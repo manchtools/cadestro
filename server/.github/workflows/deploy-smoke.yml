@@ -1,0 +1,31 @@
+name: Deploy smoke test
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Published control image tag to test
+        default: latest-rc
+  pull_request:
+    paths:
+      - 'deploy/**'
+      - '.github/workflows/deploy-smoke.yml'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Show container tooling
+        run: docker version && docker compose version
+      - name: Run deployed-stack verification
+        env:
+          IMAGE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.image_tag || '' }}
+        run: bash deploy/smoke-test.sh

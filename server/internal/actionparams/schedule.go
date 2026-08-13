@@ -1,0 +1,81 @@
+package actionparams
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+
+	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	"google.golang.org/protobuf/proto"
+)
+
+// ScheduleToRaw serialises an ActionSchedule proto into the json.RawMessage
+// form stored as validated SQLite JSON, via the shared protojson marshalOptions
+// (EmitUnpopulated). It returns nil — so the emitter omits the `schedule` key —
+// in two cases:
+//
+//   - a nil schedule, and
+//   - an all-default schedule (every field at its zero value), detected
+//     generically with proto.Equal against the zero message rather than by
+//     re-enumerating the field set.
+//
+// For any NON-empty schedule, EmitUnpopulated keeps an explicitly-set zero
+// value (e.g. interval_hours:0 alongside run_on_assign:true — "run once on
+// assign, never on a drift interval") observable on the wire instead of being
+// silently dropped and re-defaulted — the pm-tty createHome bug class. And the
+// field set is now declared exactly once (the proto), not three times.
+func ScheduleToRaw(s *pm.ActionSchedule) (json.RawMessage, error) {
+	if s == nil || proto.Equal(s, &pm.ActionSchedule{}) {
+		return nil, nil
+	}
+	b, err := marshalOptions.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(b), nil
+}
+
+// ScheduleFromJSON deserialises a schedule JSONB column back into an
+// ActionSchedule proto via protojson. A populated object decodes to a non-nil
+// proto (even when every field is its zero value — presence is the schedule's
+// existence, distinct from absence). Empty input, `{}`, or `null` decode to nil
+// (no schedule configured) so callers leave the proto field unset rather than
+// carrying an all-zeros placeholder.
+func ScheduleFromJSON(data []byte) *pm.ActionSchedule {
+	s, err := ParseSchedule(data)
+	if err != nil {
+		if len(bytes.TrimSpace(data)) > 0 {
+			slog.Warn("actionparams: schedule JSON malformed; treating as no schedule",
+				"bytes", len(data), "error", err)
+		}
+		return nil
+	}
+	return s
+}
+
+// ParseSchedule is the fail-closed form of ScheduleFromJSON. Compilation and
+// dispatch paths use it so malformed or unknown stored fields cannot silently
+// change the work sent to an agent.
+func ParseSchedule(data []byte) (*pm.ActionSchedule, error) {
+	// Probe for object presence first: an empty object carries no schedule,
+	// while a populated object is a schedule even if all fields are zero. This
+	// is what distinguishes "explicitly set" from "unset" — protojson alone
+	// can't, since both decode to the same all-zero proto.
+	var probe map[string]json.RawMessage
+	if err := json.Unmarshal(data, &probe); err != nil {
+		if len(bytes.TrimSpace(data)) == 0 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("decode schedule JSON: %w", err)
+	}
+	if len(probe) == 0 {
+		// `{}`, `null` (decodes to nil map), or absent → no schedule.
+		return nil, nil
+	}
+	var s pm.ActionSchedule
+	if err := unmarshalOpts.Unmarshal(data, &s); err != nil {
+		return nil, fmt.Errorf("decode schedule fields: %w", err)
+	}
+	return &s, nil
+}

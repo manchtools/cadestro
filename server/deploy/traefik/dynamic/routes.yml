@@ -1,0 +1,50 @@
+http:
+  # docref: begin public-backend-tls
+  serversTransports:
+    control-tls:
+      serverName: control
+      rootCAs:
+        - /run/certs/ca-trust-bundle.crt
+      minVersion: VersionTLS13
+      maxVersion: VersionTLS13
+  routers:
+    control:
+      rule: 'Host(`{{ env "CONTROL_DOMAIN" }}`)'
+      entryPoints: [websecure]
+      middlewares: [security-headers]
+      service: control
+      tls:
+        certResolver: letsencrypt
+  middlewares:
+    security-headers:
+      headers:
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: no-referrer
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+  services:
+    control:
+      loadBalancer:
+        serversTransport: control-tls
+        servers:
+          - url: https://control:8081
+  # docref: end public-backend-tls
+
+# docref: begin agent-route
+tcp:
+  routers:
+    agents:
+      rule: 'HostSNI(`{{ env "AGENT_DOMAIN" }}`)'
+      entryPoints: [websecure]
+      service: agents
+      tls:
+        passthrough: true
+  services:
+    agents:
+      loadBalancer:
+        proxyProtocol:
+          version: 2
+        servers:
+          - address: 172.30.0.3:8082
+# docref: end agent-route

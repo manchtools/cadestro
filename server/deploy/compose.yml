@@ -1,0 +1,82 @@
+# docref: begin deployment-services
+services:
+  traefik:
+    image: docker.io/traefik:v3.7.1
+    container_name: pm-traefik
+    restart: unless-stopped
+    # traefik-acme.env carries the ACME challenge setup.sh rendered from
+    # ACME_CHALLENGE; traefik-dns.env carries the DNS provider credentials the
+    # operator wrote, and is empty for an http01 deployment.
+    env_file:
+      - ./config/traefik-acme.env
+      - ./config/traefik-dns.env
+    environment:
+      CONTROL_DOMAIN: ${CONTROL_DOMAIN:?CONTROL_DOMAIN is required}
+      AGENT_DOMAIN: ${AGENT_DOMAIN:?AGENT_DOMAIN is required}
+      TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro,z
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro,z
+      - ./certs/ca-trust-bundle.crt:/run/certs/ca-trust-bundle.crt:ro,z
+      - ./data/traefik:/letsencrypt:z
+    # `docker compose up -d --wait` waits only on services that declare a
+    # healthcheck. Traefik is the only way into the deployment, so without this
+    # the wait returns while every request into it still fails. It asks the
+    # ping endpoint traefik.yml enables, over the internal entrypoint nothing
+    # publishes.
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    networks:
+      internal:
+        ipv4_address: 172.29.0.2
+      agent_proxy:
+        ipv4_address: 172.30.0.2
+
+  control:
+    image: ghcr.io/manchtools/power-manage-control:${IMAGE_TAG:-latest}
+    container_name: pm-control
+    restart: unless-stopped
+    env_file: ./config/control.env
+    volumes:
+      - ./certs/ca.crt:/run/certs/ca.crt:ro,z
+      - ./certs/ca.key:/run/certs/ca.key:ro,z
+      - ./certs/ca-trust-bundle.crt:/run/certs/ca-trust-bundle.crt:ro,z
+      - ./certs/control.crt:/run/certs/control.crt:ro,z
+      - ./certs/control.key:/run/certs/control.key:ro,z
+      - ./secrets/encryption.key:/run/secrets/encryption.key:ro,z
+      - ./secrets/session-signing.pem:/run/secrets/session-signing.pem:ro,z
+      - ./secrets/sealing.key:/run/secrets/sealing.key:ro,z
+      - ./data/control:/var/lib/power-manage/state:z
+      - ./data/artifacts:/var/lib/power-manage/artifacts:z
+      - ./data/backups:/var/lib/power-manage/backups:z
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "--spider", "https://127.0.0.1:8081/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      internal:
+        ipv4_address: 172.29.0.3
+      agent_proxy:
+        ipv4_address: 172.30.0.3
+# docref: end deployment-services
+
+networks:
+  internal:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24
+  agent_proxy:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

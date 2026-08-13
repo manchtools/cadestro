@@ -1,0 +1,42 @@
+package authoring
+
+import (
+	"context"
+	"errors"
+
+	"connectrpc.com/connect"
+
+	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	"github.com/manchtools/power-manage/server/internal/middleware"
+)
+
+const (
+	errNotAuthenticated         = "not_authenticated"
+	errPermissionDenied         = "permission_denied"
+	errValidationFailed         = "validation_failed"
+	errInvalidPageToken         = "invalid_page_token"
+	errInternal                 = "internal_error"
+	errActionNotFound           = "action_not_found"
+	errActionSetNotFound        = "action_set_not_found"
+	errActionAlreadyInSet       = "action_already_in_set"
+	errActionSetMemberNotFound  = "action_set_member_not_found"
+	errDefinitionNotFound       = "definition_not_found"
+	errActionSetAlreadyInDef    = "action_set_already_in_definition"
+	errDefinitionMemberNotFound = "definition_member_not_found"
+	errCannotModifySystemAction = "cannot_modify_system_action"
+)
+
+func authoringRPCError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+	err := connect.NewError(connectCode, errors.New(message))
+	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
+		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
+	})
+	if detailErr == nil {
+		err.AddDetail(detail)
+	}
+	return err
+}
+
+func authoringNotFound(ctx context.Context, code, message string) *connect.Error {
+	return authoringRPCError(ctx, code, connect.CodeNotFound, message)
+}

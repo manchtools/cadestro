@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go test -count=1 ./...
+      - run: go vet ./...
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build control
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          mkdir -p dist
+          go build -ldflags="-s -w -X main.version=${GITHUB_REF_NAME#v}" \
+            -o dist/control-linux-${{ matrix.arch }} ./cmd/control
+      - uses: actions/upload-artifact@v5
+        with:
+          name: control-${{ matrix.arch }}
+          path: dist/control-linux-${{ matrix.arch }}
+
+  containers:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.arch != 'amd64'
+        with:
+          platforms: ${{ matrix.arch }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: control-${{ matrix.arch }}
+          path: dist
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push control image
+        run: |
+          chmod +x dist/control-linux-${{ matrix.arch }}
+          docker build --platform "linux/${{ matrix.arch }}" --provenance=false -f deploy/Containerfile.control \
+            --build-arg BINARY=dist/control-linux-${{ matrix.arch }} \
+            -t ghcr.io/manchtools/power-manage-control:${GITHUB_REF_NAME#v}-${{ matrix.arch }} .
+          docker push ghcr.io/manchtools/power-manage-control:${GITHUB_REF_NAME#v}-${{ matrix.arch }}
+
+  smoke:
+    needs: containers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify deployed target
+        env:
+          IMAGE_TAG: ${{ github.ref_name }}-amd64
+        run: |
+          IMAGE_TAG="${IMAGE_TAG#v}" bash deploy/smoke-test.sh
+
+  manifests:
+    needs: [build, containers, smoke]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish version and channel manifests
+        env:
+          PRERELEASE: ${{ contains(github.ref_name, '-') }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          image=ghcr.io/manchtools/power-manage-control
+          docker manifest create "$image:$version" "$image:$version-amd64" "$image:$version-arm64"
+          docker manifest push "$image:$version"
+          channel=latest
+          if [[ "$PRERELEASE" == true ]]; then channel=latest-rc; fi
+          docker manifest create --amend "$image:$channel" "$image:$version-amd64" "$image:$version-arm64"
+          docker manifest push "$image:$channel"
+
+  release:
+    needs: [build, manifests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: control-*
+          path: release
+          merge-multiple: true
+      - uses: anchore/sbom-action/download-syft@v0
+        id: syft
+      - name: SBOMs
+        run: |
+          shopt -s nullglob
+          bins=(release/control-linux-*)
+          [[ ${#bins[@]} -gt 0 ]] || { echo "no binaries to scan" >&2; exit 1; }
+          for bin in "${bins[@]}"; do
+            "${{ steps.syft.outputs.cmd }}" scan "file:$bin" -o "spdx-json=$bin.spdx.json"
+          done
+      - name: Checksums
+        run: cd release && sha256sum control-* > SHA256SUMS
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            release/control-linux-amd64
+            release/control-linux-arm64
+      - uses: softprops/action-gh-release@v2
+        with:
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          name: Power Manage Server ${{ github.ref_name }}
+          files: release/*
+          generate_release_notes: true

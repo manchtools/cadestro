@@ -1,0 +1,470 @@
+// Package ca provides a certificate authority for issuing device certificates.
+package ca
+
+import (
+	"bytes"
+	"crypto"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/sha256"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/hex"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"math/big"
+	"net/url"
+	"os"
+	"time"
+
+	"github.com/manchtools/power-manage/server/internal/mtls"
+)
+
+// ErrInvalidCSR marks caller-controlled certificate requests that cannot be
+// issued. Handlers use it to distinguish InvalidArgument from CA failures.
+var ErrInvalidCSR = errors.New("invalid certificate signing request")
+
+// CA is a certificate authority that issues device certificates.
+type CA struct {
+	cert      *x509.Certificate
+	key       crypto.Signer
+	validity  time.Duration
+	trustPool *x509.CertPool   // trust bundle for verification (supports CA rotation)
+	now       func() time.Time // clock seam; defaults to time.Now, overridden in tests
+}
+
+// Option configures a CA.
+type Option func(*CA)
+
+// WithClock overrides the time source (tests). The default is time.Now.
+func WithClock(now func() time.Time) Option { return func(c *CA) { c.now = now } }
+
+// Certificate holds a PEM-encoded certificate and private key.
+type Certificate struct {
+	CertPEM     []byte
+	KeyPEM      []byte
+	Fingerprint string
+	NotAfter    time.Time
+}
+
+// New creates a new CA from PEM-encoded certificate and key files.
+func New(certPath, keyPath string, validity time.Duration, opts ...Option) (*CA, error) {
+	certPEM, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, fmt.Errorf("read CA certificate: %w", err)
+	}
+
+	keyInfo, err := os.Stat(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("stat CA key: %w", err)
+	}
+	if keyInfo.Mode().Perm()&0o077 != 0 {
+		return nil, fmt.Errorf("CA private key file %q must not be group/world accessible (mode %#o)", keyPath, keyInfo.Mode().Perm())
+	}
+
+	keyPEM, err := os.ReadFile(keyPath)
+	if err != nil {
+		return nil, fmt.Errorf("read CA key: %w", err)
+	}
+
+	return NewFromPEM(certPEM, keyPEM, validity, opts...)
+}
+
+// NewFromPEM creates a new CA from PEM-encoded certificate and key bytes.
+func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) (*CA, error) {
+	certBlock, _ := pem.Decode(certPEM)
+	if certBlock == nil {
+		return nil, fmt.Errorf("failed to decode CA certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse CA certificate: %w", err)
+	}
+
+	keyBlock, _ := pem.Decode(keyPEM)
+	if keyBlock == nil {
+		return nil, fmt.Errorf("failed to decode CA key PEM")
+	}
+
+	key, err := parsePrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("parse CA key: %w", err)
+	}
+
+	if _, ok := key.(ed25519.PrivateKey); !ok {
+		return nil, fmt.Errorf("unsupported CA signing key type %T: Ed25519 is required", key)
+	}
+	certPublic, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("marshal CA certificate public key: %w", err)
+	}
+	keyPublic, err := x509.MarshalPKIXPublicKey(key.Public())
+	if err != nil {
+		return nil, fmt.Errorf("marshal CA private-key public key: %w", err)
+	}
+	if !bytes.Equal(certPublic, keyPublic) {
+		return nil, fmt.Errorf("CA certificate and private key do not match")
+	}
+
+	pool := x509.NewCertPool()
+	pool.AddCert(cert)
+
+	c := &CA{
+		cert:      cert,
+		key:       key,
+		validity:  validity,
+		trustPool: pool,
+		now:       time.Now,
+	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c, nil
+}
+
+// serverCertValidity is the fixed short-lived TTL for control-plane server
+// certificates: 45 days, distinct from the agent-cert ca.validity. Short-lived
+// so an abandoned or revoked one self-expires within the window on its own.
+const serverCertValidity = 45 * 24 * time.Hour
+
+// IssueCertificateFromCSR signs an agent Certificate Signing Request and returns
+// the certificate. The private key stays on the agent - this method only signs
+// the CSR. Agent certs carry the agent peer class and the CA's default validity.
+func (ca *CA) IssueCertificateFromCSR(deviceID string, csrPEM []byte) (*Certificate, error) {
+	return ca.issueFromCSR(deviceID, csrPEM, mtls.PeerClassAgent, ca.validity, nil)
+}
+
+// IssueServerCertificateFromCSR signs a CSR for a control-plane TLS SERVER —
+// today only the datastore integration tests, which need a cert something can
+// actually be served on. CN = SerialNumber = id, the control peer class, and a
+// server-chosen DNS SAN when hostname is non-empty.
+//
+// The DNS SAN is server-chosen here, never CSR-supplied: issueFromCSR rejects a
+// CSR that requests SANs of its own, so a caller cannot mint a certificate for
+// a hostname the server did not assign.
+func (ca *CA) IssueServerCertificateFromCSR(id string, csrPEM []byte, hostname string) (*Certificate, error) {
+	var dnsNames []string
+	if hostname != "" {
+		dnsNames = []string{hostname}
+	}
+	return ca.issueFromCSR(id, csrPEM, mtls.PeerClassControl, serverCertValidity, dnsNames)
+}
+
+// issueFromCSR is the shared issuance body. deviceID becomes the cert CN and
+// Subject.SerialNumber; class selects the peer-class URI SAN stamped on the
+// cert; validity sets NotAfter; dnsNames are server-chosen DNS SANs (a server
+// hostname). The CA authoritatively stamps the identity, class, and any DNS
+// SANs — caller-supplied SANs in the CSR are rejected below — so an enrolling
+// peer can never mint a different identity, peer class, or hostname than the
+// server assigns.
+func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass, validity time.Duration, dnsNames []string) (*Certificate, error) {
+	// Parse the CSR
+	csrBlock, _ := pem.Decode(csrPEM)
+	if csrBlock == nil {
+		return nil, fmt.Errorf("%w: failed to decode CSR PEM", ErrInvalidCSR)
+	}
+
+	csr, err := x509.ParseCertificateRequest(csrBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("%w: parse CSR: %v", ErrInvalidCSR, err)
+	}
+
+	// Verify the CSR signature
+	if err := csr.CheckSignature(); err != nil {
+		return nil, fmt.Errorf("%w: invalid CSR signature: %v", ErrInvalidCSR, err)
+	}
+	if _, ok := csr.PublicKey.(ed25519.PublicKey); !ok {
+		return nil, fmt.Errorf("%w: unsupported public key type %T: Ed25519 is required", ErrInvalidCSR, csr.PublicKey)
+	}
+
+	// Reject CSRs that request Subject Alternative Names. Agent
+	// certificates are client certs identified by the deviceID in the
+	// Subject CN — DNSNames, IPAddresses, EmailAddresses, and URIs have
+	// no legitimate use here and would otherwise be copied into the
+	// issued cert, letting a malicious agent request SANs for internal
+	// hostnames (e.g. control-server.example.com) that downstream
+	// verifiers might then trust.
+	if len(csr.DNSNames) > 0 || len(csr.IPAddresses) > 0 || len(csr.EmailAddresses) > 0 || len(csr.URIs) > 0 {
+		return nil, fmt.Errorf("%w: CSR must not request subject alternative names", ErrInvalidCSR)
+	}
+
+	// Generate serial number
+	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return nil, fmt.Errorf("generate serial number: %w", err)
+	}
+
+	now := ca.now()
+	notAfter := now.Add(validity)
+
+	// Stamp the SPIFFE URI SAN that marks this cert's peer class. The
+	// agent listener requires the agent class, so a leaked control-class cert
+	// cannot be replayed against it and vice versa. The class is server-chosen
+	// here, never CSR-supplied.
+	peerURI, err := mtls.PeerClassURI(class)
+	if err != nil {
+		return nil, fmt.Errorf("build peer-class URI: %w", err)
+	}
+
+	// Agent certs are TLS clients only. A cert carrying a server hostname is
+	// also serving TLS on it, so it needs ServerAuth as well — a client-only
+	// cert fails a peer's ServerAuth check. Keyed on the DNS SAN rather than on
+	// a peer class, because it is the SAN that says this cert is served.
+	extKeyUsage := []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
+	if len(dnsNames) > 0 {
+		extKeyUsage = append(extKeyUsage, x509.ExtKeyUsageServerAuth)
+	}
+
+	template := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			CommonName:   deviceID,
+			Organization: []string{"power-manage"},
+		},
+		NotBefore:             now.Add(-1 * time.Minute), // Allow for clock skew
+		NotAfter:              notAfter,
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           extKeyUsage,
+		BasicConstraintsValid: true,
+		URIs:                  []*url.URL{peerURI},
+		// Server-chosen DNS SANs (a server hostname). Empty for agent certs.
+		DNSNames: dnsNames,
+	}
+
+	// Add device ID to the Subject's SerialNumber field
+	template.Subject.SerialNumber = deviceID
+
+	// Sign the certificate using the public key from the CSR
+	certDER, err := x509.CreateCertificate(rand.Reader, template, ca.cert, csr.PublicKey, ca.key)
+	if err != nil {
+		return nil, fmt.Errorf("create certificate: %w", err)
+	}
+
+	// Encode certificate to PEM
+	certPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certDER,
+	})
+
+	// Calculate fingerprint (SHA256 of DER-encoded certificate)
+	fingerprint := sha256.Sum256(certDER)
+
+	return &Certificate{
+		CertPEM:     certPEM,
+		KeyPEM:      nil, // Private key stays on agent
+		Fingerprint: hex.EncodeToString(fingerprint[:]),
+		NotAfter:    notAfter,
+	}, nil
+}
+
+// SetTrustBundle replaces the verification trust pool with all CA certificates
+// parsed from the given PEM data. This supports CA rotation: the bundle should
+// contain both the old and new CA certificates so that agent certs signed by
+// either CA are accepted during the transition period.
+func (ca *CA) SetTrustBundle(pemData []byte) error {
+	pool := x509.NewCertPool()
+	foundActive := false
+	rest := bytes.TrimSpace(pemData)
+	for len(rest) > 0 {
+		block, remaining := pem.Decode(rest)
+		if block == nil || block.Type != "CERTIFICATE" {
+			return fmt.Errorf("CA trust bundle contains invalid PEM data")
+		}
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return fmt.Errorf("parse CA trust bundle certificate: %w", err)
+		}
+		if !cert.IsCA || cert.KeyUsage&x509.KeyUsageCertSign == 0 {
+			return fmt.Errorf("CA trust bundle contains a certificate that cannot sign certificates")
+		}
+		pool.AddCert(cert)
+		foundActive = foundActive || bytes.Equal(cert.Raw, ca.cert.Raw)
+		rest = bytes.TrimSpace(remaining)
+	}
+	if len(pemData) == 0 {
+		return fmt.Errorf("CA trust bundle is empty")
+	}
+	if !foundActive {
+		return fmt.Errorf("CA trust bundle does not contain the active CA certificate")
+	}
+	ca.trustPool = pool
+	return nil
+}
+
+// VerifyCertificate verifies a PEM-encoded certificate was signed by a trusted CA.
+// Uses the trust pool (which may contain multiple CA certs for rotation).
+// Returns the device ID (CN) if valid.
+func (ca *CA) VerifyCertificate(certPEM []byte) (string, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return "", fmt.Errorf("failed to decode certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("parse certificate: %w", err)
+	}
+
+	if _, err := cert.Verify(x509.VerifyOptions{
+		Roots:     ca.trustPool,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}); err != nil {
+		return "", fmt.Errorf("certificate verification failed: %w", err)
+	}
+
+	return cert.Subject.CommonName, nil
+}
+
+// TrustPool returns the CA trust pool used for certificate verification.
+// This includes additional CAs added via SetTrustBundle for rotation support.
+func (ca *CA) TrustPool() *x509.CertPool {
+	return ca.trustPool
+}
+
+// CACertPEM returns the PEM-encoded CA certificate.
+func (ca *CA) CACertPEM() []byte {
+	return pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: ca.cert.Raw,
+	})
+}
+
+// parsePrivateKey tries to parse a private key in various formats.
+func parsePrivateKey(der []byte) (crypto.Signer, error) {
+	// Try PKCS8 first
+	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
+		if signer, ok := key.(crypto.Signer); ok {
+			return signer, nil
+		}
+	}
+
+	// Try EC private key
+	if key, err := x509.ParseECPrivateKey(der); err == nil {
+		return key, nil
+	}
+
+	// Try RSA private key (PKCS1)
+	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
+		return key, nil
+	}
+
+	return nil, fmt.Errorf("unsupported private key format")
+}
+
+// FingerprintFromPEM extracts the fingerprint from a PEM-encoded certificate.
+func FingerprintFromPEM(certPEM []byte) (string, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return "", fmt.Errorf("failed to decode certificate PEM")
+	}
+
+	fingerprint := sha256.Sum256(block.Bytes)
+	return hex.EncodeToString(fingerprint[:]), nil
+}
+
+// NotAfterFromPEM returns the expiry of a PEM-encoded certificate. Revocation
+// rows need not outlive the certificate because mTLS already rejects expiry.
+func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return time.Time{}, fmt.Errorf("failed to decode certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("parse certificate: %w", err)
+	}
+	return cert.NotAfter, nil
+}
+
+// FingerprintFromCert computes the fingerprint of an already-parsed
+// certificate. It is byte-for-byte identical to FingerprintFromPEM /
+// IssueCertificateFromCSR (hex of SHA-256 over the DER), so a fingerprint the
+// control server stored or revoked matches one control derives from the
+// cert presented on an mTLS connection. cert.Raw is the DER encoding.
+func FingerprintFromCert(cert *x509.Certificate) string {
+	// Defensive: callers reach this from the mTLS path where the leaf is
+	// already verified non-nil, but never panic on a hot request path. An empty
+	// fingerprint matches no revoked entry — a nil cert is already rejected by
+	// the peer-class / TLS checks upstream, so this fails safe, not open.
+	if cert == nil {
+		return ""
+	}
+	fingerprint := sha256.Sum256(cert.Raw)
+	return hex.EncodeToString(fingerprint[:])
+}
+
+// DeviceIDFromPEM extracts the device ID from a PEM-encoded certificate.
+func DeviceIDFromPEM(certPEM []byte) (string, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return "", fmt.Errorf("failed to decode certificate PEM")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("parse certificate: %w", err)
+	}
+
+	return cert.Subject.CommonName, nil
+}
+
+// PeerClassFromPEM extracts the SPIFFE peer class from a PEM-encoded
+// certificate's URI SAN. Mirrors DeviceIDFromPEM/NotAfterFromPEM so the API
+// handlers can assert a presented cert's class without re-implementing the
+// decode. Delegates the URI-SAN parsing to mtls.PeerClassFromCert (single
+// source of truth for the class layout).
+func PeerClassFromPEM(certPEM []byte) (mtls.PeerClass, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return "", fmt.Errorf("failed to decode certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("parse certificate: %w", err)
+	}
+	return mtls.PeerClassFromCert(cert)
+}
+
+// AssertCSRMatchesCertKey verifies that the CSR's public key equals the
+// certificate's public key. On certificate renewal this is the
+// proof-of-possession: the renewer must hold the private key bound to the cert
+// it presented, which agents do because they reuse their keypair
+// (GenerateCSRFromKey). Without it, certificates are public material — returned
+// at registration and stored with the device — so anyone who reads a device's
+// cert PEM could submit a CSR for a key they control and mint an impersonation
+// cert bound to that device id (#361).
+func AssertCSRMatchesCertKey(certPEM, csrPEM []byte) error {
+	certBlock, _ := pem.Decode(certPEM)
+	if certBlock == nil {
+		return fmt.Errorf("failed to decode certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return fmt.Errorf("parse certificate: %w", err)
+	}
+
+	csrBlock, _ := pem.Decode(csrPEM)
+	if csrBlock == nil {
+		return fmt.Errorf("failed to decode CSR PEM")
+	}
+	csr, err := x509.ParseCertificateRequest(csrBlock.Bytes)
+	if err != nil {
+		return fmt.Errorf("parse CSR: %w", err)
+	}
+
+	// crypto.PublicKey for ecdsa/rsa/ed25519 implements Equal; compare via it
+	// rather than re-encoding so a curve/parameter mismatch can't slip through.
+	type equalKey interface {
+		Equal(crypto.PublicKey) bool
+	}
+	certKey, ok := cert.PublicKey.(equalKey)
+	if !ok {
+		return fmt.Errorf("unsupported certificate public key type %T", cert.PublicKey)
+	}
+	if !certKey.Equal(csr.PublicKey) {
+		return fmt.Errorf("CSR public key does not match the current certificate")
+	}
+	return nil
+}

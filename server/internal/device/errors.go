@@ -1,0 +1,49 @@
+// Package device implements the device CRUD portion of the control service.
+package device
+
+import (
+	"context"
+	"errors"
+
+	"connectrpc.com/connect"
+
+	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	"github.com/manchtools/power-manage/server/internal/middleware"
+)
+
+const (
+	errNotAuthenticated        = "not_authenticated"
+	errPermissionDenied        = "permission_denied"
+	errValidationFailed        = "validation_failed"
+	errInvalidPageToken        = "invalid_page_token"
+	errInternal                = "internal_error"
+	errDeviceNotFound          = "device_not_found"
+	errQueryResultMissing      = "query_result_not_found"
+	errExecutionNotFound       = "execution_not_found"
+	errActionNotFound          = "action_not_found"
+	errLpsPasswordNotFound     = "lps_password_not_found"
+	errLuksKeyNotFound         = "luks_key_not_found"
+	errRevocationPending       = "luks_key_revocation_pending"
+	errAlreadyRevoked          = "luks_key_already_revoked"
+	errDeviceUnavailable       = "device_unavailable"
+	errDeviceNotConnected      = "device_not_connected"
+	errTerminalUsernameMissing = "terminal_linux_username_not_set"
+	errTerminalSessionMissing  = "terminal_session_not_found"
+	errUserNotFound            = "user_not_found"
+	errUserGroupMissing        = "user_group_not_found"
+)
+
+func rpcError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+	err := connect.NewError(connectCode, errors.New(message))
+	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
+		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
+	})
+	if detailErr == nil {
+		err.AddDetail(detail)
+	}
+	return err
+}
+
+func notFound(ctx context.Context, code, message string) *connect.Error {
+	return rpcError(ctx, code, connect.CodeNotFound, message)
+}
