@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package powermanage.v1;
+
+option go_package = "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1;powermanagev1";
+
+// ============================================================================
+// Device Enrollment Service (Agent Local Socket)
+//
+// This service runs on the agent's local unix socket (/run/pm-agent/enroll.sock)
+// and provides enrollment functionality for registering the agent with a
+// PM control server. No sudo required — the registration token is the
+// authorization.
+// ============================================================================
+
+service DeviceAuthService {
+  // Enroll the agent with a PM server (called by CLI, no sudo required).
+  rpc Enroll(EnrollRequest) returns (EnrollResponse);
+
+  // Check whether the agent is currently enrolled.
+  rpc GetEnrollmentStatus(GetEnrollmentStatusRequest) returns (GetEnrollmentStatusResponse);
+}
+
+// ============================================================================
+// Enrollment (Socket-based, no sudo required)
+// ============================================================================
+
+message EnrollRequest {
+  // @gotags: validate:"required,url"
+  string server_url = 1; // Control server URL (https only — enforced agent-side)
+  // @gotags: validate:"required"
+  string token = 2; // Registration token from web UI
+  // Required out-of-band CA fingerprint pin: the 64-char hex SHA-256 of
+  // the control CA certificate DER. The agent verifies the CA
+  // returned by registration matches this pin BEFORE trusting it,
+  // defending against a first-enrollment trust-anchor swap. Delivered by
+  // the operator alongside the token (e.g. power-manage://…?token=…&pin=…).
+  // Missing or mismatched pins fail closed; enrollment has no
+  // trust-on-first-use path. Case-insensitive: the enroll CLI strips colons
+  // (openssl emits uppercase, colon-separated) and the agent compares
+  // with EqualFold, so the `hexadecimal` tag is intentionally permissive
+  // on case.
+  // @gotags: validate:"required,len=64,hexadecimal"
+  string ca_fingerprint_pin = 3;
+}
+
+message EnrollResponse {
+  // The other two fields below are conditioned on this — success=true
+  // means device_id is populated and error is empty; success=false
+  // means error is populated and device_id is empty. The bool itself
+  // is unconditional but we tag it explicit-required so the
+  // proto-validate coverage tool stops counting it as a gap. Bools
+  // always have a default value, so
+  // "required" here means "must be present in the wire payload" —
+  // protovalidate enforces no extra runtime check beyond that.
+  // @gotags: validate:"required"
+  bool success = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string device_id = 2; // Assigned device ID on success
+  // @gotags: validate:"omitempty,max=4096"
+  string error = 3; // Error message on failure
+}
+
+message GetEnrollmentStatusRequest {}
+
+message GetEnrollmentStatusResponse {
+  // @gotags: validate:"required"
+  bool enrolled = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string device_id = 2; // Empty if not enrolled
+}

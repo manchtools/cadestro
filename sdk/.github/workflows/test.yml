@@ -1,0 +1,657 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    name: Static Checks (gofmt, vet, staticcheck, errcheck, govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: |
+          dirty=$(gofmt -l .)
+          if [ -n "$dirty" ]; then
+            echo "The following files are not gofmt-clean:"
+            echo "$dirty"
+            echo "---- diff ----"
+            gofmt -d .
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
+
+      # errcheck catches a returned error dropped on the floor — a bare
+      # statement call (foo(ctx)) that discards an error, which the compiler
+      # permits (only unused *variables* are an error, not unused returns).
+      # No exclude list: every deliberately-ignored error is written `_ = foo()`
+      # at its call site (errcheck honours that without -blank), so the gate
+      # stays honest — it can't be told "read-side Close only" by signature, so
+      # a future bare WRITE-path Close is caught too. Production code only
+      # (-ignoretests); test-setup hygiene is tracked separately.
+      - name: errcheck
+        run: |
+          go install github.com/kisielk/errcheck@latest
+          errcheck -ignoretests ./...
+
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  # Go test sweep across every SDK package whose tests don't require
+  # systemd / privileged operations (those run in test-sys below). The
+  # job is split out from test-unit so the existing pkg-only job stays
+  # untouched while we add coverage for the root package, verify/, crypto/,
+  # sys/{exec,fs,network,firewall,inventory,osquery,notify,...} —
+  # anything that compiles without an integration build tag.
+  test-go-all:
+    name: Go unit sweep (race, all SDK packages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: go test (excludes integration-tagged files)
+        run: go test -race -short ./...
+
+  # NOTE: the validate-tag coverage gate is now the Go test
+  # TestEveryBoundableRequestFieldCarriesValidateTag (test/protovalidatecoverage/
+  # coverage_test.go). It hard-fails when a bound-able *Request* field lacks a
+  # validate tag and runs under the `go test` job above, so the previous
+  # soft-fail `go run ./test/protovalidatecoverage` job has been removed (it
+  # always exited 0 and counted response fields the gate intentionally exempts).
+
+  proto-lint:
+    name: Proto lint + format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # `npm ci` only — no `|| npm install` fallback. The point of these steps
+      # is that buf comes from package-lock.json; falling back to `npm install`
+      # on a lock mismatch resolves whatever the ranges allow and defeats it.
+      - name: Install npm deps
+        run: npm ci
+
+      # Same resolution the local gate and `make generate` use
+      # (scripts/buf.sh: fail-closed to the lock-installed binary). Previously
+      # `npx --prefix .. buf`, which downloads registry-latest when the package
+      # is absent instead of failing.
+      - name: buf lint
+        working-directory: proto
+        run: ../scripts/buf.sh lint
+
+      - name: buf format (drift)
+        working-directory: proto
+        run: ../scripts/buf.sh format --diff --exit-code
+
+  # Run `make generate` and assert nothing changed. Catches the
+  # "edited a .proto but forgot to regenerate" footgun before it
+  # lands in main.
+  proto-gen-drift:
+    name: Generated-code drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci || npm install
+
+      # Pin protoc — the generated `.pb.go` files carry a `// protoc
+      # vX.Y.Z` comment that flips every protoc release, so an
+      # unpinned apt-get install would surface false-positive drift
+      # against whatever version the contributor ran locally. Pinning
+      # in CI (and documenting the same version in CONTRIBUTING) keeps
+      # the comment stable across machines.
+      - name: Install protoc (pinned)
+        env:
+          PROTOC_VERSION: 30.2
+        run: |
+          curl -fsSL -o /tmp/protoc.zip \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+          sudo unzip -q -o /tmp/protoc.zip -d /usr/local
+          protoc --version
+
+      - name: Install protoc plugins
+        run: make install-tools
+
+      - name: make generate
+        run: make generate
+
+      - name: Verify no drift
+        run: |
+          # Ignore the auto-generated `// protoc vX.Y.Z` comment in
+          # `.pb.go` files — the line flips with every protoc release
+          # and isn't semantic. The pinned protoc above keeps this
+          # filter conservative; the filter exists in case the pinned
+          # version is later bumped without a co-located gen commit.
+          if ! git diff --exit-code \
+               -I '^//\s*protoc\s+v[0-9]+\.[0-9]+\(\.[0-9]+\)\?' \
+               -- gen/; then
+            echo ""
+            echo "::error::generated code in gen/ drifted from proto sources."
+            echo "Run 'make generate' locally and commit the result."
+            exit 1
+          fi
+
+  ts-typecheck:
+    name: TypeScript typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci || npm install
+
+      - name: tsc --noEmit
+        run: npm run typecheck
+
+  ts-test:
+    name: TypeScript unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci || npm install
+
+      - name: Run tests
+        run: npm test
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run pkg unit tests
+        run: go test -v -race -short ./...
+        working-directory: pkg
+
+      - name: Run sys unit tests
+        run: go test -v -race ./sys/user/ -run TestGeneratePassword
+
+  test-sys:
+    name: Integration Tests (sys/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: sdk
+
+      - name: Build test image
+        run: docker build -f sdk/test/Dockerfile.integration --target systemd -t pm-sdk-test .
+
+      - name: Start systemd container
+        run: docker run -d --privileged --name pm-sdk-test pm-sdk-test
+
+      - name: Wait for systemd
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec pm-sdk-test systemctl is-system-running --wait 2>/dev/null; then
+              break
+            fi
+            sleep 0.5
+          done
+
+      # Run under a non-English locale (Japanese) so locale-fragile parsing of
+      # real tool output is caught in CI: any capability matching an English
+      # error string without forcing LC_ALL=C (Command.CLocale) fails here.
+      - name: Run sys integration tests (ja_JP.UTF-8 locale)
+        run: |
+          docker exec -w /workspace pm-sdk-test \
+            runuser -u power-manage -- env LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 \
+              /usr/local/go/bin/go test \
+              -v -tags=integration -count=1 -timeout=10m \
+              ./sdk/sys/exec/ ./sdk/sys/fs/ ./sdk/sys/user/ ./sdk/sys/service/ \
+              ./sdk/sys/timesync/ ./sdk/sys/log/ ./sdk/sys/dns/ ./sdk/sys/desktop/
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f pm-sdk-test 2>/dev/null || true
+
+  # Dedicated job for sys/network: the keyfile-based WiFi provisioning needs BOTH
+  # a live NetworkManager daemon (`nmcli connection reload`) and root (the 0600
+  # keyfile write into /etc/NetworkManager/system-connections) — neither fits the
+  # power-manage test-sys lane. Its own systemd+NM image (`with-networkmanager`,
+  # NM configured to manage no devices) keeps NM out of the test-sys container so
+  # the other integration tests are unaffected.
+  test-network:
+    name: Integration Tests (NetworkManager)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: sdk
+
+      - name: Build systemd + NetworkManager image
+        run: docker build -f sdk/test/Dockerfile.integration --target with-networkmanager -t pm-sdk-nm .
+
+      - name: Start systemd + NM container
+        run: docker run -d --privileged --name pm-sdk-nm pm-sdk-nm
+
+      - name: Wait for NetworkManager
+        run: |
+          # The container reports "degraded" (a hardware-bound unit can't start in
+          # a container) yet NM itself comes up active — wait on NM directly.
+          for i in $(seq 1 60); do
+            if docker exec pm-sdk-nm systemctl is-active NetworkManager >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.5
+          done
+          docker exec pm-sdk-nm systemctl is-active NetworkManager
+
+      - name: Run network integration tests (root, real NetworkManager)
+        run: |
+          # PM_NM_REQUIRED=1 makes the test FAIL (not skip) if NM is somehow
+          # unavailable — this job guarantees it, so a skip would pass vacuously.
+          docker exec -w /workspace -e PM_NM_REQUIRED=1 pm-sdk-nm \
+            /usr/local/go/bin/go test -tags=integration -count=1 -v -timeout=5m \
+              -run Integration ./sdk/sys/network/
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f pm-sdk-nm 2>/dev/null || true
+
+  # Container-based real-execution tests (`//go:build container`). Each cell
+  # builds one immutable bad-state image stage (the precondition is asserted at
+  # BUILD time) and runs the container-tagged tests INSIDE it, against the real
+  # tool binaries. Adding a distro or a state is a new matrix row + a Dockerfile
+  # stage + a `container`-tagged test file; the tests self-skip when their baked
+  # precondition is absent, so no other wiring changes.
+  container-tests:
+    name: Container Tests (${{ matrix.label }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: pkg (debian/state-locked-apt)
+            distro: debian
+            state: state-locked-apt
+            path: ./sdk/pkg/
+            expect: apt-get fuser
+          # LUKS Manager against real cryptsetup. No bad-state needed (each test
+          # formats its own LUKS2 container on a /dev/shm file), so it runs on
+          # the clean `base` stage. --shm-size gives /dev/shm headroom for the
+          # 64 MiB container files.
+          - label: sys/encryption (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/encryption/
+            expect: cryptsetup
+          # nftables round-trip + iproute2 read path. Run on the clean `base`
+          # stage; the tests load real kernel netfilter / interface state in the
+          # container's own network namespace (CAP_NET_ADMIN, added below).
+          - label: sys/firewall (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/firewall/
+            expect: nft
+          - label: sys/netconfig (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/netconfig/
+            expect: ip
+          # /proc + os-release + lsblk + ip parsers against the real container.
+          - label: sys/inventory (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/inventory/
+            expect: lsblk ip
+          # update-ca-certificates round-trip into the real system trust bundle,
+          # verified with `openssl verify` (the portable, bundle-path-independent
+          # trust probe the distro-aware test uses).
+          - label: sys/catrust (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/catrust/
+            expect: update-ca-certificates openssl
+          # Real PTY + setresuid privilege drop (creates an unprivileged user).
+          - label: sys/terminal (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/terminal/
+            expect: useradd
+          # Real `wall` broadcast.
+          - label: sys/notify (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/notify/
+            expect: wall
+          # Real `osqueryi --json` queries + the sensitive-table deny-list
+          # against the actual binary (pinned osquery .deb in the with-osquery
+          # stage).
+          - label: sys/osquery (debian/with-osquery)
+            distro: debian
+            state: with-osquery
+            path: ./sdk/sys/osquery/
+            expect: osqueryi
+          # Real clamscan detection (custom .ndb marker) + freshclam error path
+          # against the actual ClamAV binaries (with-clamav stage).
+          - label: sys/antivirus (debian/with-clamav)
+            distro: debian
+            state: with-clamav
+            path: ./sdk/sys/antivirus/
+            expect: clamscan
+          # repo Manager apt backend: real `gpg --dearmor` + deb822 .sources
+          # write/idempotency/remove (base + gnupg). The dnf/pacman/zypper repo
+          # cells run in their distro jobs below; each test self-skips when its
+          # backend is absent.
+          - label: sys/repo apt (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/repo/
+            expect: apt-get gpg
+          # desktop: real runuser privilege-drop + HomeUsers passwd enumeration +
+          # per-user Flatpak-install probe (creates real accounts → needs root).
+          # The graphical ActiveSessions path runs against real loginctl in the
+          # systemd job; here ActiveSessions covers the loginctl-absent path.
+          - label: sys/desktop (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/desktop/
+            expect: useradd runuser env
+          # smartctl --scan parse + validation + fatal-exit-status-bit path
+          # (real passing-SMART-health needs hardware — residual).
+          - label: sys/smart (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/smart/
+            expect: smartctl
+          # reboot-required marker detection (Schedule/Cancel drive real shutdown
+          # — residual).
+          - label: sys/reboot (debian/base)
+            distro: debian
+            state: base
+            path: ./sdk/sys/reboot/
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: sdk
+
+      - name: Build ${{ matrix.distro }}/${{ matrix.state }} image
+        run: |
+          docker build \
+            -f sdk/test/Dockerfile.${{ matrix.distro }} \
+            --target ${{ matrix.state }} \
+            -t pm-sdk-container .
+
+      # --cap-add NET_ADMIN: the firewall/netconfig tests load real netfilter and
+      # interface state in the container's own network namespace. It is harmless
+      # for the other cells. --shm-size gives /dev/shm headroom for the LUKS cell.
+      - name: Assert expected tools present (no vacuous skip)
+        if: matrix.expect != ''
+        run: |
+          for tool in ${{ matrix.expect }}; do
+            if ! docker run --rm pm-sdk-container sh -c "command -v $tool >/dev/null 2>&1"; then
+              echo "::error::expected tool '$tool' absent from '${{ matrix.label }}' image — its container test would skip VACUOUSLY instead of running"
+              exit 1
+            fi
+          done
+
+      - name: Run container tests
+        run: |
+          docker run --rm --shm-size=512m --cap-add NET_ADMIN pm-sdk-container \
+            go test -tags=container -count=1 -v ${{ matrix.path }} -run Container
+
+  # The non-Debian distro families. Where the per-capability Debian matrix above
+  # builds one image per cell, each distro here builds its image ONCE and runs the
+  # whole base-stage capability set in a single job (the Molecule/Kitchen "platform"
+  # model) — far fewer image rebuilds for the same coverage. The SAME container
+  # tests run, proving cross-distro portability (catrust P11Kit/SUSE backends,
+  # desktop PATH on SUSE, the os-release parse, repo/pkg native backends, …).
+  # osquery stays Debian-only (statically-built binary, identical behaviour); notify
+  # is dropped on openSUSE (no `wall` package). See test/README.md.
+  container-tests-distro:
+    name: Container Tests (${{ matrix.distro }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { distro: fedora,    notify: ./sdk/sys/notify/, walltool: wall }
+          - { distro: almalinux, notify: ./sdk/sys/notify/, walltool: wall }
+          - { distro: arch,      notify: ./sdk/sys/notify/, walltool: wall }
+          - { distro: opensuse,  notify: '',                walltool: '' }
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: sdk
+
+      - name: Build base image
+        run: docker build -f sdk/test/Dockerfile.${{ matrix.distro }} --target base -t pm-base .
+
+      - name: Assert base tool surface (no vacuous skip)
+        run: |
+          for tool in cryptsetup nft ip lsblk useradd runuser env smartctl gpg flatpak fuser openssl ${{ matrix.walltool }}; do
+            if ! docker run --rm pm-base sh -c "command -v $tool >/dev/null 2>&1"; then
+              echo "::error::tool '$tool' absent from the ${{ matrix.distro }} base image — its container test would skip VACUOUSLY"
+              exit 1
+            fi
+          done
+          # catrust Detect must find a refresh tool, or its test skips vacuously.
+          docker run --rm pm-base sh -c 'command -v update-ca-trust >/dev/null 2>&1 || command -v update-ca-certificates >/dev/null 2>&1' \
+            || { echo "::error::no CA-trust refresh tool on ${{ matrix.distro }}"; exit 1; }
+
+      - name: Run base-stage container tests
+        run: |
+          docker run --rm --shm-size=512m --cap-add NET_ADMIN pm-base \
+            go test -tags=container -count=1 -v -run Container \
+            ./sdk/sys/encryption/ ./sdk/sys/firewall/ ./sdk/sys/netconfig/ ./sdk/sys/inventory/ \
+            ./sdk/sys/catrust/ ./sdk/sys/terminal/ ./sdk/sys/desktop/ ./sdk/sys/smart/ \
+            ./sdk/sys/reboot/ ./sdk/sys/repo/ ./sdk/pkg/ ${{ matrix.notify }}
+
+      - name: Run antivirus (with-clamav seed DB)
+        run: |
+          docker build -f sdk/test/Dockerfile.${{ matrix.distro }} --target with-clamav -t pm-clamav .
+          docker run --rm pm-clamav \
+            go test -tags=container -count=1 -v -run Container ./sdk/sys/antivirus/
+
+  test-apt:
+    name: Integration Tests (apt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Update apt cache
+        run: sudo apt-get update
+
+      - name: Run integration tests
+        run: go test -v -race ./...
+        working-directory: pkg
+
+      - name: Run tests with coverage
+        run: go test -coverprofile=coverage-apt.out ./...
+        working-directory: pkg
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-apt
+          path: pkg/coverage-apt.out
+
+  test-dnf:
+    name: Integration Tests (dnf)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Go
+        run: dnf install -y golang
+
+      - name: Update dnf cache
+        run: dnf makecache
+
+      - name: Run integration tests
+        run: go test -v ./...
+        working-directory: pkg
+
+      - name: Run tests with coverage
+        run: go test -coverprofile=coverage-dnf.out ./...
+        working-directory: pkg
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-dnf
+          path: pkg/coverage-dnf.out
+
+      # repo Manager dnf backend: real .repo write/idempotency/remove against the
+      # actual dnf (root container). Run from the module root (pkg/ is the same
+      # module but `./...` there does not reach sys/repo). The apt/pacman/zypper
+      # repo tests self-skip here.
+      - name: Run repo Manager container tests (real dnf)
+        run: go test -tags=container -count=1 -v -run Container ./sys/repo/
+
+  # pacman/zypper are the two package managers with zero real-tool coverage
+  # before this. The pkg integration tests (TestIntegration_Pacman/_Zypper)
+  # auto-detect the backend and run read-only ops (List / IsInstalled / Search)
+  # against the REAL binary, so an output-format / exit-code change across distro
+  # or tool versions is caught.
+  test-pacman:
+    name: Integration Tests (pacman)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Go + sync pacman db
+        run: pacman -Sy --noconfirm go git
+
+      - name: Run integration tests
+        run: go test -v ./...
+        working-directory: pkg
+
+      # repo Manager pacman backend: real /etc/pacman.conf [section] write/remove
+      # against the actual pacman (root container).
+      - name: Run repo Manager container tests (real pacman)
+        run: go test -tags=container -count=1 -v -run Container ./sys/repo/
+
+  test-zypper:
+    name: Integration Tests (zypper)
+    runs-on: ubuntu-latest
+    container:
+      image: opensuse/leap:latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Go + refresh zypper
+        run: |
+          zypper --non-interactive --gpg-auto-import-keys refresh
+          zypper --non-interactive install go git tar gzip
+
+      # Leap's `go` package pins GOTOOLCHAIN=local and ships go 1.25.10, one
+      # patch below the go.mod requirement (1.25.11). GOTOOLCHAIN=auto lets the
+      # first `go` invocation fetch the exact toolchain the module declares.
+      - name: Run integration tests
+        run: go test -v ./...
+        working-directory: pkg
+        env:
+          GOTOOLCHAIN: auto
+
+      # repo Manager zypper backend: real `zypper addrepo`/`lr`/`removerepo`
+      # round-trip (root container). GOTOOLCHAIN=auto for Leap's go 1.25.10.
+      - name: Run repo Manager container tests (real zypper)
+        run: go test -tags=container -count=1 -v -run Container ./sys/repo/
+        env:
+          GOTOOLCHAIN: auto
+
+  coverage-report:
+    name: Coverage Report
+    needs: [test-apt, test-dnf]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Download apt coverage
+        uses: actions/download-artifact@v5
+        with:
+          name: coverage-apt
+          path: coverage
+
+      - name: Download dnf coverage
+        uses: actions/download-artifact@v5
+        with:
+          name: coverage-dnf
+          path: coverage
+
+      - name: Display coverage
+        run: |
+          echo "=== APT Coverage ==="
+          go tool cover -func=coverage/coverage-apt.out | tail -1
+          echo ""
+          echo "=== DNF Coverage ==="
+          go tool cover -func=coverage/coverage-dnf.out | tail -1
+
+  docref-check:
+    name: docref (docs anchored to code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Purpose-built docref CI image (docref + git on Alpine); nothing to build.
+      - name: docref check (docs match the code they describe)
+        run: docker run --rm -v "${{ github.workspace }}:/repo" ghcr.io/manchtools/open-docref:v0.1.0 check

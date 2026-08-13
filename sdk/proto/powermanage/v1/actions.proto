@@ -1,0 +1,819 @@
+syntax = "proto3";
+
+package powermanage.v1;
+
+import "google/protobuf/timestamp.proto";
+import "powermanage/v1/common.proto";
+
+option go_package = "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1;powermanagev1";
+
+// ============================================================================
+// Action Types
+// ============================================================================
+
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+
+  // Package management (1-99)
+  ACTION_TYPE_PACKAGE = 1; // Generic package (apt/dnf/pacman based on distro)
+  ACTION_TYPE_UPDATE = 2; // System-wide package update (respects pinning)
+  ACTION_TYPE_REPOSITORY = 3; // External repository configuration
+
+  // Application installation (100-199)
+  ACTION_TYPE_APP_IMAGE = 100; // AppImage
+  ACTION_TYPE_DEB = 101; // Direct .deb
+  ACTION_TYPE_RPM = 102; // Direct .rpm
+  ACTION_TYPE_FLATPAK = 103; // Flatpak application
+
+  // Scripts (200-299)
+  ACTION_TYPE_SHELL = 200; // Shell script
+  ACTION_TYPE_SCRIPT_RUN = 201; // One-off script execution (not scheduled)
+
+  // Services (300-399)
+  ACTION_TYPE_SERVICE = 300; // Service unit (systemd, openrc, runit, s6)
+
+  // Files (400-499)
+  ACTION_TYPE_FILE = 400; // File management
+  ACTION_TYPE_DIRECTORY = 401; // Directory management
+
+  // Instant actions (500-599) — agent-builtin, no parameters
+  ACTION_TYPE_REBOOT = 500; // Reboot the device (5-minute delay)
+  ACTION_TYPE_SYNC = 501; // Trigger immediate agent sync
+
+  // System management (600-699)
+  ACTION_TYPE_USER = 600; // User account management
+  ACTION_TYPE_GROUP = 601; // Group membership management
+
+  // SSH access management (700-799)
+  ACTION_TYPE_SSH = 700; // SSH access configuration
+  ACTION_TYPE_SSHD = 701; // SSH daemon configuration
+
+  // Privilege management (800-899)
+  ACTION_TYPE_ADMIN_POLICY = 800; // Administrative privilege policy (sudoers or doas)
+
+  // Password management (900-999)
+  ACTION_TYPE_LPS = 900; // Local Password Solution
+
+  // Encryption management (1000-1099)
+  ACTION_TYPE_ENCRYPTION = 1000; // LUKS disk encryption management
+
+  // Network management (1100-1199)
+  ACTION_TYPE_WIFI = 1100; // WiFi connection management
+
+  // Agent management (1200-1299)
+  ACTION_TYPE_AGENT_UPDATE = 1200; // Agent self-update
+}
+
+// ============================================================================
+// Action - Pushed from server to agent
+// ============================================================================
+
+message Action {
+  // @gotags: validate:"required"
+  ActionId id = 1;
+  // @gotags: validate:"required,ne=0"
+  ActionType type = 2;
+
+  // @gotags: validate:"omitempty"
+  DesiredState desired_state = 3;
+  // @gotags: validate:"omitempty,gte=0,lte=3600"
+  int32 timeout_seconds = 4;
+
+  // The action's own authored schedule. It is carried for display and for
+  // authoring round-trips; execution is driven by the schedule on the
+  // Manifest the occurrence belongs to, which fires every occurrence in
+  // declared order. A singleton-Action manifest simply carries this schedule
+  // at the manifest level.
+  // @gotags: validate:"omitempty"
+  ActionSchedule schedule = 5;
+
+  // Type-specific parameters
+  oneof params {
+    PackageParams package = 8;
+    AppInstallParams app = 9;
+    ShellParams shell = 10;
+    ServiceParams service = 11;
+    FileParams file = 12;
+    UpdateParams update = 13;
+    RepositoryParams repository = 14;
+    FlatpakParams flatpak = 15;
+    DirectoryParams directory = 16;
+    UserParams user = 17;
+    SshParams ssh = 18;
+    SshdParams sshd = 19;
+    AdminPolicyParams admin_policy = 20;
+    LpsParams lps = 21;
+    GroupParams group = 22;
+    EncryptionParams encryption = 23;
+    WifiParams wifi = 24;
+    AgentUpdateParams agent_update = 25;
+  }
+}
+
+// ActionSchedule defines when an action should be executed by the agent.
+// Actions run autonomously on the agent even without server connection.
+message ActionSchedule {
+  // Cron expression for scheduled execution (e.g., "0 3 * * *" for 3am daily)
+  // If empty, uses default_interval_hours instead.
+  // @gotags: validate:"omitempty,max=128"
+  string cron = 1;
+
+  // Default interval in hours between executions (default: 8 hours for drift prevention)
+  // Used when cron is not specified.
+  // @gotags: validate:"omitempty,gte=0,lte=8760"
+  int32 interval_hours = 2;
+
+  // Whether to run immediately when the action is first received
+  // @gotags: validate:"omitempty"
+  bool run_on_assign = 3;
+
+  // Whether to skip execution if the previous run was successful and no changes detected
+  // @gotags: validate:"omitempty"
+  bool skip_if_unchanged = 4;
+}
+
+// ============================================================================
+// Action Parameters
+// ============================================================================
+
+message PackageParams {
+  // Generic package name (used if manager-specific names not provided)
+  // If set, this name is used for all package managers.
+  // @gotags: validate:"omitempty,max=255"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=128"
+  string version = 2;
+  // @gotags: validate:"omitempty"
+  bool allow_downgrade = 3;
+  // @gotags: validate:"omitempty"
+  bool pin = 4;
+
+  // Manager-specific package names (override generic name)
+  // If a manager-specific name is empty, that manager will be skipped.
+  // @gotags: validate:"omitempty,max=255"
+  string apt_name = 5; // Debian/Ubuntu (apt/apt-get)
+  // @gotags: validate:"omitempty,max=255"
+  string dnf_name = 6; // Fedora/RHEL (dnf/yum)
+  // @gotags: validate:"omitempty,max=255"
+  string pacman_name = 7; // Arch Linux (pacman)
+  // @gotags: validate:"omitempty,max=255"
+  string zypper_name = 8; // openSUSE (zypper)
+}
+
+message AppInstallParams {
+  // @gotags: validate:"required,url"
+  string url = 1;
+  // Mandatory integrity for download-and-install actions (deb/rpm/
+  // appimage): without it the agent would install a binary whose only
+  // authenticity is TLS to a possibly-compromised origin. Lowercase hex.
+  // @gotags: validate:"required,len=64,hexadecimal"
+  string checksum_sha256 = 2;
+  // @gotags: validate:"omitempty,startswith=/"
+  string install_path = 3;
+}
+
+message ShellParams {
+  // Execution/remediation script (runs when detection_script is absent or exits non-zero)
+  // @gotags: validate:"omitempty,max=1048576"
+  string script = 1;
+  // @gotags: validate:"omitempty,max=255"
+  string interpreter = 2;
+  // @gotags: validate:"omitempty"
+  bool run_as_root = 3;
+  // @gotags: validate:"omitempty,startswith=/"
+  string working_directory = 4;
+  // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=4096"
+  map<string, string> environment = 5;
+  // Detection script: exit 0 = compliant (skip execution), non-zero = needs remediation
+  // @gotags: validate:"omitempty,max=1048576"
+  string detection_script = 6;
+  // When true, only the detection script runs (no remediation) and results are tracked as compliance checks
+  // @gotags: validate:"omitempty"
+  bool is_compliance = 7;
+}
+
+// ServiceParams configures a systemd unit. unit_content is the verbatim unit
+// file written under /etc/systemd/system.
+message ServiceParams {
+  // @gotags: validate:"required,min=1,max=255"
+  string unit_name = 1;
+  // @gotags: validate:"omitempty"
+  ServiceUnitState desired_state = 2;
+  // @gotags: validate:"omitempty"
+  bool enable = 3;
+  // @gotags: validate:"omitempty,max=65536"
+  string unit_content = 4;
+}
+
+enum ServiceUnitState {
+  SERVICE_UNIT_STATE_UNSPECIFIED = 0;
+  SERVICE_UNIT_STATE_STARTED = 1;
+  SERVICE_UNIT_STATE_STOPPED = 2;
+  SERVICE_UNIT_STATE_RESTARTED = 3;
+}
+
+message FileParams {
+  // @gotags: validate:"required,startswith=/"
+  string path = 1;
+  // @gotags: validate:"omitempty,max=10485760"
+  string content = 2;
+  // @gotags: validate:"omitempty,max=32"
+  string owner = 3;
+  // @gotags: validate:"omitempty,max=32"
+  string group = 4;
+  // @gotags: validate:"omitempty,max=4"
+  string mode = 5;
+
+  // Managed block mode: if true, manages a content block within the file.
+  // PRESENT: appends content if not already present in file.
+  // ABSENT: removes only the content block, not the entire file.
+  // Ownership and mode are still enforced.
+  // @gotags: validate:"omitempty"
+  bool managed_block = 6;
+}
+
+// DirectoryParams configures directory management.
+// Creates or removes directories with optional ownership and permissions.
+message DirectoryParams {
+  // Directory path (must be absolute)
+  // @gotags: validate:"required,startswith=/"
+  string path = 1;
+  // @gotags: validate:"omitempty,max=32"
+  string owner = 2;
+  // @gotags: validate:"omitempty,max=32"
+  string group = 3;
+  // @gotags: validate:"omitempty,max=4"
+  string mode = 4;
+  // Whether to create parent directories (like mkdir -p)
+  // Default: true
+  // @gotags: validate:"omitempty"
+  bool recursive = 5;
+}
+
+// UpdateParams configures system-wide package updates.
+// Respects version pinning (apt-mark hold / dnf versionlock).
+message UpdateParams {
+  // @gotags: validate:"omitempty"
+  bool security_only = 1; // Only install security updates (if supported)
+  // @gotags: validate:"omitempty"
+  bool autoremove = 2; // Remove unused dependencies after update
+  // @gotags: validate:"omitempty"
+  bool reboot_if_required = 3; // Reboot system if updates require it
+}
+
+// FlatpakParams configures Flatpak application installation.
+// Similar to AppImage but uses the Flatpak package manager.
+message FlatpakParams {
+  // Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
+  // @gotags: validate:"required,min=1,max=255"
+  string app_id = 1;
+
+  // Remote/repository name (default: "flathub")
+  // @gotags: validate:"omitempty,max=64"
+  string remote = 2;
+
+  // Whether to install system-wide (true) or user-only (false)
+  // Default: true (system-wide)
+  // @gotags: validate:"omitempty"
+  bool system_wide = 3;
+
+  // Pin the application to prevent automatic updates
+  // @gotags: validate:"omitempty"
+  bool pin = 4;
+}
+
+// RepositoryParams configures external package repositories.
+// Each package manager has its own configuration format.
+message RepositoryParams {
+  // Repository name/identifier (used for file naming)
+  // @gotags: validate:"required,min=1,max=64,alphanum"
+  string name = 1;
+
+  // APT repository configuration (Debian/Ubuntu)
+  // @gotags: validate:"omitempty"
+  AptRepository apt = 2;
+
+  // DNF/YUM repository configuration (Fedora/RHEL)
+  // @gotags: validate:"omitempty"
+  DnfRepository dnf = 3;
+
+  // Pacman repository configuration (Arch Linux)
+  // @gotags: validate:"omitempty"
+  PacmanRepository pacman = 4;
+
+  // Zypper repository configuration (openSUSE)
+  // @gotags: validate:"omitempty"
+  ZypperRepository zypper = 5;
+}
+
+// AptRepository configures a Debian/Ubuntu APT repository.
+message AptRepository {
+  // Repository URL (e.g., "https://packages.example.com/apt")
+  // @gotags: validate:"required_without=Disabled,omitempty,url"
+  string url = 1;
+
+  // Distribution codename (e.g., "jammy", "bookworm")
+  // @gotags: validate:"omitempty,max=64"
+  string distribution = 2;
+
+  // Components (e.g., "main", "contrib", "non-free")
+  // @gotags: validate:"omitempty,dive,max=64"
+  repeated string components = 3;
+
+  // GPG key URL for repository signing
+  // @gotags: validate:"omitempty,url"
+  string gpg_key_url = 4;
+
+  // GPG key content (ASCII-armored, alternative to gpg_key_url)
+  // @gotags: validate:"omitempty,max=65536"
+  string gpg_key = 5;
+
+  // Whether to use signed-by (modern) or trusted=yes (legacy, less secure)
+  // @gotags: validate:"omitempty"
+  bool trusted = 6;
+
+  // Architecture filter (e.g., "amd64", "arm64")
+  // @gotags: validate:"omitempty,max=32"
+  string arch = 7;
+
+  // Set to true to disable/skip this repository manager
+  // @gotags: validate:"omitempty"
+  bool disabled = 8;
+}
+
+// DnfRepository configures a Fedora/RHEL DNF/YUM repository.
+message DnfRepository {
+  // Base URL for the repository (supports DNF variables like $releasever and $basearch)
+  // @gotags: validate:"required_without=Disabled,omitempty"
+  string baseurl = 1;
+
+  // Repository description
+  // @gotags: validate:"omitempty,max=255"
+  string description = 2;
+
+  // Whether the repository is enabled (default true)
+  // @gotags: validate:"omitempty"
+  bool enabled = 3;
+
+  // Whether to check GPG signatures
+  // @gotags: validate:"omitempty"
+  bool gpgcheck = 4;
+
+  // GPG key URL
+  // @gotags: validate:"omitempty,url"
+  string gpgkey = 5;
+
+  // Module hotfixes (for modular content)
+  // @gotags: validate:"omitempty"
+  bool module_hotfixes = 6;
+
+  // Set to true to disable/skip this repository manager
+  // @gotags: validate:"omitempty"
+  bool disabled = 7;
+}
+
+// PacmanRepository configures an Arch Linux pacman repository.
+message PacmanRepository {
+  // Server URL (supports pacman variables like $repo and $arch)
+  // @gotags: validate:"required_without=Disabled,omitempty"
+  string server = 1;
+
+  // SigLevel (e.g., "Optional TrustAll", "Required DatabaseOptional")
+  // @gotags: validate:"omitempty,max=128"
+  string sig_level = 2;
+
+  // Set to true to disable/skip this repository manager
+  // @gotags: validate:"omitempty"
+  bool disabled = 3;
+}
+
+// ZypperRepository configures an openSUSE zypper repository.
+message ZypperRepository {
+  // Repository URL
+  // @gotags: validate:"required_without=Disabled,omitempty,url"
+  string url = 1;
+
+  // Repository description/alias
+  // @gotags: validate:"omitempty,max=255"
+  string description = 2;
+
+  // Whether to enable the repository (default true)
+  // @gotags: validate:"omitempty"
+  bool enabled = 3;
+
+  // Whether to auto-refresh the repository
+  // @gotags: validate:"omitempty"
+  bool autorefresh = 4;
+
+  // Whether to check GPG signatures
+  // @gotags: validate:"omitempty"
+  bool gpgcheck = 5;
+
+  // GPG key URL
+  // @gotags: validate:"omitempty,url"
+  string gpgkey = 6;
+
+  // Repository type (e.g., "rpm-md", "yast2")
+  // @gotags: validate:"omitempty,max=32"
+  string type = 7;
+
+  // Set to true to disable/skip this repository manager
+  // @gotags: validate:"omitempty"
+  bool disabled = 8;
+}
+
+// UserParams configures user account management.
+// Supports creating, updating, deactivating, and removing user accounts.
+message UserParams {
+  // Username (required)
+  // @gotags: validate:"required,min=1,max=32,alphanum"
+  string username = 1;
+
+  // User ID (optional - system assigns if not specified)
+  // @gotags: validate:"omitempty,gte=0,lte=65534"
+  int32 uid = 2;
+
+  // Primary group ID (optional - creates user's own group if not specified)
+  // @gotags: validate:"omitempty,gte=0,lte=65534"
+  int32 gid = 3;
+
+  // Home directory path (optional - defaults to /home/<username>)
+  // @gotags: validate:"omitempty,startswith=/"
+  string home_dir = 4;
+
+  // Login shell (optional - defaults to /bin/bash)
+  // @gotags: validate:"omitempty,startswith=/"
+  string shell = 5;
+
+  // SSH authorized keys to add to ~/.ssh/authorized_keys
+  // @gotags: validate:"omitempty,dive,max=4096"
+  repeated string ssh_authorized_keys = 6;
+
+  // GECOS field / user comment (full name, etc.)
+  // @gotags: validate:"omitempty,max=255"
+  string comment = 7;
+
+  // Create as system user (UID < 1000, no home directory by default)
+  // @gotags: validate:"omitempty"
+  bool system_user = 8;
+
+  // Create home directory (default: true for normal users, false for system users)
+  // @gotags: validate:"omitempty"
+  bool create_home = 9;
+
+  // Disable the user account (lock password, set shell to /usr/sbin/nologin)
+  // @gotags: validate:"omitempty"
+  bool disabled = 10;
+
+  // Primary group name (alternative to gid - creates group if needed)
+  // @gotags: validate:"omitempty,max=32"
+  string primary_group = 11;
+
+  // Hide user from graphical login screens (GDM, SDDM, LightDM).
+  // Sets SystemAccount=true in AccountsService. No effect on headless systems.
+  // @gotags: validate:"omitempty"
+  bool hidden = 12;
+
+  // When true, the agent does NOT generate or set a temporary password
+  // for this account, nor report any lps.rotations metadata back to
+  // the server. The account is created with the shadow-locked default
+  // ('!'), so no PAM-protected login path (password, su) succeeds; a
+  // root setuid invocation (e.g. the agent's terminal session opener)
+  // still works because it bypasses PAM.
+  //
+  // Intended for system-managed nologin accounts that are only ever
+  // reached via setuid — pm-tty-* is the canonical case. Do NOT set
+  // this for general-purpose users: passwords are good to have for
+  // any account that might ever need a PAM-protected login path, and
+  // setting no_password here locks that path closed.
+  //
+  // This flag is deliberately explicit, not derived from
+  // Shell == "/usr/sbin/nologin": the password-good-to-have default
+  // should not be flipped by a heuristic on a related field.
+  // @gotags: validate:"omitempty"
+  bool no_password = 13;
+}
+
+// GroupParams configures Linux group management.
+// Creates or removes a group and manages its members.
+message GroupParams {
+  // Group name (required)
+  // @gotags: validate:"required,min=1,max=32"
+  string name = 1;
+
+  // Members to add to the group
+  // @gotags: validate:"omitempty,dive,min=1,max=32"
+  repeated string members = 2;
+
+  // Group ID (optional - system assigns if not specified)
+  // @gotags: validate:"omitempty,gte=0,lte=65534"
+  int32 gid = 3;
+
+  // Create as system group (GID < 1000)
+  // @gotags: validate:"omitempty"
+  bool system_group = 4;
+}
+
+// SshParams configures SSH access for a user.
+// Creates an sshd_config.d drop-in file with a Match Group directive.
+// Each action creates a Linux group pm-ssh-{actionId} and users are added
+// to the group. SSH keys and home directory are managed by the User action type.
+message SshParams {
+  // Allow public key authentication (default: true)
+  // @gotags: validate:"omitempty"
+  bool allow_pubkey = 1;
+
+  // Allow password authentication (default: false)
+  // @gotags: validate:"omitempty"
+  bool allow_password = 2;
+
+  // Users to add to the SSH access group (must be valid Linux usernames)
+  // @gotags: validate:"omitempty,dive,min=1,max=32"
+  repeated string users = 3;
+}
+
+// SshdDirective represents a single sshd_config key-value directive.
+message SshdDirective {
+  // sshd_config directive name (e.g., "PermitRootLogin", "Port")
+  // @gotags: validate:"required,min=1,max=128"
+  string key = 1;
+
+  // Directive value (e.g., "no", "22")
+  // @gotags: validate:"required,min=1,max=1024"
+  string value = 2;
+}
+
+// SshdParams configures the SSH daemon via sshd_config.d drop-in files.
+// Each action creates a numbered config file for ordering (e.g., 0000-*.conf, 0001-*.conf).
+// Priority is auto-assigned by the server based on creation order.
+// The sshd service is automatically reloaded when configuration changes.
+message SshdParams {
+  // Priority for config file ordering (auto-assigned by server, lower = loaded first)
+  // @gotags: validate:"omitempty"
+  uint32 priority = 1;
+
+  // sshd_config directives to set
+  // @gotags: validate:"required,min=1,dive"
+  repeated SshdDirective directives = 2;
+}
+
+// AdminAccessLevel defines the level of administrative access granted.
+// The server renders FULL/LIMITED into the concrete policy file format
+// for the selected PrivilegeBackend (sudoers or doas); CUSTOM carries
+// raw admin-authored config that must be valid syntax for the chosen
+// backend. TERMINAL_ADMIN_LIMITED and TERMINAL_ADMIN_FULL are used by
+// the server's TerminalAdmin reconciler — they route the agent to two
+// passwordless templates designed for pm-tty-* accounts (which have
+// no password to prompt for). Operator-authored AdminPolicy actions
+// should continue to use FULL/LIMITED/CUSTOM.
+enum AdminAccessLevel {
+  ADMIN_ACCESS_LEVEL_UNSPECIFIED = 0;
+  ADMIN_ACCESS_LEVEL_FULL = 1; // Unrestricted access (password required)
+  ADMIN_ACCESS_LEVEL_LIMITED = 2; // System management commands only (password required)
+  ADMIN_ACCESS_LEVEL_CUSTOM = 3; // Admin-defined raw policy
+  ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED = 4; // Passwordless LIMITED variant for pm-tty-* TerminalAdmin grants
+  ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL = 5; // Passwordless FULL variant for pm-tty-* TerminalAdmin grants
+}
+
+// PrivilegeBackend selects which privilege-escalation tool the agent
+// uses, both for its own operations and for rendering admin policies.
+// The agent reads its configured backend at startup and passes it to
+// the SDK via exec.SetPrivilegeBackend.
+enum PrivilegeBackend {
+  PRIVILEGE_BACKEND_SUDO = 0; // Default. Drops files into /etc/sudoers.d/.
+  PRIVILEGE_BACKEND_DOAS = 1; // Drops files into /etc/doas.d/.
+}
+
+// AdminPolicyParams configures privilege-delegation policies.
+// Under PRIVILEGE_BACKEND_SUDO the action manages /etc/sudoers.d/
+// drop-ins; under PRIVILEGE_BACKEND_DOAS it manages /etc/doas.d/
+// drop-ins. Each action creates a Linux group pm-admin-{actionId}
+// and the corresponding policy file. Users specified in the users
+// list are added to the group. When removed, the group and policy
+// file are cleaned up.
+message AdminPolicyParams {
+  // Access level determines the policy template
+  // @gotags: validate:"required,ne=0"
+  AdminAccessLevel access_level = 1;
+
+  // Users to add to the admin group (must be valid Linux usernames)
+  // @gotags: validate:"required,min=1,dive,min=1,max=32"
+  repeated string users = 2;
+
+  // Raw policy content (only used when access_level is CUSTOM). Must be
+  // valid syntax for the chosen backend — sudoers grammar for SUDO and
+  // doas.conf(5) grammar for DOAS. Use {group} as placeholder for the
+  // auto-generated group name. Required when access_level is CUSTOM (3).
+  // @gotags: validate:"required_if=AccessLevel 3,max=65536"
+  string custom_config = 3;
+
+  // Privilege backend. Unset means PRIVILEGE_BACKEND_SUDO.
+  // @gotags: validate:"omitempty"
+  PrivilegeBackend backend = 4;
+}
+
+// LpsPasswordComplexity defines the character set for generated passwords.
+enum LpsPasswordComplexity {
+  LPS_PASSWORD_COMPLEXITY_UNSPECIFIED = 0;
+  LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC = 1; // a-z, A-Z, 0-9
+  LPS_PASSWORD_COMPLEXITY_COMPLEX = 2; // a-z, A-Z, 0-9, special characters
+}
+
+// LpsParams configures Local Password Solution (LAPS-like) password management.
+// Each action targets one or more user accounts. The agent generates a random
+// password for each user based on configured length/complexity, sets it via
+// chpasswd, kills all user sessions, and reports the passwords back to the
+// server. Rotation occurs independently per user on a schedule and optionally
+// after authentication events.
+message LpsParams {
+  // Target user accounts (must exist on device)
+  // @gotags: validate:"required,min=1,dive,min=1,max=32"
+  repeated string usernames = 1;
+  // Password length (8-128)
+  // @gotags: validate:"required,gte=8,lte=128"
+  int32 password_length = 2;
+  // Password complexity
+  // @gotags: validate:"required,ne=0"
+  LpsPasswordComplexity complexity = 3;
+  // Days between scheduled rotations (1-365)
+  // @gotags: validate:"required,gte=1,lte=365"
+  int32 rotation_interval_days = 4;
+  // Hours after auth event before automatic rotation (0 = disabled)
+  // @gotags: validate:"omitempty,gte=0,lte=8760"
+  int32 grace_period_hours = 5;
+}
+
+// EncryptionDeviceBoundKeyType determines what goes in LUKS slot 7.
+enum EncryptionDeviceBoundKeyType {
+  ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE = 0; // Managed passphrase only, no device-bound key
+  ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM = 1; // TPM2 auto-unlock at boot
+  ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE = 2; // User-defined passphrase via CLI
+}
+
+// EncryptionParams configures LUKS disk encryption management. The agent
+// auto-detects the primary encrypted volume, generates and rotates a managed
+// passphrase, and can enroll a TPM or user passphrase in the device-bound slot.
+message EncryptionParams {
+  // Pre-shared key for initial ownership, sealed by control to this agent.
+  // @gotags: validate:"required"
+  SealedValue preshared_key = 1 [debug_redact = true];
+  // Days between scheduled passphrase rotations (1-365)
+  // @gotags: validate:"required,gte=1,lte=365"
+  int32 rotation_interval_days = 2;
+  // Minimum words in generated managed passphrase (default 5, min 3, max 10)
+  // @gotags: validate:"omitempty,gte=3,lte=10"
+  int32 min_words = 3;
+  // What to put in the device-bound key slot — TPM, user passphrase, or nothing.
+  // Range-checked: the agent switches on this value and its default branch means
+  // "no device-bound key", so an unvalidated out-of-range value would silently
+  // downgrade a requested TPM enrollment instead of being refused.
+  // @gotags: validate:"omitempty,oneof=0 1 2"
+  EncryptionDeviceBoundKeyType device_bound_key_type = 4;
+  // Minimum length for user-defined passphrases (16-128, only used when device_bound_key_type = USER_PASSPHRASE)
+  // @gotags: validate:"omitempty,gte=16,lte=128"
+  int32 user_passphrase_min_length = 5;
+  // Complexity requirement for user-defined passphrases (only used when device_bound_key_type = USER_PASSPHRASE)
+  // Range-checked for the same reason as device_bound_key_type: this selects the
+  // alphabet the agent draws the passphrase from, and its switch default is a
+  // weaker alphabet than an out-of-range value was asking for. Stays optional —
+  // UNSPECIFIED (0) is legal because the field only applies to USER_PASSPHRASE.
+  // @gotags: validate:"omitempty,oneof=0 1 2"
+  LpsPasswordComplexity user_passphrase_complexity = 6;
+}
+
+// WiFi authentication type.
+enum WifiAuthType {
+  WIFI_AUTH_TYPE_UNSPECIFIED = 0;
+  WIFI_AUTH_TYPE_PSK = 1; // WPA2/WPA3 Personal (password)
+  WIFI_AUTH_TYPE_EAP_TLS = 2; // 802.1X with client certificate
+}
+
+// WifiParams configures NetworkManager WiFi connection management.
+// Each action creates a connection profile named pm-wifi-{actionId}. Supports PSK (password) and
+// EAP-TLS (certificate) authentication.
+message WifiParams {
+  // Network name (SSID)
+  // @gotags: validate:"required,min=1,max=255"
+  string ssid = 1;
+  // Authentication type
+  // @gotags: validate:"required,ne=0"
+  WifiAuthType auth_type = 2;
+
+  // PSK authentication (WPA2/WPA3 Personal), sealed by control to this agent.
+  // @gotags: validate:"omitempty"
+  SealedValue psk = 3 [debug_redact = true];
+
+  // EAP-TLS authentication (802.1X with client certificate)
+  // @gotags: validate:"omitempty"
+  string ca_cert = 4; // CA certificate (PEM)
+  // @gotags: validate:"omitempty"
+  string client_cert = 5; // Client certificate (PEM)
+  // Client private key (PEM), sealed by control to this agent.
+  // @gotags: validate:"omitempty"
+  SealedValue client_key = 6 [debug_redact = true];
+  // @gotags: validate:"omitempty,max=254"
+  string identity = 7; // EAP identity (e.g., user@corp.com)
+
+  // Connection settings
+  // Connect to this network automatically when in range.
+  bool auto_connect = 8;
+  // Network does not broadcast its SSID (probe-scan required).
+  bool hidden = 9;
+  // Selection priority when multiple known networks are visible (higher wins).
+  // @gotags: validate:"omitempty,gte=-1,lte=999"
+  int32 priority = 10;
+}
+
+// ============================================================================
+// Action Result - Sent from agent to server
+// ============================================================================
+
+message ActionResult {
+  // @gotags: validate:"required"
+  ActionId action_id = 1;
+  // @gotags: validate:"required"
+  ExecutionStatus status = 2;
+  // @gotags: validate:"omitempty,max=4096"
+  string error = 3;
+  // @gotags: validate:"omitempty"
+  CommandOutput output = 4;
+  // @gotags: validate:"omitempty"
+  google.protobuf.Timestamp completed_at = 5;
+  // @gotags: validate:"omitempty,gte=0"
+  int64 duration_ms = 6;
+  // Whether the action made changes to the system (true) or state was already as desired (false)
+  bool changed = 7;
+  // Optional action-specific metadata (e.g., LPS password data)
+  // @gotags: validate:"omitempty"
+  map<string, string> metadata = 8;
+  // Detection script result: true if detection script exited 0 (compliant)
+  bool compliant = 9;
+  // Detection script output (separate from execution output)
+  // @gotags: validate:"omitempty"
+  CommandOutput detection_output = 10;
+  // The delivery this result belongs to, and the authored position within
+  // that delivery's manifest. Together they make ingestion idempotent:
+  // control keys the stored result on (delivery_id, occurrence_id), so a
+  // result replayed after a reconnect updates the same row instead of
+  // creating a second one. action_id alone cannot do this — duplicate
+  // authored occurrences of the same action are preserved and executed, so
+  // one delivery legitimately produces several results with the same
+  // action_id.
+  //
+  // Both are mandatory. Every execution descends from a delivery — the pull
+  // path carries the same ManifestDelivery the push path does — so a result
+  // that can name neither did not come from an assignment.
+  // @gotags: validate:"required,ulid"
+  string delivery_id = 11;
+  // @gotags: validate:"required,ulid"
+  string occurrence_id = 12;
+}
+
+// ============================================================================
+// Agent Update Parameters
+// ============================================================================
+
+// Per-architecture binary source authenticated by a signed checksum manifest.
+message AgentUpdateArch {
+  // Direct download URL for the agent binary (HTTPS only)
+  // @gotags: validate:"required,url,startswith=https://"
+  string binary_url = 1;
+
+  // URL to the release's SHA256SUMS-style checksum manifest (HTTPS only).
+  // The agent requires an adjacent detached signature and verifies the exact
+  // manifest bytes with its embedded Ed25519 release-signing public key before
+  // trusting the candidate binary hash. This is the only update-integrity path.
+  // @gotags: validate:"required,url,startswith=https://"
+  string checksum_url = 2;
+}
+
+// AgentUpdateParams configures agent self-update via direct binary download.
+// At least one architecture must be specified. The agent selects the entry
+// matching its own architecture (runtime.GOARCH) and skips if no match.
+message AgentUpdateParams {
+  // AMD64 (x86_64) binary source
+  AgentUpdateArch amd64 = 1;
+
+  // ARM64 (aarch64) binary source
+  AgentUpdateArch arm64 = 2;
+
+  // When true, the agent installs the target binary even if its version
+  // is older than or equal to the running version (downgrade). The flag
+  // reaches the agent over the authenticated mTLS stream, so a downgrade is
+  // an explicit operator decision — the agent otherwise refuses an older
+  // version (anti-rollback). Default false.
+  // @gotags: validate:"omitempty"
+  bool allow_downgrade = 3;
+
+  // When true, the agent follows a redirect that changes host or scheme
+  // while downloading the update binary and checksum manifest — e.g.
+  // GitHub release assets, which 302 from github.com to
+  // release-assets.githubusercontent.com. Default false: a cross-origin
+  // redirect is refused and the download must reach the configured host
+  // directly. The binary is still verified against the publisher-signed
+  // checksum manifest and an https->http downgrade is refused regardless.
+  // This opts into a host-changing hop, not into unchecked bytes, and it is
+  // an explicit operator decision either way.
+  // @gotags: validate:"omitempty"
+  bool allow_redirect = 4;
+}

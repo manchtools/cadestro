@@ -1,0 +1,3128 @@
+syntax = "proto3";
+
+package powermanage.v1;
+
+import "google/protobuf/timestamp.proto";
+import "powermanage/v1/actions.proto";
+import "powermanage/v1/agent.proto";
+import "powermanage/v1/common.proto";
+
+option go_package = "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1;powermanagev1";
+
+// ============================================================================
+// Agent Registration (called by agent during first-time setup)
+// ============================================================================
+
+message RegisterRequest {
+  // @gotags: validate:"required,max=255"
+  string token = 1;
+  // @gotags: validate:"required,min=1,max=253"
+  string hostname = 2;
+  // @gotags: validate:"required,min=1,max=32"
+  string agent_version = 3;
+  // Certificate Signing Request (PEM-encoded PKCS#10)
+  // Agent generates its own key pair and sends CSR for signing
+  // @gotags: validate:"required"
+  bytes csr = 4;
+  // The agent's X25519 recipient public key, raw 32-byte encoding. Generated
+  // on the device at enrollment alongside the Ed25519 identity key; the
+  // private half never leaves the device. Control seals every secret it sends
+  // this agent to this key, and pins it to the device identity it issues here
+  // — the key and the certificate are bound by the same enrollment.
+  // @gotags: validate:"required,len=32"
+  bytes agent_sealing_public_key = 5;
+}
+
+message RegisterResponse {
+  // @gotags: validate:"required"
+  DeviceId device_id = 1;
+  // mTLS credentials issued by control server
+  // @gotags: validate:"required"
+  bytes ca_cert = 2; // CA certificate (PEM)
+  // Signed device certificate (PEM) - private key stays on agent
+  // @gotags: validate:"required"
+  bytes certificate = 3;
+  // Control URL for the agent's streaming connection; the agent stores this and
+  // dials it for the AgentService bidi stream. Control terminates agent mTLS
+  // itself, so this is control's own agent-listener address, which is normally
+  // a different host from the web/API URL the agent registered against.
+  // @gotags: validate:"required,url"
+  string control_url = 4;
+  // Control's deployment sealing public key, raw 32-byte X25519 encoding. The
+  // agent seals every secret it reports (LUKS passphrases, LPS passwords) to
+  // this key and pins it to the CA it accepts in the same response, so a later
+  // substitution is a visible identity change rather than a silent redirect of
+  // where secrets can be opened.
+  // @gotags: validate:"required,len=32"
+  bytes control_sealing_public_key = 5;
+}
+
+// ============================================================================
+// Certificate Renewal (called by agent to renew expiring certificates)
+// ============================================================================
+
+message RenewCertificateRequest {
+  // Certificate Signing Request (PEM-encoded PKCS#10)
+  // @gotags: validate:"required"
+  bytes csr = 1;
+  // Current certificate (PEM) for identity verification
+  // @gotags: validate:"required"
+  bytes current_certificate = 2;
+}
+
+message RenewCertificateResponse {
+  // New signed certificate (PEM)
+  bytes certificate = 1;
+  // Certificate expiry
+  google.protobuf.Timestamp not_after = 2;
+  // Active CA certificate (PEM). Agents should update their stored CA cert
+  // if non-empty, enabling seamless CA rotation.
+  bytes ca_certificate = 3;
+}
+
+// ============================================================================
+// Authentication
+// ============================================================================
+
+message RefreshTokenRequest {
+  // @gotags: validate:"required"
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  string refresh_token = 3;
+}
+
+message LogoutRequest {
+  // @gotags: validate:"required"
+  string refresh_token = 1;
+}
+
+message LogoutResponse {}
+
+message GetCurrentUserRequest {}
+
+message GetCurrentUserResponse {
+  User user = 1;
+}
+
+// ============================================================================
+// Users
+// ============================================================================
+
+message User {
+  string id = 1;
+  string email = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp last_login_at = 4;
+  bool disabled = 5;
+  repeated IdentityLink identity_links = 9;
+  // OIDC profile scope properties
+  string display_name = 10;
+  string given_name = 11;
+  string family_name = 12;
+  string preferred_username = 13;
+  string picture = 14;
+  string locale = 15;
+  // Linux identity
+  string linux_username = 16;
+  int32 linux_uid = 17;
+  // SSH access settings
+  repeated SshPublicKey ssh_public_keys = 18;
+  bool ssh_access_enabled = 19;
+  bool ssh_allow_pubkey = 20;
+  bool ssh_allow_password = 21;
+  bool user_provisioning_enabled = 22;
+  repeated InheritedRole inherited_roles = 23;
+  // The user's directly-assigned roles, one entry per grant, carrying each
+  // grant's scope. This is the role surface: a role granted both globally and
+  // scoped to a device group appears as two RoleGrant entries, and revocation
+  // names the grant, not just the role.
+  repeated RoleGrant role_grants = 24;
+}
+
+message InheritedRole {
+  string role_id = 1;
+  string role_name = 2;
+  string group_id = 3;
+  string group_name = 4;
+}
+
+message SshPublicKey {
+  string id = 1;
+  string public_key = 2;
+  string comment = 3;
+  google.protobuf.Timestamp added_at = 4;
+}
+
+message Role {
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 2;
+  string description = 3;
+  repeated string permissions = 4;
+  google.protobuf.Timestamp created_at = 5;
+  bool is_system = 6;
+}
+
+// A single role grant on a user or user group, with its optional scope
+// scope_kind == UNSPECIFIED is an unscoped/global grant (scope_id
+// and scope_name empty). For a scoped grant, scope_id is the device- or
+// user-group id and scope_name is that group's resolved display name
+// (empty if the group was deleted).
+message RoleGrant {
+  Role role = 1;
+  RoleGrantScopeKind scope_kind = 2;
+  string scope_id = 3;
+  string scope_name = 4;
+}
+
+message PermissionInfo {
+  string key = 1;
+  string group = 2;
+  string description = 3;
+  // Classifies what kind of target this permission acts on, which
+  // determines whether (and how) it can be scoped on a role grant.
+  // UNSPECIFIED = not scopable (fail-closed default). DEVICE = takes
+  // RoleGrantScopeKind=DEVICE_GROUP. USER = takes USER_GROUP.
+  // Surfaced so the web role-builder can gate the scope picker.
+  PermissionTargetKind target_kind = 4;
+}
+
+// Explicit local erasure for subjects created by optional OIDC JIT.
+// The control server rejects subjects created through SCIM.
+message EraseJITUserRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message EraseJITUserResponse {}
+
+message GetUserRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message ListUsersRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// Granular user updates
+message UpdateUserEmailRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,email"
+  string email = 2;
+}
+
+message SetUserDisabledRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  bool disabled = 2;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message UpdateUserProfileRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,max=255"
+  string display_name = 2;
+  // @gotags: validate:"omitempty,max=255"
+  string given_name = 3;
+  // @gotags: validate:"omitempty,max=255"
+  string family_name = 4;
+  // @gotags: validate:"omitempty,max=64"
+  string preferred_username = 5;
+  // @gotags: validate:"omitempty,max=2048"
+  string picture = 6;
+  // @gotags: validate:"omitempty,max=10"
+  string locale = 7;
+}
+
+message AddUserSshKeyRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  // @gotags: validate:"required,min=1,max=8192"
+  string public_key = 2;
+  // @gotags: validate:"omitempty,max=256"
+  string comment = 3;
+}
+
+message AddUserSshKeyResponse {
+  SshPublicKey key = 1;
+}
+
+message RemoveUserSshKeyRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  // @gotags: validate:"required,ulid"
+  string key_id = 2;
+}
+
+message RemoveUserSshKeyResponse {}
+
+message UpdateUserSshSettingsRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  bool ssh_access_enabled = 2;
+  bool ssh_allow_pubkey = 3;
+  bool ssh_allow_password = 4;
+}
+
+message UpdateUserLinuxUsernameRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  // @gotags: validate:"required,min=1,max=32"
+  string linux_username = 2;
+}
+
+// ============================================================================
+// Devices
+// ============================================================================
+
+message Device {
+  string id = 1;
+  string hostname = 2;
+  string agent_version = 3;
+  // Online / offline, derived from last_seen_at on the server.
+  DeviceStatus status = 4;
+  google.protobuf.Timestamp registered_at = 5;
+  google.protobuf.Timestamp last_seen_at = 6;
+  google.protobuf.Timestamp cert_expires_at = 7;
+  map<string, string> labels = 8;
+  repeated string assigned_user_ids = 9; // Users assigned to this device
+  repeated string assigned_group_ids = 10; // User groups assigned to this device
+  // Stream synchronization interval in minutes (0 = use default of 30 minutes).
+  int32 sync_interval_minutes = 11;
+  // Compliance status based on detection scripts
+  ComplianceStatus compliance_status = 12;
+  google.protobuf.Timestamp compliance_checked_at = 13;
+  int32 compliance_total = 14; // Total number of compliance checks
+  int32 compliance_passing = 15; // Number of passing checks
+  // Freshness of the server-scheduled inventory collection.
+  // last_inventory_at is MAX(collected_at) across the device's inventory;
+  // unset when no inventory has ever been collected.
+  google.protobuf.Timestamp last_inventory_at = 16;
+  // True when inventory age exceeds the resolved interval plus grace
+  // (max(1h, 25% of interval)) — computed server-side from policy, so it
+  // is valid even while the device is offline.
+  bool inventory_overdue = 17;
+  // Device-level inventory interval override in minutes. Resolution:
+  // device override first, then group minimum, then the 1440-minute
+  // server default; 0 means inherit.
+  int32 inventory_interval_minutes = 18;
+}
+
+message ListDevicesRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+  // UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
+  // the listing to that single status.
+  // @gotags: validate:"omitempty,gte=0,lte=2"
+  DeviceStatus status_filter = 3;
+  // @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
+  map<string, string> label_filter = 4;
+  bool my_devices_only = 5; // when true, only return devices assigned to the authenticated user
+}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message GetDeviceRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetDeviceResponse {
+  Device device = 1;
+}
+
+// Granular device updates
+message SetDeviceLabelRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=64"
+  string key = 2;
+  // @gotags: validate:"required,max=256"
+  string value = 3;
+}
+
+message RemoveDeviceLabelRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=64"
+  string key = 2;
+}
+
+message UpdateDeviceResponse {
+  Device device = 1;
+}
+
+message DeleteDeviceRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteDeviceResponse {}
+
+// Device assignment (admin-only)
+// Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
+message AssignDeviceRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string user_id = 2;
+  // @gotags: validate:"omitempty,ulid"
+  string group_id = 3;
+  // @gotags: validate:"omitempty,max=256,dive,ulid"
+  repeated string user_ids = 4;
+  // @gotags: validate:"omitempty,max=256,dive,ulid"
+  repeated string group_ids = 5;
+}
+
+message AssignDeviceResponse {
+  Device device = 1;
+}
+
+// Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
+message UnassignDeviceRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string user_id = 2;
+  // @gotags: validate:"omitempty,ulid"
+  string group_id = 3;
+}
+
+message UnassignDeviceResponse {
+  Device device = 1;
+}
+
+message DeviceAssignee {
+  string id = 1; // User or group ID
+  // Subset of AssignmentTargetType: only USER and USER_GROUP are valid
+  // values for a device assignee. DEVICE and DEVICE_GROUP are rejected
+  // at write time.
+  AssignmentTargetType type = 2;
+  string name = 3; // User email or group name
+}
+
+message ListDeviceAssigneesRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message ListDeviceAssigneesResponse {
+  repeated DeviceAssignee assignees = 1;
+}
+
+// Update device sync interval
+message SetDeviceSyncIntervalRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"gte=0,lte=1440"
+  int32 sync_interval_minutes = 2; // 0 = use default (30 min), max 24 hours
+}
+
+// Update device inventory collection interval.
+message SetDeviceInventoryIntervalRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,gte=120,lte=10080"
+  int32 inventory_interval_minutes = 2; // 0 = inherit (group min, else 1440), else 2h–7d
+}
+
+// ============================================================================
+// Registration Tokens
+// ============================================================================
+
+message RegistrationToken {
+  string id = 1;
+  string value = 2; // Only returned on creation
+  string name = 3;
+  bool one_time = 4;
+  int32 max_uses = 5; // 0 = unlimited
+  int32 current_uses = 6;
+  google.protobuf.Timestamp expires_at = 7;
+  google.protobuf.Timestamp created_at = 8;
+  string created_by = 9;
+  bool disabled = 10;
+  string owner_id = 11; // User who owns this token (devices registered with it are assigned to them)
+}
+
+message CreateTokenRequest {
+  // @gotags: validate:"required,min=1,max=128"
+  string name = 1;
+  bool one_time = 2;
+  // @gotags: validate:"omitempty,min=0"
+  int32 max_uses = 3; // 0 = unlimited (for reusable tokens)
+  google.protobuf.Timestamp expires_at = 4; // optional
+  // Optional. When set to a user ID, devices enrolled through this
+  // token are auto-assigned to that user. When empty, the token is
+  // ownerless — no auto-assignment happens, suitable for bulk/imaging
+  // enrollment. The :self scope ignores this field and forces the
+  // creator as owner.
+  // @gotags: validate:"omitempty,ulid"
+  string owner_id = 5;
+}
+
+message CreateTokenResponse {
+  RegistrationToken token = 1;
+  // SHA-256 fingerprint of the control CA certificate DER. Provisioning
+  // presents this beside token.value; agents require it during enrollment.
+  // @gotags: validate:"required,len=64,hexadecimal"
+  string ca_fingerprint_pin = 2;
+}
+
+message ListTokensRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+  bool include_disabled = 3;
+}
+
+message ListTokensResponse {
+  repeated RegistrationToken tokens = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message GetTokenRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetTokenResponse {
+  RegistrationToken token = 1;
+}
+
+// Granular token updates
+message RenameTokenRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=128"
+  string name = 2;
+}
+
+message SetTokenDisabledRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  bool disabled = 2;
+}
+
+message UpdateTokenResponse {
+  RegistrationToken token = 1;
+}
+
+message DeleteTokenRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteTokenResponse {}
+
+// ============================================================================
+// Actions (Single Executable - renamed from ActionDefinition)
+// ============================================================================
+
+message ManagedAction {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  ActionType type = 4;
+  DesiredState desired_state = 5;
+  int32 timeout_seconds = 6;
+  google.protobuf.Timestamp created_at = 7;
+  string created_by = 8;
+  ActionSchedule schedule = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  oneof params {
+    PackageParams package = 11;
+    AppInstallParams app = 12;
+    ShellParams shell = 13;
+    ServiceParams service = 14;
+    FileParams file = 15;
+    UpdateParams update = 16;
+    RepositoryParams repository = 17;
+    FlatpakParams flatpak = 18;
+    DirectoryParams directory = 19;
+    UserParams user = 20;
+    SshParams ssh = 21;
+    SshdParams sshd = 22;
+    AdminPolicyParams admin_policy = 23;
+    // @gotags: validate:"omitempty"
+    LpsParams lps = 24;
+    GroupParams group = 25;
+    ManagedEncryptionParams encryption = 26;
+    ManagedWifiParams wifi = 27;
+    AgentUpdateParams agent_update = 28;
+  }
+}
+
+message CreateActionRequest {
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+  // @gotags: validate:"required,ne=0"
+  ActionType type = 3;
+  // @gotags: validate:"omitempty"
+  DesiredState desired_state = 4;
+  // @gotags: validate:"omitempty,gte=0,lte=3600"
+  int32 timeout_seconds = 5;
+  // @gotags: validate:"omitempty"
+  ActionSchedule schedule = 6;
+
+  oneof params {
+    // @gotags: validate:"omitempty"
+    PackageParams package = 7;
+    // @gotags: validate:"omitempty"
+    AppInstallParams app = 8;
+    // @gotags: validate:"omitempty"
+    ShellParams shell = 9;
+    // @gotags: validate:"omitempty"
+    ServiceParams service = 10;
+    // @gotags: validate:"omitempty"
+    FileParams file = 11;
+    // @gotags: validate:"omitempty"
+    UpdateParams update = 12;
+    // @gotags: validate:"omitempty"
+    RepositoryParams repository = 13;
+    // @gotags: validate:"omitempty"
+    FlatpakParams flatpak = 14;
+    // @gotags: validate:"omitempty"
+    DirectoryParams directory = 15;
+    // @gotags: validate:"omitempty"
+    UserParams user = 16;
+    // @gotags: validate:"omitempty"
+    SshParams ssh = 17;
+    // @gotags: validate:"omitempty"
+    SshdParams sshd = 18;
+    // @gotags: validate:"omitempty"
+    AdminPolicyParams admin_policy = 19;
+    // @gotags: validate:"omitempty"
+    LpsParams lps = 20;
+    // @gotags: validate:"omitempty"
+    GroupParams group = 21;
+    // @gotags: validate:"omitempty"
+    EncryptionAuthoringParams encryption = 22;
+    // @gotags: validate:"omitempty"
+    WifiAuthoringParams wifi = 23;
+    // @gotags: validate:"omitempty"
+    AgentUpdateParams agent_update = 24;
+  }
+}
+
+message CreateActionResponse {
+  ManagedAction action = 1;
+}
+
+message GetActionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetActionResponse {
+  ManagedAction action = 1;
+}
+
+message ListActionsRequest {
+  // @gotags: validate:"omitempty,gte=0,lte=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+  ActionType type_filter = 3;
+  bool unassigned_only = 4;
+}
+
+message ListActionsResponse {
+  repeated ManagedAction actions = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message RenameActionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 2;
+}
+
+message UpdateActionDescriptionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+}
+
+message UpdateActionParamsRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty"
+  DesiredState desired_state = 2;
+  // @gotags: validate:"omitempty,gte=0,lte=3600"
+  int32 timeout_seconds = 3;
+  // @gotags: validate:"omitempty"
+  ActionSchedule schedule = 4;
+
+  oneof params {
+    // @gotags: validate:"omitempty"
+    PackageParams package = 5;
+    // @gotags: validate:"omitempty"
+    AppInstallParams app = 6;
+    // @gotags: validate:"omitempty"
+    ShellParams shell = 7;
+    // @gotags: validate:"omitempty"
+    ServiceParams service = 8;
+    // @gotags: validate:"omitempty"
+    FileParams file = 9;
+    // @gotags: validate:"omitempty"
+    UpdateParams update = 10;
+    // @gotags: validate:"omitempty"
+    RepositoryParams repository = 11;
+    // @gotags: validate:"omitempty"
+    FlatpakParams flatpak = 12;
+    // @gotags: validate:"omitempty"
+    DirectoryParams directory = 13;
+    // @gotags: validate:"omitempty"
+    UserParams user = 14;
+    // @gotags: validate:"omitempty"
+    SshParams ssh = 15;
+    // @gotags: validate:"omitempty"
+    SshdParams sshd = 16;
+    // @gotags: validate:"omitempty"
+    AdminPolicyParams admin_policy = 17;
+    // @gotags: validate:"omitempty"
+    LpsParams lps = 18;
+    // @gotags: validate:"omitempty"
+    GroupParams group = 19;
+    // @gotags: validate:"omitempty"
+    EncryptionAuthoringParams encryption = 20;
+    // @gotags: validate:"omitempty"
+    WifiAuthoringParams wifi = 21;
+    // @gotags: validate:"omitempty"
+    AgentUpdateParams agent_update = 22;
+  }
+}
+
+message UpdateActionResponse {
+  ManagedAction action = 1;
+}
+
+message DeleteActionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteActionResponse {}
+
+// ============================================================================
+// Action Sets (Collection of Actions)
+// ============================================================================
+
+message ActionSet {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 member_count = 4;
+  google.protobuf.Timestamp created_at = 5;
+  string created_by = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  // Schedule that triggers every member action when fired. Required.
+  // The set's schedule overrides each member action's own schedule —
+  // member actions never fire on their own when assigned via this set.
+  // @gotags: validate:"required"
+  ActionSchedule schedule = 8;
+  // Failure policy resolved onto every occurrence in the compiled manifest.
+  // CONTINUE is the default; STOP must be selected explicitly.
+  // @gotags: validate:"omitempty"
+  OnFailure on_failure = 9;
+}
+
+message ActionSetMember {
+  // @gotags: validate:"required,ulid"
+  string action_id = 1;
+  // Position of this action within the set's execution order. When the
+  // set's schedule fires, members are executed in ascending sort_order.
+  // Stable tiebreak by action_id for ties.
+  // @gotags: validate:"omitempty,gte=0"
+  int32 sort_order = 2;
+  string action_name = 3;
+  ActionType action_type = 4;
+}
+
+message CreateActionSetRequest {
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+  // Schedule that triggers every member action when fired. Required:
+  // member actions never fire on their own when assigned via this set.
+  // @gotags: validate:"required"
+  ActionSchedule schedule = 3;
+  // CONTINUE is the default; STOP must be selected explicitly.
+  // @gotags: validate:"omitempty"
+  OnFailure on_failure = 4;
+}
+
+message CreateActionSetResponse {
+  ActionSet set = 1;
+}
+
+message GetActionSetRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetActionSetResponse {
+  ActionSet set = 1;
+  repeated ActionSetMember members = 2;
+}
+
+message ListActionSetsRequest {
+  // @gotags: validate:"omitempty,gte=0,lte=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+  bool unassigned_only = 3;
+}
+
+message ListActionSetsResponse {
+  repeated ActionSet sets = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message RenameActionSetRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 2;
+}
+
+message UpdateActionSetDescriptionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+}
+
+message UpdateActionSetScheduleRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // Replacement schedule for the set. Required.
+  // @gotags: validate:"required"
+  ActionSchedule schedule = 2;
+  // Replacement failure policy. CONTINUE is the default.
+  // @gotags: validate:"omitempty"
+  OnFailure on_failure = 3;
+}
+
+message UpdateActionSetResponse {
+  ActionSet set = 1;
+}
+
+message DeleteActionSetRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteActionSetResponse {}
+
+message AddActionToSetRequest {
+  // @gotags: validate:"required,ulid"
+  string set_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+  // @gotags: validate:"omitempty,gte=0"
+  int32 sort_order = 3;
+}
+
+message AddActionToSetResponse {
+  ActionSet set = 1;
+}
+
+message RemoveActionFromSetRequest {
+  // @gotags: validate:"required,ulid"
+  string set_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+}
+
+message RemoveActionFromSetResponse {
+  ActionSet set = 1;
+}
+
+message ReorderActionInSetRequest {
+  // @gotags: validate:"required,ulid"
+  string set_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+  // @gotags: validate:"gte=0"
+  int32 new_order = 3;
+}
+
+message ReorderActionInSetResponse {
+  ActionSet set = 1;
+}
+
+// ============================================================================
+// Definitions (Collection of Action Sets)
+// ============================================================================
+
+message Definition {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 member_count = 4;
+  google.protobuf.Timestamp created_at = 5;
+  string created_by = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  // Schedule used by manifests compiled from this definition. Required.
+  // The override exists only on those emitted manifests: it does not rewrite
+  // member ActionSets, whose schedules still apply when assigned independently.
+  // @gotags: validate:"required"
+  ActionSchedule schedule = 8;
+}
+
+message DefinitionMember {
+  // @gotags: validate:"required,ulid"
+  string action_set_id = 1;
+  // Position of this set within the definition's execution order. When the
+  // definition's schedule fires, sets are walked in ascending sort_order
+  // and each set's actions execute in their own ascending sort_order.
+  // Stable tiebreak by action_set_id for ties.
+  // @gotags: validate:"omitempty,gte=0"
+  int32 sort_order = 2;
+  string action_set_name = 3;
+}
+
+message CreateDefinitionRequest {
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+  // Schedule used by manifests compiled from this definition. Required. It
+  // overrides their manifest schedules without rewriting member ActionSets.
+  // @gotags: validate:"required"
+  ActionSchedule schedule = 3;
+}
+
+message CreateDefinitionResponse {
+  Definition definition = 1;
+}
+
+message GetDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetDefinitionResponse {
+  Definition definition = 1;
+  repeated DefinitionMember members = 2;
+}
+
+message ListDefinitionsRequest {
+  // @gotags: validate:"omitempty,gte=0,lte=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListDefinitionsResponse {
+  repeated Definition definitions = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message RenameDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 2;
+}
+
+message UpdateDefinitionDescriptionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+}
+
+message UpdateDefinitionScheduleRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // Replacement schedule for manifests compiled from the definition. Required;
+  // member ActionSet schedules are not rewritten.
+  // @gotags: validate:"required"
+  ActionSchedule schedule = 2;
+}
+
+message UpdateDefinitionResponse {
+  Definition definition = 1;
+}
+
+message DeleteDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteDefinitionResponse {}
+
+message AddActionSetToDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string definition_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_set_id = 2;
+  // @gotags: validate:"omitempty,gte=0"
+  int32 sort_order = 3;
+}
+
+message AddActionSetToDefinitionResponse {
+  Definition definition = 1;
+}
+
+message RemoveActionSetFromDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string definition_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_set_id = 2;
+}
+
+message RemoveActionSetFromDefinitionResponse {
+  Definition definition = 1;
+}
+
+message ReorderActionSetInDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string definition_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_set_id = 2;
+  // @gotags: validate:"gte=0"
+  int32 new_order = 3;
+}
+
+message ReorderActionSetInDefinitionResponse {
+  Definition definition = 1;
+}
+
+// ============================================================================
+// Device Groups
+// ============================================================================
+
+message DeviceGroup {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 member_count = 4;
+  google.protobuf.Timestamp created_at = 5;
+  string created_by = 6;
+  bool is_dynamic = 7; // True if membership is determined by dynamic_query
+  string dynamic_query = 8; // Query for dynamic membership (verbose syntax)
+  // Sync interval in minutes for devices in this group (0 = use device/default)
+  // Takes precedence over device-level setting
+  int32 sync_interval_minutes = 9;
+  // Per-group maintenance window. Empty means "no constraint": members
+  // may receive dispatches at any time. When non-empty the agent gates
+  // non-instant action dispatch by the device-local-time union across
+  // every group the device belongs to (device groups + user groups
+  // reaching it via assignments).
+  MaintenanceWindow maintenance_window = 10;
+  // Inventory collection interval in minutes for devices in this group
+  // (0 = no group contribution). A device resolves its interval as:
+  // device override, else MIN across its groups, else 1440.
+  int32 inventory_interval_minutes = 11;
+}
+
+message CreateDeviceGroupRequest {
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+  // If true, membership is determined by dynamic_query instead of manual assignment
+  bool is_dynamic = 3;
+  // @gotags: validate:"omitempty,max=4096"
+  string dynamic_query = 4; // Query for dynamic membership (see docs for syntax)
+}
+
+message CreateDeviceGroupResponse {
+  DeviceGroup group = 1;
+}
+
+message GetDeviceGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetDeviceGroupResponse {
+  DeviceGroup group = 1;
+  repeated string device_ids = 2;
+  repeated DeviceGroupMember devices = 3;
+}
+
+message DeviceGroupMember {
+  string device_id = 1;
+  string hostname = 2;
+  string agent_version = 3;
+  google.protobuf.Timestamp last_seen_at = 4;
+}
+
+message ListDeviceGroupsRequest {
+  // @gotags: validate:"omitempty,gte=0,lte=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListDeviceGroupsResponse {
+  repeated DeviceGroup groups = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message ListDeviceGroupsForDeviceRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message ListDeviceGroupsForDeviceResponse {
+  repeated DeviceGroup groups = 1;
+}
+
+message RenameDeviceGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 2;
+}
+
+message UpdateDeviceGroupDescriptionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+}
+
+message UpdateDeviceGroupResponse {
+  DeviceGroup group = 1;
+}
+
+message DeleteDeviceGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteDeviceGroupResponse {}
+
+message AddDeviceToGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string device_id = 2;
+  // @gotags: validate:"omitempty,max=256,dive,ulid"
+  repeated string device_ids = 3;
+}
+
+message AddDeviceToGroupResponse {
+  DeviceGroup group = 1;
+}
+
+message RemoveDeviceFromGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"required,ulid"
+  string device_id = 2;
+}
+
+message RemoveDeviceFromGroupResponse {
+  DeviceGroup group = 1;
+}
+
+// Update a device group's dynamic query
+message UpdateDeviceGroupQueryRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // If true, membership is determined by dynamic_query instead of manual assignment
+  bool is_dynamic = 2;
+  // @gotags: validate:"omitempty,max=4096"
+  string dynamic_query = 3; // Query for dynamic membership (see docs for syntax)
+}
+
+message UpdateDeviceGroupQueryResponse {
+  DeviceGroup group = 1;
+}
+
+// Validate a dynamic query without creating a group
+message ValidateDynamicQueryRequest {
+  // @gotags: validate:"max=4096"
+  string query = 1;
+}
+
+message ValidateDynamicQueryResponse {
+  bool valid = 1;
+  string error = 2; // Error message if not valid
+  int32 matching_device_count = 3; // Number of devices that would match
+}
+
+// Trigger re-evaluation of a dynamic group
+message EvaluateDynamicGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message EvaluateDynamicGroupResponse {
+  DeviceGroup group = 1;
+  int32 devices_added = 2;
+  int32 devices_removed = 3;
+}
+
+// Update device group sync interval
+message SetDeviceGroupSyncIntervalRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"gte=0,lte=1440"
+  int32 sync_interval_minutes = 2; // 0 = use device/default, max 24 hours
+}
+
+// Update device group inventory collection interval.
+message SetDeviceGroupInventoryIntervalRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,gte=120,lte=10080"
+  int32 inventory_interval_minutes = 2; // 0 = no group contribution, else 2h–7d
+}
+
+// Replace the device group's maintenance window. Pass an empty
+// MaintenanceWindow (or omit the schedule) to clear it — that drops
+// the group's contribution to the device-side union, leaving the
+// device unconstrained by this group.
+message SetDeviceGroupMaintenanceWindowRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty"
+  MaintenanceWindow maintenance_window = 2;
+}
+
+// ============================================================================
+// Assignments (Link actions/sets/definitions to devices/groups)
+// ============================================================================
+
+message Assignment {
+  string id = 1;
+  AssignmentSourceType source_type = 2;
+  string source_id = 3;
+  AssignmentTargetType target_type = 4;
+  string target_id = 5;
+  google.protobuf.Timestamp created_at = 6;
+  string created_by = 7;
+  AssignmentMode mode = 8;
+  string source_name = 9;
+  string target_name = 10;
+}
+
+message CreateAssignmentRequest {
+  // @gotags: validate:"required,gte=1,lte=4"
+  AssignmentSourceType source_type = 1;
+  // @gotags: validate:"required,ulid"
+  string source_id = 2;
+  // @gotags: validate:"required,gte=1,lte=4"
+  AssignmentTargetType target_type = 3;
+  // @gotags: validate:"required,ulid"
+  string target_id = 4;
+  // @gotags: validate:"omitempty"
+  AssignmentMode mode = 5; // Defaults to REQUIRED (0)
+}
+
+message CreateAssignmentResponse {
+  Assignment assignment = 1;
+}
+
+message DeleteAssignmentRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteAssignmentResponse {}
+
+message ListAssignmentsRequest {
+  // UNSPECIFIED (0) means "all source types"; non-zero filters to
+  // that single source type.
+  // @gotags: validate:"omitempty,gte=0,lte=4"
+  AssignmentSourceType source_type = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string source_id = 2;
+  // UNSPECIFIED (0) means "all target types"; non-zero filters to
+  // that single target type.
+  // @gotags: validate:"omitempty,gte=0,lte=4"
+  AssignmentTargetType target_type = 3;
+  // @gotags: validate:"omitempty,ulid"
+  string target_id = 4;
+  // @gotags: validate:"omitempty,gte=0,lte=100"
+  int32 page_size = 5;
+  // @gotags: validate:"omitempty"
+  string page_token = 6;
+}
+
+message ListAssignmentsResponse {
+  repeated Assignment assignments = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// ============================================================================
+// User Selections (for available assignments)
+// ============================================================================
+
+message UserSelection {
+  string id = 1;
+  string device_id = 2;
+  AssignmentSourceType source_type = 3;
+  string source_id = 4;
+  bool selected = 5; // true=user wants it (present), false=user rejected (absent)
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message SetUserSelectionRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required,gte=1,lte=4"
+  AssignmentSourceType source_type = 2;
+  // @gotags: validate:"required,ulid"
+  string source_id = 3;
+  bool selected = 4;
+}
+
+message SetUserSelectionResponse {
+  UserSelection selection = 1;
+}
+
+message ListAvailableActionsRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message AvailableItem {
+  AssignmentSourceType source_type = 1;
+  string source_id = 2;
+  string source_name = 3;
+  string source_description = 4;
+  bool selected = 5;
+  repeated ManagedAction actions = 6; // preview of contained actions
+}
+
+message ListAvailableActionsResponse {
+  repeated AvailableItem items = 1;
+}
+
+// Get all resolved actions for a device (expands groups, definitions, sets)
+message GetDeviceAssignmentsRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message GetDeviceAssignmentsResponse {
+  repeated ManagedAction actions = 1;
+  repeated ActionSet action_sets = 2;
+  repeated Definition definitions = 3;
+  repeated CompliancePolicy compliance_policies = 4;
+  repeated GetActionSetResponse action_set_details = 5;
+  repeated GetDefinitionResponse definition_details = 6;
+}
+
+// Get all assignments targeting a user (directly or via user groups)
+message GetUserAssignmentsRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+}
+
+message GetUserAssignmentsResponse {
+  repeated Assignment assignments = 1;
+}
+
+// ============================================================================
+// Action Dispatch & Execution
+// ============================================================================
+
+message ActionExecution {
+  string id = 1;
+  string device_id = 2;
+  string action_id = 3; // Reference to ManagedAction
+  ActionType type = 4;
+  ExecutionStatus status = 5;
+  string error = 6;
+  CommandOutput output = 7; // Final output (set on completion)
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp dispatched_at = 9;
+  google.protobuf.Timestamp completed_at = 10;
+  int64 duration_ms = 11;
+  string created_by = 12;
+  CommandOutput live_output = 13; // Streaming output received so far (useful when status is RUNNING)
+  DesiredState desired_state = 14; // Whether the action was meant to install/enable (PRESENT) or remove/disable (ABSENT)
+  bool changed = 15; // Whether the execution made changes to the system (false = state was already as desired)
+  bool compliant = 16; // Detection script result: true if compliant
+  CommandOutput detection_output = 17; // Detection script output
+  string action_name = 18; // Resolved from the action row (empty for inline actions)
+  // Set when status is SCHEDULED (or was, before dispatch fired). The
+  // UTC timestamp at which the deferred dispatch is configured to
+  // fire. Populated when a Dispatch* request supplies the run_at
+  // field — DispatchActionRequest, DispatchInstantActionRequest,
+  // and friends — so the server can defer the dispatch until the
+  // operator-chosen time.
+  google.protobuf.Timestamp scheduled_for = 19;
+}
+
+message DispatchActionRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // Either use an action or inline action
+  oneof action_source {
+    // @gotags: validate:"omitempty,ulid"
+    string action_id = 2; // Reference to ManagedAction
+    Action inline_action = 3;
+  }
+  // When set, defer the dispatch until this UTC timestamp instead of
+  // running it immediately. The execution record is created up front
+  // with status SCHEDULED so the operator can see the pending dispatch
+  // in the execution-history UI before it fires; on run_at the
+  // deferred dispatch hits the standard path and the execution
+  // transitions through PENDING / RUNNING and then onward to a
+  // terminal status (SUCCESS, FAILED, TIMEOUT, SKIPPED, or
+  // CANCELLED) the same as any immediate dispatch. Cancelable via
+  // CancelExecution until the dispatch fires. Must be in the future
+  // at scheduling time.
+  google.protobuf.Timestamp run_at = 4;
+  // When true, the dispatched action still respects the device's
+  // maintenance window if the device has one configured. The default
+  // (false) bypasses the window so admins can override an active
+  // freeze.
+  bool respect_maintenance_window = 5;
+}
+
+message DispatchActionResponse {
+  ActionExecution execution = 1;
+}
+
+message DispatchToMultipleRequest {
+  // @gotags: validate:"required,min=1,max=256,dive,ulid"
+  repeated string device_ids = 1;
+  oneof action_source {
+    // @gotags: validate:"omitempty,ulid"
+    string action_id = 2; // Reference to ManagedAction
+    Action inline_action = 3;
+  }
+}
+
+message DispatchToMultipleResponse {
+  repeated ActionExecution executions = 1;
+}
+
+// Dispatch all actions assigned to a device (resolves definitions, sets, groups)
+message DispatchAssignedActionsRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message DispatchAssignedActionsResponse {
+  repeated ActionExecution executions = 1;
+}
+
+// Dispatch all actions from an action set to a device
+message DispatchActionSetRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_set_id = 2;
+}
+
+message DispatchActionSetResponse {
+  repeated ActionExecution executions = 1;
+}
+
+// Dispatch all actions from a definition to a device
+message DispatchDefinitionRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required,ulid"
+  string definition_id = 2;
+}
+
+message DispatchDefinitionResponse {
+  repeated ActionExecution executions = 1;
+}
+
+// Dispatch to a device group
+message DispatchToGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  oneof action_source {
+    // @gotags: validate:"omitempty,ulid"
+    string action_id = 2;
+    // @gotags: validate:"omitempty,ulid"
+    string action_set_id = 3;
+    // @gotags: validate:"omitempty,ulid"
+    string definition_id = 4;
+    Action inline_action = 5;
+  }
+}
+
+message DispatchToGroupResponse {
+  repeated ActionExecution executions = 1;
+}
+
+message GetExecutionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetExecutionResponse {
+  ActionExecution execution = 1;
+}
+
+message ListExecutionsRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+  // @gotags: validate:"omitempty,ulid"
+  string device_id = 3; // optional filter
+  ExecutionStatus status_filter = 4;
+  ActionType type_filter = 5; // optional action type filter
+  // @gotags: validate:"omitempty,max=255"
+  string search = 6; // searches action name and device hostname
+}
+
+message ListExecutionsResponse {
+  repeated ActionExecution executions = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// ============================================================================
+// Instant Actions (agent-builtin, no parameters)
+// ============================================================================
+
+message DispatchInstantActionRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required,ne=0"
+  ActionType instant_action = 2;
+  // Same semantics as DispatchActionRequest.run_at: when set, defer
+  // the instant action's dispatch until this UTC timestamp.
+  google.protobuf.Timestamp run_at = 3;
+  // Same semantics as DispatchActionRequest.respect_maintenance_window.
+  // For instant actions the default (false) is the operator-friendly
+  // choice — REBOOT-now should not be silently held by a freeze.
+  bool respect_maintenance_window = 4;
+}
+
+message DispatchInstantActionResponse {
+  ActionExecution execution = 1;
+}
+
+// CancelExecution prunes a scheduled or pending dispatch before it
+// fires. Idempotent and best-effort: once an execution leaves the
+// SCHEDULED / PENDING window the cancel is a documented no-op and the
+// returned execution reflects whatever terminal state it reached on
+// its own.
+message CancelExecutionRequest {
+  // @gotags: validate:"required,ulid"
+  string execution_id = 1;
+}
+
+message CancelExecutionResponse {
+  // The execution after the cancel attempt. Status will be CANCELLED
+  // when the dispatch was still pending; otherwise the execution
+  // reflects whatever state it had reached on its own.
+  ActionExecution execution = 1;
+}
+
+// ============================================================================
+// Audit Log
+// ============================================================================
+
+// AuditEvent mirrors a row from the append-only audit log. The
+// event_type, stream_type, and actor_type fields are intentionally
+// string-typed (open set): the log records dozens of event types across
+// every domain, and a new one must not require a proto enum bump. The
+// web UI populates filter dropdowns from the distinct values returned by
+// ListAuditEvents rather than from a typed enum.
+message AuditEvent {
+  string id = 1;
+  string event_type = 2;
+  string stream_type = 3;
+  string stream_id = 4;
+  string actor_type = 5;
+  string actor_id = 6;
+  string data = 7;
+  google.protobuf.Timestamp occurred_at = 8;
+}
+
+message ListAuditEventsRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty,max=32"
+  string page_token = 2;
+  // @gotags: validate:"omitempty,ulid"
+  string actor_id = 3;
+  // @gotags: validate:"omitempty,max=64"
+  string stream_type = 4;
+  // @gotags: validate:"omitempty,max=128"
+  string event_type = 5;
+}
+
+message ListAuditEventsResponse {
+  repeated AuditEvent events = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// ExportAuditEvents streams the audit log as CSV or JSON for DSAR /
+// external review. It is a *unary, chunked* export on purpose: the control server's
+// interceptors are deliberately fail-closed on streaming RPCs, so the
+// client loops — pass the returned next_page_token back until it comes
+// back empty, concatenating the chunks. The server applies the same
+// read-side redaction and the same permission gate as ListAuditEvents.
+//
+// Filters mirror what the audit view can express: exact actor, a set
+// of stream types, an event-type substring match (same semantics as
+// ListAuditEvents.event_type), and an occurred_at range.
+message ExportAuditEventsRequest {
+  // Export format: "csv" or "json".
+  // @gotags: validate:"required,oneof=csv json"
+  string format = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string actor_id = 2;
+  // Empty = all stream types.
+  // @gotags: validate:"omitempty,max=64,dive,min=1,max=64"
+  repeated string stream_types = 3;
+  // Case-insensitive substring match on the event type.
+  // @gotags: validate:"omitempty,max=128"
+  string event_type = 4;
+  // Inclusive occurred_at lower/upper bounds; unset = unbounded.
+  google.protobuf.Timestamp occurred_from = 5;
+  google.protobuf.Timestamp occurred_to = 6;
+  // Cursor from the previous chunk; empty starts the export.
+  // @gotags: validate:"omitempty,max=32"
+  string page_token = 7;
+}
+
+message ExportAuditEventsResponse {
+  // The next fragment of the export artifact. Chunks concatenate to
+  // one valid CSV file (header on the first chunk) or one valid JSON
+  // array. A chunk can be empty (e.g. a filter matching zero events
+  // still yields the CSV header / "[]").
+  bytes chunk = 1;
+  // Empty when the export is complete.
+  string next_page_token = 2;
+}
+
+// ============================================================================
+// LPS (Local Password Solution)
+// ============================================================================
+
+// LPS password metadata stored per device. Plaintext is available only from
+// RevealLpsPassword so each access has an independent audit operation.
+message LpsPassword {
+  string id = 1;
+  string device_id = 2;
+  string device_hostname = 3;
+  string action_id = 4;
+  string action_name = 5;
+  string username = 6;
+  google.protobuf.Timestamp rotated_at = 7;
+  RotationReason rotation_reason = 8;
+}
+
+message ListLpsPasswordsRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message ListLpsPasswordsResponse {
+  // Current entries (one per LPS action and username assigned to the device).
+  repeated LpsPassword current = 1;
+  // Previous entries (most recent first, max 3 per action).
+  repeated LpsPassword history = 2;
+}
+
+message RevealLpsPasswordRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message RevealLpsPasswordResponse {
+  string password = 1;
+}
+
+// ============================================================================
+// LUKS (Disk Encryption)
+// ============================================================================
+
+// LUKS key metadata stored per device. Plaintext is available only from
+// RevealLuksKey so each access has an independent audit operation.
+message LuksKey {
+  string id = 1;
+  string device_id = 2;
+  string device_hostname = 3;
+  string action_id = 4;
+  string action_name = 5;
+  string device_path = 6;
+  google.protobuf.Timestamp rotated_at = 7;
+  RotationReason rotation_reason = 8;
+  LuksRevocationStatus revocation_status = 9;
+  // Error message if revocation failed
+  string revocation_error = 10;
+  // Timestamp of last revocation event
+  google.protobuf.Timestamp revocation_at = 11;
+}
+
+message ListLuksKeysRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message ListLuksKeysResponse {
+  // Current key metadata (one per LUKS action assigned to the device).
+  repeated LuksKey current = 1;
+  // Previous key metadata (most recent first, max 3 per action).
+  repeated LuksKey history = 2;
+}
+
+message RevealLuksKeyRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message RevealLuksKeyResponse {
+  string passphrase = 1;
+}
+
+message CreateLuksTokenRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+}
+
+message CreateLuksTokenResponse {
+  // One-time UUID token
+  string token = 1;
+  // URI for opening terminal: power-manage://luks/set-passphrase?token=<token-value>
+  string uri = 2;
+  // CLI command: power-manage-agent luks set-passphrase --token <token-value>
+  string cli_command = 3;
+}
+
+message RevokeLuksDeviceKeyRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+}
+
+message RevokeLuksDeviceKeyResponse {}
+
+// ============================================================================
+// OSQuery / Device Inventory
+// ============================================================================
+
+// Dispatch an on-demand OSQuery to a connected device
+message DispatchOSQueryRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"required_without=RawSql,omitempty,min=1,max=64"
+  string table = 2;
+  // @gotags: validate:"omitempty,dive,max=64"
+  repeated string columns = 3;
+  // @gotags: validate:"omitempty,gte=0,lte=10000"
+  int32 limit = 4;
+  // Raw SQL query — when set, table/columns/limit are ignored.
+  // @gotags: validate:"omitempty,max=4096"
+  string raw_sql = 5;
+}
+
+message DispatchOSQueryResponse {
+  string query_id = 1;
+}
+
+// Poll for the result of a dispatched OSQuery
+message GetOSQueryResultRequest {
+  // @gotags: validate:"required,ulid"
+  string query_id = 1;
+}
+
+message GetOSQueryResultResponse {
+  string query_id = 1;
+  bool completed = 2;
+  bool success = 3;
+  string error = 4;
+  repeated OSQueryRow rows = 5;
+}
+
+// Get cached device inventory (hardware/software data collected by agent)
+message GetDeviceInventoryRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // Optional: filter to specific tables (empty = all)
+  // @gotags: validate:"omitempty,dive,max=128"
+  repeated string table_names = 2;
+}
+
+message InventoryTableResult {
+  string table_name = 1;
+  repeated OSQueryRow rows = 2;
+  google.protobuf.Timestamp collected_at = 3;
+}
+
+message GetDeviceInventoryResponse {
+  repeated InventoryTableResult tables = 1;
+}
+
+// Request the agent to re-collect and send inventory
+message RefreshDeviceInventoryRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message RefreshDeviceInventoryResponse {}
+
+// ============================================================================
+// Device Logs (Remote journalctl)
+// ============================================================================
+
+message QueryDeviceLogsRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // @gotags: validate:"omitempty,gte=0,lte=10000"
+  int32 lines = 2;
+  // @gotags: validate:"omitempty,max=256"
+  string unit = 3;
+  // @gotags: validate:"omitempty,max=64"
+  string since = 4;
+  // @gotags: validate:"omitempty,max=64"
+  string until = 5;
+  // @gotags: validate:"omitempty,max=32"
+  string priority = 6;
+  // @gotags: validate:"omitempty,max=256"
+  string grep = 7;
+  bool kernel = 8;
+}
+
+message QueryDeviceLogsResponse {
+  string query_id = 1;
+}
+
+message GetDeviceLogResultRequest {
+  // @gotags: validate:"required,ulid"
+  string query_id = 1;
+}
+
+message GetDeviceLogResultResponse {
+  string query_id = 1;
+  bool completed = 2;
+  bool success = 3;
+  string error = 4;
+  string logs = 5;
+}
+
+// ============================================================================
+// Roles & Permissions
+// ============================================================================
+
+message CreateRoleRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+  // @gotags: validate:"omitempty"
+  repeated string permissions = 3;
+}
+
+message CreateRoleResponse {
+  Role role = 1;
+}
+
+message GetRoleRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetRoleResponse {
+  Role role = 1;
+  int32 user_count = 2;
+}
+
+message ListRolesRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListRolesResponse {
+  repeated Role roles = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateRoleRequest {
+  // @gotags: validate:"required,ulid"
+  string role_id = 1;
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 2;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 3;
+  // @gotags: validate:"required,min=1"
+  repeated string permissions = 4;
+}
+
+message UpdateRoleResponse {
+  Role role = 1;
+}
+
+message DeleteRoleRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteRoleResponse {}
+
+message AssignRoleToUserRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string role_id = 2;
+  // @gotags: validate:"omitempty,max=256,dive,ulid"
+  repeated string role_ids = 3;
+  // Optional grant scope. Paired-or-neither: both scope_kind and
+  // scope_id MUST be set together, or both absent. Absent =
+  // unscoped/global grant. Set = the grant's authorization extends only
+  // to members of the group identified by scope_id, and scope_kind
+  // selects which kind of group that is. Every permission in the role
+  // must accept this scope_kind (PermissionInfo.target_kind must
+  // match), or the assignment is rejected. The actor must hold
+  // AssignRoleScope.
+  RoleGrantScopeKind scope_kind = 4;
+  // @gotags: validate:"omitempty,ulid"
+  string scope_id = 5;
+}
+
+message AssignRoleToUserResponse {}
+
+message RevokeRoleFromUserRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  // @gotags: validate:"required,ulid"
+  string role_id = 2;
+  // Optional grant scope identifying WHICH grant to revoke when the
+  // (user_id, role_id) pair has multiple grants at different
+  // scopes. Paired-or-neither with scope_id. Both absent = revoke
+  // the unscoped grant; both set = revoke that one specific scoped
+  // grant. The handler rejects "revoke unscoped" when only scoped
+  // grants exist (and vice versa) to surface ambiguity rather than
+  // silently no-op.
+  RoleGrantScopeKind scope_kind = 3;
+  // @gotags: validate:"omitempty,ulid"
+  string scope_id = 4;
+}
+
+message RevokeRoleFromUserResponse {}
+
+message ListPermissionsRequest {}
+
+message ListPermissionsResponse {
+  repeated PermissionInfo permissions = 1;
+}
+
+// ============================================================================
+// User Groups
+// ============================================================================
+
+message UserGroup {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 member_count = 4;
+  google.protobuf.Timestamp created_at = 6;
+  bool is_dynamic = 7;
+  string dynamic_query = 8;
+  bool is_scim_managed = 9;
+  // Per-group maintenance window. Same semantics as
+  // DeviceGroup.maintenance_window: when a user group reaches a device
+  // through an assignment, that device gates dispatches by the union of
+  // every reaching group's window (the device's own groups plus any
+  // user groups reaching it). Empty means "no constraint" for this
+  // group's contribution to the union.
+  MaintenanceWindow maintenance_window = 10;
+  // The group's assigned roles, one entry per grant, carrying each grant's
+  // scope. See User.role_grants.
+  repeated RoleGrant role_grants = 11;
+}
+
+message UserGroupMember {
+  string user_id = 1;
+  string email = 2;
+  google.protobuf.Timestamp added_at = 3;
+}
+
+message CreateUserGroupRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+  bool is_dynamic = 3;
+  // @gotags: validate:"omitempty,max=4096"
+  string dynamic_query = 4;
+}
+
+message CreateUserGroupResponse {
+  UserGroup group = 1;
+}
+
+message GetUserGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetUserGroupResponse {
+  UserGroup group = 1;
+  repeated UserGroupMember members = 2;
+}
+
+message ListUserGroupsRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListUserGroupsResponse {
+  repeated UserGroup groups = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateUserGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 2;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 3;
+}
+
+message UpdateUserGroupResponse {
+  UserGroup group = 1;
+}
+
+message DeleteUserGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteUserGroupResponse {}
+
+message AddUserToGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string user_id = 2;
+  // @gotags: validate:"omitempty,max=256,dive,ulid"
+  repeated string user_ids = 3;
+}
+
+message AddUserToGroupResponse {}
+
+message RemoveUserFromGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"required,ulid"
+  string user_id = 2;
+}
+
+message RemoveUserFromGroupResponse {}
+
+message AssignRoleToUserGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"omitempty,ulid"
+  string role_id = 2;
+  // @gotags: validate:"omitempty,max=256,dive,ulid"
+  repeated string role_ids = 3;
+  // Optional grant scope. Same paired-or-neither semantics as
+  // AssignRoleToUserRequest.scope_*. Every member of the target
+  // user group inherits this scope through the grant.
+  RoleGrantScopeKind scope_kind = 4;
+  // @gotags: validate:"omitempty,ulid"
+  string scope_id = 5;
+}
+
+message AssignRoleToUserGroupResponse {}
+
+message RevokeRoleFromUserGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string group_id = 1;
+  // @gotags: validate:"required,ulid"
+  string role_id = 2;
+  // Optional grant scope identifying WHICH (user_group, role)
+  // grant to revoke when multiple scoped grants of the same role
+  // are attached to the same user group. Paired-or-neither with
+  // scope_id; same semantics as RevokeRoleFromUserRequest.
+  RoleGrantScopeKind scope_kind = 3;
+  // @gotags: validate:"omitempty,ulid"
+  string scope_id = 4;
+}
+
+message RevokeRoleFromUserGroupResponse {}
+
+message ListUserGroupsForUserRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+}
+
+message ListUserGroupsForUserResponse {
+  repeated UserGroup groups = 1;
+}
+
+message UpdateUserGroupQueryRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  bool is_dynamic = 2;
+  // @gotags: validate:"omitempty,max=4096"
+  string dynamic_query = 3;
+}
+
+message UpdateUserGroupQueryResponse {
+  UserGroup group = 1;
+}
+
+message ValidateUserGroupQueryRequest {
+  // @gotags: validate:"max=4096"
+  string query = 1;
+}
+
+message ValidateUserGroupQueryResponse {
+  bool valid = 1;
+  string error = 2;
+  int32 matching_user_count = 3;
+}
+
+message EvaluateDynamicUserGroupRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message EvaluateDynamicUserGroupResponse {
+  UserGroup group = 1;
+  int32 users_added = 2;
+  int32 users_removed = 3;
+}
+
+// Replace the user group's maintenance window. Same semantics as
+// SetDeviceGroupMaintenanceWindowRequest. The window contributes to a
+// device-side union for every device the user group reaches via an
+// assignment. Empty schedule = clear.
+message SetUserGroupMaintenanceWindowRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty"
+  MaintenanceWindow maintenance_window = 2;
+}
+
+// ============================================================================
+// Identity Providers (OIDC SSO)
+// ============================================================================
+
+message IdentityProvider {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  IdentityProviderType provider_type = 4;
+  bool enabled = 5;
+  string client_id = 6;
+  // client_secret is not returned in responses (write-only).
+  string issuer_url = 7;
+  string authorization_url = 8;
+  string token_url = 9;
+  string userinfo_url = 10;
+  repeated string scopes = 11;
+  bool auto_create_users = 12;
+  bool auto_link_by_email = 13;
+  string default_role_id = 14;
+  string group_claim = 16;
+  map<string, string> group_mapping = 17; // external group name → user_group_id
+  google.protobuf.Timestamp created_at = 18;
+  google.protobuf.Timestamp updated_at = 19;
+  bool scim_enabled = 20;
+  string scim_endpoint_url = 21; // read-only, computed by server
+  // trust_email_assertions: operator opt-in to delegate email-identity
+  // assertion to this IdP. When true, SCIM AutoLinkByEmail may bind an asserted
+  // email to a pre-existing account; default false refuses that
+  // (account-takeover guard across providers).
+  bool trust_email_assertions = 22;
+  // Public OIDC client used by native CLI login. This is an identifier, not a
+  // client secret.
+  string cli_client_id = 23;
+}
+
+message IdentityLink {
+  string id = 1;
+  string user_id = 2;
+  string provider_id = 3;
+  string provider_name = 4;
+  string provider_slug = 5;
+  string external_id = 6;
+  string external_email = 7;
+  string external_name = 8;
+  google.protobuf.Timestamp linked_at = 9;
+  google.protobuf.Timestamp last_login_at = 10;
+}
+
+message CreateIdentityProviderRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 1;
+  // @gotags: validate:"required,min=1,max=64,alphanum"
+  string slug = 2;
+  // @gotags: validate:"required,gte=1,lte=1"
+  IdentityProviderType provider_type = 3;
+  // @gotags: validate:"omitempty,max=255"
+  string client_id = 4;
+  // @gotags: validate:"omitempty,max=4096"
+  string client_secret = 5;
+  // @gotags: validate:"required,url"
+  string issuer_url = 6;
+  // @gotags: validate:"omitempty,url"
+  string authorization_url = 7;
+  // @gotags: validate:"omitempty,url"
+  string token_url = 8;
+  // @gotags: validate:"omitempty,url"
+  string userinfo_url = 9;
+  // @gotags: validate:"omitempty,dive,max=255"
+  repeated string scopes = 10;
+  bool auto_create_users = 11;
+  bool auto_link_by_email = 12;
+  // @gotags: validate:"omitempty,ulid"
+  string default_role_id = 13;
+  // @gotags: validate:"omitempty,max=255"
+  string group_claim = 15;
+  // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
+  map<string, string> group_mapping = 16;
+  // See IdentityProvider.trust_email_assertions. Default false (secure).
+  bool trust_email_assertions = 17;
+  // @gotags: validate:"omitempty,max=255"
+  string cli_client_id = 18;
+}
+
+message CreateIdentityProviderResponse {
+  IdentityProvider provider = 1;
+}
+
+message GetIdentityProviderRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetIdentityProviderResponse {
+  IdentityProvider provider = 1;
+}
+
+message ListIdentityProvidersRequest {
+  // @gotags: validate:"omitempty,min=1,max=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListIdentityProvidersResponse {
+  repeated IdentityProvider providers = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateIdentityProviderRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=64"
+  string name = 2;
+  bool enabled = 3;
+  // @gotags: validate:"omitempty,max=255"
+  string client_id = 4;
+  // If empty, the existing secret is kept.
+  // @gotags: validate:"omitempty,max=4096"
+  string client_secret = 5;
+  // @gotags: validate:"omitempty,url"
+  string issuer_url = 6;
+  // @gotags: validate:"omitempty,url"
+  string authorization_url = 7;
+  // @gotags: validate:"omitempty,url"
+  string token_url = 8;
+  // @gotags: validate:"omitempty,url"
+  string userinfo_url = 9;
+  // @gotags: validate:"omitempty,dive,max=255"
+  repeated string scopes = 10;
+  bool auto_create_users = 11;
+  bool auto_link_by_email = 12;
+  // @gotags: validate:"omitempty,ulid"
+  string default_role_id = 13;
+  // @gotags: validate:"omitempty,max=255"
+  string group_claim = 15;
+  // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
+  map<string, string> group_mapping = 16;
+  // See IdentityProvider.trust_email_assertions. Default false (secure).
+  bool trust_email_assertions = 17;
+  // Omit to keep the current CLI client; send empty to remove it.
+  // @gotags: validate:"omitempty,max=255"
+  optional string cli_client_id = 18;
+}
+
+message UpdateIdentityProviderResponse {
+  IdentityProvider provider = 1;
+}
+
+message DeleteIdentityProviderRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteIdentityProviderResponse {}
+
+// ============================================================================
+// SSO Authentication Flow
+// ============================================================================
+
+message AuthMethodProvider {
+  string slug = 1;
+  string name = 2;
+  IdentityProviderType provider_type = 3;
+  bool browser_login = 4;
+  bool cli_login = 5;
+}
+
+message ListAuthMethodsRequest {
+  // Optional email to check user-specific auth methods.
+  // @gotags: validate:"omitempty,email,max=254"
+  string email = 1;
+}
+
+message ListAuthMethodsResponse {
+  repeated AuthMethodProvider providers = 3;
+}
+
+message GetSSOLoginURLRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string slug = 1;
+  // @gotags: validate:"required,url"
+  string redirect_url = 2;
+}
+
+message GetSSOLoginURLResponse {
+  string login_url = 1;
+}
+
+message SSOCallbackRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string slug = 1;
+  // @gotags: validate:"required"
+  string code = 2;
+  // @gotags: validate:"required"
+  string state = 3;
+}
+
+message SSOCallbackResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  User user = 4;
+}
+
+message BeginCLILoginRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string slug = 1;
+  // @gotags: validate:"required,url,max=2048"
+  string redirect_url = 2;
+  // @gotags: validate:"required,len=43"
+  string code_challenge = 3;
+}
+
+message BeginCLILoginResponse {
+  string login_url = 1;
+  string state = 2;
+  string token_url = 3;
+  string client_id = 4;
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+message ExchangeCLISessionRequest {
+  // @gotags: validate:"required,min=1,max=64"
+  string slug = 1;
+  // @gotags: validate:"required,max=512"
+  string state = 2;
+  // @gotags: validate:"required,max=65536"
+  string id_token = 3;
+}
+
+message ExchangeCLISessionResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  User user = 4;
+}
+
+// ============================================================================
+// Identity Linking (Self-Service)
+// ============================================================================
+
+message ListIdentityLinksRequest {}
+
+message ListIdentityLinksResponse {
+  repeated IdentityLink links = 1;
+}
+
+message UnlinkIdentityRequest {
+  // @gotags: validate:"required,ulid"
+  string link_id = 1;
+}
+
+message UnlinkIdentityResponse {}
+
+// SCIM Provisioning
+message EnableSCIMRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message EnableSCIMResponse {
+  string token = 1; // plaintext token, shown once
+  string endpoint_url = 2; // full SCIM endpoint URL
+}
+
+message DisableSCIMRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DisableSCIMResponse {}
+
+message RotateSCIMTokenRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message RotateSCIMTokenResponse {
+  string token = 1; // new plaintext token, shown once
+}
+
+// ============================================================================
+// Device Compliance
+// ============================================================================
+
+message GetDeviceComplianceRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message GetDeviceComplianceResponse {
+  ComplianceStatus status = 1;
+  repeated ComplianceCheckResult checks = 2;
+}
+
+message ComplianceCheckResult {
+  string action_id = 1;
+  string action_name = 2;
+  bool compliant = 3;
+  CommandOutput detection_output = 4;
+  google.protobuf.Timestamp checked_at = 5;
+}
+
+// ============================================================================
+// Compliance Policies
+// ============================================================================
+
+message CompliancePolicy {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated CompliancePolicyRule rules = 4;
+  int32 rule_count = 5;
+  google.protobuf.Timestamp created_at = 6;
+  string created_by = 7;
+}
+
+message CompliancePolicyRule {
+  string action_id = 1;
+  string action_name = 2;
+  int32 grace_period_hours = 3;
+}
+
+message CreateCompliancePolicyRequest {
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+}
+
+message CreateCompliancePolicyResponse {
+  CompliancePolicy policy = 1;
+}
+
+message GetCompliancePolicyRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message GetCompliancePolicyResponse {
+  CompliancePolicy policy = 1;
+}
+
+message ListCompliancePoliciesRequest {
+  // @gotags: validate:"omitempty,gte=0,lte=100"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+}
+
+message ListCompliancePoliciesResponse {
+  repeated CompliancePolicy policies = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message RenameCompliancePolicyRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"required,min=1,max=255"
+  string name = 2;
+}
+
+message UpdateCompliancePolicyDescriptionRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+  // @gotags: validate:"omitempty,max=1024"
+  string description = 2;
+}
+
+message UpdateCompliancePolicyResponse {
+  CompliancePolicy policy = 1;
+}
+
+message DeleteCompliancePolicyRequest {
+  // @gotags: validate:"required,ulid"
+  string id = 1;
+}
+
+message DeleteCompliancePolicyResponse {}
+
+message AddCompliancePolicyRuleRequest {
+  // @gotags: validate:"required,ulid"
+  string policy_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+  // @gotags: validate:"omitempty,gte=0,lte=8760"
+  int32 grace_period_hours = 3;
+}
+
+message AddCompliancePolicyRuleResponse {
+  CompliancePolicy policy = 1;
+}
+
+message RemoveCompliancePolicyRuleRequest {
+  // @gotags: validate:"required,ulid"
+  string policy_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+}
+
+message RemoveCompliancePolicyRuleResponse {
+  CompliancePolicy policy = 1;
+}
+
+message UpdateCompliancePolicyRuleRequest {
+  // @gotags: validate:"required,ulid"
+  string policy_id = 1;
+  // @gotags: validate:"required,ulid"
+  string action_id = 2;
+  // @gotags: validate:"omitempty,gte=0,lte=8760"
+  int32 grace_period_hours = 3;
+}
+
+message UpdateCompliancePolicyRuleResponse {
+  CompliancePolicy policy = 1;
+}
+
+message GetDeviceCompliancePolicyStatusRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+}
+
+message GetDeviceCompliancePolicyStatusResponse {
+  ComplianceStatus overall_status = 1;
+  repeated DevicePolicyEvaluation policies = 2;
+}
+
+message DevicePolicyEvaluation {
+  string policy_id = 1;
+  string policy_name = 2;
+  ComplianceStatus status = 3;
+  repeated DevicePolicyRuleEvaluation rules = 4;
+}
+
+message DevicePolicyRuleEvaluation {
+  string action_id = 1;
+  string action_name = 2;
+  ComplianceStatus status = 3;
+  bool compliant = 4;
+  google.protobuf.Timestamp checked_at = 5;
+  google.protobuf.Timestamp first_failed_at = 6;
+  int32 grace_period_hours = 7;
+  google.protobuf.Timestamp grace_expires_at = 8;
+  CommandOutput detection_output = 9;
+}
+
+// ============================================================================
+// Search
+// ============================================================================
+
+message SearchDateFilter {
+  string field = 1; // index field name: "created_at", "updated_at", "occurred_at"
+  int64 start = 2; // unix epoch seconds, 0 = no lower bound
+  int64 end = 3; // unix epoch seconds, 0 = no upper bound
+}
+
+message SearchRequest {
+  // @gotags: validate:"omitempty,max=1024"
+  string query = 1;
+  // UNSPECIFIED (0) means "all scopes".
+  // @gotags: validate:"omitempty,gte=0,lte=10"
+  SearchScope scope = 2;
+  // Matches the handler's effective clamp ([1,200], else default 50).
+  // @gotags: validate:"omitempty,gte=0,lte=200"
+  int32 page_size = 3;
+  // @gotags: validate:"omitempty,max=4096"
+  string page_token = 4;
+  repeated SearchDateFilter date_filters = 5;
+  // @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
+  map<string, string> tag_filters = 6; // field → value(s), pipe-separated for OR (e.g. "completed|failed")
+  // UNSPECIFIED (0) means "scope default"; server validates per-scope validity.
+  // @gotags: validate:"omitempty,gte=0,lte=21"
+  SortField sort_field = 7;
+  // @gotags: validate:"omitempty,gte=0,lte=2"
+  SortDirection sort_direction = 8;
+}
+
+message SearchResult {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  SearchScope scope = 4;
+  int32 member_count = 5;
+  map<string, string> fields = 6; // all hash fields from the search index
+}
+
+message SearchResponse {
+  repeated SearchResult results = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message RebuildSearchIndexRequest {}
+message RebuildSearchIndexResponse {}
+
+// ============================================================================
+// Server Settings
+// ============================================================================
+
+message ServerSettings {
+  bool user_provisioning_enabled = 1;
+  bool ssh_access_for_all = 2;
+}
+
+message GetServerSettingsRequest {}
+message GetServerSettingsResponse {
+  ServerSettings settings = 1;
+}
+
+message UpdateServerSettingsRequest {
+  bool user_provisioning_enabled = 1;
+  bool ssh_access_for_all = 2;
+}
+message UpdateServerSettingsResponse {
+  ServerSettings settings = 1;
+}
+
+// ============================================================================
+// User Provisioning Per-User
+// ============================================================================
+
+message SetUserProvisioningEnabledRequest {
+  // @gotags: validate:"required,ulid"
+  string user_id = 1;
+  bool enabled = 2;
+}
+
+// ============================================================================
+// Service Definition
+// ============================================================================
+
+service ControlService {
+  // Agent Registration
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Certificate Renewal
+  rpc RenewCertificate(RenewCertificateRequest) returns (RenewCertificateResponse);
+
+  // Agent-certificate revocation is a control-side indexed lookup during the
+  // mTLS handshake. There is no published list, no distribution RPC, and no
+  // agent-side cache.
+
+  // Authentication
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+
+  // SSO / Identity Providers
+  rpc ListAuthMethods(ListAuthMethodsRequest) returns (ListAuthMethodsResponse);
+  rpc GetSSOLoginURL(GetSSOLoginURLRequest) returns (GetSSOLoginURLResponse);
+  rpc SSOCallback(SSOCallbackRequest) returns (SSOCallbackResponse);
+  rpc BeginCLILogin(BeginCLILoginRequest) returns (BeginCLILoginResponse);
+  rpc ExchangeCLISession(ExchangeCLISessionRequest) returns (ExchangeCLISessionResponse);
+  rpc CreateIdentityProvider(CreateIdentityProviderRequest) returns (CreateIdentityProviderResponse);
+  rpc GetIdentityProvider(GetIdentityProviderRequest) returns (GetIdentityProviderResponse);
+  rpc ListIdentityProviders(ListIdentityProvidersRequest) returns (ListIdentityProvidersResponse);
+  rpc UpdateIdentityProvider(UpdateIdentityProviderRequest) returns (UpdateIdentityProviderResponse);
+  rpc DeleteIdentityProvider(DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse);
+  rpc ListIdentityLinks(ListIdentityLinksRequest) returns (ListIdentityLinksResponse);
+  rpc UnlinkIdentity(UnlinkIdentityRequest) returns (UnlinkIdentityResponse);
+
+  // SCIM Provisioning
+  rpc EnableSCIM(EnableSCIMRequest) returns (EnableSCIMResponse);
+  rpc DisableSCIM(DisableSCIMRequest) returns (DisableSCIMResponse);
+  rpc RotateSCIMToken(RotateSCIMTokenRequest) returns (RotateSCIMTokenResponse);
+
+  // Users
+  rpc EraseJITUser(EraseJITUserRequest) returns (EraseJITUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc UpdateUserEmail(UpdateUserEmailRequest) returns (UpdateUserResponse);
+  rpc SetUserDisabled(SetUserDisabledRequest) returns (UpdateUserResponse);
+  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserResponse);
+  rpc UpdateUserLinuxUsername(UpdateUserLinuxUsernameRequest) returns (UpdateUserResponse);
+  rpc AddUserSshKey(AddUserSshKeyRequest) returns (AddUserSshKeyResponse);
+  rpc RemoveUserSshKey(RemoveUserSshKeyRequest) returns (RemoveUserSshKeyResponse);
+  rpc UpdateUserSshSettings(UpdateUserSshSettingsRequest) returns (UpdateUserResponse);
+  // Devices
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
+  rpc SetDeviceLabel(SetDeviceLabelRequest) returns (UpdateDeviceResponse);
+  rpc RemoveDeviceLabel(RemoveDeviceLabelRequest) returns (UpdateDeviceResponse);
+  rpc AssignDevice(AssignDeviceRequest) returns (AssignDeviceResponse);
+  rpc UnassignDevice(UnassignDeviceRequest) returns (UnassignDeviceResponse);
+  rpc ListDeviceAssignees(ListDeviceAssigneesRequest) returns (ListDeviceAssigneesResponse);
+  rpc SetDeviceSyncInterval(SetDeviceSyncIntervalRequest) returns (UpdateDeviceResponse);
+  rpc SetDeviceInventoryInterval(SetDeviceInventoryIntervalRequest) returns (UpdateDeviceResponse);
+  rpc DeleteDevice(DeleteDeviceRequest) returns (DeleteDeviceResponse);
+
+  // Registration Tokens
+  rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
+  rpc GetToken(GetTokenRequest) returns (GetTokenResponse);
+  rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
+  rpc RenameToken(RenameTokenRequest) returns (UpdateTokenResponse);
+  rpc SetTokenDisabled(SetTokenDisabledRequest) returns (UpdateTokenResponse);
+  rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
+
+  // Actions (single executable)
+  rpc CreateAction(CreateActionRequest) returns (CreateActionResponse);
+  rpc GetAction(GetActionRequest) returns (GetActionResponse);
+  rpc ListActions(ListActionsRequest) returns (ListActionsResponse);
+  rpc RenameAction(RenameActionRequest) returns (UpdateActionResponse);
+  rpc UpdateActionDescription(UpdateActionDescriptionRequest) returns (UpdateActionResponse);
+  rpc UpdateActionParams(UpdateActionParamsRequest) returns (UpdateActionResponse);
+  rpc DeleteAction(DeleteActionRequest) returns (DeleteActionResponse);
+
+  // Action Sets (collection of actions)
+  rpc CreateActionSet(CreateActionSetRequest) returns (CreateActionSetResponse);
+  rpc GetActionSet(GetActionSetRequest) returns (GetActionSetResponse);
+  rpc ListActionSets(ListActionSetsRequest) returns (ListActionSetsResponse);
+  rpc RenameActionSet(RenameActionSetRequest) returns (UpdateActionSetResponse);
+  rpc UpdateActionSetDescription(UpdateActionSetDescriptionRequest) returns (UpdateActionSetResponse);
+  rpc UpdateActionSetSchedule(UpdateActionSetScheduleRequest) returns (UpdateActionSetResponse);
+  rpc DeleteActionSet(DeleteActionSetRequest) returns (DeleteActionSetResponse);
+  rpc AddActionToSet(AddActionToSetRequest) returns (AddActionToSetResponse);
+  rpc RemoveActionFromSet(RemoveActionFromSetRequest) returns (RemoveActionFromSetResponse);
+  rpc ReorderActionInSet(ReorderActionInSetRequest) returns (ReorderActionInSetResponse);
+
+  // Definitions (collection of action sets)
+  rpc CreateDefinition(CreateDefinitionRequest) returns (CreateDefinitionResponse);
+  rpc GetDefinition(GetDefinitionRequest) returns (GetDefinitionResponse);
+  rpc ListDefinitions(ListDefinitionsRequest) returns (ListDefinitionsResponse);
+  rpc RenameDefinition(RenameDefinitionRequest) returns (UpdateDefinitionResponse);
+  rpc UpdateDefinitionDescription(UpdateDefinitionDescriptionRequest) returns (UpdateDefinitionResponse);
+  rpc UpdateDefinitionSchedule(UpdateDefinitionScheduleRequest) returns (UpdateDefinitionResponse);
+  rpc DeleteDefinition(DeleteDefinitionRequest) returns (DeleteDefinitionResponse);
+  rpc AddActionSetToDefinition(AddActionSetToDefinitionRequest) returns (AddActionSetToDefinitionResponse);
+  rpc RemoveActionSetFromDefinition(RemoveActionSetFromDefinitionRequest) returns (RemoveActionSetFromDefinitionResponse);
+  rpc ReorderActionSetInDefinition(ReorderActionSetInDefinitionRequest) returns (ReorderActionSetInDefinitionResponse);
+
+  // Device Groups
+  rpc CreateDeviceGroup(CreateDeviceGroupRequest) returns (CreateDeviceGroupResponse);
+  rpc GetDeviceGroup(GetDeviceGroupRequest) returns (GetDeviceGroupResponse);
+  rpc ListDeviceGroups(ListDeviceGroupsRequest) returns (ListDeviceGroupsResponse);
+  rpc ListDeviceGroupsForDevice(ListDeviceGroupsForDeviceRequest) returns (ListDeviceGroupsForDeviceResponse);
+  rpc RenameDeviceGroup(RenameDeviceGroupRequest) returns (UpdateDeviceGroupResponse);
+  rpc UpdateDeviceGroupDescription(UpdateDeviceGroupDescriptionRequest) returns (UpdateDeviceGroupResponse);
+  rpc UpdateDeviceGroupQuery(UpdateDeviceGroupQueryRequest) returns (UpdateDeviceGroupQueryResponse);
+  rpc DeleteDeviceGroup(DeleteDeviceGroupRequest) returns (DeleteDeviceGroupResponse);
+  rpc AddDeviceToGroup(AddDeviceToGroupRequest) returns (AddDeviceToGroupResponse);
+  rpc RemoveDeviceFromGroup(RemoveDeviceFromGroupRequest) returns (RemoveDeviceFromGroupResponse);
+  rpc ValidateDynamicQuery(ValidateDynamicQueryRequest) returns (ValidateDynamicQueryResponse);
+  rpc EvaluateDynamicGroup(EvaluateDynamicGroupRequest) returns (EvaluateDynamicGroupResponse);
+  rpc SetDeviceGroupSyncInterval(SetDeviceGroupSyncIntervalRequest) returns (UpdateDeviceGroupResponse);
+  rpc SetDeviceGroupInventoryInterval(SetDeviceGroupInventoryIntervalRequest) returns (UpdateDeviceGroupResponse);
+  rpc SetDeviceGroupMaintenanceWindow(SetDeviceGroupMaintenanceWindowRequest) returns (UpdateDeviceGroupResponse);
+
+  // Assignments
+  rpc CreateAssignment(CreateAssignmentRequest) returns (CreateAssignmentResponse);
+  rpc DeleteAssignment(DeleteAssignmentRequest) returns (DeleteAssignmentResponse);
+  rpc ListAssignments(ListAssignmentsRequest) returns (ListAssignmentsResponse);
+  rpc GetDeviceAssignments(GetDeviceAssignmentsRequest) returns (GetDeviceAssignmentsResponse);
+  rpc GetUserAssignments(GetUserAssignmentsRequest) returns (GetUserAssignmentsResponse);
+
+  // User Selections (for available assignments)
+  rpc SetUserSelection(SetUserSelectionRequest) returns (SetUserSelectionResponse);
+  rpc ListAvailableActions(ListAvailableActionsRequest) returns (ListAvailableActionsResponse);
+
+  // Action Dispatch & Execution
+  rpc DispatchAction(DispatchActionRequest) returns (DispatchActionResponse);
+  rpc DispatchToMultiple(DispatchToMultipleRequest) returns (DispatchToMultipleResponse);
+  rpc DispatchAssignedActions(DispatchAssignedActionsRequest) returns (DispatchAssignedActionsResponse);
+  rpc DispatchActionSet(DispatchActionSetRequest) returns (DispatchActionSetResponse);
+  rpc DispatchDefinition(DispatchDefinitionRequest) returns (DispatchDefinitionResponse);
+  rpc DispatchToGroup(DispatchToGroupRequest) returns (DispatchToGroupResponse);
+  rpc DispatchInstantAction(DispatchInstantActionRequest) returns (DispatchInstantActionResponse);
+  rpc CancelExecution(CancelExecutionRequest) returns (CancelExecutionResponse);
+  rpc GetExecution(GetExecutionRequest) returns (GetExecutionResponse);
+  rpc ListExecutions(ListExecutionsRequest) returns (ListExecutionsResponse);
+
+  // Audit Log
+  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
+  rpc ExportAuditEvents(ExportAuditEventsRequest) returns (ExportAuditEventsResponse);
+
+  // LPS (Local Password Solution)
+  rpc ListLpsPasswords(ListLpsPasswordsRequest) returns (ListLpsPasswordsResponse);
+  rpc RevealLpsPassword(RevealLpsPasswordRequest) returns (RevealLpsPasswordResponse);
+
+  // LUKS (Disk Encryption)
+  rpc ListLuksKeys(ListLuksKeysRequest) returns (ListLuksKeysResponse);
+  rpc RevealLuksKey(RevealLuksKeyRequest) returns (RevealLuksKeyResponse);
+  rpc CreateLuksToken(CreateLuksTokenRequest) returns (CreateLuksTokenResponse);
+  rpc RevokeLuksDeviceKey(RevokeLuksDeviceKeyRequest) returns (RevokeLuksDeviceKeyResponse);
+
+  // OSQuery / Device Inventory
+  rpc DispatchOSQuery(DispatchOSQueryRequest) returns (DispatchOSQueryResponse);
+  rpc GetOSQueryResult(GetOSQueryResultRequest) returns (GetOSQueryResultResponse);
+  rpc GetDeviceInventory(GetDeviceInventoryRequest) returns (GetDeviceInventoryResponse);
+  rpc RefreshDeviceInventory(RefreshDeviceInventoryRequest) returns (RefreshDeviceInventoryResponse);
+
+  // Device Logs
+  rpc QueryDeviceLogs(QueryDeviceLogsRequest) returns (QueryDeviceLogsResponse);
+  rpc GetDeviceLogResult(GetDeviceLogResultRequest) returns (GetDeviceLogResultResponse);
+
+  // Roles & Permissions
+  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
+  rpc GetRole(GetRoleRequest) returns (GetRoleResponse);
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
+  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
+  rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse);
+  rpc RevokeRoleFromUser(RevokeRoleFromUserRequest) returns (RevokeRoleFromUserResponse);
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
+
+  // User Groups
+  rpc CreateUserGroup(CreateUserGroupRequest) returns (CreateUserGroupResponse);
+  rpc GetUserGroup(GetUserGroupRequest) returns (GetUserGroupResponse);
+  rpc ListUserGroups(ListUserGroupsRequest) returns (ListUserGroupsResponse);
+  rpc UpdateUserGroup(UpdateUserGroupRequest) returns (UpdateUserGroupResponse);
+  rpc DeleteUserGroup(DeleteUserGroupRequest) returns (DeleteUserGroupResponse);
+  rpc AddUserToGroup(AddUserToGroupRequest) returns (AddUserToGroupResponse);
+  rpc RemoveUserFromGroup(RemoveUserFromGroupRequest) returns (RemoveUserFromGroupResponse);
+  rpc AssignRoleToUserGroup(AssignRoleToUserGroupRequest) returns (AssignRoleToUserGroupResponse);
+  rpc RevokeRoleFromUserGroup(RevokeRoleFromUserGroupRequest) returns (RevokeRoleFromUserGroupResponse);
+  rpc ListUserGroupsForUser(ListUserGroupsForUserRequest) returns (ListUserGroupsForUserResponse);
+  rpc UpdateUserGroupQuery(UpdateUserGroupQueryRequest) returns (UpdateUserGroupQueryResponse);
+  rpc ValidateUserGroupQuery(ValidateUserGroupQueryRequest) returns (ValidateUserGroupQueryResponse);
+  rpc EvaluateDynamicUserGroup(EvaluateDynamicUserGroupRequest) returns (EvaluateDynamicUserGroupResponse);
+  rpc SetUserGroupMaintenanceWindow(SetUserGroupMaintenanceWindowRequest) returns (UpdateUserGroupResponse);
+
+  // Device Compliance
+  rpc GetDeviceCompliance(GetDeviceComplianceRequest) returns (GetDeviceComplianceResponse);
+
+  // Compliance Policies
+  rpc CreateCompliancePolicy(CreateCompliancePolicyRequest) returns (CreateCompliancePolicyResponse);
+  rpc GetCompliancePolicy(GetCompliancePolicyRequest) returns (GetCompliancePolicyResponse);
+  rpc ListCompliancePolicies(ListCompliancePoliciesRequest) returns (ListCompliancePoliciesResponse);
+  rpc RenameCompliancePolicy(RenameCompliancePolicyRequest) returns (UpdateCompliancePolicyResponse);
+  rpc UpdateCompliancePolicyDescription(UpdateCompliancePolicyDescriptionRequest) returns (UpdateCompliancePolicyResponse);
+  rpc DeleteCompliancePolicy(DeleteCompliancePolicyRequest) returns (DeleteCompliancePolicyResponse);
+  rpc AddCompliancePolicyRule(AddCompliancePolicyRuleRequest) returns (AddCompliancePolicyRuleResponse);
+  rpc RemoveCompliancePolicyRule(RemoveCompliancePolicyRuleRequest) returns (RemoveCompliancePolicyRuleResponse);
+  rpc UpdateCompliancePolicyRule(UpdateCompliancePolicyRuleRequest) returns (UpdateCompliancePolicyRuleResponse);
+  rpc GetDeviceCompliancePolicyStatus(GetDeviceCompliancePolicyStatusRequest) returns (GetDeviceCompliancePolicyStatusResponse);
+
+  // Search
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc RebuildSearchIndex(RebuildSearchIndexRequest) returns (RebuildSearchIndexResponse);
+
+  // Server Settings
+  rpc GetServerSettings(GetServerSettingsRequest) returns (GetServerSettingsResponse);
+  rpc UpdateServerSettings(UpdateServerSettingsRequest) returns (UpdateServerSettingsResponse);
+
+  // User Provisioning Per-User
+  rpc SetUserProvisioningEnabled(SetUserProvisioningEnabledRequest) returns (UpdateUserResponse);
+
+  // Remote Terminal (PTY) sessions
+  rpc StartTerminal(StartTerminalRequest) returns (StartTerminalResponse);
+  rpc StopTerminal(StopTerminalRequest) returns (StopTerminalResponse);
+  rpc ListActiveTerminalSessions(ListActiveTerminalSessionsRequest) returns (ListActiveTerminalSessionsResponse);
+  rpc TerminateTerminalSession(TerminateTerminalSessionRequest) returns (TerminateTerminalSessionResponse);
+}
+
+// ============================================================================
+// Remote Terminal Sessions
+// ============================================================================
+//
+// StartTerminal verifies the caller's TerminalAccess permission, resolves
+// the dedicated TTY username (pm-tty-<linux_username>), records an audit
+// event, mints a short-lived session token, and returns the WebSocket URL
+// of control's own terminal endpoint.
+//
+// Control bridges the browser WebSocket to the device; PTY frames reach the
+// agent over the AgentService Stream RPC like every other frame. Session
+// state lives in control, which is also where the whole fleet's sessions
+// are enumerated from.
+//
+// ListActiveTerminalSessions and TerminateTerminalSession are admin-only
+// operations gated by the corresponding permissions.
+
+message StartTerminalRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
+  // Initial window size. The web client may send a Resize immediately
+  // after connecting if these turn out to be wrong.
+  // @gotags: validate:"omitempty,gt=0,lte=65535"
+  uint32 cols = 2;
+  // @gotags: validate:"omitempty,gt=0,lte=65535"
+  uint32 rows = 3;
+}
+
+message StartTerminalResponse {
+  // ULID identifying the session for the lifetime of the connection.
+  // @gotags: validate:"required,ulid"
+  string session_id = 1;
+  // Short-lived bearer token the web client must append to terminal_url
+  // as ?token=<session_token> when opening the WebSocket. The token is
+  // intentionally returned separately from the URL so the URL can be
+  // logged or displayed without leaking the credential.
+  // @gotags: validate:"required,min=1"
+  string session_token = 2;
+  // Token-free base WebSocket URL of control's terminal endpoint
+  // (e.g. wss://control.example.com/terminal). Clients MUST construct
+  // the final connect URL by appending ?token=<session_token>; this
+  // field never embeds the token.
+  // @gotags: validate:"required,url,startswith=wss://"
+  string terminal_url = 3;
+  // Token expiry; the client should connect well before this.
+  // @gotags: validate:"required"
+  google.protobuf.Timestamp expires_at = 4;
+  // The TTY user the agent will spawn the shell as. Returned for the
+  // UI to display ("Connected as pm-tty-pdotterer") and for diagnostics.
+  // @gotags: validate:"required,min=1,max=64"
+  string tty_user = 5;
+}
+
+// StopTerminal vs TerminateTerminalSession
+//
+// These two RPCs both end a session but have different semantics and
+// permission requirements; implementations MUST honour the split:
+//
+// StopTerminal — graceful, owner-initiated stop.
+//   - Caller MUST be the user that opened the session (the same
+//     identity that received it from StartTerminal). Other users get
+//     PermissionDenied even if they hold admin permissions; admins
+//     wanting to kill someone else's session must use
+//     TerminateTerminalSession.
+//   - Idempotent: calling StopTerminal twice on the same session_id
+//     returns OK both times. An unknown or already-ended session
+//     returns OK with no body, NOT NotFound, so clients can fire and
+//     forget on disconnect.
+//   - No reason field: graceful stops are audited only by the ordinary
+//     session-ended record.
+//   - Agent failures while delivering the stop signal are logged but
+//     never surface as RPC errors — the session is considered closed
+//     once the control server has accepted the request.
+//
+// TerminateTerminalSession — admin/forcible termination.
+//   - Caller MUST hold the TerminateTerminalSession permission;
+//     ownership is NOT sufficient (use StopTerminal for that path).
+//   - NOT idempotent in the same sense: an unknown session returns
+//     NotFound so the admin can distinguish "killed it" from "it was
+//     already gone".
+//   - Carries a reason that is recorded in the audit log alongside the
+//     terminating user and surfaced to the agent so the user sees why
+//     their session disappeared.
+//   - Underlying agent failures DO surface as RPC errors so the admin
+//     knows the kill did not actually land.
+message StopTerminalRequest {
+  // @gotags: validate:"required,ulid"
+  string session_id = 1;
+}
+
+message StopTerminalResponse {}
+
+// TerminalSessionInfo is the admin view of an active session, returned
+// by ListActiveTerminalSessions and used by the admin UI for display.
+message TerminalSessionInfo {
+  string session_id = 1;
+  // ID and email of the Power Manage user who opened the session.
+  string user_id = 2;
+  string user_email = 3;
+  // Target device.
+  string device_id = 4;
+  string device_hostname = 5;
+  // The dedicated TTY user the shell is running as.
+  string tty_user = 6;
+  google.protobuf.Timestamp started_at = 7;
+  // Last activity timestamp (any input or output traffic).
+  google.protobuf.Timestamp last_activity_at = 8;
+}
+
+// ListActiveTerminalSessionsRequest follows the project-wide pagination
+// contract: page_size + page_token in, next_page_token + total_count out.
+message ListActiveTerminalSessionsRequest {
+  // @gotags: validate:"omitempty,gte=1,lte=200"
+  int32 page_size = 1;
+  // @gotags: validate:"omitempty"
+  string page_token = 2;
+  // Optional filter: only sessions on this device.
+  // @gotags: validate:"omitempty,ulid"
+  string device_id = 3;
+  // Optional filter: only sessions opened by this user.
+  // @gotags: validate:"omitempty,ulid"
+  string user_id = 4;
+}
+
+message ListActiveTerminalSessionsResponse {
+  repeated TerminalSessionInfo sessions = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// See the StopTerminal vs TerminateTerminalSession comment block above
+// for the full semantic split. Summary: this is the admin/forcible
+// path, gated by the TerminateTerminalSession permission, returns
+// NotFound for unknown sessions, and records the reason in the audit
+// log alongside the terminating user.
+message TerminateTerminalSessionRequest {
+  // @gotags: validate:"required,ulid"
+  string session_id = 1;
+  // Optional reason for the audit log; surfaced to the agent and the
+  // affected user.
+  // @gotags: validate:"omitempty,max=512"
+  string reason = 2;
+}
+
+message TerminateTerminalSessionResponse {}
+
+// EncryptionAuthoringParams is the HTTPS write boundary for an operator-authored
+// encryption action. preshared_key is write-only: the create handler requires
+// it, while this shared update shape permits omission to preserve the current
+// value, and no response returns it.
+message EncryptionAuthoringParams {
+  // @gotags: validate:"omitempty,min=1,max=256"
+  optional string preshared_key = 1 [debug_redact = true];
+  // @gotags: validate:"required,gte=1,lte=365"
+  int32 rotation_interval_days = 2;
+  // @gotags: validate:"omitempty,gte=3,lte=10"
+  int32 min_words = 3;
+  // Range-checked for the same reason as EncryptionParams.device_bound_key_type:
+  // the agent's switch default means "no device-bound key", so an out-of-range
+  // value must be refused here rather than silently downgraded there.
+  // @gotags: validate:"omitempty,oneof=0 1 2"
+  EncryptionDeviceBoundKeyType device_bound_key_type = 4;
+  // @gotags: validate:"omitempty,gte=16,lte=128"
+  int32 user_passphrase_min_length = 5;
+  // Range-checked for the same reason as EncryptionParams
+  // .user_passphrase_complexity, and optional for the same reason.
+  // @gotags: validate:"omitempty,oneof=0 1 2"
+  LpsPasswordComplexity user_passphrase_complexity = 6;
+}
+
+// ManagedEncryptionParams is safe for ordinary action reads.
+message ManagedEncryptionParams {
+  bool preshared_key_configured = 1;
+  int32 rotation_interval_days = 2;
+  int32 min_words = 3;
+  EncryptionDeviceBoundKeyType device_bound_key_type = 4;
+  int32 user_passphrase_min_length = 5;
+  LpsPasswordComplexity user_passphrase_complexity = 6;
+}
+
+// WifiAuthoringParams is the HTTPS write boundary for an operator-authored
+// WiFi action. psk and client_key are write-only; omission on update preserves
+// the applicable credential.
+message WifiAuthoringParams {
+  // @gotags: validate:"required,min=1,max=255"
+  string ssid = 1;
+  // @gotags: validate:"required,ne=0"
+  WifiAuthType auth_type = 2;
+  // @gotags: validate:"omitempty,min=8,max=64"
+  optional string psk = 3 [debug_redact = true];
+  // @gotags: validate:"omitempty"
+  string ca_cert = 4;
+  // @gotags: validate:"omitempty"
+  string client_cert = 5;
+  // @gotags: validate:"omitempty,max=65536"
+  optional string client_key = 6 [debug_redact = true];
+  // @gotags: validate:"omitempty,max=254"
+  string identity = 7;
+  bool auto_connect = 8;
+  bool hidden = 9;
+  // @gotags: validate:"omitempty,gte=-1,lte=999"
+  int32 priority = 10;
+}
+
+// ManagedWifiParams is safe for ordinary action reads.
+message ManagedWifiParams {
+  string ssid = 1;
+  WifiAuthType auth_type = 2;
+  bool psk_configured = 3;
+  string ca_cert = 4;
+  string client_cert = 5;
+  bool client_key_configured = 6;
+  string identity = 7;
+  bool auto_connect = 8;
+  bool hidden = 9;
+  int32 priority = 10;
+}

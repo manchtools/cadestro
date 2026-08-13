@@ -1,0 +1,1905 @@
+// Power Manage API Client.
+// Plain TypeScript — no framework dependencies.
+// Dependencies (auth store, config) are injected via ClientOptions.
+
+import { createClient, Code, ConnectError } from '@connectrpc/connect';
+import { createConnectTransport } from '@connectrpc/connect-web';
+import { create } from '@bufbuild/protobuf';
+import { timestampFromDate, type Timestamp } from '@bufbuild/protobuf/wkt';
+
+import {
+	ControlService,
+	RefreshTokenRequestSchema,
+	LogoutRequestSchema,
+	GetCurrentUserRequestSchema,
+	EraseJITUserRequestSchema,
+	GetUserRequestSchema,
+	ListUsersRequestSchema,
+	UpdateUserEmailRequestSchema,
+	SetUserDisabledRequestSchema,
+	UpdateUserProfileRequestSchema,
+	UpdateUserLinuxUsernameRequestSchema,
+	AddUserSshKeyRequestSchema,
+	RemoveUserSshKeyRequestSchema,
+	UpdateUserSshSettingsRequestSchema,
+	type SshPublicKey,
+	ListDevicesRequestSchema,
+	GetDeviceRequestSchema,
+	SetDeviceLabelRequestSchema,
+	RemoveDeviceLabelRequestSchema,
+	AssignDeviceRequestSchema,
+	UnassignDeviceRequestSchema,
+	ListDeviceAssigneesRequestSchema,
+	DeleteDeviceRequestSchema,
+	SetDeviceSyncIntervalRequestSchema,
+	SetDeviceInventoryIntervalRequestSchema,
+	CreateTokenRequestSchema,
+	GetTokenRequestSchema,
+	ListTokensRequestSchema,
+	RenameTokenRequestSchema,
+	SetTokenDisabledRequestSchema,
+	DeleteTokenRequestSchema,
+	// Actions (renamed from definitions)
+	CreateActionRequestSchema,
+	GetActionRequestSchema,
+	ListActionsRequestSchema,
+	RenameActionRequestSchema,
+	UpdateActionDescriptionRequestSchema,
+	UpdateActionParamsRequestSchema,
+	DeleteActionRequestSchema,
+	// Action Sets
+	CreateActionSetRequestSchema,
+	GetActionSetRequestSchema,
+	ListActionSetsRequestSchema,
+	RenameActionSetRequestSchema,
+	UpdateActionSetDescriptionRequestSchema,
+	UpdateActionSetScheduleRequestSchema,
+	DeleteActionSetRequestSchema,
+	AddActionToSetRequestSchema,
+	RemoveActionFromSetRequestSchema,
+	ReorderActionInSetRequestSchema,
+	// Definitions (collection of action sets)
+	CreateDefinitionRequestSchema,
+	GetDefinitionRequestSchema,
+	ListDefinitionsRequestSchema,
+	RenameDefinitionRequestSchema,
+	UpdateDefinitionDescriptionRequestSchema,
+	UpdateDefinitionScheduleRequestSchema,
+	DeleteDefinitionRequestSchema,
+	AddActionSetToDefinitionRequestSchema,
+	RemoveActionSetFromDefinitionRequestSchema,
+	ReorderActionSetInDefinitionRequestSchema,
+	// Device Groups
+	CreateDeviceGroupRequestSchema,
+	GetDeviceGroupRequestSchema,
+	ListDeviceGroupsRequestSchema,
+	ListDeviceGroupsForDeviceRequestSchema,
+	RenameDeviceGroupRequestSchema,
+	UpdateDeviceGroupDescriptionRequestSchema,
+	UpdateDeviceGroupQueryRequestSchema,
+	DeleteDeviceGroupRequestSchema,
+	AddDeviceToGroupRequestSchema,
+	RemoveDeviceFromGroupRequestSchema,
+	ValidateDynamicQueryRequestSchema,
+	EvaluateDynamicGroupRequestSchema,
+	SetDeviceGroupSyncIntervalRequestSchema,
+	SetDeviceGroupInventoryIntervalRequestSchema,
+	SetDeviceGroupMaintenanceWindowRequestSchema,
+	SetUserGroupMaintenanceWindowRequestSchema,
+	// Assignments
+	CreateAssignmentRequestSchema,
+	DeleteAssignmentRequestSchema,
+	ListAssignmentsRequestSchema,
+	GetDeviceAssignmentsRequestSchema,
+	GetUserAssignmentsRequestSchema,
+	// User Selections
+	ListAvailableActionsRequestSchema,
+	SetUserSelectionRequestSchema,
+	// Dispatch & Execution
+	DispatchActionRequestSchema,
+	DispatchToMultipleRequestSchema,
+	DispatchAssignedActionsRequestSchema,
+	DispatchActionSetRequestSchema,
+	DispatchDefinitionRequestSchema,
+	DispatchToGroupRequestSchema,
+	DispatchInstantActionRequestSchema,
+	CancelExecutionRequestSchema,
+	GetExecutionRequestSchema,
+	ListExecutionsRequestSchema,
+	// Audit Log
+	ListAuditEventsRequestSchema,
+	ExportAuditEventsRequestSchema,
+	// LPS
+	ListLpsPasswordsRequestSchema,
+	RevealLpsPasswordRequestSchema,
+	// LUKS
+	ListLuksKeysRequestSchema,
+	RevealLuksKeyRequestSchema,
+	CreateLuksTokenRequestSchema,
+	RevokeLuksDeviceKeyRequestSchema,
+	// OSQuery & Inventory
+	DispatchOSQueryRequestSchema,
+	GetOSQueryResultRequestSchema,
+	GetDeviceInventoryRequestSchema,
+	RefreshDeviceInventoryRequestSchema,
+	// Device Logs
+	QueryDeviceLogsRequestSchema,
+	GetDeviceLogResultRequestSchema,
+	// Roles & Permissions
+	CreateRoleRequestSchema,
+	GetRoleRequestSchema,
+	ListRolesRequestSchema,
+	UpdateRoleRequestSchema,
+	DeleteRoleRequestSchema,
+	AssignRoleToUserRequestSchema,
+	RevokeRoleFromUserRequestSchema,
+	ListPermissionsRequestSchema,
+	// User Groups
+	CreateUserGroupRequestSchema,
+	GetUserGroupRequestSchema,
+	ListUserGroupsRequestSchema,
+	UpdateUserGroupRequestSchema,
+	DeleteUserGroupRequestSchema,
+	AddUserToGroupRequestSchema,
+	RemoveUserFromGroupRequestSchema,
+	AssignRoleToUserGroupRequestSchema,
+	RevokeRoleFromUserGroupRequestSchema,
+	ListUserGroupsForUserRequestSchema,
+	UpdateUserGroupQueryRequestSchema,
+	ValidateUserGroupQueryRequestSchema,
+	EvaluateDynamicUserGroupRequestSchema,
+	// Identity Providers & SSO
+	ListAuthMethodsRequestSchema,
+	GetSSOLoginURLRequestSchema,
+	SSOCallbackRequestSchema,
+	CreateIdentityProviderRequestSchema,
+	GetIdentityProviderRequestSchema,
+	ListIdentityProvidersRequestSchema,
+	UpdateIdentityProviderRequestSchema,
+	DeleteIdentityProviderRequestSchema,
+	ListIdentityLinksRequestSchema,
+	UnlinkIdentityRequestSchema,
+	EnableSCIMRequestSchema,
+	DisableSCIMRequestSchema,
+	RotateSCIMTokenRequestSchema,
+	// Search
+	SearchRequestSchema,
+	SearchDateFilterSchema,
+	RebuildSearchIndexRequestSchema,
+	// Server Settings
+	GetServerSettingsRequestSchema,
+	UpdateServerSettingsRequestSchema,
+	// User Provisioning
+	SetUserProvisioningEnabledRequestSchema,
+	// Agent Update
+	type SearchResult,
+	// Compliance
+	GetDeviceComplianceRequestSchema,
+	type GetDeviceComplianceResponse,
+	// Compliance Policies
+	CreateCompliancePolicyRequestSchema,
+	GetCompliancePolicyRequestSchema,
+	ListCompliancePoliciesRequestSchema,
+	RenameCompliancePolicyRequestSchema,
+	UpdateCompliancePolicyDescriptionRequestSchema,
+	DeleteCompliancePolicyRequestSchema,
+	AddCompliancePolicyRuleRequestSchema,
+	RemoveCompliancePolicyRuleRequestSchema,
+	UpdateCompliancePolicyRuleRequestSchema,
+	GetDeviceCompliancePolicyStatusRequestSchema,
+	type CompliancePolicy,
+	type CompliancePolicyRule,
+	type DevicePolicyEvaluation,
+	type GetDeviceCompliancePolicyStatusResponse,
+	type IdentityProvider,
+	type IdentityLink,
+	type InventoryTableResult,
+	type User,
+	type Device,
+	type RegistrationToken,
+	type ManagedAction,
+	type ActionSet,
+	type Definition,
+	type DeviceGroup,
+	type Assignment,
+	type ActionExecution,
+	type AuditEvent,
+	type CreateActionRequest,
+	type CreateActionSetRequest,
+	type CreateDefinitionRequest,
+	type UpdateActionParamsRequest,
+	type Role,
+	type PermissionInfo,
+	type UserGroup,
+	type UserGroupMember,
+	type LpsPassword,
+	type LuksKey,
+	type AvailableItem,
+	type DeviceAssignee,
+	type DeviceGroupMember,
+	type InheritedRole,
+	type ActionSetMember,
+	type DefinitionMember,
+	StartTerminalRequestSchema,
+	StopTerminalRequestSchema,
+	ListActiveTerminalSessionsRequestSchema,
+	TerminateTerminalSessionRequestSchema,
+	type StartTerminalResponse,
+	type TerminalSessionInfo
+} from '../gen/ts/powermanage/v1/control_pb';
+import type { ActionType, Action, ActionSchedule } from '../gen/ts/powermanage/v1/actions_pb';
+import {
+	type ExecutionStatus,
+	ErrorDetailSchema,
+	type MaintenanceWindow,
+	AssignmentSourceType,
+	AssignmentTargetType,
+	DeviceStatus,
+	IdentityProviderType,
+	SearchScope,
+	SortField,
+	SortDirection,
+	RoleGrantScopeKind
+} from '../gen/ts/powermanage/v1/common_pb';
+import { timestampDate } from '@bufbuild/protobuf/wkt';
+
+export interface ClientOptions {
+	getServerUrl: () => string;
+	getAccessToken: () => string | null;
+	getRefreshToken: () => string | null;
+	ensureValidToken: () => Promise<void>;
+	refreshToken: () => Promise<boolean>;
+	onUnauthenticated: () => void;
+	onAuthResponse: (accessToken: string, refreshToken: string, expiresAt: Date, user: User) => void;
+	onUserUpdated: (user: User) => void;
+}
+
+export class ApiClient {
+	private opts: ClientOptions;
+
+	// Cached transport. createConnectTransport allocates a fetch
+	// wrapper + interceptor chain on every call; before this cache,
+	// every RPC built one from scratch even though the
+	// authentication interceptor closes over `this.opts` and never
+	// changes shape. Keyed by the resolved baseUrl so a runtime
+	// server-URL switch (multi-tenant, environment swap) rebuilds
+	// transparently.
+	private cachedTransport: ReturnType<typeof createConnectTransport> | null = null;
+	private cachedTransportUrl: string | null = null;
+
+	constructor(opts: ClientOptions) {
+		this.opts = opts;
+	}
+
+	private getTransport() {
+		const serverUrl = this.opts.getServerUrl();
+		if (!serverUrl) {
+			throw new Error('Server URL not configured');
+		}
+		if (this.cachedTransport && this.cachedTransportUrl === serverUrl) {
+			return this.cachedTransport;
+		}
+
+		const transport = createConnectTransport({
+			baseUrl: serverUrl,
+			interceptors: [
+				(next) => async (req) => {
+					await this.opts.ensureValidToken();
+
+					const token = this.opts.getAccessToken();
+					if (token) {
+						req.header.set('Authorization', `Bearer ${token}`);
+					}
+
+					try {
+						return await next(req);
+					} catch (error: unknown) {
+						if (error instanceof ConnectError && error.code === Code.Unauthenticated) {
+							const refreshed = await this.opts.refreshToken();
+							if (refreshed) {
+								const newToken = this.opts.getAccessToken();
+								if (newToken) {
+									req.header.set('Authorization', `Bearer ${newToken}`);
+								}
+								return await next(req);
+							}
+							this.opts.onUnauthenticated();
+						}
+						throw error;
+					}
+				}
+			]
+		});
+		this.cachedTransport = transport;
+		this.cachedTransportUrl = serverUrl;
+		return transport;
+	}
+
+	// Cached typed client. createClient generates a proxy over the
+	// transport for every method on ControlService — re-running it on
+	// every RPC call (~160 sites) is wasted work. Re-cache only when
+	// the underlying transport reference changes (URL change, token
+	// refresh swap, etc.).
+	private cachedClient: ReturnType<typeof createClient<typeof ControlService>> | null = null;
+	private cachedClientTransport: ReturnType<typeof createConnectTransport> | null = null;
+
+	private getClient() {
+		const transport = this.getTransport();
+		if (this.cachedClient && this.cachedClientTransport === transport) {
+			return this.cachedClient;
+		}
+		this.cachedClient = createClient(ControlService, transport);
+		this.cachedClientTransport = transport;
+		return this.cachedClient;
+	}
+
+	// Auth-only transport (no token interceptor — login itself
+	// produces the token). Cached on the same key as the primary
+	// transport since the URL is the only meaningful input.
+	private cachedAuthTransport: ReturnType<typeof createConnectTransport> | null = null;
+	private cachedAuthTransportUrl: string | null = null;
+
+	private getAuthTransport() {
+		const serverUrl = this.opts.getServerUrl();
+		if (!serverUrl) {
+			throw new Error('Server URL not configured');
+		}
+		if (this.cachedAuthTransport && this.cachedAuthTransportUrl === serverUrl) {
+			return this.cachedAuthTransport;
+		}
+		const transport = createConnectTransport({ baseUrl: serverUrl });
+		this.cachedAuthTransport = transport;
+		this.cachedAuthTransportUrl = serverUrl;
+		return transport;
+	}
+
+	// Cached typed auth client (same rationale as cachedClient above).
+	private cachedAuthClient: ReturnType<typeof createClient<typeof ControlService>> | null = null;
+	private cachedAuthClientTransport: ReturnType<typeof createConnectTransport> | null = null;
+
+	private getAuthClient() {
+		const transport = this.getAuthTransport();
+		if (this.cachedAuthClient && this.cachedAuthClientTransport === transport) {
+			return this.cachedAuthClient;
+		}
+		this.cachedAuthClient = createClient(ControlService, transport);
+		this.cachedAuthClientTransport = transport;
+		return this.cachedAuthClient;
+	}
+
+	// ============================================================================
+	// Authentication
+	// ============================================================================
+
+	async refreshTokenRPC() {
+		const client = this.getAuthClient();
+		return client.refreshToken(
+			create(RefreshTokenRequestSchema, { refreshToken: this.opts.getRefreshToken() ?? '' })
+		);
+	}
+
+	async logoutRPC() {
+		const client = this.getAuthClient();
+		return client.logout(
+			create(LogoutRequestSchema, { refreshToken: this.opts.getRefreshToken() ?? '' })
+		);
+	}
+
+	async getCurrentUser() {
+		const client = this.getClient();
+		const response = await client.getCurrentUser(
+			create(GetCurrentUserRequestSchema, {})
+		);
+		if (response.user) {
+			this.opts.onUserUpdated(response.user);
+		}
+		return response.user;
+	}
+
+	// ============================================================================
+	// Users
+	// ============================================================================
+
+	async eraseJITUser(id: string) {
+		const client = this.getClient();
+		await client.eraseJITUser(create(EraseJITUserRequestSchema, { id }));
+	}
+
+	async getUser(id: string) {
+		const client = this.getClient();
+		const response = await client.getUser(create(GetUserRequestSchema, { id }));
+		return response.user;
+	}
+
+	async listUsers(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listUsers(
+			create(ListUsersRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async updateUserEmail(id: string, email: string) {
+		const client = this.getClient();
+		const response = await client.updateUserEmail(
+			create(UpdateUserEmailRequestSchema, { id, email })
+		);
+		return response.user;
+	}
+
+	async setUserDisabled(id: string, disabled: boolean) {
+		const client = this.getClient();
+		const response = await client.setUserDisabled(
+			create(SetUserDisabledRequestSchema, { id, disabled })
+		);
+		return response.user;
+	}
+
+	async updateUserProfile(id: string, profile: {
+		displayName?: string;
+		givenName?: string;
+		familyName?: string;
+		preferredUsername?: string;
+		picture?: string;
+		locale?: string;
+	}) {
+		const client = this.getClient();
+		const response = await client.updateUserProfile(
+			create(UpdateUserProfileRequestSchema, { id, ...profile })
+		);
+		return response.user;
+	}
+
+	async updateUserLinuxUsername(userId: string, linuxUsername: string) {
+		const client = this.getClient();
+		const response = await client.updateUserLinuxUsername(
+			create(UpdateUserLinuxUsernameRequestSchema, { userId, linuxUsername })
+		);
+		return response.user;
+	}
+
+	async addUserSshKey(userId: string, publicKey: string, comment: string = '') {
+		const client = this.getClient();
+		const response = await client.addUserSshKey(
+			create(AddUserSshKeyRequestSchema, { userId, publicKey, comment })
+		);
+		return response.key;
+	}
+
+	async removeUserSshKey(userId: string, keyId: string) {
+		const client = this.getClient();
+		await client.removeUserSshKey(
+			create(RemoveUserSshKeyRequestSchema, { userId, keyId })
+		);
+	}
+
+	async updateUserSshSettings(userId: string, settings: {
+		sshAccessEnabled: boolean;
+		sshAllowPubkey: boolean;
+		sshAllowPassword: boolean;
+	}) {
+		const client = this.getClient();
+		const response = await client.updateUserSshSettings(
+			create(UpdateUserSshSettingsRequestSchema, { userId, ...settings })
+		);
+		return response.user;
+	}
+
+	// ============================================================================
+	// Devices
+	// ============================================================================
+
+	async listDevices(
+		pageSize: number = 50,
+		pageToken: string = '',
+		statusFilter: DeviceStatus = DeviceStatus.UNSPECIFIED,
+		labelFilter: Record<string, string> = {},
+		myDevicesOnly: boolean = false
+	) {
+		const client = this.getClient();
+		return client.listDevices(
+			create(ListDevicesRequestSchema, { pageSize, pageToken, statusFilter, labelFilter, myDevicesOnly })
+		);
+	}
+
+	async getDevice(id: string) {
+		const client = this.getClient();
+		const response = await client.getDevice(create(GetDeviceRequestSchema, { id }));
+		return response.device;
+	}
+
+	async setDeviceLabel(id: string, key: string, value: string) {
+		const client = this.getClient();
+		const response = await client.setDeviceLabel(
+			create(SetDeviceLabelRequestSchema, { id, key, value })
+		);
+		return response.device;
+	}
+
+	async removeDeviceLabel(id: string, key: string) {
+		const client = this.getClient();
+		const response = await client.removeDeviceLabel(
+			create(RemoveDeviceLabelRequestSchema, { id, key })
+		);
+		return response.device;
+	}
+
+	async assignDevice(deviceId: string, userIds: string[], groupIds: string[]) {
+		const client = this.getClient();
+		const response = await client.assignDevice(
+			create(AssignDeviceRequestSchema, { deviceId, userIds, groupIds })
+		);
+		return response.device;
+	}
+
+	async unassignDevice(deviceId: string, userId?: string, groupId?: string) {
+		const client = this.getClient();
+		const response = await client.unassignDevice(
+			create(UnassignDeviceRequestSchema, { deviceId, userId: userId ?? '', groupId: groupId ?? '' })
+		);
+		return response.device;
+	}
+
+	async listDeviceAssignees(deviceId: string): Promise<DeviceAssignee[]> {
+		const client = this.getClient();
+		const response = await client.listDeviceAssignees(
+			create(ListDeviceAssigneesRequestSchema, { deviceId })
+		);
+		return [...response.assignees];
+	}
+
+	async deleteDevice(id: string) {
+		const client = this.getClient();
+		await client.deleteDevice(create(DeleteDeviceRequestSchema, { id }));
+	}
+
+	async setDeviceSyncInterval(id: string, syncIntervalMinutes: number) {
+		const client = this.getClient();
+		const response = await client.setDeviceSyncInterval(
+			create(SetDeviceSyncIntervalRequestSchema, { id, syncIntervalMinutes })
+		);
+		return response.device;
+	}
+
+	async setDeviceInventoryInterval(id: string, inventoryIntervalMinutes: number) {
+		const client = this.getClient();
+		const response = await client.setDeviceInventoryInterval(
+			create(SetDeviceInventoryIntervalRequestSchema, { id, inventoryIntervalMinutes })
+		);
+		return response.device;
+	}
+
+	// ============================================================================
+	// Registration Tokens
+	// ============================================================================
+
+	async createToken(
+		name: string,
+		oneTime: boolean,
+		maxUses: number = 0,
+		expiresAt?: Date,
+		ownerId: string = ''
+	) {
+		const client = this.getClient();
+		const response = await client.createToken(
+			create(CreateTokenRequestSchema, {
+				name,
+				oneTime,
+				maxUses,
+				expiresAt: expiresAt
+					? { seconds: BigInt(Math.floor(expiresAt.getTime() / 1000)), nanos: 0 }
+					: undefined,
+				ownerId
+			})
+		);
+		// Return the whole response, not just the token: caFingerprintPin rides
+		// beside token.value by contract — agents cannot enroll without it, so a
+		// wrapper that dropped it made every web-created token un-enrollable.
+		return response;
+	}
+
+	async getToken(id: string) {
+		const client = this.getClient();
+		const response = await client.getToken(create(GetTokenRequestSchema, { id }));
+		return response.token;
+	}
+
+	async listTokens(pageSize: number = 50, pageToken: string = '', includeDisabled: boolean = false) {
+		const client = this.getClient();
+		return client.listTokens(
+			create(ListTokensRequestSchema, { pageSize, pageToken, includeDisabled })
+		);
+	}
+
+	async renameToken(id: string, name: string) {
+		const client = this.getClient();
+		const response = await client.renameToken(
+			create(RenameTokenRequestSchema, { id, name })
+		);
+		return response.token;
+	}
+
+	async setTokenDisabled(id: string, disabled: boolean) {
+		const client = this.getClient();
+		const response = await client.setTokenDisabled(
+			create(SetTokenDisabledRequestSchema, { id, disabled })
+		);
+		return response.token;
+	}
+
+	async deleteToken(id: string) {
+		const client = this.getClient();
+		await client.deleteToken(create(DeleteTokenRequestSchema, { id }));
+	}
+
+	// ============================================================================
+	// Actions (single executable actions)
+	// ============================================================================
+
+	async createAction(data: Omit<CreateActionRequest, '$typeName'>) {
+		const client = this.getClient();
+		const response = await client.createAction(
+			create(CreateActionRequestSchema, data)
+		);
+		return response.action;
+	}
+
+	async getAction(id: string) {
+		const client = this.getClient();
+		const response = await client.getAction(create(GetActionRequestSchema, { id }));
+		return response.action;
+	}
+
+	async listActions(pageSize: number = 50, pageToken: string = '', typeFilter?: ActionType, unassignedOnly: boolean = false) {
+		const client = this.getClient();
+		return client.listActions(
+			create(ListActionsRequestSchema, { pageSize, pageToken, typeFilter: typeFilter ?? 0, unassignedOnly })
+		);
+	}
+
+	async renameAction(id: string, name: string) {
+		const client = this.getClient();
+		const response = await client.renameAction(
+			create(RenameActionRequestSchema, { id, name })
+		);
+		return response.action;
+	}
+
+	async updateActionDescription(id: string, description: string) {
+		const client = this.getClient();
+		const response = await client.updateActionDescription(
+			create(UpdateActionDescriptionRequestSchema, { id, description })
+		);
+		return response.action;
+	}
+
+	async updateActionParams(data: Omit<UpdateActionParamsRequest, '$typeName'>) {
+		const client = this.getClient();
+		const response = await client.updateActionParams(
+			create(UpdateActionParamsRequestSchema, data)
+		);
+		return response.action;
+	}
+
+	async deleteAction(id: string) {
+		const client = this.getClient();
+		await client.deleteAction(create(DeleteActionRequestSchema, { id }));
+	}
+
+	// ============================================================================
+	// Action Sets (collection of actions)
+	// ============================================================================
+
+	async createActionSet(data: Omit<CreateActionSetRequest, '$typeName'>) {
+		const client = this.getClient();
+		const response = await client.createActionSet(
+			create(CreateActionSetRequestSchema, data)
+		);
+		return response.set;
+	}
+
+	async getActionSet(id: string) {
+		const client = this.getClient();
+		return client.getActionSet(create(GetActionSetRequestSchema, { id }));
+	}
+
+	async listActionSets(pageSize: number = 50, pageToken: string = '', unassignedOnly: boolean = false) {
+		const client = this.getClient();
+		return client.listActionSets(
+			create(ListActionSetsRequestSchema, { pageSize, pageToken, unassignedOnly })
+		);
+	}
+
+	async renameActionSet(id: string, name: string) {
+		const client = this.getClient();
+		const response = await client.renameActionSet(
+			create(RenameActionSetRequestSchema, { id, name })
+		);
+		return response.set;
+	}
+
+	async updateActionSetDescription(id: string, description: string) {
+		const client = this.getClient();
+		const response = await client.updateActionSetDescription(
+			create(UpdateActionSetDescriptionRequestSchema, { id, description })
+		);
+		return response.set;
+	}
+
+	async updateActionSetSchedule(id: string, schedule: ActionSchedule) {
+		const client = this.getClient();
+		const response = await client.updateActionSetSchedule(
+			create(UpdateActionSetScheduleRequestSchema, { id, schedule })
+		);
+		return response.set;
+	}
+
+	async deleteActionSet(id: string) {
+		const client = this.getClient();
+		await client.deleteActionSet(create(DeleteActionSetRequestSchema, { id }));
+	}
+
+	async addActionToSet(setId: string, actionId: string, sortOrder: number = 0) {
+		const client = this.getClient();
+		const response = await client.addActionToSet(
+			create(AddActionToSetRequestSchema, { setId, actionId, sortOrder })
+		);
+		return response.set;
+	}
+
+	async removeActionFromSet(setId: string, actionId: string) {
+		const client = this.getClient();
+		const response = await client.removeActionFromSet(
+			create(RemoveActionFromSetRequestSchema, { setId, actionId })
+		);
+		return response.set;
+	}
+
+	async reorderActionInSet(setId: string, actionId: string, newOrder: number) {
+		const client = this.getClient();
+		const response = await client.reorderActionInSet(
+			create(ReorderActionInSetRequestSchema, { setId, actionId, newOrder })
+		);
+		return response.set;
+	}
+
+	// ============================================================================
+	// Definitions (collection of action sets)
+	// ============================================================================
+
+	async createDefinition(data: Omit<CreateDefinitionRequest, '$typeName'>) {
+		const client = this.getClient();
+		const response = await client.createDefinition(
+			create(CreateDefinitionRequestSchema, data)
+		);
+		return response.definition;
+	}
+
+	async getDefinition(id: string) {
+		const client = this.getClient();
+		return client.getDefinition(create(GetDefinitionRequestSchema, { id }));
+	}
+
+	async listDefinitions(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listDefinitions(
+			create(ListDefinitionsRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async renameDefinition(id: string, name: string) {
+		const client = this.getClient();
+		const response = await client.renameDefinition(
+			create(RenameDefinitionRequestSchema, { id, name })
+		);
+		return response.definition;
+	}
+
+	async updateDefinitionDescription(id: string, description: string) {
+		const client = this.getClient();
+		const response = await client.updateDefinitionDescription(
+			create(UpdateDefinitionDescriptionRequestSchema, { id, description })
+		);
+		return response.definition;
+	}
+
+	async updateDefinitionSchedule(id: string, schedule: ActionSchedule) {
+		const client = this.getClient();
+		const response = await client.updateDefinitionSchedule(
+			create(UpdateDefinitionScheduleRequestSchema, { id, schedule })
+		);
+		return response.definition;
+	}
+
+	async deleteDefinition(id: string) {
+		const client = this.getClient();
+		await client.deleteDefinition(create(DeleteDefinitionRequestSchema, { id }));
+	}
+
+	async addActionSetToDefinition(definitionId: string, actionSetId: string, sortOrder: number = 0) {
+		const client = this.getClient();
+		const response = await client.addActionSetToDefinition(
+			create(AddActionSetToDefinitionRequestSchema, { definitionId, actionSetId, sortOrder })
+		);
+		return response.definition;
+	}
+
+	async removeActionSetFromDefinition(definitionId: string, actionSetId: string) {
+		const client = this.getClient();
+		const response = await client.removeActionSetFromDefinition(
+			create(RemoveActionSetFromDefinitionRequestSchema, { definitionId, actionSetId })
+		);
+		return response.definition;
+	}
+
+	async reorderActionSetInDefinition(definitionId: string, actionSetId: string, newOrder: number) {
+		const client = this.getClient();
+		const response = await client.reorderActionSetInDefinition(
+			create(ReorderActionSetInDefinitionRequestSchema, { definitionId, actionSetId, newOrder })
+		);
+		return response.definition;
+	}
+
+	// ============================================================================
+	// Device Groups
+	// ============================================================================
+
+	async createDeviceGroup(name: string, description: string = '', isDynamic: boolean = false, dynamicQuery: string = '') {
+		const client = this.getClient();
+		const response = await client.createDeviceGroup(
+			create(CreateDeviceGroupRequestSchema, { name, description, isDynamic, dynamicQuery })
+		);
+		return response.group;
+	}
+
+	async getDeviceGroup(id: string) {
+		const client = this.getClient();
+		return client.getDeviceGroup(create(GetDeviceGroupRequestSchema, { id }));
+	}
+
+	async listDeviceGroups(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listDeviceGroups(
+			create(ListDeviceGroupsRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async listDeviceGroupsForDevice(deviceId: string) {
+		const client = this.getClient();
+		return client.listDeviceGroupsForDevice(
+			create(ListDeviceGroupsForDeviceRequestSchema, { deviceId })
+		);
+	}
+
+	async renameDeviceGroup(id: string, name: string) {
+		const client = this.getClient();
+		const response = await client.renameDeviceGroup(
+			create(RenameDeviceGroupRequestSchema, { id, name })
+		);
+		return response.group;
+	}
+
+	async updateDeviceGroupDescription(id: string, description: string) {
+		const client = this.getClient();
+		const response = await client.updateDeviceGroupDescription(
+			create(UpdateDeviceGroupDescriptionRequestSchema, { id, description })
+		);
+		return response.group;
+	}
+
+	async deleteDeviceGroup(id: string) {
+		const client = this.getClient();
+		await client.deleteDeviceGroup(create(DeleteDeviceGroupRequestSchema, { id }));
+	}
+
+	async addDeviceToGroup(groupId: string, deviceIds: string[]) {
+		const client = this.getClient();
+		const response = await client.addDeviceToGroup(
+			create(AddDeviceToGroupRequestSchema, { groupId, deviceIds })
+		);
+		return response.group;
+	}
+
+	async removeDeviceFromGroup(groupId: string, deviceId: string) {
+		const client = this.getClient();
+		const response = await client.removeDeviceFromGroup(
+			create(RemoveDeviceFromGroupRequestSchema, { groupId, deviceId })
+		);
+		return response.group;
+	}
+
+	async updateDeviceGroupQuery(id: string, isDynamic: boolean, dynamicQuery: string = '') {
+		const client = this.getClient();
+		const response = await client.updateDeviceGroupQuery(
+			create(UpdateDeviceGroupQueryRequestSchema, { id, isDynamic, dynamicQuery })
+		);
+		return response.group;
+	}
+
+	async validateDynamicQuery(query: string) {
+		const client = this.getClient();
+		return client.validateDynamicQuery(
+			create(ValidateDynamicQueryRequestSchema, { query })
+		);
+	}
+
+	async evaluateDynamicGroup(id: string) {
+		const client = this.getClient();
+		return client.evaluateDynamicGroup(
+			create(EvaluateDynamicGroupRequestSchema, { id })
+		);
+	}
+
+	async setDeviceGroupSyncInterval(id: string, syncIntervalMinutes: number) {
+		const client = this.getClient();
+		const response = await client.setDeviceGroupSyncInterval(
+			create(SetDeviceGroupSyncIntervalRequestSchema, { id, syncIntervalMinutes })
+		);
+		return response.group;
+	}
+
+	async setDeviceGroupInventoryInterval(id: string, inventoryIntervalMinutes: number) {
+		const client = this.getClient();
+		const response = await client.setDeviceGroupInventoryInterval(
+			create(SetDeviceGroupInventoryIntervalRequestSchema, { id, inventoryIntervalMinutes })
+		);
+		return response.group;
+	}
+
+	async setDeviceGroupMaintenanceWindow(
+		id: string,
+		maintenanceWindow: MaintenanceWindow | undefined
+	) {
+		const client = this.getClient();
+		const response = await client.setDeviceGroupMaintenanceWindow(
+			create(SetDeviceGroupMaintenanceWindowRequestSchema, { id, maintenanceWindow })
+		);
+		return response.group;
+	}
+
+	// ============================================================================
+	// Assignments
+	// ============================================================================
+
+	async createAssignment(
+		sourceType: AssignmentSourceType,
+		sourceId: string,
+		targetType: AssignmentTargetType,
+		targetId: string,
+		mode: number = 0
+	) {
+		const client = this.getClient();
+		const response = await client.createAssignment(
+			create(CreateAssignmentRequestSchema, { sourceType, sourceId, targetType, targetId, mode })
+		);
+		return response.assignment;
+	}
+
+	async batchCreateAssignments(
+		sourceType: AssignmentSourceType,
+		sourceId: string,
+		targets: Array<{ targetType: AssignmentTargetType; targetId: string }>,
+		mode: number = 0
+	) {
+		return Promise.all(
+			targets.map((t) =>
+				this.createAssignment(sourceType, sourceId, t.targetType, t.targetId, mode)
+			)
+		);
+	}
+
+	async deleteAssignment(id: string) {
+		const client = this.getClient();
+		await client.deleteAssignment(create(DeleteAssignmentRequestSchema, { id }));
+	}
+
+	async listAssignments(
+		pageSize: number = 50,
+		pageToken: string = '',
+		sourceType: AssignmentSourceType = AssignmentSourceType.UNSPECIFIED,
+		sourceId: string = '',
+		targetType: AssignmentTargetType = AssignmentTargetType.UNSPECIFIED,
+		targetId: string = ''
+	) {
+		const client = this.getClient();
+		return client.listAssignments(
+			create(ListAssignmentsRequestSchema, { pageSize, pageToken, sourceType, sourceId, targetType, targetId })
+		);
+	}
+
+	async getDeviceAssignments(deviceId: string) {
+		const client = this.getClient();
+		return client.getDeviceAssignments(
+			create(GetDeviceAssignmentsRequestSchema, { deviceId })
+		);
+	}
+
+	async getUserAssignments(userId: string) {
+		const client = this.getClient();
+		return client.getUserAssignments(
+			create(GetUserAssignmentsRequestSchema, { userId })
+		);
+	}
+
+	// ============================================================================
+	// User Selections (available assignments)
+	// ============================================================================
+
+	async listAvailableActions(deviceId: string) {
+		const client = this.getClient();
+		const response = await client.listAvailableActions(
+			create(ListAvailableActionsRequestSchema, { deviceId })
+		);
+		return response.items;
+	}
+
+	async setUserSelection(deviceId: string, sourceType: AssignmentSourceType, sourceId: string, selected: boolean) {
+		const client = this.getClient();
+		return client.setUserSelection(
+			create(SetUserSelectionRequestSchema, { deviceId, sourceType, sourceId, selected })
+		);
+	}
+
+	// ============================================================================
+	// Action Dispatch & Execution
+	// ============================================================================
+
+	async dispatchAction(
+		deviceId: string,
+		actionId: string,
+		options?: { runAt?: Date; respectMaintenanceWindow?: boolean }
+	) {
+		const client = this.getClient();
+		const response = await client.dispatchAction(
+			create(DispatchActionRequestSchema, {
+				deviceId,
+				actionSource: { case: 'actionId', value: actionId },
+				runAt: options?.runAt ? timestampFromDate(options.runAt) : undefined,
+				respectMaintenanceWindow: options?.respectMaintenanceWindow ?? false
+			})
+		);
+		return response.execution;
+	}
+
+	async dispatchInlineAction(
+		deviceId: string,
+		action: Action,
+		options?: { runAt?: Date; respectMaintenanceWindow?: boolean }
+	) {
+		const client = this.getClient();
+		const response = await client.dispatchAction(
+			create(DispatchActionRequestSchema, {
+				deviceId,
+				actionSource: { case: 'inlineAction', value: action },
+				runAt: options?.runAt ? timestampFromDate(options.runAt) : undefined,
+				respectMaintenanceWindow: options?.respectMaintenanceWindow ?? false
+			})
+		);
+		return response.execution;
+	}
+
+	async dispatchToMultiple(deviceIds: string[], actionId: string) {
+		const client = this.getClient();
+		const response = await client.dispatchToMultiple(
+			create(DispatchToMultipleRequestSchema, {
+				deviceIds,
+				actionSource: { case: 'actionId', value: actionId }
+			})
+		);
+		return response.executions;
+	}
+
+	async dispatchAssignedActions(deviceId: string) {
+		const client = this.getClient();
+		const response = await client.dispatchAssignedActions(
+			create(DispatchAssignedActionsRequestSchema, { deviceId })
+		);
+		return response.executions;
+	}
+
+	async dispatchActionSet(deviceId: string, actionSetId: string) {
+		const client = this.getClient();
+		const response = await client.dispatchActionSet(
+			create(DispatchActionSetRequestSchema, { deviceId, actionSetId })
+		);
+		return response.executions;
+	}
+
+	async dispatchDefinition(deviceId: string, definitionId: string) {
+		const client = this.getClient();
+		const response = await client.dispatchDefinition(
+			create(DispatchDefinitionRequestSchema, { deviceId, definitionId })
+		);
+		return response.executions;
+	}
+
+	async dispatchToGroup(
+		groupId: string,
+		actionSource: { case: 'actionId'; value: string } | { case: 'actionSetId'; value: string } | { case: 'definitionId'; value: string }
+	) {
+		const client = this.getClient();
+		const response = await client.dispatchToGroup(
+			create(DispatchToGroupRequestSchema, { groupId, actionSource })
+		);
+		return response.executions;
+	}
+
+	async dispatchInstantAction(
+		deviceId: string,
+		instantAction: ActionType,
+		options?: { runAt?: Date; respectMaintenanceWindow?: boolean }
+	) {
+		const client = this.getClient();
+		const response = await client.dispatchInstantAction(
+			create(DispatchInstantActionRequestSchema, {
+				deviceId,
+				instantAction,
+				runAt: options?.runAt ? timestampFromDate(options.runAt) : undefined,
+				respectMaintenanceWindow: options?.respectMaintenanceWindow ?? false
+			})
+		);
+		return response.execution;
+	}
+
+	// CancelExecution prunes a scheduled or pending dispatch before it
+	// fires. Idempotent and best-effort — once an execution leaves the
+	// SCHEDULED / PENDING window the cancel is a no-op and the returned
+	// execution reflects whatever terminal state it reached on its own.
+	// See manchtools/power-manage-server#57.
+	async cancelExecution(executionId: string) {
+		const client = this.getClient();
+		const response = await client.cancelExecution(
+			create(CancelExecutionRequestSchema, { executionId })
+		);
+		return response.execution;
+	}
+
+	async getExecution(id: string) {
+		const client = this.getClient();
+		const response = await client.getExecution(create(GetExecutionRequestSchema, { id }));
+		return response.execution;
+	}
+
+	async listExecutions(
+		pageSize: number = 50,
+		pageToken: string = '',
+		deviceId: string = '',
+		statusFilter?: ExecutionStatus,
+		typeFilter?: ActionType,
+		search: string = ''
+	) {
+		const client = this.getClient();
+		return client.listExecutions(
+			create(ListExecutionsRequestSchema, {
+				pageSize, pageToken, deviceId,
+				statusFilter: statusFilter ?? 0,
+				typeFilter: typeFilter ?? 0,
+				search,
+			})
+		);
+	}
+
+	async listLpsPasswords(deviceId: string) {
+		const client = this.getClient();
+		return client.listLpsPasswords(
+			create(ListLpsPasswordsRequestSchema, { deviceId })
+		);
+	}
+
+	async revealLpsPassword(id: string) {
+		const client = this.getClient();
+		return client.revealLpsPassword(
+			create(RevealLpsPasswordRequestSchema, { id })
+		);
+	}
+
+	async listLuksKeys(deviceId: string) {
+		const client = this.getClient();
+		return client.listLuksKeys(
+			create(ListLuksKeysRequestSchema, { deviceId })
+		);
+	}
+
+	async revealLuksKey(id: string) {
+		const client = this.getClient();
+		return client.revealLuksKey(
+			create(RevealLuksKeyRequestSchema, { id })
+		);
+	}
+
+	async createLuksToken(deviceId: string, actionId: string) {
+		const client = this.getClient();
+		return client.createLuksToken(
+			create(CreateLuksTokenRequestSchema, { deviceId, actionId })
+		);
+	}
+
+	async revokeLuksDeviceKey(deviceId: string, actionId: string) {
+		const client = this.getClient();
+		return client.revokeLuksDeviceKey(
+			create(RevokeLuksDeviceKeyRequestSchema, { deviceId, actionId })
+		);
+	}
+
+	// ============================================================================
+	// Device Compliance
+	// ============================================================================
+
+	async getDeviceCompliance(deviceId: string): Promise<GetDeviceComplianceResponse> {
+		const client = this.getClient();
+		return client.getDeviceCompliance(
+			create(GetDeviceComplianceRequestSchema, { deviceId })
+		);
+	}
+
+	// ============================================================================
+	// Compliance Policies
+	// ============================================================================
+
+	async createCompliancePolicy(name: string, description: string = '') {
+		const client = this.getClient();
+		const response = await client.createCompliancePolicy(
+			create(CreateCompliancePolicyRequestSchema, { name, description })
+		);
+		return response.policy;
+	}
+
+	async getCompliancePolicy(id: string) {
+		const client = this.getClient();
+		const response = await client.getCompliancePolicy(
+			create(GetCompliancePolicyRequestSchema, { id })
+		);
+		return response.policy;
+	}
+
+	async listCompliancePolicies(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listCompliancePolicies(
+			create(ListCompliancePoliciesRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async renameCompliancePolicy(id: string, name: string) {
+		const client = this.getClient();
+		const response = await client.renameCompliancePolicy(
+			create(RenameCompliancePolicyRequestSchema, { id, name })
+		);
+		return response.policy;
+	}
+
+	async updateCompliancePolicyDescription(id: string, description: string) {
+		const client = this.getClient();
+		const response = await client.updateCompliancePolicyDescription(
+			create(UpdateCompliancePolicyDescriptionRequestSchema, { id, description })
+		);
+		return response.policy;
+	}
+
+	async deleteCompliancePolicy(id: string) {
+		const client = this.getClient();
+		await client.deleteCompliancePolicy(
+			create(DeleteCompliancePolicyRequestSchema, { id })
+		);
+	}
+
+	async addCompliancePolicyRule(policyId: string, actionId: string, gracePeriodHours: number = 0) {
+		const client = this.getClient();
+		const response = await client.addCompliancePolicyRule(
+			create(AddCompliancePolicyRuleRequestSchema, { policyId, actionId, gracePeriodHours })
+		);
+		return response.policy;
+	}
+
+	async removeCompliancePolicyRule(policyId: string, actionId: string) {
+		const client = this.getClient();
+		const response = await client.removeCompliancePolicyRule(
+			create(RemoveCompliancePolicyRuleRequestSchema, { policyId, actionId })
+		);
+		return response.policy;
+	}
+
+	async updateCompliancePolicyRule(policyId: string, actionId: string, gracePeriodHours: number) {
+		const client = this.getClient();
+		const response = await client.updateCompliancePolicyRule(
+			create(UpdateCompliancePolicyRuleRequestSchema, { policyId, actionId, gracePeriodHours })
+		);
+		return response.policy;
+	}
+
+	async getDeviceCompliancePolicyStatus(deviceId: string): Promise<GetDeviceCompliancePolicyStatusResponse> {
+		const client = this.getClient();
+		return client.getDeviceCompliancePolicyStatus(
+			create(GetDeviceCompliancePolicyStatusRequestSchema, { deviceId })
+		);
+	}
+
+	// ============================================================================
+	// OSQuery & Device Inventory
+	// ============================================================================
+
+	async getDeviceInventory(deviceId: string, tableNames?: string[]) {
+		const client = this.getClient();
+		return client.getDeviceInventory(
+			create(GetDeviceInventoryRequestSchema, { deviceId, tableNames: tableNames ?? [] })
+		);
+	}
+
+	async refreshDeviceInventory(deviceId: string) {
+		const client = this.getClient();
+		return client.refreshDeviceInventory(
+			create(RefreshDeviceInventoryRequestSchema, { deviceId })
+		);
+	}
+
+	async dispatchOSQuery(deviceId: string, table: string, columns?: string[], limit?: number, rawSql?: string) {
+		const client = this.getClient();
+		const response = await client.dispatchOSQuery(
+			create(DispatchOSQueryRequestSchema, {
+				deviceId, table, columns: columns ?? [], limit: limit ?? 0, rawSql: rawSql ?? ''
+			})
+		);
+		return response.queryId;
+	}
+
+	async getOSQueryResult(queryId: string) {
+		const client = this.getClient();
+		return client.getOSQueryResult(
+			create(GetOSQueryResultRequestSchema, { queryId })
+		);
+	}
+
+	async queryDeviceLogs(deviceId: string, options?: {
+		lines?: number, unit?: string, since?: string, until?: string,
+		priority?: string, grep?: string, kernel?: boolean
+	}) {
+		const client = this.getClient();
+		const response = await client.queryDeviceLogs(
+			create(QueryDeviceLogsRequestSchema, {
+				deviceId,
+				lines: options?.lines ?? 0,
+				unit: options?.unit ?? '',
+				since: options?.since ?? '',
+				until: options?.until ?? '',
+				priority: options?.priority ?? '',
+				grep: options?.grep ?? '',
+				kernel: options?.kernel ?? false
+			})
+		);
+		return response.queryId;
+	}
+
+	async getDeviceLogResult(queryId: string) {
+		const client = this.getClient();
+		return client.getDeviceLogResult(
+			create(GetDeviceLogResultRequestSchema, { queryId })
+		);
+	}
+
+	async listAuditEvents(
+		pageSize: number = 50,
+		pageToken: string = '',
+		actorId: string = '',
+		streamType: string = '',
+		eventType: string = ''
+	) {
+		const client = this.getClient();
+		return client.listAuditEvents(
+			create(ListAuditEventsRequestSchema, { pageSize, pageToken, actorId, streamType, eventType })
+		);
+	}
+
+	/**
+	 * One chunk of the audit-log export (spec 26). The export is unary
+	 * and chunked: pass the returned nextPageToken back until it comes
+	 * back empty, concatenating the chunks into one valid CSV file or
+	 * JSON array.
+	 */
+	async exportAuditEvents(options: {
+		format: 'csv' | 'json';
+		actorId?: string;
+		streamTypes?: string[];
+		eventType?: string;
+		occurredFrom?: Timestamp;
+		occurredTo?: Timestamp;
+		pageToken?: string;
+	}) {
+		const client = this.getClient();
+		return client.exportAuditEvents(create(ExportAuditEventsRequestSchema, options));
+	}
+
+	// ============================================================================
+	// Roles & Permissions
+	// ============================================================================
+
+	async createRole(name: string, description: string, permissions: string[]) {
+		const client = this.getClient();
+		const response = await client.createRole(
+			create(CreateRoleRequestSchema, { name, description, permissions })
+		);
+		return response.role;
+	}
+
+	async getRole(id: string) {
+		const client = this.getClient();
+		return client.getRole(create(GetRoleRequestSchema, { id }));
+	}
+
+	async listRoles(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listRoles(
+			create(ListRolesRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async updateRole(roleId: string, name: string, description: string, permissions: string[]) {
+		const client = this.getClient();
+		const response = await client.updateRole(
+			create(UpdateRoleRequestSchema, { roleId, name, description, permissions })
+		);
+		return response.role;
+	}
+
+	async deleteRole(id: string) {
+		const client = this.getClient();
+		await client.deleteRole(create(DeleteRoleRequestSchema, { id }));
+	}
+
+	async assignRoleToUser(
+		userId: string,
+		roleIds: string[],
+		scopeKind: RoleGrantScopeKind = RoleGrantScopeKind.UNSPECIFIED,
+		scopeId: string = ''
+	) {
+		const client = this.getClient();
+		await client.assignRoleToUser(
+			create(AssignRoleToUserRequestSchema, { userId, roleIds, scopeKind, scopeId })
+		);
+	}
+
+	async revokeRoleFromUser(
+		userId: string,
+		roleId: string,
+		scopeKind: RoleGrantScopeKind = RoleGrantScopeKind.UNSPECIFIED,
+		scopeId: string = ''
+	) {
+		const client = this.getClient();
+		await client.revokeRoleFromUser(
+			create(RevokeRoleFromUserRequestSchema, { userId, roleId, scopeKind, scopeId })
+		);
+	}
+
+	async listPermissions() {
+		const client = this.getClient();
+		return client.listPermissions(
+			create(ListPermissionsRequestSchema, {})
+		);
+	}
+
+	// ============================================================================
+	// User Groups
+	// ============================================================================
+
+	async createUserGroup(name: string, description: string = '', isDynamic: boolean = false, dynamicQuery: string = '') {
+		const client = this.getClient();
+		const response = await client.createUserGroup(
+			create(CreateUserGroupRequestSchema, { name, description, isDynamic, dynamicQuery })
+		);
+		return response.group;
+	}
+
+	async getUserGroup(id: string) {
+		const client = this.getClient();
+		return client.getUserGroup(create(GetUserGroupRequestSchema, { id }));
+	}
+
+	async listUserGroups(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listUserGroups(
+			create(ListUserGroupsRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async updateUserGroup(id: string, name: string, description: string) {
+		const client = this.getClient();
+		const response = await client.updateUserGroup(
+			create(UpdateUserGroupRequestSchema, { groupId: id, name, description })
+		);
+		return response.group;
+	}
+
+	async deleteUserGroup(id: string) {
+		const client = this.getClient();
+		await client.deleteUserGroup(create(DeleteUserGroupRequestSchema, { id }));
+	}
+
+	async addUserToGroup(groupId: string, userIds: string[]) {
+		const client = this.getClient();
+		await client.addUserToGroup(
+			create(AddUserToGroupRequestSchema, { groupId, userIds })
+		);
+	}
+
+	async removeUserFromGroup(groupId: string, userId: string) {
+		const client = this.getClient();
+		await client.removeUserFromGroup(
+			create(RemoveUserFromGroupRequestSchema, { groupId, userId })
+		);
+	}
+
+	async assignRoleToUserGroup(
+		groupId: string,
+		roleIds: string[],
+		scopeKind: RoleGrantScopeKind = RoleGrantScopeKind.UNSPECIFIED,
+		scopeId: string = ''
+	) {
+		const client = this.getClient();
+		await client.assignRoleToUserGroup(
+			create(AssignRoleToUserGroupRequestSchema, { groupId, roleIds, scopeKind, scopeId })
+		);
+	}
+
+	async revokeRoleFromUserGroup(
+		groupId: string,
+		roleId: string,
+		scopeKind: RoleGrantScopeKind = RoleGrantScopeKind.UNSPECIFIED,
+		scopeId: string = ''
+	) {
+		const client = this.getClient();
+		await client.revokeRoleFromUserGroup(
+			create(RevokeRoleFromUserGroupRequestSchema, { groupId, roleId, scopeKind, scopeId })
+		);
+	}
+
+	async listUserGroupsForUser(userId: string) {
+		const client = this.getClient();
+		return client.listUserGroupsForUser(
+			create(ListUserGroupsForUserRequestSchema, { userId })
+		);
+	}
+
+	async updateUserGroupQuery(id: string, isDynamic: boolean, dynamicQuery: string) {
+		const client = this.getClient();
+		const response = await client.updateUserGroupQuery(
+			create(UpdateUserGroupQueryRequestSchema, { id, isDynamic, dynamicQuery })
+		);
+		return response.group;
+	}
+
+	async validateUserGroupQuery(query: string) {
+		const client = this.getClient();
+		return client.validateUserGroupQuery(
+			create(ValidateUserGroupQueryRequestSchema, { query })
+		);
+	}
+
+	async evaluateDynamicUserGroup(id: string) {
+		const client = this.getClient();
+		return client.evaluateDynamicUserGroup(
+			create(EvaluateDynamicUserGroupRequestSchema, { id })
+		);
+	}
+
+	async setUserGroupMaintenanceWindow(
+		id: string,
+		maintenanceWindow: MaintenanceWindow | undefined
+	) {
+		const client = this.getClient();
+		const response = await client.setUserGroupMaintenanceWindow(
+			create(SetUserGroupMaintenanceWindowRequestSchema, { id, maintenanceWindow })
+		);
+		return response.group;
+	}
+
+	// ============================================================================
+	// Identity Providers & SSO
+	// ============================================================================
+
+	async listAuthMethods(email: string = '') {
+		const client = this.getAuthClient();
+		return client.listAuthMethods(
+			create(ListAuthMethodsRequestSchema, { email })
+		);
+	}
+
+	async getSSOLoginURL(slug: string, redirectUrl: string) {
+		const client = this.getAuthClient();
+		return client.getSSOLoginURL(
+			create(GetSSOLoginURLRequestSchema, { slug, redirectUrl })
+		);
+	}
+
+	async ssoCallback(slug: string, code: string, state: string) {
+		const client = this.getAuthClient();
+		const response = await client.sSOCallback(
+			create(SSOCallbackRequestSchema, { slug, code, state })
+		);
+
+		if (response.accessToken && response.refreshToken && response.expiresAt && response.user) {
+			this.opts.onAuthResponse(
+				response.accessToken,
+				response.refreshToken,
+				timestampDate(response.expiresAt),
+				response.user
+			);
+		}
+
+		return response;
+	}
+
+	async createIdentityProvider(data: {
+		name: string;
+		slug: string;
+		providerType: IdentityProviderType;
+		clientId: string;
+		clientSecret: string;
+		issuerUrl: string;
+		authorizationUrl?: string;
+		tokenUrl?: string;
+		userinfoUrl?: string;
+		scopes?: string[];
+		autoCreateUsers?: boolean;
+		autoLinkByEmail?: boolean;
+		trustEmailAssertions?: boolean;
+		defaultRoleId?: string;
+		groupClaim?: string;
+		groupMapping?: Record<string, string>;
+	}) {
+		const client = this.getClient();
+		const response = await client.createIdentityProvider(
+			create(CreateIdentityProviderRequestSchema, data)
+		);
+		return response.provider;
+	}
+
+	// Bootstrap-only provider registration. The host-authorized bootstrap-admin
+	// token is presented to control as `Authorization: PowerManage-Bootstrap <T>`
+	// (NOT a Bearer session token) and is spent on exactly this one call. It goes
+	// through the auth transport — the one WITHOUT the session/Bearer interceptor —
+	// so no access token is ever attached, and the scheme is set as a per-call
+	// header override rather than forking a second transport config. The caller
+	// must never persist or log the token.
+	async createIdentityProviderWithBootstrapToken(
+		bootstrapToken: string,
+		data: {
+			name: string;
+			slug: string;
+			providerType: IdentityProviderType;
+			clientId: string;
+			clientSecret: string;
+			issuerUrl: string;
+			authorizationUrl?: string;
+			tokenUrl?: string;
+			userinfoUrl?: string;
+			scopes?: string[];
+			autoCreateUsers?: boolean;
+			autoLinkByEmail?: boolean;
+			trustEmailAssertions?: boolean;
+			defaultRoleId?: string;
+			groupClaim?: string;
+			groupMapping?: Record<string, string>;
+		}
+	) {
+		const client = this.getAuthClient();
+		const response = await client.createIdentityProvider(
+			create(CreateIdentityProviderRequestSchema, data),
+			{ headers: { Authorization: `PowerManage-Bootstrap ${bootstrapToken}` } }
+		);
+		return response.provider;
+	}
+
+	async getIdentityProvider(id: string) {
+		const client = this.getClient();
+		const response = await client.getIdentityProvider(
+			create(GetIdentityProviderRequestSchema, { id })
+		);
+		return response.provider;
+	}
+
+	async listIdentityProviders(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listIdentityProviders(
+			create(ListIdentityProvidersRequestSchema, { pageSize, pageToken })
+		);
+	}
+
+	async updateIdentityProvider(data: {
+		id: string;
+		name?: string;
+		enabled?: boolean;
+		clientId?: string;
+		clientSecret?: string;
+		issuerUrl?: string;
+		authorizationUrl?: string;
+		tokenUrl?: string;
+		userinfoUrl?: string;
+		scopes?: string[];
+		autoCreateUsers?: boolean;
+		autoLinkByEmail?: boolean;
+		trustEmailAssertions?: boolean;
+		defaultRoleId?: string;
+		groupClaim?: string;
+		groupMapping?: Record<string, string>;
+	}) {
+		const client = this.getClient();
+		const response = await client.updateIdentityProvider(
+			create(UpdateIdentityProviderRequestSchema, data)
+		);
+		return response.provider;
+	}
+
+	async deleteIdentityProvider(id: string) {
+		const client = this.getClient();
+		await client.deleteIdentityProvider(
+			create(DeleteIdentityProviderRequestSchema, { id })
+		);
+	}
+
+	async listIdentityLinks() {
+		const client = this.getClient();
+		return client.listIdentityLinks(
+			create(ListIdentityLinksRequestSchema, {})
+		);
+	}
+
+	async unlinkIdentity(linkId: string) {
+		const client = this.getClient();
+		await client.unlinkIdentity(
+			create(UnlinkIdentityRequestSchema, { linkId })
+		);
+	}
+
+	async enableSCIM(id: string) {
+		const client = this.getClient();
+		return client.enableSCIM(create(EnableSCIMRequestSchema, { id }));
+	}
+
+	async disableSCIM(id: string) {
+		const client = this.getClient();
+		await client.disableSCIM(create(DisableSCIMRequestSchema, { id }));
+	}
+
+	async rotateSCIMToken(id: string) {
+		const client = this.getClient();
+		return client.rotateSCIMToken(create(RotateSCIMTokenRequestSchema, { id }));
+	}
+
+	// Search
+	async search(
+		query: string,
+		scope: SearchScope = SearchScope.UNSPECIFIED,
+		pageSize: number = 50,
+		pageToken: string = '',
+		dateFilters?: Array<{ field: string; start: bigint; end: bigint }>,
+		tagFilters?: Record<string, string>,
+		sortField: SortField = SortField.UNSPECIFIED,
+		sortDirection: SortDirection = SortDirection.UNSPECIFIED
+	) {
+		const client = this.getClient();
+		const req: Record<string, unknown> = { query, scope, pageSize, pageToken, sortField, sortDirection };
+		if (dateFilters && dateFilters.length > 0) {
+			req.dateFilters = dateFilters.map((df) =>
+				create(SearchDateFilterSchema, { field: df.field, start: df.start, end: df.end })
+			);
+		}
+		if (tagFilters) {
+			req.tagFilters = tagFilters;
+		}
+		return client.search(create(SearchRequestSchema, req));
+	}
+
+	async rebuildSearchIndex() {
+		const client = this.getClient();
+		await client.rebuildSearchIndex(create(RebuildSearchIndexRequestSchema, {}));
+	}
+
+	// Server Settings
+	async getServerSettings() {
+		const client = this.getClient();
+		return client.getServerSettings(create(GetServerSettingsRequestSchema, {}));
+	}
+
+	async updateServerSettings(userProvisioningEnabled: boolean, sshAccessForAll: boolean) {
+		const client = this.getClient();
+		return client.updateServerSettings(create(UpdateServerSettingsRequestSchema, {
+			userProvisioningEnabled,
+			sshAccessForAll,
+		}));
+	}
+
+	// User Provisioning Per-User
+	async setUserProvisioningEnabled(userId: string, enabled: boolean) {
+		const client = this.getClient();
+		return client.setUserProvisioningEnabled(create(SetUserProvisioningEnabledRequestSchema, {
+			userId,
+			enabled,
+		}));
+	}
+
+	// Remote terminal (PTY) sessions.
+	//
+	// startTerminal mints a short-lived session token + public control
+	// WebSocket URL; stopTerminal ends the session gracefully (owner-
+	// initiated, idempotent). The admin-only listActiveTerminalSessions
+	// / terminateTerminalSession pair is for moderation — see the
+	// StopTerminal vs TerminateTerminalSession block in control.proto
+	// for the full semantic split (ownership vs admin, audit reason,
+	// idempotency vs NotFound on unknown sessions).
+	async startTerminal(deviceId: string, cols: number = 80, rows: number = 24) {
+		const client = this.getClient();
+		return client.startTerminal(create(StartTerminalRequestSchema, {
+			deviceId,
+			cols,
+			rows,
+		}));
+	}
+
+	async stopTerminal(sessionId: string) {
+		const client = this.getClient();
+		return client.stopTerminal(create(StopTerminalRequestSchema, {
+			sessionId,
+		}));
+	}
+
+	async listActiveTerminalSessions(
+		pageSize: number = 50,
+		pageToken: string = '',
+		deviceId: string = '',
+		userId: string = ''
+	) {
+		const client = this.getClient();
+		return client.listActiveTerminalSessions(create(ListActiveTerminalSessionsRequestSchema, {
+			pageSize,
+			pageToken,
+			deviceId,
+			userId,
+		}));
+	}
+
+	async terminateTerminalSession(sessionId: string, reason: string = '') {
+		const client = this.getClient();
+		return client.terminateTerminalSession(create(TerminateTerminalSessionRequestSchema, {
+			sessionId,
+			reason,
+		}));
+	}
+
+}
+
+/**
+ * Extract the error code from a ConnectError's ErrorDetail, if present.
+ */
+export function getErrorCode(error: unknown): string | undefined {
+	if (error instanceof ConnectError) {
+		const details = error.findDetails(ErrorDetailSchema);
+		const first = details[0];
+		if (first && first.code) {
+			return first.code;
+		}
+	}
+	return undefined;
+}
+
+/**
+ * Extract the request ID from a ConnectError's ErrorDetail, if present.
+ * Users can report this ID to correlate with server-side logs.
+ */
+export function getRequestId(error: unknown): string | undefined {
+	if (error instanceof ConnectError) {
+		const details = error.findDetails(ErrorDetailSchema);
+		const first = details[0];
+		if (first && first.requestId) {
+			return first.requestId;
+		}
+	}
+	return undefined;
+}
+
+// Re-export types for convenience
+export type {
+	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
+	DeviceGroup, Assignment, ActionExecution, AuditEvent, InventoryTableResult,
+	Role, PermissionInfo, UserGroup, UserGroupMember, IdentityProvider, IdentityLink,
+	LpsPassword, LuksKey, CreateActionRequest, UpdateActionParamsRequest,
+	AvailableItem, DeviceAssignee, CompliancePolicy, CompliancePolicyRule, DevicePolicyEvaluation,
+	SearchResult, SshPublicKey, DeviceGroupMember, InheritedRole, ActionSetMember, DefinitionMember,
+	StartTerminalResponse, TerminalSessionInfo
+};

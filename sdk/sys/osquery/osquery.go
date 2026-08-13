@@ -1,0 +1,344 @@
+// Package osquery integrates the osquery binary for system queries through an
+// injected exec.Runner.
+//
+// Build a Querier with a Runner and call its methods; every query is escalated
+// through the Runner. Both the convenience table path AND the RawSql path refuse
+// a curated deny-list of credential-bearing tables before running anything — a
+// raw query that references a deny-listed table (in any clause) is rejected, so
+// there is no path to read shadow/sudoers/… via osquery.
+//
+//	r, _ := exec.NewRunner(exec.Sudo)
+//	q, err := osquery.New(r) // ErrNotInstalled if osqueryi is absent
+//	if err != nil { ... }
+//	rows, err := q.QueryTable(ctx, "os_version")
+//
+// New is a single-implementation capability (design §3.8): it exposes the
+// Querier interface for shape-uniformity with the backend-pattern packages even
+// though osquery is the only implementation. There is no Backend argument — only
+// the required Runner.
+package osquery
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	osexec "os/exec"
+	"regexp"
+	"strings"
+	"time"
+
+	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	"github.com/manchtools/power-manage-sdk/sys/exec"
+)
+
+// validTableName matches only safe osquery table names (alphanumeric + underscore).
+var validTableName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
+// sensitiveTables are osquery tables that can expose credential material or other
+// high-value secrets — password-hash metadata (shadow), secrets in process
+// environments (process_envs), scheduled commands (crontab), shell history
+// (shell_history), and sudoers policy (sudoers). They all pass validTableName, so
+// the shape-only check is not enough: BOTH the convenience table path and the
+// RawSql path refuse them (sensitiveTableRefIn scans raw SQL for any deny-listed
+// table as a whole-word identifier) so a compromised control server cannot
+// exfiltrate them through the agent's privileged osquery by any path.
+var sensitiveTables = map[string]bool{
+	"shadow":        true,
+	"process_envs":  true,
+	"crontab":       true,
+	"shell_history": true,
+	"sudoers":       true,
+}
+
+// isSensitiveTable reports whether name is on the curated deny-list. Comparison is
+// case- and whitespace-insensitive so trivial variants cannot slip past.
+func isSensitiveTable(name string) bool {
+	return sensitiveTables[strings.ToLower(strings.TrimSpace(name))]
+}
+
+// sensitiveTableRefIn returns the first deny-listed table name that appears as a
+// whole-word identifier anywhere in sql (case-insensitive), or "" if none. Raw
+// SQL is operator-supplied and osquery's grammar is rich (quoting, aliases,
+// subqueries, JOINs), so rather than parse it this gate FAILS CLOSED: any token
+// equal to a sensitive table name — even in a column, alias, or string position
+// — is treated as a reference and refused. Over-refusal is the safe direction
+// for a credential-table gate; under-refusal would leak shadow/sudoers/…
+func sensitiveTableRefIn(sql string) string {
+	lower := strings.ToLower(sql)
+	for name := range sensitiveTables {
+		if containsWord(lower, name) {
+			return name
+		}
+	}
+	return ""
+}
+
+// containsWord reports whether word occurs in s delimited by non-identifier
+// characters (so "shadow" matches `FROM shadow` / `from shadow s` but not
+// `shadowed`). Both arguments must already be lowercase.
+func containsWord(s, word string) bool {
+	for from := 0; ; {
+		i := strings.Index(s[from:], word)
+		if i < 0 {
+			return false
+		}
+		i += from
+		leftOK := i == 0 || !isIdentByte(s[i-1])
+		rightOK := i+len(word) >= len(s) || !isIdentByte(s[i+len(word)])
+		if leftOK && rightOK {
+			return true
+		}
+		from = i + 1
+	}
+}
+
+// isIdentByte reports whether b is a SQL identifier character ([A-Za-z0-9_]).
+func isIdentByte(b byte) bool {
+	return b == '_' || (b >= '0' && b <= '9') || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
+}
+
+var (
+	// ErrNotInstalled is returned when osquery is not installed on the system.
+	ErrNotInstalled = errors.New("osquery is not installed")
+
+	// ErrQueryFailed is returned when an osquery query fails.
+	ErrQueryFailed = errors.New("osquery query failed")
+
+	// Common osquery binary paths to check.
+	osqueryPaths = []string{
+		"/usr/bin/osqueryi",
+		"/usr/local/bin/osqueryi",
+		"/opt/osquery/bin/osqueryi",
+	}
+
+	// Default query timeout.
+	defaultTimeout = 30 * time.Second
+)
+
+// Querier is the osquery surface: a small, ctx-first interface over the osquery
+// binary. It is single-implementation by nature (§3.8) — there is no second way
+// to run osquery — but it is an interface so a consumer learns the same
+// construct-a-handle shape as every other capability.
+type Querier interface {
+	// IsInstalled reports, live, whether an osqueryi binary is currently
+	// reachable. New already fails closed with ErrNotInstalled when the binary
+	// is absent at construction; IsInstalled re-probes so a caller can detect
+	// the binary being removed during the agent's lifetime. The ctx is accepted
+	// for shape-uniformity; the probe itself is a filesystem lookup.
+	IsInstalled(ctx context.Context) bool
+	// ListTables returns the names of the available osquery tables.
+	ListTables(ctx context.Context) ([]string, error)
+	// Query runs a structured query. BOTH the table path and the RawSql path are
+	// gated by the credential-bearing deny-list before any SQL is built or run —
+	// a raw query referencing a deny-listed table is refused. A query failure
+	// (or a policy refusal) is folded into the returned *pb.OSQueryResult
+	// (Success=false), not returned as a Go error.
+	Query(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error)
+	// QueryTable runs SELECT * FROM <table> after the same validity + deny-list
+	// checks as Query's table path.
+	QueryTable(ctx context.Context, tableName string) ([]*pb.OSQueryRow, error)
+	// QuerySQL runs raw SQL and parses the JSON result rows.
+	QuerySQL(ctx context.Context, sql string) ([]*pb.OSQueryRow, error)
+}
+
+// client is the single Querier implementation; it wraps osquery binary
+// execution over an injected Runner.
+type client struct {
+	binaryPath string
+	r          exec.Runner
+}
+
+// New creates an osquery Querier driven by runner. Returns ErrNotInstalled when
+// the osqueryi binary is not found (eager fail-closed probe, so a caller learns
+// at construction that osquery is unavailable), and an error when runner is nil.
+func New(runner exec.Runner) (Querier, error) {
+	if runner == nil {
+		return nil, fmt.Errorf("osquery: %w", exec.ErrRunnerRequired)
+	}
+	path := findOsqueryBinary()
+	if path == "" {
+		return nil, ErrNotInstalled
+	}
+	return &client{binaryPath: path, r: runner}, nil
+}
+
+// IsInstalled re-probes for the osqueryi binary so callers can detect removal at
+// runtime. See the Querier.IsInstalled contract.
+func (c *client) IsInstalled(ctx context.Context) bool {
+	return findOsqueryBinary() != ""
+}
+
+// lookPath is the resolution function used by findOsqueryBinary. It defaults to
+// os/exec.LookPath and is overridable from tests so binary discovery can be
+// exercised without depending on what is installed on the test host (F026 in
+// TECH_DEBT_AUDIT.md).
+var lookPath = osexec.LookPath
+
+// findOsqueryBinary searches for the osqueryi binary.
+//
+// Resolution order: explicit absolute paths in osqueryPaths first (matches the
+// "use the system package's location if available" expectation on
+// Fedora/RHEL/Debian), then PATH lookup for the bare "osqueryi" name (covers
+// Homebrew/Linuxbrew, Nix, Snap, manual installs).
+func findOsqueryBinary() string {
+	for _, path := range osqueryPaths {
+		if _, err := lookPath(path); err == nil {
+			return path
+		}
+	}
+	if path, err := lookPath("osqueryi"); err == nil {
+		return path
+	}
+	return ""
+}
+
+// ListTables returns a list of available osquery tables.
+func (c *client) ListTables(ctx context.Context) ([]string, error) {
+	output, err := c.execQuery(ctx, ".tables")
+	if err != nil {
+		return nil, err
+	}
+
+	var tables []string
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		// osqueryi `.tables` prints one table per line as "=> <name>" (with
+		// leading indentation, already trimmed above). The "=> " lines ARE the
+		// data; strip the marker and keep the name. Any line without the marker
+		// is decoration/noise and is ignored.
+		name, ok := strings.CutPrefix(line, "=>")
+		if !ok {
+			continue
+		}
+		if name = strings.TrimSpace(name); name != "" {
+			tables = append(tables, name)
+		}
+	}
+	return tables, nil
+}
+
+// tableSQL returns custom SQL for tables that need JOINs or special handling.
+var tableSQL = map[string]string{
+	"authorized_keys": "SELECT authorized_keys.* FROM users JOIN authorized_keys USING (uid)",
+}
+
+// Query executes an osquery SQL query and returns the results.
+func (c *client) Query(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error) {
+	var sql string
+	if query.RawSql != "" {
+		// RawSql is gated against the same credential-table deny-list as the
+		// table path: a raw query that references a sensitive table is refused
+		// BEFORE osqueryi runs. RawSql is no longer an escape hatch around the
+		// deny-list — there is no path to read shadow/sudoers/… via osquery.
+		if name := sensitiveTableRefIn(query.RawSql); name != "" {
+			return &pb.OSQueryResult{
+				QueryId: query.QueryId,
+				Success: false,
+				Error:   fmt.Sprintf("table %q is not permitted", name),
+			}, nil
+		}
+		sql = query.RawSql
+	} else if custom, ok := tableSQL[query.Table]; ok {
+		sql = custom
+	} else {
+		if !validTableName.MatchString(query.Table) {
+			return &pb.OSQueryResult{
+				QueryId: query.QueryId,
+				Success: false,
+				Error:   fmt.Sprintf("invalid table name: %q", query.Table),
+			}, nil
+		}
+		if isSensitiveTable(query.Table) {
+			return &pb.OSQueryResult{
+				QueryId: query.QueryId,
+				Success: false,
+				Error:   fmt.Sprintf("table %q is not permitted", query.Table),
+			}, nil
+		}
+		sql = fmt.Sprintf("SELECT * FROM %s", query.Table)
+	}
+
+	rows, err := c.QuerySQL(ctx, sql)
+	if err != nil {
+		return &pb.OSQueryResult{
+			QueryId: query.QueryId,
+			Success: false,
+			Error:   err.Error(),
+		}, nil
+	}
+
+	return &pb.OSQueryResult{
+		QueryId: query.QueryId,
+		Success: true,
+		Rows:    rows,
+	}, nil
+}
+
+// QuerySQL executes a raw SQL query against osquery.
+func (c *client) QuerySQL(ctx context.Context, sql string) ([]*pb.OSQueryRow, error) {
+	output, err := c.execQuery(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []map[string]string
+	if err := json.Unmarshal([]byte(output), &results); err != nil {
+		return nil, fmt.Errorf("failed to parse osquery output: %w", err)
+	}
+
+	rows := make([]*pb.OSQueryRow, 0, len(results))
+	for _, result := range results {
+		rows = append(rows, &pb.OSQueryRow{Data: result})
+	}
+
+	return rows, nil
+}
+
+// QueryTable queries a specific table by name.
+func (c *client) QueryTable(ctx context.Context, tableName string) ([]*pb.OSQueryRow, error) {
+	sql, ok := tableSQL[tableName]
+	if !ok {
+		if !validTableName.MatchString(tableName) {
+			return nil, fmt.Errorf("invalid table name: %q", tableName)
+		}
+		if isSensitiveTable(tableName) {
+			return nil, fmt.Errorf("table %q is not permitted", tableName)
+		}
+		sql = fmt.Sprintf("SELECT * FROM %s", tableName)
+	}
+	return c.QuerySQL(ctx, sql)
+}
+
+// execQuery executes an osquery command (escalated through the Runner) and
+// returns its stdout.
+func (c *client) execQuery(ctx context.Context, query string) (string, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, defaultTimeout)
+		defer cancel()
+	}
+
+	args := []string{}
+	if strings.HasPrefix(query, ".") {
+		args = append(args, query)
+	} else {
+		args = append(args, "--json", query)
+	}
+
+	res, err := c.r.Run(ctx, exec.Command{Name: c.binaryPath, Args: args, Escalate: true})
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrQueryFailed, err)
+	}
+	if res.ExitCode != 0 {
+		if stderr := strings.TrimSpace(res.Stderr); stderr != "" {
+			return "", fmt.Errorf("%w: %s", ErrQueryFailed, stderr)
+		}
+		return "", fmt.Errorf("%w: exit code %d", ErrQueryFailed, res.ExitCode)
+	}
+
+	return strings.TrimSpace(res.Stdout), nil
+}
