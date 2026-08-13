@@ -1,0 +1,283 @@
+package deviceauth
+
+import (
+	"bytes"
+	"context"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"connectrpc.com/connect"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	"github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1/powermanagev1connect"
+
+	sdk "github.com/manchtools/power-manage-sdk"
+	"github.com/manchtools/power-manage/agent/internal/credentials"
+)
+
+var testCAPin = strings.Repeat("0", 64)
+
+func testControlSealingPublicKey() []byte {
+	return bytes.Repeat([]byte{0x42}, 32)
+}
+
+// mockRegisterService implements the Register RPC of ControlServiceHandler.
+type mockRegisterService struct {
+	powermanagev1connect.UnimplementedControlServiceHandler
+
+	registerFunc func(context.Context, *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error)
+}
+
+func (m *mockRegisterService) Register(ctx context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+	if m.registerFunc != nil {
+		return m.registerFunc(ctx, req)
+	}
+	return nil, connect.NewError(connect.CodeUnimplemented, nil)
+}
+
+// startMockControlServer starts an httptest TLS control server (the
+// agent enforces https-only enrollment, so a plain-http test server
+// would be rejected by the gate before RegisterAgent runs).
+func startMockControlServer(t *testing.T, mock *mockRegisterService) *httptest.Server {
+	t.Helper()
+	mux := http.NewServeMux()
+	path, handler := powermanagev1connect.NewControlServiceHandler(mock)
+	mux.Handle(path, handler)
+	srv := httptest.NewTLSServer(mux)
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// trustServer returns the registerOpts that make sdk.RegisterAgent trust
+// the httptest TLS server's self-signed certificate.
+func trustServer(srv *httptest.Server) []sdk.ClientOption {
+	return []sdk.ClientOption{sdk.WithHTTPClient(srv.Client())}
+}
+
+func TestEnroll_Success(t *testing.T) {
+	caPEM := genTestCAPEM(t)
+	mock := &mockRegisterService{
+		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+			require.Len(t, req.Msg.AgentSealingPublicKey, 32)
+			return connect.NewResponse(&pm.RegisterResponse{
+				DeviceId:                &pm.DeviceId{Value: "dev-123"},
+				CaCert:                  caPEM,
+				Certificate:             []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
+				ControlUrl:              "https://gw.example.com:8443",
+				ControlSealingPublicKey: testControlSealingPublicKey(),
+			}), nil
+		},
+	}
+	srv := startMockControlServer(t, mock)
+
+	credStore := credentials.NewStore(t.TempDir())
+	logger := slog.Default()
+
+	var enrolledCreds *credentials.Credentials
+	handler := NewEnrollHandler("test-host", "dev", credStore, logger, func(creds *credentials.Credentials) {
+		enrolledCreds = creds
+	})
+	handler.registerOpts = trustServer(srv)
+
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		ServerUrl: srv.URL, Token: "test-token", CaFingerprintPin: caPin(t, caPEM),
+	}))
+	require.NoError(t, err)
+	assert.True(t, resp.Msg.Success)
+	assert.Equal(t, "dev-123", resp.Msg.DeviceId)
+	assert.Empty(t, resp.Msg.Error)
+
+	// Callback was called
+	require.NotNil(t, enrolledCreds)
+	assert.Equal(t, "dev-123", enrolledCreds.DeviceID)
+	assert.Equal(t, "https://gw.example.com:8443", enrolledCreds.AgentAddr)
+	assert.Equal(t, srv.URL, enrolledCreds.ControlAddr)
+	assert.Len(t, enrolledCreds.SealingPrivateKey, 32)
+	assert.Equal(t, testControlSealingPublicKey(), enrolledCreds.ControlSealingPublicKey)
+
+	// Credentials saved to store
+	assert.True(t, credStore.Exists())
+	loaded, err := credStore.Load()
+	require.NoError(t, err)
+	assert.Equal(t, "dev-123", loaded.DeviceID)
+	assert.Len(t, loaded.SealingPrivateKey, 32)
+	assert.Equal(t, testControlSealingPublicKey(), loaded.ControlSealingPublicKey)
+}
+
+func TestEnroll_MissingFields(t *testing.T) {
+	credStore := credentials.NewStore(t.TempDir())
+	logger := slog.Default()
+	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
+
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		ServerUrl: "",
+		Token:     "",
+	}))
+	require.NoError(t, err)
+	assert.False(t, resp.Msg.Success)
+	assert.Contains(t, resp.Msg.Error, "required")
+}
+
+func TestEnroll_AlreadyEnrolled(t *testing.T) {
+	// Pre-populate credentials
+	credStore := credentials.NewStore(t.TempDir())
+	credStore.Save(&credentials.Credentials{
+		DeviceID:    "existing-device",
+		CACert:      []byte("ca"),
+		Certificate: []byte("cert"),
+		PrivateKey:  []byte("key"),
+		AgentAddr:   "https://gw.example.com",
+	})
+
+	logger := slog.Default()
+	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
+
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		ServerUrl:        "https://example.com",
+		Token:            "token",
+		CaFingerprintPin: testCAPin,
+	}))
+	require.NoError(t, err)
+	assert.True(t, resp.Msg.Success) // Returns success with existing device ID
+	assert.Equal(t, "existing-device", resp.Msg.DeviceId)
+	assert.Contains(t, resp.Msg.Error, "already enrolled")
+}
+
+func TestEnroll_RegistrationFails(t *testing.T) {
+	mock := &mockRegisterService{
+		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+			return nil, connect.NewError(connect.CodePermissionDenied, nil)
+		},
+	}
+	srv := startMockControlServer(t, mock)
+
+	credStore := credentials.NewStore(t.TempDir())
+	logger := slog.Default()
+	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
+	handler.registerOpts = trustServer(srv)
+
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		ServerUrl: srv.URL, Token: "bad-token", CaFingerprintPin: testCAPin,
+	}))
+	require.NoError(t, err)
+	assert.False(t, resp.Msg.Success)
+	assert.Contains(t, resp.Msg.Error, "registration failed")
+}
+
+func TestGetEnrollmentStatus_NotEnrolled(t *testing.T) {
+	credStore := credentials.NewStore(t.TempDir())
+	logger := slog.Default()
+	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
+
+	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	require.NoError(t, err)
+	assert.False(t, resp.Msg.Enrolled)
+	assert.Empty(t, resp.Msg.DeviceId)
+}
+
+func TestGetEnrollmentStatus_Enrolled(t *testing.T) {
+	credStore := credentials.NewStore(t.TempDir())
+	credStore.Save(&credentials.Credentials{
+		DeviceID:    "dev-abc",
+		CACert:      []byte("ca"),
+		Certificate: []byte("cert"),
+		PrivateKey:  []byte("key"),
+		AgentAddr:   "https://gw.example.com",
+	})
+
+	logger := slog.Default()
+	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
+
+	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	require.NoError(t, err)
+	assert.True(t, resp.Msg.Enrolled)
+	assert.Equal(t, "dev-abc", resp.Msg.DeviceId)
+}
+
+func TestEnrollServer_EndToEnd(t *testing.T) {
+	caPEM := genTestCAPEM(t)
+	mock := &mockRegisterService{
+		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+			return connect.NewResponse(&pm.RegisterResponse{
+				DeviceId:                &pm.DeviceId{Value: "dev-e2e"},
+				CaCert:                  caPEM,
+				Certificate:             []byte("-----BEGIN CERTIFICATE-----\ncert\n-----END CERTIFICATE-----\n"),
+				ControlUrl:              "https://gw.example.com",
+				ControlSealingPublicKey: testControlSealingPublicKey(),
+			}), nil
+		},
+	}
+	controlSrv := startMockControlServer(t, mock)
+
+	credStore := credentials.NewStore(t.TempDir())
+	logger := slog.Default()
+
+	enrollCh := make(chan *credentials.Credentials, 1)
+	enrollHandler := NewEnrollHandler("test-host", "dev", credStore, logger, func(creds *credentials.Credentials) {
+		enrollCh <- creds
+	})
+	enrollHandler.registerOpts = trustServer(controlSrv)
+
+	socketPath := filepath.Join(t.TempDir(), "enroll.sock")
+	enrollServer := NewEnrollServer(enrollHandler, socketPath, logger)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	go enrollServer.Start(ctx)
+
+	// Wait for socket to be ready
+	require.Eventually(t, func() bool {
+		conn, err := net.Dial("unix", socketPath)
+		if err != nil {
+			return false
+		}
+		conn.Close()
+		return true
+	}, 2*time.Second, 10*time.Millisecond)
+
+	// Create client over unix socket
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return (&net.Dialer{}).DialContext(ctx, "unix", socketPath)
+			},
+		},
+	}
+	client := powermanagev1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
+
+	// Check status: not enrolled
+	status, err := client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	require.NoError(t, err)
+	assert.False(t, status.Msg.Enrolled)
+
+	// Enroll
+	resp, err := client.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		ServerUrl: controlSrv.URL, Token: "test-token", CaFingerprintPin: caPin(t, caPEM),
+	}))
+	require.NoError(t, err)
+	assert.True(t, resp.Msg.Success)
+	assert.Equal(t, "dev-e2e", resp.Msg.DeviceId)
+
+	// Callback received
+	select {
+	case creds := <-enrollCh:
+		assert.Equal(t, "dev-e2e", creds.DeviceID)
+	case <-time.After(2 * time.Second):
+		t.Fatal("enrollment callback not received")
+	}
+
+	// Check status again: enrolled
+	status, err = client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	require.NoError(t, err)
+	assert.True(t, status.Msg.Enrolled)
+	assert.Equal(t, "dev-e2e", status.Msg.DeviceId)
+}

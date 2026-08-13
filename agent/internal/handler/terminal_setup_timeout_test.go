@@ -1,0 +1,98 @@
+package handler
+
+import (
+	"context"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+)
+
+const setupTestULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+
+// TestOnTerminalStart_BoundedSetupContext pins WS13 #2: the privileged setup
+// steps run under a BOUNDED context, so a hung step surfaces a STATE_ERROR
+// within the deadline and the call returns — it cannot wedge the dispatch loop
+// indefinitely. Driven via the sysuser seams so it needs no real pm-tty account.
+func TestOnTerminalStart_BoundedSetupContext(t *testing.T) {
+	h, sender := newTestHandlerWithTTY(t, true)
+
+	origGet, origModify, origTimeout := sysuserGet, sysuserModify, terminalSetupTimeout
+	t.Cleanup(func() {
+		sysuserGet, sysuserModify, terminalSetupTimeout = origGet, origModify, origTimeout
+	})
+
+	// A valid, unlocked user so we reach the setup steps.
+	sysuserGet = func(context.Context, string) (sysuser.Info, error) { return sysuser.Info{Locked: false}, nil }
+	// Modify hangs, respecting ctx — it returns only when the bounded setup ctx
+	// fires. This is the "hung sudo" the bound defends against.
+	modifyEntered := make(chan struct{})
+	var modifyOnce sync.Once // a retry / second user must not re-close (#174)
+	sysuserModify = func(ctx context.Context, _ string, _ sysuser.ModifyOptions) error {
+		modifyOnce.Do(func() { close(modifyEntered) })
+		<-ctx.Done()
+		return ctx.Err()
+	}
+	terminalSetupTimeout = 100 * time.Millisecond // fast test
+
+	done := make(chan error, 1)
+	go func() {
+		done <- h.OnTerminalStart(context.Background(), &pb.TerminalStart{
+			SessionId: setupTestULID, TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+		})
+	}()
+
+	// Prove we actually exercised the setup path (reached Modify).
+	select {
+	case <-modifyEntered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("setup never reached the Modify step")
+	}
+
+	// OnTerminalStart must RETURN shortly after the deadline — the dispatch loop
+	// goroutine is freed, not blocked on the hung step.
+	select {
+	case err := <-done:
+		require.NoError(t, err, "OnTerminalStart returns nil; failures surface via STATE_ERROR, not a returned error")
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnTerminalStart did not return after the setup deadline — the dispatch loop would be wedged")
+	}
+
+	last := sender.lastState()
+	require.NotNil(t, last, "a setup timeout must emit a TerminalStateChange")
+	assert.Equal(t, pb.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR, last.State,
+		"a setup timeout must surface STATE_ERROR")
+
+	h.mu.Lock()
+	_, exists := h.terminals[setupTestULID]
+	h.mu.Unlock()
+	assert.False(t, exists, "the half-built session must be removed after a setup failure")
+}
+
+func TestTerminalCleanupContextSurvivesRequestCancellationButStaysBounded(t *testing.T) {
+	originalTimeout := terminalCleanupTimeout
+	terminalCleanupTimeout = 50 * time.Millisecond
+	t.Cleanup(func() { terminalCleanupTimeout = originalTimeout })
+
+	requestCtx, cancelRequest := context.WithCancel(context.Background())
+	cancelRequest()
+
+	cleanupCtx, cancelCleanup := terminalCleanupContext(requestCtx)
+	defer cancelCleanup()
+	require.NoError(t, cleanupCtx.Err(), "cleanup must survive the failed request context")
+	deadline, ok := cleanupCtx.Deadline()
+	require.True(t, ok, "cleanup must always carry a deadline")
+	require.LessOrEqual(t, time.Until(deadline), terminalCleanupTimeout)
+
+	select {
+	case <-cleanupCtx.Done():
+		require.ErrorIs(t, cleanupCtx.Err(), context.DeadlineExceeded)
+	case <-time.After(time.Second):
+		t.Fatal("terminal cleanup context was not bounded")
+	}
+}

@@ -1,0 +1,927 @@
+package handler
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/oklog/ulid/v2"
+
+	sdk "github.com/manchtools/power-manage-sdk"
+	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/power-manage-sdk/sys/terminal"
+	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+)
+
+// Compile-time assertion that *Handler satisfies sdk.TerminalHandler.
+// If the SDK changes the interface and the handler stops matching, this
+// fails at build time instead of silently disabling terminal support
+// (the SDK Client's type-assert miss is a no-op for the agent).
+var _ sdk.TerminalHandler = (*Handler)(nil)
+
+// Seams over the sysuser helpers + the setup deadline, so the bounded-setup
+// behaviour (WS13 #2) is testable without a real pm-tty-* account: a test
+// substitutes a ctx-respecting blocker for Modify and a fixed user for Get, and
+// lowers the timeout to keep the test fast. Production uses the real helpers
+// (Modify shells out via sudo -n) and the 30s default.
+var (
+	// termUserMgr/termFSMgr drive the privileged tty-account setup (usermod shell,
+	// recursive chown of the temp home), built over the handler's Direct runner —
+	// the agent runs as root — mirroring the osquery/inventory Managers. The
+	// sysuserModify/sysuserGet method-value seams stay so tests can substitute a
+	// ctx-respecting blocker / a fixed user without a real pm-tty-* account.
+	termUserMgr   = mustTermUserManager()
+	termFSMgr     = mustTermFSManager()
+	sysuserModify = termUserMgr.Modify
+	sysuserGet    = termUserMgr.Get
+	// terminalSetupTimeout bounds the privileged setup steps (usermod, chown)
+	// that run on the dispatch loop before a session goes active, so a slow/hung
+	// step cannot wedge the receive loop. Bounds only SETUP, not the session
+	// lifetime (the PTY pump uses sessionCtx).
+	terminalSetupTimeout = 30 * time.Second
+	// terminalCleanupTimeout lets local cleanup outlive a failed stream send,
+	// but prevents a stuck usermod from leaking the dispatch goroutine.
+	terminalCleanupTimeout = 5 * time.Second
+)
+
+func terminalCleanupContext(requestCtx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(requestCtx), terminalCleanupTimeout)
+}
+
+func mustTermUserManager() sysuser.Manager {
+	m, err := sysuser.New(sysuser.ShadowUtils, handlerRunner)
+	if err != nil {
+		panic("handler: user manager must construct: " + err.Error())
+	}
+	return m
+}
+
+func mustTermFSManager() sysfs.Manager {
+	m, err := sysfs.New(handlerRunner)
+	if err != nil {
+		panic("handler: fs manager must construct: " + err.Error())
+	}
+	return m
+}
+
+// Default agent-side limits per the issue spec
+// (manchtools/power-manage-sdk#16 — Security section).
+const (
+	defaultTerminalLimit       = 3
+	defaultTerminalIdleTimeout = 30 * time.Minute
+	terminalSweepInterval      = 30 * time.Second
+	terminalReadChunkBytes     = 32 * 1024 // matches the proto's max=65536 with headroom
+
+	// Activated shell to assign to the TTY user during a session. The
+	// agent reverts to nologin on disconnect; this is intentionally
+	// hard-coded so it cannot be overridden from the control side.
+	terminalActivatedShell   = "/bin/bash"
+	terminalDeactivatedShell = "/usr/sbin/nologin"
+
+	// maxTerminalDimension is the inclusive upper bound for a PTY column /
+	// row count. It is the largest value representable in the uint16 the
+	// kernel winsize ABI uses; anything above it would wrap when narrowed
+	// (65536 -> 0, 65537 -> 1) and produce a degenerate PTY.
+	maxTerminalDimension = 65535
+)
+
+// validateDims enforces the PTY dimension contract — 0 < dim <= 65535 —
+// BEFORE the uint16 narrowing in OnTerminalStart / OnTerminalResize. A zero
+// dimension is absent; a value above 65535 wraps under uint16. Sourced from
+// the wire intent (proto's gt=0,lte=65535), not from any artifact, because
+// the agent's Receive path runs no protovalidate.
+func validateDims(cols, rows uint32) error {
+	if cols == 0 || cols > maxTerminalDimension {
+		return fmt.Errorf("invalid terminal dimensions: cols=%d (must be 1..%d)", cols, maxTerminalDimension)
+	}
+	if rows == 0 || rows > maxTerminalDimension {
+		return fmt.Errorf("invalid terminal dimensions: rows=%d (must be 1..%d)", rows, maxTerminalDimension)
+	}
+	return nil
+}
+
+// TerminalSender is the subset of the SDK Client that the terminal
+// handler needs to push messages back to the control. The agent's
+// main.go injects the *sdk.Client which satisfies this interface
+// implicitly so the handler package doesn't depend on the entire
+// client.
+type TerminalSender interface {
+	SendTerminalOutput(ctx context.Context, out *pb.TerminalOutput) error
+	SendTerminalStateChange(ctx context.Context, change *pb.TerminalStateChange) error
+}
+
+// sessionState tracks the lifecycle of a terminal session.
+type sessionState int
+
+const (
+	// sessionStateStarting is the brief window between reservation
+	// (when the slot is reserved under h.mu) and activation (when the
+	// PTY has been allocated and OnTerminalStart is about to send
+	// STARTED). closeTerminal during this window marks the session
+	// stopping and cancels the start context; OnTerminalStart sees the
+	// state transition between sudo calls and tears down its own
+	// partial state instead of finishing.
+	sessionStateStarting sessionState = iota
+	// sessionStateActive is the steady-state: PTY allocated, pump
+	// goroutine running, normal I/O flowing.
+	sessionStateActive
+	// sessionStateStopping signals the session has been ordered to
+	// terminate, either by an external Stop or by an internal
+	// teardown (idle sweeper, send failure, natural exit). Any
+	// subsequent operation on the session is a no-op.
+	sessionStateStopping
+)
+
+// terminalSession is the agent's per-session bookkeeping. It owns the
+// SDK terminal.Session, the activated tty user (so we know what to
+// revert on Stop), the cancel function for its I/O goroutine, and a
+// snapshot of the TerminalSender captured at creation time so the
+// pump goroutine never has to touch h.mu to read the sender.
+type terminalSession struct {
+	id      string
+	ttyUser string
+	// sender is captured once at creation and is immutable for the
+	// session's lifetime. The pump goroutine uses this field directly
+	// rather than h.terminalSender so SetTerminalSender races on the
+	// handler are impossible.
+	sender TerminalSender
+
+	// mu protects state, session, tempHome, cancel, and lastActivity.
+	mu           sync.Mutex
+	state        sessionState
+	session      *terminal.Session  // nil during sessionStateStarting
+	tempHome     string             // "" during sessionStateStarting
+	cancel       context.CancelFunc // bound to a sessionCtx that gates both start prep and the I/O loop
+	lastActivity time.Time
+
+	now func() time.Time // clock seam; defaults to time.Now, overridden in tests
+}
+
+func (ts *terminalSession) touch() {
+	ts.mu.Lock()
+	ts.lastActivity = ts.now()
+	ts.mu.Unlock()
+}
+
+func (ts *terminalSession) idleSince() time.Time {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	return ts.lastActivity
+}
+
+func (ts *terminalSession) isStopping() bool {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	return ts.state == sessionStateStopping
+}
+
+// SetTerminalSender wires the SDK Client (or any compatible sender)
+// into the handler. Must be called once after the Client is created
+// and before the stream loop dispatches the first TerminalStart
+// message. Calling it twice replaces the previous sender.
+//
+// On the first call it also starts the idle-session sweeper goroutine
+// in the background. Call StopTerminalSweeper at agent shutdown to
+// stop the sweeper — without that, a Handler kept alive in tests would
+// leak the goroutine forever (audit F004).
+func (h *Handler) SetTerminalSender(sender TerminalSender) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.terminalSender = sender
+	if h.terminals == nil {
+		h.terminals = make(map[string]*terminalSession)
+	}
+	if h.terminalLimit == 0 {
+		h.terminalLimit = defaultTerminalLimit
+	}
+	if h.terminalIdleTimeout == 0 {
+		h.terminalIdleTimeout = defaultTerminalIdleTimeout
+	}
+	if !h.terminalSweeperStarted {
+		h.terminalSweeperStarted = true
+		h.terminalSweeperStop = make(chan struct{})
+		stopCh := h.terminalSweeperStop
+		go h.terminalSweepLoop(stopCh)
+	}
+}
+
+// StopTerminalSweeper stops the idle-session sweeper goroutine started
+// by the first SetTerminalSender call. Idempotent: safe to call before
+// the sweeper has been started or after it has already stopped. Audit
+// F004: tests that GC a Handler used to leak the sweeper forever.
+func (h *Handler) StopTerminalSweeper() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if !h.terminalSweeperStarted {
+		return
+	}
+	if h.terminalSweeperStop == nil {
+		return
+	}
+	// Closing a nil channel panics; closing a closed channel also
+	// panics — guard with the started/stop fields above and nil out
+	// after close so a second call is a no-op.
+	close(h.terminalSweeperStop)
+	h.terminalSweeperStop = nil
+	h.terminalSweeperStarted = false
+}
+
+// snapshotTerminalSender returns the currently-installed sender under
+// h.mu so callers don't race with SetTerminalSender. Returns nil if no
+// sender has been wired (the agent dropped the start request before it
+// could spawn anything).
+func (h *Handler) snapshotTerminalSender() TerminalSender {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.terminalSender
+}
+
+// OnTerminalStart implements sdk.TerminalHandler. It validates the
+// dedicated TTY user, activates its shell, allocates the PTY via the
+// SDK terminal package, kicks off the read goroutine that pumps PTY
+// output back to the control, and emits a STARTED state change. Any
+// failure surfaces via SendTerminalStateChange with STATE_ERROR
+// instead of returning an error from the dispatch loop, so a single
+// bad request never tears down the agent connection.
+//
+// The slow setup path (sudo Modify, mkdir, chown, terminal.Start)
+// runs after the slot is reserved but before the session is marked
+// active. A concurrent OnTerminalStop during that window marks the
+// session stopping and cancels the start context; this method checks
+// for that state between every step and reverts whichever side
+// effects already landed.
+func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) error {
+	logger := h.logger.With("session_id", req.SessionId, "tty_user", req.TtyUser)
+	logger.Info("opening terminal session")
+
+	// Snapshot the sender once under the lock so we never read
+	// h.terminalSender concurrently with SetTerminalSender. The
+	// captured value is what the pump goroutine uses too — see
+	// terminalSession.sender.
+	sender := h.snapshotTerminalSender()
+	if sender == nil {
+		// Should not happen — SetTerminalSender is called at startup.
+		// Surface the misconfiguration as a log line; we have no way
+		// to send a state-change error without a sender.
+		logger.Error("terminal sender not configured; dropping start request")
+		return nil
+	}
+
+	// Refuse anything that doesn't look like a Power Manage TTY user.
+	// IsValidName covers the syntactic constraints (lowercase, length,
+	// charset). The HasPrefix check enforces the dedicated pm-tty-*
+	// namespace so the agent can never operate on an arbitrary system
+	// account, even if the control server's resolution is buggy or
+	// compromised. The constant comes from the SDK so the prefix is
+	// the single source of truth.
+	if !sysuser.IsValidName(req.TtyUser) || !strings.HasPrefix(req.TtyUser, terminal.TTYUsernamePrefix) {
+		h.failTerminalStart(ctx, sender, req.SessionId, "invalid tty username")
+		return nil
+	}
+
+	// Device-authoritative TTY gate. The toggle lives in the agent's
+	// SQLite database and defaults to off. Only the power-manage user
+	// (via the CLI) or root can flip it — the server cannot bypass
+	// this by pushing an action because the action still runs on the
+	// device and goes through the same CLI surface.
+	//
+	// Fail-closed: a nil store or any read error means the gate is
+	// closed, never the other way around. This runs before the user
+	// lookup so a disabled device does zero syscalls on each rejected
+	// request and the error message doesn't leak whether the pm-tty-*
+	// user happens to exist.
+	if h.store == nil {
+		logger.Warn("terminal start rejected: no store wired for tty gate")
+		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
+		return nil
+	}
+	enabled, err := h.store.IsTTYEnabled()
+	if err != nil {
+		logger.Warn("failed to read tty toggle state; refusing session", "error", err)
+		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
+		return nil
+	}
+	if !enabled {
+		logger.Info("terminal start rejected: tty disabled on device")
+		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
+		return nil
+	}
+
+	// Validate the PTY dimensions BEFORE any narrowing to uint16. A value of
+	// 0 or > 65535 would otherwise wrap (65536 -> 0, 65537 -> 1) into a
+	// degenerate PTY. Reject with a clear reason rather than silently
+	// allocating a 0xN / 1xN terminal.
+	if err := validateDims(req.Cols, req.Rows); err != nil {
+		logger.Warn("terminal start rejected: bad dimensions", "cols", req.Cols, "rows", req.Rows)
+		h.failTerminalStart(ctx, sender, req.SessionId, err.Error())
+		return nil
+	}
+
+	// The session id is spliced into a /tmp path (tempHome below) that is then
+	// created and chowned as root, so it must be a well-formed ULID — the proto
+	// declares session_id as validate:"required,ulid", and the agent enforces
+	// that on inbound stream messages rather than trusting a possibly-compromised
+	// control. ulid.Parse rejects path-meaningful values ("../../etc", "a/b",
+	// embedded NULs) and the empty string before any filesystem use; together
+	// with the validated pm-tty-* username this makes the joined path unable to
+	// escape /tmp. Placed after the TTY/dims gates so those keep their existing
+	// rejection precedence, but before the user lookup so an invalid id costs no
+	// syscall.
+	if _, err := ulid.Parse(req.SessionId); err != nil {
+		h.failTerminalStart(ctx, sender, req.SessionId, "invalid session id")
+		return nil
+	}
+
+	// Verify the TTY user actually exists and is not locked. This is
+	// the dedicated pm-tty-* account; failure here means the control
+	// server's TerminalAccess provisioning hasn't run on this device
+	// yet, or the user has been disabled.
+	info, err := sysuserGet(ctx, req.TtyUser)
+	if err != nil {
+		h.failTerminalStart(ctx, sender, req.SessionId, fmt.Sprintf("tty user %q not provisioned: %v", req.TtyUser, err))
+		return nil
+	}
+	if info.Locked {
+		h.failTerminalStart(ctx, sender, req.SessionId, fmt.Sprintf("tty user %q is disabled", req.TtyUser))
+		return nil
+	}
+
+	// Build the session record up front so closeTerminal can find it
+	// during the slow start path and signal cancellation.
+	sessionCtx, cancel := context.WithCancel(context.Background())
+	// setupCtx bounds ONLY the privileged setup steps below (usermod, chown), so
+	// a slow/hung step cannot wedge the dispatch loop (WS13 #2). It derives from
+	// sessionCtx (a concurrent Stop still cancels setup) but adds a deadline; the
+	// session lifetime keeps sessionCtx. Released as soon as setup is done.
+	setupCtx, setupCancel := context.WithTimeout(sessionCtx, terminalSetupTimeout)
+	defer setupCancel()
+	ts := &terminalSession{
+		id:      req.SessionId,
+		ttyUser: req.TtyUser,
+		sender:  sender,
+		state:   sessionStateStarting,
+		cancel:  cancel,
+		now:     time.Now,
+	}
+	ts.touch()
+
+	// Reserve the slot under h.mu so concurrent Start requests can't
+	// both pass the limit check.
+	h.mu.Lock()
+	if h.terminals == nil {
+		h.terminals = make(map[string]*terminalSession)
+	}
+	if _, exists := h.terminals[req.SessionId]; exists {
+		h.mu.Unlock()
+		cancel()
+		h.failTerminalStart(ctx, sender, req.SessionId, "session already exists")
+		return nil
+	}
+	limit := h.terminalLimit
+	if limit == 0 {
+		limit = defaultTerminalLimit
+	}
+	if len(h.terminals) >= limit {
+		h.mu.Unlock()
+		cancel()
+		h.failTerminalStart(ctx, sender, req.SessionId, fmt.Sprintf("device terminal session limit reached (%d)", limit))
+		return nil
+	}
+	h.terminals[req.SessionId] = ts
+	h.mu.Unlock()
+
+	// Track which side effects have landed so the abort path can
+	// unwind exactly what was applied. Captured by the closures below.
+	var (
+		shellActivated bool
+		tempHomeDir    string
+	)
+
+	cleanup := func() {
+		if tempHomeDir != "" {
+			if err := os.RemoveAll(tempHomeDir); err != nil {
+				logger.Warn("failed to remove terminal temp home", "path", tempHomeDir, "error", err)
+			}
+		}
+		if shellActivated {
+			// Only revert if no other session for this user is still
+			// active — matches the live-session cleanup path.
+			if !h.anySessionForUserExcept(req.TtyUser, req.SessionId) {
+				h.deactivateShell(ctx, req.TtyUser)
+			}
+		}
+		h.removeTerminal(req.SessionId)
+	}
+
+	// abortFail tears down whatever was built and emits STATE_ERROR.
+	// Used for failures during start prep that the control hasn't
+	// asked for.
+	abortFail := func(reason string) {
+		cleanup()
+		h.failTerminalStart(ctx, sender, req.SessionId, reason)
+	}
+
+	// abortStopped tears down whatever was built but does NOT emit a
+	// STATE_ERROR — Stop arrived externally and the control already
+	// knows the session is being killed.
+	abortStopped := func() {
+		logger.Info("terminal start aborted by concurrent stop")
+		cleanup()
+	}
+
+	// Activate the shell. usermod via the SDK helper which already uses
+	// sudo -n. sysuser.Modify honors the context (it shells out via
+	// exec.Privileged → Run, which cancels and SIGKILL-escalates the process
+	// group on ctx expiry), so a bounded ctx (e.g. the shutdown teardown's 30s
+	// deadline) does bite; we still gate on isStopping() between steps as a
+	// belt-and-suspenders fallback.
+	if ts.isStopping() {
+		abortStopped()
+		return nil
+	}
+	if err := sysuserModify(setupCtx, req.TtyUser, sysuser.ModifyOptions{Shell: terminalActivatedShell}); err != nil {
+		abortFail(fmt.Sprintf("activate shell: %v", err))
+		return nil
+	}
+	shellActivated = true
+
+	// Per-session temp home so the activated shell has a writable
+	// CWD without polluting any real user's $HOME. Owned by the TTY
+	// user (chown via the SDK helper) and removed on session stop.
+	//
+	// Use os.Mkdir (NOT MkdirAll) so a pre-existing path causes a
+	// hard failure instead of being followed: a malicious local user
+	// could otherwise plant /tmp/pm-tty-foo.<sessid> as a symlink
+	// pointing at /etc and trick the subsequent chown into rewriting
+	// system file ownership. ULID session ids make accidental
+	// collisions statistically impossible, so EEXIST really does
+	// mean "something is wrong".
+	if ts.isStopping() {
+		abortStopped()
+		return nil
+	}
+	tempHome := filepath.Join("/tmp", req.TtyUser+"."+req.SessionId)
+	if err := os.Mkdir(tempHome, 0o700); err != nil {
+		abortFail(fmt.Sprintf("create temp home: %v", err))
+		return nil
+	}
+	tempHomeDir = tempHome
+	// Belt and braces: confirm the freshly-created path is actually
+	// a directory and not a symlink before chowning anything.
+	if info, err := os.Lstat(tempHome); err != nil || !info.Mode().IsDir() {
+		abortFail("temp home is not a regular directory")
+		return nil
+	}
+	if err := termFSMgr.SetOwnershipRecursive(setupCtx, tempHome, req.TtyUser, req.TtyUser); err != nil {
+		abortFail(fmt.Sprintf("chown temp home: %v", err))
+		return nil
+	}
+
+	if ts.isStopping() {
+		abortStopped()
+		return nil
+	}
+
+	cols := uint16(req.Cols)
+	rows := uint16(req.Rows)
+	cfg := terminal.SessionConfig{
+		User:    req.TtyUser,
+		Shell:   terminalActivatedShell,
+		Cols:    cols,
+		Rows:    rows,
+		WorkDir: tempHome,
+		Env:     []string{"HOME=" + tempHome, "USER=" + req.TtyUser, "LOGNAME=" + req.TtyUser},
+	}
+
+	tm, err := terminal.New()
+	if err != nil {
+		abortFail(fmt.Sprintf("build terminal manager: %v", err))
+		return nil
+	}
+	sess, err := tm.Open(setupCtx, cfg)
+	if err != nil {
+		abortFail(fmt.Sprintf("allocate pty: %v", err))
+		return nil
+	}
+
+	// Promote to active under the session lock. If we were marked
+	// stopping in the gap between the last isStopping() check and
+	// here, tear down the freshly-allocated PTY before returning.
+	ts.mu.Lock()
+	if ts.state == sessionStateStopping {
+		ts.mu.Unlock()
+		_ = sess.Close()
+		abortStopped()
+		return nil
+	}
+	ts.session = sess
+	ts.tempHome = tempHomeDir
+	ts.state = sessionStateActive
+	ts.touchLocked()
+	ts.mu.Unlock()
+
+	// Tell the control/web client we're live BEFORE starting the
+	// reader, so the first byte of output cannot race ahead of the
+	// STARTED state change. If this fails, the control never
+	// learned we're alive — there's no point keeping the PTY open
+	// and burning a slot, so tear the session down.
+	if err := sender.SendTerminalStateChange(ctx, &pb.TerminalStateChange{
+		SessionId: req.SessionId,
+		State:     pb.TerminalSessionState_TERMINAL_SESSION_STATE_STARTED,
+	}); err != nil {
+		logger.Warn("failed to send STARTED state change; aborting session", "error", err)
+		cleanupCtx, cancelCleanup := terminalCleanupContext(ctx)
+		h.closeTerminal(cleanupCtx, req.SessionId, "send started failed")
+		cancelCleanup()
+		return nil
+	}
+
+	go h.pumpTerminalOutput(sessionCtx, ts)
+	return nil
+}
+
+// touchLocked is the lock-free variant of touch, used when the caller
+// already holds ts.mu (e.g. inside the activation transition).
+func (ts *terminalSession) touchLocked() {
+	ts.lastActivity = ts.now()
+}
+
+// OnTerminalInput writes the bytes to the named session's PTY. Unknown
+// sessions are ignored at debug level — the control may have already
+// torn down the session and a few in-flight frames are normal.
+func (h *Handler) OnTerminalInput(ctx context.Context, req *pb.TerminalInput) error {
+	ts := h.lookupTerminal(req.SessionId)
+	if ts == nil {
+		h.logger.Debug("terminal input for unknown session", "session_id", req.SessionId)
+		return nil
+	}
+	// Sessions in the starting state have no PTY yet; ignore until
+	// they activate.
+	ts.mu.Lock()
+	sess := ts.session
+	ts.mu.Unlock()
+	if sess == nil {
+		h.logger.Debug("terminal input for not-yet-active session", "session_id", req.SessionId)
+		return nil
+	}
+	if _, err := sess.Write(req.Data); err != nil {
+		h.logger.Warn("terminal input write failed", "session_id", req.SessionId, "error", err)
+		// Don't tear down the session — the read pump will detect the
+		// PTY going away and emit EXITED.
+		return nil
+	}
+	ts.touch()
+	return nil
+}
+
+// OnTerminalResize forwards a TIOCSWINSZ to the session's PTY.
+func (h *Handler) OnTerminalResize(ctx context.Context, req *pb.TerminalResize) error {
+	// Reject out-of-range dimensions before the uint16 narrowing below, so a
+	// Cols/Rows >= 65536 can never reach sess.Resize as a truncated value
+	// (65536 -> 0). Non-fatal: log and no-op, like an unknown session.
+	if err := validateDims(req.Cols, req.Rows); err != nil {
+		h.logger.Warn("ignoring terminal resize with bad dimensions",
+			"session_id", req.SessionId, "cols", req.Cols, "rows", req.Rows)
+		return nil
+	}
+	ts := h.lookupTerminal(req.SessionId)
+	if ts == nil {
+		h.logger.Debug("terminal resize for unknown session", "session_id", req.SessionId)
+		return nil
+	}
+	ts.mu.Lock()
+	sess := ts.session
+	ts.mu.Unlock()
+	if sess == nil {
+		h.logger.Debug("terminal resize for not-yet-active session", "session_id", req.SessionId)
+		return nil
+	}
+	if err := sess.Resize(uint16(req.Cols), uint16(req.Rows)); err != nil {
+		h.logger.Warn("terminal resize failed", "session_id", req.SessionId, "error", err)
+	}
+	return nil
+}
+
+// OnTerminalStop terminates the named session and reverts side
+// effects: closes the PTY, removes the temp home, and reverts the
+// TTY user's shell to nologin if it was the last active session for
+// that user. Idempotent: unknown sessions are no-ops so the control
+// can fire and forget. Sessions still in the starting state are
+// marked stopping and cleaned up by OnTerminalStart on its next
+// state check.
+func (h *Handler) OnTerminalStop(ctx context.Context, req *pb.TerminalStop) error {
+	if req.Reason != "" {
+		h.logger.Info("stopping terminal session", "session_id", req.SessionId, "reason", req.Reason)
+	} else {
+		h.logger.Info("stopping terminal session", "session_id", req.SessionId)
+	}
+	h.closeTerminal(ctx, req.SessionId, req.Reason)
+	return nil
+}
+
+// pumpTerminalOutput is the per-session goroutine that copies PTY
+// output to TerminalOutput frames. Exits when the session ends
+// (PTY closed by Stop or natural shell exit) or when sessionCtx is
+// cancelled. Always emits a final state change before returning so
+// the web client knows whether the shell exited cleanly or errored.
+//
+// All sender access goes through the per-session ts.sender snapshot,
+// not h.terminalSender, so this goroutine never has to touch h.mu.
+func (h *Handler) pumpTerminalOutput(sessionCtx context.Context, ts *terminalSession) {
+	defer func() {
+		// Wait for the shell to actually exit so we can report the
+		// real exit code; if Wait races with Close the SDK Session
+		// already handles the EIO/EOF in Read.
+		exitCode, _ := ts.session.Wait()
+		state := &pb.TerminalStateChange{
+			SessionId: ts.id,
+			State:     pb.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED,
+			ExitCode:  int32(exitCode),
+		}
+		// Bound the EXITED-state send so a hung/unresponsive control
+		// peer cannot wedge this goroutine forever, holding the
+		// terminal-limit slot and blocking new sessions. Audit F053:
+		// previously context.Background() with no timeout. closeTerminal
+		// (below) is local cleanup that has to run regardless of ctx
+		// cancellation, so it stays on Background.
+		sendCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err := ts.sender.SendTerminalStateChange(sendCtx, state)
+		cancel()
+		if err != nil {
+			h.logger.Warn("failed to send EXITED state change",
+				"session_id", ts.id, "error", err)
+		}
+		// Make sure all the side effects are gone even if Stop never came.
+		h.closeTerminal(context.Background(), ts.id, "")
+	}()
+
+	buf := make([]byte, terminalReadChunkBytes)
+	for {
+		select {
+		case <-sessionCtx.Done():
+			return
+		default:
+		}
+
+		n, err := ts.session.Read(buf)
+		if n > 0 {
+			ts.touch()
+			out := &pb.TerminalOutput{
+				SessionId: ts.id,
+				Data:      append([]byte(nil), buf[:n]...),
+			}
+			if sendErr := ts.sender.SendTerminalOutput(context.Background(), out); sendErr != nil {
+				h.logger.Warn("failed to send terminal output; tearing down session",
+					"session_id", ts.id, "error", sendErr)
+				// Returning here triggers the deferred Wait + EXITED
+				// + closeTerminal path, so the PTY is torn down and
+				// the slot is freed. Without this teardown, a
+				// disconnected control would leak the PTY indefinitely.
+				return
+			}
+		}
+		if err != nil {
+			// io.EOF / os.ErrClosed are expected on shell exit;
+			// anything else still ends the session.
+			return
+		}
+	}
+}
+
+// failTerminalStart sends a STATE_ERROR back to the control and gives
+// up on the session. Used during the validation/preparation phase
+// before the I/O goroutine has been started; once the goroutine is
+// running, errors flow through pumpTerminalOutput's deferred
+// EXITED/closeTerminal path.
+//
+// Takes an explicit sender so the caller — which has already
+// snapshotted h.terminalSender once under h.mu — does not have to
+// re-acquire the lock.
+func (h *Handler) failTerminalStart(ctx context.Context, sender TerminalSender, sessionID, msg string) {
+	h.logger.Warn("terminal session start failed", "session_id", sessionID, "error", msg)
+	if sender == nil {
+		return
+	}
+	change := &pb.TerminalStateChange{
+		SessionId: sessionID,
+		State:     pb.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR,
+		Error:     msg,
+	}
+	if err := sender.SendTerminalStateChange(ctx, change); err != nil {
+		h.logger.Warn("failed to send ERROR state change",
+			"session_id", sessionID, "error", err)
+	}
+}
+
+// closeTerminal closes one session and reverts its side effects.
+// Idempotent: a second call for the same id is a no-op.
+//
+// For sessions still in sessionStateStarting, this method only
+// transitions the state to stopping and cancels the start context;
+// the cleanup of partial side effects (shell, temp home) is done by
+// OnTerminalStart on its next state check, because Start owns the
+// list of "what has been applied so far".
+func (h *Handler) closeTerminal(ctx context.Context, sessionID, reason string) {
+	// Audit F045: log which path triggered the close so post-cleanup
+	// logs can distinguish sweeper-vs-stop-vs-pump-failure. Reason
+	// was previously discarded with `_ = reason` at the bottom.
+	h.logger.Debug("closeTerminal entered",
+		"session_id", sessionID, "reason", reason)
+
+	h.mu.Lock()
+	ts, ok := h.terminals[sessionID]
+	h.mu.Unlock()
+	if !ok || ts == nil {
+		return
+	}
+
+	ts.mu.Lock()
+	if ts.state == sessionStateStopping {
+		// Already being torn down — nothing to do.
+		ts.mu.Unlock()
+		return
+	}
+	wasStarting := ts.state == sessionStateStarting
+	ts.state = sessionStateStopping
+	if ts.cancel != nil {
+		ts.cancel()
+	}
+	sess := ts.session
+	tempHome := ts.tempHome
+	ttyUser := ts.ttyUser
+	ts.mu.Unlock()
+
+	if wasStarting {
+		// OnTerminalStart will see the stopping state on its next
+		// isStopping() check (or the cancelled context will pop a
+		// sudo call out), and it will clean up its own partial state
+		// and remove the entry from the registry. We deliberately
+		// don't touch the registry here.
+		return
+	}
+
+	// Active session: pull from the registry, then revert side effects.
+	h.mu.Lock()
+	delete(h.terminals, sessionID)
+	h.mu.Unlock()
+
+	if sess != nil {
+		if err := sess.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
+			h.logger.Warn("terminal session close error", "session_id", sessionID, "error", err)
+		}
+	}
+
+	// Revert the TTY user shell only when no other session for the
+	// same user is still running (the same user can have concurrent
+	// sessions). Decided as LATE as possible (#173 narrow TOCTOU): the
+	// old snapshot was taken before sess.Close(), widening the window
+	// in which a concurrently-starting session for the same user would
+	// get its shell deactivated underneath it. A usermod-wide residual
+	// window remains — eliminating it needs a per-user
+	// activate/deactivate mutex; accepted, since the racing start fails
+	// its first shell exec loudly and the operator's reconnect retries.
+	h.mu.Lock()
+	stillActiveForUser := false
+	for _, other := range h.terminals {
+		if other != nil && other.ttyUser == ttyUser {
+			stillActiveForUser = true
+			break
+		}
+	}
+	h.mu.Unlock()
+	if !stillActiveForUser {
+		h.deactivateShell(ctx, ttyUser)
+	}
+
+	if tempHome != "" {
+		if err := os.RemoveAll(tempHome); err != nil {
+			h.logger.Warn("failed to remove terminal temp home",
+				"session_id", sessionID, "path", tempHome, "error", err)
+		}
+	}
+}
+
+// CloseAllTerminals tears down every live terminal session — used on agent
+// shutdown so a session left open does not leave its pm-tty shell activated and
+// its temp home on disk (WS16 #5). It snapshots the session ids under h.mu,
+// then closes each via the idempotent closeTerminal (which cancels the session
+// ctx so the pump goroutine unblocks, reverts the shell when no other session
+// for that user remains, and removes the temp home). Safe to call with no
+// sessions.
+func (h *Handler) CloseAllTerminals(ctx context.Context) {
+	h.mu.Lock()
+	ids := make([]string, 0, len(h.terminals))
+	for id := range h.terminals {
+		ids = append(ids, id)
+	}
+	h.mu.Unlock()
+
+	for _, id := range ids {
+		h.closeTerminal(ctx, id, "agent shutdown")
+	}
+}
+
+// anySessionForUserExcept reports whether any active session in the
+// registry has the given tty user, ignoring the supplied session id.
+// Used by OnTerminalStart's cleanup path to decide whether reverting
+// the shell would yank it out from under a concurrent session.
+func (h *Handler) anySessionForUserExcept(ttyUser, exceptSessionID string) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for id, other := range h.terminals {
+		if id == exceptSessionID || other == nil {
+			continue
+		}
+		if other.ttyUser == ttyUser {
+			return true
+		}
+	}
+	return false
+}
+
+// deactivateShell reverts the TTY user's login shell back to nologin.
+// Best-effort: a failure here is logged but does not block the rest
+// of the cleanup.
+func (h *Handler) deactivateShell(ctx context.Context, ttyUser string) {
+	if err := termUserMgr.Modify(ctx, ttyUser, sysuser.ModifyOptions{Shell: terminalDeactivatedShell}); err != nil {
+		h.logger.Warn("failed to revert tty user shell",
+			"tty_user", ttyUser, "error", err)
+	}
+}
+
+func (h *Handler) lookupTerminal(sessionID string) *terminalSession {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.terminals[sessionID]
+}
+
+func (h *Handler) removeTerminal(sessionID string) {
+	h.mu.Lock()
+	ts := h.terminals[sessionID]
+	delete(h.terminals, sessionID)
+	h.mu.Unlock()
+	// Cancel the session context too (#173 review finding): the
+	// abortFail/abortStopped cleanup path reached only this function,
+	// so a session torn down after registration leaked its sessionCtx.
+	// CancelFuncs are idempotent, so the closeTerminal path calling
+	// cancel first is fine.
+	if ts != nil && ts.cancel != nil {
+		ts.cancel()
+	}
+}
+
+// terminalSweepLoop closes any session that has been idle longer than
+// the configured timeout. Started lazily on the first SetTerminalSender
+// call; exits when stopCh is closed (StopTerminalSweeper). Audit F004:
+// previously a `for range t.C` loop with no exit, leaking the goroutine
+// on Handler GC in tests.
+func (h *Handler) terminalSweepLoop(stopCh <-chan struct{}) {
+	t := time.NewTicker(terminalSweepInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-t.C:
+			h.sweepIdleTerminals()
+		}
+	}
+}
+
+func (h *Handler) sweepIdleTerminals() {
+	h.mu.Lock()
+	timeout := h.terminalIdleTimeout
+	if timeout == 0 {
+		timeout = defaultTerminalIdleTimeout
+	}
+	cutoff := h.now().Add(-timeout)
+	var idle []string
+	for id, ts := range h.terminals {
+		if ts == nil {
+			continue
+		}
+		// Skip sessions that aren't fully active yet — they're either
+		// still in setup (no PTY to close) or already stopping.
+		ts.mu.Lock()
+		state := ts.state
+		ts.mu.Unlock()
+		if state != sessionStateActive {
+			continue
+		}
+		if ts.idleSince().Before(cutoff) {
+			idle = append(idle, id)
+		}
+	}
+	h.mu.Unlock()
+
+	for _, id := range idle {
+		h.logger.Info("closing idle terminal session", "session_id", id, "timeout", timeout)
+		h.closeTerminal(context.Background(), id, "idle timeout")
+	}
+}

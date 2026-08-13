@@ -1,0 +1,56 @@
+# Stage 1: Get Go toolchain + pre-download modules
+FROM golang:1.26-bookworm AS go-builder
+WORKDIR /workspace
+COPY agent/ ./agent/
+# Single-module go.work so `go test ./agent/...` works from /workspace
+# (CI invokes gotestsum from the container's default cwd).
+RUN printf 'go %s\n\nuse (\n\t./agent\n)\n' "$(sed -n 's/^go //p' agent/go.mod)" > go.work
+RUN cd agent && go mod download
+RUN go install gotest.tools/gotestsum@latest
+
+# Stage 2: openSUSE Tumbleweed base with Go copied in
+FROM opensuse/tumbleweed
+
+# Agent runs as root in production (systemd User=root) — no power-manage
+# user, no sudoers drop-in. Integration tests run as root too.
+
+COPY --from=go-builder /usr/local/go /usr/local/go
+ENV PATH="/usr/local/go/bin:/usr/sbin:${PATH}"
+ENV GOPATH="/go"
+ENV GOMODCACHE="/go/pkg/mod"
+
+# Tests run as root, but PATH still needs /usr/sbin where useradd /
+# groupadd / sshd live. In production systemd provides /usr/sbin via
+# its DefaultEnvironment.
+RUN printf 'PATH="/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"\n' > /etc/environment
+
+RUN zypper --non-interactive install --force-resolution \
+    sudo \
+    shadow \
+    gpg2 \
+    openssh-server \
+    systemd \
+    rpm-build \
+    gzip \
+    tar \
+    && zypper clean -a
+
+# sshd_config.d directory + host keys for sshd -t validation
+RUN mkdir -p /etc/ssh/sshd_config.d && ssh-keygen -A
+
+# Ensure Include directive exists in sshd_config for sshd_config.d
+RUN grep -q 'Include /etc/ssh/sshd_config.d' /etc/ssh/sshd_config || \
+    echo 'Include /etc/ssh/sshd_config.d/*.conf' >> /etc/ssh/sshd_config
+
+# LPS state directory (root-owned, matches production)
+RUN mkdir -p /var/lib/power-manage/lps
+
+# sshd privilege separation directory (needed by sshd -t)
+RUN mkdir -p /run/sshd
+
+WORKDIR /workspace
+
+# Copy pre-built workspace from builder
+COPY --from=go-builder /workspace ./
+COPY --from=go-builder /go/pkg/mod /go/pkg/mod
+COPY --from=go-builder /go/bin/gotestsum /go/bin/gotestsum

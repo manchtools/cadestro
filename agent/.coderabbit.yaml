@@ -1,0 +1,27 @@
+language: en
+reviews:
+  auto_review:
+    enabled: true
+  profile: chill
+  path_instructions:
+    - path: "internal/executor/**"
+      instructions: >
+        The agent daemon runs as root because it is an RMM endpoint. Check every
+        action for command injection, path traversal, secret leakage, and
+        strict input validation. External commands and filesystem mutations
+        must use the SDK sys packages. Classified transport fields stay sealed
+        until their narrow sink; application frames are not signed.
+    - path: "internal/executor/agent_update.go"
+      instructions: >
+        Agent updates must authenticate the Ed25519-signed release manifest
+        before trusting its SHA-256 and staging a binary, enforce anti-rollback,
+        self-test before the atomic swap, and retain one recoverable previous
+        binary. Preserve operator-selected HTTPS release endpoints, including
+        private/internal hosts used by self-hosted deployments; do not require a
+        MANCHTOOLS or public-network host allowlist.
+  tools:
+    golangci-lint:
+      enabled: true
+knowledge_base:
+  learnings:
+    scope: auto
