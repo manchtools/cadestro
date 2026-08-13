@@ -1,0 +1,155 @@
+name: CI
+
+# Tag-only triggering meant direct-to-main pushes had zero CI gating
+# (audit "Web CI runs only on tags" — fixed here). Now runs on every
+# PR, every main push, and every release tag.
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'static/**'
+      - 'messages/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'svelte.config.js'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/ci.yml'
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+# Cancel in-progress runs for the same ref
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: web
+
+      # SDK contains generated TypeScript protobuf types (gen/ts) and
+      # handwritten TypeScript utilities (ts/) needed by the web app.
+      - uses: actions/checkout@v4
+        with:
+          repository: manchtools/power-manage-sdk
+          path: sdk
+          sparse-checkout: |
+            gen/ts
+            ts
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+      # Symlink web's node_modules into sdk/ so svelte-check can resolve
+      # @bufbuild/protobuf imports from SDK files outside the web directory.
+      - run: ln -s $(pwd)/node_modules ../sdk/node_modules
+      - run: bun run check
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 30
+
+  build:
+    # Image-push job only runs on tag pushes (release). On PRs and
+    # main pushes we ONLY want the test job — `build` pushes to GHCR
+    # with the ref name as the tag, which makes no sense for a PR
+    # head and isn't a useful artifact for plain main pushes.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: web
+
+      - uses: actions/checkout@v4
+        with:
+          repository: manchtools/power-manage-sdk
+          path: sdk
+          sparse-checkout: |
+            gen/ts
+            ts
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Image tag contract:
+      #   :latest    -> the most recent stable release  (vYYYY.MM)
+      #   :latest-rc -> the most recent release candidate (vYYYY.MM-rcN)
+      # Anything with -rc in the tag name moves :latest-rc; everything
+      # else moves :latest.
+      - name: Resolve moving tag
+        id: moving
+        run: |
+          if [[ "${{ github.ref_name }}" == *-rc* ]]; then
+            echo "tag=latest-rc" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: web/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/power-manage-web:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/power-manage-web:${{ steps.moving.outputs.tag }}
+          build-args: VERSION=${{ github.ref_name }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Only deploy if DEPLOY_HOST secret is configured
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to host
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          SSH="ssh -i ~/.ssh/deploy_key ${DEPLOY_USER}@${DEPLOY_HOST}"
+          SCP="scp -i ~/.ssh/deploy_key"
+
+          # Copy deploy script to host and run it
+          $SCP deploy/deploy.sh "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/pm-deploy.sh"
+          $SSH "chmod +x /tmp/pm-deploy.sh && GHCR_TOKEN='${GHCR_TOKEN}' /tmp/pm-deploy.sh ${{ github.ref_name }} && rm /tmp/pm-deploy.sh"

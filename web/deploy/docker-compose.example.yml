@@ -1,0 +1,18 @@
+services:
+  # Latest version (default — no cookie or unrecognized cookie)
+  web-latest:
+    image: ghcr.io/org/power-manage-web:v2026.02.18
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web-latest.rule=PathPrefix(`/app`)"
+      - "traefik.http.routers.web-latest.priority=50"
+      - "traefik.http.services.web-latest.loadbalancer.server.port=3000"
+
+  # Older version (routed by pm-version cookie)
+  web-v2026-02-15:
+    image: ghcr.io/org/power-manage-web:v2026.02.15
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web-v2026-02-15.rule=PathPrefix(`/app`) && HeadersRegexp(`Cookie`, `pm-version=2026\\.02\\.15`)"
+      - "traefik.http.routers.web-v2026-02-15.priority=100"
+      - "traefik.http.services.web-v2026-02-15.loadbalancer.server.port=3000"
