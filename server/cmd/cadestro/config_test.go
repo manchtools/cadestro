@@ -348,7 +348,7 @@ func TestLoadConfigKeepsExistingValidationSemantics(t *testing.T) {
 		},
 		"artifact path must exist": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["CADESTRO_ARTIFACT_PATH"] = "/nonexistent/power-manage-artifacts"
+				fixture.values["CADESTRO_ARTIFACT_PATH"] = "/nonexistent/cadestro-artifacts"
 			},
 			expected: "artifact_path",
 		},
@@ -448,11 +448,11 @@ func TestParseCommandAcceptsSubcommandsAndRejectsEverythingElse(t *testing.T) {
 
 	const hint = " (accepted commands: bootstrap-admin, backup-status)"
 	for message, args := range map[string][]string{
-		"unexpected arguments: -config /etc/power-manage/control.json" + hint: {"-config", "/etc/power-manage/control.json"},
-		"unexpected arguments: --help" + hint:                                 {"--help"},
-		"unexpected arguments: serve" + hint:                                  {"serve"},
-		"unexpected arguments: extra":                                         {"bootstrap-admin", "extra"},
-		"unexpected arguments: -config /etc/power-manage/control.json":        {"backup-status", "-config", "/etc/power-manage/control.json"},
+		"unexpected arguments: -config /etc/cadestro/control.json" + hint: {"-config", "/etc/cadestro/control.json"},
+		"unexpected arguments: --help" + hint:                             {"--help"},
+		"unexpected arguments: serve" + hint:                              {"serve"},
+		"unexpected arguments: extra":                                     {"bootstrap-admin", "extra"},
+		"unexpected arguments: -config /etc/cadestro/control.json":        {"backup-status", "-config", "/etc/cadestro/control.json"},
 	} {
 		command, err := parseCommand(args)
 		assert.EqualError(t, err, message, "%v must be rejected", args)

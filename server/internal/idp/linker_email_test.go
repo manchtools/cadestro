@@ -21,7 +21,7 @@ const linkerTestKEK = "00112233445566778899aabbccddeeff00112233445566778899aabbc
 func newLinkerStore(t *testing.T) (*store.Store, *testdb.DB) {
 	t.Helper()
 	ctx := context.Background()
-	path := filepath.Join(t.TempDir(), "power-manage.db")
+	path := filepath.Join(t.TempDir(), "cadestro.db")
 	st, err := store.New(ctx, path)
 	require.NoError(t, err)
 	t.Cleanup(st.Close)

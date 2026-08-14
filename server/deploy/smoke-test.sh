@@ -181,9 +181,9 @@ fi
 
 compose up -d --wait control
 
-schema_version="$(compose exec -T control sqlite3 /var/lib/power-manage/state/control.db 'PRAGMA user_version;')"
+schema_version="$(compose exec -T control sqlite3 /var/lib/cadestro/state/control.db 'PRAGMA user_version;')"
 [[ "$schema_version" == 1 ]] || { printf 'SQLite schema probe failed\n' >&2; exit 1; }
-fts="$(compose exec -T control sqlite3 /var/lib/power-manage/state/control.db \
+fts="$(compose exec -T control sqlite3 /var/lib/cadestro/state/control.db \
     "SELECT count(*) FROM sqlite_schema WHERE name = 'search_fts';")"
 [[ "$fts" == 1 ]] || { printf 'SQLite FTS5 probe failed\n' >&2; exit 1; }
 

@@ -53,9 +53,9 @@ services:
       - ./secrets/encryption.key:/run/secrets/encryption.key:ro,z
       - ./secrets/session-signing.pem:/run/secrets/session-signing.pem:ro,z
       - ./secrets/sealing.key:/run/secrets/sealing.key:ro,z
-      - ./data/control:/var/lib/power-manage/state:z
-      - ./data/artifacts:/var/lib/power-manage/artifacts:z
-      - ./data/backups:/var/lib/power-manage/backups:z
+      - ./data/control:/var/lib/cadestro/state:z
+      - ./data/artifacts:/var/lib/cadestro/artifacts:z
+      - ./data/backups:/var/lib/cadestro/backups:z
     healthcheck:
       test: ["CMD", "wget", "--no-check-certificate", "-q", "--spider", "https://127.0.0.1:8081/ready"]
       interval: 10s

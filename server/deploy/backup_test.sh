@@ -17,9 +17,9 @@ cat > "$WORK_DIR/bin/docker" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 last="${*: -1}"
-if [[ "$*" == *" test -f /var/lib/power-manage/state/control.db"* ]]; then
+if [[ "$*" == *" test -f /var/lib/cadestro/state/control.db"* ]]; then
     exit 0
-elif [[ "$*" == *" sqlite3 /var/lib/power-manage/state/control.db PRAGMA user_version;"* ]]; then
+elif [[ "$*" == *" sqlite3 /var/lib/cadestro/state/control.db PRAGMA user_version;"* ]]; then
     printf '1\n'
 elif [[ "$last" == ".backup "* ]]; then
     container_path="${last:9:${#last}-10}"
@@ -28,11 +28,11 @@ elif [[ "$last" == "PRAGMA integrity_check;" ]]; then
     printf 'ok\n'
 elif [[ "$last" == "PRAGMA foreign_key_check;" ]]; then
     exit 0
-elif [[ "$*" == *" chmod 600 /var/lib/power-manage/backups/"* ]]; then
+elif [[ "$*" == *" chmod 600 /var/lib/cadestro/backups/"* ]]; then
     chmod 600 "$TEST_BACKUP_DIR/${last##*/}"
-elif [[ "$*" == *" stat -c %s /var/lib/power-manage/backups/"* ]]; then
+elif [[ "$*" == *" stat -c %s /var/lib/cadestro/backups/"* ]]; then
     stat -c '%s' "$TEST_BACKUP_DIR/${last##*/}"
-elif [[ "$*" == *" sha256sum /var/lib/power-manage/backups/"* ]]; then
+elif [[ "$*" == *" sha256sum /var/lib/cadestro/backups/"* ]]; then
     sha256sum "$TEST_BACKUP_DIR/${last##*/}"
 else
     printf 'unexpected docker invocation: %s\n' "$*" >&2

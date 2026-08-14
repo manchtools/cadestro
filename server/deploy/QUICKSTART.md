@@ -1,6 +1,6 @@
 # Power Manage server quickstart
 
-<!-- docref: begin src=deploy/compose.yml#@deployment-services:3fac95e9 -->
+<!-- docref: begin src=deploy/compose.yml#@deployment-services:b7ac2a9b -->
 The stack has exactly two services: Traefik and one control process with an
 embedded SQLite database. Compose gives control no arguments and passes it the
 rendered `config/control.env` as the container's environment file, and passes
@@ -25,7 +25,7 @@ own environment file, not control's configuration.
 remote-backed volume there:
 
 ```bash
-mkdir -p data && ln -s /srv/power-manage-archive data/backups
+mkdir -p data && ln -s /srv/cadestro-archive data/backups
 ```
 
 A symlink works as well as a mount point: Compose bind-mounts whatever the path
@@ -118,7 +118,7 @@ into `config/control.env`, and that file is where ordinary settings such as the
 log level or the retention windows are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:6c09313e -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:42074772 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
 encryption, session and sealing keys, and `config/control.env` with a 90-day
 audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`. It first

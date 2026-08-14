@@ -12,7 +12,7 @@ import (
 func setupSQLite(t *testing.T) (*store.Store, *testdb.DB) {
 	t.Helper()
 	ctx := context.Background()
-	path := filepath.Join(t.TempDir(), "power-manage.db")
+	path := filepath.Join(t.TempDir(), "cadestro.db")
 	st, err := store.New(ctx, path)
 	if err != nil {
 		t.Fatalf("SCIM test fixture: initialize SQLite: %v", err)

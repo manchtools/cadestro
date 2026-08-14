@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
 // TestValidateDestination_RejectsEmptyOrRoot covers the cheapest layer of
@@ -61,8 +63,8 @@ func TestValidateDestination_AcceptsNormalAbsolutePaths(t *testing.T) {
 		tmp,
 		filepath.Join(tmp, "newfile"),
 		filepath.Join(tmp, "subdir", "file"),
-		"/var/lib/power-manage/something", // doesn't need to exist; ResolveAndValidatePath walks up
-		"/etc/power-manage/something",
+		"/var/lib/cadestro/something", // doesn't need to exist; ResolveAndValidatePath walks up
+		"/etc/cadestro/something",
 	} {
 		t.Run("dest="+p, func(t *testing.T) {
 			if err := validateDestination(p); err != nil {
@@ -96,9 +98,9 @@ func TestValidateDestination_RejectsSymlinkEscape(t *testing.T) {
 // previously seen by a successful Fetch (RecordDest).
 func TestCanWipe_AllowsManagedRoots(t *testing.T) {
 	for _, p := range []string{
-		"/var/lib/power-manage/x",
-		"/var/lib/power-manage/sub/dir",
-		"/etc/power-manage/x",
+		"/var/lib/cadestro/x",
+		"/var/lib/cadestro/sub/dir",
+		"/etc/cadestro/x",
 	} {
 		t.Run("dest="+p, func(t *testing.T) {
 			if err := canWipe(p); err != nil {
@@ -218,16 +220,16 @@ func TestCanWipe_RejectsProtectedSubpaths(t *testing.T) {
 
 // TestValidateDestination_StillAcceptsManagedRootsUnderProtectedPrefix is the
 // regression guard for the carve-out: the agent's own managed roots live UNDER
-// protected prefixes (/etc/power-manage is under /etc, /var/lib/power-manage is
+// protected prefixes (/etc/cadestro is under /etc, /var/lib/cadestro is
 // under /var/lib), so the deny-by-default subtree check must explicitly exempt
 // them or the agent can no longer manage its own state. Pins the boundary so a
 // future tightening of the deny set can't silently break legitimate writes.
 func TestValidateDestination_StillAcceptsManagedRootsUnderProtectedPrefix(t *testing.T) {
 	for _, p := range []string{
-		"/etc/power-manage",
-		"/etc/power-manage/sub/file",
-		"/var/lib/power-manage",
-		"/var/lib/power-manage/sub/dir/file",
+		"/etc/cadestro",
+		"/etc/cadestro/sub/file",
+		"/var/lib/cadestro",
+		"/var/lib/cadestro/sub/dir/file",
 	} {
 		t.Run("dest="+p, func(t *testing.T) {
 			if err := validateDestination(p); err != nil {
@@ -240,33 +242,102 @@ func TestValidateDestination_StillAcceptsManagedRootsUnderProtectedPrefix(t *tes
 // TestIsManagedRoot_BoundaryRobustToMissingTrailingSlash pins that the
 // sibling-prefix boundary does NOT depend on wipeAllowedRoots entries being
 // written with a trailing slash: even a no-slash entry must refuse a hostile
-// sibling (/etc/power-manage-evil) while still matching real managed subpaths.
+// sibling (/etc/cadestro-evil) while still matching real managed subpaths.
 func TestIsManagedRoot_BoundaryRobustToMissingTrailingSlash(t *testing.T) {
 	orig := wipeAllowedRoots
 	t.Cleanup(func() { wipeAllowedRoots = orig })
-	wipeAllowedRoots = []string{"/etc/power-manage"} // intentionally no trailing slash
+	wipeAllowedRoots = []string{"/etc/cadestro"} // intentionally no trailing slash
 
-	if isManagedRoot("/etc/power-manage-evil") {
-		t.Error("isManagedRoot matched a hostile sibling /etc/power-manage-evil; boundary must not depend on a trailing slash")
+	if isManagedRoot("/etc/cadestro-evil") {
+		t.Error("isManagedRoot matched a hostile sibling /etc/cadestro-evil; boundary must not depend on a trailing slash")
 	}
-	if !isManagedRoot("/etc/power-manage") {
+	if !isManagedRoot("/etc/cadestro") {
 		t.Error("isManagedRoot must match the exact managed root")
 	}
-	if !isManagedRoot("/etc/power-manage/x") {
+	if !isManagedRoot("/etc/cadestro/x") {
 		t.Error("isManagedRoot must match a real managed subpath")
 	}
 }
 
 // TestCanWipe_RejectsManagedRootSiblingPrefix — the carve-out must use a
-// trailing-slash boundary so a hostile sibling like /etc/power-manage-evil is
-// NOT mistaken for the managed root /etc/power-manage and is refused as a
+// trailing-slash boundary so a hostile sibling like /etc/cadestro-evil is
+// NOT mistaken for the managed root /etc/cadestro and is refused as a
 // protected /etc subtree.
 func TestCanWipe_RejectsManagedRootSiblingPrefix(t *testing.T) {
-	for _, p := range []string{"/etc/power-manage-evil/x", "/var/lib/power-manage-evil"} {
+	for _, p := range []string{"/etc/cadestro-evil/x", "/var/lib/cadestro-evil"} {
 		t.Run("dest="+p, func(t *testing.T) {
 			if err := canWipe(p); !errors.Is(err, ErrUnsafeDestination) {
 				t.Fatalf("canWipe(%q) = %v; want errors.Is(..., ErrUnsafeDestination)", p, err)
 			}
 		})
+	}
+}
+
+// agentStateRoots are the directories the Cadestro agent actually owns on a
+// managed host: `credentials.DefaultDataDir` in agent/internal/credentials
+// (which install.sh creates mode 0700 and the cadestrod systemd unit passes as
+// -data-dir) and its /etc configuration sibling.
+//
+// This module cannot import the agent — the SDK is a leaf and must stay
+// consumable on its own — so the coupling is pinned here as literals and
+// asserted from the other side in the agent's own suite
+// (TestCertBaseDirLivesUnderTheAgentDataDir). Both halves must name the same
+// root; a rename that moves only one fails one of the two.
+var agentStateRoots = []string{"/var/lib/cadestro", "/etc/cadestro"}
+
+// TestWipeAllowedRoots_CoverTheDirectoriesTheAgentUses is the regression guard
+// for a real split-brain: the agent's data directory was renamed to
+// /var/lib/cadestro while wipeAllowedRoots still listed the predecessor root.
+// The allow-list then protected a directory nothing writes to, and every real
+// agent-owned path fell through to the deny-by-default /var/lib refusal — so
+// the agent could no longer clean up its own state, and validateDestination
+// refused writes the carve-out exists to permit.
+//
+// Asserting the LIST covers the agent's roots (rather than asserting the list
+// equals some other literal) keeps the check about the property that matters:
+// wherever the agent state lives, the guard has to reach it.
+func TestWipeAllowedRoots_CoverTheDirectoriesTheAgentUses(t *testing.T) {
+	if len(wipeAllowedRoots) == 0 {
+		t.Fatal("wipeAllowedRoots is empty; the carve-out would refuse every agent-owned path")
+	}
+	for _, root := range agentStateRoots {
+		t.Run("root="+root, func(t *testing.T) {
+			// The root itself and a path beneath it must both be recognised —
+			// Wipe targets subtrees, validateDestination targets leaf writes.
+			for _, p := range []string{root, root + "/state/file"} {
+				if !isManagedRoot(p) {
+					t.Errorf("isManagedRoot(%q) = false; wipeAllowedRoots %v does not cover the agent's state root",
+						p, wipeAllowedRoots)
+				}
+				if err := canWipe(p); err != nil {
+					t.Errorf("canWipe(%q) = %v; the agent cannot clean up its own state", p, err)
+				}
+				if err := validateDestination(p); err != nil {
+					t.Errorf("validateDestination(%q) = %v; the agent cannot write its own state", p, err)
+				}
+			}
+			// The boundary still holds for the renamed root: a hostile sibling
+			// must not inherit the carve-out.
+			if isManagedRoot(root + "-evil") {
+				t.Errorf("isManagedRoot(%q) matched a hostile sibling of the agent state root", root+"-evil")
+			}
+		})
+	}
+}
+
+// TestWipeAllowedRoots_CoverEverythingTheSDKItselfWritesThere is the same
+// invariant from inside this module, with no literal at all: sys/network writes
+// EAP-TLS key material under CertBaseDir, which lives in the agent-managed
+// tree. If a rename moves that constant without moving the allow-list, the SDK
+// would be writing key material it can no longer remove. Self-discovering, so
+// it keeps holding after the next rename.
+func TestWipeAllowedRoots_CoverEverythingTheSDKItselfWritesThere(t *testing.T) {
+	certDir := network.CertBaseDir + "/01ARZ3NDEKTSV4RRFFQ69G5FAV"
+	if !isManagedRoot(certDir) {
+		t.Fatalf("isManagedRoot(%q) = false; sys/network.CertBaseDir sits outside wipeAllowedRoots %v,"+
+			" so the SDK writes EAP-TLS keys into a tree it cannot clean up", certDir, wipeAllowedRoots)
+	}
+	if err := canWipe(certDir); err != nil {
+		t.Fatalf("canWipe(%q) = %v; want nil", certDir, err)
 	}
 }

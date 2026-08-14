@@ -2,11 +2,14 @@ package executor
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
+	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
 // executeWifi splices the action ID into a filesystem path
@@ -59,6 +62,39 @@ func TestExecuteWifi_RejectsUnsafeActionID(t *testing.T) {
 	// consults, so legitimate WiFi actions are not broken by the new check.
 	if err := validateActionIDForFilesystem("01ARZ3NDEKTSV4RRFFQ69G5FAV"); err != nil {
 		t.Errorf("valid ULID action ID rejected by the gate: %v", err)
+	}
+}
+
+// wifiCertPath writes EAP-TLS key material under the SDK's network.CertBaseDir
+// while the rest of this agent's state lives under credentials.DefaultDataDir.
+// Nothing in either module forces those two to agree, and for one rename they
+// did not: the agent moved to /var/lib/cadestro while the SDK constant still
+// pointed at the predecessor root. The agent then scattered private keys into a
+// directory its own installer never creates, chmods, or uninstalls — outside
+// the 0700 data dir, and outside the tree sys/remote will wipe.
+//
+// This asserts the invariant across the module boundary rather than restating
+// either literal, so a future move of one constant fails here instead of
+// silently splitting the agent's state in two again.
+func TestCertBaseDirLivesUnderTheAgentDataDir(t *testing.T) {
+	root := strings.TrimSuffix(credentials.DefaultDataDir, "/") + "/"
+	if !strings.HasPrefix(network.CertBaseDir, root) {
+		t.Fatalf("network.CertBaseDir = %q is not under credentials.DefaultDataDir = %q;"+
+			" the agent would write EAP-TLS keys outside its own managed data directory",
+			network.CertBaseDir, credentials.DefaultDataDir)
+	}
+	// The base dir must be a real subdirectory, not the data dir itself — the
+	// prefix check above is satisfied by equality-plus-slash only if something
+	// stripped the leaf, which would put cert dirs directly in the state root.
+	if filepath.Clean(network.CertBaseDir) == filepath.Clean(credentials.DefaultDataDir) {
+		t.Fatalf("network.CertBaseDir must be a subdirectory of %q, not the directory itself",
+			credentials.DefaultDataDir)
+	}
+	// And the path executeWifi actually builds inherits that root, so the
+	// invariant covers the call site and not just the constant.
+	certDir := wifiCertPath("01ARZ3NDEKTSV4RRFFQ69G5FAV")
+	if !strings.HasPrefix(certDir, root) {
+		t.Fatalf("wifiCertPath = %q escapes the agent data directory %q", certDir, credentials.DefaultDataDir)
 	}
 }
 

@@ -23,7 +23,7 @@ func assertArgs(t *testing.T, expected, actual []string) {
 }
 
 func TestBuildAddArgs_EAPTLS(t *testing.T) {
-	dir := "/var/lib/power-manage/wifi/xyz"
+	dir := "/var/lib/cadestro/wifi/xyz"
 	args := buildAddArgs(Profile{
 		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "user@corp.com", CACert: realCACert, ClientCert: realClientCert,
@@ -44,7 +44,7 @@ func TestBuildAddArgs_EAPTLS(t *testing.T) {
 func TestBuildAddArgs_EAPTLS_NoCertContent(t *testing.T) {
 	args := buildAddArgs(Profile{
 		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
-		Identity: "user@corp.com", CertDir: "/var/lib/power-manage/wifi/xyz",
+		Identity: "user@corp.com", CertDir: "/var/lib/cadestro/wifi/xyz",
 	})
 	// No cert-path args when the content is empty / key is zero.
 	assertArgs(t, []string{
@@ -57,7 +57,7 @@ func TestBuildAddArgs_EAPTLS_NoCertContent(t *testing.T) {
 }
 
 func TestBuildModifyArgs_EAPTLS_NoCurrent(t *testing.T) {
-	dir := "/var/lib/power-manage/wifi/xyz"
+	dir := "/var/lib/cadestro/wifi/xyz"
 	args := buildModifyArgs(Profile{
 		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "user@corp.com", CACert: realCACert, ClientCert: realClientCert,
@@ -78,7 +78,7 @@ func TestBuildModifyArgs_EAPTLS_NoCurrent(t *testing.T) {
 // A PSK → EAP-TLS conversion must clear the stale wifi-sec.psk that the keyfile
 // path had set, otherwise NetworkManager would keep two key-mgmt secrets.
 func TestBuildModifyArgs_ClearsStalePSKOnTransition(t *testing.T) {
-	dir := "/var/lib/power-manage/wifi/xyz"
+	dir := "/var/lib/cadestro/wifi/xyz"
 	current := map[string]string{
 		"wifi.ssid":         "SecureNet",
 		"wifi-sec.key-mgmt": "wpa-psk",
@@ -125,7 +125,7 @@ func TestAppendCommonArgs(t *testing.T) {
 }
 
 func TestBuildDesiredSettings_EAPTLS(t *testing.T) {
-	dir := "/var/lib/power-manage/wifi/xyz"
+	dir := "/var/lib/cadestro/wifi/xyz"
 	d := buildDesiredSettings(Profile{
 		SSID: "SecureNet", AuthType: AuthEAPTLS, Identity: "u",
 		CACert: realCACert, ClientCert: realClientCert,

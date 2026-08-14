@@ -592,12 +592,12 @@ func TestIsSubdirOf(t *testing.T) {
 		parent, child string
 		want          bool
 	}{
-		{"/var/lib/power-manage/wifi", "/var/lib/power-manage/wifi/abc", true},
-		{"/var/lib/power-manage/wifi", "/var/lib/power-manage/wifi/abc/def", true},
-		{"/var/lib/power-manage/wifi", "/var/lib/power-manage/wifi", false},
-		{"/var/lib/power-manage/wifi", "/tmp/evil", false},
-		{"/var/lib/power-manage/wifi", "/var/lib/power-manage/wifi/../x", false},
-		{"/var/lib/power-manage/wifi", "/", false},
+		{"/var/lib/cadestro/wifi", "/var/lib/cadestro/wifi/abc", true},
+		{"/var/lib/cadestro/wifi", "/var/lib/cadestro/wifi/abc/def", true},
+		{"/var/lib/cadestro/wifi", "/var/lib/cadestro/wifi", false},
+		{"/var/lib/cadestro/wifi", "/tmp/evil", false},
+		{"/var/lib/cadestro/wifi", "/var/lib/cadestro/wifi/../x", false},
+		{"/var/lib/cadestro/wifi", "/", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.child, func(t *testing.T) {

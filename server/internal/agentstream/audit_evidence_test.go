@@ -29,7 +29,7 @@ import (
 func auditFixture(t *testing.T) (*store.Store, *testdb.DB) {
 	t.Helper()
 	ctx := context.Background()
-	path := filepath.Join(t.TempDir(), "power-manage.db")
+	path := filepath.Join(t.TempDir(), "cadestro.db")
 	st, err := store.New(ctx, path)
 	require.NoError(t, err, "initialize SQLite")
 	t.Cleanup(st.Close)

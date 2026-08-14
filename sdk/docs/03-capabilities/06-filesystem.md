@@ -28,13 +28,13 @@ if err != nil {
 
 ```go
 data, err := m.ReadFile(ctx, "/etc/hostname")
-err = m.WriteFile(ctx, "/etc/power-manage/agent.conf", []byte(cfg), fs.WriteOptions{
+err = m.WriteFile(ctx, "/etc/cadestro/agent.conf", []byte(cfg), fs.WriteOptions{
     Mode:  0o644,
     Owner: "root",
     Group: "root",
 })
-ok, err := m.Exists(ctx, "/etc/power-manage")
-entries, err := m.ReadDir(ctx, "/etc/power-manage")
+ok, err := m.Exists(ctx, "/etc/cadestro")
+entries, err := m.ReadDir(ctx, "/etc/cadestro")
 ```
 
 <!-- docref: begin src=sys/fs/write.go#manager.WriteFile:d23eed7b -->
@@ -46,10 +46,10 @@ below.
 ## Directories, permissions, ownership
 
 ```go
-err := m.Mkdir(ctx, "/var/lib/power-manage/state", fs.MkdirOptions{Mode: 0o750, Recursive: true})
-err = m.SetMode(ctx, "/var/lib/power-manage/state", 0o700)
-err = m.SetOwnership(ctx, "/var/lib/power-manage/state", "power-manage", "power-manage")
-err = m.Remove(ctx, "/var/lib/power-manage/state/stale.tmp")
+err := m.Mkdir(ctx, "/var/lib/cadestro/state", fs.MkdirOptions{Mode: 0o750, Recursive: true})
+err = m.SetMode(ctx, "/var/lib/cadestro/state", 0o700)
+err = m.SetOwnership(ctx, "/var/lib/cadestro/state", "power-manage", "power-manage")
+err = m.Remove(ctx, "/var/lib/cadestro/state/stale.tmp")
 ```
 
 ## Why use this instead of `os`

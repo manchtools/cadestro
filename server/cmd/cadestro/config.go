@@ -284,7 +284,7 @@ func defaultEnvironment() configEnvironment {
 		HeartbeatInterval:   30 * time.Second,
 		AuditRetention:      2160 * time.Hour,
 		BackupMaxLag:        26 * time.Hour,
-		DatabasePath:        "/var/lib/power-manage/control.db",
+		DatabasePath:        "/var/lib/cadestro/control.db",
 	}
 }
 
@@ -430,7 +430,7 @@ func validateWritableDirectory(name, path string) error {
 	if !info.IsDir() {
 		return fmt.Errorf("%s %q must be a directory", name, path)
 	}
-	probe, err := os.CreateTemp(path, ".power-manage-write-probe-*")
+	probe, err := os.CreateTemp(path, ".cadestro-write-probe-*")
 	if err != nil {
 		return fmt.Errorf("%s %q is not writable: %w", name, path, err)
 	}

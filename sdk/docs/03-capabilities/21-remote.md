@@ -29,7 +29,7 @@ src, err := remote.NewHTTP(remote.HTTPConfig{
 if err != nil {
     return err
 }
-res, err := src.Fetch(ctx, "/var/lib/power-manage/release")
+res, err := src.Fetch(ctx, "/var/lib/cadestro/release")
 if err != nil {
     return err
 }
@@ -111,11 +111,11 @@ locations the SDK is allowed to manage:
 
 <!-- docref: begin src=sys/remote/paths.go#validateDestination:e25e0621 -->
 A destination is rejected unless it falls under a managed root (e.g.
-`/var/lib/power-manage`, `/etc/power-manage`); a write that would land in a
+`/var/lib/cadestro`, `/etc/cadestro`); a write that would land in a
 sensitive system location — `/etc/cron.d`, `/usr/bin`, a user's `~/.ssh` — is
 refused before any bytes are fetched. The check is a subtree test with a
-trailing-slash boundary, so `/etc/power-manage-evil` cannot masquerade as being
-under `/etc/power-manage`.
+trailing-slash boundary, so `/etc/cadestro-evil` cannot masquerade as being
+under `/etc/cadestro`.
 <!-- docref: end -->
 
 {% callout type="info" title="Reference" %}

@@ -464,7 +464,7 @@ func exerciseTerminal(ctx context.Context, registry *connection.TerminalSessionR
 }
 
 func exerciseBackup(ctx context.Context, raw *testdb.DB, directory string) (time.Duration, time.Time, error) {
-	path := filepath.Join(directory, "power-manage-scale.db")
+	path := filepath.Join(directory, "cadestro-scale.db")
 	started := time.Now()
 	if err := raw.Backup(ctx, path); err != nil {
 		return 0, time.Time{}, err

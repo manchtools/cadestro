@@ -20,8 +20,8 @@ import (
 //     destination (parent chain OR final component) that lands on one. The
 //     agent-owned managed roots are the sole exemption.
 //   - canWipe — used by Wipe. Strict allow-list on top of the
-//     destination check: `/var/lib/power-manage/...`,
-//     `/etc/power-manage/...`, or any path previously seen by a
+//     destination check: `/var/lib/cadestro/...`,
+//     `/etc/cadestro/...`, or any path previously seen by a
 //     successful Fetch (RecordDest). The recorded set is process-local;
 //     once the agent restarts only the project-managed prefixes remain
 //     wipe-eligible — the safer default after a crash / upgrade.
@@ -31,30 +31,30 @@ import (
 // deployments — the agent is the only writer there, so a hostile symlink
 // would mean the agent itself was compromised, in which case the rest of
 // these checks don't matter either. The lexical check also makes the
-// helper testable on hosts where /var/lib/power-manage is owned by
+// helper testable on hosts where /var/lib/cadestro is owned by
 // another uid (e.g. a developer machine that ran the install script).
 
 // wipeAllowedRoots are the only path prefixes Wipe will touch in the
 // absence of a RecordDest entry. Mirrors the canonical agent state dirs
 // documented in install.sh + setup.sh. Trailing slash is required so the
-// prefix check can't match a hostile sibling (e.g. `/var/lib/power-manage-evil`).
+// prefix check can't match a hostile sibling (e.g. `/var/lib/cadestro-evil`).
 var wipeAllowedRoots = []string{
-	"/var/lib/power-manage/",
-	"/etc/power-manage/",
+	"/var/lib/cadestro/",
+	"/etc/cadestro/",
 }
 
 // isManagedRoot reports whether clean is at or under one of the agent-owned
-// managed roots. These live UNDER protected system prefixes (/etc/power-manage
-// is under /etc, /var/lib/power-manage under /var/lib), so the deny-by-default
+// managed roots. These live UNDER protected system prefixes (/etc/cadestro
+// is under /etc, /var/lib/cadestro under /var/lib), so the deny-by-default
 // subtree check would otherwise refuse the agent's own state dirs. The match is
 // lexical with a trailing-slash boundary (so a hostile sibling like
-// /etc/power-manage-evil is NOT mistaken for the managed root) — see the file
+// /etc/cadestro-evil is NOT mistaken for the managed root) — see the file
 // header for why agent-owned roots are intentionally not symlink-resolved.
 func isManagedRoot(clean string) bool {
 	for _, root := range wipeAllowedRoots {
 		// Normalise to a trailing-slash boundary regardless of how the entry is
-		// written, so a hostile sibling (/etc/power-manage-evil) can never be
-		// mistaken for the managed root /etc/power-manage.
+		// written, so a hostile sibling (/etc/cadestro-evil) can never be
+		// mistaken for the managed root /etc/cadestro.
 		root = strings.TrimSuffix(root, "/") + "/"
 		if strings.HasPrefix(clean+"/", root) {
 			return true

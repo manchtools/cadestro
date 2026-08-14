@@ -57,7 +57,7 @@ const (
 // CertBaseDir is the expected parent directory for EAP-TLS cert directories.
 // Apply and Delete validate CertDir against this (symlink-aware) so a profile
 // can never read or remove files outside the managed tree.
-const CertBaseDir = "/var/lib/power-manage/wifi"
+const CertBaseDir = "/var/lib/cadestro/wifi"
 
 // certBaseDir is the value actually enforced by validateProfile /
 // safeRemoveCertDir. It defaults to CertBaseDir; it is a var (not the exported

@@ -16,7 +16,7 @@ import (
 func TestValidatePath_AcceptsCanonicalShapes(t *testing.T) {
 	for _, p := range []string{
 		"/etc/sudoers.d/pm-power",
-		"/var/lib/power-manage/wifi/abc/ca.pem",
+		"/var/lib/cadestro/wifi/abc/ca.pem",
 		"/tmp/pm-test-keyfile",
 		"/home/alice/file with spaces.txt",
 		"relative/looking/path",

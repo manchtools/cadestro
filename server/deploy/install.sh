@@ -3,7 +3,7 @@
 set -euo pipefail
 umask 077
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/power-manage}"
+INSTALL_DIR="${INSTALL_DIR:-/opt/cadestro}"
 RELEASE_TAG="${RELEASE_TAG:-}"
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-MANCHTOOLS/power-manage-server}"
 

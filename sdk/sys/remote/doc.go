@@ -45,7 +45,7 @@
 //
 // Then drive Fetch / Wipe on the returned Source:
 //
-//	res, err := src.Fetch(ctx, "/var/lib/power-manage/release")
+//	res, err := src.Fetch(ctx, "/var/lib/cadestro/release")
 //	// res.Changed   — true on first fetch, false on a no-op drift hit.
 //	// res.Revision  — opaque drift token; cache between cycles to skip
 //	//                 no-op re-fetches.
@@ -74,7 +74,7 @@
 // or under a protected system root — /etc/cron.d/x, /usr/bin/x,
 // /home/<u>/.ssh/x, /var/lib/x — is refused at ANY depth, not just the exact
 // top-level dir. The only exemptions are the agent-owned managed roots
-// (/var/lib/power-manage/, /etc/power-manage/). Wipe additionally requires the
+// (/var/lib/cadestro/, /etc/cadestro/). Wipe additionally requires the
 // path to live under one of those managed roots OR to have been seen by a
 // successful Fetch (RecordDest), and refuses a protected subtree even if it
 // was somehow recorded; a hostile actor with action-creation rights can't

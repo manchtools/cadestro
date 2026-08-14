@@ -91,7 +91,7 @@ func TestResolvePath_AbsFails_RelMismatchRejected(t *testing.T) {
 	// relative child stays relative — Rel(absoluteParent, relativeChild) then
 	// errors, and isSubdirOf must fail closed.
 	absPath = func(p string) (string, error) { return "", errors.New("getwd failed") }
-	if isSubdirOf("/var/lib/power-manage/wifi", "relative-child") {
+	if isSubdirOf("/var/lib/cadestro/wifi", "relative-child") {
 		t.Error("isSubdirOf = true when the paths can't be related (Abs failed)")
 	}
 }
@@ -110,7 +110,7 @@ func TestResolvePath_StatAlwaysFails_WalksToRoot(t *testing.T) {
 	// No component "exists" per the seam, so the walk climbs to "/" and breaks on
 	// parent==current rather than looping forever.
 	statResolve = func(string) (os.FileInfo, error) { return nil, errors.New("stat denied") }
-	got := resolvePath("/var/lib/power-manage/wifi/deep/missing")
+	got := resolvePath("/var/lib/cadestro/wifi/deep/missing")
 	if !strings.HasPrefix(got, "/") {
 		t.Errorf("resolvePath walked to %q, want an absolute root-anchored path", got)
 	}

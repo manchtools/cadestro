@@ -31,8 +31,8 @@ final_path="$BACKUP_DIR/$artifact"
 temp_artifact=".sqlite-backup-${stamp}-$$.db"
 temp_path="$BACKUP_DIR/$temp_artifact"
 status_temp="$(mktemp "$BACKUP_DIR/.backup-status-XXXXXX.json")"
-container_database="/var/lib/power-manage/state/control.db"
-container_temp="/var/lib/power-manage/backups/$temp_artifact"
+container_database="/var/lib/cadestro/state/control.db"
+container_temp="/var/lib/cadestro/backups/$temp_artifact"
 
 cleanup() {
     local status=$?
