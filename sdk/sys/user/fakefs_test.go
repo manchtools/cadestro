@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // fakeFS is a hermetic fsManager for user tests: it records the

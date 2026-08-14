@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // zypper drives the openSUSE/SLES package manager (zypper / rpm) over an

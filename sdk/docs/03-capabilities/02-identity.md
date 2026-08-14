@@ -121,7 +121,7 @@ present, so it is safe to call on every reconcile.
 
 {% callout type="info" title="Reference" %}
 The full method set and option fields are generated API docs on
-[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/power-manage-sdk/sys/user).
+[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/cadestro/sdk/sys/user).
 {% /callout %}
 
 ## Related

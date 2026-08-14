@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/desktop"
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/desktop"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ExampleManager_ActiveSessions discovers the active graphical sessions and

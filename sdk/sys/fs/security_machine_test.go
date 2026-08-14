@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 type fileMutationAction int

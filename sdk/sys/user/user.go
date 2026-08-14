@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // queryTimeout caps a query op when the caller's context carries no deadline so

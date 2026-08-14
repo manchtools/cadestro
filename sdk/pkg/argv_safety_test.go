@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // indexOf returns the first index of want in args, or -1.

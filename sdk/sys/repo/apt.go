@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 const (

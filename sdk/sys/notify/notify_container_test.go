@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestNotifyAll_RealWall_Container(t *testing.T) {

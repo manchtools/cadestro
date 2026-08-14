@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/network"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
 // These exercise the REAL NetworkManager keyfile-based WiFi provisioning against

@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/reboot"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
 // debianRebootMarker is the Debian/Ubuntu reboot-required marker the detector

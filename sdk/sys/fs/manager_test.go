@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // ownerGroup is the current process's owner/group names, for fd-chown-to-self

@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // stubStatFile overrides the statFile seam: paths in exist resolve, all others

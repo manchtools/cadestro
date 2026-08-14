@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/timesync"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/timesync"
 )
 
 // ExampleNew reads the clock-sync status from chrony.

@@ -30,7 +30,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // selfSignedCA returns a PEM-encoded self-signed CA certificate with the given

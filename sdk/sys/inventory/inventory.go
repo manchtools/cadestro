@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Seams for the file-backed sources, overridable from tests so the

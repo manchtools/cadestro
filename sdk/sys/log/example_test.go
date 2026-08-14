@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	syslog "github.com/manchtools/power-manage-sdk/sys/log"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	syslog "github.com/manchtools/cadestro/sdk/sys/log"
 )
 
 // ExampleNew reads recent warnings from a unit's journal.

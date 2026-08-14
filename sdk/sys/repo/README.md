@@ -17,9 +17,9 @@ import (
     "context"
     "log"
 
-    "github.com/manchtools/power-manage-sdk/pkg"
-    "github.com/manchtools/power-manage-sdk/sys/exec"
-    "github.com/manchtools/power-manage-sdk/sys/repo"
+    "github.com/manchtools/cadestro/sdk/pkg"
+    "github.com/manchtools/cadestro/sdk/sys/exec"
+    "github.com/manchtools/cadestro/sdk/sys/repo"
 )
 
 ctx := context.Background()

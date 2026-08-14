@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
-	sdkfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
+	sdkfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // genCert builds a self-signed cert PEM with the given CA flag and validity

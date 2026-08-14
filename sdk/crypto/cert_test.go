@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/cryptotest"
+	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
 
 // TestCAFingerprintFromPEM pins that the fingerprint is the lowercase hex

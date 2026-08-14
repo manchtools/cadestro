@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // networkDir is where systemd-networkd reads .network units. A package var so

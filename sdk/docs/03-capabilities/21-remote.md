@@ -120,7 +120,7 @@ under `/etc/power-manage`.
 
 {% callout type="info" title="Reference" %}
 Config fields and the `Result` shape are generated API docs on
-[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/power-manage-sdk/sys/remote).
+[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/cadestro/sdk/sys/remote).
 See also [Backends](/concepts/backends) for the per-call Source model vs. the
 Runner/Backend model the other capabilities use.
 {% /callout %}

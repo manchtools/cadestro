@@ -110,7 +110,7 @@ reverses it.
 
 {% callout type="info" title="Reference" %}
 The full method set is generated API docs on
-[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/power-manage-sdk/sys/service).
+[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/cadestro/sdk/sys/service).
 {% /callout %}
 
 ## Related

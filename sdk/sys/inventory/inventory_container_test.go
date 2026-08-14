@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func realCollector(t *testing.T) Collector {

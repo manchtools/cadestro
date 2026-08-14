@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // TestValidateProfile_RejectsControlChars: Name/SSID/PSK are rendered into the

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // These are real-system integration tests: they build a Manager over a real

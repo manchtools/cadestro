@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 type aptTrustState int

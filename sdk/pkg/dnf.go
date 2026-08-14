@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // dnf drives the Fedora/RHEL package manager (dnf / rpm) over an injected Runner.

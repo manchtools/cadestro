@@ -25,8 +25,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/antivirus"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/antivirus"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // marker is the exact string the baked custom .ndb signature matches. Keep in

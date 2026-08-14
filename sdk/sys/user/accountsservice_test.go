@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // useAccountsSeams points the accountsservice file ops at a capturing fake fs

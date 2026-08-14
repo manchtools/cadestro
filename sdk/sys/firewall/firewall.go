@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Backend selects the packet-filter framework the SDK targets. Passed explicitly

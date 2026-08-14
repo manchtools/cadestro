@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Seams: notify-send presence + the per-user D-Bus socket check. Overridable from

@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // randInt is a seam over crypto/rand.Int so the (practically unreachable)

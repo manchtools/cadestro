@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // resolvConfPath is systemd-resolved's generated resolv.conf, the authoritative

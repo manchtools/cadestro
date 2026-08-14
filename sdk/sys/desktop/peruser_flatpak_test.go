@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	"github.com/manchtools/power-manage-sdk/sys/desktop"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	"github.com/manchtools/cadestro/sdk/sys/desktop"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // TestPerUserFlatpak_Composition pins the agent's per-user flatpak pattern end to

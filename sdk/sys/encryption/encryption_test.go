@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // recordingRunner is an exec.Runner that captures each Command and, crucially,

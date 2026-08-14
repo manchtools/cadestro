@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/dns"
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/dns"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ExampleNew shows the construct-a-handle flow: pick a backend (here

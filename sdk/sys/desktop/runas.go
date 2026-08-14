@@ -3,7 +3,7 @@ package desktop
 import (
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // EnvFor builds the minimum environment a user-scoped command needs

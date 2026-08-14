@@ -7,10 +7,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // fakeFS is a recording fsManager. It records every op (as "Op:path", in order),

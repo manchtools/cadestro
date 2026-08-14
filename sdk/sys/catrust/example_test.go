@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/manchtools/power-manage-sdk/sys/catrust"
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/catrust"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ExampleNew installs an org CA into the system trust store, then lists the

@@ -1,15 +1,14 @@
 # SDK documentation — authoring guide
 
-`docs/` is the narrative documentation for the Power Manage SDK. It is served
+`docs/` is the narrative documentation for the Cadestro SDK. It is served
 with **open-docs** (folder tree = navigation; `NN-` prefixes order; frontmatter
 sets titles) and kept honest against the code with **open-docref**
-(`docref.toml` at the repo root; `docref check` runs in CI).
+(`docref.toml` at this module's root; `docref check` runs in CI).
 
-The sole Power Manage system-design authority is
-`../DESIGN_2026_07_31/00_TARGET_DESIGN.md`. SDK docs may explain the
-implemented mechanism layer, but must not create a competing product
-architecture. During consolidation the protobuf contract moves to its own
-monorepo module; the SDK remains mechanism, not server policy.
+SDK docs explain the implemented mechanism layer. They must not create a
+competing product architecture, and they do not describe the wire contract:
+that is its own module, with its own documentation. The SDK is mechanism, not
+server policy.
 
 Don't re-derive the conventions from memory — read the canonical specs:
 
@@ -31,7 +30,7 @@ the upstream spec — the exact thing docref exists to prevent.)
   mirror method signatures into prose.
 - **Anchor Go code with docref.** A claim or snippet points at a symbol
   (`sys/<pkg>/<file>.go#Symbol`) or a marked region (`<file>.go#@name`).
-  `src=` paths are relative to the repo root, where `docref.toml` lives.
+  `src=` paths are relative to this module's root, where `docref.toml` lives.
 - **After changing anchored code:** `docref refresh <doc>` for snippets; read
   the prose and `docref approve <doc>` for claims (never approve unread); then
   `docref check` must exit `0`.

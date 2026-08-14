@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // recordingRunner is the test exec.Runner: it records each Command (so a test can

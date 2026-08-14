@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestLocalPackageInfo_AptRealDeb_Container(t *testing.T) {

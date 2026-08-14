@@ -142,7 +142,7 @@ Behavioural differences the Manager smooths over but you should know about:
 
 {% callout type="info" title="Reference" %}
 The full method set and option fields are generated API docs on
-[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/power-manage-sdk/pkg).
+[pkg.go.dev](https://pkg.go.dev/github.com/manchtools/cadestro/sdk/pkg).
 This page is the task-oriented recipe; the reference lists the surface.
 {% /callout %}
 

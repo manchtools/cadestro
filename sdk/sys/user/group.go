@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // MembersMatch reports whether two member lists contain the same set of names,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // RunAsRunner wraps a base [exec.Runner] so every command it runs executes AS the

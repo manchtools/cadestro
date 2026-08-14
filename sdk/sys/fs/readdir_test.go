@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // names renders entries as "name(d|f)" sorted, so assertions are order-stable

@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // mutTestPackage is a tiny, dependency-light package in the Debian archive —

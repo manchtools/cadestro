@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // statFile is the os.Stat seam used by removeStaleLock so the lock-file probe

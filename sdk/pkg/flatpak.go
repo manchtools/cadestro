@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // flatpak drives the cross-distro application bundle manager over an injected

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // Contract (gap #2): LocalPackageInfo(ctx, path) reads a package's CANONICAL

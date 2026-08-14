@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // FakeRunner is the keystone of the additive unit tier: a capability Manager

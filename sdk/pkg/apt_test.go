@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // aptM builds an apt Manager over a fresh fake with "apt" resolvable on PATH

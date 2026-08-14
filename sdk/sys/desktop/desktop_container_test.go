@@ -29,7 +29,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func requireUseradd(t *testing.T) {

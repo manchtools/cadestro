@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
+	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
 // Field grammars. A repository name becomes a filename (and, for apt, a keyring

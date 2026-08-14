@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // apt drives the Debian/Ubuntu package manager (apt / apt-get / dpkg / apt-mark)

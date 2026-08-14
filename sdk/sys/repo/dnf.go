@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // dnfRepoFile is the .repo path for a named DNF repository.

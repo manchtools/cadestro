@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // etcResolvConfPath is the host's effective resolver file, which NetworkManager

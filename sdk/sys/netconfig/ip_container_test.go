@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestGet_ParsesRealIpJSON_Container(t *testing.T) {

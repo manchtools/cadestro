@@ -29,8 +29,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // Backend selects the trust-store mechanism. Zero is invalid; only implemented

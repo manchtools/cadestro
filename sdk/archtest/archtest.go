@@ -69,6 +69,17 @@ func moduleRoot(t *testing.T) string {
 // the archtest package itself).
 func walkGoFiles(t *testing.T, root string, keep func(rel string) bool) []*goFile {
 	t.Helper()
+	return walkGoFilesIncludingTests(t, root, func(rel string) bool {
+		return !strings.HasSuffix(rel, "_test.go") && keep(rel)
+	})
+}
+
+// walkGoFilesIncludingTests is walkGoFiles without the _test.go exclusion, for
+// the guards whose subject is a module-level property rather than production
+// code quality: an import edge in a test file is a real module dependency, so
+// the leaf-purity guard has to see it.
+func walkGoFilesIncludingTests(t *testing.T, root string, keep func(rel string) bool) []*goFile {
+	t.Helper()
 	var out []*goFile
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -96,7 +107,7 @@ func walkGoFiles(t *testing.T, root string, keep func(rel string) bool) []*goFil
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if strings.HasSuffix(rel, "_test.go") || !keep(rel) {
+		if !keep(rel) {
 			return nil
 		}
 		fset := token.NewFileSet()

@@ -32,7 +32,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
+	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
 // armoredTestKey2 is a SECOND throwaway ed25519 PUBLIC key (no secret committed),

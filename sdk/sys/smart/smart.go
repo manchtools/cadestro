@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ErrInvalidDevice is returned when a device path is unsafe to pass to smartctl

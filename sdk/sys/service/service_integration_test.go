@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
-	"github.com/manchtools/power-manage-sdk/sys/service"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
 const testUnitName = "pm-test-unit.service"

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // SetHiddenOnLoginScreen shows or hides a user on the graphical login screen by

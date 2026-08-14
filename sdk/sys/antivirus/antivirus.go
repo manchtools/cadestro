@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Backend selects the AV engine. The zero value is invalid; only implemented

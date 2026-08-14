@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // tpmDevicePaths are probed by Available. A var (not const) so tests can point

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // systemd is the systemctl-backed Manager. Every operation runs through the

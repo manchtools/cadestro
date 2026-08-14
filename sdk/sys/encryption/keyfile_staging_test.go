@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // withKeyFileDir points the key-file staging root at dir for one test.

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 func newResolved(t *testing.T, ff *fakeFS) (*resolvedManager, *exectest.FakeRunner) {

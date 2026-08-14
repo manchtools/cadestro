@@ -32,7 +32,7 @@ import (
 	"os"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ErrInvalidPath is returned by ValidatePath when the supplied path would be

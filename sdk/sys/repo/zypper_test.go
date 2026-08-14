@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 func TestZypper_Apply_FullSequence(t *testing.T) {

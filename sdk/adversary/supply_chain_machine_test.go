@@ -15,14 +15,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	"github.com/manchtools/power-manage-sdk/sys/catrust"
-	"github.com/manchtools/power-manage-sdk/sys/dns"
-	sdkexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
-	"github.com/manchtools/power-manage-sdk/sys/remote"
-	"github.com/manchtools/power-manage-sdk/sys/repo"
-	"github.com/manchtools/power-manage-sdk/sys/service"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	"github.com/manchtools/cadestro/sdk/sys/catrust"
+	"github.com/manchtools/cadestro/sdk/sys/dns"
+	sdkexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/sys/remote"
+	"github.com/manchtools/cadestro/sdk/sys/repo"
+	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
 // TestAdversarialSupplyChainTrustMachine covers attack classes that are hard to

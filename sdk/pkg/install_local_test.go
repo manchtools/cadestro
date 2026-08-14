@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // TestInstallLocal_GoldenArgv pins the per-backend command for installing a

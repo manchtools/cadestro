@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/user"
+	"github.com/manchtools/cadestro/sdk/sys/user"
 )
 
 func testGroupName(suffix string) string {

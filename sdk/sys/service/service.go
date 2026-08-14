@@ -19,8 +19,8 @@ import (
 	osexec "os/exec"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // Backend selects the service-manager implementation. Passed explicitly even

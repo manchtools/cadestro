@@ -28,8 +28,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // Backend selects the resolver framework a Manager drives. The zero value is

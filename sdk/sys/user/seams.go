@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // fsManager is the narrow slice of fs.Manager this package uses: the -M+chown

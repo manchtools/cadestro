@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ErrUnknownBackend is returned by New for a Backend the SDK does not implement

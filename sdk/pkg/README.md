@@ -9,8 +9,8 @@ flatpak) through a single `Manager` interface built over an injected
 
 ```go
 import (
-    "github.com/manchtools/power-manage-sdk/pkg"
-    "github.com/manchtools/power-manage-sdk/sys/exec"
+    "github.com/manchtools/cadestro/sdk/pkg"
+    "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 ```
 

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // --- P0.5: cleanupKeyFile must never block, and never scrub a non-regular file ---

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func tpm(t *testing.T, r exec.Runner) TPMEnroller {

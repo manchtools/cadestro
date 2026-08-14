@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // The Runner enforces the SDK env hijack boundary (audit finding #8) on

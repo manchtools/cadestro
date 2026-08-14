@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // Path-safety helpers shared by every Source. Two layers:

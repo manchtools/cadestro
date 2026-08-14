@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestRunRead_BuildsUnprivilegedCommand(t *testing.T) {

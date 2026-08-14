@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // applyZypper configures a zypper repository with `zypper addrepo` (preceded by a

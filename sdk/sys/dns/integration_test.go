@@ -9,8 +9,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/dns"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/dns"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // systemdRunning reports whether systemd is PID 1 (so resolvectl/systemctl can

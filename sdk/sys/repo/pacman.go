@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // pacmanConf is the pacman configuration file edited in place.

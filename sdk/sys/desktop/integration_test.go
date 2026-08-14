@@ -8,8 +8,8 @@ import (
 	osexec "os/exec"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/desktop"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/desktop"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func systemdRunning() bool {

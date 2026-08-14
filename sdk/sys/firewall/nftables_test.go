@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // nftTestNamespace is the namespace every nftables test uses. Tests

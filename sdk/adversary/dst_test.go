@@ -28,11 +28,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	"github.com/manchtools/power-manage-sdk/sys/dns"
-	sdkexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
-	"github.com/manchtools/power-manage-sdk/sys/network"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	"github.com/manchtools/cadestro/sdk/sys/dns"
+	sdkexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
+	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
 const defaultDSTSeed = 0x5d_a_da_7a // a fixed default so CI is deterministic; override with PM_DST_SEED

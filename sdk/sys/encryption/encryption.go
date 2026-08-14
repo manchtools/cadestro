@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Backend selects the disk-encryption implementation. Passed explicitly even

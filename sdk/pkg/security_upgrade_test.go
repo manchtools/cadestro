@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // stubUnattendedUpgradePaths overrides the known absolute-path probe list so the

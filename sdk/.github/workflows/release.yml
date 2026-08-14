@@ -1,11 +1,9 @@
 name: Release
 
-# docref: begin release-trigger
 on:
   push:
     tags:
       - 'v*'
-# docref: end release-trigger
 
 permissions:
   contents: write
@@ -47,7 +45,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # docref: begin ts-release-assets
       # Same buf as the verification gate and `make generate`
       # (scripts/buf.sh). A bare `npx buf` runs the lock-installed binary when
       # present and DOWNLOADS registry-latest when it is not — which would mean
@@ -67,7 +64,6 @@ jobs:
           tar czf release/ts-sdk.tar.gz -C gen/ts .
 
           cd release && sha256sum * > SHA256SUMS
-      # docref: end ts-release-assets
 
       - name: Generate changelog
         run: |
@@ -120,7 +116,7 @@ jobs:
           ## Go SDK
 
           ```go
-          go get github.com/manchtools/power-manage-sdk@${{ github.ref_name }}
+          go get github.com/manchtools/cadestro/sdk@${{ github.ref_name }}
           ```
 
           ## Assets

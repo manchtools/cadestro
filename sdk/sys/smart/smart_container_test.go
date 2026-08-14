@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/smart"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/smart"
 )
 
 func realSmart(t *testing.T) smart.Collector {

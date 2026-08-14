@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/antivirus"
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/antivirus"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ExampleNew updates signatures then scans a path, printing any detections.

@@ -18,7 +18,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Backend selects the time-sync daemon to query. The zero value is invalid; only

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/osquery"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
 // ExampleNew shows the construct-a-handle flow: pick a Runner, build a Querier,

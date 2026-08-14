@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	syslog "github.com/manchtools/power-manage-sdk/sys/log"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	syslog "github.com/manchtools/cadestro/sdk/sys/log"
 )
 
 func systemdRunning() bool {

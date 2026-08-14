@@ -36,7 +36,7 @@ import (
 	osexec "os/exec"
 	"os/user"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // defaultHomeRoot is the directory HomeUsers enumerates unless overridden with

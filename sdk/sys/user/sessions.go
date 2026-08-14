@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // KillSessions terminates all of a user's sessions. It prefers systemd's

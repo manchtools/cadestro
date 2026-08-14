@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // clamavManager drives ClamAV via clamscan + freshclam.

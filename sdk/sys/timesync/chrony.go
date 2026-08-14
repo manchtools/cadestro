@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // chronyManager queries chrony via `chronyc -c tracking` (CSV report).

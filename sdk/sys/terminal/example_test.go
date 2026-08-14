@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/terminal"
+	"github.com/manchtools/cadestro/sdk/sys/terminal"
 )
 
 // ExampleManager_Open shows the construct-a-handle flow: build a Manager, open a

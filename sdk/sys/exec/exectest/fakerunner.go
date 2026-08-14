@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // FakeRunner is a drop-in exec.Runner.

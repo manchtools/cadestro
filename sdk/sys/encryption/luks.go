@@ -11,7 +11,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // luks is the cryptsetup/LUKS Manager. cryptsetup needs root, so every command

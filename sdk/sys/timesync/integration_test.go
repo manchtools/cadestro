@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/timesync"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/timesync"
 )
 
 // systemdRunning reports whether systemd is PID 1 (so timedatectl can reach

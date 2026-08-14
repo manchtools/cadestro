@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/smart"
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/smart"
 )
 
 // ExampleNew scans for devices and prints each one's health.

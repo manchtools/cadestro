@@ -1,196 +1,107 @@
 ---
 title: Release coordination
 label: Releases
-description: How SDK changes propagate to the agent and server without breaking them — pinning, bumping, the workspace trick, and tag conventions.
+description: How the SDK reaches the agent and server — module wiring, the leaf rule, and tag conventions.
 ---
 
 # Release coordination
 
-This document explains how SDK changes propagate to the agent, server, and web
-repositories.
+Contract, SDK, agent, and control server are modules of one repository. This
+document is how a change to `sdk/` reaches the code that consumes it, and how
+the repository is versioned for consumers outside it.
 
-## The problem it solves
+## How the modules are wired
 
-Downstream builds pin a *specific* SDK commit or tag, so SDK main can
-move freely and downstream bumps are explicit. The moment a breaking SDK
-change lands on main, open agent/server PRs keep compiling against their
-pinned SDK version until their author opens an explicit bump PR — main
-never breaks a PR that hasn't changed.
-
-## How it works now
-
-### Downstream pinning
-
-Agent and server `go.mod` look like this:
+Consumers resolve the two leaf modules from the sibling directory:
 
 ```go
+// agent/go.mod and server/go.mod
 require (
-    github.com/manchtools/power-manage-sdk v0.1.0
-    // ...
+    github.com/manchtools/cadestro/contract v0.0.0
+    github.com/manchtools/cadestro/sdk v0.0.0
 )
+
+replace github.com/manchtools/cadestro/contract => ../contract
+
+replace github.com/manchtools/cadestro/sdk => ../sdk
 ```
 
-<!-- docref: begin src=go.mod#@module-path:3320c783 -->
-The module path now equals the repo URL
-(`github.com/manchtools/power-manage-sdk`), so `go get` resolves it
-directly — no `replace` directive needed. The version is a Go-compatible
-semver tag (`v0.x.x` / `v1.x.x`); pseudo-versions
-(`v0.0.0-TIMESTAMP-SHORTSHA`) are accepted for pinning an untagged
-commit, but prefer a tagged release when one exists — `go.mod` stays
-readable.
+<!-- docref: begin src=go.mod#@module-path:d4d2037e -->
+The `v0.0.0` is a placeholder: the `replace` directive resolves the module
+from the sibling directory, so the version is never consulted. The module
+path (`github.com/manchtools/cadestro/sdk`) is the path this module publishes
+under, not a location anything fetches from during a build in this
+repository.
 <!-- docref: end -->
 
-`go build` fetches the pinned version from GitHub. Nothing looks at
-SDK main unless someone explicitly bumps the pin.
+The root `go.work` lists all four Go modules, so an editor and a repo-wide
+`go build ./...` see one workspace. Every module also builds with `GOWORK=off`
+— that is what the relative `replace` directives are for, and what each
+module's gate runs. A module that builds only inside the workspace is broken
+for everyone consuming it from outside.
 
-### Bumping the pin
+## A change to the SDK is compiled by its consumers in the same commit
 
-Downstream repos bump the SDK pin with a normal PR:
+Consumers resolve the SDK from the tree rather than from a recorded version,
+so every commit compiles one SDK. Change the SDK and its consumers together:
+`go build ./...` from the repository root compiles all of them, and each
+module's gate re-runs the build standalone. When an SDK change breaks the
+agent, the agent fix belongs in that same change.
 
-```bash
-cd agent   # or server
-go get github.com/manchtools/power-manage-sdk@<commit-or-tag>
-go mod tidy
-git add go.mod go.sum
-git commit -m "chore: bump SDK to <commit-or-tag>"
-```
+## The leaf rule
 
-That PR runs CI against the new SDK commit. If it passes, merge it. If
-the new SDK has breaking API changes, the same PR carries the downstream
-migration.
+`contract` and `sdk` import nothing else in this repository, and `sdk` is
+otherwise free of the generated protobuf types. This is not a convention: the
+architecture test in `archtest` asserts it, and fails both when a new in-repo
+import appears and when a recorded exception goes stale.
 
-### Cross-cutting development
-
-When you're iterating on an SDK change and the matching agent or server
-migration at the same time, pinning gets in the way. Fix: use a Go
-workspace (`go.work`) at the parent directory that contains all the
-repo checkouts. `go.work` overrides the pinned `require` versions, so all
-three modules build against your local checkouts.
-
-```bash
-# At the workspace root (e.g., ~/code/power-manage/):
-cat > go.work <<'EOF'
-go 1.25
-
-use (
-    ./agent
-    ./server
-)
-
-replace github.com/manchtools/power-manage-sdk => ./sdk
-EOF
-```
-
-Don't commit `go.work` to any repo — each developer manages their own.
-
-When you're done with cross-cutting work, rename it to `go.work.off` (or
-delete it) so regular builds go back to the pinned SDK.
-
-## The release flow
-
-### For SDK contributors
-
-1. Open a PR against SDK main (small, focused — breaking changes are a
-   judgment call but prefer landing them separately from additive work).
-2. Merge. SDK main advances.
-3. Downstream repos are *not* broken by this. They still pin the
-   previous SDK commit until someone opens a bump PR.
-4. Optionally tag a release (see below). Tagging is a strictly
-   optional step for human-readable release names — Go pinning works
-   fine against any commit.
-
-### For agent / server maintainers
-
-When ready to consume the latest SDK:
-
-1. `go get github.com/manchtools/power-manage-sdk@main` (or a specific
-   commit / tag) in agent or server.
-2. `go mod tidy`.
-3. Fix any API breakage in the same PR. Run tests.
-4. Merge. Now the downstream is on the new SDK.
-
-### Breaking-change coordination
-
-When an SDK change is known to break downstream, the PR description
-should:
-
-1. Link the downstream migration PRs that consume the breaking change.
-2. State the order of merges: SDK merges first (now the new API is
-   available as a pseudo-version), then each downstream's bump PR is
-   rebased on main and merged.
-
-There's no hard coupling — the downstream migration PR stays on an old
-SDK pin until its author explicitly bumps it. Missing the coordination
-window just delays the migration, it doesn't break anything.
+The reason is licensing. `contract` and `sdk` are MIT so that implementing the
+protocol, or embedding a capability, imposes no obligation; `agent` and
+`server` are copyleft. Permissive leaves feeding copyleft consumers is the
+safe direction, and the reverse would not be.
 
 ## Tags and GitHub Releases
 
-The SDK uses two kinds of tags side-by-side:
+Tags name a state of the whole repository, not of one module.
 
 | Identity | Format | Used by |
 |---|---|---|
-| Go module tag | `v0.x.x` semver | agent/server `go.mod` |
+| Go module tag | `v0.x.x` semver | anyone consuming `contract` or `sdk` from outside |
 | Human-readable release label | `vYYYY.MM.XX` calendar date (e.g. `v2026.04.03`) | GitHub Releases UI, operator-facing docs |
-
-<!-- docref: begin src=.github/workflows/release.yml#@release-trigger:6d9c7468,.github/workflows/release.yml#@ts-release-assets:8a07e73a -->
-Both can live at the same commit — the release workflow
-(`.github/workflows/release.yml`) fires on any tag matching `v*` and
-builds TypeScript SDK assets (`ts-sdk.tar.gz`, plus the proto sources
-as `proto.tar.gz`) for the GitHub Release page regardless of the
-format. They're just two ways to reference the same release.
-<!-- docref: end -->
 
 ### Why two conventions
 
-Go modules applies **Semantic Import Versioning**: for major version
-≥ 2, the import path must carry a `/vN` suffix (e.g.
-`github.com/foo/bar/v2`). Calendar-style tags like `v2026.x.x` would
-require renaming the SDK's import path to
-`github.com/manchtools/power-manage-sdk/v2026`, which ripples into
-every downstream `import` statement and has to be redone every January.
-That's a high price for a version-number aesthetic.
+Go modules applies **Semantic Import Versioning**: for major version ≥ 2, the
+import path must carry a `/vN` suffix (e.g. `github.com/foo/bar/v2`).
+Calendar-style tags like `v2026.x.x` would require renaming the import path to
+`github.com/manchtools/cadestro/sdk/v2026`, which ripples into every `import`
+statement and has to be redone every January. That is a high price for a
+version-number aesthetic.
 
-The SDK sidesteps it by staying in the `v0.x.x` / `v1.x.x` range for
-Go pinning while keeping calendar-dated GitHub Release names for
-humans. Both coexist at the same commit; downstream machinery reads
-the semver tag, release notes reference the calendar one.
+The repository sidesteps it by staying in the `v0.x.x` / `v1.x.x` range for Go
+consumption while keeping calendar-dated GitHub Release names for humans. Both
+coexist at the same commit.
 
 ### The pre-v1.0.0 contract
 
-The SDK is currently on a `v0.x.x` line, which per semver means the
-API is not yet stable. **Minor bumps (`v0.1.0` → `v0.2.0`) may carry breaking changes.** Expect each bump to ship with migration notes in the
-release body, and for downstream bump PRs to absorb the required API
-edits in the same commit.
-
-A move to `v1.x.x` is a deliberate decision to freeze the public
-surface. Don't tag `v1.0.0` until the API has settled — once it's
-cut, breaking changes become a coordinated `v2.x.x` move with a new
-import path.
-
-### Pseudo-versions
-
-Pseudo-versions (`v0.0.0-TIMESTAMP-SHORTSHA`) remain valid for pinning
-untagged commits. Use them when you need to reference a specific
-commit that doesn't have a matching release tag — generally during
-active cross-cutting development before the SDK side cuts its tag.
-Prefer a real tag once one exists; `go.mod` readability matters.
+`contract` and `sdk` are on a `v0.x.x` line, which per semver means the public
+API is not yet stable. **Minor bumps (`v0.1.0` → `v0.2.0`) may carry breaking
+changes.** A move to `v1.x.x` is a deliberate decision to freeze the public
+surface; don't tag `v1.0.0` until the API has settled, because once it is cut,
+breaking changes become a coordinated `v2.x.x` move with a new import path.
 
 ## Anti-patterns
 
-- **Don't delete old tags.** Downstream may still pin to them.
-- **Don't tag `v1.0.0` prematurely.** Once the `v1.x.x` line is
-  cut, the API is frozen; breaking changes require moving to
-  `v2.x.x` and renaming the import path. Stay on `v0.x.x` until the
-  public surface is genuinely stable.
-- **Don't tag `v2.x.x` without renaming the import path.** Go's
-  Semantic Import Versioning requires a `/v2` suffix in the path,
-  and skipping it produces invalid modules that downstream can't
-  pin at all.
-- **Don't edit pseudo-version timestamps by hand.** Always let
-  `go get @<sha-or-tag>` compute them. Hand-edited timestamps drift
-  from the actual commit time and Go rejects the module.
-- **Don't skip the `go.work` for cross-cutting dev.** Tweaking the
-  pin to a fake SHA sometimes works, sometimes doesn't, and always
-  confuses other developers. `go.work` is the right tool.
-- **Don't put `go.work` in any repo's git history.** It's workspace-
-  local by design.
+- **Don't delete old tags.** External consumers may still pin to them.
+- **Don't tag `v1.0.0` prematurely.** Once the `v1.x.x` line is cut, the API
+  is frozen; breaking changes require moving to `v2.x.x` and renaming the
+  import path.
+- **Don't tag `v2.x.x` without renaming the import path.** Go's Semantic
+  Import Versioning requires a `/v2` suffix in the path, and skipping it
+  produces invalid modules that nobody can consume.
+- **Don't replace a relative `replace` with a version pin** to insulate a
+  consumer from an in-tree change. The agent's architecture test fails on that
+  deliberately: a consumer that resolves the SDK from anywhere but the sibling
+  directory is compiling against code this repository does not contain.
+- **Don't let a module build only inside the workspace.** Run its gate with
+  `GOWORK=off`; that is how everyone outside this repository resolves it.

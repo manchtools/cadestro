@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // defaultHTTPMaxBytes caps the size of any single HTTP payload to defeat
