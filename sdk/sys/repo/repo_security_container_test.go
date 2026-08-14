@@ -60,12 +60,12 @@ IzP53rgn9zz6rhzYNLf7yWtog0MbeGAjFPy5/B2G3gEAuhJEqqjp+uBXM0MvYrfc
 func TestRepoSecurity_AptMalformedKey_Rejected_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
-	const name = "pm-sec-apt-badkey"
+	const name = "cadestro-sec-apt-badkey"
 	repoFile, keyFile := aptRepoFile(name), aptKeyFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	_, err := m.Apply(ctx, Repository{Name: name, Apt: &AptConfig{
-		URL:          "https://example.com/pm-sec-debian",
+		URL:          "https://example.com/cadestro-sec-debian",
 		Distribution: "bookworm",
 		Components:   []string{"main"},
 		GPGKey:       []byte("this is definitely not an OpenPGP public key"),
@@ -92,16 +92,16 @@ func TestRepoSecurity_AptMalformedKey_Rejected_Container(t *testing.T) {
 func TestRepoSecurity_AptConflictCleanupConfinedToKeyringJail_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
-	const name = "pm-sec-apt-conflict"
-	const url = "https://example.com/pm-sec-conflict"
+	const name = "cadestro-sec-apt-conflict"
+	const url = "https://example.com/cadestro-sec-conflict"
 	repoFile, keyFile := aptRepoFile(name), aptKeyFile(name)
 
 	if err := os.MkdirAll(aptKeyringDir, 0o755); err != nil {
 		t.Fatalf("prepare keyring dir: %v", err)
 	}
-	decoySource := aptSourcesDir + "/pm-sec-decoy.sources"
-	inJailKey := aptKeyringDir + "/pm-sec-decoy-injail.gpg"
-	outOfJailSentinel := "/etc/pm-sec-out-of-jail-sentinel.gpg" // NOT under any keyring dir
+	decoySource := aptSourcesDir + "/cadestro-sec-decoy.sources"
+	inJailKey := aptKeyringDir + "/cadestro-sec-decoy-injail.gpg"
+	outOfJailSentinel := "/etc/cadestro-sec-out-of-jail-sentinel.gpg" // NOT under any keyring dir
 
 	for path, body := range map[string]string{
 		inJailKey:         "decoy-in-jail-key\n",
@@ -153,8 +153,8 @@ func TestRepoSecurity_AptConflictCleanupConfinedToKeyringJail_Container(t *testi
 func TestRepoSecurity_AptKeyRotation_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
-	const name = "pm-sec-apt-rotate"
-	const url = "https://example.com/pm-sec-rotate"
+	const name = "cadestro-sec-apt-rotate"
+	const url = "https://example.com/cadestro-sec-rotate"
 	keyFile := aptKeyFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
@@ -206,8 +206,8 @@ func TestRepoSecurity_AptKeyRotation_Container(t *testing.T) {
 func TestRepoSecurity_AptRejectedReapplyPreservesExisting_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
-	const name = "pm-sec-apt-preserve"
-	const url = "https://example.com/pm-sec-preserve"
+	const name = "cadestro-sec-apt-preserve"
+	const url = "https://example.com/cadestro-sec-preserve"
 	repoFile := aptRepoFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
@@ -237,8 +237,8 @@ func TestRepoSecurity_AptRejectedReapplyPreservesExisting_Container(t *testing.T
 func TestRepoSecurity_AptTrustedYes_OperatorOverride_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
-	const name = "pm-sec-apt-trusted"
-	const url = "https://example.com/pm-sec-trusted"
+	const name = "cadestro-sec-apt-trusted"
+	const url = "https://example.com/cadestro-sec-trusted"
 	repoFile := aptRepoFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
@@ -269,13 +269,13 @@ func TestRepoSecurity_AptTrustedYes_OperatorOverride_Container(t *testing.T) {
 func TestRepoSecurity_DnfGpgcheckZeroDropsKeyImport_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Dnf)
 	ctx := repoCtx(t)
-	const name = "pm-sec-dnf-nokey"
+	const name = "cadestro-sec-dnf-nokey"
 	repoFile := dnfRepoFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	if _, err := m.Apply(ctx, Repository{Name: name, Dnf: &DnfConfig{
-		BaseURL: "https://example.com/pm-sec-el9", Description: "PM Sec", Enabled: true,
-		GPGCheck: false, GPGKey: "https://example.com/pm-sec-el9/RPM-GPG-KEY",
+		BaseURL: "https://example.com/cadestro-sec-el9", Description: "PM Sec", Enabled: true,
+		GPGCheck: false, GPGKey: "https://example.com/cadestro-sec-el9/RPM-GPG-KEY",
 	}}); err != nil {
 		t.Fatalf("Apply(dnf gpgcheck=0): %v", err)
 	}
@@ -300,12 +300,12 @@ func TestRepoSecurity_DnfGpgcheckZeroDropsKeyImport_Container(t *testing.T) {
 func TestRepoSecurity_PacmanSigLevelNever_Rejected_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Pacman)
 	ctx := repoCtx(t)
-	const name = "pm-sec-pacman-never"
+	const name = "cadestro-sec-pacman-never"
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	before := readFile(t, pacmanConf)
 	_, err := m.Apply(ctx, Repository{Name: name, Pacman: &PacmanConfig{
-		Server: "https://example.com/pm-sec-arch/$repo/os/$arch", SigLevel: "Never",
+		Server: "https://example.com/cadestro-sec-arch/$repo/os/$arch", SigLevel: "Never",
 	}})
 	if !errors.Is(err, ErrInvalidConfig) {
 		t.Fatalf("Apply(SigLevel Never): got err=%v, want ErrInvalidConfig", err)
@@ -328,7 +328,7 @@ func TestRepoSecurity_PacmanReservedOptionsName_Rejected_Container(t *testing.T)
 
 	before := readFile(t, pacmanConf)
 	_, err := m.Apply(ctx, Repository{Name: "options", Pacman: &PacmanConfig{
-		Server: "https://example.com/pm-sec-arch/$repo/os/$arch",
+		Server: "https://example.com/cadestro-sec-arch/$repo/os/$arch",
 	}})
 	if !errors.Is(err, ErrInvalidConfig) {
 		t.Fatalf("Apply(name=options): got err=%v, want ErrInvalidConfig", err)
@@ -344,11 +344,11 @@ func TestRepoSecurity_PacmanReservedOptionsName_Rejected_Container(t *testing.T)
 func TestRepoSecurity_PacmanTrustAll_OperatorOverride_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Pacman)
 	ctx := repoCtx(t)
-	const name = "pm-sec-pacman-trustall"
+	const name = "cadestro-sec-pacman-trustall"
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	if _, err := m.Apply(ctx, Repository{Name: name, Pacman: &PacmanConfig{
-		Server: "https://example.com/pm-sec-arch/$repo/os/$arch", SigLevel: "Optional TrustAll",
+		Server: "https://example.com/cadestro-sec-arch/$repo/os/$arch", SigLevel: "Optional TrustAll",
 	}}); err != nil {
 		t.Fatalf("Apply(Optional TrustAll) is an allowed operator override but failed: %v", err)
 	}
@@ -366,11 +366,11 @@ func TestRepoSecurity_PacmanTrustAll_OperatorOverride_Container(t *testing.T) {
 func TestRepoSecurity_ZypperNoGpgcheck_OperatorOverride_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Zypper)
 	ctx := repoCtx(t)
-	const name = "pm-sec-zypper-nogpg"
+	const name = "cadestro-sec-zypper-nogpg"
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	if _, err := m.Apply(ctx, Repository{Name: name, Zypper: &ZypperConfig{
-		URL: "https://example.com/pm-sec-suite", Description: "PM Sec", Enabled: false,
+		URL: "https://example.com/cadestro-sec-suite", Description: "PM Sec", Enabled: false,
 		Autorefresh: false, GPGCheck: false,
 	}}); err != nil {
 		t.Fatalf("Apply(zypper --no-gpgcheck) is an allowed operator override but failed: %v", err)

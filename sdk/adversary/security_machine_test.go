@@ -180,7 +180,7 @@ func remoteToRootPersistenceProgram() attackProgram {
 					r := exectest.New(sdkexec.Sudo)
 					m, err := fs.New(r)
 					if err == nil {
-						err = m.SetMode(env.ctx, "/etc/pm-downloaded-helper", os.FileMode(0o755)|os.ModeSetuid)
+						err = m.SetMode(env.ctx, "/etc/cadestro-downloaded-helper", os.FileMode(0o755)|os.ModeSetuid)
 					}
 					return observation{err: err, commands: r.Calls()}
 				},

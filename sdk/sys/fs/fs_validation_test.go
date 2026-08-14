@@ -15,9 +15,9 @@ import (
 
 func TestValidatePath_AcceptsCanonicalShapes(t *testing.T) {
 	for _, p := range []string{
-		"/etc/sudoers.d/pm-power",
+		"/etc/sudoers.d/cadestro-power",
 		"/var/lib/cadestro/wifi/abc/ca.pem",
-		"/tmp/pm-test-keyfile",
+		"/tmp/cadestro-test-keyfile",
 		"/home/alice/file with spaces.txt",
 		"relative/looking/path",
 	} {
@@ -40,7 +40,7 @@ func TestValidatePath_RejectsEmpty(t *testing.T) {
 }
 
 func TestValidatePath_RejectsNULByte(t *testing.T) {
-	err := ValidatePath("/etc/sudoers.d/pm-power\x00.evil")
+	err := ValidatePath("/etc/sudoers.d/cadestro-power\x00.evil")
 	if !errors.Is(err, ErrInvalidPath) {
 		t.Fatalf("err = %v; want ErrInvalidPath", err)
 	}

@@ -64,7 +64,7 @@ func assertNeverStagedIn(t *testing.T, path string, err error, hostileDir string
 func TestWriteKeyFile_RefusesPreCreatedStagingDirectory(t *testing.T) {
 	t.Run("world-writable directory pre-created at the configured path", func(t *testing.T) {
 		root := t.TempDir()
-		hostile := filepath.Join(root, "pm-luks")
+		hostile := filepath.Join(root, "cadestro-luks")
 		if err := os.Mkdir(hostile, 0o700); err != nil {
 			t.Fatal(err)
 		}
@@ -84,7 +84,7 @@ func TestWriteKeyFile_RefusesPreCreatedStagingDirectory(t *testing.T) {
 		if err := os.Mkdir(attacker, 0o700); err != nil {
 			t.Fatal(err)
 		}
-		link := filepath.Join(root, "pm-luks")
+		link := filepath.Join(root, "cadestro-luks")
 		if err := os.Symlink(attacker, link); err != nil {
 			t.Fatal(err)
 		}
@@ -99,7 +99,7 @@ func TestWriteKeyFile_RefusesPreCreatedStagingDirectory(t *testing.T) {
 			t.Skip("chown to a foreign uid needs root; the ownership predicate is unit-tested in TestVerifyStagingDir_RefusesForeignOwner")
 		}
 		root := t.TempDir()
-		hostile := filepath.Join(root, "pm-luks")
+		hostile := filepath.Join(root, "cadestro-luks")
 		if err := os.Mkdir(hostile, 0o700); err != nil {
 			t.Fatal(err)
 		}
@@ -289,7 +289,7 @@ func TestAddKey_DetectsKeyFileSwapBeforeExec(t *testing.T) {
 // counted.
 func TestEverySecretMethodRefusesHostileStagingDir(t *testing.T) {
 	root := t.TempDir()
-	hostile := filepath.Join(root, "pm-luks")
+	hostile := filepath.Join(root, "cadestro-luks")
 	if err := os.Mkdir(hostile, 0o700); err != nil {
 		t.Fatal(err)
 	}

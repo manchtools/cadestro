@@ -109,7 +109,7 @@ func TestWriteKeyFile_FaultPaths(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer swapKeyFileSeams(t)()
 			stagingDirSeam(t)
-			fk := &fakeKeyFile{name: "/dev/shm/pm-luks/key-xxx"}
+			fk := &fakeKeyFile{name: "/dev/shm/cadestro-luks/key-xxx"}
 			tc.set(fk)
 			createKeyFile = func(string) (keyFileHandle, error) { return fk, nil }
 			rm := removed(t)
@@ -131,7 +131,7 @@ func TestWriteKeyFile_CleanupFailureSurfacesResidue(t *testing.T) {
 	defer swapKeyFileSeams(t)()
 	stagingDirSeam(t)
 	createKeyFile = func(string) (keyFileHandle, error) {
-		return &fakeKeyFile{name: "/dev/shm/pm-luks/key-leak", failWrite: true}, nil
+		return &fakeKeyFile{name: "/dev/shm/cadestro-luks/key-leak", failWrite: true}, nil
 	}
 	removeFile = func(string) error { return errIO }
 
@@ -142,7 +142,7 @@ func TestWriteKeyFile_CleanupFailureSurfacesResidue(t *testing.T) {
 	if !strings.Contains(err.Error(), "write key file") {
 		t.Errorf("err = %v, want the original write failure preserved", err)
 	}
-	if !strings.Contains(err.Error(), "cleanup failed") || !strings.Contains(err.Error(), "/dev/shm/pm-luks/key-leak") {
+	if !strings.Contains(err.Error(), "cleanup failed") || !strings.Contains(err.Error(), "/dev/shm/cadestro-luks/key-leak") {
 		t.Errorf("err = %v, want the key-file cleanup failure (plaintext residue) surfaced", err)
 	}
 }
@@ -211,7 +211,7 @@ func TestCleanupKeyFile_FaultPaths(t *testing.T) {
 		defer swapKeyFileSeams(t)()
 		openKeyFile = func(string) (scrubFile, error) { return nil, errIO }
 		removeFile = func(string) error { return errIO }
-		cleanupKeyFile("/dev/shm/pm-luks/key-x") // must not panic
+		cleanupKeyFile("/dev/shm/cadestro-luks/key-x") // must not panic
 	})
 	t.Run("scrub + close + remove all fail → warns, no panic", func(t *testing.T) {
 		defer swapKeyFileSeams(t)()
@@ -219,6 +219,6 @@ func TestCleanupKeyFile_FaultPaths(t *testing.T) {
 			return &fakeScrubFile{size: 16, failWrite: true, failClose: true}, nil
 		}
 		removeFile = func(string) error { return errIO }
-		cleanupKeyFile("/dev/shm/pm-luks/key-x") // exercises scrub/close/remove warn paths
+		cleanupKeyFile("/dev/shm/cadestro-luks/key-x") // exercises scrub/close/remove warn paths
 	})
 }

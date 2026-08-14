@@ -244,7 +244,7 @@ func findArchiveFile(t *testing.T, dir, ref string) string {
 func TestFilesystem_RejectsReservedRefNamespaces(t *testing.T) {
 	st := fsStore(t)
 	ctx := context.Background()
-	for _, ref := range []string{"x.sha256", "a.tmp-1", ".pm-archive-probe-9", "..", "a/b", ""} {
+	for _, ref := range []string{"x.sha256", "a.tmp-1", ".cadestro-archive-probe-9", "..", "a/b", ""} {
 		_, err := st.Put(ctx, ref, strings.NewReader("data"))
 		assert.Error(t, err, "reserved/unsafe ref %q must be rejected", ref)
 	}

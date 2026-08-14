@@ -79,8 +79,8 @@ func TestQuery_GrepSeed_Integration(t *testing.T) {
 
 	// Unique per process so a re-run never matches a stale entry; PID needs no
 	// clock/random and is stable within one container run.
-	marker := "PM-LOG-SEED-" + strconv.Itoa(os.Getpid())
-	if out, err := exec.Command("logger", "-t", "pm-sdk-test", marker).CombinedOutput(); err != nil {
+	marker := "CADESTRO-LOG-SEED-" + strconv.Itoa(os.Getpid())
+	if out, err := exec.Command("logger", "-t", "cadestro-sdk-test", marker).CombinedOutput(); err != nil {
 		t.Skipf("cannot seed journal via logger: %v\n%s", err, out)
 	}
 
@@ -124,7 +124,7 @@ func TestQuery_GrepSeed_Integration(t *testing.T) {
 	// Exclusion proof: a marker that was never logged returns ZERO entries — and
 	// the SDK drops journalctl's "-- No entries --" status marker (not a real
 	// entry) rather than surfacing it as one.
-	absent := "PM-LOG-ABSENT-" + strconv.Itoa(os.Getpid())
+	absent := "CADESTRO-LOG-ABSENT-" + strconv.Itoa(os.Getpid())
 	ghost, err := s.Query(ctx, syslog.Query{Grep: absent, Lines: 50})
 	if err != nil {
 		t.Fatalf("Query{Grep:absent}: %v", err)

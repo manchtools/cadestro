@@ -24,7 +24,7 @@ const sealSuffix = ".sha256"
 // probePrefix names the writability-probe temp files newFilesystem
 // creates; refs may not collide with it (nor with sealSuffix / the
 // temp infix — see refPath).
-const probePrefix = ".pm-archive-probe-"
+const probePrefix = ".cadestro-archive-probe-"
 
 // filesystem is the v1 ArchiveStore backend: one directory of sealed
 // artifacts on operator-configured storage (the deployment runs it on

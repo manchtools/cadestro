@@ -2,7 +2,7 @@
 services:
   traefik:
     image: docker.io/traefik:v3.7.1
-    container_name: pm-traefik
+    container_name: cadestro-traefik
     restart: unless-stopped
     # traefik-acme.env carries the ACME challenge setup.sh rendered from
     # ACME_CHALLENGE; traefik-dns.env carries the DNS provider credentials the
@@ -41,7 +41,7 @@ services:
 
   control:
     image: ghcr.io/manchtools/cadestro:${IMAGE_TAG:-latest}
-    container_name: pm-control
+    container_name: cadestro-control
     restart: unless-stopped
     env_file: ./config/control.env
     volumes:

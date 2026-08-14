@@ -335,7 +335,7 @@ func keyFileStagingDir() (string, error) {
 	if err := verifyStagingParent(keyFileDir); err != nil {
 		return "", err
 	}
-	dir, err := mkdirTemp(keyFileDir, "pm-luks-")
+	dir, err := mkdirTemp(keyFileDir, "cadestro-luks-")
 	if err != nil {
 		return "", fmt.Errorf("%w: create under %s: %v", ErrKeyFileStaging, keyFileDir, err)
 	}

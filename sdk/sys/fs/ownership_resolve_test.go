@@ -56,13 +56,13 @@ func TestResolveOwnership(t *testing.T) {
 	})
 
 	t.Run("unknown owner is an error", func(t *testing.T) {
-		if _, _, err := ResolveOwnership("pm-ws6-no-such-user-zzz", ""); err == nil {
+		if _, _, err := ResolveOwnership("cadestro-ws6-no-such-user-zzz", ""); err == nil {
 			t.Errorf("ResolveOwnership(unknown user): want error, got nil")
 		}
 	})
 
 	t.Run("unknown group is an error", func(t *testing.T) {
-		if _, _, err := ResolveOwnership("", "pm-ws6-no-such-group-zzz"); err == nil {
+		if _, _, err := ResolveOwnership("", "cadestro-ws6-no-such-group-zzz"); err == nil {
 			t.Errorf("ResolveOwnership(unknown group): want error, got nil")
 		}
 	})

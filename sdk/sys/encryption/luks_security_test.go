@@ -68,7 +68,7 @@ func TestCleanupKeyFile_RefusesToScrubNonRegular(t *testing.T) {
 	removed := false
 	removeFile = func(string) error { removed = true; return nil }
 
-	cleanupKeyFile("/dev/shm/pm-luks/key-x")
+	cleanupKeyFile("/dev/shm/cadestro-luks/key-x")
 
 	if f.wrote {
 		t.Error("cleanupKeyFile wrote zeros to a non-regular (FIFO/device) file; it must refuse non-regular scrub targets")

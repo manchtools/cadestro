@@ -92,7 +92,7 @@ func TestInstallRemove_RealTrustStore_Container(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 
-			const name = "pm-container-test-ca"
+			const name = "cadestro-container-test-ca"
 			const cn = "pm container test root"
 			pemBytes := selfSignedCA(t, cn)
 			pemPath := filepath.Join(t.TempDir(), "ca.pem")

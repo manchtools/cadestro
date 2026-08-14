@@ -57,7 +57,7 @@ func TestKeyFileFailClosed(t *testing.T) {
 	if err := os.WriteFile(tmp, nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	keyFileDir = filepath.Join(tmp, "pm-luks")
+	keyFileDir = filepath.Join(tmp, "cadestro-luks")
 	defer func() { keyFileDir = orig }()
 
 	ops := map[string]func(Manager, *recordingRunner) error{

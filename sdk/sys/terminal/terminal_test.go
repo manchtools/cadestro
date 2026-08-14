@@ -81,7 +81,7 @@ func TestOpen_EmptyUser(t *testing.T) {
 }
 
 func TestOpen_UnknownUser(t *testing.T) {
-	_, err := openSession(t, SessionConfig{User: "this-user-definitely-does-not-exist-pm-12345"})
+	_, err := openSession(t, SessionConfig{User: "this-user-definitely-does-not-exist-cadestro-12345"})
 	if err == nil {
 		t.Fatal("expected error for unknown user")
 	}
@@ -180,7 +180,7 @@ func TestOpen_ContextCancelled(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err = m.Open(ctx, SessionConfig{User: "this-user-definitely-does-not-exist-pm-12345"})
+	_, err = m.Open(ctx, SessionConfig{User: "this-user-definitely-does-not-exist-cadestro-12345"})
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("Open(cancelled) error = %v, want context.Canceled", err)
 	}
@@ -366,14 +366,14 @@ func TestSession_EchoAndExit(t *testing.T) {
 	defer s.Close()
 
 	// Send a command and an exit.
-	if _, err := io.WriteString(s, "echo PM-OK\nexit\n"); err != nil {
+	if _, err := io.WriteString(s, "echo CADESTRO-OK\nexit\n"); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
 	// Drain output until EOF (or the session closes).
 	output := drain(t, s, 5*time.Second)
-	if !strings.Contains(output, "PM-OK") {
-		t.Errorf("expected output to contain PM-OK, got: %q", output)
+	if !strings.Contains(output, "CADESTRO-OK") {
+		t.Errorf("expected output to contain CADESTRO-OK, got: %q", output)
 	}
 
 	// Wait for the shell to exit cleanly.

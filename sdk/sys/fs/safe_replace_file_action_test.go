@@ -11,18 +11,21 @@ import (
 	"testing"
 )
 
-// WS6 #2: WriteFileAtomic used a PREDICTABLE temp name (path+".pm-tmp")
-// and wrote it with a privilege-backend `tee`, which FOLLOWS symlinks.
-// A local attacker who can create entries in the target directory could
-// pre-plant `<target>.pm-tmp` as a symlink to any root-writable file and
+// WS6 #2: WriteFileAtomic derived its temp file from the target path with a
+// FIXED suffix, and wrote it with a privilege-backend `tee`, which FOLLOWS
+// symlinks. A local attacker who can create entries in the target directory
+// could pre-plant that derived path as a symlink to any root-writable file and
 // redirect the root agent's write there — an arbitrary-file-write → root
 // privesc. The fix routes the write through SafeReplaceFile: a
 // RANDOM-suffix same-directory temp opened O_NOFOLLOW, fchmod'd, then
-// renamed into place. The predictable name is gone entirely, so a planted
-// symlink at the old name is never touched.
+// renamed into place. No temp path is derivable from the target any more, so a
+// planted symlink at any such name is never touched. `.cadestro-tmp` below
+// stands in for that whole class of derived names — the assertion is that the
+// write does not follow a symlink planted at a name derived from the target,
+// not that this one spelling is special.
 //
 // Design intent pinned here:
-//   - the predictable `<target>.pm-tmp` path is NEVER written through;
+//   - a target-derived `<target>.cadestro-tmp` path is NEVER written through;
 //   - no leftover temp (`.<base>.tmp-*`) lingers on success;
 //   - the final inode is a real regular file with the requested content
 //     and mode.
@@ -32,13 +35,13 @@ func TestWriteFileAtomic_RefusesSymlinkPlantedTempTarget(t *testing.T) {
 	target := filepath.Join(dir, "managed.conf")
 
 	// Sentinel in a separate tree that the attacker hopes to clobber by
-	// planting a symlink at the OLD predictable temp path.
+	// planting a symlink at a target-derived temp path.
 	sentinelDir := t.TempDir()
 	sentinel := filepath.Join(sentinelDir, "sentinel")
 	if err := os.WriteFile(sentinel, []byte("ORIGINAL"), 0o644); err != nil {
 		t.Fatalf("seed sentinel: %v", err)
 	}
-	planted := target + ".pm-tmp"
+	planted := target + ".cadestro-tmp"
 	if err := os.Symlink(sentinel, planted); err != nil {
 		t.Fatalf("plant symlink: %v", err)
 	}
@@ -49,13 +52,13 @@ func TestWriteFileAtomic_RefusesSymlinkPlantedTempTarget(t *testing.T) {
 	}
 
 	// The planted symlink target must be untouched — the write must not
-	// have followed `<target>.pm-tmp`.
+	// have followed `<target>.cadestro-tmp`.
 	got, err := os.ReadFile(sentinel)
 	if err != nil {
 		t.Fatalf("read sentinel: %v", err)
 	}
 	if string(got) != "ORIGINAL" {
-		t.Fatalf("sentinel was modified through the planted .pm-tmp symlink: %q", string(got))
+		t.Fatalf("sentinel was modified through the planted .cadestro-tmp symlink: %q", string(got))
 	}
 
 	// The real target holds the new content as a regular file.

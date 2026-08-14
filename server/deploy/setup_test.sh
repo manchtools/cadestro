@@ -212,7 +212,7 @@ assert_setup_refused() {
 # references would satisfy a file-content check and reach Traefik never.
 compose_service_environment() {
     local directory="$1" service="${2:-traefik}"
-    docker compose -p pm-challenge-test -f "$directory/compose.yml" config --format json \
+    docker compose -p cadestro-challenge-test -f "$directory/compose.yml" config --format json \
         | python3 -c 'import json, sys
 service = json.load(sys.stdin)["services"][sys.argv[1]]["environment"]
 print("\n".join(f"{name}={value}" for name, value in service.items()))' "$service"
@@ -224,7 +224,7 @@ print("\n".join(f"{name}={value}" for name, value in service.items()))' "$servic
 # its healthcheck the wait returns while every request still fails.
 assert_service_healthcheck() {
     local directory="$1" service="$2" expected="$3" command_line
-    command_line="$(docker compose -p pm-challenge-test -f "$directory/compose.yml" config --format json \
+    command_line="$(docker compose -p cadestro-challenge-test -f "$directory/compose.yml" config --format json \
         | python3 -c 'import json, sys
 service = json.load(sys.stdin)["services"][sys.argv[1]]
 print(" ".join(service.get("healthcheck", {}).get("test", [])))' "$service")"
@@ -703,7 +703,7 @@ test_compose_configuration_valid_in_both_modes() {
     directory="$(challenge_fixture)"
     cp "$DEPLOY_DIR/compose.yml" "$directory/compose.yml"
     run_setup "$directory" >/dev/null
-    docker compose -p pm-challenge-test -f "$directory/compose.yml" config --quiet
+    docker compose -p cadestro-challenge-test -f "$directory/compose.yml" config --quiet
     compose_service_environment "$directory" > "$directory/resolved.env"
     assert_env_line "$directory/resolved.env" \
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web'
@@ -718,7 +718,7 @@ test_compose_configuration_valid_in_both_modes() {
     printf 'ACME_CHALLENGE=dns01\nACME_DNS_PROVIDER=hetzner\n' >> "$directory/.env"
     write_dns_credentials "$directory" 600 $'HETZNER_API_KEY=example-token\n'
     run_setup "$directory" >/dev/null
-    docker compose -p pm-challenge-test -f "$directory/compose.yml" config --quiet
+    docker compose -p cadestro-challenge-test -f "$directory/compose.yml" config --quiet
     compose_service_environment "$directory" > "$directory/resolved.env"
     assert_env_line "$directory/resolved.env" \
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROVIDER=hetzner'
@@ -732,7 +732,7 @@ test_compose_configuration_valid_in_both_modes() {
 
 # The archive storage every fixture is given lives here, on a filesystem that
 # is not the one holding the fixtures themselves.
-ARCHIVE_ROOT="$(mktemp -d /dev/shm/pm-setup-test-XXXXXX)"
+ARCHIVE_ROOT="$(mktemp -d /dev/shm/cadestro-setup-test-XXXXXX)"
 fixture_one="$(mktemp -d)"
 fixture_two="$(mktemp -d)"
 fixture_three="$(mktemp -d)"

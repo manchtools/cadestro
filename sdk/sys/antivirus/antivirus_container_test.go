@@ -31,7 +31,7 @@ import (
 
 // marker is the exact string the baked custom .ndb signature matches. Keep in
 // sync with test/Dockerfile.debian (with-clamav stage).
-const marker = "PM-CLAMAV-TEST-MARKER"
+const marker = "CADESTRO-CLAMAV-TEST-MARKER"
 
 func realAV(t *testing.T) antivirus.Manager {
 	t.Helper()
@@ -127,8 +127,8 @@ func TestScan_EICAR_Container(t *testing.T) {
 	if inf.File != bad {
 		t.Errorf("Infection.File = %q, want %q", inf.File, bad)
 	}
-	if !strings.Contains(inf.Signature, "PM.Eicar.Test") {
-		t.Errorf("Infection.Signature = %q, want it to carry the seed sig name PM.Eicar.Test", inf.Signature)
+	if !strings.Contains(inf.Signature, "Cadestro.Eicar.Test") {
+		t.Errorf("Infection.Signature = %q, want it to carry the seed sig name Cadestro.Eicar.Test", inf.Signature)
 	}
 }
 
@@ -149,8 +149,8 @@ func TestScan_Marker_Container(t *testing.T) {
 	if res.Clean() || len(res.Infected) != 1 {
 		t.Fatalf("marker not detected as exactly one infection: %+v", res.Infected)
 	}
-	if !strings.Contains(res.Infected[0].Signature, "PM.Marker.Test") {
-		t.Errorf("Infection.Signature = %q, want it to carry the seed sig name PM.Marker.Test", res.Infected[0].Signature)
+	if !strings.Contains(res.Infected[0].Signature, "Cadestro.Marker.Test") {
+		t.Errorf("Infection.Signature = %q, want it to carry the seed sig name Cadestro.Marker.Test", res.Infected[0].Signature)
 	}
 }
 

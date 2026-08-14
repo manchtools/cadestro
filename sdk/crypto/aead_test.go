@@ -19,7 +19,7 @@ func key32(t *testing.T) []byte {
 func TestSealOpen_RoundTrip(t *testing.T) {
 	key := key32(t)
 	pt := []byte("super secret credential")
-	aad := []byte("pm-agent:credentials:v1")
+	aad := []byte("cadestro-agent:credentials:v1")
 	ct, err := SealWithAAD(key, pt, aad)
 	if err != nil {
 		t.Fatalf("Seal: %v", err)

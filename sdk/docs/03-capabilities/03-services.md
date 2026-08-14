@@ -75,13 +75,13 @@ drift apart in your code.
 const unit = `[Unit]
 Description=Cadestro agent
 [Service]
-ExecStart=/usr/bin/pm-agent
+ExecStart=/usr/bin/cadestrod
 [Install]
 WantedBy=multi-user.target
 `
-err := m.WriteUnit(ctx, "pm-agent.service", unit)
+err := m.WriteUnit(ctx, "cadestrod.service", unit)
 err = m.DaemonReload(ctx)            // re-read unit files
-err = m.EnableNow(ctx, "pm-agent.service")
+err = m.EnableNow(ctx, "cadestrod.service")
 ```
 
 <!-- docref: begin src=sys/service/systemd.go#systemd.WriteUnit:cbdc6014,sys/service/unitcontent.go#ErrUnsafeUnitContent:ee7dfadb -->

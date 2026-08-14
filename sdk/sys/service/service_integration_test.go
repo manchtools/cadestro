@@ -12,7 +12,7 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
-const testUnitName = "pm-test-unit.service"
+const testUnitName = "cadestro-test-unit.service"
 const testUnitContent = `[Unit]
 Description=Cadestro SDK Test Unit
 
@@ -109,7 +109,7 @@ func TestRemoveUnit_Integration(t *testing.T) {
 }
 
 func TestRemoveUnitMissing_Integration(t *testing.T) {
-	if err := newManager(t).RemoveUnit(context.Background(), "pm-nonexistent-unit.service"); err != nil {
+	if err := newManager(t).RemoveUnit(context.Background(), "cadestro-nonexistent-unit.service"); err != nil {
 		t.Fatalf("RemoveUnit should tolerate a missing file: %v", err)
 	}
 }
@@ -129,7 +129,7 @@ func TestStatusMissingUnit_Integration(t *testing.T) {
 	// systemctl is-enabled on a non-existent unit prints "not-found"/exits 4;
 	// Status surfaces that as an error so callers can tell "doesn't exist" from
 	// "exists but disabled".
-	if _, err := newManager(t).Status(context.Background(), "pm-nonexistent-12345.service"); err == nil {
+	if _, err := newManager(t).Status(context.Background(), "cadestro-nonexistent-12345.service"); err == nil {
 		t.Fatal("Status on a missing unit returned nil, want an error")
 	}
 }

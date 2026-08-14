@@ -779,7 +779,7 @@ func TestGetOwnership_SelfAndMissing(t *testing.T) {
 	if owner == "" && group == "" {
 		t.Skip("ownership name lookup unavailable in this environment")
 	}
-	o, g := GetOwnership("/nonexistent-pm-fs-xyz")
+	o, g := GetOwnership("/nonexistent-cadestro-fs-xyz")
 	if o != "" || g != "" {
 		t.Errorf("GetOwnership(missing) = (%q,%q), want empties", o, g)
 	}
@@ -828,7 +828,7 @@ func TestWriteFile_Direct_ResolveOwnershipError(t *testing.T) {
 	m := directManager(t)
 	dest := t.TempDir() + "/f"
 	err := m.WriteFile(context.Background(), dest, []byte("x"),
-		WriteOptions{Owner: "pm-nonexistent-user-zzz", Group: "pm-nonexistent-group-zzz"})
+		WriteOptions{Owner: "cadestro-nonexistent-user-zzz", Group: "cadestro-nonexistent-group-zzz"})
 	if err == nil || !strings.Contains(err.Error(), "resolve owner") {
 		t.Fatalf("err = %v, want a resolve-owner failure", err)
 	}

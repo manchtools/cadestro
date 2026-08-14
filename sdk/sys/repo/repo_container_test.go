@@ -86,12 +86,12 @@ func fileExists(path string) bool {
 func TestApt_ApplyRemove_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
-	const name = "pm-test-apt"
+	const name = "cadestro-test-apt"
 	repoFile, keyFile := aptRepoFile(name), aptKeyFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	repo := Repository{Name: name, Apt: &AptConfig{
-		URL:          "https://example.com/pm-test-debian",
+		URL:          "https://example.com/cadestro-test-debian",
 		Distribution: "bookworm",
 		Components:   []string{"main"},
 		GPGKey:       []byte(armoredTestKey),
@@ -106,7 +106,7 @@ func TestApt_ApplyRemove_Container(t *testing.T) {
 	}
 
 	src := readFile(t, repoFile)
-	for _, want := range []string{"Types: deb", "URIs: https://example.com/pm-test-debian", "Suites: bookworm", "Components: main", "Signed-By: " + keyFile} {
+	for _, want := range []string{"Types: deb", "URIs: https://example.com/cadestro-test-debian", "Suites: bookworm", "Components: main", "Signed-By: " + keyFile} {
 		if !strings.Contains(src, want) {
 			t.Errorf("deb822 source missing %q:\n%s", want, src)
 		}
@@ -125,7 +125,7 @@ func TestApt_ApplyRemove_Container(t *testing.T) {
 	// the repo URI appearing proves the deb822 file is well-formed and accepted —
 	// not merely that the bytes we wrote back match. It does not depend on the
 	// unreachable example.com metadata.
-	if !aptParsesRepo(t, "https://example.com/pm-test-debian") {
+	if !aptParsesRepo(t, "https://example.com/cadestro-test-debian") {
 		t.Error("apt did not parse the written .sources (`apt-get --print-uris update` omits the repo URI)")
 	}
 
@@ -163,7 +163,7 @@ func TestApt_ApplyRemove_Container(t *testing.T) {
 func TestDnf_ApplyRemove_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Dnf)
 	ctx := repoCtx(t)
-	const name = "pm-test-dnf"
+	const name = "cadestro-test-dnf"
 	repoFile := dnfRepoFile(name)
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
@@ -171,8 +171,8 @@ func TestDnf_ApplyRemove_Container(t *testing.T) {
 	// gpgcheck=0 operator override is exercised separately in
 	// repo_security_container_test.go so it is never modelled as the normal case.
 	repo := Repository{Name: name, Dnf: &DnfConfig{
-		BaseURL: "https://example.com/pm-test-el9", Description: "PM Test", Enabled: true,
-		GPGCheck: true, GPGKey: "https://example.com/pm-test-el9/RPM-GPG-KEY",
+		BaseURL: "https://example.com/cadestro-test-el9", Description: "PM Test", Enabled: true,
+		GPGCheck: true, GPGKey: "https://example.com/cadestro-test-el9/RPM-GPG-KEY",
 	}}
 
 	o, err := m.Apply(ctx, repo)
@@ -183,7 +183,7 @@ func TestDnf_ApplyRemove_Container(t *testing.T) {
 		t.Error("first Apply should report Changed=true")
 	}
 	body := readFile(t, repoFile)
-	for _, want := range []string{"[" + name + "]", "name=PM Test", "baseurl=https://example.com/pm-test-el9", "enabled=1", "gpgcheck=1", "gpgkey=https://example.com/pm-test-el9/RPM-GPG-KEY"} {
+	for _, want := range []string{"[" + name + "]", "name=PM Test", "baseurl=https://example.com/cadestro-test-el9", "enabled=1", "gpgcheck=1", "gpgkey=https://example.com/cadestro-test-el9/RPM-GPG-KEY"} {
 		if !strings.Contains(body, want) {
 			t.Errorf(".repo missing %q:\n%s", want, body)
 		}
@@ -211,13 +211,13 @@ func TestDnf_ApplyRemove_Container(t *testing.T) {
 func TestPacman_ApplyRemove_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Pacman)
 	ctx := repoCtx(t)
-	const name = "pm-test-pacman"
+	const name = "cadestro-test-pacman"
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	// Happy path requires a valid signature (the secure default). The TrustAll
 	// operator override is pinned separately in repo_security_container_test.go.
 	repo := Repository{Name: name, Pacman: &PacmanConfig{
-		Server: "https://example.com/pm-test-arch/$repo/os/$arch", SigLevel: "Required DatabaseOptional",
+		Server: "https://example.com/cadestro-test-arch/$repo/os/$arch", SigLevel: "Required DatabaseOptional",
 	}}
 
 	o, err := m.Apply(ctx, repo)
@@ -228,7 +228,7 @@ func TestPacman_ApplyRemove_Container(t *testing.T) {
 		t.Error("first Apply should report Changed=true")
 	}
 	conf := readFile(t, pacmanConf)
-	for _, want := range []string{"[" + name + "]", "SigLevel = Required DatabaseOptional", "Server = https://example.com/pm-test-arch/$repo/os/$arch"} {
+	for _, want := range []string{"[" + name + "]", "SigLevel = Required DatabaseOptional", "Server = https://example.com/cadestro-test-arch/$repo/os/$arch"} {
 		if !strings.Contains(conf, want) {
 			t.Errorf("pacman.conf missing %q", want)
 		}
@@ -260,13 +260,13 @@ func TestPacman_ApplyRemove_Container(t *testing.T) {
 func TestZypper_ApplyRemove_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Zypper)
 	ctx := repoCtx(t)
-	const name = "pm-test-zypper"
+	const name = "cadestro-test-zypper"
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	// Happy path keeps signature checking ON (the secure default); the
 	// --no-gpgcheck operator override lives in repo_security_container_test.go.
 	repo := Repository{Name: name, Zypper: &ZypperConfig{
-		URL: "https://example.com/pm-test-suite", Description: "PM Test", Enabled: false, Autorefresh: false, GPGCheck: true,
+		URL: "https://example.com/cadestro-test-suite", Description: "PM Test", Enabled: false, Autorefresh: false, GPGCheck: true,
 	}}
 
 	o, err := m.Apply(ctx, repo)

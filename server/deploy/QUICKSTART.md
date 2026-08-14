@@ -1,6 +1,6 @@
 # Cadestro server quickstart
 
-<!-- docref: begin src=deploy/compose.yml#@deployment-services:4cf17a9d -->
+<!-- docref: begin src=deploy/compose.yml#@deployment-services:ca913fd3 -->
 The stack has exactly three services: Traefik, one control process with an
 embedded SQLite database, and the administration UI. Compose gives control no
 arguments and passes it the rendered `config/control.env` as the container's

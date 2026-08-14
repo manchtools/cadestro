@@ -70,7 +70,7 @@ func intManager(t *testing.T) fs.Manager {
 
 func tmpPath(t *testing.T, name string) string {
 	t.Helper()
-	return fmt.Sprintf("/tmp/pm-fs-test-%s-%d", name, os.Getpid())
+	return fmt.Sprintf("/tmp/cadestro-fs-test-%s-%d", name, os.Getpid())
 }
 
 func cleanup(t *testing.T, m fs.Manager, path string) {

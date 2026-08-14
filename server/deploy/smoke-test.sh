@@ -5,7 +5,7 @@ set -euo pipefail
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$(mktemp -d)"
 ARCHIVE_DIR=""
-PROJECT_NAME="pm-smoke-$$"
+PROJECT_NAME="cadestro-smoke-$$"
 PUBLISHED_IMAGE_TAG="${IMAGE_TAG:-}"
 REQUESTED_IMAGE_TAG="${PUBLISHED_IMAGE_TAG:-smoke-$$}"
 CONTROL_IMAGE="ghcr.io/manchtools/cadestro:$REQUESTED_IMAGE_TAG"
@@ -90,7 +90,7 @@ provision_archive_storage() {
             "$available" "$ARCHIVE_MINIMUM_KIB" >&2
         exit 1
     }
-    ARCHIVE_DIR="$(mktemp -d /dev/shm/pm-smoke-archive-XXXXXX)"
+    ARCHIVE_DIR="$(mktemp -d /dev/shm/cadestro-smoke-archive-XXXXXX)"
     mkdir -p "$WORK_DIR/data"
     rm -rf -- "$WORK_DIR/data/backups"
     ln -s "$ARCHIVE_DIR" "$WORK_DIR/data/backups"

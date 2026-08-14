@@ -189,7 +189,7 @@ func TestDST_ArgvAndSecretInvariants(t *testing.T) {
 				break // NewSecret rejects newline-bearing secrets — that's a valid rejection
 			}
 			m, _ := network.New(network.NetworkManager, fr)
-			_, _ = m.Apply(ctx, network.Profile{Name: "pm-" + sanitize(input), SSID: "net", AuthType: network.AuthPSK, PSK: sec})
+			_, _ = m.Apply(ctx, network.Profile{Name: "cadestro-" + sanitize(input), SSID: "net", AuthType: network.AuthPSK, PSK: sec})
 			for _, c := range fr.Calls() {
 				for _, a := range c.Args {
 					if strings.Contains(a, secretVal) {

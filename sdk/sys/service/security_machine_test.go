@@ -42,7 +42,7 @@ func TestSystemdUnitPersistenceSecurityMachine(t *testing.T) {
 			fs := &fakeFS{}
 			fs.install(t)
 			r := exectest.New(exec.Sudo)
-			err := mgr(t, r).WriteUnit(context.Background(), "pm-security.service", unitContentForAction(step.action))
+			err := mgr(t, r).WriteUnit(context.Background(), "cadestro-security.service", unitContentForAction(step.action))
 			if step.wantReject {
 				if err == nil {
 					t.Errorf("%s reached accepted state; want unit-content policy rejection", step.name)
@@ -55,7 +55,7 @@ func TestSystemdUnitPersistenceSecurityMachine(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s unexpected error: %v", step.name, err)
 			}
-			if fs.wrotePath != "/etc/systemd/system/pm-security.service" {
+			if fs.wrotePath != "/etc/systemd/system/cadestro-security.service" {
 				t.Fatalf("accepted unit wrote %q", fs.wrotePath)
 			}
 		})

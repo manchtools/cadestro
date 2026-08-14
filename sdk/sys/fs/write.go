@@ -140,7 +140,7 @@ const exclusiveExistsExit = 3
 const escalatedWriteExclusiveScript = `set -eu
 target=$1; mode=$2; owner=$3
 dir=$(dirname -- "$target")
-tmp=$(mktemp "$dir/.pm-XXXXXXXXXX")
+tmp=$(mktemp "$dir/.cadestro-XXXXXXXXXX")
 trap 'rm -f -- "$tmp"' EXIT
 cat > "$tmp"
 chmod "$mode" -- "$tmp"
@@ -220,7 +220,7 @@ dir=$(dirname -- "$target")
 if [ -n "$backup" ] && [ -e "$target" ]; then
 	cp -f -- "$target" "$backup"
 fi
-tmp=$(mktemp "$dir/.pm-XXXXXXXXXX")
+tmp=$(mktemp "$dir/.cadestro-XXXXXXXXXX")
 trap 'rm -f -- "$tmp"' EXIT
 cat > "$tmp"
 chmod "$mode" -- "$tmp"

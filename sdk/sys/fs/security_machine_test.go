@@ -66,13 +66,13 @@ func runFileMutationStep(m Manager, action fileMutationAction) error {
 	setuidMode := os.FileMode(0o755) | os.ModeSetuid
 	switch action {
 	case fileMutationWriteConfig:
-		return m.WriteFile(context.Background(), "/etc/pm-example.conf", []byte("ok\n"), WriteOptions{Mode: 0o644, Owner: "root", Group: "root"})
+		return m.WriteFile(context.Background(), "/etc/cadestro-example.conf", []byte("ok\n"), WriteOptions{Mode: 0o644, Owner: "root", Group: "root"})
 	case fileMutationWriteSetUID:
-		return m.WriteFile(context.Background(), "/etc/pm-helper", []byte("#!/bin/sh\n"), WriteOptions{Mode: setuidMode, Owner: "root", Group: "root"})
+		return m.WriteFile(context.Background(), "/etc/cadestro-helper", []byte("#!/bin/sh\n"), WriteOptions{Mode: setuidMode, Owner: "root", Group: "root"})
 	case fileMutationChmodSetUID:
-		return m.SetMode(context.Background(), "/etc/pm-helper", setuidMode)
+		return m.SetMode(context.Background(), "/etc/cadestro-helper", setuidMode)
 	case fileMutationCopySetUID:
-		return m.Copy(context.Background(), "/etc/pm-src", "/etc/pm-helper", WriteOptions{Mode: setuidMode})
+		return m.Copy(context.Background(), "/etc/cadestro-src", "/etc/cadestro-helper", WriteOptions{Mode: setuidMode})
 	case fileMutationRecursiveChownRoot:
 		return m.SetOwnershipRecursive(context.Background(), "/", "root", "root")
 	default:

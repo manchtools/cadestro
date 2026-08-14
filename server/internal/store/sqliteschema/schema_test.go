@@ -138,7 +138,7 @@ func TestBaselineRejectsSharedAuditSequenceCollisionsAndSplitRetention(t *testin
 				prev_hash, row_hash
 			) VALUES (
 				'00000000000000000000000006', 2, 'MUTATION', 'user', 'rpc',
-				'pm.v1.ControlService/Test', 'ALLOWED', 'SUCCESS', CURRENT_TIMESTAMP,
+				'cadestro.v1.ControlService/Test', 'ALLOWED', 'SUCCESS', CURRENT_TIMESTAMP,
 				zeroblob(32), zeroblob(32)
 			)
 		`)
@@ -256,7 +256,7 @@ func insertAuditOperation(t *testing.T, db interface {
 			prev_hash, row_hash
 		) VALUES (
 			'00000000000000000000000009', 1, 'MUTATION', 'user', 'rpc',
-			'pm.v1.ControlService/Test', 'ALLOWED', 'SUCCESS', CURRENT_TIMESTAMP,
+			'cadestro.v1.ControlService/Test', 'ALLOWED', 'SUCCESS', CURRENT_TIMESTAMP,
 			zeroblob(32), zeroblob(32)
 		)
 	`)

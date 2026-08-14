@@ -82,7 +82,7 @@ func TestWriteKeyfile_AtomicMode0600(t *testing.T) {
 	// No temp leftovers.
 	entries, _ := os.ReadDir(dir)
 	for _, e := range entries {
-		if strings.HasPrefix(e.Name(), ".pm-keyfile-") {
+		if strings.HasPrefix(e.Name(), ".cadestro-keyfile-") {
 			t.Errorf("temp keyfile not cleaned up: %s", e.Name())
 		}
 	}
