@@ -44,9 +44,19 @@ for everyone consuming it from outside.
 
 Consumers resolve the SDK from the tree rather than from a recorded version,
 so every commit compiles one SDK. Change the SDK and its consumers together:
-`go build ./...` from the repository root compiles all of them, and each
-module's gate re-runs the build standalone. When an SDK change breaks the
-agent, the agent fix belongs in that same change.
+
+```bash
+go build ./agent/... ./contract/... ./sdk/... ./server/...
+```
+
+compiles all of them from the repository root, and each module's gate re-runs
+the build standalone. When an SDK change breaks the agent, the agent fix
+belongs in that same change.
+
+The module patterns are spelled out because the repository root is not itself
+a Go module: in workspace mode `./...` resolves against the current module, so
+from the root it matches nothing and the go command says so rather than
+quietly building less than you asked for.
 
 ## The leaf rule
 

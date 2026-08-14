@@ -864,8 +864,9 @@ required, both replaced, each pointing at its sibling directory and nothing
 else. A `replace` aimed out of tree fails the build.
 
 There is no version to bump. A contract or SDK change and the agent code that
-consumes it belong in the same commit, and `go build ./...` from the repository
-root compiles both.
+consumes it belong in the same commit, and
+`go build ./agent/... ./contract/... ./sdk/...` from the repository root
+compiles them together.
 
 ### Working across modules
 
