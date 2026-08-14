@@ -302,7 +302,7 @@ func main() {
 	sched.Stop()
 
 	// Tear down any live terminal sessions (WS16 #5): a session left open at
-	// shutdown would leave its pm-tty shell activated and its temp home on
+	// shutdown would leave its cadestro-tty shell activated and its temp home on
 	// disk. Use a fresh bounded ctx — the run ctx may already be cancelled by
 	// the shutdown signal, which would abort the usermod shell-revert.
 	teardownCtx, cancelTeardown := context.WithTimeout(context.Background(), 30*time.Second)

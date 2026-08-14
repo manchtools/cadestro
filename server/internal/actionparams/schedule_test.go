@@ -15,7 +15,7 @@ import (
 // TestScheduleRoundTrip_PreservesExplicitFalse pins WS1b #4: ActionSchedule is
 // serialised via protojson (EmitUnpopulated), so an explicitly-set zero-valued
 // field is observable on the wire instead of being dropped — the exact gap that
-// let the pm-tty createHome bug fabricate a home the server never asked for.
+// let the cadestro-tty createHome bug fabricate a home the server never asked for.
 // The old ScheduleToMap omitted zero values, collapsing "explicitly false" into
 // "unset" and, for an all-zero schedule, into "no schedule at all".
 func TestScheduleRoundTrip_PreservesExplicitFalse(t *testing.T) {

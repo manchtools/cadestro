@@ -23,7 +23,7 @@ import (
 // For any NON-empty schedule, EmitUnpopulated keeps an explicitly-set zero
 // value (e.g. interval_hours:0 alongside run_on_assign:true — "run once on
 // assign, never on a drift interval") observable on the wire instead of being
-// silently dropped and re-defaulted — the pm-tty createHome bug class. And the
+// silently dropped and re-defaulted — the cadestro-tty createHome bug class. And the
 // field set is now declared exactly once (the proto), not three times.
 func ScheduleToRaw(s *pm.ActionSchedule) (json.RawMessage, error) {
 	if s == nil || proto.Equal(s, &pm.ActionSchedule{}) {

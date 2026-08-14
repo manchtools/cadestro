@@ -63,8 +63,8 @@ func TestKeyfilePath_StripsSeparators(t *testing.T) {
 
 func TestWriteKeyfile_AtomicMode0600(t *testing.T) {
 	dir := t.TempDir()
-	target := filepath.Join(dir, "pm-wifi.nmconnection")
-	content := []byte("[connection]\nid=pm-wifi\n")
+	target := filepath.Join(dir, "cadestro-wifi.nmconnection")
+	content := []byte("[connection]\nid=cadestro-wifi\n")
 	if err := writeKeyfile(target, content); err != nil {
 		t.Fatalf("writeKeyfile: %v", err)
 	}

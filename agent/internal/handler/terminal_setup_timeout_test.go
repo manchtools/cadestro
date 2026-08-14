@@ -18,7 +18,7 @@ const setupTestULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 // TestOnTerminalStart_BoundedSetupContext pins WS13 #2: the privileged setup
 // steps run under a BOUNDED context, so a hung step surfaces a STATE_ERROR
 // within the deadline and the call returns — it cannot wedge the dispatch loop
-// indefinitely. Driven via the sysuser seams so it needs no real pm-tty account.
+// indefinitely. Driven via the sysuser seams so it needs no real cadestro-tty account.
 func TestOnTerminalStart_BoundedSetupContext(t *testing.T) {
 	h, sender := newTestHandlerWithTTY(t, true)
 

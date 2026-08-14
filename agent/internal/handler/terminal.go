@@ -809,7 +809,7 @@ func (h *Handler) closeTerminal(ctx context.Context, sessionID, reason string) {
 }
 
 // CloseAllTerminals tears down every live terminal session — used on agent
-// shutdown so a session left open does not leave its pm-tty shell activated and
+// shutdown so a session left open does not leave its cadestro-tty shell activated and
 // its temp home on disk (WS16 #5). It snapshots the session ids under h.mu,
 // then closes each via the idempotent closeTerminal (which cancels the session
 // ctx so the pump goroutine unblocks, reverts the shell when no other session

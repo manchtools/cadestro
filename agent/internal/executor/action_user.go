@@ -158,7 +158,7 @@ func (e *Executor) createUser(ctx context.Context, params *pb.UserParams, action
 	// That broke the UserParams contract — the server could not
 	// express "no home directory" for a non-system user even when it
 	// explicitly set create_home: false, because the agent would
-	// silently override. The control server's system-managed pm-tty
+	// silently override. The control server's system-managed cadestro-tty
 	// action and the web UI's "Create home" checkbox both rely on
 	// explicit-false being honoured.
 	opts := sysuser.CreateOptions{

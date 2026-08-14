@@ -467,7 +467,7 @@ func TestApply_RejectsInvalidProfileBeforeAnyCommand(t *testing.T) {
 	r := &recordingRunner{}
 	// EAP-TLS with a CertDir OUTSIDE the base must be rejected before nmcli runs.
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi", SSID: "x", AuthType: AuthEAPTLS, Identity: "u",
+		Name: "cadestro-wifi", SSID: "x", AuthType: AuthEAPTLS, Identity: "u",
 		CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: "/tmp/evil-escape",
 	})
@@ -484,7 +484,7 @@ func TestApply_ConnectionExistsErrorAborts(t *testing.T) {
 	r := &recordingRunner{}
 	r.push(exec.Result{}, errors.New("nmcli down"))
 	if _, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi", SSID: "x", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
+		Name: "cadestro-wifi", SSID: "x", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
 	}); err == nil {
 		t.Error("Apply continued past a ConnectionExists failure")
 	}
@@ -527,23 +527,23 @@ func TestDelete(t *testing.T) {
 	t.Run("no certdir: delete only", func(t *testing.T) {
 		redirectDirs(t)
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "pm-wifi\n"}, nil)
-		if err := mgr(t, r).Delete(context.Background(), "pm-wifi", DeleteOptions{}); err != nil {
+		r.push(exec.Result{Stdout: "cadestro-wifi\n"}, nil)
+		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi", DeleteOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	t.Run("ConnectionExists error aborts", func(t *testing.T) {
 		r := &recordingRunner{}
 		r.push(exec.Result{}, errors.New("nmcli down"))
-		if err := mgr(t, r).Delete(context.Background(), "pm-wifi", DeleteOptions{}); err == nil {
+		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi", DeleteOptions{}); err == nil {
 			t.Error("Delete continued past a ConnectionExists failure")
 		}
 	})
 	t.Run("con delete failure propagates", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "pm-wifi\n"}, nil)
+		r.push(exec.Result{Stdout: "cadestro-wifi\n"}, nil)
 		r.push(exec.Result{ExitCode: 1, Stderr: "Error: delete failed"}, nil)
-		if err := mgr(t, r).Delete(context.Background(), "pm-wifi", DeleteOptions{}); err == nil {
+		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi", DeleteOptions{}); err == nil {
 			t.Error("Delete swallowed a con-delete failure")
 		}
 	})
@@ -551,7 +551,7 @@ func TestDelete(t *testing.T) {
 		redirectDirs(t)
 		r := &recordingRunner{}
 		r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // not found → straight to cert cleanup
-		if err := mgr(t, r).Delete(context.Background(), "pm-wifi", DeleteOptions{CertDir: "/tmp/evil"}); err == nil {
+		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi", DeleteOptions{CertDir: "/tmp/evil"}); err == nil {
 			t.Error("Delete accepted a cert dir outside CertBaseDir")
 		}
 	})

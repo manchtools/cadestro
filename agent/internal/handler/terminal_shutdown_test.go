@@ -11,7 +11,7 @@ import (
 )
 
 // WS16 #5: live terminal sessions were not torn down on agent shutdown — the
-// pm-tty shell stayed activated and the temp home leaked. CloseAllTerminals
+// cadestro-tty shell stayed activated and the temp home leaked. CloseAllTerminals
 // reverts every live session.
 
 // registerLiveSession injects an active session with a real temp home and a

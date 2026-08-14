@@ -141,7 +141,7 @@ func registryPermissions() []permEntry {
 		{"UpdateUserProfile:self", "Users", "Update own profile", TargetUnspecified},
 		{"UpdateUserSshSettings", "Users", "Update any user's SSH settings", TargetUser},
 		{"UpdateUserSshSettings:self", "Users", "Update own SSH settings", TargetUnspecified},
-		// linux_username keys pm-tty/sudo account naming on managed devices, so
+		// linux_username keys cadestro-tty/sudo account naming on managed devices, so
 		// it is ADMIN-ONLY: there is intentionally NO :self variant (#354). The
 		// interceptor admits any :self holder (Authorize short-circuits :self
 		// when the interceptor passes an empty ResourceID), and the handler did
