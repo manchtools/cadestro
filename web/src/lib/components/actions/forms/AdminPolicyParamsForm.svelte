@@ -49,7 +49,7 @@
 		const sudoGroup = '%pm-sudo-{id}'; // sudoers group marker
 		const doasGroup = ':pm-sudo-{id}'; // doas group marker
 		const isDoas = params.backend === 'DOAS';
-		const lines = ['# Managed by Power Manage - do not edit manually'];
+		const lines = ['# Managed by Cadestro - do not edit manually'];
 
 		if (isDoas) {
 			switch (params.accessLevel) {

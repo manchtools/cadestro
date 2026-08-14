@@ -36,9 +36,9 @@ vi.mock('$lib/navigation', () => ({
 	replaceState: vi.fn()
 }));
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	// The REAL pager: the sweep must actually walk the mocked list RPC.
 	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {

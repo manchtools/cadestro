@@ -47,7 +47,7 @@
 	     because they need to be present on every route. -->
 	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-	<meta name="apple-mobile-web-app-title" content="Power Manage" />
+	<meta name="apple-mobile-web-app-title" content="Cadestro" />
 	{#if webManifestHref}
 		<link rel="manifest" href={webManifestHref} />
 	{/if}

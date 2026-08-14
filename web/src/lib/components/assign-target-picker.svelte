@@ -6,7 +6,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Search } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import { DeviceStatus } from '$sdk/powermanage/v1/common_pb';
+	import { DeviceStatus } from '$contract/cadestro/v1/common_pb';
 
 	type DeviceItem = {
 		id: string;

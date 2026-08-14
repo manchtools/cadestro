@@ -3,9 +3,9 @@
 import type { Page } from '@playwright/test';
 import { ALL_PERMISSIONS } from './dummy';
 
-const CONFIG_KEY = 'power-manage-config';
-const AUTH_KEY = 'power-manage-auth';
-const PERSIST_KEY = 'power-manage-persist';
+const CONFIG_KEY = 'cadestro-config';
+const AUTH_KEY = 'cadestro-auth';
+const PERSIST_KEY = 'cadestro-persist';
 const MODE_KEY = 'mode-watcher-mode';
 const SHOWCASE_CONFIG = JSON.stringify({ serverUrl: 'https://localhost:5179' });
 
@@ -18,7 +18,7 @@ export function buildAuthSuperjson(opts: {
 	permissions: string[];
 }): string {
 	const role = {
-		$typeName: 'powermanage.v1.Role',
+		$typeName: 'cadestro.v1.Role',
 		id: opts.roleId,
 		name: opts.roleName,
 		description: '',
@@ -30,9 +30,9 @@ export function buildAuthSuperjson(opts: {
 		refreshToken: 'showcase-jwt-refresh',
 		expiresAt: '2099-01-01T00:00:00.000Z',
 		user: {
-			$typeName: 'powermanage.v1.User',
+			$typeName: 'cadestro.v1.User',
 			id: '01J6XYZSHOWCASEADMINUSR01',
-			email: 'sam.reiter@power-manage.example',
+			email: 'sam.reiter@cadestro.example',
 			displayName: 'Sam Reiter',
 			givenName: 'Sam',
 			familyName: 'Reiter',
@@ -43,7 +43,7 @@ export function buildAuthSuperjson(opts: {
 			identityLinks: [],
 			roleGrants: [
 				{
-					$typeName: 'powermanage.v1.RoleGrant',
+					$typeName: 'cadestro.v1.RoleGrant',
 					role,
 					scopeKind: 0,
 					scopeId: '',

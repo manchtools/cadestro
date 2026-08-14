@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import { getLocalizedError } from '$lib/errors';
 	import { apiClient, fetchAllPages, type Device } from '$lib/sdk';
-	import { DeviceStatus } from '$sdk/powermanage/v1/common_pb';
+	import { DeviceStatus } from '$contract/cadestro/v1/common_pb';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';

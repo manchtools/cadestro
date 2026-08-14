@@ -9,29 +9,29 @@ import { defineConfig } from 'vite';
 // ever talks to this (trusted, basic-ssl) dev origin, so control's self-signed
 // cert never needs manual acceptance. Override with VITE_DEV_CONTROL_URL.
 const DEV_CONTROL_TARGET = process.env.VITE_DEV_CONTROL_URL || 'https://127.0.0.1:8081';
-const DEV_AUTH_TOKEN = process.env.PM_DEV_AUTH_TOKEN || '';
+const DEV_AUTH_TOKEN = process.env.CADESTRO_DEV_AUTH_TOKEN || '';
 
 export default defineConfig({
 	define: {
 		__APP_VERSION__: JSON.stringify(process.env.APP_VERSION || 'dev'),
 		__MARKETPLACE_URL__: JSON.stringify(
-			process.env.PUBLIC_MARKETPLACE_URL || 'https://marketplace.power-manage.manchtools.com'
+			process.env.PUBLIC_MARKETPLACE_URL || 'https://marketplace.cadestro.manchtools.com'
 		),
 		__BASE_PATH__: JSON.stringify(process.env.BASE_PATH || '/')
 	},
 	resolve: {
-		// The SDK's generated TypeScript files live outside web/ (in ../sdk/gen/ts/)
+		// The SDK's generated TypeScript files live outside web/ (in ../contract/gen/ts/)
 		// and import @bufbuild/protobuf. Dedupe ensures Vite resolves these from
 		// web/node_modules instead of looking relative to the SDK directory.
 		dedupe: ['@bufbuild/protobuf']
 	},
 	server: {
-		// This proxy holds PM_DEV_AUTH_TOKEN and can mint administrator
+		// This proxy holds CADESTRO_DEV_AUTH_TOKEN and can mint administrator
 		// sessions, so it must never accept a non-loopback client.
 		host: '127.0.0.1',
 		// Vite 5.4+ rejects unknown Host headers to protect against DNS
 		// rebinding. The marketplace iframe flow depends on accessing
-		// this dev server through `pm.localhost` (so the publisher
+		// this dev server through `cadestro.localhost` (so the publisher
 		// session cookie with Domain=.localhost is shared with
 		// marketplace.localhost:5180). Allow *.localhost here;
 		// production builds don't use Vite's dev server.
@@ -41,7 +41,7 @@ export default defineConfig({
 		// control's self-signed cert on the server side; the browser never sees
 		// it. Dev-only — production builds don't use Vite's dev server.
 		proxy: {
-			'/powermanage.v1.ControlService': {
+			'/cadestro.v1.ControlService': {
 				target: DEV_CONTROL_TARGET,
 				changeOrigin: true,
 				secure: false
@@ -51,7 +51,7 @@ export default defineConfig({
 				changeOrigin: true,
 				secure: false,
 				xfwd: true,
-				headers: DEV_AUTH_TOKEN ? { 'X-Power-Manage-Dev-Auth': DEV_AUTH_TOKEN } : {}
+				headers: DEV_AUTH_TOKEN ? { 'X-Cadestro-Dev-Auth': DEV_AUTH_TOKEN } : {}
 			},
 			'/health': { target: DEV_CONTROL_TARGET, changeOrigin: true, secure: false }
 		}
@@ -75,9 +75,9 @@ export default defineConfig({
 			base: process.env.BASE_PATH || '/',
 			registerType: 'autoUpdate',
 			manifest: {
-				name: 'Power Manage',
-				short_name: 'PowerMgmt',
-				description: 'Device Power Management System',
+				name: 'Cadestro',
+				short_name: 'Cadestro',
+				description: 'Linux fleet management',
 				theme_color: '#171717',
 				background_color: '#171717',
 				display: 'standalone',

@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import { apiClient } from '$lib/sdk';
 	import { setUserLoaders, apiUserLoaders } from './forms/user-loader-context.svelte';
-	import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+	import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';

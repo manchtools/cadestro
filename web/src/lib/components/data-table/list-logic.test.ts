@@ -3,7 +3,7 @@
 // pagination, filter/offset mapping), so they're pinned here — matching the
 // repo's pure-TS test style (no component-test harness exists).
 import { describe, it, expect } from 'vitest';
-import { SearchScope, SortField, SortDirection } from '$sdk/powermanage/v1/common_pb';
+import { SearchScope, SortField, SortDirection } from '$contract/cadestro/v1/common_pb';
 import { nextSort, pageMath, buildSearchArgs, type SortState } from './list-logic';
 
 describe('nextSort', () => {

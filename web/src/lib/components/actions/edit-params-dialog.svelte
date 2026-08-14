@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ManagedAction } from '$lib/sdk';
 	import { setUserLoaders, apiUserLoaders } from './forms/user-loader-context.svelte';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
@@ -196,7 +196,7 @@
 </AlertDialog.Root>
 
 <script lang="ts" module>
-	import { ActionType as AT } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType as AT } from '$contract/cadestro/v1/actions_pb';
 	import { getLocalizedError } from '$lib/errors';
 
 	export function supportsAbsent(type: AT | undefined): boolean {

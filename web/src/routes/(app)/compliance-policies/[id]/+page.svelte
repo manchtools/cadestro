@@ -7,12 +7,12 @@
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, fetchAllPages, type CompliancePolicy, type CompliancePolicyRule, type ManagedAction } from '$lib/sdk';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import {
 		AssignmentSourceType,
 		AssignmentTargetType,
 		ComplianceStatus
-	} from '$sdk/powermanage/v1/common_pb';
+	} from '$contract/cadestro/v1/common_pb';
 	import { Chip } from '$lib/components/fleet';
 	import type { FleetTone } from '$lib/components/fleet';
 	import { createFormValidation } from '$lib/forms';

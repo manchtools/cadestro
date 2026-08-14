@@ -13,9 +13,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ManagedActionSchema } from '$sdk/powermanage/v1/control_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
-import { DesiredState, SearchScope } from '$sdk/powermanage/v1/common_pb';
+import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
+import { DesiredState, SearchScope } from '$contract/cadestro/v1/common_pb';
 import * as m from '$lib/paraglide/messages';
 
 const mocks = vi.hoisted(() => ({
@@ -47,9 +47,9 @@ vi.mock('$app/navigation', () => ({
 // Only the client is faked; the generated protobuf re-exports stay real, so the
 // page's ActionType / DesiredState / SearchScope constants are the production ones.
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

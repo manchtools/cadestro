@@ -61,7 +61,7 @@ export async function gotoAndSettle(page: Page, path: string, waitFor?: string):
 // unary error is an HTTP 5xx with a JSON `{ code, message }` body, which
 // connect-es surfaces to the app as a thrown ConnectError.
 export async function failRpc(page: Page, method: string, message = 'mock backend failure'): Promise<void> {
-	await page.route(`**/powermanage.v1.ControlService/${method}`, async (route: Route) => {
+	await page.route(`**/cadestro.v1.ControlService/${method}`, async (route: Route) => {
 		await route.fulfill({
 			status: 500,
 			headers: { 'content-type': 'application/json' },
@@ -89,7 +89,7 @@ export async function expectSuccessToast(page: Page): Promise<void> {
 // exact request it produced (e.g. sortField / tagFilters), not by pixels.
 export function recordRpc<T = Record<string, unknown>>(page: Page, method: string): T[] {
 	const calls: T[] = [];
-	void page.route(`**/powermanage.v1.ControlService/${method}`, async (route) => {
+	void page.route(`**/cadestro.v1.ControlService/${method}`, async (route) => {
 		try {
 			calls.push(route.request().postDataJSON() as T);
 		} catch {

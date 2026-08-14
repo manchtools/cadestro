@@ -7,9 +7,9 @@
 //   3. install + remove === total is an invariant of the summary strip.
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
-import { ManagedActionSchema } from '$sdk/powermanage/v1/control_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
-import { DesiredState } from '$sdk/powermanage/v1/common_pb';
+import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
+import { DesiredState } from '$contract/cadestro/v1/common_pb';
 import {
 	bucketOf,
 	buildBubbles,

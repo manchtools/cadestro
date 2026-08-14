@@ -1,9 +1,11 @@
 .PHONY: dev build preview check check-watch install generate clean
 
-# Install npm dependencies (including SDK for type resolution)
+# Install npm dependencies. The contract is consumed through the $contract and
+# $contractClient path aliases, not as a package, so nothing is installed for
+# it: its TypeScript resolves @bufbuild/protobuf out of web/node_modules
+# (vite.config.ts dedupes it).
 install:
 	npm install
-	cd ../sdk && npm install
 
 # Development server (all feature flags enabled).
 # Points the marketplace iframe at the locally running marketplace
@@ -13,7 +15,7 @@ install:
 # Safari (RFC 6761), and a Domain=.localhost cookie set by the
 # marketplace tab is picked up by any *.localhost iframe.
 #
-# Visit this app via http://pm.localhost:5173 (pair the two
+# Visit this app via http://cadestro.localhost:5173 (pair the two
 # *.localhost labels so the cookie's Domain=.localhost scope covers
 # both).
 #
@@ -48,9 +50,10 @@ check:
 check-watch:
 	npm run check:watch
 
-# Regenerate TypeScript types from protobuf definitions
+# Regenerate TypeScript types from the protobuf definitions. The contract owns
+# generation; this only forwards to it so the output lands in ../contract/gen/ts.
 generate:
-	cd ../sdk && npm install && make generate-ts
+	$(MAKE) -C ../contract generate-ts
 
 # Clean build artifacts
 clean:

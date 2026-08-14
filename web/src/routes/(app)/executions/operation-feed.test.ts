@@ -10,8 +10,8 @@
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
-import { ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ExecutionStatus } from '$contract/cadestro/v1/common_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import {
 	BUCKET_ORDER,
 	OPERATION_WINDOW_SECONDS,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ActionSchedule } from '$sdk/powermanage/v1/actions_pb';
+	import type { ActionSchedule } from '$contract/cadestro/v1/actions_pb';
 	import * as m from '$lib/paraglide/messages';
 
 	interface Props {

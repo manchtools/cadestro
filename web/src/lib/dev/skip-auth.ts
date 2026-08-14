@@ -1,7 +1,7 @@
 // TEMPORARY dev-only auth bypass: `VITE_SKIP_AUTH=1 npm run dev` signs the UI
 // in without walking OIDC. It prefers a REAL admin session from a devauth
-// control server (`go build -tags devauth`, run with PM_DEV_AUTH=1 and the
-// same PM_DEV_AUTH_TOKEN as Vite)
+// control server (`go build -tags devauth`, run with CADESTRO_DEV_AUTH=1 and the
+// same CADESTRO_DEV_AUTH_TOKEN as Vite)
 // via POST /dev/session, so every RPC works — not just the shell. When no such
 // server answers it falls back to a fake in-memory admin session, preserving
 // serverless UI dev (RPCs then fail; pages render their empty/error states).
@@ -54,8 +54,8 @@ export async function seedDevSession() {
 	if (!browser) return;
 	configStore.serverUrl = window.location.origin;
 	// Prefer a REAL session so every RPC works. The proxied /dev/session only
-	// answers when control is a devauth build run with PM_DEV_AUTH=1 and Vite
-	// carries the matching PM_DEV_AUTH_TOKEN; otherwise
+	// answers when control is a devauth build run with CADESTRO_DEV_AUTH=1 and Vite
+	// carries the matching CADESTRO_DEV_AUTH_TOKEN; otherwise
 	// (or with no server) we fall back to the offline fake session.
 	try {
 		const res = await fetch(`${configStore.serverUrl}/dev/session`, { method: 'POST' });

@@ -1,14 +1,14 @@
 // Behaviour contract for the SDK's bootstrap-provider path.
 //
 // The bootstrap-admin URL hands the web a single-use token that the server
-// consumes as `Authorization: PowerManage-Bootstrap <T>` — NOT a Bearer
+// consumes as `Authorization: Cadestro-Bootstrap <T>` — NOT a Bearer
 // session token. The one call it may spend the token on is
 // CreateIdentityProvider. These tests pin the outgoing wire header on the
-// real Connect transport: exactly the PowerManage-Bootstrap scheme, and never
+// real Connect transport: exactly the Cadestro-Bootstrap scheme, and never
 // a Bearer/session token even when a session token happens to be available.
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { ApiClient } from '$pmSdk/client';
-import { IdentityProviderType } from '$sdk/powermanage/v1/common_pb';
+import { ApiClient } from '$contractClient/client';
+import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 
 const SERVER_URL = 'https://control.test';
 
@@ -34,7 +34,7 @@ const providerData = {
 	name: 'Keycloak',
 	slug: 'keycloak',
 	providerType: IdentityProviderType.OIDC,
-	clientId: 'power-manage',
+	clientId: 'cadestro',
 	clientSecret: 's3cr3t',
 	issuerUrl: 'https://sso.example.com/realms/pm',
 	scopes: ['openid', 'profile', 'email']
@@ -61,7 +61,7 @@ afterEach(() => {
 });
 
 describe('ApiClient.createIdentityProviderWithBootstrapToken', () => {
-	it('sends exactly one request carrying the PowerManage-Bootstrap Authorization header', async () => {
+	it('sends exactly one request carrying the Cadestro-Bootstrap Authorization header', async () => {
 		const { headersOf, mock } = captureFetch();
 		const client = makeClient();
 
@@ -70,7 +70,7 @@ describe('ApiClient.createIdentityProviderWithBootstrapToken', () => {
 		).rejects.toBeTruthy();
 
 		expect(mock).toHaveBeenCalledTimes(1);
-		expect(headersOf()?.get('authorization')).toBe('PowerManage-Bootstrap BOOT-TOKEN-123');
+		expect(headersOf()?.get('authorization')).toBe('Cadestro-Bootstrap BOOT-TOKEN-123');
 	});
 
 	it('never attaches a Bearer/session token, even when a session token is available', async () => {
@@ -83,7 +83,7 @@ describe('ApiClient.createIdentityProviderWithBootstrapToken', () => {
 		).rejects.toBeTruthy();
 
 		const auth = headersOf()?.get('authorization');
-		expect(auth).toBe('PowerManage-Bootstrap BOOT-TOKEN-123');
+		expect(auth).toBe('Cadestro-Bootstrap BOOT-TOKEN-123');
 		expect(auth).not.toContain('Bearer');
 		// The session token must not appear anywhere in the outgoing headers.
 		const all = JSON.stringify([...(headersOf()?.entries() ?? [])]);

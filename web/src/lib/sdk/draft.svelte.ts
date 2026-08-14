@@ -1,10 +1,10 @@
 // Svelte 5 reactive draft hook.
 // Uses $state and $effect for auto-save — must stay in the web app.
 
-import type { DraftType } from '$pmSdk/offline';
+import type { DraftType } from '$contractClient/offline';
 import { offlineStore } from './wrappers.svelte';
 
-export type { DraftType } from '$pmSdk/offline';
+export type { DraftType } from '$contractClient/offline';
 
 export function useDraft<T extends Record<string, unknown>>(
 	type: DraftType,

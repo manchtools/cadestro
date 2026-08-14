@@ -11,7 +11,7 @@
 		type Device,
 		formatTimestampDateTime
 	} from '$lib/sdk';
-	import { SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 	import { auditEventSummary, auditEventOutcome } from '$lib/audit-summaries';
 	import { Button } from '$lib/components/ui/button';

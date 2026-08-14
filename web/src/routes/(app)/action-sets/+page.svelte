@@ -9,7 +9,7 @@
 		type ManagedAction,
 		formatTimestampDateTime
 	} from '$lib/sdk';
-	import { SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Chip } from '$lib/components/fleet';

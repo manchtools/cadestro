@@ -13,8 +13,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ComplianceStatus } from '$sdk/powermanage/v1/common_pb';
-import { SearchResultSchema } from '$sdk/powermanage/v1/control_pb';
+import { ComplianceStatus } from '$contract/cadestro/v1/common_pb';
+import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
 import * as m from '$lib/paraglide/messages';
 
 const mocks = vi.hoisted(() => ({
@@ -46,9 +46,9 @@ vi.mock('$app/navigation', () => ({
 // Only the client is faked; the generated protobuf re-exports stay real, so the
 // component classifies with the production DeviceStatus / ComplianceStatus.
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

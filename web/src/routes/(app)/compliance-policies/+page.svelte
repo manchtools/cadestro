@@ -10,7 +10,7 @@
 		type Device,
 		type SearchResult
 	} from '$lib/sdk';
-	import { ComplianceStatus, SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { ComplianceStatus, SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import { TONE_FILL } from '$lib/components/fleet';
 	import CompliancePolicyDetailSheet, {
 		openCompliancePolicySheet

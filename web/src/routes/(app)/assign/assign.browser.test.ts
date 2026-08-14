@@ -20,14 +20,14 @@ import {
 	ActionSetMemberSchema,
 	AssignmentSchema,
 	DeviceSchema
-} from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/control_pb';
 import {
 	AssignmentMode,
 	AssignmentSourceType,
 	AssignmentTargetType,
 	DeviceStatus
-} from '$sdk/powermanage/v1/common_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+} from '$contract/cadestro/v1/common_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import * as m from '$lib/paraglide/messages';
 import {
 	shell,
@@ -63,9 +63,9 @@ const nav = vi.hoisted(() => ({ goto: vi.fn() }));
 const toaster = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return { ...actions, ...control, ...common, apiClient: api };
 });
 

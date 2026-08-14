@@ -18,8 +18,8 @@
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ManagedAction } from '$lib/sdk';
-	import { DesiredState, AssignmentSourceType } from '$sdk/powermanage/v1/common_pb';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { DesiredState, AssignmentSourceType } from '$contract/cadestro/v1/common_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { Button } from '$lib/components/ui/button';
 	import ConfirmDeleteDialog from '$lib/components/confirm-delete-dialog.svelte';
 	import PageShell from '$lib/components/page-shell.svelte';

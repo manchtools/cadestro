@@ -3,8 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
 import { Code, ConnectError } from '@connectrpc/connect';
-import { ErrorDetailSchema } from '$sdk/powermanage/v1/common_pb';
-import { SearchResultSchema } from '$sdk/powermanage/v1/control_pb';
+import { ErrorDetailSchema } from '$contract/cadestro/v1/common_pb';
+import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
 import * as m from '$lib/paraglide/messages';
 import UsersPage from './+page.svelte';
 

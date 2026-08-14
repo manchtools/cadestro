@@ -9,8 +9,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser, userEvent } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
-import { SearchResultSchema } from '$sdk/powermanage/v1/control_pb';
-import { SearchScope } from '$sdk/powermanage/v1/common_pb';
+import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
+import { SearchScope } from '$contract/cadestro/v1/common_pb';
 import * as m from '$lib/paraglide/messages';
 import { Monitor, Send } from '@lucide/svelte';
 import {
@@ -34,8 +34,8 @@ const nav = vi.hoisted(() => ({ goto: vi.fn() }));
 
 // Only the client is faked; the generated protobuf re-exports stay real.
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
 	return { ...control, ...common, apiClient: api };
 });
 vi.mock('$lib/navigation', () => ({ goto: nav.goto, pushState: vi.fn(), replaceState: vi.fn() }));

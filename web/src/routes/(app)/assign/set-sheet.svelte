@@ -6,7 +6,7 @@
 	// one has no case for REBOOT/SYNC and falls through to "UNSPECIFIED", which
 	// would mislabel a real step.
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
-	import type { ActionSet, ActionSetMember } from '$sdk/powermanage/v1/control_pb';
+	import type { ActionSet, ActionSetMember } from '$contract/cadestro/v1/control_pb';
 	import type { AssignSchedule } from './assign-data';
 
 	let {

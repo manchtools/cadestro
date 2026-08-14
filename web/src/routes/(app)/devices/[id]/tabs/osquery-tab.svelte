@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import { apiClient } from '$lib/sdk';
 	import { getLocalizedError } from '$lib/errors';
-	import type { OSQueryRow } from '$sdk/powermanage/v1/agent_pb';
+	import type { OSQueryRow } from '$contract/cadestro/v1/agent_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Textarea } from '$lib/components/ui/textarea';

@@ -3,8 +3,8 @@
 	import { goto } from '$lib/navigation';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ManagedAction, formatTimestampDateTime } from '$lib/sdk';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
-	import { DesiredState, SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
+	import { DesiredState, SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Chip, Stat, TONE_FILL } from '$lib/components/fleet';

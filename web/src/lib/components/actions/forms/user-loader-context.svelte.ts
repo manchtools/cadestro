@@ -12,8 +12,8 @@
 // render empty-state pickers instead of fetching.
 
 import { getContext, setContext } from 'svelte';
-import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import { apiClient, fetchAllPages } from '$lib/sdk';
 
 export interface UserLite {

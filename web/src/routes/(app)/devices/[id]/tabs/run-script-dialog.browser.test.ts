@@ -7,8 +7,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ManagedActionSchema } from '$sdk/powermanage/v1/control_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 const api = vi.hoisted(() => ({
 	listActions: vi.fn(),
@@ -19,7 +19,7 @@ const api = vi.hoisted(() => ({
 // `fetchAllPages` keeps its real paging contract so the dialog sweeps as it does
 // in production.
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
 	return {
 		...control,
 		apiClient: api,

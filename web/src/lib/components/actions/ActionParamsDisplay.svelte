@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+	import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 	import * as m from '$lib/paraglide/messages';
 
 	interface Props {

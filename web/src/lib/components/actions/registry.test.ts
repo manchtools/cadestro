@@ -7,11 +7,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import {
 	ManagedEncryptionParamsSchema,
 	ManagedWifiParamsSchema
-} from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/control_pb';
 import { encryptionParamsSchema, wifiParamsSchema } from '$lib/forms/schemas/actions';
 import {
 	encryptionFormToProto,

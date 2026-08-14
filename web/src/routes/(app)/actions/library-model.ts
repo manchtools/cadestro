@@ -8,9 +8,9 @@
 // it succeeded anywhere. A library row's only real binary is its desired state,
 // which is exactly the ok/crit chip the list row already draws, so the overview
 // and the list can never disagree about an action.
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
-import { DesiredState } from '$sdk/powermanage/v1/common_pb';
-import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
+import { DesiredState } from '$contract/cadestro/v1/common_pb';
+import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 
 /** The virtual bucket for SHELL actions carrying `is_compliance`. Its id is the
  *  page's own `COMPLIANCE_FILTER_ID`, so clicking the bubble drives the real

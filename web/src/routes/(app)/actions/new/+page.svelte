@@ -14,7 +14,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient, useDraft } from '$lib/sdk';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import * as m from '$lib/paraglide/messages';
 	import { getLocalizedError } from '$lib/errors';
 	import { actionBasicSchema } from '$lib/forms/schemas/actions';

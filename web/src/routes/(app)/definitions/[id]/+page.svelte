@@ -18,8 +18,8 @@
 	import ContainerScheduleCard from '$lib/components/container-schedule-card.svelte';
 	import DefinitionBuilder from '$lib/components/actions/pipeline/definition-builder.svelte';
 	import { Chip } from '$lib/components/fleet';
-	import type { ActionSchedule } from '$sdk/powermanage/v1/actions_pb';
-	import { AssignmentSourceType } from '$sdk/powermanage/v1/common_pb';
+	import type { ActionSchedule } from '$contract/cadestro/v1/actions_pb';
+	import { AssignmentSourceType } from '$contract/cadestro/v1/common_pb';
 	import { ArrowLeft, RefreshCw } from '@lucide/svelte';
 	import type { PillAction } from '$lib/shell/shell.svelte';
 

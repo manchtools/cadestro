@@ -11,8 +11,8 @@
 		type Definition,
 		type Assignment
 	} from '$lib/sdk';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
-	import { AssignmentMode, AssignmentSourceType, AssignmentTargetType } from '$sdk/powermanage/v1/common_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
+	import { AssignmentMode, AssignmentSourceType, AssignmentTargetType } from '$contract/cadestro/v1/common_pb';
 	import { getActionTypeInfo } from '$lib/components/actions';
 	import ActionDetailSheet, { openActionSheet } from '$lib/components/actions/action-detail-sheet.svelte';
 	import * as Table from '$lib/components/ui/table';

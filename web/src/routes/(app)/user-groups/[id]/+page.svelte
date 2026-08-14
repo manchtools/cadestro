@@ -50,7 +50,7 @@
 	import {
 		MaintenanceWindowSchema,
 		MaintenanceWindowEntrySchema
-	} from '$sdk/powermanage/v1/common_pb';
+	} from '$contract/cadestro/v1/common_pb';
 	import {
 		shell,
 		enterContext,

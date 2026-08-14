@@ -6,7 +6,7 @@
 	import { FieldError } from '$lib/components/ui/field-error';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+	import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 	import { Plus, X, UserCog } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import type { GroupFormState } from './types';

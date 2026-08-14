@@ -16,9 +16,9 @@ import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
-import { ComplianceStatus, DeviceStatus } from '$sdk/powermanage/v1/common_pb';
-import { DeviceSchema, DeviceGroupSchema } from '$sdk/powermanage/v1/control_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
+import { DeviceSchema, DeviceGroupSchema } from '$contract/cadestro/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 const mocks = vi.hoisted(() => ({
 	url: new URL('http://localhost/devices'),
@@ -51,9 +51,9 @@ vi.mock('$app/navigation', () => ({
 vi.mock('svelte-sonner', () => ({ toast: toaster }));
 
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

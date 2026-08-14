@@ -1,4 +1,4 @@
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import {
 	Package,
 	Terminal,
@@ -27,7 +27,7 @@ import {
 	getActionTypeEnum,
 	actionTypeToString,
 	ACTION_TYPE_OPTIONS
-} from '$pmSdk/action-types';
+} from '$contractClient/action-types';
 
 export interface ActionTypeInfo {
 	label: string;

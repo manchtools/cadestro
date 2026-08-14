@@ -4,7 +4,7 @@ import adapter from 'svelte-adapter-bun';
 // the web client uses. Allowed in frame-src so the /marketplace route
 // can embed the marketplace UI; everything else stays same-origin.
 const marketplaceOrigin = (() => {
-	const raw = process.env.PUBLIC_MARKETPLACE_URL || 'https://marketplace.power-manage.manchtools.com';
+	const raw = process.env.PUBLIC_MARKETPLACE_URL || 'https://marketplace.cadestro.manchtools.com';
 	try {
 		return new URL(raw).origin;
 	} catch {
@@ -37,8 +37,8 @@ const config = {
 			base: process.env.BASE_PATH || ''
 		},
 		alias: {
-			$sdk: '../sdk/gen/ts',
-			$pmSdk: '../sdk/ts'
+			$contract: '../contract/gen/ts',
+			$contractClient: '../contract/ts'
 		}
 	}
 };

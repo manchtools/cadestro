@@ -14,7 +14,7 @@
 
 import type { Component } from 'svelte';
 import type { ZodSchema } from 'zod';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 import {
 	defaultPackageForm,

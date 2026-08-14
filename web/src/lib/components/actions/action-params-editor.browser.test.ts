@@ -9,9 +9,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ManagedActionSchema } from '$sdk/powermanage/v1/control_pb';
-import { ActionType, PackageParamsSchema } from '$sdk/powermanage/v1/actions_pb';
-import { DesiredState } from '$sdk/powermanage/v1/common_pb';
+import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
+import { ActionType, PackageParamsSchema } from '$contract/cadestro/v1/actions_pb';
+import { DesiredState } from '$contract/cadestro/v1/common_pb';
 import { shell, resetShell, commitContext } from '$lib/shell/shell.svelte';
 
 const ACTION_ID = '01JQZZACTION0000000000000A';

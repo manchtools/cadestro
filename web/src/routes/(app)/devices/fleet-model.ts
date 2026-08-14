@@ -3,8 +3,8 @@
 // actually returns on Device / DeviceGroup — no state is invented, and there is
 // deliberately no 'info' / converging tone because nothing on a Device says an
 // operation is currently landing on it.
-import { ComplianceStatus, DeviceStatus } from '$sdk/powermanage/v1/common_pb';
-import type { Device } from '$sdk/powermanage/v1/control_pb';
+import { ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
+import type { Device } from '$contract/cadestro/v1/control_pb';
 import type { FleetTone } from '$lib/components/fleet/tone';
 
 /** Server default when neither the device nor any of its groups overrides it

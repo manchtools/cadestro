@@ -3,7 +3,7 @@
 // `control bootstrap-admin` prints <origin>/setup#bootstrap_token=<T>. The web
 // reads the token from the fragment, and — after the server URL is known —
 // spends it on exactly ONE CreateIdentityProvider call under the
-// PowerManage-Bootstrap scheme. The token is memory-only: never persisted,
+// Cadestro-Bootstrap scheme. The token is memory-only: never persisted,
 // never turned into a session. These tests pin the fragment read, the
 // server→provider step transition that must not lose the token, the single
 // bootstrap call (and the absence of the Bearer path), success cleanup, the
@@ -28,7 +28,7 @@ const cfg = vi.hoisted(() => ({ serverUrl: 'https://control.test' }));
 const navi = vi.hoisted(() => ({ goto: vi.fn() }));
 
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
 	return {
 		...common,
 		apiClient: api,
@@ -74,7 +74,7 @@ async function fillProvider(over: Partial<Record<string, string>> = {}) {
 	const values: Record<string, string> = {
 		idpName: 'Keycloak',
 		idpSlug: 'keycloak',
-		idpClientId: 'power-manage',
+		idpClientId: 'cadestro',
 		idpClientSecret: 's3cr3t',
 		idpIssuerUrl: 'https://sso.example.com/realms/pm',
 		idpScopes: '',
@@ -158,7 +158,7 @@ describe('/setup — the bootstrap token onboarding flow', () => {
 		expect(data).toMatchObject({
 			name: 'Keycloak',
 			slug: 'keycloak',
-			clientId: 'power-manage',
+			clientId: 'cadestro',
 			clientSecret: 's3cr3t',
 			issuerUrl: 'https://sso.example.com/realms/pm',
 			// An empty scopes box still sends the provider form's three defaults.

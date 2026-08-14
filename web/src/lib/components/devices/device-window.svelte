@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { apiClient, formatTimestampDateTime, type Device } from '$lib/sdk';
-	import { DeviceStatus } from '$sdk/powermanage/v1/common_pb';
+	import { DeviceStatus } from '$contract/cadestro/v1/common_pb';
 	import { getLocalizedError } from '$lib/errors';
 	import { openTerminal } from '$lib/shell/shell.svelte';
 	import { Button } from '$lib/components/ui/button';

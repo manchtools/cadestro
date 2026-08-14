@@ -86,12 +86,12 @@ function byId(builder: (id: string) => unknown) {
 export async function mockControlService(page: Page): Promise<void> {
 	// Catch-all so any unstubbed RPC returns `{}` rather than the dev
 	// server's 404 (which would trigger a toast on every page load).
-	await page.route('**/powermanage.v1.ControlService/**', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/**', async (route) => {
 		await route.fulfill(unaryJson({}));
 	});
 
 	// Search dispatches by scope — read the request body and route.
-	await page.route('**/powermanage.v1.ControlService/Search', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/Search', async (route) => {
 		const req = route.request();
 		let scope: number | string | undefined;
 		try {
@@ -103,50 +103,50 @@ export async function mockControlService(page: Page): Promise<void> {
 		await route.fulfill(unaryJson(searchResponseFor(scope)));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/GetDevice', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetDevice', async (route) => {
 		const req = route.request();
 		const id = (req.postDataJSON() as { id?: string })?.id ?? '';
 		await route.fulfill(unaryJson(getDeviceByIdResponse(id)));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/GetDeviceInventory', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetDeviceInventory', async (route) => {
 		await route.fulfill(unaryJson(getDeviceInventoryResponse()));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/RefreshDeviceInventory', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/RefreshDeviceInventory', async (route) => {
 		await route.fulfill(unaryJson({}));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/ListRoles', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListRoles', async (route) => {
 		await route.fulfill(unaryJson(listRolesResponse()));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/GetDeviceGroup', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetDeviceGroup', async (route) => {
 		const id = (route.request().postDataJSON() as { id?: string })?.id ?? '';
 		await route.fulfill(unaryJson(getDeviceGroupResponse(id)));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/ListDevices', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListDevices', async (route) => {
 		await route.fulfill(unaryJson(listDevicesResponse()));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/GetDeviceCompliancePolicyStatus', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetDeviceCompliancePolicyStatus', async (route) => {
 		await route.fulfill(unaryJson(getDeviceCompliancePolicyStatusResponse()));
 	});
 
-	await page.route('**/powermanage.v1.ControlService/ValidateDynamicQuery', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ValidateDynamicQuery', async (route) => {
 		// Used by the create / edit-query dialogs to preview matching devices.
 		await route.fulfill(unaryJson({ valid: true, error: '', matchingDeviceCount: 6 }));
 	});
 
 	// GetCurrentUser — the auth store already has the user hydrated from
 	// localStorage; this is here for any page that calls it explicitly.
-	await page.route('**/powermanage.v1.ControlService/GetCurrentUser', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetCurrentUser', async (route) => {
 		await route.fulfill(
 			unaryJson({
 				user: {
 					id: '01J6XYZSHOWCASEADMINUSR01',
-					email: 'admin@power-manage.example',
+					email: 'admin@cadestro.example',
 					displayName: 'Sam Reiter',
 					givenName: 'Sam',
 					familyName: 'Reiter',
@@ -182,62 +182,62 @@ export async function mockControlService(page: Page): Promise<void> {
 // (which only needs a handful) is unaffected.
 export async function mockControlServiceExtras(page: Page): Promise<void> {
 	// Actions / sets / definitions / compliance.
-	await page.route('**/powermanage.v1.ControlService/ListActions', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListActions', async (route) => {
 		await route.fulfill(unaryJson(listActionsResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/GetAction', byId(getActionResponse));
-	await page.route('**/powermanage.v1.ControlService/ListActionSets', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetAction', byId(getActionResponse));
+	await page.route('**/cadestro.v1.ControlService/ListActionSets', async (route) => {
 		await route.fulfill(unaryJson(listActionSetsResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/GetActionSet', byId(getActionSetResponse));
-	await page.route('**/powermanage.v1.ControlService/GetDefinition', byId(getDefinitionResponse));
-	await page.route('**/powermanage.v1.ControlService/GetCompliancePolicy', byId(getCompliancePolicyResponse));
+	await page.route('**/cadestro.v1.ControlService/GetActionSet', byId(getActionSetResponse));
+	await page.route('**/cadestro.v1.ControlService/GetDefinition', byId(getDefinitionResponse));
+	await page.route('**/cadestro.v1.ControlService/GetCompliancePolicy', byId(getCompliancePolicyResponse));
 
 	// Executions.
-	await page.route('**/powermanage.v1.ControlService/GetExecution', byId(getExecutionResponse));
+	await page.route('**/cadestro.v1.ControlService/GetExecution', byId(getExecutionResponse));
 
 	// Users / groups / roles / permissions.
-	await page.route('**/powermanage.v1.ControlService/ListUsers', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListUsers', async (route) => {
 		await route.fulfill(unaryJson(listUsersResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/GetUser', byId(getUserResponse));
-	await page.route('**/powermanage.v1.ControlService/GetUserGroup', byId(getUserGroupResponse));
-	await page.route('**/powermanage.v1.ControlService/GetRole', byId(getRoleResponse));
-	await page.route('**/powermanage.v1.ControlService/ListPermissions', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetUser', byId(getUserResponse));
+	await page.route('**/cadestro.v1.ControlService/GetUserGroup', byId(getUserGroupResponse));
+	await page.route('**/cadestro.v1.ControlService/GetRole', byId(getRoleResponse));
+	await page.route('**/cadestro.v1.ControlService/ListPermissions', async (route) => {
 		await route.fulfill(unaryJson(listPermissionsResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/ListUserGroupsForUser', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListUserGroupsForUser', async (route) => {
 		await route.fulfill(unaryJson({ groups: [] }));
 	});
-	await page.route('**/powermanage.v1.ControlService/ListDeviceGroups', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListDeviceGroups', async (route) => {
 		await route.fulfill(unaryJson(deviceGroupsList()));
 	});
 
 	// Tokens.
-	await page.route('**/powermanage.v1.ControlService/ListTokens', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListTokens', async (route) => {
 		await route.fulfill(unaryJson(listTokensResponse()));
 	});
 
 	// Identity providers / links / auth methods.
-	await page.route('**/powermanage.v1.ControlService/ListIdentityProviders', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListIdentityProviders', async (route) => {
 		await route.fulfill(unaryJson(listIdentityProvidersResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/GetIdentityProvider', byId(getIdentityProviderResponse));
-	await page.route('**/powermanage.v1.ControlService/ListIdentityLinks', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetIdentityProvider', byId(getIdentityProviderResponse));
+	await page.route('**/cadestro.v1.ControlService/ListIdentityLinks', async (route) => {
 		await route.fulfill(unaryJson(listIdentityLinksResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/ListAuthMethods', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListAuthMethods', async (route) => {
 		await route.fulfill(unaryJson(listAuthMethodsResponse()));
 	});
 
 	// Settings, terminal sessions, and available actions.
-	await page.route('**/powermanage.v1.ControlService/GetServerSettings', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/GetServerSettings', async (route) => {
 		await route.fulfill(unaryJson(getServerSettingsResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/ListActiveTerminalSessions', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListActiveTerminalSessions', async (route) => {
 		await route.fulfill(unaryJson(listActiveTerminalSessionsResponse()));
 	});
-	await page.route('**/powermanage.v1.ControlService/ListAvailableActions', async (route) => {
+	await page.route('**/cadestro.v1.ControlService/ListAvailableActions', async (route) => {
 		await route.fulfill(unaryJson(listAvailableActionsResponse()));
 	});
 }

@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type Device, type ActionExecution, type InventoryTableResult, type DeviceAssignee, formatTimestampDateTime, formatDuration, ActionType } from '$lib/sdk';
-	import { AssignmentTargetType, DeviceStatus, ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
+	import { AssignmentTargetType, DeviceStatus, ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';

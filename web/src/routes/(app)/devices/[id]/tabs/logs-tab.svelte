@@ -17,7 +17,7 @@
 	let { deviceId }: Props = $props();
 
 	// Query parameters (pre-filled defaults for one-click agent log query)
-	let unit = $state('power-manage-agent.service');
+	let unit = $state('cadestrod.service');
 	let lines = $state(100);
 	let since = $state('');
 	let until = $state('');

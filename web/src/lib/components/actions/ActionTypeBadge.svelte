@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { Badge } from '$lib/components/ui/badge';
 	import { getActionTypeInfo, getActionTypeInfoByValue } from './action-type';
 

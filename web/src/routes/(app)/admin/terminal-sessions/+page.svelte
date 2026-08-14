@@ -18,7 +18,7 @@
 	import PageShell from '$lib/components/page-shell.svelte';
 	import { RefreshCw, SquareTerminal, Ban } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import type { TerminalSessionInfo } from '$pmSdk/client';
+	import type { TerminalSessionInfo } from '$contractClient/client';
 	import { RowList, DataTablePagination, createClientListState } from '$lib/components/data-table';
 
 	type SortKey = 'user' | 'device' | 'started' | 'activity';
@@ -100,7 +100,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.terminal_sessions_title()} — Power Manage</title>
+	<title>{m.terminal_sessions_title()} — Cadestro</title>
 </svelte:head>
 
 <PageShell contentClass="space-y-4">

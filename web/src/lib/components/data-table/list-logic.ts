@@ -1,7 +1,7 @@
 // Pure, framework-free logic behind the server-mode DataTable. Kept out of the
 // runes module so it's unit-testable without a Svelte runtime — the repo has no
 // component-test harness, only pure-TS tests.
-import { SearchScope, SortField, SortDirection } from '$sdk/powermanage/v1/common_pb';
+import { SearchScope, SortField, SortDirection } from '$contract/cadestro/v1/common_pb';
 
 export type SortDir = 'asc' | 'desc';
 export type SortState<K extends string = string> = { key: K; dir: SortDir };
@@ -56,7 +56,7 @@ export function pageMath(total: number, page: number, pageSize: number): PageMat
  */
 export type SearchDateFilter = { field: string; start: bigint; end: bigint };
 
-/** Positional argument tuple for `apiClient.search` (see sdk/ts/client.ts:1846). */
+/** Positional argument tuple for `apiClient.search` (see contract/ts/client.ts:1846). */
 export type SearchArgs = [
 	query: string,
 	scope: SearchScope,

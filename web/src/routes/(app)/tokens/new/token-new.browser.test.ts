@@ -33,9 +33,9 @@ const nav = vi.hoisted(() => ({ url: new URL('https://control.test/tokens/new') 
 // empty autosave, so the cross-route test can only pass if the stage card's own
 // payload rebuilt the form.
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

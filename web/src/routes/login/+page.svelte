@@ -10,7 +10,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label';
 	import { Settings, Globe } from '@lucide/svelte';
-	import type { IdentityProviderType } from '$sdk/powermanage/v1/common_pb';
+	import type { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 	import * as m from '$lib/paraglide/messages';
 
 	type SSOProvider = { slug: string; name: string; providerType: IdentityProviderType };

@@ -21,8 +21,8 @@ import {
 	CreateLuksTokenResponseSchema,
 	LpsPasswordSchema,
 	LuksKeySchema
-} from '$sdk/powermanage/v1/control_pb';
-import { RotationReason, LuksRevocationStatus } from '$sdk/powermanage/v1/common_pb';
+} from '$contract/cadestro/v1/control_pb';
+import { RotationReason, LuksRevocationStatus } from '$contract/cadestro/v1/common_pb';
 import * as m from '$lib/paraglide/messages';
 
 const DEVICE_ID = '01JQZZDEVICE00000000000000';
@@ -39,7 +39,7 @@ const LUKS_TOKEN = 'c0ffee00-token-0001';
 const SECOND_LUKS_TOKEN = 'c0ffee00-token-0002';
 
 // What the server actually advertises: no token on argv, no sudo.
-const LUKS_CLI_COMMAND = 'power-manage-agent luks set-passphrase';
+const LUKS_CLI_COMMAND = 'cadestrod luks set-passphrase';
 
 const api = vi.hoisted(() => ({
 	listLpsPasswords: vi.fn(),
@@ -100,7 +100,7 @@ const plaintextByEntry: Record<string, string> = {
 function tokenResponse(token: string) {
 	return create(CreateLuksTokenResponseSchema, {
 		token,
-		uri: `power-manage://luks/set-passphrase?token=${token}`,
+		uri: `cadestro://luks/set-passphrase?token=${token}`,
 		cliCommand: LUKS_CLI_COMMAND
 	});
 }
@@ -255,7 +255,7 @@ describe('system resources tab — LUKS token dialog', () => {
 
 		await expect
 			.element(page.getByRole('link', { name: m.luks_set_passphrase() }))
-			.toHaveAttribute('href', `power-manage://luks/set-passphrase?token=${LUKS_TOKEN}`);
+			.toHaveAttribute('href', `cadestro://luks/set-passphrase?token=${LUKS_TOKEN}`);
 	});
 
 	it('copies the token and the command to the clipboard as separate values', async () => {

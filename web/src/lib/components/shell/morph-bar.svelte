@@ -51,7 +51,7 @@
 
 	// The pill renders props: the layout owns the auth client and passes
 	// the permission-filtered tables (adaptor seam; this file must stay free of
-	// $pmSdk/$sdk imports, guard-enforced).
+	// $contractClient/$contract imports, guard-enforced).
 	//
 	// `searchSurface` is that same seam for ⌘K. There is exactly ONE search
 	// implementation — the palette — and it talks to the Search RPC, so it cannot

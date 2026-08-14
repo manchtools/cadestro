@@ -18,9 +18,9 @@ const api = vi.hoisted(() => ({
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/user-groups/new') }));
 
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

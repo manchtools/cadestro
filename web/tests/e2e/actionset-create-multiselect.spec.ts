@@ -9,14 +9,14 @@ import { test, expect, preparePage, gotoAndSettle, recordRpc, clickUntil } from 
 import type { Page, Route } from '@playwright/test';
 
 async function mockCreateFlow(page: Page): Promise<void> {
-	await page.route('**/powermanage.v1.ControlService/CreateActionSet', async (route: Route) => {
+	await page.route('**/cadestro.v1.ControlService/CreateActionSet', async (route: Route) => {
 		await route.fulfill({
 			status: 200,
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ set: { id: '01JREPROSET000000000000000', name: 'repro', memberCount: 0 } }),
 		});
 	});
-	await page.route('**/powermanage.v1.ControlService/AddActionToSet', async (route: Route) => {
+	await page.route('**/cadestro.v1.ControlService/AddActionToSet', async (route: Route) => {
 		await route.fulfill({
 			status: 200,
 			headers: { 'content-type': 'application/json' },

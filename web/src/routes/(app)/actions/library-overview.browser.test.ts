@@ -15,7 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { userEvent } from 'vitest/browser';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import { getActionTypeLabel } from '$lib/components/actions';
 import * as m from '$lib/paraglide/messages';
 

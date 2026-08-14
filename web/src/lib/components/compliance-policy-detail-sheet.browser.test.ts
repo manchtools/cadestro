@@ -14,7 +14,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
-import { CompliancePolicySchema } from '$sdk/powermanage/v1/control_pb';
+import { CompliancePolicySchema } from '$contract/cadestro/v1/control_pb';
 import * as m from '$lib/paraglide/messages';
 import { shell, resetShell, commitContext } from '$lib/shell/shell.svelte';
 
@@ -33,9 +33,9 @@ const api = vi.hoisted(() => ({
 const nav = vi.hoisted(() => ({ state: {} as { compliancePolicySheet?: string } }));
 
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

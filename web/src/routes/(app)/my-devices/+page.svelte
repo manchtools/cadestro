@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type AvailableItem } from '$lib/sdk';
-	import { AssignmentSourceType } from '$sdk/powermanage/v1/common_pb';
+	import { AssignmentSourceType } from '$contract/cadestro/v1/common_pb';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';

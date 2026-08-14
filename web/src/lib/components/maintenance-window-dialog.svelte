@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import * as m from '$lib/paraglide/messages';
-	import type { MaintenanceWindow, MaintenanceWindowEntry } from '$sdk/powermanage/v1/common_pb';
+	import type { MaintenanceWindow, MaintenanceWindowEntry } from '$contract/cadestro/v1/common_pb';
 
 	export type MaintenanceWindowEntryInput = {
 		days: string[];

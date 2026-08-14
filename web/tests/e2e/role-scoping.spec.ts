@@ -19,7 +19,7 @@ async function json(route: Route, body: unknown): Promise<void> {
 // target kind, plus a device group and a user group to scope to. Registered
 // after preparePage so they win (page.route is LIFO).
 async function installScopeFixtures(page: Page): Promise<void> {
-	await page.route('**/powermanage.v1.ControlService/ListPermissions', (r) =>
+	await page.route('**/cadestro.v1.ControlService/ListPermissions', (r) =>
 		json(r, {
 			permissions: [
 				{ key: 'DevPerm', group: 'Devices', description: 'd', targetKind: 'PERMISSION_TARGET_KIND_DEVICE' },
@@ -28,7 +28,7 @@ async function installScopeFixtures(page: Page): Promise<void> {
 			],
 		})
 	);
-	await page.route('**/powermanage.v1.ControlService/ListRoles', (r) =>
+	await page.route('**/cadestro.v1.ControlService/ListRoles', (r) =>
 		json(r, {
 			roles: [
 				{ id: 'ROLE_DEVICE', name: 'Device Scoped Role', description: '', permissions: ['DevPerm'], isSystem: false },
@@ -39,10 +39,10 @@ async function installScopeFixtures(page: Page): Promise<void> {
 			totalCount: 3,
 		})
 	);
-	await page.route('**/powermanage.v1.ControlService/ListDeviceGroups', (r) =>
+	await page.route('**/cadestro.v1.ControlService/ListDeviceGroups', (r) =>
 		json(r, { groups: [{ id: 'DG_PROD', name: 'Production', description: '', memberCount: 0 }], nextPageToken: '', totalCount: 1 })
 	);
-	await page.route('**/powermanage.v1.ControlService/ListUserGroups', (r) =>
+	await page.route('**/cadestro.v1.ControlService/ListUserGroups', (r) =>
 		json(r, { groups: [{ id: 'UG_ADMINS', name: 'Admins', description: '', memberCount: 0 }], nextPageToken: '', totalCount: 1 })
 	);
 }
@@ -68,7 +68,7 @@ async function chooseScope(page: Page, name: string): Promise<void> {
 test('DEVICE-kind role offers a device-group picker and assigns with DEVICE_GROUP scope', async ({ page }) => {
 	await preparePage(page, 'light');
 	await installScopeFixtures(page);
-	await page.route('**/powermanage.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
+	await page.route('**/cadestro.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUser');
 
 	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
@@ -89,7 +89,7 @@ test('DEVICE-kind role offers a device-group picker and assigns with DEVICE_GROU
 test('USER-kind role offers a user-group picker and assigns with USER_GROUP scope', async ({ page }) => {
 	await preparePage(page, 'light');
 	await installScopeFixtures(page);
-	await page.route('**/powermanage.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
+	await page.route('**/cadestro.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUser');
 
 	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
@@ -108,7 +108,7 @@ test('USER-kind role offers a user-group picker and assigns with USER_GROUP scop
 test('non-scopable role offers no picker and sends an unscoped grant', async ({ page }) => {
 	await preparePage(page, 'light');
 	await installScopeFixtures(page);
-	await page.route('**/powermanage.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
+	await page.route('**/cadestro.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUser');
 
 	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
@@ -136,7 +136,7 @@ const GROUP_ID = '01J6XYZSHOWCASEGROUP0001';
 test('user-group flow: DEVICE-kind role assigns to the group with DEVICE_GROUP scope', async ({ page }) => {
 	await preparePage(page, 'light');
 	await installScopeFixtures(page);
-	await page.route('**/powermanage.v1.ControlService/AssignRoleToUserGroup', (r) => json(r, {}));
+	await page.route('**/cadestro.v1.ControlService/AssignRoleToUserGroup', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUserGroup');
 
 	await gotoAndSettle(page, `/user-groups/${GROUP_ID}`, 'text=Assign Role');
@@ -155,7 +155,7 @@ test('user-group flow: DEVICE-kind role assigns to the group with DEVICE_GROUP s
 test('user-group flow: non-scopable role offers no picker and sends an unscoped grant', async ({ page }) => {
 	await preparePage(page, 'light');
 	await installScopeFixtures(page);
-	await page.route('**/powermanage.v1.ControlService/AssignRoleToUserGroup', (r) => json(r, {}));
+	await page.route('**/cadestro.v1.ControlService/AssignRoleToUserGroup', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUserGroup');
 
 	await gotoAndSettle(page, `/user-groups/${GROUP_ID}`, 'text=Assign Role');

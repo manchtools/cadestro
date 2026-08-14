@@ -4,8 +4,8 @@
 	import { base } from '$app/paths';
 	import { goto } from '$lib/navigation';
 	import { formatTimestampDateTime, formatDuration } from '$lib/sdk';
-	import { ExecutionStatus, DesiredState } from '$sdk/powermanage/v1/common_pb';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ExecutionStatus, DesiredState } from '$contract/cadestro/v1/common_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { Chip } from '$lib/components/fleet';
 	import type { FleetTone } from '$lib/components/fleet';

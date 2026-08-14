@@ -2,7 +2,7 @@
 // deliberately generic ("staging", "edge-01", etc.) — no real customer
 // or operator data should ever land here.
 //
-// SearchScope enum values (from sdk/gen/ts/powermanage/v1/common_pb.ts):
+// SearchScope enum values (from contract/gen/ts/cadestro/v1/common_pb.ts):
 //   ACTIONS=1 ACTION_SETS=2 DEFINITIONS=3 COMPLIANCE_POLICIES=4
 //   DEVICES=5 USERS=6 DEVICE_GROUPS=7 USER_GROUPS=8 EXECUTIONS=9
 
@@ -353,7 +353,7 @@ export function actionsAsSearchResults() {
 export const DUMMY_USERS = [
 	{
 		id: '01J6XYZSHOWCASEADMINUSR01',
-		email: 'admin@power-manage.example',
+		email: 'admin@cadestro.example',
 		display_name: 'Sam Reiter',
 		created_at: now - 320 * day,
 		last_login_at: now - 1 * hour,
@@ -362,7 +362,7 @@ export const DUMMY_USERS = [
 	},
 	{
 		id: '01J6XYZSHOWCASEUSER0002',
-		email: 'lina.hartmann@power-manage.example',
+		email: 'lina.hartmann@cadestro.example',
 		display_name: 'Lina Hartmann',
 		created_at: now - 180 * day,
 		last_login_at: now - 6 * hour,
@@ -371,7 +371,7 @@ export const DUMMY_USERS = [
 	},
 	{
 		id: '01J6XYZSHOWCASEUSER0003',
-		email: 'kai.bauer@power-manage.example',
+		email: 'kai.bauer@cadestro.example',
 		display_name: 'Kai Bauer',
 		created_at: now - 90 * day,
 		last_login_at: now - 2 * day,
@@ -380,7 +380,7 @@ export const DUMMY_USERS = [
 	},
 	{
 		id: '01J6XYZSHOWCASEUSER0004',
-		email: 'sven.koch@power-manage.example',
+		email: 'sven.koch@cadestro.example',
 		display_name: 'Sven Koch',
 		created_at: now - 540 * day,
 		last_login_at: now - 12 * day,
@@ -389,7 +389,7 @@ export const DUMMY_USERS = [
 	},
 	{
 		id: '01J6XYZSHOWCASEUSER0005',
-		email: 'rebecca.weber@power-manage.example',
+		email: 'rebecca.weber@cadestro.example',
 		display_name: 'Rebecca Weber',
 		created_at: now - 60 * day,
 		last_login_at: now - 38 * day,
@@ -1336,7 +1336,7 @@ export function listIdentityLinksResponse() {
 				providerName: 'Okta (Staging)',
 				providerSlug: 'okta-staging',
 				externalId: 'okta|00u123',
-				externalEmail: 'admin@power-manage.example',
+				externalEmail: 'admin@cadestro.example',
 				externalName: 'Sam Reiter',
 				linkedAt: isoFromSec(now - 100 * day),
 				lastLoginAt: isoFromSec(now - 1 * hour),
@@ -1369,7 +1369,7 @@ export function listActiveTerminalSessionsResponse() {
 			{
 				sessionId: '01J6XYZSHOWCASETERM0001',
 				userId: '01J6XYZSHOWCASEADMINUSR01',
-				userEmail: 'admin@power-manage.example',
+				userEmail: 'admin@cadestro.example',
 				deviceId: '01J6XYZSHOWCASEDEVICE0001',
 				deviceHostname: 'edge-01.berlin',
 				ttyUser: 'root',

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type LpsPassword, type LuksKey, formatTimestampDateTime } from '$lib/sdk';
-	import { LuksRevocationStatus, RotationReason } from '$sdk/powermanage/v1/common_pb';
+	import { LuksRevocationStatus, RotationReason } from '$contract/cadestro/v1/common_pb';
 	import { getLocalizedError } from '$lib/errors';
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';

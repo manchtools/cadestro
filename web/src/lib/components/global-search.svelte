@@ -51,8 +51,8 @@
 		ListFilter,
 		X
 	} from '@lucide/svelte';
-	import type { SearchResult } from '$pmSdk/client';
-	import { SearchScope } from '$sdk/powermanage/v1/common_pb';
+	import type { SearchResult } from '$contractClient/client';
+	import { SearchScope } from '$contract/cadestro/v1/common_pb';
 	import { TONE_FILL, TONE_LABEL, type FleetTone } from '$lib/components/fleet';
 	import type { PillEntry, PillGroup } from '$lib/shell/nav';
 	import { shell, restorePanel, focusSession, restoreDraft } from '$lib/shell/shell.svelte';

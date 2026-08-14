@@ -13,8 +13,8 @@
 	import { goto } from '$lib/navigation';
 	import { create } from '@bufbuild/protobuf';
 	import { apiClient, useDraft, type ManagedAction } from '$lib/sdk';
-	import { ActionScheduleSchema } from '$sdk/powermanage/v1/actions_pb';
-	import { OnFailure } from '$sdk/powermanage/v1/agent_pb';
+	import { ActionScheduleSchema } from '$contract/cadestro/v1/actions_pb';
+	import { OnFailure } from '$contract/cadestro/v1/agent_pb';
 	import { nameDescriptionSchema } from '$lib/forms/schemas/common';
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
 	import CreatePlate from '$lib/components/create/create-plate.svelte';

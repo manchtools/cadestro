@@ -1,9 +1,10 @@
 // postMessage contract with the marketplace iframe. Mirror of the
-// definition inside the marketplace repo — kept in sync by hand for
-// now so PM web has a single source of truth it can type against.
+// definition inside the marketplace repository, which is a separate
+// product — kept in sync by hand for now so this app has a single
+// source of truth it can type against.
 //
-// Any change here must be reflected in
-// power-manage-marketplace/web/src/lib/embed.ts.
+// Any change here must be reflected in that repository's copy of
+// `web/src/lib/embed.ts`.
 
 export type EmbedMessage =
 	// Embed → host. Posted once the embed's message listener is

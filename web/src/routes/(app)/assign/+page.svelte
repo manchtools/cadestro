@@ -36,7 +36,7 @@
 	} from '$lib/shell/shell.svelte';
 	import FutureScopeDialog from '$lib/components/future-scope-dialog.svelte';
 	import type { QueryEditorState } from '$lib/components/query-builder.svelte';
-	import type { ActionSet, ActionSetMember } from '$sdk/powermanage/v1/control_pb';
+	import type { ActionSet, ActionSetMember } from '$contract/cadestro/v1/control_pb';
 	import {
 		MAX_CARRIED,
 		assignSetToGroup,

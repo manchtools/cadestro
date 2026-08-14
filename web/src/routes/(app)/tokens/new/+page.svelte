@@ -84,7 +84,7 @@
 
 	const installCommand = $derived(
 		created
-			? `curl -fsSL https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/install.sh | sudo bash -s -- -s ${configStore.serverUrl} -t ${created.value} -p ${caPin}`
+			? `curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh | sudo bash -s -- -s ${configStore.serverUrl} -t ${created.value} -p ${caPin}`
 			: ''
 	);
 

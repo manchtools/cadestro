@@ -13,7 +13,7 @@
 		type SearchResult,
 		formatTimestampDateTime
 	} from '$lib/sdk';
-	import { ExecutionStatus, SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { ExecutionStatus, SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import { getActionTypeOptions } from '$lib/components/actions/action-type';
 	import { Button } from '$lib/components/ui/button';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';

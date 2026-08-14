@@ -44,7 +44,7 @@ import {
 	AgentUpdateParamsSchema,
 	AgentUpdateArchSchema,
 	type AgentUpdateParams
-} from '$sdk/powermanage/v1/actions_pb';
+} from '$contract/cadestro/v1/actions_pb';
 import {
 	EncryptionAuthoringParamsSchema,
 	type EncryptionAuthoringParams,
@@ -52,7 +52,7 @@ import {
 	WifiAuthoringParamsSchema,
 	type WifiAuthoringParams,
 	type ManagedWifiParams
-} from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/control_pb';
 
 // ─── Form state interfaces ──────────────────────────────────────────
 
@@ -428,10 +428,10 @@ export function defaultWifiForm(): WifiFormState {
 
 export function defaultAgentUpdateForm(): AgentUpdateFormState {
 	return {
-		amd64BinaryUrl: 'https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/power-manage-agent-linux-amd64',
-		amd64ChecksumUrl: 'https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/SHA256SUMS',
-		arm64BinaryUrl: 'https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/power-manage-agent-linux-arm64',
-		arm64ChecksumUrl: 'https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/SHA256SUMS',
+		amd64BinaryUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-linux-amd64',
+		amd64ChecksumUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/SHA256SUMS',
+		arm64BinaryUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-linux-arm64',
+		arm64ChecksumUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/SHA256SUMS',
 		// The default URLs are GitHub release downloads, which 302 to another host
 		// (release-assets.githubusercontent.com); opt into following that redirect.
 		allowRedirect: true

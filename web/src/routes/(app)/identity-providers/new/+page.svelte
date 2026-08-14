@@ -14,7 +14,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient, type Role } from '$lib/sdk';
-	import { IdentityProviderType } from '$sdk/powermanage/v1/common_pb';
+	import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 	import { z } from 'zod';
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
 	import CreatePlate from '$lib/components/create/create-plate.svelte';

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { ActionSchedule } from '$sdk/powermanage/v1/actions_pb';
+	import type { ActionSchedule } from '$contract/cadestro/v1/actions_pb';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import ScheduleSummary from '$lib/components/actions/schedule-summary.svelte';
@@ -14,7 +14,7 @@
 
 	// Card surfacing the schedule of an action set or definition. The
 	// container's schedule fires every member action when triggered (see
-	// manchtools/power-manage-agent#45) — that's what the description
+	// manchtools/cadestro-agent#45) — that's what the description
 	// callout reinforces. Edit opens a dialog backed by the existing
 	// per-action ActionScheduleForm so cron/interval/run-on-assign/skip-
 	// if-unchanged behavior is identical.

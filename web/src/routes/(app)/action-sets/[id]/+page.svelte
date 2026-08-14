@@ -14,7 +14,7 @@
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ActionSet, type ManagedAction } from '$lib/sdk';
-	import type { ActionSetMember } from '$sdk/powermanage/v1/control_pb';
+	import type { ActionSetMember } from '$contract/cadestro/v1/control_pb';
 	import { Button } from '$lib/components/ui/button';
 	import ConfirmDeleteDialog from '$lib/components/confirm-delete-dialog.svelte';
 	import PageShell from '$lib/components/page-shell.svelte';
@@ -23,8 +23,8 @@
 	import DispatchToDeviceDialog from '$lib/components/dispatch-to-device-dialog.svelte';
 	import ActionSetBuilder from '$lib/components/actions/pipeline/action-set-builder.svelte';
 	import { Chip } from '$lib/components/fleet';
-	import type { ActionSchedule } from '$sdk/powermanage/v1/actions_pb';
-	import { AssignmentSourceType } from '$sdk/powermanage/v1/common_pb';
+	import type { ActionSchedule } from '$contract/cadestro/v1/actions_pb';
+	import { AssignmentSourceType } from '$contract/cadestro/v1/common_pb';
 	import { ArrowLeft, RefreshCw } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import type { PillAction } from '$lib/shell/shell.svelte';

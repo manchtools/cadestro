@@ -5,7 +5,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import AssignTargetPicker from '$lib/components/assign-target-picker.svelte';
 	import * as m from '$lib/paraglide/messages';
-	import { AssignmentMode, AssignmentTargetType, type DeviceStatus } from '$sdk/powermanage/v1/common_pb';
+	import { AssignmentMode, AssignmentTargetType, type DeviceStatus } from '$contract/cadestro/v1/common_pb';
 
 	interface Props {
 		open: boolean;

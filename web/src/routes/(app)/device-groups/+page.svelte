@@ -3,7 +3,7 @@
 	import { goto } from '$lib/navigation';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, fetchAllPages, type DeviceGroup, formatTimestampDateTime } from '$lib/sdk';
-	import { SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import * as m from '$lib/paraglide/messages';
 	import { Button } from '$lib/components/ui/button';
 	import { Chip } from '$lib/components/fleet';

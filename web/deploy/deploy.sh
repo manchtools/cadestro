@@ -5,7 +5,7 @@
 #   e.g.: ./deploy.sh v2026.02.19
 #
 # Environment:
-#   DEPLOY_DIR     — working directory (default: /opt/power-manage-web)
+#   DEPLOY_DIR     — working directory (default: /opt/cadestro-web)
 #   GHCR_TOKEN     — GHCR PAT for docker login (optional if already logged in)
 #   GHCR_USER      — GHCR username (default: github)
 #
@@ -17,10 +17,10 @@
 set -euo pipefail
 
 NEW_VERSION="${1:?Usage: $0 <version>}"
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/power-manage-web}"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/cadestro-web}"
 VERSIONS_FILE="${DEPLOY_DIR}/versions.conf"
 COMPOSE_FILE="${DEPLOY_DIR}/docker-compose.yml"
-IMAGE="ghcr.io/manchtools/power-manage-web"
+IMAGE="ghcr.io/manchtools/cadestro-web"
 
 mkdir -p "$DEPLOY_DIR"
 

@@ -19,9 +19,9 @@ const drafts = vi.hoisted(() => ({ types: [] as string[] }));
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/identity-providers/new') }));
 
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,
@@ -70,7 +70,7 @@ vi.mock('$app/state', () => ({
 }));
 
 import { goto } from '$app/navigation';
-import { IdentityProviderType } from '$sdk/powermanage/v1/common_pb';
+import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 import NewIdpPage from './+page.svelte';
 import IdpPage from '../+page.svelte';
 import StageRail from '$lib/components/shell/stage-rail.svelte';
@@ -118,7 +118,7 @@ async function fillProvider(over: Partial<Record<string, string>> = {}) {
 	const values: Record<string, string> = {
 		idpName: 'Keycloak',
 		idpSlug: 'keycloak',
-		idpClientId: 'power-manage',
+		idpClientId: 'cadestro',
 		idpClientSecret: 's3cr3t',
 		idpIssuerUrl: 'https://sso.example.com/realms/pm',
 		idpScopes: '',
@@ -157,7 +157,7 @@ describe('/identity-providers/new — the commit is the pill\'s', () => {
 			name: 'Keycloak',
 			slug: 'keycloak',
 			providerType: IdentityProviderType.OIDC,
-			clientId: 'power-manage',
+			clientId: 'cadestro',
 			clientSecret: 's3cr3t',
 			issuerUrl: 'https://sso.example.com/realms/pm',
 			// An empty scopes box still sends the dialog's three defaults.
@@ -247,7 +247,7 @@ describe('/identity-providers/new — the third exit: stash, walk away, restore'
 
 		await vi.waitFor(() => expect(field('idpName')?.value).toBe('Keycloak'));
 		expect(field('idpSlug')?.value).toBe('keycloak');
-		expect(field('idpClientId')?.value).toBe('power-manage');
+		expect(field('idpClientId')?.value).toBe('cadestro');
 		// The secret is part of the parked work — losing it would send the operator
 		// back to the provider's console.
 		expect(field('idpClientSecret')?.value).toBe('s3cr3t');

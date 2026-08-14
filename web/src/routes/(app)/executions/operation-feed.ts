@@ -1,6 +1,6 @@
 // Movement F's "one card per operation" — DERIVED from execution rows, never read.
 //
-// `message ActionExecution` (sdk/proto/powermanage/v1/control.proto) carries no
+// `message ActionExecution` (contract/proto/cadestro/v1/control.proto) carries no
 // shared dispatch, batch, manifest or operation id. Its complete field list is
 // id, device_id, action_id, type, status, error, output, created_at,
 // dispatched_at, completed_at, duration_ms, created_by, live_output,
@@ -38,7 +38,7 @@
 // the feed's grouping.
 
 import type { Timestamp } from '@bufbuild/protobuf/wkt';
-import { ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
+import { ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 
 /** Seconds of slack that still read as one dispatch gesture. */
 export const OPERATION_WINDOW_SECONDS = 5;

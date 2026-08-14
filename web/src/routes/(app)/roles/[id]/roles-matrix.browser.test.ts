@@ -12,8 +12,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
-import { RoleSchema, PermissionInfoSchema } from '$sdk/powermanage/v1/control_pb';
-import { PermissionTargetKind } from '$sdk/powermanage/v1/common_pb';
+import { RoleSchema, PermissionInfoSchema } from '$contract/cadestro/v1/control_pb';
+import { PermissionTargetKind } from '$contract/cadestro/v1/common_pb';
 import * as m from '$lib/paraglide/messages';
 import {
 	shell,
@@ -48,9 +48,9 @@ vi.mock('$app/state', () => ({
 	page: { url: new URL(`https://control.test/roles/${ROLE_ID}`), params: { id: ROLE_ID } }
 }));
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

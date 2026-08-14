@@ -5,7 +5,7 @@
 // same words, and a second switch would be a place for the two to drift apart.
 // The i18n keys it names are the ones ./execution-status-labels.test.ts pins
 // against the SDK enum, so a new ExecutionStatus still forces a label decision.
-import { ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
+import { ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 import type { FleetTone } from '$lib/components/fleet/tone';
 import * as m from '$lib/paraglide/messages';
 

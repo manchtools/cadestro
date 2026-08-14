@@ -9,9 +9,9 @@
 // page correctly said "Remove".
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
-import { SearchResultSchema } from '$sdk/powermanage/v1/control_pb';
-import { DesiredState } from '$sdk/powermanage/v1/common_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
+import { DesiredState } from '$contract/cadestro/v1/common_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 import {
 	searchResultToManagedAction,

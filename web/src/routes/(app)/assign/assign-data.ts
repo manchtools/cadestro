@@ -1,5 +1,5 @@
 // The assign surface's RPC seam. Every call here is one the control service
-// really exposes (sdk/ts/client.ts); nothing is composed out of a capability
+// really exposes (contract/ts/client.ts); nothing is composed out of a capability
 // the server does not have.
 //
 // Reads
@@ -43,8 +43,8 @@ import {
 	AssignmentMode,
 	AssignmentSourceType,
 	AssignmentTargetType
-} from '$sdk/powermanage/v1/common_pb';
-import type { ActionSet, ActionSetMember } from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/common_pb';
+import type { ActionSet, ActionSetMember } from '$contract/cadestro/v1/control_pb';
 import type { CarriedDevice } from './eligibility';
 
 /** Fan-out bound. One request per device is the contract's only shape for

@@ -4,9 +4,9 @@
 	import { toast } from 'svelte-sonner';
 	import { page } from '$app/state';
 	import { apiClient, formatTimestampDateTime } from '$lib/sdk';
-	import { ComplianceStatus, type CommandOutput } from '$sdk/powermanage/v1/common_pb';
+	import { ComplianceStatus, type CommandOutput } from '$contract/cadestro/v1/common_pb';
 	import type { Timestamp } from '@bufbuild/protobuf/wkt';
-	import type { GetDeviceCompliancePolicyStatusResponse } from '$sdk/powermanage/v1/control_pb';
+	import type { GetDeviceCompliancePolicyStatusResponse } from '$contract/cadestro/v1/control_pb';
 	import ActionDetailSheet, { openActionSheet } from '$lib/components/actions/action-detail-sheet.svelte';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';

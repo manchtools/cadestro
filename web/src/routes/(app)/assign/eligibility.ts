@@ -11,7 +11,7 @@
 // which is why the same map feeds the stage rows, the pill caption and the
 // commit count (one map, three renderings, no drift).
 
-import { DeviceStatus } from '$sdk/powermanage/v1/common_pb';
+import { DeviceStatus } from '$contract/cadestro/v1/common_pb';
 
 export type EligibilityBucket = 'ready' | 'update' | 'queued' | 'unknown';
 

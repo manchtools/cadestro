@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ActionScheduleSchema } from '$sdk/powermanage/v1/actions_pb';
+import { ActionScheduleSchema } from '$contract/cadestro/v1/actions_pb';
 import * as m from '$lib/paraglide/messages';
 
 import ContainerScheduleCard from './container-schedule-card.svelte';

@@ -7,7 +7,7 @@
 import { page } from '$app/state';
 import { toast } from 'svelte-sonner';
 import { apiClient, type SearchResult } from '$lib/sdk';
-import type { SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+import type { SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 import {
 	codecs,
 	readURLParam,

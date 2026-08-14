@@ -25,7 +25,7 @@
 		type CompliancePolicy,
 		type ManagedAction
 	} from '$lib/sdk';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import { Input } from '$lib/components/ui/input';

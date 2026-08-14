@@ -18,7 +18,7 @@
 // devices behind it in the queue.
 import { apiClient } from '$lib/sdk';
 import { getLocalizedError } from '$lib/errors';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 /** Writes in flight. The same bound the assign lane commits with — enough to
  *  keep a large selection moving, small enough that one bulk action is not a

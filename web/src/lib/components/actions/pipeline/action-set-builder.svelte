@@ -20,8 +20,8 @@
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ActionSet, type ManagedAction } from '$lib/sdk';
-	import type { ActionSetMember } from '$sdk/powermanage/v1/control_pb';
-	import type { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import type { ActionSetMember } from '$contract/cadestro/v1/control_pb';
+	import type { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { getLocalizedError } from '$lib/errors';
 	import * as m from '$lib/paraglide/messages';
 	import { Input } from '$lib/components/ui/input';

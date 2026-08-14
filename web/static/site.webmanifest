@@ -1,6 +1,6 @@
 {
-  "name": "power-manage",
-  "short_name": "power-manage",
+  "name": "Cadestro",
+  "short_name": "Cadestro",
   "icons": [
     { "src": "/favicon-light-32x32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "/apple-touch-icon-light.png", "sizes": "180x180", "type": "image/png" },

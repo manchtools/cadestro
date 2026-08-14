@@ -15,7 +15,7 @@
 // wall covers the registry exactly, in both directions.
 
 import { ACTION_REGISTRY, formKeyFromString, type FormKey } from '$lib/components/actions/registry';
-import { ACTION_TYPE_OPTIONS } from '$pmSdk/action-types';
+import { ACTION_TYPE_OPTIONS } from '$contractClient/action-types';
 
 /** COMPLIANCE_CHECK has no proto enum — it is a SHELL action the registry
  *  validates more strictly — so it is named here rather than discovered. */

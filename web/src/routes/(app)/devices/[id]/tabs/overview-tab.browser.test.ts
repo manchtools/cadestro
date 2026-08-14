@@ -11,9 +11,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ActionExecutionSchema, DeviceSchema } from '$sdk/powermanage/v1/control_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
-import { DeviceStatus, ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
+import { ActionExecutionSchema, DeviceSchema } from '$contract/cadestro/v1/control_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
+import { DeviceStatus, ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 
 const DEVICE_ID = '01JQZZDEVICE00000000000000';
 

@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { apiClient, type InventoryTableResult, type ManagedAction } from '$lib/sdk';
 	import { formatTimestampDateTime } from '$lib/sdk';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import * as Table from '$lib/components/ui/table';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';

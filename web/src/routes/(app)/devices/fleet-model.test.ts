@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
-import { ComplianceStatus, DeviceStatus } from '$sdk/powermanage/v1/common_pb';
-import { DeviceSchema } from '$sdk/powermanage/v1/control_pb';
+import { ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
+import { DeviceSchema } from '$contract/cadestro/v1/control_pb';
 import {
 	DEFAULT_SYNC_MINUTES,
 	ageBucket,

@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import { ACTION_REGISTRY, FORM_KEYS } from '$lib/components/actions/registry';
 import { getActionTypeInfoByValue } from '$lib/components/actions/action-type';
 import * as m from '$lib/paraglide/messages';
@@ -32,9 +32,9 @@ const api = vi.hoisted(() => ({
 // empty autosave, so the cross-route test can only pass if the stage card's own
 // payload rebuilt the form.
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
 	return {
 		...actions,
 		...control,

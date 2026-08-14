@@ -8,8 +8,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
-import { SearchResultSchema } from '$sdk/powermanage/v1/control_pb';
-import { RoleGrantScopeKind } from '$sdk/powermanage/v1/common_pb';
+import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
+import { RoleGrantScopeKind } from '$contract/cadestro/v1/common_pb';
 import * as m from '$lib/paraglide/messages';
 import UsersPage from './+page.svelte';
 

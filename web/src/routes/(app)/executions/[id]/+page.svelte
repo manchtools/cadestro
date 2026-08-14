@@ -6,8 +6,8 @@
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ActionExecution, type Device, formatTimestampDateTime, formatDuration } from '$lib/sdk';
-	import { ExecutionStatus, DesiredState } from '$sdk/powermanage/v1/common_pb';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ExecutionStatus, DesiredState } from '$contract/cadestro/v1/common_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';

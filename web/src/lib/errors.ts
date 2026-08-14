@@ -1,5 +1,5 @@
 import * as m from '$lib/paraglide/messages';
-import { getErrorCode, getRequestId } from '$pmSdk/client';
+import { getErrorCode, getRequestId } from '$contractClient/client';
 
 const errorMessages: Record<string, () => string> = {
 	not_authenticated: m.error_not_authenticated,
@@ -92,4 +92,4 @@ export function getLocalizedError(error: unknown): string {
 }
 
 export { getErrorCode };
-export * from '$pmSdk/errors';
+export * from '$contractClient/errors';

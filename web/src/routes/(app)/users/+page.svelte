@@ -8,7 +8,7 @@
 		type IdentityLink,
 		formatTimestampDateTime
 	} from '$lib/sdk';
-	import { SearchScope, SortField, RoleGrantScopeKind } from '$sdk/powermanage/v1/common_pb';
+	import { SearchScope, SortField, RoleGrantScopeKind } from '$contract/cadestro/v1/common_pb';
 	import { codecs } from '$lib/url-state';
 	import {
 		searchResultToUser,

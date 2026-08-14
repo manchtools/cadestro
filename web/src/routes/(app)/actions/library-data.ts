@@ -13,7 +13,7 @@
 // hit the surface says it is showing a partial library instead of implying the
 // tiles are everything.
 import { apiClient } from '$lib/sdk';
-import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 
 /** ListActions caps page_size at 100 (control.proto: `validate:"…,lte=100"`). */
 export const PAGE_SIZE = 100;

@@ -127,7 +127,7 @@
 	// Config preview
 	const configPreview = $derived.by(() => {
 		if (params.directives.length === 0) return '# No directives configured';
-		const lines = ['# Managed by Power Manage - do not edit manually'];
+		const lines = ['# Managed by Cadestro - do not edit manually'];
 		for (const d of params.directives) {
 			lines.push(`${d.key || '<key>'} ${d.value || '<value>'}`);
 		}

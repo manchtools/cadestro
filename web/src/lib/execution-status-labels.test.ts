@@ -10,7 +10,7 @@
 // conscious label decision here before it ships.
 
 import { describe, it, expect } from 'vitest';
-import { ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
+import { ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 import en from '../../messages/en.json';
 import de from '../../messages/de.json';
 

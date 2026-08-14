@@ -7,7 +7,7 @@
 	import AssignTargetDialog from '$lib/components/assign-target-dialog.svelte';
 	import { Plus, Monitor, Users, Trash2, UserRound, UsersRound } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import { AssignmentMode, AssignmentSourceType, AssignmentTargetType } from '$sdk/powermanage/v1/common_pb';
+	import { AssignmentMode, AssignmentSourceType, AssignmentTargetType } from '$contract/cadestro/v1/common_pb';
 	import { getLocalizedError } from '$lib/errors';
 
 	interface Props {

@@ -1,14 +1,14 @@
 FROM oven/bun:alpine AS build
 WORKDIR /src
 
-COPY sdk/gen/ts/ /sdk/gen/ts/
-COPY sdk/ts/ /sdk/ts/
+COPY contract/gen/ts/ /contract/gen/ts/
+COPY contract/ts/ /contract/ts/
 
 COPY web/package.json web/package-lock.json ./
 RUN bun install
-# SDK files import @connectrpc/connect, @bufbuild/protobuf, etc.
-# Symlink so Vite can resolve them from /sdk/ via /src/node_modules.
-RUN ln -s /src/node_modules /sdk/node_modules
+# The contract's TypeScript imports @connectrpc/connect, @bufbuild/protobuf,
+# etc. Symlink so Vite can resolve them from /contract/ via /src/node_modules.
+RUN ln -s /src/node_modules /contract/node_modules
 COPY web/ ./
 
 ARG VERSION=dev

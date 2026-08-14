@@ -7,8 +7,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ShellParamsSchema, ActionType } from '$sdk/powermanage/v1/actions_pb';
-import { ManagedActionSchema } from '$sdk/powermanage/v1/control_pb';
+import { ShellParamsSchema, ActionType } from '$contract/cadestro/v1/actions_pb';
+import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
 import * as m from '$lib/paraglide/messages';
 
 const api = vi.hoisted(() => ({
@@ -22,9 +22,9 @@ const api = vi.hoisted(() => ({
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/compliance-policies/new') }));
 
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

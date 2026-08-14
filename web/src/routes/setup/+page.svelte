@@ -3,7 +3,7 @@
 	//
 	// `control bootstrap-admin` prints <origin>/setup#bootstrap_token=<T>. The
 	// token is single-use, ~15min TTL, and is presented to control as
-	// `Authorization: PowerManage-Bootstrap <T>` (NOT a Bearer session token). It
+	// `Authorization: Cadestro-Bootstrap <T>` (NOT a Bearer session token). It
 	// buys exactly ONE authenticated call — registering the first OIDC provider —
 	// and is then spent. It is never stored, never logged, and never exchanged for
 	// a session.
@@ -18,7 +18,7 @@
 	import { z } from 'zod';
 	import { ConnectError, Code } from '@connectrpc/connect';
 	import { configStore, apiClient } from '$lib/sdk';
-	import { IdentityProviderType } from '$sdk/powermanage/v1/common_pb';
+	import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 	import { checkAndSwitchVersion } from '$lib/version';
 	import { getLocalizedError, getErrorCode } from '$lib/errors';
 	import { Button } from '$lib/components/ui/button';

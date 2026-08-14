@@ -11,7 +11,7 @@ import {
 	DefinitionSchema,
 	type ActionSet,
 	type Definition
-} from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/control_pb';
 import * as m from '$lib/paraglide/messages';
 
 const DEF_ID = '01JQZZ8E1R7S3V6W0X2Y5Z4A9B';
@@ -32,9 +32,9 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
 	return {
 		...actions,
 		...control,

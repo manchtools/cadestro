@@ -5,10 +5,10 @@
 // state, schema and proto conversion all come from ACTION_REGISTRY, which is the
 // only place that ladder is allowed to live.
 
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import { ACTION_REGISTRY, formKeyFromActionType, formKeyFromString, type FormKey } from '../registry';
 import { defaultScheduleForm, type ScheduleFormState } from '../forms/types';
-import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormState = any;

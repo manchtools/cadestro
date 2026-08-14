@@ -26,7 +26,7 @@
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
 	import { scheduleFormToProto } from './forms/types';
 	import { ACTION_REGISTRY } from './registry';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import {
 		getActionTypeIcon,
 		getActionTypeLabel,

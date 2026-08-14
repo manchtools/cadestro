@@ -10,7 +10,7 @@
 	import { base } from '$app/paths';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type Device, formatTimestampDateTime } from '$lib/sdk';
-	import { SearchScope, SortField } from '$sdk/powermanage/v1/common_pb';
+	import { SearchScope, SortField } from '$contract/cadestro/v1/common_pb';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';

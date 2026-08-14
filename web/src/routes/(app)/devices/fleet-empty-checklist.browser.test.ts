@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { DeviceSchema } from '$sdk/powermanage/v1/control_pb';
+import { DeviceSchema } from '$contract/cadestro/v1/control_pb';
 
 const mocks = vi.hoisted(() => ({
 	url: new URL('http://localhost/devices'),
@@ -44,9 +44,9 @@ vi.mock('$app/navigation', () => ({
 // One faked client behind BOTH readers — the fleet sweep and the checklist
 // probes are the same seam, so the page and the card agree on the same fleet.
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

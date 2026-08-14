@@ -15,8 +15,8 @@
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ManagedAction } from '$lib/sdk';
-	import { DesiredState } from '$sdk/powermanage/v1/common_pb';
-	import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+	import { DesiredState } from '$contract/cadestro/v1/common_pb';
+	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import { Badge } from '$lib/components/ui/badge';

@@ -5,7 +5,7 @@
 	import { FieldError } from '$lib/components/ui/field-error';
 	import * as Select from '$lib/components/ui/select';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import type { ManagedAction } from '$sdk/powermanage/v1/control_pb';
+	import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 	import { Plus, X, UserCog, UserRound } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { getUserLoaders, type UserLite } from './user-loader-context.svelte';

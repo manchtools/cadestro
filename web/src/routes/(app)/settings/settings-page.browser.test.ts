@@ -35,8 +35,8 @@ const nav = vi.hoisted(() => ({ goto: vi.fn() }));
 const tour = vi.hoisted(() => ({ startTour: vi.fn() }));
 
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
 	return {
 		...control,
 		...common,

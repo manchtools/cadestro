@@ -36,9 +36,9 @@ export type {
 	LuksKey
 } from './wrappers.svelte';
 
-export * from '$sdk/powermanage/v1/control_pb';
-export * from '$sdk/powermanage/v1/actions_pb';
-export * from '$sdk/powermanage/v1/common_pb';
+export * from '$contract/cadestro/v1/control_pb';
+export * from '$contract/cadestro/v1/actions_pb';
+export * from '$contract/cadestro/v1/common_pb';
 
 // Picker pagination helper — see ./paginate.ts.
 export { fetchAllPages, type PageResult, type PaginateOptions } from './paginate';

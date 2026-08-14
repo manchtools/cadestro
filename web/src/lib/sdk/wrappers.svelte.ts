@@ -1,12 +1,12 @@
-// Power Manage Web SDK
-// Wires the plain TypeScript SDK classes together with Svelte 5 reactive wrappers.
+// Svelte 5 wrappers around the contract's plain TypeScript client
+// (../contract/ts, reached through the $contractClient alias).
 
-import { ApiClient } from '$pmSdk/client';
-import { AuthStore, type RefreshResult } from '$pmSdk/auth';
-import { ConfigStore } from '$pmSdk/config';
-import { OfflineStore } from '$pmSdk/offline';
+import { ApiClient } from '$contractClient/client';
+import { AuthStore, type RefreshResult } from '$contractClient/auth';
+import { ConfigStore } from '$contractClient/config';
+import { OfflineStore } from '$contractClient/offline';
 import { timestampDate } from '@bufbuild/protobuf/wkt';
-import type { User } from '$pmSdk/client';
+import type { User } from '$contractClient/client';
 
 // --- Create plain TS instances ---
 
@@ -97,21 +97,21 @@ export const apiClient = _client;
 export { useDraft, type DraftType } from './draft.svelte';
 
 // Re-export SDK types
-export type { ServerConfig } from '$pmSdk/config';
+export type { ServerConfig } from '$contractClient/config';
 export type {
 	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
 	DeviceGroup, Assignment, ActionExecution, AuditEvent, InventoryTableResult,
 	Role, PermissionInfo, UserGroup, UserGroupMember, IdentityProvider, IdentityLink,
 	LpsPassword, LuksKey
-} from '$pmSdk/client';
+} from '$contractClient/client';
 
 // Re-export generated types
-export * from '$sdk/powermanage/v1/control_pb';
-export * from '$sdk/powermanage/v1/actions_pb';
-export * from '$sdk/powermanage/v1/common_pb';
+export * from '$contract/cadestro/v1/control_pb';
+export * from '$contract/cadestro/v1/actions_pb';
+export * from '$contract/cadestro/v1/common_pb';
 
 // Re-export helpers
-export { formatTimestamp, formatTimestampDateTime } from '$pmSdk/index';
+export { formatTimestamp, formatTimestampDateTime } from '$contractClient/index';
 
 /**
  * Format a duration in milliseconds to a human-readable string.

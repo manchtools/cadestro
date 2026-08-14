@@ -233,7 +233,7 @@
 			localStorage.clear();
 		}
 		if (typeof indexedDB !== 'undefined') {
-			indexedDB.deleteDatabase('power-manage-offline');
+			indexedDB.deleteDatabase('cadestro-offline');
 		}
 		goto('/setup');
 	}

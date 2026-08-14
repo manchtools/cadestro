@@ -12,9 +12,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ActionExecutionSchema } from '$sdk/powermanage/v1/control_pb';
-import { ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
-import { ActionType } from '$sdk/powermanage/v1/actions_pb';
+import { ActionExecutionSchema } from '$contract/cadestro/v1/control_pb';
+import { ExecutionStatus } from '$contract/cadestro/v1/common_pb';
+import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import * as m from '$lib/paraglide/messages';
 
 const EXEC_ID = '01JQZZ4A7K3M9P2Q6R8T1V0W5X';
@@ -27,9 +27,9 @@ vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 // Only the client is faked; the generated protobuf re-exports stay real, so the
 // component's ExecutionStatus constants are the production ones.
 vi.mock('$lib/sdk', async () => {
-	const common = await import('$sdk/powermanage/v1/common_pb');
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
 	return {
 		...actions,
 		...control,

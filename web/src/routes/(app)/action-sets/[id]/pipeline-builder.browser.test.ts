@@ -20,12 +20,12 @@ import {
 	type ManagedAction,
 	type ActionSet,
 	type ActionSetMember
-} from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/control_pb';
 import {
 	ActionType,
 	PackageParamsSchema,
 	ServiceParamsSchema
-} from '$sdk/powermanage/v1/actions_pb';
+} from '$contract/cadestro/v1/actions_pb';
 import * as m from '$lib/paraglide/messages';
 
 const SET_ID = '01JQZZ7D0Q6R2T5V9W1X4Y3Z8A';
@@ -52,9 +52,9 @@ const api = vi.hoisted(() => ({
 // protobuf re-exports stay real so the builder's registry, schemas and
 // ActionType constants are the production ones.
 vi.mock('$lib/sdk', async () => {
-	const control = await import('$sdk/powermanage/v1/control_pb');
-	const actions = await import('$sdk/powermanage/v1/actions_pb');
-	const common = await import('$sdk/powermanage/v1/common_pb');
+	const control = await import('$contract/cadestro/v1/control_pb');
+	const actions = await import('$contract/cadestro/v1/actions_pb');
+	const common = await import('$contract/cadestro/v1/common_pb');
 	return {
 		...actions,
 		...control,

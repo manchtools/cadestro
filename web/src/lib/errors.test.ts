@@ -9,7 +9,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 // Mock the SDK's getErrorCode / getRequestId so we can drive arbitrary
 // shapes through getLocalizedError without needing a real ConnectError.
-vi.mock('$pmSdk/client', () => ({
+vi.mock('$contractClient/client', () => ({
 	getErrorCode: (e: unknown) => {
 		if (e && typeof e === 'object' && 'code' in e) {
 			return (e as { code: string }).code;
@@ -24,7 +24,7 @@ vi.mock('$pmSdk/client', () => ({
 	}
 }));
 
-vi.mock('$pmSdk/errors', () => ({}));
+vi.mock('$contractClient/errors', () => ({}));
 
 import { getLocalizedError } from './errors';
 

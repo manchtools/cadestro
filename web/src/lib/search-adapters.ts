@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
-import { ActionType, ShellParamsSchema } from '$sdk/powermanage/v1/actions_pb';
-import { DesiredState, DeviceStatus } from '$sdk/powermanage/v1/common_pb';
+import { ActionType, ShellParamsSchema } from '$contract/cadestro/v1/actions_pb';
+import { DesiredState, DeviceStatus } from '$contract/cadestro/v1/common_pb';
 import {
 	type ManagedAction,
 	ManagedActionSchema,
@@ -24,7 +24,7 @@ import {
 	type AuditEvent,
 	AuditEventSchema,
 	type SearchResult
-} from '$sdk/powermanage/v1/control_pb';
+} from '$contract/cadestro/v1/control_pb';
 
 // List pages receive SearchResult.fields as map<string, string>. These adapters
 // reconstruct only the typed fields needed by list rendering. Detail pages call

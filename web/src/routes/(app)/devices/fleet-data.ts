@@ -11,8 +11,8 @@
 // one call PER DEVICE, strictly worse. Calls run in small batches, and both
 // sweeps are bounded so one page load can never become an unbounded RPC storm.
 import { apiClient } from '$lib/sdk';
-import { DeviceStatus } from '$sdk/powermanage/v1/common_pb';
-import type { Device, DeviceGroup } from '$sdk/powermanage/v1/control_pb';
+import { DeviceStatus } from '$contract/cadestro/v1/common_pb';
+import type { Device, DeviceGroup } from '$contract/cadestro/v1/control_pb';
 
 /** ListDevices / ListDeviceGroups cap page_size at 100 (control.proto). */
 export const PAGE_SIZE = 100;

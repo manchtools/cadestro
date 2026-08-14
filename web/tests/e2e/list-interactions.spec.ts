@@ -91,7 +91,7 @@ test.describe('list pagination', () => {
 		await preparePage(page, 'light');
 		// Report a large total so the next-page control enables (the fixtures
 		// alone fit on one page). Registered after preparePage → wins (LIFO).
-		await page.route('**/powermanage.v1.ControlService/Search', async (route) => {
+		await page.route('**/cadestro.v1.ControlService/Search', async (route) => {
 			await route.fulfill({
 				status: 200,
 				headers: { 'content-type': 'application/json' },

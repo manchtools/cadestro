@@ -19,7 +19,7 @@
 		formatDuration,
 		type ActionExecution
 	} from '$lib/sdk';
-	import { ExecutionStatus } from '$sdk/powermanage/v1/common_pb';
+	import { ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { getExecutionStatusLabel } from '$lib/execution-status';
 	import { getLocalizedError } from '$lib/errors';

@@ -10,10 +10,10 @@
 // normal UI.
 
 import { create } from '@bufbuild/protobuf';
-import { OnFailure } from '$sdk/powermanage/v1/agent_pb';
+import { OnFailure } from '$contract/cadestro/v1/agent_pb';
 
 import { apiClient } from '$lib/sdk';
-import { ActionScheduleSchema } from '$sdk/powermanage/v1/actions_pb';
+import { ActionScheduleSchema } from '$contract/cadestro/v1/actions_pb';
 
 // Default container schedule applied when the marketplace template
 // doesn't carry one explicitly. Uses the server's eight-hour default.
