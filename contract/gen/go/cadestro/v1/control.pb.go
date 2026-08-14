@@ -20645,7 +20645,7 @@ type StartTerminalResponse struct {
 	// @gotags: validate:"required"
 	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty" validate:"required"`
 	// The TTY user the agent will spawn the shell as. Returned for the
-	// UI to display ("Connected as pm-tty-pdotterer") and for diagnostics.
+	// UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
 	// @gotags: validate:"required,min=1,max=64"
 	TtyUser       string `protobuf:"bytes,5,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty" validate:"required,min=1,max=64"`
 	unknownFields protoimpl.UnknownFields

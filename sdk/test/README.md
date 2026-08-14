@@ -96,5 +96,5 @@ debian-only testing hid:
 ```bash
 go test ./...                                    # hermetic unit tests
 go test -tags=container -run Container ./sys/... # real-execution (inside a container)
-PM_DST_SEED=1 PM_DST_ITERS=20000 go test ./adversary/ -run TestDST   # DST sweep
+CADESTRO_DST_SEED=1 CADESTRO_DST_ITERS=20000 go test ./adversary/ -run TestDST   # DST sweep
 ```

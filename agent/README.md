@@ -59,7 +59,7 @@ The agent has one explicit enrollment method:
 1. The install script starts the agent as a systemd service
 2. The unenrolled agent opens an **enrollment socket** at `/run/pm-agent/enroll.sock` (mode 0600, restricted to the agent's own uid — root under the shipped unit)
 3. The local operator (running as the agent's uid, i.e. root) runs `cadestrod enroll -server=URL -token-file=PATH -pin=CA_SHA256`
-   (or `PM_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=CA_SHA256`)
+   (or `CADESTRO_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=CA_SHA256`)
 4. The CLI sends an `Enroll` RPC to the agent over the unix socket
 5. The agent calls the **Control Server** `Register` RPC with the token and a locally-generated CSR
 6. The Control Server validates the token, signs the certificate, and returns credentials
@@ -80,7 +80,7 @@ The agent has one explicit enrollment method:
 >
 > **Enrollment hardening.** `server_url` must be **https** (cleartext/opaque
 > URLs are refused before any network call). Token delivery is via
-> `-token-file` or the `PM_REGISTRATION_TOKEN` env var; passing `-token`
+> `-token-file` or the `CADESTRO_REGISTRATION_TOKEN` env var; passing `-token`
 > on argv still works but warns (it leaks via `/proc/<pid>/cmdline`).
 > The operator must pass the out-of-band **CA fingerprint pin** returned beside
 > the registration token (`-pin`, or `&pin=` in a `cadestro://` URI). The agent verifies the
@@ -219,7 +219,7 @@ URI Parameters:
 | `-log-level` | `info` | Log level (debug, info, warn, error) |
 
 The `enroll` subcommand separately accepts required `-server` and `-pin` flags plus one token source:
-`-token-file` (preferred), `PM_REGISTRATION_TOKEN`, or the discouraged `-token` argv fallback.
+`-token-file` (preferred), `CADESTRO_REGISTRATION_TOKEN`, or the discouraged `-token` argv fallback.
 
 > TLS verification is mandatory; there is no bypass flag or environment variable.
 
@@ -230,7 +230,7 @@ applied first, then env vars override).
 
 | Variable | Description |
 |----------|-------------|
-| `PM_REGISTRATION_TOKEN` | Registration token for the explicit `enroll` subcommand |
+| `CADESTRO_REGISTRATION_TOKEN` | Registration token for the explicit `enroll` subcommand |
 | `CADESTRO_DATA_DIR` | Data directory for state |
 | `CADESTRO_PRIVILEGE_BACKEND` | Privilege backend override: `root`, `sudo`, or `doas` (empty selects `root` for the packaged service) |
 
@@ -710,10 +710,10 @@ Exit code 0 = enabled, 1 = disabled. Combined with `is_compliance=true` + `compl
 
 The agent treats every server-supplied field that reaches a filesystem path, a shell, or a privileged call as untrusted and validates it before use. These device-side rejection guards are exercised by dedicated rejection-path tests:
 
-- **TTY `session_id` is validated as a ULID.** `TerminalStart.session_id` is spliced into the per-session `/tmp/<tty-user>.<session-id>` directory that is created and `chown`-ed as root, so it must parse as a ULID. Path-meaningful values (`../../etc`, `a/b`), embedded NULs, and the empty string are refused before any filesystem use; together with the validated `pm-tty-*` username this makes the joined path unable to escape `/tmp`.
-- **Locked/disabled TTY users are refused.** A `pm-tty-*` account that is shadow-locked cannot open a session.
+- **TTY `session_id` is validated as a ULID.** `TerminalStart.session_id` is spliced into the per-session `/tmp/<tty-user>.<session-id>` directory that is created and `chown`-ed as root, so it must parse as a ULID. Path-meaningful values (`../../etc`, `a/b`), embedded NULs, and the empty string are refused before any filesystem use; together with the validated `cadestro-tty-*` username this makes the joined path unable to escape `/tmp`.
+- **Locked/disabled TTY users are refused.** A `cadestro-tty-*` account that is shadow-locked cannot open a session.
 - **`FILE` actions refuse to overwrite a directory.** Writing a file to a path that already exists as a directory reports `FAILED` and leaves the directory untouched.
-- **`WIFI` action IDs are filesystem-validated.** The action ID is run through the same `validateActionIDForFilesystem` guard the sudo/ssh/sshd executors use before it is spliced into the EAP-TLS cert directory or the `pm-wifi-<id>` connection name.
+- **`WIFI` action IDs are filesystem-validated.** The action ID is run through the same `validateActionIDForFilesystem` guard the sudo/ssh/sshd executors use before it is spliced into the EAP-TLS cert directory or the `cadestro-wifi-<id>` connection name.
 - **`SHELL` env vars go through the SDK hijack allow-list.** Caller-supplied `LD_PRELOAD` / `PATH` / `LD_LIBRARY_PATH` and friends are refused before the interpreter is launched.
 - **The stream URL must be `https://host`.** Cleartext / h2c / opaque / hostless URLs are refused before the mTLS dial.
 - **osquery refuses credential-bearing tables.** The SDK's convenience table

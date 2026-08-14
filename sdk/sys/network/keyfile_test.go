@@ -12,7 +12,7 @@ import (
 
 func TestBuildPSKKeyfile(t *testing.T) {
 	body := string(buildPSKKeyfile(Profile{
-		Name:        "pm-wifi-abc123",
+		Name:        "cadestro-wifi-abc123",
 		SSID:        "CorpNet",
 		AuthType:    AuthPSK,
 		PSK:         mustSecret(t, "hunter2"),
@@ -21,7 +21,7 @@ func TestBuildPSKKeyfile(t *testing.T) {
 		Priority:    10,
 	}))
 	for _, want := range []string{
-		"[connection]", "id=pm-wifi-abc123", "type=wifi",
+		"[connection]", "id=cadestro-wifi-abc123", "type=wifi",
 		"autoconnect=true", "autoconnect-priority=10",
 		"[wifi]", "ssid=CorpNet", "hidden=true",
 		"[wifi-security]", "key-mgmt=wpa-psk", "psk=hunter2",
@@ -38,7 +38,7 @@ func TestBuildPSKKeyfile(t *testing.T) {
 
 func TestBuildPSKKeyfile_AutoConnectFalseNoHidden(t *testing.T) {
 	body := string(buildPSKKeyfile(Profile{
-		Name: "pm-wifi-2", SSID: "OpenNet", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
+		Name: "cadestro-wifi-2", SSID: "OpenNet", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
 	}))
 	if !strings.Contains(body, "autoconnect=false") {
 		t.Errorf("expected autoconnect=false:\n%s", body)

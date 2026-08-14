@@ -110,7 +110,7 @@ func makeTerminalMsg(name string) *pm.ServerMessage {
 		msg.Payload = &pm.ServerMessage_TerminalStart{
 			TerminalStart: &pm.TerminalStart{
 				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
-				TtyUser:   "pm-tty-test",
+				TtyUser:   "cadestro-tty-test",
 				Cols:      80,
 				Rows:      24,
 			},
@@ -162,8 +162,8 @@ func TestDispatch_Terminal_Routing(t *testing.T) {
 				if h.startCalls[0].SessionId != "01ARZ3NDEKTSV4RRFFQ69G5FAV" {
 					t.Errorf("session_id = %q, want 01ARZ3NDEKTSV4RRFFQ69G5FAV", h.startCalls[0].SessionId)
 				}
-				if h.startCalls[0].TtyUser != "pm-tty-test" {
-					t.Errorf("tty_user = %q, want pm-tty-test", h.startCalls[0].TtyUser)
+				if h.startCalls[0].TtyUser != "cadestro-tty-test" {
+					t.Errorf("tty_user = %q, want cadestro-tty-test", h.startCalls[0].TtyUser)
 				}
 			},
 		},

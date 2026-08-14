@@ -6,11 +6,11 @@ package terminal
 const DefaultUIDOffset = 100000
 
 // TTYUsernamePrefix is prepended to a Linux username to derive the TTY
-// username (e.g. "pdotterer" -> "pm-tty-pdotterer").
-const TTYUsernamePrefix = "pm-tty-"
+// username (e.g. "pdotterer" -> "cadestro-tty-pdotterer").
+const TTYUsernamePrefix = "cadestro-tty-"
 
 // TTYUsername returns the TTY user name for a given Linux username.
-// The TTY user is a dedicated `pm-tty-<username>` account used to run
+// The TTY user is a dedicated `cadestro-tty-<username>` account used to run
 // remote terminal sessions, separate from the user's own Linux account.
 func TTYUsername(linuxUsername string) string {
 	return TTYUsernamePrefix + linuxUsername

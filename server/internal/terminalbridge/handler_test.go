@@ -59,7 +59,7 @@ func TestServeHTTPClearsPublicRequestReadDeadlineBeforeUpgrade(t *testing.T) {
 
 	tokens := terminal.NewTokenStore(terminal.NewMemoryBackend(nil))
 	minted, err := tokens.Mint(context.Background(), terminal.MintParams{
-		UserID: userID, DeviceID: deviceID, TtyUser: "pm-tty-user", Cols: 80, Rows: 24,
+		UserID: userID, DeviceID: deviceID, TtyUser: "cadestro-tty-user", Cols: 80, Rows: 24,
 	})
 	require.NoError(t, err)
 

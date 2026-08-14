@@ -46,7 +46,7 @@ func TestApply_EAPTLS_WriteCertsFails(t *testing.T) {
 	r := &recordingRunner{}
 	r.push(exec.Result{Stdout: ""}, nil) // not found → create EAP → writeCerts
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-eap", SSID: "x", AuthType: AuthEAPTLS, Identity: "u",
+		Name: "cadestro-wifi-eap", SSID: "x", AuthType: AuthEAPTLS, Identity: "u",
 		CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: certBase + "/eap",
 	})

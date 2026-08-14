@@ -54,7 +54,7 @@ RestrictSUIDSGID=false
 #     they're launched.
 #
 #   - Remote terminal sessions spawn /bin/bash under per-user
-#     pm-tty-* accounts via setresuid/setresgid. CAP_SETUID and
+#     cadestro-tty-* accounts via setresuid/setresgid. CAP_SETUID and
 #     CAP_SETGID are already in root's effective set, but listing
 #     them as ambient caps makes the privilege transition explicit
 #     and survives any future drop-priv refactor that runs the
@@ -69,7 +69,7 @@ RestrictSUIDSGID=false
 #     permitted" — silent compliance gap on SOC2/PCI/CIS hosts.
 #
 # Bounding set caps and what they're for:
-#   CAP_SETUID / CAP_SETGID — drop priv to per-user pm-tty-* shells.
+#   CAP_SETUID / CAP_SETGID — drop priv to per-user cadestro-tty-* shells.
 #   CAP_AUDIT_WRITE — kernel audit log writes from setuid children.
 #   CAP_CHOWN / CAP_DAC_OVERRIDE / CAP_FOWNER — file ownership +
 #     permission overrides during package hooks and config writes.
@@ -77,7 +77,7 @@ RestrictSUIDSGID=false
 #     bind privileged ports without setuid.
 #   CAP_NET_ADMIN — firewall control via ufw / firewall-cmd / nft.
 #   CAP_SYS_ADMIN — mount / umount during LUKS operations.
-#   CAP_KILL — signal other-uid (pm-tty-*) process groups when tearing
+#   CAP_KILL — signal other-uid (cadestro-tty-*) process groups when tearing
 #     down terminal sessions; without it the in-process root model's
 #     kill(-pgid, …) / pkill -u returns EPERM and the sweeper degrades
 #     to relying on pty-close SIGHUP, leaking detached/ignoring procs.

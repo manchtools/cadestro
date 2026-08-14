@@ -15,7 +15,7 @@ func TestTokenStore_MintLookupRoundTrip(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 		Cols:     80,
 		Rows:     24,
 	})
@@ -33,7 +33,7 @@ func TestTokenStore_MintLookupRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("lookup: %v", err)
 	}
-	if got.UserID != "user-1" || got.DeviceID != "device-1" || got.TtyUser != "pm-tty-alice" {
+	if got.UserID != "user-1" || got.DeviceID != "device-1" || got.TtyUser != "cadestro-tty-alice" {
 		t.Errorf("session metadata mismatch: %+v", got)
 	}
 	if got.Cols != 80 || got.Rows != 24 {
@@ -49,7 +49,7 @@ func TestTokenStore_TokenIsHashedNotPlaintext(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -75,7 +75,7 @@ func TestTokenStore_Validate_RoundTrip(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -97,7 +97,7 @@ func TestTokenStore_Validate_MismatchedToken(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -131,7 +131,7 @@ func TestTokenStore_Validate_IsSingleUse(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -159,7 +159,7 @@ func TestTokenStore_Validate_MismatchPreservesSession(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -187,7 +187,7 @@ func TestTokenStore_Revoke_IsIdempotent(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -217,7 +217,7 @@ func TestTokenStore_TTLExpiry(t *testing.T) {
 	res, err := store.Mint(ctx, MintParams{
 		UserID:   "user-1",
 		DeviceID: "device-1",
-		TtyUser:  "pm-tty-alice",
+		TtyUser:  "cadestro-tty-alice",
 	})
 	if err != nil {
 		t.Fatalf("mint: %v", err)
@@ -259,7 +259,7 @@ func TestTokenStore_MintGeneratesUniqueIDs(t *testing.T) {
 		res, err := store.Mint(ctx, MintParams{
 			UserID:   "user-1",
 			DeviceID: "device-1",
-			TtyUser:  "pm-tty-alice",
+			TtyUser:  "cadestro-tty-alice",
 		})
 		if err != nil {
 			t.Fatalf("mint %d: %v", i, err)

@@ -10,7 +10,7 @@ package executor
 // this PR — that's separate test-coverage work.
 //
 // The two new templates exist because the operator-authored
-// FULL/LIMITED templates assume a password-bearing account; pm-tty-*
+// FULL/LIMITED templates assume a password-bearing account; cadestro-tty-*
 // accounts (#327) are passwordless, so the server's TerminalAdmin
 // reconciler points the two global AdminPolicy actions at these new
 // templates instead. The ADR (server/docs/adr/0000-terminal-admin-
@@ -44,7 +44,7 @@ func TestGenerateTerminalAdminLimitedSudoConfig_GroupInterpolation(t *testing.T)
 }
 
 // ADR T1: every command rule must carry NOPASSWD so the passwordless
-// pm-tty-* account can use the allowlist at all. Without it the
+// cadestro-tty-* account can use the allowlist at all. Without it the
 // template is unusable — the operator has no password to type.
 func TestGenerateTerminalAdminLimitedSudoConfig_NOPASSWD(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
@@ -239,7 +239,7 @@ func TestGenerateTerminalAdminFullSudoConfig_DefaultsBlock(t *testing.T) {
 // TestSetupSudoPolicy_RoutesTerminalAdminLimitedEnumToNewGenerator pins
 // the switch arm in setupSudoPolicy: the new enum value must select
 // the new generator, NOT the existing LIMITED template (which requires
-// a password and is unusable through pm-tty-* accounts).
+// a password and is unusable through cadestro-tty-* accounts).
 func TestSetupSudoPolicy_RoutesTerminalAdminLimitedEnumToNewGenerator(t *testing.T) {
 	out := contentForAccessLevel(t, pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED)
 	want := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
@@ -262,7 +262,7 @@ func contentForAccessLevel(t *testing.T, level pb.AdminAccessLevel) string {
 	t.Helper()
 	params := &pb.AdminPolicyParams{
 		AccessLevel: level,
-		Users:       []string{"pm-tty-alice"},
+		Users:       []string{"cadestro-tty-alice"},
 	}
 	content, err := sudoConfigForParams(params, testTerminalAdminGroup)
 	if err != nil {

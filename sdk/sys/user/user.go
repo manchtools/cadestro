@@ -405,7 +405,7 @@ func (u *shadowUtils) Lock(ctx context.Context, name string) error {
 // Plain `usermod -U` strips the leading "!" from the shadow password — but it
 // REFUSES when that would leave the account passwordless ("unlocking the user's
 // password would result in a passwordless account"). Accounts reached only via
-// setuid or SSH keys — the pm-tty-* terminal accounts — are passwordless by
+// setuid or SSH keys — the cadestro-tty-* terminal accounts — are passwordless by
 // design, so for a locked PASSWORDLESS account set the field to "*" (no
 // password, not locked) instead. An account with a real password hash still
 // round-trips through `usermod -U`, preserving the hash.
@@ -424,7 +424,7 @@ func (u *shadowUtils) Unlock(ctx context.Context, name string) error {
 	}
 	if rest := strings.TrimLeft(field, "!"); rest == "" || rest == "*" {
 		// Locked AND passwordless: usermod -U errors. "*" = no password, not
-		// locked — the unlocked state for a passwordless (pm-tty-*) account.
+		// locked — the unlocked state for a passwordless (cadestro-tty-*) account.
 		return u.run(ctx, "usermod", "-p", "*", name)
 	}
 	return u.run(ctx, "usermod", "-U", name)
@@ -495,7 +495,7 @@ func (u *shadowUtils) Get(ctx context.Context, name string) (Info, error) {
 	//
 	// Only a leading "!" means LOCKED (that's what `usermod -L` prepends). A "*"
 	// is NOT locked — it means "no password, password login disabled," while the
-	// account stays reachable via SSH keys / su / a setuid opener. The pm-tty-*
+	// account stays reachable via SSH keys / su / a setuid opener. The cadestro-tty-*
 	// terminal accounts are passwordless ("*") on purpose; treating "*" as locked
 	// made the agent refuse every terminal session ("tty user is disabled").
 	if field, err := u.shadowPassword(ctx, name); err == nil {

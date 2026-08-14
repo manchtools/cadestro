@@ -218,14 +218,14 @@ func TestLockUnlock(t *testing.T) {
 	}
 }
 
-// TestUnlock_Passwordless covers the pm-tty-* case: `usermod -U` REFUSES to
+// TestUnlock_Passwordless covers the cadestro-tty-* case: `usermod -U` REFUSES to
 // unlock a passwordless account ("would result in a passwordless account"), so
 // Unlock sets the field to "*" (no password, not locked) instead.
 func TestUnlock_Passwordless(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{Stdout: "pm-tty-paul:!:19000:0:99999:7:::\n"}, nil) // getent shadow: locked + passwordless
+	f.Push(exec.Result{Stdout: "cadestro-tty-paul:!:19000:0:99999:7:::\n"}, nil) // getent shadow: locked + passwordless
 	f.Push(exec.Result{}, nil)                                             // usermod -p '*'
-	if err := mgr(t, f).Unlock(context.Background(), "pm-tty-paul"); err != nil {
+	if err := mgr(t, f).Unlock(context.Background(), "cadestro-tty-paul"); err != nil {
 		t.Fatal(err)
 	}
 	calls := f.Calls()

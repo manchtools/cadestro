@@ -37,7 +37,7 @@ const PAYLOADS: Record<(typeof SUMMARIZED_EVENT_TYPES)[number], Record<string, u
 	LuksKeysViewDenied: { device_id: 'dev-1', reason: 'decrypt_failed' },
 	UserLoggedOut: { jti: 'jti-1' },
 	UserSessionRefreshed: { old_jti: 'jti-0' },
-	TerminalSessionStarted: { session_id: 's1', tty_user: 'pm-tty-alice', cols: 80, rows: 24 },
+	TerminalSessionStarted: { session_id: 's1', tty_user: 'cadestro-tty-alice', cols: 80, rows: 24 },
 	TerminalSessionStopped: { session_id: 's1', reason: 'user_stopped' },
 	TerminalSessionTerminated: { session_id: 's1', reason: 'operator_disconnect' }
 };
@@ -59,7 +59,7 @@ describe('auditEventSummary', () => {
 			['LpsPasswordsViewed', ['2', 'host-alpha']],
 			['LuksKeysViewed', ['1', 'host-alpha']],
 			['LpsPasswordsViewDenied', ['device_not_found', 'host-alpha']],
-			['TerminalSessionStarted', ['pm-tty-alice']],
+			['TerminalSessionStarted', ['cadestro-tty-alice']],
 			['TerminalSessionTerminated', ['operator_disconnect']]
 		];
 		for (const [eventType, fragments] of cases) {

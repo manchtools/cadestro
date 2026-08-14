@@ -53,7 +53,7 @@ const (
 
 	// credentialsMagicV1 identifies the only accepted on-disk format.
 	// Agents are re-enrolled instead of carrying format compatibility code.
-	credentialsMagicV1 = "pmcred:v1:"
+	credentialsMagicV1 = "cadestrocred:v1:"
 )
 
 // Credentials holds the agent's identity and certificates.

@@ -1623,7 +1623,7 @@ export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
   sessionId: string;
 
   /**
-   * The dedicated TTY username (e.g. "pm-tty-pdotterer"). The agent
+   * The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
    * never uses the original Linux username for the shell.
    * @gotags: validate:"required,min=1,max=64"
    *

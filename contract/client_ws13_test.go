@@ -119,21 +119,21 @@ func TestDispatch_DropsInvalidInbound(t *testing.T) {
 	t.Run("cols=0 dropped (gt=0)", func(t *testing.T) {
 		c := newTestClient()
 		h := &fakeTerminalHandler{}
-		require.NoError(t, c.dispatchServerMessage(ctx, start(testULID, "pm-tty-x", 0, 24), h))
+		require.NoError(t, c.dispatchServerMessage(ctx, start(testULID, "cadestro-tty-x", 0, 24), h))
 		require.Empty(t, h.startCalls, "a TerminalStart with cols=0 must be dropped by inbound validation")
 	})
 
 	t.Run("non-ULID session id dropped", func(t *testing.T) {
 		c := newTestClient()
 		h := &fakeTerminalHandler{}
-		require.NoError(t, c.dispatchServerMessage(ctx, start("not-a-ulid", "pm-tty-x", 80, 24), h))
+		require.NoError(t, c.dispatchServerMessage(ctx, start("not-a-ulid", "cadestro-tty-x", 80, 24), h))
 		require.Empty(t, h.startCalls, "a TerminalStart with a non-ULID session id must be dropped")
 	})
 
 	t.Run("conformant frame reaches the handler", func(t *testing.T) {
 		c := newTestClient()
 		h := &fakeTerminalHandler{}
-		require.NoError(t, c.dispatchServerMessage(ctx, start(testULID, "pm-tty-x", 80, 24), h))
+		require.NoError(t, c.dispatchServerMessage(ctx, start(testULID, "cadestro-tty-x", 80, 24), h))
 		require.Len(t, h.startCalls, 1, "a valid TerminalStart must reach the handler")
 	})
 }

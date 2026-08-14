@@ -43,8 +43,8 @@ func TestCloseAllTerminals_RevertsLiveSessions(t *testing.T) {
 	h, _ := newTestHandler(t)
 
 	var cancelledA, cancelledB int32
-	homeA := registerLiveSession(t, h, "01ARZ3NDEKTSV4RRFFQ69G5FAV", "pm-tty-a", &cancelledA)
-	homeB := registerLiveSession(t, h, "01ARZ3NDEKTSV4RRFFQ69G5FAW", "pm-tty-b", &cancelledB)
+	homeA := registerLiveSession(t, h, "01ARZ3NDEKTSV4RRFFQ69G5FAV", "cadestro-tty-a", &cancelledA)
+	homeB := registerLiveSession(t, h, "01ARZ3NDEKTSV4RRFFQ69G5FAW", "cadestro-tty-b", &cancelledB)
 
 	h.CloseAllTerminals(context.Background())
 
@@ -91,7 +91,7 @@ func TestCloseAllTerminals_AlreadyStopping_NotDoubleReverted(t *testing.T) {
 	}
 	ts := &terminalSession{
 		id:       "01ARZ3NDEKTSV4RRFFQ69G5FAX",
-		ttyUser:  "pm-tty-stop",
+		ttyUser:  "cadestro-tty-stop",
 		state:    sessionStateStopping, // already being torn down elsewhere
 		tempHome: tempHome,
 		cancel:   func() {}, // real func: a regression calling it must not nil-panic (#174)

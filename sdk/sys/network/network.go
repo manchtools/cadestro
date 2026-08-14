@@ -67,7 +67,7 @@ var certBaseDir = CertBaseDir
 
 // Profile is a NetworkManager WiFi connection profile.
 type Profile struct {
-	Name        string      // connection name (e.g. "pm-wifi-<id>")
+	Name        string      // connection name (e.g. "cadestro-wifi-<id>")
 	SSID        string      // WiFi network SSID
 	AuthType    AuthType    // AuthPSK or AuthEAPTLS
 	PSK         exec.Secret // WPA2/WPA3 password (PSK only) — never enters argv

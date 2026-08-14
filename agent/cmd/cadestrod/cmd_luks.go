@@ -19,7 +19,7 @@ import (
 // luksTokenEnv delivers the one-time LUKS token without argv.
 // /proc/<pid>/environ is readable only by the process's own uid, unlike
 // /proc/<pid>/cmdline, which every local user can read.
-const luksTokenEnv = "PM_LUKS_TOKEN"
+const luksTokenEnv = "CADESTRO_LUKS_TOKEN"
 
 const maxLuksTokenBytes = 4096
 

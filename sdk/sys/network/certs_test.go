@@ -14,7 +14,7 @@ import (
 func eapProfile(t *testing.T, certDir string) Profile {
 	t.Helper()
 	return Profile{
-		Name: "pm-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "device@corp.example.com", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: certDir, AutoConnect: true,
 	}

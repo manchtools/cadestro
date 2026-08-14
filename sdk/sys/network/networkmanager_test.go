@@ -25,12 +25,12 @@ func assertArgs(t *testing.T, expected, actual []string) {
 func TestBuildAddArgs_EAPTLS(t *testing.T) {
 	dir := "/var/lib/cadestro/wifi/xyz"
 	args := buildAddArgs(Profile{
-		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "user@corp.com", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: dir, AutoConnect: true, Priority: 5,
 	})
 	assertArgs(t, []string{
-		"con", "add", "con-name", "pm-wifi-xyz", "type", "wifi", "ssid", "SecureNet",
+		"con", "add", "con-name", "cadestro-wifi-xyz", "type", "wifi", "ssid", "SecureNet",
 		"wifi-sec.key-mgmt", "wpa-eap", "802-1x.eap", "tls", "802-1x.identity", "user@corp.com",
 		"802-1x.ca-cert", filepath.Join(dir, "ca.pem"),
 		"802-1x.client-cert", filepath.Join(dir, "client.pem"),
@@ -43,12 +43,12 @@ func TestBuildAddArgs_EAPTLS(t *testing.T) {
 
 func TestBuildAddArgs_EAPTLS_NoCertContent(t *testing.T) {
 	args := buildAddArgs(Profile{
-		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "user@corp.com", CertDir: "/var/lib/cadestro/wifi/xyz",
 	})
 	// No cert-path args when the content is empty / key is zero.
 	assertArgs(t, []string{
-		"con", "add", "con-name", "pm-wifi-xyz", "type", "wifi", "ssid", "SecureNet",
+		"con", "add", "con-name", "cadestro-wifi-xyz", "type", "wifi", "ssid", "SecureNet",
 		"wifi-sec.key-mgmt", "wpa-eap", "802-1x.eap", "tls", "802-1x.identity", "user@corp.com",
 		"connection.autoconnect", "no",
 		"connection.autoconnect-priority", "0",
@@ -59,12 +59,12 @@ func TestBuildAddArgs_EAPTLS_NoCertContent(t *testing.T) {
 func TestBuildModifyArgs_EAPTLS_NoCurrent(t *testing.T) {
 	dir := "/var/lib/cadestro/wifi/xyz"
 	args := buildModifyArgs(Profile{
-		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "user@corp.com", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: dir, Hidden: true, Priority: 3,
 	}, nil)
 	assertArgs(t, []string{
-		"con", "mod", "pm-wifi-xyz", "wifi.ssid", "SecureNet",
+		"con", "mod", "cadestro-wifi-xyz", "wifi.ssid", "SecureNet",
 		"wifi-sec.key-mgmt", "wpa-eap", "802-1x.eap", "tls", "802-1x.identity", "user@corp.com",
 		"802-1x.ca-cert", filepath.Join(dir, "ca.pem"),
 		"802-1x.client-cert", filepath.Join(dir, "client.pem"),
@@ -85,7 +85,7 @@ func TestBuildModifyArgs_ClearsStalePSKOnTransition(t *testing.T) {
 		"wifi-sec.psk":      "old-secret",
 	}
 	args := buildModifyArgs(Profile{
-		Name: "pm-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "u", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: dir,
 	}, current)

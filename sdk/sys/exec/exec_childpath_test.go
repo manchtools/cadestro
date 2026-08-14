@@ -42,10 +42,10 @@ func TestRunnerChildPath_AppliesCuratedPath(t *testing.T) {
 // curated PATH exists to provide. (The forced-locale vars are pinned on top, but
 // arbitrary parent vars must not leak.)
 func TestRunnerChildPath_EmptyEnvStillIsolates(t *testing.T) {
-	t.Setenv("PM_PARENT_SECRET", "leaked-from-root")
+	t.Setenv("CADESTRO_PARENT_SECRET", "leaked-from-root")
 
 	res, err := runnerForChildPathTest(t).Run(context.Background(), pmexec.Command{
-		Name: "sh", Args: []string{"-c", "printf %s \"$PATH|${PM_PARENT_SECRET:-unset}\""},
+		Name: "sh", Args: []string{"-c", "printf %s \"$PATH|${CADESTRO_PARENT_SECRET:-unset}\""},
 		ChildPath: "/curated/bin",
 	})
 	if err != nil {

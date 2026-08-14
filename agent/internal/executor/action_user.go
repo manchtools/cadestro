@@ -191,7 +191,7 @@ func (e *Executor) createUser(ctx context.Context, params *pb.UserParams, action
 	// Generate and set temporary password for non-system users.
 	//
 	// NoPassword opts out of this block entirely — used for
-	// system-managed nologin accounts (pm-tty-*) that are only ever
+	// system-managed nologin accounts (cadestro-tty-*) that are only ever
 	// reached via setuid and would otherwise create an LPS table row
 	// that no PAM path will ever consume. The flag is deliberately
 	// explicit, not derived from Shell == /usr/sbin/nologin: passwords
@@ -273,7 +273,7 @@ func createUserSetsPassword(params *pb.UserParams) bool {
 
 // desiredAccountLocked reports whether the account must be shadow-LOCKED ("!")
 // at rest. The lock is the agent-side "user is disabled" gate: the terminal
-// handler refuses a locked pm-tty-* account, and the control rejects a disabled
+// handler refuses a locked cadestro-tty-* account, and the control rejects a disabled
 // user at StartTerminal — so a disabled user is blocked at BOTH ends, and a
 // locked "!" unambiguously means "disabled" (every enabled account is driven to
 // an unlocked resting state below).
@@ -282,7 +282,7 @@ func createUserSetsPassword(params *pb.UserParams) bool {
 // system_user account, because the old Manager.Unlock ran a bare `usermod -U`
 // that would strip the "!" off a passwordless account into an EMPTY (login-able)
 // password — so leaving such accounts locked was the only safe option, which in
-// turn stranded enabled pm-tty-* terminal accounts as "disabled". Manager.Unlock
+// turn stranded enabled cadestro-tty-* terminal accounts as "disabled". Manager.Unlock
 // now special-cases a passwordless account and sets "*" (no password, NOT
 // locked) instead, so an enabled passwordless account is correctly left
 // unlocked-but-passwordless and no reconcile path ever yields an empty password.
@@ -391,7 +391,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 	// the decision off Disabled alone would compute desiredLocked=false
 	// for such an account, see currentInfo.Locked=true, and run
 	// `usermod -U` — stripping the '!' and producing a PASSWORDLESS
-	// login path (the no_password / pm-tty-* regression). Unlock is only
+	// login path (the no_password / cadestro-tty-* regression). Unlock is only
 	// correct for an account that actually has a password hash to
 	// restore.
 	desiredLocked := desiredAccountLocked(params)

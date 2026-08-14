@@ -14,7 +14,7 @@ import (
 // All Cadestro WiFi profiles are prefixed so they're distinguishable
 // from user-managed NetworkManager connections.
 func wifiConnectionName(actionID string) string {
-	return "pm-wifi-" + actionID
+	return "cadestro-wifi-" + actionID
 }
 
 // wifiCertPath returns the directory for EAP-TLS certificates for an action.
@@ -31,7 +31,7 @@ func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state
 	}
 	// The action ID is spliced into a filesystem path
 	// (network.CertBaseDir/<id> for EAP-TLS certificates) and the
-	// pm-wifi-<id> NetworkManager connection name. Validate it the same
+	// cadestro-wifi-<id> NetworkManager connection name. Validate it the same
 	// way the sudo/ssh/sshd executors do — empty was the only case
 	// checked before, leaving traversal/separator characters
 	// ("../../etc", "a/b") free to escape CertBaseDir.

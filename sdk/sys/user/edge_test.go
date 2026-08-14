@@ -37,7 +37,7 @@ func TestGet_NonNumericGIDFailsClosed(t *testing.T) {
 // shadow password means "no password, password-login disabled" — it is NOT a
 // locked account (only a leading "!", from usermod -L, is). The account stays
 // reachable via SSH keys / su / a setuid opener, which is exactly how the
-// passwordless pm-tty-* terminal accounts work. Treating "*" as locked made the
+// passwordless cadestro-tty-* terminal accounts work. Treating "*" as locked made the
 // agent refuse every terminal session ("tty user is disabled").
 func TestGet_StarPasswordIsNotLocked(t *testing.T) {
 	f := exectest.New(exec.Direct)

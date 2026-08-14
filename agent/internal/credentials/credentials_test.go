@@ -128,7 +128,7 @@ func TestLoadRejectsUnknownFutureMagic(t *testing.T) {
 
 	// Write a credentials.enc that starts with a future-format prefix.
 	credPath := filepath.Join(dir, credentialsFile)
-	if err := os.WriteFile(credPath, []byte("pmcred:v999:opaque"), 0600); err != nil {
+	if err := os.WriteFile(credPath, []byte("cadestrocred:v999:opaque"), 0600); err != nil {
 		t.Fatalf("write fake creds: %v", err)
 	}
 

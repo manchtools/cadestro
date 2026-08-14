@@ -156,7 +156,7 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	jobAccepted := fillJobQueue(jobRunner)
 
 	terminalRegistry := connection.NewTerminalSessionRegistry()
-	terminalSession := connection.NewTerminalSession(newID(), deviceIDs[0], newID(), "pm-tty-scale", 120, 40)
+	terminalSession := connection.NewTerminalSession(newID(), deviceIDs[0], newID(), "cadestro-tty-scale", 120, 40)
 	terminalRegistry.Register(terminalSession)
 	defer terminalRegistry.Unregister(terminalSession.SessionID)
 

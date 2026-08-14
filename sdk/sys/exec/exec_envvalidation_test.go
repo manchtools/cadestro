@@ -54,8 +54,8 @@ func TestRunner_RejectsMalformedEnvEntry(t *testing.T) {
 func TestRunner_AcceptsSafeEnvVar(t *testing.T) {
 	r := runnerForEnvTest(t)
 	res, err := r.Run(context.Background(), pmexec.Command{
-		Name: "sh", Args: []string{"-c", "printf %s \"$PM_AUDIT_TEST_MARKER\""},
-		Env: []string{"PM_AUDIT_TEST_MARKER=ok"},
+		Name: "sh", Args: []string{"-c", "printf %s \"$CADESTRO_AUDIT_TEST_MARKER\""},
+		Env: []string{"CADESTRO_AUDIT_TEST_MARKER=ok"},
 	})
 	if err != nil {
 		t.Fatalf("Run: %v", err)

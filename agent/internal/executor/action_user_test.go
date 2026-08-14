@@ -65,9 +65,9 @@ func TestHomeGroupForOwnership_ResolvesViaSDK(t *testing.T) {
 
 // desiredAccountLocked is the agent-side "user is disabled" gate: an account is
 // shadow-LOCKED ("!") iff the control user is disabled. The terminal handler
-// refuses a locked pm-tty-* account, so a "!" unambiguously means disabled —
+// refuses a locked cadestro-tty-* account, so a "!" unambiguously means disabled —
 // every ENABLED account is driven to an unlocked resting state ("*" for a
-// passwordless pm-tty-* user, a hash for a normal user), so the agent can tell a
+// passwordless cadestro-tty-* user, a hash for a normal user), so the agent can tell a
 // disabled account apart from a freshly-created passwordless one.
 func TestDesiredAccountLocked(t *testing.T) {
 	cases := []struct {
@@ -75,7 +75,7 @@ func TestDesiredAccountLocked(t *testing.T) {
 		p    *pb.UserParams
 		want bool
 	}{
-		// The fix: an ENABLED passwordless account (a pm-tty-* terminal user) is
+		// The fix: an ENABLED passwordless account (a cadestro-tty-* terminal user) is
 		// NOT locked — Manager.Unlock sets it to "*" (no password, not locked),
 		// never an empty/login-able password. Locking it stranded every terminal
 		// session as "tty user is disabled".
@@ -117,7 +117,7 @@ func TestDesiredAccountLocked_IsExactlyDisabled(t *testing.T) {
 	}
 
 	// The password-skip contract is unchanged and still load-bearing: createUser
-	// sets a temp password ONLY for a plain enabled account, so a pm-tty-* account
+	// sets a temp password ONLY for a plain enabled account, so a cadestro-tty-* account
 	// never gains a real password (the lock decision is just no longer bound to it).
 	assert.True(t, createUserSetsPassword(&pb.UserParams{}),
 		"a plain account (no opt-outs) must get a password")

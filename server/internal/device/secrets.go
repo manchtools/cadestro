@@ -313,7 +313,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 		// passphrase before it dials, so a token on argv was exposed for the
 		// whole typing window while being the sole authorization for a root
 		// daemon that writes LUKS keyslots. The client prompts for the token
-		// instead (or takes --token-file / $PM_LUKS_TOKEN). sudo is gone
+		// instead (or takes --token-file / $CADESTRO_LUKS_TOKEN). sudo is gone
 		// because the sudoers rule was removed to make this client
 		// unprivileged; an operator copying it back would reinstate the
 		// escalation the daemon exists to remove. Token is returned as its own

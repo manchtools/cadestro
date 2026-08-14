@@ -3329,7 +3329,7 @@ type TerminalStart struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// @gotags: validate:"required,ulid"
 	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
-	// The dedicated TTY username (e.g. "pm-tty-pdotterer"). The agent
+	// The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
 	// never uses the original Linux username for the shell.
 	// @gotags: validate:"required,min=1,max=64"
 	TtyUser string `protobuf:"bytes,2,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty" validate:"required,min=1,max=64"`

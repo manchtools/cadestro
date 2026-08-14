@@ -908,9 +908,9 @@ func TestIntegration_User(t *testing.T) {
 
 // TestIntegration_User_CreateHomeRespected locks down the fix for the
 // agent inverting `create_home: false` to `true` for non-system users.
-// Before the fix, the control server's pm-tty-* sync explicitly set
+// Before the fix, the control server's cadestro-tty-* sync explicitly set
 // create_home: false on the UserParams but the agent overrode it and
-// produced a home directory at /home/pm-tty-<username> anyway, which
+// produced a home directory at /home/cadestro-tty-<username> anyway, which
 // contradicted the wire contract.
 //
 // Two sub-tests — the explicit-false path and the explicit-true path.

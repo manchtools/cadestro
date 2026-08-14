@@ -132,7 +132,7 @@ func TestRunner_RejectsEmptyNameAndUnknownBinary(t *testing.T) {
 func TestBuildChildEnv_DefaultBranchDropsHijackVars(t *testing.T) {
 	t.Setenv("LD_PRELOAD", "/tmp/evil.so")    // a classic injection var
 	t.Setenv("BASH_ENV", "/tmp/evil.sh")      // another
-	t.Setenv("PM_BENIGN_TEST_VAR", "keep-me") // a normal var that must survive
+	t.Setenv("CADESTRO_BENIGN_TEST_VAR", "keep-me") // a normal var that must survive
 	t.Setenv("LANG", "de_DE.UTF-8")           // reserved; forced LANG=C must win
 
 	env, err := buildChildEnv(Command{}) // default branch: inherit parent
@@ -153,7 +153,7 @@ func TestBuildChildEnv_DefaultBranchDropsHijackVars(t *testing.T) {
 	if has("BASH_ENV=") {
 		t.Error("BASH_ENV leaked from the parent env into the child")
 	}
-	if !has("PM_BENIGN_TEST_VAR=keep-me") {
+	if !has("CADESTRO_BENIGN_TEST_VAR=keep-me") {
 		t.Error("a benign inherited var was dropped; the default branch must still inherit safe vars")
 	}
 	// forcedEnv is appended last, so the deterministic locale wins over inherited LANG.
@@ -267,8 +267,8 @@ func TestRunner_EnvBlocklistRejectedBeforeExec(t *testing.T) {
 
 func TestRunner_AllowedEnvReachesChild(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{
-		Name: "sh", Args: []string{"-c", "printf %s \"$PM_TEST_VAR\""},
-		Env: []string{"PM_TEST_VAR=visible"},
+		Name: "sh", Args: []string{"-c", "printf %s \"$CADESTRO_TEST_VAR\""},
+		Env: []string{"CADESTRO_TEST_VAR=visible"},
 	})
 	if err != nil {
 		t.Fatalf("Run err = %v", err)
@@ -307,9 +307,9 @@ func TestRunner_RejectsReservedEnv(t *testing.T) {
 // The forced env is an OVERRIDE, not a replacement: a plain command still
 // inherits the parent environment; only the deterministic vars are pinned.
 func TestRunner_InheritsParentEnvWhilePinningLocale(t *testing.T) {
-	t.Setenv("PM_TEST_INHERIT", "visible")
+	t.Setenv("CADESTRO_TEST_INHERIT", "visible")
 	res, err := directRunner(t).Run(context.Background(), Command{
-		Name: "sh", Args: []string{"-c", `printf '%s|%s' "$PM_TEST_INHERIT" "$LC_ALL"`},
+		Name: "sh", Args: []string{"-c", `printf '%s|%s' "$CADESTRO_TEST_INHERIT" "$LC_ALL"`},
 	})
 	if err != nil {
 		t.Fatalf("Run err = %v", err)

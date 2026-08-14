@@ -17,18 +17,18 @@ func ws17aULID() string { return ulid.Make().String() }
 
 // The IsValidName conjunct of the username guard is exercised independently of
 // the HasPrefix conjunct the existing test covers: usernames that HAVE the
-// pm-tty- prefix but FAIL IsValidName (uppercase, separators, control chars,
+// cadestro-tty- prefix but FAIL IsValidName (uppercase, separators, control chars,
 // over length) must be refused with STATE_ERROR before any system call, and no
 // session may be registered. The wrong inputs are sourced from the IsValidName
 // contract (lowercase letters/digits/_/-, ≤32 chars), not from the regex.
 func TestTerminal_Start_RejectsPrefixedButInvalidUsername(t *testing.T) {
 	cases := map[string]string{
-		"uppercase":  "pm-tty-Abc",
-		"slash":      "pm-tty-a/b",
-		"newline":    "pm-tty-a\nb",
-		"colon":      "pm-tty-a:b",
-		"over-32":    "pm-tty-" + strings.Repeat("a", 40),
-		"whitespace": "pm-tty-a b",
+		"uppercase":  "cadestro-tty-Abc",
+		"slash":      "cadestro-tty-a/b",
+		"newline":    "cadestro-tty-a\nb",
+		"colon":      "cadestro-tty-a:b",
+		"over-32":    "cadestro-tty-" + strings.Repeat("a", 40),
+		"whitespace": "cadestro-tty-a b",
 	}
 	for name, user := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestTerminal_Start_RejectsNonUlidSessionId(t *testing.T) {
 			h, sender := newTestHandler(t)
 			err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 				SessionId: sid,
-				TtyUser:   "pm-tty-test",
+				TtyUser:   "cadestro-tty-test",
 				Cols:      80,
 				Rows:      24,
 			})
@@ -107,7 +107,7 @@ func TestTerminal_Start_RejectsNonUlidSessionId(t *testing.T) {
 		}
 		h, sender := newTestHandler(t)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: ws17aULID(), TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+			SessionId: ws17aULID(), TtyUser: "cadestro-tty-test", Cols: 80, Rows: 24,
 		})
 		if err != nil {
 			t.Fatalf("OnTerminalStart returned %v", err)
@@ -128,11 +128,11 @@ func TestTerminal_Start_RejectsAtSessionLimit(t *testing.T) {
 
 	h, sender := newTestHandler(t)
 	h.terminalLimit = 2
-	addTestSession(h, ws17aULID(), "pm-tty-test", time.Now())
-	addTestSession(h, ws17aULID(), "pm-tty-test", time.Now())
+	addTestSession(h, ws17aULID(), "cadestro-tty-test", time.Now())
+	addTestSession(h, ws17aULID(), "cadestro-tty-test", time.Now())
 
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-		SessionId: ws17aULID(), TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+		SessionId: ws17aULID(), TtyUser: "cadestro-tty-test", Cols: 80, Rows: 24,
 	})
 	if err != nil {
 		t.Fatalf("OnTerminalStart returned %v", err)
@@ -156,10 +156,10 @@ func TestTerminal_Start_RejectsDuplicateSession(t *testing.T) {
 
 	h, sender := newTestHandler(t)
 	dup := ws17aULID()
-	addTestSession(h, dup, "pm-tty-test", time.Now())
+	addTestSession(h, dup, "cadestro-tty-test", time.Now())
 
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-		SessionId: dup, TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+		SessionId: dup, TtyUser: "cadestro-tty-test", Cols: 80, Rows: 24,
 	})
 	if err != nil {
 		t.Fatalf("OnTerminalStart returned %v", err)
@@ -176,7 +176,7 @@ func TestTerminal_Start_RejectsDuplicateSession(t *testing.T) {
 	}
 }
 
-// A locked/disabled pm-tty-* user must be refused; an unlocked user is the
+// A locked/disabled cadestro-tty-* user must be refused; an unlocked user is the
 // distinguishing factor — it gets PAST the locked gate (and then fails at shell
 // activation, a different error), proving info.Locked is what gates here.
 func TestTerminal_Start_RejectsLockedTtyUser(t *testing.T) {
@@ -188,7 +188,7 @@ func TestTerminal_Start_RejectsLockedTtyUser(t *testing.T) {
 		sysuserGet = func(context.Context, string) (sysuser.Info, error) { return sysuser.Info{Locked: true}, nil }
 		h, sender := newTestHandler(t)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: ws17aULID(), TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+			SessionId: ws17aULID(), TtyUser: "cadestro-tty-test", Cols: 80, Rows: 24,
 		})
 		if err != nil {
 			t.Fatalf("OnTerminalStart returned %v", err)
@@ -212,7 +212,7 @@ func TestTerminal_Start_RejectsLockedTtyUser(t *testing.T) {
 		}
 		h, sender := newTestHandler(t)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: ws17aULID(), TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+			SessionId: ws17aULID(), TtyUser: "cadestro-tty-test", Cols: 80, Rows: 24,
 		})
 		if err != nil {
 			t.Fatalf("OnTerminalStart returned %v", err)

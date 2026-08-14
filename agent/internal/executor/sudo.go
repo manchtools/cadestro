@@ -149,7 +149,7 @@ func (e *Executor) removeSudoPolicy(ctx context.Context, groupName, sudoersPath 
 // work.
 //
 // The two TERMINAL_ADMIN_* arms route to passwordless templates
-// designed for pm-tty-* accounts (see archived server#70).
+// designed for cadestro-tty-* accounts (see archived server#70).
 // The pre-existing FULL/LIMITED/CUSTOM arms are unchanged — operator-
 // authored AdminPolicy actions continue to behave exactly as they did
 // before this PR.

@@ -136,7 +136,7 @@ func TestTerminal_OnStop_UnknownIsNoOp(t *testing.T) {
 
 func TestTerminal_CloseRemovesFromRegistry(t *testing.T) {
 	h, _ := newTestHandler(t)
-	addTestSession(h, "01ABC", "pm-tty-test", time.Now())
+	addTestSession(h, "01ABC", "cadestro-tty-test", time.Now())
 
 	if got := len(h.terminals); got != 1 {
 		t.Fatalf("len(terminals) before close = %d, want 1", got)
@@ -154,7 +154,7 @@ func TestTerminal_CloseRemovesFromRegistry(t *testing.T) {
 
 func TestTerminal_CloseIsIdempotent(t *testing.T) {
 	h, _ := newTestHandler(t)
-	addTestSession(h, "01ABC", "pm-tty-test", time.Now())
+	addTestSession(h, "01ABC", "cadestro-tty-test", time.Now())
 
 	h.closeTerminal(context.Background(), "01ABC", "")
 	// Second close should be a clean no-op (no panic, no error path).
@@ -175,8 +175,8 @@ func TestTerminal_SweepIdle_ClosesStaleSessions(t *testing.T) {
 
 	stale := time.Now().Add(-1 * time.Hour)
 	fresh := time.Now()
-	addTestSession(h, "stale", "pm-tty-a", stale)
-	addTestSession(h, "fresh", "pm-tty-b", fresh)
+	addTestSession(h, "stale", "cadestro-tty-a", stale)
+	addTestSession(h, "fresh", "cadestro-tty-b", fresh)
 
 	h.sweepIdleTerminals()
 
@@ -194,8 +194,8 @@ func TestTerminal_SweepIdle_LeavesEverythingWhenNothingIsStale(t *testing.T) {
 	h.terminalIdleTimeout = 1 * time.Hour
 	h.mu.Unlock()
 
-	addTestSession(h, "a", "pm-tty-a", time.Now())
-	addTestSession(h, "b", "pm-tty-b", time.Now())
+	addTestSession(h, "a", "cadestro-tty-a", time.Now())
+	addTestSession(h, "b", "cadestro-tty-b", time.Now())
 
 	h.sweepIdleTerminals()
 
@@ -268,7 +268,7 @@ func TestTerminal_FailStart_EmitsErrorState(t *testing.T) {
 }
 
 // OnTerminalStart must reject any TTY username that does not start
-// with the dedicated pm-tty- prefix, even when the username is
+// with the dedicated cadestro-tty- prefix, even when the username is
 // otherwise syntactically valid. This guards against the agent ever
 // operating on an arbitrary system account if the control server's
 // resolution is buggy or compromised.
@@ -276,7 +276,7 @@ func TestTerminal_Start_RejectsNonPrefixedUsername(t *testing.T) {
 	h, sender := newTestHandler(t)
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 		SessionId: "01ABC",
-		TtyUser:   "alice", // valid syntax, NOT a pm-tty-* user
+		TtyUser:   "alice", // valid syntax, NOT a cadestro-tty-* user
 		Cols:      80,
 		Rows:      24,
 	})
@@ -307,7 +307,7 @@ func TestTerminal_Start_RejectsWhenTTYDisabled(t *testing.T) {
 	h, sender := newTestHandlerWithTTY(t, false)
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 		SessionId: "01ABC",
-		TtyUser:   "pm-tty-test",
+		TtyUser:   "cadestro-tty-test",
 		Cols:      80,
 		Rows:      24,
 	})
@@ -344,7 +344,7 @@ func TestTerminal_Start_RejectsWhenStoreMissing(t *testing.T) {
 
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 		SessionId: "01ABC",
-		TtyUser:   "pm-tty-test",
+		TtyUser:   "cadestro-tty-test",
 		Cols:      80,
 		Rows:      24,
 	})
@@ -381,7 +381,7 @@ func TestTerminal_CloseDuringStart_MarksStoppingButLeavesRegistryEntry(t *testin
 	}
 	ts := &terminalSession{
 		id:      "01ABC",
-		ttyUser: "pm-tty-test",
+		ttyUser: "cadestro-tty-test",
 		state:   sessionStateStarting,
 		cancel:  wrappedCancel,
 		now:     time.Now,
@@ -415,7 +415,7 @@ func TestTerminal_CloseDuringStart_MarksStoppingButLeavesRegistryEntry(t *testin
 // about the new state-aware path.)
 func TestTerminal_CloseDuringActive_RemovesFromRegistry(t *testing.T) {
 	h, _ := newTestHandler(t)
-	addTestSession(h, "01ABC", "pm-tty-test", time.Now())
+	addTestSession(h, "01ABC", "cadestro-tty-test", time.Now())
 
 	h.closeTerminal(context.Background(), "01ABC", "")
 
@@ -457,20 +457,20 @@ func TestTerminal_SnapshotTerminalSender_ReturnsLatest(t *testing.T) {
 // to revert the user's shell.
 func TestTerminal_AnySessionForUserExcept(t *testing.T) {
 	h, _ := newTestHandler(t)
-	addTestSession(h, "a", "pm-tty-alice", time.Now())
-	addTestSession(h, "b", "pm-tty-alice", time.Now())
-	addTestSession(h, "c", "pm-tty-bob", time.Now())
+	addTestSession(h, "a", "cadestro-tty-alice", time.Now())
+	addTestSession(h, "b", "cadestro-tty-alice", time.Now())
+	addTestSession(h, "c", "cadestro-tty-bob", time.Now())
 
-	if !h.anySessionForUserExcept("pm-tty-alice", "a") {
+	if !h.anySessionForUserExcept("cadestro-tty-alice", "a") {
 		t.Error("session b for alice should be visible when excluding a")
 	}
-	if !h.anySessionForUserExcept("pm-tty-alice", "b") {
+	if !h.anySessionForUserExcept("cadestro-tty-alice", "b") {
 		t.Error("session a for alice should be visible when excluding b")
 	}
-	if h.anySessionForUserExcept("pm-tty-bob", "c") {
+	if h.anySessionForUserExcept("cadestro-tty-bob", "c") {
 		t.Error("excluding the only bob session should return false")
 	}
-	if h.anySessionForUserExcept("pm-tty-eve", "any") {
+	if h.anySessionForUserExcept("cadestro-tty-eve", "any") {
 		t.Error("user with no sessions should return false")
 	}
 }

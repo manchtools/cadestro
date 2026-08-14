@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 			"executor integration tests skipped: not running in a container.\n"+
 				"These mutate real host state (users, files, packages). Run them in "+
 				"the container lane (`docker run ... -tags=integration`), or set "+
-				"PM_ALLOW_DESTRUCTIVE_TESTS=1 to force them on this host.")
+				"CADESTRO_ALLOW_DESTRUCTIVE_TESTS=1 to force them on this host.")
 		os.Exit(0)
 	}
 	code := m.Run()
@@ -48,9 +48,9 @@ func TestMain(m *testing.M) {
 
 // disposableHost reports whether destructive integration tests are safe to run
 // here: inside a container (Docker's /.dockerenv or Podman's /run/.containerenv),
-// or when the operator explicitly opted in via PM_ALLOW_DESTRUCTIVE_TESTS=1.
+// or when the operator explicitly opted in via CADESTRO_ALLOW_DESTRUCTIVE_TESTS=1.
 func disposableHost() bool {
-	if os.Getenv("PM_ALLOW_DESTRUCTIVE_TESTS") == "1" {
+	if os.Getenv("CADESTRO_ALLOW_DESTRUCTIVE_TESTS") == "1" {
 		return true
 	}
 	for _, marker := range []string{"/.dockerenv", "/run/.containerenv"} {

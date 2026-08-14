@@ -53,7 +53,7 @@ type Session struct {
 	// DeviceID is the target device the session will run on.
 	DeviceID string `json:"device_id"`
 	// TtyUser is the resolved dedicated TTY user
-	// (e.g. "pm-tty-pdotterer") that the agent will spawn the shell
+	// (e.g. "cadestro-tty-pdotterer") that the agent will spawn the shell
 	// as. Carried in the session record so the control bridge can pass it
 	// through to the agent without re-resolving.
 	TtyUser string `json:"tty_user"`

@@ -38,8 +38,8 @@ echo "==> Running integration tests..."
 # Run under a non-English locale (default Japanese) so locale-fragile parsing of
 # tool output is caught: any capability that matches an English error string
 # without forcing LC_ALL=C (Command.CLocale) fails here. Override with
-# PM_TEST_LOCALE=C (or zh_CN.UTF-8, etc.). The locale is generated in the image.
-TEST_LOCALE="${PM_TEST_LOCALE:-ja_JP.UTF-8}"
+# CADESTRO_TEST_LOCALE=C (or zh_CN.UTF-8, etc.). The locale is generated in the image.
+TEST_LOCALE="${CADESTRO_TEST_LOCALE:-ja_JP.UTF-8}"
 echo "    (locale: ${TEST_LOCALE})"
 
 # Integration-tagged packages that run in THIS systemd container — the set whose

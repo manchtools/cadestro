@@ -1088,7 +1088,7 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
    * still works because it bypasses PAM.
    *
    * Intended for system-managed nologin accounts that are only ever
-   * reached via setuid — pm-tty-* is the canonical case. Do NOT set
+   * reached via setuid — cadestro-tty-* is the canonical case. Do NOT set
    * this for general-purpose users: passwords are good to have for
    * any account that might ever need a PAM-protected login path, and
    * setting no_password here locks that path closed.
@@ -1448,7 +1448,7 @@ export const EncryptionParamsSchema: GenMessage<EncryptionParams> = /*@__PURE__*
 
 /**
  * WifiParams configures NetworkManager WiFi connection management.
- * Each action creates a connection profile named pm-wifi-{actionId}. Supports PSK (password) and
+ * Each action creates a connection profile named cadestro-wifi-{actionId}. Supports PSK (password) and
  * EAP-TLS (certificate) authentication.
  *
  * @generated from message cadestro.v1.WifiParams
@@ -1987,7 +1987,7 @@ export const ServiceUnitStateSchema: GenEnum<ServiceUnitState> = /*@__PURE__*/
  * raw admin-authored config that must be valid syntax for the chosen
  * backend. TERMINAL_ADMIN_LIMITED and TERMINAL_ADMIN_FULL are used by
  * the server's TerminalAdmin reconciler — they route the agent to two
- * passwordless templates designed for pm-tty-* accounts (which have
+ * passwordless templates designed for cadestro-tty-* accounts (which have
  * no password to prompt for). Operator-authored AdminPolicy actions
  * should continue to use FULL/LIMITED/CUSTOM.
  *
@@ -2021,14 +2021,14 @@ export enum AdminAccessLevel {
   CUSTOM = 3,
 
   /**
-   * Passwordless LIMITED variant for pm-tty-* TerminalAdmin grants
+   * Passwordless LIMITED variant for cadestro-tty-* TerminalAdmin grants
    *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED = 4;
    */
   TERMINAL_ADMIN_LIMITED = 4,
 
   /**
-   * Passwordless FULL variant for pm-tty-* TerminalAdmin grants
+   * Passwordless FULL variant for cadestro-tty-* TerminalAdmin grants
    *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL = 5;
    */

@@ -147,8 +147,8 @@ func TestNew_FailClosed(t *testing.T) {
 func TestConnectionExists(t *testing.T) {
 	t.Run("found (exact match among many)", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "HomeWifi\npm-wifi-01\nGuestNet\n"}, nil)
-		ok, err := mgr(t, r).ConnectionExists(context.Background(), "pm-wifi-01")
+		r.push(exec.Result{Stdout: "HomeWifi\ncadestro-wifi-01\nGuestNet\n"}, nil)
+		ok, err := mgr(t, r).ConnectionExists(context.Background(), "cadestro-wifi-01")
 		if err != nil || !ok {
 			t.Fatalf("ConnectionExists = (%v,%v), want (true,nil)", ok, err)
 		}
@@ -163,7 +163,7 @@ func TestConnectionExists(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		r := &recordingRunner{}
 		r.push(exec.Result{Stdout: "HomeWifi\nGuestNet\n"}, nil)
-		if ok, _ := mgr(t, r).ConnectionExists(context.Background(), "pm-wifi-01"); ok {
+		if ok, _ := mgr(t, r).ConnectionExists(context.Background(), "cadestro-wifi-01"); ok {
 			t.Error("ConnectionExists = true for an absent name")
 		}
 	})
@@ -194,15 +194,15 @@ func TestConnectionExists(t *testing.T) {
 func TestSettings(t *testing.T) {
 	t.Run("parses and unescapes", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "connection.id:pm-wifi-01\r\n" +
+		r.push(exec.Result{Stdout: "connection.id:cadestro-wifi-01\r\n" +
 			"wifi.ssid:CorpNet\n" +
 			`ipv4.routes:10.0.0.0/8\: via\\gw` + "\n" +
 			"malformed-no-colon\n"}, nil)
-		got, err := mgr(t, r).Settings(context.Background(), "pm-wifi-01")
+		got, err := mgr(t, r).Settings(context.Background(), "cadestro-wifi-01")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got["connection.id"] != "pm-wifi-01" || got["wifi.ssid"] != "CorpNet" {
+		if got["connection.id"] != "cadestro-wifi-01" || got["wifi.ssid"] != "CorpNet" {
 			t.Errorf("settings = %v", got)
 		}
 		if got["ipv4.routes"] != `10.0.0.0/8: via\gw` {
@@ -212,7 +212,7 @@ func TestSettings(t *testing.T) {
 			t.Error("a line without a colon should be skipped, not stored")
 		}
 		c := r.calls[0].cmd
-		if c.Escalate || strings.Join(c.Args, " ") != "-t -f all con show pm-wifi-01" {
+		if c.Escalate || strings.Join(c.Args, " ") != "-t -f all con show cadestro-wifi-01" {
 			t.Errorf("read command = %+v", c)
 		}
 	})
@@ -232,7 +232,7 @@ func TestApply_PSK_Create(t *testing.T) {
 	r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // ConnectionExists → not found
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name:        "pm-wifi-01",
+		Name:        "cadestro-wifi-01",
 		SSID:        "CorpNet",
 		AuthType:    AuthPSK,
 		PSK:         mustSecret(t, psk),
@@ -244,14 +244,14 @@ func TestApply_PSK_Create(t *testing.T) {
 	}
 
 	// Keyfile written, 0600, carries the PSK.
-	body, err := os.ReadFile(filepath.Join(keyDir, "pm-wifi-01.nmconnection"))
+	body, err := os.ReadFile(filepath.Join(keyDir, "cadestro-wifi-01.nmconnection"))
 	if err != nil {
 		t.Fatalf("keyfile not written: %v", err)
 	}
 	if !strings.Contains(string(body), "psk="+psk) {
 		t.Errorf("keyfile missing psk: %s", body)
 	}
-	info, _ := os.Stat(filepath.Join(keyDir, "pm-wifi-01.nmconnection"))
+	info, _ := os.Stat(filepath.Join(keyDir, "cadestro-wifi-01.nmconnection"))
 	if info.Mode().Perm() != 0o600 {
 		t.Errorf("keyfile mode = %o, want 0600", info.Mode().Perm())
 	}
@@ -272,15 +272,15 @@ func TestApply_PSK_Update(t *testing.T) {
 	keyDir, _ := redirectDirs(t)
 	const psk = "Rotated-PSK-distinctive"
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "pm-wifi-01\n"}, nil) // exists
+	r.push(exec.Result{Stdout: "cadestro-wifi-01\n"}, nil) // exists
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-01", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, psk),
+		Name: "cadestro-wifi-01", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, psk),
 	})
 	if err != nil || !changed {
 		t.Fatalf("Apply(update) = (%v,%v), want (true,nil)", changed, err)
 	}
-	body, _ := os.ReadFile(filepath.Join(keyDir, "pm-wifi-01.nmconnection"))
+	body, _ := os.ReadFile(filepath.Join(keyDir, "cadestro-wifi-01.nmconnection"))
 	if !strings.Contains(string(body), "psk="+psk) {
 		t.Errorf("rotated keyfile missing new psk: %s", body)
 	}
@@ -293,7 +293,7 @@ func TestApply_PSK_ReloadFailure(t *testing.T) {
 	r.push(exec.Result{Stdout: ""}, nil)                                  // not found
 	r.push(exec.Result{ExitCode: 2, Stderr: "Error: reload failed"}, nil) // reload fails
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-01", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
+		Name: "cadestro-wifi-01", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
 	})
 	if err == nil || !strings.Contains(err.Error(), "create PSK connection") {
 		t.Errorf("Apply err = %v, want a wrapped reload failure", err)
@@ -302,12 +302,12 @@ func TestApply_PSK_ReloadFailure(t *testing.T) {
 
 func TestApply_EAPTLS_Create(t *testing.T) {
 	_, certBase := redirectDirs(t)
-	certDir := filepath.Join(certBase, "pm-wifi-eap")
+	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
 	r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // not found
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name:       "pm-wifi-eap",
+		Name:       "cadestro-wifi-eap",
 		SSID:       "SecureNet",
 		AuthType:   AuthEAPTLS,
 		Identity:   "device@corp.example.com",
@@ -340,13 +340,13 @@ func TestApply_EAPTLS_Create(t *testing.T) {
 
 func TestApply_EAPTLS_CreateFailureCleansCerts(t *testing.T) {
 	_, certBase := redirectDirs(t)
-	certDir := filepath.Join(certBase, "pm-wifi-eap")
+	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
 	r.push(exec.Result{Stdout: ""}, nil)                               // not found
 	r.push(exec.Result{ExitCode: 1, Stderr: "Error: add failed"}, nil) // con add fails
 
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "u", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: certDir,
 	})
@@ -361,7 +361,7 @@ func TestApply_EAPTLS_CreateFailureCleansCerts(t *testing.T) {
 
 func TestApply_EAPTLS_UpdateWithDrift(t *testing.T) {
 	_, certBase := redirectDirs(t)
-	certDir := filepath.Join(certBase, "pm-wifi-eap")
+	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	// Pre-existing live certs (old content).
 	if err := os.MkdirAll(certDir, 0o750); err != nil {
 		t.Fatal(err)
@@ -370,12 +370,12 @@ func TestApply_EAPTLS_UpdateWithDrift(t *testing.T) {
 		os.WriteFile(filepath.Join(certDir, n), []byte("OLD"), 0o600)
 	}
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "pm-wifi-eap\n"}, nil) // exists
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil) // exists
 	// current settings differ (old ssid) → needsModify.
 	r.push(exec.Result{Stdout: "wifi.ssid:OldName\nwifi-sec.key-mgmt:wpa-eap\n"}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "device@corp.example.com", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: certDir, AutoConnect: true,
 	})
@@ -402,7 +402,7 @@ func TestApply_EAPTLS_UpdateWithDrift(t *testing.T) {
 
 func TestApply_EAPTLS_UpdateNoChange(t *testing.T) {
 	_, certBase := redirectDirs(t)
-	certDir := filepath.Join(certBase, "pm-wifi-eap")
+	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	if err := os.MkdirAll(certDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -412,7 +412,7 @@ func TestApply_EAPTLS_UpdateNoChange(t *testing.T) {
 	os.WriteFile(filepath.Join(certDir, "client-key.pem"), []byte(realPEMKey), 0o600)
 
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "pm-wifi-eap\n"}, nil) // exists
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil) // exists
 	// current settings already match desired exactly.
 	current := "wifi.ssid:SecureNet\n" +
 		"wifi-sec.key-mgmt:wpa-eap\n" +
@@ -427,7 +427,7 @@ func TestApply_EAPTLS_UpdateNoChange(t *testing.T) {
 	r.push(exec.Result{Stdout: current}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "device@corp.example.com", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: certDir, AutoConnect: true,
 	})
@@ -444,13 +444,13 @@ func TestApply_EAPTLS_UpdateNoChange(t *testing.T) {
 
 func TestApply_EAPTLS_UpdateSettingsErrorStillStages(t *testing.T) {
 	_, certBase := redirectDirs(t)
-	certDir := filepath.Join(certBase, "pm-wifi-eap")
+	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "pm-wifi-eap\n"}, nil)                      // exists
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)                      // exists
 	r.push(exec.Result{ExitCode: 10, Stderr: "settings read failed"}, nil) // Settings fails
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
-		Name: "pm-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
+		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "u", CACert: realCACert, ClientCert: realClientCert,
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: certDir,
 	})
@@ -493,15 +493,15 @@ func TestApply_ConnectionExistsErrorAborts(t *testing.T) {
 func TestDelete(t *testing.T) {
 	t.Run("exists: deletes and cleans certs", func(t *testing.T) {
 		_, certBase := redirectDirs(t)
-		certDir := filepath.Join(certBase, "pm-wifi-eap")
+		certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 		os.MkdirAll(certDir, 0o750)
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "pm-wifi-eap\n"}, nil) // exists
-		if err := mgr(t, r).Delete(context.Background(), "pm-wifi-eap", DeleteOptions{CertDir: certDir}); err != nil {
+		r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil) // exists
+		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi-eap", DeleteOptions{CertDir: certDir}); err != nil {
 			t.Fatal(err)
 		}
 		del := r.calls[1].cmd
-		if !del.Escalate || strings.Join(del.Args, " ") != "con delete pm-wifi-eap" {
+		if !del.Escalate || strings.Join(del.Args, " ") != "con delete cadestro-wifi-eap" {
 			t.Errorf("delete command = %+v", del)
 		}
 		if _, err := os.Stat(certDir); !os.IsNotExist(err) {
@@ -510,11 +510,11 @@ func TestDelete(t *testing.T) {
 	})
 	t.Run("absent: skips delete, still cleans certs", func(t *testing.T) {
 		_, certBase := redirectDirs(t)
-		certDir := filepath.Join(certBase, "pm-wifi-eap")
+		certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 		os.MkdirAll(certDir, 0o750)
 		r := &recordingRunner{}
 		r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // not found
-		if err := mgr(t, r).Delete(context.Background(), "pm-wifi-eap", DeleteOptions{CertDir: certDir}); err != nil {
+		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi-eap", DeleteOptions{CertDir: certDir}); err != nil {
 			t.Fatal(err)
 		}
 		if len(r.calls) != 1 {

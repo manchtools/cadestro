@@ -4,9 +4,9 @@ import "testing"
 
 func TestTTYUsername(t *testing.T) {
 	cases := map[string]string{
-		"pdotterer": "pm-tty-pdotterer",
-		"alice":     "pm-tty-alice",
-		"":          "pm-tty-",
+		"pdotterer": "cadestro-tty-pdotterer",
+		"alice":     "cadestro-tty-alice",
+		"":          "cadestro-tty-",
 	}
 	for in, want := range cases {
 		if got := TTYUsername(in); got != want {

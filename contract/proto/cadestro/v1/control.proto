@@ -2914,7 +2914,7 @@ service ControlService {
 // ============================================================================
 //
 // StartTerminal verifies the caller's TerminalAccess permission, resolves
-// the dedicated TTY username (pm-tty-<linux_username>), records an audit
+// the dedicated TTY username (cadestro-tty-<linux_username>), records an audit
 // event, mints a short-lived session token, and returns the WebSocket URL
 // of control's own terminal endpoint.
 //
@@ -2957,7 +2957,7 @@ message StartTerminalResponse {
   // @gotags: validate:"required"
   google.protobuf.Timestamp expires_at = 4;
   // The TTY user the agent will spawn the shell as. Returned for the
-  // UI to display ("Connected as pm-tty-pdotterer") and for diagnostics.
+  // UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
   // @gotags: validate:"required,min=1,max=64"
   string tty_user = 5;
 }

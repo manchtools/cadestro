@@ -28,14 +28,14 @@ const keyfileDir = "/etc/NetworkManager/system-connections"
 
 // requireNM gates the test on root + a usable NetworkManager. It SKIPS when
 // those are absent so the file is safe to run anywhere — EXCEPT when
-// PM_NM_REQUIRED=1 (set by the dedicated test-network CI job, which guarantees
+// CADESTRO_NM_REQUIRED=1 (set by the dedicated test-network CI job, which guarantees
 // NM), where a missing prerequisite is a setup failure and must FAIL rather than
 // let the job pass vacuously (matches-zero guard: the one test in this job must
 // actually run).
 func requireNM(t *testing.T) {
 	t.Helper()
 	bail := t.Skipf
-	if os.Getenv("PM_NM_REQUIRED") == "1" {
+	if os.Getenv("CADESTRO_NM_REQUIRED") == "1" {
 		bail = t.Fatalf
 	}
 	if os.Geteuid() != 0 {

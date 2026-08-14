@@ -7,9 +7,9 @@ package adversary
 // Where the per-package security machines pin specific known attacks, this
 // fuzzes the whole argv/secret boundary and catches the attack nobody enumerated.
 //
-// Reproducibility: the seed is logged and overridable (PM_DST_SEED); a failure
+// Reproducibility: the seed is logged and overridable (CADESTRO_DST_SEED); a failure
 // prints the seed + iteration + operation + raw input so the exact sequence
-// replays deterministically. PM_DST_ITERS scales the run.
+// replays deterministically. CADESTRO_DST_ITERS scales the run.
 //
 // Invariants checked on every recorded Command:
 //   I1  no argument contains a control character — a capability must REJECT a
@@ -35,13 +35,13 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
-const defaultDSTSeed = 0x5d_a_da_7a // a fixed default so CI is deterministic; override with PM_DST_SEED
+const defaultDSTSeed = 0x5d_a_da_7a // a fixed default so CI is deterministic; override with CADESTRO_DST_SEED
 
 func dstSeed(t *testing.T) int64 {
-	if v := os.Getenv("PM_DST_SEED"); v != "" {
+	if v := os.Getenv("CADESTRO_DST_SEED"); v != "" {
 		s, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
-			t.Fatalf("PM_DST_SEED=%q is not an int64: %v", v, err)
+			t.Fatalf("CADESTRO_DST_SEED=%q is not an int64: %v", v, err)
 		}
 		return s
 	}
@@ -49,7 +49,7 @@ func dstSeed(t *testing.T) int64 {
 }
 
 func dstIters() int {
-	if v := os.Getenv("PM_DST_ITERS"); v != "" {
+	if v := os.Getenv("CADESTRO_DST_ITERS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
 		}
@@ -144,7 +144,7 @@ func checkArgvInvariants(t *testing.T, seed int64, iter int, op, input string, c
 func TestDST_ArgvAndSecretInvariants(t *testing.T) {
 	seed := dstSeed(t)
 	iters := dstIters()
-	t.Logf("DST argv/secret: seed=%d iters=%d (replay with PM_DST_SEED=%d)", seed, iters, seed)
+	t.Logf("DST argv/secret: seed=%d iters=%d (replay with CADESTRO_DST_SEED=%d)", seed, iters, seed)
 	r := rand.New(rand.NewSource(seed))
 	ctx := context.Background()
 	backends := []pkg.Backend{pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper, pkg.Flatpak}

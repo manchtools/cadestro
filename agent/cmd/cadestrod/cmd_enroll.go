@@ -59,7 +59,7 @@ func parseRegistrationURI(rawURI string) (*registrationURI, error) {
 }
 
 // resolveEnrollToken resolves the registration token, preferring secure
-// delivery: a -token-file read from disk, then the PM_REGISTRATION_TOKEN
+// delivery: a -token-file read from disk, then the CADESTRO_REGISTRATION_TOKEN
 // environment variable, and only as a last resort the -token argv flag —
 // which is warned against because process arguments are world-readable
 // via /proc/<pid>/cmdline (finding #3). Returns "" when no source
@@ -76,7 +76,7 @@ func resolveEnrollToken(flagToken, tokenFile, envToken string) (string, error) {
 		return strings.TrimSpace(envToken), nil
 	}
 	if flagToken != "" {
-		fmt.Fprintln(os.Stderr, "warning: passing -token on the command line is insecure (visible in /proc/<pid>/cmdline); prefer -token-file or the PM_REGISTRATION_TOKEN environment variable")
+		fmt.Fprintln(os.Stderr, "warning: passing -token on the command line is insecure (visible in /proc/<pid>/cmdline); prefer -token-file or the CADESTRO_REGISTRATION_TOKEN environment variable")
 		return strings.TrimSpace(flagToken), nil
 	}
 	return "", nil
@@ -88,7 +88,7 @@ func resolveEnrollToken(flagToken, tokenFile, envToken string) (string, error) {
 //	cadestrod enroll 'cadestro://server:port?token=xxx&pin=<CA-SHA256>'
 func runEnroll(args []string) {
 	fs := flag.NewFlagSet("enroll", flag.ExitOnError)
-	token := fs.String("token", "", "Registration token (INSECURE on argv; prefer -token-file or PM_REGISTRATION_TOKEN)")
+	token := fs.String("token", "", "Registration token (INSECURE on argv; prefer -token-file or CADESTRO_REGISTRATION_TOKEN)")
 	tokenFile := fs.String("token-file", "", "Path to a file containing the registration token (preferred over -token)")
 	server := fs.String("server", "", "Control server URL")
 	pin := fs.String("pin", "", "Required CA fingerprint pin (SHA-256 hex of the control CA)")
@@ -117,11 +117,11 @@ func runEnroll(args []string) {
 	}
 
 	// Resolve the token. The URI carries its own token; otherwise prefer
-	// the secure -token-file / PM_REGISTRATION_TOKEN sources over -token
+	// the secure -token-file / CADESTRO_REGISTRATION_TOKEN sources over -token
 	// argv (which leaks via /proc/<pid>/cmdline, #3).
 	resolvedToken := *token
 	if !fromURI {
-		rt, err := resolveEnrollToken(*token, *tokenFile, os.Getenv("PM_REGISTRATION_TOKEN"))
+		rt, err := resolveEnrollToken(*token, *tokenFile, os.Getenv("CADESTRO_REGISTRATION_TOKEN"))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
@@ -132,7 +132,7 @@ func runEnroll(args []string) {
 	if resolvedToken == "" || *server == "" || strings.TrimSpace(caPin) == "" {
 		fmt.Fprintln(os.Stderr, "error: a control server URL, registration token, and CA fingerprint pin are required")
 		fmt.Fprintln(os.Stderr, "usage: cadestrod enroll -server=URL -token-file=PATH -pin=SHA256")
-		fmt.Fprintln(os.Stderr, "   or: PM_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=SHA256")
+		fmt.Fprintln(os.Stderr, "   or: CADESTRO_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=SHA256")
 		fmt.Fprintln(os.Stderr, "   or: cadestrod enroll 'cadestro://server:port?token=xxx&pin=…'")
 		os.Exit(1)
 	}

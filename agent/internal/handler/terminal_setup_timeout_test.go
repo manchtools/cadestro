@@ -43,7 +43,7 @@ func TestOnTerminalStart_BoundedSetupContext(t *testing.T) {
 	done := make(chan error, 1)
 	go func() {
 		done <- h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: setupTestULID, TtyUser: "pm-tty-test", Cols: 80, Rows: 24,
+			SessionId: setupTestULID, TtyUser: "cadestro-tty-test", Cols: 80, Rows: 24,
 		})
 	}()
 

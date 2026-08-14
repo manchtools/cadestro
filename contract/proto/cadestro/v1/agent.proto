@@ -702,7 +702,7 @@ enum TerminalSessionState {
 message TerminalStart {
   // @gotags: validate:"required,ulid"
   string session_id = 1;
-  // The dedicated TTY username (e.g. "pm-tty-pdotterer"). The agent
+  // The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
   // never uses the original Linux username for the shell.
   // @gotags: validate:"required,min=1,max=64"
   string tty_user = 2;

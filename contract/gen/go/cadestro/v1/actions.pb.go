@@ -205,7 +205,7 @@ func (ServiceUnitState) EnumDescriptor() ([]byte, []int) {
 // raw admin-authored config that must be valid syntax for the chosen
 // backend. TERMINAL_ADMIN_LIMITED and TERMINAL_ADMIN_FULL are used by
 // the server's TerminalAdmin reconciler — they route the agent to two
-// passwordless templates designed for pm-tty-* accounts (which have
+// passwordless templates designed for cadestro-tty-* accounts (which have
 // no password to prompt for). Operator-authored AdminPolicy actions
 // should continue to use FULL/LIMITED/CUSTOM.
 type AdminAccessLevel int32
@@ -215,8 +215,8 @@ const (
 	AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL                   AdminAccessLevel = 1 // Unrestricted access (password required)
 	AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED                AdminAccessLevel = 2 // System management commands only (password required)
 	AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM                 AdminAccessLevel = 3 // Admin-defined raw policy
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED AdminAccessLevel = 4 // Passwordless LIMITED variant for pm-tty-* TerminalAdmin grants
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL    AdminAccessLevel = 5 // Passwordless FULL variant for pm-tty-* TerminalAdmin grants
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED AdminAccessLevel = 4 // Passwordless LIMITED variant for cadestro-tty-* TerminalAdmin grants
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL    AdminAccessLevel = 5 // Passwordless FULL variant for cadestro-tty-* TerminalAdmin grants
 )
 
 // Enum value maps for AdminAccessLevel.
@@ -2159,7 +2159,7 @@ type UserParams struct {
 	// still works because it bypasses PAM.
 	//
 	// Intended for system-managed nologin accounts that are only ever
-	// reached via setuid — pm-tty-* is the canonical case. Do NOT set
+	// reached via setuid — cadestro-tty-* is the canonical case. Do NOT set
 	// this for general-purpose users: passwords are good to have for
 	// any account that might ever need a PAM-protected login path, and
 	// setting no_password here locks that path closed.
@@ -2844,7 +2844,7 @@ func (x *EncryptionParams) GetUserPassphraseComplexity() LpsPasswordComplexity {
 }
 
 // WifiParams configures NetworkManager WiFi connection management.
-// Each action creates a connection profile named pm-wifi-{actionId}. Supports PSK (password) and
+// Each action creates a connection profile named cadestro-wifi-{actionId}. Supports PSK (password) and
 // EAP-TLS (certificate) authentication.
 type WifiParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`

@@ -29,7 +29,7 @@ var unmarshalOpts = protojson.UnmarshalOptions{}
 //   - EmitUnpopulated = true. Without this, proto3 scalar zero values
 //     are dropped from the JSON output, which makes it impossible to
 //     distinguish "the caller explicitly wants false" from "the caller
-//     did not mention the field." The pm-tty-* home directory bug
+//     did not mention the field." The cadestro-tty-* home directory bug
 //     exploited this exact gap: syncTtyUserAction set createHome:
 //     false, which the default marshaller dropped, and the agent's
 //     "default true for normal users" logic then fabricated a home

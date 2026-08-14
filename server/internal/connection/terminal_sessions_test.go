@@ -12,7 +12,7 @@ import (
 )
 
 func newTestSession(id string) *TerminalSession {
-	return NewTerminalSession(id, "dev-1", "user-1", "pm-tty-alice", 80, 24)
+	return NewTerminalSession(id, "dev-1", "user-1", "cadestro-tty-alice", 80, 24)
 }
 
 func outputMsg() *pm.AgentMessage {

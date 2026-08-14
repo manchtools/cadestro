@@ -45,11 +45,11 @@ func TestOpenRunsShellAsTargetUser_Container(t *testing.T) {
 	// Ask the shell who it is via a UNIQUE sentinel, then exit so the PTY reaches
 	// EOF. A bare `id -un` would false-pass: the login-shell prompt (PS1 = \u@\h)
 	// already prints the username, so `strings.Contains(out, u)` could match the
-	// prompt even if the shell ran as the wrong user. The "PM_USER:" prefix only
+	// prompt even if the shell ran as the wrong user. The "CADESTRO_USER:" prefix only
 	// appears in the command's OUTPUT (the echoed command text carries the
-	// literal "$(id -un)", not its value), so matching "PM_USER:<u>" proves the
+	// literal "$(id -un)", not its value), so matching "CADESTRO_USER:<u>" proves the
 	// shell actually executed as u.
-	if _, err := sess.Write([]byte("printf 'PM_USER:%s\\n' \"$(id -un)\"\nexit\n")); err != nil {
+	if _, err := sess.Write([]byte("printf 'CADESTRO_USER:%s\\n' \"$(id -un)\"\nexit\n")); err != nil {
 		t.Fatalf("Write: %v", err)
 	}
 
@@ -74,7 +74,7 @@ func TestOpenRunsShellAsTargetUser_Container(t *testing.T) {
 		t.Fatalf("timed out reading PTY output; got so far:\n%s", buf.String())
 	}
 
-	if marker := "PM_USER:" + u; !strings.Contains(buf.String(), marker) {
+	if marker := "CADESTRO_USER:" + u; !strings.Contains(buf.String(), marker) {
 		t.Errorf("shell did not run as %q (sentinel %q absent from PTY output):\n%s", u, marker, buf.String())
 	}
 }

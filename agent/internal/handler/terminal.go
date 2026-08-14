@@ -26,7 +26,7 @@ import (
 var _ sdk.TerminalHandler = (*Handler)(nil)
 
 // Seams over the sysuser helpers + the setup deadline, so the bounded-setup
-// behaviour (WS13 #2) is testable without a real pm-tty-* account: a test
+// behaviour (WS13 #2) is testable without a real cadestro-tty-* account: a test
 // substitutes a ctx-respecting blocker for Modify and a fixed user for Get, and
 // lowers the timeout to keep the test fast. Production uses the real helpers
 // (Modify shells out via sudo -n) and the 30s default.
@@ -35,7 +35,7 @@ var (
 	// recursive chown of the temp home), built over the handler's Direct runner —
 	// the agent runs as root — mirroring the osquery/inventory Managers. The
 	// sysuserModify/sysuserGet method-value seams stay so tests can substitute a
-	// ctx-respecting blocker / a fixed user without a real pm-tty-* account.
+	// ctx-respecting blocker / a fixed user without a real cadestro-tty-* account.
 	termUserMgr   = mustTermUserManager()
 	termFSMgr     = mustTermFSManager()
 	sysuserModify = termUserMgr.Modify
@@ -275,7 +275,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 
 	// Refuse anything that doesn't look like a Cadestro TTY user.
 	// IsValidName covers the syntactic constraints (lowercase, length,
-	// charset). The HasPrefix check enforces the dedicated pm-tty-*
+	// charset). The HasPrefix check enforces the dedicated cadestro-tty-*
 	// namespace so the agent can never operate on an arbitrary system
 	// account, even if the control server's resolution is buggy or
 	// compromised. The constant comes from the SDK so the prefix is
@@ -295,7 +295,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// Fail-closed: a nil store or any read error means the gate is
 	// closed, never the other way around. This runs before the user
 	// lookup so a disabled device does zero syscalls on each rejected
-	// request and the error message doesn't leak whether the pm-tty-*
+	// request and the error message doesn't leak whether the cadestro-tty-*
 	// user happens to exist.
 	if h.store == nil {
 		logger.Warn("terminal start rejected: no store wired for tty gate")
@@ -330,7 +330,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// that on inbound stream messages rather than trusting a possibly-compromised
 	// control. ulid.Parse rejects path-meaningful values ("../../etc", "a/b",
 	// embedded NULs) and the empty string before any filesystem use; together
-	// with the validated pm-tty-* username this makes the joined path unable to
+	// with the validated cadestro-tty-* username this makes the joined path unable to
 	// escape /tmp. Placed after the TTY/dims gates so those keep their existing
 	// rejection precedence, but before the user lookup so an invalid id costs no
 	// syscall.
@@ -340,7 +340,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	}
 
 	// Verify the TTY user actually exists and is not locked. This is
-	// the dedicated pm-tty-* account; failure here means the control
+	// the dedicated cadestro-tty-* account; failure here means the control
 	// server's TerminalAccess provisioning hasn't run on this device
 	// yet, or the user has been disabled.
 	info, err := sysuserGet(ctx, req.TtyUser)
@@ -458,7 +458,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	//
 	// Use os.Mkdir (NOT MkdirAll) so a pre-existing path causes a
 	// hard failure instead of being followed: a malicious local user
-	// could otherwise plant /tmp/pm-tty-foo.<sessid> as a symlink
+	// could otherwise plant /tmp/cadestro-tty-foo.<sessid> as a symlink
 	// pointing at /etc and trick the subsequent chown into rewriting
 	// system file ownership. ULID session ids make accidental
 	// collisions statistically impossible, so EEXIST really does

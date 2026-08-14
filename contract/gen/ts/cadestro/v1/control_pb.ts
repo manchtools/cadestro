@@ -10057,7 +10057,7 @@ export type StartTerminalResponse = Message<"cadestro.v1.StartTerminalResponse">
 
   /**
    * The TTY user the agent will spawn the shell as. Returned for the
-   * UI to display ("Connected as pm-tty-pdotterer") and for diagnostics.
+   * UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
    * @gotags: validate:"required,min=1,max=64"
    *
    * @generated from field: string tty_user = 5;

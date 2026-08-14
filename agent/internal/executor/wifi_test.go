@@ -14,7 +14,7 @@ import (
 
 // executeWifi splices the action ID into a filesystem path
 // (network.CertBaseDir/<id> for EAP-TLS certificates) and into the
-// pm-wifi-<id> NetworkManager connection name. Like the sudo/ssh/sshd
+// cadestro-wifi-<id> NetworkManager connection name. Like the sudo/ssh/sshd
 // executors it must run the action ID through validateActionIDForFilesystem
 // BEFORE building any path, not merely reject the empty string.
 //

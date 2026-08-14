@@ -14,7 +14,7 @@ import (
 // them; legitimate values must pass.
 func TestValidateProfile_RejectsControlChars(t *testing.T) {
 	ok := mustSecret(t, "Hunter2-Corp-PSK-distinctive")
-	valid := Profile{Name: "pm-wifi-1", SSID: "CorpNet", AuthType: AuthPSK, PSK: ok}
+	valid := Profile{Name: "cadestro-wifi-1", SSID: "CorpNet", AuthType: AuthPSK, PSK: ok}
 	if err := validateProfile(valid); err != nil {
 		t.Fatalf("a clean PSK profile was rejected: %v", err)
 	}
@@ -23,13 +23,13 @@ func TestValidateProfile_RejectsControlChars(t *testing.T) {
 		"newline in name":      {Name: "pm\n[connection]\nid=evil", SSID: "Corp", AuthType: AuthPSK, PSK: ok},
 		"leading dash in name": {Name: "-x", SSID: "Corp", AuthType: AuthPSK, PSK: ok},
 		"empty name":           {Name: "", SSID: "Corp", AuthType: AuthPSK, PSK: ok},
-		"newline in ssid":      {Name: "pm-wifi-1", SSID: "Corp\nhidden=true", AuthType: AuthPSK, PSK: ok},
-		"NUL in ssid":          {Name: "pm-wifi-1", SSID: "Corp\x00", AuthType: AuthPSK, PSK: ok},
+		"newline in ssid":      {Name: "cadestro-wifi-1", SSID: "Corp\nhidden=true", AuthType: AuthPSK, PSK: ok},
+		"NUL in ssid":          {Name: "cadestro-wifi-1", SSID: "Corp\x00", AuthType: AuthPSK, PSK: ok},
 		// A normal NewSecret PSK can't hold a newline, but a NewMultilineSecret one
 		// can — and its own doc forbids using it for a keyfile psk= line. The
 		// profile validator is what enforces that, so test it via that constructor.
-		"newline in psk":      {Name: "pm-wifi-1", SSID: "Corp", AuthType: AuthPSK, PSK: exec.NewMultilineSecret("pass\n[wifi-security]\nkey-mgmt=none")},
-		"newline in identity": {Name: "pm-wifi-1", SSID: "Corp", AuthType: AuthEAPTLS, Identity: "user\nx"},
+		"newline in psk":      {Name: "cadestro-wifi-1", SSID: "Corp", AuthType: AuthPSK, PSK: exec.NewMultilineSecret("pass\n[wifi-security]\nkey-mgmt=none")},
+		"newline in identity": {Name: "cadestro-wifi-1", SSID: "Corp", AuthType: AuthEAPTLS, Identity: "user\nx"},
 	}
 	for name, p := range bad {
 		t.Run(name, func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestValidateProfile_RejectsWeakOrMalformedPSK(t *testing.T) {
 	}
 	for name, psk := range cases {
 		t.Run(name, func(t *testing.T) {
-			if err := validateProfile(Profile{Name: "pm-wifi-1", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, psk)}); err == nil {
+			if err := validateProfile(Profile{Name: "cadestro-wifi-1", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, psk)}); err == nil {
 				t.Fatalf("validateProfile accepted malformed WPA-PSK case %q", name)
 			}
 		})
@@ -94,7 +94,7 @@ func TestConnectionNameMethods_RejectInvalidName(t *testing.T) {
 // A legitimate connection name (including one with embedded spaces, which nmcli
 // permits) must be accepted by the name validator.
 func TestValidateConnName_AllowsLegitNames(t *testing.T) {
-	for _, name := range []string{"pm-wifi-01", "Corp Net", "home_5GHz"} {
+	for _, name := range []string{"cadestro-wifi-01", "Corp Net", "home_5GHz"} {
 		if err := validateConnName(name); err != nil {
 			t.Errorf("validateConnName(%q) = %v, want nil", name, err)
 		}

@@ -30,7 +30,7 @@ func TestLuksCLI_NeverAcceptsTheTokenOnArgv(t *testing.T) {
 	}
 	// Literals, not the package's own constants: the guard must fail if the
 	// route is renamed away, not follow the rename.
-	for _, required := range []string{"token-file", "PM_LUKS_TOKEN"} {
+	for _, required := range []string{"token-file", "CADESTRO_LUKS_TOKEN"} {
 		if !strings.Contains(src, required) {
 			t.Errorf("cmd_luks.go must offer %q as a token route that keeps the token off argv", required)
 		}
