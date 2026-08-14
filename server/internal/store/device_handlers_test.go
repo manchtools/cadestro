@@ -899,6 +899,17 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	_, err = ulid.ParseStrict(issued.Msg.Token)
 	require.NoError(t, err)
 	assert.Contains(t, issued.Msg.Uri, issued.Msg.Token)
+	// The agent's URI handler rewrites the scheme by STRICT prefix and exits
+	// non-zero on anything else (agent cmd/cadestrod/cmd_luks.go runLuksURI),
+	// and the operator pastes CliCommand into a shell. Both values therefore
+	// name device-side artifacts that live in the agent module, so a rename on
+	// only one side of that boundary produces a link the agent refuses and a
+	// command the host cannot find — with no compile error anywhere. These two
+	// assertions are the only thing that fails when that happens.
+	assert.True(t, strings.HasPrefix(issued.Msg.Uri, "cadestro://"),
+		"the issued URI must use the scheme the agent's handler accepts; got %q", issued.Msg.Uri)
+	assert.True(t, strings.HasPrefix(issued.Msg.CliCommand, "cadestrod "),
+		"CliCommand must invoke the installed agent daemon by its real name; got %q", issued.Msg.CliCommand)
 	// F2: the advertised command must NOT carry the token on argv —
 	// /proc/<pid>/cmdline is world-readable and the client reads the passphrase
 	// before it dials, so an argv token is exposed for the whole typing window

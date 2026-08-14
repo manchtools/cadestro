@@ -307,7 +307,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 	}
 	return connect.NewResponse(&pmv1.CreateLuksTokenResponse{
 		Token: token,
-		Uri:   "power-manage://luks/set-passphrase?token=" + token,
+		Uri:   "cadestro://luks/set-passphrase?token=" + token,
 		// The advertised command carries NEITHER the token nor sudo (F2).
 		// /proc/<pid>/cmdline is world-readable and the client collects the
 		// passphrase before it dials, so a token on argv was exposed for the
@@ -318,7 +318,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 		// unprivileged; an operator copying it back would reinstate the
 		// escalation the daemon exists to remove. Token is returned as its own
 		// field for the UI to display.
-		CliCommand: "power-manage-agent luks set-passphrase",
+		CliCommand: "cadestrod luks set-passphrase",
 	}), nil
 }
 
