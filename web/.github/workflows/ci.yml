@@ -4,18 +4,13 @@ name: CI
 # (audit "Web CI runs only on tags" — fixed here). Now runs on every
 # PR, every main push, and every release tag.
 on:
+  # Paths are repository-relative: this module is web/ inside the monorepo, and
+  # it is also rebuilt when the contract it compiles against moves.
   pull_request:
     paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'static/**'
-      - 'messages/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'svelte.config.js'
-      - 'vite.config.ts'
-      - 'tsconfig.json'
-      - '.github/workflows/ci.yml'
+      - 'web/**'
+      - 'contract/gen/ts/**'
+      - 'contract/ts/**'
   push:
     branches:
       - main
@@ -34,26 +29,17 @@ jobs:
       run:
         working-directory: web
     steps:
+      # One checkout: the contract's generated types (contract/gen/ts) and its
+      # hand-written client (contract/ts) are in this repository, reached
+      # through the $contract and $contractClient aliases.
       - uses: actions/checkout@v4
-        with:
-          path: web
-
-      # SDK contains generated TypeScript protobuf types (gen/ts) and
-      # handwritten TypeScript utilities (ts/) needed by the web app.
-      - uses: actions/checkout@v4
-        with:
-          repository: manchtools/power-manage-sdk
-          path: sdk
-          sparse-checkout: |
-            gen/ts
-            ts
 
       - uses: oven-sh/setup-bun@v2
 
       - run: bun install
-      # Symlink web's node_modules into sdk/ so svelte-check can resolve
-      # @bufbuild/protobuf imports from SDK files outside the web directory.
-      - run: ln -s $(pwd)/node_modules ../sdk/node_modules
+      # Symlink web's node_modules into the contract so svelte-check can
+      # resolve @bufbuild/protobuf from files outside the web directory.
+      - run: ln -s $(pwd)/node_modules ../contract/node_modules
       - run: bun run check
       - run: bunx playwright install --with-deps chromium
       - run: bun run test
@@ -78,16 +64,6 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: web
-
-      - uses: actions/checkout@v4
-        with:
-          repository: manchtools/power-manage-sdk
-          path: sdk
-          sparse-checkout: |
-            gen/ts
-            ts
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -98,58 +74,39 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Image tag contract:
-      #   :latest    -> the most recent stable release  (vYYYY.MM)
-      #   :latest-rc -> the most recent release candidate (vYYYY.MM-rcN)
-      # Anything with -rc in the tag name moves :latest-rc; everything
-      # else moves :latest.
-      - name: Resolve moving tag
-        id: moving
+      # Image tag contract, identical to the control image's because one
+      # deployment resolves both from a single IMAGE_TAG:
+      #   :<version>  -> the release tag without its leading v (what .env pins)
+      #   :latest     -> the most recent stable release  (vYYYY.MM)
+      #   :latest-rc  -> the most recent release candidate (vYYYY.MM-rcN)
+      # A tag published with the leading v would be unreachable from a
+      # deployment, because install.sh writes IMAGE_TAG=${RELEASE_TAG#v}.
+      - name: Resolve tags
+        id: tags
         run: |
-          if [[ "${{ github.ref_name }}" == *-rc* ]]; then
-            echo "tag=latest-rc" >> "$GITHUB_OUTPUT"
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF_NAME" == *-rc* ]]; then
+            echo "moving=latest-rc" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "moving=latest" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: web/Dockerfile
+          file: web/Containerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/power-manage-web:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/power-manage-web:${{ steps.moving.outputs.tag }}
-          build-args: VERSION=${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/cadestro-web:${{ steps.tags.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/cadestro-web:${{ steps.tags.outputs.moving }}
+          # The same string control stamps into its own binary
+          # (-X main.version=${GITHUB_REF_NAME#v}). The UI compares its build
+          # version against the one control reports from /health and reloads
+          # itself when they differ, so a leading v here would make every first
+          # visit to a fresh deployment reload once for nothing.
+          build-args: VERSION=${{ steps.tags.outputs.version }}
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    # Only deploy if DEPLOY_HOST secret is configured
-    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to host
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          GHCR_TOKEN: ${{ secrets.DEPLOY_GHCR_TOKEN }}
-        run: |
-          # Setup SSH
-          mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-
-          SSH="ssh -i ~/.ssh/deploy_key ${DEPLOY_USER}@${DEPLOY_HOST}"
-          SCP="scp -i ~/.ssh/deploy_key"
-
-          # Copy deploy script to host and run it
-          $SCP deploy/deploy.sh "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/pm-deploy.sh"
-          $SSH "chmod +x /tmp/pm-deploy.sh && GHCR_TOKEN='${GHCR_TOKEN}' /tmp/pm-deploy.sh ${{ github.ref_name }} && rm /tmp/pm-deploy.sh"

@@ -14,6 +14,31 @@ const _config = new ConfigStore();
 const _auth = new AuthStore();
 const _offline = new OfflineStore();
 
+// A deployment that serves this app beside control writes the control origin
+// into the page it sends (hooks.server.ts fills the meta tag app.html declares),
+// so a fresh install reaches a working UI instead of stopping at /setup to ask a
+// human for the address of the server that just served them the page.
+//
+// It is a SEED, not an override: it applies only while nothing is configured, so
+// an operator who pointed this browser somewhere else from Settings keeps that
+// choice. It runs at module scope because the route guards read `isConfigured`
+// inside `load`, which is after this module is imported and before anything
+// renders. With no tag, no content, or no document at all — a build served
+// without that server, or a component under test — nothing happens and /setup
+// asks exactly as it always did.
+function preconfiguredControlUrl(): string {
+	if (typeof document === 'undefined') return '';
+	const configured = document
+		.querySelector('meta[name="cadestro-control-url"]')
+		?.getAttribute('content');
+	return (configured ?? '').trim().replace(/\/+$/, '');
+}
+
+const _preconfigured = preconfiguredControlUrl();
+if (_preconfigured && !_config.isConfigured) {
+	_config.serverUrl = _preconfigured;
+}
+
 // --- Wire ApiClient with dependency injection ---
 // Closures capture _auth/_config by reference; works because refreshFn/logoutFn
 // are called lazily (never during construction).

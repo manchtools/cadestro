@@ -1,10 +1,15 @@
 # Cadestro server quickstart
 
-<!-- docref: begin src=deploy/compose.yml#@deployment-services:11b2ae28 -->
-The stack has exactly two services: Traefik and one control process with an
-embedded SQLite database. Compose gives control no arguments and passes it the
-rendered `config/control.env` as the container's environment file, and passes
-Traefik `config/traefik-acme.env` and `config/traefik-dns.env` the same way.
+<!-- docref: begin src=deploy/compose.yml#@deployment-services:4cf17a9d -->
+The stack has exactly three services: Traefik, one control process with an
+embedded SQLite database, and the administration UI. Compose gives control no
+arguments and passes it the rendered `config/control.env` as the container's
+environment file, and passes Traefik `config/traefik-acme.env` and
+`config/traefik-dns.env`, and the UI `config/web.env`, the same way. The UI is
+served on `CONTROL_DOMAIN` alongside the API rather than on a hostname of its
+own, so the browser's API origin is the page's own origin and a fresh install
+needs no client configuration. Both images are released from one repository
+under one tag, which is why they share `IMAGE_TAG`.
 The authoritative system design is
 `../../DESIGN_2026_07_31/00_TARGET_DESIGN.md`.
 <!-- docref: end -->
@@ -118,10 +123,12 @@ into `config/control.env`, and that file is where ordinary settings such as the
 log level or the retention windows are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:7b2cbee9 -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:13fdd201 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
-encryption, session and sealing keys, and `config/control.env` with a 90-day
-audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`. It first
+encryption, session and sealing keys, `config/control.env` with a 90-day
+audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`, and
+`config/web.env` with the `PUBLIC_CONTROL_URL` the UI calls — the same origin
+control publishes its setup URL on, taken from `CONTROL_DOMAIN`. It first
 refuses, before generating any key material, when `data/backups` shares a
 filesystem with `data/control`, because control refuses to start on such a
 configuration, and equally when the chosen ACME challenge cannot work — an
@@ -142,10 +149,15 @@ protocol v2 on an isolated network; control itself authenticates the device
 certificate and checks revocation.
 <!-- docref: end -->
 
-<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:873710ea,deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
+<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:21e99269,deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
 Traefik also authenticates control's internal TLS certificate against the
 deployment CA, so browser/API traffic stays encrypted after public TLS
-termination. Its JSON access log omits the URI-bearing `RequestPath` and
+termination. Control keeps the paths it serves — the `cadestro.v1.ControlService`
+procedures, `/scim`, `/terminal`, `/health`, and `/ready` — at a higher router
+priority, and everything else on that hostname is the UI, including the `/setup`
+page the bootstrap URL points at. The hop to the UI container is plain HTTP on
+the internal bridge: it serves build output, holds no secret, and that hop never
+leaves the Compose network. Its JSON access log omits the URI-bearing `RequestPath` and
 `RequestLine` fields; method, host, status, timing, router, service, and client
 metadata remain available without recording query-string credentials.
 <!-- docref: end -->
@@ -153,7 +165,8 @@ metadata remain available without recording query-string credentials.
 ## Start
 
 Run `docker compose up -d --wait`, then inspect the result with
-`docker compose ps`.
+`docker compose ps`. The administration UI answers at `https://$CONTROL_DOMAIN`
+and needs no configuration of its own — the setup URL below opens in it.
 
 <!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#runBootstrapAdmin:fd19e1f2,internal/identity/bootstrap.go#Bootstrapper.setupURL:417b204e -->
 Create a host-authorized, single-use administrator setup URL:

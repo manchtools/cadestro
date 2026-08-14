@@ -226,5 +226,7 @@ docker compose pull
 docker compose up -d --wait
 
 print_dns_reminder
-printf 'Cadestro is running. Create the one-time administrator setup URL with:\n'
+printf 'Cadestro is running. The administration UI is served at https://%s and needs\n' "$CONTROL_DOMAIN"
+printf 'no configuration; it talks to control on that same origin.\n'
+printf 'Create the one-time administrator setup URL with:\n'
 printf '  cd %q && docker compose exec control cadestro bootstrap-admin\n' "$INSTALL_DIR"

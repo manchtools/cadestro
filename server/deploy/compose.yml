@@ -66,6 +66,28 @@ services:
         ipv4_address: 172.29.0.3
       agent_proxy:
         ipv4_address: 172.30.0.3
+
+  # The administration UI, served on the same public hostname as control:
+  # traefik/dynamic/routes.yml keeps control's own paths for control and hands
+  # everything else here, so the browser's API origin is the page's own origin
+  # and a fresh install needs no client configuration. It is released from this
+  # repository under the same tag as control, which is why it shares IMAGE_TAG.
+  # It reaches nothing itself — no volume, no agent network, no secret — so the
+  # only thing it is given is the origin its RPCs go to.
+  web:
+    image: ghcr.io/manchtools/cadestro-web:${IMAGE_TAG:-latest}
+    container_name: cadestro-web
+    restart: unless-stopped
+    env_file: ./config/web.env
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      internal:
+        ipv4_address: 172.29.0.4
 # docref: end deployment-services
 
 networks:

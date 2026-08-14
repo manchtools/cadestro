@@ -5,6 +5,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content="Cadestro — Linux fleet management web UI" />
 
+		<!-- The control origin this deployment was configured with, filled in per
+		     request by hooks.server.ts. A deployment that serves the UI beside
+		     control writes its own origin here and the app is configured before it
+		     paints; an empty value (or a build served without that server, such as
+		     a component test) leaves the app to ask at /setup, exactly as before. -->
+		<meta name="cadestro-control-url" content="%cadestro.controlUrl%" />
+
 		<!-- Favicons. Standard fallback first for browsers that ignore
 		     `media=` on rel=icon, then the light + dark variants picked
 		     by media query, then the adaptive SVG as a last-resort

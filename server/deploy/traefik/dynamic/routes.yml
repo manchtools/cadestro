@@ -8,11 +8,35 @@ http:
       minVersion: VersionTLS13
       maxVersion: VersionTLS13
   routers:
+    # The UI and the API share one hostname, so the split between them is a
+    # path rule. Control keeps exactly what it serves: the Connect procedures of
+    # cadestro.v1.ControlService, SCIM provisioning, the terminal websocket
+    # bridge, and the two probes. Every prefix ends on a path segment so it
+    # matches the same way whether Traefik compares raw prefixes or segments.
+    #
+    # Both priorities are explicit. Without them Traefik ranks by rule length,
+    # which would make the whole split depend on how the rules happen to be
+    # spelled — and a UI catch-all that outranked this one would answer browser
+    # RPCs with the SPA shell and a 200.
     control:
-      rule: 'Host(`{{ env "CONTROL_DOMAIN" }}`)'
+      rule: >-
+        Host(`{{ env "CONTROL_DOMAIN" }}`) &&
+        (PathPrefix(`/cadestro.v1.ControlService`) || PathPrefix(`/scim`) ||
+        Path(`/terminal`) || Path(`/health`) || Path(`/ready`))
+      priority: 100
       entryPoints: [websecure]
       middlewares: [security-headers]
       service: control
+      tls:
+        certResolver: letsencrypt
+    # Everything else on the browser hostname is the administration UI,
+    # including /setup — the path control's bootstrap-admin URL points at.
+    web:
+      rule: 'Host(`{{ env "CONTROL_DOMAIN" }}`)'
+      priority: 10
+      entryPoints: [websecure]
+      middlewares: [security-headers]
+      service: web
       tls:
         certResolver: letsencrypt
   middlewares:
@@ -29,6 +53,14 @@ http:
         serversTransport: control-tls
         servers:
           - url: https://control:8081
+    # Plain HTTP on the internal bridge: the UI container serves static build
+    # output and holds no secret, and the hop never leaves the compose network.
+    # Control's backend keeps its authenticated TLS above because that hop
+    # carries sessions and secrets.
+    web:
+      loadBalancer:
+        servers:
+          - url: http://web:3000
   # docref: end public-backend-tls
 
 # docref: begin agent-route

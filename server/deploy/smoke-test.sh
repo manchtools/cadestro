@@ -170,7 +170,7 @@ bash ./setup.sh >/dev/null
 assert_archive_isolated
 
 mapfile -t services < <(compose config --services | sort)
-[[ "${services[*]}" == "control traefik" ]] || {
+[[ "${services[*]}" == "control traefik web" ]] || {
     printf 'unexpected deployment services: %s\n' "${services[*]}" >&2
     exit 1
 }
@@ -261,4 +261,4 @@ direct_status="$(docker run --rm --network "container:$control_id" --user 0:0 \
     exit 1
 }
 
-printf 'PASS: two services, isolated audit archive, verified SQLite backup, FTS5, exact RPC surface, authenticated backend TLS, query-safe logs, and isolated agent route\n'
+printf 'PASS: three services, isolated audit archive, verified SQLite backup, FTS5, exact RPC surface, authenticated backend TLS, query-safe logs, and isolated agent route\n'

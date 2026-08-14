@@ -298,6 +298,18 @@ CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key
 CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem
 CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key
 EOF
+    # The browser gets a working UI without configuring anything, because the
+    # UI is served on the same origin as the API it calls: Traefik hands
+    # CONTROL_DOMAIN to the web container and keeps control's own paths for
+    # control. The origin is still written down rather than inferred in the
+    # browser, so an operator who fronts the UI with a different hostname
+    # changes one line here instead of re-teaching every browser through
+    # /setup. It is the origin control already publishes its single-use setup
+    # URL on: bootstrap-admin prints <CADESTRO_PUBLIC_BASE_URL>/setup#…, and
+    # /setup is a page only the UI serves.
+    cat > "$CONFIG_DIR/web.env" <<EOF
+PUBLIC_CONTROL_URL=https://${CONTROL_DOMAIN}
+EOF
 }
 
 validate_permissions() {
@@ -339,7 +351,7 @@ main() {
     ensure_secret_files
     write_config
 
-    chmod 600 "$CERTS_DIR"/*.key "$SECRETS_DIR"/* "$CONFIG_DIR/control.env"
+    chmod 600 "$CERTS_DIR"/*.key "$SECRETS_DIR"/* "$CONFIG_DIR/control.env" "$CONFIG_DIR/web.env"
     chmod 644 "$CERTS_DIR"/*.crt
     validate_permissions
 

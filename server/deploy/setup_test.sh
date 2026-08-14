@@ -38,6 +38,14 @@ CONTROL_ENV_VARIABLES=(
     CADESTRO_SEALING_KEY_FILE
 )
 
+# The single expected web.env surface, same contract as above. The web
+# container is preconfigured from the answers the installer already collected,
+# so this file is what makes a fresh install reach a working UI without the
+# operator typing a server URL into /setup.
+WEB_ENV_VARIABLES=(
+    PUBLIC_CONTROL_URL
+)
+
 # Every fixture models a deployment that can actually start, archive storage
 # included. Without it setup.sh would stop at the archive check and each
 # negative test below would pass for a reason it does not name.
@@ -85,10 +93,11 @@ assert_env_line() {
 # line rather than only from assignment-shaped lines also rejects stray output.
 assert_env_variable_set() {
     local file="$1" expected actual
-    expected="$(printf '%s\n' "${CONTROL_ENV_VARIABLES[@]}" | LC_ALL=C sort)"
+    shift
+    expected="$(printf '%s\n' "$@" | LC_ALL=C sort)"
     actual="$(cut -d= -f1 < "$file" | LC_ALL=C sort)"
     [[ "$expected" == "$actual" ]] || {
-        printf 'unexpected control.env variables:\n%s\n' \
+        printf 'unexpected variables in %s:\n%s\n' "$file" \
             "$(diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true)" >&2
         return 1
     }
@@ -190,7 +199,7 @@ assert_setup_refused() {
     }
     for artifact in certs/ca.key certs/ca.crt certs/control.key certs/control.crt \
         secrets/encryption.key secrets/sealing.key secrets/session-signing.pem \
-        config/control.env config/traefik-acme.env; do
+        config/control.env config/web.env config/traefik-acme.env; do
         [[ ! -e "$directory/$artifact" ]] || {
             printf 'refused run left %s behind\n' "$directory/$artifact" >&2
             return 1
@@ -202,11 +211,11 @@ assert_setup_refused() {
 # configuration is where the wiring can be asserted: a rendered file nothing
 # references would satisfy a file-content check and reach Traefik never.
 compose_service_environment() {
-    local directory="$1"
+    local directory="$1" service="${2:-traefik}"
     docker compose -p pm-challenge-test -f "$directory/compose.yml" config --format json \
         | python3 -c 'import json, sys
-service = json.load(sys.stdin)["services"]["traefik"]["environment"]
-print("\n".join(f"{name}={value}" for name, value in service.items()))'
+service = json.load(sys.stdin)["services"][sys.argv[1]]["environment"]
+print("\n".join(f"{name}={value}" for name, value in service.items()))' "$service"
 }
 
 # `docker compose up -d --wait` waits on the services that declare a
@@ -258,7 +267,7 @@ test_secure_idempotent_setup() {
     [[ "$(stat -c '%a' "$config")" == 600 ]]
     # Control is configured entirely by the environment; no file is rendered.
     [[ ! -e "$directory/config/control.json" ]]
-    assert_env_variable_set "$config"
+    assert_env_variable_set "$config" "${CONTROL_ENV_VARIABLES[@]}"
     assert_env_line "$config" 'CADESTRO_PUBLIC_LISTEN=0.0.0.0:8081'
     assert_env_line "$config" 'CADESTRO_AGENT_LISTEN=172.30.0.3:8082'
     assert_env_line "$config" 'CADESTRO_PUBLIC_BASE_URL=https://manage.example.test'
@@ -561,6 +570,127 @@ test_provider_credentials_never_leave_their_file() {
     }
 }
 
+# A fresh install must reach a working UI without anyone typing a server URL
+# into /setup, so the browser origin is rendered from the same answer the rest
+# of the deployment is built from rather than left to the operator.
+test_web_env_is_rendered_for_the_control_domain() {
+    local directory config
+    directory="$(challenge_fixture)"
+    run_setup "$directory" >/dev/null
+
+    config="$directory/config/web.env"
+    [[ -f "$config" ]] || {
+        printf 'setup.sh rendered no web configuration; the UI container would start unconfigured\n' >&2
+        return 1
+    }
+    # validate_permissions covers every config/*.env, so a web.env that escaped
+    # the mode rules would have failed the run; assert it anyway, because this
+    # file is new and the loop is what makes that true.
+    [[ "$(stat -c '%a' "$config")" == 600 ]]
+    assert_env_variable_set "$config" "${WEB_ENV_VARIABLES[@]}"
+    # Same origin as control: Traefik serves the UI on the browser domain and
+    # keeps control's own paths for control, so the API the UI talks to is the
+    # page's own origin. CADESTRO_PUBLIC_BASE_URL already assumes exactly this —
+    # bootstrap-admin prints <that base>/setup#bootstrap_token=…, a path only
+    # the UI serves.
+    assert_env_line "$config" 'PUBLIC_CONTROL_URL=https://manage.example.test'
+    [[ "$(env_value "$config" PUBLIC_CONTROL_URL)" == "$(env_value "$directory/config/control.env" CADESTRO_PUBLIC_BASE_URL)" ]] || {
+        printf 'the UI would call an origin other than the one control publishes its setup URL on\n' >&2
+        return 1
+    }
+}
+
+# The prefix every browser RPC lands on is not a constant this file may choose:
+# it is the Connect service name the contract generates. Reading it out of the
+# generated client means a renamed proto package fails here instead of silently
+# routing RPCs into the web container, which would answer them with the SPA
+# shell and a 200.
+control_rpc_prefix() {
+    local generated="$DEPLOY_DIR/../../contract/gen/go/cadestro/v1/cadestrov1connect/control.connect.go" name
+    [[ -f "$generated" ]] || {
+        printf 'the generated Connect client is not at %s, so the routed RPC prefix cannot be derived\n' \
+            "$generated" >&2
+        return 1
+    }
+    name="$(sed -nE 's|^[[:space:]]*ControlServiceName = "([^"]+)"$|\1|p' "$generated")"
+    [[ -n "$name" ]] || {
+        printf 'ControlServiceName is not declared in %s\n' "$generated" >&2
+        return 1
+    }
+    printf '/%s\n' "$name"
+}
+
+# Both the UI and the API answer on CONTROL_DOMAIN, so the split between them is
+# a routing rule rather than a second hostname. Control keeps exactly the paths
+# it serves; everything else is the UI.
+test_traefik_reserves_the_control_paths_and_serves_the_ui() {
+    local routes="$DEPLOY_DIR/traefik/dynamic/routes.yml" prefix path
+    prefix="$(control_rpc_prefix)"
+
+    grep -Fq "PathPrefix(\`${prefix}\`)" "$routes" || {
+        printf 'the control router does not reserve %s; browser RPCs would reach the UI container\n' \
+            "$prefix" >&2
+        return 1
+    }
+    # The rest of control's public surface: SCIM provisioning, the terminal
+    # websocket bridge, and the two probes the UI and Compose both ask for.
+    for path in '/scim' '/terminal' '/health' '/ready'; do
+        grep -Eq "Path(Prefix)?\(\`${path}\`\)" "$routes" || {
+            printf 'the control router does not reserve %s\n' "$path" >&2
+            return 1
+        }
+    done
+    grep -Fq 'service: web' "$routes" || {
+        printf 'no router hands the browser host to the web container\n' >&2
+        return 1
+    }
+    grep -Fq 'url: http://web:3000' "$routes" || {
+        printf 'the web service does not name the UI container\n' >&2
+        return 1
+    }
+    # Traefik falls back to rule length when no priority is set, which would
+    # make this split depend on how the rules happen to be spelled. Both are
+    # explicit, and control's has to win.
+    local control_priority web_priority
+    control_priority="$(sed -nE '/^    control:$/,/^    [a-z]/ s|^ *priority: ([0-9]+)$|\1|p' "$routes")"
+    web_priority="$(sed -nE '/^    web:$/,/^    [a-z]/ s|^ *priority: ([0-9]+)$|\1|p' "$routes")"
+    [[ -n "$control_priority" && -n "$web_priority" ]] || {
+        printf 'both routers must set an explicit priority (control=%s web=%s)\n' \
+            "$control_priority" "$web_priority" >&2
+        return 1
+    }
+    (( control_priority > web_priority )) || {
+        printf 'the UI catch-all outranks control at %s over %s\n' "$web_priority" "$control_priority" >&2
+        return 1
+    }
+}
+
+# deploy.sh names the images it pulls, so a service added to compose.yml can be
+# left out of that line and then start from whatever stale image the host
+# happens to have — or from none. The expected set is read out of compose.yml
+# rather than written down a second time, so the next service is covered by
+# existing code.
+test_deploy_pulls_every_declared_service() {
+    local declared service pull_line
+    mapfile -t declared < <(python3 -c 'import sys, yaml
+print("\n".join(sorted(yaml.safe_load(open(sys.argv[1]))["services"])))' "$DEPLOY_DIR/compose.yml")
+    [[ ${#declared[@]} -gt 0 ]] || {
+        printf 'compose.yml declares no services, so this check proves nothing\n' >&2
+        return 1
+    }
+    pull_line="$(grep -E '^docker compose pull ' "$DEPLOY_DIR/deploy.sh")"
+    [[ -n "$pull_line" ]] || {
+        printf 'deploy.sh no longer pulls anything by name\n' >&2
+        return 1
+    }
+    for service in "${declared[@]}"; do
+        grep -qE "(^| )${service}( |$)" <<<"$pull_line" || {
+            printf 'deploy.sh does not pull the %s service: %s\n' "$service" "$pull_line" >&2
+            return 1
+        }
+    done
+}
+
 # This one reports its own verdict, because a skipped compose validation must
 # not be printed as a pass.
 test_compose_configuration_valid_in_both_modes() {
@@ -578,6 +708,10 @@ test_compose_configuration_valid_in_both_modes() {
     assert_env_line "$directory/resolved.env" \
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web'
     assert_service_healthcheck "$directory" traefik 'traefik healthcheck'
+    # The rendered web.env has to reach the container. A file nothing references
+    # would satisfy the rendering test above and configure nothing.
+    compose_service_environment "$directory" web > "$directory/resolved-web.env"
+    assert_env_line "$directory/resolved-web.env" 'PUBLIC_CONTROL_URL=https://manage.example.test'
 
     directory="$(challenge_fixture)"
     cp "$DEPLOY_DIR/compose.yml" "$directory/compose.yml"
@@ -648,4 +782,10 @@ test_unknown_challenge_fails
 printf 'PASS unknown ACME challenge rejected\n'
 test_provider_credentials_never_leave_their_file
 printf 'PASS provider credentials stay in their file\n'
+test_web_env_is_rendered_for_the_control_domain
+printf 'PASS the UI is preconfigured for the browser domain\n'
+test_traefik_reserves_the_control_paths_and_serves_the_ui
+printf 'PASS Traefik reserves the control paths and serves the UI on the same origin\n'
+test_deploy_pulls_every_declared_service
+printf 'PASS deploy.sh pulls every service the deployment declares\n'
 test_compose_configuration_valid_in_both_modes

@@ -9,7 +9,7 @@ cd "$DEPLOY_DIR"
 
 ./setup.sh
 docker compose config --quiet
-docker compose pull control traefik
+docker compose pull control traefik web
 docker compose up -d --wait --remove-orphans
 docker compose ps
 

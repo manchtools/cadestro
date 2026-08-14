@@ -1,10 +1,9 @@
-# Power Manage Web
+# Cadestro Web
 
-The web frontend for Power Manage, built with SvelteKit 2, Svelte 5, and TailwindCSS 4. Communicates with the Control Server via Connect-RPC.
+The web frontend for Cadestro, built with SvelteKit 2, Svelte 5, and TailwindCSS 4. Communicates with the Control Server via Connect-RPC.
 
-The sole workspace system-design authority is
-`../DESIGN_2026_07_31/00_TARGET_DESIGN.md`. The web is an RPC consumer and
-does not create hidden server history, rollout, or analytics APIs.
+The web is an RPC consumer of the contract in `../contract/` and creates no
+server history, rollout, or analytics API of its own.
 
 ## Tech Stack
 
@@ -50,7 +49,7 @@ npm run preview
 - **Dynamic RBAC** — custom roles, user groups with additive permissions, per-permission granularity. The role editor is a permission matrix whose groups are discovered from `ListPermissions`, and it commits from the pill rather than from a Save button
 - **OIDC login** — identity providers, identity linking, and auto-created users; MFA stays at the IdP. There is no manual user creation; JIT-created users can be erased locally, SCIM-managed users are deprovisioned by the identity provider
 - **SCIM v2 provisioning** — enable/disable, token rotation, group mapping
-- **Full-text search** — the stable Search RPC backed by PostgreSQL FTS during consolidation and FTS5 after the final SQLite port
+- **Full-text search** — the stable Search RPC, backed by SQLite FTS5 on the control server
 - **Audit log viewer** — operation/effect evidence without exposing secrets
 - **Skeleton loading states** — all searchable pages use skeleton tables during load
 - **Row-list grammar** — entity lists are dense headerless rows, not tables: an icon or status tile, the name over its ULID, chips for state, a right-aligned stamp, and the former column headers moved into a sort bar
@@ -78,7 +77,7 @@ alive across navigation, and terminal windows persist for their session.
 src/
 ├── lib/
 │   ├── components/      UI components (ItemTablePicker, ActionDetailSheet, etc.)
-│   ├── sdk/             Connect-RPC client wrapper (re-exports the plain TS SDK)
+│   ├── sdk/             Svelte 5 wrapper around the contract's plain-TS client
 │   ├── errors.ts        Error code → i18n key mapping
 │   ├── paraglide/       Paraglide compiler output (generated, gitignored)
 │   └── ...
@@ -86,29 +85,40 @@ src/
 └── app.html             HTML template
 
 messages/                i18n message files at repo root (en.json, de.json)
-../sdk/gen/ts/           Generated protobuf types, resolved via the $sdk alias
+../contract/gen/ts/      Generated protobuf types, resolved via the $contract alias
+../contract/ts/          The contract's plain-TS client, resolved via $contractClient
 ```
 
 ## Regenerating Types
 
-After editing proto definitions in the SDK:
+The protobuf definitions live in the contract module, and its Makefile owns
+generation — nothing here regenerates them:
 
 ```bash
-npx buf generate
+make -C ../contract generate-ts
 ```
 
-This generates TypeScript types into `../sdk/gen/ts/` (resolved via the `$sdk` Vite alias).
+That writes `../contract/gen/ts/`, which this app imports through the
+`$contract` alias. The contract's hand-written client (`../contract/ts/`) is
+imported through `$contractClient`. Both aliases are declared in
+`svelte.config.js`; there is no npm dependency on the contract, so no registry
+package has to exist for a build to resolve it.
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
+| `PUBLIC_CONTROL_URL` | Origin of the control server this UI talks to, read at runtime by the server that serves the app. Set, it preconfigures the browser so a fresh install never stops at `/setup`; unset, the app asks for the URL there as before. The reference deployment renders it from `CONTROL_DOMAIN` and serves the UI on that same origin. |
 | `BASE_PATH` | Base path prefix for non-root deployments (default: `/`). Affects SvelteKit `base`, the PWA scope, and the version-pinning cookie path. |
-| `PM_DEV_AUTH_TOKEN` | Server-side-only token shared with a control `devauth` build. Use at least 32 random bytes; the loopback-only Vite proxy injects it into `/dev/session` and forwards the original client address without exposing the token to browser code. |
+| `CADESTRO_DEV_AUTH_TOKEN` | Server-side-only token shared with a control `devauth` build. Use at least 32 random bytes; the loopback-only Vite proxy injects it into `/dev/session` and forwards the original client address without exposing the token to browser code. |
 | `VITE_DEV_CONTROL_URL` | Control target for the local Vite proxy (default: `https://127.0.0.1:8081`). |
 | `VITE_SKIP_AUTH` | **Temporary, dev-only.** `1` seeds a fake admin session so the UI starts without a control server (RPCs still fail; pages show their empty/error states). `make dev` sets it by default; use `make dev VITE_SKIP_AUTH=0` (or plain `npm run dev`) for the real login flow. Compile-time-guarded via `import.meta.env.DEV` — it has no effect in production builds. Close the tab or log out to drop the fake session. |
 
-The Control Server URL is configured at first launch via the in-app setup flow and persisted to `localStorage`; there is no build-time API URL env var.
+The control server URL is a runtime value, never a build-time one. `PUBLIC_CONTROL_URL`
+seeds it once, before the first route guard runs; the operator can still change
+it from Settings, which returns to `/setup`, and the choice is persisted to
+`localStorage` from then on. Without that variable the app behaves as it always
+did and starts at `/setup`.
 
 ## Building
 
@@ -116,4 +126,16 @@ The Control Server URL is configured at first launch via the in-app setup flow a
 npm run build
 ```
 
-The output is in `.svelte-kit/output/`. Deploy using an appropriate SvelteKit adapter for your target environment.
+`svelte-adapter-bun` writes a server into `build/`, started with
+`bun run build/index.js` (`PORT` defaults to 3000).
+
+The released image is built from the repository root, because the app compiles
+against `../contract`:
+
+```bash
+docker build -f web/Containerfile --build-arg VERSION=v2026.08 -t cadestro-web .
+```
+
+It is published as `ghcr.io/manchtools/cadestro-web` under the same tag as the
+control image, and the reference deployment in `../server/deploy` runs the two
+side by side on one hostname.
