@@ -1,3 +1,0 @@
-# docref keeps README.md and docs/ synchronized with the code they describe.
-[scan]
-include = ["README.md", "docs/**/*.md"]

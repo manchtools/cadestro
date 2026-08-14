@@ -1,0 +1,94 @@
+name: Agent
+
+# Static analysis and the unit/arch suite for the device agent. The per-distro
+# executor integration tests are behind the `integration` build tag and live in
+# .github/workflows/agent-integration.yml, which the release workflow also
+# calls.
+#
+# Path filter: the agent's own tree plus the two modules it replaces to
+# (sdk/**, contract/**). agent/go.mod redirects both at their sibling
+# directories, so a change there is compiled by this module and must be gated
+# here.
+on:
+  pull_request:
+    paths:
+      - 'agent/**'
+      - 'sdk/**'
+      - 'contract/**'
+      - '.github/workflows/agent.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'agent/**'
+      - 'sdk/**'
+      - 'contract/**'
+      - '.github/workflows/agent.yml'
+
+concurrency:
+  group: agent-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: agent
+
+env:
+  # The repository root carries a go.work covering all four Go modules. Each
+  # module must also build standalone, so every job here runs with the
+  # workspace off — a module that only compiles inside the workspace has an
+  # undeclared dependency.
+  GOWORK: 'off'
+
+jobs:
+  lint:
+    name: gofmt + vet + staticcheck + govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: agent/go.mod
+
+      - name: gofmt
+        run: |
+          test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          # SA1019 (deprecated calls into sysservice / sysuser / sysexec) and
+          # U1000 (unused funcs in internal/executor/cmd.go) are pre-existing
+          # tech debt that this workflow's first run surfaced. Filtered here so
+          # the workflow gates NEW issues immediately — follow-up changes can
+          # remove the SA1019,U1000 exclusions as the existing call sites are
+          # migrated to the replacement APIs.
+          staticcheck -checks='inherit,-SA1019,-U1000' ./...
+
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  unit-tests:
+    name: Unit Tests (race)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: agent/go.mod
+
+      - name: go test
+        # Plain `go test ./...` runs only the unit/arch suite — the executor
+        # integration tests are behind the `integration` build tag and are
+        # covered by agent-integration.yml's per-distro matrix. -race needs
+        # cgo, which ubuntu-latest provides (gcc preinstalled).
+        run: go test -race ./...

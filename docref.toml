@@ -1,0 +1,24 @@
+# docref keeps the agent's prose synchronized with the code it describes.
+#
+# This config sits at the REPOSITORY root rather than in agent/ because
+# agent/README.md anchors a region of .github/workflows/release.yml — the
+# release-signing steps — and docref resolves every `src=` relative to the
+# directory holding this file while rejecting any path containing "..". A
+# module-scoped root therefore cannot reach repository-level CI at all, and the
+# claim would have to be dropped or left unanchored, which is exactly the
+# silent drift docref exists to prevent.
+#
+# server/ and sdk/ keep their own module-scoped docref.toml: nothing they
+# describe lives above them. .github/workflows/docref.yml runs one check per
+# root.
+[scan]
+include = ["agent/README.md", "agent/docs/**/*.md"]
+
+# Anchor discovery is scoped to the two trees this root is responsible for.
+# Without it the unused-anchor check — which reports a region marker no scanned
+# claim references — would sweep the whole repository and flag every server/
+# and sdk/ marker, because the prose that uses them is scanned by THEIR roots,
+# not this one. The result was a red check that named nine perfectly-used
+# anchors.
+[anchors]
+include = ["agent/**", ".github/**"]

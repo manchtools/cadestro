@@ -65,7 +65,7 @@ The agent has one explicit enrollment method:
 6. The Control Server validates the token, signs the certificate, and returns credentials
 7. The agent saves credentials, closes the enrollment socket, starts the auth socket, and opens its stream to control
 
-<!-- docref: begin src=internal/deviceauth/enroll_server.go#EnrollSocketPath:7b7f3315 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:7b7f3315 -->
 > **Trust boundary.** The enrollment socket is owner-only (mode `0600`) and
 > the agent authenticates the connecting process by its OS identity
 > (`SO_PEERCRED`): only the agent's own uid — root under the shipped unit — may
@@ -127,7 +127,7 @@ curl -fsSL https://your-server/install.sh | sudo bash -s -- \
   --pin YOUR_CA_SHA256
 ```
 
-<!-- docref: begin src=install.sh#download_binary:da1c3e0a -->
+<!-- docref: begin src=agent/install.sh#download_binary:da1c3e0a -->
 The install script:
 1. Installs its own release by default: the release build stamps the tag into
    the installer, so a release asset run without `-v` fetches that release's
@@ -337,7 +337,7 @@ Create, modify, or remove system users.
 
 On creation, a temporary password is generated and returned in the `lps.rotations` metadata field.
 
-<!-- docref: begin src=internal/executor/action_user.go#Executor.updateUser:50055ffa -->
+<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.updateUser:50055ffa -->
 `disabled: true` shadow-locks the account (`usermod -L`, a leading `!` on the password hash) and — for regular users — defaults the shell to `/usr/sbin/nologin` for offboarding. **Disabling the superuser is deliberately lock-only**: for any UID-0 account (keyed on the UID, not the name `root`, so a renamed superuser is covered without a name list) the shell is left untouched, so `sudo -i` and key-based root SSH keep working while password login stops — the same posture as Ubuntu's locked-by-default root. This is an operator choice and has no effect on the agent itself (a running root service neither re-authenticates nor uses the login shell); the agent logs a warning when it locks a UID-0 account. An explicitly set `shell` is always honored, superuser included.
 <!-- docref: end -->
 
@@ -487,7 +487,7 @@ The agent communicates with the server via bidirectional stream messages (`GetLu
 
 #### LUKS passphrase daemon
 
-<!-- docref: begin src=cmd/cadestrod/cmd_luks.go#resolveLuksToken:0972a499,internal/luksd/peercred.go#peerAuthorized:8ce20012,internal/luksd/server.go#Daemon.Start:80dfc23a -->
+<!-- docref: begin src=agent/cmd/cadestrod/cmd_luks.go#resolveLuksToken:0972a499,agent/internal/luksd/peercred.go#peerAuthorized:8ce20012,agent/internal/luksd/server.go#Daemon.Start:80dfc23a -->
 When `device_bound_key_type` is `USER_PASSPHRASE`, the user sets their slot-7
 passphrase with `cadestrod luks set-passphrase` and supplies the token
 by private file, environment variable, or hidden prompt. This command is
@@ -634,7 +634,7 @@ run in-process without a separate escalation account or sudoers policy.
 
 - **Registration**: Agent registers with the Control Server over HTTPS, authenticating with a registration token
 - **mTLS**: After registration, the agent connects to control's agent listener using mutual TLS with certificates signed by the Control Server CA
-<!-- docref: begin src=cmd/cadestrod/cert_rotation.go#renewAt:211ccaeb,cmd/cadestrod/cert_rotation.go#applyRenewal:49ccae95 -->
+<!-- docref: begin src=agent/cmd/cadestrod/cert_rotation.go#renewAt:211ccaeb,agent/cmd/cadestrod/cert_rotation.go#applyRenewal:49ccae95 -->
 - **Certificate Rotation**: The agent automatically renews its mTLS certificate at 80% of its lifetime (~292 days for a 1-year cert). Renewal uses the existing private key to generate a new CSR and calls the Control Server's `RenewCertificate` RPC, presenting the current certificate for identity verification. The response includes the active CA certificate. The agent stores it only when it is identical to or cross-signed by the enrolled CA; an unrelated root is refused. Operators load the old+new bundle and restart control before the overlap begins. On failure, the agent retries hourly.
 - **Trust root**: the direct agent stream validates control against the pinned
   enrollment CA. Renewal occurs through authenticated control and preserves CA
@@ -765,7 +765,7 @@ Both URLs must be HTTPS. The server and agent reject an action without a signed
 checksum-manifest source; an update action cannot supply or replace the trusted
 public key.
 
-<!-- docref: begin src=internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3,internal/executor/agent_update.go#downloadAndExtractChecksum:ca7f8bef -->
+<!-- docref: begin src=agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3,agent/internal/executor/agent_update.go#downloadAndExtractChecksum:ca7f8bef -->
 Once a trusted installer or agent containing the embedded key is present, a
 compromised artifact host can replace the binary, manifest, and signature but
 cannot produce a signature that it accepts. The initial `curl | bash` bootstrap
@@ -918,12 +918,13 @@ make test-integration-edgecase
 
 ### CI/CD
 
-Integration tests run automatically on push to `main` and on pull requests via GitHub Actions (`.github/workflows/integration-test.yml`). The workflow is triggered only on actual code changes (Go files, go.mod/sum, Makefile, cmd/**, test/**, internal/**).
+Integration tests run automatically on push to `main` and on pull requests via GitHub Actions (`.github/workflows/agent-integration.yml`, at the repository root — GitHub honours workflows only there). The workflow is triggered on changes to `agent/**` and to the two modules the agent compiles against, `sdk/**` and `contract/**`.
 
-The release workflow (`.github/workflows/release.yml`) gates binary builds on
-passing integration tests, then signs the checksum manifest before publishing.
+The repository's single release workflow (`.github/workflows/release.yml`) gates
+the agent binaries on passing integration tests, then signs the checksum
+manifest — which covers every asset in the release — before publishing.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:90961075 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:5b6b6553 -->
 Release signing uses two GitHub settings:
 
 - `RELEASE_SIGNING_PRIVATE_KEY`: the PKCS#8 PEM private key, stored only as a
@@ -944,7 +945,7 @@ Cloning or forking this repository does not provide MANCHTOOLS release-signing
 settings or private key material. Downstream maintainers must configure their
 own Ed25519 pair under the same Actions variable and environment-secret names.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:90961075,internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:5b6b6553,agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
 There are two deliberately different build modes:
 
 - A normal `go build ./cmd/cadestrod` development build succeeds

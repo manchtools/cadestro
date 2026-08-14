@@ -1,0 +1,56 @@
+name: docref
+
+# Keeps prose honest against the code it describes: a claim or snippet that
+# drifts from its anchored symbol, region, or file fails this check.
+#
+# Deliberately unfiltered. Drift can be introduced from EITHER side — by
+# editing the prose OR by editing the anchored Go, shell, or workflow — so a
+# path filter scoped to one side would let the other side rot silently. The job
+# is a single `docker run` against a prebuilt image, so running it on every
+# push and pull request is cheap.
+#
+# One matrix cell per docref root. Each root is the directory holding a
+# docref.toml, and every `src=` inside its scanned prose resolves relative to
+# that directory — docref rejects a path containing `..`, so a document that
+# anchors into repository-level CI must sit under the repository root. That is
+# why the agent's prose is checked from `.`: agent/README.md anchors the
+# release-signing region in .github/workflows/release.yml.
+on:
+  push:
+    branches: [main, 'v*']
+  pull_request:
+
+concurrency:
+  group: docref-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docref-check:
+    name: docref (${{ matrix.label }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: agent prose (repository root)
+            root: .
+          - label: server
+            root: server
+          - label: sdk
+            root: sdk
+    steps:
+      - uses: actions/checkout@v5
+
+      # Purpose-built docref CI image (docref + git on Alpine); nothing to
+      # build. One pinned version for every root: two roots trailed on v0.1.0
+      # while a third had moved to v0.1.1, which means the same anchor could
+      # have been judged by two different checkers.
+      - name: docref check (docs match the code they describe)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/${{ matrix.root }}:/repo" \
+            ghcr.io/manchtools/open-docref:v0.1.1 check

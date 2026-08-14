@@ -9,9 +9,16 @@ import (
 	"testing"
 )
 
+// integrationWorkflow is the repository-root workflow that runs the agent's
+// integration lanes. It lives above this module because GitHub honours
+// workflows only at the repository root; a module-local copy is a file nothing
+// executes.
+var integrationWorkflow = filepath.Join(".github", "workflows", "agent-integration.yml")
+
 // TestCIRunsEveryIntegrationTest guards the hand-wired integration lanes in
-// .github/workflows/integration-test.yml against failing open (audit A-06,
-// issue #171 — the agent port of server#482's self-discovering guard).
+// .github/workflows/agent-integration.yml against failing open (audit A-06,
+// issue #171 — the agent port of archived server#482's self-discovering
+// guard).
 //
 // The agent's split differs from the server's: the unit workflow runs a
 // plain `go test ./...`, so PACKAGE-level coverage is complete by
@@ -36,32 +43,32 @@ func TestCIRunsEveryIntegrationTest(t *testing.T) {
 		t.Fatal("matches-zero guard: discovered no //go:build integration test files; the walk is broken (internal/executor has them today)")
 	}
 
-	workflow := filepath.Join(root, ".github", "workflows", "integration-test.yml")
+	workflow := filepath.Join(repositoryRoot(t), integrationWorkflow)
 	raw, err := os.ReadFile(workflow)
 	if err != nil {
 		t.Fatalf("read %s: %v", workflow, err)
 	}
 	pkgs := extractWorkflowPackages(string(raw))
 	if len(pkgs) == 0 {
-		t.Fatal("matches-zero guard: extracted no ./agent/<pkg>/ package arguments from integration-test.yml; the parser is broken")
+		t.Fatalf("matches-zero guard: extracted no ./agent/<pkg>/ package arguments from %s; the parser is broken", integrationWorkflow)
 	}
 	selectors := extractRunSelectors(string(raw))
 	if len(selectors) == 0 {
-		t.Fatal("matches-zero guard: extracted no -run selectors from integration-test.yml; the parser is broken")
+		t.Fatalf("matches-zero guard: extracted no -run selectors from %s; the parser is broken", integrationWorkflow)
 	}
 
 	// Stale-list direction: a workflow package argument whose directory no
 	// longer exists is the same rot in reverse.
 	for _, p := range pkgs {
 		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(p.dir))); err != nil {
-			t.Errorf("integration-test.yml references ./agent/%s/ but that directory does not exist (stale lane entry)", p.dir)
+			t.Errorf("%s references ./agent/%s/ but that directory does not exist (stale lane entry)", integrationWorkflow, p.dir)
 		}
 	}
 
 	for file, fns := range files {
 		pkg := filepath.ToSlash(filepath.Dir(file))
 		if !workflowCovers(pkg, pkgs) {
-			t.Errorf("%s carries //go:build integration but package %s is passed to no `go test -tags=integration` invocation in integration-test.yml — it never even compiles in CI", file, pkg)
+			t.Errorf("%s carries //go:build integration but package %s is passed to no `go test -tags=integration` invocation in %s — it never even compiles in CI", file, pkg, integrationWorkflow)
 			continue
 		}
 		for _, fn := range fns {
@@ -132,7 +139,7 @@ func TestIntegrationCIUsesTheInRepoModules(t *testing.T) {
 	// branch-override mode, and a clone of a separate SDK repository.
 	files := []string{
 		filepath.Join(root, "go.mod"),
-		filepath.Join(root, ".github", "workflows", "integration-test.yml"),
+		filepath.Join(repositoryRoot(t), integrationWorkflow),
 	}
 	dockerfiles, err := filepath.Glob(filepath.Join(root, "test", "Dockerfile.integration*"))
 	if err != nil {

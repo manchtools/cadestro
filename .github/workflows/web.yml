@@ -1,0 +1,59 @@
+name: Web
+
+# The administration UI. Only the test job lives here: the image push moved
+# into the single root release workflow with the server and agent artefacts, so
+# one tag produces one coherent set of assets instead of three workflows racing
+# on the same ref.
+#
+# Path filter: the app plus the contract surfaces it compiles against — the
+# generated types (contract/gen/ts) and the hand-written client (contract/ts),
+# reached through the $contract and $contractClient aliases.
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'contract/gen/ts/**'
+      - 'contract/ts/**'
+      - '.github/workflows/web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'contract/gen/ts/**'
+      - 'contract/ts/**'
+      - '.github/workflows/web.yml'
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      # One checkout: the contract's generated types (contract/gen/ts) and its
+      # hand-written client (contract/ts) are in this repository.
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+      # Symlink web's node_modules into the contract so svelte-check can
+      # resolve @bufbuild/protobuf from files outside the web directory.
+      - run: ln -s $(pwd)/node_modules ../contract/node_modules
+      - run: bun run check
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test
+
+      - uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 30

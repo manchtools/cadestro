@@ -1,0 +1,91 @@
+name: Agent Integration Tests
+
+# The per-distro executor integration tests (`//go:build integration`), run
+# against real system state inside containers. Kept in its own file because the
+# release workflow calls it with `uses:` — a reusable workflow needs a
+# `workflow_call` trigger of its own.
+#
+# agent/internal/archtest/ci_coverage_test.go parses THIS file: every
+# integration-tagged package must appear as a ./agent/<pkg>/ argument below and
+# every integration-tagged Test function must match one of the -run selectors.
+# Adding a lane here is how that guard is satisfied; the guard fails rather
+# than letting a tagged test lie dormant.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agent/**'
+      - 'sdk/**'
+      - 'contract/**'
+      - '.github/workflows/agent-integration.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'agent/**'
+      - 'sdk/**'
+      - 'contract/**'
+      - '.github/workflows/agent-integration.yml'
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: debian
+            dockerfile: agent/test/Dockerfile.integration
+          - distro: fedora
+            dockerfile: agent/test/Dockerfile.integration.fedora
+          - distro: opensuse
+            dockerfile: agent/test/Dockerfile.integration.opensuse
+          - distro: archlinux
+            dockerfile: agent/test/Dockerfile.integration.archlinux
+    steps:
+      # No `path:` on the checkout: the agent already sits at agent/ in this
+      # repository, which is the layout the Dockerfiles copy from and the
+      # ./agent/<pkg>/ test arguments below address.
+      - uses: actions/checkout@v5
+
+      - name: Build test image
+        run: |
+          docker build \
+            -f ${{ matrix.dockerfile }} \
+            -t cadestro-agent-test-${{ matrix.distro }} \
+            .
+
+      - name: Run integration tests
+        run: |
+          docker run --rm cadestro-agent-test-${{ matrix.distro }} \
+            /go/bin/gotestsum \
+              --format testdox \
+              --format-hide-empty-pkg \
+              -- -tags=integration -count=1 -timeout=10m \
+              ./agent/internal/executor/ -run Integration
+
+  integration-edgecase:
+    name: edge-cases (privileged)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build test image
+        run: |
+          docker build \
+            -f agent/test/Dockerfile.integration \
+            -t cadestro-agent-test-debian \
+            .
+
+      - name: Run edge case tests
+        run: |
+          docker run --rm --privileged cadestro-agent-test-debian \
+            /go/bin/gotestsum \
+              --format testdox \
+              --format-hide-empty-pkg \
+              -- -tags=integration -count=1 -timeout=10m \
+              ./agent/internal/executor/ -run Integration -run EdgeCase

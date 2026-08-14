@@ -85,6 +85,34 @@ func moduleRoot(t *testing.T) string {
 	}
 }
 
+// repositoryRoot returns the monorepo root — the directory that carries the
+// repository-level CI the agent's own guards read. GitHub honours workflows
+// only at the repository root, so the files those guards parse live above this
+// module, not inside it.
+//
+// The search starts at the module root's PARENT and looks for
+// .github/workflows. Starting above the module is deliberate: a stray
+// agent/.github/workflows would otherwise satisfy the search and the guards
+// would parse a file GitHub never runs, reporting clean while the real
+// workflow rotted. Walking rather than assuming "one level up" is the same
+// reasoning applied to the other direction — a hardcoded depth reports clean
+// the moment the layout moves.
+func repositoryRoot(t *testing.T) string {
+	t.Helper()
+	module := moduleRoot(t)
+	dir := filepath.Dir(module)
+	for {
+		if info, err := os.Stat(filepath.Join(dir, ".github", "workflows")); err == nil && info.IsDir() {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatalf("could not locate a .github/workflows directory above the module root %s", module)
+		}
+		dir = parent
+	}
+}
+
 // walkGoFiles parses every .go file under root whose module-relative,
 // slash-separated path satisfies keep. Test files, the archtest package
 // itself, and anything under a vendor/ directory are never returned —

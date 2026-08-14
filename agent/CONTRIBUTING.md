@@ -6,8 +6,8 @@ The agent runs as root on managed devices and delegates OS work to the [SDK](../
 
 | Tier | Selector | Where it runs |
 |---|---|---|
-| Unit + arch | `go test -race ./...` (no tags) | host, every PR (`unit-test.yml`) |
-| Integration | `//go:build integration` files, functions named `TestIntegration_*` | 4-distro container matrix (`integration-test.yml`) |
+| Unit + arch | `go test -race ./...` (no tags) | host, every PR (`.github/workflows/agent.yml`) |
+| Integration | `//go:build integration` files, functions named `TestIntegration_*` | 4-distro container matrix (`.github/workflows/agent-integration.yml`) |
 | Privileged edge | same tag, functions named `TestEdgeCase_*` | privileged container lane |
 
 Rules the CI enforces (self-discovering guards in `internal/archtest/`):
@@ -27,7 +27,7 @@ docker run --rm --privileged pm-agent-test \
   go test -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run EdgeCase
 ```
 
-The build context is the **parent** directory: CI checks the repo out into `agent/` and optionally overlays a same-named SDK branch into `sdk/` (the go.mod pin is used otherwise).
+The build context is the **repository root**, and the image copies `contract/`, `sdk/`, and `agent/` into it: `agent/go.mod` replaces the contract and the SDK with those sibling directories, so an image built from `agent/` alone cannot resolve them. There is no branch-override mode — `internal/archtest` fails the build if one reappears, because an out-of-tree resolution means CI tested code this repository does not contain.
 
 ## Docs
 

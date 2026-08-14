@@ -295,8 +295,10 @@ tests prove the primitives work independently.
    `.archlinux`. Modeled on the existing `agent/test/Dockerfile.integration*`
    pattern, with the addition of `state-*` stages.
 
-2. **CI workflow** — `sdk/.github/workflows/container-test.yml`. Modeled on the
-   existing `agent/.github/workflows/integration-test.yml`.
+2. **CI workflow** — the `container-tests` jobs in `.github/workflows/sdk.yml`.
+   Modeled on the agent lanes in `.github/workflows/agent-integration.yml`.
+   Both live at the repository root: GitHub honours workflows only there, so a
+   module-local `.github/workflows` is a file nothing executes.
 
 3. **First container test** — one package, one distro, one bad state. Proves the
    pattern end-to-end: build → run → test detects its precondition → test

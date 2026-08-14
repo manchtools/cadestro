@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-// readRepoFile reads a file at the agent repo root (two levels up from
+// readRepoFile reads a file at the agent module root (two levels up from
 // this package: agent/cmd/cadestrod → agent/).
 func readRepoFile(t *testing.T, name string) string {
 	t.Helper()
@@ -22,6 +22,22 @@ func readRepoFile(t *testing.T, name string) string {
 	}
 	return string(b)
 }
+
+// readRootFile reads a file at the REPOSITORY root, one level above the agent
+// module. GitHub honours workflows only there, so the release workflow these
+// tests read is a repository file, not an agent file — reading it from the
+// module root would find nothing and every assertion below would fail loudly
+// rather than silently, which is why the split is explicit instead of a
+// fallback.
+func readRootFile(t *testing.T, name string) string {
+	t.Helper()
+	return readRepoFile(t, filepath.Join("..", name))
+}
+
+// releaseWorkflow is the repository-root release workflow. One workflow now
+// builds, signs, and publishes every artefact in this repository; the agent's
+// installer-stamping steps are jobs in it rather than a workflow of their own.
+var releaseWorkflow = filepath.Join(".github", "workflows", "release.yml")
 
 // WS7 #4: the cadestro:// URI handler must be OPT-IN (off by default),
 // and the desktop entry must not auto-launch a terminal. An unconditional
@@ -91,7 +107,7 @@ func TestInstall_VerifiesPublisherSignatureBeforeChecksum(t *testing.T) {
 }
 
 func TestReleaseWorkflowSignsChecksumsInProtectedEnvironment(t *testing.T) {
-	workflow := readRepoFile(t, filepath.Join(".github", "workflows", "release.yml"))
+	workflow := readRootFile(t, releaseWorkflow)
 	_, releaseJob, ok := strings.Cut(workflow, "\n  release:\n")
 	if !ok {
 		t.Fatal("release workflow is missing the release job")
@@ -107,8 +123,8 @@ func TestReleaseWorkflowSignsChecksumsInProtectedEnvironment(t *testing.T) {
 }
 
 func TestReleaseWorkflowPrereleaseInstructionsUseExactTag(t *testing.T) {
-	workflow := readRepoFile(t, filepath.Join(".github", "workflows", "release.yml"))
-	_, prerelease, ok := strings.Cut(workflow, `if [[ "${{ needs.build.outputs.is_prerelease }}" == "true" ]]; then`)
+	workflow := readRootFile(t, releaseWorkflow)
+	_, prerelease, ok := strings.Cut(workflow, `if [[ "${{ needs.version.outputs.is_prerelease }}" == "true" ]]; then`)
 	if !ok {
 		t.Fatal("release workflow is missing the prerelease release-body branch")
 	}
@@ -170,7 +186,7 @@ func releaseDownloadRepositories(fragment string) []string {
 // Self-discovering: it reads whatever URLs the step emits, so a newly added
 // installer snippet is covered without editing a list here.
 func TestReleaseWorkflowBodyURLsAreForkSafe(t *testing.T) {
-	workflow := readRepoFile(t, filepath.Join(".github", "workflows", "release.yml"))
+	workflow := readRootFile(t, releaseWorkflow)
 	_, body, ok := strings.Cut(workflow, "\n      - name: Generate release body\n")
 	if !ok {
 		t.Fatal("release workflow is missing the release-body step")
@@ -341,7 +357,7 @@ func TestInstall_PlaceholderAppearsOnlyInTheAssignment(t *testing.T) {
 // second place, fails here instead of in the next broken release.
 func TestInstall_EveryPlaceholderStampedExactlyOnce(t *testing.T) {
 	sh := readRepoFile(t, "install.sh")
-	wf := readRepoFile(t, filepath.Join(".github", "workflows", "release.yml"))
+	wf := readRootFile(t, releaseWorkflow)
 
 	pattern := regexp.MustCompile(`__[A-Z][A-Z0-9_]*__`)
 	counts := map[string]int{}

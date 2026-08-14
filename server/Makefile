@@ -47,7 +47,10 @@ sqlc-generate:
 	fi
 
 # Fail if generated code is out of date. Wired into CI as the "sqlc drift"
-# workflow (.github/workflows/sqlc.yml), which runs on any change to
-# queries/, migrations/, sqlc.yaml, the overlay, generated/, or this file.
+# workflow (.github/workflows/server-sqlc.yml, at the repository root — GitHub
+# honours workflows only there). It runs on any change to queries/,
+# sqliteschema/, sqlc.yaml, generated/, or this file. There is no migrations
+# directory and no schema overlay: the datastore is embedded SQLite and the
+# baseline is created fresh, so the schema is one file.
 sqlc-check: sqlc-generate
 	git diff --exit-code internal/store/generated
