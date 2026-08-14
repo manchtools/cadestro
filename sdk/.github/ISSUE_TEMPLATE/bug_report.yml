@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in Power Manage SDK
+description: Report a bug in Cadestro SDK
 title: "[Bug] "
 labels: ["bug"]
 body:
@@ -40,7 +40,7 @@ body:
     attributes:
       label: Environment
       description: OS and SDK version.
-      placeholder: "e.g. Go 1.25, Power Manage SDK v2026.03.01"
+      placeholder: "e.g. Go 1.25, Cadestro SDK v2026.03.01"
     validations:
       required: true
   - type: textarea

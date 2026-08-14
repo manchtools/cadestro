@@ -16,7 +16,7 @@ import (
 
 // PeerClass identifies the role of a mTLS peer. The internal CA
 // issues every non-CA certificate with exactly one URI SAN of the
-// form `spiffe://power-manage/<class>`, where `<class>` is one of
+// form `spiffe://cadestro/<class>`, where `<class>` is one of
 // the constants below. Middleware on each listener requires a
 // specific class so a leaked cert of one class (e.g. an agent
 // cert pulled from a compromised host) cannot be used to reach
@@ -46,7 +46,7 @@ const (
 // place makes it obvious where to add a new class.
 const (
 	peerClassURIScheme = "spiffe"
-	peerClassURIHost   = "power-manage"
+	peerClassURIHost   = "cadestro"
 )
 
 // peerClassURI builds the canonical SPIFFE URI for a class. Kept in
@@ -57,7 +57,7 @@ func peerClassURI(class PeerClass) string {
 
 // PeerClassFromCert inspects the URI SANs on a peer certificate and
 // returns the identified class, or an error if the cert carries no
-// `spiffe://power-manage/<class>` URI or carries more than one such
+// `spiffe://cadestro/<class>` URI or carries more than one such
 // URI (ambiguous class is a hard error — the CA MUST emit exactly
 // one).
 func PeerClassFromCert(cert *x509.Certificate) (PeerClass, error) {

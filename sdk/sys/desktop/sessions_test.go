@@ -341,7 +341,7 @@ func TestListSessionIDs_ParsesAndSkipsBlankLines(t *testing.T) {
 // TestActiveSessions_RealLoginctl is the integration leg: it builds a Manager
 // over a REAL runner and runs the actual loginctl. On a host without logind
 // (the agent's CI containers) it must return ([], nil) — the regression fix for
-// manchtools/power-manage-sdk#88. On a host WITH logind any count is fine; the
+// archived sdk#88. On a host WITH logind any count is fine; the
 // load-bearing assertion is "no error from the no-logind path".
 func TestActiveSessions_RealLoginctl(t *testing.T) {
 	if _, err := lookPath(loginctlPath); err != nil {

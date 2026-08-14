@@ -225,7 +225,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 	// Notify affected users and terminate sessions after a grace period
 	if len(rotatedUsers) > 0 {
 		notifyUsers(ctx, rotatedUsers, "Session Termination",
-			"Your password has been changed by Power Manage. All sessions will be terminated in 60 seconds. Please save your work.")
+			"Your password has been changed by Cadestro. All sessions will be terminated in 60 seconds. Please save your work.")
 		output.WriteString(fmt.Sprintf("LPS: notified %d user(s), waiting 60 seconds before session termination\n", len(rotatedUsers)))
 
 		select {

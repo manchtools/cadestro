@@ -1,17 +1,17 @@
 ---
-title: Power Manage SDK
+title: Cadestro SDK
 label: Getting started
-description: The Go SDK for building on Power Manage — proto types, crypto helpers, and an idiomatic Linux system-management library.
+description: The Go SDK for building on Cadestro — proto types, crypto helpers, and an idiomatic Linux system-management library.
 icon: "🚀"
 ---
 
-# Power Manage SDK
+# Cadestro SDK
 
-The Power Manage SDK is the shared Go (and TypeScript) library the agent,
+The Cadestro SDK is the shared Go (and TypeScript) library the agent,
 control server, and web UI build on. It ships three things:
 
 - **Protocol types** — the generated protobuf / Connect-RPC code for the
-  Power Manage wire format.
+  Cadestro wire format.
 - **Crypto helpers** — CSR generation, certificate utilities, at-rest AEAD,
   and recipient-bound field sealing.
 - **A Linux system-management library** — package managers, users, services,

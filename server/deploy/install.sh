@@ -5,7 +5,7 @@ umask 077
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/cadestro}"
 RELEASE_TAG="${RELEASE_TAG:-}"
-GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-MANCHTOOLS/power-manage-server}"
+GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-MANCHTOOLS/cadestro}"
 
 fail() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
 for command_name in curl tar docker openssl; do
@@ -226,5 +226,5 @@ docker compose pull
 docker compose up -d --wait
 
 print_dns_reminder
-printf 'Power Manage is running. Create the one-time administrator setup URL with:\n'
+printf 'Cadestro is running. Create the one-time administrator setup URL with:\n'
 printf '  cd %q && docker compose exec control cadestro bootstrap-admin\n' "$INSTALL_DIR"

@@ -1,4 +1,4 @@
-# Contributing to Power Manage SDK
+# Contributing to Cadestro SDK
 
 ## Prerequisites
 

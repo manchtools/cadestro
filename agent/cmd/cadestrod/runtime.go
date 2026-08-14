@@ -1,4 +1,4 @@
-// Package main is the entry point for the power-manage agent.
+// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -327,7 +327,7 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 	// scheduler's next tick already gates by
 	// the new window — and persisted via the scheduler so an agent
 	// restart inside an active freeze keeps deferring instead of
-	// blasting through queued work. See manchtools/power-manage-server#58.
+	// blasting through queued work. See archived server#58.
 	sched.SetMaintenanceWindow(result.MaintenanceWindow)
 
 	// Convert sync interval from minutes to duration

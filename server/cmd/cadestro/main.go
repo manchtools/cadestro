@@ -1,4 +1,4 @@
-// Command cadestro runs the single Power Manage control process.
+// Command cadestro runs the single Cadestro control process.
 package main
 
 import (

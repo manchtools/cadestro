@@ -11,7 +11,7 @@ RUN go install gotest.tools/gotestsum@latest
 # Stage 2: openSUSE Tumbleweed base with Go copied in
 FROM opensuse/tumbleweed
 
-# Agent runs as root in production (systemd User=root) — no power-manage
+# Agent runs as root in production (systemd User=root) — no cadestro
 # user, no sudoers drop-in. Integration tests run as root too.
 
 COPY --from=go-builder /usr/local/go /usr/local/go

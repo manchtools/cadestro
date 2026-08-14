@@ -221,7 +221,7 @@ func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass,
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   deviceID,
-			Organization: []string{"power-manage"},
+			Organization: []string{"cadestro"},
 		},
 		NotBefore:             now.Add(-1 * time.Minute), // Allow for clock skew
 		NotAfter:              notAfter,

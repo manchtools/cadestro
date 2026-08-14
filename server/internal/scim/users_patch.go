@@ -21,7 +21,7 @@ var (
 //
 // An attribute this surface does not model is ignored rather than
 // refused: a directory that also syncs, say, a phone number must not
-// have its whole request fail because of an attribute Power Manage
+// have its whole request fail because of an attribute Cadestro
 // keeps no column for.
 func applyUserPatchOp(a *subjectAssertion, op SCIMPatchOp) error {
 	switch strings.ToLower(strings.TrimSpace(op.Path)) {

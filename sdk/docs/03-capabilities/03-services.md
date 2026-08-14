@@ -73,7 +73,7 @@ drift apart in your code.
 
 ```go
 const unit = `[Unit]
-Description=Power Manage agent
+Description=Cadestro agent
 [Service]
 ExecStart=/usr/bin/pm-agent
 [Install]

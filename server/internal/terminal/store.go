@@ -46,7 +46,7 @@ type Session struct {
 	// SessionID is the ULID identifying the session for its full
 	// lifetime (mint, validate, stop, audit).
 	SessionID string `json:"session_id"`
-	// UserID is the ID of the Power Manage user that opened the
+	// UserID is the ID of the Cadestro user that opened the
 	// session. Used for ownership checks (StopTerminal must be called
 	// by the same user) and audit attribution.
 	UserID string `json:"user_id"`

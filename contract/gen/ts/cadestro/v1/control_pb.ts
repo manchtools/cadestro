@@ -6341,14 +6341,14 @@ export type CreateLuksTokenResponse = Message<"cadestro.v1.CreateLuksTokenRespon
   token: string;
 
   /**
-   * URI for opening terminal: power-manage://luks/set-passphrase?token=<token-value>
+   * URI for opening terminal: cadestro://luks/set-passphrase?token=<token-value>
    *
    * @generated from field: string uri = 2;
    */
   uri: string;
 
   /**
-   * CLI command: power-manage-agent luks set-passphrase --token <token-value>
+   * CLI command: cadestrod luks set-passphrase --token <token-value>
    *
    * @generated from field: string cli_command = 3;
    */
@@ -10150,7 +10150,7 @@ export type TerminalSessionInfo = Message<"cadestro.v1.TerminalSessionInfo"> & {
   sessionId: string;
 
   /**
-   * ID and email of the Power Manage user who opened the session.
+   * ID and email of the Cadestro user who opened the session.
    *
    * @generated from field: string user_id = 2;
    */

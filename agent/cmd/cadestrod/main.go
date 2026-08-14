@@ -1,4 +1,4 @@
-// Package main is the entry point for the power-manage agent.
+// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -324,7 +324,7 @@ func parseFlags() *Config {
 	// operators otherwise can't discover).
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintln(out, "cadestrod — Power Manage device agent")
+		fmt.Fprintln(out, "cadestrod — Cadestro device agent")
 		fmt.Fprintln(out, "\nUsage:")
 		fmt.Fprintln(out, "  cadestrod [flags]           run the agent (default)")
 		fmt.Fprintln(out, "  cadestrod <command> [args]  run a subcommand")

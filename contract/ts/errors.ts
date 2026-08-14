@@ -1,4 +1,4 @@
-// Error code constants used across the Power Manage system.
+// Error code constants used across the Cadestro system.
 // These match the snake_case codes in server/internal/api/errors.go.
 
 export const ErrNotAuthenticated = 'not_authenticated';

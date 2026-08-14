@@ -1,4 +1,4 @@
-# Power Manage Agent — dev deploy Makefile
+# Cadestro Agent — dev deploy Makefile
 #
 # Usage:
 #   make deploy SSH=user@testserver                    # build + deploy + restart

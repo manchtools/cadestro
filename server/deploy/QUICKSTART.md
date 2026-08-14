@@ -1,6 +1,6 @@
-# Power Manage server quickstart
+# Cadestro server quickstart
 
-<!-- docref: begin src=deploy/compose.yml#@deployment-services:b7ac2a9b -->
+<!-- docref: begin src=deploy/compose.yml#@deployment-services:11b2ae28 -->
 The stack has exactly two services: Traefik and one control process with an
 embedded SQLite database. Compose gives control no arguments and passes it the
 rendered `config/control.env` as the container's environment file, and passes
@@ -118,7 +118,7 @@ into `config/control.env`, and that file is where ordinary settings such as the
 log level or the retention windows are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:42074772 -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:7b2cbee9 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
 encryption, session and sealing keys, and `config/control.env` with a 90-day
 audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`. It first

@@ -11,7 +11,7 @@ import (
 )
 
 // wifiConnectionName returns the managed connection name for an action.
-// All Power Manage WiFi profiles are prefixed so they're distinguishable
+// All Cadestro WiFi profiles are prefixed so they're distinguishable
 // from user-managed NetworkManager connections.
 func wifiConnectionName(actionID string) string {
 	return "pm-wifi-" + actionID

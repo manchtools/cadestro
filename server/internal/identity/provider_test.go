@@ -72,20 +72,20 @@ func TestCreateIdentityProvider_AcceptsASecretlessCLIOnlyProvider(t *testing.T) 
 		Name:          "Corp CLI",
 		Slug:          "corpcli",
 		ProviderType:  pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
-		CliClientId:   "powermanage-cli",
+		CliClientId:   "cadestro-cli",
 		IssuerUrl:     "https://idp.example/",
 		DefaultRoleId: auth.AdminRoleID,
 	}, admin.Token))
 	require.NoError(t, err)
 	require.NotNil(t, resp.Msg.Provider)
 	assert.Empty(t, resp.Msg.Provider.ClientId)
-	assert.Equal(t, "powermanage-cli", resp.Msg.Provider.CliClientId)
+	assert.Equal(t, "cadestro-cli", resp.Msg.Provider.CliClientId)
 
 	var cliClientID, sealedSecret string
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT cli_client_id, client_secret_encrypted FROM identity_providers WHERE id = $1`,
 		resp.Msg.Provider.Id).Scan(&cliClientID, &sealedSecret))
-	assert.Equal(t, "powermanage-cli", cliClientID)
+	assert.Equal(t, "cadestro-cli", cliClientID)
 	assert.Empty(t, sealedSecret)
 }
 
@@ -188,7 +188,7 @@ func TestUpdateIdentityProvider_OmittedCLIClientKeepsTheStoredOne(t *testing.T) 
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"UpdateIdentityProvider"}})
 	providerID := f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "powermanage-cli"
+		s.CliClientID = "cadestro-cli"
 		s.IssuerURL = "https://idp.example/"
 	})
 
@@ -197,12 +197,12 @@ func TestUpdateIdentityProvider_OmittedCLIClientKeepsTheStoredOne(t *testing.T) 
 		IssuerUrl: "https://idp.example/",
 	}, admin.Token))
 	require.NoError(t, err)
-	assert.Equal(t, "powermanage-cli", response.Msg.Provider.CliClientId)
+	assert.Equal(t, "cadestro-cli", response.Msg.Provider.CliClientId)
 
 	var stored string
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT cli_client_id FROM identity_providers WHERE id = $1`, providerID).Scan(&stored))
-	assert.Equal(t, "powermanage-cli", stored)
+	assert.Equal(t, "cadestro-cli", stored)
 
 	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "UPDATE")
@@ -214,12 +214,12 @@ func TestUpdateIdentityProvider_DroppingTheBrowserClientClearsItsSecret(t *testi
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"UpdateIdentityProvider"}})
 	providerID := f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "powermanage-cli"
+		s.CliClientID = "cadestro-cli"
 		s.Secret = "browser-secret"
 		s.IssuerURL = "https://idp.example/"
 	})
 
-	cliClientID := "powermanage-cli"
+	cliClientID := "cadestro-cli"
 	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
 		Id: providerID, Name: "CLI only", Enabled: true, CliClientId: &cliClientID,
 		IssuerUrl: "https://idp.example/",

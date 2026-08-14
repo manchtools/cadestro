@@ -83,7 +83,7 @@ func assertAgentLeaf(t *testing.T, c *ca.CA, issued *ca.Certificate, keyPEM []by
 	assert.NotEqual(t, interopHostname, parsed.Subject.CommonName, "the CSR's CN must never become the identity")
 
 	require.Len(t, parsed.URIs, 1, "an issued agent cert must carry exactly one URI SAN")
-	assert.Equal(t, "spiffe://power-manage/agent", parsed.URIs[0].String())
+	assert.Equal(t, "spiffe://cadestro/agent", parsed.URIs[0].String())
 	class, err := mtls.PeerClassFromCert(parsed)
 	require.NoError(t, err)
 	assert.Equal(t, mtls.PeerClassAgent, class)

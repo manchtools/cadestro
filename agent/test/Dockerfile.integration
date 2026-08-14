@@ -1,6 +1,6 @@
 FROM golang:1.26-bookworm
 
-# Agent runs as root in production (systemd User=root) — no power-manage
+# Agent runs as root in production (systemd User=root) — no cadestro
 # user, no sudoers drop-in. Integration tests run as root too so they
 # exercise the same code path.
 

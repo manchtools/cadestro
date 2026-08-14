@@ -48,7 +48,7 @@ below.
 ```go
 err := m.Mkdir(ctx, "/var/lib/cadestro/state", fs.MkdirOptions{Mode: 0o750, Recursive: true})
 err = m.SetMode(ctx, "/var/lib/cadestro/state", 0o700)
-err = m.SetOwnership(ctx, "/var/lib/cadestro/state", "power-manage", "power-manage")
+err = m.SetOwnership(ctx, "/var/lib/cadestro/state", "cadestro", "cadestro")
 err = m.Remove(ctx, "/var/lib/cadestro/state/stale.tmp")
 ```
 

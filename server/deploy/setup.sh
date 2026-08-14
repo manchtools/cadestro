@@ -196,7 +196,7 @@ ensure_ca() {
     info "Generating internal Ed25519 certificate authority"
     openssl genpkey -algorithm Ed25519 -out "$CERTS_DIR/ca.key"
     openssl req -new -x509 -key "$CERTS_DIR/ca.key" -days 3650 \
-        -subj "/CN=Power Manage Internal CA/O=Power Manage" \
+        -subj "/CN=Cadestro Internal CA/O=Cadestro" \
         -addext "basicConstraints=critical,CA:TRUE" \
         -addext "keyUsage=critical,keyCertSign,cRLSign" \
         -out "$CERTS_DIR/ca.crt"
@@ -239,7 +239,7 @@ ensure_certificates() {
         printf '\n' >> "$CERTS_DIR/ca-trust-bundle.crt"
         cat "$CERTS_DIR/ca.crt" >> "$CERTS_DIR/ca-trust-bundle.crt"
     fi
-    ensure_certificate control "/CN=$AGENT_DOMAIN/O=Power Manage" \
+    ensure_certificate control "/CN=$AGENT_DOMAIN/O=Cadestro" \
         "subjectAltName=DNS:$AGENT_DOMAIN,DNS:control,DNS:localhost\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature"
     certificate_covers_host "$CERTS_DIR/control.crt" "$AGENT_DOMAIN" \
         || fail "control.crt does not cover AGENT_DOMAIN; replace control.crt and control.key"

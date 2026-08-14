@@ -244,6 +244,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
-          name: Power Manage Agent ${{ steps.version.outputs.version }}
+          name: Cadestro Agent ${{ steps.version.outputs.version }}
           files: release/*
           body_path: body.md

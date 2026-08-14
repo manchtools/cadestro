@@ -67,11 +67,11 @@ produce a single-use, short-lived URL. Configure OIDC/SCIM immediately; there
 is no local administrator password.
 
 <!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/cadestro/main.go#parseCommand:dfecd82c -->
-For the open operator CLI, request the pipe-safe token form explicitly:
+To hand the token to another tool instead of a browser, request the pipe-safe
+form explicitly:
 
 ```bash
-cadestro bootstrap-admin --output token \
-  | powermanage bootstrap oidc --file provider.json --token-stdin
+cadestro bootstrap-admin --output token | your-provisioning-tool --token-stdin
 ```
 
 `--output token` writes only the raw token and a newline. Without it, the

@@ -27,7 +27,7 @@ if err != nil {
 for _, b := range firewall.Detect(ctx) { // Nftables if nft; Firewalld if firewall-cmd
     _ = b
 }
-m, err := firewall.New(firewall.Nftables, "powermanage", r) // namespace isolates this app's tables/chains
+m, err := firewall.New(firewall.Nftables, "cadestro", r) // namespace isolates this app's tables/chains
 if err != nil {
     return err
 }

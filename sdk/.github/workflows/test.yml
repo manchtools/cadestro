@@ -250,7 +250,7 @@ jobs:
       - name: Run sys integration tests (ja_JP.UTF-8 locale)
         run: |
           docker exec -w /workspace pm-sdk-test \
-            runuser -u power-manage -- env LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 \
+            runuser -u cadestro -- env LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 \
               /usr/local/go/bin/go test \
               -v -tags=integration -count=1 -timeout=10m \
               ./sdk/sys/exec/ ./sdk/sys/fs/ ./sdk/sys/user/ ./sdk/sys/service/ \
@@ -263,7 +263,7 @@ jobs:
   # Dedicated job for sys/network: the keyfile-based WiFi provisioning needs BOTH
   # a live NetworkManager daemon (`nmcli connection reload`) and root (the 0600
   # keyfile write into /etc/NetworkManager/system-connections) — neither fits the
-  # power-manage test-sys lane. Its own systemd+NM image (`with-networkmanager`,
+  # cadestro test-sys lane. Its own systemd+NM image (`with-networkmanager`,
   # NM configured to manage no devices) keeps NM out of the test-sys container so
   # the other integration tests are unaffected.
   test-network:

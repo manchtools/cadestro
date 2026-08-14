@@ -31,7 +31,7 @@ func TestAgentUpdateArchRequiresSignedChecksumManifest(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			_, ok := pmvalidate.Struct(validator, &pm.AgentUpdateArch{
-				BinaryUrl:   "https://releases.example/power-manage-agent-linux-amd64",
+				BinaryUrl:   "https://releases.example/cadestrod-linux-amd64",
 				ChecksumUrl: tc.checksumURL,
 			})
 			if ok != tc.wantOK {

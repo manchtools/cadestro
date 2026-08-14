@@ -41,7 +41,7 @@ func (b *networkdBackend) Apply(ctx context.Context, cfg InterfaceConfig) error 
 // would inject extra directives.
 func renderNetworkUnit(cfg InterfaceConfig) string {
 	var b strings.Builder
-	b.WriteString("# Managed by power-manage-agent — do not edit by hand.\n")
+	b.WriteString("# Managed by cadestrod — do not edit by hand.\n")
 	b.WriteString("[Match]\nName=" + cfg.Name + "\n\n")
 	b.WriteString("[Network]\n")
 	if cfg.Mode == DHCP {

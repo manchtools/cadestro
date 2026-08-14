@@ -12947,9 +12947,9 @@ type CreateLuksTokenResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// One-time UUID token
 	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	// URI for opening terminal: power-manage://luks/set-passphrase?token=<token-value>
+	// URI for opening terminal: cadestro://luks/set-passphrase?token=<token-value>
 	Uri string `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
-	// CLI command: power-manage-agent luks set-passphrase --token <token-value>
+	// CLI command: cadestrod luks set-passphrase --token <token-value>
 	CliCommand    string `protobuf:"bytes,3,opt,name=cli_command,json=cliCommand,proto3" json:"cli_command,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -20835,7 +20835,7 @@ func (*StopTerminalResponse) Descriptor() ([]byte, []int) {
 type TerminalSessionInfo struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// ID and email of the Power Manage user who opened the session.
+	// ID and email of the Cadestro user who opened the session.
 	UserId    string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	UserEmail string `protobuf:"bytes,3,opt,name=user_email,json=userEmail,proto3" json:"user_email,omitempty"`
 	// Target device.

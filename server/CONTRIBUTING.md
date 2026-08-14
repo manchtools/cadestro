@@ -1,4 +1,4 @@
-# Contributing to the Power Manage server
+# Contributing to the Cadestro server
 
 ## Build and test
 

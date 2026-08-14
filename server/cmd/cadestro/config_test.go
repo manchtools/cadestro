@@ -58,7 +58,7 @@ func newEnvironmentFixture(t *testing.T) environmentFixture {
 			"CADESTRO_PUBLIC_BASE_URL":          "https://manage.example",
 			"CADESTRO_AGENT_URL":                "https://agents.example",
 			"CADESTRO_TERMINAL_URL":             "wss://manage.example/terminal",
-			"CADESTRO_WEBHOOK_URL":              "https://hooks.example.test/power-manage?token=secret",
+			"CADESTRO_WEBHOOK_URL":              "https://hooks.example.test/cadestro?token=secret",
 			"CADESTRO_CORS_ORIGINS":             "https://manage.example",
 			"CADESTRO_AGENT_PROXY_SOURCES":      "172.30.0.2",
 			"CADESTRO_ARTIFACT_PATH":            artifactPath,
@@ -132,7 +132,7 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Equal(t, "https://manage.example", cfg.PublicBaseURL)
 	assert.Equal(t, "https://agents.example", cfg.AgentURL)
 	assert.Equal(t, "wss://manage.example/terminal", cfg.TerminalURL)
-	assert.Equal(t, "https://hooks.example.test/power-manage?token=secret", cfg.WebhookURL)
+	assert.Equal(t, "https://hooks.example.test/cadestro?token=secret", cfg.WebhookURL)
 	assert.Equal(t, fixture.values["CADESTRO_ARTIFACT_PATH"], cfg.ArtifactPath)
 	assert.Equal(t, fixture.values["CADESTRO_BACKUP_PATH"], cfg.BackupPath)
 	assert.Equal(t, fixture.values["CADESTRO_DATABASE_PATH"], cfg.DatabasePath)

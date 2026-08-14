@@ -6,7 +6,7 @@
 #   ./sdk/test/run-tests.sh
 #
 # The container boots systemd as PID 1 (required for systemctl daemon-reload,
-# enable, start, stop tests), then the tests run as the power-manage user.
+# enable, start, stop tests), then the tests run as the cadestro user.
 #
 
 set -euo pipefail
@@ -62,7 +62,7 @@ for p in "${INTEGRATION_PKGS[@]}"; do
 done
 
 podman exec -w /workspace "$CONTAINER_NAME" \
-    runuser -u power-manage -- env "LANG=${TEST_LOCALE}" "LC_ALL=${TEST_LOCALE}" \
+    runuser -u cadestro -- env "LANG=${TEST_LOCALE}" "LC_ALL=${TEST_LOCALE}" \
         /usr/local/go/bin/go test \
         -v -tags=integration -count=1 -timeout=10m \
         "${INTEGRATION_PKGS[@]/#/./}"

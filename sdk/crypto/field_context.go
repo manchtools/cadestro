@@ -11,7 +11,7 @@ type SealDirection string
 const (
 	DirectionAgentToControl SealDirection = "agent-to-control"
 	DirectionControlToAgent SealDirection = "control-to-agent"
-	fieldSealVersion                      = "power-manage-field-seal:v1"
+	fieldSealVersion                      = "cadestro-field-seal:v1"
 )
 
 // FieldSealContext constructs the shared AAD and HKDF domain used by control

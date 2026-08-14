@@ -1,4 +1,4 @@
-// Package main is the entry point for the power-manage agent.
+// Package main is the entry point for the cadestrod agent.
 package main
 
 import (

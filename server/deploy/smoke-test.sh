@@ -8,7 +8,7 @@ ARCHIVE_DIR=""
 PROJECT_NAME="pm-smoke-$$"
 PUBLISHED_IMAGE_TAG="${IMAGE_TAG:-}"
 REQUESTED_IMAGE_TAG="${PUBLISHED_IMAGE_TAG:-smoke-$$}"
-CONTROL_IMAGE="ghcr.io/manchtools/power-manage-control:$REQUESTED_IMAGE_TAG"
+CONTROL_IMAGE="ghcr.io/manchtools/cadestro:$REQUESTED_IMAGE_TAG"
 BUILT_IMAGE=""
 
 # The archive has to hold control's audit anchors and archived chain prefixes
@@ -235,11 +235,11 @@ traefik_logs="$(compose logs --no-color traefik)"
 
 openssl genpkey -algorithm Ed25519 -out "$WORK_DIR/certs/smoke-agent.key" >/dev/null 2>&1
 openssl req -new -key "$WORK_DIR/certs/smoke-agent.key" \
-    -subj '/CN=01SMOKEDEVICE0000000000000/O=Power Manage' \
+    -subj '/CN=01SMOKEDEVICE0000000000000/O=Cadestro' \
     -out "$WORK_DIR/certs/smoke-agent.csr" >/dev/null 2>&1
 openssl x509 -req -in "$WORK_DIR/certs/smoke-agent.csr" \
     -CA "$WORK_DIR/certs/ca.crt" -CAkey "$WORK_DIR/certs/ca.key" -CAcreateserial -days 1 \
-    -extfile <(printf 'subjectAltName=URI:spiffe://power-manage/agent\nextendedKeyUsage=clientAuth\n') \
+    -extfile <(printf 'subjectAltName=URI:spiffe://cadestro/agent\nextendedKeyUsage=clientAuth\n') \
     -out "$WORK_DIR/certs/smoke-agent.crt" >/dev/null 2>&1
 
 agent_status="$(docker run --rm --network "container:$control_id" --user 0:0 \

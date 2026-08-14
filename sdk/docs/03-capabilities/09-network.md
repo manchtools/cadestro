@@ -44,7 +44,7 @@ changed, err := m.Apply(ctx, network.Profile{
 })
 ```
 
-<!-- docref: begin src=sys/network/keyfile.go#buildPSKKeyfile:c291b90a -->
+<!-- docref: begin src=sys/network/keyfile.go#buildPSKKeyfile:64294277 -->
 The PSK is written into a NetworkManager *keyfile* — a `0600` file under
 `/etc/NetworkManager/system-connections/` with the `psk=` line — and never
 passed as an `nmcli` argument. Running `nmcli connection modify wifi-sec.psk

@@ -1,4 +1,4 @@
-// Power Manage TypeScript SDK
+// Cadestro TypeScript SDK
 // Plain TypeScript — no framework dependencies.
 
 import type { Timestamp } from '@bufbuild/protobuf/wkt';

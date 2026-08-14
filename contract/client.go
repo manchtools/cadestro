@@ -1,4 +1,4 @@
-// Package sdk provides a client library for communicating with the power-manage server.
+// Package sdk provides a client library for communicating with the cadestro server.
 package contract
 
 import (
@@ -36,7 +36,7 @@ const (
 	MaxHeartbeatInterval = 5 * time.Minute
 )
 
-// Client provides methods to communicate with the power-manage server.
+// Client provides methods to communicate with the cadestro server.
 type Client struct {
 	client    cadestrov1connect.AgentServiceClient
 	deviceID  string
@@ -548,7 +548,7 @@ type InventoryHandler interface {
 
 // TerminalHandler extends StreamHandler with remote terminal (PTY) session
 // support. Handlers that implement this interface receive the four
-// server-initiated session control messages from manchtools/power-manage-sdk#16
+// server-initiated session control messages from archived sdk#16
 // and are responsible for allocating PTYs, relaying I/O, and reporting
 // state back via Client.SendTerminalOutput / Client.SendTerminalStateChange.
 //

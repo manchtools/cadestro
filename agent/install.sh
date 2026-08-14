@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Power Manage Agent Installation Script
+# Cadestro Agent Installation Script
 #
 # Downloads the agent binary, installs it as a systemd service, and optionally
 # registers with a control server — all in one step.
@@ -75,7 +75,7 @@ log_error() {
 
 show_help() {
     cat << EOF
-Power Manage Agent Installation Script
+Cadestro Agent Installation Script
 
 Usage:
   sudo ./install.sh [OPTIONS]
@@ -97,16 +97,16 @@ Options:
 
 Examples:
   # Download, install and register (one-liner)
-  curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/install.sh | sudo bash -s -- -s https://power-manage.example.com -t abc123 -p CA_SHA256
+  curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/install.sh | sudo bash -s -- -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
   # Install the latest prerelease version
-  sudo ./install.sh --pre -s https://power-manage.example.com -t abc123 -p CA_SHA256
+  sudo ./install.sh --pre -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
   # Install a specific version
-  sudo ./install.sh -v v2026.2.0 -s https://power-manage.example.com -t abc123 -p CA_SHA256
+  sudo ./install.sh -v v2026.2.0 -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
   # Install with existing binary (skip download)
-  sudo ./install.sh --skip-download -s https://power-manage.example.com -t abc123 -p CA_SHA256
+  sudo ./install.sh --skip-download -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
   # Uninstall completely
   sudo ./install.sh --uninstall
@@ -493,7 +493,7 @@ enable_and_start_service() {
 }
 
 uninstall() {
-    log_info "Uninstalling Power Manage Agent..."
+    log_info "Uninstalling Cadestro Agent..."
 
     # Stop and disable service
     if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
@@ -548,8 +548,8 @@ install_desktop_handler() {
 
     cat > "$desktop_file" << EOF
 [Desktop Entry]
-Name=Power Manage Agent
-Comment=Power Manage device agent
+Name=Cadestro Agent
+Comment=Cadestro device agent
 Exec=$BINARY_PATH %u
 Terminal=false
 Type=Application
@@ -577,7 +577,7 @@ EOF
 show_status() {
     echo ""
     echo "=========================================="
-    echo "  Power Manage Agent Installation Complete"
+    echo "  Cadestro Agent Installation Complete"
     echo "=========================================="
     echo ""
     echo "Runs As:       root"
@@ -627,7 +627,7 @@ main() {
     # up the freshly-installed binary.
     stop_service_if_running
 
-    log_info "Starting Power Manage Agent installation..."
+    log_info "Starting Cadestro Agent installation..."
 
     create_directories
     install_systemd_service

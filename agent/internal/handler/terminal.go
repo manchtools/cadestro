@@ -71,7 +71,7 @@ func mustTermFSManager() sysfs.Manager {
 }
 
 // Default agent-side limits per the issue spec
-// (manchtools/power-manage-sdk#16 — Security section).
+// (archived sdk#16 — Security section).
 const (
 	defaultTerminalLimit       = 3
 	defaultTerminalIdleTimeout = 30 * time.Minute
@@ -273,7 +273,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 		return nil
 	}
 
-	// Refuse anything that doesn't look like a Power Manage TTY user.
+	// Refuse anything that doesn't look like a Cadestro TTY user.
 	// IsValidName covers the syntactic constraints (lowercase, length,
 	// charset). The HasPrefix check enforces the dedicated pm-tty-*
 	// namespace so the agent can never operate on an arbitrary system
@@ -286,10 +286,11 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	}
 
 	// Device-authoritative TTY gate. The toggle lives in the agent's
-	// SQLite database and defaults to off. Only the power-manage user
-	// (via the CLI) or root can flip it — the server cannot bypass
-	// this by pushing an action because the action still runs on the
-	// device and goes through the same CLI surface.
+	// SQLite database and defaults to off. Only root (via the CLI) can
+	// flip it — the database sits in the agent's root-owned 0700 data
+	// directory — and the server cannot bypass this by pushing an action
+	// because the action still runs on the device and goes through the
+	// same CLI surface.
 	//
 	// Fail-closed: a nil store or any read error means the gate is
 	// closed, never the other way around. This runs before the user

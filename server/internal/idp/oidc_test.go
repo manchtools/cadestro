@@ -1,7 +1,7 @@
 package idp_test
 
 // OIDC discovery + AuthCodeURL coverage
-// (manchtools/power-manage-server#161 follow-up). The full happy-path
+// (archived server#161 follow-up). The full happy-path
 // SSOCallback flow needs a signed-id_token fixture (substantial
 // JWS infrastructure); this test covers the slice that doesn't —
 // NewOIDCProvider's discovery probe + AuthCodeURL's state/nonce/PKCE

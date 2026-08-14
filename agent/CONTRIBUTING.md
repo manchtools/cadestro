@@ -1,4 +1,4 @@
-# Contributing to the Power Manage Agent
+# Contributing to the Cadestro Agent
 
 The agent runs as root on managed devices and delegates OS work to the [SDK](../sdk) (`sys/*`, `pkg`) — the agent must not reimplement OS features the SDK provides. Shared idioms, branch naming, and commit conventions are the SDK's: see its [CONTRIBUTING](../sdk/CONTRIBUTING.md). Use an issue first; branch as `<prefix>/issue-<number>-<short-description>`.
 

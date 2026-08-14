@@ -34,7 +34,7 @@ func newJournald(t *testing.T) syslog.Source {
 }
 
 // READ-ONLY: Detect + a small real Query against journald. Under a real systemd
-// (the test-sys container, where power-manage is in the systemd-journal group)
+// (the test-sys container, where cadestro is in the systemd-journal group)
 // the Query MUST succeed and return real journal lines — the drift guard against
 // a journalctl output change. Elsewhere it skips gracefully.
 func TestQuery_Integration(t *testing.T) {

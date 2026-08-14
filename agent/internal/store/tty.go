@@ -6,12 +6,12 @@ import "strings"
 // Value is "1"/"true"/"enabled" (case-insensitive, whitespace-trimmed)
 // when enabled; any other value (including absent) means disabled.
 //
-// The toggle is device-local — only the agent process (running as
-// power-manage) can write it, so enable/disable is invoked via the
-// cadestrod CLI which requires sudo or equivalent privilege
-// escalation to the power-manage user. The server cannot flip this flag
-// directly; it can only request the flip via a shell action, which still
-// runs as the agent user on the device.
+// The toggle is device-local — the database lives in the agent's
+// root-owned, mode 0700 data directory, so only the agent process can
+// write it and enable/disable is invoked via the cadestrod CLI, which
+// requires sudo or equivalent escalation to root. The server cannot flip
+// this flag directly; it can only request the flip via a shell action,
+// which still runs on the device through that same CLI surface.
 const TTYSettingKey = "tty.enabled"
 
 // IsTTYEnabled returns true if remote terminal sessions are enabled on

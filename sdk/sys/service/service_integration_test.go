@@ -14,7 +14,7 @@ import (
 
 const testUnitName = "pm-test-unit.service"
 const testUnitContent = `[Unit]
-Description=Power Manage SDK Test Unit
+Description=Cadestro SDK Test Unit
 
 [Service]
 Type=oneshot
@@ -26,7 +26,7 @@ WantedBy=multi-user.target
 `
 
 // newManager builds a real-Runner service.Manager. The integration container
-// runs as the non-root power-manage user with passwordless sudo.
+// runs as the non-root cadestro user with passwordless sudo.
 func newManager(t *testing.T) service.Manager {
 	t.Helper()
 	r, err := exec.NewRunner(exec.Sudo)

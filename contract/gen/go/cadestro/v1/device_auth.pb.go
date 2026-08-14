@@ -31,7 +31,7 @@ type EnrollRequest struct {
 	// the control CA certificate DER. The agent verifies the CA
 	// returned by registration matches this pin BEFORE trusting it,
 	// defending against a first-enrollment trust-anchor swap. Delivered by
-	// the operator alongside the token (e.g. power-manage://…?token=…&pin=…).
+	// the operator alongside the token (e.g. cadestro://…?token=…&pin=…).
 	// Missing or mismatched pins fail closed; enrollment has no
 	// trust-on-first-use path. Case-insensitive: the enroll CLI strips colons
 	// (openssl emits uppercase, colon-separated) and the agent compares

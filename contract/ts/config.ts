@@ -4,7 +4,7 @@
 import { logger, describeError } from './logger.js';
 
 const log = logger.named('config');
-const CONFIG_KEY = 'power-manage-config';
+const CONFIG_KEY = 'cadestro-config';
 
 export interface ServerConfig {
 	serverUrl: string;

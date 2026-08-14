@@ -46,7 +46,7 @@ done
 # release tarball, and the real tar to unpack it. docker and openssl stay
 # stubbed. The fixture setup.sh records that it ran, which the test asserts
 # never happens.
-FIXTURE_SOURCE="$FIXTURE_ROOT/power-manage-server-fixture"
+FIXTURE_SOURCE="$FIXTURE_ROOT/cadestro-server-fixture"
 FIXTURE_TARBALL="$FIXTURE_ROOT/release.tar.gz"
 SKEW_TARBALL="$FIXTURE_ROOT/release-skew.tar.gz"
 mkdir -p "$FIXTURE_SOURCE/deploy"
@@ -115,7 +115,7 @@ run_install() {
         CONTROL_DOMAIN=manage.example.test \
         AGENT_DOMAIN=agents.example.test \
         ACME_EMAIL=admin@example.test \
-        GITHUB_REPOSITORY=power-manage.invalid/server \
+        GITHUB_REPOSITORY=cadestro.invalid/server \
         "$@" \
         bash "$DEPLOY_DIR/install.sh"
 }
@@ -209,7 +209,7 @@ run_install_guided() {
         -u CONTROL_DOMAIN -u AGENT_DOMAIN -u ACME_EMAIL -u ARCHIVE_LOOPBACK \
         PATH="$bin_directory:$PATH" \
         INSTALL_DIR="$directory" \
-        GITHUB_REPOSITORY=power-manage.invalid/server \
+        GITHUB_REPOSITORY=cadestro.invalid/server \
         FSTAB_FILE="$fstab" \
         python3 -c 'import os, pty, sys; sys.exit(os.waitstatus_to_exitcode(pty.spawn(sys.argv[1:])))' \
         bash "$DEPLOY_DIR/install.sh"
@@ -226,7 +226,7 @@ test_missing_domain_without_terminal_still_refuses() {
         AGENT_DOMAIN=agents.example.test \
         ACME_EMAIL=admin@example.test \
         RELEASE_TAG=v2026.08.09-rc2 \
-        GITHUB_REPOSITORY=power-manage.invalid/server \
+        GITHUB_REPOSITORY=cadestro.invalid/server \
         bash "$DEPLOY_DIR/install.sh" </dev/null 2>&1)"; then
         printf 'install.sh proceeded without CONTROL_DOMAIN and without a terminal\n' >&2
         return 1

@@ -17,7 +17,7 @@ func genRecipient(t *testing.T) *ecdh.PrivateKey {
 	return priv
 }
 
-const testInfo = "power-manage-test-seal:v1"
+const testInfo = "cadestro-test-seal:v1"
 
 // Criterion 1: seal → open round-trips the exact plaintext, and the sealed
 // layout starts with the 32-byte ephemeral public key.
@@ -67,7 +67,7 @@ func TestOpenWithPrivateKey_RejectsTamperAndContextMismatch(t *testing.T) {
 	if _, err := OpenWithPrivateKey(priv, sealed, []byte("device|action|OTHER"), testInfo); err == nil {
 		t.Error("wrong AAD accepted")
 	}
-	if _, err := OpenWithPrivateKey(priv, sealed, aad, "power-manage-other:v1"); err == nil {
+	if _, err := OpenWithPrivateKey(priv, sealed, aad, "cadestro-other:v1"); err == nil {
 		t.Error("wrong info accepted")
 	}
 	other := genRecipient(t)

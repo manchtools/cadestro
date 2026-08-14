@@ -104,13 +104,13 @@ jobs:
           Download the pre-generated TypeScript types:
 
           ```bash
-          curl -fsSL https://github.com/MANCHTOOLS/power-manage-sdk/releases/download/${{ github.ref_name }}/ts-sdk.tar.gz | tar xz -C src/lib/gen/pm/v1/
+          curl -fsSL https://github.com/MANCHTOOLS/cadestro/releases/download/${{ github.ref_name }}/ts-sdk.tar.gz | tar xz -C src/lib/gen/pm/v1/
           ```
 
           ## Proto Source
 
           ```bash
-          curl -fsSL https://github.com/MANCHTOOLS/power-manage-sdk/releases/download/${{ github.ref_name }}/proto.tar.gz | tar xz -C proto/
+          curl -fsSL https://github.com/MANCHTOOLS/cadestro/releases/download/${{ github.ref_name }}/proto.tar.gz | tar xz -C proto/
           ```
 
           ## Go SDK
@@ -131,6 +131,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ steps.prerelease.outputs.is_prerelease == 'true' }}
-          name: Power Manage SDK ${{ steps.version.outputs.version }}
+          name: Cadestro SDK ${{ steps.version.outputs.version }}
           files: release/*
           body_path: body.md

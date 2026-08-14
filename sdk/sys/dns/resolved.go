@@ -21,7 +21,7 @@ var resolvConfPath = "/run/systemd/resolve/resolv.conf"
 // without overriding a higher-numbered local override an admin may add.
 const (
 	resolvedDropInDir  = "/etc/systemd/resolved.conf.d"
-	resolvedDropInPath = resolvedDropInDir + "/10-power-manage.conf"
+	resolvedDropInPath = resolvedDropInDir + "/10-cadestro.conf"
 )
 
 // resolvedManager drives systemd-resolved via resolvectl plus a managed
@@ -119,7 +119,7 @@ var renderDropIn = renderResolvedDropIn
 // the root-parsed file.
 func renderResolvedDropIn(cfg Config) ([]byte, error) {
 	var b strings.Builder
-	b.WriteString("# Managed by power-manage-agent — do not edit by hand.\n")
+	b.WriteString("# Managed by cadestrod — do not edit by hand.\n")
 	b.WriteString("[Resolve]\n")
 	if len(cfg.Nameservers) > 0 {
 		v := strings.Join(cfg.Nameservers, " ")

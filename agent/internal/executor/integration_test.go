@@ -34,7 +34,7 @@ import (
 // testRunner builds the privilege runner for the integration suite, mirroring
 // the agent's runtime backend selection so the tests exercise the same
 // dispatcher branch as production. When the test process is already root (the
-// post-rewire container default — containers no longer set up a power-manage
+// post-rewire container default — containers no longer set up a cadestro
 // user) it uses the no-escalation Direct backend so privileged calls don't
 // depend on per-distro sudoers quirks (notably openSUSE Tumbleweed's default
 // /etc/sudoers excludes root, breaking every `sudo -n cmd`); otherwise it
@@ -271,7 +271,7 @@ License: MIT
 BuildArch: noarch
 
 %description
-Test package for power-manage integration tests.
+Test package for cadestro integration tests.
 
 %install
 mkdir -p %{buildroot}/usr/share/pmtestrpm
@@ -1462,7 +1462,7 @@ func TestIntegration_Systemd(t *testing.T) {
 	t.Run("WriteUnitFile", func(t *testing.T) {
 		unitName := "pm-integration-test.service"
 		unitContent := `[Unit]
-Description=Power Manage Integration Test
+Description=Cadestro Integration Test
 
 [Service]
 ExecStart=/bin/true
@@ -2459,7 +2459,7 @@ func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 	// Before removing sudoers.d, copy rules into main /etc/sudoers so sudo
 	// still works during cleanup (the sudoers.d files won't exist to provide NOPASSWD).
 	sudoRun("cp", "/etc/sudoers", "/etc/sudoers.bak").Run()
-	sudoRun("sh", "-c", "cat /etc/sudoers.d/power-manage >> /etc/sudoers").Run()
+	sudoRun("sh", "-c", "cat /etc/sudoers.d/cadestro >> /etc/sudoers").Run()
 
 	// Backup and remove sudoers.d
 	sudoRun("cp", "-a", origDir, backupDir).Run()
@@ -3519,7 +3519,7 @@ func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 	assertSuccess(t, result)
 
 	// Verify .ssh directory permissions are now 700
-	// Use sudo sh because .ssh is 0700 owned by the test user, not accessible by power-manage
+	// Use sudo sh because .ssh is 0700 owned by the test user, not accessible by cadestro
 	out, err := sudoRun("sh", "-c", fmt.Sprintf("stat -c '%%a' %s", sshDir)).Output()
 	if err != nil {
 		t.Fatalf("cannot stat .ssh: %v", err)

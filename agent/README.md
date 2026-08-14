@@ -1,6 +1,6 @@
-# Power Manage Agent
+# Cadestro Agent
 
-The Power Manage Agent runs on managed devices and executes actions dispatched from the Control Server. It supports autonomous operation, executing scheduled actions even when disconnected from the server.
+The Cadestro Agent runs on managed devices and executes actions dispatched from the Control Server. It supports autonomous operation, executing scheduled actions even when disconnected from the server.
 
 The sole workspace system-design authority is
 `../DESIGN_2026_07_31/00_TARGET_DESIGN.md`. This README documents the agent
@@ -335,7 +335,7 @@ Create, modify, or remove system users.
 | `shell` | Login shell (e.g., `/bin/bash`) |
 | `groups` | Supplementary groups |
 
-On creation, a temporary password is generated and returned in the `lps.rotations` metadata field. The `power-manage` system user is protected from deletion.
+On creation, a temporary password is generated and returned in the `lps.rotations` metadata field.
 
 <!-- docref: begin src=internal/executor/action_user.go#Executor.updateUser:50055ffa -->
 `disabled: true` shadow-locks the account (`usermod -L`, a leading `!` on the password hash) and — for regular users — defaults the shell to `/usr/sbin/nologin` for offboarding. **Disabling the superuser is deliberately lock-only**: for any UID-0 account (keyed on the UID, not the name `root`, so a renamed superuser is covered without a name list) the shell is left untouched, so `sudo -i` and key-based root SSH keep working while password login stops — the same posture as Ubuntu's locked-by-default root. This is an operator choice and has no effect on the agent itself (a running root service neither re-authenticates nor uses the login shell); the agent logs a warning when it locks a UID-0 account. An explicitly set `shell` is always honored, superuser included.
@@ -353,8 +353,6 @@ Create, modify, or remove system groups.
 |-------|-------------|
 | `name` | Group name |
 | `members` | List of usernames to add as group members |
-
-The `power-manage` system group is protected from deletion.
 
 **Desired State:**
 - `PRESENT`: Create the group or update membership
@@ -693,7 +691,7 @@ cadestrod tty status           # prints "enabled" or "disabled"; exit 0 / 1
 
 - State lives in the agent's SQLite database (`tty.enabled` key in the `settings` table)
 - Default is **disabled** — fresh installs and upgrades must explicitly enable
-- The `power-manage` user owns the data directory, so the CLI must run as that user (via `sudo` or equivalent privilege escalation)
+- The data directory is root-owned and mode 0700, so the CLI must run as root (via `sudo` or equivalent privilege escalation)
 - The terminal handler fails-closed: if the flag is missing, the store is unreachable, or any read error occurs, sessions are refused
 - The rejection message sent to the server is intentionally opaque (`terminal sessions are disabled on this device`) — it never distinguishes "disabled" from other failure modes
 - No agent restart is required; the check runs at every `TerminalStart` request
@@ -811,7 +809,7 @@ The install script creates a systemd service:
 
 ```ini
 [Unit]
-Description=Power Manage Agent
+Description=Cadestro Agent
 After=network-online.target
 Wants=network-online.target
 
@@ -1008,8 +1006,8 @@ These tests verify the full lifecycle (create, idempotent re-run, update, remove
 | `TestIntegration_Shell` | SHELL | Basic execution, exit code handling, stderr capture, timeout, `run_as_root`, working directory, environment variables, multi-line scripts |
 | `TestIntegration_File` | FILE | Create with content/owner/group/mode, idempotent re-create, update content, remove, binary content |
 | `TestIntegration_Directory` | DIRECTORY | Create with owner/group/mode, idempotent re-create, update permissions, nested directories, remove, remove non-existent |
-| `TestIntegration_User` | USER | Create, idempotent re-create, update shell, remove, remove non-existent, protect `power-manage` |
-| `TestIntegration_Group` | GROUP | Create, idempotent re-create, add members, remove, protect `power-manage` |
+| `TestIntegration_User` | USER | Create, idempotent re-create, update shell, remove, remove non-existent, explicit home-creation flags, no-password handling |
+| `TestIntegration_Group` | GROUP | Create, idempotent re-create, add members, empty members removes all |
 | `TestIntegration_Sudo` | SUDO | Full-access policy setup, idempotent re-setup, remove (sudoers file + group) |
 | `TestIntegration_SSH` | SSH | Access policy setup (group + sshd_config.d snippet), idempotent re-setup, remove |
 | `TestIntegration_SSHD` | SSHD | Config directives setup, idempotent re-setup, `sshd -t` validation, remove |

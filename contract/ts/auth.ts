@@ -8,8 +8,8 @@ import { logger, describeError } from './logger.js';
 
 const log = logger.named('auth');
 
-const AUTH_KEY = 'power-manage-auth';
-const PERSIST_KEY = 'power-manage-persist';
+const AUTH_KEY = 'cadestro-auth';
+const PERSIST_KEY = 'cadestro-persist';
 
 export interface StoredAuth {
 	accessToken: string | null;

@@ -143,7 +143,7 @@ func TestResolvedApply_PerLink_Integration(t *testing.T) {
 
 func newResolved(t *testing.T) dns.Manager {
 	t.Helper()
-	// Sudo (not Direct): the test runs as the unprivileged power-manage user, so
+	// Sudo (not Direct): the test runs as the unprivileged cadestro user, so
 	// Apply's escalated mutations (mkdir/tee/chmod the root-owned drop-in,
 	// `systemctl restart`, `resolvectl`) must go through `sudo -n`. This exercises
 	// the exact escalation seam production uses (where the agent runs as root and
@@ -171,7 +171,7 @@ func restoreResolved(t *testing.T) {
 	}
 	ctx := context.Background()
 	if _, err := r.Run(ctx, pmexec.Command{
-		Name: "rm", Args: []string{"-f", "/etc/systemd/resolved.conf.d/10-power-manage.conf"}, Escalate: true,
+		Name: "rm", Args: []string{"-f", "/etc/systemd/resolved.conf.d/10-cadestro.conf"}, Escalate: true,
 	}); err != nil {
 		t.Logf("restore: rm drop-in: %v", err)
 	}

@@ -79,7 +79,7 @@ func TestStruct_EmptyULID(t *testing.T) {
 }
 
 func TestToSnakeCase(t *testing.T) {
-	// Acronym handling pinned by manchtools/power-manage-server#140 —
+	// Acronym handling pinned by archived server#140 —
 	// the previous shape split contiguous uppercase letters one at a
 	// time (`ServerURL` → `server_u_r_l`), which leaked nonsense into
 	// operator-facing validation error messages. New rule: `_` is

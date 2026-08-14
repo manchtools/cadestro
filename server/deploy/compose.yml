@@ -40,7 +40,7 @@ services:
         ipv4_address: 172.30.0.2
 
   control:
-    image: ghcr.io/manchtools/power-manage-control:${IMAGE_TAG:-latest}
+    image: ghcr.io/manchtools/cadestro:${IMAGE_TAG:-latest}
     container_name: pm-control
     restart: unless-stopped
     env_file: ./config/control.env

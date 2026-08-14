@@ -125,7 +125,7 @@ func TestBeginCLILogin_StoresOnlyTheChallengeAndReturnsPublicProviderMetadata(t 
 	oidc := newOIDCDouble(t)
 	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
 	providerID := f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "powermanage-cli"
+		s.CliClientID = "cadestro-cli"
 		s.IssuerURL = oidc.URL
 	})
 	challenge := strings.Repeat("A", 43)
@@ -136,7 +136,7 @@ func TestBeginCLILogin_StoresOnlyTheChallengeAndReturnsPublicProviderMetadata(t 
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, oidc.URL+"/token", resp.Msg.TokenUrl)
-	assert.Equal(t, "powermanage-cli", resp.Msg.ClientId)
+	assert.Equal(t, "cadestro-cli", resp.Msg.ClientId)
 	assert.NotEmpty(t, resp.Msg.State)
 	assert.WithinDuration(t, f.now.Add(10*time.Minute), resp.Msg.ExpiresAt.AsTime(), time.Second)
 
@@ -145,7 +145,7 @@ func TestBeginCLILogin_StoresOnlyTheChallengeAndReturnsPublicProviderMetadata(t 
 	assert.Equal(t, redirectURL, loginURL.Query().Get("redirect_uri"))
 	assert.Equal(t, challenge, loginURL.Query().Get("code_challenge"))
 	assert.Equal(t, "S256", loginURL.Query().Get("code_challenge_method"))
-	assert.Equal(t, "powermanage-cli", loginURL.Query().Get("client_id"))
+	assert.Equal(t, "cadestro-cli", loginURL.Query().Get("client_id"))
 	assert.NotEmpty(t, loginURL.Query().Get("nonce"))
 
 	var storedProvider, kind, verifier, storedRedirect string
@@ -163,7 +163,7 @@ func TestBeginCLILogin_RejectsUnsafeRedirectAndBrowserOnlyProvider(t *testing.T)
 	t.Parallel()
 	f := newFixture(t, withProviderFactory(discardProviderFactory))
 	f.insertProvider("browser", nil)
-	f.insertProvider("cli", func(s *providerSeed) { s.CliClientID = "powermanage-cli" })
+	f.insertProvider("cli", func(s *providerSeed) { s.CliClientID = "cadestro-cli" })
 	challenge := strings.Repeat("A", 43)
 
 	_, err := f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
@@ -187,11 +187,11 @@ func TestBeginCLILogin_RejectsUnsafeRedirectAndBrowserOnlyProvider(t *testing.T)
 func TestExchangeCLISession_VerifiesTheIDTokenAndIssuesARegularSession(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
-	oidc.audience = "powermanage-cli"
+	oidc.audience = "cadestro-cli"
 	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
 	role := f.insertRole([]string{"GetCurrentUser"})
 	f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "powermanage-cli"
+		s.CliClientID = "cadestro-cli"
 		s.IssuerURL = oidc.URL
 		s.AutoCreateUsers = true
 		s.DefaultRoleID = role
@@ -224,7 +224,7 @@ func TestExchangeCLISession_RejectsAnIDTokenForTheBrowserAudience(t *testing.T) 
 	oidc := newOIDCDouble(t) // default audience is the browser client-id
 	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
 	f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "powermanage-cli"
+		s.CliClientID = "cadestro-cli"
 		s.IssuerURL = oidc.URL
 		s.AutoCreateUsers = true
 	})
@@ -247,7 +247,7 @@ func TestBrowserAndCLIStatesCannotBeCrossConsumed(t *testing.T) {
 	oidc := newOIDCDouble(t)
 	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
 	f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "powermanage-cli"
+		s.CliClientID = "cadestro-cli"
 		s.IssuerURL = oidc.URL
 	})
 	browserState := f.startLogin("corp")

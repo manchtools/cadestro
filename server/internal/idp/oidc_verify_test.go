@@ -4,7 +4,7 @@ package idp_test
 // fixture from #217 with a real RSA-signed id_token so
 // VerifyAndExtractClaims can be exercised end-to-end. Closes the
 // "OIDC token+verify follow-up" item from
-// manchtools/power-manage-server#161.
+// archived server#161.
 //
 // Strategy: generate an in-test RSA key pair, sign a JWT with
 // go-jose/v4, expose the public key via the existing fake JWKS

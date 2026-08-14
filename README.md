@@ -3,11 +3,11 @@
 Device management for Linux fleets — one server binary, embedded SQLite, mTLS
 agents, and a transactional audit log.
 
-**This repository is being assembled.** Cadestro is the consolidation of the
-Power Manage component repositories into one codebase under a new name; the
-sources are being seeded module by module, and the documentation is being
-rewritten from the code as part of the move. Until the seed completes, the
-predecessor repositories remain the working trees.
+**This repository is being assembled.** Cadestro consolidates its predecessor's
+component repositories into one codebase under a new name; the sources were
+seeded module by module and the documentation is being rewritten from the code
+as part of the move. [PROVENANCE.md](PROVENANCE.md) records exactly what was
+seeded, from where, and what the squash discarded.
 
 ## Layout
 

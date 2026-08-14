@@ -32,7 +32,10 @@ No other tracked file was dirty in any source repository at seed time.
 - **Issue cross-references**: commit subjects referencing
   `manchtools/power-manage-{server,agent,sdk}#N` resolve in the archived
   repos, not here. Still-relevant open issues are re-filed here before the
-  archives close.
+  archives close. In-code citations use the shorthand `archived <module>#N`
+  — `archived server#58` is issue 58 of the `server/` row above — because
+  the predecessor repository names are swept out of the source tree; this
+  table is what resolves them.
 - **Tags and releases**: published tags (including the `v2026.08` RC line)
   stay in the source repos and are not re-pointed.
 - **The operator CLI** (`cmd/powermanage`): deliberately not carried — removed

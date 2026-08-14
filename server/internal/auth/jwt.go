@@ -77,7 +77,7 @@ const (
 	DefaultAccessTokenExpiry  = 5 * time.Minute
 	DefaultRefreshTokenExpiry = 7 * 24 * time.Hour
 	// DefaultIssuer is the `iss` claim; validation requires it.
-	DefaultIssuer = "power-manage"
+	DefaultIssuer = "cadestro"
 )
 
 // NewJWTManager creates a session-token manager. It refuses to build

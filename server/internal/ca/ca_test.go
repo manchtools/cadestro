@@ -250,8 +250,8 @@ func TestIssueCertificateFromCSR_RejectsSAN(t *testing.T) {
 		return u
 	}
 	cases := map[string]func(*x509.CertificateRequest){
-		"spiffe gateway URI": func(r *x509.CertificateRequest) { r.URIs = []*url.URL{mustURL("spiffe://power-manage/gateway")} },
-		"spiffe control URI": func(r *x509.CertificateRequest) { r.URIs = []*url.URL{mustURL("spiffe://power-manage/control")} },
+		"spiffe gateway URI": func(r *x509.CertificateRequest) { r.URIs = []*url.URL{mustURL("spiffe://cadestro/gateway")} },
+		"spiffe control URI": func(r *x509.CertificateRequest) { r.URIs = []*url.URL{mustURL("spiffe://cadestro/control")} },
 		"dns name":           func(r *x509.CertificateRequest) { r.DNSNames = []string{"control-server.example.com"} },
 		"ip address":         func(r *x509.CertificateRequest) { r.IPAddresses = []net.IP{net.ParseIP("10.0.0.1")} },
 		"email":              func(r *x509.CertificateRequest) { r.EmailAddresses = []string{"x@y"} },
@@ -292,7 +292,7 @@ func TestIssueCertificateFromCSR_StampsExactlyAgentPeerClass(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, parsed.URIs, 1, "an issued agent cert must carry exactly one URI SAN")
-	assert.Equal(t, "spiffe://power-manage/agent", parsed.URIs[0].String())
+	assert.Equal(t, "spiffe://cadestro/agent", parsed.URIs[0].String())
 
 	class, err := mtls.PeerClassFromCert(parsed)
 	require.NoError(t, err)
@@ -450,7 +450,7 @@ func TestIssueServerCertificateFromCSR_RejectsSAN(t *testing.T) {
 		return u
 	}
 	csrPEM := generateCSRWithSAN(t, "gw-1", func(r *x509.CertificateRequest) {
-		r.URIs = []*url.URL{mustURL("spiffe://power-manage/control")}
+		r.URIs = []*url.URL{mustURL("spiffe://cadestro/control")}
 	})
 	cert, err := c.IssueServerCertificateFromCSR("gw-1", csrPEM, "gw-1.example.com")
 	require.Error(t, err)

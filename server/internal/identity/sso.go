@@ -304,7 +304,7 @@ func (h *Handlers) SSOCallback(ctx context.Context, req *connect.Request[pmv1.SS
 }
 
 // ExchangeCLISession verifies the public client's ID-token assertion and
-// issues the same Power Manage session as browser SSO.
+// issues the same Cadestro session as browser SSO.
 func (h *Handlers) ExchangeCLISession(ctx context.Context, req *connect.Request[pmv1.ExchangeCLISessionRequest]) (*connect.Response[pmv1.ExchangeCLISessionResponse], error) {
 	if err := h.validate(ctx, req.Msg); err != nil {
 		return nil, err

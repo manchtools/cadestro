@@ -359,7 +359,7 @@ test_backend_name_missing_fails() {
     new_fixture "$directory" manage.example.test agents.example.test
     run_setup "$directory" >/dev/null
     openssl req -new -key "$directory/certs/control.key" \
-        -subj '/CN=agents.example.test/O=Power Manage' \
+        -subj '/CN=agents.example.test/O=Cadestro' \
         -out "$directory/certs/control.csr" >/dev/null 2>&1
     openssl x509 -req -in "$directory/certs/control.csr" \
         -CA "$directory/certs/ca.crt" -CAkey "$directory/certs/ca.key" \

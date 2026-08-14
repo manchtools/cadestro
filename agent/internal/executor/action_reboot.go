@@ -31,7 +31,7 @@ func (e *Executor) executeReboot(ctx context.Context) (*pb.CommandOutput, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build reboot manager: %w", err)
 	}
-	if err := rb.Schedule(ctx, sysreboot.ScheduleOptions{Delay: "+5", Message: "Power Manage: scheduled reboot"}); err != nil {
+	if err := rb.Schedule(ctx, sysreboot.ScheduleOptions{Delay: "+5", Message: "Cadestro: scheduled reboot"}); err != nil {
 		return nil, fmt.Errorf("failed to schedule reboot: %w", err)
 	}
 	return &pb.CommandOutput{Stdout: "Reboot scheduled in 5 minutes\n"}, nil

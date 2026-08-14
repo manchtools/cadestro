@@ -97,7 +97,7 @@ func isHex(s string) bool {
 func buildPSKKeyfile(p Profile) []byte {
 	var b strings.Builder
 
-	b.WriteString("# Managed by power-manage-agent — do not edit by hand.\n")
+	b.WriteString("# Managed by cadestrod — do not edit by hand.\n")
 	b.WriteString("[connection]\n")
 	fmt.Fprintf(&b, "id=%s\n", p.Name)
 	b.WriteString("type=wifi\n")

@@ -13,7 +13,7 @@ import (
 // TestValidateActionSafetyRequiresSignedAgentUpdateManifest pins fail-closed source validation.
 func TestValidateActionSafetyRequiresSignedAgentUpdateManifest(t *testing.T) {
 	t.Parallel()
-	validBinaryURL := "https://releases.example/power-manage-agent-linux-amd64"
+	validBinaryURL := "https://releases.example/cadestrod-linux-amd64"
 	validChecksumURL := "https://releases.example/SHA256SUMS"
 
 	tests := []struct {

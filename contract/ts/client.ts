@@ -1,4 +1,4 @@
-// Power Manage API Client.
+// Cadestro API Client.
 // Plain TypeScript — no framework dependencies.
 // Dependencies (auth store, config) are injected via ClientOptions.
 
@@ -1144,7 +1144,7 @@ export class ApiClient {
 	// fires. Idempotent and best-effort — once an execution leaves the
 	// SCHEDULED / PENDING window the cancel is a no-op and the returned
 	// execution reflects whatever terminal state it reached on its own.
-	// See manchtools/power-manage-server#57.
+	// See archived server#57.
 	async cancelExecution(executionId: string) {
 		const client = this.getClient();
 		const response = await client.cancelExecution(
@@ -1651,7 +1651,7 @@ export class ApiClient {
 	}
 
 	// Bootstrap-only provider registration. The host-authorized bootstrap-admin
-	// token is presented to control as `Authorization: PowerManage-Bootstrap <T>`
+	// token is presented to control as `Authorization: Cadestro-Bootstrap <T>`
 	// (NOT a Bearer session token) and is spent on exactly this one call. It goes
 	// through the auth transport — the one WITHOUT the session/Bearer interceptor —
 	// so no access token is ever attached, and the scheme is set as a per-call
@@ -1681,7 +1681,7 @@ export class ApiClient {
 		const client = this.getAuthClient();
 		const response = await client.createIdentityProvider(
 			create(CreateIdentityProviderRequestSchema, data),
-			{ headers: { Authorization: `PowerManage-Bootstrap ${bootstrapToken}` } }
+			{ headers: { Authorization: `Cadestro-Bootstrap ${bootstrapToken}` } }
 		);
 		return response.provider;
 	}

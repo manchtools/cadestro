@@ -27,13 +27,13 @@ RUN systemctl enable systemd-resolved
 # LC_ALL=C (via Command.CLocale) fails here. ja_JP/zh_CN translate the strings
 # the SDK parses (e.g. cat's "No such file or directory").
 
-# Create power-manage user (matches production setup). Add it to systemd-journal
+# Create cadestro user (matches production setup). Add it to systemd-journal
 # so the sys/log integration test can read the real system journal via journalctl
 # (a non-member only sees its own, empty, user journal).
-RUN useradd --system --no-create-home --shell /usr/sbin/nologin power-manage && \
-    mkdir -p /home/power-manage && \
-    chown power-manage:power-manage /home/power-manage && \
-    usermod -aG systemd-journal power-manage
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin cadestro && \
+    mkdir -p /home/cadestro && \
+    chown cadestro:cadestro /home/cadestro && \
+    usermod -aG systemd-journal cadestro
 
 # sshd host keys (needed for systemd tests that reference ssh.service)
 RUN ssh-keygen -A
@@ -49,62 +49,62 @@ RUN printf 'go %s\n\nuse (\n\t./sdk\n)\n' "$(sed -n 's/^go //p' sdk/go.mod)" > g
 # Pre-download dependencies
 RUN cd sdk && go mod download
 
-# Install sudoers for power-manage user (same commands the SDK packages use)
+# Install sudoers for cadestro user (same commands the SDK packages use)
 RUN printf '\
-power-manage ALL=(root) NOPASSWD: /usr/bin/systemctl *\n\
-power-manage ALL=(root) NOPASSWD: /bin/systemctl *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/systemctl\n\
-power-manage ALL=(root) NOPASSWD: /bin/systemctl\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/tee *\n\
-power-manage ALL=(root) NOPASSWD: /bin/tee *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/chown *\n\
-power-manage ALL=(root) NOPASSWD: /bin/chown *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/chmod *\n\
-power-manage ALL=(root) NOPASSWD: /bin/chmod *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/mkdir *\n\
-power-manage ALL=(root) NOPASSWD: /bin/mkdir *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/rm *\n\
-power-manage ALL=(root) NOPASSWD: /bin/rm *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/cp *\n\
-power-manage ALL=(root) NOPASSWD: /bin/cp *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/mv *\n\
-power-manage ALL=(root) NOPASSWD: /bin/mv *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/cat *\n\
-power-manage ALL=(root) NOPASSWD: /bin/cat *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/id *\n\
-power-manage ALL=(root) NOPASSWD: /bin/id *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/useradd *\n\
-power-manage ALL=(root) NOPASSWD: /sbin/useradd *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/usermod *\n\
-power-manage ALL=(root) NOPASSWD: /sbin/usermod *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/userdel *\n\
-power-manage ALL=(root) NOPASSWD: /sbin/userdel *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/groupadd *\n\
-power-manage ALL=(root) NOPASSWD: /sbin/groupadd *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/groupdel *\n\
-power-manage ALL=(root) NOPASSWD: /sbin/groupdel *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/gpasswd *\n\
-power-manage ALL=(root) NOPASSWD: /sbin/gpasswd *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/gpasswd *\n\
-power-manage ALL=(root) NOPASSWD: /bin/gpasswd *\n\
-power-manage ALL=(root) NOPASSWD: /usr/sbin/chpasswd\n\
-power-manage ALL=(root) NOPASSWD: /sbin/chpasswd\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/chage *\n\
-power-manage ALL=(root) NOPASSWD: /bin/chage *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/getent *\n\
-power-manage ALL=(root) NOPASSWD: /bin/getent *\n\
-power-manage ALL=(root) NOPASSWD: /bin/sh *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/sh *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/test *\n\
-power-manage ALL=(root) NOPASSWD: /bin/test *\n\
-power-manage ALL=(root) NOPASSWD: /usr/bin/resolvectl *\n\
-power-manage ALL=(root) NOPASSWD: /bin/resolvectl *\n\
-' > /etc/sudoers.d/power-manage && \
-    chmod 0440 /etc/sudoers.d/power-manage && \
-    visudo -c -f /etc/sudoers.d/power-manage
+cadestro ALL=(root) NOPASSWD: /usr/bin/systemctl *\n\
+cadestro ALL=(root) NOPASSWD: /bin/systemctl *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/systemctl\n\
+cadestro ALL=(root) NOPASSWD: /bin/systemctl\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/tee *\n\
+cadestro ALL=(root) NOPASSWD: /bin/tee *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/chown *\n\
+cadestro ALL=(root) NOPASSWD: /bin/chown *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/chmod *\n\
+cadestro ALL=(root) NOPASSWD: /bin/chmod *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/mkdir *\n\
+cadestro ALL=(root) NOPASSWD: /bin/mkdir *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/rm *\n\
+cadestro ALL=(root) NOPASSWD: /bin/rm *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/cp *\n\
+cadestro ALL=(root) NOPASSWD: /bin/cp *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/mv *\n\
+cadestro ALL=(root) NOPASSWD: /bin/mv *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/cat *\n\
+cadestro ALL=(root) NOPASSWD: /bin/cat *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/id *\n\
+cadestro ALL=(root) NOPASSWD: /bin/id *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/useradd *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/useradd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/usermod *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/usermod *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/userdel *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/userdel *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/groupadd *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/groupadd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/groupdel *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/groupdel *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /bin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/chpasswd\n\
+cadestro ALL=(root) NOPASSWD: /sbin/chpasswd\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/chage *\n\
+cadestro ALL=(root) NOPASSWD: /bin/chage *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/getent *\n\
+cadestro ALL=(root) NOPASSWD: /bin/getent *\n\
+cadestro ALL=(root) NOPASSWD: /bin/sh *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/sh *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/test *\n\
+cadestro ALL=(root) NOPASSWD: /bin/test *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/resolvectl *\n\
+cadestro ALL=(root) NOPASSWD: /bin/resolvectl *\n\
+' > /etc/sudoers.d/cadestro && \
+    chmod 0440 /etc/sudoers.d/cadestro && \
+    visudo -c -f /etc/sudoers.d/cadestro
 
-# Own workspace and Go caches so power-manage user can compile tests
-RUN chown -R power-manage:power-manage /workspace /home/power-manage
+# Own workspace and Go caches so cadestro user can compile tests
+RUN chown -R cadestro:cadestro /workspace /home/cadestro
 
 # Use systemd as PID 1 for systemctl daemon-reload, enable, start, etc.
 STOPSIGNAL SIGRTMIN+3
@@ -114,7 +114,7 @@ ENTRYPOINT ["/sbin/init"]
 # the dedicated network CI job (the sys/network keyfile-based WiFi provisioning
 # runs `nmcli connection reload` against a live NM and writes a root-owned 0600
 # keyfile, so it needs both a running daemon and root — hence its own job rather
-# than the power-manage test-sys lane). `unmanaged-devices=*` keeps NM from
+# than the cadestro test-sys lane). `unmanaged-devices=*` keeps NM from
 # touching the container's eth0 / DNS, so it manages profile config only and
 # never disrupts the container's own networking. Inherits ENTRYPOINT/STOPSIGNAL
 # from `systemd`.

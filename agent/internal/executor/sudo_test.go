@@ -1,7 +1,7 @@
 package executor
 
 // TerminalAdmin sudoers template coverage —
-// manchtools/power-manage-server#70.
+// archived server#70.
 //
 // This file covers ONLY the two new server-managed templates added
 // alongside the new AdminAccessLevel enum values. The existing

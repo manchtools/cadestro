@@ -1731,9 +1731,9 @@ message CreateLuksTokenRequest {
 message CreateLuksTokenResponse {
   // One-time UUID token
   string token = 1;
-  // URI for opening terminal: power-manage://luks/set-passphrase?token=<token-value>
+  // URI for opening terminal: cadestro://luks/set-passphrase?token=<token-value>
   string uri = 2;
-  // CLI command: power-manage-agent luks set-passphrase --token <token-value>
+  // CLI command: cadestrod luks set-passphrase --token <token-value>
   string cli_command = 3;
 }
 
@@ -3005,7 +3005,7 @@ message StopTerminalResponse {}
 // by ListActiveTerminalSessions and used by the admin UI for display.
 message TerminalSessionInfo {
   string session_id = 1;
-  // ID and email of the Power Manage user who opened the session.
+  // ID and email of the Cadestro user who opened the session.
   string user_id = 2;
   string user_email = 3;
   // Target device.

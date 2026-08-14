@@ -129,7 +129,7 @@ func (e *Executor) executeSsh(ctx context.Context, params *pb.SshParams, state p
 // generateSshGroupConfig generates sshd_config content using Match Group.
 func generateSshGroupConfig(groupName string, params *pb.SshParams) string {
 	lines := []string{
-		"# Managed by Power Manage - do not edit manually",
+		"# Managed by Cadestro - do not edit manually",
 		fmt.Sprintf("Match Group %s", groupName),
 	}
 	if params.AllowPubkey {
@@ -279,7 +279,7 @@ func (e *Executor) executeSshd(ctx context.Context, params *pb.SshdParams, state
 // generation time.
 func generateSshdGlobalConfig(params *pb.SshdParams) (string, error) {
 	var lines []string
-	lines = append(lines, "# Managed by Power Manage - do not edit manually")
+	lines = append(lines, "# Managed by Cadestro - do not edit manually")
 	for _, d := range params.Directives {
 		if strings.ContainsAny(d.Key, "\n\r\x00") {
 			return "", fmt.Errorf("sshd directive key contains forbidden control character (CR, LF, or NUL)")

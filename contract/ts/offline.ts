@@ -6,7 +6,7 @@ import { logger, describeError } from './logger.js';
 
 const log = logger.named('offline');
 
-const DB_NAME = 'power-manage-offline';
+const DB_NAME = 'cadestro-offline';
 const DB_VERSION = 1;
 
 interface OfflineDB {
@@ -51,7 +51,7 @@ export type DraftType =
  * DraftPayloadMap is intentionally empty so frontend code can declare
  * narrowed per-type shapes via TypeScript module augmentation:
  *
- *   declare module '@manchtools/power-manage-sdk/ts/offline' {
+ *   declare module '@manchtools/cadestro-contract/ts/offline' {
  *     interface DraftPayloadMap {
  *       'create-user': { email: string; displayName: string };
  *     }

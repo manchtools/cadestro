@@ -147,7 +147,7 @@ func prepareSQLiteFile(path string, create bool) error {
 func sqliteDSN(path string) (string, error) {
 	var base string
 	if path == ":memory:" {
-		base = "file:power-manage?mode=memory&cache=shared"
+		base = "file:cadestro?mode=memory&cache=shared"
 	} else if strings.HasPrefix(path, "file:") {
 		base = path
 	} else {

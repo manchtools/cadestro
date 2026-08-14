@@ -385,7 +385,7 @@ func (i *AuthInterceptor) WithBootstrapAuthenticator(b BootstrapAuthenticator) *
 // a bootstrap token must never be accepted anywhere a session token is
 // expected, and a distinct scheme makes that a parse-level property
 // rather than a validation-order one.
-const BootstrapTokenScheme = "PowerManage-Bootstrap"
+const BootstrapTokenScheme = "Cadestro-Bootstrap"
 
 // WrapUnary implements connect.Interceptor.
 func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {

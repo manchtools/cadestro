@@ -289,7 +289,7 @@ func (n *notifier) sendDesktopNotification(ctx context.Context, s session, title
 		Args: []string{
 			"DBUS_SESSION_BUS_ADDRESS=" + dbusAddr,
 			"runuser", "-u", s.user, "--",
-			"notify-send", "-u", "critical", "-a", "Power Manage", "-i", "dialog-warning",
+			"notify-send", "-u", "critical", "-a", "Cadestro", "-i", "dialog-warning",
 			title, message,
 		},
 		Escalate: true,

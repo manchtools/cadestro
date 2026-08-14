@@ -149,7 +149,7 @@ func (e *Executor) removeSudoPolicy(ctx context.Context, groupName, sudoersPath 
 // work.
 //
 // The two TERMINAL_ADMIN_* arms route to passwordless templates
-// designed for pm-tty-* accounts (see manchtools/power-manage-server#70).
+// designed for pm-tty-* accounts (see archived server#70).
 // The pre-existing FULL/LIMITED/CUSTOM arms are unchanged — operator-
 // authored AdminPolicy actions continue to behave exactly as they did
 // before this PR.
@@ -238,7 +238,7 @@ func terminalAdminLimitedDenyBlocks(groupName string) []string {
 // persistence deny blocks land on top.
 func generateTerminalAdminLimitedSudoConfig(groupName string) string {
 	lines := []string{
-		"# Managed by Power Manage — do not edit manually",
+		"# Managed by Cadestro — do not edit manually",
 		fmt.Sprintf("# Passwordless LIMITED sudo for group %s (TerminalAdmin, server #70)", groupName),
 		"",
 		terminalAdminDefaultsBlock(groupName),
@@ -284,7 +284,7 @@ func generateTerminalAdminLimitedSudoConfig(groupName string) string {
 // Defaults block applies regardless of access level.
 func generateTerminalAdminFullSudoConfig(groupName string) string {
 	lines := []string{
-		"# Managed by Power Manage — do not edit manually",
+		"# Managed by Cadestro — do not edit manually",
 		fmt.Sprintf("# Passwordless FULL sudo for group %s (TerminalAdmin, server #70)", groupName),
 		"",
 		terminalAdminDefaultsBlock(groupName),
@@ -296,7 +296,7 @@ func generateTerminalAdminFullSudoConfig(groupName string) string {
 
 func generateFullSudoConfig(groupName string) string {
 	lines := []string{
-		"# Managed by Power Manage - do not edit manually",
+		"# Managed by Cadestro - do not edit manually",
 		fmt.Sprintf("# Full sudo access for group %s (password required)", groupName),
 		fmt.Sprintf("%%%s ALL=(ALL:ALL) ALL", groupName),
 	}
@@ -305,7 +305,7 @@ func generateFullSudoConfig(groupName string) string {
 
 func generateLimitedSudoConfig(groupName string) string {
 	lines := []string{
-		"# Managed by Power Manage - do not edit manually",
+		"# Managed by Cadestro - do not edit manually",
 		fmt.Sprintf("# Limited sudo access for group %s (password required)", groupName),
 		"",
 		"# Package management",
@@ -346,7 +346,7 @@ func generateCustomSudoConfig(groupName, customConfig string) string {
 	// Replace {group} placeholder with actual group name
 	resolved := strings.ReplaceAll(customConfig, "{group}", groupName)
 	lines := []string{
-		"# Managed by Power Manage - do not edit manually",
+		"# Managed by Cadestro - do not edit manually",
 		fmt.Sprintf("# Custom sudo access for group %s", groupName),
 		"",
 		resolved,

@@ -1,9 +1,9 @@
-# Power Manage
+# Cadestro
 
 Self-hosted device management for Linux fleets — one binary, embedded SQLite,
 mTLS agents, and a transactional audit log.
 
-Power Manage is for teams running tens to thousands of Linux machines —
+Cadestro is for teams running tens to thousands of Linux machines —
 workstations, servers, kiosks — who need enrollment, desired-state policy,
 one-shot dispatch, and audit evidence without operating a database cluster to
 get them.
@@ -48,7 +48,7 @@ OIDC provider for operator login. The installer is interactive and asks for
 everything it needs; it never prompts for secrets.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manchtools/power-manage-server/main/deploy/install.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/manchtools/cadestro/main/deploy/install.sh -o install.sh
 chmod +x install.sh && sudo ./install.sh
 ```
 
@@ -57,24 +57,23 @@ control refuses to start otherwise, because evidence that shares a disk with
 the records it attests to is not evidence. For a single-disk test box, answer
 `loopback` when asked (or set `ARCHIVE_LOOPBACK=1`).
 
-Then bootstrap your identity provider and enroll a device:
+Then create a single-use administrator setup URL, configure your identity
+provider through it, and enroll a device:
 
 ```bash
-# on the control host: one-time admin token, piped into the CLI
-docker compose exec -T control cadestro bootstrap-admin --output token \
-  | powermanage bootstrap oidc --file provider.json --token-stdin
+# on the control host: host-authorized, single-use setup URL
+docker compose exec control cadestro bootstrap-admin
 
-powermanage login --provider <slug>
-powermanage enrollment-token create --file token.json
+# in the browser at that URL: configure OIDC and SCIM, then mint an
+# enrollment token
 
 # on the device, with the installer from the agent release assets
 sudo bash install.sh -s https://agents.example.com -t <token> -p <ca-fingerprint>
 ```
 
-The operator CLI (`powermanage`) is MIT-licensed and ships from the
-[SDK repository](https://github.com/manchtools/power-manage-sdk); the device
-agent ships from the
-[agent repository](https://github.com/manchtools/power-manage-agent)
+The bearer token sits in the URL fragment, which browsers do not send to
+control or to Traefik access logs. There is no local password or TOTP
+administrator. The device agent ships from this repository's `agent/` module
 with signed releases the installer verifies before anything lands on disk.
 Full walkthrough: [deploy/QUICKSTART.md](deploy/QUICKSTART.md).
 
@@ -109,7 +108,7 @@ multi-region, local passwords/TOTP/WebAuthn, and email notifications
 ## Where it fits
 
 Configuration management (Ansible, Puppet, Salt) pushes changes to reachable
-machines and records that a run happened. Power Manage enrolls devices that
+machines and records that a run happened. Cadestro enrolls devices that
 connect outward, keeps desired state applied while they are offline, and
 records every change as transactional audit evidence — which matters for
 remote fleets and for anyone who has to hand an auditor enrollment records

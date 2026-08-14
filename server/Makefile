@@ -1,4 +1,4 @@
-# Power Manage control server.
+# Cadestro control server.
 #
 # Build/test recipes live in CLAUDE.md / README.md; this Makefile exists
 # for the code-generation steps that must be reproducible and version-

@@ -22,7 +22,7 @@ import (
 func TestIsUnderProtectedPrefix(t *testing.T) {
 	refuse := []string{
 		"/",
-		"/etc", "/etc/sudoers.d", "/etc/sudoers.d/power-manage",
+		"/etc", "/etc/sudoers.d", "/etc/sudoers.d/cadestro",
 		"/etc/cron.d", "/etc/cron.d/job", "/etc/systemd/system",
 		"/boot", "/boot/efi", "/boot/efi/EFI",
 		"/var", "/var/lib", "/var/lib/anything", "/var/lib/postgresql/data",
@@ -64,7 +64,7 @@ func TestIsUnderProtectedPrefix(t *testing.T) {
 func TestRemoveDir_RefusesProtectedPrefixes(t *testing.T) {
 	m := directManager(t)
 	for _, p := range []string{
-		"/etc/sudoers.d/power-manage",
+		"/etc/sudoers.d/cadestro",
 		"/etc/cron.d",
 		"/boot/efi",
 		"/var/lib/anything",

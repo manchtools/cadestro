@@ -7,7 +7,7 @@ package contract
 // in-the-field agent.
 //
 // Filed alongside the TerminalAdmin work in
-// manchtools/power-manage-server#70 — the new TERMINAL_ADMIN_*
+// archived server#70 — the new TERMINAL_ADMIN_*
 // values were added so the agent can route to two new sudoers
 // generators without mutating FULL/LIMITED's existing semantics.
 

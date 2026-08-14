@@ -1,4 +1,4 @@
-# Contributing to Power Manage Agent
+# Contributing to Cadestro Agent
 
 ## Prerequisites
 
@@ -8,20 +8,19 @@
 
 ## Getting started
 
-The agent builds standalone against its pinned SDK dependency:
+The agent builds standalone, resolving the contract and the SDK from their
+sibling directories in this repository through the `replace` directives in
+`agent/go.mod`:
 
 ```bash
 go build ./cmd/cadestrod
 go test ./...
 ```
 
-For coordinated changes against a local SDK checkout, clone
-[power-manage-sdk](https://github.com/manchtools/power-manage-sdk) beside this
-repository and point a `go.work` at it:
-
-```bash
-go work init . && go work edit -replace github.com/manchtools/power-manage-sdk=../sdk
-```
+Coordinated changes across modules need no extra setup: the repository root
+carries a `go.work` that already stitches `agent`, `contract`, `sdk`, and
+`server` together. Run the module's own gate with `GOWORK=off` to confirm it
+still builds as a standalone module, which is what CI certifies.
 
 ## Workflow
 

@@ -15,7 +15,7 @@ import (
 )
 
 // newManager builds a real-Runner user.Manager. The integration container runs
-// the suite as the non-root power-manage user with passwordless sudo, so the
+// the suite as the non-root cadestro user with passwordless sudo, so the
 // escalation backend is Sudo.
 func newManager(t *testing.T) user.Manager {
 	t.Helper()

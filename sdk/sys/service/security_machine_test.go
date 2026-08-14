@@ -65,7 +65,7 @@ func TestSystemdUnitPersistenceSecurityMachine(t *testing.T) {
 func unitContentForAction(action unitPersistenceAction) string {
 	switch action {
 	case unitHardenedService:
-		return "[Unit]\nDescription=Power Manage test unit\n[Service]\nDynamicUser=yes\nNoNewPrivileges=yes\nProtectSystem=strict\nExecStart=/usr/bin/true\n"
+		return "[Unit]\nDescription=Cadestro test unit\n[Service]\nDynamicUser=yes\nNoNewPrivileges=yes\nProtectSystem=strict\nExecStart=/usr/bin/true\n"
 	case unitExecFromTmp:
 		return "[Unit]\nDescription=tmp persistence\n[Service]\nExecStart=/tmp/payload\n"
 	case unitShellDownloader:

@@ -1,5 +1,5 @@
 -- docref: anchor sqlite-baseline
--- Power Manage SQLite baseline. The project is pre-alpha: PostgreSQL data is
+-- Cadestro SQLite baseline. The project is pre-alpha: PostgreSQL data is
 -- not migrated and a SQLite installation always starts from this schema.
 
 PRAGMA user_version = 1;
