@@ -63,41 +63,28 @@ func TestCreateIdentityProvider_SealsTheSecretAndNeverReturnsIt(t *testing.T) {
 	assert.Zero(t, hits, "the client secret never reaches the audit log in the clear")
 }
 
-func TestCreateIdentityProvider_AcceptsASecretlessCLIOnlyProvider(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"CreateIdentityProvider"}})
-
-	resp, err := f.client.CreateIdentityProvider(f.ctx(), authed(&pmv1.CreateIdentityProviderRequest{
-		Name:          "Corp CLI",
-		Slug:          "corpcli",
-		ProviderType:  pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
-		CliClientId:   "cadestro-cli",
-		IssuerUrl:     "https://idp.example/",
-		DefaultRoleId: auth.AdminRoleID,
-	}, admin.Token))
-	require.NoError(t, err)
-	require.NotNil(t, resp.Msg.Provider)
-	assert.Empty(t, resp.Msg.Provider.ClientId)
-	assert.Equal(t, "cadestro-cli", resp.Msg.Provider.CliClientId)
-
-	var cliClientID, sealedSecret string
-	require.NoError(t, f.raw.QueryRow(f.ctx(),
-		`SELECT cli_client_id, client_secret_encrypted FROM identity_providers WHERE id = $1`,
-		resp.Msg.Provider.Id).Scan(&cliClientID, &sealedSecret))
-	assert.Equal(t, "cadestro-cli", cliClientID)
-	assert.Empty(t, sealedSecret)
-}
-
-func TestCreateIdentityProvider_RequiresAUsableClientMode(t *testing.T) {
+// A provider is an OIDC browser client and nothing else: the CLI login that
+// once justified a second, secretless client mode is gone, so a request
+// without a client_id configures a provider nobody could ever log in through.
+//
+// This replaces the pair that guarded the two-mode rule — the acceptance test
+// for a secretless CLI-only provider, which is now an unconfigurable shape,
+// and the "usable client mode" rejection. The rejection is kept and made
+// stronger: it asserts the refused request wrote no row, not only that it
+// recorded no audit operation, so a handler that created the provider and
+// then failed would be caught.
+func TestCreateIdentityProvider_RequiresAClientID(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateIdentityProvider"}})
 
 	for name, mutate := range map[string]func(*pmv1.CreateIdentityProviderRequest){
-		"neither client": func(*pmv1.CreateIdentityProviderRequest) {},
-		"secret without browser client": func(req *pmv1.CreateIdentityProviderRequest) {
+		"no client id": func(*pmv1.CreateIdentityProviderRequest) {},
+		"a secret with no client id": func(req *pmv1.CreateIdentityProviderRequest) {
 			req.ClientSecret = "orphaned-secret"
+		},
+		"a default role but no client id": func(req *pmv1.CreateIdentityProviderRequest) {
+			req.DefaultRoleId = auth.AdminRoleID
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -110,6 +97,11 @@ func TestCreateIdentityProvider_RequiresAUsableClientMode(t *testing.T) {
 			assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 		})
 	}
+
+	var rows int
+	require.NoError(t, f.raw.QueryRow(f.ctx(),
+		`SELECT COUNT(*) FROM identity_providers`).Scan(&rows))
+	assert.Zero(t, rows, "a refused request must not leave a provider behind")
 	assert.Zero(t, f.countAuditOperations())
 }
 
@@ -183,59 +175,43 @@ func TestUpdateIdentityProvider_EmptySecretKeepsTheStoredOne(t *testing.T) {
 		"the record must not claim a field changed when it did not")
 }
 
-func TestUpdateIdentityProvider_OmittedCLIClientKeepsTheStoredOne(t *testing.T) {
+// Dropping the browser client used to be a supported edit: it converted a
+// provider to CLI-only and cleared the secret that no longer had an owner.
+// With the CLI login gone that edit would leave a provider nobody can use, so
+// it is refused — and the refusal must be total. The two tests this replaces
+// covered the CLI-only conversion and the retention of a stored CLI client;
+// neither shape exists, and both of their observable properties (the stored
+// credential is untouched, the audit log records nothing) are asserted here
+// against the stronger rejection.
+func TestUpdateIdentityProvider_RefusesToDropTheClientID(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"UpdateIdentityProvider"}})
 	providerID := f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "cadestro-cli"
-		s.IssuerURL = "https://idp.example/"
-	})
-
-	response, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
-		Id: providerID, Name: "Renamed", Enabled: true, ClientId: "browser-client",
-		IssuerUrl: "https://idp.example/",
-	}, admin.Token))
-	require.NoError(t, err)
-	assert.Equal(t, "cadestro-cli", response.Msg.Provider.CliClientId)
-
-	var stored string
-	require.NoError(t, f.raw.QueryRow(f.ctx(),
-		`SELECT cli_client_id FROM identity_providers WHERE id = $1`, providerID).Scan(&stored))
-	assert.Equal(t, "cadestro-cli", stored)
-
-	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure)
-	effect := f.effectWithAction(f.effectsOf(op.OperationID), "UPDATE")
-	assert.NotContains(t, effect.ChangedFields, "cli_client_id")
-}
-
-func TestUpdateIdentityProvider_DroppingTheBrowserClientClearsItsSecret(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"UpdateIdentityProvider"}})
-	providerID := f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "cadestro-cli"
+		s.ClientID = "browser-client"
 		s.Secret = "browser-secret"
 		s.IssuerURL = "https://idp.example/"
 	})
 
-	cliClientID := "cadestro-cli"
-	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
-		Id: providerID, Name: "CLI only", Enabled: true, CliClientId: &cliClientID,
-		IssuerUrl: "https://idp.example/",
-	}, admin.Token))
-	require.NoError(t, err)
-	var browserClientID, sealedSecret string
+	var beforeClientID, beforeSecret string
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT client_id, client_secret_encrypted FROM identity_providers WHERE id = $1`, providerID).
-		Scan(&browserClientID, &sealedSecret))
-	assert.Empty(t, browserClientID)
-	assert.Empty(t, sealedSecret)
+		Scan(&beforeClientID, &beforeSecret))
+	require.NotEmpty(t, beforeSecret, "the fixture must hold a secret or the retention check proves nothing")
 
-	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure)
-	effect := f.effectWithAction(f.effectsOf(op.OperationID), "UPDATE")
-	assert.Contains(t, effect.ChangedFields, "client_secret_encrypted")
-	assert.Empty(t, effect.EvidenceKind, "clearing a secret records no credential fingerprint")
+	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
+		Id: providerID, Name: "Unusable", Enabled: true,
+		IssuerUrl: "https://idp.example/",
+	}, admin.Token))
+	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
+
+	var afterClientID, afterSecret string
+	require.NoError(t, f.raw.QueryRow(f.ctx(),
+		`SELECT client_id, client_secret_encrypted FROM identity_providers WHERE id = $1`, providerID).
+		Scan(&afterClientID, &afterSecret))
+	assert.Equal(t, beforeClientID, afterClientID, "a refused update must not rewrite the client")
+	assert.Equal(t, beforeSecret, afterSecret, "a refused update must not clear the stored secret")
+	assert.Zero(t, f.countAuditOperations(), "a refused update records no applied effect")
 }
 
 func TestUpdateIdentityProvider_RecordsTheEmailAssertionTransition(t *testing.T) {

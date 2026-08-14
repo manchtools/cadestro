@@ -49,7 +49,6 @@ func (h *Handlers) ListAuthMethods(ctx context.Context, req *connect.Request[pmv
 			Name:         p.Name,
 			ProviderType: providerTypeToProto(p.ProviderType),
 			BrowserLogin: p.ClientID != "",
-			CliLogin:     p.CliClientID != "",
 		})
 	}
 	return connect.NewResponse(resp), nil

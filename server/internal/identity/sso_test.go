@@ -52,7 +52,17 @@ func TestListAuthMethods_ReturnsEnabledProvidersAndNothingAboutTheEmail(t *testi
 	require.Len(t, forKnown.Msg.Providers, 1)
 	assert.Equal(t, "corp", forKnown.Msg.Providers[0].Slug, "a disabled provider is not offered")
 	assert.True(t, forKnown.Msg.Providers[0].BrowserLogin)
-	assert.False(t, forKnown.Msg.Providers[0].CliLogin)
+	// This response is what a login page offers, so it must never name a
+	// method that cannot be completed. cli_login used to be advertised here
+	// and was asserted false for a provider without a CLI client; the field
+	// is now absent from the contract, which is the stronger property — there
+	// is no value of it left to be wrong. Read off the SHIPPED descriptor of
+	// the message this handler actually returned, so a re-added field fails
+	// here and not only in the contract module.
+	fields := forKnown.Msg.Providers[0].ProtoReflect().Descriptor().Fields()
+	require.NotZero(t, fields.Len(), "the response descriptor has no fields; this guard would pass vacuously")
+	assert.Nil(t, fields.ByName("cli_login"),
+		"ListAuthMethods must not advertise a login method the deployment cannot complete")
 	assert.Equal(t, len(forKnown.Msg.Providers), len(forUnknown.Msg.Providers),
 		"the answer must not depend on whether the address has an account here")
 	assert.Equal(t, forKnown.Msg.Providers[0].Slug, forUnknown.Msg.Providers[0].Slug)

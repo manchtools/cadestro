@@ -142,7 +142,6 @@ CREATE TABLE identity_providers (
     provider_type           text NOT NULL DEFAULT 'oidc',
     enabled                 boolean NOT NULL DEFAULT true,
     client_id               text NOT NULL,
-    cli_client_id           text NOT NULL DEFAULT '',
     client_secret_encrypted text NOT NULL DEFAULT '',
     issuer_url              text NOT NULL,
     authorization_url       text NOT NULL DEFAULT '',

@@ -2175,9 +2175,6 @@ message IdentityProvider {
   // email to a pre-existing account; default false refuses that
   // (account-takeover guard across providers).
   bool trust_email_assertions = 22;
-  // Public OIDC client used by native CLI login. This is an identifier, not a
-  // client secret.
-  string cli_client_id = 23;
 }
 
 message IdentityLink {
@@ -2224,8 +2221,6 @@ message CreateIdentityProviderRequest {
   map<string, string> group_mapping = 16;
   // See IdentityProvider.trust_email_assertions. Default false (secure).
   bool trust_email_assertions = 17;
-  // @gotags: validate:"omitempty,max=255"
-  string cli_client_id = 18;
 }
 
 message CreateIdentityProviderResponse {
@@ -2285,9 +2280,6 @@ message UpdateIdentityProviderRequest {
   map<string, string> group_mapping = 16;
   // See IdentityProvider.trust_email_assertions. Default false (secure).
   bool trust_email_assertions = 17;
-  // Omit to keep the current CLI client; send empty to remove it.
-  // @gotags: validate:"omitempty,max=255"
-  optional string cli_client_id = 18;
 }
 
 message UpdateIdentityProviderResponse {
@@ -2310,7 +2302,6 @@ message AuthMethodProvider {
   string name = 2;
   IdentityProviderType provider_type = 3;
   bool browser_login = 4;
-  bool cli_login = 5;
 }
 
 message ListAuthMethodsRequest {

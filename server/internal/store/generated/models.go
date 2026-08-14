@@ -375,7 +375,6 @@ type IdentityProvider struct {
 	ProviderType          string                `json:"provider_type"`
 	Enabled               bool                  `json:"enabled"`
 	ClientID              string                `json:"client_id"`
-	CliClientID           string                `json:"cli_client_id"`
 	ClientSecretEncrypted string                `json:"client_secret_encrypted"`
 	IssuerUrl             string                `json:"issuer_url"`
 	AuthorizationUrl      string                `json:"authorization_url"`

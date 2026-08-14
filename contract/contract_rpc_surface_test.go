@@ -235,21 +235,22 @@ func TestContract_RetractedMessagesAreGone(t *testing.T) {
 }
 
 // TestRPCSurface_ProviderCapabilitiesArePublic holds the identity-provider
-// capability shape that a login client reads before it offers a method.
+// capability shape that a login client reads before it offers a method. One
+// OIDC client remains — the browser client — so client_id is the field every
+// provider shape carries and browser_login is the capability derived from it.
 func TestRPCSurface_ProviderCapabilitiesArePublic(t *testing.T) {
 	for messageName, fields := range map[protoreflect.FullName]map[protoreflect.Name]protoreflect.Kind{
 		"cadestro.v1.IdentityProvider": {
-			"cli_client_id": protoreflect.StringKind,
+			"client_id": protoreflect.StringKind,
 		},
 		"cadestro.v1.CreateIdentityProviderRequest": {
-			"cli_client_id": protoreflect.StringKind,
+			"client_id": protoreflect.StringKind,
 		},
 		"cadestro.v1.UpdateIdentityProviderRequest": {
-			"cli_client_id": protoreflect.StringKind,
+			"client_id": protoreflect.StringKind,
 		},
 		"cadestro.v1.AuthMethodProvider": {
 			"browser_login": protoreflect.BoolKind,
-			"cli_login":     protoreflect.BoolKind,
 		},
 	} {
 		descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(messageName)
@@ -266,9 +267,53 @@ func TestRPCSurface_ProviderCapabilitiesArePublic(t *testing.T) {
 			if field.Kind() != wantKind {
 				t.Errorf("%s.%s kind = %s, want %s", messageName, fieldName, field.Kind(), wantKind)
 			}
-			if messageName == "cadestro.v1.UpdateIdentityProviderRequest" && fieldName == "cli_client_id" && !field.HasPresence() {
-				t.Error("UpdateIdentityProviderRequest.cli_client_id must preserve field presence")
-			}
+		}
+	}
+}
+
+// retractedFields are the CLI-login residue the operator ruled out after the
+// operator CLI and its RPCs were deleted: the public OIDC client an operator
+// configured for native CLI login, and the capability flag that advertised
+// that login method to a client.
+//
+// They need their own guard because a FIELD deletion is invisible to every
+// other assertion in this file. The goldens record RPC names, and
+// TestContract_RetractedMessagesAreGone judges whole messages — but
+// IdentityProvider, CreateIdentityProviderRequest, UpdateIdentityProviderRequest
+// and AuthMethodProvider all still ship, so a re-added field would return
+// silently inside a message that is supposed to be there.
+//
+// Named by full name and checked against the registered descriptors: a
+// resurrected field cannot pass by being left out of a JSON file, and it
+// cannot pass by reappearing under a nested message either.
+var retractedFields = []protoreflect.FullName{
+	"cadestro.v1.IdentityProvider.cli_client_id",
+	"cadestro.v1.CreateIdentityProviderRequest.cli_client_id",
+	"cadestro.v1.UpdateIdentityProviderRequest.cli_client_id",
+	"cadestro.v1.AuthMethodProvider.cli_login",
+}
+
+func TestContract_RetractedFieldsAreGone(t *testing.T) {
+	if len(retractedFields) == 0 {
+		t.Fatal("matches-zero: retractedFields is empty, so this test proved nothing")
+	}
+	for _, name := range retractedFields {
+		// The parent must still exist, otherwise the lookup below would pass
+		// for the wrong reason — a message renamed out from under the entry
+		// would retire the check silently.
+		parent := name.Parent()
+		descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(parent)
+		if err != nil {
+			t.Errorf("%s names a retracted field of %s, which resolves to no descriptor", name, parent)
+			continue
+		}
+		message, ok := descriptor.(protoreflect.MessageDescriptor)
+		if !ok {
+			t.Errorf("%s is not a message, so %s cannot be judged", parent, name)
+			continue
+		}
+		if field := message.Fields().ByName(name.Name()); field != nil {
+			t.Errorf("%s still ships — the CLI login it served no longer exists", name)
 		}
 	}
 }

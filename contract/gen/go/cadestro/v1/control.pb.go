@@ -16211,11 +16211,8 @@ type IdentityProvider struct {
 	// email to a pre-existing account; default false refuses that
 	// (account-takeover guard across providers).
 	TrustEmailAssertions bool `protobuf:"varint,22,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
-	// Public OIDC client used by native CLI login. This is an identifier, not a
-	// client secret.
-	CliClientId   string `protobuf:"bytes,23,opt,name=cli_client_id,json=cliClientId,proto3" json:"cli_client_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *IdentityProvider) Reset() {
@@ -16395,13 +16392,6 @@ func (x *IdentityProvider) GetTrustEmailAssertions() bool {
 	return false
 }
 
-func (x *IdentityProvider) GetCliClientId() string {
-	if x != nil {
-		return x.CliClientId
-	}
-	return ""
-}
-
 type IdentityLink struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -16550,10 +16540,8 @@ type CreateIdentityProviderRequest struct {
 	GroupMapping map[string]string `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
 	// See IdentityProvider.trust_email_assertions. Default false (secure).
 	TrustEmailAssertions bool `protobuf:"varint,17,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
-	// @gotags: validate:"omitempty,max=255"
-	CliClientId   string `protobuf:"bytes,18,opt,name=cli_client_id,json=cliClientId,proto3" json:"cli_client_id,omitempty" validate:"omitempty,max=255"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *CreateIdentityProviderRequest) Reset() {
@@ -16696,13 +16684,6 @@ func (x *CreateIdentityProviderRequest) GetTrustEmailAssertions() bool {
 		return x.TrustEmailAssertions
 	}
 	return false
-}
-
-func (x *CreateIdentityProviderRequest) GetCliClientId() string {
-	if x != nil {
-		return x.CliClientId
-	}
-	return ""
 }
 
 type CreateIdentityProviderResponse struct {
@@ -16984,11 +16965,8 @@ type UpdateIdentityProviderRequest struct {
 	GroupMapping map[string]string `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
 	// See IdentityProvider.trust_email_assertions. Default false (secure).
 	TrustEmailAssertions bool `protobuf:"varint,17,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
-	// Omit to keep the current CLI client; send empty to remove it.
-	// @gotags: validate:"omitempty,max=255"
-	CliClientId   *string `protobuf:"bytes,18,opt,name=cli_client_id,json=cliClientId,proto3,oneof" json:"cli_client_id,omitempty" validate:"omitempty,max=255"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *UpdateIdentityProviderRequest) Reset() {
@@ -17133,13 +17111,6 @@ func (x *UpdateIdentityProviderRequest) GetTrustEmailAssertions() bool {
 	return false
 }
 
-func (x *UpdateIdentityProviderRequest) GetCliClientId() string {
-	if x != nil && x.CliClientId != nil {
-		return *x.CliClientId
-	}
-	return ""
-}
-
 type UpdateIdentityProviderResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Provider      *IdentityProvider      `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
@@ -17271,7 +17242,6 @@ type AuthMethodProvider struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	ProviderType  IdentityProviderType   `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
 	BrowserLogin  bool                   `protobuf:"varint,4,opt,name=browser_login,json=browserLogin,proto3" json:"browser_login,omitempty"`
-	CliLogin      bool                   `protobuf:"varint,5,opt,name=cli_login,json=cliLogin,proto3" json:"cli_login,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17330,13 +17300,6 @@ func (x *AuthMethodProvider) GetProviderType() IdentityProviderType {
 func (x *AuthMethodProvider) GetBrowserLogin() bool {
 	if x != nil {
 		return x.BrowserLogin
-	}
-	return false
-}
-
-func (x *AuthMethodProvider) GetCliLogin() bool {
-	if x != nil {
-		return x.CliLogin
 	}
 	return false
 }
@@ -22408,7 +22371,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\rusers_removed\x18\x03 \x01(\x05R\fusersRemoved\"\x85\x01\n" +
 	"$SetUserGroupMaintenanceWindowRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12M\n" +
-	"\x12maintenance_window\x18\x02 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\"\xc5\a\n" +
+	"\x12maintenance_window\x18\x02 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\"\xa1\a\n" +
 	"\x10IdentityProvider\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -22435,8 +22398,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"updated_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12!\n" +
 	"\fscim_enabled\x18\x14 \x01(\bR\vscimEnabled\x12*\n" +
 	"\x11scim_endpoint_url\x18\x15 \x01(\tR\x0fscimEndpointUrl\x124\n" +
-	"\x16trust_email_assertions\x18\x16 \x01(\bR\x14trustEmailAssertions\x12\"\n" +
-	"\rcli_client_id\x18\x17 \x01(\tR\vcliClientId\x1a?\n" +
+	"\x16trust_email_assertions\x18\x16 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x88\x03\n" +
@@ -22453,7 +22415,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\rexternal_name\x18\b \x01(\tR\fexternalName\x127\n" +
 	"\tlinked_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\blinkedAt\x12>\n" +
 	"\rlast_login_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\x95\x06\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\xf1\x05\n" +
 	"\x1dCreateIdentityProviderRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04slug\x18\x02 \x01(\tR\x04slug\x12F\n" +
@@ -22473,8 +22435,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vgroup_claim\x18\x0f \x01(\tR\n" +
 	"groupClaim\x12a\n" +
 	"\rgroup_mapping\x18\x10 \x03(\v2<.cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
-	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x12\"\n" +
-	"\rcli_client_id\x18\x12 \x01(\tR\vcliClientId\x1a?\n" +
+	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
@@ -22492,7 +22453,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\tproviders\x18\x01 \x03(\v2\x1d.cadestro.v1.IdentityProviderR\tproviders\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\xfa\x05\n" +
+	"totalCount\"\xbf\x05\n" +
 	"\x1dUpdateIdentityProviderRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -22512,23 +22473,20 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vgroup_claim\x18\x0f \x01(\tR\n" +
 	"groupClaim\x12a\n" +
 	"\rgroup_mapping\x18\x10 \x03(\v2<.cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
-	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x12'\n" +
-	"\rcli_client_id\x18\x12 \x01(\tH\x00R\vcliClientId\x88\x01\x01\x1a?\n" +
+	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x10\n" +
-	"\x0e_cli_client_id\"[\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
 	"\x1eUpdateIdentityProviderResponse\x129\n" +
 	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"/\n" +
 	"\x1dDeleteIdentityProviderRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
-	"\x1eDeleteIdentityProviderResponse\"\xc6\x01\n" +
+	"\x1eDeleteIdentityProviderResponse\"\xa9\x01\n" +
 	"\x12AuthMethodProvider\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12F\n" +
 	"\rprovider_type\x18\x03 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeR\fproviderType\x12#\n" +
-	"\rbrowser_login\x18\x04 \x01(\bR\fbrowserLogin\x12\x1b\n" +
-	"\tcli_login\x18\x05 \x01(\bR\bcliLogin\".\n" +
+	"\rbrowser_login\x18\x04 \x01(\bR\fbrowserLogin\".\n" +
 	"\x16ListAuthMethodsRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"X\n" +
 	"\x17ListAuthMethodsResponse\x12=\n" +
@@ -24083,7 +24041,6 @@ func file_cadestro_v1_control_proto_init() {
 		(*DispatchToGroupRequest_DefinitionId)(nil),
 		(*DispatchToGroupRequest_InlineAction)(nil),
 	}
-	file_cadestro_v1_control_proto_msgTypes[265].OneofWrappers = []any{}
 	file_cadestro_v1_control_proto_msgTypes[333].OneofWrappers = []any{}
 	file_cadestro_v1_control_proto_msgTypes[335].OneofWrappers = []any{}
 	type x struct{}
