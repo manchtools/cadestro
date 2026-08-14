@@ -70,13 +70,13 @@ func TestExecuteDirectory_ABSENT_DenyByDefault(t *testing.T) {
 	e := NewExecutor(nil)
 
 	for _, p := range []string{
-		"/etc/sudoers.d/pm-ws6-nope",
-		"/etc/cron.d/pm-ws6-nope",
-		"/boot/efi/pm-ws6-nope",
-		"/var/lib/pm-ws6-nope",
-		"/home/pm-ws6-victim",
+		"/etc/sudoers.d/cadestro-ws6-nope",
+		"/etc/cron.d/cadestro-ws6-nope",
+		"/boot/efi/cadestro-ws6-nope",
+		"/var/lib/cadestro-ws6-nope",
+		"/home/cadestro-ws6-victim",
 		"/root/.ssh",
-		"/usr/lib/pm-ws6-nope",
+		"/usr/lib/cadestro-ws6-nope",
 	} {
 		_, changed, err := e.executeDirectory(context.Background(),
 			&pb.DirectoryParams{Path: p},

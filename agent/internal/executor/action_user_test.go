@@ -58,7 +58,7 @@ func TestHomeGroupForOwnership_ResolvesViaSDK(t *testing.T) {
 	})
 
 	t.Run("unknown user is an error, not a silent uid 0", func(t *testing.T) {
-		_, _, err := resolve(&pb.UserParams{Username: "pm-definitely-no-such-user-xyz"})
+		_, _, err := resolve(&pb.UserParams{Username: "cadestro-definitely-no-such-user-xyz"})
 		assert.Error(t, err, "a failed user lookup must error so .ssh is never chowned to root")
 	})
 }

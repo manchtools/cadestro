@@ -28,7 +28,7 @@ func TestRunShellScript_RejectsBlocklistedEnvVar(t *testing.T) {
 	e := NewExecutor(nil)
 	ctx := context.Background()
 
-	const bogusInterp = "/nonexistent/pm-ws17a-interp"
+	const bogusInterp = "/nonexistent/cadestro-ws17a-interp"
 
 	for _, name := range []string{"LD_PRELOAD", "PATH", "LD_LIBRARY_PATH"} {
 		t.Run("rejects "+name, func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestRunShellScript_DoesNotInjectReservedLocaleVar(t *testing.T) {
 	e := NewExecutor(nil)
 	ctx := context.Background()
 
-	const bogusInterp = "/nonexistent/pm-reserved-locale-interp"
+	const bogusInterp = "/nonexistent/cadestro-reserved-locale-interp"
 
 	for _, name := range []string{"LC_ALL", "LANG", "NO_COLOR"} {
 		t.Run("rejects "+name, func(t *testing.T) {

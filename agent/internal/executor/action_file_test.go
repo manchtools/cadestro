@@ -168,7 +168,7 @@ func TestIsProtectedPath_CriticalFiles(t *testing.T) {
 	if isCriticalFile("/etc/hosts.allow") {
 		t.Error("/etc/hosts.allow is not in the denylist, must not be critical")
 	}
-	if isCriticalFile("/etc/ssh/sshd_config.d/01-pm-test.conf") {
+	if isCriticalFile("/etc/ssh/sshd_config.d/01-cadestro-test.conf") {
 		t.Error("drop-in config file must not be flagged as critical")
 	}
 }

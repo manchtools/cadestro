@@ -120,10 +120,10 @@ func TestShortGroupName_FitsIn32Chars(t *testing.T) {
 		prefix   string
 		actionID string
 	}{
-		{"short id fits", "pm-ssh-", "01J123456789"},
-		{"exact fit", "pm-ssh-", strings.Repeat("a", 25)}, // 7+25=32
-		{"overflow with hash", "pm-ssh-", strings.Repeat("a", 50)},
-		{"long prefix with long id", "pm-sudo-verylongprefix-", "01J1234567890123456789"},
+		{"short id fits", "cadestro-ssh-", "01J123456789"},
+		{"exact fit", "cadestro-ssh-", strings.Repeat("a", 19)}, // 13+19=32
+		{"overflow with hash", "cadestro-ssh-", strings.Repeat("a", 50)},
+		{"long prefix with long id", "cadestro-sudo-verylongprefix-", "01J1234567890123456789"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestShortGroupName_FitsIn32Chars(t *testing.T) {
 // TestShortGroupName_Deterministic verifies that the same actionID+prefix
 // always produces the same group name (no random component).
 func TestShortGroupName_Deterministic(t *testing.T) {
-	prefix := "pm-ssh-"
+	prefix := "cadestro-ssh-"
 	id := "01J1234567890123456789"
 	first := shortGroupName(prefix, id)
 	for i := 0; i < 100; i++ {
@@ -152,7 +152,7 @@ func TestShortGroupName_Deterministic(t *testing.T) {
 // TestShortGroupName_DifferentIDsProduceDifferentNames verifies that two
 // distinct action IDs produce distinct group names (no collision).
 func TestShortGroupName_DifferentIDsProduceDifferentNames(t *testing.T) {
-	prefix := "pm-ssh-"
+	prefix := "cadestro-ssh-"
 	// Two IDs sharing a long common prefix — truncation hazard.
 	id1 := "01JARXABCDEFGHIJKLMNOP1234"
 	id2 := "01JARXABCDEFGHIJKLMNOP5678"
@@ -166,11 +166,11 @@ func TestShortGroupName_DifferentIDsProduceDifferentNames(t *testing.T) {
 // TestGenerateSshGroupConfig_ContainsMatchGroup verifies that the generated
 // sshd_config content contains the expected Match Group directive.
 func TestGenerateSshGroupConfig_ContainsMatchGroup(t *testing.T) {
-	got := generateSshGroupConfig("pm-ssh-test1234", &pb.SshParams{
+	got := generateSshGroupConfig("cadestro-ssh-test1234", &pb.SshParams{
 		AllowPubkey:   true,
 		AllowPassword: false,
 	})
-	if !strings.Contains(got, "Match Group pm-ssh-test1234") {
+	if !strings.Contains(got, "Match Group cadestro-ssh-test1234") {
 		t.Errorf("generated config missing Match Group directive:\n%s", got)
 	}
 	if !strings.Contains(got, "PubkeyAuthentication yes") {
@@ -187,7 +187,7 @@ func TestGenerateSshGroupConfig_ContainsMatchGroup(t *testing.T) {
 // TestGenerateSshGroupConfig_BothAllowed verifies that when both pubkey and
 // password are allowed, both directives appear as "yes".
 func TestGenerateSshGroupConfig_BothAllowed(t *testing.T) {
-	got := generateSshGroupConfig("pm-ssh-test1234", &pb.SshParams{
+	got := generateSshGroupConfig("cadestro-ssh-test1234", &pb.SshParams{
 		AllowPubkey:   true,
 		AllowPassword: true,
 	})

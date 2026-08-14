@@ -21,7 +21,7 @@ const (
 	// other local uid is refused. This authorizes by OS identity, not human
 	// intent: a root-owned service could also connect, so enrollment stays a
 	// privileged local operation rather than something any local user can do.
-	EnrollSocketPath = "/run/pm-agent/enroll.sock"
+	EnrollSocketPath = "/run/cadestro/enroll.sock"
 )
 
 // EnrollServer runs the enrollment service over a unix socket.

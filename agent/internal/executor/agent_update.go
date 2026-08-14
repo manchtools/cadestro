@@ -224,7 +224,7 @@ func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdat
 	// Before the swap, save the currently-installed binary to a
 	// `.bak` sibling so an operator can roll back manually with
 	// `mv <BinaryPath>.bak <BinaryPath> && systemctl restart
-	// pm-agent` if the new binary fails to start (the systemd
+	// cadestrod` if the new binary fails to start (the systemd
 	// restart-loop case the self-test cannot catch — bad config
 	// load, missing kernel feature, broken libc dependency, etc.).
 	// We keep only the most recent previous version; older `.bak`s

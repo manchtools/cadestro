@@ -21,7 +21,7 @@ import (
 // pass); an unknown access level must be rejected (fail closed, never
 // emit an empty/permissive file). The {group} placeholder must substitute.
 func TestSudoConfigForParams_CustomRequiresConfig(t *testing.T) {
-	const group = "pm-sudo-test"
+	const group = "cadestro-sudo-test"
 
 	t.Run("CUSTOM without config is rejected", func(t *testing.T) {
 		_, err := sudoConfigForParams(&pb.AdminPolicyParams{
@@ -82,7 +82,7 @@ func TestSetupSudoPolicy_RejectsInvalidUsernameBeforeWrite(t *testing.T) {
 
 	for _, name := range invalid {
 		t.Run(name, func(t *testing.T) {
-			groupName := "pm-sudo-rejecttest"
+			groupName := "cadestro-sudo-rejecttest"
 			// A writable temp path so that if validation were (wrongly)
 			// moved after the write, the file would appear and fail the
 			// assertion below — proving "rejected BEFORE write".

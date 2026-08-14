@@ -57,7 +57,7 @@ The agent has one explicit enrollment method:
 #### Socket-based enrollment (recommended; run as the agent's uid / root)
 
 1. The install script starts the agent as a systemd service
-2. The unenrolled agent opens an **enrollment socket** at `/run/pm-agent/enroll.sock` (mode 0600, restricted to the agent's own uid — root under the shipped unit)
+2. The unenrolled agent opens an **enrollment socket** at `/run/cadestro/enroll.sock` (mode 0600, restricted to the agent's own uid — root under the shipped unit)
 3. The local operator (running as the agent's uid, i.e. root) runs `cadestrod enroll -server=URL -token-file=PATH -pin=CA_SHA256`
    (or `CADESTRO_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=CA_SHA256`)
 4. The CLI sends an `Enroll` RPC to the agent over the unix socket
@@ -65,7 +65,7 @@ The agent has one explicit enrollment method:
 6. The Control Server validates the token, signs the certificate, and returns credentials
 7. The agent saves credentials, closes the enrollment socket, starts the auth socket, and opens its stream to control
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:7b7f3315 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:a4fcf356 -->
 > **Trust boundary.** The enrollment socket is owner-only (mode `0600`) and
 > the agent authenticates the connecting process by its OS identity
 > (`SO_PEERCRED`): only the agent's own uid — root under the shipped unit — may
@@ -91,7 +91,7 @@ The agent has one explicit enrollment method:
 ```
                                   ┌─────────────────────────┐
   Operator (root)                 │   Agent (systemd svc)   │
-  cadestrod enroll ───►  │   /run/pm-agent/        │
+  cadestrod enroll ───►           │   /run/cadestro/        │
     -server=URL -token-file=PATH  │     enroll.sock (0600)  │
     -pin=CA_SHA256                │         │               │
                                   │         │               │
@@ -166,7 +166,7 @@ sudo install -m 0755 cadestrod /usr/local/bin/
 # 2. Create the data directory
 sudo mkdir -p /var/lib/cadestro && sudo chmod 700 /var/lib/cadestro
 
-# 3. Write the systemd unit (User=root, RuntimeDirectory=pm-agent for the
+# 3. Write the systemd unit (User=root, RuntimeDirectory=cadestro for the
 #    enrollment socket). See install.sh for the full unit including
 #    the AmbientCapabilities / CapabilityBoundingSet block.
 sudo systemctl daemon-reload
@@ -493,8 +493,8 @@ passphrase with `cadestrod luks set-passphrase` and supplies the token
 by private file, environment variable, or hidden prompt. This command is
 **unprivileged** and requires **no sudo / sudoers rule**: it is a thin client
 to a root daemon the agent runs in-process on a Unix socket at
-`/run/pm-agent/luks.sock` (mode 0622, created under the unit's
-`RuntimeDirectory=pm-agent`).
+`/run/cadestro/luks.sock` (mode 0622, created under the unit's
+`RuntimeDirectory=cadestro`).
 
 The client sends **only** `{token, passphrase}`. The root agent then, with its
 **own** credentials over its **own** authenticated connection to control:

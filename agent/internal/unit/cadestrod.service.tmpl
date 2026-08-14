@@ -22,8 +22,8 @@ ExecStart={{.BinaryPath}} -data-dir={{.DataDir}} -log-level=info
 Restart=always
 RestartSec=10
 
-# Runtime directory (/run/pm-agent) for enrollment socket
-RuntimeDirectory=pm-agent
+# Runtime directory (/run/cadestro) for enrollment socket
+RuntimeDirectory=cadestro
 RuntimeDirectoryMode=0755
 
 # Security hardening — most ProtectXxx knobs are intentionally
@@ -90,7 +90,7 @@ RestrictSUIDSGID=false
 # syscalls are also subject to this bounding set — not just its
 # children — so the three caps above are required for the in-process
 # model, not optional. The agent's only listener is the UNIX socket at
-# /run/pm-agent/enroll.sock — it never binds a TCP port itself.
+# /run/cadestro/enroll.sock — it never binds a TCP port itself.
 AmbientCapabilities=CAP_SETUID CAP_SETGID
 CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_SYS_ADMIN CAP_KILL CAP_SETFCAP CAP_NET_RAW
 

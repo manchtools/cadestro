@@ -26,7 +26,7 @@ package luksd
 // DefaultSocketPath is the unix socket the root agent listens on for
 // LUKS passphrase requests. Mode 0622: connect(2) requires only write
 // permission, and the login-session check — not the file mode — is the gate.
-const DefaultSocketPath = "/run/pm-agent/luks.sock"
+const DefaultSocketPath = "/run/cadestro/luks.sock"
 
 // userPassphraseSlot is the LUKS keyslot the user passphrase occupies.
 // Slot 7 by convention across the agent (see executor/luks.go).

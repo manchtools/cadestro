@@ -31,7 +31,7 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-const testTerminalAdminGroup = "pm-sudo-test"
+const testTerminalAdminGroup = "cadestro-sudo-test"
 
 // =============================================================================
 // generateTerminalAdminLimitedSudoConfig — passwordless LIMITED.
@@ -301,7 +301,7 @@ func requireVisudo(t *testing.T) {
 
 func requireVisudoAccepts(t *testing.T, content string) {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "sudoers.d.pm-test")
+	path := filepath.Join(t.TempDir(), "sudoers.d.cadestro-test")
 	if err := os.WriteFile(path, []byte(content), 0o440); err != nil {
 		t.Fatalf("write tempfile: %v", err)
 	}

@@ -150,7 +150,7 @@ export const GetEnrollmentStatusResponseSchema: GenMessage<GetEnrollmentStatusRe
  */
 export const DeviceAuthService: GenService<{
   /**
-   * Enroll the agent with a PM server (called by CLI, no sudo required).
+   * Enroll the agent with a Cadestro server (called by CLI, no sudo required).
    *
    * @generated from rpc cadestro.v1.DeviceAuthService.Enroll
    */

@@ -40,7 +40,7 @@ func TestComplianceShellWithoutDetectionScriptFailsClosed(t *testing.T) {
 	e := NewExecutor(nil)
 	execOut, detectionOut, changed, err := e.executeShellStreaming(context.Background(), &pb.ShellParams{
 		IsCompliance:    true,
-		Script:          "touch /tmp/pm-compliance-remediation-must-never-run",
+		Script:          "touch /tmp/cadestro-compliance-remediation-must-never-run",
 		DetectionScript: "",
 		RunAsRoot:       true,
 	}, nil)
@@ -64,8 +64,8 @@ func TestComplianceShellRunsDetectionOnly(t *testing.T) {
 	executorRunner = rec
 
 	const (
-		detection   = "test -f /etc/pm-compliance-probe"
-		remediation = "touch /tmp/pm-compliance-remediation-must-never-run"
+		detection   = "test -f /etc/cadestro-compliance-probe"
+		remediation = "touch /tmp/cadestro-compliance-remediation-must-never-run"
 	)
 	e := NewExecutor(nil)
 	execOut, detectionOut, changed, err := e.executeShellStreaming(context.Background(), &pb.ShellParams{
@@ -100,7 +100,7 @@ func TestComplianceShellReportsNotCompliantWhenDetectionCannotRun(t *testing.T) 
 		Type: pb.ActionType_ACTION_TYPE_SHELL,
 		Params: &pb.Action_Shell{Shell: &pb.ShellParams{
 			IsCompliance:    true,
-			DetectionScript: "test -f /etc/pm-compliance-probe",
+			DetectionScript: "test -f /etc/cadestro-compliance-probe",
 			RunAsRoot:       true,
 		}},
 	})

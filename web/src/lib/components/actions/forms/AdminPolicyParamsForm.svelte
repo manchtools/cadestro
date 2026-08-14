@@ -46,8 +46,8 @@
 	// group membership) — sharing a single preview template would
 	// produce invalid output for at least one backend.
 	const configPreview = $derived.by(() => {
-		const sudoGroup = '%pm-sudo-{id}'; // sudoers group marker
-		const doasGroup = ':pm-sudo-{id}'; // doas group marker
+		const sudoGroup = '%cadestro-sudo-{id}'; // sudoers group marker
+		const doasGroup = ':cadestro-sudo-{id}'; // doas group marker
 		const isDoas = params.backend === 'DOAS';
 		const lines = ['# Managed by Cadestro - do not edit manually'];
 

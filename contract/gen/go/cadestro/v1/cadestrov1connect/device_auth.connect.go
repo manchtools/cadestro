@@ -43,7 +43,7 @@ const (
 
 // DeviceAuthServiceClient is a client for the cadestro.v1.DeviceAuthService service.
 type DeviceAuthServiceClient interface {
-	// Enroll the agent with a PM server (called by CLI, no sudo required).
+	// Enroll the agent with a Cadestro server (called by CLI, no sudo required).
 	Enroll(context.Context, *connect.Request[v1.EnrollRequest]) (*connect.Response[v1.EnrollResponse], error)
 	// Check whether the agent is currently enrolled.
 	GetEnrollmentStatus(context.Context, *connect.Request[v1.GetEnrollmentStatusRequest]) (*connect.Response[v1.GetEnrollmentStatusResponse], error)
@@ -93,7 +93,7 @@ func (c *deviceAuthServiceClient) GetEnrollmentStatus(ctx context.Context, req *
 
 // DeviceAuthServiceHandler is an implementation of the cadestro.v1.DeviceAuthService service.
 type DeviceAuthServiceHandler interface {
-	// Enroll the agent with a PM server (called by CLI, no sudo required).
+	// Enroll the agent with a Cadestro server (called by CLI, no sudo required).
 	Enroll(context.Context, *connect.Request[v1.EnrollRequest]) (*connect.Response[v1.EnrollResponse], error)
 	// Check whether the agent is currently enrolled.
 	GetEnrollmentStatus(context.Context, *connect.Request[v1.GetEnrollmentStatusRequest]) (*connect.Response[v1.GetEnrollmentStatusResponse], error)

@@ -137,7 +137,7 @@ func TestRender_CarriesInstallShape(t *testing.T) {
 		"CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_SYS_ADMIN CAP_KILL CAP_SETFCAP CAP_NET_RAW",
 		"AmbientCapabilities=CAP_SETUID CAP_SETGID",
 		"Restart=always",
-		"RuntimeDirectory=pm-agent",
+		"RuntimeDirectory=cadestro",
 		"SyslogIdentifier=cadestrod",
 		"WantedBy=multi-user.target",
 	} {
@@ -376,7 +376,7 @@ func TestRender_RejectsUnsafePaths(t *testing.T) {
 			t.Errorf("DataDir %q must be rejected", p)
 		}
 	}
-	if _, err := Render(Params{BinaryPath: "/opt/pm/agent-v2", DataDir: "/srv/pm-data_1"}); err != nil {
+	if _, err := Render(Params{BinaryPath: "/opt/pm/agent-v2", DataDir: "/srv/cadestro-data_1"}); err != nil {
 		t.Errorf("plain absolute paths must pass, got %v", err)
 	}
 }

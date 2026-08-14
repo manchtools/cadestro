@@ -460,12 +460,12 @@ enroll_agent() {
     # Wait for the enrollment socket to become available (agent needs to start first)
     local max_wait=10
     local waited=0
-    while [[ ! -S "/run/pm-agent/enroll.sock" ]] && [[ $waited -lt $max_wait ]]; do
+    while [[ ! -S "/run/cadestro/enroll.sock" ]] && [[ $waited -lt $max_wait ]]; do
         sleep 1
         waited=$((waited + 1))
     done
 
-    if [[ ! -S "/run/pm-agent/enroll.sock" ]]; then
+    if [[ ! -S "/run/cadestro/enroll.sock" ]]; then
         log_warn "Enrollment socket not available after ${max_wait}s, agent may already be enrolled"
         return
     fi
@@ -568,8 +568,8 @@ EOF
 }
 
 # The agent runs as root and exposes an in-process LUKS daemon socket
-# at /run/pm-agent/luks.sock (created at runtime under the unit's
-# RuntimeDirectory=pm-agent). The unprivileged `cadestrod luks
+# at /run/cadestro/luks.sock (created at runtime under the unit's
+# RuntimeDirectory=cadestro). The unprivileged `cadestrod luks
 # set-passphrase` client sends only {token, passphrase} to that socket;
 # the root agent performs the cryptsetup work with its own credentials,
 # authorized by the server-issued device-bound, single-use token.

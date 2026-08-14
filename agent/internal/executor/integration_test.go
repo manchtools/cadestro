@@ -66,7 +66,7 @@ func newTestExecutor() *Executor {
 	}
 	e.httpClient = insecure
 	remoteHTTPClient = insecure
-	tmpDir, err := os.MkdirTemp("", "pm-executor-test-*")
+	tmpDir, err := os.MkdirTemp("", "cadestro-executor-test-*")
 	if err != nil {
 		panic("failed to create temp dir: " + err.Error())
 	}
@@ -263,7 +263,7 @@ func createTestRpm(t *testing.T) []byte {
 		}
 	}
 
-	spec := `Name: pmtestrpm
+	spec := `Name: cadestrotestrpm
 Version: 1.0.0
 Release: 1
 Summary: Test RPM for integration tests
@@ -274,13 +274,13 @@ BuildArch: noarch
 Test package for cadestro integration tests.
 
 %install
-mkdir -p %{buildroot}/usr/share/pmtestrpm
-echo "test" > %{buildroot}/usr/share/pmtestrpm/marker
+mkdir -p %{buildroot}/usr/share/cadestrotestrpm
+echo "test" > %{buildroot}/usr/share/cadestrotestrpm/marker
 
 %files
-/usr/share/pmtestrpm/marker
+/usr/share/cadestrotestrpm/marker
 `
-	specFile := filepath.Join(dir, "SPECS", "pmtestrpm.spec")
+	specFile := filepath.Join(dir, "SPECS", "cadestrotestrpm.spec")
 	if err := os.WriteFile(specFile, []byte(spec), 0644); err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +290,7 @@ echo "test" > %{buildroot}/usr/share/pmtestrpm/marker
 		t.Fatalf("rpmbuild failed: %v: %s", err, out)
 	}
 
-	matches, err := filepath.Glob(filepath.Join(dir, "RPMS", "noarch", "pmtestrpm-*.rpm"))
+	matches, err := filepath.Glob(filepath.Join(dir, "RPMS", "noarch", "cadestrotestrpm-*.rpm"))
 	if err != nil || len(matches) == 0 {
 		t.Fatal("no RPM found after rpmbuild")
 	}
@@ -323,12 +323,12 @@ func startFileServer(t *testing.T, files map[string][]byte) *httptest.Server {
 func createTestDeb(t *testing.T) []byte {
 	t.Helper()
 	dir := t.TempDir()
-	pkgDir := filepath.Join(dir, "pm-testpkg")
+	pkgDir := filepath.Join(dir, "cadestro-testpkg")
 	debianDir := filepath.Join(pkgDir, "DEBIAN")
 	if err := os.MkdirAll(debianDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	control := `Package: pm-testpkg
+	control := `Package: cadestro-testpkg
 Version: 1.0.0
 Architecture: all
 Maintainer: test <test@test.com>
@@ -337,7 +337,7 @@ Description: Test package for integration tests
 	if err := os.WriteFile(filepath.Join(debianDir, "control"), []byte(control), 0644); err != nil {
 		t.Fatal(err)
 	}
-	debFile := filepath.Join(dir, "pm-testpkg_1.0.0_all.deb")
+	debFile := filepath.Join(dir, "cadestro-testpkg_1.0.0_all.deb")
 	cmd := exec.Command("dpkg-deb", "--build", pkgDir, debFile)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("dpkg-deb failed: %v: %s", err, out)
@@ -656,7 +656,7 @@ func TestIntegration_Shell(t *testing.T) {
 func TestIntegration_File(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	testFile := "/tmp/pm-integration-test-file"
+	testFile := "/tmp/cadestro-integration-test-file"
 
 	t.Cleanup(func() {
 		sudoRemove(testFile)
@@ -725,7 +725,7 @@ func TestIntegration_File(t *testing.T) {
 	})
 
 	t.Run("ManagedBlock", func(t *testing.T) {
-		mbFile := "/tmp/pm-integration-test-mb"
+		mbFile := "/tmp/cadestro-integration-test-mb"
 		t.Cleanup(func() { sudoRemove(mbFile) })
 
 		// Create a base file first
@@ -758,11 +758,11 @@ func TestIntegration_File(t *testing.T) {
 func TestIntegration_Directory(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	testDir := "/tmp/pm-integration-test-dir"
+	testDir := "/tmp/cadestro-integration-test-dir"
 
 	t.Cleanup(func() {
 		sudoRemoveAll(testDir)
-		sudoRemoveAll("/tmp/pm-integration-deep")
+		sudoRemoveAll("/tmp/cadestro-integration-deep")
 	})
 
 	t.Run("Create", func(t *testing.T) {
@@ -795,7 +795,7 @@ func TestIntegration_Directory(t *testing.T) {
 	})
 
 	t.Run("CreateRecursive", func(t *testing.T) {
-		deepDir := "/tmp/pm-integration-deep/a/b/c"
+		deepDir := "/tmp/cadestro-integration-deep/a/b/c"
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_DIRECTORY, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Directory{Directory: &pb.DirectoryParams{
 			Path:      deepDir,
@@ -1382,7 +1382,7 @@ func TestIntegration_SSHD(t *testing.T) {
 	ctx := context.Background()
 	actionID := "sshdtest01"
 	priority := uint32(50)
-	configPath := fmt.Sprintf("/etc/ssh/sshd_config.d/%04d-pm-%s.conf", priority, actionID)
+	configPath := fmt.Sprintf("/etc/ssh/sshd_config.d/%04d-cadestro-%s.conf", priority, actionID)
 
 	t.Cleanup(func() { sudoRemove(configPath) })
 
@@ -1460,7 +1460,7 @@ func TestIntegration_Systemd(t *testing.T) {
 	})
 
 	t.Run("WriteUnitFile", func(t *testing.T) {
-		unitName := "pm-integration-test.service"
+		unitName := "cadestro-integration-test.service"
 		unitContent := `[Unit]
 Description=Cadestro Integration Test
 
@@ -1573,35 +1573,35 @@ func TestIntegration_Deb(t *testing.T) {
 	ctx := context.Background()
 
 	t.Cleanup(func() {
-		sudoRun("dpkg", "-r", "pm-testpkg").Run()
+		sudoRun("dpkg", "-r", "cadestro-testpkg").Run()
 	})
 
 	t.Run("Install", func(t *testing.T) {
 		debData := createTestDeb(t)
 		ts := startFileServer(t, map[string][]byte{
-			"/pm-testpkg_1.0.0_all.deb": debData,
+			"/cadestro-testpkg_1.0.0_all.deb": debData,
 		})
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_DEB, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
-			Url:            ts.URL + "/pm-testpkg_1.0.0_all.deb",
+			Url:            ts.URL + "/cadestro-testpkg_1.0.0_all.deb",
 			ChecksumSha256: sha256hex(debData),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
 		assertChanged(t, result, true)
-		if !checkCmdSuccess("dpkg", "-s", "pm-testpkg") {
-			t.Error("pm-testpkg not installed")
+		if !checkCmdSuccess("dpkg", "-s", "cadestro-testpkg") {
+			t.Error("cadestro-testpkg not installed")
 		}
 	})
 
 	t.Run("RemoveAbsent", func(t *testing.T) {
 		// Remove the package first
-		sudoRun("dpkg", "-r", "pm-testpkg").Run()
+		sudoRun("dpkg", "-r", "cadestro-testpkg").Run()
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_DEB, pb.DesiredState_DESIRED_STATE_ABSENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
-			Url: "http://example.com/pm-notinstalled_1.0.0_all.deb",
+			Url: "http://example.com/cadestro-notinstalled_1.0.0_all.deb",
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
@@ -1616,7 +1616,7 @@ func TestIntegration_Deb(t *testing.T) {
 func TestIntegration_AppImage(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	installDir := "/tmp/pm-integration-appimages"
+	installDir := "/tmp/cadestro-integration-appimages"
 	fileName := "test-app.AppImage"
 
 	t.Cleanup(func() { sudoRemoveAll(installDir) })
@@ -1883,37 +1883,37 @@ func TestIntegration_Rpm(t *testing.T) {
 	ctx := context.Background()
 
 	t.Cleanup(func() {
-		sudoRun("rpm", "-e", "pmtestrpm").Run()
+		sudoRun("rpm", "-e", "cadestrotestrpm").Run()
 	})
 
 	t.Run("Install", func(t *testing.T) {
 		rpmData := createTestRpm(t)
 		ts := startFileServer(t, map[string][]byte{
-			"/pmtestrpm-1.0.0-1.noarch.rpm": rpmData,
+			"/cadestrotestrpm-1.0.0-1.noarch.rpm": rpmData,
 		})
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_RPM, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
-			Url:            ts.URL + "/pmtestrpm-1.0.0-1.noarch.rpm",
+			Url:            ts.URL + "/cadestrotestrpm-1.0.0-1.noarch.rpm",
 			ChecksumSha256: sha256hex(rpmData),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
 		assertChanged(t, result, true)
-		if !isRpmInstalled("pmtestrpm") {
-			t.Error("pmtestrpm not installed")
+		if !isRpmInstalled("cadestrotestrpm") {
+			t.Error("cadestrotestrpm not installed")
 		}
 	})
 
 	t.Run("InstallIdempotent", func(t *testing.T) {
 		rpmData := createTestRpm(t)
 		ts := startFileServer(t, map[string][]byte{
-			"/pmtestrpm-1.0.0-1.noarch.rpm": rpmData,
+			"/cadestrotestrpm-1.0.0-1.noarch.rpm": rpmData,
 		})
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_RPM, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
-			Url:            ts.URL + "/pmtestrpm-1.0.0-1.noarch.rpm",
+			Url:            ts.URL + "/cadestrotestrpm-1.0.0-1.noarch.rpm",
 			ChecksumSha256: sha256hex(rpmData),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -1929,19 +1929,19 @@ func TestIntegration_Rpm(t *testing.T) {
 		// resolve, not 404 — give Remove a real local file server.
 		rpmData := createTestRpm(t)
 		ts := startFileServer(t, map[string][]byte{
-			"/pmtestrpm-1.0.0-1.noarch.rpm": rpmData,
+			"/cadestrotestrpm-1.0.0-1.noarch.rpm": rpmData,
 		})
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_RPM, pb.DesiredState_DESIRED_STATE_ABSENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
-			Url:            ts.URL + "/pmtestrpm-1.0.0-1.noarch.rpm",
+			Url:            ts.URL + "/cadestrotestrpm-1.0.0-1.noarch.rpm",
 			ChecksumSha256: sha256hex(rpmData),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
 		assertChanged(t, result, true)
-		if isRpmInstalled("pmtestrpm") {
-			t.Error("pmtestrpm still installed after removal")
+		if isRpmInstalled("cadestrotestrpm") {
+			t.Error("cadestrotestrpm still installed after removal")
 		}
 	})
 
@@ -1950,12 +1950,12 @@ func TestIntegration_Rpm(t *testing.T) {
 		// canonical NAME before asking rpm whether it's installed.
 		rpmData := createTestRpm(t)
 		ts := startFileServer(t, map[string][]byte{
-			"/pmtestrpm-1.0.0-1.noarch.rpm": rpmData,
+			"/cadestrotestrpm-1.0.0-1.noarch.rpm": rpmData,
 		})
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_RPM, pb.DesiredState_DESIRED_STATE_ABSENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
-			Url:            ts.URL + "/pmtestrpm-1.0.0-1.noarch.rpm",
+			Url:            ts.URL + "/cadestrotestrpm-1.0.0-1.noarch.rpm",
 			ChecksumSha256: sha256hex(rpmData),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2249,7 +2249,7 @@ func TestIntegration_Repository_Zypper(t *testing.T) {
 // skipIfNotPrivileged skips tests that require mount capabilities (--privileged).
 func skipIfNotPrivileged(t *testing.T) {
 	t.Helper()
-	testDir := "/tmp/pm-priv-check"
+	testDir := "/tmp/cadestro-priv-check"
 	os.MkdirAll(testDir, 0755)
 	defer sudoRemoveAll(testDir)
 
@@ -2859,7 +2859,7 @@ func TestIntegration_EdgeCase_DiskFull(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	mountPoint := "/tmp/pm-diskfull-test"
+	mountPoint := "/tmp/cadestro-diskfull-test"
 	os.MkdirAll(mountPoint, 0755)
 
 	// Mount a 1MB tmpfs
@@ -2893,8 +2893,8 @@ func TestIntegration_EdgeCase_ReadOnlyMount(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a directory and bind-mount it read-only
-	sourceDir := "/tmp/pm-ro-source"
-	mountPoint := "/tmp/pm-ro-test"
+	sourceDir := "/tmp/cadestro-ro-source"
+	mountPoint := "/tmp/cadestro-ro-test"
 	os.MkdirAll(sourceDir, 0755)
 	os.MkdirAll(mountPoint, 0755)
 
@@ -2960,7 +2960,7 @@ func TestIntegration_EdgeCase_FileExistsDifferentPerms(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	filePath := "/tmp/pm-edge-perms-test"
+	filePath := "/tmp/cadestro-edge-perms-test"
 	os.WriteFile(filePath, []byte("original"), 0600)
 	t.Cleanup(func() { sudoRemove(filePath) })
 
@@ -2988,7 +2988,7 @@ func TestIntegration_EdgeCase_FileExistsAsDirectory(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	dirPath := "/tmp/pm-edge-type-conflict"
+	dirPath := "/tmp/cadestro-edge-type-conflict"
 	os.MkdirAll(dirPath, 0755)
 	t.Cleanup(func() { sudoRemoveAll(dirPath) })
 
@@ -3026,7 +3026,7 @@ func TestIntegration_EdgeCase_EmptyFileContent(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	filePath := "/tmp/pm-edge-empty-file"
+	filePath := "/tmp/cadestro-edge-empty-file"
 	t.Cleanup(func() { sudoRemove(filePath) })
 
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -3059,11 +3059,11 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 
 	t.Run("DanglingSymlink", func(t *testing.T) {
 		// Create a symlink pointing to a non-existent target
-		linkPath := "/tmp/pm-edge-dangling-link"
+		linkPath := "/tmp/cadestro-edge-dangling-link"
 		os.Remove(linkPath)
 		t.Cleanup(func() { os.Remove(linkPath) })
 
-		if err := os.Symlink("/tmp/pm-edge-nonexistent-target", linkPath); err != nil {
+		if err := os.Symlink("/tmp/cadestro-edge-nonexistent-target", linkPath); err != nil {
 			t.Fatal(err)
 		}
 
@@ -3085,8 +3085,8 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 
 	t.Run("CircularSymlink", func(t *testing.T) {
 		// Create two symlinks pointing at each other
-		linkA := "/tmp/pm-edge-circular-a"
-		linkB := "/tmp/pm-edge-circular-b"
+		linkA := "/tmp/cadestro-edge-circular-a"
+		linkB := "/tmp/cadestro-edge-circular-b"
 		os.Remove(linkA)
 		os.Remove(linkB)
 		t.Cleanup(func() {
@@ -3113,7 +3113,7 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 
 	t.Run("SymlinkToProtectedPath", func(t *testing.T) {
 		// Create a symlink from a temp path pointing to /etc/passwd
-		linkPath := "/tmp/pm-edge-symlink-protected"
+		linkPath := "/tmp/cadestro-edge-symlink-protected"
 		os.Remove(linkPath)
 		t.Cleanup(func() { os.Remove(linkPath) })
 
@@ -3141,7 +3141,7 @@ func TestIntegration_EdgeCase_DNSResolutionFailure(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_APP_IMAGE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url:         "https://this-domain-does-not-exist-xyzzy.invalid/app.AppImage",
-			InstallPath: "/tmp/pm-edge-dns",
+			InstallPath: "/tmp/cadestro-edge-dns",
 			// Supply a checksum so the install passes the artifact-verification
 			// guard and actually reaches the DNS resolution this test exercises.
 			ChecksumSha256: strings.Repeat("a", 64),
@@ -3196,7 +3196,7 @@ func TestIntegration_EdgeCase_HTTPSCertError(t *testing.T) {
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_APP_IMAGE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 		Url:         ts.URL + "/test.AppImage",
-		InstallPath: "/tmp/pm-edge-tls",
+		InstallPath: "/tmp/cadestro-edge-tls",
 		// Supply a checksum so the install passes the artifact-verification guard
 		// and actually reaches the TLS handshake this test exercises.
 		ChecksumSha256: strings.Repeat("a", 64),
@@ -3205,9 +3205,9 @@ func TestIntegration_EdgeCase_HTTPSCertError(t *testing.T) {
 	assertFailed(t, result)
 
 	// Verify no partial file was left behind
-	if _, err := os.Stat("/tmp/pm-edge-tls/test.AppImage"); err == nil {
+	if _, err := os.Stat("/tmp/cadestro-edge-tls/test.AppImage"); err == nil {
 		t.Error("partial file left behind after TLS error")
-		os.RemoveAll("/tmp/pm-edge-tls")
+		os.RemoveAll("/tmp/cadestro-edge-tls")
 	}
 }
 
@@ -3216,7 +3216,7 @@ func TestIntegration_EdgeCase_HTTPSCertError(t *testing.T) {
 func TestIntegration_EdgeCase_PartialAppImage(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	installDir := "/tmp/pm-edge-partial-appimage"
+	installDir := "/tmp/cadestro-edge-partial-appimage"
 	fileName := "partial-app.AppImage"
 
 	os.MkdirAll(installDir, 0755)
@@ -3332,7 +3332,7 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("NullBytes", func(t *testing.T) {
-		filePath := "/tmp/pm-edge-binary-null"
+		filePath := "/tmp/cadestro-edge-binary-null"
 		t.Cleanup(func() { sudoRemove(filePath) })
 
 		// Content with null bytes
@@ -3356,7 +3356,7 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 	})
 
 	t.Run("UTF8Multibyte", func(t *testing.T) {
-		filePath := "/tmp/pm-edge-utf8"
+		filePath := "/tmp/cadestro-edge-utf8"
 		t.Cleanup(func() { sudoRemove(filePath) })
 
 		// Content with multibyte UTF-8 characters
@@ -3380,7 +3380,7 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 	})
 
 	t.Run("LargeContent", func(t *testing.T) {
-		filePath := "/tmp/pm-edge-large-content"
+		filePath := "/tmp/cadestro-edge-large-content"
 		t.Cleanup(func() { sudoRemove(filePath) })
 
 		// 1MB file content
@@ -3410,7 +3410,7 @@ func TestIntegration_EdgeCase_ImmutableFile(t *testing.T) {
 	skipIfNotPrivileged(t)
 	e := newTestExecutor()
 	ctx := context.Background()
-	filePath := "/tmp/pm-edge-immutable"
+	filePath := "/tmp/cadestro-edge-immutable"
 
 	t.Cleanup(func() {
 		// Must remove immutable attribute before cleanup
@@ -3451,7 +3451,7 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 	actionID := "edgebroken01"
 
 	// Create a broken sudoers file in sudoers.d
-	brokenPath := "/etc/sudoers.d/99-pm-broken-test"
+	brokenPath := "/etc/sudoers.d/99-cadestro-broken-test"
 	t.Cleanup(func() {
 		sudoRemove(brokenPath)
 		sudoRemove(sudoersFilePath(actionID))
@@ -3546,7 +3546,7 @@ func TestIntegration_EdgeCase_VeryLongFilePath(t *testing.T) {
 
 	// Create a path that's just under PATH_MAX (4096)
 	// /tmp/ = 5 chars, then we need deeply nested dirs
-	baseDir := "/tmp/pm-edge-longpath"
+	baseDir := "/tmp/cadestro-edge-longpath"
 	t.Cleanup(func() { os.RemoveAll(baseDir) })
 
 	// Build a path with many nested directories
@@ -3662,7 +3662,7 @@ func TestIntegration_EdgeCase_SystemdInvalidUnit(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	unitName := "pm-edge-invalid.service"
+	unitName := "cadestro-edge-invalid.service"
 	unitPath := "/etc/systemd/system/" + unitName
 	t.Cleanup(func() { sudoRemove(unitPath) })
 
@@ -3707,7 +3707,7 @@ func TestIntegration_EdgeCase_SystemdInvalidUnit(t *testing.T) {
 // file writes to the same path don't corrupt the file.
 func TestIntegration_EdgeCase_ConcurrentFileWrites(t *testing.T) {
 	e := newTestExecutor()
-	filePath := "/tmp/pm-edge-concurrent"
+	filePath := "/tmp/cadestro-edge-concurrent"
 	t.Cleanup(func() { sudoRemove(filePath) })
 
 	// Run 10 concurrent file writes with different content
@@ -3741,9 +3741,10 @@ func TestIntegration_EdgeCase_ConcurrentFileWrites(t *testing.T) {
 		errs = append(errs, e)
 	}
 
-	// Most will fail because atomicWriteFile uses a single temp path (.pm-tmp)
-	// per destination — concurrent writes race on the temp file. This is expected.
-	// The important thing is: at least one succeeds and the file isn't corrupt.
+	// Some may fail: ten writers racing on one destination contend on the
+	// read-compare-replace sequence, and a loser reports the failure rather
+	// than silently interleaving. This is expected. The important thing is:
+	// at least one succeeds and the file isn't corrupt.
 	successCount := 10 - len(errs)
 	if successCount == 0 {
 		t.Error("all concurrent writes failed — expected at least one to succeed")
@@ -3843,17 +3844,17 @@ func TestIntegration_EdgeCase_InterruptedDpkgConfigure(t *testing.T) {
 
 	t.Cleanup(func() {
 		// Force remove the broken package
-		sudoRun("dpkg", "--remove", "--force-remove-reinstreq", "pm-broken-postinst").Run()
+		sudoRun("dpkg", "--remove", "--force-remove-reinstreq", "cadestro-broken-postinst").Run()
 		sudoRun("apt-get", "install", "-f", "-y").Run()
 	})
 
 	// Build a .deb with a failing postinst script
 	dir := t.TempDir()
-	pkgDir := filepath.Join(dir, "pm-broken-postinst")
+	pkgDir := filepath.Join(dir, "cadestro-broken-postinst")
 	debianDir := filepath.Join(pkgDir, "DEBIAN")
 	os.MkdirAll(debianDir, 0755)
 
-	control := `Package: pm-broken-postinst
+	control := `Package: cadestro-broken-postinst
 Version: 1.0.0
 Architecture: all
 Maintainer: test <test@test.com>
@@ -3865,7 +3866,7 @@ Description: Package with broken postinst
 	postinst := "#!/bin/sh\nexit 1\n"
 	os.WriteFile(filepath.Join(debianDir, "postinst"), []byte(postinst), 0755)
 
-	debFile := filepath.Join(dir, "pm-broken-postinst_1.0.0_all.deb")
+	debFile := filepath.Join(dir, "cadestro-broken-postinst_1.0.0_all.deb")
 	cmd := exec.Command("dpkg-deb", "--build", pkgDir, debFile)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("dpkg-deb failed: %v: %s", err, out)

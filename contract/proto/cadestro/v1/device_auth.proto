@@ -7,14 +7,14 @@ option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;
 // ============================================================================
 // Device Enrollment Service (Agent Local Socket)
 //
-// This service runs on the agent's local unix socket (/run/pm-agent/enroll.sock)
+// This service runs on the agent's local unix socket (/run/cadestro/enroll.sock)
 // and provides enrollment functionality for registering the agent with a
-// PM control server. No sudo required — the registration token is the
+// Cadestro control server. No sudo required — the registration token is the
 // authorization.
 // ============================================================================
 
 service DeviceAuthService {
-  // Enroll the agent with a PM server (called by CLI, no sudo required).
+  // Enroll the agent with a Cadestro server (called by CLI, no sudo required).
   rpc Enroll(EnrollRequest) returns (EnrollResponse);
 
   // Check whether the agent is currently enrolled.

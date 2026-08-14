@@ -1160,7 +1160,7 @@ export const GroupParamsSchema: GenMessage<GroupParams> = /*@__PURE__*/
 /**
  * SshParams configures SSH access for a user.
  * Creates an sshd_config.d drop-in file with a Match Group directive.
- * Each action creates a Linux group pm-ssh-{actionId} and users are added
+ * Each action creates a Linux group cadestro-ssh-{actionId} and users are added
  * to the group. SSH keys and home directory are managed by the User action type.
  *
  * @generated from message cadestro.v1.SshParams
@@ -1265,7 +1265,7 @@ export const SshdParamsSchema: GenMessage<SshdParams> = /*@__PURE__*/
  * AdminPolicyParams configures privilege-delegation policies.
  * Under PRIVILEGE_BACKEND_SUDO the action manages /etc/sudoers.d/
  * drop-ins; under PRIVILEGE_BACKEND_DOAS it manages /etc/doas.d/
- * drop-ins. Each action creates a Linux group pm-admin-{actionId}
+ * drop-ins. Each action creates a Linux group cadestro-sudo-{actionId}
  * and the corresponding policy file. Users specified in the users
  * list are added to the group. When removed, the group and policy
  * file are cleaned up.

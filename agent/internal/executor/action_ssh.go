@@ -57,7 +57,7 @@ const maxActionIDForFilesystem = 64
 // too long, or contains any character outside the alphanumeric-safe
 // set. Action IDs flow into filesystem paths
 // (/etc/sudoers.d/<id>, /etc/ssh/sshd_config.d/<id>.conf, …) and into
-// Linux group names (pm-ssh-<id>, pm-sudo-<id>). The entry-point
+// Linux group names (cadestro-ssh-<id>, cadestro-sudo-<id>). The entry-point
 // getActionID enforces the same rule, but each action_*.go file
 // accepts actionID as a parameter and any future caller that bypasses
 // getActionID would otherwise smuggle path-meaningful characters
@@ -77,17 +77,17 @@ func validateActionIDForFilesystem(actionID string) error {
 }
 
 // sshGroupName creates a valid Linux group name from the action ID for SSH access.
-// Linux group names: max 32 chars. pm-ssh- (7 chars) + up to 25 chars of action ID.
+// Linux group names: max 32 chars. cadestro-ssh- (13 chars) + up to 19 chars of action ID.
 // For longer action IDs, falls back to a hash-suffix scheme to keep
 // the mapping unique — naïve truncation could otherwise let two
-// distinct IDs sharing a 25-char prefix collide on the same group.
+// distinct IDs sharing a 19-char prefix collide on the same group.
 func sshGroupName(actionID string) string {
-	return shortGroupName("pm-ssh-", actionID)
+	return shortGroupName("cadestro-ssh-", actionID)
 }
 
 // sshConfigPath returns the path for an SSH config drop-in file.
 func sshConfigPath(actionID string) string {
-	return fmt.Sprintf("/etc/ssh/sshd_config.d/pm-ssh-%s.conf", strings.ToLower(actionID))
+	return fmt.Sprintf("/etc/ssh/sshd_config.d/cadestro-ssh-%s.conf", strings.ToLower(actionID))
 }
 
 // sshEffectiveUsers returns the user list from params.
@@ -96,7 +96,7 @@ func sshEffectiveUsers(params *pb.SshParams) []string {
 }
 
 // executeSsh configures SSH access via an sshd_config.d drop-in file with a Match Group directive.
-// Each action creates a Linux group pm-ssh-{actionId} and users are added to the group.
+// Each action creates a Linux group cadestro-ssh-{actionId} and users are added to the group.
 func (e *Executor) executeSsh(ctx context.Context, params *pb.SshParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
 	if params == nil {
 		return nil, false, fmt.Errorf("ssh params required")
@@ -260,7 +260,7 @@ func (e *Executor) executeSshd(ctx context.Context, params *pb.SshdParams, state
 		return nil, false, err
 	}
 
-	configPath := fmt.Sprintf("/etc/ssh/sshd_config.d/%04d-pm-%s.conf", params.Priority, strings.ToLower(actionID))
+	configPath := fmt.Sprintf("/etc/ssh/sshd_config.d/%04d-cadestro-%s.conf", params.Priority, strings.ToLower(actionID))
 
 	switch state {
 	case pb.DesiredState_DESIRED_STATE_ABSENT:
