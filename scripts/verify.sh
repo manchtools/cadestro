@@ -106,6 +106,65 @@ done
 printf 'verify: predecessor name confined to the allowlist (%d matching paths, %d allowlist entries)\n' \
     "${#old_name_hits[@]}" "${#old_name_allow[@]}"
 
+# The predecessor INITIALS are retired too, not just the spelled-out name. They
+# were the prefix on the device surface (the runtime directory under /run, the
+# per-action sudoers and sshd groups and their drop-in files), on the web design
+# tokens, on the local container tags, and on a few hundred test fixtures. All
+# of it is renamed, so the spelling must never come back.
+#
+# The initials ALONE are far too generic to forbid: `rpm-md`, `rpm-build` and
+# /etc/pki/rpm-gpg all contain them and all are legitimate. So the check is
+# ANCHORED on a word boundary immediately before the initials — which is exactly
+# the shape a reintroduced identifier has, and exactly what those rpm spellings
+# do not have, because an alphanumeric sits in front of the match there. That
+# anchoring is the whole reason this can be a hard failure instead of a grep a
+# human has to triage.
+#
+# There is deliberately NO allowlist. Nothing in the tree may carry this
+# spelling — which costs this check the trick the scan above relies on, where
+# PROVENANCE.md always matching proves the scan ran. A zero result here is
+# ambiguous between "clean tree" and "the grep never worked". So the machinery
+# is proved against a POSITIVE CONTROL first: a file that DOES carry the
+# forbidden spelling has to be reported before the tree is trusted to be clean.
+#
+# The scan reads the TRACKED files, not the directory tree. Build output is the
+# reason: a stale `web/.svelte-kit/` carries whatever token names the last build
+# compiled in, so a recursive scan reports a violation that no source file has
+# and that no rename can fix. `git ls-files` is the self-discovering answer —
+# "the files this repository contains" — and it needs no hand-maintained list of
+# generated directories that would rot the moment a tool changes its output
+# path. The list being empty is itself a failure: that means the scan is not
+# looking at a repository.
+#
+# As above, the pattern is assembled from a fragment rather than written out, so
+# neither the regex nor the control string makes this file match its own check.
+initials_head='p'
+initials_re="\\b${initials_head}m-"
+
+initials_control=$(mktemp) || fail "could not create the predecessor-initials positive control"
+trap 'rm -f "$initials_control"' EXIT
+printf '/run/%sm-agent and group %sm-sudo-01ARZ\n' "$initials_head" "$initials_head" \
+    > "$initials_control"
+grep -IiE -- "$initials_re" "$initials_control" >/dev/null \
+    || fail "predecessor-initials positive control did not match — the scan is broken, not the tree"
+
+mapfile -t initials_tracked < <(git ls-files)
+[[ ${#initials_tracked[@]} -gt 0 ]] \
+    || fail "predecessor-initials scan found no tracked files — the scan is broken, not the tree"
+
+mapfile -t initials_hits < <(
+    printf '%s\0' "${initials_tracked[@]}" \
+        | xargs -0 grep -IiEl -- "$initials_re" \
+        | sort
+)
+if [[ ${#initials_hits[@]} -gt 0 ]]; then
+    echo "verify: the predecessor initials survive as an identifier prefix:" >&2
+    printf '  %s\n' "${initials_hits[@]}" >&2
+    fail "rename these to the cadestro- spelling"
+fi
+
+printf 'verify: predecessor initials absent as an identifier prefix (positive control matched, tree clean)\n'
+
 # Every module directory that exists must carry its own LICENSE, and every
 # module named in LICENSING.md must be one of the known set (drift guard).
 known="contract sdk agent server web"
