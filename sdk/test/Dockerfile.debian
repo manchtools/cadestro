@@ -42,8 +42,19 @@ WORKDIR /workspace
 
 # Copy only the SDK module and pin it into a minimal workspace (standalone
 # resolution; mirrors test/Dockerfile.integration).
+# The SDK and the contract it replaces to: sdk/go.mod redirects
+# github.com/manchtools/cadestro/contract at ../contract, so copying sdk/ alone
+# leaves the replacement directory missing and `go mod download` fails before a
+# single test compiles.
+COPY contract/ ./contract/
 COPY sdk/ ./sdk/
-RUN printf 'go %s\n\nuse (\n\t./sdk\n)\n' "$(sed -n 's/^go //p' sdk/go.mod)" > go.work
+RUN printf 'go %s
+
+use (
+	./contract
+	./sdk
+)
+' "$(sed -n 's/^go //p' sdk/go.mod)" > go.work
 RUN cd sdk && go mod download
 
 # --- bad-state stages -------------------------------------------------------

@@ -26,16 +26,21 @@ RUN mkdir -p /run/sshd
 
 WORKDIR /workspace
 
-# Copy only the agent module; go.mod's replace directive points at a
-# pinned SDK version fetched from GitHub at build time. Cross-
-# cutting SDK/agent development happens locally via a per-dev go.work
-# at the workspace root — see agent/README.md.
+# The agent and the two modules it replaces to. agent/go.mod redirects
+# github.com/manchtools/cadestro/{contract,sdk} at ../contract and ../sdk, so
+# copying agent/ alone leaves both replacement directories missing and
+# `go mod download` fails before a single test compiles. The build context is
+# the repository root for exactly this reason.
+COPY contract/ ./contract/
+COPY sdk/ ./sdk/
 COPY agent/ ./agent/
 
-# Single-module go.work so `go test ./agent/...` works from /workspace
-# (CI invokes gotestsum from the container's default cwd). Without this
-# Go can't find a module rooted at /workspace.
-RUN printf 'go %s\n\nuse (\n\t./agent\n)\n' "$(sed -n 's/^go //p' agent/go.mod)" > go.work
+# go.work so `go test ./agent/...` works from /workspace (CI invokes gotestsum
+# from the container's default cwd). Without this Go can't find a module rooted
+# at /workspace. All three modules are listed: they are one source tree here,
+# and the workspace is what makes the sibling replacements resolve as the
+# committed code rather than as version queries.
+RUN printf 'go %s\n\nuse (\n\t./contract\n\t./sdk\n\t./agent\n)\n' "$(sed -n 's/^go //p' agent/go.mod)" > go.work
 
 # Pre-download dependencies and install gotestsum for clear failure reporting
 RUN cd agent && go mod download
