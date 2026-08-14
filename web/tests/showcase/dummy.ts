@@ -424,64 +424,65 @@ export function usersAsSearchResults() {
 // Roles
 // ---------------------------------------------------------------------------
 
-// Canonical permission set — matches server/internal/auth/permissions.go's
-// AllPermissions(). The full 168-entry list is kept here so the Administrator
-// role on the Roles page renders its real permission count, not a single "*".
+// The Administrator role's permission set, so the Roles page renders a real
+// count instead of a single "*".
+//
+// This is a SNAPSHOT of the server registry, in registry order, not a live
+// mirror: nothing in this TypeScript build can read the Go source, so a
+// permission added there will not appear here until someone re-extracts it.
+// The previous copy claimed to match AllPermissions() and did not — it had
+// drifted to 160 entries including CreateUser, DeleteUser and GetToken, which
+// are not permissions at all, while missing sixteen that are.
+//
+// Re-extract with, from the repository root:
+//
+//   awk '/^func registryPermissions\(\) \[\]permEntry \{/,/^\}/' \
+//       server/internal/auth/permissions.go | grep -oP '^\s*\{"\K[^"]+'
+//
+// 166 keys as of this snapshot.
 export const ALL_PERMISSIONS = [
-	'GetCurrentUser','GetUser','GetUser:self','ListUsers','CreateUser',
-	'UpdateUserEmail','UpdateUserEmail:self','SetUserDisabled','UpdateUserProfile',
-	'UpdateUserProfile:self','DeleteUser','UpdateUserSshSettings',
-	'UpdateUserSshSettings:self','UpdateUserLinuxUsername',
-	'UpdateUserLinuxUsername:self','AddUserSshKey','AddUserSshKey:self',
-	'RemoveUserSshKey','RemoveUserSshKey:self','ListDevices',
-	'ListDevices:assigned','GetDevice','GetDevice:assigned','SetDeviceLabel',
-	'RemoveDeviceLabel','AssignDevice','UnassignDevice','ListDeviceAssignees',
-	'SetDeviceSyncInterval','DeleteDevice','CreateToken','CreateToken:self',
-	'GetToken','ListTokens','RenameToken','SetTokenDisabled','DeleteToken',
-	'CreateAction','GetAction','ListActions','RenameAction',
-	'UpdateActionDescription','UpdateActionParams','DeleteAction',
-	'CreateActionSet','GetActionSet','ListActionSets','RenameActionSet',
-	'UpdateActionSetDescription','UpdateActionSetSchedule','DeleteActionSet',
-	'AddActionToSet','RemoveActionFromSet','ReorderActionInSet',
+	'GetCurrentUser','GetUser','GetUser:self','ListUsers',
+	'EraseJITUser','UpdateUserEmail','UpdateUserEmail:self','SetUserDisabled',
+	'UpdateUserProfile','UpdateUserProfile:self','UpdateUserSshSettings','UpdateUserSshSettings:self',
+	'UpdateUserLinuxUsername','AddUserSshKey','AddUserSshKey:self','RemoveUserSshKey',
+	'RemoveUserSshKey:self','ListDevices','ListDevices:assigned','GetDevice',
+	'GetDevice:assigned','SetDeviceLabel','RemoveDeviceLabel','AssignDevice',
+	'UnassignDevice','ListDeviceAssignees','SetDeviceSyncInterval','SetDeviceInventoryInterval',
+	'DeleteDevice','CreateToken','CreateToken:self','ListTokens',
+	'RenameToken','SetTokenDisabled','DeleteToken','CreateAction',
+	'GetAction','ListActions','RenameAction','UpdateActionDescription',
+	'UpdateActionParams','DeleteAction','CreateActionSet','GetActionSet',
+	'ListActionSets','RenameActionSet','UpdateActionSetDescription','UpdateActionSetSchedule',
+	'DeleteActionSet','AddActionToSet','RemoveActionFromSet','ReorderActionInSet',
 	'CreateDefinition','GetDefinition','ListDefinitions','RenameDefinition',
-	'UpdateDefinitionDescription','UpdateDefinitionSchedule',
-	'DeleteDefinition','AddActionSetToDefinition',
-	'RemoveActionSetFromDefinition','ReorderActionSetInDefinition',
-	'CreateDeviceGroup','GetDeviceGroup','ListDeviceGroups',
-	'ListDeviceGroupsForDevice','RenameDeviceGroup',
-	'UpdateDeviceGroupDescription','UpdateDeviceGroupQuery',
-	'DeleteDeviceGroup','AddDeviceToGroup','RemoveDeviceFromGroup',
-	'ValidateDynamicQuery','EvaluateDynamicGroup',
-	'SetDeviceGroupSyncInterval','SetDeviceGroupMaintenanceWindow',
-	'CreateAssignment','DeleteAssignment','ListAssignments',
-	'GetDeviceAssignments','GetUserAssignments','SetUserSelection',
-	'ListAvailableActions','DispatchAction','DispatchToMultiple',
-	'DispatchAssignedActions','DispatchActionSet','DispatchDefinition',
-	'DispatchToGroup','DispatchInstantAction','GetExecution','ListExecutions',
-	'CancelExecution','DispatchOSQuery','GetOSQueryResult',
-	'GetDeviceInventory','RefreshDeviceInventory','QueryDeviceLogs',
-	'GetDeviceLogResult','GetDeviceCompliance','GetDeviceCompliance:assigned',
-	'CreateCompliancePolicy','GetCompliancePolicy','ListCompliancePolicies',
-	'RenameCompliancePolicy','UpdateCompliancePolicyDescription',
-	'DeleteCompliancePolicy','AddCompliancePolicyRule',
-	'RemoveCompliancePolicyRule','UpdateCompliancePolicyRule',
-	'GetDeviceCompliancePolicyStatus',
-	'GetDeviceCompliancePolicyStatus:assigned','ListAuditEvents',
-	'GetDeviceLpsPasswords','GetDeviceLuksKeys','CreateLuksToken',
-	'RevokeLuksDeviceKey',
-	'CreateRole','GetRole','ListRoles','UpdateRole','DeleteRole',
-	'AssignRoleToUser','RevokeRoleFromUser','ListPermissions',
-	'CreateUserGroup','GetUserGroup','ListUserGroups','UpdateUserGroup',
-	'DeleteUserGroup','AddUserToGroup','RemoveUserFromGroup',
-	'AssignRoleToUserGroup','RevokeRoleFromUserGroup',
-	'ListUserGroupsForUser','UpdateUserGroupQuery','ValidateUserGroupQuery',
-	'EvaluateDynamicUserGroup','SetUserGroupMaintenanceWindow',
-	'CreateIdentityProvider','GetIdentityProvider','ListIdentityProviders',
-	'UpdateIdentityProvider','DeleteIdentityProvider','EnableSCIM',
-	'DisableSCIM','RotateSCIMToken','ListIdentityLinks','UnlinkIdentity',
-	'Search','RebuildSearchIndex','GetServerSettings','UpdateServerSettings',
-	'SetUserProvisioningEnabled','StartTerminal','StopTerminal',
-	'ListActiveTerminalSessions','TerminateTerminalSession',
+	'UpdateDefinitionDescription','UpdateDefinitionSchedule','DeleteDefinition','AddActionSetToDefinition',
+	'RemoveActionSetFromDefinition','ReorderActionSetInDefinition','CreateStaticDeviceGroup','CreateDynamicDeviceGroup',
+	'GetDeviceGroup','ListDeviceGroups','ListDeviceGroupsForDevice','RenameDeviceGroup',
+	'UpdateDeviceGroupDescription','UpdateDynamicDeviceGroupQuery','DeleteDeviceGroup','AddDeviceToGroup',
+	'RemoveDeviceFromGroup','ValidateDynamicQuery','EvaluateDynamicGroup','SetDeviceGroupSyncInterval',
+	'SetDeviceGroupInventoryInterval','SetDeviceGroupMaintenanceWindow','CreateAssignment','DeleteAssignment',
+	'ListAssignments','GetDeviceAssignments','GetUserAssignments','SetUserSelection',
+	'ListAvailableActions','DispatchAction','DispatchToMultiple','DispatchAssignedActions',
+	'DispatchActionSet','DispatchDefinition','DispatchToGroup','DispatchInstantAction',
+	'GetExecution','ListExecutions','CancelExecution','DispatchOSQuery',
+	'GetOSQueryResult','GetDeviceInventory','RefreshDeviceInventory','QueryDeviceLogs',
+	'GetDeviceLogResult','GetDeviceCompliance','GetDeviceCompliance:assigned','CreateCompliancePolicy',
+	'GetCompliancePolicy','ListCompliancePolicies','RenameCompliancePolicy','UpdateCompliancePolicyDescription',
+	'DeleteCompliancePolicy','AddCompliancePolicyRule','RemoveCompliancePolicyRule','UpdateCompliancePolicyRule',
+	'GetDeviceCompliancePolicyStatus','GetDeviceCompliancePolicyStatus:assigned','ListAuditEvents','ListLpsPasswords',
+	'RevealLpsPassword','ListLuksKeys','RevealLuksKey','CreateLuksToken',
+	'RevokeLuksDeviceKey','CreateRole','GetRole','ListRoles',
+	'UpdateRole','DeleteRole','AssignRoleToUser','RevokeRoleFromUser',
+	'AssignRoleScope','ListPermissions','CreateStaticUserGroup','CreateDynamicUserGroup',
+	'GetUserGroup','ListUserGroups','UpdateUserGroup','DeleteUserGroup',
+	'AddUserToGroup','RemoveUserFromGroup','AssignRoleToUserGroup','RevokeRoleFromUserGroup',
+	'ListUserGroupsForUser','UpdateDynamicUserGroupQuery','ValidateUserGroupQuery','EvaluateDynamicUserGroup',
+	'SetUserGroupMaintenanceWindow','CreateIdentityProvider','GetIdentityProvider','ListIdentityProviders',
+	'UpdateIdentityProvider','DeleteIdentityProvider','EnableSCIM','DisableSCIM',
+	'RotateSCIMToken','ListIdentityLinks','UnlinkIdentity','Search',
+	'RebuildSearchIndex','GetServerSettings','UpdateServerSettings','SetUserProvisioningEnabled',
+	'StartTerminal','StopTerminal','ListActiveTerminalSessions','TerminateTerminalSession',
+	'TerminalAdminLimited','TerminalAdminFull',
 ];
 
 export function listRolesResponse() {
@@ -1245,7 +1246,9 @@ export function getRoleResponse(id: string) {
 const PERMISSION_GROUPS: Array<[string, string[]]> = [
 	['Devices', ['ListDevices', 'GetDevice', 'AssignDevice', 'UnassignDevice', 'DeleteDevice']],
 	['Actions', ['ListActions', 'CreateAction', 'RenameAction', 'DeleteAction', 'DispatchAction']],
-	['Users', ['ListUsers', 'CreateUser', 'SetUserDisabled', 'DeleteUser']],
+	// Provisioning is provider-owned: there is no CreateUser or DeleteUser
+	// permission to catalogue, and EraseJITUser is the only local erase.
+	['Users', ['ListUsers', 'SetUserDisabled', 'UpdateUserProfile', 'EraseJITUser']],
 	['Roles', ['ListRoles', 'CreateRole', 'UpdateRole', 'DeleteRole', 'AssignRoleToUser']],
 	['Audit', ['ListAuditEvents']],
 ];
