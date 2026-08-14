@@ -7,35 +7,35 @@ DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The single expected control.env surface. Every name assertion derives from
 # this list, so an added, removed, or duplicated variable is caught once.
 CONTROL_ENV_VARIABLES=(
-    POWER_MANAGE_PUBLIC_LISTEN
-    POWER_MANAGE_AGENT_LISTEN
-    POWER_MANAGE_PUBLIC_BASE_URL
-    POWER_MANAGE_AGENT_URL
-    POWER_MANAGE_TERMINAL_URL
-    POWER_MANAGE_CORS_ORIGINS
-    POWER_MANAGE_TERMINAL_ORIGINS
-    POWER_MANAGE_TRUSTED_PROXIES
-    POWER_MANAGE_AGENT_PROXY_SOURCES
-    POWER_MANAGE_LOG_LEVEL
-    POWER_MANAGE_LOG_FORMAT
-    POWER_MANAGE_CERTIFICATE_VALIDITY
-    POWER_MANAGE_HEARTBEAT_INTERVAL
-    POWER_MANAGE_AUDIT_RETENTION
-    POWER_MANAGE_ARTIFACT_PATH
-    POWER_MANAGE_DATABASE_PATH
-    POWER_MANAGE_BACKUP_PATH
-    POWER_MANAGE_BACKUP_MAX_LAG
-    POWER_MANAGE_WEBHOOK_URL
-    POWER_MANAGE_CA_CERT_FILE
-    POWER_MANAGE_CA_KEY_FILE
-    POWER_MANAGE_CA_TRUST_BUNDLE_FILE
-    POWER_MANAGE_AGENT_TLS_CERT_FILE
-    POWER_MANAGE_AGENT_TLS_KEY_FILE
-    POWER_MANAGE_PUBLIC_TLS_CERT_FILE
-    POWER_MANAGE_PUBLIC_TLS_KEY_FILE
-    POWER_MANAGE_ENCRYPTION_KEY_FILE
-    POWER_MANAGE_SESSION_SIGNING_KEY_FILE
-    POWER_MANAGE_SEALING_KEY_FILE
+    CADESTRO_PUBLIC_LISTEN
+    CADESTRO_AGENT_LISTEN
+    CADESTRO_PUBLIC_BASE_URL
+    CADESTRO_AGENT_URL
+    CADESTRO_TERMINAL_URL
+    CADESTRO_CORS_ORIGINS
+    CADESTRO_TERMINAL_ORIGINS
+    CADESTRO_TRUSTED_PROXIES
+    CADESTRO_AGENT_PROXY_SOURCES
+    CADESTRO_LOG_LEVEL
+    CADESTRO_LOG_FORMAT
+    CADESTRO_CERTIFICATE_VALIDITY
+    CADESTRO_HEARTBEAT_INTERVAL
+    CADESTRO_AUDIT_RETENTION
+    CADESTRO_ARTIFACT_PATH
+    CADESTRO_DATABASE_PATH
+    CADESTRO_BACKUP_PATH
+    CADESTRO_BACKUP_MAX_LAG
+    CADESTRO_WEBHOOK_URL
+    CADESTRO_CA_CERT_FILE
+    CADESTRO_CA_KEY_FILE
+    CADESTRO_CA_TRUST_BUNDLE_FILE
+    CADESTRO_AGENT_TLS_CERT_FILE
+    CADESTRO_AGENT_TLS_KEY_FILE
+    CADESTRO_PUBLIC_TLS_CERT_FILE
+    CADESTRO_PUBLIC_TLS_KEY_FILE
+    CADESTRO_ENCRYPTION_KEY_FILE
+    CADESTRO_SESSION_SIGNING_KEY_FILE
+    CADESTRO_SEALING_KEY_FILE
 )
 
 # Every fixture models a deployment that can actually start, archive storage
@@ -135,8 +135,8 @@ host_mount_for() {
 assert_archive_isolated() {
     local config="$1" directory="$2"
     local database_path archive_path database archive
-    database_path="$(env_value "$config" POWER_MANAGE_DATABASE_PATH)"
-    archive_path="$(env_value "$config" POWER_MANAGE_BACKUP_PATH)"
+    database_path="$(env_value "$config" CADESTRO_DATABASE_PATH)"
+    archive_path="$(env_value "$config" CADESTRO_BACKUP_PATH)"
     database="$(host_mount_for "$(dirname "$database_path")" "$directory")"
     archive="$(host_mount_for "$archive_path" "$directory")"
     [[ "$(stat -L -c '%d' "$database")" != "$(stat -L -c '%d' "$archive")" ]] || {
@@ -259,36 +259,36 @@ test_secure_idempotent_setup() {
     # Control is configured entirely by the environment; no file is rendered.
     [[ ! -e "$directory/config/control.json" ]]
     assert_env_variable_set "$config"
-    assert_env_line "$config" 'POWER_MANAGE_PUBLIC_LISTEN=0.0.0.0:8081'
-    assert_env_line "$config" 'POWER_MANAGE_AGENT_LISTEN=172.30.0.3:8082'
-    assert_env_line "$config" 'POWER_MANAGE_PUBLIC_BASE_URL=https://manage.example.test'
-    assert_env_line "$config" 'POWER_MANAGE_AGENT_URL=https://agents.example.test'
-    assert_env_line "$config" 'POWER_MANAGE_TERMINAL_URL=wss://manage.example.test/terminal'
-    assert_env_line "$config" 'POWER_MANAGE_CORS_ORIGINS=https://manage.example.test'
-    assert_env_line "$config" 'POWER_MANAGE_TERMINAL_ORIGINS=manage.example.test'
-    assert_env_line "$config" 'POWER_MANAGE_TRUSTED_PROXIES=172.29.0.2'
-    assert_env_line "$config" 'POWER_MANAGE_AGENT_PROXY_SOURCES=172.30.0.2'
+    assert_env_line "$config" 'CADESTRO_PUBLIC_LISTEN=0.0.0.0:8081'
+    assert_env_line "$config" 'CADESTRO_AGENT_LISTEN=172.30.0.3:8082'
+    assert_env_line "$config" 'CADESTRO_PUBLIC_BASE_URL=https://manage.example.test'
+    assert_env_line "$config" 'CADESTRO_AGENT_URL=https://agents.example.test'
+    assert_env_line "$config" 'CADESTRO_TERMINAL_URL=wss://manage.example.test/terminal'
+    assert_env_line "$config" 'CADESTRO_CORS_ORIGINS=https://manage.example.test'
+    assert_env_line "$config" 'CADESTRO_TERMINAL_ORIGINS=manage.example.test'
+    assert_env_line "$config" 'CADESTRO_TRUSTED_PROXIES=172.29.0.2'
+    assert_env_line "$config" 'CADESTRO_AGENT_PROXY_SOURCES=172.30.0.2'
     # Both defaults are rendered by setup.sh; the fixture .env never set them.
-    assert_env_line "$config" 'POWER_MANAGE_LOG_LEVEL=info'
-    assert_env_line "$config" 'POWER_MANAGE_LOG_FORMAT=json'
-    assert_env_line "$config" 'POWER_MANAGE_CERTIFICATE_VALIDITY=8760h'
-    assert_env_line "$config" 'POWER_MANAGE_HEARTBEAT_INTERVAL=30s'
-    assert_env_line "$config" 'POWER_MANAGE_AUDIT_RETENTION=2160h'
-    assert_env_line "$config" 'POWER_MANAGE_ARTIFACT_PATH=/var/lib/power-manage/artifacts'
-    assert_env_line "$config" 'POWER_MANAGE_DATABASE_PATH=/var/lib/power-manage/state/control.db'
-    assert_env_line "$config" 'POWER_MANAGE_BACKUP_PATH=/var/lib/power-manage/backups'
-    assert_env_line "$config" 'POWER_MANAGE_BACKUP_MAX_LAG=26h'
-    assert_env_line "$config" 'POWER_MANAGE_WEBHOOK_URL='
-    assert_env_line "$config" 'POWER_MANAGE_CA_CERT_FILE=/run/certs/ca.crt'
-    assert_env_line "$config" 'POWER_MANAGE_CA_KEY_FILE=/run/certs/ca.key'
-    assert_env_line "$config" 'POWER_MANAGE_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt'
-    assert_env_line "$config" 'POWER_MANAGE_AGENT_TLS_CERT_FILE=/run/certs/control.crt'
-    assert_env_line "$config" 'POWER_MANAGE_AGENT_TLS_KEY_FILE=/run/certs/control.key'
-    assert_env_line "$config" 'POWER_MANAGE_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt'
-    assert_env_line "$config" 'POWER_MANAGE_PUBLIC_TLS_KEY_FILE=/run/certs/control.key'
-    assert_env_line "$config" 'POWER_MANAGE_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
-    assert_env_line "$config" 'POWER_MANAGE_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
-    assert_env_line "$config" 'POWER_MANAGE_SEALING_KEY_FILE=/run/secrets/sealing.key'
+    assert_env_line "$config" 'CADESTRO_LOG_LEVEL=info'
+    assert_env_line "$config" 'CADESTRO_LOG_FORMAT=json'
+    assert_env_line "$config" 'CADESTRO_CERTIFICATE_VALIDITY=8760h'
+    assert_env_line "$config" 'CADESTRO_HEARTBEAT_INTERVAL=30s'
+    assert_env_line "$config" 'CADESTRO_AUDIT_RETENTION=2160h'
+    assert_env_line "$config" 'CADESTRO_ARTIFACT_PATH=/var/lib/power-manage/artifacts'
+    assert_env_line "$config" 'CADESTRO_DATABASE_PATH=/var/lib/power-manage/state/control.db'
+    assert_env_line "$config" 'CADESTRO_BACKUP_PATH=/var/lib/power-manage/backups'
+    assert_env_line "$config" 'CADESTRO_BACKUP_MAX_LAG=26h'
+    assert_env_line "$config" 'CADESTRO_WEBHOOK_URL='
+    assert_env_line "$config" 'CADESTRO_CA_CERT_FILE=/run/certs/ca.crt'
+    assert_env_line "$config" 'CADESTRO_CA_KEY_FILE=/run/certs/ca.key'
+    assert_env_line "$config" 'CADESTRO_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt'
+    assert_env_line "$config" 'CADESTRO_AGENT_TLS_CERT_FILE=/run/certs/control.crt'
+    assert_env_line "$config" 'CADESTRO_AGENT_TLS_KEY_FILE=/run/certs/control.key'
+    assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt'
+    assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key'
+    assert_env_line "$config" 'CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
+    assert_env_line "$config" 'CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
+    assert_env_line "$config" 'CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key'
     cmp -s "$directory/certs/ca.crt" "$directory/certs/ca-trust-bundle.crt"
     assert_archive_isolated "$config" "$directory"
 

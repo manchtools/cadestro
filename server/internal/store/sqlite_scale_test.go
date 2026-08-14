@@ -104,10 +104,10 @@ type sqliteScaleResult struct {
 
 // TestSQLiteScale_MixedWorkloadAtTenThousandAgents is the repeatable target
 // database gate. Normal suites skip it; run explicitly with
-// POWER_MANAGE_RUN_SCALE_TEST=1.
+// CADESTRO_RUN_SCALE_TEST=1.
 func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
-	if os.Getenv("POWER_MANAGE_RUN_SCALE_TEST") != "1" {
-		t.Skip("set POWER_MANAGE_RUN_SCALE_TEST=1 to run the 10,000-agent SQLite gate")
+	if os.Getenv("CADESTRO_RUN_SCALE_TEST") != "1" {
+		t.Skip("set CADESTRO_RUN_SCALE_TEST=1 to run the 10,000-agent SQLite gate")
 	}
 	if testing.Short() {
 		t.Fatal("the explicit scale gate cannot run in short mode")

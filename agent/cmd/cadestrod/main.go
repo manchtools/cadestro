@@ -46,7 +46,7 @@ type Config struct {
 	LogLevel  string
 	LogFormat string
 
-	// PrivilegeBackend is resolved from POWER_MANAGE_PRIVILEGE_BACKEND at
+	// PrivilegeBackend is resolved from CADESTRO_PRIVILEGE_BACKEND at
 	// parseFlags time. Empty selects direct execution for the packaged root
 	// service and sudo for an explicit non-root invocation.
 	PrivilegeBackend string
@@ -374,11 +374,11 @@ func parseFlags() *Config {
 	}
 
 	// Allow environment variables to override
-	if v := os.Getenv("POWER_MANAGE_DATA_DIR"); v != "" {
+	if v := os.Getenv("CADESTRO_DATA_DIR"); v != "" {
 		cfg.DataDir = v
 	}
 
-	cfg.PrivilegeBackend = strings.ToLower(os.Getenv("POWER_MANAGE_PRIVILEGE_BACKEND"))
+	cfg.PrivilegeBackend = strings.ToLower(os.Getenv("CADESTRO_PRIVILEGE_BACKEND"))
 
 	return cfg
 }

@@ -36,7 +36,7 @@ func randomBackoff() time.Duration {
 // values fail at startup rather than selecting a different privilege model.
 //
 // Returns an error if the selected backend's required binary isn't on
-// PATH (e.g. POWER_MANAGE_PRIVILEGE_BACKEND=doas on a host with no
+// PATH (e.g. CADESTRO_PRIVILEGE_BACKEND=doas on a host with no
 // doas installed). Fail-fast at startup is cheaper than debugging a
 // "permission denied" on the first privileged call hours later.
 func applyBackendOverrides(cfg *Config, logger *slog.Logger) (sysexec.PrivilegeBackend, error) {
@@ -74,7 +74,7 @@ func setPrivilegeBackend(backend string, logger *slog.Logger) (sysexec.Privilege
 	switch backend {
 	case "root":
 		// Refuse the no-escalation root backend unless the process is actually
-		// root. Otherwise an explicit POWER_MANAGE_PRIVILEGE_BACKEND=root on a
+		// root. Otherwise an explicit CADESTRO_PRIVILEGE_BACKEND=root on a
 		// non-root agent would build a usable Direct runner, bypassing the
 		// fail-closed path and running privileged commands unescalated (e.g. a
 		// desktop reboot via logind/polkit). Fail fast at startup instead.

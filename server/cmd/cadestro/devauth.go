@@ -1,11 +1,11 @@
 //go:build devauth
 
 // Development-only authentication bypass. Target design §5.2: a build
-// compiled with the `devauth` tag AND run with PM_DEV_AUTH=1 plus a
-// PM_DEV_AUTH_TOKEN
-// exposes POST /dev/session, which provisions one fixed local
-// administrator and mints an ordinary session for it so the web UI can be
-// exercised without an identity provider. All three gates are mandatory: a
+// compiled with the `devauth` tag AND run with CADESTRO_DEV_AUTH=1 plus a
+// CADESTRO_DEV_AUTH_TOKEN exposes POST /dev/session, which provisions one
+// fixed local administrator and mints an ordinary session for it so the web
+// UI can be exercised without an identity provider. All three gates are
+// mandatory: a
 // release build omits this file entirely (the !devauth stub replaces it),
 // and a devauth build still refuses unless both runtime gates are set.
 // The minted session is an ordinary signed session subject to the same
@@ -33,9 +33,9 @@ import (
 )
 
 const (
-	devAuthEnv         = "PM_DEV_AUTH"
-	devAuthTokenEnv    = "PM_DEV_AUTH_TOKEN"
-	devAuthTokenHeader = "X-Power-Manage-Dev-Auth"
+	devAuthEnv         = "CADESTRO_DEV_AUTH"
+	devAuthTokenEnv    = "CADESTRO_DEV_AUTH_TOKEN"
+	devAuthTokenHeader = "X-Cadestro-Dev-Auth"
 	devSessionPath     = "/dev/session"
 	// devAdminEmail is the fixed local administrator. Lookup by this
 	// address keeps provisioning idempotent across restarts and repeat
@@ -63,10 +63,11 @@ type devSessionResponse struct {
 //
 // It rides the same gates as the session endpoint: a release binary compiles
 // the !devauth stub, which returns false and has no way to be told otherwise,
-// and a devauth binary still enforces the requirement unless PM_DEV_AUTH=1 and
-// a sufficiently long PM_DEV_AUTH_TOKEN are set. A build in which this can return
-// true is a build that also mints administrator sessions without an identity
-// provider, so it can never be mistaken for a deployable one.
+// and a devauth binary still enforces the requirement unless
+// CADESTRO_DEV_AUTH=1 and a sufficiently long CADESTRO_DEV_AUTH_TOKEN are set.
+// A build in which this can return true is a build that also mints
+// administrator sessions without an identity provider, so it can never be
+// mistaken for a deployable one.
 func archiveIsolationRelaxed() bool { return devAuthEnabled() }
 
 func devAuthEnabled() bool {
@@ -74,16 +75,16 @@ func devAuthEnabled() bool {
 }
 
 // wrapDevAuth mounts POST /dev/session in front of next when this devauth
-// build is run with PM_DEV_AUTH=1 and a development token. Without them it returns
-// next unchanged, so the route does not exist. Production builds never
-// reach here — they compile the !devauth stub instead.
+// build is run with CADESTRO_DEV_AUTH=1 and a development token. Without them
+// it returns next unchanged, so the route does not exist. Production builds
+// never reach here — they compile the !devauth stub instead.
 func wrapDevAuth(next http.Handler, st *store.Store, jwtMgr *auth.JWTManager, kek *pmcrypto.Encryptor, logger *slog.Logger) http.Handler {
 	if os.Getenv(devAuthEnv) != "1" {
 		return next
 	}
 	token := os.Getenv(devAuthTokenEnv)
 	if len(token) < 32 {
-		logger.Error("development auth bypass disabled: PM_DEV_AUTH_TOKEN must contain at least 32 bytes")
+		logger.Error("development auth bypass disabled: CADESTRO_DEV_AUTH_TOKEN must contain at least 32 bytes")
 		return next
 	}
 	logger.Warn("DEVELOPMENT AUTH BYPASS ACTIVE — POST /dev/session mints an administrator session without an identity provider; never run a devauth build in production",

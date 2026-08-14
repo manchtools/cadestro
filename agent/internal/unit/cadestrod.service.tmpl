@@ -13,7 +13,7 @@ User=root
 Group=root
 
 # Environment
-Environment="POWER_MANAGE_DATA_DIR={{.DataDir}}"
+Environment="CADESTRO_DATA_DIR={{.DataDir}}"
 
 # Main process
 ExecStart={{.BinaryPath}} -data-dir={{.DataDir}} -log-level=info

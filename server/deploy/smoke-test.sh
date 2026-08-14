@@ -139,8 +139,8 @@ host_mount_for() {
 # a hardcoded pair.
 assert_archive_isolated() {
     local database_path archive_path database archive
-    database_path="$(control_env_value POWER_MANAGE_DATABASE_PATH)"
-    archive_path="$(control_env_value POWER_MANAGE_BACKUP_PATH)"
+    database_path="$(control_env_value CADESTRO_DATABASE_PATH)"
+    archive_path="$(control_env_value CADESTRO_BACKUP_PATH)"
     database="$(host_mount_for "$(dirname "$database_path")")"
     archive="$(host_mount_for "$archive_path")"
     [[ "$(stat -L -c '%d' "$database")" != "$(stat -L -c '%d' "$archive")" ]] || {

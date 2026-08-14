@@ -26,12 +26,12 @@ const (
 	// optionPrefix marks the variables control owns. Every variable carrying
 	// it must be declared on configEnvironment, so a misspelled variable fails
 	// startup instead of leaving the option it meant to set at its default.
-	optionPrefix   = "POWER_MANAGE_"
+	optionPrefix   = "CADESTRO_"
 	maxSecretBytes = 64 << 10
 )
 
 // configEnviron reports the process environment. It is a package variable so
-// tests can drive the loader without inheriting POWER_MANAGE_ variables that
+// tests can drive the loader without inheriting CADESTRO_ variables that
 // already exist in the surrounding shell.
 var configEnviron = os.Environ
 
@@ -45,38 +45,38 @@ var filesystemIDOf = filesystemDeviceID
 // names its variable and the field type selects its parser. The recognized set
 // is derived from these declarations rather than from a second list.
 type configEnvironment struct {
-	PublicListen          string        `env:"POWER_MANAGE_PUBLIC_LISTEN"`
-	AgentListen           string        `env:"POWER_MANAGE_AGENT_LISTEN"`
-	PublicBaseURL         string        `env:"POWER_MANAGE_PUBLIC_BASE_URL"`
-	AgentURL              string        `env:"POWER_MANAGE_AGENT_URL"`
-	TerminalURL           string        `env:"POWER_MANAGE_TERMINAL_URL"`
-	CORSOrigins           []string      `env:"POWER_MANAGE_CORS_ORIGINS"`
-	TerminalOrigins       []string      `env:"POWER_MANAGE_TERMINAL_ORIGINS"`
-	TrustedProxies        []string      `env:"POWER_MANAGE_TRUSTED_PROXIES"`
-	AgentProxySources     []string      `env:"POWER_MANAGE_AGENT_PROXY_SOURCES"`
-	CORSAllowAll          bool          `env:"POWER_MANAGE_CORS_ALLOW_ALL"`
-	LogLevel              string        `env:"POWER_MANAGE_LOG_LEVEL"`
-	LogFormat             string        `env:"POWER_MANAGE_LOG_FORMAT"`
-	CertificateValidity   time.Duration `env:"POWER_MANAGE_CERTIFICATE_VALIDITY"`
-	HeartbeatInterval     time.Duration `env:"POWER_MANAGE_HEARTBEAT_INTERVAL"`
-	AuditRetention        time.Duration `env:"POWER_MANAGE_AUDIT_RETENTION"`
-	ArtifactPath          string        `env:"POWER_MANAGE_ARTIFACT_PATH"`
-	BackupPath            string        `env:"POWER_MANAGE_BACKUP_PATH"`
-	BackupMaxLag          time.Duration `env:"POWER_MANAGE_BACKUP_MAX_LAG"`
-	WebhookURL            string        `env:"POWER_MANAGE_WEBHOOK_URL"`
-	CACertFile            string        `env:"POWER_MANAGE_CA_CERT_FILE"`
-	CAKeyFile             string        `env:"POWER_MANAGE_CA_KEY_FILE"`
-	CATrustBundleFile     string        `env:"POWER_MANAGE_CA_TRUST_BUNDLE_FILE"`
-	AgentTLSCertFile      string        `env:"POWER_MANAGE_AGENT_TLS_CERT_FILE"`
-	AgentTLSKeyFile       string        `env:"POWER_MANAGE_AGENT_TLS_KEY_FILE"`
-	PublicTLSCertFile     string        `env:"POWER_MANAGE_PUBLIC_TLS_CERT_FILE"`
-	PublicTLSKeyFile      string        `env:"POWER_MANAGE_PUBLIC_TLS_KEY_FILE"`
-	DatabasePath          string        `env:"POWER_MANAGE_DATABASE_PATH"`
-	EncryptionKey         string        `env:"POWER_MANAGE_ENCRYPTION_KEY"`
-	EncryptionKeyFile     string        `env:"POWER_MANAGE_ENCRYPTION_KEY_FILE"`
-	SessionSigningKeyFile string        `env:"POWER_MANAGE_SESSION_SIGNING_KEY_FILE"`
-	SealingKey            string        `env:"POWER_MANAGE_SEALING_KEY"`
-	SealingKeyFile        string        `env:"POWER_MANAGE_SEALING_KEY_FILE"`
+	PublicListen          string        `env:"CADESTRO_PUBLIC_LISTEN"`
+	AgentListen           string        `env:"CADESTRO_AGENT_LISTEN"`
+	PublicBaseURL         string        `env:"CADESTRO_PUBLIC_BASE_URL"`
+	AgentURL              string        `env:"CADESTRO_AGENT_URL"`
+	TerminalURL           string        `env:"CADESTRO_TERMINAL_URL"`
+	CORSOrigins           []string      `env:"CADESTRO_CORS_ORIGINS"`
+	TerminalOrigins       []string      `env:"CADESTRO_TERMINAL_ORIGINS"`
+	TrustedProxies        []string      `env:"CADESTRO_TRUSTED_PROXIES"`
+	AgentProxySources     []string      `env:"CADESTRO_AGENT_PROXY_SOURCES"`
+	CORSAllowAll          bool          `env:"CADESTRO_CORS_ALLOW_ALL"`
+	LogLevel              string        `env:"CADESTRO_LOG_LEVEL"`
+	LogFormat             string        `env:"CADESTRO_LOG_FORMAT"`
+	CertificateValidity   time.Duration `env:"CADESTRO_CERTIFICATE_VALIDITY"`
+	HeartbeatInterval     time.Duration `env:"CADESTRO_HEARTBEAT_INTERVAL"`
+	AuditRetention        time.Duration `env:"CADESTRO_AUDIT_RETENTION"`
+	ArtifactPath          string        `env:"CADESTRO_ARTIFACT_PATH"`
+	BackupPath            string        `env:"CADESTRO_BACKUP_PATH"`
+	BackupMaxLag          time.Duration `env:"CADESTRO_BACKUP_MAX_LAG"`
+	WebhookURL            string        `env:"CADESTRO_WEBHOOK_URL"`
+	CACertFile            string        `env:"CADESTRO_CA_CERT_FILE"`
+	CAKeyFile             string        `env:"CADESTRO_CA_KEY_FILE"`
+	CATrustBundleFile     string        `env:"CADESTRO_CA_TRUST_BUNDLE_FILE"`
+	AgentTLSCertFile      string        `env:"CADESTRO_AGENT_TLS_CERT_FILE"`
+	AgentTLSKeyFile       string        `env:"CADESTRO_AGENT_TLS_KEY_FILE"`
+	PublicTLSCertFile     string        `env:"CADESTRO_PUBLIC_TLS_CERT_FILE"`
+	PublicTLSKeyFile      string        `env:"CADESTRO_PUBLIC_TLS_KEY_FILE"`
+	DatabasePath          string        `env:"CADESTRO_DATABASE_PATH"`
+	EncryptionKey         string        `env:"CADESTRO_ENCRYPTION_KEY"`
+	EncryptionKeyFile     string        `env:"CADESTRO_ENCRYPTION_KEY_FILE"`
+	SessionSigningKeyFile string        `env:"CADESTRO_SESSION_SIGNING_KEY_FILE"`
+	SealingKey            string        `env:"CADESTRO_SEALING_KEY"`
+	SealingKeyFile        string        `env:"CADESTRO_SEALING_KEY_FILE"`
 }
 
 type Config struct {
@@ -112,7 +112,7 @@ type Config struct {
 	SealingKey          *ecdh.PrivateKey
 }
 
-// loadConfig builds the control configuration from the POWER_MANAGE_
+// loadConfig builds the control configuration from the CADESTRO_
 // environment. There is no configuration file.
 func loadConfig() (*Config, error) {
 	document, err := readEnvironment(configEnviron())
@@ -121,18 +121,18 @@ func loadConfig() (*Config, error) {
 	}
 
 	encryptionKey, _, err := loadSecret(
-		"POWER_MANAGE_ENCRYPTION_KEY", document.EncryptionKey,
-		"POWER_MANAGE_ENCRYPTION_KEY_FILE", document.EncryptionKeyFile)
+		"CADESTRO_ENCRYPTION_KEY", document.EncryptionKey,
+		"CADESTRO_ENCRYPTION_KEY_FILE", document.EncryptionKeyFile)
 	if err != nil {
 		return nil, err
 	}
 	sessionKey, err := loadEd25519PrivateKey(document.SessionSigningKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("POWER_MANAGE_SESSION_SIGNING_KEY_FILE: %w", err)
+		return nil, fmt.Errorf("CADESTRO_SESSION_SIGNING_KEY_FILE: %w", err)
 	}
 	sealingSecret, sealingVariable, err := loadSecret(
-		"POWER_MANAGE_SEALING_KEY", document.SealingKey,
-		"POWER_MANAGE_SEALING_KEY_FILE", document.SealingKeyFile)
+		"CADESTRO_SEALING_KEY", document.SealingKey,
+		"CADESTRO_SEALING_KEY_FILE", document.SealingKeyFile)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func loadConfig() (*Config, error) {
 }
 
 // readEnvironment resolves the declared options from the raw environment
-// entries. Unrecognized POWER_MANAGE_ variables are rejected before anything
+// entries. Unrecognized CADESTRO_ variables are rejected before anything
 // is parsed, and only variable names are reported because values may be
 // secrets.
 func readEnvironment(entries []string) (configEnvironment, error) {
@@ -415,7 +415,7 @@ func validateArchiveIsolation(databasePath, archivePath string) error {
 		"backup_path %q is on the same filesystem as the database at %q: the audit archive holds separately stored "+
 			"evidence for that database and must be a separate mount, ideally remote storage under different "+
 			"credentials, so that losing or tampering with one cannot silently take the other with it; mount a "+
-			"distinct filesystem and point POWER_MANAGE_BACKUP_PATH at it",
+			"distinct filesystem and point CADESTRO_BACKUP_PATH at it",
 		archivePath, databaseProbe)
 }
 

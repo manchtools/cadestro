@@ -154,7 +154,7 @@ func run(cfg *Config, logger *slog.Logger) error {
 	})
 	defer runtime.Close()
 	// wrapDevAuth is a no-op unless this binary was compiled with the
-	// `devauth` build tag and run with PM_DEV_AUTH=1; only then
+	// `devauth` build tag and run with CADESTRO_DEV_AUTH=1; only then
 	// does it mount the local development sign-in endpoint (target design
 	// §5.2). Production builds compile the stub, so the wrap returns the
 	// handler unchanged.

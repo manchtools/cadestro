@@ -55,28 +55,28 @@ func newEnvironmentFixture(t *testing.T) environmentFixture {
 	return environmentFixture{
 		sessionKey: sessionKey,
 		values: map[string]string{
-			"POWER_MANAGE_PUBLIC_BASE_URL":          "https://manage.example",
-			"POWER_MANAGE_AGENT_URL":                "https://agents.example",
-			"POWER_MANAGE_TERMINAL_URL":             "wss://manage.example/terminal",
-			"POWER_MANAGE_WEBHOOK_URL":              "https://hooks.example.test/power-manage?token=secret",
-			"POWER_MANAGE_CORS_ORIGINS":             "https://manage.example",
-			"POWER_MANAGE_AGENT_PROXY_SOURCES":      "172.30.0.2",
-			"POWER_MANAGE_ARTIFACT_PATH":            artifactPath,
-			"POWER_MANAGE_BACKUP_PATH":              backupPath,
-			"POWER_MANAGE_CA_CERT_FILE":             "/certs/ca.crt",
-			"POWER_MANAGE_CA_KEY_FILE":              "/certs/ca.key",
-			"POWER_MANAGE_AGENT_TLS_CERT_FILE":      "/certs/control.crt",
-			"POWER_MANAGE_AGENT_TLS_KEY_FILE":       "/certs/control.key",
-			"POWER_MANAGE_DATABASE_PATH":            filepath.Join(directory, "control.db"),
-			"POWER_MANAGE_ENCRYPTION_KEY_FILE":      write("encryption.key", strings.Repeat("02", 32)),
-			"POWER_MANAGE_SESSION_SIGNING_KEY_FILE": sessionPath,
-			"POWER_MANAGE_SEALING_KEY_FILE":         write("sealing.key", strings.Repeat("01", 32)),
+			"CADESTRO_PUBLIC_BASE_URL":          "https://manage.example",
+			"CADESTRO_AGENT_URL":                "https://agents.example",
+			"CADESTRO_TERMINAL_URL":             "wss://manage.example/terminal",
+			"CADESTRO_WEBHOOK_URL":              "https://hooks.example.test/power-manage?token=secret",
+			"CADESTRO_CORS_ORIGINS":             "https://manage.example",
+			"CADESTRO_AGENT_PROXY_SOURCES":      "172.30.0.2",
+			"CADESTRO_ARTIFACT_PATH":            artifactPath,
+			"CADESTRO_BACKUP_PATH":              backupPath,
+			"CADESTRO_CA_CERT_FILE":             "/certs/ca.crt",
+			"CADESTRO_CA_KEY_FILE":              "/certs/ca.key",
+			"CADESTRO_AGENT_TLS_CERT_FILE":      "/certs/control.crt",
+			"CADESTRO_AGENT_TLS_KEY_FILE":       "/certs/control.key",
+			"CADESTRO_DATABASE_PATH":            filepath.Join(directory, "control.db"),
+			"CADESTRO_ENCRYPTION_KEY_FILE":      write("encryption.key", strings.Repeat("02", 32)),
+			"CADESTRO_SESSION_SIGNING_KEY_FILE": sessionPath,
+			"CADESTRO_SEALING_KEY_FILE":         write("sealing.key", strings.Repeat("01", 32)),
 		},
 	}
 }
 
 // setEnvironment installs exactly the given variables for one test. The loader
-// reads the environment through configEnviron, so POWER_MANAGE_ variables that
+// reads the environment through configEnviron, so CADESTRO_ variables that
 // happen to exist in the developer's shell cannot leak into a fixture;
 // t.Setenv keeps the real process environment in agreement with the seam.
 func setEnvironment(t *testing.T, values map[string]string) {
@@ -118,12 +118,12 @@ func useRealFilesystemProbe(t *testing.T) {
 
 func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	fixture := newEnvironmentFixture(t)
-	fixture.values["POWER_MANAGE_CORS_ORIGINS"] = "https://manage.example, https://admin.example"
-	fixture.values["POWER_MANAGE_TRUSTED_PROXIES"] = "10.0.0.1 , 10.0.0.2"
-	fixture.values["POWER_MANAGE_CORS_ALLOW_ALL"] = "true"
-	fixture.values["POWER_MANAGE_HEARTBEAT_INTERVAL"] = "45s"
-	fixture.values["POWER_MANAGE_LOG_LEVEL"] = "debug"
-	fixture.values["POWER_MANAGE_CA_TRUST_BUNDLE_FILE"] = "/certs/ca-bundle.crt"
+	fixture.values["CADESTRO_CORS_ORIGINS"] = "https://manage.example, https://admin.example"
+	fixture.values["CADESTRO_TRUSTED_PROXIES"] = "10.0.0.1 , 10.0.0.2"
+	fixture.values["CADESTRO_CORS_ALLOW_ALL"] = "true"
+	fixture.values["CADESTRO_HEARTBEAT_INTERVAL"] = "45s"
+	fixture.values["CADESTRO_LOG_LEVEL"] = "debug"
+	fixture.values["CADESTRO_CA_TRUST_BUNDLE_FILE"] = "/certs/ca-bundle.crt"
 	setEnvironment(t, fixture.values)
 
 	cfg, err := loadConfig()
@@ -133,9 +133,9 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Equal(t, "https://agents.example", cfg.AgentURL)
 	assert.Equal(t, "wss://manage.example/terminal", cfg.TerminalURL)
 	assert.Equal(t, "https://hooks.example.test/power-manage?token=secret", cfg.WebhookURL)
-	assert.Equal(t, fixture.values["POWER_MANAGE_ARTIFACT_PATH"], cfg.ArtifactPath)
-	assert.Equal(t, fixture.values["POWER_MANAGE_BACKUP_PATH"], cfg.BackupPath)
-	assert.Equal(t, fixture.values["POWER_MANAGE_DATABASE_PATH"], cfg.DatabasePath)
+	assert.Equal(t, fixture.values["CADESTRO_ARTIFACT_PATH"], cfg.ArtifactPath)
+	assert.Equal(t, fixture.values["CADESTRO_BACKUP_PATH"], cfg.BackupPath)
+	assert.Equal(t, fixture.values["CADESTRO_DATABASE_PATH"], cfg.DatabasePath)
 	assert.Equal(t, "/certs/ca.crt", cfg.CACertFile)
 	assert.Equal(t, "/certs/ca.key", cfg.CAKeyFile)
 	assert.Equal(t, "/certs/ca-bundle.crt", cfg.CATrustBundleFile)
@@ -171,10 +171,10 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 
 func TestLoadConfigAcceptsSecretsSuppliedDirectly(t *testing.T) {
 	fixture := newEnvironmentFixture(t)
-	delete(fixture.values, "POWER_MANAGE_ENCRYPTION_KEY_FILE")
-	delete(fixture.values, "POWER_MANAGE_SEALING_KEY_FILE")
-	fixture.values["POWER_MANAGE_ENCRYPTION_KEY"] = strings.Repeat("03", 32)
-	fixture.values["POWER_MANAGE_SEALING_KEY"] = strings.Repeat("04", 32)
+	delete(fixture.values, "CADESTRO_ENCRYPTION_KEY_FILE")
+	delete(fixture.values, "CADESTRO_SEALING_KEY_FILE")
+	fixture.values["CADESTRO_ENCRYPTION_KEY"] = strings.Repeat("03", 32)
+	fixture.values["CADESTRO_SEALING_KEY"] = strings.Repeat("04", 32)
 	setEnvironment(t, fixture.values)
 
 	cfg, err := loadConfig()
@@ -190,89 +190,89 @@ func TestLoadConfigFailsClosedAndNamesTheOffendingVariable(t *testing.T) {
 	}{
 		"unrecognized variable": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_TYPO"] = "1"
+				fixture.values["CADESTRO_TYPO"] = "1"
 			},
-			expected: []string{"POWER_MANAGE_TYPO"},
+			expected: []string{"CADESTRO_TYPO"},
 		},
 		"empty list entry": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_CORS_ORIGINS"] = "https://a.example,,https://b.example"
+				fixture.values["CADESTRO_CORS_ORIGINS"] = "https://a.example,,https://b.example"
 			},
-			expected: []string{"POWER_MANAGE_CORS_ORIGINS"},
+			expected: []string{"CADESTRO_CORS_ORIGINS"},
 		},
 		"trailing list separator": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_AGENT_PROXY_SOURCES"] = "172.30.0.2,"
+				fixture.values["CADESTRO_AGENT_PROXY_SOURCES"] = "172.30.0.2,"
 			},
-			expected: []string{"POWER_MANAGE_AGENT_PROXY_SOURCES"},
+			expected: []string{"CADESTRO_AGENT_PROXY_SOURCES"},
 		},
 		"blank list entry": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_TERMINAL_ORIGINS"] = "manage.example,   ,admin.example"
+				fixture.values["CADESTRO_TERMINAL_ORIGINS"] = "manage.example,   ,admin.example"
 			},
-			expected: []string{"POWER_MANAGE_TERMINAL_ORIGINS"},
+			expected: []string{"CADESTRO_TERMINAL_ORIGINS"},
 		},
 		"invalid boolean": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_CORS_ALLOW_ALL"] = "yes-please"
+				fixture.values["CADESTRO_CORS_ALLOW_ALL"] = "yes-please"
 			},
-			expected: []string{"POWER_MANAGE_CORS_ALLOW_ALL"},
+			expected: []string{"CADESTRO_CORS_ALLOW_ALL"},
 		},
 		"invalid duration": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_CERTIFICATE_VALIDITY"] = "forever"
+				fixture.values["CADESTRO_CERTIFICATE_VALIDITY"] = "forever"
 			},
-			expected: []string{"POWER_MANAGE_CERTIFICATE_VALIDITY"},
+			expected: []string{"CADESTRO_CERTIFICATE_VALIDITY"},
 		},
 		"non-positive duration": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_AUDIT_RETENTION"] = "0h"
+				fixture.values["CADESTRO_AUDIT_RETENTION"] = "0h"
 			},
-			expected: []string{"POWER_MANAGE_AUDIT_RETENTION"},
+			expected: []string{"CADESTRO_AUDIT_RETENTION"},
 		},
 		"missing encryption key": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				delete(fixture.values, "POWER_MANAGE_ENCRYPTION_KEY_FILE")
+				delete(fixture.values, "CADESTRO_ENCRYPTION_KEY_FILE")
 			},
-			expected: []string{"POWER_MANAGE_ENCRYPTION_KEY", "POWER_MANAGE_ENCRYPTION_KEY_FILE"},
+			expected: []string{"CADESTRO_ENCRYPTION_KEY", "CADESTRO_ENCRYPTION_KEY_FILE"},
 		},
 		"encryption key supplied twice": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_ENCRYPTION_KEY"] = strings.Repeat("05", 32)
+				fixture.values["CADESTRO_ENCRYPTION_KEY"] = strings.Repeat("05", 32)
 			},
-			expected: []string{"POWER_MANAGE_ENCRYPTION_KEY", "POWER_MANAGE_ENCRYPTION_KEY_FILE"},
+			expected: []string{"CADESTRO_ENCRYPTION_KEY", "CADESTRO_ENCRYPTION_KEY_FILE"},
 		},
 		"sealing key supplied twice": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_SEALING_KEY"] = strings.Repeat("06", 32)
+				fixture.values["CADESTRO_SEALING_KEY"] = strings.Repeat("06", 32)
 			},
-			expected: []string{"POWER_MANAGE_SEALING_KEY", "POWER_MANAGE_SEALING_KEY_FILE"},
+			expected: []string{"CADESTRO_SEALING_KEY", "CADESTRO_SEALING_KEY_FILE"},
 		},
 		"missing session signing key": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
-				delete(fixture.values, "POWER_MANAGE_SESSION_SIGNING_KEY_FILE")
+				delete(fixture.values, "CADESTRO_SESSION_SIGNING_KEY_FILE")
 			},
-			expected: []string{"POWER_MANAGE_SESSION_SIGNING_KEY_FILE"},
+			expected: []string{"CADESTRO_SESSION_SIGNING_KEY_FILE"},
 		},
 		"session signing key is not a PEM key": {
 			mutate: func(t *testing.T, fixture environmentFixture) {
 				require.NoError(t, os.WriteFile(
-					fixture.values["POWER_MANAGE_SESSION_SIGNING_KEY_FILE"], []byte("not a key"), 0o600))
+					fixture.values["CADESTRO_SESSION_SIGNING_KEY_FILE"], []byte("not a key"), 0o600))
 			},
-			expected: []string{"POWER_MANAGE_SESSION_SIGNING_KEY_FILE"},
+			expected: []string{"CADESTRO_SESSION_SIGNING_KEY_FILE"},
 		},
 		"sealing key file is group readable": {
 			mutate: func(t *testing.T, fixture environmentFixture) {
-				require.NoError(t, os.Chmod(fixture.values["POWER_MANAGE_SEALING_KEY_FILE"], 0o640))
+				require.NoError(t, os.Chmod(fixture.values["CADESTRO_SEALING_KEY_FILE"], 0o640))
 			},
-			expected: []string{"POWER_MANAGE_SEALING_KEY_FILE"},
+			expected: []string{"CADESTRO_SEALING_KEY_FILE"},
 		},
 		"sealing key of the wrong length": {
 			mutate: func(t *testing.T, fixture environmentFixture) {
 				require.NoError(t, os.WriteFile(
-					fixture.values["POWER_MANAGE_SEALING_KEY_FILE"], []byte(strings.Repeat("01", 16)), 0o600))
+					fixture.values["CADESTRO_SEALING_KEY_FILE"], []byte(strings.Repeat("01", 16)), 0o600))
 			},
-			expected: []string{"POWER_MANAGE_SEALING_KEY_FILE"},
+			expected: []string{"CADESTRO_SEALING_KEY_FILE"},
 		},
 	}
 
@@ -299,68 +299,68 @@ func TestLoadConfigKeepsExistingValidationSemantics(t *testing.T) {
 	}{
 		"listeners must differ": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_PUBLIC_LISTEN"] = ":9000"
-				fixture.values["POWER_MANAGE_AGENT_LISTEN"] = ":9000"
+				fixture.values["CADESTRO_PUBLIC_LISTEN"] = ":9000"
+				fixture.values["CADESTRO_AGENT_LISTEN"] = ":9000"
 			},
 			expected: "must be distinct",
 		},
 		"agent proxy sources are required": {
 			mutate: func(fixture environmentFixture) {
-				delete(fixture.values, "POWER_MANAGE_AGENT_PROXY_SOURCES")
+				delete(fixture.values, "CADESTRO_AGENT_PROXY_SOURCES")
 			},
 			expected: "isolated reverse proxy network",
 		},
 		"agent proxy sources must be addresses": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_AGENT_PROXY_SOURCES"] = "not-an-address"
+				fixture.values["CADESTRO_AGENT_PROXY_SOURCES"] = "not-an-address"
 			},
 			expected: "invalid address",
 		},
 		"public base URL must be https": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_PUBLIC_BASE_URL"] = "http://manage.example"
+				fixture.values["CADESTRO_PUBLIC_BASE_URL"] = "http://manage.example"
 			},
 			expected: "public_base_url",
 		},
 		"terminal URL must end at /terminal": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_TERMINAL_URL"] = "wss://manage.example/other"
+				fixture.values["CADESTRO_TERMINAL_URL"] = "wss://manage.example/other"
 			},
 			expected: "terminal_url",
 		},
 		"CORS origins must be bare origins": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_CORS_ORIGINS"] = "https://manage.example/app"
+				fixture.values["CADESTRO_CORS_ORIGINS"] = "https://manage.example/app"
 			},
 			expected: "invalid CORS origin",
 		},
 		"public TLS certificate and key travel together": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_PUBLIC_TLS_CERT_FILE"] = "/certs/public.crt"
+				fixture.values["CADESTRO_PUBLIC_TLS_CERT_FILE"] = "/certs/public.crt"
 			},
 			expected: "must be set together",
 		},
 		"CA certificate is required": {
 			mutate: func(fixture environmentFixture) {
-				delete(fixture.values, "POWER_MANAGE_CA_CERT_FILE")
+				delete(fixture.values, "CADESTRO_CA_CERT_FILE")
 			},
 			expected: "ca_cert_file is required",
 		},
 		"artifact path must exist": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_ARTIFACT_PATH"] = "/nonexistent/power-manage-artifacts"
+				fixture.values["CADESTRO_ARTIFACT_PATH"] = "/nonexistent/power-manage-artifacts"
 			},
 			expected: "artifact_path",
 		},
 		"database path must be absolute": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_DATABASE_PATH"] = "control.db"
+				fixture.values["CADESTRO_DATABASE_PATH"] = "control.db"
 			},
 			expected: "database_path must be an absolute file path",
 		},
 		"webhook URL must be https": {
 			mutate: func(fixture environmentFixture) {
-				fixture.values["POWER_MANAGE_WEBHOOK_URL"] = "http://hooks.example.test"
+				fixture.values["CADESTRO_WEBHOOK_URL"] = "http://hooks.example.test"
 			},
 			expected: "webhook_url",
 		},
@@ -385,20 +385,20 @@ func TestLoadConfigKeepsExistingValidationSemantics(t *testing.T) {
 func TestLoadConfigErrorsNeverEchoSecretValues(t *testing.T) {
 	const sealingSecret = "0a1b2c3d"
 	fixture := newEnvironmentFixture(t)
-	delete(fixture.values, "POWER_MANAGE_SEALING_KEY_FILE")
-	fixture.values["POWER_MANAGE_SEALING_KEY"] = sealingSecret
+	delete(fixture.values, "CADESTRO_SEALING_KEY_FILE")
+	fixture.values["CADESTRO_SEALING_KEY"] = sealingSecret
 	setEnvironment(t, fixture.values)
 
 	cfg, err := loadConfig()
 	require.Error(t, err)
 	assert.Nil(t, cfg)
-	assert.ErrorContains(t, err, "POWER_MANAGE_SEALING_KEY")
+	assert.ErrorContains(t, err, "CADESTRO_SEALING_KEY")
 	assert.NotContains(t, err.Error(), sealingSecret)
 }
 
 // TestEveryConfigOptionDeclaresItsVariable keeps the recognized set derived
 // from the option declarations. A new option without a variable, or one whose
-// variable does not follow POWER_MANAGE_<UPPER_SNAKE>, fails here instead of
+// variable does not follow CADESTRO_<UPPER_SNAKE>, fails here instead of
 // becoming silently unconfigurable or unrecognized.
 func TestEveryConfigOptionDeclaresItsVariable(t *testing.T) {
 	fields := reflect.VisibleFields(reflect.TypeOf(configEnvironment{}))
@@ -474,8 +474,8 @@ func TestLoadConfigRefusesAnArchiveOnTheDatabaseFilesystem(t *testing.T) {
 	cfg, err := loadConfig()
 	require.Error(t, err)
 	assert.Nil(t, cfg)
-	assert.ErrorContains(t, err, fixture.values["POWER_MANAGE_BACKUP_PATH"])
-	assert.ErrorContains(t, err, filepath.Dir(fixture.values["POWER_MANAGE_DATABASE_PATH"]))
+	assert.ErrorContains(t, err, fixture.values["CADESTRO_BACKUP_PATH"])
+	assert.ErrorContains(t, err, filepath.Dir(fixture.values["CADESTRO_DATABASE_PATH"]))
 	assert.ErrorContains(t, err, "same filesystem")
 	assert.ErrorContains(t, err, "separate mount",
 		"the operator must be told what to do, not only that something is wrong")
@@ -489,7 +489,7 @@ func TestLoadConfigAcceptsAnArchiveOnADistinctFilesystem(t *testing.T) {
 
 	cfg, err := loadConfig()
 	require.NoError(t, err)
-	assert.Equal(t, fixture.values["POWER_MANAGE_BACKUP_PATH"], cfg.BackupPath)
+	assert.Equal(t, fixture.values["CADESTRO_BACKUP_PATH"], cfg.BackupPath)
 }
 
 func TestArchiveIsolationProbesAnExistingDatabaseFile(t *testing.T) {

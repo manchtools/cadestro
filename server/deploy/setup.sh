@@ -116,7 +116,7 @@ ensure_archive_isolation() {
         "    rmdir $archive && ln -s /path/on/that/storage $archive" \
         "" \
         "then run this script again. This cannot be skipped: control applies the same check to" \
-        "POWER_MANAGE_BACKUP_PATH at startup and no configuration variable turns it off.")"
+        "CADESTRO_BACKUP_PATH at startup and no configuration variable turns it off.")"
 }
 # docref: end archive-isolation
 
@@ -268,35 +268,35 @@ ensure_secret_files() {
 
 write_config() {
     cat > "$CONFIG_DIR/control.env" <<EOF
-POWER_MANAGE_PUBLIC_LISTEN=0.0.0.0:8081
-POWER_MANAGE_AGENT_LISTEN=172.30.0.3:8082
-POWER_MANAGE_PUBLIC_BASE_URL=https://${CONTROL_DOMAIN}
-POWER_MANAGE_AGENT_URL=https://${AGENT_DOMAIN}
-POWER_MANAGE_TERMINAL_URL=wss://${CONTROL_DOMAIN}/terminal
-POWER_MANAGE_CORS_ORIGINS=https://${CONTROL_DOMAIN}
-POWER_MANAGE_TERMINAL_ORIGINS=${CONTROL_DOMAIN}
-POWER_MANAGE_TRUSTED_PROXIES=172.29.0.2
-POWER_MANAGE_AGENT_PROXY_SOURCES=172.30.0.2
-POWER_MANAGE_LOG_LEVEL=info
-POWER_MANAGE_LOG_FORMAT=json
-POWER_MANAGE_CERTIFICATE_VALIDITY=8760h
-POWER_MANAGE_HEARTBEAT_INTERVAL=30s
-POWER_MANAGE_AUDIT_RETENTION=2160h
-POWER_MANAGE_ARTIFACT_PATH=/var/lib/power-manage/artifacts
-POWER_MANAGE_DATABASE_PATH=/var/lib/power-manage/state/control.db
-POWER_MANAGE_BACKUP_PATH=/var/lib/power-manage/backups
-POWER_MANAGE_BACKUP_MAX_LAG=26h
-POWER_MANAGE_WEBHOOK_URL=
-POWER_MANAGE_CA_CERT_FILE=/run/certs/ca.crt
-POWER_MANAGE_CA_KEY_FILE=/run/certs/ca.key
-POWER_MANAGE_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt
-POWER_MANAGE_AGENT_TLS_CERT_FILE=/run/certs/control.crt
-POWER_MANAGE_AGENT_TLS_KEY_FILE=/run/certs/control.key
-POWER_MANAGE_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt
-POWER_MANAGE_PUBLIC_TLS_KEY_FILE=/run/certs/control.key
-POWER_MANAGE_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key
-POWER_MANAGE_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem
-POWER_MANAGE_SEALING_KEY_FILE=/run/secrets/sealing.key
+CADESTRO_PUBLIC_LISTEN=0.0.0.0:8081
+CADESTRO_AGENT_LISTEN=172.30.0.3:8082
+CADESTRO_PUBLIC_BASE_URL=https://${CONTROL_DOMAIN}
+CADESTRO_AGENT_URL=https://${AGENT_DOMAIN}
+CADESTRO_TERMINAL_URL=wss://${CONTROL_DOMAIN}/terminal
+CADESTRO_CORS_ORIGINS=https://${CONTROL_DOMAIN}
+CADESTRO_TERMINAL_ORIGINS=${CONTROL_DOMAIN}
+CADESTRO_TRUSTED_PROXIES=172.29.0.2
+CADESTRO_AGENT_PROXY_SOURCES=172.30.0.2
+CADESTRO_LOG_LEVEL=info
+CADESTRO_LOG_FORMAT=json
+CADESTRO_CERTIFICATE_VALIDITY=8760h
+CADESTRO_HEARTBEAT_INTERVAL=30s
+CADESTRO_AUDIT_RETENTION=2160h
+CADESTRO_ARTIFACT_PATH=/var/lib/power-manage/artifacts
+CADESTRO_DATABASE_PATH=/var/lib/power-manage/state/control.db
+CADESTRO_BACKUP_PATH=/var/lib/power-manage/backups
+CADESTRO_BACKUP_MAX_LAG=26h
+CADESTRO_WEBHOOK_URL=
+CADESTRO_CA_CERT_FILE=/run/certs/ca.crt
+CADESTRO_CA_KEY_FILE=/run/certs/ca.key
+CADESTRO_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt
+CADESTRO_AGENT_TLS_CERT_FILE=/run/certs/control.crt
+CADESTRO_AGENT_TLS_KEY_FILE=/run/certs/control.key
+CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt
+CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key
+CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key
+CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem
+CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key
 EOF
 }
 

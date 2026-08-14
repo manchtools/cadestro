@@ -139,7 +139,7 @@ The install script:
 5. Enrolls via the enrollment socket only when `--server`, `--token`, and `--pin` are provided
 <!-- docref: end -->
 
-The `cadestro://` desktop URI handler is **opt-in** (`--enable-uri-handler` or `POWER_MANAGE_ENABLE_URI_HANDLER=true`) and **off by default** — an unconditional handler exposes the root-capable binary to drive-by browser links. When enabled, the `.desktop` entry sets `Terminal=false` so a link cannot auto-spawn a terminal.
+The `cadestro://` desktop URI handler is **opt-in** (`--enable-uri-handler` or `CADESTRO_ENABLE_URI_HANDLER=true`) and **off by default** — an unconditional handler exposes the root-capable binary to drive-by browser links. When enabled, the `.desktop` entry sets `Terminal=false` so a link cannot auto-spawn a terminal.
 
 There is **no LUKS sudoers rule** — `cadestrod luks set-passphrase` is an unprivileged client to the root agent's LUKS daemon socket (see [LUKS passphrase daemon](#luks-passphrase-daemon)).
 
@@ -231,8 +231,8 @@ applied first, then env vars override).
 | Variable | Description |
 |----------|-------------|
 | `PM_REGISTRATION_TOKEN` | Registration token for the explicit `enroll` subcommand |
-| `POWER_MANAGE_DATA_DIR` | Data directory for state |
-| `POWER_MANAGE_PRIVILEGE_BACKEND` | Privilege backend override: `root`, `sudo`, or `doas` (empty selects `root` for the packaged service) |
+| `CADESTRO_DATA_DIR` | Data directory for state |
+| `CADESTRO_PRIVILEGE_BACKEND` | Privilege backend override: `root`, `sudo`, or `doas` (empty selects `root` for the packaged service) |
 
 Log level has no env var; set it via the `-log-level` flag.
 

@@ -133,7 +133,7 @@ func TestRender_CarriesInstallShape(t *testing.T) {
 	}
 	for _, want := range []string{
 		"ExecStart=" + testBin + " -data-dir=" + testData + " -log-level=info",
-		"Environment=\"POWER_MANAGE_DATA_DIR=" + testData + "\"",
+		"Environment=\"CADESTRO_DATA_DIR=" + testData + "\"",
 		"CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_SYS_ADMIN CAP_KILL CAP_SETFCAP CAP_NET_RAW",
 		"AmbientCapabilities=CAP_SETUID CAP_SETGID",
 		"Restart=always",

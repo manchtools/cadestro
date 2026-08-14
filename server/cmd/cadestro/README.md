@@ -27,33 +27,33 @@ Control must fail readiness when the schema is not current, required keys or CA
 material are unusable, artifact paths are not writable, or the agent listener
 cannot enforce revocation.
 
-<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:dfecd82c,cmd/cadestro/config.go#configEnvironment:f192d94c,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
+<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:dfecd82c,cmd/cadestro/config.go#configEnvironment:c1ebb388,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
 Configuration is entirely environmental: every option is its own documented
-`POWER_MANAGE_`-prefixed variable. There is no configuration file and no
+`CADESTRO_`-prefixed variable. There is no configuration file and no
 `-config` flag, and the only accepted top-level arguments are the
 `bootstrap-admin` and `backup-status` subcommands. `bootstrap-admin` additionally
 accepts the exact machine-output form `--output token`. The `configEnvironment` declarations in
 `config.go` are the authoritative option list — each field's tag names its
 variable and its type selects the parser — and startup fails closed on any
-`POWER_MANAGE_` variable that is not declared there, so a misspelling stops the
+`CADESTRO_` variable that is not declared there, so a misspelling stops the
 process by name instead of silently leaving its option at the default. List
 options are comma-separated and reject an empty entry; malformed booleans and
 durations name their variable and fail startup.
 <!-- docref: end -->
 
-<!-- docref: begin src=cmd/cadestro/main.go#run:065ded94,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
-`POWER_MANAGE_CA_TRUST_BUNDLE_FILE` optionally names the startup-only PEM trust
+<!-- docref: begin src=cmd/cadestro/main.go#run:02e31f3c,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
+`CADESTRO_CA_TRUST_BUNDLE_FILE` optionally names the startup-only PEM trust
 bundle used for agent-client certificate verification. It must contain the
-active CA from `POWER_MANAGE_CA_CERT_FILE`; changing either file requires a
+active CA from `CADESTRO_CA_CERT_FILE`; changing either file requires a
 control restart.
 <!-- docref: end -->
 
 <!-- docref: begin src=cmd/cadestro/config.go#loadSecret:b9678c7e,cmd/cadestro/config.go#readSecretFile:60ffa83b,cmd/cadestro/config.go#loadEd25519PrivateKey:3cc11345 -->
-Private keys are file-referenced only: `POWER_MANAGE_SESSION_SIGNING_KEY_FILE`
+Private keys are file-referenced only: `CADESTRO_SESSION_SIGNING_KEY_FILE`
 must name one PEM-encoded Ed25519 PKCS#8 key. The two symmetric secrets accept
-either form — exactly one of `POWER_MANAGE_ENCRYPTION_KEY` or
-`POWER_MANAGE_ENCRYPTION_KEY_FILE`, and exactly one of
-`POWER_MANAGE_SEALING_KEY` or `POWER_MANAGE_SEALING_KEY_FILE`. Naming both of a
+either form — exactly one of `CADESTRO_ENCRYPTION_KEY` or
+`CADESTRO_ENCRYPTION_KEY_FILE`, and exactly one of
+`CADESTRO_SEALING_KEY` or `CADESTRO_SEALING_KEY_FILE`. Naming both of a
 pair is a configuration mistake rather than a precedence question and fails
 startup, as does naming neither. A referenced secret file must be a small
 regular file that is not group/world accessible. Configuration errors report
@@ -81,7 +81,7 @@ existing human-readable setup URL remains the default.
 ## Database
 
 Control embeds SQLite in WAL mode with `synchronous=FULL` and owns the file
-named by `POWER_MANAGE_DATABASE_PATH`. Search runs on FTS5.
+named by `CADESTRO_DATABASE_PATH`. Search runs on FTS5.
 
 That datastore port deliberately came last: state was first converted to CRUD,
 audit to dedicated append-only tables, work to database jobs, and search to
@@ -90,9 +90,9 @@ search semantics. PostgreSQL is removed and guarded against return.
 
 ## Development
 
-<!-- docref: begin src=cmd/cadestro/devauth.go#wrapDevAuth:f04e68b9,cmd/cadestro/devauth.go#devAuthEnabled:4a7b3325 -->
+<!-- docref: begin src=cmd/cadestro/devauth.go#wrapDevAuth:42bbf137,cmd/cadestro/devauth.go#devAuthEnabled:4a7b3325 -->
 The development session endpoint is available only in a `devauth` build run
-with `PM_DEV_AUTH=1` and a `PM_DEV_AUTH_TOKEN` of at least 32 bytes. Start Vite
+with `CADESTRO_DEV_AUTH=1` and a `CADESTRO_DEV_AUTH_TOKEN` of at least 32 bytes. Start Vite
 with the same token; its loopback-only proxy injects the token and forwards the
 original client address into `/dev/session` without exposing the token to
 browser code. Control requires both proxy and original client hops to be
@@ -108,11 +108,11 @@ make sqlc-check
 
 Generated sqlc and protobuf outputs are never edited by hand.
 
-<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cbcd232a -->
+<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:c4219deb -->
 Run the explicit SQLite 10,000-agent gate with:
 
 ```bash
-POWER_MANAGE_RUN_SCALE_TEST=1 go test ./internal/store \
+CADESTRO_RUN_SCALE_TEST=1 go test ./internal/store \
   -run '^TestSQLiteScale_MixedWorkloadAtTenThousandAgents$' -count=1 -v -timeout 10m
 ```
 

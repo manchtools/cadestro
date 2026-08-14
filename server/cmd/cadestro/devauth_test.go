@@ -52,7 +52,7 @@ func base404() http.Handler {
 	})
 }
 
-// AC (b): with the devauth build but PM_DEV_AUTH unset, the route
+// AC (b): with the devauth build but CADESTRO_DEV_AUTH unset, the route
 // does not exist — the wrapper returns the base handler unchanged.
 func TestDevAuthDisabledWithoutEnv(t *testing.T) {
 	t.Setenv(devAuthEnv, "")
@@ -61,7 +61,7 @@ func TestDevAuthDisabledWithoutEnv(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, devSessionPath, nil))
-	assert.Equal(t, http.StatusNotFound, rec.Code, "/dev/session must not exist without PM_DEV_AUTH=1")
+	assert.Equal(t, http.StatusNotFound, rec.Code, "/dev/session must not exist without CADESTRO_DEV_AUTH=1")
 }
 
 // TestArchiveIsolationRelaxationFollowsTheDevAuthFlag holds the escape hatch's
@@ -101,7 +101,7 @@ func TestLoadConfigToleratesOneDiskInADevAuthBuild(t *testing.T) {
 	t.Setenv(devAuthTokenEnv, devTestAuthToken)
 	cfg, err = loadConfig()
 	require.NoError(t, err)
-	assert.Equal(t, fixture.values["POWER_MANAGE_BACKUP_PATH"], cfg.BackupPath)
+	assert.Equal(t, fixture.values["CADESTRO_BACKUP_PATH"], cfg.BackupPath)
 }
 
 // AC (c) + (d): with the flag set, POST /dev/session idempotently provisions

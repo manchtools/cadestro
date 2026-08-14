@@ -52,8 +52,8 @@ VERSION="latest"
 # WS7 #4: the cadestro:// desktop URI handler is OPT-IN and OFF by
 # default — an unconditional handler exposes the root-capable binary to
 # drive-by browser links. Enable with --enable-uri-handler or
-# POWER_MANAGE_ENABLE_URI_HANDLER=true.
-ENABLE_URI_HANDLER="${POWER_MANAGE_ENABLE_URI_HANDLER:-false}"
+# CADESTRO_ENABLE_URI_HANDLER=true.
+ENABLE_URI_HANDLER="${CADESTRO_ENABLE_URI_HANDLER:-false}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -536,7 +536,7 @@ uninstall() {
 
 # install_desktop_handler registers the cadestro:// URI scheme so a
 # browser link can launch `cadestrod luks set-passphrase`. It is
-# OPT-IN (--enable-uri-handler / POWER_MANAGE_ENABLE_URI_HANDLER=true) and
+# OPT-IN (--enable-uri-handler / CADESTRO_ENABLE_URI_HANDLER=true) and
 # OFF by default: an unconditional handler exposes the root-capable binary
 # to drive-by links (WS7 #4). The entry sets Terminal=false so a malicious
 # link cannot silently auto-spawn a terminal; operators who enable the

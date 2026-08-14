@@ -36,7 +36,7 @@ func TestInstall_DesktopHandlerOptIn(t *testing.T) {
 		t.Error("install_desktop_handler must be gated behind ENABLE_URI_HANDLER (opt-in)")
 	}
 	// Default off: the env default must not be true.
-	if strings.Contains(sh, `ENABLE_URI_HANDLER="${POWER_MANAGE_ENABLE_URI_HANDLER:-true}`) {
+	if strings.Contains(sh, `ENABLE_URI_HANDLER="${CADESTRO_ENABLE_URI_HANDLER:-true}`) {
 		t.Error("the URI handler must default to OFF")
 	}
 	// No auto-launching terminal entry.
@@ -85,7 +85,7 @@ func TestInstall_VerifiesPublisherSignatureBeforeChecksum(t *testing.T) {
 	if signatureCheck < 0 || hashCheck < 0 || signatureCheck > hashCheck {
 		t.Error("publisher signature must be verified before trusting SHA256SUMS")
 	}
-	if strings.Contains(sh, "POWER_MANAGE_RELEASE_SIGNING_PUBLIC_KEY") {
+	if strings.Contains(sh, "CADESTRO_RELEASE_SIGNING_PUBLIC_KEY") {
 		t.Error("the published installer's pinned release key must not be replaceable through the environment")
 	}
 }

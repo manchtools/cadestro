@@ -19,7 +19,7 @@ own environment file, not control's configuration.
 
 ### Storage for the audit archive
 
-<!-- docref: begin src=deploy/setup.sh#@archive-isolation:b4ebb270,cmd/cadestro/config.go#validateArchiveIsolation:b9894a73,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
+<!-- docref: begin src=deploy/setup.sh#@archive-isolation:6ded442f,cmd/cadestro/config.go#validateArchiveIsolation:69e8ec75,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
 `data/backups` must be on a different filesystem from the SQLite database under
 `data/control`. Mount a second disk, an NFS or NAS export, or any
 remote-backed volume there:
@@ -112,16 +112,16 @@ archive storage. Write the file into the install directory it created, then run
 Leave both unset for the default HTTP challenge; port 80 also carries the
 redirect to HTTPS either way, so keep it published.
 
-Control is configured entirely by `POWER_MANAGE_`-prefixed environment
+Control is configured entirely by `CADESTRO_`-prefixed environment
 variables and reads no configuration file. `setup.sh` renders every one of them
 into `config/control.env`, and that file is where ordinary settings such as the
 log level or the retention windows are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:e7331c91 -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:6c09313e -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
 encryption, session and sealing keys, and `config/control.env` with a 90-day
-audit-retention policy and the SQLite `POWER_MANAGE_DATABASE_PATH`. It first
+audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`. It first
 refuses, before generating any key material, when `data/backups` shares a
 filesystem with `data/control`, because control refuses to start on such a
 configuration, and equally when the chosen ACME challenge cannot work — an
@@ -180,9 +180,9 @@ refuse to start after the next restart.
 
 <!-- docref: begin src=internal/maintenance/service.go#Service.RetainAudit:8584f810,cmd/cadestro/config.go#Config.AuditRetention:0e4ab606 -->
 Control writes integrity-sealed audit anchors and archive-before-delete chain
-prefixes to `POWER_MANAGE_BACKUP_PATH`, and re-verifies every archived prefix
+prefixes to `CADESTRO_BACKUP_PATH`, and re-verifies every archived prefix
 against its recorded checkpoint digest before retention deletes anything more;
-`POWER_MANAGE_AUDIT_RETENTION` defaults to 90 days. That path must be a
+`CADESTRO_AUDIT_RETENTION` defaults to 90 days. That path must be a
 filesystem of its own, which control enforces at startup; replicating it
 off-host is the stronger form of the same property and remains yours to
 arrange. Back up the database, artifacts, `certs`, and `secrets` as one
@@ -190,7 +190,7 @@ deployment unit.
 <!-- docref: end -->
 
 <!-- docref: begin src=cmd/cadestro/config.go#Config.WebhookURL:341af9cf,internal/maintenance/service.go#Service.InspectSecurity:223fcf91,internal/maintenance/service.go#Service.InspectBackup:d8c2e6fd -->
-Set the optional `POWER_MANAGE_WEBHOOK_URL` to an HTTPS endpoint to receive
+Set the optional `CADESTRO_WEBHOOK_URL` to an HTTPS endpoint to receive
 generic security
 and backup-lag notifications. The payload contains only the event name and
 occurrence time; control has no email or provider-specific notification
@@ -203,7 +203,7 @@ Run `./backup.sh` from a host timer at least daily. It takes an online SQLite
 before atomically publishing `backup-status.json`. It retains seven backups by
 default and never touches readiness. Inspect the latest success and current lag
 with `docker compose exec control cadestro backup-status`;
-`POWER_MANAGE_BACKUP_MAX_LAG` defaults to 26 hours.
+`CADESTRO_BACKUP_MAX_LAG` defaults to 26 hours.
 <!-- docref: end -->
 
 <!-- docref: begin src=internal/store/reads.go#ListDueDeliveries:bbaaa8a0,internal/store/search.go#Search:3244914e -->
