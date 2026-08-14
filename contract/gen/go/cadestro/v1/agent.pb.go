@@ -1355,7 +1355,8 @@ type Welcome struct {
 	ServerVersion string `protobuf:"bytes,1,opt,name=server_version,json=serverVersion,proto3" json:"server_version,omitempty" validate:"required,min=1,max=32"`
 	// @gotags: validate:"omitempty"
 	HeartbeatInterval *durationpb.Duration `protobuf:"bytes,2,opt,name=heartbeat_interval,json=heartbeatInterval,proto3" json:"heartbeat_interval,omitempty" validate:"omitempty"`
-	// Base URL for browser-based device login (configurable, defaults to built-in PM web app).
+	// Base URL for browser-based device login (configurable, defaults to the
+	// bundled Cadestro web UI).
 	// Used by PAM module to open the OIDC login page for display manager sessions.
 	DeviceLoginUrl string `protobuf:"bytes,3,opt,name=device_login_url,json=deviceLoginUrl,proto3" json:"device_login_url,omitempty"`
 	unknownFields  protoimpl.UnknownFields

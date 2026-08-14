@@ -15,7 +15,7 @@ enum ActionType {
   ACTION_TYPE_UNSPECIFIED = 0;
 
   // Package management (1-99)
-  ACTION_TYPE_PACKAGE = 1; // Generic package (apt/dnf/pacman based on distro)
+  ACTION_TYPE_PACKAGE = 1; // Generic package (apt/dnf/pacman/zypper based on distro)
   ACTION_TYPE_UPDATE = 2; // System-wide package update (respects pinning)
   ACTION_TYPE_REPOSITORY = 3; // External repository configuration
 
@@ -30,7 +30,7 @@ enum ActionType {
   ACTION_TYPE_SCRIPT_RUN = 201; // One-off script execution (not scheduled)
 
   // Services (300-399)
-  ACTION_TYPE_SERVICE = 300; // Service unit (systemd, openrc, runit, s6)
+  ACTION_TYPE_SERVICE = 300; // Service unit (systemd; the only backend the SDK implements)
 
   // Files (400-499)
   ACTION_TYPE_FILE = 400; // File management

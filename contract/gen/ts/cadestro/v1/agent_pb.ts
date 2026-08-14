@@ -529,7 +529,8 @@ export type Welcome = Message<"cadestro.v1.Welcome"> & {
   heartbeatInterval?: Duration;
 
   /**
-   * Base URL for browser-based device login (configurable, defaults to built-in PM web app).
+   * Base URL for browser-based device login (configurable, defaults to the
+   * bundled Cadestro web UI).
    * Used by PAM module to open the OIDC login page for display manager sessions.
    *
    * @generated from field: string device_login_url = 3;

@@ -27,7 +27,7 @@ type ActionType int32
 const (
 	ActionType_ACTION_TYPE_UNSPECIFIED ActionType = 0
 	// Package management (1-99)
-	ActionType_ACTION_TYPE_PACKAGE    ActionType = 1 // Generic package (apt/dnf/pacman based on distro)
+	ActionType_ACTION_TYPE_PACKAGE    ActionType = 1 // Generic package (apt/dnf/pacman/zypper based on distro)
 	ActionType_ACTION_TYPE_UPDATE     ActionType = 2 // System-wide package update (respects pinning)
 	ActionType_ACTION_TYPE_REPOSITORY ActionType = 3 // External repository configuration
 	// Application installation (100-199)
@@ -39,7 +39,7 @@ const (
 	ActionType_ACTION_TYPE_SHELL      ActionType = 200 // Shell script
 	ActionType_ACTION_TYPE_SCRIPT_RUN ActionType = 201 // One-off script execution (not scheduled)
 	// Services (300-399)
-	ActionType_ACTION_TYPE_SERVICE ActionType = 300 // Service unit (systemd, openrc, runit, s6)
+	ActionType_ACTION_TYPE_SERVICE ActionType = 300 // Service unit (systemd; the only backend the SDK implements)
 	// Files (400-499)
 	ActionType_ACTION_TYPE_FILE      ActionType = 400 // File management
 	ActionType_ACTION_TYPE_DIRECTORY ActionType = 401 // Directory management

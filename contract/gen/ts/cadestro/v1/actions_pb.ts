@@ -1758,7 +1758,7 @@ export enum ActionType {
   /**
    * Package management (1-99)
    *
-   * Generic package (apt/dnf/pacman based on distro)
+   * Generic package (apt/dnf/pacman/zypper based on distro)
    *
    * @generated from enum value: ACTION_TYPE_PACKAGE = 1;
    */
@@ -1827,7 +1827,7 @@ export enum ActionType {
   /**
    * Services (300-399)
    *
-   * Service unit (systemd, openrc, runit, s6)
+   * Service unit (systemd; the only backend the SDK implements)
    *
    * @generated from enum value: ACTION_TYPE_SERVICE = 300;
    */
