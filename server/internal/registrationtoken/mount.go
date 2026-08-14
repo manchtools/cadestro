@@ -13,15 +13,13 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	if mux == nil {
 		panic("registrationtoken: mux is required")
 	}
-	mounted := make([]string, 0, 6)
+	mounted := make([]string, 0, 5)
 	register := func(procedure string, handler http.Handler) {
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
 	register(cadestrov1connect.ControlServiceCreateTokenProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateTokenProcedure, h.CreateToken, opts...))
-	register(cadestrov1connect.ControlServiceGetTokenProcedure,
-		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetTokenProcedure, h.GetToken, opts...))
 	register(cadestrov1connect.ControlServiceListTokensProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListTokensProcedure, h.ListTokens, opts...))
 	register(cadestrov1connect.ControlServiceRenameTokenProcedure,
@@ -46,7 +44,6 @@ func MutationProcedures() []string {
 // ReadProcedures is the exact non-mutating registration-token set.
 func ReadProcedures() []string {
 	return []string{
-		cadestrov1connect.ControlServiceGetTokenProcedure,
 		cadestrov1connect.ControlServiceListTokensProcedure,
 	}
 }

@@ -166,11 +166,12 @@ secret, backup code, MFA or WebAuthn field fails the test, as does the existence
 of a TOTP or WebAuthn table.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/guards_test.go#TestPublicProcedures_AreExactlyTheUnauthenticatedSurface:eb3ecf45 -->
+<!-- docref: begin src=server/internal/identity/guards_test.go#TestPublicProcedures_AreExactlyTheUnauthenticatedSurface:03f0bc7a -->
 The unauthenticated surface is pinned as an exact set — not a maximum, an exact
 set, so adding an unauthenticated endpoint fails the build until someone
 consciously adds it to that list. It is additionally asserted to contain nothing
-resembling a login or TOTP procedure.
+resembling a login or TOTP procedure, and procedures that have been retired from
+the contract are named individually so the entry cannot come back on its own.
 <!-- docref: end -->
 
 ### Bootstrap
@@ -207,8 +208,8 @@ by a list of exceptions someone has to maintain.
 
 ### Authorization
 
-<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:caee153b -->
-Permissions live in one registry — roughly 180 entries, each declaring its key,
+<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:b0a709b1 -->
+Permissions live in one registry — roughly 165 entries, each declaring its key,
 its UI grouping, its description, and the kind of target it acts on. That target
 kind is what decides whether a permission can be scoped to a group, and the zero
 value is **not scopable**, so a new permission added without thinking lands on

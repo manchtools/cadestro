@@ -34,7 +34,6 @@ import {
 	SetDeviceSyncIntervalRequestSchema,
 	SetDeviceInventoryIntervalRequestSchema,
 	CreateTokenRequestSchema,
-	GetTokenRequestSchema,
 	ListTokensRequestSchema,
 	RenameTokenRequestSchema,
 	SetTokenDisabledRequestSchema,
@@ -595,12 +594,6 @@ export class ApiClient {
 		// beside token.value by contract — agents cannot enroll without it, so a
 		// wrapper that dropped it made every web-created token un-enrollable.
 		return response;
-	}
-
-	async getToken(id: string) {
-		const client = this.getClient();
-		const response = await client.getToken(create(GetTokenRequestSchema, { id }));
-		return response.token;
 	}
 
 	async listTokens(pageSize: number = 50, pageToken: string = '', includeDisabled: boolean = false) {

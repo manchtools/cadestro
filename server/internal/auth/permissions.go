@@ -176,7 +176,6 @@ func registryPermissions() []permEntry {
 		// Tokens
 		{"CreateToken", "Tokens", "Create registration tokens", TargetUnspecified},
 		{"CreateToken:self", "Tokens", "Create one-time token for self", TargetUnspecified},
-		{"GetToken", "Tokens", "View tokens", TargetUnspecified},
 		{"ListTokens", "Tokens", "List tokens", TargetUnspecified},
 		{"RenameToken", "Tokens", "Rename tokens", TargetUnspecified},
 		{"SetTokenDisabled", "Tokens", "Disable/enable tokens", TargetUnspecified},

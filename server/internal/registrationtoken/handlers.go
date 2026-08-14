@@ -197,27 +197,6 @@ func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.Cr
 	return connect.NewResponse(&pmv1.CreateTokenResponse{Token: out, CaFingerprintPin: h.caPin}), nil
 }
 
-// GetToken returns one live non-bootstrap token without its bearer value.
-func (h *Handlers) GetToken(ctx context.Context, req *connect.Request[pmv1.GetTokenRequest]) (*connect.Response[pmv1.GetTokenResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
-	if _, err := h.actor(ctx); err != nil {
-		return nil, err
-	}
-	if err := h.authorize(ctx, "GetToken", req.Msg.Id); err != nil {
-		return nil, err
-	}
-	row, err := h.store.GetRegistrationToken(ctx, req.Msg.Id)
-	if err != nil {
-		if store.IsNotFound(err) {
-			return nil, notFound(ctx, errTokenNotFound, "token not found")
-		}
-		return nil, h.internal(ctx, "get token", err)
-	}
-	return connect.NewResponse(&pmv1.GetTokenResponse{Token: tokenToProto(row)}), nil
-}
-
 // ListTokens returns a deterministic keyset page of live non-bootstrap tokens.
 func (h *Handlers) ListTokens(ctx context.Context, req *connect.Request[pmv1.ListTokensRequest]) (*connect.Response[pmv1.ListTokensResponse], error) {
 	if err := validateRequest(h, ctx, req); err != nil {

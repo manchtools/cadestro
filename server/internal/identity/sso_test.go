@@ -16,7 +16,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -118,152 +117,6 @@ func TestGetSSOLoginURL_RejectsAMalformedRedirect(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 	assert.Zero(t, f.countAuditOperations())
-}
-
-func TestBeginCLILogin_StoresOnlyTheChallengeAndReturnsPublicProviderMetadata(t *testing.T) {
-	t.Parallel()
-	oidc := newOIDCDouble(t)
-	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
-	providerID := f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "cadestro-cli"
-		s.IssuerURL = oidc.URL
-	})
-	challenge := strings.Repeat("A", 43)
-	redirectURL := "http://127.0.0.1:45123/callback"
-
-	resp, err := f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
-		Slug: "corp", RedirectUrl: redirectURL, CodeChallenge: challenge,
-	}))
-	require.NoError(t, err)
-	assert.Equal(t, oidc.URL+"/token", resp.Msg.TokenUrl)
-	assert.Equal(t, "cadestro-cli", resp.Msg.ClientId)
-	assert.NotEmpty(t, resp.Msg.State)
-	assert.WithinDuration(t, f.now.Add(10*time.Minute), resp.Msg.ExpiresAt.AsTime(), time.Second)
-
-	loginURL, err := url.Parse(resp.Msg.LoginUrl)
-	require.NoError(t, err)
-	assert.Equal(t, redirectURL, loginURL.Query().Get("redirect_uri"))
-	assert.Equal(t, challenge, loginURL.Query().Get("code_challenge"))
-	assert.Equal(t, "S256", loginURL.Query().Get("code_challenge_method"))
-	assert.Equal(t, "cadestro-cli", loginURL.Query().Get("client_id"))
-	assert.NotEmpty(t, loginURL.Query().Get("nonce"))
-
-	var storedProvider, kind, verifier, storedRedirect string
-	require.NoError(t, f.raw.QueryRow(f.ctx(), `
-		SELECT provider_id, flow_kind, code_verifier, redirect_uri
-		  FROM auth_states WHERE state = $1`, resp.Msg.State).
-		Scan(&storedProvider, &kind, &verifier, &storedRedirect))
-	assert.Equal(t, providerID, storedProvider)
-	assert.Equal(t, "cli", kind)
-	assert.Empty(t, verifier, "the CLI verifier never crosses the process boundary")
-	assert.Equal(t, redirectURL, storedRedirect)
-}
-
-func TestBeginCLILogin_RejectsUnsafeRedirectAndBrowserOnlyProvider(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t, withProviderFactory(discardProviderFactory))
-	f.insertProvider("browser", nil)
-	f.insertProvider("cli", func(s *providerSeed) { s.CliClientID = "cadestro-cli" })
-	challenge := strings.Repeat("A", 43)
-
-	_, err := f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
-		Slug: "browser", RedirectUrl: "http://127.0.0.1:45123/callback", CodeChallenge: challenge,
-	}))
-	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
-
-	for _, redirectURL := range []string{
-		"https://127.0.0.1:45123/callback",
-		"http://localhost:45123/callback",
-		"http://127.0.0.2:45123/callback",
-		"http://127.0.0.1:45123/callback?code=leak",
-	} {
-		_, err = f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
-			Slug: "cli", RedirectUrl: redirectURL, CodeChallenge: challenge,
-		}))
-		assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err), redirectURL)
-	}
-}
-
-func TestExchangeCLISession_VerifiesTheIDTokenAndIssuesARegularSession(t *testing.T) {
-	t.Parallel()
-	oidc := newOIDCDouble(t)
-	oidc.audience = "cadestro-cli"
-	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
-	role := f.insertRole([]string{"GetCurrentUser"})
-	f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "cadestro-cli"
-		s.IssuerURL = oidc.URL
-		s.AutoCreateUsers = true
-		s.DefaultRoleID = role
-	})
-	oidc.subject, oidc.email, oidc.emailVerified = "cli-subject", "cli@test.example", true
-
-	begin, err := f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
-		Slug: "corp", RedirectUrl: "http://127.0.0.1:45123/callback", CodeChallenge: strings.Repeat("A", 43),
-	}))
-	require.NoError(t, err)
-	oidc.nonce = f.nonceFor(begin.Msg.State)
-
-	resp, err := f.client.ExchangeCLISession(f.ctx(), connect.NewRequest(&pmv1.ExchangeCLISessionRequest{
-		Slug: "corp", State: begin.Msg.State, IdToken: oidc.idToken(t, oidc.URL),
-	}))
-	require.NoError(t, err)
-	assert.Equal(t, "cli@test.example", resp.Msg.User.Email)
-	assert.NotEmpty(t, resp.Msg.AccessToken)
-	assert.NotEmpty(t, resp.Msg.RefreshToken)
-	f.operationOfClass(cadestrov1connect.ControlServiceExchangeCLISessionProcedure, "MUTATION")
-
-	_, err = f.client.ExchangeCLISession(f.ctx(), connect.NewRequest(&pmv1.ExchangeCLISessionRequest{
-		Slug: "corp", State: begin.Msg.State, IdToken: oidc.idToken(t, oidc.URL),
-	}))
-	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err), "the state is one-use")
-}
-
-func TestExchangeCLISession_RejectsAnIDTokenForTheBrowserAudience(t *testing.T) {
-	t.Parallel()
-	oidc := newOIDCDouble(t) // default audience is the browser client-id
-	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
-	f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "cadestro-cli"
-		s.IssuerURL = oidc.URL
-		s.AutoCreateUsers = true
-	})
-	oidc.subject, oidc.email, oidc.emailVerified = "cli-subject", "cli@test.example", true
-	begin, err := f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
-		Slug: "corp", RedirectUrl: "http://127.0.0.1:45123/callback", CodeChallenge: strings.Repeat("A", 43),
-	}))
-	require.NoError(t, err)
-	oidc.nonce = f.nonceFor(begin.Msg.State)
-
-	_, err = f.client.ExchangeCLISession(f.ctx(), connect.NewRequest(&pmv1.ExchangeCLISessionRequest{
-		Slug: "corp", State: begin.Msg.State, IdToken: oidc.idToken(t, oidc.URL),
-	}))
-	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
-	f.operationOfClass(cadestrov1connect.ControlServiceExchangeCLISessionProcedure, "REJECTED_AUTHENTICATION")
-}
-
-func TestBrowserAndCLIStatesCannotBeCrossConsumed(t *testing.T) {
-	t.Parallel()
-	oidc := newOIDCDouble(t)
-	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
-	f.insertProvider("corp", func(s *providerSeed) {
-		s.CliClientID = "cadestro-cli"
-		s.IssuerURL = oidc.URL
-	})
-	browserState := f.startLogin("corp")
-	cliBegin, err := f.client.BeginCLILogin(f.ctx(), connect.NewRequest(&pmv1.BeginCLILoginRequest{
-		Slug: "corp", RedirectUrl: "http://127.0.0.1:45123/callback", CodeChallenge: strings.Repeat("A", 43),
-	}))
-	require.NoError(t, err)
-
-	_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
-		Slug: "corp", State: cliBegin.Msg.State, Code: "unused-code",
-	}))
-	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
-	_, err = f.client.ExchangeCLISession(f.ctx(), connect.NewRequest(&pmv1.ExchangeCLISessionRequest{
-		Slug: "corp", State: browserState, IdToken: "unused-token",
-	}))
-	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 }
 
 func TestSSOCallback_AutoCreatesASubjectAndIssuesASession(t *testing.T) {
@@ -487,6 +340,56 @@ func TestSSOCallback_RefusesAStateFromAnotherProvider(t *testing.T) {
 		Slug: "second", Code: "auth-code", State: state,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
+}
+
+// The auth_state row records which login flow minted it, and SSOCallback
+// consumes only a browser-flow state. Browser is currently the only flow
+// control drives, so nothing else can produce a foreign row — the state is
+// seeded directly here instead.
+//
+// This replaces the cross-consumption test that drove the removed CLI login
+// pair. The discriminator survived that removal, and an unexercised
+// discriminator is an unexercised rejection: were the flow-kind comparison
+// dropped, every check left in this file would still pass.
+func TestSSOCallback_RefusesAStateMintedForAnotherFlow(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, withProviderFactory(discardProviderFactory))
+	providerID := f.insertProvider("corp", nil)
+
+	// The provider factory refuses to build a client, so a state that PASSES
+	// the flow check fails afterwards with Internal. That is the positive
+	// control: the two rows differ only in flow_kind, and they exit on
+	// different paths, so Unauthenticated below is attributable to the flow
+	// check rather than to the seeding or to a provider that never loads.
+	for _, tc := range []struct {
+		name     string
+		flowKind string
+		wantCode connect.Code
+	}{
+		{"a browser state passes the flow check", "browser", connect.CodeInternal},
+		{"a foreign flow state is refused", "cli", connect.CodeUnauthenticated},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := "state-" + tc.flowKind
+			_, err := f.raw.Exec(f.ctx(), `
+				INSERT INTO auth_states (state, provider_id, flow_kind, nonce, code_verifier, redirect_uri, expires_at)
+				VALUES ($1, $2, $3, 'nonce', 'verifier', $4, $5)`,
+				state, providerID, tc.flowKind, testBaseURL+"/auth/callback", f.now.Add(10*time.Minute))
+			require.NoError(t, err)
+
+			_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+				Slug: "corp", Code: "auth-code", State: state,
+			}))
+			assert.Equal(t, tc.wantCode, connectCodeOf(t, err))
+
+			// Either way the state is spent: consumption precedes the flow
+			// check, so a refused attempt must not leave a replayable row.
+			var remaining int
+			require.NoError(t, f.raw.QueryRow(f.ctx(),
+				`SELECT COUNT(*) FROM auth_states WHERE state = $1`, state).Scan(&remaining))
+			assert.Zero(t, remaining, "a consumed state must not survive its attempt")
+		})
+	}
 }
 
 func TestSSOCallback_RejectsAMissingCode(t *testing.T) {

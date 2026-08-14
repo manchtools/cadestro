@@ -2,11 +2,7 @@ package identity
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
-	"net"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,10 +21,11 @@ import (
 // through the identity provider.
 const authStateTTL = 10 * time.Minute
 
-const (
-	authFlowBrowser = "browser"
-	authFlowCLI     = "cli"
-)
+// authFlowBrowser is the only login flow control drives. It is still recorded
+// on every auth_state row so a state minted for one flow can never be consumed
+// as another, which is the property that has to survive a second flow ever
+// being added back.
+const authFlowBrowser = "browser"
 
 // ListAuthMethods reports which identity providers a login page should
 // offer.
@@ -153,98 +150,6 @@ func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[pmv1
 	}), nil
 }
 
-// BeginCLILogin starts a public-client OIDC flow whose verifier and callback
-// remain in the CLI process.
-func (h *Handlers) BeginCLILogin(ctx context.Context, req *connect.Request[pmv1.BeginCLILoginRequest]) (*connect.Response[pmv1.BeginCLILoginResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
-	redirectURL, err := validateCLIRedirect(req.Msg.RedirectUrl)
-	if err != nil {
-		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, err.Error())
-	}
-	challenge, err := base64.RawURLEncoding.DecodeString(req.Msg.CodeChallenge)
-	if err != nil || len(challenge) != 32 {
-		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "invalid PKCE challenge")
-	}
-	provider, err := h.store.GetIdentityProviderBySlug(ctx, req.Msg.Slug)
-	if err != nil {
-		if store.IsNotFound(err) {
-			return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
-		}
-		return nil, internalError(ctx, "failed to load identity provider")
-	}
-	if !provider.Enabled {
-		return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
-	}
-	if provider.CliClientID == "" {
-		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeFailedPrecondition,
-			"CLI login is not configured for this identity provider")
-	}
-	oidcClient, err := h.cliOIDCClientFor(ctx, provider, redirectURL)
-	if err != nil {
-		h.logger.Error("failed to build the CLI OIDC client", "provider_id", provider.ID, "error", err)
-		return nil, internalError(ctx, "failed to reach the identity provider")
-	}
-	state, err := idp.GenerateState()
-	if err != nil {
-		return nil, internalError(ctx, "failed to start the login flow")
-	}
-	nonce, err := idp.GenerateNonce()
-	if err != nil {
-		return nil, internalError(ctx, "failed to start the login flow")
-	}
-	expires := h.now().UTC().Add(authStateTTL)
-	op := store.AuditOperation{
-		Class:                store.ClassBackgroundWriter,
-		ActorType:            auth.AnonymousActorType,
-		Origin:               auth.ControlRPCOrigin,
-		RequestDescriptor:    req.Spec().Procedure,
-		AuthorizationOutcome: store.AuthorizationNotApplicable,
-		Result:               store.ResultSuccess,
-	}
-	if ip := auth.ClientIP(req); ip != "" {
-		op.OriginFingerprint = auth.Fingerprint(ip)
-	}
-	_, err = h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-		if err := tx.CreateAuthState(ctx, db.CreateAuthStateParams{
-			State: state, ProviderID: provider.ID, FlowKind: authFlowCLI, Nonce: nonce,
-			CodeVerifier: "", RedirectUri: redirectURL, ExpiresAt: expires,
-		}); err != nil {
-			return err
-		}
-		rec.Effect(store.AuditEffect{
-			ResourceType: "auth_state", ResourceID: provider.ID, Action: "START_LOGIN", Outcome: store.EffectApplied,
-			EvidenceKind: "auth_state_sha256", EvidenceFingerprint: fingerprint(state),
-		})
-		return nil
-	})
-	if err != nil {
-		return nil, internalError(ctx, "failed to start the login flow")
-	}
-	return connect.NewResponse(&pmv1.BeginCLILoginResponse{
-		LoginUrl: oidcClient.AuthCodeURLWithChallenge(state, nonce, req.Msg.CodeChallenge),
-		State:    state, TokenUrl: oidcClient.OAuth2Cfg.Endpoint.TokenURL,
-		ClientId: provider.CliClientID, ExpiresAt: timestampValue(expires),
-	}), nil
-}
-
-func validateCLIRedirect(raw string) (string, error) {
-	u, err := url.ParseRequestURI(strings.TrimSpace(raw))
-	if err != nil || u.Scheme != "http" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
-		return "", errors.New("invalid CLI redirect")
-	}
-	host, port, err := net.SplitHostPort(u.Host)
-	if err != nil || host != "127.0.0.1" {
-		return "", errors.New("invalid CLI redirect")
-	}
-	portNumber, err := strconv.Atoi(port)
-	if err != nil || portNumber < 1 || portNumber > 65535 {
-		return "", errors.New("invalid CLI redirect")
-	}
-	return u.String(), nil
-}
-
 // SSOCallback completes an authorization-code flow and issues a
 // session.
 //
@@ -298,50 +203,6 @@ func (h *Handlers) SSOCallback(ctx context.Context, req *connect.Request[pmv1.SS
 		return nil, err
 	}
 	return connect.NewResponse(&pmv1.SSOCallbackResponse{
-		AccessToken: completed.AccessToken, RefreshToken: completed.RefreshToken,
-		ExpiresAt: timestampValue(completed.ExpiresAt), User: completed.User,
-	}), nil
-}
-
-// ExchangeCLISession verifies the public client's ID-token assertion and
-// issues the same Cadestro session as browser SSO.
-func (h *Handlers) ExchangeCLISession(ctx context.Context, req *connect.Request[pmv1.ExchangeCLISessionRequest]) (*connect.Response[pmv1.ExchangeCLISessionResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
-	provider, err := h.store.GetIdentityProviderBySlug(ctx, req.Msg.Slug)
-	if err != nil {
-		if store.IsNotFound(err) {
-			return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
-		}
-		return nil, internalError(ctx, "failed to load identity provider")
-	}
-	if !provider.Enabled {
-		return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
-	}
-	if provider.CliClientID == "" {
-		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeFailedPrecondition,
-			"CLI login is not configured for this identity provider")
-	}
-	state, err := h.consumeAuthState(ctx, req, provider.ID, req.Msg.State, authFlowCLI)
-	if err != nil {
-		return nil, err
-	}
-	oidcClient, err := h.cliOIDCClientFor(ctx, provider, state.RedirectUri)
-	if err != nil {
-		h.logger.Error("failed to build the CLI OIDC client", "provider_id", provider.ID, "error", err)
-		return nil, internalError(ctx, "failed to reach the identity provider")
-	}
-	claims, err := oidcClient.VerifyIDToken(ctx, req.Msg.IdToken, state.Nonce)
-	if err != nil {
-		h.logger.Warn("CLI identity token verification failed", "provider_id", provider.ID)
-		return nil, h.rejectSSO(ctx, req, provider.ID, "identity token verification failed")
-	}
-	completed, err := h.completeLogin(ctx, req, provider, claims)
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&pmv1.ExchangeCLISessionResponse{
 		AccessToken: completed.AccessToken, RefreshToken: completed.RefreshToken,
 		ExpiresAt: timestampValue(completed.ExpiresAt), User: completed.User,
 	}), nil
@@ -522,14 +383,5 @@ func (h *Handlers) oidcClientFor(ctx context.Context, provider store.IdentityPro
 		Scopes:           provider.Scopes,
 		RedirectURL:      strings.TrimSpace(redirectURL),
 		GroupClaim:       provider.GroupClaim,
-	})
-}
-
-func (h *Handlers) cliOIDCClientFor(ctx context.Context, provider store.IdentityProviderRow, redirectURL string) (*idp.OIDCProvider, error) {
-	return h.newOIDC(ctx, idp.ProviderConfig{
-		IssuerURL: provider.IssuerUrl, AuthorizationURL: provider.AuthorizationUrl,
-		TokenURL: provider.TokenUrl, UserinfoURL: provider.UserinfoUrl,
-		ClientID: provider.CliClientID, Scopes: provider.Scopes,
-		RedirectURL: strings.TrimSpace(redirectURL), GroupClaim: provider.GroupClaim,
 	})
 }

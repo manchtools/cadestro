@@ -109,6 +109,41 @@ var removedBroadSecretReads = map[string][]string{
 	},
 }
 
+// removedCLIOnlyReads is the operator ruling that follows the removal of the
+// operator CLI: GetToken was the single-token read no remaining client issues.
+// The web client and the deployment probes read the token list, and a token's
+// bearer value is never recoverable from either, so the one-entry read carried
+// no capability the list does not.
+//
+// Its two siblings in that ruling — BeginCLILogin and ExchangeCLISession — are
+// absent from this map on purpose. They never existed in the predecessor, so
+// they were never a removal FROM it. They are recorded in retractedAdditions
+// instead.
+var removedCLIOnlyReads = map[string][]string{
+	"ControlService": {"GetToken"},
+}
+
+// retractedAdditions were approved ADDITIONS in an earlier revision of this
+// contract and have since been withdrawn by the same operator ruling that
+// removed GetToken. BeginCLILogin and ExchangeCLISession were the native CLI
+// login pair; the operator CLI is gone and nothing else ever called them.
+//
+// They need their own record because they are absent from BOTH goldens: the
+// predecessor never had them, and the target no longer does. Neither
+// removalDeltas (which requires presence in the predecessor) nor
+// additionDeltas (which requires presence in the target) can hold such a name,
+// so a withdrawn addition is invisible to every assertion in
+// TestRPCSurface_PredecessorDifferenceIsApproved — it would simply vanish from
+// the reasoning with nothing left claiming it was ever decided.
+//
+// TestRPCSurface_RetractedAdditionsAreAbsentEverywhere turns that record into
+// an assertion, and it is a strictly stronger one than the addition delta it
+// replaces: it checks the SHIPPED descriptors as well as both goldens, so a
+// resurrected handler cannot pass by having been left out of a JSON file.
+var retractedAdditions = map[string][]string{
+	"ControlService": {"BeginCLILogin", "ExchangeCLISession"},
+}
+
 // removalDeltas are the complete approved difference between the predecessor
 // and the target contract.
 var removalDeltas = map[string]map[string][]string{
@@ -117,16 +152,11 @@ var removalDeltas = map[string]map[string][]string{
 	"single-agent-stream":     removedAgentUnary,
 	"provider-owned-users":    removedManualUserLifecycle,
 	"auditable-secret-reads":  removedBroadSecretReads,
+	"cli-only-reads":          removedCLIOnlyReads,
 }
 
 // additionDeltas are intentional target RPCs with no predecessor equivalent.
 var additionDeltas = map[string]map[string][]string{
-	"native-cli-auth": {
-		"ControlService": {
-			"BeginCLILogin",
-			"ExchangeCLISession",
-		},
-	},
 	"jit-user-erasure": {
 		"ControlService": {"EraseJITUser"},
 	},
@@ -140,14 +170,73 @@ var additionDeltas = map[string]map[string][]string{
 	},
 }
 
-func TestRPCSurface_NativeCLIAuthIsExplicitAndProviderCapabilitiesArePublic(t *testing.T) {
+// TestRPCSurface_RetractedAdditionsAreAbsentEverywhere proves that a name the
+// contract added and then withdrew is gone from the shipped descriptors, not
+// merely missing from a golden. The live check is the load-bearing one: a
+// .pb.go orphaned by a moved proto still registers its service at init, so a
+// handler can keep answering while every JSON-level check reports clean.
+func TestRPCSurface_RetractedAdditionsAreAbsentEverywhere(t *testing.T) {
+	predecessor := loadGolden(t, predecessorGoldenPath, 180, 6)
+	current := loadGolden(t, currentGoldenPath, 150, 3)
 	live := liveSurface(t)
-	for _, method := range []string{"BeginCLILogin", "ExchangeCLISession"} {
-		if !contains(live["ControlService"], method) {
-			t.Errorf("ControlService is missing native CLI method %s", method)
+
+	named := 0
+	for service, methods := range retractedAdditions {
+		for _, method := range methods {
+			named++
+			key := service + "/" + method
+			if contains(predecessor.Services[service], method) {
+				t.Errorf("%s is recorded as a retracted addition but the predecessor already had it — "+
+					"it is an ordinary removal and belongs in removalDeltas", key)
+			}
+			if contains(current.Services[service], method) {
+				t.Errorf("%s is recorded as retracted but the target golden still lists it", key)
+			}
+			if contains(live[service], method) {
+				t.Errorf("%s is recorded as retracted but the shipped descriptors still serve it", key)
+			}
 		}
 	}
+	if named == 0 {
+		t.Fatal("matches-zero: retractedAdditions is empty, so this test proved nothing")
+	}
+}
 
+// retractedMessages are the request/response shapes deleted with the RPCs in
+// retractedAdditions and removedCLIOnlyReads. Deleting an RPC does not by
+// itself delete its messages, and an orphaned message keeps shipping to every
+// consumer as a live export.
+//
+// ExchangeCLISessionRequest.id_token and ExchangeCLISessionResponse's
+// access/refresh tokens were three of the justified-plaintext entries in
+// TestContract_SecretShapedFieldsAreClassifiedOrJustified. Their justifications
+// retire with this deletion, so this guard is what replaces them — and it is
+// the stronger claim: a justification PERMITS a secret-shaped field to ship
+// unclassified, whereas this forbids the carrier from existing at all.
+var retractedMessages = []protoreflect.Name{
+	"BeginCLILoginRequest",
+	"BeginCLILoginResponse",
+	"ExchangeCLISessionRequest",
+	"ExchangeCLISessionResponse",
+	"GetTokenRequest",
+	"GetTokenResponse",
+}
+
+func TestContract_RetractedMessagesAreGone(t *testing.T) {
+	messages := contractMessages(t)
+	if len(retractedMessages) == 0 {
+		t.Fatal("matches-zero: retractedMessages is empty, so this test proved nothing")
+	}
+	for _, name := range retractedMessages {
+		if _, ok := messages[name]; ok {
+			t.Errorf("message %s still ships — it was deleted with its RPC and has no remaining caller", name)
+		}
+	}
+}
+
+// TestRPCSurface_ProviderCapabilitiesArePublic holds the identity-provider
+// capability shape that a login client reads before it offers a method.
+func TestRPCSurface_ProviderCapabilitiesArePublic(t *testing.T) {
 	for messageName, fields := range map[protoreflect.FullName]map[protoreflect.Name]protoreflect.Kind{
 		"cadestro.v1.IdentityProvider": {
 			"cli_client_id": protoreflect.StringKind,
@@ -760,6 +849,13 @@ func TestContract_ActionCredentialsAreSealed(t *testing.T) {
 // name that lacks the marker would otherwise be invisible to every downstream
 // redaction/sealing guard at once. Metadata and deliberately plaintext public
 // API fields must be named explicitly here with a narrow justification.
+//
+// An entry retires only when its FIELD is gone: assertLiveFields below fails on
+// a justification that resolves to no descriptor, so an entry cannot be dropped
+// to silence a finding while the field still ships. The message-level guard in
+// TestContract_RetractedMessagesAreGone covers the other direction — a whole
+// message deleted with the RPC that carried it must not return, because its
+// secret-shaped fields would come back with no justification and no marker.
 func TestContract_SecretShapedFieldsAreClassifiedOrJustified(t *testing.T) {
 	secretName := regexp.MustCompile(`(?i)(token|secret|hmac|signature|fingerprint|password|passwd|digest|apikey|psk|private_key|preshared_key|client_key)`)
 	metadataSuffixes := []string{
@@ -785,9 +881,6 @@ func TestContract_SecretShapedFieldsAreClassifiedOrJustified(t *testing.T) {
 		"cadestro.v1.RevealLpsPasswordResponse.password":          "explicit audited operator reveal",
 		"cadestro.v1.SSOCallbackResponse.access_token":            "public HTTPS authentication output",
 		"cadestro.v1.SSOCallbackResponse.refresh_token":           "public HTTPS authentication output",
-		"cadestro.v1.ExchangeCLISessionRequest.id_token":          "public HTTPS OIDC authentication assertion",
-		"cadestro.v1.ExchangeCLISessionResponse.access_token":     "public HTTPS authentication output",
-		"cadestro.v1.ExchangeCLISessionResponse.refresh_token":    "public HTTPS authentication output",
 		"cadestro.v1.RefreshTokenResponse.access_token":           "public HTTPS authentication output",
 		"cadestro.v1.RefreshTokenResponse.refresh_token":          "public HTTPS authentication output",
 	}

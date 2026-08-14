@@ -65,16 +65,26 @@ func (f *tokenHandlerFixture) actor(perms ...string) context.Context {
 
 func TestTokenHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newTokenHandlerFixture(t)
-	_, err := f.handlers.GetToken(context.Background(), connect.NewRequest(&pmv1.GetTokenRequest{Id: "bad"}))
+	// A malformed id is rejected before the caller is authenticated, and a
+	// well-formed one from the same anonymous caller gets as far as
+	// authentication. Asserted on both a read and a mutation so the ordering
+	// is a property of the package, not of one handler.
+	_, err := f.handlers.RenameToken(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: "bad", Name: "n"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.GetToken(context.Background(), connect.NewRequest(&pmv1.GetTokenRequest{Id: newID()}))
+	_, err = f.handlers.RenameToken(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: newID(), Name: "n"}))
+	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
+
+	_, err = f.handlers.ListTokens(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{PageToken: "not-a-ulid"}))
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+
+	_, err = f.handlers.ListTokens(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
 func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	f := newTokenHandlerFixture(t)
-	ctx := f.actor("CreateToken", "GetToken", "ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
+	ctx := f.actor("CreateToken", "ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
 	expires := f.now.Add(48 * time.Hour)
 
 	created, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{
@@ -95,9 +105,13 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	assert.Equal(t, hex.EncodeToString(digest[:]), storedHash)
 	assert.NotEqual(t, plaintext, storedHash)
 
-	got, err := f.handlers.GetToken(ctx, connect.NewRequest(&pmv1.GetTokenRequest{Id: tokenID}))
+	// The list is the only read path, so it is where the "a stored bearer
+	// value is never recoverable" property has to hold.
+	stored, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{}))
 	require.NoError(t, err)
-	assert.Empty(t, got.Msg.Token.Value, "stored tokens are never recoverable")
+	require.Len(t, stored.Msg.Tokens, 1)
+	assert.Equal(t, tokenID, stored.Msg.Tokens[0].Id)
+	assert.Empty(t, stored.Msg.Tokens[0].Value, "stored tokens are never recoverable")
 
 	renamed, err := f.handlers.RenameToken(ctx, connect.NewRequest(&pmv1.RenameTokenRequest{Id: tokenID, Name: "renamed"}))
 	require.NoError(t, err)
@@ -118,8 +132,12 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 
 	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&pmv1.DeleteTokenRequest{Id: tokenID}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetToken(ctx, connect.NewRequest(&pmv1.GetTokenRequest{Id: tokenID}))
-	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	gone, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{IncludeDisabled: true}))
+	require.NoError(t, err)
+	assert.Empty(t, gone.Msg.Tokens, "a deleted token is gone from the widest read the surface offers")
+	assert.Zero(t, gone.Msg.TotalCount)
+	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&pmv1.DeleteTokenRequest{Id: tokenID}))
+	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "a second delete finds nothing")
 
 	for _, procedure := range registrationtoken.MutationProcedures() {
 		operation, err := latestOperationFor(t, f.store, f.raw, procedure)
@@ -153,13 +171,32 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 		) VALUES ($1, $2, $3, TRUE, 1, $4, $5)`,
 		bootstrapID, strings.Repeat("a", 64), store.BootstrapAdminTokenName, f.now, auth.BootstrapPrincipalID)
 	require.NoError(t, err)
-	operator := f.actor("GetToken", "ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
-	_, err = f.handlers.GetToken(operator, connect.NewRequest(&pmv1.GetTokenRequest{Id: bootstrapID}))
-	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	operator := f.actor("ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
 	listed, err := f.handlers.ListTokens(operator, connect.NewRequest(&pmv1.ListTokensRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Tokens, 1, "only the ordinary self token is visible")
 	assert.Equal(t, self.Msg.Token.Id, listed.Msg.Tokens[0].Id)
+
+	// The bootstrap token must be unreachable through EVERY read the surface
+	// still offers, not merely through the default page. The single-token read
+	// that used to carry this assertion is gone, so the widest list — the one
+	// that deliberately includes disabled rows — has to carry it instead: an
+	// exclusion that only held for the narrow page would be no exclusion.
+	for name, req := range map[string]*pmv1.ListTokensRequest{
+		"default page":       {},
+		"including disabled": {IncludeDisabled: true},
+		"paged":              {PageSize: 100},
+	} {
+		t.Run("bootstrap token is invisible to the "+name, func(t *testing.T) {
+			page, err := f.handlers.ListTokens(operator, connect.NewRequest(req))
+			require.NoError(t, err)
+			for _, token := range page.Msg.Tokens {
+				assert.NotEqual(t, bootstrapID, token.Id, "the reserved bootstrap token was disclosed")
+				assert.NotEqual(t, store.BootstrapAdminTokenName, token.Name)
+			}
+		})
+	}
+
 	for name, call := range map[string]func() error{
 		"rename": func() error {
 			_, err := f.handlers.RenameToken(operator, connect.NewRequest(&pmv1.RenameTokenRequest{Id: bootstrapID, Name: "stolen"}))

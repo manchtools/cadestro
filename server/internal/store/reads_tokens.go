@@ -20,17 +20,6 @@ type RegistrationTokenListFilter struct {
 	IncludeDisabled bool
 }
 
-// GetRegistrationToken returns one live, non-bootstrap registration token.
-func (s *Store) GetRegistrationToken(ctx context.Context, id string) (RegistrationTokenRow, error) {
-	row, err := s.queries.GetRegistrationToken(ctx, db.GetRegistrationTokenParams{
-		ID: id, ReservedName: BootstrapAdminTokenName,
-	})
-	if err != nil {
-		return RegistrationTokenRow{}, fmt.Errorf("registration token: get: %w", translateNotFound(err))
-	}
-	return row, nil
-}
-
 // ListRegistrationTokens returns live non-bootstrap tokens in id order.
 func (s *Store) ListRegistrationTokens(ctx context.Context, f RegistrationTokenListFilter) ([]RegistrationTokenRow, error) {
 	rows, err := s.queries.ListRegistrationTokens(ctx, db.ListRegistrationTokensParams{

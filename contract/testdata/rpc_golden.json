@@ -14,7 +14,6 @@
       "AssignDevice",
       "AssignRoleToUser",
       "AssignRoleToUserGroup",
-      "BeginCLILogin",
       "CancelExecution",
       "CreateAction",
       "CreateActionSet",
@@ -51,7 +50,6 @@
       "EraseJITUser",
       "EvaluateDynamicGroup",
       "EvaluateDynamicUserGroup",
-      "ExchangeCLISession",
       "ExportAuditEvents",
       "GetAction",
       "GetActionSet",
@@ -71,7 +69,6 @@
       "GetRole",
       "GetSSOLoginURL",
       "GetServerSettings",
-      "GetToken",
       "GetUser",
       "GetUserAssignments",
       "GetUserGroup",
@@ -172,5 +169,5 @@
       "GetEnrollmentStatus"
     ]
   },
-  "total": 164
+  "total": 161
 }

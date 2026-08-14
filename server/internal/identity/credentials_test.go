@@ -219,13 +219,19 @@ var authenticatedMutations = map[string]call{
 // publicMutations are the state-changing procedures that deliberately
 // carry no session token: the SSO handshake and the session lifecycle a
 // client must be able to drive when its access token is gone.
+//
+// This is an EXEMPTION list — a name here is skipped by the mutation matrix —
+// so it must never outlive its procedure. The stale sweep in
+// TestMutationMatrix_CoversEveryMutationProcedure fails on an entry that is no
+// longer a mounted mutation, which is why the CLI login pair had to leave this
+// map when their RPCs were deleted rather than being left behind as inert
+// entries. Shrinking it narrows nothing: every remaining mutation is still
+// either matched here or carries a credential/authorization case.
 var publicMutations = map[string]bool{
-	cadestrov1connect.ControlServiceRefreshTokenProcedure:       true,
-	cadestrov1connect.ControlServiceLogoutProcedure:             true,
-	cadestrov1connect.ControlServiceGetSSOLoginURLProcedure:     true,
-	cadestrov1connect.ControlServiceSSOCallbackProcedure:        true,
-	cadestrov1connect.ControlServiceBeginCLILoginProcedure:      true,
-	cadestrov1connect.ControlServiceExchangeCLISessionProcedure: true,
+	cadestrov1connect.ControlServiceRefreshTokenProcedure:   true,
+	cadestrov1connect.ControlServiceLogoutProcedure:         true,
+	cadestrov1connect.ControlServiceGetSSOLoginURLProcedure: true,
+	cadestrov1connect.ControlServiceSSOCallbackProcedure:    true,
 }
 
 // testSSHKey is a real, parsable ed25519 authorized-key line. The
@@ -270,6 +276,21 @@ func TestMutationMatrix_CoversEveryMutationProcedure(t *testing.T) {
 		}
 	}
 	assert.Empty(t, stale, "the matrix names procedures that are not mutations: %v", stale)
+
+	// The CLI login pair was deleted from the contract. Neither may reappear
+	// as an exemption: publicMutations excuses a procedure from needing a
+	// credential case at all, so an entry naming a procedure nobody mounts is
+	// the shape that would let a resurrected unauthenticated mutation ship
+	// pre-excused.
+	for _, retired := range []string{
+		"/cadestro.v1.ControlService/BeginCLILogin",
+		"/cadestro.v1.ControlService/ExchangeCLISession",
+	} {
+		assert.NotContains(t, publicMutations, retired,
+			"%s is exempted from the mutation matrix but no longer exists", retired)
+		assert.NotContains(t, authenticatedMutations, retired,
+			"%s has a matrix case but no longer exists", retired)
+	}
 }
 
 // Every mounted procedure is classified as a mutation, ordinary read or

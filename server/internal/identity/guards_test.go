@@ -96,15 +96,13 @@ func TestRegistry_HasNoLocalCredentialPermissions(t *testing.T) {
 func TestPublicProcedures_AreExactlyTheUnauthenticatedSurface(t *testing.T) {
 	t.Parallel()
 	expected := map[string]bool{
-		"/cadestro.v1.ControlService/RefreshToken":       true,
-		"/cadestro.v1.ControlService/Logout":             true,
-		"/cadestro.v1.ControlService/Register":           true,
-		"/cadestro.v1.ControlService/RenewCertificate":   true,
-		"/cadestro.v1.ControlService/ListAuthMethods":    true,
-		"/cadestro.v1.ControlService/GetSSOLoginURL":     true,
-		"/cadestro.v1.ControlService/SSOCallback":        true,
-		"/cadestro.v1.ControlService/BeginCLILogin":      true,
-		"/cadestro.v1.ControlService/ExchangeCLISession": true,
+		"/cadestro.v1.ControlService/RefreshToken":     true,
+		"/cadestro.v1.ControlService/Logout":           true,
+		"/cadestro.v1.ControlService/Register":         true,
+		"/cadestro.v1.ControlService/RenewCertificate": true,
+		"/cadestro.v1.ControlService/ListAuthMethods":  true,
+		"/cadestro.v1.ControlService/GetSSOLoginURL":   true,
+		"/cadestro.v1.ControlService/SSOCallback":      true,
 	}
 	require.Len(t, auth.PublicProcedures, len(expected),
 		"the unauthenticated surface changed size; that is a deliberate act that must be reviewed")
@@ -115,6 +113,16 @@ func TestPublicProcedures_AreExactlyTheUnauthenticatedSurface(t *testing.T) {
 	for procedure := range auth.PublicProcedures {
 		assert.NotContains(t, procedure, "Login/")
 		assert.NotContains(t, procedure, "TOTP")
+	}
+	// The CLI login pair was removed with the operator CLI. Re-adding either
+	// name would put an unauthenticated procedure back on the public surface,
+	// so the absence is asserted rather than left to the size check alone.
+	for _, removed := range []string{
+		"/cadestro.v1.ControlService/BeginCLILogin",
+		"/cadestro.v1.ControlService/ExchangeCLISession",
+	} {
+		assert.NotContains(t, auth.PublicProcedures, removed,
+			"%s no longer exists on the contract; a public entry for it would gate nothing", removed)
 	}
 }
 

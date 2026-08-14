@@ -39,10 +39,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetSSOLoginURLProcedure, h.GetSSOLoginURL, opts...))
 	register(cadestrov1connect.ControlServiceSSOCallbackProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceSSOCallbackProcedure, h.SSOCallback, opts...))
-	register(cadestrov1connect.ControlServiceBeginCLILoginProcedure,
-		connect.NewUnaryHandler(cadestrov1connect.ControlServiceBeginCLILoginProcedure, h.BeginCLILogin, opts...))
-	register(cadestrov1connect.ControlServiceExchangeCLISessionProcedure,
-		connect.NewUnaryHandler(cadestrov1connect.ControlServiceExchangeCLISessionProcedure, h.ExchangeCLISession, opts...))
 
 	// Identity providers.
 	register(cadestrov1connect.ControlServiceCreateIdentityProviderProcedure,
@@ -165,8 +161,6 @@ func MutationProcedures() []string {
 		cadestrov1connect.ControlServiceLogoutProcedure,
 		cadestrov1connect.ControlServiceGetSSOLoginURLProcedure,
 		cadestrov1connect.ControlServiceSSOCallbackProcedure,
-		cadestrov1connect.ControlServiceBeginCLILoginProcedure,
-		cadestrov1connect.ControlServiceExchangeCLISessionProcedure,
 		cadestrov1connect.ControlServiceCreateIdentityProviderProcedure,
 		cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure,
 		cadestrov1connect.ControlServiceDeleteIdentityProviderProcedure,
