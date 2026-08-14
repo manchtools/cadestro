@@ -42,14 +42,14 @@ done
 #       files must never contain. The predecessor repository name is the thing
 #       being forbidden.
 #
-#   web
-#       TEMPORARY, and the only entry here that is not permanent. The web
-#       module has not been swept yet. The web slice renames it and MUST
-#       delete this entry in the same change.
+# Every remaining entry is permanent: each one needs the old name to say what it
+# says. The temporary entry this list was born with — `web`, for the module that
+# had not been swept yet — is gone, deleted by the slice that swept it.
 #
 # Shrink-only: an allowlist entry that no longer matches anything is itself a
-# failure, so the list cannot outlive the occurrences it excuses — that is what
-# forces the temporary `web` entry out once the web slice lands.
+# failure, so the list cannot outlive the occurrences it excuses. That is what
+# forced the temporary entry out, and what stops a permanent one from quietly
+# becoming a licence to reintroduce the name somewhere else in its directory.
 # The pattern is assembled from a fragment rather than written out, so this
 # file does not match its own check. Spelling it literally would force
 # scripts/verify.sh onto the allowlist, which would blind the guard to a real
@@ -60,7 +60,6 @@ old_name_allow=(
     PROVENANCE.md
     contract/contract_rpc_surface_test.go
     agent/internal/archtest/ci_coverage_test.go
-    web
 )
 
 mapfile -t old_name_hits < <(
