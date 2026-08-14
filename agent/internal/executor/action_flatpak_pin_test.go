@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	pmexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // fakeFlatpakPinMgr is a minimal pkg.Manager that drives ensureFlatpakPinned's

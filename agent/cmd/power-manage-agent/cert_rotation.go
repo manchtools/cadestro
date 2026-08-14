@@ -9,8 +9,8 @@ import (
 	"log/slog"
 	"time"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pmcrypto "github.com/manchtools/power-manage-sdk/crypto"
+	sdk "github.com/manchtools/cadestro/contract"
+	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 

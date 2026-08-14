@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage-sdk/sys/desktop"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/desktop"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // recordingBaseRunner records each command the base runner receives — under

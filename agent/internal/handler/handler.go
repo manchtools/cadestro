@@ -12,12 +12,12 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/inventory"
-	syslog "github.com/manchtools/power-manage-sdk/sys/log"
-	"github.com/manchtools/power-manage-sdk/sys/osquery"
-	"github.com/manchtools/power-manage-sdk/validate"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/contract/validate"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/inventory"
+	syslog "github.com/manchtools/cadestro/sdk/sys/log"
+	"github.com/manchtools/cadestro/sdk/sys/osquery"
 	"github.com/manchtools/power-manage/agent/internal/executor"
 	"github.com/manchtools/power-manage/agent/internal/scheduler"
 	"github.com/manchtools/power-manage/agent/internal/store"

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # The agent's canonical verification gate.
 #
-# GOWORK=off verifies the standalone module against the SDK version pinned in
-# go.mod, matching the repository's CI checkout.
+# GOWORK=off verifies the module as it builds on its own: the relative replace
+# directives in go.mod resolve the contract and the SDK from their sibling
+# directories, without the root go.work stitching anything together. A module
+# that only builds inside the workspace is broken for every other consumer.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

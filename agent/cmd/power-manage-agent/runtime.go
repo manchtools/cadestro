@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	sdk "github.com/manchtools/cadestro/contract"
+	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/power-manage/agent/internal/credentials"
 	"github.com/manchtools/power-manage/agent/internal/handler"
 	"github.com/manchtools/power-manage/agent/internal/luksd"

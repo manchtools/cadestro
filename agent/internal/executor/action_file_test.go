@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // TestExecuteFile_RejectsNilParams verifies that nil FileParams is rejected.

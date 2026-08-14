@@ -6,9 +6,15 @@ import (
 	"testing"
 )
 
-// sdkImportPath is the import path of the Power Manage SDK root package,
-// which owns the mTLS ClientOption constructors.
-const sdkImportPath = "github.com/manchtools/power-manage-sdk"
+// sdkImportPath is the import path of the contract's root package, which
+// owns the stream client and its mTLS ClientOption constructors.
+const sdkImportPath = "github.com/manchtools/cadestro/contract"
+
+// sdkDefaultLocalName is the package name that import path declares, used
+// when a file imports it without an alias. A wrong value here is silent:
+// sdkLocalName would hand the matchers an identifier no selector uses, and
+// every guard below would skip the file instead of failing.
+const sdkDefaultLocalName = "contract"
 
 // strictTrustOption is the SDK option whose server-verification RootCAs
 // pool is EXACTLY the CA PEM handed to it (the CA this device enrolled
@@ -168,7 +174,7 @@ func sdkLocalName(file *ast.File) (string, bool) {
 			continue
 		}
 		if imp.Name == nil {
-			return "sdk", true // the SDK root is `package sdk`
+			return sdkDefaultLocalName, true
 		}
 		if imp.Name.Name == "_" || imp.Name.Name == "." {
 			return "", false

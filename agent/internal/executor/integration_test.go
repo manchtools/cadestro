@@ -20,9 +20,9 @@ import (
 	"testing"
 	"time"
 
-	sdkcrypto "github.com/manchtools/power-manage-sdk/crypto"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 
 	"github.com/manchtools/power-manage/agent/internal/store"
 )

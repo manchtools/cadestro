@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysenc "github.com/manchtools/power-manage-sdk/sys/encryption"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/power-manage/agent/internal/store"
 )
 

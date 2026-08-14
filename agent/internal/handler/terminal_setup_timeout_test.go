@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
 const setupTestULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"

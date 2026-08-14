@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/pkg"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
 // probeErrPkgManager fails the IsInstalled state probe, standing in for a

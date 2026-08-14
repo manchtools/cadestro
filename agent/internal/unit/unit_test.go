@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage-sdk/sys/service"
+	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
 // fakeManager implements service.Manager hermetically: scripted version /

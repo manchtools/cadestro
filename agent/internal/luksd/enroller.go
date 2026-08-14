@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	sysenc "github.com/manchtools/power-manage-sdk/sys/encryption"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // sysencEnroller is the production Enroller: it runs the privileged cryptsetup

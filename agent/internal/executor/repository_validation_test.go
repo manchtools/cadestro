@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/pkg"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/repo"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/repo"
 )
 
 // testRunnerForValidation builds a Direct runner for repo.Validate tests.

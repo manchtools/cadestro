@@ -12,11 +12,11 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
-	"github.com/manchtools/power-manage-sdk/sys/terminal"
-	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/terminal"
+	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
 // Compile-time assertion that *Handler satisfies sdk.TerminalHandler.

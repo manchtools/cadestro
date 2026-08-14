@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // testExecutorTmpDirs collects the per-executor temp dirs newTestExecutor

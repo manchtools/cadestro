@@ -841,41 +841,41 @@ sudo systemctl enable power-manage-agent
 
 ## Development
 
-### SDK versioning
+### Resolving the contract and the SDK
 
-The agent pins a specific SDK tag via `go.mod`'s replace directive:
+The agent consumes two modules of this repository, resolved from their sibling
+directories:
 
 ```
-replace github.com/manchtools/power-manage/sdk => github.com/manchtools/power-manage-sdk v0.1.0
-```
-
-The replace maps the monorepo-style import path (`github.com/manchtools/power-manage/sdk`) to the actual polyrepo URL (`github.com/manchtools/power-manage-sdk`). `go build` fetches the exact tagged version from GitHub — SDK `main` can move freely without breaking agent builds. When the agent is ready to consume a newer SDK:
-
-```bash
-cd agent
-go get github.com/manchtools/power-manage-sdk@v0.2.0   # or any tag / commit SHA
-go mod tidy
-```
-
-The SDK is still pre-v1.0.0, so minor bumps (`v0.1.0` → `v0.2.0`) may carry breaking API changes. Expect each bump PR to carry the matching migration in the same commit.
-
-### Working on SDK + agent together
-
-For cross-cutting changes, point the agent at a local SDK checkout via a `go.work` at the workspace root (the directory that contains both `agent/` and `sdk/` checkouts). `go.work` overrides any `replace` directive and fetched module versions.
-
-```bash
-# At the workspace root (NOT committed — each dev manages their own):
-cat > go.work <<'EOF'
-go 1.25
-
-use (
-    ./sdk
-    ./agent
+require (
+    github.com/manchtools/cadestro/contract v0.0.0
+    github.com/manchtools/cadestro/sdk v0.0.0
 )
-EOF
+
+replace github.com/manchtools/cadestro/contract => ../contract
+
+replace github.com/manchtools/cadestro/sdk => ../sdk
 ```
 
-Remove it, or rename it to `go.work.off`, when you want `go build` back to using the pinned SDK.
+The `v0.0.0` is a placeholder the `replace` makes unreachable — nothing is
+fetched, so no version is consulted, and the agent compiles against the copy it
+is committed with. `internal/archtest` asserts exactly that: both modules
+required, both replaced, each pointing at its sibling directory and nothing
+else. A `replace` aimed out of tree fails the build.
+
+There is no version to bump. A contract or SDK change and the agent code that
+consumes it belong in the same commit, and `go build ./...` from the repository
+root compiles both.
+
+### Working across modules
+
+The root `go.work` already lists every Go module, so an editor and a repo-wide
+build see one workspace with no per-developer setup.
+
+Each module must also build on its own, which is what the relative `replace`
+directives are for. That is what `scripts/verify.sh` checks by exporting
+`GOWORK=off`: a module that builds only inside the workspace is broken for
+anyone consuming it from outside.
 
 ### Building
 

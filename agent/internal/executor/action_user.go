@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
-	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
+	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
 // executeUser manages user accounts (create, update, disable, remove).

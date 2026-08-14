@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	"github.com/manchtools/power-manage-sdk/cryptotest"
+	sdk "github.com/manchtools/cadestro/contract"
+	"github.com/manchtools/cadestro/sdk/cryptotest"
 	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 

@@ -9,8 +9,8 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
 func ws17aULID() string { return ulid.Make().String() }

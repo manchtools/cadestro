@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // The ~/.ssh TOCTOU (audit F022) is closed by FD-based ops: setupSSHKeys

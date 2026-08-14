@@ -15,11 +15,11 @@ import (
 	"strings"
 	"time"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
-	"github.com/manchtools/power-manage-sdk/sys/remote"
+	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
 // AgentUpdateConfig holds configuration for the agent self-update executor.

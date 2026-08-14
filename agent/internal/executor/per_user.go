@@ -8,14 +8,14 @@ package executor
 import (
 	"context"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/sys/desktop"
-	sysenc "github.com/manchtools/power-manage-sdk/sys/encryption"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
-	"github.com/manchtools/power-manage-sdk/sys/network"
-	sysservice "github.com/manchtools/power-manage-sdk/sys/service"
-	sysuser "github.com/manchtools/power-manage-sdk/sys/user"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/sys/desktop"
+	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
+	"github.com/manchtools/cadestro/sdk/sys/network"
+	sysservice "github.com/manchtools/cadestro/sdk/sys/service"
+	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
 // desktopMgr is the process-wide desktop fan-out Manager (session enumeration +

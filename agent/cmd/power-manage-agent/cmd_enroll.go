@@ -14,8 +14,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 	"github.com/manchtools/power-manage/agent/internal/deviceauth"
 )
 

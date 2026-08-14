@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	sdkcrypto "github.com/manchtools/power-manage-sdk/crypto"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 const sealedFieldVersion = 1

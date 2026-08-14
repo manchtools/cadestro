@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/manchtools/power-manage-sdk/pkg"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // errNotApplicable marks an action as structurally inapplicable to this

@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysreboot "github.com/manchtools/power-manage-sdk/sys/reboot"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysreboot "github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
 // executeReboot schedules a system reboot in 5 minutes.

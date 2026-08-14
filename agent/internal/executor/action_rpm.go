@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/pkg"
+	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
 func (e *Executor) executeRpm(ctx context.Context, params *pb.AppInstallParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {

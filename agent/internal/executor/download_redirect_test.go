@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/sys/remote"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
 // crossOriginFixture serves payload from B and 302s A -> B/file. A and B listen

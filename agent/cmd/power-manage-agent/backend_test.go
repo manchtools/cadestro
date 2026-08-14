@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // applyBackendOverrides is the single point where operator-supplied backend

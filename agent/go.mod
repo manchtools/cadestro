@@ -3,34 +3,32 @@ module github.com/manchtools/power-manage/agent
 go 1.25.12
 
 require (
-	connectrpc.com/connect v1.18.1
-	github.com/manchtools/power-manage-sdk v0.5.4
-	github.com/oklog/ulid/v2 v2.1.0
+	connectrpc.com/connect v1.20.0
+	github.com/manchtools/cadestro/contract v0.0.0
+	github.com/manchtools/cadestro/sdk v0.0.0
+	github.com/oklog/ulid/v2 v2.1.2
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/crypto v0.53.0
-	golang.org/x/sys v0.46.0
-	golang.org/x/term v0.44.0
-	google.golang.org/protobuf v1.36.11
+	golang.org/x/crypto v0.55.0
+	golang.org/x/sys v0.47.0
+	golang.org/x/term v0.45.0
+	google.golang.org/protobuf v1.36.12
 	modernc.org/sqlite v1.44.3
 )
 
-// The SDK import path differs from the actual GitHub repo URL
-// (monorepo-style import path, polyrepo actual layout). Map it here
-// so every `go build` uses a specific, pinned SDK version rather than
-// whatever happens to be in a local ../sdk checkout. Developers who
-// want to iterate against a local SDK override this with a per-dev
-// go.work at their workspace root — see agent/README.md for setup.
+// The contract and the SDK are modules of this repository, resolved from
+// their sibling directories. The v0.0.0 above is a placeholder the replace
+// makes unreachable — nothing fetches these, so no version is ever consulted,
+// and the agent compiles against the copy it is committed with.
 //
-// Pin lifecycle (audit F034): this version is bumped manually after the
-// SDK change receives a release tag. The
-// agent maintainer runs `go get
-// github.com/manchtools/power-manage-sdk@<version>` and commits the
-// resulting go.mod/go.sum together with the agent change that consumes
-// it. There is no automatic floating version — that's intentional, because
-// SDK proto/Go API drifts between commits should be reviewable in the
-// same PR as the agent change that consumes them.
+// internal/archtest asserts this exactly: both modules required, both
+// replaced, each pointing at its sibling directory and nothing else. A
+// replace aimed anywhere out of tree is the defect that guard exists to
+// catch.
+replace github.com/manchtools/cadestro/contract => ../contract
+
+replace github.com/manchtools/cadestro/sdk => ../sdk
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -42,14 +40,14 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/go-cmd/cmd v1.4.3 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.9.0 // indirect
 	github.com/go-git/go-git/v5 v5.19.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.30.1 // indirect
+	github.com/go-playground/validator/v10 v10.30.3 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
@@ -68,9 +66,9 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/text v0.39.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.67.6 // indirect

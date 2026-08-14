@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // runShellScript builds the child environment from a curated baseline plus

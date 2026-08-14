@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/sys/remote"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
 // WS16 #2: executeDeb relied solely on downloadFile, which SKIPS checksum

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // installShutdownStub makes `shutdown` resolve to a HARMLESS stub on a fully

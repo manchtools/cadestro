@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/sys/remote"
+	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
 // =============================================================================

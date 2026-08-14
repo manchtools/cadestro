@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/power-manage/agent/internal/store"
 )
 

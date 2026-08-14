@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/exec/exectest"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 // TestReconcileUnitAtStartup_NonRootIsCompleteNoop pins spec 27 AC 7's

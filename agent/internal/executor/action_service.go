@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysservice "github.com/manchtools/power-manage-sdk/sys/service"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysservice "github.com/manchtools/cadestro/sdk/sys/service"
 )
 
 func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams) (*pb.CommandOutput, bool, error) {

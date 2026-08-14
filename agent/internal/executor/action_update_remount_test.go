@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"testing"
 
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // fakeRemountFS is a minimal fs.Manager that serves a fixed mount table and

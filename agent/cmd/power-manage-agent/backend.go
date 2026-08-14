@@ -9,7 +9,7 @@ import (
 	osexec "os/exec"
 	"time"
 
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // geteuidFn is a seam over os.Geteuid so the empty-default privilege branch

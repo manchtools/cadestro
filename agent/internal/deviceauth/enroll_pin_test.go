@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 
-	pmcrypto "github.com/manchtools/power-manage-sdk/crypto"
-	"github.com/manchtools/power-manage-sdk/cryptotest"
+	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
+	"github.com/manchtools/cadestro/sdk/cryptotest"
 	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 

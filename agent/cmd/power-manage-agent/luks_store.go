@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/power-manage/agent/internal/executor"
 )
 

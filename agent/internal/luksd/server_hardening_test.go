@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/manchtools/power-manage-sdk"
+	sdk "github.com/manchtools/cadestro/contract"
 	"github.com/manchtools/power-manage/agent/internal/store"
 )
 

@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	_ "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1" // registers the descriptors this guard reads
+	_ "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1" // registers the descriptors this guard reads
 )
 
 // secretLogSinkAllowlist lists the ONLY places a secret-named field may be

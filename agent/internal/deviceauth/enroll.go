@@ -11,11 +11,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pmcrypto "github.com/manchtools/power-manage-sdk/crypto"
+	sdk "github.com/manchtools/cadestro/contract"
+	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 

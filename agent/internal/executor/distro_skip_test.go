@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/pkg"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
 // These skip-gates mirror the production detection exactly: the executors now

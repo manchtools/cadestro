@@ -75,27 +75,61 @@ func TestCIRunsEveryIntegrationTest(t *testing.T) {
 	}
 }
 
-// sdkModulePath is the SDK module whose version pin integration CI must
-// build against. A replace directive naming it silently defeats that pin.
-const sdkModulePath = "github.com/manchtools/power-manage-sdk"
+// inRepoModules are the repository modules the agent consumes, mapped to the
+// sibling directory each one must resolve from. A `replace` pointing anywhere
+// else — an external checkout, a git URL, a published version — means the
+// agent is being built against code this repository does not contain.
+var inRepoModules = map[string]string{
+	"github.com/manchtools/cadestro/contract": "../contract",
+	"github.com/manchtools/cadestro/sdk":      "../sdk",
+}
 
-func TestIntegrationCIUsesPinnedSDK(t *testing.T) {
+// TestIntegrationCIUsesTheInRepoModules asserts that the agent resolves the
+// contract and the SDK from this repository and from nowhere else.
+//
+// This guard used to assert the opposite shape — that go.mod pinned a
+// published SDK version and that NO replace directive overrode it — because
+// the SDK was a separate repository, where an override meant CI silently
+// tested unreviewed code. Here the relative replace IS the reviewed
+// resolution: the modules are in the tree, compiled from it, and reviewed in
+// the same commit. What must not happen is the reverse, so the assertion is
+// inverted rather than dropped: every in-repo module is required, replaced,
+// and replaced with exactly its sibling directory.
+//
+// A missing replace is a failure too, not a neutral state. Without it the
+// v0.0.0 placeholder becomes a real version query, and the build either fails
+// or — worse, should such a version ever be published — succeeds against
+// something that is not this tree.
+func TestIntegrationCIUsesTheInRepoModules(t *testing.T) {
 	root := moduleRoot(t)
 	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(sdkModulePath) + `\s+v0\.5\.4\s*$`).Match(goMod) {
-		t.Error("go.mod must require " + sdkModulePath + " at exactly v0.5.4")
-	}
-	// go.mod's replace directives are PARSED rather than substring-scanned by
-	// the marker loop below: Go's parenthesised block form puts the `replace`
-	// keyword and the module path on different lines, so a same-line marker
-	// never sees it while the override is fully in effect (issue #204).
-	if overrides := sdkReplaceDirectives(string(goMod)); len(overrides) > 0 {
-		t.Errorf("go.mod replaces %s with %q; integration CI must build against the reviewed pin", sdkModulePath, overrides)
+	if len(inRepoModules) == 0 {
+		t.Fatal("matches-zero guard: inRepoModules is empty, so this test asserts nothing")
 	}
 
+	for module, want := range inRepoModules {
+		if !regexp.MustCompile(`(?m)^\s*` + regexp.QuoteMeta(module) + `\s+v\S+\s*$`).Match(goMod) {
+			t.Errorf("go.mod must require %s", module)
+		}
+		targets := replaceDirectives(string(goMod), module)
+		switch len(targets) {
+		case 0:
+			t.Errorf("go.mod does not replace %s with %s — without the replace, the placeholder version is resolved from the network instead of from this repository", module, want)
+		case 1:
+			if targets[0] != want {
+				t.Errorf("go.mod replaces %s with %q; it must resolve from %s, the copy in this repository", module, targets[0], want)
+			}
+		default:
+			t.Errorf("go.mod replaces %s %d times (%q); exactly one replace is allowed", module, len(targets), targets)
+		}
+	}
+
+	// The integration lanes must not reintroduce an out-of-tree resolution of
+	// their own. These markers name the mechanisms that did it before: a
+	// branch-override mode, and a clone of a separate SDK repository.
 	files := []string{
 		filepath.Join(root, "go.mod"),
 		filepath.Join(root, ".github", "workflows", "integration-test.yml"),
@@ -114,32 +148,32 @@ func TestIntegrationCIUsesPinnedSDK(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, override := range []string{"SDK_MODE", "Resolve SDK branch override", "power-manage-sdk.git", "replace github.com/manchtools/power-manage-sdk"} {
+		for _, override := range []string{"SDK_MODE", "Resolve SDK branch override", "power-manage-sdk.git", "cadestro-sdk.git"} {
 			if strings.Contains(string(raw), override) {
-				t.Errorf("integration CI must use the reviewed SDK pin, found override path %q in %s", override, file)
+				t.Errorf("the agent must build against the modules in this repository, found out-of-tree resolution %q in %s", override, file)
 			}
 		}
 	}
 }
 
-// sdkReplaceDirectives returns the replacement target of every `replace`
-// directive in goMod whose left-hand module path is exactly sdkModulePath.
+// replaceDirectives returns the replacement target of every `replace`
+// directive in goMod whose left-hand module path is exactly module.
 //
 // It parses the directive structure rather than scanning for the substring
 // "replace <path>", because the go command accepts BOTH
 //
-//	replace github.com/manchtools/power-manage-sdk v0.5.4 => ../sdk
+//	replace github.com/manchtools/cadestro/sdk v0.0.0 => ../sdk
 //
 // and the parenthesised block form
 //
 //	replace (
-//	    github.com/manchtools/power-manage-sdk v0.5.4 => ../sdk
+//	    github.com/manchtools/cadestro/sdk v0.0.0 => ../sdk
 //	)
 //
-// which override the pin identically while a same-line substring scan sees
+// which resolve the module identically while a same-line substring scan sees
 // only the first (issue #204). Comments are stripped first, so a
 // commented-out directive — which the build ignores — is not reported.
-func sdkReplaceDirectives(goMod string) []string {
+func replaceDirectives(goMod, module string) []string {
 	var out []string
 	inBlock := false
 	for _, raw := range strings.Split(goMod, "\n") {
@@ -167,7 +201,7 @@ func sdkReplaceDirectives(goMod string) []string {
 				line = rest
 			}
 		}
-		if target, ok := sdkReplaceTarget(line); ok {
+		if target, ok := replaceTarget(line, module); ok {
 			out = append(out, target)
 		}
 	}
@@ -198,10 +232,10 @@ func afterGoModKeyword(line, keyword string) (string, bool) {
 	return strings.TrimSpace(rest), true
 }
 
-// sdkReplaceTarget parses one `<old> [version] => <new> [version]` entry and
-// returns the replacement target when the old side names sdkModulePath. The
-// old-side version is optional, and the path may be quoted.
-func sdkReplaceTarget(entry string) (string, bool) {
+// replaceTarget parses one `<old> [version] => <new> [version]` entry and
+// returns the replacement target when the old side names module. The old-side
+// version is optional, and the path may be quoted.
+func replaceTarget(entry, module string) (string, bool) {
 	oldSide, newSide, ok := strings.Cut(entry, "=>")
 	if !ok {
 		return "", false
@@ -210,22 +244,23 @@ func sdkReplaceTarget(entry string) (string, bool) {
 	if len(fields) == 0 {
 		return "", false
 	}
-	if strings.Trim(fields[0], "\"`") != sdkModulePath {
+	if strings.Trim(fields[0], "\"`") != module {
 		return "", false
 	}
 	return strings.TrimSpace(newSide), true
 }
 
-// TestSDKReplaceDirectivesSeesEveryReplaceForm pins the detector against the
+// TestReplaceDirectivesSeesEveryReplaceForm pins the detector against the
 // forms the go command actually accepts. The block-form rows are the
-// regression: a same-line substring scan reports a clean go.mod while the pin
-// is fully overridden (issue #204).
+// regression: a same-line substring scan reports a go.mod with no replace at
+// all while the module is fully redirected (issue #204).
 //
 // The `replace (` / module-path / version split across three lines is
 // deliberately absent — the go command rejects it as a parse error, so it is
 // not a bypass this guard has to cover.
-func TestSDKReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
-	const header = "module github.com/manchtools/power-manage/agent\n\ngo 1.25.12\n\nrequire " + sdkModulePath + " v0.5.4\n\n"
+func TestReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
+	const sdkModulePath = "github.com/manchtools/cadestro/sdk"
+	const header = "module github.com/manchtools/power-manage/agent\n\ngo 1.25.12\n\nrequire " + sdkModulePath + " v0.0.0\n\n"
 
 	for _, tc := range []struct {
 		name   string
@@ -234,14 +269,14 @@ func TestSDKReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 		reason string
 	}{
 		{
-			name:   "clean go.mod with no replace at all",
+			name:   "go.mod with no replace at all",
 			goMod:  header,
 			want:   nil,
-			reason: "the pinned baseline must not be reported as overridden",
+			reason: "a require without a replace resolves nothing locally, and must not be reported as if it did",
 		},
 		{
 			name:   "single-line replace with a version",
-			goMod:  header + "replace " + sdkModulePath + " v0.5.4 => ../sdk\n",
+			goMod:  header + "replace " + sdkModulePath + " v0.0.0 => ../sdk\n",
 			want:   []string{"../sdk"},
 			reason: "the form the original marker scan already caught",
 		},
@@ -249,11 +284,11 @@ func TestSDKReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 			name:   "single-line replace without a version",
 			goMod:  header + "replace " + sdkModulePath + " => ../sdk\n",
 			want:   []string{"../sdk"},
-			reason: "the version on the left is optional",
+			reason: "the version on the left is optional — this is the form the agent uses",
 		},
 		{
 			name:   "block-form replace with a version",
-			goMod:  header + "replace (\n\t" + sdkModulePath + " v0.5.4 => ../sdk\n)\n",
+			goMod:  header + "replace (\n\t" + sdkModulePath + " v0.0.0 => ../sdk\n)\n",
 			want:   []string{"../sdk"},
 			reason: "issue #204: the keyword and the module path sit on different lines",
 		},
@@ -261,19 +296,19 @@ func TestSDKReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 			name:   "block-form replace with the module path alone on its line",
 			goMod:  header + "replace (\n\t" + sdkModulePath + " => ../sdk\n)\n",
 			want:   []string{"../sdk"},
-			reason: "issue #204: versionless block entry, still a full override",
+			reason: "issue #204: versionless block entry, still a full redirection",
 		},
 		{
 			name:   "block-form replace hidden among unrelated entries",
-			goMod:  header + "replace (\n\tgithub.com/other/thing v1.2.3 => ../thing\n\t" + sdkModulePath + " v0.5.4 => github.com/attacker/sdk v0.0.1\n\tgithub.com/third/thing => ../third\n)\n",
+			goMod:  header + "replace (\n\tgithub.com/other/thing v1.2.3 => ../thing\n\t" + sdkModulePath + " v0.0.0 => github.com/attacker/sdk v0.0.1\n\tgithub.com/third/thing => ../third\n)\n",
 			want:   []string{"github.com/attacker/sdk v0.0.1"},
-			reason: "the SDK entry must be found regardless of its position in the block",
+			reason: "the SDK entry must be found regardless of its position in the block, and an out-of-tree target is exactly what the guard rejects",
 		},
 		{
 			name:   "block-form replacing only other modules",
 			goMod:  header + "replace (\n\tgithub.com/other/thing v1.2.3 => ../thing\n)\n",
 			want:   nil,
-			reason: "replacing an unrelated module is not an SDK pin override",
+			reason: "replacing an unrelated module says nothing about the SDK",
 		},
 		{
 			name:   "module whose path merely starts with the SDK path",
@@ -283,9 +318,9 @@ func TestSDKReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 		},
 		{
 			name:   "commented-out replace directives",
-			goMod:  header + "// replace " + sdkModulePath + " => ../sdk\nreplace (\n\t// " + sdkModulePath + " v0.5.4 => ../sdk\n)\n",
+			goMod:  header + "// replace " + sdkModulePath + " => ../sdk\nreplace (\n\t// " + sdkModulePath + " v0.0.0 => ../sdk\n)\n",
 			want:   nil,
-			reason: "a commented directive has no effect on the build",
+			reason: "a commented directive has no effect on the build, so it must not satisfy the required-replace assertion either",
 		},
 		{
 			name:   "block-form replace closed and followed by a require block",
@@ -295,13 +330,13 @@ func TestSDKReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := sdkReplaceDirectives(tc.goMod)
+			got := replaceDirectives(tc.goMod, sdkModulePath)
 			if len(got) != len(tc.want) {
-				t.Fatalf("sdkReplaceDirectives() = %q, want %q (%s)", got, tc.want, tc.reason)
+				t.Fatalf("replaceDirectives() = %q, want %q (%s)", got, tc.want, tc.reason)
 			}
 			for i := range got {
 				if got[i] != tc.want[i] {
-					t.Errorf("sdkReplaceDirectives()[%d] = %q, want %q (%s)", i, got[i], tc.want[i], tc.reason)
+					t.Errorf("replaceDirectives()[%d] = %q, want %q (%s)", i, got[i], tc.want[i], tc.reason)
 				}
 			}
 		})

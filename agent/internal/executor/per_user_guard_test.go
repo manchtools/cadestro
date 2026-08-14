@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage-sdk/sys/desktop"
+	"github.com/manchtools/cadestro/sdk/sys/desktop"
 )
 
 // WS6 #15: runAsUserStreaming must reject a missing command name or an

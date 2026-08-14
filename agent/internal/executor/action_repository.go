@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/pkg"
-	"github.com/manchtools/power-manage-sdk/sys/repo"
+	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	"github.com/manchtools/cadestro/sdk/sys/repo"
 )
 
 // executeRepository configures an external package repository by delegating to

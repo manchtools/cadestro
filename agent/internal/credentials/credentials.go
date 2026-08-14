@@ -31,8 +31,8 @@ import (
 
 	"golang.org/x/crypto/argon2"
 
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	sdkfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sdkfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 const (

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 func (e *Executor) executeDirectory(ctx context.Context, params *pb.DirectoryParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {

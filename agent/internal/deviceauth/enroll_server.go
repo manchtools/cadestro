@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 )
 
 const (

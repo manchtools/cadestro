@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
-	"github.com/manchtools/power-manage-sdk/sys/network"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
 // wifiConnectionName returns the managed connection name for an action.

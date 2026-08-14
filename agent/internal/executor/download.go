@@ -5,7 +5,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/manchtools/power-manage-sdk/sys/remote"
+	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
 // remoteHTTPClient is the HTTP client the artifact fetcher uses. It is nil in

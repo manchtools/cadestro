@@ -11,8 +11,13 @@ import (
 func TestTargetArchitectureHasNoAbolishedAgentRuntime(t *testing.T) {
 	root := moduleRoot(t)
 	forbidden := []string{
-		"github.com/manchtools/power-manage-sdk/gen/go/pm/v1",
-		"github.com/manchtools/power-manage-sdk/verify",
+		// Abolished import paths. Both track the module that would host them
+		// if they returned — generated protobuf lives in the contract,
+		// application-frame signing would live in the SDK. A stale path here
+		// matches nothing and the guard reports clean while the subsystem is
+		// back under its new path.
+		"github.com/manchtools/cadestro/contract/gen/go/pm/v1",
+		"github.com/manchtools/cadestro/sdk/verify",
 		"SignedActionEnvelope",
 		"ActionEnvelope",
 		"SyncActions",
@@ -76,7 +81,7 @@ func TestTargetArchitectureHasNoAbolishedAgentRuntime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, dependency := range []string{"asynq", "redis", "valkey", "power-manage-sdk/verify"} {
+	for _, dependency := range []string{"asynq", "redis", "valkey", "cadestro/sdk/verify"} {
 		if strings.Contains(strings.ToLower(string(module)), dependency) {
 			t.Errorf("go.mod contains abolished runtime dependency %q", dependency)
 		}

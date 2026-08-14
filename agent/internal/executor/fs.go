@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	sysfs "github.com/manchtools/power-manage-sdk/sys/fs"
+	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // getFileOwnership retrieves the current owner:group of a file using stat.

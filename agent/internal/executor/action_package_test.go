@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/pkg"
-	sysexec "github.com/manchtools/power-manage-sdk/sys/exec"
+	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // TestExecutePackage_RejectsNilParams verifies that a nil PackageParams is

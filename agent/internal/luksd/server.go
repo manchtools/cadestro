@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sysenc "github.com/manchtools/power-manage-sdk/sys/encryption"
+	sdk "github.com/manchtools/cadestro/contract"
+	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
