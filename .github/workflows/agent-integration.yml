@@ -34,6 +34,10 @@ jobs:
   integration:
     name: ${{ matrix.distro }}
     runs-on: ubuntu-latest
+    # docref: begin distro-matrix
+    # The distributions the agent's executor is exercised on. docs/ and the root
+    # README cite this list; adding or dropping a lane changes what the product
+    # may claim to support, so the claim is anchored here rather than retyped.
     strategy:
       fail-fast: false
       matrix:
@@ -46,6 +50,7 @@ jobs:
             dockerfile: agent/test/Dockerfile.integration.opensuse
           - distro: archlinux
             dockerfile: agent/test/Dockerfile.integration.archlinux
+    # docref: end distro-matrix
     steps:
       # No `path:` on the checkout: the agent already sits at agent/ in this
       # repository, which is the layout the Dockerfiles copy from and the

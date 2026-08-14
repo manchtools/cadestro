@@ -362,6 +362,9 @@ jobs:
   container-tests-distro:
     name: Container Tests (${{ matrix.distro }})
     runs-on: ubuntu-latest
+    # docref: begin sdk-distro-matrix
+    # The distributions the system capabilities are exercised on, in addition to
+    # the Debian base lanes above. Cited by the root README.
     strategy:
       fail-fast: false
       matrix:
@@ -370,6 +373,7 @@ jobs:
           - { distro: almalinux, notify: ./sdk/sys/notify/, walltool: wall }
           - { distro: arch,      notify: ./sdk/sys/notify/, walltool: wall }
           - { distro: opensuse,  notify: '',                walltool: '' }
+    # docref: end sdk-distro-matrix
     steps:
       - uses: actions/checkout@v5
 
