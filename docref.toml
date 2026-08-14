@@ -1,4 +1,5 @@
-# docref keeps the agent's prose synchronized with the code it describes.
+# docref keeps the repository-level prose synchronized with the code it
+# describes.
 #
 # This config sits at the REPOSITORY root rather than in agent/ because
 # agent/README.md anchors a region of .github/workflows/release.yml — the
@@ -8,17 +9,36 @@
 # claim would have to be dropped or left unanchored, which is exactly the
 # silent drift docref exists to prevent.
 #
-# server/ and sdk/ keep their own module-scoped docref.toml: nothing they
-# describe lives above them. .github/workflows/docref.yml runs one check per
-# root.
+# `docs/` and the root README are scanned from here for the same reason,
+# and more strongly: the product documentation is written ACROSS the modules —
+# one page describes the deployment in server/, the enrollment handshake in
+# agent/ and server/, the action contract in contract/, and the platform
+# backends in sdk/. No module-scoped root can reach all four, so the corpus
+# that spans them has to be checked from the only directory that contains
+# them all.
+#
+# server/ and sdk/ keep their own module-scoped docref.toml: nothing their
+# prose describes lives above them. .github/workflows/docref.yml runs one
+# check per root.
 [scan]
-include = ["agent/README.md", "agent/docs/**/*.md"]
+include = [
+    "README.md",
+    "docs/**/*.md",
+    "agent/README.md",
+    "agent/docs/**/*.md",
+]
 
-# Anchor discovery is scoped to the two trees this root is responsible for.
+# Anchor discovery is scoped to the two trees this root OWNS the markers in.
 # Without it the unused-anchor check — which reports a region marker no scanned
 # claim references — would sweep the whole repository and flag every server/
 # and sdk/ marker, because the prose that uses them is scanned by THEIR roots,
 # not this one. The result was a red check that named nine perfectly-used
 # anchors.
+#
+# Note the asymmetry, which is deliberate: pages under docs/ freely REFERENCE
+# markers that live under server/ and sdk/ — resolution is not scoped, only
+# discovery is — but those markers stay the responsibility of the module root
+# whose prose introduced them. Scoping discovery and scoping resolution are
+# different questions, and only the first one belongs to a single owner.
 [anchors]
 include = ["agent/**", ".github/**"]
