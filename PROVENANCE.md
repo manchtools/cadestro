@@ -15,7 +15,7 @@ answered there, at the SHAs below.
 | `agent/` | `github.com/manchtools/power-manage-agent` | local octopus merge `7997d3ce8b448e52317f615ce1a7bc06cea6fb3d` of `main` @ `0f6403efb48ed086b0421c3562964c7519c7744b` + PR #203 (`docs/contributor-guide` @ `871643c5ec2e8b963bb15887d82f5e4694a43364`) + PR #205 (`fix/release-fork-safety` @ `3255d029f23af81fdba421b17de479e1c86c58e9`); both PRs were fully gate-verified and CI-green at seed time |
 | `sdk/` → split into `contract/` + `sdk/` | `github.com/manchtools/power-manage-sdk` | PR #337 branch `fix/sys-review-notes` @ `2be1782c4179faca53306120a40942bd871d972b` (main + the July sys-review fixes + review batch, fully gate-verified and CI-green) |
 | `web/` | private predecessor web repository (open-sourced with this move) | `fix/security-audit-remediation` @ `c95e97e3921fa33b52180013a5aa98f11a8721d9` |
-| docs | `github.com/manchtools/power-manage-docs` | **not seeded by ruling** — the documentation is rewritten from the code in this repository; the old corpus carried too much legacy and archives with its repo |
+| docs | `github.com/manchtools/power-manage-docs` | **not seeded by ruling** — the documentation is rewritten from the code in this repository; the old corpus carried too much legacy and archives with its repo. The replacement corpus under `docs/` was written from scratch against the code at `6d1c05f`: nothing was imported, adapted, or consulted from the predecessor corpus, and every behavioural claim is docref-anchored to the source that proves it |
 
 ## Uncommitted state at seed time, and its disposition
 

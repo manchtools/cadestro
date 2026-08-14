@@ -61,6 +61,45 @@ cd server   && make sqlc-generate # SQL queries -> internal/store/generated
 
 Both are gated: CI regenerates and fails if the committed output differs.
 
+## Documentation
+
+The product documentation lives in [`docs/`](docs/) and is written **from the
+code in this repository**, not from any predecessor corpus. It is one tree, not
+one per module, because the pages cut across modules: enrollment is `agent/` and
+`server/` together, the policy model is `contract/` plus both sides that
+implement it, and the capability reference is `agent/internal/executor/` plus
+the `sdk/sys/` backends underneath it.
+
+Every behavioural statement in it is anchored with
+[docref](https://github.com/manchtools/open-docref) to the symbol or region that
+proves it, so a change to the code fails the docs that describe it:
+
+```bash
+docref check           # repository root: README.md + docs/ + agent/
+cd server && docref check
+cd sdk    && docref check
+```
+
+Three roots, one per `docref.toml`; `.github/workflows/docref.yml` runs all
+three. Write the anchor as you write the sentence:
+
+```bash
+docref claim 'server/internal/ca/ca.go#CA.IssueCertificateFromCSR'   # a symbol
+docref claim 'server/deploy/setup.sh#@archive-isolation'             # a region
+```
+
+That prints a paste-ready `<!-- docref: begin … -->` / `<!-- docref: end -->`
+block with the hash already computed — never type or repair a hash by hand. When
+a prose claim goes stale because the code moved, read the change and then
+`docref approve <path>`; when only a materialized snippet moved, `docref
+refresh` is mechanical. An un-anchored claim about behaviour is treated the same
+way as an untested code path.
+
+Module-local prose (`agent/README.md`, `server/deploy/QUICKSTART.md`,
+`sdk/docs/`) stays where it is and stays anchored: it documents the module to
+someone working *inside* it. `docs/` documents the product to someone deploying
+and running it.
+
 ## Continuous integration
 
 Workflows live in `.github/workflows/` at the repository root — GitHub honours
