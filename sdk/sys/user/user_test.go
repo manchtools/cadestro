@@ -224,7 +224,7 @@ func TestLockUnlock(t *testing.T) {
 func TestUnlock_Passwordless(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "cadestro-tty-paul:!:19000:0:99999:7:::\n"}, nil) // getent shadow: locked + passwordless
-	f.Push(exec.Result{}, nil)                                             // usermod -p '*'
+	f.Push(exec.Result{}, nil)                                                   // usermod -p '*'
 	if err := mgr(t, f).Unlock(context.Background(), "cadestro-tty-paul"); err != nil {
 		t.Fatal(err)
 	}

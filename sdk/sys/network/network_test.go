@@ -446,7 +446,7 @@ func TestApply_EAPTLS_UpdateSettingsErrorStillStages(t *testing.T) {
 	_, certBase := redirectDirs(t)
 	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)                      // exists
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)                // exists
 	r.push(exec.Result{ExitCode: 10, Stderr: "settings read failed"}, nil) // Settings fails
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{

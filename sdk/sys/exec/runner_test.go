@@ -130,10 +130,10 @@ func TestRunner_RejectsEmptyNameAndUnknownBinary(t *testing.T) {
 // Command.Env is already filtered; the inherited env must be filtered the same
 // way. Benign inherited vars are kept, and the forced locale still wins.
 func TestBuildChildEnv_DefaultBranchDropsHijackVars(t *testing.T) {
-	t.Setenv("LD_PRELOAD", "/tmp/evil.so")    // a classic injection var
-	t.Setenv("BASH_ENV", "/tmp/evil.sh")      // another
+	t.Setenv("LD_PRELOAD", "/tmp/evil.so")          // a classic injection var
+	t.Setenv("BASH_ENV", "/tmp/evil.sh")            // another
 	t.Setenv("CADESTRO_BENIGN_TEST_VAR", "keep-me") // a normal var that must survive
-	t.Setenv("LANG", "de_DE.UTF-8")           // reserved; forced LANG=C must win
+	t.Setenv("LANG", "de_DE.UTF-8")                 // reserved; forced LANG=C must win
 
 	env, err := buildChildEnv(Command{}) // default branch: inherit parent
 	if err != nil {

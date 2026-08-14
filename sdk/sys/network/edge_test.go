@@ -29,7 +29,7 @@ func TestApply_PSK_KeyfileWriteFails(t *testing.T) {
 func TestApply_PSK_UpdateReloadFails(t *testing.T) {
 	redirectDirs(t)
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "cadestro-wifi\n"}, nil)                  // exists → update
+	r.push(exec.Result{Stdout: "cadestro-wifi\n"}, nil)            // exists → update
 	r.push(exec.Result{ExitCode: 2, Stderr: "reload failed"}, nil) // reload fails
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name: "cadestro-wifi", SSID: "x", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
