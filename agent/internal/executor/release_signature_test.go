@@ -26,7 +26,7 @@ func testReleaseSigningKey(t *testing.T) ed25519.PrivateKey {
 
 func TestVerifyReleaseManifestRejectsAnythingButTheConfiguredSigner(t *testing.T) {
 	private := testReleaseSigningKey(t)
-	manifest := []byte("abc  power-manage-agent-linux-amd64\n")
+	manifest := []byte("abc  cadestrod-linux-amd64\n")
 	signature := ed25519.Sign(private, manifest)
 
 	if err := verifyReleaseManifest(manifest, signature); err != nil {

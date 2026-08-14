@@ -13,9 +13,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/maintenance"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 const DefaultCheckInterval = time.Minute

@@ -19,8 +19,8 @@ import (
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 
 var testCAPin = strings.Repeat("0", 64)

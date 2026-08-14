@@ -7,11 +7,11 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/unit"
 	"github.com/manchtools/cadestro/sdk/logging"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/service"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
-	"github.com/manchtools/power-manage/agent/internal/unit"
 )
 
 // runInstallUnit implements the `install-unit` subcommand (spec 27): it

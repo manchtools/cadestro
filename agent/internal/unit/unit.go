@@ -10,7 +10,7 @@
 // a rewritten unit takes effect at the next restart — reboot, a manual
 // systemctl restart, or the respawn the next self-update performs.
 // Operator customizations belong in drop-ins
-// (power-manage-agent.service.d/*.conf), which win per systemd
+// (cadestrod.service.d/*.conf), which win per systemd
 // semantics and which this package never reads or writes.
 //
 // All system operations go through sdk/sys/service.Manager — the same
@@ -31,7 +31,7 @@ import (
 )
 
 // ServiceName is the agent's systemd service name (sans unit suffix).
-const ServiceName = "power-manage-agent"
+const ServiceName = "cadestrod"
 
 // UnitName is the full unit-file name WriteUnit/ReadUnit operate on.
 const UnitName = ServiceName + ".service"
@@ -41,7 +41,7 @@ const UnitName = ServiceName + ".service"
 // (which would break sudo children); see the former install.sh probe.
 const restrictRealtimeMinVersion = 257
 
-//go:embed power-manage-agent.service.tmpl
+//go:embed cadestrod.service.tmpl
 var unitTemplate string
 
 var tmpl = template.Must(template.New(UnitName).Parse(unitTemplate))

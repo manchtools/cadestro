@@ -6,10 +6,10 @@
 # registers with a control server — all in one step.
 #
 # One-liner install (stable):
-#   curl -fsSL https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/install.sh | sudo bash -s -- -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
+#   curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh | sudo bash -s -- -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
 #
 # One-liner install (prerelease):
-#   curl -fsSL https://github.com/MANCHTOOLS/power-manage-agent/releases/latest/download/install.sh | sudo bash -s -- --pre -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
+#   curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh | sudo bash -s -- --pre -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
 #
 # Usage:
 #   sudo ./install.sh [OPTIONS]
@@ -20,8 +20,8 @@
 #   -p, --pin SHA256        Required control CA fingerprint supplied with the token
 #   -v, --version VERSION   Version to install (default: latest)
 #   --pre                   Install the latest prerelease (release candidate) version
-#   -d, --data-dir DIR      Data directory (default: /var/lib/power-manage)
-#   -b, --binary PATH       Path to the agent binary (default: /usr/local/bin/power-manage-agent)
+#   -d, --data-dir DIR      Data directory (default: /var/lib/cadestro)
+#   -b, --binary PATH       Path to the agent binary (default: /usr/local/bin/cadestrod)
 #   --skip-download         Skip downloading the binary (use existing binary at --binary path)
 #   --uninstall             Remove the agent and all configuration
 #   -h, --help              Show this help message
@@ -29,7 +29,7 @@
 
 set -e
 
-GITHUB_REPO="MANCHTOOLS/power-manage-agent"
+GITHUB_REPO="manchtools/cadestro"
 # Replaced with the base64-encoded PKIX Ed25519 public key by the protected
 # release workflow. A source-tree installer deliberately fails closed: only a
 # release artifact carries the pinned value.
@@ -40,16 +40,16 @@ RELEASE_SIGNING_PUBLIC_KEY="__RELEASE_SIGNING_PUBLIC_KEY__"
 INSTALLER_RELEASE_VERSION="__INSTALLER_RELEASE_VERSION__"
 
 # Default values
-DATA_DIR="/var/lib/power-manage"
-BINARY_PATH="/usr/local/bin/power-manage-agent"
-SERVICE_NAME="power-manage-agent"
+DATA_DIR="/var/lib/cadestro"
+BINARY_PATH="/usr/local/bin/cadestrod"
+SERVICE_NAME="cadestrod"
 REGISTRATION_TOKEN=""
 SERVER_URL=""
 CA_FINGERPRINT_PIN=""
 SKIP_DOWNLOAD=""
 PRE_RELEASE=""
 VERSION="latest"
-# WS7 #4: the power-manage:// desktop URI handler is OPT-IN and OFF by
+# WS7 #4: the cadestro:// desktop URI handler is OPT-IN and OFF by
 # default — an unconditional handler exposes the root-capable binary to
 # drive-by browser links. Enable with --enable-uri-handler or
 # POWER_MANAGE_ENABLE_URI_HANDLER=true.
@@ -89,8 +89,8 @@ Options:
   -p, --pin SHA256        Required control CA fingerprint supplied with the token
   -v, --version VERSION   Version to install (e.g., v2026.2.0; default: latest)
   --pre                   Install the latest prerelease (release candidate) version
-  -d, --data-dir DIR      Data directory (default: /var/lib/power-manage)
-  -b, --binary PATH       Path to the agent binary (default: /usr/local/bin/power-manage-agent)
+  -d, --data-dir DIR      Data directory (default: /var/lib/cadestro)
+  -b, --binary PATH       Path to the agent binary (default: /usr/local/bin/cadestrod)
   --skip-download         Skip downloading the binary (use existing binary at --binary path)
   --uninstall             Remove the agent and all configuration
   -h, --help              Show this help message
@@ -266,7 +266,7 @@ download_binary() {
 
     local arch
     arch=$(detect_arch)
-    local binary_name="power-manage-agent-linux-${arch}"
+    local binary_name="cadestrod-linux-${arch}"
     local download_url sums_url sums_signature_url release_base
 
     if [[ "$VERSION" == "latest" ]]; then
@@ -291,7 +291,7 @@ download_binary() {
     dest_dir=$(dirname "$BINARY_PATH")
     mkdir -p "$dest_dir"
     local tmp_binary tmp_sums tmp_signature tmp_public
-    tmp_binary=$(mktemp "${dest_dir}/.power-manage-agent.XXXXXX")
+    tmp_binary=$(mktemp "${dest_dir}/.cadestrod.XXXXXX")
     tmp_sums=$(mktemp "${dest_dir}/.SHA256SUMS.XXXXXX")
     tmp_signature=$(mktemp "${dest_dir}/.SHA256SUMS.sig.XXXXXX")
     tmp_public=$(mktemp "${dest_dir}/.release-signing-public.XXXXXX")
@@ -489,7 +489,7 @@ enable_and_start_service() {
     log_info "Service started"
 
     # If not yet enrolled, the agent will listen on the enrollment socket
-    # and wait for enrollment via: power-manage-agent enroll -server=URL -token-file=PATH -pin=CA_SHA256
+    # and wait for enrollment via: cadestrod enroll -server=URL -token-file=PATH -pin=CA_SHA256
 }
 
 uninstall() {
@@ -514,9 +514,9 @@ uninstall() {
     fi
 
     # Remove desktop handler
-    if [[ -f "/usr/share/applications/power-manage-agent.desktop" ]]; then
+    if [[ -f "/usr/share/applications/cadestrod.desktop" ]]; then
         log_info "Removing desktop handler..."
-        rm -f "/usr/share/applications/power-manage-agent.desktop"
+        rm -f "/usr/share/applications/cadestrod.desktop"
     fi
 
     # Ask about data directory
@@ -534,15 +534,15 @@ uninstall() {
     log_info "Uninstall complete"
 }
 
-# install_desktop_handler registers the power-manage:// URI scheme so a
-# browser link can launch `power-manage-agent luks set-passphrase`. It is
+# install_desktop_handler registers the cadestro:// URI scheme so a
+# browser link can launch `cadestrod luks set-passphrase`. It is
 # OPT-IN (--enable-uri-handler / POWER_MANAGE_ENABLE_URI_HANDLER=true) and
 # OFF by default: an unconditional handler exposes the root-capable binary
 # to drive-by links (WS7 #4). The entry sets Terminal=false so a malicious
 # link cannot silently auto-spawn a terminal; operators who enable the
 # handler get a non-auto-launching entry.
 install_desktop_handler() {
-    local desktop_file="/usr/share/applications/power-manage-agent.desktop"
+    local desktop_file="/usr/share/applications/cadestrod.desktop"
 
     log_info "Installing desktop URI handler (opt-in)..."
 
@@ -553,7 +553,7 @@ Comment=Power Manage device agent
 Exec=$BINARY_PATH %u
 Terminal=false
 Type=Application
-MimeType=x-scheme-handler/power-manage;
+MimeType=x-scheme-handler/cadestro;
 NoDisplay=true
 EOF
 
@@ -561,7 +561,7 @@ EOF
 
     # Register the URI scheme handler
     if command -v xdg-mime &>/dev/null; then
-        xdg-mime default power-manage-agent.desktop x-scheme-handler/power-manage 2>/dev/null || true
+        xdg-mime default cadestrod.desktop x-scheme-handler/cadestro 2>/dev/null || true
     fi
 
     log_info "Desktop URI handler installed"
@@ -569,7 +569,7 @@ EOF
 
 # The agent runs as root and exposes an in-process LUKS daemon socket
 # at /run/pm-agent/luks.sock (created at runtime under the unit's
-# RuntimeDirectory=pm-agent). The unprivileged `power-manage-agent luks
+# RuntimeDirectory=pm-agent). The unprivileged `cadestrod luks
 # set-passphrase` client sends only {token, passphrase} to that socket;
 # the root agent performs the cryptsetup work with its own credentials,
 # authorized by the server-issued device-bound, single-use token.
@@ -632,11 +632,11 @@ main() {
     create_directories
     install_systemd_service
     # WS7 #4: opt-in only — the URI handler exposes the root-capable binary
-    # to drive-by power-manage:// links, so it is not installed by default.
+    # to drive-by cadestro:// links, so it is not installed by default.
     if [[ "$ENABLE_URI_HANDLER" == "true" ]]; then
         install_desktop_handler
     else
-        log_info "Skipping power-manage:// URI handler (enable with --enable-uri-handler)"
+        log_info "Skipping cadestro:// URI handler (enable with --enable-uri-handler)"
     fi
 
     enable_and_start_service

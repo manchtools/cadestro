@@ -12,7 +12,7 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 
-	"github.com/manchtools/power-manage/agent/internal/store"
+	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
 // LpsPasswordStore sends rotated passwords as dedicated sealed fields over the

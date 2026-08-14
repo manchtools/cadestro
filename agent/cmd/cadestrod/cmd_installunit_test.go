@@ -18,7 +18,7 @@ func TestReconcileUnitAtStartup_NonRootIsCompleteNoop(t *testing.T) {
 		t.Skip("test requires a non-root euid to exercise the root guard")
 	}
 	fake := exectest.New(sysexec.Direct)
-	reconcileUnitAtStartup(context.Background(), fake, discardLogger(), "/var/lib/power-manage")
+	reconcileUnitAtStartup(context.Background(), fake, discardLogger(), "/var/lib/cadestro")
 	if calls := fake.Calls(); len(calls) != 0 {
 		t.Fatalf("non-root reconcile must be a complete no-op, ran %d commands: %+v", len(calls), calls)
 	}

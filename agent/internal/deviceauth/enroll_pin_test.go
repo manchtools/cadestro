@@ -12,9 +12,9 @@ import (
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 
 const fakeLeafPEM = "-----BEGIN CERTIFICATE-----\nleaf\n-----END CERTIFICATE-----\n"

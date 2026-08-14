@@ -14,9 +14,9 @@ import (
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
 	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 
 // credentialStore is the slice of *credentials.Store the enrollment

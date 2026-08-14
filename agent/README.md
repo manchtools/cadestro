@@ -58,8 +58,8 @@ The agent has one explicit enrollment method:
 
 1. The install script starts the agent as a systemd service
 2. The unenrolled agent opens an **enrollment socket** at `/run/pm-agent/enroll.sock` (mode 0600, restricted to the agent's own uid — root under the shipped unit)
-3. The local operator (running as the agent's uid, i.e. root) runs `power-manage-agent enroll -server=URL -token-file=PATH -pin=CA_SHA256`
-   (or `PM_REGISTRATION_TOKEN=… power-manage-agent enroll -server=URL -pin=CA_SHA256`)
+3. The local operator (running as the agent's uid, i.e. root) runs `cadestrod enroll -server=URL -token-file=PATH -pin=CA_SHA256`
+   (or `PM_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=CA_SHA256`)
 4. The CLI sends an `Enroll` RPC to the agent over the unix socket
 5. The agent calls the **Control Server** `Register` RPC with the token and a locally-generated CSR
 6. The Control Server validates the token, signs the certificate, and returns credentials
@@ -83,7 +83,7 @@ The agent has one explicit enrollment method:
 > `-token-file` or the `PM_REGISTRATION_TOKEN` env var; passing `-token`
 > on argv still works but warns (it leaks via `/proc/<pid>/cmdline`).
 > The operator must pass the out-of-band **CA fingerprint pin** returned beside
-> the registration token (`-pin`, or `&pin=` in a `power-manage://` URI). The agent verifies the
+> the registration token (`-pin`, or `&pin=` in a `cadestro://` URI). The agent verifies the
 > Control Server CA matches the pin before trusting it, defending against
 > a first-enrollment trust-anchor swap. Missing, malformed, and mismatched pins
 > all fail before credentials are saved; there is no trust-on-first-use path.
@@ -91,7 +91,7 @@ The agent has one explicit enrollment method:
 ```
                                   ┌─────────────────────────┐
   Operator (root)                 │   Agent (systemd svc)   │
-  power-manage-agent enroll ───►  │   /run/pm-agent/        │
+  cadestrod enroll ───►  │   /run/pm-agent/        │
     -server=URL -token-file=PATH  │     enroll.sock (0600)  │
     -pin=CA_SHA256                │         │               │
                                   │         │               │
@@ -127,58 +127,58 @@ curl -fsSL https://your-server/install.sh | sudo bash -s -- \
   --pin YOUR_CA_SHA256
 ```
 
-<!-- docref: begin src=install.sh#download_binary:2f3e9ce7 -->
+<!-- docref: begin src=install.sh#download_binary:da1c3e0a -->
 The install script:
 1. Installs its own release by default: the release build stamps the tag into
    the installer, so a release asset run without `-v` fetches that release's
    binaries rather than resolving GitHub's prerelease-skipping `latest` alias
 2. Downloads `SHA256SUMS` and `SHA256SUMS.sig`, verifies the manifest with the
    pinned Ed25519 release key, then verifies and installs the agent binary
-3. Creates `/var/lib/power-manage` as a root-owned, mode 0700 data directory
+3. Creates `/var/lib/cadestro` as a root-owned, mode 0700 data directory
 4. Installs the systemd unit with `User=root` and the documented capability bounding set, then enables and starts the service
 5. Enrolls via the enrollment socket only when `--server`, `--token`, and `--pin` are provided
 <!-- docref: end -->
 
-The `power-manage://` desktop URI handler is **opt-in** (`--enable-uri-handler` or `POWER_MANAGE_ENABLE_URI_HANDLER=true`) and **off by default** — an unconditional handler exposes the root-capable binary to drive-by browser links. When enabled, the `.desktop` entry sets `Terminal=false` so a link cannot auto-spawn a terminal.
+The `cadestro://` desktop URI handler is **opt-in** (`--enable-uri-handler` or `POWER_MANAGE_ENABLE_URI_HANDLER=true`) and **off by default** — an unconditional handler exposes the root-capable binary to drive-by browser links. When enabled, the `.desktop` entry sets `Terminal=false` so a link cannot auto-spawn a terminal.
 
-There is **no LUKS sudoers rule** — `power-manage-agent luks set-passphrase` is an unprivileged client to the root agent's LUKS daemon socket (see [LUKS passphrase daemon](#luks-passphrase-daemon)).
+There is **no LUKS sudoers rule** — `cadestrod luks set-passphrase` is an unprivileged client to the root agent's LUKS daemon socket (see [LUKS passphrase daemon](#luks-passphrase-daemon)).
 
 ### Manual Installation
 
 ```bash
 # Build the agent
-go build -o power-manage-agent ./agent/cmd/agent
+go build -o cadestrod ./cmd/cadestrod
 
 # Start the agent as root (it will wait for enrollment)
-sudo ./power-manage-agent
+sudo ./cadestrod
 
 # In another terminal, enroll via the local socket as root (the shipped
 # service runs as root; the socket only admits the agent's own uid):
-sudo power-manage-agent enroll -server=https://control.example.com:8081 -token-file=TOKEN_PATH -pin=YOUR_CA_SHA256
+sudo cadestrod enroll -server=https://control.example.com:8081 -token-file=TOKEN_PATH -pin=YOUR_CA_SHA256
 ```
 
 For a production-style manual install (without the install script):
 
 ```bash
 # 1. Place the binary
-sudo install -m 0755 power-manage-agent /usr/local/bin/
+sudo install -m 0755 cadestrod /usr/local/bin/
 
 # 2. Create the data directory
-sudo mkdir -p /var/lib/power-manage && sudo chmod 700 /var/lib/power-manage
+sudo mkdir -p /var/lib/cadestro && sudo chmod 700 /var/lib/cadestro
 
 # 3. Write the systemd unit (User=root, RuntimeDirectory=pm-agent for the
 #    enrollment socket). See install.sh for the full unit including
 #    the AmbientCapabilities / CapabilityBoundingSet block.
 sudo systemctl daemon-reload
-sudo systemctl enable --now power-manage-agent
+sudo systemctl enable --now cadestrod
 
 # 4. Enroll (any user, no sudo needed)
-power-manage-agent enroll -server=https://control.example.com:8081 -token-file=TOKEN_PATH -pin=YOUR_CA_SHA256
+cadestrod enroll -server=https://control.example.com:8081 -token-file=TOKEN_PATH -pin=YOUR_CA_SHA256
 ```
 
 ### Using URI Scheme
 
-The explicit `enroll` subcommand accepts a `power-manage://` URI containing both the token and CA pin.
+The explicit `enroll` subcommand accepts a `cadestro://` URI containing both the token and CA pin.
 The desktop handler never auto-enrolls from a browser click; it refuses registration URIs and prints the
 explicit command the operator may run.
 
@@ -187,7 +187,7 @@ explicit command the operator may run.
 > regardless; only clickable browser-link registration requires the handler.
 
 ```bash
-power-manage-agent enroll 'power-manage://control.example.com:8081?token=abc123&pin=CA_SHA256'
+cadestrod enroll 'cadestro://control.example.com:8081?token=abc123&pin=CA_SHA256'
 ```
 
 URI Parameters:
@@ -215,7 +215,7 @@ URI Parameters:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-data-dir` | `/var/lib/power-manage` | Data directory for state |
+| `-data-dir` | `/var/lib/cadestro` | Data directory for state |
 | `-log-level` | `info` | Log level (debug, info, warn, error) |
 
 The `enroll` subcommand separately accepts required `-server` and `-pin` flags plus one token source:
@@ -418,7 +418,7 @@ Automated password rotation with encrypted state tracking.
 | `complexity` | `ALPHANUMERIC` or `COMPLEX` |
 | `rotation_interval_days` | Days between rotations |
 
-Rotated passwords are returned in the `lps.rotations` metadata field and stored encrypted on the server. The LPS state is tracked per-action in `/var/lib/power-manage/lps/`.
+Rotated passwords are returned in the `lps.rotations` metadata field and stored encrypted on the server. The LPS state is tracked per-action in `/var/lib/cadestro/lps/`.
 
 **Desired State:**
 - `PRESENT`: Rotate passwords if the rotation interval has elapsed
@@ -489,9 +489,9 @@ The agent communicates with the server via bidirectional stream messages (`GetLu
 
 #### LUKS passphrase daemon
 
-<!-- docref: begin src=cmd/power-manage-agent/cmd_luks.go#resolveLuksToken:0972a499,internal/luksd/peercred.go#peerAuthorized:8ce20012,internal/luksd/server.go#Daemon.Start:80dfc23a -->
+<!-- docref: begin src=cmd/cadestrod/cmd_luks.go#resolveLuksToken:0972a499,internal/luksd/peercred.go#peerAuthorized:8ce20012,internal/luksd/server.go#Daemon.Start:80dfc23a -->
 When `device_bound_key_type` is `USER_PASSPHRASE`, the user sets their slot-7
-passphrase with `power-manage-agent luks set-passphrase` and supplies the token
+passphrase with `cadestrod luks set-passphrase` and supplies the token
 by private file, environment variable, or hidden prompt. This command is
 **unprivileged** and requires **no sudo / sudoers rule**: it is a thin client
 to a root daemon the agent runs in-process on a Unix socket at
@@ -636,7 +636,7 @@ run in-process without a separate escalation account or sudoers policy.
 
 - **Registration**: Agent registers with the Control Server over HTTPS, authenticating with a registration token
 - **mTLS**: After registration, the agent connects to control's agent listener using mutual TLS with certificates signed by the Control Server CA
-<!-- docref: begin src=cmd/power-manage-agent/cert_rotation.go#renewAt:211ccaeb,cmd/power-manage-agent/cert_rotation.go#applyRenewal:49ccae95 -->
+<!-- docref: begin src=cmd/cadestrod/cert_rotation.go#renewAt:211ccaeb,cmd/cadestrod/cert_rotation.go#applyRenewal:49ccae95 -->
 - **Certificate Rotation**: The agent automatically renews its mTLS certificate at 80% of its lifetime (~292 days for a 1-year cert). Renewal uses the existing private key to generate a new CSR and calls the Control Server's `RenewCertificate` RPC, presenting the current certificate for identity verification. The response includes the active CA certificate. The agent stores it only when it is identical to or cross-signed by the enrolled CA; an unrelated root is refused. Operators load the old+new bundle and restart control before the overlap begins. On failure, the agent retries hourly.
 - **Trust root**: the direct agent stream validates control against the pinned
   enrollment CA. Renewal occurs through authenticated control and preserves CA
@@ -684,9 +684,9 @@ Remote terminal sessions are **disabled by default** on every device. Before a s
 **Commands:**
 
 ```bash
-sudo power-manage-agent tty enable      # allow remote terminals on this device
-sudo power-manage-agent tty disable     # revoke access; existing sessions must be closed separately
-power-manage-agent tty status           # prints "enabled" or "disabled"; exit 0 / 1
+sudo cadestrod tty enable      # allow remote terminals on this device
+sudo cadestrod tty disable     # revoke access; existing sessions must be closed separately
+cadestrod tty status           # prints "enabled" or "disabled"; exit 0 / 1
 ```
 
 **How it works:**
@@ -703,7 +703,7 @@ power-manage-agent tty status           # prints "enabled" or "disabled"; exit 0
 The toggle is queryable from the server via a compliance shell action:
 
 ```bash
-power-manage-agent tty status
+cadestrod tty status
 ```
 
 Exit code 0 = enabled, 1 = disabled. Combined with `is_compliance=true` + `compliance_expected_output=enabled` (or `disabled`), admins can report on fleet-wide TTY state without a new action type.
@@ -731,13 +731,13 @@ Logs are written to stdout/stderr and can be collected by systemd journal:
 
 ```bash
 # View agent logs
-journalctl -u power-manage-agent -f
+journalctl -u cadestrod -f
 ```
 
 ## Data Directory Structure
 
 ```
-/var/lib/power-manage/
+/var/lib/cadestro/
 ├── certs/
 │   ├── device.crt      # Device certificate
 │   └── device.key      # Device private key
@@ -785,7 +785,7 @@ requires `allow_downgrade` in the authenticated delivery.
 ### Update Process
 
 1. Download and authenticate the publisher-signed checksum manifest, then
-   download the binary to `/var/lib/power-manage/update/agent-update-*.tmp` and
+   download the binary to `/var/lib/cadestro/update/agent-update-*.tmp` and
    verify its SHA-256 against the trusted manifest entry
 2. Run `<tmpPath> version`, compare with running — skip if same; refuse a downgrade unless `allow_downgrade`
 3. Run `<tmpPath> self-test` as a subprocess (60s timeout). The self-test:
@@ -822,7 +822,7 @@ Type=simple
 # root. Don't change this to a regular user without first auditing
 # every action executor for capability requirements.
 User=root
-ExecStart=/usr/local/bin/power-manage-agent
+ExecStart=/usr/local/bin/cadestrod
 Restart=always
 RestartSec=10
 
@@ -833,10 +833,10 @@ WantedBy=multi-user.target
 Manage with:
 
 ```bash
-sudo systemctl start power-manage-agent
-sudo systemctl stop power-manage-agent
-sudo systemctl status power-manage-agent
-sudo systemctl enable power-manage-agent
+sudo systemctl start cadestrod
+sudo systemctl stop cadestrod
+sudo systemctl status cadestrod
+sudo systemctl enable cadestrod
 ```
 
 ## Development
@@ -925,7 +925,7 @@ Integration tests run automatically on push to `main` and on pull requests via G
 The release workflow (`.github/workflows/release.yml`) gates binary builds on
 passing integration tests, then signs the checksum manifest before publishing.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:0f884921 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:90961075 -->
 Release signing uses two GitHub settings:
 
 - `RELEASE_SIGNING_PRIVATE_KEY`: the PKCS#8 PEM private key, stored only as a
@@ -946,10 +946,10 @@ Cloning or forking this repository does not provide MANCHTOOLS release-signing
 settings or private key material. Downstream maintainers must configure their
 own Ed25519 pair under the same Actions variable and environment-secret names.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:0f884921,internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:90961075,internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
 There are two deliberately different build modes:
 
-- A normal `go build ./cmd/power-manage-agent` development build succeeds
+- A normal `go build ./cmd/cadestrod` development build succeeds
   without a release key, but contains no trusted publisher identity.
   Self-update does not work: the agent rejects the release manifest before
   trusting its hashes, and no action field can bypass that check.
@@ -981,7 +981,7 @@ Each distro has its own Dockerfile in `test/`:
 
 Container setup:
 1. Install Go toolchain and test dependencies
-2. Create LPS state directory under `/var/lib/power-manage/` (root-owned)
+2. Create LPS state directory under `/var/lib/cadestro/` (root-owned)
 3. Set up SSHD host keys and config directory for validation tests
 4. Pre-download Go module dependencies
 
@@ -1042,7 +1042,7 @@ These tests verify resilience against real-world failure conditions. Some requir
 | Test | Description |
 |------|-------------|
 | `EdgeCase_LpsInvalidJson` | Corrupted JSON state file is treated as initial rotation |
-| `EdgeCase_LpsMissingDirectory` | Missing `/var/lib/power-manage/lps/` directory is re-created |
+| `EdgeCase_LpsMissingDirectory` | Missing `/var/lib/cadestro/lps/` directory is re-created |
 
 **Missing system directories:**
 | Test | Description |

@@ -11,7 +11,7 @@ import (
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 
-	"github.com/manchtools/power-manage/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 )
 
 // TestEnroll_RejectsNonHTTPSServerURL pins the https-only gate (#2/#16):

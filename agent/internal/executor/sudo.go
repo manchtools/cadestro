@@ -270,8 +270,8 @@ func generateTerminalAdminLimitedSudoConfig(groupName string) string {
 		"# Diagnostics",
 		fmt.Sprintf("%%%s ALL=(ALL) NOPASSWD: /usr/bin/dmesg", groupName),
 		"",
-		"# Deny modifications to power-manage-agent and sudoers",
-		fmt.Sprintf("%%%s ALL=(ALL) !/usr/bin/systemctl * power-manage-agent*", groupName),
+		"# Deny modifications to cadestrod and sudoers",
+		fmt.Sprintf("%%%s ALL=(ALL) !/usr/bin/systemctl * cadestrod*", groupName),
 		fmt.Sprintf("%%%s ALL=(ALL) !/usr/bin/visudo, !/usr/sbin/visudo", groupName),
 	}
 	lines = append(lines, terminalAdminLimitedDenyBlocks(groupName)...)
@@ -335,8 +335,8 @@ func generateLimitedSudoConfig(groupName string) string {
 		"# Diagnostics",
 		fmt.Sprintf("%%%s ALL=(ALL) /usr/bin/dmesg", groupName),
 		"",
-		"# Deny modifications to power-manage-agent and sudoers",
-		fmt.Sprintf("%%%s ALL=(ALL) !/usr/bin/systemctl * power-manage-agent*", groupName),
+		"# Deny modifications to cadestrod and sudoers",
+		fmt.Sprintf("%%%s ALL=(ALL) !/usr/bin/systemctl * cadestrod*", groupName),
 		fmt.Sprintf("%%%s ALL=(ALL) !/usr/bin/visudo, !/usr/sbin/visudo", groupName),
 	}
 	return strings.Join(lines, "\n") + "\n"

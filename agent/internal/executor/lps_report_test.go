@@ -13,7 +13,7 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 
-	"github.com/manchtools/power-manage/agent/internal/store"
+	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
 // These tests pin both X25519 field sealing and the ordering invariant: never

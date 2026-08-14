@@ -13,7 +13,7 @@ import (
 )
 
 // readRepoFile reads a file at the agent repo root (two levels up from
-// this package: agent/cmd/power-manage-agent → agent/).
+// this package: agent/cmd/cadestrod → agent/).
 func readRepoFile(t *testing.T, name string) string {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join("..", "..", name))
@@ -23,7 +23,7 @@ func readRepoFile(t *testing.T, name string) string {
 	return string(b)
 }
 
-// WS7 #4: the power-manage:// URI handler must be OPT-IN (off by default),
+// WS7 #4: the cadestro:// URI handler must be OPT-IN (off by default),
 // and the desktop entry must not auto-launch a terminal. An unconditional
 // handler exposes the root-capable binary to drive-by links.
 func TestInstall_DesktopHandlerOptIn(t *testing.T) {
@@ -203,7 +203,7 @@ func TestInstall_ReleaseVerifierAcceptsOnlyConfiguredSigner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	manifest := []byte("abc  power-manage-agent-linux-amd64\n")
+	manifest := []byte("abc  cadestrod-linux-amd64\n")
 	directory := t.TempDir()
 	manifestPath := filepath.Join(directory, "SHA256SUMS")
 	signaturePath := filepath.Join(directory, "SHA256SUMS.sig")
@@ -235,7 +235,7 @@ func TestInstall_ReleaseVerifierAcceptsOnlyConfiguredSigner(t *testing.T) {
 // unit) and requires a justification comment for every capability in
 // the bounding set.
 func TestInstall_CapsDocumented(t *testing.T) {
-	sh := readRepoFile(t, filepath.Join("internal", "unit", "power-manage-agent.service.tmpl"))
+	sh := readRepoFile(t, filepath.Join("internal", "unit", "cadestrod.service.tmpl"))
 
 	var capLine string
 	commentCaps := map[string]bool{}
@@ -296,8 +296,8 @@ func TestInstall_SingleUnitSource(t *testing.T) {
 // install.sh (it holds action secrets + the agent store).
 func TestContainerfile_DataDirPerms(t *testing.T) {
 	cf := readRepoFile(t, "Containerfile")
-	if !strings.Contains(cf, "chmod 700 /var/lib/power-manage") {
-		t.Error("Containerfile must `chmod 700 /var/lib/power-manage` after creating it")
+	if !strings.Contains(cf, "chmod 700 /var/lib/cadestro") {
+		t.Error("Containerfile must `chmod 700 /var/lib/cadestro` after creating it")
 	}
 }
 

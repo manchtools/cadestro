@@ -16,10 +16,10 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/sdk/pkg"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // Repository configuration validation (name grammar, per-backend URL/baseurl

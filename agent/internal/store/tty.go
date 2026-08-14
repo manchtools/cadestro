@@ -8,7 +8,7 @@ import "strings"
 //
 // The toggle is device-local — only the agent process (running as
 // power-manage) can write it, so enable/disable is invoked via the
-// power-manage-agent CLI which requires sudo or equivalent privilege
+// cadestrod CLI which requires sudo or equivalent privilege
 // escalation to the power-manage user. The server cannot flip this flag
 // directly; it can only request the flip via a shell action, which still
 // runs as the agent user on the device.

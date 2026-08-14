@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // TestRecordLuksTimestampFailure_EscalatesAtThreshold pins the

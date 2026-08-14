@@ -14,7 +14,7 @@ import (
 // passphrase, so the client refuses to send. Injectable for tests.
 type PassphraseReader func() (string, error)
 
-// Client is the UNPRIVILEGED side run by `power-manage-agent luks
+// Client is the UNPRIVILEGED side run by `cadestrod luks
 // set-passphrase`. It collects the passphrase and sends EXACTLY
 // {token, passphrase} to the root daemon socket — never credentials, a
 // data dir, or a store path. All privileged work happens in the daemon.

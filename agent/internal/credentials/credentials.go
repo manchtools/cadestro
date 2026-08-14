@@ -49,7 +49,7 @@ const (
 	saltFile        = "salt"
 
 	// Default data directory
-	DefaultDataDir = "/var/lib/power-manage"
+	DefaultDataDir = "/var/lib/cadestro"
 
 	// credentialsMagicV1 identifies the only accepted on-disk format.
 	// Agents are re-enrolled instead of carrying format compatibility code.

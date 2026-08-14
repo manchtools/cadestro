@@ -17,7 +17,7 @@ import (
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 
-	"github.com/manchtools/power-manage/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 )
 
 // failingStore wraps a real store but fails Save — for the

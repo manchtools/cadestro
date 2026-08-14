@@ -27,7 +27,7 @@ func TestExecuteService_RejectsNilParams(t *testing.T) {
 
 func TestExecuteService_RejectsAgentOwnService(t *testing.T) {
 	e := NewExecutor(nil)
-	name := "power-manage-agent.service"
+	name := "cadestrod.service"
 	params := &pb.ServiceParams{UnitName: name}
 	_, changed, err := e.executeService(context.Background(), params)
 	if err == nil {
@@ -40,8 +40,8 @@ func TestExecuteService_RejectsAgentOwnService(t *testing.T) {
 		t.Errorf("error should mention 'protected service', got %q", err)
 	}
 
-	// "power-manage-agent" without .service suffix is rejected at validation
-	params = &pb.ServiceParams{UnitName: "power-manage-agent"}
+	// "cadestrod" without .service suffix is rejected at validation
+	params = &pb.ServiceParams{UnitName: "cadestrod"}
 	_, changed, err = e.executeService(context.Background(), params)
 	if err == nil {
 		t.Fatal("expected error for agent's own service (no suffix), got nil")
@@ -79,7 +79,7 @@ func TestExecuteService_RejectsBeforeRemount(t *testing.T) {
 		remountCalled = true
 		return true
 	}
-	params := &pb.ServiceParams{UnitName: "power-manage-agent.service"}
+	params := &pb.ServiceParams{UnitName: "cadestrod.service"}
 	_, _, err := e.executeService(context.Background(), params)
 	if err == nil {
 		t.Fatal("expected error for agent's own service, got nil")

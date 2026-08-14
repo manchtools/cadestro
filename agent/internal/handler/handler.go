@@ -12,15 +12,15 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/manchtools/cadestro/agent/internal/executor"
+	"github.com/manchtools/cadestro/agent/internal/scheduler"
+	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/validate"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/inventory"
 	syslog "github.com/manchtools/cadestro/sdk/sys/log"
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
-	"github.com/manchtools/power-manage/agent/internal/executor"
-	"github.com/manchtools/power-manage/agent/internal/scheduler"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // heartbeatQueryTimeout bounds each BuildHeartbeat osquery round-trip;

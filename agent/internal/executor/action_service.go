@@ -30,11 +30,11 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 	}
 
 	// Never allow managing the agent's own service
-	if params.UnitName == "power-manage-agent.service" || params.UnitName == "power-manage-agent" {
+	if params.UnitName == "cadestrod.service" || params.UnitName == "cadestrod" {
 		return &pb.CommandOutput{
 			ExitCode: 1,
-			Stderr:   "refusing to manage the power-manage-agent service\n",
-		}, false, fmt.Errorf("cannot manage protected service: power-manage-agent")
+			Stderr:   "refusing to manage the cadestrod service\n",
+		}, false, fmt.Errorf("cannot manage protected service: cadestrod")
 	}
 
 	var output strings.Builder

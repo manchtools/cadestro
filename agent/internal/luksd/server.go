@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // Session is the agent's authenticated control connection, supplying the

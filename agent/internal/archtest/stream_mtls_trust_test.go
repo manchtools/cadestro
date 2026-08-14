@@ -130,7 +130,7 @@ func TestSystemRootsTrustIsConfinedToThePublicCAEndpoint(t *testing.T) {
 	}
 
 	allow := newAllowlist(map[string]string{
-		"cmd/power-manage-agent/cert_rotation.go :: startCertRotation": "ControlService.RenewCertificate is dialled at creds.ControlAddr, the public HTTPS host (Traefik + Let's Encrypt in the reference deployment), so server verification legitimately needs the host's system roots. The agent's own identity on that call is proven at the application layer by the current certificate carried in the request body, not by the transport's root pool.",
+		"cmd/cadestrod/cert_rotation.go :: startCertRotation": "ControlService.RenewCertificate is dialled at creds.ControlAddr, the public HTTPS host (Traefik + Let's Encrypt in the reference deployment), so server verification legitimately needs the host's system roots. The agent's own identity on that call is proven at the application layer by the current certificate carried in the request body, not by the transport's root pool.",
 	})
 
 	seen := 0

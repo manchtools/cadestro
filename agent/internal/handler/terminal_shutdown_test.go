@@ -114,7 +114,7 @@ func TestCloseAllTerminals_AlreadyStopping_NotDoubleReverted(t *testing.T) {
 // main shutdown path must invoke CloseAllTerminals, or a session left open at
 // shutdown leaks its activated shell. Fails if the caller is removed.
 func TestMain_ShutdownClosesLiveTerminals(t *testing.T) {
-	src, err := os.ReadFile("../../cmd/power-manage-agent/main.go")
+	src, err := os.ReadFile("../../cmd/cadestrod/main.go")
 	if err != nil {
 		t.Fatalf("read main.go: %v", err)
 	}

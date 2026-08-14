@@ -3,7 +3,7 @@
 // user set a LUKS passphrase WITHOUT any sudoers rule.
 //
 // WS6 #1/#19 close a local privilege escalation. The previous design ran
-// `power-manage-agent luks set-passphrase` under a NOPASSWD sudoers rule
+// `cadestrod luks set-passphrase` under a NOPASSWD sudoers rule
 // with an attacker-controllable `--data-dir`, so any local user could
 // point root's cryptsetup helper at a forged credential store and a
 // hostile control. This daemon removes BOTH: the sudoers rule is deleted,

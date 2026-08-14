@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // startDaemon runs a daemon on a temp socket and returns its path.

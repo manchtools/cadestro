@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
 	"github.com/manchtools/cadestro/sdk/logging"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 
 // runSelfTest runs a minimal connectivity probe to validate that this binary

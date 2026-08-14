@@ -24,7 +24,7 @@ import (
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 
-	"github.com/manchtools/power-manage/agent/internal/store"
+	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
 // =============================================================================
@@ -1452,7 +1452,7 @@ func TestIntegration_Systemd(t *testing.T) {
 	t.Run("ProtectAgent", func(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SERVICE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Service{Service: &pb.ServiceParams{
-			UnitName:     "power-manage-agent",
+			UnitName:     "cadestrod",
 			DesiredState: pb.ServiceUnitState_SERVICE_UNIT_STATE_STOPPED,
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))

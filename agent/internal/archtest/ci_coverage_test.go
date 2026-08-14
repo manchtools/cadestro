@@ -260,7 +260,7 @@ func replaceTarget(entry, module string) (string, bool) {
 // not a bypass this guard has to cover.
 func TestReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 	const sdkModulePath = "github.com/manchtools/cadestro/sdk"
-	const header = "module github.com/manchtools/power-manage/agent\n\ngo 1.25.12\n\nrequire " + sdkModulePath + " v0.0.0\n\n"
+	const header = "module github.com/manchtools/cadestro/agent\n\ngo 1.25.12\n\nrequire " + sdkModulePath + " v0.0.0\n\n"
 
 	for _, tc := range []struct {
 		name   string

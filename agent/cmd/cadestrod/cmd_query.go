@@ -34,7 +34,7 @@ func isNotInstalled(err error) bool {
 }
 
 // runQuery executes a local osquery table query and prints results.
-// Usage: power-manage-agent query <table> [--json]
+// Usage: cadestrod query <table> [--json]
 func runQuery(args []string) {
 	if len(args) == 0 {
 		printQueryUsage()
@@ -101,7 +101,7 @@ func runQuery(args []string) {
 }
 
 func printQueryUsage() {
-	fmt.Println("Usage: power-manage-agent query <table> [--json]")
+	fmt.Println("Usage: cadestrod query <table> [--json]")
 	fmt.Println()
 	fmt.Println("Query system information using the installed osquery binary.")
 	fmt.Println()

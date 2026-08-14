@@ -60,7 +60,7 @@ func TestSpecAgent_CertRenewalTime_Documented(t *testing.T) {
 	// The renewAt function in main cert_rotation.go must:
 	//   1. Return notAfter.Sub(notBefore) * 0.8 from notBefore, minus now
 	//   2. Clamp to minimum 1 minute when already past the renewal point
-	// Behavioral tests in cmd/power-manage-agent/cert_rotation_test.go.
+	// Behavioral tests in cmd/cadestrod/cert_rotation_test.go.
 	_ = time.Hour // prove we can use time package
 }
 

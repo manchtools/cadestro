@@ -11,9 +11,9 @@
 SSH         ?= user@testserver
 KEY         ?=
 GOARCH      ?= amd64
-BINARY      := power-manage-agent
+BINARY      := cadestrod
 REMOTE_BIN  := /usr/local/bin/$(BINARY)
-SERVICE     := power-manage-agent
+SERVICE     := cadestrod
 BUILD_DIR   := dist
 
 VERSION     := dev-$(shell date +%Y%m%d-%H%M%S)
@@ -34,7 +34,7 @@ build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build \
 		-ldflags="$(LDFLAGS)" \
 		-o $(BUILD_DIR)/$(BINARY)-linux-$(GOARCH) \
-		./cmd/power-manage-agent
+		./cmd/cadestrod
 	@echo "Built $(BUILD_DIR)/$(BINARY)-linux-$(GOARCH)  ($(VERSION))"
 
 deploy: build

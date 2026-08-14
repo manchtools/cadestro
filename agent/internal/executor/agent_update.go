@@ -26,7 +26,7 @@ import (
 type AgentUpdateConfig struct {
 	Version    string // Current running agent version
 	DataDir    string // Data directory for update staging
-	BinaryPath string // Path to the installed agent binary (e.g., /usr/local/bin/power-manage-agent)
+	BinaryPath string // Path to the installed agent binary (e.g., /usr/local/bin/cadestrod)
 	Shutdown   func() // Called after a successful update to trigger graceful agent shutdown
 }
 
@@ -512,8 +512,8 @@ func getBinaryVersion(binaryPath string) (string, error) {
 	if v == "" {
 		return "", fmt.Errorf("binary returned empty version")
 	}
-	// Output is "power-manage-agent <version>" today; an evolved
-	// format like "power-manage-agent 2026.05.07 (commit abc123)"
+	// Output is "cadestrod <version>" today; an evolved
+	// format like "cadestrod 2026.05.07 (commit abc123)"
 	// would have made the previous "last whitespace token" parser
 	// return "abc123)". Match the documented two-field format
 	// explicitly. Audit F028.

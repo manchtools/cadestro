@@ -143,11 +143,11 @@ func TestGenerateTerminalAdminLimitedSudoConfig_DeniesPersistenceVectors(t *test
 	}
 }
 
-// ADR L1/L5 + "Deny modifications to power-manage-agent and sudoers":
+// ADR L1/L5 + "Deny modifications to cadestrod and sudoers":
 // the agent-protection rules MUST actually deny. In sudoers(5) an EVEN
 // number of '!' operators cancels out (resolving to an ALLOW); only an
 // ODD number negates. So `!!/usr/bin/visudo` GRANTS visudo (sudoers
-// edit → trivial root) and `!!systemctl * power-manage-agent*` GRANTS
+// edit → trivial root) and `!!systemctl * cadestrod*` GRANTS
 // stopping/disabling the managed agent — the exact opposite of the
 // rule's stated purpose. No reading of the ADR wants visudo granted to
 // a LIMITED terminal admin, so a double-bang must never appear.
@@ -155,8 +155,8 @@ func TestGenerateTerminalAdminLimitedSudoConfig_AgentProtectionIsRealDeny(t *tes
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	assert.NotContains(t, out, "!!",
 		"double-bang in sudoers is an even negation = ALLOW; agent/visudo protection must use a single '!' deny")
-	assert.Contains(t, out, "!/usr/bin/systemctl * power-manage-agent*",
-		"LIMITED template must deny controlling the power-manage-agent unit")
+	assert.Contains(t, out, "!/usr/bin/systemctl * cadestrod*",
+		"LIMITED template must deny controlling the cadestrod unit")
 	assert.Contains(t, out, "!/usr/bin/visudo",
 		"LIMITED template must deny visudo (sudoers edit is root escalation)")
 	assert.Contains(t, out, "!/usr/sbin/visudo",

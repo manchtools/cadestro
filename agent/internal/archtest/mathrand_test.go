@@ -27,7 +27,7 @@ func TestNoMathRandForCrypto(t *testing.T) {
 	}
 
 	allow := newAllowlist(map[string]string{
-		"cmd/power-manage-agent/backend.go :: math/rand/v2": "connection backoff jitter (rand.Int64N) — non-cryptographic; IDs use ulidx and secret material uses crypto/rand",
+		"cmd/cadestrod/backend.go :: math/rand/v2": "connection backoff jitter (rand.Int64N) — non-cryptographic; IDs use ulidx and secret material uses crypto/rand",
 	})
 
 	for _, gf := range files {

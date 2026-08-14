@@ -1,4 +1,4 @@
-module github.com/manchtools/power-manage/agent
+module github.com/manchtools/cadestro/agent
 
 go 1.25.12
 

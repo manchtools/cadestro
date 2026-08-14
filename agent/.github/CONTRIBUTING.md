@@ -11,7 +11,7 @@
 The agent builds standalone against its pinned SDK dependency:
 
 ```bash
-go build ./cmd/power-manage-agent
+go build ./cmd/cadestrod
 go test ./...
 ```
 

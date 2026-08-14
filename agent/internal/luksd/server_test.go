@@ -15,9 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 const goodPassphrase = "correct-horse-battery-staple-42" // >= 16 chars

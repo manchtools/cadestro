@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/handler"
+	"github.com/manchtools/cadestro/agent/internal/luksd"
+	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
-	"github.com/manchtools/power-manage/agent/internal/handler"
-	"github.com/manchtools/power-manage/agent/internal/luksd"
-	"github.com/manchtools/power-manage/agent/internal/scheduler"
 )
 
 // runAgent connects to the control and processes messages.

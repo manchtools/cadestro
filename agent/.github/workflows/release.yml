@@ -53,8 +53,8 @@ jobs:
             echo "RELEASE_SIGNING_PUBLIC_KEY repository variable is required" >&2
             exit 1
           fi
-          go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X github.com/manchtools/power-manage/agent/internal/executor.releaseSigningPublicKey=${RELEASE_SIGNING_PUBLIC_KEY}" \
-            -o dist/power-manage-agent-linux-${{ matrix.arch }} ./cmd/power-manage-agent
+          go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }} -X github.com/manchtools/cadestro/agent/internal/executor.releaseSigningPublicKey=${RELEASE_SIGNING_PUBLIC_KEY}" \
+            -o dist/cadestrod-linux-${{ matrix.arch }} ./cmd/cadestrod
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v5
@@ -116,7 +116,7 @@ jobs:
             exit 1
           fi
           cd release
-          sha256sum power-manage-agent-linux-amd64 power-manage-agent-linux-arm64 install.sh > SHA256SUMS
+          sha256sum cadestrod-linux-amd64 cadestrod-linux-arm64 install.sh > SHA256SUMS
 
       - name: Sign release checksum manifest
         env:
@@ -236,8 +236,8 @@ jobs:
 
           | Binary | Platform |
           |--------|----------|
-          | `power-manage-agent-linux-amd64` | Linux x86_64 |
-          | `power-manage-agent-linux-arm64` | Linux ARM64 |
+          | `cadestrod-linux-amd64` | Linux x86_64 |
+          | `cadestrod-linux-arm64` | Linux ARM64 |
           EOF
 
       - name: Create release

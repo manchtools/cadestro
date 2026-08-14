@@ -67,7 +67,7 @@ func newUpdateHarness(t *testing.T, runningVersion string, serveBody, sumsBody [
 		sumsBody = []byte(sha256hex(serveBody) + "  agent\n")
 	}
 	dir := t.TempDir()
-	binaryPath := filepath.Join(dir, "power-manage-agent")
+	binaryPath := filepath.Join(dir, "cadestrod")
 	oldBytes := []byte("#!/bin/sh\necho OLD\n")
 	if err := os.WriteFile(binaryPath, oldBytes, 0o755); err != nil {
 		t.Fatalf("seed binary: %v", err)

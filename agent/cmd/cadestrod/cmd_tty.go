@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/manchtools/power-manage/agent/internal/credentials"
-	"github.com/manchtools/power-manage/agent/internal/store"
+	"github.com/manchtools/cadestro/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
 // runTTY manages the device-local TTY enable/disable toggle.
 // Usage:
 //
-//	power-manage-agent tty enable
-//	power-manage-agent tty disable
-//	power-manage-agent tty status
+//	cadestrod tty enable
+//	cadestrod tty disable
+//	cadestrod tty status
 //
 // The toggle is stored in the agent's SQLite database. `enable` and
 // `disable` require root (euid 0). `status` only needs read access to the
@@ -63,7 +63,7 @@ func runTTY(args []string) int {
 	// the agent CLI.
 	if sub == "enable" || sub == "disable" {
 		if os.Geteuid() != 0 {
-			fmt.Fprintf(os.Stderr, "Error: tty %s must be run as root (try: sudo power-manage-agent tty %s)\n", sub, sub)
+			fmt.Fprintf(os.Stderr, "Error: tty %s must be run as root (try: sudo cadestrod tty %s)\n", sub, sub)
 			return 1
 		}
 	}
@@ -109,5 +109,5 @@ func runTTY(args []string) int {
 }
 
 func printTTYUsage() {
-	fmt.Fprintln(os.Stderr, "usage: power-manage-agent tty {enable|disable|status} [--data-dir=PATH]")
+	fmt.Fprintln(os.Stderr, "usage: cadestrod tty {enable|disable|status} [--data-dir=PATH]")
 }

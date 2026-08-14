@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // CHARTER — LUKS passphrase custody (AGENT side).

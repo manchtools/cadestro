@@ -37,7 +37,7 @@ RUN grep -q 'Include /etc/ssh/sshd_config.d' /etc/ssh/sshd_config || \
     echo 'Include /etc/ssh/sshd_config.d/*.conf' >> /etc/ssh/sshd_config
 
 # LPS state directory (root-owned, matches production)
-RUN mkdir -p /var/lib/power-manage/lps
+RUN mkdir -p /var/lib/cadestro/lps
 
 # sshd privilege separation directory (needed by sshd -t)
 RUN mkdir -p /run/sshd

@@ -7,7 +7,7 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 
-	"github.com/manchtools/power-manage/agent/internal/executor"
+	"github.com/manchtools/cadestro/agent/internal/executor"
 )
 
 // Per-execution streaming budget (audit A-02, issue #170 — the polite

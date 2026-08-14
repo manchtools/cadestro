@@ -9,9 +9,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
 	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
 )
 
 // renewAt returns how long to wait, measured from now, before renewing a
@@ -74,7 +74,7 @@ func startCertRotation(ctx context.Context, credStore *credentials.Store, hostna
 		consecutiveFailures++
 		attrs := []any{"stage", stage, "error", err, "consecutive_failures", consecutiveFailures}
 		if shouldEscalateRotation(consecutiveFailures, escalateThreshold) {
-			// Escalated wording so a `journalctl -u power-manage-agent
+			// Escalated wording so a `journalctl -u cadestrod
 			// | grep "rotation stalled"` query surfaces the issue
 			// fast. The hours-stalled value is the operator-facing
 			// triage handle.

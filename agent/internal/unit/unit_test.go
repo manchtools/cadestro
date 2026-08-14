@@ -98,8 +98,8 @@ func (f *fakeManager) RemoveUnit(context.Context, string) error { f.fail("Remove
 
 func testLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
-const testBin = "/usr/local/bin/power-manage-agent"
-const testData = "/var/lib/power-manage"
+const testBin = "/usr/local/bin/cadestrod"
+const testData = "/var/lib/cadestro"
 
 // TestRender_RestrictRealtimeByVersion pins AC 2: ≥257 → true, <257 →
 // false; the unparseable/unknown case is exercised on the sync paths
@@ -138,7 +138,7 @@ func TestRender_CarriesInstallShape(t *testing.T) {
 		"AmbientCapabilities=CAP_SETUID CAP_SETGID",
 		"Restart=always",
 		"RuntimeDirectory=pm-agent",
-		"SyslogIdentifier=power-manage-agent",
+		"SyslogIdentifier=cadestrod",
 		"WantedBy=multi-user.target",
 	} {
 		if !strings.Contains(out, want) {

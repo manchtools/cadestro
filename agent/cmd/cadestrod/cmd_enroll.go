@@ -14,15 +14,15 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/manchtools/cadestro/agent/internal/deviceauth"
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
-	"github.com/manchtools/power-manage/agent/internal/deviceauth"
 )
 
-// parseRegistrationURI parses a power-manage:// URI.
-// Format: power-manage://server:port?token=xxx&pin=sha256
+// parseRegistrationURI parses a cadestro:// URI.
+// Format: cadestro://server:port?token=xxx&pin=sha256
 // Examples:
-//   - power-manage://control.example.com:8080?token=abc123&pin=<CA-SHA256>
+//   - cadestro://control.example.com:8080?token=abc123&pin=<CA-SHA256>
 //
 // TLS verification is always enforced. The previous `skip-verify=true`
 // and `tls=false` query parameters were removed because bypassing
@@ -30,8 +30,8 @@ import (
 // substitute the control URL and a malicious certificate before the
 // agent has any trust anchor of its own.
 func parseRegistrationURI(rawURI string) (*registrationURI, error) {
-	// Replace power-manage:// with https:// for parsing.
-	normalizedURI := strings.Replace(rawURI, "power-manage://", "https://", 1)
+	// Replace cadestro:// with https:// for parsing.
+	normalizedURI := strings.Replace(rawURI, "cadestro://", "https://", 1)
 
 	parsed, err := url.Parse(normalizedURI)
 	if err != nil {
@@ -83,9 +83,9 @@ func resolveEnrollToken(flagToken, tokenFile, envToken string) (string, error) {
 }
 
 // runEnroll handles the "enroll" subcommand.
-// Usage: power-manage-agent enroll -server=URL -token-file=PATH -pin=SHA256
+// Usage: cadestrod enroll -server=URL -token-file=PATH -pin=SHA256
 //
-//	power-manage-agent enroll 'power-manage://server:port?token=xxx&pin=<CA-SHA256>'
+//	cadestrod enroll 'cadestro://server:port?token=xxx&pin=<CA-SHA256>'
 func runEnroll(args []string) {
 	fs := flag.NewFlagSet("enroll", flag.ExitOnError)
 	token := fs.String("token", "", "Registration token (INSECURE on argv; prefer -token-file or PM_REGISTRATION_TOKEN)")
@@ -98,10 +98,10 @@ func runEnroll(args []string) {
 	caPin := *pin
 	fromURI := false
 
-	// Accept power-manage:// URI as positional arg
+	// Accept cadestro:// URI as positional arg
 	if fs.NArg() > 0 {
 		arg := fs.Arg(0)
-		if strings.HasPrefix(arg, "power-manage://") {
+		if strings.HasPrefix(arg, "cadestro://") {
 			parsed, err := parseRegistrationURI(arg)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error: %v\n", err)
@@ -131,9 +131,9 @@ func runEnroll(args []string) {
 
 	if resolvedToken == "" || *server == "" || strings.TrimSpace(caPin) == "" {
 		fmt.Fprintln(os.Stderr, "error: a control server URL, registration token, and CA fingerprint pin are required")
-		fmt.Fprintln(os.Stderr, "usage: power-manage-agent enroll -server=URL -token-file=PATH -pin=SHA256")
-		fmt.Fprintln(os.Stderr, "   or: PM_REGISTRATION_TOKEN=… power-manage-agent enroll -server=URL -pin=SHA256")
-		fmt.Fprintln(os.Stderr, "   or: power-manage-agent enroll 'power-manage://server:port?token=xxx&pin=…'")
+		fmt.Fprintln(os.Stderr, "usage: cadestrod enroll -server=URL -token-file=PATH -pin=SHA256")
+		fmt.Fprintln(os.Stderr, "   or: PM_REGISTRATION_TOKEN=… cadestrod enroll -server=URL -pin=SHA256")
+		fmt.Fprintln(os.Stderr, "   or: cadestrod enroll 'cadestro://server:port?token=xxx&pin=…'")
 		os.Exit(1)
 	}
 
@@ -148,7 +148,7 @@ func runEnroll(args []string) {
 	status, err := client.GetEnrollmentStatus(ctx, connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: cannot connect to agent enrollment socket at %s\n", *socketPath)
-		fmt.Fprintln(os.Stderr, "Is the agent service running? Check: systemctl status power-manage-agent")
+		fmt.Fprintln(os.Stderr, "Is the agent service running? Check: systemctl status cadestrod")
 		os.Exit(1)
 	}
 
@@ -180,13 +180,13 @@ func runEnroll(args []string) {
 }
 
 // registrationURIRefusedByHandler reports whether the bare-binary / desktop
-// URI-handler path must REFUSE uri. luks operation URIs (power-manage://luks/…)
-// are handled upstream; any OTHER power-manage:// URI is a registration URI
+// URI-handler path must REFUSE uri. luks operation URIs (cadestro://luks/…)
+// are handled upstream; any OTHER cadestro:// URI is a registration URI
 // (server+token) and must not auto-enroll from a URI handler — a browser link
 // could otherwise silently enroll the device into an attacker-controlled
 // backend. Enrollment is only allowed via the explicit `enroll` subcommand. (WS7)
 func registrationURIRefusedByHandler(uri string) bool {
-	return strings.HasPrefix(uri, "power-manage://") && !strings.HasPrefix(uri, "power-manage://luks/")
+	return strings.HasPrefix(uri, "cadestro://") && !strings.HasPrefix(uri, "cadestro://luks/")
 }
 
 type registrationURI struct {

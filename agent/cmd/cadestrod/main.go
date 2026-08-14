@@ -12,15 +12,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/manchtools/cadestro/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/deviceauth"
+	"github.com/manchtools/cadestro/agent/internal/executor"
+	"github.com/manchtools/cadestro/agent/internal/handler"
+	"github.com/manchtools/cadestro/agent/internal/luksd"
+	"github.com/manchtools/cadestro/agent/internal/scheduler"
+	"github.com/manchtools/cadestro/agent/internal/store"
 	"github.com/manchtools/cadestro/sdk/logging"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
-	"github.com/manchtools/power-manage/agent/internal/credentials"
-	"github.com/manchtools/power-manage/agent/internal/deviceauth"
-	"github.com/manchtools/power-manage/agent/internal/executor"
-	"github.com/manchtools/power-manage/agent/internal/handler"
-	"github.com/manchtools/power-manage/agent/internal/luksd"
-	"github.com/manchtools/power-manage/agent/internal/scheduler"
-	"github.com/manchtools/power-manage/agent/internal/store"
 )
 
 // version is set at build time via -ldflags.
@@ -68,7 +68,7 @@ func main() {
 	if len(os.Args) >= 2 {
 		switch os.Args[1] {
 		case "version", "--version", "-v":
-			fmt.Printf("power-manage-agent %s\n", version)
+			fmt.Printf("cadestrod %s\n", version)
 			return
 		case "query", "--query", "-query":
 			runQuery(os.Args[2:])
@@ -209,7 +209,7 @@ func main() {
 
 	// Start the LUKS passphrase daemon. It listens on a
 	// world-connectable unix socket; an unprivileged user runs
-	// `power-manage-agent luks set-passphrase` and the root agent performs
+	// `cadestrod luks set-passphrase` and the root agent performs
 	// the cryptsetup work with its OWN credentials, authorized by the
 	// server-issued token. The control session is wired in per connection
 	// (SetSession/ClearSession) inside runAgent.
@@ -252,7 +252,7 @@ func main() {
 	//
 	// Symlink note: os.Executable resolves symlinks on Linux, so
 	// if the agent was launched via a symlink chain (e.g.
-	// /usr/bin/power-manage-agent -> /opt/pm/current/bin/power-manage-agent)
+	// /usr/bin/cadestrod -> /opt/pm/current/bin/cadestrod)
 	// the self-update replaces the symlink TARGET, leaving the
 	// symlink itself intact. That matches the typical "rotate
 	// /opt/pm/current/" deployment pattern; if an operator
@@ -262,7 +262,7 @@ func main() {
 	if err != nil {
 		// os.Executable can fail on platforms that don't expose
 		// /proc/self/exe symlink semantics. The previous behaviour
-		// silently fell back to /usr/local/bin/power-manage-agent
+		// silently fell back to /usr/local/bin/cadestrod
 		// — but on a non-standard install that hard-codes the
 		// wrong target and self-update would later overwrite some
 		// unrelated file. Refuse to enable self-update instead, so
@@ -320,16 +320,16 @@ func parseFlags() *Config {
 
 	// Subcommands are dispatched in main() before flags are parsed, so the
 	// default flag usage (flags only) never mentions them. List them here so
-	// `power-manage-agent --help` shows the full surface (notably `tty`, which
+	// `cadestrod --help` shows the full surface (notably `tty`, which
 	// operators otherwise can't discover).
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintln(out, "power-manage-agent — Power Manage device agent")
+		fmt.Fprintln(out, "cadestrod — Power Manage device agent")
 		fmt.Fprintln(out, "\nUsage:")
-		fmt.Fprintln(out, "  power-manage-agent [flags]           run the agent (default)")
-		fmt.Fprintln(out, "  power-manage-agent <command> [args]  run a subcommand")
+		fmt.Fprintln(out, "  cadestrod [flags]           run the agent (default)")
+		fmt.Fprintln(out, "  cadestrod <command> [args]  run a subcommand")
 		fmt.Fprintln(out, "\nSubcommands:")
-		fmt.Fprintln(out, "  enroll        enroll this device with a control server (token or power-manage:// URI)")
+		fmt.Fprintln(out, "  enroll        enroll this device with a control server (token or cadestro:// URI)")
 		fmt.Fprintln(out, "  tty           toggle the device-local remote-terminal gate (enable|disable|status)")
 		fmt.Fprintln(out, "  luks          LUKS passphrase operations")
 		fmt.Fprintln(out, "  query         run a local osquery query")
@@ -350,26 +350,26 @@ func parseFlags() *Config {
 	// Check for URI as positional argument (for desktop integration)
 	if uri == "" && flag.NArg() > 0 {
 		arg := flag.Arg(0)
-		if strings.HasPrefix(arg, "power-manage://") {
+		if strings.HasPrefix(arg, "cadestro://") {
 			uri = arg
 		}
 	}
 
-	// Route LUKS URIs to the LUKS subcommand (power-manage://luks/...)
-	if uri != "" && strings.HasPrefix(uri, "power-manage://luks/") {
+	// Route LUKS URIs to the LUKS subcommand (cadestro://luks/...)
+	if uri != "" && strings.HasPrefix(uri, "cadestro://luks/") {
 		runLuksURI(uri) // runLuksURI always exits
 	}
 
-	// Any remaining power-manage:// URI here is a REGISTRATION URI (server+token)
+	// Any remaining cadestro:// URI here is a REGISTRATION URI (server+token)
 	// arriving via the bare-binary / desktop URI-handler path (luks URIs already
 	// exited above). REFUSE it (WS7): a browser-triggered
-	// power-manage://<server>?token=... must not silently enroll this device into
+	// cadestro://<server>?token=... must not silently enroll this device into
 	// an attacker-controlled backend. Enrollment must be an explicit,
 	// operator-initiated action via the `enroll` subcommand, which accepts the
 	// same URI.
 	if registrationURIRefusedByHandler(uri) {
 		fmt.Fprintln(os.Stderr, "refusing to enroll from a URI handler: enrollment must be explicit. Run:")
-		fmt.Fprintf(os.Stderr, "  power-manage-agent enroll '%s'\n", uri)
+		fmt.Fprintf(os.Stderr, "  cadestrod enroll '%s'\n", uri)
 		os.Exit(1)
 	}
 

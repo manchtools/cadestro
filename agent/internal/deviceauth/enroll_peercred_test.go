@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/agent/internal/credentials"
+	"github.com/manchtools/cadestro/agent/internal/credentials"
 )
 
 // TestPeerAuthorized pins the enrollment-socket peer-credential decision:

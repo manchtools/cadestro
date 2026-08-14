@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/manchtools/power-manage/agent/internal/luksd"
+	"github.com/manchtools/cadestro/agent/internal/luksd"
 
 	"golang.org/x/term"
 )
@@ -23,7 +23,7 @@ const luksTokenEnv = "PM_LUKS_TOKEN"
 
 const maxLuksTokenBytes = 4096
 
-const luksUsage = "usage: power-manage-agent luks set-passphrase [--token-file <path>|-]\n" +
+const luksUsage = "usage: cadestrod luks set-passphrase [--token-file <path>|-]\n" +
 	"       the token may also come from $" + luksTokenEnv + ", or be typed at the prompt"
 
 // runLuks handles the "luks" subcommand.
@@ -153,24 +153,24 @@ func promptToken() (string, error) {
 	return strings.TrimSpace(string(raw)), nil
 }
 
-// runLuksURI handles power-manage://luks/set-passphrase?token=XXX URIs.
+// runLuksURI handles cadestro://luks/set-passphrase?token=XXX URIs.
 //
 // The URI carries the token on argv by construction — a desktop handler is
-// invoked as `power-manage-agent %u` — which the CLI routes above deliberately
+// invoked as `cadestrod %u` — which the CLI routes above deliberately
 // avoid. That residual exposure is why the daemon authenticates the socket peer
 // as well (agent/internal/luksd/peercred.go); the CLI form remains the
 // advertised route.
 func runLuksURI(rawURI string) {
 	// Strict PREFIX rewrite (#174): strings.Replace on the first
 	// occurrence anywhere would let a crafted URI like
-	// power-manage://power-manage://evil/... shift the scheme swap into
+	// cadestro://cadestro://evil/... shift the scheme swap into
 	// the middle of the string; a URI that doesn't START with our scheme
 	// is rejected outright.
-	if !strings.HasPrefix(rawURI, "power-manage://") {
-		fmt.Fprintf(os.Stderr, "error: not a power-manage:// URI\n")
+	if !strings.HasPrefix(rawURI, "cadestro://") {
+		fmt.Fprintf(os.Stderr, "error: not a cadestro:// URI\n")
 		os.Exit(1)
 	}
-	normalizedURI := "https://" + strings.TrimPrefix(rawURI, "power-manage://")
+	normalizedURI := "https://" + strings.TrimPrefix(rawURI, "cadestro://")
 	parsed, err := url.Parse(normalizedURI)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: invalid URI: %v\n", err)

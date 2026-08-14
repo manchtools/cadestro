@@ -11,7 +11,7 @@ import (
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 
-	"github.com/manchtools/power-manage/agent/internal/store"
+	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
 // luksSecret wraps a key string the agent holds (a PSK or a key-store value) as

@@ -13,7 +13,7 @@ import (
 func TestParseRegistrationURI(t *testing.T) {
 	t.Run("well-formed with pin", func(t *testing.T) {
 		pin := strings.Repeat("A", 64)
-		u, err := parseRegistrationURI("power-manage://host:8081?token=abc123&pin=" + pin)
+		u, err := parseRegistrationURI("cadestro://host:8081?token=abc123&pin=" + pin)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -28,20 +28,20 @@ func TestParseRegistrationURI(t *testing.T) {
 		}
 	})
 	t.Run("pin required", func(t *testing.T) {
-		if _, err := parseRegistrationURI("power-manage://host?token=t"); err == nil {
+		if _, err := parseRegistrationURI("cadestro://host?token=t"); err == nil {
 			t.Error("expected error for missing pin")
 		}
 	})
 	t.Run("token required", func(t *testing.T) {
-		if _, err := parseRegistrationURI("power-manage://host"); err == nil {
+		if _, err := parseRegistrationURI("cadestro://host"); err == nil {
 			t.Error("expected error for missing token")
 		}
-		if _, err := parseRegistrationURI("power-manage://host?token="); err == nil {
+		if _, err := parseRegistrationURI("cadestro://host?token="); err == nil {
 			t.Error("expected error for empty token")
 		}
 	})
 	t.Run("tls-bypass params ignored", func(t *testing.T) {
-		u, err := parseRegistrationURI("power-manage://host?token=t&pin=" + strings.Repeat("a", 64) + "&tls=false&skip-verify=true")
+		u, err := parseRegistrationURI("cadestro://host?token=t&pin=" + strings.Repeat("a", 64) + "&tls=false&skip-verify=true")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -93,7 +93,7 @@ func TestResolveEnrollToken(t *testing.T) {
 
 // TestRegistrationURIRefusedByHandler pins WS7: the bare-binary / desktop
 // URI-handler path refuses registration URIs (server+token) — only luks
-// operation URIs are allowed — so a browser-triggered power-manage:// link can
+// operation URIs are allowed — so a browser-triggered cadestro:// link can
 // never silently enroll the device. Enrollment stays explicit (the `enroll`
 // subcommand).
 func TestRegistrationURIRefusedByHandler(t *testing.T) {
@@ -101,10 +101,10 @@ func TestRegistrationURIRefusedByHandler(t *testing.T) {
 		uri    string
 		refuse bool
 	}{
-		{"power-manage://control.example.com:8080?token=abc123", true}, // registration → refused
-		{"power-manage://server?token=t&pin=DEADBEEF", true},
-		{"power-manage://luks/set-passphrase?token=xxx", false}, // luks op → allowed through to runLuksURI
-		{"power-manage://luks/rotate", false},
+		{"cadestro://control.example.com:8080?token=abc123", true}, // registration → refused
+		{"cadestro://server?token=t&pin=DEADBEEF", true},
+		{"cadestro://luks/set-passphrase?token=xxx", false}, // luks op → allowed through to runLuksURI
+		{"cadestro://luks/rotate", false},
 		{"https://example.com/?token=x", false}, // not our scheme
 		{"", false},
 	}
