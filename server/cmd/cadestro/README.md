@@ -1,6 +1,6 @@
 # Control server
 
-`control` is the single target server process. The workspace architecture
+`cadestro` is the single target server process. The workspace architecture
 authority is
 `../../../DESIGN_2026_07_31/00_TARGET_DESIGN.md`.
 
@@ -14,7 +14,7 @@ authority is
 - SQLite FTS5 full-text search;
 - certificate issuance, renewal, and indexed revocation;
 - artifact metadata and filesystem ownership; and
-<!-- docref: begin src=internal/controlruntime/runtime.go#health:550d4ab3,internal/controlruntime/runtime.go#readinessHandler:679b3b18,cmd/control/backup_status.go#runBackupStatus:41ed4e6c -->
+<!-- docref: begin src=internal/controlruntime/runtime.go#health:550d4ab3,internal/controlruntime/runtime.go#readinessHandler:679b3b18,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 - health and readiness endpoints, plus the host-facing `backup-status` command.
 <!-- docref: end -->
 
@@ -27,7 +27,7 @@ Control must fail readiness when the schema is not current, required keys or CA
 material are unusable, artifact paths are not writable, or the agent listener
 cannot enforce revocation.
 
-<!-- docref: begin src=cmd/control/main.go#parseCommand:dfecd82c,cmd/control/config.go#configEnvironment:f192d94c,cmd/control/config.go#readEnvironment:88fc4d61,cmd/control/config.go#parseList:02da4e62 -->
+<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:dfecd82c,cmd/cadestro/config.go#configEnvironment:f192d94c,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
 Configuration is entirely environmental: every option is its own documented
 `POWER_MANAGE_`-prefixed variable. There is no configuration file and no
 `-config` flag, and the only accepted top-level arguments are the
@@ -41,14 +41,14 @@ options are comma-separated and reject an empty entry; malformed booleans and
 durations name their variable and fail startup.
 <!-- docref: end -->
 
-<!-- docref: begin src=cmd/control/main.go#run:065ded94,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
+<!-- docref: begin src=cmd/cadestro/main.go#run:065ded94,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
 `POWER_MANAGE_CA_TRUST_BUNDLE_FILE` optionally names the startup-only PEM trust
 bundle used for agent-client certificate verification. It must contain the
 active CA from `POWER_MANAGE_CA_CERT_FILE`; changing either file requires a
 control restart.
 <!-- docref: end -->
 
-<!-- docref: begin src=cmd/control/config.go#loadSecret:b9678c7e,cmd/control/config.go#readSecretFile:60ffa83b,cmd/control/config.go#loadEd25519PrivateKey:3cc11345 -->
+<!-- docref: begin src=cmd/cadestro/config.go#loadSecret:b9678c7e,cmd/cadestro/config.go#readSecretFile:60ffa83b,cmd/cadestro/config.go#loadEd25519PrivateKey:3cc11345 -->
 Private keys are file-referenced only: `POWER_MANAGE_SESSION_SIGNING_KEY_FILE`
 must name one PEM-encoded Ed25519 PKCS#8 key. The two symmetric secrets accept
 either form — exactly one of `POWER_MANAGE_ENCRYPTION_KEY` or
@@ -66,11 +66,11 @@ Initial administration uses the host-authorized `bootstrap-admin` command to
 produce a single-use, short-lived URL. Configure OIDC/SCIM immediately; there
 is no local administrator password.
 
-<!-- docref: begin src=cmd/control/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/control/main.go#parseCommand:dfecd82c -->
+<!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/cadestro/main.go#parseCommand:dfecd82c -->
 For the open operator CLI, request the pipe-safe token form explicitly:
 
 ```bash
-control bootstrap-admin --output token \
+cadestro bootstrap-admin --output token \
   | powermanage bootstrap oidc --file provider.json --token-stdin
 ```
 
@@ -90,7 +90,7 @@ search semantics. PostgreSQL is removed and guarded against return.
 
 ## Development
 
-<!-- docref: begin src=cmd/control/devauth.go#wrapDevAuth:f04e68b9,cmd/control/devauth.go#devAuthEnabled:4a7b3325 -->
+<!-- docref: begin src=cmd/cadestro/devauth.go#wrapDevAuth:f04e68b9,cmd/cadestro/devauth.go#devAuthEnabled:4a7b3325 -->
 The development session endpoint is available only in a `devauth` build run
 with `PM_DEV_AUTH=1` and a `PM_DEV_AUTH_TOKEN` of at least 32 bytes. Start Vite
 with the same token; its loopback-only proxy injects the token and forwards the
@@ -100,7 +100,7 @@ loopback and refuses requests without the matching token.
 <!-- docref: end -->
 
 ```bash
-go build ./cmd/control
+go build ./cmd/cadestro
 go test ./...
 make sqlc-generate
 make sqlc-check

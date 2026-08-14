@@ -18,7 +18,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/mtls"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
 // ErrInvalidCSR marks caller-controlled certificate requests that cannot be

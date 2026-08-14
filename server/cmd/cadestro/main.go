@@ -1,4 +1,4 @@
-// Command control runs the single Power Manage control process.
+// Command cadestro runs the single Power Manage control process.
 package main
 
 import (
@@ -14,15 +14,15 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/sdk/logging"
-	"github.com/manchtools/power-manage/server/internal/archive"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/ca"
-	"github.com/manchtools/power-manage/server/internal/controlruntime"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/jobs"
-	"github.com/manchtools/power-manage/server/internal/maintenance"
-	"github.com/manchtools/power-manage/server/internal/store"
-	"github.com/manchtools/power-manage/server/internal/webhook"
+	"github.com/manchtools/cadestro/server/internal/archive"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/controlruntime"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/jobs"
+	"github.com/manchtools/cadestro/server/internal/maintenance"
+	"github.com/manchtools/cadestro/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
 // version is set at build time.
@@ -31,12 +31,12 @@ var version = "dev"
 func main() {
 	command, err := parseCommand(os.Args[1:])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "control:", err)
+		fmt.Fprintln(os.Stderr, "cadestro:", err)
 		os.Exit(2)
 	}
 	cfg, err := loadConfig()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "control: invalid configuration:", err)
+		fmt.Fprintln(os.Stderr, "cadestro: invalid configuration:", err)
 		os.Exit(2)
 	}
 	if command == "bootstrap-admin" {

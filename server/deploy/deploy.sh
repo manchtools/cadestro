@@ -14,6 +14,6 @@ docker compose up -d --wait --remove-orphans
 docker compose ps
 
 printf 'Deployment complete. Issue a setup URL when needed with:\n'
-printf '  cd %q && docker compose exec control control bootstrap-admin\n' "$DEPLOY_DIR"
+printf '  cd %q && docker compose exec control cadestro bootstrap-admin\n' "$DEPLOY_DIR"
 printf 'Run %q from a daily host timer and inspect lag with:\n' "$DEPLOY_DIR/backup.sh"
-printf '  cd %q && docker compose exec control control backup-status\n' "$DEPLOY_DIR"
+printf '  cd %q && docker compose exec control cadestro backup-status\n' "$DEPLOY_DIR"

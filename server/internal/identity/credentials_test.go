@@ -19,7 +19,7 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
-	"github.com/manchtools/power-manage/server/internal/identity"
+	"github.com/manchtools/cadestro/server/internal/identity"
 )
 
 // call issues one procedure with the supplied bearer token and returns

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -15,9 +15,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/delivery"
-	"github.com/manchtools/power-manage/server/internal/execution"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/execution"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 type executionResultFixture struct {

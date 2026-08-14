@@ -16,10 +16,10 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/connection"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
-	"github.com/manchtools/power-manage/server/internal/terminal"
+	"github.com/manchtools/cadestro/server/internal/connection"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/terminal"
 )
 
 const (

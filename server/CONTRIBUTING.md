@@ -3,7 +3,7 @@
 ## Build and test
 
 ```bash
-go build ./cmd/control
+go build ./cmd/cadestro
 go test ./...
 ```
 
@@ -57,7 +57,7 @@ repository's [AGPL-3.0](LICENSE) license.
 
 ## Repository layout
 
-- `cmd/control/` — server executable
+- `cmd/cadestro/` — the `cadestro` server executable
 - `internal/controlrpc/`, `internal/searchrpc/` — explicit RPC handlers
 - `internal/auth/` — authentication, authorization, and scope enforcement
 - `internal/ca/`, `internal/mtls/` — device PKI and direct mTLS

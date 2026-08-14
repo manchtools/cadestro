@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/mtls"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
 type fakeRevocation struct {

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -17,10 +17,10 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/dispatch"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/dispatch"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 type dispatchHandlerFixture struct {

@@ -6,8 +6,8 @@ import (
 	"connectrpc.com/connect"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 const serverSettingsID = "00000000000000000000000003"

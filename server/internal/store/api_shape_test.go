@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // mutationCapableExports is the complete set of exported Store methods

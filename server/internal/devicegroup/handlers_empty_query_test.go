@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
 func seedBareDevice(t *testing.T, raw *testdb.DB, deviceID string) {

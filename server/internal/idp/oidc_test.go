@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/idp"
+	"github.com/manchtools/cadestro/server/internal/idp"
 )
 
 // fakeOIDCServer stands up the minimum endpoints go-oidc's discovery

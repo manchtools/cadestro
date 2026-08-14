@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/manchtools/power-manage/server/internal/store/sqlitetype"
+	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 // ErrInvalidSearch means a facet, filter, sort, or page bound is outside the

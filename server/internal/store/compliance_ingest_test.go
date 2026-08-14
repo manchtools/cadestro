@@ -12,11 +12,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/actionparams"
-	"github.com/manchtools/power-manage/server/internal/authoring"
-	"github.com/manchtools/power-manage/server/internal/compliance"
-	"github.com/manchtools/power-manage/server/internal/delivery"
-	"github.com/manchtools/power-manage/server/internal/execution"
+	"github.com/manchtools/cadestro/server/internal/actionparams"
+	"github.com/manchtools/cadestro/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/compliance"
+	"github.com/manchtools/cadestro/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/execution"
 )
 
 // complianceIngestFixture drives the real ingestion path: an agent result

@@ -17,11 +17,11 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/ca"
-	"github.com/manchtools/power-manage/server/internal/mtls"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/mtls"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 var errCredentialRejected = errors.New("enrollment credential rejected")

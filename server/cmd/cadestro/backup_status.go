@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/backupstatus"
+	"github.com/manchtools/cadestro/server/internal/backupstatus"
 )
 
 func runBackupStatus(output, diagnostics io.Writer, cfg *Config, now func() time.Time) int {

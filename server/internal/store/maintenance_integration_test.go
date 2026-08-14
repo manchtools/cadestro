@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/archive"
-	"github.com/manchtools/power-manage/server/internal/backupstatus"
-	"github.com/manchtools/power-manage/server/internal/jobs"
-	"github.com/manchtools/power-manage/server/internal/maintenance"
-	"github.com/manchtools/power-manage/server/internal/store"
-	"github.com/manchtools/power-manage/server/internal/webhook"
+	"github.com/manchtools/cadestro/server/internal/archive"
+	"github.com/manchtools/cadestro/server/internal/backupstatus"
+	"github.com/manchtools/cadestro/server/internal/jobs"
+	"github.com/manchtools/cadestro/server/internal/maintenance"
+	"github.com/manchtools/cadestro/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
 type prefixFailArchive struct{ archive.ArchiveStore }

@@ -16,11 +16,11 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/manchtools/power-manage/server/internal/archive"
-	"github.com/manchtools/power-manage/server/internal/backupstatus"
-	"github.com/manchtools/power-manage/server/internal/jobs"
-	"github.com/manchtools/power-manage/server/internal/store"
-	"github.com/manchtools/power-manage/server/internal/webhook"
+	"github.com/manchtools/cadestro/server/internal/archive"
+	"github.com/manchtools/cadestro/server/internal/backupstatus"
+	"github.com/manchtools/cadestro/server/internal/jobs"
+	"github.com/manchtools/cadestro/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
 const (

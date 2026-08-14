@@ -19,12 +19,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/store"
-	"github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 func sha256hex(s string) string {

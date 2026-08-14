@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/manchtools/power-manage/server/internal/dynamicquery"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
-	"github.com/manchtools/power-manage/server/internal/store/sqlitetype"
+	"github.com/manchtools/cadestro/server/internal/dynamicquery"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 // EvaluationResult is the committed membership delta and resulting group.

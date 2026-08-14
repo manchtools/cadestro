@@ -5,16 +5,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
-	"github.com/manchtools/power-manage/server/internal/actionparams"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/dispatch"
-	"github.com/manchtools/power-manage/server/internal/manifest"
+	"github.com/manchtools/cadestro/server/internal/actionparams"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/dispatch"
+	"github.com/manchtools/cadestro/server/internal/manifest"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

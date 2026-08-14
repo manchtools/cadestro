@@ -13,9 +13,9 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // loadUserView reads one subject and everything a User message shows.

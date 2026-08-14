@@ -30,8 +30,8 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
-	"github.com/manchtools/power-manage/server/internal/idp"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/idp"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func TestListAuthMethods_ReturnsEnabledProvidersAndNothingAboutTheEmail(t *testing.T) {

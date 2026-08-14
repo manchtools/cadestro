@@ -13,8 +13,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/connection"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/connection"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/identity"
+	"github.com/manchtools/cadestro/server/internal/identity"
 )
 
 func TestWriteBootstrapAdminOutput_RawTokenIsPipeSafe(t *testing.T) {

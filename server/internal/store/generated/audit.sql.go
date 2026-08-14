@@ -9,7 +9,7 @@ import (
 	"context"
 	"time"
 
-	sqlitetype "github.com/manchtools/power-manage/server/internal/store/sqlitetype"
+	sqlitetype "github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 const advanceAuditChainHead = `-- name: AdvanceAuditChainHead :exec

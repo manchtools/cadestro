@@ -7,7 +7,7 @@ import (
 	"slices"
 	"time"
 
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // heartbeatBatchSize bounds one telemetry transaction. The store serializes

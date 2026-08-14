@@ -16,7 +16,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/ca"
 )
 
 func pkcs8PEM(t *testing.T, key any) []byte {

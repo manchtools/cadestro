@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/actionparams"
+	"github.com/manchtools/cadestro/server/internal/actionparams"
 )
 
 func TestPopulateAction_RejectsMalformedParams(t *testing.T) {

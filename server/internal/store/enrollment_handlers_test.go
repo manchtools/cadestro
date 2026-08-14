@@ -19,15 +19,15 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
-	"github.com/manchtools/power-manage/server/internal/ca"
-	"github.com/manchtools/power-manage/server/internal/enrollment"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/enrollment"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 type enrollmentFixture struct {

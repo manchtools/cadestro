@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/manchtools/power-manage/server/internal/idp"
+	"github.com/manchtools/cadestro/server/internal/idp"
 )
 
 // signedOIDCFixture stands up an httptest.Server that publishes a

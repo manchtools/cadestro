@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // Store is the database surface the SCIM routes use: the audited

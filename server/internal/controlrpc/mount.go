@@ -6,16 +6,16 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/manchtools/power-manage/server/internal/assignment"
-	"github.com/manchtools/power-manage/server/internal/authoring"
-	"github.com/manchtools/power-manage/server/internal/compliance"
-	"github.com/manchtools/power-manage/server/internal/device"
-	"github.com/manchtools/power-manage/server/internal/devicegroup"
-	"github.com/manchtools/power-manage/server/internal/dispatch"
-	"github.com/manchtools/power-manage/server/internal/enrollment"
-	"github.com/manchtools/power-manage/server/internal/identity"
-	"github.com/manchtools/power-manage/server/internal/registrationtoken"
-	"github.com/manchtools/power-manage/server/internal/searchrpc"
+	"github.com/manchtools/cadestro/server/internal/assignment"
+	"github.com/manchtools/cadestro/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/compliance"
+	"github.com/manchtools/cadestro/server/internal/device"
+	"github.com/manchtools/cadestro/server/internal/devicegroup"
+	"github.com/manchtools/cadestro/server/internal/dispatch"
+	"github.com/manchtools/cadestro/server/internal/enrollment"
+	"github.com/manchtools/cadestro/server/internal/identity"
+	"github.com/manchtools/cadestro/server/internal/registrationtoken"
+	"github.com/manchtools/cadestro/server/internal/searchrpc"
 )
 
 // Handlers is the complete direct implementation of ControlService. Keeping

@@ -12,8 +12,8 @@ import (
 
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 
-	"github.com/manchtools/power-manage/server/internal/ca"
-	"github.com/manchtools/power-manage/server/internal/mtls"
+	"github.com/manchtools/cadestro/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
 // The CSR the agent actually sends comes from the SDK, and every other test in

@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/authoring"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func actionOperation() store.AuditOperation {

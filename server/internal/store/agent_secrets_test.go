@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
-	"github.com/manchtools/power-manage/server/internal/agentsecrets"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/agentsecrets"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 type agentSecretFixture struct {

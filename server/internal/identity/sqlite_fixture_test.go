@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/manchtools/power-manage/server/internal/store"
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
 func setupSQLite(t *testing.T) (*store.Store, *testdb.DB) {

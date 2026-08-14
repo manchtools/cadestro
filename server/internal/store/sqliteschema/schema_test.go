@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
 
-	"github.com/manchtools/power-manage/server/internal/store/sqliteschema"
+	"github.com/manchtools/cadestro/server/internal/store/sqliteschema"
 )
 
 func TestBaselineEnablesRequiredSQLitePosture(t *testing.T) {

@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/scim"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/scim"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func scimUser(userName, externalID string) map[string]any {

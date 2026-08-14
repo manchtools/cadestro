@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/manchtools/power-manage/server/internal/auth"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // wrapDevAuth is a no-op in production builds: the development auth bypass

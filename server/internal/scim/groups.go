@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // A directory group is a MAPPING onto a local user group, not a group

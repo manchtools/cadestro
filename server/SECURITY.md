@@ -70,7 +70,7 @@ jobs, and background writers.
 Audit streams are hash-chained and periodically anchored in the configured
 archive. Retention archives and verifies a prefix before deletion.
 
-<!-- docref: begin src=cmd/control/config.go#validateArchiveIsolation:b9894a73,cmd/control/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
+<!-- docref: begin src=cmd/cadestro/config.go#validateArchiveIsolation:b9894a73,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
 Filesystem separation is enforced. Control compares the filesystem holding
 the archive path with the one holding the database and refuses to start when
 they match. Off-host replication remains an operator requirement. No
@@ -93,7 +93,7 @@ silent replay of non-idempotent effects.
 - Restrict the PROXY-protocol listener to the isolated Traefik network.
 - Protect CA, JWT, sealing, database, and at-rest encryption keys with strict
   filesystem or deployment-secret permissions.
-<!-- docref: begin src=cmd/control/config.go#validateArchiveIsolation:b9894a73,cmd/control/devauth_stub.go#archiveIsolationRelaxed:8de98d35,deploy/backup.sh#@sqlite-backup:99bc90ed,cmd/control/backup_status.go#runBackupStatus:41ed4e6c -->
+<!-- docref: begin src=cmd/cadestro/config.go#validateArchiveIsolation:b9894a73,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35,deploy/backup.sh#@sqlite-backup:99bc90ed,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 - Give `POWER_MANAGE_BACKUP_PATH` its own filesystem, separate from the one
   holding the database: it carries the audit chain's tamper-evidence, and
   control refuses to start when the two share a mount. `deploy/setup.sh` makes
@@ -102,7 +102,7 @@ silent replay of non-idempotent effects.
 - Run `deploy/backup.sh` from a host timer and replicate the
   `POWER_MANAGE_BACKUP_PATH` directory off-host: it contains verified bounded
   SQLite backups, audit anchors, and archived prefixes. Back up artifacts too,
-  and monitor `control backup-status`.
+  and monitor `cadestro backup-status`.
 <!-- docref: end -->
 
 Gateway, Valkey, Asynq, external indexing, CRL distribution, local

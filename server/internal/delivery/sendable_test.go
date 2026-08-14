@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/manchtools/power-manage/server/internal/delivery"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // TestSendable pins the single availability/epoch predicate the dispatcher and

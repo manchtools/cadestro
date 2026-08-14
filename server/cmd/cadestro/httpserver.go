@@ -10,7 +10,7 @@ import (
 	proxyproto "github.com/pires/go-proxyproto"
 	"golang.org/x/net/http2"
 
-	"github.com/manchtools/power-manage/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/ca"
 )
 
 const publicRequestReadTimeout = 30 * time.Second

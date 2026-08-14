@@ -227,4 +227,4 @@ docker compose up -d --wait
 
 print_dns_reminder
 printf 'Power Manage is running. Create the one-time administrator setup URL with:\n'
-printf '  cd %q && docker compose exec control control bootstrap-admin\n' "$INSTALL_DIR"
+printf '  cd %q && docker compose exec control cadestro bootstrap-admin\n' "$INSTALL_DIR"

@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/actionparams"
+	"github.com/manchtools/cadestro/server/internal/actionparams"
 )
 
 // TestScheduleRoundTrip_PreservesExplicitFalse pins WS1b #4: ActionSchedule is

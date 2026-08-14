@@ -346,7 +346,7 @@ main() {
     info "Deployment material is ready"
     printf '%s\n' \
         "Start:     cd $SCRIPT_DIR && docker compose up -d --wait" \
-        "Bootstrap: cd $SCRIPT_DIR && docker compose exec control control bootstrap-admin"
+        "Bootstrap: cd $SCRIPT_DIR && docker compose exec control cadestro bootstrap-admin"
 }
 # docref: end generated-material
 

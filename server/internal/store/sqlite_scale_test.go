@@ -19,11 +19,11 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/connection"
-	"github.com/manchtools/power-manage/server/internal/delivery"
-	"github.com/manchtools/power-manage/server/internal/jobs"
-	"github.com/manchtools/power-manage/server/internal/store"
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/connection"
+	"github.com/manchtools/cadestro/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/jobs"
+	"github.com/manchtools/cadestro/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
 const (

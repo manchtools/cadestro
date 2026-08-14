@@ -19,12 +19,12 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/connection"
-	"github.com/manchtools/power-manage/server/internal/delivery"
-	"github.com/manchtools/power-manage/server/internal/execution"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/connection"
+	"github.com/manchtools/cadestro/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/execution"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 type frameClass string

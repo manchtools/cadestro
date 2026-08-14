@@ -9,10 +9,10 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/idp"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/idp"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // Store is the database surface the identity handlers use. It is the

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/scim"
+	"github.com/manchtools/cadestro/server/internal/scim"
 )
 
 func mountedDescriptors(t *testing.T) []string {

@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/enrollment"
-	"github.com/manchtools/power-manage/server/internal/webhook"
+	"github.com/manchtools/cadestro/server/internal/enrollment"
+	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
 const (
@@ -337,7 +337,7 @@ func validateConfig(cfg *Config) error {
 		if !archiveIsolationRelaxed() {
 			return err
 		}
-		fmt.Fprintln(os.Stderr, "control: DEVELOPMENT BUILD, audit archive separation not enforced:", err)
+		fmt.Fprintln(os.Stderr, "cadestro: DEVELOPMENT BUILD, audit archive separation not enforced:", err)
 	}
 	if _, err := webhook.New(cfg.WebhookURL); err != nil {
 		return err

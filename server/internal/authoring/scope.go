@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func (h *Handlers) directScopeGroups(ctx context.Context, objectType, id string) ([]string, error) {

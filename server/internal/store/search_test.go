@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/authoring"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/archive"
+	"github.com/manchtools/cadestro/server/internal/archive"
 )
 
 // ArchiveStore streams artifacts to/from the operator-configured path via

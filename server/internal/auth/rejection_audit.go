@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // AuditOperationRecorder is the store's audited no-mutation door.

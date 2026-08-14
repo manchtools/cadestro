@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/manchtools/power-manage/server/internal/agentsync"
-	"github.com/manchtools/power-manage/server/internal/connection"
-	"github.com/manchtools/power-manage/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/agentsync"
+	"github.com/manchtools/cadestro/server/internal/connection"
+	"github.com/manchtools/cadestro/server/internal/delivery"
 )
 
 // connectedSyncer registers a live connection for the fixture device and

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/store/generated"
-	"github.com/manchtools/power-manage/server/internal/store/sqlitetype"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 // Identity reads. Same rule as reads.go: one exported method per

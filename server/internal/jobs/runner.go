@@ -11,7 +11,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 const (

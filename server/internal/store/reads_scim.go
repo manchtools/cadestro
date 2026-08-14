@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // Directory-provisioning reads. Same rule as reads.go: one exported

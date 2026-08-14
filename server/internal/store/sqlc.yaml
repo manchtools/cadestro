@@ -13,45 +13,45 @@ sql:
         sql_package: "database/sql"
         overrides:
           - column: "roles.permissions"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
           - column: "identity_providers.scopes"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
           - column: "audit_effects.changed_fields"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
           - column: "audit_event_rows.changed_fields"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "StringList"}
           - column: "identity_providers.attribute_mapping"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "identity_providers.group_mapping"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "device_groups.maintenance_window"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "user_groups.maintenance_window"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "device_inventory.rows"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "osquery_results.rows"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "jobs.payload"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "actions.params"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "actions.schedule"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "action_sets.schedule"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "definitions.schedule"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "deliveries.manifest"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "executions.params"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "executions.output"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "executions.detection_output"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "compliance_results.detection_output"
-            go_type: {import: "github.com/manchtools/power-manage/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "users.session_version"
             go_type: "int32"
           - column: "users.linux_uid"

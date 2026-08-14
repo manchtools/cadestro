@@ -24,8 +24,8 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/manchtools/power-manage/server/internal/store/generated"
-	"github.com/manchtools/power-manage/server/internal/store/sqliteschema"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/sqliteschema"
 )
 
 // Tx is the transaction-bound query handle handed to a WithAudit callback.

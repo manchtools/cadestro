@@ -3,7 +3,7 @@ package authoring
 import (
 	"context"
 
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // refreshActionDependents records the fixed cross-row documents that embed an

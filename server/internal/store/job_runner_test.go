@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/jobs"
+	"github.com/manchtools/cadestro/server/internal/jobs"
 )
 
 func waitForJobState(t *testing.T, f *jobFixture, state string) {

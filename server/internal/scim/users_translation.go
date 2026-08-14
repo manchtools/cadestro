@@ -3,7 +3,7 @@ package scim
 import (
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // userResource shapes a stored subject as a SCIM user resource.

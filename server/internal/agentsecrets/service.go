@@ -18,9 +18,9 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 const sealedFieldVersion = uint32(1)

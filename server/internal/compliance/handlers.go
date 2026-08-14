@@ -17,10 +17,10 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/authoring"
-	"github.com/manchtools/power-manage/server/internal/middleware"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/middleware"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 const (

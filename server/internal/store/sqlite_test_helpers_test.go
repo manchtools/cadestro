@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
 func auditActions(t *testing.T, raw *testdb.DB, resourceType, resourceID string) []string {

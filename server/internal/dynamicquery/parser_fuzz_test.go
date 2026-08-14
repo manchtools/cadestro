@@ -3,7 +3,7 @@ package dynamicquery_test
 import (
 	"testing"
 
-	"github.com/manchtools/power-manage/server/internal/dynamicquery"
+	"github.com/manchtools/cadestro/server/internal/dynamicquery"
 )
 
 // FuzzParse exercises the dynamic-query parser against arbitrary

@@ -153,8 +153,8 @@ assert_archive_isolated() {
 cp -R "$SOURCE_DIR/." "$WORK_DIR/"
 provision_archive_storage
 if [[ -z "$PUBLISHED_IMAGE_TAG" ]]; then
-    CGO_ENABLED=0 go -C "$SOURCE_DIR/.." build -o "$WORK_DIR/control" ./cmd/control
-    docker build --build-arg BINARY=control -f "$SOURCE_DIR/Containerfile.control" \
+    CGO_ENABLED=0 go -C "$SOURCE_DIR/.." build -o "$WORK_DIR/cadestro" ./cmd/cadestro
+    docker build --build-arg BINARY=cadestro -f "$SOURCE_DIR/Containerfile.control" \
         -t "$CONTROL_IMAGE" "$WORK_DIR"
     BUILT_IMAGE="$CONTROL_IMAGE"
 fi
@@ -188,12 +188,12 @@ fts="$(compose exec -T control sqlite3 /var/lib/power-manage/state/control.db \
 [[ "$fts" == 1 ]] || { printf 'SQLite FTS5 probe failed\n' >&2; exit 1; }
 
 COMPOSE_PROJECT_NAME="$PROJECT_NAME" bash ./backup.sh >/dev/null
-if ! compose exec -T control control backup-status >/dev/null; then
+if ! compose exec -T control cadestro backup-status >/dev/null; then
     printf 'verified backup was not reported as fresh\n' >&2
     exit 1
 fi
 
-bootstrap="$(compose exec -T control control bootstrap-admin)"
+bootstrap="$(compose exec -T control cadestro bootstrap-admin)"
 [[ "$bootstrap" == *"https://manage.example.test/setup#bootstrap_token="* ]] || {
     printf 'bootstrap-admin did not issue the expected setup URL\n' >&2
     exit 1

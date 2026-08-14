@@ -15,9 +15,9 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // ErrNoMatchingAccount is what an external identity that cannot be

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // bearerScheme is the only authentication scheme this surface accepts.

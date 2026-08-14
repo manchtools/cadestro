@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/identity"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/identity"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func runBootstrapAdmin(ctx context.Context, cfg *Config, rawToken bool) int {

@@ -3,7 +3,7 @@ FROM docker.io/library/alpine:3.23
 RUN apk add --no-cache ca-certificates sqlite
 
 ARG BINARY
-COPY ${BINARY} /usr/local/bin/control
+COPY ${BINARY} /usr/local/bin/cadestro
 
 EXPOSE 8081 8082
-ENTRYPOINT ["/usr/local/bin/control"]
+ENTRYPOINT ["/usr/local/bin/cadestro"]

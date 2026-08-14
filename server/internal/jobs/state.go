@@ -15,9 +15,9 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
-	"github.com/manchtools/power-manage/server/internal/store/sqlitetype"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 const (

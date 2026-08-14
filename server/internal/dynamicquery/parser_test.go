@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/manchtools/power-manage/server/internal/dynamicquery"
+	"github.com/manchtools/cadestro/server/internal/dynamicquery"
 )
 
 func TestParse_HappyPath(t *testing.T) {

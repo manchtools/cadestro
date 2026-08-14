@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/ca"
-	"github.com/manchtools/power-manage/server/internal/mtls"
+	"github.com/manchtools/cadestro/server/internal/ca"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
 type deviceIdentityKey struct{}

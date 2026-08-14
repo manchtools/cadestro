@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: Build control
+      - name: Build cadestro
         env:
           CGO_ENABLED: '0'
           GOOS: linux
@@ -40,11 +40,11 @@ jobs:
         run: |
           mkdir -p dist
           go build -ldflags="-s -w -X main.version=${GITHUB_REF_NAME#v}" \
-            -o dist/control-linux-${{ matrix.arch }} ./cmd/control
+            -o dist/cadestro-linux-${{ matrix.arch }} ./cmd/cadestro
       - uses: actions/upload-artifact@v5
         with:
-          name: control-${{ matrix.arch }}
-          path: dist/control-linux-${{ matrix.arch }}
+          name: cadestro-${{ matrix.arch }}
+          path: dist/cadestro-linux-${{ matrix.arch }}
 
   containers:
     needs: build
@@ -60,7 +60,7 @@ jobs:
           platforms: ${{ matrix.arch }}
       - uses: actions/download-artifact@v5
         with:
-          name: control-${{ matrix.arch }}
+          name: cadestro-${{ matrix.arch }}
           path: dist
       - uses: docker/login-action@v3
         with:
@@ -69,9 +69,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push control image
         run: |
-          chmod +x dist/control-linux-${{ matrix.arch }}
+          chmod +x dist/cadestro-linux-${{ matrix.arch }}
           docker build --platform "linux/${{ matrix.arch }}" --provenance=false -f deploy/Containerfile.control \
-            --build-arg BINARY=dist/control-linux-${{ matrix.arch }} \
+            --build-arg BINARY=dist/cadestro-linux-${{ matrix.arch }} \
             -t ghcr.io/manchtools/power-manage-control:${GITHUB_REF_NAME#v}-${{ matrix.arch }} .
           docker push ghcr.io/manchtools/power-manage-control:${GITHUB_REF_NAME#v}-${{ matrix.arch }}
 
@@ -122,7 +122,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v5
         with:
-          pattern: control-*
+          pattern: cadestro-*
           path: release
           merge-multiple: true
       - uses: anchore/sbom-action/download-syft@v0
@@ -130,19 +130,19 @@ jobs:
       - name: SBOMs
         run: |
           shopt -s nullglob
-          bins=(release/control-linux-*)
+          bins=(release/cadestro-linux-*)
           [[ ${#bins[@]} -gt 0 ]] || { echo "no binaries to scan" >&2; exit 1; }
           for bin in "${bins[@]}"; do
             "${{ steps.syft.outputs.cmd }}" scan "file:$bin" -o "spdx-json=$bin.spdx.json"
           done
       - name: Checksums
-        run: cd release && sha256sum control-* > SHA256SUMS
+        run: cd release && sha256sum cadestro-* > SHA256SUMS
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
-            release/control-linux-amd64
-            release/control-linux-arm64
+            release/cadestro-linux-amd64
+            release/cadestro-linux-arm64
       - uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ contains(github.ref_name, '-') }}

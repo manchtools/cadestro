@@ -61,7 +61,7 @@ Then bootstrap your identity provider and enroll a device:
 
 ```bash
 # on the control host: one-time admin token, piped into the CLI
-docker compose exec -T control control bootstrap-admin --output token \
+docker compose exec -T control cadestro bootstrap-admin --output token \
   | powermanage bootstrap oidc --file provider.json --token-stdin
 
 powermanage login --provider <slug>

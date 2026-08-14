@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/authoring"
-	"github.com/manchtools/power-manage/server/internal/manifest"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/manifest"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func createNoParamsAction(t *testing.T, svc *authoring.Service, actionType pmv1.ActionType) store.ActionRow {

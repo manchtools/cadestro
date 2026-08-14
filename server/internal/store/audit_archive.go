@@ -10,7 +10,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 const (

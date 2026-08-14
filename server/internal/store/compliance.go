@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // RefreshDeviceCompliance recomputes each named device's compliance summary

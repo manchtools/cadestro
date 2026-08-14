@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/store"
-	db "github.com/manchtools/power-manage/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // System role IDs, matching the seed in the migrations.

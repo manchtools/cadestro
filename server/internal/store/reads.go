@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/manchtools/power-manage/server/internal/store/generated"
-	"github.com/manchtools/power-manage/server/internal/store/sqlitetype"
+	"github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 // Reads are exported one at a time rather than by handing out the

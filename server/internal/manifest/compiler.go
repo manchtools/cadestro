@@ -13,9 +13,9 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
-	"github.com/manchtools/power-manage/server/internal/actionparams"
-	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/actionparams"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/store"
 	"google.golang.org/protobuf/proto"
 )
 

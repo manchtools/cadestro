@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/power-manage/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 )
 
 // TestSecretAADForRow_BindsImmutableRowID proves the at-rest AAD binds the

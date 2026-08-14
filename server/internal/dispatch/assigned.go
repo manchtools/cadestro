@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage/server/internal/assignment"
-	"github.com/manchtools/power-manage/server/internal/authoring"
+	"github.com/manchtools/cadestro/server/internal/assignment"
+	"github.com/manchtools/cadestro/server/internal/authoring"
 )
 
 var errAssignedSourceNotVisible = errors.New("assigned source is outside caller scope")

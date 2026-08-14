@@ -1,4 +1,4 @@
-module github.com/manchtools/power-manage/server
+module github.com/manchtools/cadestro/server
 
 go 1.25.12
 

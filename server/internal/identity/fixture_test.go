@@ -23,16 +23,16 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/manchtools/power-manage/server/internal/testdb"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
-	"github.com/manchtools/power-manage/server/internal/auth"
-	"github.com/manchtools/power-manage/server/internal/crypto"
-	"github.com/manchtools/power-manage/server/internal/identity"
-	"github.com/manchtools/power-manage/server/internal/idp"
-	"github.com/manchtools/power-manage/server/internal/store"
+	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/identity"
+	"github.com/manchtools/cadestro/server/internal/idp"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // testKEK is a fixed 32-byte key. It is a TEST key: the fixture needs a
