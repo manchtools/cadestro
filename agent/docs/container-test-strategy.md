@@ -240,12 +240,12 @@ jobs:
         with:
           file: sdk/test/Dockerfile.${{ matrix.distro }}
           target: ${{ matrix.target }}
-          tags: pm-sdk-test
+          tags: cadestro-sdk-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - run: |
-          docker run --rm pm-sdk-test \
+          docker run --rm cadestro-sdk-test \
             go test -tags=container -count=1 -timeout=10m ./...
 ```
 

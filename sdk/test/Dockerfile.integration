@@ -128,5 +128,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends network-manager
     && rm -rf /var/lib/apt/lists/* \
     && systemctl enable NetworkManager \
     && mkdir -p /etc/NetworkManager/conf.d \
-    && printf '[keyfile]\nunmanaged-devices=*\n' > /etc/NetworkManager/conf.d/90-pm-test-unmanaged.conf \
+    && printf '[keyfile]\nunmanaged-devices=*\n' > /etc/NetworkManager/conf.d/90-cadestro-test-unmanaged.conf \
     && nmcli --version

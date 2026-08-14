@@ -46,10 +46,10 @@ RUN zypper --non-interactive install --no-recommends clamav \
     && zypper clean --all \
     && rm -f /var/lib/clamav/*.cvd /var/lib/clamav/*.cld /var/lib/clamav/*.cud \
     && mkdir -p /var/lib/clamav \
-    && printf '44d88612fea8a8f36de82e1278abb02f:68:PM.Eicar.Test\n' \
-       > /var/lib/clamav/pm-seed.hdb \
-    && printf 'PM.Marker.Test:0:*:504d2d434c414d41562d544553542d4d41524b4552\n' \
-       > /var/lib/clamav/pm-seed.ndb \
+    && printf '44d88612fea8a8f36de82e1278abb02f:68:Cadestro.Eicar.Test\n' \
+       > /var/lib/clamav/cadestro-seed.hdb \
+    && printf 'Cadestro.Marker.Test:0:*:434144455354524f2d434c414d41562d544553542d4d41524b4552\n' \
+       > /var/lib/clamav/cadestro-seed.ndb \
     && rm -f /etc/freshclam.conf \
     && clamscan --version \
        || (echo "PRECONDITION FAILED: clamscan not installed/runnable" && exit 1)

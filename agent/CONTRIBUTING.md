@@ -18,12 +18,12 @@ Rules the CI enforces (self-discovering guards in `internal/archtest/`):
 
 ```bash
 # Distro matrix lane (debian; swap the Dockerfile suffix for fedora/opensuse/archlinux)
-cd .. && docker build -f agent/test/Dockerfile.integration -t pm-agent-test .
-docker run --rm pm-agent-test \
+cd .. && docker build -f agent/test/Dockerfile.integration -t cadestro-agent-test .
+docker run --rm cadestro-agent-test \
   go test -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run Integration
 
 # Privileged edge lane
-docker run --rm --privileged pm-agent-test \
+docker run --rm --privileged cadestro-agent-test \
   go test -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run EdgeCase
 ```
 

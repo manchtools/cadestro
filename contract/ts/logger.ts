@@ -141,8 +141,8 @@ function makeLogger(name: string): Logger {
 	};
 }
 
-/** The root logger for the SDK. Sub-loggers via `logger.named(...)`. */
-export const logger: Logger = makeLogger('pm-sdk');
+/** The root logger for the contract package. Sub-loggers via `logger.named(...)`. */
+export const logger: Logger = makeLogger('cadestro-contract');
 
 /** Best-effort serialization of an `unknown` (typically a `catch`
  * error binding) into a JSON-safe shape for the `context` payload.

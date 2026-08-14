@@ -69,20 +69,20 @@ CONTAINER_CMD := $(shell command -v podman 2>/dev/null || command -v docker 2>/d
 TEST_CMD := /usr/local/go/bin/go test -v -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run Integration
 
 test-integration-debian:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t pm-agent-test-debian ../
-	$(CONTAINER_CMD) run --rm pm-agent-test-debian $(TEST_CMD)
+	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t cadestro-agent-test-debian ../
+	$(CONTAINER_CMD) run --rm cadestro-agent-test-debian $(TEST_CMD)
 
 test-integration-fedora:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration.fedora -t pm-agent-test-fedora ../
-	$(CONTAINER_CMD) run --rm pm-agent-test-fedora $(TEST_CMD)
+	$(CONTAINER_CMD) build -f test/Dockerfile.integration.fedora -t cadestro-agent-test-fedora ../
+	$(CONTAINER_CMD) run --rm cadestro-agent-test-fedora $(TEST_CMD)
 
 test-integration-opensuse:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration.opensuse -t pm-agent-test-opensuse ../
-	$(CONTAINER_CMD) run --rm pm-agent-test-opensuse $(TEST_CMD)
+	$(CONTAINER_CMD) build -f test/Dockerfile.integration.opensuse -t cadestro-agent-test-opensuse ../
+	$(CONTAINER_CMD) run --rm cadestro-agent-test-opensuse $(TEST_CMD)
 
 test-integration-archlinux:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration.archlinux -t pm-agent-test-archlinux ../
-	$(CONTAINER_CMD) run --rm pm-agent-test-archlinux $(TEST_CMD)
+	$(CONTAINER_CMD) build -f test/Dockerfile.integration.archlinux -t cadestro-agent-test-archlinux ../
+	$(CONTAINER_CMD) run --rm cadestro-agent-test-archlinux $(TEST_CMD)
 
 # Run all 4 distros in parallel
 test-integration-all:
@@ -90,5 +90,5 @@ test-integration-all:
 
 # Edge case tests in privileged Debian container (disk-full, read-only FS, etc.)
 test-integration-edgecase:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t pm-agent-test-debian ../
-	$(CONTAINER_CMD) run --rm --privileged pm-agent-test-debian $(TEST_CMD) -run EdgeCase
+	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t cadestro-agent-test-debian ../
+	$(CONTAINER_CMD) run --rm --privileged cadestro-agent-test-debian $(TEST_CMD) -run EdgeCase

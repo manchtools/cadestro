@@ -20,7 +20,7 @@ ENGINE="${CONTAINER_ENGINE:-docker}"
 DISTRO="${1:-debian}"
 STATE="${2:-state-locked-apt}"
 TEST_PATH="${3:-./sdk/pkg/}"
-IMAGE="pm-sdk-container-${DISTRO}-${STATE}"
+IMAGE="cadestro-sdk-container-${DISTRO}-${STATE}"
 
 # Build context is the repo root (parent of sdk/), matching the existing
 # integration CI: the Dockerfile does `COPY sdk/ ./sdk/`.

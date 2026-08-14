@@ -27,7 +27,7 @@ describe('logger', () => {
 		expect(events).toHaveLength(1);
 		const ev = events[0]!;
 		expect(ev.level).toBe('warn');
-		expect(ev.name).toBe('pm-sdk.auth');
+		expect(ev.name).toBe('cadestro-contract.auth');
 		expect(ev.message).toBe('something off');
 		expect(ev.context).toEqual({ tokenAgeMs: 1234 });
 	});
@@ -49,7 +49,7 @@ describe('logger', () => {
 	it('named() composes dotted prefixes for nested sub-loggers', () => {
 		const child = logger.named('auth').named('refresh');
 		child.info('rotated', { newExpiry: '2026-01-01T00:00:00.000Z' });
-		expect(events[0]!.name).toBe('pm-sdk.auth.refresh');
+		expect(events[0]!.name).toBe('cadestro-contract.auth.refresh');
 	});
 });
 

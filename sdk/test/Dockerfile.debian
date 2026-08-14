@@ -82,10 +82,10 @@ RUN touch /var/lib/dpkg/lock \
 # archive, plus a tiny STATIC seed signature database (two loose text files) so
 # clamscan detects real threats WITHOUT freshclam's ~300 MB official DB download.
 # The seed carries two real signatures of two different kinds:
-#   - pm-seed.hdb — the canonical EICAR test file, by its well-known MD5 hash
+#   - cadestro-seed.hdb — the canonical EICAR test file, by its well-known MD5 hash
 #     (44d88612fea8a8f36de82e1278abb02f) + size (68). EICAR is the industry's
 #     standard AV smoke test, so this is a genuine, recognizable detection.
-#   - pm-seed.ndb — our own marker string ("PM-CLAMAV-TEST-MARKER") as a byte
+#   - cadestro-seed.ndb — our own marker string ("CADESTRO-CLAMAV-TEST-MARKER") as a byte
 #     pattern, exercising clamscan's pattern-signature path too.
 # Detection is deterministic and hermetic; the network is never touched.
 #
@@ -105,10 +105,10 @@ FROM base AS with-clamav
 RUN apt-get update && apt-get install -y --no-install-recommends clamav \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/lib/clamav \
-    && printf '44d88612fea8a8f36de82e1278abb02f:68:PM.Eicar.Test\n' \
-       > /var/lib/clamav/pm-seed.hdb \
-    && printf 'PM.Marker.Test:0:*:504d2d434c414d41562d544553542d4d41524b4552\n' \
-       > /var/lib/clamav/pm-seed.ndb \
+    && printf '44d88612fea8a8f36de82e1278abb02f:68:Cadestro.Eicar.Test\n' \
+       > /var/lib/clamav/cadestro-seed.hdb \
+    && printf 'Cadestro.Marker.Test:0:*:434144455354524f2d434c414d41562d544553542d4d41524b4552\n' \
+       > /var/lib/clamav/cadestro-seed.ndb \
     && rm -f /etc/clamav/freshclam.conf \
     && clamscan --version \
        || (echo "PRECONDITION FAILED: clamscan not installed/runnable" && exit 1)

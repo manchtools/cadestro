@@ -11,8 +11,8 @@
 
 set -euo pipefail
 
-CONTAINER_NAME="pm-sdk-test-$$"
-IMAGE_NAME="pm-sdk-test"
+CONTAINER_NAME="cadestro-sdk-test-$$"
+IMAGE_NAME="cadestro-sdk-test"
 
 cleanup() {
     podman stop -t 2 "$CONTAINER_NAME" 2>/dev/null || true
