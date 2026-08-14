@@ -20,8 +20,8 @@ import (
 	"golang.org/x/net/http2"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
@@ -117,7 +117,7 @@ func seedExecution(t *testing.T, raw *testdb.DB, at time.Time) seededExecution {
 // the routing tests never errors, so it cannot show what an error costs.
 type streamFixture struct {
 	store   *store.Store
-	client  powermanagev1connect.AgentServiceClient
+	client  cadestrov1connect.AgentServiceClient
 	own     seededExecution
 	foreign seededExecution
 }
@@ -148,7 +148,7 @@ func newStreamFixture(t *testing.T) *streamFixture {
 	})
 	t.Cleanup(handler.Close)
 
-	procedure, connectHandler := powermanagev1connect.NewAgentServiceHandler(handler)
+	procedure, connectHandler := cadestrov1connect.NewAgentServiceHandler(handler)
 	mux := http.NewServeMux()
 	// Stands in for MTLSMiddleware: the transport is already authenticated by
 	// the time a frame reaches Stream, so the identity is bound here directly.
@@ -167,7 +167,7 @@ func newStreamFixture(t *testing.T) *streamFixture {
 			return (&net.Dialer{}).DialContext(ctx, network, addr)
 		},
 	}}
-	f.client = powermanagev1connect.NewAgentServiceClient(httpClient, server.URL, connect.WithGRPC())
+	f.client = cadestrov1connect.NewAgentServiceClient(httpClient, server.URL, connect.WithGRPC())
 	return f
 }
 

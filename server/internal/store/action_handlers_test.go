@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -429,12 +429,12 @@ func TestActionHandlers_RejectComplianceShellWithoutDetectionScript(t *testing.T
 func TestActionHandlers_MountsExactSurface(t *testing.T) {
 	f := newActionHandlerFixture(t)
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceCreateActionProcedure,
-		powermanagev1connect.ControlServiceGetActionProcedure,
-		powermanagev1connect.ControlServiceListActionsProcedure,
-		powermanagev1connect.ControlServiceRenameActionProcedure,
-		powermanagev1connect.ControlServiceUpdateActionDescriptionProcedure,
-		powermanagev1connect.ControlServiceUpdateActionParamsProcedure,
-		powermanagev1connect.ControlServiceDeleteActionProcedure,
+		cadestrov1connect.ControlServiceCreateActionProcedure,
+		cadestrov1connect.ControlServiceGetActionProcedure,
+		cadestrov1connect.ControlServiceListActionsProcedure,
+		cadestrov1connect.ControlServiceRenameActionProcedure,
+		cadestrov1connect.ControlServiceUpdateActionDescriptionProcedure,
+		cadestrov1connect.ControlServiceUpdateActionParamsProcedure,
+		cadestrov1connect.ControlServiceDeleteActionProcedure,
 	}, f.handlers.MountActions(http.NewServeMux()))
 }

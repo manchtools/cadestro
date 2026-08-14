@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	_ "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1" // registers the contract descriptors
+	_ "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1" // registers the contract descriptors
 )
 
 func assertLiveFields[V any](t *testing.T, name string, fields map[protoreflect.FullName]V) {
@@ -149,16 +149,16 @@ func TestRPCSurface_NativeCLIAuthIsExplicitAndProviderCapabilitiesArePublic(t *t
 	}
 
 	for messageName, fields := range map[protoreflect.FullName]map[protoreflect.Name]protoreflect.Kind{
-		"powermanage.v1.IdentityProvider": {
+		"cadestro.v1.IdentityProvider": {
 			"cli_client_id": protoreflect.StringKind,
 		},
-		"powermanage.v1.CreateIdentityProviderRequest": {
+		"cadestro.v1.CreateIdentityProviderRequest": {
 			"cli_client_id": protoreflect.StringKind,
 		},
-		"powermanage.v1.UpdateIdentityProviderRequest": {
+		"cadestro.v1.UpdateIdentityProviderRequest": {
 			"cli_client_id": protoreflect.StringKind,
 		},
-		"powermanage.v1.AuthMethodProvider": {
+		"cadestro.v1.AuthMethodProvider": {
 			"browser_login": protoreflect.BoolKind,
 			"cli_login":     protoreflect.BoolKind,
 		},
@@ -177,7 +177,7 @@ func TestRPCSurface_NativeCLIAuthIsExplicitAndProviderCapabilitiesArePublic(t *t
 			if field.Kind() != wantKind {
 				t.Errorf("%s.%s kind = %s, want %s", messageName, fieldName, field.Kind(), wantKind)
 			}
-			if messageName == "powermanage.v1.UpdateIdentityProviderRequest" && fieldName == "cli_client_id" && !field.HasPresence() {
+			if messageName == "cadestro.v1.UpdateIdentityProviderRequest" && fieldName == "cli_client_id" && !field.HasPresence() {
 				t.Error("UpdateIdentityProviderRequest.cli_client_id must preserve field presence")
 			}
 		}
@@ -221,7 +221,7 @@ func loadGolden(t *testing.T, path string, minimumTotal, minimumServices int) go
 // contractPackage is the protobuf namespace the contract ships under
 // (target design §2). Every descriptor-level assertion in this file is scoped
 // to it, so a stray descriptor from another module can never satisfy one.
-const contractPackage = "powermanage.v1"
+const contractPackage = "cadestro.v1"
 
 // liveSurface enumerates services and methods from the registered contract
 // descriptors — the artifact that actually ships, not the .proto text.
@@ -389,8 +389,8 @@ func TestRPCSurface_PredecessorDifferenceIsApproved(t *testing.T) {
 // secret value.
 func TestRPCSurface_SecretListsCannotLeakPlaintext(t *testing.T) {
 	for _, message := range []protoreflect.FullName{
-		"powermanage.v1.LpsPassword",
-		"powermanage.v1.LuksKey",
+		"cadestro.v1.LpsPassword",
+		"cadestro.v1.LuksKey",
 	} {
 		descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(message)
 		if err != nil {
@@ -408,8 +408,8 @@ func TestRPCSurface_SecretListsCannotLeakPlaintext(t *testing.T) {
 	}
 
 	for message, secretField := range map[protoreflect.FullName]protoreflect.Name{
-		"powermanage.v1.RevealLpsPasswordResponse": "password",
-		"powermanage.v1.RevealLuksKeyResponse":     "passphrase",
+		"cadestro.v1.RevealLpsPasswordResponse": "password",
+		"cadestro.v1.RevealLuksKeyResponse":     "passphrase",
 	} {
 		descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(message)
 		if err != nil {
@@ -494,17 +494,34 @@ func contractMessages(t *testing.T) map[protoreflect.Name]protoreflect.MessageDe
 	return out
 }
 
-// Design §2: the contract lives under powermanage.v1. Both directions, so a
+// Design §2: the contract lives under cadestro.v1. Both directions, so a
 // rename that copied instead of moved (stale descriptors still registering at
 // init) fails here.
+// abandonedPackages are every namespace this contract has previously shipped
+// under. Each rename ADDS to this list rather than replacing it: protoc leaves
+// an orphaned .pb.go behind whenever a source file moves, and a .pb.go
+// registers its descriptors at init, so a copied-instead-of-moved rename keeps
+// the old namespace live in protoregistry while every source-level check
+// reports clean. Dropping an older entry would retire that evidence.
+var abandonedPackages = []string{"pm.v1", "powermanage.v1"}
+
 func TestContract_Namespace(t *testing.T) {
+	abandoned := map[string]bool{}
+	for _, pkg := range abandonedPackages {
+		if pkg == contractPackage {
+			t.Fatalf("%s is listed as abandoned but is the shipped package — the guard would "+
+				"contradict itself and can prove nothing", pkg)
+		}
+		abandoned[pkg] = true
+	}
+
 	var shipped, legacy []string
 	protoregistry.GlobalFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		switch string(fd.Package()) {
-		case contractPackage:
+		switch pkg := string(fd.Package()); {
+		case pkg == contractPackage:
 			shipped = append(shipped, fd.Path())
-		case "pm.v1":
-			legacy = append(legacy, fd.Path())
+		case abandoned[pkg]:
+			legacy = append(legacy, pkg+" ("+fd.Path()+")")
 		}
 		return true
 	})
@@ -513,7 +530,7 @@ func TestContract_Namespace(t *testing.T) {
 	}
 	if len(legacy) != 0 {
 		sort.Strings(legacy)
-		t.Errorf("stale pm.v1 descriptors still registered: %s", strings.Join(legacy, ", "))
+		t.Errorf("stale descriptors from an abandoned namespace still registered: %s", strings.Join(legacy, ", "))
 	}
 }
 
@@ -663,9 +680,9 @@ func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
 	// HTTPS write-only inputs consumed and encrypted by control. They never enter
 	// an agent-facing frame and no response message contains them.
 	writeOnlyInputs := map[protoreflect.FullName]struct{}{
-		"powermanage.v1.EncryptionAuthoringParams.preshared_key": {},
-		"powermanage.v1.WifiAuthoringParams.psk":                 {},
-		"powermanage.v1.WifiAuthoringParams.client_key":          {},
+		"cadestro.v1.EncryptionAuthoringParams.preshared_key": {},
+		"cadestro.v1.WifiAuthoringParams.psk":                 {},
+		"cadestro.v1.WifiAuthoringParams.client_key":          {},
 	}
 	banned := map[protoreflect.Name]string{
 		"signature":          "a CA signature over an application frame",
@@ -752,27 +769,27 @@ func TestContract_SecretShapedFieldsAreClassifiedOrJustified(t *testing.T) {
 		"url", "pin", "pagetoken", "nextpagetoken",
 	}
 	justifiedPlaintext := map[protoreflect.FullName]string{
-		"powermanage.v1.EnableSCIMResponse.token":                    "one-time SCIM bearer reveal",
-		"powermanage.v1.StartTerminalResponse.session_token":         "short-lived browser bearer output",
-		"powermanage.v1.RegisterRequest.token":                       "one-time enrollment input",
-		"powermanage.v1.RotateSCIMTokenResponse.token":               "one-time SCIM bearer reveal",
-		"powermanage.v1.ValidateLuksTokenRequest.token":              "one-time device-bound LUKS input",
-		"powermanage.v1.CreateTokenResponse.token":                   "one-time registration-token reveal",
-		"powermanage.v1.CreateLuksTokenResponse.token":               "one-time LUKS-token reveal",
-		"powermanage.v1.Hello.auth_token":                            "short-lived direct-stream bootstrap bearer",
-		"powermanage.v1.RefreshTokenRequest.refresh_token":           "public HTTPS authentication input",
-		"powermanage.v1.LogoutRequest.refresh_token":                 "public HTTPS authentication input",
-		"powermanage.v1.EnrollRequest.token":                         "local privileged enrollment input",
-		"powermanage.v1.CreateIdentityProviderRequest.client_secret": "authenticated HTTPS write-only input",
-		"powermanage.v1.UpdateIdentityProviderRequest.client_secret": "authenticated HTTPS write-only input",
-		"powermanage.v1.RevealLpsPasswordResponse.password":          "explicit audited operator reveal",
-		"powermanage.v1.SSOCallbackResponse.access_token":            "public HTTPS authentication output",
-		"powermanage.v1.SSOCallbackResponse.refresh_token":           "public HTTPS authentication output",
-		"powermanage.v1.ExchangeCLISessionRequest.id_token":          "public HTTPS OIDC authentication assertion",
-		"powermanage.v1.ExchangeCLISessionResponse.access_token":     "public HTTPS authentication output",
-		"powermanage.v1.ExchangeCLISessionResponse.refresh_token":    "public HTTPS authentication output",
-		"powermanage.v1.RefreshTokenResponse.access_token":           "public HTTPS authentication output",
-		"powermanage.v1.RefreshTokenResponse.refresh_token":          "public HTTPS authentication output",
+		"cadestro.v1.EnableSCIMResponse.token":                    "one-time SCIM bearer reveal",
+		"cadestro.v1.StartTerminalResponse.session_token":         "short-lived browser bearer output",
+		"cadestro.v1.RegisterRequest.token":                       "one-time enrollment input",
+		"cadestro.v1.RotateSCIMTokenResponse.token":               "one-time SCIM bearer reveal",
+		"cadestro.v1.ValidateLuksTokenRequest.token":              "one-time device-bound LUKS input",
+		"cadestro.v1.CreateTokenResponse.token":                   "one-time registration-token reveal",
+		"cadestro.v1.CreateLuksTokenResponse.token":               "one-time LUKS-token reveal",
+		"cadestro.v1.Hello.auth_token":                            "short-lived direct-stream bootstrap bearer",
+		"cadestro.v1.RefreshTokenRequest.refresh_token":           "public HTTPS authentication input",
+		"cadestro.v1.LogoutRequest.refresh_token":                 "public HTTPS authentication input",
+		"cadestro.v1.EnrollRequest.token":                         "local privileged enrollment input",
+		"cadestro.v1.CreateIdentityProviderRequest.client_secret": "authenticated HTTPS write-only input",
+		"cadestro.v1.UpdateIdentityProviderRequest.client_secret": "authenticated HTTPS write-only input",
+		"cadestro.v1.RevealLpsPasswordResponse.password":          "explicit audited operator reveal",
+		"cadestro.v1.SSOCallbackResponse.access_token":            "public HTTPS authentication output",
+		"cadestro.v1.SSOCallbackResponse.refresh_token":           "public HTTPS authentication output",
+		"cadestro.v1.ExchangeCLISessionRequest.id_token":          "public HTTPS OIDC authentication assertion",
+		"cadestro.v1.ExchangeCLISessionResponse.access_token":     "public HTTPS authentication output",
+		"cadestro.v1.ExchangeCLISessionResponse.refresh_token":    "public HTTPS authentication output",
+		"cadestro.v1.RefreshTokenResponse.access_token":           "public HTTPS authentication output",
+		"cadestro.v1.RefreshTokenResponse.refresh_token":          "public HTTPS authentication output",
 	}
 
 	matches := 0

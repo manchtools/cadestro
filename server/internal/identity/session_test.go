@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 )
 
@@ -31,7 +31,7 @@ func TestRefreshToken_RotatesAndRevokesTheOldToken(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 
-	ops := f.operationsFor(powermanagev1connect.ControlServiceRefreshTokenProcedure)
+	ops := f.operationsFor(cadestrov1connect.ControlServiceRefreshTokenProcedure)
 	require.Len(t, ops, 2, "the successful rotation and the replay are both recorded")
 	assert.Equal(t, "MUTATION", ops[0].Class)
 	assert.Equal(t, subject.ID, ops[0].ActorID)
@@ -95,7 +95,7 @@ func TestRefreshToken_RefusesAForgedToken(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 
-	ops := f.operationsFor(powermanagev1connect.ControlServiceRefreshTokenProcedure)
+	ops := f.operationsFor(cadestrov1connect.ControlServiceRefreshTokenProcedure)
 	require.Len(t, ops, 1)
 	assert.Equal(t, "REJECTED_AUTHENTICATION", ops[0].Class)
 }
@@ -127,7 +127,7 @@ func TestLogout_RevokesTheSessionAndIsIdempotent(t *testing.T) {
 	_, err = f.client.Logout(f.ctx(), connect.NewRequest(&pmv1.LogoutRequest{RefreshToken: pair.RefreshToken}))
 	require.NoError(t, err)
 
-	ops := f.operationsFor(powermanagev1connect.ControlServiceLogoutProcedure)
+	ops := f.operationsFor(cadestrov1connect.ControlServiceLogoutProcedure)
 	require.Len(t, ops, 2)
 	first := f.effectWithAction(f.effectsOf(ops[0].OperationID), "LOGOUT")
 	assert.Equal(t, "APPLIED", first.Outcome)
@@ -195,7 +195,7 @@ func TestRejectedAuthentication_RecordsItsOwnOperationClass(t *testing.T) {
 	_, err := f.client.GetCurrentUser(f.ctx(), authed(&pmv1.GetCurrentUserRequest{}, forged))
 	require.Error(t, err)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceGetCurrentUserProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceGetCurrentUserProcedure)
 	assert.Equal(t, "REJECTED_AUTHENTICATION", op.Class)
 	assert.Equal(t, auth.AnonymousActorType, op.ActorType)
 	assert.Empty(t, op.ActorID, "the attempt never authenticated, so it has no actor")
@@ -218,7 +218,7 @@ func TestRejectedAuthentication_DistinguishesExpiryFromEverythingElse(t *testing
 		f.expiredToken(subject.ID, subject.Email)))
 	require.Error(t, err)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceGetCurrentUserProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceGetCurrentUserProcedure)
 	assert.Equal(t, "token_expired", op.ResultCode)
 }
 

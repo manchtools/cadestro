@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/identity"
 )
 
@@ -36,7 +36,7 @@ type call func(f *fixture, token string) error
 // by design, and their rejection paths are tested where their own
 // credential lives.
 var authenticatedMutations = map[string]call{
-	powermanagev1connect.ControlServiceCreateIdentityProviderProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceCreateIdentityProviderProcedure: func(f *fixture, token string) error {
 		_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&pmv1.CreateIdentityProviderRequest{
 			Name:         "Corp",
 			Slug:         "corp",
@@ -47,168 +47,168 @@ var authenticatedMutations = map[string]call{
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateIdentityProviderProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
 			Id:   newULID(),
 			Name: "Corp",
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceDeleteIdentityProviderProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceDeleteIdentityProviderProcedure: func(f *fixture, token string) error {
 		_, err := f.client.DeleteIdentityProvider(f.ctx(), authed(&pmv1.DeleteIdentityProviderRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceEnableSCIMProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceEnableSCIMProcedure: func(f *fixture, token string) error {
 		_, err := f.client.EnableSCIM(f.ctx(), authed(&pmv1.EnableSCIMRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceDisableSCIMProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceDisableSCIMProcedure: func(f *fixture, token string) error {
 		_, err := f.client.DisableSCIM(f.ctx(), authed(&pmv1.DisableSCIMRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceRotateSCIMTokenProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceRotateSCIMTokenProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RotateSCIMToken(f.ctx(), authed(&pmv1.RotateSCIMTokenRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUnlinkIdentityProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUnlinkIdentityProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UnlinkIdentity(f.ctx(), authed(&pmv1.UnlinkIdentityRequest{LinkId: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceEraseJITUserProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceEraseJITUserProcedure: func(f *fixture, token string) error {
 		_, err := f.client.EraseJITUser(f.ctx(), authed(&pmv1.EraseJITUserRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateUserEmailProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateUserEmailProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserEmail(f.ctx(), authed(&pmv1.UpdateUserEmailRequest{
 			Id: newULID(), Email: "moved@test.example",
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceSetUserDisabledProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceSetUserDisabledProcedure: func(f *fixture, token string) error {
 		_, err := f.client.SetUserDisabled(f.ctx(), authed(&pmv1.SetUserDisabledRequest{Id: newULID(), Disabled: true}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateUserProfileProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateUserProfileProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserProfile(f.ctx(), authed(&pmv1.UpdateUserProfileRequest{
 			Id: newULID(), DisplayName: "Name",
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateUserLinuxUsernameProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateUserLinuxUsernameProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserLinuxUsername(f.ctx(), authed(&pmv1.UpdateUserLinuxUsernameRequest{
 			UserId: newULID(), LinuxUsername: "alice",
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateUserSshSettingsProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateUserSshSettingsProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserSshSettings(f.ctx(), authed(&pmv1.UpdateUserSshSettingsRequest{
 			UserId: newULID(), SshAccessEnabled: true,
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceAddUserSshKeyProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceAddUserSshKeyProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AddUserSshKey(f.ctx(), authed(&pmv1.AddUserSshKeyRequest{
 			UserId: newULID(), PublicKey: testSSHKey,
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceRemoveUserSshKeyProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceRemoveUserSshKeyProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RemoveUserSshKey(f.ctx(), authed(&pmv1.RemoveUserSshKeyRequest{
 			UserId: newULID(), KeyId: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceSetUserProvisioningEnabledProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceSetUserProvisioningEnabledProcedure: func(f *fixture, token string) error {
 		_, err := f.client.SetUserProvisioningEnabled(f.ctx(), authed(&pmv1.SetUserProvisioningEnabledRequest{
 			UserId: newULID(), Enabled: true,
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceCreateUserGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceCreateUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.CreateUserGroup(f.ctx(), authed(&pmv1.CreateUserGroupRequest{Name: "Operators"}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateUserGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserGroup(f.ctx(), authed(&pmv1.UpdateUserGroupRequest{
 			GroupId: newULID(), Name: "Operators",
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceDeleteUserGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceDeleteUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.DeleteUserGroup(f.ctx(), authed(&pmv1.DeleteUserGroupRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceAddUserToGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceAddUserToGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AddUserToGroup(f.ctx(), authed(&pmv1.AddUserToGroupRequest{
 			GroupId: newULID(), UserId: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceRemoveUserFromGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceRemoveUserFromGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RemoveUserFromGroup(f.ctx(), authed(&pmv1.RemoveUserFromGroupRequest{
 			GroupId: newULID(), UserId: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceSetUserGroupMaintenanceWindowProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceSetUserGroupMaintenanceWindowProcedure: func(f *fixture, token string) error {
 		_, err := f.client.SetUserGroupMaintenanceWindow(f.ctx(), authed(&pmv1.SetUserGroupMaintenanceWindowRequest{
 			Id: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateUserGroupQueryProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&pmv1.UpdateUserGroupQueryRequest{
 			Id: newULID(), IsDynamic: true, DynamicQuery: `user.disabled equals "true"`,
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceEvaluateDynamicUserGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&pmv1.EvaluateDynamicUserGroupRequest{
 			Id: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateServerSettingsProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateServerSettingsProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateServerSettings(f.ctx(), authed(&pmv1.UpdateServerSettingsRequest{
 			UserProvisioningEnabled: true,
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceCreateRoleProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceCreateRoleProcedure: func(f *fixture, token string) error {
 		_, err := f.client.CreateRole(f.ctx(), authed(&pmv1.CreateRoleRequest{
 			Name: "Auditors", Permissions: []string{"ListUsers"},
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceUpdateRoleProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceUpdateRoleProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
 			RoleId: newULID(), Name: "Auditors", Permissions: []string{"ListUsers"},
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceDeleteRoleProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceDeleteRoleProcedure: func(f *fixture, token string) error {
 		_, err := f.client.DeleteRole(f.ctx(), authed(&pmv1.DeleteRoleRequest{Id: newULID()}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceAssignRoleToUserProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceAssignRoleToUserProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
 			UserId: newULID(), RoleId: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceRevokeRoleFromUserProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceRevokeRoleFromUserProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RevokeRoleFromUser(f.ctx(), authed(&pmv1.RevokeRoleFromUserRequest{
 			UserId: newULID(), RoleId: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceAssignRoleToUserGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceAssignRoleToUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AssignRoleToUserGroup(f.ctx(), authed(&pmv1.AssignRoleToUserGroupRequest{
 			GroupId: newULID(), RoleId: newULID(),
 		}, token))
 		return err
 	},
-	powermanagev1connect.ControlServiceRevokeRoleFromUserGroupProcedure: func(f *fixture, token string) error {
+	cadestrov1connect.ControlServiceRevokeRoleFromUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&pmv1.RevokeRoleFromUserGroupRequest{
 			GroupId: newULID(), RoleId: newULID(),
 		}, token))
@@ -220,12 +220,12 @@ var authenticatedMutations = map[string]call{
 // carry no session token: the SSO handshake and the session lifecycle a
 // client must be able to drive when its access token is gone.
 var publicMutations = map[string]bool{
-	powermanagev1connect.ControlServiceRefreshTokenProcedure:       true,
-	powermanagev1connect.ControlServiceLogoutProcedure:             true,
-	powermanagev1connect.ControlServiceGetSSOLoginURLProcedure:     true,
-	powermanagev1connect.ControlServiceSSOCallbackProcedure:        true,
-	powermanagev1connect.ControlServiceBeginCLILoginProcedure:      true,
-	powermanagev1connect.ControlServiceExchangeCLISessionProcedure: true,
+	cadestrov1connect.ControlServiceRefreshTokenProcedure:       true,
+	cadestrov1connect.ControlServiceLogoutProcedure:             true,
+	cadestrov1connect.ControlServiceGetSSOLoginURLProcedure:     true,
+	cadestrov1connect.ControlServiceSSOCallbackProcedure:        true,
+	cadestrov1connect.ControlServiceBeginCLILoginProcedure:      true,
+	cadestrov1connect.ControlServiceExchangeCLISessionProcedure: true,
 }
 
 // testSSHKey is a real, parsable ed25519 authorized-key line. The

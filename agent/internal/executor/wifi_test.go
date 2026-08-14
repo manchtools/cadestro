@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
@@ -96,7 +96,7 @@ func TestExecuteSealedWifi_RejectsWrongFieldContext(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-				"powermanage.v1.WifiParams", tc.sealField, deviceID, actionID)
+				"cadestro.v1.WifiParams", tc.sealField, deviceID, actionID)
 			if err != nil {
 				t.Fatal(err)
 			}

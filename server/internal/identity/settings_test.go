@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 func TestServerSettings_DirectAuditedCRUD(t *testing.T) {
@@ -31,7 +31,7 @@ func TestServerSettings_DirectAuditedCRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, updated.Msg.Settings, stored.Msg.Settings)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceUpdateServerSettingsProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateServerSettingsProcedure)
 	assert.Equal(t, operator.ID, op.ActorID)
 	effects := f.effectsOf(op.OperationID)
 	provisioning := f.effectWithAction(effects, "SET_USER_PROVISIONING")

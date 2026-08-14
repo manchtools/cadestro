@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
@@ -365,7 +365,7 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 		}
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceGetDeviceInventoryProcedure, "GetDeviceInventory",
+		cadestrov1connect.ControlServiceGetDeviceInventoryProcedure, "GetDeviceInventory",
 		"device_inventory", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
@@ -417,7 +417,7 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pm
 		}
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceGetOSQueryResultProcedure, "GetOSQueryResult",
+		cadestrov1connect.ControlServiceGetOSQueryResultProcedure, "GetOSQueryResult",
 		"osquery_result", result.QueryID); err != nil {
 		return nil, err
 	}
@@ -461,7 +461,7 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 		response.Logs = ""
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceGetDeviceLogResultProcedure, "GetDeviceLogResult",
+		cadestrov1connect.ControlServiceGetDeviceLogResultProcedure, "GetDeviceLogResult",
 		"device_log_result", result.QueryID); err != nil {
 		return nil, err
 	}
@@ -502,7 +502,7 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 		}
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceGetDeviceComplianceProcedure, "GetDeviceCompliance",
+		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure, "GetDeviceCompliance",
 		"device_compliance", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
@@ -570,7 +570,7 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 		policy.Status = worseComplianceStatus(policy.Status, rule.Status)
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
+		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
 		"GetDeviceCompliancePolicyStatus", "device_compliance_policy_status", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
@@ -651,7 +651,7 @@ func (h *Handlers) GetExecution(ctx context.Context, req *connect.Request[pmv1.G
 		return nil, h.internal(ctx, "decode execution", err)
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceGetExecutionProcedure, "GetExecution",
+		cadestrov1connect.ControlServiceGetExecutionProcedure, "GetExecution",
 		"execution", row.ID); err != nil {
 		return nil, err
 	}
@@ -725,7 +725,7 @@ func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[pmv1
 		next = rows[len(rows)-1].ID
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceListExecutionsProcedure, "ListExecutions",
+		cadestrov1connect.ControlServiceListExecutionsProcedure, "ListExecutions",
 		"execution", ""); err != nil {
 		return nil, err
 	}

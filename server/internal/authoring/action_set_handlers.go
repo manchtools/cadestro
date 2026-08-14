@@ -6,8 +6,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -25,7 +25,7 @@ func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[pmv
 		return nil, err
 	}
 	row, err := h.state.CreateActionSet(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateActionSetProcedure, "CreateActionSet"), CreateActionSetParams{
+		cadestrov1connect.ControlServiceCreateActionSetProcedure, "CreateActionSet"), CreateActionSetParams{
 		Name: req.Msg.Name, Description: req.Msg.Description, CreatedBy: actor.ID,
 		Schedule: req.Msg.Schedule, OnFailure: req.Msg.OnFailure,
 	})
@@ -132,7 +132,7 @@ func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[pmv
 		return nil, err
 	}
 	row, err := h.state.RenameActionSet(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRenameActionSetProcedure, "RenameActionSet"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameActionSetProcedure, "RenameActionSet"), req.Msg.Id, req.Msg.Name)
 	return h.updatedActionSet(ctx, "rename action set", row, err)
 }
 
@@ -146,7 +146,7 @@ func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.
 		return nil, err
 	}
 	row, err := h.state.UpdateActionSetDescription(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateActionSetDescriptionProcedure, "UpdateActionSetDescription"),
+		cadestrov1connect.ControlServiceUpdateActionSetDescriptionProcedure, "UpdateActionSetDescription"),
 		req.Msg.Id, req.Msg.Description)
 	return h.updatedActionSet(ctx, "update action set description", row, err)
 }
@@ -161,7 +161,7 @@ func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Req
 		return nil, err
 	}
 	row, err := h.state.UpdateActionSetPolicy(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateActionSetScheduleProcedure, "UpdateActionSetSchedule"),
+		cadestrov1connect.ControlServiceUpdateActionSetScheduleProcedure, "UpdateActionSetSchedule"),
 		req.Msg.Id, req.Msg.Schedule, req.Msg.OnFailure)
 	return h.updatedActionSet(ctx, "update action set policy", row, err)
 }
@@ -176,7 +176,7 @@ func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[pmv
 		return nil, err
 	}
 	if err := h.state.DeleteActionSet(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteActionSetProcedure, "DeleteActionSet"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteActionSetProcedure, "DeleteActionSet"), req.Msg.Id); err != nil {
 		return nil, h.actionSetError(ctx, "delete action set", err)
 	}
 	return connect.NewResponse(&pmv1.DeleteActionSetResponse{}), nil
@@ -205,7 +205,7 @@ func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[pmv1
 		return nil, h.actionError(ctx, "reject system action membership", ErrSystemAction)
 	}
 	if err := h.state.AddActionToSet(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceAddActionToSetProcedure, "AddActionToSet"),
+		cadestrov1connect.ControlServiceAddActionToSetProcedure, "AddActionToSet"),
 		req.Msg.SetId, req.Msg.ActionId, req.Msg.SortOrder); err != nil {
 		return nil, h.addActionToSetError(ctx, req.Msg.SetId, req.Msg.ActionId, err)
 	}
@@ -226,7 +226,7 @@ func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request
 		return nil, err
 	}
 	if err := h.state.RemoveActionFromSet(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRemoveActionFromSetProcedure, "RemoveActionFromSet"),
+		cadestrov1connect.ControlServiceRemoveActionFromSetProcedure, "RemoveActionFromSet"),
 		req.Msg.SetId, req.Msg.ActionId); err != nil {
 		return nil, h.actionSetError(ctx, "remove action from set", err)
 	}
@@ -247,7 +247,7 @@ func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 	if err := h.state.ReorderActionInSet(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceReorderActionInSetProcedure, "ReorderActionInSet"),
+		cadestrov1connect.ControlServiceReorderActionInSetProcedure, "ReorderActionInSet"),
 		req.Msg.SetId, req.Msg.ActionId, req.Msg.NewOrder); err != nil {
 		return nil, h.actionSetError(ctx, "reorder action in set", err)
 	}

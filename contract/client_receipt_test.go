@@ -9,7 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // Target design §7.2: control acknowledges a delivery only after the agent

@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/assignment"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -198,8 +198,8 @@ func TestAssignmentHandlers_CRUDAcrossEverySourceAndTarget(t *testing.T) {
 	assert.Equal(t, pmv1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL, recreated.Msg.Assignment.Mode)
 
 	for _, procedure := range []string{
-		powermanagev1connect.ControlServiceCreateAssignmentProcedure,
-		powermanagev1connect.ControlServiceDeleteAssignmentProcedure,
+		cadestrov1connect.ControlServiceCreateAssignmentProcedure,
+		cadestrov1connect.ControlServiceDeleteAssignmentProcedure,
 	} {
 		operation, err := latestOperationFor(t, f.store, f.raw, procedure)
 		require.NoError(t, err, procedure)
@@ -318,7 +318,7 @@ func TestAssignmentHandlers_AvailableSelectionIsAuditedDirectState(t *testing.T)
 	operations := 0
 	rows, err := f.raw.Query(context.Background(),
 		`SELECT operation_id FROM audit_operations WHERE request_descriptor = $1 ORDER BY chain_seq`,
-		powermanagev1connect.ControlServiceSetUserSelectionProcedure)
+		cadestrov1connect.ControlServiceSetUserSelectionProcedure)
 	require.NoError(t, err)
 	defer rows.Close()
 	for rows.Next() {
@@ -527,13 +527,13 @@ func TestAssignmentHandlers_MountExactCRUDSurface(t *testing.T) {
 	f := newAssignmentHandlerFixture(t)
 	mounted := f.handlers.Mount(http.NewServeMux())
 	want := []string{
-		powermanagev1connect.ControlServiceCreateAssignmentProcedure,
-		powermanagev1connect.ControlServiceDeleteAssignmentProcedure,
-		powermanagev1connect.ControlServiceListAssignmentsProcedure,
-		powermanagev1connect.ControlServiceGetUserAssignmentsProcedure,
-		powermanagev1connect.ControlServiceSetUserSelectionProcedure,
-		powermanagev1connect.ControlServiceListAvailableActionsProcedure,
-		powermanagev1connect.ControlServiceGetDeviceAssignmentsProcedure,
+		cadestrov1connect.ControlServiceCreateAssignmentProcedure,
+		cadestrov1connect.ControlServiceDeleteAssignmentProcedure,
+		cadestrov1connect.ControlServiceListAssignmentsProcedure,
+		cadestrov1connect.ControlServiceGetUserAssignmentsProcedure,
+		cadestrov1connect.ControlServiceSetUserSelectionProcedure,
+		cadestrov1connect.ControlServiceListAvailableActionsProcedure,
+		cadestrov1connect.ControlServiceGetDeviceAssignmentsProcedure,
 	}
 	assert.Equal(t, want, mounted)
 	assert.Equal(t, []string{want[0], want[1], want[4]}, assignment.MutationProcedures())

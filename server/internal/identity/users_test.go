@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -43,13 +43,13 @@ func TestEraseJITUser_ErasesSubjectAndCryptoShredsAuditDetail(t *testing.T) {
 		Id: subject.ID, Email: erasedAddress,
 	}, admin.Token))
 	require.NoError(t, err)
-	updateOp := f.onlyOperationFor(powermanagev1connect.ControlServiceUpdateUserEmailProcedure)
+	updateOp := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateUserEmailProcedure)
 	sealed := f.effectWithAction(f.effectsOf(updateOp.OperationID), "UPDATE_EMAIL").SealedDetail
 
 	_, err = f.client.EraseJITUser(f.ctx(), authed(&pmv1.EraseJITUserRequest{Id: subject.ID}, admin.Token))
 	require.NoError(t, err)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceEraseJITUserProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceEraseJITUserProcedure)
 	assert.Equal(t, "MUTATION", op.Class)
 	assert.Equal(t, "user", op.ActorType)
 	assert.Equal(t, admin.ID, op.ActorID)
@@ -119,7 +119,7 @@ func TestEraseJITUser_RejectsSCIMSubjectWithoutMutation(t *testing.T) {
 	assert.NoError(t, err, "a SCIM-created subject must survive the rejected JIT erasure")
 	_, err = f.store.GetUserEncryptionKey(f.ctx(), subject.ID)
 	assert.NoError(t, err, "the rejected request must not destroy the subject DEK")
-	assert.Empty(t, f.operationsFor(powermanagev1connect.ControlServiceEraseJITUserProcedure))
+	assert.Empty(t, f.operationsFor(cadestrov1connect.ControlServiceEraseJITUserProcedure))
 }
 
 func TestEraseJITUser_ValidatesIDBeforeWork(t *testing.T) {
@@ -172,7 +172,7 @@ func TestEraseJITUser_AuditFailureRollsBackErasure(t *testing.T) {
 	_, err := f.raw.Exec(f.ctx(), `
 		CREATE TRIGGER reject_jit_erasure_audit
 		BEFORE INSERT ON audit_operations
-		WHEN NEW.request_descriptor = '/powermanage.v1.ControlService/EraseJITUser'
+		WHEN NEW.request_descriptor = '/cadestro.v1.ControlService/EraseJITUser'
 		BEGIN SELECT RAISE(ABORT, 'rejected JIT erasure audit'); END`)
 	require.NoError(t, err)
 
@@ -199,7 +199,7 @@ func TestUpdateUserEmail_SealsTheTransitionForTheSubject(t *testing.T) {
 	}, admin.Token))
 	require.NoError(t, err)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceUpdateUserEmailProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateUserEmailProcedure)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "UPDATE_EMAIL")
 	require.NotNil(t, effect.SealedDetailSubject)
 	assert.Equal(t, subject.ID, *effect.SealedDetailSubject,
@@ -325,7 +325,7 @@ func TestSetUserDisabled_BumpsSessionVersionAndRecordsTheTransition(t *testing.T
 	assert.Greater(t, after.SessionVersion, before.SessionVersion,
 		"disabling a subject invalidates the sessions already issued to them")
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceSetUserDisabledProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceSetUserDisabledProcedure)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "SET_DISABLED")
 	require.NotNil(t, effect.BeforeFlag)
 	require.NotNil(t, effect.AfterFlag)
@@ -394,7 +394,7 @@ func TestSetUserDisabled_AllowsDisablingFinalAdmin(t *testing.T) {
 			state, err := f.store.GetUserSessionState(f.ctx(), soleAdmin.ID)
 			require.NoError(t, err)
 			assert.True(t, state.Disabled)
-			assert.Len(t, f.operationsFor(powermanagev1connect.ControlServiceSetUserDisabledProcedure), 1)
+			assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceSetUserDisabledProcedure), 1)
 		})
 	}
 }
@@ -445,7 +445,7 @@ func TestAddUserSshKey_RecordsTheKeyFingerprintNotTheKey(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp.Msg.Key)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceAddUserSshKeyProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceAddUserSshKeyProcedure)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "ADD")
 	assert.Equal(t, "ssh_public_key_sha256", effect.EvidenceKind)
 	assert.Len(t, effect.EvidenceFingerprint, 64, "the evidence is a SHA-256 digest")
@@ -456,7 +456,7 @@ func TestAddUserSshKey_RecordsTheKeyFingerprintNotTheKey(t *testing.T) {
 	}, admin.Token))
 	require.NoError(t, err)
 
-	removeOp := f.onlyOperationFor(powermanagev1connect.ControlServiceRemoveUserSshKeyProcedure)
+	removeOp := f.onlyOperationFor(cadestrov1connect.ControlServiceRemoveUserSshKeyProcedure)
 	removeEffect := f.effectWithAction(f.effectsOf(removeOp.OperationID), "REMOVE")
 	assert.Equal(t, effect.EvidenceFingerprint, removeEffect.EvidenceFingerprint)
 }

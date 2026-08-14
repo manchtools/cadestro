@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/agent/internal/executor"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // ctxCapturingOsquery records the context handed to each osquery call so a

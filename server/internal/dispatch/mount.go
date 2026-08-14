@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 // MountActions registers the direct singleton dispatch procedures.
@@ -18,32 +18,32 @@ func (h *Handlers) MountActions(mux *http.ServeMux, opts ...connect.HandlerOptio
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	register(powermanagev1connect.ControlServiceDispatchActionProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchActionProcedure, h.DispatchAction, opts...))
-	register(powermanagev1connect.ControlServiceDispatchInstantActionProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchInstantActionProcedure, h.DispatchInstantAction, opts...))
-	register(powermanagev1connect.ControlServiceDispatchActionSetProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchActionSetProcedure, h.DispatchActionSet, opts...))
-	register(powermanagev1connect.ControlServiceDispatchDefinitionProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchDefinitionProcedure, h.DispatchDefinition, opts...))
-	register(powermanagev1connect.ControlServiceDispatchToMultipleProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchToMultipleProcedure, h.DispatchToMultiple, opts...))
-	register(powermanagev1connect.ControlServiceDispatchToGroupProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchToGroupProcedure, h.DispatchToGroup, opts...))
-	register(powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure, h.DispatchAssignedActions, opts...))
+	register(cadestrov1connect.ControlServiceDispatchActionProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchActionProcedure, h.DispatchAction, opts...))
+	register(cadestrov1connect.ControlServiceDispatchInstantActionProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchInstantActionProcedure, h.DispatchInstantAction, opts...))
+	register(cadestrov1connect.ControlServiceDispatchActionSetProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchActionSetProcedure, h.DispatchActionSet, opts...))
+	register(cadestrov1connect.ControlServiceDispatchDefinitionProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchDefinitionProcedure, h.DispatchDefinition, opts...))
+	register(cadestrov1connect.ControlServiceDispatchToMultipleProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchToMultipleProcedure, h.DispatchToMultiple, opts...))
+	register(cadestrov1connect.ControlServiceDispatchToGroupProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchToGroupProcedure, h.DispatchToGroup, opts...))
+	register(cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure, h.DispatchAssignedActions, opts...))
 	return mounted
 }
 
 // MutationProcedures is the exact audited dispatch surface implemented here.
 func MutationProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceDispatchActionProcedure,
-		powermanagev1connect.ControlServiceDispatchInstantActionProcedure,
-		powermanagev1connect.ControlServiceDispatchActionSetProcedure,
-		powermanagev1connect.ControlServiceDispatchDefinitionProcedure,
-		powermanagev1connect.ControlServiceDispatchToMultipleProcedure,
-		powermanagev1connect.ControlServiceDispatchToGroupProcedure,
-		powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure,
+		cadestrov1connect.ControlServiceDispatchActionProcedure,
+		cadestrov1connect.ControlServiceDispatchInstantActionProcedure,
+		cadestrov1connect.ControlServiceDispatchActionSetProcedure,
+		cadestrov1connect.ControlServiceDispatchDefinitionProcedure,
+		cadestrov1connect.ControlServiceDispatchToMultipleProcedure,
+		cadestrov1connect.ControlServiceDispatchToGroupProcedure,
+		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure,
 	}
 }

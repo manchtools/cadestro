@@ -15,7 +15,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 )
 

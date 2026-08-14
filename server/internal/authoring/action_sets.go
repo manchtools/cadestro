@@ -8,7 +8,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/store"

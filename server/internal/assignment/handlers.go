@@ -12,8 +12,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -99,7 +99,7 @@ func (h *Handlers) CreateAssignment(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	row, err := h.state.Create(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateAssignmentProcedure, "CreateAssignment"), CreateParams{
+		cadestrov1connect.ControlServiceCreateAssignmentProcedure, "CreateAssignment"), CreateParams{
 		SourceType: req.Msg.SourceType, SourceID: req.Msg.SourceId,
 		TargetType: req.Msg.TargetType, TargetID: req.Msg.TargetId,
 		Mode: req.Msg.Mode, CreatedBy: actor.ID,
@@ -123,7 +123,7 @@ func (h *Handlers) DeleteAssignment(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	if err := h.state.Delete(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteAssignmentProcedure, "DeleteAssignment"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteAssignmentProcedure, "DeleteAssignment"), req.Msg.Id); err != nil {
 		return nil, h.mapError(ctx, "delete assignment", err)
 	}
 	return connect.NewResponse(&pmv1.DeleteAssignmentResponse{}), nil
@@ -415,7 +415,7 @@ func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	row, err := h.state.SetUserSelection(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetUserSelectionProcedure, "SetUserSelection"),
+		cadestrov1connect.ControlServiceSetUserSelectionProcedure, "SetUserSelection"),
 		req.Msg.DeviceId, req.Msg.SourceType, req.Msg.SourceId, req.Msg.Selected, actor.ID)
 	if err != nil {
 		return nil, h.mapError(ctx, "set user selection", err)
@@ -657,38 +657,38 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	register(powermanagev1connect.ControlServiceCreateAssignmentProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceCreateAssignmentProcedure, h.CreateAssignment, opts...))
-	register(powermanagev1connect.ControlServiceDeleteAssignmentProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDeleteAssignmentProcedure, h.DeleteAssignment, opts...))
-	register(powermanagev1connect.ControlServiceListAssignmentsProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceListAssignmentsProcedure, h.ListAssignments, opts...))
-	register(powermanagev1connect.ControlServiceGetUserAssignmentsProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceGetUserAssignmentsProcedure, h.GetUserAssignments, opts...))
-	register(powermanagev1connect.ControlServiceSetUserSelectionProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceSetUserSelectionProcedure, h.SetUserSelection, opts...))
-	register(powermanagev1connect.ControlServiceListAvailableActionsProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceListAvailableActionsProcedure, h.ListAvailableActions, opts...))
-	register(powermanagev1connect.ControlServiceGetDeviceAssignmentsProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceGetDeviceAssignmentsProcedure, h.GetDeviceAssignments, opts...))
+	register(cadestrov1connect.ControlServiceCreateAssignmentProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateAssignmentProcedure, h.CreateAssignment, opts...))
+	register(cadestrov1connect.ControlServiceDeleteAssignmentProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDeleteAssignmentProcedure, h.DeleteAssignment, opts...))
+	register(cadestrov1connect.ControlServiceListAssignmentsProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListAssignmentsProcedure, h.ListAssignments, opts...))
+	register(cadestrov1connect.ControlServiceGetUserAssignmentsProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetUserAssignmentsProcedure, h.GetUserAssignments, opts...))
+	register(cadestrov1connect.ControlServiceSetUserSelectionProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceSetUserSelectionProcedure, h.SetUserSelection, opts...))
+	register(cadestrov1connect.ControlServiceListAvailableActionsProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListAvailableActionsProcedure, h.ListAvailableActions, opts...))
+	register(cadestrov1connect.ControlServiceGetDeviceAssignmentsProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetDeviceAssignmentsProcedure, h.GetDeviceAssignments, opts...))
 	return mounted
 }
 
 // MutationProcedures is the exact audited assignment mutation surface.
 func MutationProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceCreateAssignmentProcedure,
-		powermanagev1connect.ControlServiceDeleteAssignmentProcedure,
-		powermanagev1connect.ControlServiceSetUserSelectionProcedure,
+		cadestrov1connect.ControlServiceCreateAssignmentProcedure,
+		cadestrov1connect.ControlServiceDeleteAssignmentProcedure,
+		cadestrov1connect.ControlServiceSetUserSelectionProcedure,
 	}
 }
 
 // ReadProcedures is the exact non-mutating assignment CRUD surface.
 func ReadProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceListAssignmentsProcedure,
-		powermanagev1connect.ControlServiceGetUserAssignmentsProcedure,
-		powermanagev1connect.ControlServiceListAvailableActionsProcedure,
-		powermanagev1connect.ControlServiceGetDeviceAssignmentsProcedure,
+		cadestrov1connect.ControlServiceListAssignmentsProcedure,
+		cadestrov1connect.ControlServiceGetUserAssignmentsProcedure,
+		cadestrov1connect.ControlServiceListAvailableActionsProcedure,
+		cadestrov1connect.ControlServiceGetDeviceAssignmentsProcedure,
 	}
 }

@@ -12,8 +12,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -174,7 +174,7 @@ func (h *Handlers) DispatchAction(ctx context.Context, req *connect.Request[pmv1
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "run_at must be a valid future timestamp")
 	}
 	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, powermanagev1connect.ControlServiceDispatchActionProcedure, "DispatchAction"),
+		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchActionProcedure, "DispatchAction"),
 		DeviceID:  req.Msg.DeviceId, Manifests: []ManifestInput{input}, ScheduledFor: scheduledFor,
 	})
 	if err != nil {
@@ -220,7 +220,7 @@ func (h *Handlers) DispatchInstantAction(ctx context.Context, req *connect.Reque
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "run_at must be a valid future timestamp")
 	}
 	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, powermanagev1connect.ControlServiceDispatchInstantActionProcedure, "DispatchInstantAction"),
+		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchInstantActionProcedure, "DispatchInstantAction"),
 		DeviceID:  req.Msg.DeviceId, Manifests: []ManifestInput{{Manifest: compiled}}, ScheduledFor: scheduledFor,
 	})
 	if err != nil {
@@ -252,7 +252,7 @@ func (h *Handlers) DispatchActionSet(ctx context.Context, req *connect.Request[p
 		return nil, err
 	}
 	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, powermanagev1connect.ControlServiceDispatchActionSetProcedure, "DispatchActionSet"),
+		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchActionSetProcedure, "DispatchActionSet"),
 		DeviceID:  req.Msg.DeviceId, Manifests: catalogManifests(compiled),
 	})
 	if err != nil {
@@ -281,7 +281,7 @@ func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, powermanagev1connect.ControlServiceDispatchDefinitionProcedure, "DispatchDefinition"),
+		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchDefinitionProcedure, "DispatchDefinition"),
 		DeviceID:  req.Msg.DeviceId, Manifests: catalogManifests(compiled...),
 	})
 	if err != nil {
@@ -335,7 +335,7 @@ func (h *Handlers) DispatchToMultiple(ctx context.Context, req *connect.Request[
 			"either action_id or inline_action is required")
 	}
 	result, err := h.submitter.SubmitBatch(ctx, SubmitBatchParams{
-		Operation: h.operation(req, actor, powermanagev1connect.ControlServiceDispatchToMultipleProcedure, "DispatchToMultiple"),
+		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchToMultipleProcedure, "DispatchToMultiple"),
 		Targets:   targets,
 	})
 	if err != nil {
@@ -386,7 +386,7 @@ func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv
 		}
 	}
 
-	op := h.operation(req, actor, powermanagev1connect.ControlServiceDispatchToGroupProcedure, "DispatchToGroup")
+	op := h.operation(req, actor, cadestrov1connect.ControlServiceDispatchToGroupProcedure, "DispatchToGroup")
 	if len(deviceIDs) == 0 {
 		_, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
 			ResourceType: "device_group", ResourceID: req.Msg.GroupId,
@@ -465,7 +465,7 @@ func (h *Handlers) DispatchAssignedActions(ctx context.Context, req *connect.Req
 		}
 	}
 	op := h.operation(req, actor,
-		powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure, "DispatchAssignedActions")
+		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure, "DispatchAssignedActions")
 	if len(inputs) == 0 {
 		_, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
 			ResourceType: "device", ResourceID: req.Msg.DeviceId,

@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	_ "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1" // registers the descriptors this guard reads
+	_ "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1" // registers the descriptors this guard reads
 )
 
 // secretLogSinkAllowlist lists the ONLY places a secret-named field may be
@@ -108,7 +108,7 @@ func secretFieldNamesFromDescriptors(t *testing.T) map[string]bool {
 	t.Helper()
 	out := map[string]bool{}
 	protoregistry.GlobalFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		if !strings.HasPrefix(string(fd.Package()), "powermanage.") {
+		if !strings.HasPrefix(string(fd.Package()), "cadestro.") {
 			return true
 		}
 		msgs := fd.Messages()

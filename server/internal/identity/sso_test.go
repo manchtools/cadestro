@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/idp"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -83,7 +83,7 @@ func TestGetSSOLoginURL_MintsStateAndRecordsOnlyItsDigest(t *testing.T) {
 		`SELECT provider_id FROM auth_states WHERE state = $1`, state).Scan(&storedProvider))
 	assert.Equal(t, providerID, storedProvider)
 
-	op := f.operationOfClass(powermanagev1connect.ControlServiceGetSSOLoginURLProcedure, "BACKGROUND_WRITER")
+	op := f.operationOfClass(cadestrov1connect.ControlServiceGetSSOLoginURLProcedure, "BACKGROUND_WRITER")
 	assert.Equal(t, "BACKGROUND_WRITER", op.Class)
 	assert.Empty(t, op.ActorID, "there is no subject yet")
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "START_LOGIN")
@@ -211,7 +211,7 @@ func TestExchangeCLISession_VerifiesTheIDTokenAndIssuesARegularSession(t *testin
 	assert.Equal(t, "cli@test.example", resp.Msg.User.Email)
 	assert.NotEmpty(t, resp.Msg.AccessToken)
 	assert.NotEmpty(t, resp.Msg.RefreshToken)
-	f.operationOfClass(powermanagev1connect.ControlServiceExchangeCLISessionProcedure, "MUTATION")
+	f.operationOfClass(cadestrov1connect.ControlServiceExchangeCLISessionProcedure, "MUTATION")
 
 	_, err = f.client.ExchangeCLISession(f.ctx(), connect.NewRequest(&pmv1.ExchangeCLISessionRequest{
 		Slug: "corp", State: begin.Msg.State, IdToken: oidc.idToken(t, oidc.URL),
@@ -239,7 +239,7 @@ func TestExchangeCLISession_RejectsAnIDTokenForTheBrowserAudience(t *testing.T) 
 		Slug: "corp", State: begin.Msg.State, IdToken: oidc.idToken(t, oidc.URL),
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
-	f.operationOfClass(powermanagev1connect.ControlServiceExchangeCLISessionProcedure, "REJECTED_AUTHENTICATION")
+	f.operationOfClass(cadestrov1connect.ControlServiceExchangeCLISessionProcedure, "REJECTED_AUTHENTICATION")
 }
 
 func TestBrowserAndCLIStatesCannotBeCrossConsumed(t *testing.T) {
@@ -301,7 +301,7 @@ func TestSSOCallback_AutoCreatesASubjectAndIssuesASession(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, store.UserProvisioningSourceOIDCJIT, row.ProvisioningSource)
 
-	op := f.operationOfClass(powermanagev1connect.ControlServiceSSOCallbackProcedure, "MUTATION")
+	op := f.operationOfClass(cadestrov1connect.ControlServiceSSOCallbackProcedure, "MUTATION")
 	effects := f.effectsOf(op.OperationID)
 	provision := f.effectWithAction(effects, "PROVISION")
 	assert.Equal(t, sha256Hex("newcomer@test.example"), provision.EvidenceFingerprint)
@@ -340,7 +340,7 @@ func TestSSOCallback_RefusesAReplayedState(t *testing.T) {
 
 	// The replay is recorded as a rejected authentication, distinct
 	// from the successful attempt's own records.
-	f.operationOfClass(powermanagev1connect.ControlServiceSSOCallbackProcedure, "REJECTED_AUTHENTICATION")
+	f.operationOfClass(cadestrov1connect.ControlServiceSSOCallbackProcedure, "REJECTED_AUTHENTICATION")
 }
 
 // The account-takeover guard: a provider may not bind an address that

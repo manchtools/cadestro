@@ -79,7 +79,7 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 
 	auditRecord, err := st.RecordOperation(ctx, store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "user", ActorID: userID,
-		Origin: "control_rpc", RequestDescriptor: "/powermanage.v1.ControlService/DispatchAction",
+		Origin: "control_rpc", RequestDescriptor: "/cadestro.v1.ControlService/DispatchAction",
 		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "DispatchAction",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}, store.AuditEffect{

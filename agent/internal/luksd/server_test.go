@@ -17,7 +17,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const goodPassphrase = "correct-horse-battery-staple-42" // >= 16 chars

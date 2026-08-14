@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 )
@@ -247,15 +247,15 @@ func TestDefinitionHandlers_CorruptStoredScheduleFailsClosed(t *testing.T) {
 func TestDefinitionHandlers_MountsExactSurface(t *testing.T) {
 	f := newActionHandlerFixture(t)
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceCreateDefinitionProcedure,
-		powermanagev1connect.ControlServiceGetDefinitionProcedure,
-		powermanagev1connect.ControlServiceListDefinitionsProcedure,
-		powermanagev1connect.ControlServiceRenameDefinitionProcedure,
-		powermanagev1connect.ControlServiceUpdateDefinitionDescriptionProcedure,
-		powermanagev1connect.ControlServiceUpdateDefinitionScheduleProcedure,
-		powermanagev1connect.ControlServiceDeleteDefinitionProcedure,
-		powermanagev1connect.ControlServiceAddActionSetToDefinitionProcedure,
-		powermanagev1connect.ControlServiceRemoveActionSetFromDefinitionProcedure,
-		powermanagev1connect.ControlServiceReorderActionSetInDefinitionProcedure,
+		cadestrov1connect.ControlServiceCreateDefinitionProcedure,
+		cadestrov1connect.ControlServiceGetDefinitionProcedure,
+		cadestrov1connect.ControlServiceListDefinitionsProcedure,
+		cadestrov1connect.ControlServiceRenameDefinitionProcedure,
+		cadestrov1connect.ControlServiceUpdateDefinitionDescriptionProcedure,
+		cadestrov1connect.ControlServiceUpdateDefinitionScheduleProcedure,
+		cadestrov1connect.ControlServiceDeleteDefinitionProcedure,
+		cadestrov1connect.ControlServiceAddActionSetToDefinitionProcedure,
+		cadestrov1connect.ControlServiceRemoveActionSetFromDefinitionProcedure,
+		cadestrov1connect.ControlServiceReorderActionSetInDefinitionProcedure,
 	}, f.handlers.MountDefinitions(http.NewServeMux()))
 }

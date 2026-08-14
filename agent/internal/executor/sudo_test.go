@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const testTerminalAdminGroup = "pm-sudo-test"

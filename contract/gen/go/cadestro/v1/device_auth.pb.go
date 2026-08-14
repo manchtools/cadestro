@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v6.30.2
-// source: powermanage/v1/device_auth.proto
+// source: cadestro/v1/device_auth.proto
 
-package powermanagev1
+package cadestrov1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -45,7 +45,7 @@ type EnrollRequest struct {
 
 func (x *EnrollRequest) Reset() {
 	*x = EnrollRequest{}
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[0]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -57,7 +57,7 @@ func (x *EnrollRequest) String() string {
 func (*EnrollRequest) ProtoMessage() {}
 
 func (x *EnrollRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[0]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -70,7 +70,7 @@ func (x *EnrollRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollRequest.ProtoReflect.Descriptor instead.
 func (*EnrollRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_device_auth_proto_rawDescGZIP(), []int{0}
+	return file_cadestro_v1_device_auth_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *EnrollRequest) GetServerUrl() string {
@@ -116,7 +116,7 @@ type EnrollResponse struct {
 
 func (x *EnrollResponse) Reset() {
 	*x = EnrollResponse{}
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[1]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -128,7 +128,7 @@ func (x *EnrollResponse) String() string {
 func (*EnrollResponse) ProtoMessage() {}
 
 func (x *EnrollResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[1]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +141,7 @@ func (x *EnrollResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollResponse.ProtoReflect.Descriptor instead.
 func (*EnrollResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_device_auth_proto_rawDescGZIP(), []int{1}
+	return file_cadestro_v1_device_auth_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *EnrollResponse) GetSuccess() bool {
@@ -173,7 +173,7 @@ type GetEnrollmentStatusRequest struct {
 
 func (x *GetEnrollmentStatusRequest) Reset() {
 	*x = GetEnrollmentStatusRequest{}
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[2]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -185,7 +185,7 @@ func (x *GetEnrollmentStatusRequest) String() string {
 func (*GetEnrollmentStatusRequest) ProtoMessage() {}
 
 func (x *GetEnrollmentStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[2]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -198,7 +198,7 @@ func (x *GetEnrollmentStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEnrollmentStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetEnrollmentStatusRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_device_auth_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_device_auth_proto_rawDescGZIP(), []int{2}
 }
 
 type GetEnrollmentStatusResponse struct {
@@ -213,7 +213,7 @@ type GetEnrollmentStatusResponse struct {
 
 func (x *GetEnrollmentStatusResponse) Reset() {
 	*x = GetEnrollmentStatusResponse{}
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[3]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +225,7 @@ func (x *GetEnrollmentStatusResponse) String() string {
 func (*GetEnrollmentStatusResponse) ProtoMessage() {}
 
 func (x *GetEnrollmentStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_device_auth_proto_msgTypes[3]
+	mi := &file_cadestro_v1_device_auth_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +238,7 @@ func (x *GetEnrollmentStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEnrollmentStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetEnrollmentStatusResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_device_auth_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_device_auth_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetEnrollmentStatusResponse) GetEnrolled() bool {
@@ -255,11 +255,11 @@ func (x *GetEnrollmentStatusResponse) GetDeviceId() string {
 	return ""
 }
 
-var File_powermanage_v1_device_auth_proto protoreflect.FileDescriptor
+var File_cadestro_v1_device_auth_proto protoreflect.FileDescriptor
 
-const file_powermanage_v1_device_auth_proto_rawDesc = "" +
+const file_cadestro_v1_device_auth_proto_rawDesc = "" +
 	"\n" +
-	" powermanage/v1/device_auth.proto\x12\x0epowermanage.v1\"r\n" +
+	"\x1dcadestro/v1/device_auth.proto\x12\vcadestro.v1\"r\n" +
 	"\rEnrollRequest\x12\x1d\n" +
 	"\n" +
 	"server_url\x18\x01 \x01(\tR\tserverUrl\x12\x14\n" +
@@ -272,35 +272,35 @@ const file_powermanage_v1_device_auth_proto_rawDesc = "" +
 	"\x1aGetEnrollmentStatusRequest\"V\n" +
 	"\x1bGetEnrollmentStatusResponse\x12\x1a\n" +
 	"\benrolled\x18\x01 \x01(\bR\benrolled\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId2\xcc\x01\n" +
-	"\x11DeviceAuthService\x12G\n" +
-	"\x06Enroll\x12\x1d.powermanage.v1.EnrollRequest\x1a\x1e.powermanage.v1.EnrollResponse\x12n\n" +
-	"\x13GetEnrollmentStatus\x12*.powermanage.v1.GetEnrollmentStatusRequest\x1a+.powermanage.v1.GetEnrollmentStatusResponseBMZKgithub.com/manchtools/cadestro/contract/gen/go/powermanage/v1;powermanagev1b\x06proto3"
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId2\xc0\x01\n" +
+	"\x11DeviceAuthService\x12A\n" +
+	"\x06Enroll\x12\x1a.cadestro.v1.EnrollRequest\x1a\x1b.cadestro.v1.EnrollResponse\x12h\n" +
+	"\x13GetEnrollmentStatus\x12'.cadestro.v1.GetEnrollmentStatusRequest\x1a(.cadestro.v1.GetEnrollmentStatusResponseBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
-	file_powermanage_v1_device_auth_proto_rawDescOnce sync.Once
-	file_powermanage_v1_device_auth_proto_rawDescData []byte
+	file_cadestro_v1_device_auth_proto_rawDescOnce sync.Once
+	file_cadestro_v1_device_auth_proto_rawDescData []byte
 )
 
-func file_powermanage_v1_device_auth_proto_rawDescGZIP() []byte {
-	file_powermanage_v1_device_auth_proto_rawDescOnce.Do(func() {
-		file_powermanage_v1_device_auth_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_powermanage_v1_device_auth_proto_rawDesc), len(file_powermanage_v1_device_auth_proto_rawDesc)))
+func file_cadestro_v1_device_auth_proto_rawDescGZIP() []byte {
+	file_cadestro_v1_device_auth_proto_rawDescOnce.Do(func() {
+		file_cadestro_v1_device_auth_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cadestro_v1_device_auth_proto_rawDesc), len(file_cadestro_v1_device_auth_proto_rawDesc)))
 	})
-	return file_powermanage_v1_device_auth_proto_rawDescData
+	return file_cadestro_v1_device_auth_proto_rawDescData
 }
 
-var file_powermanage_v1_device_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_powermanage_v1_device_auth_proto_goTypes = []any{
-	(*EnrollRequest)(nil),               // 0: powermanage.v1.EnrollRequest
-	(*EnrollResponse)(nil),              // 1: powermanage.v1.EnrollResponse
-	(*GetEnrollmentStatusRequest)(nil),  // 2: powermanage.v1.GetEnrollmentStatusRequest
-	(*GetEnrollmentStatusResponse)(nil), // 3: powermanage.v1.GetEnrollmentStatusResponse
+var file_cadestro_v1_device_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_cadestro_v1_device_auth_proto_goTypes = []any{
+	(*EnrollRequest)(nil),               // 0: cadestro.v1.EnrollRequest
+	(*EnrollResponse)(nil),              // 1: cadestro.v1.EnrollResponse
+	(*GetEnrollmentStatusRequest)(nil),  // 2: cadestro.v1.GetEnrollmentStatusRequest
+	(*GetEnrollmentStatusResponse)(nil), // 3: cadestro.v1.GetEnrollmentStatusResponse
 }
-var file_powermanage_v1_device_auth_proto_depIdxs = []int32{
-	0, // 0: powermanage.v1.DeviceAuthService.Enroll:input_type -> powermanage.v1.EnrollRequest
-	2, // 1: powermanage.v1.DeviceAuthService.GetEnrollmentStatus:input_type -> powermanage.v1.GetEnrollmentStatusRequest
-	1, // 2: powermanage.v1.DeviceAuthService.Enroll:output_type -> powermanage.v1.EnrollResponse
-	3, // 3: powermanage.v1.DeviceAuthService.GetEnrollmentStatus:output_type -> powermanage.v1.GetEnrollmentStatusResponse
+var file_cadestro_v1_device_auth_proto_depIdxs = []int32{
+	0, // 0: cadestro.v1.DeviceAuthService.Enroll:input_type -> cadestro.v1.EnrollRequest
+	2, // 1: cadestro.v1.DeviceAuthService.GetEnrollmentStatus:input_type -> cadestro.v1.GetEnrollmentStatusRequest
+	1, // 2: cadestro.v1.DeviceAuthService.Enroll:output_type -> cadestro.v1.EnrollResponse
+	3, // 3: cadestro.v1.DeviceAuthService.GetEnrollmentStatus:output_type -> cadestro.v1.GetEnrollmentStatusResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -308,26 +308,26 @@ var file_powermanage_v1_device_auth_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_powermanage_v1_device_auth_proto_init() }
-func file_powermanage_v1_device_auth_proto_init() {
-	if File_powermanage_v1_device_auth_proto != nil {
+func init() { file_cadestro_v1_device_auth_proto_init() }
+func file_cadestro_v1_device_auth_proto_init() {
+	if File_cadestro_v1_device_auth_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_powermanage_v1_device_auth_proto_rawDesc), len(file_powermanage_v1_device_auth_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_device_auth_proto_rawDesc), len(file_cadestro_v1_device_auth_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_powermanage_v1_device_auth_proto_goTypes,
-		DependencyIndexes: file_powermanage_v1_device_auth_proto_depIdxs,
-		MessageInfos:      file_powermanage_v1_device_auth_proto_msgTypes,
+		GoTypes:           file_cadestro_v1_device_auth_proto_goTypes,
+		DependencyIndexes: file_cadestro_v1_device_auth_proto_depIdxs,
+		MessageInfos:      file_cadestro_v1_device_auth_proto_msgTypes,
 	}.Build()
-	File_powermanage_v1_device_auth_proto = out.File
-	file_powermanage_v1_device_auth_proto_goTypes = nil
-	file_powermanage_v1_device_auth_proto_depIdxs = nil
+	File_cadestro_v1_device_auth_proto = out.File
+	file_cadestro_v1_device_auth_proto_goTypes = nil
+	file_cadestro_v1_device_auth_proto_depIdxs = nil
 }

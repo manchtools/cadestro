@@ -21,8 +21,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/net/http2"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/contract/validate"
 )
 
@@ -38,7 +38,7 @@ const (
 
 // Client provides methods to communicate with the power-manage server.
 type Client struct {
-	client    powermanagev1connect.AgentServiceClient
+	client    cadestrov1connect.AgentServiceClient
 	deviceID  string
 	authToken string
 	logger    *slog.Logger
@@ -149,7 +149,7 @@ func NewClient(serverURL string, opts ...ClientOption) *Client {
 	// resource-exhausted error and tear down cleanly, rather than
 	// allocate. The long-lived bidi stream is unaffected for normal
 	// (small) control frames.
-	c.client = powermanagev1connect.NewAgentServiceClient(httpClient, serverURL,
+	c.client = cadestrov1connect.NewAgentServiceClient(httpClient, serverURL,
 		connect.WithReadMaxBytes(maxInboundMessageBytes))
 	return c
 }
@@ -415,7 +415,7 @@ func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agen
 		opt.apply(c, &httpClient)
 	}
 
-	controlClient := powermanagev1connect.NewControlServiceClient(httpClient, controlURL)
+	controlClient := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
 
 	req := connect.NewRequest(&pm.RegisterRequest{
 		Token:                 token,
@@ -455,7 +455,7 @@ func RenewCertificate(ctx context.Context, controlURL string, csr, currentCert [
 		opt.apply(c, &httpClient)
 	}
 
-	controlClient := powermanagev1connect.NewControlServiceClient(httpClient, controlURL)
+	controlClient := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
 
 	req := connect.NewRequest(&pm.RenewCertificateRequest{
 		Csr:                csr,

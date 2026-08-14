@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 type recordingExecutor struct {

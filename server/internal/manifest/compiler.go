@@ -10,7 +10,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
@@ -287,7 +287,7 @@ func (c *Compiler) encryptionParams(ctx context.Context, deviceID string, row st
 	if err := actionparams.UnmarshalActionParams(row.Params, stored); err != nil {
 		return nil, err
 	}
-	sealed, err := c.sealActionField(ctx, deviceID, row.ID, "powermanage.v1.EncryptionParams",
+	sealed, err := c.sealActionField(ctx, deviceID, row.ID, "cadestro.v1.EncryptionParams",
 		"preshared_key", stored.GetPresharedKey(), pmcrypto.PurposeActionEncryptionPresharedKey)
 	if err != nil {
 		return nil, err
@@ -313,10 +313,10 @@ func (c *Compiler) wifiParams(ctx context.Context, deviceID string, row store.Ac
 	var err error
 	switch stored.AuthType {
 	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
-		params.Psk, err = c.sealActionField(ctx, deviceID, row.ID, "powermanage.v1.WifiParams",
+		params.Psk, err = c.sealActionField(ctx, deviceID, row.ID, "cadestro.v1.WifiParams",
 			"psk", stored.GetPsk(), pmcrypto.PurposeActionWifiPSK)
 	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
-		params.ClientKey, err = c.sealActionField(ctx, deviceID, row.ID, "powermanage.v1.WifiParams",
+		params.ClientKey, err = c.sealActionField(ctx, deviceID, row.ID, "cadestro.v1.WifiParams",
 			"client_key", stored.GetClientKey(), pmcrypto.PurposeActionWifiClientKey)
 	default:
 		return nil, errors.New("unsupported WiFi authentication type")

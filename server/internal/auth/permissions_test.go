@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 )
 
@@ -47,7 +47,7 @@ func TestAssignedPermissionAlternativesAreExactAndBackedByRPCs(t *testing.T) {
 // it, so the registry cannot drift away from the contract.
 func controlRPCNames(t *testing.T) map[string]bool {
 	t.Helper()
-	iface := reflect.TypeOf((*powermanagev1connect.ControlServiceHandler)(nil)).Elem()
+	iface := reflect.TypeOf((*cadestrov1connect.ControlServiceHandler)(nil)).Elem()
 	out := make(map[string]bool, iface.NumMethod())
 	for i := 0; i < iface.NumMethod(); i++ {
 		out[iface.Method(i).Name] = true

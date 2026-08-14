@@ -7,7 +7,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/executor"
 	sdk "github.com/manchtools/cadestro/contract"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // clientLuksKeyStore adapts sdk.Client to the executor.LuksKeyStore interface.

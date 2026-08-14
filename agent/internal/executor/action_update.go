@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"strings"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/pkg"
 	sysnotify "github.com/manchtools/cadestro/sdk/sys/notify"
 	sysreboot "github.com/manchtools/cadestro/sdk/sys/reboot"

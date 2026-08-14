@@ -36,7 +36,7 @@ func linkerOp() store.AuditOperation {
 		Class:                store.ClassMutation,
 		ActorType:            SystemActorSSO,
 		Origin:               "rpc",
-		RequestDescriptor:    "powermanage.v1.ControlService/CompleteOIDCLogin",
+		RequestDescriptor:    "cadestro.v1.ControlService/CompleteOIDCLogin",
 		AuthorizationOutcome: store.AuthorizationAllowed,
 		AuthorizationDetail:  "oidc",
 		Result:               store.ResultSuccess,

@@ -26,8 +26,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/identity"
@@ -55,7 +55,7 @@ type fixture struct {
 
 	// control is the real ControlService client, used for the SCIM
 	// token lifecycle (enable, rotate, disable).
-	control powermanagev1connect.ControlServiceClient
+	control cadestrov1connect.ControlServiceClient
 	// adminToken is a session token for a subject holding every
 	// permission, so a lifecycle call in a fixture helper is never the
 	// thing under test.
@@ -116,7 +116,7 @@ func newFixture(t *testing.T) *fixture {
 		client:  srv.Client(),
 		mounted: mounted,
 		now:     now,
-		control: powermanagev1connect.NewControlServiceClient(srv.Client(), srv.URL),
+		control: cadestrov1connect.NewControlServiceClient(srv.Client(), srv.URL),
 	}
 	f.adminToken = f.seedAdmin(jwt)
 	return f

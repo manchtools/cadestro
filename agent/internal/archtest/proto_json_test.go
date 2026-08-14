@@ -20,7 +20,7 @@ var protoJSONAllowlist = map[string]string{}
 // module that hosts the generated code: matched as a suffix, a stale value
 // matches nothing, and this guard's matches-zero check is what turns that
 // into a failure instead of a silent pass.
-const protoPkgPathSuffix = "/contract/gen/go/powermanage/v1"
+const protoPkgPathSuffix = "/contract/gen/go/cadestro/v1"
 
 // TestNoStdlibJSONOfProtoMessage forbids passing a generated protobuf type to
 // the standard library encoding/json (Marshal / MarshalIndent / Unmarshal, and
@@ -113,11 +113,11 @@ func protoImportAliases(f *ast.File) map[string]bool {
 			out[imp.Name.Name] = true
 		} else {
 			// Unaliased import: pure-AST parsing can't resolve the package's
-			// declared name. The generated protobuf package is `package powermanagev1`,
+			// declared name. The generated protobuf package is `package cadestrov1`,
 			// but register the last path segment `v1` too so neither possible
 			// identifier bypasses the guard. Both are scoped to this exact
 			// import path, so there is no collision with other /v1 packages.
-			out["powermanagev1"] = true
+			out["cadestrov1"] = true
 			out["v1"] = true
 		}
 	}

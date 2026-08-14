@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
@@ -31,7 +31,7 @@ func testControlSealingPublicKey() []byte {
 
 // mockRegisterService implements the Register RPC of ControlServiceHandler.
 type mockRegisterService struct {
-	powermanagev1connect.UnimplementedControlServiceHandler
+	cadestrov1connect.UnimplementedControlServiceHandler
 
 	registerFunc func(context.Context, *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error)
 }
@@ -49,7 +49,7 @@ func (m *mockRegisterService) Register(ctx context.Context, req *connect.Request
 func startMockControlServer(t *testing.T, mock *mockRegisterService) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
-	path, handler := powermanagev1connect.NewControlServiceHandler(mock)
+	path, handler := cadestrov1connect.NewControlServiceHandler(mock)
 	mux.Handle(path, handler)
 	srv := httptest.NewTLSServer(mux)
 	t.Cleanup(srv.Close)
@@ -252,7 +252,7 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 			},
 		},
 	}
-	client := powermanagev1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
+	client := cadestrov1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
 
 	// Check status: not enrolled
 	status, err := client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))

@@ -6,8 +6,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -30,7 +30,7 @@ func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[pmv1.C
 		return nil, h.actionError(ctx, "validate create action params", err)
 	}
 	row, err := h.state.CreateAction(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateActionProcedure, "CreateAction"), CreateActionParams{
+		cadestrov1connect.ControlServiceCreateActionProcedure, "CreateAction"), CreateActionParams{
 		Name: req.Msg.Name, Description: req.Msg.Description, CreatedBy: actor.ID,
 		ID:   actionID,
 		Type: req.Msg.Type, DesiredState: req.Msg.DesiredState, Params: params,
@@ -141,7 +141,7 @@ func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[pmv1.R
 		return nil, err
 	}
 	row, err := h.state.RenameAction(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRenameActionProcedure, "RenameAction"), req.Msg.Id, req.Msg.Name, false)
+		cadestrov1connect.ControlServiceRenameActionProcedure, "RenameAction"), req.Msg.Id, req.Msg.Name, false)
 	return h.updatedAction(ctx, "rename action", row, err)
 }
 
@@ -155,7 +155,7 @@ func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Req
 		return nil, err
 	}
 	row, err := h.state.UpdateActionDescription(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateActionDescriptionProcedure, "UpdateActionDescription"),
+		cadestrov1connect.ControlServiceUpdateActionDescriptionProcedure, "UpdateActionDescription"),
 		req.Msg.Id, req.Msg.Description, false)
 	return h.updatedAction(ctx, "update action description", row, err)
 }
@@ -175,7 +175,7 @@ func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[
 		return nil, h.actionError(ctx, "validate updated action params", err)
 	}
 	updated, err := h.state.UpdateActionParams(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateActionParamsProcedure, "UpdateActionParams"), UpdateActionParams{
+		cadestrov1connect.ControlServiceUpdateActionParamsProcedure, "UpdateActionParams"), UpdateActionParams{
 		ID: req.Msg.Id, DesiredState: req.Msg.DesiredState, Params: params,
 		TimeoutSeconds: req.Msg.TimeoutSeconds, Schedule: req.Msg.Schedule,
 	})
@@ -192,7 +192,7 @@ func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[pmv1.D
 		return nil, err
 	}
 	if err := h.state.DeleteAction(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteActionProcedure, "DeleteAction"), req.Msg.Id, false); err != nil {
+		cadestrov1connect.ControlServiceDeleteActionProcedure, "DeleteAction"), req.Msg.Id, false); err != nil {
 		return nil, h.actionError(ctx, "delete action", err)
 	}
 	return connect.NewResponse(&pmv1.DeleteActionResponse{}), nil

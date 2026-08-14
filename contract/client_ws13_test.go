@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const testULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"

@@ -14,8 +14,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
@@ -131,7 +131,7 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 		Class: store.ClassMutation, ActorType: "registration_token",
 		ActorFingerprint: tokenFingerprint, Origin: auth.ControlRPCOrigin,
 		OriginFingerprint:    originFingerprint(req),
-		RequestDescriptor:    powermanagev1connect.ControlServiceRegisterProcedure,
+		RequestDescriptor:    cadestrov1connect.ControlServiceRegisterProcedure,
 		AuthorizationOutcome: store.AuthorizationAllowed,
 		AuthorizationDetail:  "registration_token", Result: store.ResultSuccess, ResultCode: "OK",
 	}
@@ -181,7 +181,7 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 		return nil
 	})
 	if errors.Is(err, errCredentialRejected) {
-		if auditErr := h.recordRejected(ctx, req, powermanagev1connect.ControlServiceRegisterProcedure, tokenFingerprint, "INVALID_REGISTRATION_TOKEN"); auditErr != nil {
+		if auditErr := h.recordRejected(ctx, req, cadestrov1connect.ControlServiceRegisterProcedure, tokenFingerprint, "INVALID_REGISTRATION_TOKEN"); auditErr != nil {
 			return nil, h.internal(ctx, "audit rejected registration", auditErr)
 		}
 		return nil, rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied, "invalid registration token")
@@ -233,7 +233,7 @@ func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pm
 		Class: store.ClassMutation, ActorType: "device", ActorID: deviceID,
 		ActorFingerprint: oldFingerprint, Origin: auth.ControlRPCOrigin,
 		OriginFingerprint:    originFingerprint(req),
-		RequestDescriptor:    powermanagev1connect.ControlServiceRenewCertificateProcedure,
+		RequestDescriptor:    cadestrov1connect.ControlServiceRenewCertificateProcedure,
 		AuthorizationOutcome: store.AuthorizationAllowed,
 		AuthorizationDetail:  "device_certificate", Result: store.ResultSuccess, ResultCode: "OK",
 	}
@@ -275,7 +275,7 @@ func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pm
 
 func (h *Handlers) rejectCertificate(ctx context.Context, req *connect.Request[pmv1.RenewCertificateRequest], reason string) error {
 	digest := sha256.Sum256(req.Msg.CurrentCertificate)
-	if err := h.recordRejected(ctx, req, powermanagev1connect.ControlServiceRenewCertificateProcedure, hex.EncodeToString(digest[:]), reason); err != nil {
+	if err := h.recordRejected(ctx, req, cadestrov1connect.ControlServiceRenewCertificateProcedure, hex.EncodeToString(digest[:]), reason); err != nil {
 		return h.internal(ctx, "audit rejected renewal", err)
 	}
 	return rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied, "certificate not recognized")

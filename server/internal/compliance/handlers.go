@@ -14,8 +14,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -126,7 +126,7 @@ func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	row, err := h.state.Create(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateCompliancePolicyProcedure, "CreateCompliancePolicy"), CreateParams{
+		cadestrov1connect.ControlServiceCreateCompliancePolicyProcedure, "CreateCompliancePolicy"), CreateParams{
 		Name: req.Msg.Name, Description: req.Msg.Description, CreatedBy: actor.ID,
 	})
 	if err != nil {
@@ -220,7 +220,7 @@ func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	row, err := h.state.Rename(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRenameCompliancePolicyProcedure, "RenameCompliancePolicy"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure, "RenameCompliancePolicy"), req.Msg.Id, req.Msg.Name)
 	return h.updatedPolicy(ctx, "rename policy", row, err)
 }
 
@@ -234,7 +234,7 @@ func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *c
 		return nil, err
 	}
 	row, err := h.state.UpdateDescription(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure, "UpdateCompliancePolicyDescription"),
+		cadestrov1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure, "UpdateCompliancePolicyDescription"),
 		req.Msg.Id, req.Msg.Description)
 	return h.updatedPolicy(ctx, "update policy description", row, err)
 }
@@ -249,7 +249,7 @@ func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	if err := h.state.Delete(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteCompliancePolicyProcedure, "DeleteCompliancePolicy"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure, "DeleteCompliancePolicy"), req.Msg.Id); err != nil {
 		return nil, h.policyError(ctx, "delete policy", err)
 	}
 	return connect.NewResponse(&pmv1.DeleteCompliancePolicyResponse{}), nil
@@ -276,7 +276,7 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 		return nil, err
 	}
 	if err := h.state.AddRule(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceAddCompliancePolicyRuleProcedure, "AddCompliancePolicyRule"),
+		cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure, "AddCompliancePolicyRule"),
 		req.Msg.PolicyId, req.Msg.ActionId, req.Msg.GracePeriodHours); err != nil {
 		return nil, h.addRuleError(ctx, req.Msg.PolicyId, req.Msg.ActionId, err)
 	}
@@ -297,7 +297,7 @@ func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.
 		return nil, err
 	}
 	if err := h.state.RemoveRule(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRemoveCompliancePolicyRuleProcedure, "RemoveCompliancePolicyRule"),
+		cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure, "RemoveCompliancePolicyRule"),
 		req.Msg.PolicyId, req.Msg.ActionId); err != nil {
 		return nil, h.policyError(ctx, "remove policy rule", err)
 	}
@@ -318,7 +318,7 @@ func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.
 		return nil, err
 	}
 	if err := h.state.UpdateRule(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateCompliancePolicyRuleProcedure, "UpdateCompliancePolicyRule"),
+		cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure, "UpdateCompliancePolicyRule"),
 		req.Msg.PolicyId, req.Msg.ActionId, req.Msg.GracePeriodHours); err != nil {
 		return nil, h.policyError(ctx, "update policy rule", err)
 	}
@@ -573,44 +573,44 @@ func (h *Handlers) MountPolicies(mux *http.ServeMux, opts ...connect.HandlerOpti
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	register(powermanagev1connect.ControlServiceCreateCompliancePolicyProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceCreateCompliancePolicyProcedure, h.CreateCompliancePolicy, opts...))
-	register(powermanagev1connect.ControlServiceGetCompliancePolicyProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceGetCompliancePolicyProcedure, h.GetCompliancePolicy, opts...))
-	register(powermanagev1connect.ControlServiceListCompliancePoliciesProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceListCompliancePoliciesProcedure, h.ListCompliancePolicies, opts...))
-	register(powermanagev1connect.ControlServiceRenameCompliancePolicyProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceRenameCompliancePolicyProcedure, h.RenameCompliancePolicy, opts...))
-	register(powermanagev1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure, h.UpdateCompliancePolicyDescription, opts...))
-	register(powermanagev1connect.ControlServiceDeleteCompliancePolicyProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDeleteCompliancePolicyProcedure, h.DeleteCompliancePolicy, opts...))
-	register(powermanagev1connect.ControlServiceAddCompliancePolicyRuleProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceAddCompliancePolicyRuleProcedure, h.AddCompliancePolicyRule, opts...))
-	register(powermanagev1connect.ControlServiceRemoveCompliancePolicyRuleProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceRemoveCompliancePolicyRuleProcedure, h.RemoveCompliancePolicyRule, opts...))
-	register(powermanagev1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceUpdateCompliancePolicyRuleProcedure, h.UpdateCompliancePolicyRule, opts...))
+	register(cadestrov1connect.ControlServiceCreateCompliancePolicyProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateCompliancePolicyProcedure, h.CreateCompliancePolicy, opts...))
+	register(cadestrov1connect.ControlServiceGetCompliancePolicyProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetCompliancePolicyProcedure, h.GetCompliancePolicy, opts...))
+	register(cadestrov1connect.ControlServiceListCompliancePoliciesProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListCompliancePoliciesProcedure, h.ListCompliancePolicies, opts...))
+	register(cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure, h.RenameCompliancePolicy, opts...))
+	register(cadestrov1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure, h.UpdateCompliancePolicyDescription, opts...))
+	register(cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure, h.DeleteCompliancePolicy, opts...))
+	register(cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure, h.AddCompliancePolicyRule, opts...))
+	register(cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure, h.RemoveCompliancePolicyRule, opts...))
+	register(cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure, h.UpdateCompliancePolicyRule, opts...))
 	return mounted
 }
 
 // MutationProcedures is the exact audited compliance-policy mutation surface.
 func MutationProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceCreateCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceRenameCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure,
-		powermanagev1connect.ControlServiceDeleteCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceAddCompliancePolicyRuleProcedure,
-		powermanagev1connect.ControlServiceRemoveCompliancePolicyRuleProcedure,
-		powermanagev1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
+		cadestrov1connect.ControlServiceCreateCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure,
+		cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure,
+		cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure,
+		cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
 	}
 }
 
 // ReadProcedures is the exact non-mutating compliance-policy CRUD surface.
 func ReadProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceGetCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceListCompliancePoliciesProcedure,
+		cadestrov1connect.ControlServiceGetCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceListCompliancePoliciesProcedure,
 	}
 }

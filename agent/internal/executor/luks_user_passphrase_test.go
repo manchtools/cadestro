@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // reconcileDeviceKey for USER_PASSPHRASE revokes any current key and

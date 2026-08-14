@@ -43,7 +43,7 @@ echo "== go test"
 go test ./... -count=1
 
 # buf runs from proto/ — proto/buf.yaml is the module root, so
-# `import "powermanage/v1/common.proto"` only resolves from there. CI sets
+# `import "cadestro/v1/common.proto"` only resolves from there. CI sets
 # working-directory: proto for exactly this reason.
 #
 # The binary is resolved by scripts/buf.sh, which is fail-closed to the single

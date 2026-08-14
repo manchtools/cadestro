@@ -15,8 +15,8 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/manchtools/cadestro/agent/internal/deviceauth"
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 // parseRegistrationURI parses a cadestro:// URI.
@@ -142,7 +142,7 @@ func runEnroll(args []string) {
 
 	// Connect to the enrollment socket
 	httpClient := unixSocketHTTPClient(*socketPath)
-	client := powermanagev1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
+	client := cadestrov1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
 
 	// Check enrollment status first
 	status, err := client.GetEnrollmentStatus(ctx, connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))

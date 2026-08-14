@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // errReadOnlyFS is a sentinel error returned when the filesystem is read-only and repair failed.

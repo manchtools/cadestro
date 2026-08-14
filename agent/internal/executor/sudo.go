@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 

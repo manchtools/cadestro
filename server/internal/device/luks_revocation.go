@@ -8,8 +8,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -47,7 +47,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 	revocationID := ulid.Make().String()
 	requestedAt := h.now().UTC()
 	record, err := h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRevokeLuksDeviceKeyProcedure, "RevokeLuksDeviceKey"),
+		cadestrov1connect.ControlServiceRevokeLuksDeviceKeyProcedure, "RevokeLuksDeviceKey"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			rows, err := tx.MarkLuksKeyRevocationDispatched(ctx, db.MarkLuksKeyRevocationDispatchedParams{
 				RevocationAt: &requestedAt, DeviceID: req.Msg.DeviceId, ActionID: req.Msg.ActionId,
@@ -123,7 +123,7 @@ func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID strin
 	completedAt := h.now().UTC()
 	op := store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "agent", ActorID: deviceID, Origin: "agent_stream",
-		RequestDescriptor:    "powermanage.v1.AgentService.Stream/RevokeLuksDeviceKeyResult",
+		RequestDescriptor:    "cadestro.v1.AgentService.Stream/RevokeLuksDeviceKeyResult",
 		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "device_mtls",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}

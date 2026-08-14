@@ -10,8 +10,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -48,7 +48,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[pmv
 	}
 	createdAt := h.now().UTC()
 	record, err := h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDispatchOSQueryProcedure, "DispatchOSQuery"),
+		cadestrov1connect.ControlServiceDispatchOSQueryProcedure, "DispatchOSQuery"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if err := tx.InsertPendingOSQueryResult(ctx, db.InsertPendingOSQueryResultParams{
 				QueryID: queryID, DeviceID: req.Msg.DeviceId, TableName: tableName, CreatedAt: createdAt,
@@ -96,7 +96,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[pmv
 	queryID := ulid.Make().String()
 	createdAt := h.now().UTC()
 	record, err := h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceQueryDeviceLogsProcedure, "QueryDeviceLogs"),
+		cadestrov1connect.ControlServiceQueryDeviceLogsProcedure, "QueryDeviceLogs"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if err := tx.InsertPendingLogQueryResult(ctx, db.InsertPendingLogQueryResultParams{
 				QueryID: queryID, DeviceID: req.Msg.DeviceId, CreatedAt: createdAt,
@@ -144,7 +144,7 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 
 	requestID := ulid.Make().String()
 	record, err := h.store.RecordOperation(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRefreshDeviceInventoryProcedure, "RefreshDeviceInventory"),
+		cadestrov1connect.ControlServiceRefreshDeviceInventoryProcedure, "RefreshDeviceInventory"),
 		store.AuditEffect{
 			ResourceType: "device_inventory", ResourceID: req.Msg.DeviceId,
 			Action: "REFRESH", Outcome: store.EffectApplied,
@@ -387,7 +387,7 @@ func validateAgentDeviceMessage(h *Handlers, ctx context.Context, deviceID strin
 func agentStreamOperation(deviceID, descriptor string) store.AuditOperation {
 	return store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "agent", ActorID: deviceID, Origin: "agent_stream",
-		RequestDescriptor:    "powermanage.v1.AgentService.Stream/" + descriptor,
+		RequestDescriptor:    "cadestro.v1.AgentService.Stream/" + descriptor,
 		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "device_mtls",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}

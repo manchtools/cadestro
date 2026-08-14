@@ -13,7 +13,7 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	sdk "github.com/manchtools/cadestro/contract"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 	"github.com/manchtools/cadestro/sdk/sys/terminal"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"

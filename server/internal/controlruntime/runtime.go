@@ -12,7 +12,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/agentsecrets"
 	"github.com/manchtools/cadestro/server/internal/agentstream"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
@@ -175,7 +175,7 @@ func New(cfg Config) *Runtime {
 	publicHandler := middleware.RequestID(middleware.SecurityHeaders(
 		middleware.CORS(cfg.CORSOrigins, cfg.CORSAllowAll, cfg.Logger)(publicMux)))
 
-	agentPath, directAgentHandler := powermanagev1connect.NewAgentServiceHandler(
+	agentPath, directAgentHandler := cadestrov1connect.NewAgentServiceHandler(
 		agentService, connect.WithReadMaxBytes(maxAgentFrameBytes))
 	agentMux := http.NewServeMux()
 	agentMux.Handle(agentPath, agentstream.MTLSMiddleware(directAgentHandler,

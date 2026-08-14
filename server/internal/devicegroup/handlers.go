@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/contract/maintenance"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -135,7 +135,7 @@ func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[p
 		return nil, rpcError(ctx, "permission_denied", connect.CodePermissionDenied, "permission denied")
 	}
 	row, err := h.state.Create(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateDeviceGroupProcedure, permission), CreateParams{
+		cadestrov1connect.ControlServiceCreateDeviceGroupProcedure, permission), CreateParams{
 		Name: req.Msg.Name, Description: req.Msg.Description, CreatedBy: actor.ID,
 		Dynamic: req.Msg.IsDynamic, Query: req.Msg.DynamicQuery,
 	})
@@ -289,7 +289,7 @@ func (h *Handlers) RenameDeviceGroup(ctx context.Context, req *connect.Request[p
 		return nil, err
 	}
 	row, err := h.state.Rename(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRenameDeviceGroupProcedure, "RenameDeviceGroup"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameDeviceGroupProcedure, "RenameDeviceGroup"), req.Msg.Id, req.Msg.Name)
 	return h.updated(ctx, "rename device group", row, err)
 }
 
@@ -303,7 +303,7 @@ func (h *Handlers) UpdateDeviceGroupDescription(ctx context.Context, req *connec
 		return nil, err
 	}
 	row, err := h.state.UpdateDescription(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, "UpdateDeviceGroupDescription"),
+		cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, "UpdateDeviceGroupDescription"),
 		req.Msg.Id, req.Msg.Description)
 	return h.updated(ctx, "update device group description", row, err)
 }
@@ -319,7 +319,7 @@ func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Requ
 		return nil, err
 	}
 	row, err := h.state.UpdateQuery(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateDeviceGroupQueryProcedure, permission),
+		cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure, permission),
 		req.Msg.Id, req.Msg.IsDynamic, req.Msg.DynamicQuery)
 	if err != nil {
 		return nil, h.mapError(ctx, "update device group query", err)
@@ -341,7 +341,7 @@ func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[p
 		return nil, err
 	}
 	if err := h.state.Delete(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteDeviceGroupProcedure, "DeleteDeviceGroup"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure, "DeleteDeviceGroup"), req.Msg.Id); err != nil {
 		return nil, h.mapError(ctx, "delete device group", err)
 	}
 	return connect.NewResponse(&pmv1.DeleteDeviceGroupResponse{}), nil
@@ -375,7 +375,7 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[pm
 		}
 	}
 	if _, err := h.state.AddDevices(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceAddDeviceToGroupProcedure, "AddDeviceToGroup"), req.Msg.GroupId, ids); err != nil {
+		cadestrov1connect.ControlServiceAddDeviceToGroupProcedure, "AddDeviceToGroup"), req.Msg.GroupId, ids); err != nil {
 		return nil, h.mapError(ctx, "add devices to group", err)
 	}
 	group, err := h.groupResponse(ctx, req.Msg.GroupId)
@@ -395,7 +395,7 @@ func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 	if err := h.state.RemoveDevice(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRemoveDeviceFromGroupProcedure, "RemoveDeviceFromGroup"),
+		cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure, "RemoveDeviceFromGroup"),
 		req.Msg.GroupId, req.Msg.DeviceId); err != nil {
 		return nil, h.mapError(ctx, "remove device from group", err)
 	}
@@ -442,7 +442,7 @@ func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Reques
 		return nil, err
 	}
 	result, err := h.state.EvaluateDynamicGroup(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceEvaluateDynamicGroupProcedure, "EvaluateDynamicGroup"), req.Msg.Id)
+		cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure, "EvaluateDynamicGroup"), req.Msg.Id)
 	if err != nil {
 		return nil, h.mapError(ctx, "evaluate dynamic group", err)
 	}
@@ -465,7 +465,7 @@ func (h *Handlers) SetDeviceGroupSyncInterval(ctx context.Context, req *connect.
 		return nil, err
 	}
 	row, err := h.state.SetSyncInterval(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, "SetDeviceGroupSyncInterval"),
+		cadestrov1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, "SetDeviceGroupSyncInterval"),
 		req.Msg.Id, req.Msg.SyncIntervalMinutes)
 	return h.updated(ctx, "set device group sync interval", row, err)
 }
@@ -480,7 +480,7 @@ func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *con
 		return nil, err
 	}
 	row, err := h.state.SetInventoryInterval(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, "SetDeviceGroupInventoryInterval"),
+		cadestrov1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, "SetDeviceGroupInventoryInterval"),
 		req.Msg.Id, req.Msg.InventoryIntervalMinutes)
 	return h.updated(ctx, "set device group inventory interval", row, err)
 }
@@ -505,7 +505,7 @@ func (h *Handlers) SetDeviceGroupMaintenanceWindow(ctx context.Context, req *con
 		}
 	}
 	row, err := h.state.SetMaintenanceWindow(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, "SetDeviceGroupMaintenanceWindow"),
+		cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, "SetDeviceGroupMaintenanceWindow"),
 		req.Msg.Id, raw)
 	return h.updated(ctx, "set device group maintenance window", row, err)
 }
@@ -680,47 +680,47 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	register(powermanagev1connect.ControlServiceCreateDeviceGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceCreateDeviceGroupProcedure, h.CreateDeviceGroup, opts...))
-	register(powermanagev1connect.ControlServiceGetDeviceGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceGetDeviceGroupProcedure, h.GetDeviceGroup, opts...))
-	register(powermanagev1connect.ControlServiceListDeviceGroupsProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceListDeviceGroupsProcedure, h.ListDeviceGroups, opts...))
-	register(powermanagev1connect.ControlServiceListDeviceGroupsForDeviceProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceListDeviceGroupsForDeviceProcedure, h.ListDeviceGroupsForDevice, opts...))
-	register(powermanagev1connect.ControlServiceRenameDeviceGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceRenameDeviceGroupProcedure, h.RenameDeviceGroup, opts...))
-	register(powermanagev1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, h.UpdateDeviceGroupDescription, opts...))
-	register(powermanagev1connect.ControlServiceUpdateDeviceGroupQueryProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceUpdateDeviceGroupQueryProcedure, h.UpdateDeviceGroupQuery, opts...))
-	register(powermanagev1connect.ControlServiceDeleteDeviceGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceDeleteDeviceGroupProcedure, h.DeleteDeviceGroup, opts...))
-	register(powermanagev1connect.ControlServiceAddDeviceToGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceAddDeviceToGroupProcedure, h.AddDeviceToGroup, opts...))
-	register(powermanagev1connect.ControlServiceRemoveDeviceFromGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceRemoveDeviceFromGroupProcedure, h.RemoveDeviceFromGroup, opts...))
-	register(powermanagev1connect.ControlServiceValidateDynamicQueryProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceValidateDynamicQueryProcedure, h.ValidateDynamicQuery, opts...))
-	register(powermanagev1connect.ControlServiceEvaluateDynamicGroupProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceEvaluateDynamicGroupProcedure, h.EvaluateDynamicGroup, opts...))
-	register(powermanagev1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, h.SetDeviceGroupSyncInterval, opts...))
-	register(powermanagev1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, h.SetDeviceGroupInventoryInterval, opts...))
-	register(powermanagev1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, connect.NewUnaryHandler(powermanagev1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, h.SetDeviceGroupMaintenanceWindow, opts...))
+	register(cadestrov1connect.ControlServiceCreateDeviceGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateDeviceGroupProcedure, h.CreateDeviceGroup, opts...))
+	register(cadestrov1connect.ControlServiceGetDeviceGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetDeviceGroupProcedure, h.GetDeviceGroup, opts...))
+	register(cadestrov1connect.ControlServiceListDeviceGroupsProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceListDeviceGroupsProcedure, h.ListDeviceGroups, opts...))
+	register(cadestrov1connect.ControlServiceListDeviceGroupsForDeviceProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceListDeviceGroupsForDeviceProcedure, h.ListDeviceGroupsForDevice, opts...))
+	register(cadestrov1connect.ControlServiceRenameDeviceGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceRenameDeviceGroupProcedure, h.RenameDeviceGroup, opts...))
+	register(cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, h.UpdateDeviceGroupDescription, opts...))
+	register(cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure, h.UpdateDeviceGroupQuery, opts...))
+	register(cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure, h.DeleteDeviceGroup, opts...))
+	register(cadestrov1connect.ControlServiceAddDeviceToGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceAddDeviceToGroupProcedure, h.AddDeviceToGroup, opts...))
+	register(cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure, h.RemoveDeviceFromGroup, opts...))
+	register(cadestrov1connect.ControlServiceValidateDynamicQueryProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceValidateDynamicQueryProcedure, h.ValidateDynamicQuery, opts...))
+	register(cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure, h.EvaluateDynamicGroup, opts...))
+	register(cadestrov1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, h.SetDeviceGroupSyncInterval, opts...))
+	register(cadestrov1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, h.SetDeviceGroupInventoryInterval, opts...))
+	register(cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, h.SetDeviceGroupMaintenanceWindow, opts...))
 	return mounted
 }
 
 // MutationProcedures is the exact audited device-group mutation surface.
 func MutationProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceCreateDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceRenameDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure,
-		powermanagev1connect.ControlServiceUpdateDeviceGroupQueryProcedure,
-		powermanagev1connect.ControlServiceDeleteDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceAddDeviceToGroupProcedure,
-		powermanagev1connect.ControlServiceRemoveDeviceFromGroupProcedure,
-		powermanagev1connect.ControlServiceEvaluateDynamicGroupProcedure,
-		powermanagev1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure,
-		powermanagev1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure,
-		powermanagev1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure,
+		cadestrov1connect.ControlServiceCreateDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceRenameDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure,
+		cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure,
+		cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceAddDeviceToGroupProcedure,
+		cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure,
+		cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure,
+		cadestrov1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure,
+		cadestrov1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure,
+		cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure,
 	}
 }
 
 // ReadProcedures is the exact non-mutating device-group surface.
 func ReadProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceGetDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceListDeviceGroupsProcedure,
-		powermanagev1connect.ControlServiceListDeviceGroupsForDeviceProcedure,
-		powermanagev1connect.ControlServiceValidateDynamicQueryProcedure,
+		cadestrov1connect.ControlServiceGetDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceListDeviceGroupsProcedure,
+		cadestrov1connect.ControlServiceListDeviceGroupsForDeviceProcedure,
+		cadestrov1connect.ControlServiceValidateDynamicQueryProcedure,
 	}
 }

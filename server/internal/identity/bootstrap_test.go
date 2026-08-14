@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/identity"
 )
@@ -69,7 +69,7 @@ func TestBootstrapToken_AttributesItsWritesToTheReservedPrincipal(t *testing.T) 
 	}, issued.Token))
 	require.NoError(t, err)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceCreateRoleProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceCreateRoleProcedure)
 	assert.Equal(t, "MUTATION", op.Class)
 	assert.Equal(t, string(auth.PrincipalBootstrapAdmin), op.ActorType)
 	assert.Empty(t, op.ActorID,
@@ -237,7 +237,7 @@ func TestBootstrapToken_RejectsAnUnknownValue(t *testing.T) {
 	}, "not-the-token"))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceCreateRoleProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceCreateRoleProcedure)
 	assert.Equal(t, "REJECTED_AUTHENTICATION", op.Class,
 		"a refused bootstrap token is a rejected authentication like any other")
 }

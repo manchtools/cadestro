@@ -1,5 +1,5 @@
 // Pure action type conversion utilities — no framework dependencies.
-import { ActionType } from '../gen/ts/powermanage/v1/actions_pb';
+import { ActionType } from '../gen/ts/cadestro/v1/actions_pb';
 
 export { ActionType };
 

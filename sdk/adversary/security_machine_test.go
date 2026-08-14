@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/desktop"
 	"github.com/manchtools/cadestro/sdk/sys/dns"
 	"github.com/manchtools/cadestro/sdk/sys/encryption"

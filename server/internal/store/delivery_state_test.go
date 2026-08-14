@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -46,7 +46,7 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	}
 	op := mutationOp()
 	op.OperationID = newID()
-	op.RequestDescriptor = "powermanage.v1.ControlService/DispatchAction"
+	op.RequestDescriptor = "cadestro.v1.ControlService/DispatchAction"
 	var deliveryID string
 	_, err := st.WithAudit(context.Background(), op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		var err error

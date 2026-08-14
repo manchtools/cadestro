@@ -1,4 +1,4 @@
-// Command rpcsurface prints powermanage.v1 procedure paths, one per line.
+// Command rpcsurface prints cadestro.v1 procedure paths, one per line.
 //
 // It exists so the deployment gate can ask a RUNNING listener "do you serve
 // exactly these?" without anyone maintaining a list by hand. The set is derived
@@ -31,8 +31,16 @@ import (
 	// Imported for descriptor registration side effects: without this the
 	// registry is empty and the tool would print nothing, which the caller must
 	// treat as a failure rather than as "no RPCs".
-	_ "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	_ "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
+
+// contractPackage is the protobuf namespace the contract ships under. It is
+// named ONCE: the procedure paths below are built from each service's own
+// FullName rather than from a second copy of this string, so a namespace
+// rename cannot leave the filter and the emitted paths disagreeing — the shape
+// that makes every emitted procedure miss the listener it is compared against
+// while the tool still reports a full, plausible-looking set.
+const contractPackage = "cadestro.v1"
 
 func main() {
 	services := flag.String("services", "", "comma-separated service names to include (required)")
@@ -54,7 +62,7 @@ func main() {
 	seen := map[string]bool{}
 	var procedures []string
 	protoregistry.GlobalFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		if fd.Package() != "powermanage.v1" {
+		if string(fd.Package()) != contractPackage {
 			return true
 		}
 		svcs := fd.Services()
@@ -67,22 +75,22 @@ func main() {
 			}
 			ms := sd.Methods()
 			for j := 0; j < ms.Len(); j++ {
-				procedures = append(procedures, fmt.Sprintf("/powermanage.v1.%s/%s", name, ms.Get(j).Name()))
+				procedures = append(procedures, fmt.Sprintf("/%s/%s", sd.FullName(), ms.Get(j).Name()))
 			}
 		}
 		return true
 	})
 
 	if len(seen) == 0 {
-		fmt.Fprintln(os.Stderr, "rpcsurface: no powermanage.v1 services in the descriptor registry — "+
-			"the enumeration is broken, and emitting an empty set would let the gate pass vacuously")
+		fmt.Fprintf(os.Stderr, "rpcsurface: no %s services in the descriptor registry — "+
+			"the enumeration is broken, and emitting an empty set would let the gate pass vacuously\n", contractPackage)
 		os.Exit(1)
 	}
 	// A name that matches no live service is a stale expectation: it would
 	// silently contribute nothing and shrink the set the gate checks.
 	for name := range want {
 		if !seen[name] {
-			fmt.Fprintf(os.Stderr, "rpcsurface: -services names %q but no such pm.v1 service exists — stale expectation\n", name)
+			fmt.Fprintf(os.Stderr, "rpcsurface: -services names %q but no such %s service exists — stale expectation\n", name, contractPackage)
 			os.Exit(1)
 		}
 	}

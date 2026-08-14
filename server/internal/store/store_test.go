@@ -132,7 +132,7 @@ func TestRevokeInTx_CommitsWithItsAuditedOperation(t *testing.T) {
 
 	deviceID := newID()
 	op := mutationOp()
-	op.RequestDescriptor = "powermanage.v1.ControlService/DeleteDevice"
+	op.RequestDescriptor = "cadestro.v1.ControlService/DeleteDevice"
 	_, err = st.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, r *store.AuditRecorder) error {
 		if err := store.RevokeInTx(ctx, tx, fingerprint, time.Now().UTC().Add(24*time.Hour), "device_deleted"); err != nil {
 			return err

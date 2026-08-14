@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
@@ -166,7 +166,7 @@ func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *t
 	assert.Equal(t, int32(300), inlineManifest.Occurrences[0].Action.TimeoutSeconds)
 
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceDispatchActionProcedure)
+		cadestrov1connect.ControlServiceDispatchActionProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -243,7 +243,7 @@ func TestDispatchHandlers_ActionSetAndDefinitionPreserveComposition(t *testing.T
 		"the same Action authored through two sets remains two occurrences")
 	assert.Equal(t, definitionResponse.Msg.Executions[0].ActionId, definitionResponse.Msg.Executions[1].ActionId)
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceDispatchDefinitionProcedure)
+		cadestrov1connect.ControlServiceDispatchDefinitionProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -349,7 +349,7 @@ func TestDispatchHandlers_AssignedDefinitionAbsorbsChildrenAndOverridesManifestS
 	assert.JSONEq(t, `{"runOnAssign":true}`, set2Schedule)
 
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure)
+		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -370,7 +370,7 @@ func TestDispatchHandlers_ExcludedAssignedContainerAbsorbsDirectChildren(t *test
 	assert.Empty(t, f.waker.ids)
 
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure)
+		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -397,7 +397,7 @@ func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testin
 	assert.NotEqual(t, firstManifest.ManifestId, secondManifest.ManifestId)
 	assert.NotEqual(t, firstManifest.Occurrences[0].OccurrenceId, secondManifest.Occurrences[0].OccurrenceId)
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceDispatchToMultipleProcedure)
+		cadestrov1connect.ControlServiceDispatchToMultipleProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -419,7 +419,7 @@ func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testin
 	}
 	assert.Equal(t, map[string]int{f.deviceID: 2, f.otherDevice: 2}, counts)
 	operation, err = latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceDispatchToGroupProcedure)
+		cadestrov1connect.ControlServiceDispatchToGroupProcedure)
 	require.NoError(t, err)
 	effects, err = f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -462,13 +462,13 @@ func TestDispatchHandlers_RefuseUnauthorizedAndMissingTargetsWithoutWork(t *test
 func TestDispatchHandlers_MountsExactInitialSurface(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
 	assert.ElementsMatch(t, []string{
-		powermanagev1connect.ControlServiceDispatchActionProcedure,
-		powermanagev1connect.ControlServiceDispatchInstantActionProcedure,
-		powermanagev1connect.ControlServiceDispatchActionSetProcedure,
-		powermanagev1connect.ControlServiceDispatchDefinitionProcedure,
-		powermanagev1connect.ControlServiceDispatchToMultipleProcedure,
-		powermanagev1connect.ControlServiceDispatchToGroupProcedure,
-		powermanagev1connect.ControlServiceDispatchAssignedActionsProcedure,
+		cadestrov1connect.ControlServiceDispatchActionProcedure,
+		cadestrov1connect.ControlServiceDispatchInstantActionProcedure,
+		cadestrov1connect.ControlServiceDispatchActionSetProcedure,
+		cadestrov1connect.ControlServiceDispatchDefinitionProcedure,
+		cadestrov1connect.ControlServiceDispatchToMultipleProcedure,
+		cadestrov1connect.ControlServiceDispatchToGroupProcedure,
+		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure,
 	}, f.handlers.MountActions(http.NewServeMux()))
 	assert.ElementsMatch(t, f.handlers.MountActions(http.NewServeMux()), dispatch.MutationProcedures())
 }

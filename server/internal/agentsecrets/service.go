@@ -15,7 +15,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -133,7 +133,7 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *pmv1
 		return nil, err
 	}
 	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"powermanage.v1.GetLuksKeyResponse", "passphrase", deviceID, request.ActionId)
+		"cadestro.v1.GetLuksKeyResponse", "passphrase", deviceID, request.ActionId)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 	if err := s.requireActionType(ctx, request.ActionId, pmv1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
 		return nil, err
 	}
-	plaintext, err := s.openAgentField(request.Passphrase, "powermanage.v1.StoreLuksKeyRequest", "passphrase", deviceID, request.ActionId)
+	plaintext, err := s.openAgentField(request.Passphrase, "cadestro.v1.StoreLuksKeyRequest", "passphrase", deviceID, request.ActionId)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		}
 		seen[rotation.Username] = struct{}{}
 		plaintext, err := s.openAgentField(rotation.Password,
-			"powermanage.v1.LpsPasswordRotation", "password", deviceID, request.ActionId, rotation.Username)
+			"cadestro.v1.LpsPasswordRotation", "password", deviceID, request.ActionId, rotation.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -333,7 +333,7 @@ func validID(id string) bool {
 func agentOperation(deviceID, descriptor string) store.AuditOperation {
 	return store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "agent", ActorID: deviceID, Origin: "agent_stream",
-		RequestDescriptor:    "powermanage.v1.AgentService.Stream/" + descriptor,
+		RequestDescriptor:    "cadestro.v1.AgentService.Stream/" + descriptor,
 		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "device_mtls",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}

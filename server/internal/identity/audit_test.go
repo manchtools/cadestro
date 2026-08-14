@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 func TestAuditBoundary_ValidationPrecedesAuthentication(t *testing.T) {
@@ -60,7 +60,7 @@ func TestAuditEvents_ReadTheAppendOnlyEffectLog(t *testing.T) {
 
 	var data map[string]any
 	require.NoError(t, json.Unmarshal([]byte(event.Data), &data))
-	assert.Equal(t, powermanagev1connect.ControlServiceUpdateServerSettingsProcedure, data["request_descriptor"])
+	assert.Equal(t, cadestrov1connect.ControlServiceUpdateServerSettingsProcedure, data["request_descriptor"])
 	assert.Equal(t, "APPLIED", data["effect_outcome"])
 	assert.NotContains(t, event.Data, "sealed_detail")
 	assert.NotContains(t, event.Data, "prev_hash")
@@ -87,7 +87,7 @@ func TestAuditEvents_KeepOperationOnlyRejectedAuthentication(t *testing.T) {
 	assert.Equal(t, "anonymous", event.ActorType)
 	assert.Empty(t, event.ActorId)
 	assert.NotEmpty(t, event.StreamId, "the operation id remains the durable target reference")
-	assert.Contains(t, event.Data, powermanagev1connect.ControlServiceGetServerSettingsProcedure)
+	assert.Contains(t, event.Data, cadestrov1connect.ControlServiceGetServerSettingsProcedure)
 }
 
 func TestAuditEvents_UseStableKeysetPagination(t *testing.T) {
@@ -157,7 +157,7 @@ func TestExportAuditEvents_UsesTheSameSafeRowsAndAuditsTheRead(t *testing.T) {
 	require.Len(t, records, 3)
 	assert.Equal(t, []string{"id", "occurred_at", "actor_type", "actor_id", "stream_type", "stream_id", "event_type", "data"}, records[0])
 
-	ops := f.operationsFor(powermanagev1connect.ControlServiceExportAuditEventsProcedure)
+	ops := f.operationsFor(cadestrov1connect.ControlServiceExportAuditEventsProcedure)
 	require.Len(t, ops, 2)
 	for _, op := range ops {
 		assert.Equal(t, "SENSITIVE_READ", op.Class)

@@ -6,8 +6,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -25,7 +25,7 @@ func (h *Handlers) CreateDefinition(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	row, err := h.state.CreateDefinition(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateDefinitionProcedure, "CreateDefinition"), CreateDefinitionParams{
+		cadestrov1connect.ControlServiceCreateDefinitionProcedure, "CreateDefinition"), CreateDefinitionParams{
 		Name: req.Msg.Name, Description: req.Msg.Description,
 		CreatedBy: actor.ID, Schedule: req.Msg.Schedule,
 	})
@@ -131,7 +131,7 @@ func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	row, err := h.state.RenameDefinition(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRenameDefinitionProcedure, "RenameDefinition"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameDefinitionProcedure, "RenameDefinition"), req.Msg.Id, req.Msg.Name)
 	return h.updatedDefinition(ctx, "rename definition", row, err)
 }
 
@@ -145,7 +145,7 @@ func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect
 		return nil, err
 	}
 	row, err := h.state.UpdateDefinitionDescription(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateDefinitionDescriptionProcedure, "UpdateDefinitionDescription"),
+		cadestrov1connect.ControlServiceUpdateDefinitionDescriptionProcedure, "UpdateDefinitionDescription"),
 		req.Msg.Id, req.Msg.Description)
 	return h.updatedDefinition(ctx, "update definition description", row, err)
 }
@@ -160,7 +160,7 @@ func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Re
 		return nil, err
 	}
 	row, err := h.state.UpdateDefinitionSchedule(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUpdateDefinitionScheduleProcedure, "UpdateDefinitionSchedule"),
+		cadestrov1connect.ControlServiceUpdateDefinitionScheduleProcedure, "UpdateDefinitionSchedule"),
 		req.Msg.Id, req.Msg.Schedule)
 	return h.updatedDefinition(ctx, "update definition schedule", row, err)
 }
@@ -176,7 +176,7 @@ func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	if err := h.state.DeleteDefinition(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteDefinitionProcedure, "DeleteDefinition"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteDefinitionProcedure, "DeleteDefinition"), req.Msg.Id); err != nil {
 		return nil, h.definitionError(ctx, "delete definition", err)
 	}
 	return connect.NewResponse(&pmv1.DeleteDefinitionResponse{}), nil
@@ -198,7 +198,7 @@ func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Re
 		return nil, err
 	}
 	if err := h.state.AddActionSetToDefinition(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceAddActionSetToDefinitionProcedure, "AddActionSetToDefinition"),
+		cadestrov1connect.ControlServiceAddActionSetToDefinitionProcedure, "AddActionSetToDefinition"),
 		req.Msg.DefinitionId, req.Msg.ActionSetId, req.Msg.SortOrder); err != nil {
 		return nil, h.definitionError(ctx, "add action set to definition", err)
 	}
@@ -219,7 +219,7 @@ func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *conne
 		return nil, err
 	}
 	if err := h.state.RemoveActionSetFromDefinition(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRemoveActionSetFromDefinitionProcedure, "RemoveActionSetFromDefinition"),
+		cadestrov1connect.ControlServiceRemoveActionSetFromDefinitionProcedure, "RemoveActionSetFromDefinition"),
 		req.Msg.DefinitionId, req.Msg.ActionSetId); err != nil {
 		return nil, h.definitionError(ctx, "remove action set from definition", err)
 	}
@@ -240,7 +240,7 @@ func (h *Handlers) ReorderActionSetInDefinition(ctx context.Context, req *connec
 		return nil, err
 	}
 	if err := h.state.ReorderActionSetInDefinition(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceReorderActionSetInDefinitionProcedure, "ReorderActionSetInDefinition"),
+		cadestrov1connect.ControlServiceReorderActionSetInDefinitionProcedure, "ReorderActionSetInDefinition"),
 		req.Msg.DefinitionId, req.Msg.ActionSetId, req.Msg.NewOrder); err != nil {
 		return nil, h.definitionError(ctx, "reorder action set in definition", err)
 	}

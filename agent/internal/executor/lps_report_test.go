@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
@@ -158,7 +158,7 @@ func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 	// The sealed password must open at control to exactly the value applied to
 	// the account; plaintext never appears in the protobuf field.
 	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionAgentToControl,
-		"powermanage.v1.LpsPasswordRotation", "password",
+		"cadestro.v1.LpsPasswordRotation", "password",
 		"01HKDEVICE0000000000000000", actionID, "alice")
 	if err != nil {
 		t.Fatalf("field context: %v", err)

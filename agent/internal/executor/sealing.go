@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
@@ -72,13 +72,13 @@ func (e *Executor) openFromControl(value *pb.SealedValue, message, field string,
 
 func (e *Executor) SealLuksPassphrase(actionID, passphrase string) (*pb.SealedValue, error) {
 	return e.sealToControl([]byte(passphrase),
-		"powermanage.v1.StoreLuksKeyRequest", "passphrase",
+		"cadestro.v1.StoreLuksKeyRequest", "passphrase",
 		e.getDeviceID(), actionID)
 }
 
 func (e *Executor) OpenLuksPassphrase(actionID string, value *pb.SealedValue) (string, error) {
 	plaintext, err := e.openFromControl(value,
-		"powermanage.v1.GetLuksKeyResponse", "passphrase",
+		"cadestro.v1.GetLuksKeyResponse", "passphrase",
 		e.getDeviceID(), actionID)
 	if err != nil {
 		return "", err
@@ -93,7 +93,7 @@ func (e *Executor) executeSealedLuks(ctx context.Context, params *pb.EncryptionP
 	}
 	openPresharedKey := func() ([]byte, error) {
 		plaintext, err := e.openFromControl(params.GetPresharedKey(),
-			"powermanage.v1.EncryptionParams", "preshared_key", e.getDeviceID(), actionID)
+			"cadestro.v1.EncryptionParams", "preshared_key", e.getDeviceID(), actionID)
 		if err != nil {
 			return nil, fmt.Errorf("open encryption pre-shared key: %w", err)
 		}
@@ -116,9 +116,9 @@ func (e *Executor) executeSealedWifi(ctx context.Context, params *pb.WifiParams,
 	var err error
 	switch params.AuthType {
 	case pb.WifiAuthType_WIFI_AUTH_TYPE_PSK:
-		psk, err = e.openFromControl(params.GetPsk(), "powermanage.v1.WifiParams", "psk", e.getDeviceID(), actionID)
+		psk, err = e.openFromControl(params.GetPsk(), "cadestro.v1.WifiParams", "psk", e.getDeviceID(), actionID)
 	case pb.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
-		clientKey, err = e.openFromControl(params.GetClientKey(), "powermanage.v1.WifiParams", "client_key", e.getDeviceID(), actionID)
+		clientKey, err = e.openFromControl(params.GetClientKey(), "cadestro.v1.WifiParams", "client_key", e.getDeviceID(), actionID)
 	default:
 		err = errors.New("unsupported WiFi authentication type")
 	}

@@ -15,8 +15,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -172,7 +172,7 @@ func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.Cr
 	id, createdAt := ulid.Make().String(), h.now().UTC()
 	var row store.RegistrationTokenRow
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateTokenProcedure, "CreateToken"),
+		cadestrov1connect.ControlServiceCreateTokenProcedure, "CreateToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			inserted, err := tx.InsertRegistrationToken(ctx, db.InsertRegistrationTokenParams{
 				ID: id, ValueHash: digestHex, Name: req.Msg.Name, OneTime: oneTime,
@@ -279,7 +279,7 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[pmv1.Re
 	}
 	var row store.RegistrationTokenRow
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRenameTokenProcedure, "RenameToken"),
+		cadestrov1connect.ControlServiceRenameTokenProcedure, "RenameToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			updated, err := tx.RenameRegistrationToken(ctx, db.RenameRegistrationTokenParams{
 				ID: req.Msg.Id, Name: req.Msg.Name, ReservedName: store.BootstrapAdminTokenName,
@@ -311,7 +311,7 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[pm
 	}
 	var row store.RegistrationTokenRow
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetTokenDisabledProcedure, "SetTokenDisabled"),
+		cadestrov1connect.ControlServiceSetTokenDisabledProcedure, "SetTokenDisabled"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			updated, err := tx.SetRegistrationTokenDisabled(ctx, db.SetRegistrationTokenDisabledParams{
 				ID: req.Msg.Id, Disabled: req.Msg.Disabled, ReservedName: store.BootstrapAdminTokenName,
@@ -344,7 +344,7 @@ func (h *Handlers) DeleteToken(ctx context.Context, req *connect.Request[pmv1.De
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteTokenProcedure, "DeleteToken"),
+		cadestrov1connect.ControlServiceDeleteTokenProcedure, "DeleteToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.SoftDeleteRegistrationToken(ctx, db.SoftDeleteRegistrationTokenParams{
 				ID: req.Msg.Id, ReservedName: store.BootstrapAdminTokenName,

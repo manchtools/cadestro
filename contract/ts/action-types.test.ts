@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ActionType } from '../gen/ts/powermanage/v1/actions_pb';
+import { ActionType } from '../gen/ts/cadestro/v1/actions_pb';
 import { getActionTypeEnum, actionTypeToString, ACTION_TYPE_OPTIONS } from './action-types';
 
 // Self-discovering guard: every member of the GENERATED enum must survive the

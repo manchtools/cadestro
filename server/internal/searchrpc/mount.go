@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 // Mount registers exactly the SQLite FTS5 search procedures.
@@ -18,19 +18,19 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	register(powermanagev1connect.ControlServiceSearchProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceSearchProcedure, h.Search, opts...))
-	register(powermanagev1connect.ControlServiceRebuildSearchIndexProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceRebuildSearchIndexProcedure, h.RebuildSearchIndex, opts...))
+	register(cadestrov1connect.ControlServiceSearchProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceSearchProcedure, h.Search, opts...))
+	register(cadestrov1connect.ControlServiceRebuildSearchIndexProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRebuildSearchIndexProcedure, h.RebuildSearchIndex, opts...))
 	return mounted
 }
 
 // ReadProcedures is the exact non-mutating search surface.
 func ReadProcedures() []string {
-	return []string{powermanagev1connect.ControlServiceSearchProcedure}
+	return []string{cadestrov1connect.ControlServiceSearchProcedure}
 }
 
 // MutationProcedures is the exact audited search-maintenance surface.
 func MutationProcedures() []string {
-	return []string{powermanagev1connect.ControlServiceRebuildSearchIndexProcedure}
+	return []string{cadestrov1connect.ControlServiceRebuildSearchIndexProcedure}
 }

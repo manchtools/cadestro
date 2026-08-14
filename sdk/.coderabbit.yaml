@@ -4,7 +4,7 @@ reviews:
     enabled: true
   profile: chill
   path_instructions:
-    - path: "proto/powermanage/v1/*.proto"
+    - path: "proto/cadestro/v1/*.proto"
       instructions: >
         Protobuf definitions shared across all components. Review against the
         approved target design (../DESIGN_2026_07_31/00_TARGET_DESIGN.md): the

@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -102,13 +102,13 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 	_, err = f.client.GetUserGroup(f.ctx(), authed(&pmv1.GetUserGroupRequest{Id: groupID}, operator.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
-	createOp := f.onlyOperationFor(powermanagev1connect.ControlServiceCreateUserGroupProcedure)
+	createOp := f.onlyOperationFor(cadestrov1connect.ControlServiceCreateUserGroupProcedure)
 	assert.Equal(t, operator.ID, createOp.ActorID)
 	assert.Equal(t, "CreateStaticUserGroup", createOp.AuthorizationDetail)
 	assert.Equal(t, "CREATE", f.effectWithAction(f.effectsOf(createOp.OperationID), "CREATE").Action)
-	assert.Len(t, f.operationsFor(powermanagev1connect.ControlServiceAddUserToGroupProcedure), 1)
-	assert.Len(t, f.operationsFor(powermanagev1connect.ControlServiceRemoveUserFromGroupProcedure), 1)
-	assert.Len(t, f.operationsFor(powermanagev1connect.ControlServiceDeleteUserGroupProcedure), 1)
+	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceAddUserToGroupProcedure), 1)
+	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceRemoveUserFromGroupProcedure), 1)
+	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceDeleteUserGroupProcedure), 1)
 }
 
 func TestUserGroups_DynamicMembershipRejectsManualChanges(t *testing.T) {
@@ -151,7 +151,7 @@ func TestDeleteUserGroup_AllowsRemovingFinalAdminGrant(t *testing.T) {
 	var deleted bool
 	require.NoError(t, f.raw.QueryRow(f.ctx(), `SELECT is_deleted FROM user_groups WHERE id = $1`, groupID).Scan(&deleted))
 	assert.True(t, deleted)
-	assert.Len(t, f.operationsFor(powermanagev1connect.ControlServiceDeleteUserGroupProcedure), 1)
+	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceDeleteUserGroupProcedure), 1)
 }
 
 func TestDynamicUserGroups_ValidateUpdateAndEvaluateDirectState(t *testing.T) {
@@ -216,7 +216,7 @@ func TestDynamicUserGroups_ValidateUpdateAndEvaluateDirectState(t *testing.T) {
 	_, err = f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&pmv1.EvaluateDynamicUserGroupRequest{Id: groupID}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 
-	ops := f.operationsFor(powermanagev1connect.ControlServiceEvaluateDynamicUserGroupProcedure)
+	ops := f.operationsFor(cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure)
 	require.Len(t, ops, 2)
 	evaluate := f.effectWithAction(f.effectsOf(ops[0].OperationID), "EVALUATE")
 	require.NotNil(t, evaluate.BeforeCount)
@@ -246,7 +246,7 @@ func TestEvaluateDynamicUserGroup_AllowsRemovingFinalAdminMembership(t *testing.
 	members, err := f.store.ListUserGroupMembers(f.ctx(), groupID)
 	require.NoError(t, err)
 	assert.Empty(t, members)
-	assert.Len(t, f.operationsFor(powermanagev1connect.ControlServiceEvaluateDynamicUserGroupProcedure), 1)
+	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure), 1)
 }
 
 // Converting a curated user group into a rule-driven one is supported in both
@@ -309,7 +309,7 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	after, err := f.client.GetUserGroup(f.ctx(), authed(&pmv1.GetUserGroupRequest{Id: groupID}, operator.Token))
 	require.NoError(t, err)
 	assert.Empty(t, after.Msg.Members, "membership has one source once the group is a rule")
-	operations := f.operationsFor(powermanagev1connect.ControlServiceUpdateUserGroupQueryProcedure)
+	operations := f.operationsFor(cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure)
 	require.Len(t, operations, 1)
 	effects := f.effectsOf(operations[0].OperationID)
 	assert.Contains(t, f.effectWithAction(effects, "UPDATE").ChangedFields, "members")

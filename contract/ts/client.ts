@@ -226,8 +226,8 @@ import {
 	TerminateTerminalSessionRequestSchema,
 	type StartTerminalResponse,
 	type TerminalSessionInfo
-} from '../gen/ts/powermanage/v1/control_pb';
-import type { ActionType, Action, ActionSchedule } from '../gen/ts/powermanage/v1/actions_pb';
+} from '../gen/ts/cadestro/v1/control_pb';
+import type { ActionType, Action, ActionSchedule } from '../gen/ts/cadestro/v1/actions_pb';
 import {
 	type ExecutionStatus,
 	ErrorDetailSchema,
@@ -240,7 +240,7 @@ import {
 	SortField,
 	SortDirection,
 	RoleGrantScopeKind
-} from '../gen/ts/powermanage/v1/common_pb';
+} from '../gen/ts/cadestro/v1/common_pb';
 import { timestampDate } from '@bufbuild/protobuf/wkt';
 
 export interface ClientOptions {

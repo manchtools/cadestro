@@ -11,10 +11,10 @@ See [`../LICENSING.md`](../LICENSING.md).
 
 ## Runtime contract
 
-- Protobuf sources live in `proto/powermanage/v1/` under package
-  `powermanage.v1`.
-- Generated Go and TypeScript packages live in `gen/go/powermanage/v1/` and
-  `gen/ts/powermanage/v1/`.
+- Protobuf sources live in `proto/cadestro/v1/` under package
+  `cadestro.v1`.
+- Generated Go and TypeScript packages live in `gen/go/cadestro/v1/` and
+  `gen/ts/cadestro/v1/`.
 - `AgentService` exposes one bidirectional `Stream`. Handshake, synchronization,
   heartbeats, manifest delivery and receipts, results, secret operations, and
   terminal traffic are frames on that stream.
@@ -32,9 +32,9 @@ See [`../LICENSING.md`](../LICENSING.md).
 
 | Path | Purpose |
 |------|---------|
-| `proto/powermanage/v1/` | Contract source |
-| `gen/go/powermanage/v1/` | Generated protobuf and Connect Go packages |
-| `gen/ts/powermanage/v1/` | Generated TypeScript messages |
+| `proto/cadestro/v1/` | Contract source |
+| `gen/go/cadestro/v1/` | Generated protobuf and Connect Go packages |
+| `gen/ts/cadestro/v1/` | Generated TypeScript messages |
 | `client.go` | Agent-side stream client and correlated stream operations |
 | `validate/` | Request validation used at the transport boundary |
 | `maintenance/` | Maintenance-window semantics over the contract types |

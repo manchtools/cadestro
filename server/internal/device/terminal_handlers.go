@@ -12,8 +12,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkterminal "github.com/manchtools/cadestro/sdk/sys/terminal"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -81,7 +81,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[pmv1.
 	}
 	startedAt := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceStartTerminalProcedure, "StartTerminal"),
+		cadestrov1connect.ControlServiceStartTerminalProcedure, "StartTerminal"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if err := tx.InsertTerminalSession(ctx, db.InsertTerminalSessionParams{
 				SessionID: sessionID, DeviceID: req.Msg.DeviceId, UserID: actor.ID,
@@ -135,7 +135,7 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[pmv1.S
 	stoppedAt := h.now().UTC()
 	reason := "user stopped"
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceStopTerminalProcedure, "StopTerminal"),
+		cadestrov1connect.ControlServiceStopTerminalProcedure, "StopTerminal"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			rows, err := tx.StopTerminalSession(ctx, db.StopTerminalSessionParams{
 				StoppedAt: &stoppedAt, ExitReason: &reason, SessionID: session.SessionID,
@@ -239,7 +239,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 			}
 		}
 	}
-	op := h.operation(req, actor, powermanagev1connect.ControlServiceListActiveTerminalSessionsProcedure,
+	op := h.operation(req, actor, cadestrov1connect.ControlServiceListActiveTerminalSessionsProcedure,
 		"ListActiveTerminalSessions")
 	op.Class = store.ClassSensitiveRead
 	if _, err := h.store.RecordOperation(ctx, op); err != nil {
@@ -287,7 +287,7 @@ func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Re
 		}
 	}
 	record, err := h.store.RecordOperation(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceTerminateTerminalSessionProcedure, "TerminateTerminalSession"),
+		cadestrov1connect.ControlServiceTerminateTerminalSessionProcedure, "TerminateTerminalSession"),
 		terminalEffect(session.SessionID, "TERMINATE", store.EffectApplied))
 	if err != nil {
 		return nil, h.internal(ctx, "record terminal termination intent", err)

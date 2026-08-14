@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package powermanage.v1;
+package cadestro.v1;
 
-option go_package = "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1;powermanagev1";
+option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
 // Unique identifier for an action instance
 message ActionId {

@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
 )
@@ -248,20 +248,20 @@ func TestDeviceGroupHandlers_MountsCompleteDirectSurface(t *testing.T) {
 	f := newDeviceGroupHandlerFixture(t)
 	mounted := f.handlers.Mount(http.NewServeMux())
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceCreateDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceGetDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceListDeviceGroupsProcedure,
-		powermanagev1connect.ControlServiceListDeviceGroupsForDeviceProcedure,
-		powermanagev1connect.ControlServiceRenameDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure,
-		powermanagev1connect.ControlServiceUpdateDeviceGroupQueryProcedure,
-		powermanagev1connect.ControlServiceDeleteDeviceGroupProcedure,
-		powermanagev1connect.ControlServiceAddDeviceToGroupProcedure,
-		powermanagev1connect.ControlServiceRemoveDeviceFromGroupProcedure,
-		powermanagev1connect.ControlServiceValidateDynamicQueryProcedure,
-		powermanagev1connect.ControlServiceEvaluateDynamicGroupProcedure,
-		powermanagev1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure,
-		powermanagev1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure,
-		powermanagev1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure,
+		cadestrov1connect.ControlServiceCreateDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceGetDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceListDeviceGroupsProcedure,
+		cadestrov1connect.ControlServiceListDeviceGroupsForDeviceProcedure,
+		cadestrov1connect.ControlServiceRenameDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure,
+		cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure,
+		cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure,
+		cadestrov1connect.ControlServiceAddDeviceToGroupProcedure,
+		cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure,
+		cadestrov1connect.ControlServiceValidateDynamicQueryProcedure,
+		cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure,
+		cadestrov1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure,
+		cadestrov1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure,
+		cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure,
 	}, mounted)
 }

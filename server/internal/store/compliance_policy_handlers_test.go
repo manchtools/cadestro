@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -388,14 +388,14 @@ func TestCompliancePolicyRules_ProvideTransitiveActionReadScope(t *testing.T) {
 func TestCompliancePolicyHandlers_MountsExactCRUDSurface(t *testing.T) {
 	f := newComplianceHandlerFixture(t)
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceCreateCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceGetCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceListCompliancePoliciesProcedure,
-		powermanagev1connect.ControlServiceRenameCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure,
-		powermanagev1connect.ControlServiceDeleteCompliancePolicyProcedure,
-		powermanagev1connect.ControlServiceAddCompliancePolicyRuleProcedure,
-		powermanagev1connect.ControlServiceRemoveCompliancePolicyRuleProcedure,
-		powermanagev1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
+		cadestrov1connect.ControlServiceCreateCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceGetCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceListCompliancePoliciesProcedure,
+		cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure,
+		cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure,
+		cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure,
+		cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure,
+		cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
 	}, f.handlers.MountPolicies(http.NewServeMux()))
 }

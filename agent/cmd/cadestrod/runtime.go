@@ -14,7 +14,7 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/luksd"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // runAgent connects to the control and processes messages.

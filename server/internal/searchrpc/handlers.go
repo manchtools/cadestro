@@ -13,8 +13,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -231,7 +231,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 
 	if req.Msg.Scope == pmv1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS {
 		op := h.operation(req, actor, store.ClassSensitiveRead,
-			powermanagev1connect.ControlServiceSearchProcedure, "ListAuditEvents")
+			cadestrov1connect.ControlServiceSearchProcedure, "ListAuditEvents")
 		op.OperationID = ulid.Make().String()
 		if _, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
 			ResourceType: "audit_log", ResourceID: op.OperationID,
@@ -261,7 +261,7 @@ func (h *Handlers) RebuildSearchIndex(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 	op := h.operation(req, actor, store.ClassMutation,
-		powermanagev1connect.ControlServiceRebuildSearchIndexProcedure, "RebuildSearchIndex")
+		cadestrov1connect.ControlServiceRebuildSearchIndexProcedure, "RebuildSearchIndex")
 	if err := h.store.RebuildSearchIndexes(ctx, op); err != nil {
 		return nil, h.internal(ctx, "rebuild SQLite indexes", err)
 	}

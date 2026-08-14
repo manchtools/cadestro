@@ -2,7 +2,7 @@
 // Plain TypeScript — no framework dependencies.
 // Refresh/logout functions are set lazily to avoid circular dependencies with ApiClient.
 
-import type { User } from '../gen/ts/powermanage/v1/control_pb';
+import type { User } from '../gen/ts/cadestro/v1/control_pb';
 import superjson from 'superjson';
 import { logger, describeError } from './logger.js';
 

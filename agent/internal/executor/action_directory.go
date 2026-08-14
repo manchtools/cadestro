@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 

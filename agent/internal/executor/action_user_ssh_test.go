@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // setupSSHKeys must refuse an authorized_keys entry that carries an embedded

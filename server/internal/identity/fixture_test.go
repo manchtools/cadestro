@@ -27,7 +27,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/identity"
@@ -51,7 +51,7 @@ type fixture struct {
 	jwt      *auth.JWTManager
 	kek      *crypto.Encryptor
 	server   *httptest.Server
-	client   powermanagev1connect.ControlServiceClient
+	client   cadestrov1connect.ControlServiceClient
 	mounted  []string
 	now      time.Time
 	// clock backs every injected time source in this fixture; advance
@@ -136,7 +136,7 @@ func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 		jwt:        jwt,
 		kek:        kek,
 		server:     srv,
-		client:     powermanagev1connect.NewControlServiceClient(srv.Client(), srv.URL),
+		client:     cadestrov1connect.NewControlServiceClient(srv.Client(), srv.URL),
 		mounted:    mounted,
 		now:        cfg.now,
 		clock:      clock,

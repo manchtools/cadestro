@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // The remote/app-id end-of-options argv discipline now lives in the SDK flatpak

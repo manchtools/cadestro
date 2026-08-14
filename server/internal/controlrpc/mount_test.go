@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/assignment"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/compliance"
@@ -41,7 +41,7 @@ func TestMountIsExactControlServiceDescriptorSet(t *testing.T) {
 	}
 	assert.Empty(t, duplicates, "one procedure must have one direct owner")
 
-	service := pmv1.File_powermanage_v1_control_proto.Services().ByName("ControlService")
+	service := pmv1.File_cadestro_v1_control_proto.Services().ByName("ControlService")
 	require.NotNil(t, service)
 	want := make(map[string]struct{}, service.Methods().Len())
 	for i := 0; i < service.Methods().Len(); i++ {

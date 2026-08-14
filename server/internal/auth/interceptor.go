@@ -13,8 +13,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v5"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/middleware"
 )
 
@@ -28,7 +28,7 @@ const (
 
 // ControlProcedurePrefix is the Connect path prefix every control
 // procedure shares.
-const ControlProcedurePrefix = "/" + powermanagev1connect.ControlServiceName + "/"
+const ControlProcedurePrefix = "/" + cadestrov1connect.ControlServiceName + "/"
 
 // PublicProcedures are the procedures that carry no session token.
 //
@@ -37,15 +37,15 @@ const ControlProcedurePrefix = "/" + powermanagev1connect.ControlServiceName + "
 // access token, and the two device-certificate procedures whose caller
 // authenticates with an enrollment token or its existing certificate.
 var PublicProcedures = map[string]bool{
-	powermanagev1connect.ControlServiceRefreshTokenProcedure:       true,
-	powermanagev1connect.ControlServiceLogoutProcedure:             true,
-	powermanagev1connect.ControlServiceRegisterProcedure:           true,
-	powermanagev1connect.ControlServiceRenewCertificateProcedure:   true,
-	powermanagev1connect.ControlServiceListAuthMethodsProcedure:    true,
-	powermanagev1connect.ControlServiceGetSSOLoginURLProcedure:     true,
-	powermanagev1connect.ControlServiceSSOCallbackProcedure:        true,
-	powermanagev1connect.ControlServiceBeginCLILoginProcedure:      true,
-	powermanagev1connect.ControlServiceExchangeCLISessionProcedure: true,
+	cadestrov1connect.ControlServiceRefreshTokenProcedure:       true,
+	cadestrov1connect.ControlServiceLogoutProcedure:             true,
+	cadestrov1connect.ControlServiceRegisterProcedure:           true,
+	cadestrov1connect.ControlServiceRenewCertificateProcedure:   true,
+	cadestrov1connect.ControlServiceListAuthMethodsProcedure:    true,
+	cadestrov1connect.ControlServiceGetSSOLoginURLProcedure:     true,
+	cadestrov1connect.ControlServiceSSOCallbackProcedure:        true,
+	cadestrov1connect.ControlServiceBeginCLILoginProcedure:      true,
+	cadestrov1connect.ControlServiceExchangeCLISessionProcedure: true,
 }
 
 // procedureAlternatives maps a procedure to the permission keys that
@@ -65,27 +65,27 @@ var PublicProcedures = map[string]bool{
 // ProcedureAlternativesSnapshot. The map is written once at package
 // init and only read afterwards, so concurrent reads are safe.
 var procedureAlternatives = map[string][]string{
-	powermanagev1connect.ControlServiceCreateDeviceGroupProcedure: {
+	cadestrov1connect.ControlServiceCreateDeviceGroupProcedure: {
 		"CreateStaticDeviceGroup",
 		"CreateDynamicDeviceGroup",
 	},
-	powermanagev1connect.ControlServiceCreateUserGroupProcedure: {
+	cadestrov1connect.ControlServiceCreateUserGroupProcedure: {
 		"CreateStaticUserGroup",
 		"CreateDynamicUserGroup",
 	},
 	// The query-update procedures are dynamic-only: a static-group
 	// admin cannot satisfy them because only the dynamic permission is
 	// listed.
-	powermanagev1connect.ControlServiceUpdateDeviceGroupQueryProcedure: {
+	cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure: {
 		"UpdateDynamicDeviceGroupQuery",
 	},
-	powermanagev1connect.ControlServiceUpdateUserGroupQueryProcedure: {
+	cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure: {
 		"UpdateDynamicUserGroupQuery",
 	},
 	// The export is a re-serialisation of what the list already
 	// returns, so a separate permission could only drift wider or
 	// narrower than the data it re-serves.
-	powermanagev1connect.ControlServiceExportAuditEventsProcedure: {
+	cadestrov1connect.ControlServiceExportAuditEventsProcedure: {
 		"ListAuditEvents",
 	},
 }
@@ -482,21 +482,21 @@ func (i *AuthInterceptor) applyPublicLimiters(ctx context.Context, procedure str
 	}
 	var g gate
 	switch procedure {
-	case powermanagev1connect.ControlServiceSSOCallbackProcedure,
-		powermanagev1connect.ControlServiceExchangeCLISessionProcedure:
+	case cadestrov1connect.ControlServiceSSOCallbackProcedure,
+		cadestrov1connect.ControlServiceExchangeCLISessionProcedure:
 		g = gate{i.limiters.SSOCallback, "sso_callback", "too many login attempts, try again later"}
-	case powermanagev1connect.ControlServiceRefreshTokenProcedure:
+	case cadestrov1connect.ControlServiceRefreshTokenProcedure:
 		g = gate{i.limiters.Refresh, "refresh", "too many refresh attempts, try again later"}
-	case powermanagev1connect.ControlServiceRegisterProcedure:
+	case cadestrov1connect.ControlServiceRegisterProcedure:
 		g = gate{i.limiters.Register, "register", "too many registration attempts, try again later"}
-	case powermanagev1connect.ControlServiceLogoutProcedure:
+	case cadestrov1connect.ControlServiceLogoutProcedure:
 		g = gate{i.limiters.Logout, "logout", "too many logout attempts, try again later"}
-	case powermanagev1connect.ControlServiceRenewCertificateProcedure:
+	case cadestrov1connect.ControlServiceRenewCertificateProcedure:
 		g = gate{i.limiters.RenewCert, "renew_cert", "too many certificate renewal attempts, try again later"}
-	case powermanagev1connect.ControlServiceListAuthMethodsProcedure:
+	case cadestrov1connect.ControlServiceListAuthMethodsProcedure:
 		g = gate{i.limiters.AuthMethods, "auth_methods", "too many requests, try again later"}
-	case powermanagev1connect.ControlServiceGetSSOLoginURLProcedure,
-		powermanagev1connect.ControlServiceBeginCLILoginProcedure:
+	case cadestrov1connect.ControlServiceGetSSOLoginURLProcedure,
+		cadestrov1connect.ControlServiceBeginCLILoginProcedure:
 		g = gate{i.limiters.SSO, "sso", "too many requests, try again later"}
 	default:
 		return nil

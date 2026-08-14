@@ -13,8 +13,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -50,7 +50,7 @@ func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[pm
 		return nil, h.internal(ctx, "decode historical LPS passwords", err)
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceListLpsPasswordsProcedure,
+		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
 		"ListLpsPasswords", "device_lps_passwords", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[p
 		return nil, h.internal(ctx, "open LPS password", err)
 	}
 	if err := h.recordSecretReveal(ctx, req, actor,
-		powermanagev1connect.ControlServiceRevealLpsPasswordProcedure,
+		cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
 		"RevealLpsPassword", "lps_password", secret.ID, secret.DeviceID, secret.ActionID); err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[pmv1.L
 		return nil, h.internal(ctx, "decode historical LUKS keys", err)
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
-		powermanagev1connect.ControlServiceListLuksKeysProcedure,
+		cadestrov1connect.ControlServiceListLuksKeysProcedure,
 		"ListLuksKeys", "device_luks_keys", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[pmv1.
 		return nil, h.internal(ctx, "open LUKS passphrase", err)
 	}
 	if err := h.recordSecretReveal(ctx, req, actor,
-		powermanagev1connect.ControlServiceRevealLuksKeyProcedure,
+		cadestrov1connect.ControlServiceRevealLuksKeyProcedure,
 		"RevealLuksKey", "luks_key", secret.ID, secret.DeviceID, secret.ActionID); err != nil {
 		return nil, err
 	}
@@ -283,7 +283,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 	expiresAt := issuedAt.Add(luksTokenTTL)
 	rowID := ulid.Make().String()
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCreateLuksTokenProcedure, "CreateLuksToken"),
+		cadestrov1connect.ControlServiceCreateLuksTokenProcedure, "CreateLuksToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.InsertLuksToken(ctx, db.InsertLuksTokenParams{
 				ID: rowID, DeviceID: req.Msg.DeviceId, ActionID: req.Msg.ActionId,

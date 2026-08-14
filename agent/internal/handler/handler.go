@@ -15,7 +15,7 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/executor"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/validate"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/inventory"

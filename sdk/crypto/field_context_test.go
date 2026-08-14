@@ -7,7 +7,7 @@ import (
 
 func TestFieldSealContextBindsEveryTransportDimension(t *testing.T) {
 	baseAAD, baseInfo, err := FieldSealContext(
-		DirectionAgentToControl, "powermanage.v1.StoreLuksKeyRequest", "passphrase", "device", "action",
+		DirectionAgentToControl, "cadestro.v1.StoreLuksKeyRequest", "passphrase", "device", "action",
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -19,11 +19,11 @@ func TestFieldSealContextBindsEveryTransportDimension(t *testing.T) {
 		field     string
 		bindings  []string
 	}{
-		{"direction", DirectionControlToAgent, "powermanage.v1.StoreLuksKeyRequest", "passphrase", []string{"device", "action"}},
-		{"message", DirectionAgentToControl, "powermanage.v1.Other", "passphrase", []string{"device", "action"}},
-		{"field", DirectionAgentToControl, "powermanage.v1.StoreLuksKeyRequest", "other", []string{"device", "action"}},
-		{"device", DirectionAgentToControl, "powermanage.v1.StoreLuksKeyRequest", "passphrase", []string{"other-device", "action"}},
-		{"action", DirectionAgentToControl, "powermanage.v1.StoreLuksKeyRequest", "passphrase", []string{"device", "other-action"}},
+		{"direction", DirectionControlToAgent, "cadestro.v1.StoreLuksKeyRequest", "passphrase", []string{"device", "action"}},
+		{"message", DirectionAgentToControl, "cadestro.v1.Other", "passphrase", []string{"device", "action"}},
+		{"field", DirectionAgentToControl, "cadestro.v1.StoreLuksKeyRequest", "other", []string{"device", "action"}},
+		{"device", DirectionAgentToControl, "cadestro.v1.StoreLuksKeyRequest", "passphrase", []string{"other-device", "action"}},
+		{"action", DirectionAgentToControl, "cadestro.v1.StoreLuksKeyRequest", "passphrase", []string{"device", "other-action"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

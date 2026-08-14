@@ -96,15 +96,15 @@ func TestRegistry_HasNoLocalCredentialPermissions(t *testing.T) {
 func TestPublicProcedures_AreExactlyTheUnauthenticatedSurface(t *testing.T) {
 	t.Parallel()
 	expected := map[string]bool{
-		"/powermanage.v1.ControlService/RefreshToken":       true,
-		"/powermanage.v1.ControlService/Logout":             true,
-		"/powermanage.v1.ControlService/Register":           true,
-		"/powermanage.v1.ControlService/RenewCertificate":   true,
-		"/powermanage.v1.ControlService/ListAuthMethods":    true,
-		"/powermanage.v1.ControlService/GetSSOLoginURL":     true,
-		"/powermanage.v1.ControlService/SSOCallback":        true,
-		"/powermanage.v1.ControlService/BeginCLILogin":      true,
-		"/powermanage.v1.ControlService/ExchangeCLISession": true,
+		"/cadestro.v1.ControlService/RefreshToken":       true,
+		"/cadestro.v1.ControlService/Logout":             true,
+		"/cadestro.v1.ControlService/Register":           true,
+		"/cadestro.v1.ControlService/RenewCertificate":   true,
+		"/cadestro.v1.ControlService/ListAuthMethods":    true,
+		"/cadestro.v1.ControlService/GetSSOLoginURL":     true,
+		"/cadestro.v1.ControlService/SSOCallback":        true,
+		"/cadestro.v1.ControlService/BeginCLILogin":      true,
+		"/cadestro.v1.ControlService/ExchangeCLISession": true,
 	}
 	require.Len(t, auth.PublicProcedures, len(expected),
 		"the unauthenticated surface changed size; that is a deliberate act that must be reviewed")
@@ -126,6 +126,6 @@ func TestMountedProcedures_UseTheCanonicalContractPaths(t *testing.T) {
 	require.NotEmpty(t, f.mounted)
 	for _, p := range f.mounted {
 		assert.Contains(t, p, auth.ControlProcedurePrefix,
-			"%s is not a powermanage.v1 control procedure", p)
+			"%s is not a cadestro.v1 control procedure", p)
 	}
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -28,7 +28,7 @@ func TestCreateRole_RecordsThePermissionCount(t *testing.T) {
 	assert.ElementsMatch(t, []string{"ListAuditEvents", "ListUsers"}, resp.Msg.Role.Permissions)
 	assert.False(t, resp.Msg.Role.IsSystem)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceCreateRoleProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceCreateRoleProcedure)
 	assert.Equal(t, "MUTATION", op.Class)
 	assert.Equal(t, admin.ID, op.ActorID)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "CREATE")
@@ -93,7 +93,7 @@ func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T)
 	assert.Greater(t, after.SessionVersion, before.SessionVersion,
 		"widening a role must not leave a session running under the old permission set")
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceUpdateRoleProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateRoleProcedure)
 	effects := f.effectsOf(op.OperationID)
 	invalidate := f.effectWithAction(effects, "INVALIDATE_HOLDER_SESSIONS")
 	require.NotNil(t, invalidate.AfterCount)
@@ -122,7 +122,7 @@ func TestDeleteRole_RefusesARoleSomebodyStillHolds(t *testing.T) {
 	_, err = f.client.DeleteRole(f.ctx(), authed(&pmv1.DeleteRoleRequest{Id: created.Msg.Role.Id}, admin.Token))
 	require.NoError(t, err)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceDeleteRoleProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceDeleteRoleProcedure)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "DELETE")
 	require.NotNil(t, effect.AfterFlag)
 	assert.True(t, *effect.AfterFlag)
@@ -152,7 +152,7 @@ func TestAssignRoleToUser_GrantsAndInvalidatesTheSubjectSession(t *testing.T) {
 	require.NoError(t, err)
 	assert.Greater(t, after.SessionVersion, before.SessionVersion)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceAssignRoleToUserProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceAssignRoleToUserProcedure)
 	effects := f.effectsOf(op.OperationID)
 	grantEffect := f.effectWithAction(effects, "GRANT")
 	assert.Equal(t, grants[0].GrantID, grantEffect.ResourceID,
@@ -407,7 +407,7 @@ func TestAssignRoleToUserGroup_GrantsAndRevokesByScope(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, grants, 1)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceAssignRoleToUserGroupProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceAssignRoleToUserGroupProcedure)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "GRANT")
 	assert.Equal(t, grants[0].GrantID, effect.ResourceID)
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // TestRequireVerifiedArtifact pins the MITM-hardening contract for a

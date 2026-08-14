@@ -11,8 +11,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
@@ -32,7 +32,7 @@ type credentialStore interface {
 // on the local enrollment socket. All other DeviceAuthService RPCs
 // return Unimplemented.
 type EnrollHandler struct {
-	powermanagev1connect.UnimplementedDeviceAuthServiceHandler
+	cadestrov1connect.UnimplementedDeviceAuthServiceHandler
 
 	hostname   string
 	version    string

@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/searchrpc"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -106,7 +106,7 @@ func TestSQLiteSearchHandlers_AuditSearchAndRebuildRecordEvidence(t *testing.T) 
 	require.NoError(t, err)
 	_, err = st.RecordOperation(ctx, store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "user", ActorID: actorID,
-		Origin: auth.ControlRPCOrigin, RequestDescriptor: "/powermanage.v1.ControlService/DeleteAction",
+		Origin: auth.ControlRPCOrigin, RequestDescriptor: "/cadestro.v1.ControlService/DeleteAction",
 		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "DeleteAction",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}, store.AuditEffect{ResourceType: "action", ResourceID: newID(), Action: "DELETE", Outcome: store.EffectApplied})
@@ -127,10 +127,10 @@ func TestSQLiteSearchHandlers_AuditSearchAndRebuildRecordEvidence(t *testing.T) 
 	err = raw.QueryRow(ctx, `SELECT o.operation_class, o.request_descriptor, e.action, e.after_count
 		FROM audit_operations o JOIN audit_effects e ON e.operation_id = o.operation_id
 		WHERE o.request_descriptor = $1 ORDER BY o.chain_seq DESC LIMIT 1`,
-		powermanagev1connect.ControlServiceSearchProcedure).Scan(&class, &descriptor, &effectAction, &returned)
+		cadestrov1connect.ControlServiceSearchProcedure).Scan(&class, &descriptor, &effectAction, &returned)
 	require.NoError(t, err)
 	assert.Equal(t, string(store.ClassSensitiveRead), class)
-	assert.Equal(t, powermanagev1connect.ControlServiceSearchProcedure, descriptor)
+	assert.Equal(t, cadestrov1connect.ControlServiceSearchProcedure, descriptor)
 	assert.Equal(t, "SEARCH", effectAction)
 	assert.Equal(t, int64(len(resp.Msg.Results)), returned)
 
@@ -139,14 +139,14 @@ func TestSQLiteSearchHandlers_AuditSearchAndRebuildRecordEvidence(t *testing.T) 
 	err = raw.QueryRow(ctx, `SELECT e.action FROM audit_operations o
 		JOIN audit_effects e ON e.operation_id = o.operation_id
 		WHERE o.request_descriptor = $1 ORDER BY o.chain_seq DESC LIMIT 1`,
-		powermanagev1connect.ControlServiceRebuildSearchIndexProcedure).Scan(&effectAction)
+		cadestrov1connect.ControlServiceRebuildSearchIndexProcedure).Scan(&effectAction)
 	require.NoError(t, err)
 	assert.Equal(t, "REBUILD_SEARCH", effectAction)
 
 	assert.ElementsMatch(t, []string{
-		powermanagev1connect.ControlServiceSearchProcedure,
-		powermanagev1connect.ControlServiceRebuildSearchIndexProcedure,
+		cadestrov1connect.ControlServiceSearchProcedure,
+		cadestrov1connect.ControlServiceRebuildSearchIndexProcedure,
 	}, h.Mount(http.NewServeMux()))
-	assert.Equal(t, []string{powermanagev1connect.ControlServiceSearchProcedure}, searchrpc.ReadProcedures())
-	assert.Equal(t, []string{powermanagev1connect.ControlServiceRebuildSearchIndexProcedure}, searchrpc.MutationProcedures())
+	assert.Equal(t, []string{cadestrov1connect.ControlServiceSearchProcedure}, searchrpc.ReadProcedures())
+	assert.Equal(t, []string{cadestrov1connect.ControlServiceRebuildSearchIndexProcedure}, searchrpc.MutationProcedures())
 }

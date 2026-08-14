@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // WS6 #11: dispatchServerMessage spawned an UNBOUNDED goroutine for every

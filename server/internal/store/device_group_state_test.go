@@ -17,7 +17,7 @@ import (
 func deviceGroupOperation() store.AuditOperation {
 	op := mutationOp()
 	op.OperationID = newID()
-	op.RequestDescriptor = "powermanage.v1.ControlService/DeviceGroupMutation"
+	op.RequestDescriptor = "cadestro.v1.ControlService/DeviceGroupMutation"
 	op.AuthorizationDetail = "DeviceGroupMutation"
 	return op
 }

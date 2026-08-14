@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/agentsecrets"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -85,7 +85,7 @@ func TestAgentSecrets_LuksFieldsAreSealedInTransitAndEncryptedAtRest(t *testing.
 	passphrase := "correct horse battery staple"
 	request := &pmv1.StoreLuksKeyRequest{
 		ActionId: f.luksActionID, DevicePath: "/dev/vda3",
-		Passphrase: f.sealToControl("powermanage.v1.StoreLuksKeyRequest", "passphrase", passphrase,
+		Passphrase: f.sealToControl("cadestro.v1.StoreLuksKeyRequest", "passphrase", passphrase,
 			f.deviceID, f.luksActionID),
 		RotationReason: pmv1.RotationReason_ROTATION_REASON_INITIAL,
 	}
@@ -107,7 +107,7 @@ func TestAgentSecrets_LuksFieldsAreSealedInTransitAndEncryptedAtRest(t *testing.
 	got, err := f.service.GetLuksKey(ctx, f.deviceID, &pmv1.GetLuksKeyRequest{ActionId: f.luksActionID})
 	require.NoError(t, err)
 	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"powermanage.v1.GetLuksKeyResponse", "passphrase", f.deviceID, f.luksActionID)
+		"cadestro.v1.GetLuksKeyResponse", "passphrase", f.deviceID, f.luksActionID)
 	require.NoError(t, err)
 	openedForAgent, err := sdkcrypto.OpenWithPrivateKey(f.agentPrivate, got.Passphrase.Ciphertext, aad, info)
 	require.NoError(t, err)
@@ -137,7 +137,7 @@ func TestAgentSecrets_LpsBatchIsAtomicAndRowIDBound(t *testing.T) {
 	rotation := func(username, password string) *pmv1.LpsPasswordRotation {
 		return &pmv1.LpsPasswordRotation{
 			Username: username,
-			Password: f.sealToControl("powermanage.v1.LpsPasswordRotation", "password", password,
+			Password: f.sealToControl("cadestro.v1.LpsPasswordRotation", "password", password,
 				f.deviceID, f.lpsActionID, username),
 			RotatedAt: f.now.Format(time.RFC3339Nano),
 			Reason:    pmv1.RotationReason_ROTATION_REASON_SCHEDULED,

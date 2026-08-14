@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
@@ -67,7 +67,7 @@ func TestRecordSecurityAlertCommitsOperationAndEffect(t *testing.T) {
 	}
 	require.NoError(t, handler.recordSecurityAlert(context.Background(), deviceID, alert))
 
-	const descriptor = "powermanage.v1.AgentService.Stream/SecurityAlert"
+	const descriptor = "cadestro.v1.AgentService.Stream/SecurityAlert"
 	assert.Equal(t, 1, countRows(t, raw,
 		`SELECT COUNT(*) FROM audit_operations WHERE request_descriptor = $1 AND actor_id = $2`,
 		descriptor, deviceID), "the alert must leave exactly one operation row")
@@ -106,7 +106,7 @@ func TestRecordFrameDropCommitsOperationAndEffect(t *testing.T) {
 	}
 	handler.recordFrameDrop(context.Background(), deviceID, message)
 
-	const descriptor = "powermanage.v1.AgentService.Stream/FrameRateLimit/telemetry"
+	const descriptor = "cadestro.v1.AgentService.Stream/FrameRateLimit/telemetry"
 	assert.Equal(t, 1, countRows(t, raw,
 		`SELECT COUNT(*) FROM audit_operations WHERE request_descriptor = $1 AND actor_id = $2`,
 		descriptor, deviceID), "a throttled frame must leave exactly one operation row")

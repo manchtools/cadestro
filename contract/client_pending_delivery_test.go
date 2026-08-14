@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // noopStreamHandler satisfies StreamHandler; these cases never reach a handler

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 const (
@@ -82,7 +82,7 @@ func (s *EnrollServer) Start(ctx context.Context) error {
 
 	// Create HTTP mux with Connect-RPC handler
 	mux := http.NewServeMux()
-	path, handler := powermanagev1connect.NewDeviceAuthServiceHandler(s.handler)
+	path, handler := cadestrov1connect.NewDeviceAuthServiceHandler(s.handler)
 	mux.Handle(path, handler)
 
 	s.httpServer = &http.Server{

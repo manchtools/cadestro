@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v6.30.2
-// source: powermanage/v1/common.proto
+// source: cadestro/v1/common.proto
 
-package powermanagev1
+package cadestrov1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -105,11 +105,11 @@ func (x ExecutionStatus) String() string {
 }
 
 func (ExecutionStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[0].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[0].Descriptor()
 }
 
 func (ExecutionStatus) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[0]
+	return &file_cadestro_v1_common_proto_enumTypes[0]
 }
 
 func (x ExecutionStatus) Number() protoreflect.EnumNumber {
@@ -118,7 +118,7 @@ func (x ExecutionStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ExecutionStatus.Descriptor instead.
 func (ExecutionStatus) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{0}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{0}
 }
 
 // Desired state for stateful actions
@@ -152,11 +152,11 @@ func (x DesiredState) String() string {
 }
 
 func (DesiredState) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[1].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[1].Descriptor()
 }
 
 func (DesiredState) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[1]
+	return &file_cadestro_v1_common_proto_enumTypes[1]
 }
 
 func (x DesiredState) Number() protoreflect.EnumNumber {
@@ -165,7 +165,7 @@ func (x DesiredState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DesiredState.Descriptor instead.
 func (DesiredState) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{1}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
 // Assignment mode determines how an action is applied to a target
@@ -205,11 +205,11 @@ func (x AssignmentMode) String() string {
 }
 
 func (AssignmentMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[2].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[2].Descriptor()
 }
 
 func (AssignmentMode) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[2]
+	return &file_cadestro_v1_common_proto_enumTypes[2]
 }
 
 func (x AssignmentMode) Number() protoreflect.EnumNumber {
@@ -218,7 +218,7 @@ func (x AssignmentMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AssignmentMode.Descriptor instead.
 func (AssignmentMode) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
 // AssignmentSourceType identifies what kind of policy artefact an
@@ -262,11 +262,11 @@ func (x AssignmentSourceType) String() string {
 }
 
 func (AssignmentSourceType) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[3].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[3].Descriptor()
 }
 
 func (AssignmentSourceType) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[3]
+	return &file_cadestro_v1_common_proto_enumTypes[3]
 }
 
 func (x AssignmentSourceType) Number() protoreflect.EnumNumber {
@@ -275,7 +275,7 @@ func (x AssignmentSourceType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AssignmentSourceType.Descriptor instead.
 func (AssignmentSourceType) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
 // AssignmentTargetType identifies what kind of subject an Assignment
@@ -319,11 +319,11 @@ func (x AssignmentTargetType) String() string {
 }
 
 func (AssignmentTargetType) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[4].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[4].Descriptor()
 }
 
 func (AssignmentTargetType) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[4]
+	return &file_cadestro_v1_common_proto_enumTypes[4]
 }
 
 func (x AssignmentTargetType) Number() protoreflect.EnumNumber {
@@ -332,7 +332,7 @@ func (x AssignmentTargetType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AssignmentTargetType.Descriptor instead.
 func (AssignmentTargetType) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 // RoleGrantScopeKind names which kind of group anchors a scoped role
@@ -375,11 +375,11 @@ func (x RoleGrantScopeKind) String() string {
 }
 
 func (RoleGrantScopeKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[5].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[5].Descriptor()
 }
 
 func (RoleGrantScopeKind) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[5]
+	return &file_cadestro_v1_common_proto_enumTypes[5]
 }
 
 func (x RoleGrantScopeKind) Number() protoreflect.EnumNumber {
@@ -388,7 +388,7 @@ func (x RoleGrantScopeKind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RoleGrantScopeKind.Descriptor instead.
 func (RoleGrantScopeKind) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 // PermissionTargetKind classifies the target kind a permission acts
@@ -443,11 +443,11 @@ func (x PermissionTargetKind) String() string {
 }
 
 func (PermissionTargetKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[6].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[6].Descriptor()
 }
 
 func (PermissionTargetKind) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[6]
+	return &file_cadestro_v1_common_proto_enumTypes[6]
 }
 
 func (x PermissionTargetKind) Number() protoreflect.EnumNumber {
@@ -456,7 +456,7 @@ func (x PermissionTargetKind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PermissionTargetKind.Descriptor instead.
 func (PermissionTargetKind) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 // DeviceStatus is computed by the server from the device's last_seen_at
@@ -495,11 +495,11 @@ func (x DeviceStatus) String() string {
 }
 
 func (DeviceStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[7].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[7].Descriptor()
 }
 
 func (DeviceStatus) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[7]
+	return &file_cadestro_v1_common_proto_enumTypes[7]
 }
 
 func (x DeviceStatus) Number() protoreflect.EnumNumber {
@@ -508,7 +508,7 @@ func (x DeviceStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DeviceStatus.Descriptor instead.
 func (DeviceStatus) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{7}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
 // SearchScope identifies which search index a SearchRequest targets,
@@ -571,11 +571,11 @@ func (x SearchScope) String() string {
 }
 
 func (SearchScope) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[8].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[8].Descriptor()
 }
 
 func (SearchScope) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[8]
+	return &file_cadestro_v1_common_proto_enumTypes[8]
 }
 
 func (x SearchScope) Number() protoreflect.EnumNumber {
@@ -584,7 +584,7 @@ func (x SearchScope) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SearchScope.Descriptor instead.
 func (SearchScope) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
 // SortField is the column a Search orders by. Shared across all scopes
@@ -681,11 +681,11 @@ func (x SortField) String() string {
 }
 
 func (SortField) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[9].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[9].Descriptor()
 }
 
 func (SortField) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[9]
+	return &file_cadestro_v1_common_proto_enumTypes[9]
 }
 
 func (x SortField) Number() protoreflect.EnumNumber {
@@ -694,7 +694,7 @@ func (x SortField) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SortField.Descriptor instead.
 func (SortField) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
 // SortDirection is the order for a Search sort. UNSPECIFIED lets the
@@ -732,11 +732,11 @@ func (x SortDirection) String() string {
 }
 
 func (SortDirection) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[10].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[10].Descriptor()
 }
 
 func (SortDirection) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[10]
+	return &file_cadestro_v1_common_proto_enumTypes[10]
 }
 
 func (x SortDirection) Number() protoreflect.EnumNumber {
@@ -745,7 +745,7 @@ func (x SortDirection) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SortDirection.Descriptor instead.
 func (SortDirection) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{10}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 // IdentityProviderType identifies the auth protocol an
@@ -781,11 +781,11 @@ func (x IdentityProviderType) String() string {
 }
 
 func (IdentityProviderType) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[11].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[11].Descriptor()
 }
 
 func (IdentityProviderType) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[11]
+	return &file_cadestro_v1_common_proto_enumTypes[11]
 }
 
 func (x IdentityProviderType) Number() protoreflect.EnumNumber {
@@ -794,7 +794,7 @@ func (x IdentityProviderType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use IdentityProviderType.Descriptor instead.
 func (IdentityProviderType) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
 }
 
 // RotationReason classifies why a credential rotation happened. The
@@ -840,11 +840,11 @@ func (x RotationReason) String() string {
 }
 
 func (RotationReason) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[12].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[12].Descriptor()
 }
 
 func (RotationReason) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[12]
+	return &file_cadestro_v1_common_proto_enumTypes[12]
 }
 
 func (x RotationReason) Number() protoreflect.EnumNumber {
@@ -853,7 +853,7 @@ func (x RotationReason) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use RotationReason.Descriptor instead.
 func (RotationReason) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{12}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
 }
 
 // LuksRevocationStatus tracks the lifecycle of a LUKS passphrase
@@ -900,11 +900,11 @@ func (x LuksRevocationStatus) String() string {
 }
 
 func (LuksRevocationStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[13].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[13].Descriptor()
 }
 
 func (LuksRevocationStatus) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[13]
+	return &file_cadestro_v1_common_proto_enumTypes[13]
 }
 
 func (x LuksRevocationStatus) Number() protoreflect.EnumNumber {
@@ -913,7 +913,7 @@ func (x LuksRevocationStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use LuksRevocationStatus.Descriptor instead.
 func (LuksRevocationStatus) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{13}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
 }
 
 // Compliance status for a device based on detection scripts
@@ -953,11 +953,11 @@ func (x ComplianceStatus) String() string {
 }
 
 func (ComplianceStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_common_proto_enumTypes[14].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[14].Descriptor()
 }
 
 func (ComplianceStatus) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_common_proto_enumTypes[14]
+	return &file_cadestro_v1_common_proto_enumTypes[14]
 }
 
 func (x ComplianceStatus) Number() protoreflect.EnumNumber {
@@ -966,7 +966,7 @@ func (x ComplianceStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ComplianceStatus.Descriptor instead.
 func (ComplianceStatus) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{14}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
 }
 
 // Unique identifier for an action instance
@@ -980,7 +980,7 @@ type ActionId struct {
 
 func (x *ActionId) Reset() {
 	*x = ActionId{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[0]
+	mi := &file_cadestro_v1_common_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -992,7 +992,7 @@ func (x *ActionId) String() string {
 func (*ActionId) ProtoMessage() {}
 
 func (x *ActionId) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[0]
+	mi := &file_cadestro_v1_common_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1005,7 +1005,7 @@ func (x *ActionId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionId.ProtoReflect.Descriptor instead.
 func (*ActionId) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{0}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ActionId) GetValue() string {
@@ -1026,7 +1026,7 @@ type DeviceId struct {
 
 func (x *DeviceId) Reset() {
 	*x = DeviceId{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[1]
+	mi := &file_cadestro_v1_common_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1038,7 +1038,7 @@ func (x *DeviceId) String() string {
 func (*DeviceId) ProtoMessage() {}
 
 func (x *DeviceId) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[1]
+	mi := &file_cadestro_v1_common_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1051,7 +1051,7 @@ func (x *DeviceId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceId.ProtoReflect.Descriptor instead.
 func (*DeviceId) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{1}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DeviceId) GetValue() string {
@@ -1082,7 +1082,7 @@ type ErrorDetail struct {
 
 func (x *ErrorDetail) Reset() {
 	*x = ErrorDetail{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[2]
+	mi := &file_cadestro_v1_common_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1094,7 +1094,7 @@ func (x *ErrorDetail) String() string {
 func (*ErrorDetail) ProtoMessage() {}
 
 func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[2]
+	mi := &file_cadestro_v1_common_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1107,7 +1107,7 @@ func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ErrorDetail.ProtoReflect.Descriptor instead.
 func (*ErrorDetail) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ErrorDetail) GetCode() string {
@@ -1143,7 +1143,7 @@ type MaintenanceWindow struct {
 
 func (x *MaintenanceWindow) Reset() {
 	*x = MaintenanceWindow{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[3]
+	mi := &file_cadestro_v1_common_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1155,7 +1155,7 @@ func (x *MaintenanceWindow) String() string {
 func (*MaintenanceWindow) ProtoMessage() {}
 
 func (x *MaintenanceWindow) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[3]
+	mi := &file_cadestro_v1_common_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1168,7 +1168,7 @@ func (x *MaintenanceWindow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintenanceWindow.ProtoReflect.Descriptor instead.
 func (*MaintenanceWindow) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MaintenanceWindow) GetSchedule() []*MaintenanceWindowEntry {
@@ -1196,7 +1196,7 @@ type MaintenanceWindowEntry struct {
 
 func (x *MaintenanceWindowEntry) Reset() {
 	*x = MaintenanceWindowEntry{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[4]
+	mi := &file_cadestro_v1_common_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1208,7 +1208,7 @@ func (x *MaintenanceWindowEntry) String() string {
 func (*MaintenanceWindowEntry) ProtoMessage() {}
 
 func (x *MaintenanceWindowEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[4]
+	mi := &file_cadestro_v1_common_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1221,7 +1221,7 @@ func (x *MaintenanceWindowEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintenanceWindowEntry.ProtoReflect.Descriptor instead.
 func (*MaintenanceWindowEntry) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *MaintenanceWindowEntry) GetDays() []string {
@@ -1277,7 +1277,7 @@ type SealedValue struct {
 
 func (x *SealedValue) Reset() {
 	*x = SealedValue{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[5]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1289,7 +1289,7 @@ func (x *SealedValue) String() string {
 func (*SealedValue) ProtoMessage() {}
 
 func (x *SealedValue) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[5]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1302,7 +1302,7 @@ func (x *SealedValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SealedValue.ProtoReflect.Descriptor instead.
 func (*SealedValue) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SealedValue) GetVersion() uint32 {
@@ -1334,7 +1334,7 @@ type CommandOutput struct {
 
 func (x *CommandOutput) Reset() {
 	*x = CommandOutput{}
-	mi := &file_powermanage_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1346,7 +1346,7 @@ func (x *CommandOutput) String() string {
 func (*CommandOutput) ProtoMessage() {}
 
 func (x *CommandOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1359,7 +1359,7 @@ func (x *CommandOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandOutput.ProtoReflect.Descriptor instead.
 func (*CommandOutput) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CommandOutput) GetExitCode() int32 {
@@ -1383,11 +1383,11 @@ func (x *CommandOutput) GetStderr() string {
 	return ""
 }
 
-var File_powermanage_v1_common_proto protoreflect.FileDescriptor
+var File_cadestro_v1_common_proto protoreflect.FileDescriptor
 
-const file_powermanage_v1_common_proto_rawDesc = "" +
+const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x1bpowermanage/v1/common.proto\x12\x0epowermanage.v1\" \n" +
+	"\x18cadestro/v1/common.proto\x12\vcadestro.v1\" \n" +
 	"\bActionId\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\" \n" +
 	"\bDeviceId\x12\x14\n" +
@@ -1395,9 +1395,9 @@ const file_powermanage_v1_common_proto_rawDesc = "" +
 	"\vErrorDetail\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x1d\n" +
 	"\n" +
-	"request_id\x18\x02 \x01(\tR\trequestId\"W\n" +
-	"\x11MaintenanceWindow\x12B\n" +
-	"\bschedule\x18\x01 \x03(\v2&.powermanage.v1.MaintenanceWindowEntryR\bschedule\"B\n" +
+	"request_id\x18\x02 \x01(\tR\trequestId\"T\n" +
+	"\x11MaintenanceWindow\x12?\n" +
+	"\bschedule\x18\x01 \x03(\v2#.cadestro.v1.MaintenanceWindowEntryR\bschedule\"B\n" +
 	"\x16MaintenanceWindowEntry\x12\x12\n" +
 	"\x04days\x18\x01 \x03(\tR\x04days\x12\x14\n" +
 	"\x05allow\x18\x02 \x01(\tR\x05allow\"G\n" +
@@ -1514,48 +1514,48 @@ const file_powermanage_v1_common_proto_rawDesc = "" +
 	"\x19COMPLIANCE_STATUS_UNKNOWN\x10\x00\x12\x1f\n" +
 	"\x1bCOMPLIANCE_STATUS_COMPLIANT\x10\x01\x12#\n" +
 	"\x1fCOMPLIANCE_STATUS_NON_COMPLIANT\x10\x02\x12%\n" +
-	"!COMPLIANCE_STATUS_IN_GRACE_PERIOD\x10\x03BMZKgithub.com/manchtools/cadestro/contract/gen/go/powermanage/v1;powermanagev1b\x06proto3"
+	"!COMPLIANCE_STATUS_IN_GRACE_PERIOD\x10\x03BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
-	file_powermanage_v1_common_proto_rawDescOnce sync.Once
-	file_powermanage_v1_common_proto_rawDescData []byte
+	file_cadestro_v1_common_proto_rawDescOnce sync.Once
+	file_cadestro_v1_common_proto_rawDescData []byte
 )
 
-func file_powermanage_v1_common_proto_rawDescGZIP() []byte {
-	file_powermanage_v1_common_proto_rawDescOnce.Do(func() {
-		file_powermanage_v1_common_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_powermanage_v1_common_proto_rawDesc), len(file_powermanage_v1_common_proto_rawDesc)))
+func file_cadestro_v1_common_proto_rawDescGZIP() []byte {
+	file_cadestro_v1_common_proto_rawDescOnce.Do(func() {
+		file_cadestro_v1_common_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)))
 	})
-	return file_powermanage_v1_common_proto_rawDescData
+	return file_cadestro_v1_common_proto_rawDescData
 }
 
-var file_powermanage_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
-var file_powermanage_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_powermanage_v1_common_proto_goTypes = []any{
-	(ExecutionStatus)(0),           // 0: powermanage.v1.ExecutionStatus
-	(DesiredState)(0),              // 1: powermanage.v1.DesiredState
-	(AssignmentMode)(0),            // 2: powermanage.v1.AssignmentMode
-	(AssignmentSourceType)(0),      // 3: powermanage.v1.AssignmentSourceType
-	(AssignmentTargetType)(0),      // 4: powermanage.v1.AssignmentTargetType
-	(RoleGrantScopeKind)(0),        // 5: powermanage.v1.RoleGrantScopeKind
-	(PermissionTargetKind)(0),      // 6: powermanage.v1.PermissionTargetKind
-	(DeviceStatus)(0),              // 7: powermanage.v1.DeviceStatus
-	(SearchScope)(0),               // 8: powermanage.v1.SearchScope
-	(SortField)(0),                 // 9: powermanage.v1.SortField
-	(SortDirection)(0),             // 10: powermanage.v1.SortDirection
-	(IdentityProviderType)(0),      // 11: powermanage.v1.IdentityProviderType
-	(RotationReason)(0),            // 12: powermanage.v1.RotationReason
-	(LuksRevocationStatus)(0),      // 13: powermanage.v1.LuksRevocationStatus
-	(ComplianceStatus)(0),          // 14: powermanage.v1.ComplianceStatus
-	(*ActionId)(nil),               // 15: powermanage.v1.ActionId
-	(*DeviceId)(nil),               // 16: powermanage.v1.DeviceId
-	(*ErrorDetail)(nil),            // 17: powermanage.v1.ErrorDetail
-	(*MaintenanceWindow)(nil),      // 18: powermanage.v1.MaintenanceWindow
-	(*MaintenanceWindowEntry)(nil), // 19: powermanage.v1.MaintenanceWindowEntry
-	(*SealedValue)(nil),            // 20: powermanage.v1.SealedValue
-	(*CommandOutput)(nil),          // 21: powermanage.v1.CommandOutput
+var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
+var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_cadestro_v1_common_proto_goTypes = []any{
+	(ExecutionStatus)(0),           // 0: cadestro.v1.ExecutionStatus
+	(DesiredState)(0),              // 1: cadestro.v1.DesiredState
+	(AssignmentMode)(0),            // 2: cadestro.v1.AssignmentMode
+	(AssignmentSourceType)(0),      // 3: cadestro.v1.AssignmentSourceType
+	(AssignmentTargetType)(0),      // 4: cadestro.v1.AssignmentTargetType
+	(RoleGrantScopeKind)(0),        // 5: cadestro.v1.RoleGrantScopeKind
+	(PermissionTargetKind)(0),      // 6: cadestro.v1.PermissionTargetKind
+	(DeviceStatus)(0),              // 7: cadestro.v1.DeviceStatus
+	(SearchScope)(0),               // 8: cadestro.v1.SearchScope
+	(SortField)(0),                 // 9: cadestro.v1.SortField
+	(SortDirection)(0),             // 10: cadestro.v1.SortDirection
+	(IdentityProviderType)(0),      // 11: cadestro.v1.IdentityProviderType
+	(RotationReason)(0),            // 12: cadestro.v1.RotationReason
+	(LuksRevocationStatus)(0),      // 13: cadestro.v1.LuksRevocationStatus
+	(ComplianceStatus)(0),          // 14: cadestro.v1.ComplianceStatus
+	(*ActionId)(nil),               // 15: cadestro.v1.ActionId
+	(*DeviceId)(nil),               // 16: cadestro.v1.DeviceId
+	(*ErrorDetail)(nil),            // 17: cadestro.v1.ErrorDetail
+	(*MaintenanceWindow)(nil),      // 18: cadestro.v1.MaintenanceWindow
+	(*MaintenanceWindowEntry)(nil), // 19: cadestro.v1.MaintenanceWindowEntry
+	(*SealedValue)(nil),            // 20: cadestro.v1.SealedValue
+	(*CommandOutput)(nil),          // 21: cadestro.v1.CommandOutput
 }
-var file_powermanage_v1_common_proto_depIdxs = []int32{
-	19, // 0: powermanage.v1.MaintenanceWindow.schedule:type_name -> powermanage.v1.MaintenanceWindowEntry
+var file_cadestro_v1_common_proto_depIdxs = []int32{
+	19, // 0: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
 	1,  // [1:1] is the sub-list for method output_type
 	1,  // [1:1] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
@@ -1563,27 +1563,27 @@ var file_powermanage_v1_common_proto_depIdxs = []int32{
 	0,  // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_powermanage_v1_common_proto_init() }
-func file_powermanage_v1_common_proto_init() {
-	if File_powermanage_v1_common_proto != nil {
+func init() { file_cadestro_v1_common_proto_init() }
+func file_cadestro_v1_common_proto_init() {
+	if File_cadestro_v1_common_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_powermanage_v1_common_proto_rawDesc), len(file_powermanage_v1_common_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)),
 			NumEnums:      15,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_powermanage_v1_common_proto_goTypes,
-		DependencyIndexes: file_powermanage_v1_common_proto_depIdxs,
-		EnumInfos:         file_powermanage_v1_common_proto_enumTypes,
-		MessageInfos:      file_powermanage_v1_common_proto_msgTypes,
+		GoTypes:           file_cadestro_v1_common_proto_goTypes,
+		DependencyIndexes: file_cadestro_v1_common_proto_depIdxs,
+		EnumInfos:         file_cadestro_v1_common_proto_enumTypes,
+		MessageInfos:      file_cadestro_v1_common_proto_msgTypes,
 	}.Build()
-	File_powermanage_v1_common_proto = out.File
-	file_powermanage_v1_common_proto_goTypes = nil
-	file_powermanage_v1_common_proto_depIdxs = nil
+	File_cadestro_v1_common_proto = out.File
+	file_cadestro_v1_common_proto_goTypes = nil
+	file_cadestro_v1_common_proto_depIdxs = nil
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -51,7 +51,7 @@ func TestDispatchSubmission_CommitsManifestExecutionsAndAuditBeforeWake(t *testi
 	service := dispatch.New(dispatch.Config{Store: st, Waker: waker, Now: func() time.Time { return now }})
 	manifest := dispatchManifest()
 	op := mutationOp()
-	op.RequestDescriptor = "/powermanage.v1.ControlService/DispatchInstantAction"
+	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchInstantAction"
 	op.AuthorizationDetail = "DispatchInstantAction"
 
 	result, err := service.Submit(context.Background(), dispatch.SubmitParams{
@@ -89,7 +89,7 @@ func TestDispatchSubmission_SchedulingAndAuditFailure(t *testing.T) {
 	service := dispatch.New(dispatch.Config{Store: st, Waker: waker, Now: func() time.Time { return now }})
 	scheduledFor := now.Add(2 * time.Hour)
 	op := mutationOp()
-	op.RequestDescriptor = "/powermanage.v1.ControlService/DispatchAction"
+	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchAction"
 
 	result, err := service.Submit(context.Background(), dispatch.SubmitParams{
 		Operation: op, DeviceID: deviceID, ScheduledFor: &scheduledFor,
@@ -125,7 +125,7 @@ func TestDispatchSubmission_MultiDeviceFailureRollsBackWholeFanout(t *testing.T)
 	service := dispatch.New(dispatch.Config{Store: st, Waker: waker, Now: func() time.Time { return now }})
 	first, second := dispatchManifest(), dispatchManifest()
 	op := mutationOp()
-	op.RequestDescriptor = "/powermanage.v1.ControlService/DispatchToMultiple"
+	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchToMultiple"
 
 	_, err := service.SubmitBatch(context.Background(), dispatch.SubmitBatchParams{
 		Operation: op,

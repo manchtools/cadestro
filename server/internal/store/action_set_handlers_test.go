@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 )
@@ -269,15 +269,15 @@ func TestActionSetHandlers_CorruptStoredPolicyFailsClosed(t *testing.T) {
 func TestActionSetHandlers_MountsExactSurface(t *testing.T) {
 	f := newActionHandlerFixture(t)
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceCreateActionSetProcedure,
-		powermanagev1connect.ControlServiceGetActionSetProcedure,
-		powermanagev1connect.ControlServiceListActionSetsProcedure,
-		powermanagev1connect.ControlServiceRenameActionSetProcedure,
-		powermanagev1connect.ControlServiceUpdateActionSetDescriptionProcedure,
-		powermanagev1connect.ControlServiceUpdateActionSetScheduleProcedure,
-		powermanagev1connect.ControlServiceDeleteActionSetProcedure,
-		powermanagev1connect.ControlServiceAddActionToSetProcedure,
-		powermanagev1connect.ControlServiceRemoveActionFromSetProcedure,
-		powermanagev1connect.ControlServiceReorderActionInSetProcedure,
+		cadestrov1connect.ControlServiceCreateActionSetProcedure,
+		cadestrov1connect.ControlServiceGetActionSetProcedure,
+		cadestrov1connect.ControlServiceListActionSetsProcedure,
+		cadestrov1connect.ControlServiceRenameActionSetProcedure,
+		cadestrov1connect.ControlServiceUpdateActionSetDescriptionProcedure,
+		cadestrov1connect.ControlServiceUpdateActionSetScheduleProcedure,
+		cadestrov1connect.ControlServiceDeleteActionSetProcedure,
+		cadestrov1connect.ControlServiceAddActionToSetProcedure,
+		cadestrov1connect.ControlServiceRemoveActionFromSetProcedure,
+		cadestrov1connect.ControlServiceReorderActionInSetProcedure,
 	}, f.handlers.MountActionSets(http.NewServeMux()))
 }

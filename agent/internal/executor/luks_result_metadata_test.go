@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
@@ -82,7 +82,7 @@ func TestExecuteEncryptionActionReportsNoResultMetadata(t *testing.T) {
 	require.NoError(t, e.ConfigureSealing(agentKey.Bytes(), controlKey.PublicKey().Bytes()))
 	const actionID = "01HXLUKSEXEC00000000000000"
 	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"powermanage.v1.EncryptionParams", "preshared_key", e.getDeviceID(), actionID)
+		"cadestro.v1.EncryptionParams", "preshared_key", e.getDeviceID(), actionID)
 	require.NoError(t, err)
 	sealed, err := sdkcrypto.SealToPublicKey(agentKey.PublicKey(), []byte("psk-value"), aad, info)
 	require.NoError(t, err)

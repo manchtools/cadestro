@@ -16,7 +16,7 @@ import (
 	"time"
 
 	sdk "github.com/manchtools/cadestro/contract"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 	"github.com/manchtools/cadestro/sdk/sys/remote"

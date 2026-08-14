@@ -18,7 +18,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/manchtools/cadestro/agent/internal/store/migrations"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 var cronParser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)

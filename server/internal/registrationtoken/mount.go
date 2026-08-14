@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 // Mount registers exactly the explicit registration-token procedures.
@@ -18,35 +18,35 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	register(powermanagev1connect.ControlServiceCreateTokenProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceCreateTokenProcedure, h.CreateToken, opts...))
-	register(powermanagev1connect.ControlServiceGetTokenProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceGetTokenProcedure, h.GetToken, opts...))
-	register(powermanagev1connect.ControlServiceListTokensProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceListTokensProcedure, h.ListTokens, opts...))
-	register(powermanagev1connect.ControlServiceRenameTokenProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceRenameTokenProcedure, h.RenameToken, opts...))
-	register(powermanagev1connect.ControlServiceSetTokenDisabledProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceSetTokenDisabledProcedure, h.SetTokenDisabled, opts...))
-	register(powermanagev1connect.ControlServiceDeleteTokenProcedure,
-		connect.NewUnaryHandler(powermanagev1connect.ControlServiceDeleteTokenProcedure, h.DeleteToken, opts...))
+	register(cadestrov1connect.ControlServiceCreateTokenProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateTokenProcedure, h.CreateToken, opts...))
+	register(cadestrov1connect.ControlServiceGetTokenProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetTokenProcedure, h.GetToken, opts...))
+	register(cadestrov1connect.ControlServiceListTokensProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListTokensProcedure, h.ListTokens, opts...))
+	register(cadestrov1connect.ControlServiceRenameTokenProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRenameTokenProcedure, h.RenameToken, opts...))
+	register(cadestrov1connect.ControlServiceSetTokenDisabledProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceSetTokenDisabledProcedure, h.SetTokenDisabled, opts...))
+	register(cadestrov1connect.ControlServiceDeleteTokenProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceDeleteTokenProcedure, h.DeleteToken, opts...))
 	return mounted
 }
 
 // MutationProcedures is the exact audited registration-token mutation set.
 func MutationProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceCreateTokenProcedure,
-		powermanagev1connect.ControlServiceRenameTokenProcedure,
-		powermanagev1connect.ControlServiceSetTokenDisabledProcedure,
-		powermanagev1connect.ControlServiceDeleteTokenProcedure,
+		cadestrov1connect.ControlServiceCreateTokenProcedure,
+		cadestrov1connect.ControlServiceRenameTokenProcedure,
+		cadestrov1connect.ControlServiceSetTokenDisabledProcedure,
+		cadestrov1connect.ControlServiceDeleteTokenProcedure,
 	}
 }
 
 // ReadProcedures is the exact non-mutating registration-token set.
 func ReadProcedures() []string {
 	return []string{
-		powermanagev1connect.ControlServiceGetTokenProcedure,
-		powermanagev1connect.ControlServiceListTokensProcedure,
+		cadestrov1connect.ControlServiceGetTokenProcedure,
+		cadestrov1connect.ControlServiceListTokensProcedure,
 	}
 }

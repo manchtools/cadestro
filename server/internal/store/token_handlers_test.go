@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/registrationtoken"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -216,10 +216,10 @@ func TestTokenHandlers_KeysetPaginationAndMountSurface(t *testing.T) {
 	mounted := f.handlers.Mount(http.NewServeMux())
 	assert.ElementsMatch(t, append(registrationtoken.MutationProcedures(), registrationtoken.ReadProcedures()...), mounted)
 	assert.ElementsMatch(t, []string{
-		powermanagev1connect.ControlServiceCreateTokenProcedure,
-		powermanagev1connect.ControlServiceRenameTokenProcedure,
-		powermanagev1connect.ControlServiceSetTokenDisabledProcedure,
-		powermanagev1connect.ControlServiceDeleteTokenProcedure,
+		cadestrov1connect.ControlServiceCreateTokenProcedure,
+		cadestrov1connect.ControlServiceRenameTokenProcedure,
+		cadestrov1connect.ControlServiceSetTokenDisabledProcedure,
+		cadestrov1connect.ControlServiceDeleteTokenProcedure,
 	}, registrationtoken.MutationProcedures())
 }
 

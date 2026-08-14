@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 func TestListIdentityLinks_ReturnsOnlyTheCallersOwnBindings(t *testing.T) {
@@ -45,7 +45,7 @@ func TestUnlinkIdentity_RemovesTheCallersOwnBinding(t *testing.T) {
 	require.Len(t, links, 1)
 	assert.Equal(t, second, links[0].ProviderID)
 
-	op := f.onlyOperationFor(powermanagev1connect.ControlServiceUnlinkIdentityProcedure)
+	op := f.onlyOperationFor(cadestrov1connect.ControlServiceUnlinkIdentityProcedure)
 	assert.Equal(t, caller.ID, op.ActorID)
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "UNLINK")
 	assert.Equal(t, "external_subject_sha256", effect.EvidenceKind)

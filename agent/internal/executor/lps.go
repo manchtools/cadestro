@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
@@ -174,7 +174,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		plaintext := password.Reveal()
 		rotatedAt := e.now().UTC()
 		sealedPassword, err := e.sealToControl([]byte(plaintext),
-			"powermanage.v1.LpsPasswordRotation", "password",
+			"cadestro.v1.LpsPasswordRotation", "password",
 			e.getDeviceID(), actionID, username)
 		if err != nil {
 			anyError = fmt.Errorf("seal password for %s: %w", username, err)
@@ -375,7 +375,7 @@ func (e *Executor) reportUserCreatePassword(ctx context.Context, username, actio
 		return
 	}
 	sealedPassword, err := e.sealToControl([]byte(plaintext),
-		"powermanage.v1.LpsPasswordRotation", "password",
+		"cadestro.v1.LpsPasswordRotation", "password",
 		e.getDeviceID(), actionID, username)
 	if err != nil {
 		e.logger.Warn("user create: failed to seal temp password", "username", username, "error", err)

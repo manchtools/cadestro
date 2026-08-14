@@ -5,35 +5,35 @@ import (
 	"testing"
 	"time"
 
-	powermanagev1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/maintenance"
 )
 
 func TestValidate(t *testing.T) {
 	cases := []struct {
 		name    string
-		w       *powermanagev1.MaintenanceWindow
+		w       *cadestrov1.MaintenanceWindow
 		wantErr bool
 	}{
 		{"nil window", nil, false},
-		{"empty schedule", &powermanagev1.MaintenanceWindow{}, false},
+		{"empty schedule", &cadestrov1.MaintenanceWindow{}, false},
 		{
 			"valid same-day",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"mon", "tue"}, Allow: "09:00-17:00"},
 			}},
 			false,
 		},
 		{
 			"valid crosses midnight",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"fri"}, Allow: "22:00-06:00"},
 			}},
 			false,
 		},
 		{
 			"bad day",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"funday"}, Allow: "00:00-23:59"},
 			}},
 			true,
@@ -42,56 +42,56 @@ func TestValidate(t *testing.T) {
 			// Mixed-case tokens are rejected by Validate because the evaluator
 			// accepts canonical lowercase tokens only.
 			"uppercase day rejected",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"MON"}, Allow: "09:00-17:00"},
 			}},
 			true,
 		},
 		{
 			"mixed-case day rejected",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"Mon"}, Allow: "09:00-17:00"},
 			}},
 			true,
 		},
 		{
 			"duplicate day",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"mon", "mon"}, Allow: "09:00-17:00"},
 			}},
 			true,
 		},
 		{
 			"empty days",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: nil, Allow: "09:00-17:00"},
 			}},
 			true,
 		},
 		{
 			"bad clock",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"mon"}, Allow: "25:00-26:00"},
 			}},
 			true,
 		},
 		{
 			"signed hour rejected",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"mon"}, Allow: "+9:00-17:00"},
 			}},
 			true,
 		},
 		{
 			"missing dash",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"mon"}, Allow: "09:0017:00X"},
 			}},
 			true,
 		},
 		{
 			"zero-length range",
-			&powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"mon"}, Allow: "09:00-09:00"},
 			}},
 			true,
@@ -115,7 +115,7 @@ func TestValidate(t *testing.T) {
 }
 
 func TestIsAllowedSameDay(t *testing.T) {
-	w := &powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+	w := &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 		{Days: []string{"mon", "tue", "wed", "thu", "fri"}, Allow: "09:00-17:00"},
 	}}
 	// Monday 2026-05-04 — note May 3 (today's date in conv context) is Sunday.
@@ -142,7 +142,7 @@ func TestIsAllowedSameDay(t *testing.T) {
 }
 
 func TestIsAllowedCrossesMidnight(t *testing.T) {
-	w := &powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+	w := &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 		{Days: []string{"mon", "tue", "wed", "thu", "fri"}, Allow: "22:00-06:00"},
 	}}
 	// Monday 22:00 — exactly the window start. Inclusive boundary
@@ -177,13 +177,13 @@ func TestIsAllowedCrossesMidnight(t *testing.T) {
 }
 
 func TestUnion(t *testing.T) {
-	weekdays := &powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+	weekdays := &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 		{Days: []string{"mon", "tue", "wed", "thu", "fri"}, Allow: "22:00-06:00"},
 	}}
-	weekends := &powermanagev1.MaintenanceWindow{Schedule: []*powermanagev1.MaintenanceWindowEntry{
+	weekends := &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 		{Days: []string{"sat", "sun"}, Allow: "00:00-23:59"},
 	}}
-	empty := &powermanagev1.MaintenanceWindow{}
+	empty := &cadestrov1.MaintenanceWindow{}
 
 	got := maintenance.Union(weekdays, weekends)
 	if len(got.GetSchedule()) != 2 {
@@ -218,7 +218,7 @@ func TestIsAllowedNilOrEmpty(t *testing.T) {
 	if !maintenance.IsAllowed(nil, now) {
 		t.Fatalf("nil window must allow")
 	}
-	if !maintenance.IsAllowed(&powermanagev1.MaintenanceWindow{}, now) {
+	if !maintenance.IsAllowed(&cadestrov1.MaintenanceWindow{}, now) {
 		t.Fatalf("empty schedule must allow")
 	}
 }

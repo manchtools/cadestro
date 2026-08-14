@@ -24,7 +24,7 @@
 set -euo pipefail
 
 # Resolved from THIS script's own location, not the caller's cwd: the gate runs
-# `cd proto && …` (proto/buf.yaml is the module root, so `import "powermanage/v1/…"`
+# `cd proto && …` (proto/buf.yaml is the module root, so `import "cadestro/v1/…"`
 # only resolves from there) and make may be invoked with -C or -f from anywhere.
 # A cwd-relative path silently missed the lock-installed binary and fell through
 # to the PATH copy — the exact defect this script exists to remove.

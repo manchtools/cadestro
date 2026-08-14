@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -170,7 +170,7 @@ func TestEnrollment_RegisterCommitsOneAuditedDevice(t *testing.T) {
 		`SELECT user_id FROM device_assigned_users WHERE device_id = $1`, deviceID).Scan(&assignedUser))
 	assert.Equal(t, ownerID, assignedUser)
 
-	op, err := latestOperationFor(t, f.store, f.raw, powermanagev1connect.ControlServiceRegisterProcedure)
+	op, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceRegisterProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), op.OperationID)
 	require.NoError(t, err)
@@ -258,7 +258,7 @@ func TestEnrollment_RenewalReplacesRevokesAndCloses(t *testing.T) {
 	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM revoked_certificates`).Scan(&revocations))
 	assert.Equal(t, 1, revocations)
 
-	op, err := latestOperationFor(t, f.store, f.raw, powermanagev1connect.ControlServiceRenewCertificateProcedure)
+	op, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceRenewCertificateProcedure)
 	require.NoError(t, err)
 	assert.Equal(t, string(store.ClassRejectedAuthentication), op.OperationClass)
 }
@@ -288,8 +288,8 @@ func TestEnrollment_MountsExactSurface(t *testing.T) {
 	f := newEnrollmentFixture(t)
 	assert.ElementsMatch(t, enrollment.MutationProcedures(), f.handlers.Mount(http.NewServeMux()))
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceRegisterProcedure,
-		powermanagev1connect.ControlServiceRenewCertificateProcedure,
+		cadestrov1connect.ControlServiceRegisterProcedure,
+		cadestrov1connect.ControlServiceRenewCertificateProcedure,
 	}, enrollment.MutationProcedures())
 }
 

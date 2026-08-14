@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -416,7 +416,7 @@ func TestDeviceHandlers_GetDeviceInventoryReadsDirectTables(t *testing.T) {
 			DeviceId: f.groupID, TableNames: make([]string, 129),
 		}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	assertSensitiveDeviceRead(t, f, powermanagev1connect.ControlServiceGetDeviceInventoryProcedure,
+	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetDeviceInventoryProcedure,
 		"device_inventory", f.groupID)
 }
 
@@ -490,7 +490,7 @@ func TestDeviceHandlers_GetOSQueryResultReadsDirectState(t *testing.T) {
 	_, err = f.handlers.GetOSQueryResult(ctx,
 		connect.NewRequest(&pmv1.GetOSQueryResultRequest{QueryId: newID()}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
-	assertSensitiveDeviceRead(t, f, powermanagev1connect.ControlServiceGetOSQueryResultProcedure,
+	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetOSQueryResultProcedure,
 		"osquery_result", staleID)
 }
 
@@ -561,7 +561,7 @@ func TestDeviceHandlers_GetDeviceLogResultReadsDirectState(t *testing.T) {
 	_, err = f.handlers.GetDeviceLogResult(ctx,
 		connect.NewRequest(&pmv1.GetDeviceLogResultRequest{QueryId: newID()}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
-	assertSensitiveDeviceRead(t, f, powermanagev1connect.ControlServiceGetDeviceLogResultProcedure,
+	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
 		"device_log_result", staleID)
 }
 
@@ -605,10 +605,10 @@ func TestDeviceHandlers_GetDeviceComplianceReadsDirectState(t *testing.T) {
 		}
 	}
 	assertSensitiveDeviceRead(t, f.deviceHandlerFixture,
-		powermanagev1connect.ControlServiceGetDeviceComplianceProcedure,
+		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
 		"device_compliance", f.groupID)
 	assertSensitiveDeviceRead(t, f.deviceHandlerFixture,
-		powermanagev1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
+		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
 		"device_compliance_policy_status", f.groupID)
 
 	_, err = f.raw.Exec(context.Background(), `
@@ -699,10 +699,10 @@ func TestDeviceHandlers_ExecutionReadsUseDirectKeysetAndScope(t *testing.T) {
 		connect.NewRequest(&pmv1.ListExecutionsRequest{StatusFilter: pmv1.ExecutionStatus(99)}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	assertSensitiveDeviceRead(t, f, powermanagev1connect.ControlServiceGetExecutionProcedure,
+	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetExecutionProcedure,
 		"execution", groupExecutionID)
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceListExecutionsProcedure)
+		cadestrov1connect.ControlServiceListExecutionsProcedure)
 	require.NoError(t, err)
 	assert.Equal(t, string(store.ClassSensitiveRead), operation.OperationClass)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
@@ -739,7 +739,7 @@ func TestDeviceHandlers_CancelExecutionIsDirectAndIdempotent(t *testing.T) {
 	assert.Equal(t, pmv1.ExecutionStatus_EXECUTION_STATUS_CANCELLED, cancelled.Msg.Execution.Status)
 	assert.NotNil(t, cancelled.Msg.Execution.CompletedAt)
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceCancelExecutionProcedure)
+		cadestrov1connect.ControlServiceCancelExecutionProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -753,13 +753,13 @@ func TestDeviceHandlers_CancelExecutionIsDirectAndIdempotent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS, unchanged.Msg.Execution.Status)
 	operation, err = latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceCancelExecutionProcedure)
+		cadestrov1connect.ControlServiceCancelExecutionProcedure)
 	require.NoError(t, err)
 	effects, err = f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
 	assert.Empty(t, effects, "an idempotent no-op has no fabricated state-change effect")
 
-	rejectAuditOperation(t, f.raw, "/powermanage.v1.ControlService/CancelExecution")
+	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/CancelExecution")
 	_, err = f.handlers.CancelExecution(ctx,
 		connect.NewRequest(&pmv1.CancelExecutionRequest{ExecutionId: rollbackID}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
@@ -831,10 +831,10 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		luks.Msg.Current[0].RevocationStatus)
 
 	assertSensitiveDeviceRead(t, f,
-		powermanagev1connect.ControlServiceListLpsPasswordsProcedure,
+		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
 		"device_lps_passwords", f.directID)
 	assertSensitiveDeviceRead(t, f,
-		powermanagev1connect.ControlServiceListLuksKeysProcedure,
+		cadestrov1connect.ControlServiceListLuksKeysProcedure,
 		"device_luks_keys", f.directID)
 
 	_, err = f.handlers.RevealLpsPassword(f.actor("ListLpsPasswords"),
@@ -845,14 +845,14 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		connect.NewRequest(&pmv1.RevealLpsPasswordRequest{Id: lpsIDs[0]}))
 	require.NoError(t, err)
 	assert.Equal(t, "local-secret", lpsReveal.Msg.Password)
-	assertSecretReveal(t, f, powermanagev1connect.ControlServiceRevealLpsPasswordProcedure,
+	assertSecretReveal(t, f, cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
 		"lps_password", lpsIDs[0], f.directID, lpsActionID)
 
 	luksReveal, err := f.handlers.RevealLuksKey(f.actor("RevealLuksKey"),
 		connect.NewRequest(&pmv1.RevealLuksKeyRequest{Id: luksIDs[0]}))
 	require.NoError(t, err)
 	assert.Equal(t, "disk-secret", luksReveal.Msg.Passphrase)
-	assertSecretReveal(t, f, powermanagev1connect.ControlServiceRevealLuksKeyProcedure,
+	assertSecretReveal(t, f, cadestrov1connect.ControlServiceRevealLuksKeyProcedure,
 		"luks_key", luksIDs[0], f.directID, luksActionID)
 
 	_, err = f.raw.Exec(context.Background(), `
@@ -873,7 +873,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		connect.NewRequest(&pmv1.RevealLpsPasswordRequest{Id: lpsIDs[0]}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "plaintext storage must not get a compatibility path")
 
-	rejectAuditOperation(t, f.raw, "/powermanage.v1.ControlService/RevealLuksKey")
+	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/RevealLuksKey")
 	blocked, err := f.handlers.RevealLuksKey(f.actor("RevealLuksKey"),
 		connect.NewRequest(&pmv1.RevealLuksKeyRequest{Id: luksIDs[1]}))
 	assert.Nil(t, blocked)
@@ -938,7 +938,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	assert.Equal(t, int32(pmv1.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX), complexity)
 	assert.True(t, expiresAt.Equal(f.now.Add(24*time.Hour)))
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceCreateLuksTokenProcedure)
+		cadestrov1connect.ControlServiceCreateLuksTokenProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -965,7 +965,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	_, err = f.raw.Exec(context.Background(), `PRAGMA ignore_check_constraints = OFF`)
 	require.NoError(t, err)
 
-	rejectAuditOperation(t, f.raw, "/powermanage.v1.ControlService/CreateLuksToken")
+	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/CreateLuksToken")
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&pmv1.CreateLuksTokenRequest{
 		DeviceId: f.directID, ActionId: actionID,
 	}))
@@ -1012,7 +1012,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, dispatched)
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceRevokeLuksDeviceKeyProcedure)
+		cadestrov1connect.ControlServiceRevokeLuksDeviceKeyProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -1042,7 +1042,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	require.NoError(t, f.handlers.CompleteLuksKeyRevocation(context.Background(), f.directID,
 		&pmv1.RevokeLuksDeviceKeyResult{ActionId: actionID, Success: false, Error: "stale"}))
 	resultOperation, err := latestOperationFor(t, f.store, f.raw,
-		"powermanage.v1.AgentService.Stream/RevokeLuksDeviceKeyResult")
+		"cadestro.v1.AgentService.Stream/RevokeLuksDeviceKeyResult")
 	require.NoError(t, err)
 	resultEffects, err := f.store.ListAuditEffects(context.Background(), resultOperation.OperationID)
 	require.NoError(t, err)
@@ -1070,7 +1070,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyRecordsUnavailableDevice(t *testing.T
 	require.NotNil(t, detail)
 	assert.Equal(t, "device unavailable", *detail, "transport internals must not enter durable state")
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceRevokeLuksDeviceKeyProcedure)
+		cadestrov1connect.ControlServiceRevokeLuksDeviceKeyProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
@@ -1083,7 +1083,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyAuditFailurePreventsSend(t *testing.T
 	f := newDeviceHandlerFixture(t)
 	actionID := newID()
 	seedCurrentLuksKeys(t, f, actionID, 1)
-	rejectAuditOperation(t, f.raw, "/powermanage.v1.ControlService/RevokeLuksDeviceKey")
+	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/RevokeLuksDeviceKey")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor("RevokeLuksDeviceKey"),
 		connect.NewRequest(&pmv1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: actionID}))
@@ -1163,9 +1163,9 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	assert.Equal(t, refreshFrame.Id, refreshFrame.GetRequestInventory().QueryId)
 
 	for _, procedure := range []string{
-		powermanagev1connect.ControlServiceDispatchOSQueryProcedure,
-		powermanagev1connect.ControlServiceQueryDeviceLogsProcedure,
-		powermanagev1connect.ControlServiceRefreshDeviceInventoryProcedure,
+		cadestrov1connect.ControlServiceDispatchOSQueryProcedure,
+		cadestrov1connect.ControlServiceQueryDeviceLogsProcedure,
+		cadestrov1connect.ControlServiceRefreshDeviceInventoryProcedure,
 	} {
 		operation, err := latestOperationFor(t, f.store, f.raw, procedure)
 		require.NoError(t, err, procedure)
@@ -1220,7 +1220,7 @@ func TestDeviceHandlers_InstantQuerySendFailureIsTerminalAndGeneric(t *testing.T
 		connect.NewRequest(&pmv1.RefreshDeviceInventoryRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	refreshOperation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceRefreshDeviceInventoryProcedure)
+		cadestrov1connect.ControlServiceRefreshDeviceInventoryProcedure)
 	require.NoError(t, err)
 	refreshEffects, err := f.store.ListAuditEffects(context.Background(), refreshOperation.OperationID)
 	require.NoError(t, err)
@@ -1292,7 +1292,7 @@ func TestDeviceHandlers_AgentQueryResultsAndInventoryCommitDirectly(t *testing.T
 
 func TestDeviceHandlers_OSQueryAuditFailurePreventsSendAndPendingRow(t *testing.T) {
 	f := newDeviceHandlerFixture(t)
-	rejectAuditOperation(t, f.raw, "/powermanage.v1.ControlService/DispatchOSQuery")
+	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/DispatchOSQuery")
 	_, err := f.handlers.DispatchOSQuery(f.actor("DispatchOSQuery"),
 		connect.NewRequest(&pmv1.DispatchOSQueryRequest{DeviceId: f.directID, Table: "packages"}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
@@ -1348,7 +1348,7 @@ func TestDeviceHandlers_TerminalLifecycleUsesInProcessSessionTruth(t *testing.T)
 	assert.Equal(t, "direct", listed.Msg.Sessions[0].DeviceHostname)
 	assert.Equal(t, int32(1), listed.Msg.TotalCount)
 	operation, err := latestOperationFor(t, f.store, f.raw,
-		powermanagev1connect.ControlServiceListActiveTerminalSessionsProcedure)
+		cadestrov1connect.ControlServiceListActiveTerminalSessionsProcedure)
 	require.NoError(t, err)
 	assert.Equal(t, string(store.ClassSensitiveRead), operation.OperationClass)
 
@@ -1489,7 +1489,7 @@ func TestDeviceHandlers_TerminateTerminalSurfacesSendFailureThenCommitsRetry(t *
 
 func TestDeviceHandlers_SensitiveReadFailsClosedWhenEvidenceFails(t *testing.T) {
 	f := newDeviceHandlerFixture(t)
-	rejectAuditOperation(t, f.raw, "/powermanage.v1.ControlService/GetDeviceInventory")
+	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/GetDeviceInventory")
 
 	_, err := f.handlers.GetDeviceInventory(f.actor("GetDeviceInventory"),
 		connect.NewRequest(&pmv1.GetDeviceInventoryRequest{DeviceId: f.groupID}))
@@ -1616,7 +1616,7 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 		assert.NotEmpty(t, effects, procedure)
 	}
 
-	operation, err := latestOperationFor(t, f.store, f.raw, powermanagev1connect.ControlServiceDeleteDeviceProcedure)
+	operation, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceDeleteDeviceProcedure)
 	require.NoError(t, err)
 	assert.Equal(t, "DeleteDevice", operation.AuthorizationDetail)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
@@ -1645,52 +1645,52 @@ func TestDeviceHandlers_MountsExactSurface(t *testing.T) {
 	f := newDeviceHandlerFixture(t)
 	mounted := f.handlers.Mount(http.NewServeMux())
 	want := []string{
-		powermanagev1connect.ControlServiceListDevicesProcedure,
-		powermanagev1connect.ControlServiceGetDeviceProcedure,
-		powermanagev1connect.ControlServiceGetDeviceInventoryProcedure,
-		powermanagev1connect.ControlServiceGetOSQueryResultProcedure,
-		powermanagev1connect.ControlServiceGetDeviceLogResultProcedure,
-		powermanagev1connect.ControlServiceGetDeviceComplianceProcedure,
-		powermanagev1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		powermanagev1connect.ControlServiceGetExecutionProcedure,
-		powermanagev1connect.ControlServiceListExecutionsProcedure,
-		powermanagev1connect.ControlServiceCancelExecutionProcedure,
-		powermanagev1connect.ControlServiceListLpsPasswordsProcedure,
-		powermanagev1connect.ControlServiceRevealLpsPasswordProcedure,
-		powermanagev1connect.ControlServiceListLuksKeysProcedure,
-		powermanagev1connect.ControlServiceRevealLuksKeyProcedure,
-		powermanagev1connect.ControlServiceCreateLuksTokenProcedure,
-		powermanagev1connect.ControlServiceRevokeLuksDeviceKeyProcedure,
-		powermanagev1connect.ControlServiceDispatchOSQueryProcedure,
-		powermanagev1connect.ControlServiceRefreshDeviceInventoryProcedure,
-		powermanagev1connect.ControlServiceQueryDeviceLogsProcedure,
-		powermanagev1connect.ControlServiceStartTerminalProcedure,
-		powermanagev1connect.ControlServiceStopTerminalProcedure,
-		powermanagev1connect.ControlServiceListActiveTerminalSessionsProcedure,
-		powermanagev1connect.ControlServiceTerminateTerminalSessionProcedure,
-		powermanagev1connect.ControlServiceSetDeviceLabelProcedure,
-		powermanagev1connect.ControlServiceRemoveDeviceLabelProcedure,
-		powermanagev1connect.ControlServiceAssignDeviceProcedure,
-		powermanagev1connect.ControlServiceUnassignDeviceProcedure,
-		powermanagev1connect.ControlServiceListDeviceAssigneesProcedure,
-		powermanagev1connect.ControlServiceSetDeviceSyncIntervalProcedure,
-		powermanagev1connect.ControlServiceSetDeviceInventoryIntervalProcedure,
-		powermanagev1connect.ControlServiceDeleteDeviceProcedure,
+		cadestrov1connect.ControlServiceListDevicesProcedure,
+		cadestrov1connect.ControlServiceGetDeviceProcedure,
+		cadestrov1connect.ControlServiceGetDeviceInventoryProcedure,
+		cadestrov1connect.ControlServiceGetOSQueryResultProcedure,
+		cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
+		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
+		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
+		cadestrov1connect.ControlServiceGetExecutionProcedure,
+		cadestrov1connect.ControlServiceListExecutionsProcedure,
+		cadestrov1connect.ControlServiceCancelExecutionProcedure,
+		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
+		cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
+		cadestrov1connect.ControlServiceListLuksKeysProcedure,
+		cadestrov1connect.ControlServiceRevealLuksKeyProcedure,
+		cadestrov1connect.ControlServiceCreateLuksTokenProcedure,
+		cadestrov1connect.ControlServiceRevokeLuksDeviceKeyProcedure,
+		cadestrov1connect.ControlServiceDispatchOSQueryProcedure,
+		cadestrov1connect.ControlServiceRefreshDeviceInventoryProcedure,
+		cadestrov1connect.ControlServiceQueryDeviceLogsProcedure,
+		cadestrov1connect.ControlServiceStartTerminalProcedure,
+		cadestrov1connect.ControlServiceStopTerminalProcedure,
+		cadestrov1connect.ControlServiceListActiveTerminalSessionsProcedure,
+		cadestrov1connect.ControlServiceTerminateTerminalSessionProcedure,
+		cadestrov1connect.ControlServiceSetDeviceLabelProcedure,
+		cadestrov1connect.ControlServiceRemoveDeviceLabelProcedure,
+		cadestrov1connect.ControlServiceAssignDeviceProcedure,
+		cadestrov1connect.ControlServiceUnassignDeviceProcedure,
+		cadestrov1connect.ControlServiceListDeviceAssigneesProcedure,
+		cadestrov1connect.ControlServiceSetDeviceSyncIntervalProcedure,
+		cadestrov1connect.ControlServiceSetDeviceInventoryIntervalProcedure,
+		cadestrov1connect.ControlServiceDeleteDeviceProcedure,
 	}
 	assert.Equal(t, want, mounted)
 	assert.Equal(t, []string{
-		powermanagev1connect.ControlServiceGetDeviceInventoryProcedure,
-		powermanagev1connect.ControlServiceGetOSQueryResultProcedure,
-		powermanagev1connect.ControlServiceGetDeviceLogResultProcedure,
-		powermanagev1connect.ControlServiceGetDeviceComplianceProcedure,
-		powermanagev1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		powermanagev1connect.ControlServiceGetExecutionProcedure,
-		powermanagev1connect.ControlServiceListExecutionsProcedure,
-		powermanagev1connect.ControlServiceListLpsPasswordsProcedure,
-		powermanagev1connect.ControlServiceRevealLpsPasswordProcedure,
-		powermanagev1connect.ControlServiceListLuksKeysProcedure,
-		powermanagev1connect.ControlServiceRevealLuksKeyProcedure,
-		powermanagev1connect.ControlServiceListActiveTerminalSessionsProcedure,
+		cadestrov1connect.ControlServiceGetDeviceInventoryProcedure,
+		cadestrov1connect.ControlServiceGetOSQueryResultProcedure,
+		cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
+		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
+		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
+		cadestrov1connect.ControlServiceGetExecutionProcedure,
+		cadestrov1connect.ControlServiceListExecutionsProcedure,
+		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
+		cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
+		cadestrov1connect.ControlServiceListLuksKeysProcedure,
+		cadestrov1connect.ControlServiceRevealLuksKeyProcedure,
+		cadestrov1connect.ControlServiceListActiveTerminalSessionsProcedure,
 	}, device.SensitiveReadProcedures())
 	classified := append(device.MutationProcedures(), device.ReadProcedures()...)
 	classified = append(classified, device.SensitiveReadProcedures()...)

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // Agent represents a connected agent.

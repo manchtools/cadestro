@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v6.30.2
-// source: powermanage/v1/actions.proto
+// source: cadestro/v1/actions.proto
 
-package powermanagev1
+package cadestrov1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -131,11 +131,11 @@ func (x ActionType) String() string {
 }
 
 func (ActionType) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[0].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[0].Descriptor()
 }
 
 func (ActionType) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[0]
+	return &file_cadestro_v1_actions_proto_enumTypes[0]
 }
 
 func (x ActionType) Number() protoreflect.EnumNumber {
@@ -144,7 +144,7 @@ func (x ActionType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ActionType.Descriptor instead.
 func (ActionType) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{0}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{0}
 }
 
 type ServiceUnitState int32
@@ -183,11 +183,11 @@ func (x ServiceUnitState) String() string {
 }
 
 func (ServiceUnitState) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[1].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[1].Descriptor()
 }
 
 func (ServiceUnitState) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[1]
+	return &file_cadestro_v1_actions_proto_enumTypes[1]
 }
 
 func (x ServiceUnitState) Number() protoreflect.EnumNumber {
@@ -196,7 +196,7 @@ func (x ServiceUnitState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ServiceUnitState.Descriptor instead.
 func (ServiceUnitState) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{1}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{1}
 }
 
 // AdminAccessLevel defines the level of administrative access granted.
@@ -250,11 +250,11 @@ func (x AdminAccessLevel) String() string {
 }
 
 func (AdminAccessLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[2].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[2].Descriptor()
 }
 
 func (AdminAccessLevel) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[2]
+	return &file_cadestro_v1_actions_proto_enumTypes[2]
 }
 
 func (x AdminAccessLevel) Number() protoreflect.EnumNumber {
@@ -263,7 +263,7 @@ func (x AdminAccessLevel) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AdminAccessLevel.Descriptor instead.
 func (AdminAccessLevel) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
 }
 
 // PrivilegeBackend selects which privilege-escalation tool the agent
@@ -300,11 +300,11 @@ func (x PrivilegeBackend) String() string {
 }
 
 func (PrivilegeBackend) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[3].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[3].Descriptor()
 }
 
 func (PrivilegeBackend) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[3]
+	return &file_cadestro_v1_actions_proto_enumTypes[3]
 }
 
 func (x PrivilegeBackend) Number() protoreflect.EnumNumber {
@@ -313,7 +313,7 @@ func (x PrivilegeBackend) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PrivilegeBackend.Descriptor instead.
 func (PrivilegeBackend) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
 }
 
 // LpsPasswordComplexity defines the character set for generated passwords.
@@ -350,11 +350,11 @@ func (x LpsPasswordComplexity) String() string {
 }
 
 func (LpsPasswordComplexity) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[4].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[4].Descriptor()
 }
 
 func (LpsPasswordComplexity) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[4]
+	return &file_cadestro_v1_actions_proto_enumTypes[4]
 }
 
 func (x LpsPasswordComplexity) Number() protoreflect.EnumNumber {
@@ -363,7 +363,7 @@ func (x LpsPasswordComplexity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use LpsPasswordComplexity.Descriptor instead.
 func (LpsPasswordComplexity) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
 }
 
 // EncryptionDeviceBoundKeyType determines what goes in LUKS slot 7.
@@ -400,11 +400,11 @@ func (x EncryptionDeviceBoundKeyType) String() string {
 }
 
 func (EncryptionDeviceBoundKeyType) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[5].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[5].Descriptor()
 }
 
 func (EncryptionDeviceBoundKeyType) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[5]
+	return &file_cadestro_v1_actions_proto_enumTypes[5]
 }
 
 func (x EncryptionDeviceBoundKeyType) Number() protoreflect.EnumNumber {
@@ -413,7 +413,7 @@ func (x EncryptionDeviceBoundKeyType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EncryptionDeviceBoundKeyType.Descriptor instead.
 func (EncryptionDeviceBoundKeyType) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
 }
 
 // WiFi authentication type.
@@ -450,11 +450,11 @@ func (x WifiAuthType) String() string {
 }
 
 func (WifiAuthType) Descriptor() protoreflect.EnumDescriptor {
-	return file_powermanage_v1_actions_proto_enumTypes[6].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[6].Descriptor()
 }
 
 func (WifiAuthType) Type() protoreflect.EnumType {
-	return &file_powermanage_v1_actions_proto_enumTypes[6]
+	return &file_cadestro_v1_actions_proto_enumTypes[6]
 }
 
 func (x WifiAuthType) Number() protoreflect.EnumNumber {
@@ -463,7 +463,7 @@ func (x WifiAuthType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WifiAuthType.Descriptor instead.
 func (WifiAuthType) EnumDescriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{6}
 }
 
 type Action struct {
@@ -471,9 +471,9 @@ type Action struct {
 	// @gotags: validate:"required"
 	Id *ActionId `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required"`
 	// @gotags: validate:"required,ne=0"
-	Type ActionType `protobuf:"varint,2,opt,name=type,proto3,enum=powermanage.v1.ActionType" json:"type,omitempty" validate:"required,ne=0"`
+	Type ActionType `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty" validate:"required,ne=0"`
 	// @gotags: validate:"omitempty"
-	DesiredState DesiredState `protobuf:"varint,3,opt,name=desired_state,json=desiredState,proto3,enum=powermanage.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
+	DesiredState DesiredState `protobuf:"varint,3,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
 	// @gotags: validate:"omitempty,gte=0,lte=3600"
 	TimeoutSeconds int32 `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty" validate:"omitempty,gte=0,lte=3600"`
 	// The action's own authored schedule. It is carried for display and for
@@ -512,7 +512,7 @@ type Action struct {
 
 func (x *Action) Reset() {
 	*x = Action{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[0]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -524,7 +524,7 @@ func (x *Action) String() string {
 func (*Action) ProtoMessage() {}
 
 func (x *Action) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[0]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +537,7 @@ func (x *Action) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Action.ProtoReflect.Descriptor instead.
 func (*Action) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{0}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Action) GetId() *ActionId {
@@ -880,7 +880,7 @@ type ActionSchedule struct {
 
 func (x *ActionSchedule) Reset() {
 	*x = ActionSchedule{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[1]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -892,7 +892,7 @@ func (x *ActionSchedule) String() string {
 func (*ActionSchedule) ProtoMessage() {}
 
 func (x *ActionSchedule) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[1]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -905,7 +905,7 @@ func (x *ActionSchedule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionSchedule.ProtoReflect.Descriptor instead.
 func (*ActionSchedule) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{1}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ActionSchedule) GetCron() string {
@@ -964,7 +964,7 @@ type PackageParams struct {
 
 func (x *PackageParams) Reset() {
 	*x = PackageParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[2]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -976,7 +976,7 @@ func (x *PackageParams) String() string {
 func (*PackageParams) ProtoMessage() {}
 
 func (x *PackageParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[2]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -989,7 +989,7 @@ func (x *PackageParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PackageParams.ProtoReflect.Descriptor instead.
 func (*PackageParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PackageParams) GetName() string {
@@ -1065,7 +1065,7 @@ type AppInstallParams struct {
 
 func (x *AppInstallParams) Reset() {
 	*x = AppInstallParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[3]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1077,7 +1077,7 @@ func (x *AppInstallParams) String() string {
 func (*AppInstallParams) ProtoMessage() {}
 
 func (x *AppInstallParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[3]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1090,7 +1090,7 @@ func (x *AppInstallParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppInstallParams.ProtoReflect.Descriptor instead.
 func (*AppInstallParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *AppInstallParams) GetUrl() string {
@@ -1139,7 +1139,7 @@ type ShellParams struct {
 
 func (x *ShellParams) Reset() {
 	*x = ShellParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[4]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1151,7 +1151,7 @@ func (x *ShellParams) String() string {
 func (*ShellParams) ProtoMessage() {}
 
 func (x *ShellParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[4]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1164,7 +1164,7 @@ func (x *ShellParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellParams.ProtoReflect.Descriptor instead.
 func (*ShellParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ShellParams) GetScript() string {
@@ -1223,7 +1223,7 @@ type ServiceParams struct {
 	// @gotags: validate:"required,min=1,max=255"
 	UnitName string `protobuf:"bytes,1,opt,name=unit_name,json=unitName,proto3" json:"unit_name,omitempty" validate:"required,min=1,max=255"`
 	// @gotags: validate:"omitempty"
-	DesiredState ServiceUnitState `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=powermanage.v1.ServiceUnitState" json:"desired_state,omitempty" validate:"omitempty"`
+	DesiredState ServiceUnitState `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.ServiceUnitState" json:"desired_state,omitempty" validate:"omitempty"`
 	// @gotags: validate:"omitempty"
 	Enable bool `protobuf:"varint,3,opt,name=enable,proto3" json:"enable,omitempty" validate:"omitempty"`
 	// @gotags: validate:"omitempty,max=65536"
@@ -1234,7 +1234,7 @@ type ServiceParams struct {
 
 func (x *ServiceParams) Reset() {
 	*x = ServiceParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[5]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1246,7 +1246,7 @@ func (x *ServiceParams) String() string {
 func (*ServiceParams) ProtoMessage() {}
 
 func (x *ServiceParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[5]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1259,7 +1259,7 @@ func (x *ServiceParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceParams.ProtoReflect.Descriptor instead.
 func (*ServiceParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ServiceParams) GetUnitName() string {
@@ -1314,7 +1314,7 @@ type FileParams struct {
 
 func (x *FileParams) Reset() {
 	*x = FileParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[6]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1326,7 +1326,7 @@ func (x *FileParams) String() string {
 func (*FileParams) ProtoMessage() {}
 
 func (x *FileParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[6]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1339,7 +1339,7 @@ func (x *FileParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileParams.ProtoReflect.Descriptor instead.
 func (*FileParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *FileParams) GetPath() string {
@@ -1407,7 +1407,7 @@ type DirectoryParams struct {
 
 func (x *DirectoryParams) Reset() {
 	*x = DirectoryParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[7]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1419,7 +1419,7 @@ func (x *DirectoryParams) String() string {
 func (*DirectoryParams) ProtoMessage() {}
 
 func (x *DirectoryParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[7]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1432,7 +1432,7 @@ func (x *DirectoryParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DirectoryParams.ProtoReflect.Descriptor instead.
 func (*DirectoryParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{7}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DirectoryParams) GetPath() string {
@@ -1486,7 +1486,7 @@ type UpdateParams struct {
 
 func (x *UpdateParams) Reset() {
 	*x = UpdateParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[8]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1498,7 +1498,7 @@ func (x *UpdateParams) String() string {
 func (*UpdateParams) ProtoMessage() {}
 
 func (x *UpdateParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[8]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1511,7 +1511,7 @@ func (x *UpdateParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateParams.ProtoReflect.Descriptor instead.
 func (*UpdateParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateParams) GetSecurityOnly() bool {
@@ -1558,7 +1558,7 @@ type FlatpakParams struct {
 
 func (x *FlatpakParams) Reset() {
 	*x = FlatpakParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[9]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1570,7 +1570,7 @@ func (x *FlatpakParams) String() string {
 func (*FlatpakParams) ProtoMessage() {}
 
 func (x *FlatpakParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[9]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1583,7 +1583,7 @@ func (x *FlatpakParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlatpakParams.ProtoReflect.Descriptor instead.
 func (*FlatpakParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *FlatpakParams) GetAppId() string {
@@ -1639,7 +1639,7 @@ type RepositoryParams struct {
 
 func (x *RepositoryParams) Reset() {
 	*x = RepositoryParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[10]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1651,7 +1651,7 @@ func (x *RepositoryParams) String() string {
 func (*RepositoryParams) ProtoMessage() {}
 
 func (x *RepositoryParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[10]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1664,7 +1664,7 @@ func (x *RepositoryParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepositoryParams.ProtoReflect.Descriptor instead.
 func (*RepositoryParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{10}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RepositoryParams) GetName() string {
@@ -1735,7 +1735,7 @@ type AptRepository struct {
 
 func (x *AptRepository) Reset() {
 	*x = AptRepository{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[11]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1747,7 +1747,7 @@ func (x *AptRepository) String() string {
 func (*AptRepository) ProtoMessage() {}
 
 func (x *AptRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[11]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1760,7 +1760,7 @@ func (x *AptRepository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AptRepository.ProtoReflect.Descriptor instead.
 func (*AptRepository) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AptRepository) GetUrl() string {
@@ -1849,7 +1849,7 @@ type DnfRepository struct {
 
 func (x *DnfRepository) Reset() {
 	*x = DnfRepository{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[12]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1861,7 +1861,7 @@ func (x *DnfRepository) String() string {
 func (*DnfRepository) ProtoMessage() {}
 
 func (x *DnfRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[12]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1874,7 +1874,7 @@ func (x *DnfRepository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DnfRepository.ProtoReflect.Descriptor instead.
 func (*DnfRepository) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{12}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DnfRepository) GetBaseurl() string {
@@ -1944,7 +1944,7 @@ type PacmanRepository struct {
 
 func (x *PacmanRepository) Reset() {
 	*x = PacmanRepository{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[13]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1956,7 +1956,7 @@ func (x *PacmanRepository) String() string {
 func (*PacmanRepository) ProtoMessage() {}
 
 func (x *PacmanRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[13]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1969,7 +1969,7 @@ func (x *PacmanRepository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PacmanRepository.ProtoReflect.Descriptor instead.
 func (*PacmanRepository) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{13}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PacmanRepository) GetServer() string {
@@ -2026,7 +2026,7 @@ type ZypperRepository struct {
 
 func (x *ZypperRepository) Reset() {
 	*x = ZypperRepository{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[14]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2038,7 +2038,7 @@ func (x *ZypperRepository) String() string {
 func (*ZypperRepository) ProtoMessage() {}
 
 func (x *ZypperRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[14]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2051,7 +2051,7 @@ func (x *ZypperRepository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ZypperRepository.ProtoReflect.Descriptor instead.
 func (*ZypperRepository) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{14}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ZypperRepository) GetUrl() string {
@@ -2175,7 +2175,7 @@ type UserParams struct {
 
 func (x *UserParams) Reset() {
 	*x = UserParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[15]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2187,7 +2187,7 @@ func (x *UserParams) String() string {
 func (*UserParams) ProtoMessage() {}
 
 func (x *UserParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[15]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2200,7 +2200,7 @@ func (x *UserParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserParams.ProtoReflect.Descriptor instead.
 func (*UserParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{15}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UserParams) GetUsername() string {
@@ -2316,7 +2316,7 @@ type GroupParams struct {
 
 func (x *GroupParams) Reset() {
 	*x = GroupParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[16]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2328,7 +2328,7 @@ func (x *GroupParams) String() string {
 func (*GroupParams) ProtoMessage() {}
 
 func (x *GroupParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[16]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2341,7 +2341,7 @@ func (x *GroupParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupParams.ProtoReflect.Descriptor instead.
 func (*GroupParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{16}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GroupParams) GetName() string {
@@ -2393,7 +2393,7 @@ type SshParams struct {
 
 func (x *SshParams) Reset() {
 	*x = SshParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[17]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2405,7 +2405,7 @@ func (x *SshParams) String() string {
 func (*SshParams) ProtoMessage() {}
 
 func (x *SshParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[17]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2418,7 +2418,7 @@ func (x *SshParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SshParams.ProtoReflect.Descriptor instead.
 func (*SshParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{17}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SshParams) GetAllowPubkey() bool {
@@ -2457,7 +2457,7 @@ type SshdDirective struct {
 
 func (x *SshdDirective) Reset() {
 	*x = SshdDirective{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[18]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2469,7 +2469,7 @@ func (x *SshdDirective) String() string {
 func (*SshdDirective) ProtoMessage() {}
 
 func (x *SshdDirective) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[18]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2482,7 +2482,7 @@ func (x *SshdDirective) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SshdDirective.ProtoReflect.Descriptor instead.
 func (*SshdDirective) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{18}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SshdDirective) GetKey() string {
@@ -2517,7 +2517,7 @@ type SshdParams struct {
 
 func (x *SshdParams) Reset() {
 	*x = SshdParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[19]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2529,7 +2529,7 @@ func (x *SshdParams) String() string {
 func (*SshdParams) ProtoMessage() {}
 
 func (x *SshdParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[19]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2542,7 +2542,7 @@ func (x *SshdParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SshdParams.ProtoReflect.Descriptor instead.
 func (*SshdParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{19}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SshdParams) GetPriority() uint32 {
@@ -2570,7 +2570,7 @@ type AdminPolicyParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Access level determines the policy template
 	// @gotags: validate:"required,ne=0"
-	AccessLevel AdminAccessLevel `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=powermanage.v1.AdminAccessLevel" json:"access_level,omitempty" validate:"required,ne=0"`
+	AccessLevel AdminAccessLevel `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=cadestro.v1.AdminAccessLevel" json:"access_level,omitempty" validate:"required,ne=0"`
 	// Users to add to the admin group (must be valid Linux usernames)
 	// @gotags: validate:"required,min=1,dive,min=1,max=32"
 	Users []string `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty" validate:"required,min=1,dive,min=1,max=32"`
@@ -2582,14 +2582,14 @@ type AdminPolicyParams struct {
 	CustomConfig string `protobuf:"bytes,3,opt,name=custom_config,json=customConfig,proto3" json:"custom_config,omitempty" validate:"required_if=AccessLevel 3,max=65536"`
 	// Privilege backend. Unset means PRIVILEGE_BACKEND_SUDO.
 	// @gotags: validate:"omitempty"
-	Backend       PrivilegeBackend `protobuf:"varint,4,opt,name=backend,proto3,enum=powermanage.v1.PrivilegeBackend" json:"backend,omitempty" validate:"omitempty"`
+	Backend       PrivilegeBackend `protobuf:"varint,4,opt,name=backend,proto3,enum=cadestro.v1.PrivilegeBackend" json:"backend,omitempty" validate:"omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AdminPolicyParams) Reset() {
 	*x = AdminPolicyParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[20]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2601,7 +2601,7 @@ func (x *AdminPolicyParams) String() string {
 func (*AdminPolicyParams) ProtoMessage() {}
 
 func (x *AdminPolicyParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[20]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2614,7 +2614,7 @@ func (x *AdminPolicyParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminPolicyParams.ProtoReflect.Descriptor instead.
 func (*AdminPolicyParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{20}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *AdminPolicyParams) GetAccessLevel() AdminAccessLevel {
@@ -2661,7 +2661,7 @@ type LpsParams struct {
 	PasswordLength int32 `protobuf:"varint,2,opt,name=password_length,json=passwordLength,proto3" json:"password_length,omitempty" validate:"required,gte=8,lte=128"`
 	// Password complexity
 	// @gotags: validate:"required,ne=0"
-	Complexity LpsPasswordComplexity `protobuf:"varint,3,opt,name=complexity,proto3,enum=powermanage.v1.LpsPasswordComplexity" json:"complexity,omitempty" validate:"required,ne=0"`
+	Complexity LpsPasswordComplexity `protobuf:"varint,3,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty" validate:"required,ne=0"`
 	// Days between scheduled rotations (1-365)
 	// @gotags: validate:"required,gte=1,lte=365"
 	RotationIntervalDays int32 `protobuf:"varint,4,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty" validate:"required,gte=1,lte=365"`
@@ -2674,7 +2674,7 @@ type LpsParams struct {
 
 func (x *LpsParams) Reset() {
 	*x = LpsParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[21]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2686,7 +2686,7 @@ func (x *LpsParams) String() string {
 func (*LpsParams) ProtoMessage() {}
 
 func (x *LpsParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[21]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2699,7 +2699,7 @@ func (x *LpsParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LpsParams.ProtoReflect.Descriptor instead.
 func (*LpsParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{21}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *LpsParams) GetUsernames() []string {
@@ -2756,7 +2756,7 @@ type EncryptionParams struct {
 	// "no device-bound key", so an unvalidated out-of-range value would silently
 	// downgrade a requested TPM enrollment instead of being refused.
 	// @gotags: validate:"omitempty,oneof=0 1 2"
-	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=powermanage.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty" validate:"omitempty,oneof=0 1 2"`
+	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty" validate:"omitempty,oneof=0 1 2"`
 	// Minimum length for user-defined passphrases (16-128, only used when device_bound_key_type = USER_PASSPHRASE)
 	// @gotags: validate:"omitempty,gte=16,lte=128"
 	UserPassphraseMinLength int32 `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty" validate:"omitempty,gte=16,lte=128"`
@@ -2766,14 +2766,14 @@ type EncryptionParams struct {
 	// weaker alphabet than an out-of-range value was asking for. Stays optional —
 	// UNSPECIFIED (0) is legal because the field only applies to USER_PASSPHRASE.
 	// @gotags: validate:"omitempty,oneof=0 1 2"
-	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=powermanage.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty" validate:"omitempty,oneof=0 1 2"`
+	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty" validate:"omitempty,oneof=0 1 2"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
 func (x *EncryptionParams) Reset() {
 	*x = EncryptionParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[22]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2785,7 +2785,7 @@ func (x *EncryptionParams) String() string {
 func (*EncryptionParams) ProtoMessage() {}
 
 func (x *EncryptionParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[22]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2798,7 +2798,7 @@ func (x *EncryptionParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptionParams.ProtoReflect.Descriptor instead.
 func (*EncryptionParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{22}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *EncryptionParams) GetPresharedKey() *SealedValue {
@@ -2853,7 +2853,7 @@ type WifiParams struct {
 	Ssid string `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty" validate:"required,min=1,max=255"`
 	// Authentication type
 	// @gotags: validate:"required,ne=0"
-	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=powermanage.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
+	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
 	// PSK authentication (WPA2/WPA3 Personal), sealed by control to this agent.
 	// @gotags: validate:"omitempty"
 	Psk *SealedValue `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty" validate:"omitempty"`
@@ -2881,7 +2881,7 @@ type WifiParams struct {
 
 func (x *WifiParams) Reset() {
 	*x = WifiParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[23]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2893,7 +2893,7 @@ func (x *WifiParams) String() string {
 func (*WifiParams) ProtoMessage() {}
 
 func (x *WifiParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[23]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2906,7 +2906,7 @@ func (x *WifiParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WifiParams.ProtoReflect.Descriptor instead.
 func (*WifiParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{23}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *WifiParams) GetSsid() string {
@@ -2984,7 +2984,7 @@ type ActionResult struct {
 	// @gotags: validate:"required"
 	ActionId *ActionId `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required"`
 	// @gotags: validate:"required"
-	Status ExecutionStatus `protobuf:"varint,2,opt,name=status,proto3,enum=powermanage.v1.ExecutionStatus" json:"status,omitempty" validate:"required"`
+	Status ExecutionStatus `protobuf:"varint,2,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty" validate:"required"`
 	// @gotags: validate:"omitempty,max=4096"
 	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=4096"`
 	// @gotags: validate:"omitempty"
@@ -3025,7 +3025,7 @@ type ActionResult struct {
 
 func (x *ActionResult) Reset() {
 	*x = ActionResult{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[24]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3037,7 +3037,7 @@ func (x *ActionResult) String() string {
 func (*ActionResult) ProtoMessage() {}
 
 func (x *ActionResult) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[24]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3050,7 +3050,7 @@ func (x *ActionResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionResult.ProtoReflect.Descriptor instead.
 func (*ActionResult) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{24}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ActionResult) GetActionId() *ActionId {
@@ -3155,7 +3155,7 @@ type AgentUpdateArch struct {
 
 func (x *AgentUpdateArch) Reset() {
 	*x = AgentUpdateArch{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[25]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3167,7 +3167,7 @@ func (x *AgentUpdateArch) String() string {
 func (*AgentUpdateArch) ProtoMessage() {}
 
 func (x *AgentUpdateArch) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[25]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3180,7 +3180,7 @@ func (x *AgentUpdateArch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentUpdateArch.ProtoReflect.Descriptor instead.
 func (*AgentUpdateArch) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{25}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *AgentUpdateArch) GetBinaryUrl() string {
@@ -3230,7 +3230,7 @@ type AgentUpdateParams struct {
 
 func (x *AgentUpdateParams) Reset() {
 	*x = AgentUpdateParams{}
-	mi := &file_powermanage_v1_actions_proto_msgTypes[26]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3242,7 +3242,7 @@ func (x *AgentUpdateParams) String() string {
 func (*AgentUpdateParams) ProtoMessage() {}
 
 func (x *AgentUpdateParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_actions_proto_msgTypes[26]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3255,7 +3255,7 @@ func (x *AgentUpdateParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentUpdateParams.ProtoReflect.Descriptor instead.
 func (*AgentUpdateParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_actions_proto_rawDescGZIP(), []int{26}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *AgentUpdateParams) GetAmd64() *AgentUpdateArch {
@@ -3286,41 +3286,40 @@ func (x *AgentUpdateParams) GetAllowRedirect() bool {
 	return false
 }
 
-var File_powermanage_v1_actions_proto protoreflect.FileDescriptor
+var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
-const file_powermanage_v1_actions_proto_rawDesc = "" +
+const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x1cpowermanage/v1/actions.proto\x12\x0epowermanage.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bpowermanage/v1/common.proto\"\x9c\n" +
-	"\n" +
-	"\x06Action\x12(\n" +
-	"\x02id\x18\x01 \x01(\v2\x18.powermanage.v1.ActionIdR\x02id\x12.\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\x04type\x12A\n" +
-	"\rdesired_state\x18\x03 \x01(\x0e2\x1c.powermanage.v1.DesiredStateR\fdesiredState\x12'\n" +
-	"\x0ftimeout_seconds\x18\x04 \x01(\x05R\x0etimeoutSeconds\x12:\n" +
-	"\bschedule\x18\x05 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x129\n" +
-	"\apackage\x18\b \x01(\v2\x1d.powermanage.v1.PackageParamsH\x00R\apackage\x124\n" +
-	"\x03app\x18\t \x01(\v2 .powermanage.v1.AppInstallParamsH\x00R\x03app\x123\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xda\t\n" +
+	"\x06Action\x12%\n" +
+	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdR\x02id\x12+\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\x04type\x12>\n" +
+	"\rdesired_state\x18\x03 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
+	"\x0ftimeout_seconds\x18\x04 \x01(\x05R\x0etimeoutSeconds\x127\n" +
+	"\bschedule\x18\x05 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
+	"\apackage\x18\b \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
+	"\x03app\x18\t \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
 	"\x05shell\x18\n" +
-	" \x01(\v2\x1b.powermanage.v1.ShellParamsH\x00R\x05shell\x129\n" +
-	"\aservice\x18\v \x01(\v2\x1d.powermanage.v1.ServiceParamsH\x00R\aservice\x120\n" +
-	"\x04file\x18\f \x01(\v2\x1a.powermanage.v1.FileParamsH\x00R\x04file\x126\n" +
-	"\x06update\x18\r \x01(\v2\x1c.powermanage.v1.UpdateParamsH\x00R\x06update\x12B\n" +
+	" \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shell\x126\n" +
+	"\aservice\x18\v \x01(\v2\x1a.cadestro.v1.ServiceParamsH\x00R\aservice\x12-\n" +
+	"\x04file\x18\f \x01(\v2\x17.cadestro.v1.FileParamsH\x00R\x04file\x123\n" +
+	"\x06update\x18\r \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x12?\n" +
 	"\n" +
-	"repository\x18\x0e \x01(\v2 .powermanage.v1.RepositoryParamsH\x00R\n" +
-	"repository\x129\n" +
-	"\aflatpak\x18\x0f \x01(\v2\x1d.powermanage.v1.FlatpakParamsH\x00R\aflatpak\x12?\n" +
-	"\tdirectory\x18\x10 \x01(\v2\x1f.powermanage.v1.DirectoryParamsH\x00R\tdirectory\x120\n" +
-	"\x04user\x18\x11 \x01(\v2\x1a.powermanage.v1.UserParamsH\x00R\x04user\x12-\n" +
-	"\x03ssh\x18\x12 \x01(\v2\x19.powermanage.v1.SshParamsH\x00R\x03ssh\x120\n" +
-	"\x04sshd\x18\x13 \x01(\v2\x1a.powermanage.v1.SshdParamsH\x00R\x04sshd\x12F\n" +
-	"\fadmin_policy\x18\x14 \x01(\v2!.powermanage.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12-\n" +
-	"\x03lps\x18\x15 \x01(\v2\x19.powermanage.v1.LpsParamsH\x00R\x03lps\x123\n" +
-	"\x05group\x18\x16 \x01(\v2\x1b.powermanage.v1.GroupParamsH\x00R\x05group\x12B\n" +
+	"repository\x18\x0e \x01(\v2\x1d.cadestro.v1.RepositoryParamsH\x00R\n" +
+	"repository\x126\n" +
+	"\aflatpak\x18\x0f \x01(\v2\x1a.cadestro.v1.FlatpakParamsH\x00R\aflatpak\x12<\n" +
+	"\tdirectory\x18\x10 \x01(\v2\x1c.cadestro.v1.DirectoryParamsH\x00R\tdirectory\x12-\n" +
+	"\x04user\x18\x11 \x01(\v2\x17.cadestro.v1.UserParamsH\x00R\x04user\x12*\n" +
+	"\x03ssh\x18\x12 \x01(\v2\x16.cadestro.v1.SshParamsH\x00R\x03ssh\x12-\n" +
+	"\x04sshd\x18\x13 \x01(\v2\x17.cadestro.v1.SshdParamsH\x00R\x04sshd\x12C\n" +
+	"\fadmin_policy\x18\x14 \x01(\v2\x1e.cadestro.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12*\n" +
+	"\x03lps\x18\x15 \x01(\v2\x16.cadestro.v1.LpsParamsH\x00R\x03lps\x120\n" +
+	"\x05group\x18\x16 \x01(\v2\x18.cadestro.v1.GroupParamsH\x00R\x05group\x12?\n" +
 	"\n" +
-	"encryption\x18\x17 \x01(\v2 .powermanage.v1.EncryptionParamsH\x00R\n" +
-	"encryption\x120\n" +
-	"\x04wifi\x18\x18 \x01(\v2\x1a.powermanage.v1.WifiParamsH\x00R\x04wifi\x12F\n" +
-	"\fagent_update\x18\x19 \x01(\v2!.powermanage.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
+	"encryption\x18\x17 \x01(\v2\x1d.cadestro.v1.EncryptionParamsH\x00R\n" +
+	"encryption\x12-\n" +
+	"\x04wifi\x18\x18 \x01(\v2\x17.cadestro.v1.WifiParamsH\x00R\x04wifi\x12C\n" +
+	"\fagent_update\x18\x19 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
 	"\x06params\"\x9b\x01\n" +
 	"\x0eActionSchedule\x12\x12\n" +
 	"\x04cron\x18\x01 \x01(\tR\x04cron\x12%\n" +
@@ -3341,21 +3340,21 @@ const file_powermanage_v1_actions_proto_rawDesc = "" +
 	"\x10AppInstallParams\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12'\n" +
 	"\x0fchecksum_sha256\x18\x02 \x01(\tR\x0echecksumSha256\x12!\n" +
-	"\finstall_path\x18\x03 \x01(\tR\vinstallPath\"\xf4\x02\n" +
+	"\finstall_path\x18\x03 \x01(\tR\vinstallPath\"\xf1\x02\n" +
 	"\vShellParams\x12\x16\n" +
 	"\x06script\x18\x01 \x01(\tR\x06script\x12 \n" +
 	"\vinterpreter\x18\x02 \x01(\tR\vinterpreter\x12\x1e\n" +
 	"\vrun_as_root\x18\x03 \x01(\bR\trunAsRoot\x12+\n" +
-	"\x11working_directory\x18\x04 \x01(\tR\x10workingDirectory\x12N\n" +
-	"\venvironment\x18\x05 \x03(\v2,.powermanage.v1.ShellParams.EnvironmentEntryR\venvironment\x12)\n" +
+	"\x11working_directory\x18\x04 \x01(\tR\x10workingDirectory\x12K\n" +
+	"\venvironment\x18\x05 \x03(\v2).cadestro.v1.ShellParams.EnvironmentEntryR\venvironment\x12)\n" +
 	"\x10detection_script\x18\x06 \x01(\tR\x0fdetectionScript\x12#\n" +
 	"\ris_compliance\x18\a \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xae\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xab\x01\n" +
 	"\rServiceParams\x12\x1b\n" +
-	"\tunit_name\x18\x01 \x01(\tR\bunitName\x12E\n" +
-	"\rdesired_state\x18\x02 \x01(\x0e2 .powermanage.v1.ServiceUnitStateR\fdesiredState\x12\x16\n" +
+	"\tunit_name\x18\x01 \x01(\tR\bunitName\x12B\n" +
+	"\rdesired_state\x18\x02 \x01(\x0e2\x1d.cadestro.v1.ServiceUnitStateR\fdesiredState\x12\x16\n" +
 	"\x06enable\x18\x03 \x01(\bR\x06enable\x12!\n" +
 	"\funit_content\x18\x04 \x01(\tR\vunitContent\"\x9f\x01\n" +
 	"\n" +
@@ -3383,13 +3382,13 @@ const file_powermanage_v1_actions_proto_rawDesc = "" +
 	"\x06remote\x18\x02 \x01(\tR\x06remote\x12\x1f\n" +
 	"\vsystem_wide\x18\x03 \x01(\bR\n" +
 	"systemWide\x12\x10\n" +
-	"\x03pin\x18\x04 \x01(\bR\x03pin\"\xfc\x01\n" +
+	"\x03pin\x18\x04 \x01(\bR\x03pin\"\xf0\x01\n" +
 	"\x10RepositoryParams\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
-	"\x03apt\x18\x02 \x01(\v2\x1d.powermanage.v1.AptRepositoryR\x03apt\x12/\n" +
-	"\x03dnf\x18\x03 \x01(\v2\x1d.powermanage.v1.DnfRepositoryR\x03dnf\x128\n" +
-	"\x06pacman\x18\x04 \x01(\v2 .powermanage.v1.PacmanRepositoryR\x06pacman\x128\n" +
-	"\x06zypper\x18\x05 \x01(\v2 .powermanage.v1.ZypperRepositoryR\x06zypper\"\xe8\x01\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
+	"\x03apt\x18\x02 \x01(\v2\x1a.cadestro.v1.AptRepositoryR\x03apt\x12,\n" +
+	"\x03dnf\x18\x03 \x01(\v2\x1a.cadestro.v1.DnfRepositoryR\x03dnf\x125\n" +
+	"\x06pacman\x18\x04 \x01(\v2\x1d.cadestro.v1.PacmanRepositoryR\x06pacman\x125\n" +
+	"\x06zypper\x18\x05 \x01(\v2\x1d.cadestro.v1.ZypperRepositoryR\x06zypper\"\xe8\x01\n" +
 	"\rAptRepository\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\"\n" +
 	"\fdistribution\x18\x02 \x01(\tR\fdistribution\x12\x1e\n" +
@@ -3452,61 +3451,61 @@ const file_powermanage_v1_actions_proto_rawDesc = "" +
 	"\x05users\x18\x03 \x03(\tR\x05users\"7\n" +
 	"\rSshdDirective\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"g\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"d\n" +
 	"\n" +
 	"SshdParams\x12\x1a\n" +
-	"\bpriority\x18\x01 \x01(\rR\bpriority\x12=\n" +
+	"\bpriority\x18\x01 \x01(\rR\bpriority\x12:\n" +
 	"\n" +
-	"directives\x18\x02 \x03(\v2\x1d.powermanage.v1.SshdDirectiveR\n" +
-	"directives\"\xcf\x01\n" +
-	"\x11AdminPolicyParams\x12C\n" +
-	"\faccess_level\x18\x01 \x01(\x0e2 .powermanage.v1.AdminAccessLevelR\vaccessLevel\x12\x14\n" +
+	"directives\x18\x02 \x03(\v2\x1a.cadestro.v1.SshdDirectiveR\n" +
+	"directives\"\xc9\x01\n" +
+	"\x11AdminPolicyParams\x12@\n" +
+	"\faccess_level\x18\x01 \x01(\x0e2\x1d.cadestro.v1.AdminAccessLevelR\vaccessLevel\x12\x14\n" +
 	"\x05users\x18\x02 \x03(\tR\x05users\x12#\n" +
-	"\rcustom_config\x18\x03 \x01(\tR\fcustomConfig\x12:\n" +
-	"\abackend\x18\x04 \x01(\x0e2 .powermanage.v1.PrivilegeBackendR\abackend\"\xfd\x01\n" +
+	"\rcustom_config\x18\x03 \x01(\tR\fcustomConfig\x127\n" +
+	"\abackend\x18\x04 \x01(\x0e2\x1d.cadestro.v1.PrivilegeBackendR\abackend\"\xfa\x01\n" +
 	"\tLpsParams\x12\x1c\n" +
 	"\tusernames\x18\x01 \x03(\tR\tusernames\x12'\n" +
-	"\x0fpassword_length\x18\x02 \x01(\x05R\x0epasswordLength\x12E\n" +
+	"\x0fpassword_length\x18\x02 \x01(\x05R\x0epasswordLength\x12B\n" +
 	"\n" +
-	"complexity\x18\x03 \x01(\x0e2%.powermanage.v1.LpsPasswordComplexityR\n" +
+	"complexity\x18\x03 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\n" +
 	"complexity\x124\n" +
 	"\x16rotation_interval_days\x18\x04 \x01(\x05R\x14rotationIntervalDays\x12,\n" +
-	"\x12grace_period_hours\x18\x05 \x01(\x05R\x10gracePeriodHours\"\xaf\x03\n" +
-	"\x10EncryptionParams\x12E\n" +
-	"\rpreshared_key\x18\x01 \x01(\v2\x1b.powermanage.v1.SealedValueB\x03\x80\x01\x01R\fpresharedKey\x124\n" +
+	"\x12grace_period_hours\x18\x05 \x01(\x05R\x10gracePeriodHours\"\xa6\x03\n" +
+	"\x10EncryptionParams\x12B\n" +
+	"\rpreshared_key\x18\x01 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\fpresharedKey\x124\n" +
 	"\x16rotation_interval_days\x18\x02 \x01(\x05R\x14rotationIntervalDays\x12\x1b\n" +
-	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12_\n" +
-	"\x15device_bound_key_type\x18\x04 \x01(\x0e2,.powermanage.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
-	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12c\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2%.powermanage.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xfd\x02\n" +
+	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
+	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
+	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xf4\x02\n" +
 	"\n" +
 	"WifiParams\x12\x12\n" +
-	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x129\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x1c.powermanage.v1.WifiAuthTypeR\bauthType\x122\n" +
-	"\x03psk\x18\x03 \x01(\v2\x1b.powermanage.v1.SealedValueB\x03\x80\x01\x01R\x03psk\x12\x17\n" +
+	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x126\n" +
+	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12/\n" +
+	"\x03psk\x18\x03 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\x03psk\x12\x17\n" +
 	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
 	"\vclient_cert\x18\x05 \x01(\tR\n" +
-	"clientCert\x12?\n" +
+	"clientCert\x12<\n" +
 	"\n" +
-	"client_key\x18\x06 \x01(\v2\x1b.powermanage.v1.SealedValueB\x03\x80\x01\x01R\tclientKey\x12\x1a\n" +
+	"client_key\x18\x06 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\tclientKey\x12\x1a\n" +
 	"\bidentity\x18\a \x01(\tR\bidentity\x12!\n" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
 	"\x06hidden\x18\t \x01(\bR\x06hidden\x12\x1a\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05R\bpriority\"\xf8\x04\n" +
-	"\fActionResult\x125\n" +
-	"\taction_id\x18\x01 \x01(\v2\x18.powermanage.v1.ActionIdR\bactionId\x127\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1f.powermanage.v1.ExecutionStatusR\x06status\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x125\n" +
-	"\x06output\x18\x04 \x01(\v2\x1d.powermanage.v1.CommandOutputR\x06output\x12=\n" +
+	" \x01(\x05R\bpriority\"\xe9\x04\n" +
+	"\fActionResult\x122\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdR\bactionId\x124\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\x06status\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x122\n" +
+	"\x06output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12=\n" +
 	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12\x1f\n" +
 	"\vduration_ms\x18\x06 \x01(\x03R\n" +
 	"durationMs\x12\x18\n" +
-	"\achanged\x18\a \x01(\bR\achanged\x12F\n" +
-	"\bmetadata\x18\b \x03(\v2*.powermanage.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
-	"\tcompliant\x18\t \x01(\bR\tcompliant\x12H\n" +
+	"\achanged\x18\a \x01(\bR\achanged\x12C\n" +
+	"\bmetadata\x18\b \x03(\v2'.cadestro.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
+	"\tcompliant\x18\t \x01(\bR\tcompliant\x12E\n" +
 	"\x10detection_output\x18\n" +
-	" \x01(\v2\x1d.powermanage.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
+	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
 	"\vdelivery_id\x18\v \x01(\tR\n" +
 	"deliveryId\x12#\n" +
 	"\roccurrence_id\x18\f \x01(\tR\foccurrenceId\x1a;\n" +
@@ -3516,10 +3515,10 @@ const file_powermanage_v1_actions_proto_rawDesc = "" +
 	"\x0fAgentUpdateArch\x12\x1d\n" +
 	"\n" +
 	"binary_url\x18\x01 \x01(\tR\tbinaryUrl\x12!\n" +
-	"\fchecksum_url\x18\x02 \x01(\tR\vchecksumUrl\"\xd1\x01\n" +
-	"\x11AgentUpdateParams\x125\n" +
-	"\x05amd64\x18\x01 \x01(\v2\x1f.powermanage.v1.AgentUpdateArchR\x05amd64\x125\n" +
-	"\x05arm64\x18\x02 \x01(\v2\x1f.powermanage.v1.AgentUpdateArchR\x05arm64\x12'\n" +
+	"\fchecksum_url\x18\x02 \x01(\tR\vchecksumUrl\"\xcb\x01\n" +
+	"\x11AgentUpdateParams\x122\n" +
+	"\x05amd64\x18\x01 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05amd64\x122\n" +
+	"\x05arm64\x18\x02 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05arm64\x12'\n" +
 	"\x0fallow_downgrade\x18\x03 \x01(\bR\x0eallowDowngrade\x12%\n" +
 	"\x0eallow_redirect\x18\x04 \x01(\bR\rallowRedirect*\xea\x04\n" +
 	"\n" +
@@ -3574,113 +3573,113 @@ const file_powermanage_v1_actions_proto_rawDesc = "" +
 	"\fWifiAuthType\x12\x1e\n" +
 	"\x1aWIFI_AUTH_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12WIFI_AUTH_TYPE_PSK\x10\x01\x12\x1a\n" +
-	"\x16WIFI_AUTH_TYPE_EAP_TLS\x10\x02BMZKgithub.com/manchtools/cadestro/contract/gen/go/powermanage/v1;powermanagev1b\x06proto3"
+	"\x16WIFI_AUTH_TYPE_EAP_TLS\x10\x02BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
-	file_powermanage_v1_actions_proto_rawDescOnce sync.Once
-	file_powermanage_v1_actions_proto_rawDescData []byte
+	file_cadestro_v1_actions_proto_rawDescOnce sync.Once
+	file_cadestro_v1_actions_proto_rawDescData []byte
 )
 
-func file_powermanage_v1_actions_proto_rawDescGZIP() []byte {
-	file_powermanage_v1_actions_proto_rawDescOnce.Do(func() {
-		file_powermanage_v1_actions_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_powermanage_v1_actions_proto_rawDesc), len(file_powermanage_v1_actions_proto_rawDesc)))
+func file_cadestro_v1_actions_proto_rawDescGZIP() []byte {
+	file_cadestro_v1_actions_proto_rawDescOnce.Do(func() {
+		file_cadestro_v1_actions_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cadestro_v1_actions_proto_rawDesc), len(file_cadestro_v1_actions_proto_rawDesc)))
 	})
-	return file_powermanage_v1_actions_proto_rawDescData
+	return file_cadestro_v1_actions_proto_rawDescData
 }
 
-var file_powermanage_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_powermanage_v1_actions_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
-var file_powermanage_v1_actions_proto_goTypes = []any{
-	(ActionType)(0),                   // 0: powermanage.v1.ActionType
-	(ServiceUnitState)(0),             // 1: powermanage.v1.ServiceUnitState
-	(AdminAccessLevel)(0),             // 2: powermanage.v1.AdminAccessLevel
-	(PrivilegeBackend)(0),             // 3: powermanage.v1.PrivilegeBackend
-	(LpsPasswordComplexity)(0),        // 4: powermanage.v1.LpsPasswordComplexity
-	(EncryptionDeviceBoundKeyType)(0), // 5: powermanage.v1.EncryptionDeviceBoundKeyType
-	(WifiAuthType)(0),                 // 6: powermanage.v1.WifiAuthType
-	(*Action)(nil),                    // 7: powermanage.v1.Action
-	(*ActionSchedule)(nil),            // 8: powermanage.v1.ActionSchedule
-	(*PackageParams)(nil),             // 9: powermanage.v1.PackageParams
-	(*AppInstallParams)(nil),          // 10: powermanage.v1.AppInstallParams
-	(*ShellParams)(nil),               // 11: powermanage.v1.ShellParams
-	(*ServiceParams)(nil),             // 12: powermanage.v1.ServiceParams
-	(*FileParams)(nil),                // 13: powermanage.v1.FileParams
-	(*DirectoryParams)(nil),           // 14: powermanage.v1.DirectoryParams
-	(*UpdateParams)(nil),              // 15: powermanage.v1.UpdateParams
-	(*FlatpakParams)(nil),             // 16: powermanage.v1.FlatpakParams
-	(*RepositoryParams)(nil),          // 17: powermanage.v1.RepositoryParams
-	(*AptRepository)(nil),             // 18: powermanage.v1.AptRepository
-	(*DnfRepository)(nil),             // 19: powermanage.v1.DnfRepository
-	(*PacmanRepository)(nil),          // 20: powermanage.v1.PacmanRepository
-	(*ZypperRepository)(nil),          // 21: powermanage.v1.ZypperRepository
-	(*UserParams)(nil),                // 22: powermanage.v1.UserParams
-	(*GroupParams)(nil),               // 23: powermanage.v1.GroupParams
-	(*SshParams)(nil),                 // 24: powermanage.v1.SshParams
-	(*SshdDirective)(nil),             // 25: powermanage.v1.SshdDirective
-	(*SshdParams)(nil),                // 26: powermanage.v1.SshdParams
-	(*AdminPolicyParams)(nil),         // 27: powermanage.v1.AdminPolicyParams
-	(*LpsParams)(nil),                 // 28: powermanage.v1.LpsParams
-	(*EncryptionParams)(nil),          // 29: powermanage.v1.EncryptionParams
-	(*WifiParams)(nil),                // 30: powermanage.v1.WifiParams
-	(*ActionResult)(nil),              // 31: powermanage.v1.ActionResult
-	(*AgentUpdateArch)(nil),           // 32: powermanage.v1.AgentUpdateArch
-	(*AgentUpdateParams)(nil),         // 33: powermanage.v1.AgentUpdateParams
-	nil,                               // 34: powermanage.v1.ShellParams.EnvironmentEntry
-	nil,                               // 35: powermanage.v1.ActionResult.MetadataEntry
-	(*ActionId)(nil),                  // 36: powermanage.v1.ActionId
-	(DesiredState)(0),                 // 37: powermanage.v1.DesiredState
-	(*SealedValue)(nil),               // 38: powermanage.v1.SealedValue
-	(ExecutionStatus)(0),              // 39: powermanage.v1.ExecutionStatus
-	(*CommandOutput)(nil),             // 40: powermanage.v1.CommandOutput
+var file_cadestro_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_cadestro_v1_actions_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_cadestro_v1_actions_proto_goTypes = []any{
+	(ActionType)(0),                   // 0: cadestro.v1.ActionType
+	(ServiceUnitState)(0),             // 1: cadestro.v1.ServiceUnitState
+	(AdminAccessLevel)(0),             // 2: cadestro.v1.AdminAccessLevel
+	(PrivilegeBackend)(0),             // 3: cadestro.v1.PrivilegeBackend
+	(LpsPasswordComplexity)(0),        // 4: cadestro.v1.LpsPasswordComplexity
+	(EncryptionDeviceBoundKeyType)(0), // 5: cadestro.v1.EncryptionDeviceBoundKeyType
+	(WifiAuthType)(0),                 // 6: cadestro.v1.WifiAuthType
+	(*Action)(nil),                    // 7: cadestro.v1.Action
+	(*ActionSchedule)(nil),            // 8: cadestro.v1.ActionSchedule
+	(*PackageParams)(nil),             // 9: cadestro.v1.PackageParams
+	(*AppInstallParams)(nil),          // 10: cadestro.v1.AppInstallParams
+	(*ShellParams)(nil),               // 11: cadestro.v1.ShellParams
+	(*ServiceParams)(nil),             // 12: cadestro.v1.ServiceParams
+	(*FileParams)(nil),                // 13: cadestro.v1.FileParams
+	(*DirectoryParams)(nil),           // 14: cadestro.v1.DirectoryParams
+	(*UpdateParams)(nil),              // 15: cadestro.v1.UpdateParams
+	(*FlatpakParams)(nil),             // 16: cadestro.v1.FlatpakParams
+	(*RepositoryParams)(nil),          // 17: cadestro.v1.RepositoryParams
+	(*AptRepository)(nil),             // 18: cadestro.v1.AptRepository
+	(*DnfRepository)(nil),             // 19: cadestro.v1.DnfRepository
+	(*PacmanRepository)(nil),          // 20: cadestro.v1.PacmanRepository
+	(*ZypperRepository)(nil),          // 21: cadestro.v1.ZypperRepository
+	(*UserParams)(nil),                // 22: cadestro.v1.UserParams
+	(*GroupParams)(nil),               // 23: cadestro.v1.GroupParams
+	(*SshParams)(nil),                 // 24: cadestro.v1.SshParams
+	(*SshdDirective)(nil),             // 25: cadestro.v1.SshdDirective
+	(*SshdParams)(nil),                // 26: cadestro.v1.SshdParams
+	(*AdminPolicyParams)(nil),         // 27: cadestro.v1.AdminPolicyParams
+	(*LpsParams)(nil),                 // 28: cadestro.v1.LpsParams
+	(*EncryptionParams)(nil),          // 29: cadestro.v1.EncryptionParams
+	(*WifiParams)(nil),                // 30: cadestro.v1.WifiParams
+	(*ActionResult)(nil),              // 31: cadestro.v1.ActionResult
+	(*AgentUpdateArch)(nil),           // 32: cadestro.v1.AgentUpdateArch
+	(*AgentUpdateParams)(nil),         // 33: cadestro.v1.AgentUpdateParams
+	nil,                               // 34: cadestro.v1.ShellParams.EnvironmentEntry
+	nil,                               // 35: cadestro.v1.ActionResult.MetadataEntry
+	(*ActionId)(nil),                  // 36: cadestro.v1.ActionId
+	(DesiredState)(0),                 // 37: cadestro.v1.DesiredState
+	(*SealedValue)(nil),               // 38: cadestro.v1.SealedValue
+	(ExecutionStatus)(0),              // 39: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),             // 40: cadestro.v1.CommandOutput
 	(*timestamppb.Timestamp)(nil),     // 41: google.protobuf.Timestamp
 }
-var file_powermanage_v1_actions_proto_depIdxs = []int32{
-	36, // 0: powermanage.v1.Action.id:type_name -> powermanage.v1.ActionId
-	0,  // 1: powermanage.v1.Action.type:type_name -> powermanage.v1.ActionType
-	37, // 2: powermanage.v1.Action.desired_state:type_name -> powermanage.v1.DesiredState
-	8,  // 3: powermanage.v1.Action.schedule:type_name -> powermanage.v1.ActionSchedule
-	9,  // 4: powermanage.v1.Action.package:type_name -> powermanage.v1.PackageParams
-	10, // 5: powermanage.v1.Action.app:type_name -> powermanage.v1.AppInstallParams
-	11, // 6: powermanage.v1.Action.shell:type_name -> powermanage.v1.ShellParams
-	12, // 7: powermanage.v1.Action.service:type_name -> powermanage.v1.ServiceParams
-	13, // 8: powermanage.v1.Action.file:type_name -> powermanage.v1.FileParams
-	15, // 9: powermanage.v1.Action.update:type_name -> powermanage.v1.UpdateParams
-	17, // 10: powermanage.v1.Action.repository:type_name -> powermanage.v1.RepositoryParams
-	16, // 11: powermanage.v1.Action.flatpak:type_name -> powermanage.v1.FlatpakParams
-	14, // 12: powermanage.v1.Action.directory:type_name -> powermanage.v1.DirectoryParams
-	22, // 13: powermanage.v1.Action.user:type_name -> powermanage.v1.UserParams
-	24, // 14: powermanage.v1.Action.ssh:type_name -> powermanage.v1.SshParams
-	26, // 15: powermanage.v1.Action.sshd:type_name -> powermanage.v1.SshdParams
-	27, // 16: powermanage.v1.Action.admin_policy:type_name -> powermanage.v1.AdminPolicyParams
-	28, // 17: powermanage.v1.Action.lps:type_name -> powermanage.v1.LpsParams
-	23, // 18: powermanage.v1.Action.group:type_name -> powermanage.v1.GroupParams
-	29, // 19: powermanage.v1.Action.encryption:type_name -> powermanage.v1.EncryptionParams
-	30, // 20: powermanage.v1.Action.wifi:type_name -> powermanage.v1.WifiParams
-	33, // 21: powermanage.v1.Action.agent_update:type_name -> powermanage.v1.AgentUpdateParams
-	34, // 22: powermanage.v1.ShellParams.environment:type_name -> powermanage.v1.ShellParams.EnvironmentEntry
-	1,  // 23: powermanage.v1.ServiceParams.desired_state:type_name -> powermanage.v1.ServiceUnitState
-	18, // 24: powermanage.v1.RepositoryParams.apt:type_name -> powermanage.v1.AptRepository
-	19, // 25: powermanage.v1.RepositoryParams.dnf:type_name -> powermanage.v1.DnfRepository
-	20, // 26: powermanage.v1.RepositoryParams.pacman:type_name -> powermanage.v1.PacmanRepository
-	21, // 27: powermanage.v1.RepositoryParams.zypper:type_name -> powermanage.v1.ZypperRepository
-	25, // 28: powermanage.v1.SshdParams.directives:type_name -> powermanage.v1.SshdDirective
-	2,  // 29: powermanage.v1.AdminPolicyParams.access_level:type_name -> powermanage.v1.AdminAccessLevel
-	3,  // 30: powermanage.v1.AdminPolicyParams.backend:type_name -> powermanage.v1.PrivilegeBackend
-	4,  // 31: powermanage.v1.LpsParams.complexity:type_name -> powermanage.v1.LpsPasswordComplexity
-	38, // 32: powermanage.v1.EncryptionParams.preshared_key:type_name -> powermanage.v1.SealedValue
-	5,  // 33: powermanage.v1.EncryptionParams.device_bound_key_type:type_name -> powermanage.v1.EncryptionDeviceBoundKeyType
-	4,  // 34: powermanage.v1.EncryptionParams.user_passphrase_complexity:type_name -> powermanage.v1.LpsPasswordComplexity
-	6,  // 35: powermanage.v1.WifiParams.auth_type:type_name -> powermanage.v1.WifiAuthType
-	38, // 36: powermanage.v1.WifiParams.psk:type_name -> powermanage.v1.SealedValue
-	38, // 37: powermanage.v1.WifiParams.client_key:type_name -> powermanage.v1.SealedValue
-	36, // 38: powermanage.v1.ActionResult.action_id:type_name -> powermanage.v1.ActionId
-	39, // 39: powermanage.v1.ActionResult.status:type_name -> powermanage.v1.ExecutionStatus
-	40, // 40: powermanage.v1.ActionResult.output:type_name -> powermanage.v1.CommandOutput
-	41, // 41: powermanage.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	35, // 42: powermanage.v1.ActionResult.metadata:type_name -> powermanage.v1.ActionResult.MetadataEntry
-	40, // 43: powermanage.v1.ActionResult.detection_output:type_name -> powermanage.v1.CommandOutput
-	32, // 44: powermanage.v1.AgentUpdateParams.amd64:type_name -> powermanage.v1.AgentUpdateArch
-	32, // 45: powermanage.v1.AgentUpdateParams.arm64:type_name -> powermanage.v1.AgentUpdateArch
+var file_cadestro_v1_actions_proto_depIdxs = []int32{
+	36, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
+	0,  // 1: cadestro.v1.Action.type:type_name -> cadestro.v1.ActionType
+	37, // 2: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
+	8,  // 3: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
+	9,  // 4: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageParams
+	10, // 5: cadestro.v1.Action.app:type_name -> cadestro.v1.AppInstallParams
+	11, // 6: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellParams
+	12, // 7: cadestro.v1.Action.service:type_name -> cadestro.v1.ServiceParams
+	13, // 8: cadestro.v1.Action.file:type_name -> cadestro.v1.FileParams
+	15, // 9: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateParams
+	17, // 10: cadestro.v1.Action.repository:type_name -> cadestro.v1.RepositoryParams
+	16, // 11: cadestro.v1.Action.flatpak:type_name -> cadestro.v1.FlatpakParams
+	14, // 12: cadestro.v1.Action.directory:type_name -> cadestro.v1.DirectoryParams
+	22, // 13: cadestro.v1.Action.user:type_name -> cadestro.v1.UserParams
+	24, // 14: cadestro.v1.Action.ssh:type_name -> cadestro.v1.SshParams
+	26, // 15: cadestro.v1.Action.sshd:type_name -> cadestro.v1.SshdParams
+	27, // 16: cadestro.v1.Action.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
+	28, // 17: cadestro.v1.Action.lps:type_name -> cadestro.v1.LpsParams
+	23, // 18: cadestro.v1.Action.group:type_name -> cadestro.v1.GroupParams
+	29, // 19: cadestro.v1.Action.encryption:type_name -> cadestro.v1.EncryptionParams
+	30, // 20: cadestro.v1.Action.wifi:type_name -> cadestro.v1.WifiParams
+	33, // 21: cadestro.v1.Action.agent_update:type_name -> cadestro.v1.AgentUpdateParams
+	34, // 22: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
+	1,  // 23: cadestro.v1.ServiceParams.desired_state:type_name -> cadestro.v1.ServiceUnitState
+	18, // 24: cadestro.v1.RepositoryParams.apt:type_name -> cadestro.v1.AptRepository
+	19, // 25: cadestro.v1.RepositoryParams.dnf:type_name -> cadestro.v1.DnfRepository
+	20, // 26: cadestro.v1.RepositoryParams.pacman:type_name -> cadestro.v1.PacmanRepository
+	21, // 27: cadestro.v1.RepositoryParams.zypper:type_name -> cadestro.v1.ZypperRepository
+	25, // 28: cadestro.v1.SshdParams.directives:type_name -> cadestro.v1.SshdDirective
+	2,  // 29: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
+	3,  // 30: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
+	4,  // 31: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	38, // 32: cadestro.v1.EncryptionParams.preshared_key:type_name -> cadestro.v1.SealedValue
+	5,  // 33: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
+	4,  // 34: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	6,  // 35: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
+	38, // 36: cadestro.v1.WifiParams.psk:type_name -> cadestro.v1.SealedValue
+	38, // 37: cadestro.v1.WifiParams.client_key:type_name -> cadestro.v1.SealedValue
+	36, // 38: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
+	39, // 39: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	40, // 40: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
+	41, // 41: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	35, // 42: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
+	40, // 43: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	32, // 44: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
+	32, // 45: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
 	46, // [46:46] is the sub-list for method output_type
 	46, // [46:46] is the sub-list for method input_type
 	46, // [46:46] is the sub-list for extension type_name
@@ -3688,13 +3687,13 @@ var file_powermanage_v1_actions_proto_depIdxs = []int32{
 	0,  // [0:46] is the sub-list for field type_name
 }
 
-func init() { file_powermanage_v1_actions_proto_init() }
-func file_powermanage_v1_actions_proto_init() {
-	if File_powermanage_v1_actions_proto != nil {
+func init() { file_cadestro_v1_actions_proto_init() }
+func file_cadestro_v1_actions_proto_init() {
+	if File_cadestro_v1_actions_proto != nil {
 		return
 	}
-	file_powermanage_v1_common_proto_init()
-	file_powermanage_v1_actions_proto_msgTypes[0].OneofWrappers = []any{
+	file_cadestro_v1_common_proto_init()
+	file_cadestro_v1_actions_proto_msgTypes[0].OneofWrappers = []any{
 		(*Action_Package)(nil),
 		(*Action_App)(nil),
 		(*Action_Shell)(nil),
@@ -3718,18 +3717,18 @@ func file_powermanage_v1_actions_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_powermanage_v1_actions_proto_rawDesc), len(file_powermanage_v1_actions_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_actions_proto_rawDesc), len(file_cadestro_v1_actions_proto_rawDesc)),
 			NumEnums:      7,
 			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_powermanage_v1_actions_proto_goTypes,
-		DependencyIndexes: file_powermanage_v1_actions_proto_depIdxs,
-		EnumInfos:         file_powermanage_v1_actions_proto_enumTypes,
-		MessageInfos:      file_powermanage_v1_actions_proto_msgTypes,
+		GoTypes:           file_cadestro_v1_actions_proto_goTypes,
+		DependencyIndexes: file_cadestro_v1_actions_proto_depIdxs,
+		EnumInfos:         file_cadestro_v1_actions_proto_enumTypes,
+		MessageInfos:      file_cadestro_v1_actions_proto_msgTypes,
 	}.Build()
-	File_powermanage_v1_actions_proto = out.File
-	file_powermanage_v1_actions_proto_goTypes = nil
-	file_powermanage_v1_actions_proto_depIdxs = nil
+	File_cadestro_v1_actions_proto = out.File
+	file_cadestro_v1_actions_proto_goTypes = nil
+	file_cadestro_v1_actions_proto_depIdxs = nil
 }

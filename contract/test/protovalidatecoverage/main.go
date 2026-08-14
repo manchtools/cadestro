@@ -17,7 +17,7 @@
 //
 // Example:
 //
-//	go run ./test/protovalidatecoverage ./proto/powermanage/v1
+//	go run ./test/protovalidatecoverage ./proto/cadestro/v1
 package main
 
 import (

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -228,7 +228,7 @@ func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *test
 	sealed := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
 	require.NotNil(t, sealed)
 	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"powermanage.v1.EncryptionParams", "preshared_key", deviceID, actionID)
+		"cadestro.v1.EncryptionParams", "preshared_key", deviceID, actionID)
 	require.NoError(t, err)
 	opened, err := sdkcrypto.OpenWithPrivateKey(agentKey, sealed.Ciphertext, aad, info)
 	require.NoError(t, err)
@@ -238,7 +238,7 @@ func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *test
 	waker := &committedWaker{store: st}
 	service := dispatch.New(dispatch.Config{Store: st, Waker: waker})
 	op := mutationOp()
-	op.RequestDescriptor = "/powermanage.v1.ControlService/DispatchAction"
+	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchAction"
 	result, err := service.Submit(ctx, dispatch.SubmitParams{
 		Operation: op, DeviceID: deviceID,
 		Manifests: []dispatch.ManifestInput{{Manifest: compiled, PersistActionIDs: true}},

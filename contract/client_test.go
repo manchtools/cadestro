@@ -11,7 +11,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // TestBootstrapHTTPClient_Bounded pins the transport hardening for the

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/proto"
 )
 

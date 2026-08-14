@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v6.30.2
-// source: powermanage/v1/control.proto
+// source: cadestro/v1/control.proto
 
-package powermanagev1
+package cadestrov1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -47,7 +47,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[0]
+	mi := &file_cadestro_v1_control_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -59,7 +59,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[0]
+	mi := &file_cadestro_v1_control_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -72,7 +72,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{0}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *RegisterRequest) GetToken() string {
@@ -139,7 +139,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[1]
+	mi := &file_cadestro_v1_control_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -151,7 +151,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[1]
+	mi := &file_cadestro_v1_control_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -164,7 +164,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{1}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RegisterResponse) GetDeviceId() *DeviceId {
@@ -216,7 +216,7 @@ type RenewCertificateRequest struct {
 
 func (x *RenewCertificateRequest) Reset() {
 	*x = RenewCertificateRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[2]
+	mi := &file_cadestro_v1_control_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -228,7 +228,7 @@ func (x *RenewCertificateRequest) String() string {
 func (*RenewCertificateRequest) ProtoMessage() {}
 
 func (x *RenewCertificateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[2]
+	mi := &file_cadestro_v1_control_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -241,7 +241,7 @@ func (x *RenewCertificateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenewCertificateRequest.ProtoReflect.Descriptor instead.
 func (*RenewCertificateRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RenewCertificateRequest) GetCsr() []byte {
@@ -273,7 +273,7 @@ type RenewCertificateResponse struct {
 
 func (x *RenewCertificateResponse) Reset() {
 	*x = RenewCertificateResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[3]
+	mi := &file_cadestro_v1_control_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +285,7 @@ func (x *RenewCertificateResponse) String() string {
 func (*RenewCertificateResponse) ProtoMessage() {}
 
 func (x *RenewCertificateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[3]
+	mi := &file_cadestro_v1_control_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +298,7 @@ func (x *RenewCertificateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenewCertificateResponse.ProtoReflect.Descriptor instead.
 func (*RenewCertificateResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RenewCertificateResponse) GetCertificate() []byte {
@@ -332,7 +332,7 @@ type RefreshTokenRequest struct {
 
 func (x *RefreshTokenRequest) Reset() {
 	*x = RefreshTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[4]
+	mi := &file_cadestro_v1_control_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -344,7 +344,7 @@ func (x *RefreshTokenRequest) String() string {
 func (*RefreshTokenRequest) ProtoMessage() {}
 
 func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[4]
+	mi := &file_cadestro_v1_control_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +357,7 @@ func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenRequest.ProtoReflect.Descriptor instead.
 func (*RefreshTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RefreshTokenRequest) GetRefreshToken() string {
@@ -378,7 +378,7 @@ type RefreshTokenResponse struct {
 
 func (x *RefreshTokenResponse) Reset() {
 	*x = RefreshTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[5]
+	mi := &file_cadestro_v1_control_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -390,7 +390,7 @@ func (x *RefreshTokenResponse) String() string {
 func (*RefreshTokenResponse) ProtoMessage() {}
 
 func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[5]
+	mi := &file_cadestro_v1_control_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -403,7 +403,7 @@ func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenResponse.ProtoReflect.Descriptor instead.
 func (*RefreshTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RefreshTokenResponse) GetAccessToken() string {
@@ -437,7 +437,7 @@ type LogoutRequest struct {
 
 func (x *LogoutRequest) Reset() {
 	*x = LogoutRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[6]
+	mi := &file_cadestro_v1_control_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -449,7 +449,7 @@ func (x *LogoutRequest) String() string {
 func (*LogoutRequest) ProtoMessage() {}
 
 func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[6]
+	mi := &file_cadestro_v1_control_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -462,7 +462,7 @@ func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
 func (*LogoutRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LogoutRequest) GetRefreshToken() string {
@@ -480,7 +480,7 @@ type LogoutResponse struct {
 
 func (x *LogoutResponse) Reset() {
 	*x = LogoutResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[7]
+	mi := &file_cadestro_v1_control_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -492,7 +492,7 @@ func (x *LogoutResponse) String() string {
 func (*LogoutResponse) ProtoMessage() {}
 
 func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[7]
+	mi := &file_cadestro_v1_control_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -505,7 +505,7 @@ func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
 func (*LogoutResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{7}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{7}
 }
 
 type GetCurrentUserRequest struct {
@@ -516,7 +516,7 @@ type GetCurrentUserRequest struct {
 
 func (x *GetCurrentUserRequest) Reset() {
 	*x = GetCurrentUserRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[8]
+	mi := &file_cadestro_v1_control_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -528,7 +528,7 @@ func (x *GetCurrentUserRequest) String() string {
 func (*GetCurrentUserRequest) ProtoMessage() {}
 
 func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[8]
+	mi := &file_cadestro_v1_control_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -541,7 +541,7 @@ func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCurrentUserRequest.ProtoReflect.Descriptor instead.
 func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{8}
 }
 
 type GetCurrentUserResponse struct {
@@ -553,7 +553,7 @@ type GetCurrentUserResponse struct {
 
 func (x *GetCurrentUserResponse) Reset() {
 	*x = GetCurrentUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[9]
+	mi := &file_cadestro_v1_control_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -565,7 +565,7 @@ func (x *GetCurrentUserResponse) String() string {
 func (*GetCurrentUserResponse) ProtoMessage() {}
 
 func (x *GetCurrentUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[9]
+	mi := &file_cadestro_v1_control_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -578,7 +578,7 @@ func (x *GetCurrentUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCurrentUserResponse.ProtoReflect.Descriptor instead.
 func (*GetCurrentUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetCurrentUserResponse) GetUser() *User {
@@ -624,7 +624,7 @@ type User struct {
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[10]
+	mi := &file_cadestro_v1_control_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -636,7 +636,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[10]
+	mi := &file_cadestro_v1_control_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -649,7 +649,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{10}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *User) GetId() string {
@@ -811,7 +811,7 @@ type InheritedRole struct {
 
 func (x *InheritedRole) Reset() {
 	*x = InheritedRole{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[11]
+	mi := &file_cadestro_v1_control_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -823,7 +823,7 @@ func (x *InheritedRole) String() string {
 func (*InheritedRole) ProtoMessage() {}
 
 func (x *InheritedRole) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[11]
+	mi := &file_cadestro_v1_control_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -836,7 +836,7 @@ func (x *InheritedRole) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InheritedRole.ProtoReflect.Descriptor instead.
 func (*InheritedRole) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *InheritedRole) GetRoleId() string {
@@ -879,7 +879,7 @@ type SshPublicKey struct {
 
 func (x *SshPublicKey) Reset() {
 	*x = SshPublicKey{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[12]
+	mi := &file_cadestro_v1_control_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -891,7 +891,7 @@ func (x *SshPublicKey) String() string {
 func (*SshPublicKey) ProtoMessage() {}
 
 func (x *SshPublicKey) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[12]
+	mi := &file_cadestro_v1_control_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -904,7 +904,7 @@ func (x *SshPublicKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SshPublicKey.ProtoReflect.Descriptor instead.
 func (*SshPublicKey) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{12}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SshPublicKey) GetId() string {
@@ -950,7 +950,7 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[13]
+	mi := &file_cadestro_v1_control_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -962,7 +962,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[13]
+	mi := &file_cadestro_v1_control_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +975,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{13}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Role) GetId() string {
@@ -1028,7 +1028,7 @@ func (x *Role) GetIsSystem() bool {
 type RoleGrant struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Role          *Role                  `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
-	ScopeKind     RoleGrantScopeKind     `protobuf:"varint,2,opt,name=scope_kind,json=scopeKind,proto3,enum=powermanage.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeKind     RoleGrantScopeKind     `protobuf:"varint,2,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
 	ScopeId       string                 `protobuf:"bytes,3,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	ScopeName     string                 `protobuf:"bytes,4,opt,name=scope_name,json=scopeName,proto3" json:"scope_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1037,7 +1037,7 @@ type RoleGrant struct {
 
 func (x *RoleGrant) Reset() {
 	*x = RoleGrant{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[14]
+	mi := &file_cadestro_v1_control_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1049,7 +1049,7 @@ func (x *RoleGrant) String() string {
 func (*RoleGrant) ProtoMessage() {}
 
 func (x *RoleGrant) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[14]
+	mi := &file_cadestro_v1_control_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1062,7 +1062,7 @@ func (x *RoleGrant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleGrant.ProtoReflect.Descriptor instead.
 func (*RoleGrant) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{14}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RoleGrant) GetRole() *Role {
@@ -1103,14 +1103,14 @@ type PermissionInfo struct {
 	// UNSPECIFIED = not scopable (fail-closed default). DEVICE = takes
 	// RoleGrantScopeKind=DEVICE_GROUP. USER = takes USER_GROUP.
 	// Surfaced so the web role-builder can gate the scope picker.
-	TargetKind    PermissionTargetKind `protobuf:"varint,4,opt,name=target_kind,json=targetKind,proto3,enum=powermanage.v1.PermissionTargetKind" json:"target_kind,omitempty"`
+	TargetKind    PermissionTargetKind `protobuf:"varint,4,opt,name=target_kind,json=targetKind,proto3,enum=cadestro.v1.PermissionTargetKind" json:"target_kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PermissionInfo) Reset() {
 	*x = PermissionInfo{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[15]
+	mi := &file_cadestro_v1_control_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1122,7 +1122,7 @@ func (x *PermissionInfo) String() string {
 func (*PermissionInfo) ProtoMessage() {}
 
 func (x *PermissionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[15]
+	mi := &file_cadestro_v1_control_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1135,7 +1135,7 @@ func (x *PermissionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PermissionInfo.ProtoReflect.Descriptor instead.
 func (*PermissionInfo) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{15}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PermissionInfo) GetKey() string {
@@ -1178,7 +1178,7 @@ type EraseJITUserRequest struct {
 
 func (x *EraseJITUserRequest) Reset() {
 	*x = EraseJITUserRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[16]
+	mi := &file_cadestro_v1_control_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1190,7 +1190,7 @@ func (x *EraseJITUserRequest) String() string {
 func (*EraseJITUserRequest) ProtoMessage() {}
 
 func (x *EraseJITUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[16]
+	mi := &file_cadestro_v1_control_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1203,7 +1203,7 @@ func (x *EraseJITUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EraseJITUserRequest.ProtoReflect.Descriptor instead.
 func (*EraseJITUserRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{16}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *EraseJITUserRequest) GetId() string {
@@ -1221,7 +1221,7 @@ type EraseJITUserResponse struct {
 
 func (x *EraseJITUserResponse) Reset() {
 	*x = EraseJITUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[17]
+	mi := &file_cadestro_v1_control_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1233,7 +1233,7 @@ func (x *EraseJITUserResponse) String() string {
 func (*EraseJITUserResponse) ProtoMessage() {}
 
 func (x *EraseJITUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[17]
+	mi := &file_cadestro_v1_control_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1246,7 +1246,7 @@ func (x *EraseJITUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EraseJITUserResponse.ProtoReflect.Descriptor instead.
 func (*EraseJITUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{17}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{17}
 }
 
 type GetUserRequest struct {
@@ -1259,7 +1259,7 @@ type GetUserRequest struct {
 
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[18]
+	mi := &file_cadestro_v1_control_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1271,7 +1271,7 @@ func (x *GetUserRequest) String() string {
 func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[18]
+	mi := &file_cadestro_v1_control_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1284,7 +1284,7 @@ func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{18}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetUserRequest) GetId() string {
@@ -1303,7 +1303,7 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[19]
+	mi := &file_cadestro_v1_control_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1315,7 +1315,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[19]
+	mi := &file_cadestro_v1_control_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1328,7 +1328,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{19}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetUserResponse) GetUser() *User {
@@ -1350,7 +1350,7 @@ type ListUsersRequest struct {
 
 func (x *ListUsersRequest) Reset() {
 	*x = ListUsersRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[20]
+	mi := &file_cadestro_v1_control_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1362,7 +1362,7 @@ func (x *ListUsersRequest) String() string {
 func (*ListUsersRequest) ProtoMessage() {}
 
 func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[20]
+	mi := &file_cadestro_v1_control_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1375,7 +1375,7 @@ func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
 func (*ListUsersRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{20}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListUsersRequest) GetPageSize() int32 {
@@ -1403,7 +1403,7 @@ type ListUsersResponse struct {
 
 func (x *ListUsersResponse) Reset() {
 	*x = ListUsersResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[21]
+	mi := &file_cadestro_v1_control_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1415,7 +1415,7 @@ func (x *ListUsersResponse) String() string {
 func (*ListUsersResponse) ProtoMessage() {}
 
 func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[21]
+	mi := &file_cadestro_v1_control_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1428,7 +1428,7 @@ func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
 func (*ListUsersResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{21}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListUsersResponse) GetUsers() []*User {
@@ -1465,7 +1465,7 @@ type UpdateUserEmailRequest struct {
 
 func (x *UpdateUserEmailRequest) Reset() {
 	*x = UpdateUserEmailRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[22]
+	mi := &file_cadestro_v1_control_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1477,7 +1477,7 @@ func (x *UpdateUserEmailRequest) String() string {
 func (*UpdateUserEmailRequest) ProtoMessage() {}
 
 func (x *UpdateUserEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[22]
+	mi := &file_cadestro_v1_control_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1490,7 +1490,7 @@ func (x *UpdateUserEmailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserEmailRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserEmailRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{22}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UpdateUserEmailRequest) GetId() string {
@@ -1518,7 +1518,7 @@ type SetUserDisabledRequest struct {
 
 func (x *SetUserDisabledRequest) Reset() {
 	*x = SetUserDisabledRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[23]
+	mi := &file_cadestro_v1_control_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1530,7 +1530,7 @@ func (x *SetUserDisabledRequest) String() string {
 func (*SetUserDisabledRequest) ProtoMessage() {}
 
 func (x *SetUserDisabledRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[23]
+	mi := &file_cadestro_v1_control_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1543,7 +1543,7 @@ func (x *SetUserDisabledRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetUserDisabledRequest.ProtoReflect.Descriptor instead.
 func (*SetUserDisabledRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{23}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SetUserDisabledRequest) GetId() string {
@@ -1569,7 +1569,7 @@ type UpdateUserResponse struct {
 
 func (x *UpdateUserResponse) Reset() {
 	*x = UpdateUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[24]
+	mi := &file_cadestro_v1_control_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1581,7 +1581,7 @@ func (x *UpdateUserResponse) String() string {
 func (*UpdateUserResponse) ProtoMessage() {}
 
 func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[24]
+	mi := &file_cadestro_v1_control_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1594,7 +1594,7 @@ func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{24}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpdateUserResponse) GetUser() *User {
@@ -1626,7 +1626,7 @@ type UpdateUserProfileRequest struct {
 
 func (x *UpdateUserProfileRequest) Reset() {
 	*x = UpdateUserProfileRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[25]
+	mi := &file_cadestro_v1_control_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1638,7 +1638,7 @@ func (x *UpdateUserProfileRequest) String() string {
 func (*UpdateUserProfileRequest) ProtoMessage() {}
 
 func (x *UpdateUserProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[25]
+	mi := &file_cadestro_v1_control_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1651,7 +1651,7 @@ func (x *UpdateUserProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserProfileRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserProfileRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{25}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UpdateUserProfileRequest) GetId() string {
@@ -1717,7 +1717,7 @@ type AddUserSshKeyRequest struct {
 
 func (x *AddUserSshKeyRequest) Reset() {
 	*x = AddUserSshKeyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[26]
+	mi := &file_cadestro_v1_control_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1729,7 +1729,7 @@ func (x *AddUserSshKeyRequest) String() string {
 func (*AddUserSshKeyRequest) ProtoMessage() {}
 
 func (x *AddUserSshKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[26]
+	mi := &file_cadestro_v1_control_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1742,7 +1742,7 @@ func (x *AddUserSshKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserSshKeyRequest.ProtoReflect.Descriptor instead.
 func (*AddUserSshKeyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{26}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *AddUserSshKeyRequest) GetUserId() string {
@@ -1775,7 +1775,7 @@ type AddUserSshKeyResponse struct {
 
 func (x *AddUserSshKeyResponse) Reset() {
 	*x = AddUserSshKeyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[27]
+	mi := &file_cadestro_v1_control_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1787,7 +1787,7 @@ func (x *AddUserSshKeyResponse) String() string {
 func (*AddUserSshKeyResponse) ProtoMessage() {}
 
 func (x *AddUserSshKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[27]
+	mi := &file_cadestro_v1_control_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1800,7 +1800,7 @@ func (x *AddUserSshKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserSshKeyResponse.ProtoReflect.Descriptor instead.
 func (*AddUserSshKeyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{27}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *AddUserSshKeyResponse) GetKey() *SshPublicKey {
@@ -1822,7 +1822,7 @@ type RemoveUserSshKeyRequest struct {
 
 func (x *RemoveUserSshKeyRequest) Reset() {
 	*x = RemoveUserSshKeyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[28]
+	mi := &file_cadestro_v1_control_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1834,7 +1834,7 @@ func (x *RemoveUserSshKeyRequest) String() string {
 func (*RemoveUserSshKeyRequest) ProtoMessage() {}
 
 func (x *RemoveUserSshKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[28]
+	mi := &file_cadestro_v1_control_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1847,7 +1847,7 @@ func (x *RemoveUserSshKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveUserSshKeyRequest.ProtoReflect.Descriptor instead.
 func (*RemoveUserSshKeyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{28}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RemoveUserSshKeyRequest) GetUserId() string {
@@ -1872,7 +1872,7 @@ type RemoveUserSshKeyResponse struct {
 
 func (x *RemoveUserSshKeyResponse) Reset() {
 	*x = RemoveUserSshKeyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[29]
+	mi := &file_cadestro_v1_control_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1884,7 +1884,7 @@ func (x *RemoveUserSshKeyResponse) String() string {
 func (*RemoveUserSshKeyResponse) ProtoMessage() {}
 
 func (x *RemoveUserSshKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[29]
+	mi := &file_cadestro_v1_control_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1897,7 +1897,7 @@ func (x *RemoveUserSshKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveUserSshKeyResponse.ProtoReflect.Descriptor instead.
 func (*RemoveUserSshKeyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{29}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{29}
 }
 
 type UpdateUserSshSettingsRequest struct {
@@ -1913,7 +1913,7 @@ type UpdateUserSshSettingsRequest struct {
 
 func (x *UpdateUserSshSettingsRequest) Reset() {
 	*x = UpdateUserSshSettingsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[30]
+	mi := &file_cadestro_v1_control_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1925,7 +1925,7 @@ func (x *UpdateUserSshSettingsRequest) String() string {
 func (*UpdateUserSshSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateUserSshSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[30]
+	mi := &file_cadestro_v1_control_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1938,7 +1938,7 @@ func (x *UpdateUserSshSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserSshSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserSshSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{30}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *UpdateUserSshSettingsRequest) GetUserId() string {
@@ -1981,7 +1981,7 @@ type UpdateUserLinuxUsernameRequest struct {
 
 func (x *UpdateUserLinuxUsernameRequest) Reset() {
 	*x = UpdateUserLinuxUsernameRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[31]
+	mi := &file_cadestro_v1_control_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1993,7 +1993,7 @@ func (x *UpdateUserLinuxUsernameRequest) String() string {
 func (*UpdateUserLinuxUsernameRequest) ProtoMessage() {}
 
 func (x *UpdateUserLinuxUsernameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[31]
+	mi := &file_cadestro_v1_control_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2006,7 +2006,7 @@ func (x *UpdateUserLinuxUsernameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserLinuxUsernameRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserLinuxUsernameRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{31}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *UpdateUserLinuxUsernameRequest) GetUserId() string {
@@ -2029,7 +2029,7 @@ type Device struct {
 	Hostname     string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	AgentVersion string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
 	// Online / offline, derived from last_seen_at on the server.
-	Status           DeviceStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=powermanage.v1.DeviceStatus" json:"status,omitempty"`
+	Status           DeviceStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=cadestro.v1.DeviceStatus" json:"status,omitempty"`
 	RegisteredAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
 	LastSeenAt       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
 	CertExpiresAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=cert_expires_at,json=certExpiresAt,proto3" json:"cert_expires_at,omitempty"`
@@ -2039,7 +2039,7 @@ type Device struct {
 	// Stream synchronization interval in minutes (0 = use default of 30 minutes).
 	SyncIntervalMinutes int32 `protobuf:"varint,11,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
 	// Compliance status based on detection scripts
-	ComplianceStatus    ComplianceStatus       `protobuf:"varint,12,opt,name=compliance_status,json=complianceStatus,proto3,enum=powermanage.v1.ComplianceStatus" json:"compliance_status,omitempty"`
+	ComplianceStatus    ComplianceStatus       `protobuf:"varint,12,opt,name=compliance_status,json=complianceStatus,proto3,enum=cadestro.v1.ComplianceStatus" json:"compliance_status,omitempty"`
 	ComplianceCheckedAt *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=compliance_checked_at,json=complianceCheckedAt,proto3" json:"compliance_checked_at,omitempty"`
 	ComplianceTotal     int32                  `protobuf:"varint,14,opt,name=compliance_total,json=complianceTotal,proto3" json:"compliance_total,omitempty"`       // Total number of compliance checks
 	CompliancePassing   int32                  `protobuf:"varint,15,opt,name=compliance_passing,json=compliancePassing,proto3" json:"compliance_passing,omitempty"` // Number of passing checks
@@ -2061,7 +2061,7 @@ type Device struct {
 
 func (x *Device) Reset() {
 	*x = Device{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[32]
+	mi := &file_cadestro_v1_control_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2073,7 +2073,7 @@ func (x *Device) String() string {
 func (*Device) ProtoMessage() {}
 
 func (x *Device) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[32]
+	mi := &file_cadestro_v1_control_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2086,7 +2086,7 @@ func (x *Device) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device.ProtoReflect.Descriptor instead.
 func (*Device) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{32}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *Device) GetId() string {
@@ -2224,7 +2224,7 @@ type ListDevicesRequest struct {
 	// UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
 	// the listing to that single status.
 	// @gotags: validate:"omitempty,gte=0,lte=2"
-	StatusFilter DeviceStatus `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=powermanage.v1.DeviceStatus" json:"status_filter,omitempty" validate:"omitempty,gte=0,lte=2"`
+	StatusFilter DeviceStatus `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.DeviceStatus" json:"status_filter,omitempty" validate:"omitempty,gte=0,lte=2"`
 	// @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
 	LabelFilter   map[string]string `protobuf:"bytes,4,rep,name=label_filter,json=labelFilter,proto3" json:"label_filter,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=64,endkeys,max=1024"`
 	MyDevicesOnly bool              `protobuf:"varint,5,opt,name=my_devices_only,json=myDevicesOnly,proto3" json:"my_devices_only,omitempty"` // when true, only return devices assigned to the authenticated user
@@ -2234,7 +2234,7 @@ type ListDevicesRequest struct {
 
 func (x *ListDevicesRequest) Reset() {
 	*x = ListDevicesRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[33]
+	mi := &file_cadestro_v1_control_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2246,7 +2246,7 @@ func (x *ListDevicesRequest) String() string {
 func (*ListDevicesRequest) ProtoMessage() {}
 
 func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[33]
+	mi := &file_cadestro_v1_control_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2259,7 +2259,7 @@ func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
 func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{33}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListDevicesRequest) GetPageSize() int32 {
@@ -2308,7 +2308,7 @@ type ListDevicesResponse struct {
 
 func (x *ListDevicesResponse) Reset() {
 	*x = ListDevicesResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[34]
+	mi := &file_cadestro_v1_control_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2320,7 +2320,7 @@ func (x *ListDevicesResponse) String() string {
 func (*ListDevicesResponse) ProtoMessage() {}
 
 func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[34]
+	mi := &file_cadestro_v1_control_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2333,7 +2333,7 @@ func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
 func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{34}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListDevicesResponse) GetDevices() []*Device {
@@ -2367,7 +2367,7 @@ type GetDeviceRequest struct {
 
 func (x *GetDeviceRequest) Reset() {
 	*x = GetDeviceRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[35]
+	mi := &file_cadestro_v1_control_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2379,7 +2379,7 @@ func (x *GetDeviceRequest) String() string {
 func (*GetDeviceRequest) ProtoMessage() {}
 
 func (x *GetDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[35]
+	mi := &file_cadestro_v1_control_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2392,7 +2392,7 @@ func (x *GetDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{35}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetDeviceRequest) GetId() string {
@@ -2411,7 +2411,7 @@ type GetDeviceResponse struct {
 
 func (x *GetDeviceResponse) Reset() {
 	*x = GetDeviceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[36]
+	mi := &file_cadestro_v1_control_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2423,7 +2423,7 @@ func (x *GetDeviceResponse) String() string {
 func (*GetDeviceResponse) ProtoMessage() {}
 
 func (x *GetDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[36]
+	mi := &file_cadestro_v1_control_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2436,7 +2436,7 @@ func (x *GetDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{36}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetDeviceResponse) GetDevice() *Device {
@@ -2461,7 +2461,7 @@ type SetDeviceLabelRequest struct {
 
 func (x *SetDeviceLabelRequest) Reset() {
 	*x = SetDeviceLabelRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[37]
+	mi := &file_cadestro_v1_control_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2473,7 +2473,7 @@ func (x *SetDeviceLabelRequest) String() string {
 func (*SetDeviceLabelRequest) ProtoMessage() {}
 
 func (x *SetDeviceLabelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[37]
+	mi := &file_cadestro_v1_control_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2486,7 +2486,7 @@ func (x *SetDeviceLabelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetDeviceLabelRequest.ProtoReflect.Descriptor instead.
 func (*SetDeviceLabelRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{37}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *SetDeviceLabelRequest) GetId() string {
@@ -2522,7 +2522,7 @@ type RemoveDeviceLabelRequest struct {
 
 func (x *RemoveDeviceLabelRequest) Reset() {
 	*x = RemoveDeviceLabelRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[38]
+	mi := &file_cadestro_v1_control_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2534,7 +2534,7 @@ func (x *RemoveDeviceLabelRequest) String() string {
 func (*RemoveDeviceLabelRequest) ProtoMessage() {}
 
 func (x *RemoveDeviceLabelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[38]
+	mi := &file_cadestro_v1_control_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2547,7 +2547,7 @@ func (x *RemoveDeviceLabelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveDeviceLabelRequest.ProtoReflect.Descriptor instead.
 func (*RemoveDeviceLabelRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{38}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *RemoveDeviceLabelRequest) GetId() string {
@@ -2573,7 +2573,7 @@ type UpdateDeviceResponse struct {
 
 func (x *UpdateDeviceResponse) Reset() {
 	*x = UpdateDeviceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[39]
+	mi := &file_cadestro_v1_control_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2585,7 +2585,7 @@ func (x *UpdateDeviceResponse) String() string {
 func (*UpdateDeviceResponse) ProtoMessage() {}
 
 func (x *UpdateDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[39]
+	mi := &file_cadestro_v1_control_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2598,7 +2598,7 @@ func (x *UpdateDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{39}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *UpdateDeviceResponse) GetDevice() *Device {
@@ -2618,7 +2618,7 @@ type DeleteDeviceRequest struct {
 
 func (x *DeleteDeviceRequest) Reset() {
 	*x = DeleteDeviceRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[40]
+	mi := &file_cadestro_v1_control_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2630,7 +2630,7 @@ func (x *DeleteDeviceRequest) String() string {
 func (*DeleteDeviceRequest) ProtoMessage() {}
 
 func (x *DeleteDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[40]
+	mi := &file_cadestro_v1_control_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2643,7 +2643,7 @@ func (x *DeleteDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDeviceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{40}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *DeleteDeviceRequest) GetId() string {
@@ -2661,7 +2661,7 @@ type DeleteDeviceResponse struct {
 
 func (x *DeleteDeviceResponse) Reset() {
 	*x = DeleteDeviceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[41]
+	mi := &file_cadestro_v1_control_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2673,7 +2673,7 @@ func (x *DeleteDeviceResponse) String() string {
 func (*DeleteDeviceResponse) ProtoMessage() {}
 
 func (x *DeleteDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[41]
+	mi := &file_cadestro_v1_control_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2686,7 +2686,7 @@ func (x *DeleteDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDeviceResponse.ProtoReflect.Descriptor instead.
 func (*DeleteDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{41}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{41}
 }
 
 // Device assignment (admin-only)
@@ -2709,7 +2709,7 @@ type AssignDeviceRequest struct {
 
 func (x *AssignDeviceRequest) Reset() {
 	*x = AssignDeviceRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[42]
+	mi := &file_cadestro_v1_control_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2721,7 +2721,7 @@ func (x *AssignDeviceRequest) String() string {
 func (*AssignDeviceRequest) ProtoMessage() {}
 
 func (x *AssignDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[42]
+	mi := &file_cadestro_v1_control_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2734,7 +2734,7 @@ func (x *AssignDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignDeviceRequest.ProtoReflect.Descriptor instead.
 func (*AssignDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{42}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *AssignDeviceRequest) GetDeviceId() string {
@@ -2781,7 +2781,7 @@ type AssignDeviceResponse struct {
 
 func (x *AssignDeviceResponse) Reset() {
 	*x = AssignDeviceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[43]
+	mi := &file_cadestro_v1_control_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2793,7 +2793,7 @@ func (x *AssignDeviceResponse) String() string {
 func (*AssignDeviceResponse) ProtoMessage() {}
 
 func (x *AssignDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[43]
+	mi := &file_cadestro_v1_control_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2806,7 +2806,7 @@ func (x *AssignDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignDeviceResponse.ProtoReflect.Descriptor instead.
 func (*AssignDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{43}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *AssignDeviceResponse) GetDevice() *Device {
@@ -2831,7 +2831,7 @@ type UnassignDeviceRequest struct {
 
 func (x *UnassignDeviceRequest) Reset() {
 	*x = UnassignDeviceRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[44]
+	mi := &file_cadestro_v1_control_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2843,7 +2843,7 @@ func (x *UnassignDeviceRequest) String() string {
 func (*UnassignDeviceRequest) ProtoMessage() {}
 
 func (x *UnassignDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[44]
+	mi := &file_cadestro_v1_control_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2856,7 +2856,7 @@ func (x *UnassignDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnassignDeviceRequest.ProtoReflect.Descriptor instead.
 func (*UnassignDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{44}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *UnassignDeviceRequest) GetDeviceId() string {
@@ -2889,7 +2889,7 @@ type UnassignDeviceResponse struct {
 
 func (x *UnassignDeviceResponse) Reset() {
 	*x = UnassignDeviceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[45]
+	mi := &file_cadestro_v1_control_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2901,7 +2901,7 @@ func (x *UnassignDeviceResponse) String() string {
 func (*UnassignDeviceResponse) ProtoMessage() {}
 
 func (x *UnassignDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[45]
+	mi := &file_cadestro_v1_control_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2914,7 +2914,7 @@ func (x *UnassignDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnassignDeviceResponse.ProtoReflect.Descriptor instead.
 func (*UnassignDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{45}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *UnassignDeviceResponse) GetDevice() *Device {
@@ -2930,7 +2930,7 @@ type DeviceAssignee struct {
 	// Subset of AssignmentTargetType: only USER and USER_GROUP are valid
 	// values for a device assignee. DEVICE and DEVICE_GROUP are rejected
 	// at write time.
-	Type          AssignmentTargetType `protobuf:"varint,2,opt,name=type,proto3,enum=powermanage.v1.AssignmentTargetType" json:"type,omitempty"`
+	Type          AssignmentTargetType `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.AssignmentTargetType" json:"type,omitempty"`
 	Name          string               `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"` // User email or group name
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2938,7 +2938,7 @@ type DeviceAssignee struct {
 
 func (x *DeviceAssignee) Reset() {
 	*x = DeviceAssignee{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[46]
+	mi := &file_cadestro_v1_control_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2950,7 +2950,7 @@ func (x *DeviceAssignee) String() string {
 func (*DeviceAssignee) ProtoMessage() {}
 
 func (x *DeviceAssignee) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[46]
+	mi := &file_cadestro_v1_control_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2963,7 +2963,7 @@ func (x *DeviceAssignee) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceAssignee.ProtoReflect.Descriptor instead.
 func (*DeviceAssignee) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{46}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *DeviceAssignee) GetId() string {
@@ -2997,7 +2997,7 @@ type ListDeviceAssigneesRequest struct {
 
 func (x *ListDeviceAssigneesRequest) Reset() {
 	*x = ListDeviceAssigneesRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[47]
+	mi := &file_cadestro_v1_control_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3009,7 +3009,7 @@ func (x *ListDeviceAssigneesRequest) String() string {
 func (*ListDeviceAssigneesRequest) ProtoMessage() {}
 
 func (x *ListDeviceAssigneesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[47]
+	mi := &file_cadestro_v1_control_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3022,7 +3022,7 @@ func (x *ListDeviceAssigneesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDeviceAssigneesRequest.ProtoReflect.Descriptor instead.
 func (*ListDeviceAssigneesRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{47}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *ListDeviceAssigneesRequest) GetDeviceId() string {
@@ -3041,7 +3041,7 @@ type ListDeviceAssigneesResponse struct {
 
 func (x *ListDeviceAssigneesResponse) Reset() {
 	*x = ListDeviceAssigneesResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[48]
+	mi := &file_cadestro_v1_control_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3053,7 +3053,7 @@ func (x *ListDeviceAssigneesResponse) String() string {
 func (*ListDeviceAssigneesResponse) ProtoMessage() {}
 
 func (x *ListDeviceAssigneesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[48]
+	mi := &file_cadestro_v1_control_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3066,7 +3066,7 @@ func (x *ListDeviceAssigneesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDeviceAssigneesResponse.ProtoReflect.Descriptor instead.
 func (*ListDeviceAssigneesResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{48}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *ListDeviceAssigneesResponse) GetAssignees() []*DeviceAssignee {
@@ -3089,7 +3089,7 @@ type SetDeviceSyncIntervalRequest struct {
 
 func (x *SetDeviceSyncIntervalRequest) Reset() {
 	*x = SetDeviceSyncIntervalRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[49]
+	mi := &file_cadestro_v1_control_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3101,7 +3101,7 @@ func (x *SetDeviceSyncIntervalRequest) String() string {
 func (*SetDeviceSyncIntervalRequest) ProtoMessage() {}
 
 func (x *SetDeviceSyncIntervalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[49]
+	mi := &file_cadestro_v1_control_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3114,7 +3114,7 @@ func (x *SetDeviceSyncIntervalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetDeviceSyncIntervalRequest.ProtoReflect.Descriptor instead.
 func (*SetDeviceSyncIntervalRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{49}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *SetDeviceSyncIntervalRequest) GetId() string {
@@ -3144,7 +3144,7 @@ type SetDeviceInventoryIntervalRequest struct {
 
 func (x *SetDeviceInventoryIntervalRequest) Reset() {
 	*x = SetDeviceInventoryIntervalRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[50]
+	mi := &file_cadestro_v1_control_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3156,7 +3156,7 @@ func (x *SetDeviceInventoryIntervalRequest) String() string {
 func (*SetDeviceInventoryIntervalRequest) ProtoMessage() {}
 
 func (x *SetDeviceInventoryIntervalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[50]
+	mi := &file_cadestro_v1_control_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3169,7 +3169,7 @@ func (x *SetDeviceInventoryIntervalRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use SetDeviceInventoryIntervalRequest.ProtoReflect.Descriptor instead.
 func (*SetDeviceInventoryIntervalRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{50}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *SetDeviceInventoryIntervalRequest) GetId() string {
@@ -3205,7 +3205,7 @@ type RegistrationToken struct {
 
 func (x *RegistrationToken) Reset() {
 	*x = RegistrationToken{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[51]
+	mi := &file_cadestro_v1_control_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3217,7 +3217,7 @@ func (x *RegistrationToken) String() string {
 func (*RegistrationToken) ProtoMessage() {}
 
 func (x *RegistrationToken) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[51]
+	mi := &file_cadestro_v1_control_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3230,7 +3230,7 @@ func (x *RegistrationToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistrationToken.ProtoReflect.Descriptor instead.
 func (*RegistrationToken) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{51}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RegistrationToken) GetId() string {
@@ -3331,7 +3331,7 @@ type CreateTokenRequest struct {
 
 func (x *CreateTokenRequest) Reset() {
 	*x = CreateTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[52]
+	mi := &file_cadestro_v1_control_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3343,7 +3343,7 @@ func (x *CreateTokenRequest) String() string {
 func (*CreateTokenRequest) ProtoMessage() {}
 
 func (x *CreateTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[52]
+	mi := &file_cadestro_v1_control_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3356,7 +3356,7 @@ func (x *CreateTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTokenRequest.ProtoReflect.Descriptor instead.
 func (*CreateTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{52}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *CreateTokenRequest) GetName() string {
@@ -3407,7 +3407,7 @@ type CreateTokenResponse struct {
 
 func (x *CreateTokenResponse) Reset() {
 	*x = CreateTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[53]
+	mi := &file_cadestro_v1_control_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3419,7 +3419,7 @@ func (x *CreateTokenResponse) String() string {
 func (*CreateTokenResponse) ProtoMessage() {}
 
 func (x *CreateTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[53]
+	mi := &file_cadestro_v1_control_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3432,7 +3432,7 @@ func (x *CreateTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTokenResponse.ProtoReflect.Descriptor instead.
 func (*CreateTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{53}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *CreateTokenResponse) GetToken() *RegistrationToken {
@@ -3462,7 +3462,7 @@ type ListTokensRequest struct {
 
 func (x *ListTokensRequest) Reset() {
 	*x = ListTokensRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[54]
+	mi := &file_cadestro_v1_control_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3474,7 +3474,7 @@ func (x *ListTokensRequest) String() string {
 func (*ListTokensRequest) ProtoMessage() {}
 
 func (x *ListTokensRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[54]
+	mi := &file_cadestro_v1_control_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3487,7 +3487,7 @@ func (x *ListTokensRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTokensRequest.ProtoReflect.Descriptor instead.
 func (*ListTokensRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{54}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ListTokensRequest) GetPageSize() int32 {
@@ -3522,7 +3522,7 @@ type ListTokensResponse struct {
 
 func (x *ListTokensResponse) Reset() {
 	*x = ListTokensResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[55]
+	mi := &file_cadestro_v1_control_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3534,7 +3534,7 @@ func (x *ListTokensResponse) String() string {
 func (*ListTokensResponse) ProtoMessage() {}
 
 func (x *ListTokensResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[55]
+	mi := &file_cadestro_v1_control_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3547,7 +3547,7 @@ func (x *ListTokensResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTokensResponse.ProtoReflect.Descriptor instead.
 func (*ListTokensResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{55}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *ListTokensResponse) GetTokens() []*RegistrationToken {
@@ -3581,7 +3581,7 @@ type GetTokenRequest struct {
 
 func (x *GetTokenRequest) Reset() {
 	*x = GetTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[56]
+	mi := &file_cadestro_v1_control_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3593,7 +3593,7 @@ func (x *GetTokenRequest) String() string {
 func (*GetTokenRequest) ProtoMessage() {}
 
 func (x *GetTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[56]
+	mi := &file_cadestro_v1_control_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3606,7 +3606,7 @@ func (x *GetTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTokenRequest.ProtoReflect.Descriptor instead.
 func (*GetTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{56}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *GetTokenRequest) GetId() string {
@@ -3625,7 +3625,7 @@ type GetTokenResponse struct {
 
 func (x *GetTokenResponse) Reset() {
 	*x = GetTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[57]
+	mi := &file_cadestro_v1_control_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3637,7 +3637,7 @@ func (x *GetTokenResponse) String() string {
 func (*GetTokenResponse) ProtoMessage() {}
 
 func (x *GetTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[57]
+	mi := &file_cadestro_v1_control_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3650,7 +3650,7 @@ func (x *GetTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTokenResponse.ProtoReflect.Descriptor instead.
 func (*GetTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{57}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *GetTokenResponse) GetToken() *RegistrationToken {
@@ -3673,7 +3673,7 @@ type RenameTokenRequest struct {
 
 func (x *RenameTokenRequest) Reset() {
 	*x = RenameTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[58]
+	mi := &file_cadestro_v1_control_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3685,7 +3685,7 @@ func (x *RenameTokenRequest) String() string {
 func (*RenameTokenRequest) ProtoMessage() {}
 
 func (x *RenameTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[58]
+	mi := &file_cadestro_v1_control_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3698,7 +3698,7 @@ func (x *RenameTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameTokenRequest.ProtoReflect.Descriptor instead.
 func (*RenameTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{58}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *RenameTokenRequest) GetId() string {
@@ -3726,7 +3726,7 @@ type SetTokenDisabledRequest struct {
 
 func (x *SetTokenDisabledRequest) Reset() {
 	*x = SetTokenDisabledRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[59]
+	mi := &file_cadestro_v1_control_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3738,7 +3738,7 @@ func (x *SetTokenDisabledRequest) String() string {
 func (*SetTokenDisabledRequest) ProtoMessage() {}
 
 func (x *SetTokenDisabledRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[59]
+	mi := &file_cadestro_v1_control_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3751,7 +3751,7 @@ func (x *SetTokenDisabledRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetTokenDisabledRequest.ProtoReflect.Descriptor instead.
 func (*SetTokenDisabledRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{59}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *SetTokenDisabledRequest) GetId() string {
@@ -3777,7 +3777,7 @@ type UpdateTokenResponse struct {
 
 func (x *UpdateTokenResponse) Reset() {
 	*x = UpdateTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[60]
+	mi := &file_cadestro_v1_control_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3789,7 +3789,7 @@ func (x *UpdateTokenResponse) String() string {
 func (*UpdateTokenResponse) ProtoMessage() {}
 
 func (x *UpdateTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[60]
+	mi := &file_cadestro_v1_control_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3802,7 +3802,7 @@ func (x *UpdateTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTokenResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{60}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *UpdateTokenResponse) GetToken() *RegistrationToken {
@@ -3822,7 +3822,7 @@ type DeleteTokenRequest struct {
 
 func (x *DeleteTokenRequest) Reset() {
 	*x = DeleteTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[61]
+	mi := &file_cadestro_v1_control_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3834,7 +3834,7 @@ func (x *DeleteTokenRequest) String() string {
 func (*DeleteTokenRequest) ProtoMessage() {}
 
 func (x *DeleteTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[61]
+	mi := &file_cadestro_v1_control_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3847,7 +3847,7 @@ func (x *DeleteTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTokenRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{61}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *DeleteTokenRequest) GetId() string {
@@ -3865,7 +3865,7 @@ type DeleteTokenResponse struct {
 
 func (x *DeleteTokenResponse) Reset() {
 	*x = DeleteTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[62]
+	mi := &file_cadestro_v1_control_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3877,7 +3877,7 @@ func (x *DeleteTokenResponse) String() string {
 func (*DeleteTokenResponse) ProtoMessage() {}
 
 func (x *DeleteTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[62]
+	mi := &file_cadestro_v1_control_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3890,7 +3890,7 @@ func (x *DeleteTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTokenResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{62}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{62}
 }
 
 type ManagedAction struct {
@@ -3898,8 +3898,8 @@ type ManagedAction struct {
 	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description    string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Type           ActionType             `protobuf:"varint,4,opt,name=type,proto3,enum=powermanage.v1.ActionType" json:"type,omitempty"`
-	DesiredState   DesiredState           `protobuf:"varint,5,opt,name=desired_state,json=desiredState,proto3,enum=powermanage.v1.DesiredState" json:"desired_state,omitempty"`
+	Type           ActionType             `protobuf:"varint,4,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty"`
+	DesiredState   DesiredState           `protobuf:"varint,5,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
 	TimeoutSeconds int32                  `protobuf:"varint,6,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
 	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	CreatedBy      string                 `protobuf:"bytes,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
@@ -3932,7 +3932,7 @@ type ManagedAction struct {
 
 func (x *ManagedAction) Reset() {
 	*x = ManagedAction{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[63]
+	mi := &file_cadestro_v1_control_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3944,7 +3944,7 @@ func (x *ManagedAction) String() string {
 func (*ManagedAction) ProtoMessage() {}
 
 func (x *ManagedAction) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[63]
+	mi := &file_cadestro_v1_control_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3957,7 +3957,7 @@ func (x *ManagedAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManagedAction.ProtoReflect.Descriptor instead.
 func (*ManagedAction) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{63}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ManagedAction) GetId() string {
@@ -4319,9 +4319,9 @@ type CreateActionRequest struct {
 	// @gotags: validate:"omitempty,max=1024"
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
 	// @gotags: validate:"required,ne=0"
-	Type ActionType `protobuf:"varint,3,opt,name=type,proto3,enum=powermanage.v1.ActionType" json:"type,omitempty" validate:"required,ne=0"`
+	Type ActionType `protobuf:"varint,3,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty" validate:"required,ne=0"`
 	// @gotags: validate:"omitempty"
-	DesiredState DesiredState `protobuf:"varint,4,opt,name=desired_state,json=desiredState,proto3,enum=powermanage.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
+	DesiredState DesiredState `protobuf:"varint,4,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
 	// @gotags: validate:"omitempty,gte=0,lte=3600"
 	TimeoutSeconds int32 `protobuf:"varint,5,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty" validate:"omitempty,gte=0,lte=3600"`
 	// @gotags: validate:"omitempty"
@@ -4353,7 +4353,7 @@ type CreateActionRequest struct {
 
 func (x *CreateActionRequest) Reset() {
 	*x = CreateActionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[64]
+	mi := &file_cadestro_v1_control_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4365,7 +4365,7 @@ func (x *CreateActionRequest) String() string {
 func (*CreateActionRequest) ProtoMessage() {}
 
 func (x *CreateActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[64]
+	mi := &file_cadestro_v1_control_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4378,7 +4378,7 @@ func (x *CreateActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateActionRequest.ProtoReflect.Descriptor instead.
 func (*CreateActionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{64}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *CreateActionRequest) GetName() string {
@@ -4731,7 +4731,7 @@ type CreateActionResponse struct {
 
 func (x *CreateActionResponse) Reset() {
 	*x = CreateActionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[65]
+	mi := &file_cadestro_v1_control_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4743,7 +4743,7 @@ func (x *CreateActionResponse) String() string {
 func (*CreateActionResponse) ProtoMessage() {}
 
 func (x *CreateActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[65]
+	mi := &file_cadestro_v1_control_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4756,7 +4756,7 @@ func (x *CreateActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateActionResponse.ProtoReflect.Descriptor instead.
 func (*CreateActionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{65}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *CreateActionResponse) GetAction() *ManagedAction {
@@ -4776,7 +4776,7 @@ type GetActionRequest struct {
 
 func (x *GetActionRequest) Reset() {
 	*x = GetActionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[66]
+	mi := &file_cadestro_v1_control_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4788,7 +4788,7 @@ func (x *GetActionRequest) String() string {
 func (*GetActionRequest) ProtoMessage() {}
 
 func (x *GetActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[66]
+	mi := &file_cadestro_v1_control_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4801,7 +4801,7 @@ func (x *GetActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActionRequest.ProtoReflect.Descriptor instead.
 func (*GetActionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{66}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GetActionRequest) GetId() string {
@@ -4820,7 +4820,7 @@ type GetActionResponse struct {
 
 func (x *GetActionResponse) Reset() {
 	*x = GetActionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[67]
+	mi := &file_cadestro_v1_control_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4832,7 +4832,7 @@ func (x *GetActionResponse) String() string {
 func (*GetActionResponse) ProtoMessage() {}
 
 func (x *GetActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[67]
+	mi := &file_cadestro_v1_control_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4845,7 +4845,7 @@ func (x *GetActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActionResponse.ProtoReflect.Descriptor instead.
 func (*GetActionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{67}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *GetActionResponse) GetAction() *ManagedAction {
@@ -4861,7 +4861,7 @@ type ListActionsRequest struct {
 	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
 	// @gotags: validate:"omitempty"
 	PageToken      string     `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
-	TypeFilter     ActionType `protobuf:"varint,3,opt,name=type_filter,json=typeFilter,proto3,enum=powermanage.v1.ActionType" json:"type_filter,omitempty"`
+	TypeFilter     ActionType `protobuf:"varint,3,opt,name=type_filter,json=typeFilter,proto3,enum=cadestro.v1.ActionType" json:"type_filter,omitempty"`
 	UnassignedOnly bool       `protobuf:"varint,4,opt,name=unassigned_only,json=unassignedOnly,proto3" json:"unassigned_only,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -4869,7 +4869,7 @@ type ListActionsRequest struct {
 
 func (x *ListActionsRequest) Reset() {
 	*x = ListActionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[68]
+	mi := &file_cadestro_v1_control_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4881,7 +4881,7 @@ func (x *ListActionsRequest) String() string {
 func (*ListActionsRequest) ProtoMessage() {}
 
 func (x *ListActionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[68]
+	mi := &file_cadestro_v1_control_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4894,7 +4894,7 @@ func (x *ListActionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActionsRequest.ProtoReflect.Descriptor instead.
 func (*ListActionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{68}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *ListActionsRequest) GetPageSize() int32 {
@@ -4936,7 +4936,7 @@ type ListActionsResponse struct {
 
 func (x *ListActionsResponse) Reset() {
 	*x = ListActionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[69]
+	mi := &file_cadestro_v1_control_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4948,7 +4948,7 @@ func (x *ListActionsResponse) String() string {
 func (*ListActionsResponse) ProtoMessage() {}
 
 func (x *ListActionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[69]
+	mi := &file_cadestro_v1_control_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4961,7 +4961,7 @@ func (x *ListActionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActionsResponse.ProtoReflect.Descriptor instead.
 func (*ListActionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{69}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *ListActionsResponse) GetActions() []*ManagedAction {
@@ -4997,7 +4997,7 @@ type RenameActionRequest struct {
 
 func (x *RenameActionRequest) Reset() {
 	*x = RenameActionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[70]
+	mi := &file_cadestro_v1_control_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5009,7 +5009,7 @@ func (x *RenameActionRequest) String() string {
 func (*RenameActionRequest) ProtoMessage() {}
 
 func (x *RenameActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[70]
+	mi := &file_cadestro_v1_control_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5022,7 +5022,7 @@ func (x *RenameActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameActionRequest.ProtoReflect.Descriptor instead.
 func (*RenameActionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{70}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *RenameActionRequest) GetId() string {
@@ -5051,7 +5051,7 @@ type UpdateActionDescriptionRequest struct {
 
 func (x *UpdateActionDescriptionRequest) Reset() {
 	*x = UpdateActionDescriptionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[71]
+	mi := &file_cadestro_v1_control_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5063,7 +5063,7 @@ func (x *UpdateActionDescriptionRequest) String() string {
 func (*UpdateActionDescriptionRequest) ProtoMessage() {}
 
 func (x *UpdateActionDescriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[71]
+	mi := &file_cadestro_v1_control_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5076,7 +5076,7 @@ func (x *UpdateActionDescriptionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateActionDescriptionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateActionDescriptionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{71}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *UpdateActionDescriptionRequest) GetId() string {
@@ -5098,7 +5098,7 @@ type UpdateActionParamsRequest struct {
 	// @gotags: validate:"required,ulid"
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
 	// @gotags: validate:"omitempty"
-	DesiredState DesiredState `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=powermanage.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
+	DesiredState DesiredState `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
 	// @gotags: validate:"omitempty,gte=0,lte=3600"
 	TimeoutSeconds int32 `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty" validate:"omitempty,gte=0,lte=3600"`
 	// @gotags: validate:"omitempty"
@@ -5130,7 +5130,7 @@ type UpdateActionParamsRequest struct {
 
 func (x *UpdateActionParamsRequest) Reset() {
 	*x = UpdateActionParamsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[72]
+	mi := &file_cadestro_v1_control_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5142,7 +5142,7 @@ func (x *UpdateActionParamsRequest) String() string {
 func (*UpdateActionParamsRequest) ProtoMessage() {}
 
 func (x *UpdateActionParamsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[72]
+	mi := &file_cadestro_v1_control_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5155,7 +5155,7 @@ func (x *UpdateActionParamsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateActionParamsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateActionParamsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{72}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *UpdateActionParamsRequest) GetId() string {
@@ -5494,7 +5494,7 @@ type UpdateActionResponse struct {
 
 func (x *UpdateActionResponse) Reset() {
 	*x = UpdateActionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[73]
+	mi := &file_cadestro_v1_control_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5506,7 +5506,7 @@ func (x *UpdateActionResponse) String() string {
 func (*UpdateActionResponse) ProtoMessage() {}
 
 func (x *UpdateActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[73]
+	mi := &file_cadestro_v1_control_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5519,7 +5519,7 @@ func (x *UpdateActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateActionResponse.ProtoReflect.Descriptor instead.
 func (*UpdateActionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{73}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *UpdateActionResponse) GetAction() *ManagedAction {
@@ -5539,7 +5539,7 @@ type DeleteActionRequest struct {
 
 func (x *DeleteActionRequest) Reset() {
 	*x = DeleteActionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[74]
+	mi := &file_cadestro_v1_control_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5551,7 +5551,7 @@ func (x *DeleteActionRequest) String() string {
 func (*DeleteActionRequest) ProtoMessage() {}
 
 func (x *DeleteActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[74]
+	mi := &file_cadestro_v1_control_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5564,7 +5564,7 @@ func (x *DeleteActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteActionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteActionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{74}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *DeleteActionRequest) GetId() string {
@@ -5582,7 +5582,7 @@ type DeleteActionResponse struct {
 
 func (x *DeleteActionResponse) Reset() {
 	*x = DeleteActionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[75]
+	mi := &file_cadestro_v1_control_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5594,7 +5594,7 @@ func (x *DeleteActionResponse) String() string {
 func (*DeleteActionResponse) ProtoMessage() {}
 
 func (x *DeleteActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[75]
+	mi := &file_cadestro_v1_control_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5607,7 +5607,7 @@ func (x *DeleteActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteActionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteActionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{75}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{75}
 }
 
 type ActionSet struct {
@@ -5627,14 +5627,14 @@ type ActionSet struct {
 	// Failure policy resolved onto every occurrence in the compiled manifest.
 	// CONTINUE is the default; STOP must be selected explicitly.
 	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,9,opt,name=on_failure,json=onFailure,proto3,enum=powermanage.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,9,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ActionSet) Reset() {
 	*x = ActionSet{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[76]
+	mi := &file_cadestro_v1_control_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5646,7 +5646,7 @@ func (x *ActionSet) String() string {
 func (*ActionSet) ProtoMessage() {}
 
 func (x *ActionSet) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[76]
+	mi := &file_cadestro_v1_control_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5659,7 +5659,7 @@ func (x *ActionSet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionSet.ProtoReflect.Descriptor instead.
 func (*ActionSet) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{76}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *ActionSet) GetId() string {
@@ -5735,14 +5735,14 @@ type ActionSetMember struct {
 	// @gotags: validate:"omitempty,gte=0"
 	SortOrder     int32      `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty" validate:"omitempty,gte=0"`
 	ActionName    string     `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
-	ActionType    ActionType `protobuf:"varint,4,opt,name=action_type,json=actionType,proto3,enum=powermanage.v1.ActionType" json:"action_type,omitempty"`
+	ActionType    ActionType `protobuf:"varint,4,opt,name=action_type,json=actionType,proto3,enum=cadestro.v1.ActionType" json:"action_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ActionSetMember) Reset() {
 	*x = ActionSetMember{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[77]
+	mi := &file_cadestro_v1_control_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5754,7 +5754,7 @@ func (x *ActionSetMember) String() string {
 func (*ActionSetMember) ProtoMessage() {}
 
 func (x *ActionSetMember) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[77]
+	mi := &file_cadestro_v1_control_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5767,7 +5767,7 @@ func (x *ActionSetMember) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionSetMember.ProtoReflect.Descriptor instead.
 func (*ActionSetMember) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{77}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *ActionSetMember) GetActionId() string {
@@ -5810,14 +5810,14 @@ type CreateActionSetRequest struct {
 	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
 	// CONTINUE is the default; STOP must be selected explicitly.
 	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,4,opt,name=on_failure,json=onFailure,proto3,enum=powermanage.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,4,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateActionSetRequest) Reset() {
 	*x = CreateActionSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[78]
+	mi := &file_cadestro_v1_control_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5829,7 +5829,7 @@ func (x *CreateActionSetRequest) String() string {
 func (*CreateActionSetRequest) ProtoMessage() {}
 
 func (x *CreateActionSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[78]
+	mi := &file_cadestro_v1_control_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5842,7 +5842,7 @@ func (x *CreateActionSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateActionSetRequest.ProtoReflect.Descriptor instead.
 func (*CreateActionSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{78}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *CreateActionSetRequest) GetName() string {
@@ -5882,7 +5882,7 @@ type CreateActionSetResponse struct {
 
 func (x *CreateActionSetResponse) Reset() {
 	*x = CreateActionSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[79]
+	mi := &file_cadestro_v1_control_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5894,7 +5894,7 @@ func (x *CreateActionSetResponse) String() string {
 func (*CreateActionSetResponse) ProtoMessage() {}
 
 func (x *CreateActionSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[79]
+	mi := &file_cadestro_v1_control_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5907,7 +5907,7 @@ func (x *CreateActionSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateActionSetResponse.ProtoReflect.Descriptor instead.
 func (*CreateActionSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{79}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *CreateActionSetResponse) GetSet() *ActionSet {
@@ -5927,7 +5927,7 @@ type GetActionSetRequest struct {
 
 func (x *GetActionSetRequest) Reset() {
 	*x = GetActionSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[80]
+	mi := &file_cadestro_v1_control_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5939,7 +5939,7 @@ func (x *GetActionSetRequest) String() string {
 func (*GetActionSetRequest) ProtoMessage() {}
 
 func (x *GetActionSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[80]
+	mi := &file_cadestro_v1_control_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5952,7 +5952,7 @@ func (x *GetActionSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActionSetRequest.ProtoReflect.Descriptor instead.
 func (*GetActionSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{80}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *GetActionSetRequest) GetId() string {
@@ -5972,7 +5972,7 @@ type GetActionSetResponse struct {
 
 func (x *GetActionSetResponse) Reset() {
 	*x = GetActionSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[81]
+	mi := &file_cadestro_v1_control_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5984,7 +5984,7 @@ func (x *GetActionSetResponse) String() string {
 func (*GetActionSetResponse) ProtoMessage() {}
 
 func (x *GetActionSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[81]
+	mi := &file_cadestro_v1_control_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5997,7 +5997,7 @@ func (x *GetActionSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActionSetResponse.ProtoReflect.Descriptor instead.
 func (*GetActionSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{81}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *GetActionSetResponse) GetSet() *ActionSet {
@@ -6027,7 +6027,7 @@ type ListActionSetsRequest struct {
 
 func (x *ListActionSetsRequest) Reset() {
 	*x = ListActionSetsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[82]
+	mi := &file_cadestro_v1_control_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6039,7 +6039,7 @@ func (x *ListActionSetsRequest) String() string {
 func (*ListActionSetsRequest) ProtoMessage() {}
 
 func (x *ListActionSetsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[82]
+	mi := &file_cadestro_v1_control_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6052,7 +6052,7 @@ func (x *ListActionSetsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActionSetsRequest.ProtoReflect.Descriptor instead.
 func (*ListActionSetsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{82}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *ListActionSetsRequest) GetPageSize() int32 {
@@ -6087,7 +6087,7 @@ type ListActionSetsResponse struct {
 
 func (x *ListActionSetsResponse) Reset() {
 	*x = ListActionSetsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[83]
+	mi := &file_cadestro_v1_control_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6099,7 +6099,7 @@ func (x *ListActionSetsResponse) String() string {
 func (*ListActionSetsResponse) ProtoMessage() {}
 
 func (x *ListActionSetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[83]
+	mi := &file_cadestro_v1_control_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6112,7 +6112,7 @@ func (x *ListActionSetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActionSetsResponse.ProtoReflect.Descriptor instead.
 func (*ListActionSetsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{83}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *ListActionSetsResponse) GetSets() []*ActionSet {
@@ -6148,7 +6148,7 @@ type RenameActionSetRequest struct {
 
 func (x *RenameActionSetRequest) Reset() {
 	*x = RenameActionSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[84]
+	mi := &file_cadestro_v1_control_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6160,7 +6160,7 @@ func (x *RenameActionSetRequest) String() string {
 func (*RenameActionSetRequest) ProtoMessage() {}
 
 func (x *RenameActionSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[84]
+	mi := &file_cadestro_v1_control_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6173,7 +6173,7 @@ func (x *RenameActionSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameActionSetRequest.ProtoReflect.Descriptor instead.
 func (*RenameActionSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{84}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *RenameActionSetRequest) GetId() string {
@@ -6202,7 +6202,7 @@ type UpdateActionSetDescriptionRequest struct {
 
 func (x *UpdateActionSetDescriptionRequest) Reset() {
 	*x = UpdateActionSetDescriptionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[85]
+	mi := &file_cadestro_v1_control_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6214,7 +6214,7 @@ func (x *UpdateActionSetDescriptionRequest) String() string {
 func (*UpdateActionSetDescriptionRequest) ProtoMessage() {}
 
 func (x *UpdateActionSetDescriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[85]
+	mi := &file_cadestro_v1_control_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6227,7 +6227,7 @@ func (x *UpdateActionSetDescriptionRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use UpdateActionSetDescriptionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateActionSetDescriptionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{85}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *UpdateActionSetDescriptionRequest) GetId() string {
@@ -6253,14 +6253,14 @@ type UpdateActionSetScheduleRequest struct {
 	Schedule *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
 	// Replacement failure policy. CONTINUE is the default.
 	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=powermanage.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateActionSetScheduleRequest) Reset() {
 	*x = UpdateActionSetScheduleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[86]
+	mi := &file_cadestro_v1_control_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6272,7 +6272,7 @@ func (x *UpdateActionSetScheduleRequest) String() string {
 func (*UpdateActionSetScheduleRequest) ProtoMessage() {}
 
 func (x *UpdateActionSetScheduleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[86]
+	mi := &file_cadestro_v1_control_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6285,7 +6285,7 @@ func (x *UpdateActionSetScheduleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateActionSetScheduleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateActionSetScheduleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{86}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *UpdateActionSetScheduleRequest) GetId() string {
@@ -6318,7 +6318,7 @@ type UpdateActionSetResponse struct {
 
 func (x *UpdateActionSetResponse) Reset() {
 	*x = UpdateActionSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[87]
+	mi := &file_cadestro_v1_control_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6330,7 +6330,7 @@ func (x *UpdateActionSetResponse) String() string {
 func (*UpdateActionSetResponse) ProtoMessage() {}
 
 func (x *UpdateActionSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[87]
+	mi := &file_cadestro_v1_control_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6343,7 +6343,7 @@ func (x *UpdateActionSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateActionSetResponse.ProtoReflect.Descriptor instead.
 func (*UpdateActionSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{87}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *UpdateActionSetResponse) GetSet() *ActionSet {
@@ -6363,7 +6363,7 @@ type DeleteActionSetRequest struct {
 
 func (x *DeleteActionSetRequest) Reset() {
 	*x = DeleteActionSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[88]
+	mi := &file_cadestro_v1_control_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6375,7 +6375,7 @@ func (x *DeleteActionSetRequest) String() string {
 func (*DeleteActionSetRequest) ProtoMessage() {}
 
 func (x *DeleteActionSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[88]
+	mi := &file_cadestro_v1_control_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6388,7 +6388,7 @@ func (x *DeleteActionSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteActionSetRequest.ProtoReflect.Descriptor instead.
 func (*DeleteActionSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{88}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *DeleteActionSetRequest) GetId() string {
@@ -6406,7 +6406,7 @@ type DeleteActionSetResponse struct {
 
 func (x *DeleteActionSetResponse) Reset() {
 	*x = DeleteActionSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[89]
+	mi := &file_cadestro_v1_control_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6418,7 +6418,7 @@ func (x *DeleteActionSetResponse) String() string {
 func (*DeleteActionSetResponse) ProtoMessage() {}
 
 func (x *DeleteActionSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[89]
+	mi := &file_cadestro_v1_control_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6431,7 +6431,7 @@ func (x *DeleteActionSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteActionSetResponse.ProtoReflect.Descriptor instead.
 func (*DeleteActionSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{89}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{89}
 }
 
 type AddActionToSetRequest struct {
@@ -6448,7 +6448,7 @@ type AddActionToSetRequest struct {
 
 func (x *AddActionToSetRequest) Reset() {
 	*x = AddActionToSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[90]
+	mi := &file_cadestro_v1_control_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6460,7 +6460,7 @@ func (x *AddActionToSetRequest) String() string {
 func (*AddActionToSetRequest) ProtoMessage() {}
 
 func (x *AddActionToSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[90]
+	mi := &file_cadestro_v1_control_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6473,7 +6473,7 @@ func (x *AddActionToSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddActionToSetRequest.ProtoReflect.Descriptor instead.
 func (*AddActionToSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{90}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *AddActionToSetRequest) GetSetId() string {
@@ -6506,7 +6506,7 @@ type AddActionToSetResponse struct {
 
 func (x *AddActionToSetResponse) Reset() {
 	*x = AddActionToSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[91]
+	mi := &file_cadestro_v1_control_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6518,7 +6518,7 @@ func (x *AddActionToSetResponse) String() string {
 func (*AddActionToSetResponse) ProtoMessage() {}
 
 func (x *AddActionToSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[91]
+	mi := &file_cadestro_v1_control_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6531,7 +6531,7 @@ func (x *AddActionToSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddActionToSetResponse.ProtoReflect.Descriptor instead.
 func (*AddActionToSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{91}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *AddActionToSetResponse) GetSet() *ActionSet {
@@ -6553,7 +6553,7 @@ type RemoveActionFromSetRequest struct {
 
 func (x *RemoveActionFromSetRequest) Reset() {
 	*x = RemoveActionFromSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[92]
+	mi := &file_cadestro_v1_control_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6565,7 +6565,7 @@ func (x *RemoveActionFromSetRequest) String() string {
 func (*RemoveActionFromSetRequest) ProtoMessage() {}
 
 func (x *RemoveActionFromSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[92]
+	mi := &file_cadestro_v1_control_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6578,7 +6578,7 @@ func (x *RemoveActionFromSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveActionFromSetRequest.ProtoReflect.Descriptor instead.
 func (*RemoveActionFromSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{92}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *RemoveActionFromSetRequest) GetSetId() string {
@@ -6604,7 +6604,7 @@ type RemoveActionFromSetResponse struct {
 
 func (x *RemoveActionFromSetResponse) Reset() {
 	*x = RemoveActionFromSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[93]
+	mi := &file_cadestro_v1_control_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6616,7 +6616,7 @@ func (x *RemoveActionFromSetResponse) String() string {
 func (*RemoveActionFromSetResponse) ProtoMessage() {}
 
 func (x *RemoveActionFromSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[93]
+	mi := &file_cadestro_v1_control_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6629,7 +6629,7 @@ func (x *RemoveActionFromSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveActionFromSetResponse.ProtoReflect.Descriptor instead.
 func (*RemoveActionFromSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{93}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *RemoveActionFromSetResponse) GetSet() *ActionSet {
@@ -6653,7 +6653,7 @@ type ReorderActionInSetRequest struct {
 
 func (x *ReorderActionInSetRequest) Reset() {
 	*x = ReorderActionInSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[94]
+	mi := &file_cadestro_v1_control_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6665,7 +6665,7 @@ func (x *ReorderActionInSetRequest) String() string {
 func (*ReorderActionInSetRequest) ProtoMessage() {}
 
 func (x *ReorderActionInSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[94]
+	mi := &file_cadestro_v1_control_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6678,7 +6678,7 @@ func (x *ReorderActionInSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReorderActionInSetRequest.ProtoReflect.Descriptor instead.
 func (*ReorderActionInSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{94}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *ReorderActionInSetRequest) GetSetId() string {
@@ -6711,7 +6711,7 @@ type ReorderActionInSetResponse struct {
 
 func (x *ReorderActionInSetResponse) Reset() {
 	*x = ReorderActionInSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[95]
+	mi := &file_cadestro_v1_control_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6723,7 +6723,7 @@ func (x *ReorderActionInSetResponse) String() string {
 func (*ReorderActionInSetResponse) ProtoMessage() {}
 
 func (x *ReorderActionInSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[95]
+	mi := &file_cadestro_v1_control_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6736,7 +6736,7 @@ func (x *ReorderActionInSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReorderActionInSetResponse.ProtoReflect.Descriptor instead.
 func (*ReorderActionInSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{95}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *ReorderActionInSetResponse) GetSet() *ActionSet {
@@ -6766,7 +6766,7 @@ type Definition struct {
 
 func (x *Definition) Reset() {
 	*x = Definition{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[96]
+	mi := &file_cadestro_v1_control_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6778,7 +6778,7 @@ func (x *Definition) String() string {
 func (*Definition) ProtoMessage() {}
 
 func (x *Definition) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[96]
+	mi := &file_cadestro_v1_control_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6791,7 +6791,7 @@ func (x *Definition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Definition.ProtoReflect.Descriptor instead.
 func (*Definition) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{96}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *Definition) GetId() string {
@@ -6867,7 +6867,7 @@ type DefinitionMember struct {
 
 func (x *DefinitionMember) Reset() {
 	*x = DefinitionMember{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[97]
+	mi := &file_cadestro_v1_control_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6879,7 +6879,7 @@ func (x *DefinitionMember) String() string {
 func (*DefinitionMember) ProtoMessage() {}
 
 func (x *DefinitionMember) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[97]
+	mi := &file_cadestro_v1_control_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6892,7 +6892,7 @@ func (x *DefinitionMember) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DefinitionMember.ProtoReflect.Descriptor instead.
 func (*DefinitionMember) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{97}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *DefinitionMember) GetActionSetId() string {
@@ -6932,7 +6932,7 @@ type CreateDefinitionRequest struct {
 
 func (x *CreateDefinitionRequest) Reset() {
 	*x = CreateDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[98]
+	mi := &file_cadestro_v1_control_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6944,7 +6944,7 @@ func (x *CreateDefinitionRequest) String() string {
 func (*CreateDefinitionRequest) ProtoMessage() {}
 
 func (x *CreateDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[98]
+	mi := &file_cadestro_v1_control_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6957,7 +6957,7 @@ func (x *CreateDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*CreateDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{98}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *CreateDefinitionRequest) GetName() string {
@@ -6990,7 +6990,7 @@ type CreateDefinitionResponse struct {
 
 func (x *CreateDefinitionResponse) Reset() {
 	*x = CreateDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[99]
+	mi := &file_cadestro_v1_control_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7002,7 +7002,7 @@ func (x *CreateDefinitionResponse) String() string {
 func (*CreateDefinitionResponse) ProtoMessage() {}
 
 func (x *CreateDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[99]
+	mi := &file_cadestro_v1_control_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7015,7 +7015,7 @@ func (x *CreateDefinitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*CreateDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{99}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *CreateDefinitionResponse) GetDefinition() *Definition {
@@ -7035,7 +7035,7 @@ type GetDefinitionRequest struct {
 
 func (x *GetDefinitionRequest) Reset() {
 	*x = GetDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[100]
+	mi := &file_cadestro_v1_control_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7047,7 +7047,7 @@ func (x *GetDefinitionRequest) String() string {
 func (*GetDefinitionRequest) ProtoMessage() {}
 
 func (x *GetDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[100]
+	mi := &file_cadestro_v1_control_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7060,7 +7060,7 @@ func (x *GetDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*GetDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{100}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *GetDefinitionRequest) GetId() string {
@@ -7080,7 +7080,7 @@ type GetDefinitionResponse struct {
 
 func (x *GetDefinitionResponse) Reset() {
 	*x = GetDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[101]
+	mi := &file_cadestro_v1_control_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7092,7 +7092,7 @@ func (x *GetDefinitionResponse) String() string {
 func (*GetDefinitionResponse) ProtoMessage() {}
 
 func (x *GetDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[101]
+	mi := &file_cadestro_v1_control_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7105,7 +7105,7 @@ func (x *GetDefinitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*GetDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{101}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{101}
 }
 
 func (x *GetDefinitionResponse) GetDefinition() *Definition {
@@ -7134,7 +7134,7 @@ type ListDefinitionsRequest struct {
 
 func (x *ListDefinitionsRequest) Reset() {
 	*x = ListDefinitionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[102]
+	mi := &file_cadestro_v1_control_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7146,7 +7146,7 @@ func (x *ListDefinitionsRequest) String() string {
 func (*ListDefinitionsRequest) ProtoMessage() {}
 
 func (x *ListDefinitionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[102]
+	mi := &file_cadestro_v1_control_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7159,7 +7159,7 @@ func (x *ListDefinitionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDefinitionsRequest.ProtoReflect.Descriptor instead.
 func (*ListDefinitionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{102}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{102}
 }
 
 func (x *ListDefinitionsRequest) GetPageSize() int32 {
@@ -7187,7 +7187,7 @@ type ListDefinitionsResponse struct {
 
 func (x *ListDefinitionsResponse) Reset() {
 	*x = ListDefinitionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[103]
+	mi := &file_cadestro_v1_control_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7199,7 +7199,7 @@ func (x *ListDefinitionsResponse) String() string {
 func (*ListDefinitionsResponse) ProtoMessage() {}
 
 func (x *ListDefinitionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[103]
+	mi := &file_cadestro_v1_control_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7212,7 +7212,7 @@ func (x *ListDefinitionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDefinitionsResponse.ProtoReflect.Descriptor instead.
 func (*ListDefinitionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{103}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *ListDefinitionsResponse) GetDefinitions() []*Definition {
@@ -7248,7 +7248,7 @@ type RenameDefinitionRequest struct {
 
 func (x *RenameDefinitionRequest) Reset() {
 	*x = RenameDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[104]
+	mi := &file_cadestro_v1_control_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7260,7 +7260,7 @@ func (x *RenameDefinitionRequest) String() string {
 func (*RenameDefinitionRequest) ProtoMessage() {}
 
 func (x *RenameDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[104]
+	mi := &file_cadestro_v1_control_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7273,7 +7273,7 @@ func (x *RenameDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*RenameDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{104}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *RenameDefinitionRequest) GetId() string {
@@ -7302,7 +7302,7 @@ type UpdateDefinitionDescriptionRequest struct {
 
 func (x *UpdateDefinitionDescriptionRequest) Reset() {
 	*x = UpdateDefinitionDescriptionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[105]
+	mi := &file_cadestro_v1_control_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7314,7 +7314,7 @@ func (x *UpdateDefinitionDescriptionRequest) String() string {
 func (*UpdateDefinitionDescriptionRequest) ProtoMessage() {}
 
 func (x *UpdateDefinitionDescriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[105]
+	mi := &file_cadestro_v1_control_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7327,7 +7327,7 @@ func (x *UpdateDefinitionDescriptionRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use UpdateDefinitionDescriptionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDefinitionDescriptionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{105}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *UpdateDefinitionDescriptionRequest) GetId() string {
@@ -7358,7 +7358,7 @@ type UpdateDefinitionScheduleRequest struct {
 
 func (x *UpdateDefinitionScheduleRequest) Reset() {
 	*x = UpdateDefinitionScheduleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[106]
+	mi := &file_cadestro_v1_control_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7370,7 +7370,7 @@ func (x *UpdateDefinitionScheduleRequest) String() string {
 func (*UpdateDefinitionScheduleRequest) ProtoMessage() {}
 
 func (x *UpdateDefinitionScheduleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[106]
+	mi := &file_cadestro_v1_control_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7383,7 +7383,7 @@ func (x *UpdateDefinitionScheduleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDefinitionScheduleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDefinitionScheduleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{106}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *UpdateDefinitionScheduleRequest) GetId() string {
@@ -7409,7 +7409,7 @@ type UpdateDefinitionResponse struct {
 
 func (x *UpdateDefinitionResponse) Reset() {
 	*x = UpdateDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[107]
+	mi := &file_cadestro_v1_control_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7421,7 +7421,7 @@ func (x *UpdateDefinitionResponse) String() string {
 func (*UpdateDefinitionResponse) ProtoMessage() {}
 
 func (x *UpdateDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[107]
+	mi := &file_cadestro_v1_control_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7434,7 +7434,7 @@ func (x *UpdateDefinitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{107}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *UpdateDefinitionResponse) GetDefinition() *Definition {
@@ -7454,7 +7454,7 @@ type DeleteDefinitionRequest struct {
 
 func (x *DeleteDefinitionRequest) Reset() {
 	*x = DeleteDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[108]
+	mi := &file_cadestro_v1_control_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7466,7 +7466,7 @@ func (x *DeleteDefinitionRequest) String() string {
 func (*DeleteDefinitionRequest) ProtoMessage() {}
 
 func (x *DeleteDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[108]
+	mi := &file_cadestro_v1_control_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7479,7 +7479,7 @@ func (x *DeleteDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{108}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *DeleteDefinitionRequest) GetId() string {
@@ -7497,7 +7497,7 @@ type DeleteDefinitionResponse struct {
 
 func (x *DeleteDefinitionResponse) Reset() {
 	*x = DeleteDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[109]
+	mi := &file_cadestro_v1_control_proto_msgTypes[109]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7509,7 +7509,7 @@ func (x *DeleteDefinitionResponse) String() string {
 func (*DeleteDefinitionResponse) ProtoMessage() {}
 
 func (x *DeleteDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[109]
+	mi := &file_cadestro_v1_control_proto_msgTypes[109]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7522,7 +7522,7 @@ func (x *DeleteDefinitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{109}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{109}
 }
 
 type AddActionSetToDefinitionRequest struct {
@@ -7539,7 +7539,7 @@ type AddActionSetToDefinitionRequest struct {
 
 func (x *AddActionSetToDefinitionRequest) Reset() {
 	*x = AddActionSetToDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[110]
+	mi := &file_cadestro_v1_control_proto_msgTypes[110]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7551,7 +7551,7 @@ func (x *AddActionSetToDefinitionRequest) String() string {
 func (*AddActionSetToDefinitionRequest) ProtoMessage() {}
 
 func (x *AddActionSetToDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[110]
+	mi := &file_cadestro_v1_control_proto_msgTypes[110]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7564,7 +7564,7 @@ func (x *AddActionSetToDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddActionSetToDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*AddActionSetToDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{110}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{110}
 }
 
 func (x *AddActionSetToDefinitionRequest) GetDefinitionId() string {
@@ -7597,7 +7597,7 @@ type AddActionSetToDefinitionResponse struct {
 
 func (x *AddActionSetToDefinitionResponse) Reset() {
 	*x = AddActionSetToDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[111]
+	mi := &file_cadestro_v1_control_proto_msgTypes[111]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7609,7 +7609,7 @@ func (x *AddActionSetToDefinitionResponse) String() string {
 func (*AddActionSetToDefinitionResponse) ProtoMessage() {}
 
 func (x *AddActionSetToDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[111]
+	mi := &file_cadestro_v1_control_proto_msgTypes[111]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7622,7 +7622,7 @@ func (x *AddActionSetToDefinitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddActionSetToDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*AddActionSetToDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{111}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{111}
 }
 
 func (x *AddActionSetToDefinitionResponse) GetDefinition() *Definition {
@@ -7644,7 +7644,7 @@ type RemoveActionSetFromDefinitionRequest struct {
 
 func (x *RemoveActionSetFromDefinitionRequest) Reset() {
 	*x = RemoveActionSetFromDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[112]
+	mi := &file_cadestro_v1_control_proto_msgTypes[112]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7656,7 +7656,7 @@ func (x *RemoveActionSetFromDefinitionRequest) String() string {
 func (*RemoveActionSetFromDefinitionRequest) ProtoMessage() {}
 
 func (x *RemoveActionSetFromDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[112]
+	mi := &file_cadestro_v1_control_proto_msgTypes[112]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7669,7 +7669,7 @@ func (x *RemoveActionSetFromDefinitionRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use RemoveActionSetFromDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*RemoveActionSetFromDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{112}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{112}
 }
 
 func (x *RemoveActionSetFromDefinitionRequest) GetDefinitionId() string {
@@ -7695,7 +7695,7 @@ type RemoveActionSetFromDefinitionResponse struct {
 
 func (x *RemoveActionSetFromDefinitionResponse) Reset() {
 	*x = RemoveActionSetFromDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[113]
+	mi := &file_cadestro_v1_control_proto_msgTypes[113]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7707,7 +7707,7 @@ func (x *RemoveActionSetFromDefinitionResponse) String() string {
 func (*RemoveActionSetFromDefinitionResponse) ProtoMessage() {}
 
 func (x *RemoveActionSetFromDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[113]
+	mi := &file_cadestro_v1_control_proto_msgTypes[113]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7720,7 +7720,7 @@ func (x *RemoveActionSetFromDefinitionResponse) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use RemoveActionSetFromDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*RemoveActionSetFromDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{113}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{113}
 }
 
 func (x *RemoveActionSetFromDefinitionResponse) GetDefinition() *Definition {
@@ -7744,7 +7744,7 @@ type ReorderActionSetInDefinitionRequest struct {
 
 func (x *ReorderActionSetInDefinitionRequest) Reset() {
 	*x = ReorderActionSetInDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[114]
+	mi := &file_cadestro_v1_control_proto_msgTypes[114]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7756,7 +7756,7 @@ func (x *ReorderActionSetInDefinitionRequest) String() string {
 func (*ReorderActionSetInDefinitionRequest) ProtoMessage() {}
 
 func (x *ReorderActionSetInDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[114]
+	mi := &file_cadestro_v1_control_proto_msgTypes[114]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7769,7 +7769,7 @@ func (x *ReorderActionSetInDefinitionRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use ReorderActionSetInDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*ReorderActionSetInDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{114}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{114}
 }
 
 func (x *ReorderActionSetInDefinitionRequest) GetDefinitionId() string {
@@ -7802,7 +7802,7 @@ type ReorderActionSetInDefinitionResponse struct {
 
 func (x *ReorderActionSetInDefinitionResponse) Reset() {
 	*x = ReorderActionSetInDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[115]
+	mi := &file_cadestro_v1_control_proto_msgTypes[115]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7814,7 +7814,7 @@ func (x *ReorderActionSetInDefinitionResponse) String() string {
 func (*ReorderActionSetInDefinitionResponse) ProtoMessage() {}
 
 func (x *ReorderActionSetInDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[115]
+	mi := &file_cadestro_v1_control_proto_msgTypes[115]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7827,7 +7827,7 @@ func (x *ReorderActionSetInDefinitionResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ReorderActionSetInDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*ReorderActionSetInDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{115}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{115}
 }
 
 func (x *ReorderActionSetInDefinitionResponse) GetDefinition() *Definition {
@@ -7866,7 +7866,7 @@ type DeviceGroup struct {
 
 func (x *DeviceGroup) Reset() {
 	*x = DeviceGroup{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[116]
+	mi := &file_cadestro_v1_control_proto_msgTypes[116]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7878,7 +7878,7 @@ func (x *DeviceGroup) String() string {
 func (*DeviceGroup) ProtoMessage() {}
 
 func (x *DeviceGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[116]
+	mi := &file_cadestro_v1_control_proto_msgTypes[116]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7891,7 +7891,7 @@ func (x *DeviceGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceGroup.ProtoReflect.Descriptor instead.
 func (*DeviceGroup) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{116}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{116}
 }
 
 func (x *DeviceGroup) GetId() string {
@@ -7987,7 +7987,7 @@ type CreateDeviceGroupRequest struct {
 
 func (x *CreateDeviceGroupRequest) Reset() {
 	*x = CreateDeviceGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[117]
+	mi := &file_cadestro_v1_control_proto_msgTypes[117]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7999,7 +7999,7 @@ func (x *CreateDeviceGroupRequest) String() string {
 func (*CreateDeviceGroupRequest) ProtoMessage() {}
 
 func (x *CreateDeviceGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[117]
+	mi := &file_cadestro_v1_control_proto_msgTypes[117]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8012,7 +8012,7 @@ func (x *CreateDeviceGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDeviceGroupRequest.ProtoReflect.Descriptor instead.
 func (*CreateDeviceGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{117}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{117}
 }
 
 func (x *CreateDeviceGroupRequest) GetName() string {
@@ -8052,7 +8052,7 @@ type CreateDeviceGroupResponse struct {
 
 func (x *CreateDeviceGroupResponse) Reset() {
 	*x = CreateDeviceGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[118]
+	mi := &file_cadestro_v1_control_proto_msgTypes[118]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8064,7 +8064,7 @@ func (x *CreateDeviceGroupResponse) String() string {
 func (*CreateDeviceGroupResponse) ProtoMessage() {}
 
 func (x *CreateDeviceGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[118]
+	mi := &file_cadestro_v1_control_proto_msgTypes[118]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8077,7 +8077,7 @@ func (x *CreateDeviceGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateDeviceGroupResponse.ProtoReflect.Descriptor instead.
 func (*CreateDeviceGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{118}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{118}
 }
 
 func (x *CreateDeviceGroupResponse) GetGroup() *DeviceGroup {
@@ -8097,7 +8097,7 @@ type GetDeviceGroupRequest struct {
 
 func (x *GetDeviceGroupRequest) Reset() {
 	*x = GetDeviceGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[119]
+	mi := &file_cadestro_v1_control_proto_msgTypes[119]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8109,7 +8109,7 @@ func (x *GetDeviceGroupRequest) String() string {
 func (*GetDeviceGroupRequest) ProtoMessage() {}
 
 func (x *GetDeviceGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[119]
+	mi := &file_cadestro_v1_control_proto_msgTypes[119]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8122,7 +8122,7 @@ func (x *GetDeviceGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceGroupRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{119}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{119}
 }
 
 func (x *GetDeviceGroupRequest) GetId() string {
@@ -8143,7 +8143,7 @@ type GetDeviceGroupResponse struct {
 
 func (x *GetDeviceGroupResponse) Reset() {
 	*x = GetDeviceGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[120]
+	mi := &file_cadestro_v1_control_proto_msgTypes[120]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8155,7 +8155,7 @@ func (x *GetDeviceGroupResponse) String() string {
 func (*GetDeviceGroupResponse) ProtoMessage() {}
 
 func (x *GetDeviceGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[120]
+	mi := &file_cadestro_v1_control_proto_msgTypes[120]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8168,7 +8168,7 @@ func (x *GetDeviceGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceGroupResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{120}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{120}
 }
 
 func (x *GetDeviceGroupResponse) GetGroup() *DeviceGroup {
@@ -8204,7 +8204,7 @@ type DeviceGroupMember struct {
 
 func (x *DeviceGroupMember) Reset() {
 	*x = DeviceGroupMember{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[121]
+	mi := &file_cadestro_v1_control_proto_msgTypes[121]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8216,7 +8216,7 @@ func (x *DeviceGroupMember) String() string {
 func (*DeviceGroupMember) ProtoMessage() {}
 
 func (x *DeviceGroupMember) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[121]
+	mi := &file_cadestro_v1_control_proto_msgTypes[121]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8229,7 +8229,7 @@ func (x *DeviceGroupMember) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceGroupMember.ProtoReflect.Descriptor instead.
 func (*DeviceGroupMember) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{121}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{121}
 }
 
 func (x *DeviceGroupMember) GetDeviceId() string {
@@ -8272,7 +8272,7 @@ type ListDeviceGroupsRequest struct {
 
 func (x *ListDeviceGroupsRequest) Reset() {
 	*x = ListDeviceGroupsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[122]
+	mi := &file_cadestro_v1_control_proto_msgTypes[122]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8284,7 +8284,7 @@ func (x *ListDeviceGroupsRequest) String() string {
 func (*ListDeviceGroupsRequest) ProtoMessage() {}
 
 func (x *ListDeviceGroupsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[122]
+	mi := &file_cadestro_v1_control_proto_msgTypes[122]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8297,7 +8297,7 @@ func (x *ListDeviceGroupsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDeviceGroupsRequest.ProtoReflect.Descriptor instead.
 func (*ListDeviceGroupsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{122}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{122}
 }
 
 func (x *ListDeviceGroupsRequest) GetPageSize() int32 {
@@ -8325,7 +8325,7 @@ type ListDeviceGroupsResponse struct {
 
 func (x *ListDeviceGroupsResponse) Reset() {
 	*x = ListDeviceGroupsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[123]
+	mi := &file_cadestro_v1_control_proto_msgTypes[123]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8337,7 +8337,7 @@ func (x *ListDeviceGroupsResponse) String() string {
 func (*ListDeviceGroupsResponse) ProtoMessage() {}
 
 func (x *ListDeviceGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[123]
+	mi := &file_cadestro_v1_control_proto_msgTypes[123]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8350,7 +8350,7 @@ func (x *ListDeviceGroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDeviceGroupsResponse.ProtoReflect.Descriptor instead.
 func (*ListDeviceGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{123}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{123}
 }
 
 func (x *ListDeviceGroupsResponse) GetGroups() []*DeviceGroup {
@@ -8384,7 +8384,7 @@ type ListDeviceGroupsForDeviceRequest struct {
 
 func (x *ListDeviceGroupsForDeviceRequest) Reset() {
 	*x = ListDeviceGroupsForDeviceRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[124]
+	mi := &file_cadestro_v1_control_proto_msgTypes[124]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8396,7 +8396,7 @@ func (x *ListDeviceGroupsForDeviceRequest) String() string {
 func (*ListDeviceGroupsForDeviceRequest) ProtoMessage() {}
 
 func (x *ListDeviceGroupsForDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[124]
+	mi := &file_cadestro_v1_control_proto_msgTypes[124]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8409,7 +8409,7 @@ func (x *ListDeviceGroupsForDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDeviceGroupsForDeviceRequest.ProtoReflect.Descriptor instead.
 func (*ListDeviceGroupsForDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{124}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{124}
 }
 
 func (x *ListDeviceGroupsForDeviceRequest) GetDeviceId() string {
@@ -8428,7 +8428,7 @@ type ListDeviceGroupsForDeviceResponse struct {
 
 func (x *ListDeviceGroupsForDeviceResponse) Reset() {
 	*x = ListDeviceGroupsForDeviceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[125]
+	mi := &file_cadestro_v1_control_proto_msgTypes[125]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8440,7 +8440,7 @@ func (x *ListDeviceGroupsForDeviceResponse) String() string {
 func (*ListDeviceGroupsForDeviceResponse) ProtoMessage() {}
 
 func (x *ListDeviceGroupsForDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[125]
+	mi := &file_cadestro_v1_control_proto_msgTypes[125]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8453,7 +8453,7 @@ func (x *ListDeviceGroupsForDeviceResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ListDeviceGroupsForDeviceResponse.ProtoReflect.Descriptor instead.
 func (*ListDeviceGroupsForDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{125}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{125}
 }
 
 func (x *ListDeviceGroupsForDeviceResponse) GetGroups() []*DeviceGroup {
@@ -8475,7 +8475,7 @@ type RenameDeviceGroupRequest struct {
 
 func (x *RenameDeviceGroupRequest) Reset() {
 	*x = RenameDeviceGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[126]
+	mi := &file_cadestro_v1_control_proto_msgTypes[126]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8487,7 +8487,7 @@ func (x *RenameDeviceGroupRequest) String() string {
 func (*RenameDeviceGroupRequest) ProtoMessage() {}
 
 func (x *RenameDeviceGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[126]
+	mi := &file_cadestro_v1_control_proto_msgTypes[126]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8500,7 +8500,7 @@ func (x *RenameDeviceGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameDeviceGroupRequest.ProtoReflect.Descriptor instead.
 func (*RenameDeviceGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{126}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{126}
 }
 
 func (x *RenameDeviceGroupRequest) GetId() string {
@@ -8529,7 +8529,7 @@ type UpdateDeviceGroupDescriptionRequest struct {
 
 func (x *UpdateDeviceGroupDescriptionRequest) Reset() {
 	*x = UpdateDeviceGroupDescriptionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[127]
+	mi := &file_cadestro_v1_control_proto_msgTypes[127]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8541,7 +8541,7 @@ func (x *UpdateDeviceGroupDescriptionRequest) String() string {
 func (*UpdateDeviceGroupDescriptionRequest) ProtoMessage() {}
 
 func (x *UpdateDeviceGroupDescriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[127]
+	mi := &file_cadestro_v1_control_proto_msgTypes[127]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8554,7 +8554,7 @@ func (x *UpdateDeviceGroupDescriptionRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use UpdateDeviceGroupDescriptionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceGroupDescriptionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{127}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *UpdateDeviceGroupDescriptionRequest) GetId() string {
@@ -8580,7 +8580,7 @@ type UpdateDeviceGroupResponse struct {
 
 func (x *UpdateDeviceGroupResponse) Reset() {
 	*x = UpdateDeviceGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[128]
+	mi := &file_cadestro_v1_control_proto_msgTypes[128]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8592,7 +8592,7 @@ func (x *UpdateDeviceGroupResponse) String() string {
 func (*UpdateDeviceGroupResponse) ProtoMessage() {}
 
 func (x *UpdateDeviceGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[128]
+	mi := &file_cadestro_v1_control_proto_msgTypes[128]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8605,7 +8605,7 @@ func (x *UpdateDeviceGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceGroupResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{128}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *UpdateDeviceGroupResponse) GetGroup() *DeviceGroup {
@@ -8625,7 +8625,7 @@ type DeleteDeviceGroupRequest struct {
 
 func (x *DeleteDeviceGroupRequest) Reset() {
 	*x = DeleteDeviceGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[129]
+	mi := &file_cadestro_v1_control_proto_msgTypes[129]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8637,7 +8637,7 @@ func (x *DeleteDeviceGroupRequest) String() string {
 func (*DeleteDeviceGroupRequest) ProtoMessage() {}
 
 func (x *DeleteDeviceGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[129]
+	mi := &file_cadestro_v1_control_proto_msgTypes[129]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8650,7 +8650,7 @@ func (x *DeleteDeviceGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDeviceGroupRequest.ProtoReflect.Descriptor instead.
 func (*DeleteDeviceGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{129}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{129}
 }
 
 func (x *DeleteDeviceGroupRequest) GetId() string {
@@ -8668,7 +8668,7 @@ type DeleteDeviceGroupResponse struct {
 
 func (x *DeleteDeviceGroupResponse) Reset() {
 	*x = DeleteDeviceGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[130]
+	mi := &file_cadestro_v1_control_proto_msgTypes[130]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8680,7 +8680,7 @@ func (x *DeleteDeviceGroupResponse) String() string {
 func (*DeleteDeviceGroupResponse) ProtoMessage() {}
 
 func (x *DeleteDeviceGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[130]
+	mi := &file_cadestro_v1_control_proto_msgTypes[130]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8693,7 +8693,7 @@ func (x *DeleteDeviceGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteDeviceGroupResponse.ProtoReflect.Descriptor instead.
 func (*DeleteDeviceGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{130}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{130}
 }
 
 type AddDeviceToGroupRequest struct {
@@ -8710,7 +8710,7 @@ type AddDeviceToGroupRequest struct {
 
 func (x *AddDeviceToGroupRequest) Reset() {
 	*x = AddDeviceToGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[131]
+	mi := &file_cadestro_v1_control_proto_msgTypes[131]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8722,7 +8722,7 @@ func (x *AddDeviceToGroupRequest) String() string {
 func (*AddDeviceToGroupRequest) ProtoMessage() {}
 
 func (x *AddDeviceToGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[131]
+	mi := &file_cadestro_v1_control_proto_msgTypes[131]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8735,7 +8735,7 @@ func (x *AddDeviceToGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddDeviceToGroupRequest.ProtoReflect.Descriptor instead.
 func (*AddDeviceToGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{131}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{131}
 }
 
 func (x *AddDeviceToGroupRequest) GetGroupId() string {
@@ -8768,7 +8768,7 @@ type AddDeviceToGroupResponse struct {
 
 func (x *AddDeviceToGroupResponse) Reset() {
 	*x = AddDeviceToGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[132]
+	mi := &file_cadestro_v1_control_proto_msgTypes[132]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8780,7 +8780,7 @@ func (x *AddDeviceToGroupResponse) String() string {
 func (*AddDeviceToGroupResponse) ProtoMessage() {}
 
 func (x *AddDeviceToGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[132]
+	mi := &file_cadestro_v1_control_proto_msgTypes[132]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8793,7 +8793,7 @@ func (x *AddDeviceToGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddDeviceToGroupResponse.ProtoReflect.Descriptor instead.
 func (*AddDeviceToGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{132}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *AddDeviceToGroupResponse) GetGroup() *DeviceGroup {
@@ -8815,7 +8815,7 @@ type RemoveDeviceFromGroupRequest struct {
 
 func (x *RemoveDeviceFromGroupRequest) Reset() {
 	*x = RemoveDeviceFromGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[133]
+	mi := &file_cadestro_v1_control_proto_msgTypes[133]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8827,7 +8827,7 @@ func (x *RemoveDeviceFromGroupRequest) String() string {
 func (*RemoveDeviceFromGroupRequest) ProtoMessage() {}
 
 func (x *RemoveDeviceFromGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[133]
+	mi := &file_cadestro_v1_control_proto_msgTypes[133]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8840,7 +8840,7 @@ func (x *RemoveDeviceFromGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveDeviceFromGroupRequest.ProtoReflect.Descriptor instead.
 func (*RemoveDeviceFromGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{133}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *RemoveDeviceFromGroupRequest) GetGroupId() string {
@@ -8866,7 +8866,7 @@ type RemoveDeviceFromGroupResponse struct {
 
 func (x *RemoveDeviceFromGroupResponse) Reset() {
 	*x = RemoveDeviceFromGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[134]
+	mi := &file_cadestro_v1_control_proto_msgTypes[134]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8878,7 +8878,7 @@ func (x *RemoveDeviceFromGroupResponse) String() string {
 func (*RemoveDeviceFromGroupResponse) ProtoMessage() {}
 
 func (x *RemoveDeviceFromGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[134]
+	mi := &file_cadestro_v1_control_proto_msgTypes[134]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8891,7 +8891,7 @@ func (x *RemoveDeviceFromGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveDeviceFromGroupResponse.ProtoReflect.Descriptor instead.
 func (*RemoveDeviceFromGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{134}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{134}
 }
 
 func (x *RemoveDeviceFromGroupResponse) GetGroup() *DeviceGroup {
@@ -8916,7 +8916,7 @@ type UpdateDeviceGroupQueryRequest struct {
 
 func (x *UpdateDeviceGroupQueryRequest) Reset() {
 	*x = UpdateDeviceGroupQueryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[135]
+	mi := &file_cadestro_v1_control_proto_msgTypes[135]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8928,7 +8928,7 @@ func (x *UpdateDeviceGroupQueryRequest) String() string {
 func (*UpdateDeviceGroupQueryRequest) ProtoMessage() {}
 
 func (x *UpdateDeviceGroupQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[135]
+	mi := &file_cadestro_v1_control_proto_msgTypes[135]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8941,7 +8941,7 @@ func (x *UpdateDeviceGroupQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceGroupQueryRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceGroupQueryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{135}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{135}
 }
 
 func (x *UpdateDeviceGroupQueryRequest) GetId() string {
@@ -8974,7 +8974,7 @@ type UpdateDeviceGroupQueryResponse struct {
 
 func (x *UpdateDeviceGroupQueryResponse) Reset() {
 	*x = UpdateDeviceGroupQueryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[136]
+	mi := &file_cadestro_v1_control_proto_msgTypes[136]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8986,7 +8986,7 @@ func (x *UpdateDeviceGroupQueryResponse) String() string {
 func (*UpdateDeviceGroupQueryResponse) ProtoMessage() {}
 
 func (x *UpdateDeviceGroupQueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[136]
+	mi := &file_cadestro_v1_control_proto_msgTypes[136]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8999,7 +8999,7 @@ func (x *UpdateDeviceGroupQueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDeviceGroupQueryResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDeviceGroupQueryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{136}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{136}
 }
 
 func (x *UpdateDeviceGroupQueryResponse) GetGroup() *DeviceGroup {
@@ -9020,7 +9020,7 @@ type ValidateDynamicQueryRequest struct {
 
 func (x *ValidateDynamicQueryRequest) Reset() {
 	*x = ValidateDynamicQueryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[137]
+	mi := &file_cadestro_v1_control_proto_msgTypes[137]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9032,7 +9032,7 @@ func (x *ValidateDynamicQueryRequest) String() string {
 func (*ValidateDynamicQueryRequest) ProtoMessage() {}
 
 func (x *ValidateDynamicQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[137]
+	mi := &file_cadestro_v1_control_proto_msgTypes[137]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9045,7 +9045,7 @@ func (x *ValidateDynamicQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateDynamicQueryRequest.ProtoReflect.Descriptor instead.
 func (*ValidateDynamicQueryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{137}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{137}
 }
 
 func (x *ValidateDynamicQueryRequest) GetQuery() string {
@@ -9066,7 +9066,7 @@ type ValidateDynamicQueryResponse struct {
 
 func (x *ValidateDynamicQueryResponse) Reset() {
 	*x = ValidateDynamicQueryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[138]
+	mi := &file_cadestro_v1_control_proto_msgTypes[138]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9078,7 +9078,7 @@ func (x *ValidateDynamicQueryResponse) String() string {
 func (*ValidateDynamicQueryResponse) ProtoMessage() {}
 
 func (x *ValidateDynamicQueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[138]
+	mi := &file_cadestro_v1_control_proto_msgTypes[138]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9091,7 +9091,7 @@ func (x *ValidateDynamicQueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateDynamicQueryResponse.ProtoReflect.Descriptor instead.
 func (*ValidateDynamicQueryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{138}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{138}
 }
 
 func (x *ValidateDynamicQueryResponse) GetValid() bool {
@@ -9126,7 +9126,7 @@ type EvaluateDynamicGroupRequest struct {
 
 func (x *EvaluateDynamicGroupRequest) Reset() {
 	*x = EvaluateDynamicGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[139]
+	mi := &file_cadestro_v1_control_proto_msgTypes[139]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9138,7 +9138,7 @@ func (x *EvaluateDynamicGroupRequest) String() string {
 func (*EvaluateDynamicGroupRequest) ProtoMessage() {}
 
 func (x *EvaluateDynamicGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[139]
+	mi := &file_cadestro_v1_control_proto_msgTypes[139]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9151,7 +9151,7 @@ func (x *EvaluateDynamicGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluateDynamicGroupRequest.ProtoReflect.Descriptor instead.
 func (*EvaluateDynamicGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{139}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{139}
 }
 
 func (x *EvaluateDynamicGroupRequest) GetId() string {
@@ -9172,7 +9172,7 @@ type EvaluateDynamicGroupResponse struct {
 
 func (x *EvaluateDynamicGroupResponse) Reset() {
 	*x = EvaluateDynamicGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[140]
+	mi := &file_cadestro_v1_control_proto_msgTypes[140]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9184,7 +9184,7 @@ func (x *EvaluateDynamicGroupResponse) String() string {
 func (*EvaluateDynamicGroupResponse) ProtoMessage() {}
 
 func (x *EvaluateDynamicGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[140]
+	mi := &file_cadestro_v1_control_proto_msgTypes[140]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9197,7 +9197,7 @@ func (x *EvaluateDynamicGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluateDynamicGroupResponse.ProtoReflect.Descriptor instead.
 func (*EvaluateDynamicGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{140}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{140}
 }
 
 func (x *EvaluateDynamicGroupResponse) GetGroup() *DeviceGroup {
@@ -9234,7 +9234,7 @@ type SetDeviceGroupSyncIntervalRequest struct {
 
 func (x *SetDeviceGroupSyncIntervalRequest) Reset() {
 	*x = SetDeviceGroupSyncIntervalRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[141]
+	mi := &file_cadestro_v1_control_proto_msgTypes[141]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9246,7 +9246,7 @@ func (x *SetDeviceGroupSyncIntervalRequest) String() string {
 func (*SetDeviceGroupSyncIntervalRequest) ProtoMessage() {}
 
 func (x *SetDeviceGroupSyncIntervalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[141]
+	mi := &file_cadestro_v1_control_proto_msgTypes[141]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9259,7 +9259,7 @@ func (x *SetDeviceGroupSyncIntervalRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use SetDeviceGroupSyncIntervalRequest.ProtoReflect.Descriptor instead.
 func (*SetDeviceGroupSyncIntervalRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{141}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{141}
 }
 
 func (x *SetDeviceGroupSyncIntervalRequest) GetId() string {
@@ -9289,7 +9289,7 @@ type SetDeviceGroupInventoryIntervalRequest struct {
 
 func (x *SetDeviceGroupInventoryIntervalRequest) Reset() {
 	*x = SetDeviceGroupInventoryIntervalRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[142]
+	mi := &file_cadestro_v1_control_proto_msgTypes[142]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9301,7 +9301,7 @@ func (x *SetDeviceGroupInventoryIntervalRequest) String() string {
 func (*SetDeviceGroupInventoryIntervalRequest) ProtoMessage() {}
 
 func (x *SetDeviceGroupInventoryIntervalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[142]
+	mi := &file_cadestro_v1_control_proto_msgTypes[142]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9314,7 +9314,7 @@ func (x *SetDeviceGroupInventoryIntervalRequest) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use SetDeviceGroupInventoryIntervalRequest.ProtoReflect.Descriptor instead.
 func (*SetDeviceGroupInventoryIntervalRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{142}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{142}
 }
 
 func (x *SetDeviceGroupInventoryIntervalRequest) GetId() string {
@@ -9347,7 +9347,7 @@ type SetDeviceGroupMaintenanceWindowRequest struct {
 
 func (x *SetDeviceGroupMaintenanceWindowRequest) Reset() {
 	*x = SetDeviceGroupMaintenanceWindowRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[143]
+	mi := &file_cadestro_v1_control_proto_msgTypes[143]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9359,7 +9359,7 @@ func (x *SetDeviceGroupMaintenanceWindowRequest) String() string {
 func (*SetDeviceGroupMaintenanceWindowRequest) ProtoMessage() {}
 
 func (x *SetDeviceGroupMaintenanceWindowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[143]
+	mi := &file_cadestro_v1_control_proto_msgTypes[143]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9372,7 +9372,7 @@ func (x *SetDeviceGroupMaintenanceWindowRequest) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use SetDeviceGroupMaintenanceWindowRequest.ProtoReflect.Descriptor instead.
 func (*SetDeviceGroupMaintenanceWindowRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{143}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{143}
 }
 
 func (x *SetDeviceGroupMaintenanceWindowRequest) GetId() string {
@@ -9392,13 +9392,13 @@ func (x *SetDeviceGroupMaintenanceWindowRequest) GetMaintenanceWindow() *Mainten
 type Assignment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	SourceType    AssignmentSourceType   `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=powermanage.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceType    AssignmentSourceType   `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
 	SourceId      string                 `protobuf:"bytes,3,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
-	TargetType    AssignmentTargetType   `protobuf:"varint,4,opt,name=target_type,json=targetType,proto3,enum=powermanage.v1.AssignmentTargetType" json:"target_type,omitempty"`
+	TargetType    AssignmentTargetType   `protobuf:"varint,4,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty"`
 	TargetId      string                 `protobuf:"bytes,5,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	CreatedBy     string                 `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	Mode          AssignmentMode         `protobuf:"varint,8,opt,name=mode,proto3,enum=powermanage.v1.AssignmentMode" json:"mode,omitempty"`
+	Mode          AssignmentMode         `protobuf:"varint,8,opt,name=mode,proto3,enum=cadestro.v1.AssignmentMode" json:"mode,omitempty"`
 	SourceName    string                 `protobuf:"bytes,9,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
 	TargetName    string                 `protobuf:"bytes,10,opt,name=target_name,json=targetName,proto3" json:"target_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -9407,7 +9407,7 @@ type Assignment struct {
 
 func (x *Assignment) Reset() {
 	*x = Assignment{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[144]
+	mi := &file_cadestro_v1_control_proto_msgTypes[144]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9419,7 +9419,7 @@ func (x *Assignment) String() string {
 func (*Assignment) ProtoMessage() {}
 
 func (x *Assignment) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[144]
+	mi := &file_cadestro_v1_control_proto_msgTypes[144]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9432,7 +9432,7 @@ func (x *Assignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Assignment.ProtoReflect.Descriptor instead.
 func (*Assignment) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{144}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{144}
 }
 
 func (x *Assignment) GetId() string {
@@ -9508,22 +9508,22 @@ func (x *Assignment) GetTargetName() string {
 type CreateAssignmentRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// @gotags: validate:"required,gte=1,lte=4"
-	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=powermanage.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"required,gte=1,lte=4"`
+	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"required,gte=1,lte=4"`
 	// @gotags: validate:"required,ulid"
 	SourceId string `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty" validate:"required,ulid"`
 	// @gotags: validate:"required,gte=1,lte=4"
-	TargetType AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=powermanage.v1.AssignmentTargetType" json:"target_type,omitempty" validate:"required,gte=1,lte=4"`
+	TargetType AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty" validate:"required,gte=1,lte=4"`
 	// @gotags: validate:"required,ulid"
 	TargetId string `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty" validate:"required,ulid"`
 	// @gotags: validate:"omitempty"
-	Mode          AssignmentMode `protobuf:"varint,5,opt,name=mode,proto3,enum=powermanage.v1.AssignmentMode" json:"mode,omitempty" validate:"omitempty"` // Defaults to REQUIRED (0)
+	Mode          AssignmentMode `protobuf:"varint,5,opt,name=mode,proto3,enum=cadestro.v1.AssignmentMode" json:"mode,omitempty" validate:"omitempty"` // Defaults to REQUIRED (0)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateAssignmentRequest) Reset() {
 	*x = CreateAssignmentRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[145]
+	mi := &file_cadestro_v1_control_proto_msgTypes[145]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9535,7 +9535,7 @@ func (x *CreateAssignmentRequest) String() string {
 func (*CreateAssignmentRequest) ProtoMessage() {}
 
 func (x *CreateAssignmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[145]
+	mi := &file_cadestro_v1_control_proto_msgTypes[145]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9548,7 +9548,7 @@ func (x *CreateAssignmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAssignmentRequest.ProtoReflect.Descriptor instead.
 func (*CreateAssignmentRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{145}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{145}
 }
 
 func (x *CreateAssignmentRequest) GetSourceType() AssignmentSourceType {
@@ -9595,7 +9595,7 @@ type CreateAssignmentResponse struct {
 
 func (x *CreateAssignmentResponse) Reset() {
 	*x = CreateAssignmentResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[146]
+	mi := &file_cadestro_v1_control_proto_msgTypes[146]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9607,7 +9607,7 @@ func (x *CreateAssignmentResponse) String() string {
 func (*CreateAssignmentResponse) ProtoMessage() {}
 
 func (x *CreateAssignmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[146]
+	mi := &file_cadestro_v1_control_proto_msgTypes[146]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9620,7 +9620,7 @@ func (x *CreateAssignmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAssignmentResponse.ProtoReflect.Descriptor instead.
 func (*CreateAssignmentResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{146}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{146}
 }
 
 func (x *CreateAssignmentResponse) GetAssignment() *Assignment {
@@ -9640,7 +9640,7 @@ type DeleteAssignmentRequest struct {
 
 func (x *DeleteAssignmentRequest) Reset() {
 	*x = DeleteAssignmentRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[147]
+	mi := &file_cadestro_v1_control_proto_msgTypes[147]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9652,7 +9652,7 @@ func (x *DeleteAssignmentRequest) String() string {
 func (*DeleteAssignmentRequest) ProtoMessage() {}
 
 func (x *DeleteAssignmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[147]
+	mi := &file_cadestro_v1_control_proto_msgTypes[147]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9665,7 +9665,7 @@ func (x *DeleteAssignmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAssignmentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAssignmentRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{147}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{147}
 }
 
 func (x *DeleteAssignmentRequest) GetId() string {
@@ -9683,7 +9683,7 @@ type DeleteAssignmentResponse struct {
 
 func (x *DeleteAssignmentResponse) Reset() {
 	*x = DeleteAssignmentResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[148]
+	mi := &file_cadestro_v1_control_proto_msgTypes[148]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9695,7 +9695,7 @@ func (x *DeleteAssignmentResponse) String() string {
 func (*DeleteAssignmentResponse) ProtoMessage() {}
 
 func (x *DeleteAssignmentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[148]
+	mi := &file_cadestro_v1_control_proto_msgTypes[148]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9708,7 +9708,7 @@ func (x *DeleteAssignmentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAssignmentResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAssignmentResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{148}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{148}
 }
 
 type ListAssignmentsRequest struct {
@@ -9716,13 +9716,13 @@ type ListAssignmentsRequest struct {
 	// UNSPECIFIED (0) means "all source types"; non-zero filters to
 	// that single source type.
 	// @gotags: validate:"omitempty,gte=0,lte=4"
-	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=powermanage.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"omitempty,gte=0,lte=4"`
+	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"omitempty,gte=0,lte=4"`
 	// @gotags: validate:"omitempty,ulid"
 	SourceId string `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty" validate:"omitempty,ulid"`
 	// UNSPECIFIED (0) means "all target types"; non-zero filters to
 	// that single target type.
 	// @gotags: validate:"omitempty,gte=0,lte=4"
-	TargetType AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=powermanage.v1.AssignmentTargetType" json:"target_type,omitempty" validate:"omitempty,gte=0,lte=4"`
+	TargetType AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty" validate:"omitempty,gte=0,lte=4"`
 	// @gotags: validate:"omitempty,ulid"
 	TargetId string `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty" validate:"omitempty,ulid"`
 	// @gotags: validate:"omitempty,gte=0,lte=100"
@@ -9735,7 +9735,7 @@ type ListAssignmentsRequest struct {
 
 func (x *ListAssignmentsRequest) Reset() {
 	*x = ListAssignmentsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[149]
+	mi := &file_cadestro_v1_control_proto_msgTypes[149]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9747,7 +9747,7 @@ func (x *ListAssignmentsRequest) String() string {
 func (*ListAssignmentsRequest) ProtoMessage() {}
 
 func (x *ListAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[149]
+	mi := &file_cadestro_v1_control_proto_msgTypes[149]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9760,7 +9760,7 @@ func (x *ListAssignmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAssignmentsRequest.ProtoReflect.Descriptor instead.
 func (*ListAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{149}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{149}
 }
 
 func (x *ListAssignmentsRequest) GetSourceType() AssignmentSourceType {
@@ -9816,7 +9816,7 @@ type ListAssignmentsResponse struct {
 
 func (x *ListAssignmentsResponse) Reset() {
 	*x = ListAssignmentsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[150]
+	mi := &file_cadestro_v1_control_proto_msgTypes[150]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9828,7 +9828,7 @@ func (x *ListAssignmentsResponse) String() string {
 func (*ListAssignmentsResponse) ProtoMessage() {}
 
 func (x *ListAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[150]
+	mi := &file_cadestro_v1_control_proto_msgTypes[150]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9841,7 +9841,7 @@ func (x *ListAssignmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAssignmentsResponse.ProtoReflect.Descriptor instead.
 func (*ListAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{150}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{150}
 }
 
 func (x *ListAssignmentsResponse) GetAssignments() []*Assignment {
@@ -9869,7 +9869,7 @@ type UserSelection struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	SourceType    AssignmentSourceType   `protobuf:"varint,3,opt,name=source_type,json=sourceType,proto3,enum=powermanage.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceType    AssignmentSourceType   `protobuf:"varint,3,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
 	SourceId      string                 `protobuf:"bytes,4,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
 	Selected      bool                   `protobuf:"varint,5,opt,name=selected,proto3" json:"selected,omitempty"` // true=user wants it (present), false=user rejected (absent)
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
@@ -9879,7 +9879,7 @@ type UserSelection struct {
 
 func (x *UserSelection) Reset() {
 	*x = UserSelection{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[151]
+	mi := &file_cadestro_v1_control_proto_msgTypes[151]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9891,7 +9891,7 @@ func (x *UserSelection) String() string {
 func (*UserSelection) ProtoMessage() {}
 
 func (x *UserSelection) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[151]
+	mi := &file_cadestro_v1_control_proto_msgTypes[151]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9904,7 +9904,7 @@ func (x *UserSelection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserSelection.ProtoReflect.Descriptor instead.
 func (*UserSelection) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{151}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{151}
 }
 
 func (x *UserSelection) GetId() string {
@@ -9954,7 +9954,7 @@ type SetUserSelectionRequest struct {
 	// @gotags: validate:"required,ulid"
 	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
 	// @gotags: validate:"required,gte=1,lte=4"
-	SourceType AssignmentSourceType `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=powermanage.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"required,gte=1,lte=4"`
+	SourceType AssignmentSourceType `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"required,gte=1,lte=4"`
 	// @gotags: validate:"required,ulid"
 	SourceId      string `protobuf:"bytes,3,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty" validate:"required,ulid"`
 	Selected      bool   `protobuf:"varint,4,opt,name=selected,proto3" json:"selected,omitempty"`
@@ -9964,7 +9964,7 @@ type SetUserSelectionRequest struct {
 
 func (x *SetUserSelectionRequest) Reset() {
 	*x = SetUserSelectionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[152]
+	mi := &file_cadestro_v1_control_proto_msgTypes[152]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9976,7 +9976,7 @@ func (x *SetUserSelectionRequest) String() string {
 func (*SetUserSelectionRequest) ProtoMessage() {}
 
 func (x *SetUserSelectionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[152]
+	mi := &file_cadestro_v1_control_proto_msgTypes[152]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9989,7 +9989,7 @@ func (x *SetUserSelectionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetUserSelectionRequest.ProtoReflect.Descriptor instead.
 func (*SetUserSelectionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{152}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{152}
 }
 
 func (x *SetUserSelectionRequest) GetDeviceId() string {
@@ -10029,7 +10029,7 @@ type SetUserSelectionResponse struct {
 
 func (x *SetUserSelectionResponse) Reset() {
 	*x = SetUserSelectionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[153]
+	mi := &file_cadestro_v1_control_proto_msgTypes[153]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10041,7 +10041,7 @@ func (x *SetUserSelectionResponse) String() string {
 func (*SetUserSelectionResponse) ProtoMessage() {}
 
 func (x *SetUserSelectionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[153]
+	mi := &file_cadestro_v1_control_proto_msgTypes[153]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10054,7 +10054,7 @@ func (x *SetUserSelectionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetUserSelectionResponse.ProtoReflect.Descriptor instead.
 func (*SetUserSelectionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{153}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{153}
 }
 
 func (x *SetUserSelectionResponse) GetSelection() *UserSelection {
@@ -10074,7 +10074,7 @@ type ListAvailableActionsRequest struct {
 
 func (x *ListAvailableActionsRequest) Reset() {
 	*x = ListAvailableActionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[154]
+	mi := &file_cadestro_v1_control_proto_msgTypes[154]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10086,7 +10086,7 @@ func (x *ListAvailableActionsRequest) String() string {
 func (*ListAvailableActionsRequest) ProtoMessage() {}
 
 func (x *ListAvailableActionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[154]
+	mi := &file_cadestro_v1_control_proto_msgTypes[154]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10099,7 +10099,7 @@ func (x *ListAvailableActionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAvailableActionsRequest.ProtoReflect.Descriptor instead.
 func (*ListAvailableActionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{154}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{154}
 }
 
 func (x *ListAvailableActionsRequest) GetDeviceId() string {
@@ -10111,7 +10111,7 @@ func (x *ListAvailableActionsRequest) GetDeviceId() string {
 
 type AvailableItem struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	SourceType        AssignmentSourceType   `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=powermanage.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceType        AssignmentSourceType   `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
 	SourceId          string                 `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
 	SourceName        string                 `protobuf:"bytes,3,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
 	SourceDescription string                 `protobuf:"bytes,4,opt,name=source_description,json=sourceDescription,proto3" json:"source_description,omitempty"`
@@ -10123,7 +10123,7 @@ type AvailableItem struct {
 
 func (x *AvailableItem) Reset() {
 	*x = AvailableItem{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[155]
+	mi := &file_cadestro_v1_control_proto_msgTypes[155]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10135,7 +10135,7 @@ func (x *AvailableItem) String() string {
 func (*AvailableItem) ProtoMessage() {}
 
 func (x *AvailableItem) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[155]
+	mi := &file_cadestro_v1_control_proto_msgTypes[155]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10148,7 +10148,7 @@ func (x *AvailableItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AvailableItem.ProtoReflect.Descriptor instead.
 func (*AvailableItem) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{155}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{155}
 }
 
 func (x *AvailableItem) GetSourceType() AssignmentSourceType {
@@ -10202,7 +10202,7 @@ type ListAvailableActionsResponse struct {
 
 func (x *ListAvailableActionsResponse) Reset() {
 	*x = ListAvailableActionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[156]
+	mi := &file_cadestro_v1_control_proto_msgTypes[156]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10214,7 +10214,7 @@ func (x *ListAvailableActionsResponse) String() string {
 func (*ListAvailableActionsResponse) ProtoMessage() {}
 
 func (x *ListAvailableActionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[156]
+	mi := &file_cadestro_v1_control_proto_msgTypes[156]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10227,7 +10227,7 @@ func (x *ListAvailableActionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAvailableActionsResponse.ProtoReflect.Descriptor instead.
 func (*ListAvailableActionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{156}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{156}
 }
 
 func (x *ListAvailableActionsResponse) GetItems() []*AvailableItem {
@@ -10248,7 +10248,7 @@ type GetDeviceAssignmentsRequest struct {
 
 func (x *GetDeviceAssignmentsRequest) Reset() {
 	*x = GetDeviceAssignmentsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[157]
+	mi := &file_cadestro_v1_control_proto_msgTypes[157]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10260,7 +10260,7 @@ func (x *GetDeviceAssignmentsRequest) String() string {
 func (*GetDeviceAssignmentsRequest) ProtoMessage() {}
 
 func (x *GetDeviceAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[157]
+	mi := &file_cadestro_v1_control_proto_msgTypes[157]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10273,7 +10273,7 @@ func (x *GetDeviceAssignmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceAssignmentsRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{157}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{157}
 }
 
 func (x *GetDeviceAssignmentsRequest) GetDeviceId() string {
@@ -10297,7 +10297,7 @@ type GetDeviceAssignmentsResponse struct {
 
 func (x *GetDeviceAssignmentsResponse) Reset() {
 	*x = GetDeviceAssignmentsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[158]
+	mi := &file_cadestro_v1_control_proto_msgTypes[158]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10309,7 +10309,7 @@ func (x *GetDeviceAssignmentsResponse) String() string {
 func (*GetDeviceAssignmentsResponse) ProtoMessage() {}
 
 func (x *GetDeviceAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[158]
+	mi := &file_cadestro_v1_control_proto_msgTypes[158]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10322,7 +10322,7 @@ func (x *GetDeviceAssignmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceAssignmentsResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{158}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{158}
 }
 
 func (x *GetDeviceAssignmentsResponse) GetActions() []*ManagedAction {
@@ -10378,7 +10378,7 @@ type GetUserAssignmentsRequest struct {
 
 func (x *GetUserAssignmentsRequest) Reset() {
 	*x = GetUserAssignmentsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[159]
+	mi := &file_cadestro_v1_control_proto_msgTypes[159]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10390,7 +10390,7 @@ func (x *GetUserAssignmentsRequest) String() string {
 func (*GetUserAssignmentsRequest) ProtoMessage() {}
 
 func (x *GetUserAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[159]
+	mi := &file_cadestro_v1_control_proto_msgTypes[159]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10403,7 +10403,7 @@ func (x *GetUserAssignmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserAssignmentsRequest.ProtoReflect.Descriptor instead.
 func (*GetUserAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{159}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{159}
 }
 
 func (x *GetUserAssignmentsRequest) GetUserId() string {
@@ -10422,7 +10422,7 @@ type GetUserAssignmentsResponse struct {
 
 func (x *GetUserAssignmentsResponse) Reset() {
 	*x = GetUserAssignmentsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[160]
+	mi := &file_cadestro_v1_control_proto_msgTypes[160]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10434,7 +10434,7 @@ func (x *GetUserAssignmentsResponse) String() string {
 func (*GetUserAssignmentsResponse) ProtoMessage() {}
 
 func (x *GetUserAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[160]
+	mi := &file_cadestro_v1_control_proto_msgTypes[160]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10447,7 +10447,7 @@ func (x *GetUserAssignmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserAssignmentsResponse.ProtoReflect.Descriptor instead.
 func (*GetUserAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{160}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{160}
 }
 
 func (x *GetUserAssignmentsResponse) GetAssignments() []*Assignment {
@@ -10462,8 +10462,8 @@ type ActionExecution struct {
 	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	DeviceId        string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	ActionId        string                 `protobuf:"bytes,3,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"` // Reference to ManagedAction
-	Type            ActionType             `protobuf:"varint,4,opt,name=type,proto3,enum=powermanage.v1.ActionType" json:"type,omitempty"`
-	Status          ExecutionStatus        `protobuf:"varint,5,opt,name=status,proto3,enum=powermanage.v1.ExecutionStatus" json:"status,omitempty"`
+	Type            ActionType             `protobuf:"varint,4,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty"`
+	Status          ExecutionStatus        `protobuf:"varint,5,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
 	Error           string                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	Output          *CommandOutput         `protobuf:"bytes,7,opt,name=output,proto3" json:"output,omitempty"` // Final output (set on completion)
 	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -10471,12 +10471,12 @@ type ActionExecution struct {
 	CompletedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	DurationMs      int64                  `protobuf:"varint,11,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
 	CreatedBy       string                 `protobuf:"bytes,12,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	LiveOutput      *CommandOutput         `protobuf:"bytes,13,opt,name=live_output,json=liveOutput,proto3" json:"live_output,omitempty"`                                         // Streaming output received so far (useful when status is RUNNING)
-	DesiredState    DesiredState           `protobuf:"varint,14,opt,name=desired_state,json=desiredState,proto3,enum=powermanage.v1.DesiredState" json:"desired_state,omitempty"` // Whether the action was meant to install/enable (PRESENT) or remove/disable (ABSENT)
-	Changed         bool                   `protobuf:"varint,15,opt,name=changed,proto3" json:"changed,omitempty"`                                                                // Whether the execution made changes to the system (false = state was already as desired)
-	Compliant       bool                   `protobuf:"varint,16,opt,name=compliant,proto3" json:"compliant,omitempty"`                                                            // Detection script result: true if compliant
-	DetectionOutput *CommandOutput         `protobuf:"bytes,17,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`                          // Detection script output
-	ActionName      string                 `protobuf:"bytes,18,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`                                         // Resolved from the action row (empty for inline actions)
+	LiveOutput      *CommandOutput         `protobuf:"bytes,13,opt,name=live_output,json=liveOutput,proto3" json:"live_output,omitempty"`                                      // Streaming output received so far (useful when status is RUNNING)
+	DesiredState    DesiredState           `protobuf:"varint,14,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"` // Whether the action was meant to install/enable (PRESENT) or remove/disable (ABSENT)
+	Changed         bool                   `protobuf:"varint,15,opt,name=changed,proto3" json:"changed,omitempty"`                                                             // Whether the execution made changes to the system (false = state was already as desired)
+	Compliant       bool                   `protobuf:"varint,16,opt,name=compliant,proto3" json:"compliant,omitempty"`                                                         // Detection script result: true if compliant
+	DetectionOutput *CommandOutput         `protobuf:"bytes,17,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`                       // Detection script output
+	ActionName      string                 `protobuf:"bytes,18,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`                                      // Resolved from the action row (empty for inline actions)
 	// Set when status is SCHEDULED (or was, before dispatch fired). The
 	// UTC timestamp at which the deferred dispatch is configured to
 	// fire. Populated when a Dispatch* request supplies the run_at
@@ -10490,7 +10490,7 @@ type ActionExecution struct {
 
 func (x *ActionExecution) Reset() {
 	*x = ActionExecution{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[161]
+	mi := &file_cadestro_v1_control_proto_msgTypes[161]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10502,7 +10502,7 @@ func (x *ActionExecution) String() string {
 func (*ActionExecution) ProtoMessage() {}
 
 func (x *ActionExecution) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[161]
+	mi := &file_cadestro_v1_control_proto_msgTypes[161]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10515,7 +10515,7 @@ func (x *ActionExecution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionExecution.ProtoReflect.Descriptor instead.
 func (*ActionExecution) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{161}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{161}
 }
 
 func (x *ActionExecution) GetId() string {
@@ -10684,7 +10684,7 @@ type DispatchActionRequest struct {
 
 func (x *DispatchActionRequest) Reset() {
 	*x = DispatchActionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[162]
+	mi := &file_cadestro_v1_control_proto_msgTypes[162]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10696,7 +10696,7 @@ func (x *DispatchActionRequest) String() string {
 func (*DispatchActionRequest) ProtoMessage() {}
 
 func (x *DispatchActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[162]
+	mi := &file_cadestro_v1_control_proto_msgTypes[162]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10709,7 +10709,7 @@ func (x *DispatchActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchActionRequest.ProtoReflect.Descriptor instead.
 func (*DispatchActionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{162}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{162}
 }
 
 func (x *DispatchActionRequest) GetDeviceId() string {
@@ -10784,7 +10784,7 @@ type DispatchActionResponse struct {
 
 func (x *DispatchActionResponse) Reset() {
 	*x = DispatchActionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[163]
+	mi := &file_cadestro_v1_control_proto_msgTypes[163]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10796,7 +10796,7 @@ func (x *DispatchActionResponse) String() string {
 func (*DispatchActionResponse) ProtoMessage() {}
 
 func (x *DispatchActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[163]
+	mi := &file_cadestro_v1_control_proto_msgTypes[163]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10809,7 +10809,7 @@ func (x *DispatchActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchActionResponse.ProtoReflect.Descriptor instead.
 func (*DispatchActionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{163}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{163}
 }
 
 func (x *DispatchActionResponse) GetExecution() *ActionExecution {
@@ -10834,7 +10834,7 @@ type DispatchToMultipleRequest struct {
 
 func (x *DispatchToMultipleRequest) Reset() {
 	*x = DispatchToMultipleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[164]
+	mi := &file_cadestro_v1_control_proto_msgTypes[164]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10846,7 +10846,7 @@ func (x *DispatchToMultipleRequest) String() string {
 func (*DispatchToMultipleRequest) ProtoMessage() {}
 
 func (x *DispatchToMultipleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[164]
+	mi := &file_cadestro_v1_control_proto_msgTypes[164]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10859,7 +10859,7 @@ func (x *DispatchToMultipleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchToMultipleRequest.ProtoReflect.Descriptor instead.
 func (*DispatchToMultipleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{164}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{164}
 }
 
 func (x *DispatchToMultipleRequest) GetDeviceIds() []string {
@@ -10920,7 +10920,7 @@ type DispatchToMultipleResponse struct {
 
 func (x *DispatchToMultipleResponse) Reset() {
 	*x = DispatchToMultipleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[165]
+	mi := &file_cadestro_v1_control_proto_msgTypes[165]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10932,7 +10932,7 @@ func (x *DispatchToMultipleResponse) String() string {
 func (*DispatchToMultipleResponse) ProtoMessage() {}
 
 func (x *DispatchToMultipleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[165]
+	mi := &file_cadestro_v1_control_proto_msgTypes[165]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10945,7 +10945,7 @@ func (x *DispatchToMultipleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchToMultipleResponse.ProtoReflect.Descriptor instead.
 func (*DispatchToMultipleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{165}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{165}
 }
 
 func (x *DispatchToMultipleResponse) GetExecutions() []*ActionExecution {
@@ -10966,7 +10966,7 @@ type DispatchAssignedActionsRequest struct {
 
 func (x *DispatchAssignedActionsRequest) Reset() {
 	*x = DispatchAssignedActionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[166]
+	mi := &file_cadestro_v1_control_proto_msgTypes[166]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10978,7 +10978,7 @@ func (x *DispatchAssignedActionsRequest) String() string {
 func (*DispatchAssignedActionsRequest) ProtoMessage() {}
 
 func (x *DispatchAssignedActionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[166]
+	mi := &file_cadestro_v1_control_proto_msgTypes[166]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10991,7 +10991,7 @@ func (x *DispatchAssignedActionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchAssignedActionsRequest.ProtoReflect.Descriptor instead.
 func (*DispatchAssignedActionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{166}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{166}
 }
 
 func (x *DispatchAssignedActionsRequest) GetDeviceId() string {
@@ -11010,7 +11010,7 @@ type DispatchAssignedActionsResponse struct {
 
 func (x *DispatchAssignedActionsResponse) Reset() {
 	*x = DispatchAssignedActionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[167]
+	mi := &file_cadestro_v1_control_proto_msgTypes[167]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11022,7 +11022,7 @@ func (x *DispatchAssignedActionsResponse) String() string {
 func (*DispatchAssignedActionsResponse) ProtoMessage() {}
 
 func (x *DispatchAssignedActionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[167]
+	mi := &file_cadestro_v1_control_proto_msgTypes[167]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11035,7 +11035,7 @@ func (x *DispatchAssignedActionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchAssignedActionsResponse.ProtoReflect.Descriptor instead.
 func (*DispatchAssignedActionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{167}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{167}
 }
 
 func (x *DispatchAssignedActionsResponse) GetExecutions() []*ActionExecution {
@@ -11058,7 +11058,7 @@ type DispatchActionSetRequest struct {
 
 func (x *DispatchActionSetRequest) Reset() {
 	*x = DispatchActionSetRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[168]
+	mi := &file_cadestro_v1_control_proto_msgTypes[168]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11070,7 +11070,7 @@ func (x *DispatchActionSetRequest) String() string {
 func (*DispatchActionSetRequest) ProtoMessage() {}
 
 func (x *DispatchActionSetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[168]
+	mi := &file_cadestro_v1_control_proto_msgTypes[168]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11083,7 +11083,7 @@ func (x *DispatchActionSetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchActionSetRequest.ProtoReflect.Descriptor instead.
 func (*DispatchActionSetRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{168}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{168}
 }
 
 func (x *DispatchActionSetRequest) GetDeviceId() string {
@@ -11109,7 +11109,7 @@ type DispatchActionSetResponse struct {
 
 func (x *DispatchActionSetResponse) Reset() {
 	*x = DispatchActionSetResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[169]
+	mi := &file_cadestro_v1_control_proto_msgTypes[169]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11121,7 +11121,7 @@ func (x *DispatchActionSetResponse) String() string {
 func (*DispatchActionSetResponse) ProtoMessage() {}
 
 func (x *DispatchActionSetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[169]
+	mi := &file_cadestro_v1_control_proto_msgTypes[169]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11134,7 +11134,7 @@ func (x *DispatchActionSetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchActionSetResponse.ProtoReflect.Descriptor instead.
 func (*DispatchActionSetResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{169}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{169}
 }
 
 func (x *DispatchActionSetResponse) GetExecutions() []*ActionExecution {
@@ -11157,7 +11157,7 @@ type DispatchDefinitionRequest struct {
 
 func (x *DispatchDefinitionRequest) Reset() {
 	*x = DispatchDefinitionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[170]
+	mi := &file_cadestro_v1_control_proto_msgTypes[170]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11169,7 +11169,7 @@ func (x *DispatchDefinitionRequest) String() string {
 func (*DispatchDefinitionRequest) ProtoMessage() {}
 
 func (x *DispatchDefinitionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[170]
+	mi := &file_cadestro_v1_control_proto_msgTypes[170]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11182,7 +11182,7 @@ func (x *DispatchDefinitionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchDefinitionRequest.ProtoReflect.Descriptor instead.
 func (*DispatchDefinitionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{170}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{170}
 }
 
 func (x *DispatchDefinitionRequest) GetDeviceId() string {
@@ -11208,7 +11208,7 @@ type DispatchDefinitionResponse struct {
 
 func (x *DispatchDefinitionResponse) Reset() {
 	*x = DispatchDefinitionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[171]
+	mi := &file_cadestro_v1_control_proto_msgTypes[171]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11220,7 +11220,7 @@ func (x *DispatchDefinitionResponse) String() string {
 func (*DispatchDefinitionResponse) ProtoMessage() {}
 
 func (x *DispatchDefinitionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[171]
+	mi := &file_cadestro_v1_control_proto_msgTypes[171]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11233,7 +11233,7 @@ func (x *DispatchDefinitionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchDefinitionResponse.ProtoReflect.Descriptor instead.
 func (*DispatchDefinitionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{171}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{171}
 }
 
 func (x *DispatchDefinitionResponse) GetExecutions() []*ActionExecution {
@@ -11261,7 +11261,7 @@ type DispatchToGroupRequest struct {
 
 func (x *DispatchToGroupRequest) Reset() {
 	*x = DispatchToGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[172]
+	mi := &file_cadestro_v1_control_proto_msgTypes[172]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11273,7 +11273,7 @@ func (x *DispatchToGroupRequest) String() string {
 func (*DispatchToGroupRequest) ProtoMessage() {}
 
 func (x *DispatchToGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[172]
+	mi := &file_cadestro_v1_control_proto_msgTypes[172]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11286,7 +11286,7 @@ func (x *DispatchToGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchToGroupRequest.ProtoReflect.Descriptor instead.
 func (*DispatchToGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{172}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{172}
 }
 
 func (x *DispatchToGroupRequest) GetGroupId() string {
@@ -11379,7 +11379,7 @@ type DispatchToGroupResponse struct {
 
 func (x *DispatchToGroupResponse) Reset() {
 	*x = DispatchToGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[173]
+	mi := &file_cadestro_v1_control_proto_msgTypes[173]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11391,7 +11391,7 @@ func (x *DispatchToGroupResponse) String() string {
 func (*DispatchToGroupResponse) ProtoMessage() {}
 
 func (x *DispatchToGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[173]
+	mi := &file_cadestro_v1_control_proto_msgTypes[173]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11404,7 +11404,7 @@ func (x *DispatchToGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchToGroupResponse.ProtoReflect.Descriptor instead.
 func (*DispatchToGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{173}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{173}
 }
 
 func (x *DispatchToGroupResponse) GetExecutions() []*ActionExecution {
@@ -11424,7 +11424,7 @@ type GetExecutionRequest struct {
 
 func (x *GetExecutionRequest) Reset() {
 	*x = GetExecutionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[174]
+	mi := &file_cadestro_v1_control_proto_msgTypes[174]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11436,7 +11436,7 @@ func (x *GetExecutionRequest) String() string {
 func (*GetExecutionRequest) ProtoMessage() {}
 
 func (x *GetExecutionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[174]
+	mi := &file_cadestro_v1_control_proto_msgTypes[174]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11449,7 +11449,7 @@ func (x *GetExecutionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExecutionRequest.ProtoReflect.Descriptor instead.
 func (*GetExecutionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{174}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{174}
 }
 
 func (x *GetExecutionRequest) GetId() string {
@@ -11468,7 +11468,7 @@ type GetExecutionResponse struct {
 
 func (x *GetExecutionResponse) Reset() {
 	*x = GetExecutionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[175]
+	mi := &file_cadestro_v1_control_proto_msgTypes[175]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11480,7 +11480,7 @@ func (x *GetExecutionResponse) String() string {
 func (*GetExecutionResponse) ProtoMessage() {}
 
 func (x *GetExecutionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[175]
+	mi := &file_cadestro_v1_control_proto_msgTypes[175]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11493,7 +11493,7 @@ func (x *GetExecutionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExecutionResponse.ProtoReflect.Descriptor instead.
 func (*GetExecutionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{175}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{175}
 }
 
 func (x *GetExecutionResponse) GetExecution() *ActionExecution {
@@ -11511,8 +11511,8 @@ type ListExecutionsRequest struct {
 	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
 	// @gotags: validate:"omitempty,ulid"
 	DeviceId     string          `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"omitempty,ulid"` // optional filter
-	StatusFilter ExecutionStatus `protobuf:"varint,4,opt,name=status_filter,json=statusFilter,proto3,enum=powermanage.v1.ExecutionStatus" json:"status_filter,omitempty"`
-	TypeFilter   ActionType      `protobuf:"varint,5,opt,name=type_filter,json=typeFilter,proto3,enum=powermanage.v1.ActionType" json:"type_filter,omitempty"` // optional action type filter
+	StatusFilter ExecutionStatus `protobuf:"varint,4,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.ExecutionStatus" json:"status_filter,omitempty"`
+	TypeFilter   ActionType      `protobuf:"varint,5,opt,name=type_filter,json=typeFilter,proto3,enum=cadestro.v1.ActionType" json:"type_filter,omitempty"` // optional action type filter
 	// @gotags: validate:"omitempty,max=255"
 	Search        string `protobuf:"bytes,6,opt,name=search,proto3" json:"search,omitempty" validate:"omitempty,max=255"` // searches action name and device hostname
 	unknownFields protoimpl.UnknownFields
@@ -11521,7 +11521,7 @@ type ListExecutionsRequest struct {
 
 func (x *ListExecutionsRequest) Reset() {
 	*x = ListExecutionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[176]
+	mi := &file_cadestro_v1_control_proto_msgTypes[176]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11533,7 +11533,7 @@ func (x *ListExecutionsRequest) String() string {
 func (*ListExecutionsRequest) ProtoMessage() {}
 
 func (x *ListExecutionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[176]
+	mi := &file_cadestro_v1_control_proto_msgTypes[176]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11546,7 +11546,7 @@ func (x *ListExecutionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExecutionsRequest.ProtoReflect.Descriptor instead.
 func (*ListExecutionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{176}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{176}
 }
 
 func (x *ListExecutionsRequest) GetPageSize() int32 {
@@ -11602,7 +11602,7 @@ type ListExecutionsResponse struct {
 
 func (x *ListExecutionsResponse) Reset() {
 	*x = ListExecutionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[177]
+	mi := &file_cadestro_v1_control_proto_msgTypes[177]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11614,7 +11614,7 @@ func (x *ListExecutionsResponse) String() string {
 func (*ListExecutionsResponse) ProtoMessage() {}
 
 func (x *ListExecutionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[177]
+	mi := &file_cadestro_v1_control_proto_msgTypes[177]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11627,7 +11627,7 @@ func (x *ListExecutionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListExecutionsResponse.ProtoReflect.Descriptor instead.
 func (*ListExecutionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{177}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{177}
 }
 
 func (x *ListExecutionsResponse) GetExecutions() []*ActionExecution {
@@ -11656,7 +11656,7 @@ type DispatchInstantActionRequest struct {
 	// @gotags: validate:"required,ulid"
 	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
 	// @gotags: validate:"required,ne=0"
-	InstantAction ActionType `protobuf:"varint,2,opt,name=instant_action,json=instantAction,proto3,enum=powermanage.v1.ActionType" json:"instant_action,omitempty" validate:"required,ne=0"`
+	InstantAction ActionType `protobuf:"varint,2,opt,name=instant_action,json=instantAction,proto3,enum=cadestro.v1.ActionType" json:"instant_action,omitempty" validate:"required,ne=0"`
 	// Same semantics as DispatchActionRequest.run_at: when set, defer
 	// the instant action's dispatch until this UTC timestamp.
 	RunAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=run_at,json=runAt,proto3" json:"run_at,omitempty"`
@@ -11670,7 +11670,7 @@ type DispatchInstantActionRequest struct {
 
 func (x *DispatchInstantActionRequest) Reset() {
 	*x = DispatchInstantActionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[178]
+	mi := &file_cadestro_v1_control_proto_msgTypes[178]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11682,7 +11682,7 @@ func (x *DispatchInstantActionRequest) String() string {
 func (*DispatchInstantActionRequest) ProtoMessage() {}
 
 func (x *DispatchInstantActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[178]
+	mi := &file_cadestro_v1_control_proto_msgTypes[178]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11695,7 +11695,7 @@ func (x *DispatchInstantActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchInstantActionRequest.ProtoReflect.Descriptor instead.
 func (*DispatchInstantActionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{178}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{178}
 }
 
 func (x *DispatchInstantActionRequest) GetDeviceId() string {
@@ -11735,7 +11735,7 @@ type DispatchInstantActionResponse struct {
 
 func (x *DispatchInstantActionResponse) Reset() {
 	*x = DispatchInstantActionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[179]
+	mi := &file_cadestro_v1_control_proto_msgTypes[179]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11747,7 +11747,7 @@ func (x *DispatchInstantActionResponse) String() string {
 func (*DispatchInstantActionResponse) ProtoMessage() {}
 
 func (x *DispatchInstantActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[179]
+	mi := &file_cadestro_v1_control_proto_msgTypes[179]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11760,7 +11760,7 @@ func (x *DispatchInstantActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchInstantActionResponse.ProtoReflect.Descriptor instead.
 func (*DispatchInstantActionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{179}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{179}
 }
 
 func (x *DispatchInstantActionResponse) GetExecution() *ActionExecution {
@@ -11785,7 +11785,7 @@ type CancelExecutionRequest struct {
 
 func (x *CancelExecutionRequest) Reset() {
 	*x = CancelExecutionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[180]
+	mi := &file_cadestro_v1_control_proto_msgTypes[180]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11797,7 +11797,7 @@ func (x *CancelExecutionRequest) String() string {
 func (*CancelExecutionRequest) ProtoMessage() {}
 
 func (x *CancelExecutionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[180]
+	mi := &file_cadestro_v1_control_proto_msgTypes[180]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11810,7 +11810,7 @@ func (x *CancelExecutionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelExecutionRequest.ProtoReflect.Descriptor instead.
 func (*CancelExecutionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{180}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{180}
 }
 
 func (x *CancelExecutionRequest) GetExecutionId() string {
@@ -11832,7 +11832,7 @@ type CancelExecutionResponse struct {
 
 func (x *CancelExecutionResponse) Reset() {
 	*x = CancelExecutionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[181]
+	mi := &file_cadestro_v1_control_proto_msgTypes[181]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11844,7 +11844,7 @@ func (x *CancelExecutionResponse) String() string {
 func (*CancelExecutionResponse) ProtoMessage() {}
 
 func (x *CancelExecutionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[181]
+	mi := &file_cadestro_v1_control_proto_msgTypes[181]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11857,7 +11857,7 @@ func (x *CancelExecutionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelExecutionResponse.ProtoReflect.Descriptor instead.
 func (*CancelExecutionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{181}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{181}
 }
 
 func (x *CancelExecutionResponse) GetExecution() *ActionExecution {
@@ -11889,7 +11889,7 @@ type AuditEvent struct {
 
 func (x *AuditEvent) Reset() {
 	*x = AuditEvent{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[182]
+	mi := &file_cadestro_v1_control_proto_msgTypes[182]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11901,7 +11901,7 @@ func (x *AuditEvent) String() string {
 func (*AuditEvent) ProtoMessage() {}
 
 func (x *AuditEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[182]
+	mi := &file_cadestro_v1_control_proto_msgTypes[182]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11914,7 +11914,7 @@ func (x *AuditEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditEvent.ProtoReflect.Descriptor instead.
 func (*AuditEvent) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{182}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{182}
 }
 
 func (x *AuditEvent) GetId() string {
@@ -11991,7 +11991,7 @@ type ListAuditEventsRequest struct {
 
 func (x *ListAuditEventsRequest) Reset() {
 	*x = ListAuditEventsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[183]
+	mi := &file_cadestro_v1_control_proto_msgTypes[183]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12003,7 +12003,7 @@ func (x *ListAuditEventsRequest) String() string {
 func (*ListAuditEventsRequest) ProtoMessage() {}
 
 func (x *ListAuditEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[183]
+	mi := &file_cadestro_v1_control_proto_msgTypes[183]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12016,7 +12016,7 @@ func (x *ListAuditEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListAuditEventsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{183}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{183}
 }
 
 func (x *ListAuditEventsRequest) GetPageSize() int32 {
@@ -12065,7 +12065,7 @@ type ListAuditEventsResponse struct {
 
 func (x *ListAuditEventsResponse) Reset() {
 	*x = ListAuditEventsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[184]
+	mi := &file_cadestro_v1_control_proto_msgTypes[184]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12077,7 +12077,7 @@ func (x *ListAuditEventsResponse) String() string {
 func (*ListAuditEventsResponse) ProtoMessage() {}
 
 func (x *ListAuditEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[184]
+	mi := &file_cadestro_v1_control_proto_msgTypes[184]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12090,7 +12090,7 @@ func (x *ListAuditEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListAuditEventsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{184}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{184}
 }
 
 func (x *ListAuditEventsResponse) GetEvents() []*AuditEvent {
@@ -12149,7 +12149,7 @@ type ExportAuditEventsRequest struct {
 
 func (x *ExportAuditEventsRequest) Reset() {
 	*x = ExportAuditEventsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[185]
+	mi := &file_cadestro_v1_control_proto_msgTypes[185]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12161,7 +12161,7 @@ func (x *ExportAuditEventsRequest) String() string {
 func (*ExportAuditEventsRequest) ProtoMessage() {}
 
 func (x *ExportAuditEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[185]
+	mi := &file_cadestro_v1_control_proto_msgTypes[185]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12174,7 +12174,7 @@ func (x *ExportAuditEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportAuditEventsRequest.ProtoReflect.Descriptor instead.
 func (*ExportAuditEventsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{185}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{185}
 }
 
 func (x *ExportAuditEventsRequest) GetFormat() string {
@@ -12241,7 +12241,7 @@ type ExportAuditEventsResponse struct {
 
 func (x *ExportAuditEventsResponse) Reset() {
 	*x = ExportAuditEventsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[186]
+	mi := &file_cadestro_v1_control_proto_msgTypes[186]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12253,7 +12253,7 @@ func (x *ExportAuditEventsResponse) String() string {
 func (*ExportAuditEventsResponse) ProtoMessage() {}
 
 func (x *ExportAuditEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[186]
+	mi := &file_cadestro_v1_control_proto_msgTypes[186]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12266,7 +12266,7 @@ func (x *ExportAuditEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportAuditEventsResponse.ProtoReflect.Descriptor instead.
 func (*ExportAuditEventsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{186}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{186}
 }
 
 func (x *ExportAuditEventsResponse) GetChunk() []byte {
@@ -12294,14 +12294,14 @@ type LpsPassword struct {
 	ActionName     string                 `protobuf:"bytes,5,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
 	Username       string                 `protobuf:"bytes,6,opt,name=username,proto3" json:"username,omitempty"`
 	RotatedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty"`
-	RotationReason RotationReason         `protobuf:"varint,8,opt,name=rotation_reason,json=rotationReason,proto3,enum=powermanage.v1.RotationReason" json:"rotation_reason,omitempty"`
+	RotationReason RotationReason         `protobuf:"varint,8,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *LpsPassword) Reset() {
 	*x = LpsPassword{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[187]
+	mi := &file_cadestro_v1_control_proto_msgTypes[187]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12313,7 +12313,7 @@ func (x *LpsPassword) String() string {
 func (*LpsPassword) ProtoMessage() {}
 
 func (x *LpsPassword) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[187]
+	mi := &file_cadestro_v1_control_proto_msgTypes[187]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12326,7 +12326,7 @@ func (x *LpsPassword) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LpsPassword.ProtoReflect.Descriptor instead.
 func (*LpsPassword) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{187}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{187}
 }
 
 func (x *LpsPassword) GetId() string {
@@ -12395,7 +12395,7 @@ type ListLpsPasswordsRequest struct {
 
 func (x *ListLpsPasswordsRequest) Reset() {
 	*x = ListLpsPasswordsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[188]
+	mi := &file_cadestro_v1_control_proto_msgTypes[188]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12407,7 +12407,7 @@ func (x *ListLpsPasswordsRequest) String() string {
 func (*ListLpsPasswordsRequest) ProtoMessage() {}
 
 func (x *ListLpsPasswordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[188]
+	mi := &file_cadestro_v1_control_proto_msgTypes[188]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12420,7 +12420,7 @@ func (x *ListLpsPasswordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLpsPasswordsRequest.ProtoReflect.Descriptor instead.
 func (*ListLpsPasswordsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{188}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{188}
 }
 
 func (x *ListLpsPasswordsRequest) GetDeviceId() string {
@@ -12442,7 +12442,7 @@ type ListLpsPasswordsResponse struct {
 
 func (x *ListLpsPasswordsResponse) Reset() {
 	*x = ListLpsPasswordsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[189]
+	mi := &file_cadestro_v1_control_proto_msgTypes[189]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12454,7 +12454,7 @@ func (x *ListLpsPasswordsResponse) String() string {
 func (*ListLpsPasswordsResponse) ProtoMessage() {}
 
 func (x *ListLpsPasswordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[189]
+	mi := &file_cadestro_v1_control_proto_msgTypes[189]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12467,7 +12467,7 @@ func (x *ListLpsPasswordsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLpsPasswordsResponse.ProtoReflect.Descriptor instead.
 func (*ListLpsPasswordsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{189}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{189}
 }
 
 func (x *ListLpsPasswordsResponse) GetCurrent() []*LpsPassword {
@@ -12494,7 +12494,7 @@ type RevealLpsPasswordRequest struct {
 
 func (x *RevealLpsPasswordRequest) Reset() {
 	*x = RevealLpsPasswordRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[190]
+	mi := &file_cadestro_v1_control_proto_msgTypes[190]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12506,7 +12506,7 @@ func (x *RevealLpsPasswordRequest) String() string {
 func (*RevealLpsPasswordRequest) ProtoMessage() {}
 
 func (x *RevealLpsPasswordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[190]
+	mi := &file_cadestro_v1_control_proto_msgTypes[190]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12519,7 +12519,7 @@ func (x *RevealLpsPasswordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevealLpsPasswordRequest.ProtoReflect.Descriptor instead.
 func (*RevealLpsPasswordRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{190}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{190}
 }
 
 func (x *RevealLpsPasswordRequest) GetId() string {
@@ -12538,7 +12538,7 @@ type RevealLpsPasswordResponse struct {
 
 func (x *RevealLpsPasswordResponse) Reset() {
 	*x = RevealLpsPasswordResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[191]
+	mi := &file_cadestro_v1_control_proto_msgTypes[191]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12550,7 +12550,7 @@ func (x *RevealLpsPasswordResponse) String() string {
 func (*RevealLpsPasswordResponse) ProtoMessage() {}
 
 func (x *RevealLpsPasswordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[191]
+	mi := &file_cadestro_v1_control_proto_msgTypes[191]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12563,7 +12563,7 @@ func (x *RevealLpsPasswordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevealLpsPasswordResponse.ProtoReflect.Descriptor instead.
 func (*RevealLpsPasswordResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{191}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{191}
 }
 
 func (x *RevealLpsPasswordResponse) GetPassword() string {
@@ -12584,8 +12584,8 @@ type LuksKey struct {
 	ActionName       string                 `protobuf:"bytes,5,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
 	DevicePath       string                 `protobuf:"bytes,6,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
 	RotatedAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty"`
-	RotationReason   RotationReason         `protobuf:"varint,8,opt,name=rotation_reason,json=rotationReason,proto3,enum=powermanage.v1.RotationReason" json:"rotation_reason,omitempty"`
-	RevocationStatus LuksRevocationStatus   `protobuf:"varint,9,opt,name=revocation_status,json=revocationStatus,proto3,enum=powermanage.v1.LuksRevocationStatus" json:"revocation_status,omitempty"`
+	RotationReason   RotationReason         `protobuf:"varint,8,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty"`
+	RevocationStatus LuksRevocationStatus   `protobuf:"varint,9,opt,name=revocation_status,json=revocationStatus,proto3,enum=cadestro.v1.LuksRevocationStatus" json:"revocation_status,omitempty"`
 	// Error message if revocation failed
 	RevocationError string `protobuf:"bytes,10,opt,name=revocation_error,json=revocationError,proto3" json:"revocation_error,omitempty"`
 	// Timestamp of last revocation event
@@ -12596,7 +12596,7 @@ type LuksKey struct {
 
 func (x *LuksKey) Reset() {
 	*x = LuksKey{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[192]
+	mi := &file_cadestro_v1_control_proto_msgTypes[192]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12608,7 +12608,7 @@ func (x *LuksKey) String() string {
 func (*LuksKey) ProtoMessage() {}
 
 func (x *LuksKey) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[192]
+	mi := &file_cadestro_v1_control_proto_msgTypes[192]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12621,7 +12621,7 @@ func (x *LuksKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LuksKey.ProtoReflect.Descriptor instead.
 func (*LuksKey) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{192}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{192}
 }
 
 func (x *LuksKey) GetId() string {
@@ -12711,7 +12711,7 @@ type ListLuksKeysRequest struct {
 
 func (x *ListLuksKeysRequest) Reset() {
 	*x = ListLuksKeysRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[193]
+	mi := &file_cadestro_v1_control_proto_msgTypes[193]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12723,7 +12723,7 @@ func (x *ListLuksKeysRequest) String() string {
 func (*ListLuksKeysRequest) ProtoMessage() {}
 
 func (x *ListLuksKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[193]
+	mi := &file_cadestro_v1_control_proto_msgTypes[193]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12736,7 +12736,7 @@ func (x *ListLuksKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLuksKeysRequest.ProtoReflect.Descriptor instead.
 func (*ListLuksKeysRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{193}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{193}
 }
 
 func (x *ListLuksKeysRequest) GetDeviceId() string {
@@ -12758,7 +12758,7 @@ type ListLuksKeysResponse struct {
 
 func (x *ListLuksKeysResponse) Reset() {
 	*x = ListLuksKeysResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[194]
+	mi := &file_cadestro_v1_control_proto_msgTypes[194]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12770,7 +12770,7 @@ func (x *ListLuksKeysResponse) String() string {
 func (*ListLuksKeysResponse) ProtoMessage() {}
 
 func (x *ListLuksKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[194]
+	mi := &file_cadestro_v1_control_proto_msgTypes[194]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12783,7 +12783,7 @@ func (x *ListLuksKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListLuksKeysResponse.ProtoReflect.Descriptor instead.
 func (*ListLuksKeysResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{194}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{194}
 }
 
 func (x *ListLuksKeysResponse) GetCurrent() []*LuksKey {
@@ -12810,7 +12810,7 @@ type RevealLuksKeyRequest struct {
 
 func (x *RevealLuksKeyRequest) Reset() {
 	*x = RevealLuksKeyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[195]
+	mi := &file_cadestro_v1_control_proto_msgTypes[195]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12822,7 +12822,7 @@ func (x *RevealLuksKeyRequest) String() string {
 func (*RevealLuksKeyRequest) ProtoMessage() {}
 
 func (x *RevealLuksKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[195]
+	mi := &file_cadestro_v1_control_proto_msgTypes[195]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12835,7 +12835,7 @@ func (x *RevealLuksKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevealLuksKeyRequest.ProtoReflect.Descriptor instead.
 func (*RevealLuksKeyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{195}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{195}
 }
 
 func (x *RevealLuksKeyRequest) GetId() string {
@@ -12854,7 +12854,7 @@ type RevealLuksKeyResponse struct {
 
 func (x *RevealLuksKeyResponse) Reset() {
 	*x = RevealLuksKeyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[196]
+	mi := &file_cadestro_v1_control_proto_msgTypes[196]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12866,7 +12866,7 @@ func (x *RevealLuksKeyResponse) String() string {
 func (*RevealLuksKeyResponse) ProtoMessage() {}
 
 func (x *RevealLuksKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[196]
+	mi := &file_cadestro_v1_control_proto_msgTypes[196]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12879,7 +12879,7 @@ func (x *RevealLuksKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevealLuksKeyResponse.ProtoReflect.Descriptor instead.
 func (*RevealLuksKeyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{196}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{196}
 }
 
 func (x *RevealLuksKeyResponse) GetPassphrase() string {
@@ -12901,7 +12901,7 @@ type CreateLuksTokenRequest struct {
 
 func (x *CreateLuksTokenRequest) Reset() {
 	*x = CreateLuksTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[197]
+	mi := &file_cadestro_v1_control_proto_msgTypes[197]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12913,7 +12913,7 @@ func (x *CreateLuksTokenRequest) String() string {
 func (*CreateLuksTokenRequest) ProtoMessage() {}
 
 func (x *CreateLuksTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[197]
+	mi := &file_cadestro_v1_control_proto_msgTypes[197]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12926,7 +12926,7 @@ func (x *CreateLuksTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateLuksTokenRequest.ProtoReflect.Descriptor instead.
 func (*CreateLuksTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{197}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{197}
 }
 
 func (x *CreateLuksTokenRequest) GetDeviceId() string {
@@ -12957,7 +12957,7 @@ type CreateLuksTokenResponse struct {
 
 func (x *CreateLuksTokenResponse) Reset() {
 	*x = CreateLuksTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[198]
+	mi := &file_cadestro_v1_control_proto_msgTypes[198]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12969,7 +12969,7 @@ func (x *CreateLuksTokenResponse) String() string {
 func (*CreateLuksTokenResponse) ProtoMessage() {}
 
 func (x *CreateLuksTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[198]
+	mi := &file_cadestro_v1_control_proto_msgTypes[198]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12982,7 +12982,7 @@ func (x *CreateLuksTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateLuksTokenResponse.ProtoReflect.Descriptor instead.
 func (*CreateLuksTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{198}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{198}
 }
 
 func (x *CreateLuksTokenResponse) GetToken() string {
@@ -13018,7 +13018,7 @@ type RevokeLuksDeviceKeyRequest struct {
 
 func (x *RevokeLuksDeviceKeyRequest) Reset() {
 	*x = RevokeLuksDeviceKeyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[199]
+	mi := &file_cadestro_v1_control_proto_msgTypes[199]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13030,7 +13030,7 @@ func (x *RevokeLuksDeviceKeyRequest) String() string {
 func (*RevokeLuksDeviceKeyRequest) ProtoMessage() {}
 
 func (x *RevokeLuksDeviceKeyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[199]
+	mi := &file_cadestro_v1_control_proto_msgTypes[199]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13043,7 +13043,7 @@ func (x *RevokeLuksDeviceKeyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeLuksDeviceKeyRequest.ProtoReflect.Descriptor instead.
 func (*RevokeLuksDeviceKeyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{199}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{199}
 }
 
 func (x *RevokeLuksDeviceKeyRequest) GetDeviceId() string {
@@ -13068,7 +13068,7 @@ type RevokeLuksDeviceKeyResponse struct {
 
 func (x *RevokeLuksDeviceKeyResponse) Reset() {
 	*x = RevokeLuksDeviceKeyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[200]
+	mi := &file_cadestro_v1_control_proto_msgTypes[200]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13080,7 +13080,7 @@ func (x *RevokeLuksDeviceKeyResponse) String() string {
 func (*RevokeLuksDeviceKeyResponse) ProtoMessage() {}
 
 func (x *RevokeLuksDeviceKeyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[200]
+	mi := &file_cadestro_v1_control_proto_msgTypes[200]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13093,7 +13093,7 @@ func (x *RevokeLuksDeviceKeyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeLuksDeviceKeyResponse.ProtoReflect.Descriptor instead.
 func (*RevokeLuksDeviceKeyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{200}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{200}
 }
 
 // Dispatch an on-demand OSQuery to a connected device
@@ -13116,7 +13116,7 @@ type DispatchOSQueryRequest struct {
 
 func (x *DispatchOSQueryRequest) Reset() {
 	*x = DispatchOSQueryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[201]
+	mi := &file_cadestro_v1_control_proto_msgTypes[201]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13128,7 +13128,7 @@ func (x *DispatchOSQueryRequest) String() string {
 func (*DispatchOSQueryRequest) ProtoMessage() {}
 
 func (x *DispatchOSQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[201]
+	mi := &file_cadestro_v1_control_proto_msgTypes[201]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13141,7 +13141,7 @@ func (x *DispatchOSQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchOSQueryRequest.ProtoReflect.Descriptor instead.
 func (*DispatchOSQueryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{201}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{201}
 }
 
 func (x *DispatchOSQueryRequest) GetDeviceId() string {
@@ -13188,7 +13188,7 @@ type DispatchOSQueryResponse struct {
 
 func (x *DispatchOSQueryResponse) Reset() {
 	*x = DispatchOSQueryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[202]
+	mi := &file_cadestro_v1_control_proto_msgTypes[202]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13200,7 +13200,7 @@ func (x *DispatchOSQueryResponse) String() string {
 func (*DispatchOSQueryResponse) ProtoMessage() {}
 
 func (x *DispatchOSQueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[202]
+	mi := &file_cadestro_v1_control_proto_msgTypes[202]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13213,7 +13213,7 @@ func (x *DispatchOSQueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DispatchOSQueryResponse.ProtoReflect.Descriptor instead.
 func (*DispatchOSQueryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{202}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{202}
 }
 
 func (x *DispatchOSQueryResponse) GetQueryId() string {
@@ -13234,7 +13234,7 @@ type GetOSQueryResultRequest struct {
 
 func (x *GetOSQueryResultRequest) Reset() {
 	*x = GetOSQueryResultRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[203]
+	mi := &file_cadestro_v1_control_proto_msgTypes[203]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13246,7 +13246,7 @@ func (x *GetOSQueryResultRequest) String() string {
 func (*GetOSQueryResultRequest) ProtoMessage() {}
 
 func (x *GetOSQueryResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[203]
+	mi := &file_cadestro_v1_control_proto_msgTypes[203]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13259,7 +13259,7 @@ func (x *GetOSQueryResultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOSQueryResultRequest.ProtoReflect.Descriptor instead.
 func (*GetOSQueryResultRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{203}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{203}
 }
 
 func (x *GetOSQueryResultRequest) GetQueryId() string {
@@ -13282,7 +13282,7 @@ type GetOSQueryResultResponse struct {
 
 func (x *GetOSQueryResultResponse) Reset() {
 	*x = GetOSQueryResultResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[204]
+	mi := &file_cadestro_v1_control_proto_msgTypes[204]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13294,7 +13294,7 @@ func (x *GetOSQueryResultResponse) String() string {
 func (*GetOSQueryResultResponse) ProtoMessage() {}
 
 func (x *GetOSQueryResultResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[204]
+	mi := &file_cadestro_v1_control_proto_msgTypes[204]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13307,7 +13307,7 @@ func (x *GetOSQueryResultResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOSQueryResultResponse.ProtoReflect.Descriptor instead.
 func (*GetOSQueryResultResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{204}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{204}
 }
 
 func (x *GetOSQueryResultResponse) GetQueryId() string {
@@ -13359,7 +13359,7 @@ type GetDeviceInventoryRequest struct {
 
 func (x *GetDeviceInventoryRequest) Reset() {
 	*x = GetDeviceInventoryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[205]
+	mi := &file_cadestro_v1_control_proto_msgTypes[205]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13371,7 +13371,7 @@ func (x *GetDeviceInventoryRequest) String() string {
 func (*GetDeviceInventoryRequest) ProtoMessage() {}
 
 func (x *GetDeviceInventoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[205]
+	mi := &file_cadestro_v1_control_proto_msgTypes[205]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13384,7 +13384,7 @@ func (x *GetDeviceInventoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceInventoryRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceInventoryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{205}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{205}
 }
 
 func (x *GetDeviceInventoryRequest) GetDeviceId() string {
@@ -13412,7 +13412,7 @@ type InventoryTableResult struct {
 
 func (x *InventoryTableResult) Reset() {
 	*x = InventoryTableResult{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[206]
+	mi := &file_cadestro_v1_control_proto_msgTypes[206]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13424,7 +13424,7 @@ func (x *InventoryTableResult) String() string {
 func (*InventoryTableResult) ProtoMessage() {}
 
 func (x *InventoryTableResult) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[206]
+	mi := &file_cadestro_v1_control_proto_msgTypes[206]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13437,7 +13437,7 @@ func (x *InventoryTableResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InventoryTableResult.ProtoReflect.Descriptor instead.
 func (*InventoryTableResult) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{206}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{206}
 }
 
 func (x *InventoryTableResult) GetTableName() string {
@@ -13470,7 +13470,7 @@ type GetDeviceInventoryResponse struct {
 
 func (x *GetDeviceInventoryResponse) Reset() {
 	*x = GetDeviceInventoryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[207]
+	mi := &file_cadestro_v1_control_proto_msgTypes[207]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13482,7 +13482,7 @@ func (x *GetDeviceInventoryResponse) String() string {
 func (*GetDeviceInventoryResponse) ProtoMessage() {}
 
 func (x *GetDeviceInventoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[207]
+	mi := &file_cadestro_v1_control_proto_msgTypes[207]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13495,7 +13495,7 @@ func (x *GetDeviceInventoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceInventoryResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceInventoryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{207}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{207}
 }
 
 func (x *GetDeviceInventoryResponse) GetTables() []*InventoryTableResult {
@@ -13516,7 +13516,7 @@ type RefreshDeviceInventoryRequest struct {
 
 func (x *RefreshDeviceInventoryRequest) Reset() {
 	*x = RefreshDeviceInventoryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[208]
+	mi := &file_cadestro_v1_control_proto_msgTypes[208]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13528,7 +13528,7 @@ func (x *RefreshDeviceInventoryRequest) String() string {
 func (*RefreshDeviceInventoryRequest) ProtoMessage() {}
 
 func (x *RefreshDeviceInventoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[208]
+	mi := &file_cadestro_v1_control_proto_msgTypes[208]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13541,7 +13541,7 @@ func (x *RefreshDeviceInventoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshDeviceInventoryRequest.ProtoReflect.Descriptor instead.
 func (*RefreshDeviceInventoryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{208}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{208}
 }
 
 func (x *RefreshDeviceInventoryRequest) GetDeviceId() string {
@@ -13559,7 +13559,7 @@ type RefreshDeviceInventoryResponse struct {
 
 func (x *RefreshDeviceInventoryResponse) Reset() {
 	*x = RefreshDeviceInventoryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[209]
+	mi := &file_cadestro_v1_control_proto_msgTypes[209]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13571,7 +13571,7 @@ func (x *RefreshDeviceInventoryResponse) String() string {
 func (*RefreshDeviceInventoryResponse) ProtoMessage() {}
 
 func (x *RefreshDeviceInventoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[209]
+	mi := &file_cadestro_v1_control_proto_msgTypes[209]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13584,7 +13584,7 @@ func (x *RefreshDeviceInventoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshDeviceInventoryResponse.ProtoReflect.Descriptor instead.
 func (*RefreshDeviceInventoryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{209}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{209}
 }
 
 type QueryDeviceLogsRequest struct {
@@ -13610,7 +13610,7 @@ type QueryDeviceLogsRequest struct {
 
 func (x *QueryDeviceLogsRequest) Reset() {
 	*x = QueryDeviceLogsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[210]
+	mi := &file_cadestro_v1_control_proto_msgTypes[210]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13622,7 +13622,7 @@ func (x *QueryDeviceLogsRequest) String() string {
 func (*QueryDeviceLogsRequest) ProtoMessage() {}
 
 func (x *QueryDeviceLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[210]
+	mi := &file_cadestro_v1_control_proto_msgTypes[210]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13635,7 +13635,7 @@ func (x *QueryDeviceLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryDeviceLogsRequest.ProtoReflect.Descriptor instead.
 func (*QueryDeviceLogsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{210}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{210}
 }
 
 func (x *QueryDeviceLogsRequest) GetDeviceId() string {
@@ -13703,7 +13703,7 @@ type QueryDeviceLogsResponse struct {
 
 func (x *QueryDeviceLogsResponse) Reset() {
 	*x = QueryDeviceLogsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[211]
+	mi := &file_cadestro_v1_control_proto_msgTypes[211]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13715,7 +13715,7 @@ func (x *QueryDeviceLogsResponse) String() string {
 func (*QueryDeviceLogsResponse) ProtoMessage() {}
 
 func (x *QueryDeviceLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[211]
+	mi := &file_cadestro_v1_control_proto_msgTypes[211]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13728,7 +13728,7 @@ func (x *QueryDeviceLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryDeviceLogsResponse.ProtoReflect.Descriptor instead.
 func (*QueryDeviceLogsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{211}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{211}
 }
 
 func (x *QueryDeviceLogsResponse) GetQueryId() string {
@@ -13748,7 +13748,7 @@ type GetDeviceLogResultRequest struct {
 
 func (x *GetDeviceLogResultRequest) Reset() {
 	*x = GetDeviceLogResultRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[212]
+	mi := &file_cadestro_v1_control_proto_msgTypes[212]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13760,7 +13760,7 @@ func (x *GetDeviceLogResultRequest) String() string {
 func (*GetDeviceLogResultRequest) ProtoMessage() {}
 
 func (x *GetDeviceLogResultRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[212]
+	mi := &file_cadestro_v1_control_proto_msgTypes[212]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13773,7 +13773,7 @@ func (x *GetDeviceLogResultRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceLogResultRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceLogResultRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{212}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{212}
 }
 
 func (x *GetDeviceLogResultRequest) GetQueryId() string {
@@ -13796,7 +13796,7 @@ type GetDeviceLogResultResponse struct {
 
 func (x *GetDeviceLogResultResponse) Reset() {
 	*x = GetDeviceLogResultResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[213]
+	mi := &file_cadestro_v1_control_proto_msgTypes[213]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13808,7 +13808,7 @@ func (x *GetDeviceLogResultResponse) String() string {
 func (*GetDeviceLogResultResponse) ProtoMessage() {}
 
 func (x *GetDeviceLogResultResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[213]
+	mi := &file_cadestro_v1_control_proto_msgTypes[213]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13821,7 +13821,7 @@ func (x *GetDeviceLogResultResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceLogResultResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceLogResultResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{213}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{213}
 }
 
 func (x *GetDeviceLogResultResponse) GetQueryId() string {
@@ -13873,7 +13873,7 @@ type CreateRoleRequest struct {
 
 func (x *CreateRoleRequest) Reset() {
 	*x = CreateRoleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[214]
+	mi := &file_cadestro_v1_control_proto_msgTypes[214]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13885,7 +13885,7 @@ func (x *CreateRoleRequest) String() string {
 func (*CreateRoleRequest) ProtoMessage() {}
 
 func (x *CreateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[214]
+	mi := &file_cadestro_v1_control_proto_msgTypes[214]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13898,7 +13898,7 @@ func (x *CreateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoleRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{214}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{214}
 }
 
 func (x *CreateRoleRequest) GetName() string {
@@ -13931,7 +13931,7 @@ type CreateRoleResponse struct {
 
 func (x *CreateRoleResponse) Reset() {
 	*x = CreateRoleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[215]
+	mi := &file_cadestro_v1_control_proto_msgTypes[215]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13943,7 +13943,7 @@ func (x *CreateRoleResponse) String() string {
 func (*CreateRoleResponse) ProtoMessage() {}
 
 func (x *CreateRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[215]
+	mi := &file_cadestro_v1_control_proto_msgTypes[215]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13956,7 +13956,7 @@ func (x *CreateRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoleResponse.ProtoReflect.Descriptor instead.
 func (*CreateRoleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{215}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{215}
 }
 
 func (x *CreateRoleResponse) GetRole() *Role {
@@ -13976,7 +13976,7 @@ type GetRoleRequest struct {
 
 func (x *GetRoleRequest) Reset() {
 	*x = GetRoleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[216]
+	mi := &file_cadestro_v1_control_proto_msgTypes[216]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13988,7 +13988,7 @@ func (x *GetRoleRequest) String() string {
 func (*GetRoleRequest) ProtoMessage() {}
 
 func (x *GetRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[216]
+	mi := &file_cadestro_v1_control_proto_msgTypes[216]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14001,7 +14001,7 @@ func (x *GetRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleRequest.ProtoReflect.Descriptor instead.
 func (*GetRoleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{216}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{216}
 }
 
 func (x *GetRoleRequest) GetId() string {
@@ -14021,7 +14021,7 @@ type GetRoleResponse struct {
 
 func (x *GetRoleResponse) Reset() {
 	*x = GetRoleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[217]
+	mi := &file_cadestro_v1_control_proto_msgTypes[217]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14033,7 +14033,7 @@ func (x *GetRoleResponse) String() string {
 func (*GetRoleResponse) ProtoMessage() {}
 
 func (x *GetRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[217]
+	mi := &file_cadestro_v1_control_proto_msgTypes[217]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14046,7 +14046,7 @@ func (x *GetRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleResponse.ProtoReflect.Descriptor instead.
 func (*GetRoleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{217}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{217}
 }
 
 func (x *GetRoleResponse) GetRole() *Role {
@@ -14075,7 +14075,7 @@ type ListRolesRequest struct {
 
 func (x *ListRolesRequest) Reset() {
 	*x = ListRolesRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[218]
+	mi := &file_cadestro_v1_control_proto_msgTypes[218]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14087,7 +14087,7 @@ func (x *ListRolesRequest) String() string {
 func (*ListRolesRequest) ProtoMessage() {}
 
 func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[218]
+	mi := &file_cadestro_v1_control_proto_msgTypes[218]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14100,7 +14100,7 @@ func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesRequest.ProtoReflect.Descriptor instead.
 func (*ListRolesRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{218}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{218}
 }
 
 func (x *ListRolesRequest) GetPageSize() int32 {
@@ -14128,7 +14128,7 @@ type ListRolesResponse struct {
 
 func (x *ListRolesResponse) Reset() {
 	*x = ListRolesResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[219]
+	mi := &file_cadestro_v1_control_proto_msgTypes[219]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14140,7 +14140,7 @@ func (x *ListRolesResponse) String() string {
 func (*ListRolesResponse) ProtoMessage() {}
 
 func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[219]
+	mi := &file_cadestro_v1_control_proto_msgTypes[219]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14153,7 +14153,7 @@ func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesResponse.ProtoReflect.Descriptor instead.
 func (*ListRolesResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{219}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{219}
 }
 
 func (x *ListRolesResponse) GetRoles() []*Role {
@@ -14193,7 +14193,7 @@ type UpdateRoleRequest struct {
 
 func (x *UpdateRoleRequest) Reset() {
 	*x = UpdateRoleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[220]
+	mi := &file_cadestro_v1_control_proto_msgTypes[220]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14205,7 +14205,7 @@ func (x *UpdateRoleRequest) String() string {
 func (*UpdateRoleRequest) ProtoMessage() {}
 
 func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[220]
+	mi := &file_cadestro_v1_control_proto_msgTypes[220]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14218,7 +14218,7 @@ func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{220}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{220}
 }
 
 func (x *UpdateRoleRequest) GetRoleId() string {
@@ -14258,7 +14258,7 @@ type UpdateRoleResponse struct {
 
 func (x *UpdateRoleResponse) Reset() {
 	*x = UpdateRoleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[221]
+	mi := &file_cadestro_v1_control_proto_msgTypes[221]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14270,7 +14270,7 @@ func (x *UpdateRoleResponse) String() string {
 func (*UpdateRoleResponse) ProtoMessage() {}
 
 func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[221]
+	mi := &file_cadestro_v1_control_proto_msgTypes[221]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14283,7 +14283,7 @@ func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRoleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{221}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{221}
 }
 
 func (x *UpdateRoleResponse) GetRole() *Role {
@@ -14303,7 +14303,7 @@ type DeleteRoleRequest struct {
 
 func (x *DeleteRoleRequest) Reset() {
 	*x = DeleteRoleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[222]
+	mi := &file_cadestro_v1_control_proto_msgTypes[222]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14315,7 +14315,7 @@ func (x *DeleteRoleRequest) String() string {
 func (*DeleteRoleRequest) ProtoMessage() {}
 
 func (x *DeleteRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[222]
+	mi := &file_cadestro_v1_control_proto_msgTypes[222]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14328,7 +14328,7 @@ func (x *DeleteRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRoleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{222}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{222}
 }
 
 func (x *DeleteRoleRequest) GetId() string {
@@ -14346,7 +14346,7 @@ type DeleteRoleResponse struct {
 
 func (x *DeleteRoleResponse) Reset() {
 	*x = DeleteRoleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[223]
+	mi := &file_cadestro_v1_control_proto_msgTypes[223]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14358,7 +14358,7 @@ func (x *DeleteRoleResponse) String() string {
 func (*DeleteRoleResponse) ProtoMessage() {}
 
 func (x *DeleteRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[223]
+	mi := &file_cadestro_v1_control_proto_msgTypes[223]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14371,7 +14371,7 @@ func (x *DeleteRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoleResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRoleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{223}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{223}
 }
 
 type AssignRoleToUserRequest struct {
@@ -14390,7 +14390,7 @@ type AssignRoleToUserRequest struct {
 	// must accept this scope_kind (PermissionInfo.target_kind must
 	// match), or the assignment is rejected. The actor must hold
 	// AssignRoleScope.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=powermanage.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeKind RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
 	// @gotags: validate:"omitempty,ulid"
 	ScopeId       string `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
 	unknownFields protoimpl.UnknownFields
@@ -14399,7 +14399,7 @@ type AssignRoleToUserRequest struct {
 
 func (x *AssignRoleToUserRequest) Reset() {
 	*x = AssignRoleToUserRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[224]
+	mi := &file_cadestro_v1_control_proto_msgTypes[224]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14411,7 +14411,7 @@ func (x *AssignRoleToUserRequest) String() string {
 func (*AssignRoleToUserRequest) ProtoMessage() {}
 
 func (x *AssignRoleToUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[224]
+	mi := &file_cadestro_v1_control_proto_msgTypes[224]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14424,7 +14424,7 @@ func (x *AssignRoleToUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignRoleToUserRequest.ProtoReflect.Descriptor instead.
 func (*AssignRoleToUserRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{224}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{224}
 }
 
 func (x *AssignRoleToUserRequest) GetUserId() string {
@@ -14470,7 +14470,7 @@ type AssignRoleToUserResponse struct {
 
 func (x *AssignRoleToUserResponse) Reset() {
 	*x = AssignRoleToUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[225]
+	mi := &file_cadestro_v1_control_proto_msgTypes[225]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14482,7 +14482,7 @@ func (x *AssignRoleToUserResponse) String() string {
 func (*AssignRoleToUserResponse) ProtoMessage() {}
 
 func (x *AssignRoleToUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[225]
+	mi := &file_cadestro_v1_control_proto_msgTypes[225]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14495,7 +14495,7 @@ func (x *AssignRoleToUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignRoleToUserResponse.ProtoReflect.Descriptor instead.
 func (*AssignRoleToUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{225}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{225}
 }
 
 type RevokeRoleFromUserRequest struct {
@@ -14511,7 +14511,7 @@ type RevokeRoleFromUserRequest struct {
 	// grant. The handler rejects "revoke unscoped" when only scoped
 	// grants exist (and vice versa) to surface ambiguity rather than
 	// silently no-op.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=powermanage.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeKind RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
 	// @gotags: validate:"omitempty,ulid"
 	ScopeId       string `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
 	unknownFields protoimpl.UnknownFields
@@ -14520,7 +14520,7 @@ type RevokeRoleFromUserRequest struct {
 
 func (x *RevokeRoleFromUserRequest) Reset() {
 	*x = RevokeRoleFromUserRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[226]
+	mi := &file_cadestro_v1_control_proto_msgTypes[226]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14532,7 +14532,7 @@ func (x *RevokeRoleFromUserRequest) String() string {
 func (*RevokeRoleFromUserRequest) ProtoMessage() {}
 
 func (x *RevokeRoleFromUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[226]
+	mi := &file_cadestro_v1_control_proto_msgTypes[226]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14545,7 +14545,7 @@ func (x *RevokeRoleFromUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeRoleFromUserRequest.ProtoReflect.Descriptor instead.
 func (*RevokeRoleFromUserRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{226}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{226}
 }
 
 func (x *RevokeRoleFromUserRequest) GetUserId() string {
@@ -14584,7 +14584,7 @@ type RevokeRoleFromUserResponse struct {
 
 func (x *RevokeRoleFromUserResponse) Reset() {
 	*x = RevokeRoleFromUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[227]
+	mi := &file_cadestro_v1_control_proto_msgTypes[227]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14596,7 +14596,7 @@ func (x *RevokeRoleFromUserResponse) String() string {
 func (*RevokeRoleFromUserResponse) ProtoMessage() {}
 
 func (x *RevokeRoleFromUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[227]
+	mi := &file_cadestro_v1_control_proto_msgTypes[227]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14609,7 +14609,7 @@ func (x *RevokeRoleFromUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeRoleFromUserResponse.ProtoReflect.Descriptor instead.
 func (*RevokeRoleFromUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{227}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{227}
 }
 
 type ListPermissionsRequest struct {
@@ -14620,7 +14620,7 @@ type ListPermissionsRequest struct {
 
 func (x *ListPermissionsRequest) Reset() {
 	*x = ListPermissionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[228]
+	mi := &file_cadestro_v1_control_proto_msgTypes[228]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14632,7 +14632,7 @@ func (x *ListPermissionsRequest) String() string {
 func (*ListPermissionsRequest) ProtoMessage() {}
 
 func (x *ListPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[228]
+	mi := &file_cadestro_v1_control_proto_msgTypes[228]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14645,7 +14645,7 @@ func (x *ListPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*ListPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{228}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{228}
 }
 
 type ListPermissionsResponse struct {
@@ -14657,7 +14657,7 @@ type ListPermissionsResponse struct {
 
 func (x *ListPermissionsResponse) Reset() {
 	*x = ListPermissionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[229]
+	mi := &file_cadestro_v1_control_proto_msgTypes[229]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14669,7 +14669,7 @@ func (x *ListPermissionsResponse) String() string {
 func (*ListPermissionsResponse) ProtoMessage() {}
 
 func (x *ListPermissionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[229]
+	mi := &file_cadestro_v1_control_proto_msgTypes[229]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14682,7 +14682,7 @@ func (x *ListPermissionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPermissionsResponse.ProtoReflect.Descriptor instead.
 func (*ListPermissionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{229}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{229}
 }
 
 func (x *ListPermissionsResponse) GetPermissions() []*PermissionInfo {
@@ -14718,7 +14718,7 @@ type UserGroup struct {
 
 func (x *UserGroup) Reset() {
 	*x = UserGroup{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[230]
+	mi := &file_cadestro_v1_control_proto_msgTypes[230]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14730,7 +14730,7 @@ func (x *UserGroup) String() string {
 func (*UserGroup) ProtoMessage() {}
 
 func (x *UserGroup) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[230]
+	mi := &file_cadestro_v1_control_proto_msgTypes[230]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14743,7 +14743,7 @@ func (x *UserGroup) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserGroup.ProtoReflect.Descriptor instead.
 func (*UserGroup) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{230}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{230}
 }
 
 func (x *UserGroup) GetId() string {
@@ -14827,7 +14827,7 @@ type UserGroupMember struct {
 
 func (x *UserGroupMember) Reset() {
 	*x = UserGroupMember{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[231]
+	mi := &file_cadestro_v1_control_proto_msgTypes[231]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14839,7 +14839,7 @@ func (x *UserGroupMember) String() string {
 func (*UserGroupMember) ProtoMessage() {}
 
 func (x *UserGroupMember) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[231]
+	mi := &file_cadestro_v1_control_proto_msgTypes[231]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14852,7 +14852,7 @@ func (x *UserGroupMember) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserGroupMember.ProtoReflect.Descriptor instead.
 func (*UserGroupMember) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{231}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{231}
 }
 
 func (x *UserGroupMember) GetUserId() string {
@@ -14891,7 +14891,7 @@ type CreateUserGroupRequest struct {
 
 func (x *CreateUserGroupRequest) Reset() {
 	*x = CreateUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[232]
+	mi := &file_cadestro_v1_control_proto_msgTypes[232]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14903,7 +14903,7 @@ func (x *CreateUserGroupRequest) String() string {
 func (*CreateUserGroupRequest) ProtoMessage() {}
 
 func (x *CreateUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[232]
+	mi := &file_cadestro_v1_control_proto_msgTypes[232]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14916,7 +14916,7 @@ func (x *CreateUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*CreateUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{232}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{232}
 }
 
 func (x *CreateUserGroupRequest) GetName() string {
@@ -14956,7 +14956,7 @@ type CreateUserGroupResponse struct {
 
 func (x *CreateUserGroupResponse) Reset() {
 	*x = CreateUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[233]
+	mi := &file_cadestro_v1_control_proto_msgTypes[233]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14968,7 +14968,7 @@ func (x *CreateUserGroupResponse) String() string {
 func (*CreateUserGroupResponse) ProtoMessage() {}
 
 func (x *CreateUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[233]
+	mi := &file_cadestro_v1_control_proto_msgTypes[233]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14981,7 +14981,7 @@ func (x *CreateUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*CreateUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{233}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{233}
 }
 
 func (x *CreateUserGroupResponse) GetGroup() *UserGroup {
@@ -15001,7 +15001,7 @@ type GetUserGroupRequest struct {
 
 func (x *GetUserGroupRequest) Reset() {
 	*x = GetUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[234]
+	mi := &file_cadestro_v1_control_proto_msgTypes[234]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15013,7 +15013,7 @@ func (x *GetUserGroupRequest) String() string {
 func (*GetUserGroupRequest) ProtoMessage() {}
 
 func (x *GetUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[234]
+	mi := &file_cadestro_v1_control_proto_msgTypes[234]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15026,7 +15026,7 @@ func (x *GetUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*GetUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{234}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{234}
 }
 
 func (x *GetUserGroupRequest) GetId() string {
@@ -15046,7 +15046,7 @@ type GetUserGroupResponse struct {
 
 func (x *GetUserGroupResponse) Reset() {
 	*x = GetUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[235]
+	mi := &file_cadestro_v1_control_proto_msgTypes[235]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15058,7 +15058,7 @@ func (x *GetUserGroupResponse) String() string {
 func (*GetUserGroupResponse) ProtoMessage() {}
 
 func (x *GetUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[235]
+	mi := &file_cadestro_v1_control_proto_msgTypes[235]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15071,7 +15071,7 @@ func (x *GetUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*GetUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{235}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{235}
 }
 
 func (x *GetUserGroupResponse) GetGroup() *UserGroup {
@@ -15100,7 +15100,7 @@ type ListUserGroupsRequest struct {
 
 func (x *ListUserGroupsRequest) Reset() {
 	*x = ListUserGroupsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[236]
+	mi := &file_cadestro_v1_control_proto_msgTypes[236]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15112,7 +15112,7 @@ func (x *ListUserGroupsRequest) String() string {
 func (*ListUserGroupsRequest) ProtoMessage() {}
 
 func (x *ListUserGroupsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[236]
+	mi := &file_cadestro_v1_control_proto_msgTypes[236]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15125,7 +15125,7 @@ func (x *ListUserGroupsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserGroupsRequest.ProtoReflect.Descriptor instead.
 func (*ListUserGroupsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{236}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{236}
 }
 
 func (x *ListUserGroupsRequest) GetPageSize() int32 {
@@ -15153,7 +15153,7 @@ type ListUserGroupsResponse struct {
 
 func (x *ListUserGroupsResponse) Reset() {
 	*x = ListUserGroupsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[237]
+	mi := &file_cadestro_v1_control_proto_msgTypes[237]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15165,7 +15165,7 @@ func (x *ListUserGroupsResponse) String() string {
 func (*ListUserGroupsResponse) ProtoMessage() {}
 
 func (x *ListUserGroupsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[237]
+	mi := &file_cadestro_v1_control_proto_msgTypes[237]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15178,7 +15178,7 @@ func (x *ListUserGroupsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserGroupsResponse.ProtoReflect.Descriptor instead.
 func (*ListUserGroupsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{237}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{237}
 }
 
 func (x *ListUserGroupsResponse) GetGroups() []*UserGroup {
@@ -15216,7 +15216,7 @@ type UpdateUserGroupRequest struct {
 
 func (x *UpdateUserGroupRequest) Reset() {
 	*x = UpdateUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[238]
+	mi := &file_cadestro_v1_control_proto_msgTypes[238]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15228,7 +15228,7 @@ func (x *UpdateUserGroupRequest) String() string {
 func (*UpdateUserGroupRequest) ProtoMessage() {}
 
 func (x *UpdateUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[238]
+	mi := &file_cadestro_v1_control_proto_msgTypes[238]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15241,7 +15241,7 @@ func (x *UpdateUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{238}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{238}
 }
 
 func (x *UpdateUserGroupRequest) GetGroupId() string {
@@ -15274,7 +15274,7 @@ type UpdateUserGroupResponse struct {
 
 func (x *UpdateUserGroupResponse) Reset() {
 	*x = UpdateUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[239]
+	mi := &file_cadestro_v1_control_proto_msgTypes[239]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15286,7 +15286,7 @@ func (x *UpdateUserGroupResponse) String() string {
 func (*UpdateUserGroupResponse) ProtoMessage() {}
 
 func (x *UpdateUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[239]
+	mi := &file_cadestro_v1_control_proto_msgTypes[239]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15299,7 +15299,7 @@ func (x *UpdateUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{239}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{239}
 }
 
 func (x *UpdateUserGroupResponse) GetGroup() *UserGroup {
@@ -15319,7 +15319,7 @@ type DeleteUserGroupRequest struct {
 
 func (x *DeleteUserGroupRequest) Reset() {
 	*x = DeleteUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[240]
+	mi := &file_cadestro_v1_control_proto_msgTypes[240]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15331,7 +15331,7 @@ func (x *DeleteUserGroupRequest) String() string {
 func (*DeleteUserGroupRequest) ProtoMessage() {}
 
 func (x *DeleteUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[240]
+	mi := &file_cadestro_v1_control_proto_msgTypes[240]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15344,7 +15344,7 @@ func (x *DeleteUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{240}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{240}
 }
 
 func (x *DeleteUserGroupRequest) GetId() string {
@@ -15362,7 +15362,7 @@ type DeleteUserGroupResponse struct {
 
 func (x *DeleteUserGroupResponse) Reset() {
 	*x = DeleteUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[241]
+	mi := &file_cadestro_v1_control_proto_msgTypes[241]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15374,7 +15374,7 @@ func (x *DeleteUserGroupResponse) String() string {
 func (*DeleteUserGroupResponse) ProtoMessage() {}
 
 func (x *DeleteUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[241]
+	mi := &file_cadestro_v1_control_proto_msgTypes[241]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15387,7 +15387,7 @@ func (x *DeleteUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{241}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{241}
 }
 
 type AddUserToGroupRequest struct {
@@ -15404,7 +15404,7 @@ type AddUserToGroupRequest struct {
 
 func (x *AddUserToGroupRequest) Reset() {
 	*x = AddUserToGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[242]
+	mi := &file_cadestro_v1_control_proto_msgTypes[242]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15416,7 +15416,7 @@ func (x *AddUserToGroupRequest) String() string {
 func (*AddUserToGroupRequest) ProtoMessage() {}
 
 func (x *AddUserToGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[242]
+	mi := &file_cadestro_v1_control_proto_msgTypes[242]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15429,7 +15429,7 @@ func (x *AddUserToGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserToGroupRequest.ProtoReflect.Descriptor instead.
 func (*AddUserToGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{242}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{242}
 }
 
 func (x *AddUserToGroupRequest) GetGroupId() string {
@@ -15461,7 +15461,7 @@ type AddUserToGroupResponse struct {
 
 func (x *AddUserToGroupResponse) Reset() {
 	*x = AddUserToGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[243]
+	mi := &file_cadestro_v1_control_proto_msgTypes[243]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15473,7 +15473,7 @@ func (x *AddUserToGroupResponse) String() string {
 func (*AddUserToGroupResponse) ProtoMessage() {}
 
 func (x *AddUserToGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[243]
+	mi := &file_cadestro_v1_control_proto_msgTypes[243]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15486,7 +15486,7 @@ func (x *AddUserToGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserToGroupResponse.ProtoReflect.Descriptor instead.
 func (*AddUserToGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{243}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{243}
 }
 
 type RemoveUserFromGroupRequest struct {
@@ -15501,7 +15501,7 @@ type RemoveUserFromGroupRequest struct {
 
 func (x *RemoveUserFromGroupRequest) Reset() {
 	*x = RemoveUserFromGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[244]
+	mi := &file_cadestro_v1_control_proto_msgTypes[244]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15513,7 +15513,7 @@ func (x *RemoveUserFromGroupRequest) String() string {
 func (*RemoveUserFromGroupRequest) ProtoMessage() {}
 
 func (x *RemoveUserFromGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[244]
+	mi := &file_cadestro_v1_control_proto_msgTypes[244]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15526,7 +15526,7 @@ func (x *RemoveUserFromGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveUserFromGroupRequest.ProtoReflect.Descriptor instead.
 func (*RemoveUserFromGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{244}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{244}
 }
 
 func (x *RemoveUserFromGroupRequest) GetGroupId() string {
@@ -15551,7 +15551,7 @@ type RemoveUserFromGroupResponse struct {
 
 func (x *RemoveUserFromGroupResponse) Reset() {
 	*x = RemoveUserFromGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[245]
+	mi := &file_cadestro_v1_control_proto_msgTypes[245]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15563,7 +15563,7 @@ func (x *RemoveUserFromGroupResponse) String() string {
 func (*RemoveUserFromGroupResponse) ProtoMessage() {}
 
 func (x *RemoveUserFromGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[245]
+	mi := &file_cadestro_v1_control_proto_msgTypes[245]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15576,7 +15576,7 @@ func (x *RemoveUserFromGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveUserFromGroupResponse.ProtoReflect.Descriptor instead.
 func (*RemoveUserFromGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{245}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{245}
 }
 
 type AssignRoleToUserGroupRequest struct {
@@ -15590,7 +15590,7 @@ type AssignRoleToUserGroupRequest struct {
 	// Optional grant scope. Same paired-or-neither semantics as
 	// AssignRoleToUserRequest.scope_*. Every member of the target
 	// user group inherits this scope through the grant.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=powermanage.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeKind RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
 	// @gotags: validate:"omitempty,ulid"
 	ScopeId       string `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
 	unknownFields protoimpl.UnknownFields
@@ -15599,7 +15599,7 @@ type AssignRoleToUserGroupRequest struct {
 
 func (x *AssignRoleToUserGroupRequest) Reset() {
 	*x = AssignRoleToUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[246]
+	mi := &file_cadestro_v1_control_proto_msgTypes[246]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15611,7 +15611,7 @@ func (x *AssignRoleToUserGroupRequest) String() string {
 func (*AssignRoleToUserGroupRequest) ProtoMessage() {}
 
 func (x *AssignRoleToUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[246]
+	mi := &file_cadestro_v1_control_proto_msgTypes[246]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15624,7 +15624,7 @@ func (x *AssignRoleToUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignRoleToUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*AssignRoleToUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{246}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{246}
 }
 
 func (x *AssignRoleToUserGroupRequest) GetGroupId() string {
@@ -15670,7 +15670,7 @@ type AssignRoleToUserGroupResponse struct {
 
 func (x *AssignRoleToUserGroupResponse) Reset() {
 	*x = AssignRoleToUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[247]
+	mi := &file_cadestro_v1_control_proto_msgTypes[247]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15682,7 +15682,7 @@ func (x *AssignRoleToUserGroupResponse) String() string {
 func (*AssignRoleToUserGroupResponse) ProtoMessage() {}
 
 func (x *AssignRoleToUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[247]
+	mi := &file_cadestro_v1_control_proto_msgTypes[247]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15695,7 +15695,7 @@ func (x *AssignRoleToUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignRoleToUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*AssignRoleToUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{247}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{247}
 }
 
 type RevokeRoleFromUserGroupRequest struct {
@@ -15708,7 +15708,7 @@ type RevokeRoleFromUserGroupRequest struct {
 	// grant to revoke when multiple scoped grants of the same role
 	// are attached to the same user group. Paired-or-neither with
 	// scope_id; same semantics as RevokeRoleFromUserRequest.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=powermanage.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeKind RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
 	// @gotags: validate:"omitempty,ulid"
 	ScopeId       string `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
 	unknownFields protoimpl.UnknownFields
@@ -15717,7 +15717,7 @@ type RevokeRoleFromUserGroupRequest struct {
 
 func (x *RevokeRoleFromUserGroupRequest) Reset() {
 	*x = RevokeRoleFromUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[248]
+	mi := &file_cadestro_v1_control_proto_msgTypes[248]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15729,7 +15729,7 @@ func (x *RevokeRoleFromUserGroupRequest) String() string {
 func (*RevokeRoleFromUserGroupRequest) ProtoMessage() {}
 
 func (x *RevokeRoleFromUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[248]
+	mi := &file_cadestro_v1_control_proto_msgTypes[248]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15742,7 +15742,7 @@ func (x *RevokeRoleFromUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeRoleFromUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*RevokeRoleFromUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{248}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{248}
 }
 
 func (x *RevokeRoleFromUserGroupRequest) GetGroupId() string {
@@ -15781,7 +15781,7 @@ type RevokeRoleFromUserGroupResponse struct {
 
 func (x *RevokeRoleFromUserGroupResponse) Reset() {
 	*x = RevokeRoleFromUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[249]
+	mi := &file_cadestro_v1_control_proto_msgTypes[249]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15793,7 +15793,7 @@ func (x *RevokeRoleFromUserGroupResponse) String() string {
 func (*RevokeRoleFromUserGroupResponse) ProtoMessage() {}
 
 func (x *RevokeRoleFromUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[249]
+	mi := &file_cadestro_v1_control_proto_msgTypes[249]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15806,7 +15806,7 @@ func (x *RevokeRoleFromUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeRoleFromUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*RevokeRoleFromUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{249}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{249}
 }
 
 type ListUserGroupsForUserRequest struct {
@@ -15819,7 +15819,7 @@ type ListUserGroupsForUserRequest struct {
 
 func (x *ListUserGroupsForUserRequest) Reset() {
 	*x = ListUserGroupsForUserRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[250]
+	mi := &file_cadestro_v1_control_proto_msgTypes[250]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15831,7 +15831,7 @@ func (x *ListUserGroupsForUserRequest) String() string {
 func (*ListUserGroupsForUserRequest) ProtoMessage() {}
 
 func (x *ListUserGroupsForUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[250]
+	mi := &file_cadestro_v1_control_proto_msgTypes[250]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15844,7 +15844,7 @@ func (x *ListUserGroupsForUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserGroupsForUserRequest.ProtoReflect.Descriptor instead.
 func (*ListUserGroupsForUserRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{250}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{250}
 }
 
 func (x *ListUserGroupsForUserRequest) GetUserId() string {
@@ -15863,7 +15863,7 @@ type ListUserGroupsForUserResponse struct {
 
 func (x *ListUserGroupsForUserResponse) Reset() {
 	*x = ListUserGroupsForUserResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[251]
+	mi := &file_cadestro_v1_control_proto_msgTypes[251]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15875,7 +15875,7 @@ func (x *ListUserGroupsForUserResponse) String() string {
 func (*ListUserGroupsForUserResponse) ProtoMessage() {}
 
 func (x *ListUserGroupsForUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[251]
+	mi := &file_cadestro_v1_control_proto_msgTypes[251]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15888,7 +15888,7 @@ func (x *ListUserGroupsForUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserGroupsForUserResponse.ProtoReflect.Descriptor instead.
 func (*ListUserGroupsForUserResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{251}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{251}
 }
 
 func (x *ListUserGroupsForUserResponse) GetGroups() []*UserGroup {
@@ -15911,7 +15911,7 @@ type UpdateUserGroupQueryRequest struct {
 
 func (x *UpdateUserGroupQueryRequest) Reset() {
 	*x = UpdateUserGroupQueryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[252]
+	mi := &file_cadestro_v1_control_proto_msgTypes[252]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15923,7 +15923,7 @@ func (x *UpdateUserGroupQueryRequest) String() string {
 func (*UpdateUserGroupQueryRequest) ProtoMessage() {}
 
 func (x *UpdateUserGroupQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[252]
+	mi := &file_cadestro_v1_control_proto_msgTypes[252]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15936,7 +15936,7 @@ func (x *UpdateUserGroupQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserGroupQueryRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUserGroupQueryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{252}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{252}
 }
 
 func (x *UpdateUserGroupQueryRequest) GetId() string {
@@ -15969,7 +15969,7 @@ type UpdateUserGroupQueryResponse struct {
 
 func (x *UpdateUserGroupQueryResponse) Reset() {
 	*x = UpdateUserGroupQueryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[253]
+	mi := &file_cadestro_v1_control_proto_msgTypes[253]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15981,7 +15981,7 @@ func (x *UpdateUserGroupQueryResponse) String() string {
 func (*UpdateUserGroupQueryResponse) ProtoMessage() {}
 
 func (x *UpdateUserGroupQueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[253]
+	mi := &file_cadestro_v1_control_proto_msgTypes[253]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15994,7 +15994,7 @@ func (x *UpdateUserGroupQueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUserGroupQueryResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUserGroupQueryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{253}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{253}
 }
 
 func (x *UpdateUserGroupQueryResponse) GetGroup() *UserGroup {
@@ -16014,7 +16014,7 @@ type ValidateUserGroupQueryRequest struct {
 
 func (x *ValidateUserGroupQueryRequest) Reset() {
 	*x = ValidateUserGroupQueryRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[254]
+	mi := &file_cadestro_v1_control_proto_msgTypes[254]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16026,7 +16026,7 @@ func (x *ValidateUserGroupQueryRequest) String() string {
 func (*ValidateUserGroupQueryRequest) ProtoMessage() {}
 
 func (x *ValidateUserGroupQueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[254]
+	mi := &file_cadestro_v1_control_proto_msgTypes[254]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16039,7 +16039,7 @@ func (x *ValidateUserGroupQueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateUserGroupQueryRequest.ProtoReflect.Descriptor instead.
 func (*ValidateUserGroupQueryRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{254}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{254}
 }
 
 func (x *ValidateUserGroupQueryRequest) GetQuery() string {
@@ -16060,7 +16060,7 @@ type ValidateUserGroupQueryResponse struct {
 
 func (x *ValidateUserGroupQueryResponse) Reset() {
 	*x = ValidateUserGroupQueryResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[255]
+	mi := &file_cadestro_v1_control_proto_msgTypes[255]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16072,7 +16072,7 @@ func (x *ValidateUserGroupQueryResponse) String() string {
 func (*ValidateUserGroupQueryResponse) ProtoMessage() {}
 
 func (x *ValidateUserGroupQueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[255]
+	mi := &file_cadestro_v1_control_proto_msgTypes[255]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16085,7 +16085,7 @@ func (x *ValidateUserGroupQueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateUserGroupQueryResponse.ProtoReflect.Descriptor instead.
 func (*ValidateUserGroupQueryResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{255}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{255}
 }
 
 func (x *ValidateUserGroupQueryResponse) GetValid() bool {
@@ -16119,7 +16119,7 @@ type EvaluateDynamicUserGroupRequest struct {
 
 func (x *EvaluateDynamicUserGroupRequest) Reset() {
 	*x = EvaluateDynamicUserGroupRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[256]
+	mi := &file_cadestro_v1_control_proto_msgTypes[256]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16131,7 +16131,7 @@ func (x *EvaluateDynamicUserGroupRequest) String() string {
 func (*EvaluateDynamicUserGroupRequest) ProtoMessage() {}
 
 func (x *EvaluateDynamicUserGroupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[256]
+	mi := &file_cadestro_v1_control_proto_msgTypes[256]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16144,7 +16144,7 @@ func (x *EvaluateDynamicUserGroupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluateDynamicUserGroupRequest.ProtoReflect.Descriptor instead.
 func (*EvaluateDynamicUserGroupRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{256}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{256}
 }
 
 func (x *EvaluateDynamicUserGroupRequest) GetId() string {
@@ -16165,7 +16165,7 @@ type EvaluateDynamicUserGroupResponse struct {
 
 func (x *EvaluateDynamicUserGroupResponse) Reset() {
 	*x = EvaluateDynamicUserGroupResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[257]
+	mi := &file_cadestro_v1_control_proto_msgTypes[257]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16177,7 +16177,7 @@ func (x *EvaluateDynamicUserGroupResponse) String() string {
 func (*EvaluateDynamicUserGroupResponse) ProtoMessage() {}
 
 func (x *EvaluateDynamicUserGroupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[257]
+	mi := &file_cadestro_v1_control_proto_msgTypes[257]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16190,7 +16190,7 @@ func (x *EvaluateDynamicUserGroupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluateDynamicUserGroupResponse.ProtoReflect.Descriptor instead.
 func (*EvaluateDynamicUserGroupResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{257}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{257}
 }
 
 func (x *EvaluateDynamicUserGroupResponse) GetGroup() *UserGroup {
@@ -16230,7 +16230,7 @@ type SetUserGroupMaintenanceWindowRequest struct {
 
 func (x *SetUserGroupMaintenanceWindowRequest) Reset() {
 	*x = SetUserGroupMaintenanceWindowRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[258]
+	mi := &file_cadestro_v1_control_proto_msgTypes[258]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16242,7 +16242,7 @@ func (x *SetUserGroupMaintenanceWindowRequest) String() string {
 func (*SetUserGroupMaintenanceWindowRequest) ProtoMessage() {}
 
 func (x *SetUserGroupMaintenanceWindowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[258]
+	mi := &file_cadestro_v1_control_proto_msgTypes[258]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16255,7 +16255,7 @@ func (x *SetUserGroupMaintenanceWindowRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use SetUserGroupMaintenanceWindowRequest.ProtoReflect.Descriptor instead.
 func (*SetUserGroupMaintenanceWindowRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{258}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{258}
 }
 
 func (x *SetUserGroupMaintenanceWindowRequest) GetId() string {
@@ -16277,7 +16277,7 @@ type IdentityProvider struct {
 	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Slug         string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
-	ProviderType IdentityProviderType   `protobuf:"varint,4,opt,name=provider_type,json=providerType,proto3,enum=powermanage.v1.IdentityProviderType" json:"provider_type,omitempty"`
+	ProviderType IdentityProviderType   `protobuf:"varint,4,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
 	Enabled      bool                   `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	ClientId     string                 `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	// client_secret is not returned in responses (write-only).
@@ -16309,7 +16309,7 @@ type IdentityProvider struct {
 
 func (x *IdentityProvider) Reset() {
 	*x = IdentityProvider{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[259]
+	mi := &file_cadestro_v1_control_proto_msgTypes[259]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16321,7 +16321,7 @@ func (x *IdentityProvider) String() string {
 func (*IdentityProvider) ProtoMessage() {}
 
 func (x *IdentityProvider) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[259]
+	mi := &file_cadestro_v1_control_proto_msgTypes[259]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16334,7 +16334,7 @@ func (x *IdentityProvider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentityProvider.ProtoReflect.Descriptor instead.
 func (*IdentityProvider) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{259}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{259}
 }
 
 func (x *IdentityProvider) GetId() string {
@@ -16509,7 +16509,7 @@ type IdentityLink struct {
 
 func (x *IdentityLink) Reset() {
 	*x = IdentityLink{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[260]
+	mi := &file_cadestro_v1_control_proto_msgTypes[260]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16521,7 +16521,7 @@ func (x *IdentityLink) String() string {
 func (*IdentityLink) ProtoMessage() {}
 
 func (x *IdentityLink) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[260]
+	mi := &file_cadestro_v1_control_proto_msgTypes[260]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16534,7 +16534,7 @@ func (x *IdentityLink) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentityLink.ProtoReflect.Descriptor instead.
 func (*IdentityLink) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{260}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{260}
 }
 
 func (x *IdentityLink) GetId() string {
@@ -16614,7 +16614,7 @@ type CreateIdentityProviderRequest struct {
 	// @gotags: validate:"required,min=1,max=64,alphanum"
 	Slug string `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty" validate:"required,min=1,max=64,alphanum"`
 	// @gotags: validate:"required,gte=1,lte=1"
-	ProviderType IdentityProviderType `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=powermanage.v1.IdentityProviderType" json:"provider_type,omitempty" validate:"required,gte=1,lte=1"`
+	ProviderType IdentityProviderType `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty" validate:"required,gte=1,lte=1"`
 	// @gotags: validate:"omitempty,max=255"
 	ClientId string `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" validate:"omitempty,max=255"`
 	// @gotags: validate:"omitempty,max=4096"
@@ -16647,7 +16647,7 @@ type CreateIdentityProviderRequest struct {
 
 func (x *CreateIdentityProviderRequest) Reset() {
 	*x = CreateIdentityProviderRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[261]
+	mi := &file_cadestro_v1_control_proto_msgTypes[261]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16659,7 +16659,7 @@ func (x *CreateIdentityProviderRequest) String() string {
 func (*CreateIdentityProviderRequest) ProtoMessage() {}
 
 func (x *CreateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[261]
+	mi := &file_cadestro_v1_control_proto_msgTypes[261]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16672,7 +16672,7 @@ func (x *CreateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*CreateIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{261}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{261}
 }
 
 func (x *CreateIdentityProviderRequest) GetName() string {
@@ -16803,7 +16803,7 @@ type CreateIdentityProviderResponse struct {
 
 func (x *CreateIdentityProviderResponse) Reset() {
 	*x = CreateIdentityProviderResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[262]
+	mi := &file_cadestro_v1_control_proto_msgTypes[262]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16815,7 +16815,7 @@ func (x *CreateIdentityProviderResponse) String() string {
 func (*CreateIdentityProviderResponse) ProtoMessage() {}
 
 func (x *CreateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[262]
+	mi := &file_cadestro_v1_control_proto_msgTypes[262]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16828,7 +16828,7 @@ func (x *CreateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*CreateIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{262}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{262}
 }
 
 func (x *CreateIdentityProviderResponse) GetProvider() *IdentityProvider {
@@ -16848,7 +16848,7 @@ type GetIdentityProviderRequest struct {
 
 func (x *GetIdentityProviderRequest) Reset() {
 	*x = GetIdentityProviderRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[263]
+	mi := &file_cadestro_v1_control_proto_msgTypes[263]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16860,7 +16860,7 @@ func (x *GetIdentityProviderRequest) String() string {
 func (*GetIdentityProviderRequest) ProtoMessage() {}
 
 func (x *GetIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[263]
+	mi := &file_cadestro_v1_control_proto_msgTypes[263]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16873,7 +16873,7 @@ func (x *GetIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*GetIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{263}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{263}
 }
 
 func (x *GetIdentityProviderRequest) GetId() string {
@@ -16892,7 +16892,7 @@ type GetIdentityProviderResponse struct {
 
 func (x *GetIdentityProviderResponse) Reset() {
 	*x = GetIdentityProviderResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[264]
+	mi := &file_cadestro_v1_control_proto_msgTypes[264]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16904,7 +16904,7 @@ func (x *GetIdentityProviderResponse) String() string {
 func (*GetIdentityProviderResponse) ProtoMessage() {}
 
 func (x *GetIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[264]
+	mi := &file_cadestro_v1_control_proto_msgTypes[264]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16917,7 +16917,7 @@ func (x *GetIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*GetIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{264}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{264}
 }
 
 func (x *GetIdentityProviderResponse) GetProvider() *IdentityProvider {
@@ -16939,7 +16939,7 @@ type ListIdentityProvidersRequest struct {
 
 func (x *ListIdentityProvidersRequest) Reset() {
 	*x = ListIdentityProvidersRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[265]
+	mi := &file_cadestro_v1_control_proto_msgTypes[265]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -16951,7 +16951,7 @@ func (x *ListIdentityProvidersRequest) String() string {
 func (*ListIdentityProvidersRequest) ProtoMessage() {}
 
 func (x *ListIdentityProvidersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[265]
+	mi := &file_cadestro_v1_control_proto_msgTypes[265]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -16964,7 +16964,7 @@ func (x *ListIdentityProvidersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIdentityProvidersRequest.ProtoReflect.Descriptor instead.
 func (*ListIdentityProvidersRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{265}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{265}
 }
 
 func (x *ListIdentityProvidersRequest) GetPageSize() int32 {
@@ -16992,7 +16992,7 @@ type ListIdentityProvidersResponse struct {
 
 func (x *ListIdentityProvidersResponse) Reset() {
 	*x = ListIdentityProvidersResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[266]
+	mi := &file_cadestro_v1_control_proto_msgTypes[266]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17004,7 +17004,7 @@ func (x *ListIdentityProvidersResponse) String() string {
 func (*ListIdentityProvidersResponse) ProtoMessage() {}
 
 func (x *ListIdentityProvidersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[266]
+	mi := &file_cadestro_v1_control_proto_msgTypes[266]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17017,7 +17017,7 @@ func (x *ListIdentityProvidersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIdentityProvidersResponse.ProtoReflect.Descriptor instead.
 func (*ListIdentityProvidersResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{266}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{266}
 }
 
 func (x *ListIdentityProvidersResponse) GetProviders() []*IdentityProvider {
@@ -17082,7 +17082,7 @@ type UpdateIdentityProviderRequest struct {
 
 func (x *UpdateIdentityProviderRequest) Reset() {
 	*x = UpdateIdentityProviderRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[267]
+	mi := &file_cadestro_v1_control_proto_msgTypes[267]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17094,7 +17094,7 @@ func (x *UpdateIdentityProviderRequest) String() string {
 func (*UpdateIdentityProviderRequest) ProtoMessage() {}
 
 func (x *UpdateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[267]
+	mi := &file_cadestro_v1_control_proto_msgTypes[267]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17107,7 +17107,7 @@ func (x *UpdateIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*UpdateIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{267}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{267}
 }
 
 func (x *UpdateIdentityProviderRequest) GetId() string {
@@ -17238,7 +17238,7 @@ type UpdateIdentityProviderResponse struct {
 
 func (x *UpdateIdentityProviderResponse) Reset() {
 	*x = UpdateIdentityProviderResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[268]
+	mi := &file_cadestro_v1_control_proto_msgTypes[268]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17250,7 +17250,7 @@ func (x *UpdateIdentityProviderResponse) String() string {
 func (*UpdateIdentityProviderResponse) ProtoMessage() {}
 
 func (x *UpdateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[268]
+	mi := &file_cadestro_v1_control_proto_msgTypes[268]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17263,7 +17263,7 @@ func (x *UpdateIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*UpdateIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{268}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{268}
 }
 
 func (x *UpdateIdentityProviderResponse) GetProvider() *IdentityProvider {
@@ -17283,7 +17283,7 @@ type DeleteIdentityProviderRequest struct {
 
 func (x *DeleteIdentityProviderRequest) Reset() {
 	*x = DeleteIdentityProviderRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[269]
+	mi := &file_cadestro_v1_control_proto_msgTypes[269]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17295,7 +17295,7 @@ func (x *DeleteIdentityProviderRequest) String() string {
 func (*DeleteIdentityProviderRequest) ProtoMessage() {}
 
 func (x *DeleteIdentityProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[269]
+	mi := &file_cadestro_v1_control_proto_msgTypes[269]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17308,7 +17308,7 @@ func (x *DeleteIdentityProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteIdentityProviderRequest.ProtoReflect.Descriptor instead.
 func (*DeleteIdentityProviderRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{269}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{269}
 }
 
 func (x *DeleteIdentityProviderRequest) GetId() string {
@@ -17326,7 +17326,7 @@ type DeleteIdentityProviderResponse struct {
 
 func (x *DeleteIdentityProviderResponse) Reset() {
 	*x = DeleteIdentityProviderResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[270]
+	mi := &file_cadestro_v1_control_proto_msgTypes[270]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17338,7 +17338,7 @@ func (x *DeleteIdentityProviderResponse) String() string {
 func (*DeleteIdentityProviderResponse) ProtoMessage() {}
 
 func (x *DeleteIdentityProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[270]
+	mi := &file_cadestro_v1_control_proto_msgTypes[270]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17351,14 +17351,14 @@ func (x *DeleteIdentityProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteIdentityProviderResponse.ProtoReflect.Descriptor instead.
 func (*DeleteIdentityProviderResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{270}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{270}
 }
 
 type AuthMethodProvider struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Slug          string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ProviderType  IdentityProviderType   `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=powermanage.v1.IdentityProviderType" json:"provider_type,omitempty"`
+	ProviderType  IdentityProviderType   `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
 	BrowserLogin  bool                   `protobuf:"varint,4,opt,name=browser_login,json=browserLogin,proto3" json:"browser_login,omitempty"`
 	CliLogin      bool                   `protobuf:"varint,5,opt,name=cli_login,json=cliLogin,proto3" json:"cli_login,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -17367,7 +17367,7 @@ type AuthMethodProvider struct {
 
 func (x *AuthMethodProvider) Reset() {
 	*x = AuthMethodProvider{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[271]
+	mi := &file_cadestro_v1_control_proto_msgTypes[271]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17379,7 +17379,7 @@ func (x *AuthMethodProvider) String() string {
 func (*AuthMethodProvider) ProtoMessage() {}
 
 func (x *AuthMethodProvider) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[271]
+	mi := &file_cadestro_v1_control_proto_msgTypes[271]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17392,7 +17392,7 @@ func (x *AuthMethodProvider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthMethodProvider.ProtoReflect.Descriptor instead.
 func (*AuthMethodProvider) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{271}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{271}
 }
 
 func (x *AuthMethodProvider) GetSlug() string {
@@ -17441,7 +17441,7 @@ type ListAuthMethodsRequest struct {
 
 func (x *ListAuthMethodsRequest) Reset() {
 	*x = ListAuthMethodsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[272]
+	mi := &file_cadestro_v1_control_proto_msgTypes[272]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17453,7 +17453,7 @@ func (x *ListAuthMethodsRequest) String() string {
 func (*ListAuthMethodsRequest) ProtoMessage() {}
 
 func (x *ListAuthMethodsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[272]
+	mi := &file_cadestro_v1_control_proto_msgTypes[272]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17466,7 +17466,7 @@ func (x *ListAuthMethodsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuthMethodsRequest.ProtoReflect.Descriptor instead.
 func (*ListAuthMethodsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{272}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{272}
 }
 
 func (x *ListAuthMethodsRequest) GetEmail() string {
@@ -17485,7 +17485,7 @@ type ListAuthMethodsResponse struct {
 
 func (x *ListAuthMethodsResponse) Reset() {
 	*x = ListAuthMethodsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[273]
+	mi := &file_cadestro_v1_control_proto_msgTypes[273]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17497,7 +17497,7 @@ func (x *ListAuthMethodsResponse) String() string {
 func (*ListAuthMethodsResponse) ProtoMessage() {}
 
 func (x *ListAuthMethodsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[273]
+	mi := &file_cadestro_v1_control_proto_msgTypes[273]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17510,7 +17510,7 @@ func (x *ListAuthMethodsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuthMethodsResponse.ProtoReflect.Descriptor instead.
 func (*ListAuthMethodsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{273}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{273}
 }
 
 func (x *ListAuthMethodsResponse) GetProviders() []*AuthMethodProvider {
@@ -17532,7 +17532,7 @@ type GetSSOLoginURLRequest struct {
 
 func (x *GetSSOLoginURLRequest) Reset() {
 	*x = GetSSOLoginURLRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[274]
+	mi := &file_cadestro_v1_control_proto_msgTypes[274]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17544,7 +17544,7 @@ func (x *GetSSOLoginURLRequest) String() string {
 func (*GetSSOLoginURLRequest) ProtoMessage() {}
 
 func (x *GetSSOLoginURLRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[274]
+	mi := &file_cadestro_v1_control_proto_msgTypes[274]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17557,7 +17557,7 @@ func (x *GetSSOLoginURLRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSSOLoginURLRequest.ProtoReflect.Descriptor instead.
 func (*GetSSOLoginURLRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{274}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{274}
 }
 
 func (x *GetSSOLoginURLRequest) GetSlug() string {
@@ -17583,7 +17583,7 @@ type GetSSOLoginURLResponse struct {
 
 func (x *GetSSOLoginURLResponse) Reset() {
 	*x = GetSSOLoginURLResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[275]
+	mi := &file_cadestro_v1_control_proto_msgTypes[275]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17595,7 +17595,7 @@ func (x *GetSSOLoginURLResponse) String() string {
 func (*GetSSOLoginURLResponse) ProtoMessage() {}
 
 func (x *GetSSOLoginURLResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[275]
+	mi := &file_cadestro_v1_control_proto_msgTypes[275]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17608,7 +17608,7 @@ func (x *GetSSOLoginURLResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSSOLoginURLResponse.ProtoReflect.Descriptor instead.
 func (*GetSSOLoginURLResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{275}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{275}
 }
 
 func (x *GetSSOLoginURLResponse) GetLoginUrl() string {
@@ -17632,7 +17632,7 @@ type SSOCallbackRequest struct {
 
 func (x *SSOCallbackRequest) Reset() {
 	*x = SSOCallbackRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[276]
+	mi := &file_cadestro_v1_control_proto_msgTypes[276]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17644,7 +17644,7 @@ func (x *SSOCallbackRequest) String() string {
 func (*SSOCallbackRequest) ProtoMessage() {}
 
 func (x *SSOCallbackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[276]
+	mi := &file_cadestro_v1_control_proto_msgTypes[276]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17657,7 +17657,7 @@ func (x *SSOCallbackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SSOCallbackRequest.ProtoReflect.Descriptor instead.
 func (*SSOCallbackRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{276}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{276}
 }
 
 func (x *SSOCallbackRequest) GetSlug() string {
@@ -17693,7 +17693,7 @@ type SSOCallbackResponse struct {
 
 func (x *SSOCallbackResponse) Reset() {
 	*x = SSOCallbackResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[277]
+	mi := &file_cadestro_v1_control_proto_msgTypes[277]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17705,7 +17705,7 @@ func (x *SSOCallbackResponse) String() string {
 func (*SSOCallbackResponse) ProtoMessage() {}
 
 func (x *SSOCallbackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[277]
+	mi := &file_cadestro_v1_control_proto_msgTypes[277]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17718,7 +17718,7 @@ func (x *SSOCallbackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SSOCallbackResponse.ProtoReflect.Descriptor instead.
 func (*SSOCallbackResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{277}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{277}
 }
 
 func (x *SSOCallbackResponse) GetAccessToken() string {
@@ -17763,7 +17763,7 @@ type BeginCLILoginRequest struct {
 
 func (x *BeginCLILoginRequest) Reset() {
 	*x = BeginCLILoginRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[278]
+	mi := &file_cadestro_v1_control_proto_msgTypes[278]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17775,7 +17775,7 @@ func (x *BeginCLILoginRequest) String() string {
 func (*BeginCLILoginRequest) ProtoMessage() {}
 
 func (x *BeginCLILoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[278]
+	mi := &file_cadestro_v1_control_proto_msgTypes[278]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17788,7 +17788,7 @@ func (x *BeginCLILoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginCLILoginRequest.ProtoReflect.Descriptor instead.
 func (*BeginCLILoginRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{278}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{278}
 }
 
 func (x *BeginCLILoginRequest) GetSlug() string {
@@ -17825,7 +17825,7 @@ type BeginCLILoginResponse struct {
 
 func (x *BeginCLILoginResponse) Reset() {
 	*x = BeginCLILoginResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[279]
+	mi := &file_cadestro_v1_control_proto_msgTypes[279]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17837,7 +17837,7 @@ func (x *BeginCLILoginResponse) String() string {
 func (*BeginCLILoginResponse) ProtoMessage() {}
 
 func (x *BeginCLILoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[279]
+	mi := &file_cadestro_v1_control_proto_msgTypes[279]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17850,7 +17850,7 @@ func (x *BeginCLILoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginCLILoginResponse.ProtoReflect.Descriptor instead.
 func (*BeginCLILoginResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{279}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{279}
 }
 
 func (x *BeginCLILoginResponse) GetLoginUrl() string {
@@ -17902,7 +17902,7 @@ type ExchangeCLISessionRequest struct {
 
 func (x *ExchangeCLISessionRequest) Reset() {
 	*x = ExchangeCLISessionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[280]
+	mi := &file_cadestro_v1_control_proto_msgTypes[280]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17914,7 +17914,7 @@ func (x *ExchangeCLISessionRequest) String() string {
 func (*ExchangeCLISessionRequest) ProtoMessage() {}
 
 func (x *ExchangeCLISessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[280]
+	mi := &file_cadestro_v1_control_proto_msgTypes[280]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17927,7 +17927,7 @@ func (x *ExchangeCLISessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExchangeCLISessionRequest.ProtoReflect.Descriptor instead.
 func (*ExchangeCLISessionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{280}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{280}
 }
 
 func (x *ExchangeCLISessionRequest) GetSlug() string {
@@ -17963,7 +17963,7 @@ type ExchangeCLISessionResponse struct {
 
 func (x *ExchangeCLISessionResponse) Reset() {
 	*x = ExchangeCLISessionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[281]
+	mi := &file_cadestro_v1_control_proto_msgTypes[281]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -17975,7 +17975,7 @@ func (x *ExchangeCLISessionResponse) String() string {
 func (*ExchangeCLISessionResponse) ProtoMessage() {}
 
 func (x *ExchangeCLISessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[281]
+	mi := &file_cadestro_v1_control_proto_msgTypes[281]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -17988,7 +17988,7 @@ func (x *ExchangeCLISessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExchangeCLISessionResponse.ProtoReflect.Descriptor instead.
 func (*ExchangeCLISessionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{281}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{281}
 }
 
 func (x *ExchangeCLISessionResponse) GetAccessToken() string {
@@ -18027,7 +18027,7 @@ type ListIdentityLinksRequest struct {
 
 func (x *ListIdentityLinksRequest) Reset() {
 	*x = ListIdentityLinksRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[282]
+	mi := &file_cadestro_v1_control_proto_msgTypes[282]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18039,7 +18039,7 @@ func (x *ListIdentityLinksRequest) String() string {
 func (*ListIdentityLinksRequest) ProtoMessage() {}
 
 func (x *ListIdentityLinksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[282]
+	mi := &file_cadestro_v1_control_proto_msgTypes[282]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18052,7 +18052,7 @@ func (x *ListIdentityLinksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIdentityLinksRequest.ProtoReflect.Descriptor instead.
 func (*ListIdentityLinksRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{282}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{282}
 }
 
 type ListIdentityLinksResponse struct {
@@ -18064,7 +18064,7 @@ type ListIdentityLinksResponse struct {
 
 func (x *ListIdentityLinksResponse) Reset() {
 	*x = ListIdentityLinksResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[283]
+	mi := &file_cadestro_v1_control_proto_msgTypes[283]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18076,7 +18076,7 @@ func (x *ListIdentityLinksResponse) String() string {
 func (*ListIdentityLinksResponse) ProtoMessage() {}
 
 func (x *ListIdentityLinksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[283]
+	mi := &file_cadestro_v1_control_proto_msgTypes[283]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18089,7 +18089,7 @@ func (x *ListIdentityLinksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListIdentityLinksResponse.ProtoReflect.Descriptor instead.
 func (*ListIdentityLinksResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{283}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{283}
 }
 
 func (x *ListIdentityLinksResponse) GetLinks() []*IdentityLink {
@@ -18109,7 +18109,7 @@ type UnlinkIdentityRequest struct {
 
 func (x *UnlinkIdentityRequest) Reset() {
 	*x = UnlinkIdentityRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[284]
+	mi := &file_cadestro_v1_control_proto_msgTypes[284]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18121,7 +18121,7 @@ func (x *UnlinkIdentityRequest) String() string {
 func (*UnlinkIdentityRequest) ProtoMessage() {}
 
 func (x *UnlinkIdentityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[284]
+	mi := &file_cadestro_v1_control_proto_msgTypes[284]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18134,7 +18134,7 @@ func (x *UnlinkIdentityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlinkIdentityRequest.ProtoReflect.Descriptor instead.
 func (*UnlinkIdentityRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{284}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{284}
 }
 
 func (x *UnlinkIdentityRequest) GetLinkId() string {
@@ -18152,7 +18152,7 @@ type UnlinkIdentityResponse struct {
 
 func (x *UnlinkIdentityResponse) Reset() {
 	*x = UnlinkIdentityResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[285]
+	mi := &file_cadestro_v1_control_proto_msgTypes[285]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18164,7 +18164,7 @@ func (x *UnlinkIdentityResponse) String() string {
 func (*UnlinkIdentityResponse) ProtoMessage() {}
 
 func (x *UnlinkIdentityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[285]
+	mi := &file_cadestro_v1_control_proto_msgTypes[285]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18177,7 +18177,7 @@ func (x *UnlinkIdentityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnlinkIdentityResponse.ProtoReflect.Descriptor instead.
 func (*UnlinkIdentityResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{285}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{285}
 }
 
 // SCIM Provisioning
@@ -18191,7 +18191,7 @@ type EnableSCIMRequest struct {
 
 func (x *EnableSCIMRequest) Reset() {
 	*x = EnableSCIMRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[286]
+	mi := &file_cadestro_v1_control_proto_msgTypes[286]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18203,7 +18203,7 @@ func (x *EnableSCIMRequest) String() string {
 func (*EnableSCIMRequest) ProtoMessage() {}
 
 func (x *EnableSCIMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[286]
+	mi := &file_cadestro_v1_control_proto_msgTypes[286]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18216,7 +18216,7 @@ func (x *EnableSCIMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableSCIMRequest.ProtoReflect.Descriptor instead.
 func (*EnableSCIMRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{286}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{286}
 }
 
 func (x *EnableSCIMRequest) GetId() string {
@@ -18236,7 +18236,7 @@ type EnableSCIMResponse struct {
 
 func (x *EnableSCIMResponse) Reset() {
 	*x = EnableSCIMResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[287]
+	mi := &file_cadestro_v1_control_proto_msgTypes[287]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18248,7 +18248,7 @@ func (x *EnableSCIMResponse) String() string {
 func (*EnableSCIMResponse) ProtoMessage() {}
 
 func (x *EnableSCIMResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[287]
+	mi := &file_cadestro_v1_control_proto_msgTypes[287]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18261,7 +18261,7 @@ func (x *EnableSCIMResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableSCIMResponse.ProtoReflect.Descriptor instead.
 func (*EnableSCIMResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{287}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{287}
 }
 
 func (x *EnableSCIMResponse) GetToken() string {
@@ -18288,7 +18288,7 @@ type DisableSCIMRequest struct {
 
 func (x *DisableSCIMRequest) Reset() {
 	*x = DisableSCIMRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[288]
+	mi := &file_cadestro_v1_control_proto_msgTypes[288]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18300,7 +18300,7 @@ func (x *DisableSCIMRequest) String() string {
 func (*DisableSCIMRequest) ProtoMessage() {}
 
 func (x *DisableSCIMRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[288]
+	mi := &file_cadestro_v1_control_proto_msgTypes[288]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18313,7 +18313,7 @@ func (x *DisableSCIMRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableSCIMRequest.ProtoReflect.Descriptor instead.
 func (*DisableSCIMRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{288}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{288}
 }
 
 func (x *DisableSCIMRequest) GetId() string {
@@ -18331,7 +18331,7 @@ type DisableSCIMResponse struct {
 
 func (x *DisableSCIMResponse) Reset() {
 	*x = DisableSCIMResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[289]
+	mi := &file_cadestro_v1_control_proto_msgTypes[289]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18343,7 +18343,7 @@ func (x *DisableSCIMResponse) String() string {
 func (*DisableSCIMResponse) ProtoMessage() {}
 
 func (x *DisableSCIMResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[289]
+	mi := &file_cadestro_v1_control_proto_msgTypes[289]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18356,7 +18356,7 @@ func (x *DisableSCIMResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableSCIMResponse.ProtoReflect.Descriptor instead.
 func (*DisableSCIMResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{289}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{289}
 }
 
 type RotateSCIMTokenRequest struct {
@@ -18369,7 +18369,7 @@ type RotateSCIMTokenRequest struct {
 
 func (x *RotateSCIMTokenRequest) Reset() {
 	*x = RotateSCIMTokenRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[290]
+	mi := &file_cadestro_v1_control_proto_msgTypes[290]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18381,7 +18381,7 @@ func (x *RotateSCIMTokenRequest) String() string {
 func (*RotateSCIMTokenRequest) ProtoMessage() {}
 
 func (x *RotateSCIMTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[290]
+	mi := &file_cadestro_v1_control_proto_msgTypes[290]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18394,7 +18394,7 @@ func (x *RotateSCIMTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateSCIMTokenRequest.ProtoReflect.Descriptor instead.
 func (*RotateSCIMTokenRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{290}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{290}
 }
 
 func (x *RotateSCIMTokenRequest) GetId() string {
@@ -18413,7 +18413,7 @@ type RotateSCIMTokenResponse struct {
 
 func (x *RotateSCIMTokenResponse) Reset() {
 	*x = RotateSCIMTokenResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[291]
+	mi := &file_cadestro_v1_control_proto_msgTypes[291]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18425,7 +18425,7 @@ func (x *RotateSCIMTokenResponse) String() string {
 func (*RotateSCIMTokenResponse) ProtoMessage() {}
 
 func (x *RotateSCIMTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[291]
+	mi := &file_cadestro_v1_control_proto_msgTypes[291]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18438,7 +18438,7 @@ func (x *RotateSCIMTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateSCIMTokenResponse.ProtoReflect.Descriptor instead.
 func (*RotateSCIMTokenResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{291}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{291}
 }
 
 func (x *RotateSCIMTokenResponse) GetToken() string {
@@ -18458,7 +18458,7 @@ type GetDeviceComplianceRequest struct {
 
 func (x *GetDeviceComplianceRequest) Reset() {
 	*x = GetDeviceComplianceRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[292]
+	mi := &file_cadestro_v1_control_proto_msgTypes[292]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18470,7 +18470,7 @@ func (x *GetDeviceComplianceRequest) String() string {
 func (*GetDeviceComplianceRequest) ProtoMessage() {}
 
 func (x *GetDeviceComplianceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[292]
+	mi := &file_cadestro_v1_control_proto_msgTypes[292]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18483,7 +18483,7 @@ func (x *GetDeviceComplianceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceComplianceRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceComplianceRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{292}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{292}
 }
 
 func (x *GetDeviceComplianceRequest) GetDeviceId() string {
@@ -18495,7 +18495,7 @@ func (x *GetDeviceComplianceRequest) GetDeviceId() string {
 
 type GetDeviceComplianceResponse struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Status        ComplianceStatus         `protobuf:"varint,1,opt,name=status,proto3,enum=powermanage.v1.ComplianceStatus" json:"status,omitempty"`
+	Status        ComplianceStatus         `protobuf:"varint,1,opt,name=status,proto3,enum=cadestro.v1.ComplianceStatus" json:"status,omitempty"`
 	Checks        []*ComplianceCheckResult `protobuf:"bytes,2,rep,name=checks,proto3" json:"checks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -18503,7 +18503,7 @@ type GetDeviceComplianceResponse struct {
 
 func (x *GetDeviceComplianceResponse) Reset() {
 	*x = GetDeviceComplianceResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[293]
+	mi := &file_cadestro_v1_control_proto_msgTypes[293]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18515,7 +18515,7 @@ func (x *GetDeviceComplianceResponse) String() string {
 func (*GetDeviceComplianceResponse) ProtoMessage() {}
 
 func (x *GetDeviceComplianceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[293]
+	mi := &file_cadestro_v1_control_proto_msgTypes[293]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18528,7 +18528,7 @@ func (x *GetDeviceComplianceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceComplianceResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceComplianceResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{293}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{293}
 }
 
 func (x *GetDeviceComplianceResponse) GetStatus() ComplianceStatus {
@@ -18558,7 +18558,7 @@ type ComplianceCheckResult struct {
 
 func (x *ComplianceCheckResult) Reset() {
 	*x = ComplianceCheckResult{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[294]
+	mi := &file_cadestro_v1_control_proto_msgTypes[294]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18570,7 +18570,7 @@ func (x *ComplianceCheckResult) String() string {
 func (*ComplianceCheckResult) ProtoMessage() {}
 
 func (x *ComplianceCheckResult) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[294]
+	mi := &file_cadestro_v1_control_proto_msgTypes[294]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18583,7 +18583,7 @@ func (x *ComplianceCheckResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComplianceCheckResult.ProtoReflect.Descriptor instead.
 func (*ComplianceCheckResult) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{294}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{294}
 }
 
 func (x *ComplianceCheckResult) GetActionId() string {
@@ -18636,7 +18636,7 @@ type CompliancePolicy struct {
 
 func (x *CompliancePolicy) Reset() {
 	*x = CompliancePolicy{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[295]
+	mi := &file_cadestro_v1_control_proto_msgTypes[295]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18648,7 +18648,7 @@ func (x *CompliancePolicy) String() string {
 func (*CompliancePolicy) ProtoMessage() {}
 
 func (x *CompliancePolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[295]
+	mi := &file_cadestro_v1_control_proto_msgTypes[295]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18661,7 +18661,7 @@ func (x *CompliancePolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompliancePolicy.ProtoReflect.Descriptor instead.
 func (*CompliancePolicy) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{295}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{295}
 }
 
 func (x *CompliancePolicy) GetId() string {
@@ -18724,7 +18724,7 @@ type CompliancePolicyRule struct {
 
 func (x *CompliancePolicyRule) Reset() {
 	*x = CompliancePolicyRule{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[296]
+	mi := &file_cadestro_v1_control_proto_msgTypes[296]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18736,7 +18736,7 @@ func (x *CompliancePolicyRule) String() string {
 func (*CompliancePolicyRule) ProtoMessage() {}
 
 func (x *CompliancePolicyRule) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[296]
+	mi := &file_cadestro_v1_control_proto_msgTypes[296]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18749,7 +18749,7 @@ func (x *CompliancePolicyRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompliancePolicyRule.ProtoReflect.Descriptor instead.
 func (*CompliancePolicyRule) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{296}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{296}
 }
 
 func (x *CompliancePolicyRule) GetActionId() string {
@@ -18785,7 +18785,7 @@ type CreateCompliancePolicyRequest struct {
 
 func (x *CreateCompliancePolicyRequest) Reset() {
 	*x = CreateCompliancePolicyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[297]
+	mi := &file_cadestro_v1_control_proto_msgTypes[297]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18797,7 +18797,7 @@ func (x *CreateCompliancePolicyRequest) String() string {
 func (*CreateCompliancePolicyRequest) ProtoMessage() {}
 
 func (x *CreateCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[297]
+	mi := &file_cadestro_v1_control_proto_msgTypes[297]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18810,7 +18810,7 @@ func (x *CreateCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCompliancePolicyRequest.ProtoReflect.Descriptor instead.
 func (*CreateCompliancePolicyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{297}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{297}
 }
 
 func (x *CreateCompliancePolicyRequest) GetName() string {
@@ -18836,7 +18836,7 @@ type CreateCompliancePolicyResponse struct {
 
 func (x *CreateCompliancePolicyResponse) Reset() {
 	*x = CreateCompliancePolicyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[298]
+	mi := &file_cadestro_v1_control_proto_msgTypes[298]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18848,7 +18848,7 @@ func (x *CreateCompliancePolicyResponse) String() string {
 func (*CreateCompliancePolicyResponse) ProtoMessage() {}
 
 func (x *CreateCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[298]
+	mi := &file_cadestro_v1_control_proto_msgTypes[298]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18861,7 +18861,7 @@ func (x *CreateCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCompliancePolicyResponse.ProtoReflect.Descriptor instead.
 func (*CreateCompliancePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{298}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{298}
 }
 
 func (x *CreateCompliancePolicyResponse) GetPolicy() *CompliancePolicy {
@@ -18881,7 +18881,7 @@ type GetCompliancePolicyRequest struct {
 
 func (x *GetCompliancePolicyRequest) Reset() {
 	*x = GetCompliancePolicyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[299]
+	mi := &file_cadestro_v1_control_proto_msgTypes[299]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18893,7 +18893,7 @@ func (x *GetCompliancePolicyRequest) String() string {
 func (*GetCompliancePolicyRequest) ProtoMessage() {}
 
 func (x *GetCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[299]
+	mi := &file_cadestro_v1_control_proto_msgTypes[299]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18906,7 +18906,7 @@ func (x *GetCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCompliancePolicyRequest.ProtoReflect.Descriptor instead.
 func (*GetCompliancePolicyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{299}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{299}
 }
 
 func (x *GetCompliancePolicyRequest) GetId() string {
@@ -18925,7 +18925,7 @@ type GetCompliancePolicyResponse struct {
 
 func (x *GetCompliancePolicyResponse) Reset() {
 	*x = GetCompliancePolicyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[300]
+	mi := &file_cadestro_v1_control_proto_msgTypes[300]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18937,7 +18937,7 @@ func (x *GetCompliancePolicyResponse) String() string {
 func (*GetCompliancePolicyResponse) ProtoMessage() {}
 
 func (x *GetCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[300]
+	mi := &file_cadestro_v1_control_proto_msgTypes[300]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18950,7 +18950,7 @@ func (x *GetCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCompliancePolicyResponse.ProtoReflect.Descriptor instead.
 func (*GetCompliancePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{300}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{300}
 }
 
 func (x *GetCompliancePolicyResponse) GetPolicy() *CompliancePolicy {
@@ -18972,7 +18972,7 @@ type ListCompliancePoliciesRequest struct {
 
 func (x *ListCompliancePoliciesRequest) Reset() {
 	*x = ListCompliancePoliciesRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[301]
+	mi := &file_cadestro_v1_control_proto_msgTypes[301]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -18984,7 +18984,7 @@ func (x *ListCompliancePoliciesRequest) String() string {
 func (*ListCompliancePoliciesRequest) ProtoMessage() {}
 
 func (x *ListCompliancePoliciesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[301]
+	mi := &file_cadestro_v1_control_proto_msgTypes[301]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -18997,7 +18997,7 @@ func (x *ListCompliancePoliciesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCompliancePoliciesRequest.ProtoReflect.Descriptor instead.
 func (*ListCompliancePoliciesRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{301}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{301}
 }
 
 func (x *ListCompliancePoliciesRequest) GetPageSize() int32 {
@@ -19025,7 +19025,7 @@ type ListCompliancePoliciesResponse struct {
 
 func (x *ListCompliancePoliciesResponse) Reset() {
 	*x = ListCompliancePoliciesResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[302]
+	mi := &file_cadestro_v1_control_proto_msgTypes[302]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19037,7 +19037,7 @@ func (x *ListCompliancePoliciesResponse) String() string {
 func (*ListCompliancePoliciesResponse) ProtoMessage() {}
 
 func (x *ListCompliancePoliciesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[302]
+	mi := &file_cadestro_v1_control_proto_msgTypes[302]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19050,7 +19050,7 @@ func (x *ListCompliancePoliciesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCompliancePoliciesResponse.ProtoReflect.Descriptor instead.
 func (*ListCompliancePoliciesResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{302}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{302}
 }
 
 func (x *ListCompliancePoliciesResponse) GetPolicies() []*CompliancePolicy {
@@ -19086,7 +19086,7 @@ type RenameCompliancePolicyRequest struct {
 
 func (x *RenameCompliancePolicyRequest) Reset() {
 	*x = RenameCompliancePolicyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[303]
+	mi := &file_cadestro_v1_control_proto_msgTypes[303]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19098,7 +19098,7 @@ func (x *RenameCompliancePolicyRequest) String() string {
 func (*RenameCompliancePolicyRequest) ProtoMessage() {}
 
 func (x *RenameCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[303]
+	mi := &file_cadestro_v1_control_proto_msgTypes[303]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19111,7 +19111,7 @@ func (x *RenameCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RenameCompliancePolicyRequest.ProtoReflect.Descriptor instead.
 func (*RenameCompliancePolicyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{303}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{303}
 }
 
 func (x *RenameCompliancePolicyRequest) GetId() string {
@@ -19140,7 +19140,7 @@ type UpdateCompliancePolicyDescriptionRequest struct {
 
 func (x *UpdateCompliancePolicyDescriptionRequest) Reset() {
 	*x = UpdateCompliancePolicyDescriptionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[304]
+	mi := &file_cadestro_v1_control_proto_msgTypes[304]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19152,7 +19152,7 @@ func (x *UpdateCompliancePolicyDescriptionRequest) String() string {
 func (*UpdateCompliancePolicyDescriptionRequest) ProtoMessage() {}
 
 func (x *UpdateCompliancePolicyDescriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[304]
+	mi := &file_cadestro_v1_control_proto_msgTypes[304]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19165,7 +19165,7 @@ func (x *UpdateCompliancePolicyDescriptionRequest) ProtoReflect() protoreflect.M
 
 // Deprecated: Use UpdateCompliancePolicyDescriptionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCompliancePolicyDescriptionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{304}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{304}
 }
 
 func (x *UpdateCompliancePolicyDescriptionRequest) GetId() string {
@@ -19191,7 +19191,7 @@ type UpdateCompliancePolicyResponse struct {
 
 func (x *UpdateCompliancePolicyResponse) Reset() {
 	*x = UpdateCompliancePolicyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[305]
+	mi := &file_cadestro_v1_control_proto_msgTypes[305]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19203,7 +19203,7 @@ func (x *UpdateCompliancePolicyResponse) String() string {
 func (*UpdateCompliancePolicyResponse) ProtoMessage() {}
 
 func (x *UpdateCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[305]
+	mi := &file_cadestro_v1_control_proto_msgTypes[305]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19216,7 +19216,7 @@ func (x *UpdateCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCompliancePolicyResponse.ProtoReflect.Descriptor instead.
 func (*UpdateCompliancePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{305}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{305}
 }
 
 func (x *UpdateCompliancePolicyResponse) GetPolicy() *CompliancePolicy {
@@ -19236,7 +19236,7 @@ type DeleteCompliancePolicyRequest struct {
 
 func (x *DeleteCompliancePolicyRequest) Reset() {
 	*x = DeleteCompliancePolicyRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[306]
+	mi := &file_cadestro_v1_control_proto_msgTypes[306]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19248,7 +19248,7 @@ func (x *DeleteCompliancePolicyRequest) String() string {
 func (*DeleteCompliancePolicyRequest) ProtoMessage() {}
 
 func (x *DeleteCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[306]
+	mi := &file_cadestro_v1_control_proto_msgTypes[306]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19261,7 +19261,7 @@ func (x *DeleteCompliancePolicyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCompliancePolicyRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCompliancePolicyRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{306}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{306}
 }
 
 func (x *DeleteCompliancePolicyRequest) GetId() string {
@@ -19279,7 +19279,7 @@ type DeleteCompliancePolicyResponse struct {
 
 func (x *DeleteCompliancePolicyResponse) Reset() {
 	*x = DeleteCompliancePolicyResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[307]
+	mi := &file_cadestro_v1_control_proto_msgTypes[307]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19291,7 +19291,7 @@ func (x *DeleteCompliancePolicyResponse) String() string {
 func (*DeleteCompliancePolicyResponse) ProtoMessage() {}
 
 func (x *DeleteCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[307]
+	mi := &file_cadestro_v1_control_proto_msgTypes[307]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19304,7 +19304,7 @@ func (x *DeleteCompliancePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCompliancePolicyResponse.ProtoReflect.Descriptor instead.
 func (*DeleteCompliancePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{307}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{307}
 }
 
 type AddCompliancePolicyRuleRequest struct {
@@ -19321,7 +19321,7 @@ type AddCompliancePolicyRuleRequest struct {
 
 func (x *AddCompliancePolicyRuleRequest) Reset() {
 	*x = AddCompliancePolicyRuleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[308]
+	mi := &file_cadestro_v1_control_proto_msgTypes[308]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19333,7 +19333,7 @@ func (x *AddCompliancePolicyRuleRequest) String() string {
 func (*AddCompliancePolicyRuleRequest) ProtoMessage() {}
 
 func (x *AddCompliancePolicyRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[308]
+	mi := &file_cadestro_v1_control_proto_msgTypes[308]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19346,7 +19346,7 @@ func (x *AddCompliancePolicyRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddCompliancePolicyRuleRequest.ProtoReflect.Descriptor instead.
 func (*AddCompliancePolicyRuleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{308}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{308}
 }
 
 func (x *AddCompliancePolicyRuleRequest) GetPolicyId() string {
@@ -19379,7 +19379,7 @@ type AddCompliancePolicyRuleResponse struct {
 
 func (x *AddCompliancePolicyRuleResponse) Reset() {
 	*x = AddCompliancePolicyRuleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[309]
+	mi := &file_cadestro_v1_control_proto_msgTypes[309]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19391,7 +19391,7 @@ func (x *AddCompliancePolicyRuleResponse) String() string {
 func (*AddCompliancePolicyRuleResponse) ProtoMessage() {}
 
 func (x *AddCompliancePolicyRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[309]
+	mi := &file_cadestro_v1_control_proto_msgTypes[309]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19404,7 +19404,7 @@ func (x *AddCompliancePolicyRuleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddCompliancePolicyRuleResponse.ProtoReflect.Descriptor instead.
 func (*AddCompliancePolicyRuleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{309}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{309}
 }
 
 func (x *AddCompliancePolicyRuleResponse) GetPolicy() *CompliancePolicy {
@@ -19426,7 +19426,7 @@ type RemoveCompliancePolicyRuleRequest struct {
 
 func (x *RemoveCompliancePolicyRuleRequest) Reset() {
 	*x = RemoveCompliancePolicyRuleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[310]
+	mi := &file_cadestro_v1_control_proto_msgTypes[310]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19438,7 +19438,7 @@ func (x *RemoveCompliancePolicyRuleRequest) String() string {
 func (*RemoveCompliancePolicyRuleRequest) ProtoMessage() {}
 
 func (x *RemoveCompliancePolicyRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[310]
+	mi := &file_cadestro_v1_control_proto_msgTypes[310]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19451,7 +19451,7 @@ func (x *RemoveCompliancePolicyRuleRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use RemoveCompliancePolicyRuleRequest.ProtoReflect.Descriptor instead.
 func (*RemoveCompliancePolicyRuleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{310}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{310}
 }
 
 func (x *RemoveCompliancePolicyRuleRequest) GetPolicyId() string {
@@ -19477,7 +19477,7 @@ type RemoveCompliancePolicyRuleResponse struct {
 
 func (x *RemoveCompliancePolicyRuleResponse) Reset() {
 	*x = RemoveCompliancePolicyRuleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[311]
+	mi := &file_cadestro_v1_control_proto_msgTypes[311]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19489,7 +19489,7 @@ func (x *RemoveCompliancePolicyRuleResponse) String() string {
 func (*RemoveCompliancePolicyRuleResponse) ProtoMessage() {}
 
 func (x *RemoveCompliancePolicyRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[311]
+	mi := &file_cadestro_v1_control_proto_msgTypes[311]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19502,7 +19502,7 @@ func (x *RemoveCompliancePolicyRuleResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use RemoveCompliancePolicyRuleResponse.ProtoReflect.Descriptor instead.
 func (*RemoveCompliancePolicyRuleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{311}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{311}
 }
 
 func (x *RemoveCompliancePolicyRuleResponse) GetPolicy() *CompliancePolicy {
@@ -19526,7 +19526,7 @@ type UpdateCompliancePolicyRuleRequest struct {
 
 func (x *UpdateCompliancePolicyRuleRequest) Reset() {
 	*x = UpdateCompliancePolicyRuleRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[312]
+	mi := &file_cadestro_v1_control_proto_msgTypes[312]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19538,7 +19538,7 @@ func (x *UpdateCompliancePolicyRuleRequest) String() string {
 func (*UpdateCompliancePolicyRuleRequest) ProtoMessage() {}
 
 func (x *UpdateCompliancePolicyRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[312]
+	mi := &file_cadestro_v1_control_proto_msgTypes[312]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19551,7 +19551,7 @@ func (x *UpdateCompliancePolicyRuleRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use UpdateCompliancePolicyRuleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCompliancePolicyRuleRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{312}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{312}
 }
 
 func (x *UpdateCompliancePolicyRuleRequest) GetPolicyId() string {
@@ -19584,7 +19584,7 @@ type UpdateCompliancePolicyRuleResponse struct {
 
 func (x *UpdateCompliancePolicyRuleResponse) Reset() {
 	*x = UpdateCompliancePolicyRuleResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[313]
+	mi := &file_cadestro_v1_control_proto_msgTypes[313]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19596,7 +19596,7 @@ func (x *UpdateCompliancePolicyRuleResponse) String() string {
 func (*UpdateCompliancePolicyRuleResponse) ProtoMessage() {}
 
 func (x *UpdateCompliancePolicyRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[313]
+	mi := &file_cadestro_v1_control_proto_msgTypes[313]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19609,7 +19609,7 @@ func (x *UpdateCompliancePolicyRuleResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use UpdateCompliancePolicyRuleResponse.ProtoReflect.Descriptor instead.
 func (*UpdateCompliancePolicyRuleResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{313}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{313}
 }
 
 func (x *UpdateCompliancePolicyRuleResponse) GetPolicy() *CompliancePolicy {
@@ -19629,7 +19629,7 @@ type GetDeviceCompliancePolicyStatusRequest struct {
 
 func (x *GetDeviceCompliancePolicyStatusRequest) Reset() {
 	*x = GetDeviceCompliancePolicyStatusRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[314]
+	mi := &file_cadestro_v1_control_proto_msgTypes[314]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19641,7 +19641,7 @@ func (x *GetDeviceCompliancePolicyStatusRequest) String() string {
 func (*GetDeviceCompliancePolicyStatusRequest) ProtoMessage() {}
 
 func (x *GetDeviceCompliancePolicyStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[314]
+	mi := &file_cadestro_v1_control_proto_msgTypes[314]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19654,7 +19654,7 @@ func (x *GetDeviceCompliancePolicyStatusRequest) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use GetDeviceCompliancePolicyStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceCompliancePolicyStatusRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{314}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{314}
 }
 
 func (x *GetDeviceCompliancePolicyStatusRequest) GetDeviceId() string {
@@ -19666,7 +19666,7 @@ func (x *GetDeviceCompliancePolicyStatusRequest) GetDeviceId() string {
 
 type GetDeviceCompliancePolicyStatusResponse struct {
 	state         protoimpl.MessageState    `protogen:"open.v1"`
-	OverallStatus ComplianceStatus          `protobuf:"varint,1,opt,name=overall_status,json=overallStatus,proto3,enum=powermanage.v1.ComplianceStatus" json:"overall_status,omitempty"`
+	OverallStatus ComplianceStatus          `protobuf:"varint,1,opt,name=overall_status,json=overallStatus,proto3,enum=cadestro.v1.ComplianceStatus" json:"overall_status,omitempty"`
 	Policies      []*DevicePolicyEvaluation `protobuf:"bytes,2,rep,name=policies,proto3" json:"policies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -19674,7 +19674,7 @@ type GetDeviceCompliancePolicyStatusResponse struct {
 
 func (x *GetDeviceCompliancePolicyStatusResponse) Reset() {
 	*x = GetDeviceCompliancePolicyStatusResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[315]
+	mi := &file_cadestro_v1_control_proto_msgTypes[315]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19686,7 +19686,7 @@ func (x *GetDeviceCompliancePolicyStatusResponse) String() string {
 func (*GetDeviceCompliancePolicyStatusResponse) ProtoMessage() {}
 
 func (x *GetDeviceCompliancePolicyStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[315]
+	mi := &file_cadestro_v1_control_proto_msgTypes[315]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19699,7 +19699,7 @@ func (x *GetDeviceCompliancePolicyStatusResponse) ProtoReflect() protoreflect.Me
 
 // Deprecated: Use GetDeviceCompliancePolicyStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceCompliancePolicyStatusResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{315}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{315}
 }
 
 func (x *GetDeviceCompliancePolicyStatusResponse) GetOverallStatus() ComplianceStatus {
@@ -19720,7 +19720,7 @@ type DevicePolicyEvaluation struct {
 	state         protoimpl.MessageState        `protogen:"open.v1"`
 	PolicyId      string                        `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty"`
 	PolicyName    string                        `protobuf:"bytes,2,opt,name=policy_name,json=policyName,proto3" json:"policy_name,omitempty"`
-	Status        ComplianceStatus              `protobuf:"varint,3,opt,name=status,proto3,enum=powermanage.v1.ComplianceStatus" json:"status,omitempty"`
+	Status        ComplianceStatus              `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ComplianceStatus" json:"status,omitempty"`
 	Rules         []*DevicePolicyRuleEvaluation `protobuf:"bytes,4,rep,name=rules,proto3" json:"rules,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -19728,7 +19728,7 @@ type DevicePolicyEvaluation struct {
 
 func (x *DevicePolicyEvaluation) Reset() {
 	*x = DevicePolicyEvaluation{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[316]
+	mi := &file_cadestro_v1_control_proto_msgTypes[316]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19740,7 +19740,7 @@ func (x *DevicePolicyEvaluation) String() string {
 func (*DevicePolicyEvaluation) ProtoMessage() {}
 
 func (x *DevicePolicyEvaluation) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[316]
+	mi := &file_cadestro_v1_control_proto_msgTypes[316]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19753,7 +19753,7 @@ func (x *DevicePolicyEvaluation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DevicePolicyEvaluation.ProtoReflect.Descriptor instead.
 func (*DevicePolicyEvaluation) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{316}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{316}
 }
 
 func (x *DevicePolicyEvaluation) GetPolicyId() string {
@@ -19788,7 +19788,7 @@ type DevicePolicyRuleEvaluation struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	ActionId         string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	ActionName       string                 `protobuf:"bytes,2,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
-	Status           ComplianceStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=powermanage.v1.ComplianceStatus" json:"status,omitempty"`
+	Status           ComplianceStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ComplianceStatus" json:"status,omitempty"`
 	Compliant        bool                   `protobuf:"varint,4,opt,name=compliant,proto3" json:"compliant,omitempty"`
 	CheckedAt        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=checked_at,json=checkedAt,proto3" json:"checked_at,omitempty"`
 	FirstFailedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=first_failed_at,json=firstFailedAt,proto3" json:"first_failed_at,omitempty"`
@@ -19801,7 +19801,7 @@ type DevicePolicyRuleEvaluation struct {
 
 func (x *DevicePolicyRuleEvaluation) Reset() {
 	*x = DevicePolicyRuleEvaluation{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[317]
+	mi := &file_cadestro_v1_control_proto_msgTypes[317]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19813,7 +19813,7 @@ func (x *DevicePolicyRuleEvaluation) String() string {
 func (*DevicePolicyRuleEvaluation) ProtoMessage() {}
 
 func (x *DevicePolicyRuleEvaluation) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[317]
+	mi := &file_cadestro_v1_control_proto_msgTypes[317]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19826,7 +19826,7 @@ func (x *DevicePolicyRuleEvaluation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DevicePolicyRuleEvaluation.ProtoReflect.Descriptor instead.
 func (*DevicePolicyRuleEvaluation) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{317}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{317}
 }
 
 func (x *DevicePolicyRuleEvaluation) GetActionId() string {
@@ -19903,7 +19903,7 @@ type SearchDateFilter struct {
 
 func (x *SearchDateFilter) Reset() {
 	*x = SearchDateFilter{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[318]
+	mi := &file_cadestro_v1_control_proto_msgTypes[318]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19915,7 +19915,7 @@ func (x *SearchDateFilter) String() string {
 func (*SearchDateFilter) ProtoMessage() {}
 
 func (x *SearchDateFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[318]
+	mi := &file_cadestro_v1_control_proto_msgTypes[318]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -19928,7 +19928,7 @@ func (x *SearchDateFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchDateFilter.ProtoReflect.Descriptor instead.
 func (*SearchDateFilter) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{318}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{318}
 }
 
 func (x *SearchDateFilter) GetField() string {
@@ -19958,7 +19958,7 @@ type SearchRequest struct {
 	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty" validate:"omitempty,max=1024"`
 	// UNSPECIFIED (0) means "all scopes".
 	// @gotags: validate:"omitempty,gte=0,lte=10"
-	Scope SearchScope `protobuf:"varint,2,opt,name=scope,proto3,enum=powermanage.v1.SearchScope" json:"scope,omitempty" validate:"omitempty,gte=0,lte=10"`
+	Scope SearchScope `protobuf:"varint,2,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty" validate:"omitempty,gte=0,lte=10"`
 	// Matches the handler's effective clamp ([1,200], else default 50).
 	// @gotags: validate:"omitempty,gte=0,lte=200"
 	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=200"`
@@ -19969,16 +19969,16 @@ type SearchRequest struct {
 	TagFilters map[string]string `protobuf:"bytes,6,rep,name=tag_filters,json=tagFilters,proto3" json:"tag_filters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=64,endkeys,max=1024"` // field → value(s), pipe-separated for OR (e.g. "completed|failed")
 	// UNSPECIFIED (0) means "scope default"; server validates per-scope validity.
 	// @gotags: validate:"omitempty,gte=0,lte=21"
-	SortField SortField `protobuf:"varint,7,opt,name=sort_field,json=sortField,proto3,enum=powermanage.v1.SortField" json:"sort_field,omitempty" validate:"omitempty,gte=0,lte=21"`
+	SortField SortField `protobuf:"varint,7,opt,name=sort_field,json=sortField,proto3,enum=cadestro.v1.SortField" json:"sort_field,omitempty" validate:"omitempty,gte=0,lte=21"`
 	// @gotags: validate:"omitempty,gte=0,lte=2"
-	SortDirection SortDirection `protobuf:"varint,8,opt,name=sort_direction,json=sortDirection,proto3,enum=powermanage.v1.SortDirection" json:"sort_direction,omitempty" validate:"omitempty,gte=0,lte=2"`
+	SortDirection SortDirection `protobuf:"varint,8,opt,name=sort_direction,json=sortDirection,proto3,enum=cadestro.v1.SortDirection" json:"sort_direction,omitempty" validate:"omitempty,gte=0,lte=2"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SearchRequest) Reset() {
 	*x = SearchRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[319]
+	mi := &file_cadestro_v1_control_proto_msgTypes[319]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -19990,7 +19990,7 @@ func (x *SearchRequest) String() string {
 func (*SearchRequest) ProtoMessage() {}
 
 func (x *SearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[319]
+	mi := &file_cadestro_v1_control_proto_msgTypes[319]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20003,7 +20003,7 @@ func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
 func (*SearchRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{319}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{319}
 }
 
 func (x *SearchRequest) GetQuery() string {
@@ -20067,7 +20067,7 @@ type SearchResult struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Scope         SearchScope            `protobuf:"varint,4,opt,name=scope,proto3,enum=powermanage.v1.SearchScope" json:"scope,omitempty"`
+	Scope         SearchScope            `protobuf:"varint,4,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty"`
 	MemberCount   int32                  `protobuf:"varint,5,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
 	Fields        map[string]string      `protobuf:"bytes,6,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // all hash fields from the search index
 	unknownFields protoimpl.UnknownFields
@@ -20076,7 +20076,7 @@ type SearchResult struct {
 
 func (x *SearchResult) Reset() {
 	*x = SearchResult{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[320]
+	mi := &file_cadestro_v1_control_proto_msgTypes[320]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20088,7 +20088,7 @@ func (x *SearchResult) String() string {
 func (*SearchResult) ProtoMessage() {}
 
 func (x *SearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[320]
+	mi := &file_cadestro_v1_control_proto_msgTypes[320]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20101,7 +20101,7 @@ func (x *SearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResult.ProtoReflect.Descriptor instead.
 func (*SearchResult) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{320}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{320}
 }
 
 func (x *SearchResult) GetId() string {
@@ -20157,7 +20157,7 @@ type SearchResponse struct {
 
 func (x *SearchResponse) Reset() {
 	*x = SearchResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[321]
+	mi := &file_cadestro_v1_control_proto_msgTypes[321]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20169,7 +20169,7 @@ func (x *SearchResponse) String() string {
 func (*SearchResponse) ProtoMessage() {}
 
 func (x *SearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[321]
+	mi := &file_cadestro_v1_control_proto_msgTypes[321]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20182,7 +20182,7 @@ func (x *SearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
 func (*SearchResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{321}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{321}
 }
 
 func (x *SearchResponse) GetResults() []*SearchResult {
@@ -20214,7 +20214,7 @@ type RebuildSearchIndexRequest struct {
 
 func (x *RebuildSearchIndexRequest) Reset() {
 	*x = RebuildSearchIndexRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[322]
+	mi := &file_cadestro_v1_control_proto_msgTypes[322]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20226,7 +20226,7 @@ func (x *RebuildSearchIndexRequest) String() string {
 func (*RebuildSearchIndexRequest) ProtoMessage() {}
 
 func (x *RebuildSearchIndexRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[322]
+	mi := &file_cadestro_v1_control_proto_msgTypes[322]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20239,7 +20239,7 @@ func (x *RebuildSearchIndexRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RebuildSearchIndexRequest.ProtoReflect.Descriptor instead.
 func (*RebuildSearchIndexRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{322}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{322}
 }
 
 type RebuildSearchIndexResponse struct {
@@ -20250,7 +20250,7 @@ type RebuildSearchIndexResponse struct {
 
 func (x *RebuildSearchIndexResponse) Reset() {
 	*x = RebuildSearchIndexResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[323]
+	mi := &file_cadestro_v1_control_proto_msgTypes[323]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20262,7 +20262,7 @@ func (x *RebuildSearchIndexResponse) String() string {
 func (*RebuildSearchIndexResponse) ProtoMessage() {}
 
 func (x *RebuildSearchIndexResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[323]
+	mi := &file_cadestro_v1_control_proto_msgTypes[323]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20275,7 +20275,7 @@ func (x *RebuildSearchIndexResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RebuildSearchIndexResponse.ProtoReflect.Descriptor instead.
 func (*RebuildSearchIndexResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{323}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{323}
 }
 
 type ServerSettings struct {
@@ -20288,7 +20288,7 @@ type ServerSettings struct {
 
 func (x *ServerSettings) Reset() {
 	*x = ServerSettings{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[324]
+	mi := &file_cadestro_v1_control_proto_msgTypes[324]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20300,7 +20300,7 @@ func (x *ServerSettings) String() string {
 func (*ServerSettings) ProtoMessage() {}
 
 func (x *ServerSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[324]
+	mi := &file_cadestro_v1_control_proto_msgTypes[324]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20313,7 +20313,7 @@ func (x *ServerSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerSettings.ProtoReflect.Descriptor instead.
 func (*ServerSettings) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{324}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{324}
 }
 
 func (x *ServerSettings) GetUserProvisioningEnabled() bool {
@@ -20338,7 +20338,7 @@ type GetServerSettingsRequest struct {
 
 func (x *GetServerSettingsRequest) Reset() {
 	*x = GetServerSettingsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[325]
+	mi := &file_cadestro_v1_control_proto_msgTypes[325]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20350,7 +20350,7 @@ func (x *GetServerSettingsRequest) String() string {
 func (*GetServerSettingsRequest) ProtoMessage() {}
 
 func (x *GetServerSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[325]
+	mi := &file_cadestro_v1_control_proto_msgTypes[325]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20363,7 +20363,7 @@ func (x *GetServerSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServerSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetServerSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{325}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{325}
 }
 
 type GetServerSettingsResponse struct {
@@ -20375,7 +20375,7 @@ type GetServerSettingsResponse struct {
 
 func (x *GetServerSettingsResponse) Reset() {
 	*x = GetServerSettingsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[326]
+	mi := &file_cadestro_v1_control_proto_msgTypes[326]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20387,7 +20387,7 @@ func (x *GetServerSettingsResponse) String() string {
 func (*GetServerSettingsResponse) ProtoMessage() {}
 
 func (x *GetServerSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[326]
+	mi := &file_cadestro_v1_control_proto_msgTypes[326]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20400,7 +20400,7 @@ func (x *GetServerSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServerSettingsResponse.ProtoReflect.Descriptor instead.
 func (*GetServerSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{326}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{326}
 }
 
 func (x *GetServerSettingsResponse) GetSettings() *ServerSettings {
@@ -20420,7 +20420,7 @@ type UpdateServerSettingsRequest struct {
 
 func (x *UpdateServerSettingsRequest) Reset() {
 	*x = UpdateServerSettingsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[327]
+	mi := &file_cadestro_v1_control_proto_msgTypes[327]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20432,7 +20432,7 @@ func (x *UpdateServerSettingsRequest) String() string {
 func (*UpdateServerSettingsRequest) ProtoMessage() {}
 
 func (x *UpdateServerSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[327]
+	mi := &file_cadestro_v1_control_proto_msgTypes[327]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20445,7 +20445,7 @@ func (x *UpdateServerSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateServerSettingsRequest.ProtoReflect.Descriptor instead.
 func (*UpdateServerSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{327}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{327}
 }
 
 func (x *UpdateServerSettingsRequest) GetUserProvisioningEnabled() bool {
@@ -20471,7 +20471,7 @@ type UpdateServerSettingsResponse struct {
 
 func (x *UpdateServerSettingsResponse) Reset() {
 	*x = UpdateServerSettingsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[328]
+	mi := &file_cadestro_v1_control_proto_msgTypes[328]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20483,7 +20483,7 @@ func (x *UpdateServerSettingsResponse) String() string {
 func (*UpdateServerSettingsResponse) ProtoMessage() {}
 
 func (x *UpdateServerSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[328]
+	mi := &file_cadestro_v1_control_proto_msgTypes[328]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20496,7 +20496,7 @@ func (x *UpdateServerSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateServerSettingsResponse.ProtoReflect.Descriptor instead.
 func (*UpdateServerSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{328}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{328}
 }
 
 func (x *UpdateServerSettingsResponse) GetSettings() *ServerSettings {
@@ -20517,7 +20517,7 @@ type SetUserProvisioningEnabledRequest struct {
 
 func (x *SetUserProvisioningEnabledRequest) Reset() {
 	*x = SetUserProvisioningEnabledRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[329]
+	mi := &file_cadestro_v1_control_proto_msgTypes[329]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20529,7 +20529,7 @@ func (x *SetUserProvisioningEnabledRequest) String() string {
 func (*SetUserProvisioningEnabledRequest) ProtoMessage() {}
 
 func (x *SetUserProvisioningEnabledRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[329]
+	mi := &file_cadestro_v1_control_proto_msgTypes[329]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20542,7 +20542,7 @@ func (x *SetUserProvisioningEnabledRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use SetUserProvisioningEnabledRequest.ProtoReflect.Descriptor instead.
 func (*SetUserProvisioningEnabledRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{329}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{329}
 }
 
 func (x *SetUserProvisioningEnabledRequest) GetUserId() string {
@@ -20575,7 +20575,7 @@ type StartTerminalRequest struct {
 
 func (x *StartTerminalRequest) Reset() {
 	*x = StartTerminalRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[330]
+	mi := &file_cadestro_v1_control_proto_msgTypes[330]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20587,7 +20587,7 @@ func (x *StartTerminalRequest) String() string {
 func (*StartTerminalRequest) ProtoMessage() {}
 
 func (x *StartTerminalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[330]
+	mi := &file_cadestro_v1_control_proto_msgTypes[330]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20600,7 +20600,7 @@ func (x *StartTerminalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartTerminalRequest.ProtoReflect.Descriptor instead.
 func (*StartTerminalRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{330}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{330}
 }
 
 func (x *StartTerminalRequest) GetDeviceId() string {
@@ -20654,7 +20654,7 @@ type StartTerminalResponse struct {
 
 func (x *StartTerminalResponse) Reset() {
 	*x = StartTerminalResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[331]
+	mi := &file_cadestro_v1_control_proto_msgTypes[331]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20666,7 +20666,7 @@ func (x *StartTerminalResponse) String() string {
 func (*StartTerminalResponse) ProtoMessage() {}
 
 func (x *StartTerminalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[331]
+	mi := &file_cadestro_v1_control_proto_msgTypes[331]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20679,7 +20679,7 @@ func (x *StartTerminalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartTerminalResponse.ProtoReflect.Descriptor instead.
 func (*StartTerminalResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{331}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{331}
 }
 
 func (x *StartTerminalResponse) GetSessionId() string {
@@ -20759,7 +20759,7 @@ type StopTerminalRequest struct {
 
 func (x *StopTerminalRequest) Reset() {
 	*x = StopTerminalRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[332]
+	mi := &file_cadestro_v1_control_proto_msgTypes[332]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20771,7 +20771,7 @@ func (x *StopTerminalRequest) String() string {
 func (*StopTerminalRequest) ProtoMessage() {}
 
 func (x *StopTerminalRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[332]
+	mi := &file_cadestro_v1_control_proto_msgTypes[332]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20784,7 +20784,7 @@ func (x *StopTerminalRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTerminalRequest.ProtoReflect.Descriptor instead.
 func (*StopTerminalRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{332}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{332}
 }
 
 func (x *StopTerminalRequest) GetSessionId() string {
@@ -20802,7 +20802,7 @@ type StopTerminalResponse struct {
 
 func (x *StopTerminalResponse) Reset() {
 	*x = StopTerminalResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[333]
+	mi := &file_cadestro_v1_control_proto_msgTypes[333]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20814,7 +20814,7 @@ func (x *StopTerminalResponse) String() string {
 func (*StopTerminalResponse) ProtoMessage() {}
 
 func (x *StopTerminalResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[333]
+	mi := &file_cadestro_v1_control_proto_msgTypes[333]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20827,7 +20827,7 @@ func (x *StopTerminalResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTerminalResponse.ProtoReflect.Descriptor instead.
 func (*StopTerminalResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{333}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{333}
 }
 
 // TerminalSessionInfo is the admin view of an active session, returned
@@ -20852,7 +20852,7 @@ type TerminalSessionInfo struct {
 
 func (x *TerminalSessionInfo) Reset() {
 	*x = TerminalSessionInfo{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[334]
+	mi := &file_cadestro_v1_control_proto_msgTypes[334]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20864,7 +20864,7 @@ func (x *TerminalSessionInfo) String() string {
 func (*TerminalSessionInfo) ProtoMessage() {}
 
 func (x *TerminalSessionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[334]
+	mi := &file_cadestro_v1_control_proto_msgTypes[334]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20877,7 +20877,7 @@ func (x *TerminalSessionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminalSessionInfo.ProtoReflect.Descriptor instead.
 func (*TerminalSessionInfo) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{334}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{334}
 }
 
 func (x *TerminalSessionInfo) GetSessionId() string {
@@ -20956,7 +20956,7 @@ type ListActiveTerminalSessionsRequest struct {
 
 func (x *ListActiveTerminalSessionsRequest) Reset() {
 	*x = ListActiveTerminalSessionsRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[335]
+	mi := &file_cadestro_v1_control_proto_msgTypes[335]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -20968,7 +20968,7 @@ func (x *ListActiveTerminalSessionsRequest) String() string {
 func (*ListActiveTerminalSessionsRequest) ProtoMessage() {}
 
 func (x *ListActiveTerminalSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[335]
+	mi := &file_cadestro_v1_control_proto_msgTypes[335]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -20981,7 +20981,7 @@ func (x *ListActiveTerminalSessionsRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ListActiveTerminalSessionsRequest.ProtoReflect.Descriptor instead.
 func (*ListActiveTerminalSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{335}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{335}
 }
 
 func (x *ListActiveTerminalSessionsRequest) GetPageSize() int32 {
@@ -21023,7 +21023,7 @@ type ListActiveTerminalSessionsResponse struct {
 
 func (x *ListActiveTerminalSessionsResponse) Reset() {
 	*x = ListActiveTerminalSessionsResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[336]
+	mi := &file_cadestro_v1_control_proto_msgTypes[336]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21035,7 +21035,7 @@ func (x *ListActiveTerminalSessionsResponse) String() string {
 func (*ListActiveTerminalSessionsResponse) ProtoMessage() {}
 
 func (x *ListActiveTerminalSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[336]
+	mi := &file_cadestro_v1_control_proto_msgTypes[336]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21048,7 +21048,7 @@ func (x *ListActiveTerminalSessionsResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use ListActiveTerminalSessionsResponse.ProtoReflect.Descriptor instead.
 func (*ListActiveTerminalSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{336}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{336}
 }
 
 func (x *ListActiveTerminalSessionsResponse) GetSessions() []*TerminalSessionInfo {
@@ -21091,7 +21091,7 @@ type TerminateTerminalSessionRequest struct {
 
 func (x *TerminateTerminalSessionRequest) Reset() {
 	*x = TerminateTerminalSessionRequest{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[337]
+	mi := &file_cadestro_v1_control_proto_msgTypes[337]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21103,7 +21103,7 @@ func (x *TerminateTerminalSessionRequest) String() string {
 func (*TerminateTerminalSessionRequest) ProtoMessage() {}
 
 func (x *TerminateTerminalSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[337]
+	mi := &file_cadestro_v1_control_proto_msgTypes[337]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21116,7 +21116,7 @@ func (x *TerminateTerminalSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminateTerminalSessionRequest.ProtoReflect.Descriptor instead.
 func (*TerminateTerminalSessionRequest) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{337}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{337}
 }
 
 func (x *TerminateTerminalSessionRequest) GetSessionId() string {
@@ -21141,7 +21141,7 @@ type TerminateTerminalSessionResponse struct {
 
 func (x *TerminateTerminalSessionResponse) Reset() {
 	*x = TerminateTerminalSessionResponse{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[338]
+	mi := &file_cadestro_v1_control_proto_msgTypes[338]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21153,7 +21153,7 @@ func (x *TerminateTerminalSessionResponse) String() string {
 func (*TerminateTerminalSessionResponse) ProtoMessage() {}
 
 func (x *TerminateTerminalSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[338]
+	mi := &file_cadestro_v1_control_proto_msgTypes[338]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21166,7 +21166,7 @@ func (x *TerminateTerminalSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminateTerminalSessionResponse.ProtoReflect.Descriptor instead.
 func (*TerminateTerminalSessionResponse) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{338}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{338}
 }
 
 // EncryptionAuthoringParams is the HTTPS write boundary for an operator-authored
@@ -21185,20 +21185,20 @@ type EncryptionAuthoringParams struct {
 	// the agent's switch default means "no device-bound key", so an out-of-range
 	// value must be refused here rather than silently downgraded there.
 	// @gotags: validate:"omitempty,oneof=0 1 2"
-	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=powermanage.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty" validate:"omitempty,oneof=0 1 2"`
+	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty" validate:"omitempty,oneof=0 1 2"`
 	// @gotags: validate:"omitempty,gte=16,lte=128"
 	UserPassphraseMinLength int32 `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty" validate:"omitempty,gte=16,lte=128"`
 	// Range-checked for the same reason as EncryptionParams
 	// .user_passphrase_complexity, and optional for the same reason.
 	// @gotags: validate:"omitempty,oneof=0 1 2"
-	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=powermanage.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty" validate:"omitempty,oneof=0 1 2"`
+	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty" validate:"omitempty,oneof=0 1 2"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
 func (x *EncryptionAuthoringParams) Reset() {
 	*x = EncryptionAuthoringParams{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[339]
+	mi := &file_cadestro_v1_control_proto_msgTypes[339]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21210,7 +21210,7 @@ func (x *EncryptionAuthoringParams) String() string {
 func (*EncryptionAuthoringParams) ProtoMessage() {}
 
 func (x *EncryptionAuthoringParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[339]
+	mi := &file_cadestro_v1_control_proto_msgTypes[339]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21223,7 +21223,7 @@ func (x *EncryptionAuthoringParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptionAuthoringParams.ProtoReflect.Descriptor instead.
 func (*EncryptionAuthoringParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{339}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{339}
 }
 
 func (x *EncryptionAuthoringParams) GetPresharedKey() string {
@@ -21274,16 +21274,16 @@ type ManagedEncryptionParams struct {
 	PresharedKeyConfigured   bool                         `protobuf:"varint,1,opt,name=preshared_key_configured,json=presharedKeyConfigured,proto3" json:"preshared_key_configured,omitempty"`
 	RotationIntervalDays     int32                        `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
 	MinWords                 int32                        `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
-	DeviceBoundKeyType       EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=powermanage.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
+	DeviceBoundKeyType       EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
 	UserPassphraseMinLength  int32                        `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
-	UserPassphraseComplexity LpsPasswordComplexity        `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=powermanage.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
+	UserPassphraseComplexity LpsPasswordComplexity        `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ManagedEncryptionParams) Reset() {
 	*x = ManagedEncryptionParams{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[340]
+	mi := &file_cadestro_v1_control_proto_msgTypes[340]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21295,7 +21295,7 @@ func (x *ManagedEncryptionParams) String() string {
 func (*ManagedEncryptionParams) ProtoMessage() {}
 
 func (x *ManagedEncryptionParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[340]
+	mi := &file_cadestro_v1_control_proto_msgTypes[340]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21308,7 +21308,7 @@ func (x *ManagedEncryptionParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManagedEncryptionParams.ProtoReflect.Descriptor instead.
 func (*ManagedEncryptionParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{340}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{340}
 }
 
 func (x *ManagedEncryptionParams) GetPresharedKeyConfigured() bool {
@@ -21361,7 +21361,7 @@ type WifiAuthoringParams struct {
 	// @gotags: validate:"required,min=1,max=255"
 	Ssid string `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty" validate:"required,min=1,max=255"`
 	// @gotags: validate:"required,ne=0"
-	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=powermanage.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
+	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
 	// @gotags: validate:"omitempty,min=8,max=64"
 	Psk *string `protobuf:"bytes,3,opt,name=psk,proto3,oneof" json:"psk,omitempty" validate:"omitempty,min=8,max=64"`
 	// @gotags: validate:"omitempty"
@@ -21382,7 +21382,7 @@ type WifiAuthoringParams struct {
 
 func (x *WifiAuthoringParams) Reset() {
 	*x = WifiAuthoringParams{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[341]
+	mi := &file_cadestro_v1_control_proto_msgTypes[341]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21394,7 +21394,7 @@ func (x *WifiAuthoringParams) String() string {
 func (*WifiAuthoringParams) ProtoMessage() {}
 
 func (x *WifiAuthoringParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[341]
+	mi := &file_cadestro_v1_control_proto_msgTypes[341]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21407,7 +21407,7 @@ func (x *WifiAuthoringParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WifiAuthoringParams.ProtoReflect.Descriptor instead.
 func (*WifiAuthoringParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{341}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{341}
 }
 
 func (x *WifiAuthoringParams) GetSsid() string {
@@ -21484,7 +21484,7 @@ func (x *WifiAuthoringParams) GetPriority() int32 {
 type ManagedWifiParams struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Ssid                string                 `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
-	AuthType            WifiAuthType           `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=powermanage.v1.WifiAuthType" json:"auth_type,omitempty"`
+	AuthType            WifiAuthType           `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty"`
 	PskConfigured       bool                   `protobuf:"varint,3,opt,name=psk_configured,json=pskConfigured,proto3" json:"psk_configured,omitempty"`
 	CaCert              string                 `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
 	ClientCert          string                 `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty"`
@@ -21499,7 +21499,7 @@ type ManagedWifiParams struct {
 
 func (x *ManagedWifiParams) Reset() {
 	*x = ManagedWifiParams{}
-	mi := &file_powermanage_v1_control_proto_msgTypes[342]
+	mi := &file_cadestro_v1_control_proto_msgTypes[342]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -21511,7 +21511,7 @@ func (x *ManagedWifiParams) String() string {
 func (*ManagedWifiParams) ProtoMessage() {}
 
 func (x *ManagedWifiParams) ProtoReflect() protoreflect.Message {
-	mi := &file_powermanage_v1_control_proto_msgTypes[342]
+	mi := &file_cadestro_v1_control_proto_msgTypes[342]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -21524,7 +21524,7 @@ func (x *ManagedWifiParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManagedWifiParams.ProtoReflect.Descriptor instead.
 func (*ManagedWifiParams) Descriptor() ([]byte, []int) {
-	return file_powermanage_v1_control_proto_rawDescGZIP(), []int{342}
+	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{342}
 }
 
 func (x *ManagedWifiParams) GetSsid() string {
@@ -21597,19 +21597,19 @@ func (x *ManagedWifiParams) GetPriority() int32 {
 	return 0
 }
 
-var File_powermanage_v1_control_proto protoreflect.FileDescriptor
+var File_cadestro_v1_control_proto protoreflect.FileDescriptor
 
-const file_powermanage_v1_control_proto_rawDesc = "" +
+const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
-	"\x1cpowermanage/v1/control.proto\x12\x0epowermanage.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cpowermanage/v1/actions.proto\x1a\x1apowermanage/v1/agent.proto\x1a\x1bpowermanage/v1/common.proto\"\xb3\x01\n" +
+	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb3\x01\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
 	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x12\x10\n" +
 	"\x03csr\x18\x04 \x01(\fR\x03csr\x127\n" +
-	"\x18agent_sealing_public_key\x18\x05 \x01(\fR\x15agentSealingPublicKey\"\xe2\x01\n" +
-	"\x10RegisterResponse\x125\n" +
-	"\tdevice_id\x18\x01 \x01(\v2\x18.powermanage.v1.DeviceIdR\bdeviceId\x12\x17\n" +
+	"\x18agent_sealing_public_key\x18\x05 \x01(\fR\x15agentSealingPublicKey\"\xdf\x01\n" +
+	"\x10RegisterResponse\x122\n" +
+	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdR\bdeviceId\x12\x17\n" +
 	"\aca_cert\x18\x02 \x01(\fR\x06caCert\x12 \n" +
 	"\vcertificate\x18\x03 \x01(\fR\vcertificate\x12\x1f\n" +
 	"\vcontrol_url\x18\x04 \x01(\tR\n" +
@@ -21632,17 +21632,17 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\rLogoutRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x10\n" +
 	"\x0eLogoutResponse\"\x17\n" +
-	"\x15GetCurrentUserRequest\"B\n" +
-	"\x16GetCurrentUserResponse\x12(\n" +
-	"\x04user\x18\x01 \x01(\v2\x14.powermanage.v1.UserR\x04user\"\x9c\a\n" +
+	"\x15GetCurrentUserRequest\"?\n" +
+	"\x16GetCurrentUserResponse\x12%\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\x90\a\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x129\n" +
 	"\n" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n" +
 	"\rlast_login_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\x12\x1a\n" +
-	"\bdisabled\x18\x05 \x01(\bR\bdisabled\x12C\n" +
-	"\x0eidentity_links\x18\t \x03(\v2\x1c.powermanage.v1.IdentityLinkR\ridentityLinks\x12!\n" +
+	"\bdisabled\x18\x05 \x01(\bR\bdisabled\x12@\n" +
+	"\x0eidentity_links\x18\t \x03(\v2\x19.cadestro.v1.IdentityLinkR\ridentityLinks\x12!\n" +
 	"\fdisplay_name\x18\n" +
 	" \x01(\tR\vdisplayName\x12\x1d\n" +
 	"\n" +
@@ -21653,14 +21653,14 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\apicture\x18\x0e \x01(\tR\apicture\x12\x16\n" +
 	"\x06locale\x18\x0f \x01(\tR\x06locale\x12%\n" +
 	"\x0elinux_username\x18\x10 \x01(\tR\rlinuxUsername\x12\x1b\n" +
-	"\tlinux_uid\x18\x11 \x01(\x05R\blinuxUid\x12D\n" +
-	"\x0fssh_public_keys\x18\x12 \x03(\v2\x1c.powermanage.v1.SshPublicKeyR\rsshPublicKeys\x12,\n" +
+	"\tlinux_uid\x18\x11 \x01(\x05R\blinuxUid\x12A\n" +
+	"\x0fssh_public_keys\x18\x12 \x03(\v2\x19.cadestro.v1.SshPublicKeyR\rsshPublicKeys\x12,\n" +
 	"\x12ssh_access_enabled\x18\x13 \x01(\bR\x10sshAccessEnabled\x12(\n" +
 	"\x10ssh_allow_pubkey\x18\x14 \x01(\bR\x0esshAllowPubkey\x12,\n" +
 	"\x12ssh_allow_password\x18\x15 \x01(\bR\x10sshAllowPassword\x12:\n" +
-	"\x19user_provisioning_enabled\x18\x16 \x01(\bR\x17userProvisioningEnabled\x12F\n" +
-	"\x0finherited_roles\x18\x17 \x03(\v2\x1d.powermanage.v1.InheritedRoleR\x0einheritedRoles\x12:\n" +
-	"\vrole_grants\x18\x18 \x03(\v2\x19.powermanage.v1.RoleGrantR\n" +
+	"\x19user_provisioning_enabled\x18\x16 \x01(\bR\x17userProvisioningEnabled\x12C\n" +
+	"\x0finherited_roles\x18\x17 \x03(\v2\x1a.cadestro.v1.InheritedRoleR\x0einheritedRoles\x127\n" +
+	"\vrole_grants\x18\x18 \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
 	"roleGrants\"\x7f\n" +
 	"\rInheritedRole\x12\x17\n" +
 	"\arole_id\x18\x01 \x01(\tR\x06roleId\x12\x1b\n" +
@@ -21681,33 +21681,33 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\vpermissions\x18\x04 \x03(\tR\vpermissions\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1b\n" +
-	"\tis_system\x18\x06 \x01(\bR\bisSystem\"\xb2\x01\n" +
-	"\tRoleGrant\x12(\n" +
-	"\x04role\x18\x01 \x01(\v2\x14.powermanage.v1.RoleR\x04role\x12A\n" +
+	"\tis_system\x18\x06 \x01(\bR\bisSystem\"\xac\x01\n" +
+	"\tRoleGrant\x12%\n" +
+	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x02 \x01(\x0e2\".powermanage.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
+	"scope_kind\x18\x02 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
 	"\bscope_id\x18\x03 \x01(\tR\ascopeId\x12\x1d\n" +
 	"\n" +
-	"scope_name\x18\x04 \x01(\tR\tscopeName\"\xa1\x01\n" +
+	"scope_name\x18\x04 \x01(\tR\tscopeName\"\x9e\x01\n" +
 	"\x0ePermissionInfo\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05group\x18\x02 \x01(\tR\x05group\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12E\n" +
-	"\vtarget_kind\x18\x04 \x01(\x0e2$.powermanage.v1.PermissionTargetKindR\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12B\n" +
+	"\vtarget_kind\x18\x04 \x01(\x0e2!.cadestro.v1.PermissionTargetKindR\n" +
 	"targetKind\"%\n" +
 	"\x13EraseJITUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
 	"\x14EraseJITUserResponse\" \n" +
 	"\x0eGetUserRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\";\n" +
-	"\x0fGetUserResponse\x12(\n" +
-	"\x04user\x18\x01 \x01(\v2\x14.powermanage.v1.UserR\x04user\"N\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"8\n" +
+	"\x0fGetUserResponse\x12%\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"N\n" +
 	"\x10ListUsersRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x88\x01\n" +
-	"\x11ListUsersResponse\x12*\n" +
-	"\x05users\x18\x01 \x03(\v2\x14.powermanage.v1.UserR\x05users\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x85\x01\n" +
+	"\x11ListUsersResponse\x12'\n" +
+	"\x05users\x18\x01 \x03(\v2\x11.cadestro.v1.UserR\x05users\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\">\n" +
@@ -21716,9 +21716,9 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x05email\x18\x02 \x01(\tR\x05email\"D\n" +
 	"\x16SetUserDisabledRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\bdisabled\x18\x02 \x01(\bR\bdisabled\">\n" +
-	"\x12UpdateUserResponse\x12(\n" +
-	"\x04user\x18\x01 \x01(\v2\x14.powermanage.v1.UserR\x04user\"\xee\x01\n" +
+	"\bdisabled\x18\x02 \x01(\bR\bdisabled\";\n" +
+	"\x12UpdateUserResponse\x12%\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\xee\x01\n" +
 	"\x18UpdateUserProfileRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x1d\n" +
@@ -21733,9 +21733,9 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
 	"public_key\x18\x02 \x01(\tR\tpublicKey\x12\x18\n" +
-	"\acomment\x18\x03 \x01(\tR\acomment\"G\n" +
-	"\x15AddUserSshKeyResponse\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.powermanage.v1.SshPublicKeyR\x03key\"I\n" +
+	"\acomment\x18\x03 \x01(\tR\acomment\"D\n" +
+	"\x15AddUserSshKeyResponse\x12+\n" +
+	"\x03key\x18\x01 \x01(\v2\x19.cadestro.v1.SshPublicKeyR\x03key\"I\n" +
 	"\x17RemoveUserSshKeyRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x15\n" +
 	"\x06key_id\x18\x02 \x01(\tR\x05keyId\"\x1a\n" +
@@ -21747,22 +21747,22 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x12ssh_allow_password\x18\x04 \x01(\bR\x10sshAllowPassword\"`\n" +
 	"\x1eUpdateUserLinuxUsernameRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12%\n" +
-	"\x0elinux_username\x18\x02 \x01(\tR\rlinuxUsername\"\x83\b\n" +
+	"\x0elinux_username\x18\x02 \x01(\tR\rlinuxUsername\"\xfa\a\n" +
 	"\x06Device\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
-	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x124\n" +
-	"\x06status\x18\x04 \x01(\x0e2\x1c.powermanage.v1.DeviceStatusR\x06status\x12?\n" +
+	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x121\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x19.cadestro.v1.DeviceStatusR\x06status\x12?\n" +
 	"\rregistered_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAt\x12<\n" +
 	"\flast_seen_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSeenAt\x12B\n" +
-	"\x0fcert_expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\rcertExpiresAt\x12:\n" +
-	"\x06labels\x18\b \x03(\v2\".powermanage.v1.Device.LabelsEntryR\x06labels\x12*\n" +
+	"\x0fcert_expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\rcertExpiresAt\x127\n" +
+	"\x06labels\x18\b \x03(\v2\x1f.cadestro.v1.Device.LabelsEntryR\x06labels\x12*\n" +
 	"\x11assigned_user_ids\x18\t \x03(\tR\x0fassignedUserIds\x12,\n" +
 	"\x12assigned_group_ids\x18\n" +
 	" \x03(\tR\x10assignedGroupIds\x122\n" +
-	"\x15sync_interval_minutes\x18\v \x01(\x05R\x13syncIntervalMinutes\x12M\n" +
-	"\x11compliance_status\x18\f \x01(\x0e2 .powermanage.v1.ComplianceStatusR\x10complianceStatus\x12N\n" +
+	"\x15sync_interval_minutes\x18\v \x01(\x05R\x13syncIntervalMinutes\x12J\n" +
+	"\x11compliance_status\x18\f \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\x10complianceStatus\x12N\n" +
 	"\x15compliance_checked_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\x13complianceCheckedAt\x12)\n" +
 	"\x10compliance_total\x18\x0e \x01(\x05R\x0fcomplianceTotal\x12-\n" +
 	"\x12compliance_passing\x18\x0f \x01(\x05R\x11compliancePassing\x12F\n" +
@@ -21771,35 +21771,35 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x1ainventory_interval_minutes\x18\x12 \x01(\x05R\x18inventoryIntervalMinutes\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd3\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcd\x02\n" +
 	"\x12ListDevicesRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12A\n" +
-	"\rstatus_filter\x18\x03 \x01(\x0e2\x1c.powermanage.v1.DeviceStatusR\fstatusFilter\x12V\n" +
-	"\flabel_filter\x18\x04 \x03(\v23.powermanage.v1.ListDevicesRequest.LabelFilterEntryR\vlabelFilter\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12>\n" +
+	"\rstatus_filter\x18\x03 \x01(\x0e2\x19.cadestro.v1.DeviceStatusR\fstatusFilter\x12S\n" +
+	"\flabel_filter\x18\x04 \x03(\v20.cadestro.v1.ListDevicesRequest.LabelFilterEntryR\vlabelFilter\x12&\n" +
 	"\x0fmy_devices_only\x18\x05 \x01(\bR\rmyDevicesOnly\x1a>\n" +
 	"\x10LabelFilterEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x90\x01\n" +
-	"\x13ListDevicesResponse\x120\n" +
-	"\adevices\x18\x01 \x03(\v2\x16.powermanage.v1.DeviceR\adevices\x12&\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8d\x01\n" +
+	"\x13ListDevicesResponse\x12-\n" +
+	"\adevices\x18\x01 \x03(\v2\x13.cadestro.v1.DeviceR\adevices\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"\"\n" +
 	"\x10GetDeviceRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"C\n" +
-	"\x11GetDeviceResponse\x12.\n" +
-	"\x06device\x18\x01 \x01(\v2\x16.powermanage.v1.DeviceR\x06device\"O\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"@\n" +
+	"\x11GetDeviceResponse\x12+\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"O\n" +
 	"\x15SetDeviceLabelRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03key\x18\x02 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x03 \x01(\tR\x05value\"<\n" +
 	"\x18RemoveDeviceLabelRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\"F\n" +
-	"\x14UpdateDeviceResponse\x12.\n" +
-	"\x06device\x18\x01 \x01(\v2\x16.powermanage.v1.DeviceR\x06device\"%\n" +
+	"\x03key\x18\x02 \x01(\tR\x03key\"C\n" +
+	"\x14UpdateDeviceResponse\x12+\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"%\n" +
 	"\x13DeleteDeviceRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
 	"\x14DeleteDeviceResponse\"\x9e\x01\n" +
@@ -21808,23 +21808,23 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
 	"\bgroup_id\x18\x03 \x01(\tR\agroupId\x12\x19\n" +
 	"\buser_ids\x18\x04 \x03(\tR\auserIds\x12\x1b\n" +
-	"\tgroup_ids\x18\x05 \x03(\tR\bgroupIds\"F\n" +
-	"\x14AssignDeviceResponse\x12.\n" +
-	"\x06device\x18\x01 \x01(\v2\x16.powermanage.v1.DeviceR\x06device\"h\n" +
+	"\tgroup_ids\x18\x05 \x03(\tR\bgroupIds\"C\n" +
+	"\x14AssignDeviceResponse\x12+\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"h\n" +
 	"\x15UnassignDeviceRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
-	"\bgroup_id\x18\x03 \x01(\tR\agroupId\"H\n" +
-	"\x16UnassignDeviceResponse\x12.\n" +
-	"\x06device\x18\x01 \x01(\v2\x16.powermanage.v1.DeviceR\x06device\"n\n" +
+	"\bgroup_id\x18\x03 \x01(\tR\agroupId\"E\n" +
+	"\x16UnassignDeviceResponse\x12+\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"k\n" +
 	"\x0eDeviceAssignee\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x128\n" +
-	"\x04type\x18\x02 \x01(\x0e2$.powermanage.v1.AssignmentTargetTypeR\x04type\x12\x12\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
+	"\x04type\x18\x02 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\x04type\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\"9\n" +
 	"\x1aListDeviceAssigneesRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"[\n" +
-	"\x1bListDeviceAssigneesResponse\x12<\n" +
-	"\tassignees\x18\x01 \x03(\v2\x1e.powermanage.v1.DeviceAssigneeR\tassignees\"b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"X\n" +
+	"\x1bListDeviceAssigneesResponse\x129\n" +
+	"\tassignees\x18\x01 \x03(\v2\x1b.cadestro.v1.DeviceAssigneeR\tassignees\"b\n" +
 	"\x1cSetDeviceSyncIntervalRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x122\n" +
 	"\x15sync_interval_minutes\x18\x02 \x01(\x05R\x13syncIntervalMinutes\"q\n" +
@@ -21853,120 +21853,120 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\bmax_uses\x18\x03 \x01(\x05R\amaxUses\x129\n" +
 	"\n" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x19\n" +
-	"\bowner_id\x18\x05 \x01(\tR\aownerId\"|\n" +
-	"\x13CreateTokenResponse\x127\n" +
-	"\x05token\x18\x01 \x01(\v2!.powermanage.v1.RegistrationTokenR\x05token\x12,\n" +
+	"\bowner_id\x18\x05 \x01(\tR\aownerId\"y\n" +
+	"\x13CreateTokenResponse\x124\n" +
+	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\x12,\n" +
 	"\x12ca_fingerprint_pin\x18\x02 \x01(\tR\x10caFingerprintPin\"z\n" +
 	"\x11ListTokensRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12)\n" +
-	"\x10include_disabled\x18\x03 \x01(\bR\x0fincludeDisabled\"\x98\x01\n" +
-	"\x12ListTokensResponse\x129\n" +
-	"\x06tokens\x18\x01 \x03(\v2!.powermanage.v1.RegistrationTokenR\x06tokens\x12&\n" +
+	"\x10include_disabled\x18\x03 \x01(\bR\x0fincludeDisabled\"\x95\x01\n" +
+	"\x12ListTokensResponse\x126\n" +
+	"\x06tokens\x18\x01 \x03(\v2\x1e.cadestro.v1.RegistrationTokenR\x06tokens\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"!\n" +
 	"\x0fGetTokenRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"K\n" +
-	"\x10GetTokenResponse\x127\n" +
-	"\x05token\x18\x01 \x01(\v2!.powermanage.v1.RegistrationTokenR\x05token\"8\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"H\n" +
+	"\x10GetTokenResponse\x124\n" +
+	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\"8\n" +
 	"\x12RenameTokenRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"E\n" +
 	"\x17SetTokenDisabledRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\bdisabled\x18\x02 \x01(\bR\bdisabled\"N\n" +
-	"\x13UpdateTokenResponse\x127\n" +
-	"\x05token\x18\x01 \x01(\v2!.powermanage.v1.RegistrationTokenR\x05token\"$\n" +
+	"\bdisabled\x18\x02 \x01(\bR\bdisabled\"K\n" +
+	"\x13UpdateTokenResponse\x124\n" +
+	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\"$\n" +
 	"\x12DeleteTokenRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x15\n" +
-	"\x13DeleteTokenResponse\"\xe2\v\n" +
+	"\x13DeleteTokenResponse\"\xa3\v\n" +
 	"\rManagedAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12.\n" +
-	"\x04type\x18\x04 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\x04type\x12A\n" +
-	"\rdesired_state\x18\x05 \x01(\x0e2\x1c.powermanage.v1.DesiredStateR\fdesiredState\x12'\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12+\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\x04type\x12>\n" +
+	"\rdesired_state\x18\x05 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
 	"\x0ftimeout_seconds\x18\x06 \x01(\x05R\x0etimeoutSeconds\x129\n" +
 	"\n" +
 	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"created_by\x18\b \x01(\tR\tcreatedBy\x12:\n" +
-	"\bschedule\x18\t \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x129\n" +
+	"created_by\x18\b \x01(\tR\tcreatedBy\x127\n" +
+	"\bschedule\x18\t \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x129\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x129\n" +
-	"\apackage\x18\v \x01(\v2\x1d.powermanage.v1.PackageParamsH\x00R\apackage\x124\n" +
-	"\x03app\x18\f \x01(\v2 .powermanage.v1.AppInstallParamsH\x00R\x03app\x123\n" +
-	"\x05shell\x18\r \x01(\v2\x1b.powermanage.v1.ShellParamsH\x00R\x05shell\x129\n" +
-	"\aservice\x18\x0e \x01(\v2\x1d.powermanage.v1.ServiceParamsH\x00R\aservice\x120\n" +
-	"\x04file\x18\x0f \x01(\v2\x1a.powermanage.v1.FileParamsH\x00R\x04file\x126\n" +
-	"\x06update\x18\x10 \x01(\v2\x1c.powermanage.v1.UpdateParamsH\x00R\x06update\x12B\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x126\n" +
+	"\apackage\x18\v \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
+	"\x03app\x18\f \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
+	"\x05shell\x18\r \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shell\x126\n" +
+	"\aservice\x18\x0e \x01(\v2\x1a.cadestro.v1.ServiceParamsH\x00R\aservice\x12-\n" +
+	"\x04file\x18\x0f \x01(\v2\x17.cadestro.v1.FileParamsH\x00R\x04file\x123\n" +
+	"\x06update\x18\x10 \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x12?\n" +
 	"\n" +
-	"repository\x18\x11 \x01(\v2 .powermanage.v1.RepositoryParamsH\x00R\n" +
-	"repository\x129\n" +
-	"\aflatpak\x18\x12 \x01(\v2\x1d.powermanage.v1.FlatpakParamsH\x00R\aflatpak\x12?\n" +
-	"\tdirectory\x18\x13 \x01(\v2\x1f.powermanage.v1.DirectoryParamsH\x00R\tdirectory\x120\n" +
-	"\x04user\x18\x14 \x01(\v2\x1a.powermanage.v1.UserParamsH\x00R\x04user\x12-\n" +
-	"\x03ssh\x18\x15 \x01(\v2\x19.powermanage.v1.SshParamsH\x00R\x03ssh\x120\n" +
-	"\x04sshd\x18\x16 \x01(\v2\x1a.powermanage.v1.SshdParamsH\x00R\x04sshd\x12F\n" +
-	"\fadmin_policy\x18\x17 \x01(\v2!.powermanage.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12-\n" +
-	"\x03lps\x18\x18 \x01(\v2\x19.powermanage.v1.LpsParamsH\x00R\x03lps\x123\n" +
-	"\x05group\x18\x19 \x01(\v2\x1b.powermanage.v1.GroupParamsH\x00R\x05group\x12I\n" +
+	"repository\x18\x11 \x01(\v2\x1d.cadestro.v1.RepositoryParamsH\x00R\n" +
+	"repository\x126\n" +
+	"\aflatpak\x18\x12 \x01(\v2\x1a.cadestro.v1.FlatpakParamsH\x00R\aflatpak\x12<\n" +
+	"\tdirectory\x18\x13 \x01(\v2\x1c.cadestro.v1.DirectoryParamsH\x00R\tdirectory\x12-\n" +
+	"\x04user\x18\x14 \x01(\v2\x17.cadestro.v1.UserParamsH\x00R\x04user\x12*\n" +
+	"\x03ssh\x18\x15 \x01(\v2\x16.cadestro.v1.SshParamsH\x00R\x03ssh\x12-\n" +
+	"\x04sshd\x18\x16 \x01(\v2\x17.cadestro.v1.SshdParamsH\x00R\x04sshd\x12C\n" +
+	"\fadmin_policy\x18\x17 \x01(\v2\x1e.cadestro.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12*\n" +
+	"\x03lps\x18\x18 \x01(\v2\x16.cadestro.v1.LpsParamsH\x00R\x03lps\x120\n" +
+	"\x05group\x18\x19 \x01(\v2\x18.cadestro.v1.GroupParamsH\x00R\x05group\x12F\n" +
 	"\n" +
-	"encryption\x18\x1a \x01(\v2'.powermanage.v1.ManagedEncryptionParamsH\x00R\n" +
-	"encryption\x127\n" +
-	"\x04wifi\x18\x1b \x01(\v2!.powermanage.v1.ManagedWifiParamsH\x00R\x04wifi\x12F\n" +
-	"\fagent_update\x18\x1c \x01(\v2!.powermanage.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
-	"\x06params\"\xc7\n" +
+	"encryption\x18\x1a \x01(\v2$.cadestro.v1.ManagedEncryptionParamsH\x00R\n" +
+	"encryption\x124\n" +
+	"\x04wifi\x18\x1b \x01(\v2\x1e.cadestro.v1.ManagedWifiParamsH\x00R\x04wifi\x12C\n" +
+	"\fagent_update\x18\x1c \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
+	"\x06params\"\x88\n" +
 	"\n" +
 	"\x13CreateActionRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12.\n" +
-	"\x04type\x18\x03 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\x04type\x12A\n" +
-	"\rdesired_state\x18\x04 \x01(\x0e2\x1c.powermanage.v1.DesiredStateR\fdesiredState\x12'\n" +
-	"\x0ftimeout_seconds\x18\x05 \x01(\x05R\x0etimeoutSeconds\x12:\n" +
-	"\bschedule\x18\x06 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x129\n" +
-	"\apackage\x18\a \x01(\v2\x1d.powermanage.v1.PackageParamsH\x00R\apackage\x124\n" +
-	"\x03app\x18\b \x01(\v2 .powermanage.v1.AppInstallParamsH\x00R\x03app\x123\n" +
-	"\x05shell\x18\t \x01(\v2\x1b.powermanage.v1.ShellParamsH\x00R\x05shell\x129\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12+\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\x04type\x12>\n" +
+	"\rdesired_state\x18\x04 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
+	"\x0ftimeout_seconds\x18\x05 \x01(\x05R\x0etimeoutSeconds\x127\n" +
+	"\bschedule\x18\x06 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
+	"\apackage\x18\a \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
+	"\x03app\x18\b \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
+	"\x05shell\x18\t \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shell\x126\n" +
 	"\aservice\x18\n" +
-	" \x01(\v2\x1d.powermanage.v1.ServiceParamsH\x00R\aservice\x120\n" +
-	"\x04file\x18\v \x01(\v2\x1a.powermanage.v1.FileParamsH\x00R\x04file\x126\n" +
-	"\x06update\x18\f \x01(\v2\x1c.powermanage.v1.UpdateParamsH\x00R\x06update\x12B\n" +
+	" \x01(\v2\x1a.cadestro.v1.ServiceParamsH\x00R\aservice\x12-\n" +
+	"\x04file\x18\v \x01(\v2\x17.cadestro.v1.FileParamsH\x00R\x04file\x123\n" +
+	"\x06update\x18\f \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x12?\n" +
 	"\n" +
-	"repository\x18\r \x01(\v2 .powermanage.v1.RepositoryParamsH\x00R\n" +
-	"repository\x129\n" +
-	"\aflatpak\x18\x0e \x01(\v2\x1d.powermanage.v1.FlatpakParamsH\x00R\aflatpak\x12?\n" +
-	"\tdirectory\x18\x0f \x01(\v2\x1f.powermanage.v1.DirectoryParamsH\x00R\tdirectory\x120\n" +
-	"\x04user\x18\x10 \x01(\v2\x1a.powermanage.v1.UserParamsH\x00R\x04user\x12-\n" +
-	"\x03ssh\x18\x11 \x01(\v2\x19.powermanage.v1.SshParamsH\x00R\x03ssh\x120\n" +
-	"\x04sshd\x18\x12 \x01(\v2\x1a.powermanage.v1.SshdParamsH\x00R\x04sshd\x12F\n" +
-	"\fadmin_policy\x18\x13 \x01(\v2!.powermanage.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12-\n" +
-	"\x03lps\x18\x14 \x01(\v2\x19.powermanage.v1.LpsParamsH\x00R\x03lps\x123\n" +
-	"\x05group\x18\x15 \x01(\v2\x1b.powermanage.v1.GroupParamsH\x00R\x05group\x12K\n" +
+	"repository\x18\r \x01(\v2\x1d.cadestro.v1.RepositoryParamsH\x00R\n" +
+	"repository\x126\n" +
+	"\aflatpak\x18\x0e \x01(\v2\x1a.cadestro.v1.FlatpakParamsH\x00R\aflatpak\x12<\n" +
+	"\tdirectory\x18\x0f \x01(\v2\x1c.cadestro.v1.DirectoryParamsH\x00R\tdirectory\x12-\n" +
+	"\x04user\x18\x10 \x01(\v2\x17.cadestro.v1.UserParamsH\x00R\x04user\x12*\n" +
+	"\x03ssh\x18\x11 \x01(\v2\x16.cadestro.v1.SshParamsH\x00R\x03ssh\x12-\n" +
+	"\x04sshd\x18\x12 \x01(\v2\x17.cadestro.v1.SshdParamsH\x00R\x04sshd\x12C\n" +
+	"\fadmin_policy\x18\x13 \x01(\v2\x1e.cadestro.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12*\n" +
+	"\x03lps\x18\x14 \x01(\v2\x16.cadestro.v1.LpsParamsH\x00R\x03lps\x120\n" +
+	"\x05group\x18\x15 \x01(\v2\x18.cadestro.v1.GroupParamsH\x00R\x05group\x12H\n" +
 	"\n" +
-	"encryption\x18\x16 \x01(\v2).powermanage.v1.EncryptionAuthoringParamsH\x00R\n" +
-	"encryption\x129\n" +
-	"\x04wifi\x18\x17 \x01(\v2#.powermanage.v1.WifiAuthoringParamsH\x00R\x04wifi\x12F\n" +
-	"\fagent_update\x18\x18 \x01(\v2!.powermanage.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
-	"\x06params\"M\n" +
-	"\x14CreateActionResponse\x125\n" +
-	"\x06action\x18\x01 \x01(\v2\x1d.powermanage.v1.ManagedActionR\x06action\"\"\n" +
+	"encryption\x18\x16 \x01(\v2&.cadestro.v1.EncryptionAuthoringParamsH\x00R\n" +
+	"encryption\x126\n" +
+	"\x04wifi\x18\x17 \x01(\v2 .cadestro.v1.WifiAuthoringParamsH\x00R\x04wifi\x12C\n" +
+	"\fagent_update\x18\x18 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
+	"\x06params\"J\n" +
+	"\x14CreateActionResponse\x122\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\"\n" +
 	"\x10GetActionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"J\n" +
-	"\x11GetActionResponse\x125\n" +
-	"\x06action\x18\x01 \x01(\v2\x1d.powermanage.v1.ManagedActionR\x06action\"\xb6\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"G\n" +
+	"\x11GetActionResponse\x122\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\xb3\x01\n" +
 	"\x12ListActionsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12;\n" +
-	"\vtype_filter\x18\x03 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x128\n" +
+	"\vtype_filter\x18\x03 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
 	"typeFilter\x12'\n" +
-	"\x0funassigned_only\x18\x04 \x01(\bR\x0eunassignedOnly\"\x97\x01\n" +
-	"\x13ListActionsResponse\x127\n" +
-	"\aactions\x18\x01 \x03(\v2\x1d.powermanage.v1.ManagedActionR\aactions\x12&\n" +
+	"\x0funassigned_only\x18\x04 \x01(\bR\x0eunassignedOnly\"\x94\x01\n" +
+	"\x13ListActionsResponse\x124\n" +
+	"\aactions\x18\x01 \x03(\v2\x1a.cadestro.v1.ManagedActionR\aactions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"9\n" +
@@ -21975,41 +21975,41 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"R\n" +
 	"\x1eUpdateActionDescriptionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xf7\t\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xbb\t\n" +
 	"\x19UpdateActionParamsRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12A\n" +
-	"\rdesired_state\x18\x02 \x01(\x0e2\x1c.powermanage.v1.DesiredStateR\fdesiredState\x12'\n" +
-	"\x0ftimeout_seconds\x18\x03 \x01(\x05R\x0etimeoutSeconds\x12:\n" +
-	"\bschedule\x18\x04 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x129\n" +
-	"\apackage\x18\x05 \x01(\v2\x1d.powermanage.v1.PackageParamsH\x00R\apackage\x124\n" +
-	"\x03app\x18\x06 \x01(\v2 .powermanage.v1.AppInstallParamsH\x00R\x03app\x123\n" +
-	"\x05shell\x18\a \x01(\v2\x1b.powermanage.v1.ShellParamsH\x00R\x05shell\x129\n" +
-	"\aservice\x18\b \x01(\v2\x1d.powermanage.v1.ServiceParamsH\x00R\aservice\x120\n" +
-	"\x04file\x18\t \x01(\v2\x1a.powermanage.v1.FileParamsH\x00R\x04file\x126\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12>\n" +
+	"\rdesired_state\x18\x02 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
+	"\x0ftimeout_seconds\x18\x03 \x01(\x05R\x0etimeoutSeconds\x127\n" +
+	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
+	"\apackage\x18\x05 \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
+	"\x03app\x18\x06 \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
+	"\x05shell\x18\a \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shell\x126\n" +
+	"\aservice\x18\b \x01(\v2\x1a.cadestro.v1.ServiceParamsH\x00R\aservice\x12-\n" +
+	"\x04file\x18\t \x01(\v2\x17.cadestro.v1.FileParamsH\x00R\x04file\x123\n" +
 	"\x06update\x18\n" +
-	" \x01(\v2\x1c.powermanage.v1.UpdateParamsH\x00R\x06update\x12B\n" +
+	" \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x12?\n" +
 	"\n" +
-	"repository\x18\v \x01(\v2 .powermanage.v1.RepositoryParamsH\x00R\n" +
-	"repository\x129\n" +
-	"\aflatpak\x18\f \x01(\v2\x1d.powermanage.v1.FlatpakParamsH\x00R\aflatpak\x12?\n" +
-	"\tdirectory\x18\r \x01(\v2\x1f.powermanage.v1.DirectoryParamsH\x00R\tdirectory\x120\n" +
-	"\x04user\x18\x0e \x01(\v2\x1a.powermanage.v1.UserParamsH\x00R\x04user\x12-\n" +
-	"\x03ssh\x18\x0f \x01(\v2\x19.powermanage.v1.SshParamsH\x00R\x03ssh\x120\n" +
-	"\x04sshd\x18\x10 \x01(\v2\x1a.powermanage.v1.SshdParamsH\x00R\x04sshd\x12F\n" +
-	"\fadmin_policy\x18\x11 \x01(\v2!.powermanage.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12-\n" +
-	"\x03lps\x18\x12 \x01(\v2\x19.powermanage.v1.LpsParamsH\x00R\x03lps\x123\n" +
-	"\x05group\x18\x13 \x01(\v2\x1b.powermanage.v1.GroupParamsH\x00R\x05group\x12K\n" +
+	"repository\x18\v \x01(\v2\x1d.cadestro.v1.RepositoryParamsH\x00R\n" +
+	"repository\x126\n" +
+	"\aflatpak\x18\f \x01(\v2\x1a.cadestro.v1.FlatpakParamsH\x00R\aflatpak\x12<\n" +
+	"\tdirectory\x18\r \x01(\v2\x1c.cadestro.v1.DirectoryParamsH\x00R\tdirectory\x12-\n" +
+	"\x04user\x18\x0e \x01(\v2\x17.cadestro.v1.UserParamsH\x00R\x04user\x12*\n" +
+	"\x03ssh\x18\x0f \x01(\v2\x16.cadestro.v1.SshParamsH\x00R\x03ssh\x12-\n" +
+	"\x04sshd\x18\x10 \x01(\v2\x17.cadestro.v1.SshdParamsH\x00R\x04sshd\x12C\n" +
+	"\fadmin_policy\x18\x11 \x01(\v2\x1e.cadestro.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12*\n" +
+	"\x03lps\x18\x12 \x01(\v2\x16.cadestro.v1.LpsParamsH\x00R\x03lps\x120\n" +
+	"\x05group\x18\x13 \x01(\v2\x18.cadestro.v1.GroupParamsH\x00R\x05group\x12H\n" +
 	"\n" +
-	"encryption\x18\x14 \x01(\v2).powermanage.v1.EncryptionAuthoringParamsH\x00R\n" +
-	"encryption\x129\n" +
-	"\x04wifi\x18\x15 \x01(\v2#.powermanage.v1.WifiAuthoringParamsH\x00R\x04wifi\x12F\n" +
-	"\fagent_update\x18\x16 \x01(\v2!.powermanage.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
-	"\x06params\"M\n" +
-	"\x14UpdateActionResponse\x125\n" +
-	"\x06action\x18\x01 \x01(\v2\x1d.powermanage.v1.ManagedActionR\x06action\"%\n" +
+	"encryption\x18\x14 \x01(\v2&.cadestro.v1.EncryptionAuthoringParamsH\x00R\n" +
+	"encryption\x126\n" +
+	"\x04wifi\x18\x15 \x01(\v2 .cadestro.v1.WifiAuthoringParamsH\x00R\x04wifi\x12C\n" +
+	"\fagent_update\x18\x16 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
+	"\x06params\"J\n" +
+	"\x14UpdateActionResponse\x122\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"%\n" +
 	"\x13DeleteActionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
-	"\x14DeleteActionResponse\"\xff\x02\n" +
+	"\x14DeleteActionResponse\"\xf9\x02\n" +
 	"\tActionSet\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -22020,38 +22020,38 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\x06 \x01(\tR\tcreatedBy\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12:\n" +
-	"\bschedule\x18\b \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x128\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x127\n" +
+	"\bschedule\x18\b \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x125\n" +
 	"\n" +
-	"on_failure\x18\t \x01(\x0e2\x19.powermanage.v1.OnFailureR\tonFailure\"\xab\x01\n" +
+	"on_failure\x18\t \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xa8\x01\n" +
 	"\x0fActionSetMember\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1d\n" +
 	"\n" +
 	"sort_order\x18\x02 \x01(\x05R\tsortOrder\x12\x1f\n" +
 	"\vaction_name\x18\x03 \x01(\tR\n" +
-	"actionName\x12;\n" +
-	"\vaction_type\x18\x04 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\n" +
-	"actionType\"\xc4\x01\n" +
+	"actionName\x128\n" +
+	"\vaction_type\x18\x04 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
+	"actionType\"\xbe\x01\n" +
 	"\x16CreateActionSetRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12:\n" +
-	"\bschedule\x18\x03 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x128\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x127\n" +
+	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x125\n" +
 	"\n" +
-	"on_failure\x18\x04 \x01(\x0e2\x19.powermanage.v1.OnFailureR\tonFailure\"F\n" +
-	"\x17CreateActionSetResponse\x12+\n" +
-	"\x03set\x18\x01 \x01(\v2\x19.powermanage.v1.ActionSetR\x03set\"%\n" +
+	"on_failure\x18\x04 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"C\n" +
+	"\x17CreateActionSetResponse\x12(\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"%\n" +
 	"\x13GetActionSetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"~\n" +
-	"\x14GetActionSetResponse\x12+\n" +
-	"\x03set\x18\x01 \x01(\v2\x19.powermanage.v1.ActionSetR\x03set\x129\n" +
-	"\amembers\x18\x02 \x03(\v2\x1f.powermanage.v1.ActionSetMemberR\amembers\"|\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"x\n" +
+	"\x14GetActionSetResponse\x12(\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\x126\n" +
+	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.ActionSetMemberR\amembers\"|\n" +
 	"\x15ListActionSetsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12'\n" +
-	"\x0funassigned_only\x18\x03 \x01(\bR\x0eunassignedOnly\"\x90\x01\n" +
-	"\x16ListActionSetsResponse\x12-\n" +
-	"\x04sets\x18\x01 \x03(\v2\x19.powermanage.v1.ActionSetR\x04sets\x12&\n" +
+	"\x0funassigned_only\x18\x03 \x01(\bR\x0eunassignedOnly\"\x8d\x01\n" +
+	"\x16ListActionSetsResponse\x12*\n" +
+	"\x04sets\x18\x01 \x03(\v2\x16.cadestro.v1.ActionSetR\x04sets\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"<\n" +
@@ -22060,14 +22060,14 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"U\n" +
 	"!UpdateActionSetDescriptionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xa6\x01\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xa0\x01\n" +
 	"\x1eUpdateActionSetScheduleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12:\n" +
-	"\bschedule\x18\x02 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\x128\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x127\n" +
+	"\bschedule\x18\x02 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x125\n" +
 	"\n" +
-	"on_failure\x18\x03 \x01(\x0e2\x19.powermanage.v1.OnFailureR\tonFailure\"F\n" +
-	"\x17UpdateActionSetResponse\x12+\n" +
-	"\x03set\x18\x01 \x01(\v2\x19.powermanage.v1.ActionSetR\x03set\"(\n" +
+	"on_failure\x18\x03 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"C\n" +
+	"\x17UpdateActionSetResponse\x12(\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"(\n" +
 	"\x16DeleteActionSetRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x19\n" +
 	"\x17DeleteActionSetResponse\"j\n" +
@@ -22075,20 +22075,20 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x06set_id\x18\x01 \x01(\tR\x05setId\x12\x1b\n" +
 	"\taction_id\x18\x02 \x01(\tR\bactionId\x12\x1d\n" +
 	"\n" +
-	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"E\n" +
-	"\x16AddActionToSetResponse\x12+\n" +
-	"\x03set\x18\x01 \x01(\v2\x19.powermanage.v1.ActionSetR\x03set\"P\n" +
+	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"B\n" +
+	"\x16AddActionToSetResponse\x12(\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"P\n" +
 	"\x1aRemoveActionFromSetRequest\x12\x15\n" +
 	"\x06set_id\x18\x01 \x01(\tR\x05setId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\"J\n" +
-	"\x1bRemoveActionFromSetResponse\x12+\n" +
-	"\x03set\x18\x01 \x01(\v2\x19.powermanage.v1.ActionSetR\x03set\"l\n" +
+	"\taction_id\x18\x02 \x01(\tR\bactionId\"G\n" +
+	"\x1bRemoveActionFromSetResponse\x12(\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"l\n" +
 	"\x19ReorderActionInSetRequest\x12\x15\n" +
 	"\x06set_id\x18\x01 \x01(\tR\x05setId\x12\x1b\n" +
 	"\taction_id\x18\x02 \x01(\tR\bactionId\x12\x1b\n" +
-	"\tnew_order\x18\x03 \x01(\x05R\bnewOrder\"I\n" +
-	"\x1aReorderActionInSetResponse\x12+\n" +
-	"\x03set\x18\x01 \x01(\v2\x19.powermanage.v1.ActionSetR\x03set\"\xc6\x02\n" +
+	"\tnew_order\x18\x03 \x01(\x05R\bnewOrder\"F\n" +
+	"\x1aReorderActionInSetResponse\x12(\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"\xc3\x02\n" +
 	"\n" +
 	"Definition\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -22100,34 +22100,34 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\x06 \x01(\tR\tcreatedBy\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12:\n" +
-	"\bschedule\x18\b \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\"}\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x127\n" +
+	"\bschedule\x18\b \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\"}\n" +
 	"\x10DefinitionMember\x12\"\n" +
 	"\raction_set_id\x18\x01 \x01(\tR\vactionSetId\x12\x1d\n" +
 	"\n" +
 	"sort_order\x18\x02 \x01(\x05R\tsortOrder\x12&\n" +
-	"\x0faction_set_name\x18\x03 \x01(\tR\ractionSetName\"\x8b\x01\n" +
+	"\x0faction_set_name\x18\x03 \x01(\tR\ractionSetName\"\x88\x01\n" +
 	"\x17CreateDefinitionRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12:\n" +
-	"\bschedule\x18\x03 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\"V\n" +
-	"\x18CreateDefinitionResponse\x12:\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x127\n" +
+	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\"S\n" +
+	"\x18CreateDefinitionResponse\x127\n" +
 	"\n" +
-	"definition\x18\x01 \x01(\v2\x1a.powermanage.v1.DefinitionR\n" +
+	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
 	"definition\"&\n" +
 	"\x14GetDefinitionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x8f\x01\n" +
-	"\x15GetDefinitionResponse\x12:\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x89\x01\n" +
+	"\x15GetDefinitionResponse\x127\n" +
 	"\n" +
-	"definition\x18\x01 \x01(\v2\x1a.powermanage.v1.DefinitionR\n" +
-	"definition\x12:\n" +
-	"\amembers\x18\x02 \x03(\v2 .powermanage.v1.DefinitionMemberR\amembers\"T\n" +
+	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
+	"definition\x127\n" +
+	"\amembers\x18\x02 \x03(\v2\x1d.cadestro.v1.DefinitionMemberR\amembers\"T\n" +
 	"\x16ListDefinitionsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa0\x01\n" +
-	"\x17ListDefinitionsResponse\x12<\n" +
-	"\vdefinitions\x18\x01 \x03(\v2\x1a.powermanage.v1.DefinitionR\vdefinitions\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x9d\x01\n" +
+	"\x17ListDefinitionsResponse\x129\n" +
+	"\vdefinitions\x18\x01 \x03(\v2\x17.cadestro.v1.DefinitionR\vdefinitions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"=\n" +
@@ -22136,13 +22136,13 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"V\n" +
 	"\"UpdateDefinitionDescriptionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"m\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"j\n" +
 	"\x1fUpdateDefinitionScheduleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12:\n" +
-	"\bschedule\x18\x02 \x01(\v2\x1e.powermanage.v1.ActionScheduleR\bschedule\"V\n" +
-	"\x18UpdateDefinitionResponse\x12:\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x127\n" +
+	"\bschedule\x18\x02 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\"S\n" +
+	"\x18UpdateDefinitionResponse\x127\n" +
 	"\n" +
-	"definition\x18\x01 \x01(\v2\x1a.powermanage.v1.DefinitionR\n" +
+	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
 	"definition\")\n" +
 	"\x17DeleteDefinitionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
@@ -22151,26 +22151,26 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
 	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\x12\x1d\n" +
 	"\n" +
-	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"^\n" +
-	" AddActionSetToDefinitionResponse\x12:\n" +
+	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"[\n" +
+	" AddActionSetToDefinitionResponse\x127\n" +
 	"\n" +
-	"definition\x18\x01 \x01(\v2\x1a.powermanage.v1.DefinitionR\n" +
+	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
 	"definition\"o\n" +
 	"$RemoveActionSetFromDefinitionRequest\x12#\n" +
 	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\"c\n" +
-	"%RemoveActionSetFromDefinitionResponse\x12:\n" +
+	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\"`\n" +
+	"%RemoveActionSetFromDefinitionResponse\x127\n" +
 	"\n" +
-	"definition\x18\x01 \x01(\v2\x1a.powermanage.v1.DefinitionR\n" +
+	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
 	"definition\"\x8b\x01\n" +
 	"#ReorderActionSetInDefinitionRequest\x12#\n" +
 	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
 	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\x12\x1b\n" +
-	"\tnew_order\x18\x03 \x01(\x05R\bnewOrder\"b\n" +
-	"$ReorderActionSetInDefinitionResponse\x12:\n" +
+	"\tnew_order\x18\x03 \x01(\x05R\bnewOrder\"_\n" +
+	"$ReorderActionSetInDefinitionResponse\x127\n" +
 	"\n" +
-	"definition\x18\x01 \x01(\v2\x1a.powermanage.v1.DefinitionR\n" +
-	"definition\"\xd8\x03\n" +
+	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
+	"definition\"\xd5\x03\n" +
 	"\vDeviceGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -22183,25 +22183,25 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"is_dynamic\x18\a \x01(\bR\tisDynamic\x12#\n" +
 	"\rdynamic_query\x18\b \x01(\tR\fdynamicQuery\x122\n" +
-	"\x15sync_interval_minutes\x18\t \x01(\x05R\x13syncIntervalMinutes\x12P\n" +
+	"\x15sync_interval_minutes\x18\t \x01(\x05R\x13syncIntervalMinutes\x12M\n" +
 	"\x12maintenance_window\x18\n" +
-	" \x01(\v2!.powermanage.v1.MaintenanceWindowR\x11maintenanceWindow\x12<\n" +
+	" \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x12<\n" +
 	"\x1ainventory_interval_minutes\x18\v \x01(\x05R\x18inventoryIntervalMinutes\"\x94\x01\n" +
 	"\x18CreateDeviceGroupRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
 	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x04 \x01(\tR\fdynamicQuery\"N\n" +
-	"\x19CreateDeviceGroupResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\"'\n" +
+	"\rdynamic_query\x18\x04 \x01(\tR\fdynamicQuery\"K\n" +
+	"\x19CreateDeviceGroupResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"'\n" +
 	"\x15GetDeviceGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xa7\x01\n" +
-	"\x16GetDeviceGroupResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xa1\x01\n" +
+	"\x16GetDeviceGroupResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\x12\x1d\n" +
 	"\n" +
-	"device_ids\x18\x02 \x03(\tR\tdeviceIds\x12;\n" +
-	"\adevices\x18\x03 \x03(\v2!.powermanage.v1.DeviceGroupMemberR\adevices\"\xaf\x01\n" +
+	"device_ids\x18\x02 \x03(\tR\tdeviceIds\x128\n" +
+	"\adevices\x18\x03 \x03(\v2\x1e.cadestro.v1.DeviceGroupMemberR\adevices\"\xaf\x01\n" +
 	"\x11DeviceGroupMember\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
@@ -22211,24 +22211,24 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x17ListDeviceGroupsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x98\x01\n" +
-	"\x18ListDeviceGroupsResponse\x123\n" +
-	"\x06groups\x18\x01 \x03(\v2\x1b.powermanage.v1.DeviceGroupR\x06groups\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x95\x01\n" +
+	"\x18ListDeviceGroupsResponse\x120\n" +
+	"\x06groups\x18\x01 \x03(\v2\x18.cadestro.v1.DeviceGroupR\x06groups\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"?\n" +
 	" ListDeviceGroupsForDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"X\n" +
-	"!ListDeviceGroupsForDeviceResponse\x123\n" +
-	"\x06groups\x18\x01 \x03(\v2\x1b.powermanage.v1.DeviceGroupR\x06groups\">\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"U\n" +
+	"!ListDeviceGroupsForDeviceResponse\x120\n" +
+	"\x06groups\x18\x01 \x03(\v2\x18.cadestro.v1.DeviceGroupR\x06groups\">\n" +
 	"\x18RenameDeviceGroupRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"W\n" +
 	"#UpdateDeviceGroupDescriptionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"N\n" +
-	"\x19UpdateDeviceGroupResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\"*\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"K\n" +
+	"\x19UpdateDeviceGroupResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"*\n" +
 	"\x18DeleteDeviceGroupRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1b\n" +
 	"\x19DeleteDeviceGroupResponse\"p\n" +
@@ -22236,21 +22236,21 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\x1d\n" +
 	"\n" +
-	"device_ids\x18\x03 \x03(\tR\tdeviceIds\"M\n" +
-	"\x18AddDeviceToGroupResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\"V\n" +
+	"device_ids\x18\x03 \x03(\tR\tdeviceIds\"J\n" +
+	"\x18AddDeviceToGroupResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"V\n" +
 	"\x1cRemoveDeviceFromGroupRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\"R\n" +
-	"\x1dRemoveDeviceFromGroupResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\"s\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\"O\n" +
+	"\x1dRemoveDeviceFromGroupResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"s\n" +
 	"\x1dUpdateDeviceGroupQueryRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x03 \x01(\tR\fdynamicQuery\"S\n" +
-	"\x1eUpdateDeviceGroupQueryResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\"3\n" +
+	"\rdynamic_query\x18\x03 \x01(\tR\fdynamicQuery\"P\n" +
+	"\x1eUpdateDeviceGroupQueryResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"3\n" +
 	"\x1bValidateDynamicQueryRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\"~\n" +
 	"\x1cValidateDynamicQueryResponse\x12\x14\n" +
@@ -22258,9 +22258,9 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x05error\x18\x02 \x01(\tR\x05error\x122\n" +
 	"\x15matching_device_count\x18\x03 \x01(\x05R\x13matchingDeviceCount\"-\n" +
 	"\x1bEvaluateDynamicGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x9f\x01\n" +
-	"\x1cEvaluateDynamicGroupResponse\x121\n" +
-	"\x05group\x18\x01 \x01(\v2\x1b.powermanage.v1.DeviceGroupR\x05group\x12#\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x9c\x01\n" +
+	"\x1cEvaluateDynamicGroupResponse\x12.\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\x12#\n" +
 	"\rdevices_added\x18\x02 \x01(\x05R\fdevicesAdded\x12'\n" +
 	"\x0fdevices_removed\x18\x03 \x01(\x05R\x0edevicesRemoved\"g\n" +
 	"!SetDeviceGroupSyncIntervalRequest\x12\x0e\n" +
@@ -22268,111 +22268,111 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x15sync_interval_minutes\x18\x02 \x01(\x05R\x13syncIntervalMinutes\"v\n" +
 	"&SetDeviceGroupInventoryIntervalRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
-	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05R\x18inventoryIntervalMinutes\"\x8a\x01\n" +
+	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05R\x18inventoryIntervalMinutes\"\x87\x01\n" +
 	"&SetDeviceGroupMaintenanceWindowRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12P\n" +
-	"\x12maintenance_window\x18\x02 \x01(\v2!.powermanage.v1.MaintenanceWindowR\x11maintenanceWindow\"\xb4\x03\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12M\n" +
+	"\x12maintenance_window\x18\x02 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\"\xab\x03\n" +
 	"\n" +
 	"Assignment\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12E\n" +
-	"\vsource_type\x18\x02 \x01(\x0e2$.powermanage.v1.AssignmentSourceTypeR\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12B\n" +
+	"\vsource_type\x18\x02 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
-	"\tsource_id\x18\x03 \x01(\tR\bsourceId\x12E\n" +
-	"\vtarget_type\x18\x04 \x01(\x0e2$.powermanage.v1.AssignmentTargetTypeR\n" +
+	"\tsource_id\x18\x03 \x01(\tR\bsourceId\x12B\n" +
+	"\vtarget_type\x18\x04 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\n" +
 	"targetType\x12\x1b\n" +
 	"\ttarget_id\x18\x05 \x01(\tR\btargetId\x129\n" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"created_by\x18\a \x01(\tR\tcreatedBy\x122\n" +
-	"\x04mode\x18\b \x01(\x0e2\x1e.powermanage.v1.AssignmentModeR\x04mode\x12\x1f\n" +
+	"created_by\x18\a \x01(\tR\tcreatedBy\x12/\n" +
+	"\x04mode\x18\b \x01(\x0e2\x1b.cadestro.v1.AssignmentModeR\x04mode\x12\x1f\n" +
 	"\vsource_name\x18\t \x01(\tR\n" +
 	"sourceName\x12\x1f\n" +
 	"\vtarget_name\x18\n" +
 	" \x01(\tR\n" +
-	"targetName\"\x95\x02\n" +
-	"\x17CreateAssignmentRequest\x12E\n" +
-	"\vsource_type\x18\x01 \x01(\x0e2$.powermanage.v1.AssignmentSourceTypeR\n" +
+	"targetName\"\x8c\x02\n" +
+	"\x17CreateAssignmentRequest\x12B\n" +
+	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12E\n" +
-	"\vtarget_type\x18\x03 \x01(\x0e2$.powermanage.v1.AssignmentTargetTypeR\n" +
+	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12B\n" +
+	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\n" +
 	"targetType\x12\x1b\n" +
-	"\ttarget_id\x18\x04 \x01(\tR\btargetId\x122\n" +
-	"\x04mode\x18\x05 \x01(\x0e2\x1e.powermanage.v1.AssignmentModeR\x04mode\"V\n" +
-	"\x18CreateAssignmentResponse\x12:\n" +
+	"\ttarget_id\x18\x04 \x01(\tR\btargetId\x12/\n" +
+	"\x04mode\x18\x05 \x01(\x0e2\x1b.cadestro.v1.AssignmentModeR\x04mode\"S\n" +
+	"\x18CreateAssignmentResponse\x127\n" +
 	"\n" +
-	"assignment\x18\x01 \x01(\v2\x1a.powermanage.v1.AssignmentR\n" +
+	"assignment\x18\x01 \x01(\v2\x17.cadestro.v1.AssignmentR\n" +
 	"assignment\")\n" +
 	"\x17DeleteAssignmentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
-	"\x18DeleteAssignmentResponse\"\x9c\x02\n" +
-	"\x16ListAssignmentsRequest\x12E\n" +
-	"\vsource_type\x18\x01 \x01(\x0e2$.powermanage.v1.AssignmentSourceTypeR\n" +
+	"\x18DeleteAssignmentResponse\"\x96\x02\n" +
+	"\x16ListAssignmentsRequest\x12B\n" +
+	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12E\n" +
-	"\vtarget_type\x18\x03 \x01(\x0e2$.powermanage.v1.AssignmentTargetTypeR\n" +
+	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12B\n" +
+	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\n" +
 	"targetType\x12\x1b\n" +
 	"\ttarget_id\x18\x04 \x01(\tR\btargetId\x12\x1b\n" +
 	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x06 \x01(\tR\tpageToken\"\xa0\x01\n" +
-	"\x17ListAssignmentsResponse\x12<\n" +
-	"\vassignments\x18\x01 \x03(\v2\x1a.powermanage.v1.AssignmentR\vassignments\x12&\n" +
+	"page_token\x18\x06 \x01(\tR\tpageToken\"\x9d\x01\n" +
+	"\x17ListAssignmentsResponse\x129\n" +
+	"\vassignments\x18\x01 \x03(\v2\x17.cadestro.v1.AssignmentR\vassignments\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\xf7\x01\n" +
+	"totalCount\"\xf4\x01\n" +
 	"\rUserSelection\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12E\n" +
-	"\vsource_type\x18\x03 \x01(\x0e2$.powermanage.v1.AssignmentSourceTypeR\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12B\n" +
+	"\vsource_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
 	"\tsource_id\x18\x04 \x01(\tR\bsourceId\x12\x1a\n" +
 	"\bselected\x18\x05 \x01(\bR\bselected\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xb6\x01\n" +
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xb3\x01\n" +
 	"\x17SetUserSelectionRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12E\n" +
-	"\vsource_type\x18\x02 \x01(\x0e2$.powermanage.v1.AssignmentSourceTypeR\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12B\n" +
+	"\vsource_type\x18\x02 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
 	"\tsource_id\x18\x03 \x01(\tR\bsourceId\x12\x1a\n" +
-	"\bselected\x18\x04 \x01(\bR\bselected\"W\n" +
-	"\x18SetUserSelectionResponse\x12;\n" +
-	"\tselection\x18\x01 \x01(\v2\x1d.powermanage.v1.UserSelectionR\tselection\":\n" +
+	"\bselected\x18\x04 \x01(\bR\bselected\"T\n" +
+	"\x18SetUserSelectionResponse\x128\n" +
+	"\tselection\x18\x01 \x01(\v2\x1a.cadestro.v1.UserSelectionR\tselection\":\n" +
 	"\x1bListAvailableActionsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x98\x02\n" +
-	"\rAvailableItem\x12E\n" +
-	"\vsource_type\x18\x01 \x01(\x0e2$.powermanage.v1.AssignmentSourceTypeR\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x92\x02\n" +
+	"\rAvailableItem\x12B\n" +
+	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
 	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x1f\n" +
 	"\vsource_name\x18\x03 \x01(\tR\n" +
 	"sourceName\x12-\n" +
 	"\x12source_description\x18\x04 \x01(\tR\x11sourceDescription\x12\x1a\n" +
-	"\bselected\x18\x05 \x01(\bR\bselected\x127\n" +
-	"\aactions\x18\x06 \x03(\v2\x1d.powermanage.v1.ManagedActionR\aactions\"S\n" +
-	"\x1cListAvailableActionsResponse\x123\n" +
-	"\x05items\x18\x01 \x03(\v2\x1d.powermanage.v1.AvailableItemR\x05items\":\n" +
+	"\bselected\x18\x05 \x01(\bR\bselected\x124\n" +
+	"\aactions\x18\x06 \x03(\v2\x1a.cadestro.v1.ManagedActionR\aactions\"P\n" +
+	"\x1cListAvailableActionsResponse\x120\n" +
+	"\x05items\x18\x01 \x03(\v2\x1a.cadestro.v1.AvailableItemR\x05items\":\n" +
 	"\x1bGetDeviceAssignmentsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\xce\x03\n" +
-	"\x1cGetDeviceAssignmentsResponse\x127\n" +
-	"\aactions\x18\x01 \x03(\v2\x1d.powermanage.v1.ManagedActionR\aactions\x12:\n" +
-	"\vaction_sets\x18\x02 \x03(\v2\x19.powermanage.v1.ActionSetR\n" +
-	"actionSets\x12<\n" +
-	"\vdefinitions\x18\x03 \x03(\v2\x1a.powermanage.v1.DefinitionR\vdefinitions\x12Q\n" +
-	"\x13compliance_policies\x18\x04 \x03(\v2 .powermanage.v1.CompliancePolicyR\x12compliancePolicies\x12R\n" +
-	"\x12action_set_details\x18\x05 \x03(\v2$.powermanage.v1.GetActionSetResponseR\x10actionSetDetails\x12T\n" +
-	"\x12definition_details\x18\x06 \x03(\v2%.powermanage.v1.GetDefinitionResponseR\x11definitionDetails\"4\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\xbc\x03\n" +
+	"\x1cGetDeviceAssignmentsResponse\x124\n" +
+	"\aactions\x18\x01 \x03(\v2\x1a.cadestro.v1.ManagedActionR\aactions\x127\n" +
+	"\vaction_sets\x18\x02 \x03(\v2\x16.cadestro.v1.ActionSetR\n" +
+	"actionSets\x129\n" +
+	"\vdefinitions\x18\x03 \x03(\v2\x17.cadestro.v1.DefinitionR\vdefinitions\x12N\n" +
+	"\x13compliance_policies\x18\x04 \x03(\v2\x1d.cadestro.v1.CompliancePolicyR\x12compliancePolicies\x12O\n" +
+	"\x12action_set_details\x18\x05 \x03(\v2!.cadestro.v1.GetActionSetResponseR\x10actionSetDetails\x12Q\n" +
+	"\x12definition_details\x18\x06 \x03(\v2\".cadestro.v1.GetDefinitionResponseR\x11definitionDetails\"4\n" +
 	"\x19GetUserAssignmentsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"Z\n" +
-	"\x1aGetUserAssignmentsResponse\x12<\n" +
-	"\vassignments\x18\x01 \x03(\v2\x1a.powermanage.v1.AssignmentR\vassignments\"\xf3\x06\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"W\n" +
+	"\x1aGetUserAssignmentsResponse\x129\n" +
+	"\vassignments\x18\x01 \x03(\v2\x17.cadestro.v1.AssignmentR\vassignments\"\xe1\x06\n" +
 	"\x0fActionExecution\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\x1b\n" +
-	"\taction_id\x18\x03 \x01(\tR\bactionId\x12.\n" +
-	"\x04type\x18\x04 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\x04type\x127\n" +
-	"\x06status\x18\x05 \x01(\x0e2\x1f.powermanage.v1.ExecutionStatusR\x06status\x12\x14\n" +
-	"\x05error\x18\x06 \x01(\tR\x05error\x125\n" +
-	"\x06output\x18\a \x01(\v2\x1d.powermanage.v1.CommandOutputR\x06output\x129\n" +
+	"\taction_id\x18\x03 \x01(\tR\bactionId\x12+\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\x04type\x124\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\x06status\x12\x14\n" +
+	"\x05error\x18\x06 \x01(\tR\x05error\x122\n" +
+	"\x06output\x18\a \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x129\n" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12?\n" +
 	"\rdispatched_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\fdispatchedAt\x12=\n" +
@@ -22381,97 +22381,97 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\vduration_ms\x18\v \x01(\x03R\n" +
 	"durationMs\x12\x1d\n" +
 	"\n" +
-	"created_by\x18\f \x01(\tR\tcreatedBy\x12>\n" +
-	"\vlive_output\x18\r \x01(\v2\x1d.powermanage.v1.CommandOutputR\n" +
-	"liveOutput\x12A\n" +
-	"\rdesired_state\x18\x0e \x01(\x0e2\x1c.powermanage.v1.DesiredStateR\fdesiredState\x12\x18\n" +
+	"created_by\x18\f \x01(\tR\tcreatedBy\x12;\n" +
+	"\vlive_output\x18\r \x01(\v2\x1a.cadestro.v1.CommandOutputR\n" +
+	"liveOutput\x12>\n" +
+	"\rdesired_state\x18\x0e \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12\x18\n" +
 	"\achanged\x18\x0f \x01(\bR\achanged\x12\x1c\n" +
-	"\tcompliant\x18\x10 \x01(\bR\tcompliant\x12H\n" +
-	"\x10detection_output\x18\x11 \x01(\v2\x1d.powermanage.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
+	"\tcompliant\x18\x10 \x01(\bR\tcompliant\x12E\n" +
+	"\x10detection_output\x18\x11 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
 	"\vaction_name\x18\x12 \x01(\tR\n" +
 	"actionName\x12?\n" +
-	"\rscheduled_for\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\fscheduledFor\"\x94\x02\n" +
+	"\rscheduled_for\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\fscheduledFor\"\x91\x02\n" +
 	"\x15DispatchActionRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1d\n" +
-	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12=\n" +
-	"\rinline_action\x18\x03 \x01(\v2\x16.powermanage.v1.ActionH\x00R\finlineAction\x121\n" +
+	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12:\n" +
+	"\rinline_action\x18\x03 \x01(\v2\x13.cadestro.v1.ActionH\x00R\finlineAction\x121\n" +
 	"\x06run_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05runAt\x12<\n" +
 	"\x1arespect_maintenance_window\x18\x05 \x01(\bR\x18respectMaintenanceWindowB\x0f\n" +
-	"\raction_source\"W\n" +
-	"\x16DispatchActionResponse\x12=\n" +
-	"\texecution\x18\x01 \x01(\v2\x1f.powermanage.v1.ActionExecutionR\texecution\"\xa9\x01\n" +
+	"\raction_source\"T\n" +
+	"\x16DispatchActionResponse\x12:\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\xa6\x01\n" +
 	"\x19DispatchToMultipleRequest\x12\x1d\n" +
 	"\n" +
 	"device_ids\x18\x01 \x03(\tR\tdeviceIds\x12\x1d\n" +
-	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12=\n" +
-	"\rinline_action\x18\x03 \x01(\v2\x16.powermanage.v1.ActionH\x00R\finlineActionB\x0f\n" +
-	"\raction_source\"]\n" +
-	"\x1aDispatchToMultipleResponse\x12?\n" +
+	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12:\n" +
+	"\rinline_action\x18\x03 \x01(\v2\x13.cadestro.v1.ActionH\x00R\finlineActionB\x0f\n" +
+	"\raction_source\"Z\n" +
+	"\x1aDispatchToMultipleResponse\x12<\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1f.powermanage.v1.ActionExecutionR\n" +
+	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
 	"executions\"=\n" +
 	"\x1eDispatchAssignedActionsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"b\n" +
-	"\x1fDispatchAssignedActionsResponse\x12?\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"_\n" +
+	"\x1fDispatchAssignedActionsResponse\x12<\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1f.powermanage.v1.ActionExecutionR\n" +
+	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
 	"executions\"[\n" +
 	"\x18DispatchActionSetRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\"\\\n" +
-	"\x19DispatchActionSetResponse\x12?\n" +
+	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\"Y\n" +
+	"\x19DispatchActionSetResponse\x12<\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1f.powermanage.v1.ActionExecutionR\n" +
+	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
 	"executions\"]\n" +
 	"\x19DispatchDefinitionRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12#\n" +
-	"\rdefinition_id\x18\x02 \x01(\tR\fdefinitionId\"]\n" +
-	"\x1aDispatchDefinitionResponse\x12?\n" +
+	"\rdefinition_id\x18\x02 \x01(\tR\fdefinitionId\"Z\n" +
+	"\x1aDispatchDefinitionResponse\x12<\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1f.powermanage.v1.ActionExecutionR\n" +
-	"executions\"\xef\x01\n" +
+	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
+	"executions\"\xec\x01\n" +
 	"\x16DispatchToGroupRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1d\n" +
 	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12$\n" +
 	"\raction_set_id\x18\x03 \x01(\tH\x00R\vactionSetId\x12%\n" +
-	"\rdefinition_id\x18\x04 \x01(\tH\x00R\fdefinitionId\x12=\n" +
-	"\rinline_action\x18\x05 \x01(\v2\x16.powermanage.v1.ActionH\x00R\finlineActionB\x0f\n" +
-	"\raction_source\"Z\n" +
-	"\x17DispatchToGroupResponse\x12?\n" +
+	"\rdefinition_id\x18\x04 \x01(\tH\x00R\fdefinitionId\x12:\n" +
+	"\rinline_action\x18\x05 \x01(\v2\x13.cadestro.v1.ActionH\x00R\finlineActionB\x0f\n" +
+	"\raction_source\"W\n" +
+	"\x17DispatchToGroupResponse\x12<\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1f.powermanage.v1.ActionExecutionR\n" +
+	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
 	"executions\"%\n" +
 	"\x13GetExecutionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"U\n" +
-	"\x14GetExecutionResponse\x12=\n" +
-	"\texecution\x18\x01 \x01(\v2\x1f.powermanage.v1.ActionExecutionR\texecution\"\x8b\x02\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"R\n" +
+	"\x14GetExecutionResponse\x12:\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\x85\x02\n" +
 	"\x15ListExecutionsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x1b\n" +
-	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\x12D\n" +
-	"\rstatus_filter\x18\x04 \x01(\x0e2\x1f.powermanage.v1.ExecutionStatusR\fstatusFilter\x12;\n" +
-	"\vtype_filter\x18\x05 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\n" +
+	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\x12A\n" +
+	"\rstatus_filter\x18\x04 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\fstatusFilter\x128\n" +
+	"\vtype_filter\x18\x05 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
 	"typeFilter\x12\x16\n" +
-	"\x06search\x18\x06 \x01(\tR\x06search\"\xa2\x01\n" +
-	"\x16ListExecutionsResponse\x12?\n" +
+	"\x06search\x18\x06 \x01(\tR\x06search\"\x9f\x01\n" +
+	"\x16ListExecutionsResponse\x12<\n" +
 	"\n" +
-	"executions\x18\x01 \x03(\v2\x1f.powermanage.v1.ActionExecutionR\n" +
+	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
 	"executions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\xef\x01\n" +
+	"totalCount\"\xec\x01\n" +
 	"\x1cDispatchInstantActionRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12A\n" +
-	"\x0einstant_action\x18\x02 \x01(\x0e2\x1a.powermanage.v1.ActionTypeR\rinstantAction\x121\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12>\n" +
+	"\x0einstant_action\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\rinstantAction\x121\n" +
 	"\x06run_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x05runAt\x12<\n" +
-	"\x1arespect_maintenance_window\x18\x04 \x01(\bR\x18respectMaintenanceWindow\"^\n" +
-	"\x1dDispatchInstantActionResponse\x12=\n" +
-	"\texecution\x18\x01 \x01(\v2\x1f.powermanage.v1.ActionExecutionR\texecution\";\n" +
+	"\x1arespect_maintenance_window\x18\x04 \x01(\bR\x18respectMaintenanceWindow\"[\n" +
+	"\x1dDispatchInstantActionResponse\x12:\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\";\n" +
 	"\x16CancelExecutionRequest\x12!\n" +
-	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\"X\n" +
-	"\x17CancelExecutionResponse\x12=\n" +
-	"\texecution\x18\x01 \x01(\v2\x1f.powermanage.v1.ActionExecutionR\texecution\"\x84\x02\n" +
+	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\"U\n" +
+	"\x17CancelExecutionResponse\x12:\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\x84\x02\n" +
 	"\n" +
 	"AuditEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
@@ -22494,9 +22494,9 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\vstream_type\x18\x04 \x01(\tR\n" +
 	"streamType\x12\x1d\n" +
 	"\n" +
-	"event_type\x18\x05 \x01(\tR\teventType\"\x96\x01\n" +
-	"\x17ListAuditEventsResponse\x122\n" +
-	"\x06events\x18\x01 \x03(\v2\x1a.powermanage.v1.AuditEventR\x06events\x12&\n" +
+	"event_type\x18\x05 \x01(\tR\teventType\"\x93\x01\n" +
+	"\x17ListAuditEventsResponse\x12/\n" +
+	"\x06events\x18\x01 \x03(\v2\x17.cadestro.v1.AuditEventR\x06events\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"\xac\x02\n" +
@@ -22513,7 +22513,7 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"page_token\x18\a \x01(\tR\tpageToken\"Y\n" +
 	"\x19ExportAuditEventsResponse\x12\x14\n" +
 	"\x05chunk\x18\x01 \x01(\fR\x05chunk\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xc1\x02\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xbe\x02\n" +
 	"\vLpsPassword\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12'\n" +
@@ -22523,17 +22523,17 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"actionName\x12\x1a\n" +
 	"\busername\x18\x06 \x01(\tR\busername\x129\n" +
 	"\n" +
-	"rotated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\trotatedAt\x12G\n" +
-	"\x0frotation_reason\x18\b \x01(\x0e2\x1e.powermanage.v1.RotationReasonR\x0erotationReason\"6\n" +
+	"rotated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\trotatedAt\x12D\n" +
+	"\x0frotation_reason\x18\b \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x0erotationReason\"6\n" +
 	"\x17ListLpsPasswordsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x88\x01\n" +
-	"\x18ListLpsPasswordsResponse\x125\n" +
-	"\acurrent\x18\x01 \x03(\v2\x1b.powermanage.v1.LpsPasswordR\acurrent\x125\n" +
-	"\ahistory\x18\x02 \x03(\v2\x1b.powermanage.v1.LpsPasswordR\ahistory\"*\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x82\x01\n" +
+	"\x18ListLpsPasswordsResponse\x122\n" +
+	"\acurrent\x18\x01 \x03(\v2\x18.cadestro.v1.LpsPasswordR\acurrent\x122\n" +
+	"\ahistory\x18\x02 \x03(\v2\x18.cadestro.v1.LpsPasswordR\ahistory\"*\n" +
 	"\x18RevealLpsPasswordRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
 	"\x19RevealLpsPasswordResponse\x12\x1a\n" +
-	"\bpassword\x18\x01 \x01(\tR\bpassword\"\x81\x04\n" +
+	"\bpassword\x18\x01 \x01(\tR\bpassword\"\xfb\x03\n" +
 	"\aLuksKey\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12'\n" +
@@ -22544,17 +22544,17 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\vdevice_path\x18\x06 \x01(\tR\n" +
 	"devicePath\x129\n" +
 	"\n" +
-	"rotated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\trotatedAt\x12G\n" +
-	"\x0frotation_reason\x18\b \x01(\x0e2\x1e.powermanage.v1.RotationReasonR\x0erotationReason\x12Q\n" +
-	"\x11revocation_status\x18\t \x01(\x0e2$.powermanage.v1.LuksRevocationStatusR\x10revocationStatus\x12)\n" +
+	"rotated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\trotatedAt\x12D\n" +
+	"\x0frotation_reason\x18\b \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x0erotationReason\x12N\n" +
+	"\x11revocation_status\x18\t \x01(\x0e2!.cadestro.v1.LuksRevocationStatusR\x10revocationStatus\x12)\n" +
 	"\x10revocation_error\x18\n" +
 	" \x01(\tR\x0frevocationError\x12?\n" +
 	"\rrevocation_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\frevocationAt\"2\n" +
 	"\x13ListLuksKeysRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"|\n" +
-	"\x14ListLuksKeysResponse\x121\n" +
-	"\acurrent\x18\x01 \x03(\v2\x17.powermanage.v1.LuksKeyR\acurrent\x121\n" +
-	"\ahistory\x18\x02 \x03(\v2\x17.powermanage.v1.LuksKeyR\ahistory\"&\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"v\n" +
+	"\x14ListLuksKeysResponse\x12.\n" +
+	"\acurrent\x18\x01 \x03(\v2\x14.cadestro.v1.LuksKeyR\acurrent\x12.\n" +
+	"\ahistory\x18\x02 \x03(\v2\x14.cadestro.v1.LuksKeyR\ahistory\"&\n" +
 	"\x14RevealLuksKeyRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
 	"\x15RevealLuksKeyResponse\x12\x1e\n" +
@@ -22582,24 +22582,24 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x17DispatchOSQueryResponse\x12\x19\n" +
 	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"4\n" +
 	"\x17GetOSQueryResultRequest\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"\xb3\x01\n" +
+	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"\xb0\x01\n" +
 	"\x18GetOSQueryResultResponse\x12\x19\n" +
 	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x1c\n" +
 	"\tcompleted\x18\x02 \x01(\bR\tcompleted\x12\x18\n" +
 	"\asuccess\x18\x03 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\x12.\n" +
-	"\x04rows\x18\x05 \x03(\v2\x1a.powermanage.v1.OSQueryRowR\x04rows\"Y\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\x12+\n" +
+	"\x04rows\x18\x05 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"Y\n" +
 	"\x19GetDeviceInventoryRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1f\n" +
 	"\vtable_names\x18\x02 \x03(\tR\n" +
-	"tableNames\"\xa4\x01\n" +
+	"tableNames\"\xa1\x01\n" +
 	"\x14InventoryTableResult\x12\x1d\n" +
 	"\n" +
-	"table_name\x18\x01 \x01(\tR\ttableName\x12.\n" +
-	"\x04rows\x18\x02 \x03(\v2\x1a.powermanage.v1.OSQueryRowR\x04rows\x12=\n" +
-	"\fcollected_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vcollectedAt\"Z\n" +
-	"\x1aGetDeviceInventoryResponse\x12<\n" +
-	"\x06tables\x18\x01 \x03(\v2$.powermanage.v1.InventoryTableResultR\x06tables\"<\n" +
+	"table_name\x18\x01 \x01(\tR\ttableName\x12+\n" +
+	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\x12=\n" +
+	"\fcollected_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vcollectedAt\"W\n" +
+	"\x1aGetDeviceInventoryResponse\x129\n" +
+	"\x06tables\x18\x01 \x03(\v2!.cadestro.v1.InventoryTableResultR\x06tables\"<\n" +
 	"\x1dRefreshDeviceInventoryRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\" \n" +
 	"\x1eRefreshDeviceInventoryResponse\"\xd3\x01\n" +
@@ -22625,21 +22625,21 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x11CreateRoleRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12 \n" +
-	"\vpermissions\x18\x03 \x03(\tR\vpermissions\">\n" +
-	"\x12CreateRoleResponse\x12(\n" +
-	"\x04role\x18\x01 \x01(\v2\x14.powermanage.v1.RoleR\x04role\" \n" +
+	"\vpermissions\x18\x03 \x03(\tR\vpermissions\";\n" +
+	"\x12CreateRoleResponse\x12%\n" +
+	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\" \n" +
 	"\x0eGetRoleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"Z\n" +
-	"\x0fGetRoleResponse\x12(\n" +
-	"\x04role\x18\x01 \x01(\v2\x14.powermanage.v1.RoleR\x04role\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"W\n" +
+	"\x0fGetRoleResponse\x12%\n" +
+	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\x12\x1d\n" +
 	"\n" +
 	"user_count\x18\x02 \x01(\x05R\tuserCount\"N\n" +
 	"\x10ListRolesRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x88\x01\n" +
-	"\x11ListRolesResponse\x12*\n" +
-	"\x05roles\x18\x01 \x03(\v2\x14.powermanage.v1.RoleR\x05roles\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x85\x01\n" +
+	"\x11ListRolesResponse\x12'\n" +
+	"\x05roles\x18\x01 \x03(\v2\x11.cadestro.v1.RoleR\x05roles\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"\x84\x01\n" +
@@ -22647,30 +22647,30 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\arole_id\x18\x01 \x01(\tR\x06roleId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12 \n" +
-	"\vpermissions\x18\x04 \x03(\tR\vpermissions\">\n" +
-	"\x12UpdateRoleResponse\x12(\n" +
-	"\x04role\x18\x01 \x01(\v2\x14.powermanage.v1.RoleR\x04role\"#\n" +
+	"\vpermissions\x18\x04 \x03(\tR\vpermissions\";\n" +
+	"\x12UpdateRoleResponse\x12%\n" +
+	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\"#\n" +
 	"\x11DeleteRoleRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12DeleteRoleResponse\"\xc4\x01\n" +
+	"\x12DeleteRoleResponse\"\xc1\x01\n" +
 	"\x17AssignRoleToUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
 	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12\x19\n" +
-	"\brole_ids\x18\x03 \x03(\tR\aroleIds\x12A\n" +
+	"\brole_ids\x18\x03 \x03(\tR\aroleIds\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x04 \x01(\x0e2\".powermanage.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
+	"scope_kind\x18\x04 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
 	"\bscope_id\x18\x05 \x01(\tR\ascopeId\"\x1a\n" +
-	"\x18AssignRoleToUserResponse\"\xab\x01\n" +
+	"\x18AssignRoleToUserResponse\"\xa8\x01\n" +
 	"\x19RevokeRoleFromUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
-	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12A\n" +
+	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x03 \x01(\x0e2\".powermanage.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
+	"scope_kind\x18\x03 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
 	"\bscope_id\x18\x04 \x01(\tR\ascopeId\"\x1c\n" +
 	"\x1aRevokeRoleFromUserResponse\"\x18\n" +
-	"\x16ListPermissionsRequest\"[\n" +
-	"\x17ListPermissionsResponse\x12@\n" +
-	"\vpermissions\x18\x01 \x03(\v2\x1e.powermanage.v1.PermissionInfoR\vpermissions\"\xa9\x03\n" +
+	"\x16ListPermissionsRequest\"X\n" +
+	"\x17ListPermissionsResponse\x12=\n" +
+	"\vpermissions\x18\x01 \x03(\v2\x1b.cadestro.v1.PermissionInfoR\vpermissions\"\xa3\x03\n" +
 	"\tUserGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -22681,10 +22681,10 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"is_dynamic\x18\a \x01(\bR\tisDynamic\x12#\n" +
 	"\rdynamic_query\x18\b \x01(\tR\fdynamicQuery\x12&\n" +
-	"\x0fis_scim_managed\x18\t \x01(\bR\risScimManaged\x12P\n" +
+	"\x0fis_scim_managed\x18\t \x01(\bR\risScimManaged\x12M\n" +
 	"\x12maintenance_window\x18\n" +
-	" \x01(\v2!.powermanage.v1.MaintenanceWindowR\x11maintenanceWindow\x12:\n" +
-	"\vrole_grants\x18\v \x03(\v2\x19.powermanage.v1.RoleGrantR\n" +
+	" \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x127\n" +
+	"\vrole_grants\x18\v \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
 	"roleGrants\"w\n" +
 	"\x0fUserGroupMember\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
@@ -22695,29 +22695,29 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
 	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x04 \x01(\tR\fdynamicQuery\"J\n" +
-	"\x17CreateUserGroupResponse\x12/\n" +
-	"\x05group\x18\x01 \x01(\v2\x19.powermanage.v1.UserGroupR\x05group\"%\n" +
+	"\rdynamic_query\x18\x04 \x01(\tR\fdynamicQuery\"G\n" +
+	"\x17CreateUserGroupResponse\x12,\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"%\n" +
 	"\x13GetUserGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x82\x01\n" +
-	"\x14GetUserGroupResponse\x12/\n" +
-	"\x05group\x18\x01 \x01(\v2\x19.powermanage.v1.UserGroupR\x05group\x129\n" +
-	"\amembers\x18\x02 \x03(\v2\x1f.powermanage.v1.UserGroupMemberR\amembers\"S\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"|\n" +
+	"\x14GetUserGroupResponse\x12,\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\x126\n" +
+	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.UserGroupMemberR\amembers\"S\n" +
 	"\x15ListUserGroupsRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x94\x01\n" +
-	"\x16ListUserGroupsResponse\x121\n" +
-	"\x06groups\x18\x01 \x03(\v2\x19.powermanage.v1.UserGroupR\x06groups\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\x91\x01\n" +
+	"\x16ListUserGroupsResponse\x12.\n" +
+	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"i\n" +
 	"\x16UpdateUserGroupRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"J\n" +
-	"\x17UpdateUserGroupResponse\x12/\n" +
-	"\x05group\x18\x01 \x01(\v2\x19.powermanage.v1.UserGroupR\x05group\"(\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\"G\n" +
+	"\x17UpdateUserGroupResponse\x12,\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"(\n" +
 	"\x16DeleteUserGroupRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x19\n" +
 	"\x17DeleteUserGroupResponse\"f\n" +
@@ -22729,33 +22729,33 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x1aRemoveUserFromGroupRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x1d\n" +
-	"\x1bRemoveUserFromGroupResponse\"\xcb\x01\n" +
+	"\x1bRemoveUserFromGroupResponse\"\xc8\x01\n" +
 	"\x1cAssignRoleToUserGroupRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
 	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12\x19\n" +
-	"\brole_ids\x18\x03 \x03(\tR\aroleIds\x12A\n" +
+	"\brole_ids\x18\x03 \x03(\tR\aroleIds\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x04 \x01(\x0e2\".powermanage.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
+	"scope_kind\x18\x04 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
 	"\bscope_id\x18\x05 \x01(\tR\ascopeId\"\x1f\n" +
-	"\x1dAssignRoleToUserGroupResponse\"\xb2\x01\n" +
+	"\x1dAssignRoleToUserGroupResponse\"\xaf\x01\n" +
 	"\x1eRevokeRoleFromUserGroupRequest\x12\x19\n" +
 	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
-	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12A\n" +
+	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x03 \x01(\x0e2\".powermanage.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
+	"scope_kind\x18\x03 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
 	"\bscope_id\x18\x04 \x01(\tR\ascopeId\"!\n" +
 	"\x1fRevokeRoleFromUserGroupResponse\"7\n" +
 	"\x1cListUserGroupsForUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"R\n" +
-	"\x1dListUserGroupsForUserResponse\x121\n" +
-	"\x06groups\x18\x01 \x03(\v2\x19.powermanage.v1.UserGroupR\x06groups\"q\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"O\n" +
+	"\x1dListUserGroupsForUserResponse\x12.\n" +
+	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\"q\n" +
 	"\x1bUpdateUserGroupQueryRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x03 \x01(\tR\fdynamicQuery\"O\n" +
-	"\x1cUpdateUserGroupQueryResponse\x12/\n" +
-	"\x05group\x18\x01 \x01(\v2\x19.powermanage.v1.UserGroupR\x05group\"5\n" +
+	"\rdynamic_query\x18\x03 \x01(\tR\fdynamicQuery\"L\n" +
+	"\x1cUpdateUserGroupQueryResponse\x12,\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"5\n" +
 	"\x1dValidateUserGroupQueryRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\"|\n" +
 	"\x1eValidateUserGroupQueryResponse\x12\x14\n" +
@@ -22763,20 +22763,20 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x05error\x18\x02 \x01(\tR\x05error\x12.\n" +
 	"\x13matching_user_count\x18\x03 \x01(\x05R\x11matchingUserCount\"1\n" +
 	"\x1fEvaluateDynamicUserGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x99\x01\n" +
-	" EvaluateDynamicUserGroupResponse\x12/\n" +
-	"\x05group\x18\x01 \x01(\v2\x19.powermanage.v1.UserGroupR\x05group\x12\x1f\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x96\x01\n" +
+	" EvaluateDynamicUserGroupResponse\x12,\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\x12\x1f\n" +
 	"\vusers_added\x18\x02 \x01(\x05R\n" +
 	"usersAdded\x12#\n" +
-	"\rusers_removed\x18\x03 \x01(\x05R\fusersRemoved\"\x88\x01\n" +
+	"\rusers_removed\x18\x03 \x01(\x05R\fusersRemoved\"\x85\x01\n" +
 	"$SetUserGroupMaintenanceWindowRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12P\n" +
-	"\x12maintenance_window\x18\x02 \x01(\v2!.powermanage.v1.MaintenanceWindowR\x11maintenanceWindow\"\xcb\a\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12M\n" +
+	"\x12maintenance_window\x18\x02 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\"\xc5\a\n" +
 	"\x10IdentityProvider\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04slug\x18\x03 \x01(\tR\x04slug\x12I\n" +
-	"\rprovider_type\x18\x04 \x01(\x0e2$.powermanage.v1.IdentityProviderTypeR\fproviderType\x12\x18\n" +
+	"\x04slug\x18\x03 \x01(\tR\x04slug\x12F\n" +
+	"\rprovider_type\x18\x04 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeR\fproviderType\x12\x18\n" +
 	"\aenabled\x18\x05 \x01(\bR\aenabled\x12\x1b\n" +
 	"\tclient_id\x18\x06 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
@@ -22790,8 +22790,8 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x12auto_link_by_email\x18\r \x01(\bR\x0fautoLinkByEmail\x12&\n" +
 	"\x0fdefault_role_id\x18\x0e \x01(\tR\rdefaultRoleId\x12\x1f\n" +
 	"\vgroup_claim\x18\x10 \x01(\tR\n" +
-	"groupClaim\x12W\n" +
-	"\rgroup_mapping\x18\x11 \x03(\v22.powermanage.v1.IdentityProvider.GroupMappingEntryR\fgroupMapping\x129\n" +
+	"groupClaim\x12T\n" +
+	"\rgroup_mapping\x18\x11 \x03(\v2/.cadestro.v1.IdentityProvider.GroupMappingEntryR\fgroupMapping\x129\n" +
 	"\n" +
 	"created_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
@@ -22816,11 +22816,11 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\rexternal_name\x18\b \x01(\tR\fexternalName\x127\n" +
 	"\tlinked_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\blinkedAt\x12>\n" +
 	"\rlast_login_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\x9b\x06\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\x95\x06\n" +
 	"\x1dCreateIdentityProviderRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04slug\x18\x02 \x01(\tR\x04slug\x12I\n" +
-	"\rprovider_type\x18\x03 \x01(\x0e2$.powermanage.v1.IdentityProviderTypeR\fproviderType\x12\x1b\n" +
+	"\x04slug\x18\x02 \x01(\tR\x04slug\x12F\n" +
+	"\rprovider_type\x18\x03 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeR\fproviderType\x12\x1b\n" +
 	"\tclient_id\x18\x04 \x01(\tR\bclientId\x12#\n" +
 	"\rclient_secret\x18\x05 \x01(\tR\fclientSecret\x12\x1d\n" +
 	"\n" +
@@ -22834,28 +22834,28 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x12&\n" +
 	"\x0fdefault_role_id\x18\r \x01(\tR\rdefaultRoleId\x12\x1f\n" +
 	"\vgroup_claim\x18\x0f \x01(\tR\n" +
-	"groupClaim\x12d\n" +
-	"\rgroup_mapping\x18\x10 \x03(\v2?.powermanage.v1.CreateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
+	"groupClaim\x12a\n" +
+	"\rgroup_mapping\x18\x10 \x03(\v2<.cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
 	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x12\"\n" +
 	"\rcli_client_id\x18\x12 \x01(\tR\vcliClientId\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"^\n" +
-	"\x1eCreateIdentityProviderResponse\x12<\n" +
-	"\bprovider\x18\x01 \x01(\v2 .powermanage.v1.IdentityProviderR\bprovider\",\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
+	"\x1eCreateIdentityProviderResponse\x129\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\",\n" +
 	"\x1aGetIdentityProviderRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"[\n" +
-	"\x1bGetIdentityProviderResponse\x12<\n" +
-	"\bprovider\x18\x01 \x01(\v2 .powermanage.v1.IdentityProviderR\bprovider\"Z\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"X\n" +
+	"\x1bGetIdentityProviderResponse\x129\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"Z\n" +
 	"\x1cListIdentityProvidersRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa8\x01\n" +
-	"\x1dListIdentityProvidersResponse\x12>\n" +
-	"\tproviders\x18\x01 \x03(\v2 .powermanage.v1.IdentityProviderR\tproviders\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa5\x01\n" +
+	"\x1dListIdentityProvidersResponse\x12;\n" +
+	"\tproviders\x18\x01 \x03(\v2\x1d.cadestro.v1.IdentityProviderR\tproviders\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\xfd\x05\n" +
+	"totalCount\"\xfa\x05\n" +
 	"\x1dUpdateIdentityProviderRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -22873,29 +22873,29 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x12&\n" +
 	"\x0fdefault_role_id\x18\r \x01(\tR\rdefaultRoleId\x12\x1f\n" +
 	"\vgroup_claim\x18\x0f \x01(\tR\n" +
-	"groupClaim\x12d\n" +
-	"\rgroup_mapping\x18\x10 \x03(\v2?.powermanage.v1.UpdateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
+	"groupClaim\x12a\n" +
+	"\rgroup_mapping\x18\x10 \x03(\v2<.cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
 	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x12'\n" +
 	"\rcli_client_id\x18\x12 \x01(\tH\x00R\vcliClientId\x88\x01\x01\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x10\n" +
-	"\x0e_cli_client_id\"^\n" +
-	"\x1eUpdateIdentityProviderResponse\x12<\n" +
-	"\bprovider\x18\x01 \x01(\v2 .powermanage.v1.IdentityProviderR\bprovider\"/\n" +
+	"\x0e_cli_client_id\"[\n" +
+	"\x1eUpdateIdentityProviderResponse\x129\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"/\n" +
 	"\x1dDeleteIdentityProviderRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
-	"\x1eDeleteIdentityProviderResponse\"\xc9\x01\n" +
+	"\x1eDeleteIdentityProviderResponse\"\xc6\x01\n" +
 	"\x12AuthMethodProvider\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12I\n" +
-	"\rprovider_type\x18\x03 \x01(\x0e2$.powermanage.v1.IdentityProviderTypeR\fproviderType\x12#\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12F\n" +
+	"\rprovider_type\x18\x03 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeR\fproviderType\x12#\n" +
 	"\rbrowser_login\x18\x04 \x01(\bR\fbrowserLogin\x12\x1b\n" +
 	"\tcli_login\x18\x05 \x01(\bR\bcliLogin\".\n" +
 	"\x16ListAuthMethodsRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\"[\n" +
-	"\x17ListAuthMethodsResponse\x12@\n" +
-	"\tproviders\x18\x03 \x03(\v2\".powermanage.v1.AuthMethodProviderR\tproviders\"N\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\"X\n" +
+	"\x17ListAuthMethodsResponse\x12=\n" +
+	"\tproviders\x18\x03 \x03(\v2\x1f.cadestro.v1.AuthMethodProviderR\tproviders\"N\n" +
 	"\x15GetSSOLoginURLRequest\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12!\n" +
 	"\fredirect_url\x18\x02 \x01(\tR\vredirectUrl\"5\n" +
@@ -22904,13 +22904,13 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x12SSOCallbackRequest\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x14\n" +
-	"\x05state\x18\x03 \x01(\tR\x05state\"\xc2\x01\n" +
+	"\x05state\x18\x03 \x01(\tR\x05state\"\xbf\x01\n" +
 	"\x13SSOCallbackResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12(\n" +
-	"\x04user\x18\x04 \x01(\v2\x14.powermanage.v1.UserR\x04user\"t\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12%\n" +
+	"\x04user\x18\x04 \x01(\v2\x11.cadestro.v1.UserR\x04user\"t\n" +
 	"\x14BeginCLILoginRequest\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12!\n" +
 	"\fredirect_url\x18\x02 \x01(\tR\vredirectUrl\x12%\n" +
@@ -22925,16 +22925,16 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x19ExchangeCLISessionRequest\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x14\n" +
 	"\x05state\x18\x02 \x01(\tR\x05state\x12\x19\n" +
-	"\bid_token\x18\x03 \x01(\tR\aidToken\"\xc9\x01\n" +
+	"\bid_token\x18\x03 \x01(\tR\aidToken\"\xc6\x01\n" +
 	"\x1aExchangeCLISessionResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12(\n" +
-	"\x04user\x18\x04 \x01(\v2\x14.powermanage.v1.UserR\x04user\"\x1a\n" +
-	"\x18ListIdentityLinksRequest\"O\n" +
-	"\x19ListIdentityLinksResponse\x122\n" +
-	"\x05links\x18\x01 \x03(\v2\x1c.powermanage.v1.IdentityLinkR\x05links\"0\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12%\n" +
+	"\x04user\x18\x04 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\x1a\n" +
+	"\x18ListIdentityLinksRequest\"L\n" +
+	"\x19ListIdentityLinksResponse\x12/\n" +
+	"\x05links\x18\x01 \x03(\v2\x19.cadestro.v1.IdentityLinkR\x05links\"0\n" +
 	"\x15UnlinkIdentityRequest\x12\x17\n" +
 	"\alink_id\x18\x01 \x01(\tR\x06linkId\"\x18\n" +
 	"\x16UnlinkIdentityResponse\"#\n" +
@@ -22951,23 +22951,23 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x17RotateSCIMTokenResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"9\n" +
 	"\x1aGetDeviceComplianceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x96\x01\n" +
-	"\x1bGetDeviceComplianceResponse\x128\n" +
-	"\x06status\x18\x01 \x01(\x0e2 .powermanage.v1.ComplianceStatusR\x06status\x12=\n" +
-	"\x06checks\x18\x02 \x03(\v2%.powermanage.v1.ComplianceCheckResultR\x06checks\"\xf8\x01\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x90\x01\n" +
+	"\x1bGetDeviceComplianceResponse\x125\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\x06status\x12:\n" +
+	"\x06checks\x18\x02 \x03(\v2\".cadestro.v1.ComplianceCheckResultR\x06checks\"\xf5\x01\n" +
 	"\x15ComplianceCheckResult\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
 	"\vaction_name\x18\x02 \x01(\tR\n" +
 	"actionName\x12\x1c\n" +
-	"\tcompliant\x18\x03 \x01(\bR\tcompliant\x12H\n" +
-	"\x10detection_output\x18\x04 \x01(\v2\x1d.powermanage.v1.CommandOutputR\x0fdetectionOutput\x129\n" +
+	"\tcompliant\x18\x03 \x01(\bR\tcompliant\x12E\n" +
+	"\x10detection_output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x129\n" +
 	"\n" +
-	"checked_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckedAt\"\x8d\x02\n" +
+	"checked_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckedAt\"\x8a\x02\n" +
 	"\x10CompliancePolicy\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12:\n" +
-	"\x05rules\x18\x04 \x03(\v2$.powermanage.v1.CompliancePolicyRuleR\x05rules\x12\x1d\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x127\n" +
+	"\x05rules\x18\x04 \x03(\v2!.cadestro.v1.CompliancePolicyRuleR\x05rules\x12\x1d\n" +
 	"\n" +
 	"rule_count\x18\x05 \x01(\x05R\truleCount\x129\n" +
 	"\n" +
@@ -22981,19 +22981,19 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"U\n" +
 	"\x1dCreateCompliancePolicyRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"Z\n" +
-	"\x1eCreateCompliancePolicyResponse\x128\n" +
-	"\x06policy\x18\x01 \x01(\v2 .powermanage.v1.CompliancePolicyR\x06policy\",\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"W\n" +
+	"\x1eCreateCompliancePolicyResponse\x125\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\",\n" +
 	"\x1aGetCompliancePolicyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"W\n" +
-	"\x1bGetCompliancePolicyResponse\x128\n" +
-	"\x06policy\x18\x01 \x01(\v2 .powermanage.v1.CompliancePolicyR\x06policy\"[\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"T\n" +
+	"\x1bGetCompliancePolicyResponse\x125\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"[\n" +
 	"\x1dListCompliancePoliciesRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa7\x01\n" +
-	"\x1eListCompliancePoliciesResponse\x12<\n" +
-	"\bpolicies\x18\x01 \x03(\v2 .powermanage.v1.CompliancePolicyR\bpolicies\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa4\x01\n" +
+	"\x1eListCompliancePoliciesResponse\x129\n" +
+	"\bpolicies\x18\x01 \x03(\v2\x1d.cadestro.v1.CompliancePolicyR\bpolicies\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"C\n" +
@@ -23002,83 +23002,83 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"\\\n" +
 	"(UpdateCompliancePolicyDescriptionRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"Z\n" +
-	"\x1eUpdateCompliancePolicyResponse\x128\n" +
-	"\x06policy\x18\x01 \x01(\v2 .powermanage.v1.CompliancePolicyR\x06policy\"/\n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"W\n" +
+	"\x1eUpdateCompliancePolicyResponse\x125\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"/\n" +
 	"\x1dDeleteCompliancePolicyRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
 	"\x1eDeleteCompliancePolicyResponse\"\x88\x01\n" +
 	"\x1eAddCompliancePolicyRuleRequest\x12\x1b\n" +
 	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1b\n" +
 	"\taction_id\x18\x02 \x01(\tR\bactionId\x12,\n" +
-	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"[\n" +
-	"\x1fAddCompliancePolicyRuleResponse\x128\n" +
-	"\x06policy\x18\x01 \x01(\v2 .powermanage.v1.CompliancePolicyR\x06policy\"]\n" +
+	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"X\n" +
+	"\x1fAddCompliancePolicyRuleResponse\x125\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"]\n" +
 	"!RemoveCompliancePolicyRuleRequest\x12\x1b\n" +
 	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\"^\n" +
-	"\"RemoveCompliancePolicyRuleResponse\x128\n" +
-	"\x06policy\x18\x01 \x01(\v2 .powermanage.v1.CompliancePolicyR\x06policy\"\x8b\x01\n" +
+	"\taction_id\x18\x02 \x01(\tR\bactionId\"[\n" +
+	"\"RemoveCompliancePolicyRuleResponse\x125\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"\x8b\x01\n" +
 	"!UpdateCompliancePolicyRuleRequest\x12\x1b\n" +
 	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1b\n" +
 	"\taction_id\x18\x02 \x01(\tR\bactionId\x12,\n" +
-	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"^\n" +
-	"\"UpdateCompliancePolicyRuleResponse\x128\n" +
-	"\x06policy\x18\x01 \x01(\v2 .powermanage.v1.CompliancePolicyR\x06policy\"E\n" +
+	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"[\n" +
+	"\"UpdateCompliancePolicyRuleResponse\x125\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"E\n" +
 	"&GetDeviceCompliancePolicyStatusRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\xb6\x01\n" +
-	"'GetDeviceCompliancePolicyStatusResponse\x12G\n" +
-	"\x0eoverall_status\x18\x01 \x01(\x0e2 .powermanage.v1.ComplianceStatusR\roverallStatus\x12B\n" +
-	"\bpolicies\x18\x02 \x03(\v2&.powermanage.v1.DevicePolicyEvaluationR\bpolicies\"\xd2\x01\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\xb0\x01\n" +
+	"'GetDeviceCompliancePolicyStatusResponse\x12D\n" +
+	"\x0eoverall_status\x18\x01 \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\roverallStatus\x12?\n" +
+	"\bpolicies\x18\x02 \x03(\v2#.cadestro.v1.DevicePolicyEvaluationR\bpolicies\"\xcc\x01\n" +
 	"\x16DevicePolicyEvaluation\x12\x1b\n" +
 	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1f\n" +
 	"\vpolicy_name\x18\x02 \x01(\tR\n" +
-	"policyName\x128\n" +
-	"\x06status\x18\x03 \x01(\x0e2 .powermanage.v1.ComplianceStatusR\x06status\x12@\n" +
-	"\x05rules\x18\x04 \x03(\v2*.powermanage.v1.DevicePolicyRuleEvaluationR\x05rules\"\xef\x03\n" +
+	"policyName\x125\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\x06status\x12=\n" +
+	"\x05rules\x18\x04 \x03(\v2'.cadestro.v1.DevicePolicyRuleEvaluationR\x05rules\"\xe9\x03\n" +
 	"\x1aDevicePolicyRuleEvaluation\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
 	"\vaction_name\x18\x02 \x01(\tR\n" +
-	"actionName\x128\n" +
-	"\x06status\x18\x03 \x01(\x0e2 .powermanage.v1.ComplianceStatusR\x06status\x12\x1c\n" +
+	"actionName\x125\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\x06status\x12\x1c\n" +
 	"\tcompliant\x18\x04 \x01(\bR\tcompliant\x129\n" +
 	"\n" +
 	"checked_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcheckedAt\x12B\n" +
 	"\x0ffirst_failed_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\rfirstFailedAt\x12,\n" +
 	"\x12grace_period_hours\x18\a \x01(\x05R\x10gracePeriodHours\x12D\n" +
-	"\x10grace_expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x0egraceExpiresAt\x12H\n" +
-	"\x10detection_output\x18\t \x01(\v2\x1d.powermanage.v1.CommandOutputR\x0fdetectionOutput\"P\n" +
+	"\x10grace_expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x0egraceExpiresAt\x12E\n" +
+	"\x10detection_output\x18\t \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\"P\n" +
 	"\x10SearchDateFilter\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x14\n" +
 	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x10\n" +
-	"\x03end\x18\x03 \x01(\x03R\x03end\"\xe8\x03\n" +
+	"\x03end\x18\x03 \x01(\x03R\x03end\"\xd9\x03\n" +
 	"\rSearchRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\x121\n" +
-	"\x05scope\x18\x02 \x01(\x0e2\x1b.powermanage.v1.SearchScopeR\x05scope\x12\x1b\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12.\n" +
+	"\x05scope\x18\x02 \x01(\x0e2\x18.cadestro.v1.SearchScopeR\x05scope\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\x12C\n" +
-	"\fdate_filters\x18\x05 \x03(\v2 .powermanage.v1.SearchDateFilterR\vdateFilters\x12N\n" +
-	"\vtag_filters\x18\x06 \x03(\v2-.powermanage.v1.SearchRequest.TagFiltersEntryR\n" +
-	"tagFilters\x128\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\x12@\n" +
+	"\fdate_filters\x18\x05 \x03(\v2\x1d.cadestro.v1.SearchDateFilterR\vdateFilters\x12K\n" +
+	"\vtag_filters\x18\x06 \x03(\v2*.cadestro.v1.SearchRequest.TagFiltersEntryR\n" +
+	"tagFilters\x125\n" +
 	"\n" +
-	"sort_field\x18\a \x01(\x0e2\x19.powermanage.v1.SortFieldR\tsortField\x12D\n" +
-	"\x0esort_direction\x18\b \x01(\x0e2\x1d.powermanage.v1.SortDirectionR\rsortDirection\x1a=\n" +
+	"sort_field\x18\a \x01(\x0e2\x16.cadestro.v1.SortFieldR\tsortField\x12A\n" +
+	"\x0esort_direction\x18\b \x01(\x0e2\x1a.cadestro.v1.SortDirectionR\rsortDirection\x1a=\n" +
 	"\x0fTagFiltersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa7\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa1\x02\n" +
 	"\fSearchResult\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x121\n" +
-	"\x05scope\x18\x04 \x01(\x0e2\x1b.powermanage.v1.SearchScopeR\x05scope\x12!\n" +
-	"\fmember_count\x18\x05 \x01(\x05R\vmemberCount\x12@\n" +
-	"\x06fields\x18\x06 \x03(\v2(.powermanage.v1.SearchResult.FieldsEntryR\x06fields\x1a9\n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12.\n" +
+	"\x05scope\x18\x04 \x01(\x0e2\x18.cadestro.v1.SearchScopeR\x05scope\x12!\n" +
+	"\fmember_count\x18\x05 \x01(\x05R\vmemberCount\x12=\n" +
+	"\x06fields\x18\x06 \x03(\v2%.cadestro.v1.SearchResult.FieldsEntryR\x06fields\x1a9\n" +
 	"\vFieldsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x91\x01\n" +
-	"\x0eSearchResponse\x126\n" +
-	"\aresults\x18\x01 \x03(\v2\x1c.powermanage.v1.SearchResultR\aresults\x12&\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8e\x01\n" +
+	"\x0eSearchResponse\x123\n" +
+	"\aresults\x18\x01 \x03(\v2\x19.cadestro.v1.SearchResultR\aresults\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"\x1b\n" +
@@ -23087,14 +23087,14 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\x0eServerSettings\x12:\n" +
 	"\x19user_provisioning_enabled\x18\x01 \x01(\bR\x17userProvisioningEnabled\x12+\n" +
 	"\x12ssh_access_for_all\x18\x02 \x01(\bR\x0fsshAccessForAll\"\x1a\n" +
-	"\x18GetServerSettingsRequest\"W\n" +
-	"\x19GetServerSettingsResponse\x12:\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1e.powermanage.v1.ServerSettingsR\bsettings\"\x86\x01\n" +
+	"\x18GetServerSettingsRequest\"T\n" +
+	"\x19GetServerSettingsResponse\x127\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1b.cadestro.v1.ServerSettingsR\bsettings\"\x86\x01\n" +
 	"\x1bUpdateServerSettingsRequest\x12:\n" +
 	"\x19user_provisioning_enabled\x18\x01 \x01(\bR\x17userProvisioningEnabled\x12+\n" +
-	"\x12ssh_access_for_all\x18\x02 \x01(\bR\x0fsshAccessForAll\"Z\n" +
-	"\x1cUpdateServerSettingsResponse\x12:\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1e.powermanage.v1.ServerSettingsR\bsettings\"V\n" +
+	"\x12ssh_access_for_all\x18\x02 \x01(\bR\x0fsshAccessForAll\"W\n" +
+	"\x1cUpdateServerSettingsResponse\x127\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1b.cadestro.v1.ServerSettingsR\bsettings\"V\n" +
 	"!SetUserProvisioningEnabledRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
 	"\aenabled\x18\x02 \x01(\bR\aenabled\"[\n" +
@@ -23131,9 +23131,9 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x1b\n" +
 	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\x12\x17\n" +
-	"\auser_id\x18\x04 \x01(\tR\x06userId\"\xae\x01\n" +
-	"\"ListActiveTerminalSessionsResponse\x12?\n" +
-	"\bsessions\x18\x01 \x03(\v2#.powermanage.v1.TerminalSessionInfoR\bsessions\x12&\n" +
+	"\auser_id\x18\x04 \x01(\tR\x06userId\"\xab\x01\n" +
+	"\"ListActiveTerminalSessionsResponse\x12<\n" +
+	"\bsessions\x18\x01 \x03(\v2 .cadestro.v1.TerminalSessionInfoR\bsessions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
 	"totalCount\"X\n" +
@@ -23141,25 +23141,25 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\"\"\n" +
-	" TerminateTerminalSessionResponse\"\xb2\x03\n" +
+	" TerminateTerminalSessionResponse\"\xac\x03\n" +
 	"\x19EncryptionAuthoringParams\x12-\n" +
 	"\rpreshared_key\x18\x01 \x01(\tB\x03\x80\x01\x01H\x00R\fpresharedKey\x88\x01\x01\x124\n" +
 	"\x16rotation_interval_days\x18\x02 \x01(\x05R\x14rotationIntervalDays\x12\x1b\n" +
-	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12_\n" +
-	"\x15device_bound_key_type\x18\x04 \x01(\x0e2,.powermanage.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
-	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12c\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2%.powermanage.v1.LpsPasswordComplexityR\x18userPassphraseComplexityB\x10\n" +
-	"\x0e_preshared_key\"\xa9\x03\n" +
+	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
+	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
+	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexityB\x10\n" +
+	"\x0e_preshared_key\"\xa3\x03\n" +
 	"\x17ManagedEncryptionParams\x128\n" +
 	"\x18preshared_key_configured\x18\x01 \x01(\bR\x16presharedKeyConfigured\x124\n" +
 	"\x16rotation_interval_days\x18\x02 \x01(\x05R\x14rotationIntervalDays\x12\x1b\n" +
-	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12_\n" +
-	"\x15device_bound_key_type\x18\x04 \x01(\x0e2,.powermanage.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
-	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12c\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2%.powermanage.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xed\x02\n" +
+	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
+	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
+	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xea\x02\n" +
 	"\x13WifiAuthoringParams\x12\x12\n" +
-	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x129\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x1c.powermanage.v1.WifiAuthTypeR\bauthType\x12\x1a\n" +
+	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x126\n" +
+	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12\x1a\n" +
 	"\x03psk\x18\x03 \x01(\tB\x03\x80\x01\x01H\x00R\x03psk\x88\x01\x01\x12\x17\n" +
 	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
 	"\vclient_cert\x18\x05 \x01(\tR\n" +
@@ -23172,10 +23172,10 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\bpriority\x18\n" +
 	" \x01(\x05R\bpriorityB\x06\n" +
 	"\x04_pskB\r\n" +
-	"\v_client_key\"\xea\x02\n" +
+	"\v_client_key\"\xe7\x02\n" +
 	"\x11ManagedWifiParams\x12\x12\n" +
-	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x129\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x1c.powermanage.v1.WifiAuthTypeR\bauthType\x12%\n" +
+	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x126\n" +
+	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12%\n" +
 	"\x0epsk_configured\x18\x03 \x01(\bR\rpskConfigured\x12\x17\n" +
 	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
 	"\vclient_cert\x18\x05 \x01(\tR\n" +
@@ -23185,1218 +23185,1218 @@ const file_powermanage_v1_control_proto_rawDesc = "" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
 	"\x06hidden\x18\t \x01(\bR\x06hidden\x12\x1a\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05R\bpriority2Ȅ\x01\n" +
-	"\x0eControlService\x12M\n" +
-	"\bRegister\x12\x1f.powermanage.v1.RegisterRequest\x1a .powermanage.v1.RegisterResponse\x12e\n" +
-	"\x10RenewCertificate\x12'.powermanage.v1.RenewCertificateRequest\x1a(.powermanage.v1.RenewCertificateResponse\x12Y\n" +
-	"\fRefreshToken\x12#.powermanage.v1.RefreshTokenRequest\x1a$.powermanage.v1.RefreshTokenResponse\x12G\n" +
-	"\x06Logout\x12\x1d.powermanage.v1.LogoutRequest\x1a\x1e.powermanage.v1.LogoutResponse\x12_\n" +
-	"\x0eGetCurrentUser\x12%.powermanage.v1.GetCurrentUserRequest\x1a&.powermanage.v1.GetCurrentUserResponse\x12b\n" +
-	"\x0fListAuthMethods\x12&.powermanage.v1.ListAuthMethodsRequest\x1a'.powermanage.v1.ListAuthMethodsResponse\x12_\n" +
-	"\x0eGetSSOLoginURL\x12%.powermanage.v1.GetSSOLoginURLRequest\x1a&.powermanage.v1.GetSSOLoginURLResponse\x12V\n" +
-	"\vSSOCallback\x12\".powermanage.v1.SSOCallbackRequest\x1a#.powermanage.v1.SSOCallbackResponse\x12\\\n" +
-	"\rBeginCLILogin\x12$.powermanage.v1.BeginCLILoginRequest\x1a%.powermanage.v1.BeginCLILoginResponse\x12k\n" +
-	"\x12ExchangeCLISession\x12).powermanage.v1.ExchangeCLISessionRequest\x1a*.powermanage.v1.ExchangeCLISessionResponse\x12w\n" +
-	"\x16CreateIdentityProvider\x12-.powermanage.v1.CreateIdentityProviderRequest\x1a..powermanage.v1.CreateIdentityProviderResponse\x12n\n" +
-	"\x13GetIdentityProvider\x12*.powermanage.v1.GetIdentityProviderRequest\x1a+.powermanage.v1.GetIdentityProviderResponse\x12t\n" +
-	"\x15ListIdentityProviders\x12,.powermanage.v1.ListIdentityProvidersRequest\x1a-.powermanage.v1.ListIdentityProvidersResponse\x12w\n" +
-	"\x16UpdateIdentityProvider\x12-.powermanage.v1.UpdateIdentityProviderRequest\x1a..powermanage.v1.UpdateIdentityProviderResponse\x12w\n" +
-	"\x16DeleteIdentityProvider\x12-.powermanage.v1.DeleteIdentityProviderRequest\x1a..powermanage.v1.DeleteIdentityProviderResponse\x12h\n" +
-	"\x11ListIdentityLinks\x12(.powermanage.v1.ListIdentityLinksRequest\x1a).powermanage.v1.ListIdentityLinksResponse\x12_\n" +
-	"\x0eUnlinkIdentity\x12%.powermanage.v1.UnlinkIdentityRequest\x1a&.powermanage.v1.UnlinkIdentityResponse\x12S\n" +
+	" \x01(\x05R\bpriority2\xfc|\n" +
+	"\x0eControlService\x12G\n" +
+	"\bRegister\x12\x1c.cadestro.v1.RegisterRequest\x1a\x1d.cadestro.v1.RegisterResponse\x12_\n" +
+	"\x10RenewCertificate\x12$.cadestro.v1.RenewCertificateRequest\x1a%.cadestro.v1.RenewCertificateResponse\x12S\n" +
+	"\fRefreshToken\x12 .cadestro.v1.RefreshTokenRequest\x1a!.cadestro.v1.RefreshTokenResponse\x12A\n" +
+	"\x06Logout\x12\x1a.cadestro.v1.LogoutRequest\x1a\x1b.cadestro.v1.LogoutResponse\x12Y\n" +
+	"\x0eGetCurrentUser\x12\".cadestro.v1.GetCurrentUserRequest\x1a#.cadestro.v1.GetCurrentUserResponse\x12\\\n" +
+	"\x0fListAuthMethods\x12#.cadestro.v1.ListAuthMethodsRequest\x1a$.cadestro.v1.ListAuthMethodsResponse\x12Y\n" +
+	"\x0eGetSSOLoginURL\x12\".cadestro.v1.GetSSOLoginURLRequest\x1a#.cadestro.v1.GetSSOLoginURLResponse\x12P\n" +
+	"\vSSOCallback\x12\x1f.cadestro.v1.SSOCallbackRequest\x1a .cadestro.v1.SSOCallbackResponse\x12V\n" +
+	"\rBeginCLILogin\x12!.cadestro.v1.BeginCLILoginRequest\x1a\".cadestro.v1.BeginCLILoginResponse\x12e\n" +
+	"\x12ExchangeCLISession\x12&.cadestro.v1.ExchangeCLISessionRequest\x1a'.cadestro.v1.ExchangeCLISessionResponse\x12q\n" +
+	"\x16CreateIdentityProvider\x12*.cadestro.v1.CreateIdentityProviderRequest\x1a+.cadestro.v1.CreateIdentityProviderResponse\x12h\n" +
+	"\x13GetIdentityProvider\x12'.cadestro.v1.GetIdentityProviderRequest\x1a(.cadestro.v1.GetIdentityProviderResponse\x12n\n" +
+	"\x15ListIdentityProviders\x12).cadestro.v1.ListIdentityProvidersRequest\x1a*.cadestro.v1.ListIdentityProvidersResponse\x12q\n" +
+	"\x16UpdateIdentityProvider\x12*.cadestro.v1.UpdateIdentityProviderRequest\x1a+.cadestro.v1.UpdateIdentityProviderResponse\x12q\n" +
+	"\x16DeleteIdentityProvider\x12*.cadestro.v1.DeleteIdentityProviderRequest\x1a+.cadestro.v1.DeleteIdentityProviderResponse\x12b\n" +
+	"\x11ListIdentityLinks\x12%.cadestro.v1.ListIdentityLinksRequest\x1a&.cadestro.v1.ListIdentityLinksResponse\x12Y\n" +
+	"\x0eUnlinkIdentity\x12\".cadestro.v1.UnlinkIdentityRequest\x1a#.cadestro.v1.UnlinkIdentityResponse\x12M\n" +
 	"\n" +
-	"EnableSCIM\x12!.powermanage.v1.EnableSCIMRequest\x1a\".powermanage.v1.EnableSCIMResponse\x12V\n" +
-	"\vDisableSCIM\x12\".powermanage.v1.DisableSCIMRequest\x1a#.powermanage.v1.DisableSCIMResponse\x12b\n" +
-	"\x0fRotateSCIMToken\x12&.powermanage.v1.RotateSCIMTokenRequest\x1a'.powermanage.v1.RotateSCIMTokenResponse\x12Y\n" +
-	"\fEraseJITUser\x12#.powermanage.v1.EraseJITUserRequest\x1a$.powermanage.v1.EraseJITUserResponse\x12J\n" +
-	"\aGetUser\x12\x1e.powermanage.v1.GetUserRequest\x1a\x1f.powermanage.v1.GetUserResponse\x12P\n" +
-	"\tListUsers\x12 .powermanage.v1.ListUsersRequest\x1a!.powermanage.v1.ListUsersResponse\x12]\n" +
-	"\x0fUpdateUserEmail\x12&.powermanage.v1.UpdateUserEmailRequest\x1a\".powermanage.v1.UpdateUserResponse\x12]\n" +
-	"\x0fSetUserDisabled\x12&.powermanage.v1.SetUserDisabledRequest\x1a\".powermanage.v1.UpdateUserResponse\x12a\n" +
-	"\x11UpdateUserProfile\x12(.powermanage.v1.UpdateUserProfileRequest\x1a\".powermanage.v1.UpdateUserResponse\x12m\n" +
-	"\x17UpdateUserLinuxUsername\x12..powermanage.v1.UpdateUserLinuxUsernameRequest\x1a\".powermanage.v1.UpdateUserResponse\x12\\\n" +
-	"\rAddUserSshKey\x12$.powermanage.v1.AddUserSshKeyRequest\x1a%.powermanage.v1.AddUserSshKeyResponse\x12e\n" +
-	"\x10RemoveUserSshKey\x12'.powermanage.v1.RemoveUserSshKeyRequest\x1a(.powermanage.v1.RemoveUserSshKeyResponse\x12i\n" +
-	"\x15UpdateUserSshSettings\x12,.powermanage.v1.UpdateUserSshSettingsRequest\x1a\".powermanage.v1.UpdateUserResponse\x12V\n" +
-	"\vListDevices\x12\".powermanage.v1.ListDevicesRequest\x1a#.powermanage.v1.ListDevicesResponse\x12P\n" +
-	"\tGetDevice\x12 .powermanage.v1.GetDeviceRequest\x1a!.powermanage.v1.GetDeviceResponse\x12]\n" +
-	"\x0eSetDeviceLabel\x12%.powermanage.v1.SetDeviceLabelRequest\x1a$.powermanage.v1.UpdateDeviceResponse\x12c\n" +
-	"\x11RemoveDeviceLabel\x12(.powermanage.v1.RemoveDeviceLabelRequest\x1a$.powermanage.v1.UpdateDeviceResponse\x12Y\n" +
-	"\fAssignDevice\x12#.powermanage.v1.AssignDeviceRequest\x1a$.powermanage.v1.AssignDeviceResponse\x12_\n" +
-	"\x0eUnassignDevice\x12%.powermanage.v1.UnassignDeviceRequest\x1a&.powermanage.v1.UnassignDeviceResponse\x12n\n" +
-	"\x13ListDeviceAssignees\x12*.powermanage.v1.ListDeviceAssigneesRequest\x1a+.powermanage.v1.ListDeviceAssigneesResponse\x12k\n" +
-	"\x15SetDeviceSyncInterval\x12,.powermanage.v1.SetDeviceSyncIntervalRequest\x1a$.powermanage.v1.UpdateDeviceResponse\x12u\n" +
-	"\x1aSetDeviceInventoryInterval\x121.powermanage.v1.SetDeviceInventoryIntervalRequest\x1a$.powermanage.v1.UpdateDeviceResponse\x12Y\n" +
-	"\fDeleteDevice\x12#.powermanage.v1.DeleteDeviceRequest\x1a$.powermanage.v1.DeleteDeviceResponse\x12V\n" +
-	"\vCreateToken\x12\".powermanage.v1.CreateTokenRequest\x1a#.powermanage.v1.CreateTokenResponse\x12M\n" +
-	"\bGetToken\x12\x1f.powermanage.v1.GetTokenRequest\x1a .powermanage.v1.GetTokenResponse\x12S\n" +
+	"EnableSCIM\x12\x1e.cadestro.v1.EnableSCIMRequest\x1a\x1f.cadestro.v1.EnableSCIMResponse\x12P\n" +
+	"\vDisableSCIM\x12\x1f.cadestro.v1.DisableSCIMRequest\x1a .cadestro.v1.DisableSCIMResponse\x12\\\n" +
+	"\x0fRotateSCIMToken\x12#.cadestro.v1.RotateSCIMTokenRequest\x1a$.cadestro.v1.RotateSCIMTokenResponse\x12S\n" +
+	"\fEraseJITUser\x12 .cadestro.v1.EraseJITUserRequest\x1a!.cadestro.v1.EraseJITUserResponse\x12D\n" +
+	"\aGetUser\x12\x1b.cadestro.v1.GetUserRequest\x1a\x1c.cadestro.v1.GetUserResponse\x12J\n" +
+	"\tListUsers\x12\x1d.cadestro.v1.ListUsersRequest\x1a\x1e.cadestro.v1.ListUsersResponse\x12W\n" +
+	"\x0fUpdateUserEmail\x12#.cadestro.v1.UpdateUserEmailRequest\x1a\x1f.cadestro.v1.UpdateUserResponse\x12W\n" +
+	"\x0fSetUserDisabled\x12#.cadestro.v1.SetUserDisabledRequest\x1a\x1f.cadestro.v1.UpdateUserResponse\x12[\n" +
+	"\x11UpdateUserProfile\x12%.cadestro.v1.UpdateUserProfileRequest\x1a\x1f.cadestro.v1.UpdateUserResponse\x12g\n" +
+	"\x17UpdateUserLinuxUsername\x12+.cadestro.v1.UpdateUserLinuxUsernameRequest\x1a\x1f.cadestro.v1.UpdateUserResponse\x12V\n" +
+	"\rAddUserSshKey\x12!.cadestro.v1.AddUserSshKeyRequest\x1a\".cadestro.v1.AddUserSshKeyResponse\x12_\n" +
+	"\x10RemoveUserSshKey\x12$.cadestro.v1.RemoveUserSshKeyRequest\x1a%.cadestro.v1.RemoveUserSshKeyResponse\x12c\n" +
+	"\x15UpdateUserSshSettings\x12).cadestro.v1.UpdateUserSshSettingsRequest\x1a\x1f.cadestro.v1.UpdateUserResponse\x12P\n" +
+	"\vListDevices\x12\x1f.cadestro.v1.ListDevicesRequest\x1a .cadestro.v1.ListDevicesResponse\x12J\n" +
+	"\tGetDevice\x12\x1d.cadestro.v1.GetDeviceRequest\x1a\x1e.cadestro.v1.GetDeviceResponse\x12W\n" +
+	"\x0eSetDeviceLabel\x12\".cadestro.v1.SetDeviceLabelRequest\x1a!.cadestro.v1.UpdateDeviceResponse\x12]\n" +
+	"\x11RemoveDeviceLabel\x12%.cadestro.v1.RemoveDeviceLabelRequest\x1a!.cadestro.v1.UpdateDeviceResponse\x12S\n" +
+	"\fAssignDevice\x12 .cadestro.v1.AssignDeviceRequest\x1a!.cadestro.v1.AssignDeviceResponse\x12Y\n" +
+	"\x0eUnassignDevice\x12\".cadestro.v1.UnassignDeviceRequest\x1a#.cadestro.v1.UnassignDeviceResponse\x12h\n" +
+	"\x13ListDeviceAssignees\x12'.cadestro.v1.ListDeviceAssigneesRequest\x1a(.cadestro.v1.ListDeviceAssigneesResponse\x12e\n" +
+	"\x15SetDeviceSyncInterval\x12).cadestro.v1.SetDeviceSyncIntervalRequest\x1a!.cadestro.v1.UpdateDeviceResponse\x12o\n" +
+	"\x1aSetDeviceInventoryInterval\x12..cadestro.v1.SetDeviceInventoryIntervalRequest\x1a!.cadestro.v1.UpdateDeviceResponse\x12S\n" +
+	"\fDeleteDevice\x12 .cadestro.v1.DeleteDeviceRequest\x1a!.cadestro.v1.DeleteDeviceResponse\x12P\n" +
+	"\vCreateToken\x12\x1f.cadestro.v1.CreateTokenRequest\x1a .cadestro.v1.CreateTokenResponse\x12G\n" +
+	"\bGetToken\x12\x1c.cadestro.v1.GetTokenRequest\x1a\x1d.cadestro.v1.GetTokenResponse\x12M\n" +
 	"\n" +
-	"ListTokens\x12!.powermanage.v1.ListTokensRequest\x1a\".powermanage.v1.ListTokensResponse\x12V\n" +
-	"\vRenameToken\x12\".powermanage.v1.RenameTokenRequest\x1a#.powermanage.v1.UpdateTokenResponse\x12`\n" +
-	"\x10SetTokenDisabled\x12'.powermanage.v1.SetTokenDisabledRequest\x1a#.powermanage.v1.UpdateTokenResponse\x12V\n" +
-	"\vDeleteToken\x12\".powermanage.v1.DeleteTokenRequest\x1a#.powermanage.v1.DeleteTokenResponse\x12Y\n" +
-	"\fCreateAction\x12#.powermanage.v1.CreateActionRequest\x1a$.powermanage.v1.CreateActionResponse\x12P\n" +
-	"\tGetAction\x12 .powermanage.v1.GetActionRequest\x1a!.powermanage.v1.GetActionResponse\x12V\n" +
-	"\vListActions\x12\".powermanage.v1.ListActionsRequest\x1a#.powermanage.v1.ListActionsResponse\x12Y\n" +
-	"\fRenameAction\x12#.powermanage.v1.RenameActionRequest\x1a$.powermanage.v1.UpdateActionResponse\x12o\n" +
-	"\x17UpdateActionDescription\x12..powermanage.v1.UpdateActionDescriptionRequest\x1a$.powermanage.v1.UpdateActionResponse\x12e\n" +
-	"\x12UpdateActionParams\x12).powermanage.v1.UpdateActionParamsRequest\x1a$.powermanage.v1.UpdateActionResponse\x12Y\n" +
-	"\fDeleteAction\x12#.powermanage.v1.DeleteActionRequest\x1a$.powermanage.v1.DeleteActionResponse\x12b\n" +
-	"\x0fCreateActionSet\x12&.powermanage.v1.CreateActionSetRequest\x1a'.powermanage.v1.CreateActionSetResponse\x12Y\n" +
-	"\fGetActionSet\x12#.powermanage.v1.GetActionSetRequest\x1a$.powermanage.v1.GetActionSetResponse\x12_\n" +
-	"\x0eListActionSets\x12%.powermanage.v1.ListActionSetsRequest\x1a&.powermanage.v1.ListActionSetsResponse\x12b\n" +
-	"\x0fRenameActionSet\x12&.powermanage.v1.RenameActionSetRequest\x1a'.powermanage.v1.UpdateActionSetResponse\x12x\n" +
-	"\x1aUpdateActionSetDescription\x121.powermanage.v1.UpdateActionSetDescriptionRequest\x1a'.powermanage.v1.UpdateActionSetResponse\x12r\n" +
-	"\x17UpdateActionSetSchedule\x12..powermanage.v1.UpdateActionSetScheduleRequest\x1a'.powermanage.v1.UpdateActionSetResponse\x12b\n" +
-	"\x0fDeleteActionSet\x12&.powermanage.v1.DeleteActionSetRequest\x1a'.powermanage.v1.DeleteActionSetResponse\x12_\n" +
-	"\x0eAddActionToSet\x12%.powermanage.v1.AddActionToSetRequest\x1a&.powermanage.v1.AddActionToSetResponse\x12n\n" +
-	"\x13RemoveActionFromSet\x12*.powermanage.v1.RemoveActionFromSetRequest\x1a+.powermanage.v1.RemoveActionFromSetResponse\x12k\n" +
-	"\x12ReorderActionInSet\x12).powermanage.v1.ReorderActionInSetRequest\x1a*.powermanage.v1.ReorderActionInSetResponse\x12e\n" +
-	"\x10CreateDefinition\x12'.powermanage.v1.CreateDefinitionRequest\x1a(.powermanage.v1.CreateDefinitionResponse\x12\\\n" +
-	"\rGetDefinition\x12$.powermanage.v1.GetDefinitionRequest\x1a%.powermanage.v1.GetDefinitionResponse\x12b\n" +
-	"\x0fListDefinitions\x12&.powermanage.v1.ListDefinitionsRequest\x1a'.powermanage.v1.ListDefinitionsResponse\x12e\n" +
-	"\x10RenameDefinition\x12'.powermanage.v1.RenameDefinitionRequest\x1a(.powermanage.v1.UpdateDefinitionResponse\x12{\n" +
-	"\x1bUpdateDefinitionDescription\x122.powermanage.v1.UpdateDefinitionDescriptionRequest\x1a(.powermanage.v1.UpdateDefinitionResponse\x12u\n" +
-	"\x18UpdateDefinitionSchedule\x12/.powermanage.v1.UpdateDefinitionScheduleRequest\x1a(.powermanage.v1.UpdateDefinitionResponse\x12e\n" +
-	"\x10DeleteDefinition\x12'.powermanage.v1.DeleteDefinitionRequest\x1a(.powermanage.v1.DeleteDefinitionResponse\x12}\n" +
-	"\x18AddActionSetToDefinition\x12/.powermanage.v1.AddActionSetToDefinitionRequest\x1a0.powermanage.v1.AddActionSetToDefinitionResponse\x12\x8c\x01\n" +
-	"\x1dRemoveActionSetFromDefinition\x124.powermanage.v1.RemoveActionSetFromDefinitionRequest\x1a5.powermanage.v1.RemoveActionSetFromDefinitionResponse\x12\x89\x01\n" +
-	"\x1cReorderActionSetInDefinition\x123.powermanage.v1.ReorderActionSetInDefinitionRequest\x1a4.powermanage.v1.ReorderActionSetInDefinitionResponse\x12h\n" +
-	"\x11CreateDeviceGroup\x12(.powermanage.v1.CreateDeviceGroupRequest\x1a).powermanage.v1.CreateDeviceGroupResponse\x12_\n" +
-	"\x0eGetDeviceGroup\x12%.powermanage.v1.GetDeviceGroupRequest\x1a&.powermanage.v1.GetDeviceGroupResponse\x12e\n" +
-	"\x10ListDeviceGroups\x12'.powermanage.v1.ListDeviceGroupsRequest\x1a(.powermanage.v1.ListDeviceGroupsResponse\x12\x80\x01\n" +
-	"\x19ListDeviceGroupsForDevice\x120.powermanage.v1.ListDeviceGroupsForDeviceRequest\x1a1.powermanage.v1.ListDeviceGroupsForDeviceResponse\x12h\n" +
-	"\x11RenameDeviceGroup\x12(.powermanage.v1.RenameDeviceGroupRequest\x1a).powermanage.v1.UpdateDeviceGroupResponse\x12~\n" +
-	"\x1cUpdateDeviceGroupDescription\x123.powermanage.v1.UpdateDeviceGroupDescriptionRequest\x1a).powermanage.v1.UpdateDeviceGroupResponse\x12w\n" +
-	"\x16UpdateDeviceGroupQuery\x12-.powermanage.v1.UpdateDeviceGroupQueryRequest\x1a..powermanage.v1.UpdateDeviceGroupQueryResponse\x12h\n" +
-	"\x11DeleteDeviceGroup\x12(.powermanage.v1.DeleteDeviceGroupRequest\x1a).powermanage.v1.DeleteDeviceGroupResponse\x12e\n" +
-	"\x10AddDeviceToGroup\x12'.powermanage.v1.AddDeviceToGroupRequest\x1a(.powermanage.v1.AddDeviceToGroupResponse\x12t\n" +
-	"\x15RemoveDeviceFromGroup\x12,.powermanage.v1.RemoveDeviceFromGroupRequest\x1a-.powermanage.v1.RemoveDeviceFromGroupResponse\x12q\n" +
-	"\x14ValidateDynamicQuery\x12+.powermanage.v1.ValidateDynamicQueryRequest\x1a,.powermanage.v1.ValidateDynamicQueryResponse\x12q\n" +
-	"\x14EvaluateDynamicGroup\x12+.powermanage.v1.EvaluateDynamicGroupRequest\x1a,.powermanage.v1.EvaluateDynamicGroupResponse\x12z\n" +
-	"\x1aSetDeviceGroupSyncInterval\x121.powermanage.v1.SetDeviceGroupSyncIntervalRequest\x1a).powermanage.v1.UpdateDeviceGroupResponse\x12\x84\x01\n" +
-	"\x1fSetDeviceGroupInventoryInterval\x126.powermanage.v1.SetDeviceGroupInventoryIntervalRequest\x1a).powermanage.v1.UpdateDeviceGroupResponse\x12\x84\x01\n" +
-	"\x1fSetDeviceGroupMaintenanceWindow\x126.powermanage.v1.SetDeviceGroupMaintenanceWindowRequest\x1a).powermanage.v1.UpdateDeviceGroupResponse\x12e\n" +
-	"\x10CreateAssignment\x12'.powermanage.v1.CreateAssignmentRequest\x1a(.powermanage.v1.CreateAssignmentResponse\x12e\n" +
-	"\x10DeleteAssignment\x12'.powermanage.v1.DeleteAssignmentRequest\x1a(.powermanage.v1.DeleteAssignmentResponse\x12b\n" +
-	"\x0fListAssignments\x12&.powermanage.v1.ListAssignmentsRequest\x1a'.powermanage.v1.ListAssignmentsResponse\x12q\n" +
-	"\x14GetDeviceAssignments\x12+.powermanage.v1.GetDeviceAssignmentsRequest\x1a,.powermanage.v1.GetDeviceAssignmentsResponse\x12k\n" +
-	"\x12GetUserAssignments\x12).powermanage.v1.GetUserAssignmentsRequest\x1a*.powermanage.v1.GetUserAssignmentsResponse\x12e\n" +
-	"\x10SetUserSelection\x12'.powermanage.v1.SetUserSelectionRequest\x1a(.powermanage.v1.SetUserSelectionResponse\x12q\n" +
-	"\x14ListAvailableActions\x12+.powermanage.v1.ListAvailableActionsRequest\x1a,.powermanage.v1.ListAvailableActionsResponse\x12_\n" +
-	"\x0eDispatchAction\x12%.powermanage.v1.DispatchActionRequest\x1a&.powermanage.v1.DispatchActionResponse\x12k\n" +
-	"\x12DispatchToMultiple\x12).powermanage.v1.DispatchToMultipleRequest\x1a*.powermanage.v1.DispatchToMultipleResponse\x12z\n" +
-	"\x17DispatchAssignedActions\x12..powermanage.v1.DispatchAssignedActionsRequest\x1a/.powermanage.v1.DispatchAssignedActionsResponse\x12h\n" +
-	"\x11DispatchActionSet\x12(.powermanage.v1.DispatchActionSetRequest\x1a).powermanage.v1.DispatchActionSetResponse\x12k\n" +
-	"\x12DispatchDefinition\x12).powermanage.v1.DispatchDefinitionRequest\x1a*.powermanage.v1.DispatchDefinitionResponse\x12b\n" +
-	"\x0fDispatchToGroup\x12&.powermanage.v1.DispatchToGroupRequest\x1a'.powermanage.v1.DispatchToGroupResponse\x12t\n" +
-	"\x15DispatchInstantAction\x12,.powermanage.v1.DispatchInstantActionRequest\x1a-.powermanage.v1.DispatchInstantActionResponse\x12b\n" +
-	"\x0fCancelExecution\x12&.powermanage.v1.CancelExecutionRequest\x1a'.powermanage.v1.CancelExecutionResponse\x12Y\n" +
-	"\fGetExecution\x12#.powermanage.v1.GetExecutionRequest\x1a$.powermanage.v1.GetExecutionResponse\x12_\n" +
-	"\x0eListExecutions\x12%.powermanage.v1.ListExecutionsRequest\x1a&.powermanage.v1.ListExecutionsResponse\x12b\n" +
-	"\x0fListAuditEvents\x12&.powermanage.v1.ListAuditEventsRequest\x1a'.powermanage.v1.ListAuditEventsResponse\x12h\n" +
-	"\x11ExportAuditEvents\x12(.powermanage.v1.ExportAuditEventsRequest\x1a).powermanage.v1.ExportAuditEventsResponse\x12e\n" +
-	"\x10ListLpsPasswords\x12'.powermanage.v1.ListLpsPasswordsRequest\x1a(.powermanage.v1.ListLpsPasswordsResponse\x12h\n" +
-	"\x11RevealLpsPassword\x12(.powermanage.v1.RevealLpsPasswordRequest\x1a).powermanage.v1.RevealLpsPasswordResponse\x12Y\n" +
-	"\fListLuksKeys\x12#.powermanage.v1.ListLuksKeysRequest\x1a$.powermanage.v1.ListLuksKeysResponse\x12\\\n" +
-	"\rRevealLuksKey\x12$.powermanage.v1.RevealLuksKeyRequest\x1a%.powermanage.v1.RevealLuksKeyResponse\x12b\n" +
-	"\x0fCreateLuksToken\x12&.powermanage.v1.CreateLuksTokenRequest\x1a'.powermanage.v1.CreateLuksTokenResponse\x12n\n" +
-	"\x13RevokeLuksDeviceKey\x12*.powermanage.v1.RevokeLuksDeviceKeyRequest\x1a+.powermanage.v1.RevokeLuksDeviceKeyResponse\x12b\n" +
-	"\x0fDispatchOSQuery\x12&.powermanage.v1.DispatchOSQueryRequest\x1a'.powermanage.v1.DispatchOSQueryResponse\x12e\n" +
-	"\x10GetOSQueryResult\x12'.powermanage.v1.GetOSQueryResultRequest\x1a(.powermanage.v1.GetOSQueryResultResponse\x12k\n" +
-	"\x12GetDeviceInventory\x12).powermanage.v1.GetDeviceInventoryRequest\x1a*.powermanage.v1.GetDeviceInventoryResponse\x12w\n" +
-	"\x16RefreshDeviceInventory\x12-.powermanage.v1.RefreshDeviceInventoryRequest\x1a..powermanage.v1.RefreshDeviceInventoryResponse\x12b\n" +
-	"\x0fQueryDeviceLogs\x12&.powermanage.v1.QueryDeviceLogsRequest\x1a'.powermanage.v1.QueryDeviceLogsResponse\x12k\n" +
-	"\x12GetDeviceLogResult\x12).powermanage.v1.GetDeviceLogResultRequest\x1a*.powermanage.v1.GetDeviceLogResultResponse\x12S\n" +
+	"ListTokens\x12\x1e.cadestro.v1.ListTokensRequest\x1a\x1f.cadestro.v1.ListTokensResponse\x12P\n" +
+	"\vRenameToken\x12\x1f.cadestro.v1.RenameTokenRequest\x1a .cadestro.v1.UpdateTokenResponse\x12Z\n" +
+	"\x10SetTokenDisabled\x12$.cadestro.v1.SetTokenDisabledRequest\x1a .cadestro.v1.UpdateTokenResponse\x12P\n" +
+	"\vDeleteToken\x12\x1f.cadestro.v1.DeleteTokenRequest\x1a .cadestro.v1.DeleteTokenResponse\x12S\n" +
+	"\fCreateAction\x12 .cadestro.v1.CreateActionRequest\x1a!.cadestro.v1.CreateActionResponse\x12J\n" +
+	"\tGetAction\x12\x1d.cadestro.v1.GetActionRequest\x1a\x1e.cadestro.v1.GetActionResponse\x12P\n" +
+	"\vListActions\x12\x1f.cadestro.v1.ListActionsRequest\x1a .cadestro.v1.ListActionsResponse\x12S\n" +
+	"\fRenameAction\x12 .cadestro.v1.RenameActionRequest\x1a!.cadestro.v1.UpdateActionResponse\x12i\n" +
+	"\x17UpdateActionDescription\x12+.cadestro.v1.UpdateActionDescriptionRequest\x1a!.cadestro.v1.UpdateActionResponse\x12_\n" +
+	"\x12UpdateActionParams\x12&.cadestro.v1.UpdateActionParamsRequest\x1a!.cadestro.v1.UpdateActionResponse\x12S\n" +
+	"\fDeleteAction\x12 .cadestro.v1.DeleteActionRequest\x1a!.cadestro.v1.DeleteActionResponse\x12\\\n" +
+	"\x0fCreateActionSet\x12#.cadestro.v1.CreateActionSetRequest\x1a$.cadestro.v1.CreateActionSetResponse\x12S\n" +
+	"\fGetActionSet\x12 .cadestro.v1.GetActionSetRequest\x1a!.cadestro.v1.GetActionSetResponse\x12Y\n" +
+	"\x0eListActionSets\x12\".cadestro.v1.ListActionSetsRequest\x1a#.cadestro.v1.ListActionSetsResponse\x12\\\n" +
+	"\x0fRenameActionSet\x12#.cadestro.v1.RenameActionSetRequest\x1a$.cadestro.v1.UpdateActionSetResponse\x12r\n" +
+	"\x1aUpdateActionSetDescription\x12..cadestro.v1.UpdateActionSetDescriptionRequest\x1a$.cadestro.v1.UpdateActionSetResponse\x12l\n" +
+	"\x17UpdateActionSetSchedule\x12+.cadestro.v1.UpdateActionSetScheduleRequest\x1a$.cadestro.v1.UpdateActionSetResponse\x12\\\n" +
+	"\x0fDeleteActionSet\x12#.cadestro.v1.DeleteActionSetRequest\x1a$.cadestro.v1.DeleteActionSetResponse\x12Y\n" +
+	"\x0eAddActionToSet\x12\".cadestro.v1.AddActionToSetRequest\x1a#.cadestro.v1.AddActionToSetResponse\x12h\n" +
+	"\x13RemoveActionFromSet\x12'.cadestro.v1.RemoveActionFromSetRequest\x1a(.cadestro.v1.RemoveActionFromSetResponse\x12e\n" +
+	"\x12ReorderActionInSet\x12&.cadestro.v1.ReorderActionInSetRequest\x1a'.cadestro.v1.ReorderActionInSetResponse\x12_\n" +
+	"\x10CreateDefinition\x12$.cadestro.v1.CreateDefinitionRequest\x1a%.cadestro.v1.CreateDefinitionResponse\x12V\n" +
+	"\rGetDefinition\x12!.cadestro.v1.GetDefinitionRequest\x1a\".cadestro.v1.GetDefinitionResponse\x12\\\n" +
+	"\x0fListDefinitions\x12#.cadestro.v1.ListDefinitionsRequest\x1a$.cadestro.v1.ListDefinitionsResponse\x12_\n" +
+	"\x10RenameDefinition\x12$.cadestro.v1.RenameDefinitionRequest\x1a%.cadestro.v1.UpdateDefinitionResponse\x12u\n" +
+	"\x1bUpdateDefinitionDescription\x12/.cadestro.v1.UpdateDefinitionDescriptionRequest\x1a%.cadestro.v1.UpdateDefinitionResponse\x12o\n" +
+	"\x18UpdateDefinitionSchedule\x12,.cadestro.v1.UpdateDefinitionScheduleRequest\x1a%.cadestro.v1.UpdateDefinitionResponse\x12_\n" +
+	"\x10DeleteDefinition\x12$.cadestro.v1.DeleteDefinitionRequest\x1a%.cadestro.v1.DeleteDefinitionResponse\x12w\n" +
+	"\x18AddActionSetToDefinition\x12,.cadestro.v1.AddActionSetToDefinitionRequest\x1a-.cadestro.v1.AddActionSetToDefinitionResponse\x12\x86\x01\n" +
+	"\x1dRemoveActionSetFromDefinition\x121.cadestro.v1.RemoveActionSetFromDefinitionRequest\x1a2.cadestro.v1.RemoveActionSetFromDefinitionResponse\x12\x83\x01\n" +
+	"\x1cReorderActionSetInDefinition\x120.cadestro.v1.ReorderActionSetInDefinitionRequest\x1a1.cadestro.v1.ReorderActionSetInDefinitionResponse\x12b\n" +
+	"\x11CreateDeviceGroup\x12%.cadestro.v1.CreateDeviceGroupRequest\x1a&.cadestro.v1.CreateDeviceGroupResponse\x12Y\n" +
+	"\x0eGetDeviceGroup\x12\".cadestro.v1.GetDeviceGroupRequest\x1a#.cadestro.v1.GetDeviceGroupResponse\x12_\n" +
+	"\x10ListDeviceGroups\x12$.cadestro.v1.ListDeviceGroupsRequest\x1a%.cadestro.v1.ListDeviceGroupsResponse\x12z\n" +
+	"\x19ListDeviceGroupsForDevice\x12-.cadestro.v1.ListDeviceGroupsForDeviceRequest\x1a..cadestro.v1.ListDeviceGroupsForDeviceResponse\x12b\n" +
+	"\x11RenameDeviceGroup\x12%.cadestro.v1.RenameDeviceGroupRequest\x1a&.cadestro.v1.UpdateDeviceGroupResponse\x12x\n" +
+	"\x1cUpdateDeviceGroupDescription\x120.cadestro.v1.UpdateDeviceGroupDescriptionRequest\x1a&.cadestro.v1.UpdateDeviceGroupResponse\x12q\n" +
+	"\x16UpdateDeviceGroupQuery\x12*.cadestro.v1.UpdateDeviceGroupQueryRequest\x1a+.cadestro.v1.UpdateDeviceGroupQueryResponse\x12b\n" +
+	"\x11DeleteDeviceGroup\x12%.cadestro.v1.DeleteDeviceGroupRequest\x1a&.cadestro.v1.DeleteDeviceGroupResponse\x12_\n" +
+	"\x10AddDeviceToGroup\x12$.cadestro.v1.AddDeviceToGroupRequest\x1a%.cadestro.v1.AddDeviceToGroupResponse\x12n\n" +
+	"\x15RemoveDeviceFromGroup\x12).cadestro.v1.RemoveDeviceFromGroupRequest\x1a*.cadestro.v1.RemoveDeviceFromGroupResponse\x12k\n" +
+	"\x14ValidateDynamicQuery\x12(.cadestro.v1.ValidateDynamicQueryRequest\x1a).cadestro.v1.ValidateDynamicQueryResponse\x12k\n" +
+	"\x14EvaluateDynamicGroup\x12(.cadestro.v1.EvaluateDynamicGroupRequest\x1a).cadestro.v1.EvaluateDynamicGroupResponse\x12t\n" +
+	"\x1aSetDeviceGroupSyncInterval\x12..cadestro.v1.SetDeviceGroupSyncIntervalRequest\x1a&.cadestro.v1.UpdateDeviceGroupResponse\x12~\n" +
+	"\x1fSetDeviceGroupInventoryInterval\x123.cadestro.v1.SetDeviceGroupInventoryIntervalRequest\x1a&.cadestro.v1.UpdateDeviceGroupResponse\x12~\n" +
+	"\x1fSetDeviceGroupMaintenanceWindow\x123.cadestro.v1.SetDeviceGroupMaintenanceWindowRequest\x1a&.cadestro.v1.UpdateDeviceGroupResponse\x12_\n" +
+	"\x10CreateAssignment\x12$.cadestro.v1.CreateAssignmentRequest\x1a%.cadestro.v1.CreateAssignmentResponse\x12_\n" +
+	"\x10DeleteAssignment\x12$.cadestro.v1.DeleteAssignmentRequest\x1a%.cadestro.v1.DeleteAssignmentResponse\x12\\\n" +
+	"\x0fListAssignments\x12#.cadestro.v1.ListAssignmentsRequest\x1a$.cadestro.v1.ListAssignmentsResponse\x12k\n" +
+	"\x14GetDeviceAssignments\x12(.cadestro.v1.GetDeviceAssignmentsRequest\x1a).cadestro.v1.GetDeviceAssignmentsResponse\x12e\n" +
+	"\x12GetUserAssignments\x12&.cadestro.v1.GetUserAssignmentsRequest\x1a'.cadestro.v1.GetUserAssignmentsResponse\x12_\n" +
+	"\x10SetUserSelection\x12$.cadestro.v1.SetUserSelectionRequest\x1a%.cadestro.v1.SetUserSelectionResponse\x12k\n" +
+	"\x14ListAvailableActions\x12(.cadestro.v1.ListAvailableActionsRequest\x1a).cadestro.v1.ListAvailableActionsResponse\x12Y\n" +
+	"\x0eDispatchAction\x12\".cadestro.v1.DispatchActionRequest\x1a#.cadestro.v1.DispatchActionResponse\x12e\n" +
+	"\x12DispatchToMultiple\x12&.cadestro.v1.DispatchToMultipleRequest\x1a'.cadestro.v1.DispatchToMultipleResponse\x12t\n" +
+	"\x17DispatchAssignedActions\x12+.cadestro.v1.DispatchAssignedActionsRequest\x1a,.cadestro.v1.DispatchAssignedActionsResponse\x12b\n" +
+	"\x11DispatchActionSet\x12%.cadestro.v1.DispatchActionSetRequest\x1a&.cadestro.v1.DispatchActionSetResponse\x12e\n" +
+	"\x12DispatchDefinition\x12&.cadestro.v1.DispatchDefinitionRequest\x1a'.cadestro.v1.DispatchDefinitionResponse\x12\\\n" +
+	"\x0fDispatchToGroup\x12#.cadestro.v1.DispatchToGroupRequest\x1a$.cadestro.v1.DispatchToGroupResponse\x12n\n" +
+	"\x15DispatchInstantAction\x12).cadestro.v1.DispatchInstantActionRequest\x1a*.cadestro.v1.DispatchInstantActionResponse\x12\\\n" +
+	"\x0fCancelExecution\x12#.cadestro.v1.CancelExecutionRequest\x1a$.cadestro.v1.CancelExecutionResponse\x12S\n" +
+	"\fGetExecution\x12 .cadestro.v1.GetExecutionRequest\x1a!.cadestro.v1.GetExecutionResponse\x12Y\n" +
+	"\x0eListExecutions\x12\".cadestro.v1.ListExecutionsRequest\x1a#.cadestro.v1.ListExecutionsResponse\x12\\\n" +
+	"\x0fListAuditEvents\x12#.cadestro.v1.ListAuditEventsRequest\x1a$.cadestro.v1.ListAuditEventsResponse\x12b\n" +
+	"\x11ExportAuditEvents\x12%.cadestro.v1.ExportAuditEventsRequest\x1a&.cadestro.v1.ExportAuditEventsResponse\x12_\n" +
+	"\x10ListLpsPasswords\x12$.cadestro.v1.ListLpsPasswordsRequest\x1a%.cadestro.v1.ListLpsPasswordsResponse\x12b\n" +
+	"\x11RevealLpsPassword\x12%.cadestro.v1.RevealLpsPasswordRequest\x1a&.cadestro.v1.RevealLpsPasswordResponse\x12S\n" +
+	"\fListLuksKeys\x12 .cadestro.v1.ListLuksKeysRequest\x1a!.cadestro.v1.ListLuksKeysResponse\x12V\n" +
+	"\rRevealLuksKey\x12!.cadestro.v1.RevealLuksKeyRequest\x1a\".cadestro.v1.RevealLuksKeyResponse\x12\\\n" +
+	"\x0fCreateLuksToken\x12#.cadestro.v1.CreateLuksTokenRequest\x1a$.cadestro.v1.CreateLuksTokenResponse\x12h\n" +
+	"\x13RevokeLuksDeviceKey\x12'.cadestro.v1.RevokeLuksDeviceKeyRequest\x1a(.cadestro.v1.RevokeLuksDeviceKeyResponse\x12\\\n" +
+	"\x0fDispatchOSQuery\x12#.cadestro.v1.DispatchOSQueryRequest\x1a$.cadestro.v1.DispatchOSQueryResponse\x12_\n" +
+	"\x10GetOSQueryResult\x12$.cadestro.v1.GetOSQueryResultRequest\x1a%.cadestro.v1.GetOSQueryResultResponse\x12e\n" +
+	"\x12GetDeviceInventory\x12&.cadestro.v1.GetDeviceInventoryRequest\x1a'.cadestro.v1.GetDeviceInventoryResponse\x12q\n" +
+	"\x16RefreshDeviceInventory\x12*.cadestro.v1.RefreshDeviceInventoryRequest\x1a+.cadestro.v1.RefreshDeviceInventoryResponse\x12\\\n" +
+	"\x0fQueryDeviceLogs\x12#.cadestro.v1.QueryDeviceLogsRequest\x1a$.cadestro.v1.QueryDeviceLogsResponse\x12e\n" +
+	"\x12GetDeviceLogResult\x12&.cadestro.v1.GetDeviceLogResultRequest\x1a'.cadestro.v1.GetDeviceLogResultResponse\x12M\n" +
 	"\n" +
-	"CreateRole\x12!.powermanage.v1.CreateRoleRequest\x1a\".powermanage.v1.CreateRoleResponse\x12J\n" +
-	"\aGetRole\x12\x1e.powermanage.v1.GetRoleRequest\x1a\x1f.powermanage.v1.GetRoleResponse\x12P\n" +
-	"\tListRoles\x12 .powermanage.v1.ListRolesRequest\x1a!.powermanage.v1.ListRolesResponse\x12S\n" +
+	"CreateRole\x12\x1e.cadestro.v1.CreateRoleRequest\x1a\x1f.cadestro.v1.CreateRoleResponse\x12D\n" +
+	"\aGetRole\x12\x1b.cadestro.v1.GetRoleRequest\x1a\x1c.cadestro.v1.GetRoleResponse\x12J\n" +
+	"\tListRoles\x12\x1d.cadestro.v1.ListRolesRequest\x1a\x1e.cadestro.v1.ListRolesResponse\x12M\n" +
 	"\n" +
-	"UpdateRole\x12!.powermanage.v1.UpdateRoleRequest\x1a\".powermanage.v1.UpdateRoleResponse\x12S\n" +
+	"UpdateRole\x12\x1e.cadestro.v1.UpdateRoleRequest\x1a\x1f.cadestro.v1.UpdateRoleResponse\x12M\n" +
 	"\n" +
-	"DeleteRole\x12!.powermanage.v1.DeleteRoleRequest\x1a\".powermanage.v1.DeleteRoleResponse\x12e\n" +
-	"\x10AssignRoleToUser\x12'.powermanage.v1.AssignRoleToUserRequest\x1a(.powermanage.v1.AssignRoleToUserResponse\x12k\n" +
-	"\x12RevokeRoleFromUser\x12).powermanage.v1.RevokeRoleFromUserRequest\x1a*.powermanage.v1.RevokeRoleFromUserResponse\x12b\n" +
-	"\x0fListPermissions\x12&.powermanage.v1.ListPermissionsRequest\x1a'.powermanage.v1.ListPermissionsResponse\x12b\n" +
-	"\x0fCreateUserGroup\x12&.powermanage.v1.CreateUserGroupRequest\x1a'.powermanage.v1.CreateUserGroupResponse\x12Y\n" +
-	"\fGetUserGroup\x12#.powermanage.v1.GetUserGroupRequest\x1a$.powermanage.v1.GetUserGroupResponse\x12_\n" +
-	"\x0eListUserGroups\x12%.powermanage.v1.ListUserGroupsRequest\x1a&.powermanage.v1.ListUserGroupsResponse\x12b\n" +
-	"\x0fUpdateUserGroup\x12&.powermanage.v1.UpdateUserGroupRequest\x1a'.powermanage.v1.UpdateUserGroupResponse\x12b\n" +
-	"\x0fDeleteUserGroup\x12&.powermanage.v1.DeleteUserGroupRequest\x1a'.powermanage.v1.DeleteUserGroupResponse\x12_\n" +
-	"\x0eAddUserToGroup\x12%.powermanage.v1.AddUserToGroupRequest\x1a&.powermanage.v1.AddUserToGroupResponse\x12n\n" +
-	"\x13RemoveUserFromGroup\x12*.powermanage.v1.RemoveUserFromGroupRequest\x1a+.powermanage.v1.RemoveUserFromGroupResponse\x12t\n" +
-	"\x15AssignRoleToUserGroup\x12,.powermanage.v1.AssignRoleToUserGroupRequest\x1a-.powermanage.v1.AssignRoleToUserGroupResponse\x12z\n" +
-	"\x17RevokeRoleFromUserGroup\x12..powermanage.v1.RevokeRoleFromUserGroupRequest\x1a/.powermanage.v1.RevokeRoleFromUserGroupResponse\x12t\n" +
-	"\x15ListUserGroupsForUser\x12,.powermanage.v1.ListUserGroupsForUserRequest\x1a-.powermanage.v1.ListUserGroupsForUserResponse\x12q\n" +
-	"\x14UpdateUserGroupQuery\x12+.powermanage.v1.UpdateUserGroupQueryRequest\x1a,.powermanage.v1.UpdateUserGroupQueryResponse\x12w\n" +
-	"\x16ValidateUserGroupQuery\x12-.powermanage.v1.ValidateUserGroupQueryRequest\x1a..powermanage.v1.ValidateUserGroupQueryResponse\x12}\n" +
-	"\x18EvaluateDynamicUserGroup\x12/.powermanage.v1.EvaluateDynamicUserGroupRequest\x1a0.powermanage.v1.EvaluateDynamicUserGroupResponse\x12~\n" +
-	"\x1dSetUserGroupMaintenanceWindow\x124.powermanage.v1.SetUserGroupMaintenanceWindowRequest\x1a'.powermanage.v1.UpdateUserGroupResponse\x12n\n" +
-	"\x13GetDeviceCompliance\x12*.powermanage.v1.GetDeviceComplianceRequest\x1a+.powermanage.v1.GetDeviceComplianceResponse\x12w\n" +
-	"\x16CreateCompliancePolicy\x12-.powermanage.v1.CreateCompliancePolicyRequest\x1a..powermanage.v1.CreateCompliancePolicyResponse\x12n\n" +
-	"\x13GetCompliancePolicy\x12*.powermanage.v1.GetCompliancePolicyRequest\x1a+.powermanage.v1.GetCompliancePolicyResponse\x12w\n" +
-	"\x16ListCompliancePolicies\x12-.powermanage.v1.ListCompliancePoliciesRequest\x1a..powermanage.v1.ListCompliancePoliciesResponse\x12w\n" +
-	"\x16RenameCompliancePolicy\x12-.powermanage.v1.RenameCompliancePolicyRequest\x1a..powermanage.v1.UpdateCompliancePolicyResponse\x12\x8d\x01\n" +
-	"!UpdateCompliancePolicyDescription\x128.powermanage.v1.UpdateCompliancePolicyDescriptionRequest\x1a..powermanage.v1.UpdateCompliancePolicyResponse\x12w\n" +
-	"\x16DeleteCompliancePolicy\x12-.powermanage.v1.DeleteCompliancePolicyRequest\x1a..powermanage.v1.DeleteCompliancePolicyResponse\x12z\n" +
-	"\x17AddCompliancePolicyRule\x12..powermanage.v1.AddCompliancePolicyRuleRequest\x1a/.powermanage.v1.AddCompliancePolicyRuleResponse\x12\x83\x01\n" +
-	"\x1aRemoveCompliancePolicyRule\x121.powermanage.v1.RemoveCompliancePolicyRuleRequest\x1a2.powermanage.v1.RemoveCompliancePolicyRuleResponse\x12\x83\x01\n" +
-	"\x1aUpdateCompliancePolicyRule\x121.powermanage.v1.UpdateCompliancePolicyRuleRequest\x1a2.powermanage.v1.UpdateCompliancePolicyRuleResponse\x12\x92\x01\n" +
-	"\x1fGetDeviceCompliancePolicyStatus\x126.powermanage.v1.GetDeviceCompliancePolicyStatusRequest\x1a7.powermanage.v1.GetDeviceCompliancePolicyStatusResponse\x12G\n" +
-	"\x06Search\x12\x1d.powermanage.v1.SearchRequest\x1a\x1e.powermanage.v1.SearchResponse\x12k\n" +
-	"\x12RebuildSearchIndex\x12).powermanage.v1.RebuildSearchIndexRequest\x1a*.powermanage.v1.RebuildSearchIndexResponse\x12h\n" +
-	"\x11GetServerSettings\x12(.powermanage.v1.GetServerSettingsRequest\x1a).powermanage.v1.GetServerSettingsResponse\x12q\n" +
-	"\x14UpdateServerSettings\x12+.powermanage.v1.UpdateServerSettingsRequest\x1a,.powermanage.v1.UpdateServerSettingsResponse\x12s\n" +
-	"\x1aSetUserProvisioningEnabled\x121.powermanage.v1.SetUserProvisioningEnabledRequest\x1a\".powermanage.v1.UpdateUserResponse\x12\\\n" +
-	"\rStartTerminal\x12$.powermanage.v1.StartTerminalRequest\x1a%.powermanage.v1.StartTerminalResponse\x12Y\n" +
-	"\fStopTerminal\x12#.powermanage.v1.StopTerminalRequest\x1a$.powermanage.v1.StopTerminalResponse\x12\x83\x01\n" +
-	"\x1aListActiveTerminalSessions\x121.powermanage.v1.ListActiveTerminalSessionsRequest\x1a2.powermanage.v1.ListActiveTerminalSessionsResponse\x12}\n" +
-	"\x18TerminateTerminalSession\x12/.powermanage.v1.TerminateTerminalSessionRequest\x1a0.powermanage.v1.TerminateTerminalSessionResponseBMZKgithub.com/manchtools/cadestro/contract/gen/go/powermanage/v1;powermanagev1b\x06proto3"
+	"DeleteRole\x12\x1e.cadestro.v1.DeleteRoleRequest\x1a\x1f.cadestro.v1.DeleteRoleResponse\x12_\n" +
+	"\x10AssignRoleToUser\x12$.cadestro.v1.AssignRoleToUserRequest\x1a%.cadestro.v1.AssignRoleToUserResponse\x12e\n" +
+	"\x12RevokeRoleFromUser\x12&.cadestro.v1.RevokeRoleFromUserRequest\x1a'.cadestro.v1.RevokeRoleFromUserResponse\x12\\\n" +
+	"\x0fListPermissions\x12#.cadestro.v1.ListPermissionsRequest\x1a$.cadestro.v1.ListPermissionsResponse\x12\\\n" +
+	"\x0fCreateUserGroup\x12#.cadestro.v1.CreateUserGroupRequest\x1a$.cadestro.v1.CreateUserGroupResponse\x12S\n" +
+	"\fGetUserGroup\x12 .cadestro.v1.GetUserGroupRequest\x1a!.cadestro.v1.GetUserGroupResponse\x12Y\n" +
+	"\x0eListUserGroups\x12\".cadestro.v1.ListUserGroupsRequest\x1a#.cadestro.v1.ListUserGroupsResponse\x12\\\n" +
+	"\x0fUpdateUserGroup\x12#.cadestro.v1.UpdateUserGroupRequest\x1a$.cadestro.v1.UpdateUserGroupResponse\x12\\\n" +
+	"\x0fDeleteUserGroup\x12#.cadestro.v1.DeleteUserGroupRequest\x1a$.cadestro.v1.DeleteUserGroupResponse\x12Y\n" +
+	"\x0eAddUserToGroup\x12\".cadestro.v1.AddUserToGroupRequest\x1a#.cadestro.v1.AddUserToGroupResponse\x12h\n" +
+	"\x13RemoveUserFromGroup\x12'.cadestro.v1.RemoveUserFromGroupRequest\x1a(.cadestro.v1.RemoveUserFromGroupResponse\x12n\n" +
+	"\x15AssignRoleToUserGroup\x12).cadestro.v1.AssignRoleToUserGroupRequest\x1a*.cadestro.v1.AssignRoleToUserGroupResponse\x12t\n" +
+	"\x17RevokeRoleFromUserGroup\x12+.cadestro.v1.RevokeRoleFromUserGroupRequest\x1a,.cadestro.v1.RevokeRoleFromUserGroupResponse\x12n\n" +
+	"\x15ListUserGroupsForUser\x12).cadestro.v1.ListUserGroupsForUserRequest\x1a*.cadestro.v1.ListUserGroupsForUserResponse\x12k\n" +
+	"\x14UpdateUserGroupQuery\x12(.cadestro.v1.UpdateUserGroupQueryRequest\x1a).cadestro.v1.UpdateUserGroupQueryResponse\x12q\n" +
+	"\x16ValidateUserGroupQuery\x12*.cadestro.v1.ValidateUserGroupQueryRequest\x1a+.cadestro.v1.ValidateUserGroupQueryResponse\x12w\n" +
+	"\x18EvaluateDynamicUserGroup\x12,.cadestro.v1.EvaluateDynamicUserGroupRequest\x1a-.cadestro.v1.EvaluateDynamicUserGroupResponse\x12x\n" +
+	"\x1dSetUserGroupMaintenanceWindow\x121.cadestro.v1.SetUserGroupMaintenanceWindowRequest\x1a$.cadestro.v1.UpdateUserGroupResponse\x12h\n" +
+	"\x13GetDeviceCompliance\x12'.cadestro.v1.GetDeviceComplianceRequest\x1a(.cadestro.v1.GetDeviceComplianceResponse\x12q\n" +
+	"\x16CreateCompliancePolicy\x12*.cadestro.v1.CreateCompliancePolicyRequest\x1a+.cadestro.v1.CreateCompliancePolicyResponse\x12h\n" +
+	"\x13GetCompliancePolicy\x12'.cadestro.v1.GetCompliancePolicyRequest\x1a(.cadestro.v1.GetCompliancePolicyResponse\x12q\n" +
+	"\x16ListCompliancePolicies\x12*.cadestro.v1.ListCompliancePoliciesRequest\x1a+.cadestro.v1.ListCompliancePoliciesResponse\x12q\n" +
+	"\x16RenameCompliancePolicy\x12*.cadestro.v1.RenameCompliancePolicyRequest\x1a+.cadestro.v1.UpdateCompliancePolicyResponse\x12\x87\x01\n" +
+	"!UpdateCompliancePolicyDescription\x125.cadestro.v1.UpdateCompliancePolicyDescriptionRequest\x1a+.cadestro.v1.UpdateCompliancePolicyResponse\x12q\n" +
+	"\x16DeleteCompliancePolicy\x12*.cadestro.v1.DeleteCompliancePolicyRequest\x1a+.cadestro.v1.DeleteCompliancePolicyResponse\x12t\n" +
+	"\x17AddCompliancePolicyRule\x12+.cadestro.v1.AddCompliancePolicyRuleRequest\x1a,.cadestro.v1.AddCompliancePolicyRuleResponse\x12}\n" +
+	"\x1aRemoveCompliancePolicyRule\x12..cadestro.v1.RemoveCompliancePolicyRuleRequest\x1a/.cadestro.v1.RemoveCompliancePolicyRuleResponse\x12}\n" +
+	"\x1aUpdateCompliancePolicyRule\x12..cadestro.v1.UpdateCompliancePolicyRuleRequest\x1a/.cadestro.v1.UpdateCompliancePolicyRuleResponse\x12\x8c\x01\n" +
+	"\x1fGetDeviceCompliancePolicyStatus\x123.cadestro.v1.GetDeviceCompliancePolicyStatusRequest\x1a4.cadestro.v1.GetDeviceCompliancePolicyStatusResponse\x12A\n" +
+	"\x06Search\x12\x1a.cadestro.v1.SearchRequest\x1a\x1b.cadestro.v1.SearchResponse\x12e\n" +
+	"\x12RebuildSearchIndex\x12&.cadestro.v1.RebuildSearchIndexRequest\x1a'.cadestro.v1.RebuildSearchIndexResponse\x12b\n" +
+	"\x11GetServerSettings\x12%.cadestro.v1.GetServerSettingsRequest\x1a&.cadestro.v1.GetServerSettingsResponse\x12k\n" +
+	"\x14UpdateServerSettings\x12(.cadestro.v1.UpdateServerSettingsRequest\x1a).cadestro.v1.UpdateServerSettingsResponse\x12m\n" +
+	"\x1aSetUserProvisioningEnabled\x12..cadestro.v1.SetUserProvisioningEnabledRequest\x1a\x1f.cadestro.v1.UpdateUserResponse\x12V\n" +
+	"\rStartTerminal\x12!.cadestro.v1.StartTerminalRequest\x1a\".cadestro.v1.StartTerminalResponse\x12S\n" +
+	"\fStopTerminal\x12 .cadestro.v1.StopTerminalRequest\x1a!.cadestro.v1.StopTerminalResponse\x12}\n" +
+	"\x1aListActiveTerminalSessions\x12..cadestro.v1.ListActiveTerminalSessionsRequest\x1a/.cadestro.v1.ListActiveTerminalSessionsResponse\x12w\n" +
+	"\x18TerminateTerminalSession\x12,.cadestro.v1.TerminateTerminalSessionRequest\x1a-.cadestro.v1.TerminateTerminalSessionResponseBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
-	file_powermanage_v1_control_proto_rawDescOnce sync.Once
-	file_powermanage_v1_control_proto_rawDescData []byte
+	file_cadestro_v1_control_proto_rawDescOnce sync.Once
+	file_cadestro_v1_control_proto_rawDescData []byte
 )
 
-func file_powermanage_v1_control_proto_rawDescGZIP() []byte {
-	file_powermanage_v1_control_proto_rawDescOnce.Do(func() {
-		file_powermanage_v1_control_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_powermanage_v1_control_proto_rawDesc), len(file_powermanage_v1_control_proto_rawDesc)))
+func file_cadestro_v1_control_proto_rawDescGZIP() []byte {
+	file_cadestro_v1_control_proto_rawDescOnce.Do(func() {
+		file_cadestro_v1_control_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_cadestro_v1_control_proto_rawDesc), len(file_cadestro_v1_control_proto_rawDesc)))
 	})
-	return file_powermanage_v1_control_proto_rawDescData
+	return file_cadestro_v1_control_proto_rawDescData
 }
 
-var file_powermanage_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 350)
-var file_powermanage_v1_control_proto_goTypes = []any{
-	(*RegisterRequest)(nil),                          // 0: powermanage.v1.RegisterRequest
-	(*RegisterResponse)(nil),                         // 1: powermanage.v1.RegisterResponse
-	(*RenewCertificateRequest)(nil),                  // 2: powermanage.v1.RenewCertificateRequest
-	(*RenewCertificateResponse)(nil),                 // 3: powermanage.v1.RenewCertificateResponse
-	(*RefreshTokenRequest)(nil),                      // 4: powermanage.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),                     // 5: powermanage.v1.RefreshTokenResponse
-	(*LogoutRequest)(nil),                            // 6: powermanage.v1.LogoutRequest
-	(*LogoutResponse)(nil),                           // 7: powermanage.v1.LogoutResponse
-	(*GetCurrentUserRequest)(nil),                    // 8: powermanage.v1.GetCurrentUserRequest
-	(*GetCurrentUserResponse)(nil),                   // 9: powermanage.v1.GetCurrentUserResponse
-	(*User)(nil),                                     // 10: powermanage.v1.User
-	(*InheritedRole)(nil),                            // 11: powermanage.v1.InheritedRole
-	(*SshPublicKey)(nil),                             // 12: powermanage.v1.SshPublicKey
-	(*Role)(nil),                                     // 13: powermanage.v1.Role
-	(*RoleGrant)(nil),                                // 14: powermanage.v1.RoleGrant
-	(*PermissionInfo)(nil),                           // 15: powermanage.v1.PermissionInfo
-	(*EraseJITUserRequest)(nil),                      // 16: powermanage.v1.EraseJITUserRequest
-	(*EraseJITUserResponse)(nil),                     // 17: powermanage.v1.EraseJITUserResponse
-	(*GetUserRequest)(nil),                           // 18: powermanage.v1.GetUserRequest
-	(*GetUserResponse)(nil),                          // 19: powermanage.v1.GetUserResponse
-	(*ListUsersRequest)(nil),                         // 20: powermanage.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),                        // 21: powermanage.v1.ListUsersResponse
-	(*UpdateUserEmailRequest)(nil),                   // 22: powermanage.v1.UpdateUserEmailRequest
-	(*SetUserDisabledRequest)(nil),                   // 23: powermanage.v1.SetUserDisabledRequest
-	(*UpdateUserResponse)(nil),                       // 24: powermanage.v1.UpdateUserResponse
-	(*UpdateUserProfileRequest)(nil),                 // 25: powermanage.v1.UpdateUserProfileRequest
-	(*AddUserSshKeyRequest)(nil),                     // 26: powermanage.v1.AddUserSshKeyRequest
-	(*AddUserSshKeyResponse)(nil),                    // 27: powermanage.v1.AddUserSshKeyResponse
-	(*RemoveUserSshKeyRequest)(nil),                  // 28: powermanage.v1.RemoveUserSshKeyRequest
-	(*RemoveUserSshKeyResponse)(nil),                 // 29: powermanage.v1.RemoveUserSshKeyResponse
-	(*UpdateUserSshSettingsRequest)(nil),             // 30: powermanage.v1.UpdateUserSshSettingsRequest
-	(*UpdateUserLinuxUsernameRequest)(nil),           // 31: powermanage.v1.UpdateUserLinuxUsernameRequest
-	(*Device)(nil),                                   // 32: powermanage.v1.Device
-	(*ListDevicesRequest)(nil),                       // 33: powermanage.v1.ListDevicesRequest
-	(*ListDevicesResponse)(nil),                      // 34: powermanage.v1.ListDevicesResponse
-	(*GetDeviceRequest)(nil),                         // 35: powermanage.v1.GetDeviceRequest
-	(*GetDeviceResponse)(nil),                        // 36: powermanage.v1.GetDeviceResponse
-	(*SetDeviceLabelRequest)(nil),                    // 37: powermanage.v1.SetDeviceLabelRequest
-	(*RemoveDeviceLabelRequest)(nil),                 // 38: powermanage.v1.RemoveDeviceLabelRequest
-	(*UpdateDeviceResponse)(nil),                     // 39: powermanage.v1.UpdateDeviceResponse
-	(*DeleteDeviceRequest)(nil),                      // 40: powermanage.v1.DeleteDeviceRequest
-	(*DeleteDeviceResponse)(nil),                     // 41: powermanage.v1.DeleteDeviceResponse
-	(*AssignDeviceRequest)(nil),                      // 42: powermanage.v1.AssignDeviceRequest
-	(*AssignDeviceResponse)(nil),                     // 43: powermanage.v1.AssignDeviceResponse
-	(*UnassignDeviceRequest)(nil),                    // 44: powermanage.v1.UnassignDeviceRequest
-	(*UnassignDeviceResponse)(nil),                   // 45: powermanage.v1.UnassignDeviceResponse
-	(*DeviceAssignee)(nil),                           // 46: powermanage.v1.DeviceAssignee
-	(*ListDeviceAssigneesRequest)(nil),               // 47: powermanage.v1.ListDeviceAssigneesRequest
-	(*ListDeviceAssigneesResponse)(nil),              // 48: powermanage.v1.ListDeviceAssigneesResponse
-	(*SetDeviceSyncIntervalRequest)(nil),             // 49: powermanage.v1.SetDeviceSyncIntervalRequest
-	(*SetDeviceInventoryIntervalRequest)(nil),        // 50: powermanage.v1.SetDeviceInventoryIntervalRequest
-	(*RegistrationToken)(nil),                        // 51: powermanage.v1.RegistrationToken
-	(*CreateTokenRequest)(nil),                       // 52: powermanage.v1.CreateTokenRequest
-	(*CreateTokenResponse)(nil),                      // 53: powermanage.v1.CreateTokenResponse
-	(*ListTokensRequest)(nil),                        // 54: powermanage.v1.ListTokensRequest
-	(*ListTokensResponse)(nil),                       // 55: powermanage.v1.ListTokensResponse
-	(*GetTokenRequest)(nil),                          // 56: powermanage.v1.GetTokenRequest
-	(*GetTokenResponse)(nil),                         // 57: powermanage.v1.GetTokenResponse
-	(*RenameTokenRequest)(nil),                       // 58: powermanage.v1.RenameTokenRequest
-	(*SetTokenDisabledRequest)(nil),                  // 59: powermanage.v1.SetTokenDisabledRequest
-	(*UpdateTokenResponse)(nil),                      // 60: powermanage.v1.UpdateTokenResponse
-	(*DeleteTokenRequest)(nil),                       // 61: powermanage.v1.DeleteTokenRequest
-	(*DeleteTokenResponse)(nil),                      // 62: powermanage.v1.DeleteTokenResponse
-	(*ManagedAction)(nil),                            // 63: powermanage.v1.ManagedAction
-	(*CreateActionRequest)(nil),                      // 64: powermanage.v1.CreateActionRequest
-	(*CreateActionResponse)(nil),                     // 65: powermanage.v1.CreateActionResponse
-	(*GetActionRequest)(nil),                         // 66: powermanage.v1.GetActionRequest
-	(*GetActionResponse)(nil),                        // 67: powermanage.v1.GetActionResponse
-	(*ListActionsRequest)(nil),                       // 68: powermanage.v1.ListActionsRequest
-	(*ListActionsResponse)(nil),                      // 69: powermanage.v1.ListActionsResponse
-	(*RenameActionRequest)(nil),                      // 70: powermanage.v1.RenameActionRequest
-	(*UpdateActionDescriptionRequest)(nil),           // 71: powermanage.v1.UpdateActionDescriptionRequest
-	(*UpdateActionParamsRequest)(nil),                // 72: powermanage.v1.UpdateActionParamsRequest
-	(*UpdateActionResponse)(nil),                     // 73: powermanage.v1.UpdateActionResponse
-	(*DeleteActionRequest)(nil),                      // 74: powermanage.v1.DeleteActionRequest
-	(*DeleteActionResponse)(nil),                     // 75: powermanage.v1.DeleteActionResponse
-	(*ActionSet)(nil),                                // 76: powermanage.v1.ActionSet
-	(*ActionSetMember)(nil),                          // 77: powermanage.v1.ActionSetMember
-	(*CreateActionSetRequest)(nil),                   // 78: powermanage.v1.CreateActionSetRequest
-	(*CreateActionSetResponse)(nil),                  // 79: powermanage.v1.CreateActionSetResponse
-	(*GetActionSetRequest)(nil),                      // 80: powermanage.v1.GetActionSetRequest
-	(*GetActionSetResponse)(nil),                     // 81: powermanage.v1.GetActionSetResponse
-	(*ListActionSetsRequest)(nil),                    // 82: powermanage.v1.ListActionSetsRequest
-	(*ListActionSetsResponse)(nil),                   // 83: powermanage.v1.ListActionSetsResponse
-	(*RenameActionSetRequest)(nil),                   // 84: powermanage.v1.RenameActionSetRequest
-	(*UpdateActionSetDescriptionRequest)(nil),        // 85: powermanage.v1.UpdateActionSetDescriptionRequest
-	(*UpdateActionSetScheduleRequest)(nil),           // 86: powermanage.v1.UpdateActionSetScheduleRequest
-	(*UpdateActionSetResponse)(nil),                  // 87: powermanage.v1.UpdateActionSetResponse
-	(*DeleteActionSetRequest)(nil),                   // 88: powermanage.v1.DeleteActionSetRequest
-	(*DeleteActionSetResponse)(nil),                  // 89: powermanage.v1.DeleteActionSetResponse
-	(*AddActionToSetRequest)(nil),                    // 90: powermanage.v1.AddActionToSetRequest
-	(*AddActionToSetResponse)(nil),                   // 91: powermanage.v1.AddActionToSetResponse
-	(*RemoveActionFromSetRequest)(nil),               // 92: powermanage.v1.RemoveActionFromSetRequest
-	(*RemoveActionFromSetResponse)(nil),              // 93: powermanage.v1.RemoveActionFromSetResponse
-	(*ReorderActionInSetRequest)(nil),                // 94: powermanage.v1.ReorderActionInSetRequest
-	(*ReorderActionInSetResponse)(nil),               // 95: powermanage.v1.ReorderActionInSetResponse
-	(*Definition)(nil),                               // 96: powermanage.v1.Definition
-	(*DefinitionMember)(nil),                         // 97: powermanage.v1.DefinitionMember
-	(*CreateDefinitionRequest)(nil),                  // 98: powermanage.v1.CreateDefinitionRequest
-	(*CreateDefinitionResponse)(nil),                 // 99: powermanage.v1.CreateDefinitionResponse
-	(*GetDefinitionRequest)(nil),                     // 100: powermanage.v1.GetDefinitionRequest
-	(*GetDefinitionResponse)(nil),                    // 101: powermanage.v1.GetDefinitionResponse
-	(*ListDefinitionsRequest)(nil),                   // 102: powermanage.v1.ListDefinitionsRequest
-	(*ListDefinitionsResponse)(nil),                  // 103: powermanage.v1.ListDefinitionsResponse
-	(*RenameDefinitionRequest)(nil),                  // 104: powermanage.v1.RenameDefinitionRequest
-	(*UpdateDefinitionDescriptionRequest)(nil),       // 105: powermanage.v1.UpdateDefinitionDescriptionRequest
-	(*UpdateDefinitionScheduleRequest)(nil),          // 106: powermanage.v1.UpdateDefinitionScheduleRequest
-	(*UpdateDefinitionResponse)(nil),                 // 107: powermanage.v1.UpdateDefinitionResponse
-	(*DeleteDefinitionRequest)(nil),                  // 108: powermanage.v1.DeleteDefinitionRequest
-	(*DeleteDefinitionResponse)(nil),                 // 109: powermanage.v1.DeleteDefinitionResponse
-	(*AddActionSetToDefinitionRequest)(nil),          // 110: powermanage.v1.AddActionSetToDefinitionRequest
-	(*AddActionSetToDefinitionResponse)(nil),         // 111: powermanage.v1.AddActionSetToDefinitionResponse
-	(*RemoveActionSetFromDefinitionRequest)(nil),     // 112: powermanage.v1.RemoveActionSetFromDefinitionRequest
-	(*RemoveActionSetFromDefinitionResponse)(nil),    // 113: powermanage.v1.RemoveActionSetFromDefinitionResponse
-	(*ReorderActionSetInDefinitionRequest)(nil),      // 114: powermanage.v1.ReorderActionSetInDefinitionRequest
-	(*ReorderActionSetInDefinitionResponse)(nil),     // 115: powermanage.v1.ReorderActionSetInDefinitionResponse
-	(*DeviceGroup)(nil),                              // 116: powermanage.v1.DeviceGroup
-	(*CreateDeviceGroupRequest)(nil),                 // 117: powermanage.v1.CreateDeviceGroupRequest
-	(*CreateDeviceGroupResponse)(nil),                // 118: powermanage.v1.CreateDeviceGroupResponse
-	(*GetDeviceGroupRequest)(nil),                    // 119: powermanage.v1.GetDeviceGroupRequest
-	(*GetDeviceGroupResponse)(nil),                   // 120: powermanage.v1.GetDeviceGroupResponse
-	(*DeviceGroupMember)(nil),                        // 121: powermanage.v1.DeviceGroupMember
-	(*ListDeviceGroupsRequest)(nil),                  // 122: powermanage.v1.ListDeviceGroupsRequest
-	(*ListDeviceGroupsResponse)(nil),                 // 123: powermanage.v1.ListDeviceGroupsResponse
-	(*ListDeviceGroupsForDeviceRequest)(nil),         // 124: powermanage.v1.ListDeviceGroupsForDeviceRequest
-	(*ListDeviceGroupsForDeviceResponse)(nil),        // 125: powermanage.v1.ListDeviceGroupsForDeviceResponse
-	(*RenameDeviceGroupRequest)(nil),                 // 126: powermanage.v1.RenameDeviceGroupRequest
-	(*UpdateDeviceGroupDescriptionRequest)(nil),      // 127: powermanage.v1.UpdateDeviceGroupDescriptionRequest
-	(*UpdateDeviceGroupResponse)(nil),                // 128: powermanage.v1.UpdateDeviceGroupResponse
-	(*DeleteDeviceGroupRequest)(nil),                 // 129: powermanage.v1.DeleteDeviceGroupRequest
-	(*DeleteDeviceGroupResponse)(nil),                // 130: powermanage.v1.DeleteDeviceGroupResponse
-	(*AddDeviceToGroupRequest)(nil),                  // 131: powermanage.v1.AddDeviceToGroupRequest
-	(*AddDeviceToGroupResponse)(nil),                 // 132: powermanage.v1.AddDeviceToGroupResponse
-	(*RemoveDeviceFromGroupRequest)(nil),             // 133: powermanage.v1.RemoveDeviceFromGroupRequest
-	(*RemoveDeviceFromGroupResponse)(nil),            // 134: powermanage.v1.RemoveDeviceFromGroupResponse
-	(*UpdateDeviceGroupQueryRequest)(nil),            // 135: powermanage.v1.UpdateDeviceGroupQueryRequest
-	(*UpdateDeviceGroupQueryResponse)(nil),           // 136: powermanage.v1.UpdateDeviceGroupQueryResponse
-	(*ValidateDynamicQueryRequest)(nil),              // 137: powermanage.v1.ValidateDynamicQueryRequest
-	(*ValidateDynamicQueryResponse)(nil),             // 138: powermanage.v1.ValidateDynamicQueryResponse
-	(*EvaluateDynamicGroupRequest)(nil),              // 139: powermanage.v1.EvaluateDynamicGroupRequest
-	(*EvaluateDynamicGroupResponse)(nil),             // 140: powermanage.v1.EvaluateDynamicGroupResponse
-	(*SetDeviceGroupSyncIntervalRequest)(nil),        // 141: powermanage.v1.SetDeviceGroupSyncIntervalRequest
-	(*SetDeviceGroupInventoryIntervalRequest)(nil),   // 142: powermanage.v1.SetDeviceGroupInventoryIntervalRequest
-	(*SetDeviceGroupMaintenanceWindowRequest)(nil),   // 143: powermanage.v1.SetDeviceGroupMaintenanceWindowRequest
-	(*Assignment)(nil),                               // 144: powermanage.v1.Assignment
-	(*CreateAssignmentRequest)(nil),                  // 145: powermanage.v1.CreateAssignmentRequest
-	(*CreateAssignmentResponse)(nil),                 // 146: powermanage.v1.CreateAssignmentResponse
-	(*DeleteAssignmentRequest)(nil),                  // 147: powermanage.v1.DeleteAssignmentRequest
-	(*DeleteAssignmentResponse)(nil),                 // 148: powermanage.v1.DeleteAssignmentResponse
-	(*ListAssignmentsRequest)(nil),                   // 149: powermanage.v1.ListAssignmentsRequest
-	(*ListAssignmentsResponse)(nil),                  // 150: powermanage.v1.ListAssignmentsResponse
-	(*UserSelection)(nil),                            // 151: powermanage.v1.UserSelection
-	(*SetUserSelectionRequest)(nil),                  // 152: powermanage.v1.SetUserSelectionRequest
-	(*SetUserSelectionResponse)(nil),                 // 153: powermanage.v1.SetUserSelectionResponse
-	(*ListAvailableActionsRequest)(nil),              // 154: powermanage.v1.ListAvailableActionsRequest
-	(*AvailableItem)(nil),                            // 155: powermanage.v1.AvailableItem
-	(*ListAvailableActionsResponse)(nil),             // 156: powermanage.v1.ListAvailableActionsResponse
-	(*GetDeviceAssignmentsRequest)(nil),              // 157: powermanage.v1.GetDeviceAssignmentsRequest
-	(*GetDeviceAssignmentsResponse)(nil),             // 158: powermanage.v1.GetDeviceAssignmentsResponse
-	(*GetUserAssignmentsRequest)(nil),                // 159: powermanage.v1.GetUserAssignmentsRequest
-	(*GetUserAssignmentsResponse)(nil),               // 160: powermanage.v1.GetUserAssignmentsResponse
-	(*ActionExecution)(nil),                          // 161: powermanage.v1.ActionExecution
-	(*DispatchActionRequest)(nil),                    // 162: powermanage.v1.DispatchActionRequest
-	(*DispatchActionResponse)(nil),                   // 163: powermanage.v1.DispatchActionResponse
-	(*DispatchToMultipleRequest)(nil),                // 164: powermanage.v1.DispatchToMultipleRequest
-	(*DispatchToMultipleResponse)(nil),               // 165: powermanage.v1.DispatchToMultipleResponse
-	(*DispatchAssignedActionsRequest)(nil),           // 166: powermanage.v1.DispatchAssignedActionsRequest
-	(*DispatchAssignedActionsResponse)(nil),          // 167: powermanage.v1.DispatchAssignedActionsResponse
-	(*DispatchActionSetRequest)(nil),                 // 168: powermanage.v1.DispatchActionSetRequest
-	(*DispatchActionSetResponse)(nil),                // 169: powermanage.v1.DispatchActionSetResponse
-	(*DispatchDefinitionRequest)(nil),                // 170: powermanage.v1.DispatchDefinitionRequest
-	(*DispatchDefinitionResponse)(nil),               // 171: powermanage.v1.DispatchDefinitionResponse
-	(*DispatchToGroupRequest)(nil),                   // 172: powermanage.v1.DispatchToGroupRequest
-	(*DispatchToGroupResponse)(nil),                  // 173: powermanage.v1.DispatchToGroupResponse
-	(*GetExecutionRequest)(nil),                      // 174: powermanage.v1.GetExecutionRequest
-	(*GetExecutionResponse)(nil),                     // 175: powermanage.v1.GetExecutionResponse
-	(*ListExecutionsRequest)(nil),                    // 176: powermanage.v1.ListExecutionsRequest
-	(*ListExecutionsResponse)(nil),                   // 177: powermanage.v1.ListExecutionsResponse
-	(*DispatchInstantActionRequest)(nil),             // 178: powermanage.v1.DispatchInstantActionRequest
-	(*DispatchInstantActionResponse)(nil),            // 179: powermanage.v1.DispatchInstantActionResponse
-	(*CancelExecutionRequest)(nil),                   // 180: powermanage.v1.CancelExecutionRequest
-	(*CancelExecutionResponse)(nil),                  // 181: powermanage.v1.CancelExecutionResponse
-	(*AuditEvent)(nil),                               // 182: powermanage.v1.AuditEvent
-	(*ListAuditEventsRequest)(nil),                   // 183: powermanage.v1.ListAuditEventsRequest
-	(*ListAuditEventsResponse)(nil),                  // 184: powermanage.v1.ListAuditEventsResponse
-	(*ExportAuditEventsRequest)(nil),                 // 185: powermanage.v1.ExportAuditEventsRequest
-	(*ExportAuditEventsResponse)(nil),                // 186: powermanage.v1.ExportAuditEventsResponse
-	(*LpsPassword)(nil),                              // 187: powermanage.v1.LpsPassword
-	(*ListLpsPasswordsRequest)(nil),                  // 188: powermanage.v1.ListLpsPasswordsRequest
-	(*ListLpsPasswordsResponse)(nil),                 // 189: powermanage.v1.ListLpsPasswordsResponse
-	(*RevealLpsPasswordRequest)(nil),                 // 190: powermanage.v1.RevealLpsPasswordRequest
-	(*RevealLpsPasswordResponse)(nil),                // 191: powermanage.v1.RevealLpsPasswordResponse
-	(*LuksKey)(nil),                                  // 192: powermanage.v1.LuksKey
-	(*ListLuksKeysRequest)(nil),                      // 193: powermanage.v1.ListLuksKeysRequest
-	(*ListLuksKeysResponse)(nil),                     // 194: powermanage.v1.ListLuksKeysResponse
-	(*RevealLuksKeyRequest)(nil),                     // 195: powermanage.v1.RevealLuksKeyRequest
-	(*RevealLuksKeyResponse)(nil),                    // 196: powermanage.v1.RevealLuksKeyResponse
-	(*CreateLuksTokenRequest)(nil),                   // 197: powermanage.v1.CreateLuksTokenRequest
-	(*CreateLuksTokenResponse)(nil),                  // 198: powermanage.v1.CreateLuksTokenResponse
-	(*RevokeLuksDeviceKeyRequest)(nil),               // 199: powermanage.v1.RevokeLuksDeviceKeyRequest
-	(*RevokeLuksDeviceKeyResponse)(nil),              // 200: powermanage.v1.RevokeLuksDeviceKeyResponse
-	(*DispatchOSQueryRequest)(nil),                   // 201: powermanage.v1.DispatchOSQueryRequest
-	(*DispatchOSQueryResponse)(nil),                  // 202: powermanage.v1.DispatchOSQueryResponse
-	(*GetOSQueryResultRequest)(nil),                  // 203: powermanage.v1.GetOSQueryResultRequest
-	(*GetOSQueryResultResponse)(nil),                 // 204: powermanage.v1.GetOSQueryResultResponse
-	(*GetDeviceInventoryRequest)(nil),                // 205: powermanage.v1.GetDeviceInventoryRequest
-	(*InventoryTableResult)(nil),                     // 206: powermanage.v1.InventoryTableResult
-	(*GetDeviceInventoryResponse)(nil),               // 207: powermanage.v1.GetDeviceInventoryResponse
-	(*RefreshDeviceInventoryRequest)(nil),            // 208: powermanage.v1.RefreshDeviceInventoryRequest
-	(*RefreshDeviceInventoryResponse)(nil),           // 209: powermanage.v1.RefreshDeviceInventoryResponse
-	(*QueryDeviceLogsRequest)(nil),                   // 210: powermanage.v1.QueryDeviceLogsRequest
-	(*QueryDeviceLogsResponse)(nil),                  // 211: powermanage.v1.QueryDeviceLogsResponse
-	(*GetDeviceLogResultRequest)(nil),                // 212: powermanage.v1.GetDeviceLogResultRequest
-	(*GetDeviceLogResultResponse)(nil),               // 213: powermanage.v1.GetDeviceLogResultResponse
-	(*CreateRoleRequest)(nil),                        // 214: powermanage.v1.CreateRoleRequest
-	(*CreateRoleResponse)(nil),                       // 215: powermanage.v1.CreateRoleResponse
-	(*GetRoleRequest)(nil),                           // 216: powermanage.v1.GetRoleRequest
-	(*GetRoleResponse)(nil),                          // 217: powermanage.v1.GetRoleResponse
-	(*ListRolesRequest)(nil),                         // 218: powermanage.v1.ListRolesRequest
-	(*ListRolesResponse)(nil),                        // 219: powermanage.v1.ListRolesResponse
-	(*UpdateRoleRequest)(nil),                        // 220: powermanage.v1.UpdateRoleRequest
-	(*UpdateRoleResponse)(nil),                       // 221: powermanage.v1.UpdateRoleResponse
-	(*DeleteRoleRequest)(nil),                        // 222: powermanage.v1.DeleteRoleRequest
-	(*DeleteRoleResponse)(nil),                       // 223: powermanage.v1.DeleteRoleResponse
-	(*AssignRoleToUserRequest)(nil),                  // 224: powermanage.v1.AssignRoleToUserRequest
-	(*AssignRoleToUserResponse)(nil),                 // 225: powermanage.v1.AssignRoleToUserResponse
-	(*RevokeRoleFromUserRequest)(nil),                // 226: powermanage.v1.RevokeRoleFromUserRequest
-	(*RevokeRoleFromUserResponse)(nil),               // 227: powermanage.v1.RevokeRoleFromUserResponse
-	(*ListPermissionsRequest)(nil),                   // 228: powermanage.v1.ListPermissionsRequest
-	(*ListPermissionsResponse)(nil),                  // 229: powermanage.v1.ListPermissionsResponse
-	(*UserGroup)(nil),                                // 230: powermanage.v1.UserGroup
-	(*UserGroupMember)(nil),                          // 231: powermanage.v1.UserGroupMember
-	(*CreateUserGroupRequest)(nil),                   // 232: powermanage.v1.CreateUserGroupRequest
-	(*CreateUserGroupResponse)(nil),                  // 233: powermanage.v1.CreateUserGroupResponse
-	(*GetUserGroupRequest)(nil),                      // 234: powermanage.v1.GetUserGroupRequest
-	(*GetUserGroupResponse)(nil),                     // 235: powermanage.v1.GetUserGroupResponse
-	(*ListUserGroupsRequest)(nil),                    // 236: powermanage.v1.ListUserGroupsRequest
-	(*ListUserGroupsResponse)(nil),                   // 237: powermanage.v1.ListUserGroupsResponse
-	(*UpdateUserGroupRequest)(nil),                   // 238: powermanage.v1.UpdateUserGroupRequest
-	(*UpdateUserGroupResponse)(nil),                  // 239: powermanage.v1.UpdateUserGroupResponse
-	(*DeleteUserGroupRequest)(nil),                   // 240: powermanage.v1.DeleteUserGroupRequest
-	(*DeleteUserGroupResponse)(nil),                  // 241: powermanage.v1.DeleteUserGroupResponse
-	(*AddUserToGroupRequest)(nil),                    // 242: powermanage.v1.AddUserToGroupRequest
-	(*AddUserToGroupResponse)(nil),                   // 243: powermanage.v1.AddUserToGroupResponse
-	(*RemoveUserFromGroupRequest)(nil),               // 244: powermanage.v1.RemoveUserFromGroupRequest
-	(*RemoveUserFromGroupResponse)(nil),              // 245: powermanage.v1.RemoveUserFromGroupResponse
-	(*AssignRoleToUserGroupRequest)(nil),             // 246: powermanage.v1.AssignRoleToUserGroupRequest
-	(*AssignRoleToUserGroupResponse)(nil),            // 247: powermanage.v1.AssignRoleToUserGroupResponse
-	(*RevokeRoleFromUserGroupRequest)(nil),           // 248: powermanage.v1.RevokeRoleFromUserGroupRequest
-	(*RevokeRoleFromUserGroupResponse)(nil),          // 249: powermanage.v1.RevokeRoleFromUserGroupResponse
-	(*ListUserGroupsForUserRequest)(nil),             // 250: powermanage.v1.ListUserGroupsForUserRequest
-	(*ListUserGroupsForUserResponse)(nil),            // 251: powermanage.v1.ListUserGroupsForUserResponse
-	(*UpdateUserGroupQueryRequest)(nil),              // 252: powermanage.v1.UpdateUserGroupQueryRequest
-	(*UpdateUserGroupQueryResponse)(nil),             // 253: powermanage.v1.UpdateUserGroupQueryResponse
-	(*ValidateUserGroupQueryRequest)(nil),            // 254: powermanage.v1.ValidateUserGroupQueryRequest
-	(*ValidateUserGroupQueryResponse)(nil),           // 255: powermanage.v1.ValidateUserGroupQueryResponse
-	(*EvaluateDynamicUserGroupRequest)(nil),          // 256: powermanage.v1.EvaluateDynamicUserGroupRequest
-	(*EvaluateDynamicUserGroupResponse)(nil),         // 257: powermanage.v1.EvaluateDynamicUserGroupResponse
-	(*SetUserGroupMaintenanceWindowRequest)(nil),     // 258: powermanage.v1.SetUserGroupMaintenanceWindowRequest
-	(*IdentityProvider)(nil),                         // 259: powermanage.v1.IdentityProvider
-	(*IdentityLink)(nil),                             // 260: powermanage.v1.IdentityLink
-	(*CreateIdentityProviderRequest)(nil),            // 261: powermanage.v1.CreateIdentityProviderRequest
-	(*CreateIdentityProviderResponse)(nil),           // 262: powermanage.v1.CreateIdentityProviderResponse
-	(*GetIdentityProviderRequest)(nil),               // 263: powermanage.v1.GetIdentityProviderRequest
-	(*GetIdentityProviderResponse)(nil),              // 264: powermanage.v1.GetIdentityProviderResponse
-	(*ListIdentityProvidersRequest)(nil),             // 265: powermanage.v1.ListIdentityProvidersRequest
-	(*ListIdentityProvidersResponse)(nil),            // 266: powermanage.v1.ListIdentityProvidersResponse
-	(*UpdateIdentityProviderRequest)(nil),            // 267: powermanage.v1.UpdateIdentityProviderRequest
-	(*UpdateIdentityProviderResponse)(nil),           // 268: powermanage.v1.UpdateIdentityProviderResponse
-	(*DeleteIdentityProviderRequest)(nil),            // 269: powermanage.v1.DeleteIdentityProviderRequest
-	(*DeleteIdentityProviderResponse)(nil),           // 270: powermanage.v1.DeleteIdentityProviderResponse
-	(*AuthMethodProvider)(nil),                       // 271: powermanage.v1.AuthMethodProvider
-	(*ListAuthMethodsRequest)(nil),                   // 272: powermanage.v1.ListAuthMethodsRequest
-	(*ListAuthMethodsResponse)(nil),                  // 273: powermanage.v1.ListAuthMethodsResponse
-	(*GetSSOLoginURLRequest)(nil),                    // 274: powermanage.v1.GetSSOLoginURLRequest
-	(*GetSSOLoginURLResponse)(nil),                   // 275: powermanage.v1.GetSSOLoginURLResponse
-	(*SSOCallbackRequest)(nil),                       // 276: powermanage.v1.SSOCallbackRequest
-	(*SSOCallbackResponse)(nil),                      // 277: powermanage.v1.SSOCallbackResponse
-	(*BeginCLILoginRequest)(nil),                     // 278: powermanage.v1.BeginCLILoginRequest
-	(*BeginCLILoginResponse)(nil),                    // 279: powermanage.v1.BeginCLILoginResponse
-	(*ExchangeCLISessionRequest)(nil),                // 280: powermanage.v1.ExchangeCLISessionRequest
-	(*ExchangeCLISessionResponse)(nil),               // 281: powermanage.v1.ExchangeCLISessionResponse
-	(*ListIdentityLinksRequest)(nil),                 // 282: powermanage.v1.ListIdentityLinksRequest
-	(*ListIdentityLinksResponse)(nil),                // 283: powermanage.v1.ListIdentityLinksResponse
-	(*UnlinkIdentityRequest)(nil),                    // 284: powermanage.v1.UnlinkIdentityRequest
-	(*UnlinkIdentityResponse)(nil),                   // 285: powermanage.v1.UnlinkIdentityResponse
-	(*EnableSCIMRequest)(nil),                        // 286: powermanage.v1.EnableSCIMRequest
-	(*EnableSCIMResponse)(nil),                       // 287: powermanage.v1.EnableSCIMResponse
-	(*DisableSCIMRequest)(nil),                       // 288: powermanage.v1.DisableSCIMRequest
-	(*DisableSCIMResponse)(nil),                      // 289: powermanage.v1.DisableSCIMResponse
-	(*RotateSCIMTokenRequest)(nil),                   // 290: powermanage.v1.RotateSCIMTokenRequest
-	(*RotateSCIMTokenResponse)(nil),                  // 291: powermanage.v1.RotateSCIMTokenResponse
-	(*GetDeviceComplianceRequest)(nil),               // 292: powermanage.v1.GetDeviceComplianceRequest
-	(*GetDeviceComplianceResponse)(nil),              // 293: powermanage.v1.GetDeviceComplianceResponse
-	(*ComplianceCheckResult)(nil),                    // 294: powermanage.v1.ComplianceCheckResult
-	(*CompliancePolicy)(nil),                         // 295: powermanage.v1.CompliancePolicy
-	(*CompliancePolicyRule)(nil),                     // 296: powermanage.v1.CompliancePolicyRule
-	(*CreateCompliancePolicyRequest)(nil),            // 297: powermanage.v1.CreateCompliancePolicyRequest
-	(*CreateCompliancePolicyResponse)(nil),           // 298: powermanage.v1.CreateCompliancePolicyResponse
-	(*GetCompliancePolicyRequest)(nil),               // 299: powermanage.v1.GetCompliancePolicyRequest
-	(*GetCompliancePolicyResponse)(nil),              // 300: powermanage.v1.GetCompliancePolicyResponse
-	(*ListCompliancePoliciesRequest)(nil),            // 301: powermanage.v1.ListCompliancePoliciesRequest
-	(*ListCompliancePoliciesResponse)(nil),           // 302: powermanage.v1.ListCompliancePoliciesResponse
-	(*RenameCompliancePolicyRequest)(nil),            // 303: powermanage.v1.RenameCompliancePolicyRequest
-	(*UpdateCompliancePolicyDescriptionRequest)(nil), // 304: powermanage.v1.UpdateCompliancePolicyDescriptionRequest
-	(*UpdateCompliancePolicyResponse)(nil),           // 305: powermanage.v1.UpdateCompliancePolicyResponse
-	(*DeleteCompliancePolicyRequest)(nil),            // 306: powermanage.v1.DeleteCompliancePolicyRequest
-	(*DeleteCompliancePolicyResponse)(nil),           // 307: powermanage.v1.DeleteCompliancePolicyResponse
-	(*AddCompliancePolicyRuleRequest)(nil),           // 308: powermanage.v1.AddCompliancePolicyRuleRequest
-	(*AddCompliancePolicyRuleResponse)(nil),          // 309: powermanage.v1.AddCompliancePolicyRuleResponse
-	(*RemoveCompliancePolicyRuleRequest)(nil),        // 310: powermanage.v1.RemoveCompliancePolicyRuleRequest
-	(*RemoveCompliancePolicyRuleResponse)(nil),       // 311: powermanage.v1.RemoveCompliancePolicyRuleResponse
-	(*UpdateCompliancePolicyRuleRequest)(nil),        // 312: powermanage.v1.UpdateCompliancePolicyRuleRequest
-	(*UpdateCompliancePolicyRuleResponse)(nil),       // 313: powermanage.v1.UpdateCompliancePolicyRuleResponse
-	(*GetDeviceCompliancePolicyStatusRequest)(nil),   // 314: powermanage.v1.GetDeviceCompliancePolicyStatusRequest
-	(*GetDeviceCompliancePolicyStatusResponse)(nil),  // 315: powermanage.v1.GetDeviceCompliancePolicyStatusResponse
-	(*DevicePolicyEvaluation)(nil),                   // 316: powermanage.v1.DevicePolicyEvaluation
-	(*DevicePolicyRuleEvaluation)(nil),               // 317: powermanage.v1.DevicePolicyRuleEvaluation
-	(*SearchDateFilter)(nil),                         // 318: powermanage.v1.SearchDateFilter
-	(*SearchRequest)(nil),                            // 319: powermanage.v1.SearchRequest
-	(*SearchResult)(nil),                             // 320: powermanage.v1.SearchResult
-	(*SearchResponse)(nil),                           // 321: powermanage.v1.SearchResponse
-	(*RebuildSearchIndexRequest)(nil),                // 322: powermanage.v1.RebuildSearchIndexRequest
-	(*RebuildSearchIndexResponse)(nil),               // 323: powermanage.v1.RebuildSearchIndexResponse
-	(*ServerSettings)(nil),                           // 324: powermanage.v1.ServerSettings
-	(*GetServerSettingsRequest)(nil),                 // 325: powermanage.v1.GetServerSettingsRequest
-	(*GetServerSettingsResponse)(nil),                // 326: powermanage.v1.GetServerSettingsResponse
-	(*UpdateServerSettingsRequest)(nil),              // 327: powermanage.v1.UpdateServerSettingsRequest
-	(*UpdateServerSettingsResponse)(nil),             // 328: powermanage.v1.UpdateServerSettingsResponse
-	(*SetUserProvisioningEnabledRequest)(nil),        // 329: powermanage.v1.SetUserProvisioningEnabledRequest
-	(*StartTerminalRequest)(nil),                     // 330: powermanage.v1.StartTerminalRequest
-	(*StartTerminalResponse)(nil),                    // 331: powermanage.v1.StartTerminalResponse
-	(*StopTerminalRequest)(nil),                      // 332: powermanage.v1.StopTerminalRequest
-	(*StopTerminalResponse)(nil),                     // 333: powermanage.v1.StopTerminalResponse
-	(*TerminalSessionInfo)(nil),                      // 334: powermanage.v1.TerminalSessionInfo
-	(*ListActiveTerminalSessionsRequest)(nil),        // 335: powermanage.v1.ListActiveTerminalSessionsRequest
-	(*ListActiveTerminalSessionsResponse)(nil),       // 336: powermanage.v1.ListActiveTerminalSessionsResponse
-	(*TerminateTerminalSessionRequest)(nil),          // 337: powermanage.v1.TerminateTerminalSessionRequest
-	(*TerminateTerminalSessionResponse)(nil),         // 338: powermanage.v1.TerminateTerminalSessionResponse
-	(*EncryptionAuthoringParams)(nil),                // 339: powermanage.v1.EncryptionAuthoringParams
-	(*ManagedEncryptionParams)(nil),                  // 340: powermanage.v1.ManagedEncryptionParams
-	(*WifiAuthoringParams)(nil),                      // 341: powermanage.v1.WifiAuthoringParams
-	(*ManagedWifiParams)(nil),                        // 342: powermanage.v1.ManagedWifiParams
-	nil,                                              // 343: powermanage.v1.Device.LabelsEntry
-	nil,                                              // 344: powermanage.v1.ListDevicesRequest.LabelFilterEntry
-	nil,                                              // 345: powermanage.v1.IdentityProvider.GroupMappingEntry
-	nil,                                              // 346: powermanage.v1.CreateIdentityProviderRequest.GroupMappingEntry
-	nil,                                              // 347: powermanage.v1.UpdateIdentityProviderRequest.GroupMappingEntry
-	nil,                                              // 348: powermanage.v1.SearchRequest.TagFiltersEntry
-	nil,                                              // 349: powermanage.v1.SearchResult.FieldsEntry
-	(*DeviceId)(nil),                                 // 350: powermanage.v1.DeviceId
+var file_cadestro_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 350)
+var file_cadestro_v1_control_proto_goTypes = []any{
+	(*RegisterRequest)(nil),                          // 0: cadestro.v1.RegisterRequest
+	(*RegisterResponse)(nil),                         // 1: cadestro.v1.RegisterResponse
+	(*RenewCertificateRequest)(nil),                  // 2: cadestro.v1.RenewCertificateRequest
+	(*RenewCertificateResponse)(nil),                 // 3: cadestro.v1.RenewCertificateResponse
+	(*RefreshTokenRequest)(nil),                      // 4: cadestro.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),                     // 5: cadestro.v1.RefreshTokenResponse
+	(*LogoutRequest)(nil),                            // 6: cadestro.v1.LogoutRequest
+	(*LogoutResponse)(nil),                           // 7: cadestro.v1.LogoutResponse
+	(*GetCurrentUserRequest)(nil),                    // 8: cadestro.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),                   // 9: cadestro.v1.GetCurrentUserResponse
+	(*User)(nil),                                     // 10: cadestro.v1.User
+	(*InheritedRole)(nil),                            // 11: cadestro.v1.InheritedRole
+	(*SshPublicKey)(nil),                             // 12: cadestro.v1.SshPublicKey
+	(*Role)(nil),                                     // 13: cadestro.v1.Role
+	(*RoleGrant)(nil),                                // 14: cadestro.v1.RoleGrant
+	(*PermissionInfo)(nil),                           // 15: cadestro.v1.PermissionInfo
+	(*EraseJITUserRequest)(nil),                      // 16: cadestro.v1.EraseJITUserRequest
+	(*EraseJITUserResponse)(nil),                     // 17: cadestro.v1.EraseJITUserResponse
+	(*GetUserRequest)(nil),                           // 18: cadestro.v1.GetUserRequest
+	(*GetUserResponse)(nil),                          // 19: cadestro.v1.GetUserResponse
+	(*ListUsersRequest)(nil),                         // 20: cadestro.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),                        // 21: cadestro.v1.ListUsersResponse
+	(*UpdateUserEmailRequest)(nil),                   // 22: cadestro.v1.UpdateUserEmailRequest
+	(*SetUserDisabledRequest)(nil),                   // 23: cadestro.v1.SetUserDisabledRequest
+	(*UpdateUserResponse)(nil),                       // 24: cadestro.v1.UpdateUserResponse
+	(*UpdateUserProfileRequest)(nil),                 // 25: cadestro.v1.UpdateUserProfileRequest
+	(*AddUserSshKeyRequest)(nil),                     // 26: cadestro.v1.AddUserSshKeyRequest
+	(*AddUserSshKeyResponse)(nil),                    // 27: cadestro.v1.AddUserSshKeyResponse
+	(*RemoveUserSshKeyRequest)(nil),                  // 28: cadestro.v1.RemoveUserSshKeyRequest
+	(*RemoveUserSshKeyResponse)(nil),                 // 29: cadestro.v1.RemoveUserSshKeyResponse
+	(*UpdateUserSshSettingsRequest)(nil),             // 30: cadestro.v1.UpdateUserSshSettingsRequest
+	(*UpdateUserLinuxUsernameRequest)(nil),           // 31: cadestro.v1.UpdateUserLinuxUsernameRequest
+	(*Device)(nil),                                   // 32: cadestro.v1.Device
+	(*ListDevicesRequest)(nil),                       // 33: cadestro.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),                      // 34: cadestro.v1.ListDevicesResponse
+	(*GetDeviceRequest)(nil),                         // 35: cadestro.v1.GetDeviceRequest
+	(*GetDeviceResponse)(nil),                        // 36: cadestro.v1.GetDeviceResponse
+	(*SetDeviceLabelRequest)(nil),                    // 37: cadestro.v1.SetDeviceLabelRequest
+	(*RemoveDeviceLabelRequest)(nil),                 // 38: cadestro.v1.RemoveDeviceLabelRequest
+	(*UpdateDeviceResponse)(nil),                     // 39: cadestro.v1.UpdateDeviceResponse
+	(*DeleteDeviceRequest)(nil),                      // 40: cadestro.v1.DeleteDeviceRequest
+	(*DeleteDeviceResponse)(nil),                     // 41: cadestro.v1.DeleteDeviceResponse
+	(*AssignDeviceRequest)(nil),                      // 42: cadestro.v1.AssignDeviceRequest
+	(*AssignDeviceResponse)(nil),                     // 43: cadestro.v1.AssignDeviceResponse
+	(*UnassignDeviceRequest)(nil),                    // 44: cadestro.v1.UnassignDeviceRequest
+	(*UnassignDeviceResponse)(nil),                   // 45: cadestro.v1.UnassignDeviceResponse
+	(*DeviceAssignee)(nil),                           // 46: cadestro.v1.DeviceAssignee
+	(*ListDeviceAssigneesRequest)(nil),               // 47: cadestro.v1.ListDeviceAssigneesRequest
+	(*ListDeviceAssigneesResponse)(nil),              // 48: cadestro.v1.ListDeviceAssigneesResponse
+	(*SetDeviceSyncIntervalRequest)(nil),             // 49: cadestro.v1.SetDeviceSyncIntervalRequest
+	(*SetDeviceInventoryIntervalRequest)(nil),        // 50: cadestro.v1.SetDeviceInventoryIntervalRequest
+	(*RegistrationToken)(nil),                        // 51: cadestro.v1.RegistrationToken
+	(*CreateTokenRequest)(nil),                       // 52: cadestro.v1.CreateTokenRequest
+	(*CreateTokenResponse)(nil),                      // 53: cadestro.v1.CreateTokenResponse
+	(*ListTokensRequest)(nil),                        // 54: cadestro.v1.ListTokensRequest
+	(*ListTokensResponse)(nil),                       // 55: cadestro.v1.ListTokensResponse
+	(*GetTokenRequest)(nil),                          // 56: cadestro.v1.GetTokenRequest
+	(*GetTokenResponse)(nil),                         // 57: cadestro.v1.GetTokenResponse
+	(*RenameTokenRequest)(nil),                       // 58: cadestro.v1.RenameTokenRequest
+	(*SetTokenDisabledRequest)(nil),                  // 59: cadestro.v1.SetTokenDisabledRequest
+	(*UpdateTokenResponse)(nil),                      // 60: cadestro.v1.UpdateTokenResponse
+	(*DeleteTokenRequest)(nil),                       // 61: cadestro.v1.DeleteTokenRequest
+	(*DeleteTokenResponse)(nil),                      // 62: cadestro.v1.DeleteTokenResponse
+	(*ManagedAction)(nil),                            // 63: cadestro.v1.ManagedAction
+	(*CreateActionRequest)(nil),                      // 64: cadestro.v1.CreateActionRequest
+	(*CreateActionResponse)(nil),                     // 65: cadestro.v1.CreateActionResponse
+	(*GetActionRequest)(nil),                         // 66: cadestro.v1.GetActionRequest
+	(*GetActionResponse)(nil),                        // 67: cadestro.v1.GetActionResponse
+	(*ListActionsRequest)(nil),                       // 68: cadestro.v1.ListActionsRequest
+	(*ListActionsResponse)(nil),                      // 69: cadestro.v1.ListActionsResponse
+	(*RenameActionRequest)(nil),                      // 70: cadestro.v1.RenameActionRequest
+	(*UpdateActionDescriptionRequest)(nil),           // 71: cadestro.v1.UpdateActionDescriptionRequest
+	(*UpdateActionParamsRequest)(nil),                // 72: cadestro.v1.UpdateActionParamsRequest
+	(*UpdateActionResponse)(nil),                     // 73: cadestro.v1.UpdateActionResponse
+	(*DeleteActionRequest)(nil),                      // 74: cadestro.v1.DeleteActionRequest
+	(*DeleteActionResponse)(nil),                     // 75: cadestro.v1.DeleteActionResponse
+	(*ActionSet)(nil),                                // 76: cadestro.v1.ActionSet
+	(*ActionSetMember)(nil),                          // 77: cadestro.v1.ActionSetMember
+	(*CreateActionSetRequest)(nil),                   // 78: cadestro.v1.CreateActionSetRequest
+	(*CreateActionSetResponse)(nil),                  // 79: cadestro.v1.CreateActionSetResponse
+	(*GetActionSetRequest)(nil),                      // 80: cadestro.v1.GetActionSetRequest
+	(*GetActionSetResponse)(nil),                     // 81: cadestro.v1.GetActionSetResponse
+	(*ListActionSetsRequest)(nil),                    // 82: cadestro.v1.ListActionSetsRequest
+	(*ListActionSetsResponse)(nil),                   // 83: cadestro.v1.ListActionSetsResponse
+	(*RenameActionSetRequest)(nil),                   // 84: cadestro.v1.RenameActionSetRequest
+	(*UpdateActionSetDescriptionRequest)(nil),        // 85: cadestro.v1.UpdateActionSetDescriptionRequest
+	(*UpdateActionSetScheduleRequest)(nil),           // 86: cadestro.v1.UpdateActionSetScheduleRequest
+	(*UpdateActionSetResponse)(nil),                  // 87: cadestro.v1.UpdateActionSetResponse
+	(*DeleteActionSetRequest)(nil),                   // 88: cadestro.v1.DeleteActionSetRequest
+	(*DeleteActionSetResponse)(nil),                  // 89: cadestro.v1.DeleteActionSetResponse
+	(*AddActionToSetRequest)(nil),                    // 90: cadestro.v1.AddActionToSetRequest
+	(*AddActionToSetResponse)(nil),                   // 91: cadestro.v1.AddActionToSetResponse
+	(*RemoveActionFromSetRequest)(nil),               // 92: cadestro.v1.RemoveActionFromSetRequest
+	(*RemoveActionFromSetResponse)(nil),              // 93: cadestro.v1.RemoveActionFromSetResponse
+	(*ReorderActionInSetRequest)(nil),                // 94: cadestro.v1.ReorderActionInSetRequest
+	(*ReorderActionInSetResponse)(nil),               // 95: cadestro.v1.ReorderActionInSetResponse
+	(*Definition)(nil),                               // 96: cadestro.v1.Definition
+	(*DefinitionMember)(nil),                         // 97: cadestro.v1.DefinitionMember
+	(*CreateDefinitionRequest)(nil),                  // 98: cadestro.v1.CreateDefinitionRequest
+	(*CreateDefinitionResponse)(nil),                 // 99: cadestro.v1.CreateDefinitionResponse
+	(*GetDefinitionRequest)(nil),                     // 100: cadestro.v1.GetDefinitionRequest
+	(*GetDefinitionResponse)(nil),                    // 101: cadestro.v1.GetDefinitionResponse
+	(*ListDefinitionsRequest)(nil),                   // 102: cadestro.v1.ListDefinitionsRequest
+	(*ListDefinitionsResponse)(nil),                  // 103: cadestro.v1.ListDefinitionsResponse
+	(*RenameDefinitionRequest)(nil),                  // 104: cadestro.v1.RenameDefinitionRequest
+	(*UpdateDefinitionDescriptionRequest)(nil),       // 105: cadestro.v1.UpdateDefinitionDescriptionRequest
+	(*UpdateDefinitionScheduleRequest)(nil),          // 106: cadestro.v1.UpdateDefinitionScheduleRequest
+	(*UpdateDefinitionResponse)(nil),                 // 107: cadestro.v1.UpdateDefinitionResponse
+	(*DeleteDefinitionRequest)(nil),                  // 108: cadestro.v1.DeleteDefinitionRequest
+	(*DeleteDefinitionResponse)(nil),                 // 109: cadestro.v1.DeleteDefinitionResponse
+	(*AddActionSetToDefinitionRequest)(nil),          // 110: cadestro.v1.AddActionSetToDefinitionRequest
+	(*AddActionSetToDefinitionResponse)(nil),         // 111: cadestro.v1.AddActionSetToDefinitionResponse
+	(*RemoveActionSetFromDefinitionRequest)(nil),     // 112: cadestro.v1.RemoveActionSetFromDefinitionRequest
+	(*RemoveActionSetFromDefinitionResponse)(nil),    // 113: cadestro.v1.RemoveActionSetFromDefinitionResponse
+	(*ReorderActionSetInDefinitionRequest)(nil),      // 114: cadestro.v1.ReorderActionSetInDefinitionRequest
+	(*ReorderActionSetInDefinitionResponse)(nil),     // 115: cadestro.v1.ReorderActionSetInDefinitionResponse
+	(*DeviceGroup)(nil),                              // 116: cadestro.v1.DeviceGroup
+	(*CreateDeviceGroupRequest)(nil),                 // 117: cadestro.v1.CreateDeviceGroupRequest
+	(*CreateDeviceGroupResponse)(nil),                // 118: cadestro.v1.CreateDeviceGroupResponse
+	(*GetDeviceGroupRequest)(nil),                    // 119: cadestro.v1.GetDeviceGroupRequest
+	(*GetDeviceGroupResponse)(nil),                   // 120: cadestro.v1.GetDeviceGroupResponse
+	(*DeviceGroupMember)(nil),                        // 121: cadestro.v1.DeviceGroupMember
+	(*ListDeviceGroupsRequest)(nil),                  // 122: cadestro.v1.ListDeviceGroupsRequest
+	(*ListDeviceGroupsResponse)(nil),                 // 123: cadestro.v1.ListDeviceGroupsResponse
+	(*ListDeviceGroupsForDeviceRequest)(nil),         // 124: cadestro.v1.ListDeviceGroupsForDeviceRequest
+	(*ListDeviceGroupsForDeviceResponse)(nil),        // 125: cadestro.v1.ListDeviceGroupsForDeviceResponse
+	(*RenameDeviceGroupRequest)(nil),                 // 126: cadestro.v1.RenameDeviceGroupRequest
+	(*UpdateDeviceGroupDescriptionRequest)(nil),      // 127: cadestro.v1.UpdateDeviceGroupDescriptionRequest
+	(*UpdateDeviceGroupResponse)(nil),                // 128: cadestro.v1.UpdateDeviceGroupResponse
+	(*DeleteDeviceGroupRequest)(nil),                 // 129: cadestro.v1.DeleteDeviceGroupRequest
+	(*DeleteDeviceGroupResponse)(nil),                // 130: cadestro.v1.DeleteDeviceGroupResponse
+	(*AddDeviceToGroupRequest)(nil),                  // 131: cadestro.v1.AddDeviceToGroupRequest
+	(*AddDeviceToGroupResponse)(nil),                 // 132: cadestro.v1.AddDeviceToGroupResponse
+	(*RemoveDeviceFromGroupRequest)(nil),             // 133: cadestro.v1.RemoveDeviceFromGroupRequest
+	(*RemoveDeviceFromGroupResponse)(nil),            // 134: cadestro.v1.RemoveDeviceFromGroupResponse
+	(*UpdateDeviceGroupQueryRequest)(nil),            // 135: cadestro.v1.UpdateDeviceGroupQueryRequest
+	(*UpdateDeviceGroupQueryResponse)(nil),           // 136: cadestro.v1.UpdateDeviceGroupQueryResponse
+	(*ValidateDynamicQueryRequest)(nil),              // 137: cadestro.v1.ValidateDynamicQueryRequest
+	(*ValidateDynamicQueryResponse)(nil),             // 138: cadestro.v1.ValidateDynamicQueryResponse
+	(*EvaluateDynamicGroupRequest)(nil),              // 139: cadestro.v1.EvaluateDynamicGroupRequest
+	(*EvaluateDynamicGroupResponse)(nil),             // 140: cadestro.v1.EvaluateDynamicGroupResponse
+	(*SetDeviceGroupSyncIntervalRequest)(nil),        // 141: cadestro.v1.SetDeviceGroupSyncIntervalRequest
+	(*SetDeviceGroupInventoryIntervalRequest)(nil),   // 142: cadestro.v1.SetDeviceGroupInventoryIntervalRequest
+	(*SetDeviceGroupMaintenanceWindowRequest)(nil),   // 143: cadestro.v1.SetDeviceGroupMaintenanceWindowRequest
+	(*Assignment)(nil),                               // 144: cadestro.v1.Assignment
+	(*CreateAssignmentRequest)(nil),                  // 145: cadestro.v1.CreateAssignmentRequest
+	(*CreateAssignmentResponse)(nil),                 // 146: cadestro.v1.CreateAssignmentResponse
+	(*DeleteAssignmentRequest)(nil),                  // 147: cadestro.v1.DeleteAssignmentRequest
+	(*DeleteAssignmentResponse)(nil),                 // 148: cadestro.v1.DeleteAssignmentResponse
+	(*ListAssignmentsRequest)(nil),                   // 149: cadestro.v1.ListAssignmentsRequest
+	(*ListAssignmentsResponse)(nil),                  // 150: cadestro.v1.ListAssignmentsResponse
+	(*UserSelection)(nil),                            // 151: cadestro.v1.UserSelection
+	(*SetUserSelectionRequest)(nil),                  // 152: cadestro.v1.SetUserSelectionRequest
+	(*SetUserSelectionResponse)(nil),                 // 153: cadestro.v1.SetUserSelectionResponse
+	(*ListAvailableActionsRequest)(nil),              // 154: cadestro.v1.ListAvailableActionsRequest
+	(*AvailableItem)(nil),                            // 155: cadestro.v1.AvailableItem
+	(*ListAvailableActionsResponse)(nil),             // 156: cadestro.v1.ListAvailableActionsResponse
+	(*GetDeviceAssignmentsRequest)(nil),              // 157: cadestro.v1.GetDeviceAssignmentsRequest
+	(*GetDeviceAssignmentsResponse)(nil),             // 158: cadestro.v1.GetDeviceAssignmentsResponse
+	(*GetUserAssignmentsRequest)(nil),                // 159: cadestro.v1.GetUserAssignmentsRequest
+	(*GetUserAssignmentsResponse)(nil),               // 160: cadestro.v1.GetUserAssignmentsResponse
+	(*ActionExecution)(nil),                          // 161: cadestro.v1.ActionExecution
+	(*DispatchActionRequest)(nil),                    // 162: cadestro.v1.DispatchActionRequest
+	(*DispatchActionResponse)(nil),                   // 163: cadestro.v1.DispatchActionResponse
+	(*DispatchToMultipleRequest)(nil),                // 164: cadestro.v1.DispatchToMultipleRequest
+	(*DispatchToMultipleResponse)(nil),               // 165: cadestro.v1.DispatchToMultipleResponse
+	(*DispatchAssignedActionsRequest)(nil),           // 166: cadestro.v1.DispatchAssignedActionsRequest
+	(*DispatchAssignedActionsResponse)(nil),          // 167: cadestro.v1.DispatchAssignedActionsResponse
+	(*DispatchActionSetRequest)(nil),                 // 168: cadestro.v1.DispatchActionSetRequest
+	(*DispatchActionSetResponse)(nil),                // 169: cadestro.v1.DispatchActionSetResponse
+	(*DispatchDefinitionRequest)(nil),                // 170: cadestro.v1.DispatchDefinitionRequest
+	(*DispatchDefinitionResponse)(nil),               // 171: cadestro.v1.DispatchDefinitionResponse
+	(*DispatchToGroupRequest)(nil),                   // 172: cadestro.v1.DispatchToGroupRequest
+	(*DispatchToGroupResponse)(nil),                  // 173: cadestro.v1.DispatchToGroupResponse
+	(*GetExecutionRequest)(nil),                      // 174: cadestro.v1.GetExecutionRequest
+	(*GetExecutionResponse)(nil),                     // 175: cadestro.v1.GetExecutionResponse
+	(*ListExecutionsRequest)(nil),                    // 176: cadestro.v1.ListExecutionsRequest
+	(*ListExecutionsResponse)(nil),                   // 177: cadestro.v1.ListExecutionsResponse
+	(*DispatchInstantActionRequest)(nil),             // 178: cadestro.v1.DispatchInstantActionRequest
+	(*DispatchInstantActionResponse)(nil),            // 179: cadestro.v1.DispatchInstantActionResponse
+	(*CancelExecutionRequest)(nil),                   // 180: cadestro.v1.CancelExecutionRequest
+	(*CancelExecutionResponse)(nil),                  // 181: cadestro.v1.CancelExecutionResponse
+	(*AuditEvent)(nil),                               // 182: cadestro.v1.AuditEvent
+	(*ListAuditEventsRequest)(nil),                   // 183: cadestro.v1.ListAuditEventsRequest
+	(*ListAuditEventsResponse)(nil),                  // 184: cadestro.v1.ListAuditEventsResponse
+	(*ExportAuditEventsRequest)(nil),                 // 185: cadestro.v1.ExportAuditEventsRequest
+	(*ExportAuditEventsResponse)(nil),                // 186: cadestro.v1.ExportAuditEventsResponse
+	(*LpsPassword)(nil),                              // 187: cadestro.v1.LpsPassword
+	(*ListLpsPasswordsRequest)(nil),                  // 188: cadestro.v1.ListLpsPasswordsRequest
+	(*ListLpsPasswordsResponse)(nil),                 // 189: cadestro.v1.ListLpsPasswordsResponse
+	(*RevealLpsPasswordRequest)(nil),                 // 190: cadestro.v1.RevealLpsPasswordRequest
+	(*RevealLpsPasswordResponse)(nil),                // 191: cadestro.v1.RevealLpsPasswordResponse
+	(*LuksKey)(nil),                                  // 192: cadestro.v1.LuksKey
+	(*ListLuksKeysRequest)(nil),                      // 193: cadestro.v1.ListLuksKeysRequest
+	(*ListLuksKeysResponse)(nil),                     // 194: cadestro.v1.ListLuksKeysResponse
+	(*RevealLuksKeyRequest)(nil),                     // 195: cadestro.v1.RevealLuksKeyRequest
+	(*RevealLuksKeyResponse)(nil),                    // 196: cadestro.v1.RevealLuksKeyResponse
+	(*CreateLuksTokenRequest)(nil),                   // 197: cadestro.v1.CreateLuksTokenRequest
+	(*CreateLuksTokenResponse)(nil),                  // 198: cadestro.v1.CreateLuksTokenResponse
+	(*RevokeLuksDeviceKeyRequest)(nil),               // 199: cadestro.v1.RevokeLuksDeviceKeyRequest
+	(*RevokeLuksDeviceKeyResponse)(nil),              // 200: cadestro.v1.RevokeLuksDeviceKeyResponse
+	(*DispatchOSQueryRequest)(nil),                   // 201: cadestro.v1.DispatchOSQueryRequest
+	(*DispatchOSQueryResponse)(nil),                  // 202: cadestro.v1.DispatchOSQueryResponse
+	(*GetOSQueryResultRequest)(nil),                  // 203: cadestro.v1.GetOSQueryResultRequest
+	(*GetOSQueryResultResponse)(nil),                 // 204: cadestro.v1.GetOSQueryResultResponse
+	(*GetDeviceInventoryRequest)(nil),                // 205: cadestro.v1.GetDeviceInventoryRequest
+	(*InventoryTableResult)(nil),                     // 206: cadestro.v1.InventoryTableResult
+	(*GetDeviceInventoryResponse)(nil),               // 207: cadestro.v1.GetDeviceInventoryResponse
+	(*RefreshDeviceInventoryRequest)(nil),            // 208: cadestro.v1.RefreshDeviceInventoryRequest
+	(*RefreshDeviceInventoryResponse)(nil),           // 209: cadestro.v1.RefreshDeviceInventoryResponse
+	(*QueryDeviceLogsRequest)(nil),                   // 210: cadestro.v1.QueryDeviceLogsRequest
+	(*QueryDeviceLogsResponse)(nil),                  // 211: cadestro.v1.QueryDeviceLogsResponse
+	(*GetDeviceLogResultRequest)(nil),                // 212: cadestro.v1.GetDeviceLogResultRequest
+	(*GetDeviceLogResultResponse)(nil),               // 213: cadestro.v1.GetDeviceLogResultResponse
+	(*CreateRoleRequest)(nil),                        // 214: cadestro.v1.CreateRoleRequest
+	(*CreateRoleResponse)(nil),                       // 215: cadestro.v1.CreateRoleResponse
+	(*GetRoleRequest)(nil),                           // 216: cadestro.v1.GetRoleRequest
+	(*GetRoleResponse)(nil),                          // 217: cadestro.v1.GetRoleResponse
+	(*ListRolesRequest)(nil),                         // 218: cadestro.v1.ListRolesRequest
+	(*ListRolesResponse)(nil),                        // 219: cadestro.v1.ListRolesResponse
+	(*UpdateRoleRequest)(nil),                        // 220: cadestro.v1.UpdateRoleRequest
+	(*UpdateRoleResponse)(nil),                       // 221: cadestro.v1.UpdateRoleResponse
+	(*DeleteRoleRequest)(nil),                        // 222: cadestro.v1.DeleteRoleRequest
+	(*DeleteRoleResponse)(nil),                       // 223: cadestro.v1.DeleteRoleResponse
+	(*AssignRoleToUserRequest)(nil),                  // 224: cadestro.v1.AssignRoleToUserRequest
+	(*AssignRoleToUserResponse)(nil),                 // 225: cadestro.v1.AssignRoleToUserResponse
+	(*RevokeRoleFromUserRequest)(nil),                // 226: cadestro.v1.RevokeRoleFromUserRequest
+	(*RevokeRoleFromUserResponse)(nil),               // 227: cadestro.v1.RevokeRoleFromUserResponse
+	(*ListPermissionsRequest)(nil),                   // 228: cadestro.v1.ListPermissionsRequest
+	(*ListPermissionsResponse)(nil),                  // 229: cadestro.v1.ListPermissionsResponse
+	(*UserGroup)(nil),                                // 230: cadestro.v1.UserGroup
+	(*UserGroupMember)(nil),                          // 231: cadestro.v1.UserGroupMember
+	(*CreateUserGroupRequest)(nil),                   // 232: cadestro.v1.CreateUserGroupRequest
+	(*CreateUserGroupResponse)(nil),                  // 233: cadestro.v1.CreateUserGroupResponse
+	(*GetUserGroupRequest)(nil),                      // 234: cadestro.v1.GetUserGroupRequest
+	(*GetUserGroupResponse)(nil),                     // 235: cadestro.v1.GetUserGroupResponse
+	(*ListUserGroupsRequest)(nil),                    // 236: cadestro.v1.ListUserGroupsRequest
+	(*ListUserGroupsResponse)(nil),                   // 237: cadestro.v1.ListUserGroupsResponse
+	(*UpdateUserGroupRequest)(nil),                   // 238: cadestro.v1.UpdateUserGroupRequest
+	(*UpdateUserGroupResponse)(nil),                  // 239: cadestro.v1.UpdateUserGroupResponse
+	(*DeleteUserGroupRequest)(nil),                   // 240: cadestro.v1.DeleteUserGroupRequest
+	(*DeleteUserGroupResponse)(nil),                  // 241: cadestro.v1.DeleteUserGroupResponse
+	(*AddUserToGroupRequest)(nil),                    // 242: cadestro.v1.AddUserToGroupRequest
+	(*AddUserToGroupResponse)(nil),                   // 243: cadestro.v1.AddUserToGroupResponse
+	(*RemoveUserFromGroupRequest)(nil),               // 244: cadestro.v1.RemoveUserFromGroupRequest
+	(*RemoveUserFromGroupResponse)(nil),              // 245: cadestro.v1.RemoveUserFromGroupResponse
+	(*AssignRoleToUserGroupRequest)(nil),             // 246: cadestro.v1.AssignRoleToUserGroupRequest
+	(*AssignRoleToUserGroupResponse)(nil),            // 247: cadestro.v1.AssignRoleToUserGroupResponse
+	(*RevokeRoleFromUserGroupRequest)(nil),           // 248: cadestro.v1.RevokeRoleFromUserGroupRequest
+	(*RevokeRoleFromUserGroupResponse)(nil),          // 249: cadestro.v1.RevokeRoleFromUserGroupResponse
+	(*ListUserGroupsForUserRequest)(nil),             // 250: cadestro.v1.ListUserGroupsForUserRequest
+	(*ListUserGroupsForUserResponse)(nil),            // 251: cadestro.v1.ListUserGroupsForUserResponse
+	(*UpdateUserGroupQueryRequest)(nil),              // 252: cadestro.v1.UpdateUserGroupQueryRequest
+	(*UpdateUserGroupQueryResponse)(nil),             // 253: cadestro.v1.UpdateUserGroupQueryResponse
+	(*ValidateUserGroupQueryRequest)(nil),            // 254: cadestro.v1.ValidateUserGroupQueryRequest
+	(*ValidateUserGroupQueryResponse)(nil),           // 255: cadestro.v1.ValidateUserGroupQueryResponse
+	(*EvaluateDynamicUserGroupRequest)(nil),          // 256: cadestro.v1.EvaluateDynamicUserGroupRequest
+	(*EvaluateDynamicUserGroupResponse)(nil),         // 257: cadestro.v1.EvaluateDynamicUserGroupResponse
+	(*SetUserGroupMaintenanceWindowRequest)(nil),     // 258: cadestro.v1.SetUserGroupMaintenanceWindowRequest
+	(*IdentityProvider)(nil),                         // 259: cadestro.v1.IdentityProvider
+	(*IdentityLink)(nil),                             // 260: cadestro.v1.IdentityLink
+	(*CreateIdentityProviderRequest)(nil),            // 261: cadestro.v1.CreateIdentityProviderRequest
+	(*CreateIdentityProviderResponse)(nil),           // 262: cadestro.v1.CreateIdentityProviderResponse
+	(*GetIdentityProviderRequest)(nil),               // 263: cadestro.v1.GetIdentityProviderRequest
+	(*GetIdentityProviderResponse)(nil),              // 264: cadestro.v1.GetIdentityProviderResponse
+	(*ListIdentityProvidersRequest)(nil),             // 265: cadestro.v1.ListIdentityProvidersRequest
+	(*ListIdentityProvidersResponse)(nil),            // 266: cadestro.v1.ListIdentityProvidersResponse
+	(*UpdateIdentityProviderRequest)(nil),            // 267: cadestro.v1.UpdateIdentityProviderRequest
+	(*UpdateIdentityProviderResponse)(nil),           // 268: cadestro.v1.UpdateIdentityProviderResponse
+	(*DeleteIdentityProviderRequest)(nil),            // 269: cadestro.v1.DeleteIdentityProviderRequest
+	(*DeleteIdentityProviderResponse)(nil),           // 270: cadestro.v1.DeleteIdentityProviderResponse
+	(*AuthMethodProvider)(nil),                       // 271: cadestro.v1.AuthMethodProvider
+	(*ListAuthMethodsRequest)(nil),                   // 272: cadestro.v1.ListAuthMethodsRequest
+	(*ListAuthMethodsResponse)(nil),                  // 273: cadestro.v1.ListAuthMethodsResponse
+	(*GetSSOLoginURLRequest)(nil),                    // 274: cadestro.v1.GetSSOLoginURLRequest
+	(*GetSSOLoginURLResponse)(nil),                   // 275: cadestro.v1.GetSSOLoginURLResponse
+	(*SSOCallbackRequest)(nil),                       // 276: cadestro.v1.SSOCallbackRequest
+	(*SSOCallbackResponse)(nil),                      // 277: cadestro.v1.SSOCallbackResponse
+	(*BeginCLILoginRequest)(nil),                     // 278: cadestro.v1.BeginCLILoginRequest
+	(*BeginCLILoginResponse)(nil),                    // 279: cadestro.v1.BeginCLILoginResponse
+	(*ExchangeCLISessionRequest)(nil),                // 280: cadestro.v1.ExchangeCLISessionRequest
+	(*ExchangeCLISessionResponse)(nil),               // 281: cadestro.v1.ExchangeCLISessionResponse
+	(*ListIdentityLinksRequest)(nil),                 // 282: cadestro.v1.ListIdentityLinksRequest
+	(*ListIdentityLinksResponse)(nil),                // 283: cadestro.v1.ListIdentityLinksResponse
+	(*UnlinkIdentityRequest)(nil),                    // 284: cadestro.v1.UnlinkIdentityRequest
+	(*UnlinkIdentityResponse)(nil),                   // 285: cadestro.v1.UnlinkIdentityResponse
+	(*EnableSCIMRequest)(nil),                        // 286: cadestro.v1.EnableSCIMRequest
+	(*EnableSCIMResponse)(nil),                       // 287: cadestro.v1.EnableSCIMResponse
+	(*DisableSCIMRequest)(nil),                       // 288: cadestro.v1.DisableSCIMRequest
+	(*DisableSCIMResponse)(nil),                      // 289: cadestro.v1.DisableSCIMResponse
+	(*RotateSCIMTokenRequest)(nil),                   // 290: cadestro.v1.RotateSCIMTokenRequest
+	(*RotateSCIMTokenResponse)(nil),                  // 291: cadestro.v1.RotateSCIMTokenResponse
+	(*GetDeviceComplianceRequest)(nil),               // 292: cadestro.v1.GetDeviceComplianceRequest
+	(*GetDeviceComplianceResponse)(nil),              // 293: cadestro.v1.GetDeviceComplianceResponse
+	(*ComplianceCheckResult)(nil),                    // 294: cadestro.v1.ComplianceCheckResult
+	(*CompliancePolicy)(nil),                         // 295: cadestro.v1.CompliancePolicy
+	(*CompliancePolicyRule)(nil),                     // 296: cadestro.v1.CompliancePolicyRule
+	(*CreateCompliancePolicyRequest)(nil),            // 297: cadestro.v1.CreateCompliancePolicyRequest
+	(*CreateCompliancePolicyResponse)(nil),           // 298: cadestro.v1.CreateCompliancePolicyResponse
+	(*GetCompliancePolicyRequest)(nil),               // 299: cadestro.v1.GetCompliancePolicyRequest
+	(*GetCompliancePolicyResponse)(nil),              // 300: cadestro.v1.GetCompliancePolicyResponse
+	(*ListCompliancePoliciesRequest)(nil),            // 301: cadestro.v1.ListCompliancePoliciesRequest
+	(*ListCompliancePoliciesResponse)(nil),           // 302: cadestro.v1.ListCompliancePoliciesResponse
+	(*RenameCompliancePolicyRequest)(nil),            // 303: cadestro.v1.RenameCompliancePolicyRequest
+	(*UpdateCompliancePolicyDescriptionRequest)(nil), // 304: cadestro.v1.UpdateCompliancePolicyDescriptionRequest
+	(*UpdateCompliancePolicyResponse)(nil),           // 305: cadestro.v1.UpdateCompliancePolicyResponse
+	(*DeleteCompliancePolicyRequest)(nil),            // 306: cadestro.v1.DeleteCompliancePolicyRequest
+	(*DeleteCompliancePolicyResponse)(nil),           // 307: cadestro.v1.DeleteCompliancePolicyResponse
+	(*AddCompliancePolicyRuleRequest)(nil),           // 308: cadestro.v1.AddCompliancePolicyRuleRequest
+	(*AddCompliancePolicyRuleResponse)(nil),          // 309: cadestro.v1.AddCompliancePolicyRuleResponse
+	(*RemoveCompliancePolicyRuleRequest)(nil),        // 310: cadestro.v1.RemoveCompliancePolicyRuleRequest
+	(*RemoveCompliancePolicyRuleResponse)(nil),       // 311: cadestro.v1.RemoveCompliancePolicyRuleResponse
+	(*UpdateCompliancePolicyRuleRequest)(nil),        // 312: cadestro.v1.UpdateCompliancePolicyRuleRequest
+	(*UpdateCompliancePolicyRuleResponse)(nil),       // 313: cadestro.v1.UpdateCompliancePolicyRuleResponse
+	(*GetDeviceCompliancePolicyStatusRequest)(nil),   // 314: cadestro.v1.GetDeviceCompliancePolicyStatusRequest
+	(*GetDeviceCompliancePolicyStatusResponse)(nil),  // 315: cadestro.v1.GetDeviceCompliancePolicyStatusResponse
+	(*DevicePolicyEvaluation)(nil),                   // 316: cadestro.v1.DevicePolicyEvaluation
+	(*DevicePolicyRuleEvaluation)(nil),               // 317: cadestro.v1.DevicePolicyRuleEvaluation
+	(*SearchDateFilter)(nil),                         // 318: cadestro.v1.SearchDateFilter
+	(*SearchRequest)(nil),                            // 319: cadestro.v1.SearchRequest
+	(*SearchResult)(nil),                             // 320: cadestro.v1.SearchResult
+	(*SearchResponse)(nil),                           // 321: cadestro.v1.SearchResponse
+	(*RebuildSearchIndexRequest)(nil),                // 322: cadestro.v1.RebuildSearchIndexRequest
+	(*RebuildSearchIndexResponse)(nil),               // 323: cadestro.v1.RebuildSearchIndexResponse
+	(*ServerSettings)(nil),                           // 324: cadestro.v1.ServerSettings
+	(*GetServerSettingsRequest)(nil),                 // 325: cadestro.v1.GetServerSettingsRequest
+	(*GetServerSettingsResponse)(nil),                // 326: cadestro.v1.GetServerSettingsResponse
+	(*UpdateServerSettingsRequest)(nil),              // 327: cadestro.v1.UpdateServerSettingsRequest
+	(*UpdateServerSettingsResponse)(nil),             // 328: cadestro.v1.UpdateServerSettingsResponse
+	(*SetUserProvisioningEnabledRequest)(nil),        // 329: cadestro.v1.SetUserProvisioningEnabledRequest
+	(*StartTerminalRequest)(nil),                     // 330: cadestro.v1.StartTerminalRequest
+	(*StartTerminalResponse)(nil),                    // 331: cadestro.v1.StartTerminalResponse
+	(*StopTerminalRequest)(nil),                      // 332: cadestro.v1.StopTerminalRequest
+	(*StopTerminalResponse)(nil),                     // 333: cadestro.v1.StopTerminalResponse
+	(*TerminalSessionInfo)(nil),                      // 334: cadestro.v1.TerminalSessionInfo
+	(*ListActiveTerminalSessionsRequest)(nil),        // 335: cadestro.v1.ListActiveTerminalSessionsRequest
+	(*ListActiveTerminalSessionsResponse)(nil),       // 336: cadestro.v1.ListActiveTerminalSessionsResponse
+	(*TerminateTerminalSessionRequest)(nil),          // 337: cadestro.v1.TerminateTerminalSessionRequest
+	(*TerminateTerminalSessionResponse)(nil),         // 338: cadestro.v1.TerminateTerminalSessionResponse
+	(*EncryptionAuthoringParams)(nil),                // 339: cadestro.v1.EncryptionAuthoringParams
+	(*ManagedEncryptionParams)(nil),                  // 340: cadestro.v1.ManagedEncryptionParams
+	(*WifiAuthoringParams)(nil),                      // 341: cadestro.v1.WifiAuthoringParams
+	(*ManagedWifiParams)(nil),                        // 342: cadestro.v1.ManagedWifiParams
+	nil,                                              // 343: cadestro.v1.Device.LabelsEntry
+	nil,                                              // 344: cadestro.v1.ListDevicesRequest.LabelFilterEntry
+	nil,                                              // 345: cadestro.v1.IdentityProvider.GroupMappingEntry
+	nil,                                              // 346: cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntry
+	nil,                                              // 347: cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntry
+	nil,                                              // 348: cadestro.v1.SearchRequest.TagFiltersEntry
+	nil,                                              // 349: cadestro.v1.SearchResult.FieldsEntry
+	(*DeviceId)(nil),                                 // 350: cadestro.v1.DeviceId
 	(*timestamppb.Timestamp)(nil),                    // 351: google.protobuf.Timestamp
-	(RoleGrantScopeKind)(0),                          // 352: powermanage.v1.RoleGrantScopeKind
-	(PermissionTargetKind)(0),                        // 353: powermanage.v1.PermissionTargetKind
-	(DeviceStatus)(0),                                // 354: powermanage.v1.DeviceStatus
-	(ComplianceStatus)(0),                            // 355: powermanage.v1.ComplianceStatus
-	(AssignmentTargetType)(0),                        // 356: powermanage.v1.AssignmentTargetType
-	(ActionType)(0),                                  // 357: powermanage.v1.ActionType
-	(DesiredState)(0),                                // 358: powermanage.v1.DesiredState
-	(*ActionSchedule)(nil),                           // 359: powermanage.v1.ActionSchedule
-	(*PackageParams)(nil),                            // 360: powermanage.v1.PackageParams
-	(*AppInstallParams)(nil),                         // 361: powermanage.v1.AppInstallParams
-	(*ShellParams)(nil),                              // 362: powermanage.v1.ShellParams
-	(*ServiceParams)(nil),                            // 363: powermanage.v1.ServiceParams
-	(*FileParams)(nil),                               // 364: powermanage.v1.FileParams
-	(*UpdateParams)(nil),                             // 365: powermanage.v1.UpdateParams
-	(*RepositoryParams)(nil),                         // 366: powermanage.v1.RepositoryParams
-	(*FlatpakParams)(nil),                            // 367: powermanage.v1.FlatpakParams
-	(*DirectoryParams)(nil),                          // 368: powermanage.v1.DirectoryParams
-	(*UserParams)(nil),                               // 369: powermanage.v1.UserParams
-	(*SshParams)(nil),                                // 370: powermanage.v1.SshParams
-	(*SshdParams)(nil),                               // 371: powermanage.v1.SshdParams
-	(*AdminPolicyParams)(nil),                        // 372: powermanage.v1.AdminPolicyParams
-	(*LpsParams)(nil),                                // 373: powermanage.v1.LpsParams
-	(*GroupParams)(nil),                              // 374: powermanage.v1.GroupParams
-	(*AgentUpdateParams)(nil),                        // 375: powermanage.v1.AgentUpdateParams
-	(OnFailure)(0),                                   // 376: powermanage.v1.OnFailure
-	(*MaintenanceWindow)(nil),                        // 377: powermanage.v1.MaintenanceWindow
-	(AssignmentSourceType)(0),                        // 378: powermanage.v1.AssignmentSourceType
-	(AssignmentMode)(0),                              // 379: powermanage.v1.AssignmentMode
-	(ExecutionStatus)(0),                             // 380: powermanage.v1.ExecutionStatus
-	(*CommandOutput)(nil),                            // 381: powermanage.v1.CommandOutput
-	(*Action)(nil),                                   // 382: powermanage.v1.Action
-	(RotationReason)(0),                              // 383: powermanage.v1.RotationReason
-	(LuksRevocationStatus)(0),                        // 384: powermanage.v1.LuksRevocationStatus
-	(*OSQueryRow)(nil),                               // 385: powermanage.v1.OSQueryRow
-	(IdentityProviderType)(0),                        // 386: powermanage.v1.IdentityProviderType
-	(SearchScope)(0),                                 // 387: powermanage.v1.SearchScope
-	(SortField)(0),                                   // 388: powermanage.v1.SortField
-	(SortDirection)(0),                               // 389: powermanage.v1.SortDirection
-	(EncryptionDeviceBoundKeyType)(0),                // 390: powermanage.v1.EncryptionDeviceBoundKeyType
-	(LpsPasswordComplexity)(0),                       // 391: powermanage.v1.LpsPasswordComplexity
-	(WifiAuthType)(0),                                // 392: powermanage.v1.WifiAuthType
+	(RoleGrantScopeKind)(0),                          // 352: cadestro.v1.RoleGrantScopeKind
+	(PermissionTargetKind)(0),                        // 353: cadestro.v1.PermissionTargetKind
+	(DeviceStatus)(0),                                // 354: cadestro.v1.DeviceStatus
+	(ComplianceStatus)(0),                            // 355: cadestro.v1.ComplianceStatus
+	(AssignmentTargetType)(0),                        // 356: cadestro.v1.AssignmentTargetType
+	(ActionType)(0),                                  // 357: cadestro.v1.ActionType
+	(DesiredState)(0),                                // 358: cadestro.v1.DesiredState
+	(*ActionSchedule)(nil),                           // 359: cadestro.v1.ActionSchedule
+	(*PackageParams)(nil),                            // 360: cadestro.v1.PackageParams
+	(*AppInstallParams)(nil),                         // 361: cadestro.v1.AppInstallParams
+	(*ShellParams)(nil),                              // 362: cadestro.v1.ShellParams
+	(*ServiceParams)(nil),                            // 363: cadestro.v1.ServiceParams
+	(*FileParams)(nil),                               // 364: cadestro.v1.FileParams
+	(*UpdateParams)(nil),                             // 365: cadestro.v1.UpdateParams
+	(*RepositoryParams)(nil),                         // 366: cadestro.v1.RepositoryParams
+	(*FlatpakParams)(nil),                            // 367: cadestro.v1.FlatpakParams
+	(*DirectoryParams)(nil),                          // 368: cadestro.v1.DirectoryParams
+	(*UserParams)(nil),                               // 369: cadestro.v1.UserParams
+	(*SshParams)(nil),                                // 370: cadestro.v1.SshParams
+	(*SshdParams)(nil),                               // 371: cadestro.v1.SshdParams
+	(*AdminPolicyParams)(nil),                        // 372: cadestro.v1.AdminPolicyParams
+	(*LpsParams)(nil),                                // 373: cadestro.v1.LpsParams
+	(*GroupParams)(nil),                              // 374: cadestro.v1.GroupParams
+	(*AgentUpdateParams)(nil),                        // 375: cadestro.v1.AgentUpdateParams
+	(OnFailure)(0),                                   // 376: cadestro.v1.OnFailure
+	(*MaintenanceWindow)(nil),                        // 377: cadestro.v1.MaintenanceWindow
+	(AssignmentSourceType)(0),                        // 378: cadestro.v1.AssignmentSourceType
+	(AssignmentMode)(0),                              // 379: cadestro.v1.AssignmentMode
+	(ExecutionStatus)(0),                             // 380: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),                            // 381: cadestro.v1.CommandOutput
+	(*Action)(nil),                                   // 382: cadestro.v1.Action
+	(RotationReason)(0),                              // 383: cadestro.v1.RotationReason
+	(LuksRevocationStatus)(0),                        // 384: cadestro.v1.LuksRevocationStatus
+	(*OSQueryRow)(nil),                               // 385: cadestro.v1.OSQueryRow
+	(IdentityProviderType)(0),                        // 386: cadestro.v1.IdentityProviderType
+	(SearchScope)(0),                                 // 387: cadestro.v1.SearchScope
+	(SortField)(0),                                   // 388: cadestro.v1.SortField
+	(SortDirection)(0),                               // 389: cadestro.v1.SortDirection
+	(EncryptionDeviceBoundKeyType)(0),                // 390: cadestro.v1.EncryptionDeviceBoundKeyType
+	(LpsPasswordComplexity)(0),                       // 391: cadestro.v1.LpsPasswordComplexity
+	(WifiAuthType)(0),                                // 392: cadestro.v1.WifiAuthType
 }
-var file_powermanage_v1_control_proto_depIdxs = []int32{
-	350, // 0: powermanage.v1.RegisterResponse.device_id:type_name -> powermanage.v1.DeviceId
-	351, // 1: powermanage.v1.RenewCertificateResponse.not_after:type_name -> google.protobuf.Timestamp
-	351, // 2: powermanage.v1.RefreshTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	10,  // 3: powermanage.v1.GetCurrentUserResponse.user:type_name -> powermanage.v1.User
-	351, // 4: powermanage.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	351, // 5: powermanage.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
-	260, // 6: powermanage.v1.User.identity_links:type_name -> powermanage.v1.IdentityLink
-	12,  // 7: powermanage.v1.User.ssh_public_keys:type_name -> powermanage.v1.SshPublicKey
-	11,  // 8: powermanage.v1.User.inherited_roles:type_name -> powermanage.v1.InheritedRole
-	14,  // 9: powermanage.v1.User.role_grants:type_name -> powermanage.v1.RoleGrant
-	351, // 10: powermanage.v1.SshPublicKey.added_at:type_name -> google.protobuf.Timestamp
-	351, // 11: powermanage.v1.Role.created_at:type_name -> google.protobuf.Timestamp
-	13,  // 12: powermanage.v1.RoleGrant.role:type_name -> powermanage.v1.Role
-	352, // 13: powermanage.v1.RoleGrant.scope_kind:type_name -> powermanage.v1.RoleGrantScopeKind
-	353, // 14: powermanage.v1.PermissionInfo.target_kind:type_name -> powermanage.v1.PermissionTargetKind
-	10,  // 15: powermanage.v1.GetUserResponse.user:type_name -> powermanage.v1.User
-	10,  // 16: powermanage.v1.ListUsersResponse.users:type_name -> powermanage.v1.User
-	10,  // 17: powermanage.v1.UpdateUserResponse.user:type_name -> powermanage.v1.User
-	12,  // 18: powermanage.v1.AddUserSshKeyResponse.key:type_name -> powermanage.v1.SshPublicKey
-	354, // 19: powermanage.v1.Device.status:type_name -> powermanage.v1.DeviceStatus
-	351, // 20: powermanage.v1.Device.registered_at:type_name -> google.protobuf.Timestamp
-	351, // 21: powermanage.v1.Device.last_seen_at:type_name -> google.protobuf.Timestamp
-	351, // 22: powermanage.v1.Device.cert_expires_at:type_name -> google.protobuf.Timestamp
-	343, // 23: powermanage.v1.Device.labels:type_name -> powermanage.v1.Device.LabelsEntry
-	355, // 24: powermanage.v1.Device.compliance_status:type_name -> powermanage.v1.ComplianceStatus
-	351, // 25: powermanage.v1.Device.compliance_checked_at:type_name -> google.protobuf.Timestamp
-	351, // 26: powermanage.v1.Device.last_inventory_at:type_name -> google.protobuf.Timestamp
-	354, // 27: powermanage.v1.ListDevicesRequest.status_filter:type_name -> powermanage.v1.DeviceStatus
-	344, // 28: powermanage.v1.ListDevicesRequest.label_filter:type_name -> powermanage.v1.ListDevicesRequest.LabelFilterEntry
-	32,  // 29: powermanage.v1.ListDevicesResponse.devices:type_name -> powermanage.v1.Device
-	32,  // 30: powermanage.v1.GetDeviceResponse.device:type_name -> powermanage.v1.Device
-	32,  // 31: powermanage.v1.UpdateDeviceResponse.device:type_name -> powermanage.v1.Device
-	32,  // 32: powermanage.v1.AssignDeviceResponse.device:type_name -> powermanage.v1.Device
-	32,  // 33: powermanage.v1.UnassignDeviceResponse.device:type_name -> powermanage.v1.Device
-	356, // 34: powermanage.v1.DeviceAssignee.type:type_name -> powermanage.v1.AssignmentTargetType
-	46,  // 35: powermanage.v1.ListDeviceAssigneesResponse.assignees:type_name -> powermanage.v1.DeviceAssignee
-	351, // 36: powermanage.v1.RegistrationToken.expires_at:type_name -> google.protobuf.Timestamp
-	351, // 37: powermanage.v1.RegistrationToken.created_at:type_name -> google.protobuf.Timestamp
-	351, // 38: powermanage.v1.CreateTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
-	51,  // 39: powermanage.v1.CreateTokenResponse.token:type_name -> powermanage.v1.RegistrationToken
-	51,  // 40: powermanage.v1.ListTokensResponse.tokens:type_name -> powermanage.v1.RegistrationToken
-	51,  // 41: powermanage.v1.GetTokenResponse.token:type_name -> powermanage.v1.RegistrationToken
-	51,  // 42: powermanage.v1.UpdateTokenResponse.token:type_name -> powermanage.v1.RegistrationToken
-	357, // 43: powermanage.v1.ManagedAction.type:type_name -> powermanage.v1.ActionType
-	358, // 44: powermanage.v1.ManagedAction.desired_state:type_name -> powermanage.v1.DesiredState
-	351, // 45: powermanage.v1.ManagedAction.created_at:type_name -> google.protobuf.Timestamp
-	359, // 46: powermanage.v1.ManagedAction.schedule:type_name -> powermanage.v1.ActionSchedule
-	351, // 47: powermanage.v1.ManagedAction.updated_at:type_name -> google.protobuf.Timestamp
-	360, // 48: powermanage.v1.ManagedAction.package:type_name -> powermanage.v1.PackageParams
-	361, // 49: powermanage.v1.ManagedAction.app:type_name -> powermanage.v1.AppInstallParams
-	362, // 50: powermanage.v1.ManagedAction.shell:type_name -> powermanage.v1.ShellParams
-	363, // 51: powermanage.v1.ManagedAction.service:type_name -> powermanage.v1.ServiceParams
-	364, // 52: powermanage.v1.ManagedAction.file:type_name -> powermanage.v1.FileParams
-	365, // 53: powermanage.v1.ManagedAction.update:type_name -> powermanage.v1.UpdateParams
-	366, // 54: powermanage.v1.ManagedAction.repository:type_name -> powermanage.v1.RepositoryParams
-	367, // 55: powermanage.v1.ManagedAction.flatpak:type_name -> powermanage.v1.FlatpakParams
-	368, // 56: powermanage.v1.ManagedAction.directory:type_name -> powermanage.v1.DirectoryParams
-	369, // 57: powermanage.v1.ManagedAction.user:type_name -> powermanage.v1.UserParams
-	370, // 58: powermanage.v1.ManagedAction.ssh:type_name -> powermanage.v1.SshParams
-	371, // 59: powermanage.v1.ManagedAction.sshd:type_name -> powermanage.v1.SshdParams
-	372, // 60: powermanage.v1.ManagedAction.admin_policy:type_name -> powermanage.v1.AdminPolicyParams
-	373, // 61: powermanage.v1.ManagedAction.lps:type_name -> powermanage.v1.LpsParams
-	374, // 62: powermanage.v1.ManagedAction.group:type_name -> powermanage.v1.GroupParams
-	340, // 63: powermanage.v1.ManagedAction.encryption:type_name -> powermanage.v1.ManagedEncryptionParams
-	342, // 64: powermanage.v1.ManagedAction.wifi:type_name -> powermanage.v1.ManagedWifiParams
-	375, // 65: powermanage.v1.ManagedAction.agent_update:type_name -> powermanage.v1.AgentUpdateParams
-	357, // 66: powermanage.v1.CreateActionRequest.type:type_name -> powermanage.v1.ActionType
-	358, // 67: powermanage.v1.CreateActionRequest.desired_state:type_name -> powermanage.v1.DesiredState
-	359, // 68: powermanage.v1.CreateActionRequest.schedule:type_name -> powermanage.v1.ActionSchedule
-	360, // 69: powermanage.v1.CreateActionRequest.package:type_name -> powermanage.v1.PackageParams
-	361, // 70: powermanage.v1.CreateActionRequest.app:type_name -> powermanage.v1.AppInstallParams
-	362, // 71: powermanage.v1.CreateActionRequest.shell:type_name -> powermanage.v1.ShellParams
-	363, // 72: powermanage.v1.CreateActionRequest.service:type_name -> powermanage.v1.ServiceParams
-	364, // 73: powermanage.v1.CreateActionRequest.file:type_name -> powermanage.v1.FileParams
-	365, // 74: powermanage.v1.CreateActionRequest.update:type_name -> powermanage.v1.UpdateParams
-	366, // 75: powermanage.v1.CreateActionRequest.repository:type_name -> powermanage.v1.RepositoryParams
-	367, // 76: powermanage.v1.CreateActionRequest.flatpak:type_name -> powermanage.v1.FlatpakParams
-	368, // 77: powermanage.v1.CreateActionRequest.directory:type_name -> powermanage.v1.DirectoryParams
-	369, // 78: powermanage.v1.CreateActionRequest.user:type_name -> powermanage.v1.UserParams
-	370, // 79: powermanage.v1.CreateActionRequest.ssh:type_name -> powermanage.v1.SshParams
-	371, // 80: powermanage.v1.CreateActionRequest.sshd:type_name -> powermanage.v1.SshdParams
-	372, // 81: powermanage.v1.CreateActionRequest.admin_policy:type_name -> powermanage.v1.AdminPolicyParams
-	373, // 82: powermanage.v1.CreateActionRequest.lps:type_name -> powermanage.v1.LpsParams
-	374, // 83: powermanage.v1.CreateActionRequest.group:type_name -> powermanage.v1.GroupParams
-	339, // 84: powermanage.v1.CreateActionRequest.encryption:type_name -> powermanage.v1.EncryptionAuthoringParams
-	341, // 85: powermanage.v1.CreateActionRequest.wifi:type_name -> powermanage.v1.WifiAuthoringParams
-	375, // 86: powermanage.v1.CreateActionRequest.agent_update:type_name -> powermanage.v1.AgentUpdateParams
-	63,  // 87: powermanage.v1.CreateActionResponse.action:type_name -> powermanage.v1.ManagedAction
-	63,  // 88: powermanage.v1.GetActionResponse.action:type_name -> powermanage.v1.ManagedAction
-	357, // 89: powermanage.v1.ListActionsRequest.type_filter:type_name -> powermanage.v1.ActionType
-	63,  // 90: powermanage.v1.ListActionsResponse.actions:type_name -> powermanage.v1.ManagedAction
-	358, // 91: powermanage.v1.UpdateActionParamsRequest.desired_state:type_name -> powermanage.v1.DesiredState
-	359, // 92: powermanage.v1.UpdateActionParamsRequest.schedule:type_name -> powermanage.v1.ActionSchedule
-	360, // 93: powermanage.v1.UpdateActionParamsRequest.package:type_name -> powermanage.v1.PackageParams
-	361, // 94: powermanage.v1.UpdateActionParamsRequest.app:type_name -> powermanage.v1.AppInstallParams
-	362, // 95: powermanage.v1.UpdateActionParamsRequest.shell:type_name -> powermanage.v1.ShellParams
-	363, // 96: powermanage.v1.UpdateActionParamsRequest.service:type_name -> powermanage.v1.ServiceParams
-	364, // 97: powermanage.v1.UpdateActionParamsRequest.file:type_name -> powermanage.v1.FileParams
-	365, // 98: powermanage.v1.UpdateActionParamsRequest.update:type_name -> powermanage.v1.UpdateParams
-	366, // 99: powermanage.v1.UpdateActionParamsRequest.repository:type_name -> powermanage.v1.RepositoryParams
-	367, // 100: powermanage.v1.UpdateActionParamsRequest.flatpak:type_name -> powermanage.v1.FlatpakParams
-	368, // 101: powermanage.v1.UpdateActionParamsRequest.directory:type_name -> powermanage.v1.DirectoryParams
-	369, // 102: powermanage.v1.UpdateActionParamsRequest.user:type_name -> powermanage.v1.UserParams
-	370, // 103: powermanage.v1.UpdateActionParamsRequest.ssh:type_name -> powermanage.v1.SshParams
-	371, // 104: powermanage.v1.UpdateActionParamsRequest.sshd:type_name -> powermanage.v1.SshdParams
-	372, // 105: powermanage.v1.UpdateActionParamsRequest.admin_policy:type_name -> powermanage.v1.AdminPolicyParams
-	373, // 106: powermanage.v1.UpdateActionParamsRequest.lps:type_name -> powermanage.v1.LpsParams
-	374, // 107: powermanage.v1.UpdateActionParamsRequest.group:type_name -> powermanage.v1.GroupParams
-	339, // 108: powermanage.v1.UpdateActionParamsRequest.encryption:type_name -> powermanage.v1.EncryptionAuthoringParams
-	341, // 109: powermanage.v1.UpdateActionParamsRequest.wifi:type_name -> powermanage.v1.WifiAuthoringParams
-	375, // 110: powermanage.v1.UpdateActionParamsRequest.agent_update:type_name -> powermanage.v1.AgentUpdateParams
-	63,  // 111: powermanage.v1.UpdateActionResponse.action:type_name -> powermanage.v1.ManagedAction
-	351, // 112: powermanage.v1.ActionSet.created_at:type_name -> google.protobuf.Timestamp
-	351, // 113: powermanage.v1.ActionSet.updated_at:type_name -> google.protobuf.Timestamp
-	359, // 114: powermanage.v1.ActionSet.schedule:type_name -> powermanage.v1.ActionSchedule
-	376, // 115: powermanage.v1.ActionSet.on_failure:type_name -> powermanage.v1.OnFailure
-	357, // 116: powermanage.v1.ActionSetMember.action_type:type_name -> powermanage.v1.ActionType
-	359, // 117: powermanage.v1.CreateActionSetRequest.schedule:type_name -> powermanage.v1.ActionSchedule
-	376, // 118: powermanage.v1.CreateActionSetRequest.on_failure:type_name -> powermanage.v1.OnFailure
-	76,  // 119: powermanage.v1.CreateActionSetResponse.set:type_name -> powermanage.v1.ActionSet
-	76,  // 120: powermanage.v1.GetActionSetResponse.set:type_name -> powermanage.v1.ActionSet
-	77,  // 121: powermanage.v1.GetActionSetResponse.members:type_name -> powermanage.v1.ActionSetMember
-	76,  // 122: powermanage.v1.ListActionSetsResponse.sets:type_name -> powermanage.v1.ActionSet
-	359, // 123: powermanage.v1.UpdateActionSetScheduleRequest.schedule:type_name -> powermanage.v1.ActionSchedule
-	376, // 124: powermanage.v1.UpdateActionSetScheduleRequest.on_failure:type_name -> powermanage.v1.OnFailure
-	76,  // 125: powermanage.v1.UpdateActionSetResponse.set:type_name -> powermanage.v1.ActionSet
-	76,  // 126: powermanage.v1.AddActionToSetResponse.set:type_name -> powermanage.v1.ActionSet
-	76,  // 127: powermanage.v1.RemoveActionFromSetResponse.set:type_name -> powermanage.v1.ActionSet
-	76,  // 128: powermanage.v1.ReorderActionInSetResponse.set:type_name -> powermanage.v1.ActionSet
-	351, // 129: powermanage.v1.Definition.created_at:type_name -> google.protobuf.Timestamp
-	351, // 130: powermanage.v1.Definition.updated_at:type_name -> google.protobuf.Timestamp
-	359, // 131: powermanage.v1.Definition.schedule:type_name -> powermanage.v1.ActionSchedule
-	359, // 132: powermanage.v1.CreateDefinitionRequest.schedule:type_name -> powermanage.v1.ActionSchedule
-	96,  // 133: powermanage.v1.CreateDefinitionResponse.definition:type_name -> powermanage.v1.Definition
-	96,  // 134: powermanage.v1.GetDefinitionResponse.definition:type_name -> powermanage.v1.Definition
-	97,  // 135: powermanage.v1.GetDefinitionResponse.members:type_name -> powermanage.v1.DefinitionMember
-	96,  // 136: powermanage.v1.ListDefinitionsResponse.definitions:type_name -> powermanage.v1.Definition
-	359, // 137: powermanage.v1.UpdateDefinitionScheduleRequest.schedule:type_name -> powermanage.v1.ActionSchedule
-	96,  // 138: powermanage.v1.UpdateDefinitionResponse.definition:type_name -> powermanage.v1.Definition
-	96,  // 139: powermanage.v1.AddActionSetToDefinitionResponse.definition:type_name -> powermanage.v1.Definition
-	96,  // 140: powermanage.v1.RemoveActionSetFromDefinitionResponse.definition:type_name -> powermanage.v1.Definition
-	96,  // 141: powermanage.v1.ReorderActionSetInDefinitionResponse.definition:type_name -> powermanage.v1.Definition
-	351, // 142: powermanage.v1.DeviceGroup.created_at:type_name -> google.protobuf.Timestamp
-	377, // 143: powermanage.v1.DeviceGroup.maintenance_window:type_name -> powermanage.v1.MaintenanceWindow
-	116, // 144: powermanage.v1.CreateDeviceGroupResponse.group:type_name -> powermanage.v1.DeviceGroup
-	116, // 145: powermanage.v1.GetDeviceGroupResponse.group:type_name -> powermanage.v1.DeviceGroup
-	121, // 146: powermanage.v1.GetDeviceGroupResponse.devices:type_name -> powermanage.v1.DeviceGroupMember
-	351, // 147: powermanage.v1.DeviceGroupMember.last_seen_at:type_name -> google.protobuf.Timestamp
-	116, // 148: powermanage.v1.ListDeviceGroupsResponse.groups:type_name -> powermanage.v1.DeviceGroup
-	116, // 149: powermanage.v1.ListDeviceGroupsForDeviceResponse.groups:type_name -> powermanage.v1.DeviceGroup
-	116, // 150: powermanage.v1.UpdateDeviceGroupResponse.group:type_name -> powermanage.v1.DeviceGroup
-	116, // 151: powermanage.v1.AddDeviceToGroupResponse.group:type_name -> powermanage.v1.DeviceGroup
-	116, // 152: powermanage.v1.RemoveDeviceFromGroupResponse.group:type_name -> powermanage.v1.DeviceGroup
-	116, // 153: powermanage.v1.UpdateDeviceGroupQueryResponse.group:type_name -> powermanage.v1.DeviceGroup
-	116, // 154: powermanage.v1.EvaluateDynamicGroupResponse.group:type_name -> powermanage.v1.DeviceGroup
-	377, // 155: powermanage.v1.SetDeviceGroupMaintenanceWindowRequest.maintenance_window:type_name -> powermanage.v1.MaintenanceWindow
-	378, // 156: powermanage.v1.Assignment.source_type:type_name -> powermanage.v1.AssignmentSourceType
-	356, // 157: powermanage.v1.Assignment.target_type:type_name -> powermanage.v1.AssignmentTargetType
-	351, // 158: powermanage.v1.Assignment.created_at:type_name -> google.protobuf.Timestamp
-	379, // 159: powermanage.v1.Assignment.mode:type_name -> powermanage.v1.AssignmentMode
-	378, // 160: powermanage.v1.CreateAssignmentRequest.source_type:type_name -> powermanage.v1.AssignmentSourceType
-	356, // 161: powermanage.v1.CreateAssignmentRequest.target_type:type_name -> powermanage.v1.AssignmentTargetType
-	379, // 162: powermanage.v1.CreateAssignmentRequest.mode:type_name -> powermanage.v1.AssignmentMode
-	144, // 163: powermanage.v1.CreateAssignmentResponse.assignment:type_name -> powermanage.v1.Assignment
-	378, // 164: powermanage.v1.ListAssignmentsRequest.source_type:type_name -> powermanage.v1.AssignmentSourceType
-	356, // 165: powermanage.v1.ListAssignmentsRequest.target_type:type_name -> powermanage.v1.AssignmentTargetType
-	144, // 166: powermanage.v1.ListAssignmentsResponse.assignments:type_name -> powermanage.v1.Assignment
-	378, // 167: powermanage.v1.UserSelection.source_type:type_name -> powermanage.v1.AssignmentSourceType
-	351, // 168: powermanage.v1.UserSelection.updated_at:type_name -> google.protobuf.Timestamp
-	378, // 169: powermanage.v1.SetUserSelectionRequest.source_type:type_name -> powermanage.v1.AssignmentSourceType
-	151, // 170: powermanage.v1.SetUserSelectionResponse.selection:type_name -> powermanage.v1.UserSelection
-	378, // 171: powermanage.v1.AvailableItem.source_type:type_name -> powermanage.v1.AssignmentSourceType
-	63,  // 172: powermanage.v1.AvailableItem.actions:type_name -> powermanage.v1.ManagedAction
-	155, // 173: powermanage.v1.ListAvailableActionsResponse.items:type_name -> powermanage.v1.AvailableItem
-	63,  // 174: powermanage.v1.GetDeviceAssignmentsResponse.actions:type_name -> powermanage.v1.ManagedAction
-	76,  // 175: powermanage.v1.GetDeviceAssignmentsResponse.action_sets:type_name -> powermanage.v1.ActionSet
-	96,  // 176: powermanage.v1.GetDeviceAssignmentsResponse.definitions:type_name -> powermanage.v1.Definition
-	295, // 177: powermanage.v1.GetDeviceAssignmentsResponse.compliance_policies:type_name -> powermanage.v1.CompliancePolicy
-	81,  // 178: powermanage.v1.GetDeviceAssignmentsResponse.action_set_details:type_name -> powermanage.v1.GetActionSetResponse
-	101, // 179: powermanage.v1.GetDeviceAssignmentsResponse.definition_details:type_name -> powermanage.v1.GetDefinitionResponse
-	144, // 180: powermanage.v1.GetUserAssignmentsResponse.assignments:type_name -> powermanage.v1.Assignment
-	357, // 181: powermanage.v1.ActionExecution.type:type_name -> powermanage.v1.ActionType
-	380, // 182: powermanage.v1.ActionExecution.status:type_name -> powermanage.v1.ExecutionStatus
-	381, // 183: powermanage.v1.ActionExecution.output:type_name -> powermanage.v1.CommandOutput
-	351, // 184: powermanage.v1.ActionExecution.created_at:type_name -> google.protobuf.Timestamp
-	351, // 185: powermanage.v1.ActionExecution.dispatched_at:type_name -> google.protobuf.Timestamp
-	351, // 186: powermanage.v1.ActionExecution.completed_at:type_name -> google.protobuf.Timestamp
-	381, // 187: powermanage.v1.ActionExecution.live_output:type_name -> powermanage.v1.CommandOutput
-	358, // 188: powermanage.v1.ActionExecution.desired_state:type_name -> powermanage.v1.DesiredState
-	381, // 189: powermanage.v1.ActionExecution.detection_output:type_name -> powermanage.v1.CommandOutput
-	351, // 190: powermanage.v1.ActionExecution.scheduled_for:type_name -> google.protobuf.Timestamp
-	382, // 191: powermanage.v1.DispatchActionRequest.inline_action:type_name -> powermanage.v1.Action
-	351, // 192: powermanage.v1.DispatchActionRequest.run_at:type_name -> google.protobuf.Timestamp
-	161, // 193: powermanage.v1.DispatchActionResponse.execution:type_name -> powermanage.v1.ActionExecution
-	382, // 194: powermanage.v1.DispatchToMultipleRequest.inline_action:type_name -> powermanage.v1.Action
-	161, // 195: powermanage.v1.DispatchToMultipleResponse.executions:type_name -> powermanage.v1.ActionExecution
-	161, // 196: powermanage.v1.DispatchAssignedActionsResponse.executions:type_name -> powermanage.v1.ActionExecution
-	161, // 197: powermanage.v1.DispatchActionSetResponse.executions:type_name -> powermanage.v1.ActionExecution
-	161, // 198: powermanage.v1.DispatchDefinitionResponse.executions:type_name -> powermanage.v1.ActionExecution
-	382, // 199: powermanage.v1.DispatchToGroupRequest.inline_action:type_name -> powermanage.v1.Action
-	161, // 200: powermanage.v1.DispatchToGroupResponse.executions:type_name -> powermanage.v1.ActionExecution
-	161, // 201: powermanage.v1.GetExecutionResponse.execution:type_name -> powermanage.v1.ActionExecution
-	380, // 202: powermanage.v1.ListExecutionsRequest.status_filter:type_name -> powermanage.v1.ExecutionStatus
-	357, // 203: powermanage.v1.ListExecutionsRequest.type_filter:type_name -> powermanage.v1.ActionType
-	161, // 204: powermanage.v1.ListExecutionsResponse.executions:type_name -> powermanage.v1.ActionExecution
-	357, // 205: powermanage.v1.DispatchInstantActionRequest.instant_action:type_name -> powermanage.v1.ActionType
-	351, // 206: powermanage.v1.DispatchInstantActionRequest.run_at:type_name -> google.protobuf.Timestamp
-	161, // 207: powermanage.v1.DispatchInstantActionResponse.execution:type_name -> powermanage.v1.ActionExecution
-	161, // 208: powermanage.v1.CancelExecutionResponse.execution:type_name -> powermanage.v1.ActionExecution
-	351, // 209: powermanage.v1.AuditEvent.occurred_at:type_name -> google.protobuf.Timestamp
-	182, // 210: powermanage.v1.ListAuditEventsResponse.events:type_name -> powermanage.v1.AuditEvent
-	351, // 211: powermanage.v1.ExportAuditEventsRequest.occurred_from:type_name -> google.protobuf.Timestamp
-	351, // 212: powermanage.v1.ExportAuditEventsRequest.occurred_to:type_name -> google.protobuf.Timestamp
-	351, // 213: powermanage.v1.LpsPassword.rotated_at:type_name -> google.protobuf.Timestamp
-	383, // 214: powermanage.v1.LpsPassword.rotation_reason:type_name -> powermanage.v1.RotationReason
-	187, // 215: powermanage.v1.ListLpsPasswordsResponse.current:type_name -> powermanage.v1.LpsPassword
-	187, // 216: powermanage.v1.ListLpsPasswordsResponse.history:type_name -> powermanage.v1.LpsPassword
-	351, // 217: powermanage.v1.LuksKey.rotated_at:type_name -> google.protobuf.Timestamp
-	383, // 218: powermanage.v1.LuksKey.rotation_reason:type_name -> powermanage.v1.RotationReason
-	384, // 219: powermanage.v1.LuksKey.revocation_status:type_name -> powermanage.v1.LuksRevocationStatus
-	351, // 220: powermanage.v1.LuksKey.revocation_at:type_name -> google.protobuf.Timestamp
-	192, // 221: powermanage.v1.ListLuksKeysResponse.current:type_name -> powermanage.v1.LuksKey
-	192, // 222: powermanage.v1.ListLuksKeysResponse.history:type_name -> powermanage.v1.LuksKey
-	385, // 223: powermanage.v1.GetOSQueryResultResponse.rows:type_name -> powermanage.v1.OSQueryRow
-	385, // 224: powermanage.v1.InventoryTableResult.rows:type_name -> powermanage.v1.OSQueryRow
-	351, // 225: powermanage.v1.InventoryTableResult.collected_at:type_name -> google.protobuf.Timestamp
-	206, // 226: powermanage.v1.GetDeviceInventoryResponse.tables:type_name -> powermanage.v1.InventoryTableResult
-	13,  // 227: powermanage.v1.CreateRoleResponse.role:type_name -> powermanage.v1.Role
-	13,  // 228: powermanage.v1.GetRoleResponse.role:type_name -> powermanage.v1.Role
-	13,  // 229: powermanage.v1.ListRolesResponse.roles:type_name -> powermanage.v1.Role
-	13,  // 230: powermanage.v1.UpdateRoleResponse.role:type_name -> powermanage.v1.Role
-	352, // 231: powermanage.v1.AssignRoleToUserRequest.scope_kind:type_name -> powermanage.v1.RoleGrantScopeKind
-	352, // 232: powermanage.v1.RevokeRoleFromUserRequest.scope_kind:type_name -> powermanage.v1.RoleGrantScopeKind
-	15,  // 233: powermanage.v1.ListPermissionsResponse.permissions:type_name -> powermanage.v1.PermissionInfo
-	351, // 234: powermanage.v1.UserGroup.created_at:type_name -> google.protobuf.Timestamp
-	377, // 235: powermanage.v1.UserGroup.maintenance_window:type_name -> powermanage.v1.MaintenanceWindow
-	14,  // 236: powermanage.v1.UserGroup.role_grants:type_name -> powermanage.v1.RoleGrant
-	351, // 237: powermanage.v1.UserGroupMember.added_at:type_name -> google.protobuf.Timestamp
-	230, // 238: powermanage.v1.CreateUserGroupResponse.group:type_name -> powermanage.v1.UserGroup
-	230, // 239: powermanage.v1.GetUserGroupResponse.group:type_name -> powermanage.v1.UserGroup
-	231, // 240: powermanage.v1.GetUserGroupResponse.members:type_name -> powermanage.v1.UserGroupMember
-	230, // 241: powermanage.v1.ListUserGroupsResponse.groups:type_name -> powermanage.v1.UserGroup
-	230, // 242: powermanage.v1.UpdateUserGroupResponse.group:type_name -> powermanage.v1.UserGroup
-	352, // 243: powermanage.v1.AssignRoleToUserGroupRequest.scope_kind:type_name -> powermanage.v1.RoleGrantScopeKind
-	352, // 244: powermanage.v1.RevokeRoleFromUserGroupRequest.scope_kind:type_name -> powermanage.v1.RoleGrantScopeKind
-	230, // 245: powermanage.v1.ListUserGroupsForUserResponse.groups:type_name -> powermanage.v1.UserGroup
-	230, // 246: powermanage.v1.UpdateUserGroupQueryResponse.group:type_name -> powermanage.v1.UserGroup
-	230, // 247: powermanage.v1.EvaluateDynamicUserGroupResponse.group:type_name -> powermanage.v1.UserGroup
-	377, // 248: powermanage.v1.SetUserGroupMaintenanceWindowRequest.maintenance_window:type_name -> powermanage.v1.MaintenanceWindow
-	386, // 249: powermanage.v1.IdentityProvider.provider_type:type_name -> powermanage.v1.IdentityProviderType
-	345, // 250: powermanage.v1.IdentityProvider.group_mapping:type_name -> powermanage.v1.IdentityProvider.GroupMappingEntry
-	351, // 251: powermanage.v1.IdentityProvider.created_at:type_name -> google.protobuf.Timestamp
-	351, // 252: powermanage.v1.IdentityProvider.updated_at:type_name -> google.protobuf.Timestamp
-	351, // 253: powermanage.v1.IdentityLink.linked_at:type_name -> google.protobuf.Timestamp
-	351, // 254: powermanage.v1.IdentityLink.last_login_at:type_name -> google.protobuf.Timestamp
-	386, // 255: powermanage.v1.CreateIdentityProviderRequest.provider_type:type_name -> powermanage.v1.IdentityProviderType
-	346, // 256: powermanage.v1.CreateIdentityProviderRequest.group_mapping:type_name -> powermanage.v1.CreateIdentityProviderRequest.GroupMappingEntry
-	259, // 257: powermanage.v1.CreateIdentityProviderResponse.provider:type_name -> powermanage.v1.IdentityProvider
-	259, // 258: powermanage.v1.GetIdentityProviderResponse.provider:type_name -> powermanage.v1.IdentityProvider
-	259, // 259: powermanage.v1.ListIdentityProvidersResponse.providers:type_name -> powermanage.v1.IdentityProvider
-	347, // 260: powermanage.v1.UpdateIdentityProviderRequest.group_mapping:type_name -> powermanage.v1.UpdateIdentityProviderRequest.GroupMappingEntry
-	259, // 261: powermanage.v1.UpdateIdentityProviderResponse.provider:type_name -> powermanage.v1.IdentityProvider
-	386, // 262: powermanage.v1.AuthMethodProvider.provider_type:type_name -> powermanage.v1.IdentityProviderType
-	271, // 263: powermanage.v1.ListAuthMethodsResponse.providers:type_name -> powermanage.v1.AuthMethodProvider
-	351, // 264: powermanage.v1.SSOCallbackResponse.expires_at:type_name -> google.protobuf.Timestamp
-	10,  // 265: powermanage.v1.SSOCallbackResponse.user:type_name -> powermanage.v1.User
-	351, // 266: powermanage.v1.BeginCLILoginResponse.expires_at:type_name -> google.protobuf.Timestamp
-	351, // 267: powermanage.v1.ExchangeCLISessionResponse.expires_at:type_name -> google.protobuf.Timestamp
-	10,  // 268: powermanage.v1.ExchangeCLISessionResponse.user:type_name -> powermanage.v1.User
-	260, // 269: powermanage.v1.ListIdentityLinksResponse.links:type_name -> powermanage.v1.IdentityLink
-	355, // 270: powermanage.v1.GetDeviceComplianceResponse.status:type_name -> powermanage.v1.ComplianceStatus
-	294, // 271: powermanage.v1.GetDeviceComplianceResponse.checks:type_name -> powermanage.v1.ComplianceCheckResult
-	381, // 272: powermanage.v1.ComplianceCheckResult.detection_output:type_name -> powermanage.v1.CommandOutput
-	351, // 273: powermanage.v1.ComplianceCheckResult.checked_at:type_name -> google.protobuf.Timestamp
-	296, // 274: powermanage.v1.CompliancePolicy.rules:type_name -> powermanage.v1.CompliancePolicyRule
-	351, // 275: powermanage.v1.CompliancePolicy.created_at:type_name -> google.protobuf.Timestamp
-	295, // 276: powermanage.v1.CreateCompliancePolicyResponse.policy:type_name -> powermanage.v1.CompliancePolicy
-	295, // 277: powermanage.v1.GetCompliancePolicyResponse.policy:type_name -> powermanage.v1.CompliancePolicy
-	295, // 278: powermanage.v1.ListCompliancePoliciesResponse.policies:type_name -> powermanage.v1.CompliancePolicy
-	295, // 279: powermanage.v1.UpdateCompliancePolicyResponse.policy:type_name -> powermanage.v1.CompliancePolicy
-	295, // 280: powermanage.v1.AddCompliancePolicyRuleResponse.policy:type_name -> powermanage.v1.CompliancePolicy
-	295, // 281: powermanage.v1.RemoveCompliancePolicyRuleResponse.policy:type_name -> powermanage.v1.CompliancePolicy
-	295, // 282: powermanage.v1.UpdateCompliancePolicyRuleResponse.policy:type_name -> powermanage.v1.CompliancePolicy
-	355, // 283: powermanage.v1.GetDeviceCompliancePolicyStatusResponse.overall_status:type_name -> powermanage.v1.ComplianceStatus
-	316, // 284: powermanage.v1.GetDeviceCompliancePolicyStatusResponse.policies:type_name -> powermanage.v1.DevicePolicyEvaluation
-	355, // 285: powermanage.v1.DevicePolicyEvaluation.status:type_name -> powermanage.v1.ComplianceStatus
-	317, // 286: powermanage.v1.DevicePolicyEvaluation.rules:type_name -> powermanage.v1.DevicePolicyRuleEvaluation
-	355, // 287: powermanage.v1.DevicePolicyRuleEvaluation.status:type_name -> powermanage.v1.ComplianceStatus
-	351, // 288: powermanage.v1.DevicePolicyRuleEvaluation.checked_at:type_name -> google.protobuf.Timestamp
-	351, // 289: powermanage.v1.DevicePolicyRuleEvaluation.first_failed_at:type_name -> google.protobuf.Timestamp
-	351, // 290: powermanage.v1.DevicePolicyRuleEvaluation.grace_expires_at:type_name -> google.protobuf.Timestamp
-	381, // 291: powermanage.v1.DevicePolicyRuleEvaluation.detection_output:type_name -> powermanage.v1.CommandOutput
-	387, // 292: powermanage.v1.SearchRequest.scope:type_name -> powermanage.v1.SearchScope
-	318, // 293: powermanage.v1.SearchRequest.date_filters:type_name -> powermanage.v1.SearchDateFilter
-	348, // 294: powermanage.v1.SearchRequest.tag_filters:type_name -> powermanage.v1.SearchRequest.TagFiltersEntry
-	388, // 295: powermanage.v1.SearchRequest.sort_field:type_name -> powermanage.v1.SortField
-	389, // 296: powermanage.v1.SearchRequest.sort_direction:type_name -> powermanage.v1.SortDirection
-	387, // 297: powermanage.v1.SearchResult.scope:type_name -> powermanage.v1.SearchScope
-	349, // 298: powermanage.v1.SearchResult.fields:type_name -> powermanage.v1.SearchResult.FieldsEntry
-	320, // 299: powermanage.v1.SearchResponse.results:type_name -> powermanage.v1.SearchResult
-	324, // 300: powermanage.v1.GetServerSettingsResponse.settings:type_name -> powermanage.v1.ServerSettings
-	324, // 301: powermanage.v1.UpdateServerSettingsResponse.settings:type_name -> powermanage.v1.ServerSettings
-	351, // 302: powermanage.v1.StartTerminalResponse.expires_at:type_name -> google.protobuf.Timestamp
-	351, // 303: powermanage.v1.TerminalSessionInfo.started_at:type_name -> google.protobuf.Timestamp
-	351, // 304: powermanage.v1.TerminalSessionInfo.last_activity_at:type_name -> google.protobuf.Timestamp
-	334, // 305: powermanage.v1.ListActiveTerminalSessionsResponse.sessions:type_name -> powermanage.v1.TerminalSessionInfo
-	390, // 306: powermanage.v1.EncryptionAuthoringParams.device_bound_key_type:type_name -> powermanage.v1.EncryptionDeviceBoundKeyType
-	391, // 307: powermanage.v1.EncryptionAuthoringParams.user_passphrase_complexity:type_name -> powermanage.v1.LpsPasswordComplexity
-	390, // 308: powermanage.v1.ManagedEncryptionParams.device_bound_key_type:type_name -> powermanage.v1.EncryptionDeviceBoundKeyType
-	391, // 309: powermanage.v1.ManagedEncryptionParams.user_passphrase_complexity:type_name -> powermanage.v1.LpsPasswordComplexity
-	392, // 310: powermanage.v1.WifiAuthoringParams.auth_type:type_name -> powermanage.v1.WifiAuthType
-	392, // 311: powermanage.v1.ManagedWifiParams.auth_type:type_name -> powermanage.v1.WifiAuthType
-	0,   // 312: powermanage.v1.ControlService.Register:input_type -> powermanage.v1.RegisterRequest
-	2,   // 313: powermanage.v1.ControlService.RenewCertificate:input_type -> powermanage.v1.RenewCertificateRequest
-	4,   // 314: powermanage.v1.ControlService.RefreshToken:input_type -> powermanage.v1.RefreshTokenRequest
-	6,   // 315: powermanage.v1.ControlService.Logout:input_type -> powermanage.v1.LogoutRequest
-	8,   // 316: powermanage.v1.ControlService.GetCurrentUser:input_type -> powermanage.v1.GetCurrentUserRequest
-	272, // 317: powermanage.v1.ControlService.ListAuthMethods:input_type -> powermanage.v1.ListAuthMethodsRequest
-	274, // 318: powermanage.v1.ControlService.GetSSOLoginURL:input_type -> powermanage.v1.GetSSOLoginURLRequest
-	276, // 319: powermanage.v1.ControlService.SSOCallback:input_type -> powermanage.v1.SSOCallbackRequest
-	278, // 320: powermanage.v1.ControlService.BeginCLILogin:input_type -> powermanage.v1.BeginCLILoginRequest
-	280, // 321: powermanage.v1.ControlService.ExchangeCLISession:input_type -> powermanage.v1.ExchangeCLISessionRequest
-	261, // 322: powermanage.v1.ControlService.CreateIdentityProvider:input_type -> powermanage.v1.CreateIdentityProviderRequest
-	263, // 323: powermanage.v1.ControlService.GetIdentityProvider:input_type -> powermanage.v1.GetIdentityProviderRequest
-	265, // 324: powermanage.v1.ControlService.ListIdentityProviders:input_type -> powermanage.v1.ListIdentityProvidersRequest
-	267, // 325: powermanage.v1.ControlService.UpdateIdentityProvider:input_type -> powermanage.v1.UpdateIdentityProviderRequest
-	269, // 326: powermanage.v1.ControlService.DeleteIdentityProvider:input_type -> powermanage.v1.DeleteIdentityProviderRequest
-	282, // 327: powermanage.v1.ControlService.ListIdentityLinks:input_type -> powermanage.v1.ListIdentityLinksRequest
-	284, // 328: powermanage.v1.ControlService.UnlinkIdentity:input_type -> powermanage.v1.UnlinkIdentityRequest
-	286, // 329: powermanage.v1.ControlService.EnableSCIM:input_type -> powermanage.v1.EnableSCIMRequest
-	288, // 330: powermanage.v1.ControlService.DisableSCIM:input_type -> powermanage.v1.DisableSCIMRequest
-	290, // 331: powermanage.v1.ControlService.RotateSCIMToken:input_type -> powermanage.v1.RotateSCIMTokenRequest
-	16,  // 332: powermanage.v1.ControlService.EraseJITUser:input_type -> powermanage.v1.EraseJITUserRequest
-	18,  // 333: powermanage.v1.ControlService.GetUser:input_type -> powermanage.v1.GetUserRequest
-	20,  // 334: powermanage.v1.ControlService.ListUsers:input_type -> powermanage.v1.ListUsersRequest
-	22,  // 335: powermanage.v1.ControlService.UpdateUserEmail:input_type -> powermanage.v1.UpdateUserEmailRequest
-	23,  // 336: powermanage.v1.ControlService.SetUserDisabled:input_type -> powermanage.v1.SetUserDisabledRequest
-	25,  // 337: powermanage.v1.ControlService.UpdateUserProfile:input_type -> powermanage.v1.UpdateUserProfileRequest
-	31,  // 338: powermanage.v1.ControlService.UpdateUserLinuxUsername:input_type -> powermanage.v1.UpdateUserLinuxUsernameRequest
-	26,  // 339: powermanage.v1.ControlService.AddUserSshKey:input_type -> powermanage.v1.AddUserSshKeyRequest
-	28,  // 340: powermanage.v1.ControlService.RemoveUserSshKey:input_type -> powermanage.v1.RemoveUserSshKeyRequest
-	30,  // 341: powermanage.v1.ControlService.UpdateUserSshSettings:input_type -> powermanage.v1.UpdateUserSshSettingsRequest
-	33,  // 342: powermanage.v1.ControlService.ListDevices:input_type -> powermanage.v1.ListDevicesRequest
-	35,  // 343: powermanage.v1.ControlService.GetDevice:input_type -> powermanage.v1.GetDeviceRequest
-	37,  // 344: powermanage.v1.ControlService.SetDeviceLabel:input_type -> powermanage.v1.SetDeviceLabelRequest
-	38,  // 345: powermanage.v1.ControlService.RemoveDeviceLabel:input_type -> powermanage.v1.RemoveDeviceLabelRequest
-	42,  // 346: powermanage.v1.ControlService.AssignDevice:input_type -> powermanage.v1.AssignDeviceRequest
-	44,  // 347: powermanage.v1.ControlService.UnassignDevice:input_type -> powermanage.v1.UnassignDeviceRequest
-	47,  // 348: powermanage.v1.ControlService.ListDeviceAssignees:input_type -> powermanage.v1.ListDeviceAssigneesRequest
-	49,  // 349: powermanage.v1.ControlService.SetDeviceSyncInterval:input_type -> powermanage.v1.SetDeviceSyncIntervalRequest
-	50,  // 350: powermanage.v1.ControlService.SetDeviceInventoryInterval:input_type -> powermanage.v1.SetDeviceInventoryIntervalRequest
-	40,  // 351: powermanage.v1.ControlService.DeleteDevice:input_type -> powermanage.v1.DeleteDeviceRequest
-	52,  // 352: powermanage.v1.ControlService.CreateToken:input_type -> powermanage.v1.CreateTokenRequest
-	56,  // 353: powermanage.v1.ControlService.GetToken:input_type -> powermanage.v1.GetTokenRequest
-	54,  // 354: powermanage.v1.ControlService.ListTokens:input_type -> powermanage.v1.ListTokensRequest
-	58,  // 355: powermanage.v1.ControlService.RenameToken:input_type -> powermanage.v1.RenameTokenRequest
-	59,  // 356: powermanage.v1.ControlService.SetTokenDisabled:input_type -> powermanage.v1.SetTokenDisabledRequest
-	61,  // 357: powermanage.v1.ControlService.DeleteToken:input_type -> powermanage.v1.DeleteTokenRequest
-	64,  // 358: powermanage.v1.ControlService.CreateAction:input_type -> powermanage.v1.CreateActionRequest
-	66,  // 359: powermanage.v1.ControlService.GetAction:input_type -> powermanage.v1.GetActionRequest
-	68,  // 360: powermanage.v1.ControlService.ListActions:input_type -> powermanage.v1.ListActionsRequest
-	70,  // 361: powermanage.v1.ControlService.RenameAction:input_type -> powermanage.v1.RenameActionRequest
-	71,  // 362: powermanage.v1.ControlService.UpdateActionDescription:input_type -> powermanage.v1.UpdateActionDescriptionRequest
-	72,  // 363: powermanage.v1.ControlService.UpdateActionParams:input_type -> powermanage.v1.UpdateActionParamsRequest
-	74,  // 364: powermanage.v1.ControlService.DeleteAction:input_type -> powermanage.v1.DeleteActionRequest
-	78,  // 365: powermanage.v1.ControlService.CreateActionSet:input_type -> powermanage.v1.CreateActionSetRequest
-	80,  // 366: powermanage.v1.ControlService.GetActionSet:input_type -> powermanage.v1.GetActionSetRequest
-	82,  // 367: powermanage.v1.ControlService.ListActionSets:input_type -> powermanage.v1.ListActionSetsRequest
-	84,  // 368: powermanage.v1.ControlService.RenameActionSet:input_type -> powermanage.v1.RenameActionSetRequest
-	85,  // 369: powermanage.v1.ControlService.UpdateActionSetDescription:input_type -> powermanage.v1.UpdateActionSetDescriptionRequest
-	86,  // 370: powermanage.v1.ControlService.UpdateActionSetSchedule:input_type -> powermanage.v1.UpdateActionSetScheduleRequest
-	88,  // 371: powermanage.v1.ControlService.DeleteActionSet:input_type -> powermanage.v1.DeleteActionSetRequest
-	90,  // 372: powermanage.v1.ControlService.AddActionToSet:input_type -> powermanage.v1.AddActionToSetRequest
-	92,  // 373: powermanage.v1.ControlService.RemoveActionFromSet:input_type -> powermanage.v1.RemoveActionFromSetRequest
-	94,  // 374: powermanage.v1.ControlService.ReorderActionInSet:input_type -> powermanage.v1.ReorderActionInSetRequest
-	98,  // 375: powermanage.v1.ControlService.CreateDefinition:input_type -> powermanage.v1.CreateDefinitionRequest
-	100, // 376: powermanage.v1.ControlService.GetDefinition:input_type -> powermanage.v1.GetDefinitionRequest
-	102, // 377: powermanage.v1.ControlService.ListDefinitions:input_type -> powermanage.v1.ListDefinitionsRequest
-	104, // 378: powermanage.v1.ControlService.RenameDefinition:input_type -> powermanage.v1.RenameDefinitionRequest
-	105, // 379: powermanage.v1.ControlService.UpdateDefinitionDescription:input_type -> powermanage.v1.UpdateDefinitionDescriptionRequest
-	106, // 380: powermanage.v1.ControlService.UpdateDefinitionSchedule:input_type -> powermanage.v1.UpdateDefinitionScheduleRequest
-	108, // 381: powermanage.v1.ControlService.DeleteDefinition:input_type -> powermanage.v1.DeleteDefinitionRequest
-	110, // 382: powermanage.v1.ControlService.AddActionSetToDefinition:input_type -> powermanage.v1.AddActionSetToDefinitionRequest
-	112, // 383: powermanage.v1.ControlService.RemoveActionSetFromDefinition:input_type -> powermanage.v1.RemoveActionSetFromDefinitionRequest
-	114, // 384: powermanage.v1.ControlService.ReorderActionSetInDefinition:input_type -> powermanage.v1.ReorderActionSetInDefinitionRequest
-	117, // 385: powermanage.v1.ControlService.CreateDeviceGroup:input_type -> powermanage.v1.CreateDeviceGroupRequest
-	119, // 386: powermanage.v1.ControlService.GetDeviceGroup:input_type -> powermanage.v1.GetDeviceGroupRequest
-	122, // 387: powermanage.v1.ControlService.ListDeviceGroups:input_type -> powermanage.v1.ListDeviceGroupsRequest
-	124, // 388: powermanage.v1.ControlService.ListDeviceGroupsForDevice:input_type -> powermanage.v1.ListDeviceGroupsForDeviceRequest
-	126, // 389: powermanage.v1.ControlService.RenameDeviceGroup:input_type -> powermanage.v1.RenameDeviceGroupRequest
-	127, // 390: powermanage.v1.ControlService.UpdateDeviceGroupDescription:input_type -> powermanage.v1.UpdateDeviceGroupDescriptionRequest
-	135, // 391: powermanage.v1.ControlService.UpdateDeviceGroupQuery:input_type -> powermanage.v1.UpdateDeviceGroupQueryRequest
-	129, // 392: powermanage.v1.ControlService.DeleteDeviceGroup:input_type -> powermanage.v1.DeleteDeviceGroupRequest
-	131, // 393: powermanage.v1.ControlService.AddDeviceToGroup:input_type -> powermanage.v1.AddDeviceToGroupRequest
-	133, // 394: powermanage.v1.ControlService.RemoveDeviceFromGroup:input_type -> powermanage.v1.RemoveDeviceFromGroupRequest
-	137, // 395: powermanage.v1.ControlService.ValidateDynamicQuery:input_type -> powermanage.v1.ValidateDynamicQueryRequest
-	139, // 396: powermanage.v1.ControlService.EvaluateDynamicGroup:input_type -> powermanage.v1.EvaluateDynamicGroupRequest
-	141, // 397: powermanage.v1.ControlService.SetDeviceGroupSyncInterval:input_type -> powermanage.v1.SetDeviceGroupSyncIntervalRequest
-	142, // 398: powermanage.v1.ControlService.SetDeviceGroupInventoryInterval:input_type -> powermanage.v1.SetDeviceGroupInventoryIntervalRequest
-	143, // 399: powermanage.v1.ControlService.SetDeviceGroupMaintenanceWindow:input_type -> powermanage.v1.SetDeviceGroupMaintenanceWindowRequest
-	145, // 400: powermanage.v1.ControlService.CreateAssignment:input_type -> powermanage.v1.CreateAssignmentRequest
-	147, // 401: powermanage.v1.ControlService.DeleteAssignment:input_type -> powermanage.v1.DeleteAssignmentRequest
-	149, // 402: powermanage.v1.ControlService.ListAssignments:input_type -> powermanage.v1.ListAssignmentsRequest
-	157, // 403: powermanage.v1.ControlService.GetDeviceAssignments:input_type -> powermanage.v1.GetDeviceAssignmentsRequest
-	159, // 404: powermanage.v1.ControlService.GetUserAssignments:input_type -> powermanage.v1.GetUserAssignmentsRequest
-	152, // 405: powermanage.v1.ControlService.SetUserSelection:input_type -> powermanage.v1.SetUserSelectionRequest
-	154, // 406: powermanage.v1.ControlService.ListAvailableActions:input_type -> powermanage.v1.ListAvailableActionsRequest
-	162, // 407: powermanage.v1.ControlService.DispatchAction:input_type -> powermanage.v1.DispatchActionRequest
-	164, // 408: powermanage.v1.ControlService.DispatchToMultiple:input_type -> powermanage.v1.DispatchToMultipleRequest
-	166, // 409: powermanage.v1.ControlService.DispatchAssignedActions:input_type -> powermanage.v1.DispatchAssignedActionsRequest
-	168, // 410: powermanage.v1.ControlService.DispatchActionSet:input_type -> powermanage.v1.DispatchActionSetRequest
-	170, // 411: powermanage.v1.ControlService.DispatchDefinition:input_type -> powermanage.v1.DispatchDefinitionRequest
-	172, // 412: powermanage.v1.ControlService.DispatchToGroup:input_type -> powermanage.v1.DispatchToGroupRequest
-	178, // 413: powermanage.v1.ControlService.DispatchInstantAction:input_type -> powermanage.v1.DispatchInstantActionRequest
-	180, // 414: powermanage.v1.ControlService.CancelExecution:input_type -> powermanage.v1.CancelExecutionRequest
-	174, // 415: powermanage.v1.ControlService.GetExecution:input_type -> powermanage.v1.GetExecutionRequest
-	176, // 416: powermanage.v1.ControlService.ListExecutions:input_type -> powermanage.v1.ListExecutionsRequest
-	183, // 417: powermanage.v1.ControlService.ListAuditEvents:input_type -> powermanage.v1.ListAuditEventsRequest
-	185, // 418: powermanage.v1.ControlService.ExportAuditEvents:input_type -> powermanage.v1.ExportAuditEventsRequest
-	188, // 419: powermanage.v1.ControlService.ListLpsPasswords:input_type -> powermanage.v1.ListLpsPasswordsRequest
-	190, // 420: powermanage.v1.ControlService.RevealLpsPassword:input_type -> powermanage.v1.RevealLpsPasswordRequest
-	193, // 421: powermanage.v1.ControlService.ListLuksKeys:input_type -> powermanage.v1.ListLuksKeysRequest
-	195, // 422: powermanage.v1.ControlService.RevealLuksKey:input_type -> powermanage.v1.RevealLuksKeyRequest
-	197, // 423: powermanage.v1.ControlService.CreateLuksToken:input_type -> powermanage.v1.CreateLuksTokenRequest
-	199, // 424: powermanage.v1.ControlService.RevokeLuksDeviceKey:input_type -> powermanage.v1.RevokeLuksDeviceKeyRequest
-	201, // 425: powermanage.v1.ControlService.DispatchOSQuery:input_type -> powermanage.v1.DispatchOSQueryRequest
-	203, // 426: powermanage.v1.ControlService.GetOSQueryResult:input_type -> powermanage.v1.GetOSQueryResultRequest
-	205, // 427: powermanage.v1.ControlService.GetDeviceInventory:input_type -> powermanage.v1.GetDeviceInventoryRequest
-	208, // 428: powermanage.v1.ControlService.RefreshDeviceInventory:input_type -> powermanage.v1.RefreshDeviceInventoryRequest
-	210, // 429: powermanage.v1.ControlService.QueryDeviceLogs:input_type -> powermanage.v1.QueryDeviceLogsRequest
-	212, // 430: powermanage.v1.ControlService.GetDeviceLogResult:input_type -> powermanage.v1.GetDeviceLogResultRequest
-	214, // 431: powermanage.v1.ControlService.CreateRole:input_type -> powermanage.v1.CreateRoleRequest
-	216, // 432: powermanage.v1.ControlService.GetRole:input_type -> powermanage.v1.GetRoleRequest
-	218, // 433: powermanage.v1.ControlService.ListRoles:input_type -> powermanage.v1.ListRolesRequest
-	220, // 434: powermanage.v1.ControlService.UpdateRole:input_type -> powermanage.v1.UpdateRoleRequest
-	222, // 435: powermanage.v1.ControlService.DeleteRole:input_type -> powermanage.v1.DeleteRoleRequest
-	224, // 436: powermanage.v1.ControlService.AssignRoleToUser:input_type -> powermanage.v1.AssignRoleToUserRequest
-	226, // 437: powermanage.v1.ControlService.RevokeRoleFromUser:input_type -> powermanage.v1.RevokeRoleFromUserRequest
-	228, // 438: powermanage.v1.ControlService.ListPermissions:input_type -> powermanage.v1.ListPermissionsRequest
-	232, // 439: powermanage.v1.ControlService.CreateUserGroup:input_type -> powermanage.v1.CreateUserGroupRequest
-	234, // 440: powermanage.v1.ControlService.GetUserGroup:input_type -> powermanage.v1.GetUserGroupRequest
-	236, // 441: powermanage.v1.ControlService.ListUserGroups:input_type -> powermanage.v1.ListUserGroupsRequest
-	238, // 442: powermanage.v1.ControlService.UpdateUserGroup:input_type -> powermanage.v1.UpdateUserGroupRequest
-	240, // 443: powermanage.v1.ControlService.DeleteUserGroup:input_type -> powermanage.v1.DeleteUserGroupRequest
-	242, // 444: powermanage.v1.ControlService.AddUserToGroup:input_type -> powermanage.v1.AddUserToGroupRequest
-	244, // 445: powermanage.v1.ControlService.RemoveUserFromGroup:input_type -> powermanage.v1.RemoveUserFromGroupRequest
-	246, // 446: powermanage.v1.ControlService.AssignRoleToUserGroup:input_type -> powermanage.v1.AssignRoleToUserGroupRequest
-	248, // 447: powermanage.v1.ControlService.RevokeRoleFromUserGroup:input_type -> powermanage.v1.RevokeRoleFromUserGroupRequest
-	250, // 448: powermanage.v1.ControlService.ListUserGroupsForUser:input_type -> powermanage.v1.ListUserGroupsForUserRequest
-	252, // 449: powermanage.v1.ControlService.UpdateUserGroupQuery:input_type -> powermanage.v1.UpdateUserGroupQueryRequest
-	254, // 450: powermanage.v1.ControlService.ValidateUserGroupQuery:input_type -> powermanage.v1.ValidateUserGroupQueryRequest
-	256, // 451: powermanage.v1.ControlService.EvaluateDynamicUserGroup:input_type -> powermanage.v1.EvaluateDynamicUserGroupRequest
-	258, // 452: powermanage.v1.ControlService.SetUserGroupMaintenanceWindow:input_type -> powermanage.v1.SetUserGroupMaintenanceWindowRequest
-	292, // 453: powermanage.v1.ControlService.GetDeviceCompliance:input_type -> powermanage.v1.GetDeviceComplianceRequest
-	297, // 454: powermanage.v1.ControlService.CreateCompliancePolicy:input_type -> powermanage.v1.CreateCompliancePolicyRequest
-	299, // 455: powermanage.v1.ControlService.GetCompliancePolicy:input_type -> powermanage.v1.GetCompliancePolicyRequest
-	301, // 456: powermanage.v1.ControlService.ListCompliancePolicies:input_type -> powermanage.v1.ListCompliancePoliciesRequest
-	303, // 457: powermanage.v1.ControlService.RenameCompliancePolicy:input_type -> powermanage.v1.RenameCompliancePolicyRequest
-	304, // 458: powermanage.v1.ControlService.UpdateCompliancePolicyDescription:input_type -> powermanage.v1.UpdateCompliancePolicyDescriptionRequest
-	306, // 459: powermanage.v1.ControlService.DeleteCompliancePolicy:input_type -> powermanage.v1.DeleteCompliancePolicyRequest
-	308, // 460: powermanage.v1.ControlService.AddCompliancePolicyRule:input_type -> powermanage.v1.AddCompliancePolicyRuleRequest
-	310, // 461: powermanage.v1.ControlService.RemoveCompliancePolicyRule:input_type -> powermanage.v1.RemoveCompliancePolicyRuleRequest
-	312, // 462: powermanage.v1.ControlService.UpdateCompliancePolicyRule:input_type -> powermanage.v1.UpdateCompliancePolicyRuleRequest
-	314, // 463: powermanage.v1.ControlService.GetDeviceCompliancePolicyStatus:input_type -> powermanage.v1.GetDeviceCompliancePolicyStatusRequest
-	319, // 464: powermanage.v1.ControlService.Search:input_type -> powermanage.v1.SearchRequest
-	322, // 465: powermanage.v1.ControlService.RebuildSearchIndex:input_type -> powermanage.v1.RebuildSearchIndexRequest
-	325, // 466: powermanage.v1.ControlService.GetServerSettings:input_type -> powermanage.v1.GetServerSettingsRequest
-	327, // 467: powermanage.v1.ControlService.UpdateServerSettings:input_type -> powermanage.v1.UpdateServerSettingsRequest
-	329, // 468: powermanage.v1.ControlService.SetUserProvisioningEnabled:input_type -> powermanage.v1.SetUserProvisioningEnabledRequest
-	330, // 469: powermanage.v1.ControlService.StartTerminal:input_type -> powermanage.v1.StartTerminalRequest
-	332, // 470: powermanage.v1.ControlService.StopTerminal:input_type -> powermanage.v1.StopTerminalRequest
-	335, // 471: powermanage.v1.ControlService.ListActiveTerminalSessions:input_type -> powermanage.v1.ListActiveTerminalSessionsRequest
-	337, // 472: powermanage.v1.ControlService.TerminateTerminalSession:input_type -> powermanage.v1.TerminateTerminalSessionRequest
-	1,   // 473: powermanage.v1.ControlService.Register:output_type -> powermanage.v1.RegisterResponse
-	3,   // 474: powermanage.v1.ControlService.RenewCertificate:output_type -> powermanage.v1.RenewCertificateResponse
-	5,   // 475: powermanage.v1.ControlService.RefreshToken:output_type -> powermanage.v1.RefreshTokenResponse
-	7,   // 476: powermanage.v1.ControlService.Logout:output_type -> powermanage.v1.LogoutResponse
-	9,   // 477: powermanage.v1.ControlService.GetCurrentUser:output_type -> powermanage.v1.GetCurrentUserResponse
-	273, // 478: powermanage.v1.ControlService.ListAuthMethods:output_type -> powermanage.v1.ListAuthMethodsResponse
-	275, // 479: powermanage.v1.ControlService.GetSSOLoginURL:output_type -> powermanage.v1.GetSSOLoginURLResponse
-	277, // 480: powermanage.v1.ControlService.SSOCallback:output_type -> powermanage.v1.SSOCallbackResponse
-	279, // 481: powermanage.v1.ControlService.BeginCLILogin:output_type -> powermanage.v1.BeginCLILoginResponse
-	281, // 482: powermanage.v1.ControlService.ExchangeCLISession:output_type -> powermanage.v1.ExchangeCLISessionResponse
-	262, // 483: powermanage.v1.ControlService.CreateIdentityProvider:output_type -> powermanage.v1.CreateIdentityProviderResponse
-	264, // 484: powermanage.v1.ControlService.GetIdentityProvider:output_type -> powermanage.v1.GetIdentityProviderResponse
-	266, // 485: powermanage.v1.ControlService.ListIdentityProviders:output_type -> powermanage.v1.ListIdentityProvidersResponse
-	268, // 486: powermanage.v1.ControlService.UpdateIdentityProvider:output_type -> powermanage.v1.UpdateIdentityProviderResponse
-	270, // 487: powermanage.v1.ControlService.DeleteIdentityProvider:output_type -> powermanage.v1.DeleteIdentityProviderResponse
-	283, // 488: powermanage.v1.ControlService.ListIdentityLinks:output_type -> powermanage.v1.ListIdentityLinksResponse
-	285, // 489: powermanage.v1.ControlService.UnlinkIdentity:output_type -> powermanage.v1.UnlinkIdentityResponse
-	287, // 490: powermanage.v1.ControlService.EnableSCIM:output_type -> powermanage.v1.EnableSCIMResponse
-	289, // 491: powermanage.v1.ControlService.DisableSCIM:output_type -> powermanage.v1.DisableSCIMResponse
-	291, // 492: powermanage.v1.ControlService.RotateSCIMToken:output_type -> powermanage.v1.RotateSCIMTokenResponse
-	17,  // 493: powermanage.v1.ControlService.EraseJITUser:output_type -> powermanage.v1.EraseJITUserResponse
-	19,  // 494: powermanage.v1.ControlService.GetUser:output_type -> powermanage.v1.GetUserResponse
-	21,  // 495: powermanage.v1.ControlService.ListUsers:output_type -> powermanage.v1.ListUsersResponse
-	24,  // 496: powermanage.v1.ControlService.UpdateUserEmail:output_type -> powermanage.v1.UpdateUserResponse
-	24,  // 497: powermanage.v1.ControlService.SetUserDisabled:output_type -> powermanage.v1.UpdateUserResponse
-	24,  // 498: powermanage.v1.ControlService.UpdateUserProfile:output_type -> powermanage.v1.UpdateUserResponse
-	24,  // 499: powermanage.v1.ControlService.UpdateUserLinuxUsername:output_type -> powermanage.v1.UpdateUserResponse
-	27,  // 500: powermanage.v1.ControlService.AddUserSshKey:output_type -> powermanage.v1.AddUserSshKeyResponse
-	29,  // 501: powermanage.v1.ControlService.RemoveUserSshKey:output_type -> powermanage.v1.RemoveUserSshKeyResponse
-	24,  // 502: powermanage.v1.ControlService.UpdateUserSshSettings:output_type -> powermanage.v1.UpdateUserResponse
-	34,  // 503: powermanage.v1.ControlService.ListDevices:output_type -> powermanage.v1.ListDevicesResponse
-	36,  // 504: powermanage.v1.ControlService.GetDevice:output_type -> powermanage.v1.GetDeviceResponse
-	39,  // 505: powermanage.v1.ControlService.SetDeviceLabel:output_type -> powermanage.v1.UpdateDeviceResponse
-	39,  // 506: powermanage.v1.ControlService.RemoveDeviceLabel:output_type -> powermanage.v1.UpdateDeviceResponse
-	43,  // 507: powermanage.v1.ControlService.AssignDevice:output_type -> powermanage.v1.AssignDeviceResponse
-	45,  // 508: powermanage.v1.ControlService.UnassignDevice:output_type -> powermanage.v1.UnassignDeviceResponse
-	48,  // 509: powermanage.v1.ControlService.ListDeviceAssignees:output_type -> powermanage.v1.ListDeviceAssigneesResponse
-	39,  // 510: powermanage.v1.ControlService.SetDeviceSyncInterval:output_type -> powermanage.v1.UpdateDeviceResponse
-	39,  // 511: powermanage.v1.ControlService.SetDeviceInventoryInterval:output_type -> powermanage.v1.UpdateDeviceResponse
-	41,  // 512: powermanage.v1.ControlService.DeleteDevice:output_type -> powermanage.v1.DeleteDeviceResponse
-	53,  // 513: powermanage.v1.ControlService.CreateToken:output_type -> powermanage.v1.CreateTokenResponse
-	57,  // 514: powermanage.v1.ControlService.GetToken:output_type -> powermanage.v1.GetTokenResponse
-	55,  // 515: powermanage.v1.ControlService.ListTokens:output_type -> powermanage.v1.ListTokensResponse
-	60,  // 516: powermanage.v1.ControlService.RenameToken:output_type -> powermanage.v1.UpdateTokenResponse
-	60,  // 517: powermanage.v1.ControlService.SetTokenDisabled:output_type -> powermanage.v1.UpdateTokenResponse
-	62,  // 518: powermanage.v1.ControlService.DeleteToken:output_type -> powermanage.v1.DeleteTokenResponse
-	65,  // 519: powermanage.v1.ControlService.CreateAction:output_type -> powermanage.v1.CreateActionResponse
-	67,  // 520: powermanage.v1.ControlService.GetAction:output_type -> powermanage.v1.GetActionResponse
-	69,  // 521: powermanage.v1.ControlService.ListActions:output_type -> powermanage.v1.ListActionsResponse
-	73,  // 522: powermanage.v1.ControlService.RenameAction:output_type -> powermanage.v1.UpdateActionResponse
-	73,  // 523: powermanage.v1.ControlService.UpdateActionDescription:output_type -> powermanage.v1.UpdateActionResponse
-	73,  // 524: powermanage.v1.ControlService.UpdateActionParams:output_type -> powermanage.v1.UpdateActionResponse
-	75,  // 525: powermanage.v1.ControlService.DeleteAction:output_type -> powermanage.v1.DeleteActionResponse
-	79,  // 526: powermanage.v1.ControlService.CreateActionSet:output_type -> powermanage.v1.CreateActionSetResponse
-	81,  // 527: powermanage.v1.ControlService.GetActionSet:output_type -> powermanage.v1.GetActionSetResponse
-	83,  // 528: powermanage.v1.ControlService.ListActionSets:output_type -> powermanage.v1.ListActionSetsResponse
-	87,  // 529: powermanage.v1.ControlService.RenameActionSet:output_type -> powermanage.v1.UpdateActionSetResponse
-	87,  // 530: powermanage.v1.ControlService.UpdateActionSetDescription:output_type -> powermanage.v1.UpdateActionSetResponse
-	87,  // 531: powermanage.v1.ControlService.UpdateActionSetSchedule:output_type -> powermanage.v1.UpdateActionSetResponse
-	89,  // 532: powermanage.v1.ControlService.DeleteActionSet:output_type -> powermanage.v1.DeleteActionSetResponse
-	91,  // 533: powermanage.v1.ControlService.AddActionToSet:output_type -> powermanage.v1.AddActionToSetResponse
-	93,  // 534: powermanage.v1.ControlService.RemoveActionFromSet:output_type -> powermanage.v1.RemoveActionFromSetResponse
-	95,  // 535: powermanage.v1.ControlService.ReorderActionInSet:output_type -> powermanage.v1.ReorderActionInSetResponse
-	99,  // 536: powermanage.v1.ControlService.CreateDefinition:output_type -> powermanage.v1.CreateDefinitionResponse
-	101, // 537: powermanage.v1.ControlService.GetDefinition:output_type -> powermanage.v1.GetDefinitionResponse
-	103, // 538: powermanage.v1.ControlService.ListDefinitions:output_type -> powermanage.v1.ListDefinitionsResponse
-	107, // 539: powermanage.v1.ControlService.RenameDefinition:output_type -> powermanage.v1.UpdateDefinitionResponse
-	107, // 540: powermanage.v1.ControlService.UpdateDefinitionDescription:output_type -> powermanage.v1.UpdateDefinitionResponse
-	107, // 541: powermanage.v1.ControlService.UpdateDefinitionSchedule:output_type -> powermanage.v1.UpdateDefinitionResponse
-	109, // 542: powermanage.v1.ControlService.DeleteDefinition:output_type -> powermanage.v1.DeleteDefinitionResponse
-	111, // 543: powermanage.v1.ControlService.AddActionSetToDefinition:output_type -> powermanage.v1.AddActionSetToDefinitionResponse
-	113, // 544: powermanage.v1.ControlService.RemoveActionSetFromDefinition:output_type -> powermanage.v1.RemoveActionSetFromDefinitionResponse
-	115, // 545: powermanage.v1.ControlService.ReorderActionSetInDefinition:output_type -> powermanage.v1.ReorderActionSetInDefinitionResponse
-	118, // 546: powermanage.v1.ControlService.CreateDeviceGroup:output_type -> powermanage.v1.CreateDeviceGroupResponse
-	120, // 547: powermanage.v1.ControlService.GetDeviceGroup:output_type -> powermanage.v1.GetDeviceGroupResponse
-	123, // 548: powermanage.v1.ControlService.ListDeviceGroups:output_type -> powermanage.v1.ListDeviceGroupsResponse
-	125, // 549: powermanage.v1.ControlService.ListDeviceGroupsForDevice:output_type -> powermanage.v1.ListDeviceGroupsForDeviceResponse
-	128, // 550: powermanage.v1.ControlService.RenameDeviceGroup:output_type -> powermanage.v1.UpdateDeviceGroupResponse
-	128, // 551: powermanage.v1.ControlService.UpdateDeviceGroupDescription:output_type -> powermanage.v1.UpdateDeviceGroupResponse
-	136, // 552: powermanage.v1.ControlService.UpdateDeviceGroupQuery:output_type -> powermanage.v1.UpdateDeviceGroupQueryResponse
-	130, // 553: powermanage.v1.ControlService.DeleteDeviceGroup:output_type -> powermanage.v1.DeleteDeviceGroupResponse
-	132, // 554: powermanage.v1.ControlService.AddDeviceToGroup:output_type -> powermanage.v1.AddDeviceToGroupResponse
-	134, // 555: powermanage.v1.ControlService.RemoveDeviceFromGroup:output_type -> powermanage.v1.RemoveDeviceFromGroupResponse
-	138, // 556: powermanage.v1.ControlService.ValidateDynamicQuery:output_type -> powermanage.v1.ValidateDynamicQueryResponse
-	140, // 557: powermanage.v1.ControlService.EvaluateDynamicGroup:output_type -> powermanage.v1.EvaluateDynamicGroupResponse
-	128, // 558: powermanage.v1.ControlService.SetDeviceGroupSyncInterval:output_type -> powermanage.v1.UpdateDeviceGroupResponse
-	128, // 559: powermanage.v1.ControlService.SetDeviceGroupInventoryInterval:output_type -> powermanage.v1.UpdateDeviceGroupResponse
-	128, // 560: powermanage.v1.ControlService.SetDeviceGroupMaintenanceWindow:output_type -> powermanage.v1.UpdateDeviceGroupResponse
-	146, // 561: powermanage.v1.ControlService.CreateAssignment:output_type -> powermanage.v1.CreateAssignmentResponse
-	148, // 562: powermanage.v1.ControlService.DeleteAssignment:output_type -> powermanage.v1.DeleteAssignmentResponse
-	150, // 563: powermanage.v1.ControlService.ListAssignments:output_type -> powermanage.v1.ListAssignmentsResponse
-	158, // 564: powermanage.v1.ControlService.GetDeviceAssignments:output_type -> powermanage.v1.GetDeviceAssignmentsResponse
-	160, // 565: powermanage.v1.ControlService.GetUserAssignments:output_type -> powermanage.v1.GetUserAssignmentsResponse
-	153, // 566: powermanage.v1.ControlService.SetUserSelection:output_type -> powermanage.v1.SetUserSelectionResponse
-	156, // 567: powermanage.v1.ControlService.ListAvailableActions:output_type -> powermanage.v1.ListAvailableActionsResponse
-	163, // 568: powermanage.v1.ControlService.DispatchAction:output_type -> powermanage.v1.DispatchActionResponse
-	165, // 569: powermanage.v1.ControlService.DispatchToMultiple:output_type -> powermanage.v1.DispatchToMultipleResponse
-	167, // 570: powermanage.v1.ControlService.DispatchAssignedActions:output_type -> powermanage.v1.DispatchAssignedActionsResponse
-	169, // 571: powermanage.v1.ControlService.DispatchActionSet:output_type -> powermanage.v1.DispatchActionSetResponse
-	171, // 572: powermanage.v1.ControlService.DispatchDefinition:output_type -> powermanage.v1.DispatchDefinitionResponse
-	173, // 573: powermanage.v1.ControlService.DispatchToGroup:output_type -> powermanage.v1.DispatchToGroupResponse
-	179, // 574: powermanage.v1.ControlService.DispatchInstantAction:output_type -> powermanage.v1.DispatchInstantActionResponse
-	181, // 575: powermanage.v1.ControlService.CancelExecution:output_type -> powermanage.v1.CancelExecutionResponse
-	175, // 576: powermanage.v1.ControlService.GetExecution:output_type -> powermanage.v1.GetExecutionResponse
-	177, // 577: powermanage.v1.ControlService.ListExecutions:output_type -> powermanage.v1.ListExecutionsResponse
-	184, // 578: powermanage.v1.ControlService.ListAuditEvents:output_type -> powermanage.v1.ListAuditEventsResponse
-	186, // 579: powermanage.v1.ControlService.ExportAuditEvents:output_type -> powermanage.v1.ExportAuditEventsResponse
-	189, // 580: powermanage.v1.ControlService.ListLpsPasswords:output_type -> powermanage.v1.ListLpsPasswordsResponse
-	191, // 581: powermanage.v1.ControlService.RevealLpsPassword:output_type -> powermanage.v1.RevealLpsPasswordResponse
-	194, // 582: powermanage.v1.ControlService.ListLuksKeys:output_type -> powermanage.v1.ListLuksKeysResponse
-	196, // 583: powermanage.v1.ControlService.RevealLuksKey:output_type -> powermanage.v1.RevealLuksKeyResponse
-	198, // 584: powermanage.v1.ControlService.CreateLuksToken:output_type -> powermanage.v1.CreateLuksTokenResponse
-	200, // 585: powermanage.v1.ControlService.RevokeLuksDeviceKey:output_type -> powermanage.v1.RevokeLuksDeviceKeyResponse
-	202, // 586: powermanage.v1.ControlService.DispatchOSQuery:output_type -> powermanage.v1.DispatchOSQueryResponse
-	204, // 587: powermanage.v1.ControlService.GetOSQueryResult:output_type -> powermanage.v1.GetOSQueryResultResponse
-	207, // 588: powermanage.v1.ControlService.GetDeviceInventory:output_type -> powermanage.v1.GetDeviceInventoryResponse
-	209, // 589: powermanage.v1.ControlService.RefreshDeviceInventory:output_type -> powermanage.v1.RefreshDeviceInventoryResponse
-	211, // 590: powermanage.v1.ControlService.QueryDeviceLogs:output_type -> powermanage.v1.QueryDeviceLogsResponse
-	213, // 591: powermanage.v1.ControlService.GetDeviceLogResult:output_type -> powermanage.v1.GetDeviceLogResultResponse
-	215, // 592: powermanage.v1.ControlService.CreateRole:output_type -> powermanage.v1.CreateRoleResponse
-	217, // 593: powermanage.v1.ControlService.GetRole:output_type -> powermanage.v1.GetRoleResponse
-	219, // 594: powermanage.v1.ControlService.ListRoles:output_type -> powermanage.v1.ListRolesResponse
-	221, // 595: powermanage.v1.ControlService.UpdateRole:output_type -> powermanage.v1.UpdateRoleResponse
-	223, // 596: powermanage.v1.ControlService.DeleteRole:output_type -> powermanage.v1.DeleteRoleResponse
-	225, // 597: powermanage.v1.ControlService.AssignRoleToUser:output_type -> powermanage.v1.AssignRoleToUserResponse
-	227, // 598: powermanage.v1.ControlService.RevokeRoleFromUser:output_type -> powermanage.v1.RevokeRoleFromUserResponse
-	229, // 599: powermanage.v1.ControlService.ListPermissions:output_type -> powermanage.v1.ListPermissionsResponse
-	233, // 600: powermanage.v1.ControlService.CreateUserGroup:output_type -> powermanage.v1.CreateUserGroupResponse
-	235, // 601: powermanage.v1.ControlService.GetUserGroup:output_type -> powermanage.v1.GetUserGroupResponse
-	237, // 602: powermanage.v1.ControlService.ListUserGroups:output_type -> powermanage.v1.ListUserGroupsResponse
-	239, // 603: powermanage.v1.ControlService.UpdateUserGroup:output_type -> powermanage.v1.UpdateUserGroupResponse
-	241, // 604: powermanage.v1.ControlService.DeleteUserGroup:output_type -> powermanage.v1.DeleteUserGroupResponse
-	243, // 605: powermanage.v1.ControlService.AddUserToGroup:output_type -> powermanage.v1.AddUserToGroupResponse
-	245, // 606: powermanage.v1.ControlService.RemoveUserFromGroup:output_type -> powermanage.v1.RemoveUserFromGroupResponse
-	247, // 607: powermanage.v1.ControlService.AssignRoleToUserGroup:output_type -> powermanage.v1.AssignRoleToUserGroupResponse
-	249, // 608: powermanage.v1.ControlService.RevokeRoleFromUserGroup:output_type -> powermanage.v1.RevokeRoleFromUserGroupResponse
-	251, // 609: powermanage.v1.ControlService.ListUserGroupsForUser:output_type -> powermanage.v1.ListUserGroupsForUserResponse
-	253, // 610: powermanage.v1.ControlService.UpdateUserGroupQuery:output_type -> powermanage.v1.UpdateUserGroupQueryResponse
-	255, // 611: powermanage.v1.ControlService.ValidateUserGroupQuery:output_type -> powermanage.v1.ValidateUserGroupQueryResponse
-	257, // 612: powermanage.v1.ControlService.EvaluateDynamicUserGroup:output_type -> powermanage.v1.EvaluateDynamicUserGroupResponse
-	239, // 613: powermanage.v1.ControlService.SetUserGroupMaintenanceWindow:output_type -> powermanage.v1.UpdateUserGroupResponse
-	293, // 614: powermanage.v1.ControlService.GetDeviceCompliance:output_type -> powermanage.v1.GetDeviceComplianceResponse
-	298, // 615: powermanage.v1.ControlService.CreateCompliancePolicy:output_type -> powermanage.v1.CreateCompliancePolicyResponse
-	300, // 616: powermanage.v1.ControlService.GetCompliancePolicy:output_type -> powermanage.v1.GetCompliancePolicyResponse
-	302, // 617: powermanage.v1.ControlService.ListCompliancePolicies:output_type -> powermanage.v1.ListCompliancePoliciesResponse
-	305, // 618: powermanage.v1.ControlService.RenameCompliancePolicy:output_type -> powermanage.v1.UpdateCompliancePolicyResponse
-	305, // 619: powermanage.v1.ControlService.UpdateCompliancePolicyDescription:output_type -> powermanage.v1.UpdateCompliancePolicyResponse
-	307, // 620: powermanage.v1.ControlService.DeleteCompliancePolicy:output_type -> powermanage.v1.DeleteCompliancePolicyResponse
-	309, // 621: powermanage.v1.ControlService.AddCompliancePolicyRule:output_type -> powermanage.v1.AddCompliancePolicyRuleResponse
-	311, // 622: powermanage.v1.ControlService.RemoveCompliancePolicyRule:output_type -> powermanage.v1.RemoveCompliancePolicyRuleResponse
-	313, // 623: powermanage.v1.ControlService.UpdateCompliancePolicyRule:output_type -> powermanage.v1.UpdateCompliancePolicyRuleResponse
-	315, // 624: powermanage.v1.ControlService.GetDeviceCompliancePolicyStatus:output_type -> powermanage.v1.GetDeviceCompliancePolicyStatusResponse
-	321, // 625: powermanage.v1.ControlService.Search:output_type -> powermanage.v1.SearchResponse
-	323, // 626: powermanage.v1.ControlService.RebuildSearchIndex:output_type -> powermanage.v1.RebuildSearchIndexResponse
-	326, // 627: powermanage.v1.ControlService.GetServerSettings:output_type -> powermanage.v1.GetServerSettingsResponse
-	328, // 628: powermanage.v1.ControlService.UpdateServerSettings:output_type -> powermanage.v1.UpdateServerSettingsResponse
-	24,  // 629: powermanage.v1.ControlService.SetUserProvisioningEnabled:output_type -> powermanage.v1.UpdateUserResponse
-	331, // 630: powermanage.v1.ControlService.StartTerminal:output_type -> powermanage.v1.StartTerminalResponse
-	333, // 631: powermanage.v1.ControlService.StopTerminal:output_type -> powermanage.v1.StopTerminalResponse
-	336, // 632: powermanage.v1.ControlService.ListActiveTerminalSessions:output_type -> powermanage.v1.ListActiveTerminalSessionsResponse
-	338, // 633: powermanage.v1.ControlService.TerminateTerminalSession:output_type -> powermanage.v1.TerminateTerminalSessionResponse
+var file_cadestro_v1_control_proto_depIdxs = []int32{
+	350, // 0: cadestro.v1.RegisterResponse.device_id:type_name -> cadestro.v1.DeviceId
+	351, // 1: cadestro.v1.RenewCertificateResponse.not_after:type_name -> google.protobuf.Timestamp
+	351, // 2: cadestro.v1.RefreshTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	10,  // 3: cadestro.v1.GetCurrentUserResponse.user:type_name -> cadestro.v1.User
+	351, // 4: cadestro.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	351, // 5: cadestro.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
+	260, // 6: cadestro.v1.User.identity_links:type_name -> cadestro.v1.IdentityLink
+	12,  // 7: cadestro.v1.User.ssh_public_keys:type_name -> cadestro.v1.SshPublicKey
+	11,  // 8: cadestro.v1.User.inherited_roles:type_name -> cadestro.v1.InheritedRole
+	14,  // 9: cadestro.v1.User.role_grants:type_name -> cadestro.v1.RoleGrant
+	351, // 10: cadestro.v1.SshPublicKey.added_at:type_name -> google.protobuf.Timestamp
+	351, // 11: cadestro.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	13,  // 12: cadestro.v1.RoleGrant.role:type_name -> cadestro.v1.Role
+	352, // 13: cadestro.v1.RoleGrant.scope_kind:type_name -> cadestro.v1.RoleGrantScopeKind
+	353, // 14: cadestro.v1.PermissionInfo.target_kind:type_name -> cadestro.v1.PermissionTargetKind
+	10,  // 15: cadestro.v1.GetUserResponse.user:type_name -> cadestro.v1.User
+	10,  // 16: cadestro.v1.ListUsersResponse.users:type_name -> cadestro.v1.User
+	10,  // 17: cadestro.v1.UpdateUserResponse.user:type_name -> cadestro.v1.User
+	12,  // 18: cadestro.v1.AddUserSshKeyResponse.key:type_name -> cadestro.v1.SshPublicKey
+	354, // 19: cadestro.v1.Device.status:type_name -> cadestro.v1.DeviceStatus
+	351, // 20: cadestro.v1.Device.registered_at:type_name -> google.protobuf.Timestamp
+	351, // 21: cadestro.v1.Device.last_seen_at:type_name -> google.protobuf.Timestamp
+	351, // 22: cadestro.v1.Device.cert_expires_at:type_name -> google.protobuf.Timestamp
+	343, // 23: cadestro.v1.Device.labels:type_name -> cadestro.v1.Device.LabelsEntry
+	355, // 24: cadestro.v1.Device.compliance_status:type_name -> cadestro.v1.ComplianceStatus
+	351, // 25: cadestro.v1.Device.compliance_checked_at:type_name -> google.protobuf.Timestamp
+	351, // 26: cadestro.v1.Device.last_inventory_at:type_name -> google.protobuf.Timestamp
+	354, // 27: cadestro.v1.ListDevicesRequest.status_filter:type_name -> cadestro.v1.DeviceStatus
+	344, // 28: cadestro.v1.ListDevicesRequest.label_filter:type_name -> cadestro.v1.ListDevicesRequest.LabelFilterEntry
+	32,  // 29: cadestro.v1.ListDevicesResponse.devices:type_name -> cadestro.v1.Device
+	32,  // 30: cadestro.v1.GetDeviceResponse.device:type_name -> cadestro.v1.Device
+	32,  // 31: cadestro.v1.UpdateDeviceResponse.device:type_name -> cadestro.v1.Device
+	32,  // 32: cadestro.v1.AssignDeviceResponse.device:type_name -> cadestro.v1.Device
+	32,  // 33: cadestro.v1.UnassignDeviceResponse.device:type_name -> cadestro.v1.Device
+	356, // 34: cadestro.v1.DeviceAssignee.type:type_name -> cadestro.v1.AssignmentTargetType
+	46,  // 35: cadestro.v1.ListDeviceAssigneesResponse.assignees:type_name -> cadestro.v1.DeviceAssignee
+	351, // 36: cadestro.v1.RegistrationToken.expires_at:type_name -> google.protobuf.Timestamp
+	351, // 37: cadestro.v1.RegistrationToken.created_at:type_name -> google.protobuf.Timestamp
+	351, // 38: cadestro.v1.CreateTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
+	51,  // 39: cadestro.v1.CreateTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
+	51,  // 40: cadestro.v1.ListTokensResponse.tokens:type_name -> cadestro.v1.RegistrationToken
+	51,  // 41: cadestro.v1.GetTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
+	51,  // 42: cadestro.v1.UpdateTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
+	357, // 43: cadestro.v1.ManagedAction.type:type_name -> cadestro.v1.ActionType
+	358, // 44: cadestro.v1.ManagedAction.desired_state:type_name -> cadestro.v1.DesiredState
+	351, // 45: cadestro.v1.ManagedAction.created_at:type_name -> google.protobuf.Timestamp
+	359, // 46: cadestro.v1.ManagedAction.schedule:type_name -> cadestro.v1.ActionSchedule
+	351, // 47: cadestro.v1.ManagedAction.updated_at:type_name -> google.protobuf.Timestamp
+	360, // 48: cadestro.v1.ManagedAction.package:type_name -> cadestro.v1.PackageParams
+	361, // 49: cadestro.v1.ManagedAction.app:type_name -> cadestro.v1.AppInstallParams
+	362, // 50: cadestro.v1.ManagedAction.shell:type_name -> cadestro.v1.ShellParams
+	363, // 51: cadestro.v1.ManagedAction.service:type_name -> cadestro.v1.ServiceParams
+	364, // 52: cadestro.v1.ManagedAction.file:type_name -> cadestro.v1.FileParams
+	365, // 53: cadestro.v1.ManagedAction.update:type_name -> cadestro.v1.UpdateParams
+	366, // 54: cadestro.v1.ManagedAction.repository:type_name -> cadestro.v1.RepositoryParams
+	367, // 55: cadestro.v1.ManagedAction.flatpak:type_name -> cadestro.v1.FlatpakParams
+	368, // 56: cadestro.v1.ManagedAction.directory:type_name -> cadestro.v1.DirectoryParams
+	369, // 57: cadestro.v1.ManagedAction.user:type_name -> cadestro.v1.UserParams
+	370, // 58: cadestro.v1.ManagedAction.ssh:type_name -> cadestro.v1.SshParams
+	371, // 59: cadestro.v1.ManagedAction.sshd:type_name -> cadestro.v1.SshdParams
+	372, // 60: cadestro.v1.ManagedAction.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
+	373, // 61: cadestro.v1.ManagedAction.lps:type_name -> cadestro.v1.LpsParams
+	374, // 62: cadestro.v1.ManagedAction.group:type_name -> cadestro.v1.GroupParams
+	340, // 63: cadestro.v1.ManagedAction.encryption:type_name -> cadestro.v1.ManagedEncryptionParams
+	342, // 64: cadestro.v1.ManagedAction.wifi:type_name -> cadestro.v1.ManagedWifiParams
+	375, // 65: cadestro.v1.ManagedAction.agent_update:type_name -> cadestro.v1.AgentUpdateParams
+	357, // 66: cadestro.v1.CreateActionRequest.type:type_name -> cadestro.v1.ActionType
+	358, // 67: cadestro.v1.CreateActionRequest.desired_state:type_name -> cadestro.v1.DesiredState
+	359, // 68: cadestro.v1.CreateActionRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	360, // 69: cadestro.v1.CreateActionRequest.package:type_name -> cadestro.v1.PackageParams
+	361, // 70: cadestro.v1.CreateActionRequest.app:type_name -> cadestro.v1.AppInstallParams
+	362, // 71: cadestro.v1.CreateActionRequest.shell:type_name -> cadestro.v1.ShellParams
+	363, // 72: cadestro.v1.CreateActionRequest.service:type_name -> cadestro.v1.ServiceParams
+	364, // 73: cadestro.v1.CreateActionRequest.file:type_name -> cadestro.v1.FileParams
+	365, // 74: cadestro.v1.CreateActionRequest.update:type_name -> cadestro.v1.UpdateParams
+	366, // 75: cadestro.v1.CreateActionRequest.repository:type_name -> cadestro.v1.RepositoryParams
+	367, // 76: cadestro.v1.CreateActionRequest.flatpak:type_name -> cadestro.v1.FlatpakParams
+	368, // 77: cadestro.v1.CreateActionRequest.directory:type_name -> cadestro.v1.DirectoryParams
+	369, // 78: cadestro.v1.CreateActionRequest.user:type_name -> cadestro.v1.UserParams
+	370, // 79: cadestro.v1.CreateActionRequest.ssh:type_name -> cadestro.v1.SshParams
+	371, // 80: cadestro.v1.CreateActionRequest.sshd:type_name -> cadestro.v1.SshdParams
+	372, // 81: cadestro.v1.CreateActionRequest.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
+	373, // 82: cadestro.v1.CreateActionRequest.lps:type_name -> cadestro.v1.LpsParams
+	374, // 83: cadestro.v1.CreateActionRequest.group:type_name -> cadestro.v1.GroupParams
+	339, // 84: cadestro.v1.CreateActionRequest.encryption:type_name -> cadestro.v1.EncryptionAuthoringParams
+	341, // 85: cadestro.v1.CreateActionRequest.wifi:type_name -> cadestro.v1.WifiAuthoringParams
+	375, // 86: cadestro.v1.CreateActionRequest.agent_update:type_name -> cadestro.v1.AgentUpdateParams
+	63,  // 87: cadestro.v1.CreateActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	63,  // 88: cadestro.v1.GetActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	357, // 89: cadestro.v1.ListActionsRequest.type_filter:type_name -> cadestro.v1.ActionType
+	63,  // 90: cadestro.v1.ListActionsResponse.actions:type_name -> cadestro.v1.ManagedAction
+	358, // 91: cadestro.v1.UpdateActionParamsRequest.desired_state:type_name -> cadestro.v1.DesiredState
+	359, // 92: cadestro.v1.UpdateActionParamsRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	360, // 93: cadestro.v1.UpdateActionParamsRequest.package:type_name -> cadestro.v1.PackageParams
+	361, // 94: cadestro.v1.UpdateActionParamsRequest.app:type_name -> cadestro.v1.AppInstallParams
+	362, // 95: cadestro.v1.UpdateActionParamsRequest.shell:type_name -> cadestro.v1.ShellParams
+	363, // 96: cadestro.v1.UpdateActionParamsRequest.service:type_name -> cadestro.v1.ServiceParams
+	364, // 97: cadestro.v1.UpdateActionParamsRequest.file:type_name -> cadestro.v1.FileParams
+	365, // 98: cadestro.v1.UpdateActionParamsRequest.update:type_name -> cadestro.v1.UpdateParams
+	366, // 99: cadestro.v1.UpdateActionParamsRequest.repository:type_name -> cadestro.v1.RepositoryParams
+	367, // 100: cadestro.v1.UpdateActionParamsRequest.flatpak:type_name -> cadestro.v1.FlatpakParams
+	368, // 101: cadestro.v1.UpdateActionParamsRequest.directory:type_name -> cadestro.v1.DirectoryParams
+	369, // 102: cadestro.v1.UpdateActionParamsRequest.user:type_name -> cadestro.v1.UserParams
+	370, // 103: cadestro.v1.UpdateActionParamsRequest.ssh:type_name -> cadestro.v1.SshParams
+	371, // 104: cadestro.v1.UpdateActionParamsRequest.sshd:type_name -> cadestro.v1.SshdParams
+	372, // 105: cadestro.v1.UpdateActionParamsRequest.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
+	373, // 106: cadestro.v1.UpdateActionParamsRequest.lps:type_name -> cadestro.v1.LpsParams
+	374, // 107: cadestro.v1.UpdateActionParamsRequest.group:type_name -> cadestro.v1.GroupParams
+	339, // 108: cadestro.v1.UpdateActionParamsRequest.encryption:type_name -> cadestro.v1.EncryptionAuthoringParams
+	341, // 109: cadestro.v1.UpdateActionParamsRequest.wifi:type_name -> cadestro.v1.WifiAuthoringParams
+	375, // 110: cadestro.v1.UpdateActionParamsRequest.agent_update:type_name -> cadestro.v1.AgentUpdateParams
+	63,  // 111: cadestro.v1.UpdateActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	351, // 112: cadestro.v1.ActionSet.created_at:type_name -> google.protobuf.Timestamp
+	351, // 113: cadestro.v1.ActionSet.updated_at:type_name -> google.protobuf.Timestamp
+	359, // 114: cadestro.v1.ActionSet.schedule:type_name -> cadestro.v1.ActionSchedule
+	376, // 115: cadestro.v1.ActionSet.on_failure:type_name -> cadestro.v1.OnFailure
+	357, // 116: cadestro.v1.ActionSetMember.action_type:type_name -> cadestro.v1.ActionType
+	359, // 117: cadestro.v1.CreateActionSetRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	376, // 118: cadestro.v1.CreateActionSetRequest.on_failure:type_name -> cadestro.v1.OnFailure
+	76,  // 119: cadestro.v1.CreateActionSetResponse.set:type_name -> cadestro.v1.ActionSet
+	76,  // 120: cadestro.v1.GetActionSetResponse.set:type_name -> cadestro.v1.ActionSet
+	77,  // 121: cadestro.v1.GetActionSetResponse.members:type_name -> cadestro.v1.ActionSetMember
+	76,  // 122: cadestro.v1.ListActionSetsResponse.sets:type_name -> cadestro.v1.ActionSet
+	359, // 123: cadestro.v1.UpdateActionSetScheduleRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	376, // 124: cadestro.v1.UpdateActionSetScheduleRequest.on_failure:type_name -> cadestro.v1.OnFailure
+	76,  // 125: cadestro.v1.UpdateActionSetResponse.set:type_name -> cadestro.v1.ActionSet
+	76,  // 126: cadestro.v1.AddActionToSetResponse.set:type_name -> cadestro.v1.ActionSet
+	76,  // 127: cadestro.v1.RemoveActionFromSetResponse.set:type_name -> cadestro.v1.ActionSet
+	76,  // 128: cadestro.v1.ReorderActionInSetResponse.set:type_name -> cadestro.v1.ActionSet
+	351, // 129: cadestro.v1.Definition.created_at:type_name -> google.protobuf.Timestamp
+	351, // 130: cadestro.v1.Definition.updated_at:type_name -> google.protobuf.Timestamp
+	359, // 131: cadestro.v1.Definition.schedule:type_name -> cadestro.v1.ActionSchedule
+	359, // 132: cadestro.v1.CreateDefinitionRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	96,  // 133: cadestro.v1.CreateDefinitionResponse.definition:type_name -> cadestro.v1.Definition
+	96,  // 134: cadestro.v1.GetDefinitionResponse.definition:type_name -> cadestro.v1.Definition
+	97,  // 135: cadestro.v1.GetDefinitionResponse.members:type_name -> cadestro.v1.DefinitionMember
+	96,  // 136: cadestro.v1.ListDefinitionsResponse.definitions:type_name -> cadestro.v1.Definition
+	359, // 137: cadestro.v1.UpdateDefinitionScheduleRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	96,  // 138: cadestro.v1.UpdateDefinitionResponse.definition:type_name -> cadestro.v1.Definition
+	96,  // 139: cadestro.v1.AddActionSetToDefinitionResponse.definition:type_name -> cadestro.v1.Definition
+	96,  // 140: cadestro.v1.RemoveActionSetFromDefinitionResponse.definition:type_name -> cadestro.v1.Definition
+	96,  // 141: cadestro.v1.ReorderActionSetInDefinitionResponse.definition:type_name -> cadestro.v1.Definition
+	351, // 142: cadestro.v1.DeviceGroup.created_at:type_name -> google.protobuf.Timestamp
+	377, // 143: cadestro.v1.DeviceGroup.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	116, // 144: cadestro.v1.CreateDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	116, // 145: cadestro.v1.GetDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	121, // 146: cadestro.v1.GetDeviceGroupResponse.devices:type_name -> cadestro.v1.DeviceGroupMember
+	351, // 147: cadestro.v1.DeviceGroupMember.last_seen_at:type_name -> google.protobuf.Timestamp
+	116, // 148: cadestro.v1.ListDeviceGroupsResponse.groups:type_name -> cadestro.v1.DeviceGroup
+	116, // 149: cadestro.v1.ListDeviceGroupsForDeviceResponse.groups:type_name -> cadestro.v1.DeviceGroup
+	116, // 150: cadestro.v1.UpdateDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	116, // 151: cadestro.v1.AddDeviceToGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	116, // 152: cadestro.v1.RemoveDeviceFromGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	116, // 153: cadestro.v1.UpdateDeviceGroupQueryResponse.group:type_name -> cadestro.v1.DeviceGroup
+	116, // 154: cadestro.v1.EvaluateDynamicGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	377, // 155: cadestro.v1.SetDeviceGroupMaintenanceWindowRequest.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	378, // 156: cadestro.v1.Assignment.source_type:type_name -> cadestro.v1.AssignmentSourceType
+	356, // 157: cadestro.v1.Assignment.target_type:type_name -> cadestro.v1.AssignmentTargetType
+	351, // 158: cadestro.v1.Assignment.created_at:type_name -> google.protobuf.Timestamp
+	379, // 159: cadestro.v1.Assignment.mode:type_name -> cadestro.v1.AssignmentMode
+	378, // 160: cadestro.v1.CreateAssignmentRequest.source_type:type_name -> cadestro.v1.AssignmentSourceType
+	356, // 161: cadestro.v1.CreateAssignmentRequest.target_type:type_name -> cadestro.v1.AssignmentTargetType
+	379, // 162: cadestro.v1.CreateAssignmentRequest.mode:type_name -> cadestro.v1.AssignmentMode
+	144, // 163: cadestro.v1.CreateAssignmentResponse.assignment:type_name -> cadestro.v1.Assignment
+	378, // 164: cadestro.v1.ListAssignmentsRequest.source_type:type_name -> cadestro.v1.AssignmentSourceType
+	356, // 165: cadestro.v1.ListAssignmentsRequest.target_type:type_name -> cadestro.v1.AssignmentTargetType
+	144, // 166: cadestro.v1.ListAssignmentsResponse.assignments:type_name -> cadestro.v1.Assignment
+	378, // 167: cadestro.v1.UserSelection.source_type:type_name -> cadestro.v1.AssignmentSourceType
+	351, // 168: cadestro.v1.UserSelection.updated_at:type_name -> google.protobuf.Timestamp
+	378, // 169: cadestro.v1.SetUserSelectionRequest.source_type:type_name -> cadestro.v1.AssignmentSourceType
+	151, // 170: cadestro.v1.SetUserSelectionResponse.selection:type_name -> cadestro.v1.UserSelection
+	378, // 171: cadestro.v1.AvailableItem.source_type:type_name -> cadestro.v1.AssignmentSourceType
+	63,  // 172: cadestro.v1.AvailableItem.actions:type_name -> cadestro.v1.ManagedAction
+	155, // 173: cadestro.v1.ListAvailableActionsResponse.items:type_name -> cadestro.v1.AvailableItem
+	63,  // 174: cadestro.v1.GetDeviceAssignmentsResponse.actions:type_name -> cadestro.v1.ManagedAction
+	76,  // 175: cadestro.v1.GetDeviceAssignmentsResponse.action_sets:type_name -> cadestro.v1.ActionSet
+	96,  // 176: cadestro.v1.GetDeviceAssignmentsResponse.definitions:type_name -> cadestro.v1.Definition
+	295, // 177: cadestro.v1.GetDeviceAssignmentsResponse.compliance_policies:type_name -> cadestro.v1.CompliancePolicy
+	81,  // 178: cadestro.v1.GetDeviceAssignmentsResponse.action_set_details:type_name -> cadestro.v1.GetActionSetResponse
+	101, // 179: cadestro.v1.GetDeviceAssignmentsResponse.definition_details:type_name -> cadestro.v1.GetDefinitionResponse
+	144, // 180: cadestro.v1.GetUserAssignmentsResponse.assignments:type_name -> cadestro.v1.Assignment
+	357, // 181: cadestro.v1.ActionExecution.type:type_name -> cadestro.v1.ActionType
+	380, // 182: cadestro.v1.ActionExecution.status:type_name -> cadestro.v1.ExecutionStatus
+	381, // 183: cadestro.v1.ActionExecution.output:type_name -> cadestro.v1.CommandOutput
+	351, // 184: cadestro.v1.ActionExecution.created_at:type_name -> google.protobuf.Timestamp
+	351, // 185: cadestro.v1.ActionExecution.dispatched_at:type_name -> google.protobuf.Timestamp
+	351, // 186: cadestro.v1.ActionExecution.completed_at:type_name -> google.protobuf.Timestamp
+	381, // 187: cadestro.v1.ActionExecution.live_output:type_name -> cadestro.v1.CommandOutput
+	358, // 188: cadestro.v1.ActionExecution.desired_state:type_name -> cadestro.v1.DesiredState
+	381, // 189: cadestro.v1.ActionExecution.detection_output:type_name -> cadestro.v1.CommandOutput
+	351, // 190: cadestro.v1.ActionExecution.scheduled_for:type_name -> google.protobuf.Timestamp
+	382, // 191: cadestro.v1.DispatchActionRequest.inline_action:type_name -> cadestro.v1.Action
+	351, // 192: cadestro.v1.DispatchActionRequest.run_at:type_name -> google.protobuf.Timestamp
+	161, // 193: cadestro.v1.DispatchActionResponse.execution:type_name -> cadestro.v1.ActionExecution
+	382, // 194: cadestro.v1.DispatchToMultipleRequest.inline_action:type_name -> cadestro.v1.Action
+	161, // 195: cadestro.v1.DispatchToMultipleResponse.executions:type_name -> cadestro.v1.ActionExecution
+	161, // 196: cadestro.v1.DispatchAssignedActionsResponse.executions:type_name -> cadestro.v1.ActionExecution
+	161, // 197: cadestro.v1.DispatchActionSetResponse.executions:type_name -> cadestro.v1.ActionExecution
+	161, // 198: cadestro.v1.DispatchDefinitionResponse.executions:type_name -> cadestro.v1.ActionExecution
+	382, // 199: cadestro.v1.DispatchToGroupRequest.inline_action:type_name -> cadestro.v1.Action
+	161, // 200: cadestro.v1.DispatchToGroupResponse.executions:type_name -> cadestro.v1.ActionExecution
+	161, // 201: cadestro.v1.GetExecutionResponse.execution:type_name -> cadestro.v1.ActionExecution
+	380, // 202: cadestro.v1.ListExecutionsRequest.status_filter:type_name -> cadestro.v1.ExecutionStatus
+	357, // 203: cadestro.v1.ListExecutionsRequest.type_filter:type_name -> cadestro.v1.ActionType
+	161, // 204: cadestro.v1.ListExecutionsResponse.executions:type_name -> cadestro.v1.ActionExecution
+	357, // 205: cadestro.v1.DispatchInstantActionRequest.instant_action:type_name -> cadestro.v1.ActionType
+	351, // 206: cadestro.v1.DispatchInstantActionRequest.run_at:type_name -> google.protobuf.Timestamp
+	161, // 207: cadestro.v1.DispatchInstantActionResponse.execution:type_name -> cadestro.v1.ActionExecution
+	161, // 208: cadestro.v1.CancelExecutionResponse.execution:type_name -> cadestro.v1.ActionExecution
+	351, // 209: cadestro.v1.AuditEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	182, // 210: cadestro.v1.ListAuditEventsResponse.events:type_name -> cadestro.v1.AuditEvent
+	351, // 211: cadestro.v1.ExportAuditEventsRequest.occurred_from:type_name -> google.protobuf.Timestamp
+	351, // 212: cadestro.v1.ExportAuditEventsRequest.occurred_to:type_name -> google.protobuf.Timestamp
+	351, // 213: cadestro.v1.LpsPassword.rotated_at:type_name -> google.protobuf.Timestamp
+	383, // 214: cadestro.v1.LpsPassword.rotation_reason:type_name -> cadestro.v1.RotationReason
+	187, // 215: cadestro.v1.ListLpsPasswordsResponse.current:type_name -> cadestro.v1.LpsPassword
+	187, // 216: cadestro.v1.ListLpsPasswordsResponse.history:type_name -> cadestro.v1.LpsPassword
+	351, // 217: cadestro.v1.LuksKey.rotated_at:type_name -> google.protobuf.Timestamp
+	383, // 218: cadestro.v1.LuksKey.rotation_reason:type_name -> cadestro.v1.RotationReason
+	384, // 219: cadestro.v1.LuksKey.revocation_status:type_name -> cadestro.v1.LuksRevocationStatus
+	351, // 220: cadestro.v1.LuksKey.revocation_at:type_name -> google.protobuf.Timestamp
+	192, // 221: cadestro.v1.ListLuksKeysResponse.current:type_name -> cadestro.v1.LuksKey
+	192, // 222: cadestro.v1.ListLuksKeysResponse.history:type_name -> cadestro.v1.LuksKey
+	385, // 223: cadestro.v1.GetOSQueryResultResponse.rows:type_name -> cadestro.v1.OSQueryRow
+	385, // 224: cadestro.v1.InventoryTableResult.rows:type_name -> cadestro.v1.OSQueryRow
+	351, // 225: cadestro.v1.InventoryTableResult.collected_at:type_name -> google.protobuf.Timestamp
+	206, // 226: cadestro.v1.GetDeviceInventoryResponse.tables:type_name -> cadestro.v1.InventoryTableResult
+	13,  // 227: cadestro.v1.CreateRoleResponse.role:type_name -> cadestro.v1.Role
+	13,  // 228: cadestro.v1.GetRoleResponse.role:type_name -> cadestro.v1.Role
+	13,  // 229: cadestro.v1.ListRolesResponse.roles:type_name -> cadestro.v1.Role
+	13,  // 230: cadestro.v1.UpdateRoleResponse.role:type_name -> cadestro.v1.Role
+	352, // 231: cadestro.v1.AssignRoleToUserRequest.scope_kind:type_name -> cadestro.v1.RoleGrantScopeKind
+	352, // 232: cadestro.v1.RevokeRoleFromUserRequest.scope_kind:type_name -> cadestro.v1.RoleGrantScopeKind
+	15,  // 233: cadestro.v1.ListPermissionsResponse.permissions:type_name -> cadestro.v1.PermissionInfo
+	351, // 234: cadestro.v1.UserGroup.created_at:type_name -> google.protobuf.Timestamp
+	377, // 235: cadestro.v1.UserGroup.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	14,  // 236: cadestro.v1.UserGroup.role_grants:type_name -> cadestro.v1.RoleGrant
+	351, // 237: cadestro.v1.UserGroupMember.added_at:type_name -> google.protobuf.Timestamp
+	230, // 238: cadestro.v1.CreateUserGroupResponse.group:type_name -> cadestro.v1.UserGroup
+	230, // 239: cadestro.v1.GetUserGroupResponse.group:type_name -> cadestro.v1.UserGroup
+	231, // 240: cadestro.v1.GetUserGroupResponse.members:type_name -> cadestro.v1.UserGroupMember
+	230, // 241: cadestro.v1.ListUserGroupsResponse.groups:type_name -> cadestro.v1.UserGroup
+	230, // 242: cadestro.v1.UpdateUserGroupResponse.group:type_name -> cadestro.v1.UserGroup
+	352, // 243: cadestro.v1.AssignRoleToUserGroupRequest.scope_kind:type_name -> cadestro.v1.RoleGrantScopeKind
+	352, // 244: cadestro.v1.RevokeRoleFromUserGroupRequest.scope_kind:type_name -> cadestro.v1.RoleGrantScopeKind
+	230, // 245: cadestro.v1.ListUserGroupsForUserResponse.groups:type_name -> cadestro.v1.UserGroup
+	230, // 246: cadestro.v1.UpdateUserGroupQueryResponse.group:type_name -> cadestro.v1.UserGroup
+	230, // 247: cadestro.v1.EvaluateDynamicUserGroupResponse.group:type_name -> cadestro.v1.UserGroup
+	377, // 248: cadestro.v1.SetUserGroupMaintenanceWindowRequest.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	386, // 249: cadestro.v1.IdentityProvider.provider_type:type_name -> cadestro.v1.IdentityProviderType
+	345, // 250: cadestro.v1.IdentityProvider.group_mapping:type_name -> cadestro.v1.IdentityProvider.GroupMappingEntry
+	351, // 251: cadestro.v1.IdentityProvider.created_at:type_name -> google.protobuf.Timestamp
+	351, // 252: cadestro.v1.IdentityProvider.updated_at:type_name -> google.protobuf.Timestamp
+	351, // 253: cadestro.v1.IdentityLink.linked_at:type_name -> google.protobuf.Timestamp
+	351, // 254: cadestro.v1.IdentityLink.last_login_at:type_name -> google.protobuf.Timestamp
+	386, // 255: cadestro.v1.CreateIdentityProviderRequest.provider_type:type_name -> cadestro.v1.IdentityProviderType
+	346, // 256: cadestro.v1.CreateIdentityProviderRequest.group_mapping:type_name -> cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntry
+	259, // 257: cadestro.v1.CreateIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	259, // 258: cadestro.v1.GetIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	259, // 259: cadestro.v1.ListIdentityProvidersResponse.providers:type_name -> cadestro.v1.IdentityProvider
+	347, // 260: cadestro.v1.UpdateIdentityProviderRequest.group_mapping:type_name -> cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntry
+	259, // 261: cadestro.v1.UpdateIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	386, // 262: cadestro.v1.AuthMethodProvider.provider_type:type_name -> cadestro.v1.IdentityProviderType
+	271, // 263: cadestro.v1.ListAuthMethodsResponse.providers:type_name -> cadestro.v1.AuthMethodProvider
+	351, // 264: cadestro.v1.SSOCallbackResponse.expires_at:type_name -> google.protobuf.Timestamp
+	10,  // 265: cadestro.v1.SSOCallbackResponse.user:type_name -> cadestro.v1.User
+	351, // 266: cadestro.v1.BeginCLILoginResponse.expires_at:type_name -> google.protobuf.Timestamp
+	351, // 267: cadestro.v1.ExchangeCLISessionResponse.expires_at:type_name -> google.protobuf.Timestamp
+	10,  // 268: cadestro.v1.ExchangeCLISessionResponse.user:type_name -> cadestro.v1.User
+	260, // 269: cadestro.v1.ListIdentityLinksResponse.links:type_name -> cadestro.v1.IdentityLink
+	355, // 270: cadestro.v1.GetDeviceComplianceResponse.status:type_name -> cadestro.v1.ComplianceStatus
+	294, // 271: cadestro.v1.GetDeviceComplianceResponse.checks:type_name -> cadestro.v1.ComplianceCheckResult
+	381, // 272: cadestro.v1.ComplianceCheckResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	351, // 273: cadestro.v1.ComplianceCheckResult.checked_at:type_name -> google.protobuf.Timestamp
+	296, // 274: cadestro.v1.CompliancePolicy.rules:type_name -> cadestro.v1.CompliancePolicyRule
+	351, // 275: cadestro.v1.CompliancePolicy.created_at:type_name -> google.protobuf.Timestamp
+	295, // 276: cadestro.v1.CreateCompliancePolicyResponse.policy:type_name -> cadestro.v1.CompliancePolicy
+	295, // 277: cadestro.v1.GetCompliancePolicyResponse.policy:type_name -> cadestro.v1.CompliancePolicy
+	295, // 278: cadestro.v1.ListCompliancePoliciesResponse.policies:type_name -> cadestro.v1.CompliancePolicy
+	295, // 279: cadestro.v1.UpdateCompliancePolicyResponse.policy:type_name -> cadestro.v1.CompliancePolicy
+	295, // 280: cadestro.v1.AddCompliancePolicyRuleResponse.policy:type_name -> cadestro.v1.CompliancePolicy
+	295, // 281: cadestro.v1.RemoveCompliancePolicyRuleResponse.policy:type_name -> cadestro.v1.CompliancePolicy
+	295, // 282: cadestro.v1.UpdateCompliancePolicyRuleResponse.policy:type_name -> cadestro.v1.CompliancePolicy
+	355, // 283: cadestro.v1.GetDeviceCompliancePolicyStatusResponse.overall_status:type_name -> cadestro.v1.ComplianceStatus
+	316, // 284: cadestro.v1.GetDeviceCompliancePolicyStatusResponse.policies:type_name -> cadestro.v1.DevicePolicyEvaluation
+	355, // 285: cadestro.v1.DevicePolicyEvaluation.status:type_name -> cadestro.v1.ComplianceStatus
+	317, // 286: cadestro.v1.DevicePolicyEvaluation.rules:type_name -> cadestro.v1.DevicePolicyRuleEvaluation
+	355, // 287: cadestro.v1.DevicePolicyRuleEvaluation.status:type_name -> cadestro.v1.ComplianceStatus
+	351, // 288: cadestro.v1.DevicePolicyRuleEvaluation.checked_at:type_name -> google.protobuf.Timestamp
+	351, // 289: cadestro.v1.DevicePolicyRuleEvaluation.first_failed_at:type_name -> google.protobuf.Timestamp
+	351, // 290: cadestro.v1.DevicePolicyRuleEvaluation.grace_expires_at:type_name -> google.protobuf.Timestamp
+	381, // 291: cadestro.v1.DevicePolicyRuleEvaluation.detection_output:type_name -> cadestro.v1.CommandOutput
+	387, // 292: cadestro.v1.SearchRequest.scope:type_name -> cadestro.v1.SearchScope
+	318, // 293: cadestro.v1.SearchRequest.date_filters:type_name -> cadestro.v1.SearchDateFilter
+	348, // 294: cadestro.v1.SearchRequest.tag_filters:type_name -> cadestro.v1.SearchRequest.TagFiltersEntry
+	388, // 295: cadestro.v1.SearchRequest.sort_field:type_name -> cadestro.v1.SortField
+	389, // 296: cadestro.v1.SearchRequest.sort_direction:type_name -> cadestro.v1.SortDirection
+	387, // 297: cadestro.v1.SearchResult.scope:type_name -> cadestro.v1.SearchScope
+	349, // 298: cadestro.v1.SearchResult.fields:type_name -> cadestro.v1.SearchResult.FieldsEntry
+	320, // 299: cadestro.v1.SearchResponse.results:type_name -> cadestro.v1.SearchResult
+	324, // 300: cadestro.v1.GetServerSettingsResponse.settings:type_name -> cadestro.v1.ServerSettings
+	324, // 301: cadestro.v1.UpdateServerSettingsResponse.settings:type_name -> cadestro.v1.ServerSettings
+	351, // 302: cadestro.v1.StartTerminalResponse.expires_at:type_name -> google.protobuf.Timestamp
+	351, // 303: cadestro.v1.TerminalSessionInfo.started_at:type_name -> google.protobuf.Timestamp
+	351, // 304: cadestro.v1.TerminalSessionInfo.last_activity_at:type_name -> google.protobuf.Timestamp
+	334, // 305: cadestro.v1.ListActiveTerminalSessionsResponse.sessions:type_name -> cadestro.v1.TerminalSessionInfo
+	390, // 306: cadestro.v1.EncryptionAuthoringParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
+	391, // 307: cadestro.v1.EncryptionAuthoringParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	390, // 308: cadestro.v1.ManagedEncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
+	391, // 309: cadestro.v1.ManagedEncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	392, // 310: cadestro.v1.WifiAuthoringParams.auth_type:type_name -> cadestro.v1.WifiAuthType
+	392, // 311: cadestro.v1.ManagedWifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
+	0,   // 312: cadestro.v1.ControlService.Register:input_type -> cadestro.v1.RegisterRequest
+	2,   // 313: cadestro.v1.ControlService.RenewCertificate:input_type -> cadestro.v1.RenewCertificateRequest
+	4,   // 314: cadestro.v1.ControlService.RefreshToken:input_type -> cadestro.v1.RefreshTokenRequest
+	6,   // 315: cadestro.v1.ControlService.Logout:input_type -> cadestro.v1.LogoutRequest
+	8,   // 316: cadestro.v1.ControlService.GetCurrentUser:input_type -> cadestro.v1.GetCurrentUserRequest
+	272, // 317: cadestro.v1.ControlService.ListAuthMethods:input_type -> cadestro.v1.ListAuthMethodsRequest
+	274, // 318: cadestro.v1.ControlService.GetSSOLoginURL:input_type -> cadestro.v1.GetSSOLoginURLRequest
+	276, // 319: cadestro.v1.ControlService.SSOCallback:input_type -> cadestro.v1.SSOCallbackRequest
+	278, // 320: cadestro.v1.ControlService.BeginCLILogin:input_type -> cadestro.v1.BeginCLILoginRequest
+	280, // 321: cadestro.v1.ControlService.ExchangeCLISession:input_type -> cadestro.v1.ExchangeCLISessionRequest
+	261, // 322: cadestro.v1.ControlService.CreateIdentityProvider:input_type -> cadestro.v1.CreateIdentityProviderRequest
+	263, // 323: cadestro.v1.ControlService.GetIdentityProvider:input_type -> cadestro.v1.GetIdentityProviderRequest
+	265, // 324: cadestro.v1.ControlService.ListIdentityProviders:input_type -> cadestro.v1.ListIdentityProvidersRequest
+	267, // 325: cadestro.v1.ControlService.UpdateIdentityProvider:input_type -> cadestro.v1.UpdateIdentityProviderRequest
+	269, // 326: cadestro.v1.ControlService.DeleteIdentityProvider:input_type -> cadestro.v1.DeleteIdentityProviderRequest
+	282, // 327: cadestro.v1.ControlService.ListIdentityLinks:input_type -> cadestro.v1.ListIdentityLinksRequest
+	284, // 328: cadestro.v1.ControlService.UnlinkIdentity:input_type -> cadestro.v1.UnlinkIdentityRequest
+	286, // 329: cadestro.v1.ControlService.EnableSCIM:input_type -> cadestro.v1.EnableSCIMRequest
+	288, // 330: cadestro.v1.ControlService.DisableSCIM:input_type -> cadestro.v1.DisableSCIMRequest
+	290, // 331: cadestro.v1.ControlService.RotateSCIMToken:input_type -> cadestro.v1.RotateSCIMTokenRequest
+	16,  // 332: cadestro.v1.ControlService.EraseJITUser:input_type -> cadestro.v1.EraseJITUserRequest
+	18,  // 333: cadestro.v1.ControlService.GetUser:input_type -> cadestro.v1.GetUserRequest
+	20,  // 334: cadestro.v1.ControlService.ListUsers:input_type -> cadestro.v1.ListUsersRequest
+	22,  // 335: cadestro.v1.ControlService.UpdateUserEmail:input_type -> cadestro.v1.UpdateUserEmailRequest
+	23,  // 336: cadestro.v1.ControlService.SetUserDisabled:input_type -> cadestro.v1.SetUserDisabledRequest
+	25,  // 337: cadestro.v1.ControlService.UpdateUserProfile:input_type -> cadestro.v1.UpdateUserProfileRequest
+	31,  // 338: cadestro.v1.ControlService.UpdateUserLinuxUsername:input_type -> cadestro.v1.UpdateUserLinuxUsernameRequest
+	26,  // 339: cadestro.v1.ControlService.AddUserSshKey:input_type -> cadestro.v1.AddUserSshKeyRequest
+	28,  // 340: cadestro.v1.ControlService.RemoveUserSshKey:input_type -> cadestro.v1.RemoveUserSshKeyRequest
+	30,  // 341: cadestro.v1.ControlService.UpdateUserSshSettings:input_type -> cadestro.v1.UpdateUserSshSettingsRequest
+	33,  // 342: cadestro.v1.ControlService.ListDevices:input_type -> cadestro.v1.ListDevicesRequest
+	35,  // 343: cadestro.v1.ControlService.GetDevice:input_type -> cadestro.v1.GetDeviceRequest
+	37,  // 344: cadestro.v1.ControlService.SetDeviceLabel:input_type -> cadestro.v1.SetDeviceLabelRequest
+	38,  // 345: cadestro.v1.ControlService.RemoveDeviceLabel:input_type -> cadestro.v1.RemoveDeviceLabelRequest
+	42,  // 346: cadestro.v1.ControlService.AssignDevice:input_type -> cadestro.v1.AssignDeviceRequest
+	44,  // 347: cadestro.v1.ControlService.UnassignDevice:input_type -> cadestro.v1.UnassignDeviceRequest
+	47,  // 348: cadestro.v1.ControlService.ListDeviceAssignees:input_type -> cadestro.v1.ListDeviceAssigneesRequest
+	49,  // 349: cadestro.v1.ControlService.SetDeviceSyncInterval:input_type -> cadestro.v1.SetDeviceSyncIntervalRequest
+	50,  // 350: cadestro.v1.ControlService.SetDeviceInventoryInterval:input_type -> cadestro.v1.SetDeviceInventoryIntervalRequest
+	40,  // 351: cadestro.v1.ControlService.DeleteDevice:input_type -> cadestro.v1.DeleteDeviceRequest
+	52,  // 352: cadestro.v1.ControlService.CreateToken:input_type -> cadestro.v1.CreateTokenRequest
+	56,  // 353: cadestro.v1.ControlService.GetToken:input_type -> cadestro.v1.GetTokenRequest
+	54,  // 354: cadestro.v1.ControlService.ListTokens:input_type -> cadestro.v1.ListTokensRequest
+	58,  // 355: cadestro.v1.ControlService.RenameToken:input_type -> cadestro.v1.RenameTokenRequest
+	59,  // 356: cadestro.v1.ControlService.SetTokenDisabled:input_type -> cadestro.v1.SetTokenDisabledRequest
+	61,  // 357: cadestro.v1.ControlService.DeleteToken:input_type -> cadestro.v1.DeleteTokenRequest
+	64,  // 358: cadestro.v1.ControlService.CreateAction:input_type -> cadestro.v1.CreateActionRequest
+	66,  // 359: cadestro.v1.ControlService.GetAction:input_type -> cadestro.v1.GetActionRequest
+	68,  // 360: cadestro.v1.ControlService.ListActions:input_type -> cadestro.v1.ListActionsRequest
+	70,  // 361: cadestro.v1.ControlService.RenameAction:input_type -> cadestro.v1.RenameActionRequest
+	71,  // 362: cadestro.v1.ControlService.UpdateActionDescription:input_type -> cadestro.v1.UpdateActionDescriptionRequest
+	72,  // 363: cadestro.v1.ControlService.UpdateActionParams:input_type -> cadestro.v1.UpdateActionParamsRequest
+	74,  // 364: cadestro.v1.ControlService.DeleteAction:input_type -> cadestro.v1.DeleteActionRequest
+	78,  // 365: cadestro.v1.ControlService.CreateActionSet:input_type -> cadestro.v1.CreateActionSetRequest
+	80,  // 366: cadestro.v1.ControlService.GetActionSet:input_type -> cadestro.v1.GetActionSetRequest
+	82,  // 367: cadestro.v1.ControlService.ListActionSets:input_type -> cadestro.v1.ListActionSetsRequest
+	84,  // 368: cadestro.v1.ControlService.RenameActionSet:input_type -> cadestro.v1.RenameActionSetRequest
+	85,  // 369: cadestro.v1.ControlService.UpdateActionSetDescription:input_type -> cadestro.v1.UpdateActionSetDescriptionRequest
+	86,  // 370: cadestro.v1.ControlService.UpdateActionSetSchedule:input_type -> cadestro.v1.UpdateActionSetScheduleRequest
+	88,  // 371: cadestro.v1.ControlService.DeleteActionSet:input_type -> cadestro.v1.DeleteActionSetRequest
+	90,  // 372: cadestro.v1.ControlService.AddActionToSet:input_type -> cadestro.v1.AddActionToSetRequest
+	92,  // 373: cadestro.v1.ControlService.RemoveActionFromSet:input_type -> cadestro.v1.RemoveActionFromSetRequest
+	94,  // 374: cadestro.v1.ControlService.ReorderActionInSet:input_type -> cadestro.v1.ReorderActionInSetRequest
+	98,  // 375: cadestro.v1.ControlService.CreateDefinition:input_type -> cadestro.v1.CreateDefinitionRequest
+	100, // 376: cadestro.v1.ControlService.GetDefinition:input_type -> cadestro.v1.GetDefinitionRequest
+	102, // 377: cadestro.v1.ControlService.ListDefinitions:input_type -> cadestro.v1.ListDefinitionsRequest
+	104, // 378: cadestro.v1.ControlService.RenameDefinition:input_type -> cadestro.v1.RenameDefinitionRequest
+	105, // 379: cadestro.v1.ControlService.UpdateDefinitionDescription:input_type -> cadestro.v1.UpdateDefinitionDescriptionRequest
+	106, // 380: cadestro.v1.ControlService.UpdateDefinitionSchedule:input_type -> cadestro.v1.UpdateDefinitionScheduleRequest
+	108, // 381: cadestro.v1.ControlService.DeleteDefinition:input_type -> cadestro.v1.DeleteDefinitionRequest
+	110, // 382: cadestro.v1.ControlService.AddActionSetToDefinition:input_type -> cadestro.v1.AddActionSetToDefinitionRequest
+	112, // 383: cadestro.v1.ControlService.RemoveActionSetFromDefinition:input_type -> cadestro.v1.RemoveActionSetFromDefinitionRequest
+	114, // 384: cadestro.v1.ControlService.ReorderActionSetInDefinition:input_type -> cadestro.v1.ReorderActionSetInDefinitionRequest
+	117, // 385: cadestro.v1.ControlService.CreateDeviceGroup:input_type -> cadestro.v1.CreateDeviceGroupRequest
+	119, // 386: cadestro.v1.ControlService.GetDeviceGroup:input_type -> cadestro.v1.GetDeviceGroupRequest
+	122, // 387: cadestro.v1.ControlService.ListDeviceGroups:input_type -> cadestro.v1.ListDeviceGroupsRequest
+	124, // 388: cadestro.v1.ControlService.ListDeviceGroupsForDevice:input_type -> cadestro.v1.ListDeviceGroupsForDeviceRequest
+	126, // 389: cadestro.v1.ControlService.RenameDeviceGroup:input_type -> cadestro.v1.RenameDeviceGroupRequest
+	127, // 390: cadestro.v1.ControlService.UpdateDeviceGroupDescription:input_type -> cadestro.v1.UpdateDeviceGroupDescriptionRequest
+	135, // 391: cadestro.v1.ControlService.UpdateDeviceGroupQuery:input_type -> cadestro.v1.UpdateDeviceGroupQueryRequest
+	129, // 392: cadestro.v1.ControlService.DeleteDeviceGroup:input_type -> cadestro.v1.DeleteDeviceGroupRequest
+	131, // 393: cadestro.v1.ControlService.AddDeviceToGroup:input_type -> cadestro.v1.AddDeviceToGroupRequest
+	133, // 394: cadestro.v1.ControlService.RemoveDeviceFromGroup:input_type -> cadestro.v1.RemoveDeviceFromGroupRequest
+	137, // 395: cadestro.v1.ControlService.ValidateDynamicQuery:input_type -> cadestro.v1.ValidateDynamicQueryRequest
+	139, // 396: cadestro.v1.ControlService.EvaluateDynamicGroup:input_type -> cadestro.v1.EvaluateDynamicGroupRequest
+	141, // 397: cadestro.v1.ControlService.SetDeviceGroupSyncInterval:input_type -> cadestro.v1.SetDeviceGroupSyncIntervalRequest
+	142, // 398: cadestro.v1.ControlService.SetDeviceGroupInventoryInterval:input_type -> cadestro.v1.SetDeviceGroupInventoryIntervalRequest
+	143, // 399: cadestro.v1.ControlService.SetDeviceGroupMaintenanceWindow:input_type -> cadestro.v1.SetDeviceGroupMaintenanceWindowRequest
+	145, // 400: cadestro.v1.ControlService.CreateAssignment:input_type -> cadestro.v1.CreateAssignmentRequest
+	147, // 401: cadestro.v1.ControlService.DeleteAssignment:input_type -> cadestro.v1.DeleteAssignmentRequest
+	149, // 402: cadestro.v1.ControlService.ListAssignments:input_type -> cadestro.v1.ListAssignmentsRequest
+	157, // 403: cadestro.v1.ControlService.GetDeviceAssignments:input_type -> cadestro.v1.GetDeviceAssignmentsRequest
+	159, // 404: cadestro.v1.ControlService.GetUserAssignments:input_type -> cadestro.v1.GetUserAssignmentsRequest
+	152, // 405: cadestro.v1.ControlService.SetUserSelection:input_type -> cadestro.v1.SetUserSelectionRequest
+	154, // 406: cadestro.v1.ControlService.ListAvailableActions:input_type -> cadestro.v1.ListAvailableActionsRequest
+	162, // 407: cadestro.v1.ControlService.DispatchAction:input_type -> cadestro.v1.DispatchActionRequest
+	164, // 408: cadestro.v1.ControlService.DispatchToMultiple:input_type -> cadestro.v1.DispatchToMultipleRequest
+	166, // 409: cadestro.v1.ControlService.DispatchAssignedActions:input_type -> cadestro.v1.DispatchAssignedActionsRequest
+	168, // 410: cadestro.v1.ControlService.DispatchActionSet:input_type -> cadestro.v1.DispatchActionSetRequest
+	170, // 411: cadestro.v1.ControlService.DispatchDefinition:input_type -> cadestro.v1.DispatchDefinitionRequest
+	172, // 412: cadestro.v1.ControlService.DispatchToGroup:input_type -> cadestro.v1.DispatchToGroupRequest
+	178, // 413: cadestro.v1.ControlService.DispatchInstantAction:input_type -> cadestro.v1.DispatchInstantActionRequest
+	180, // 414: cadestro.v1.ControlService.CancelExecution:input_type -> cadestro.v1.CancelExecutionRequest
+	174, // 415: cadestro.v1.ControlService.GetExecution:input_type -> cadestro.v1.GetExecutionRequest
+	176, // 416: cadestro.v1.ControlService.ListExecutions:input_type -> cadestro.v1.ListExecutionsRequest
+	183, // 417: cadestro.v1.ControlService.ListAuditEvents:input_type -> cadestro.v1.ListAuditEventsRequest
+	185, // 418: cadestro.v1.ControlService.ExportAuditEvents:input_type -> cadestro.v1.ExportAuditEventsRequest
+	188, // 419: cadestro.v1.ControlService.ListLpsPasswords:input_type -> cadestro.v1.ListLpsPasswordsRequest
+	190, // 420: cadestro.v1.ControlService.RevealLpsPassword:input_type -> cadestro.v1.RevealLpsPasswordRequest
+	193, // 421: cadestro.v1.ControlService.ListLuksKeys:input_type -> cadestro.v1.ListLuksKeysRequest
+	195, // 422: cadestro.v1.ControlService.RevealLuksKey:input_type -> cadestro.v1.RevealLuksKeyRequest
+	197, // 423: cadestro.v1.ControlService.CreateLuksToken:input_type -> cadestro.v1.CreateLuksTokenRequest
+	199, // 424: cadestro.v1.ControlService.RevokeLuksDeviceKey:input_type -> cadestro.v1.RevokeLuksDeviceKeyRequest
+	201, // 425: cadestro.v1.ControlService.DispatchOSQuery:input_type -> cadestro.v1.DispatchOSQueryRequest
+	203, // 426: cadestro.v1.ControlService.GetOSQueryResult:input_type -> cadestro.v1.GetOSQueryResultRequest
+	205, // 427: cadestro.v1.ControlService.GetDeviceInventory:input_type -> cadestro.v1.GetDeviceInventoryRequest
+	208, // 428: cadestro.v1.ControlService.RefreshDeviceInventory:input_type -> cadestro.v1.RefreshDeviceInventoryRequest
+	210, // 429: cadestro.v1.ControlService.QueryDeviceLogs:input_type -> cadestro.v1.QueryDeviceLogsRequest
+	212, // 430: cadestro.v1.ControlService.GetDeviceLogResult:input_type -> cadestro.v1.GetDeviceLogResultRequest
+	214, // 431: cadestro.v1.ControlService.CreateRole:input_type -> cadestro.v1.CreateRoleRequest
+	216, // 432: cadestro.v1.ControlService.GetRole:input_type -> cadestro.v1.GetRoleRequest
+	218, // 433: cadestro.v1.ControlService.ListRoles:input_type -> cadestro.v1.ListRolesRequest
+	220, // 434: cadestro.v1.ControlService.UpdateRole:input_type -> cadestro.v1.UpdateRoleRequest
+	222, // 435: cadestro.v1.ControlService.DeleteRole:input_type -> cadestro.v1.DeleteRoleRequest
+	224, // 436: cadestro.v1.ControlService.AssignRoleToUser:input_type -> cadestro.v1.AssignRoleToUserRequest
+	226, // 437: cadestro.v1.ControlService.RevokeRoleFromUser:input_type -> cadestro.v1.RevokeRoleFromUserRequest
+	228, // 438: cadestro.v1.ControlService.ListPermissions:input_type -> cadestro.v1.ListPermissionsRequest
+	232, // 439: cadestro.v1.ControlService.CreateUserGroup:input_type -> cadestro.v1.CreateUserGroupRequest
+	234, // 440: cadestro.v1.ControlService.GetUserGroup:input_type -> cadestro.v1.GetUserGroupRequest
+	236, // 441: cadestro.v1.ControlService.ListUserGroups:input_type -> cadestro.v1.ListUserGroupsRequest
+	238, // 442: cadestro.v1.ControlService.UpdateUserGroup:input_type -> cadestro.v1.UpdateUserGroupRequest
+	240, // 443: cadestro.v1.ControlService.DeleteUserGroup:input_type -> cadestro.v1.DeleteUserGroupRequest
+	242, // 444: cadestro.v1.ControlService.AddUserToGroup:input_type -> cadestro.v1.AddUserToGroupRequest
+	244, // 445: cadestro.v1.ControlService.RemoveUserFromGroup:input_type -> cadestro.v1.RemoveUserFromGroupRequest
+	246, // 446: cadestro.v1.ControlService.AssignRoleToUserGroup:input_type -> cadestro.v1.AssignRoleToUserGroupRequest
+	248, // 447: cadestro.v1.ControlService.RevokeRoleFromUserGroup:input_type -> cadestro.v1.RevokeRoleFromUserGroupRequest
+	250, // 448: cadestro.v1.ControlService.ListUserGroupsForUser:input_type -> cadestro.v1.ListUserGroupsForUserRequest
+	252, // 449: cadestro.v1.ControlService.UpdateUserGroupQuery:input_type -> cadestro.v1.UpdateUserGroupQueryRequest
+	254, // 450: cadestro.v1.ControlService.ValidateUserGroupQuery:input_type -> cadestro.v1.ValidateUserGroupQueryRequest
+	256, // 451: cadestro.v1.ControlService.EvaluateDynamicUserGroup:input_type -> cadestro.v1.EvaluateDynamicUserGroupRequest
+	258, // 452: cadestro.v1.ControlService.SetUserGroupMaintenanceWindow:input_type -> cadestro.v1.SetUserGroupMaintenanceWindowRequest
+	292, // 453: cadestro.v1.ControlService.GetDeviceCompliance:input_type -> cadestro.v1.GetDeviceComplianceRequest
+	297, // 454: cadestro.v1.ControlService.CreateCompliancePolicy:input_type -> cadestro.v1.CreateCompliancePolicyRequest
+	299, // 455: cadestro.v1.ControlService.GetCompliancePolicy:input_type -> cadestro.v1.GetCompliancePolicyRequest
+	301, // 456: cadestro.v1.ControlService.ListCompliancePolicies:input_type -> cadestro.v1.ListCompliancePoliciesRequest
+	303, // 457: cadestro.v1.ControlService.RenameCompliancePolicy:input_type -> cadestro.v1.RenameCompliancePolicyRequest
+	304, // 458: cadestro.v1.ControlService.UpdateCompliancePolicyDescription:input_type -> cadestro.v1.UpdateCompliancePolicyDescriptionRequest
+	306, // 459: cadestro.v1.ControlService.DeleteCompliancePolicy:input_type -> cadestro.v1.DeleteCompliancePolicyRequest
+	308, // 460: cadestro.v1.ControlService.AddCompliancePolicyRule:input_type -> cadestro.v1.AddCompliancePolicyRuleRequest
+	310, // 461: cadestro.v1.ControlService.RemoveCompliancePolicyRule:input_type -> cadestro.v1.RemoveCompliancePolicyRuleRequest
+	312, // 462: cadestro.v1.ControlService.UpdateCompliancePolicyRule:input_type -> cadestro.v1.UpdateCompliancePolicyRuleRequest
+	314, // 463: cadestro.v1.ControlService.GetDeviceCompliancePolicyStatus:input_type -> cadestro.v1.GetDeviceCompliancePolicyStatusRequest
+	319, // 464: cadestro.v1.ControlService.Search:input_type -> cadestro.v1.SearchRequest
+	322, // 465: cadestro.v1.ControlService.RebuildSearchIndex:input_type -> cadestro.v1.RebuildSearchIndexRequest
+	325, // 466: cadestro.v1.ControlService.GetServerSettings:input_type -> cadestro.v1.GetServerSettingsRequest
+	327, // 467: cadestro.v1.ControlService.UpdateServerSettings:input_type -> cadestro.v1.UpdateServerSettingsRequest
+	329, // 468: cadestro.v1.ControlService.SetUserProvisioningEnabled:input_type -> cadestro.v1.SetUserProvisioningEnabledRequest
+	330, // 469: cadestro.v1.ControlService.StartTerminal:input_type -> cadestro.v1.StartTerminalRequest
+	332, // 470: cadestro.v1.ControlService.StopTerminal:input_type -> cadestro.v1.StopTerminalRequest
+	335, // 471: cadestro.v1.ControlService.ListActiveTerminalSessions:input_type -> cadestro.v1.ListActiveTerminalSessionsRequest
+	337, // 472: cadestro.v1.ControlService.TerminateTerminalSession:input_type -> cadestro.v1.TerminateTerminalSessionRequest
+	1,   // 473: cadestro.v1.ControlService.Register:output_type -> cadestro.v1.RegisterResponse
+	3,   // 474: cadestro.v1.ControlService.RenewCertificate:output_type -> cadestro.v1.RenewCertificateResponse
+	5,   // 475: cadestro.v1.ControlService.RefreshToken:output_type -> cadestro.v1.RefreshTokenResponse
+	7,   // 476: cadestro.v1.ControlService.Logout:output_type -> cadestro.v1.LogoutResponse
+	9,   // 477: cadestro.v1.ControlService.GetCurrentUser:output_type -> cadestro.v1.GetCurrentUserResponse
+	273, // 478: cadestro.v1.ControlService.ListAuthMethods:output_type -> cadestro.v1.ListAuthMethodsResponse
+	275, // 479: cadestro.v1.ControlService.GetSSOLoginURL:output_type -> cadestro.v1.GetSSOLoginURLResponse
+	277, // 480: cadestro.v1.ControlService.SSOCallback:output_type -> cadestro.v1.SSOCallbackResponse
+	279, // 481: cadestro.v1.ControlService.BeginCLILogin:output_type -> cadestro.v1.BeginCLILoginResponse
+	281, // 482: cadestro.v1.ControlService.ExchangeCLISession:output_type -> cadestro.v1.ExchangeCLISessionResponse
+	262, // 483: cadestro.v1.ControlService.CreateIdentityProvider:output_type -> cadestro.v1.CreateIdentityProviderResponse
+	264, // 484: cadestro.v1.ControlService.GetIdentityProvider:output_type -> cadestro.v1.GetIdentityProviderResponse
+	266, // 485: cadestro.v1.ControlService.ListIdentityProviders:output_type -> cadestro.v1.ListIdentityProvidersResponse
+	268, // 486: cadestro.v1.ControlService.UpdateIdentityProvider:output_type -> cadestro.v1.UpdateIdentityProviderResponse
+	270, // 487: cadestro.v1.ControlService.DeleteIdentityProvider:output_type -> cadestro.v1.DeleteIdentityProviderResponse
+	283, // 488: cadestro.v1.ControlService.ListIdentityLinks:output_type -> cadestro.v1.ListIdentityLinksResponse
+	285, // 489: cadestro.v1.ControlService.UnlinkIdentity:output_type -> cadestro.v1.UnlinkIdentityResponse
+	287, // 490: cadestro.v1.ControlService.EnableSCIM:output_type -> cadestro.v1.EnableSCIMResponse
+	289, // 491: cadestro.v1.ControlService.DisableSCIM:output_type -> cadestro.v1.DisableSCIMResponse
+	291, // 492: cadestro.v1.ControlService.RotateSCIMToken:output_type -> cadestro.v1.RotateSCIMTokenResponse
+	17,  // 493: cadestro.v1.ControlService.EraseJITUser:output_type -> cadestro.v1.EraseJITUserResponse
+	19,  // 494: cadestro.v1.ControlService.GetUser:output_type -> cadestro.v1.GetUserResponse
+	21,  // 495: cadestro.v1.ControlService.ListUsers:output_type -> cadestro.v1.ListUsersResponse
+	24,  // 496: cadestro.v1.ControlService.UpdateUserEmail:output_type -> cadestro.v1.UpdateUserResponse
+	24,  // 497: cadestro.v1.ControlService.SetUserDisabled:output_type -> cadestro.v1.UpdateUserResponse
+	24,  // 498: cadestro.v1.ControlService.UpdateUserProfile:output_type -> cadestro.v1.UpdateUserResponse
+	24,  // 499: cadestro.v1.ControlService.UpdateUserLinuxUsername:output_type -> cadestro.v1.UpdateUserResponse
+	27,  // 500: cadestro.v1.ControlService.AddUserSshKey:output_type -> cadestro.v1.AddUserSshKeyResponse
+	29,  // 501: cadestro.v1.ControlService.RemoveUserSshKey:output_type -> cadestro.v1.RemoveUserSshKeyResponse
+	24,  // 502: cadestro.v1.ControlService.UpdateUserSshSettings:output_type -> cadestro.v1.UpdateUserResponse
+	34,  // 503: cadestro.v1.ControlService.ListDevices:output_type -> cadestro.v1.ListDevicesResponse
+	36,  // 504: cadestro.v1.ControlService.GetDevice:output_type -> cadestro.v1.GetDeviceResponse
+	39,  // 505: cadestro.v1.ControlService.SetDeviceLabel:output_type -> cadestro.v1.UpdateDeviceResponse
+	39,  // 506: cadestro.v1.ControlService.RemoveDeviceLabel:output_type -> cadestro.v1.UpdateDeviceResponse
+	43,  // 507: cadestro.v1.ControlService.AssignDevice:output_type -> cadestro.v1.AssignDeviceResponse
+	45,  // 508: cadestro.v1.ControlService.UnassignDevice:output_type -> cadestro.v1.UnassignDeviceResponse
+	48,  // 509: cadestro.v1.ControlService.ListDeviceAssignees:output_type -> cadestro.v1.ListDeviceAssigneesResponse
+	39,  // 510: cadestro.v1.ControlService.SetDeviceSyncInterval:output_type -> cadestro.v1.UpdateDeviceResponse
+	39,  // 511: cadestro.v1.ControlService.SetDeviceInventoryInterval:output_type -> cadestro.v1.UpdateDeviceResponse
+	41,  // 512: cadestro.v1.ControlService.DeleteDevice:output_type -> cadestro.v1.DeleteDeviceResponse
+	53,  // 513: cadestro.v1.ControlService.CreateToken:output_type -> cadestro.v1.CreateTokenResponse
+	57,  // 514: cadestro.v1.ControlService.GetToken:output_type -> cadestro.v1.GetTokenResponse
+	55,  // 515: cadestro.v1.ControlService.ListTokens:output_type -> cadestro.v1.ListTokensResponse
+	60,  // 516: cadestro.v1.ControlService.RenameToken:output_type -> cadestro.v1.UpdateTokenResponse
+	60,  // 517: cadestro.v1.ControlService.SetTokenDisabled:output_type -> cadestro.v1.UpdateTokenResponse
+	62,  // 518: cadestro.v1.ControlService.DeleteToken:output_type -> cadestro.v1.DeleteTokenResponse
+	65,  // 519: cadestro.v1.ControlService.CreateAction:output_type -> cadestro.v1.CreateActionResponse
+	67,  // 520: cadestro.v1.ControlService.GetAction:output_type -> cadestro.v1.GetActionResponse
+	69,  // 521: cadestro.v1.ControlService.ListActions:output_type -> cadestro.v1.ListActionsResponse
+	73,  // 522: cadestro.v1.ControlService.RenameAction:output_type -> cadestro.v1.UpdateActionResponse
+	73,  // 523: cadestro.v1.ControlService.UpdateActionDescription:output_type -> cadestro.v1.UpdateActionResponse
+	73,  // 524: cadestro.v1.ControlService.UpdateActionParams:output_type -> cadestro.v1.UpdateActionResponse
+	75,  // 525: cadestro.v1.ControlService.DeleteAction:output_type -> cadestro.v1.DeleteActionResponse
+	79,  // 526: cadestro.v1.ControlService.CreateActionSet:output_type -> cadestro.v1.CreateActionSetResponse
+	81,  // 527: cadestro.v1.ControlService.GetActionSet:output_type -> cadestro.v1.GetActionSetResponse
+	83,  // 528: cadestro.v1.ControlService.ListActionSets:output_type -> cadestro.v1.ListActionSetsResponse
+	87,  // 529: cadestro.v1.ControlService.RenameActionSet:output_type -> cadestro.v1.UpdateActionSetResponse
+	87,  // 530: cadestro.v1.ControlService.UpdateActionSetDescription:output_type -> cadestro.v1.UpdateActionSetResponse
+	87,  // 531: cadestro.v1.ControlService.UpdateActionSetSchedule:output_type -> cadestro.v1.UpdateActionSetResponse
+	89,  // 532: cadestro.v1.ControlService.DeleteActionSet:output_type -> cadestro.v1.DeleteActionSetResponse
+	91,  // 533: cadestro.v1.ControlService.AddActionToSet:output_type -> cadestro.v1.AddActionToSetResponse
+	93,  // 534: cadestro.v1.ControlService.RemoveActionFromSet:output_type -> cadestro.v1.RemoveActionFromSetResponse
+	95,  // 535: cadestro.v1.ControlService.ReorderActionInSet:output_type -> cadestro.v1.ReorderActionInSetResponse
+	99,  // 536: cadestro.v1.ControlService.CreateDefinition:output_type -> cadestro.v1.CreateDefinitionResponse
+	101, // 537: cadestro.v1.ControlService.GetDefinition:output_type -> cadestro.v1.GetDefinitionResponse
+	103, // 538: cadestro.v1.ControlService.ListDefinitions:output_type -> cadestro.v1.ListDefinitionsResponse
+	107, // 539: cadestro.v1.ControlService.RenameDefinition:output_type -> cadestro.v1.UpdateDefinitionResponse
+	107, // 540: cadestro.v1.ControlService.UpdateDefinitionDescription:output_type -> cadestro.v1.UpdateDefinitionResponse
+	107, // 541: cadestro.v1.ControlService.UpdateDefinitionSchedule:output_type -> cadestro.v1.UpdateDefinitionResponse
+	109, // 542: cadestro.v1.ControlService.DeleteDefinition:output_type -> cadestro.v1.DeleteDefinitionResponse
+	111, // 543: cadestro.v1.ControlService.AddActionSetToDefinition:output_type -> cadestro.v1.AddActionSetToDefinitionResponse
+	113, // 544: cadestro.v1.ControlService.RemoveActionSetFromDefinition:output_type -> cadestro.v1.RemoveActionSetFromDefinitionResponse
+	115, // 545: cadestro.v1.ControlService.ReorderActionSetInDefinition:output_type -> cadestro.v1.ReorderActionSetInDefinitionResponse
+	118, // 546: cadestro.v1.ControlService.CreateDeviceGroup:output_type -> cadestro.v1.CreateDeviceGroupResponse
+	120, // 547: cadestro.v1.ControlService.GetDeviceGroup:output_type -> cadestro.v1.GetDeviceGroupResponse
+	123, // 548: cadestro.v1.ControlService.ListDeviceGroups:output_type -> cadestro.v1.ListDeviceGroupsResponse
+	125, // 549: cadestro.v1.ControlService.ListDeviceGroupsForDevice:output_type -> cadestro.v1.ListDeviceGroupsForDeviceResponse
+	128, // 550: cadestro.v1.ControlService.RenameDeviceGroup:output_type -> cadestro.v1.UpdateDeviceGroupResponse
+	128, // 551: cadestro.v1.ControlService.UpdateDeviceGroupDescription:output_type -> cadestro.v1.UpdateDeviceGroupResponse
+	136, // 552: cadestro.v1.ControlService.UpdateDeviceGroupQuery:output_type -> cadestro.v1.UpdateDeviceGroupQueryResponse
+	130, // 553: cadestro.v1.ControlService.DeleteDeviceGroup:output_type -> cadestro.v1.DeleteDeviceGroupResponse
+	132, // 554: cadestro.v1.ControlService.AddDeviceToGroup:output_type -> cadestro.v1.AddDeviceToGroupResponse
+	134, // 555: cadestro.v1.ControlService.RemoveDeviceFromGroup:output_type -> cadestro.v1.RemoveDeviceFromGroupResponse
+	138, // 556: cadestro.v1.ControlService.ValidateDynamicQuery:output_type -> cadestro.v1.ValidateDynamicQueryResponse
+	140, // 557: cadestro.v1.ControlService.EvaluateDynamicGroup:output_type -> cadestro.v1.EvaluateDynamicGroupResponse
+	128, // 558: cadestro.v1.ControlService.SetDeviceGroupSyncInterval:output_type -> cadestro.v1.UpdateDeviceGroupResponse
+	128, // 559: cadestro.v1.ControlService.SetDeviceGroupInventoryInterval:output_type -> cadestro.v1.UpdateDeviceGroupResponse
+	128, // 560: cadestro.v1.ControlService.SetDeviceGroupMaintenanceWindow:output_type -> cadestro.v1.UpdateDeviceGroupResponse
+	146, // 561: cadestro.v1.ControlService.CreateAssignment:output_type -> cadestro.v1.CreateAssignmentResponse
+	148, // 562: cadestro.v1.ControlService.DeleteAssignment:output_type -> cadestro.v1.DeleteAssignmentResponse
+	150, // 563: cadestro.v1.ControlService.ListAssignments:output_type -> cadestro.v1.ListAssignmentsResponse
+	158, // 564: cadestro.v1.ControlService.GetDeviceAssignments:output_type -> cadestro.v1.GetDeviceAssignmentsResponse
+	160, // 565: cadestro.v1.ControlService.GetUserAssignments:output_type -> cadestro.v1.GetUserAssignmentsResponse
+	153, // 566: cadestro.v1.ControlService.SetUserSelection:output_type -> cadestro.v1.SetUserSelectionResponse
+	156, // 567: cadestro.v1.ControlService.ListAvailableActions:output_type -> cadestro.v1.ListAvailableActionsResponse
+	163, // 568: cadestro.v1.ControlService.DispatchAction:output_type -> cadestro.v1.DispatchActionResponse
+	165, // 569: cadestro.v1.ControlService.DispatchToMultiple:output_type -> cadestro.v1.DispatchToMultipleResponse
+	167, // 570: cadestro.v1.ControlService.DispatchAssignedActions:output_type -> cadestro.v1.DispatchAssignedActionsResponse
+	169, // 571: cadestro.v1.ControlService.DispatchActionSet:output_type -> cadestro.v1.DispatchActionSetResponse
+	171, // 572: cadestro.v1.ControlService.DispatchDefinition:output_type -> cadestro.v1.DispatchDefinitionResponse
+	173, // 573: cadestro.v1.ControlService.DispatchToGroup:output_type -> cadestro.v1.DispatchToGroupResponse
+	179, // 574: cadestro.v1.ControlService.DispatchInstantAction:output_type -> cadestro.v1.DispatchInstantActionResponse
+	181, // 575: cadestro.v1.ControlService.CancelExecution:output_type -> cadestro.v1.CancelExecutionResponse
+	175, // 576: cadestro.v1.ControlService.GetExecution:output_type -> cadestro.v1.GetExecutionResponse
+	177, // 577: cadestro.v1.ControlService.ListExecutions:output_type -> cadestro.v1.ListExecutionsResponse
+	184, // 578: cadestro.v1.ControlService.ListAuditEvents:output_type -> cadestro.v1.ListAuditEventsResponse
+	186, // 579: cadestro.v1.ControlService.ExportAuditEvents:output_type -> cadestro.v1.ExportAuditEventsResponse
+	189, // 580: cadestro.v1.ControlService.ListLpsPasswords:output_type -> cadestro.v1.ListLpsPasswordsResponse
+	191, // 581: cadestro.v1.ControlService.RevealLpsPassword:output_type -> cadestro.v1.RevealLpsPasswordResponse
+	194, // 582: cadestro.v1.ControlService.ListLuksKeys:output_type -> cadestro.v1.ListLuksKeysResponse
+	196, // 583: cadestro.v1.ControlService.RevealLuksKey:output_type -> cadestro.v1.RevealLuksKeyResponse
+	198, // 584: cadestro.v1.ControlService.CreateLuksToken:output_type -> cadestro.v1.CreateLuksTokenResponse
+	200, // 585: cadestro.v1.ControlService.RevokeLuksDeviceKey:output_type -> cadestro.v1.RevokeLuksDeviceKeyResponse
+	202, // 586: cadestro.v1.ControlService.DispatchOSQuery:output_type -> cadestro.v1.DispatchOSQueryResponse
+	204, // 587: cadestro.v1.ControlService.GetOSQueryResult:output_type -> cadestro.v1.GetOSQueryResultResponse
+	207, // 588: cadestro.v1.ControlService.GetDeviceInventory:output_type -> cadestro.v1.GetDeviceInventoryResponse
+	209, // 589: cadestro.v1.ControlService.RefreshDeviceInventory:output_type -> cadestro.v1.RefreshDeviceInventoryResponse
+	211, // 590: cadestro.v1.ControlService.QueryDeviceLogs:output_type -> cadestro.v1.QueryDeviceLogsResponse
+	213, // 591: cadestro.v1.ControlService.GetDeviceLogResult:output_type -> cadestro.v1.GetDeviceLogResultResponse
+	215, // 592: cadestro.v1.ControlService.CreateRole:output_type -> cadestro.v1.CreateRoleResponse
+	217, // 593: cadestro.v1.ControlService.GetRole:output_type -> cadestro.v1.GetRoleResponse
+	219, // 594: cadestro.v1.ControlService.ListRoles:output_type -> cadestro.v1.ListRolesResponse
+	221, // 595: cadestro.v1.ControlService.UpdateRole:output_type -> cadestro.v1.UpdateRoleResponse
+	223, // 596: cadestro.v1.ControlService.DeleteRole:output_type -> cadestro.v1.DeleteRoleResponse
+	225, // 597: cadestro.v1.ControlService.AssignRoleToUser:output_type -> cadestro.v1.AssignRoleToUserResponse
+	227, // 598: cadestro.v1.ControlService.RevokeRoleFromUser:output_type -> cadestro.v1.RevokeRoleFromUserResponse
+	229, // 599: cadestro.v1.ControlService.ListPermissions:output_type -> cadestro.v1.ListPermissionsResponse
+	233, // 600: cadestro.v1.ControlService.CreateUserGroup:output_type -> cadestro.v1.CreateUserGroupResponse
+	235, // 601: cadestro.v1.ControlService.GetUserGroup:output_type -> cadestro.v1.GetUserGroupResponse
+	237, // 602: cadestro.v1.ControlService.ListUserGroups:output_type -> cadestro.v1.ListUserGroupsResponse
+	239, // 603: cadestro.v1.ControlService.UpdateUserGroup:output_type -> cadestro.v1.UpdateUserGroupResponse
+	241, // 604: cadestro.v1.ControlService.DeleteUserGroup:output_type -> cadestro.v1.DeleteUserGroupResponse
+	243, // 605: cadestro.v1.ControlService.AddUserToGroup:output_type -> cadestro.v1.AddUserToGroupResponse
+	245, // 606: cadestro.v1.ControlService.RemoveUserFromGroup:output_type -> cadestro.v1.RemoveUserFromGroupResponse
+	247, // 607: cadestro.v1.ControlService.AssignRoleToUserGroup:output_type -> cadestro.v1.AssignRoleToUserGroupResponse
+	249, // 608: cadestro.v1.ControlService.RevokeRoleFromUserGroup:output_type -> cadestro.v1.RevokeRoleFromUserGroupResponse
+	251, // 609: cadestro.v1.ControlService.ListUserGroupsForUser:output_type -> cadestro.v1.ListUserGroupsForUserResponse
+	253, // 610: cadestro.v1.ControlService.UpdateUserGroupQuery:output_type -> cadestro.v1.UpdateUserGroupQueryResponse
+	255, // 611: cadestro.v1.ControlService.ValidateUserGroupQuery:output_type -> cadestro.v1.ValidateUserGroupQueryResponse
+	257, // 612: cadestro.v1.ControlService.EvaluateDynamicUserGroup:output_type -> cadestro.v1.EvaluateDynamicUserGroupResponse
+	239, // 613: cadestro.v1.ControlService.SetUserGroupMaintenanceWindow:output_type -> cadestro.v1.UpdateUserGroupResponse
+	293, // 614: cadestro.v1.ControlService.GetDeviceCompliance:output_type -> cadestro.v1.GetDeviceComplianceResponse
+	298, // 615: cadestro.v1.ControlService.CreateCompliancePolicy:output_type -> cadestro.v1.CreateCompliancePolicyResponse
+	300, // 616: cadestro.v1.ControlService.GetCompliancePolicy:output_type -> cadestro.v1.GetCompliancePolicyResponse
+	302, // 617: cadestro.v1.ControlService.ListCompliancePolicies:output_type -> cadestro.v1.ListCompliancePoliciesResponse
+	305, // 618: cadestro.v1.ControlService.RenameCompliancePolicy:output_type -> cadestro.v1.UpdateCompliancePolicyResponse
+	305, // 619: cadestro.v1.ControlService.UpdateCompliancePolicyDescription:output_type -> cadestro.v1.UpdateCompliancePolicyResponse
+	307, // 620: cadestro.v1.ControlService.DeleteCompliancePolicy:output_type -> cadestro.v1.DeleteCompliancePolicyResponse
+	309, // 621: cadestro.v1.ControlService.AddCompliancePolicyRule:output_type -> cadestro.v1.AddCompliancePolicyRuleResponse
+	311, // 622: cadestro.v1.ControlService.RemoveCompliancePolicyRule:output_type -> cadestro.v1.RemoveCompliancePolicyRuleResponse
+	313, // 623: cadestro.v1.ControlService.UpdateCompliancePolicyRule:output_type -> cadestro.v1.UpdateCompliancePolicyRuleResponse
+	315, // 624: cadestro.v1.ControlService.GetDeviceCompliancePolicyStatus:output_type -> cadestro.v1.GetDeviceCompliancePolicyStatusResponse
+	321, // 625: cadestro.v1.ControlService.Search:output_type -> cadestro.v1.SearchResponse
+	323, // 626: cadestro.v1.ControlService.RebuildSearchIndex:output_type -> cadestro.v1.RebuildSearchIndexResponse
+	326, // 627: cadestro.v1.ControlService.GetServerSettings:output_type -> cadestro.v1.GetServerSettingsResponse
+	328, // 628: cadestro.v1.ControlService.UpdateServerSettings:output_type -> cadestro.v1.UpdateServerSettingsResponse
+	24,  // 629: cadestro.v1.ControlService.SetUserProvisioningEnabled:output_type -> cadestro.v1.UpdateUserResponse
+	331, // 630: cadestro.v1.ControlService.StartTerminal:output_type -> cadestro.v1.StartTerminalResponse
+	333, // 631: cadestro.v1.ControlService.StopTerminal:output_type -> cadestro.v1.StopTerminalResponse
+	336, // 632: cadestro.v1.ControlService.ListActiveTerminalSessions:output_type -> cadestro.v1.ListActiveTerminalSessionsResponse
+	338, // 633: cadestro.v1.ControlService.TerminateTerminalSession:output_type -> cadestro.v1.TerminateTerminalSessionResponse
 	473, // [473:634] is the sub-list for method output_type
 	312, // [312:473] is the sub-list for method input_type
 	312, // [312:312] is the sub-list for extension type_name
@@ -24404,15 +24404,15 @@ var file_powermanage_v1_control_proto_depIdxs = []int32{
 	0,   // [0:312] is the sub-list for field type_name
 }
 
-func init() { file_powermanage_v1_control_proto_init() }
-func file_powermanage_v1_control_proto_init() {
-	if File_powermanage_v1_control_proto != nil {
+func init() { file_cadestro_v1_control_proto_init() }
+func file_cadestro_v1_control_proto_init() {
+	if File_cadestro_v1_control_proto != nil {
 		return
 	}
-	file_powermanage_v1_actions_proto_init()
-	file_powermanage_v1_agent_proto_init()
-	file_powermanage_v1_common_proto_init()
-	file_powermanage_v1_control_proto_msgTypes[63].OneofWrappers = []any{
+	file_cadestro_v1_actions_proto_init()
+	file_cadestro_v1_agent_proto_init()
+	file_cadestro_v1_common_proto_init()
+	file_cadestro_v1_control_proto_msgTypes[63].OneofWrappers = []any{
 		(*ManagedAction_Package)(nil),
 		(*ManagedAction_App)(nil),
 		(*ManagedAction_Shell)(nil),
@@ -24432,7 +24432,7 @@ func file_powermanage_v1_control_proto_init() {
 		(*ManagedAction_Wifi)(nil),
 		(*ManagedAction_AgentUpdate)(nil),
 	}
-	file_powermanage_v1_control_proto_msgTypes[64].OneofWrappers = []any{
+	file_cadestro_v1_control_proto_msgTypes[64].OneofWrappers = []any{
 		(*CreateActionRequest_Package)(nil),
 		(*CreateActionRequest_App)(nil),
 		(*CreateActionRequest_Shell)(nil),
@@ -24452,7 +24452,7 @@ func file_powermanage_v1_control_proto_init() {
 		(*CreateActionRequest_Wifi)(nil),
 		(*CreateActionRequest_AgentUpdate)(nil),
 	}
-	file_powermanage_v1_control_proto_msgTypes[72].OneofWrappers = []any{
+	file_cadestro_v1_control_proto_msgTypes[72].OneofWrappers = []any{
 		(*UpdateActionParamsRequest_Package)(nil),
 		(*UpdateActionParamsRequest_App)(nil),
 		(*UpdateActionParamsRequest_Shell)(nil),
@@ -24472,38 +24472,38 @@ func file_powermanage_v1_control_proto_init() {
 		(*UpdateActionParamsRequest_Wifi)(nil),
 		(*UpdateActionParamsRequest_AgentUpdate)(nil),
 	}
-	file_powermanage_v1_control_proto_msgTypes[162].OneofWrappers = []any{
+	file_cadestro_v1_control_proto_msgTypes[162].OneofWrappers = []any{
 		(*DispatchActionRequest_ActionId)(nil),
 		(*DispatchActionRequest_InlineAction)(nil),
 	}
-	file_powermanage_v1_control_proto_msgTypes[164].OneofWrappers = []any{
+	file_cadestro_v1_control_proto_msgTypes[164].OneofWrappers = []any{
 		(*DispatchToMultipleRequest_ActionId)(nil),
 		(*DispatchToMultipleRequest_InlineAction)(nil),
 	}
-	file_powermanage_v1_control_proto_msgTypes[172].OneofWrappers = []any{
+	file_cadestro_v1_control_proto_msgTypes[172].OneofWrappers = []any{
 		(*DispatchToGroupRequest_ActionId)(nil),
 		(*DispatchToGroupRequest_ActionSetId)(nil),
 		(*DispatchToGroupRequest_DefinitionId)(nil),
 		(*DispatchToGroupRequest_InlineAction)(nil),
 	}
-	file_powermanage_v1_control_proto_msgTypes[267].OneofWrappers = []any{}
-	file_powermanage_v1_control_proto_msgTypes[339].OneofWrappers = []any{}
-	file_powermanage_v1_control_proto_msgTypes[341].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[267].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[339].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[341].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_powermanage_v1_control_proto_rawDesc), len(file_powermanage_v1_control_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_control_proto_rawDesc), len(file_cadestro_v1_control_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   350,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_powermanage_v1_control_proto_goTypes,
-		DependencyIndexes: file_powermanage_v1_control_proto_depIdxs,
-		MessageInfos:      file_powermanage_v1_control_proto_msgTypes,
+		GoTypes:           file_cadestro_v1_control_proto_goTypes,
+		DependencyIndexes: file_cadestro_v1_control_proto_depIdxs,
+		MessageInfos:      file_cadestro_v1_control_proto_msgTypes,
 	}.Build()
-	File_powermanage_v1_control_proto = out.File
-	file_powermanage_v1_control_proto_goTypes = nil
-	file_powermanage_v1_control_proto_depIdxs = nil
+	File_cadestro_v1_control_proto = out.File
+	file_cadestro_v1_control_proto_goTypes = nil
+	file_cadestro_v1_control_proto_depIdxs = nil
 }

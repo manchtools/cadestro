@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

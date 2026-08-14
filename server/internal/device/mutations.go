@@ -6,8 +6,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -56,7 +56,7 @@ func (h *Handlers) CancelExecution(ctx context.Context, req *connect.Request[pmv
 
 	completedAt := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceCancelExecutionProcedure, "CancelExecution"),
+		cadestrov1connect.ControlServiceCancelExecutionProcedure, "CancelExecution"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.CancelPendingExecution(ctx, db.CancelPendingExecutionParams{
 				ID: req.Msg.ExecutionId, CompletedAt: &completedAt,
@@ -106,7 +106,7 @@ func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[pmv1
 		return nil, h.internal(ctx, "read label target", err)
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetDeviceLabelProcedure, "SetDeviceLabel"),
+		cadestrov1connect.ControlServiceSetDeviceLabelProcedure, "SetDeviceLabel"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.SetDeviceLabel(ctx, db.SetDeviceLabelParams{
 				DeviceID: req.Msg.Id, Key: req.Msg.Key, Value: req.Msg.Value,
@@ -142,7 +142,7 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[p
 		return nil, h.internal(ctx, "read label target", err)
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceRemoveDeviceLabelProcedure, "RemoveDeviceLabel"),
+		cadestrov1connect.ControlServiceRemoveDeviceLabelProcedure, "RemoveDeviceLabel"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.RemoveDeviceLabel(ctx, db.RemoveDeviceLabelParams{DeviceID: req.Msg.Id, Key: req.Msg.Key})
 			if err != nil {
@@ -205,7 +205,7 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[pmv1.A
 	existingUsers := set(view.AssignedUserIDs)
 	existingGroups := set(view.AssignedGroupIDs)
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceAssignDeviceProcedure, "AssignDevice"),
+		cadestrov1connect.ControlServiceAssignDeviceProcedure, "AssignDevice"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			for _, id := range userIDs {
 				if existingUsers[id] {
@@ -269,7 +269,7 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[pmv1
 		return nil, h.internal(ctx, "read unassignment target", err)
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceUnassignDeviceProcedure, "UnassignDevice"),
+		cadestrov1connect.ControlServiceUnassignDeviceProcedure, "UnassignDevice"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			var n int64
 			var err error
@@ -314,7 +314,7 @@ func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetDeviceSyncIntervalProcedure, "SetDeviceSyncInterval"),
+		cadestrov1connect.ControlServiceSetDeviceSyncIntervalProcedure, "SetDeviceSyncInterval"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.SetDeviceSyncInterval(ctx, db.SetDeviceSyncIntervalParams{ID: req.Msg.Id, Minutes: req.Msg.SyncIntervalMinutes})
 			if err := requireOne("set device sync interval", n, err); err != nil {
@@ -345,7 +345,7 @@ func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceSetDeviceInventoryIntervalProcedure, "SetDeviceInventoryInterval"),
+		cadestrov1connect.ControlServiceSetDeviceInventoryIntervalProcedure, "SetDeviceInventoryInterval"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.SetDeviceInventoryInterval(ctx, db.SetDeviceInventoryIntervalParams{ID: req.Msg.Id, Minutes: req.Msg.InventoryIntervalMinutes})
 			if err := requireOne("set device inventory interval", n, err); err != nil {
@@ -379,7 +379,7 @@ func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[pmv1.D
 		return nil, h.internal(ctx, "delete device", fmt.Errorf("certificate expiry is missing"))
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
-		powermanagev1connect.ControlServiceDeleteDeviceProcedure, "DeleteDevice"),
+		cadestrov1connect.ControlServiceDeleteDeviceProcedure, "DeleteDevice"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.SoftDeleteDevice(ctx, req.Msg.Id)
 			if err := requireOne("delete device", n, err); err != nil {

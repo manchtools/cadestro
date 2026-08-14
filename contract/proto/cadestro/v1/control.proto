@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package powermanage.v1;
+package cadestro.v1;
 
+import "cadestro/v1/actions.proto";
+import "cadestro/v1/agent.proto";
+import "cadestro/v1/common.proto";
 import "google/protobuf/timestamp.proto";
-import "powermanage/v1/actions.proto";
-import "powermanage/v1/agent.proto";
-import "powermanage/v1/common.proto";
 
-option go_package = "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1;powermanagev1";
+option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
 // ============================================================================
 // Agent Registration (called by agent during first-time setup)

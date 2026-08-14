@@ -18,8 +18,8 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 // agentLoopback wires an in-process AgentService handler behind an h2c
@@ -90,7 +90,7 @@ func newAgentLoopback(t *testing.T) *agentLoopback {
 	t.Helper()
 
 	handler := &recordingAgentHandler{}
-	path, h := powermanagev1connect.NewAgentServiceHandler(handler)
+	path, h := cadestrov1connect.NewAgentServiceHandler(handler)
 	mux := http.NewServeMux()
 	mux.Handle(path, h)
 
@@ -135,7 +135,7 @@ type controlLoopback struct {
 }
 
 type recordingControlHandler struct {
-	powermanagev1connect.UnimplementedControlServiceHandler
+	cadestrov1connect.UnimplementedControlServiceHandler
 
 	registerFn         func(*connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error)
 	renewCertificateFn func(*connect.Request[pm.RenewCertificateRequest]) (*connect.Response[pm.RenewCertificateResponse], error)
@@ -159,7 +159,7 @@ func newControlLoopback(t *testing.T) *controlLoopback {
 	t.Helper()
 
 	handler := &recordingControlHandler{}
-	path, h := powermanagev1connect.NewControlServiceHandler(handler)
+	path, h := cadestrov1connect.NewControlServiceHandler(handler)
 	mux := http.NewServeMux()
 	mux.Handle(path, h)
 
@@ -705,7 +705,7 @@ func startMTLSTestServer(t *testing.T, serverCertPEM, serverKeyPEM []byte, clien
 	handler.registerFn = func(*connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 		return connect.NewResponse(&pm.RegisterResponse{DeviceId: &pm.DeviceId{Value: "ok"}}), nil
 	}
-	path, h := powermanagev1connect.NewControlServiceHandler(handler)
+	path, h := cadestrov1connect.NewControlServiceHandler(handler)
 	mux := http.NewServeMux()
 	mux.Handle(path, h)
 	srv := httptest.NewUnstartedServer(mux)

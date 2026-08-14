@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // fakeSender records every TerminalOutput / TerminalStateChange so

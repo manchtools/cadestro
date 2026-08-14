@@ -16,8 +16,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
-	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
@@ -100,7 +100,7 @@ type Config struct {
 
 // Handler implements the target AgentService without legacy transport paths.
 type Handler struct {
-	powermanagev1connect.UnimplementedAgentServiceHandler
+	cadestrov1connect.UnimplementedAgentServiceHandler
 
 	store             *store.Store
 	manager           *connection.Manager
@@ -540,7 +540,7 @@ func validID(value string) bool {
 func agentOperation(deviceID, descriptor string) store.AuditOperation {
 	return store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "agent", ActorID: deviceID, Origin: "agent_stream",
-		RequestDescriptor:    "powermanage.v1.AgentService.Stream/" + descriptor,
+		RequestDescriptor:    "cadestro.v1.AgentService.Stream/" + descriptor,
 		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "device_mtls",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}
