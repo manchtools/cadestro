@@ -9,7 +9,7 @@
 
    TWO LAYERS, in this order:
 
-   1. `--pm-*` — the raw palette from the approved design concepts
+   1. `--cadestro-*` — the raw palette from the approved design concepts
       (built-out concepts + Shell & Fleet round 2). This is the ONLY place
       literal colours live.
    2. the shadcn-style semantic set (--background/--card/--primary/…) and the
@@ -27,134 +27,134 @@
   --radius: 0.625rem;
 
   /* ── layer 1: raw palette (light) ─────────────────────────────────────── */
-  --pm-page: #e9edf2;
-  --pm-frame: #f6f8fb;
-  --pm-surface: #ffffff;
-  --pm-sunken: #eef1f6;
+  --cadestro-page: #e9edf2;
+  --cadestro-frame: #f6f8fb;
+  --cadestro-surface: #ffffff;
+  --cadestro-sunken: #eef1f6;
 
-  --pm-border: #e0e4ea;
-  --pm-border-strong: #ccd2dc;
-  --pm-hair: #edf0f5;
+  --cadestro-border: #e0e4ea;
+  --cadestro-border-strong: #ccd2dc;
+  --cadestro-hair: #edf0f5;
 
-  --pm-text: #141922;
-  --pm-muted: #5b6470;
-  --pm-faint: #8a93a1;
+  --cadestro-text: #141922;
+  --cadestro-muted: #5b6470;
+  --cadestro-faint: #8a93a1;
 
-  --pm-accent: #4f46e5;
-  --pm-accent-ink: #4f46e5;
-  --pm-accent-soft: #ecebfd;
+  --cadestro-accent: #4f46e5;
+  --cadestro-accent-ink: #4f46e5;
+  --cadestro-accent-soft: #ecebfd;
   /* ink that sits ON a solid accent/status fill — white in light, plate in dark */
-  --pm-on-solid: #ffffff;
+  --cadestro-on-solid: #ffffff;
 
-  --pm-ok: #12a06a;
-  --pm-ok-soft: #e0f3ea;
-  --pm-warn: #b0761a;
-  --pm-warn-soft: #f6ecd7;
-  --pm-crit: #d23948;
-  --pm-crit-soft: #fbe1e4;
-  --pm-info: #2775cc;
-  --pm-info-soft: #dcebfa;
+  --cadestro-ok: #12a06a;
+  --cadestro-ok-soft: #e0f3ea;
+  --cadestro-warn: #b0761a;
+  --cadestro-warn-soft: #f6ecd7;
+  --cadestro-crit: #d23948;
+  --cadestro-crit-soft: #fbe1e4;
+  --cadestro-info: #2775cc;
+  --cadestro-info-soft: #dcebfa;
 
   /* markers painted ON a solid status fill — the fleet tile's warn dot and crit
      notch. Dark ink over a saturated fill in BOTH schemes, so it is deliberately
      not restated in the dark block; -strong is the notch's denser variant. */
-  --pm-marker: rgba(16, 20, 24, 0.75);
-  --pm-marker-strong: rgba(16, 20, 24, 0.8);
+  --cadestro-marker: rgba(16, 20, 24, 0.75);
+  --cadestro-marker-strong: rgba(16, 20, 24, 0.8);
 
-  --pm-shadow: 0 1px 2px rgba(15, 20, 30, 0.06), 0 12px 30px -12px rgba(15, 20, 30, 0.18);
-  --pm-shadow-pill: 0 8px 26px -8px rgba(15, 20, 30, 0.3);
+  --cadestro-shadow: 0 1px 2px rgba(15, 20, 30, 0.06), 0 12px 30px -12px rgba(15, 20, 30, 0.18);
+  --cadestro-shadow-pill: 0 8px 26px -8px rgba(15, 20, 30, 0.3);
 
-  --pm-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --cadestro-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
   /* ── layer 2: semantic set — surfaces ────────────────────────────────── */
-  --background: var(--pm-page);
-  --foreground: var(--pm-text);
-  --card: var(--pm-surface);
-  --card-foreground: var(--pm-text);
-  --popover: var(--pm-surface);
-  --popover-foreground: var(--pm-text);
+  --background: var(--cadestro-page);
+  --foreground: var(--cadestro-text);
+  --card: var(--cadestro-surface);
+  --card-foreground: var(--cadestro-text);
+  --popover: var(--cadestro-surface);
+  --popover-foreground: var(--cadestro-text);
 
-  --primary: var(--pm-accent);
-  --primary-foreground: var(--pm-on-solid);
+  --primary: var(--cadestro-accent);
+  --primary-foreground: var(--cadestro-on-solid);
 
-  --secondary: var(--pm-sunken);
-  --secondary-foreground: var(--pm-text);
-  --muted: var(--pm-sunken);
-  --muted-foreground: var(--pm-muted);
+  --secondary: var(--cadestro-sunken);
+  --secondary-foreground: var(--cadestro-text);
+  --muted: var(--cadestro-sunken);
+  --muted-foreground: var(--cadestro-muted);
 
   /* accent = the soft accent wash the concepts use for hover/selected states */
-  --accent: var(--pm-accent-soft);
-  --accent-foreground: var(--pm-accent-ink);
+  --accent: var(--cadestro-accent-soft);
+  --accent-foreground: var(--cadestro-accent-ink);
 
-  --destructive: var(--pm-crit);
+  --destructive: var(--cadestro-crit);
   --destructive-foreground: #ffffff;
 
-  --border: var(--pm-border);
-  --input: var(--pm-border-strong);
-  --ring: var(--pm-accent);
+  --border: var(--cadestro-border);
+  --input: var(--cadestro-border-strong);
+  --ring: var(--cadestro-accent);
 
   /* charts — the concepts' semantic hues, in status order */
-  --chart-1: var(--pm-accent);
-  --chart-2: var(--pm-info);
-  --chart-3: var(--pm-ok);
-  --chart-4: var(--pm-warn);
-  --chart-5: var(--pm-crit);
+  --chart-1: var(--cadestro-accent);
+  --chart-2: var(--cadestro-info);
+  --chart-3: var(--cadestro-ok);
+  --chart-4: var(--cadestro-warn);
+  --chart-5: var(--cadestro-crit);
 
   /* sidebar — the concepts' "frame" plate */
-  --sidebar: var(--pm-frame);
-  --sidebar-foreground: var(--pm-text);
-  --sidebar-primary: var(--pm-accent);
-  --sidebar-primary-foreground: var(--pm-on-solid);
-  --sidebar-accent: var(--pm-accent-soft);
-  --sidebar-accent-foreground: var(--pm-accent-ink);
-  --sidebar-border: var(--pm-border);
-  --sidebar-ring: var(--pm-accent);
+  --sidebar: var(--cadestro-frame);
+  --sidebar-foreground: var(--cadestro-text);
+  --sidebar-primary: var(--cadestro-accent);
+  --sidebar-primary-foreground: var(--cadestro-on-solid);
+  --sidebar-accent: var(--cadestro-accent-soft);
+  --sidebar-accent-foreground: var(--cadestro-accent-ink);
+  --sidebar-border: var(--cadestro-border);
+  --sidebar-ring: var(--cadestro-accent);
 
   /* brand extensions — retained names, re-pointed at the concept palette */
-  --brand-key: var(--pm-accent-ink);
-  --brand-key-foreground: var(--pm-accent-soft);
-  --success: var(--pm-ok);
-  --success-foreground: var(--pm-on-solid);
-  --warning: var(--pm-warn);
-  --warning-foreground: var(--pm-on-solid);
-  --info: var(--pm-info);
-  --info-foreground: var(--pm-on-solid);
+  --brand-key: var(--cadestro-accent-ink);
+  --brand-key-foreground: var(--cadestro-accent-soft);
+  --success: var(--cadestro-ok);
+  --success-foreground: var(--cadestro-on-solid);
+  --warning: var(--cadestro-warn);
+  --warning-foreground: var(--cadestro-on-solid);
+  --info: var(--cadestro-info);
+  --info-foreground: var(--cadestro-on-solid);
 }
 
 .dark {
   /* ── layer 1: raw palette (dark) ─────────────────────────────────────── */
-  --pm-page: #070809;
-  --pm-frame: #0c0e13;
-  --pm-surface: #161a23;
-  --pm-sunken: #0f1219;
+  --cadestro-page: #070809;
+  --cadestro-frame: #0c0e13;
+  --cadestro-surface: #161a23;
+  --cadestro-sunken: #0f1219;
 
-  --pm-border: #242a36;
-  --pm-border-strong: #333a49;
-  --pm-hair: #1c212b;
+  --cadestro-border: #242a36;
+  --cadestro-border-strong: #333a49;
+  --cadestro-hair: #1c212b;
 
-  --pm-text: #e7eaf0;
-  --pm-muted: #909aa9;
-  --pm-faint: #69717f;
+  --cadestro-text: #e7eaf0;
+  --cadestro-muted: #909aa9;
+  --cadestro-faint: #69717f;
 
-  --pm-accent: #8f90ff;
-  --pm-accent-ink: #b9baff;
-  --pm-accent-soft: #20223a;
-  --pm-on-solid: #0b0d12;
+  --cadestro-accent: #8f90ff;
+  --cadestro-accent-ink: #b9baff;
+  --cadestro-accent-soft: #20223a;
+  --cadestro-on-solid: #0b0d12;
 
-  --pm-ok: #3ecb8e;
-  --pm-ok-soft: #112a21;
-  --pm-warn: #e0a23a;
-  --pm-warn-soft: #2a2413;
-  --pm-crit: #f0616d;
-  --pm-crit-soft: #2c1519;
-  --pm-info: #57adff;
-  --pm-info-soft: #112536;
+  --cadestro-ok: #3ecb8e;
+  --cadestro-ok-soft: #112a21;
+  --cadestro-warn: #e0a23a;
+  --cadestro-warn-soft: #2a2413;
+  --cadestro-crit: #f0616d;
+  --cadestro-crit-soft: #2c1519;
+  --cadestro-info: #57adff;
+  --cadestro-info-soft: #112536;
 
-  --pm-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
-  --pm-shadow-pill: 0 10px 30px -6px rgba(0, 0, 0, 0.7);
+  --cadestro-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+  --cadestro-shadow-pill: 0 10px 30px -6px rgba(0, 0, 0, 0.7);
 
   /* layer 2 needs no dark restatement — every semantic var above resolves
-     through `--pm-*`, so re-pointing layer 1 re-skins the whole set. The two
+     through `--cadestro-*`, so re-pointing layer 1 re-skins the whole set. The two
      literals that stay literal are ink-on-crit and the destructive fill's
      white text, which is white in both schemes. */
   --destructive-foreground: #ffffff;
@@ -165,7 +165,7 @@
   /* converging ring on an in-flight fleet tile (round 2, movement A) */
   --animate-conv-pulse: conv-pulse 1.6s ease-in-out infinite;
 
-  --font-mono: var(--pm-mono);
+  --font-mono: var(--cadestro-mono);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -220,32 +220,32 @@
      Plates and status tones exactly as the design concepts name them, so
      shell chrome and fleet atoms can be written in the concepts' own words
      (bg-surface, border-border-strong, text-warn, bg-crit-soft, …). */
-  --color-page: var(--pm-page);
-  --color-frame: var(--pm-frame);
-  --color-surface: var(--pm-surface);
-  --color-sunken: var(--pm-sunken);
-  --color-hair: var(--pm-hair);
-  --color-border-strong: var(--pm-border-strong);
-  --color-faint: var(--pm-faint);
-  --color-accent-ink: var(--pm-accent-ink);
-  --color-accent-soft: var(--pm-accent-soft);
-  --color-on-solid: var(--pm-on-solid);
+  --color-page: var(--cadestro-page);
+  --color-frame: var(--cadestro-frame);
+  --color-surface: var(--cadestro-surface);
+  --color-sunken: var(--cadestro-sunken);
+  --color-hair: var(--cadestro-hair);
+  --color-border-strong: var(--cadestro-border-strong);
+  --color-faint: var(--cadestro-faint);
+  --color-accent-ink: var(--cadestro-accent-ink);
+  --color-accent-soft: var(--cadestro-accent-soft);
+  --color-on-solid: var(--cadestro-on-solid);
 
-  --color-ok: var(--pm-ok);
-  --color-ok-soft: var(--pm-ok-soft);
-  --color-warn: var(--pm-warn);
-  --color-warn-soft: var(--pm-warn-soft);
-  --color-crit: var(--pm-crit);
-  --color-crit-soft: var(--pm-crit-soft);
-  --color-info-soft: var(--pm-info-soft);
-  --color-idle: var(--pm-faint);
+  --color-ok: var(--cadestro-ok);
+  --color-ok-soft: var(--cadestro-ok-soft);
+  --color-warn: var(--cadestro-warn);
+  --color-warn-soft: var(--cadestro-warn-soft);
+  --color-crit: var(--cadestro-crit);
+  --color-crit-soft: var(--cadestro-crit-soft);
+  --color-info-soft: var(--cadestro-info-soft);
+  --color-idle: var(--cadestro-faint);
   /* ink for the shape markers a status tile draws on its own fill */
-  --color-marker: var(--pm-marker);
-  --color-marker-strong: var(--pm-marker-strong);
+  --color-marker: var(--cadestro-marker);
+  --color-marker-strong: var(--cadestro-marker-strong);
 
   /* the concepts' two elevations: plates, and the floating pill */
-  --shadow-plate: var(--pm-shadow);
-  --shadow-pill: var(--pm-shadow-pill);
+  --shadow-plate: var(--cadestro-shadow);
+  --shadow-pill: var(--cadestro-shadow-pill);
 }
 
 @layer base {

@@ -1,5 +1,5 @@
-const COOKIE_NAME = 'pm-version';
-const LOOP_KEY = 'pm-version-attempted';
+const COOKIE_NAME = 'cadestro-version';
+const LOOP_KEY = 'cadestro-version-attempted';
 // Build-time base path injected via vite.config.ts (matches BASE_PATH env var
 // passed to the build, defaulting to "/"). The cookie scope MUST match the
 // SvelteKit base path so reload triggers Traefik routing on the same prefix.

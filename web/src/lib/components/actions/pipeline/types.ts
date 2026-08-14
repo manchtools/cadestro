@@ -42,4 +42,4 @@ export interface SetOption {
 
 /** MIME type for palette→pipeline drags. A private type keeps foreign drags
  *  (files, text selections) from being read as step inserts. */
-export const STEP_DND_TYPE = 'application/x-pm-step';
+export const STEP_DND_TYPE = 'application/x-cadestro-step';

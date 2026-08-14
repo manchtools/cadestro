@@ -74,7 +74,7 @@ const sessions = [
 		userEmail: 'operator@example.test',
 		deviceId: DEVICE_A,
 		deviceHostname: 'ws-alpha',
-		ttyUser: 'pm-shell-1',
+		ttyUser: 'cadestro-shell-1',
 		startedAt: timestampFromMs(Date.UTC(2026, 6, 3)),
 		lastActivityAt: timestampFromMs(Date.UTC(2026, 6, 4))
 	}),
@@ -83,7 +83,7 @@ const sessions = [
 		userId: USER_ID,
 		// No email and no hostname: the row must fall back to the ULIDs.
 		deviceId: DEVICE_B,
-		ttyUser: 'pm-shell-2',
+		ttyUser: 'cadestro-shell-2',
 		startedAt: timestampFromMs(Date.UTC(2026, 6, 1)),
 		lastActivityAt: timestampFromMs(Date.UTC(2026, 6, 2))
 	})
@@ -126,7 +126,7 @@ describe('terminal sessions list — the list RPC feeds a client-side row list',
 		await expect.element(browser.getByText(SESSION_A)).toBeVisible();
 		await expect.element(browser.getByText('ws-alpha')).toBeVisible();
 		await expect.element(browser.getByText('operator@example.test')).toBeVisible();
-		await expect.element(browser.getByText('pm-shell-1')).toBeVisible();
+		await expect.element(browser.getByText('cadestro-shell-1')).toBeVisible();
 	});
 
 	it('falls back to the ULIDs when the session carries no email or hostname', async () => {
