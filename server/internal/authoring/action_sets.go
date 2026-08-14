@@ -8,8 +8,8 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sdkvalidate "github.com/manchtools/power-manage-sdk/validate"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/power-manage/server/internal/actionparams"
 	"github.com/manchtools/power-manage/server/internal/store"
 	db "github.com/manchtools/power-manage/server/internal/store/generated"

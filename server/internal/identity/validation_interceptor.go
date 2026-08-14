@@ -6,7 +6,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/go-playground/validator/v10"
 
-	sdkvalidate "github.com/manchtools/power-manage-sdk/validate"
+	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 )
 
 // ValidationInterceptor enforces every request's declared constraints

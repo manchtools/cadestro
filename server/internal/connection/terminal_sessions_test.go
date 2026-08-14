@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pm "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 )
 
 func newTestSession(id string) *TerminalSession {

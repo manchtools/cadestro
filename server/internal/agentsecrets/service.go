@@ -15,9 +15,9 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	sdkcrypto "github.com/manchtools/power-manage-sdk/crypto"
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sdkvalidate "github.com/manchtools/power-manage-sdk/validate"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
 	"github.com/manchtools/power-manage/server/internal/store"
 	db "github.com/manchtools/power-manage/server/internal/store/generated"

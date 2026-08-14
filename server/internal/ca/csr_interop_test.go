@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sdkcrypto "github.com/manchtools/power-manage-sdk/crypto"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 
 	"github.com/manchtools/power-manage/server/internal/ca"
 	"github.com/manchtools/power-manage/server/internal/mtls"

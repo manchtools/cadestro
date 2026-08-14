@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/power-manage/server/internal/assignment"
 	"github.com/manchtools/power-manage/server/internal/authoring"
 )

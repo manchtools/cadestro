@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/manchtools/power-manage-sdk/logging"
+	"github.com/manchtools/cadestro/sdk/logging"
 	"github.com/manchtools/power-manage/server/internal/archive"
 	"github.com/manchtools/power-manage/server/internal/auth"
 	"github.com/manchtools/power-manage/server/internal/ca"

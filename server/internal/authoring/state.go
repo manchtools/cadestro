@@ -16,9 +16,9 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	sdk "github.com/manchtools/power-manage-sdk"
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	sdkvalidate "github.com/manchtools/power-manage-sdk/validate"
+	contract "github.com/manchtools/cadestro/contract"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/power-manage/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
 	"github.com/manchtools/power-manage/server/internal/store"
@@ -398,7 +398,7 @@ func validateActionSafety(params proto.Message) error {
 			if arch == nil {
 				continue
 			}
-			if sdk.ValidateHTTPSURL(arch.BinaryUrl) != nil || sdk.ValidateHTTPSURL(arch.ChecksumUrl) != nil {
+			if contract.ValidateHTTPSURL(arch.BinaryUrl) != nil || contract.ValidateHTTPSURL(arch.ChecksumUrl) != nil {
 				return fmt.Errorf("%w: unsafe agent update source", ErrInvalidInput)
 			}
 		}

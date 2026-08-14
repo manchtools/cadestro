@@ -13,9 +13,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
-	"github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1/powermanagev1connect"
-	sdkvalidate "github.com/manchtools/power-manage-sdk/validate"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/powermanage/v1/powermanagev1connect"
+	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/power-manage/server/internal/auth"
 	"github.com/manchtools/power-manage/server/internal/store"
 )

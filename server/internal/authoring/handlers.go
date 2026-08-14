@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 
-	sdkvalidate "github.com/manchtools/power-manage-sdk/validate"
+	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/power-manage/server/internal/auth"
 	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
 	"github.com/manchtools/power-manage/server/internal/store"

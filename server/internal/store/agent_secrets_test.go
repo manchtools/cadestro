@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	sdkcrypto "github.com/manchtools/power-manage-sdk/crypto"
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/power-manage/server/internal/agentsecrets"
 	pmcrypto "github.com/manchtools/power-manage/server/internal/crypto"
 	"github.com/manchtools/power-manage/server/internal/store"

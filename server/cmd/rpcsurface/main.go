@@ -31,7 +31,7 @@ import (
 	// Imported for descriptor registration side effects: without this the
 	// registry is empty and the tool would print nothing, which the caller must
 	// treat as a failure rather than as "no RPCs".
-	_ "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	_ "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 )
 
 func main() {

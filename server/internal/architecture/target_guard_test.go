@@ -81,7 +81,11 @@ func TestAbolishedRuntimeAPIsCannotReturn(t *testing.T) {
 		"github.com/hibiken/asynq",
 		"github.com/redis/go-redis",
 		"github.com/alicebob/miniredis",
-		"power-manage-sdk/verify",
+		// Application-frame signing. The package this names has to track the
+		// SDK's module path: matched as a substring, a stale path would let the
+		// abolished subsystem return under its new import path while this guard
+		// reported clean.
+		"cadestro/sdk/verify",
 		"net/smtp",
 		"github.com/jackc/pgx",
 		"github.com/lib/pq",
@@ -119,9 +123,9 @@ func TestAbolishedRuntimeAPIsCannotReturn(t *testing.T) {
 			case name == "vendor", name == "testdata":
 				return filepath.SkipDir
 			// The Go toolchain ignores directories whose names begin with "_" or
-			// ".", so they are not part of this module. CI checks the SDK out into
-			// `_sdk` and replaces the module with it; guarding another repository's
-			// source there reports a violation this module cannot fix.
+			// ".", so they are not part of this module. Anything staged there is
+			// not code this module ships, and reporting a violation in it would
+			// be a violation this module cannot fix.
 			case path != root && (strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".")):
 				return filepath.SkipDir
 			}

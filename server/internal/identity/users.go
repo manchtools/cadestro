@@ -12,7 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/ssh"
 
-	pmv1 "github.com/manchtools/power-manage-sdk/gen/go/powermanage/v1"
+	pmv1 "github.com/manchtools/cadestro/contract/gen/go/powermanage/v1"
 	"github.com/manchtools/power-manage/server/internal/auth"
 	"github.com/manchtools/power-manage/server/internal/store"
 	db "github.com/manchtools/power-manage/server/internal/store/generated"
