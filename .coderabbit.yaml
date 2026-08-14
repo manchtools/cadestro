@@ -1,0 +1,82 @@
+# One review configuration for the whole repository. CodeRabbit reads
+# .coderabbit.yaml at the repository root; the three module-local copies this
+# replaces were as inert as the module-local workflows were, so every
+# instruction below is repository-relative.
+language: en
+reviews:
+  auto_review:
+    enabled: true
+  profile: chill
+  path_instructions:
+    # ---- contract -------------------------------------------------------
+    # These three moved with the protos: they were written for the
+    # predecessor SDK repository, where proto/, ts/, and gen/ lived at its
+    # root. The sources are now the contract module, so the paths name it.
+    - path: "contract/proto/cadestro/v1/*.proto"
+      instructions: >
+        Protobuf definitions shared across every module. The RPC surface must
+        exactly match the guarded golden set in
+        contract/contract_rpc_surface_test.go, and the contract is a pre-alpha
+        clean break — reject compatibility shims, dual old/new fields,
+        tombstone comments, and reserved-history markers for removed shapes.
+        Scrutinize field numbering and validate tags for the current V1 only.
+        Changes here require regeneration (make generate in contract/), and the
+        generated-drift job fails a change that skips it.
+    - path: "contract/ts/client.ts"
+      instructions: >
+        TypeScript client used by the web frontend. Methods must match the
+        proto RPC definitions. Return types should unwrap response messages to
+        return the inner field directly.
+    - path: "contract/gen/**"
+      instructions: >
+        Auto-generated code. Do not review for style or suggest changes. Only
+        flag if generated output looks corrupted or inconsistent with the proto
+        definitions.
+
+    # ---- server ---------------------------------------------------------
+    - path: "server/internal/store/sqliteschema/*.sql"
+      instructions: >
+        The approved final datastore is embedded SQLite in WAL mode with
+        synchronous=FULL and FTS5. There is one clean-break pre-alpha baseline,
+        no PostgreSQL data migration or compatibility schema. Audit
+        operations/effects are append-only evidence, never application state.
+        Reject anything that revives removed architecture or weakens the
+        audit-chain and retention guards.
+    - path: "server/internal/store/**"
+      instructions: >
+        Ordinary state is direct transactional CRUD. Every state mutation,
+        sensitive read, and background writer must use the structural audit
+        transaction path; the only unaudited write exception is explicitly
+        classified, coalesced heartbeat telemetry. Jobs and dispatch are
+        durable database rows. Valkey, Asynq, projectors, and compatibility
+        shims must not return.
+    - path: "server/internal/auth/**"
+      instructions: >
+        Security-critical code. Check for permission bypass, scope escalation,
+        and proper validation of :self/:assigned scoped permissions. Human
+        identity is OIDC with SCIM lifecycle or explicitly enabled OIDC JIT;
+        local passwords, TOTP, CreateUser, and DeleteUser must not return.
+
+    # ---- agent ----------------------------------------------------------
+    - path: "agent/internal/executor/**"
+      instructions: >
+        The agent daemon runs as root because it is an RMM endpoint. Check
+        every action for command injection, path traversal, secret leakage, and
+        strict input validation. External commands and filesystem mutations
+        must use the SDK sys packages. Classified transport fields stay sealed
+        until their narrow sink; application frames are not signed.
+    - path: "agent/internal/executor/agent_update.go"
+      instructions: >
+        Agent updates must authenticate the Ed25519-signed release manifest
+        before trusting its SHA-256 and staging a binary, enforce
+        anti-rollback, self-test before the atomic swap, and retain one
+        recoverable previous binary. Preserve operator-selected HTTPS release
+        endpoints, including private/internal hosts used by self-hosted
+        deployments; do not require a MANCHTOOLS or public-network host
+        allowlist.
+  tools:
+    golangci-lint:
+      enabled: true
+knowledge_base:
+  learnings:
+    scope: auto
