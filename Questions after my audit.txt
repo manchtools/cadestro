@@ -1,0 +1,100 @@
+Questions after my audit
+
+The reference deployment is three containers behind Traefik — ingress, control, and the web UI served same-origin beside it — with agents on a separate, internal-only network. -> What is the ingress you are talking about?
+The upgrade portion is kinda bad, no one wants to test a system that they have to reenroll every time. We dont provide built in migrations, but should at least provide SQL Upgrade files admins can run manually between non RC releases
+
+One subtlety that trips people up. -> not true if you phrase it differently. Just explain the shedule and the inheritance, that is all everyone needs to know to not be tripped up
+
+Assignment — you attach what you authored to devices or groups -> contradicts -> The four targets are DEVICE, DEVICE_GROUP, USER, and USER_GROUP
+
+Writing an assignment row commits the intent. Turning that intent into work for a particular device is a separate, explicitly invoked operation — DispatchAssignedActions — which resolves that device's assignments, compiles them, and commits the deliveries. There is no background reconciler that walks the fleet applying new assignments on its own. -> plain wrong, creating an assignment makes the device process it once it syncs
+
+When two assignments disagree -> kinda confusing wording for Excluded > Uninstall > Required > Available and Defintion > Actionset > Action. 
+
+For two different sources carrying the same action with different desired state, there is no resolution rule in the code -> Is this true? This is in direct contrast fot the statement before about "When two assignments disagree"
+
+Compilation flattens it -> how is order in the Definition Flattening handled? Admins would assume that having an order inside the definition is reflected in the execution as well. Why isnt the Definition compiled down to 1 big manifest with correct ordering inside the manifest? I can think of failure domain beeing a reason but we need a solution for ordered definition execution
+
+A set or definition member that contains no live actions cannot become executable work, and compilation refuses it rather than emitting an empty manifest. -> why does it not just ignore it? In day to day operation its quite normal to have empty sets/definitions
+
+The state machine -> i dont get how this is supposed to work. Pushed Delivery? Normally the server should not push unless its an instant action. The Agent should check in, see whats new and pull it down. The Sync instant acion should be the "escape hatch" that triggers on demand reevaluation.
+
+I think you have in general bunged up the rewrite for the control node. The control node shuold ne be an active participant in pushing policies to the agent. It should store the policies and the only control -> agent push should be instant actions and terminal opening. No need for complext delivery state machinery because its enough for the agent to sync and then report execution results. We should track agent checkins and what it pulled, then only record the exeution results. That simple
+
+I think the whole delivery needs a complete rework or more clarification "why" it works like this because i dont see any benefits to the current setup
+
+The same discipline runs one level down: an entry whose clock range cannot be parsed denies rather than permits. The union has the opposite bias by construction — because an empty window means "always allowed", a device in any group without a window is unrestricted. Windows narrow a device only when every group reaching it agrees to narrow it. -> i would expect maintenance windows to compute per assignment. So actions that are assigned to device groups with maintenance windows run IN THAT window and actions assigned to groups with no windows run "whenever" that way we can contol when updates are installed but dont limit the actual installation/configuration of other policies. Maybe that would involve removing the windows from groups and moving them to assignments. That could simplify many things at once.
+
+5. One-shot dispatch -> Please refer to any instant actions, as instant actions
+
+Findings are ingested inside the execution result's own transaction, so the compliance surface can never disagree with the execution evidence it was derived from. Two rules govern what a finding means. First, only a detection run that actually completed counts as proof: an agent reporting "compliant" alongside a timeout or failure is recorded as non-compliant, because a check that did not finish proves nothing. Second, a rule may carry a grace period, during which a newly failing device reports IN_GRACE_PERIOD rather than NON_COMPLIANT; the clock starts at the first failure and is cleared on recovery. -> devices reporting their own compliance state is dangerous. The state should be calculated on the server. Agent shuold only report the detection script status. Server should look at it and then calculate the compliance status.
+
+RESTARTED is intentionally non-idempotent — it restarts every time the action fires, which is what "restart nightly" needs to mean. -> i think we can loose restart, at least from the agent execution, not the SDK but i dont think we should support policy driven systemd service restarts. One can write an shellscript for that. Restart in a action implies that it will be restarted once applied and confusing to explain
+
+Privilege escalation	sudo or doas	CADESTRO_PRIVILEGE_BACKEND, fail-fast if the tool is absent -> This needs to be reworked. The agent should know if sudo or doas is present and use the same backend approach every other action type has. Return "uninmplemented" for doas backend and work with sudo
+
+Account takeover by email assertion is guarded explicitly: an account already bound to another directory cannot be claimed by a second one unless that provider is configured to be trusted for email assertions. Directory A cannot absorb Directory B's users by asserting their addresses. Deprovisioning removes the identity link. The subject itself is erased only when its last binding is removed and it was SCIM-provisioned in the first place — so unlinking one directory from a user who is also in another does not delete the person. -> I think we need to revisit this. If SCIM is setup a admin would expect that any OIDC provisioned users will be SCIM managed and then also go into the SCIM lifecycle. So i would say remove on the last IDP unlink no matter if the user was OIDC only before. Also im not so sure about the multiple SCIM providers and "Authority" i would say that its not really something we need to design around. If multiple SCIM providers provision a user, then they should be treated equally an none should take presedence. I also dont expect a admin to setup 2 SCIM and OIDC endpoints for the same user directory scope, and if so, so what? Create the links and let the SCIM provider remove them. Last SCIM provider to remove the link deletes the user.
+
+They are not in HttpOnly cookies -> maybe worth revisiting because the webui is not open source and part of the deployment. So we can tighten security
+
+Please extend the cadestro description to not only "audit log" its also the orchestrator of agents and a "all seeing eye"
+
+Im missing the crypto shred personal data in the "Secrets section"
+
+3. What actually happens: the local socket -> does not really make it clear that any local user can call the enrollment socket to enroll the agent with a token and plain
+
+5. CA Pinning, why a sha of the private key and not just the public key? Thats what it is for after all?
+
+Release to install	RELEASE_TAG	no default — you must name one -> id set it to latest
+
+Worth knowing: the installer downloads the release tarball over HTTPS and unpacks it. Unlike the device agent installer, it does not verify a signature or checksum over what it downloaded. -> may be worth doing since its not that big of a deal
+
+Knowing your backups are current -> can we add that to the health checkpoint, so faulty backups mark it unhealthy so monitoring can be easier alerted?
+
+Pinning IMAGE_TAG defaults to latest, which is fine for evaluation -> this contrasts with other assertions in the docs
+
+why dont we have a action type "instant_action" that is a enum of available instant actions? That would make it clear what actions are instant actions
+
+whats AssignmentSourceType and AssignmentTargetType used for?
+
+ErrorDetail message has only string for code, would it not make sense to have explicit message types for the codes?
+
+MaintenanceWindowEntry and MaintenanceWindow in combination only allow windows weekly. No way to install updates once a month for example?
+
+ActionSchedule -> go-validate has an explicit cron validate target
+
+id also invert run_on_assign and skip_if_unchanged so we turn OFF this behaviour as running on assignment and skipping if nothing changed are default expectencies
+
+message PackageParams -> having different package manager names is good but what about different version names per package manager? Is this a thing? I would think so that deb and rpm versions might not always match
+
+message ShellParams map<string, string> environment = 5; -> why map<string, string>?
+
+go-validate also has a dirpath and filepath validators, worth using them?
+
+UpdateParams security_only -> id change it so security_only is the default and rename it something like "full updates"
+
+FlatpakParams app_id -> maybe use the go-validate url validator as well?
+
+As a future addition we should have a action type to configure a flatpak remote, maybe as repositoryParams or something
+
+AptRepository arch -> go-validate max 32? im not aware of any arch that is longer then 10
+
+DnfRepository baseurl -> missing a go-validate URL validation
+
+PacmanRepository server -> missing a go-validate URL validation
+
+UserParams create_home -> should be default yes, maybe invert behaviour so omition has to be explicit
+
+UserParams primary_group -> why have this and gid?
+
+GroupParams -> what happens if system_group and gid is set? Go validate can have conditional validaton as well, maybe worth adding
+
+ActionResult metadata -> not redacted but comment still says "LPS passwords"
+
+AgentUpdateArch binary_url,checksum_url -> go-validate already has a https_url validator
+
+ManifestOccurrence on_failure -> is validated as optional, i would say it should always be there
+
+Manifest OnFailure/ManifestOccurrence -> why have default_on_failure if ManifestOccurrence already contains it? Would it not be simpler to rewrite the occurance or just remove it from the occurance if its at the manifest level anyways?
+
+This is only a small slice i found while reading the docs and some of the protos, im horrified as to what you wrote inside the code ... please take my findings as a learning, extract the patterns you obviously missed and comb through everything with the same care and thoroughness as i have. 
