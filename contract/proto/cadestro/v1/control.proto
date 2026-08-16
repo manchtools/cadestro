@@ -118,29 +118,29 @@ message User {
   google.protobuf.Timestamp created_at = 3;
   google.protobuf.Timestamp last_login_at = 4;
   bool disabled = 5;
-  repeated IdentityLink identity_links = 9;
+  repeated IdentityLink identity_links = 6;
   // OIDC profile scope properties
-  string display_name = 10;
-  string given_name = 11;
-  string family_name = 12;
-  string preferred_username = 13;
-  string picture = 14;
-  string locale = 15;
+  string display_name = 7;
+  string given_name = 8;
+  string family_name = 9;
+  string preferred_username = 10;
+  string picture = 11;
+  string locale = 12;
   // Linux identity
-  string linux_username = 16;
-  int32 linux_uid = 17;
+  string linux_username = 13;
+  int32 linux_uid = 14;
   // SSH access settings
-  repeated SshPublicKey ssh_public_keys = 18;
-  bool ssh_access_enabled = 19;
-  bool ssh_allow_pubkey = 20;
-  bool ssh_allow_password = 21;
-  bool user_provisioning_enabled = 22;
-  repeated InheritedRole inherited_roles = 23;
+  repeated SshPublicKey ssh_public_keys = 15;
+  bool ssh_access_enabled = 16;
+  bool ssh_allow_pubkey = 17;
+  bool ssh_allow_password = 18;
+  bool user_provisioning_enabled = 19;
+  repeated InheritedRole inherited_roles = 20;
   // The user's directly-assigned roles, one entry per grant, carrying each
   // grant's scope. This is the role surface: a role granted both globally and
   // scoped to a device group appears as two RoleGrant entries, and revocation
   // names the grant, not just the role.
-  repeated RoleGrant role_grants = 24;
+  repeated RoleGrant role_grants = 21;
 }
 
 message InheritedRole {
@@ -1958,20 +1958,20 @@ message UserGroup {
   string name = 2;
   string description = 3;
   int32 member_count = 4;
-  google.protobuf.Timestamp created_at = 6;
-  bool is_dynamic = 7;
-  string dynamic_query = 8;
-  bool is_scim_managed = 9;
+  google.protobuf.Timestamp created_at = 5;
+  bool is_dynamic = 6;
+  string dynamic_query = 7;
+  bool is_scim_managed = 8;
   // Per-group maintenance window. Same semantics as
   // DeviceGroup.maintenance_window: when a user group reaches a device
   // through an assignment, that device gates dispatches by the union of
   // every reaching group's window (the device's own groups plus any
   // user groups reaching it). Empty means "no constraint" for this
   // group's contribution to the union.
-  MaintenanceWindow maintenance_window = 10;
+  MaintenanceWindow maintenance_window = 9;
   // The group's assigned roles, one entry per grant, carrying each grant's
   // scope. See User.role_grants.
-  repeated RoleGrant role_grants = 11;
+  repeated RoleGrant role_grants = 10;
 }
 
 message UserGroupMember {
@@ -2164,17 +2164,17 @@ message IdentityProvider {
   bool auto_create_users = 12;
   bool auto_link_by_email = 13;
   string default_role_id = 14;
-  string group_claim = 16;
-  map<string, string> group_mapping = 17; // external group name → user_group_id
-  google.protobuf.Timestamp created_at = 18;
-  google.protobuf.Timestamp updated_at = 19;
-  bool scim_enabled = 20;
-  string scim_endpoint_url = 21; // read-only, computed by server
+  string group_claim = 15;
+  map<string, string> group_mapping = 16; // external group name → user_group_id
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+  bool scim_enabled = 19;
+  string scim_endpoint_url = 20; // read-only, computed by server
   // trust_email_assertions: operator opt-in to delegate email-identity
   // assertion to this IdP. When true, SCIM AutoLinkByEmail may bind an asserted
   // email to a pre-existing account; default false refuses that
   // (account-takeover guard across providers).
-  bool trust_email_assertions = 22;
+  bool trust_email_assertions = 21;
 }
 
 message IdentityLink {
@@ -2216,11 +2216,11 @@ message CreateIdentityProviderRequest {
   // @gotags: validate:"omitempty,ulid"
   string default_role_id = 13;
   // @gotags: validate:"omitempty,max=255"
-  string group_claim = 15;
+  string group_claim = 14;
   // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-  map<string, string> group_mapping = 16;
+  map<string, string> group_mapping = 15;
   // See IdentityProvider.trust_email_assertions. Default false (secure).
-  bool trust_email_assertions = 17;
+  bool trust_email_assertions = 16;
 }
 
 message CreateIdentityProviderResponse {
@@ -2275,11 +2275,11 @@ message UpdateIdentityProviderRequest {
   // @gotags: validate:"omitempty,ulid"
   string default_role_id = 13;
   // @gotags: validate:"omitempty,max=255"
-  string group_claim = 15;
+  string group_claim = 14;
   // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-  map<string, string> group_mapping = 16;
+  map<string, string> group_mapping = 15;
   // See IdentityProvider.trust_email_assertions. Default false (secure).
-  bool trust_email_assertions = 17;
+  bool trust_email_assertions = 16;
 }
 
 message UpdateIdentityProviderResponse {
@@ -2311,7 +2311,7 @@ message ListAuthMethodsRequest {
 }
 
 message ListAuthMethodsResponse {
-  repeated AuthMethodProvider providers = 3;
+  repeated AuthMethodProvider providers = 1;
 }
 
 message GetSSOLoginURLRequest {

@@ -595,29 +595,29 @@ type User struct {
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	LastLoginAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
 	Disabled      bool                   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	IdentityLinks []*IdentityLink        `protobuf:"bytes,9,rep,name=identity_links,json=identityLinks,proto3" json:"identity_links,omitempty"`
+	IdentityLinks []*IdentityLink        `protobuf:"bytes,6,rep,name=identity_links,json=identityLinks,proto3" json:"identity_links,omitempty"`
 	// OIDC profile scope properties
-	DisplayName       string `protobuf:"bytes,10,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	GivenName         string `protobuf:"bytes,11,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
-	FamilyName        string `protobuf:"bytes,12,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
-	PreferredUsername string `protobuf:"bytes,13,opt,name=preferred_username,json=preferredUsername,proto3" json:"preferred_username,omitempty"`
-	Picture           string `protobuf:"bytes,14,opt,name=picture,proto3" json:"picture,omitempty"`
-	Locale            string `protobuf:"bytes,15,opt,name=locale,proto3" json:"locale,omitempty"`
+	DisplayName       string `protobuf:"bytes,7,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	GivenName         string `protobuf:"bytes,8,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
+	FamilyName        string `protobuf:"bytes,9,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	PreferredUsername string `protobuf:"bytes,10,opt,name=preferred_username,json=preferredUsername,proto3" json:"preferred_username,omitempty"`
+	Picture           string `protobuf:"bytes,11,opt,name=picture,proto3" json:"picture,omitempty"`
+	Locale            string `protobuf:"bytes,12,opt,name=locale,proto3" json:"locale,omitempty"`
 	// Linux identity
-	LinuxUsername string `protobuf:"bytes,16,opt,name=linux_username,json=linuxUsername,proto3" json:"linux_username,omitempty"`
-	LinuxUid      int32  `protobuf:"varint,17,opt,name=linux_uid,json=linuxUid,proto3" json:"linux_uid,omitempty"`
+	LinuxUsername string `protobuf:"bytes,13,opt,name=linux_username,json=linuxUsername,proto3" json:"linux_username,omitempty"`
+	LinuxUid      int32  `protobuf:"varint,14,opt,name=linux_uid,json=linuxUid,proto3" json:"linux_uid,omitempty"`
 	// SSH access settings
-	SshPublicKeys           []*SshPublicKey  `protobuf:"bytes,18,rep,name=ssh_public_keys,json=sshPublicKeys,proto3" json:"ssh_public_keys,omitempty"`
-	SshAccessEnabled        bool             `protobuf:"varint,19,opt,name=ssh_access_enabled,json=sshAccessEnabled,proto3" json:"ssh_access_enabled,omitempty"`
-	SshAllowPubkey          bool             `protobuf:"varint,20,opt,name=ssh_allow_pubkey,json=sshAllowPubkey,proto3" json:"ssh_allow_pubkey,omitempty"`
-	SshAllowPassword        bool             `protobuf:"varint,21,opt,name=ssh_allow_password,json=sshAllowPassword,proto3" json:"ssh_allow_password,omitempty"`
-	UserProvisioningEnabled bool             `protobuf:"varint,22,opt,name=user_provisioning_enabled,json=userProvisioningEnabled,proto3" json:"user_provisioning_enabled,omitempty"`
-	InheritedRoles          []*InheritedRole `protobuf:"bytes,23,rep,name=inherited_roles,json=inheritedRoles,proto3" json:"inherited_roles,omitempty"`
+	SshPublicKeys           []*SshPublicKey  `protobuf:"bytes,15,rep,name=ssh_public_keys,json=sshPublicKeys,proto3" json:"ssh_public_keys,omitempty"`
+	SshAccessEnabled        bool             `protobuf:"varint,16,opt,name=ssh_access_enabled,json=sshAccessEnabled,proto3" json:"ssh_access_enabled,omitempty"`
+	SshAllowPubkey          bool             `protobuf:"varint,17,opt,name=ssh_allow_pubkey,json=sshAllowPubkey,proto3" json:"ssh_allow_pubkey,omitempty"`
+	SshAllowPassword        bool             `protobuf:"varint,18,opt,name=ssh_allow_password,json=sshAllowPassword,proto3" json:"ssh_allow_password,omitempty"`
+	UserProvisioningEnabled bool             `protobuf:"varint,19,opt,name=user_provisioning_enabled,json=userProvisioningEnabled,proto3" json:"user_provisioning_enabled,omitempty"`
+	InheritedRoles          []*InheritedRole `protobuf:"bytes,20,rep,name=inherited_roles,json=inheritedRoles,proto3" json:"inherited_roles,omitempty"`
 	// The user's directly-assigned roles, one entry per grant, carrying each
 	// grant's scope. This is the role surface: a role granted both globally and
 	// scoped to a device group appears as two RoleGrant entries, and revocation
 	// names the grant, not just the role.
-	RoleGrants    []*RoleGrant `protobuf:"bytes,24,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
+	RoleGrants    []*RoleGrant `protobuf:"bytes,21,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14609,20 +14609,20 @@ type UserGroup struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	MemberCount   int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	IsDynamic     bool                   `protobuf:"varint,7,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string                 `protobuf:"bytes,8,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
-	IsScimManaged bool                   `protobuf:"varint,9,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	IsDynamic     bool                   `protobuf:"varint,6,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string                 `protobuf:"bytes,7,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	IsScimManaged bool                   `protobuf:"varint,8,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
 	// Per-group maintenance window. Same semantics as
 	// DeviceGroup.maintenance_window: when a user group reaches a device
 	// through an assignment, that device gates dispatches by the union of
 	// every reaching group's window (the device's own groups plus any
 	// user groups reaching it). Empty means "no constraint" for this
 	// group's contribution to the union.
-	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,10,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
+	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,9,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
 	// The group's assigned roles, one entry per grant, carrying each grant's
 	// scope. See User.role_grants.
-	RoleGrants    []*RoleGrant `protobuf:"bytes,11,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
+	RoleGrants    []*RoleGrant `protobuf:"bytes,10,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -16200,17 +16200,17 @@ type IdentityProvider struct {
 	AutoCreateUsers  bool                   `protobuf:"varint,12,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
 	AutoLinkByEmail  bool                   `protobuf:"varint,13,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
 	DefaultRoleId    string                 `protobuf:"bytes,14,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
-	GroupClaim       string                 `protobuf:"bytes,16,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
-	GroupMapping     map[string]string      `protobuf:"bytes,17,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // external group name → user_group_id
-	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ScimEnabled      bool                   `protobuf:"varint,20,opt,name=scim_enabled,json=scimEnabled,proto3" json:"scim_enabled,omitempty"`
-	ScimEndpointUrl  string                 `protobuf:"bytes,21,opt,name=scim_endpoint_url,json=scimEndpointUrl,proto3" json:"scim_endpoint_url,omitempty"` // read-only, computed by server
+	GroupClaim       string                 `protobuf:"bytes,15,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
+	GroupMapping     map[string]string      `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // external group name → user_group_id
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ScimEnabled      bool                   `protobuf:"varint,19,opt,name=scim_enabled,json=scimEnabled,proto3" json:"scim_enabled,omitempty"`
+	ScimEndpointUrl  string                 `protobuf:"bytes,20,opt,name=scim_endpoint_url,json=scimEndpointUrl,proto3" json:"scim_endpoint_url,omitempty"` // read-only, computed by server
 	// trust_email_assertions: operator opt-in to delegate email-identity
 	// assertion to this IdP. When true, SCIM AutoLinkByEmail may bind an asserted
 	// email to a pre-existing account; default false refuses that
 	// (account-takeover guard across providers).
-	TrustEmailAssertions bool `protobuf:"varint,22,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
+	TrustEmailAssertions bool `protobuf:"varint,21,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -16535,11 +16535,11 @@ type CreateIdentityProviderRequest struct {
 	// @gotags: validate:"omitempty,ulid"
 	DefaultRoleId string `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty" validate:"omitempty,ulid"`
 	// @gotags: validate:"omitempty,max=255"
-	GroupClaim string `protobuf:"bytes,15,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty" validate:"omitempty,max=255"`
+	GroupClaim string `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty" validate:"omitempty,max=255"`
 	// @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-	GroupMapping map[string]string `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
+	GroupMapping map[string]string `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
 	// See IdentityProvider.trust_email_assertions. Default false (secure).
-	TrustEmailAssertions bool `protobuf:"varint,17,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
+	TrustEmailAssertions bool `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -16960,11 +16960,11 @@ type UpdateIdentityProviderRequest struct {
 	// @gotags: validate:"omitempty,ulid"
 	DefaultRoleId string `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty" validate:"omitempty,ulid"`
 	// @gotags: validate:"omitempty,max=255"
-	GroupClaim string `protobuf:"bytes,15,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty" validate:"omitempty,max=255"`
+	GroupClaim string `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty" validate:"omitempty,max=255"`
 	// @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-	GroupMapping map[string]string `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
+	GroupMapping map[string]string `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
 	// See IdentityProvider.trust_email_assertions. Default false (secure).
-	TrustEmailAssertions bool `protobuf:"varint,17,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
+	TrustEmailAssertions bool `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -17352,7 +17352,7 @@ func (x *ListAuthMethodsRequest) GetEmail() string {
 
 type ListAuthMethodsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Providers     []*AuthMethodProvider  `protobuf:"bytes,3,rep,name=providers,proto3" json:"providers,omitempty"`
+	Providers     []*AuthMethodProvider  `protobuf:"bytes,1,rep,name=providers,proto3" json:"providers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -21246,25 +21246,25 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n" +
 	"\rlast_login_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\x12\x1a\n" +
 	"\bdisabled\x18\x05 \x01(\bR\bdisabled\x12@\n" +
-	"\x0eidentity_links\x18\t \x03(\v2\x19.cadestro.v1.IdentityLinkR\ridentityLinks\x12!\n" +
-	"\fdisplay_name\x18\n" +
-	" \x01(\tR\vdisplayName\x12\x1d\n" +
+	"\x0eidentity_links\x18\x06 \x03(\v2\x19.cadestro.v1.IdentityLinkR\ridentityLinks\x12!\n" +
+	"\fdisplay_name\x18\a \x01(\tR\vdisplayName\x12\x1d\n" +
 	"\n" +
-	"given_name\x18\v \x01(\tR\tgivenName\x12\x1f\n" +
-	"\vfamily_name\x18\f \x01(\tR\n" +
+	"given_name\x18\b \x01(\tR\tgivenName\x12\x1f\n" +
+	"\vfamily_name\x18\t \x01(\tR\n" +
 	"familyName\x12-\n" +
-	"\x12preferred_username\x18\r \x01(\tR\x11preferredUsername\x12\x18\n" +
-	"\apicture\x18\x0e \x01(\tR\apicture\x12\x16\n" +
-	"\x06locale\x18\x0f \x01(\tR\x06locale\x12%\n" +
-	"\x0elinux_username\x18\x10 \x01(\tR\rlinuxUsername\x12\x1b\n" +
-	"\tlinux_uid\x18\x11 \x01(\x05R\blinuxUid\x12A\n" +
-	"\x0fssh_public_keys\x18\x12 \x03(\v2\x19.cadestro.v1.SshPublicKeyR\rsshPublicKeys\x12,\n" +
-	"\x12ssh_access_enabled\x18\x13 \x01(\bR\x10sshAccessEnabled\x12(\n" +
-	"\x10ssh_allow_pubkey\x18\x14 \x01(\bR\x0esshAllowPubkey\x12,\n" +
-	"\x12ssh_allow_password\x18\x15 \x01(\bR\x10sshAllowPassword\x12:\n" +
-	"\x19user_provisioning_enabled\x18\x16 \x01(\bR\x17userProvisioningEnabled\x12C\n" +
-	"\x0finherited_roles\x18\x17 \x03(\v2\x1a.cadestro.v1.InheritedRoleR\x0einheritedRoles\x127\n" +
-	"\vrole_grants\x18\x18 \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
+	"\x12preferred_username\x18\n" +
+	" \x01(\tR\x11preferredUsername\x12\x18\n" +
+	"\apicture\x18\v \x01(\tR\apicture\x12\x16\n" +
+	"\x06locale\x18\f \x01(\tR\x06locale\x12%\n" +
+	"\x0elinux_username\x18\r \x01(\tR\rlinuxUsername\x12\x1b\n" +
+	"\tlinux_uid\x18\x0e \x01(\x05R\blinuxUid\x12A\n" +
+	"\x0fssh_public_keys\x18\x0f \x03(\v2\x19.cadestro.v1.SshPublicKeyR\rsshPublicKeys\x12,\n" +
+	"\x12ssh_access_enabled\x18\x10 \x01(\bR\x10sshAccessEnabled\x12(\n" +
+	"\x10ssh_allow_pubkey\x18\x11 \x01(\bR\x0esshAllowPubkey\x12,\n" +
+	"\x12ssh_allow_password\x18\x12 \x01(\bR\x10sshAllowPassword\x12:\n" +
+	"\x19user_provisioning_enabled\x18\x13 \x01(\bR\x17userProvisioningEnabled\x12C\n" +
+	"\x0finherited_roles\x18\x14 \x03(\v2\x1a.cadestro.v1.InheritedRoleR\x0einheritedRoles\x127\n" +
+	"\vrole_grants\x18\x15 \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
 	"roleGrants\"\x7f\n" +
 	"\rInheritedRole\x12\x17\n" +
 	"\arole_id\x18\x01 \x01(\tR\x06roleId\x12\x1b\n" +
@@ -22277,14 +22277,14 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12!\n" +
 	"\fmember_count\x18\x04 \x01(\x05R\vmemberCount\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"is_dynamic\x18\a \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\b \x01(\tR\fdynamicQuery\x12&\n" +
-	"\x0fis_scim_managed\x18\t \x01(\bR\risScimManaged\x12M\n" +
-	"\x12maintenance_window\x18\n" +
-	" \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x127\n" +
-	"\vrole_grants\x18\v \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
+	"is_dynamic\x18\x06 \x01(\bR\tisDynamic\x12#\n" +
+	"\rdynamic_query\x18\a \x01(\tR\fdynamicQuery\x12&\n" +
+	"\x0fis_scim_managed\x18\b \x01(\bR\risScimManaged\x12M\n" +
+	"\x12maintenance_window\x18\t \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x127\n" +
+	"\vrole_grants\x18\n" +
+	" \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
 	"roleGrants\"w\n" +
 	"\x0fUserGroupMember\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
@@ -22389,16 +22389,16 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x11auto_create_users\x18\f \x01(\bR\x0fautoCreateUsers\x12+\n" +
 	"\x12auto_link_by_email\x18\r \x01(\bR\x0fautoLinkByEmail\x12&\n" +
 	"\x0fdefault_role_id\x18\x0e \x01(\tR\rdefaultRoleId\x12\x1f\n" +
-	"\vgroup_claim\x18\x10 \x01(\tR\n" +
+	"\vgroup_claim\x18\x0f \x01(\tR\n" +
 	"groupClaim\x12T\n" +
-	"\rgroup_mapping\x18\x11 \x03(\v2/.cadestro.v1.IdentityProvider.GroupMappingEntryR\fgroupMapping\x129\n" +
+	"\rgroup_mapping\x18\x10 \x03(\v2/.cadestro.v1.IdentityProvider.GroupMappingEntryR\fgroupMapping\x129\n" +
 	"\n" +
-	"created_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12!\n" +
-	"\fscim_enabled\x18\x14 \x01(\bR\vscimEnabled\x12*\n" +
-	"\x11scim_endpoint_url\x18\x15 \x01(\tR\x0fscimEndpointUrl\x124\n" +
-	"\x16trust_email_assertions\x18\x16 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
+	"updated_at\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12!\n" +
+	"\fscim_enabled\x18\x13 \x01(\bR\vscimEnabled\x12*\n" +
+	"\x11scim_endpoint_url\x18\x14 \x01(\tR\x0fscimEndpointUrl\x124\n" +
+	"\x16trust_email_assertions\x18\x15 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x88\x03\n" +
@@ -22432,10 +22432,10 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x11auto_create_users\x18\v \x01(\bR\x0fautoCreateUsers\x12+\n" +
 	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x12&\n" +
 	"\x0fdefault_role_id\x18\r \x01(\tR\rdefaultRoleId\x12\x1f\n" +
-	"\vgroup_claim\x18\x0f \x01(\tR\n" +
+	"\vgroup_claim\x18\x0e \x01(\tR\n" +
 	"groupClaim\x12a\n" +
-	"\rgroup_mapping\x18\x10 \x03(\v2<.cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
-	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
+	"\rgroup_mapping\x18\x0f \x03(\v2<.cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
+	"\x16trust_email_assertions\x18\x10 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
@@ -22470,10 +22470,10 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x11auto_create_users\x18\v \x01(\bR\x0fautoCreateUsers\x12+\n" +
 	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x12&\n" +
 	"\x0fdefault_role_id\x18\r \x01(\tR\rdefaultRoleId\x12\x1f\n" +
-	"\vgroup_claim\x18\x0f \x01(\tR\n" +
+	"\vgroup_claim\x18\x0e \x01(\tR\n" +
 	"groupClaim\x12a\n" +
-	"\rgroup_mapping\x18\x10 \x03(\v2<.cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
-	"\x16trust_email_assertions\x18\x11 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
+	"\rgroup_mapping\x18\x0f \x03(\v2<.cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
+	"\x16trust_email_assertions\x18\x10 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
@@ -22490,7 +22490,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x16ListAuthMethodsRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"X\n" +
 	"\x17ListAuthMethodsResponse\x12=\n" +
-	"\tproviders\x18\x03 \x03(\v2\x1f.cadestro.v1.AuthMethodProviderR\tproviders\"N\n" +
+	"\tproviders\x18\x01 \x03(\v2\x1f.cadestro.v1.AuthMethodProviderR\tproviders\"N\n" +
 	"\x15GetSSOLoginURLRequest\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12!\n" +
 	"\fredirect_url\x18\x02 \x01(\tR\vredirectUrl\"5\n" +
