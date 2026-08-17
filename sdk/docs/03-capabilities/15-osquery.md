@@ -28,15 +28,21 @@ if err != nil {
 ## Query
 
 ```go
-rows, err := q.QueryTable(ctx, "os_version")
+rows, err := q.QueryTable(ctx, "os_version") // []osquery.Row, one map per row
 tables, err := q.ListTables(ctx)
-result, err := q.Query(ctx, &pb.OSQuery{Table: "processes"})
+rows, err = q.QuerySQL(ctx, "SELECT name, pid FROM processes")
 ```
 
-<!-- docref: begin src=sys/osquery/osquery.go#client.QueryTable:5586f365 -->
-`QueryTable` validates the table name (alphanumeric + underscore) and applies the
-deny-list before building `SELECT * FROM <table>`, so an invalid or forbidden
-name is rejected without running anything.
+A `Row` is `map[string]string` — exactly the element shape of osqueryi's
+`--json` output. Refusals are `errors.Is`-able sentinels:
+`ErrTableNotPermitted` (deny-list), `ErrInvalidTableName` (identifier shape,
+including the 64-byte name cap), and `ErrQueryTooLong` (raw SQL over 4096
+bytes). The wrapped error always names the offending table.
+
+<!-- docref: begin src=sys/osquery/osquery.go#client.QueryTable:ac73160b -->
+`QueryTable` validates the table name (alphanumeric + underscore, capped
+length) and applies the deny-list before building `SELECT * FROM <table>`, so
+an invalid or forbidden name is rejected without running anything.
 <!-- docref: end -->
 
 ## The sensitive-table deny-list
@@ -44,25 +50,23 @@ name is rejected without running anything.
 <!-- docref: begin src=sys/osquery/osquery.go#sensitiveTables:1054224b -->
 A curated deny-list refuses tables that expose credential material — `shadow`
 (password hashes), `process_envs` (secrets in process environments), `crontab`,
-`shell_history`, and `sudoers` — on the table path. They all pass the name
-validity check, so a shape-only filter is not enough; this refuses them by name
-so a compromised control server cannot exfiltrate them through the agent's
-privileged osquery.
+`shell_history`, and `sudoers`. They all pass the name validity check, so a
+shape-only filter is not enough; this refuses them by name so hostile query
+input cannot exfiltrate them through privileged osquery.
 <!-- docref: end -->
 
-<!-- docref: begin src=sys/osquery/osquery.go#client.Query:29737495 -->
-The deny-list gates **both** query paths: `Query` with a `Table` (and
-`QueryTable`) refuses a sensitive name before building any SQL, and `RawSql` is
-refused when it *references* a sensitive table. Even the signed raw-query path
-cannot read `shadow`/`sudoers`/… — there is no osquery path to a credential
+<!-- docref: begin src=sys/osquery/osquery.go#client.QuerySQL:17f00532 -->
+The deny-list gates **every** query path: `QueryTable` refuses a sensitive
+name before building any SQL, and `QuerySQL` refuses raw SQL that *references*
+a sensitive table as a whole-word identifier anywhere in the query — the scan
+fails closed rather than parsing SQL. There is no osquery path to a credential
 table.
 <!-- docref: end -->
 
-{% callout type="warning" title="RawSql is still the operator's responsibility" %}
-`RawSql` runs arbitrary read-only SQL and is a signed command in the agent, so
-restrict who can issue it. It is gated by the credential deny-list — it cannot
-read `shadow`/`sudoers`/… — but it can still read any other table osquery
-exposes.
+{% callout type="warning" title="Raw SQL is still the caller's responsibility" %}
+`QuerySQL` runs arbitrary read-only SQL, so restrict which of your callers can
+reach it. It is gated by the credential deny-list — it cannot read
+`shadow`/`sudoers`/… — but it can still read any other table osquery exposes.
 {% /callout %}
 
 ## Related

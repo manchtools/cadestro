@@ -61,9 +61,8 @@ quietly building less than you asked for.
 ## The leaf rule
 
 `contract` and `sdk` import nothing else in this repository, and `sdk` is
-otherwise free of the generated protobuf types. This is not a convention: the
-architecture test in `archtest` asserts it, and fails both when a new in-repo
-import appears and when a recorded exception goes stale.
+proto-free with no exceptions. This is not a convention: the architecture
+test in `archtest` asserts it and fails when any in-repo import appears.
 
 The reason is licensing. `contract` and `sdk` are MIT so that implementing the
 protocol, or embedding a capability, imposes no obligation; `agent` and

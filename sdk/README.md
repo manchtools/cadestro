@@ -30,13 +30,11 @@ build when either reappears. Shipped implementations are concrete — systemd fo
 service actions, LUKS for disk encryption — and the public API does not expose
 selectors for implementations that do not exist.
 
-## The contract dependency
+## Leaf purity
 
-This module is otherwise free of the generated protobuf types, and the
-leaf-purity guard in `archtest` keeps it that way. `sys/osquery` is the single
-recorded exception: its `Querier` API is expressed in the contract's `OSQuery`
-messages, so it imports `contract/gen`. The guard fails both when a second
-package starts importing the contract and when that exception goes stale.
+This module is proto-free and imports nothing else in this repository; the
+leaf-purity guard in `archtest` fails the suite the moment any package —
+test files included — grows an in-repo import edge.
 
 ## Verify
 

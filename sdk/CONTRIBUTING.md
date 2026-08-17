@@ -40,8 +40,8 @@ instead of maintaining old and new paths in parallel.
   actually exists and is supported end to end.
 - Prefer concrete standard-library or platform mechanisms over new abstraction
   layers and dependencies.
-- Do not import the contract module. `sys/osquery` is the single recorded
-  exception, and the leaf-purity guard in `archtest` exists to keep it single.
+- Do not import anything else from this repository. The SDK is a leaf module;
+  the leaf-purity guard in `archtest` enforces this with no exceptions.
 
 ## Verification
 
