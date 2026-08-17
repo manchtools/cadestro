@@ -5,9 +5,9 @@
 // queries inside the container against the installed binary, so an osquery
 // output-format change (the []map[string]string JSON shape, the `.tables`
 // listing) is caught here. They also prove the security-critical sensitive-table
-// deny-list against the REAL binary: the table path refuses every deny-listed
-// table before exec, while the CA-signed RawSql escape hatch is intentionally
-// NOT gated and runs the same table.
+// deny-list against the REAL binary: every query path — table, RawSql, and
+// direct QuerySQL — refuses a deny-listed table before exec; there is no
+// escape hatch around the credential-table policy.
 //
 // Runs in the container-tests lane (root), so the Runner is Direct: Escalate is
 // a no-op wrapper and osqueryi runs as the already-root process — the same shape

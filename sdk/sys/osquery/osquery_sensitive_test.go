@@ -87,6 +87,53 @@ func TestQuery_RawSqlGatedByDenyList(t *testing.T) {
 	}
 }
 
+// QuerySQL is a public entry point and must be gated by the same
+// credential-table deny-list as Query's table and RawSql paths: the package
+// promises there is NO path to read shadow/sudoers/… via osquery, and a direct
+// QuerySQL call is such a path. Refusal must happen BEFORE any command runs.
+func TestQuerySQL_GatedByDenyList(t *testing.T) {
+	r := exectest.New(exec.Direct)
+	r.Push(exec.Result{Stdout: `[{"hash":"x"}]`}, nil) // consumed only by the benign positive control
+	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
+	ctx := context.Background()
+
+	// Every deny-listed table is refused, and the error names it.
+	for table := range sensitiveTables {
+		_, err := c.QuerySQL(ctx, "SELECT * FROM "+table)
+		if err == nil || !strings.Contains(err.Error(), "not permitted") || !strings.Contains(err.Error(), table) {
+			t.Errorf("QuerySQL(FROM %s) err = %v, want a refusal naming the table as not permitted", table, err)
+		}
+	}
+
+	// CTE smuggling cannot alias its way past the whole-word scan.
+	if _, err := c.QuerySQL(ctx, "WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen"); err == nil ||
+		!strings.Contains(err.Error(), "not permitted") {
+		t.Errorf("CTE-smuggled shadow read err = %v, want a deny-list refusal", err)
+	}
+
+	// Recorded decision, not an accident: the gate FAILS CLOSED on any
+	// whole-word deny token even in a value position, so file *metadata*
+	// about /etc/sudoers is also refused. Over-refusal is the safe direction
+	// for a credential-table gate.
+	if _, err := c.QuerySQL(ctx, "SELECT * FROM file WHERE path = '/etc/sudoers'"); err == nil ||
+		!strings.Contains(err.Error(), "not permitted") {
+		t.Errorf("value-position sudoers err = %v, want the fail-closed refusal", err)
+	}
+
+	// Nothing above may have reached the Runner.
+	if n := len(r.Calls()); n != 0 {
+		t.Fatalf("refused raw SQL ran %d command(s) before the policy gate; want 0", n)
+	}
+
+	// Positive control: benign raw SQL still executes exactly once.
+	if _, err := c.QuerySQL(ctx, "SELECT * FROM os_version"); err != nil {
+		t.Fatalf("benign raw SQL must still run, got %v", err)
+	}
+	if n := len(r.Calls()); n != 1 {
+		t.Fatalf("benign raw SQL ran %d command(s), want exactly 1", n)
+	}
+}
+
 func TestExecQuery_Failures(t *testing.T) {
 	t.Run("exec error", func(t *testing.T) {
 		r := exectest.New(exec.Direct)

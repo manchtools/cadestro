@@ -138,7 +138,9 @@ type Querier interface {
 	// QueryTable runs SELECT * FROM <table> after the same validity + deny-list
 	// checks as Query's table path.
 	QueryTable(ctx context.Context, tableName string) ([]*pb.OSQueryRow, error)
-	// QuerySQL runs raw SQL and parses the JSON result rows.
+	// QuerySQL runs raw SQL and parses the JSON result rows. It is gated by
+	// the same credential-table deny-list as every other query path: raw SQL
+	// referencing a deny-listed table is refused before anything executes.
 	QuerySQL(ctx context.Context, sql string) ([]*pb.OSQueryRow, error)
 }
 
@@ -278,8 +280,15 @@ func (c *client) Query(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResul
 	}, nil
 }
 
-// QuerySQL executes a raw SQL query against osquery.
+// QuerySQL executes a raw SQL query against osquery. It is a public entry
+// point, so the credential-table deny-list gates it directly: refusal happens
+// here, before any command runs, not only on the Query wrapper paths. The gate
+// deliberately sits above execQuery so ListTables' `.tables` meta-command
+// stays ungated.
 func (c *client) QuerySQL(ctx context.Context, sql string) ([]*pb.OSQueryRow, error) {
+	if name := sensitiveTableRefIn(sql); name != "" {
+		return nil, fmt.Errorf("table %q is not permitted", name)
+	}
 	output, err := c.execQuery(ctx, sql)
 	if err != nil {
 		return nil, err
