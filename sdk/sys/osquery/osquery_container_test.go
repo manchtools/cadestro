@@ -16,11 +16,11 @@ package osquery
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
@@ -58,8 +58,8 @@ func TestQueryTable_OSVersion_Container(t *testing.T) {
 	if len(rows) != 1 {
 		t.Fatalf("os_version returned %d rows, want 1", len(rows))
 	}
-	if name := rows[0].Data["name"]; name == "" {
-		t.Errorf("os_version row missing/empty `name` column: %+v", rows[0].Data)
+	if name := rows[0]["name"]; name == "" {
+		t.Errorf("os_version row missing/empty `name` column: %+v", rows[0])
 	}
 }
 
@@ -92,9 +92,10 @@ func TestListTables_Container(t *testing.T) {
 // TestDenyList_RefusedBeforeExec_Container is SELF-DISCOVERING: it iterates the
 // real sensitiveTables map (not a hardcoded copy), so a table added to the
 // deny-list is automatically covered. Each must be refused by BOTH the
-// QueryTable and Query table paths — and the refusal must be the policy error
-// ("not permitted"), distinguishable from a query-execution failure, proving the
-// gate fires BEFORE the binary is ever invoked.
+// QueryTable and raw QuerySQL paths — and the refusal must be the policy
+// sentinel (ErrTableNotPermitted, "not permitted"), distinguishable from a
+// query-execution failure, proving the gate fires BEFORE the binary is ever
+// invoked.
 func TestDenyList_RefusedBeforeExec_Container(t *testing.T) {
 	q := realQuerier(t)
 	ctx := osqCtx(t)
@@ -102,23 +103,15 @@ func TestDenyList_RefusedBeforeExec_Container(t *testing.T) {
 		t.Fatal("sensitiveTables is empty — deny-list coverage would be vacuous")
 	}
 	for table := range sensitiveTables {
-		// QueryTable path: a Go error carrying the policy phrase.
+		// QueryTable path.
 		_, err := q.QueryTable(ctx, table)
-		if err == nil {
-			t.Errorf("QueryTable(%q): expected refusal, got nil error", table)
-		} else if !strings.Contains(err.Error(), "not permitted") {
-			t.Errorf("QueryTable(%q): want a 'not permitted' refusal, got %v", table, err)
+		if !errors.Is(err, ErrTableNotPermitted) || !strings.Contains(err.Error(), "not permitted") {
+			t.Errorf("QueryTable(%q): want the 'not permitted' policy refusal, got %v", table, err)
 		}
-		// Query path: refusal folded into the result, never executed.
-		res, err := q.Query(ctx, &pb.OSQuery{Table: table})
-		if err != nil {
-			t.Errorf("Query(%q): unexpected Go error: %v", table, err)
-		}
-		if res.GetSuccess() {
-			t.Errorf("Query(%q): expected Success=false (refused), got success", table)
-		}
-		if !strings.Contains(res.GetError(), "not permitted") {
-			t.Errorf("Query(%q): want a 'not permitted' refusal, got %q", table, res.GetError())
+		// Raw SQL path.
+		_, err = q.QuerySQL(ctx, "SELECT * FROM "+table)
+		if !errors.Is(err, ErrTableNotPermitted) {
+			t.Errorf("QuerySQL(FROM %s): want ErrTableNotPermitted, got %v", table, err)
 		}
 	}
 }
@@ -173,40 +166,26 @@ func TestDenyList_ThreatModelComplete_Container(t *testing.T) {
 	}
 }
 
-// TestRawSqlGated_Container proves against the real binary that RawSql is gated
-// by the same credential-table deny-list as the table path: a raw query naming
-// `shadow` is refused and osqueryi is never run. (Supersedes the prior WS4
-// escape-hatch behaviour where signed RawSql bypassed the deny-list.)
+// TestRawSqlGated_Container proves against the real binary that raw SQL is
+// gated by the same credential-table deny-list as the table path: a raw query
+// naming `shadow` is refused and osqueryi is never run.
 func TestRawSqlGated_Container(t *testing.T) {
-	res, err := realQuerier(t).Query(osqCtx(t), &pb.OSQuery{
-		RawSql: "SELECT count(*) AS n FROM shadow",
-	})
-	if err != nil {
-		t.Fatalf("Query(RawSql shadow count): unexpected Go error: %v", err)
+	rows, err := realQuerier(t).QuerySQL(osqCtx(t), "SELECT count(*) AS n FROM shadow")
+	if !errors.Is(err, ErrTableNotPermitted) || !strings.Contains(err.Error(), "not permitted") {
+		t.Fatalf("raw SQL naming deny-listed `shadow` must be refused; got %v", err)
 	}
-	if res.GetSuccess() || !strings.Contains(res.GetError(), "not permitted") {
-		t.Fatalf("RawSql naming deny-listed `shadow` must be refused; got success=%v err=%q", res.GetSuccess(), res.GetError())
-	}
-	if len(res.GetRows()) != 0 {
-		t.Fatalf("refused RawSql returned %d rows, want 0", len(res.GetRows()))
+	if len(rows) != 0 {
+		t.Fatalf("refused raw SQL returned %d rows, want 0", len(rows))
 	}
 }
 
 // TestInvalidTableName_Container: a non-identifier table name is rejected on
-// shape (before exec) by both table paths against the real binary.
+// shape (before exec) against the real binary.
 func TestInvalidTableName_Container(t *testing.T) {
-	q := realQuerier(t)
-	ctx := osqCtx(t)
 	const bad = "os_version; DROP TABLE x"
-	if _, err := q.QueryTable(ctx, bad); err == nil || !strings.Contains(err.Error(), "invalid table name") {
-		t.Errorf("QueryTable(%q): want 'invalid table name', got %v", bad, err)
-	}
-	res, err := q.Query(ctx, &pb.OSQuery{Table: bad})
-	if err != nil {
-		t.Errorf("Query(%q): unexpected Go error: %v", bad, err)
-	}
-	if res.GetSuccess() || !strings.Contains(res.GetError(), "invalid table name") {
-		t.Errorf("Query(%q): want refused with 'invalid table name', got success=%v err=%q", bad, res.GetSuccess(), res.GetError())
+	_, err := realQuerier(t).QueryTable(osqCtx(t), bad)
+	if !errors.Is(err, ErrInvalidTableName) || !strings.Contains(err.Error(), "invalid table name") {
+		t.Errorf("QueryTable(%q): want the 'invalid table name' shape refusal, got %v", bad, err)
 	}
 }
 

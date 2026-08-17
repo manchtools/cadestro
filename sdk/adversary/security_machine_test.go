@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +13,6 @@ import (
 	"sync/atomic"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/desktop"
 	"github.com/manchtools/cadestro/sdk/sys/dns"
 	"github.com/manchtools/cadestro/sdk/sys/encryption"
@@ -202,12 +200,7 @@ func controlPlaneLocalExfiltrationProgram(t *testing.T) attackProgram {
 					r.Push(sdkexec.Result{Stdout: `[{"name":"linux"}]`}, nil)
 					q, err := osquery.New(r)
 					if err == nil {
-						res, qerr := q.Query(env.ctx, osqueryPayloadTable("os_version"))
-						if qerr != nil {
-							err = qerr
-						} else if !res.GetSuccess() {
-							err = errors.New(res.GetError())
-						}
+						_, err = q.QueryTable(env.ctx, "os_version")
 					}
 					return observation{err: err, commands: r.Calls()}
 				},
@@ -221,12 +214,7 @@ func controlPlaneLocalExfiltrationProgram(t *testing.T) attackProgram {
 					r.Push(sdkexec.Result{Stdout: `[{"username":"root","hash":"$y$j9T$secret"}]`}, nil)
 					q, err := osquery.New(r)
 					if err == nil {
-						res, qerr := q.Query(env.ctx, osqueryPayloadRaw("WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen"))
-						if qerr != nil {
-							err = qerr
-						} else if !res.GetSuccess() {
-							err = errors.New(res.GetError())
-						}
+						_, err = q.QuerySQL(env.ctx, "WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen")
 					}
 					return observation{err: err, commands: r.Calls()}
 				},
@@ -389,14 +377,6 @@ func encryptionSecretHygieneProgram() attackProgram {
 			},
 		},
 	}
-}
-
-func osqueryPayloadTable(table string) *pb.OSQuery {
-	return &pb.OSQuery{QueryId: "adversary", Table: table}
-}
-
-func osqueryPayloadRaw(sql string) *pb.OSQuery {
-	return &pb.OSQuery{QueryId: "adversary", RawSql: sql}
 }
 
 func installFakeTool(t *testing.T, name string) {

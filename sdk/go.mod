@@ -5,12 +5,6 @@ module github.com/manchtools/cadestro/sdk
 
 go 1.25.12
 
-// sys/osquery is the one package here that speaks the wire contract: its
-// Querier API is expressed in the contract's OSQuery messages. Everything
-// else in this module is proto-free, and the leaf-purity guard in archtest
-// keeps that exception from spreading.
-require github.com/manchtools/cadestro/contract v0.0.0
-
 require (
 	github.com/creack/pty v1.1.24
 	github.com/go-cmd/cmd v1.4.3
@@ -40,9 +34,6 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
-	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/manchtools/cadestro/contract => ../contract

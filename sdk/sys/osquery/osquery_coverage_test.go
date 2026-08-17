@@ -2,10 +2,10 @@ package osquery
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
@@ -53,47 +53,6 @@ func TestListTables_ExecError(t *testing.T) {
 	}
 }
 
-func TestQuery_CustomTableSQL(t *testing.T) {
-	r := exectest.New(exec.Direct)
-	r.Push(exec.Result{Stdout: "[]"}, nil)
-	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
-	res, err := c.Query(context.Background(), &pb.OSQuery{QueryId: "q", Table: "authorized_keys"})
-	if err != nil || !res.Success {
-		t.Fatalf("Query(authorized_keys) = (%+v,%v)", res, err)
-	}
-	if argv := strings.Join(r.Calls()[0].Args, " "); !strings.Contains(argv, "JOIN authorized_keys USING (uid)") {
-		t.Errorf("custom JOIN SQL not used: %q", argv)
-	}
-}
-
-func TestQuery_RawSQLRefusesSensitiveTablesBeforeExec(t *testing.T) {
-	r := exectest.New(exec.Direct)
-	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
-	res, err := c.Query(context.Background(), &pb.OSQuery{QueryId: "q", RawSql: "SELECT * FROM shadow"})
-	if err != nil {
-		t.Fatalf("Query returned Go error = %v, want folded result", err)
-	}
-	if res.GetSuccess() || res.GetError() == "" {
-		t.Fatalf("Query(RawSql shadow) = %+v, want Success=false with a policy error", res)
-	}
-	if calls := r.Calls(); len(calls) != 0 {
-		t.Fatalf("RawSql sensitive query ran %d command(s) before policy rejection: %+v", len(calls), calls)
-	}
-}
-
-func TestQuery_QuerySQLErrorSurfacesInResult(t *testing.T) {
-	r := exectest.New(exec.Direct)
-	r.Push(exec.Result{Stdout: "not json"}, nil) // parse failure inside QuerySQL
-	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
-	res, err := c.Query(context.Background(), &pb.OSQuery{QueryId: "q", Table: "os_version"})
-	if err != nil {
-		t.Fatalf("Query should fold the SQL error into the result, not return it: %v", err)
-	}
-	if res.Success || res.Error == "" {
-		t.Errorf("res = %+v, want Success=false with a populated Error", res)
-	}
-}
-
 func TestQueryTable(t *testing.T) {
 	t.Run("benign", func(t *testing.T) {
 		r := exectest.New(exec.Direct)
@@ -102,6 +61,9 @@ func TestQueryTable(t *testing.T) {
 		rows, err := c.QueryTable(context.Background(), "os_version")
 		if err != nil || len(rows) != 1 {
 			t.Fatalf("QueryTable = (%v,%v), want one row", rows, err)
+		}
+		if rows[0]["name"] != "x" {
+			t.Errorf("row = %v, want the name column decoded", rows[0])
 		}
 	})
 	t.Run("custom tableSQL", func(t *testing.T) {
@@ -118,8 +80,8 @@ func TestQueryTable(t *testing.T) {
 	t.Run("invalid name rejected before exec", func(t *testing.T) {
 		r := exectest.New(exec.Direct)
 		c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
-		if _, err := c.QueryTable(context.Background(), "bad name!"); err == nil {
-			t.Error("QueryTable accepted an invalid name")
+		if _, err := c.QueryTable(context.Background(), "bad name!"); !errors.Is(err, ErrInvalidTableName) {
+			t.Errorf("err = %v, want ErrInvalidTableName", err)
 		}
 		if len(r.Calls()) != 0 {
 			t.Error("ran a query for an invalid table name")
@@ -128,8 +90,8 @@ func TestQueryTable(t *testing.T) {
 	t.Run("sensitive table refused before exec", func(t *testing.T) {
 		r := exectest.New(exec.Direct)
 		c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
-		if _, err := c.QueryTable(context.Background(), "shadow"); err == nil {
-			t.Error("QueryTable returned a sensitive table")
+		if _, err := c.QueryTable(context.Background(), "shadow"); !errors.Is(err, ErrTableNotPermitted) {
+			t.Errorf("err = %v, want ErrTableNotPermitted", err)
 		}
 		if len(r.Calls()) != 0 {
 			t.Error("ran a query for a sensitive table")

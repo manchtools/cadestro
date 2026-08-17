@@ -12,7 +12,7 @@ import (
 
 // ExampleNew shows the construct-a-handle flow: pick a Runner, build a Querier,
 // and query a benign table. The credential-table deny-list and table-name
-// validation are enforced inside QueryTable/Query.
+// validation are enforced inside QueryTable/QuerySQL.
 func ExampleNew() {
 	r, err := exec.NewRunner(exec.Sudo) // the consumer picks the escalation backend
 	if err != nil {
@@ -33,6 +33,6 @@ func ExampleNew() {
 		log.Fatal(err)
 	}
 	for _, row := range rows {
-		fmt.Println(row.Data["name"])
+		fmt.Println(row["name"])
 	}
 }

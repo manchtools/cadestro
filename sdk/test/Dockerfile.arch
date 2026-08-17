@@ -23,19 +23,7 @@ RUN pacman -Sy --noconfirm \
     && pacman -Scc --noconfirm
 
 WORKDIR /workspace
-# The SDK and the contract it replaces to: sdk/go.mod redirects
-# github.com/manchtools/cadestro/contract at ../contract, so copying sdk/ alone
-# leaves the replacement directory missing and `go mod download` fails before a
-# single test compiles.
-COPY contract/ ./contract/
 COPY sdk/ ./sdk/
-RUN printf 'go %s
-
-use (
-	./contract
-	./sdk
-)
-' "$(sed -n 's/^go //p' sdk/go.mod)" > go.work
 RUN cd sdk && go mod download
 
 # with-clamav: clamav + the same static seed DB. Arch ships freshclam.conf at

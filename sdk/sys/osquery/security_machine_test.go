@@ -2,9 +2,9 @@ package osquery
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
@@ -26,9 +26,9 @@ type osqueryPolicyStep struct {
 }
 
 // TestOSQueryPolicySecurityMachine models the osquery boundary as a policy
-// automaton. Remote query input may reach the privileged osquery binary only if
-// the resolved SQL cannot touch credential-bearing tables; every rejected state
-// must fail before Runner execution.
+// automaton. Query input may reach the privileged osquery binary only if the
+// resolved SQL cannot touch credential-bearing tables; every rejected state
+// must fail with ErrTableNotPermitted before Runner execution.
 func TestOSQueryPolicySecurityMachine(t *testing.T) {
 	steps := []osqueryPolicyStep{
 		{name: "allowed inventory table reaches osquery", action: osqueryAllowedTable},
@@ -45,21 +45,18 @@ func TestOSQueryPolicySecurityMachine(t *testing.T) {
 				r.Push(exec.Result{Stdout: `[{"name":"linux"}]`}, nil)
 			}
 			c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
-			res, err := c.Query(context.Background(), osqueryQueryForAction(step.action))
-			if err != nil {
-				t.Fatalf("Query returned Go error: %v", err)
-			}
+			err := runOsqueryAction(c, step.action)
 			if step.wantReject {
-				if res.GetSuccess() || res.GetError() == "" {
-					t.Fatalf("%s returned %+v, want folded policy rejection", step.name, res)
+				if !errors.Is(err, ErrTableNotPermitted) {
+					t.Fatalf("%s err = %v, want ErrTableNotPermitted", step.name, err)
 				}
 				if calls := r.Calls(); len(calls) != 0 {
 					t.Fatalf("%s reached privileged osquery execution: %+v", step.name, calls)
 				}
 				return
 			}
-			if !res.GetSuccess() {
-				t.Fatalf("%s returned %+v, want success", step.name, res)
+			if err != nil {
+				t.Fatalf("%s err = %v, want success", step.name, err)
 			}
 			if calls := r.Calls(); len(calls) != 1 || !calls[0].Escalate {
 				t.Fatalf("%s calls = %+v, want one escalated osquery call", step.name, calls)
@@ -68,19 +65,20 @@ func TestOSQueryPolicySecurityMachine(t *testing.T) {
 	}
 }
 
-func osqueryQueryForAction(action osqueryPolicyAction) *pb.OSQuery {
+func runOsqueryAction(c *client, action osqueryPolicyAction) error {
+	ctx := context.Background()
+	var err error
 	switch action {
-	case osqueryAllowedTable:
-		return &pb.OSQuery{QueryId: "q", Table: "os_version"}
 	case osqueryDeniedTable:
-		return &pb.OSQuery{QueryId: "q", Table: "shadow"}
+		_, err = c.QueryTable(ctx, "shadow")
 	case osqueryRawDeniedTable:
-		return &pb.OSQuery{QueryId: "q", RawSql: "SELECT * FROM shadow"}
+		_, err = c.QuerySQL(ctx, "SELECT * FROM shadow")
 	case osqueryRawDeniedTableViaCTE:
-		return &pb.OSQuery{QueryId: "q", RawSql: "WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen"}
+		_, err = c.QuerySQL(ctx, "WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen")
 	case osqueryRawProcessEnvSecret:
-		return &pb.OSQuery{QueryId: "q", RawSql: "SELECT * FROM process_envs WHERE key LIKE '%TOKEN%'"}
-	default:
-		return &pb.OSQuery{QueryId: "q", Table: "os_version"}
+		_, err = c.QuerySQL(ctx, "SELECT * FROM process_envs WHERE key LIKE '%TOKEN%'")
+	default: // osqueryAllowedTable
+		_, err = c.QueryTable(ctx, "os_version")
 	}
+	return err
 }

@@ -2,15 +2,22 @@
 // injected exec.Runner.
 //
 // Build a Querier with a Runner and call its methods; every query is escalated
-// through the Runner. Both the convenience table path AND the RawSql path refuse
-// a curated deny-list of credential-bearing tables before running anything — a
-// raw query that references a deny-listed table (in any clause) is rejected, so
-// there is no path to read shadow/sudoers/… via osquery.
+// through the Runner. Every query path — the convenience table path AND raw
+// SQL — refuses a curated deny-list of credential-bearing tables before
+// running anything: a query that references a deny-listed table (in any
+// clause) is rejected, so there is no path to read shadow/sudoers/… via
+// osquery. Inputs are size-bounded in-package: table names and raw SQL beyond
+// the caps are refused before execution.
 //
 //	r, _ := exec.NewRunner(exec.Sudo)
 //	q, err := osquery.New(r) // ErrNotInstalled if osqueryi is absent
 //	if err != nil { ... }
 //	rows, err := q.QueryTable(ctx, "os_version")
+//
+// Results are SDK-native: a Row is one result row as column→value, exactly
+// osquery's own --json output shape. Refusals are errors.Is-able sentinels
+// (ErrTableNotPermitted, ErrInvalidTableName, ErrQueryTooLong); consumers that
+// need a wire envelope build their own at their boundary.
 //
 // New is a single-implementation capability (design §3.8): it exposes the
 // Querier interface for shape-uniformity with the backend-pattern packages even
@@ -28,8 +35,20 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/exec"
+)
+
+// Row is one osquery result row: column name → value. It is exactly the
+// element shape of osqueryi's --json output.
+type Row map[string]string
+
+// Input caps. The numeric values are inherited from the retired wire
+// contract's validators and sit far above any legitimate osquery identifier
+// or query; anything larger is refused before execution (fail closed, like
+// the deny-list).
+const (
+	maxTableNameLen = 64
+	maxRawSQLLen    = 4096
 )
 
 // validTableName matches only safe osquery table names (alphanumeric + underscore).
@@ -39,10 +58,10 @@ var validTableName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 // high-value secrets — password-hash metadata (shadow), secrets in process
 // environments (process_envs), scheduled commands (crontab), shell history
 // (shell_history), and sudoers policy (sudoers). They all pass validTableName, so
-// the shape-only check is not enough: BOTH the convenience table path and the
-// RawSql path refuse them (sensitiveTableRefIn scans raw SQL for any deny-listed
-// table as a whole-word identifier) so a compromised control server cannot
-// exfiltrate them through the agent's privileged osquery by any path.
+// the shape-only check is not enough: every query path refuses them
+// (sensitiveTableRefIn scans raw SQL for any deny-listed table as a whole-word
+// identifier), so hostile query input cannot exfiltrate them through
+// privileged osquery by any path.
 var sensitiveTables = map[string]bool{
 	"shadow":        true,
 	"process_envs":  true,
@@ -105,6 +124,19 @@ var (
 	// ErrQueryFailed is returned when an osquery query fails.
 	ErrQueryFailed = errors.New("osquery query failed")
 
+	// ErrTableNotPermitted is the credential-table deny-list refusal: the
+	// query referenced a table on the curated sensitiveTables list. The
+	// wrapped error names the offending table.
+	ErrTableNotPermitted = errors.New("table is not permitted")
+
+	// ErrInvalidTableName is the shape refusal: the table name is not a safe
+	// osquery identifier (or exceeds the name cap). Distinct from
+	// ErrTableNotPermitted — shape vs policy.
+	ErrInvalidTableName = errors.New("invalid table name")
+
+	// ErrQueryTooLong is the size refusal: raw SQL exceeded maxRawSQLLen.
+	ErrQueryTooLong = errors.New("osquery input exceeds size limit")
+
 	// Common osquery binary paths to check.
 	osqueryPaths = []string{
 		"/usr/bin/osqueryi",
@@ -129,19 +161,15 @@ type Querier interface {
 	IsInstalled(ctx context.Context) bool
 	// ListTables returns the names of the available osquery tables.
 	ListTables(ctx context.Context) ([]string, error)
-	// Query runs a structured query. BOTH the table path and the RawSql path are
-	// gated by the credential-bearing deny-list before any SQL is built or run —
-	// a raw query referencing a deny-listed table is refused. A query failure
-	// (or a policy refusal) is folded into the returned *pb.OSQueryResult
-	// (Success=false), not returned as a Go error.
-	Query(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error)
-	// QueryTable runs SELECT * FROM <table> after the same validity + deny-list
-	// checks as Query's table path.
-	QueryTable(ctx context.Context, tableName string) ([]*pb.OSQueryRow, error)
+	// QueryTable runs SELECT * FROM <table> after shape validation
+	// (ErrInvalidTableName) and the credential-table deny-list
+	// (ErrTableNotPermitted); both refuse before anything executes.
+	QueryTable(ctx context.Context, tableName string) ([]Row, error)
 	// QuerySQL runs raw SQL and parses the JSON result rows. It is gated by
-	// the same credential-table deny-list as every other query path: raw SQL
-	// referencing a deny-listed table is refused before anything executes.
-	QuerySQL(ctx context.Context, sql string) ([]*pb.OSQueryRow, error)
+	// the same credential-table deny-list as the table path — raw SQL
+	// referencing a deny-listed table is refused (ErrTableNotPermitted)
+	// before anything executes — and size-bounded (ErrQueryTooLong).
+	QuerySQL(ctx context.Context, sql string) ([]Row, error)
 }
 
 // client is the single Querier implementation; it wraps osquery binary
@@ -228,94 +256,38 @@ var tableSQL = map[string]string{
 	"authorized_keys": "SELECT authorized_keys.* FROM users JOIN authorized_keys USING (uid)",
 }
 
-// Query executes an osquery SQL query and returns the results.
-func (c *client) Query(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error) {
-	var sql string
-	if query.RawSql != "" {
-		// RawSql is gated against the same credential-table deny-list as the
-		// table path: a raw query that references a sensitive table is refused
-		// BEFORE osqueryi runs. RawSql is no longer an escape hatch around the
-		// deny-list — there is no path to read shadow/sudoers/… via osquery.
-		if name := sensitiveTableRefIn(query.RawSql); name != "" {
-			return &pb.OSQueryResult{
-				QueryId: query.QueryId,
-				Success: false,
-				Error:   fmt.Sprintf("table %q is not permitted", name),
-			}, nil
-		}
-		sql = query.RawSql
-	} else if custom, ok := tableSQL[query.Table]; ok {
-		sql = custom
-	} else {
-		if !validTableName.MatchString(query.Table) {
-			return &pb.OSQueryResult{
-				QueryId: query.QueryId,
-				Success: false,
-				Error:   fmt.Sprintf("invalid table name: %q", query.Table),
-			}, nil
-		}
-		if isSensitiveTable(query.Table) {
-			return &pb.OSQueryResult{
-				QueryId: query.QueryId,
-				Success: false,
-				Error:   fmt.Sprintf("table %q is not permitted", query.Table),
-			}, nil
-		}
-		sql = fmt.Sprintf("SELECT * FROM %s", query.Table)
-	}
-
-	rows, err := c.QuerySQL(ctx, sql)
-	if err != nil {
-		return &pb.OSQueryResult{
-			QueryId: query.QueryId,
-			Success: false,
-			Error:   err.Error(),
-		}, nil
-	}
-
-	return &pb.OSQueryResult{
-		QueryId: query.QueryId,
-		Success: true,
-		Rows:    rows,
-	}, nil
-}
-
 // QuerySQL executes a raw SQL query against osquery. It is a public entry
-// point, so the credential-table deny-list gates it directly: refusal happens
-// here, before any command runs, not only on the Query wrapper paths. The gate
-// deliberately sits above execQuery so ListTables' `.tables` meta-command
-// stays ungated.
-func (c *client) QuerySQL(ctx context.Context, sql string) ([]*pb.OSQueryRow, error) {
+// point, so the size cap and the credential-table deny-list gate it directly:
+// refusal happens here, before any command runs. The gates deliberately sit
+// above execQuery so ListTables' `.tables` meta-command stays unaffected.
+func (c *client) QuerySQL(ctx context.Context, sql string) ([]Row, error) {
+	if len(sql) > maxRawSQLLen {
+		return nil, fmt.Errorf("%w: %d bytes (max %d)", ErrQueryTooLong, len(sql), maxRawSQLLen)
+	}
 	if name := sensitiveTableRefIn(sql); name != "" {
-		return nil, fmt.Errorf("table %q is not permitted", name)
+		return nil, fmt.Errorf("%w: %q", ErrTableNotPermitted, name)
 	}
 	output, err := c.execQuery(ctx, sql)
 	if err != nil {
 		return nil, err
 	}
 
-	var results []map[string]string
-	if err := json.Unmarshal([]byte(output), &results); err != nil {
+	var rows []Row
+	if err := json.Unmarshal([]byte(output), &rows); err != nil {
 		return nil, fmt.Errorf("failed to parse osquery output: %w", err)
 	}
-
-	rows := make([]*pb.OSQueryRow, 0, len(results))
-	for _, result := range results {
-		rows = append(rows, &pb.OSQueryRow{Data: result})
-	}
-
 	return rows, nil
 }
 
 // QueryTable queries a specific table by name.
-func (c *client) QueryTable(ctx context.Context, tableName string) ([]*pb.OSQueryRow, error) {
+func (c *client) QueryTable(ctx context.Context, tableName string) ([]Row, error) {
 	sql, ok := tableSQL[tableName]
 	if !ok {
-		if !validTableName.MatchString(tableName) {
-			return nil, fmt.Errorf("invalid table name: %q", tableName)
+		if len(tableName) > maxTableNameLen || !validTableName.MatchString(tableName) {
+			return nil, fmt.Errorf("%w: %q", ErrInvalidTableName, tableName)
 		}
 		if isSensitiveTable(tableName) {
-			return nil, fmt.Errorf("table %q is not permitted", tableName)
+			return nil, fmt.Errorf("%w: %q", ErrTableNotPermitted, tableName)
 		}
 		sql = fmt.Sprintf("SELECT * FROM %s", tableName)
 	}

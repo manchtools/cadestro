@@ -40,16 +40,7 @@ RUN ssh-keygen -A
 
 WORKDIR /workspace
 
-# The SDK and the contract it replaces to: sdk/go.mod redirects
-# github.com/manchtools/cadestro/contract at ../contract, so copying sdk/ alone
-# leaves the replacement directory missing and `go mod download` fails before a
-# single test compiles.
-COPY contract/ ./contract/
 COPY sdk/ ./sdk/
-
-# go.work over both modules: they are one source tree here, and the workspace is
-# what makes the sibling replacement resolve as the committed code.
-RUN printf 'go %s\n\nuse (\n\t./contract\n\t./sdk\n)\n' "$(sed -n 's/^go //p' sdk/go.mod)" > go.work
 
 # Pre-download dependencies
 RUN cd sdk && go mod download
