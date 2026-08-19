@@ -217,7 +217,13 @@ func TestStreamSurvivesRejectedActionResult(t *testing.T) {
 	defer cancel()
 	stream := f.open(t, ctx)
 
-	require.NoError(t, stream.Send(luksResult(f.own, map[string]string{"luks.device_path": "/dev/sda2"})))
+	result := luksResult(f.own, map[string]string{"luks.device_path": "/dev/sda2"})
+	require.NoError(t, stream.Send(result))
+	ack, err := stream.Receive()
+	require.NoError(t, err)
+	require.NotNil(t, ack.GetResultAck())
+	assert.Equal(t, result.Id, ack.Id)
+	assert.False(t, ack.GetResultAck().Accepted)
 
 	// The connection must still be usable: a request frame sent after the
 	// refused one still gets its answer.
@@ -243,9 +249,15 @@ func TestStreamTerminatesOnCrossDeviceClaim(t *testing.T) {
 	// No follow-up frame here: the connection is expected to be gone, so a
 	// second Send would race the teardown. Receive is the deterministic
 	// observation point — it carries the code the handler returned.
-	require.NoError(t, stream.Send(luksResult(f.foreign, nil)))
+	result := luksResult(f.foreign, nil)
+	require.NoError(t, stream.Send(result))
+	ack, err := stream.Receive()
+	require.NoError(t, err)
+	require.NotNil(t, ack.GetResultAck())
+	assert.Equal(t, result.Id, ack.Id)
+	assert.False(t, ack.GetResultAck().Accepted)
 
-	_, err := stream.Receive()
+	_, err = stream.Receive()
 	require.Error(t, err, "a cross-device claim must end the connection")
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 
@@ -262,7 +274,13 @@ func TestStreamAppliesCleanActionResult(t *testing.T) {
 	defer cancel()
 	stream := f.open(t, ctx)
 
-	require.NoError(t, stream.Send(luksResult(f.own, nil)))
+	result := luksResult(f.own, nil)
+	require.NoError(t, stream.Send(result))
+	ack, err := stream.Receive()
+	require.NoError(t, err)
+	require.NotNil(t, ack.GetResultAck())
+	assert.Equal(t, result.Id, ack.Id)
+	assert.True(t, ack.GetResultAck().Accepted)
 	require.NoError(t, stream.Send(syncRequest()))
 	response, err := stream.Receive()
 	require.NoError(t, err)

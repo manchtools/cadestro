@@ -94,7 +94,8 @@ func validManifest(manifest *pmv1.Manifest) bool {
 	if p == nil {
 		return false
 	}
-	validPath := (p.DefinitionId != "" && p.ActionSetId != "" && p.ActionId == "") ||
+	validPath := (p.DefinitionId != "" && p.ActionSetId == "" && p.ActionId == "") ||
+		(p.DefinitionId != "" && p.ActionSetId != "" && p.ActionId == "") ||
 		(p.DefinitionId == "" && p.ActionSetId != "" && p.ActionId == "") ||
 		(p.DefinitionId == "" && p.ActionSetId == "" && p.ActionId != "")
 	if !validPath {
@@ -280,6 +281,9 @@ func (s *Service) Complete(ctx context.Context, deliveryID, deviceID, manifestID
 	}
 	row, err := s.store.GetDelivery(ctx, deliveryID)
 	if err != nil {
+		if store.IsNotFound(err) {
+			return true, s.store.RecordPolicyManifestResult(ctx, deviceID, deliveryID, manifestID, state, resultCode)
+		}
 		return false, err
 	}
 	if err := resultAllowed(row, deviceID, manifestID, state, resultCode); err != nil {

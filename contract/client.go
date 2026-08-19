@@ -501,6 +501,12 @@ type StreamHandler interface {
 	OnError(ctx context.Context, err *pm.Error) error
 }
 
+// SyncHintHandler receives a lossy prompt to run the normal agent-initiated
+// Sync. The hint carries no policy and may be dropped when the agent is busy.
+type SyncHintHandler interface {
+	OnSyncHint(context.Context, *pm.SyncHint) error
+}
+
 // StreamingHandler extends StreamHandler with output streaming during manifest
 // execution. Handlers that implement this interface receive a callback for
 // pushing output chunks as the manifest's occurrences run.
@@ -689,23 +695,46 @@ func (c *Client) SendHeartbeat(ctx context.Context, hb *pm.Heartbeat) error {
 // ingestion on that pair, so a result replayed after a reconnect updates the
 // same row instead of creating a second one.
 func (c *Client) SendActionResult(ctx context.Context, result *pm.ActionResult) error {
-	return c.send(ctx, &pm.AgentMessage{
-		Id: NewULID(),
-		Payload: &pm.AgentMessage_ActionResult{
-			ActionResult: result,
-		},
-	})
+	message := &pm.AgentMessage{Id: NewULID(), Payload: &pm.AgentMessage_ActionResult{ActionResult: result}}
+	if result == nil || result.GetDeliveryId() == "" || result.GetOccurrenceId() == "" {
+		return c.send(ctx, message)
+	}
+	return c.sendResultAwaitAck(ctx, message)
 }
 
 // SendManifestResult reports the outcome of a complete manifest, once, after
 // its occurrences have reported individually.
 func (c *Client) SendManifestResult(ctx context.Context, result *pm.ManifestResult) error {
-	return c.send(ctx, &pm.AgentMessage{
-		Id: NewULID(),
-		Payload: &pm.AgentMessage_ManifestResult{
-			ManifestResult: result,
-		},
-	})
+	message := &pm.AgentMessage{Id: NewULID(), Payload: &pm.AgentMessage_ManifestResult{ManifestResult: result}}
+	if result == nil || result.GetDeliveryId() == "" || result.GetManifestId() == "" {
+		return c.send(ctx, message)
+	}
+	return c.sendResultAwaitAck(ctx, message)
+}
+
+func (c *Client) sendResultAwaitAck(ctx context.Context, message *pm.AgentMessage) error {
+	id := message.Id
+	ch := c.registerPending(id)
+	defer c.unregisterPending(id)
+	if err := c.send(ctx, message); err != nil {
+		return err
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case response, ok := <-ch:
+		if !ok || response == nil {
+			return errors.New("stream closed while waiting for result acknowledgement")
+		}
+		ack := response.GetResultAck()
+		if ack == nil || !ack.GetAccepted() {
+			if ack == nil {
+				return errors.New("server returned no result acknowledgement")
+			}
+			return fmt.Errorf("result rejected: %s", ack.GetCode())
+		}
+		return nil
+	}
 }
 
 // SendDeliveryReceipt confirms that a delivery is durably recorded on this
@@ -1398,6 +1427,13 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		}
 	}()
 	switch p := msg.Payload.(type) {
+	case *pm.ServerMessage_SyncHint:
+		if p.SyncHint == nil {
+			return nil
+		}
+		if h, ok := handler.(SyncHintHandler); ok {
+			return h.OnSyncHint(ctx, p.SyncHint)
+		}
 	case *pm.ServerMessage_Welcome:
 		if p.Welcome == nil {
 			c.logger.Warn("dropping Welcome with nil payload", "message_id", msg.Id)
@@ -1483,7 +1519,8 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		*pm.ServerMessage_GetLuksKey,
 		*pm.ServerMessage_StoreLuksKey,
 		*pm.ServerMessage_StoreLpsPasswords,
-		*pm.ServerMessage_ValidateLuksToken:
+		*pm.ServerMessage_ValidateLuksToken,
+		*pm.ServerMessage_ResultAck:
 		// Correlated response: deliver to the pending request by message ID.
 		// Every Client method that blocks on registerPending MUST be listed here
 		// — a missing case does not error, it drops the frame and the caller
@@ -1751,6 +1788,9 @@ type SyncStateResult struct {
 	// time. The agent evaluates this against time.Now().Local() before
 	// firing scheduler-driven dispatches; instant actions bypass the gate.
 	MaintenanceWindow *pm.MaintenanceWindow
+	// DesiredPolicy is the authenticated assignment snapshot. It is reconciled
+	// locally and does not use ManifestDelivery receipts.
+	DesiredPolicy *pm.DesiredPolicy
 }
 
 // Sync requests the current deliveries and device policy on the existing
@@ -1786,6 +1826,7 @@ func (c *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 			Deliveries:          state.Deliveries,
 			SyncIntervalMinutes: state.SyncIntervalMinutes,
 			MaintenanceWindow:   state.MaintenanceWindow,
+			DesiredPolicy:       state.DesiredPolicy,
 		}, nil
 	}
 }

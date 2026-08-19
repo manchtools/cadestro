@@ -97,7 +97,7 @@ func TestOneShotDispatchRunsWhileWindowDefersScheduledWork(t *testing.T) {
 		exec.executed,
 		"the one-shot must run despite the closed window; the assigned manifest must not")
 
-	due, err := st.GetDueManifestDeliveries(context.Background())
+	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1, "the deferred assigned manifest stays due; the finished one-shot does not return")
 	require.Equal(t, scheduled.GetDeliveryId(), due[0].Delivery.GetDeliveryId())

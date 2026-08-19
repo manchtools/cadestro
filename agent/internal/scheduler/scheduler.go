@@ -96,6 +96,17 @@ func (s *Scheduler) RecordDelivery(ctx context.Context, delivery *pb.ManifestDel
 	return inserted, err
 }
 
+// ReconcilePolicy replaces assignment-derived work without touching explicit
+// deliveries. Policy snapshots are already authenticated by Sync, so no
+// delivery receipt is emitted.
+func (s *Scheduler) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
+	if err := s.store.ReconcilePolicy(ctx, policy); err != nil {
+		return err
+	}
+	s.Wake()
+	return nil
+}
+
 func (s *Scheduler) GetPendingResults() ([]store.PendingResult, error) {
 	return s.store.GetPendingResults()
 }
@@ -174,7 +185,7 @@ func (s *Scheduler) runDue(ctx context.Context) {
 		s.logger.Error("recover interrupted occurrences", "error", err)
 		return
 	}
-	deliveries, err := s.store.GetDueManifestDeliveries(ctx)
+	deliveries, err := s.store.GetDueScheduledWork(ctx)
 	if err != nil {
 		s.logger.Error("load due manifests", "error", err)
 		return

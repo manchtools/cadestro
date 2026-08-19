@@ -615,6 +615,28 @@ CREATE INDEX idx_executions_status ON executions(status);
 CREATE INDEX idx_executions_device_status ON executions(device_id, status);
 CREATE INDEX idx_executions_delivery ON executions(delivery_id);
 
+-- Assignment runs are accepted on the authenticated Sync/result stream and
+-- never become transport deliveries. These append-only result rows retain
+-- owner-bound replay evidence without inventing a delivery receipt.
+CREATE TABLE policy_action_results (
+    run_id       text NOT NULL,
+    occurrence_id text NOT NULL,
+    device_id    text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    action_id    text NOT NULL,
+    result_hash  text NOT NULL CHECK (length(result_hash) = 64),
+    payload      text NOT NULL CHECK (json_valid(payload)),
+    created_at   timestamp NOT NULL,
+    PRIMARY KEY (run_id, occurrence_id)
+);
+CREATE TABLE policy_manifest_results (
+    run_id      text PRIMARY KEY,
+    device_id   text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    manifest_id text NOT NULL,
+    state       text NOT NULL,
+    result_code text NOT NULL,
+    created_at  timestamp NOT NULL
+);
+
 CREATE TABLE execution_output_chunks (
     execution_id text NOT NULL REFERENCES executions(id) ON DELETE CASCADE,
     stream       text NOT NULL CHECK (stream IN ('stdout', 'stderr')),

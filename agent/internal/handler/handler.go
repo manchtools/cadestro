@@ -91,6 +91,17 @@ func NewHandler(logger *slog.Logger, exec *executor.Executor, sched *scheduler.S
 	}
 }
 
+func (h *Handler) OnSyncHint(context.Context, *pb.SyncHint) error {
+	if h.syncTrigger == nil {
+		return nil
+	}
+	select {
+	case h.syncTrigger <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
 // getOsquery returns the osquery registry, initializing it lazily on first use.
 // If osquery was not found previously, it re-checks so that osquery installed
 // after the agent started is detected without requiring a restart.

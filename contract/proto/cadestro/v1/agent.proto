@@ -153,6 +153,10 @@ message ServerMessage {
   string id = 1;
 
   oneof payload {
+	// A lossy prompt to perform the normal authenticated Sync. It carries no
+	// policy and has no durable delivery semantics.
+	// @gotags: validate:"omitempty"
+	SyncHint sync_hint = 11;
     // @gotags: validate:"omitempty"
     Welcome welcome = 10;
     // @gotags: validate:"omitempty"
@@ -176,6 +180,9 @@ message ServerMessage {
     StoreLpsPasswordsResponse store_lps_passwords = 53;
     // @gotags: validate:"omitempty"
     ValidateLuksTokenResponse validate_luks_token = 54;
+	// Correlated application acknowledgement for result ingestion.
+	// @gotags: validate:"omitempty"
+	ResultAck result_ack = 24;
     // Log query dispatch (journalctl)
     // @gotags: validate:"omitempty"
     LogQuery log_query = 60;
@@ -190,6 +197,8 @@ message ServerMessage {
     TerminalStop terminal_stop = 73;
   }
 }
+
+message SyncHint {}
 
 message Welcome {
   // @gotags: validate:"required,min=1,max=32"
@@ -221,9 +230,9 @@ enum OnFailure {
 // composition and does not resolve one.
 //
 // Which levels are populated follows the assignment that produced the
-// manifest: a Definition assignment sets definition_id and action_set_id (one
-// manifest per contained set), an ActionSet assignment sets action_set_id
-// alone, and a singleton Action assignment sets action_id alone.
+// manifest: an assignment-pulled Definition sets definition_id on one ordered
+// runbook, an ActionSet assignment sets action_set_id alone, and a singleton
+// Action assignment sets action_id alone.
 message ManifestProvenance {
   // @gotags: validate:"omitempty,ulid"
   string definition_id = 1;
@@ -257,9 +266,9 @@ message ManifestOccurrence {
 // of action occurrences under one schedule and one failure policy.
 //
 // Assigning an Action creates a singleton manifest; assigning an ActionSet
-// creates one manifest; assigning a Definition creates one manifest per
-// contained ActionSet. Definition compilation overrides each emitted manifest's
-// schedule without rewriting its ActionSet; set failure policies remain independent.
+// creates one manifest; assigning a Definition creates one globally ordered
+// runbook. Explicit Definition dispatch may retain its historical batch shape;
+// pulled policy carries the authored order and set failure policies directly.
 message Manifest {
   // @gotags: validate:"required,ulid"
   string manifest_id = 1;
@@ -333,6 +342,11 @@ message ManifestResult {
   int64 duration_ms = 5;
   // @gotags: validate:"omitempty,max=4096"
   string error = 6;
+}
+
+message ResultAck {
+  bool accepted = 1;
+  string code = 2;
 }
 
 message Error {
@@ -621,6 +635,20 @@ message SyncState {
   // is also the response when no groups carry a window. The agent
   // evaluates this against time.Now().Local() at dispatch time.
   MaintenanceWindow maintenance_window = 3;
+
+  // Current assignment-derived desired state. Unlike deliveries, this is a
+  // replaceable snapshot: the agent reconciles it locally and sends no
+  // delivery receipt for these manifests.
+  DesiredPolicy desired_policy = 4;
+}
+
+message DesiredPolicy {
+  // Stable revision of the resolved device policy.
+  // @gotags: validate:"required,ulid"
+  string revision = 1;
+  // One globally ordered runbook for the device. Empty containers are omitted.
+  // @gotags: validate:"omitempty,dive"
+  repeated Manifest manifests = 2;
 }
 
 // ============================================================================

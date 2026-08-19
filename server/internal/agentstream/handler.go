@@ -313,13 +313,21 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 	case *pmv1.AgentMessage_ManifestResult:
 		state, code, err := manifestResultState(payload.ManifestResult)
 		if err != nil {
+			_ = h.sendResultAck(agent, message.Id, err)
 			return err
 		}
 		_, err = h.deliveries.Complete(ctx, payload.ManifestResult.DeliveryId, deviceID,
 			payload.ManifestResult.ManifestId, state, code)
+		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
+			return ackErr
+		}
 		return err
 	case *pmv1.AgentMessage_ActionResult:
-		return h.executions.ApplyActionResult(ctx, deviceID, payload.ActionResult)
+		err := h.executions.ApplyActionResult(ctx, deviceID, payload.ActionResult)
+		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
+			return ackErr
+		}
+		return err
 	case *pmv1.AgentMessage_OutputChunk:
 		return h.executions.AppendOutputChunk(ctx, deviceID, payload.OutputChunk)
 	case *pmv1.AgentMessage_QueryResult:
@@ -353,6 +361,19 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 	default:
 		return errors.New("unsupported agent frame")
 	}
+}
+
+func (h *Handler) sendResultAck(agent *connection.Agent, messageID string, resultErr error) error {
+	if agent == nil || messageID == "" {
+		return nil
+	}
+	ack := &pmv1.ResultAck{Accepted: resultErr == nil}
+	if resultErr == nil {
+		ack.Code = "ACCEPTED"
+	} else {
+		ack.Code = "REJECTED"
+	}
+	return agent.Send(&pmv1.ServerMessage{Id: messageID, Payload: &pmv1.ServerMessage_ResultAck{ResultAck: ack}})
 }
 
 func (h *Handler) allowFrame(deviceID string, message *pmv1.AgentMessage) bool {

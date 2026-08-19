@@ -112,15 +112,15 @@ reaches.
 This is the single most important operational fact on this page, and it is easy
 to assume the opposite.
 
-<!-- docref: begin src=contract/proto/cadestro/v1/control.proto#ControlService.DispatchAssignedActions:031cd7e5,server/internal/dispatch/handlers.go#Handlers.DispatchAssignedActions:8fdbf875 -->
-Writing an assignment row commits the *intent*. Turning that intent into work
-for a particular device is a separate, explicitly invoked operation —
-`DispatchAssignedActions` — which resolves that device's assignments, compiles
-them, and commits the deliveries. There is no background reconciler that walks
-the fleet applying new assignments on its own.
+<!-- docref: begin src=contract/proto/cadestro/v1/control.proto#ControlService.DispatchAssignedActions:031cd7e5,server/internal/dispatch/handlers.go#Handlers.DispatchAssignedActions:50b74470 -->
+Writing an assignment row commits the *intent*. An authenticated agent's next
+`Sync` resolves that device's assignments and pulls the current desired policy;
+`DispatchAssignedActions` remains only as a compatibility sync hint and never
+commits a policy delivery. There is no background reconciler that walks the
+fleet applying new assignments on its own.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/dispatch/assigned.go#Handlers.assignedManifests:7bd228ed -->
+<!-- docref: begin src=server/internal/dispatch/assigned.go#CompileAssigned:2dd608d5 -->
 When it does run, resolution walks the assigned sources in a fixed order —
 definitions, then action sets, then singleton actions, then compliance policies
 — and an action already carried by a container it walked earlier is not emitted
@@ -260,7 +260,7 @@ having landed, so a handler error — or a panic — leaves the delivery
 unacknowledged, which is exactly the state that makes control redeliver it.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/store/manifest.go#Store.RecordManifestDelivery:b40ecef4 -->
+<!-- docref: begin src=agent/internal/store/manifest.go#Store.RecordManifestDelivery:636d839b -->
 The agent's dedupe is byte-exact, not id-only. A replay carrying identical
 manifest bytes is accepted without touching the schedule or execution state. The
 same delivery id carrying *different* bytes is **rejected** — and because the
@@ -277,7 +277,7 @@ transition are successful no-ops, and a receipt naming another device's delivery
 is rejected outright.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/delivery/state.go#Service.MarkPushed:ec61132f,server/internal/delivery/state.go#Service.Complete:736a52cf -->
+<!-- docref: begin src=server/internal/delivery/state.go#Service.MarkPushed:ec61132f,server/internal/delivery/state.go#Service.Complete:33b7134a -->
 Every transition is a conditional, audited SQLite transaction rather than a
 read-then-write. Pushes carry the connection's epoch so an older stream can
 never overwrite a newer one's state, and a completion replay is accepted only if
@@ -305,12 +305,13 @@ for the future is never pulled forward. The same guard is used by the push path
 and the agent's sync path so the two cannot drift apart.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#SyncState:d55811d5 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#SyncState:42f97884 -->
 Periodic sync is a *state refresh*, not a second dispatch path. It carries every
-delivery currently assigned to the device, each keeping the same durable
-`delivery_id` the push path would have used, so a manifest the agent already
-recorded is recognised as a repeat and not re-run. The default sync interval is
-30 minutes unless the server sets one.
+explicit delivery currently assigned to the device and the device's resolved
+desired policy snapshot. Explicit deliveries retain their durable
+`delivery_id`; assignment policy is reconciled locally as replaceable scheduled
+work without a transport receipt. The default sync interval is 30 minutes
+unless the server sets one.
 <!-- docref: end -->
 
 <!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#AgentService:1027f6e5 -->
@@ -358,7 +359,7 @@ group without a window is unrestricted. Windows narrow a device only when every
 group reaching it agrees to narrow it.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/scheduler/scheduler.go#Scheduler.runDue:b20ae0bb -->
+<!-- docref: begin src=agent/internal/scheduler/scheduler.go#Scheduler.runDue:e3bd1024 -->
 **A deferred run is silent.** When the window is closed the agent simply does not
 start the manifest — it does not report a skipped execution, and control sees
 nothing at all until the window opens and the work actually runs. Do not look
@@ -390,7 +391,7 @@ cadence. The agent executes such a delivery exactly once on durable receipt and
 never reschedules it.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/scheduler/scheduler.go#Scheduler.runDue:b20ae0bb -->
+<!-- docref: begin src=agent/internal/scheduler/scheduler.go#Scheduler.runDue:e3bd1024 -->
 A one-shot delivery is also **exempt from the maintenance window**. An operator
 asking for something now means now; assigned work keeps deferring until the
 window opens. This is the only exemption — the flag does not bypass the receipt,

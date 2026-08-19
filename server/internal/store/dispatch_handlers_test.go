@@ -17,8 +17,11 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
+	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/connection"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -41,6 +44,10 @@ type dispatchHandlerFixture struct {
 }
 
 func newDispatchHandlerFixture(t *testing.T) *dispatchHandlerFixture {
+	return newDispatchHandlerFixtureWithSender(t, nil)
+}
+
+func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *pmv1.ServerMessage) error) *dispatchHandlerFixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
@@ -92,6 +99,7 @@ func newDispatchHandlerFixture(t *testing.T) *dispatchHandlerFixture {
 	require.NoError(t, err)
 	f.handlers = dispatch.NewHandlers(dispatch.HandlersConfig{
 		Store: st, AtRest: atRest, Waker: f.waker,
+		Sender: sender,
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Now:    func() time.Time { return now },
 	})
@@ -121,6 +129,91 @@ func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, target
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		newID(), sourceType, sourceID, targetType, targetID, int32(mode), f.now, f.actorID)
 	require.NoError(f.t, err)
+}
+
+func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
+	f := newDispatchHandlerFixture(t)
+	f.assign("definition", f.definition, "device", f.deviceID, pmv1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED)
+
+	manager := connection.NewManager()
+	agent := manager.Register(context.Background(), f.deviceID, "device", "v1", nil)
+	t.Cleanup(agent.Close)
+	other := manager.Register(context.Background(), f.otherDevice, "other", "v1", nil)
+	t.Cleanup(other.Close)
+	syncer := agentsync.New(agentsync.Config{
+		Store: f.store, Manager: manager,
+		Deliveries:  delivery.New(delivery.Config{Store: f.store, Now: func() time.Time { return f.now }}),
+		Assignments: f.handlers,
+		Now:         func() time.Time { return f.now },
+	})
+	rows, err := f.store.ListDeviceDeliveries(context.Background(), f.deviceID, 10)
+	require.NoError(t, err)
+	require.Empty(t, rows, "policy must not be materialized before an agent pulls it")
+	otherState, err := syncer.Sync(context.Background(), f.otherDevice)
+	require.NoError(t, err)
+	require.NotNil(t, otherState.DesiredPolicy)
+	require.Empty(t, otherState.DesiredPolicy.Manifests, "one device cannot pull another device's assignment")
+
+	state, err := syncer.Sync(context.Background(), f.deviceID)
+	require.NoError(t, err)
+	require.Empty(t, state.Deliveries, "assignment policy is returned only in the explicit Sync snapshot")
+	require.NotNil(t, state.DesiredPolicy)
+	require.Len(t, state.DesiredPolicy.Manifests, 1, "a Definition is one globally ordered runbook")
+	require.Len(t, state.DesiredPolicy.Manifests[0].Occurrences, 2)
+	require.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, state.DesiredPolicy.Manifests[0].Occurrences[0].OnFailure)
+	require.Equal(t, pmv1.OnFailure_ON_FAILURE_CONTINUE, state.DesiredPolicy.Manifests[0].Occurrences[1].OnFailure)
+	firstRevision := state.DesiredPolicy.Revision
+	firstManifestID := state.DesiredPolicy.Manifests[0].ManifestId
+	// Repeated compilation must keep the authored revision and manifest
+	// identity stable even when the device-facing payload is rebuilt.
+	repeated, err := syncer.Sync(context.Background(), f.deviceID)
+	require.NoError(t, err)
+	assert.Equal(t, firstRevision, repeated.DesiredPolicy.Revision)
+	assert.Equal(t, firstManifestID, repeated.DesiredPolicy.Manifests[0].ManifestId)
+
+	// Semantic authoring changes feed the stable identity seed rather than
+	// being hidden by the per-device sealed payload.
+	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = $1, params_canonical = $1 WHERE id = $2`,
+		`{"interpreter":"/bin/sh","script":"printf changed"}`, f.actionID)
+	require.NoError(t, err)
+	changed, err := syncer.Sync(context.Background(), f.deviceID)
+	require.NoError(t, err)
+	assert.NotEqual(t, firstRevision, changed.DesiredPolicy.Revision)
+	assert.NotEqual(t, firstManifestID, changed.DesiredPolicy.Manifests[0].ManifestId)
+
+	// Authored container order is semantic even when the contained action is
+	// currently the same, so moving the sets changes the policy identity.
+	_, err = f.raw.Exec(context.Background(), `UPDATE definition_members
+		SET sort_order = CASE WHEN sort_order = 0 THEN 1 ELSE 0 END
+		WHERE definition_id = $1`, f.definition)
+	require.NoError(t, err)
+	reordered, err := syncer.Sync(context.Background(), f.deviceID)
+	require.NoError(t, err)
+	assert.NotEqual(t, changed.DesiredPolicy.Revision, reordered.DesiredPolicy.Revision)
+	assert.NotEqual(t, changed.DesiredPolicy.Manifests[0].ManifestId, reordered.DesiredPolicy.Manifests[0].ManifestId)
+
+	// Assignment mode is also semantic: force-absent must not reuse the
+	// required-mode identity when the source is toggled.
+	_, err = f.raw.Exec(context.Background(), `DELETE FROM assignments WHERE source_id = $1`, f.definition)
+	require.NoError(t, err)
+	f.assign("definition", f.definition, "device", f.deviceID, pmv1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL)
+	forced, err := syncer.Sync(context.Background(), f.deviceID)
+	require.NoError(t, err)
+	assert.NotEqual(t, reordered.DesiredPolicy.Revision, forced.DesiredPolicy.Revision)
+	assert.NotEqual(t, reordered.DesiredPolicy.Manifests[0].ManifestId, forced.DesiredPolicy.Manifests[0].ManifestId)
+
+	rows, err = f.store.ListDeviceDeliveries(context.Background(), f.deviceID, 10)
+	require.NoError(t, err)
+	require.Empty(t, rows, "Sync policy is not a server delivery")
+
+	_, err = f.raw.Exec(context.Background(), `DELETE FROM assignments WHERE source_id IN ($1, $2)`, f.definition, f.actionID)
+	require.NoError(t, err)
+	state, err = syncer.Sync(context.Background(), f.deviceID)
+	require.NoError(t, err)
+	require.Empty(t, state.DesiredPolicy.Manifests, "unassignment must be observable on the next pull")
+	rows, err = f.store.ListDeviceDeliveries(context.Background(), f.deviceID, 10)
+	require.NoError(t, err)
+	require.Empty(t, rows)
 }
 
 func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *testing.T) {
@@ -311,11 +404,10 @@ func TestDispatchHandlers_AssignedDispatchIsNotOneShot(t *testing.T) {
 	_, err := f.handlers.DispatchAssignedActions(f.actor("DispatchAssignedActions"),
 		connect.NewRequest(&pmv1.DispatchAssignedActionsRequest{DeviceId: f.deviceID}))
 	require.NoError(t, err)
-	require.Len(t, f.waker.ids, 1)
-	compiled := f.manifest(f.waker.ids[0])
-	assert.False(t, compiled.GetOneShot(),
-		"assigned work stays scheduled and never becomes one-shot")
-	assert.Equal(t, "0 4 * * *", compiled.Schedule.Cron)
+	require.Empty(t, f.waker.ids, "assigned work is pulled by Sync rather than queued")
+	response, err := f.store.ListDeviceDeliveries(context.Background(), f.deviceID, 10)
+	require.NoError(t, err)
+	require.Empty(t, response)
 }
 
 func TestDispatchHandlers_AssignedDefinitionAbsorbsChildrenAndOverridesManifestSchedules(t *testing.T) {
@@ -327,18 +419,11 @@ func TestDispatchHandlers_AssignedDefinitionAbsorbsChildrenAndOverridesManifestS
 	response, err := f.handlers.DispatchAssignedActions(f.actor("DispatchAssignedActions"),
 		connect.NewRequest(&pmv1.DispatchAssignedActionsRequest{DeviceId: f.deviceID}))
 	require.NoError(t, err)
-	require.Len(t, response.Msg.Executions, 2,
-		"the Definition emits one manifest per set and absorbs direct assignments to its children")
-	require.Len(t, f.waker.ids, 2)
-	for _, deliveryID := range f.waker.ids {
-		compiled := f.manifest(deliveryID)
-		assert.Equal(t, f.definition, compiled.Provenance.DefinitionId)
-		assert.Equal(t, "0 1 * * *", compiled.Schedule.Cron,
-			"the Definition schedule overrides only its compiled manifests")
-		require.Len(t, compiled.Occurrences, 1)
-		assert.Equal(t, pmv1.DesiredState_DESIRED_STATE_ABSENT,
-			compiled.Occurrences[0].Action.DesiredState)
-	}
+	require.Empty(t, response.Msg.Executions)
+	require.Empty(t, f.waker.ids, "assigned work is pulled by Sync rather than queued")
+	rows, err := f.store.ListDeviceDeliveries(context.Background(), f.deviceID, 10)
+	require.NoError(t, err)
+	require.Empty(t, rows)
 
 	var set1Schedule, set2Schedule string
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
@@ -353,7 +438,7 @@ func TestDispatchHandlers_AssignedDefinitionAbsorbsChildrenAndOverridesManifestS
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
-	require.Len(t, effects, 4)
+	require.Empty(t, effects, "offline hints are lossy and must not claim delivery")
 }
 
 func TestDispatchHandlers_ExcludedAssignedContainerAbsorbsDirectChildren(t *testing.T) {
@@ -374,8 +459,33 @@ func TestDispatchHandlers_ExcludedAssignedContainerAbsorbsDirectChildren(t *test
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
-	require.Len(t, effects, 1, "an empty assigned dispatch is still an auditable operation")
-	assert.Equal(t, "device", effects[0].ResourceType)
+	require.Empty(t, effects, "offline hints are a no-op, not an applied effect")
+}
+
+func TestDispatchHandlers_AssignedDispatchOnlineSendsSyncHint(t *testing.T) {
+	var messages []*pmv1.ServerMessage
+	sender := func(_ string, message *pmv1.ServerMessage) error {
+		messages = append(messages, message)
+		return nil
+	}
+	f := newDispatchHandlerFixtureWithSender(t, sender)
+	f.assign("action", f.actionID, "device", f.deviceID, pmv1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED)
+
+	_, err := f.handlers.DispatchAssignedActions(f.actor("DispatchAssignedActions"),
+		connect.NewRequest(&pmv1.DispatchAssignedActionsRequest{DeviceId: f.deviceID}))
+	require.NoError(t, err)
+	require.Len(t, messages, 1)
+	_, ok := messages[0].GetPayload().(*pmv1.ServerMessage_SyncHint)
+	require.True(t, ok)
+	require.Empty(t, f.waker.ids, "a hint must not queue policy delivery")
+
+	operation, err := latestOperationFor(t, f.store, f.raw,
+		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure)
+	require.NoError(t, err)
+	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
+	require.NoError(t, err)
+	require.Len(t, effects, 1)
+	assert.Equal(t, string(store.EffectApplied), effects[0].Outcome)
 }
 
 func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testing.T) {

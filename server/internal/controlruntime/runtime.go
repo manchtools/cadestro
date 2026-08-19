@@ -117,7 +117,12 @@ func New(cfg Config) *Runtime {
 	secretService := agentsecrets.New(agentsecrets.Config{
 		Store: cfg.Store, AtRest: cfg.AtRest, ControlSealingPrivateKey: cfg.ControlSealingPrivateKey, Now: cfg.Now,
 	})
-	syncService := agentsync.New(agentsync.Config{Store: cfg.Store, Manager: manager, Deliveries: deliveryState})
+	dispatchHandlers := dispatch.NewHandlers(dispatch.HandlersConfig{
+		Store: cfg.Store, AtRest: cfg.AtRest, Waker: dispatcher, Sender: manager.Send, Logger: cfg.Logger, Now: cfg.Now,
+	})
+	syncService := agentsync.New(agentsync.Config{
+		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Assignments: dispatchHandlers,
+	})
 	agentService := agentstream.New(agentstream.Config{
 		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Executions: executionResults,
 		DeviceResults: deviceHandlers, Secrets: secretService, Sync: syncService, Waker: dispatcher,
@@ -159,7 +164,7 @@ func New(cfg Config) *Runtime {
 			Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now, CAFingerprint: caFingerprint,
 		}),
 		Compliance: compliance.NewHandlers(compliance.HandlersConfig{Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now}),
-		Dispatch:   dispatch.NewHandlers(dispatch.HandlersConfig{Store: cfg.Store, AtRest: cfg.AtRest, Waker: dispatcher, Logger: cfg.Logger, Now: cfg.Now}),
+		Dispatch:   dispatchHandlers,
 		Search:     searchrpc.NewHandlers(cfg.Store, cfg.Logger, cfg.Now),
 	}.Mount(publicMux, controlOptions...)
 

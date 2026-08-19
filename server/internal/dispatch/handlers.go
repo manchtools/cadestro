@@ -27,6 +27,7 @@ type HandlersConfig struct {
 	Store  *store.Store
 	AtRest *pmcrypto.Encryptor
 	Waker  Waker
+	Sender func(deviceID string, message *pmv1.ServerMessage) error
 	Logger *slog.Logger
 	Now    func() time.Time
 }
@@ -38,6 +39,7 @@ type Handlers struct {
 	submitter *Service
 	logger    *slog.Logger
 	validator *validator.Validate
+	sender    func(deviceID string, message *pmv1.ServerMessage) error
 }
 
 // NewHandlers constructs direct dispatch handlers. Missing durable state or a
@@ -52,7 +54,7 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 	return &Handlers{
 		store: cfg.Store, compiler: manifest.New(cfg.Store, cfg.AtRest),
 		submitter: New(Config{Store: cfg.Store, Waker: cfg.Waker, Now: cfg.Now}),
-		logger:    cfg.Logger, validator: sdkvalidate.NewValidator(),
+		logger:    cfg.Logger, validator: sdkvalidate.NewValidator(), sender: cfg.Sender,
 	}
 }
 
@@ -439,8 +441,9 @@ func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv
 	}), nil
 }
 
-// DispatchAssignedActions resolves assignment modes and authoring precedence,
-// then submits the resulting manifests as one durable device operation.
+// DispatchAssignedActions keeps the compatibility RPC as an authenticated
+// resolve/sync hint. Assignment work is pulled by the agent's mTLS Sync; this
+// RPC never creates a transport delivery.
 func (h *Handlers) DispatchAssignedActions(ctx context.Context, req *connect.Request[pmv1.DispatchAssignedActionsRequest]) (*connect.Response[pmv1.DispatchAssignedActionsResponse], error) {
 	if err := validateRequest(h, ctx, req); err != nil {
 		return nil, err
@@ -452,39 +455,26 @@ func (h *Handlers) DispatchAssignedActions(ctx context.Context, req *connect.Req
 	if err := h.target(ctx, actor, "DispatchAssignedActions", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	inputs, err := h.assignedManifests(ctx, req.Msg.DeviceId)
-	if err != nil {
-		switch {
-		case errors.Is(err, errAssignedSourceNotVisible):
-			return nil, notFound(ctx, errAssignedSourceMissing, "assignment source not found")
-		case errors.Is(err, manifest.ErrEmptyManifest):
-			return nil, rpcError(ctx, errValidationFailed, connect.CodeFailedPrecondition,
-				"an assigned container contains no executable actions")
-		default:
-			return nil, h.internal(ctx, "resolve assigned manifests", err)
-		}
-	}
 	op := h.operation(req, actor,
 		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure, "DispatchAssignedActions")
-	if len(inputs) == 0 {
-		_, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
-			ResourceType: "device", ResourceID: req.Msg.DeviceId,
-			Action: "DISPATCH_ASSIGNED", Outcome: store.EffectApplied,
+	var effect *store.AuditEffect
+	if h.sender != nil {
+		err := h.sender(req.Msg.DeviceId, &pmv1.ServerMessage{
+			Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_SyncHint{SyncHint: &pmv1.SyncHint{}},
 		})
-		if err != nil {
-			return nil, h.internal(ctx, "audit empty assigned dispatch", err)
+		if err == nil {
+			effect = &store.AuditEffect{ResourceType: "device", ResourceID: req.Msg.DeviceId,
+				Action: "SYNC_HINT", Outcome: store.EffectApplied}
 		}
-		return connect.NewResponse(&pmv1.DispatchAssignedActionsResponse{}), nil
 	}
-	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: op, DeviceID: req.Msg.DeviceId, Manifests: inputs,
-	})
-	if err != nil {
-		return nil, h.submitError(ctx, "submit assigned manifests", err)
+	var effects []store.AuditEffect
+	if effect != nil {
+		effects = append(effects, *effect)
 	}
-	return connect.NewResponse(&pmv1.DispatchAssignedActionsResponse{
-		Executions: createdExecutionsToProto(result.Executions),
-	}), nil
+	if _, err := h.store.RecordOperation(ctx, op, effects...); err != nil {
+		return nil, h.internal(ctx, "audit assigned sync hint", err)
+	}
+	return connect.NewResponse(&pmv1.DispatchAssignedActionsResponse{}), nil
 }
 
 func (h *Handlers) compileError(ctx context.Context, operation string, err error) error {

@@ -108,14 +108,70 @@ func (c *Compiler) actionSet(ctx context.Context, deviceID, id string) (*pmv1.Ma
 	return c.compileSet(ctx, deviceID, set, rows, &pmv1.ManifestProvenance{ActionSetId: id}, nil)
 }
 
-// Definition creates one manifest per contained ActionSet. The Definition
-// schedule overrides each emitted manifest without rewriting its ActionSet.
+// Definition preserves the historical explicit-dispatch shape: one manifest
+// per contained ActionSet. Assignment pull uses DefinitionRunbookForDevice so
+// the same authored Definition arrives as one globally ordered runbook.
 func (c *Compiler) Definition(ctx context.Context, id string) ([]*pmv1.Manifest, error) {
 	return c.definition(ctx, "", id)
 }
 
 func (c *Compiler) DefinitionForDevice(ctx context.Context, deviceID, id string) ([]*pmv1.Manifest, error) {
 	return c.definition(ctx, deviceID, id)
+}
+
+// DefinitionRunbookForDevice compiles a Definition into one globally ordered
+// runbook for assignment pull. Explicit definition dispatch retains its
+// historical one-manifest-per-set shape for compatibility.
+func (c *Compiler) DefinitionRunbookForDevice(ctx context.Context, deviceID, id string) (*pmv1.Manifest, error) {
+	if !validInput(ctx, id) {
+		return nil, ErrInvalidInput
+	}
+	definition, err := c.store.GetManifestDefinition(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	sets, err := c.store.ListManifestDefinitionActionSets(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := c.store.ListManifestDefinitionActions(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	actionsBySet := make(map[string][]store.ActionRow, len(sets))
+	for _, row := range rows {
+		actionsBySet[row.ActionSetID] = append(actionsBySet[row.ActionSetID], row.Action)
+	}
+	schedule, err := requiredSchedule(definition.Schedule)
+	if err != nil {
+		return nil, fmt.Errorf("manifest definition schedule: %w", err)
+	}
+	runbook := &pmv1.Manifest{
+		ManifestId: ulid.Make().String(), Provenance: &pmv1.ManifestProvenance{DefinitionId: id},
+		Schedule: schedule, DefaultOnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
+		Occurrences: make([]*pmv1.ManifestOccurrence, 0),
+	}
+	for _, set := range sets {
+		setRows := actionsBySet[set.ID]
+		if len(setRows) == 0 {
+			continue
+		}
+		policy := pmv1.OnFailure(set.OnFailure)
+		if policy != pmv1.OnFailure_ON_FAILURE_CONTINUE && policy != pmv1.OnFailure_ON_FAILURE_STOP {
+			return nil, fmt.Errorf("action set %s has invalid failure policy %d", set.ID, set.OnFailure)
+		}
+		for _, row := range setRows {
+			action, err := c.compileAction(ctx, row, deviceID)
+			if err != nil {
+				return nil, fmt.Errorf("manifest: definition %s set %s: %w", id, set.ID, err)
+			}
+			runbook.Occurrences = append(runbook.Occurrences, occurrence(action, policy))
+		}
+	}
+	if len(runbook.Occurrences) == 0 {
+		return nil, ErrEmptyManifest
+	}
+	return finish(runbook)
 }
 
 func (c *Compiler) definition(ctx context.Context, deviceID, id string) ([]*pmv1.Manifest, error) {
@@ -148,10 +204,16 @@ func (c *Compiler) definition(ctx context.Context, deviceID, id string) ([]*pmv1
 			DefinitionId: id,
 			ActionSetId:  set.ID,
 		}, definition.Schedule)
+		if errors.Is(err, ErrEmptyManifest) {
+			continue
+		}
 		if err != nil {
 			return nil, fmt.Errorf("manifest: definition %s set %s: %w", id, set.ID, err)
 		}
 		manifests = append(manifests, compiled)
+	}
+	if len(manifests) == 0 {
+		return nil, ErrEmptyManifest
 	}
 	return manifests, nil
 }

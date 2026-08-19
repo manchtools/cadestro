@@ -99,6 +99,9 @@ func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result
 
 	row, err := s.store.GetExecution(ctx, result.OccurrenceId)
 	if err != nil {
+		if store.IsNotFound(err) {
+			return s.store.RecordPolicyActionResult(ctx, deviceID, result)
+		}
 		return err
 	}
 	if row.DeviceID != deviceID {

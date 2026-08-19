@@ -329,6 +329,11 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 	// restart inside an active freeze keeps deferring instead of
 	// blasting through queued work. See archived server#58.
 	sched.SetMaintenanceWindow(result.MaintenanceWindow)
+	if result.DesiredPolicy != nil {
+		if err := sched.ReconcilePolicy(ctx, result.DesiredPolicy); err != nil {
+			logger.Warn("failed to reconcile assigned policy", "error", err)
+		}
+	}
 
 	// Convert sync interval from minutes to duration
 	var syncInterval time.Duration

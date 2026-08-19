@@ -48,6 +48,8 @@ var mutationCapableExports = map[string]string{
 	"RebuildSearchIndexes":       "audited SQLite FTS5 index maintenance",
 	"RecordHeartbeatTelemetry":   "bounded high-rate telemetry exception",
 	"CleanupExpiredAuthStates":   "audited one-time OIDC state cleanup",
+	"RecordPolicyActionResult":   "audited policy result ingestion",
+	"RecordPolicyManifestResult": "audited policy result ingestion",
 }
 
 // nonMutatingExports is every other exported method, each with the

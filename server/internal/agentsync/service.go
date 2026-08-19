@@ -1,20 +1,23 @@
-// Package agentsync builds a stream synchronization state from durable delivery
-// rows.
+// Package agentsync builds a stream synchronization state from durable explicit
+// delivery rows and the authenticated device's assignment snapshot.
 package agentsync
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/delivery"
+	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -25,20 +28,23 @@ var (
 	ErrNotConnected = errors.New("agent stream is not connected")
 )
 
-// Config supplies authoritative delivery state and the live epoch registry.
+// Config supplies authoritative delivery state, assignment resolution, and the
+// live epoch registry.
 type Config struct {
-	Store      *store.Store
-	Manager    *connection.Manager
-	Deliveries *delivery.Service
-	Now        func() time.Time
+	Store       *store.Store
+	Manager     *connection.Manager
+	Deliveries  *delivery.Service
+	Assignments *dispatch.Handlers
+	Now         func() time.Time
 }
 
 // Service implements durable stream synchronization.
 type Service struct {
-	store      *store.Store
-	manager    *connection.Manager
-	deliveries *delivery.Service
-	now        func() time.Time
+	store       *store.Store
+	manager     *connection.Manager
+	deliveries  *delivery.Service
+	assignments *dispatch.Handlers
+	now         func() time.Time
 }
 
 // New constructs the agent sync service.
@@ -49,11 +55,12 @@ func New(cfg Config) *Service {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	return &Service{store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, now: cfg.Now}
+	return &Service{store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, assignments: cfg.Assignments, now: cfg.Now}
 }
 
-// Sync returns each still-sendable delivery and marks the response against the
-// same live connection epoch used by unsolicited stream pushes.
+// Sync returns each still-sendable explicit delivery plus the device's current
+// assignment snapshot. Only explicit deliveries are marked against the live
+// connection epoch; assignment policy is pulled and reconciled by the agent.
 func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, error) {
 	if ctx == nil || !validID(deviceID) {
 		return nil, ErrInvalidInput
@@ -97,6 +104,14 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 			DeliveryId: row.DeliveryID, Manifest: manifest,
 		})
 	}
+	var desiredPolicy *pmv1.DesiredPolicy
+	if s.assignments != nil {
+		manifests, err := s.assignments.AssignedPolicy(ctx, deviceID)
+		if err != nil {
+			return nil, err
+		}
+		desiredPolicy = &pmv1.DesiredPolicy{Revision: policyRevision(manifests), Manifests: manifests}
+	}
 	windows, err := s.store.ListDeviceMaintenanceWindows(ctx, deviceID)
 	if err != nil {
 		return nil, err
@@ -109,7 +124,34 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 		SyncIntervalMinutes: device.SyncIntervalMinutes,
 		Deliveries:          deliveries,
 		MaintenanceWindow:   window,
+		DesiredPolicy:       desiredPolicy,
 	}, nil
+}
+
+func policyRevision(manifests []*pmv1.Manifest) string {
+	identity := make([]*pmv1.Manifest, 0, len(manifests))
+	for _, manifest := range manifests {
+		if manifest == nil {
+			continue
+		}
+		clone := proto.Clone(manifest).(*pmv1.Manifest)
+		for _, occurrence := range clone.Occurrences {
+			if occurrence != nil && occurrence.Action != nil {
+				occurrence.Action = &pmv1.Action{
+					Id: occurrence.Action.Id, Type: occurrence.Action.Type,
+					DesiredState: occurrence.Action.DesiredState,
+				}
+			}
+		}
+		identity = append(identity, clone)
+	}
+	payload, err := proto.MarshalOptions{Deterministic: true}.Marshal(&pmv1.DesiredPolicy{Manifests: identity})
+	if err != nil {
+		payload = nil
+	}
+	digest := sha256.Sum256(payload)
+	digest[0] &= 0x03
+	return ulid.ULID(digest[:16]).String()
 }
 
 func unionMaintenanceWindows(rows [][]byte) (*pmv1.MaintenanceWindow, error) {
