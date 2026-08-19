@@ -277,7 +277,11 @@ def sql_durable_matches(root: Path) -> list[Match]:
         for number, line in enumerate(text(path).splitlines(), 1):
             create = re.search(r"\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w]+)", line, re.IGNORECASE)
             if create:
-                table = create.group(1) if re.search(r"delivery|manifest|occurrence", create.group(1), re.IGNORECASE) else None
+                name = create.group(1)
+                table = name if (
+                    re.search(r"delivery|manifest|occurrence", name, re.IGNORECASE)
+                    and not re.search(r"result|history|evidence", name, re.IGNORECASE)
+                ) else None
                 if table:
                     result.append(Match(rel(root, path), number, f"table {table}"))
                 continue
@@ -414,6 +418,28 @@ def policy_dispatch_matches(root: Path) -> list[Match]:
     return result
 
 
+def assigned_policy_push_matches(root: Path) -> list[Match]:
+    """Count the old assigned-policy-to-delivery submission seam."""
+    result: list[Match] = []
+    for relative in ("server/internal/dispatch/handlers.go", "server/internal/dispatch/assigned.go"):
+        path = root / relative
+        if not path.is_file():
+            continue
+        active = False
+        for number, line in enumerate(text(path).splitlines(), 1):
+            declaration = re.match(r"^func\s+.*\b(DispatchAssignedActions|assignedManifests)\s*\(", line)
+            if declaration:
+                active = True
+                if declaration.group(1) == "assignedManifests":
+                    result.append(Match(relative, number, line))
+                continue
+            if active and re.match(r"^func\s+", line):
+                active = False
+            if active and re.search(r"\b(?:assignedManifests|ManifestInput|submitter|Submit(?:Batch)?)\b", line):
+                result.append(Match(relative, number, line))
+    return result
+
+
 def metric_matches(root: Path) -> dict[str, list[Match]]:
     return {
         "ordinary_policy_push_delivery_types_states": ordinary_policy_matches(root),
@@ -424,6 +450,7 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "delivery_manifest_occurrence_durable_tables_columns": sql_durable_matches(root),
         "agent_scheduled_work_tables": agent_scheduled_work_schema(root),
         "policy_resolver_dispatch_entry_points": policy_dispatch_matches(root),
+        "assigned_policy_push_submission_coupling": assigned_policy_push_matches(root),
         "runtime_package_fanout_coupling": runtime_import_matches(root),
         "process_global_executor_managers": executor_global_matches(root),
         "stale_field_sealing_protocol_machinery": matches(root, r"\b(?:fieldSealVersion|sealedFieldVersion|protocolVersion|wireProtocol)\b", {".go", ".proto"}),

@@ -140,6 +140,26 @@ CREATE TABLE work_reboot_markers (work_id TEXT NOT NULL);
             self.assertFalse(metric["pass"], metric)
             self.assertGreater(metric["candidate"], metric["baseline"])
 
+    def test_assigned_policy_pull_removes_submission_coupling(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            for root in (baseline, candidate):
+                feature_fixture(root)
+            write(baseline, "server/internal/dispatch/handlers.go", """package dispatch
+func (h *Handlers) DispatchAssignedActions() {
+    inputs := h.assignedManifests()
+    h.submitter.Submit(inputs)
+}
+""")
+            write(candidate, "server/internal/dispatch/handlers.go", """package dispatch
+func (h *Handlers) DispatchAssignedActions() { h.signalSync() }
+""")
+            before = judge.assigned_policy_push_matches(baseline)
+            after = judge.assigned_policy_push_matches(candidate)
+            self.assertGreater(len(before), 0)
+            self.assertEqual(after, [])
+
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
         baseline = {"rpc": ["ControlService.Old"]}
         candidate = {"rpc": ["ControlService.New"]}
