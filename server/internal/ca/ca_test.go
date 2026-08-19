@@ -51,36 +51,6 @@ func generateTestCA(t *testing.T) (certPEM, keyPEM []byte) {
 	return certPEM, keyPEM
 }
 
-func generateSuccessorCA(t *testing.T, parentCertPEM, parentKeyPEM []byte) (certPEM, keyPEM []byte) {
-	t.Helper()
-	parentBlock, _ := pem.Decode(parentCertPEM)
-	require.NotNil(t, parentBlock)
-	parent, err := x509.ParseCertificate(parentBlock.Bytes)
-	require.NoError(t, err)
-	keyBlock, _ := pem.Decode(parentKeyPEM)
-	require.NotNil(t, keyBlock)
-	parsedKey, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
-	require.NoError(t, err)
-	parentKey, ok := parsedKey.(ed25519.PrivateKey)
-	require.True(t, ok)
-
-	public, private, err := ed25519.GenerateKey(rand.Reader)
-	require.NoError(t, err)
-	template := &x509.Certificate{
-		SerialNumber: big.NewInt(2),
-		Subject:      pkix.Name{CommonName: "Successor CA", Organization: []string{"Test"}},
-		NotBefore:    time.Now().Add(-time.Hour), NotAfter: time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		BasicConstraintsValid: true, IsCA: true,
-	}
-	der, err := x509.CreateCertificate(rand.Reader, template, parent, public, parentKey)
-	require.NoError(t, err)
-	encodedKey, err := x509.MarshalPKCS8PrivateKey(private)
-	require.NoError(t, err)
-	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}),
-		pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: encodedKey})
-}
-
 // generateCSR creates a CSR PEM for a given device ID.
 func generateCSR(t *testing.T, deviceID string) (csrPEM []byte, key ed25519.PrivateKey) {
 	t.Helper()
@@ -111,10 +81,10 @@ func csrForKey(t *testing.T, deviceID string, key ed25519.PrivateKey) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: der})
 }
 
-// TestAssertCSRMatchesCertKey covers the renewal proof-of-possession helper
+// TestAssertCSRMatchesCert covers the renewal proof-of-possession helper
 // (#361): a renewal CSR is accepted only when its public key equals the current
 // certificate's.
-func TestAssertCSRMatchesCertKey(t *testing.T) {
+func TestAssertCSRMatchesCert(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
 	require.NoError(t, err)
@@ -123,22 +93,25 @@ func TestAssertCSRMatchesCertKey(t *testing.T) {
 	require.NoError(t, err)
 	issued, err := c.IssueCertificateFromCSR("device-001", csrForKey(t, "device-001", deviceKey))
 	require.NoError(t, err)
+	block, _ := pem.Decode(issued.CertPEM)
+	peer, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
 
 	t.Run("matching key passes", func(t *testing.T) {
-		require.NoError(t, ca.AssertCSRMatchesCertKey(issued.CertPEM, csrForKey(t, "device-001", deviceKey)))
+		require.NoError(t, ca.AssertCSRMatchesCert(peer, csrForKey(t, "device-001", deviceKey)))
 	})
 	t.Run("mismatched key rejected", func(t *testing.T) {
 		_, other, err := ed25519.GenerateKey(rand.Reader)
 		require.NoError(t, err)
-		err = ca.AssertCSRMatchesCertKey(issued.CertPEM, csrForKey(t, "device-001", other))
+		err = ca.AssertCSRMatchesCert(peer, csrForKey(t, "device-001", other))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "does not match")
 	})
 	t.Run("malformed cert PEM rejected", func(t *testing.T) {
-		assert.Error(t, ca.AssertCSRMatchesCertKey([]byte("not a cert"), csrForKey(t, "device-001", deviceKey)))
+		assert.Error(t, ca.AssertCSRMatchesCert(nil, csrForKey(t, "device-001", deviceKey)))
 	})
 	t.Run("malformed CSR PEM rejected", func(t *testing.T) {
-		assert.Error(t, ca.AssertCSRMatchesCertKey(issued.CertPEM, []byte("not a csr")))
+		assert.Error(t, ca.AssertCSRMatchesCert(peer, []byte("not a csr")))
 	})
 }
 
@@ -577,48 +550,6 @@ func TestDeviceIDFromPEM(t *testing.T) {
 func TestDeviceIDFromPEM_InvalidPEM(t *testing.T) {
 	_, err := ca.DeviceIDFromPEM([]byte("not a certificate"))
 	assert.Error(t, err)
-}
-
-func TestSetTrustBundle(t *testing.T) {
-	oldCertPEM, oldKeyPEM := generateTestCA(t)
-	oldCA, err := ca.NewFromPEM(oldCertPEM, oldKeyPEM, 24*time.Hour)
-	require.NoError(t, err)
-	successorCertPEM, successorKeyPEM := generateSuccessorCA(t, oldCertPEM, oldKeyPEM)
-	activeCA, err := ca.NewFromPEM(successorCertPEM, successorKeyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	csrPEM, _ := generateCSR(t, "device-001")
-	oldLeaf, err := oldCA.IssueCertificateFromCSR("device-001", csrPEM)
-	require.NoError(t, err)
-	_, err = activeCA.VerifyCertificate(oldLeaf.CertPEM)
-	assert.Error(t, err)
-
-	bundle := append(append([]byte(nil), oldCertPEM...), successorCertPEM...)
-	err = activeCA.SetTrustBundle(bundle)
-	require.NoError(t, err)
-
-	deviceID, err := activeCA.VerifyCertificate(oldLeaf.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, "device-001", deviceID)
-
-	successorLeaf, err := activeCA.IssueCertificateFromCSR("device-002", csrPEM)
-	require.NoError(t, err)
-	deviceID, err = activeCA.VerifyCertificate(successorLeaf.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, "device-002", deviceID)
-}
-
-func TestSetTrustBundle_InvalidPEM(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	err = c.SetTrustBundle([]byte("not a certificate"))
-	assert.Error(t, err)
-
-	otherCert, _ := generateTestCA(t)
-	err = c.SetTrustBundle(otherCert)
-	assert.ErrorContains(t, err, "active CA")
 }
 
 func TestTrustPool(t *testing.T) {

@@ -61,16 +61,6 @@ func rejectAuditEffect(t *testing.T, raw *testdb.DB, action string) {
 	require.NoError(t, err)
 }
 
-func rejectRevocationFingerprint(t *testing.T, raw *testdb.DB, fingerprint string) {
-	t.Helper()
-	_, err := raw.Exec(context.Background(), `
-		CREATE TRIGGER test_reject_revocation
-		BEFORE INSERT ON revoked_certificates
-		WHEN NEW.fingerprint = `+sqliteTestLiteral(fingerprint)+`
-		BEGIN SELECT RAISE(ABORT, 'fixture revocation refusal'); END`)
-	require.NoError(t, err)
-}
-
 func sqliteTestLiteral(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "''") + "'"
 }

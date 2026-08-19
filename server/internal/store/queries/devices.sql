@@ -1,10 +1,10 @@
 -- name: InsertDevice :one
 INSERT INTO devices (
     id, hostname, agent_version, agent_sealing_public_key,
-    cert_fingerprint, cert_not_after, registered_at, last_seen_at,
+    registered_at, last_seen_at,
     registration_token_id
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetDevice :one
@@ -27,17 +27,47 @@ WHERE id = sqlc.arg(device_id)
   AND is_deleted = FALSE
   AND (last_seen_at IS NULL OR last_seen_at < sqlc.arg(last_seen_at));
 
--- Advance the tracked certificate only when the presented fingerprint is
--- still current. This is the concurrency boundary for renewal: exactly one
--- caller can replace a given certificate.
--- name: ReplaceDeviceCertificate :one
+-- name: SetActiveDeviceCertificate :one
 UPDATE devices
-SET certificate_pem = COALESCE(sqlc.narg(new_certificate_pem), certificate_pem),
-    cert_fingerprint = sqlc.arg(new_fingerprint),
-    cert_not_after = sqlc.arg(new_not_after)
+SET certificate_pem = sqlc.narg(certificate_pem),
+    cert_fingerprint = NULL,
+    cert_not_after = NULL,
+    active_cert_serial = sqlc.arg(serial)
+WHERE id = sqlc.arg(id) AND is_deleted = FALSE
+RETURNING *;
+
+-- name: SetPendingDeviceCertificate :one
+UPDATE devices
+SET pending_certificate_pem = sqlc.arg(certificate_pem),
+    pending_cert_serial = sqlc.arg(serial)
 WHERE id = sqlc.arg(id)
   AND is_deleted = FALSE
-  AND cert_fingerprint IS sqlc.arg(old_fingerprint)
+  AND active_cert_serial = sqlc.arg(active_serial)
+  AND pending_cert_serial IS NULL
+RETURNING *;
+
+-- name: PromotePendingDeviceCertificate :one
+UPDATE devices
+SET certificate_pem = pending_certificate_pem,
+    cert_fingerprint = NULL,
+    cert_not_after = NULL,
+    active_cert_serial = pending_cert_serial,
+    pending_certificate_pem = NULL,
+    pending_cert_serial = NULL
+WHERE id = sqlc.arg(id)
+  AND is_deleted = FALSE
+  AND pending_cert_serial = sqlc.arg(pending_serial)
+RETURNING *;
+
+-- name: BridgeLegacyDeviceCertificate :one
+UPDATE devices
+SET active_cert_serial = sqlc.arg(serial),
+    cert_fingerprint = NULL,
+    cert_not_after = NULL
+WHERE id = sqlc.arg(id)
+  AND is_deleted = FALSE
+  AND active_cert_serial IS NULL
+  AND cert_fingerprint = sqlc.arg(fingerprint)
 RETURNING *;
 
 -- name: ListDevices :many

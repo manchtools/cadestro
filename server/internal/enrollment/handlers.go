@@ -35,7 +35,6 @@ type Config struct {
 	Now                     func() time.Time
 	ControlURL              string
 	ControlSealingPublicKey []byte
-	CloseStream             func(deviceID string)
 }
 
 // Handlers implements first enrollment and certificate renewal.
@@ -46,7 +45,6 @@ type Handlers struct {
 	now                     func() time.Time
 	controlURL              string
 	controlSealingPublicKey []byte
-	closeStream             func(string)
 	validator               *validator.Validate
 }
 
@@ -61,9 +59,6 @@ func New(cfg Config) *Handlers {
 	if len(cfg.ControlSealingPublicKey) != 32 {
 		panic("enrollment: 32-byte control sealing public key is required")
 	}
-	if cfg.CloseStream == nil {
-		panic("enrollment: stream closer is required")
-	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
@@ -74,7 +69,7 @@ func New(cfg Config) *Handlers {
 		store: cfg.Store, ca: cfg.CA, logger: cfg.Logger, now: cfg.Now,
 		controlURL:              cfg.ControlURL,
 		controlSealingPublicKey: append([]byte(nil), cfg.ControlSealingPublicKey...),
-		closeStream:             cfg.CloseStream, validator: sdkvalidate.NewValidator(),
+		validator:               sdkvalidate.NewValidator(),
 	}
 }
 
@@ -155,9 +150,12 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 					return fmt.Errorf("issue retry enrollment certificate: %w", issueErr)
 				}
 				cert = issued
-				if _, issueErr = tx.ReplaceDeviceCertificate(ctx, db.ReplaceDeviceCertificateParams{
-					ID: device.ID, NewCertificatePem: issued.CertPEM, NewFingerprint: &issued.Fingerprint,
-					NewNotAfter: &issued.NotAfter, OldFingerprint: nil,
+				serial, serialErr := ca.SerialFromPEM(issued.CertPEM)
+				if serialErr != nil {
+					return fmt.Errorf("read enrollment certificate serial: %w", serialErr)
+				}
+				if _, issueErr = tx.SetActiveDeviceCertificate(ctx, db.SetActiveDeviceCertificateParams{
+					ID: device.ID, CertificatePem: issued.CertPEM, Serial: &serial,
 				}); issueErr != nil {
 					return fmt.Errorf("store retry enrollment certificate: %w", issueErr)
 				}
@@ -195,14 +193,17 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 			return fmt.Errorf("issue enrollment certificate: %w", issueErr)
 		}
 		cert = issued
-		if _, issueErr = tx.ReplaceDeviceCertificate(ctx, db.ReplaceDeviceCertificateParams{
-			ID: device.ID, NewCertificatePem: issued.CertPEM, NewFingerprint: &issued.Fingerprint,
-			NewNotAfter: &issued.NotAfter, OldFingerprint: nil,
+		serial, serialErr := ca.SerialFromPEM(issued.CertPEM)
+		if serialErr != nil {
+			return fmt.Errorf("read enrollment certificate serial: %w", serialErr)
+		}
+		if _, issueErr = tx.SetActiveDeviceCertificate(ctx, db.SetActiveDeviceCertificateParams{
+			ID: device.ID, CertificatePem: issued.CertPEM, Serial: &serial,
 		}); issueErr != nil {
 			return fmt.Errorf("store enrollment certificate: %w", issueErr)
 		}
 		rec.Effect(store.AuditEffect{ResourceType: "device", ResourceID: device.ID, Action: "CREATE",
-			Outcome: store.EffectApplied, ChangedFields: []string{"hostname", "agent_version", "enrollment_identity_public_key", "cert_fingerprint", "cert_not_after", "registration_token_id"}})
+			Outcome: store.EffectApplied, ChangedFields: []string{"hostname", "agent_version", "enrollment_identity_public_key", "active_cert_serial", "registration_token_id"}})
 		return nil
 	})
 	if errors.Is(err, errCredentialRejected) {
@@ -224,67 +225,85 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 	}), nil
 }
 
-// RenewCertificate atomically advances the tracked identity and revokes its
-// predecessor. The conditional update absorbs concurrent renewal attempts.
+// RenewCertificate issues at most one pending successor for the authenticated
+// TLS peer. The existing certificate remains active until a fresh Hello over a
+// connection presenting the successor promotes it.
 func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pmv1.RenewCertificateRequest]) (*connect.Response[pmv1.RenewCertificateResponse], error) {
 	if err := validateRequest(h, ctx, req); err != nil {
 		return nil, err
 	}
-	deviceID, err := h.ca.VerifyCertificate(req.Msg.CurrentCertificate)
-	if err != nil {
-		return nil, h.rejectCertificate(ctx, req, "INVALID_DEVICE_CERTIFICATE")
+	peer, ok := mtls.PeerCertificateFromContext(ctx)
+	if !ok {
+		return nil, h.rejectCertificate(ctx, req, "MISSING_TLS_PEER")
 	}
-	presentedClass, err := ca.PeerClassFromPEM(req.Msg.CurrentCertificate)
+	deviceID, ok := mtls.DeviceIDFromContext(ctx)
+	if !ok {
+		return nil, h.rejectCertificate(ctx, req, "MISSING_TLS_IDENTITY")
+	}
+	presentedClass, err := mtls.PeerClassFromCert(peer)
 	if err != nil || presentedClass != mtls.PeerClassAgent {
 		return nil, h.rejectCertificate(ctx, req, "INVALID_DEVICE_CERTIFICATE")
 	}
-	if err := ca.AssertCSRMatchesCertKey(req.Msg.CurrentCertificate, req.Msg.Csr); err != nil {
+	if err := ca.AssertCSRMatchesCert(peer, req.Msg.Csr); err != nil {
 		return nil, h.rejectCertificate(ctx, req, "CERTIFICATE_KEY_MISMATCH")
 	}
-	newCert, err := h.ca.IssueCertificateFromCSR(deviceID, req.Msg.Csr)
-	if err != nil {
-		if errors.Is(err, ca.ErrInvalidCSR) {
-			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid certificate signing request")
-		}
-		return nil, h.internal(ctx, "issue renewed certificate", err)
+	if _, err := ca.EnrollmentIdentityFromCSR(req.Msg.Csr); err != nil {
+		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid certificate signing request")
 	}
-	oldFingerprint, err := ca.FingerprintFromPEM(req.Msg.CurrentCertificate)
+	peerSerial, err := ca.SerialFromCert(peer)
 	if err != nil {
-		return nil, h.internal(ctx, "fingerprint current certificate", err)
+		return nil, h.rejectCertificate(ctx, req, "INVALID_DEVICE_CERTIFICATE")
 	}
-	oldNotAfter, err := ca.NotAfterFromPEM(req.Msg.CurrentCertificate)
-	if err != nil {
-		return nil, h.internal(ctx, "read current certificate expiry", err)
-	}
-	newFingerprint, newNotAfter := newCert.Fingerprint, newCert.NotAfter
 	op := store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "device", ActorID: deviceID,
-		ActorFingerprint: oldFingerprint, Origin: auth.ControlRPCOrigin,
+		ActorFingerprint: ca.FingerprintFromCert(peer), Origin: auth.ControlRPCOrigin,
 		OriginFingerprint:    originFingerprint(req),
 		RequestDescriptor:    cadestrov1connect.ControlServiceRenewCertificateProcedure,
 		AuthorizationOutcome: store.AuthorizationAllowed,
 		AuthorizationDetail:  "device_certificate", Result: store.ResultSuccess, ResultCode: "OK",
 	}
+	var newCert *ca.Certificate
 	_, err = h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-		if _, err := tx.ReplaceDeviceCertificate(ctx, db.ReplaceDeviceCertificateParams{
-			NewCertificatePem: nil, NewFingerprint: &newFingerprint, NewNotAfter: &newNotAfter,
-			ID: deviceID, OldFingerprint: &oldFingerprint,
+		current, err := tx.GetDevice(ctx, deviceID)
+		if err != nil {
+			return err
+		}
+		if current.ActiveCertSerial == nil || *current.ActiveCertSerial != peerSerial {
+			return errCredentialRejected
+		}
+		if current.PendingCertSerial != nil {
+			if len(current.PendingCertificatePem) == 0 {
+				return errors.New("pending certificate is incomplete")
+			}
+			pendingPEM := append([]byte(nil), current.PendingCertificatePem...)
+			notAfter, err := ca.NotAfterFromPEM(pendingPEM)
+			if err != nil {
+				return err
+			}
+			newCert = &ca.Certificate{CertPEM: pendingPEM, NotAfter: notAfter}
+			return nil
+		}
+		issued, err := h.ca.IssueCertificateFromCSR(deviceID, req.Msg.Csr)
+		if err != nil {
+			return err
+		}
+		newCert = issued
+		pendingSerial, err := ca.SerialFromPEM(issued.CertPEM)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.SetPendingDeviceCertificate(ctx, db.SetPendingDeviceCertificateParams{
+			ID: deviceID, ActiveSerial: &peerSerial, CertificatePem: issued.CertPEM,
+			Serial: &pendingSerial,
 		}); store.IsNotFound(err) {
 			return errCredentialRejected
 		} else if err != nil {
-			return fmt.Errorf("replace device certificate: %w", err)
-		}
-		if err := store.RevokeInTx(ctx, tx, oldFingerprint, oldNotAfter, "superseded by renewal"); err != nil {
-			return err
+			return fmt.Errorf("store pending certificate: %w", err)
 		}
 		rec.Effect(store.AuditEffect{
 			ResourceType: "device", ResourceID: deviceID, Action: "UPDATE",
-			Outcome: store.EffectApplied, ChangedFields: []string{"cert_fingerprint", "cert_not_after"},
-			EvidenceKind: "certificate", EvidenceFingerprint: newFingerprint,
-		})
-		rec.Effect(store.AuditEffect{
-			ResourceType: "device_certificate", ResourceID: deviceID, Action: "REVOKE",
-			Outcome: store.EffectApplied, EvidenceKind: "certificate", EvidenceFingerprint: oldFingerprint,
+			Outcome: store.EffectApplied, ChangedFields: []string{"pending_cert_serial"},
+			EvidenceKind: "certificate", EvidenceFingerprint: issued.Fingerprint,
 		})
 		return nil
 	})
@@ -294,16 +313,23 @@ func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pm
 	if err != nil {
 		return nil, h.internal(ctx, "commit certificate renewal", err)
 	}
-	h.closeStream(deviceID)
+	if newCert == nil || len(newCert.CertPEM) == 0 {
+		return nil, h.internal(ctx, "commit certificate renewal", errors.New("pending certificate missing"))
+	}
 	return connect.NewResponse(&pmv1.RenewCertificateResponse{
 		Certificate: newCert.CertPEM, NotAfter: timestamppb.New(newCert.NotAfter),
-		CaCertificate: h.ca.CACertPEM(),
 	}), nil
 }
 
 func (h *Handlers) rejectCertificate(ctx context.Context, req *connect.Request[pmv1.RenewCertificateRequest], reason string) error {
-	digest := sha256.Sum256(req.Msg.CurrentCertificate)
-	if err := h.recordRejected(ctx, req, cadestrov1connect.ControlServiceRenewCertificateProcedure, hex.EncodeToString(digest[:]), reason); err != nil {
+	fingerprint := ""
+	if peer, ok := mtls.PeerCertificateFromContext(ctx); ok {
+		fingerprint = ca.FingerprintFromCert(peer)
+	} else {
+		digest := sha256.Sum256(req.Msg.Csr)
+		fingerprint = hex.EncodeToString(digest[:])
+	}
+	if err := h.recordRejected(ctx, req, cadestrov1connect.ControlServiceRenewCertificateProcedure, fingerprint, reason); err != nil {
 		return h.internal(ctx, "audit rejected renewal", err)
 	}
 	return rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied, "certificate not recognized")

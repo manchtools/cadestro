@@ -3,9 +3,13 @@ package agentstream
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/hex"
 	"io"
 	"log/slog"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -25,6 +29,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
@@ -82,8 +87,8 @@ func seedExecution(t *testing.T, raw *testdb.DB, at time.Time) seededExecution {
 		occurrence: ulid.Make().String(), actionID: ulid.Make().String(),
 	}
 	_, err := raw.Exec(ctx, `
-		INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, registered_at)
-		VALUES ($1, $2, 'v1', $3, $4)`,
+		INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, certificate_pem, active_cert_serial, registered_at)
+		VALUES ($1, $2, 'v1', $3, X'01', '1', $4)`,
 		seeded.deviceID, "host-"+seeded.deviceID, bytes.Repeat([]byte{1}, 32), at)
 	require.NoError(t, err)
 	manifest, err := protojson.Marshal(&pmv1.Manifest{
@@ -116,10 +121,12 @@ func seedExecution(t *testing.T, raw *testdb.DB, at time.Time) seededExecution {
 // real handler with the real execution sink behind it. The fake sink used by
 // the routing tests never errors, so it cannot show what an error costs.
 type streamFixture struct {
-	store   *store.Store
-	client  cadestrov1connect.AgentServiceClient
-	own     seededExecution
-	foreign seededExecution
+	store      *store.Store
+	raw        *testdb.DB
+	client     cadestrov1connect.AgentServiceClient
+	own        seededExecution
+	foreign    seededExecution
+	peerSerial *big.Int
 }
 
 func newStreamFixture(t *testing.T) *streamFixture {
@@ -134,7 +141,7 @@ func newStreamFixture(t *testing.T) *streamFixture {
 	t.Cleanup(raw.Close)
 
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	f := &streamFixture{store: st, own: seedExecution(t, raw, now), foreign: seedExecution(t, raw, now)}
+	f := &streamFixture{store: st, raw: raw, own: seedExecution(t, raw, now), foreign: seedExecution(t, raw, now), peerSerial: big.NewInt(1)}
 
 	handler := New(Config{
 		Store: st, Manager: connection.NewManager(),
@@ -153,7 +160,9 @@ func newStreamFixture(t *testing.T) *streamFixture {
 	// Stands in for MTLSMiddleware: the transport is already authenticated by
 	// the time a frame reaches Stream, so the identity is bound here directly.
 	mux.Handle(procedure, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		connectHandler.ServeHTTP(w, r.WithContext(WithDeviceID(r.Context(), f.own.deviceID)))
+		ctx := WithDeviceID(r.Context(), f.own.deviceID)
+		ctx = mtls.WithPeerCertificate(ctx, &x509.Certificate{SerialNumber: new(big.Int).Set(f.peerSerial)})
+		connectHandler.ServeHTTP(w, r.WithContext(ctx))
 	}))
 	server := httptest.NewUnstartedServer(mux)
 	server.Config.Protocols = new(http.Protocols)
@@ -169,6 +178,62 @@ func newStreamFixture(t *testing.T) *streamFixture {
 	}}
 	f.client = cadestrov1connect.NewAgentServiceClient(httpClient, server.URL, connect.WithGRPC())
 	return f
+}
+
+func TestPendingHelloPromotesAndOldActiveIsRejected(t *testing.T) {
+	f := newStreamFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := f.raw.Exec(ctx, `UPDATE devices SET pending_certificate_pem = X'02', pending_cert_serial = '2' WHERE id = ?`, f.own.deviceID)
+	require.NoError(t, err)
+	f.peerSerial = big.NewInt(2)
+	f.open(t, ctx)
+	var active, pending any
+	require.NoError(t, f.raw.QueryRow(ctx, `SELECT active_cert_serial, pending_cert_serial FROM devices WHERE id = ?`, f.own.deviceID).Scan(&active, &pending))
+	require.Equal(t, "2", active)
+	require.Nil(t, pending)
+
+	f.peerSerial = big.NewInt(1)
+	stream := f.client.Stream(ctx)
+	require.NoError(t, stream.Send(&pmv1.AgentMessage{Id: ulid.Make().String(), Payload: &pmv1.AgentMessage_Hello{Hello: &pmv1.Hello{
+		DeviceId: &pmv1.DeviceId{Value: f.own.deviceID}, AgentVersion: "v1", Hostname: "device",
+	}}}))
+	_, err = stream.Receive()
+	require.Error(t, err)
+	var connectErr *connect.Error
+	if assert.ErrorAs(t, err, &connectErr) {
+		assert.Equal(t, connect.CodePermissionDenied, connectErr.Code())
+	}
+}
+
+func TestLegacyFingerprintBridgeRecordsAuthenticatedSerial(t *testing.T) {
+	f := newStreamFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	digest := sha256.Sum256(nil)
+	_, err := f.raw.Exec(ctx, `UPDATE devices SET active_cert_serial = NULL, certificate_pem = X'01', cert_fingerprint = ?, cert_not_after = CURRENT_TIMESTAMP WHERE id = ?`, hex.EncodeToString(digest[:]), f.own.deviceID)
+	require.NoError(t, err)
+	f.open(t, ctx)
+	var serial, fingerprint any
+	require.NoError(t, f.raw.QueryRow(ctx, `SELECT active_cert_serial, cert_fingerprint FROM devices WHERE id = ?`, f.own.deviceID).Scan(&serial, &fingerprint))
+	require.Equal(t, "1", serial)
+	require.Nil(t, fingerprint)
+}
+
+func TestStreamRejectsAlreadyOpenPeerAfterSerialPromotion(t *testing.T) {
+	f := newStreamFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	stream := f.open(t, ctx)
+	_, err := f.raw.Exec(ctx, `UPDATE devices SET certificate_pem = X'02', active_cert_serial = '2' WHERE id = ?`, f.own.deviceID)
+	require.NoError(t, err)
+	require.NoError(t, stream.Send(syncRequest()))
+	_, err = stream.Receive()
+	require.Error(t, err)
+	var connectErr *connect.Error
+	if assert.ErrorAs(t, err, &connectErr) {
+		assert.Equal(t, connect.CodePermissionDenied, connectErr.Code())
+	}
 }
 
 // open completes the handshake and returns a stream ready for result frames.

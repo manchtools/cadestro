@@ -1,13 +1,9 @@
 package agentstream
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
-	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -20,15 +16,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
-type fakeRevocation struct {
-	revoked bool
-	err     error
-}
-
-func (f fakeRevocation) IsRevoked(context.Context, string) (bool, error) {
-	return f.revoked, f.err
-}
-
 func TestMTLSMiddlewareFailsClosedAndBindsAgentIdentity(t *testing.T) {
 	deviceID := ulid.Make().String()
 	agentURI, err := mtls.PeerClassURI(mtls.PeerClassAgent)
@@ -40,7 +27,6 @@ func TestMTLSMiddlewareFailsClosedAndBindsAgentIdentity(t *testing.T) {
 			Raw: []byte("certificate"), Subject: pkix.Name{CommonName: deviceID}, URIs: []*url.URL{uri},
 		}
 	}
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	next := http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		got, ok := DeviceIDFromContext(request.Context())
 		if !ok || got != deviceID {
@@ -49,26 +35,23 @@ func TestMTLSMiddlewareFailsClosedAndBindsAgentIdentity(t *testing.T) {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
-	call := func(checker mtls.RevocationChecker, peer *x509.Certificate, path string) int {
+	call := func(peer *x509.Certificate, path string) int {
 		request := httptest.NewRequest(http.MethodPost, path, nil)
 		if peer != nil {
 			request.TLS = &tls.ConnectionState{PeerCertificates: []*x509.Certificate{peer}}
 		}
 		response := httptest.NewRecorder()
-		MTLSMiddleware(next, checker, logger).ServeHTTP(response, request)
+		MTLSMiddleware(next).ServeHTTP(response, request)
 		return response.Code
 	}
 
-	assert.Equal(t, http.StatusNoContent, call(fakeRevocation{}, cert(agentURI), "/stream"))
-	assert.Equal(t, http.StatusUnauthorized, call(fakeRevocation{}, nil, "/stream"))
-	assert.Equal(t, http.StatusForbidden, call(fakeRevocation{}, cert(controlURI), "/stream"))
-	assert.Equal(t, http.StatusForbidden, call(nil, cert(agentURI), "/stream"))
-	assert.Equal(t, http.StatusForbidden, call(fakeRevocation{err: errors.New("database unavailable")}, cert(agentURI), "/stream"))
-	assert.Equal(t, http.StatusForbidden, call(fakeRevocation{revoked: true}, cert(agentURI), "/stream"))
+	assert.Equal(t, http.StatusNoContent, call(cert(agentURI), "/stream"))
+	assert.Equal(t, http.StatusUnauthorized, call(nil, "/stream"))
+	assert.Equal(t, http.StatusForbidden, call(cert(controlURI), "/stream"))
 
 	health := httptest.NewRequest(http.MethodGet, "/health", nil)
 	healthResponse := httptest.NewRecorder()
-	MTLSMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }), nil, logger).
+	MTLSMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })).
 		ServeHTTP(healthResponse, health)
 	assert.Equal(t, http.StatusOK, healthResponse.Code)
 }

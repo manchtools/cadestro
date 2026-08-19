@@ -95,6 +95,13 @@ SQLite-native `BEFORE DELETE` trigger is the equivalent append-only
 provenance guard for the rebuilt token table, so the relation cannot be
 refunded or moved without rebuilding the large devices table.
 
+For databases created before the certificate lifecycle cutover, stop control,
+take a verified backup, and run
+[`upgrade-certificate-lifecycle.sql`](upgrade-certificate-lifecycle.sql) with
+`sqlite3 -bail`. It adds the serial/pending columns and removes the obsolete
+revocation table; legacy fingerprints are bridged only when the actual mTLS
+peer leaf authenticates.
+
 <!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:e20a97cf -->
 Restoring the old database into the new release is not a migration and will not
 be treated as one: the store's non-creating open path requires the exact current

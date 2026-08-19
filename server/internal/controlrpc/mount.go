@@ -43,7 +43,7 @@ func (h Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []str
 	}
 	var mounted []string
 	mounted = append(mounted, h.Identity.Mount(mux, opts...)...)
-	mounted = append(mounted, h.Enrollment.Mount(mux, opts...)...)
+	mounted = append(mounted, h.Enrollment.MountRegister(mux, opts...)...)
 	mounted = append(mounted, h.Authoring.MountActions(mux, opts...)...)
 	mounted = append(mounted, h.Authoring.MountActionSets(mux, opts...)...)
 	mounted = append(mounted, h.Authoring.MountDefinitions(mux, opts...)...)

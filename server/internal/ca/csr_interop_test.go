@@ -60,7 +60,10 @@ func TestIssueCertificateFromCSR_AcceptsSDKRenewalCSR(t *testing.T) {
 
 	// Renewal reuses the enrolment key, so the same key file must satisfy the
 	// proof-of-possession gate the renewal handler applies before issuing.
-	require.NoError(t, ca.AssertCSRMatchesCertKey(enrolled.CertPEM, renewalCSR))
+	block, _ := pem.Decode(enrolled.CertPEM)
+	peer, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+	require.NoError(t, ca.AssertCSRMatchesCert(peer, renewalCSR))
 
 	renewed, err := c.IssueCertificateFromCSR(interopDeviceID, renewalCSR)
 	require.NoError(t, err, "the control CA must accept the renewal CSR the SDK actually produces")

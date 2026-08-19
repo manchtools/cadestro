@@ -248,10 +248,9 @@ func WithTLSConfig(tlsConfig *tls.Config) ClientOption {
 // are NOT consulted, so a cert signed by any public CA cannot
 // impersonate control even if its SNI matches.
 //
-// For reaching servers whose public-facing HTTPS cert is signed by
-// a public CA (typically a Traefik reverse proxy with Let's Encrypt
-// in front of the control server), pair the client certificate with
-// system roots via WithMTLSFromPEMAndSystemRoots instead.
+// Callers that deliberately reach a public-CA endpoint may use the separate
+// system-roots variant below; the agent's control stream must use this strict
+// option.
 func WithMTLSFromPEM(certPEM, keyPEM, caPEM []byte) (ClientOption, error) {
 	cert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
@@ -280,9 +279,7 @@ func WithMTLSFromPEM(certPEM, keyPEM, caPEM []byte) (ClientOption, error) {
 // (e.g. a Traefik reverse proxy terminating TLS with Let's Encrypt)
 // and the client cert must still authenticate the agent's identity
 // at the application layer — for example the
-// ControlService.RenewCertificate RPC, which can travel over a
-// public-LE-fronted HTTPS endpoint and also passes the current
-// certificate in the request body.
+// reusable SDK clients that deliberately reach a public-CA-fronted endpoint.
 //
 // Do NOT use this for the agent's mTLS stream: control's agent
 // listener is internal-CA only, and broadening its trust to system
@@ -443,12 +440,11 @@ func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agen
 type RenewCertificateResult struct {
 	Certificate []byte
 	NotAfter    time.Time
-	CACert      []byte // Active CA certificate (non-empty when CA has been rotated)
 }
 
 // RenewCertificate renews a device certificate via the control server.
-// The agent presents its current certificate for identity verification.
-func RenewCertificate(ctx context.Context, controlURL string, csr, currentCert []byte, opts ...ClientOption) (*RenewCertificateResult, error) {
+// The mTLS transport presents the authenticated certificate identity.
+func RenewCertificate(ctx context.Context, controlURL string, csr []byte, opts ...ClientOption) (*RenewCertificateResult, error) {
 	c := &Client{}
 	httpClient := bootstrapHTTPClient()
 	for _, opt := range opts {
@@ -458,8 +454,7 @@ func RenewCertificate(ctx context.Context, controlURL string, csr, currentCert [
 	controlClient := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
 
 	req := connect.NewRequest(&pm.RenewCertificateRequest{
-		Csr:                csr,
-		CurrentCertificate: currentCert,
+		Csr: csr,
 	})
 
 	resp, err := controlClient.RenewCertificate(ctx, req)
@@ -470,7 +465,6 @@ func RenewCertificate(ctx context.Context, controlURL string, csr, currentCert [
 	return &RenewCertificateResult{
 		Certificate: resp.Msg.Certificate,
 		NotAfter:    resp.Msg.NotAfter.AsTime(),
-		CACert:      resp.Msg.CaCertificate,
 	}, nil
 }
 

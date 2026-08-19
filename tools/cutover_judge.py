@@ -473,7 +473,8 @@ def policy_dispatch_matches(root: Path) -> list[Match]:
     declaration = re.compile(r"^\s*func\s+[^\s(]*(?:Resolve|resolve|Effective|Dispatch|dispatch|Submit|submit)[^\s(]*\s*\(")
     for path in files(root, {".go"}):
         path_name = rel(root, path)
-        if path.name.endswith("_test.go") or is_generated(root, path):
+        if (path.name.endswith("_test.go") or path.name.endswith("_test.sh")
+                or path.name.startswith("test_") or is_generated(root, path)):
             continue
         relevant = any(part in path_name for part in ("/assignment/", "/dispatch/", "/delivery/", "/compliance/"))
         for number, line in enumerate(text(path).splitlines(), 1):
@@ -519,6 +520,7 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "process_global_executor_managers": executor_global_matches(root),
         "policy_specific_result_transport_paths": policy_result_transport_matches(root),
         "stale_field_sealing_protocol_machinery": matches(root, r"\b(?:fieldSealVersion|sealedFieldVersion|protocolVersion|wireProtocol)\b", {".go", ".proto"}),
+        "certificate_lifecycle_junk": certificate_lifecycle_junk_matches(root),
     }
 
 
@@ -560,6 +562,29 @@ def runtime_import_matches(root: Path) -> list[Match]:
     return result
 
 
+def certificate_lifecycle_junk_matches(root: Path) -> list[Match]:
+    """Find removed renewal/revocation machinery, excluding deletion paths."""
+    pattern = re.compile(r"\b(?:revoked_certificates|RevocationChecker|RevokeInTx|startCertRotation|current_certificate|ca_certificate|CATrustBundle|SetTrustBundle|TrustBundle|AssertCSRMatchesCertKey|PeerClassFromPEM|ReplaceDeviceCertificate|ClearPendingDeviceCertificate)\b|CA_TRUST_BUNDLE_FILE|ca-trust-bundle\.crt")
+    result: list[Match] = []
+    for path in files(root, {".go", ".proto", ".sql", ".sh", ".yml", ".yaml"}):
+        relative = rel(root, path)
+        if (path.name.endswith("_test.go") or path.name.endswith("_test.sh")
+                or path.name.startswith("test_") or is_generated(root, path)):
+            continue
+        if path.suffix == ".sql" and "revoked_certificates" not in relative:
+            continue
+        if path.suffix == ".proto" and "control.proto" not in relative:
+            continue
+        if path.suffix == ".go" and not ("enrollment/handlers.go" in relative or "cert_rotation.go" in relative or "revoked_certificates" in relative or "/ca/" in relative or relative.endswith("cmd/cadestro/config.go") or relative.endswith("cmd/cadestro/main.go" ) ):
+            continue
+        if path.suffix in {".sh", ".yml", ".yaml"} and "server/deploy/" not in relative:
+            continue
+        for number, line in enumerate(text(path).splitlines(), 1):
+            if pattern.search(line):
+                result.append(Match(relative, number, line))
+    return result
+
+
 def simplification_report(root: Path, baseline_counts: dict[str, int]) -> dict[str, object]:
     found = metric_matches(root)
     current = {name: len(items) for name, items in found.items()}
@@ -582,6 +607,7 @@ def simplification_report(root: Path, baseline_counts: dict[str, int]) -> dict[s
         "policy_specific_result_transport_paths": current["policy_specific_result_transport_paths"] == 0,
         "legacy_registration_token_counter_owner_state": current["legacy_registration_token_counter_owner_state"] == 0,
         "assigned_policy_push_submission_coupling": current["assigned_policy_push_submission_coupling"] == 0,
+        "certificate_lifecycle_junk": current["certificate_lifecycle_junk"] == 0,
     }
     for name, passed in zero.items():
         metrics[name]["zero_invariant"] = True

@@ -61,7 +61,11 @@ type Credentials struct {
 	DeviceID    string `json:"device_id"`
 	CACert      []byte `json:"ca_cert"`
 	Certificate []byte `json:"certificate"`
-	PrivateKey  []byte `json:"private_key"`
+	// PendingCertificate is the successor issued by control. The active
+	// certificate remains usable until a Hello made with this certificate is
+	// accepted, after which the agent clears this field.
+	PendingCertificate []byte `json:"pending_certificate,omitempty"`
+	PrivateKey         []byte `json:"private_key"`
 	// AgentAddr is control's direct mTLS listener — a different host from
 	// ControlAddr,
 	// because the edge routes the two by SNI (one terminates TLS for the web,

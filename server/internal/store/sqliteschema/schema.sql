@@ -242,6 +242,12 @@ CREATE TABLE devices (
     certificate_pem            blob,
     cert_fingerprint           text UNIQUE,
     cert_not_after             timestamp,
+    -- Canonical lifecycle identity. Fingerprint/not-after remain only for the
+    -- legacy bridge while old rows are upgraded on their first authenticated
+    -- connection.
+    active_cert_serial         text,
+    pending_certificate_pem    blob,
+    pending_cert_serial        text,
     registered_at              timestamp,
     last_seen_at               timestamp,
     -- Immutable provenance: global token use is COUNT(devices.registration_token_id).
@@ -257,6 +263,22 @@ CREATE TABLE devices (
 CREATE UNIQUE INDEX idx_devices_enrollment_identity
     ON devices(enrollment_identity_public_key)
     WHERE enrollment_identity_public_key IS NOT NULL;
+
+CREATE TRIGGER devices_certificate_lifecycle_pair
+BEFORE INSERT ON devices
+WHEN (((NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)) AND NEW.cert_fingerprint IS NULL)
+  OR ((NEW.pending_cert_serial IS NULL) <> (NEW.pending_certificate_pem IS NULL))
+BEGIN
+    SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
+END;
+
+CREATE TRIGGER devices_certificate_lifecycle_pair_update
+BEFORE UPDATE OF active_cert_serial, certificate_pem, pending_cert_serial, pending_certificate_pem ON devices
+WHEN (((NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)) AND NEW.cert_fingerprint IS NULL)
+  OR ((NEW.pending_cert_serial IS NULL) <> (NEW.pending_certificate_pem IS NULL))
+BEGIN
+    SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
+END;
 
 -- Enrollment provenance is append-only. Legacy rows may backfill their first
 -- CSR identity, but an established identity or token relation cannot change.
@@ -402,13 +424,6 @@ CREATE INDEX idx_terminal_sessions_device_started
 CREATE INDEX idx_terminal_sessions_user_started
     ON terminal_sessions(user_id, started_at DESC);
 
-CREATE TABLE revoked_certificates (
-    fingerprint text PRIMARY KEY,
-    revoked_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    not_after   timestamp NOT NULL,
-    reason      text NOT NULL DEFAULT ''
-);
-CREATE INDEX revoked_certificates_not_after_idx ON revoked_certificates(not_after);
 
 CREATE TABLE actions (
     id               text PRIMARY KEY,

@@ -21,8 +21,8 @@ import (
 // The agent continues to run scheduled actions even when disconnected.
 // If securityAlert is non-nil, it will be sent to the server after connection.
 // reloadCredsForReconnect returns the latest credentials from disk,
-// falling back to `current` if the reload fails. startCertRotation
-// renews the mTLS certificate and persists it to disk, but runAgent
+// falling back to `current` if the reload fails. Renewal is checked on the
+// existing sync cadence and persists a two-certificate bundle, but runAgent
 // holds an in-memory copy loaded once at startup; without reloading it
 // before each reconnect, a reconnect that happens after the old cert
 // expired would keep presenting the stale (expired) cert and fail the
@@ -54,9 +54,10 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 	// main); every reconnect reloads from disk to pick up a rotated
 	// certificate before building the mTLS client.
 	firstConnect := true
+	fallbackActive := false
 
-	// There is no client-side CRL cache. Control checks the agent certificate at
-	// every handshake and closes the live stream when the device is revoked.
+	// The server checks the presented certificate serial at every handshake and
+	// before every privileged frame.
 
 	for {
 		if !firstConnect {
@@ -85,8 +86,29 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		// Validate control against the CA this device enrolled with — not the
 		// system roots. The agent host is served through a TCP-passthrough router
 		// precisely so control presents its own CA-signed certificate here.
-		mtlsOpt, err := sdk.WithMTLSFromPEM(creds.Certificate, creds.PrivateKey, creds.CACert)
+		presentedCertificate := creds.Certificate
+		usingPending := presentPendingCertificate(len(creds.PendingCertificate) > 0, fallbackActive)
+		if usingPending {
+			presentedCertificate = creds.PendingCertificate
+		}
+		mtlsOpt, err := sdk.WithMTLSFromPEM(presentedCertificate, creds.PrivateKey, creds.CACert)
 		if err != nil {
+			if usingPending {
+				// A corrupt or stale B is a failed B attempt, not a reason to
+				// brick the agent. Fall back to A and let the normal cadence
+				// recover/reissue the pending successor.
+				logger.Warn("pending certificate unusable; falling back to active certificate", "error", err)
+				fallbackActive = true
+				cancelSession()
+				timer := time.NewTimer(currentBackoff)
+				select {
+				case <-ctx.Done():
+					timer.Stop()
+					return
+				case <-timer.C:
+				}
+				continue
+			}
 			logger.Error("failed to configure mTLS", "error", err)
 			os.Exit(1)
 		}
@@ -113,21 +135,48 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		}()
 
 		connected := h.WaitConnected(sessionCtx) == nil
+		staged := false
 		if connected {
-			h.Executor().SetLuksKeyStore(luksStore)
-			h.Executor().SetLpsPasswordStore(&clientLpsPasswordStore{client: client})
-			if luksDaemon != nil {
-				luksDaemon.SetSession(luksStore)
+			if !usingPending {
+				// A has authenticated successfully; recover any locally staged
+				// successor from this stable connection.
+				fallbackActive = false
+				var renewErr error
+				staged, renewErr = renewCertificateIfDue(sessionCtx, credStore, creds, hostname, logger, now, len(creds.PendingCertificate) > 0)
+				if renewErr != nil {
+					logger.Warn("certificate renewal check failed", "error", renewErr)
+				} else if staged {
+					cancelSession()
+				}
 			}
-
-			if newInterval := syncStateFromControl(sessionCtx, client, sched, logger); newInterval > 0 {
-				syncInterval = newInterval
+			if usingPending {
+				// Welcome is sent only after Hello is authenticated and the
+				// server has promoted the pending serial.
+				creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
+				creds.PendingCertificate = nil
+				if err := credStore.Save(creds); err != nil {
+					logger.Warn("certificate promotion: failed to persist active bundle", "error", err)
+				}
 			}
-			syncPendingResults(sessionCtx, sched, client, logger)
+			if staged {
+				// The next session must present B; the current A session has no
+				// reason to run sync against its canceled context.
+			} else {
+				h.Executor().SetLuksKeyStore(luksStore)
+				h.Executor().SetLpsPasswordStore(&clientLpsPasswordStore{client: client})
+				if luksDaemon != nil {
+					luksDaemon.SetSession(luksStore)
+				}
 
-			if securityAlert != nil {
-				go sendSecurityAlert(sessionCtx, client, securityAlert, logger)
-				securityAlert = nil
+				if newInterval := syncStateFromControl(sessionCtx, client, sched, logger); newInterval > 0 {
+					syncInterval = newInterval
+				}
+				syncPendingResults(sessionCtx, sched, client, logger)
+
+				if securityAlert != nil {
+					go sendSecurityAlert(sessionCtx, client, securityAlert, logger)
+					securityAlert = nil
+				}
 			}
 		}
 
@@ -139,7 +188,22 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		syncDone := make(chan struct{})
 		go func() {
 			defer close(syncDone)
-			periodicSync(sessionCtx, client, sched, syncInterval, intervalUpdatesOut, syncTrigger, logger)
+			var beforeSync func() bool
+			if !usingPending && !staged {
+				beforeSync = func() bool {
+					staged, renewErr := renewCertificateIfDue(sessionCtx, credStore, creds, hostname, logger, now, len(creds.PendingCertificate) > 0)
+					if renewErr != nil {
+						logger.Warn("certificate renewal check failed", "error", renewErr)
+						return false
+					}
+					if staged {
+						cancelSession()
+						return true
+					}
+					return false
+				}
+			}
+			periodicSync(sessionCtx, client, sched, syncInterval, intervalUpdatesOut, syncTrigger, logger, beforeSync)
 		}()
 
 		// Start result sender goroutine to send scheduled execution results to server
@@ -156,6 +220,9 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		connStart := now()
 		streamErr := waitForStreamEnd(streamDone, intervalUpdatesOut, &syncInterval)
 		err = streamErr
+		// Alternate after every failed attempt: B failure selects A; A
+		// failure (including a lost Welcome after server promotion) selects B.
+		fallbackActive = fallbackAfterConnection(len(creds.PendingCertificate) > 0, usingPending, connected)
 
 		// Stop the goroutines and clear connection-dependent state
 		cancelSession()
@@ -240,6 +307,7 @@ func periodicSync(
 	intervalUpdatesOut chan<- time.Duration,
 	syncTrigger <-chan struct{},
 	logger *slog.Logger,
+	beforeSync func() bool,
 ) {
 	syncInterval := initialInterval
 	ticker := time.NewTicker(syncInterval)
@@ -248,6 +316,9 @@ func periodicSync(
 	logger.Info("periodic sync started", "interval", syncInterval.String())
 
 	doSync := func(reason string) {
+		if beforeSync != nil && beforeSync() {
+			return
+		}
 		logger.Info("synchronizing stream state", "reason", reason)
 		newInterval := syncStateFromControl(ctx, client, sched, logger)
 		if newInterval > 0 && newInterval != syncInterval {

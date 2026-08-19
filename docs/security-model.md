@@ -296,13 +296,6 @@ world-accessible — control refuses to start rather than using a CA key anyone
 on the box can read.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
-Rotation is by trust bundle rather than by hierarchy. A bundle may carry several
-CAs, each of which must be capable of signing certificates, and the bundle must
-contain the currently active CA — so you cannot rotate yourself out of trusting
-the certificates already deployed to your fleet.
-<!-- docref: end -->
-
 ### Peer classes
 
 <!-- docref: begin src=server/internal/mtls/peer_class.go#PeerClassFromCert:df329135 -->
