@@ -41,7 +41,7 @@ options are comma-separated and reject an empty entry; malformed booleans and
 durations name their variable and fail startup.
 <!-- docref: end -->
 
-<!-- docref: begin src=cmd/cadestro/main.go#run:02e31f3c,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
+<!-- docref: begin src=cmd/cadestro/main.go#run:f51db902,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
 `CADESTRO_CA_TRUST_BUNDLE_FILE` optionally names the startup-only PEM trust
 bundle used for agent-client certificate verification. It must contain the
 active CA from `CADESTRO_CA_CERT_FILE`; changing either file requires a
