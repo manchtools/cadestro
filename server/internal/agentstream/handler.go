@@ -20,9 +20,11 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
+	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -39,6 +41,8 @@ const (
 )
 
 const frameRateWindow = time.Minute
+
+var errCertificateNotActive = errors.New("certificate is not active for device")
 
 // DeviceResults is the direct sink for device-owned result frames.
 type DeviceResults interface {
@@ -192,7 +196,7 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 		return connect.NewError(connect.CodeResourceExhausted, errors.New("agent connection rate limit exceeded"))
 	}
 	if err := h.recordHello(ctx, deviceID, hello); err != nil {
-		if store.IsNotFound(err) {
+		if store.IsNotFound(err) || errors.Is(err, errCertificateNotActive) {
 			return connect.NewError(connect.CodePermissionDenied, errors.New("device is not registered"))
 		}
 		h.logger.Error("record agent hello", "device_id", deviceID, "error", err)
@@ -253,6 +257,9 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 			}
 			if agent.Terminated() {
 				return nil
+			}
+			if !h.peerCertificateActive(ctx, deviceID) {
+				return connect.NewError(connect.CodePermissionDenied, errors.New("certificate is no longer active"))
 			}
 			if err := h.validator.Struct(received.message); err != nil {
 				return connect.NewError(connect.CodeInvalidArgument, errors.New("invalid agent frame"))
@@ -483,15 +490,44 @@ func (h *Handler) routeTerminal(deviceID, sessionID string, message *pmv1.AgentM
 }
 
 func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *pmv1.Hello) error {
-	if _, err := h.store.GetDevice(ctx, deviceID); err != nil {
-		return err
-	}
 	now := h.now().UTC().Truncate(time.Microsecond)
 	_, err := h.store.WithAudit(ctx, agentOperation(deviceID, "Hello"),
 		func(ctx context.Context, tx *store.Tx, recorder *store.AuditRecorder) error {
+			bridged := false
 			current, err := tx.GetDevice(ctx, deviceID)
 			if err != nil {
 				return err
+			}
+			peer, peerOK := mtls.PeerCertificateFromContext(ctx)
+			serial, serialOK := mtls.PeerSerialFromContext(ctx)
+			if !peerOK || !serialOK {
+				return errCertificateNotActive
+			}
+			if current.ActiveCertSerial == nil && current.CertFingerprint != nil && ca.FingerprintFromCert(peer) == *current.CertFingerprint {
+				current, err = tx.BridgeLegacyDeviceCertificate(ctx, db.BridgeLegacyDeviceCertificateParams{ID: deviceID, Fingerprint: current.CertFingerprint, Serial: &serial})
+				if err != nil && !store.IsNotFound(err) {
+					return err
+				}
+				bridged = err == nil
+				if store.IsNotFound(err) {
+					current, err = tx.GetDevice(ctx, deviceID)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			if current.ActiveCertSerial == nil || (*current.ActiveCertSerial != serial && (current.PendingCertSerial == nil || *current.PendingCertSerial != serial)) {
+				return errCertificateNotActive
+			}
+			promoted := current.PendingCertSerial != nil && *current.PendingCertSerial == serial
+			if promoted {
+				current, err = tx.PromotePendingDeviceCertificate(ctx, db.PromotePendingDeviceCertificateParams{ID: deviceID, PendingSerial: &serial})
+				if err != nil {
+					return err
+				}
+			}
+			if current.ActiveCertSerial == nil || *current.ActiveCertSerial != serial {
+				return errCertificateNotActive
 			}
 			rows, err := tx.RecordDeviceHello(ctx, db.RecordDeviceHelloParams{
 				Hostname: hello.Hostname, AgentVersion: hello.AgentVersion, LastSeenAt: &now, ID: deviceID,
@@ -502,9 +538,13 @@ func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *pmv1.
 			if rows != 1 {
 				return store.ErrNotFound
 			}
+			changed := []string{"agent_version", "hostname", "last_seen_at"}
+			if promoted || bridged {
+				changed = append(changed, "active_cert_serial", "pending_cert_serial", "cert_fingerprint", "cert_not_after")
+			}
 			recorder.Effect(store.AuditEffect{
 				ResourceType: "device", ResourceID: deviceID, Action: "CONNECT", Outcome: store.EffectApplied,
-				ChangedFields: []string{"agent_version", "hostname", "last_seen_at"},
+				ChangedFields: changed,
 			})
 			if current.Hostname != hello.Hostname {
 				executionIDs, err := tx.ListExecutionIDsForDevice(ctx, deviceID)
@@ -518,6 +558,25 @@ func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *pmv1.
 			return nil
 		})
 	return err
+}
+
+// peerCertificateActive enforces the active serial before every privileged
+// frame. Pending certificates are handled only by recordHello's promotion
+// transaction and never authorize a later frame by themselves.
+func (h *Handler) peerCertificateActive(ctx context.Context, deviceID string) bool {
+	_, ok := mtls.PeerCertificateFromContext(ctx)
+	serial, serialOK := mtls.PeerSerialFromContext(ctx)
+	if !ok || !serialOK {
+		return false
+	}
+	device, err := h.store.GetDevice(ctx, deviceID)
+	if err != nil {
+		return false
+	}
+	if device.ActiveCertSerial != nil && *device.ActiveCertSerial == serial {
+		return true
+	}
+	return false
 }
 
 func (h *Handler) recordSecurityAlert(ctx context.Context, deviceID string, alert *pmv1.SecurityAlert) error {

@@ -79,8 +79,6 @@ func newDeviceHandlerFixture(t *testing.T) *deviceHandlerFixture {
 	f.tokens = terminal.NewTokenStore(terminal.NewMemoryBackend(func() time.Time { return now }),
 		terminal.WithClock(func() time.Time { return now }))
 	f.connected[f.directID], f.connected[f.groupID], f.connected[f.outsideID] = true, true, true
-	fingerprint := strings.Repeat("a", 64)
-	expires := now.Add(24 * time.Hour)
 	_, err = st.WithAudit(context.Background(), mutationOp(), func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		for id, email := range map[string]string{
 			f.actorID: "actor@example.test",
@@ -107,8 +105,7 @@ func newDeviceHandlerFixture(t *testing.T) *deviceHandlerFixture {
 		for _, d := range []db.InsertDeviceParams{
 			{
 				ID: f.directID, Hostname: "direct", AgentVersion: "1.0.0",
-				AgentSealingPublicKey: bytes.Repeat([]byte{1}, 32), CertFingerprint: &fingerprint,
-				CertNotAfter: &expires, RegisteredAt: &now, LastSeenAt: &now,
+				AgentSealingPublicKey: bytes.Repeat([]byte{1}, 32), RegisteredAt: &now, LastSeenAt: &now,
 			},
 			{
 				ID: f.groupID, Hostname: "group", AgentVersion: "1.0.0",
@@ -1602,9 +1599,6 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	_, err = f.handlers.DeleteDevice(ctx, connect.NewRequest(&pmv1.DeleteDeviceRequest{Id: f.directID}))
 	require.NoError(t, err)
 	assert.Equal(t, []string{f.directID}, f.closed)
-	revoked, err := store.NewRevocationChecker(f.store).IsRevoked(context.Background(), strings.Repeat("a", 64))
-	require.NoError(t, err)
-	assert.True(t, revoked)
 	_, err = f.store.GetDevice(context.Background(), f.directID)
 	assert.True(t, store.IsNotFound(err))
 
@@ -1624,21 +1618,6 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	require.Len(t, effects, 1)
 	assert.Equal(t, f.directID, effects[0].ResourceID)
 	assert.Equal(t, "DELETE", effects[0].Action)
-}
-
-func TestDeviceHandlers_DeleteRollsBackWhenRevocationFails(t *testing.T) {
-	f := newDeviceHandlerFixture(t)
-	fingerprint := strings.Repeat("a", 64)
-	rejectRevocationFingerprint(t, f.raw, fingerprint)
-
-	_, err := f.handlers.DeleteDevice(f.actor("DeleteDevice"), connect.NewRequest(&pmv1.DeleteDeviceRequest{Id: f.directID}))
-	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
-	_, err = f.store.GetDevice(context.Background(), f.directID)
-	require.NoError(t, err, "the device deletion must roll back with revocation")
-	assert.Empty(t, f.closed, "an uncommitted revocation must not close the live stream")
-	revoked, err := store.NewRevocationChecker(f.store).IsRevoked(context.Background(), fingerprint)
-	require.NoError(t, err)
-	assert.False(t, revoked)
 }
 
 func TestDeviceHandlers_MountsExactSurface(t *testing.T) {

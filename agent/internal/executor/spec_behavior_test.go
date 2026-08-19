@@ -52,15 +52,13 @@ func TestSpecRemoteRedirect_PinAware(t *testing.T) {
 }
 
 // =============================================================================
-// SPEC: 12-agent-spec.md — Certificate renewal at 80% of lifetime
-// (renewAt lives in main package — this test documents the contract)
+// SPEC: 12-agent-spec.md — Certificate renewal at 80% of lifetime.
 // =============================================================================
 
 func TestSpecAgent_CertRenewalTime_Documented(t *testing.T) {
-	// The renewAt function in main cert_rotation.go must:
-	//   1. Return notAfter.Sub(notBefore) * 0.8 from notBefore, minus now
-	//   2. Clamp to minimum 1 minute when already past the renewal point
-	// Behavioral tests in cmd/cadestrod/cert_rotation_test.go.
+	// certificateRenewalDue in the main package must use the certificate's own
+	// validity window and become true at its 80% point. Behavioral tests live in
+	// cmd/cadestrod/cert_rotation_test.go.
 	_ = time.Hour // prove we can use time package
 }
 

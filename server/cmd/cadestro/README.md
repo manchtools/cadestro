@@ -12,7 +12,7 @@ authority is
 - CRUD state and transactional audit operation/effect rows;
 - database-backed scheduling and durable delivery;
 - SQLite FTS5 full-text search;
-- certificate issuance, renewal, and indexed revocation;
+- certificate issuance, renewal, and active/pending serial lifecycle;
 - artifact metadata and filesystem ownership; and
 <!-- docref: begin src=internal/controlruntime/runtime.go#health:550d4ab3,internal/controlruntime/runtime.go#readinessHandler:679b3b18,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 - health and readiness endpoints, plus the host-facing `backup-status` command.
@@ -25,7 +25,7 @@ indexer, local password/TOTP service, or application-frame signer.
 
 Control must fail readiness when the schema is not current, required keys or CA
 material are unusable, artifact paths are not writable, or the agent listener
-cannot enforce revocation.
+cannot enforce active certificate serial admission.
 
 <!-- docref: begin src=cmd/cadestro/main.go#parseCommand:dfecd82c,cmd/cadestro/config.go#configEnvironment:c1ebb388,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
 Configuration is entirely environmental: every option is its own documented
@@ -41,12 +41,6 @@ options are comma-separated and reject an empty entry; malformed booleans and
 durations name their variable and fail startup.
 <!-- docref: end -->
 
-<!-- docref: begin src=cmd/cadestro/main.go#run:f51db902,internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
-`CADESTRO_CA_TRUST_BUNDLE_FILE` optionally names the startup-only PEM trust
-bundle used for agent-client certificate verification. It must contain the
-active CA from `CADESTRO_CA_CERT_FILE`; changing either file requires a
-control restart.
-<!-- docref: end -->
 
 <!-- docref: begin src=cmd/cadestro/config.go#loadSecret:b9678c7e,cmd/cadestro/config.go#readSecretFile:60ffa83b,cmd/cadestro/config.go#loadEd25519PrivateKey:3cc11345 -->
 Private keys are file-referenced only: `CADESTRO_SESSION_SIGNING_KEY_FILE`

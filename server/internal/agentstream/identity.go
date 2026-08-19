@@ -3,11 +3,9 @@ package agentstream
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
@@ -47,14 +45,11 @@ func writeDeadlinerFrom(ctx context.Context) writeDeadliner {
 }
 
 // MTLSMiddleware authenticates AgentService requests and binds the verified
-// certificate identity into their contexts. Revocation lookup failures reject
-// the request; there is no queue-backed CRL or permissive fallback.
-func MTLSMiddleware(next http.Handler, revocation mtls.RevocationChecker, logger *slog.Logger) http.Handler {
+// certificate identity and leaf into their contexts. Serial admission is
+// enforced by the stream handler against current device state.
+func MTLSMiddleware(next http.Handler) http.Handler {
 	if next == nil {
 		panic("agentstream: mTLS middleware requires a handler")
-	}
-	if logger == nil {
-		logger = slog.Default()
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		if request.URL.Path == "/health" || request.URL.Path == "/ready" {
@@ -71,27 +66,13 @@ func MTLSMiddleware(next http.Handler, revocation mtls.RevocationChecker, logger
 			http.Error(w, "agent certificate required", http.StatusForbidden)
 			return
 		}
-		if revocation == nil {
-			logger.Error("reject agent mTLS without revocation checker", "device_id", deviceID)
-			http.Error(w, "certificate revocation unavailable", http.StatusForbidden)
-			return
-		}
 		if len(request.TLS.PeerCertificates) == 0 {
 			http.Error(w, "client certificate required", http.StatusUnauthorized)
 			return
 		}
-		fingerprint := ca.FingerprintFromCert(request.TLS.PeerCertificates[0])
-		revoked, err := revocation.IsRevoked(request.Context(), fingerprint)
-		if err != nil {
-			logger.Error("reject agent mTLS after revocation lookup failure", "device_id", deviceID, "error", err)
-			http.Error(w, "certificate revocation unavailable", http.StatusForbidden)
-			return
-		}
-		if revoked {
-			http.Error(w, "certificate revoked", http.StatusForbidden)
-			return
-		}
 		ctx := WithDeviceID(request.Context(), deviceID)
+		ctx = mtls.WithDeviceID(ctx, deviceID)
+		ctx = mtls.WithPeerCertificate(ctx, request.TLS.PeerCertificates[0])
 		controller := http.NewResponseController(w)
 		if err := controller.SetWriteDeadline(time.Time{}); err == nil || !errors.Is(err, http.ErrNotSupported) {
 			ctx = withWriteDeadliner(ctx, controller)

@@ -27,6 +27,7 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
+	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -38,9 +39,6 @@ type enrollmentFixture struct {
 	ca       *ca.CA
 	now      time.Time
 	sealing  []byte
-
-	closeMu sync.Mutex
-	closed  []string
 }
 
 func newEnrollmentFixture(t *testing.T) *enrollmentFixture {
@@ -59,11 +57,6 @@ func newEnrollmentFixture(t *testing.T) *enrollmentFixture {
 		Logger: slog.Default(),
 		Now:    func() time.Time { return now }, ControlURL: "https://agents.example.test:8443",
 		ControlSealingPublicKey: f.sealing,
-		CloseStream: func(deviceID string) {
-			f.closeMu.Lock()
-			defer f.closeMu.Unlock()
-			f.closed = append(f.closed, deviceID)
-		},
 	})
 	return f
 }
@@ -118,6 +111,15 @@ func registerRequest(token string, csr []byte, sealingByte byte) *connect.Reques
 		Token: token, Hostname: "host-1", AgentVersion: "v1", Csr: csr,
 		AgentSealingPublicKey: bytes.Repeat([]byte{sealingByte}, 32),
 	})
+}
+
+func renewalContext(t *testing.T, certPEM []byte, deviceID string) context.Context {
+	t.Helper()
+	block, _ := pem.Decode(certPEM)
+	cert, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+	ctx := mtls.WithPeerCertificate(context.Background(), cert)
+	return mtls.WithDeviceID(ctx, deviceID)
 }
 
 func TestEnrollment_ValidatesBeforeCredentialUse(t *testing.T) {
@@ -274,7 +276,7 @@ func TestEnrollment_SoftDeletedIdentityCannotBeReusedOrRefundTokenUse(t *testing
 	assert.Equal(t, 1, devices, "soft deletion does not refund the global token use")
 }
 
-func TestEnrollment_RenewalReplacesRevokesAndCloses(t *testing.T) {
+func TestEnrollment_RenewalStagesPendingSuccessor(t *testing.T) {
 	f := newEnrollmentFixture(t)
 	token := "renew-token"
 	f.insertToken(token, 1, f.now.Add(time.Hour))
@@ -285,8 +287,8 @@ func TestEnrollment_RenewalReplacesRevokesAndCloses(t *testing.T) {
 	oldFingerprint, err := ca.FingerprintFromPEM(registered.Msg.Certificate)
 	require.NoError(t, err)
 
-	renewed, err := f.handlers.RenewCertificate(context.Background(), connect.NewRequest(&pmv1.RenewCertificateRequest{
-		Csr: enrollmentCSR(t, identity), CurrentCertificate: registered.Msg.Certificate,
+	renewed, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&pmv1.RenewCertificateRequest{
+		Csr: enrollmentCSR(t, identity),
 	}))
 	require.NoError(t, err)
 	newFingerprint, err := ca.FingerprintFromPEM(renewed.Msg.Certificate)
@@ -294,29 +296,27 @@ func TestEnrollment_RenewalReplacesRevokesAndCloses(t *testing.T) {
 	assert.NotEqual(t, oldFingerprint, newFingerprint)
 	assert.True(t, renewed.Msg.NotAfter.AsTime().Equal(f.now.Add(24*time.Hour)))
 
-	var storedFingerprint string
+	var storedSerial string
 	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT cert_fingerprint FROM devices WHERE id = $1`, deviceID).Scan(&storedFingerprint))
-	assert.Equal(t, newFingerprint, storedFingerprint)
-	var reason string
-	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT reason FROM revoked_certificates WHERE fingerprint = $1`, oldFingerprint).Scan(&reason))
-	assert.Equal(t, "superseded by renewal", reason)
-	f.closeMu.Lock()
-	assert.Equal(t, []string{deviceID}, f.closed)
-	f.closeMu.Unlock()
-
-	_, err = f.handlers.RenewCertificate(context.Background(), connect.NewRequest(&pmv1.RenewCertificateRequest{
-		Csr: enrollmentCSR(t, identity), CurrentCertificate: registered.Msg.Certificate,
-	}))
-	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	var revocations int
-	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM revoked_certificates`).Scan(&revocations))
-	assert.Equal(t, 1, revocations)
-
-	op, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceRenewCertificateProcedure)
+		`SELECT active_cert_serial FROM devices WHERE id = $1`, deviceID).Scan(&storedSerial))
+	activeSerial, err := ca.SerialFromPEM(registered.Msg.Certificate)
 	require.NoError(t, err)
-	assert.Equal(t, string(store.ClassRejectedAuthentication), op.OperationClass)
+	assert.Equal(t, activeSerial, storedSerial)
+	var legacyFingerprint, legacyNotAfter any
+	require.NoError(t, f.raw.QueryRow(context.Background(),
+		`SELECT cert_fingerprint, cert_not_after FROM devices WHERE id = $1`, deviceID).Scan(&legacyFingerprint, &legacyNotAfter))
+	assert.Nil(t, legacyFingerprint)
+	assert.Nil(t, legacyNotAfter)
+	var pendingSerial string
+	require.NoError(t, f.raw.QueryRow(context.Background(),
+		`SELECT pending_cert_serial FROM devices WHERE id = $1`, deviceID).Scan(&pendingSerial))
+	assert.NotEmpty(t, pendingSerial)
+
+	retry, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&pmv1.RenewCertificateRequest{
+		Csr: enrollmentCSR(t, identity),
+	}))
+	require.NoError(t, err)
+	assert.Equal(t, renewed.Msg.Certificate, retry.Msg.Certificate)
 }
 
 func TestEnrollment_RenewalRequiresSameIdentityKey(t *testing.T) {
@@ -328,21 +328,19 @@ func TestEnrollment_RenewalRequiresSameIdentityKey(t *testing.T) {
 	require.NoError(t, err)
 	otherCSR, _ := newEnrollmentIdentity(t)
 
-	_, err = f.handlers.RenewCertificate(context.Background(), connect.NewRequest(&pmv1.RenewCertificateRequest{
-		Csr: otherCSR, CurrentCertificate: registered.Msg.Certificate,
+	_, err = f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, registered.Msg.DeviceId.Value), connect.NewRequest(&pmv1.RenewCertificateRequest{
+		Csr: otherCSR,
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	f.closeMu.Lock()
-	assert.Empty(t, f.closed)
-	f.closeMu.Unlock()
-	var revocations int
-	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM revoked_certificates`).Scan(&revocations))
-	assert.Zero(t, revocations)
 }
 
 func TestEnrollment_MountsExactSurface(t *testing.T) {
 	f := newEnrollmentFixture(t)
-	assert.ElementsMatch(t, enrollment.MutationProcedures(), f.handlers.Mount(http.NewServeMux()))
+	mux := http.NewServeMux()
+	var mounted []string
+	mounted = append(mounted, f.handlers.MountRegister(mux)...)
+	mounted = append(mounted, f.handlers.MountRenewal(mux)...)
+	assert.ElementsMatch(t, enrollment.MutationProcedures(), mounted)
 	assert.Equal(t, []string{
 		cadestrov1connect.ControlServiceRegisterProcedure,
 		cadestrov1connect.ControlServiceRenewCertificateProcedure,

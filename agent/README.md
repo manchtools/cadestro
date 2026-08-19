@@ -634,12 +634,13 @@ run in-process without a separate escalation account or sudoers policy.
 
 - **Registration**: Agent registers with the Control Server over HTTPS, authenticating with a registration token
 - **mTLS**: After registration, the agent connects to control's agent listener using mutual TLS with certificates signed by the Control Server CA
-<!-- docref: begin src=agent/cmd/cadestrod/cert_rotation.go#renewAt:211ccaeb,agent/cmd/cadestrod/cert_rotation.go#applyRenewal:49ccae95 -->
-- **Certificate Rotation**: The agent automatically renews its mTLS certificate at 80% of its lifetime (~292 days for a 1-year cert). Renewal uses the existing private key to generate a new CSR and calls the Control Server's `RenewCertificate` RPC, presenting the current certificate for identity verification. The response includes the active CA certificate. The agent stores it only when it is identical to or cross-signed by the enrolled CA; an unrelated root is refused. Operators load the old+new bundle and restart control before the overlap begins. On failure, the agent retries hourly.
+- **Certificate lifecycle**: The agent renews at 80% of the active certificate's
+  validity using the same Ed25519 key. The authenticated renewal RPC stages B
+  beside active A; a fresh Hello with B promotes it. Failed B attempts alternate
+  back to A, and the existing sync cadence retries without a rotation goroutine
+  or forced stream close.
 - **Trust root**: the direct agent stream validates control against the pinned
-  enrollment CA. Renewal occurs through authenticated control and preserves CA
-  continuity.
-<!-- docref: end -->
+  enrollment CA. Renewal never changes that CA.
 - **Certificate Storage**: Credentials are encrypted at rest using AES-256-GCM with a key derived from the machine ID via Argon2id (plus a per-store random salt), written `0600` in a `0700` owner-only directory. The store fails closed if its directory is group/world-writable. Machine-ID binding is not protection against offline theft of the same disk; use full-disk encryption.
 
 ### Direct-stream validation

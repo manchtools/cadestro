@@ -288,6 +288,46 @@ message CreateTokenRequest {
         with self.assertRaises(judge.JudgeError):
             judge.compare_features(baseline, candidate, [{"category": "rpc", "from": "ControlService.Old", "to": [], "reason": ""}])
 
+    def test_certificate_junk_metric_ignores_reusable_sdk_capabilities(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root, "sdk/crypto/cert.go", "package crypto\nfunc VerifyCAContinuity() {}\n")
+            write(root, "contract/client.go", "package contract\nfunc WithMTLSFromPEMAndSystemRoots() {}\n")
+            self.assertEqual(judge.certificate_lifecycle_junk_matches(root), [])
+
+            write(root, "server/internal/enrollment/handlers.go", "package enrollment\nfunc legacy() { _ = AssertCSRMatchesCertKey }\n")
+            self.assertGreater(len(judge.certificate_lifecycle_junk_matches(root)), 0)
+
+    def test_certificate_junk_metric_ignores_test_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root, "server/deploy/setup_test.sh", "CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt\n")
+            write(root, "server/internal/ca/ca_test.go", "package ca\nfunc SetTrustBundle() {}\n")
+            self.assertEqual(judge.certificate_lifecycle_junk_matches(root), [])
+
+    def test_certificate_junk_metric_detects_live_server_rotation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root, "server/internal/ca/ca.go", "package ca\nfunc SetTrustBundle() {}\n")
+            write(root, "server/deploy/setup.sh", "CADESTRO_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt\n")
+            found = judge.certificate_lifecycle_junk_matches(root)
+            self.assertEqual(len(found), 2, found)
+
+    def test_certificate_junk_metric_requires_hard_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            write(baseline, "server/internal/ca/ca.go", "package ca\nfunc SetTrustBundle() {}\n")
+            write(baseline, "server/deploy/setup.sh", "CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt\n")
+            write(candidate, "server/internal/ca/ca.go", "package ca\nfunc SetTrustBundle() {}\n")
+            counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            report = judge.simplification_report(candidate, counts)
+            metric = report["metrics"]["certificate_lifecycle_junk"]
+            self.assertFalse(metric["pass"], metric)
+            self.assertGreater(metric["baseline"], metric["candidate"])
+            self.assertGreater(metric["candidate"], 0)
+            self.assertFalse(report["pass"], report)
+
 
 if __name__ == "__main__":
     unittest.main()

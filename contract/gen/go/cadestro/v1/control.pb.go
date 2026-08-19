@@ -206,12 +206,9 @@ type RenewCertificateRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Certificate Signing Request (PEM-encoded PKCS#10)
 	// @gotags: validate:"required"
-	Csr []byte `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty" validate:"required"`
-	// Current certificate (PEM) for identity verification
-	// @gotags: validate:"required"
-	CurrentCertificate []byte `protobuf:"bytes,2,opt,name=current_certificate,json=currentCertificate,proto3" json:"current_certificate,omitempty" validate:"required"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	Csr           []byte `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty" validate:"required"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RenewCertificateRequest) Reset() {
@@ -251,22 +248,12 @@ func (x *RenewCertificateRequest) GetCsr() []byte {
 	return nil
 }
 
-func (x *RenewCertificateRequest) GetCurrentCertificate() []byte {
-	if x != nil {
-		return x.CurrentCertificate
-	}
-	return nil
-}
-
 type RenewCertificateResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// New signed certificate (PEM)
 	Certificate []byte `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
 	// Certificate expiry
-	NotAfter *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=not_after,json=notAfter,proto3" json:"not_after,omitempty"`
-	// Active CA certificate (PEM). Agents should update their stored CA cert
-	// if non-empty, enabling seamless CA rotation.
-	CaCertificate []byte `protobuf:"bytes,3,opt,name=ca_certificate,json=caCertificate,proto3" json:"ca_certificate,omitempty"`
+	NotAfter      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=not_after,json=notAfter,proto3" json:"not_after,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -311,13 +298,6 @@ func (x *RenewCertificateResponse) GetCertificate() []byte {
 func (x *RenewCertificateResponse) GetNotAfter() *timestamppb.Timestamp {
 	if x != nil {
 		return x.NotAfter
-	}
-	return nil
-}
-
-func (x *RenewCertificateResponse) GetCaCertificate() []byte {
-	if x != nil {
-		return x.CaCertificate
 	}
 	return nil
 }
@@ -21183,14 +21163,12 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vcertificate\x18\x03 \x01(\fR\vcertificate\x12\x1f\n" +
 	"\vcontrol_url\x18\x04 \x01(\tR\n" +
 	"controlUrl\x12;\n" +
-	"\x1acontrol_sealing_public_key\x18\x05 \x01(\fR\x17controlSealingPublicKey\"\\\n" +
+	"\x1acontrol_sealing_public_key\x18\x05 \x01(\fR\x17controlSealingPublicKey\"1\n" +
 	"\x17RenewCertificateRequest\x12\x10\n" +
-	"\x03csr\x18\x01 \x01(\fR\x03csr\x12/\n" +
-	"\x13current_certificate\x18\x02 \x01(\fR\x12currentCertificate\"\x9c\x01\n" +
+	"\x03csr\x18\x01 \x01(\fR\x03csrJ\x04\b\x02\x10\x03\"{\n" +
 	"\x18RenewCertificateResponse\x12 \n" +
 	"\vcertificate\x18\x01 \x01(\fR\vcertificate\x127\n" +
-	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfter\x12%\n" +
-	"\x0eca_certificate\x18\x03 \x01(\fR\rcaCertificate\":\n" +
+	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfterJ\x04\b\x03\x10\x04\":\n" +
 	"\x13RefreshTokenRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x99\x01\n" +
 	"\x14RefreshTokenResponse\x12!\n" +

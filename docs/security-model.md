@@ -17,7 +17,7 @@ differently because they carry different things.
 |---|---|---|
 | Default address | `:8081` | `:8082` |
 | Who reaches it | Traefik, from the internet | Traefik, TCP passthrough |
-| Authentication | per-request bearer session, SCIM token, or bootstrap token | client certificate + peer class + revocation |
+| Authentication | per-request bearer session, SCIM token, or bootstrap token | client certificate + peer class + active serial |
 | TLS | terminated at Traefik, re-originated to control | **not** terminated by Traefik — end to end to control |
 
 <!-- docref: begin src=server/cmd/cadestro/httpserver.go#buildAgentServer:ccd04d34 -->
@@ -35,7 +35,7 @@ header carries it, and a connection that does not present a v2 header is
 rejected before TLS.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/architecture/deploy_test.go#TestDeploymentIsTheThreeServiceTarget:38c51965 -->
+<!-- docref: begin src=server/internal/architecture/deploy_test.go#TestDeploymentIsTheThreeServiceTarget:a5c1f429 -->
 The shape of the deployment is a test, not a convention. It asserts exactly
 three services, forbids mounting the Docker socket, forbids Docker-provider
 autodiscovery, requires the agent network to be internal-only, and requires
@@ -296,13 +296,6 @@ world-accessible — control refuses to start rather than using a CA key anyone
 on the box can read.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/ca/ca.go#CA.SetTrustBundle:3b932aea -->
-Rotation is by trust bundle rather than by hierarchy. A bundle may carry several
-CAs, each of which must be capable of signing certificates, and the bundle must
-contain the currently active CA — so you cannot rotate yourself out of trusting
-the certificates already deployed to your fleet.
-<!-- docref: end -->
-
 ### Peer classes
 
 <!-- docref: begin src=server/internal/mtls/peer_class.go#PeerClassFromCert:df329135 -->
@@ -375,7 +368,7 @@ escape hatch (a raw query, a transaction handle, the connection pool) so they
 cannot be added at all.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/credentials_test.go#TestProcedureClassification_MatchesTheMountedSurface:3136a55a,server/internal/controlrpc/mount_test.go#TestMountIsExactControlServiceDescriptorSet:ca4c8461 -->
+<!-- docref: begin src=server/internal/identity/credentials_test.go#TestProcedureClassification_MatchesTheMountedSurface:3136a55a,server/internal/controlrpc/mount_test.go#TestMountIsExactControlServiceDescriptorSet:b9a99888 -->
 Coverage cannot drift either. Every mounted procedure must be classified as a
 mutation, a read, or a sensitive read, and every classified procedure must be
 mounted — so a new RPC fails the build until it is classified. The mounted set

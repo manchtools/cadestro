@@ -375,20 +375,12 @@ func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[pmv1.D
 	if err != nil {
 		return nil, err
 	}
-	if view.CertFingerprint != nil && view.CertNotAfter == nil {
-		return nil, h.internal(ctx, "delete device", fmt.Errorf("certificate expiry is missing"))
-	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceDeleteDeviceProcedure, "DeleteDevice"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.SoftDeleteDevice(ctx, req.Msg.Id)
 			if err := requireOne("delete device", n, err); err != nil {
 				return err
-			}
-			if view.CertFingerprint != nil {
-				if err := store.RevokeInTx(ctx, tx, *view.CertFingerprint, *view.CertNotAfter, "device_deleted"); err != nil {
-					return err
-				}
 			}
 			effect := deviceEffect(req.Msg.Id, "DELETE", "is_deleted")
 			before, after := false, true

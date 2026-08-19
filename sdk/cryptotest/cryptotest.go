@@ -105,7 +105,7 @@ func GenLeaf(t testing.TB, ca *x509.Certificate, caKey *ecdsa.PrivateKey, common
 	}
 	tmpl := &x509.Certificate{
 		SerialNumber: nextSerial(),
-		Subject:      pkix.Name{CommonName: commonName},
+		Subject:      pkix.Name{CommonName: commonName, SerialNumber: commonName},
 		NotBefore:    notBefore,
 		NotAfter:     notAfter,
 		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,

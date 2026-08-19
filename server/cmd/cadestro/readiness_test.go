@@ -17,27 +17,18 @@ type readinessStoreStub struct{ err error }
 
 func (s readinessStoreStub) Ping(context.Context) error { return s.err }
 
-type revocationCheckerStub struct{ err error }
-
-func (s revocationCheckerStub) IsRevoked(context.Context, string) (bool, error) {
-	return false, s.err
-}
-
-func TestCheckReadinessChecksDatabaseRevocationAndArtifactPath(t *testing.T) {
+func TestCheckReadinessChecksDatabaseAndArtifactPath(t *testing.T) {
 	artifactPath := t.TempDir()
-	require.NoError(t, checkReadiness(context.Background(), readinessStoreStub{}, revocationCheckerStub{}, artifactPath, "", 0))
+	require.NoError(t, checkReadiness(context.Background(), readinessStoreStub{}, artifactPath, "", 0))
 
 	assert.ErrorContains(t,
-		checkReadiness(context.Background(), readinessStoreStub{err: errors.New("down")}, revocationCheckerStub{}, artifactPath, "", 0),
+		checkReadiness(context.Background(), readinessStoreStub{err: errors.New("down")}, artifactPath, "", 0),
 		"database")
-	assert.ErrorContains(t,
-		checkReadiness(context.Background(), readinessStoreStub{}, revocationCheckerStub{err: errors.New("denied")}, artifactPath, "", 0),
-		"revocation")
 
 	file := filepath.Join(t.TempDir(), "not-a-directory")
 	require.NoError(t, os.WriteFile(file, []byte("x"), 0o600))
 	assert.ErrorContains(t,
-		checkReadiness(context.Background(), readinessStoreStub{}, revocationCheckerStub{}, file, "", 0),
+		checkReadiness(context.Background(), readinessStoreStub{}, file, "", 0),
 		"artifact path")
 }
 
@@ -60,7 +51,7 @@ func TestCheckReadinessBackupPolicy(t *testing.T) {
 	}
 
 	check := func(directory string, maxLag time.Duration) error {
-		return checkReadiness(context.Background(), readinessStoreStub{}, revocationCheckerStub{}, artifactPath, directory, maxLag)
+		return checkReadiness(context.Background(), readinessStoreStub{}, artifactPath, directory, maxLag)
 	}
 
 	recent := t.TempDir()

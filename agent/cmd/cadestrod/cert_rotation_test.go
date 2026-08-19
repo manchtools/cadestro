@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"crypto/x509"
 	"testing"
 	"time"
 
@@ -9,92 +12,127 @@ import (
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
 
-// TestRenewAt_Computation pins the 80%-of-lifetime schedule and the
-// already-past clamp to a 1-minute minimum.
-func TestRenewAt_Computation(t *testing.T) {
+func TestCertificateRenewalDue_Computation(t *testing.T) {
 	nb := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	na := nb.Add(100 * 24 * time.Hour) // 100-day cert → renew at +80d
+	cert := &x509.Certificate{NotBefore: nb, NotAfter: na}
 
-	if got, want := renewAt(nb, na, nb), 80*24*time.Hour; got != want {
-		t.Errorf("renewAt at issuance = %v, want %v", got, want)
+	if certificateRenewalDue(cert, nb) {
+		t.Error("certificate is due at issuance")
 	}
-	if got := renewAt(nb, na, nb.Add(50*24*time.Hour)); got != 30*24*time.Hour {
-		t.Errorf("renewAt at +50d = %v, want 30d", got)
+	if certificateRenewalDue(cert, nb.Add(50*24*time.Hour)) {
+		t.Error("certificate is due before the 80% point")
 	}
-	if got := renewAt(nb, na, nb.Add(90*24*time.Hour)); got != time.Minute {
-		t.Errorf("renewAt past the renewal point = %v, want 1m clamp", got)
+	if !certificateRenewalDue(cert, nb.Add(80*24*time.Hour)) {
+		t.Error("certificate is not due at the 80% point")
 	}
-	if got := renewAt(nb, na, na.Add(time.Hour)); got != time.Minute {
-		t.Errorf("renewAt for an expired cert = %v, want 1m clamp", got)
+	if !certificateRenewalDue(cert, na.Add(time.Hour)) {
+		t.Error("expired certificate is not due")
 	}
 }
 
-// TestShouldEscalateRotation pins the escalation boundary.
-func TestShouldEscalateRotation(t *testing.T) {
-	if shouldEscalateRotation(2, 3) {
-		t.Error("2 < 3 must not escalate")
-	}
-	if !shouldEscalateRotation(3, 3) {
-		t.Error("3 >= 3 must escalate")
-	}
-	if !shouldEscalateRotation(7, 3) {
-		t.Error("7 >= 3 must escalate")
-	}
+type blockingWelcomeWaiter struct{}
+
+func (blockingWelcomeWaiter) WaitConnected(ctx context.Context) error {
+	<-ctx.Done()
+	return ctx.Err()
 }
 
-// TestApplyRenewal_RefusesNonContinuousCA pins finding #4: a returned CA
-// that does not chain to the enrolled CA is refused and creds is left
-// untouched (old cert + CA stay on disk).
-func TestApplyRenewal_RefusesNonContinuousCA(t *testing.T) {
-	// Distinct CNs make the "these are two different CAs" intent explicit
-	// (CAPEM also generates a fresh random key per call, so they differ
-	// regardless — the rejection path needs oldCA != unrelatedCA).
-	oldCA := cryptotest.CAPEM(t, "enrolled-ca")
-	unrelatedCA := cryptotest.CAPEM(t, "unrelated-ca")
-	creds := &credentials.Credentials{CACert: oldCA, Certificate: []byte("old-cert")}
-
-	err := applyRenewal(creds, &sdk.RenewCertificateResult{
-		Certificate: []byte("new-cert"),
-		CACert:      unrelatedCA,
-	})
+func TestWaitForWelcomeIsBounded(t *testing.T) {
+	ctx, cancelSession := context.WithCancel(context.Background())
+	defer cancelSession()
+	started := time.Now()
+	err := waitForWelcome(ctx, cancelSession, blockingWelcomeWaiter{}.WaitConnected, 5*time.Millisecond)
 	if err == nil {
-		t.Fatal("expected refusal of an unrelated (non-continuous) CA")
+		t.Fatal("missing Welcome must return an error")
 	}
-	if string(creds.Certificate) != "old-cert" || string(creds.CACert) != string(oldCA) {
-		t.Error("creds were mutated on a refused renewal — must stay untouched")
+	if elapsed := time.Since(started); elapsed > time.Second {
+		t.Fatalf("missing Welcome waited too long: %v", elapsed)
 	}
-}
-
-// TestApplyRenewal_AcceptsIdenticalCA — the common case: the server
-// returns the same CA; the new cert is adopted.
-func TestApplyRenewal_AcceptsIdenticalCA(t *testing.T) {
-	oldCA := cryptotest.CAPEM(t, "enrolled-ca")
-	creds := &credentials.Credentials{CACert: oldCA, Certificate: []byte("old-cert")}
-
-	if err := applyRenewal(creds, &sdk.RenewCertificateResult{
-		Certificate: []byte("new-cert"),
-		CACert:      oldCA,
-	}); err != nil {
-		t.Fatalf("identical CA refused: %v", err)
-	}
-	if string(creds.Certificate) != "new-cert" {
-		t.Error("certificate not updated on an accepted renewal")
+	select {
+	case <-ctx.Done():
+	default:
+		t.Fatal("missing Welcome must cancel the stream session")
 	}
 }
 
-// TestApplyRenewal_NoCAReturned keeps the enrolled CA and still adopts
-// the new cert (renewal without rotation).
-func TestApplyRenewal_NoCAReturned(t *testing.T) {
-	oldCA := cryptotest.CAPEM(t, "enrolled-ca")
-	creds := &credentials.Credentials{CACert: oldCA, Certificate: []byte("old-cert")}
+func TestPendingCredentialSelectionAlternatesAfterFailure(t *testing.T) {
+	for _, test := range []struct {
+		name, initialFallback string
+		presented, connected  bool
+		wantFallback          bool
+	}{
+		{name: "pending B fails then A", presented: true, wantFallback: true},
+		{name: "fallback A fails then B", initialFallback: "fallback", presented: false, wantFallback: false},
+		{name: "B connected promotes", presented: true, connected: true, wantFallback: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			pending := true
+			if test.initialFallback == "fallback" && presentPendingCertificate(pending, true) {
+				t.Fatal("fallback A must be selected after a failed B attempt")
+			}
+			if got := fallbackAfterConnection(pending, test.presented, test.connected); got != test.wantFallback {
+				t.Fatalf("fallbackAfterConnection = %v, want %v", got, test.wantFallback)
+			}
+		})
+	}
+}
 
-	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: []byte("new-cert")}); err != nil {
+func TestCorruptPendingCredentialFallsBackBeforeDial(t *testing.T) {
+	creds := &credentials.Credentials{
+		Certificate:        []byte("active certificate"),
+		PendingCertificate: []byte("corrupt pending certificate"),
+	}
+
+	opt, usingPending, fallback, err := configureAgentMTLS(creds, false)
+	if opt != nil {
+		t.Fatal("corrupt pending certificate must not produce an mTLS option")
+	}
+	if !usingPending {
+		t.Fatal("pending certificate must be selected before its configuration fails")
+	}
+	if !fallback {
+		t.Fatal("corrupt pending certificate must select active-credential fallback")
+	}
+	if err == nil {
+		t.Fatal("corrupt pending certificate must report its configuration error")
+	}
+}
+
+func TestApplyRenewal_StagesPendingCertificate(t *testing.T) {
+	caPEM, caKey, caCert := cryptotest.GenCA(t, "test-ca")
+	certPEM, keyPEM := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
+	creds := &credentials.Credentials{DeviceID: "dev-1", Certificate: certPEM, PendingCertificate: []byte("corrupt pending"), PrivateKey: keyPEM, CACert: caPEM}
+	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: certPEM}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if string(creds.CACert) != string(oldCA) {
-		t.Error("CA changed when the server returned none")
+	if string(creds.Certificate) != string(certPEM) || string(creds.PendingCertificate) != string(certPEM) {
+		t.Fatal("renewal must preserve A and stage B")
 	}
-	if string(creds.Certificate) != "new-cert" {
-		t.Error("certificate not updated")
+}
+
+func TestApplyRenewalRejectsTrailingCertificateData(t *testing.T) {
+	caPEM, caKey, caCert := cryptotest.GenCA(t, "test-ca")
+	activePEM, activeKey := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
+	creds := &credentials.Credentials{DeviceID: "dev-1", Certificate: activePEM, PendingCertificate: []byte("still usable"), PrivateKey: activeKey, CACert: caPEM}
+	trailing := append(append([]byte(nil), activePEM...), []byte("trailing")...)
+	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: trailing}); err == nil {
+		t.Fatal("trailing certificate data must be rejected")
+	}
+	if !bytes.Equal(creds.PendingCertificate, []byte("still usable")) {
+		t.Fatal("rejected renewal must preserve the last usable pending certificate")
+	}
+}
+
+func TestApplyRenewalRejectsCertificateWithWrongKey(t *testing.T) {
+	caPEM, caKey, caCert := cryptotest.GenCA(t, "test-ca")
+	activePEM, activeKey := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
+	otherPEM, _ := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
+	creds := &credentials.Credentials{DeviceID: "dev-1", Certificate: activePEM, PrivateKey: activeKey, CACert: caPEM}
+	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: otherPEM}); err == nil {
+		t.Fatal("renewal certificate with a different public key must be rejected")
+	}
+	if len(creds.PendingCertificate) != 0 {
+		t.Fatal("rejected renewal must not overwrite pending credentials")
 	}
 }

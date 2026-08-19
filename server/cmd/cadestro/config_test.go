@@ -123,7 +123,6 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	fixture.values["CADESTRO_CORS_ALLOW_ALL"] = "true"
 	fixture.values["CADESTRO_HEARTBEAT_INTERVAL"] = "45s"
 	fixture.values["CADESTRO_LOG_LEVEL"] = "debug"
-	fixture.values["CADESTRO_CA_TRUST_BUNDLE_FILE"] = "/certs/ca-bundle.crt"
 	setEnvironment(t, fixture.values)
 
 	cfg, err := loadConfig()
@@ -138,7 +137,6 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Equal(t, fixture.values["CADESTRO_DATABASE_PATH"], cfg.DatabasePath)
 	assert.Equal(t, "/certs/ca.crt", cfg.CACertFile)
 	assert.Equal(t, "/certs/ca.key", cfg.CAKeyFile)
-	assert.Equal(t, "/certs/ca-bundle.crt", cfg.CATrustBundleFile)
 	assert.Equal(t, "/certs/control.crt", cfg.AgentTLSCertFile)
 	assert.Equal(t, "/certs/control.key", cfg.AgentTLSKeyFile)
 

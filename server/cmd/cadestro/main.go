@@ -92,15 +92,6 @@ func run(cfg *Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("load certificate authority: %w", err)
 	}
-	if cfg.CATrustBundleFile != "" {
-		bundle, err := os.ReadFile(cfg.CATrustBundleFile)
-		if err != nil {
-			return fmt.Errorf("read CA trust bundle: %w", err)
-		}
-		if err := certificateAuthority.SetTrustBundle(bundle); err != nil {
-			return fmt.Errorf("load CA trust bundle: %w", err)
-		}
-	}
 	jwt, err := auth.NewJWTManager(auth.JWTConfig{PrivateKey: cfg.SessionSigningKey})
 	if err != nil {
 		return fmt.Errorf("load session signer: %w", err)
@@ -139,8 +130,6 @@ func run(cfg *Config, logger *slog.Logger) error {
 		Store: st, State: jobState, Handlers: maintenanceService.Handlers(),
 		Recurring: maintenanceService.Recurring(), Logger: logger,
 	})
-	revocations := store.NewRevocationChecker(st)
-
 	runtime := controlruntime.New(controlruntime.Config{
 		Store: st, CA: certificateAuthority, JWT: jwt, AtRest: atRest,
 		ControlSealingPrivateKey: cfg.SealingKey, Logger: logger, Version: version,
@@ -149,7 +138,7 @@ func run(cfg *Config, logger *slog.Logger) error {
 		TerminalOriginPatterns: cfg.TerminalOrigins, TrustedProxies: cfg.TrustedProxies,
 		HeartbeatInterval: cfg.HeartbeatInterval,
 		Readiness: func(ctx context.Context) error {
-			return checkReadiness(ctx, st, revocations, cfg.ArtifactPath, cfg.BackupPath, cfg.BackupMaxLag)
+			return checkReadiness(ctx, st, cfg.ArtifactPath, cfg.BackupPath, cfg.BackupMaxLag)
 		},
 	})
 	defer runtime.Close()

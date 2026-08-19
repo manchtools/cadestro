@@ -144,6 +144,10 @@ func New(cfg Config) *Runtime {
 		),
 		connect.WithReadMaxBytes(maxControlRequestBytes),
 	}
+	enrollmentHandler := enrollment.New(enrollment.Config{
+		Store: cfg.Store, CA: cfg.CA, Logger: cfg.Logger, Now: cfg.Now,
+		ControlURL: cfg.AgentURL, ControlSealingPublicKey: cfg.ControlSealingPrivateKey.PublicKey().Bytes(),
+	})
 
 	publicMux := http.NewServeMux()
 	controlrpc.Handlers{
@@ -151,11 +155,7 @@ func New(cfg Config) *Runtime {
 			Store: cfg.Store, Logger: cfg.Logger, JWT: cfg.JWT, KEK: cfg.AtRest,
 			PublicBaseURL: cfg.PublicBaseURL, Now: cfg.Now,
 		}),
-		Enrollment: enrollment.New(enrollment.Config{
-			Store: cfg.Store, CA: cfg.CA, Logger: cfg.Logger, Now: cfg.Now,
-			ControlURL: cfg.AgentURL, ControlSealingPublicKey: cfg.ControlSealingPrivateKey.PublicKey().Bytes(),
-			CloseStream: manager.Unregister,
-		}),
+		Enrollment:   enrollmentHandler,
 		Authoring:    authoring.NewHandlers(authoring.HandlersConfig{Store: cfg.Store, AtRest: cfg.AtRest, Logger: cfg.Logger, Now: cfg.Now}),
 		Assignments:  assignment.New(assignment.Config{Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now}),
 		DeviceGroups: devicegroup.NewHandlers(devicegroup.HandlersConfig{Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now}),
@@ -183,13 +183,16 @@ func New(cfg Config) *Runtime {
 	agentPath, directAgentHandler := cadestrov1connect.NewAgentServiceHandler(
 		agentService, connect.WithReadMaxBytes(maxAgentFrameBytes))
 	agentMux := http.NewServeMux()
-	agentMux.Handle(agentPath, agentstream.MTLSMiddleware(directAgentHandler,
-		store.NewRevocationChecker(cfg.Store), cfg.Logger))
+	agentMux.Handle(agentPath, directAgentHandler)
+	// Renewal and AgentService share the same TLS-authenticated listener; the
+	// handler binds the verified leaf into context before either path runs.
+	enrollmentHandler.MountRenewal(agentMux, controlOptions...)
 	agentMux.HandleFunc("/health", health)
 	agentMux.HandleFunc("/ready", readinessHandler(cfg.Readiness))
+	agentHandler := agentstream.MTLSMiddleware(agentMux)
 
 	return &Runtime{
-		PublicHandler: publicHandler, AgentHandler: agentMux, Connections: manager,
+		PublicHandler: publicHandler, AgentHandler: agentHandler, Connections: manager,
 		Deliveries: dispatcher, scim: scimHandler, limiters: ownedLimiters,
 		store: cfg.Store, logger: cfg.Logger, agentStream: agentService,
 	}

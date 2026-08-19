@@ -1,6 +1,8 @@
 package device
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -35,8 +37,10 @@ func (h *Handlers) toProto(view store.DeviceView) *pmv1.Device {
 			device.Status = pmv1.DeviceStatus_DEVICE_STATUS_ONLINE
 		}
 	}
-	if view.CertNotAfter != nil {
-		device.CertExpiresAt = timestamppb.New(*view.CertNotAfter)
+	if block, _ := pem.Decode(view.CertificatePem); block != nil {
+		if cert, err := x509.ParseCertificate(block.Bytes); err == nil {
+			device.CertExpiresAt = timestamppb.New(cert.NotAfter)
+		}
 	}
 	if view.ComplianceCheckedAt != nil {
 		device.ComplianceCheckedAt = timestamppb.New(*view.ComplianceCheckedAt)

@@ -232,22 +232,22 @@ configured proxy sources, so the real client address survives the reverse proxy
 in front of it instead of every agent appearing to come from the proxy.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/agentstream/identity.go#MTLSMiddleware:f1b23680 -->
-Every request on that listener is checked three ways before it reaches any
-handler: the device ID is taken from the client certificate's subject (never
-from anything the client says), the certificate's peer class must be `agent`, and
-its fingerprint is looked up against the revocation table. A missing revocation
-checker or a failed lookup is a **denial**, not a pass.
+<!-- docref: begin src=server/internal/agentstream/identity.go#MTLSMiddleware:306e83b6 -->
+Every request on that listener is checked before it reaches a handler: the
+device ID and authenticated leaf are taken from the TLS peer, and the
+certificate's peer class must be `agent`. The stream handler then admits only
+the device's active certificate serial.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/agentstream/handler.go#Handler.recordHello:58681c47 -->
-The application layer then re-checks the same thing rather than trusting the
-transport once: the first frame must be a hello, its device id must equal the
-mTLS identity, and the device must still exist and not be deleted. A mismatch is
-permission-denied.
+<!-- docref: begin src=server/internal/agentstream/handler.go#Handler.recordHello:a542688d -->
+The application layer then performs the lifecycle transition in the Hello
+transaction: the first frame must be a Hello, its device id must equal the
+mTLS identity, and a pending serial may promote only after that fresh Hello.
+Every privileged frame re-checks the active serial, so a stream displaced by a
+promotion is denied immediately.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#runAgent:8847cb7a,agent/cmd/cadestrod/main.go#maxBackoff:2d5b57db -->
+<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#runAgent:4e4110a3,agent/cmd/cadestrod/main.go#maxBackoff:2d5b57db -->
 Reconnection uses jittered exponential backoff — a randomised 5–10 second first
 wait, doubling, capped at five minutes — and resets once a session has lasted
 longer than the current backoff, so a stable agent recovers a short retry
@@ -261,77 +261,46 @@ freshly renewed certificate is picked up without a restart.
 
 ## 7. Renewal
 
-<!-- docref: begin src=agent/cmd/cadestrod/cert_rotation.go#renewAt:211ccaeb -->
-The agent renews at **80% of its certificate's lifetime** — about 292 days into
-a one-year certificate — computed from the certificate's own validity window
-rather than a fixed interval, with a one-minute floor if that moment has already
-passed.
-<!-- docref: end -->
+The agent renews at **80% of the active certificate's lifetime**, computed from
+the certificate's own validity window. It reuses the one Ed25519 private key to
+build a CSR and calls the authenticated renewal RPC with no client-supplied
+certificate identity field; the server compares the CSR key with the actual TLS
+peer leaf.
 
-<!-- docref: begin src=agent/cmd/cadestrod/cert_rotation.go#applyRenewal:49ccae95 -->
-Renewal reuses the existing private key: a new CSR is generated from it, and the
-**current certificate** is presented as the identity. So renewal proves both
-possession of the key and possession of the certificate.
-<!-- docref: end -->
+Issuance of B stores B as a pending certificate and leaves A active. The local
+credential store keeps both PEMs with the same private key. The next stream
+presents B; only a fresh authenticated Hello promotes B and clears pending.
+Until that Hello, B cannot perform privileged frames, while A remains usable.
+If the B configuration or connection fails, the agent falls back to A and uses
+the existing periodic sync cadence to retry. There is no forced stream close,
+retry goroutine, CA response, or trust-bundle rotation.
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:d71052c1 -->
-Control verifies the presented certificate against its trust pool for client
-auth, requires the `agent` peer class, and then checks that the CSR's public key
-matches the certificate's — certificates are public material, so possession of
-one proves nothing without that check. The new certificate is issued and swapped
-in one audited transaction, conditioned on the old fingerprint still being the
-current one, and the old fingerprint is revoked in the same transaction with
-reason "superseded by renewal". After commit, control closes the device's stream
-so it reconnects with the new certificate.
-<!-- docref: end -->
-
-<!-- docref: begin src=sdk/crypto/cert.go#VerifyCAContinuity:30b656cc -->
-The response also carries the active CA, and the agent will not blindly adopt
-it. It accepts a byte-identical CA, or one that is **cross-signed by the CA it
-enrolled against**; anything else is refused and the stored credentials are left
-untouched. This makes CA rotation possible (issue a cross-signed successor, run
-both) while making CA *substitution* impossible — a hard swap to an unrelated
-root requires re-enrolling the device.
-<!-- docref: end -->
-
-<!-- docref: begin src=agent/cmd/cadestrod/cert_rotation.go#startCertRotation:b90fc359 -->
-A failed renewal retries hourly. After three consecutive failures the log
-message escalates and names how many hours the rotation has been stalled, so a
-control server that has been unreachable for a week is visible on the device
-rather than silently counting down to expiry.
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:5f189181 -->
+The renewal handler runs behind the authenticated agent listener, checks the
+CSR against the actual TLS peer leaf, and stages one pending successor in the
+device row. A retry returns the existing pending certificate where possible;
+the active certificate is not replaced until Hello promotion.
 <!-- docref: end -->
 
 ---
 
-## 8. Revocation
+## 8. Certificate lifecycle state
 
-<!-- docref: begin src=server/internal/mtls/peer_class.go#RevocationChecker:7ab2c659,server/internal/store/revocation.go#RevocationChecker.IsRevoked:82de0357 -->
-There is **no CRL and no OCSP**. Revocation is a direct indexed database lookup
-on the certificate fingerprint, performed on every handshake. A cached snapshot
-was rejected deliberately: it creates a window in which a revoked certificate is
-still admitted. A nil checker, or a lookup that errors, denies — there is no
-permissive fallback and no opt-out.
-<!-- docref: end -->
+The durable lifecycle state is deliberately small: the active certificate PEM
+and serial, plus an optional pending PEM and serial. Legacy rows may still carry
+a fingerprint, but an authenticated peer is checked against it once and the
+bridge atomically records the presented serial before clearing that transitional
+field. New enrollment never writes the legacy fields.
 
-<!-- docref: begin src=server/internal/device/mutations.go#Handlers.DeleteDevice:d9f77d74,server/internal/store/revocation.go#RevokeInTx:836f92ed -->
-Deleting a device *is* the revocation action — there is no separate revoke RPC.
-The soft delete, the revocation row, and the audit effect all commit in one
-transaction, so a device cannot end up deleted-but-not-revoked or the reverse.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/connection/manager.go#Manager.Unregister:138fa5ca -->
-An agent that is connected *right now* does not keep its session. Revocation
-cancels the live stream's context immediately, so the connection terminates at
-once instead of surviving until the agent happens to disconnect. A reconnect
-attempt then fails at the transport check, and even if it did not, the
-application layer would refuse it because the device no longer exists.
-<!-- docref: end -->
+Deleting a device still prevents future admission because the device lookup
+fails; active serial checks additionally prevent an old stream from continuing
+after certificate promotion.
 
 ---
 
 ## What enrollment writes into the audit log
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:43193cf2 -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:14d5f72b -->
 A successful new registration records the device creation as an effect of one
 audited operation whose actor is the registration token itself, identified by
 its digest rather than its value. A same-identity retry is audited as an

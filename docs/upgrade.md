@@ -10,7 +10,7 @@ That is not a gap waiting to be filled in a later sprint; it is the current
 design, and this page describes what the code actually supports rather than what
 a mature product would.
 
-<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:05f20fae -->
+<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:03e5f0ac -->
 Schema handling is a three-way decision at startup, and there is no migration
 runner anywhere in the server. An empty database gets the baseline schema
 applied in one transaction. A database already at the current version is opened.
@@ -25,7 +25,7 @@ is a reinstall.
 
 ## Updating within a version
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:ca913fd3 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:809a1296 -->
 The control and web images share a single tag variable, because both are
 released from one repository under one version. They are updated together by
 construction — you cannot accidentally run a control plane and a UI from
@@ -95,7 +95,14 @@ SQLite-native `BEFORE DELETE` trigger is the equivalent append-only
 provenance guard for the rebuilt token table, so the relation cannot be
 refunded or moved without rebuilding the large devices table.
 
-<!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:e20a97cf -->
+For databases created before the certificate lifecycle cutover, stop control,
+take a verified backup, and run
+[`upgrade-certificate-lifecycle.sql`](upgrade-certificate-lifecycle.sql) with
+`sqlite3 -bail`. It adds the serial/pending columns and removes the obsolete
+revocation table; legacy fingerprints are bridged only when the actual mTLS
+peer leaf authenticates.
+
+<!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:c85cea66 -->
 Restoring the old database into the new release is not a migration and will not
 be treated as one: the store's non-creating open path requires the exact current
 schema version and refuses anything else. A database from a different schema

@@ -266,6 +266,9 @@ type Device struct {
 	CertificatePem              []byte     `json:"certificate_pem"`
 	CertFingerprint             *string    `json:"cert_fingerprint"`
 	CertNotAfter                *time.Time `json:"cert_not_after"`
+	ActiveCertSerial            *string    `json:"active_cert_serial"`
+	PendingCertificatePem       []byte     `json:"pending_certificate_pem"`
+	PendingCertSerial           *string    `json:"pending_cert_serial"`
 	RegisteredAt                *time.Time `json:"registered_at"`
 	LastSeenAt                  *time.Time `json:"last_seen_at"`
 	RegistrationTokenID         *string    `json:"registration_token_id"`
@@ -483,11 +486,23 @@ type OsqueryResult struct {
 	CompletedAt *time.Time      `json:"completed_at"`
 }
 
-type RevokedCertificate struct {
-	Fingerprint string    `json:"fingerprint"`
-	RevokedAt   time.Time `json:"revoked_at"`
-	NotAfter    time.Time `json:"not_after"`
-	Reason      string    `json:"reason"`
+type PolicyActionResult struct {
+	RunID        string    `json:"run_id"`
+	OccurrenceID string    `json:"occurrence_id"`
+	DeviceID     string    `json:"device_id"`
+	ActionID     string    `json:"action_id"`
+	ResultHash   string    `json:"result_hash"`
+	Payload      string    `json:"payload"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type PolicyManifestResult struct {
+	RunID      string    `json:"run_id"`
+	DeviceID   string    `json:"device_id"`
+	ManifestID string    `json:"manifest_id"`
+	State      string    `json:"state"`
+	ResultCode string    `json:"result_code"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type RevokedToken struct {

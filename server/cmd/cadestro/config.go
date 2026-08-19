@@ -66,7 +66,6 @@ type configEnvironment struct {
 	WebhookURL            string        `env:"CADESTRO_WEBHOOK_URL"`
 	CACertFile            string        `env:"CADESTRO_CA_CERT_FILE"`
 	CAKeyFile             string        `env:"CADESTRO_CA_KEY_FILE"`
-	CATrustBundleFile     string        `env:"CADESTRO_CA_TRUST_BUNDLE_FILE"`
 	AgentTLSCertFile      string        `env:"CADESTRO_AGENT_TLS_CERT_FILE"`
 	AgentTLSKeyFile       string        `env:"CADESTRO_AGENT_TLS_KEY_FILE"`
 	PublicTLSCertFile     string        `env:"CADESTRO_PUBLIC_TLS_CERT_FILE"`
@@ -101,7 +100,6 @@ type Config struct {
 	WebhookURL          string
 	CACertFile          string
 	CAKeyFile           string
-	CATrustBundleFile   string
 	AgentTLSCertFile    string
 	AgentTLSKeyFile     string
 	PublicTLSCertFile   string
@@ -156,7 +154,6 @@ func loadConfig() (*Config, error) {
 		WebhookURL:        document.WebhookURL,
 		CACertFile:        document.CACertFile,
 		CAKeyFile:         document.CAKeyFile,
-		CATrustBundleFile: document.CATrustBundleFile,
 		AgentTLSCertFile:  document.AgentTLSCertFile,
 		AgentTLSKeyFile:   document.AgentTLSKeyFile,
 		PublicTLSCertFile: document.PublicTLSCertFile,
