@@ -150,8 +150,61 @@ func (q *Queries) CountDevices(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const findEnrollmentDevice = `-- name: FindEnrollmentDevice :one
+SELECT d.id, d.hostname, d.agent_version, d.agent_sealing_public_key, d.enrollment_identity_public_key, d.certificate_pem, d.cert_fingerprint, d.cert_not_after, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
+FROM devices d
+JOIN tokens t ON t.id = d.registration_token_id
+WHERE t.value_hash = ?1
+  AND t.name <> ?2
+  AND t.is_deleted = FALSE
+  AND t.disabled = FALSE
+  AND t.expires_at > ?3
+  AND d.enrollment_identity_public_key = ?4
+  AND d.is_deleted = FALSE
+`
+
+type FindEnrollmentDeviceParams struct {
+	ValueHash         string    `json:"value_hash"`
+	ReservedName      string    `json:"reserved_name"`
+	EnrolledAt        time.Time `json:"enrolled_at"`
+	IdentityPublicKey []byte    `json:"identity_public_key"`
+}
+
+// Existing enrollment retries are keyed by the Ed25519 public key in the CSR,
+// never by the X25519 secret-recipient key.
+func (q *Queries) FindEnrollmentDevice(ctx context.Context, arg FindEnrollmentDeviceParams) (Device, error) {
+	row := q.db.QueryRowContext(ctx, findEnrollmentDevice,
+		arg.ValueHash,
+		arg.ReservedName,
+		arg.EnrolledAt,
+		arg.IdentityPublicKey,
+	)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.Hostname,
+		&i.AgentVersion,
+		&i.AgentSealingPublicKey,
+		&i.EnrollmentIdentityPublicKey,
+		&i.CertificatePem,
+		&i.CertFingerprint,
+		&i.CertNotAfter,
+		&i.RegisteredAt,
+		&i.LastSeenAt,
+		&i.RegistrationTokenID,
+		&i.IsDeleted,
+		&i.SyncIntervalMinutes,
+		&i.InventoryIntervalMinutes,
+		&i.ComplianceStatus,
+		&i.ComplianceCheckedAt,
+		&i.ComplianceTotal,
+		&i.CompliancePassing,
+	)
+	return i, err
+}
+
 const getDevice = `-- name: GetDevice :one
-SELECT id, hostname, agent_version, agent_sealing_public_key, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing FROM devices WHERE id = ? AND is_deleted = FALSE
+SELECT id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing FROM devices WHERE id = ? AND is_deleted = FALSE
 `
 
 func (q *Queries) GetDevice(ctx context.Context, id string) (Device, error) {
@@ -162,6 +215,8 @@ func (q *Queries) GetDevice(ctx context.Context, id string) (Device, error) {
 		&i.Hostname,
 		&i.AgentVersion,
 		&i.AgentSealingPublicKey,
+		&i.EnrollmentIdentityPublicKey,
+		&i.CertificatePem,
 		&i.CertFingerprint,
 		&i.CertNotAfter,
 		&i.RegisteredAt,
@@ -185,7 +240,7 @@ INSERT INTO devices (
     registration_token_id
 )
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, hostname, agent_version, agent_sealing_public_key, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type InsertDeviceParams struct {
@@ -218,6 +273,78 @@ func (q *Queries) InsertDevice(ctx context.Context, arg InsertDeviceParams) (Dev
 		&i.Hostname,
 		&i.AgentVersion,
 		&i.AgentSealingPublicKey,
+		&i.EnrollmentIdentityPublicKey,
+		&i.CertificatePem,
+		&i.CertFingerprint,
+		&i.CertNotAfter,
+		&i.RegisteredAt,
+		&i.LastSeenAt,
+		&i.RegistrationTokenID,
+		&i.IsDeleted,
+		&i.SyncIntervalMinutes,
+		&i.InventoryIntervalMinutes,
+		&i.ComplianceStatus,
+		&i.ComplianceCheckedAt,
+		&i.ComplianceTotal,
+		&i.CompliancePassing,
+	)
+	return i, err
+}
+
+const insertEnrolledDevice = `-- name: InsertEnrolledDevice :one
+INSERT INTO devices (
+    id, hostname, agent_version, agent_sealing_public_key,
+    enrollment_identity_public_key, registered_at, registration_token_id
+)
+SELECT ?1, ?2, ?3,
+       ?4, ?5,
+       ?6, t.id
+FROM tokens t
+WHERE t.value_hash = ?7
+  AND t.name <> ?8
+  AND t.is_deleted = FALSE
+  AND t.disabled = FALSE
+  AND t.expires_at > ?6
+  AND (t.max_uses = 0 OR (
+      SELECT COUNT(*) FROM devices d
+      WHERE d.registration_token_id = t.id
+  ) < t.max_uses)
+RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+`
+
+type InsertEnrolledDeviceParams struct {
+	ID                string     `json:"id"`
+	Hostname          string     `json:"hostname"`
+	AgentVersion      string     `json:"agent_version"`
+	SealingKey        []byte     `json:"sealing_key"`
+	IdentityPublicKey []byte     `json:"identity_public_key"`
+	EnrolledAt        *time.Time `json:"enrolled_at"`
+	ValueHash         string     `json:"value_hash"`
+	ReservedName      string     `json:"reserved_name"`
+}
+
+// The INSERT is the global-use reservation. SQLite serializes this write, and
+// the count is derived from immutable device provenance rather than a token
+// counter, so the max boundary cannot be crossed by concurrent enrollments.
+func (q *Queries) InsertEnrolledDevice(ctx context.Context, arg InsertEnrolledDeviceParams) (Device, error) {
+	row := q.db.QueryRowContext(ctx, insertEnrolledDevice,
+		arg.ID,
+		arg.Hostname,
+		arg.AgentVersion,
+		arg.SealingKey,
+		arg.IdentityPublicKey,
+		arg.EnrolledAt,
+		arg.ValueHash,
+		arg.ReservedName,
+	)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.Hostname,
+		&i.AgentVersion,
+		&i.AgentSealingPublicKey,
+		&i.EnrollmentIdentityPublicKey,
+		&i.CertificatePem,
 		&i.CertFingerprint,
 		&i.CertNotAfter,
 		&i.RegisteredAt,
@@ -678,7 +805,7 @@ func (q *Queries) ListDeviceMaintenanceWindows(ctx context.Context, deviceID str
 }
 
 const listDevices = `-- name: ListDevices :many
-SELECT d.id, d.hostname, d.agent_version, d.agent_sealing_public_key, d.cert_fingerprint, d.cert_not_after, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
+SELECT d.id, d.hostname, d.agent_version, d.agent_sealing_public_key, d.enrollment_identity_public_key, d.certificate_pem, d.cert_fingerprint, d.cert_not_after, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
 FROM devices d
 WHERE d.is_deleted = FALSE
   AND d.id > ?1
@@ -761,6 +888,8 @@ func (q *Queries) ListDevices(ctx context.Context, arg ListDevicesParams) ([]Dev
 			&i.Hostname,
 			&i.AgentVersion,
 			&i.AgentSealingPublicKey,
+			&i.EnrollmentIdentityPublicKey,
+			&i.CertificatePem,
 			&i.CertFingerprint,
 			&i.CertNotAfter,
 			&i.RegisteredAt,
@@ -952,19 +1081,21 @@ func (q *Queries) RemoveDeviceLabel(ctx context.Context, arg RemoveDeviceLabelPa
 
 const replaceDeviceCertificate = `-- name: ReplaceDeviceCertificate :one
 UPDATE devices
-SET cert_fingerprint = ?1,
-    cert_not_after = ?2
-WHERE id = ?3
+SET certificate_pem = COALESCE(?1, certificate_pem),
+    cert_fingerprint = ?2,
+    cert_not_after = ?3
+WHERE id = ?4
   AND is_deleted = FALSE
-  AND cert_fingerprint = ?4
-RETURNING id, hostname, agent_version, agent_sealing_public_key, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+  AND cert_fingerprint IS ?5
+RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type ReplaceDeviceCertificateParams struct {
-	NewFingerprint *string    `json:"new_fingerprint"`
-	NewNotAfter    *time.Time `json:"new_not_after"`
-	ID             string     `json:"id"`
-	OldFingerprint *string    `json:"old_fingerprint"`
+	NewCertificatePem []byte     `json:"new_certificate_pem"`
+	NewFingerprint    *string    `json:"new_fingerprint"`
+	NewNotAfter       *time.Time `json:"new_not_after"`
+	ID                string     `json:"id"`
+	OldFingerprint    *string    `json:"old_fingerprint"`
 }
 
 // Advance the tracked certificate only when the presented fingerprint is
@@ -972,6 +1103,7 @@ type ReplaceDeviceCertificateParams struct {
 // caller can replace a given certificate.
 func (q *Queries) ReplaceDeviceCertificate(ctx context.Context, arg ReplaceDeviceCertificateParams) (Device, error) {
 	row := q.db.QueryRowContext(ctx, replaceDeviceCertificate,
+		arg.NewCertificatePem,
 		arg.NewFingerprint,
 		arg.NewNotAfter,
 		arg.ID,
@@ -983,6 +1115,8 @@ func (q *Queries) ReplaceDeviceCertificate(ctx context.Context, arg ReplaceDevic
 		&i.Hostname,
 		&i.AgentVersion,
 		&i.AgentSealingPublicKey,
+		&i.EnrollmentIdentityPublicKey,
+		&i.CertificatePem,
 		&i.CertFingerprint,
 		&i.CertNotAfter,
 		&i.RegisteredAt,

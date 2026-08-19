@@ -84,6 +84,13 @@ Reinstall. Concretely:
 2. Install the new release fresh.
 3. Re-enroll devices.
 
+For databases created before the reusable enrollment-token cutover, run
+[`upgrade-enrollment-tokens.sql`](upgrade-enrollment-tokens.sql) manually. It
+preserves token IDs, digests, expiry, and revocation state, and stops with
+reports for tokens without expiry or devices without an immutable token
+relation; those rows must be resolved by an operator rather than guessed. Run
+it with `sqlite3 -bail` so a failed guard cannot commit a partial rebuild.
+
 <!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:e20a97cf -->
 Restoring the old database into the new release is not a migration and will not
 be treated as one: the store's non-creating open path requires the exact current

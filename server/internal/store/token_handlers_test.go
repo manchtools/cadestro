@@ -82,20 +82,35 @@ func TestTokenHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
+func TestTokenHandlers_ExpiryIsRequiredAndFutureDated(t *testing.T) {
+	f := newTokenHandlerFixture(t)
+	ctx := f.actor("CreateToken")
+	for name, expiry := range map[string]*timestamppb.Timestamp{
+		"missing": nil,
+		"past":    timestamp(f.now.Add(-time.Minute)),
+		"now":     timestamp(f.now),
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{
+				Name: name, ExpiresAt: expiry,
+			}))
+			assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+		})
+	}
+}
+
 func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	f := newTokenHandlerFixture(t)
 	ctx := f.actor("CreateToken", "ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
 	expires := f.now.Add(48 * time.Hour)
 
 	created, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{
-		Name: "rack enrollment", OneTime: true, MaxUses: 3,
-		ExpiresAt: timestamp(expires), OwnerId: f.otherID,
+		Name: "rack enrollment", MaxUses: 3, ExpiresAt: timestamp(expires),
 	}))
 	require.NoError(t, err)
 	tokenID, plaintext := created.Msg.Token.Id, created.Msg.Token.Value
 	require.NotEmpty(t, plaintext)
 	assert.Equal(t, tokenCAPin, created.Msg.CaFingerprintPin)
-	assert.Equal(t, f.otherID, created.Msg.Token.OwnerId)
 	assert.True(t, created.Msg.Token.CreatedAt.AsTime().Equal(f.now))
 
 	var storedHash string
@@ -150,13 +165,15 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 
 func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	f := newTokenHandlerFixture(t)
-	self, err := f.handlers.CreateToken(f.actor("CreateToken:self"), connect.NewRequest(&pmv1.CreateTokenRequest{
-		Name: "my device", MaxUses: 99, OwnerId: f.otherID,
+	_, err := f.handlers.CreateToken(f.actor("CreateToken:self"), connect.NewRequest(&pmv1.CreateTokenRequest{
+		Name: "self token", MaxUses: 99, ExpiresAt: timestamp(f.now.Add(7 * 24 * time.Hour)),
+	}))
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	self, err := f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&pmv1.CreateTokenRequest{
+		Name: "my device", MaxUses: 99, ExpiresAt: timestamp(f.now.Add(7 * 24 * time.Hour)),
 	}))
 	require.NoError(t, err)
-	assert.True(t, self.Msg.Token.OneTime)
-	assert.Equal(t, int32(1), self.Msg.Token.MaxUses)
-	assert.Equal(t, f.actorID, self.Msg.Token.OwnerId)
+	assert.Equal(t, int32(99), self.Msg.Token.MaxUses)
 	assert.True(t, self.Msg.Token.ExpiresAt.AsTime().Equal(f.now.Add(7*24*time.Hour)))
 
 	_, err = f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&pmv1.CreateTokenRequest{
@@ -167,9 +184,9 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	bootstrapID := newID()
 	_, err = f.raw.Exec(context.Background(), `
 		INSERT INTO tokens (
-			id, value_hash, name, one_time, max_uses, created_at, created_by
-		) VALUES ($1, $2, $3, TRUE, 1, $4, $5)`,
-		bootstrapID, strings.Repeat("a", 64), store.BootstrapAdminTokenName, f.now, auth.BootstrapPrincipalID)
+			id, value_hash, name, max_uses, expires_at, created_at, created_by
+		) VALUES ($1, $2, $3, 1, $4, $5, $6)`,
+		bootstrapID, strings.Repeat("a", 64), store.BootstrapAdminTokenName, f.now.Add(time.Hour), f.now, auth.BootstrapPrincipalID)
 	require.NoError(t, err)
 	operator := f.actor("ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
 	listed, err := f.handlers.ListTokens(operator, connect.NewRequest(&pmv1.ListTokensRequest{}))
@@ -222,16 +239,16 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	assert.False(t, bootstrapDisabled)
 
 	_, err = f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&pmv1.CreateTokenRequest{
-		Name: "missing owner", OwnerId: newID(),
+		Name: "missing expiry",
 	}))
-	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
 
 func TestTokenHandlers_KeysetPaginationAndMountSurface(t *testing.T) {
 	f := newTokenHandlerFixture(t)
 	ctx := f.actor("CreateToken", "ListTokens")
 	for _, name := range []string{"one", "two", "three"} {
-		_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{Name: name}))
+		_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{Name: name, ExpiresAt: timestamp(f.now.Add(24 * time.Hour))}))
 		require.NoError(t, err)
 	}
 	first, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{PageSize: 2}))

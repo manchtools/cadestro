@@ -1268,9 +1268,9 @@ export function listPermissionsResponse() {
 // ===========================================================================
 
 export const DUMMY_TOKENS = [
-	{ id: '01J6XYZSHOWCASETOKEN0001', name: 'Berlin rollout (bulk)', one_time: false, max_uses: 0, current_uses: 17, expires_at: now + 60 * day, created_at: now - 40 * day, disabled: false, owner_id: '01J6XYZSHOWCASEADMINUSR01' },
-	{ id: '01J6XYZSHOWCASETOKEN0002', name: 'Lab one-time enrol', one_time: true, max_uses: 1, current_uses: 0, expires_at: now + 7 * day, created_at: now - 2 * day, disabled: false, owner_id: '01J6XYZSHOWCASEUSER0002' },
-	{ id: '01J6XYZSHOWCASETOKEN0003', name: 'Expired CI token', one_time: false, max_uses: 50, current_uses: 50, expires_at: now - 3 * day, created_at: now - 90 * day, disabled: true, owner_id: '01J6XYZSHOWCASEADMINUSR01' },
+	{ id: '01J6XYZSHOWCASETOKEN0001', name: 'Berlin rollout', max_uses: 0, expires_at: now + 60 * day, created_at: now - 40 * day, disabled: false },
+	{ id: '01J6XYZSHOWCASETOKEN0002', name: 'Lab enrollment', max_uses: 1, expires_at: now + 7 * day, created_at: now - 2 * day, disabled: false },
+	{ id: '01J6XYZSHOWCASETOKEN0003', name: 'Expired CI token', max_uses: 50, expires_at: now - 3 * day, created_at: now - 90 * day, disabled: true },
 ];
 
 export function listTokensResponse() {
@@ -1278,14 +1278,11 @@ export function listTokensResponse() {
 		tokens: DUMMY_TOKENS.map((t) => ({
 			id: t.id,
 			name: t.name,
-			oneTime: t.one_time,
 			maxUses: t.max_uses,
-			currentUses: t.current_uses,
 			expiresAt: isoFromSec(t.expires_at),
 			createdAt: isoFromSec(t.created_at),
 			createdBy: 'sam.reiter',
 			disabled: t.disabled,
-			ownerId: t.owner_id,
 		})),
 		nextPageToken: '',
 		totalCount: DUMMY_TOKENS.length,

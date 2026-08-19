@@ -460,33 +460,30 @@ message SetDeviceInventoryIntervalRequest {
 // ============================================================================
 
 message RegistrationToken {
+  reserved 4, 11;
+  reserved "one_time", "owner_id";
   string id = 1;
   string value = 2; // Only returned on creation
   string name = 3;
-  bool one_time = 4;
   int32 max_uses = 5; // 0 = unlimited
-  int32 current_uses = 6;
+  int32 current_uses = 6; // Derived COUNT(devices.registration_token_id); never stored on tokens
   google.protobuf.Timestamp expires_at = 7;
   google.protobuf.Timestamp created_at = 8;
   string created_by = 9;
   bool disabled = 10;
-  string owner_id = 11; // User who owns this token (devices registered with it are assigned to them)
 }
 
 message CreateTokenRequest {
+  reserved 2, 5;
+  reserved "one_time", "owner_id";
   // @gotags: validate:"required,min=1,max=128"
   string name = 1;
-  bool one_time = 2;
   // @gotags: validate:"omitempty,min=0"
   int32 max_uses = 3; // 0 = unlimited (for reusable tokens)
-  google.protobuf.Timestamp expires_at = 4; // optional
-  // Optional. When set to a user ID, devices enrolled through this
-  // token are auto-assigned to that user. When empty, the token is
-  // ownerless — no auto-assignment happens, suitable for bulk/imaging
-  // enrollment. The :self scope ignores this field and forces the
-  // creator as owner.
-  // @gotags: validate:"omitempty,ulid"
-  string owner_id = 5;
+  // Enrollment tokens always expire. Set a sufficiently long TTL for the
+  // rollout; 0/unset is intentionally not a valid token.
+  // @gotags: validate:"required"
+  google.protobuf.Timestamp expires_at = 4;
 }
 
 message CreateTokenResponse {

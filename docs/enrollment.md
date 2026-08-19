@@ -22,20 +22,18 @@ rest of this page is what each part of it does and why.
 
 ## 1. Issue a registration token
 
-<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:d67da52e,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:2554f6a6 -->
-Tokens are minted by `ControlService.CreateToken`. A token has a name, an
-optional expiry, and a use policy: either one-time, or a maximum use count where
-**zero means unlimited**. It can optionally be owned by a user, in which case
-every device enrolled with it is assigned to that user.
+<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:5889b437,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:294e61c8 -->
+Tokens are minted by `ControlService.CreateToken`. A token has a name, a
+required future expiry, and an optional global maximum use count where **zero
+means unlimited**. Each successful new device enrollment is one immutable use
+record on the device's token relation; retries by the same Ed25519 identity do
+not consume another use.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/auth/permissions.go#DefaultUserPermissions:519897b1 -->
-There are two tiers. A holder of the full `CreateToken` permission may set any
-expiry, use count, and owner — that is the bulk-enrollment case. An ordinary
-user holds only `CreateToken:self`, which is in the default permission set, and
-whose parameters are not negotiable: the handler **overrides** whatever was
-requested to one-time, single-use, owned by the caller, expiring in seven days.
-A self-service token cannot be widened by asking nicely.
+<!-- docref: begin src=server/internal/auth/permissions.go#DefaultUserPermissions:1ecf98d4 -->
+Only a holder of the full `CreateToken` permission may mint enrollment tokens.
+There is no token owner and enrollment never assigns a human owner; operators
+use the existing device-user and device-group assignment controls afterwards.
 <!-- docref: end -->
 
 The token's plaintext exists exactly once. Control stores only its SHA-256
@@ -152,7 +150,7 @@ sent during enrollment and not sent during renewal.
 The CSR carries a subject common name and **nothing else** — no SANs of any
 kind. That is not an omission; the server enforces it:
 
-<!-- docref: begin src=server/internal/ca/ca.go#CA.issueFromCSR:ccefff1e -->
+<!-- docref: begin src=server/internal/ca/ca.go#CA.issueFromCSR:3fbb020f -->
 Issuance verifies the CSR's self-signature, requires an Ed25519 public key, and
 **rejects any CSR that requests subject alternative names**. The CSR's common
 name is then discarded. Everything identifying in the issued certificate is
@@ -276,7 +274,7 @@ Renewal reuses the existing private key: a new CSR is generated from it, and the
 possession of the key and possession of the certificate.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:a694670e -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:d71052c1 -->
 Control verifies the presented certificate against its trust pool for client
 auth, requires the `agent` peer class, and then checks that the CSR's public key
 matches the certificate's — certificates are public material, so possession of
@@ -333,11 +331,11 @@ application layer would refuse it because the device no longer exists.
 
 ## What enrollment writes into the audit log
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:eca1ecfa -->
-A successful registration records the token consumption (with before/after use
-counts), the device creation, and — when the token had an owner — the device
-assignment, all as effects of one audited operation whose actor is the
-registration token itself, identified by its digest rather than its value.
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:43193cf2 -->
+A successful new registration records the device creation as an effect of one
+audited operation whose actor is the registration token itself, identified by
+its digest rather than its value. A same-identity retry is audited as an
+observed request without an applied mutation.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.recordRejected:42b7a96e -->

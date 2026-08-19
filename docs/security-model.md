@@ -179,7 +179,7 @@ the contract are named individually so the entry cannot come back on its own.
 A fresh install has no identity provider, and therefore no way to log in. The
 bootstrap token is the one exception, and it is scoped to exactly that problem.
 
-<!-- docref: begin src=server/internal/identity/bootstrap.go#Bootstrapper.Issue:43529728,server/internal/identity/bootstrap.go#DefaultBootstrapTokenTTL:77b258d2 -->
+<!-- docref: begin src=server/internal/identity/bootstrap.go#Bootstrapper.Issue:38580545,server/internal/identity/bootstrap.go#DefaultBootstrapTokenTTL:77b258d2 -->
 It is minted only by a subcommand run on the host — you must already have
 control of the machine. It is 32 bytes of cryptographic randomness, valid for 15
 minutes, and only its digest is stored. Issuing one retires any predecessor in
@@ -208,7 +208,7 @@ by a list of exceptions someone has to maintain.
 
 ### Authorization
 
-<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:b0a709b1 -->
+<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:a3ba0530 -->
 Permissions live in one registry — roughly 165 entries, each declaring its key,
 its UI grouping, its description, and the kind of target it acts on. That target
 kind is what decides whether a permission can be scoped to a group, and the zero

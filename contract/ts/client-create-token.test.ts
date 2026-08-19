@@ -20,9 +20,10 @@ describe('createToken keeps the CA fingerprint pin beside the token', () => {
 		const createToken = ApiClient.prototype.createToken as unknown as (
 			this: { getClient: () => typeof stubClient },
 			name: string,
-			oneTime: boolean
+			maxUses: number,
+			expiresAt?: Date
 		) => ReturnType<ApiClient['createToken']>;
-		const result = await createToken.call({ getClient: () => stubClient }, 'first-device', true);
+		const result = await createToken.call({ getClient: () => stubClient }, 'first-device', 0, new Date());
 		expect(result.token?.value).toBe('TOK-SECRET');
 		expect(result.caFingerprintPin).toBe(pin);
 	});

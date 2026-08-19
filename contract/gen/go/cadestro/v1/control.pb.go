@@ -3191,14 +3191,12 @@ type RegistrationToken struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"` // Only returned on creation
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	OneTime       bool                   `protobuf:"varint,4,opt,name=one_time,json=oneTime,proto3" json:"one_time,omitempty"`
-	MaxUses       int32                  `protobuf:"varint,5,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"` // 0 = unlimited
-	CurrentUses   int32                  `protobuf:"varint,6,opt,name=current_uses,json=currentUses,proto3" json:"current_uses,omitempty"`
+	MaxUses       int32                  `protobuf:"varint,5,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`             // 0 = unlimited
+	CurrentUses   int32                  `protobuf:"varint,6,opt,name=current_uses,json=currentUses,proto3" json:"current_uses,omitempty"` // Derived COUNT(devices.registration_token_id); never stored on tokens
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	CreatedBy     string                 `protobuf:"bytes,9,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	Disabled      bool                   `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	OwnerId       string                 `protobuf:"bytes,11,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"` // User who owns this token (devices registered with it are assigned to them)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3254,13 +3252,6 @@ func (x *RegistrationToken) GetName() string {
 	return ""
 }
 
-func (x *RegistrationToken) GetOneTime() bool {
-	if x != nil {
-		return x.OneTime
-	}
-	return false
-}
-
 func (x *RegistrationToken) GetMaxUses() int32 {
 	if x != nil {
 		return x.MaxUses
@@ -3303,28 +3294,16 @@ func (x *RegistrationToken) GetDisabled() bool {
 	return false
 }
 
-func (x *RegistrationToken) GetOwnerId() string {
-	if x != nil {
-		return x.OwnerId
-	}
-	return ""
-}
-
 type CreateTokenRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// @gotags: validate:"required,min=1,max=128"
-	Name    string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=128"`
-	OneTime bool   `protobuf:"varint,2,opt,name=one_time,json=oneTime,proto3" json:"one_time,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=128"`
 	// @gotags: validate:"omitempty,min=0"
-	MaxUses   int32                  `protobuf:"varint,3,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty" validate:"omitempty,min=0"` // 0 = unlimited (for reusable tokens)
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`                       // optional
-	// Optional. When set to a user ID, devices enrolled through this
-	// token are auto-assigned to that user. When empty, the token is
-	// ownerless — no auto-assignment happens, suitable for bulk/imaging
-	// enrollment. The :self scope ignores this field and forces the
-	// creator as owner.
-	// @gotags: validate:"omitempty,ulid"
-	OwnerId       string `protobuf:"bytes,5,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty" validate:"omitempty,ulid"`
+	MaxUses int32 `protobuf:"varint,3,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty" validate:"omitempty,min=0"` // 0 = unlimited (for reusable tokens)
+	// Enrollment tokens always expire. Set a sufficiently long TTL for the
+	// rollout; 0/unset is intentionally not a valid token.
+	// @gotags: validate:"required"
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty" validate:"required"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3366,13 +3345,6 @@ func (x *CreateTokenRequest) GetName() string {
 	return ""
 }
 
-func (x *CreateTokenRequest) GetOneTime() bool {
-	if x != nil {
-		return x.OneTime
-	}
-	return false
-}
-
 func (x *CreateTokenRequest) GetMaxUses() int32 {
 	if x != nil {
 		return x.MaxUses
@@ -3385,13 +3357,6 @@ func (x *CreateTokenRequest) GetExpiresAt() *timestamppb.Timestamp {
 		return x.ExpiresAt
 	}
 	return nil
-}
-
-func (x *CreateTokenRequest) GetOwnerId() string {
-	if x != nil {
-		return x.OwnerId
-	}
-	return ""
 }
 
 type CreateTokenResponse struct {
@@ -21434,12 +21399,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x15sync_interval_minutes\x18\x02 \x01(\x05R\x13syncIntervalMinutes\"q\n" +
 	"!SetDeviceInventoryIntervalRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
-	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05R\x18inventoryIntervalMinutes\"\xf2\x02\n" +
+	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05R\x18inventoryIntervalMinutes\"\xdc\x02\n" +
 	"\x11RegistrationToken\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x19\n" +
-	"\bone_time\x18\x04 \x01(\bR\aoneTime\x12\x19\n" +
 	"\bmax_uses\x18\x05 \x01(\x05R\amaxUses\x12!\n" +
 	"\fcurrent_uses\x18\x06 \x01(\x05R\vcurrentUses\x129\n" +
 	"\n" +
@@ -21449,15 +21413,12 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\t \x01(\tR\tcreatedBy\x12\x1a\n" +
 	"\bdisabled\x18\n" +
-	" \x01(\bR\bdisabled\x12\x19\n" +
-	"\bowner_id\x18\v \x01(\tR\aownerId\"\xb4\x01\n" +
+	" \x01(\bR\bdisabledJ\x04\b\x04\x10\x05J\x04\b\v\x10\fR\bone_timeR\bowner_id\"\x9e\x01\n" +
 	"\x12CreateTokenRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x19\n" +
-	"\bone_time\x18\x02 \x01(\bR\aoneTime\x12\x19\n" +
 	"\bmax_uses\x18\x03 \x01(\x05R\amaxUses\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x19\n" +
-	"\bowner_id\x18\x05 \x01(\tR\aownerId\"y\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x06R\bone_timeR\bowner_id\"y\n" +
 	"\x13CreateTokenResponse\x124\n" +
 	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\x12,\n" +
 	"\x12ca_fingerprint_pin\x18\x02 \x01(\tR\x10caFingerprintPin\"z\n" +

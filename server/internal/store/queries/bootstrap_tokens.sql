@@ -6,24 +6,21 @@
 -- NULL because the bootstrap principal is deliberately not a user.
 
 -- name: InsertBootstrapAdminToken :one
-INSERT INTO tokens (id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted)
-VALUES (sqlc.arg(id), sqlc.arg(value_hash), sqlc.arg(reserved_name), TRUE, 1, 0,
-        sqlc.arg(expires_at), sqlc.arg(created_at), sqlc.arg(created_by), NULL, FALSE, FALSE)
+INSERT INTO tokens (id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted)
+VALUES (sqlc.arg(id), sqlc.arg(value_hash), sqlc.arg(reserved_name), 1,
+        sqlc.arg(expires_at), sqlc.arg(created_at), sqlc.arg(created_by), FALSE, FALSE)
 RETURNING *;
 
 -- name: ConsumeBootstrapAdminToken :one
--- The consume-once conditional write. Every condition is evaluated by
--- the UPDATE itself, so two concurrent presentations of the same token
--- cannot both observe current_uses < max_uses and both succeed: the
--- second finds no row.
+-- The consume-once conditional write. Retiring the row is the bootstrap
+-- boundary; enrollment tokens never mutate a usage counter.
 UPDATE tokens
-SET current_uses = current_uses + 1
+SET is_deleted = TRUE
 WHERE value_hash = ?
   AND name = sqlc.arg(reserved_name)
   AND is_deleted = FALSE
   AND disabled = FALSE
-  AND current_uses < max_uses
-  AND (expires_at IS NULL OR expires_at > sqlc.arg(now))
+  AND expires_at > sqlc.arg(now)
 RETURNING *;
 
 -- name: RetireBootstrapAdminTokens :execrows
@@ -37,5 +34,4 @@ SELECT COUNT(*) FROM tokens
 WHERE name = sqlc.arg(reserved_name)
   AND is_deleted = FALSE
   AND disabled = FALSE
-  AND current_uses < max_uses
-  AND (expires_at IS NULL OR expires_at > sqlc.arg(now));
+  AND expires_at > sqlc.arg(now);

@@ -573,21 +573,17 @@ export class ApiClient {
 
 	async createToken(
 		name: string,
-		oneTime: boolean,
 		maxUses: number = 0,
-		expiresAt?: Date,
-		ownerId: string = ''
+		expiresAt?: Date
 	) {
 		const client = this.getClient();
 		const response = await client.createToken(
 			create(CreateTokenRequestSchema, {
 				name,
-				oneTime,
 				maxUses,
 				expiresAt: expiresAt
 					? { seconds: BigInt(Math.floor(expiresAt.getTime() / 1000)), nanos: 0 }
-					: undefined,
-				ownerId
+					: undefined
 			})
 		);
 		// Return the whole response, not just the token: caFingerprintPin rides

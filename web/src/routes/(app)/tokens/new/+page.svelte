@@ -11,14 +11,13 @@
 	// navigating away with the value on screen would destroy it.
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
-	import { apiClient, authStore, configStore, useDraft, type RegistrationToken } from '$lib/sdk';
+	import { apiClient, configStore, useDraft, type RegistrationToken } from '$lib/sdk';
 	import { createTokenSchema } from '$lib/forms/schemas/tokens';
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
 	import CreatePlate from '$lib/components/create/create-plate.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { Switch } from '$lib/components/ui/switch';
 	import { FieldError } from '$lib/components/ui/field-error';
 	import { Key, Copy } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
@@ -67,7 +66,6 @@
 		const out: Record<string, string> = {};
 		const result = createTokenSchema.safeParse({
 			name: draft.name.trim(),
-			oneTime: draft.oneTime,
 			maxUses: draft.maxUses,
 			expiresInDays: draft.expiresInDays
 		});
@@ -132,17 +130,10 @@
 				expiresAt = new Date();
 				expiresAt.setDate(expiresAt.getDate() + draft.expiresInDays);
 			}
-			// Bulk enrollment ⇒ ownerless token (the server stores owner_id NULL and
-			// devices enrolled through it are not auto-assigned). Otherwise the
-			// current user owns the token.
-			const ownerId = draft.bulkEnrollment ? '' : (authStore.user?.id ?? '');
-
 			const response = await apiClient.createToken(
 				draft.name.trim(),
-				draft.oneTime,
 				draft.maxUses,
-				expiresAt,
-				ownerId
+				expiresAt
 			);
 			if (response?.token) {
 				await persist.clear();
@@ -254,39 +245,19 @@
 				<FieldError error={errors.name} />
 			</div>
 
-			<div class="flex items-center justify-between rounded-lg border p-4">
-				<div class="space-y-0.5">
-					<Label for="token-one-time">{m.tokens_one_time_label()}</Label>
-					<p class="text-xs text-muted-foreground">{m.tokens_one_time_hint()}</p>
-				</div>
-				<Switch id="token-one-time" bind:checked={draft.oneTime} />
-			</div>
-
-			<!-- Two counts, side by side: a use budget and a lifetime are the same
-			     kind of small number, and a plate-wide field for "14" reads as an
-			     invitation to type a sentence. One-time tokens drop the use budget
-			     and the lifetime keeps the first column. -->
 			<div class="grid gap-3 sm:grid-cols-2">
-				{#if !draft.oneTime}
-					<div class="space-y-1.5">
-						<Label for="token-max-uses">{m.tokens_max_uses_label()}</Label>
-						<Input
-							id="token-max-uses"
-							type="number"
-							min="0"
-							bind:value={draft.maxUses}
-							aria-invalid={!!errors.maxUses}
-						/>
-						<FieldError error={errors.maxUses} />
-					</div>
-				{/if}
+				<div class="space-y-1.5">
+					<Label for="token-max-uses">{m.tokens_max_uses_label()}</Label>
+					<Input id="token-max-uses" type="number" min="0" bind:value={draft.maxUses} aria-invalid={!!errors.maxUses} />
+					<FieldError error={errors.maxUses} />
+				</div>
 
 				<div class="space-y-1.5">
 					<Label for="token-expires">{m.tokens_expires_label()}</Label>
 					<Input
 						id="token-expires"
 						type="number"
-						min="0"
+						min="1"
 						bind:value={draft.expiresInDays}
 						aria-invalid={!!errors.expiresInDays}
 					/>
@@ -298,20 +269,11 @@
 									Date.now() + draft.expiresInDays * 24 * 60 * 60 * 1000
 								).toLocaleDateString()
 							})}
-						{:else}
-							{m.tokens_expires_never_hint()}
 						{/if}
 					</p>
 				</div>
 			</div>
 
-			<div class="flex items-center justify-between rounded-lg border p-4">
-				<div class="space-y-0.5">
-					<Label for="token-bulk">{m.tokens_bulk_enrollment_label()}</Label>
-					<p class="text-xs text-muted-foreground">{m.tokens_bulk_enrollment_hint()}</p>
-				</div>
-				<Switch id="token-bulk" bind:checked={draft.bulkEnrollment} />
-			</div>
 		</CreatePlate>
 	{/if}
 </div>

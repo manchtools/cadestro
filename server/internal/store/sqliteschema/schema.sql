@@ -222,28 +222,30 @@ CREATE TABLE tokens (
     id           text PRIMARY KEY,
     value_hash   text NOT NULL UNIQUE,
     name         text NOT NULL DEFAULT '',
-    one_time     boolean NOT NULL DEFAULT false,
     max_uses     integer NOT NULL DEFAULT 0,
-    current_uses integer NOT NULL DEFAULT 0,
-    expires_at   timestamp,
+    expires_at   timestamp NOT NULL,
     created_at   timestamp,
     created_by   text NOT NULL DEFAULT '',
-    owner_id     text REFERENCES users(id) ON DELETE CASCADE,
     disabled     boolean NOT NULL DEFAULT false,
     is_deleted   boolean NOT NULL DEFAULT false
 );
-CREATE INDEX idx_tokens_owner ON tokens(owner_id);
 
 CREATE TABLE devices (
     id                         text PRIMARY KEY,
     hostname                   text NOT NULL DEFAULT '',
     agent_version              text NOT NULL DEFAULT '',
     agent_sealing_public_key   blob NOT NULL CHECK (length(agent_sealing_public_key) = 32),
+    -- The Ed25519 key in the enrollment CSR is the immutable device identity.
+    -- Nullable only for rows created before this cutover; new enrollment rows
+    -- always set it and the partial unique index prevents identity churn.
+    enrollment_identity_public_key blob CHECK (enrollment_identity_public_key IS NULL OR length(enrollment_identity_public_key) = 32),
+    certificate_pem            blob,
     cert_fingerprint           text UNIQUE,
     cert_not_after             timestamp,
     registered_at              timestamp,
     last_seen_at               timestamp,
-    registration_token_id      text REFERENCES tokens(id) ON DELETE SET NULL,
+    -- Immutable provenance: global token use is COUNT(devices.registration_token_id).
+    registration_token_id      text REFERENCES tokens(id) ON DELETE RESTRICT,
     is_deleted                 boolean NOT NULL DEFAULT false,
     sync_interval_minutes      integer NOT NULL DEFAULT 0,
     inventory_interval_minutes integer NOT NULL DEFAULT 0,
@@ -252,6 +254,9 @@ CREATE TABLE devices (
     compliance_total           integer NOT NULL DEFAULT 0,
     compliance_passing         integer NOT NULL DEFAULT 0
 );
+CREATE UNIQUE INDEX idx_devices_enrollment_identity
+    ON devices(enrollment_identity_public_key)
+    WHERE enrollment_identity_public_key IS NOT NULL;
 
 CREATE TABLE device_labels (
     device_id text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,

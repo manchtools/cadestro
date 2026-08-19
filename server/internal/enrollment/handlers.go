@@ -3,6 +3,7 @@ package enrollment
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -110,19 +111,16 @@ func (h *Handlers) recordRejected(ctx context.Context, req connect.AnyRequest, p
 	return err
 }
 
-// Register binds one token use, one Ed25519 identity and one X25519 recipient
-// key into a device row in the same audited transaction.
+// Register binds one reusable token to one canonical Ed25519 device identity.
+// The device relation is the token's durable use record; no mutable token
+// counter or human ownership is involved.
 func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.RegisterRequest]) (*connect.Response[pmv1.RegisterResponse], error) {
 	if err := validateRequest(h, ctx, req); err != nil {
 		return nil, err
 	}
-	deviceID := ulid.Make().String()
-	cert, err := h.ca.IssueCertificateFromCSR(deviceID, req.Msg.Csr)
+	identityKey, err := ca.EnrollmentIdentityFromCSR(req.Msg.Csr)
 	if err != nil {
-		if errors.Is(err, ca.ErrInvalidCSR) {
-			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid certificate signing request")
-		}
-		return nil, h.internal(ctx, "issue enrollment certificate", err)
+		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid certificate signing request")
 	}
 	tokenDigest := sha256.Sum256([]byte(req.Msg.Token))
 	tokenFingerprint := hex.EncodeToString(tokenDigest[:])
@@ -135,49 +133,76 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 		AuthorizationOutcome: store.AuthorizationAllowed,
 		AuthorizationDetail:  "registration_token", Result: store.ResultSuccess, ResultCode: "OK",
 	}
+	var device db.Device
+	var cert *ca.Certificate
 	_, err = h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-		token, err := tx.ConsumeRegistrationToken(ctx, db.ConsumeRegistrationTokenParams{
-			ValueHash: tokenFingerprint, ReservedName: store.BootstrapAdminTokenName, ConsumedAt: &now,
+		// Validate token usability even on a retry. Revocation and expiry must
+		// never be bypassed by an identity that enrolled earlier.
+		existing, findErr := tx.FindEnrollmentDevice(ctx, db.FindEnrollmentDeviceParams{
+			ValueHash: tokenFingerprint, ReservedName: store.BootstrapAdminTokenName,
+			EnrolledAt: now, IdentityPublicKey: identityKey,
 		})
-		if store.IsNotFound(err) {
+		if findErr == nil {
+			if subtle.ConstantTimeCompare(existing.AgentSealingPublicKey, req.Msg.AgentSealingPublicKey) != 1 {
+				return errCredentialRejected
+			}
+			device = existing
+			if len(device.CertificatePem) > 0 {
+				cert = &ca.Certificate{CertPEM: append([]byte(nil), device.CertificatePem...)}
+			} else {
+				issued, issueErr := h.ca.IssueCertificateFromCSR(device.ID, req.Msg.Csr)
+				if issueErr != nil {
+					return fmt.Errorf("issue retry enrollment certificate: %w", issueErr)
+				}
+				cert = issued
+				if _, issueErr = tx.ReplaceDeviceCertificate(ctx, db.ReplaceDeviceCertificateParams{
+					ID: device.ID, NewCertificatePem: issued.CertPEM, NewFingerprint: &issued.Fingerprint,
+					NewNotAfter: &issued.NotAfter, OldFingerprint: nil,
+				}); issueErr != nil {
+					return fmt.Errorf("store retry enrollment certificate: %w", issueErr)
+				}
+			}
+			return nil
+		}
+		if !store.IsNotFound(findErr) {
+			return fmt.Errorf("find enrollment device: %w", findErr)
+		}
+
+		deviceID := ulid.Make().String()
+		created, insertErr := tx.InsertEnrolledDevice(ctx, db.InsertEnrolledDeviceParams{
+			ID: deviceID, Hostname: req.Msg.Hostname, AgentVersion: req.Msg.AgentVersion,
+			SealingKey:        append([]byte(nil), req.Msg.AgentSealingPublicKey...),
+			IdentityPublicKey: identityKey, EnrolledAt: &now, ValueHash: tokenFingerprint,
+			ReservedName: store.BootstrapAdminTokenName,
+		})
+		if store.IsNotFound(insertErr) {
 			return errCredentialRejected
 		}
-		if err != nil {
-			return fmt.Errorf("consume registration token: %w", err)
-		}
-		fingerprint, notAfter, tokenID := cert.Fingerprint, cert.NotAfter, token.ID
-		if _, err := tx.InsertDevice(ctx, db.InsertDeviceParams{
-			ID: deviceID, Hostname: req.Msg.Hostname, AgentVersion: req.Msg.AgentVersion,
-			AgentSealingPublicKey: append([]byte(nil), req.Msg.AgentSealingPublicKey...),
-			CertFingerprint:       &fingerprint, CertNotAfter: &notAfter,
-			RegisteredAt: &now, RegistrationTokenID: &tokenID,
-		}); err != nil {
-			return fmt.Errorf("insert device: %w", err)
-		}
-		beforeUses, afterUses := int64(token.CurrentUses-1), int64(token.CurrentUses)
-		rec.Effect(store.AuditEffect{
-			ResourceType: "registration_token", ResourceID: token.ID, Action: "CONSUME",
-			Outcome: store.EffectApplied, BeforeCount: &beforeUses, AfterCount: &afterUses,
-		})
-		rec.Effect(store.AuditEffect{
-			ResourceType: "device", ResourceID: deviceID, Action: "CREATE", Outcome: store.EffectApplied,
-			ChangedFields: []string{"hostname", "agent_version", "agent_sealing_public_key", "cert_fingerprint", "cert_not_after", "registration_token_id"},
-		})
-		if token.OwnerID != nil {
-			assigned, err := tx.AssignDeviceUser(ctx, db.AssignDeviceUserParams{
-				DeviceID: deviceID, UserID: *token.OwnerID, AssignedAt: now, AssignedBy: token.ID,
-			})
-			if err != nil {
-				return fmt.Errorf("assign token owner: %w", err)
+		if insertErr != nil {
+			// Any conditional insert conflict means this attempt lost a
+			// concurrent enrollment decision. Re-read/retry is intentionally
+			// not implicit here: a soft-deleted identity must never resurrect,
+			// and a caller with a different key must not receive another
+			// certificate from a failed reservation.
+			if store.IsConflict(insertErr) {
+				return errCredentialRejected
 			}
-			if assigned != 1 {
-				return fmt.Errorf("assign token owner: owner is unavailable")
-			}
-			rec.Effect(store.AuditEffect{
-				ResourceType: "device_assignment", ResourceID: deviceID, Action: "CREATE",
-				Outcome: store.EffectApplied, ChangedFields: []string{"user_id"},
-			})
+			return fmt.Errorf("reserve enrollment token: %w", insertErr)
 		}
+		device = created
+		issued, issueErr := h.ca.IssueCertificateFromCSR(device.ID, req.Msg.Csr)
+		if issueErr != nil {
+			return fmt.Errorf("issue enrollment certificate: %w", issueErr)
+		}
+		cert = issued
+		if _, issueErr = tx.ReplaceDeviceCertificate(ctx, db.ReplaceDeviceCertificateParams{
+			ID: device.ID, NewCertificatePem: issued.CertPEM, NewFingerprint: &issued.Fingerprint,
+			NewNotAfter: &issued.NotAfter, OldFingerprint: nil,
+		}); issueErr != nil {
+			return fmt.Errorf("store enrollment certificate: %w", issueErr)
+		}
+		rec.Effect(store.AuditEffect{ResourceType: "device", ResourceID: device.ID, Action: "CREATE",
+			Outcome: store.EffectApplied, ChangedFields: []string{"hostname", "agent_version", "enrollment_identity_public_key", "cert_fingerprint", "cert_not_after", "registration_token_id"}})
 		return nil
 	})
 	if errors.Is(err, errCredentialRejected) {
@@ -189,8 +214,11 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 	if err != nil {
 		return nil, h.internal(ctx, "commit enrollment", err)
 	}
+	if cert == nil || len(cert.CertPEM) == 0 {
+		return nil, h.internal(ctx, "commit enrollment", errors.New("certificate missing after enrollment"))
+	}
 	return connect.NewResponse(&pmv1.RegisterResponse{
-		DeviceId: &pmv1.DeviceId{Value: deviceID}, CaCert: h.ca.CACertPEM(),
+		DeviceId: &pmv1.DeviceId{Value: device.ID}, CaCert: h.ca.CACertPEM(),
 		Certificate: cert.CertPEM, ControlUrl: h.controlURL,
 		ControlSealingPublicKey: append([]byte(nil), h.controlSealingPublicKey...),
 	}), nil
@@ -239,7 +267,7 @@ func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pm
 	}
 	_, err = h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		if _, err := tx.ReplaceDeviceCertificate(ctx, db.ReplaceDeviceCertificateParams{
-			NewFingerprint: &newFingerprint, NewNotAfter: &newNotAfter,
+			NewCertificatePem: nil, NewFingerprint: &newFingerprint, NewNotAfter: &newNotAfter,
 			ID: deviceID, OldFingerprint: &oldFingerprint,
 		}); store.IsNotFound(err) {
 			return errCredentialRejected

@@ -7,10 +7,14 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// RegistrationTokenRow is the non-secret stored registration-token shape.
+// RegistrationTokenRow is the non-secret token shape. CurrentUses is derived
+// from device provenance and is never written back to tokens.
 // value_hash remains internal to the state service and is never copied onto
 // the protobuf read surface.
-type RegistrationTokenRow = db.Token
+type RegistrationTokenRow struct {
+	db.Token
+	CurrentUses int32
+}
 
 // RegistrationTokenListFilter is the deterministic keyset page requested by
 // the registration-token RPC surface.
@@ -29,7 +33,15 @@ func (s *Store) ListRegistrationTokens(ctx context.Context, f RegistrationTokenL
 	if err != nil {
 		return nil, fmt.Errorf("registration token: list: %w", err)
 	}
-	return rows, nil
+	out := make([]RegistrationTokenRow, len(rows))
+	for i, row := range rows {
+		out[i] = RegistrationTokenRow{Token: db.Token{
+			ID: row.ID, ValueHash: row.ValueHash, Name: row.Name, MaxUses: row.MaxUses,
+			ExpiresAt: row.ExpiresAt, CreatedAt: row.CreatedAt, CreatedBy: row.CreatedBy,
+			Disabled: row.Disabled, IsDeleted: row.IsDeleted,
+		}, CurrentUses: int32(row.CurrentUses)}
+	}
+	return out, nil
 }
 
 // CountRegistrationTokens counts the same live token population as the list.

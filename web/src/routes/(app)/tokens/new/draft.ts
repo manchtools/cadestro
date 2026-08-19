@@ -10,17 +10,14 @@
 // `Record<string, unknown>` constraint without a cast.
 export type TokenDraft = {
 	name: string;
-	oneTime: boolean;
-	/** 0 = unlimited. Only meaningful for a reusable token. */
+	/** 0 = unlimited global device enrollments. */
 	maxUses: number;
-	/** 0 = never expires. */
+	/** Required TTL in days. */
 	expiresInDays: number;
-	/** Ownerless token — enrolled devices are not auto-assigned to anyone. */
-	bulkEnrollment: boolean;
 };
 
 export function emptyDraft(): TokenDraft {
-	return { name: '', oneTime: true, maxUses: 0, expiresInDays: 0, bulkEnrollment: false };
+	return { name: '', maxUses: 0, expiresInDays: 7 };
 }
 
 /** Rebuild a buffer from a persisted autosave or a claimed stage payload. The
@@ -32,13 +29,10 @@ export function hydrate(raw: unknown): TokenDraft | null {
 	const base = emptyDraft();
 	return {
 		name: typeof d.name === 'string' ? d.name : base.name,
-		oneTime: typeof d.oneTime === 'boolean' ? d.oneTime : base.oneTime,
 		maxUses: typeof d.maxUses === 'number' && d.maxUses >= 0 ? d.maxUses : base.maxUses,
 		expiresInDays:
-			typeof d.expiresInDays === 'number' && d.expiresInDays >= 0
+			typeof d.expiresInDays === 'number' && d.expiresInDays >= 1
 				? d.expiresInDays
 				: base.expiresInDays,
-		bulkEnrollment:
-			typeof d.bulkEnrollment === 'boolean' ? d.bulkEnrollment : base.bulkEnrollment
 	};
 }

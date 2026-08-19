@@ -136,7 +136,7 @@ async function fillToken(name: string, days: string) {
 describe('/tokens/new — the commit is the pill\'s', () => {
 	it('carries no Save button of its own', async () => {
 		render(NewTokenPage);
-		await fillToken('Fleet rollout', '0');
+		await fillToken('Fleet rollout', '7');
 
 		expect(
 			[...document.querySelectorAll('button')].some(
@@ -151,12 +151,13 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 
 	it('creates the token with the exact arguments the dialog sent', async () => {
 		render(NewTokenPage);
-		await fillToken('Fleet rollout', '0');
+		await fillToken('Fleet rollout', '7');
 
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createToken).toHaveBeenCalledTimes(1));
-		// name, oneTime, maxUses, expiresAt (none), ownerId (the current user)
-		expect(api.createToken.mock.calls[0]).toEqual(['Fleet rollout', true, 0, undefined, USER_ID]);
+		expect(api.createToken.mock.calls[0][0]).toBe('Fleet rollout');
+		expect(api.createToken.mock.calls[0][1]).toBe(0);
+		expect(api.createToken.mock.calls[0][2]).toBeInstanceOf(Date);
 	});
 
 	it('sends an expiry date when the operator asks for one', async () => {
@@ -165,14 +166,14 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createToken).toHaveBeenCalledTimes(1));
-		const expiresAt = api.createToken.mock.calls[0][3] as Date;
+		const expiresAt = api.createToken.mock.calls[0][2] as Date;
 		expect(expiresAt).toBeInstanceOf(Date);
 		expect(Math.round((expiresAt.getTime() - Date.now()) / 86_400_000)).toBe(14);
 	});
 
 	it('shows the one-time secret on the route, because navigating away would destroy it', async () => {
 		render(NewTokenPage);
-		await fillToken('Fleet rollout', '0');
+		await fillToken('Fleet rollout', '7');
 		expect(commitContext()).toBe(true);
 
 		await vi.waitFor(() =>
@@ -190,7 +191,7 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 	// same copy affordance, and thread it into the example install command.
 	it('shows the CA fingerprint pin beside the secret, copyable, and in the install command', async () => {
 		render(NewTokenPage);
-		await fillToken('Fleet rollout', '0');
+		await fillToken('Fleet rollout', '7');
 		expect(commitContext()).toBe(true);
 
 		await vi.waitFor(() =>

@@ -12,26 +12,23 @@ import (
 
 const consumeBootstrapAdminToken = `-- name: ConsumeBootstrapAdminToken :one
 UPDATE tokens
-SET current_uses = current_uses + 1
+SET is_deleted = TRUE
 WHERE value_hash = ?
   AND name = ?2
   AND is_deleted = FALSE
   AND disabled = FALSE
-  AND current_uses < max_uses
-  AND (expires_at IS NULL OR expires_at > ?3)
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+  AND expires_at > ?3
+RETURNING id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted
 `
 
 type ConsumeBootstrapAdminTokenParams struct {
-	ValueHash    string     `json:"value_hash"`
-	ReservedName string     `json:"reserved_name"`
-	Now          *time.Time `json:"now"`
+	ValueHash    string    `json:"value_hash"`
+	ReservedName string    `json:"reserved_name"`
+	Now          time.Time `json:"now"`
 }
 
-// The consume-once conditional write. Every condition is evaluated by
-// the UPDATE itself, so two concurrent presentations of the same token
-// cannot both observe current_uses < max_uses and both succeed: the
-// second finds no row.
+// The consume-once conditional write. Retiring the row is the bootstrap
+// boundary; enrollment tokens never mutate a usage counter.
 func (q *Queries) ConsumeBootstrapAdminToken(ctx context.Context, arg ConsumeBootstrapAdminTokenParams) (Token, error) {
 	row := q.db.QueryRowContext(ctx, consumeBootstrapAdminToken, arg.ValueHash, arg.ReservedName, arg.Now)
 	var i Token
@@ -39,13 +36,10 @@ func (q *Queries) ConsumeBootstrapAdminToken(ctx context.Context, arg ConsumeBoo
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)
@@ -57,13 +51,12 @@ SELECT COUNT(*) FROM tokens
 WHERE name = ?1
   AND is_deleted = FALSE
   AND disabled = FALSE
-  AND current_uses < max_uses
-  AND (expires_at IS NULL OR expires_at > ?2)
+  AND expires_at > ?2
 `
 
 type CountLiveBootstrapAdminTokensParams struct {
-	ReservedName string     `json:"reserved_name"`
-	Now          *time.Time `json:"now"`
+	ReservedName string    `json:"reserved_name"`
+	Now          time.Time `json:"now"`
 }
 
 func (q *Queries) CountLiveBootstrapAdminTokens(ctx context.Context, arg CountLiveBootstrapAdminTokensParams) (int64, error) {
@@ -75,17 +68,17 @@ func (q *Queries) CountLiveBootstrapAdminTokens(ctx context.Context, arg CountLi
 
 const insertBootstrapAdminToken = `-- name: InsertBootstrapAdminToken :one
 
-INSERT INTO tokens (id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted)
-VALUES (?1, ?2, ?3, TRUE, 1, 0,
-        ?4, ?5, ?6, NULL, FALSE, FALSE)
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+INSERT INTO tokens (id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted)
+VALUES (?1, ?2, ?3, 1,
+        ?4, ?5, ?6, FALSE, FALSE)
+RETURNING id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted
 `
 
 type InsertBootstrapAdminTokenParams struct {
 	ID           string     `json:"id"`
 	ValueHash    string     `json:"value_hash"`
 	ReservedName string     `json:"reserved_name"`
-	ExpiresAt    *time.Time `json:"expires_at"`
+	ExpiresAt    time.Time  `json:"expires_at"`
 	CreatedAt    *time.Time `json:"created_at"`
 	CreatedBy    string     `json:"created_by"`
 }
@@ -110,13 +103,10 @@ func (q *Queries) InsertBootstrapAdminToken(ctx context.Context, arg InsertBoots
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)

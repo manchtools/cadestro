@@ -175,7 +175,6 @@ func registryPermissions() []permEntry {
 		{"DeleteDevice", "Devices", "Delete devices", TargetDevice},
 		// Tokens
 		{"CreateToken", "Tokens", "Create registration tokens", TargetUnspecified},
-		{"CreateToken:self", "Tokens", "Create one-time token for self", TargetUnspecified},
 		{"ListTokens", "Tokens", "List tokens", TargetUnspecified},
 		{"RenameToken", "Tokens", "Rename tokens", TargetUnspecified},
 		{"SetTokenDisabled", "Tokens", "Disable/enable tokens", TargetUnspecified},
@@ -386,7 +385,6 @@ func DefaultUserPermissions() []string {
 		"UpdateUserProfile:self",
 		"ListDevices:assigned",
 		"GetDevice:assigned",
-		"CreateToken:self",
 		"SetUserSelection",
 		"ListAvailableActions",
 		"ListIdentityLinks",

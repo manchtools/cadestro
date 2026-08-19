@@ -21,11 +21,10 @@
 	// them client-side. Status is not a stored field — it is derived from
 	// disabled + one-time + use-count, here and in the status filter alike.
 	type SortKey = 'name' | 'status' | 'created';
-	type Filters = { status: string[]; type: string[] };
+	type Filters = { status: string[] };
 
 	function tokenStatusId(token: RegistrationToken): string {
 		if (token.disabled) return 'disabled';
-		if (token.oneTime && token.currentUses > 0) return 'used';
 		if (token.maxUses > 0 && token.currentUses >= token.maxUses) return 'exhausted';
 		return 'active';
 	}
@@ -41,13 +40,8 @@
 		},
 		defaultSort: 'created',
 		sortDir: (key) => (key === 'created' ? 'desc' : 'asc'),
-		filters: {
-			status: { key: 'status', codec: codecs.stringArray([]) },
-			type: { key: 'type', codec: codecs.stringArray([]) }
-		},
-		filterRow: (t, f) =>
-			(f.status.length === 0 || f.status.includes(tokenStatusId(t))) &&
-			(f.type.length === 0 || f.type.includes(t.oneTime ? 'one_time' : 'reusable'))
+		filters: { status: { key: 'status', codec: codecs.stringArray([]) } },
+		filterRow: (t, f) => f.status.length === 0 || f.status.includes(tokenStatusId(t))
 	});
 
 	let deleteDialogOpen = $state(false);
@@ -59,13 +53,7 @@
 	const statusFilterItems = [
 		{ id: 'active', label: m.tokens_status_active() },
 		{ id: 'disabled', label: m.tokens_status_disabled() },
-		{ id: 'used', label: m.tokens_status_used() },
-		{ id: 'exhausted', label: m.tokens_status_exhausted() }
-	];
-
-	const typeFilterItems = [
-		{ id: 'one_time', label: m.tokens_type_one_time() },
-		{ id: 'reusable', label: m.tokens_type_reusable() }
+		{ id: 'exhausted', label: m.tokens_status_exhausted() },
 	];
 
 	// Headerless rows: the sort keys that were column headers now ride the row
@@ -77,7 +65,7 @@
 	];
 
 	const hasNarrowedView = $derived(
-		table.query !== '' || table.filters.status.length > 0 || table.filters.type.length > 0
+		 table.query !== '' || table.filters.status.length > 0
 	);
 
 	function confirmDelete(token: RegistrationToken) {
@@ -119,8 +107,6 @@
 		switch (tokenStatusId(token)) {
 			case 'disabled':
 				return { label: m.tokens_status_disabled(), tone: 'crit' };
-			case 'used':
-				return { label: m.tokens_status_used(), tone: 'idle' };
 			case 'exhausted':
 				return { label: m.tokens_status_exhausted(), tone: 'warn' };
 			default:
@@ -179,7 +165,7 @@
 	{/snippet}
 
 	<!-- The token list in the drafts' row grammar: key tile, name over its ULID,
-	     derived-status and type chips, the use counter, a right-aligned expiry
+		     derived-status and a right-aligned expiry
 	     stamp. Registration tokens have no detail route, so the row is not a link
 	     — every affordance stays in the trailing menu. -->
 	<div data-tour="tokens-list">
@@ -190,14 +176,6 @@
 					selected={table.filters.status}
 					onSelectedChange={(next) => table.setFilter('status', next)}
 					placeholder={m.tokens_filter_all_statuses()}
-					searchPlaceholder={m.common_search()}
-					class="w-44"
-				/>
-				<MultiSelectCombobox
-					items={typeFilterItems}
-					selected={table.filters.type}
-					onSelectedChange={(next) => table.setFilter('type', next)}
-					placeholder={m.tokens_filter_all_types()}
 					searchPlaceholder={m.common_search()}
 					class="w-44"
 				/>
@@ -215,12 +193,6 @@
 					<span title={m.tokens_table_status()}>
 						<Chip tone={status.tone} label={status.label} />
 					</span>
-					<span title={m.tokens_table_type()}>
-						<Chip
-							tone="idle"
-							label={token.oneTime ? m.tokens_type_one_time() : m.tokens_type_reusable()}
-						/>
-					</span>
 				</span>
 				<span class="shrink-0 font-mono text-xs tabular-nums" title={m.tokens_table_uses()}>
 					{token.currentUses}{#if token.maxUses > 0}&nbsp;/&nbsp;{token.maxUses}{/if}
@@ -229,13 +201,11 @@
 				     a sort key. -->
 				<span
 					class="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground"
-					title="{m.tokens_table_expires()}: {token.expiresAt
-						? formatTimestampDateTime(token.expiresAt)
-						: m.tokens_expires_never()} · {m.tokens_table_created()}: {formatTimestampDateTime(
+					 title="{m.tokens_table_expires()}: {formatTimestampDateTime(token.expiresAt)} · {m.tokens_table_created()}: {formatTimestampDateTime(
 						token.createdAt
 					)}"
 				>
-					{token.expiresAt ? formatTimestampDateTime(token.expiresAt) : m.tokens_expires_never()}
+					{formatTimestampDateTime(token.expiresAt)}
 				</span>
 			{/snippet}
 

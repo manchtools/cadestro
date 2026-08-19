@@ -32,11 +32,12 @@ WHERE id = sqlc.arg(device_id)
 -- caller can replace a given certificate.
 -- name: ReplaceDeviceCertificate :one
 UPDATE devices
-SET cert_fingerprint = sqlc.arg(new_fingerprint),
+SET certificate_pem = COALESCE(sqlc.narg(new_certificate_pem), certificate_pem),
+    cert_fingerprint = sqlc.arg(new_fingerprint),
     cert_not_after = sqlc.arg(new_not_after)
 WHERE id = sqlc.arg(id)
   AND is_deleted = FALSE
-  AND cert_fingerprint = sqlc.arg(old_fingerprint)
+  AND cert_fingerprint IS sqlc.arg(old_fingerprint)
 RETURNING *;
 
 -- name: ListDevices :many
@@ -251,6 +252,43 @@ SELECT sqlc.arg(device_id), sqlc.arg(user_id), sqlc.arg(assigned_at), sqlc.arg(a
 WHERE EXISTS (SELECT 1 FROM devices d WHERE d.id = sqlc.arg(device_id) AND d.is_deleted = FALSE)
   AND EXISTS (SELECT 1 FROM users u WHERE u.id = sqlc.arg(user_id) AND u.is_deleted = FALSE)
 ON CONFLICT (device_id, user_id) DO NOTHING;
+
+-- Existing enrollment retries are keyed by the Ed25519 public key in the CSR,
+-- never by the X25519 secret-recipient key.
+-- name: FindEnrollmentDevice :one
+SELECT d.*
+FROM devices d
+JOIN tokens t ON t.id = d.registration_token_id
+WHERE t.value_hash = sqlc.arg(value_hash)
+  AND t.name <> sqlc.arg(reserved_name)
+  AND t.is_deleted = FALSE
+  AND t.disabled = FALSE
+  AND t.expires_at > sqlc.arg(enrolled_at)
+  AND d.enrollment_identity_public_key = sqlc.arg(identity_public_key)
+  AND d.is_deleted = FALSE;
+
+-- The INSERT is the global-use reservation. SQLite serializes this write, and
+-- the count is derived from immutable device provenance rather than a token
+-- counter, so the max boundary cannot be crossed by concurrent enrollments.
+-- name: InsertEnrolledDevice :one
+INSERT INTO devices (
+    id, hostname, agent_version, agent_sealing_public_key,
+    enrollment_identity_public_key, registered_at, registration_token_id
+)
+SELECT sqlc.arg(id), sqlc.arg(hostname), sqlc.arg(agent_version),
+       sqlc.arg(sealing_key), sqlc.arg(identity_public_key),
+       sqlc.arg(enrolled_at), t.id
+FROM tokens t
+WHERE t.value_hash = sqlc.arg(value_hash)
+  AND t.name <> sqlc.arg(reserved_name)
+  AND t.is_deleted = FALSE
+  AND t.disabled = FALSE
+  AND t.expires_at > sqlc.arg(enrolled_at)
+  AND (t.max_uses = 0 OR (
+      SELECT COUNT(*) FROM devices d
+      WHERE d.registration_token_id = t.id
+  ) < t.max_uses)
+RETURNING *;
 
 -- name: AssignDeviceGroup :execrows
 INSERT INTO device_assigned_groups (device_id, group_id, assigned_at, assigned_by)

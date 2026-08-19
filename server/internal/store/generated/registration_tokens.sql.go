@@ -10,49 +10,16 @@ import (
 	"time"
 )
 
-const consumeRegistrationToken = `-- name: ConsumeRegistrationToken :one
-UPDATE tokens
-SET current_uses = current_uses + 1
-WHERE value_hash = ?1
-  AND is_deleted = FALSE
-  AND disabled = FALSE
-  AND name <> ?2
-  AND (expires_at IS NULL OR expires_at > ?3)
-  AND (
-      (one_time = TRUE AND current_uses = 0)
-      OR
-      (one_time = FALSE AND (max_uses = 0 OR current_uses < max_uses))
-  )
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+const countRegistrationTokenUses = `-- name: CountRegistrationTokenUses :one
+SELECT COUNT(*) FROM devices WHERE registration_token_id = ?1
 `
 
-type ConsumeRegistrationTokenParams struct {
-	ValueHash    string     `json:"value_hash"`
-	ReservedName string     `json:"reserved_name"`
-	ConsumedAt   *time.Time `json:"consumed_at"`
-}
-
-// Consume one enrollment use atomically. The bearer digest is the only lookup
-// key and all usability predicates live in this UPDATE, so concurrent callers
-// cannot both consume the final use.
-func (q *Queries) ConsumeRegistrationToken(ctx context.Context, arg ConsumeRegistrationTokenParams) (Token, error) {
-	row := q.db.QueryRowContext(ctx, consumeRegistrationToken, arg.ValueHash, arg.ReservedName, arg.ConsumedAt)
-	var i Token
-	err := row.Scan(
-		&i.ID,
-		&i.ValueHash,
-		&i.Name,
-		&i.OneTime,
-		&i.MaxUses,
-		&i.CurrentUses,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-		&i.CreatedBy,
-		&i.OwnerID,
-		&i.Disabled,
-		&i.IsDeleted,
-	)
-	return i, err
+// Usage is immutable device provenance, including soft-deleted devices.
+func (q *Queries) CountRegistrationTokenUses(ctx context.Context, tokenID *string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRegistrationTokenUses, tokenID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const countRegistrationTokens = `-- name: CountRegistrationTokens :one
@@ -76,7 +43,7 @@ func (q *Queries) CountRegistrationTokens(ctx context.Context, arg CountRegistra
 
 const getRegistrationToken = `-- name: GetRegistrationToken :one
 
-SELECT id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted FROM tokens
+SELECT id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted FROM tokens
 WHERE id = ?1
   AND is_deleted = FALSE
   AND name <> ?2
@@ -96,13 +63,10 @@ func (q *Queries) GetRegistrationToken(ctx context.Context, arg GetRegistrationT
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)
@@ -111,26 +75,23 @@ func (q *Queries) GetRegistrationToken(ctx context.Context, arg GetRegistrationT
 
 const insertRegistrationToken = `-- name: InsertRegistrationToken :one
 INSERT INTO tokens (
-    id, value_hash, name, one_time, max_uses, current_uses,
-    expires_at, created_at, created_by, owner_id, disabled, is_deleted
+    id, value_hash, name, max_uses,
+    expires_at, created_at, created_by, disabled, is_deleted
 ) VALUES (
     ?1, ?2, ?3, ?4,
-    ?5, 0, ?6, ?7,
-    ?8, ?9, FALSE, FALSE
+    ?5, ?6, ?7, FALSE, FALSE
 )
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+RETURNING id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted
 `
 
 type InsertRegistrationTokenParams struct {
 	ID        string     `json:"id"`
 	ValueHash string     `json:"value_hash"`
 	Name      string     `json:"name"`
-	OneTime   bool       `json:"one_time"`
 	MaxUses   int32      `json:"max_uses"`
-	ExpiresAt *time.Time `json:"expires_at"`
+	ExpiresAt time.Time  `json:"expires_at"`
 	CreatedAt *time.Time `json:"created_at"`
 	CreatedBy string     `json:"created_by"`
-	OwnerID   *string    `json:"owner_id"`
 }
 
 func (q *Queries) InsertRegistrationToken(ctx context.Context, arg InsertRegistrationTokenParams) (Token, error) {
@@ -138,25 +99,20 @@ func (q *Queries) InsertRegistrationToken(ctx context.Context, arg InsertRegistr
 		arg.ID,
 		arg.ValueHash,
 		arg.Name,
-		arg.OneTime,
 		arg.MaxUses,
 		arg.ExpiresAt,
 		arg.CreatedAt,
 		arg.CreatedBy,
-		arg.OwnerID,
 	)
 	var i Token
 	err := row.Scan(
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)
@@ -164,12 +120,15 @@ func (q *Queries) InsertRegistrationToken(ctx context.Context, arg InsertRegistr
 }
 
 const listRegistrationTokens = `-- name: ListRegistrationTokens :many
-SELECT id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted FROM tokens
-WHERE is_deleted = FALSE
-  AND name <> ?1
-  AND id > ?2
-  AND (?3 OR disabled = FALSE)
-ORDER BY id
+SELECT t.id, t.value_hash, t.name, t.max_uses, t.expires_at, t.created_at, t.created_by, t.disabled, t.is_deleted, COUNT(d.id) AS current_uses
+FROM tokens t
+LEFT JOIN devices d ON d.registration_token_id = t.id
+WHERE t.is_deleted = FALSE
+  AND t.name <> ?1
+  AND t.id > ?2
+  AND (?3 OR t.disabled = FALSE)
+GROUP BY t.id
+ORDER BY t.id
 LIMIT ?4
 `
 
@@ -180,7 +139,20 @@ type ListRegistrationTokensParams struct {
 	RowLimit        int64       `json:"row_limit"`
 }
 
-func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrationTokensParams) ([]Token, error) {
+type ListRegistrationTokensRow struct {
+	ID          string     `json:"id"`
+	ValueHash   string     `json:"value_hash"`
+	Name        string     `json:"name"`
+	MaxUses     int32      `json:"max_uses"`
+	ExpiresAt   time.Time  `json:"expires_at"`
+	CreatedAt   *time.Time `json:"created_at"`
+	CreatedBy   string     `json:"created_by"`
+	Disabled    bool       `json:"disabled"`
+	IsDeleted   bool       `json:"is_deleted"`
+	CurrentUses int64      `json:"current_uses"`
+}
+
+func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrationTokensParams) ([]ListRegistrationTokensRow, error) {
 	rows, err := q.db.QueryContext(ctx, listRegistrationTokens,
 		arg.ReservedName,
 		arg.AfterID,
@@ -191,22 +163,20 @@ func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrati
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Token{}
+	items := []ListRegistrationTokensRow{}
 	for rows.Next() {
-		var i Token
+		var i ListRegistrationTokensRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ValueHash,
 			&i.Name,
-			&i.OneTime,
 			&i.MaxUses,
-			&i.CurrentUses,
 			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.CreatedBy,
-			&i.OwnerID,
 			&i.Disabled,
 			&i.IsDeleted,
+			&i.CurrentUses,
 		); err != nil {
 			return nil, err
 		}
@@ -227,7 +197,7 @@ SET name = ?1
 WHERE id = ?2
   AND is_deleted = FALSE
   AND name <> ?3
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+RETURNING id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted
 `
 
 type RenameRegistrationTokenParams struct {
@@ -243,13 +213,10 @@ func (q *Queries) RenameRegistrationToken(ctx context.Context, arg RenameRegistr
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)
@@ -262,7 +229,7 @@ SET disabled = ?1
 WHERE id = ?2
   AND is_deleted = FALSE
   AND name <> ?3
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+RETURNING id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted
 `
 
 type SetRegistrationTokenDisabledParams struct {
@@ -278,13 +245,10 @@ func (q *Queries) SetRegistrationTokenDisabled(ctx context.Context, arg SetRegis
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)
@@ -297,7 +261,7 @@ SET is_deleted = TRUE
 WHERE id = ?1
   AND is_deleted = FALSE
   AND name <> ?2
-RETURNING id, value_hash, name, one_time, max_uses, current_uses, expires_at, created_at, created_by, owner_id, disabled, is_deleted
+RETURNING id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted
 `
 
 type SoftDeleteRegistrationTokenParams struct {
@@ -312,13 +276,10 @@ func (q *Queries) SoftDeleteRegistrationToken(ctx context.Context, arg SoftDelet
 		&i.ID,
 		&i.ValueHash,
 		&i.Name,
-		&i.OneTime,
 		&i.MaxUses,
-		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.OwnerID,
 		&i.Disabled,
 		&i.IsDeleted,
 	)

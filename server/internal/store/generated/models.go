@@ -258,22 +258,24 @@ type Delivery struct {
 }
 
 type Device struct {
-	ID                       string     `json:"id"`
-	Hostname                 string     `json:"hostname"`
-	AgentVersion             string     `json:"agent_version"`
-	AgentSealingPublicKey    []byte     `json:"agent_sealing_public_key"`
-	CertFingerprint          *string    `json:"cert_fingerprint"`
-	CertNotAfter             *time.Time `json:"cert_not_after"`
-	RegisteredAt             *time.Time `json:"registered_at"`
-	LastSeenAt               *time.Time `json:"last_seen_at"`
-	RegistrationTokenID      *string    `json:"registration_token_id"`
-	IsDeleted                bool       `json:"is_deleted"`
-	SyncIntervalMinutes      int32      `json:"sync_interval_minutes"`
-	InventoryIntervalMinutes int32      `json:"inventory_interval_minutes"`
-	ComplianceStatus         int32      `json:"compliance_status"`
-	ComplianceCheckedAt      *time.Time `json:"compliance_checked_at"`
-	ComplianceTotal          int32      `json:"compliance_total"`
-	CompliancePassing        int32      `json:"compliance_passing"`
+	ID                          string     `json:"id"`
+	Hostname                    string     `json:"hostname"`
+	AgentVersion                string     `json:"agent_version"`
+	AgentSealingPublicKey       []byte     `json:"agent_sealing_public_key"`
+	EnrollmentIdentityPublicKey []byte     `json:"enrollment_identity_public_key"`
+	CertificatePem              []byte     `json:"certificate_pem"`
+	CertFingerprint             *string    `json:"cert_fingerprint"`
+	CertNotAfter                *time.Time `json:"cert_not_after"`
+	RegisteredAt                *time.Time `json:"registered_at"`
+	LastSeenAt                  *time.Time `json:"last_seen_at"`
+	RegistrationTokenID         *string    `json:"registration_token_id"`
+	IsDeleted                   bool       `json:"is_deleted"`
+	SyncIntervalMinutes         int32      `json:"sync_interval_minutes"`
+	InventoryIntervalMinutes    int32      `json:"inventory_interval_minutes"`
+	ComplianceStatus            int32      `json:"compliance_status"`
+	ComplianceCheckedAt         *time.Time `json:"compliance_checked_at"`
+	ComplianceTotal             int32      `json:"compliance_total"`
+	CompliancePassing           int32      `json:"compliance_passing"`
 }
 
 type DeviceAssignedGroup struct {
@@ -578,18 +580,15 @@ type TerminalSession struct {
 }
 
 type Token struct {
-	ID          string     `json:"id"`
-	ValueHash   string     `json:"value_hash"`
-	Name        string     `json:"name"`
-	OneTime     bool       `json:"one_time"`
-	MaxUses     int32      `json:"max_uses"`
-	CurrentUses int32      `json:"current_uses"`
-	ExpiresAt   *time.Time `json:"expires_at"`
-	CreatedAt   *time.Time `json:"created_at"`
-	CreatedBy   string     `json:"created_by"`
-	OwnerID     *string    `json:"owner_id"`
-	Disabled    bool       `json:"disabled"`
-	IsDeleted   bool       `json:"is_deleted"`
+	ID        string     `json:"id"`
+	ValueHash string     `json:"value_hash"`
+	Name      string     `json:"name"`
+	MaxUses   int32      `json:"max_uses"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	CreatedAt *time.Time `json:"created_at"`
+	CreatedBy string     `json:"created_by"`
+	Disabled  bool       `json:"disabled"`
+	IsDeleted bool       `json:"is_deleted"`
 }
 
 type User struct {

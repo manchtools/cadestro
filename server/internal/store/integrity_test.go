@@ -189,7 +189,6 @@ var requiredForeignKeys = []string{
 	"user_group_roles.group_id -> user_groups",
 	"user_group_roles.role_id -> roles",
 	"user_ssh_keys.user_id -> users",
-	"tokens.owner_id -> users",
 	"identity_links.user_id -> users",
 	"identity_links.provider_id -> identity_providers",
 	"scim_group_mapping.provider_id -> identity_providers",

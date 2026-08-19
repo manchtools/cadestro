@@ -127,40 +127,27 @@ func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.Cr
 		if err := req.Msg.ExpiresAt.CheckValid(); err != nil {
 			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid token expiry")
 		}
+	} else {
+		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "token expiry is required")
+	}
+	expiresAt := req.Msg.ExpiresAt.AsTime().UTC()
+	if !expiresAt.After(h.now().UTC()) {
+		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "token expiry must be in the future")
 	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
+	// Enrollment tokens are organization credentials. The retired
+	// CreateToken:self path must not silently broaden into an ownerless token.
+	if !auth.HasPermission(ctx, "CreateToken") {
+		return nil, rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied, "permission denied")
+	}
 	if err := h.authorize(ctx, "CreateToken", ""); err != nil {
 		return nil, err
 	}
 
-	oneTime, maxUses := req.Msg.OneTime, req.Msg.MaxUses
-	var ownerID *string
-	var expiresAt *time.Time
-	if auth.HasPermission(ctx, "CreateToken") {
-		if req.Msg.OwnerId != "" {
-			if _, err := h.store.GetUser(ctx, req.Msg.OwnerId); err != nil {
-				if store.IsNotFound(err) {
-					return nil, notFound(ctx, errUserNotFound, "owner user not found")
-				}
-				return nil, h.internal(ctx, "read token owner", err)
-			}
-			owner := req.Msg.OwnerId
-			ownerID = &owner
-		}
-		if req.Msg.ExpiresAt != nil {
-			expiry := req.Msg.ExpiresAt.AsTime().UTC()
-			expiresAt = &expiry
-		}
-	} else {
-		oneTime, maxUses = true, 1
-		owner := actor.ID
-		ownerID = &owner
-		expiry := h.now().UTC().Add(7 * 24 * time.Hour)
-		expiresAt = &expiry
-	}
+	maxUses := req.Msg.MaxUses
 
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
@@ -175,15 +162,16 @@ func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.Cr
 		cadestrov1connect.ControlServiceCreateTokenProcedure, "CreateToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			inserted, err := tx.InsertRegistrationToken(ctx, db.InsertRegistrationTokenParams{
-				ID: id, ValueHash: digestHex, Name: req.Msg.Name, OneTime: oneTime,
+				ID: id, ValueHash: digestHex, Name: req.Msg.Name,
 				MaxUses: maxUses, ExpiresAt: expiresAt, CreatedAt: &createdAt,
-				CreatedBy: actor.ID, OwnerID: ownerID,
+				CreatedBy: actor.ID,
 			})
 			if err != nil {
 				return fmt.Errorf("registration token: insert: %w", err)
 			}
-			row = inserted
-			effect := tokenEffect(id, "CREATE", "name", "one_time", "max_uses", "expires_at", "owner_id")
+			row = store.RegistrationTokenRow{Token: inserted}
+			row.CurrentUses = 0
+			effect := tokenEffect(id, "CREATE", "name", "max_uses", "expires_at")
 			effect.EvidenceKind = "registration_token"
 			effect.EvidenceFingerprint = digestHex
 			rec.Effect(effect)
@@ -266,7 +254,13 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[pmv1.Re
 			if err != nil {
 				return err
 			}
-			row = updated
+			row = store.RegistrationTokenRow{Token: updated}
+			tokenID := updated.ID
+			uses, countErr := tx.CountRegistrationTokenUses(ctx, &tokenID)
+			if countErr != nil {
+				return fmt.Errorf("registration token: count uses: %w", countErr)
+			}
+			row.CurrentUses = int32(uses)
 			rec.Effect(tokenEffect(req.Msg.Id, "UPDATE", "name"))
 			return nil
 		})
@@ -298,7 +292,13 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[pm
 			if err != nil {
 				return err
 			}
-			row = updated
+			row = store.RegistrationTokenRow{Token: updated}
+			tokenID := updated.ID
+			uses, countErr := tx.CountRegistrationTokenUses(ctx, &tokenID)
+			if countErr != nil {
+				return fmt.Errorf("registration token: count uses: %w", countErr)
+			}
+			row.CurrentUses = int32(uses)
 			effect := tokenEffect(req.Msg.Id, "UPDATE", "disabled")
 			effect.AfterFlag = &req.Msg.Disabled
 			rec.Effect(effect)
@@ -348,18 +348,12 @@ func (h *Handlers) writeError(ctx context.Context, operation string, err error) 
 
 func tokenToProto(row store.RegistrationTokenRow) *pmv1.RegistrationToken {
 	out := &pmv1.RegistrationToken{
-		Id: row.ID, Name: row.Name, OneTime: row.OneTime,
-		MaxUses: row.MaxUses, CurrentUses: row.CurrentUses,
+		Id: row.ID, Name: row.Name, MaxUses: row.MaxUses, CurrentUses: row.CurrentUses,
 		CreatedBy: row.CreatedBy, Disabled: row.Disabled,
 	}
-	if row.ExpiresAt != nil {
-		out.ExpiresAt = timestamppb.New(*row.ExpiresAt)
-	}
+	out.ExpiresAt = timestamppb.New(row.ExpiresAt)
 	if row.CreatedAt != nil {
 		out.CreatedAt = timestamppb.New(*row.CreatedAt)
-	}
-	if row.OwnerID != nil {
-		out.OwnerId = *row.OwnerID
 	}
 	return out
 }

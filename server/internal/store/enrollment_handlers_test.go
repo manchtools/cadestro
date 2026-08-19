@@ -100,16 +100,15 @@ func newEnrollmentIdentity(t *testing.T) ([]byte, ed25519.PrivateKey) {
 	return enrollmentCSR(t, key), key
 }
 
-func (f *enrollmentFixture) insertToken(plaintext string, oneTime bool, maxUses int32, ownerID *string) string {
+func (f *enrollmentFixture) insertToken(plaintext string, maxUses int32, expiresAt time.Time) string {
 	f.t.Helper()
 	digest := sha256.Sum256([]byte(plaintext))
 	id := newID()
 	_, err := f.raw.Exec(context.Background(), `
 		INSERT INTO tokens (
-			id, value_hash, name, one_time, max_uses, current_uses,
-			created_at, created_by, owner_id
-		) VALUES ($1, $2, 'enrollment', $3, $4, 0, $5, 'test', $6)`,
-		id, hex.EncodeToString(digest[:]), oneTime, maxUses, f.now, ownerID)
+			id, value_hash, name, max_uses, expires_at, created_at, created_by
+		) VALUES ($1, $2, 'enrollment', $3, $4, $5, 'test')`,
+		id, hex.EncodeToString(digest[:]), maxUses, expiresAt, f.now)
 	require.NoError(f.t, err)
 	return id
 }
@@ -127,24 +126,18 @@ func TestEnrollment_ValidatesBeforeCredentialUse(t *testing.T) {
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
 	token := "still-usable"
-	f.insertToken(token, true, 1, nil)
+	f.insertToken(token, 1, f.now.Add(time.Hour))
 	_, err = f.handlers.Register(context.Background(), registerRequest(token, []byte("not a CSR"), 1))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	var uses int32
-	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT current_uses FROM tokens WHERE value_hash = $1`,
-		hex.EncodeToString(sha256Digest(token))).Scan(&uses))
-	assert.Zero(t, uses, "an invalid CSR must not consume enrollment authority")
+	var devices int
+	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM devices`).Scan(&devices))
+	assert.Zero(t, devices, "an invalid CSR must not consume enrollment authority")
 }
 
 func TestEnrollment_RegisterCommitsOneAuditedDevice(t *testing.T) {
 	f := newEnrollmentFixture(t)
-	ownerID := newID()
-	_, err := f.raw.Exec(context.Background(), `
-		INSERT INTO users (id, email, display_name, linux_username, linux_uid, created_at)
-		VALUES ($1, 'owner@example.test', 'Owner', 'owner', 200001, $2)`, ownerID, f.now)
-	require.NoError(t, err)
-	token := "one-use-token"
-	tokenID := f.insertToken(token, true, 1, &ownerID)
+	token := "reusable-token"
+	tokenID := f.insertToken(token, 2, f.now.Add(time.Hour))
 	csr, _ := newEnrollmentIdentity(t)
 
 	resp, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x24))
@@ -156,48 +149,54 @@ func TestEnrollment_RegisterCommitsOneAuditedDevice(t *testing.T) {
 	assert.NotEmpty(t, resp.Msg.Certificate)
 	assert.NotEmpty(t, resp.Msg.CaCert)
 
-	var uses int32
-	var storedTokenID, assignedUser string
+	var storedTokenID string
 	var storedSealing []byte
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT d.registration_token_id, d.agent_sealing_public_key, t.current_uses
-		FROM devices d JOIN tokens t ON t.id = d.registration_token_id
-		WHERE d.id = $1`, deviceID).Scan(&storedTokenID, &storedSealing, &uses))
+		SELECT d.registration_token_id, d.agent_sealing_public_key
+		FROM devices d WHERE d.id = $1`, deviceID).Scan(&storedTokenID, &storedSealing))
 	assert.Equal(t, tokenID, storedTokenID)
 	assert.Equal(t, bytes.Repeat([]byte{0x24}, 32), storedSealing)
-	assert.Equal(t, int32(1), uses)
+	var assignments int
 	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT user_id FROM device_assigned_users WHERE device_id = $1`, deviceID).Scan(&assignedUser))
-	assert.Equal(t, ownerID, assignedUser)
+		`SELECT COUNT(*) FROM device_assigned_users WHERE device_id = $1`, deviceID).Scan(&assignments))
+	assert.Zero(t, assignments, "enrollment never assigns a human owner")
 
 	op, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceRegisterProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), op.OperationID)
 	require.NoError(t, err)
-	assert.Len(t, effects, 3)
+	assert.Len(t, effects, 1)
 
-	_, err = f.handlers.Register(context.Background(), registerRequest(token, csr, 0x24))
-	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	retry, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x24))
+	require.NoError(t, err)
+	assert.Equal(t, deviceID, retry.Msg.DeviceId.Value)
+	assert.Equal(t, resp.Msg.Certificate, retry.Msg.Certificate, "retry returns the same certificate identity")
+	_, err = f.handlers.Register(context.Background(), registerRequest(token, csr, 0x99))
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "a changed sealing key must not silently reuse the old device")
 	var devices int
 	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM devices`).Scan(&devices))
 	assert.Equal(t, 1, devices)
 }
 
-func TestEnrollment_SingleUseTokenWinsExactlyOnce(t *testing.T) {
+func TestEnrollment_BoundedTokenWinsExactlyAtGlobalBoundary(t *testing.T) {
 	f := newEnrollmentFixture(t)
-	token := "raced-one-use-token"
-	f.insertToken(token, true, 1, nil)
-	csr, _ := newEnrollmentIdentity(t)
+	token := "raced-bounded-token"
+	f.insertToken(token, 1, f.now.Add(time.Hour))
 
 	const callers = 12
 	var succeeded atomic.Int32
 	var denied atomic.Int32
+	requests := make([]*connect.Request[pmv1.RegisterRequest], callers)
+	for i := range requests {
+		csr, _ := newEnrollmentIdentity(t)
+		requests[i] = registerRequest(token, csr, byte(0x33+i))
+	}
 	var wg sync.WaitGroup
-	for range callers {
+	for i := range requests {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x33))
+			_, err := f.handlers.Register(context.Background(), requests[i])
 			switch connect.CodeOf(err) {
 			case connect.CodeUnknown:
 				if err == nil {
@@ -211,17 +210,74 @@ func TestEnrollment_SingleUseTokenWinsExactlyOnce(t *testing.T) {
 	wg.Wait()
 	assert.Equal(t, int32(1), succeeded.Load())
 	assert.Equal(t, int32(callers-1), denied.Load())
-	var uses, devices int32
-	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT current_uses FROM tokens WHERE name = 'enrollment'`).Scan(&uses))
+	var devices int32
 	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM devices`).Scan(&devices))
-	assert.Equal(t, int32(1), uses)
 	assert.Equal(t, int32(1), devices)
+}
+
+func TestEnrollment_UnlimitedTokenEnrollsMultipleIdentities(t *testing.T) {
+	f := newEnrollmentFixture(t)
+	token := "unlimited-token"
+	f.insertToken(token, 0, f.now.Add(time.Hour))
+	firstCSR, _ := newEnrollmentIdentity(t)
+	secondCSR, _ := newEnrollmentIdentity(t)
+	first, err := f.handlers.Register(context.Background(), registerRequest(token, firstCSR, 0x41))
+	require.NoError(t, err)
+	second, err := f.handlers.Register(context.Background(), registerRequest(token, secondCSR, 0x42))
+	require.NoError(t, err)
+	assert.NotEqual(t, first.Msg.DeviceId.Value, second.Msg.DeviceId.Value)
+	var devices int
+	require.NoError(t, f.raw.QueryRow(context.Background(),
+		`SELECT COUNT(*) FROM devices WHERE registration_token_id = (SELECT id FROM tokens WHERE value_hash = $1)`,
+		hex.EncodeToString(sha256Digest(token))).Scan(&devices))
+	assert.Equal(t, 2, devices)
+}
+
+func TestEnrollment_ExpiredAndRevokedTokensFailClosed(t *testing.T) {
+	for name, mutate := range map[string]func(*enrollmentFixture, string){
+		"expired": func(f *enrollmentFixture, id string) {
+			_, err := f.raw.Exec(context.Background(), `UPDATE tokens SET expires_at = $2 WHERE id = $1`, id, f.now.Add(-time.Minute))
+			require.NoError(f.t, err)
+		},
+		"revoked": func(f *enrollmentFixture, id string) {
+			_, err := f.raw.Exec(context.Background(), `UPDATE tokens SET disabled = TRUE WHERE id = $1`, id)
+			require.NoError(f.t, err)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newEnrollmentFixture(t)
+			tokenID := f.insertToken(name+"-token", 0, f.now.Add(time.Hour))
+			mutate(f, tokenID)
+			csr, _ := newEnrollmentIdentity(t)
+			_, err := f.handlers.Register(context.Background(), registerRequest(name+"-token", csr, 0x51))
+			assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+		})
+	}
+}
+
+func TestEnrollment_SoftDeletedIdentityCannotBeReusedOrRefundTokenUse(t *testing.T) {
+	f := newEnrollmentFixture(t)
+	token := "deleted-device-token"
+	f.insertToken(token, 1, f.now.Add(time.Hour))
+	csr, _ := newEnrollmentIdentity(t)
+	registered, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x61))
+	require.NoError(t, err)
+	_, err = f.raw.Exec(context.Background(), `UPDATE devices SET is_deleted = TRUE WHERE id = $1`, registered.Msg.DeviceId.Value)
+	require.NoError(t, err)
+	_, err = f.handlers.Register(context.Background(), registerRequest(token, csr, 0x62))
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	otherCSR, _ := newEnrollmentIdentity(t)
+	_, err = f.handlers.Register(context.Background(), registerRequest(token, otherCSR, 0x63))
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	var devices int
+	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM devices WHERE registration_token_id IS NOT NULL`).Scan(&devices))
+	assert.Equal(t, 1, devices, "soft deletion does not refund the global token use")
 }
 
 func TestEnrollment_RenewalReplacesRevokesAndCloses(t *testing.T) {
 	f := newEnrollmentFixture(t)
 	token := "renew-token"
-	f.insertToken(token, true, 1, nil)
+	f.insertToken(token, 1, f.now.Add(time.Hour))
 	csr, identity := newEnrollmentIdentity(t)
 	registered, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x55))
 	require.NoError(t, err)
@@ -266,7 +322,7 @@ func TestEnrollment_RenewalReplacesRevokesAndCloses(t *testing.T) {
 func TestEnrollment_RenewalRequiresSameIdentityKey(t *testing.T) {
 	f := newEnrollmentFixture(t)
 	token := "key-binding-token"
-	f.insertToken(token, true, 1, nil)
+	f.insertToken(token, 1, f.now.Add(time.Hour))
 	csr, _ := newEnrollmentIdentity(t)
 	registered, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x66))
 	require.NoError(t, err)

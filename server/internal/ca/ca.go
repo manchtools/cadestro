@@ -25,6 +25,39 @@ import (
 // issued. Handlers use it to distinguish InvalidArgument from CA failures.
 var ErrInvalidCSR = errors.New("invalid certificate signing request")
 
+// EnrollmentIdentityFromCSR validates the canonical enrollment CSR and
+// returns its Ed25519 public key. The key is the device identity used for
+// idempotent retries; callers must not substitute the X25519 sealing key.
+func EnrollmentIdentityFromCSR(csrPEM []byte) ([]byte, error) {
+	_, key, err := parseEnrollmentCSR(csrPEM)
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte(nil), key...), nil
+}
+
+func parseEnrollmentCSR(csrPEM []byte) (*x509.CertificateRequest, ed25519.PublicKey, error) {
+	block, _ := pem.Decode(csrPEM)
+	if block == nil {
+		return nil, nil, fmt.Errorf("%w: failed to decode CSR PEM", ErrInvalidCSR)
+	}
+	csr, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w: parse CSR: %v", ErrInvalidCSR, err)
+	}
+	if err := csr.CheckSignature(); err != nil {
+		return nil, nil, fmt.Errorf("%w: invalid CSR signature: %v", ErrInvalidCSR, err)
+	}
+	key, ok := csr.PublicKey.(ed25519.PublicKey)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: unsupported public key type %T: Ed25519 is required", ErrInvalidCSR, csr.PublicKey)
+	}
+	if len(csr.DNSNames) > 0 || len(csr.IPAddresses) > 0 || len(csr.EmailAddresses) > 0 || len(csr.URIs) > 0 {
+		return nil, nil, fmt.Errorf("%w: CSR must not request subject alternative names", ErrInvalidCSR)
+	}
+	return csr, key, nil
+}
+
 // CA is a certificate authority that issues device certificates.
 type CA struct {
 	cert      *x509.Certificate
@@ -160,34 +193,10 @@ func (ca *CA) IssueServerCertificateFromCSR(id string, csrPEM []byte, hostname s
 // peer can never mint a different identity, peer class, or hostname than the
 // server assigns.
 func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass, validity time.Duration, dnsNames []string) (*Certificate, error) {
-	// Parse the CSR
-	csrBlock, _ := pem.Decode(csrPEM)
-	if csrBlock == nil {
-		return nil, fmt.Errorf("%w: failed to decode CSR PEM", ErrInvalidCSR)
-	}
-
-	csr, err := x509.ParseCertificateRequest(csrBlock.Bytes)
+	// Parse, authenticate, and constrain the CSR before issuing anything.
+	csr, _, err := parseEnrollmentCSR(csrPEM)
 	if err != nil {
-		return nil, fmt.Errorf("%w: parse CSR: %v", ErrInvalidCSR, err)
-	}
-
-	// Verify the CSR signature
-	if err := csr.CheckSignature(); err != nil {
-		return nil, fmt.Errorf("%w: invalid CSR signature: %v", ErrInvalidCSR, err)
-	}
-	if _, ok := csr.PublicKey.(ed25519.PublicKey); !ok {
-		return nil, fmt.Errorf("%w: unsupported public key type %T: Ed25519 is required", ErrInvalidCSR, csr.PublicKey)
-	}
-
-	// Reject CSRs that request Subject Alternative Names. Agent
-	// certificates are client certs identified by the deviceID in the
-	// Subject CN — DNSNames, IPAddresses, EmailAddresses, and URIs have
-	// no legitimate use here and would otherwise be copied into the
-	// issued cert, letting a malicious agent request SANs for internal
-	// hostnames (e.g. control-server.example.com) that downstream
-	// verifiers might then trust.
-	if len(csr.DNSNames) > 0 || len(csr.IPAddresses) > 0 || len(csr.EmailAddresses) > 0 || len(csr.URIs) > 0 {
-		return nil, fmt.Errorf("%w: CSR must not request subject alternative names", ErrInvalidCSR)
+		return nil, err
 	}
 
 	// Generate serial number

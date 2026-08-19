@@ -58,8 +58,6 @@ sql:
             go_type: "int32"
           - column: "tokens.max_uses"
             go_type: "int32"
-          - column: "tokens.current_uses"
-            go_type: "int32"
           - column: "devices.sync_interval_minutes"
             go_type: "int32"
           - column: "devices.inventory_interval_minutes"

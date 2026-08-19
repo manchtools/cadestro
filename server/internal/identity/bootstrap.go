@@ -121,7 +121,7 @@ func (b *Bootstrapper) Issue(ctx context.Context) (BootstrapToken, error) {
 			ID:           tokenID,
 			ValueHash:    digest,
 			ReservedName: store.BootstrapAdminTokenName,
-			ExpiresAt:    &expiresAt,
+			ExpiresAt:    expiresAt,
 			CreatedAt:    &issuedAt,
 			CreatedBy:    auth.BootstrapPrincipalID,
 		}); err != nil {
@@ -161,9 +161,8 @@ func (b *Bootstrapper) Issue(ctx context.Context) (BootstrapToken, error) {
 // AuthenticateBootstrapToken spends a token and returns the reserved
 // principal it admits.
 //
-// The spend is a conditional UPDATE that checks liveness, expiry and
-// the use count in one statement, so two concurrent presentations of
-// the same value cannot both succeed: the second matches no row.
+// The spend is a conditional UPDATE that checks liveness and expiry in one
+// statement, retiring the row so two presentations cannot both succeed.
 func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token string) (*auth.UserContext, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
@@ -188,7 +187,7 @@ func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token str
 		row, err := tx.ConsumeBootstrapAdminToken(ctx, db.ConsumeBootstrapAdminTokenParams{
 			ValueHash:    digest,
 			ReservedName: store.BootstrapAdminTokenName,
-			Now:          &now,
+			Now:          now,
 		})
 		if err != nil {
 			if store.IsNotFound(err) {
@@ -202,7 +201,7 @@ func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token str
 			ResourceID:          row.ID,
 			Action:              "CONSUME",
 			Outcome:             store.EffectApplied,
-			ChangedFields:       []string{"current_uses"},
+			ChangedFields:       []string{"is_deleted"},
 			EvidenceKind:        "bootstrap_token_sha256",
 			EvidenceFingerprint: digest,
 		})

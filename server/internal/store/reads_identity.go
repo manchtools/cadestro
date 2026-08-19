@@ -372,7 +372,7 @@ func (s *Store) CountLiveBootstrapAdminTokens(ctx context.Context, at time.Time)
 	at = at.UTC()
 	n, err := s.queries.CountLiveBootstrapAdminTokens(ctx, generated.CountLiveBootstrapAdminTokensParams{
 		ReservedName: BootstrapAdminTokenName,
-		Now:          &at,
+		Now:          at,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("bootstrap_token: count: %w", err)

@@ -52,10 +52,10 @@ func TestBootstrapToken_AdmitsTheReservedPrincipalExactlyOnce(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
 		"a bootstrap token is single-use")
 
-	var uses int32
+	var deleted bool
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
-		`SELECT current_uses FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&uses))
-	assert.Equal(t, int32(1), uses, "the refused second attempt did not spend it again")
+		`SELECT is_deleted FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&deleted))
+	assert.True(t, deleted, "the refused second attempt did not revive it")
 }
 
 func TestBootstrapToken_MayGrantTheFirstAdminRole(t *testing.T) {
@@ -126,10 +126,10 @@ func TestBootstrapToken_ExpiresAndIsThenUnusable(t *testing.T) {
 	}, issued.Token))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 
-	var uses int32
+	var deleted bool
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
-		`SELECT current_uses FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&uses))
-	assert.Zero(t, uses, "an expired token is not spent, it is simply refused")
+		`SELECT is_deleted FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&deleted))
+	assert.False(t, deleted, "an expired token is not spent, it is simply refused")
 }
 
 // Minting a second token retires the first, so at most one is ever
@@ -237,10 +237,10 @@ func TestBootstrapToken_IsNotAcceptedAsABearerToken(t *testing.T) {
 		"a bootstrap token presented as a session bearer token is not a session")
 
 	// And it was not spent by the refused attempt.
-	var uses int32
+	var deleted bool
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
-		`SELECT current_uses FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&uses))
-	assert.Zero(t, uses)
+		`SELECT is_deleted FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&deleted))
+	assert.False(t, deleted)
 }
 
 func TestBootstrapToken_RejectsAnUnknownValue(t *testing.T) {
