@@ -413,7 +413,8 @@ def legacy_registration_token_matches(root: Path) -> list[Match]:
                 }
                 and not re.search(r"\bAS\s+current_uses\b", line, re.IGNORECASE)
             )
-            if relevant and (legacy.search(line) or mutable_counter):
+            reservation = path.suffix == ".proto" and re.match(r"^\s*reserved\b", line)
+            if relevant and not reservation and (legacy.search(line) or mutable_counter):
                 result.append(Match(path_name, number, line))
             if in_token_block and line.strip() == "}":
                 in_token_block = False

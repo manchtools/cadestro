@@ -217,6 +217,21 @@ func retry() { _ = \"cert_fingerprint cert_not_after device_identity\" }
             self.assertFalse(metric["pass"], metric)
             self.assertTrue(metric["zero_invariant"], metric)
 
+    def test_removed_token_field_reservations_are_not_live_state(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root, "contract/proto/cadestro/v1/control.proto", """message RegistrationToken {
+  reserved 4, 11;
+  reserved "one_time", "owner_id";
+  int32 current_uses = 6;
+}
+message CreateTokenRequest {
+  reserved 2, 5;
+  reserved "one_time", "owner_id";
+}
+""")
+            self.assertEqual(judge.legacy_registration_token_matches(root), [])
+
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
         baseline = {"rpc": ["ControlService.Old"]}
         candidate = {"rpc": ["ControlService.New"]}
