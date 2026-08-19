@@ -357,9 +357,10 @@ def legacy_registration_token_matches(root: Path) -> list[Match]:
     tokens carrying a mutable use counter, a one-time mode, or a human owner.
     """
     legacy = re.compile(
-        r"\b(?:one_time|OneTime|oneTime|current_uses|CurrentUses|currentUses|"
-        r"owner_id|OwnerID|ownerId|max_uses_per_agent|MaxUsesPerAgent|maxUsesPerAgent)\b"
+        r"\b(?:one_time|OneTime|oneTime|owner_id|OwnerID|ownerId|"
+        r"max_uses_per_agent|MaxUsesPerAgent|maxUsesPerAgent)\b"
     )
+    stored_counter = re.compile(r"\bcurrent_uses\b", re.IGNORECASE)
     result: list[Match] = []
     for path in files(root, {".go", ".proto", ".sql", ".svelte", ".ts"}):
         path_name = rel(root, path)
@@ -383,7 +384,15 @@ def legacy_registration_token_matches(root: Path) -> list[Match]:
                 if message:
                     in_token_block = True
                 relevant = in_token_block
-            if relevant and legacy.search(line):
+            mutable_counter = (
+                stored_counter.search(line)
+                and path_name in {
+                    "server/internal/store/sqliteschema/schema.sql",
+                    "server/internal/store/queries/registration_tokens.sql",
+                }
+                and not re.search(r"\bAS\s+current_uses\b", line, re.IGNORECASE)
+            )
+            if relevant and (legacy.search(line) or mutable_counter):
                 result.append(Match(path_name, number, line))
             if in_token_block and line.strip() == "}":
                 in_token_block = False
