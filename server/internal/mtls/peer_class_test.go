@@ -1,15 +1,11 @@
 package mtls
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/hex"
-	"errors"
 	"io"
 	"log/slog"
 	"math/big"
@@ -19,24 +15,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
-
-// fakeRev is a RevocationChecker with a fixed revoked-set, or a fixed lookup
-// error. err takes precedence: it models the backend being unreachable, where
-// the gate has no answer and must refuse rather than guess.
-type fakeRev struct {
-	revoked map[string]bool
-	err     error
-}
-
-func (f fakeRev) IsRevoked(_ context.Context, fp string) (bool, error) {
-	if f.err != nil {
-		return false, f.err
-	}
-	return f.revoked[fp], nil
-}
 
 // realCertWithClass builds a real x509 cert (populated .Raw) carrying the given
 // peer-class SPIFFE URI, so the revocation gate's DER fingerprint is meaningful.
@@ -65,14 +44,6 @@ func realCertWithClass(t *testing.T, class PeerClass) *x509.Certificate {
 		t.Fatal(err)
 	}
 	return cert
-}
-
-// indepFingerprint computes hex(sha256(DER)) via an INDEPENDENT code path from
-// the middleware's fingerprintFromCert, so a bug in the latter (e.g. a wrong
-// hash) is caught rather than masked — "wrong" is sourced from intent.
-func indepFingerprint(cert *x509.Certificate) string {
-	sum := sha256.Sum256(cert.Raw)
-	return hex.EncodeToString(sum[:])
 }
 
 func mustURL(t *testing.T, s string) *url.URL {
@@ -190,72 +161,6 @@ func TestRequirePeerClass_HealthBypass(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestRequirePeerClassNotRevoked_RejectsRevokedFingerprint pins WS12 #2: the
-// revocation-consulting wrapper for the mTLS listeners. Peer-class is enforced
-// FIRST (additive, not replaced), then revocation; a nil checker or a failed
-// lookup fails closed; the match is the exact DER fingerprint; health bypasses.
-func TestRequirePeerClassNotRevoked_RejectsRevokedFingerprint(t *testing.T) {
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
-
-	agentCert := realCertWithClass(t, PeerClassAgent)
-	revokedFP := indepFingerprint(agentCert) // sourced independently of the middleware
-
-	callWith := func(rev RevocationChecker, cert *x509.Certificate, path string) int {
-		h := RequirePeerClassNotRevoked(logger, rev, PeerClassAgent)(next)
-		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(""))
-		if cert != nil {
-			req.TLS = &tls.ConnectionState{PeerCertificates: []*x509.Certificate{cert}}
-		}
-		rr := httptest.NewRecorder()
-		h.ServeHTTP(rr, req)
-		return rr.Code
-	}
-
-	loaded := func(fps ...string) fakeRev {
-		set := map[string]bool{}
-		for _, fp := range fps {
-			set[fp] = true
-		}
-		return fakeRev{revoked: set}
-	}
-
-	t.Run("agent class, not revoked → 200", func(t *testing.T) {
-		assert.Equal(t, http.StatusOK, callWith(loaded(), agentCert, "/x"))
-	})
-	t.Run("agent class, revoked → 403", func(t *testing.T) {
-		assert.Equal(t, http.StatusForbidden, callWith(loaded(revokedFP), agentCert, "/x"),
-			"a revoked agent cert must be rejected at the agent listener before it can open a stream")
-	})
-	t.Run("wrong class rejected first (peer-class is additive)", func(t *testing.T) {
-		controlCert := realCertWithClass(t, PeerClassControl)
-		// Even with an empty revocation set, a control-class cert on the
-		// agent-only listener is 403 from the peer-class gate.
-		assert.Equal(t, http.StatusForbidden, callWith(loaded(), controlCert, "/x"))
-	})
-	t.Run("byte-tampered seed → real cert admitted (exact-fingerprint binding)", func(t *testing.T) {
-		flipped := []byte(revokedFP)
-		flipped[len(flipped)-1] ^= 0xFF
-		assert.Equal(t, http.StatusOK, callWith(loaded(string(flipped)), agentCert, "/x"),
-			"a tampered seed fingerprint matches no real cert → admitted")
-	})
-	t.Run("lookup error fails closed even for a non-revoked cert", func(t *testing.T) {
-		assert.Equal(t, http.StatusForbidden,
-			callWith(fakeRev{err: errors.New("database unreachable")}, agentCert, "/x"),
-			"an indeterminate revocation answer must reject: we cannot prove the cert is unrevoked")
-	})
-	t.Run("nil checker fails closed", func(t *testing.T) {
-		assert.Equal(t, http.StatusForbidden, callWith(nil, agentCert, "/x"),
-			"a bare nil checker must fail closed, never silently admit")
-	})
-	t.Run("health bypasses with no cert", func(t *testing.T) {
-		for _, p := range []string{"/health", "/ready"} {
-			assert.Equal(t, http.StatusOK, callWith(fakeRev{err: errors.New("database unreachable")}, nil, p),
-				"%s must bypass both peer-class and revocation", p)
-		}
-	})
 }
 
 // TestRequirePeerClass_RejectsMissingTLS asserts a request without

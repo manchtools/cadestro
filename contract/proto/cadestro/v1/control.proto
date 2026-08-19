@@ -65,9 +65,7 @@ message RenewCertificateRequest {
   // Certificate Signing Request (PEM-encoded PKCS#10)
   // @gotags: validate:"required"
   bytes csr = 1;
-  // Current certificate (PEM) for identity verification
-  // @gotags: validate:"required"
-  bytes current_certificate = 2;
+  reserved 2;
 }
 
 message RenewCertificateResponse {
@@ -75,9 +73,7 @@ message RenewCertificateResponse {
   bytes certificate = 1;
   // Certificate expiry
   google.protobuf.Timestamp not_after = 2;
-  // Active CA certificate (PEM). Agents should update their stored CA cert
-  // if non-empty, enabling seamless CA rotation.
-  bytes ca_certificate = 3;
+  reserved 3;
 }
 
 // ============================================================================

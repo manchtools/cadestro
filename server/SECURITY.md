@@ -40,8 +40,8 @@ widening permissions remain global-only.
 
 The device generates its own Ed25519 key and CSR. Its private key never leaves
 the device. Control terminates mTLS, derives device identity from the
-certificate, checks revocation during handshake, and closes a live stream when
-the certificate is revoked.
+certificate, checks the device's active serial during handshake and privileged
+frames, and rejects a live stream as soon as another certificate is promoted.
 
 Ordinary application frames are not separately signed. There is no untrusted
 relay or offline verifier between agent and control.

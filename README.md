@@ -81,7 +81,7 @@ bidirectional stream that carries everything: handshake, sync, policy delivery,
 results, secret operations, and terminal sessions. Nothing listens on the device.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:ca913fd3 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:809a1296 -->
 The reference deployment is three containers behind Traefik — ingress, control,
 and the web UI served same-origin beside it — with agents on a separate,
 internal-only network.

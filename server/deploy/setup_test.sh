@@ -28,7 +28,6 @@ CONTROL_ENV_VARIABLES=(
     CADESTRO_WEBHOOK_URL
     CADESTRO_CA_CERT_FILE
     CADESTRO_CA_KEY_FILE
-    CADESTRO_CA_TRUST_BUNDLE_FILE
     CADESTRO_AGENT_TLS_CERT_FILE
     CADESTRO_AGENT_TLS_KEY_FILE
     CADESTRO_PUBLIC_TLS_CERT_FILE
@@ -290,7 +289,6 @@ test_secure_idempotent_setup() {
     assert_env_line "$config" 'CADESTRO_WEBHOOK_URL='
     assert_env_line "$config" 'CADESTRO_CA_CERT_FILE=/run/certs/ca.crt'
     assert_env_line "$config" 'CADESTRO_CA_KEY_FILE=/run/certs/ca.key'
-    assert_env_line "$config" 'CADESTRO_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt'
     assert_env_line "$config" 'CADESTRO_AGENT_TLS_CERT_FILE=/run/certs/control.crt'
     assert_env_line "$config" 'CADESTRO_AGENT_TLS_KEY_FILE=/run/certs/control.key'
     assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt'
@@ -298,7 +296,6 @@ test_secure_idempotent_setup() {
     assert_env_line "$config" 'CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
     assert_env_line "$config" 'CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
     assert_env_line "$config" 'CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key'
-    cmp -s "$directory/certs/ca.crt" "$directory/certs/ca-trust-bundle.crt"
     assert_archive_isolated "$config" "$directory"
 
     if grep -R -iEq 'valkey|asynq|indexer|password_auth|postgres|database_url' "$directory/config"; then
@@ -376,22 +373,6 @@ test_backend_name_missing_fails() {
         -extfile <(printf 'subjectAltName=DNS:agents.example.test\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature\n') \
         -out "$directory/certs/control.crt" >/dev/null 2>&1
     ! run_setup "$directory" >/dev/null 2>&1
-}
-
-test_ca_rotation_preserves_old_and_active_trust() {
-    local directory="$1"
-    new_fixture "$directory" manage.example.test agents.example.test
-    run_setup "$directory" >/dev/null
-    cp "$directory/certs/ca.crt" "$directory/old-ca.crt"
-    rm -f "$directory/certs/ca.crt" "$directory/certs/ca.key" \
-        "$directory/certs/control.crt" "$directory/certs/control.key"
-
-    run_setup "$directory" >/dev/null
-
-    openssl verify -CAfile "$directory/certs/ca-trust-bundle.crt" \
-        "$directory/old-ca.crt" >/dev/null
-    openssl verify -CAfile "$directory/certs/ca-trust-bundle.crt" \
-        "$directory/certs/ca.crt" >/dev/null
 }
 
 # .env is an operator-authored data file that Compose reads as KEY=VALUE lines
@@ -739,10 +720,9 @@ fixture_three="$(mktemp -d)"
 fixture_four="$(mktemp -d)"
 fixture_five="$(mktemp -d)"
 fixture_six="$(mktemp -d)"
-fixture_seven="$(mktemp -d)"
 CHALLENGE_ROOT="$(mktemp -d)"
 ENV_ROOT="$(mktemp -d)"
-trap 'rm -rf "$ARCHIVE_ROOT" "$fixture_one" "$fixture_two" "$fixture_three" "$fixture_four" "$fixture_five" "$fixture_six" "$fixture_seven" "$CHALLENGE_ROOT" "$ENV_ROOT"' EXIT
+trap 'rm -rf "$ARCHIVE_ROOT" "$fixture_one" "$fixture_two" "$fixture_three" "$fixture_four" "$fixture_five" "$fixture_six" "$CHALLENGE_ROOT" "$ENV_ROOT"' EXIT
 
 test_secure_idempotent_setup "$fixture_one"
 printf 'PASS secure and idempotent setup\n'
@@ -756,8 +736,6 @@ test_shared_filesystem_archive_fails "$fixture_five"
 printf 'PASS shared-filesystem audit archive rejected\n'
 test_backend_name_missing_fails "$fixture_six"
 printf 'PASS internal backend name required\n'
-test_ca_rotation_preserves_old_and_active_trust "$fixture_seven"
-printf 'PASS CA rotation trust bundle preserved\n'
 test_env_file_values_are_never_executed
 printf 'PASS .env values are never executed\n'
 test_env_file_rejects_a_non_assignment_line

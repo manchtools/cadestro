@@ -146,13 +146,6 @@ export type RenewCertificateRequest = Message<"cadestro.v1.RenewCertificateReque
    */
   csr: Uint8Array;
 
-  /**
-   * Current certificate (PEM) for identity verification
-   * @gotags: validate:"required"
-   *
-   * @generated from field: bytes current_certificate = 2;
-   */
-  currentCertificate: Uint8Array;
 };
 
 /**
@@ -180,13 +173,6 @@ export type RenewCertificateResponse = Message<"cadestro.v1.RenewCertificateResp
    */
   notAfter?: Timestamp;
 
-  /**
-   * Active CA certificate (PEM). Agents should update their stored CA cert
-   * if non-empty, enabling seamless CA rotation.
-   *
-   * @generated from field: bytes ca_certificate = 3;
-   */
-  caCertificate: Uint8Array;
 };
 
 /**
@@ -11675,4 +11661,3 @@ export const ControlService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cadestro_v1_control, 0);
-

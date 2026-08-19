@@ -2,10 +2,8 @@ package mtls
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,6 +11,44 @@ import (
 	"net/url"
 	"strings"
 )
+
+type peerCertificateKey struct{}
+type deviceIDKey struct{}
+
+func WithDeviceID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, deviceIDKey{}, id)
+}
+
+func DeviceIDFromContext(ctx context.Context) (string, bool) {
+	if ctx == nil {
+		return "", false
+	}
+	id, ok := ctx.Value(deviceIDKey{}).(string)
+	return id, ok && id != ""
+}
+
+// WithPeerCertificate binds the certificate verified by the TLS stack to a
+// request. Application identity must come from this value, never from a PEM
+// field in an agent request.
+func WithPeerCertificate(ctx context.Context, cert *x509.Certificate) context.Context {
+	return context.WithValue(ctx, peerCertificateKey{}, cert)
+}
+
+func PeerCertificateFromContext(ctx context.Context) (*x509.Certificate, bool) {
+	if ctx == nil {
+		return nil, false
+	}
+	cert, ok := ctx.Value(peerCertificateKey{}).(*x509.Certificate)
+	return cert, ok && cert != nil
+}
+
+func PeerSerialFromContext(ctx context.Context) (string, bool) {
+	cert, ok := PeerCertificateFromContext(ctx)
+	if !ok || cert.SerialNumber == nil || cert.SerialNumber.Sign() < 0 {
+		return "", false
+	}
+	return cert.SerialNumber.Text(16), true
+}
 
 // PeerClass identifies the role of a mTLS peer. The internal CA
 // issues every non-CA certificate with exactly one URI SAN of the
@@ -157,91 +193,6 @@ func RequirePeerClass(logger *slog.Logger, allowed ...PeerClass) func(http.Handl
 			}
 			next.ServeHTTP(w, r)
 		})
-	}
-}
-
-// RevocationChecker reports whether a peer cert (by SHA-256 DER fingerprint) is
-// revoked. This interface lives in mtls (not handler) so the listener wrappers
-// here can consult it without importing handler — handler imports mtls, so the
-// reverse would be an import cycle.
-//
-// Revocation is a direct indexed database query on every handshake. A cached
-// snapshot would create a stale admission window after revocation.
-//
-// A nil checker, or a lookup that ERRORS, is FAIL-CLOSED: without an answer we
-// cannot prove the cert is unrevoked, so we reject. There is deliberately no
-// opt-out.
-type RevocationChecker interface {
-	IsRevoked(ctx context.Context, fingerprint string) (bool, error)
-}
-
-// fingerprintFromCert returns hex(sha256(cert.Raw)), matching
-// ca.FingerprintFromCert. Reimplemented here (rather than imported) because ca
-// imports mtls — see RevocationChecker. Empty for a nil cert (fails safe: an
-// empty fingerprint matches no revoked entry, and nil certs are already rejected
-// upstream by the peer-class / TLS checks).
-func fingerprintFromCert(cert *x509.Certificate) string {
-	if cert == nil {
-		return ""
-	}
-	sum := sha256.Sum256(cert.Raw)
-	return hex.EncodeToString(sum[:])
-}
-
-// RequirePeerClassNotRevoked is RequirePeerClass plus a fail-closed database gate for
-// control's agent mTLS listener. After the peer-class checks pass it consults
-// the revocation list, so a revoked cert is rejected at connect time rather
-// than usable until its natural expiry. Health endpoints bypass as in
-// RequirePeerClass.
-//
-// Revocation is ADDITIVE: a wrong-class cert is still rejected first by the
-// peer-class check. A nil checker, or a lookup that errors, fails closed (403).
-func RequirePeerClassNotRevoked(logger *slog.Logger, revocation RevocationChecker, allowed ...PeerClass) func(http.Handler) http.Handler {
-	peerClass := RequirePeerClass(logger, allowed...)
-	return func(next http.Handler) http.Handler {
-		// Wrap the existing peer-class middleware so class is enforced FIRST,
-		// then revocation. The revocation check sees only requests that already
-		// passed the class gate (and the health bypass).
-		revocationGate := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/health" || r.URL.Path == "/ready" {
-				next.ServeHTTP(w, r)
-				return
-			}
-			// r.TLS and PeerCertificates are guaranteed non-nil here:
-			// RequirePeerClass rejected a nil r.TLS / class-less cert before
-			// delegating to this handler.
-			if revocation == nil {
-				if logger != nil {
-					logger.Warn("mTLS rejected: no revocation checker configured (fail-closed)",
-						"remote_addr", r.RemoteAddr, "path", r.URL.Path)
-				}
-				http.Error(w, "client certificate revocation unavailable", http.StatusForbidden)
-				return
-			}
-			fp := fingerprintFromCert(r.TLS.PeerCertificates[0])
-			revoked, err := revocation.IsRevoked(r.Context(), fp)
-			if err != nil {
-				// Fail closed on an indeterminate answer. A database blip must
-				// not become an admission: we cannot prove this certificate is
-				// unrevoked, so we refuse it.
-				if logger != nil {
-					logger.Error("mTLS rejected: revocation lookup failed (fail-closed)",
-						"remote_addr", r.RemoteAddr, "path", r.URL.Path, "error", err)
-				}
-				http.Error(w, "client certificate revocation unavailable", http.StatusForbidden)
-				return
-			}
-			if revoked {
-				if logger != nil {
-					logger.Warn("mTLS rejected: certificate revoked",
-						"remote_addr", r.RemoteAddr, "path", r.URL.Path)
-				}
-				http.Error(w, "client certificate revoked", http.StatusForbidden)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-		return peerClass(revocationGate)
 	}
 }
 

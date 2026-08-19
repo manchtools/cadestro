@@ -233,12 +233,6 @@ certificate_covers_host() {
 }
 
 ensure_certificates() {
-    if [[ ! -f "$CERTS_DIR/ca-trust-bundle.crt" ]]; then
-        cp "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca-trust-bundle.crt"
-    elif ! openssl verify -CAfile "$CERTS_DIR/ca-trust-bundle.crt" "$CERTS_DIR/ca.crt" >/dev/null 2>&1; then
-        printf '\n' >> "$CERTS_DIR/ca-trust-bundle.crt"
-        cat "$CERTS_DIR/ca.crt" >> "$CERTS_DIR/ca-trust-bundle.crt"
-    fi
     ensure_certificate control "/CN=$AGENT_DOMAIN/O=Cadestro" \
         "subjectAltName=DNS:$AGENT_DOMAIN,DNS:control,DNS:localhost\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature"
     certificate_covers_host "$CERTS_DIR/control.crt" "$AGENT_DOMAIN" \
@@ -289,7 +283,6 @@ CADESTRO_BACKUP_MAX_LAG=26h
 CADESTRO_WEBHOOK_URL=
 CADESTRO_CA_CERT_FILE=/run/certs/ca.crt
 CADESTRO_CA_KEY_FILE=/run/certs/ca.key
-CADESTRO_CA_TRUST_BUNDLE_FILE=/run/certs/ca-trust-bundle.crt
 CADESTRO_AGENT_TLS_CERT_FILE=/run/certs/control.crt
 CADESTRO_AGENT_TLS_KEY_FILE=/run/certs/control.key
 CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt

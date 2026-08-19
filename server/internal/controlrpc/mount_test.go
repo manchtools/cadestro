@@ -48,6 +48,9 @@ func TestMountIsExactControlServiceDescriptorSet(t *testing.T) {
 		method := service.Methods().Get(i)
 		want[fmt.Sprintf("/%s/%s", service.FullName(), method.Name())] = struct{}{}
 	}
+	// Renewal is mounted only on the authenticated agent listener; the public
+	// control mux owns registration and the operator-facing surface.
+	delete(want, "/cadestro.v1.ControlService/RenewCertificate")
 
 	var missing, extra []string
 	for procedure := range want {
@@ -64,5 +67,5 @@ func TestMountIsExactControlServiceDescriptorSet(t *testing.T) {
 	sort.Strings(extra)
 	assert.Empty(t, missing)
 	assert.Empty(t, extra)
-	assert.Len(t, mounted, service.Methods().Len())
+	assert.Len(t, mounted, len(want))
 }

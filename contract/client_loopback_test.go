@@ -266,13 +266,12 @@ func TestRenewCertificate_HappyPath(t *testing.T) {
 	cl.handler.renewCertificateFn = func(req *connect.Request[pm.RenewCertificateRequest]) (*connect.Response[pm.RenewCertificateResponse], error) {
 		observed = req.Msg
 		return connect.NewResponse(&pm.RenewCertificateResponse{
-			Certificate:   []byte("renewed-cert"),
-			NotAfter:      timestamppb.New(notAfter),
-			CaCertificate: []byte("rotated-ca"),
+			Certificate: []byte("renewed-cert"),
+			NotAfter:    timestamppb.New(notAfter),
 		}), nil
 	}
 
-	got, err := RenewCertificate(context.Background(), cl.serverURL, []byte("new-csr"), []byte("old-cert"))
+	got, err := RenewCertificate(context.Background(), cl.serverURL, []byte("new-csr"))
 	if err != nil {
 		t.Fatalf("RenewCertificate: %v", err)
 	}
@@ -282,10 +281,7 @@ func TestRenewCertificate_HappyPath(t *testing.T) {
 	if !got.NotAfter.Equal(notAfter) {
 		t.Errorf("NotAfter = %v want %v", got.NotAfter, notAfter)
 	}
-	if string(got.CACert) != "rotated-ca" {
-		t.Errorf("CACert rotation lost: %q", got.CACert)
-	}
-	if observed == nil || string(observed.Csr) != "new-csr" || string(observed.CurrentCertificate) != "old-cert" {
+	if observed == nil || string(observed.Csr) != "new-csr" {
 		t.Errorf("request lost fields: %+v", observed)
 	}
 }
@@ -310,7 +306,7 @@ func TestRenewCertificate_ServerErrorPropagates(t *testing.T) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("expired cert"))
 	}
 
-	_, err := RenewCertificate(context.Background(), cl.serverURL, []byte("csr"), []byte("stale"))
+	_, err := RenewCertificate(context.Background(), cl.serverURL, []byte("csr"))
 	if err == nil {
 		t.Fatal("expected error")
 	}

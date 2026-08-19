@@ -24,7 +24,7 @@ func testCreds(cert string) *credentials.Credentials {
 }
 
 // reloadCredsForReconnect must return the cert currently ON DISK so a
-// reconnect picks up a certificate rotated by startCertRotation, rather
+// reconnect picks up a certificate staged by the renewal cadence, rather
 // than the stale in-memory copy that would fail the handshake once
 // expired.
 func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
@@ -43,7 +43,7 @@ func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
 	inMemory := testCreds("OLD-CERT")
 	require.NoError(t, store.Save(inMemory))
 
-	// Rotation persists a new cert to disk (what startCertRotation does).
+// Renewal persists a new cert to disk.
 	require.NoError(t, store.Save(testCreds("NEW-CERT")))
 
 	got := reloadCredsForReconnect(store, inMemory, slog.Default())

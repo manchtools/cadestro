@@ -142,7 +142,7 @@ configuration file is data; sourcing it would make it code, and a stray
 backtick in a domain name would execute.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#@generated-material:13fdd201 -->
+<!-- docref: begin src=server/deploy/setup.sh#@generated-material:2d88602e -->
 Generated once and then retained: the internal CA, the control-plane server
 certificate, the at-rest encryption key, the field-sealing key, and the session
 signing key.
@@ -154,11 +154,10 @@ CA from your own PKI. A half-present pair fails rather than being completed with
 a fresh key that would not match its certificate.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#ensure_certificates:affa5b3d -->
-Certificate handling accommodates CA rotation: when an existing trust bundle
-does not already verify the CA, the CA is **appended** to the bundle rather than
-replacing it, so devices holding the previous CA keep working through the
-overlap.
+<!-- docref: begin src=server/deploy/setup.sh#ensure_certificates:a840a2ee -->
+Certificate handling keeps the active internal CA and control certificate
+together. Existing material is reused only when it verifies against that CA;
+the deployment does not maintain a rotating trust bundle.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/deploy/setup.sh#certificate_covers_host:0feefa5b -->
@@ -179,7 +178,7 @@ no group or world bits.
 
 ## The stack
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:ca913fd3 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:809a1296 -->
 Three services, and **only Traefik publishes ports** — 80 and 443. Control and
 the web UI have no published ports at all; they are reachable only across the
 compose networks.
@@ -197,7 +196,7 @@ the browser-facing path does not put an attacker on the device network.
 
 ### Routing
 
-<!-- docref: begin src=server/deploy/traefik/dynamic/routes.yml#@public-backend-tls:21e99269 -->
+<!-- docref: begin src=server/deploy/traefik/dynamic/routes.yml#@public-backend-tls:da534a3f -->
 The browser domain serves both the API and the UI **same-origin**, split by path
 priority rather than by hostname or subpath: the control plane's RPC, SCIM,
 terminal, and health paths take precedence, and everything else falls through to
@@ -205,7 +204,7 @@ the web UI at the root. Both priorities are stated explicitly so the split does
 not silently depend on how Traefik ranks rule lengths.
 
 Traefik re-originates TLS to control — it does not forward plaintext to the
-backend — verifying it against the deployment trust bundle with TLS 1.3 pinned as
+backend — verifying it against the active deployment CA with TLS 1.3 pinned as
 both the minimum and the maximum version.
 <!-- docref: end -->
 
@@ -314,7 +313,7 @@ docker compose ps                    # all three healthy
 curl -fsS https://control.example.com/ready
 ```
 
-<!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:14eb1094 -->
+<!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:8aac1435 -->
 Readiness checks that the database answers, that revocation lookups work, and
 that the artifact path is writable. When backup posture is configured, a
 missing, invalid, failed, or stale backup also makes readiness fail. An

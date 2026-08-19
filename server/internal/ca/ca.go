@@ -69,7 +69,7 @@ type CA struct {
 	cert      *x509.Certificate
 	key       crypto.Signer
 	validity  time.Duration
-	trustPool *x509.CertPool   // trust bundle for verification (supports CA rotation)
+	trustPool *x509.CertPool   // the active CA only
 	now       func() time.Time // clock seam; defaults to time.Now, overridden in tests
 }
 
@@ -85,6 +85,28 @@ type Certificate struct {
 	KeyPEM      []byte
 	Fingerprint string
 	NotAfter    time.Time
+}
+
+// SerialFromCert returns the canonical lower-case hexadecimal serial used by
+// the device lifecycle store and the authenticated TLS peer context.
+func SerialFromCert(cert *x509.Certificate) (string, error) {
+	if cert == nil || cert.SerialNumber == nil || cert.SerialNumber.Sign() < 0 {
+		return "", errors.New("certificate serial is required")
+	}
+	return cert.SerialNumber.Text(16), nil
+}
+
+// SerialFromPEM extracts a certificate serial after strict PEM decoding.
+func SerialFromPEM(certPEM []byte) (string, error) {
+	block, rest := pem.Decode(certPEM)
+	if block == nil || block.Type != "CERTIFICATE" || len(bytes.TrimSpace(rest)) != 0 {
+		return "", errors.New("invalid certificate PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("parse certificate: %w", err)
+	}
+	return SerialFromCert(cert)
 }
 
 // New creates a new CA from PEM-encoded certificate and key files.
@@ -274,40 +296,6 @@ func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass,
 	}, nil
 }
 
-// SetTrustBundle replaces the verification trust pool with all CA certificates
-// parsed from the given PEM data. This supports CA rotation: the bundle should
-// contain both the old and new CA certificates so that agent certs signed by
-// either CA are accepted during the transition period.
-func (ca *CA) SetTrustBundle(pemData []byte) error {
-	pool := x509.NewCertPool()
-	foundActive := false
-	rest := bytes.TrimSpace(pemData)
-	for len(rest) > 0 {
-		block, remaining := pem.Decode(rest)
-		if block == nil || block.Type != "CERTIFICATE" {
-			return fmt.Errorf("CA trust bundle contains invalid PEM data")
-		}
-		cert, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			return fmt.Errorf("parse CA trust bundle certificate: %w", err)
-		}
-		if !cert.IsCA || cert.KeyUsage&x509.KeyUsageCertSign == 0 {
-			return fmt.Errorf("CA trust bundle contains a certificate that cannot sign certificates")
-		}
-		pool.AddCert(cert)
-		foundActive = foundActive || bytes.Equal(cert.Raw, ca.cert.Raw)
-		rest = bytes.TrimSpace(remaining)
-	}
-	if len(pemData) == 0 {
-		return fmt.Errorf("CA trust bundle is empty")
-	}
-	if !foundActive {
-		return fmt.Errorf("CA trust bundle does not contain the active CA certificate")
-	}
-	ca.trustPool = pool
-	return nil
-}
-
 // VerifyCertificate verifies a PEM-encoded certificate was signed by a trusted CA.
 // Uses the trust pool (which may contain multiple CA certs for rotation).
 // Returns the device ID (CN) if valid.
@@ -328,12 +316,10 @@ func (ca *CA) VerifyCertificate(certPEM []byte) (string, error) {
 	}); err != nil {
 		return "", fmt.Errorf("certificate verification failed: %w", err)
 	}
-
 	return cert.Subject.CommonName, nil
 }
 
-// TrustPool returns the CA trust pool used for certificate verification.
-// This includes additional CAs added via SetTrustBundle for rotation support.
+// TrustPool returns the active CA trust pool used for certificate verification.
 func (ca *CA) TrustPool() *x509.CertPool {
 	return ca.trustPool
 }
@@ -425,61 +411,24 @@ func DeviceIDFromPEM(certPEM []byte) (string, error) {
 	return cert.Subject.CommonName, nil
 }
 
-// PeerClassFromPEM extracts the SPIFFE peer class from a PEM-encoded
-// certificate's URI SAN. Mirrors DeviceIDFromPEM/NotAfterFromPEM so the API
-// handlers can assert a presented cert's class without re-implementing the
-// decode. Delegates the URI-SAN parsing to mtls.PeerClassFromCert (single
-// source of truth for the class layout).
-func PeerClassFromPEM(certPEM []byte) (mtls.PeerClass, error) {
-	block, _ := pem.Decode(certPEM)
-	if block == nil {
-		return "", fmt.Errorf("failed to decode certificate PEM")
+// AssertCSRMatchesCert applies the renewal key proof to the TLS leaf already
+// authenticated by the transport.
+func AssertCSRMatchesCert(cert *x509.Certificate, csrPEM []byte) error {
+	if cert == nil {
+		return errors.New("certificate is required")
 	}
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return "", fmt.Errorf("parse certificate: %w", err)
+	block, rest := pem.Decode(csrPEM)
+	if block == nil || len(bytes.TrimSpace(rest)) != 0 {
+		return errors.New("invalid certificate signing request")
 	}
-	return mtls.PeerClassFromCert(cert)
-}
-
-// AssertCSRMatchesCertKey verifies that the CSR's public key equals the
-// certificate's public key. On certificate renewal this is the
-// proof-of-possession: the renewer must hold the private key bound to the cert
-// it presented, which agents do because they reuse their keypair
-// (GenerateCSRFromKey). Without it, certificates are public material — returned
-// at registration and stored with the device — so anyone who reads a device's
-// cert PEM could submit a CSR for a key they control and mint an impersonation
-// cert bound to that device id (#361).
-func AssertCSRMatchesCertKey(certPEM, csrPEM []byte) error {
-	certBlock, _ := pem.Decode(certPEM)
-	if certBlock == nil {
-		return fmt.Errorf("failed to decode certificate PEM")
-	}
-	cert, err := x509.ParseCertificate(certBlock.Bytes)
-	if err != nil {
-		return fmt.Errorf("parse certificate: %w", err)
-	}
-
-	csrBlock, _ := pem.Decode(csrPEM)
-	if csrBlock == nil {
-		return fmt.Errorf("failed to decode CSR PEM")
-	}
-	csr, err := x509.ParseCertificateRequest(csrBlock.Bytes)
+	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
 		return fmt.Errorf("parse CSR: %w", err)
 	}
-
-	// crypto.PublicKey for ecdsa/rsa/ed25519 implements Equal; compare via it
-	// rather than re-encoding so a curve/parameter mismatch can't slip through.
-	type equalKey interface {
-		Equal(crypto.PublicKey) bool
-	}
+	type equalKey interface{ Equal(crypto.PublicKey) bool }
 	certKey, ok := cert.PublicKey.(equalKey)
-	if !ok {
-		return fmt.Errorf("unsupported certificate public key type %T", cert.PublicKey)
-	}
-	if !certKey.Equal(csr.PublicKey) {
-		return fmt.Errorf("CSR public key does not match the current certificate")
+	if !ok || !certKey.Equal(csr.PublicKey) {
+		return errors.New("CSR public key does not match authenticated TLS peer")
 	}
 	return nil
 }
