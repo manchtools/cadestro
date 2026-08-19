@@ -574,11 +574,14 @@ def simplification_report(root: Path, baseline_counts: dict[str, int]) -> dict[s
             "matches": [item.as_dict() for item in found[name]],
             "pass": count <= baseline_count,
         }
-    # This is intentionally a small, auditable set of hard ceilings.  The
-    # manager pattern is process-global state and has no valid cutover use.
+    # Completed cutovers are hard zeroes, not merely improvements over the
+    # archive. Otherwise half of a removed mechanism could quietly grow back
+    # while the aggregate scoreboard still passed.
     zero = {
         "process_global_executor_managers": current["process_global_executor_managers"] == 0,
         "policy_specific_result_transport_paths": current["policy_specific_result_transport_paths"] == 0,
+        "legacy_registration_token_counter_owner_state": current["legacy_registration_token_counter_owner_state"] == 0,
+        "assigned_policy_push_submission_coupling": current["assigned_policy_push_submission_coupling"] == 0,
     }
     for name, passed in zero.items():
         metrics[name]["zero_invariant"] = True

@@ -185,6 +185,28 @@ func (h *Handlers) DispatchAssignedActions() { h.signalSync() }
             self.assertGreater(len(before), 0)
             self.assertEqual(after, [])
 
+    def test_completed_cutovers_are_hard_zeroes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            feature_fixture(baseline, junk=True)
+            feature_fixture(candidate)
+            write(candidate, "server/internal/dispatch/handlers.go", """package dispatch
+func (h *Handlers) DispatchAssignedActions() { h.submitter.Submit(h.assignedManifests()) }
+""")
+            write(candidate, "server/internal/registrationtoken/token.go", """package registrationtoken
+type RegistrationToken struct { OneTime bool }
+""")
+            counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            result = judge.simplification_report(candidate, counts)
+            for name in (
+                "assigned_policy_push_submission_coupling",
+                "legacy_registration_token_counter_owner_state",
+            ):
+                metric = result["metrics"][name]
+                self.assertTrue(metric["zero_invariant"], metric)
+                self.assertFalse(metric["pass"], metric)
+
     def test_device_identity_metric_counts_schema_not_references(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
