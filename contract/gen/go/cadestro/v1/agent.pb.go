@@ -1638,8 +1638,7 @@ func (x *ManifestOccurrence) GetOnFailure() OnFailure {
 //
 // Assigning an Action creates a singleton manifest; assigning an ActionSet
 // creates one manifest; assigning a Definition creates one globally ordered
-// runbook. Explicit Definition dispatch may retain its historical batch shape;
-// pulled policy carries the authored order and set failure policies directly.
+// runbook. Explicit Definition dispatch uses the same runbook representation.
 type Manifest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// @gotags: validate:"required,ulid"

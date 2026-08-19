@@ -482,6 +482,21 @@ def policy_dispatch_matches(root: Path) -> list[Match]:
     return result
 
 
+def legacy_definition_compile_matches(root: Path) -> list[Match]:
+    """Count only the declarations for the removed Definition compiler paths."""
+    path = root / "server/internal/manifest/compiler.go"
+    if not path.is_file():
+        return []
+    declarations = re.compile(
+        r"^func \(c \*Compiler\) (?:definition|DefinitionRunbookForDevice)\(ctx context\.Context,"
+    )
+    return [
+        Match(rel(root, path), number, line)
+        for number, line in enumerate(text(path).splitlines(), 1)
+        if declarations.search(line)
+    ]
+
+
 def assigned_policy_push_matches(root: Path) -> list[Match]:
     """Count the old assigned-policy-to-delivery submission seam."""
     result: list[Match] = []
@@ -514,6 +529,7 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "delivery_manifest_occurrence_durable_tables_columns": sql_durable_matches(root),
         "agent_scheduled_work_tables": agent_scheduled_work_schema(root),
         "policy_resolver_dispatch_entry_points": policy_dispatch_matches(root),
+        "legacy_definition_compile_paths": legacy_definition_compile_matches(root),
         "assigned_policy_push_submission_coupling": assigned_policy_push_matches(root),
         "runtime_package_fanout_coupling": runtime_import_matches(root),
         "process_global_executor_managers": executor_global_matches(root),
@@ -582,6 +598,7 @@ def simplification_report(root: Path, baseline_counts: dict[str, int]) -> dict[s
         "policy_specific_result_transport_paths": current["policy_specific_result_transport_paths"] == 0,
         "legacy_registration_token_counter_owner_state": current["legacy_registration_token_counter_owner_state"] == 0,
         "assigned_policy_push_submission_coupling": current["assigned_policy_push_submission_coupling"] == 0,
+        "legacy_definition_compile_paths": current["legacy_definition_compile_paths"] == 0,
     }
     for name, passed in zero.items():
         metrics[name]["zero_invariant"] = True

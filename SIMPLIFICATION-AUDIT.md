@@ -666,10 +666,8 @@ Calibration — do not delete necessary complexity to raise the count.
 
 ## 15. Product decisions and unresolved questions
 
-1. **Ordered-definition STOP scope.** Today a Definition compiles to one manifest per set, so STOP does not
-   cross sets. Merging into one ordered manifest — needed to honor `sort_order` — would make a set-1 STOP
-   silently halt set 2 (the flat loop + single `stop` flag inherit this with no code change). Get an explicit
-   ruling before merging.
+1. **Ordered-definition STOP scope.** Resolved: a Definition is one ordered runbook, and each occurrence carries
+   its authored set's failure policy. A STOP in one set therefore stops later occurrences in the runbook.
 2. **The five REVIEW-candidate public RPCs' lifecycle** (`DispatchToGroup`, `GetDeviceCompliance`,
    `GetUserAssignments`, `ListAuditEvents`, `RenameToken`) — supported API or retired? Decide per-RPC, not by grep.
 2b. **The five *ordinary-action push* RPCs (O5, §7)** (`DispatchAction`, `DispatchActionSet`, `DispatchDefinition`,

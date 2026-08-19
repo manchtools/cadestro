@@ -265,8 +265,8 @@ func (h *Handlers) DispatchActionSet(ctx context.Context, req *connect.Request[p
 	}), nil
 }
 
-// DispatchDefinition compiles one manifest per contained ActionSet and commits
-// the complete batch atomically without mutating any authored schedule.
+// DispatchDefinition compiles one globally ordered runbook and commits it
+// atomically without mutating any authored schedule.
 func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[pmv1.DispatchDefinitionRequest]) (*connect.Response[pmv1.DispatchDefinitionResponse], error) {
 	if err := validateRequest(h, ctx, req); err != nil {
 		return nil, err
@@ -278,13 +278,13 @@ func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[
 	if err := h.target(ctx, actor, "DispatchDefinition", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	compiled, err := h.catalogDefinitionTemplates(ctx, req.Msg.DeviceId, req.Msg.DefinitionId)
+	compiled, err := h.catalogDefinitionTemplate(ctx, req.Msg.DeviceId, req.Msg.DefinitionId)
 	if err != nil {
 		return nil, err
 	}
 	result, err := h.submitter.Submit(ctx, SubmitParams{
 		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchDefinitionProcedure, "DispatchDefinition"),
-		DeviceID:  req.Msg.DeviceId, Manifests: catalogManifests(compiled...),
+		DeviceID:  req.Msg.DeviceId, Manifests: catalogManifests(compiled),
 	})
 	if err != nil {
 		return nil, h.submitError(ctx, "submit definition dispatch", err)
@@ -416,11 +416,11 @@ func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv
 			}
 			inputs = catalogManifests(compiled)
 		case *pmv1.DispatchToGroupRequest_DefinitionId:
-			compiled, err := h.catalogDefinitionTemplates(ctx, deviceID, source.DefinitionId)
+			compiled, err := h.catalogDefinitionTemplate(ctx, deviceID, source.DefinitionId)
 			if err != nil {
 				return nil, err
 			}
-			inputs = catalogManifests(compiled...)
+			inputs = catalogManifests(compiled)
 		case *pmv1.DispatchToGroupRequest_InlineAction:
 			compiled, err := h.inlineTemplate(ctx, source.InlineAction)
 			if err != nil {
@@ -546,7 +546,7 @@ func (h *Handlers) catalogActionSetTemplate(ctx context.Context, deviceID, setID
 	return manifest.AsOneShot(compiled), nil
 }
 
-func (h *Handlers) catalogDefinitionTemplates(ctx context.Context, deviceID, definitionID string) ([]*pmv1.Manifest, error) {
+func (h *Handlers) catalogDefinitionTemplate(ctx context.Context, deviceID, definitionID string) (*pmv1.Manifest, error) {
 	compiled, err := h.compiler.DefinitionForDevice(ctx, deviceID, definitionID)
 	if err != nil {
 		return nil, h.collectionCompileError(ctx, "definition", errDefinitionMissing, "compile dispatched definition", err)
@@ -558,10 +558,7 @@ func (h *Handlers) catalogDefinitionTemplates(ctx context.Context, deviceID, def
 	if !visible {
 		return nil, notFound(ctx, errDefinitionMissing, "definition not found")
 	}
-	for _, item := range compiled {
-		manifest.AsOneShot(item)
-	}
-	return compiled, nil
+	return manifest.AsOneShot(compiled), nil
 }
 
 func (h *Handlers) inlineTemplate(ctx context.Context, action *pmv1.Action) (*pmv1.Manifest, error) {

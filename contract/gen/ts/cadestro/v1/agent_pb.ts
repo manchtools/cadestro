@@ -671,8 +671,7 @@ export const ManifestOccurrenceSchema: GenMessage<ManifestOccurrence> = /*@__PUR
  *
  * Assigning an Action creates a singleton manifest; assigning an ActionSet
  * creates one manifest; assigning a Definition creates one globally ordered
- * runbook. Explicit Definition dispatch may retain its historical batch shape;
- * pulled policy carries the authored order and set failure policies directly.
+ * runbook. Explicit Definition dispatch uses the same runbook representation.
  *
  * @generated from message cadestro.v1.Manifest
  */
@@ -2158,4 +2157,3 @@ export const AgentService: GenService<{
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cadestro_v1_agent, 0);
-

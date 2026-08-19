@@ -63,7 +63,7 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 				return nil, err
 			}
 		}
-		compiled, err := compiler.DefinitionRunbookForDevice(ctx, deviceID, source.Row.SourceID)
+		compiled, err := compiler.DefinitionForDevice(ctx, deviceID, source.Row.SourceID)
 		if errors.Is(err, manifest.ErrEmptyManifest) {
 			continue
 		}

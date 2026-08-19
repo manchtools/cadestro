@@ -108,21 +108,16 @@ func (c *Compiler) actionSet(ctx context.Context, deviceID, id string) (*pmv1.Ma
 	return c.compileSet(ctx, deviceID, set, rows, &pmv1.ManifestProvenance{ActionSetId: id}, nil)
 }
 
-// Definition preserves the historical explicit-dispatch shape: one manifest
-// per contained ActionSet. Assignment pull uses DefinitionRunbookForDevice so
-// the same authored Definition arrives as one globally ordered runbook.
-func (c *Compiler) Definition(ctx context.Context, id string) ([]*pmv1.Manifest, error) {
-	return c.definition(ctx, "", id)
+// Definition flattens a Definition into one globally ordered runbook.
+func (c *Compiler) Definition(ctx context.Context, id string) (*pmv1.Manifest, error) {
+	return c.definitionRunbook(ctx, "", id)
 }
 
-func (c *Compiler) DefinitionForDevice(ctx context.Context, deviceID, id string) ([]*pmv1.Manifest, error) {
-	return c.definition(ctx, deviceID, id)
+func (c *Compiler) DefinitionForDevice(ctx context.Context, deviceID, id string) (*pmv1.Manifest, error) {
+	return c.definitionRunbook(ctx, deviceID, id)
 }
 
-// DefinitionRunbookForDevice compiles a Definition into one globally ordered
-// runbook for assignment pull. Explicit definition dispatch retains its
-// historical one-manifest-per-set shape for compatibility.
-func (c *Compiler) DefinitionRunbookForDevice(ctx context.Context, deviceID, id string) (*pmv1.Manifest, error) {
+func (c *Compiler) definitionRunbook(ctx context.Context, deviceID, id string) (*pmv1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
 	}
@@ -172,50 +167,6 @@ func (c *Compiler) DefinitionRunbookForDevice(ctx context.Context, deviceID, id 
 		return nil, ErrEmptyManifest
 	}
 	return finish(runbook)
-}
-
-func (c *Compiler) definition(ctx context.Context, deviceID, id string) ([]*pmv1.Manifest, error) {
-	if !validInput(ctx, id) {
-		return nil, ErrInvalidInput
-	}
-	definition, err := c.store.GetManifestDefinition(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	sets, err := c.store.ListManifestDefinitionActionSets(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if len(sets) == 0 {
-		return nil, ErrEmptyManifest
-	}
-	rows, err := c.store.ListManifestDefinitionActions(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	actionsBySet := make(map[string][]store.ActionRow, len(sets))
-	for _, row := range rows {
-		actionsBySet[row.ActionSetID] = append(actionsBySet[row.ActionSetID], row.Action)
-	}
-
-	manifests := make([]*pmv1.Manifest, 0, len(sets))
-	for _, set := range sets {
-		compiled, err := c.compileSet(ctx, deviceID, set, actionsBySet[set.ID], &pmv1.ManifestProvenance{
-			DefinitionId: id,
-			ActionSetId:  set.ID,
-		}, definition.Schedule)
-		if errors.Is(err, ErrEmptyManifest) {
-			continue
-		}
-		if err != nil {
-			return nil, fmt.Errorf("manifest: definition %s set %s: %w", id, set.ID, err)
-		}
-		manifests = append(manifests, compiled)
-	}
-	if len(manifests) == 0 {
-		return nil, ErrEmptyManifest
-	}
-	return manifests, nil
 }
 
 // OneShotAction creates the singleton manifest used by an explicit dispatch.

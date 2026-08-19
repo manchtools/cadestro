@@ -120,7 +120,7 @@ commits a policy delivery. There is no background reconciler that walks the
 fleet applying new assignments on its own.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/dispatch/assigned.go#CompileAssigned:2dd608d5 -->
+<!-- docref: begin src=server/internal/dispatch/assigned.go#CompileAssigned:f3bb04b0 -->
 When it does run, resolution walks the assigned sources in a fixed order —
 definitions, then action sets, then singleton actions, then compliance policies
 — and an action already carried by a container it walked earlier is not emitted
@@ -148,12 +148,12 @@ as something to avoid authoring.
 The agent never receives a tree. Compilation resolves the hierarchy to a flat
 list before anything leaves the server:
 
-<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler.ActionSet:7b8db1be,server/internal/manifest/compiler.go#Compiler.Definition:66b49c70 -->
+<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler.ActionSet:7b8db1be,server/internal/manifest/compiler.go#Compiler.Definition:c58ccefb -->
 Assigning an Action produces one singleton manifest. Assigning an ActionSet
 flattens the set into one manifest, in authored member order. Assigning a
-Definition produces **one manifest per contained ActionSet** — the definition's
-schedule overrides each emitted manifest without rewriting the underlying sets,
-and each set keeps its own failure policy.
+Definition produces **one globally ordered runbook** — the definition's schedule
+overrides the runbook without rewriting the underlying sets, and each set keeps
+its own failure policy on its occurrences.
 <!-- docref: end -->
 
 A set or definition member that contains no live actions cannot become

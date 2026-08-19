@@ -185,6 +185,31 @@ func (h *Handlers) DispatchAssignedActions() { h.signalSync() }
             self.assertGreater(len(before), 0)
             self.assertEqual(after, [])
 
+    def test_legacy_definition_compile_metric_is_exact_and_hard_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            for root in (baseline, candidate):
+                feature_fixture(root)
+            write(baseline, "server/internal/manifest/compiler.go", """package manifest
+func (c *Compiler) definition(ctx context.Context, deviceID, id string) ([]*Manifest, error) { return nil, nil }
+func (c *Compiler) DefinitionRunbookForDevice(ctx context.Context, deviceID, id string) (*Manifest, error) { return nil, nil }
+""")
+            write(candidate, "server/internal/manifest/compiler.go", """package manifest
+func (c *Compiler) definitionRunbook(ctx context.Context, deviceID, id string) (*Manifest, error) { return nil, nil }
+""")
+            before = judge.legacy_definition_compile_matches(baseline)
+            after = judge.legacy_definition_compile_matches(candidate)
+            self.assertEqual(len(before), 2)
+            self.assertEqual(after, [])
+            counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            result = judge.simplification_report(candidate, counts)
+            metric = result["metrics"]["legacy_definition_compile_paths"]
+            self.assertEqual(metric["baseline"], 2)
+            self.assertEqual(metric["candidate"], 0)
+            self.assertTrue(metric["zero_invariant"], metric)
+            self.assertTrue(metric["pass"], metric)
+
     def test_completed_cutovers_are_hard_zeroes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             baseline = Path(directory) / "baseline"

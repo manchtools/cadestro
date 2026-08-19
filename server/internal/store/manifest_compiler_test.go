@@ -95,28 +95,28 @@ func TestManifestCompiler_ActionSetFlattensInAuthoredOrder(t *testing.T) {
 	assert.NotEqual(t, got.Occurrences[0].OccurrenceId, got.Occurrences[1].OccurrenceId)
 }
 
-func TestManifestCompiler_DefinitionScheduleOverridesOnlyCompiledManifests(t *testing.T) {
+func TestManifestCompiler_DefinitionFlattensGlobalOrderAndPolicies(t *testing.T) {
 	f := newManifestFixture(t)
 	got, err := f.compiler.Definition(context.Background(), f.definition)
 	require.NoError(t, err)
-	require.Len(t, got, 2)
-
-	assert.Equal(t, f.definition, got[0].Provenance.DefinitionId)
-	assert.Equal(t, f.set2, got[0].Provenance.ActionSetId, "definition member order is preserved")
-	assert.Equal(t, "0 1 * * *", got[0].Schedule.Cron)
-	assert.False(t, got[0].Schedule.RunOnAssign)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_CONTINUE, got[0].DefaultOnFailure)
-	require.Len(t, got[0].Occurrences, 1)
-	assert.Equal(t, f.action1, got[0].Occurrences[0].Action.Id.Value)
-
-	assert.Equal(t, f.set1, got[1].Provenance.ActionSetId)
-	assert.Equal(t, "0 1 * * *", got[1].Schedule.Cron)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, got[1].DefaultOnFailure,
-		"the definition overrides schedule, not the set failure policy")
-	require.Len(t, got[1].Occurrences, 2)
-	assert.Equal(t, f.action1, got[1].Occurrences[0].Action.Id.Value,
-		"the same authored action reached through another set is preserved")
-	assert.NotEqual(t, got[0].Occurrences[0].OccurrenceId, got[1].Occurrences[0].OccurrenceId)
+	assert.Equal(t, f.definition, got.Provenance.DefinitionId)
+	assert.Empty(t, got.Provenance.ActionSetId)
+	assert.Equal(t, "0 1 * * *", got.Schedule.Cron)
+	assert.False(t, got.Schedule.RunOnAssign)
+	require.Len(t, got.Occurrences, 3)
+	assert.Equal(t, []string{f.action1, f.action1, f.action2}, []string{
+		got.Occurrences[0].Action.Id.Value, got.Occurrences[1].Action.Id.Value,
+		got.Occurrences[2].Action.Id.Value,
+	}, "definition member order precedes each set's authored action order")
+	assert.Equal(t, []pmv1.OnFailure{
+		pmv1.OnFailure_ON_FAILURE_CONTINUE, pmv1.OnFailure_ON_FAILURE_STOP,
+		pmv1.OnFailure_ON_FAILURE_STOP,
+	}, []pmv1.OnFailure{
+		got.Occurrences[0].OnFailure, got.Occurrences[1].OnFailure,
+		got.Occurrences[2].OnFailure,
+	})
+	assert.NotEqual(t, got.Occurrences[0].OccurrenceId, got.Occurrences[1].OccurrenceId,
+		"the same authored action reached through two sets remains two occurrences")
 
 	var unchanged bool
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
@@ -128,6 +128,19 @@ func TestManifestCompiler_DefinitionScheduleOverridesOnlyCompiledManifests(t *te
 	require.NoError(t, err)
 	assert.Equal(t, "0 4 * * *", standalone.Schedule.Cron,
 		"independent ActionSet compilation still uses its own schedule")
+}
+
+func TestManifestCompiler_DefinitionSkipsEmptyAndDeletedMembers(t *testing.T) {
+	f := newManifestFixture(t)
+	ctx := context.Background()
+	_, err := f.raw.Exec(ctx, `DELETE FROM action_set_members WHERE set_id = $1`, f.set2)
+	require.NoError(t, err)
+	_, err = f.raw.Exec(ctx, `UPDATE action_sets SET is_deleted = TRUE WHERE id = $1`, f.set1)
+	require.NoError(t, err)
+
+	_, err = f.compiler.Definition(ctx, f.definition)
+	assert.ErrorIs(t, err, manifest.ErrEmptyManifest,
+		"a definition with only empty or deleted members has no executable runbook")
 }
 
 func dispatchableAction() *pmv1.Action {
@@ -176,12 +189,9 @@ func TestManifestCompiler_AssignedCompilationIsNotOneShot(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, set.GetOneShot())
 
-	definitions, err := f.compiler.Definition(context.Background(), f.definition)
+	definition, err := f.compiler.Definition(context.Background(), f.definition)
 	require.NoError(t, err)
-	require.NotEmpty(t, definitions)
-	for _, item := range definitions {
-		assert.False(t, item.GetOneShot())
-	}
+	assert.False(t, definition.GetOneShot())
 }
 
 func TestManifestCompiler_RejectsMalformedStoredParams(t *testing.T) {

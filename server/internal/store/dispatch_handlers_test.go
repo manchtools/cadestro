@@ -325,28 +325,32 @@ func TestDispatchHandlers_ActionSetAndDefinitionPreserveComposition(t *testing.T
 			DeviceId: f.deviceID, DefinitionId: f.definition,
 		}))
 	require.NoError(t, err)
-	require.Len(t, definitionResponse.Msg.Executions, 2)
-	require.Len(t, f.waker.ids, 3)
-	first, second := f.manifest(f.waker.ids[1]), f.manifest(f.waker.ids[2])
-	assert.Equal(t, f.definition, first.Provenance.DefinitionId)
-	assert.Equal(t, f.definition, second.Provenance.DefinitionId)
-	assert.ElementsMatch(t, []string{f.set1, f.set2},
-		[]string{first.Provenance.ActionSetId, second.Provenance.ActionSetId})
-	assert.NotEqual(t, definitionResponse.Msg.Executions[0].Id, definitionResponse.Msg.Executions[1].Id,
-		"the same Action authored through two sets remains two occurrences")
-	assert.Equal(t, definitionResponse.Msg.Executions[0].ActionId, definitionResponse.Msg.Executions[1].ActionId)
+	require.Len(t, definitionResponse.Msg.Executions, 2, "one execution is created per ordered occurrence")
+	require.Len(t, f.waker.ids, 2)
+	definitionManifest := f.manifest(f.waker.ids[1])
+	assert.Equal(t, f.definition, definitionManifest.Provenance.DefinitionId)
+	assert.Empty(t, definitionManifest.Provenance.ActionSetId)
+	require.Len(t, definitionManifest.Occurrences, 2)
+	assert.Equal(t, []string{f.actionID, f.actionID}, []string{
+		definitionManifest.Occurrences[0].Action.Id.Value,
+		definitionManifest.Occurrences[1].Action.Id.Value,
+	}, "definition set order is preserved")
+	assert.Equal(t, []pmv1.OnFailure{
+		pmv1.OnFailure_ON_FAILURE_STOP, pmv1.OnFailure_ON_FAILURE_CONTINUE,
+	}, []pmv1.OnFailure{
+		definitionManifest.Occurrences[0].OnFailure,
+		definitionManifest.Occurrences[1].OnFailure,
+	})
 	operation, err := latestOperationFor(t, f.store, f.raw,
 		cadestrov1connect.ControlServiceDispatchDefinitionProcedure)
 	require.NoError(t, err)
 	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
-	require.Len(t, effects, 4, "two deliveries and two executions share one initiating operation")
-	for _, deliveryID := range f.waker.ids[1:] {
-		row, err := f.store.GetDelivery(context.Background(), deliveryID)
-		require.NoError(t, err)
-		require.NotNil(t, row.OperationID)
-		assert.Equal(t, operation.OperationID, *row.OperationID)
-	}
+	require.Len(t, effects, 3, "one delivery and two occurrence executions share one initiating operation")
+	row, err := f.store.GetDelivery(context.Background(), f.waker.ids[1])
+	require.NoError(t, err)
+	require.NotNil(t, row.OperationID)
+	assert.Equal(t, operation.OperationID, *row.OperationID)
 
 	var set1Schedule, set2Schedule string
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
@@ -388,11 +392,11 @@ func TestDispatchHandlers_ExplicitDispatchMarksEveryManifestOneShot(t *testing.T
 			DeviceId: f.deviceID, DefinitionId: f.definition,
 		}))
 	require.NoError(t, err)
-	require.Len(t, f.waker.ids, 4)
+	require.Len(t, f.waker.ids, 3)
 	for _, deliveryID := range f.waker.ids[2:] {
 		compiled := f.manifest(deliveryID)
 		assert.True(t, compiled.GetOneShot(),
-			"every manifest of an explicitly dispatched Definition executes exactly once")
+			"an explicitly dispatched Definition runbook executes exactly once")
 		assert.Empty(t, compiled.Schedule.Cron)
 	}
 }
@@ -521,8 +525,8 @@ func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testin
 			},
 		}))
 	require.NoError(t, err)
-	require.Len(t, group.Msg.Executions, 4, "two set manifests are copied to each of two devices")
-	require.Len(t, f.waker.ids, 6)
+	require.Len(t, group.Msg.Executions, 4, "one runbook is copied to each of two devices")
+	require.Len(t, f.waker.ids, 4)
 	counts := map[string]int{}
 	for _, execution := range group.Msg.Executions {
 		counts[execution.DeviceId]++
@@ -533,7 +537,7 @@ func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testin
 	require.NoError(t, err)
 	effects, err = f.store.ListAuditEffects(context.Background(), operation.OperationID)
 	require.NoError(t, err)
-	require.Len(t, effects, 8, "four deliveries and four executions share the group operation")
+	require.Len(t, effects, 6, "two deliveries and four executions share the group operation")
 }
 
 func TestDispatchHandlers_RefuseUnauthorizedAndMissingTargetsWithoutWork(t *testing.T) {

@@ -29,6 +29,7 @@ func TestBaselineEnablesRequiredSQLitePosture(t *testing.T) {
 		SELECT count(*) FROM sqlite_schema
 		WHERE type = 'table'
 		  AND name NOT LIKE 'sqlite_%'
+		  AND name NOT IN ('search_fts', 'search_trigram')
 		  AND name NOT GLOB 'search_fts_*'
 		  AND name NOT GLOB 'search_trigram_*'
 	`).Scan(&applicationTables))
