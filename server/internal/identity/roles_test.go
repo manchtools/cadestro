@@ -53,7 +53,7 @@ func TestCreateRole_RejectsUnknownPermissionKey(t *testing.T) {
 func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"CreateRole", "UpdateRole", "AssignRoleToUser"}})
+	admin := f.seedActor(grant{Permissions: []string{"CreateRole", "UpdateRole", "AssignRoleToUser", "ListUsers", "GetUser"}})
 
 	_, err := f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
 		RoleId:      auth.AdminRoleID,
@@ -98,6 +98,25 @@ func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T)
 	invalidate := f.effectWithAction(effects, "INVALIDATE_HOLDER_SESSIONS")
 	require.NotNil(t, invalidate.AfterCount)
 	assert.Equal(t, int64(1), *invalidate.AfterCount)
+}
+
+func TestUpdateRole_RefusesPermissionsOutsideActorAuthority(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	admin := f.seedActor(grant{Permissions: []string{"CreateRole", "UpdateRole"}})
+	role := f.insertRole([]string{"GetUser"})
+	before, err := f.store.GetRole(f.ctx(), role)
+	require.NoError(t, err)
+	beforeAudit := f.countAuditOperations()
+
+	_, err = f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
+		RoleId: role, Name: before.Name, Permissions: []string{"GetUser", "ListUsers"},
+	}, admin.Token))
+	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
+	after, err := f.store.GetRole(f.ctx(), role)
+	require.NoError(t, err)
+	assert.Equal(t, before.Permissions, after.Permissions)
+	assert.Equal(t, beforeAudit, f.countAuditOperations(), "a denied role widening leaves audit state unchanged")
 }
 
 func TestDeleteRole_RefusesARoleSomebodyStillHolds(t *testing.T) {

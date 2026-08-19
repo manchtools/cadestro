@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"errors"
 	"slices"
 
 	"connectrpc.com/connect"
@@ -12,6 +13,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
+
+var errConferredAuthority = errors.New("conferred authority exceeds actor authority")
 
 // ListPermissions returns the permission registry, so a role builder
 // can show what a role may contain and which scopes each key accepts.
@@ -180,6 +183,9 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.Upd
 	var updated store.RoleRow
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermUpdateRole),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
+			if err := checkPermissionSubset(actor.Permissions, perms); err != nil {
+				return err
+			}
 			var err error
 			updated, err = tx.UpdateRole(ctx, db.UpdateRoleParams{
 				ID:          before.ID,
@@ -211,6 +217,9 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.Upd
 			return nil
 		})
 	if err != nil {
+		if errors.Is(err, errConferredAuthority) {
+			return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "cannot grant authority you do not hold")
+		}
 		if store.IsConflict(err) {
 			return nil, rpcError(ctx, ErrRoleNameExists, connect.CodeAlreadyExists, "a role with that name already exists")
 		}
@@ -319,6 +328,11 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pm
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermAssignRoleToUser),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
+			if scopeID == nil {
+				if err := h.enforceConferredAuthorityTx(ctx, tx, actor, roleIDs); err != nil {
+					return err
+				}
+			}
 			for _, roleID := range roleIDs {
 				grantID := ulid.Make().String()
 				if _, err := tx.InsertUserRoleGrant(ctx, db.InsertUserRoleGrantParams{
@@ -349,6 +363,9 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pm
 	if err != nil {
 		if store.IsConflict(err) {
 			return nil, rpcError(ctx, ErrUserAlreadyHasRole, connect.CodeAlreadyExists, "the subject already holds that role at that scope")
+		}
+		if errors.Is(err, errConferredAuthority) {
+			return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "cannot grant authority you do not hold")
 		}
 		return nil, internalError(ctx, "failed to assign role")
 	}
@@ -448,6 +465,11 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermAssignRoleToUserGroup),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
+			if scopeID == nil {
+				if err := h.enforceConferredAuthorityTx(ctx, tx, actor, roleIDs); err != nil {
+					return err
+				}
+			}
 			for _, roleID := range roleIDs {
 				grantID := ulid.Make().String()
 				if _, err := tx.InsertUserGroupRoleGrant(ctx, db.InsertUserGroupRoleGrantParams{
@@ -478,6 +500,9 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 	if err != nil {
 		if store.IsConflict(err) {
 			return nil, rpcError(ctx, ErrUserAlreadyHasRole, connect.CodeAlreadyExists, "the group already holds that role at that scope")
+		}
+		if errors.Is(err, errConferredAuthority) {
+			return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "cannot grant authority you do not hold")
 		}
 		// A grant naming a group or role that does not exist violates a
 		// foreign key; the caller is told the target is unknown rather
@@ -660,11 +685,38 @@ func (h *Handlers) enforceConferredAuthority(ctx context.Context, roleIDs []stri
 			}
 			return internalError(ctx, "failed to load role")
 		}
-		for _, permission := range role.Permissions {
-			if !auth.HasPermission(ctx, permission) {
-				return rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied,
-					"cannot grant authority you do not hold")
-			}
+		if err := checkPermissionSubset(actor.Permissions, role.Permissions); err != nil {
+			return rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied,
+				"cannot grant authority you do not hold")
+		}
+	}
+	return nil
+}
+
+func (h *Handlers) enforceConferredAuthorityTx(ctx context.Context, tx *store.Tx, actor *auth.UserContext, roleIDs []string) error {
+	if actor != nil && actor.Kind == auth.PrincipalBootstrapAdmin {
+		return nil
+	}
+	for _, roleID := range roleIDs {
+		role, err := tx.GetRole(ctx, roleID)
+		if err != nil {
+			return err
+		}
+		if err := checkPermissionSubset(actor.Permissions, role.Permissions); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkPermissionSubset(actor, conferred []string) error {
+	allowed := make(map[string]struct{}, len(actor))
+	for _, permission := range actor {
+		allowed[permission] = struct{}{}
+	}
+	for _, permission := range conferred {
+		if _, ok := allowed[permission]; !ok {
+			return errConferredAuthority
 		}
 	}
 	return nil

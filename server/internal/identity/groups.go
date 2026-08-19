@@ -387,6 +387,17 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[pmv1
 			if stored.IsDynamic {
 				return errUserGroupDynamic
 			}
+			roleGrants, err := tx.ListUserGroupRoleGrants(ctx, req.Msg.GroupId)
+			if err != nil {
+				return err
+			}
+			roleIDs := make([]string, len(roleGrants))
+			for i, grant := range roleGrants {
+				roleIDs[i] = grant.Role.ID
+			}
+			if err := h.enforceConferredAuthorityTx(ctx, tx, actor, roleIDs); err != nil {
+				return err
+			}
 			added := int64(0)
 			for _, id := range missing {
 				rows, err := tx.AddStaticUserGroupMember(ctx, db.AddStaticUserGroupMemberParams{
@@ -425,6 +436,9 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[pmv1
 		return connect.NewResponse(&pmv1.AddUserToGroupResponse{}), nil
 	}
 	if err != nil {
+		if errors.Is(err, errConferredAuthority) {
+			return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "cannot grant authority you do not hold")
+		}
 		if errors.Is(err, errUserGroupDynamic) {
 			return nil, rpcError(ctx, ErrDynamicGroupMembership, connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
 		}
