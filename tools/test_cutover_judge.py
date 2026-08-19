@@ -160,6 +160,25 @@ func (h *Handlers) DispatchAssignedActions() { h.signalSync() }
             self.assertGreater(len(before), 0)
             self.assertEqual(after, [])
 
+    def test_device_identity_metric_counts_schema_not_references(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root, "server/internal/store/sqliteschema/schema.sql", """CREATE TABLE devices (
+    id text PRIMARY KEY,
+    agent_sealing_public_key blob,
+    cert_fingerprint text,
+    cert_not_after timestamp,
+    enrollment_identity_public_key blob
+);
+""")
+            write(root, "server/internal/enrollment/handlers.go", """package enrollment
+func retry() { _ = \"cert_fingerprint cert_not_after device_identity\" }
+""")
+            found = judge.legacy_device_identity_columns(root)
+            self.assertEqual([item.text.strip().split()[0] for item in found], [
+                "agent_sealing_public_key", "cert_fingerprint", "cert_not_after",
+            ])
+
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
         baseline = {"rpc": ["ControlService.Old"]}
         candidate = {"rpc": ["ControlService.New"]}

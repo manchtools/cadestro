@@ -404,6 +404,30 @@ def legacy_registration_token_matches(root: Path) -> list[Match]:
     return result
 
 
+def legacy_device_identity_columns(root: Path) -> list[Match]:
+    """Count legacy identity/lifecycle state in the effective device schema.
+
+    Counting references made a correct handler refactor look like new durable
+    state.  The cutover concern is competing columns, so inspect only the
+    canonical schema that a new server actually creates.
+    """
+    path = root / "server/internal/store/sqliteschema/schema.sql"
+    if not path.is_file():
+        return []
+    in_devices = False
+    result: list[Match] = []
+    legacy = re.compile(r"^\s*(agent_sealing_public_key|cert_fingerprint|cert_not_after)\b", re.IGNORECASE)
+    for number, line in enumerate(text(path).splitlines(), 1):
+        if re.search(r"^\s*CREATE\s+TABLE\s+devices\b", line, re.IGNORECASE):
+            in_devices = True
+            continue
+        if in_devices and line.strip().startswith(")"):
+            break
+        if in_devices and legacy.search(line):
+            result.append(Match(rel(root, path), number, line))
+    return result
+
+
 def policy_dispatch_matches(root: Path) -> list[Match]:
     result: list[Match] = []
     declaration = re.compile(r"^\s*func\s+[^\s(]*(?:Resolve|resolve|Effective|Dispatch|dispatch|Submit|submit)[^\s(]*\s*\(")
@@ -444,7 +468,7 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
     return {
         "ordinary_policy_push_delivery_types_states": ordinary_policy_matches(root),
         "legacy_registration_token_counter_owner_state": legacy_registration_token_matches(root),
-        "device_identity_fields": matches(root, r"\b(?:agent_sealing_public_key|cert_fingerprint|cert_not_after|deviceIdentityKey|device_identity)\b", {".go", ".proto", ".sql"}),
+        "legacy_device_identity_columns": legacy_device_identity_columns(root),
         "device_authorization_paths": matches(root, r"(?:AuthorizeContext|EnforceDeviceScope|deviceScopeResolver|authorize\([^\n]*deviceID)", {".go"}),
         "manifest_delivery_protocol_types_fields": delivery_protocol_matches(root),
         "delivery_manifest_occurrence_durable_tables_columns": sql_durable_matches(root),
