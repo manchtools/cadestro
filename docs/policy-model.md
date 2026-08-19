@@ -411,7 +411,7 @@ it has already durably received, on schedule, indefinitely — including its
 maintenance window, which is persisted locally for exactly this reason.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#sendScheduledResults:d20a8d78,agent/internal/executor/lps.go#Executor.setupLpsPasswords:e5dedb8e -->
+<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#sendScheduledResults:d20a8d78,agent/internal/executor/lps.go#Executor.setupLpsPasswords:8f33e833 -->
 What stops while offline is precisely what needs the server. New assignments
 cannot arrive, and results queue in a durable local outbox that drains on
 reconnect. Two capabilities also refuse rather than proceed: password rotation
