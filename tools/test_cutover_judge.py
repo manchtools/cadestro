@@ -33,6 +33,13 @@ message KeepParams { string value = 1; }
     write(root, "agent/internal/executor/executor.go", "package executor\n")
     write(root, "server/internal/controlruntime/runtime.go", "package controlruntime\n")
     if junk:
+        write(root, "agent/internal/store/migrations/001.sql", """-- +goose Up
+CREATE TABLE manifest_deliveries (delivery_id TEXT PRIMARY KEY, state TEXT NOT NULL);
+CREATE TABLE manifest_occurrences (delivery_id TEXT NOT NULL, occurrence_id TEXT NOT NULL);
+CREATE TABLE reboot_markers (delivery_id TEXT NOT NULL);
+-- +goose Down
+DROP TABLE manifest_deliveries;
+""")
         write(root, "server/internal/registrationtoken/token.go", """package registrationtoken
 type RegistrationToken struct { OneTime bool; CurrentUses int; OwnerID string }
 """)
@@ -106,7 +113,32 @@ class CutoverJudgeTest(unittest.TestCase):
             self.assertTrue(simplify["pass"], simplify)
             self.assertGreater(counts["manifest_delivery_protocol_types_fields"], 0)
             self.assertGreater(counts["legacy_registration_token_counter_owner_state"], 0)
+            self.assertGreater(counts["agent_scheduled_work_tables_columns"], 0)
             self.assertEqual(len(judge.executor_global_matches(baseline)), 2)
+
+    def test_effective_agent_schema_rejects_parallel_cutover_tables(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            for root in (baseline, candidate):
+                feature_fixture(root)
+                write(root, "agent/internal/store/migrations/001.sql", """-- +goose Up
+CREATE TABLE manifest_deliveries (delivery_id TEXT PRIMARY KEY);
+CREATE TABLE manifest_occurrences (delivery_id TEXT NOT NULL);
+CREATE TABLE reboot_markers (delivery_id TEXT NOT NULL);
+-- +goose Down
+""")
+            write(candidate, "agent/internal/store/migrations/002.sql", """-- +goose Up
+CREATE TABLE work_items (work_id TEXT PRIMARY KEY);
+CREATE TABLE work_occurrences (work_id TEXT NOT NULL);
+CREATE TABLE work_reboot_markers (work_id TEXT NOT NULL);
+-- +goose Down
+""")
+            baseline_counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            result = judge.simplification_report(candidate, baseline_counts)
+            metric = result["metrics"]["agent_scheduled_work_tables_columns"]
+            self.assertFalse(metric["pass"], metric)
+            self.assertGreater(metric["candidate"], metric["baseline"])
 
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
         baseline = {"rpc": ["ControlService.Old"]}
