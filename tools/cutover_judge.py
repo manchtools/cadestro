@@ -68,7 +68,7 @@ def matches(root: Path, pattern: str, suffixes: set[str] | None = None) -> list[
     rx = re.compile(pattern, re.IGNORECASE)
     found: list[Match] = []
     for path in files(root, suffixes):
-        if path.name.endswith("_test.go") or is_generated(root, path):
+        if path.name.endswith("_test.go") or ".test." in path.name or is_generated(root, path):
             continue
         for number, line in enumerate(text(path).splitlines(), 1):
             if rx.search(line):
@@ -311,6 +311,48 @@ def ordinary_policy_matches(root: Path) -> list[Match]:
     return result
 
 
+def legacy_registration_token_matches(root: Path) -> list[Match]:
+    """Find enrollment-token state that should not survive the cutover.
+
+    The host bootstrap token is deliberately excluded: it is a separate,
+    legitimately single-use credential.  This metric is about registration
+    tokens carrying a mutable use counter, a one-time mode, or a human owner.
+    """
+    legacy = re.compile(
+        r"\b(?:one_time|OneTime|oneTime|current_uses|CurrentUses|currentUses|"
+        r"owner_id|OwnerID|ownerId|max_uses_per_agent|MaxUsesPerAgent|maxUsesPerAgent)\b"
+    )
+    result: list[Match] = []
+    for path in files(root, {".go", ".proto", ".sql", ".svelte", ".ts"}):
+        path_name = rel(root, path)
+        if path.name.endswith("_test.go") or ".test." in path.name or is_generated(root, path):
+            continue
+        relevant = (
+            "/registrationtoken/" in f"/{path_name}"
+            or path_name == "server/internal/enrollment/handlers.go"
+            or path_name == "server/internal/store/queries/registration_tokens.sql"
+            or path_name == "server/internal/store/reads_tokens.go"
+            or path_name.startswith("web/src/routes/(app)/tokens/")
+        )
+        in_token_block = False
+        for number, line in enumerate(text(path).splitlines(), 1):
+            if path_name == "server/internal/store/sqliteschema/schema.sql":
+                if re.search(r"^\s*CREATE\s+TABLE\s+tokens\b", line, re.IGNORECASE):
+                    in_token_block = True
+                relevant = in_token_block
+            elif path_name == "contract/proto/cadestro/v1/control.proto":
+                message = re.search(r"^\s*message\s+(RegistrationToken|CreateTokenRequest)\s*\{", line)
+                if message:
+                    in_token_block = True
+                relevant = in_token_block
+            if relevant and legacy.search(line):
+                result.append(Match(path_name, number, line))
+            if in_token_block and line.strip() == "}":
+                in_token_block = False
+                relevant = False
+    return result
+
+
 def policy_dispatch_matches(root: Path) -> list[Match]:
     result: list[Match] = []
     declaration = re.compile(r"^\s*func\s+[^\s(]*(?:Resolve|resolve|Effective|Dispatch|dispatch|Submit|submit)[^\s(]*\s*\(")
@@ -328,6 +370,7 @@ def policy_dispatch_matches(root: Path) -> list[Match]:
 def metric_matches(root: Path) -> dict[str, list[Match]]:
     return {
         "ordinary_policy_push_delivery_types_states": ordinary_policy_matches(root),
+        "legacy_registration_token_counter_owner_state": legacy_registration_token_matches(root),
         "device_identity_fields": matches(root, r"\b(?:agent_sealing_public_key|cert_fingerprint|cert_not_after|deviceIdentityKey|device_identity)\b", {".go", ".proto", ".sql"}),
         "device_authorization_paths": matches(root, r"(?:AuthorizeContext|EnforceDeviceScope|deviceScopeResolver|authorize\([^\n]*deviceID)", {".go"}),
         "manifest_delivery_protocol_types_fields": delivery_protocol_matches(root),

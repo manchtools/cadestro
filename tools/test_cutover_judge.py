@@ -33,6 +33,9 @@ message KeepParams { string value = 1; }
     write(root, "agent/internal/executor/executor.go", "package executor\n")
     write(root, "server/internal/controlruntime/runtime.go", "package controlruntime\n")
     if junk:
+        write(root, "server/internal/registrationtoken/token.go", """package registrationtoken
+type RegistrationToken struct { OneTime bool; CurrentUses int; OwnerID string }
+""")
         write(root, "agent/internal/executor/legacy.go", """package executor
 var old = 1
 var (
@@ -102,6 +105,7 @@ class CutoverJudgeTest(unittest.TestCase):
             self.assertTrue(simplify["improved"], simplify)
             self.assertTrue(simplify["pass"], simplify)
             self.assertGreater(counts["manifest_delivery_protocol_types_fields"], 0)
+            self.assertGreater(counts["legacy_registration_token_counter_owner_state"], 0)
             self.assertEqual(len(judge.executor_global_matches(baseline)), 2)
 
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
