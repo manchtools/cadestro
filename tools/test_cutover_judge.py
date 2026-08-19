@@ -113,7 +113,7 @@ class CutoverJudgeTest(unittest.TestCase):
             self.assertTrue(simplify["pass"], simplify)
             self.assertGreater(counts["manifest_delivery_protocol_types_fields"], 0)
             self.assertGreater(counts["legacy_registration_token_counter_owner_state"], 0)
-            self.assertGreater(counts["agent_scheduled_work_tables_columns"], 0)
+            self.assertGreater(counts["agent_scheduled_work_tables"], 0)
             self.assertEqual(len(judge.executor_global_matches(baseline)), 2)
 
     def test_effective_agent_schema_rejects_parallel_cutover_tables(self) -> None:
@@ -136,7 +136,7 @@ CREATE TABLE work_reboot_markers (work_id TEXT NOT NULL);
 """)
             baseline_counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
             result = judge.simplification_report(candidate, baseline_counts)
-            metric = result["metrics"]["agent_scheduled_work_tables_columns"]
+            metric = result["metrics"]["agent_scheduled_work_tables"]
             self.assertFalse(metric["pass"], metric)
             self.assertGreater(metric["candidate"], metric["baseline"])
 

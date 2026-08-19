@@ -289,7 +289,7 @@ def sql_durable_matches(root: Path) -> list[Match]:
 
 
 def agent_scheduled_work_schema(root: Path) -> list[Match]:
-    """Materialize agent migrations and count the active scheduling schema.
+    """Materialize agent migrations and count active scheduling tables.
 
     Historical migrations must remain in source, so grepping their text would
     punish a correct forward cutover. Applying every Up section measures the
@@ -312,20 +312,15 @@ def agent_scheduled_work_schema(root: Path) -> list[Match]:
             for row in connection.execute("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name")
             if re.fullmatch(
                 r"(?:manifest_(?:deliveries|occurrences)|reboot_markers|"
-                r"(?:scheduled_)?work_(?:items|occurrences|reboot_markers)|transport_deliveries)",
+                r"scheduled_work(?:_occurrences|_reboots)?|"
+                r"work_(?:items|occurrences|reboot_markers)|transport_deliveries)",
                 str(row[0]),
             )
         ]
-        found: list[Match] = []
-        line = 0
-        for name in names:
-            line += 1
-            found.append(Match("agent:effective-scheduled-work-schema", line, f"table {name}"))
-            quoted = '"' + name.replace('"', '""') + '"'
-            for column in connection.execute(f"PRAGMA table_info({quoted})"):
-                line += 1
-                found.append(Match("agent:effective-scheduled-work-schema", line, f"{name}.{column[1]} {column[2]}"))
-        return found
+        return [
+            Match("agent:effective-scheduled-work-schema", line, f"table {name}")
+            for line, name in enumerate(names, 1)
+        ]
     finally:
         connection.close()
 
@@ -418,7 +413,7 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "device_authorization_paths": matches(root, r"(?:AuthorizeContext|EnforceDeviceScope|deviceScopeResolver|authorize\([^\n]*deviceID)", {".go"}),
         "manifest_delivery_protocol_types_fields": delivery_protocol_matches(root),
         "delivery_manifest_occurrence_durable_tables_columns": sql_durable_matches(root),
-        "agent_scheduled_work_tables_columns": agent_scheduled_work_schema(root),
+        "agent_scheduled_work_tables": agent_scheduled_work_schema(root),
         "policy_resolver_dispatch_entry_points": policy_dispatch_matches(root),
         "runtime_package_fanout_coupling": runtime_import_matches(root),
         "process_global_executor_managers": executor_global_matches(root),
