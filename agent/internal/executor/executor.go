@@ -11,7 +11,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -73,6 +72,8 @@ type Executor struct {
 	// a test that dispatches a REBOOT through a no-runner executor can never
 	// issue a real `shutdown` on the host (it once rebooted a workstation).
 	runner       sysexec.Runner
+	deps         executorDeps
+	depsOnce     sync.Once
 	logger       *slog.Logger
 	mu           sync.RWMutex // protects luksKeyStore, lpsStore, store, actionStore, deviceID
 	luksKeyStore LuksKeyStore
@@ -133,38 +134,15 @@ func (e *Executor) pkgManagerForCtx(ctx context.Context) pkg.Manager {
 // privilege-backend runner the package manager dispatches through; a nil runner leaves the package
 // manager unset (package actions fail) — used by unit tests that inject their
 // own pkg.Manager into e.pkgManager.
-// executorGlobalsAdopted latches the first runner-bearing construction
-// so re-adoption of the package-global managers is logged (#173).
-var executorGlobalsAdopted atomic.Bool
-
 func NewExecutor(runner sysexec.Runner) *Executor {
 	logger := slog.Default()
 	var (
 		mgr     pkg.Manager
 		backend pkg.Backend
 	)
-	// Adopt the configured runner process-wide so the cmd.go helpers (notably
-	// the escalating runSudoCmd) and the desktop fan-out dispatch through it. A
-	// nil runner (unit tests) leaves the Direct defaults in place.
-	//
-	// ONE executor per process is the supported shape (#173 review
-	// finding): these are package globals, so a second runner-bearing
-	// NewExecutor re-points every previously constructed Executor's
-	// free-function dispatch at the NEW runner. That re-adoption is now
-	// loud instead of silent; the full de-globalization is tracked with
-	// the #150 SDK-delegation refactor.
-	if runner != nil {
-		if !executorGlobalsAdopted.CompareAndSwap(false, true) {
-			logger.Warn("NewExecutor called again with a privilege runner; re-pointing the process-global managers — all executors in this process now dispatch through the newest runner (one runner-bearing executor per process is the supported shape)")
-		}
-		executorRunner = runner
-		desktopMgr = mustDesktopManager(runner)
-		serviceMgr = mustServiceManager(runner)
-		networkMgr = mustNetworkManager(runner)
-		userMgr = mustUserManager(runner)
-		fsMgr = mustFSManager(runner)
-		encMgr = mustEncManager(runner)
-	}
+	// Build all host capability managers from this executor's runner. The
+	// resulting dependency set is immutable for the executor's lifetime.
+	deps := newExecutorDeps(runner)
 	switch {
 	case runner == nil:
 		logger.Warn("no privilege runner provided; package actions will fail")
@@ -187,16 +165,18 @@ func NewExecutor(runner sysexec.Runner) *Executor {
 			}
 		}
 	}
-	return &Executor{
+	e := &Executor{
 		httpClient: &http.Client{
 			Timeout: 5 * time.Minute,
 		},
 		pkgManager: mgr,
 		pkgBackend: backend,
 		runner:     runner,
+		deps:       deps,
 		logger:     logger,
 		now:        time.Now,
 	}
+	return e
 }
 
 // SetLuksKeyStore sets the LUKS key store for stream-based key operations.
@@ -524,7 +504,7 @@ func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, s
 
 	args := []string{"-c", script}
 	if params.RunAsRoot {
-		r, err := executorRunner.Stream(ctx, sysexec.Command{
+		r, err := e.runnerOrDirect().Stream(ctx, sysexec.Command{
 			Name:     interpreter,
 			Args:     args,
 			Env:      envVars,
@@ -548,7 +528,7 @@ func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, s
 // otherwise the first non-zero exit so the action result can still
 // drive the changed/failed bookkeeping in executeShellStreaming.
 func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellParams, interpreter string, args []string, envVars []string, callback OutputCallback) (*pb.CommandOutput, error) {
-	sessions, err := desktopMgr.ActiveSessions(ctx)
+	sessions, err := e.deps.desktop.ActiveSessions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("enumerate active desktop sessions: %w", err)
 	}
@@ -578,7 +558,7 @@ func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellPa
 				callback(streamType, userPrefix+line, seq)
 			}
 		}
-		out, runErr := runAsUserStreaming(ctx, s, extraEnv, params.WorkingDirectory, interpreter, args, wrappedCB)
+		out, runErr := e.runAsUserStreaming(ctx, s, extraEnv, params.WorkingDirectory, interpreter, args, wrappedCB)
 		if out != nil {
 			if out.Stdout != "" {
 				merged.Stdout += userPrefix + out.Stdout

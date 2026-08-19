@@ -98,6 +98,7 @@ func sshEffectiveUsers(params *pb.SshParams) []string {
 // executeSsh configures SSH access via an sshd_config.d drop-in file with a Match Group directive.
 // Each action creates a Linux group cadestro-ssh-{actionId} and users are added to the group.
 func (e *Executor) executeSsh(ctx context.Context, params *pb.SshParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("ssh params required")
 	}
@@ -156,7 +157,7 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 
 	// Check idempotency: file content + group membership
 	fileMatches := e.configMatchesDesired(ctx, configPath, content)
-	membersMatch := sudoGroupMembersMatch(ctx, groupName, users)
+	membersMatch := e.sudoGroupMembersMatch(ctx, groupName, users)
 	if fileMatches && membersMatch {
 		output.WriteString(fmt.Sprintf("SSH config already up to date: %s\n", configPath))
 		return &pb.CommandOutput{
@@ -170,12 +171,12 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 	}
 
 	// Ensure group exists
-	gExists, err := groupExists(ctx, groupName)
+	gExists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", groupName, err)
 	}
 	if !gExists {
-		if err := userMgr.GroupCreate(ctx, groupName, sysuser.GroupCreateOptions{}); err != nil {
+		if err := e.deps.user.GroupCreate(ctx, groupName, sysuser.GroupCreateOptions{}); err != nil {
 			return nil, false, fmt.Errorf("create group %s: %v", groupName, err)
 		}
 		output.WriteString(fmt.Sprintf("created group: %s\n", groupName))
@@ -185,7 +186,7 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 	// Write sshd config file with validation
 	if !fileMatches {
 		// Ensure /etc/ssh/sshd_config.d exists
-		if err := createDirectory(ctx, "/etc/ssh/sshd_config.d", true); err != nil {
+		if err := e.createDirectory(ctx, "/etc/ssh/sshd_config.d", true); err != nil {
 			return nil, false, fmt.Errorf("create sshd_config.d: %w", err)
 		}
 		if out, err := e.writeAndValidateConfig(ctx, configPath, content, "0644", "root", "root", "sshd", "-t"); err != nil {
@@ -193,11 +194,11 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 		}
 		output.WriteString(fmt.Sprintf("wrote SSH config: %s\n", configPath))
 		changed = true
-		reloadSshd(ctx, &output)
+		e.reloadSshd(ctx, &output)
 	}
 
 	// Sync group membership
-	if memberChanged, err := syncGroupMembers(ctx, groupName, users, &output); err != nil {
+	if memberChanged, err := e.syncGroupMembers(ctx, groupName, users, &output); err != nil {
 		return &pb.CommandOutput{ExitCode: 1, Stdout: output.String(), Stderr: err.Error()}, changed, err
 	} else if memberChanged {
 		changed = true
@@ -223,7 +224,7 @@ func (e *Executor) removeSshAccess(ctx context.Context, groupName, configPath st
 
 	// Reload sshd after removing the config drop-in
 	if changed {
-		reloadSshd(ctx, &output)
+		e.reloadSshd(ctx, &output)
 	}
 
 	if !changed {
@@ -238,10 +239,10 @@ func (e *Executor) removeSshAccess(ctx context.Context, groupName, configPath st
 
 // configMatchesDesired checks if a config file already has the desired content.
 func (e *Executor) configMatchesDesired(ctx context.Context, path, desiredContent string) bool {
-	if !fileExistsWithSudo(ctx, path) {
+	if !e.fileExistsWithSudo(ctx, path) {
 		return false
 	}
-	existing, err := readFileWithSudo(ctx, path)
+	existing, err := e.readFileWithSudo(ctx, path)
 	if err != nil {
 		return false
 	}
@@ -250,6 +251,7 @@ func (e *Executor) configMatchesDesired(ctx context.Context, path, desiredConten
 
 // executeSshd configures the SSH daemon via sshd_config.d drop-in files.
 func (e *Executor) executeSshd(ctx context.Context, params *pb.SshdParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("sshd params required")
 	}
@@ -315,7 +317,7 @@ func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, c
 	}
 
 	// Ensure /etc/ssh/sshd_config.d exists
-	if err := createDirectory(ctx, "/etc/ssh/sshd_config.d", true); err != nil {
+	if err := e.createDirectory(ctx, "/etc/ssh/sshd_config.d", true); err != nil {
 		return nil, false, fmt.Errorf("create sshd_config.d: %w", err)
 	}
 
@@ -324,7 +326,7 @@ func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, c
 	}
 	output.WriteString(fmt.Sprintf("created SSHD config: %s\n", configPath))
 
-	reloadSshd(ctx, &output)
+	e.reloadSshd(ctx, &output)
 
 	return &pb.CommandOutput{
 		ExitCode: 0,
@@ -336,7 +338,7 @@ func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, c
 func (e *Executor) removeSshdConfig(ctx context.Context, configPath string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 
-	if !fileExistsWithSudo(ctx, configPath) {
+	if !e.fileExistsWithSudo(ctx, configPath) {
 		output.WriteString(fmt.Sprintf("SSHD config does not exist: %s\n", configPath))
 		return &pb.CommandOutput{
 			ExitCode: 0,
@@ -348,11 +350,11 @@ func (e *Executor) removeSshdConfig(ctx context.Context, configPath string) (*pb
 		return out, false, err
 	}
 
-	if err := removeFileStrict(ctx, configPath); err != nil {
+	if err := e.removeFileStrict(ctx, configPath); err != nil {
 		return nil, false, fmt.Errorf("remove sshd config: %w", err)
 	}
 	output.WriteString(fmt.Sprintf("removed SSHD config: %s\n", configPath))
-	reloadSshd(ctx, &output)
+	e.reloadSshd(ctx, &output)
 
 	return &pb.CommandOutput{
 		ExitCode: 0,

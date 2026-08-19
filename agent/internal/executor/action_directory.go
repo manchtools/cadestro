@@ -13,6 +13,7 @@ import (
 )
 
 func (e *Executor) executeDirectory(ctx context.Context, params *pb.DirectoryParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("directory params required")
 	}
@@ -58,7 +59,7 @@ func (e *Executor) executeDirectory(ctx context.Context, params *pb.DirectoryPar
 		}
 
 		// Create directory with permissions (handles mkdir, chmod, and chown)
-		if err := createDirectoryWithPermissions(ctx, cleanPath, params.Mode, params.Owner, params.Group, params.Recursive); err != nil {
+		if err := e.createDirectoryWithPermissions(ctx, cleanPath, params.Mode, params.Owner, params.Group, params.Recursive); err != nil {
 			return nil, false, err
 		}
 
@@ -84,7 +85,7 @@ func (e *Executor) executeDirectory(ctx context.Context, params *pb.DirectoryPar
 		}
 
 		// Check if directory already doesn't exist
-		if !fileExistsWithSudo(ctx, cleanPath) {
+		if !e.fileExistsWithSudo(ctx, cleanPath) {
 			return &pb.CommandOutput{
 				ExitCode: 0,
 				Stdout:   fmt.Sprintf("directory %s does not exist, nothing to remove", cleanPath),
@@ -97,7 +98,7 @@ func (e *Executor) executeDirectory(ctx context.Context, params *pb.DirectoryPar
 		}
 
 		// Remove directory (use -r for recursive removal if it has contents)
-		if err := removeDirectory(ctx, cleanPath); err != nil {
+		if err := e.removeDirectory(ctx, cleanPath); err != nil {
 			return nil, false, fmt.Errorf("remove directory: %w", err)
 		}
 		return &pb.CommandOutput{

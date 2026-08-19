@@ -38,6 +38,7 @@ func TestComplianceShellWithoutDetectionScriptFailsClosed(t *testing.T) {
 	executorRunner = rec
 
 	e := NewExecutor(nil)
+	e.runner = rec
 	execOut, detectionOut, changed, err := e.executeShellStreaming(context.Background(), &pb.ShellParams{
 		IsCompliance:    true,
 		Script:          "touch /tmp/cadestro-compliance-remediation-must-never-run",
@@ -68,6 +69,7 @@ func TestComplianceShellRunsDetectionOnly(t *testing.T) {
 		remediation = "touch /tmp/cadestro-compliance-remediation-must-never-run"
 	)
 	e := NewExecutor(nil)
+	e.runner = rec
 	execOut, detectionOut, changed, err := e.executeShellStreaming(context.Background(), &pb.ShellParams{
 		IsCompliance:    true,
 		Script:          remediation,
@@ -95,6 +97,7 @@ func TestComplianceShellReportsNotCompliantWhenDetectionCannotRun(t *testing.T) 
 	executorRunner = failingBaseRunner{}
 
 	e := NewExecutor(nil)
+	e.runner = failingBaseRunner{}
 	result := e.ExecuteAction(context.Background(), &pb.Action{
 		Id:   &pb.ActionId{Value: "01J0000000000000000000000A"},
 		Type: pb.ActionType_ACTION_TYPE_SHELL,

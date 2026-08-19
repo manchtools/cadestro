@@ -44,12 +44,10 @@ func (u *fakeEnsureHomeUser) EnsureHome(_ context.Context, name string, opts sys
 	return u.err
 }
 
-func swapHomeMgrs(t *testing.T, fs *fakeExistsFS, usr *fakeEnsureHomeUser) {
+func swapHomeMgrs(t *testing.T, e *Executor, fs *fakeExistsFS, usr *fakeEnsureHomeUser) {
 	t.Helper()
-	prevFS, prevUser := fsMgr, userMgr
-	t.Cleanup(func() { fsMgr = prevFS; userMgr = prevUser })
-	fsMgr = fs
-	userMgr = usr
+	e.deps.fs = fs
+	e.deps.user = usr
 }
 
 // TestEnsureHomeIfMissing_ProbeErrorFailsClosed is the core fail-closed
@@ -63,10 +61,10 @@ func swapHomeMgrs(t *testing.T, fs *fakeExistsFS, usr *fakeEnsureHomeUser) {
 func TestEnsureHomeIfMissing_ProbeErrorFailsClosed(t *testing.T) {
 	fs := &fakeExistsFS{err: errors.New("permission denied")}
 	usr := &fakeEnsureHomeUser{}
-	swapHomeMgrs(t, fs, usr)
+	e := NewExecutor(nil)
+	swapHomeMgrs(t, e, fs, usr)
 
 	var out strings.Builder
-	e := &Executor{}
 	changed := e.ensureHomeIfMissing(context.Background(),
 		&pb.UserParams{Username: "alice", CreateHome: true}, "", &out)
 
@@ -87,10 +85,10 @@ func TestEnsureHomeIfMissing_ProbeErrorFailsClosed(t *testing.T) {
 func TestEnsureHomeIfMissing_MissingCreatesWithOwnershipAndMode(t *testing.T) {
 	fs := &fakeExistsFS{ok: false}
 	usr := &fakeEnsureHomeUser{}
-	swapHomeMgrs(t, fs, usr)
+	e := NewExecutor(nil)
+	swapHomeMgrs(t, e, fs, usr)
 
 	var out strings.Builder
-	e := &Executor{}
 	changed := e.ensureHomeIfMissing(context.Background(),
 		&pb.UserParams{Username: "alice", PrimaryGroup: "staff", CreateHome: true}, "", &out)
 
@@ -121,10 +119,10 @@ func TestEnsureHomeIfMissing_MissingCreatesWithOwnershipAndMode(t *testing.T) {
 func TestEnsureHomeIfMissing_PresentIsIdempotent(t *testing.T) {
 	fs := &fakeExistsFS{ok: true}
 	usr := &fakeEnsureHomeUser{}
-	swapHomeMgrs(t, fs, usr)
+	e := NewExecutor(nil)
+	swapHomeMgrs(t, e, fs, usr)
 
 	var out strings.Builder
-	e := &Executor{}
 	changed := e.ensureHomeIfMissing(context.Background(),
 		&pb.UserParams{Username: "alice", CreateHome: true}, "", &out)
 
@@ -141,10 +139,10 @@ func TestEnsureHomeIfMissing_PresentIsIdempotent(t *testing.T) {
 func TestEnsureHomeIfMissing_NoCreateHomeSkipsProbe(t *testing.T) {
 	fs := &fakeExistsFS{ok: false}
 	usr := &fakeEnsureHomeUser{}
-	swapHomeMgrs(t, fs, usr)
+	e := NewExecutor(nil)
+	swapHomeMgrs(t, e, fs, usr)
 
 	var out strings.Builder
-	e := &Executor{}
 	changed := e.ensureHomeIfMissing(context.Background(),
 		&pb.UserParams{Username: "alice", CreateHome: false}, "", &out)
 
@@ -177,10 +175,10 @@ func TestEnsureHomeIfMissing_HomeDirResolution(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fs := &fakeExistsFS{ok: true} // present -> just exercise the path resolution + probe
 			usr := &fakeEnsureHomeUser{}
-			swapHomeMgrs(t, fs, usr)
+			e := NewExecutor(nil)
+			swapHomeMgrs(t, e, fs, usr)
 
 			var out strings.Builder
-			e := &Executor{}
 			e.ensureHomeIfMissing(context.Background(),
 				&pb.UserParams{Username: "alice", HomeDir: tc.homeDir, CreateHome: true}, tc.currentHome, &out)
 

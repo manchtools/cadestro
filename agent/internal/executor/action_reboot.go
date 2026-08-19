@@ -11,6 +11,7 @@ import (
 
 // executeReboot schedules a system reboot in 5 minutes.
 func (e *Executor) executeReboot(ctx context.Context) (*pb.CommandOutput, error) {
+	e.ensureDeps()
 	// Fail closed when this executor has no privilege runner (the
 	// NewExecutor(nil) unit-test convention). Without this, a test that
 	// dispatches a REBOOT action through a real handler+executor would
@@ -25,7 +26,7 @@ func (e *Executor) executeReboot(ctx context.Context) (*pb.CommandOutput, error)
 	}
 
 	// Best-effort heads-up to logged-in users; never block the reboot on it.
-	notifyAll(ctx, "System Reboot", "This system will reboot in 5 minutes. Please save your work.")
+	e.notifyAll(ctx, "System Reboot", "This system will reboot in 5 minutes. Please save your work.")
 
 	rb, err := sysreboot.New(e.runner)
 	if err != nil {

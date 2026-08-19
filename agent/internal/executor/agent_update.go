@@ -85,6 +85,7 @@ func (e *Executor) markAgentUpdateExecuted() bool {
 // published. This is an intentional trade-off: retry frequency is governed
 // entirely by the admin's schedule, the old binary is never replaced.
 func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdateParams) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	cfg := e.updateCfg
 	if cfg == nil {
 		return nil, false, fmt.Errorf("agent update not configured")
@@ -150,7 +151,7 @@ func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdat
 	}
 
 	// Step 6: Run version command on downloaded binary
-	newVersion, err := getBinaryVersion(tmpPath)
+	newVersion, err := e.getBinaryVersion(tmpPath)
 	if err != nil {
 		return nil, false, fmt.Errorf("version check on downloaded binary: %w", err)
 	}
@@ -191,7 +192,7 @@ func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdat
 	defer selfTestCancel()
 
 	e.logger.Info("running self-test on new binary", "path", tmpPath)
-	selfTestResult, selfTestErr := executorRunner.Run(selfTestCtx, sysexec.Command{
+	selfTestResult, selfTestErr := e.runnerOrDirect().Run(selfTestCtx, sysexec.Command{
 		Name: tmpPath,
 		Args: []string{"self-test", "--data-dir=" + cfg.DataDir, "--timeout=55s"},
 	})
@@ -256,7 +257,7 @@ func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdat
 	// fs.Manager.WriteFile with Backup set copies the live binary → .bak
 	// (clobbering an existing .bak) and writes the new binary atomically over the
 	// live path — the same crash-safe backup-then-replace SafeBackupAndReplace did.
-	if err := fsMgr.WriteFile(ctx, cfg.BinaryPath, newBinary, sysfs.WriteOptions{Mode: 0o755, Backup: bakPath}); err != nil {
+	if err := e.deps.fs.WriteFile(ctx, cfg.BinaryPath, newBinary, sysfs.WriteOptions{Mode: 0o755, Backup: bakPath}); err != nil {
 		return nil, false, fmt.Errorf("swap binary at %s: %w", cfg.BinaryPath, err)
 	}
 
@@ -268,7 +269,7 @@ func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdat
 	// binary swap; the new binary's startup reconcile retries after the
 	// respawn and the drift stays loud there.
 	unitCtx, unitCancel := context.WithTimeout(ctx, 30*time.Second)
-	unitRes, unitErr := executorRunner.Run(unitCtx, sysexec.Command{
+	unitRes, unitErr := e.runnerOrDirect().Run(unitCtx, sysexec.Command{
 		Name: cfg.BinaryPath,
 		Args: []string{"install-unit", "--data-dir=" + cfg.DataDir},
 	})
@@ -501,10 +502,10 @@ func getArchEntry(params *pb.AgentUpdateParams) *pb.AgentUpdateArch {
 }
 
 // getBinaryVersion runs the binary with "version" subcommand and returns the trimmed output.
-func getBinaryVersion(binaryPath string) (string, error) {
+func (e *Executor) getBinaryVersion(binaryPath string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	result, err := executorRunner.Run(ctx, sysexec.Command{Name: binaryPath, Args: []string{"version"}})
+	result, err := e.runnerOrDirect().Run(ctx, sysexec.Command{Name: binaryPath, Args: []string{"version"}})
 	if err != nil {
 		return "", fmt.Errorf("run %s version: %w", binaryPath, err)
 	}

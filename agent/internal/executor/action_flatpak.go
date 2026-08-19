@@ -13,6 +13,7 @@ import (
 )
 
 func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("flatpak params required")
 	}
@@ -59,8 +60,8 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 // selects the per-user installation. This composes desktop.RunAsRunner +
 // pkg.Flatpak so the agent no longer hand-builds `runuser … flatpak --user`
 // command lines (SDK gap 7).
-func newPerUserFlatpak(s desktop.Session) (pkg.Manager, error) {
-	ru, err := desktop.RunAsRunner(executorRunner, s)
+func (e *Executor) newPerUserFlatpak(s desktop.Session) (pkg.Manager, error) {
+	ru, err := desktop.RunAsRunner(e.runnerOrDirect(), s)
 	if err != nil {
 		return nil, fmt.Errorf("build run-as runner for %s: %w", s.Username, err)
 	}
@@ -72,7 +73,7 @@ func newPerUserFlatpak(s desktop.Session) (pkg.Manager, error) {
 // configured runner). The explicit remote is honored through InstallOptions
 // (SDK gap 6), and pin/unpin go through Pin/IsPinned/Unpin.
 func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakParams, state pb.DesiredState, remote string) (*pb.CommandOutput, bool, error) {
-	mgr, err := pkg.New(pkg.Flatpak, executorRunner)
+	mgr, err := pkg.New(pkg.Flatpak, e.runnerOrDirect())
 	if err != nil {
 		return nil, false, fmt.Errorf("build flatpak manager: %w", err)
 	}
@@ -180,7 +181,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.FlatpakParams, state pb.DesiredState, remote string) (*pb.CommandOutput, bool, error) {
 	switch state {
 	case pb.DesiredState_DESIRED_STATE_PRESENT:
-		sessions, err := desktopMgr.ActiveSessions(ctx)
+		sessions, err := e.deps.desktop.ActiveSessions(ctx)
 		if err != nil {
 			return nil, false, fmt.Errorf("enumerate active desktop sessions: %w", err)
 		}
@@ -211,7 +212,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 				perUserOut.WriteString("\n")
 			}
 
-			umgr, mkErr := newPerUserFlatpak(s)
+			umgr, mkErr := e.newPerUserFlatpak(s)
 			if mkErr != nil {
 				if firstFailure == nil {
 					firstFailure = fmt.Errorf("user %s: %w", s.Username, mkErr)
@@ -275,7 +276,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 		return &pb.CommandOutput{Stdout: perUserOut.String()}, anyChanged, firstFailure
 
 	case pb.DesiredState_DESIRED_STATE_ABSENT:
-		users, err := desktopMgr.UsersWithFlatpakInstall(ctx, params.AppId)
+		users, err := e.deps.desktop.UsersWithFlatpakInstall(ctx, params.AppId)
 		if err != nil {
 			return nil, false, fmt.Errorf("enumerate per-user flatpak installs: %w", err)
 		}
@@ -300,7 +301,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 			perUserOut.WriteString(u.Username)
 			perUserOut.WriteString(": ")
 
-			umgr, mkErr := newPerUserFlatpak(u)
+			umgr, mkErr := e.newPerUserFlatpak(u)
 			if mkErr != nil {
 				if firstFailure == nil {
 					firstFailure = fmt.Errorf("user %s: %w", u.Username, mkErr)
@@ -361,7 +362,7 @@ func ensureFlatpakPinned(ctx context.Context, mgr pkg.Manager, appID string) (bo
 // consistent installation state and Update refreshes appstream metadata
 // (flatpak update --appstream).
 func (e *Executor) repairFlatpak(ctx context.Context) {
-	mgr, err := pkg.New(pkg.Flatpak, executorRunner)
+	mgr, err := pkg.New(pkg.Flatpak, e.runnerOrDirect())
 	if err != nil {
 		e.logger.Warn("repairFlatpak: build flatpak manager failed", "error", err)
 		return

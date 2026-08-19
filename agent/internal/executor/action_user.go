@@ -16,6 +16,7 @@ import (
 
 // executeUser manages user accounts (create, update, disable, remove).
 func (e *Executor) executeUser(ctx context.Context, params *pb.UserParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, nil, fmt.Errorf("user params required")
 	}
@@ -85,7 +86,7 @@ func homeGroupFor(params *pb.UserParams) string {
 // NOT from this path — so the path here only selects which location the
 // read-only Exists probe checks; it is never a write target.
 //
-// The presence probe fails CLOSED: if fsMgr.Exists cannot determine whether the
+// The presence probe fails CLOSED: if e.deps.fs.Exists cannot determine whether the
 // home exists (an I/O / permission error rather than a clean "no such file"),
 // the state is indeterminate, so we surface a warning and skip EnsureHome rather
 // than treating the error as "missing". Swallowing the probe error would invert
@@ -103,7 +104,7 @@ func (e *Executor) ensureHomeIfMissing(ctx context.Context, params *pb.UserParam
 	if homeDir == "" {
 		homeDir = "/home/" + params.Username
 	}
-	ok, err := fsMgr.Exists(ctx, homeDir)
+	ok, err := e.deps.fs.Exists(ctx, homeDir)
 	if err != nil {
 		output.WriteString(fmt.Sprintf("warning: could not check home directory %s: %v\n", homeDir, err))
 		return false
@@ -114,7 +115,7 @@ func (e *Executor) ensureHomeIfMissing(ctx context.Context, params *pb.UserParam
 	// Home is missing (a prior run failed, or the account was created with -M).
 	// EnsureHome resolves the home from the user's passwd entry, which any
 	// preceding Modify has already set to the desired path.
-	if hErr := userMgr.EnsureHome(ctx, params.Username, sysuser.EnsureHomeOptions{Group: homeGroupFor(params), Mode: 0o700}); hErr != nil {
+	if hErr := e.deps.user.EnsureHome(ctx, params.Username, sysuser.EnsureHomeOptions{Group: homeGroupFor(params), Mode: 0o700}); hErr != nil {
 		output.WriteString(fmt.Sprintf("warning: failed to create home directory: %v\n", hErr))
 		return false
 	}
@@ -124,7 +125,7 @@ func (e *Executor) ensureHomeIfMissing(ctx context.Context, params *pb.UserParam
 
 func (e *Executor) createOrUpdateUser(ctx context.Context, params *pb.UserParams, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
 	var output strings.Builder
-	exists, err := userExists(ctx, params.Username)
+	exists, err := e.userExists(ctx, params.Username)
 	if err != nil {
 		return nil, false, nil, fmt.Errorf("check user %s: %w", params.Username, err)
 	}
@@ -175,14 +176,14 @@ func (e *Executor) createUser(ctx context.Context, params *pb.UserParams, action
 	if params.Gid > 0 {
 		opts.PrimaryGroup = fmt.Sprintf("%d", params.Gid)
 	} else if params.PrimaryGroup != "" {
-		if err := userMgr.GroupEnsure(ctx, params.PrimaryGroup); err != nil {
+		if err := e.deps.user.GroupEnsure(ctx, params.PrimaryGroup); err != nil {
 			e.logger.Warn("failed to ensure primary group exists", "group", params.PrimaryGroup, "error", err)
 		}
 		opts.PrimaryGroup = params.PrimaryGroup
 	}
 
 	// Create the user via the SDK user Manager.
-	if err := userMgr.Create(ctx, params.Username, opts); err != nil {
+	if err := e.deps.user.Create(ctx, params.Username, opts); err != nil {
 		output.WriteString(err.Error())
 		return &pb.CommandOutput{ExitCode: 1, Stderr: output.String()}, nil, fmt.Errorf("failed to create user: %w", err)
 	}
@@ -204,11 +205,11 @@ func (e *Executor) createUser(ctx context.Context, params *pb.UserParams, action
 			output.WriteString(fmt.Sprintf("warning: failed to generate temporary password: %v\n", err))
 		} else {
 			// Set password
-			if chpasswdErr := userMgr.SetPassword(ctx, params.Username, tempPassword); chpasswdErr != nil {
+			if chpasswdErr := e.deps.user.SetPassword(ctx, params.Username, tempPassword); chpasswdErr != nil {
 				output.WriteString(fmt.Sprintf("warning: failed to set temporary password: %v\n", chpasswdErr))
 			} else {
 				// Force password change on first login
-				if chageErr := userMgr.ExpirePassword(ctx, params.Username); chageErr != nil {
+				if chageErr := e.deps.user.ExpirePassword(ctx, params.Username); chageErr != nil {
 					output.WriteString(fmt.Sprintf("warning: failed to expire password: %v\n", chageErr))
 				}
 				output.WriteString(fmt.Sprintf("temporary password set for %s (must be changed on first login)\n", params.Username))
@@ -244,18 +245,18 @@ func (e *Executor) createUser(ctx context.Context, params *pb.UserParams, action
 	// passwordless account and no-ops on an already-unlocked (password-bearing)
 	// one — never an empty, login-able password. Mirrors updateUser's reconcile.
 	if desiredAccountLocked(params) {
-		if lockErr := userMgr.Lock(ctx, params.Username); lockErr != nil {
+		if lockErr := e.deps.user.Lock(ctx, params.Username); lockErr != nil {
 			output.WriteString(fmt.Sprintf("warning: failed to lock user account: %v\n", lockErr))
 		} else {
 			output.WriteString("account locked (disabled)\n")
 		}
-	} else if unlockErr := userMgr.Unlock(ctx, params.Username); unlockErr != nil {
+	} else if unlockErr := e.deps.user.Unlock(ctx, params.Username); unlockErr != nil {
 		output.WriteString(fmt.Sprintf("warning: failed to unlock user account: %v\n", unlockErr))
 	}
 
 	// Hide from login screen if requested
 	if params.Hidden {
-		setUserHidden(ctx, params.Username, true, output)
+		e.setUserHidden(ctx, params.Username, true, output)
 	}
 
 	return &pb.CommandOutput{ExitCode: 0, Stdout: output.String()}, metadata, nil
@@ -293,7 +294,7 @@ func desiredAccountLocked(params *pb.UserParams) bool {
 // updateUser modifies an existing user account.
 func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output *strings.Builder) (*pb.CommandOutput, bool, error) {
 	// Get current user state
-	currentInfo, err := userMgr.Get(ctx, params.Username)
+	currentInfo, err := e.deps.user.Get(ctx, params.Username)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to get current user info: %w", err)
 	}
@@ -352,7 +353,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 		needModify = true
 		output.WriteString(fmt.Sprintf("gid: %d -> %d\n", currentInfo.GID, params.Gid))
 	} else if params.PrimaryGroup != "" {
-		if err := userMgr.GroupEnsure(ctx, params.PrimaryGroup); err != nil {
+		if err := e.deps.user.GroupEnsure(ctx, params.PrimaryGroup); err != nil {
 			e.logger.Warn("failed to ensure primary group exists for usermod", "group", params.PrimaryGroup, "error", err)
 		}
 		// Only modify when the requested primary group differs from the user's
@@ -368,7 +369,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 
 	// Apply usermod if we have changes
 	if needModify {
-		if err := userMgr.Modify(ctx, params.Username, modOpts); err != nil {
+		if err := e.deps.user.Modify(ctx, params.Username, modOpts); err != nil {
 			output.WriteString(err.Error())
 			return &pb.CommandOutput{ExitCode: 1, Stderr: output.String()}, false, fmt.Errorf("failed to update user: %w", err)
 		}
@@ -397,7 +398,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 	desiredLocked := desiredAccountLocked(params)
 	if desiredLocked != currentInfo.Locked {
 		if desiredLocked {
-			if err := userMgr.Lock(ctx, params.Username); err != nil {
+			if err := e.deps.user.Lock(ctx, params.Username); err != nil {
 				output.WriteString(fmt.Sprintf("warning: failed to lock user: %v\n", err))
 			} else {
 				if currentInfo.UID == 0 {
@@ -414,7 +415,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 				changed = true
 			}
 		} else {
-			if err := userMgr.Unlock(ctx, params.Username); err != nil {
+			if err := e.deps.user.Unlock(ctx, params.Username); err != nil {
 				output.WriteString(fmt.Sprintf("warning: failed to unlock user: %v\n", err))
 			} else {
 				output.WriteString("account unlocked\n")
@@ -435,7 +436,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 	}
 
 	// Hide/show on login screen
-	if setUserHidden(ctx, params.Username, params.Hidden, output) {
+	if e.setUserHidden(ctx, params.Username, params.Hidden, output) {
 		changed = true
 	}
 
@@ -449,7 +450,7 @@ func (e *Executor) updateUser(ctx context.Context, params *pb.UserParams, output
 // removeUser removes a user account from the system.
 // Returns the command output, whether changes were made, and any error.
 func (e *Executor) removeUser(ctx context.Context, username string) (*pb.CommandOutput, bool, error) {
-	uExists, err := userExists(ctx, username)
+	uExists, err := e.userExists(ctx, username)
 	if err != nil {
 		return nil, false, fmt.Errorf("check user %s: %w", username, err)
 	}
@@ -462,19 +463,19 @@ func (e *Executor) removeUser(ctx context.Context, username string) (*pb.Command
 	}
 
 	// Kill all processes and sessions for this user before removal
-	killUserSessions(ctx, username)
+	e.killUserSessions(ctx, username)
 
 	// Clean up AccountsService override if present
-	removeAccountsServiceFile(ctx, username)
+	e.removeAccountsServiceFile(ctx, username)
 
 	// Remove user and their home directory
-	err = userMgr.Delete(ctx, username, sysuser.DeleteOptions{RemoveHome: true})
+	err = e.deps.user.Delete(ctx, username, sysuser.DeleteOptions{RemoveHome: true})
 	if err != nil {
 		// userdel -r can report an error when only the home directory was missing
 		// yet the account was removed. Confirm via Exists — but if THAT probe
 		// also fails we cannot claim success (the zero value would read
 		// exists=false and mask an unknown state), so surface the original error.
-		exists, existsErr := userMgr.Exists(ctx, username)
+		exists, existsErr := e.deps.user.Exists(ctx, username)
 		if existsErr == nil && !exists {
 			return &pb.CommandOutput{
 				ExitCode: 0,
@@ -508,8 +509,8 @@ const accountsServiceHiddenContent = "[User]\nSystemAccount=true\n"
 // "not installed" error; idempotency (no change when already in the desired
 // state); and, on unhide, only remove an override that matches what the SDK
 // writes (don't delete a foreign override). Returns whether a change was made.
-func setUserHidden(ctx context.Context, username string, hidden bool, output *strings.Builder) bool {
-	if !fileExistsWithSudo(ctx, accountsServiceDir) {
+func (e *Executor) setUserHidden(ctx context.Context, username string, hidden bool, output *strings.Builder) bool {
+	if !e.fileExistsWithSudo(ctx, accountsServiceDir) {
 		return false // AccountsService not installed (headless), skip silently
 	}
 
@@ -517,12 +518,12 @@ func setUserHidden(ctx context.Context, username string, hidden bool, output *st
 	// "hidden, written by us". (existing==content)==hidden ⇒ already converged;
 	// and on unhide a non-matching/foreign file reads as "not hidden", so we skip
 	// rather than remove it.
-	existing, _ := readFileWithSudo(ctx, accountsServiceDir+"/"+username)
+	existing, _ := e.readFileWithSudo(ctx, accountsServiceDir+"/"+username)
 	if (existing == accountsServiceHiddenContent) == hidden {
 		return false
 	}
 
-	if err := userMgr.SetHiddenOnLoginScreen(ctx, username, hidden); err != nil {
+	if err := e.deps.user.SetHiddenOnLoginScreen(ctx, username, hidden); err != nil {
 		verb := "hide"
 		if !hidden {
 			verb = "unhide"
@@ -541,8 +542,8 @@ func setUserHidden(ctx context.Context, username string, hidden bool, output *st
 // removeAccountsServiceFile removes the AccountsService override for a user during
 // user deletion, via the SDK (SetHiddenOnLoginScreen(false) is an rm -f that
 // no-ops when the override is absent).
-func removeAccountsServiceFile(ctx context.Context, username string) {
-	_ = userMgr.SetHiddenOnLoginScreen(ctx, username, false)
+func (e *Executor) removeAccountsServiceFile(ctx context.Context, username string) {
+	_ = e.deps.user.SetHiddenOnLoginScreen(ctx, username, false)
 }
 
 // setupSSHKeys configures SSH authorized keys for a user.
@@ -591,17 +592,17 @@ func (e *Executor) setupSSHKeys(ctx context.Context, params *pb.UserParams, outp
 	desiredContent := keysContent.String()
 
 	// Check if authorized_keys already has the desired content (idempotency)
-	existing, _ := readFileWithSudo(ctx, authKeysFile)
+	existing, _ := e.readFileWithSudo(ctx, authKeysFile)
 	if existing == desiredContent {
 		return false, nil
 	}
 
 	// Create .ssh directory via the SDK fs manager (privilege-keyed, like the
-	// fsMgr.WriteFile below) instead of a raw `sudo mkdir`. No Mode is set on
+	// e.deps.fs.WriteFile below) instead of a raw `sudo mkdir`. No Mode is set on
 	// purpose: MkdirOptions.Mode chmods by PATH, which would follow a
 	// user-planted ~/.ssh symlink — the very class the OpenRealDir + fd-chmod
 	// below close. The 0700 mode is applied through the O_NOFOLLOW FD.
-	if err := fsMgr.Mkdir(ctx, sshDir, sysfs.MkdirOptions{Recursive: true}); err != nil {
+	if err := e.deps.fs.Mkdir(ctx, sshDir, sysfs.MkdirOptions{Recursive: true}); err != nil {
 		return false, fmt.Errorf("failed to create .ssh directory: %w", err)
 	}
 
@@ -646,7 +647,7 @@ func (e *Executor) setupSSHKeys(ctx context.Context, params *pb.UserParams, outp
 	// and the rename-side of the symlink race. The agent runs as root
 	// (post root-mode rewire), so it can write to the user's home
 	// directly without a sudo'd helper.
-	if err := fsMgr.WriteFile(ctx, authKeysFile, []byte(desiredContent), sysfs.WriteOptions{Mode: 0o600}); err != nil {
+	if err := e.deps.fs.WriteFile(ctx, authKeysFile, []byte(desiredContent), sysfs.WriteOptions{Mode: 0o600}); err != nil {
 		return false, fmt.Errorf("failed to write authorized_keys: %w", err)
 	}
 
@@ -669,12 +670,12 @@ func (e *Executor) setupSSHKeys(ctx context.Context, params *pb.UserParams, outp
 
 // reloadSshd reloads the sshd service, falling back to the "ssh" service name
 // for Debian/Ubuntu. Writes the result to output.
-func reloadSshd(ctx context.Context, output *strings.Builder) {
+func (e *Executor) reloadSshd(ctx context.Context, output *strings.Builder) {
 	// Reload via the SDK service Manager, falling back to the Debian/Ubuntu
 	// "ssh" unit name when "sshd" is not the unit on this host.
-	err := serviceMgr.Reload(ctx, "sshd")
+	err := e.deps.service.Reload(ctx, "sshd")
 	if err != nil {
-		err = serviceMgr.Reload(ctx, "ssh")
+		err = e.deps.service.Reload(ctx, "ssh")
 	}
 	if err != nil {
 		output.WriteString("warning: failed to reload sshd\n")

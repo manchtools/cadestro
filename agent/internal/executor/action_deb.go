@@ -26,6 +26,7 @@ import (
 var validDebPkgName = regexp.MustCompile(`^[a-z0-9][a-z0-9+.-]*$`)
 
 func (e *Executor) executeDeb(ctx context.Context, params *pb.AppInstallParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("app params required")
 	}

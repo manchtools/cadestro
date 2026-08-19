@@ -34,11 +34,9 @@ func (f *fakeRootDisableUser) Modify(_ context.Context, _ string, opts sysuser.M
 	return nil
 }
 
-func swapUserMgr(t *testing.T, m sysuser.Manager) {
+func swapUserMgr(t *testing.T, e *Executor, m sysuser.Manager) {
 	t.Helper()
-	prev := userMgr
-	t.Cleanup(func() { userMgr = prev })
-	userMgr = m
+	e.deps.user = m
 }
 
 // #169 rider (operator decision 2026-07-08): disabling ROOT is
@@ -47,10 +45,11 @@ func swapUserMgr(t *testing.T, m sysuser.Manager) {
 // in the journal.
 func TestUpdateUser_DisableRoot_LockOnlyKeepsShell(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 0, Shell: "/bin/bash", Locked: false}}
-	swapUserMgr(t, fake)
-
 	var logBuf bytes.Buffer
-	e := &Executor{logger: slog.New(slog.NewTextHandler(&logBuf, nil)), now: time.Now}
+	e := NewExecutor(nil)
+	e.deps.user = fake
+	e.logger = slog.New(slog.NewTextHandler(&logBuf, nil))
+	e.now = time.Now
 
 	var out strings.Builder
 	_, changed, err := e.updateUser(context.Background(), &pb.UserParams{
@@ -80,9 +79,10 @@ func TestUpdateUser_DisableRoot_LockOnlyKeepsShell(t *testing.T) {
 // user disabled without an explicit shell still defaults to nologin.
 func TestUpdateUser_DisableRegularUser_StillDefaultsNologin(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 1000, Shell: "/bin/bash", Locked: false}}
-	swapUserMgr(t, fake)
-
-	e := &Executor{logger: slog.Default(), now: time.Now}
+	e := NewExecutor(nil)
+	swapUserMgr(t, e, fake)
+	e.logger = slog.Default()
+	e.now = time.Now
 	var out strings.Builder
 	_, _, err := e.updateUser(context.Background(), &pb.UserParams{
 		Username: "alice",
@@ -109,9 +109,10 @@ func TestUpdateUser_DisableRegularUser_StillDefaultsNologin(t *testing.T) {
 // only removes the DEFAULT, not the operator's stated intent.
 func TestUpdateUser_DisableRoot_ExplicitShellHonored(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 0, Shell: "/bin/bash", Locked: false}}
-	swapUserMgr(t, fake)
-
-	e := &Executor{logger: slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), now: time.Now}
+	e := NewExecutor(nil)
+	swapUserMgr(t, e, fake)
+	e.logger = slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil))
+	e.now = time.Now
 	var out strings.Builder
 	_, _, err := e.updateUser(context.Background(), &pb.UserParams{
 		Username: "root",
@@ -137,10 +138,11 @@ func TestUpdateUser_DisableRoot_ExplicitShellHonored(t *testing.T) {
 // lock-only treatment — no name list to maintain.
 func TestUpdateUser_DisableRenamedSuperuser_LockOnlyKeepsShell(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 0, Shell: "/bin/bash", Locked: false}}
-	swapUserMgr(t, fake)
-
 	var logBuf bytes.Buffer
-	e := &Executor{logger: slog.New(slog.NewTextHandler(&logBuf, nil)), now: time.Now}
+	e := NewExecutor(nil)
+	swapUserMgr(t, e, fake)
+	e.logger = slog.New(slog.NewTextHandler(&logBuf, nil))
+	e.now = time.Now
 
 	var out strings.Builder
 	_, changed, err := e.updateUser(context.Background(), &pb.UserParams{

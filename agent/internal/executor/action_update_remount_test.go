@@ -36,8 +36,6 @@ func (f *fakeRemountFS) RemountRW(ctx context.Context, target string) error {
 // legitimately ro and remounting them is wrong — and a writable block device is
 // untouched.
 func TestRepairFilesystem_RemountsOnlyReadOnlyBlockDevices(t *testing.T) {
-	prev := fsMgr
-	t.Cleanup(func() { fsMgr = prev })
 	fake := &fakeRemountFS{mounts: []sysfs.MountInfo{
 		{Source: "/dev/sda1", Target: "/", FSType: "ext4", ReadOnly: true},      // remount
 		{Source: "/dev/sda2", Target: "/usr", FSType: "ext4", ReadOnly: true},   // remount
@@ -46,9 +44,9 @@ func TestRepairFilesystem_RemountsOnlyReadOnlyBlockDevices(t *testing.T) {
 		{Source: "sysfs", Target: "/sys", FSType: "sysfs", ReadOnly: true},      // virtual ro -> skip
 		{Source: "tmpfs", Target: "/run", FSType: "tmpfs", ReadOnly: true},      // virtual ro -> skip
 	}}
-	fsMgr = fake
-
-	e := &Executor{logger: slog.Default()}
+	e := NewExecutor(nil)
+	e.logger = slog.Default()
+	e.deps.fs = fake
 	if ok := e.repairFilesystem(context.Background()); !ok {
 		t.Fatal("repairFilesystem reported failure though every remount succeeded")
 	}
@@ -68,14 +66,13 @@ func TestRepairFilesystem_RemountsOnlyReadOnlyBlockDevices(t *testing.T) {
 // of a read-only block device makes repairFilesystem return false, so the action
 // does not proceed as if the filesystem were writable.
 func TestRepairFilesystem_RemountFailureReportsNotAllOk(t *testing.T) {
-	prev := fsMgr
-	t.Cleanup(func() { fsMgr = prev })
-	fsMgr = &fakeRemountFS{
+	e := NewExecutor(nil)
+	e.logger = slog.Default()
+	e.deps.fs = &fakeRemountFS{
 		mounts:     []sysfs.MountInfo{{Source: "/dev/sda1", Target: "/", ReadOnly: true}},
 		remountErr: errors.New("remount: read-only file system"),
 	}
 
-	e := &Executor{logger: slog.Default()}
 	if ok := e.repairFilesystem(context.Background()); ok {
 		t.Error("a failed remount of a read-only block device must report not-all-ok (false)")
 	}

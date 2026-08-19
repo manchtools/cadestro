@@ -1,7 +1,7 @@
 // per_user.go — agent-side wrappers around sdk/go/sys/desktop's
 // per-user fan-out. The package-local helpers convert between the
 // SDK's *exec.Cmd shape and the agent's *pb.CommandOutput shape so
-// per-user execution paths match the existing runSudoCmd ergonomics
+// per-user execution paths match the existing command-helper ergonomics
 // instead of forcing every caller to learn a parallel API.
 package executor
 
@@ -18,12 +18,7 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// desktopMgr is the process-wide desktop fan-out Manager (session enumeration +
-// run-as-user). It defaults to a Direct-runner Manager and is rebuilt by
-// NewExecutor with the configured backend so loginctl probes escalate when the
-// agent is not already root. A package var so a test can substitute a fake.
-var desktopMgr = mustDesktopManager(executorRunner)
-
+// mustDesktopManager constructs the desktop capability used by one executor.
 func mustDesktopManager(r sysexec.Runner) desktop.Manager {
 	m, err := desktop.New(r)
 	if err != nil {
@@ -32,10 +27,7 @@ func mustDesktopManager(r sysexec.Runner) desktop.Manager {
 	return m
 }
 
-// serviceMgr is the process-wide systemd service Manager; rebuilt by NewExecutor
-// with the configured backend. Package var so tests can substitute a fake.
-var serviceMgr = mustServiceManager(executorRunner)
-
+// mustServiceManager constructs the service capability used by one executor.
 func mustServiceManager(r sysexec.Runner) sysservice.Manager {
 	m, err := sysservice.New(sysservice.Systemd, r)
 	if err != nil {
@@ -44,10 +36,7 @@ func mustServiceManager(r sysexec.Runner) sysservice.Manager {
 	return m
 }
 
-// networkMgr is the process-wide NetworkManager (nmcli) Manager; rebuilt by
-// NewExecutor with the configured backend. Package var so tests can substitute.
-var networkMgr = mustNetworkManager(executorRunner)
-
+// mustNetworkManager constructs the network capability used by one executor.
 func mustNetworkManager(r sysexec.Runner) network.Manager {
 	m, err := network.New(network.NetworkManager, r)
 	if err != nil {
@@ -56,10 +45,7 @@ func mustNetworkManager(r sysexec.Runner) network.Manager {
 	return m
 }
 
-// userMgr is the process-wide user/group (shadow-utils) Manager; rebuilt by
-// NewExecutor with the configured backend. Package var so tests can substitute.
-var userMgr = mustUserManager(executorRunner)
-
+// mustUserManager constructs the user capability used by one executor.
 func mustUserManager(r sysexec.Runner) sysuser.Manager {
 	m, err := sysuser.New(sysuser.ShadowUtils, r)
 	if err != nil {
@@ -68,11 +54,7 @@ func mustUserManager(r sysexec.Runner) sysuser.Manager {
 	return m
 }
 
-// fsMgr is the process-wide filesystem Manager; rebuilt by NewExecutor with the
-// configured backend. Used for ownership operations (e.g. recursive chown of a
-// new home directory). Package var so tests can substitute.
-var fsMgr = mustFSManager(executorRunner)
-
+// mustFSManager constructs the filesystem capability used by one executor.
 func mustFSManager(r sysexec.Runner) sysfs.Manager {
 	m, err := sysfs.New(r)
 	if err != nil {
@@ -81,10 +63,7 @@ func mustFSManager(r sysexec.Runner) sysfs.Manager {
 	return m
 }
 
-// encMgr is the process-wide LUKS encryption Manager; rebuilt by NewExecutor
-// with the configured backend. Package var so tests can substitute a fake.
-var encMgr = mustEncManager(executorRunner)
-
+// mustEncManager constructs the encryption capability used by one executor.
 func mustEncManager(r sysexec.Runner) sysenc.Manager {
 	m, err := sysenc.New(sysenc.LUKS, r)
 	if err != nil {
@@ -105,7 +84,7 @@ func mustEncManager(r sysexec.Runner) sysenc.Manager {
 // stream type (stdout/stderr); if the caller wants to multiplex
 // multiple users into one stream they should wrap the callback to
 // prepend a per-user prefix before forwarding.
-func runAsUserStreaming(ctx context.Context, s desktop.Session, extraEnv []string, dir string, name string, args []string, callback OutputCallback) (*pb.CommandOutput, error) {
+func (e *Executor) runAsUserStreaming(ctx context.Context, s desktop.Session, extraEnv []string, dir string, name string, args []string, callback OutputCallback) (*pb.CommandOutput, error) {
 	if name == "" {
 		return nil, errEmptyName
 	}
@@ -121,7 +100,7 @@ func runAsUserStreaming(ctx context.Context, s desktop.Session, extraEnv []strin
 	// XDG_RUNTIME_DIR/…), the curated per-user PATH (not root's), and the working
 	// directory are all owned by the SDK now — no hand-built runuser/env splicing
 	// here. extraEnv is screened + merged by RunAsRunner.
-	ru, err := desktop.RunAsRunner(executorRunner, s)
+	ru, err := desktop.RunAsRunner(e.runnerOrDirect(), s)
 	if err != nil {
 		return nil, err
 	}

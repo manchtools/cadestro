@@ -13,6 +13,7 @@ import (
 )
 
 func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("service params required")
 	}
@@ -53,7 +54,7 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 		// skip, only a redundant write at worst.
 		unitPath := filepath.Join("/etc/systemd/system", params.UnitName)
 		needsUpdate := true
-		if existingContent, err := readFileWithSudo(ctx, unitPath); err == nil {
+		if existingContent, err := e.readFileWithSudo(ctx, unitPath); err == nil {
 			existingHash := sha256.Sum256([]byte(existingContent))
 			desiredHash := sha256.Sum256([]byte(params.UnitContent))
 			if existingHash == desiredHash {
@@ -69,14 +70,14 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 			}
 
 			// Delegate systemd unit-path and content validation to the SDK.
-			if err := serviceMgr.WriteUnit(ctx, params.UnitName, params.UnitContent); err != nil {
+			if err := e.deps.service.WriteUnit(ctx, params.UnitName, params.UnitContent); err != nil {
 				return nil, false, fmt.Errorf("write unit %s: %w", params.UnitName, err)
 			}
 			output.WriteString(fmt.Sprintf("updated unit file %s\n", params.UnitName))
 			changed = true
 
 			// Reload systemd so it picks up the new unit.
-			if err := serviceMgr.DaemonReload(ctx); err != nil {
+			if err := e.deps.service.DaemonReload(ctx); err != nil {
 				return nil, changed, fmt.Errorf("daemon-reload failed: %w", err)
 			}
 			output.WriteString("reloaded service manager\n")
@@ -90,13 +91,13 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 		if e.isUnitMasked(ctx, params.UnitName) {
 			return nil, changed, fmt.Errorf("enable: unit %s is masked (run 'systemctl unmask %s' first)", params.UnitName, params.UnitName)
 		}
-		if err := serviceMgr.Enable(ctx, params.UnitName); err != nil {
+		if err := e.deps.service.Enable(ctx, params.UnitName); err != nil {
 			return nil, changed, fmt.Errorf("enable: %w", err)
 		}
 		output.WriteString("enabled unit\n")
 		changed = true
 	} else if !params.Enable && isEnabled {
-		if err := serviceMgr.Disable(ctx, params.UnitName); err != nil {
+		if err := e.deps.service.Disable(ctx, params.UnitName); err != nil {
 			// Don't swallow real disable failures. The earlier
 			// shape blanket-suppressed every error with "unit may
 			// not exist" — but isEnabled was just true, so a
@@ -116,7 +117,7 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 	switch params.DesiredState {
 	case pb.ServiceUnitState_SERVICE_UNIT_STATE_STARTED:
 		if !isActive {
-			if err := serviceMgr.Start(ctx, params.UnitName); err != nil {
+			if err := e.deps.service.Start(ctx, params.UnitName); err != nil {
 				return nil, changed, fmt.Errorf("start: %w", err)
 			}
 			output.WriteString("started unit\n")
@@ -126,7 +127,7 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 		}
 	case pb.ServiceUnitState_SERVICE_UNIT_STATE_STOPPED:
 		if isActive {
-			if err := serviceMgr.Stop(ctx, params.UnitName); err != nil {
+			if err := e.deps.service.Stop(ctx, params.UnitName); err != nil {
 				return nil, changed, fmt.Errorf("stop: %w", err)
 			}
 			output.WriteString("stopped unit\n")
@@ -136,7 +137,7 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 		}
 	case pb.ServiceUnitState_SERVICE_UNIT_STATE_RESTARTED:
 		// Restart always runs (not idempotent by design)
-		if err := serviceMgr.Restart(ctx, params.UnitName); err != nil {
+		if err := e.deps.service.Restart(ctx, params.UnitName); err != nil {
 			return nil, changed, fmt.Errorf("restart: %w", err)
 		}
 		output.WriteString("restarted unit\n")
@@ -158,7 +159,7 @@ func (e *Executor) executeService(ctx context.Context, params *pb.ServiceParams)
 // operators have the context when troubleshooting why a unit wasn't
 // marked enabled.
 func (e *Executor) isUnitEnabled(ctx context.Context, unitName string) bool {
-	enabled, err := serviceMgr.IsEnabled(ctx, unitName)
+	enabled, err := e.deps.service.IsEnabled(ctx, unitName)
 	if err != nil {
 		e.logger.Debug("sysservice.IsEnabled failed; treating as not enabled",
 			"unit", unitName, "error", err)
@@ -171,7 +172,7 @@ func (e *Executor) isUnitEnabled(ctx context.Context, unitName string) bool {
 // an Enable attempt with a "run systemctl unmask" hint, so a false
 // negative here is a confusing user-visible failure worth surfacing.
 func (e *Executor) isUnitMasked(ctx context.Context, unitName string) bool {
-	masked, err := serviceMgr.IsMasked(ctx, unitName)
+	masked, err := e.deps.service.IsMasked(ctx, unitName)
 	if err != nil {
 		e.logger.Warn("sysservice.IsMasked failed; treating as not masked",
 			"unit", unitName, "error", err)
@@ -181,7 +182,7 @@ func (e *Executor) isUnitMasked(ctx context.Context, unitName string) bool {
 
 // isUnitActive checks if a service unit is currently active (running).
 func (e *Executor) isUnitActive(ctx context.Context, unitName string) bool {
-	active, err := serviceMgr.IsActive(ctx, unitName)
+	active, err := e.deps.service.IsActive(ctx, unitName)
 	if err != nil {
 		e.logger.Debug("sysservice.IsActive failed; treating as not active",
 			"unit", unitName, "error", err)

@@ -55,11 +55,9 @@ func (f *fakeSealEncManager) VerifyPassphrase(_ context.Context, _ string, _ sys
 }
 
 // swapEncMgr installs a fake encryption manager for the test's duration.
-func swapEncMgr(t *testing.T, m sysenc.Manager) {
+func swapEncMgr(t *testing.T, e *Executor, m sysenc.Manager) {
 	t.Helper()
-	old := encMgr
-	encMgr = m
-	t.Cleanup(func() { encMgr = old })
+	e.deps.encrypt = m
 }
 
 // The custody property: the passphrase control is given is the same one the
@@ -77,7 +75,7 @@ func TestTakeOwnership_StoresTheSamePassphraseItAddsToTheVolume(t *testing.T) {
 	defer st.Close()
 
 	fakeEnc := &fakeSealEncManager{}
-	swapEncMgr(t, fakeEnc)
+	// executor wiring is set below before the action runs
 
 	var stored string
 	var storedAtRemoveCount int
@@ -99,7 +97,10 @@ func TestTakeOwnership_StoresTheSamePassphraseItAddsToTheVolume(t *testing.T) {
 		},
 	}
 
-	e := &Executor{logger: slog.Default(), now: time.Now}
+	e := NewExecutor(nil)
+	e.deps.encrypt = fakeEnc
+	e.logger = slog.Default()
+	e.now = time.Now
 	e.SetStore(st)
 	e.SetDeviceID(deviceID)
 	e.SetLuksKeyStore(ks)
@@ -118,14 +119,17 @@ func TestTakeOwnership_StoresTheSamePassphraseItAddsToTheVolume(t *testing.T) {
 
 func TestVerifyKeyRoundTrip_DoesNotRetryCommittedMismatch(t *testing.T) {
 	fakeEnc := &fakeSealEncManager{}
-	swapEncMgr(t, fakeEnc)
+	// executor wiring is set below before the action runs
 
 	ks := &fakeLuksKeyStore{
 		getKeyFunc: func(_ context.Context, _ string) (string, error) {
 			return "different-key", nil
 		},
 	}
-	e := &Executor{logger: slog.Default(), now: time.Now}
+	e := NewExecutor(nil)
+	e.deps.encrypt = fakeEnc
+	e.logger = slog.Default()
+	e.now = time.Now
 	e.SetLuksKeyStore(ks)
 
 	err := e.verifyKeyRoundTrip(context.Background(), "01HXMISMATCH00000000000000", "/dev/mapper/test", "expected-key")
@@ -144,10 +148,13 @@ func TestTakeOwnership_NoDeviceID_FailsClosedBeforeMutation(t *testing.T) {
 	defer st.Close()
 
 	fakeEnc := &fakeSealEncManager{}
-	swapEncMgr(t, fakeEnc)
+	// executor wiring is set below before the action runs
 
 	ks := &fakeLuksKeyStore{}
-	e := &Executor{logger: slog.Default(), now: time.Now}
+	e := NewExecutor(nil)
+	e.deps.encrypt = fakeEnc
+	e.logger = slog.Default()
+	e.now = time.Now
 	e.SetStore(st)
 	e.SetLuksKeyStore(ks)
 	// No device ID set.
@@ -167,9 +174,12 @@ func TestTakeOwnership_NotConnected_FailsClosedBeforeMutation(t *testing.T) {
 	defer st.Close()
 
 	fakeEnc := &fakeSealEncManager{}
-	swapEncMgr(t, fakeEnc)
+	// executor wiring is set below before the action runs
 
-	e := &Executor{logger: slog.Default(), now: time.Now}
+	e := NewExecutor(nil)
+	e.deps.encrypt = fakeEnc
+	e.logger = slog.Default()
+	e.now = time.Now
 	e.SetStore(st)
 	e.SetDeviceID("01HXDEVICE0000000000000000")
 	// No key store wired: the agent is not connected.
@@ -189,7 +199,7 @@ func TestCheckAndRotate_NoDeviceID_FailsClosedBeforeMutation(t *testing.T) {
 	defer st.Close()
 
 	fakeEnc := &fakeSealEncManager{}
-	swapEncMgr(t, fakeEnc)
+	// executor wiring is set below before the action runs
 
 	ks := &fakeLuksKeyStore{
 		getKeyFunc: func(_ context.Context, _ string) (string, error) {

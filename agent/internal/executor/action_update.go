@@ -10,36 +10,18 @@ import (
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/pkg"
-	sysnotify "github.com/manchtools/cadestro/sdk/sys/notify"
 	sysreboot "github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
 // Notification seams so the update/LPS paths can be exercised with fixtures
 // instead of a live host. Production binds them to the real notify Manager;
 // tests stub them.
-var (
-	// notifyAll broadcasts a desktop/wall notification through a notify Manager
-	// built over the process-wide runner. Best-effort: a notification must never
-	// block an update/reboot action, so delivery errors are dropped. Kept as a
-	// package var (signature func(ctx, title, body)) so tests observe it.
-	notifyAll = func(ctx context.Context, title, body string) {
-		n, err := sysnotify.New(executorRunner)
-		if err != nil {
-			return
-		}
-		_ = n.NotifyAll(ctx, title, body)
-	}
-	// notifyUsers is notifyAll's targeted sibling: it notifies a specific set of
-	// users (LPS rotation). Same best-effort, errors-dropped contract; a package
-	// var so tests observe it.
-	notifyUsers = func(ctx context.Context, users []string, title, body string) {
-		n, err := sysnotify.New(executorRunner)
-		if err != nil {
-			return
-		}
-		_ = n.NotifyUsers(ctx, users, title, body)
-	}
-)
+func (e *Executor) notifyAll(ctx context.Context, title, body string) {
+	_ = e.deps.notify.NotifyAll(ctx, title, body)
+}
+func (e *Executor) notifyUsers(ctx context.Context, users []string, title, body string) {
+	_ = e.deps.notify.NotifyUsers(ctx, users, title, body)
+}
 
 // repairFilesystem attempts to fix read-only filesystem issues.
 // This can happen when the kernel remounts the filesystem as read-only due to errors.
@@ -47,7 +29,8 @@ var (
 // like /usr may be mounted separately and go read-only independently.
 // Returns true if all filesystems are writable, false if any repair failed.
 func (e *Executor) repairFilesystem(ctx context.Context) bool {
-	mounts, err := fsMgr.ListMounts(ctx)
+	e.ensureDeps()
+	mounts, err := e.deps.fs.ListMounts(ctx)
 	if err != nil {
 		e.logger.Warn("could not list mounts", "error", err)
 		return true // Assume writable, let operations fail naturally
@@ -69,7 +52,7 @@ func (e *Executor) repairFilesystem(ctx context.Context) bool {
 			"mount", mnt.Target, "device", mnt.Source,
 		)
 
-		if err := fsMgr.RemountRW(ctx, mnt.Target); err != nil {
+		if err := e.deps.fs.RemountRW(ctx, mnt.Target); err != nil {
 			e.logger.Error("failed to remount filesystem as read-write",
 				"mount", mnt.Target, "device", mnt.Source, "error", err,
 			)
@@ -96,9 +79,9 @@ func (e *Executor) repairPackageManager(ctx context.Context) {
 	// A probe error is treated as "not read-only" (skip the remount) — the same
 	// fail-safe as the previous /proc/mounts parse, letting the package op surface
 	// the real failure rather than remounting speculatively.
-	if ro, err := fsMgr.IsReadOnly(ctx, "/"); err == nil && ro {
+	if ro, err := e.deps.fs.IsReadOnly(ctx, "/"); err == nil && ro {
 		slog.Warn("root filesystem is mounted read-only, attempting remount as read-write")
-		if err := fsMgr.RemountRW(ctx, "/"); err != nil {
+		if err := e.deps.fs.RemountRW(ctx, "/"); err != nil {
 			slog.Error("failed to remount root filesystem as read-write", "error", err)
 		}
 	}
@@ -129,6 +112,7 @@ func (e *Executor) repairPackageManager(ctx context.Context) {
 // executeUpdate performs a system-wide package update.
 // It respects version pinning (apt-mark hold / dnf versionlock).
 func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	// WS16 #3: bind the package manager to the action ctx so the per-action
 	// timeout reaches the index-update and generic-upgrade subprocesses. The
 	// apt/dnf-specific upgrade paths already build a ctx-bound backend.
@@ -286,7 +270,7 @@ func (e *Executor) scheduleRebootAfterUpdate(ctx context.Context, output *string
 		output.WriteString(fmt.Sprintf("FAILED to schedule reboot: %v\n", err))
 		return fmt.Errorf("schedule reboot: %w", err)
 	}
-	notifyAll(ctx, "System Reboot", "A system update requires a reboot. This system will reboot in 1 minute.")
+	e.notifyAll(ctx, "System Reboot", "A system update requires a reboot. This system will reboot in 1 minute.")
 	output.WriteString("Scheduled reboot in 1 minute.\n")
 	return nil
 }

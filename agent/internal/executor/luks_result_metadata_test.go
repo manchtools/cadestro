@@ -46,7 +46,7 @@ func newLuksExecutor(t *testing.T, devicePath string) *Executor {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = st.Close() })
-	swapEncMgr(t, &fakeDetectEncManager{devicePath: devicePath})
+	fakeEnc := &fakeDetectEncManager{devicePath: devicePath}
 
 	var stored string
 	keys := &fakeLuksKeyStore{
@@ -56,7 +56,10 @@ func newLuksExecutor(t *testing.T, devicePath string) *Executor {
 			return nil
 		},
 	}
-	e := &Executor{logger: slog.Default(), now: time.Now}
+	e := NewExecutor(nil)
+	e.deps.encrypt = fakeEnc
+	e.logger = slog.Default()
+	e.now = time.Now
 	e.SetStore(st)
 	e.SetDeviceID("01HXDEVICE0000000000000000")
 	e.SetLuksKeyStore(keys)

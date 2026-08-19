@@ -37,6 +37,7 @@ func lpsRotationReason(reason string) pb.RotationReason {
 
 // executeLps manages local user password rotation (Local Password Solution).
 func (e *Executor) executeLps(ctx context.Context, params *pb.LpsParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, nil, fmt.Errorf("lps params required")
 	}
@@ -62,6 +63,7 @@ func (e *Executor) executeLps(ctx context.Context, params *pb.LpsParams, state p
 
 // setupLpsPasswords checks if password rotation is needed for each user and rotates if so.
 func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
+	e.ensureDeps()
 	st := e.getStore()
 	if st == nil {
 		return nil, false, nil, fmt.Errorf("agent store not configured")
@@ -113,7 +115,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 	for _, username := range params.Usernames {
 		// Verify user exists (fail closed on a check error — record it and move
 		// on, matching this loop's other per-user error handling).
-		uExists, err := userExists(ctx, username)
+		uExists, err := e.userExists(ctx, username)
 		if err != nil {
 			anyError = fmt.Errorf("check user %s: %w", username, err)
 			output.WriteString(fmt.Sprintf("LPS: %s — failed to verify user: %v\n", username, err))
@@ -129,7 +131,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		storedState := userStates[username]
 
 		// Determine if rotation is needed
-		rotate, reason := shouldRotateLps(ctx, storedState, params, username, e.now().UTC())
+		rotate, reason := e.shouldRotateLps(ctx, storedState, params, username, e.now().UTC())
 		if !rotate {
 			output.WriteString(fmt.Sprintf("LPS: %s — password up to date\n", username))
 			continue
@@ -193,7 +195,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		}
 
 		// Set the password
-		if err := userMgr.SetPassword(ctx, username, password); err != nil {
+		if err := e.deps.user.SetPassword(ctx, username, password); err != nil {
 			anyError = fmt.Errorf("set password for %s: %w", username, err)
 			output.WriteString(fmt.Sprintf("LPS: %s — failed to set password: %v\n", username, err))
 			continue
@@ -224,7 +226,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 
 	// Notify affected users and terminate sessions after a grace period
 	if len(rotatedUsers) > 0 {
-		notifyUsers(ctx, rotatedUsers, "Session Termination",
+		e.notifyUsers(ctx, rotatedUsers, "Session Termination",
 			"Your password has been changed by Cadestro. All sessions will be terminated in 60 seconds. Please save your work.")
 		output.WriteString(fmt.Sprintf("LPS: notified %d user(s), waiting 60 seconds before session termination\n", len(rotatedUsers)))
 
@@ -235,7 +237,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		}
 
 		for _, username := range rotatedUsers {
-			killUserSessions(ctx, username)
+			e.killUserSessions(ctx, username)
 		}
 		output.WriteString(fmt.Sprintf("LPS: terminated sessions for %d user(s)\n", len(rotatedUsers)))
 	}
@@ -304,7 +306,7 @@ func (e *Executor) removeLpsManagement(_ context.Context, actionID string) (*pb.
 // shouldRotateLps determines if a password rotation is needed for a user and returns the reason.
 // now is the caller's clock reading (UTC); injecting it keeps rotation decisions
 // deterministically testable with a fixed clock.
-func shouldRotateLps(ctx context.Context, state *store.LpsUserState, params *pb.LpsParams, username string, now time.Time) (bool, string) {
+func (e *Executor) shouldRotateLps(ctx context.Context, state *store.LpsUserState, params *pb.LpsParams, username string, now time.Time) (bool, string) {
 
 	// No state = first run
 	if state == nil {
@@ -319,7 +321,7 @@ func shouldRotateLps(ctx context.Context, state *store.LpsUserState, params *pb.
 
 	// Auth-based rotation: check if user authenticated since last rotation
 	if params.GracePeriodHours > 0 {
-		lastAuth, err := userMgr.LastLogin(ctx, username)
+		lastAuth, err := e.deps.user.LastLogin(ctx, username)
 		if err == nil && !lastAuth.IsZero() && lastAuth.After(state.LastRotatedAt) {
 			graceDuration := time.Duration(params.GracePeriodHours) * time.Hour
 			if now.Sub(lastAuth) >= graceDuration {
@@ -340,12 +342,12 @@ func shouldRotateLps(ctx context.Context, state *store.LpsUserState, params *pb.
 // the journal to distinguish "no sessions present" from "loginctl /
 // pkill failed", so the discarded errors get logged with stage tags
 // instead of being silently swallowed.
-func killUserSessions(ctx context.Context, username string) {
+func (e *Executor) killUserSessions(ctx context.Context, username string) {
 	// Delegate to the SDK user Manager, which terminates systemd-logind sessions
 	// (loginctl terminate-user) and falls back to pkill -KILL -u, treating
 	// "no sessions / no processes" as success — only a genuine failure returns
 	// an error. Log it so operators can distinguish it from the benign case.
-	if err := userMgr.KillSessions(ctx, username); err != nil {
+	if err := e.deps.user.KillSessions(ctx, username); err != nil {
 		slog.Warn("killUserSessions: SDK KillSessions failed (may be benign — no active sessions/processes)",
 			"username", username, "error", err)
 	}

@@ -25,6 +25,7 @@ func sudoersFilePath(actionID string) string {
 
 // executeSudo manages sudoers policies via /etc/sudoers.d/ drop-in files.
 func (e *Executor) executeSudo(ctx context.Context, params *pb.AdminPolicyParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("sudo params required")
 	}
@@ -66,7 +67,7 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 
 	// Check idempotency: file content + group membership
 	fileMatches := e.configMatchesDesired(ctx, sudoersPath, content)
-	membersMatch := sudoGroupMembersMatch(ctx, groupName, params.Users)
+	membersMatch := e.sudoGroupMembersMatch(ctx, groupName, params.Users)
 	if fileMatches && membersMatch {
 		output.WriteString(fmt.Sprintf("sudo policy already up to date: %s\n", sudoersPath))
 		return &pb.CommandOutput{
@@ -80,12 +81,12 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 	}
 
 	// Ensure group exists
-	gExists, err := groupExists(ctx, groupName)
+	gExists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", groupName, err)
 	}
 	if !gExists {
-		if err := userMgr.GroupCreate(ctx, groupName, sysuser.GroupCreateOptions{}); err != nil {
+		if err := e.deps.user.GroupCreate(ctx, groupName, sysuser.GroupCreateOptions{}); err != nil {
 			return nil, false, fmt.Errorf("create group %s: %v", groupName, err)
 		}
 		output.WriteString(fmt.Sprintf("created group: %s\n", groupName))
@@ -102,7 +103,7 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 	}
 
 	// Sync group membership
-	if memberChanged, err := syncGroupMembers(ctx, groupName, params.Users, &output); err != nil {
+	if memberChanged, err := e.syncGroupMembers(ctx, groupName, params.Users, &output); err != nil {
 		return &pb.CommandOutput{ExitCode: 1, Stdout: output.String(), Stderr: err.Error()}, memberChanged, err
 	} else if memberChanged {
 		changed = true
@@ -359,31 +360,31 @@ func generateCustomSudoConfig(groupName, customConfig string) string {
 // =============================================================================
 
 // addUserToGroup adds a user to a supplementary group.
-func addUserToGroup(ctx context.Context, username, groupName string) error {
-	return userMgr.AddToGroup(ctx, username, groupName)
+func (e *Executor) addUserToGroup(ctx context.Context, username, groupName string) error {
+	return e.deps.user.AddToGroup(ctx, username, groupName)
 }
 
 // removeUserFromGroup removes a user from a supplementary group.
-func removeUserFromGroup(ctx context.Context, username, groupName string) error {
-	return userMgr.RemoveFromGroup(ctx, username, groupName)
+func (e *Executor) removeUserFromGroup(ctx context.Context, username, groupName string) error {
+	return e.deps.user.RemoveFromGroup(ctx, username, groupName)
 }
 
 // getGroupMembers returns the members of a group (empty on lookup failure,
 // matching the previous helper's contract). It honors the action context so a
 // hung backend lookup is bounded by the action's cancellation/timeout.
-func getGroupMembers(ctx context.Context, groupName string) []string {
-	members, _ := userMgr.GroupMembers(ctx, groupName)
+func (e *Executor) getGroupMembers(ctx context.Context, groupName string) []string {
+	members, _ := e.deps.user.GroupMembers(ctx, groupName)
 	return members
 }
 
 // userInGroup checks if a user is a member of the specified group.
-func userInGroup(ctx context.Context, username, groupName string) bool {
-	members, _ := userMgr.GroupMembers(ctx, groupName)
+func (e *Executor) userInGroup(ctx context.Context, username, groupName string) bool {
+	members, _ := e.deps.user.GroupMembers(ctx, groupName)
 	return slices.Contains(members, username)
 }
 
 // sudoGroupMembersMatch checks if the current group members match the desired list.
-func sudoGroupMembersMatch(ctx context.Context, groupName string, desiredUsers []string) bool {
-	members, _ := userMgr.GroupMembers(ctx, groupName)
+func (e *Executor) sudoGroupMembersMatch(ctx context.Context, groupName string, desiredUsers []string) bool {
+	members, _ := e.deps.user.GroupMembers(ctx, groupName)
 	return sysuser.MembersMatch(members, desiredUsers)
 }

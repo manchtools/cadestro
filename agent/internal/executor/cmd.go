@@ -3,22 +3,12 @@
 package executor
 
 import (
-	"context"
-
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// executorRunner is the privilege-backend runner the command helpers below
-// dispatch through. It defaults to a Direct runner — correct for the
-// unprivileged query helpers and for a root daemon — and is overridden by
-// NewExecutor with the backend the operator configured, so escalating helpers
-// (runSudoCmd) use sudo/doas when the agent is not already root. It is
-// process-wide because the agent is a single daemon with one privilege
-// configuration; tests that need to observe the privileged shell-out stub
-// runSudoCmd directly.
-var executorRunner = mustDirectRunner()
-
+// mustDirectRunner constructs the safe default used for non-privileged
+// capability setup and zero-value test executors.
 func mustDirectRunner() sysexec.Runner {
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
@@ -57,12 +47,4 @@ func asCmdError(name string, r sysexec.Result, err error) error {
 		return &sysexec.CommandError{Name: name, ExitCode: r.ExitCode, Stderr: r.Stderr}
 	}
 	return nil
-}
-
-// runSudoCmd runs a command through the privilege backend. It is a package var
-// (not a plain func) so update/reboot tests can stub the privileged shell-out
-// without a live host; production dispatches through the configured runner.
-var runSudoCmd = func(ctx context.Context, name string, args ...string) (*pb.CommandOutput, error) {
-	r, err := executorRunner.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
-	return toOutput(&r), asCmdError(name, r, err)
 }

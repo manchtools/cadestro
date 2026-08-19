@@ -15,6 +15,7 @@ import (
 )
 
 func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("file params required")
 	}
@@ -61,7 +62,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 
 		// Create parent directories using sudo
 		parentDir := filepath.Dir(resolvedPath)
-		if err := createDirectory(ctx, parentDir, true); err != nil {
+		if err := e.createDirectory(ctx, parentDir, true); err != nil {
 			return nil, false, fmt.Errorf("create directory %s: %w", parentDir, err)
 		}
 
@@ -73,7 +74,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 			// and append the block. A missing file (fs.ErrNotExist) means an empty
 			// managed-block base — create fresh; a real read error (permissions,
 			// I/O) fails the action.
-			existing, err := readFileWithSudo(ctx, resolvedPath)
+			existing, err := e.readFileWithSudo(ctx, resolvedPath)
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
 				return nil, false, fmt.Errorf("read existing file: %w", err)
 			}
@@ -89,7 +90,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 
 		// Atomic write: write to temp file, set permissions, then move into place.
 		// This avoids TOCTOU race conditions.
-		if err := atomicWriteFile(ctx, resolvedPath, finalContent, params.Mode, params.Owner, params.Group); err != nil {
+		if err := e.atomicWriteFile(ctx, resolvedPath, finalContent, params.Mode, params.Owner, params.Group); err != nil {
 			return nil, false, err
 		}
 
@@ -100,7 +101,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 
 	case pb.DesiredState_DESIRED_STATE_ABSENT:
 		// Check if file already doesn't exist
-		if !fileExistsWithSudo(ctx, resolvedPath) {
+		if !e.fileExistsWithSudo(ctx, resolvedPath) {
 			return &pb.CommandOutput{
 				ExitCode: 0,
 				Stdout:   fmt.Sprintf("file %s does not exist, nothing to remove", resolvedPath),
@@ -129,7 +130,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 		// For managed block mode, remove only the specified content block from the file
 		if params.ManagedBlock {
 			// Read file with restrictive permissions
-			existingContent, err := readFileWithSudo(ctx, resolvedPath)
+			existingContent, err := e.readFileWithSudo(ctx, resolvedPath)
 			if err != nil {
 				return nil, false, fmt.Errorf("read file: %w", err)
 			}
@@ -150,7 +151,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 			}
 
 			// Write the modified content back using atomic write
-			if err := atomicWriteFile(ctx, resolvedPath, newContent, params.Mode, params.Owner, params.Group); err != nil {
+			if err := e.atomicWriteFile(ctx, resolvedPath, newContent, params.Mode, params.Owner, params.Group); err != nil {
 				return nil, false, err
 			}
 
@@ -161,7 +162,7 @@ func (e *Executor) executeFile(ctx context.Context, params *pb.FileParams, state
 		}
 
 		// For regular mode, delete the entire file
-		if err := removeFileStrict(ctx, resolvedPath); err != nil {
+		if err := e.removeFileStrict(ctx, resolvedPath); err != nil {
 			return nil, false, fmt.Errorf("remove: %w", err)
 		}
 		return &pb.CommandOutput{
@@ -189,7 +190,7 @@ func (e *Executor) fileMatchesDesired(ctx context.Context, path string, params *
 	}
 
 	// Check content
-	content, err := readFileWithSudo(ctx, path)
+	content, err := e.readFileWithSudo(ctx, path)
 	if err != nil {
 		return false
 	}

@@ -24,6 +24,7 @@ import (
 // host's package manager (a no-op skip), and downloading the apt signing key
 // from gpg_key_url (the SDK takes key bytes; the network policy is the caller's).
 func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("repository params required")
 	}
@@ -60,7 +61,7 @@ func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryP
 	}
 
 	// Build the repository Manager over the executor's per-instance runner (the
-	// same field the reboot path uses), not the process-global executorRunner —
+	// same field the reboot path uses), not a process-global runner —
 	// so a nil-runner executor fails closed here instead of silently borrowing
 	// global state. A nil runner (or, defensively, an unsupported backend the
 	// skip switch already filtered) yields the configuration error below.

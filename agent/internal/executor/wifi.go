@@ -26,6 +26,7 @@ func wifiCertPath(actionID string) string {
 // PRESENT: creates or updates the connection profile (delegated to the SDK).
 // ABSENT: deletes the connection profile and any certificate files.
 func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state pb.DesiredState, actionID, psk, clientKey string) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("wifi params required")
 	}
@@ -51,13 +52,13 @@ func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state
 		// Pattern matches the DNF/Zypper repository ABSENT branches
 		// in action_repository.go which also short-circuit when the
 		// resource is already gone.
-		existed, existsErr := networkMgr.ConnectionExists(ctx, conName)
+		existed, existsErr := e.deps.network.ConnectionExists(ctx, conName)
 		if existsErr != nil {
 			e.logger.Warn("wifi ABSENT: ConnectionExists failed; conservatively reporting changed=true",
 				"connection", conName, "error", existsErr)
 			existed = true
 		}
-		if err := networkMgr.Delete(ctx, conName, network.DeleteOptions{CertDir: certDir}); err != nil {
+		if err := e.deps.network.Delete(ctx, conName, network.DeleteOptions{CertDir: certDir}); err != nil {
 			return nil, false, fmt.Errorf("delete connection: %w", err)
 		}
 		stdout := fmt.Sprintf("connection %s already absent\n", conName)
@@ -85,7 +86,7 @@ func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state
 		CertDir:     certDir,
 	}
 
-	changed, err := networkMgr.Apply(ctx, profile)
+	changed, err := e.deps.network.Apply(ctx, profile)
 	if err != nil {
 		return nil, false, err
 	}

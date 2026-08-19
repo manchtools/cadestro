@@ -11,6 +11,7 @@ import (
 
 // executeGroup manages Linux groups and their members.
 func (e *Executor) executeGroup(ctx context.Context, params *pb.GroupParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("group params required")
 	}
@@ -38,13 +39,13 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 	changed := false
 
 	// Resolve existence once (fail closed if the lookup itself errors).
-	exists, err := groupExists(ctx, params.Name)
+	exists, err := e.groupExists(ctx, params.Name)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", params.Name, err)
 	}
 
 	// Check idempotency: group exists and members match
-	if exists && sudoGroupMembersMatch(ctx, params.Name, params.Members) {
+	if exists && e.sudoGroupMembersMatch(ctx, params.Name, params.Members) {
 		output.WriteString(fmt.Sprintf("group %s already up to date\n", params.Name))
 		return &pb.CommandOutput{
 			ExitCode: 0,
@@ -62,7 +63,7 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 		if params.Gid > 0 {
 			opts.GID = int(params.Gid)
 		}
-		if err := userMgr.GroupCreate(ctx, params.Name, opts); err != nil {
+		if err := e.deps.user.GroupCreate(ctx, params.Name, opts); err != nil {
 			return nil, false, fmt.Errorf("create group %s: %v", params.Name, err)
 		}
 		output.WriteString(fmt.Sprintf("created group: %s\n", params.Name))
@@ -70,7 +71,7 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 	}
 
 	// Sync group membership
-	if memberChanged, err := syncGroupMembers(ctx, params.Name, params.Members, &output); err != nil {
+	if memberChanged, err := e.syncGroupMembers(ctx, params.Name, params.Members, &output); err != nil {
 		return &pb.CommandOutput{ExitCode: 1, Stdout: output.String(), Stderr: err.Error()}, memberChanged, err
 	} else if memberChanged {
 		changed = true
@@ -86,7 +87,7 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 func (e *Executor) removeGroup(ctx context.Context, groupName string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 
-	exists, err := groupExists(ctx, groupName)
+	exists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", groupName, err)
 	}

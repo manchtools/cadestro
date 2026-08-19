@@ -59,23 +59,27 @@ func newRebootExecutor(t *testing.T) *Executor {
 	if err != nil {
 		t.Fatalf("build direct runner: %v", err)
 	}
-	return &Executor{runner: r}
+	e := NewExecutor(r)
+	return e
 }
+
+type countingNotify struct{ count *int }
+
+func (n countingNotify) NotifyAll(context.Context, string, string) error             { *n.count++; return nil }
+func (n countingNotify) NotifyUsers(context.Context, []string, string, string) error { return nil }
 
 // TestScheduleRebootAfterUpdate drives scheduleRebootAfterUpdate through a real
 // runner against a stubbed `shutdown` (installShutdownStub), covering both the
 // success and failure paths without touching a real reboot.
 func TestScheduleRebootAfterUpdate(t *testing.T) {
-	origNotify := notifyAll
-	t.Cleanup(func() { notifyAll = origNotify })
-
 	t.Run("schedules the reboot and notifies on success", func(t *testing.T) {
 		argvLog := installShutdownStub(t, 0) // real runner reaches a stub that exits 0
 		notified := 0
-		notifyAll = func(ctx context.Context, title, body string) { notified++ }
+		e := newRebootExecutor(t)
+		e.deps.notify = countingNotify{count: &notified}
 
 		var out strings.Builder
-		if err := newRebootExecutor(t).scheduleRebootAfterUpdate(context.Background(), &out); err != nil {
+		if err := e.scheduleRebootAfterUpdate(context.Background(), &out); err != nil {
 			t.Fatalf("scheduleRebootAfterUpdate = %v, want a scheduled reboot", err)
 		}
 		if notified != 1 {
@@ -103,10 +107,11 @@ func TestScheduleRebootAfterUpdate(t *testing.T) {
 	t.Run("schedule failure returns an error and suppresses notify", func(t *testing.T) {
 		installShutdownStub(t, 1) // stub `shutdown` exits nonzero → Schedule fails
 		notified := 0
-		notifyAll = func(ctx context.Context, title, body string) { notified++ }
+		e := newRebootExecutor(t)
+		e.deps.notify = countingNotify{count: &notified}
 
 		var out strings.Builder
-		err := newRebootExecutor(t).scheduleRebootAfterUpdate(context.Background(), &out)
+		err := e.scheduleRebootAfterUpdate(context.Background(), &out)
 		if err == nil {
 			t.Fatal("a failed reboot schedule must return an error, not a clean success")
 		}
@@ -123,11 +128,12 @@ func TestScheduleRebootAfterUpdate(t *testing.T) {
 
 	t.Run("reboot failure joins with a prior error rather than demoting it", func(t *testing.T) {
 		installShutdownStub(t, 1)
-		notifyAll = func(ctx context.Context, title, body string) {}
 
 		var out strings.Builder
 		prior := errors.New("apt upgrade failed")
-		joined := errors.Join(prior, newRebootExecutor(t).scheduleRebootAfterUpdate(context.Background(), &out))
+		e := newRebootExecutor(t)
+		e.deps.notify = countingNotify{}
+		joined := errors.Join(prior, e.scheduleRebootAfterUpdate(context.Background(), &out))
 		if !errors.Is(joined, prior) {
 			t.Error("a prior upgrade error must stay visible alongside the reboot failure")
 		}
@@ -140,7 +146,6 @@ func TestScheduleRebootAfterUpdate(t *testing.T) {
 		// No runner at all → scheduleRebootAfterUpdate returns before any exec,
 		// so no stub is needed (and nothing can run).
 		notified := 0
-		notifyAll = func(ctx context.Context, title, body string) { notified++ }
 
 		var out strings.Builder
 		e := &Executor{} // runner is nil — the NewExecutor(nil) unit-test convention

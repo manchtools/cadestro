@@ -37,6 +37,7 @@ func sha256File(path string) (string, error) {
 }
 
 func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("app params required")
 	}
@@ -113,7 +114,7 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 					}, false, nil
 				}
 			}
-		} else if ok, _ := fsMgr.Exists(ctx, resolvedPath); ok {
+		} else if ok, _ := e.deps.fs.Exists(ctx, resolvedPath); ok {
 			// No checksum specified, file exists
 			return &pb.CommandOutput{
 				ExitCode: 0,
@@ -133,7 +134,7 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 		// failed/mismatched download never clobbers an existing AppImage.
 		// requireVerifiedArtifact above already enforced https + a present
 		// checksum (remote accepts http too, so the agent keeps that gate).
-		if err := createDirectory(ctx, filepath.Dir(resolvedPath), true); err != nil {
+		if err := e.createDirectory(ctx, filepath.Dir(resolvedPath), true); err != nil {
 			return nil, false, fmt.Errorf("create directory: %w", err)
 		}
 		if err := fetchArtifact(ctx, params.Url, resolvedPath, params.ChecksumSha256, "0755", redirectForArtifact(params.ChecksumSha256)); err != nil {
@@ -149,7 +150,7 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 		// Check if file already doesn't exist. Only short-circuit on a definite
 		// "absent" (no probe error); a probe error falls through to the remove,
 		// which surfaces the real failure rather than falsely reporting absence.
-		if ok, existErr := fsMgr.Exists(ctx, resolvedPath); existErr == nil && !ok {
+		if ok, existErr := e.deps.fs.Exists(ctx, resolvedPath); existErr == nil && !ok {
 			return &pb.CommandOutput{
 				ExitCode: 0,
 				Stdout:   fmt.Sprintf("appimage %s already not present", filename),
@@ -161,7 +162,7 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 			return out, false, err
 		}
 
-		if err := removeFileStrict(ctx, resolvedPath); err != nil {
+		if err := e.removeFileStrict(ctx, resolvedPath); err != nil {
 			return nil, false, fmt.Errorf("remove: %w", err)
 		}
 		return &pb.CommandOutput{

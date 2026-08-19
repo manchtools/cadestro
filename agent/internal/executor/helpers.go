@@ -50,13 +50,13 @@ func envActionID(env *pb.Action) string {
 // for the given group. It logs warnings for non-existent users.
 // Returns (changed bool, error). The error is non-nil if any membership operation
 // failed, even if some operations succeeded (changed may still be true).
-func syncGroupMembers(ctx context.Context, groupName string, desiredUsers []string, output *strings.Builder) (bool, error) {
+func (e *Executor) syncGroupMembers(ctx context.Context, groupName string, desiredUsers []string, output *strings.Builder) (bool, error) {
 	changed := false
 	var errs []string
 
 	// Add missing members
 	for _, username := range desiredUsers {
-		uExists, err := userExists(ctx, username)
+		uExists, err := e.userExists(ctx, username)
 		if err != nil {
 			return changed, fmt.Errorf("check user %s: %w", username, err)
 		}
@@ -64,8 +64,8 @@ func syncGroupMembers(ctx context.Context, groupName string, desiredUsers []stri
 			output.WriteString(fmt.Sprintf("warning: user %q does not exist, skipping group membership\n", username))
 			continue
 		}
-		if !userInGroup(ctx, username, groupName) {
-			if err := addUserToGroup(ctx, username, groupName); err != nil {
+		if !e.userInGroup(ctx, username, groupName) {
+			if err := e.addUserToGroup(ctx, username, groupName); err != nil {
 				msg := fmt.Sprintf("failed to add user %s to group %s: %v", username, groupName, err)
 				output.WriteString(fmt.Sprintf("warning: %s\n", msg))
 				errs = append(errs, msg)
@@ -77,14 +77,14 @@ func syncGroupMembers(ctx context.Context, groupName string, desiredUsers []stri
 	}
 
 	// Remove members not in desired list
-	currentMembers := getGroupMembers(ctx, groupName)
+	currentMembers := e.getGroupMembers(ctx, groupName)
 	desiredSet := make(map[string]bool, len(desiredUsers))
 	for _, u := range desiredUsers {
 		desiredSet[u] = true
 	}
 	for _, member := range currentMembers {
 		if !desiredSet[member] {
-			if err := removeUserFromGroup(ctx, member, groupName); err != nil {
+			if err := e.removeUserFromGroup(ctx, member, groupName); err != nil {
 				msg := fmt.Sprintf("failed to remove user %s from group %s: %v", member, groupName, err)
 				output.WriteString(fmt.Sprintf("warning: %s\n", msg))
 				errs = append(errs, msg)
@@ -105,14 +105,14 @@ func syncGroupMembers(ctx context.Context, groupName string, desiredUsers []stri
 // If validation fails, the file is removed and the validation error is returned.
 // On success, returns nil, nil.
 func (e *Executor) writeAndValidateConfig(ctx context.Context, path, content, mode, owner, group string, validateCmd string, validateArgs ...string) (*pb.CommandOutput, error) {
-	if err := atomicWriteFile(ctx, path, content, mode, owner, group); err != nil {
+	if err := e.atomicWriteFile(ctx, path, content, mode, owner, group); err != nil {
 		return nil, fmt.Errorf("write config file: %w", err)
 	}
 
-	validateOut, validateErr := runSudoCmd(ctx, validateCmd, validateArgs...)
+	validateOut, validateErr := e.runSudo(ctx, validateCmd, validateArgs...)
 	if validateErr != nil {
 		// Config is invalid — remove it and report error
-		if rmErr := removeFileStrict(ctx, path); rmErr != nil {
+		if rmErr := e.removeFileStrict(ctx, path); rmErr != nil {
 			slog.Warn("failed to remove invalid config after validation failure", "path", path, "error", rmErr)
 		}
 		errMsg := "config validation failed"
@@ -135,11 +135,11 @@ func (e *Executor) removeGroupWithConfig(ctx context.Context, groupName, configP
 	changed := false
 
 	// Remove config file if specified
-	if configPath != "" && fileExistsWithSudo(ctx, configPath) {
+	if configPath != "" && e.fileExistsWithSudo(ctx, configPath) {
 		if _, err := e.requireWritableFS(ctx); err != nil {
 			return false, fmt.Errorf("writable fs: %w", err)
 		}
-		if err := removeFileStrict(ctx, configPath); err != nil {
+		if err := e.removeFileStrict(ctx, configPath); err != nil {
 			return false, fmt.Errorf("remove config file %s: %w", configPath, err)
 		}
 		output.WriteString(fmt.Sprintf("removed config file: %s\n", configPath))
@@ -147,7 +147,7 @@ func (e *Executor) removeGroupWithConfig(ctx context.Context, groupName, configP
 	}
 
 	// Remove group and membership
-	gExists, err := groupExists(ctx, groupName)
+	gExists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return changed, fmt.Errorf("check group %s: %w", groupName, err)
 	}
@@ -158,16 +158,16 @@ func (e *Executor) removeGroupWithConfig(ctx context.Context, groupName, configP
 				return false, fmt.Errorf("writable fs: %w", err)
 			}
 		}
-		members := getGroupMembers(ctx, groupName)
+		members := e.getGroupMembers(ctx, groupName)
 		for _, member := range members {
-			if err := removeUserFromGroup(ctx, member, groupName); err != nil {
+			if err := e.removeUserFromGroup(ctx, member, groupName); err != nil {
 				output.WriteString(fmt.Sprintf("warning: failed to remove user %s from group %s: %v\n", member, groupName, err))
 			} else {
 				output.WriteString(fmt.Sprintf("removed user %s from group %s\n", member, groupName))
 				changed = true
 			}
 		}
-		if err := userMgr.GroupDelete(ctx, groupName); err != nil {
+		if err := e.deps.user.GroupDelete(ctx, groupName); err != nil {
 			return changed, fmt.Errorf("delete group %s: %w", groupName, err)
 		}
 		output.WriteString(fmt.Sprintf("deleted group: %s\n", groupName))

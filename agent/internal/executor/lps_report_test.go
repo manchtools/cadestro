@@ -89,12 +89,15 @@ func newLpsExecutor(t *testing.T, rec *lpsRecorder, wireStore bool) *Executor {
 		e.SetLpsPasswordStore(rec)
 	}
 
-	prevUser, prevNotify := userMgr, notifyUsers
-	t.Cleanup(func() { userMgr = prevUser; notifyUsers = prevNotify })
-	userMgr = &lpsRecorderUser{rec: rec}
-	notifyUsers = func(context.Context, []string, string, string) {} // no host notify
+	e.deps.user = &lpsRecorderUser{rec: rec}
+	e.deps.notify = noopNotify{}
 	return e
 }
+
+type noopNotify struct{}
+
+func (noopNotify) NotifyAll(context.Context, string, string) error             { return nil }
+func (noopNotify) NotifyUsers(context.Context, []string, string, string) error { return nil }
 
 func runLps(t *testing.T, e *Executor, actionID string) (bool, map[string]string, error) {
 	t.Helper()

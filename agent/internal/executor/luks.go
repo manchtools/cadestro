@@ -106,6 +106,7 @@ func (e *Executor) clearLuksTimestampFailures(actionID string) {
 // instead of racing SetLuksKeyStore() / SetStore() / SetActionStore()
 // in runtime.go's reconnect loop.
 func (e *Executor) executeLuks(ctx context.Context, params *pb.EncryptionParams, state pb.DesiredState, actionID string, openPresharedKey func() ([]byte, error)) (*pb.CommandOutput, bool, map[string]string, error) {
+	e.ensureDeps()
 	if params == nil {
 		return nil, false, nil, fmt.Errorf("luks params required")
 	}
@@ -168,6 +169,7 @@ func (e *Executor) removeLuksManagement(actionID string) (*pb.CommandOutput, boo
 
 // setupLuks handles PRESENT state — detect volume, check conflicts, take ownership, rotate, reconcile device key.
 func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, actionID string, openPresharedKey func() ([]byte, error)) (*pb.CommandOutput, bool, map[string]string, error) {
+	e.ensureDeps()
 	st := e.getStore()
 	if st == nil {
 		return nil, false, nil, fmt.Errorf("agent store not configured")
@@ -211,7 +213,7 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 	if localState != nil && localState.OwnershipTaken && localState.DevicePath != "" {
 		// Subsequent run — use stored device path
 		devicePath = localState.DevicePath
-		isLuks, err := encMgr.IsEncrypted(ctx, devicePath)
+		isLuks, err := e.deps.encrypt.IsEncrypted(ctx, devicePath)
 		if err != nil {
 			return nil, false, nil, fmt.Errorf("failed to check LUKS status: %w", err)
 		}
@@ -230,10 +232,10 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		defer clear(presharedKey)
 
 		// First run — detect volume by PSK
-		vol, err := encMgr.DetectVolumeByKey(ctx, luksSecretBytes(presharedKey))
+		vol, err := e.deps.encrypt.DetectVolumeByKey(ctx, luksSecretBytes(presharedKey))
 		if err != nil {
 			// Fall back to heuristic detection (PSK may have been removed by a partial prior run)
-			vol, err = encMgr.DetectVolume(ctx)
+			vol, err = e.deps.encrypt.DetectVolume(ctx)
 			if err != nil {
 				return nil, false, nil, fmt.Errorf("no LUKS-encrypted volumes detected on this device")
 			}
@@ -312,6 +314,7 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 // If the server already has a working key (e.g. from a previous run with lost local state),
 // ownership is recovered without re-using the PSK.
 func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParams, actionID, devicePath string, presharedKey []byte) error {
+	e.ensureDeps()
 	ks := e.getLuksKeyStore()
 	if ks == nil {
 		return fmt.Errorf("LUKS key store not configured (no stream connection)")
@@ -326,7 +329,7 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 	if getKeyErr == nil && existingKey != "" {
 		e.logger.Info("LUKS: server has stored key, testing against volume",
 			"action_id", actionID, "key_len", len(existingKey))
-		ok, testErr := encMgr.VerifyPassphrase(ctx, devicePath, luksSecret(existingKey))
+		ok, testErr := e.deps.encrypt.VerifyPassphrase(ctx, devicePath, luksSecret(existingKey))
 		e.logger.Info("LUKS: test-passphrase result", "ok", ok, "error", testErr)
 		if testErr == nil && ok {
 			// No verifyKeyRoundTrip is needed here: the round-trip proves
@@ -370,14 +373,14 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 	e.logger.Info("LUKS: adding managed key using PSK",
 		"psk_len", len(presharedKey),
 		"new_key_len", len(passphrase))
-	if err := encMgr.AddKey(ctx, devicePath, luksSecretBytes(presharedKey), luksSecret(passphrase), sysenc.AddKeyOptions{}); err != nil {
+	if err := e.deps.encrypt.AddKey(ctx, devicePath, luksSecretBytes(presharedKey), luksSecret(passphrase), sysenc.AddKeyOptions{}); err != nil {
 		return fmt.Errorf("add managed key: %w", err)
 	}
 
 	// Store on server — must succeed before removing the PSK.
 	if err := ks.StoreKey(ctx, actionID, devicePath, passphrase, pb.RotationReason_ROTATION_REASON_INITIAL); err != nil {
 		// Rollback: remove the managed key we just added
-		if rmErr := encMgr.RemoveKey(ctx, devicePath, luksSecret(passphrase)); rmErr != nil {
+		if rmErr := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecret(passphrase)); rmErr != nil {
 			e.logger.Error("LUKS: rollback failed — managed key remains in slot",
 				"action_id", actionID, "error", rmErr)
 		}
@@ -391,7 +394,7 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 	}
 
 	// Verified — now safe to remove PSK
-	if err := encMgr.RemoveKey(ctx, devicePath, luksSecretBytes(presharedKey)); err != nil {
+	if err := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecretBytes(presharedKey)); err != nil {
 		e.logger.Warn("failed to remove PSK after ownership (both keys work)", "error", err)
 	}
 
@@ -401,6 +404,7 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 
 // checkAndRotate checks if a rotation is due and rotates the managed passphrase if needed.
 func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionParams, localState *store.LuksState, actionID, devicePath string) (bool, error) {
+	e.ensureDeps()
 	ks := e.getLuksKeyStore()
 	if ks == nil {
 		return false, fmt.Errorf("LUKS key store not configured (no stream connection)")
@@ -460,14 +464,14 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 	newPassphrase := newPassSecret.Reveal()
 
 	// Add new key using old key (both valid)
-	if err := encMgr.AddKey(ctx, devicePath, luksSecret(currentKey), luksSecret(newPassphrase), sysenc.AddKeyOptions{}); err != nil {
+	if err := e.deps.encrypt.AddKey(ctx, devicePath, luksSecret(currentKey), luksSecret(newPassphrase), sysenc.AddKeyOptions{}); err != nil {
 		return false, fmt.Errorf("add new key: %w", err)
 	}
 
 	// Store on server — must succeed before removing the old key.
 	if err := ks.StoreKey(ctx, actionID, devicePath, newPassphrase, pb.RotationReason_ROTATION_REASON_SCHEDULED); err != nil {
 		// Rollback: remove the new key we just added
-		if rmErr := encMgr.RemoveKey(ctx, devicePath, luksSecret(newPassphrase)); rmErr != nil {
+		if rmErr := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecret(newPassphrase)); rmErr != nil {
 			e.logger.Error("LUKS: rotation rollback failed — new key remains in slot",
 				"action_id", actionID, "error", rmErr)
 		}
@@ -481,7 +485,7 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 	}
 
 	// Verified — now safe to remove old key
-	if err := encMgr.RemoveKey(ctx, devicePath, luksSecret(currentKey)); err != nil {
+	if err := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecret(currentKey)); err != nil {
 		e.logger.Warn("failed to remove old key after rotation (both keys work)", "error", err)
 	}
 
@@ -556,7 +560,7 @@ func (e *Executor) enrollTpm(ctx context.Context, actionID, devicePath string) e
 		return fmt.Errorf("agent store not configured")
 	}
 
-	tpm, ok := encMgr.TPM()
+	tpm, ok := e.deps.encrypt.TPM()
 	if !ok {
 		return fmt.Errorf("TPM2 not supported by the encryption backend")
 	}
@@ -598,7 +602,7 @@ func (e *Executor) revokeDeviceKeyInternal(ctx context.Context, localState *stor
 
 	switch localState.DeviceKeyType {
 	case "tpm":
-		tpm, ok := encMgr.TPM()
+		tpm, ok := e.deps.encrypt.TPM()
 		if !ok {
 			return fmt.Errorf("TPM2 not supported by the encryption backend")
 		}
@@ -606,7 +610,7 @@ func (e *Executor) revokeDeviceKeyInternal(ctx context.Context, localState *stor
 			return err
 		}
 	case "user_passphrase":
-		if err := encMgr.KillSlot(ctx, localState.DevicePath, 7, luksSecret(managedKey)); err != nil {
+		if err := e.deps.encrypt.KillSlot(ctx, localState.DevicePath, 7, luksSecret(managedKey)); err != nil {
 			return err
 		}
 	case "none":
@@ -719,6 +723,7 @@ func resolveLuksConflict(as ActionStore, actionID string) (string, error) {
 // volume. A successful StoreKey response is transactionally visible, so any
 // mismatch is an error rather than eventual-consistency lag to retry.
 func (e *Executor) verifyKeyRoundTrip(ctx context.Context, actionID, devicePath, expectedKey string) error {
+	e.ensureDeps()
 	ks := e.getLuksKeyStore()
 	if ks == nil {
 		return fmt.Errorf("LUKS key store not configured (no stream connection)")
@@ -733,7 +738,7 @@ func (e *Executor) verifyKeyRoundTrip(ctx context.Context, actionID, devicePath,
 	}
 
 	// Defense-in-depth: verify the key actually unlocks the volume.
-	ok, testErr := encMgr.VerifyPassphrase(ctx, devicePath, luksSecret(storedKey))
+	ok, testErr := e.deps.encrypt.VerifyPassphrase(ctx, devicePath, luksSecret(storedKey))
 	if testErr != nil || !ok {
 		return fmt.Errorf("server-stored key does not unlock volume (test_ok=%v, err=%v)", ok, testErr)
 	}

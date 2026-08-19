@@ -17,7 +17,7 @@ func getFileOwnership(path string) (owner, group string) {
 
 // atomicWriteFile writes content to a file atomically with the specified
 // permissions. The fs Manager's WriteFile is atomic on every backend.
-func atomicWriteFile(ctx context.Context, path, content, mode, owner, group string) error {
+func (e *Executor) atomicWriteFile(ctx context.Context, path, content, mode, owner, group string) error {
 	opts := sysfs.WriteOptions{Owner: owner, Group: group}
 	if mode != "" {
 		v, err := strconv.ParseUint(mode, 8, 32)
@@ -26,12 +26,12 @@ func atomicWriteFile(ctx context.Context, path, content, mode, owner, group stri
 		}
 		opts.Mode = os.FileMode(v)
 	}
-	return fsMgr.WriteFile(ctx, path, []byte(content), opts)
+	return e.deps.fs.WriteFile(ctx, path, []byte(content), opts)
 }
 
 // readFileWithSudo reads a file's contents through the fs Manager.
-func readFileWithSudo(ctx context.Context, path string) (string, error) {
-	b, err := fsMgr.ReadFile(ctx, path)
+func (e *Executor) readFileWithSudo(ctx context.Context, path string) (string, error) {
+	b, err := e.deps.fs.ReadFile(ctx, path)
 	if err != nil {
 		return "", err
 	}
@@ -40,8 +40,8 @@ func readFileWithSudo(ctx context.Context, path string) (string, error) {
 
 // fileExistsWithSudo checks whether a path exists. A probe error is treated as
 // "absent" to preserve the boolean contract of the previous helper.
-func fileExistsWithSudo(ctx context.Context, path string) bool {
-	ok, _ := fsMgr.Exists(ctx, path)
+func (e *Executor) fileExistsWithSudo(ctx context.Context, path string) bool {
+	ok, _ := e.deps.fs.Exists(ctx, path)
 	return ok
 }
 
@@ -72,13 +72,13 @@ func statFile(ctx context.Context, path string) (os.FileMode, error) {
 }
 
 // removeFileStrict removes a file and returns any error.
-func removeFileStrict(ctx context.Context, path string) error {
-	return fsMgr.Remove(ctx, path)
+func (e *Executor) removeFileStrict(ctx context.Context, path string) error {
+	return e.deps.fs.Remove(ctx, path)
 }
 
 // createDirectory creates a directory through the fs Manager.
-func createDirectory(ctx context.Context, path string, recursive bool) error {
-	return fsMgr.Mkdir(ctx, path, sysfs.MkdirOptions{Recursive: recursive})
+func (e *Executor) createDirectory(ctx context.Context, path string, recursive bool) error {
+	return e.deps.fs.Mkdir(ctx, path, sysfs.MkdirOptions{Recursive: recursive})
 }
 
 // createDirectoryWithPermissions creates a directory and applies its mode
@@ -87,8 +87,8 @@ func createDirectory(ctx context.Context, path string, recursive bool) error {
 // component symlink swapped in after mkdir, redirecting a root chmod/chown onto
 // the target. Here the perms are applied via an O_NOFOLLOW|O_DIRECTORY fd, so a
 // swapped-in symlink aborts the operation (ELOOP) instead.
-func createDirectoryWithPermissions(ctx context.Context, path, mode, owner, group string, recursive bool) error {
-	if err := fsMgr.Mkdir(ctx, path, sysfs.MkdirOptions{Recursive: recursive}); err != nil {
+func (e *Executor) createDirectoryWithPermissions(ctx context.Context, path, mode, owner, group string, recursive bool) error {
+	if err := e.deps.fs.Mkdir(ctx, path, sysfs.MkdirOptions{Recursive: recursive}); err != nil {
 		return fmt.Errorf("create directory: %w", err)
 	}
 	if mode == "" && owner == "" && group == "" {
@@ -114,21 +114,21 @@ func createDirectoryWithPermissions(ctx context.Context, path, mode, owner, grou
 }
 
 // removeDirectory removes a directory and its contents.
-func removeDirectory(ctx context.Context, path string) error {
-	return fsMgr.RemoveDir(ctx, path)
+func (e *Executor) removeDirectory(ctx context.Context, path string) error {
+	return e.deps.fs.RemoveDir(ctx, path)
 }
 
 // userExists reports whether a user exists on the system, via the SDK user
 // Manager (the `id` lookup). The lookup error is propagated, not coerced to
 // "not found", so a caller can fail closed on "couldn't check" rather than
 // blindly creating or skipping.
-func userExists(ctx context.Context, username string) (bool, error) {
-	return userMgr.Exists(ctx, username)
+func (e *Executor) userExists(ctx context.Context, username string) (bool, error) {
+	return e.deps.user.Exists(ctx, username)
 }
 
 // groupExists reports whether a group exists on the system, via the SDK user
 // Manager (the `getent group` lookup). The lookup error is propagated, not
 // coerced to "not found".
-func groupExists(ctx context.Context, groupName string) (bool, error) {
-	return userMgr.GroupExists(ctx, groupName)
+func (e *Executor) groupExists(ctx context.Context, groupName string) (bool, error) {
+	return e.deps.user.GroupExists(ctx, groupName)
 }

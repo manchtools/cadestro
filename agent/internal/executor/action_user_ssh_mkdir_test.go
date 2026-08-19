@@ -79,9 +79,6 @@ func TestSetupSSHKeys_CreatesDotSSHViaFSManager(t *testing.T) {
 	}
 
 	fake := &recordingSSHFS{}
-	prev := fsMgr
-	t.Cleanup(func() { fsMgr = prev })
-	fsMgr = fake
 
 	home := t.TempDir()
 	const keyLine = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAtestkey user@host"
@@ -93,6 +90,7 @@ func TestSetupSSHKeys_CreatesDotSSHViaFSManager(t *testing.T) {
 	}
 
 	e := NewExecutor(nil)
+	e.deps.fs = fake
 	var out strings.Builder
 	changed, err := e.setupSSHKeys(context.Background(), params, &out)
 	if err != nil {
