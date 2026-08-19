@@ -29,7 +29,6 @@ func TestTargetArchitectureHasNoAbolishedAgentRuntime(t *testing.T) {
 	required := map[string]bool{
 		"ManifestDelivery":  false,
 		"MarkRebootStarted": false,
-		"SealedValue":       false,
 	}
 	files := 0
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {

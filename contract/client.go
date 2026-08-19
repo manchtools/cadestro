@@ -388,10 +388,6 @@ type RegisterAgentResult struct {
 	// agent listener, normally a different host from the API URL registration
 	// went to.
 	ControlURL string
-	// ControlSealingPublicKey is control's deployment X25519 public key, raw
-	// 32-byte encoding. The agent pins it alongside CACert and seals every
-	// secret it reports to it.
-	ControlSealingPublicKey []byte
 }
 
 // RegisterAgent registers an agent with the control server.
@@ -399,13 +395,7 @@ type RegisterAgentResult struct {
 // The controlURL is the control server's public API URL (where the web UI
 // connects). The result's ControlURL is a DIFFERENT host — control's agent
 // listener, which the agent dials for its stream.
-//
-// sealingPubKey is the raw 32-byte X25519 public key the agent generated for
-// this enrollment; control seals to it for the lifetime of the device
-// identity issued here. It is a required parameter rather than an option
-// because an enrollment without it produces a device control can never send a
-// secret to.
-func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agentVersion string, csr, sealingPubKey []byte, opts ...ClientOption) (*RegisterAgentResult, error) {
+func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agentVersion string, csr []byte, opts ...ClientOption) (*RegisterAgentResult, error) {
 	c := &Client{}
 	httpClient := bootstrapHTTPClient()
 	for _, opt := range opts {
@@ -415,11 +405,10 @@ func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agen
 	controlClient := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
 
 	req := connect.NewRequest(&pm.RegisterRequest{
-		Token:                 token,
-		Hostname:              hostname,
-		AgentVersion:          agentVersion,
-		Csr:                   csr,
-		AgentSealingPublicKey: sealingPubKey,
+		Token:        token,
+		Hostname:     hostname,
+		AgentVersion: agentVersion,
+		Csr:          csr,
 	})
 
 	resp, err := controlClient.Register(ctx, req)
@@ -428,11 +417,10 @@ func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agen
 	}
 
 	return &RegisterAgentResult{
-		DeviceID:                resp.Msg.DeviceId.GetValue(),
-		CACert:                  resp.Msg.CaCert,
-		Certificate:             resp.Msg.Certificate,
-		ControlURL:              resp.Msg.ControlUrl,
-		ControlSealingPublicKey: resp.Msg.ControlSealingPublicKey,
+		DeviceID:    resp.Msg.DeviceId.GetValue(),
+		CACert:      resp.Msg.CaCert,
+		Certificate: resp.Msg.Certificate,
+		ControlURL:  resp.Msg.ControlUrl,
 	}, nil
 }
 
@@ -830,11 +818,9 @@ func (c *Client) SendTerminalStateChange(ctx context.Context, change *pm.Termina
 // GetLuksKey sends a GetLuksKeyRequest on the stream and waits for the
 // correlated response, matched by message ID.
 //
-// The returned passphrase is sealed to this device's enrollment recipient key.
-// Opening it is the caller's job, at the narrow sink immediately before use —
-// the SDK deliberately does not unseal here, so the plaintext never exists in
-// a general-purpose transport helper.
-func (c *Client) GetLuksKey(ctx context.Context, actionID string) (*pm.SealedValue, error) {
+// The returned passphrase is plaintext inside the authenticated mTLS stream.
+// The caller should keep its lifetime narrow and clear its copy after use.
+func (c *Client) GetLuksKey(ctx context.Context, actionID string) ([]byte, error) {
 	id := NewULID()
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
@@ -864,9 +850,8 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) (*pm.SealedVal
 		if luksResp == nil {
 			return nil, errors.New("unexpected response type")
 		}
-		// The response carries validate tags and nothing was checking them: a
-		// blob too short to be a seal, or an absent one, would otherwise reach
-		// the unseal call and fail there with a less honest error.
+		// Enforce the response's required and size bounds before returning a
+		// credential to the caller.
 		if err := c.validateInbound(luksResp); err != nil {
 			return nil, fmt.Errorf("invalid GetLuksKey response: %w", err)
 		}
@@ -877,12 +862,9 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) (*pm.SealedVal
 // StoreLuksKey sends a StoreLuksKeyRequest on the stream and waits for the
 // server confirmation.
 //
-// passphrase must already be sealed to control's deployment sealing key, with
-// AAD binding this device and actionID. The SDK does not seal for the caller:
-// sealing needs the recipient key and the action context, both of which belong
-// to the agent, and a transport helper that accepted plaintext would be the
-// one place a credential could be logged by accident.
-func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, passphrase *pm.SealedValue, reason pm.RotationReason) error {
+// passphrase is plaintext inside the authenticated mTLS stream. Control derives
+// the device identity from that stream and encrypts the value before storage.
+func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, passphrase []byte, reason pm.RotationReason) error {
 	id := NewULID()
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
@@ -925,10 +907,9 @@ func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, 
 // StoreLpsPasswords reports one LPS execution's password rotations and waits for
 // the server confirmation.
 //
-// Each rotation's password must already be sealed to control's deployment
-// sealing key, with AAD binding the device, the action and that rotation's
-// username — the username binding is what stops a blob being stored under a
-// different account than the one it was generated for.
+// Each rotation's password is plaintext inside the authenticated mTLS stream.
+// Control derives the device identity from the stream and binds the stored
+// ciphertext to its row, device, kind, subject and version.
 //
 // Request/response are correlated by message id like every other stream call, so
 // a failed batch is reported rather than silently dropped: LPS rotations are

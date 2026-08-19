@@ -2,15 +2,15 @@
 
 ## The honest statement first
 
-**Cadestro is pre-1.0. There is no schema migration machinery, and there is no
-supported upgrade path across releases that change the database.** If a release
-changes the schema, the supported procedure is to reinstall clean.
+**Cadestro is pre-1.0. There is no automatic schema migration machinery.** A
+release either documents one explicit offline cutover or requires a clean
+reinstall; startup never guesses how to transform old data.
 
 That is not a gap waiting to be filled in a later sprint; it is the current
 design, and this page describes what the code actually supports rather than what
 a mature product would.
 
-<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:03e5f0ac -->
+<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:2b2f4c56 -->
 Schema handling is a three-way decision at startup, and there is no migration
 runner anywhere in the server. An empty database gets the baseline schema
 applied in one transaction. A database already at the current version is opened.
@@ -18,14 +18,14 @@ applied in one transaction. A database already at the current version is opened.
 migrated, not best-effort upgraded, refused.
 <!-- docref: end -->
 
-So: within a schema version, updating is a container image pull. Across one, it
-is a reinstall.
+So: within a schema version, updating is a container image pull. Across one,
+follow the release's named offline cutover if it has one; otherwise reinstall.
 
 ---
 
 ## Updating within a version
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:809a1296 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:c3bfad13 -->
 The control and web images share a single tag variable, because both are
 released from one repository under one version. They are updated together by
 construction — you cannot accidentally run a control plane and a UI from
@@ -77,7 +77,7 @@ one cannot read.
 
 ## Across a schema version
 
-Reinstall. Concretely:
+Unless the release names an offline cutover below, reinstall. Concretely:
 
 1. Take a [verified backup](backup-restore.md) and copy `certs/`, `secrets/`,
    and `data/artifacts` off the machine alongside it.
@@ -101,6 +101,14 @@ take a verified backup, and run
 `sqlite3 -bail`. It adds the serial/pending columns and removes the obsolete
 revocation table; legacy fingerprints are bridged only when the actual mTLS
 peer leaf authenticates.
+
+For databases created before the generic device-secret cutover, stop control,
+take a verified backup, and first run
+[`upgrade-device-secrets.sql`](upgrade-device-secrets.sql) with `sqlite3 -bail`.
+Then run `cadestro migrate-device-secrets` with the deployed at-rest key. The
+command authenticates and re-encrypts every legacy LUKS/LPS value in one
+transaction before it removes duplicate ownership and ciphertext columns; one
+bad row leaves the old schema untouched.
 
 <!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:c85cea66 -->
 Restoring the old database into the new release is not a migration and will not

@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sort"
@@ -47,8 +46,7 @@ func TestDeviceCRUD_ViewsAndFilters(t *testing.T) {
 			lastSeen := now.Add(-time.Duration(i) * 10 * time.Minute)
 			if _, err := tx.InsertDevice(ctx, db.InsertDeviceParams{
 				ID: id, Hostname: "device-" + id, AgentVersion: "1.0.0",
-				AgentSealingPublicKey: bytes.Repeat([]byte{byte(i + 1)}, 32),
-				RegisteredAt:          &now, LastSeenAt: &lastSeen,
+				RegisteredAt: &now, LastSeenAt: &lastSeen,
 			}); err != nil {
 				return err
 			}
@@ -232,7 +230,7 @@ func TestHeartbeatTelemetryUpdatesWithoutGrowingAudit(t *testing.T) {
 	_, err := st.WithAudit(ctx, mutationOp(), func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		_, err := tx.InsertDevice(ctx, db.InsertDeviceParams{
 			ID: deviceID, Hostname: "telemetry", AgentVersion: "1.0.0",
-			AgentSealingPublicKey: bytes.Repeat([]byte{1}, 32), RegisteredAt: &before, LastSeenAt: &before,
+			RegisteredAt: &before, LastSeenAt: &before,
 		})
 		if err == nil {
 			rec.Effect(deviceEffect(deviceID))
@@ -257,22 +255,6 @@ func TestHeartbeatTelemetryUpdatesWithoutGrowingAudit(t *testing.T) {
 	auditAfter, err := st.CountAuditOperations(ctx, "")
 	require.NoError(t, err)
 	assert.Equal(t, auditBefore, auditAfter, "heartbeat telemetry must not enter the audit chain")
-}
-
-func TestInsertDevice_RejectsInvalidAgentSealingKey(t *testing.T) {
-	st, _ := setupSQLite(t)
-	ctx := context.Background()
-	now := time.Now().UTC()
-
-	_, err := st.WithAudit(ctx, mutationOp(), func(ctx context.Context, tx *store.Tx, _ *store.AuditRecorder) error {
-		_, err := tx.InsertDevice(ctx, db.InsertDeviceParams{
-			ID: newID(), Hostname: "bad-key", AgentVersion: "1.0.0",
-			AgentSealingPublicKey: bytes.Repeat([]byte{1}, 31), RegisteredAt: &now, LastSeenAt: &now,
-		})
-		return err
-	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "agent_sealing_public_key")
 }
 
 func requireOneRow(op string, n int64, err error) error {

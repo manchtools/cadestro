@@ -105,8 +105,9 @@ func PopulateManagedAction(action *pm.ManagedAction, actionType pm.ActionType, p
 }
 
 // PopulateUpdateActionParams deserializes stored authoring params into the
-// API input shape. Encryption and WiFi deliberately differ from their sealed
-// agent-wire shapes, so persisted authoring validation uses this carrier.
+// API input shape. Encryption and WiFi deliberately differ from their
+// redacted read and agent-wire shapes, so persisted authoring validation uses
+// this carrier.
 func PopulateUpdateActionParams(request *pm.UpdateActionParamsRequest, actionType pm.ActionType, paramsJSON []byte) error {
 	return populateParamsOneof(request, actionType, paramsJSON)
 }

@@ -27,7 +27,7 @@ var ErrInvalidCSR = errors.New("invalid certificate signing request")
 
 // EnrollmentIdentityFromCSR validates the canonical enrollment CSR and
 // returns its Ed25519 public key. The key is the device identity used for
-// idempotent retries; callers must not substitute the X25519 sealing key.
+// idempotent retries.
 func EnrollmentIdentityFromCSR(csrPEM []byte) ([]byte, error) {
 	_, key, err := parseEnrollmentCSR(csrPEM)
 	if err != nil {

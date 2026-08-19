@@ -66,10 +66,10 @@ func TestSetupLuks_GetLuksStateError_FailsClosed(t *testing.T) {
 	require.Error(t, err, "setupLuks must fail closed on a state-read error")
 	assert.Contains(t, err.Error(), "luks state",
 		"the error must be the state read failing closed, not a downstream volume-detection error")
-	assert.False(t, opened, "the PSK must remain sealed when the state store rejects execution")
+	assert.False(t, opened, "the PSK must remain unread when the state store rejects execution")
 }
 
-func TestExecuteSealedLuks_RejectsClosedStoreBeforeOpeningPSK(t *testing.T) {
+func TestExecuteLuksActionRejectsClosedStoreBeforeOpeningPSK(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
 	require.NoError(t, st.Close())
@@ -78,17 +78,17 @@ func TestExecuteSealedLuks_RejectsClosedStoreBeforeOpeningPSK(t *testing.T) {
 	e.SetStore(st)
 	e.SetLuksKeyStore(&fakeLuksKeyStore{})
 	params := &pb.EncryptionParams{
-		PresharedKey: &pb.SealedValue{Version: sealedFieldVersion, Ciphertext: []byte("not-valid-ciphertext")},
+		PresharedKey: []byte("not-valid-ciphertext"),
 	}
 
-	_, _, _, err = e.executeSealedLuks(context.Background(), params,
+	_, _, _, err = e.executeLuksAction(context.Background(), params,
 		pb.DesiredState_DESIRED_STATE_PRESENT, "01HXSEALEDFAIL0000000000000")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "get luks state",
 		"the store gate must fail before malformed ciphertext can reach the opening boundary")
 }
 
-func TestExecuteSealedLuks_SkipsConflictBeforeOpeningPSK(t *testing.T) {
+func TestExecuteLuksActionSkipsConflictBeforeOpeningPSK(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
 	defer st.Close()
@@ -104,15 +104,15 @@ func TestExecuteSealedLuks_SkipsConflictBeforeOpeningPSK(t *testing.T) {
 			pb.DesiredState_DESIRED_STATE_PRESENT, now),
 	}})
 	params := &pb.EncryptionParams{
-		PresharedKey: &pb.SealedValue{Version: sealedFieldVersion, Ciphertext: []byte("not-valid-ciphertext")},
+		PresharedKey: []byte("not-valid-ciphertext"),
 	}
 
-	output, changed, _, err := e.executeSealedLuks(context.Background(), params,
+	output, changed, _, err := e.executeLuksAction(context.Background(), params,
 		pb.DesiredState_DESIRED_STATE_PRESENT, "weak")
 	require.NoError(t, err)
 	assert.False(t, changed)
 	assert.Contains(t, output.GetStdout(), "strong",
-		"the losing policy must be skipped without opening its sealed PSK")
+		"the losing policy must be skipped without reading its PSK")
 }
 
 // WS6 #3 (lockout safety): when the server is unreachable, takeOwnership

@@ -124,7 +124,7 @@ an error unconditionally and every connection is refused. The feature is not
 "best effort" off Linux; it is closed.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:3365e614 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:c61214e9 -->
 The handler applies a global rate limit of five enrollment attempts per rolling
 minute, and serializes the rest of the work under a mutex so that concurrent
 callers cannot each pass the "already enrolled?" check and register duplicate
@@ -300,7 +300,7 @@ after certificate promotion.
 
 ## What enrollment writes into the audit log
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:14d5f72b -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:f4aa857a -->
 A successful new registration records the device creation as an effect of one
 audited operation whose actor is the registration token itself, identified by
 its digest rather than its value. A same-identity retry is audited as an

@@ -90,7 +90,7 @@ rather than an error you notice.
 
 ### The authoring hierarchy
 
-<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler:acd57947 -->
+<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler:3d11132f -->
 There are three authoring levels and they compose in one direction only: an
 **Action** is a single declaration; an **ActionSet** is an ordered list of
 actions; a **Definition** groups action sets. The compiler is what turns any of
@@ -120,7 +120,7 @@ commits a policy delivery. There is no background reconciler that walks the
 fleet applying new assignments on its own.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/dispatch/assigned.go#CompileAssigned:f3bb04b0 -->
+<!-- docref: begin src=server/internal/dispatch/assigned.go#CompileAssigned:d6f02ff7 -->
 When it does run, resolution walks the assigned sources in a fixed order —
 definitions, then action sets, then singleton actions, then compliance policies
 — and an action already carried by a container it walked earlier is not emitted
@@ -148,7 +148,7 @@ as something to avoid authoring.
 The agent never receives a tree. Compilation resolves the hierarchy to a flat
 list before anything leaves the server:
 
-<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler.ActionSet:7b8db1be,server/internal/manifest/compiler.go#Compiler.Definition:c58ccefb -->
+<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler.ActionSet:2601f745,server/internal/manifest/compiler.go#Compiler.Definition:b745e835 -->
 Assigning an Action produces one singleton manifest. Assigning an ActionSet
 flattens the set into one manifest, in authored member order. Assigning a
 Definition produces **one globally ordered runbook** — the definition's schedule
@@ -160,17 +160,17 @@ A set or definition member that contains no live actions cannot become
 executable work, and compilation refuses it rather than emitting an empty
 manifest.
 
-Secret-bearing parameters are sealed during compilation, per device:
+Secret-bearing parameters remain encrypted while compiled and persisted:
 
-<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler.ActionForDevice:63266f1a -->
-The `…ForDevice` compile path seals every classified field to the target
-device's enrollment key *before* the manifest is persisted, so the durable
-delivery row never holds a plaintext secret and a manifest compiled for one
-device cannot be opened by another.
+<!-- docref: begin src=server/internal/manifest/compiler.go#Compiler.Action:649b1215,server/internal/manifest/compiler.go#MaterializeSecrets:91e1e417 -->
+Compilation copies the catalog's at-rest ciphertext into the durable manifest.
+Only a fresh outbound copy is decrypted at the authenticated mTLS stream, so a
+delivery row never holds plaintext and compilation does not need a parallel
+per-device path.
 <!-- docref: end -->
 
 See [Security model → secret handling](security-model.md#5-secret-handling) for
-what the seal binds.
+the storage binding and transport boundary.
 
 ### The manifest
 
@@ -296,7 +296,7 @@ delivery for every currently connected device on a 30-second tick. The database
 is the correctness path; the wakeup is only the latency path.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/delivery/dispatcher.go#Dispatcher.Dispatch:2b7e41c8,server/internal/delivery/dispatcher.go#Sendable:5d02d815 -->
+<!-- docref: begin src=server/internal/delivery/dispatcher.go#Dispatcher.Dispatch:bfd34797,server/internal/delivery/dispatcher.go#Sendable:5d02d815 -->
 A device that is offline is not an error: the row stays durable and a reconnect
 notification or the next sweep retries it. A reconnecting agent does not wait
 out the previous stream's retry delay — a pushed-but-unacknowledged delivery is
@@ -412,7 +412,7 @@ it has already durably received, on schedule, indefinitely — including its
 maintenance window, which is persisted locally for exactly this reason.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#sendScheduledResults:d20a8d78,agent/internal/executor/lps.go#Executor.setupLpsPasswords:8f33e833 -->
+<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#sendScheduledResults:d20a8d78,agent/internal/executor/lps.go#Executor.setupLpsPasswords:243c5bc4 -->
 What stops while offline is precisely what needs the server. New assignments
 cannot arrive, and results queue in a durable local outbox that drains on
 reconnect. Two capabilities also refuse rather than proceed: password rotation

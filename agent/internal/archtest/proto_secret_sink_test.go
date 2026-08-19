@@ -22,8 +22,8 @@ var secretLogSinkAllowlist = map[string]string{}
 
 // TestProtoSecretFieldSinks: a credential must never reach a log.
 //
-// LUKS passphrases and LPS passwords are sealed on the wire, but the agent must
-// still handle plaintext at the narrow operating-system sink. A field selector
+// LUKS passphrases and LPS passwords travel only on authenticated mTLS, and the
+// agent handles plaintext at the narrow operating-system sink. A field selector
 // handed to formatting or logging can therefore disclose a live credential.
 //
 // The agent is where these values ORIGINATE — it generates the password, sets

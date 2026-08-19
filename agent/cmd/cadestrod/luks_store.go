@@ -20,22 +20,18 @@ func (s *clientLuksKeyStore) GetKey(ctx context.Context, actionID string) (strin
 	if s.client == nil {
 		return "", fmt.Errorf("luks key store: no SDK client wired (programmer error)")
 	}
-	sealed, err := s.client.GetLuksKey(ctx, actionID)
+	value, err := s.client.GetLuksKey(ctx, actionID)
 	if err != nil {
 		return "", err
 	}
-	return s.executor.OpenLuksPassphrase(actionID, sealed)
+	return string(value), nil
 }
 
 func (s *clientLuksKeyStore) StoreKey(ctx context.Context, actionID, devicePath, passphrase string, reason pb.RotationReason) error {
 	if s.client == nil {
 		return fmt.Errorf("luks key store: no SDK client wired (programmer error)")
 	}
-	sealed, err := s.executor.SealLuksPassphrase(actionID, passphrase)
-	if err != nil {
-		return err
-	}
-	return s.client.StoreLuksKey(ctx, actionID, devicePath, sealed, reason)
+	return s.client.StoreLuksKey(ctx, actionID, devicePath, []byte(passphrase), reason)
 }
 
 func (s *clientLuksKeyStore) GetLuksKey(ctx context.Context, actionID string) (string, error) {
@@ -46,7 +42,7 @@ func (s *clientLuksKeyStore) ValidateLuksToken(ctx context.Context, token string
 	return s.client.ValidateLuksToken(ctx, token)
 }
 
-// clientLpsPasswordStore sends sealed password rotations over the agent's
+// clientLpsPasswordStore sends password rotations over the agent's
 // authenticated control stream.
 type clientLpsPasswordStore struct {
 	client *sdk.Client

@@ -78,7 +78,7 @@ WHERE id = ?2
   AND is_deleted = FALSE
   AND active_cert_serial IS NULL
   AND cert_fingerprint = ?3
-RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+RETURNING id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type BridgeLegacyDeviceCertificateParams struct {
@@ -94,7 +94,6 @@ func (q *Queries) BridgeLegacyDeviceCertificate(ctx context.Context, arg BridgeL
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -198,7 +197,7 @@ func (q *Queries) CountDevices(ctx context.Context) (int64, error) {
 }
 
 const findEnrollmentDevice = `-- name: FindEnrollmentDevice :one
-SELECT d.id, d.hostname, d.agent_version, d.agent_sealing_public_key, d.enrollment_identity_public_key, d.certificate_pem, d.cert_fingerprint, d.cert_not_after, d.active_cert_serial, d.pending_certificate_pem, d.pending_cert_serial, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
+SELECT d.id, d.hostname, d.agent_version, d.enrollment_identity_public_key, d.certificate_pem, d.cert_fingerprint, d.cert_not_after, d.active_cert_serial, d.pending_certificate_pem, d.pending_cert_serial, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
 FROM devices d
 JOIN tokens t ON t.id = d.registration_token_id
 WHERE t.value_hash = ?1
@@ -217,8 +216,7 @@ type FindEnrollmentDeviceParams struct {
 	IdentityPublicKey []byte    `json:"identity_public_key"`
 }
 
-// Existing enrollment retries are keyed by the Ed25519 public key in the CSR,
-// never by the X25519 secret-recipient key.
+// Existing enrollment retries are keyed by the Ed25519 public key in the CSR.
 func (q *Queries) FindEnrollmentDevice(ctx context.Context, arg FindEnrollmentDeviceParams) (Device, error) {
 	row := q.db.QueryRowContext(ctx, findEnrollmentDevice,
 		arg.ValueHash,
@@ -231,7 +229,6 @@ func (q *Queries) FindEnrollmentDevice(ctx context.Context, arg FindEnrollmentDe
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -254,7 +251,7 @@ func (q *Queries) FindEnrollmentDevice(ctx context.Context, arg FindEnrollmentDe
 }
 
 const getDevice = `-- name: GetDevice :one
-SELECT id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing FROM devices WHERE id = ? AND is_deleted = FALSE
+SELECT id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing FROM devices WHERE id = ? AND is_deleted = FALSE
 `
 
 func (q *Queries) GetDevice(ctx context.Context, id string) (Device, error) {
@@ -264,7 +261,6 @@ func (q *Queries) GetDevice(ctx context.Context, id string) (Device, error) {
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -288,22 +284,21 @@ func (q *Queries) GetDevice(ctx context.Context, id string) (Device, error) {
 
 const insertDevice = `-- name: InsertDevice :one
 INSERT INTO devices (
-    id, hostname, agent_version, agent_sealing_public_key,
-    registered_at, last_seen_at,
-    registration_token_id
+	id, hostname, agent_version,
+	registered_at, last_seen_at,
+	registration_token_id
 )
-VALUES (?, ?, ?, ?, ?, ?, ?)
-RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type InsertDeviceParams struct {
-	ID                    string     `json:"id"`
-	Hostname              string     `json:"hostname"`
-	AgentVersion          string     `json:"agent_version"`
-	AgentSealingPublicKey []byte     `json:"agent_sealing_public_key"`
-	RegisteredAt          *time.Time `json:"registered_at"`
-	LastSeenAt            *time.Time `json:"last_seen_at"`
-	RegistrationTokenID   *string    `json:"registration_token_id"`
+	ID                  string     `json:"id"`
+	Hostname            string     `json:"hostname"`
+	AgentVersion        string     `json:"agent_version"`
+	RegisteredAt        *time.Time `json:"registered_at"`
+	LastSeenAt          *time.Time `json:"last_seen_at"`
+	RegistrationTokenID *string    `json:"registration_token_id"`
 }
 
 func (q *Queries) InsertDevice(ctx context.Context, arg InsertDeviceParams) (Device, error) {
@@ -311,7 +306,6 @@ func (q *Queries) InsertDevice(ctx context.Context, arg InsertDeviceParams) (Dev
 		arg.ID,
 		arg.Hostname,
 		arg.AgentVersion,
-		arg.AgentSealingPublicKey,
 		arg.RegisteredAt,
 		arg.LastSeenAt,
 		arg.RegistrationTokenID,
@@ -321,7 +315,6 @@ func (q *Queries) InsertDevice(ctx context.Context, arg InsertDeviceParams) (Dev
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -345,30 +338,29 @@ func (q *Queries) InsertDevice(ctx context.Context, arg InsertDeviceParams) (Dev
 
 const insertEnrolledDevice = `-- name: InsertEnrolledDevice :one
 INSERT INTO devices (
-    id, hostname, agent_version, agent_sealing_public_key,
+    id, hostname, agent_version,
     enrollment_identity_public_key, registered_at, registration_token_id
 )
 SELECT ?1, ?2, ?3,
-       ?4, ?5,
-       ?6, t.id
+       ?4,
+       ?5, t.id
 FROM tokens t
-WHERE t.value_hash = ?7
-  AND t.name <> ?8
+WHERE t.value_hash = ?6
+  AND t.name <> ?7
   AND t.is_deleted = FALSE
   AND t.disabled = FALSE
-  AND t.expires_at > ?6
+  AND t.expires_at > ?5
   AND (t.max_uses = 0 OR (
       SELECT COUNT(*) FROM devices d
       WHERE d.registration_token_id = t.id
   ) < t.max_uses)
-RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+RETURNING id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type InsertEnrolledDeviceParams struct {
 	ID                string     `json:"id"`
 	Hostname          string     `json:"hostname"`
 	AgentVersion      string     `json:"agent_version"`
-	SealingKey        []byte     `json:"sealing_key"`
 	IdentityPublicKey []byte     `json:"identity_public_key"`
 	EnrolledAt        *time.Time `json:"enrolled_at"`
 	ValueHash         string     `json:"value_hash"`
@@ -383,7 +375,6 @@ func (q *Queries) InsertEnrolledDevice(ctx context.Context, arg InsertEnrolledDe
 		arg.ID,
 		arg.Hostname,
 		arg.AgentVersion,
-		arg.SealingKey,
 		arg.IdentityPublicKey,
 		arg.EnrolledAt,
 		arg.ValueHash,
@@ -394,7 +385,6 @@ func (q *Queries) InsertEnrolledDevice(ctx context.Context, arg InsertEnrolledDe
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -860,7 +850,7 @@ func (q *Queries) ListDeviceMaintenanceWindows(ctx context.Context, deviceID str
 }
 
 const listDevices = `-- name: ListDevices :many
-SELECT d.id, d.hostname, d.agent_version, d.agent_sealing_public_key, d.enrollment_identity_public_key, d.certificate_pem, d.cert_fingerprint, d.cert_not_after, d.active_cert_serial, d.pending_certificate_pem, d.pending_cert_serial, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
+SELECT d.id, d.hostname, d.agent_version, d.enrollment_identity_public_key, d.certificate_pem, d.cert_fingerprint, d.cert_not_after, d.active_cert_serial, d.pending_certificate_pem, d.pending_cert_serial, d.registered_at, d.last_seen_at, d.registration_token_id, d.is_deleted, d.sync_interval_minutes, d.inventory_interval_minutes, d.compliance_status, d.compliance_checked_at, d.compliance_total, d.compliance_passing
 FROM devices d
 WHERE d.is_deleted = FALSE
   AND d.id > ?1
@@ -942,7 +932,6 @@ func (q *Queries) ListDevices(ctx context.Context, arg ListDevicesParams) ([]Dev
 			&i.ID,
 			&i.Hostname,
 			&i.AgentVersion,
-			&i.AgentSealingPublicKey,
 			&i.EnrollmentIdentityPublicKey,
 			&i.CertificatePem,
 			&i.CertFingerprint,
@@ -1082,7 +1071,7 @@ SET certificate_pem = pending_certificate_pem,
 WHERE id = ?1
   AND is_deleted = FALSE
   AND pending_cert_serial = ?2
-RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+RETURNING id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type PromotePendingDeviceCertificateParams struct {
@@ -1097,7 +1086,6 @@ func (q *Queries) PromotePendingDeviceCertificate(ctx context.Context, arg Promo
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -1192,7 +1180,7 @@ SET certificate_pem = ?1,
     cert_not_after = NULL,
     active_cert_serial = ?2
 WHERE id = ?3 AND is_deleted = FALSE
-RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+RETURNING id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type SetActiveDeviceCertificateParams struct {
@@ -1208,7 +1196,6 @@ func (q *Queries) SetActiveDeviceCertificate(ctx context.Context, arg SetActiveD
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,
@@ -1295,7 +1282,7 @@ WHERE id = ?3
   AND is_deleted = FALSE
   AND active_cert_serial = ?4
   AND pending_cert_serial IS NULL
-RETURNING id, hostname, agent_version, agent_sealing_public_key, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
+RETURNING id, hostname, agent_version, enrollment_identity_public_key, certificate_pem, cert_fingerprint, cert_not_after, active_cert_serial, pending_certificate_pem, pending_cert_serial, registered_at, last_seen_at, registration_token_id, is_deleted, sync_interval_minutes, inventory_interval_minutes, compliance_status, compliance_checked_at, compliance_total, compliance_passing
 `
 
 type SetPendingDeviceCertificateParams struct {
@@ -1317,7 +1304,6 @@ func (q *Queries) SetPendingDeviceCertificate(ctx context.Context, arg SetPendin
 		&i.ID,
 		&i.Hostname,
 		&i.AgentVersion,
-		&i.AgentSealingPublicKey,
 		&i.EnrollmentIdentityPublicKey,
 		&i.CertificatePem,
 		&i.CertFingerprint,

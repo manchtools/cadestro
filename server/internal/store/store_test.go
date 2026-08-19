@@ -14,6 +14,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
+	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
 // The migration runner brings a fresh database all the way up.
@@ -53,6 +54,23 @@ func TestSQLiteFile_IsPrivateAndReadOnlyOpenDoesNotCreate(t *testing.T) {
 	require.Error(t, err)
 	_, statErr := os.Stat(missing)
 	assert.ErrorIs(t, statErr, os.ErrNotExist)
+}
+
+func TestNew_RejectsDuplicateSecretOwnership(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "control.db")
+	st, err := store.New(ctx, path)
+	require.NoError(t, err)
+	st.Close()
+
+	raw, err := testdb.Open(ctx, path)
+	require.NoError(t, err)
+	_, err = raw.Exec(ctx, `ALTER TABLE lps_passwords ADD COLUMN device_id text`)
+	require.NoError(t, err)
+	raw.Close()
+
+	_, err = store.New(ctx, path)
+	require.ErrorContains(t, err, "legacy column device_id")
 }
 
 // The boot-time role snapshot must not carry permissions for authentication

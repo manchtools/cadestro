@@ -41,6 +41,7 @@ type dispatchHandlerFixture struct {
 	set1        string
 	set2        string
 	definition  string
+	atRest      *pmcrypto.Encryptor
 }
 
 func newDispatchHandlerFixture(t *testing.T) *dispatchHandlerFixture {
@@ -56,7 +57,10 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *pmv1
 		deviceID: seedDevice(t, raw), otherDevice: seedDevice(t, raw),
 		groupID: newID(), actionID: newID(),
 	}
-	_, err := raw.Exec(context.Background(), `
+	atRest, err := pmcrypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
+	require.NoError(t, err)
+	f.atRest = atRest
+	_, err = raw.Exec(context.Background(), `
 		INSERT INTO device_groups (id, name, created_at) VALUES ($1, 'fanout', $2)`,
 		f.groupID, now)
 	require.NoError(t, err)
@@ -95,10 +99,8 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *pmv1
 			($1, $2, 0, $4), ($1, $3, 1, $4)`, f.definition, f.set1, f.set2, now)
 	require.NoError(t, err)
 	f.waker = &committedWaker{store: st}
-	atRest, err := pmcrypto.NewEncryptor("0202020202020202020202020202020202020202020202020202020202020202")
-	require.NoError(t, err)
 	f.handlers = dispatch.NewHandlers(dispatch.HandlersConfig{
-		Store: st, AtRest: atRest, Waker: f.waker,
+		Store: st, Waker: f.waker,
 		Sender: sender,
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Now:    func() time.Time { return now },
@@ -145,6 +147,7 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 		Deliveries:  delivery.New(delivery.Config{Store: f.store, Now: func() time.Time { return f.now }}),
 		Assignments: f.handlers,
 		Now:         func() time.Time { return f.now },
+		AtRest:      f.atRest,
 	})
 	rows, err := f.store.ListDeviceDeliveries(context.Background(), f.deviceID, 10)
 	require.NoError(t, err)
@@ -172,7 +175,7 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	assert.Equal(t, firstManifestID, repeated.DesiredPolicy.Manifests[0].ManifestId)
 
 	// Semantic authoring changes feed the stable identity seed rather than
-	// being hidden by the per-device sealed payload.
+	// being hidden by outbound secret materialization.
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = $1, params_canonical = $1 WHERE id = $2`,
 		`{"interpreter":"/bin/sh","script":"printf changed"}`, f.actionID)
 	require.NoError(t, err)

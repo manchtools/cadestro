@@ -16,8 +16,7 @@ import (
 func seedBareDevice(t *testing.T, raw *testdb.DB, deviceID string) {
 	t.Helper()
 	_, err := raw.Exec(context.Background(),
-		`INSERT INTO devices (id, hostname, agent_sealing_public_key) VALUES ($1, $2, $3)`,
-		deviceID, "host-"+deviceID, make([]byte, 32))
+		`INSERT INTO devices (id, hostname) VALUES ($1, $2)`, deviceID, "host-"+deviceID)
 	require.NoError(t, err)
 }
 

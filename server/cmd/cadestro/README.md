@@ -27,7 +27,7 @@ Control must fail readiness when the schema is not current, required keys or CA
 material are unusable, artifact paths are not writable, or the agent listener
 cannot enforce active certificate serial admission.
 
-<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:dfecd82c,cmd/cadestro/config.go#configEnvironment:c1ebb388,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
+<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:8eacfc02,cmd/cadestro/config.go#configEnvironment:7338cd89,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
 Configuration is entirely environmental: every option is its own documented
 `CADESTRO_`-prefixed variable. There is no configuration file and no
 `-config` flag, and the only accepted top-level arguments are the
@@ -44,12 +44,10 @@ durations name their variable and fail startup.
 
 <!-- docref: begin src=cmd/cadestro/config.go#loadSecret:b9678c7e,cmd/cadestro/config.go#readSecretFile:60ffa83b,cmd/cadestro/config.go#loadEd25519PrivateKey:3cc11345 -->
 Private keys are file-referenced only: `CADESTRO_SESSION_SIGNING_KEY_FILE`
-must name one PEM-encoded Ed25519 PKCS#8 key. The two symmetric secrets accept
-either form — exactly one of `CADESTRO_ENCRYPTION_KEY` or
-`CADESTRO_ENCRYPTION_KEY_FILE`, and exactly one of
-`CADESTRO_SEALING_KEY` or `CADESTRO_SEALING_KEY_FILE`. Naming both of a
-pair is a configuration mistake rather than a precedence question and fails
-startup, as does naming neither. A referenced secret file must be a small
+must name one PEM-encoded Ed25519 PKCS#8 key. At-rest encryption accepts
+exactly one of `CADESTRO_ENCRYPTION_KEY` or
+`CADESTRO_ENCRYPTION_KEY_FILE`. Naming both is a configuration mistake rather
+than a precedence question and fails startup, as does naming neither. A referenced secret file must be a small
 regular file that is not group/world accessible. Configuration errors report
 variable names only; secret values are never echoed.
 <!-- docref: end -->
@@ -60,7 +58,7 @@ Initial administration uses the host-authorized `bootstrap-admin` command to
 produce a single-use, short-lived URL. Configure OIDC/SCIM immediately; there
 is no local administrator password.
 
-<!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/cadestro/main.go#parseCommand:dfecd82c -->
+<!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/cadestro/main.go#parseCommand:8eacfc02 -->
 To hand the token to another tool instead of a browser, request the pipe-safe
 form explicitly:
 
@@ -102,7 +100,7 @@ make sqlc-check
 
 Generated sqlc and protobuf outputs are never edited by hand.
 
-<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cdb39986 -->
+<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cfb58496 -->
 Run the explicit SQLite 10,000-agent gate with:
 
 ```bash

@@ -1238,87 +1238,6 @@ func (x *MaintenanceWindowEntry) GetAllow() string {
 	return ""
 }
 
-// SealedValue is the wire form of a secret-classified field: a versioned,
-// opaque X25519 sealed envelope produced by the SDK's crypto.SealToPublicKey
-// (sdk/crypto/seal.go). Agent->control values seal to control's deployment
-// sealing key; control->agent values seal to that agent's enrollment recipient
-// key. Both public keys are exchanged on Register and pinned with the endpoint
-// identity.
-//
-// The AAD binds, in this order, the protocol version, the direction
-// (agent->control or control->agent), the fully-qualified message and field
-// name, the device ULID, and the one action, delivery or terminal session the
-// value belongs to. So a sealed value cannot be relocated to another field,
-// another device, another action, or the opposite direction: it only opens in
-// the exact context it was produced for.
-//
-// LpsPasswordRotation.password additionally binds the username, because the
-// password is only meaningful as a (username, password) pair — without that
-// binding control cannot verify that the password it stores under a username
-// is the one the agent generated for it.
-//
-// Decryption happens only at the narrow feature sink immediately before use or
-// re-encryption at rest. Transport-field sealing is never reused as storage
-// encryption.
-type SealedValue struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Sealing-scheme version. Lets the construction change without a field or
-	// message rename; a recipient refuses a version it does not implement.
-	// @gotags: validate:"required,gte=1"
-	Version uint32 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty" validate:"required,gte=1"`
-	// ephemeral X25519 public key (32) || AEAD nonce (12) || ciphertext || tag
-	// (16). The floor is crypto.MinSealedLen — anything shorter cannot be a
-	// sealed blob, so it is refused at the boundary rather than at the sink.
-	// @gotags: validate:"required,min=61,max=1048576"
-	Ciphertext    []byte `protobuf:"bytes,2,opt,name=ciphertext,proto3" json:"ciphertext,omitempty" validate:"required,min=61,max=1048576"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SealedValue) Reset() {
-	*x = SealedValue{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SealedValue) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SealedValue) ProtoMessage() {}
-
-func (x *SealedValue) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SealedValue.ProtoReflect.Descriptor instead.
-func (*SealedValue) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *SealedValue) GetVersion() uint32 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
-func (x *SealedValue) GetCiphertext() []byte {
-	if x != nil {
-		return x.Ciphertext
-	}
-	return nil
-}
-
 // Output from command execution
 type CommandOutput struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1334,7 +1253,7 @@ type CommandOutput struct {
 
 func (x *CommandOutput) Reset() {
 	*x = CommandOutput{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1346,7 +1265,7 @@ func (x *CommandOutput) String() string {
 func (*CommandOutput) ProtoMessage() {}
 
 func (x *CommandOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1359,7 +1278,7 @@ func (x *CommandOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandOutput.ProtoReflect.Descriptor instead.
 func (*CommandOutput) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CommandOutput) GetExitCode() int32 {
@@ -1400,12 +1319,7 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\bschedule\x18\x01 \x03(\v2#.cadestro.v1.MaintenanceWindowEntryR\bschedule\"B\n" +
 	"\x16MaintenanceWindowEntry\x12\x12\n" +
 	"\x04days\x18\x01 \x03(\tR\x04days\x12\x14\n" +
-	"\x05allow\x18\x02 \x01(\tR\x05allow\"G\n" +
-	"\vSealedValue\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\rR\aversion\x12\x1e\n" +
-	"\n" +
-	"ciphertext\x18\x02 \x01(\fR\n" +
-	"ciphertext\"\\\n" +
+	"\x05allow\x18\x02 \x01(\tR\x05allow\"\\\n" +
 	"\rCommandOutput\x12\x1b\n" +
 	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12\x16\n" +
 	"\x06stdout\x18\x02 \x01(\tR\x06stdout\x12\x16\n" +
@@ -1529,7 +1443,7 @@ func file_cadestro_v1_common_proto_rawDescGZIP() []byte {
 }
 
 var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
-var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cadestro_v1_common_proto_goTypes = []any{
 	(ExecutionStatus)(0),           // 0: cadestro.v1.ExecutionStatus
 	(DesiredState)(0),              // 1: cadestro.v1.DesiredState
@@ -1551,8 +1465,7 @@ var file_cadestro_v1_common_proto_goTypes = []any{
 	(*ErrorDetail)(nil),            // 17: cadestro.v1.ErrorDetail
 	(*MaintenanceWindow)(nil),      // 18: cadestro.v1.MaintenanceWindow
 	(*MaintenanceWindowEntry)(nil), // 19: cadestro.v1.MaintenanceWindowEntry
-	(*SealedValue)(nil),            // 20: cadestro.v1.SealedValue
-	(*CommandOutput)(nil),          // 21: cadestro.v1.CommandOutput
+	(*CommandOutput)(nil),          // 20: cadestro.v1.CommandOutput
 }
 var file_cadestro_v1_common_proto_depIdxs = []int32{
 	19, // 0: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
@@ -1574,7 +1487,7 @@ func file_cadestro_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)),
 			NumEnums:      15,
-			NumMessages:   7,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

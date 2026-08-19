@@ -3,7 +3,6 @@ package executor
 
 import (
 	"context"
-	"crypto/ecdh"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -75,19 +74,12 @@ type Executor struct {
 	deps         executorDeps
 	depsOnce     sync.Once
 	logger       *slog.Logger
-	mu           sync.RWMutex // protects luksKeyStore, lpsStore, store, actionStore, deviceID
+	mu           sync.RWMutex // protects luksKeyStore, lpsStore, store, actionStore
 	luksKeyStore LuksKeyStore
 	lpsStore     LpsPasswordStore
 	store        *store.Store
 	actionStore  ActionStore
 	updateCfg    *AgentUpdateConfig
-	// deviceID is this agent's own device ULID. Control derives the at-rest
-	// AAD from it, and the executor refuses to rotate a credential it cannot
-	// attribute to a device. Set from credentials in main.go.
-	deviceID             string
-	sealingPrivate       *ecdh.PrivateKey
-	controlSealingPublic *ecdh.PublicKey
-
 	// Per-cycle AGENT_UPDATE dedup. Audit F042 + F048: previously
 	// package-level globals which made parallel tests serialise on
 	// one mutex and let a future second Executor share state with
@@ -207,20 +199,6 @@ func (e *Executor) SetStore(s *store.Store) {
 	e.mu.Lock()
 	e.store = s
 	e.mu.Unlock()
-}
-
-// SetDeviceID sets this agent's own device ULID.
-func (e *Executor) SetDeviceID(id string) {
-	e.mu.Lock()
-	e.deviceID = id
-	e.mu.Unlock()
-}
-
-// getDeviceID returns the configured device ULID under the read lock.
-func (e *Executor) getDeviceID() string {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.deviceID
 }
 
 // SetUpdateConfig configures the agent self-update executor.
@@ -381,11 +359,11 @@ func (e *Executor) ExecuteWithStreaming(ctx context.Context, env *pb.Action, cal
 		// The encryption path reports no metadata: control refuses any
 		// ActionResult carrying it, and device_path already reaches control
 		// through StoreLuksKey.
-		output, changed, _, execErr = e.executeSealedLuks(ctx, env.GetEncryption(), env.DesiredState, envActionID(env))
+		output, changed, _, execErr = e.executeLuksAction(ctx, env.GetEncryption(), env.DesiredState, envActionID(env))
 		result.Changed = changed
 	case pb.ActionType_ACTION_TYPE_WIFI:
 		var changed bool
-		output, changed, execErr = e.executeSealedWifi(ctx, env.GetWifi(), env.DesiredState, envActionID(env))
+		output, changed, execErr = e.executeWifiAction(ctx, env.GetWifi(), env.DesiredState, envActionID(env))
 		result.Changed = changed
 	case pb.ActionType_ACTION_TYPE_REBOOT:
 		output, execErr = e.executeReboot(ctx)

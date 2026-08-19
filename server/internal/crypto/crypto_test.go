@@ -93,8 +93,8 @@ func TestEncryptWithContext_AADBindsContext(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
 
-	aadA := crypto.SecretAAD("01HDEVICEA", "01HACTIONA", "luks")
-	aadB := crypto.SecretAAD("01HDEVICEB", "01HACTIONA", "luks") // different device
+	aadA := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEA", "luks", "01HACTIONA", 1)
+	aadB := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEB", "luks", "01HACTIONA", 1) // different device
 
 	ct, err := enc.EncryptWithContext("super-secret", aadA)
 	require.NoError(t, err)
@@ -129,7 +129,7 @@ func TestRowAAD_BindsRowAndPurpose(t *testing.T) {
 func TestDecryptWithContext_ByteTamperedFails(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
-	aad := crypto.SecretAAD("01HDEV", "01HACT", "lps")
+	aad := crypto.DeviceSecretAAD("01HROW", "01HDEV", "lps", "01HACT", 1)
 
 	ct, err := enc.EncryptWithContext("rotate-me", aad)
 	require.NoError(t, err)
@@ -178,7 +178,7 @@ func TestDecryptWithContext_WrongAADFailsAuth(t *testing.T) {
 func TestDecryptWithContext_PlaintextRejected(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
-	_, err = enc.DecryptWithContext("not-encrypted", crypto.SecretAAD("d", "a", "luks"))
+	_, err = enc.DecryptWithContext("not-encrypted", crypto.RowAAD("r", "luks"))
 	require.Error(t, err)
 
 	empty, err := enc.DecryptWithContext("", crypto.RowAAD("r", crypto.PurposeIdPClientSecret))
@@ -191,7 +191,7 @@ func TestDecryptWithContext_WrongKeyFails(t *testing.T) {
 	require.NoError(t, err)
 	encB, err := crypto.NewEncryptor(differentKey())
 	require.NoError(t, err)
-	aad := crypto.SecretAAD("d", "a", "luks")
+	aad := crypto.RowAAD("r", "luks")
 
 	ct, err := encA.EncryptWithContext("x", aad)
 	require.NoError(t, err)
@@ -215,7 +215,6 @@ func TestDecryptWithContext_InvalidBase64(t *testing.T) {
 }
 
 // At-rest AAD keeps LUKS and LPS domains separate for the same device/action.
-// Transport sealing independently binds direction, message, field, and device.
 func TestDecryptWithContext_LuksBlobDoesNotOpenUnderTheLpsDomain(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
@@ -224,18 +223,18 @@ func TestDecryptWithContext_LuksBlobDoesNotOpenUnderTheLpsDomain(t *testing.T) {
 	const actionID = "01HACTIONA"
 	const passphrase = "a-real-luks-passphrase"
 
-	ct, err := enc.EncryptWithContext(passphrase, crypto.SecretAAD(deviceID, actionID, "luks"))
+	ct, err := enc.EncryptWithContext(passphrase, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
 	require.NoError(t, err)
 
 	// Positive control: the LUKS domain still opens it. Without this the
 	// negative below would also pass for a ciphertext that opens under NO
 	// domain at all.
-	pt, err := enc.DecryptWithContext(ct, crypto.SecretAAD(deviceID, actionID, "luks"))
+	pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
 	require.NoError(t, err)
 	require.Equal(t, passphrase, pt)
 
 	// Same device, same action, wrong domain — the whole of the separation.
-	_, err = enc.DecryptWithContext(ct, crypto.SecretAAD(deviceID, actionID, "lps"))
+	_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
 	require.Error(t, err, "a LUKS passphrase must not open under the LPS domain tag")
 }
 
@@ -247,14 +246,14 @@ func TestDecryptWithContext_LpsBlobDoesNotOpenUnderTheLuksDomain(t *testing.T) {
 	const actionID = "01HACTIONA"
 	const password = "a-real-lps-password"
 
-	ct, err := enc.EncryptWithContext(password, crypto.SecretAAD(deviceID, actionID, "lps"))
+	ct, err := enc.EncryptWithContext(password, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
 	require.NoError(t, err)
 
-	pt, err := enc.DecryptWithContext(ct, crypto.SecretAAD(deviceID, actionID, "lps"))
+	pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
 	require.NoError(t, err)
 	require.Equal(t, password, pt)
 
-	_, err = enc.DecryptWithContext(ct, crypto.SecretAAD(deviceID, actionID, "luks"))
+	_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
 	require.Error(t, err,
 		"an LPS password must not open under the LUKS domain tag — a rotated account password surfacing as a "+
 			"disk passphrase is the same confusion in the other direction")

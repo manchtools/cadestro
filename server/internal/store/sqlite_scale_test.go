@@ -20,6 +20,7 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/connection"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/jobs"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -141,9 +142,12 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 
 	router := newScaleRouter(deviceIDs)
 	deliveryState := delivery.New(delivery.Config{Store: st})
+	atRest, err := pmcrypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
+	require.NoError(t, err)
 	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: st, State: deliveryState, Router: router,
 		Workers: scaleWorkers, QueueSize: scaleQueueSize, BatchSize: 256,
+		AtRest: atRest,
 	})
 	deliveryAccepted := fillDeliveryQueue(dispatcher)
 	jobState := jobs.New(jobs.Config{
@@ -274,9 +278,9 @@ func seedScaleDevices(t *testing.T, raw *testdb.DB, now time.Time) []string {
 	for index := range scaleAgents {
 		ids[index] = newID()
 		_, err = tx.Exec(context.Background(), `
-			INSERT INTO devices (id, hostname, agent_sealing_public_key, registered_at, last_seen_at)
-			VALUES (?, ?, ?, ?, ?)`,
-			ids[index], fmt.Sprintf("scale-device-%05d", index), make([]byte, 32), now, now.Add(-time.Minute))
+			INSERT INTO devices (id, hostname, registered_at, last_seen_at)
+			VALUES (?, ?, ?, ?)`,
+			ids[index], fmt.Sprintf("scale-device-%05d", index), now, now.Add(-time.Minute))
 		require.NoError(t, err)
 	}
 	require.NoError(t, tx.Commit(context.Background()))

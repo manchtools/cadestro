@@ -12,7 +12,7 @@ import (
 // every message that carries action parameters: Action, ManagedAction,
 // CreateActionRequest, UpdateActionParamsRequest. The field names are the same
 // across all four; the credential-bearing Encryption/WiFi message types differ
-// deliberately between write input, safe read view, and sealed agent wire.
+// deliberately between write input, safe read view, and agent wire.
 // That shared oneof shape is what lets one
 // reflection helper replace the per-message switch tables.
 const paramsOneofName protoreflect.Name = "params"

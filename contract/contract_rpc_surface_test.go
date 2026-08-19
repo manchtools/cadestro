@@ -669,14 +669,14 @@ func TestContract_Namespace(t *testing.T) {
 }
 
 // Design §7.1–7.2 (manifest dispatch, stable delivery id, durable receipt,
-// per-action and per-manifest results) and §8 (sealed secrets, enrollment key
-// exchange), asserted by exact name and exact type.
+// per-action and per-manifest results) and §8 (classified mTLS secrets),
+// asserted by exact name and exact type.
 func TestContract_TargetShape(t *testing.T) {
 	msgs := contractMessages(t)
 
 	for _, name := range []protoreflect.Name{
 		"Manifest", "ManifestProvenance", "ManifestOccurrence", "ManifestDelivery",
-		"DeliveryReceipt", "ManifestResult", "SealedValue",
+		"DeliveryReceipt", "ManifestResult",
 	} {
 		if _, ok := msgs[name]; !ok {
 			t.Errorf("message %s is absent from the shipped contract", name)
@@ -721,10 +721,6 @@ func TestContract_TargetShape(t *testing.T) {
 		{"ServerMessage", "manifest_delivery", protoreflect.MessageKind, "ManifestDelivery", false, "control cannot deliver a manifest"},
 		{"AgentMessage", "delivery_receipt", protoreflect.MessageKind, "DeliveryReceipt", false, "the agent cannot confirm durable receipt"},
 		{"AgentMessage", "manifest_result", protoreflect.MessageKind, "ManifestResult", false, "there is no result for the complete manifest"},
-		{"SealedValue", "version", protoreflect.Uint32Kind, "", false, "the sealed envelope is unversioned"},
-		{"SealedValue", "ciphertext", protoreflect.BytesKind, "", false, "the sealed envelope carries no ciphertext"},
-		{"RegisterRequest", "agent_sealing_public_key", protoreflect.BytesKind, "", false, "control cannot seal a secret to this agent"},
-		{"RegisterResponse", "control_sealing_public_key", protoreflect.BytesKind, "", false, "the agent cannot seal a secret to control"},
 	} {
 		md, ok := msgs[protoreflect.Name(f.msg)]
 		if !ok {
@@ -804,11 +800,12 @@ func TestContract_HasNoSpeculativeBackendSelectors(t *testing.T) {
 	}
 }
 
-// Design §8: every field classified secret ships sealed, and no application
-// frame carries a signature or the relay-era device-binding guard. Both are
-// registry sweeps rather than lists — a NEW secret or a NEW signature field
-// fails without anyone remembering to extend anything.
-func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
+// Design §8: every field classified secret uses raw bytes on the authenticated
+// mTLS stream, and no application frame carries a signature or the relay-era
+// device-binding guard. Both are registry sweeps rather than lists — a NEW
+// secret or a NEW signature field fails without anyone remembering to extend
+// anything.
+func TestContract_SecretsAreClassifiedAndFramesAreUnsigned(t *testing.T) {
 	msgs := contractMessages(t)
 	// These are the only plaintext secret fields in the contract: authenticated
 	// HTTPS write-only inputs consumed and encrypted by control. They never enter
@@ -842,8 +839,8 @@ func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
 			if _, allowed := writeOnlyInputs[fd.FullName()]; allowed {
 				continue
 			}
-			if fd.Kind() != protoreflect.MessageKind || fd.Message().Name() != "SealedValue" {
-				t.Errorf("%s.%s is classified secret but ships as %s — it must be a SealedValue",
+			if fd.Kind() != protoreflect.BytesKind {
+				t.Errorf("%s.%s is classified secret but ships as %s — it must be raw bytes on mTLS",
 					md.Name(), fd.Name(), fd.Kind())
 			}
 		}
@@ -854,7 +851,7 @@ func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
 	}
 	if classified == 0 {
 		t.Fatal("matches-zero: no field carries the secret classification (debug_redact) — " +
-			"the marker convention was dropped, so the sealing sweep proved nothing")
+			"the marker convention was dropped, so the classification sweep proved nothing")
 	}
 }
 
@@ -862,7 +859,7 @@ func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
 // in the Action message delivered to an agent. These exact fields were the gap
 // that the general classification sweep could not see while they were left
 // unclassified, so pin both their classification and their wire type.
-func TestContract_ActionCredentialsAreSealed(t *testing.T) {
+func TestContract_ActionCredentialsAreDirectBytes(t *testing.T) {
 	messages := contractMessages(t)
 	for messageName, fieldNames := range map[protoreflect.Name][]protoreflect.Name{
 		"EncryptionParams": {"preshared_key"},
@@ -883,8 +880,8 @@ func TestContract_ActionCredentialsAreSealed(t *testing.T) {
 			if !options.GetDebugRedact() {
 				t.Errorf("%s.%s is not classified with debug_redact", messageName, fieldName)
 			}
-			if field.Kind() != protoreflect.MessageKind || field.Message().Name() != "SealedValue" {
-				t.Errorf("%s.%s ships as %s, want SealedValue", messageName, fieldName, field.Kind())
+			if field.Kind() != protoreflect.BytesKind {
+				t.Errorf("%s.%s ships as %s, want bytes", messageName, fieldName, field.Kind())
 			}
 		}
 	}

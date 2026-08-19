@@ -15,15 +15,13 @@
 package crypto
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
+
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 // prefix identifies the single AAD-bound AES-256-GCM at-rest format.
@@ -44,32 +42,17 @@ const (
 // validity is established only by DecryptWithContext at the execution sink.
 func IsEncryptedValue(value string) bool { return strings.HasPrefix(value, prefix) }
 
-// SecretAAD builds the additional-authenticated-data that binds a
-// device-scoped at-rest secret to its row context. deviceID and actionID
-// are ULIDs (Crockford base32 — they can never contain the '|'
-// separator), and secretType is a fixed literal ("luks" / "lps"), so the
-// concatenation is unambiguous.
-func SecretAAD(deviceID, actionID, secretType string) []byte {
-	return []byte(deviceID + "|" + actionID + "|" + secretType)
+// LegacySecretAADForRow reads schema-v1 rows written before the generic row
+// context. It is migration-only; new writes must use SecretAADForRow.
+func LegacySecretAADForRow(deviceID, actionID, secretType, discriminator string) []byte {
+	return []byte(deviceID + "|" + actionID + "|" + secretType + "|" + discriminator)
 }
 
-// SecretAADForRow extends SecretAAD with the per-row discriminator that
-// distinguishes sibling secrets sharing one (deviceID, actionID). The
-// discriminator is the secret row's immutable ULID primary key. LPS and LUKS
-// keep MULTIPLE rotation rows per (deviceID, actionID, username|device_path) —
-// the current row plus its history — so the username or device_path is NOT a
-// unique per-row discriminator: every rotation row for one username shares it,
-// leaving their ciphertexts interchangeable. The globally-unique row id is, so
-// a DB-level attacker cannot relocate a ciphertext onto a sibling row (a later
-// rotation of the same username included) and have it decrypt under that row's
-// context.
-//
-// deviceID, actionID, and the discriminator are all ULIDs and secretType is a
-// fixed literal, so no '|'-separated segment ever contains '|' and the four-
-// segment concatenation is unambiguous. The four-segment form also cannot
-// collide with SecretAAD's three-segment form.
-func SecretAADForRow(deviceID, actionID, secretType, discriminator string) []byte {
-	return []byte(deviceID + "|" + actionID + "|" + secretType + "|" + discriminator)
+// DeviceSecretAAD makes the generic encrypted-row context explicit for new
+// storage users. Keep the tiny string form so migration code can use the same
+// AEAD without another persistence abstraction.
+func DeviceSecretAAD(rowID, deviceID, kind, subject string, version uint32) []byte {
+	return []byte(fmt.Sprintf("%s|%s|%s|%s|v%d", rowID, deviceID, kind, subject, version))
 }
 
 // RowAAD builds the AAD for a secret owned by a single row: the owning
@@ -82,7 +65,7 @@ func RowAAD(rowID, purpose string) []byte {
 
 // Encryptor handles AES-256-GCM encryption and decryption of secret values.
 type Encryptor struct {
-	gcm cipher.AEAD
+	key []byte
 }
 
 // NewEncryptor creates a new Encryptor from a hex-encoded 32-byte key.
@@ -100,17 +83,7 @@ func NewEncryptor(keyHex string) (*Encryptor, error) {
 		return nil, fmt.Errorf("encryption key must be 32 bytes (64 hex chars), got %d bytes", len(key))
 	}
 
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, fmt.Errorf("create cipher: %w", err)
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, fmt.Errorf("create GCM: %w", err)
-	}
-
-	return &Encryptor{gcm: gcm}, nil
+	return &Encryptor{key: append([]byte(nil), key...)}, nil
 }
 
 // EncryptWithContext encrypts plaintext bound to aad and returns an
@@ -130,12 +103,10 @@ func (e *Encryptor) EncryptWithContext(plaintext string, aad []byte) (string, er
 		return "", nil
 	}
 
-	nonce := make([]byte, e.gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", fmt.Errorf("generate nonce: %w", err)
+	ciphertext, err := sdkcrypto.SealWithAAD(e.key, []byte(plaintext), aad)
+	if err != nil {
+		return "", fmt.Errorf("encrypt: %w", err)
 	}
-
-	ciphertext := e.gcm.Seal(nonce, nonce, []byte(plaintext), aad)
 	return prefix + base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
@@ -162,12 +133,7 @@ func (e *Encryptor) DecryptWithContext(value string, aad []byte) (string, error)
 		if err != nil {
 			return "", fmt.Errorf("decode ciphertext: %w", err)
 		}
-		nonceSize := e.gcm.NonceSize()
-		if len(data) < nonceSize {
-			return "", errors.New("ciphertext too short")
-		}
-		nonce, ciphertext := data[:nonceSize], data[nonceSize:]
-		plaintext, err := e.gcm.Open(nil, nonce, ciphertext, aad)
+		plaintext, err := sdkcrypto.OpenWithAAD(e.key, data, aad)
 		if err != nil {
 			return "", fmt.Errorf("decrypt: %w", err)
 		}

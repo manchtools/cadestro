@@ -232,6 +232,64 @@ type RegistrationToken struct { OneTime bool }
                 self.assertTrue(metric["zero_invariant"], metric)
                 self.assertFalse(metric["pass"], metric)
 
+    def test_field_sealing_machinery_is_non_vacuous_and_hard_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            feature_fixture(baseline)
+            feature_fixture(candidate)
+            write(baseline, "contract/proto/cadestro/v1/legacy.proto", "message Legacy { string fieldSealVersion = 1; }\n")
+            counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            self.assertGreater(counts["stale_field_sealing_protocol_machinery"], 0)
+            result = judge.simplification_report(candidate, counts)
+            metric = result["metrics"]["stale_field_sealing_protocol_machinery"]
+            self.assertTrue(metric["zero_invariant"], metric)
+            self.assertTrue(metric["pass"], metric)
+            write(candidate, "contract/proto/cadestro/v1/legacy.proto", "message Legacy { string fieldSealVersion = 1; }\n")
+            result = judge.simplification_report(candidate, counts)
+            self.assertFalse(result["metrics"]["stale_field_sealing_protocol_machinery"]["pass"])
+
+    def test_field_sealing_judge_detects_live_wiring_but_ignores_sdk_and_tests(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            feature_fixture(root)
+            write(root, "sdk/crypto/field.go", "package crypto\nfunc FieldSealContext() {}\n")
+            write(root, "server/internal/crypto/field_test.go", "package crypto\nvar _ = SealedValue{}\n")
+            self.assertEqual(judge.live_field_sealing_matches(root), [])
+            for name, token in {
+                "agent.go": "agent_sealing_public_key",
+                "control.go": "control_sealing_public_key",
+                "config.go": "CADESTRO_SEALING_KEY",
+                "runtime.go": "ConfigureSealing",
+                "seal.go": "SealToPublicKey",
+                "open.go": "OpenWithPrivateKey",
+                "proto.proto": "SealedValue",
+            }.items():
+                write(root, "server/internal/live/" + name, token + "\n")
+                self.assertGreater(len(judge.live_field_sealing_matches(root)), 0, token)
+
+    def test_device_specific_manifest_compiler_is_a_hard_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            feature_fixture(baseline)
+            feature_fixture(candidate)
+            write(
+                baseline,
+                "server/internal/manifest/compiler.go",
+                "package manifest\nfunc (c *Compiler) ActionForDevice() {}\n",
+            )
+            counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            self.assertGreater(counts["device_specific_manifest_compile_paths"], 0)
+            self.assertTrue(judge.simplification_report(candidate, counts)["pass"])
+            write(
+                candidate,
+                "server/internal/dispatch/handlers.go",
+                "package dispatch\nfunc use() { compiler.DefinitionForDevice() }\n",
+            )
+            result = judge.simplification_report(candidate, counts)
+            self.assertFalse(result["metrics"]["device_specific_manifest_compile_paths"]["pass"])
+
     def test_device_identity_metric_counts_schema_not_references(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -105,15 +104,15 @@ func newDeviceHandlerFixture(t *testing.T) *deviceHandlerFixture {
 		for _, d := range []db.InsertDeviceParams{
 			{
 				ID: f.directID, Hostname: "direct", AgentVersion: "1.0.0",
-				AgentSealingPublicKey: bytes.Repeat([]byte{1}, 32), RegisteredAt: &now, LastSeenAt: &now,
+				RegisteredAt: &now, LastSeenAt: &now,
 			},
 			{
 				ID: f.groupID, Hostname: "group", AgentVersion: "1.0.0",
-				AgentSealingPublicKey: bytes.Repeat([]byte{2}, 32), RegisteredAt: &now, LastSeenAt: &now,
+				RegisteredAt: &now, LastSeenAt: &now,
 			},
 			{
 				ID: f.outsideID, Hostname: "outside", AgentVersion: "1.0.0",
-				AgentSealingPublicKey: bytes.Repeat([]byte{3}, 32), RegisteredAt: &now, LastSeenAt: &now,
+				RegisteredAt: &now, LastSeenAt: &now,
 			},
 		} {
 			if _, err := tx.InsertDevice(ctx, d); err != nil {
@@ -784,27 +783,28 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 	for i := range lpsIDs {
 		lpsIDs[i], luksIDs[i] = newID(), newID()
 	}
-	password, err := f.encryptor.EncryptWithContext("local-secret",
-		pmcrypto.SecretAADForRow(f.directID, lpsActionID, "lps", lpsIDs[0]))
-	require.NoError(t, err)
-	passphrase, err := f.encryptor.EncryptWithContext("disk-secret",
-		pmcrypto.SecretAADForRow(f.directID, luksActionID, "luks", luksIDs[0]))
-	require.NoError(t, err)
 	for i := 0; i < 5; i++ {
 		current := i == 0
 		rotatedAt := f.now.Add(-time.Duration(i) * time.Hour)
+		password, err := f.encryptor.EncryptWithContext("local-secret",
+			pmcrypto.DeviceSecretAAD(lpsIDs[i], f.directID, "lps", lpsActionID, 1))
+		require.NoError(t, err)
+		passphrase, err := f.encryptor.EncryptWithContext("disk-secret",
+			pmcrypto.DeviceSecretAAD(luksIDs[i], f.directID, "luks", luksActionID, 1))
+		require.NoError(t, err)
+		_, err = f.raw.Exec(context.Background(), `INSERT INTO device_secrets (id, device_id, kind, subject, version, ciphertext) VALUES ($1, $2, 'lps', $3, 1, $4)`, lpsIDs[i], f.directID, lpsActionID, password)
+		require.NoError(t, err)
+		_, err = f.raw.Exec(context.Background(), `INSERT INTO device_secrets (id, device_id, kind, subject, version, ciphertext) VALUES ($1, $2, 'luks', $3, 1, $4)`, luksIDs[i], f.directID, luksActionID, passphrase)
+		require.NoError(t, err)
 		_, err = f.raw.Exec(context.Background(), `
 			INSERT INTO lps_passwords
-				(id, device_id, action_id, username, password, rotated_at, rotation_reason, is_current)
-			VALUES ($1, $2, $3, 'localadmin', $4, $5, 'scheduled', $6)`,
-			lpsIDs[i], f.directID, lpsActionID, password, rotatedAt, current)
+				(id, username, rotated_at, rotation_reason, is_current)
+			VALUES ($1, 'localadmin', $2, 'scheduled', $3)`, lpsIDs[i], rotatedAt, current)
 		require.NoError(t, err)
 		_, err = f.raw.Exec(context.Background(), `
 			INSERT INTO luks_keys
-				(id, device_id, action_id, device_path, passphrase, rotated_at,
-				 rotation_reason, is_current, revocation_status)
-			VALUES ($1, $2, $3, '/dev/vda', $4, $5, 'initial', $6, 'dispatched')`,
-			luksIDs[i], f.directID, luksActionID, passphrase, rotatedAt, current)
+				(id, device_path, rotated_at, rotation_reason, is_current, revocation_status)
+			VALUES ($1, '/dev/vda', $2, 'initial', $3, 'dispatched')`, luksIDs[i], rotatedAt, current)
 		require.NoError(t, err)
 	}
 
@@ -853,7 +853,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		"luks_key", luksIDs[0], f.directID, luksActionID)
 
 	_, err = f.raw.Exec(context.Background(), `
-		UPDATE lps_passwords SET password = 'enc:v1:not-base64'
+		UPDATE device_secrets SET ciphertext = 'enc:v1:not-base64'
 		WHERE id = $1`, lpsIDs[0])
 	require.NoError(t, err)
 	_, err = f.handlers.ListLpsPasswords(f.actor("ListLpsPasswords"),
@@ -863,7 +863,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		connect.NewRequest(&pmv1.RevealLpsPasswordRequest{Id: lpsIDs[0]}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "corrupt ciphertext must fail closed")
 	_, err = f.raw.Exec(context.Background(), `
-		UPDATE lps_passwords SET password = 'legacy-plaintext'
+		UPDATE device_secrets SET ciphertext = 'enc:v1:not-base64'
 		WHERE id = $1`, lpsIDs[0])
 	require.NoError(t, err)
 	_, err = f.handlers.RevealLpsPassword(f.actor("RevealLpsPassword"),
@@ -1003,8 +1003,8 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 
 	var dispatched int
 	err = f.raw.QueryRow(context.Background(), `
-		SELECT count(*) FROM luks_keys
-		WHERE device_id = $1 AND action_id = $2 AND revocation_status = 'dispatched'`,
+		SELECT count(*) FROM luks_keys k JOIN device_secrets ds ON ds.id = k.id
+		WHERE ds.device_id = $1 AND ds.subject = $2 AND k.revocation_status = 'dispatched'`,
 		f.directID, actionID).Scan(&dispatched)
 	require.NoError(t, err)
 	assert.Equal(t, 2, dispatched)
@@ -1028,8 +1028,8 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 		&pmv1.RevokeLuksDeviceKeyResult{ActionId: actionID, Success: true}))
 	var succeeded int
 	err = f.raw.QueryRow(context.Background(), `
-		SELECT count(*) FROM luks_keys
-		WHERE device_id = $1 AND action_id = $2 AND revocation_status = 'success'
+		SELECT count(*) FROM luks_keys k JOIN device_secrets ds ON ds.id = k.id
+		WHERE ds.device_id = $1 AND ds.subject = $2 AND k.revocation_status = 'success'
 		  AND revocation_error IS NULL`, f.directID, actionID).Scan(&succeeded)
 	require.NoError(t, err)
 	assert.Equal(t, 2, succeeded)
@@ -1059,8 +1059,8 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyRecordsUnavailableDevice(t *testing.T
 	var status string
 	var detail *string
 	err = f.raw.QueryRow(context.Background(), `
-		SELECT revocation_status, revocation_error FROM luks_keys
-		WHERE device_id = $1 AND action_id = $2 AND is_current = TRUE`,
+		SELECT k.revocation_status, k.revocation_error FROM luks_keys k JOIN device_secrets ds ON ds.id = k.id
+		WHERE ds.device_id = $1 AND ds.subject = $2 AND k.is_current = TRUE`,
 		f.directID, actionID).Scan(&status, &detail)
 	require.NoError(t, err)
 	assert.Equal(t, "failed", status)
@@ -1088,8 +1088,8 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyAuditFailurePreventsSend(t *testing.T
 	assert.Empty(t, f.sender.messages, "the irreversible command must not leave before its audit commits")
 	var status *string
 	err = f.raw.QueryRow(context.Background(), `
-		SELECT revocation_status FROM luks_keys
-		WHERE device_id = $1 AND action_id = $2 AND is_current = TRUE`,
+		SELECT k.revocation_status FROM luks_keys k JOIN device_secrets ds ON ds.id = k.id
+		WHERE ds.device_id = $1 AND ds.subject = $2 AND k.is_current = TRUE`,
 		f.directID, actionID).Scan(&status)
 	require.NoError(t, err)
 	assert.Nil(t, status, "the state mutation must roll back with failed audit evidence")
@@ -1104,11 +1104,13 @@ func seedCurrentLuksKeys(t *testing.T, f *deviceHandlerFixture, actionID string,
 		actionID, int32(pmv1.ActionType_ACTION_TYPE_ENCRYPTION), f.actorID)
 	require.NoError(t, err)
 	for i := 0; i < count; i++ {
+		id := newID()
+		_, err = f.raw.Exec(context.Background(), `INSERT INTO device_secrets (id, device_id, kind, subject, version, ciphertext) VALUES ($1, $2, 'luks', $3, 1, 'enc:v1:test')`, id, f.directID, actionID)
+		require.NoError(t, err)
 		_, err = f.raw.Exec(context.Background(), `
 			INSERT INTO luks_keys
-				(id, device_id, action_id, device_path, passphrase, rotated_at, rotation_reason, is_current)
-			VALUES ($1, $2, $3, $4, 'enc:v1:test', $5, 'scheduled', TRUE)`,
-			newID(), f.directID, actionID, fmt.Sprintf("/dev/test%d", i), f.now)
+				(id, device_path, rotated_at, rotation_reason, is_current)
+			VALUES ($1, $2, $3, 'scheduled', TRUE)`, id, fmt.Sprintf("/dev/test%d", i), f.now)
 		require.NoError(t, err)
 	}
 }

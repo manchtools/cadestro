@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/manifest"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type manifestFixture struct {
@@ -204,16 +204,10 @@ func TestManifestCompiler_RejectsMalformedStoredParams(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *testing.T) {
+func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *testing.T) {
 	st, raw := setupSQLite(t)
 	ctx := context.Background()
 	deviceID := seedDevice(t, raw)
-	agentKey, err := sdkcrypto.GenerateX25519()
-	require.NoError(t, err)
-	_, err = raw.Exec(ctx, `UPDATE devices SET agent_sealing_public_key = $2 WHERE id = $1`,
-		deviceID, agentKey.PublicKey().Bytes())
-	require.NoError(t, err)
-
 	atRest, err := pmcrypto.NewEncryptor("0303030303030303030303030303030303030303030303030303030303030303")
 	require.NoError(t, err)
 	actionID := newID()
@@ -233,17 +227,10 @@ func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *test
 		int32(pmv1.DesiredState_DESIRED_STATE_PRESENT), stored)
 	require.NoError(t, err)
 
-	compiled, err := manifest.New(st, atRest).ActionForDevice(ctx, deviceID, actionID)
+	compiled, err := manifest.New(st).Action(ctx, actionID)
 	require.NoError(t, err)
-	sealed := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
-	require.NotNil(t, sealed)
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"cadestro.v1.EncryptionParams", "preshared_key", deviceID, actionID)
-	require.NoError(t, err)
-	opened, err := sdkcrypto.OpenWithPrivateKey(agentKey, sealed.Ciphertext, aad, info)
-	require.NoError(t, err)
-	assert.Equal(t, plaintext, string(opened))
-	clear(opened)
+	catalogCiphertext := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
+	require.NotEmpty(t, catalogCiphertext)
 
 	waker := &committedWaker{store: st}
 	service := dispatch.New(dispatch.Config{Store: st, Waker: waker})
@@ -268,5 +255,14 @@ func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *test
 	}
 	var persisted pmv1.EncryptionParams
 	require.NoError(t, protojson.Unmarshal([]byte(executionParams), &persisted))
-	assert.Equal(t, sealed.Ciphertext, persisted.GetPresharedKey().GetCiphertext())
+	assert.Equal(t, catalogCiphertext, persisted.GetPresharedKey())
+
+	outbound := proto.Clone(compiled).(*pmv1.Manifest)
+	require.NoError(t, manifest.MaterializeSecrets(outbound, atRest))
+	assert.Equal(t, []byte(plaintext), outbound.Occurrences[0].Action.GetEncryption().PresharedKey)
+	assert.Equal(t, catalogCiphertext, compiled.Occurrences[0].Action.GetEncryption().PresharedKey,
+		"materialization must not mutate the durable compiler output")
+	tampered := proto.Clone(compiled).(*pmv1.Manifest)
+	tampered.Occurrences[0].Action.Id.Value = newID()
+	assert.Error(t, manifest.MaterializeSecrets(tampered, atRest), "the action id is part of the at-rest AAD")
 }

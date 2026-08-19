@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
@@ -70,7 +69,6 @@ func newEnvironmentFixture(t *testing.T) environmentFixture {
 			"CADESTRO_DATABASE_PATH":            filepath.Join(directory, "control.db"),
 			"CADESTRO_ENCRYPTION_KEY_FILE":      write("encryption.key", strings.Repeat("02", 32)),
 			"CADESTRO_SESSION_SIGNING_KEY_FILE": sessionPath,
-			"CADESTRO_SEALING_KEY_FILE":         write("sealing.key", strings.Repeat("01", 32)),
 		},
 	}
 }
@@ -164,21 +162,17 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 
 	assert.Equal(t, strings.Repeat("02", 32), cfg.EncryptionKey)
 	assert.Equal(t, fixture.sessionKey, cfg.SessionSigningKey)
-	assert.Equal(t, bytes.Repeat([]byte{1}, 32), cfg.SealingKey.Bytes())
 }
 
 func TestLoadConfigAcceptsSecretsSuppliedDirectly(t *testing.T) {
 	fixture := newEnvironmentFixture(t)
 	delete(fixture.values, "CADESTRO_ENCRYPTION_KEY_FILE")
-	delete(fixture.values, "CADESTRO_SEALING_KEY_FILE")
 	fixture.values["CADESTRO_ENCRYPTION_KEY"] = strings.Repeat("03", 32)
-	fixture.values["CADESTRO_SEALING_KEY"] = strings.Repeat("04", 32)
 	setEnvironment(t, fixture.values)
 
 	cfg, err := loadConfig()
 	require.NoError(t, err)
 	assert.Equal(t, strings.Repeat("03", 32), cfg.EncryptionKey)
-	assert.Equal(t, bytes.Repeat([]byte{4}, 32), cfg.SealingKey.Bytes())
 }
 
 func TestLoadConfigFailsClosedAndNamesTheOffendingVariable(t *testing.T) {
@@ -240,12 +234,6 @@ func TestLoadConfigFailsClosedAndNamesTheOffendingVariable(t *testing.T) {
 			},
 			expected: []string{"CADESTRO_ENCRYPTION_KEY", "CADESTRO_ENCRYPTION_KEY_FILE"},
 		},
-		"sealing key supplied twice": {
-			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["CADESTRO_SEALING_KEY"] = strings.Repeat("06", 32)
-			},
-			expected: []string{"CADESTRO_SEALING_KEY", "CADESTRO_SEALING_KEY_FILE"},
-		},
 		"missing session signing key": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
 				delete(fixture.values, "CADESTRO_SESSION_SIGNING_KEY_FILE")
@@ -258,19 +246,6 @@ func TestLoadConfigFailsClosedAndNamesTheOffendingVariable(t *testing.T) {
 					fixture.values["CADESTRO_SESSION_SIGNING_KEY_FILE"], []byte("not a key"), 0o600))
 			},
 			expected: []string{"CADESTRO_SESSION_SIGNING_KEY_FILE"},
-		},
-		"sealing key file is group readable": {
-			mutate: func(t *testing.T, fixture environmentFixture) {
-				require.NoError(t, os.Chmod(fixture.values["CADESTRO_SEALING_KEY_FILE"], 0o640))
-			},
-			expected: []string{"CADESTRO_SEALING_KEY_FILE"},
-		},
-		"sealing key of the wrong length": {
-			mutate: func(t *testing.T, fixture environmentFixture) {
-				require.NoError(t, os.WriteFile(
-					fixture.values["CADESTRO_SEALING_KEY_FILE"], []byte(strings.Repeat("01", 16)), 0o600))
-			},
-			expected: []string{"CADESTRO_SEALING_KEY_FILE"},
 		},
 	}
 
@@ -380,18 +355,15 @@ func TestLoadConfigKeepsExistingValidationSemantics(t *testing.T) {
 
 // TestLoadConfigErrorsNeverEchoSecretValues holds the logging and diagnostics
 // boundary: a rejected secret is reported by the variable that carried it.
-func TestLoadConfigErrorsNeverEchoSecretValues(t *testing.T) {
-	const sealingSecret = "0a1b2c3d"
+func TestLoadConfigRejectsRetiredSealingConfiguration(t *testing.T) {
 	fixture := newEnvironmentFixture(t)
-	delete(fixture.values, "CADESTRO_SEALING_KEY_FILE")
-	fixture.values["CADESTRO_SEALING_KEY"] = sealingSecret
+	fixture.values["CADESTRO_SEALING_KEY"] = "retired"
 	setEnvironment(t, fixture.values)
 
 	cfg, err := loadConfig()
 	require.Error(t, err)
 	assert.Nil(t, cfg)
 	assert.ErrorContains(t, err, "CADESTRO_SEALING_KEY")
-	assert.NotContains(t, err.Error(), sealingSecret)
 }
 
 // TestEveryConfigOptionDeclaresItsVariable keeps the recognized set derived
@@ -444,7 +416,7 @@ func TestParseCommandAcceptsSubcommandsAndRejectsEverythingElse(t *testing.T) {
 		assert.Equal(t, name, command)
 	}
 
-	const hint = " (accepted commands: bootstrap-admin, backup-status)"
+	const hint = " (accepted commands: bootstrap-admin, backup-status, migrate-device-secrets)"
 	for message, args := range map[string][]string{
 		"unexpected arguments: -config /etc/cadestro/control.json" + hint: {"-config", "/etc/cadestro/control.json"},
 		"unexpected arguments: --help" + hint:                             {"--help"},

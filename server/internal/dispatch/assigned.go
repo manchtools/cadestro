@@ -63,7 +63,7 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 				return nil, err
 			}
 		}
-		compiled, err := compiler.DefinitionForDevice(ctx, deviceID, source.Row.SourceID)
+		compiled, err := compiler.Definition(ctx, source.Row.SourceID)
 		if errors.Is(err, manifest.ErrEmptyManifest) {
 			continue
 		}
@@ -97,7 +97,7 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 				return nil, err
 			}
 		}
-		compiled, err := compiler.ActionSetForDevice(ctx, deviceID, source.Row.SourceID)
+		compiled, err := compiler.ActionSet(ctx, source.Row.SourceID)
 		if errors.Is(err, manifest.ErrEmptyManifest) {
 			continue
 		}
@@ -128,7 +128,7 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 				return nil, err
 			}
 		}
-		compiled, err := compiler.ActionForDevice(ctx, deviceID, source.Row.SourceID)
+		compiled, err := compiler.Action(ctx, source.Row.SourceID)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +163,7 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 					return nil, err
 				}
 			}
-			compiled, err := compiler.ActionForDevice(ctx, deviceID, rule.ActionID)
+			compiled, err := compiler.Action(ctx, rule.ActionID)
 			if err != nil {
 				return nil, err
 			}
@@ -220,8 +220,8 @@ func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifes
 }
 
 // stablePolicyIdentity remains a small pure helper for callers that already
-// hold a fully authored (unsealed) manifest. Assignment pull uses the source
-// canonical content above so device sealing cannot enter the identity.
+// hold a fully authored manifest. Assignment pull uses the source canonical
+// content above so outbound secret materialization cannot enter the identity.
 func stablePolicyIdentity(manifest *pmv1.Manifest) {
 	clone := proto.Clone(manifest).(*pmv1.Manifest)
 	clone.ManifestId = ""

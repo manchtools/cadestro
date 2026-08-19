@@ -1,7 +1,6 @@
 package agentstream
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
@@ -87,9 +86,8 @@ func seedExecution(t *testing.T, raw *testdb.DB, at time.Time) seededExecution {
 		occurrence: ulid.Make().String(), actionID: ulid.Make().String(),
 	}
 	_, err := raw.Exec(ctx, `
-		INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, certificate_pem, active_cert_serial, registered_at)
-		VALUES ($1, $2, 'v1', $3, X'01', '1', $4)`,
-		seeded.deviceID, "host-"+seeded.deviceID, bytes.Repeat([]byte{1}, 32), at)
+		INSERT INTO devices (id, hostname, agent_version, certificate_pem, active_cert_serial, registered_at)
+		VALUES ($1, $2, 'v1', X'01', '1', $3)`, seeded.deviceID, "host-"+seeded.deviceID, at)
 	require.NoError(t, err)
 	manifest, err := protojson.Marshal(&pmv1.Manifest{
 		ManifestId: ulid.Make().String(),

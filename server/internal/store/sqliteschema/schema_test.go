@@ -33,7 +33,7 @@ func TestBaselineEnablesRequiredSQLitePosture(t *testing.T) {
 		  AND name NOT GLOB 'search_fts_*'
 		  AND name NOT GLOB 'search_trigram_*'
 	`).Scan(&applicationTables))
-	assert.Equal(t, 54, applicationTables)
+	assert.Equal(t, 55, applicationTables)
 }
 
 func TestBaselineEnforcesForeignKeys(t *testing.T) {

@@ -1,10 +1,10 @@
 -- name: InsertDevice :one
 INSERT INTO devices (
-    id, hostname, agent_version, agent_sealing_public_key,
-    registered_at, last_seen_at,
-    registration_token_id
+	id, hostname, agent_version,
+	registered_at, last_seen_at,
+	registration_token_id
 )
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetDevice :one
@@ -283,8 +283,7 @@ WHERE EXISTS (SELECT 1 FROM devices d WHERE d.id = sqlc.arg(device_id) AND d.is_
   AND EXISTS (SELECT 1 FROM users u WHERE u.id = sqlc.arg(user_id) AND u.is_deleted = FALSE)
 ON CONFLICT (device_id, user_id) DO NOTHING;
 
--- Existing enrollment retries are keyed by the Ed25519 public key in the CSR,
--- never by the X25519 secret-recipient key.
+-- Existing enrollment retries are keyed by the Ed25519 public key in the CSR.
 -- name: FindEnrollmentDevice :one
 SELECT d.*
 FROM devices d
@@ -302,11 +301,11 @@ WHERE t.value_hash = sqlc.arg(value_hash)
 -- counter, so the max boundary cannot be crossed by concurrent enrollments.
 -- name: InsertEnrolledDevice :one
 INSERT INTO devices (
-    id, hostname, agent_version, agent_sealing_public_key,
+    id, hostname, agent_version,
     enrollment_identity_public_key, registered_at, registration_token_id
 )
 SELECT sqlc.arg(id), sqlc.arg(hostname), sqlc.arg(agent_version),
-       sqlc.arg(sealing_key), sqlc.arg(identity_public_key),
+       sqlc.arg(identity_public_key),
        sqlc.arg(enrolled_at), t.id
 FROM tokens t
 WHERE t.value_hash = sqlc.arg(value_hash)

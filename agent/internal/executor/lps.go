@@ -15,7 +15,7 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// LpsPasswordStore sends rotated passwords as dedicated sealed fields over the
+// LpsPasswordStore sends rotated passwords as dedicated fields over the
 // agent's authenticated control stream. Passwords never enter action metadata.
 type LpsPasswordStore interface {
 	StorePasswords(ctx context.Context, actionID string, rotations []*pb.LpsPasswordRotation) error
@@ -71,19 +71,11 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 
 	// Fail closed BEFORE touching any account: without a live session to
 	// control we cannot report the rotated password, and rotating a credential
-	// we cannot return to the operator would strand it. This is the same gate
-	// the sealing key provided — a device that is not connected simply doesn't
-	// rotate until it is.
+	// we cannot return to the operator would strand it.
 	lpsStore := e.getLpsPasswordStore()
 	if lpsStore == nil {
 		return nil, false, nil, fmt.Errorf("LPS rotation requires a connection to the server (not connected)")
 	}
-	// Control attributes the password to this device; without our own ID the
-	// rotation could not be recorded against the right record.
-	if e.getDeviceID() == "" {
-		return nil, false, nil, fmt.Errorf("LPS rotation requires the agent device ID (not configured)")
-	}
-
 	var output strings.Builder
 
 	// Load state from SQLite
@@ -175,17 +167,15 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		// visibly, and the previous recorded password still opens the account.
 		plaintext := password.Reveal()
 		rotatedAt := e.now().UTC()
-		sealedPassword, err := e.sealToControl([]byte(plaintext),
-			"cadestro.v1.LpsPasswordRotation", "password",
-			e.getDeviceID(), actionID, username)
+		passwordBytes, err := copySecret([]byte(plaintext))
 		if err != nil {
-			anyError = fmt.Errorf("seal password for %s: %w", username, err)
-			output.WriteString(fmt.Sprintf("LPS: %s — failed to seal password for server, not rotating\n", username))
+			anyError = fmt.Errorf("prepare password for %s: %w", username, err)
+			output.WriteString(fmt.Sprintf("LPS: %s — failed to prepare password for server, not rotating\n", username))
 			continue
 		}
 		if err := lpsStore.StorePasswords(ctx, actionID, []*pb.LpsPasswordRotation{{
 			Username:  username,
-			Password:  sealedPassword,
+			Password:  passwordBytes,
 			RotatedAt: rotatedAt.Format(time.RFC3339),
 			Reason:    lpsRotationReason(reason),
 		}}); err != nil {
@@ -208,7 +198,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 
 		// Update per-user state in SQLite. The drift hash is over the local
 		// plaintext (never leaves the device); the operator-facing record
-		// carries only the sealed blob.
+		// carries no credential copy.
 		hash := sha256.Sum256([]byte(plaintext))
 		hashStr := hex.EncodeToString(hash[:])
 		if err := st.SetLpsUserState(actionID, username, now, hashStr); err != nil {
@@ -256,7 +246,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		}, false, nil, nil
 	}
 
-	// No metadata: each password was sealed into its dedicated control-stream
+	// No metadata: each password was sent in its dedicated control-stream
 	// message, so action metadata must not carry a second copy.
 	return &pb.CommandOutput{
 		ExitCode: 0,
@@ -371,22 +361,15 @@ func (e *Executor) reportUserCreatePassword(ctx context.Context, username, actio
 		output.WriteString("warning: temporary password not reported (not connected; reset out of band)\n")
 		return
 	}
-	if e.getDeviceID() == "" {
-		e.logger.Warn("user create: no device ID; temp password not reported", "username", username)
-		output.WriteString("warning: temporary password not reported (no device identity; reset out of band)\n")
-		return
-	}
-	sealedPassword, err := e.sealToControl([]byte(plaintext),
-		"cadestro.v1.LpsPasswordRotation", "password",
-		e.getDeviceID(), actionID, username)
+	passwordBytes, err := copySecret([]byte(plaintext))
 	if err != nil {
-		e.logger.Warn("user create: failed to seal temp password", "username", username, "error", err)
-		output.WriteString("warning: temporary password not reported (sealing failed; reset out of band)\n")
+		e.logger.Warn("user create: failed to prepare temp password", "username", username, "error", err)
+		output.WriteString("warning: temporary password not reported (preparation failed; reset out of band)\n")
 		return
 	}
 	if err := ps.StorePasswords(ctx, actionID, []*pb.LpsPasswordRotation{{
 		Username:  username,
-		Password:  sealedPassword,
+		Password:  passwordBytes,
 		RotatedAt: e.now().UTC().Format(time.RFC3339),
 		Reason:    pb.RotationReason_ROTATION_REASON_INITIAL,
 	}}); err != nil {

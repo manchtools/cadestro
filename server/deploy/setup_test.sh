@@ -34,7 +34,6 @@ CONTROL_ENV_VARIABLES=(
     CADESTRO_PUBLIC_TLS_KEY_FILE
     CADESTRO_ENCRYPTION_KEY_FILE
     CADESTRO_SESSION_SIGNING_KEY_FILE
-    CADESTRO_SEALING_KEY_FILE
 )
 
 # The single expected web.env surface, same contract as above. The web
@@ -197,7 +196,7 @@ assert_setup_refused() {
         return 1
     }
     for artifact in certs/ca.key certs/ca.crt certs/control.key certs/control.crt \
-        secrets/encryption.key secrets/sealing.key secrets/session-signing.pem \
+        secrets/encryption.key secrets/session-signing.pem \
         config/control.env config/web.env config/traefik-acme.env; do
         [[ ! -e "$directory/$artifact" ]] || {
             printf 'refused run left %s behind\n' "$directory/$artifact" >&2
@@ -292,10 +291,9 @@ test_secure_idempotent_setup() {
     assert_env_line "$config" 'CADESTRO_AGENT_TLS_CERT_FILE=/run/certs/control.crt'
     assert_env_line "$config" 'CADESTRO_AGENT_TLS_KEY_FILE=/run/certs/control.key'
     assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt'
-    assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key'
-    assert_env_line "$config" 'CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
-    assert_env_line "$config" 'CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
-    assert_env_line "$config" 'CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key'
+	assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key'
+	assert_env_line "$config" 'CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
+	assert_env_line "$config" 'CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
     assert_archive_isolated "$config" "$directory"
 
     if grep -R -iEq 'valkey|asynq|indexer|password_auth|postgres|database_url' "$directory/config"; then
@@ -312,9 +310,9 @@ test_secure_idempotent_setup() {
         == "Hostname control does match certificate" ]]
 
     local before after
-    before="$(sha256sum "$directory/certs/ca.key" "$directory/certs/control.key" "$directory/secrets/sealing.key")"
+    before="$(sha256sum "$directory/certs/ca.key" "$directory/certs/control.key" "$directory/secrets/encryption.key")"
     run_setup "$directory" >/dev/null
-    after="$(sha256sum "$directory/certs/ca.key" "$directory/certs/control.key" "$directory/secrets/sealing.key")"
+    after="$(sha256sum "$directory/certs/ca.key" "$directory/certs/control.key" "$directory/secrets/encryption.key")"
     [[ "$before" == "$after" ]]
 }
 

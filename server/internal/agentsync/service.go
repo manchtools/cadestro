@@ -16,8 +16,10 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/connection"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
+	manifestpkg "github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -36,6 +38,7 @@ type Config struct {
 	Deliveries  *delivery.Service
 	Assignments *dispatch.Handlers
 	Now         func() time.Time
+	AtRest      *pmcrypto.Encryptor
 }
 
 // Service implements durable stream synchronization.
@@ -45,17 +48,18 @@ type Service struct {
 	deliveries  *delivery.Service
 	assignments *dispatch.Handlers
 	now         func() time.Time
+	atRest      *pmcrypto.Encryptor
 }
 
 // New constructs the agent sync service.
 func New(cfg Config) *Service {
-	if cfg.Store == nil || cfg.Manager == nil || cfg.Deliveries == nil {
-		panic("agentsync: store, manager, and delivery state are required")
+	if cfg.Store == nil || cfg.Manager == nil || cfg.Deliveries == nil || cfg.AtRest == nil {
+		panic("agentsync: store, manager, delivery state, and at-rest cipher are required")
 	}
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	return &Service{store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, assignments: cfg.Assignments, now: cfg.Now}
+	return &Service{store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, assignments: cfg.Assignments, now: cfg.Now, atRest: cfg.AtRest}
 }
 
 // Sync returns each still-sendable explicit delivery plus the device's current
@@ -93,6 +97,9 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 		if manifest.ManifestId != row.ManifestID {
 			return nil, delivery.ErrWrongManifest
 		}
+		if err := manifestpkg.MaterializeSecrets(manifest, s.atRest); err != nil {
+			return nil, err
+		}
 		changed, err := s.deliveries.MarkPushed(ctx, row.DeliveryID, deviceID, agent.Epoch)
 		if err != nil {
 			return nil, err
@@ -109,6 +116,11 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 		manifests, err := s.assignments.AssignedPolicy(ctx, deviceID)
 		if err != nil {
 			return nil, err
+		}
+		for _, item := range manifests {
+			if err := manifestpkg.MaterializeSecrets(item, s.atRest); err != nil {
+				return nil, err
+			}
 		}
 		desiredPolicy = &pmv1.DesiredPolicy{Revision: policyRevision(manifests), Manifests: manifests}
 	}

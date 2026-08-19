@@ -34,7 +34,7 @@ func TestDeviceGroupState_CRUDAndManualMembershipAreAudited(t *testing.T) {
 		for i, id := range deviceIDs {
 			if _, err := tx.InsertDevice(ctx, generated.InsertDeviceParams{
 				ID: id, Hostname: "device-" + string(rune('a'+i)),
-				AgentSealingPublicKey: make([]byte, 32), RegisteredAt: &now,
+				RegisteredAt: &now,
 			}); err != nil {
 				return err
 			}
@@ -185,7 +185,7 @@ func TestDeviceGroupState_ConvertingCuratedGroupToRuleClearsItsMembers(t *testin
 		for i, id := range deviceIDs {
 			if _, err := tx.InsertDevice(ctx, generated.InsertDeviceParams{
 				ID: id, Hostname: "curated-" + string(rune('a'+i)),
-				AgentSealingPublicKey: make([]byte, 32), RegisteredAt: &now,
+				RegisteredAt: &now,
 			}); err != nil {
 				return err
 			}

@@ -1,7 +1,6 @@
 package deviceauth
 
 import (
-	"bytes"
 	"context"
 	"log/slog"
 	"net"
@@ -24,10 +23,6 @@ import (
 )
 
 var testCAPin = strings.Repeat("0", 64)
-
-func testControlSealingPublicKey() []byte {
-	return bytes.Repeat([]byte{0x42}, 32)
-}
 
 // mockRegisterService implements the Register RPC of ControlServiceHandler.
 type mockRegisterService struct {
@@ -66,13 +61,11 @@ func TestEnroll_Success(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	mock := &mockRegisterService{
 		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-			require.Len(t, req.Msg.AgentSealingPublicKey, 32)
 			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:                &pm.DeviceId{Value: "dev-123"},
-				CaCert:                  caPEM,
-				Certificate:             []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
-				ControlUrl:              "https://gw.example.com:8443",
-				ControlSealingPublicKey: testControlSealingPublicKey(),
+				DeviceId:    &pm.DeviceId{Value: "dev-123"},
+				CaCert:      caPEM,
+				Certificate: []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
+				ControlUrl:  "https://gw.example.com:8443",
 			}), nil
 		},
 	}
@@ -100,16 +93,12 @@ func TestEnroll_Success(t *testing.T) {
 	assert.Equal(t, "dev-123", enrolledCreds.DeviceID)
 	assert.Equal(t, "https://gw.example.com:8443", enrolledCreds.AgentAddr)
 	assert.Equal(t, srv.URL, enrolledCreds.ControlAddr)
-	assert.Len(t, enrolledCreds.SealingPrivateKey, 32)
-	assert.Equal(t, testControlSealingPublicKey(), enrolledCreds.ControlSealingPublicKey)
 
 	// Credentials saved to store
 	assert.True(t, credStore.Exists())
 	loaded, err := credStore.Load()
 	require.NoError(t, err)
 	assert.Equal(t, "dev-123", loaded.DeviceID)
-	assert.Len(t, loaded.SealingPrivateKey, 32)
-	assert.Equal(t, testControlSealingPublicKey(), loaded.ControlSealingPublicKey)
 }
 
 func TestEnroll_MissingFields(t *testing.T) {
@@ -207,11 +196,10 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	mock := &mockRegisterService{
 		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:                &pm.DeviceId{Value: "dev-e2e"},
-				CaCert:                  caPEM,
-				Certificate:             []byte("-----BEGIN CERTIFICATE-----\ncert\n-----END CERTIFICATE-----\n"),
-				ControlUrl:              "https://gw.example.com",
-				ControlSealingPublicKey: testControlSealingPublicKey(),
+				DeviceId:    &pm.DeviceId{Value: "dev-e2e"},
+				CaCert:      caPEM,
+				Certificate: []byte("-----BEGIN CERTIFICATE-----\ncert\n-----END CERTIFICATE-----\n"),
+				ControlUrl:  "https://gw.example.com",
 			}), nil
 		},
 	}

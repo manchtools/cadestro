@@ -61,7 +61,7 @@ func TestEnrollmentProvenanceIsImmutable(t *testing.T) {
 	exec(t, pool, `INSERT INTO tokens (id, value_hash, name, expires_at) VALUES ($1, $2, $3, datetime('now', '+1 day'))`, tokenID, tokenID, "enrollment")
 	exec(t, pool, `INSERT INTO tokens (id, value_hash, name, expires_at) VALUES ($1, $2, $3, datetime('now', '+1 day'))`, otherTokenID, otherTokenID, "enrollment-2")
 	deviceID := newID()
-	exec(t, pool, `INSERT INTO devices (id, agent_sealing_public_key, registration_token_id) VALUES ($1, zeroblob(32), $2)`, deviceID, tokenID)
+	exec(t, pool, `INSERT INTO devices (id, registration_token_id) VALUES ($1, $2)`, deviceID, tokenID)
 
 	assert.ErrorContains(t, execFails(t, pool, `UPDATE devices SET registration_token_id = $1 WHERE id = $2`, otherTokenID, deviceID), "provenance is immutable")
 	assert.ErrorContains(t, execFails(t, pool, `UPDATE devices SET registration_token_id = NULL WHERE id = $1`, deviceID), "provenance is immutable")
@@ -186,10 +186,9 @@ var requiredForeignKeys = []string{
 	"devices.registration_token_id -> tokens",
 	"deliveries.device_id -> devices",
 
-	"lps_passwords.device_id -> devices",
-	"lps_passwords.action_id -> actions",
-	"luks_keys.device_id -> devices",
-	"luks_keys.action_id -> actions",
+	"device_secrets.device_id -> devices",
+	"lps_passwords.id -> device_secrets",
+	"luks_keys.id -> device_secrets",
 	"luks_tokens.device_id -> devices",
 	"luks_tokens.action_id -> actions",
 
@@ -276,8 +275,7 @@ func TestForeignKeys_RejectOrphanRows(t *testing.T) {
 	_, pool := setupSQLite(t)
 
 	deviceID := newID()
-	exec(t, pool, `INSERT INTO devices (id, hostname, agent_sealing_public_key)
-		VALUES ($1, 'orphan.example.test', $2)`, deviceID, make([]byte, 32))
+	exec(t, pool, `INSERT INTO devices (id, hostname) VALUES ($1, 'orphan.example.test')`, deviceID)
 	actionID := newID()
 	exec(t, pool, `INSERT INTO actions (id, name, action_type) VALUES ($1, 'rotate', 1)`, actionID)
 	user := seedUser(t, pool)
@@ -298,9 +296,9 @@ func TestForeignKeys_RejectOrphanRows(t *testing.T) {
 	})
 
 	t.Run("key material for an unknown device", func(t *testing.T) {
-		err := execFails(t, pool, `INSERT INTO luks_keys
-			(id, device_id, action_id, device_path, passphrase, rotated_at)
-			VALUES ($1, $2, $3, '/dev/sda1', 'enc:v1:ciphertext', CURRENT_TIMESTAMP)`, newID(), newID(), actionID)
+		err := execFails(t, pool, `INSERT INTO device_secrets
+			(id, device_id, kind, subject, version, ciphertext)
+			VALUES ($1, $2, 'luks', $3, 1, 'enc:v1:ciphertext')`, newID(), newID(), actionID)
 		assert.Contains(t, err.Error(), "FOREIGN KEY constraint failed")
 	})
 

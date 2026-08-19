@@ -64,7 +64,7 @@ type ExecutionResults interface {
 	AppendOutputChunk(context.Context, string, *pmv1.OutputChunk) error
 }
 
-// Secrets owns the narrow feature sinks for sealed LUKS and LPS fields.
+// Secrets owns the narrow feature sinks for LUKS and LPS fields.
 type Secrets interface {
 	ValidateLuksToken(context.Context, string, *pmv1.ValidateLuksTokenRequest) (*pmv1.ValidateLuksTokenResponse, error)
 	GetLuksKey(context.Context, string, *pmv1.GetLuksKeyRequest) (*pmv1.GetLuksKeyResponse, error)

@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"bytes"
 	"context"
 	"testing"
 	"time"
@@ -16,7 +15,7 @@ import (
 func TestPolicyResultsAreOwnerBoundAndReplaySafe(t *testing.T) {
 	st, raw := setupSQLite(t)
 	deviceID, runID, occurrenceID, actionID := ulid.Make().String(), ulid.Make().String(), ulid.Make().String(), ulid.Make().String()
-	_, err := raw.Exec(context.Background(), `INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, registered_at) VALUES ($1, 'device', 'v1', $2, $3)`, deviceID, bytes.Repeat([]byte{1}, 32), time.Now())
+	_, err := raw.Exec(context.Background(), `INSERT INTO devices (id, hostname, agent_version, registered_at) VALUES ($1, 'device', 'v1', $2)`, deviceID, time.Now())
 	require.NoError(t, err)
 	result := &pmv1.ActionResult{
 		ActionId: &pmv1.ActionId{Value: actionID}, DeliveryId: runID, OccurrenceId: occurrenceID,

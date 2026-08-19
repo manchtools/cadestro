@@ -187,7 +187,6 @@ The database alone is not enough:
 |---|---|
 | `data/control/control.db` | the deployment |
 | `secrets/encryption.key` | without it, every stored secret is unreadable |
-| `secrets/sealing.key` | field sealing to and from agents |
 | `secrets/session-signing.pem` | existing sessions |
 | `certs/` | the CA **every enrolled device pinned** — lose it and you re-enroll the fleet |
 | `data/artifacts` | uploaded artifacts, not in the database |

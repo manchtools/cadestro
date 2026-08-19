@@ -2,35 +2,31 @@ package executor
 
 import (
 	"context"
-	"crypto/ecdh"
 	"errors"
 	"strings"
 	"sync"
 	"testing"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// These tests pin both X25519 field sealing and the ordering invariant: never
-// rotate a credential that cannot first be returned to control for the
-// operator.
+// These tests pin the ordering invariant: never rotate a credential that
+// cannot first be returned to control for the operator.
 
 // lpsRecorder observes both sides of the rotation in one ordered log, so a test
 // can assert not just that the password was reported and set, but that the
 // report came FIRST.
 type lpsRecorder struct {
-	mu             sync.Mutex
-	events         []string
-	reported       []*pb.LpsPasswordRotation
-	setCalls       []string // revealed plaintexts, in call order
-	storeErr       error
-	actionIDs      []string
-	controlPrivate *ecdh.PrivateKey
+	mu        sync.Mutex
+	events    []string
+	reported  []*pb.LpsPasswordRotation
+	setCalls  []string // revealed plaintexts, in call order
+	storeErr  error
+	actionIDs []string
 }
 
 func (r *lpsRecorder) StorePasswords(_ context.Context, actionID string, rotations []*pb.LpsPasswordRotation) error {
@@ -62,8 +58,8 @@ func (f *lpsRecorderUser) SetPassword(_ context.Context, _ string, pw sysexec.Se
 }
 func (f *lpsRecorderUser) KillSessions(context.Context, string) error { return nil }
 
-// newLpsExecutor wires an executor with a store, a device id, and the recorder
-// installed on both the user manager and the password store.
+// newLpsExecutor wires an executor with a store and the recorder installed on
+// both the user manager and the password store.
 func newLpsExecutor(t *testing.T, rec *lpsRecorder, wireStore bool) *Executor {
 	t.Helper()
 	e := NewExecutor(nil)
@@ -72,19 +68,6 @@ func newLpsExecutor(t *testing.T, rec *lpsRecorder, wireStore bool) *Executor {
 		t.Fatalf("store: %v", err)
 	}
 	e.SetStore(s)
-	e.SetDeviceID("01HKDEVICE0000000000000000")
-	agentPrivate, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		t.Fatalf("agent sealing key: %v", err)
-	}
-	controlPrivate, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		t.Fatalf("control sealing key: %v", err)
-	}
-	if err := e.ConfigureSealing(agentPrivate.Bytes(), controlPrivate.PublicKey().Bytes()); err != nil {
-		t.Fatalf("configure sealing: %v", err)
-	}
-	rec.controlPrivate = controlPrivate
 	if wireStore {
 		e.SetLpsPasswordStore(rec)
 	}
@@ -112,9 +95,8 @@ func runLps(t *testing.T, e *Executor, actionID string) (bool, map[string]string
 	return changed, metadata, err
 }
 
-// The invariant, in its new form: with no route to control the action fails
-// BEFORE any account is touched. Previously this was "no sealing key"; a
-// disconnected agent is the same condition — a password it could not return.
+// With no route to control the action fails BEFORE any account is touched: a
+// disconnected agent cannot safely rotate a password it could not return.
 func TestExecuteLps_NotConnectedFailsClosedBeforeRotation(t *testing.T) {
 	rec := &lpsRecorder{}
 	e := newLpsExecutor(t, rec, false) // no password store wired
@@ -158,19 +140,7 @@ func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 		t.Fatalf("wrong order: got %v, want %v — a password set before it is reported is one the operator can lose", rec.events, want)
 	}
 
-	// The sealed password must open at control to exactly the value applied to
-	// the account; plaintext never appears in the protobuf field.
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionAgentToControl,
-		"cadestro.v1.LpsPasswordRotation", "password",
-		"01HKDEVICE0000000000000000", actionID, "alice")
-	if err != nil {
-		t.Fatalf("field context: %v", err)
-	}
-	opened, err := sdkcrypto.OpenWithPrivateKey(rec.controlPrivate, rec.reported[0].GetPassword().GetCiphertext(), aad, info)
-	if err != nil {
-		t.Fatalf("open reported password: %v", err)
-	}
-	if string(opened) != rec.setCalls[0] {
+	if string(rec.reported[0].GetPassword()) != rec.setCalls[0] {
 		t.Error("the reported password is not the one set on the account")
 	}
 	if rec.reported[0].GetUsername() != "alice" {
@@ -184,14 +154,14 @@ func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 	}
 
 	// The action result must carry no password. The credential travels only as
-	// a dedicated sealed stream field.
+	// a dedicated authenticated stream field.
 	for k, v := range metadata {
 		if strings.Contains(v, rec.setCalls[0]) {
 			t.Errorf("action metadata %q leaks the rotated password", k)
 		}
 	}
 	if metadata["lps.rotations"] != "" {
-		t.Errorf("lps.rotations metadata is still emitted (%q); passwords belong only in sealed stream fields",
+		t.Errorf("lps.rotations metadata is still emitted (%q); passwords belong only in authenticated stream fields",
 			metadata["lps.rotations"])
 	}
 }

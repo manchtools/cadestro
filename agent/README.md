@@ -10,7 +10,7 @@ surface and must not override it.
 
 The executor delegates low-level system operations to the SDK's `sys/` packages (`sys/exec`, `sys/fs`, `sys/user`, `sys/systemd`), keeping the agent focused on action dispatch, idempotency checks, and result reporting.
 
-LUKS and LPS key material uses recipient-bound X25519 field sealing on the
+LUKS and LPS key material uses the authenticated mTLS stream and
 direct control stream. If the agent cannot seal a new value to the pinned
 control key, it refuses before changing the device secret.
 
@@ -650,9 +650,9 @@ stream. It validates every message and target device before invoking osquery,
 journalctl, LUKS, inventory, or an action executor. Application frames are not
 separately signed.
 
-Classified secret fields are versioned X25519 envelopes bound to direction,
-message, field, device, and action/session context. A missing, malformed,
-wrong-recipient, or wrong-context envelope fails before the privileged sink.
+Classified secret fields are raw bytes only inside the authenticated mTLS
+stream. The peer certificate identifies the device, and bounded-field
+validation fails before the privileged sink.
 
 ### Package / Repository Argument Hardening
 

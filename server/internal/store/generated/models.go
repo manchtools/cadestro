@@ -261,7 +261,6 @@ type Device struct {
 	ID                          string     `json:"id"`
 	Hostname                    string     `json:"hostname"`
 	AgentVersion                string     `json:"agent_version"`
-	AgentSealingPublicKey       []byte     `json:"agent_sealing_public_key"`
 	EnrollmentIdentityPublicKey []byte     `json:"enrollment_identity_public_key"`
 	CertificatePem              []byte     `json:"certificate_pem"`
 	CertFingerprint             *string    `json:"cert_fingerprint"`
@@ -327,6 +326,16 @@ type DeviceLabel struct {
 	DeviceID string `json:"device_id"`
 	Key      string `json:"key"`
 	Value    string `json:"value"`
+}
+
+type DeviceSecret struct {
+	ID         string    `json:"id"`
+	DeviceID   string    `json:"device_id"`
+	Kind       string    `json:"kind"`
+	Subject    string    `json:"subject"`
+	Version    int64     `json:"version"`
+	Ciphertext string    `json:"ciphertext"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type Execution struct {
@@ -437,10 +446,7 @@ type LogQueryResult struct {
 
 type LpsPassword struct {
 	ID             string    `json:"id"`
-	DeviceID       string    `json:"device_id"`
-	ActionID       string    `json:"action_id"`
 	Username       string    `json:"username"`
-	Password       string    `json:"password"`
 	RotatedAt      time.Time `json:"rotated_at"`
 	RotationReason string    `json:"rotation_reason"`
 	IsCurrent      bool      `json:"is_current"`
@@ -449,10 +455,7 @@ type LpsPassword struct {
 
 type LuksKey struct {
 	ID               string     `json:"id"`
-	DeviceID         string     `json:"device_id"`
-	ActionID         string     `json:"action_id"`
 	DevicePath       string     `json:"device_path"`
-	Passphrase       string     `json:"passphrase"`
 	RotatedAt        time.Time  `json:"rotated_at"`
 	RotationReason   string     `json:"rotation_reason"`
 	IsCurrent        bool       `json:"is_current"`

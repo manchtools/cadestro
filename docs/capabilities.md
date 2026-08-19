@@ -6,7 +6,7 @@ is how these get scheduled, delivered, and reported.
 
 ## How every action behaves
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteWithStreaming:bafece8a -->
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteWithStreaming:a8f6cb01 -->
 One dispatch switch maps an action type to its implementation. An unrecognised
 type is refused rather than ignored, so a contract the agent is too old to
 understand fails loudly instead of silently doing nothing.
@@ -295,7 +295,7 @@ reporting. It is for system accounts only ever reached via setuid — setting it
 a general-purpose account locks its PAM login path closed.
 
 **Honours `PRESENT` and `ABSENT`.** Generated passwords never travel in result
-metadata; they are sealed onto the control stream.
+metadata; they use the authenticated control stream.
 <!-- docref: end -->
 
 ### Group
@@ -378,8 +378,8 @@ three.
 Rotates a random password per managed local account — the LAPS pattern — and
 reports it to control.
 
-The ordering is the important part: the new password is sealed and **reported to
-control before it is set locally**. A crash between the two leaves control
+The ordering is the important part: the new password is **reported to control
+over the authenticated stream before it is set locally**. A crash between the two leaves control
 holding a password that does not work yet, which is recoverable; the reverse
 would leave an account nobody can log into.
 
@@ -399,11 +399,11 @@ is no local password store or device identity.
 
 ### Disk encryption (LUKS)
 
-<!-- docref: begin src=agent/internal/executor/sealing.go#Executor.executeSealedLuks:767dcfe2,agent/internal/executor/luks.go#Executor.executeLuks:d673138a,contract/proto/cadestro/v1/actions.proto#EncryptionParams:a28ad44d -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:d673138a,contract/proto/cadestro/v1/actions.proto#EncryptionParams:b0703a68 -->
 Takes ownership of the machine's LUKS volume and manages its passphrase.
 
-`preshared_key` is a sealed value — control seals it to this specific agent — used
-once to claim the volume. The agent then generates a managed passphrase,
+`preshared_key` is delivered only on the authenticated device's mTLS stream and
+used once to claim the volume. The agent then generates a managed passphrase,
 **confirms with control that it has been stored, verifies the round trip, and
 only then removes the old key**. Losing a machine to a half-completed rotation is
 the failure this ordering exists to prevent.
@@ -425,12 +425,13 @@ requested TPM enrollment instead of being refused.
 
 ### WiFi
 
-<!-- docref: begin src=agent/internal/executor/sealing.go#Executor.executeSealedWifi:2372d7e6,agent/internal/executor/wifi.go#Executor.executeWifi:cd15c3ba,contract/proto/cadestro/v1/actions.proto#WifiParams:53420ab3 -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeWifiAction:faa8baea,agent/internal/executor/wifi.go#Executor.executeWifi:cd15c3ba,contract/proto/cadestro/v1/actions.proto#WifiParams:6fd2eeda -->
 Manages a NetworkManager connection profile.
 
-`ssid` and `auth_type` are required, and the auth type selects which sealed field
-is opened: `psk` for WPA2/WPA3 Personal, or `client_key` alongside `ca_cert`,
-`client_cert`, and `identity` for EAP-TLS. `auto_connect`, `hidden`, and
+`ssid` and `auth_type` are required, and the auth type selects which secret is
+used: `psk` for WPA2/WPA3 Personal, or `client_key` alongside `ca_cert`,
+`client_cert`, and `identity` for EAP-TLS. The secret arrives only on the
+authenticated device's mTLS stream. `auto_connect`, `hidden`, and
 `priority` (−1 to 999, higher wins) control selection behaviour.
 
 Secrets are passed to the underlying tool as multi-line stdin secrets so they
@@ -552,5 +553,5 @@ firewall" — today, through a policy, it cannot.
 
 - [Policy model](policy-model.md) — how these actions are scheduled and
   delivered.
-- [Security model](security-model.md) — sealed parameters, and what the audit
+- [Security model](security-model.md) — secret transport and storage, and what the audit
   log records when an action runs.

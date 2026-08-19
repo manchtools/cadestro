@@ -1,6 +1,6 @@
 # Cadestro server quickstart
 
-<!-- docref: begin src=deploy/compose.yml#@deployment-services:ca913fd3 -->
+<!-- docref: begin src=deploy/compose.yml#@deployment-services:c3bfad13 -->
 The stack has exactly three services: Traefik, one control process with an
 embedded SQLite database, and the administration UI. Compose gives control no
 arguments and passes it the rendered `config/control.env` as the container's
@@ -123,9 +123,9 @@ into `config/control.env`, and that file is where ordinary settings such as the
 log level or the retention windows are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:13fdd201 -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:6df12966 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
-encryption, session and sealing keys, `config/control.env` with a 90-day
+encryption and session keys, `config/control.env` with a 90-day
 audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`, and
 `config/web.env` with the `PUBLIC_CONTROL_URL` the UI calls — the same origin
 control publishes its setup URL on, taken from `CONTROL_DOMAIN`. It first
@@ -142,14 +142,14 @@ files and every file under `config/` are mode 0600, verified before the script
 reports success, and no secret value is ever printed.
 <!-- docref: end -->
 
-<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@agent-route:2b16b515,cmd/cadestro/httpserver.go#serveAgent:0543d07f,cmd/cadestro/httpserver.go#buildAgentServer:ccd04d34,internal/agentstream/identity.go#MTLSMiddleware:f1b23680 -->
+<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@agent-route:2b16b515,cmd/cadestro/httpserver.go#serveAgent:0543d07f,cmd/cadestro/httpserver.go#buildAgentServer:ccd04d34,internal/agentstream/identity.go#MTLSMiddleware:306e83b6 -->
 The public and agent hostnames must differ. Traefik terminates browser/API TLS
 for `CONTROL_DOMAIN`. For `AGENT_DOMAIN`, it passes TLS through and adds PROXY
 protocol v2 on an isolated network; control itself authenticates the device
 certificate and checks revocation.
 <!-- docref: end -->
 
-<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:21e99269,deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
+<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:da534a3f,deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
 Traefik also authenticates control's internal TLS certificate against the
 deployment CA, so browser/API traffic stays encrypted after public TLS
 termination. Control keeps the paths it serves — the `cadestro.v1.ControlService`

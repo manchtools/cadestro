@@ -476,43 +476,23 @@ Getting the archive genuinely off-host is an operator responsibility.
 
 ## 5. Secret handling
 
-### Secrets in transit are sealed to their recipient
+### Secrets in transit use the authenticated device stream
 
-<!-- docref: begin src=sdk/crypto/seal.go#SealToPublicKey:6b2352e6 -->
-Secret-bearing protocol fields are sealed with X25519: a fresh ephemeral key
-pair per operation, a shared secret with the recipient's public key, HKDF-SHA256
-to derive an AES-GCM key, and both a non-empty associated-data value and a
-non-empty derivation label required by construction rather than by convention.
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:2c626707,server/internal/agentsecrets/service.go#Service.GetLuksKey:3e34dad4 -->
+Agent-facing secrets are raw bytes inside the mutually authenticated TLS
+connection. The peer certificate supplies the device identity, so Cadestro does
+not add a second recipient-key envelope, request device identifier, or
+application signature to the same channel. Control decrypts an at-rest value
+only for the authenticated outbound stream and encrypts an inbound value before
+persisting it.
 <!-- docref: end -->
 
-<!-- docref: begin src=sdk/crypto/field_context.go#FieldSealContext:dc8c1166 -->
-The associated data is what makes a sealed value non-portable. It binds, as
-length-prefixed segments: the sealing-scheme version, the direction
-(agent-to-control or the reverse), the fully-qualified message name, the field
-name, and then the context — the device, and the specific action, delivery, or
-terminal session. Length prefixing prevents two different contexts from encoding
-identically, and an empty segment is an error rather than a silently-skipped
-field.
-
-So a captured sealed value cannot be moved to another field, another device,
-another action, or the opposite direction. It opens only in the exact context it
-was produced for. One field goes further: a rotated password additionally binds
-its **username**, because a password is only meaningful as a pair, and without
-that binding control could not verify that the password it stores under a name
-is the one generated for it.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/agentsecrets/service.go#sealedFieldVersion:3c95c986 -->
-The envelope carries its own scheme version, checked at every opening point. A
-recipient refuses a version it does not implement rather than guessing.
-<!-- docref: end -->
-
-<!-- docref: begin src=contract/contract_rpc_surface_test.go#TestContract_SecretsAreSealedAndFramesAreUnsigned:4571db0d -->
-Which fields must be sealed is not a matter of remembering. A test sweeps the
-whole protobuf registry: every field marked as a secret must be a sealed
-envelope, unless it appears in a short, justified allowlist of write-only
-inputs. The same test bans the signature fields that a previous architecture
-used, and it carries matches-zero guards so it cannot pass by scanning nothing.
+<!-- docref: begin src=contract/contract_rpc_surface_test.go#TestContract_SecretsAreClassifiedAndFramesAreUnsigned:911f0cd1 -->
+Which fields are secrets is not a matter of remembering. A test sweeps the whole
+protobuf registry: every classified agent-stream secret must be raw bytes,
+while the small set of authenticated write-only control inputs is explicit.
+The same test bans signature and relay-era device-binding fields, and it carries
+matches-zero guards so it cannot pass by scanning nothing.
 <!-- docref: end -->
 
 Application frames are **not** separately signed. The mTLS channel authenticates
@@ -521,7 +501,7 @@ was deliberately removed rather than kept as defence in depth.
 
 ### Secrets at rest
 
-<!-- docref: begin src=server/internal/crypto/crypto.go#Encryptor.EncryptWithContext:a5242e11 -->
+<!-- docref: begin src=server/internal/crypto/crypto.go#Encryptor.EncryptWithContext:f1811fb2 -->
 Stored secrets are AES-256-GCM under the deployment key, with **mandatory**
 associated data — there is deliberately no API that accepts an empty context, in
 either direction. Decryption also refuses a value that is not tagged with the
@@ -529,10 +509,11 @@ current scheme, and refuses plaintext outright, so a stripped ciphertext cannot
 be read as data.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/crypto/crypto.go#SecretAADForRow:5686972b -->
-The associated data binds the device, the action, the secret type, **and the
-individual row's immutable identifier** — so one rotation's ciphertext cannot be
-relocated onto its sibling row to make an old credential appear current.
+<!-- docref: begin src=server/internal/crypto/crypto.go#DeviceSecretAAD:235cdeff -->
+The generic device-secret associated data binds the immutable row identifier,
+device, secret kind, subject, and format version. A database attacker therefore
+cannot relocate a rotation onto a sibling row, another device, or another kind
+and have it authenticate.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/internal/crypto/pii.go#GenerateWrappedDEK:dca97952 -->

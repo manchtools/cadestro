@@ -110,18 +110,18 @@ func TestReconcilePolicyKeepsStoredManifestAcrossResealing(t *testing.T) {
 	manifest.Occurrences[0].Action = &pb.Action{
 		Id: &pb.ActionId{Value: "01K00000000000000000000004"}, Type: pb.ActionType_ACTION_TYPE_ENCRYPTION,
 		Params: &pb.Action_Encryption{Encryption: &pb.EncryptionParams{
-			PresharedKey: &pb.SealedValue{Version: 1, Ciphertext: []byte("first-seal")}, RotationIntervalDays: 30,
+			PresharedKey: []byte("first-seal"), RotationIntervalDays: 30,
 		}},
 	}
 	policy := &pb.DesiredPolicy{Revision: "01K00000000000000000000026", Manifests: []*pb.Manifest{manifest}}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
 
-	manifest.Occurrences[0].Action.GetEncryption().PresharedKey.Ciphertext = []byte("resealed")
+	manifest.Occurrences[0].Action.GetEncryption().PresharedKey = []byte("changed")
 	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1)
-	assert.Equal(t, []byte("first-seal"), due[0].Delivery.GetManifest().GetOccurrences()[0].GetAction().GetEncryption().GetPresharedKey().GetCiphertext())
+	assert.Equal(t, []byte("first-seal"), due[0].Delivery.GetManifest().GetOccurrences()[0].GetAction().GetEncryption().GetPresharedKey())
 }
 
 func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing.T) {

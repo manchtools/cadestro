@@ -11,7 +11,6 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
@@ -28,7 +27,7 @@ import (
 // fakeDetectEncManager adds first-run volume detection to the recorded-no-op
 // manager, which is what setupLuks needs before it can take ownership.
 type fakeDetectEncManager struct {
-	fakeSealEncManager
+	fakeEncManager
 	devicePath string
 }
 
@@ -61,7 +60,6 @@ func newLuksExecutor(t *testing.T, devicePath string) *Executor {
 	e.logger = slog.Default()
 	e.now = time.Now
 	e.SetStore(st)
-	e.SetDeviceID("01HXDEVICE0000000000000000")
 	e.SetLuksKeyStore(keys)
 	return e
 }
@@ -78,24 +76,14 @@ func TestSetupLuksReportsNoMetadata(t *testing.T) {
 
 func TestExecuteEncryptionActionReportsNoResultMetadata(t *testing.T) {
 	e := newLuksExecutor(t, "/dev/mapper/root")
-	agentKey, err := sdkcrypto.GenerateX25519()
-	require.NoError(t, err)
-	controlKey, err := sdkcrypto.GenerateX25519()
-	require.NoError(t, err)
-	require.NoError(t, e.ConfigureSealing(agentKey.Bytes(), controlKey.PublicKey().Bytes()))
 	const actionID = "01HXLUKSEXEC00000000000000"
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"cadestro.v1.EncryptionParams", "preshared_key", e.getDeviceID(), actionID)
-	require.NoError(t, err)
-	sealed, err := sdkcrypto.SealToPublicKey(agentKey.PublicKey(), []byte("psk-value"), aad, info)
-	require.NoError(t, err)
 
 	result := e.ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: actionID},
 		Type:         pb.ActionType_ACTION_TYPE_ENCRYPTION,
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params: &pb.Action_Encryption{Encryption: &pb.EncryptionParams{
-			PresharedKey: &pb.SealedValue{Version: 1, Ciphertext: sealed}, MinWords: 3,
+			PresharedKey: []byte("psk-value"), MinWords: 3,
 		}},
 	})
 	require.NotNil(t, result)

@@ -22,8 +22,7 @@ func luksSecret(s string) sysexec.Secret { return sysexec.NewMultilineSecret(s) 
 func luksSecretBytes(b []byte) sysexec.Secret { return sysexec.NewMultilineSecret(string(b)) }
 
 // LuksKeyStore is the executor's narrow in-process key boundary. The runtime
-// adapter seals outbound passphrases and opens inbound passphrases immediately
-// before this interface is crossed; protobuf never carries plaintext.
+// adapter carries passphrases only over the authenticated mTLS stream.
 type LuksKeyStore interface {
 	GetKey(ctx context.Context, actionID string) (string, error)
 	StoreKey(ctx context.Context, actionID, devicePath, passphrase string, reason pb.RotationReason) error
@@ -36,9 +35,6 @@ type LuksKeyStore interface {
 func (e *Executor) requireLuksStoreReady() error {
 	if e.getLuksKeyStore() == nil {
 		return fmt.Errorf("no server connection; cannot store the new passphrase (fail closed, no cleartext-only rotation)")
-	}
-	if e.getDeviceID() == "" {
-		return fmt.Errorf("device ID not available; cannot store the new passphrase")
 	}
 	return nil
 }

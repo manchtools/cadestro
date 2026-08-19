@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -184,19 +183,17 @@ func TestRegisterAgent_HappyPath(t *testing.T) {
 	cl.handler.registerFn = func(req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 		observed = req.Msg
 		return connect.NewResponse(&pm.RegisterResponse{
-			DeviceId:                &pm.DeviceId{Value: "01HXXXXXXXXXXXXXXXXXXXXXX0"},
-			CaCert:                  []byte("ca"),
-			Certificate:             []byte("cert"),
-			ControlUrl:              "https://control.example",
-			ControlSealingPublicKey: controlSealingKey,
+			DeviceId:    &pm.DeviceId{Value: "01HXXXXXXXXXXXXXXXXXXXXXX0"},
+			CaCert:      []byte("ca"),
+			Certificate: []byte("cert"),
+			ControlUrl:  "https://control.example",
 		}), nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	agentKey := testSealingPubKey()
-	got, err := RegisterAgent(ctx, cl.serverURL, "token-x", "host-1", "v1.2.3", []byte("csr-bytes"), agentKey)
+	got, err := RegisterAgent(ctx, cl.serverURL, "token-x", "host-1", "v1.2.3", []byte("csr-bytes"))
 	if err != nil {
 		t.Fatalf("RegisterAgent: %v", err)
 	}
@@ -216,28 +213,7 @@ func TestRegisterAgent_HappyPath(t *testing.T) {
 		observed.AgentVersion != "v1.2.3" || string(observed.Csr) != "csr-bytes" {
 		t.Errorf("request fields lost in transit: %+v", observed)
 	}
-	// The enrollment key exchange is the whole basis for field sealing, and it
-	// only exists if BOTH halves survive the round trip. A facade that dropped
-	// either one would leave a device that looks enrolled and can never send or
-	// receive a secret.
-	if !bytes.Equal(observed.AgentSealingPublicKey, agentKey) {
-		t.Errorf("agent sealing public key lost in transit: got %x, want %x",
-			observed.AgentSealingPublicKey, agentKey)
-	}
-	if !bytes.Equal(got.ControlSealingPublicKey, controlSealingKey) {
-		t.Errorf("control sealing public key dropped by the RegisterAgent facade: got %x, want %x",
-			got.ControlSealingPublicKey, controlSealingKey)
-	}
 }
-
-// controlSealingKey is a distinct 32-byte fixture so a facade that mixed up the
-// two directions cannot pass by echoing the agent's own key back.
-var controlSealingKey = bytes.Repeat([]byte{0x02}, 32)
-
-// testSealingPubKey is a well-formed 32-byte X25519 public key encoding. The
-// length matters: Register declares len=32, so a short fixture would be
-// rejected at the boundary rather than exercising the path under test.
-func testSealingPubKey() []byte { return bytes.Repeat([]byte{0x01}, 32) }
 
 func TestRegisterAgent_ServerErrorPropagates(t *testing.T) {
 	cl := newControlLoopback(t)
@@ -245,7 +221,7 @@ func TestRegisterAgent_ServerErrorPropagates(t *testing.T) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("bad token"))
 	}
 
-	_, err := RegisterAgent(context.Background(), cl.serverURL, "wrong", "host", "v0", []byte("csr"), testSealingPubKey())
+	_, err := RegisterAgent(context.Background(), cl.serverURL, "wrong", "host", "v0", []byte("csr"))
 	if err == nil {
 		t.Fatal("expected error from server-side PermissionDenied")
 	}
@@ -663,7 +639,7 @@ func TestWithMTLSFromPEM_ClientPresentsCertificate(t *testing.T) {
 			t.Fatalf("WithMTLSFromPEM: %v", err)
 		}
 		got, err := RegisterAgent(context.Background(), srvURL,
-			"tok", "host", "v0", []byte("csr"), testSealingPubKey(), opt)
+			"tok", "host", "v0", []byte("csr"), opt)
 		if err != nil {
 			t.Fatalf("RegisterAgent: %v", err)
 		}
@@ -680,7 +656,7 @@ func TestWithMTLSFromPEM_ClientPresentsCertificate(t *testing.T) {
 		}
 		hc := newHTTPClientWithTLS(tlsConfig)
 		_, err := RegisterAgent(context.Background(), srvURL,
-			"tok", "host", "v0", []byte("csr"), testSealingPubKey(), WithHTTPClient(hc))
+			"tok", "host", "v0", []byte("csr"), WithHTTPClient(hc))
 		if err == nil {
 			t.Fatal("expected handshake failure without client cert")
 		}
@@ -743,7 +719,7 @@ func TestWithMTLSFromPEM_RejectsServerSignedByForeignCA(t *testing.T) {
 		t.Fatalf("WithMTLSFromPEM: %v", err)
 	}
 	_, err = RegisterAgent(context.Background(), srvURL,
-		"tok", "host", "v0", []byte("csr"), testSealingPubKey(), opt)
+		"tok", "host", "v0", []byte("csr"), opt)
 	if err == nil {
 		t.Fatal("strict mTLS must reject a server signed by a CA other than the pinned internal CA")
 	}
@@ -767,7 +743,7 @@ func TestWithMTLSFromPEMAndSystemRoots_TrustsInternalCA(t *testing.T) {
 		t.Fatalf("WithMTLSFromPEMAndSystemRoots: %v", err)
 	}
 	got, err := RegisterAgent(context.Background(), srvURL,
-		"tok", "host", "v0", []byte("csr"), testSealingPubKey(), opt)
+		"tok", "host", "v0", []byte("csr"), opt)
 	if err != nil {
 		t.Fatalf("system-roots variant must trust a server signed by the internal CA: %v", err)
 	}
@@ -799,7 +775,7 @@ func TestWithMTLSFromPEMAndSystemRoots_RejectsUntrustedServer(t *testing.T) {
 		t.Fatalf("WithMTLSFromPEMAndSystemRoots: %v", err)
 	}
 	_, err = RegisterAgent(context.Background(), srvURL,
-		"tok", "host", "v0", []byte("csr"), testSealingPubKey(), opt)
+		"tok", "host", "v0", []byte("csr"), opt)
 	if err == nil {
 		t.Fatal("system-roots variant must still reject a server signed by an untrusted CA")
 	}
@@ -819,7 +795,7 @@ func TestWithHTTPClient_AppliedToControlCalls(t *testing.T) {
 	hc := &http.Client{Transport: rt}
 
 	if _, err := RegisterAgent(context.Background(), cl.serverURL,
-		"tok", "host", "v0", []byte("csr"), testSealingPubKey(), WithHTTPClient(hc)); err != nil {
+		"tok", "host", "v0", []byte("csr"), WithHTTPClient(hc)); err != nil {
 		t.Fatalf("RegisterAgent: %v", err)
 	}
 	if called.Load() == 0 {

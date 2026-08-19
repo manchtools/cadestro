@@ -3,7 +3,6 @@ package controlruntime
 
 import (
 	"context"
-	"crypto/ecdh"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -50,23 +49,22 @@ const (
 // Config contains the already-loaded durable dependencies and ordinary
 // deployment settings for one control process.
 type Config struct {
-	Store                    *store.Store
-	CA                       *ca.CA
-	JWT                      *auth.JWTManager
-	AtRest                   *pmcrypto.Encryptor
-	ControlSealingPrivateKey *ecdh.PrivateKey
-	Logger                   *slog.Logger
-	Version                  string
-	PublicBaseURL            string
-	AgentURL                 string
-	TerminalURL              string
-	CORSOrigins              []string
-	CORSAllowAll             bool
-	TerminalOriginPatterns   []string
-	TrustedProxies           []string
-	HeartbeatInterval        time.Duration
-	Now                      func() time.Time
-	Readiness                func(context.Context) error
+	Store                  *store.Store
+	CA                     *ca.CA
+	JWT                    *auth.JWTManager
+	AtRest                 *pmcrypto.Encryptor
+	Logger                 *slog.Logger
+	Version                string
+	PublicBaseURL          string
+	AgentURL               string
+	TerminalURL            string
+	CORSOrigins            []string
+	CORSAllowAll           bool
+	TerminalOriginPatterns []string
+	TrustedProxies         []string
+	HeartbeatInterval      time.Duration
+	Now                    func() time.Time
+	Readiness              func(context.Context) error
 }
 
 // Runtime owns the HTTP surfaces and bounded background dispatcher.
@@ -86,9 +84,8 @@ type Runtime struct {
 
 // New wires every retained RPC to its direct domain owner.
 func New(cfg Config) *Runtime {
-	if cfg.Store == nil || cfg.CA == nil || cfg.JWT == nil || cfg.AtRest == nil ||
-		cfg.ControlSealingPrivateKey == nil || cfg.Readiness == nil {
-		panic("controlruntime: store, CA, JWT, at-rest cipher, sealing key, and readiness check are required")
+	if cfg.Store == nil || cfg.CA == nil || cfg.JWT == nil || cfg.AtRest == nil || cfg.Readiness == nil {
+		panic("controlruntime: store, CA, JWT, at-rest cipher, and readiness check are required")
 	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
@@ -105,7 +102,7 @@ func New(cfg Config) *Runtime {
 	tokens := terminal.NewTokenStore(terminal.NewMemoryBackend(cfg.Now), terminal.WithClock(cfg.Now))
 	deliveryState := delivery.New(delivery.Config{Store: cfg.Store, Now: cfg.Now})
 	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
-		Store: cfg.Store, State: deliveryState, Router: manager, Logger: cfg.Logger, Now: cfg.Now,
+		Store: cfg.Store, State: deliveryState, Router: manager, Logger: cfg.Logger, Now: cfg.Now, AtRest: cfg.AtRest,
 	})
 	executionResults := execution.New(execution.Config{Store: cfg.Store, Now: cfg.Now})
 	deviceHandlers := device.New(device.Config{
@@ -115,13 +112,14 @@ func New(cfg Config) *Runtime {
 		IsConnected: manager.IsConnected,
 	})
 	secretService := agentsecrets.New(agentsecrets.Config{
-		Store: cfg.Store, AtRest: cfg.AtRest, ControlSealingPrivateKey: cfg.ControlSealingPrivateKey, Now: cfg.Now,
+		Store: cfg.Store, AtRest: cfg.AtRest, Now: cfg.Now,
 	})
 	dispatchHandlers := dispatch.NewHandlers(dispatch.HandlersConfig{
-		Store: cfg.Store, AtRest: cfg.AtRest, Waker: dispatcher, Sender: manager.Send, Logger: cfg.Logger, Now: cfg.Now,
+		Store: cfg.Store, Waker: dispatcher, Sender: manager.Send, Logger: cfg.Logger, Now: cfg.Now,
 	})
 	syncService := agentsync.New(agentsync.Config{
 		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Assignments: dispatchHandlers,
+		AtRest: cfg.AtRest,
 	})
 	agentService := agentstream.New(agentstream.Config{
 		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Executions: executionResults,
@@ -146,7 +144,7 @@ func New(cfg Config) *Runtime {
 	}
 	enrollmentHandler := enrollment.New(enrollment.Config{
 		Store: cfg.Store, CA: cfg.CA, Logger: cfg.Logger, Now: cfg.Now,
-		ControlURL: cfg.AgentURL, ControlSealingPublicKey: cfg.ControlSealingPrivateKey.PublicKey().Bytes(),
+		ControlURL: cfg.AgentURL,
 	})
 
 	publicMux := http.NewServeMux()

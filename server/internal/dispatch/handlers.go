@@ -17,7 +17,6 @@ import (
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -25,7 +24,6 @@ import (
 // HandlersConfig supplies the durable store and bounded dispatcher wake seam.
 type HandlersConfig struct {
 	Store  *store.Store
-	AtRest *pmcrypto.Encryptor
 	Waker  Waker
 	Sender func(deviceID string, message *pmv1.ServerMessage) error
 	Logger *slog.Logger
@@ -45,14 +43,14 @@ type Handlers struct {
 // NewHandlers constructs direct dispatch handlers. Missing durable state or a
 // wake target is a boot-time wiring defect.
 func NewHandlers(cfg HandlersConfig) *Handlers {
-	if cfg.Store == nil || cfg.Waker == nil || cfg.AtRest == nil {
-		panic("dispatch: handler store, waker, and at-rest cipher are required")
+	if cfg.Store == nil || cfg.Waker == nil {
+		panic("dispatch: handler store and waker are required")
 	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
 	return &Handlers{
-		store: cfg.Store, compiler: manifest.New(cfg.Store, cfg.AtRest),
+		store: cfg.Store, compiler: manifest.New(cfg.Store),
 		submitter: New(Config{Store: cfg.Store, Waker: cfg.Waker, Now: cfg.Now}),
 		logger:    cfg.Logger, validator: sdkvalidate.NewValidator(), sender: cfg.Sender,
 	}
@@ -155,7 +153,7 @@ func (h *Handlers) DispatchAction(ctx context.Context, req *connect.Request[pmv1
 	var input ManifestInput
 	switch source := req.Msg.ActionSource.(type) {
 	case *pmv1.DispatchActionRequest_ActionId:
-		compiled, err := h.catalogActionTemplate(ctx, req.Msg.DeviceId, source.ActionId)
+		compiled, err := h.catalogActionTemplate(ctx, source.ActionId)
 		if err != nil {
 			return nil, err
 		}
@@ -249,7 +247,7 @@ func (h *Handlers) DispatchActionSet(ctx context.Context, req *connect.Request[p
 	if err := h.target(ctx, actor, "DispatchActionSet", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	compiled, err := h.catalogActionSetTemplate(ctx, req.Msg.DeviceId, req.Msg.ActionSetId)
+	compiled, err := h.catalogActionSetTemplate(ctx, req.Msg.ActionSetId)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +276,7 @@ func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[
 	if err := h.target(ctx, actor, "DispatchDefinition", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	compiled, err := h.catalogDefinitionTemplate(ctx, req.Msg.DeviceId, req.Msg.DefinitionId)
+	compiled, err := h.catalogDefinitionTemplate(ctx, req.Msg.DefinitionId)
 	if err != nil {
 		return nil, err
 	}
@@ -315,13 +313,13 @@ func (h *Handlers) DispatchToMultiple(ctx context.Context, req *connect.Request[
 	var targets []TargetInput
 	switch source := req.Msg.ActionSource.(type) {
 	case *pmv1.DispatchToMultipleRequest_ActionId:
-		targets = make([]TargetInput, len(req.Msg.DeviceIds))
-		for i, deviceID := range req.Msg.DeviceIds {
-			compiled, err := h.catalogActionTemplate(ctx, deviceID, source.ActionId)
-			if err != nil {
-				return nil, err
-			}
-			targets[i] = TargetInput{DeviceID: deviceID, Manifests: catalogManifests(compiled)}
+		compiled, err := h.catalogActionTemplate(ctx, source.ActionId)
+		if err != nil {
+			return nil, err
+		}
+		targets, err = freshTargets(req.Msg.DeviceIds, []*pmv1.Manifest{compiled}, true)
+		if err != nil {
+			return nil, h.internal(ctx, "prepare multi-device dispatch", err)
 		}
 	case *pmv1.DispatchToMultipleRequest_InlineAction:
 		compiled, err := h.inlineTemplate(ctx, source.InlineAction)
@@ -399,38 +397,40 @@ func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv
 		}
 		return connect.NewResponse(&pmv1.DispatchToGroupResponse{}), nil
 	}
-	targets := make([]TargetInput, len(deviceIDs))
-	for i, deviceID := range deviceIDs {
-		var inputs []ManifestInput
-		switch source := req.Msg.ActionSource.(type) {
-		case *pmv1.DispatchToGroupRequest_ActionId:
-			compiled, err := h.catalogActionTemplate(ctx, deviceID, source.ActionId)
-			if err != nil {
-				return nil, err
-			}
-			inputs = catalogManifests(compiled)
-		case *pmv1.DispatchToGroupRequest_ActionSetId:
-			compiled, err := h.catalogActionSetTemplate(ctx, deviceID, source.ActionSetId)
-			if err != nil {
-				return nil, err
-			}
-			inputs = catalogManifests(compiled)
-		case *pmv1.DispatchToGroupRequest_DefinitionId:
-			compiled, err := h.catalogDefinitionTemplate(ctx, deviceID, source.DefinitionId)
-			if err != nil {
-				return nil, err
-			}
-			inputs = catalogManifests(compiled)
-		case *pmv1.DispatchToGroupRequest_InlineAction:
-			compiled, err := h.inlineTemplate(ctx, source.InlineAction)
-			if err != nil {
-				return nil, err
-			}
-			inputs = []ManifestInput{{Manifest: compiled}}
-		default:
-			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "an action source is required")
+	var templates []*pmv1.Manifest
+	persistActionIDs := true
+	switch source := req.Msg.ActionSource.(type) {
+	case *pmv1.DispatchToGroupRequest_ActionId:
+		compiled, err := h.catalogActionTemplate(ctx, source.ActionId)
+		if err != nil {
+			return nil, err
 		}
-		targets[i] = TargetInput{DeviceID: deviceID, Manifests: inputs}
+		templates = []*pmv1.Manifest{compiled}
+	case *pmv1.DispatchToGroupRequest_ActionSetId:
+		compiled, err := h.catalogActionSetTemplate(ctx, source.ActionSetId)
+		if err != nil {
+			return nil, err
+		}
+		templates = []*pmv1.Manifest{compiled}
+	case *pmv1.DispatchToGroupRequest_DefinitionId:
+		compiled, err := h.catalogDefinitionTemplate(ctx, source.DefinitionId)
+		if err != nil {
+			return nil, err
+		}
+		templates = []*pmv1.Manifest{compiled}
+	case *pmv1.DispatchToGroupRequest_InlineAction:
+		compiled, err := h.inlineTemplate(ctx, source.InlineAction)
+		if err != nil {
+			return nil, err
+		}
+		templates = []*pmv1.Manifest{compiled}
+		persistActionIDs = false
+	default:
+		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "an action source is required")
+	}
+	targets, err := freshTargets(deviceIDs, templates, persistActionIDs)
+	if err != nil {
+		return nil, h.internal(ctx, "prepare group dispatch", err)
 	}
 	result, err := h.submitter.SubmitBatch(ctx, SubmitBatchParams{Operation: op, Targets: targets})
 	if err != nil {
@@ -516,8 +516,8 @@ func catalogManifests(manifests ...*pmv1.Manifest) []ManifestInput {
 	return inputs
 }
 
-func (h *Handlers) catalogActionTemplate(ctx context.Context, deviceID, actionID string) (*pmv1.Manifest, error) {
-	compiled, err := h.compiler.ActionForDevice(ctx, deviceID, actionID)
+func (h *Handlers) catalogActionTemplate(ctx context.Context, actionID string) (*pmv1.Manifest, error) {
+	compiled, err := h.compiler.Action(ctx, actionID)
 	if err != nil {
 		return nil, h.compileError(ctx, "compile dispatched action", err)
 	}
@@ -531,8 +531,8 @@ func (h *Handlers) catalogActionTemplate(ctx context.Context, deviceID, actionID
 	return manifest.AsOneShot(compiled), nil
 }
 
-func (h *Handlers) catalogActionSetTemplate(ctx context.Context, deviceID, setID string) (*pmv1.Manifest, error) {
-	compiled, err := h.compiler.ActionSetForDevice(ctx, deviceID, setID)
+func (h *Handlers) catalogActionSetTemplate(ctx context.Context, setID string) (*pmv1.Manifest, error) {
+	compiled, err := h.compiler.ActionSet(ctx, setID)
 	if err != nil {
 		return nil, h.collectionCompileError(ctx, "action set", errActionSetMissing, "compile dispatched action set", err)
 	}
@@ -546,8 +546,8 @@ func (h *Handlers) catalogActionSetTemplate(ctx context.Context, deviceID, setID
 	return manifest.AsOneShot(compiled), nil
 }
 
-func (h *Handlers) catalogDefinitionTemplate(ctx context.Context, deviceID, definitionID string) (*pmv1.Manifest, error) {
-	compiled, err := h.compiler.DefinitionForDevice(ctx, deviceID, definitionID)
+func (h *Handlers) catalogDefinitionTemplate(ctx context.Context, definitionID string) (*pmv1.Manifest, error) {
+	compiled, err := h.compiler.Definition(ctx, definitionID)
 	if err != nil {
 		return nil, h.collectionCompileError(ctx, "definition", errDefinitionMissing, "compile dispatched definition", err)
 	}

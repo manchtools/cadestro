@@ -48,12 +48,13 @@ relay or offline verifier between agent and control.
 
 ### Secrets
 
-Classified protobuf fields carry versioned X25519-sealed values. AAD binds
-protocol version, direction, message, field, device, and the relevant action,
-delivery, or terminal session.
+Classified protobuf fields carry raw bytes only inside the authenticated mTLS
+device stream. The peer certificate supplies the device identity; there is no
+second application envelope or caller-supplied device binding.
 
 At rest, secret values use AES-256-GCM with resource-context AAD and distinct
-domain tags. Transport sealing is not reused as storage encryption.
+domain tags. Values are decrypted only on a fresh outbound copy or at an
+explicit audited reveal sink.
 
 Logging is metadata-only. Secrets must not enter debug formatting, logs,
 errors, traces, audit payloads, or support bundles.

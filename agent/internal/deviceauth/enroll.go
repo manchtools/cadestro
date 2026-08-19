@@ -172,13 +172,8 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 			Error:   fmt.Sprintf("failed to generate CSR: %v", err),
 		}), nil
 	}
-	sealingPrivate, err := pmcrypto.GenerateX25519()
-	if err != nil {
-		return connect.NewResponse(&pm.EnrollResponse{Success: false, Error: "failed to generate agent sealing key"}), nil
-	}
-
 	// Register via control server RPC.
-	result, err := sdk.RegisterAgent(ctx, req.Msg.ServerUrl, req.Msg.Token, h.hostname, h.version, csrPEM, sealingPrivate.PublicKey().Bytes(), h.registerOpts...)
+	result, err := sdk.RegisterAgent(ctx, req.Msg.ServerUrl, req.Msg.Token, h.hostname, h.version, csrPEM, h.registerOpts...)
 	if err != nil {
 		h.logger.Error("registration failed", "error", err)
 		return connect.NewResponse(&pm.EnrollResponse{
@@ -194,10 +189,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 			Error:   "server did not provide mTLS certificates",
 		}), nil
 	}
-	if _, err := pmcrypto.ParseX25519PublicKey(result.ControlSealingPublicKey); err != nil {
-		return connect.NewResponse(&pm.EnrollResponse{Success: false, Error: "server did not provide a valid sealing public key"}), nil
-	}
-
 	// Mandatory out-of-band CA-pin verification: the CA returned by
 	// registration MUST match before we adopt it as the trust anchor. Fail closed on a
 	// mismatch — no Save, no callback, no status-cache prime — so a
@@ -221,14 +212,12 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	}
 
 	creds := &credentials.Credentials{
-		DeviceID:                result.DeviceID,
-		CACert:                  result.CACert,
-		Certificate:             result.Certificate,
-		PrivateKey:              keyPEM,
-		AgentAddr:               result.ControlURL,
-		ControlAddr:             req.Msg.ServerUrl,
-		SealingPrivateKey:       sealingPrivate.Bytes(),
-		ControlSealingPublicKey: result.ControlSealingPublicKey,
+		DeviceID:    result.DeviceID,
+		CACert:      result.CACert,
+		Certificate: result.Certificate,
+		PrivateKey:  keyPEM,
+		AgentAddr:   result.ControlURL,
+		ControlAddr: req.Msg.ServerUrl,
 	}
 
 	// Save credentials

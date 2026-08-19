@@ -8,11 +8,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/connection"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 )
 
@@ -72,7 +74,7 @@ func newDispatcher(f *deliveryFixture, router *deliveryRouter, sweep time.Durati
 	return delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: f.store, State: f.service, Router: router,
 		Now: func() time.Time { return f.now }, SweepInterval: sweep,
-		Workers: 1, QueueSize: 8, BatchSize: 32,
+		Workers: 1, QueueSize: 8, BatchSize: 32, AtRest: f.atRest,
 	})
 }
 
@@ -94,7 +96,7 @@ func TestAgentSync_UsesDurableDeliveriesAndLiveEpoch(t *testing.T) {
 	manager := connection.NewManager()
 	agent := manager.Register(ctx, f.deviceID, "device", "v1", nil)
 	t.Cleanup(agent.Close)
-	syncer := agentsync.New(agentsync.Config{Store: f.store, Manager: manager, Deliveries: f.service})
+	syncer := agentsync.New(agentsync.Config{Store: f.store, Manager: manager, Deliveries: f.service, AtRest: f.atRest})
 
 	response, err := syncer.Sync(ctx, f.deviceID)
 	require.NoError(t, err)
@@ -150,6 +152,43 @@ func TestDispatcher_OfflineDeliveryArrivesAfterReconnect(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, delivery.StatePushed, row.State)
 	assert.Equal(t, int64(1), row.PushEpoch)
+}
+
+func TestDispatcherMaterializesSecretOnlyInOutboundCopy(t *testing.T) {
+	f := newDeliveryFixture(t)
+	ctx := context.Background()
+	actionID := f.manifest.Occurrences[0].Action.Id.Value
+	const plaintext = "outbound-only-secret"
+	ciphertext, err := f.atRest.EncryptWithContext(plaintext,
+		pmcrypto.RowAAD(actionID, pmcrypto.PurposeActionEncryptionPresharedKey))
+	require.NoError(t, err)
+	storedManifest := proto.Clone(f.manifest).(*pmv1.Manifest)
+	storedManifest.Occurrences[0].Action.Type = pmv1.ActionType_ACTION_TYPE_ENCRYPTION
+	storedManifest.Occurrences[0].Action.Params = &pmv1.Action_Encryption{Encryption: &pmv1.EncryptionParams{
+		PresharedKey: []byte(ciphertext), RotationIntervalDays: 30, MinWords: 5,
+	}}
+	payload, err := protojson.Marshal(storedManifest)
+	require.NoError(t, err)
+	_, err = f.raw.Exec(ctx, `UPDATE deliveries SET manifest = $1 WHERE delivery_id = $2`, payload, f.deliveryID)
+	require.NoError(t, err)
+
+	router := newDeliveryRouter()
+	router.connect(f.deviceID, 1)
+	require.NoError(t, newDispatcher(f, router, time.Hour).Dispatch(ctx, f.deliveryID))
+	var message *pmv1.ServerMessage
+	select {
+	case message = <-router.sent:
+	case <-time.After(2 * time.Second):
+		t.Fatal("dispatcher did not send the materialized manifest")
+	}
+	assert.Equal(t, []byte(plaintext), message.GetManifestDelivery().Manifest.Occurrences[0].Action.GetEncryption().PresharedKey)
+
+	row, err := f.store.GetDelivery(ctx, f.deliveryID)
+	require.NoError(t, err)
+	assert.NotContains(t, string(row.Manifest), plaintext)
+	var persisted pmv1.Manifest
+	require.NoError(t, protojson.Unmarshal(row.Manifest, &persisted))
+	assert.Equal(t, []byte(ciphertext), persisted.Occurrences[0].Action.GetEncryption().PresharedKey)
 }
 
 func TestDispatcher_StaleConnectionCannotReceiveAndReconnectRetriesImmediately(t *testing.T) {
@@ -227,7 +266,7 @@ func TestDispatcher_WakeQueueIsBounded(t *testing.T) {
 	router := newDeliveryRouter()
 	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: f.store, State: f.service, Router: router, SweepInterval: time.Hour,
-		Workers: 1, QueueSize: 1, BatchSize: 1,
+		Workers: 1, QueueSize: 1, BatchSize: 1, AtRest: f.atRest,
 	})
 	assert.True(t, dispatcher.Wake(f.deliveryID))
 	assert.False(t, dispatcher.Wake(newID()), "a full wake queue must not grow without bound")
@@ -253,7 +292,7 @@ func TestDispatcher_OfflineBacklogCannotStarveConnectedSweep(t *testing.T) {
 	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: f.store, State: f.service, Router: router,
 		Now: func() time.Time { return f.now }, SweepInterval: 10 * time.Millisecond,
-		Workers: 1, QueueSize: 8, BatchSize: 2,
+		Workers: 1, QueueSize: 8, BatchSize: 2, AtRest: f.atRest,
 	})
 	runCtx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)

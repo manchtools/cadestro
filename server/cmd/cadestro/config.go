@@ -1,11 +1,8 @@
 package main
 
 import (
-	"crypto/ecdh"
 	"crypto/ed25519"
 	"crypto/x509"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -74,8 +71,6 @@ type configEnvironment struct {
 	EncryptionKey         string        `env:"CADESTRO_ENCRYPTION_KEY"`
 	EncryptionKeyFile     string        `env:"CADESTRO_ENCRYPTION_KEY_FILE"`
 	SessionSigningKeyFile string        `env:"CADESTRO_SESSION_SIGNING_KEY_FILE"`
-	SealingKey            string        `env:"CADESTRO_SEALING_KEY"`
-	SealingKeyFile        string        `env:"CADESTRO_SEALING_KEY_FILE"`
 }
 
 type Config struct {
@@ -107,7 +102,6 @@ type Config struct {
 	DatabasePath        string
 	EncryptionKey       string
 	SessionSigningKey   ed25519.PrivateKey
-	SealingKey          *ecdh.PrivateKey
 }
 
 // loadConfig builds the control configuration from the CADESTRO_
@@ -127,16 +121,6 @@ func loadConfig() (*Config, error) {
 	sessionKey, err := loadEd25519PrivateKey(document.SessionSigningKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("CADESTRO_SESSION_SIGNING_KEY_FILE: %w", err)
-	}
-	sealingSecret, sealingVariable, err := loadSecret(
-		"CADESTRO_SEALING_KEY", document.SealingKey,
-		"CADESTRO_SEALING_KEY_FILE", document.SealingKeyFile)
-	if err != nil {
-		return nil, err
-	}
-	sealingKey, err := parseX25519PrivateKey(sealingSecret)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", sealingVariable, err)
 	}
 
 	cfg := &Config{
@@ -159,7 +143,7 @@ func loadConfig() (*Config, error) {
 		PublicTLSCertFile: document.PublicTLSCertFile,
 		PublicTLSKeyFile:  document.PublicTLSKeyFile,
 		DatabasePath:      document.DatabasePath, EncryptionKey: encryptionKey,
-		SessionSigningKey: sessionKey, SealingKey: sealingKey,
+		SessionSigningKey: sessionKey,
 	}
 	if len(cfg.TerminalOrigins) == 0 {
 		cfg.TerminalOrigins = originHosts(cfg.CORSOrigins)
@@ -350,8 +334,8 @@ func validateConfig(cfg *Config) error {
 	if (cfg.PublicTLSCertFile == "") != (cfg.PublicTLSKeyFile == "") {
 		return errors.New("public_tls_cert_file and public_tls_key_file must be set together")
 	}
-	if len(cfg.SessionSigningKey) != ed25519.PrivateKeySize || cfg.SealingKey == nil {
-		return errors.New("session and sealing private keys are required")
+	if len(cfg.SessionSigningKey) != ed25519.PrivateKeySize {
+		return errors.New("session signing private key is required")
 	}
 	return nil
 }
@@ -531,26 +515,4 @@ func loadEd25519PrivateKey(path string) (ed25519.PrivateKey, error) {
 		return nil, errors.New("session signing key must be Ed25519 PKCS#8")
 	}
 	return append(ed25519.PrivateKey(nil), key...), nil
-}
-
-// parseX25519PrivateKey decodes the sealing key material. The encoded text is
-// secret, so decoding failures describe the expected shape and never the
-// value.
-func parseX25519PrivateKey(text string) (*ecdh.PrivateKey, error) {
-	var raw []byte
-	for _, decode := range []func(string) ([]byte, error){hex.DecodeString, base64.RawStdEncoding.DecodeString, base64.StdEncoding.DecodeString} {
-		decoded, decodeErr := decode(text)
-		if decodeErr == nil && len(decoded) == 32 {
-			raw = decoded
-			break
-		}
-	}
-	if len(raw) != 32 {
-		return nil, errors.New("sealing key must encode exactly 32 X25519 private-key bytes")
-	}
-	key, err := ecdh.X25519().NewPrivateKey(raw)
-	if err != nil {
-		return nil, err
-	}
-	return key, nil
 }

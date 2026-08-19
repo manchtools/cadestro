@@ -2742,9 +2742,11 @@ func (x *LpsParams) GetGracePeriodHours() int32 {
 // passphrase, and can enroll a TPM or user passphrase in the device-bound slot.
 type EncryptionParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Pre-shared key for initial ownership, sealed by control to this agent.
-	// @gotags: validate:"required"
-	PresharedKey *SealedValue `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty" validate:"required"`
+	// Pre-shared key for initial ownership, delivered only over authenticated mTLS.
+	// The durable manifest carries the at-rest envelope until the authenticated
+	// send boundary, so this bound includes AEAD/base64 overhead.
+	// @gotags: validate:"required,max=512"
+	PresharedKey []byte `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty" validate:"required,max=512"`
 	// Days between scheduled passphrase rotations (1-365)
 	// @gotags: validate:"required,gte=1,lte=365"
 	RotationIntervalDays int32 `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty" validate:"required,gte=1,lte=365"`
@@ -2801,7 +2803,7 @@ func (*EncryptionParams) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *EncryptionParams) GetPresharedKey() *SealedValue {
+func (x *EncryptionParams) GetPresharedKey() []byte {
 	if x != nil {
 		return x.PresharedKey
 	}
@@ -2854,17 +2856,17 @@ type WifiParams struct {
 	// Authentication type
 	// @gotags: validate:"required,ne=0"
 	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
-	// PSK authentication (WPA2/WPA3 Personal), sealed by control to this agent.
-	// @gotags: validate:"omitempty"
-	Psk *SealedValue `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty" validate:"omitempty"`
+	// PSK authentication (WPA2/WPA3 Personal), delivered only over authenticated mTLS.
+	// @gotags: validate:"omitempty,max=256"
+	Psk []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty" validate:"omitempty,max=256"`
 	// EAP-TLS authentication (802.1X with client certificate)
 	// @gotags: validate:"omitempty"
 	CaCert string `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty" validate:"omitempty"` // CA certificate (PEM)
 	// @gotags: validate:"omitempty"
 	ClientCert string `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty" validate:"omitempty"` // Client certificate (PEM)
-	// Client private key (PEM), sealed by control to this agent.
-	// @gotags: validate:"omitempty"
-	ClientKey *SealedValue `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty" validate:"omitempty"`
+	// Client private key (PEM), delivered only over authenticated mTLS.
+	// @gotags: validate:"omitempty,max=131072"
+	ClientKey []byte `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty" validate:"omitempty,max=131072"`
 	// @gotags: validate:"omitempty,max=254"
 	Identity string `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty" validate:"omitempty,max=254"` // EAP identity (e.g., user@corp.com)
 	// Connection settings
@@ -2923,7 +2925,7 @@ func (x *WifiParams) GetAuthType() WifiAuthType {
 	return WifiAuthType_WIFI_AUTH_TYPE_UNSPECIFIED
 }
 
-func (x *WifiParams) GetPsk() *SealedValue {
+func (x *WifiParams) GetPsk() []byte {
 	if x != nil {
 		return x.Psk
 	}
@@ -2944,7 +2946,7 @@ func (x *WifiParams) GetClientCert() string {
 	return ""
 }
 
-func (x *WifiParams) GetClientKey() *SealedValue {
+func (x *WifiParams) GetClientKey() []byte {
 	if x != nil {
 		return x.ClientKey
 	}
@@ -3470,24 +3472,24 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"complexity\x18\x03 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\n" +
 	"complexity\x124\n" +
 	"\x16rotation_interval_days\x18\x04 \x01(\x05R\x14rotationIntervalDays\x12,\n" +
-	"\x12grace_period_hours\x18\x05 \x01(\x05R\x10gracePeriodHours\"\xa6\x03\n" +
-	"\x10EncryptionParams\x12B\n" +
-	"\rpreshared_key\x18\x01 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\fpresharedKey\x124\n" +
+	"\x12grace_period_hours\x18\x05 \x01(\x05R\x10gracePeriodHours\"\x8c\x03\n" +
+	"\x10EncryptionParams\x12(\n" +
+	"\rpreshared_key\x18\x01 \x01(\fB\x03\x80\x01\x01R\fpresharedKey\x124\n" +
 	"\x16rotation_interval_days\x18\x02 \x01(\x05R\x14rotationIntervalDays\x12\x1b\n" +
 	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
 	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
 	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xf4\x02\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xc0\x02\n" +
 	"\n" +
 	"WifiParams\x12\x12\n" +
 	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x126\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12/\n" +
-	"\x03psk\x18\x03 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\x03psk\x12\x17\n" +
+	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12\x15\n" +
+	"\x03psk\x18\x03 \x01(\fB\x03\x80\x01\x01R\x03psk\x12\x17\n" +
 	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
 	"\vclient_cert\x18\x05 \x01(\tR\n" +
-	"clientCert\x12<\n" +
+	"clientCert\x12\"\n" +
 	"\n" +
-	"client_key\x18\x06 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\tclientKey\x12\x1a\n" +
+	"client_key\x18\x06 \x01(\fB\x03\x80\x01\x01R\tclientKey\x12\x1a\n" +
 	"\bidentity\x18\a \x01(\tR\bidentity\x12!\n" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
 	"\x06hidden\x18\t \x01(\bR\x06hidden\x12\x1a\n" +
@@ -3628,10 +3630,9 @@ var file_cadestro_v1_actions_proto_goTypes = []any{
 	nil,                               // 35: cadestro.v1.ActionResult.MetadataEntry
 	(*ActionId)(nil),                  // 36: cadestro.v1.ActionId
 	(DesiredState)(0),                 // 37: cadestro.v1.DesiredState
-	(*SealedValue)(nil),               // 38: cadestro.v1.SealedValue
-	(ExecutionStatus)(0),              // 39: cadestro.v1.ExecutionStatus
-	(*CommandOutput)(nil),             // 40: cadestro.v1.CommandOutput
-	(*timestamppb.Timestamp)(nil),     // 41: google.protobuf.Timestamp
+	(ExecutionStatus)(0),              // 38: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),             // 39: cadestro.v1.CommandOutput
+	(*timestamppb.Timestamp)(nil),     // 40: google.protobuf.Timestamp
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	36, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
@@ -3666,25 +3667,22 @@ var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	2,  // 29: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
 	3,  // 30: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
 	4,  // 31: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	38, // 32: cadestro.v1.EncryptionParams.preshared_key:type_name -> cadestro.v1.SealedValue
-	5,  // 33: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
-	4,  // 34: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	6,  // 35: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
-	38, // 36: cadestro.v1.WifiParams.psk:type_name -> cadestro.v1.SealedValue
-	38, // 37: cadestro.v1.WifiParams.client_key:type_name -> cadestro.v1.SealedValue
-	36, // 38: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
-	39, // 39: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
-	40, // 40: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
-	41, // 41: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	35, // 42: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
-	40, // 43: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	32, // 44: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
-	32, // 45: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
-	46, // [46:46] is the sub-list for method output_type
-	46, // [46:46] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	5,  // 32: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
+	4,  // 33: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	6,  // 34: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
+	36, // 35: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
+	38, // 36: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	39, // 37: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
+	40, // 38: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	35, // 39: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
+	39, // 40: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	32, // 41: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
+	32, // 42: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
+	43, // [43:43] is the sub-list for method output_type
+	43, // [43:43] is the sub-list for method input_type
+	43, // [43:43] is the sub-list for extension type_name
+	43, // [43:43] is the sub-list for extension extendee
+	0,  // [0:43] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }

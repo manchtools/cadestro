@@ -142,13 +142,12 @@ configuration file is data; sourcing it would make it code, and a stray
 backtick in a domain name would execute.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#@generated-material:2d88602e -->
+<!-- docref: begin src=server/deploy/setup.sh#@generated-material:6df12966 -->
 Generated once and then retained: the internal CA, the control-plane server
-certificate, the at-rest encryption key, the field-sealing key, and the session
-signing key.
+certificate, the at-rest encryption key, and the session signing key.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#ensure_secret_files:a02c2206 -->
+<!-- docref: begin src=server/deploy/setup.sh#ensure_secret_files:7282f65d -->
 Existing material is never regenerated — which is what lets you pre-provision a
 CA from your own PKI. A half-present pair fails rather than being completed with
 a fresh key that would not match its certificate.
@@ -178,7 +177,7 @@ no group or world bits.
 
 ## The stack
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:809a1296 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:c3bfad13 -->
 Three services, and **only Traefik publishes ports** — 80 and 443. Control and
 the web UI have no published ports at all; they are reachable only across the
 compose networks.
@@ -265,7 +264,7 @@ Open the URL. The setup page reads the token out of the fragment, holds it in
 memory, and spends it configuring your first identity provider. From then on you
 log in through that provider.
 
-<!-- docref: begin src=server/cmd/cadestro/main.go#parseCommand:dfecd82c -->
+<!-- docref: begin src=server/cmd/cadestro/main.go#parseCommand:8eacfc02 -->
 The control binary accepts exactly two subcommands — `bootstrap-admin` and
 `backup-status`. Anything else exits with a usage error rather than being
 interpreted.
@@ -288,7 +287,7 @@ silently leaving the default in place. Error messages name variables, never
 their values.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/cmd/cadestro/config.go#validateConfig:6fdab494,server/cmd/cadestro/config.go#validateWritableDirectory:0881f863 -->
+<!-- docref: begin src=server/cmd/cadestro/config.go#validateConfig:1aad560c,server/cmd/cadestro/config.go#validateWritableDirectory:0881f863 -->
 Validation is thorough and happens before anything opens a socket: the two
 listen addresses must be present and distinct; the proxy sources must be valid
 addresses or CIDRs; the public base URL must be absolute HTTPS with no

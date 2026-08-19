@@ -234,7 +234,6 @@ CREATE TABLE devices (
     id                         text PRIMARY KEY,
     hostname                   text NOT NULL DEFAULT '',
     agent_version              text NOT NULL DEFAULT '',
-    agent_sealing_public_key   blob NOT NULL CHECK (length(agent_sealing_public_key) = 32),
     -- The Ed25519 key in the enrollment CSR is the immutable device identity.
     -- Nullable only for rows created before this cutover; new enrollment rows
     -- always set it and the partial unique index prevents identity churn.
@@ -443,28 +442,31 @@ CREATE TABLE actions (
     is_deleted       boolean NOT NULL DEFAULT false
 );
 
+-- Generic device-owned secret rows. The typed tables retain only
+-- feature-specific metadata and reference this row by id.
+CREATE TABLE device_secrets (
+    id          text PRIMARY KEY,
+    device_id   text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    kind        text NOT NULL CHECK (kind <> ''),
+    subject     text NOT NULL CHECK (subject <> ''),
+    version     integer NOT NULL CHECK (version > 0),
+    ciphertext  text NOT NULL CHECK (ciphertext LIKE 'enc:v1:%'),
+    created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_device_secrets_owner ON device_secrets(device_id, kind, subject, version);
+
 CREATE TABLE lps_passwords (
-    id              text PRIMARY KEY,
-    device_id       text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-    action_id       text NOT NULL REFERENCES actions(id),
+    id              text PRIMARY KEY REFERENCES device_secrets(id) ON DELETE CASCADE,
     username        text NOT NULL,
-    password        text NOT NULL,
     rotated_at      timestamp NOT NULL,
     rotation_reason text NOT NULL DEFAULT 'scheduled',
     is_current      boolean NOT NULL DEFAULT true,
     created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_lps_passwords_device ON lps_passwords(device_id, is_current);
-CREATE INDEX idx_lps_passwords_action_device ON lps_passwords(action_id, device_id);
-CREATE INDEX idx_lps_passwords_username
-    ON lps_passwords(device_id, action_id, username, is_current);
 
 CREATE TABLE luks_keys (
-    id                text PRIMARY KEY,
-    device_id         text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-    action_id         text NOT NULL REFERENCES actions(id),
+    id                text PRIMARY KEY REFERENCES device_secrets(id) ON DELETE CASCADE,
     device_path       text NOT NULL,
-    passphrase        text NOT NULL,
     rotated_at        timestamp NOT NULL,
     rotation_reason   text NOT NULL DEFAULT 'scheduled',
     is_current        boolean NOT NULL DEFAULT true,
@@ -473,9 +475,6 @@ CREATE TABLE luks_keys (
     revocation_error  text,
     revocation_at     timestamp
 );
-CREATE INDEX idx_luks_keys_device ON luks_keys(device_id, is_current);
-CREATE INDEX idx_luks_keys_action_device ON luks_keys(action_id, device_id);
-CREATE INDEX idx_luks_keys_current ON luks_keys(device_id, action_id, device_path, is_current);
 
 CREATE TABLE luks_tokens (
     id         text PRIMARY KEY,

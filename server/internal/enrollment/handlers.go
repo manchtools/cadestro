@@ -3,7 +3,6 @@ package enrollment
 import (
 	"context"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -29,23 +28,21 @@ var errCredentialRejected = errors.New("enrollment credential rejected")
 
 // Config supplies enrollment's direct SQLite and PKI dependencies.
 type Config struct {
-	Store                   *store.Store
-	CA                      *ca.CA
-	Logger                  *slog.Logger
-	Now                     func() time.Time
-	ControlURL              string
-	ControlSealingPublicKey []byte
+	Store      *store.Store
+	CA         *ca.CA
+	Logger     *slog.Logger
+	Now        func() time.Time
+	ControlURL string
 }
 
 // Handlers implements first enrollment and certificate renewal.
 type Handlers struct {
-	store                   *store.Store
-	ca                      *ca.CA
-	logger                  *slog.Logger
-	now                     func() time.Time
-	controlURL              string
-	controlSealingPublicKey []byte
-	validator               *validator.Validate
+	store      *store.Store
+	ca         *ca.CA
+	logger     *slog.Logger
+	now        func() time.Time
+	controlURL string
+	validator  *validator.Validate
 }
 
 // New constructs enrollment handlers and rejects incomplete boot wiring.
@@ -56,9 +53,6 @@ func New(cfg Config) *Handlers {
 	if err := ValidateControlURL(cfg.ControlURL); err != nil {
 		panic(fmt.Sprintf("enrollment: invalid control URL: %v", err))
 	}
-	if len(cfg.ControlSealingPublicKey) != 32 {
-		panic("enrollment: 32-byte control sealing public key is required")
-	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
@@ -67,9 +61,8 @@ func New(cfg Config) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, ca: cfg.CA, logger: cfg.Logger, now: cfg.Now,
-		controlURL:              cfg.ControlURL,
-		controlSealingPublicKey: append([]byte(nil), cfg.ControlSealingPublicKey...),
-		validator:               sdkvalidate.NewValidator(),
+		controlURL: cfg.ControlURL,
+		validator:  sdkvalidate.NewValidator(),
 	}
 }
 
@@ -138,9 +131,6 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 			EnrolledAt: now, IdentityPublicKey: identityKey,
 		})
 		if findErr == nil {
-			if subtle.ConstantTimeCompare(existing.AgentSealingPublicKey, req.Msg.AgentSealingPublicKey) != 1 {
-				return errCredentialRejected
-			}
 			device = existing
 			if len(device.CertificatePem) > 0 {
 				cert = &ca.Certificate{CertPEM: append([]byte(nil), device.CertificatePem...)}
@@ -169,7 +159,6 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 		deviceID := ulid.Make().String()
 		created, insertErr := tx.InsertEnrolledDevice(ctx, db.InsertEnrolledDeviceParams{
 			ID: deviceID, Hostname: req.Msg.Hostname, AgentVersion: req.Msg.AgentVersion,
-			SealingKey:        append([]byte(nil), req.Msg.AgentSealingPublicKey...),
 			IdentityPublicKey: identityKey, EnrolledAt: &now, ValueHash: tokenFingerprint,
 			ReservedName: store.BootstrapAdminTokenName,
 		})
@@ -221,7 +210,6 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 	return connect.NewResponse(&pmv1.RegisterResponse{
 		DeviceId: &pmv1.DeviceId{Value: device.ID}, CaCert: h.ca.CACertPEM(),
 		Certificate: cert.CertPEM, ControlUrl: h.controlURL,
-		ControlSealingPublicKey: append([]byte(nil), h.controlSealingPublicKey...),
 	}), nil
 }
 

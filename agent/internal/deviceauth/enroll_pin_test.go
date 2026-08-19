@@ -29,11 +29,10 @@ func caReturningMock(caPEM []byte) *mockRegisterService {
 	return &mockRegisterService{
 		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:                &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
-				CaCert:                  caPEM,
-				Certificate:             []byte(fakeLeafPEM),
-				ControlUrl:              "https://gw.example.com:8443",
-				ControlSealingPublicKey: testControlSealingPublicKey(),
+				DeviceId:    &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
+				CaCert:      caPEM,
+				Certificate: []byte(fakeLeafPEM),
+				ControlUrl:  "https://gw.example.com:8443",
 			}), nil
 		},
 	}

@@ -81,7 +81,7 @@ bidirectional stream that carries everything: handshake, sync, policy delivery,
 results, secret operations, and terminal sessions. Nothing listens on the device.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:809a1296 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:c3bfad13 -->
 The reference deployment is three containers behind Traefik — ingress, control,
 and the web UI served same-origin beside it — with agents on a separate,
 internal-only network.
@@ -101,7 +101,7 @@ Fedora, AlmaLinux, Arch, and openSUSE in addition to its Debian base lanes.
 Other distributions may work; these are the ones a merge cannot break silently.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cdb39986 -->
+<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cfb58496 -->
 **Scale target: one control instance for 10,000 connected agents.** There is a
 gate for it — a mixed dispatch, receipt, result, heartbeat, terminal, and search
 workload at that agent count with latency assertions. It is **operator-run, not

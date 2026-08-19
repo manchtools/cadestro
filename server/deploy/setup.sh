@@ -249,13 +249,8 @@ ensure_secret_files() {
     if [[ ! -f "$SECRETS_DIR/session-signing.pem" ]]; then
         openssl genpkey -algorithm Ed25519 -out "$SECRETS_DIR/session-signing.pem"
     fi
-    if [[ ! -f "$SECRETS_DIR/sealing.key" ]]; then
-        openssl rand -hex 32 > "$SECRETS_DIR/sealing.key"
-    fi
     grep -Eq '^[0-9a-fA-F]{64}$' "$SECRETS_DIR/encryption.key" \
         || fail "encryption.key must contain exactly 32 hex-encoded bytes"
-    grep -Eq '^[0-9a-fA-F]{64}$' "$SECRETS_DIR/sealing.key" \
-        || fail "sealing.key must contain exactly 32 hex-encoded bytes"
     openssl pkey -in "$SECRETS_DIR/session-signing.pem" -text -noout 2>/dev/null | grep -q ED25519 \
         || fail "session-signing.pem must contain an Ed25519 private key"
 }
@@ -289,7 +284,6 @@ CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt
 CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key
 CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key
 CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem
-CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key
 EOF
     # The browser gets a working UI without configuring anything, because the
     # UI is served on the same origin as the API it calls: Traefik hands

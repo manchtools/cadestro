@@ -9,14 +9,14 @@ import (
 	"github.com/manchtools/cadestro/server/internal/crypto"
 )
 
-// TestSecretAADForRow_BindsImmutableRowID proves the at-rest AAD binds the
+// TestDeviceSecretAAD_BindsImmutableRowID proves the at-rest AAD binds the
 // per-row discriminator, which is the row's immutable ULID primary key. LPS and
 // LUKS keep multiple rotation rows per (device, action, username|device_path):
 // the current row plus its history. Each row seals under its OWN row id, so a
 // ciphertext sealed for one row cannot be relocated onto a sibling row — even a
 // later rotation of the SAME username — and opened under its context. The
 // positive controls confirm the very same row still opens.
-func TestSecretAADForRow_BindsImmutableRowID(t *testing.T) {
+func TestDeviceSecretAAD_BindsImmutableRowID(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
 
@@ -28,14 +28,14 @@ func TestSecretAADForRow_BindsImmutableRowID(t *testing.T) {
 	t.Run("a ciphertext opens only under its own row id", func(t *testing.T) {
 		const rowID = "01HROWCURRENT"
 		const secret = "administrator-password"
-		ct, err := enc.EncryptWithContext(secret, crypto.SecretAADForRow(deviceID, actionID, "lps", rowID))
+		ct, err := enc.EncryptWithContext(secret, crypto.DeviceSecretAAD(rowID, deviceID, "lps", actionID, 1))
 		require.NoError(t, err)
 
-		pt, err := enc.DecryptWithContext(ct, crypto.SecretAADForRow(deviceID, actionID, "lps", rowID))
+		pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD(rowID, deviceID, "lps", actionID, 1))
 		require.NoError(t, err, "the same row must open its own ciphertext")
 		assert.Equal(t, secret, pt)
 
-		_, err = enc.DecryptWithContext(ct, crypto.SecretAADForRow(deviceID, actionID, "lps", "01HROWSIBLING"))
+		_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROWSIBLING", deviceID, "lps", actionID, 1))
 		assert.Error(t, err,
 			"a ciphertext sealed for one row must not open under a sibling row id sharing the device and action")
 	})
@@ -48,14 +48,14 @@ func TestSecretAADForRow_BindsImmutableRowID(t *testing.T) {
 		// does not.
 		const currentRow, historicalRow = "01HROWNEW", "01HROWOLD"
 		ctOld, err := enc.EncryptWithContext("retired-secret",
-			crypto.SecretAADForRow(deviceID, actionID, "lps", historicalRow))
+			crypto.DeviceSecretAAD(historicalRow, deviceID, "lps", actionID, 1))
 		require.NoError(t, err)
 
-		_, err = enc.DecryptWithContext(ctOld, crypto.SecretAADForRow(deviceID, actionID, "lps", currentRow))
+		_, err = enc.DecryptWithContext(ctOld, crypto.DeviceSecretAAD(currentRow, deviceID, "lps", actionID, 1))
 		assert.Error(t, err,
 			"a retired rotation row's ciphertext must not open under the current row's context")
 
-		pt, err := enc.DecryptWithContext(ctOld, crypto.SecretAADForRow(deviceID, actionID, "lps", historicalRow))
+		pt, err := enc.DecryptWithContext(ctOld, crypto.DeviceSecretAAD(historicalRow, deviceID, "lps", actionID, 1))
 		require.NoError(t, err, "the retired row must still open under its own id")
 		assert.Equal(t, "retired-secret", pt)
 	})
@@ -63,25 +63,15 @@ func TestSecretAADForRow_BindsImmutableRowID(t *testing.T) {
 	t.Run("LUKS rows bind the row id too", func(t *testing.T) {
 		const rowID = "01HLUKSROW"
 		const secret = "a-real-luks-passphrase"
-		ct, err := enc.EncryptWithContext(secret, crypto.SecretAADForRow(deviceID, actionID, "luks", rowID))
+		ct, err := enc.EncryptWithContext(secret, crypto.DeviceSecretAAD(rowID, deviceID, "luks", actionID, 1))
 		require.NoError(t, err)
 
-		pt, err := enc.DecryptWithContext(ct, crypto.SecretAADForRow(deviceID, actionID, "luks", rowID))
+		pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD(rowID, deviceID, "luks", actionID, 1))
 		require.NoError(t, err, "the same row must open its own ciphertext")
 		assert.Equal(t, secret, pt)
 
-		_, err = enc.DecryptWithContext(ct, crypto.SecretAADForRow(deviceID, actionID, "luks", "01HLUKSROWB"))
+		_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HLUKSROWB", deviceID, "luks", actionID, 1))
 		assert.Error(t, err,
 			"a LUKS ciphertext sealed for one row must not open under a sibling row id")
-	})
-
-	// The four-segment row form must not collide with the three-segment
-	// SecretAAD form for the same device/action/type, or a discriminator-less
-	// ciphertext would open a row-bound context and vice versa.
-	t.Run("row form does not collide with the legacy three-segment form", func(t *testing.T) {
-		ct, err := enc.EncryptWithContext("secret", crypto.SecretAADForRow(deviceID, actionID, "lps", "01HROWX"))
-		require.NoError(t, err)
-		_, err = enc.DecryptWithContext(ct, crypto.SecretAAD(deviceID, actionID, "lps"))
-		assert.Error(t, err, "a row-bound ciphertext must not open under the discriminator-less AAD")
 	})
 }

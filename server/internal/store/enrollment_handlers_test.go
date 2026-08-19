@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -38,7 +37,6 @@ type enrollmentFixture struct {
 	handlers *enrollment.Handlers
 	ca       *ca.CA
 	now      time.Time
-	sealing  []byte
 }
 
 func newEnrollmentFixture(t *testing.T) *enrollmentFixture {
@@ -50,13 +48,11 @@ func newEnrollmentFixture(t *testing.T) *enrollmentFixture {
 	require.NoError(t, err)
 	f := &enrollmentFixture{
 		t: t, store: st, raw: raw, ca: certAuth, now: now,
-		sealing: bytes.Repeat([]byte{0x42}, 32),
 	}
 	f.handlers = enrollment.New(enrollment.Config{
 		Store: st, CA: certAuth,
 		Logger: slog.Default(),
 		Now:    func() time.Time { return now }, ControlURL: "https://agents.example.test:8443",
-		ControlSealingPublicKey: f.sealing,
 	})
 	return f
 }
@@ -106,10 +102,9 @@ func (f *enrollmentFixture) insertToken(plaintext string, maxUses int32, expires
 	return id
 }
 
-func registerRequest(token string, csr []byte, sealingByte byte) *connect.Request[pmv1.RegisterRequest] {
+func registerRequest(token string, csr []byte, _ byte) *connect.Request[pmv1.RegisterRequest] {
 	return connect.NewRequest(&pmv1.RegisterRequest{
 		Token: token, Hostname: "host-1", AgentVersion: "v1", Csr: csr,
-		AgentSealingPublicKey: bytes.Repeat([]byte{sealingByte}, 32),
 	})
 }
 
@@ -147,17 +142,13 @@ func TestEnrollment_RegisterCommitsOneAuditedDevice(t *testing.T) {
 	require.NotNil(t, resp.Msg.DeviceId)
 	deviceID := resp.Msg.DeviceId.Value
 	assert.Equal(t, "https://agents.example.test:8443", resp.Msg.ControlUrl)
-	assert.Equal(t, f.sealing, resp.Msg.ControlSealingPublicKey)
 	assert.NotEmpty(t, resp.Msg.Certificate)
 	assert.NotEmpty(t, resp.Msg.CaCert)
 
 	var storedTokenID string
-	var storedSealing []byte
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT d.registration_token_id, d.agent_sealing_public_key
-		FROM devices d WHERE d.id = $1`, deviceID).Scan(&storedTokenID, &storedSealing))
+		SELECT d.registration_token_id FROM devices d WHERE d.id = $1`, deviceID).Scan(&storedTokenID))
 	assert.Equal(t, tokenID, storedTokenID)
-	assert.Equal(t, bytes.Repeat([]byte{0x24}, 32), storedSealing)
 	var assignments int
 	require.NoError(t, f.raw.QueryRow(context.Background(),
 		`SELECT COUNT(*) FROM device_assigned_users WHERE device_id = $1`, deviceID).Scan(&assignments))
@@ -174,7 +165,7 @@ func TestEnrollment_RegisterCommitsOneAuditedDevice(t *testing.T) {
 	assert.Equal(t, deviceID, retry.Msg.DeviceId.Value)
 	assert.Equal(t, resp.Msg.Certificate, retry.Msg.Certificate, "retry returns the same certificate identity")
 	_, err = f.handlers.Register(context.Background(), registerRequest(token, csr, 0x99))
-	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "a changed sealing key must not silently reuse the old device")
+	assert.NoError(t, err, "transport key state is not part of enrollment identity")
 	var devices int
 	require.NoError(t, f.raw.QueryRow(context.Background(), `SELECT COUNT(*) FROM devices`).Scan(&devices))
 	assert.Equal(t, 1, devices)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
@@ -98,65 +97,12 @@ func TestCertBaseDirLivesUnderTheAgentDataDir(t *testing.T) {
 	}
 }
 
-func TestExecuteSealedWifi_RejectsWrongFieldContext(t *testing.T) {
-	agentKey, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		t.Fatal(err)
-	}
-	controlKey, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestExecuteWifiActionRejectsUnsafeActionIDBeforeOpeningCredential(t *testing.T) {
 	e := NewExecutor(nil)
-	const deviceID = "01HXDEVICE0000000000000000"
-	const actionID = "01HXWIFISEAL00000000000000"
-	e.SetDeviceID(deviceID)
-	if err := e.ConfigureSealing(agentKey.Bytes(), controlKey.PublicKey().Bytes()); err != nil {
-		t.Fatal(err)
-	}
-
-	for _, tc := range []struct {
-		name      string
-		authType  pb.WifiAuthType
-		sealField string
-		params    func(*pb.SealedValue) *pb.WifiParams
-	}{
-		{
-			name: "PSK", authType: pb.WifiAuthType_WIFI_AUTH_TYPE_PSK, sealField: "client_key",
-			params: func(value *pb.SealedValue) *pb.WifiParams { return &pb.WifiParams{Psk: value} },
-		},
-		{
-			name: "EAP-TLS", authType: pb.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS, sealField: "psk",
-			params: func(value *pb.SealedValue) *pb.WifiParams { return &pb.WifiParams{ClientKey: value} },
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-				"cadestro.v1.WifiParams", tc.sealField, deviceID, actionID)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ciphertext, err := sdkcrypto.SealToPublicKey(agentKey.PublicKey(), []byte("credential"), aad, info)
-			if err != nil {
-				t.Fatal(err)
-			}
-			params := tc.params(&pb.SealedValue{Version: 1, Ciphertext: ciphertext})
-			params.AuthType = tc.authType
-			_, _, err = e.executeSealedWifi(context.Background(), params,
-				pb.DesiredState_DESIRED_STATE_PRESENT, actionID)
-			if err == nil || !strings.Contains(err.Error(), "open WiFi credential") {
-				t.Fatalf("executeSealedWifi() error = %v, want sealed-field rejection", err)
-			}
-		})
-	}
-}
-
-func TestExecuteSealedWifi_RejectsUnsafeActionIDBeforeOpeningCredential(t *testing.T) {
-	e := NewExecutor(nil)
-	_, _, err := e.executeSealedWifi(context.Background(), &pb.WifiParams{
+	_, _, err := e.executeWifiAction(context.Background(), &pb.WifiParams{
 		AuthType: pb.WifiAuthType_WIFI_AUTH_TYPE_PSK,
 	}, pb.DesiredState_DESIRED_STATE_PRESENT, "../../etc")
 	if err == nil || !strings.Contains(err.Error(), "action ID") {
-		t.Fatalf("executeSealedWifi() error = %v, want action-ID rejection before sealed-field access", err)
+		t.Fatalf("executeWifiAction() error = %v, want action-ID rejection before credential access", err)
 	}
 }

@@ -14,6 +14,8 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/connection"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	manifestpkg "github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -47,6 +49,7 @@ type DispatcherConfig struct {
 	Workers       int
 	QueueSize     int
 	BatchSize     int32
+	AtRest        *pmcrypto.Encryptor
 }
 
 // Dispatcher wakes connected devices and periodically recovers any delivery a
@@ -60,14 +63,15 @@ type Dispatcher struct {
 	sweepInterval time.Duration
 	batchSize     int32
 	workers       int
+	atRest        *pmcrypto.Encryptor
 	queue         chan string
 	running       atomic.Bool
 }
 
 // NewDispatcher constructs a bounded dispatcher.
 func NewDispatcher(cfg DispatcherConfig) *Dispatcher {
-	if cfg.Store == nil || cfg.State == nil || cfg.Router == nil {
-		panic("delivery dispatcher: store, state, and router are required")
+	if cfg.Store == nil || cfg.State == nil || cfg.Router == nil || cfg.AtRest == nil {
+		panic("delivery dispatcher: store, state, router, and at-rest cipher are required")
 	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
@@ -93,7 +97,7 @@ func NewDispatcher(cfg DispatcherConfig) *Dispatcher {
 	return &Dispatcher{
 		store: cfg.Store, state: cfg.State, router: cfg.Router, logger: cfg.Logger,
 		now: cfg.Now, sweepInterval: cfg.SweepInterval, batchSize: cfg.BatchSize,
-		workers: cfg.Workers, queue: make(chan string, cfg.QueueSize),
+		workers: cfg.Workers, atRest: cfg.AtRest, queue: make(chan string, cfg.QueueSize),
 	}
 }
 
@@ -243,6 +247,9 @@ func (d *Dispatcher) Dispatch(ctx context.Context, deliveryID string) error {
 	}
 	if manifest.ManifestId != row.ManifestID {
 		return ErrWrongManifest
+	}
+	if err := manifestpkg.MaterializeSecrets(&manifest, d.atRest); err != nil {
+		return err
 	}
 	changed, err := d.state.MarkPushed(ctx, deliveryID, row.DeviceID, agent.Epoch)
 	if errors.Is(err, ErrStaleEpoch) {
