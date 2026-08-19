@@ -10,7 +10,7 @@ surface and must not override it.
 
 The executor delegates low-level system operations to the SDK's `sys/` packages (`sys/exec`, `sys/fs`, `sys/user`, `sys/systemd`), keeping the agent focused on action dispatch, idempotency checks, and result reporting.
 
-LUKS and LPS key material uses recipient-bound X25519 field sealing on the
+LUKS and LPS key material uses the authenticated mTLS stream and
 direct control stream. If the agent cannot seal a new value to the pinned
 control key, it refuses before changing the device secret.
 

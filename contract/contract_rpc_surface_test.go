@@ -676,7 +676,7 @@ func TestContract_TargetShape(t *testing.T) {
 
 	for _, name := range []protoreflect.Name{
 		"Manifest", "ManifestProvenance", "ManifestOccurrence", "ManifestDelivery",
-		"DeliveryReceipt", "ManifestResult", "SealedValue",
+		"DeliveryReceipt", "ManifestResult",
 	} {
 		if _, ok := msgs[name]; !ok {
 			t.Errorf("message %s is absent from the shipped contract", name)
@@ -721,10 +721,6 @@ func TestContract_TargetShape(t *testing.T) {
 		{"ServerMessage", "manifest_delivery", protoreflect.MessageKind, "ManifestDelivery", false, "control cannot deliver a manifest"},
 		{"AgentMessage", "delivery_receipt", protoreflect.MessageKind, "DeliveryReceipt", false, "the agent cannot confirm durable receipt"},
 		{"AgentMessage", "manifest_result", protoreflect.MessageKind, "ManifestResult", false, "there is no result for the complete manifest"},
-		{"SealedValue", "version", protoreflect.Uint32Kind, "", false, "the sealed envelope is unversioned"},
-		{"SealedValue", "ciphertext", protoreflect.BytesKind, "", false, "the sealed envelope carries no ciphertext"},
-		{"RegisterRequest", "agent_sealing_public_key", protoreflect.BytesKind, "", false, "control cannot seal a secret to this agent"},
-		{"RegisterResponse", "control_sealing_public_key", protoreflect.BytesKind, "", false, "the agent cannot seal a secret to control"},
 	} {
 		md, ok := msgs[protoreflect.Name(f.msg)]
 		if !ok {
@@ -842,8 +838,8 @@ func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
 			if _, allowed := writeOnlyInputs[fd.FullName()]; allowed {
 				continue
 			}
-			if fd.Kind() != protoreflect.MessageKind || fd.Message().Name() != "SealedValue" {
-				t.Errorf("%s.%s is classified secret but ships as %s — it must be a SealedValue",
+			if fd.Kind() != protoreflect.BytesKind {
+				t.Errorf("%s.%s is classified secret but ships as %s — it must be raw bytes on mTLS",
 					md.Name(), fd.Name(), fd.Kind())
 			}
 		}
@@ -862,7 +858,7 @@ func TestContract_SecretsAreSealedAndFramesAreUnsigned(t *testing.T) {
 // in the Action message delivered to an agent. These exact fields were the gap
 // that the general classification sweep could not see while they were left
 // unclassified, so pin both their classification and their wire type.
-func TestContract_ActionCredentialsAreSealed(t *testing.T) {
+func TestContract_ActionCredentialsAreDirectBytes(t *testing.T) {
 	messages := contractMessages(t)
 	for messageName, fieldNames := range map[protoreflect.Name][]protoreflect.Name{
 		"EncryptionParams": {"preshared_key"},
@@ -883,8 +879,8 @@ func TestContract_ActionCredentialsAreSealed(t *testing.T) {
 			if !options.GetDebugRedact() {
 				t.Errorf("%s.%s is not classified with debug_redact", messageName, fieldName)
 			}
-			if field.Kind() != protoreflect.MessageKind || field.Message().Name() != "SealedValue" {
-				t.Errorf("%s.%s ships as %s, want SealedValue", messageName, fieldName, field.Kind())
+			if field.Kind() != protoreflect.BytesKind {
+				t.Errorf("%s.%s ships as %s, want bytes", messageName, fieldName, field.Kind())
 			}
 		}
 	}

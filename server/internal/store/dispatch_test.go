@@ -24,8 +24,7 @@ func seedDevice(t *testing.T, pool *testdb.DB) string {
 	t.Helper()
 	id := newID()
 	_, err := pool.Exec(context.Background(),
-		`INSERT INTO devices (id, hostname, agent_sealing_public_key) VALUES ($1, $2, $3)`,
-		id, "dispatch-"+id, make([]byte, 32))
+		`INSERT INTO devices (id, hostname) VALUES ($1, $2)`, id, "dispatch-"+id)
 	require.NoError(t, err)
 	return id
 }

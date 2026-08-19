@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -80,8 +81,15 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[p
 	if _, err := h.readDevice(ctx, "RevealLpsPassword", secret.DeviceID); err != nil {
 		return nil, err
 	}
-	password, err := h.openStoredSecret(secret.Password,
-		pmcrypto.SecretAADForRow(secret.DeviceID, secret.ActionID, "lps", secret.ID))
+	stored, err := h.store.GetDeviceSecret(ctx, secret.ID)
+	if err != nil || stored.DeviceID != secret.DeviceID || stored.Kind != "lps" {
+		if err == nil {
+			err = errors.New("generic LPS secret owner mismatch")
+		}
+		return nil, h.internal(ctx, "read generic LPS password", err)
+	}
+	password, err := h.openStoredSecret(stored.Ciphertext,
+		pmcrypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
 	if err != nil {
 		return nil, h.internal(ctx, "open LPS password", err)
 	}
@@ -149,8 +157,15 @@ func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[pmv1.
 	if _, err := h.readDevice(ctx, "RevealLuksKey", secret.DeviceID); err != nil {
 		return nil, err
 	}
-	passphrase, err := h.openStoredSecret(secret.Passphrase,
-		pmcrypto.SecretAADForRow(secret.DeviceID, secret.ActionID, "luks", secret.ID))
+	stored, err := h.store.GetDeviceSecret(ctx, secret.ID)
+	if err != nil || stored.DeviceID != secret.DeviceID || stored.Kind != "luks" {
+		if err == nil {
+			err = errors.New("generic LUKS secret owner mismatch")
+		}
+		return nil, h.internal(ctx, "read generic LUKS key", err)
+	}
+	passphrase, err := h.openStoredSecret(stored.Ciphertext,
+		pmcrypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
 	if err != nil {
 		return nil, h.internal(ctx, "open LUKS passphrase", err)
 	}

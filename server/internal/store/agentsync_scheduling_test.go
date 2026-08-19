@@ -24,7 +24,8 @@ func connectedSyncer(t *testing.T, f *deliveryFixture) (*agentsync.Service, *con
 	t.Cleanup(agent.Close)
 	syncer := agentsync.New(agentsync.Config{
 		Store: f.store, Manager: manager, Deliveries: f.service,
-		Now: func() time.Time { return f.now },
+		Now:    func() time.Time { return f.now },
+		AtRest: f.atRest,
 	})
 	return syncer, agent
 }

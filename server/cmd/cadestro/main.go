@@ -29,6 +29,13 @@ import (
 var version = "dev"
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "migrate-device-secrets" {
+		if len(os.Args) != 2 {
+			fmt.Fprintln(os.Stderr, "cadestro: migrate-device-secrets accepts no arguments; configure CADESTRO_DATABASE_PATH and CADESTRO_ENCRYPTION_KEY")
+			os.Exit(2)
+		}
+		os.Exit(runDeviceSecretMigration(context.Background()))
+	}
 	command, err := parseCommand(os.Args[1:])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cadestro:", err)
@@ -62,7 +69,7 @@ func main() {
 func parseCommand(args []string) (string, error) {
 	if len(args) > 0 {
 		switch args[0] {
-		case "bootstrap-admin", "backup-status":
+		case "bootstrap-admin", "backup-status", "migrate-device-secrets":
 			if args[0] == "bootstrap-admin" && len(args) == 3 && args[1] == "--output" && args[2] == "token" {
 				return "bootstrap-admin-token", nil
 			}
@@ -71,7 +78,7 @@ func parseCommand(args []string) (string, error) {
 			}
 			return args[0], nil
 		default:
-			return "", fmt.Errorf("unexpected arguments: %s (accepted commands: bootstrap-admin, backup-status)",
+			return "", fmt.Errorf("unexpected arguments: %s (accepted commands: bootstrap-admin, backup-status, migrate-device-secrets)",
 				strings.Join(args, " "))
 		}
 	}
@@ -132,7 +139,7 @@ func run(cfg *Config, logger *slog.Logger) error {
 	})
 	runtime := controlruntime.New(controlruntime.Config{
 		Store: st, CA: certificateAuthority, JWT: jwt, AtRest: atRest,
-		ControlSealingPrivateKey: cfg.SealingKey, Logger: logger, Version: version,
+		Logger: logger, Version: version,
 		PublicBaseURL: cfg.PublicBaseURL, AgentURL: cfg.AgentURL, TerminalURL: cfg.TerminalURL,
 		CORSOrigins: cfg.CORSOrigins, CORSAllowAll: cfg.CORSAllowAll,
 		TerminalOriginPatterns: cfg.TerminalOrigins, TrustedProxies: cfg.TrustedProxies,

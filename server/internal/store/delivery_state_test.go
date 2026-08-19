@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -25,12 +27,15 @@ type deliveryFixture struct {
 	manifest   *pmv1.Manifest
 	deliveryID string
 	service    *delivery.Service
+	atRest     *pmcrypto.Encryptor
 }
 
 func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	atRest, err := pmcrypto.NewEncryptor(strings.Repeat("01", 32))
+	require.NoError(t, err)
 	deviceID := seedDevice(t, raw)
 	actionID, manifestID := newID(), newID()
 	manifest := &pmv1.Manifest{
@@ -48,7 +53,7 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	op.OperationID = newID()
 	op.RequestDescriptor = "cadestro.v1.ControlService/DispatchAction"
 	var deliveryID string
-	_, err := st.WithAudit(context.Background(), op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
+	_, err = st.WithAudit(context.Background(), op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		var err error
 		deliveryID, err = delivery.InsertInTx(ctx, tx, rec, delivery.InsertParams{
 			OperationID: op.OperationID, DeviceID: deviceID, Manifest: manifest, AvailableAt: now,
@@ -58,7 +63,7 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	require.NoError(t, err)
 	return &deliveryFixture{
 		t: t, store: st, raw: raw, now: now, deviceID: deviceID, manifest: manifest, deliveryID: deliveryID,
-		service: delivery.New(delivery.Config{Store: st, Now: func() time.Time { return now }}),
+		service: delivery.New(delivery.Config{Store: st, Now: func() time.Time { return now }}), atRest: atRest,
 	}
 }
 

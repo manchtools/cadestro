@@ -2526,7 +2526,7 @@ func (x *GetLuksKeyRequest) GetActionId() string {
 
 type GetLuksKeyResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The managed passphrase, sealed to this agent's enrollment recipient key.
+	// The managed passphrase, delivered only on the authenticated mTLS stream.
 	//
 	// debug_redact is the machine-readable secret classification. It redacts
 	// nothing at runtime — no encoder in protobuf-go consults the option — but
@@ -2536,7 +2536,7 @@ type GetLuksKeyResponse struct {
 	// a log. It stays on the sealed field because opening the value produces
 	// exactly that plaintext.
 	// @gotags: validate:"required"
-	Passphrase    *SealedValue `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required"`
+	Passphrase    []byte `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2571,7 +2571,7 @@ func (*GetLuksKeyResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *GetLuksKeyResponse) GetPassphrase() *SealedValue {
+func (x *GetLuksKeyResponse) GetPassphrase() []byte {
 	if x != nil {
 		return x.Passphrase
 	}
@@ -2590,15 +2590,12 @@ type StoreLuksKeyRequest struct {
 	// encrypted and persisted.
 	// @gotags: validate:"required,startswith=/,max=4096"
 	DevicePath string `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty" validate:"required,startswith=/,max=4096"`
-	// The managed passphrase, sealed to control's deployment sealing key. The
-	// AAD binds this device and this action_id, so a captured blob cannot be
-	// replayed under another device or another action. Control opens it at the
-	// storage sink and re-encrypts at rest under its own resource-context AAD;
-	// the transport seal is never reused as storage encryption.
+	// The managed passphrase, delivered only on the authenticated mTLS stream;
+	// control encrypts it under its resource-context AAD before persistence.
 	// debug_redact is the secret classification (see
 	// GetLuksKeyResponse.passphrase).
 	// @gotags: validate:"required"
-	Passphrase *SealedValue `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required"`
+	Passphrase []byte `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required"`
 	// Why this rotation happened. INITIAL on the first time the action
 	// runs on a device (no previous passphrase to retain); SCHEDULED for
 	// any subsequent policy-driven rotation. LUKS does not use
@@ -2655,7 +2652,7 @@ func (x *StoreLuksKeyRequest) GetDevicePath() string {
 	return ""
 }
 
-func (x *StoreLuksKeyRequest) GetPassphrase() *SealedValue {
+func (x *StoreLuksKeyRequest) GetPassphrase() []byte {
 	if x != nil {
 		return x.Passphrase
 	}
@@ -2719,18 +2716,12 @@ type LpsPasswordRotation struct {
 	// Local Linux username whose password was rotated.
 	// @gotags: validate:"required,min=1,max=64"
 	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty" validate:"required,min=1,max=64"`
-	// The rotated password, sealed to control's deployment sealing key.
-	//
-	// This field's AAD binds `username` in addition to the device and action, so
-	// the pairing is cryptographically checked: control cannot open a blob under
-	// a username other than the one the agent generated it for, and a blob
-	// cannot be moved between the entries of one batch. A password is only
-	// meaningful as a (username, password) pair, so the pair is what the seal
-	// authenticates.
+	// The rotated password, delivered only on the authenticated mTLS stream and
+	// encrypted with the owning device/action context before persistence.
 	// debug_redact is the secret classification (see
 	// GetLuksKeyResponse.passphrase).
 	// @gotags: validate:"required"
-	Password *SealedValue `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" validate:"required"`
+	Password []byte `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" validate:"required"`
 	// RFC 3339 timestamp the agent observed the rotation. Control keeps the
 	// agent's clock here rather than re-stamping at receipt, so the timeline
 	// reflects the device's reality.
@@ -2792,7 +2783,7 @@ func (x *LpsPasswordRotation) GetUsername() string {
 	return ""
 }
 
-func (x *LpsPasswordRotation) GetPassword() *SealedValue {
+func (x *LpsPasswordRotation) GetPassword() []byte {
 	if x != nil {
 		return x.Password
 	}
@@ -4062,24 +4053,24 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x10RequestInventory\x12\x19\n" +
 	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"0\n" +
 	"\x11GetLuksKeyRequest\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\"S\n" +
-	"\x12GetLuksKeyResponse\x12=\n" +
+	"\taction_id\x18\x01 \x01(\tR\bactionId\"9\n" +
+	"\x12GetLuksKeyResponse\x12#\n" +
 	"\n" +
-	"passphrase\x18\x01 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\n" +
-	"passphrase\"\xd8\x01\n" +
+	"passphrase\x18\x01 \x01(\fB\x03\x80\x01\x01R\n" +
+	"passphrase\"\xbe\x01\n" +
 	"\x13StoreLuksKeyRequest\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
 	"\vdevice_path\x18\x02 \x01(\tR\n" +
-	"devicePath\x12=\n" +
+	"devicePath\x12#\n" +
 	"\n" +
-	"passphrase\x18\x03 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\n" +
+	"passphrase\x18\x03 \x01(\fB\x03\x80\x01\x01R\n" +
 	"passphrase\x12D\n" +
 	"\x0frotation_reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x0erotationReason\"0\n" +
 	"\x14StoreLuksKeyResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xc0\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xa6\x01\n" +
 	"\x13LpsPasswordRotation\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x129\n" +
-	"\bpassword\x18\x02 \x01(\v2\x18.cadestro.v1.SealedValueB\x03\x80\x01\x01R\bpassword\x12\x1d\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x1f\n" +
+	"\bpassword\x18\x02 \x01(\fB\x03\x80\x01\x01R\bpassword\x12\x1d\n" +
 	"\n" +
 	"rotated_at\x18\x03 \x01(\tR\trotatedAt\x123\n" +
 	"\x06reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x06reason\"w\n" +
@@ -4268,10 +4259,9 @@ var file_cadestro_v1_agent_proto_goTypes = []any{
 	(*ActionSchedule)(nil),            // 57: cadestro.v1.ActionSchedule
 	(ExecutionStatus)(0),              // 58: cadestro.v1.ExecutionStatus
 	(*timestamppb.Timestamp)(nil),     // 59: google.protobuf.Timestamp
-	(*SealedValue)(nil),               // 60: cadestro.v1.SealedValue
-	(RotationReason)(0),               // 61: cadestro.v1.RotationReason
-	(LpsPasswordComplexity)(0),        // 62: cadestro.v1.LpsPasswordComplexity
-	(*MaintenanceWindow)(nil),         // 63: cadestro.v1.MaintenanceWindow
+	(RotationReason)(0),               // 60: cadestro.v1.RotationReason
+	(LpsPasswordComplexity)(0),        // 61: cadestro.v1.LpsPasswordComplexity
+	(*MaintenanceWindow)(nil),         // 62: cadestro.v1.MaintenanceWindow
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	8,  // 0: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
@@ -4331,26 +4321,23 @@ var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	52, // 54: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
 	27, // 55: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
 	25, // 56: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
-	60, // 57: cadestro.v1.GetLuksKeyResponse.passphrase:type_name -> cadestro.v1.SealedValue
-	60, // 58: cadestro.v1.StoreLuksKeyRequest.passphrase:type_name -> cadestro.v1.SealedValue
-	61, // 59: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
-	60, // 60: cadestro.v1.LpsPasswordRotation.password:type_name -> cadestro.v1.SealedValue
-	61, // 61: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
-	33, // 62: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
-	62, // 63: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	17, // 64: cadestro.v1.SyncState.deliveries:type_name -> cadestro.v1.ManifestDelivery
-	63, // 65: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
-	42, // 66: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	16, // 67: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	4,  // 68: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
-	5,  // 69: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
-	6,  // 70: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	11, // 71: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	71, // [71:72] is the sub-list for method output_type
-	70, // [70:71] is the sub-list for method input_type
-	70, // [70:70] is the sub-list for extension type_name
-	70, // [70:70] is the sub-list for extension extendee
-	0,  // [0:70] is the sub-list for field type_name
+	60, // 57: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
+	60, // 58: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
+	33, // 59: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
+	61, // 60: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	17, // 61: cadestro.v1.SyncState.deliveries:type_name -> cadestro.v1.ManifestDelivery
+	62, // 62: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	42, // 63: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	16, // 64: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	4,  // 65: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
+	5,  // 66: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
+	6,  // 67: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	11, // 68: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	68, // [68:69] is the sub-list for method output_type
+	67, // [67:68] is the sub-list for method input_type
+	67, // [67:67] is the sub-list for extension type_name
+	67, // [67:67] is the sub-list for extension extendee
+	0,  // [0:67] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }

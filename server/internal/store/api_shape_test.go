@@ -50,6 +50,7 @@ var mutationCapableExports = map[string]string{
 	"CleanupExpiredAuthStates":   "audited one-time OIDC state cleanup",
 	"RecordPolicyActionResult":   "audited policy result ingestion",
 	"RecordPolicyManifestResult": "audited policy result ingestion",
+	"MigrateDeviceSecretRows":    "stopped-control audited cutover migration",
 }
 
 // nonMutatingExports is every other exported method, each with the
@@ -71,6 +72,7 @@ var nonMutatingExports = map[string]string{
 	"AuditChainTipOf":                  "read",
 	"CountAuditOperations":             "read",
 	"GetDevice":                        "read",
+	"GetDeviceSecret":                  "read",
 	"GetCurrentLuksKeyForAgent":        "read",
 	"ListDeviceMaintenanceWindows":     "read",
 	"GetDelivery":                      "read",

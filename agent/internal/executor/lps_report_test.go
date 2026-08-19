@@ -2,14 +2,12 @@ package executor
 
 import (
 	"context"
-	"crypto/ecdh"
 	"errors"
 	"strings"
 	"sync"
 	"testing"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 
@@ -24,13 +22,12 @@ import (
 // can assert not just that the password was reported and set, but that the
 // report came FIRST.
 type lpsRecorder struct {
-	mu             sync.Mutex
-	events         []string
-	reported       []*pb.LpsPasswordRotation
-	setCalls       []string // revealed plaintexts, in call order
-	storeErr       error
-	actionIDs      []string
-	controlPrivate *ecdh.PrivateKey
+	mu        sync.Mutex
+	events    []string
+	reported  []*pb.LpsPasswordRotation
+	setCalls  []string // revealed plaintexts, in call order
+	storeErr  error
+	actionIDs []string
 }
 
 func (r *lpsRecorder) StorePasswords(_ context.Context, actionID string, rotations []*pb.LpsPasswordRotation) error {
@@ -73,18 +70,6 @@ func newLpsExecutor(t *testing.T, rec *lpsRecorder, wireStore bool) *Executor {
 	}
 	e.SetStore(s)
 	e.SetDeviceID("01HKDEVICE0000000000000000")
-	agentPrivate, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		t.Fatalf("agent sealing key: %v", err)
-	}
-	controlPrivate, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		t.Fatalf("control sealing key: %v", err)
-	}
-	if err := e.ConfigureSealing(agentPrivate.Bytes(), controlPrivate.PublicKey().Bytes()); err != nil {
-		t.Fatalf("configure sealing: %v", err)
-	}
-	rec.controlPrivate = controlPrivate
 	if wireStore {
 		e.SetLpsPasswordStore(rec)
 	}
@@ -158,19 +143,7 @@ func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 		t.Fatalf("wrong order: got %v, want %v — a password set before it is reported is one the operator can lose", rec.events, want)
 	}
 
-	// The sealed password must open at control to exactly the value applied to
-	// the account; plaintext never appears in the protobuf field.
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionAgentToControl,
-		"cadestro.v1.LpsPasswordRotation", "password",
-		"01HKDEVICE0000000000000000", actionID, "alice")
-	if err != nil {
-		t.Fatalf("field context: %v", err)
-	}
-	opened, err := sdkcrypto.OpenWithPrivateKey(rec.controlPrivate, rec.reported[0].GetPassword().GetCiphertext(), aad, info)
-	if err != nil {
-		t.Fatalf("open reported password: %v", err)
-	}
-	if string(opened) != rec.setCalls[0] {
+	if string(rec.reported[0].GetPassword()) != rec.setCalls[0] {
 		t.Error("the reported password is not the one set on the account")
 	}
 	if rec.reported[0].GetUsername() != "alice" {

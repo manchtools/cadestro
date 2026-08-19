@@ -39,8 +39,8 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 			VALUES ($1, 'Street compliance', 'rule action names are searchable', $2)`, []any{policyID, now}},
 		{`INSERT INTO compliance_policy_rules (policy_id, action_id, action_name, added_at)
 			VALUES ($1, $2, 'Straßenprüfung München', $3)`, []any{policyID, actionID, now}},
-		{`INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, registered_at, last_seen_at)
-			VALUES ($1, 'db-01.eu.example', '2.4.0', zeroblob(32), $2, $2)`, []any{deviceID, now}},
+		{`INSERT INTO devices (id, hostname, agent_version, registered_at, last_seen_at)
+			VALUES ($1, 'db-01.eu.example', '2.4.0', $2, $2)`, []any{deviceID, now}},
 		{`INSERT INTO deliveries
 			(delivery_id, device_id, manifest_id, manifest, state, created_at, available_at)
 			VALUES ($1, $2, $3, '{}', 'PENDING', $4, $4)`, []any{deliveryID, deviceID, newID(), now}},

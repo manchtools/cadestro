@@ -33,16 +33,9 @@ type RegisterRequest struct {
 	// Certificate Signing Request (PEM-encoded PKCS#10)
 	// Agent generates its own key pair and sends CSR for signing
 	// @gotags: validate:"required"
-	Csr []byte `protobuf:"bytes,4,opt,name=csr,proto3" json:"csr,omitempty" validate:"required"`
-	// The agent's X25519 recipient public key, raw 32-byte encoding. Generated
-	// on the device at enrollment alongside the Ed25519 identity key; the
-	// private half never leaves the device. Control seals every secret it sends
-	// this agent to this key, and pins it to the device identity it issues here
-	// — the key and the certificate are bound by the same enrollment.
-	// @gotags: validate:"required,len=32"
-	AgentSealingPublicKey []byte `protobuf:"bytes,5,opt,name=agent_sealing_public_key,json=agentSealingPublicKey,proto3" json:"agent_sealing_public_key,omitempty" validate:"required,len=32"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	Csr           []byte `protobuf:"bytes,4,opt,name=csr,proto3" json:"csr,omitempty" validate:"required"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RegisterRequest) Reset() {
@@ -103,13 +96,6 @@ func (x *RegisterRequest) GetCsr() []byte {
 	return nil
 }
 
-func (x *RegisterRequest) GetAgentSealingPublicKey() []byte {
-	if x != nil {
-		return x.AgentSealingPublicKey
-	}
-	return nil
-}
-
 type RegisterResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// @gotags: validate:"required"
@@ -125,16 +111,9 @@ type RegisterResponse struct {
 	// itself, so this is control's own agent-listener address, which is normally
 	// a different host from the web/API URL the agent registered against.
 	// @gotags: validate:"required,url"
-	ControlUrl string `protobuf:"bytes,4,opt,name=control_url,json=controlUrl,proto3" json:"control_url,omitempty" validate:"required,url"`
-	// Control's deployment sealing public key, raw 32-byte X25519 encoding. The
-	// agent seals every secret it reports (LUKS passphrases, LPS passwords) to
-	// this key and pins it to the CA it accepts in the same response, so a later
-	// substitution is a visible identity change rather than a silent redirect of
-	// where secrets can be opened.
-	// @gotags: validate:"required,len=32"
-	ControlSealingPublicKey []byte `protobuf:"bytes,5,opt,name=control_sealing_public_key,json=controlSealingPublicKey,proto3" json:"control_sealing_public_key,omitempty" validate:"required,len=32"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	ControlUrl    string `protobuf:"bytes,4,opt,name=control_url,json=controlUrl,proto3" json:"control_url,omitempty" validate:"required,url"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RegisterResponse) Reset() {
@@ -193,13 +172,6 @@ func (x *RegisterResponse) GetControlUrl() string {
 		return x.ControlUrl
 	}
 	return ""
-}
-
-func (x *RegisterResponse) GetControlSealingPublicKey() []byte {
-	if x != nil {
-		return x.ControlSealingPublicKey
-	}
-	return nil
 }
 
 type RenewCertificateRequest struct {
@@ -21150,20 +21122,18 @@ var File_cadestro_v1_control_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb3\x01\n" +
+	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x80\x01\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
 	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x12\x10\n" +
-	"\x03csr\x18\x04 \x01(\fR\x03csr\x127\n" +
-	"\x18agent_sealing_public_key\x18\x05 \x01(\fR\x15agentSealingPublicKey\"\xdf\x01\n" +
+	"\x03csr\x18\x04 \x01(\fR\x03csrJ\x04\b\x05\x10\x06\"\xa8\x01\n" +
 	"\x10RegisterResponse\x122\n" +
 	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdR\bdeviceId\x12\x17\n" +
 	"\aca_cert\x18\x02 \x01(\fR\x06caCert\x12 \n" +
 	"\vcertificate\x18\x03 \x01(\fR\vcertificate\x12\x1f\n" +
 	"\vcontrol_url\x18\x04 \x01(\tR\n" +
-	"controlUrl\x12;\n" +
-	"\x1acontrol_sealing_public_key\x18\x05 \x01(\fR\x17controlSealingPublicKey\"1\n" +
+	"controlUrlJ\x04\b\x05\x10\x06\"1\n" +
 	"\x17RenewCertificateRequest\x12\x10\n" +
 	"\x03csr\x18\x01 \x01(\fR\x03csrJ\x04\b\x02\x10\x03\"{\n" +
 	"\x18RenewCertificateResponse\x12 \n" +

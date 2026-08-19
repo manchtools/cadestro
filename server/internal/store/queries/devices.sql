@@ -1,10 +1,10 @@
 -- name: InsertDevice :one
 INSERT INTO devices (
-    id, hostname, agent_version, agent_sealing_public_key,
+    id, hostname, agent_version,
     registered_at, last_seen_at,
     registration_token_id
 )
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetDevice :one
@@ -302,11 +302,11 @@ WHERE t.value_hash = sqlc.arg(value_hash)
 -- counter, so the max boundary cannot be crossed by concurrent enrollments.
 -- name: InsertEnrolledDevice :one
 INSERT INTO devices (
-    id, hostname, agent_version, agent_sealing_public_key,
+    id, hostname, agent_version,
     enrollment_identity_public_key, registered_at, registration_token_id
 )
 SELECT sqlc.arg(id), sqlc.arg(hostname), sqlc.arg(agent_version),
-       sqlc.arg(sealing_key), sqlc.arg(identity_public_key),
+       sqlc.arg(identity_public_key),
        sqlc.arg(enrolled_at), t.id
 FROM tokens t
 WHERE t.value_hash = sqlc.arg(value_hash)

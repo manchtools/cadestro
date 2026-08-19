@@ -24,13 +24,7 @@ message RegisterRequest {
   // Agent generates its own key pair and sends CSR for signing
   // @gotags: validate:"required"
   bytes csr = 4;
-  // The agent's X25519 recipient public key, raw 32-byte encoding. Generated
-  // on the device at enrollment alongside the Ed25519 identity key; the
-  // private half never leaves the device. Control seals every secret it sends
-  // this agent to this key, and pins it to the device identity it issues here
-  // — the key and the certificate are bound by the same enrollment.
-  // @gotags: validate:"required,len=32"
-  bytes agent_sealing_public_key = 5;
+  reserved 5;
 }
 
 message RegisterResponse {
@@ -48,13 +42,7 @@ message RegisterResponse {
   // a different host from the web/API URL the agent registered against.
   // @gotags: validate:"required,url"
   string control_url = 4;
-  // Control's deployment sealing public key, raw 32-byte X25519 encoding. The
-  // agent seals every secret it reports (LUKS passphrases, LPS passwords) to
-  // this key and pins it to the CA it accepts in the same response, so a later
-  // substitution is a visible identity change rather than a silent redirect of
-  // where secrets can be opened.
-  // @gotags: validate:"required,len=32"
-  bytes control_sealing_public_key = 5;
+  reserved 5;
 }
 
 // ============================================================================

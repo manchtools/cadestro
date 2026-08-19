@@ -46,8 +46,9 @@ type DeliveryRow = generated.Delivery
 // JobRow is one durable scheduled job.
 type JobRow = generated.Job
 
-// LuksKeyRow is one encrypted-at-rest device passphrase row.
-type LuksKeyRow = generated.LuksKey
+// LuksKeyRow is one current LUKS metadata row joined to its generic secret
+// owner context.
+type LuksKeyRow = generated.GetCurrentLuksKeyForAgentRow
 
 // ActionRow is one live authored action used to compile agent manifests.
 type ActionRow = generated.Action
@@ -394,6 +395,7 @@ type LuksKeyView struct {
 // used by the corresponding one-entry reveal handlers.
 type LpsPasswordSecret = generated.GetLpsPasswordForRevealRow
 type LuksKeySecret = generated.GetLuksKeyForRevealRow
+type DeviceSecretRow = generated.GetDeviceSecretRow
 
 // LuksRevocationTarget summarizes the current keys governed by one encryption
 // action without exposing their encrypted passphrases.
@@ -1433,6 +1435,11 @@ func (s *Store) GetLpsPasswordForReveal(ctx context.Context, id string) (LpsPass
 		return LpsPasswordSecret{}, fmt.Errorf("lps password: get for reveal: %w", translateNotFound(err))
 	}
 	return row, nil
+}
+
+// GetDeviceSecret returns the generic encrypted row used by the reveal sink.
+func (s *Store) GetDeviceSecret(ctx context.Context, id string) (DeviceSecretRow, error) {
+	return s.queries.GetDeviceSecret(ctx, id)
 }
 
 // ListDeviceLuksKeys returns current rows and at most three historical rows

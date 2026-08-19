@@ -222,10 +222,6 @@ func main() {
 
 	// Initialize the scheduler for autonomous action execution
 	exec := executor.NewExecutor(runner)
-	if err := exec.ConfigureSealing(creds.SealingPrivateKey, creds.ControlSealingPublicKey); err != nil {
-		logger.Error("invalid enrollment sealing keys; remove the agent state and re-enroll", "error", err)
-		os.Exit(1)
-	}
 	exec.SetStore(actionStore)
 	// The agent's own device ID is part of the LPS seal context so control
 	// unseals each rotated password into the right (device, action, user) record.

@@ -1,7 +1,6 @@
 package contract
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"log/slog"
@@ -31,8 +30,8 @@ func quietLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard
 // tag + at least one plaintext byte). A shorter fixture would be rejected at
 // validateInbound, so a test using one would assert the rejection path while
 // claiming to exercise the happy one.
-func testSealedValue() *pm.SealedValue {
-	return &pm.SealedValue{Version: 1, Ciphertext: bytes.Repeat([]byte{0x7f}, 61)}
+func testSecretBytes() []byte {
+	return []byte("secret-bytes")
 }
 
 // Every Client method that sends a stream request and then BLOCKS on a pending
@@ -70,7 +69,7 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 			name: "GetLuksKey",
 			payload: func() *pm.ServerMessage {
 				return &pm.ServerMessage{Payload: &pm.ServerMessage_GetLuksKey{
-					GetLuksKey: &pm.GetLuksKeyResponse{Passphrase: testSealedValue()},
+					GetLuksKey: &pm.GetLuksKeyResponse{Passphrase: testSecretBytes()},
 				}}
 			},
 		},

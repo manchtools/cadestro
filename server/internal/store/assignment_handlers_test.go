@@ -87,8 +87,8 @@ func newAssignmentHandlerFixture(t *testing.T) *assignmentHandlerFixture {
 		f.targets[targetType] = newID()
 	}
 	ctx := context.Background()
-	_, err = f.raw.Exec(ctx, `INSERT INTO devices (id, hostname, agent_sealing_public_key)
-		VALUES ($1, 'assigned-device', zeroblob(32))`,
+	_, err = f.raw.Exec(ctx, `INSERT INTO devices (id, hostname)
+		VALUES ($1, 'assigned-device')`,
 		f.targets[pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE])
 	require.NoError(t, err)
 	_, err = f.raw.Exec(ctx, `INSERT INTO device_groups (id, name) VALUES ($1, 'assigned-device-group')`,

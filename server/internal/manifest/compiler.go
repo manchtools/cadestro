@@ -4,7 +4,6 @@ package manifest
 
 import (
 	"context"
-	"crypto/ecdh"
 	"errors"
 	"fmt"
 
@@ -12,7 +11,6 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -53,8 +51,8 @@ func (c *Compiler) Action(ctx context.Context, id string) (*pmv1.Manifest, error
 	return c.action(ctx, "", id)
 }
 
-// ActionForDevice creates an agent-ready manifest whose classified fields are
-// sealed to deviceID before the caller can persist it.
+// ActionForDevice creates an agent-ready manifest for the authenticated
+// stream. Secret fields are plaintext only in that mTLS message.
 func (c *Compiler) ActionForDevice(ctx context.Context, deviceID, id string) (*pmv1.Manifest, error) {
 	return c.action(ctx, deviceID, id)
 }
@@ -349,13 +347,13 @@ func (c *Compiler) encryptionParams(ctx context.Context, deviceID string, row st
 	if err := actionparams.UnmarshalActionParams(row.Params, stored); err != nil {
 		return nil, err
 	}
-	sealed, err := c.sealActionField(ctx, deviceID, row.ID, "cadestro.v1.EncryptionParams",
+	secret, err := c.secretActionField(ctx, row.ID,
 		"preshared_key", stored.GetPresharedKey(), pmcrypto.PurposeActionEncryptionPresharedKey)
 	if err != nil {
 		return nil, err
 	}
 	return &pmv1.EncryptionParams{
-		PresharedKey: sealed, RotationIntervalDays: stored.RotationIntervalDays,
+		PresharedKey: secret, RotationIntervalDays: stored.RotationIntervalDays,
 		MinWords: stored.MinWords, DeviceBoundKeyType: stored.DeviceBoundKeyType,
 		UserPassphraseMinLength:  stored.UserPassphraseMinLength,
 		UserPassphraseComplexity: stored.UserPassphraseComplexity,
@@ -375,10 +373,10 @@ func (c *Compiler) wifiParams(ctx context.Context, deviceID string, row store.Ac
 	var err error
 	switch stored.AuthType {
 	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
-		params.Psk, err = c.sealActionField(ctx, deviceID, row.ID, "cadestro.v1.WifiParams",
+		params.Psk, err = c.secretActionField(ctx, row.ID,
 			"psk", stored.GetPsk(), pmcrypto.PurposeActionWifiPSK)
 	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
-		params.ClientKey, err = c.sealActionField(ctx, deviceID, row.ID, "cadestro.v1.WifiParams",
+		params.ClientKey, err = c.secretActionField(ctx, row.ID,
 			"client_key", stored.GetClientKey(), pmcrypto.PurposeActionWifiClientKey)
 	default:
 		return nil, errors.New("unsupported WiFi authentication type")
@@ -386,38 +384,36 @@ func (c *Compiler) wifiParams(ctx context.Context, deviceID string, row store.Ac
 	return params, err
 }
 
-func (c *Compiler) sealActionField(ctx context.Context, deviceID, actionID, message, field, ciphertext, purpose string) (*pmv1.SealedValue, error) {
-	if c.atRest == nil || !validInput(ctx, deviceID) || !pmcrypto.IsEncryptedValue(ciphertext) {
-		return nil, errors.New("action secret compiler requires encrypted storage and a target device")
+func (c *Compiler) secretActionField(ctx context.Context, actionID, field, ciphertext, purpose string) ([]byte, error) {
+	if c.atRest == nil || !pmcrypto.IsEncryptedValue(ciphertext) {
+		return nil, errors.New("action secret compiler requires encrypted storage")
 	}
-	plaintext, err := c.atRest.DecryptWithContext(ciphertext, pmcrypto.RowAAD(actionID, purpose))
-	if err != nil {
-		return nil, fmt.Errorf("decrypt action credential: %w", err)
-	}
-	secret := []byte(plaintext)
-	defer clear(secret)
-	recipient, err := c.deviceRecipient(ctx, deviceID)
-	if err != nil {
-		return nil, err
-	}
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		message, field, deviceID, actionID)
-	if err != nil {
-		return nil, err
-	}
-	sealed, err := sdkcrypto.SealToPublicKey(recipient, secret, aad, info)
-	if err != nil {
-		return nil, fmt.Errorf("seal action credential: %w", err)
-	}
-	return &pmv1.SealedValue{Version: 1, Ciphertext: sealed}, nil
+	return []byte(ciphertext), nil
 }
 
-func (c *Compiler) deviceRecipient(ctx context.Context, deviceID string) (*ecdh.PublicKey, error) {
-	device, err := c.store.GetDevice(ctx, deviceID)
-	if err != nil {
-		return nil, err
+// MaterializeSecrets opens catalog ciphertext only for the authenticated
+// device stream. Callers must pass a copy that is never persisted.
+func MaterializeSecrets(manifest *pmv1.Manifest, atRest *pmcrypto.Encryptor) error {
+	if manifest == nil || atRest == nil { return errors.New("manifest secret materialization requires manifest and cipher") }
+	for _, occurrence := range manifest.Occurrences {
+		if occurrence == nil || occurrence.Action == nil || occurrence.Action.Id == nil { continue }
+		actionID := occurrence.Action.Id.Value
+		open := func(value *[]byte, purpose string) error {
+			if value == nil || len(*value) == 0 { return nil }
+			plaintext, err := atRest.DecryptWithContext(string(*value), pmcrypto.RowAAD(actionID, purpose))
+			if err != nil { return fmt.Errorf("open manifest secret: %w", err) }
+			*value = []byte(plaintext)
+			return nil
+		}
+		switch params := occurrence.Action.Params.(type) {
+		case *pmv1.Action_Encryption:
+			if err := open(&params.Encryption.PresharedKey, pmcrypto.PurposeActionEncryptionPresharedKey); err != nil { return err }
+		case *pmv1.Action_Wifi:
+			if params.Wifi.AuthType == pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK { if err := open(&params.Wifi.Psk, pmcrypto.PurposeActionWifiPSK); err != nil { return err } }
+			if params.Wifi.AuthType == pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS { if err := open(&params.Wifi.ClientKey, pmcrypto.PurposeActionWifiClientKey); err != nil { return err } }
+		}
 	}
-	return sdkcrypto.ParseX25519PublicKey(device.AgentSealingPublicKey)
+	return nil
 }
 
 func requiredSchedule(raw []byte) (*pmv1.ActionSchedule, error) {

@@ -117,11 +117,10 @@ func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 			atomic.AddInt32(&registerCalls, 1)
 			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:                &pm.DeviceId{Value: "dev-123"},
-				CaCert:                  caPEM,
-				Certificate:             []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
-				ControlUrl:              "https://gw.example.com:8443",
-				ControlSealingPublicKey: testControlSealingPublicKey(),
+				DeviceId:    &pm.DeviceId{Value: "dev-123"},
+				CaCert:      caPEM,
+				Certificate: []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
+				ControlUrl:  "https://gw.example.com:8443",
 			}), nil
 		},
 	}
@@ -173,11 +172,10 @@ func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 			mock := &mockRegisterService{
 				registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 					return connect.NewResponse(&pm.RegisterResponse{
-						DeviceId:                &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
-						CaCert:                  tc.ca,
-						Certificate:             tc.cert,
-						ControlUrl:              "https://gw.example.com",
-						ControlSealingPublicKey: testControlSealingPublicKey(),
+						DeviceId:    &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
+						CaCert:      tc.ca,
+						Certificate: tc.cert,
+						ControlUrl:  "https://gw.example.com",
 					}), nil
 				},
 			}
@@ -207,11 +205,10 @@ func TestEnroll_BindsOutboundRegisterRequest(t *testing.T) {
 		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
 			captured = req.Msg
 			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:                &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
-				CaCert:                  caPEM,
-				Certificate:             []byte(fakeLeafPEM),
-				ControlUrl:              "https://gw.example.com",
-				ControlSealingPublicKey: testControlSealingPublicKey(),
+				DeviceId:    &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
+				CaCert:      caPEM,
+				Certificate: []byte(fakeLeafPEM),
+				ControlUrl:  "https://gw.example.com",
 			}), nil
 		},
 	}
@@ -230,7 +227,6 @@ func TestEnroll_BindsOutboundRegisterRequest(t *testing.T) {
 	assert.Equal(t, "test-token", captured.Token)
 	assert.Equal(t, "test-host", captured.Hostname)
 	assert.Equal(t, "dev", captured.AgentVersion)
-	assert.Len(t, captured.AgentSealingPublicKey, 32)
 
 	block, _ := pem.Decode(captured.Csr)
 	require.NotNil(t, block, "CSR must be PEM")

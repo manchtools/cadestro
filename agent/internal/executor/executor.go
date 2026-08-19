@@ -3,7 +3,6 @@ package executor
 
 import (
 	"context"
-	"crypto/ecdh"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -84,9 +83,7 @@ type Executor struct {
 	// deviceID is this agent's own device ULID. Control derives the at-rest
 	// AAD from it, and the executor refuses to rotate a credential it cannot
 	// attribute to a device. Set from credentials in main.go.
-	deviceID             string
-	sealingPrivate       *ecdh.PrivateKey
-	controlSealingPublic *ecdh.PublicKey
+	deviceID string
 
 	// Per-cycle AGENT_UPDATE dedup. Audit F042 + F048: previously
 	// package-level globals which made parallel tests serialise on

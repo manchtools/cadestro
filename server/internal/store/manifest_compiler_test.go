@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
@@ -194,16 +193,10 @@ func TestManifestCompiler_RejectsMalformedStoredParams(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *testing.T) {
+func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *testing.T) {
 	st, raw := setupSQLite(t)
 	ctx := context.Background()
 	deviceID := seedDevice(t, raw)
-	agentKey, err := sdkcrypto.GenerateX25519()
-	require.NoError(t, err)
-	_, err = raw.Exec(ctx, `UPDATE devices SET agent_sealing_public_key = $2 WHERE id = $1`,
-		deviceID, agentKey.PublicKey().Bytes())
-	require.NoError(t, err)
-
 	atRest, err := pmcrypto.NewEncryptor("0303030303030303030303030303030303030303030303030303030303030303")
 	require.NoError(t, err)
 	actionID := newID()
@@ -225,15 +218,8 @@ func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *test
 
 	compiled, err := manifest.New(st, atRest).ActionForDevice(ctx, deviceID, actionID)
 	require.NoError(t, err)
-	sealed := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
-	require.NotNil(t, sealed)
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"cadestro.v1.EncryptionParams", "preshared_key", deviceID, actionID)
-	require.NoError(t, err)
-	opened, err := sdkcrypto.OpenWithPrivateKey(agentKey, sealed.Ciphertext, aad, info)
-	require.NoError(t, err)
-	assert.Equal(t, plaintext, string(opened))
-	clear(opened)
+	catalogCiphertext := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
+	require.NotEmpty(t, catalogCiphertext)
 
 	waker := &committedWaker{store: st}
 	service := dispatch.New(dispatch.Config{Store: st, Waker: waker})
@@ -258,5 +244,5 @@ func TestManifestCompiler_SealsActionCredentialBeforeDeliveryPersistence(t *test
 	}
 	var persisted pmv1.EncryptionParams
 	require.NoError(t, protojson.Unmarshal([]byte(executionParams), &persisted))
-	assert.Equal(t, sealed.Ciphertext, persisted.GetPresharedKey().GetCiphertext())
+	assert.Equal(t, catalogCiphertext, persisted.GetPresharedKey())
 }

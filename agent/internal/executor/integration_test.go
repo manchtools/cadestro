@@ -21,7 +21,6 @@ import (
 	"time"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
@@ -85,20 +84,6 @@ func newTestExecutor() *Executor {
 	// temporary passwords can be observed by the integration lane.
 	e.SetLpsPasswordStore(testLpsReports)
 	e.SetDeviceID("01HKINTEGRATIONDEVICE00000")
-	// Enrollment supplies the field-sealing keys in production; the lane must
-	// configure them too, or every LPS/user password seal fails with "control
-	// sealing public key is not configured".
-	agentSealing, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		panic("failed to generate agent sealing key: " + err.Error())
-	}
-	controlSealing, err := sdkcrypto.GenerateX25519()
-	if err != nil {
-		panic("failed to generate control sealing key: " + err.Error())
-	}
-	if err := e.ConfigureSealing(agentSealing.Bytes(), controlSealing.PublicKey().Bytes()); err != nil {
-		panic("failed to configure sealing: " + err.Error())
-	}
 	return e
 }
 

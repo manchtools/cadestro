@@ -78,7 +78,7 @@ func TestExecuteSealedLuks_RejectsClosedStoreBeforeOpeningPSK(t *testing.T) {
 	e.SetStore(st)
 	e.SetLuksKeyStore(&fakeLuksKeyStore{})
 	params := &pb.EncryptionParams{
-		PresharedKey: &pb.SealedValue{Version: sealedFieldVersion, Ciphertext: []byte("not-valid-ciphertext")},
+		PresharedKey: []byte("not-valid-ciphertext"),
 	}
 
 	_, _, _, err = e.executeSealedLuks(context.Background(), params,
@@ -104,7 +104,7 @@ func TestExecuteSealedLuks_SkipsConflictBeforeOpeningPSK(t *testing.T) {
 			pb.DesiredState_DESIRED_STATE_PRESENT, now),
 	}})
 	params := &pb.EncryptionParams{
-		PresharedKey: &pb.SealedValue{Version: sealedFieldVersion, Ciphertext: []byte("not-valid-ciphertext")},
+		PresharedKey: []byte("not-valid-ciphertext"),
 	}
 
 	output, changed, _, err := e.executeSealedLuks(context.Background(), params,

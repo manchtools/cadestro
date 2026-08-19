@@ -656,7 +656,7 @@ enum EncryptionDeviceBoundKeyType {
 message EncryptionParams {
   // Pre-shared key for initial ownership, sealed by control to this agent.
   // @gotags: validate:"required"
-  SealedValue preshared_key = 1 [debug_redact = true];
+  bytes preshared_key = 1 [debug_redact = true];
   // Days between scheduled passphrase rotations (1-365)
   // @gotags: validate:"required,gte=1,lte=365"
   int32 rotation_interval_days = 2;
@@ -701,7 +701,7 @@ message WifiParams {
 
   // PSK authentication (WPA2/WPA3 Personal), sealed by control to this agent.
   // @gotags: validate:"omitempty"
-  SealedValue psk = 3 [debug_redact = true];
+  bytes psk = 3 [debug_redact = true];
 
   // EAP-TLS authentication (802.1X with client certificate)
   // @gotags: validate:"omitempty"
@@ -710,7 +710,7 @@ message WifiParams {
   string client_cert = 5; // Client certificate (PEM)
   // Client private key (PEM), sealed by control to this agent.
   // @gotags: validate:"omitempty"
-  SealedValue client_key = 6 [debug_redact = true];
+  bytes client_key = 6 [debug_redact = true];
   // @gotags: validate:"omitempty,max=254"
   string identity = 7; // EAP identity (e.g., user@corp.com)
 

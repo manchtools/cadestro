@@ -519,9 +519,39 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "runtime_package_fanout_coupling": runtime_import_matches(root),
         "process_global_executor_managers": executor_global_matches(root),
         "policy_specific_result_transport_paths": policy_result_transport_matches(root),
-        "stale_field_sealing_protocol_machinery": matches(root, r"\b(?:fieldSealVersion|sealedFieldVersion|protocolVersion|wireProtocol)\b", {".go", ".proto"}),
+        "stale_field_sealing_protocol_machinery": live_field_sealing_matches(root),
         "certificate_lifecycle_junk": certificate_lifecycle_junk_matches(root),
     }
+
+
+def live_field_sealing_matches(root: Path) -> list[Match]:
+    """Find the retired envelope only in Cadestro's live protocol/wiring.
+
+    The SDK intentionally remains a reusable capability library; an unused
+    helper there is not product protocol machinery and must not keep this
+    cutover red.
+    """
+    result: list[Match] = []
+    pattern = re.compile(
+        r"(?:\bfieldSealVersion\b|\bsealedFieldVersion\b|\bprotocolVersion\b|\bwireProtocol\b|"
+        r"\bSealedValue\b|\bagent_sealing_public_key\b|\bcontrol_sealing_public_key\b|"
+        r"\bCADESTRO_SEALING_KEY(?:_FILE)?\b|\bConfigureSealing\b|\bFieldSealContext\b|"
+        r"\bSealToPublicKey\b|\bOpenWithPrivateKey\b)",
+        re.IGNORECASE,
+    )
+    for path in files(root, {".go", ".proto", ".sql", ".sh", ".yaml", ".yml"}):
+        relative = rel(root, path)
+        if (
+            not relative.startswith(("agent/", "server/", "contract/"))
+            or path.name.endswith(("_test.go", "_test.sh"))
+            or "/testdata/" in f"/{relative}/"
+            or is_generated(root, path)
+        ):
+            continue
+        for number, line in enumerate(text(path).splitlines(), 1):
+            if pattern.search(line):
+                result.append(Match(relative, number, line))
+    return result
 
 
 def executor_global_matches(root: Path) -> list[Match]:
@@ -607,6 +637,10 @@ def simplification_report(root: Path, baseline_counts: dict[str, int]) -> dict[s
         "policy_specific_result_transport_paths": current["policy_specific_result_transport_paths"] == 0,
         "legacy_registration_token_counter_owner_state": current["legacy_registration_token_counter_owner_state"] == 0,
         "assigned_policy_push_submission_coupling": current["assigned_policy_push_submission_coupling"] == 0,
+        # The mTLS stream is the only transport boundary for device secrets;
+        # any surviving field-envelope protocol is a failed cutover, even if
+        # the aggregate score improves elsewhere.
+        "stale_field_sealing_protocol_machinery": current["stale_field_sealing_protocol_machinery"] == 0,
         "certificate_lifecycle_junk": current["certificate_lifecycle_junk"] == 0,
     }
     for name, passed in zero.items():

@@ -175,12 +175,10 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		// visibly, and the previous recorded password still opens the account.
 		plaintext := password.Reveal()
 		rotatedAt := e.now().UTC()
-		sealedPassword, err := e.sealToControl([]byte(plaintext),
-			"cadestro.v1.LpsPasswordRotation", "password",
-			e.getDeviceID(), actionID, username)
+		sealedPassword, err := e.sealToControl([]byte(plaintext))
 		if err != nil {
-			anyError = fmt.Errorf("seal password for %s: %w", username, err)
-			output.WriteString(fmt.Sprintf("LPS: %s — failed to seal password for server, not rotating\n", username))
+			anyError = fmt.Errorf("prepare password for %s: %w", username, err)
+			output.WriteString(fmt.Sprintf("LPS: %s — failed to prepare password for server, not rotating\n", username))
 			continue
 		}
 		if err := lpsStore.StorePasswords(ctx, actionID, []*pb.LpsPasswordRotation{{
@@ -376,12 +374,10 @@ func (e *Executor) reportUserCreatePassword(ctx context.Context, username, actio
 		output.WriteString("warning: temporary password not reported (no device identity; reset out of band)\n")
 		return
 	}
-	sealedPassword, err := e.sealToControl([]byte(plaintext),
-		"cadestro.v1.LpsPasswordRotation", "password",
-		e.getDeviceID(), actionID, username)
+	sealedPassword, err := e.sealToControl([]byte(plaintext))
 	if err != nil {
-		e.logger.Warn("user create: failed to seal temp password", "username", username, "error", err)
-		output.WriteString("warning: temporary password not reported (sealing failed; reset out of band)\n")
+		e.logger.Warn("user create: failed to prepare temp password", "username", username, "error", err)
+		output.WriteString("warning: temporary password not reported (preparation failed; reset out of band)\n")
 		return
 	}
 	if err := ps.StorePasswords(ctx, actionID, []*pb.LpsPasswordRotation{{

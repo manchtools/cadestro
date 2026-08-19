@@ -43,8 +43,8 @@ func newExecutionResultFixture(t *testing.T, deliveryState, executionState strin
 		execution: newID(), actionID: newID(),
 	}
 	_, err := raw.Exec(context.Background(), `
-		INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, registered_at)
-		VALUES ($1, 'device', 'v1', $2, $3)`, f.deviceID, bytes.Repeat([]byte{1}, 32), now)
+		INSERT INTO devices (id, hostname, agent_version, registered_at)
+		VALUES ($1, 'device', 'v1', $2)`, f.deviceID, now)
 	require.NoError(t, err)
 	var pushedAt, ackedAt *time.Time
 	if deliveryState == delivery.StatePushed || deliveryState == delivery.StateAckedReceipt {

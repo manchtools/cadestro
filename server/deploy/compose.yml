@@ -51,7 +51,6 @@ services:
       - ./certs/control.key:/run/certs/control.key:ro,z
       - ./secrets/encryption.key:/run/secrets/encryption.key:ro,z
       - ./secrets/session-signing.pem:/run/secrets/session-signing.pem:ro,z
-      - ./secrets/sealing.key:/run/secrets/sealing.key:ro,z
       - ./data/control:/var/lib/cadestro/state:z
       - ./data/artifacts:/var/lib/cadestro/artifacts:z
       - ./data/backups:/var/lib/cadestro/backups:z

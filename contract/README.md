@@ -20,7 +20,8 @@ See [`../LICENSING.md`](../LICENSING.md).
   terminal traffic are frames on that stream.
 - Agent certificates authenticate the direct mTLS connection. Application
   frames are not separately signed.
-- Fields classified as secret use the versioned X25519 `SealedValue` envelope
+- Secret fields use bytes on the authenticated agent stream and are encrypted
+  with mandatory AAD before durable storage.
   with context-bound associated data.
 - Human authentication is OIDC-based; the contract has no local password or
   TOTP RPCs.

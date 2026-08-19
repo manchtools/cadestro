@@ -278,40 +278,6 @@ message MaintenanceWindowEntry {
   string allow = 2;
 }
 
-// SealedValue is the wire form of a secret-classified field: a versioned,
-// opaque X25519 sealed envelope produced by the SDK's crypto.SealToPublicKey
-// (sdk/crypto/seal.go). Agent->control values seal to control's deployment
-// sealing key; control->agent values seal to that agent's enrollment recipient
-// key. Both public keys are exchanged on Register and pinned with the endpoint
-// identity.
-//
-// The AAD binds, in this order, the protocol version, the direction
-// (agent->control or control->agent), the fully-qualified message and field
-// name, the device ULID, and the one action, delivery or terminal session the
-// value belongs to. So a sealed value cannot be relocated to another field,
-// another device, another action, or the opposite direction: it only opens in
-// the exact context it was produced for.
-//
-// LpsPasswordRotation.password additionally binds the username, because the
-// password is only meaningful as a (username, password) pair — without that
-// binding control cannot verify that the password it stores under a username
-// is the one the agent generated for it.
-//
-// Decryption happens only at the narrow feature sink immediately before use or
-// re-encryption at rest. Transport-field sealing is never reused as storage
-// encryption.
-message SealedValue {
-  // Sealing-scheme version. Lets the construction change without a field or
-  // message rename; a recipient refuses a version it does not implement.
-  // @gotags: validate:"required,gte=1"
-  uint32 version = 1;
-  // ephemeral X25519 public key (32) || AEAD nonce (12) || ciphertext || tag
-  // (16). The floor is crypto.MinSealedLen — anything shorter cannot be a
-  // sealed blob, so it is refused at the boundary rather than at the sink.
-  // @gotags: validate:"required,min=61,max=1048576"
-  bytes ciphertext = 2;
-}
-
 // Output from command execution
 message CommandOutput {
   // @gotags: validate:"omitempty"

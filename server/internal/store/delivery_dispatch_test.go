@@ -72,7 +72,7 @@ func newDispatcher(f *deliveryFixture, router *deliveryRouter, sweep time.Durati
 	return delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: f.store, State: f.service, Router: router,
 		Now: func() time.Time { return f.now }, SweepInterval: sweep,
-		Workers: 1, QueueSize: 8, BatchSize: 32,
+		Workers: 1, QueueSize: 8, BatchSize: 32, AtRest: f.atRest,
 	})
 }
 
@@ -94,7 +94,7 @@ func TestAgentSync_UsesDurableDeliveriesAndLiveEpoch(t *testing.T) {
 	manager := connection.NewManager()
 	agent := manager.Register(ctx, f.deviceID, "device", "v1", nil)
 	t.Cleanup(agent.Close)
-	syncer := agentsync.New(agentsync.Config{Store: f.store, Manager: manager, Deliveries: f.service})
+	syncer := agentsync.New(agentsync.Config{Store: f.store, Manager: manager, Deliveries: f.service, AtRest: f.atRest})
 
 	response, err := syncer.Sync(ctx, f.deviceID)
 	require.NoError(t, err)
@@ -227,7 +227,7 @@ func TestDispatcher_WakeQueueIsBounded(t *testing.T) {
 	router := newDeliveryRouter()
 	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: f.store, State: f.service, Router: router, SweepInterval: time.Hour,
-		Workers: 1, QueueSize: 1, BatchSize: 1,
+		Workers: 1, QueueSize: 1, BatchSize: 1, AtRest: f.atRest,
 	})
 	assert.True(t, dispatcher.Wake(f.deliveryID))
 	assert.False(t, dispatcher.Wake(newID()), "a full wake queue must not grow without bound")
@@ -253,7 +253,7 @@ func TestDispatcher_OfflineBacklogCannotStarveConnectedSweep(t *testing.T) {
 	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
 		Store: f.store, State: f.service, Router: router,
 		Now: func() time.Time { return f.now }, SweepInterval: 10 * time.Millisecond,
-		Workers: 1, QueueSize: 8, BatchSize: 2,
+		Workers: 1, QueueSize: 8, BatchSize: 2, AtRest: f.atRest,
 	})
 	runCtx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)

@@ -13,10 +13,10 @@ import (
 func seedCertificateLifecycleDevice(t *testing.T, raw *testdb.DB, id string, active, pending any) {
 	t.Helper()
 	_, err := raw.Exec(context.Background(), `
-		INSERT INTO devices (id, agent_sealing_public_key, certificate_pem,
+		INSERT INTO devices (id, certificate_pem,
 			active_cert_serial, pending_certificate_pem, pending_cert_serial,
 			cert_fingerprint, cert_not_after)
-		VALUES (?, zeroblob(32), ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+		VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
 		id, []byte("active"), active, pending, pending, "legacy-fingerprint")
 	require.NoError(t, err)
 }

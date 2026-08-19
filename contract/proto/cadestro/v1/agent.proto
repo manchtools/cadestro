@@ -468,7 +468,7 @@ message GetLuksKeyRequest {
 }
 
 message GetLuksKeyResponse {
-  // The managed passphrase, sealed to this agent's enrollment recipient key.
+  // The managed passphrase, delivered only on the authenticated mTLS stream.
   //
   // debug_redact is the machine-readable secret classification. It redacts
   // nothing at runtime — no encoder in protobuf-go consults the option — but
@@ -478,7 +478,7 @@ message GetLuksKeyResponse {
   // a log. It stays on the sealed field because opening the value produces
   // exactly that plaintext.
   // @gotags: validate:"required"
-  SealedValue passphrase = 1 [debug_redact = true];
+  bytes passphrase = 1 [debug_redact = true];
 }
 
 // Agent stores a new managed passphrase on the server.
@@ -492,15 +492,12 @@ message StoreLuksKeyRequest {
   // encrypted and persisted.
   // @gotags: validate:"required,startswith=/,max=4096"
   string device_path = 2;
-  // The managed passphrase, sealed to control's deployment sealing key. The
-  // AAD binds this device and this action_id, so a captured blob cannot be
-  // replayed under another device or another action. Control opens it at the
-  // storage sink and re-encrypts at rest under its own resource-context AAD;
-  // the transport seal is never reused as storage encryption.
+  // The managed passphrase, delivered only on the authenticated mTLS stream;
+  // control encrypts it under its resource-context AAD before persistence.
   // debug_redact is the secret classification (see
   // GetLuksKeyResponse.passphrase).
   // @gotags: validate:"required"
-  SealedValue passphrase = 3 [debug_redact = true];
+  bytes passphrase = 3 [debug_redact = true];
   // Why this rotation happened. INITIAL on the first time the action
   // runs on a device (no previous passphrase to retain); SCHEDULED for
   // any subsequent policy-driven rotation. LUKS does not use
@@ -520,18 +517,12 @@ message LpsPasswordRotation {
   // Local Linux username whose password was rotated.
   // @gotags: validate:"required,min=1,max=64"
   string username = 1;
-  // The rotated password, sealed to control's deployment sealing key.
-  //
-  // This field's AAD binds `username` in addition to the device and action, so
-  // the pairing is cryptographically checked: control cannot open a blob under
-  // a username other than the one the agent generated it for, and a blob
-  // cannot be moved between the entries of one batch. A password is only
-  // meaningful as a (username, password) pair, so the pair is what the seal
-  // authenticates.
+  // The rotated password, delivered only on the authenticated mTLS stream and
+  // encrypted with the owning device/action context before persistence.
   // debug_redact is the secret classification (see
   // GetLuksKeyResponse.passphrase).
   // @gotags: validate:"required"
-  SealedValue password = 2 [debug_redact = true];
+  bytes password = 2 [debug_redact = true];
   // RFC 3339 timestamp the agent observed the rotation. Control keeps the
   // agent's clock here rather than re-stamping at receipt, so the timeline
   // reflects the device's reality.

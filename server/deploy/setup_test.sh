@@ -34,7 +34,6 @@ CONTROL_ENV_VARIABLES=(
     CADESTRO_PUBLIC_TLS_KEY_FILE
     CADESTRO_ENCRYPTION_KEY_FILE
     CADESTRO_SESSION_SIGNING_KEY_FILE
-    CADESTRO_SEALING_KEY_FILE
 )
 
 # The single expected web.env surface, same contract as above. The web
@@ -295,7 +294,6 @@ test_secure_idempotent_setup() {
     assert_env_line "$config" 'CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key'
     assert_env_line "$config" 'CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
     assert_env_line "$config" 'CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
-    assert_env_line "$config" 'CADESTRO_SEALING_KEY_FILE=/run/secrets/sealing.key'
     assert_archive_isolated "$config" "$directory"
 
     if grep -R -iEq 'valkey|asynq|indexer|password_auth|postgres|database_url' "$directory/config"; then

@@ -45,9 +45,9 @@ func TestSQLiteSearchHandlers_ValidateAuthorizeScopeAndAssign(t *testing.T) {
 		{`INSERT INTO assignments (id, source_type, source_id, target_type, target_id, mode, created_at, created_by)
 			VALUES ($1, 'action', $2, 'device_group', $3, 0, $5, $6),
 			       ($4, 'action', $7, 'device_group', $8, 0, $5, $6)`, []any{newID(), actionA, groupA, newID(), now, actorID, actionB, groupB}},
-		{`INSERT INTO devices (id, hostname, agent_version, agent_sealing_public_key, registered_at)
-			VALUES ($1, 'assigned-device', '1', zeroblob(32), $3),
-			       ($2, 'foreign-device', '1', zeroblob(32), $3)`, []any{deviceA, deviceB, now}},
+		{`INSERT INTO devices (id, hostname, agent_version, registered_at)
+			VALUES ($1, 'assigned-device', '1', $3),
+			       ($2, 'foreign-device', '1', $3)`, []any{deviceA, deviceB, now}},
 		{`INSERT INTO device_assigned_users (device_id, user_id, assigned_at, assigned_by)
 			VALUES ($1, $2, $3, $2)`, []any{deviceA, actorID, now}},
 	}

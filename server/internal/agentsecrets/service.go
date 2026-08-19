@@ -5,25 +5,20 @@ package agentsecrets
 
 import (
 	"context"
-	"crypto/ecdh"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/oklog/ulid/v2"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
-
-const sealedFieldVersion = uint32(1)
 
 var (
 	ErrInvalidInput      = errors.New("invalid agent secret input")
@@ -34,32 +29,30 @@ var (
 
 // Config supplies the deployment recipient key and mandatory at-rest cipher.
 type Config struct {
-	Store                    *store.Store
-	AtRest                   *pmcrypto.Encryptor
-	ControlSealingPrivateKey *ecdh.PrivateKey
-	Now                      func() time.Time
+	Store  *store.Store
+	AtRest *pmcrypto.Encryptor
+	Now    func() time.Time
 }
 
 // Service implements the authenticated agent secret operations.
 type Service struct {
-	store          *store.Store
-	atRest         *pmcrypto.Encryptor
-	controlPrivate *ecdh.PrivateKey
-	now            func() time.Time
-	validator      interface{ Struct(any) error }
+	store     *store.Store
+	atRest    *pmcrypto.Encryptor
+	now       func() time.Time
+	validator interface{ Struct(any) error }
 }
 
-// New constructs the sealed-field service. Plaintext-at-rest and a missing
-// deployment recipient key are boot-time failures, not optional modes.
+// New constructs the authenticated-stream secret service. At-rest encryption
+// remains mandatory; transport does not add a second envelope to mTLS.
 func New(cfg Config) *Service {
-	if cfg.Store == nil || cfg.AtRest == nil || cfg.ControlSealingPrivateKey == nil {
-		panic("agentsecrets: store, at-rest cipher, and control X25519 key are required")
+	if cfg.Store == nil || cfg.AtRest == nil {
+		panic("agentsecrets: store and at-rest cipher are required")
 	}
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
 	return &Service{
-		store: cfg.Store, atRest: cfg.AtRest, controlPrivate: cfg.ControlSealingPrivateKey,
+		store: cfg.Store, atRest: cfg.AtRest,
 		now: cfg.Now, validator: sdkvalidate.NewValidator(),
 	}
 }
@@ -116,39 +109,24 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *pmv1
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(key.Passphrase, "enc:v1:") {
-		return nil, errors.New("LUKS passphrase is not encrypted at rest")
+	stored, err := s.store.GetDeviceSecret(ctx, key.ID)
+	if err != nil || stored.DeviceID != deviceID || stored.Kind != "luks" {
+		if err == nil {
+			err = errors.New("generic LUKS secret owner mismatch")
+		}
+		return nil, err
 	}
-	plaintext, err := s.atRest.DecryptWithContext(key.Passphrase,
-		pmcrypto.SecretAADForRow(deviceID, request.ActionId, "luks", key.ID))
+	plaintext, err := s.atRest.DecryptWithContext(stored.Ciphertext,
+		pmcrypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
 	if err != nil {
 		return nil, fmt.Errorf("open LUKS passphrase at rest: %w", err)
-	}
-	device, err := s.store.GetDevice(ctx, deviceID)
-	if err != nil {
-		return nil, err
-	}
-	recipient, err := sdkcrypto.ParseX25519PublicKey(device.AgentSealingPublicKey)
-	if err != nil {
-		return nil, err
-	}
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionControlToAgent,
-		"cadestro.v1.GetLuksKeyResponse", "passphrase", deviceID, request.ActionId)
-	if err != nil {
-		return nil, err
-	}
-	sealed, err := sdkcrypto.SealToPublicKey(recipient, []byte(plaintext), aad, info)
-	if err != nil {
-		return nil, fmt.Errorf("seal LUKS passphrase to agent: %w", err)
 	}
 	if _, err := s.store.RecordOperation(ctx, agentSensitiveReadOperation(deviceID, "GetLuksKey"), store.AuditEffect{
 		ResourceType: "luks_key", ResourceID: key.ID, Action: "READ", Outcome: store.EffectApplied,
 	}); err != nil {
 		return nil, err
 	}
-	return &pmv1.GetLuksKeyResponse{Passphrase: &pmv1.SealedValue{
-		Version: sealedFieldVersion, Ciphertext: sealed,
-	}}, nil
+	return &pmv1.GetLuksKeyResponse{Passphrase: []byte(plaintext)}, nil
 }
 
 // StoreLuksKey opens an agent-to-control field and re-encrypts it at rest in
@@ -170,10 +148,10 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 	// rotation row for this disk; only the row id makes the ciphertext
 	// non-relocatable onto a sibling rotation row.
 	rowID := ulid.Make().String()
-	ciphertext, err := s.atRest.EncryptWithContext(string(plaintext),
-		pmcrypto.SecretAADForRow(deviceID, request.ActionId, "luks", rowID))
+	genericCiphertext, err := s.atRest.EncryptWithContext(string(plaintext),
+		pmcrypto.DeviceSecretAAD(rowID, deviceID, "luks", request.ActionId, 1))
 	if err != nil {
-		return nil, fmt.Errorf("encrypt LUKS passphrase at rest: %w", err)
+		return nil, fmt.Errorf("encrypt generic LUKS passphrase at rest: %w", err)
 	}
 	reason, ok := rotationReason(request.RotationReason)
 	if !ok || request.RotationReason == pmv1.RotationReason_ROTATION_REASON_AUTH_GRACE {
@@ -187,9 +165,12 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 			}); err != nil {
 				return fmt.Errorf("retire current LUKS key: %w", err)
 			}
+			if err := tx.InsertDeviceSecret(ctx, db.InsertDeviceSecretParams{ID: rowID, DeviceID: deviceID, Kind: "luks", Subject: request.ActionId, Version: 1, Ciphertext: genericCiphertext}); err != nil {
+				return fmt.Errorf("insert device secret: %w", err)
+			}
 			if _, err := tx.InsertLuksKey(ctx, db.InsertLuksKeyParams{
-				ID: rowID, DeviceID: deviceID, ActionID: request.ActionId, DevicePath: request.DevicePath,
-				Passphrase: ciphertext, RotatedAt: now, RotationReason: reason, CreatedAt: now,
+				ID: rowID, DevicePath: request.DevicePath,
+				RotatedAt: now, RotationReason: reason, CreatedAt: now,
 			}); err != nil {
 				return fmt.Errorf("insert LUKS key: %w", err)
 			}
@@ -214,8 +195,8 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		return nil, err
 	}
 	type preparedRotation struct {
-		id, username, ciphertext, reason string
-		rotatedAt                        time.Time
+		id, username, genericCiphertext, reason string
+		rotatedAt                               time.Time
 	}
 	now := s.now().UTC().Truncate(time.Microsecond)
 	prepared := make([]preparedRotation, 0, len(request.Rotations))
@@ -238,11 +219,11 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		// username each seal under their own id, so a DB attacker cannot swap
 		// ciphertext between them; the username is not a unique discriminator.
 		rowID := ulid.Make().String()
-		ciphertext, encryptErr := s.atRest.EncryptWithContext(string(plaintext),
-			pmcrypto.SecretAADForRow(deviceID, request.ActionId, "lps", rowID))
+		genericCiphertext, genericEncryptErr := s.atRest.EncryptWithContext(string(plaintext),
+			pmcrypto.DeviceSecretAAD(rowID, deviceID, "lps", request.ActionId, 1))
 		clear(plaintext)
-		if encryptErr != nil {
-			return nil, fmt.Errorf("encrypt LPS password at rest: %w", encryptErr)
+		if genericEncryptErr != nil {
+			return nil, fmt.Errorf("encrypt generic LPS password at rest: %w", genericEncryptErr)
 		}
 		rotatedAt, err := time.Parse(time.RFC3339Nano, rotation.RotatedAt)
 		if err != nil {
@@ -253,7 +234,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 			return nil, ErrInvalidInput
 		}
 		prepared = append(prepared, preparedRotation{
-			id: rowID, username: rotation.Username, ciphertext: ciphertext,
+			id: rowID, username: rotation.Username, genericCiphertext: genericCiphertext,
 			rotatedAt: rotatedAt.UTC().Truncate(time.Microsecond), reason: reason,
 		})
 	}
@@ -265,9 +246,11 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 				}); err != nil {
 					return fmt.Errorf("retire current LPS password: %w", err)
 				}
+				if err := tx.InsertDeviceSecret(ctx, db.InsertDeviceSecretParams{ID: rotation.id, DeviceID: deviceID, Kind: "lps", Subject: request.ActionId, Version: 1, Ciphertext: rotation.genericCiphertext}); err != nil {
+					return fmt.Errorf("insert device secret: %w", err)
+				}
 				if _, err := tx.InsertLpsPassword(ctx, db.InsertLpsPasswordParams{
-					ID: rotation.id, DeviceID: deviceID, ActionID: request.ActionId, Username: rotation.username,
-					Password: rotation.ciphertext, RotatedAt: rotation.rotatedAt,
+					ID: rotation.id, Username: rotation.username, RotatedAt: rotation.rotatedAt,
 					RotationReason: rotation.reason, CreatedAt: now,
 				}); err != nil {
 					return fmt.Errorf("insert LPS password: %w", err)
@@ -283,18 +266,13 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 	return &pmv1.StoreLpsPasswordsResponse{Success: true}, nil
 }
 
-func (s *Service) openAgentField(value *pmv1.SealedValue, message, field string, bindings ...string) ([]byte, error) {
-	if value == nil || value.Version != sealedFieldVersion {
-		return nil, ErrUnsupportedSeal
+func (s *Service) openAgentField(value []byte, message, field string, bindings ...string) ([]byte, error) {
+	if len(value) == 0 {
+		return nil, ErrInvalidInput
 	}
-	aad, info, err := sdkcrypto.FieldSealContext(sdkcrypto.DirectionAgentToControl, message, field, bindings...)
-	if err != nil {
-		return nil, err
-	}
-	plaintext, err := sdkcrypto.OpenWithPrivateKey(s.controlPrivate, value.Ciphertext, aad, info)
-	if err != nil {
-		return nil, fmt.Errorf("open sealed agent field: %w", err)
-	}
+	// mTLS authenticates and encrypts this stream. The bytes are the plaintext
+	// value; never persist this representation directly.
+	plaintext := append([]byte(nil), value...)
 	if len(plaintext) == 0 {
 		return nil, ErrInvalidInput
 	}

@@ -36,8 +36,7 @@ func seedScopedDevice(t *testing.T, raw *testdb.DB, groupID, deviceID string) {
 	t.Helper()
 	ctx := context.Background()
 	_, err := raw.Exec(ctx,
-		`INSERT INTO devices (id, hostname, agent_sealing_public_key) VALUES ($1, $2, $3)`,
-		deviceID, "host-"+deviceID, make([]byte, 32))
+		`INSERT INTO devices (id, hostname) VALUES ($1, $2)`, deviceID, "host-"+deviceID)
 	require.NoError(t, err)
 	_, err = raw.Exec(ctx, `INSERT INTO device_groups (id, name) VALUES ($1, $2)`, groupID, "grp-"+groupID)
 	require.NoError(t, err)

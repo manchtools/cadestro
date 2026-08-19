@@ -100,7 +100,7 @@ func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 // exactly one enum member so that member is the only thing under test.
 func encryptionParamsFixture() *pm.EncryptionParams {
 	return &pm.EncryptionParams{
-		PresharedKey:            &pm.SealedValue{Version: 1, Ciphertext: make([]byte, 61)},
+		PresharedKey:            make([]byte, 61),
 		RotationIntervalDays:    30,
 		MinWords:                5,
 		UserPassphraseMinLength: 16,

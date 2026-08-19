@@ -209,12 +209,42 @@ func initializeSQLite(ctx context.Context, db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("commit SQLite baseline: %w", err)
 		}
-		return nil
+		return checkDeviceSecretPosture(ctx, db)
 	case 1:
-		return checkCertificateLifecyclePosture(ctx, db)
+		if err := checkCertificateLifecyclePosture(ctx, db); err != nil {
+			return err
+		}
+		return checkDeviceSecretPosture(ctx, db)
 	default:
 		return fmt.Errorf("open SQLite database: unsupported schema version %d", version)
 	}
+}
+
+func checkDeviceSecretPosture(ctx context.Context, db *sql.DB) error {
+	var tableCount int
+	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'device_secrets'`).Scan(&tableCount); err != nil {
+		return fmt.Errorf("inspect device secret schema: %w", err)
+	}
+	if tableCount != 1 {
+		return fmt.Errorf("database is missing device_secrets; stop control and run docs/upgrade-device-secrets.sql followed by migrate-device-secrets")
+	}
+	for _, table := range []string{"lps_passwords", "luks_keys"} {
+		rows, err := db.QueryContext(ctx, "SELECT name FROM pragma_table_info(?) WHERE name IN ('password', 'passphrase')", table)
+		if err != nil {
+			return fmt.Errorf("inspect %s secret columns: %w", table, err)
+		}
+		var legacyColumn string
+		if rows.Next() && rows.Scan(&legacyColumn) == nil {
+			_ = rows.Close()
+			return fmt.Errorf("database still stores %s in %s; stop control and run migrate-device-secrets", legacyColumn, table)
+		}
+		if err := rows.Err(); err != nil {
+			_ = rows.Close()
+			return fmt.Errorf("inspect %s secret columns: %w", table, err)
+		}
+		_ = rows.Close()
+	}
+	return nil
 }
 
 func checkCertificateLifecyclePosture(ctx context.Context, db *sql.DB) error {
