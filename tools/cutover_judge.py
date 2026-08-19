@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import io
 import json
-import os
 import re
 import subprocess
 import sys
@@ -23,7 +22,6 @@ from pathlib import Path
 from typing import Iterable
 
 
-SOURCE_SUFFIXES = {".go", ".proto", ".sql", ".ts", ".tsx", ".js", ".svelte"}
 SKIP_PARTS = {"node_modules", ".git", "dist", "build"}
 GENERATED_PARTS = {"gen", "generated"}
 
@@ -185,12 +183,25 @@ def feature_inventory(root: Path, require_nonempty: bool = True) -> dict[str, li
         "web_routes": discover_routes(root),
         "sdk_packages": sdk_packages,
         "sdk_capabilities": sdk_capabilities,
-        "server_agent_domains": discover_domains(root),
     }
     if require_nonempty:
         empty = [name for name, values in inventory.items() if not values]
         if empty:
             raise JudgeError("baseline feature discovery was empty: " + ", ".join(empty))
+    return inventory
+
+
+def implementation_inventory(root: Path, require_nonempty: bool = False) -> dict[str, list[str]]:
+    """Return observable package/domain inventory without treating names as API."""
+    domains = discover_domains(root)
+    inventory = {
+        "server_domains": sorted(item for item in domains if item.startswith("server:")),
+        "agent_domains": sorted(item for item in domains if item.startswith("agent:")),
+    }
+    if require_nonempty:
+        empty = [name for name, values in inventory.items() if not values]
+        if empty:
+            raise JudgeError("baseline implementation-domain discovery was empty: " + ", ".join(empty))
     return inventory
 
 
@@ -276,11 +287,28 @@ def sql_durable_matches(root: Path) -> list[Match]:
     return result
 
 
+def delivery_protocol_matches(root: Path) -> list[Match]:
+    return matches(
+        root,
+        r"^\s*(?:message\s+(?:ManifestDelivery|DeliveryReceipt)\b|type\s+DeliveryState\b)|\b(?:delivery_id|occurrence_id)\s*=\s*\d+\s*;",
+        {".go", ".proto"},
+    )
+
+
 def ordinary_policy_matches(root: Path) -> list[Match]:
     # Count declarations and state-machine tokens, not every comment that
     # happens to mention a policy and delivery.  The locations are returned so
     # a failed ceiling is inspectable rather than a synthetic score.
-    return matches(root, r"\b(?:PolicyPush|PushPolicy|PolicyState|DeliveryState|DeliveryStatus|StatePushed|PUSHED|ACKED_RECEIPT|delivery_state)\b", {".go", ".proto", ".sql"})
+    declarations = re.compile(r"\b(?:PolicyPush|PushPolicy|PolicyState|DeliveryState|DeliveryStatus|StatePending|StatePushed|StateAckedReceipt|delivery_state)\b", re.IGNORECASE)
+    states = re.compile(r"\b(?:PENDING|PUSHED|ACKED_RECEIPT)\b", re.IGNORECASE)
+    result: list[Match] = []
+    for path in files(root, {".go", ".proto", ".sql"}):
+        if path.name.endswith("_test.go") or is_generated(root, path):
+            continue
+        for number, line in enumerate(text(path).splitlines(), 1):
+            if declarations.search(line) or (states.search(line) and (re.search(r"delivery|push|receipt", line, re.IGNORECASE) or "deliver" in rel(root, path).lower())):
+                result.append(Match(rel(root, path), number, line))
+    return result
 
 
 def policy_dispatch_matches(root: Path) -> list[Match]:
@@ -302,12 +330,35 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "ordinary_policy_push_delivery_types_states": ordinary_policy_matches(root),
         "device_identity_fields": matches(root, r"\b(?:agent_sealing_public_key|cert_fingerprint|cert_not_after|deviceIdentityKey|device_identity)\b", {".go", ".proto", ".sql"}),
         "device_authorization_paths": matches(root, r"(?:AuthorizeContext|EnforceDeviceScope|deviceScopeResolver|authorize\([^\n]*deviceID)", {".go"}),
+        "manifest_delivery_protocol_types_fields": delivery_protocol_matches(root),
         "delivery_manifest_occurrence_durable_tables_columns": sql_durable_matches(root),
         "policy_resolver_dispatch_entry_points": policy_dispatch_matches(root),
         "runtime_package_fanout_coupling": runtime_import_matches(root),
-        "process_global_executor_managers": matches(root, r"^\s*(?:var|const)\s+\w*(?:Mgr|Manager|executorRunner)\b", {".go"}),
+        "process_global_executor_managers": executor_global_matches(root),
         "stale_field_sealing_protocol_machinery": matches(root, r"\b(?:fieldSealVersion|sealedFieldVersion|protocolVersion|wireProtocol)\b", {".go", ".proto"}),
     }
+
+
+def executor_global_matches(root: Path) -> list[Match]:
+    result: list[Match] = []
+    declaration = re.compile(r"^\s*(?:var|const)\s+(\w*(?:Mgr|Manager|executorRunner)\w*)\b")
+    grouped = re.compile(r"^\s*(\w*(?:Mgr|Manager|executorRunner)\w*)\s*(?:=|$)")
+    for path in files(root, {".go"}):
+        path_name = rel(root, path)
+        if path.name.endswith("_test.go") or is_generated(root, path) or "/executor/" not in f"/{path_name}":
+            continue
+        in_var_block = False
+        for number, line in enumerate(text(path).splitlines(), 1):
+            if re.match(r"^\s*var\s*\(\s*$", line):
+                in_var_block = True
+                continue
+            if in_var_block and re.match(r"^\s*\)\s*$", line):
+                in_var_block = False
+                continue
+            match = grouped.search(line) if in_var_block else declaration.search(line)
+            if match:
+                result.append(Match(path_name, number, line))
+    return result
 
 
 def runtime_import_matches(root: Path) -> list[Match]:
@@ -384,6 +435,8 @@ def run(args: argparse.Namespace) -> tuple[dict[str, object], int]:
     try:
         baseline_features = feature_inventory(baseline_root)
         candidate_features = feature_inventory(candidate_root, require_nonempty=False)
+        baseline_implementation = implementation_inventory(baseline_root, require_nonempty=True)
+        candidate_implementation = implementation_inventory(candidate_root)
         exceptions_path = Path(args.exceptions) if args.exceptions else None
         feature = compare_features(baseline_features, candidate_features, load_exceptions(exceptions_path))
         baseline_counts = {name: len(items) for name, items in metric_matches(baseline_root).items()}
@@ -392,6 +445,12 @@ def run(args: argparse.Namespace) -> tuple[dict[str, object], int]:
             "baseline": args.baseline,
             "candidate": args.candidate,
             "feature_preservation": feature,
+            "implementation_inventory": {
+                "baseline": baseline_implementation,
+                "candidate": candidate_implementation,
+                "removed_domains": sorted(set(sum(baseline_implementation.values(), [])) - set(sum(candidate_implementation.values(), []))),
+                "note": "informational: package/domain names are not feature-preservation gates",
+            },
             "implementation_simplification": simplify,
             "pass": bool(feature["pass"] and simplify["pass"]),
         }

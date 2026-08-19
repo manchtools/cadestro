@@ -34,10 +34,13 @@ message KeepParams { string value = 1; }
     write(root, "server/internal/controlruntime/runtime.go", "package controlruntime\n")
     if junk:
         write(root, "agent/internal/executor/legacy.go", """package executor
-var executorRunner = old
+var old = 1
+var (
+    executorRunner = old
+    desktopMgr = old
+)
 type PolicyPushState string
 type deviceIdentityKey struct{}
-var old = 1
 """)
         write(root, "server/internal/policy.go", """package policy
 func ResolvePolicy() {}
@@ -48,13 +51,22 @@ func EnforceDeviceScope() {}
 import _ \"github.com/example/cadestro/server/internal/old\"
 """, encoding="utf-8")
         write(root, "server/internal/store/sqliteschema/schema.sql", "CREATE TABLE deliveries (delivery_id text, state text);\n")
+        write(root, "contract/proto/cadestro/v1/delivery.proto", """message ManifestDelivery {
+  string delivery_id = 1;
+  string occurrence_id = 2;
+}
+message DeliveryReceipt { string delivery_id = 1; }
+""")
         write(root, "sdk/crypto/sealing.go", "package crypto\nfunc FieldSealContext() {}\n")
 
 
 class CutoverJudgeTest(unittest.TestCase):
     def test_real_baseline_discovery_is_non_vacuous(self) -> None:
-        inventory = judge.feature_inventory(Path(__file__).resolve().parents[1])
+        root = Path(__file__).resolve().parents[1]
+        inventory = judge.feature_inventory(root)
         self.assertTrue(all(inventory.values()), inventory)
+        domains = judge.implementation_inventory(root, require_nonempty=True)
+        self.assertTrue(all(domains.values()), domains)
 
     def test_removed_feature_is_unexplained_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -74,14 +86,23 @@ class CutoverJudgeTest(unittest.TestCase):
             candidate = Path(directory) / "candidate"
             feature_fixture(baseline, junk=True)
             feature_fixture(candidate, junk=False)
+            runtime = candidate / "server/internal/controlruntime"
+            (runtime / "runtime.go").unlink()
+            runtime.rmdir()
             baseline_features = judge.feature_inventory(baseline)
             candidate_features = judge.feature_inventory(candidate)
             feature = judge.compare_features(baseline_features, candidate_features, [])
+            domains = judge.implementation_inventory(baseline)
+            candidate_domains = judge.implementation_inventory(candidate)
             counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
             simplify = judge.simplification_report(candidate, counts)
             self.assertTrue(feature["pass"], feature)
+            self.assertNotIn("server:controlruntime", sum(candidate_domains.values(), []))
+            self.assertIn("server:controlruntime", sum(domains.values(), []))
             self.assertTrue(simplify["improved"], simplify)
             self.assertTrue(simplify["pass"], simplify)
+            self.assertGreater(counts["manifest_delivery_protocol_types_fields"], 0)
+            self.assertEqual(len(judge.executor_global_matches(baseline)), 2)
 
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
         baseline = {"rpc": ["ControlService.Old"]}
