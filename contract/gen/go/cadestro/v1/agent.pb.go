@@ -2533,10 +2533,9 @@ type GetLuksKeyResponse struct {
 	// structural sink guards read it off the descriptor to derive the set of
 	// fields whose plaintext may only be touched at an enumerated sink, so a
 	// slog or fmt argument fails the build instead of shipping a credential into
-	// a log. It stays on the sealed field because opening the value produces
-	// exactly that plaintext.
-	// @gotags: validate:"required"
-	Passphrase    []byte `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required"`
+	// a log.
+	// @gotags: validate:"required,max=4096"
+	Passphrase    []byte `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required,max=4096"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2594,8 +2593,8 @@ type StoreLuksKeyRequest struct {
 	// control encrypts it under its resource-context AAD before persistence.
 	// debug_redact is the secret classification (see
 	// GetLuksKeyResponse.passphrase).
-	// @gotags: validate:"required"
-	Passphrase []byte `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required"`
+	// @gotags: validate:"required,max=4096"
+	Passphrase []byte `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required,max=4096"`
 	// Why this rotation happened. INITIAL on the first time the action
 	// runs on a device (no previous passphrase to retain); SCHEDULED for
 	// any subsequent policy-driven rotation. LUKS does not use
@@ -2720,8 +2719,8 @@ type LpsPasswordRotation struct {
 	// encrypted with the owning device/action context before persistence.
 	// debug_redact is the secret classification (see
 	// GetLuksKeyResponse.passphrase).
-	// @gotags: validate:"required"
-	Password []byte `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" validate:"required"`
+	// @gotags: validate:"required,max=128"
+	Password []byte `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" validate:"required,max=128"`
 	// RFC 3339 timestamp the agent observed the rotation. Control keeps the
 	// agent's clock here rather than re-stamping at receipt, so the timeline
 	// reflects the device's reality.

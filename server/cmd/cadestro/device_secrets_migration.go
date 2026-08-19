@@ -25,12 +25,7 @@ func runDeviceSecretMigration(ctx context.Context) int {
 		}
 		return 2
 	}
-	legacy, err := pmcrypto.NewEncryptor(keyHex)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "cadestro: invalid encryption key:", err)
-		return 2
-	}
-	target, err := pmcrypto.NewEncryptor(keyHex)
+	atRest, err := pmcrypto.NewEncryptor(keyHex)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cadestro: invalid encryption key:", err)
 		return 2
@@ -41,7 +36,7 @@ func runDeviceSecretMigration(ctx context.Context) int {
 		return 1
 	}
 	defer st.Close()
-	if err := st.MigrateDeviceSecretRows(ctx, legacy, target); err != nil {
+	if err := st.MigrateDeviceSecretRows(ctx, atRest); err != nil {
 		fmt.Fprintln(os.Stderr, "cadestro: migrate device secrets:", err)
 		return 1
 	}

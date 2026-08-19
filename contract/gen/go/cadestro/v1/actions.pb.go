@@ -2742,9 +2742,11 @@ func (x *LpsParams) GetGracePeriodHours() int32 {
 // passphrase, and can enroll a TPM or user passphrase in the device-bound slot.
 type EncryptionParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Pre-shared key for initial ownership, sealed by control to this agent.
-	// @gotags: validate:"required"
-	PresharedKey []byte `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty" validate:"required"`
+	// Pre-shared key for initial ownership, delivered only over authenticated mTLS.
+	// The durable manifest carries the at-rest envelope until the authenticated
+	// send boundary, so this bound includes AEAD/base64 overhead.
+	// @gotags: validate:"required,max=512"
+	PresharedKey []byte `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty" validate:"required,max=512"`
 	// Days between scheduled passphrase rotations (1-365)
 	// @gotags: validate:"required,gte=1,lte=365"
 	RotationIntervalDays int32 `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty" validate:"required,gte=1,lte=365"`
@@ -2854,17 +2856,17 @@ type WifiParams struct {
 	// Authentication type
 	// @gotags: validate:"required,ne=0"
 	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
-	// PSK authentication (WPA2/WPA3 Personal), sealed by control to this agent.
-	// @gotags: validate:"omitempty"
-	Psk []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty" validate:"omitempty"`
+	// PSK authentication (WPA2/WPA3 Personal), delivered only over authenticated mTLS.
+	// @gotags: validate:"omitempty,max=256"
+	Psk []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty" validate:"omitempty,max=256"`
 	// EAP-TLS authentication (802.1X with client certificate)
 	// @gotags: validate:"omitempty"
 	CaCert string `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty" validate:"omitempty"` // CA certificate (PEM)
 	// @gotags: validate:"omitempty"
 	ClientCert string `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty" validate:"omitempty"` // Client certificate (PEM)
-	// Client private key (PEM), sealed by control to this agent.
-	// @gotags: validate:"omitempty"
-	ClientKey []byte `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty" validate:"omitempty"`
+	// Client private key (PEM), delivered only over authenticated mTLS.
+	// @gotags: validate:"omitempty,max=131072"
+	ClientKey []byte `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty" validate:"omitempty,max=131072"`
 	// @gotags: validate:"omitempty,max=254"
 	Identity string `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty" validate:"omitempty,max=254"` // EAP identity (e.g., user@corp.com)
 	// Connection settings

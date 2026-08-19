@@ -23,7 +23,6 @@ import (
 var (
 	ErrInvalidInput      = errors.New("invalid agent secret input")
 	ErrWrongActionType   = errors.New("action has the wrong secret type")
-	ErrUnsupportedSeal   = errors.New("unsupported sealed-field version")
 	ErrDuplicateUsername = errors.New("LPS batch repeats a username")
 )
 
@@ -138,7 +137,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 	if err := s.requireActionType(ctx, request.ActionId, pmv1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
 		return nil, err
 	}
-	plaintext, err := s.openAgentField(request.Passphrase, "cadestro.v1.StoreLuksKeyRequest", "passphrase", deviceID, request.ActionId)
+	plaintext, err := copySecret(request.Passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -209,8 +208,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 			return nil, ErrDuplicateUsername
 		}
 		seen[rotation.Username] = struct{}{}
-		plaintext, err := s.openAgentField(rotation.Password,
-			"cadestro.v1.LpsPasswordRotation", "password", deviceID, request.ActionId, rotation.Username)
+		plaintext, err := copySecret(rotation.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -266,17 +264,13 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 	return &pmv1.StoreLpsPasswordsResponse{Success: true}, nil
 }
 
-func (s *Service) openAgentField(value []byte, message, field string, bindings ...string) ([]byte, error) {
+func copySecret(value []byte) ([]byte, error) {
 	if len(value) == 0 {
 		return nil, ErrInvalidInput
 	}
 	// mTLS authenticates and encrypts this stream. The bytes are the plaintext
 	// value; never persist this representation directly.
-	plaintext := append([]byte(nil), value...)
-	if len(plaintext) == 0 {
-		return nil, ErrInvalidInput
-	}
-	return plaintext, nil
+	return append([]byte(nil), value...), nil
 }
 
 func (s *Service) requireActionType(ctx context.Context, actionID string, expected pmv1.ActionType) error {

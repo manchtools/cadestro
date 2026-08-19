@@ -44,12 +44,10 @@ durations name their variable and fail startup.
 
 <!-- docref: begin src=cmd/cadestro/config.go#loadSecret:b9678c7e,cmd/cadestro/config.go#readSecretFile:60ffa83b,cmd/cadestro/config.go#loadEd25519PrivateKey:3cc11345 -->
 Private keys are file-referenced only: `CADESTRO_SESSION_SIGNING_KEY_FILE`
-must name one PEM-encoded Ed25519 PKCS#8 key. The two symmetric secrets accept
-either form — exactly one of `CADESTRO_ENCRYPTION_KEY` or
-`CADESTRO_ENCRYPTION_KEY_FILE`, and exactly one of
-`CADESTRO_SEALING_KEY` or `CADESTRO_SEALING_KEY_FILE`. Naming both of a
-pair is a configuration mistake rather than a precedence question and fails
-startup, as does naming neither. A referenced secret file must be a small
+must name one PEM-encoded Ed25519 PKCS#8 key. At-rest encryption accepts
+exactly one of `CADESTRO_ENCRYPTION_KEY` or
+`CADESTRO_ENCRYPTION_KEY_FILE`. Naming both is a configuration mistake rather
+than a precedence question and fails startup, as does naming neither. A referenced secret file must be a small
 regular file that is not group/world accessible. Configuration errors report
 variable names only; secret values are never echoed.
 <!-- docref: end -->

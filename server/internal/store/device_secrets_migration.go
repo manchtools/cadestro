@@ -11,16 +11,16 @@ import (
 
 // MigrateDeviceSecretRows copies schema-v1 LUKS/LPS ciphertext into the
 // generic device-owned table. Every legacy row is opened and re-encrypted
-// inside one transaction; a bad row aborts before any insert commits and the
-// legacy tables are deliberately left readable for validation and rollback.
-func (s *Store) MigrateDeviceSecretRows(ctx context.Context, legacy, target *pmcrypto.Encryptor) error {
-	if s == nil || legacy == nil || target == nil {
-		return fmt.Errorf("device secret migration: store and both encryption keys are required")
+// inside one transaction; a bad row rolls back both the new rows and the
+// metadata-table rebuild.
+func (s *Store) MigrateDeviceSecretRows(ctx context.Context, atRest *pmcrypto.Encryptor) error {
+	if s == nil || atRest == nil {
+		return fmt.Errorf("device secret migration: store and encryption key are required")
 	}
 	_, err := s.WithAudit(ctx, AuditOperation{
-		OperationID: ulid.Make().String(), Class: ClassMutation, ActorType: "system", ActorID: "migration",
+		OperationID: ulid.Make().String(), Class: ClassMutation, ActorType: "system",
 		Origin: "manual_cutover", RequestDescriptor: "device-secret-schema-v1",
-		AuthorizationOutcome: AuthorizationAllowed, AuthorizationDetail: "offline migration", Result: ResultSuccess, ResultCode: "OK",
+		AuthorizationOutcome: AuthorizationAllowed, AuthorizationDetail: "offline_migration", Result: ResultSuccess, ResultCode: "OK",
 	}, func(ctx context.Context, tx *Tx, rec *AuditRecorder) error {
 		type row struct {
 			id, device, action, kind, value string
@@ -50,11 +50,11 @@ func (s *Store) MigrateDeviceSecretRows(ctx context.Context, legacy, target *pmc
 			_ = result.Close()
 		}
 		for _, item := range rows {
-			plaintext, err := legacy.DecryptWithContext(item.value, pmcrypto.LegacySecretAADForRow(item.device, item.action, item.kind, item.id))
+			plaintext, err := atRest.DecryptWithContext(item.value, pmcrypto.LegacySecretAADForRow(item.device, item.action, item.kind, item.id))
 			if err != nil {
 				return fmt.Errorf("decrypt legacy %s row %s: %w", item.kind, item.id, err)
 			}
-			ciphertext, err := target.EncryptWithContext(plaintext, pmcrypto.DeviceSecretAAD(item.id, item.device, item.kind, item.action, 1))
+			ciphertext, err := atRest.EncryptWithContext(plaintext, pmcrypto.DeviceSecretAAD(item.id, item.device, item.kind, item.action, 1))
 			if err != nil {
 				return fmt.Errorf("encrypt migrated %s row %s: %w", item.kind, item.id, err)
 			}
@@ -89,8 +89,8 @@ func removeLegacySecretColumns(ctx context.Context, tx *sql.Tx) error {
             is_current boolean NOT NULL DEFAULT true,
             created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`,
-		`INSERT INTO lps_passwords (id, device_id, action_id, username, rotated_at, rotation_reason, is_current, created_at)
-         SELECT id, device_id, action_id, username, rotated_at, rotation_reason, is_current, created_at FROM lps_passwords_legacy`,
+		`INSERT INTO lps_passwords (id, username, rotated_at, rotation_reason, is_current, created_at)
+		 SELECT id, username, rotated_at, rotation_reason, is_current, created_at FROM lps_passwords_legacy`,
 		`DROP TABLE lps_passwords_legacy`,
 		`DROP INDEX idx_luks_keys_device`,
 		`DROP INDEX idx_luks_keys_action_device`,
@@ -107,8 +107,8 @@ func removeLegacySecretColumns(ctx context.Context, tx *sql.Tx) error {
             revocation_error text,
             revocation_at timestamp
         )`,
-		`INSERT INTO luks_keys (id, device_id, action_id, device_path, rotated_at, rotation_reason, is_current, created_at, revocation_status, revocation_error, revocation_at)
-         SELECT id, device_id, action_id, device_path, rotated_at, rotation_reason, is_current, created_at, revocation_status, revocation_error, revocation_at FROM luks_keys_legacy`,
+		`INSERT INTO luks_keys (id, device_path, rotated_at, rotation_reason, is_current, created_at, revocation_status, revocation_error, revocation_at)
+		 SELECT id, device_path, rotated_at, rotation_reason, is_current, created_at, revocation_status, revocation_error, revocation_at FROM luks_keys_legacy`,
 		`DROP TABLE luks_keys_legacy`,
 	}
 	for _, statement := range statements {
