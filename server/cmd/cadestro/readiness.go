@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/manchtools/cadestro/server/internal/backupstatus"
 )
 
 const readinessFingerprint = "0000000000000000000000000000000000000000000000000000000000000000"
@@ -22,7 +25,8 @@ func checkReadiness(
 	ctx context.Context,
 	st readinessStore,
 	revocations readinessRevocationChecker,
-	artifactPath string,
+	artifactPath, backupPath string,
+	backupMaxLag time.Duration,
 ) error {
 	if ctx == nil || st == nil || revocations == nil {
 		return errors.New("readiness dependencies are required")
@@ -35,6 +39,18 @@ func checkReadiness(
 	}
 	if err := validateWritableDirectory("artifact path", artifactPath); err != nil {
 		return fmt.Errorf("artifact path: %w", err)
+	}
+	// Empty path or non-positive lag is the explicit disabled/unconfigured
+	// policy; readiness must not manufacture a backup failure in that mode.
+	if backupPath == "" || backupMaxLag <= 0 {
+		return nil
+	}
+	status, err := backupstatus.Read(backupPath, time.Now().UTC(), backupMaxLag)
+	if err != nil {
+		return fmt.Errorf("backup status: %w", err)
+	}
+	if status.Stale {
+		return errors.New("backup status is stale")
 	}
 	return nil
 }

@@ -27,8 +27,7 @@ type marker struct {
 	SHA256      string    `json:"sha256"`
 }
 
-// Status is the operator-facing backup posture. A missing marker is stale,
-// not an application-readiness failure.
+// Status is the operator-facing backup posture. A missing marker is stale.
 type Status struct {
 	Version              int        `json:"version"`
 	LastSuccessfulBackup *time.Time `json:"last_successful_backup"`

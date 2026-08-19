@@ -149,7 +149,7 @@ func run(cfg *Config, logger *slog.Logger) error {
 		TerminalOriginPatterns: cfg.TerminalOrigins, TrustedProxies: cfg.TrustedProxies,
 		HeartbeatInterval: cfg.HeartbeatInterval,
 		Readiness: func(ctx context.Context) error {
-			return checkReadiness(ctx, st, revocations, cfg.ArtifactPath)
+			return checkReadiness(ctx, st, revocations, cfg.ArtifactPath, cfg.BackupPath, cfg.BackupMaxLag)
 		},
 	})
 	defer runtime.Close()

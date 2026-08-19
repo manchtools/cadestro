@@ -314,12 +314,12 @@ docker compose ps                    # all three healthy
 curl -fsS https://control.example.com/ready
 ```
 
-<!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:98344964 -->
+<!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:14eb1094 -->
 Readiness checks that the database answers, that revocation lookups work, and
-that the artifact path is writable. Note what it deliberately does *not* fail
-on: a stale backup. Backup posture is reported separately (see [backup and
-restore](backup-restore.md)) rather than taking a serving control plane out of
-rotation.
+that the artifact path is writable. When backup posture is configured, a
+missing, invalid, failed, or stale backup also makes readiness fail. An
+explicitly disabled or unconfigured backup policy is skipped. Backup posture
+is also reported separately (see [backup and restore](backup-restore.md)).
 <!-- docref: end -->
 
 Then enroll your first device — see [enrollment](enrollment.md).
