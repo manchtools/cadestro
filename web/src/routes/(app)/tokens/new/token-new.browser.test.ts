@@ -171,7 +171,7 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 		expect(Math.round((expiresAt.getTime() - Date.now()) / 86_400_000)).toBe(14);
 	});
 
-	it('shows the one-time secret on the route, because navigating away would destroy it', async () => {
+	it('shows the bearer secret on the route, because navigating away would destroy it', async () => {
 		render(NewTokenPage);
 		await fillToken('Fleet rollout', '7');
 		expect(commitContext()).toBe(true);

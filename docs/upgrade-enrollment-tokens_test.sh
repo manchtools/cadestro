@@ -47,6 +47,12 @@ sqlite3 "$missing_provenance" \
   "INSERT INTO devices(id,registered_at) VALUES('d1',CURRENT_TIMESTAMP);"
 assert_refused_without_mutation "$missing_provenance" "missing token provenance with empty tokens"
 
+orphan_provenance="$tmp_dir/orphan-provenance.db"
+make_legacy_db "$orphan_provenance"
+sqlite3 "$orphan_provenance" \
+  "INSERT INTO devices(id,registered_at,registration_token_id) VALUES('d1',CURRENT_TIMESTAMP,'missing-token');"
+assert_refused_without_mutation "$orphan_provenance" "orphan token provenance"
+
 valid="$tmp_dir/valid.db"
 make_legacy_db "$valid"
 sqlite3 "$valid" <<'SQL'
@@ -58,6 +64,15 @@ SQL
 sqlite3 -bail "$valid" < "$migration" >/dev/null
 test "$(sqlite3 "$valid" "SELECT value_hash || ':' || max_uses FROM tokens WHERE id = 't1';")" = digest:1
 test "$(sqlite3 "$valid" "SELECT registration_token_id FROM devices WHERE id = 'd1';")" = t1
+if sqlite3 "$valid" "UPDATE devices SET registration_token_id = NULL WHERE id = 'd1';" >/dev/null 2>&1; then
+  echo "migration lost token provenance update guard" >&2
+  exit 1
+fi
+sqlite3 "$valid" "UPDATE devices SET enrollment_identity_public_key = zeroblob(32) WHERE id = 'd1';"
+if sqlite3 "$valid" "UPDATE devices SET enrollment_identity_public_key = randomblob(32) WHERE id = 'd1';" >/dev/null 2>&1; then
+  echo "migration lost enrollment identity update guard" >&2
+  exit 1
+fi
 if sqlite3 "$valid" "DELETE FROM tokens WHERE id = 't1';" >/dev/null 2>&1; then
   echo "migration lost token provenance delete guard" >&2
   exit 1

@@ -19,7 +19,7 @@
 	// The Search RPC has no tokens scope: the list RPC returns every token
 	// (including disabled ones) and the table matches / filters / sorts / pages
 	// them client-side. Status is not a stored field — it is derived from
-	// disabled + one-time + use-count, here and in the status filter alike.
+	// disabled and the derived use count, here and in the status filter alike.
 	type SortKey = 'name' | 'status' | 'created';
 	type Filters = { status: string[] };
 

@@ -344,6 +344,32 @@ func TestIssueCertificateFromCSR_InvalidCSR(t *testing.T) {
 	assert.Contains(t, err.Error(), "decode CSR PEM")
 }
 
+func TestEnrollmentIdentityFromCSRRejectsTrailingData(t *testing.T) {
+	csr, _ := generateCSR(t, "device-001")
+	second, _ := generateCSR(t, "device-002")
+	for name, suffix := range map[string][]byte{
+		"text":   []byte("trailing"),
+		"second": append([]byte("\n"), second...),
+	} {
+		t.Run(name, func(t *testing.T) {
+			input := append(append([]byte(nil), csr...), suffix...)
+			_, err := ca.EnrollmentIdentityFromCSR(input)
+			require.ErrorIs(t, err, ca.ErrInvalidCSR)
+			assert.Contains(t, err.Error(), "trailing data")
+		})
+	}
+}
+
+func TestEnrollmentIdentityFromCSRRejectsWrongPEMType(t *testing.T) {
+	csr, _ := generateCSR(t, "device-001")
+	block, _ := pem.Decode(csr)
+	require.NotNil(t, block)
+	block.Type = "CERTIFICATE"
+	_, err := ca.EnrollmentIdentityFromCSR(pem.EncodeToMemory(block))
+	require.ErrorIs(t, err, ca.ErrInvalidCSR)
+	assert.Contains(t, err.Error(), "unexpected PEM block type")
+}
+
 // TestIssueCertificateFromCSR_ForgedSignatureRejected pins the csr.CheckSignature
 // gate: a CSR whose ASN.1 structure is valid but whose signature does NOT verify
 // (tampered in transit, or minted by someone who does not hold the private key)

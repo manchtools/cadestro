@@ -6,6 +6,9 @@
 --   SELECT id, name FROM tokens WHERE expires_at IS NULL;
 --   SELECT id FROM devices WHERE registration_token_id IS NULL
 --       AND registered_at IS NOT NULL;
+--   SELECT d.id, d.registration_token_id FROM devices d
+--       WHERE d.registration_token_id IS NOT NULL
+--       AND NOT EXISTS (SELECT 1 FROM tokens t WHERE t.id = d.registration_token_id);
 --   SELECT id, owner_id FROM tokens WHERE owner_id IS NOT NULL;
 --   SELECT t.id, t.current_uses,
 --       (SELECT COUNT(*) FROM devices d WHERE d.registration_token_id = t.id)
@@ -14,6 +17,7 @@
 --       FROM devices d WHERE d.registration_token_id = t.id);
 -- A token with no expiry cannot be safely converted to the required TTL model.
 -- A device with no token relation cannot be assigned to a token by inference.
+-- A device with an unknown token relation cannot be carried forward safely.
 -- A non-NULL owner cannot be carried into the ownerless model without guessing;
 -- export it for a separately reviewed manual device assignment first.
 -- Keep those rows in a separately reviewed quarantine and stop this script.
@@ -29,7 +33,8 @@ BEGIN;
 SELECT t.id, t.current_uses,
        (SELECT COUNT(*) FROM devices d WHERE d.registration_token_id = t.id) AS derived_uses
 FROM tokens t
-WHERE t.current_uses <> (SELECT COUNT(*) FROM devices d WHERE d.registration_token_id = t.id);
+WHERE t.current_uses IS NULL
+   OR t.current_uses <> (SELECT COUNT(*) FROM devices d WHERE d.registration_token_id = t.id);
 
 CREATE TEMP TABLE enrollment_cutover_guard (
     ok integer NOT NULL CHECK (ok = 1)
@@ -40,6 +45,10 @@ SELECT CASE WHEN EXISTS (
 ) OR EXISTS (
     SELECT 1 FROM devices d
     WHERE d.registered_at IS NOT NULL AND d.registration_token_id IS NULL
+) OR EXISTS (
+    SELECT 1 FROM devices d
+    WHERE d.registration_token_id IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM tokens t WHERE t.id = d.registration_token_id)
 ) OR EXISTS (
     SELECT 1 FROM tokens WHERE owner_id IS NOT NULL
 ) OR EXISTS (
@@ -83,6 +92,21 @@ ALTER TABLE devices ADD COLUMN certificate_pem blob;
 CREATE UNIQUE INDEX idx_devices_enrollment_identity
     ON devices(enrollment_identity_public_key)
     WHERE enrollment_identity_public_key IS NOT NULL;
+
+CREATE TRIGGER devices_registration_token_immutable
+BEFORE UPDATE OF registration_token_id ON devices
+WHEN OLD.registration_token_id IS NOT NEW.registration_token_id
+BEGIN
+    SELECT RAISE(ABORT, 'device enrollment token provenance is immutable');
+END;
+
+CREATE TRIGGER devices_enrollment_identity_immutable
+BEFORE UPDATE OF enrollment_identity_public_key ON devices
+WHEN OLD.enrollment_identity_public_key IS NOT NULL
+ AND OLD.enrollment_identity_public_key IS NOT NEW.enrollment_identity_public_key
+BEGIN
+    SELECT RAISE(ABORT, 'device enrollment identity is immutable');
+END;
 
 -- Legacy devices used ON DELETE SET NULL. Install the guard before commit so
 -- a later trigger error cannot leave the rebuilt token table unprotected.

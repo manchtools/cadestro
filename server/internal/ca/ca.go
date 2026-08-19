@@ -37,9 +37,15 @@ func EnrollmentIdentityFromCSR(csrPEM []byte) ([]byte, error) {
 }
 
 func parseEnrollmentCSR(csrPEM []byte) (*x509.CertificateRequest, ed25519.PublicKey, error) {
-	block, _ := pem.Decode(csrPEM)
+	block, rest := pem.Decode(csrPEM)
 	if block == nil {
 		return nil, nil, fmt.Errorf("%w: failed to decode CSR PEM", ErrInvalidCSR)
+	}
+	if block.Type != "CERTIFICATE REQUEST" && block.Type != "NEW CERTIFICATE REQUEST" {
+		return nil, nil, fmt.Errorf("%w: unexpected PEM block type %q", ErrInvalidCSR, block.Type)
+	}
+	if len(bytes.TrimSpace(rest)) != 0 {
+		return nil, nil, fmt.Errorf("%w: trailing data after CSR PEM", ErrInvalidCSR)
 	}
 	csr, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {

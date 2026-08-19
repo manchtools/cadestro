@@ -54,6 +54,28 @@ func seedDeviceGroup(t *testing.T, pool *testdb.DB) string {
 	return id
 }
 
+func TestEnrollmentProvenanceIsImmutable(t *testing.T) {
+	_, pool := setupSQLite(t)
+	tokenID := newID()
+	otherTokenID := newID()
+	exec(t, pool, `INSERT INTO tokens (id, value_hash, name, expires_at) VALUES ($1, $2, $3, datetime('now', '+1 day'))`, tokenID, tokenID, "enrollment")
+	exec(t, pool, `INSERT INTO tokens (id, value_hash, name, expires_at) VALUES ($1, $2, $3, datetime('now', '+1 day'))`, otherTokenID, otherTokenID, "enrollment-2")
+	deviceID := newID()
+	exec(t, pool, `INSERT INTO devices (id, agent_sealing_public_key, registration_token_id) VALUES ($1, zeroblob(32), $2)`, deviceID, tokenID)
+
+	assert.ErrorContains(t, execFails(t, pool, `UPDATE devices SET registration_token_id = $1 WHERE id = $2`, otherTokenID, deviceID), "provenance is immutable")
+	assert.ErrorContains(t, execFails(t, pool, `UPDATE devices SET registration_token_id = NULL WHERE id = $1`, deviceID), "provenance is immutable")
+
+	identity := []byte("01234567890123456789012345678901")
+	exec(t, pool, `UPDATE devices SET enrollment_identity_public_key = $1 WHERE id = $2`, identity, deviceID)
+	assert.ErrorContains(t, execFails(t, pool, `UPDATE devices SET enrollment_identity_public_key = zeroblob(32) WHERE id = $1`, deviceID), "identity is immutable")
+	assert.ErrorContains(t, execFails(t, pool, `UPDATE devices SET enrollment_identity_public_key = NULL WHERE id = $1`, deviceID), "identity is immutable")
+
+	var storedToken string
+	require.NoError(t, pool.QueryRow(context.Background(), `SELECT registration_token_id FROM devices WHERE id = $1`, deviceID).Scan(&storedToken))
+	assert.Equal(t, tokenID, storedToken, "failed provenance updates cannot refund or move a token use")
+}
+
 // A user carries no authorization of its own: what a subject may do
 // comes from user_roles and user_group_roles. A scalar column beside
 // them would be a second, conflicting answer to the same question.

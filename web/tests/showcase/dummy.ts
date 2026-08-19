@@ -448,7 +448,7 @@ export const ALL_PERMISSIONS = [
 	'RemoveUserSshKey:self','ListDevices','ListDevices:assigned','GetDevice',
 	'GetDevice:assigned','SetDeviceLabel','RemoveDeviceLabel','AssignDevice',
 	'UnassignDevice','ListDeviceAssignees','SetDeviceSyncInterval','SetDeviceInventoryInterval',
-	'DeleteDevice','CreateToken','CreateToken:self','ListTokens',
+	'DeleteDevice','CreateToken','ListTokens',
 	'RenameToken','SetTokenDisabled','DeleteToken','CreateAction',
 	'GetAction','ListActions','RenameAction','UpdateActionDescription',
 	'UpdateActionParams','DeleteAction','CreateActionSet','GetActionSet',
@@ -1268,9 +1268,9 @@ export function listPermissionsResponse() {
 // ===========================================================================
 
 export const DUMMY_TOKENS = [
-	{ id: '01J6XYZSHOWCASETOKEN0001', name: 'Berlin rollout', max_uses: 0, expires_at: now + 60 * day, created_at: now - 40 * day, disabled: false },
-	{ id: '01J6XYZSHOWCASETOKEN0002', name: 'Lab enrollment', max_uses: 1, expires_at: now + 7 * day, created_at: now - 2 * day, disabled: false },
-	{ id: '01J6XYZSHOWCASETOKEN0003', name: 'Expired CI token', max_uses: 50, expires_at: now - 3 * day, created_at: now - 90 * day, disabled: true },
+	{ id: '01J6XYZSHOWCASETOKEN0001', name: 'Berlin rollout', max_uses: 0, current_uses: 2, expires_at: now + 60 * day, created_at: now - 40 * day, disabled: false },
+	{ id: '01J6XYZSHOWCASETOKEN0002', name: 'Lab enrollment', max_uses: 1, current_uses: 1, expires_at: now + 7 * day, created_at: now - 2 * day, disabled: false },
+	{ id: '01J6XYZSHOWCASETOKEN0003', name: 'Expired CI token', max_uses: 50, current_uses: 0, expires_at: now - 3 * day, created_at: now - 90 * day, disabled: true },
 ];
 
 export function listTokensResponse() {
@@ -1279,6 +1279,7 @@ export function listTokensResponse() {
 			id: t.id,
 			name: t.name,
 			maxUses: t.max_uses,
+			currentUses: t.current_uses,
 			expiresAt: isoFromSec(t.expires_at),
 			createdAt: isoFromSec(t.created_at),
 			createdBy: 'sam.reiter',

@@ -258,6 +258,23 @@ CREATE UNIQUE INDEX idx_devices_enrollment_identity
     ON devices(enrollment_identity_public_key)
     WHERE enrollment_identity_public_key IS NOT NULL;
 
+-- Enrollment provenance is append-only. Legacy rows may backfill their first
+-- CSR identity, but an established identity or token relation cannot change.
+CREATE TRIGGER devices_registration_token_immutable
+BEFORE UPDATE OF registration_token_id ON devices
+WHEN OLD.registration_token_id IS NOT NEW.registration_token_id
+BEGIN
+    SELECT RAISE(ABORT, 'device enrollment token provenance is immutable');
+END;
+
+CREATE TRIGGER devices_enrollment_identity_immutable
+BEFORE UPDATE OF enrollment_identity_public_key ON devices
+WHEN OLD.enrollment_identity_public_key IS NOT NULL
+ AND OLD.enrollment_identity_public_key IS NOT NEW.enrollment_identity_public_key
+BEGIN
+    SELECT RAISE(ABORT, 'device enrollment identity is immutable');
+END;
+
 CREATE TABLE device_labels (
     device_id text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
     key       text NOT NULL,
