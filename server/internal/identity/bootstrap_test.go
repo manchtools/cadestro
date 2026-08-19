@@ -58,6 +58,23 @@ func TestBootstrapToken_AdmitsTheReservedPrincipalExactlyOnce(t *testing.T) {
 	assert.Equal(t, int32(1), uses, "the refused second attempt did not spend it again")
 }
 
+func TestBootstrapToken_MayGrantTheFirstAdminRole(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	issued, err := f.boot.Issue(f.ctx())
+	require.NoError(t, err)
+	subject := f.seedSubject()
+
+	_, err = f.client.AssignRoleToUser(f.ctx(), bootstrapAuthed(&pmv1.AssignRoleToUserRequest{
+		UserId: subject.ID, RoleId: auth.AdminRoleID,
+	}, issued.Token))
+	require.NoError(t, err)
+	grants, err := f.store.ListUserRoleGrants(f.ctx(), subject.ID)
+	require.NoError(t, err)
+	require.Len(t, grants, 1)
+	assert.Equal(t, auth.AdminRoleID, grants[0].Role.ID)
+}
+
 func TestBootstrapToken_AttributesItsWritesToTheReservedPrincipal(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

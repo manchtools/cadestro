@@ -9,6 +9,7 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
+	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -109,6 +110,28 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceAddUserToGroupProcedure), 1)
 	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceRemoveUserFromGroupProcedure), 1)
 	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceDeleteUserGroupProcedure), 1)
+}
+
+func TestAddUserToGroup_RefusesMembershipInAdminCarryingGroup(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	actor := f.seedActor(grant{Permissions: []string{"AddUserToGroup"}})
+	member := f.seedSubject()
+	group := f.insertUserGroup()
+	_, err := f.raw.Exec(f.ctx(),
+		`INSERT INTO user_group_roles (grant_id, group_id, role_id, assigned_at, assigned_by)
+		 VALUES ($1, $2, $3, $4, '')`, newULID(), group, auth.AdminRoleID, f.now)
+	require.NoError(t, err)
+	beforeAudit := f.countAuditOperations()
+
+	_, err = f.client.AddUserToGroup(f.ctx(), authed(&pmv1.AddUserToGroupRequest{
+		GroupId: group, UserId: member.ID,
+	}, actor.Token))
+	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
+	members, err := f.store.ListUserGroupMembers(f.ctx(), group)
+	require.NoError(t, err)
+	assert.Empty(t, members)
+	assert.Equal(t, beforeAudit, f.countAuditOperations(), "a denied membership leaves audit state unchanged")
 }
 
 func TestUserGroups_DynamicMembershipRejectsManualChanges(t *testing.T) {

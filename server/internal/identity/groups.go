@@ -337,6 +337,17 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[pmv1
 	if group.IsDynamic {
 		return nil, rpcError(ctx, ErrDynamicGroupMembership, connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
 	}
+	roleGrants, err := h.store.ListUserGroupRoleGrants(ctx, req.Msg.GroupId)
+	if err != nil {
+		return nil, internalError(ctx, "failed to list user group role grants")
+	}
+	roleIDs := make([]string, len(roleGrants))
+	for i, grant := range roleGrants {
+		roleIDs[i] = grant.Role.ID
+	}
+	if err := h.enforceConferredAuthority(ctx, roleIDs); err != nil {
+		return nil, err
+	}
 	for _, id := range ids {
 		if err := auth.EnforceUserScopeOrSelf(ctx, h.scopeResolver(), PermAddUserToGroup, id); err != nil {
 			return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "permission denied")

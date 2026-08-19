@@ -49,7 +49,7 @@ func TestRefreshToken_RotatesAndRevokesTheOldToken(t *testing.T) {
 func TestRefreshToken_RefusesASessionMintedUnderOldAuthority(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser"}})
+	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser", "ListUsers"}})
 	subject := f.seedActor(grant{Permissions: []string{"GetCurrentUser"}})
 	pair := f.mintPair(subject.ID, subject.Email)
 

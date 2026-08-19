@@ -587,6 +587,9 @@ func (h *Handlers) checkGrantScope(
 ) (*string, *string, error) {
 	unscoped := kind == pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED && scopeID == ""
 	if unscoped {
+		if err := h.enforceConferredAuthority(ctx, roleIDs); err != nil {
+			return nil, nil, err
+		}
 		if err := auth.EnforceUnscopedGrantAuthority(ctx); err != nil {
 			return nil, nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied,
 				"a scope-limited administrator cannot create an unscoped grant")
@@ -639,6 +642,32 @@ func (h *Handlers) checkGrantScope(
 			"cannot grant a scope outside your own scope authority")
 	}
 	return &storedKind, &scopeID, nil
+}
+
+// enforceConferredAuthority prevents a role grant from conferring any
+// permission the actor does not already hold. The host-authorized bootstrap
+// principal is the deliberate first-admin exception.
+func (h *Handlers) enforceConferredAuthority(ctx context.Context, roleIDs []string) error {
+	actor, _ := auth.UserFromContext(ctx)
+	if actor != nil && actor.Kind == auth.PrincipalBootstrapAdmin {
+		return nil
+	}
+	for _, roleID := range roleIDs {
+		role, err := h.store.GetRole(ctx, roleID)
+		if err != nil {
+			if store.IsNotFound(err) {
+				return notFound(ctx, ErrRoleNotFound, "role not found")
+			}
+			return internalError(ctx, "failed to load role")
+		}
+		for _, permission := range role.Permissions {
+			if !auth.HasPermission(ctx, permission) {
+				return rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied,
+					"cannot grant authority you do not hold")
+			}
+		}
+	}
+	return nil
 }
 
 // describedScope parses the scope a revoke request names. Unlike a

@@ -131,7 +131,7 @@ func TestDeleteRole_RefusesARoleSomebodyStillHolds(t *testing.T) {
 func TestAssignRoleToUser_GrantsAndInvalidatesTheSubjectSession(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser"}})
+	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser", "ListUsers"}})
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"ListUsers"})
 
@@ -160,13 +160,63 @@ func TestAssignRoleToUser_GrantsAndInvalidatesTheSubjectSession(t *testing.T) {
 	f.effectWithAction(effects, "INVALIDATE_SESSIONS")
 }
 
+func TestAssignRoleToUser_ConferredPrivilegeCannotExceedActorAuthority(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	actor := f.seedActor(grant{Permissions: []string{"AssignRoleToUser"}})
+	subject := f.seedSubject()
+	beforeAudit := f.countAuditOperations()
+
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+		UserId: subject.ID, RoleId: auth.AdminRoleID,
+	}, actor.Token))
+	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
+	grants, err := f.store.ListUserRoleGrants(f.ctx(), subject.ID)
+	require.NoError(t, err)
+	assert.Empty(t, grants)
+	assert.Equal(t, beforeAudit, f.countAuditOperations(), "a denied grant leaves audit state unchanged")
+}
+
+func TestAssignRoleToUser_AllowsPrivilegeSubsetOrEqualToActor(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	actor := f.seedActor(grant{Permissions: []string{"AssignRoleToUser", "CreateRole", "ListUsers"}})
+	subject := f.seedSubject()
+	role := f.insertRole([]string{"CreateRole", "ListUsers"})
+
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+		UserId: subject.ID, RoleId: role,
+	}, actor.Token))
+	require.NoError(t, err)
+	grants, err := f.store.ListUserRoleGrants(f.ctx(), subject.ID)
+	require.NoError(t, err)
+	require.Len(t, grants, 1)
+}
+
+func TestAssignRoleToUserGroup_RefusesAdminRoleWithoutAdminAuthority(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	actor := f.seedActor(grant{Permissions: []string{"AssignRoleToUserGroup"}})
+	group := f.insertUserGroup()
+	beforeAudit := f.countAuditOperations()
+
+	_, err := f.client.AssignRoleToUserGroup(f.ctx(), authed(&pmv1.AssignRoleToUserGroupRequest{
+		GroupId: group, RoleId: auth.AdminRoleID,
+	}, actor.Token))
+	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
+	grants, err := f.store.ListUserGroupRoleGrants(f.ctx(), group)
+	require.NoError(t, err)
+	assert.Empty(t, grants)
+	assert.Equal(t, beforeAudit, f.countAuditOperations(), "a denied group grant leaves audit state unchanged")
+}
+
 // The same role can be held globally and at two scopes at once, so the
 // unique indexes must allow it and each grant must be independently
 // revocable.
 func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser", "RevokeRoleFromUser", "AssignRoleScope"}})
+	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser", "RevokeRoleFromUser", "AssignRoleScope", "UpdateUserProfile"}})
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"UpdateUserProfile"})
 	groupA, groupB := f.insertUserGroup(), f.insertUserGroup()
@@ -207,7 +257,7 @@ func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 func TestAssignRoleToUser_RejectsDuplicateGrantAtTheSameScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser"}})
+	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUser", "ListUsers"}})
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"ListUsers"})
 
@@ -244,11 +294,12 @@ func TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole(t *testing.T
 	require.NoError(t, err)
 	assert.Empty(t, grants, "the refused grant was never written")
 
-	// The same role granted GLOBALLY is fine.
+	// The same role granted globally is allowed because the actor holds the
+	// privilege it confers; the restriction is on scoped privilege grants.
 	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: privileged,
 	}, admin.Token))
-	require.NoError(t, err, "the restriction is on scoping it, not on granting it")
+	require.NoError(t, err)
 }
 
 // Every permission the registry marks privilege-granting must be
@@ -371,7 +422,7 @@ func TestAssignRoleToUser_ScopeLimitedAdminCannotEscapeTheirScope(t *testing.T) 
 func TestAssignRoleToUserGroup_GrantsAndRevokesByScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUserGroup", "RevokeRoleFromUserGroup"}})
+	admin := f.seedActor(grant{Permissions: []string{"AssignRoleToUserGroup", "RevokeRoleFromUserGroup", "UpdateUserProfile"}})
 	group := f.insertUserGroup()
 	role := f.insertRole([]string{"UpdateUserProfile"})
 	member := f.seedSubject()
@@ -454,7 +505,7 @@ func TestUserSearchDocument_TracksDirectRoleGrantLifecycle(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{
-		"AssignRoleToUser", "RevokeRoleFromUser", "UpdateRole",
+		"AssignRoleToUser", "RevokeRoleFromUser", "UpdateRole", "ListUsers",
 	}})
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"ListUsers"})
@@ -501,7 +552,7 @@ func TestUserSearchDocument_TracksGroupInheritedRoleFields(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{
-		"AssignRoleToUserGroup", "RevokeRoleFromUserGroup",
+		"AssignRoleToUserGroup", "RevokeRoleFromUserGroup", "UpdateUserProfile",
 	}})
 	group := f.insertUserGroup()
 	member := f.seedSubject()
