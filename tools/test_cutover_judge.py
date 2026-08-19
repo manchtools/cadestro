@@ -18,6 +18,16 @@ def feature_fixture(root: Path, junk: bool = False) -> None:
   rpc Keep(KeepRequest) returns (KeepResponse);
   rpc Removed(RemovedRequest) returns (RemovedResponse);
 }
+message RegistrationToken {
+  int32 max_uses = 1;
+  int32 current_uses = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  bool disabled = 4;
+}
+message CreateTokenRequest {
+  int32 max_uses = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}
 """)
     write(root, "contract/proto/cadestro/v1/agent.proto", "service AgentService { rpc Stream(A) returns (B); }\n")
     write(root, "contract/proto/cadestro/v1/device_auth.proto", "service DeviceAuthService { rpc Enroll(A) returns (B); }\n")
@@ -89,6 +99,21 @@ class CutoverJudgeTest(unittest.TestCase):
             result = judge.compare_features(judge.feature_inventory(baseline), judge.feature_inventory(candidate), [])
             self.assertFalse(result["pass"])
             self.assertIn({"category": "rpc", "feature": "ControlService.Removed"}, result["unexplained_missing"])
+
+    def test_removed_token_posture_is_unexplained_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            feature_fixture(baseline)
+            feature_fixture(candidate)
+            control = candidate / "contract/proto/cadestro/v1/control.proto"
+            control.write_text(control.read_text(encoding="utf-8").replace("  int32 current_uses = 2;\n", ""), encoding="utf-8")
+            result = judge.compare_features(judge.feature_inventory(baseline), judge.feature_inventory(candidate), [])
+            self.assertFalse(result["pass"])
+            self.assertIn(
+                {"category": "registration_token_posture", "feature": "RegistrationToken.current_uses"},
+                result["unexplained_missing"],
+            )
 
     def test_removed_machinery_retains_feature_and_passes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

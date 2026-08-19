@@ -114,6 +114,22 @@ def discover_rpc_group(root: Path, service_pattern: str) -> list[str]:
     return result
 
 
+def discover_registration_token_posture(root: Path) -> list[str]:
+    result: set[str] = set()
+    wanted = {
+        "RegistrationToken": {"max_uses", "current_uses", "expires_at", "disabled"},
+        "CreateTokenRequest": {"max_uses", "expires_at"},
+    }
+    for path in proto_files(root):
+        source = text(path)
+        for message, fields in wanted.items():
+            body = block(source, rf"\bmessage\s+{message}\s*\{{", r"\n\}")
+            for field in fields:
+                if re.search(rf"^\s*[\w.<>]+\s+{field}\s*=\s*\d+\s*;", body, re.MULTILINE):
+                    result.add(f"{message}.{field}")
+    return sorted(result)
+
+
 def discover_actions(root: Path) -> tuple[list[str], list[str]]:
     sources = "\n".join(text(path) for path in proto_files(root))
     enum = block(sources, r"\benum\s+ActionType\s*\{", r"\n\}")
@@ -178,6 +194,7 @@ def feature_inventory(root: Path, require_nonempty: bool = True) -> dict[str, li
         "rpc": discover_rpc(root),
         "control_rpcs": discover_rpc_group(root, r"Control"),
         "agent_rpcs": discover_rpc_group(root, r"Agent"),
+        "registration_token_posture": discover_registration_token_posture(root),
         "device_auth_rpcs": discover_rpc_group(root, r"DeviceAuth"),
         "action_values": action_values,
         "action_parameter_families": action_params,
