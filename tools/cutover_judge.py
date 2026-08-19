@@ -428,6 +428,28 @@ def legacy_device_identity_columns(root: Path) -> list[Match]:
     return result
 
 
+def policy_result_transport_matches(root: Path) -> list[Match]:
+    """Find a second result transport invented only for pulled policy."""
+    result: list[Match] = []
+    duplicate = re.compile(
+        r"\b(?:SendPolicyActionResult|SendPolicyManifestResult|IsPolicyResult|work_kind)\b"
+    )
+    for relative in (
+        "contract/client.go",
+        "agent/cmd/cadestrod/runtime.go",
+        "agent/internal/scheduler/scheduler.go",
+        "agent/internal/store/manifest.go",
+        "agent/internal/store/migrations/003_policy_manifests.sql",
+    ):
+        path = root / relative
+        if not path.is_file():
+            continue
+        for number, line in enumerate(text(path).splitlines(), 1):
+            if duplicate.search(line):
+                result.append(Match(relative, number, line))
+    return result
+
+
 def policy_dispatch_matches(root: Path) -> list[Match]:
     result: list[Match] = []
     declaration = re.compile(r"^\s*func\s+[^\s(]*(?:Resolve|resolve|Effective|Dispatch|dispatch|Submit|submit)[^\s(]*\s*\(")
@@ -477,6 +499,7 @@ def metric_matches(root: Path) -> dict[str, list[Match]]:
         "assigned_policy_push_submission_coupling": assigned_policy_push_matches(root),
         "runtime_package_fanout_coupling": runtime_import_matches(root),
         "process_global_executor_managers": executor_global_matches(root),
+        "policy_specific_result_transport_paths": policy_result_transport_matches(root),
         "stale_field_sealing_protocol_machinery": matches(root, r"\b(?:fieldSealVersion|sealedFieldVersion|protocolVersion|wireProtocol)\b", {".go", ".proto"}),
     }
 
@@ -535,7 +558,10 @@ def simplification_report(root: Path, baseline_counts: dict[str, int]) -> dict[s
         }
     # This is intentionally a small, auditable set of hard ceilings.  The
     # manager pattern is process-global state and has no valid cutover use.
-    zero = {"process_global_executor_managers": current["process_global_executor_managers"] == 0}
+    zero = {
+        "process_global_executor_managers": current["process_global_executor_managers"] == 0,
+        "policy_specific_result_transport_paths": current["policy_specific_result_transport_paths"] == 0,
+    }
     for name, passed in zero.items():
         metrics[name]["zero_invariant"] = True
         metrics[name]["pass"] = bool(metrics[name]["pass"] and passed)

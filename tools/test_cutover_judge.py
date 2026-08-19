@@ -179,6 +179,19 @@ func retry() { _ = \"cert_fingerprint cert_not_after device_identity\" }
                 "agent_sealing_public_key", "cert_fingerprint", "cert_not_after",
             ])
 
+    def test_policy_result_transport_must_reuse_the_existing_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            baseline = Path(directory) / "baseline"
+            candidate = Path(directory) / "candidate"
+            for root in (baseline, candidate):
+                feature_fixture(root)
+            write(candidate, "contract/client.go", "package contract\nfunc SendPolicyActionResult() {}\n")
+            counts = {name: len(items) for name, items in judge.metric_matches(baseline).items()}
+            result = judge.simplification_report(candidate, counts)
+            metric = result["metrics"]["policy_specific_result_transport_paths"]
+            self.assertFalse(metric["pass"], metric)
+            self.assertTrue(metric["zero_invariant"], metric)
+
     def test_exception_requires_reason_and_present_merge_target(self) -> None:
         baseline = {"rpc": ["ControlService.Old"]}
         candidate = {"rpc": ["ControlService.New"]}
