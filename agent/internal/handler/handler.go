@@ -41,19 +41,11 @@ var handlerRunner = func() sysexec.Runner {
 	return r
 }()
 
-// osqueryRunner is the minimal osquery surface the handler uses. Declared as an
-// interface (vs the concrete osquery client) so tests can inject a fake that
-// records calls and prove invalid requests do not reach osquery.
-type osqueryRunner interface {
-	Query(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error)
-	QueryTable(ctx context.Context, tableName string) ([]*pb.OSQueryRow, error)
-}
-
 // Handler implements the SDK StreamHandler interface.
 type Handler struct {
 	logger       *slog.Logger
 	executor     *executor.Executor
-	osquery      osqueryRunner // nil if osquery is not installed
+	osquery      osquery.Querier // nil if osquery is not installed
 	store        *store.Store
 	syncTrigger  chan<- struct{} // triggers a full sync
 	mu           sync.Mutex      // protects connectedCh, connectedSet and the terminal* fields below
@@ -109,7 +101,7 @@ func (h *Handler) OnRebootDevice(ctx context.Context, _ *pb.RebootDeviceCommand)
 // getOsquery returns the osquery registry, initializing it lazily on first use.
 // If osquery was not found previously, it re-checks so that osquery installed
 // after the agent started is detected without requiring a restart.
-func (h *Handler) getOsquery() osqueryRunner {
+func (h *Handler) getOsquery() osquery.Querier {
 	h.mu.Lock()
 	if h.osquery != nil {
 		r := h.osquery
@@ -259,7 +251,7 @@ func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryRe
 		}, nil
 	}
 
-	result, err := oq.Query(ctx, query)
+	result, err := queryOsquery(ctx, oq, query)
 	if err != nil {
 		h.logger.Error("query execution error", "query_id", query.QueryId, "error", err)
 		return &pb.OSQueryResult{
@@ -297,14 +289,14 @@ func (h *Handler) BuildHeartbeat() *pb.Heartbeat {
 	defer cancel()
 
 	// Get uptime
-	if result, _ := oq.Query(ctx, &pb.OSQuery{QueryId: "hb", Table: "uptime"}); result != nil && result.Success && len(result.Rows) > 0 {
+	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: "hb", Table: "uptime"}); result != nil && result.Success && len(result.Rows) > 0 {
 		if sec, err := strconv.ParseInt(result.Rows[0].Data["total_seconds"], 10, 64); err == nil {
 			hb.Uptime = durationpb.New(time.Duration(sec) * time.Second)
 		}
 	}
 
 	// Get memory usage
-	if result, _ := oq.Query(ctx, &pb.OSQuery{QueryId: "hb", Table: "memory_info"}); result != nil && result.Success && len(result.Rows) > 0 {
+	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: "hb", Table: "memory_info"}); result != nil && result.Success && len(result.Rows) > 0 {
 		data := result.Rows[0].Data
 		total, totalErr := strconv.ParseInt(data["memory_total"], 10, 64)
 		free, freeErr := strconv.ParseInt(data["memory_free"], 10, 64)
@@ -568,7 +560,7 @@ var (
 	}
 )
 
-func (h *Handler) supplementWithOsquery(ctx context.Context, oq osqueryRunner, baseline map[string]*pb.InventoryTable) {
+func (h *Handler) supplementWithOsquery(ctx context.Context, oq osquery.Querier, baseline map[string]*pb.InventoryTable) {
 	// osquery tables that override baseline
 	coreTables := inventoryCoreTables
 
@@ -585,7 +577,7 @@ func (h *Handler) supplementWithOsquery(ctx context.Context, oq osqueryRunner, b
 		if len(rows) > 0 {
 			baseline[tableName] = &pb.InventoryTable{
 				TableName: tableName,
-				Rows:      rows,
+				Rows:      osqueryRowsToProto(rows),
 			}
 		}
 	}
@@ -598,11 +590,42 @@ func (h *Handler) supplementWithOsquery(ctx context.Context, oq osqueryRunner, b
 		if len(rows) > 0 {
 			baseline[tableName] = &pb.InventoryTable{
 				TableName: tableName,
-				Rows:      rows,
+				Rows:      osqueryRowsToProto(rows),
 			}
 		}
 	}
 
+}
+
+// queryOsquery keeps the wire envelope at the agent boundary while the SDK
+// capability stays transport-neutral. Structured query fields other than the
+// table/raw SQL were historically ignored by the osquery implementation; keep
+// that behavior while using its native row type.
+func queryOsquery(ctx context.Context, oq osquery.Querier, query *pb.OSQuery) (*pb.OSQueryResult, error) {
+	var (
+		rows []osquery.Row
+		err  error
+	)
+	if query.GetRawSql() != "" {
+		rows, err = oq.QuerySQL(ctx, query.GetRawSql())
+	} else {
+		rows, err = oq.QueryTable(ctx, query.GetTable())
+	}
+	result := &pb.OSQueryResult{QueryId: query.GetQueryId(), Success: err == nil}
+	if err != nil {
+		result.Error = err.Error()
+		return result, nil
+	}
+	result.Rows = osqueryRowsToProto(rows)
+	return result, nil
+}
+
+func osqueryRowsToProto(rows []osquery.Row) []*pb.OSQueryRow {
+	converted := make([]*pb.OSQueryRow, 0, len(rows))
+	for _, row := range rows {
+		converted = append(converted, &pb.OSQueryRow{Data: map[string]string(row)})
+	}
+	return converted
 }
 
 // Executor returns the executor for direct use.

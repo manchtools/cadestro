@@ -9,6 +9,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/executor"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
 // ctxCapturingOsquery records the context handed to each osquery call so a
@@ -18,13 +19,14 @@ type ctxCapturingOsquery struct {
 	lastTableCtx context.Context
 }
 
-func (f *ctxCapturingOsquery) Query(_ context.Context, q *pb.OSQuery) (*pb.OSQueryResult, error) {
-	return &pb.OSQueryResult{QueryId: q.GetQueryId(), Success: true}, nil
+func (f *ctxCapturingOsquery) IsInstalled(context.Context) bool             { return true }
+func (f *ctxCapturingOsquery) ListTables(context.Context) ([]string, error) { return nil, nil }
+func (f *ctxCapturingOsquery) QuerySQL(context.Context, string) ([]osquery.Row, error) {
+	return nil, nil
 }
-
-func (f *ctxCapturingOsquery) QueryTable(ctx context.Context, _ string) ([]*pb.OSQueryRow, error) {
+func (f *ctxCapturingOsquery) QueryTable(ctx context.Context, _ string) ([]osquery.Row, error) {
 	f.lastTableCtx = ctx
-	return []*pb.OSQueryRow{{Data: map[string]string{"k": "v"}}}, nil
+	return []osquery.Row{{"k": "v"}}, nil
 }
 
 type inventoryCtxKey string

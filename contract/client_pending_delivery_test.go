@@ -128,6 +128,36 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 	}
 }
 
+// Keep the routing table and its validation guard coupled: a newly added
+// correlated response must both appear in dispatchServerMessage and pass the
+// same inbound payload validation before it reaches a waiter.
+func TestDispatchCorrelatedResponsesAreRoutedAndValidated(t *testing.T) {
+	want := map[string]bool{
+		"ServerMessage_Error":             true,
+		"ServerMessage_SyncState":         true,
+		"ServerMessage_GetLuksKey":        true,
+		"ServerMessage_StoreLuksKey":      true,
+		"ServerMessage_StoreLpsPasswords": true,
+		"ServerMessage_ValidateLuksToken": true,
+		"ServerMessage_ResultAck":         true,
+	}
+	cases := parseDispatchCases(t)
+	for wrapper := range want {
+		info, ok := cases[wrapper]
+		if !ok || !info.deliversPending {
+			t.Errorf("correlated response %q has no pending-response route", wrapper)
+		}
+		if !info.validates {
+			t.Errorf("correlated response %q is routed without inbound validation", wrapper)
+		}
+	}
+	for wrapper, info := range cases {
+		if info.deliversPending && !info.validates {
+			t.Errorf("pending-response arm %q is routed without inbound validation", wrapper)
+		}
+	}
+}
+
 // A correlated ERROR must reach the caller that is blocked on it.
 //
 // The server answers a rejected correlated request

@@ -65,7 +65,12 @@ type Credentials struct {
 	// certificate remains usable until a Hello made with this certificate is
 	// accepted, after which the agent clears this field.
 	PendingCertificate []byte `json:"pending_certificate,omitempty"`
-	PrivateKey         []byte `json:"private_key"`
+	// PendingPrivateKey and PendingCSR are the encrypted, durable enrollment
+	// identity. They remain until the final credentials are committed so a
+	// response lost after server commit can be retried with the same key.
+	PendingPrivateKey []byte `json:"pending_private_key,omitempty"`
+	PendingCSR        []byte `json:"pending_csr,omitempty"`
+	PrivateKey        []byte `json:"private_key"`
 	// AgentAddr is control's direct mTLS listener — a different host from
 	// ControlAddr,
 	// because the edge routes the two by SNI (one terminates TLS for the web,

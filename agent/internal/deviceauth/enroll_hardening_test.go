@@ -29,6 +29,56 @@ type failingStore struct {
 
 func (f *failingStore) Save(*credentials.Credentials) error { return f.saveErr }
 
+type failFinalSaveStore struct {
+	credentialStore
+	finalSaveFailed bool
+}
+
+func (f *failFinalSaveStore) Save(creds *credentials.Credentials) error {
+	if len(creds.PendingCSR) == 0 && !f.finalSaveFailed {
+		f.finalSaveFailed = true
+		return errors.New("response lost after server commit")
+	}
+	return f.credentialStore.Save(creds)
+}
+
+func TestEnroll_RetryReusesPendingIdentityAfterResponseLoss(t *testing.T) {
+	caPEM := genTestCAPEM(t)
+	var csrs [][]byte
+	mock := &mockRegisterService{
+		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+			csrs = append(csrs, append([]byte(nil), req.Msg.Csr...))
+			return connect.NewResponse(&pm.RegisterResponse{
+				DeviceId:    &pm.DeviceId{Value: "retry-device"},
+				CaCert:      caPEM,
+				Certificate: []byte(fakeLeafPEM),
+				ControlUrl:  "https://gw.example.com",
+			}), nil
+		},
+	}
+	srv := startMockControlServer(t, mock)
+	store := credentials.NewStore(t.TempDir())
+	h := NewEnrollHandler("test-host", "dev", store, slog.Default(), nil)
+	h.registerOpts = trustServer(srv)
+	h.credStore = &failFinalSaveStore{credentialStore: store}
+	req := func() *connect.Request[pm.EnrollRequest] {
+		return connect.NewRequest(&pm.EnrollRequest{ServerUrl: srv.URL, Token: "reusable", CaFingerprintPin: caPin(t, caPEM)})
+	}
+	first, err := h.Enroll(context.Background(), req())
+	require.NoError(t, err)
+	assert.False(t, first.Msg.Success)
+	assert.Contains(t, first.Msg.Error, "save credentials")
+	second, err := h.Enroll(context.Background(), req())
+	require.NoError(t, err)
+	assert.True(t, second.Msg.Success, "%s", second.Msg.Error)
+	assert.Len(t, csrs, 2)
+	assert.Equal(t, csrs[0], csrs[1], "retry must submit the same CSR identity")
+	loaded, err := store.Load()
+	require.NoError(t, err)
+	assert.Empty(t, loaded.PendingCSR)
+	assert.Empty(t, loaded.PendingPrivateKey)
+}
+
 // TestEnroll_RateLimitRejectsSixthInWindow pins the brute-force guard
 // (#6): five attempts in the window reach the network; the sixth is
 // rejected BEFORE any registration call (guard-before-work). Registration
@@ -190,7 +240,10 @@ func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 			require.NoError(t, err)
 			assert.False(t, resp.Msg.Success)
 			assert.Contains(t, resp.Msg.Error, "mTLS certificates")
-			assert.False(t, credStore.Exists())
+			pending, loadErr := credStore.Load()
+			require.NoError(t, loadErr)
+			assert.NotEmpty(t, pending.PendingCSR, "failed completion must retain the retry identity")
+			assert.Empty(t, pending.DeviceID, "failed completion must not create active credentials")
 		})
 	}
 }

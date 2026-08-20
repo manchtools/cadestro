@@ -13,6 +13,7 @@ import (
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
+	sdk "github.com/manchtools/cadestro/contract"
 	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
@@ -141,11 +142,39 @@ func TestEnroll_CAPinMismatchRejected(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Success)
 	assert.Contains(t, resp.Msg.Error, "fingerprint mismatch")
-	assert.False(t, credStore.Exists(), "no credentials on a pin mismatch")
+	pending, loadErr := credStore.Load()
+	require.NoError(t, loadErr)
+	assert.NotEmpty(t, pending.PendingCSR, "pin failure must retain the retry identity")
+	assert.Empty(t, pending.DeviceID, "pin failure must not create active credentials")
 	assert.False(t, called, "onEnrolled must not fire on a pin mismatch")
 
 	// Status cache must not be primed.
 	st, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, st.Msg.Enrolled)
+}
+
+func TestEnroll_CAPinRejectsBeforeBearerToken(t *testing.T) {
+	var calls int
+	caPEM := genTestCAPEM(t)
+	mock := &mockRegisterService{
+		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+			calls++
+			return connect.NewResponse(&pm.RegisterResponse{CaCert: caPEM}), nil
+		},
+	}
+	srv := startMockControlServer(t, mock)
+	h := NewEnrollHandler("test-host", "dev", credentials.NewStore(t.TempDir()), slog.Default(), nil)
+	// The test server's client supplies its trust root; WithCAPin adds the
+	// handshake-time pin check on top of it.
+	wrongPin := strings.Repeat("f", 64)
+	h.registerOpts = append(trustServer(srv), sdk.WithCAPin(wrongPin))
+
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		ServerUrl: srv.URL, Token: "must-not-cross", CaFingerprintPin: wrongPin,
+	}))
+	require.NoError(t, err)
+	assert.False(t, resp.Msg.Success)
+	assert.Contains(t, resp.Msg.Error, "registration failed")
+	assert.Zero(t, calls, "a wrong TLS pin must fail before the registration bearer token reaches the endpoint")
 }

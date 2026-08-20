@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"runtime"
 	"sync"
 	"time"
@@ -71,6 +72,10 @@ type Client struct {
 	// to reset its ticker when Welcome arrives with a new interval.
 	// Non-nil only while Run() is active; guarded by mu.
 	heartbeatUpdate chan time.Duration
+	// Run enforces the stream handshake; direct dispatch callers keep their
+	// existing standalone behavior.
+	requireWelcome bool
+	welcomed       bool
 
 	// invSem, luksRevokeSem and liveControlSem bound how many server-originated
 	// RequestInventory / RevokeLuksDeviceKey handlers run concurrently.
@@ -1006,6 +1011,8 @@ func (c *Client) Close() error {
 	_ = c.stream.CloseRequest()
 	_ = c.stream.CloseResponse()
 	c.stream = nil
+	c.requireWelcome = false
+	c.welcomed = false
 	return nil
 }
 
@@ -1042,6 +1049,11 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		return err
 	}
 	defer func() { _ = c.Close() }()
+	heartbeatInterval = normalizeHeartbeatInterval(heartbeatInterval)
+	c.mu.Lock()
+	c.requireWelcome = true
+	c.welcomed = false
+	c.mu.Unlock()
 
 	if err := c.SendHello(ctx, hostname, agentVersion); err != nil {
 		return fmt.Errorf("send hello: %w", err)
@@ -1065,6 +1077,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		c.mu.Unlock()
 	}()
 
+	heartbeatErr := make(chan error, 1)
 	go func() {
 		ticker := time.NewTicker(heartbeatInterval)
 		defer ticker.Stop()
@@ -1079,6 +1092,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 				hb := &pm.Heartbeat{}
 				// Handler can populate heartbeat data if needed
 				if err := c.SendHeartbeat(heartbeatCtx, hb); err != nil {
+					heartbeatErr <- err
 					return
 				}
 			}
@@ -1164,6 +1178,8 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case err := <-heartbeatErr:
+			return fmt.Errorf("heartbeat: %w", err)
 		case result := <-msgCh:
 			if result.err != nil {
 				return fmt.Errorf("receive: %w", result.err)
@@ -1173,6 +1189,13 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 			}
 		}
 	}
+}
+
+func normalizeHeartbeatInterval(interval time.Duration) time.Duration {
+	if interval <= 0 {
+		return MinHeartbeatInterval
+	}
+	return interval
 }
 
 // applyWelcomeHeartbeat extracts the server-requested heartbeat
@@ -1250,13 +1273,59 @@ func (c *Client) safeGo(label string, fn func()) {
 // a malformed-but-non-nil frame (out-of-range PTY dims, non-ULID session id,
 // empty action envelope) past the SDK boundary into a handler.
 func (c *Client) validateInbound(payload any) error {
-	if c.validator == nil {
-		return nil
+	v := c.validator
+	if v == nil {
+		v = validate.NewValidator()
 	}
-	if msg, ok := validate.Struct(c.validator, payload); !ok {
+	if msg, ok := validate.Struct(v, payload); !ok {
 		return errors.New(msg)
 	}
 	return nil
+}
+
+func (c *Client) validateServerMessage(msg *pm.ServerMessage) error {
+	c.mu.RLock()
+	strict := c.requireWelcome
+	c.mu.RUnlock()
+	if !strict {
+		return nil
+	}
+	if msg == nil {
+		return errors.New("ServerMessage is required")
+	}
+	if msg.Payload == nil {
+		return errors.New("ServerMessage payload is required")
+	}
+	payload := reflect.ValueOf(msg.Payload)
+	if payload.Kind() == reflect.Ptr && payload.IsNil() {
+		return errors.New("ServerMessage payload is required")
+	}
+	if payload.Kind() == reflect.Ptr && payload.Elem().Kind() == reflect.Struct {
+		field := payload.Elem().Field(0)
+		if field.Kind() == reflect.Ptr && field.IsNil() {
+			return errors.New("ServerMessage payload is required")
+		}
+	}
+	return c.validateInbound(msg)
+}
+
+func correlatedResponsePayload(msg *pm.ServerMessage) any {
+	switch p := msg.Payload.(type) {
+	case *pm.ServerMessage_SyncState:
+		return p.SyncState
+	case *pm.ServerMessage_GetLuksKey:
+		return p.GetLuksKey
+	case *pm.ServerMessage_StoreLuksKey:
+		return p.StoreLuksKey
+	case *pm.ServerMessage_StoreLpsPasswords:
+		return p.StoreLpsPasswords
+	case *pm.ServerMessage_ValidateLuksToken:
+		return p.ValidateLuksToken
+	case *pm.ServerMessage_ResultAck:
+		return p.ResultAck
+	default:
+		return nil
+	}
 }
 
 func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessage, handler StreamHandler) (retErr error) {
@@ -1276,6 +1345,17 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			retErr = nil
 		}
 	}()
+	if err := c.validateServerMessage(msg); err != nil {
+		return fmt.Errorf("invalid ServerMessage: %w", err)
+	}
+	c.mu.Lock()
+	if c.requireWelcome && !c.welcomed {
+		if _, ok := msg.Payload.(*pm.ServerMessage_Welcome); !ok {
+			c.mu.Unlock()
+			return errors.New("first server message must be Welcome")
+		}
+	}
+	c.mu.Unlock()
 	switch p := msg.Payload.(type) {
 	case *pm.ServerMessage_SyncDevice:
 		if p.SyncDevice == nil {
@@ -1322,6 +1402,9 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			c.logger.Warn("dropping Welcome with nil payload", "message_id", msg.Id)
 			return nil
 		}
+		c.mu.Lock()
+		c.welcomed = true
+		c.mu.Unlock()
 		c.applyWelcomeHeartbeat(p.Welcome)
 		if err := handler.OnWelcome(ctx, p.Welcome); err != nil {
 			return fmt.Errorf("handle welcome: %w", err)
@@ -1351,6 +1434,9 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			c.logger.Warn("dropping Error with nil payload", "message_id", msg.Id)
 			return nil
 		}
+		if err := c.validateInbound(p.Error); err != nil {
+			return fmt.Errorf("invalid Error response: %w", err)
+		}
 		// A CORRELATED error is the rejection of a specific request, and its
 		// caller is blocked waiting for exactly this message ID. Routing it to
 		// the general handler instead left that caller waiting until its
@@ -1371,6 +1457,9 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		*pm.ServerMessage_StoreLpsPasswords,
 		*pm.ServerMessage_ValidateLuksToken,
 		*pm.ServerMessage_ResultAck:
+		if err := c.validateInbound(correlatedResponsePayload(msg)); err != nil {
+			return fmt.Errorf("invalid correlated response: %w", err)
+		}
 		// Correlated response: deliver to the pending request by message ID.
 		// Every Client method that blocks on registerPending MUST be listed here
 		// — a missing case does not error, it drops the frame and the caller
@@ -1384,7 +1473,9 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		// validateInbound on a path that only hands the message to its caller.
 		// The fix belongs in the guard — discover the registerPending callers
 		// and assert each has a case — not in the dispatch shape.
-		c.deliverPending(msg)
+		if !c.deliverPending(msg) {
+			c.logger.Debug("dropping correlated response without waiter", "message_id", msg.Id)
+		}
 
 	case *pm.ServerMessage_RequestInventory:
 		if p.RequestInventory == nil {

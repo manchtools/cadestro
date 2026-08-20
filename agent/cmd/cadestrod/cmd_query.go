@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
@@ -74,29 +73,21 @@ func runQuery(args []string) {
 		os.Exit(1)
 	}
 
-	result, err := registry.Query(context.Background(), &pm.OSQuery{
-		QueryId: "cli-query",
-		Table:   tableName,
-	})
+	rows, err := registry.QueryTable(context.Background(), tableName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	if !result.Success {
-		fmt.Fprintf(os.Stderr, "Query failed: %s\n", result.Error)
-		os.Exit(1)
-	}
-
-	if len(result.Rows) == 0 {
+	if len(rows) == 0 {
 		fmt.Println("No results")
 		return
 	}
 
 	if jsonOutput {
-		printQueryResultsJSON(result.Rows)
+		printQueryResultsJSON(rows)
 	} else {
-		printQueryResultsTable(result.Rows)
+		printQueryResultsTable(rows)
 	}
 }
 
@@ -146,22 +137,16 @@ func printAvailableTables() {
 	fmt.Printf("\nTotal: %d tables\n", len(tables))
 }
 
-func printQueryResultsJSON(rows []*pm.OSQueryRow) {
-	// Convert to slice of maps for JSON output
-	data := make([]map[string]string, len(rows))
-	for i, row := range rows {
-		data[i] = row.Data
-	}
-
+func printQueryResultsJSON(rows []osquery.Row) {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(data); err != nil {
+	if err := encoder.Encode(rows); err != nil {
 		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func printQueryResultsTable(rows []*pm.OSQueryRow) {
+func printQueryResultsTable(rows []osquery.Row) {
 	if len(rows) == 0 {
 		return
 	}
@@ -169,7 +154,7 @@ func printQueryResultsTable(rows []*pm.OSQueryRow) {
 	// Collect all unique keys across all rows
 	keySet := make(map[string]bool)
 	for _, row := range rows {
-		for k := range row.Data {
+		for k := range row {
 			keySet[k] = true
 		}
 	}
@@ -208,7 +193,7 @@ func printQueryResultsTable(rows []*pm.OSQueryRow) {
 			if i > 0 {
 				fmt.Fprint(w, "\t")
 			}
-			fmt.Fprint(w, row.Data[k])
+			fmt.Fprint(w, row[k])
 		}
 		fmt.Fprintln(w)
 	}

@@ -150,10 +150,22 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 		}), nil
 	}
 
-	// Check if already enrolled
+	// Reuse an encrypted pending identity when a prior request may have
+	// committed server-side but lost its response. A complete credential set
+	// still short-circuits enrollment as before.
+	var csrPEM, keyPEM []byte
 	if h.credStore.Exists() {
 		creds, err := h.credStore.Load()
-		if err == nil {
+		if err != nil {
+			return connect.NewResponse(&pm.EnrollResponse{
+				Success: false,
+				Error:   fmt.Sprintf("failed to load credentials: %v", err),
+			}), nil
+		}
+		if len(creds.PendingCSR) > 0 && len(creds.PendingPrivateKey) > 0 {
+			csrPEM = append([]byte(nil), creds.PendingCSR...)
+			keyPEM = append([]byte(nil), creds.PendingPrivateKey...)
+		} else {
 			return connect.NewResponse(&pm.EnrollResponse{
 				Success:  true,
 				DeviceId: creds.DeviceID,
@@ -162,18 +174,37 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 		}
 	}
 
-	// Generate key pair and CSR locally — private key never leaves the agent
-	h.logger.Debug("generating key pair and CSR")
-	csrPEM, keyPEM, err := pmcrypto.GenerateCSR(h.hostname)
-	if err != nil {
-		h.logger.Error("failed to generate CSR", "error", err)
-		return connect.NewResponse(&pm.EnrollResponse{
-			Success: false,
-			Error:   fmt.Sprintf("failed to generate CSR: %v", err),
-		}), nil
+	if len(csrPEM) == 0 {
+		// Generate key pair and CSR locally — private key never leaves the agent.
+		h.logger.Debug("generating key pair and CSR")
+		csrPEM, keyPEM, err = pmcrypto.GenerateCSR(h.hostname)
+		if err != nil {
+			h.logger.Error("failed to generate CSR", "error", err)
+			return connect.NewResponse(&pm.EnrollResponse{
+				Success: false,
+				Error:   fmt.Sprintf("failed to generate CSR: %v", err),
+			}), nil
+		}
+		// Save the pending identity before sending the token. Store.Save is
+		// encrypted and atomic; a failed save means no credential leaves the
+		// process and no token is consumed.
+		if err := h.credStore.Save(&credentials.Credentials{
+			PendingPrivateKey: keyPEM,
+			PendingCSR:        csrPEM,
+		}); err != nil {
+			h.logger.Error("failed to save pending enrollment identity", "error", err)
+			return connect.NewResponse(&pm.EnrollResponse{
+				Success: false,
+				Error:   fmt.Sprintf("failed to save credentials: %v", err),
+			}), nil
+		}
 	}
 	// Register via control server RPC.
-	result, err := sdk.RegisterAgent(ctx, req.Msg.ServerUrl, req.Msg.Token, h.hostname, h.version, csrPEM, h.registerOpts...)
+	registerOpts := h.registerOpts
+	if len(registerOpts) == 0 {
+		registerOpts = []sdk.ClientOption{sdk.WithCAPin(pin)}
+	}
+	result, err := sdk.RegisterAgent(ctx, req.Msg.ServerUrl, req.Msg.Token, h.hostname, h.version, csrPEM, registerOpts...)
 	if err != nil {
 		h.logger.Error("registration failed", "error", err)
 		return connect.NewResponse(&pm.EnrollResponse{
@@ -277,8 +308,9 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 	}
 
 	creds, err := h.credStore.Load()
-	if err != nil {
+	if err != nil || creds.DeviceID == "" {
 		// Credentials exist but can't be loaded — treat as not enrolled.
+		// Pending enrollment material is deliberately not an active identity.
 		// Don't cache the failure: a transient decrypt error shouldn't
 		// pin "not enrolled" for the process lifetime.
 		return connect.NewResponse(&pm.GetEnrollmentStatusResponse{
