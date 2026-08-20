@@ -43,9 +43,6 @@ const (
 	// Files (400-499)
 	ActionType_ACTION_TYPE_FILE      ActionType = 400 // File management
 	ActionType_ACTION_TYPE_DIRECTORY ActionType = 401 // Directory management
-	// Instant actions (500-599) — agent-builtin, no parameters
-	ActionType_ACTION_TYPE_REBOOT ActionType = 500 // Reboot the device (5-minute delay)
-	ActionType_ACTION_TYPE_SYNC   ActionType = 501 // Trigger immediate agent sync
 	// System management (600-699)
 	ActionType_ACTION_TYPE_USER  ActionType = 600 // User account management
 	ActionType_ACTION_TYPE_GROUP ActionType = 601 // Group membership management
@@ -80,8 +77,6 @@ var (
 		300:  "ACTION_TYPE_SERVICE",
 		400:  "ACTION_TYPE_FILE",
 		401:  "ACTION_TYPE_DIRECTORY",
-		500:  "ACTION_TYPE_REBOOT",
-		501:  "ACTION_TYPE_SYNC",
 		600:  "ACTION_TYPE_USER",
 		601:  "ACTION_TYPE_GROUP",
 		700:  "ACTION_TYPE_SSH",
@@ -106,8 +101,6 @@ var (
 		"ACTION_TYPE_SERVICE":      300,
 		"ACTION_TYPE_FILE":         400,
 		"ACTION_TYPE_DIRECTORY":    401,
-		"ACTION_TYPE_REBOOT":       500,
-		"ACTION_TYPE_SYNC":         501,
 		"ACTION_TYPE_USER":         600,
 		"ACTION_TYPE_GROUP":        601,
 		"ACTION_TYPE_SSH":          700,
@@ -3014,9 +3007,8 @@ type ActionResult struct {
 	// one delivery legitimately produces several results with the same
 	// action_id.
 	//
-	// Both are mandatory. Every execution descends from a delivery — the pull
-	// path carries the same ManifestDelivery the push path does — so a result
-	// that can name neither did not come from an assignment.
+	// Both are mandatory. Every execution descends from a ManifestDelivery
+	// returned by Sync, so a result that can name neither is not attributable.
 	// @gotags: validate:"required,ulid"
 	DeliveryId string `protobuf:"bytes,11,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty" validate:"required,ulid"`
 	// @gotags: validate:"required,ulid"
@@ -3522,7 +3514,7 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\x05amd64\x18\x01 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05amd64\x122\n" +
 	"\x05arm64\x18\x02 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05arm64\x12'\n" +
 	"\x0fallow_downgrade\x18\x03 \x01(\bR\x0eallowDowngrade\x12%\n" +
-	"\x0eallow_redirect\x18\x04 \x01(\bR\rallowRedirect*\xea\x04\n" +
+	"\x0eallow_redirect\x18\x04 \x01(\bR\rallowRedirect*\xba\x04\n" +
 	"\n" +
 	"ActionType\x12\x1b\n" +
 	"\x17ACTION_TYPE_UNSPECIFIED\x10\x00\x12\x17\n" +
@@ -3537,9 +3529,7 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\x16ACTION_TYPE_SCRIPT_RUN\x10\xc9\x01\x12\x18\n" +
 	"\x13ACTION_TYPE_SERVICE\x10\xac\x02\x12\x15\n" +
 	"\x10ACTION_TYPE_FILE\x10\x90\x03\x12\x1a\n" +
-	"\x15ACTION_TYPE_DIRECTORY\x10\x91\x03\x12\x17\n" +
-	"\x12ACTION_TYPE_REBOOT\x10\xf4\x03\x12\x15\n" +
-	"\x10ACTION_TYPE_SYNC\x10\xf5\x03\x12\x15\n" +
+	"\x15ACTION_TYPE_DIRECTORY\x10\x91\x03\x12\x15\n" +
 	"\x10ACTION_TYPE_USER\x10\xd8\x04\x12\x16\n" +
 	"\x11ACTION_TYPE_GROUP\x10\xd9\x04\x12\x14\n" +
 	"\x0fACTION_TYPE_SSH\x10\xbc\x05\x12\x15\n" +

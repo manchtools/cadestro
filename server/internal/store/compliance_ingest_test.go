@@ -15,7 +15,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/compliance"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
 )
 
@@ -99,9 +98,9 @@ func (f *complianceIngestFixture) report(
 	_, err = f.raw.Exec(context.Background(), `
 		INSERT INTO deliveries (
 			delivery_id, device_id, manifest_id, manifest, state,
-			created_at, available_at, pushed_at, acked_receipt_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $6, $6, $6)`,
-		deliveryID, deviceID, manifestID, string(manifest), delivery.StateAckedReceipt, f.now)
+			created_at, available_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $6)`,
+		deliveryID, deviceID, manifestID, string(manifest), "PENDING", f.now)
 	require.NoError(t, err)
 	_, err = f.raw.Exec(context.Background(), `
 		INSERT INTO executions (

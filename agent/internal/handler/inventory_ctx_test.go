@@ -37,7 +37,7 @@ type inventoryCtxKey string
 // reached osquery. This is the NIS2 / spec-12 "no context.Background() in a
 // request path" invariant for the inventory path.
 func TestSupplementWithOsquery_PropagatesRequestContext(t *testing.T) {
-	h := NewHandler(slog.Default(), executor.NewExecutor(nil), nil, nil, make(chan struct{}, 1))
+	h := NewHandler(slog.Default(), executor.NewExecutor(nil), nil, make(chan struct{}, 1))
 	oq := &ctxCapturingOsquery{}
 
 	const k inventoryCtxKey = "req-sentinel"

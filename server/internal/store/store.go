@@ -38,8 +38,8 @@ type Tx struct {
 }
 
 // Store owns the connection pool and the primitives every domain
-// shares: the audited transaction spine, advisory locks, chain
-// verification and the migration runner.
+// shares: the audited transaction spine, advisory locks, and chain
+// verification.
 type Store struct {
 	now     func() time.Time // clock seam; time.Now in production
 	db      *sql.DB
@@ -65,8 +65,8 @@ func (s *Store) SetLogger(logger *slog.Logger) {
 const sqliteOpenConnections = 10
 
 // New opens the authoritative SQLite file and creates the clean baseline when
-// the file is empty. The project is pre-alpha, so there is no PostgreSQL data
-// migration or compatibility path.
+// the file is empty. The project is pre-alpha and accepts only the current
+// schema.
 func New(ctx context.Context, path string) (*Store, error) {
 	db, err := openSQLite(ctx, path, true)
 	if err != nil {
@@ -94,10 +94,6 @@ func NewWithoutMigrations(ctx context.Context, path string) (*Store, error) {
 	if version != 1 {
 		_ = db.Close()
 		return nil, fmt.Errorf("open SQLite database: schema version is %d, want 1", version)
-	}
-	if err := checkCertificateLifecyclePosture(ctx, db); err != nil {
-		_ = db.Close()
-		return nil, err
 	}
 	return newStore(db), nil
 }
@@ -198,7 +194,7 @@ func initializeSQLite(ctx context.Context, db *sql.DB) error {
 				return fmt.Errorf("close SQLite baseline check: %w", err)
 			}
 			if current == 1 {
-				return checkCertificateLifecyclePosture(ctx, db)
+				return nil
 			}
 			return fmt.Errorf("open SQLite database: unsupported schema version %d", current)
 		}
@@ -209,83 +205,12 @@ func initializeSQLite(ctx context.Context, db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("commit SQLite baseline: %w", err)
 		}
-		return checkDeviceSecretPosture(ctx, db)
+		return nil
 	case 1:
-		if err := checkCertificateLifecyclePosture(ctx, db); err != nil {
-			return err
-		}
-		return checkDeviceSecretPosture(ctx, db)
+		return nil
 	default:
 		return fmt.Errorf("open SQLite database: unsupported schema version %d", version)
 	}
-}
-
-func checkDeviceSecretPosture(ctx context.Context, db *sql.DB) error {
-	var tableCount int
-	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'device_secrets'`).Scan(&tableCount); err != nil {
-		return fmt.Errorf("inspect device secret schema: %w", err)
-	}
-	if tableCount != 1 {
-		return fmt.Errorf("database is missing device_secrets; stop control and run docs/upgrade-device-secrets.sql followed by migrate-device-secrets")
-	}
-	for _, table := range []string{"lps_passwords", "luks_keys"} {
-		rows, err := db.QueryContext(ctx, "SELECT name FROM pragma_table_info(?) WHERE name IN ('device_id', 'action_id', 'password', 'passphrase')", table)
-		if err != nil {
-			return fmt.Errorf("inspect %s secret columns: %w", table, err)
-		}
-		var legacyColumn string
-		if rows.Next() && rows.Scan(&legacyColumn) == nil {
-			_ = rows.Close()
-			return fmt.Errorf("database still has legacy column %s in %s; stop control and run migrate-device-secrets", legacyColumn, table)
-		}
-		if err := rows.Err(); err != nil {
-			_ = rows.Close()
-			return fmt.Errorf("inspect %s secret columns: %w", table, err)
-		}
-		_ = rows.Close()
-	}
-	return nil
-}
-func checkCertificateLifecyclePosture(ctx context.Context, db *sql.DB) error {
-	rows, err := db.QueryContext(ctx, `
-		SELECT name FROM pragma_table_info('devices')
-		WHERE name IN ('active_cert_serial', 'pending_certificate_pem', 'pending_cert_serial')`)
-	if err != nil {
-		return fmt.Errorf("inspect certificate lifecycle schema: %w", err)
-	}
-	defer rows.Close()
-	seen := make(map[string]bool, 3)
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return fmt.Errorf("inspect certificate lifecycle schema: %w", err)
-		}
-		seen[name] = true
-	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("inspect certificate lifecycle schema: %w", err)
-	}
-	for _, name := range []string{"active_cert_serial", "pending_certificate_pem", "pending_cert_serial"} {
-		if !seen[name] {
-			return fmt.Errorf("database is missing certificate lifecycle column %q; stop control and run docs/upgrade-certificate-lifecycle.sql", name)
-		}
-	}
-	var triggerCount int
-	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('devices_certificate_lifecycle_pair', 'devices_certificate_lifecycle_pair_update')`).Scan(&triggerCount); err != nil {
-		return fmt.Errorf("inspect certificate lifecycle triggers: %w", err)
-	}
-	if triggerCount != 2 {
-		return fmt.Errorf("database is missing certificate lifecycle triggers; stop control and run docs/upgrade-certificate-lifecycle.sql")
-	}
-	var revokedCount int
-	obsoleteRevocationTable := "revoked_" + "certificates"
-	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, obsoleteRevocationTable).Scan(&revokedCount); err != nil {
-		return fmt.Errorf("inspect certificate lifecycle tables: %w", err)
-	}
-	if revokedCount != 0 {
-		return fmt.Errorf("database still contains revoked_certificates; run docs/upgrade-certificate-lifecycle.sql")
-	}
-	return nil
 }
 
 func sqliteSchemaVersion(ctx context.Context, db *sql.DB) (int, error) {

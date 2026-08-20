@@ -56,20 +56,6 @@ type devSessionResponse struct {
 	DisplayName  string `json:"displayName"`
 }
 
-// archiveIsolationRelaxed downgrades the audit archive's separate-filesystem
-// requirement to a warning on a development workstation, where the database
-// and the archive are two directories on one disk and mounting a second
-// filesystem needs root.
-//
-// It rides the same gates as the session endpoint: a release binary compiles
-// the !devauth stub, which returns false and has no way to be told otherwise,
-// and a devauth binary still enforces the requirement unless
-// CADESTRO_DEV_AUTH=1 and a sufficiently long CADESTRO_DEV_AUTH_TOKEN are set.
-// A build in which this can return true is a build that also mints
-// administrator sessions without an identity provider, so it can never be
-// mistaken for a deployable one.
-func archiveIsolationRelaxed() bool { return devAuthEnabled() }
-
 func devAuthEnabled() bool {
 	return os.Getenv(devAuthEnv) == "1" && len(os.Getenv(devAuthTokenEnv)) >= 32
 }

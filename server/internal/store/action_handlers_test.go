@@ -240,7 +240,7 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 			Name: name, CreatedBy: op.ActorID, Type: actionType,
 			DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
 			Params: func() []byte {
-				if actionType == pmv1.ActionType_ACTION_TYPE_SHELL {
+				if actionType == pmv1.ActionType_ACTION_TYPE_SHELL || actionType == pmv1.ActionType_ACTION_TYPE_SCRIPT_RUN {
 					return []byte(`{"interpreter":"/bin/sh","script":"printf ok"}`)
 				}
 				return []byte(`{}`)
@@ -251,10 +251,10 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 		return row.ID
 	}
 	directID := create("direct", pmv1.ActionType_ACTION_TYPE_SHELL, false)
-	transitiveID := create("transitive", pmv1.ActionType_ACTION_TYPE_REBOOT, false)
-	outsideID := create("outside", pmv1.ActionType_ACTION_TYPE_REBOOT, false)
-	unassignedID := create("unassigned", pmv1.ActionType_ACTION_TYPE_SYNC, false)
-	systemID := create("system", pmv1.ActionType_ACTION_TYPE_REBOOT, true)
+	transitiveID := create("transitive", pmv1.ActionType_ACTION_TYPE_UPDATE, false)
+	outsideID := create("outside", pmv1.ActionType_ACTION_TYPE_UPDATE, false)
+	unassignedID := create("unassigned", pmv1.ActionType_ACTION_TYPE_SCRIPT_RUN, false)
+	systemID := create("system", pmv1.ActionType_ACTION_TYPE_UPDATE, true)
 
 	groupA, groupB, setID := newID(), newID(), newID()
 	raw := f.raw
@@ -326,7 +326,7 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 	assert.ElementsMatch(t, []string{transitiveID, unassignedID}, unassignedIDs,
 		"membership is not an assignment; only direct assignment rows exclude an action")
 	typeFiltered, err := f.handlers.ListActions(global, connect.NewRequest(&pmv1.ListActionsRequest{
-		TypeFilter: pmv1.ActionType_ACTION_TYPE_SYNC,
+		TypeFilter: pmv1.ActionType_ACTION_TYPE_SCRIPT_RUN,
 	}))
 	require.NoError(t, err)
 	require.Len(t, typeFiltered.Msg.Actions, 1)
@@ -376,7 +376,7 @@ func TestActionHandlers_RejectUnsafeOrMismatchedParamsAndSystemMutation(t *testi
 	state := authoring.New(authoring.Config{Store: f.store})
 	op := actionOperation()
 	system, err := state.CreateAction(context.Background(), op, authoring.CreateActionParams{
-		Name: "system", CreatedBy: op.ActorID, Type: pmv1.ActionType_ACTION_TYPE_REBOOT,
+		Name: "system", CreatedBy: op.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)

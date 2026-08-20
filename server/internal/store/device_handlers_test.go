@@ -631,7 +631,7 @@ func TestDeviceHandlers_ExecutionReadsUseDirectKeysetAndScope(t *testing.T) {
 		output               string
 	}{
 		{groupExecutionID, f.groupID, "success", &actionID, 200, `{"exitCode":0,"stdout":"done"}`},
-		{directExecutionID, f.directID, "pending", nil, 500, ``},
+		{directExecutionID, f.directID, "pending", nil, int32(pmv1.ActionType_ACTION_TYPE_UPDATE), ``},
 		{outsideExecutionID, f.outsideID, "failed", &actionID, 200, `{"exitCode":1,"stderr":"hidden"}`},
 	} {
 		deliveryID := seedDelivery(t, f.raw, row.deviceID, f.now)

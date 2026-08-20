@@ -67,19 +67,17 @@ type Config struct {
 	Readiness              func(context.Context) error
 }
 
-// Runtime owns the HTTP surfaces and bounded background dispatcher.
+// Runtime owns the HTTP surfaces and heartbeat telemetry flush.
 type Runtime struct {
 	PublicHandler http.Handler
 	AgentHandler  http.Handler
 	Connections   *connection.Manager
-	Deliveries    *delivery.Dispatcher
-
-	store       *store.Store
-	logger      *slog.Logger
-	agentStream *agentstream.Handler
-	scim        *scim.Handler
-	limiters    []*auth.RateLimiter
-	close       sync.Once
+	store         *store.Store
+	logger        *slog.Logger
+	agentStream   *agentstream.Handler
+	scim          *scim.Handler
+	limiters      []*auth.RateLimiter
+	close         sync.Once
 }
 
 // New wires every retained RPC to its direct domain owner.
@@ -101,9 +99,6 @@ func New(cfg Config) *Runtime {
 	sessions := connection.NewTerminalSessionRegistry()
 	tokens := terminal.NewTokenStore(terminal.NewMemoryBackend(cfg.Now), terminal.WithClock(cfg.Now))
 	deliveryState := delivery.New(delivery.Config{Store: cfg.Store, Now: cfg.Now})
-	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
-		Store: cfg.Store, State: deliveryState, Router: manager, Logger: cfg.Logger, Now: cfg.Now, AtRest: cfg.AtRest,
-	})
 	executionResults := execution.New(execution.Config{Store: cfg.Store, Now: cfg.Now})
 	deviceHandlers := device.New(device.Config{
 		Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now,
@@ -115,15 +110,16 @@ func New(cfg Config) *Runtime {
 		Store: cfg.Store, AtRest: cfg.AtRest, Now: cfg.Now,
 	})
 	dispatchHandlers := dispatch.NewHandlers(dispatch.HandlersConfig{
-		Store: cfg.Store, Waker: dispatcher, Sender: manager.Send, Logger: cfg.Logger, Now: cfg.Now,
+		Store: cfg.Store, Sender: manager.Send, Logger: cfg.Logger, Now: cfg.Now,
 	})
 	syncService := agentsync.New(agentsync.Config{
-		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Assignments: dispatchHandlers,
+		Store: cfg.Store, Manager: manager, Assignments: dispatchHandlers,
 		AtRest: cfg.AtRest,
 	})
 	agentService := agentstream.New(agentstream.Config{
 		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Executions: executionResults,
-		DeviceResults: deviceHandlers, Secrets: secretService, Sync: syncService, Waker: dispatcher,
+		DeviceResults: deviceHandlers, Secrets: secretService, Sync: syncService,
+		LiveOperations:   dispatchHandlers,
 		TerminalSessions: sessions, Logger: cfg.Logger, ServerVersion: cfg.Version,
 		HeartbeatInterval: cfg.HeartbeatInterval, Now: cfg.Now,
 	})
@@ -191,27 +187,18 @@ func New(cfg Config) *Runtime {
 
 	return &Runtime{
 		PublicHandler: publicHandler, AgentHandler: agentHandler, Connections: manager,
-		Deliveries: dispatcher, scim: scimHandler, limiters: ownedLimiters,
+		scim: scimHandler, limiters: ownedLimiters,
 		store: cfg.Store, logger: cfg.Logger, agentStream: agentService,
 	}
 }
 
-// Run blocks until ctx is cancelled while the durable delivery sweep and
-// coalesced heartbeat telemetry flush run.
+// Run blocks until ctx is cancelled while coalesced heartbeat telemetry flushes.
 func (r *Runtime) Run(ctx context.Context) error {
-	if ctx == nil || r == nil || r.Deliveries == nil || r.store == nil || r.Connections == nil {
+	if ctx == nil || r == nil || r.store == nil || r.Connections == nil {
 		return errors.New("control runtime is not initialized")
 	}
-	runCtx, cancel := context.WithCancel(ctx)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		r.flushHeartbeatTelemetry(runCtx)
-	}()
-	err := r.Deliveries.Run(runCtx)
-	cancel()
-	<-done
-	return err
+	r.flushHeartbeatTelemetry(ctx)
+	return nil
 }
 
 func (r *Runtime) flushHeartbeatTelemetry(ctx context.Context) {

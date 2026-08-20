@@ -5,8 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -38,7 +36,6 @@ type Scheduler struct {
 	executor ActionExecutor
 	logger   *slog.Logger
 	now      func() time.Time
-	bootID   func() (string, error)
 	wakeCh   chan struct{}
 	results  chan *ExecutionResult
 
@@ -50,7 +47,6 @@ type Scheduler struct {
 	windowMu           sync.RWMutex
 	window             *pb.MaintenanceWindow
 	windowDecodeFailed bool
-	syncTrigger        chan<- struct{}
 }
 
 func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Scheduler {
@@ -59,7 +55,6 @@ func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Schedul
 		executor: executor,
 		logger:   logger,
 		now:      time.Now,
-		bootID:   readBootID,
 		wakeCh:   make(chan struct{}, 1),
 		results:  make(chan *ExecutionResult, 100),
 	}
@@ -72,20 +67,6 @@ func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Schedul
 	return s
 }
 
-func readBootID() (string, error) {
-	raw, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
-	if err != nil {
-		return "", fmt.Errorf("read kernel boot ID: %w", err)
-	}
-	id := strings.TrimSpace(string(raw))
-	if id == "" {
-		return "", fmt.Errorf("kernel boot ID is empty")
-	}
-	return id, nil
-}
-
-func (s *Scheduler) SetSyncTrigger(trigger chan<- struct{}) { s.syncTrigger = trigger }
-
 func (s *Scheduler) Results() <-chan *ExecutionResult { return s.results }
 
 func (s *Scheduler) RecordDelivery(ctx context.Context, delivery *pb.ManifestDelivery) (bool, error) {
@@ -97,8 +78,7 @@ func (s *Scheduler) RecordDelivery(ctx context.Context, delivery *pb.ManifestDel
 }
 
 // ReconcilePolicy replaces assignment-derived work without touching explicit
-// deliveries. Policy snapshots are already authenticated by Sync, so no
-// delivery receipt is emitted.
+// deliveries. Policy snapshots arrive through authenticated Sync.
 func (s *Scheduler) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if err := s.store.ReconcilePolicy(ctx, policy); err != nil {
 		return err
@@ -206,11 +186,7 @@ func (s *Scheduler) runDue(ctx context.Context) {
 }
 
 func (s *Scheduler) recoverInterruptedOccurrences() error {
-	bootID, err := s.bootID()
-	if err != nil {
-		s.logger.Warn("kernel boot ID unavailable; reboot success cannot be proven", "error", err)
-	}
-	recovered, recoverErr := s.store.RecoverInterruptedOccurrences(bootID)
+	recovered, recoverErr := s.store.RecoverInterruptedOccurrences()
 	if recoverErr != nil {
 		return recoverErr
 	}
@@ -260,18 +236,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 			continue
 		}
 
-		markStarted := s.store.MarkOccurrenceStarted
-		if !stop && action.GetType() == pb.ActionType_ACTION_TYPE_REBOOT {
-			bootID, bootErr := s.bootID()
-			if bootErr != nil {
-				s.logger.Error("read boot marker before reboot", "error", bootErr)
-				return
-			}
-			markStarted = func(deliveryID, occurrenceID string, at time.Time) error {
-				return s.store.MarkRebootStarted(deliveryID, occurrenceID, bootID, at)
-			}
-		}
-		if err := markStarted(delivery.GetDeliveryId(), occurrence.GetOccurrenceId(), s.now()); err != nil {
+		if err := s.store.MarkOccurrenceStarted(delivery.GetDeliveryId(), occurrence.GetOccurrenceId(), s.now()); err != nil {
 			s.logger.Error("mark occurrence started", "delivery_id", delivery.GetDeliveryId(), "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
 			aggregate = pb.ExecutionStatus_EXECUTION_STATUS_FAILED
 			aggregateError = "failed to durably mark occurrence STARTED"
@@ -286,19 +251,6 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 				Error:       "skipped after an earlier occurrence failed with STOP policy",
 				CompletedAt: timestamppb.New(s.now()),
 			}
-		} else if action.GetType() == pb.ActionType_ACTION_TYPE_SYNC {
-			if s.syncTrigger != nil {
-				select {
-				case s.syncTrigger <- struct{}{}:
-				default:
-				}
-			}
-			result = &pb.ActionResult{
-				ActionId:    action.GetId(),
-				Status:      pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
-				Output:      &pb.CommandOutput{Stdout: "Sync triggered"},
-				CompletedAt: timestamppb.New(s.now()),
-			}
 		} else {
 			result = s.executor.ExecuteAction(ctx, action)
 		}
@@ -311,11 +263,6 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 		result.OccurrenceId = occurrence.GetOccurrenceId()
 		if result.CompletedAt == nil {
 			result.CompletedAt = timestamppb.New(s.now())
-		}
-		if action.GetType() == pb.ActionType_ACTION_TYPE_REBOOT && result.GetStatus() == pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
-			// Success is reported only after a later process observes a new
-			// kernel boot ID. The durable STARTED row prevents re-scheduling.
-			return
 		}
 		suppressUnchanged := manifest.GetSchedule().GetSkipIfUnchanged() &&
 			result.GetStatus() == pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&

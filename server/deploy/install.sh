@@ -28,7 +28,6 @@ check_acme_email() { [[ "$1" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ 
 check_release_tag() { [[ -n "$1" ]]; }
 check_acme_challenge() { [[ -z "$1" || "$1" == http01 || "$1" == dns01 ]]; }
 check_dns_provider() { [[ "$1" =~ ^[a-z0-9-]+$ ]]; }
-check_archive_choice() { [[ -z "$1" || "$1" == separate || "$1" == loopback ]]; }
 
 ask() {
     local question="$1" check="$2" hint="$3" answer
@@ -68,15 +67,6 @@ if [[ -t 0 && -t 2 ]]; then
             'DNS provider code from https://go-acme.github.io/lego/dns/ (e.g. hetzner):' check_dns_provider \
             'a lowercase lego provider code is required')"
     fi
-    if [[ -z "${ARCHIVE_LOOPBACK:-}" ]]; then
-        printf 'The audit archive must live on a different filesystem than the database.\n' >&2
-        printf '  separate - I will provide separate storage (default; the install stops for it)\n' >&2
-        printf '  loopback - create a loopback file on this disk. DANGEROUS: one disk failure or\n' >&2
-        printf '             ransomware pass takes the audit log and its proof together. Test nodes only.\n' >&2
-        archive_choice="$(ask 'Archive storage [separate]:' check_archive_choice \
-            'answer separate, loopback, or leave empty for separate')"
-        [[ "$archive_choice" != loopback ]] || ARCHIVE_LOOPBACK=1
-    fi
 fi
 
 [[ -n "${CONTROL_DOMAIN:-}" ]] || fail "set CONTROL_DOMAIN"
@@ -100,23 +90,6 @@ ACME_CHALLENGE="${ACME_CHALLENGE:-http01}"
 [[ "$ACME_CHALLENGE" != dns01 || -n "${ACME_DNS_PROVIDER:-}" ]] \
     || fail "ACME_DNS_PROVIDER is required when ACME_CHALLENGE=dns01"
 
-# A typo must not silently mean "off" for a value whose whole point is an
-# explicit, eyes-open decision.
-[[ -z "${ARCHIVE_LOOPBACK:-}" || "$ARCHIVE_LOOPBACK" == 0 || "$ARCHIVE_LOOPBACK" == 1 ]] \
-    || fail "ARCHIVE_LOOPBACK must be 0 or 1"
-
-# setup.sh checks the audit archive's filesystem before it generates any key
-# material, so an install that stopped there leaves the directory tree and
-# nothing in it. Refusing that tree would strand the operator with a half-made
-# installation they cannot finish here. Refuse once generated material exists,
-# which is what "already installed" means and is the state deploy.sh is for.
-#
-# Discovering the material rather than naming it keeps this attached to
-# setup.sh: anything it writes into these three directories blocks a re-run,
-# and nothing here ever deletes or rewrites what it finds. data/ is
-# deliberately not consulted — the archive storage the operator was told to
-# provide lives there, and so does the Traefik ACME file setup.sh touches
-# before the archive check.
 existing_material="$(find "$INSTALL_DIR/certs" "$INSTALL_DIR/secrets" "$INSTALL_DIR/config" \
     -mindepth 1 -print -quit 2>/dev/null || true)"
 [[ -z "$existing_material" ]] \
@@ -169,34 +142,6 @@ EOF
 chmod 600 "$INSTALL_DIR/.env"
 
 cd "$INSTALL_DIR"
-
-# The dangerous single-node arrangement: the archive gets its own filesystem,
-# as control demands, but that filesystem is a loopback image on the same
-# disk. Nothing is bypassed — control's startup check still holds — the
-# operator has knowingly given up the separate-failure-domain property.
-# FSTAB_FILE is a test seam; real runs persist the mount in /etc/fstab.
-if [[ "${ARCHIVE_LOOPBACK:-0}" == 1 ]]; then
-    for loopback_command in truncate mkfs.ext4 mount mountpoint; do
-        command -v "$loopback_command" >/dev/null 2>&1 || fail "$loopback_command is required for ARCHIVE_LOOPBACK"
-    done
-    printf 'WARNING: DANGEROUS archive storage: data/backups is a loopback file on the same disk\n' >&2
-    printf 'as the database. A disk failure or ransomware pass takes the audit log and its proof\n' >&2
-    printf 'together. Use real separate storage for anything beyond a test node.\n' >&2
-    mkdir -p data/backups
-    if ! mountpoint -q data/backups; then
-        if [[ ! -f data/backups.img ]]; then
-            # ponytail: fixed 2GiB; grow with truncate + resize2fs if a test
-            # node ever fills it.
-            truncate -s 2G data/backups.img
-            mkfs.ext4 -q data/backups.img
-        fi
-        mount -o loop data/backups.img data/backups
-    fi
-    fstab_line="$INSTALL_DIR/data/backups.img $INSTALL_DIR/data/backups ext4 loop 0 0"
-    fstab_file="${FSTAB_FILE:-/etc/fstab}"
-    grep -Fqx "$fstab_line" "$fstab_file" 2>/dev/null \
-        || printf '%s\n' "$fstab_line" >> "$fstab_file"
-fi
 
 # The DNS credential is never prompted for and never defaulted: it belongs
 # only in this 0600 file, pasted there by the operator. Stop before setup.sh

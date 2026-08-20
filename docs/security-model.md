@@ -64,12 +64,11 @@ Cadestro ships a development authentication bypass. It is worth describing
 precisely, because "there is a bypass" is the kind of sentence that deserves
 detail rather than reassurance.
 
-<!-- docref: begin src=server/cmd/cadestro/devauth_stub.go#wrapDevAuth:93667767,server/cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
+<!-- docref: begin src=server/cmd/cadestro/devauth_stub.go#wrapDevAuth:93667767 -->
 **It is not in the production binary.** The bypass lives behind a `devauth`
 build tag. The default build compiles a stub whose wrapper returns the handler
-unchanged and whose archive-isolation relaxation returns false with no way to be
-told otherwise. There is deliberately no configuration variable for either —
-an option to skip a verification is the first thing an attacker looks for.
+unchanged. There is deliberately no configuration variable to enable it — an
+option to skip authentication is the first thing an attacker looks for.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/cmd/cadestro/devauth.go#devAuthEnabled:4a7b3325 -->
@@ -343,11 +342,10 @@ digest with a named kind. That is not stylistic: it is what makes it
 structurally impossible for a credential to end up in the audit log.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/audit.go#Store.WithAudit:e6d3a5d5,server/internal/store/store.go#Store.withTx:f0b64994 -->
+<!-- docref: begin src=server/internal/store/audit.go#Store.WithAudit,server/internal/store/store.go#Store.withTx -->
 The mutation and its audit rows are written in **one** database transaction. The
-audited-write primitive opens a transaction, runs the mutation, then locks the
-chain head, appends the operation and every effect at consecutive positions, and
-advances the head — all before a single commit.
+audited-write primitive opens a transaction, runs the mutation, appends the
+operation and effects, and commits them together.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/internal/store/audit_test.go#TestWithAudit_AuditWriteFailureRollsBackTheMutation:c4d3f8a3 -->
@@ -392,85 +390,17 @@ returned**. If the evidence cannot be written, the secret is not revealed.
 
 ### Append-only
 
-<!-- docref: begin src=server/internal/store/schema_test.go#TestSchema_EveryAuditEvidenceTableHasAppendOnlyGuards:d92964da -->
+<!-- docref: begin src=server/internal/store/sqliteschema/schema.sql#audit_operations -->
 Append-only is enforced by database triggers, not by application discipline —
-an `UPDATE` on any audit evidence table is refused outright, and a `DELETE` is
-refused unless a transaction-scoped retention guard covers exactly that row's
-position. A structural test queries the live catalog and requires every one of
-the four evidence tables to carry both guards, so a table added later cannot
-quietly ship without them.
+an `UPDATE` or `DELETE` on either audit table is refused outright. The event
+rows remain queryable in the database for the lifetime of the deployment.
 <!-- docref: end -->
 
-### The hash chain
-
-<!-- docref: begin src=server/internal/store/audit.go#chainHash:c251ec0b -->
-Every operation and effect row is one position in a single SHA-256 chain, over a
-length-prefixed canonical encoding with a distinct domain tag per row type. The
-length prefixing is what stops two different records from encoding to the same
-bytes.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/store/audit_chain.go#Store.VerifyAuditChain:ce744de4 -->
-Verification detects a changed field, a reordered or inserted row, an unexplained
-gap, an edited head, **and a removed tail** — the last being the case a naive
-chain check misses, because truncating the end of a chain leaves the remainder
-internally consistent.
-<!-- docref: end -->
-
-**The chain is hashed, not signed.** There is no signature over audit rows. A
-local hash chain proves internal consistency; on its own it cannot prove that
-the whole chain was not rewritten. That is what anchors are for.
-
-<!-- docref: begin src=server/internal/store/audit_chain.go#Store.RecordPublishedAuditAnchor:a9dee619 -->
-An anchor records a position and its hash — but only **after** the anchor object
-has been written off-host, and only if the local chain reproduces the value
-being recorded. An anchor with no external reference is refused, so the table
-cannot fill with anchors that were never actually published anywhere.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/maintenance/service.go#Service.VerifyAudit:f887e06a -->
-Hourly verification then fails closed against those anchors: once an anchor
-exists, a missing archive object is an error, and an archived anchor that
-disagrees with the recorded row — behind it, or a different hash at the same
-position — is treated as a rollback or rewrite. An anchor running *ahead* of the
-row is accepted, because publishing the object before recording the row means a
-crash between the two legitimately leaves a newer object.
-<!-- docref: end -->
-
-### Retention and archive
-
-<!-- docref: begin src=server/internal/maintenance/service.go#Service.RetainAudit:8584f810 -->
-Retention deletes evidence, so it earns the right first, in a strict order:
-anchor the current head; **re-hash every prefix already archived** against its
-recorded digest; find the retention boundary; stream the prefix into the
-archive; verify what was written against the digest computed while streaming;
-and only then prune. Any failure at any step leaves every live row in place.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/store/audit_chain.go#Store.PruneAuditPrefix:963fd119 -->
-The prune itself refuses to run without an archive digest, an archive reference,
-and an archive timestamp, and does the guard-arming, closed-prefix re-check,
-deletion, checkpoint write and disarm in one transaction — so a crash cannot
-leave the deletion permission behind.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/archive/fs.go#Verify:e4234a66 -->
-Archive verification compares against a digest the caller holds from **outside**
-the archive — the one in the append-only checkpoint table in the database — and
-deliberately ignores the checksum sidecar sitting next to the artifact. Reading
-the expected value from the same directory as the artifact would make the
-comparison self-referential: anyone able to rewrite one can rewrite both.
-Tamper-evidence is only evidence when the two sides sit in different trust
-domains.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/cmd/cadestro/config.go#validateArchiveIsolation:69e8ec75 -->
-Which is why the archive **must be on a different filesystem from the database**,
-compared by kernel device ID, and control refuses to start when they match. Note
-the honest scope of that check, which its own comment states: it is a floor, not
-a guarantee of remoteness — a second local disk passes while sharing a machine.
-Getting the archive genuinely off-host is an operator responsibility.
-<!-- docref: end -->
+The event identity, occurrence time, authenticated actor, action, subject, and
+validated structured details are stored directly in these rows. A mutation and
+its audit rows are committed atomically, so a failed audit insert rolls back the
+mutation with it. Sensitive reads use the same transactional write path before
+returning protected data.
 
 ---
 
@@ -561,12 +491,8 @@ review, not on a detector.
 
 Things a reader might reasonably assume that the code does **not** establish:
 
-- **The audit log is hashed and anchored, not signed.** There is no signature
-  over audit rows or archived prefixes. Tamper-evidence against a wholesale
-  rewrite depends on off-host anchor objects and the digest in the append-only
-  checkpoint table.
-- **"Separate filesystem" is enforced; "off-host" is not.** A second local disk
-  satisfies the startup check.
+- **The audit log is append-only, not cryptographically signed.** The database
+  prevents updates and deletes, but it is not an independent tamper-proof store.
 - **Peer-class checking is one-directional.** Control validates agents' classes;
   agents validate control by CA pinning alone.
 - **Session tokens are readable by scripts on the origin.** They are in Web
@@ -590,7 +516,6 @@ Things a reader might reasonably assume that the code does **not** establish:
 ## Where to go next
 
 - [Enrollment](enrollment.md) — the device trust bootstrap in detail.
-- [Installation](installation.md) — generating the CA, keys, and archive mount.
-- [Backup and restore](backup-restore.md) — what the archive isolation is
-  protecting, and how to keep a verified copy.
+- [Installation](installation.md) — generating the CA and keys.
+- [Backup and restore](backup-restore.md) — how to keep a verified copy.
 - [SECURITY.md](../SECURITY.md) — reporting a vulnerability.

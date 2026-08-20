@@ -26,8 +26,7 @@ the streaming client with its signed-command model.
   fail-closed default.
   {% /card %}
   {% card title="Crypto helpers" href="/concepts/crypto" icon="🔑" %}
-  Mandatory domain separation on every AEAD and seal, X25519 sealing past a
-  low-trust relay, and the CSR / CA-continuity rules.
+  Mandatory domain separation on every AEAD, and the CSR / CA-continuity rules.
   {% /card %}
   {% card title="Agent client" href="/concepts/client" icon="📡" %}
   The agent's bidirectional stream, dispatch robustness against a hostile

@@ -7,7 +7,6 @@
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ActionExecution, type Device, formatTimestampDateTime, formatDuration } from '$lib/sdk';
 	import { ExecutionStatus, DesiredState } from '$contract/cadestro/v1/common_pb';
-	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
@@ -134,15 +133,7 @@
 		return parts.join('\n\n');
 	}
 
-	function isInstantAction(type: ActionType): boolean {
-		return type === ActionType.REBOOT || type === ActionType.SYNC;
-	}
-
-	function getGoalLabel(desiredState: number, actionType: ActionType): string {
-		// Instant actions use "Execute" instead of "Install"
-		if (isInstantAction(actionType)) {
-			return m.executions_goal_execute();
-		}
+	function getGoalLabel(desiredState: number): string {
 		return desiredState === DesiredState.ABSENT
 			? m.executions_goal_absent()
 			: m.executions_goal_present();
@@ -266,7 +257,7 @@
 						</div>
 						<div>
 							<Label class="text-muted-foreground">{m.execution_detail_desired_state()}</Label>
-							<p class="mt-1 font-medium">{getGoalLabel(execution.desiredState, execution.type)}</p>
+							<p class="mt-1 font-medium">{getGoalLabel(execution.desiredState)}</p>
 						</div>
 						<div>
 							<Label class="text-muted-foreground">{m.execution_detail_created_by()}</Label>

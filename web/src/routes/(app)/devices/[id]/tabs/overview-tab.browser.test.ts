@@ -58,7 +58,7 @@ function executions() {
 			// Inline dispatch: no stored action, so the server resolves no name.
 			actionId: '',
 			actionName: '',
-			type: ActionType.REBOOT,
+			type: ActionType.SHELL,
 			status: ExecutionStatus.PENDING
 		})
 	];

@@ -287,10 +287,7 @@ the active certificate is not replaced until Hello promotion.
 ## 8. Certificate lifecycle state
 
 The durable lifecycle state is deliberately small: the active certificate PEM
-and serial, plus an optional pending PEM and serial. Legacy rows may still carry
-a fingerprint, but an authenticated peer is checked against it once and the
-bridge atomically records the presented serial before clearing that transitional
-field. New enrollment never writes the legacy fields.
+and serial, plus an optional pending PEM and serial.
 
 Deleting a device still prevents future admission because the device lookup
 fails; active serial checks additionally prevent an old stream from continuing

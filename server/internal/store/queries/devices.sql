@@ -30,8 +30,6 @@ WHERE id = sqlc.arg(device_id)
 -- name: SetActiveDeviceCertificate :one
 UPDATE devices
 SET certificate_pem = sqlc.narg(certificate_pem),
-    cert_fingerprint = NULL,
-    cert_not_after = NULL,
     active_cert_serial = sqlc.arg(serial)
 WHERE id = sqlc.arg(id) AND is_deleted = FALSE
 RETURNING *;
@@ -49,25 +47,12 @@ RETURNING *;
 -- name: PromotePendingDeviceCertificate :one
 UPDATE devices
 SET certificate_pem = pending_certificate_pem,
-    cert_fingerprint = NULL,
-    cert_not_after = NULL,
     active_cert_serial = pending_cert_serial,
     pending_certificate_pem = NULL,
     pending_cert_serial = NULL
 WHERE id = sqlc.arg(id)
   AND is_deleted = FALSE
   AND pending_cert_serial = sqlc.arg(pending_serial)
-RETURNING *;
-
--- name: BridgeLegacyDeviceCertificate :one
-UPDATE devices
-SET active_cert_serial = sqlc.arg(serial),
-    cert_fingerprint = NULL,
-    cert_not_after = NULL
-WHERE id = sqlc.arg(id)
-  AND is_deleted = FALSE
-  AND active_cert_serial IS NULL
-  AND cert_fingerprint = sqlc.arg(fingerprint)
 RETURNING *;
 
 -- name: ListDevices :many

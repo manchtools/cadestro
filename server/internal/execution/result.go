@@ -17,7 +17,6 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -124,7 +123,7 @@ func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result
 	if manifestActionID != result.ActionId.Value || (row.ActionID != nil && *row.ActionID != result.ActionId.Value) {
 		return ErrWrongAction
 	}
-	if deliveryRow.State != delivery.StateAckedReceipt {
+	if deliveryRow.State != "PENDING" {
 		if terminal && sameTerminalResult(row, result, status, completedAt, output, detectionOutput) {
 			return nil
 		}
@@ -228,7 +227,7 @@ func (s *Service) AppendOutputChunk(ctx context.Context, deviceID string, chunk 
 	if err != nil {
 		return err
 	}
-	if deliveryRow.State != delivery.StateAckedReceipt {
+	if deliveryRow.State != "PENDING" {
 		return ErrInvalidTransition
 	}
 	now := s.now().UTC().Truncate(time.Microsecond)

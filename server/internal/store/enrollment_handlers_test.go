@@ -293,11 +293,6 @@ func TestEnrollment_RenewalStagesPendingSuccessor(t *testing.T) {
 	activeSerial, err := ca.SerialFromPEM(registered.Msg.Certificate)
 	require.NoError(t, err)
 	assert.Equal(t, activeSerial, storedSerial)
-	var legacyFingerprint, legacyNotAfter any
-	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT cert_fingerprint, cert_not_after FROM devices WHERE id = $1`, deviceID).Scan(&legacyFingerprint, &legacyNotAfter))
-	assert.Nil(t, legacyFingerprint)
-	assert.Nil(t, legacyNotAfter)
 	var pendingSerial string
 	require.NoError(t, f.raw.QueryRow(context.Background(),
 		`SELECT pending_cert_serial FROM devices WHERE id = $1`, deviceID).Scan(&pendingSerial))

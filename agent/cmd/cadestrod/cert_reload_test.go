@@ -43,7 +43,7 @@ func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
 	inMemory := testCreds("OLD-CERT")
 	require.NoError(t, store.Save(inMemory))
 
-// Renewal persists a new cert to disk.
+	// Renewal persists a new cert to disk.
 	require.NoError(t, store.Save(testCreds("NEW-CERT")))
 
 	got := reloadCredsForReconnect(store, inMemory, slog.Default())

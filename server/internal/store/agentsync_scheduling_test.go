@@ -11,7 +11,6 @@ import (
 
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 )
 
 // connectedSyncer registers a live connection for the fixture device and
@@ -23,7 +22,7 @@ func connectedSyncer(t *testing.T, f *deliveryFixture) (*agentsync.Service, *con
 	agent := manager.Register(context.Background(), f.deviceID, "device", "v1", nil)
 	t.Cleanup(agent.Close)
 	syncer := agentsync.New(agentsync.Config{
-		Store: f.store, Manager: manager, Deliveries: f.service,
+		Store: f.store, Manager: manager,
 		Now:    func() time.Time { return f.now },
 		AtRest: f.atRest,
 	})
@@ -42,9 +41,8 @@ func offeredDeliveryIDs(t *testing.T, syncer *agentsync.Service, deviceID string
 }
 
 // TestAgentSync_DoesNotPullFutureScheduledDeliveriesForward proves the sync
-// path honours the same availability/epoch guard the dispatcher enforces: a
-// future PENDING row is neither offered nor mutated, a due row is, and a PUSHED
-// row awaiting redelivery on a newer epoch is still offered.
+// path honours delivery availability: a future row is not offered, while a
+// due row is pulled and remains safely repeatable until its terminal result.
 func TestAgentSync_DoesNotPullFutureScheduledDeliveriesForward(t *testing.T) {
 	ctx := context.Background()
 
@@ -67,13 +65,12 @@ func TestAgentSync_DoesNotPullFutureScheduledDeliveriesForward(t *testing.T) {
 
 		row, err := f.store.GetDelivery(ctx, futureID)
 		require.NoError(t, err)
-		assert.Equal(t, delivery.StatePending, row.State, "a future delivery must remain PENDING")
-		assert.Equal(t, int64(0), row.PushEpoch, "a future delivery must not be marked pushed")
+		assert.Equal(t, "PENDING", row.State, "a future delivery must remain PENDING")
 	})
 
-	t.Run("due pending is offered and marked pushed", func(t *testing.T) {
+	t.Run("due pending is offered and repeatable", func(t *testing.T) {
 		f := newDeliveryFixture(t)
-		syncer, agent := connectedSyncer(t, f)
+		syncer, _ := connectedSyncer(t, f)
 
 		offered := offeredDeliveryIDs(t, syncer, f.deviceID)
 		_, present := offered[f.deliveryID]
@@ -81,31 +78,31 @@ func TestAgentSync_DoesNotPullFutureScheduledDeliveriesForward(t *testing.T) {
 
 		row, err := f.store.GetDelivery(ctx, f.deliveryID)
 		require.NoError(t, err)
-		assert.Equal(t, delivery.StatePushed, row.State)
-		assert.Equal(t, agent.Epoch, row.PushEpoch)
+		assert.Equal(t, "PENDING", row.State)
+		repeated := offeredDeliveryIDs(t, syncer, f.deviceID)
+		_, present = repeated[f.deliveryID]
+		assert.True(t, present, "repeated Sync must remain safe before the terminal result")
 	})
+}
 
-	t.Run("future pushed on a newer epoch is still redelivered", func(t *testing.T) {
-		f := newDeliveryFixture(t)
-		syncer, agent := connectedSyncer(t, f)
-		require.Greater(t, agent.Epoch, int64(1))
-		payload, err := protojson.Marshal(f.manifest)
-		require.NoError(t, err)
+func TestListDueDeviceDeliveriesDoesNotLetFutureWorkHideDueWork(t *testing.T) {
+	f := newDeliveryFixture(t)
+	ctx := context.Background()
+	_, err := f.raw.Exec(ctx, `UPDATE deliveries SET available_at = $1 WHERE delivery_id = $2`,
+		f.now.Add(24*time.Hour), f.deliveryID)
+	require.NoError(t, err)
 
-		staleID := newID()
-		_, err = f.raw.Exec(ctx, `
-			INSERT INTO deliveries
-				(delivery_id, device_id, manifest_id, manifest, state, push_epoch, pushed_at, available_at)
-			VALUES ($1, $2, $3, $4, 'PUSHED', 1, $5, $6)`,
-			staleID, f.deviceID, f.manifest.ManifestId, payload, f.now, f.now.Add(30*time.Second))
-		require.NoError(t, err)
+	payload, err := protojson.Marshal(f.manifest)
+	require.NoError(t, err)
+	dueID := newID()
+	_, err = f.raw.Exec(ctx, `
+		INSERT INTO deliveries (delivery_id, device_id, manifest_id, manifest, state, created_at, available_at)
+		VALUES ($1, $2, $3, $4, 'PENDING', $5, $6)`,
+		dueID, f.deviceID, f.manifest.ManifestId, payload, f.now.Add(time.Minute), f.now)
+	require.NoError(t, err)
 
-		offered := offeredDeliveryIDs(t, syncer, f.deviceID)
-		_, present := offered[staleID]
-		assert.True(t, present, "a PUSHED row awaiting redelivery on a newer epoch must still be offered")
-
-		row, err := f.store.GetDelivery(ctx, staleID)
-		require.NoError(t, err)
-		assert.Equal(t, agent.Epoch, row.PushEpoch, "redelivery must re-stamp the current epoch")
-	})
+	rows, err := f.store.ListDueDeviceDeliveries(ctx, f.deviceID, f.now, 1)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	assert.Equal(t, dueID, rows[0].DeliveryID)
 }

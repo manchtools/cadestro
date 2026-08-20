@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/sdk/logging"
-	"github.com/manchtools/cadestro/server/internal/archive"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/controlruntime"
@@ -29,13 +28,6 @@ import (
 var version = "dev"
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "migrate-device-secrets" {
-		if len(os.Args) != 2 {
-			fmt.Fprintln(os.Stderr, "cadestro: migrate-device-secrets accepts no arguments; configure CADESTRO_DATABASE_PATH and CADESTRO_ENCRYPTION_KEY")
-			os.Exit(2)
-		}
-		os.Exit(runDeviceSecretMigration(context.Background()))
-	}
 	command, err := parseCommand(os.Args[1:])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cadestro:", err)
@@ -69,7 +61,7 @@ func main() {
 func parseCommand(args []string) (string, error) {
 	if len(args) > 0 {
 		switch args[0] {
-		case "bootstrap-admin", "backup-status", "migrate-device-secrets":
+		case "bootstrap-admin", "backup-status":
 			if args[0] == "bootstrap-admin" && len(args) == 3 && args[1] == "--output" && args[2] == "token" {
 				return "bootstrap-admin-token", nil
 			}
@@ -78,7 +70,7 @@ func parseCommand(args []string) (string, error) {
 			}
 			return args[0], nil
 		default:
-			return "", fmt.Errorf("unexpected arguments: %s (accepted commands: bootstrap-admin, backup-status, migrate-device-secrets)",
+			return "", fmt.Errorf("unexpected arguments: %s (accepted commands: bootstrap-admin, backup-status)",
 				strings.Join(args, " "))
 		}
 	}
@@ -113,18 +105,12 @@ func run(cfg *Config, logger *slog.Logger) error {
 	if err := auth.ReconcileSystemRoles(ctx, st, time.Now(), logger); err != nil {
 		return fmt.Errorf("reconcile system roles: %w", err)
 	}
-	auditArchive, err := archive.New(archive.Config{
-		Backend: archive.BackendFilesystem, FilesystemPath: cfg.BackupPath,
-	})
-	if err != nil {
-		return fmt.Errorf("open audit archive: %w", err)
-	}
 	notifier, err := webhook.New(cfg.WebhookURL)
 	if err != nil {
 		return fmt.Errorf("open webhook: %w", err)
 	}
 	maintenanceService := maintenance.New(maintenance.Config{
-		Store: st, Archive: auditArchive, Retention: cfg.AuditRetention,
+		Store:    st,
 		Notifier: notifier, BackupPath: cfg.BackupPath, BackupMaxLag: cfg.BackupMaxLag,
 	})
 	if err := maintenanceService.EnsureScheduled(ctx); err != nil {
@@ -167,7 +153,7 @@ func run(cfg *Config, logger *slog.Logger) error {
 	errorsCh := make(chan error, 4)
 	go func() {
 		if err := runtime.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			errorsCh <- fmt.Errorf("delivery dispatcher: %w", err)
+			errorsCh <- fmt.Errorf("control runtime: %w", err)
 		}
 	}()
 	go func() {

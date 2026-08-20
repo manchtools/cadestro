@@ -1,0 +1,40 @@
+name: Cutover judge
+
+on:
+  push:
+    branches: [main, 'v*']
+    paths:
+      - 'agent/**'
+      - 'contract/**'
+      - 'sdk/**'
+      - 'server/**'
+      - 'web/**'
+      - 'tools/cutover_judge.py'
+      - 'tools/test_cutover_judge.py'
+      - '.github/workflows/cutover.yml'
+  pull_request:
+    paths:
+      - 'agent/**'
+      - 'contract/**'
+      - 'sdk/**'
+      - 'server/**'
+      - 'web/**'
+      - 'tools/cutover_judge.py'
+      - 'tools/test_cutover_judge.py'
+      - '.github/workflows/cutover.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Test judge
+        working-directory: tools
+        run: python3 -m unittest -v test_cutover_judge.py
+      - name: Enforce cutover invariants
+        run: python3 tools/cutover_judge.py --repo .

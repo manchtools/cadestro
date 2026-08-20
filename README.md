@@ -22,7 +22,7 @@ over mTLS, and a transactional audit log that cannot be written around.
 - **Keeps working when the server is gone.** A disconnected agent keeps
   enforcing every policy it already holds, on schedule, indefinitely — and
   queues its results until it can report them.
-  → [offline autonomy](docs/policy-model.md#6-offline-autonomy)
+  → [offline autonomy](docs/policy-model.md#5-offline-autonomy)
 - **Records every change in the same transaction that makes it.** If the audit
   write fails, the change rolls back with it. There is no configuration in which
   a mutation happens un-audited.
@@ -60,12 +60,11 @@ ownership is disputed, kept precisely so that it can be relied on later.
 That is what the audit log is here, and it is the product's semantic root rather
 than a feature beside it. Every mutation, every sensitive read, every rejected
 authentication, and every background writer lands as an operation row plus its
-effect rows, in the same database transaction as the change itself, on an
-append-only hash chain enforced by database triggers, anchored off-host so that a
-rewrite of the local chain is detectable. The effect schema has no free-form
-field a secret could occupy. If the register cannot be written, the change does
-not happen. Managing the fleet is what Cadestro does; being able to prove what
-was done to it is what Cadestro is.
+effect rows in the same database transaction as the change itself. Database
+triggers make the rows append-only, and the effect schema has no free-form field
+a secret could occupy. If the register cannot be written, the change does not
+happen. Managing the fleet is what Cadestro does; being able to prove what was
+done to it is what Cadestro is.
 
 ## Architecture
 

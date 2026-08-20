@@ -37,7 +37,7 @@ func newManifestFixture(t *testing.T) *manifestFixture {
 		VALUES
 			($1, 'first', $3, 1, '{}', 30, '{"runOnAssign":true}', CURRENT_TIMESTAMP),
 			($2, 'second', $4, 2, '{}', 60, '{"cron":"0 3 * * *"}', CURRENT_TIMESTAMP)
-	`, action1, action2, int32(pmv1.ActionType_ACTION_TYPE_REBOOT), int32(pmv1.ActionType_ACTION_TYPE_SYNC))
+	`, action1, action2, int32(pmv1.ActionType_ACTION_TYPE_UPDATE), int32(pmv1.ActionType_ACTION_TYPE_UPDATE))
 	require.NoError(t, err)
 	set1, set2 := newID(), newID()
 	_, err = raw.Exec(ctx, `
@@ -176,7 +176,7 @@ func TestManifestCompiler_AssignedCompilationIsNotOneShot(t *testing.T) {
 		INSERT INTO actions
 			(id, name, action_type, desired_state, params, timeout_seconds, schedule, created_at)
 		VALUES ($1, 'unscheduled', $2, 1, '{}', 30, '{}', CURRENT_TIMESTAMP)
-	`, unscheduled, int32(pmv1.ActionType_ACTION_TYPE_REBOOT))
+	`, unscheduled, int32(pmv1.ActionType_ACTION_TYPE_UPDATE))
 	require.NoError(t, err)
 
 	single, err := f.compiler.Action(context.Background(), unscheduled)
@@ -232,8 +232,7 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 	catalogCiphertext := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
 	require.NotEmpty(t, catalogCiphertext)
 
-	waker := &committedWaker{store: st}
-	service := dispatch.New(dispatch.Config{Store: st, Waker: waker})
+	service := dispatch.New(dispatch.Config{Store: st})
 	op := mutationOp()
 	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchAction"
 	result, err := service.Submit(ctx, dispatch.SubmitParams{

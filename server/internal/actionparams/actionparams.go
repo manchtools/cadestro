@@ -73,14 +73,11 @@ func UnmarshalActionParams(raw []byte, msg proto.Message) error {
 
 // isNoParamsActionType reports whether an action type legitimately carries no
 // params oneof (so reaching the switch default is expected, not an error).
-// REBOOT and SYNC are instant actions with no parameters; UNSPECIFIED is the
-// zero value. Any OTHER unhandled type is a new ActionType that the params
+// UNSPECIFIED is the zero value. Any other unhandled type is a new ActionType that the params
 // registry forgot to wire up (paramsFieldByActionType in registry.go).
 func isNoParamsActionType(t pm.ActionType) bool {
 	switch t {
-	case pm.ActionType_ACTION_TYPE_UNSPECIFIED,
-		pm.ActionType_ACTION_TYPE_REBOOT,
-		pm.ActionType_ACTION_TYPE_SYNC:
+	case pm.ActionType_ACTION_TYPE_UNSPECIFIED:
 		return true
 	default:
 		return false

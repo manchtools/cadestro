@@ -253,11 +253,11 @@ func registryPermissions() []permEntry {
 		// Dispatch
 		{"DispatchAction", "Dispatch", "Dispatch single action", TargetDevice},
 		{"DispatchToMultiple", "Dispatch", "Dispatch to multiple devices", TargetDevice},
-		{"DispatchAssignedActions", "Dispatch", "Sync assigned actions to device", TargetDevice},
+		{"SyncDevice", "Live Control", "Sync device", TargetDevice},
+		{"RebootDevice", "Live Control", "Reboot device", TargetDevice},
 		{"DispatchActionSet", "Dispatch", "Dispatch action set", TargetDevice},
 		{"DispatchDefinition", "Dispatch", "Dispatch definition", TargetDevice},
 		{"DispatchToGroup", "Dispatch", "Dispatch to device group", TargetDevice},
-		{"DispatchInstantAction", "Dispatch", "Dispatch instant action", TargetDevice},
 		// Executions
 		{"GetExecution", "Executions", "View executions", TargetDevice},
 		{"ListExecutions", "Executions", "List executions", TargetDevice},

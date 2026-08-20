@@ -20,7 +20,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
-	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
@@ -52,9 +51,8 @@ type DeviceResults interface {
 	CompleteLuksKeyRevocation(context.Context, string, *pmv1.RevokeLuksDeviceKeyResult) error
 }
 
-// DeliveryState advances the durable delivery state machine.
+// DeliveryState records terminal manifest results.
 type DeliveryState interface {
-	AcknowledgeReceipt(context.Context, string, string) (bool, error)
 	Complete(context.Context, string, string, string, string, string) (bool, error)
 }
 
@@ -78,10 +76,9 @@ type SyncSource interface {
 	Sync(context.Context, string) (*pmv1.SyncState, error)
 }
 
-// DeviceWaker queues a reconnect's durable delivery backlog. The database
-// sweep remains the correctness path when this best-effort wake is missed.
-type DeviceWaker interface {
-	WakeDevice(context.Context, string) error
+type LiveOperationResults interface {
+	CompleteSyncDevice(context.Context, string, string, *pmv1.SyncDeviceResult) error
+	CompleteRebootDevice(context.Context, string, string, *pmv1.RebootDeviceResult) error
 }
 
 // Config supplies the direct services used by AgentService.
@@ -93,7 +90,7 @@ type Config struct {
 	DeviceResults     DeviceResults
 	Secrets           Secrets
 	Sync              SyncSource
-	Waker             DeviceWaker
+	LiveOperations    LiveOperationResults
 	TerminalSessions  *connection.TerminalSessionRegistry
 	Logger            *slog.Logger
 	ServerVersion     string
@@ -113,7 +110,7 @@ type Handler struct {
 	deviceResults     DeviceResults
 	secrets           Secrets
 	sync              SyncSource
-	waker             DeviceWaker
+	liveOperations    LiveOperationResults
 	terminalSessions  *connection.TerminalSessionRegistry
 	logger            *slog.Logger
 	serverVersion     string
@@ -128,7 +125,7 @@ type Handler struct {
 // New constructs the direct AgentService handler.
 func New(cfg Config) *Handler {
 	if cfg.Store == nil || cfg.Manager == nil || cfg.Deliveries == nil || cfg.Executions == nil ||
-		cfg.DeviceResults == nil || cfg.Secrets == nil || cfg.Sync == nil || cfg.Waker == nil || cfg.TerminalSessions == nil {
+		cfg.DeviceResults == nil || cfg.Secrets == nil || cfg.Sync == nil || cfg.LiveOperations == nil || cfg.TerminalSessions == nil {
 		panic("agentstream: complete direct service wiring is required")
 	}
 	if cfg.Logger == nil {
@@ -139,7 +136,7 @@ func New(cfg Config) *Handler {
 	}
 	return &Handler{
 		store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, executions: cfg.Executions,
-		deviceResults: cfg.DeviceResults, secrets: cfg.Secrets, sync: cfg.Sync, waker: cfg.Waker,
+		deviceResults: cfg.DeviceResults, secrets: cfg.Secrets, sync: cfg.Sync, liveOperations: cfg.LiveOperations,
 		terminalSessions: cfg.TerminalSessions, logger: cfg.Logger,
 		serverVersion: cfg.ServerVersion, deviceLoginURL: cfg.DeviceLoginURL,
 		heartbeatInterval: cfg.HeartbeatInterval, now: cfg.Now,
@@ -224,10 +221,6 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 	}); err != nil {
 		return fmt.Errorf("send welcome: %w", err)
 	}
-	if err := h.waker.WakeDevice(ctx, deviceID); err != nil {
-		h.logger.Warn("wake device delivery backlog", "device_id", deviceID, "error", err)
-	}
-
 	type received struct {
 		message *pmv1.AgentMessage
 		err     error
@@ -314,9 +307,16 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 	case *pmv1.AgentMessage_SyncRequest:
 		response, err := h.sync.Sync(ctx, deviceID)
 		return h.sendResponse(agent, message.Id, response, err)
-	case *pmv1.AgentMessage_DeliveryReceipt:
-		_, err := h.deliveries.AcknowledgeReceipt(ctx, payload.DeliveryReceipt.DeliveryId, deviceID)
-		return err
+	case *pmv1.AgentMessage_SyncDeviceResult:
+		if payload.SyncDeviceResult == nil {
+			return errors.New("sync device result is required")
+		}
+		return h.liveOperations.CompleteSyncDevice(ctx, deviceID, message.Id, payload.SyncDeviceResult)
+	case *pmv1.AgentMessage_RebootDeviceResult:
+		if payload.RebootDeviceResult == nil {
+			return errors.New("reboot device result is required")
+		}
+		return h.liveOperations.CompleteRebootDevice(ctx, deviceID, message.Id, payload.RebootDeviceResult)
 	case *pmv1.AgentMessage_ManifestResult:
 		state, code, err := manifestResultState(payload.ManifestResult)
 		if err != nil {
@@ -493,28 +493,14 @@ func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *pmv1.
 	now := h.now().UTC().Truncate(time.Microsecond)
 	_, err := h.store.WithAudit(ctx, agentOperation(deviceID, "Hello"),
 		func(ctx context.Context, tx *store.Tx, recorder *store.AuditRecorder) error {
-			bridged := false
 			current, err := tx.GetDevice(ctx, deviceID)
 			if err != nil {
 				return err
 			}
-			peer, peerOK := mtls.PeerCertificateFromContext(ctx)
+			_, peerOK := mtls.PeerCertificateFromContext(ctx)
 			serial, serialOK := mtls.PeerSerialFromContext(ctx)
 			if !peerOK || !serialOK {
 				return errCertificateNotActive
-			}
-			if current.ActiveCertSerial == nil && current.CertFingerprint != nil && ca.FingerprintFromCert(peer) == *current.CertFingerprint {
-				current, err = tx.BridgeLegacyDeviceCertificate(ctx, db.BridgeLegacyDeviceCertificateParams{ID: deviceID, Fingerprint: current.CertFingerprint, Serial: &serial})
-				if err != nil && !store.IsNotFound(err) {
-					return err
-				}
-				bridged = err == nil
-				if store.IsNotFound(err) {
-					current, err = tx.GetDevice(ctx, deviceID)
-					if err != nil {
-						return err
-					}
-				}
 			}
 			if current.ActiveCertSerial == nil || (*current.ActiveCertSerial != serial && (current.PendingCertSerial == nil || *current.PendingCertSerial != serial)) {
 				return errCertificateNotActive
@@ -539,8 +525,8 @@ func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *pmv1.
 				return store.ErrNotFound
 			}
 			changed := []string{"agent_version", "hostname", "last_seen_at"}
-			if promoted || bridged {
-				changed = append(changed, "active_cert_serial", "pending_cert_serial", "cert_fingerprint", "cert_not_after")
+			if promoted {
+				changed = append(changed, "active_cert_serial", "pending_cert_serial")
 			}
 			recorder.Effect(store.AuditEffect{
 				ResourceType: "device", ResourceID: deviceID, Action: "CONNECT", Outcome: store.EffectApplied,

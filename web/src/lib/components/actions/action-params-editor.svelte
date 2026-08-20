@@ -69,7 +69,7 @@
 	// svelte-ignore state_referenced_locally
 	let base = $state<StepDraft | null>(stepFromAction(action, 0));
 
-	// REBOOT / SYNC / SCRIPT_RUN have no editable params shape at all; the page
+	// SCRIPT_RUN has no editable params shape at all; the page
 	// renders the read-only display instead of this editor.
 	// svelte-ignore state_referenced_locally
 	let step = $state<StepDraft | null>(base ? (JSON.parse(JSON.stringify(base)) as StepDraft) : null);

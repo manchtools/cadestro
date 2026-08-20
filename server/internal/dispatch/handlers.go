@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -21,10 +22,9 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// HandlersConfig supplies the durable store and bounded dispatcher wake seam.
+// HandlersConfig supplies the durable store and live-control sender.
 type HandlersConfig struct {
 	Store  *store.Store
-	Waker  Waker
 	Sender func(deviceID string, message *pmv1.ServerMessage) error
 	Logger *slog.Logger
 	Now    func() time.Time
@@ -38,21 +38,36 @@ type Handlers struct {
 	logger    *slog.Logger
 	validator *validator.Validate
 	sender    func(deviceID string, message *pmv1.ServerMessage) error
+	liveMu    sync.Mutex
+	live      map[string]pendingLiveOperation
 }
 
-// NewHandlers constructs direct dispatch handlers. Missing durable state or a
-// wake target is a boot-time wiring defect.
+type pendingLiveOperation struct {
+	deviceID string
+	action   string
+	result   chan liveOperationResult
+}
+
+type liveOperationResult struct {
+	success bool
+	err     error
+}
+
+const liveOperationTimeout = 20 * time.Second
+
+// NewHandlers constructs direct dispatch handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
-	if cfg.Store == nil || cfg.Waker == nil {
-		panic("dispatch: handler store and waker are required")
+	if cfg.Store == nil {
+		panic("dispatch: handler store is required")
 	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
 	return &Handlers{
 		store: cfg.Store, compiler: manifest.New(cfg.Store),
-		submitter: New(Config{Store: cfg.Store, Waker: cfg.Waker, Now: cfg.Now}),
+		submitter: New(Config{Store: cfg.Store, Now: cfg.Now}),
 		logger:    cfg.Logger, validator: sdkvalidate.NewValidator(), sender: cfg.Sender,
+		live: make(map[string]pendingLiveOperation),
 	}
 }
 
@@ -184,52 +199,6 @@ func (h *Handlers) DispatchAction(ctx context.Context, req *connect.Request[pmv1
 		return nil, h.internal(ctx, "submit action dispatch", err)
 	}
 	return connect.NewResponse(&pmv1.DispatchActionResponse{
-		Execution: createdExecutionToProto(result.Executions[0]),
-	}), nil
-}
-
-// DispatchInstantAction submits an agent-builtin REBOOT or SYNC occurrence.
-func (h *Handlers) DispatchInstantAction(ctx context.Context, req *connect.Request[pmv1.DispatchInstantActionRequest]) (*connect.Response[pmv1.DispatchInstantActionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
-	actor, err := h.actor(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if req.Msg.InstantAction != pmv1.ActionType_ACTION_TYPE_REBOOT && req.Msg.InstantAction != pmv1.ActionType_ACTION_TYPE_SYNC {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid instant action")
-	}
-	if err := h.target(ctx, actor, "DispatchInstantAction", req.Msg.DeviceId); err != nil {
-		return nil, err
-	}
-	timeout := int32(60)
-	if req.Msg.InstantAction == pmv1.ActionType_ACTION_TYPE_REBOOT {
-		timeout = 600
-	}
-	action := &pmv1.Action{
-		Id: &pmv1.ActionId{Value: ulid.Make().String()}, Type: req.Msg.InstantAction,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: timeout,
-	}
-	compiled, err := manifest.OneShotAction(action)
-	if err != nil {
-		return nil, h.internal(ctx, "compile instant action", err)
-	}
-	scheduledFor, err := futureTime(req.Msg.RunAt)
-	if err != nil {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "run_at must be a valid future timestamp")
-	}
-	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchInstantActionProcedure, "DispatchInstantAction"),
-		DeviceID:  req.Msg.DeviceId, Manifests: []ManifestInput{{Manifest: compiled}}, ScheduledFor: scheduledFor,
-	})
-	if err != nil {
-		if errors.Is(err, ErrInvalidInput) {
-			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid instant dispatch")
-		}
-		return nil, h.internal(ctx, "submit instant dispatch", err)
-	}
-	return connect.NewResponse(&pmv1.DispatchInstantActionResponse{
 		Execution: createdExecutionToProto(result.Executions[0]),
 	}), nil
 }
@@ -441,10 +410,8 @@ func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv
 	}), nil
 }
 
-// DispatchAssignedActions keeps the compatibility RPC as an authenticated
-// resolve/sync hint. Assignment work is pulled by the agent's mTLS Sync; this
-// RPC never creates a transport delivery.
-func (h *Handlers) DispatchAssignedActions(ctx context.Context, req *connect.Request[pmv1.DispatchAssignedActionsRequest]) (*connect.Response[pmv1.DispatchAssignedActionsResponse], error) {
+// SyncDevice asks a connected agent to run its normal full Sync.
+func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[pmv1.SyncDeviceRequest]) (*connect.Response[pmv1.SyncDeviceResponse], error) {
 	if err := validateRequest(h, ctx, req); err != nil {
 		return nil, err
 	}
@@ -452,29 +419,157 @@ func (h *Handlers) DispatchAssignedActions(ctx context.Context, req *connect.Req
 	if err != nil {
 		return nil, err
 	}
-	if err := h.target(ctx, actor, "DispatchAssignedActions", req.Msg.DeviceId); err != nil {
+	if err := h.target(ctx, actor, "SyncDevice", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	op := h.operation(req, actor,
-		cadestrov1connect.ControlServiceDispatchAssignedActionsProcedure, "DispatchAssignedActions")
-	var effect *store.AuditEffect
-	if h.sender != nil {
-		err := h.sender(req.Msg.DeviceId, &pmv1.ServerMessage{
-			Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_SyncHint{SyncHint: &pmv1.SyncHint{}},
-		})
-		if err == nil {
-			effect = &store.AuditEffect{ResourceType: "device", ResourceID: req.Msg.DeviceId,
-				Action: "SYNC_HINT", Outcome: store.EffectApplied}
+	if err := h.dispatchLiveOperation(ctx, req, actor, req.Msg.DeviceId, "SYNC",
+		cadestrov1connect.ControlServiceSyncDeviceProcedure, "SyncDevice",
+		&pmv1.ServerMessage{Payload: &pmv1.ServerMessage_SyncDevice{SyncDevice: &pmv1.SyncDeviceCommand{}}}); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&pmv1.SyncDeviceResponse{}), nil
+}
+
+// RebootDevice asks a connected agent to schedule its safe delayed reboot.
+func (h *Handlers) RebootDevice(ctx context.Context, req *connect.Request[pmv1.RebootDeviceRequest]) (*connect.Response[pmv1.RebootDeviceResponse], error) {
+	if err := validateRequest(h, ctx, req); err != nil {
+		return nil, err
+	}
+	actor, err := h.actor(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := h.target(ctx, actor, "RebootDevice", req.Msg.DeviceId); err != nil {
+		return nil, err
+	}
+	if err := h.dispatchLiveOperation(ctx, req, actor, req.Msg.DeviceId, "REBOOT",
+		cadestrov1connect.ControlServiceRebootDeviceProcedure, "RebootDevice",
+		&pmv1.ServerMessage{Payload: &pmv1.ServerMessage_RebootDevice{RebootDevice: &pmv1.RebootDeviceCommand{}}}); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&pmv1.RebootDeviceResponse{}), nil
+}
+
+func (h *Handlers) dispatchLiveOperation(ctx context.Context, req connect.AnyRequest, actor *auth.UserContext,
+	deviceID, action, procedure, permission string, message *pmv1.ServerMessage) error {
+	op := h.operation(req, actor, procedure, permission)
+	op.OperationID = ulid.Make().String()
+	if _, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
+		ResourceType: "device", ResourceID: deviceID, Action: action + "_REQUEST", Outcome: store.EffectApplied,
+	}); err != nil {
+		return h.internal(ctx, "audit live operation request", err)
+	}
+
+	wait := make(chan liveOperationResult, 1)
+	h.liveMu.Lock()
+	h.live[op.OperationID] = pendingLiveOperation{deviceID: deviceID, action: action, result: wait}
+	h.liveMu.Unlock()
+	defer h.removeLiveOperation(op.OperationID)
+
+	message.Id = op.OperationID
+	if h.sender == nil || h.sender(deviceID, message) != nil {
+		h.removeLiveOperation(op.OperationID)
+		if _, err := h.store.WithAuditEffects(ctx, op.OperationID, func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {
+			rec.Effect(store.AuditEffect{ResourceType: "device", ResourceID: deviceID, Action: action, Outcome: store.EffectFailed})
+			return nil
+		}); err != nil {
+			return h.internal(ctx, "audit live operation send failure", err)
 		}
+		return rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 	}
-	var effects []store.AuditEffect
-	if effect != nil {
-		effects = append(effects, *effect)
+
+	timer := time.NewTimer(liveOperationTimeout)
+	defer timer.Stop()
+	select {
+	case result := <-wait:
+		if result.err != nil {
+			return h.internal(ctx, "complete live operation", result.err)
+		}
+		if !result.success {
+			return rpcError(ctx, errValidationFailed, connect.CodeFailedPrecondition, "device rejected live operation")
+		}
+		return nil
+	case <-timer.C:
+		if h.takeLiveOperation(op.OperationID) {
+			auditCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+			defer cancel()
+			if _, err := h.store.WithAuditEffects(auditCtx, op.OperationID, func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {
+				rec.Effect(store.AuditEffect{ResourceType: "device", ResourceID: deviceID, Action: action, Outcome: store.EffectFailed})
+				return nil
+			}); err != nil {
+				return h.internal(ctx, "audit live operation timeout", err)
+			}
+			return rpcError(ctx, errDeviceUnavailable, connect.CodeDeadlineExceeded, "device did not answer live operation")
+		}
+		return rpcError(ctx, errDeviceUnavailable, connect.CodeDeadlineExceeded, "device did not answer live operation")
+	case <-ctx.Done():
+		if h.takeLiveOperation(op.OperationID) {
+			auditCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+			defer cancel()
+			_, _ = h.store.WithAuditEffects(auditCtx, op.OperationID, func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {
+				rec.Effect(store.AuditEffect{ResourceType: "device", ResourceID: deviceID, Action: action, Outcome: store.EffectFailed})
+				return nil
+			})
+		}
+		return connect.NewError(connect.CodeOf(ctx.Err()), ctx.Err())
 	}
-	if _, err := h.store.RecordOperation(ctx, op, effects...); err != nil {
-		return nil, h.internal(ctx, "audit assigned sync hint", err)
+}
+
+func (h *Handlers) removeLiveOperation(operationID string) {
+	h.liveMu.Lock()
+	delete(h.live, operationID)
+	h.liveMu.Unlock()
+}
+
+func (h *Handlers) takeLiveOperation(operationID string) bool {
+	h.liveMu.Lock()
+	defer h.liveMu.Unlock()
+	if _, ok := h.live[operationID]; !ok {
+		return false
 	}
-	return connect.NewResponse(&pmv1.DispatchAssignedActionsResponse{}), nil
+	delete(h.live, operationID)
+	return true
+}
+
+func (h *Handlers) completeLiveOperation(ctx context.Context, deviceID, operationID, action string, success bool) error {
+	h.liveMu.Lock()
+	pending, ok := h.live[operationID]
+	if ok && (pending.deviceID != deviceID || pending.action != action) {
+		h.liveMu.Unlock()
+		return connect.NewError(connect.CodePermissionDenied, errors.New("live operation belongs to another device"))
+	}
+	if ok {
+		delete(h.live, operationID)
+	}
+	h.liveMu.Unlock()
+	if !ok {
+		return nil
+	}
+
+	outcome := store.EffectApplied
+	if !success {
+		outcome = store.EffectFailed
+	}
+	_, err := h.store.WithAuditEffects(ctx, operationID, func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {
+		rec.Effect(store.AuditEffect{ResourceType: "device", ResourceID: deviceID, Action: action, Outcome: outcome})
+		return nil
+	})
+	pending.result <- liveOperationResult{success: success, err: err}
+	return err
+}
+
+func (h *Handlers) CompleteSyncDevice(ctx context.Context, deviceID, operationID string, result *pmv1.SyncDeviceResult) error {
+	if result == nil {
+		return errors.New("sync device result is required")
+	}
+	return h.completeLiveOperation(ctx, deviceID, operationID, "SYNC", result.GetSuccess())
+}
+
+func (h *Handlers) CompleteRebootDevice(ctx context.Context, deviceID, operationID string, result *pmv1.RebootDeviceResult) error {
+	if result == nil {
+		return errors.New("reboot device result is required")
+	}
+	return h.completeLiveOperation(ctx, deviceID, operationID, "REBOOT", result.GetSuccess())
 }
 
 func (h *Handlers) compileError(ctx context.Context, operation string, err error) error {

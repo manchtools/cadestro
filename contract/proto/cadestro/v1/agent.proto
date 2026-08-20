@@ -34,12 +34,16 @@ message AgentMessage {
     Heartbeat heartbeat = 11;
     // @gotags: validate:"omitempty"
     SyncRequest sync_request = 12;
+    // Result of a control-originated live sync command.
+    // @gotags: validate:"omitempty"
+    SyncDeviceResult sync_device_result = 24;
+    // Result of a control-originated live reboot command.
+    // @gotags: validate:"omitempty"
+    RebootDeviceResult reboot_device_result = 25;
     // @gotags: validate:"omitempty"
     ActionResult action_result = 20;
     // @gotags: validate:"omitempty"
     OutputChunk output_chunk = 21;
-    // @gotags: validate:"omitempty"
-    DeliveryReceipt delivery_receipt = 22;
     // @gotags: validate:"omitempty"
     ManifestResult manifest_result = 23;
     // @gotags: validate:"omitempty"
@@ -153,23 +157,22 @@ message ServerMessage {
   string id = 1;
 
   oneof payload {
-    // A lossy prompt to perform the normal authenticated Sync. It carries no
-    // policy and has no durable delivery semantics.
+    // Live operations have no policy or durable delivery semantics.
     // @gotags: validate:"omitempty"
-    SyncHint sync_hint = 11;
+    SyncDeviceCommand sync_device = 11;
     // @gotags: validate:"omitempty"
     Welcome welcome = 10;
     // @gotags: validate:"omitempty"
     SyncState sync_state = 12;
     // @gotags: validate:"omitempty"
-    ManifestDelivery manifest_delivery = 20;
+    RebootDeviceCommand reboot_device = 13;
     // @gotags: validate:"omitempty"
     OSQuery query = 30;
     // @gotags: validate:"omitempty"
     RequestInventory request_inventory = 31;
     // @gotags: validate:"omitempty"
     Error error = 40;
-    // LUKS key management responses + instant actions
+    // LUKS key management responses
     // @gotags: validate:"omitempty"
     GetLuksKeyResponse get_luks_key = 50;
     // @gotags: validate:"omitempty"
@@ -198,7 +201,17 @@ message ServerMessage {
   }
 }
 
-message SyncHint {}
+message SyncDeviceCommand {}
+
+message RebootDeviceCommand {}
+
+message SyncDeviceResult {
+  bool success = 1;
+}
+
+message RebootDeviceResult {
+  bool success = 1;
+}
 
 message Welcome {
   // @gotags: validate:"required,min=1,max=32"
@@ -287,8 +300,8 @@ message Manifest {
   // Execution order is list order.
   // @gotags: validate:"required,min=1,dive"
   repeated ManifestOccurrence occurrences = 5;
-  // An explicit dispatch: the agent executes this delivery exactly once on
-  // durable receipt and never reschedules it. Marked structurally here — not
+  // An explicit dispatch: the agent executes this delivery exactly once after
+  // recording it locally and never reschedules it. Marked structurally here — not
   // by action type and not by schedule shape, because assigned manifests may
   // legitimately carry an empty schedule (agent-default drift cadence). A
   // one-shot delivery is also exempt from the agent's maintenance window: an
@@ -297,29 +310,13 @@ message Manifest {
   bool one_shot = 6;
 }
 
-// Control -> agent: one attempt to hand a complete manifest to a device.
-//
-// The delivery row, with the whole manifest in it, is committed before this
-// frame is sent. delivery_id is minted once at that commit and stays the same
-// across every transport retry, reconnect and sweep re-send, so the agent's
-// receipt table recognises a repeat and executes the work once.
+// One durable one-shot manifest returned by Sync. delivery_id is minted once
+// when the row is committed, so repeated Sync responses remain execute-once.
 message ManifestDelivery {
   // @gotags: validate:"required,ulid"
   string delivery_id = 1;
   // @gotags: validate:"required"
   Manifest manifest = 2;
-}
-
-// Agent -> control: the delivery is durably recorded on the device.
-//
-// Sent ONLY after the agent has committed the delivery to its own store, never
-// on arrival. Control advances the delivery out of PUSHED when this frame
-// arrives and never on a successful socket write — a write that the device
-// never persisted must be retried, and it is this frame that distinguishes the
-// two.
-message DeliveryReceipt {
-  // @gotags: validate:"required,ulid"
-  string delivery_id = 1;
 }
 
 // Agent -> control: the outcome of a complete manifest.
@@ -560,7 +557,7 @@ message StoreLpsPasswordsResponse {
 }
 
 // Server instructs agent to revoke the device-bound key in LUKS slot 7.
-// Dispatched as an instant action via the stream.
+// Dispatched as a live operation via the stream.
 message RevokeLuksDeviceKey {
   // @gotags: validate:"required,ulid"
   string action_id = 1;
@@ -603,31 +600,27 @@ message ValidateLuksTokenResponse {
 message SyncRequest {}
 
 // SyncState carries the current durable deliveries and device policy over the
-// existing authenticated stream. It is a state refresh, not a second dispatch
-// path: every included delivery retains its durable delivery_id and is handled
-// exactly like an unsolicited ManifestDelivery frame.
+// existing authenticated stream.
 message SyncState {
   // Effective sync interval in minutes for this device. The agent uses it for
   // the next sync; 0 means the default (30 minutes).
   int32 sync_interval_minutes = 1;
 
-  // Every delivery currently assigned to this device. delivery_id is the same
-  // value the push path would use for the same delivery row, so a manifest the
-  // agent already recorded from the stream is recognised as a repeat here.
+  // Every due one-shot delivery for this device. A stable delivery_id lets the
+  // agent absorb repeats after reconnects.
   // @gotags: validate:"omitempty,dive"
   repeated ManifestDelivery deliveries = 2;
 
   // Resolved maintenance window. Server-computed union across every
   // group the device belongs to (its own device groups plus any user
   // groups reaching it through an assignment). Empty schedule = no
-  // gating; the agent dispatches non-instant actions any time. Empty
+  // gating; the agent dispatches actions any time. Empty
   // is also the response when no groups carry a window. The agent
   // evaluates this against time.Now().Local() at dispatch time.
   MaintenanceWindow maintenance_window = 3;
 
   // Current assignment-derived desired state. Unlike deliveries, this is a
-  // replaceable snapshot: the agent reconciles it locally and sends no
-  // delivery receipt for these manifests.
+  // replaceable snapshot that the agent reconciles locally.
   DesiredPolicy desired_policy = 4;
 }
 

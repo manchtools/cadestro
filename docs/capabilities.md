@@ -165,7 +165,7 @@ line-by-line output streaming.
 `detection_script` runs first; exit 0 means compliant and the remediation is
 skipped; non-zero runs `script` and then re-runs detection to verify. With no
 detection script, `script` simply runs. `is_compliance` makes the action
-**detection-only** — see [the policy model](policy-model.md#7-compliance-is-detection-only).
+**detection-only** — see [the policy model](policy-model.md#6-compliance-is-detection-only).
 
 `interpreter` defaults to `/bin/sh`. `run_as_root` set to false does **not** mean
 "root without escalation" — it means fan out to every active desktop session and
@@ -255,7 +255,7 @@ reboot five minutes out.
 It **fails closed when no privileged runner is configured** rather than
 reporting a success that never happens. Reboot is also the one action whose
 completion is proven rather than assumed: see the boot-id mechanism in [the
-policy model](policy-model.md#6-offline-autonomy).
+policy model](policy-model.md#5-offline-autonomy).
 <!-- docref: end -->
 
 ### Sync

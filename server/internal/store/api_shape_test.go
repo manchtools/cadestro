@@ -25,12 +25,8 @@ import (
 //   - WithAudit         the mutation door; refuses without an operation
 //   - RecordOperation   WithAudit with no state change (sensitive read,
 //     rejected authentication)
-//   - WithAuditEffects  a continuation of an operation already on the
-//     chain; appends effects, rewrites nothing
-//   - RecordPublishedAuditAnchor appends an anchor point for a chain
-//     position the caller has published off-host
-//   - PruneAuditPrefix  the retention path; deletes an archived prefix
-//     and writes its checkpoint in one transaction
+//   - WithAuditEffects  a continuation of an operation already recorded;
+//     appends effects, rewrites nothing
 //   - RebuildSearchIndexes reindexes fixed SQLite FTS5 facets and records
 //     its maintenance effect in the same transaction
 //   - RecordHeartbeatTelemetry is the one deliberate unaudited telemetry
@@ -43,14 +39,11 @@ var mutationCapableExports = map[string]string{
 	"WithAudit":                  "the audited mutation door",
 	"RecordOperation":            "audited operation with no state change",
 	"WithAuditEffects":           "audited continuation of an existing operation",
-	"RecordPublishedAuditAnchor": "appends an anchor for a published chain position",
-	"PruneAuditPrefix":           "archived-prefix deletion with its checkpoint",
 	"RebuildSearchIndexes":       "audited SQLite FTS5 index maintenance",
 	"RecordHeartbeatTelemetry":   "bounded high-rate telemetry exception",
 	"CleanupExpiredAuthStates":   "audited one-time OIDC state cleanup",
 	"RecordPolicyActionResult":   "audited policy result ingestion",
 	"RecordPolicyManifestResult": "audited policy result ingestion",
-	"MigrateDeviceSecretRows":    "stopped-control audited cutover migration",
 }
 
 // nonMutatingExports is every other exported method, each with the
@@ -61,28 +54,20 @@ var nonMutatingExports = map[string]string{
 	"Close":                            "releases the pool",
 	"Ping":                             "read-only connectivity check",
 	"SetLogger":                        "in-process wiring",
-	"VerifyAuditChain":                 "recomputes and compares; writes nothing",
-	"LatestAuditAnchor":                "read",
-	"ListAuditAnchors":                 "read",
-	"ListAuditCheckpoints":             "read",
 	"GetAuditOperation":                "read",
 	"ListAuditEffects":                 "read",
 	"ListAuditEventRows":               "read",
 	"CountAuditEventRows":              "read",
-	"AuditChainTipOf":                  "read",
 	"CountAuditOperations":             "read",
 	"GetDevice":                        "read",
 	"GetDeviceSecret":                  "read",
 	"GetCurrentLuksKeyForAgent":        "read",
 	"ListDeviceMaintenanceWindows":     "read",
 	"GetDelivery":                      "read",
-	"ListDueDeliveries":                "read",
-	"ListDeviceDeliveries":             "read",
+	"ListDueDeviceDeliveries":          "read",
 	"GetJob":                           "read",
 	"GetLiveJobByDedupe":               "read",
 	"ListClaimableJobs":                "read",
-	"FindAuditRetentionBoundary":       "read",
-	"WriteAuditPrefix":                 "read-only archive export",
 	"GetManifestAction":                "read",
 	"GetManifestActionSet":             "read",
 	"ListManifestActionSetActions":     "read",

@@ -150,6 +150,11 @@ done
 # (generated code, formatted files).
 run "root structure" . ./scripts/verify.sh
 
+# The judge compares the working tree with the archived pre-cutover baseline.
+# Keep it in the canonical all-gates path so its PASS cannot be mistaken for a
+# completed cutover unless the simplification invariants also hold.
+run "cutover judge" . python3 tools/cutover_judge.py --repo "$ROOT" --candidate .
+
 # --- summary ---------------------------------------------------------------
 printf '\n\033[1m== verify-all summary\033[0m\n'
 for i in "${!names[@]}"; do

@@ -24,7 +24,6 @@
 	import { setCarried } from '$lib/shell/carried-selection.svelte';
 	import {
 		buildBubbles,
-		isDown,
 		selectionFacts,
 		summarize,
 		toFleetDevice,
@@ -195,7 +194,6 @@
 	const selectedDevices = $derived(allWorstFirst.filter((d) => selected.has(d.id)));
 	const confirmHosts = $derived(selectedDevices.slice(0, CONFIRM_HOSTS));
 	const confirmMore = $derived(Math.max(0, selectedDevices.length - CONFIRM_HOSTS));
-	const confirmOffline = $derived(selectedDevices.filter(isDown).length);
 
 	/** ONE toast for the whole fan-out. Per-device failures are aggregated into a
 	 *  single honest count (never a toast per device) and the per-device detail
@@ -430,9 +428,8 @@
 	{/if}
 </PageShell>
 
-<!-- Bulk reboot. The dialog NAMES the devices (bounded) and states the offline
-     members plainly: their dispatch is queued durably until they reconnect, so
-     they stay in the write instead of being dropped behind the operator's back. -->
+<!-- Bulk reboot. The dialog names the devices (bounded); live RPC failures
+     remain visible in the aggregate result. -->
 <AlertDialog.Root bind:open={rebootOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
@@ -453,12 +450,6 @@
 				<li class="text-muted-foreground">{m.bulk_confirm_more({ count: confirmMore })}</li>
 			{/if}
 		</ul>
-
-		{#if confirmOffline > 0}
-			<p data-testid="bulk-reboot-queued" class="text-xs text-warn">
-				{m.bulk_reboot_queued({ count: confirmOffline })}
-			</p>
-		{/if}
 
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>

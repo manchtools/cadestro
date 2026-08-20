@@ -22,7 +22,8 @@ import (
 //     mutation — no half-owned volume, no slot holding a passphrase nobody can
 //     recover.
 //
-// Wire sealing is tested at the runtime adapter. These tests pin local custody:
+// The mTLS transport boundary is tested at the runtime adapter. These tests
+// pin local custody:
 // a volume must never end up with a passphrase control did not receive.
 
 // fakeEncManager stubs the encryption Manager for the custody tests: AddKey

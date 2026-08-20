@@ -17,7 +17,6 @@ import (
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	manifestpkg "github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -30,12 +29,10 @@ var (
 	ErrNotConnected = errors.New("agent stream is not connected")
 )
 
-// Config supplies authoritative delivery state, assignment resolution, and the
-// live epoch registry.
+// Config supplies durable work, assignment resolution, and live connections.
 type Config struct {
 	Store       *store.Store
 	Manager     *connection.Manager
-	Deliveries  *delivery.Service
 	Assignments *dispatch.Handlers
 	Now         func() time.Time
 	AtRest      *pmcrypto.Encryptor
@@ -45,7 +42,6 @@ type Config struct {
 type Service struct {
 	store       *store.Store
 	manager     *connection.Manager
-	deliveries  *delivery.Service
 	assignments *dispatch.Handlers
 	now         func() time.Time
 	atRest      *pmcrypto.Encryptor
@@ -53,18 +49,16 @@ type Service struct {
 
 // New constructs the agent sync service.
 func New(cfg Config) *Service {
-	if cfg.Store == nil || cfg.Manager == nil || cfg.Deliveries == nil || cfg.AtRest == nil {
-		panic("agentsync: store, manager, delivery state, and at-rest cipher are required")
+	if cfg.Store == nil || cfg.Manager == nil || cfg.AtRest == nil {
+		panic("agentsync: store, manager, and at-rest cipher are required")
 	}
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	return &Service{store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, assignments: cfg.Assignments, now: cfg.Now, atRest: cfg.AtRest}
+	return &Service{store: cfg.Store, manager: cfg.Manager, assignments: cfg.Assignments, now: cfg.Now, atRest: cfg.AtRest}
 }
 
-// Sync returns each still-sendable explicit delivery plus the device's current
-// assignment snapshot. Only explicit deliveries are marked against the live
-// connection epoch; assignment policy is pulled and reconciled by the agent.
+// Sync returns due one-shot work plus the device's current assignment snapshot.
 func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, error) {
 	if ctx == nil || !validID(deviceID) {
 		return nil, ErrInvalidInput
@@ -74,38 +68,27 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 		return nil, err
 	}
 	agent, connected := s.manager.Get(deviceID)
-	if !connected || agent == nil || agent.Epoch <= 0 || agent.Terminated() {
+	if !connected || agent == nil || agent.Terminated() {
 		return nil, ErrNotConnected
 	}
-	rows, err := s.store.ListDeviceDeliveries(ctx, deviceID, maxSyncDeliveries)
+	now := s.now()
+	rows, err := s.store.ListDueDeviceDeliveries(ctx, deviceID, now, maxSyncDeliveries)
 	if err != nil {
 		return nil, err
 	}
-	now := s.now()
 	deliveries := make([]*pmv1.ManifestDelivery, 0, len(rows))
 	for _, row := range rows {
-		// The listed rows are PENDING or PUSHED with no availability filter, so
-		// a future-scheduled row must be skipped here rather than pushed early.
-		// This is the same availability/epoch guard the dispatcher enforces.
-		if !delivery.Sendable(row, agent.Epoch, now) {
-			continue
-		}
+		// A delivery remains pullable until its terminal result. The stable id
+		// lets the agent absorb repeated Sync responses locally.
 		manifest := &pmv1.Manifest{}
 		if err := protojson.Unmarshal(row.Manifest, manifest); err != nil {
 			return nil, fmt.Errorf("decode delivery %s manifest: %w", row.DeliveryID, err)
 		}
 		if manifest.ManifestId != row.ManifestID {
-			return nil, delivery.ErrWrongManifest
+			return nil, fmt.Errorf("delivery %s manifest id mismatch", row.DeliveryID)
 		}
 		if err := manifestpkg.MaterializeSecrets(manifest, s.atRest); err != nil {
 			return nil, err
-		}
-		changed, err := s.deliveries.MarkPushed(ctx, row.DeliveryID, deviceID, agent.Epoch)
-		if err != nil {
-			return nil, err
-		}
-		if !changed {
-			continue
 		}
 		deliveries = append(deliveries, &pmv1.ManifestDelivery{
 			DeliveryId: row.DeliveryID, Manifest: manifest,

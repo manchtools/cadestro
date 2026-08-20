@@ -59,35 +59,6 @@ type Assignment struct {
 	IsDeleted  bool       `json:"is_deleted"`
 }
 
-type AuditChainAnchor struct {
-	AnchorID    string    `json:"anchor_id"`
-	Stream      string    `json:"stream"`
-	ChainSeq    int64     `json:"chain_seq"`
-	RowHash     []byte    `json:"row_hash"`
-	CapturedAt  time.Time `json:"captured_at"`
-	ExternalRef string    `json:"external_ref"`
-}
-
-type AuditChainCheckpoint struct {
-	CheckpointID  string    `json:"checkpoint_id"`
-	Stream        string    `json:"stream"`
-	BoundarySeq   int64     `json:"boundary_seq"`
-	BoundaryHash  []byte    `json:"boundary_hash"`
-	ResumeSeq     int64     `json:"resume_seq"`
-	DeletedRows   int64     `json:"deleted_rows"`
-	ArchiveDigest string    `json:"archive_digest"`
-	ArchiveRef    string    `json:"archive_ref"`
-	ArchivedAt    time.Time `json:"archived_at"`
-	CreatedAt     time.Time `json:"created_at"`
-}
-
-type AuditChainHead struct {
-	Stream    string    `json:"stream"`
-	HeadHash  []byte    `json:"head_hash"`
-	Height    int64     `json:"height"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 type AuditEffect struct {
 	EffectID            string                `json:"effect_id"`
 	OperationID         string                `json:"operation_id"`
@@ -110,8 +81,6 @@ type AuditEffect struct {
 	SealedDetail        []byte                `json:"sealed_detail"`
 	SealedDetailSubject *string               `json:"sealed_detail_subject"`
 	OccurredAt          time.Time             `json:"occurred_at"`
-	PrevHash            []byte                `json:"prev_hash"`
-	RowHash             []byte                `json:"row_hash"`
 }
 
 type AuditEventRow struct {
@@ -163,13 +132,6 @@ type AuditOperation struct {
 	OccurredAt           time.Time `json:"occurred_at"`
 	SealedDetail         []byte    `json:"sealed_detail"`
 	SealedDetailSubject  *string   `json:"sealed_detail_subject"`
-	PrevHash             []byte    `json:"prev_hash"`
-	RowHash              []byte    `json:"row_hash"`
-}
-
-type AuditRetentionGuard struct {
-	Stream      string `json:"stream"`
-	BoundarySeq int64  `json:"boundary_seq"`
 }
 
 type AuthState struct {
@@ -240,21 +202,16 @@ type DefinitionMember struct {
 }
 
 type Delivery struct {
-	DeliveryID     string          `json:"delivery_id"`
-	DeviceID       string          `json:"device_id"`
-	ManifestID     string          `json:"manifest_id"`
-	Manifest       sqlitetype.JSON `json:"manifest"`
-	State          string          `json:"state"`
-	OperationID    *string         `json:"operation_id"`
-	PushEpoch      int64           `json:"push_epoch"`
-	AttemptCount   int32           `json:"attempt_count"`
-	CreatedAt      time.Time       `json:"created_at"`
-	AvailableAt    time.Time       `json:"available_at"`
-	ExpiresAt      *time.Time      `json:"expires_at"`
-	PushedAt       *time.Time      `json:"pushed_at"`
-	AckedReceiptAt *time.Time      `json:"acked_receipt_at"`
-	TerminalAt     *time.Time      `json:"terminal_at"`
-	ResultCode     string          `json:"result_code"`
+	DeliveryID  string          `json:"delivery_id"`
+	DeviceID    string          `json:"device_id"`
+	ManifestID  string          `json:"manifest_id"`
+	Manifest    sqlitetype.JSON `json:"manifest"`
+	State       string          `json:"state"`
+	OperationID *string         `json:"operation_id"`
+	CreatedAt   time.Time       `json:"created_at"`
+	AvailableAt time.Time       `json:"available_at"`
+	TerminalAt  *time.Time      `json:"terminal_at"`
+	ResultCode  string          `json:"result_code"`
 }
 
 type Device struct {
@@ -263,8 +220,6 @@ type Device struct {
 	AgentVersion                string     `json:"agent_version"`
 	EnrollmentIdentityPublicKey []byte     `json:"enrollment_identity_public_key"`
 	CertificatePem              []byte     `json:"certificate_pem"`
-	CertFingerprint             *string    `json:"cert_fingerprint"`
-	CertNotAfter                *time.Time `json:"cert_not_after"`
 	ActiveCertSerial            *string    `json:"active_cert_serial"`
 	PendingCertificatePem       []byte     `json:"pending_certificate_pem"`
 	PendingCertSerial           *string    `json:"pending_cert_serial"`

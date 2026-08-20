@@ -68,22 +68,10 @@ unaudited telemetry writer. Shared boundaries and exact-set tests enforce
 coverage for RPCs, sensitive reads, rejected authentication, SCIM, enrollment,
 jobs, and background writers.
 
-Audit streams are hash-chained and periodically anchored in the configured
-archive. Retention archives and verifies a prefix before deletion.
-
-<!-- docref: begin src=cmd/cadestro/config.go#validateArchiveIsolation:69e8ec75,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
-Filesystem separation is enforced. Control compares the filesystem holding
-the archive path with the one holding the database and refuses to start when
-they match. Off-host replication remains an operator requirement. No
-configuration variable relaxes the filesystem check; the only build that
-tolerates a shared filesystem is the same one that mints administrator
-sessions without an identity provider.
-<!-- docref: end -->
-
 ### Dispatch
 
-Control commits a complete delivery before send. The agent durably records
-receipt before acknowledgement. Stable delivery IDs, connection epochs,
+Control commits complete one-shot work before synchronization. The agent
+durably records each manifest before scheduling it. Stable delivery IDs,
 idempotent result ingestion, and an explicit INDETERMINATE outcome prevent
 silent replay of non-idempotent effects.
 
@@ -92,18 +80,12 @@ silent replay of non-idempotent effects.
 - Do not expose control directly to the internet.
 - Do not mount the Docker socket into Traefik.
 - Restrict the PROXY-protocol listener to the isolated Traefik network.
-- Protect CA, JWT, sealing, database, and at-rest encryption keys with strict
+- Protect CA, JWT, database, and at-rest encryption keys with strict
   filesystem or deployment-secret permissions.
-<!-- docref: begin src=cmd/cadestro/config.go#validateArchiveIsolation:69e8ec75,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35,deploy/backup.sh#@sqlite-backup:99bc90ed,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
-- Give `CADESTRO_BACKUP_PATH` its own filesystem, separate from the one
-  holding the database: it carries the audit chain's tamper-evidence, and
-  control refuses to start when the two share a mount. `deploy/setup.sh` makes
-  the same check before it renders a configuration, so a deployment installed
-  from this tree either has that storage or does not install.
+<!-- docref: begin src=deploy/backup.sh#@sqlite-backup:99bc90ed,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 - Run `deploy/backup.sh` from a host timer and replicate the
   `CADESTRO_BACKUP_PATH` directory off-host: it contains verified bounded
-  SQLite backups, audit anchors, and archived prefixes. Back up artifacts too,
-  and monitor `cadestro backup-status`.
+  SQLite backups. Back up artifacts too, and monitor `cadestro backup-status`.
 <!-- docref: end -->
 
 Gateway, Valkey, Asynq, external indexing, CRL distribution, local

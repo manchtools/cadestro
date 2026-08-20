@@ -42,14 +42,7 @@ const (
 // validity is established only by DecryptWithContext at the execution sink.
 func IsEncryptedValue(value string) bool { return strings.HasPrefix(value, prefix) }
 
-// LegacySecretAADForRow reads schema-v1 rows written before the generic row
-// context. It is migration-only; new writes must use SecretAADForRow.
-func LegacySecretAADForRow(deviceID, actionID, secretType, discriminator string) []byte {
-	return []byte(deviceID + "|" + actionID + "|" + secretType + "|" + discriminator)
-}
-
 // DeviceSecretAAD makes the generic encrypted-row context explicit for new
-// storage users. Keep the tiny string form so migration code can use the same
 // AEAD without another persistence abstraction.
 func DeviceSecretAAD(rowID, deviceID, kind, subject string, version uint32) []byte {
 	return []byte(fmt.Sprintf("%s|%s|%s|%s|v%d", rowID, deviceID, kind, subject, version))

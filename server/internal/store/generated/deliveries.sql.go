@@ -7,14 +7,13 @@ package generated
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	sqlitetype "github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 const getDelivery = `-- name: GetDelivery :one
-SELECT delivery_id, device_id, manifest_id, manifest, state, operation_id, push_epoch, attempt_count, created_at, available_at, expires_at, pushed_at, acked_receipt_at, terminal_at, result_code FROM deliveries WHERE delivery_id = ?
+SELECT delivery_id, device_id, manifest_id, manifest, state, operation_id, created_at, available_at, terminal_at, result_code FROM deliveries WHERE delivery_id = ?
 `
 
 func (q *Queries) GetDelivery(ctx context.Context, deliveryID string) (Delivery, error) {
@@ -27,13 +26,8 @@ func (q *Queries) GetDelivery(ctx context.Context, deliveryID string) (Delivery,
 		&i.Manifest,
 		&i.State,
 		&i.OperationID,
-		&i.PushEpoch,
-		&i.AttemptCount,
 		&i.CreatedAt,
 		&i.AvailableAt,
-		&i.ExpiresAt,
-		&i.PushedAt,
-		&i.AckedReceiptAt,
 		&i.TerminalAt,
 		&i.ResultCode,
 	)
@@ -44,9 +38,9 @@ const insertDelivery = `-- name: InsertDelivery :one
 
 INSERT INTO deliveries (
     delivery_id, device_id, manifest_id, manifest,
-    state, operation_id, available_at, expires_at
-) VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?)
-RETURNING delivery_id, device_id, manifest_id, manifest, state, operation_id, push_epoch, attempt_count, created_at, available_at, expires_at, pushed_at, acked_receipt_at, terminal_at, result_code
+    state, operation_id, available_at
+) VALUES (?, ?, ?, ?, 'PENDING', ?, ?)
+RETURNING delivery_id, device_id, manifest_id, manifest, state, operation_id, created_at, available_at, terminal_at, result_code
 `
 
 type InsertDeliveryParams struct {
@@ -56,14 +50,12 @@ type InsertDeliveryParams struct {
 	Manifest    sqlitetype.JSON `json:"manifest"`
 	OperationID *string         `json:"operation_id"`
 	AvailableAt time.Time       `json:"available_at"`
-	ExpiresAt   *time.Time      `json:"expires_at"`
 }
 
 // Durable delivery rows.
 //
-// Every state advance is a conditional UPDATE that names the state it
-// expects to find, so a stale connection or a duplicate result cannot
-// move a delivery backwards: the statement matches zero rows instead.
+// A terminal result advances PENDING exactly once, so duplicate results cannot
+// move a delivery backwards.
 // Commits the complete manifest before any send is attempted.
 func (q *Queries) InsertDelivery(ctx context.Context, arg InsertDeliveryParams) (Delivery, error) {
 	row := q.db.QueryRowContext(ctx, insertDelivery,
@@ -73,7 +65,6 @@ func (q *Queries) InsertDelivery(ctx context.Context, arg InsertDeliveryParams) 
 		arg.Manifest,
 		arg.OperationID,
 		arg.AvailableAt,
-		arg.ExpiresAt,
 	)
 	var i Delivery
 	err := row.Scan(
@@ -83,166 +74,32 @@ func (q *Queries) InsertDelivery(ctx context.Context, arg InsertDeliveryParams) 
 		&i.Manifest,
 		&i.State,
 		&i.OperationID,
-		&i.PushEpoch,
-		&i.AttemptCount,
 		&i.CreatedAt,
 		&i.AvailableAt,
-		&i.ExpiresAt,
-		&i.PushedAt,
-		&i.AckedReceiptAt,
 		&i.TerminalAt,
 		&i.ResultCode,
 	)
 	return i, err
 }
 
-const listDueDeliveriesForDevices = `-- name: ListDueDeliveriesForDevices :many
-SELECT delivery_id, device_id, manifest_id, manifest, state, operation_id, push_epoch, attempt_count, created_at, available_at, expires_at, pushed_at, acked_receipt_at, terminal_at, result_code FROM deliveries
-WHERE available_at <= ?1
-  AND ?2 > 0
-  AND state IN ('PENDING', 'PUSHED')
-  AND device_id IN (/*SLICE:device_ids*/?)
-ORDER BY available_at
-LIMIT ?2
-`
-
-type ListDueDeliveriesForDevicesParams struct {
-	AvailableAt time.Time `json:"available_at"`
-	PageSize    int64     `json:"page_size"`
-	DeviceIds   []string  `json:"device_ids"`
-}
-
-// The sweep only considers live connections. Offline rows stay durable and a
-// reconnect queues them directly; excluding them here prevents a large offline
-// backlog from monopolising every bounded sweep page.
-//
-// Placeholder order is load-bearing. sqlc expands sqlc.slice into bare
-// placeholders at run time and SQLite numbers a bare placeholder one above the
-// highest index assigned so far, so a numbered argument written after the slice
-// is overrun the moment the slice carries a second element. Every argument
-// therefore takes its number before the slice: page_size is bound by the guard
-// below, where a non-positive page asks for nothing, and only reused by LIMIT.
-func (q *Queries) ListDueDeliveriesForDevices(ctx context.Context, arg ListDueDeliveriesForDevicesParams) ([]Delivery, error) {
-	query := listDueDeliveriesForDevices
-	var queryParams []interface{}
-	queryParams = append(queryParams, arg.AvailableAt)
-	queryParams = append(queryParams, arg.PageSize)
-	if len(arg.DeviceIds) > 0 {
-		for _, v := range arg.DeviceIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:device_ids*/?", strings.Repeat(",?", len(arg.DeviceIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:device_ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Delivery{}
-	for rows.Next() {
-		var i Delivery
-		if err := rows.Scan(
-			&i.DeliveryID,
-			&i.DeviceID,
-			&i.ManifestID,
-			&i.Manifest,
-			&i.State,
-			&i.OperationID,
-			&i.PushEpoch,
-			&i.AttemptCount,
-			&i.CreatedAt,
-			&i.AvailableAt,
-			&i.ExpiresAt,
-			&i.PushedAt,
-			&i.AckedReceiptAt,
-			&i.TerminalAt,
-			&i.ResultCode,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listExpiredDeliveries = `-- name: ListExpiredDeliveries :many
-SELECT delivery_id, device_id, manifest_id, manifest, state, operation_id, push_epoch, attempt_count, created_at, available_at, expires_at, pushed_at, acked_receipt_at, terminal_at, result_code FROM deliveries
-WHERE expires_at IS NOT NULL
-  AND expires_at <= ?
-  AND terminal_at IS NULL
-ORDER BY expires_at
-LIMIT ?
-`
-
-type ListExpiredDeliveriesParams struct {
-	ExpiresAt *time.Time `json:"expires_at"`
-	Limit     int64      `json:"limit"`
-}
-
-func (q *Queries) ListExpiredDeliveries(ctx context.Context, arg ListExpiredDeliveriesParams) ([]Delivery, error) {
-	rows, err := q.db.QueryContext(ctx, listExpiredDeliveries, arg.ExpiresAt, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Delivery{}
-	for rows.Next() {
-		var i Delivery
-		if err := rows.Scan(
-			&i.DeliveryID,
-			&i.DeviceID,
-			&i.ManifestID,
-			&i.Manifest,
-			&i.State,
-			&i.OperationID,
-			&i.PushEpoch,
-			&i.AttemptCount,
-			&i.CreatedAt,
-			&i.AvailableAt,
-			&i.ExpiresAt,
-			&i.PushedAt,
-			&i.AckedReceiptAt,
-			&i.TerminalAt,
-			&i.ResultCode,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listSendableDeliveriesForDevice = `-- name: ListSendableDeliveriesForDevice :many
-SELECT delivery_id, device_id, manifest_id, manifest, state, operation_id, push_epoch, attempt_count, created_at, available_at, expires_at, pushed_at, acked_receipt_at, terminal_at, result_code FROM deliveries
+const listDueDeliveriesForDevice = `-- name: ListDueDeliveriesForDevice :many
+SELECT delivery_id, device_id, manifest_id, manifest, state, operation_id, created_at, available_at, terminal_at, result_code FROM deliveries
 WHERE device_id = ?
-  AND state IN ('PENDING', 'PUSHED')
-ORDER BY created_at
+  AND state = 'PENDING'
+  AND available_at <= ?
+ORDER BY available_at, created_at
 LIMIT ?
 `
 
-type ListSendableDeliveriesForDeviceParams struct {
-	DeviceID string `json:"device_id"`
-	Limit    int64  `json:"limit"`
+type ListDueDeliveriesForDeviceParams struct {
+	DeviceID    string    `json:"device_id"`
+	AvailableAt time.Time `json:"available_at"`
+	Limit       int64     `json:"limit"`
 }
 
-// Manifest frames one connected agent can still receive, oldest first. A row
-// already acknowledged is awaiting results, not another manifest send.
-func (q *Queries) ListSendableDeliveriesForDevice(ctx context.Context, arg ListSendableDeliveriesForDeviceParams) ([]Delivery, error) {
-	rows, err := q.db.QueryContext(ctx, listSendableDeliveriesForDevice, arg.DeviceID, arg.Limit)
+// Due one-shot manifests returned by the authenticated device's Sync.
+func (q *Queries) ListDueDeliveriesForDevice(ctx context.Context, arg ListDueDeliveriesForDeviceParams) ([]Delivery, error) {
+	rows, err := q.db.QueryContext(ctx, listDueDeliveriesForDevice, arg.DeviceID, arg.AvailableAt, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -257,13 +114,8 @@ func (q *Queries) ListSendableDeliveriesForDevice(ctx context.Context, arg ListS
 			&i.Manifest,
 			&i.State,
 			&i.OperationID,
-			&i.PushEpoch,
-			&i.AttemptCount,
 			&i.CreatedAt,
 			&i.AvailableAt,
-			&i.ExpiresAt,
-			&i.PushedAt,
-			&i.AckedReceiptAt,
 			&i.TerminalAt,
 			&i.ResultCode,
 		); err != nil {
@@ -278,65 +130,6 @@ func (q *Queries) ListSendableDeliveriesForDevice(ctx context.Context, arg ListS
 		return nil, err
 	}
 	return items, nil
-}
-
-const markDeliveryAckedReceipt = `-- name: MarkDeliveryAckedReceipt :execrows
-UPDATE deliveries
-SET state = 'ACKED_RECEIPT',
-    acked_receipt_at = ?
-WHERE delivery_id = ?
-  AND state = 'PUSHED'
-`
-
-type MarkDeliveryAckedReceiptParams struct {
-	AckedReceiptAt *time.Time `json:"acked_receipt_at"`
-	DeliveryID     string     `json:"delivery_id"`
-}
-
-// The agent confirmed DURABLE receipt. Idempotent on replay: a second
-// ack for an already-acked row matches nothing and is not an error to
-// the caller, which is what makes reconnect retries safe.
-func (q *Queries) MarkDeliveryAckedReceipt(ctx context.Context, arg MarkDeliveryAckedReceiptParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, markDeliveryAckedReceipt, arg.AckedReceiptAt, arg.DeliveryID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
-}
-
-const markDeliveryPushed = `-- name: MarkDeliveryPushed :execrows
-UPDATE deliveries
-SET state = 'PUSHED',
-    pushed_at = ?1,
-    push_epoch = ?2,
-    attempt_count = attempt_count + 1,
-    available_at = ?3
-WHERE delivery_id = ?4
-  AND state IN ('PENDING', 'PUSHED')
-  AND push_epoch <= ?2
-`
-
-type MarkDeliveryPushedParams struct {
-	PushedAt    *time.Time `json:"pushed_at"`
-	PushEpoch   int64      `json:"push_epoch"`
-	AvailableAt time.Time  `json:"available_at"`
-	DeliveryID  string     `json:"delivery_id"`
-}
-
-// PENDING or a re-push of an already PUSHED row (a reconnect), never a
-// row that has already been received. push_epoch only moves forward,
-// so a stale connection cannot claim the push.
-func (q *Queries) MarkDeliveryPushed(ctx context.Context, arg MarkDeliveryPushedParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, markDeliveryPushed,
-		arg.PushedAt,
-		arg.PushEpoch,
-		arg.AvailableAt,
-		arg.DeliveryID,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
 }
 
 const markDeliveryResult = `-- name: MarkDeliveryResult :execrows
@@ -345,7 +138,7 @@ SET state = ?,
     terminal_at = ?,
     result_code = ?
 WHERE delivery_id = ?
-  AND state = 'ACKED_RECEIPT'
+  AND state = 'PENDING'
 `
 
 type MarkDeliveryResultParams struct {
@@ -355,41 +148,10 @@ type MarkDeliveryResultParams struct {
 	DeliveryID string     `json:"delivery_id"`
 }
 
-// A per-action and manifest result. Only reachable from a confirmed
-// receipt, which the schema also enforces.
+// A per-action and manifest result. Sync is the transport boundary.
 func (q *Queries) MarkDeliveryResult(ctx context.Context, arg MarkDeliveryResultParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, markDeliveryResult,
 		arg.State,
-		arg.TerminalAt,
-		arg.ResultCode,
-		arg.DeliveryID,
-	)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
-}
-
-const markDeliveryTerminalWithoutReceipt = `-- name: MarkDeliveryTerminalWithoutReceipt :execrows
-UPDATE deliveries
-SET state = ?1,
-    terminal_at = ?2,
-    result_code = ?3
-WHERE delivery_id = ?4
-  AND state IN ('PENDING', 'PUSHED')
-`
-
-type MarkDeliveryTerminalWithoutReceiptParams struct {
-	NewState   string     `json:"new_state"`
-	TerminalAt *time.Time `json:"terminal_at"`
-	ResultCode string     `json:"result_code"`
-	DeliveryID string     `json:"delivery_id"`
-}
-
-// Expiry or cancellation of a delivery the device never received.
-func (q *Queries) MarkDeliveryTerminalWithoutReceipt(ctx context.Context, arg MarkDeliveryTerminalWithoutReceiptParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, markDeliveryTerminalWithoutReceipt,
-		arg.NewState,
 		arg.TerminalAt,
 		arg.ResultCode,
 		arg.DeliveryID,

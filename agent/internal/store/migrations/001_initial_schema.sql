@@ -35,17 +35,6 @@ CREATE TABLE manifest_occurrences (
     FOREIGN KEY (delivery_id) REFERENCES manifest_deliveries(delivery_id) ON DELETE CASCADE
 );
 
-CREATE TABLE reboot_markers (
-    delivery_id TEXT NOT NULL,
-    occurrence_id TEXT NOT NULL,
-    boot_id TEXT NOT NULL,
-    scheduled_at DATETIME NOT NULL,
-    PRIMARY KEY (delivery_id, occurrence_id),
-    FOREIGN KEY (delivery_id, occurrence_id)
-        REFERENCES manifest_occurrences(delivery_id, occurrence_id)
-        ON DELETE CASCADE
-);
-
 CREATE TABLE result_outbox (
     sequence INTEGER PRIMARY KEY AUTOINCREMENT,
     id TEXT NOT NULL UNIQUE,
@@ -93,7 +82,6 @@ DROP TABLE lps_state;
 DROP TABLE luks_user_passphrase_history;
 DROP TABLE luks_state;
 DROP TABLE result_outbox;
-DROP TABLE reboot_markers;
 DROP TABLE manifest_occurrences;
 DROP TABLE manifest_deliveries;
 DROP TABLE settings;

@@ -52,11 +52,6 @@ curl -fsSL https://raw.githubusercontent.com/manchtools/cadestro/main/deploy/ins
 chmod +x install.sh && sudo ./install.sh
 ```
 
-The audit archive must live on a filesystem separate from the database —
-control refuses to start otherwise, because evidence that shares a disk with
-the records it attests to is not evidence. For a single-disk test box, answer
-`loopback` when asked (or set `ARCHIVE_LOOPBACK=1`).
-
 Then create a single-use administrator setup URL, configure your identity
 provider through it, and enroll a device:
 

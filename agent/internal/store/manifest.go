@@ -59,8 +59,7 @@ func (s *Store) resolveWorkID(id string) (string, error) {
 }
 
 // ReconcilePolicy replaces only assignment-derived manifests. Explicit
-// deliveries remain untouched, and policy changes are applied without a
-// transport receipt because the authenticated Sync response is the boundary.
+// deliveries remain untouched; authenticated Sync is the policy boundary.
 func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if policy == nil {
 		return errors.New("reconcile policy: missing snapshot")
@@ -434,45 +433,6 @@ func (s *Store) MarkOccurrenceStarted(deliveryID, occurrenceID string, startedAt
 	return nil
 }
 
-func (s *Store) MarkRebootStarted(deliveryID, occurrenceID, bootID string, startedAt time.Time) error {
-	if bootID == "" {
-		return errors.New("mark reboot started: boot ID is empty")
-	}
-	workID, err := s.resolveWorkID(deliveryID)
-	if err != nil {
-		return err
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	startedAt = startedAt.UTC()
-	result, err := tx.Exec(`
-		UPDATE scheduled_work_occurrences SET state = ?, started_at = ?, completed_at = NULL
-		WHERE delivery_id = ? AND occurrence_id = ? AND state = ?
-	`, OccurrenceStarted, startedAt, workID, occurrenceID, OccurrencePending)
-	if err != nil {
-		return err
-	}
-	changed, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if changed != 1 {
-		return fmt.Errorf("mark reboot started: invalid state for %s/%s", deliveryID, occurrenceID)
-	}
-	if _, err := tx.Exec(`
-		INSERT INTO scheduled_work_reboots (delivery_id, occurrence_id, boot_id, scheduled_at)
-		VALUES (?, ?, ?, ?)
-	`, workID, occurrenceID, bootID, startedAt); err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
 func (s *Store) GetManifestOccurrenceStates(deliveryID string) (map[string]ManifestOccurrenceState, error) {
 	workID, err := s.resolveWorkID(deliveryID)
 	if err != nil {
@@ -554,11 +514,6 @@ func (s *Store) RecordOccurrenceResult(result *pb.ActionResult, suppressUnchange
 	}
 	if rows != 1 {
 		return "", false, errors.New("record occurrence result: occurrence was not STARTED")
-	}
-	if _, err := tx.Exec(`
-		DELETE FROM scheduled_work_reboots WHERE delivery_id = ? AND occurrence_id = ?
-	`, workID, result.GetOccurrenceId()); err != nil {
-		return "", false, err
 	}
 	if suppressUnchanged && previousHash != "" && previousHash == resultHash {
 		if err := tx.Commit(); err != nil {
@@ -701,14 +656,9 @@ func (s *Store) MarkPendingResultSynced(id string) error {
 	return err
 }
 
-const rebootResolutionGrace = 15 * time.Minute
-
 // RecoverInterruptedOccurrences resolves durable STARTED rows without ever
-// repeating their side effects. A changed kernel boot ID proves a scheduled
-// reboot completed; other interrupted work is INDETERMINATE. A reboot marker
-// on the current boot is left pending briefly so an agent-service restart does
-// not race the already scheduled operating-system reboot.
-func (s *Store) RecoverInterruptedOccurrences(currentBootID string) ([]PendingResult, error) {
+// repeating their side effects.
+func (s *Store) RecoverInterruptedOccurrences() ([]PendingResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	tx, err := s.db.Begin()
@@ -717,12 +667,9 @@ func (s *Store) RecoverInterruptedOccurrences(currentBootID string) ([]PendingRe
 	}
 	defer tx.Rollback()
 	rows, err := tx.Query(`
-		SELECT COALESCE(sw.run_id, o.delivery_id), o.delivery_id, o.occurrence_id, o.action_id,
-		       r.boot_id, r.scheduled_at
+		SELECT COALESCE(sw.run_id, o.delivery_id), o.delivery_id, o.occurrence_id, o.action_id
 		FROM scheduled_work_occurrences o
 		JOIN scheduled_work sw ON sw.delivery_id = o.delivery_id
-		LEFT JOIN scheduled_work_reboots r
-		  ON r.delivery_id = o.delivery_id AND r.occurrence_id = o.occurrence_id
 		WHERE o.state = ?
 		ORDER BY o.delivery_id, o.position
 	`, OccurrenceStarted)
@@ -731,16 +678,11 @@ func (s *Store) RecoverInterruptedOccurrences(currentBootID string) ([]PendingRe
 	}
 	type interrupted struct {
 		runID, deliveryID, occurrenceID, actionID string
-		bootID                                    sql.NullString
-		scheduledAt                               sql.NullTime
 	}
 	var interruptedRows []interrupted
 	for rows.Next() {
 		var item interrupted
-		if err := rows.Scan(
-			&item.runID, &item.deliveryID, &item.occurrenceID, &item.actionID,
-			&item.bootID, &item.scheduledAt,
-		); err != nil {
+		if err := rows.Scan(&item.runID, &item.deliveryID, &item.occurrenceID, &item.actionID); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -757,26 +699,12 @@ func (s *Store) RecoverInterruptedOccurrences(currentBootID string) ([]PendingRe
 	for _, item := range interruptedRows {
 		status := pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE
 		message := "agent restarted after STARTED; effect is unknown and was not repeated"
-		var output *pb.CommandOutput
-		if item.bootID.Valid {
-			switch {
-			case currentBootID != "" && currentBootID != item.bootID.String:
-				status = pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS
-				message = ""
-				output = &pb.CommandOutput{Stdout: "Reboot completed\n"}
-			case item.scheduledAt.Valid && now.Before(item.scheduledAt.Time.Add(rebootResolutionGrace)):
-				continue
-			default:
-				message = "scheduled reboot did not produce a new boot ID; effect is indeterminate"
-			}
-		}
 		result := &pb.ActionResult{
 			ActionId:     &pb.ActionId{Value: item.actionID},
 			DeliveryId:   item.runID,
 			OccurrenceId: item.occurrenceID,
 			Status:       status,
 			Error:        message,
-			Output:       output,
 			CompletedAt:  timestamppb.New(now),
 		}
 		payload, err := marshalStoredProto(result)
@@ -799,11 +727,6 @@ func (s *Store) RecoverInterruptedOccurrences(currentBootID string) ([]PendingRe
 			SET state = ?, completed_at = ?, result_status = ?, result_error = ?
 			WHERE delivery_id = ? AND occurrence_id = ? AND state = ?
 		`, state, now, status, message, item.deliveryID, item.occurrenceID, OccurrenceStarted); err != nil {
-			return nil, err
-		}
-		if _, err := tx.Exec(`
-			DELETE FROM scheduled_work_reboots WHERE delivery_id = ? AND occurrence_id = ?
-		`, item.deliveryID, item.occurrenceID); err != nil {
 			return nil, err
 		}
 		recovered = append(recovered, PendingResult{ID: id, ActionResult: result})

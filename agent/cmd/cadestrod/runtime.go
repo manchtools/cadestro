@@ -349,13 +349,13 @@ func periodicSync(
 		case <-ticker.C:
 			doSync("periodic")
 		case <-syncTrigger:
-			doSync("instant action trigger")
+			doSync("live sync trigger")
 		}
 	}
 }
 
 // sendScheduledResults consumes the scheduler's Results channel and sends execution results to the server.
-// This ensures that results from scheduled actions (not just server-pushed actions) are reported back.
+// This ensures that results from scheduled actions (including one-shot work) are reported back.
 func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) {
 	for {
 		select {
@@ -393,9 +393,6 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 		if _, err := sched.RecordDelivery(ctx, delivery); err != nil {
 			logger.Error("failed to durably record synced delivery", "delivery_id", delivery.GetDeliveryId(), "error", err)
 			continue
-		}
-		if err := client.SendDeliveryReceipt(ctx, delivery.GetDeliveryId()); err != nil {
-			logger.Warn("failed to send synced delivery receipt", "delivery_id", delivery.GetDeliveryId(), "error", err)
 		}
 	}
 

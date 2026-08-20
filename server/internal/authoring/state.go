@@ -356,8 +356,7 @@ func ValidateExecutableAction(action *pmv1.Action) error {
 	}
 	params := actionparams.ExtractParamsMsg(action)
 	if params == nil {
-		// UPDATE is the only ordinary action whose empty params oneof is
-		// meaningful. REBOOT and SYNC use DispatchInstantAction instead.
+		// UPDATE is the only action whose empty params oneof is meaningful.
 		if action.Type != pmv1.ActionType_ACTION_TYPE_UPDATE {
 			return ErrInvalidInput
 		}

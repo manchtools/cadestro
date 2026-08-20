@@ -3,7 +3,7 @@
 	// Save button: it is inline, and its commit rides the context pill (⌘S /
 	// Stash / Esc) like every other committable surface in the redesign.
 	//
-	// Action types with no registry entry (REBOOT, SYNC, SCRIPT_RUN) have no
+	// Action types with no registry entry (SCRIPT_RUN) have no
 	// editable params shape at all — those fall back to the read-only display
 	// rather than showing an empty editor.
 	import { onMount, onDestroy, untrack } from 'svelte';
@@ -161,7 +161,7 @@
 			: getActionTypeIcon(action.type)}
 		{@const absent = action.desiredState === DesiredState.ABSENT}
 		{#if !editable}
-			<!-- Types with no editable params (REBOOT / SYNC / SCRIPT_RUN) have no
+			<!-- Types with no editable params (SCRIPT_RUN) have no
 			     draft to toggle, so their strip stays a statement. The editable ones
 			     carry theirs inside the editor, where the state chip IS the switch. -->
 			<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">

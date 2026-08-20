@@ -18,7 +18,6 @@ import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
 import { ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
 import { DeviceSchema, DeviceGroupSchema } from '$contract/cadestro/v1/control_pb';
-import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 const mocks = vi.hoisted(() => ({
 	url: new URL('http://localhost/devices'),
@@ -26,7 +25,7 @@ const mocks = vi.hoisted(() => ({
 	listDeviceGroups: vi.fn(),
 	getDeviceGroup: vi.fn(),
 	search: vi.fn(),
-	dispatchInstantAction: vi.fn(),
+	rebootDevice: vi.fn(),
 	setDeviceLabel: vi.fn(),
 	goto: vi.fn(),
 	pushState: vi.fn()
@@ -63,7 +62,7 @@ vi.mock('$lib/sdk', async () => {
 			listDeviceGroups: mocks.listDeviceGroups,
 			getDeviceGroup: mocks.getDeviceGroup,
 			search: mocks.search,
-			dispatchInstantAction: mocks.dispatchInstantAction,
+			rebootDevice: mocks.rebootDevice,
 			setDeviceLabel: mocks.setDeviceLabel,
 			deleteDevice: vi.fn(),
 			assignDevice: vi.fn(),
@@ -143,12 +142,12 @@ beforeEach(() => {
 	mocks.listDeviceGroups.mockReset();
 	mocks.getDeviceGroup.mockReset();
 	mocks.search.mockReset();
-	mocks.dispatchInstantAction.mockReset();
+	mocks.rebootDevice.mockReset();
 	mocks.setDeviceLabel.mockReset();
 	mocks.goto.mockReset();
 	mocks.pushState.mockReset();
 	mocks.search.mockResolvedValue({ results: [], totalCount: 0 });
-	mocks.dispatchInstantAction.mockResolvedValue({});
+	mocks.rebootDevice.mockResolvedValue({});
 	mocks.setDeviceLabel.mockResolvedValue({});
 	toaster.success.mockReset();
 	toaster.error.mockReset();
@@ -199,7 +198,7 @@ describe('the resting pill stays quiet on the fleet', () => {
 
 		clickTile('g1', 'api-01');
 		await vi.waitFor(() => expect(pillMode()).toBe('selection'));
-		expect(pillSubtext()!.text).toBe('across 1 groups · 0 offline will queue');
+		expect(pillSubtext()!.text).toBe('across 1 groups · 0 offline unavailable for live calls');
 
 		clickTile('g1', 'api-01'); // toggle back off
 		await vi.waitFor(() => expect(pillMode()).toBe('nav'));
@@ -239,7 +238,7 @@ describe('bulk reboot', () => {
 		]);
 	});
 
-	it('names the hosts, counts the offline members that will queue, and dispatches once per id', async () => {
+	it('names the hosts and calls reboot once per id', async () => {
 		fixture();
 		await selectAllThree();
 
@@ -250,32 +249,23 @@ describe('bulk reboot', () => {
 		const hosts = document.querySelector<HTMLElement>('[data-testid="bulk-reboot-hosts"]')!;
 		// the unreachable member is named FIRST and is never dropped from the write
 		expect(hosts.textContent!.replace(/\s+/g, ' ').trim()).toBe('a2 a1 b1');
-		expect(document.querySelector('[data-testid="bulk-reboot-queued"]')!.textContent!.trim()).toBe(
-			'1 offline — queued until it reconnects'
-		);
-
 		await dialog.getByTestId('bulk-reboot-confirm').click();
 
-		await vi.waitFor(() => expect(mocks.dispatchInstantAction).toHaveBeenCalledTimes(3));
-		expect(mocks.dispatchInstantAction.mock.calls.map((c) => c[0]).sort()).toEqual([
+		await vi.waitFor(() => expect(mocks.rebootDevice).toHaveBeenCalledTimes(3));
+		expect(mocks.rebootDevice.mock.calls.map((c) => c[0]).sort()).toEqual([
 			'd1',
 			'd2',
 			'd3'
 		]);
-		expect(mocks.dispatchInstantAction.mock.calls.map((c) => c[1])).toEqual([
-			ActionType.REBOOT,
-			ActionType.REBOOT,
-			ActionType.REBOOT
-		]);
 		await vi.waitFor(() =>
-			expect(toaster.success).toHaveBeenCalledWith('Reboot dispatched to 3 devices')
+			expect(toaster.success).toHaveBeenCalledWith('Reboot requested on 3 devices')
 		);
 		expect(toaster.error).not.toHaveBeenCalled();
 	});
 
 	it('aggregates per-device failures into one toast and still writes every other device', async () => {
 		fixture();
-		mocks.dispatchInstantAction.mockImplementation(async (id: string) => {
+		mocks.rebootDevice.mockImplementation(async (id: string) => {
 			if (id === 'd2') throw new Error('agent unreachable');
 			return {};
 		});
@@ -286,9 +276,9 @@ describe('bulk reboot', () => {
 		await browser.getByTestId('bulk-reboot-confirm').click();
 
 		// the failing device does NOT abort the queue behind it
-		await vi.waitFor(() => expect(mocks.dispatchInstantAction).toHaveBeenCalledTimes(3));
+		await vi.waitFor(() => expect(mocks.rebootDevice).toHaveBeenCalledTimes(3));
 		await vi.waitFor(() =>
-			expect(toaster.error).toHaveBeenCalledWith('2 dispatched, 1 failed')
+			expect(toaster.error).toHaveBeenCalledWith('2 requested, 1 failed')
 		);
 		expect(toaster.error).toHaveBeenCalledTimes(1); // one toast, not one per device
 		expect(toaster.success).not.toHaveBeenCalled();

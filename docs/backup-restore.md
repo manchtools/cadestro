@@ -1,15 +1,7 @@
 # Backup and restore
 
-There are **two** separate things to keep, and conflating them is the mistake
-this page exists to prevent:
-
-1. **The database** — every device, action, assignment, and result. Backed up by
-   a script you schedule.
-2. **The audit archive** — retained audit evidence, written by control itself
-   when it prunes old audit rows, and required to be on a different filesystem.
-
-Losing the first costs you the deployment. Losing the second costs you the
-evidence about the deployment, which is the harder thing to reconstruct.
+The database is the source of truth for devices, actions, assignments, results,
+and audit events. Back it up with the script you schedule below.
 
 ---
 
@@ -49,8 +41,8 @@ behind for the next run to trip over.
 Retention is `BACKUP_KEEP`, default 7, validated as an integer between 1 and
 365. Pruning is by reverse-sorted filename, which is reverse-chronological
 because the timestamps are fixed-width — and it only ever matches the snapshot
-filename pattern, so it cannot delete the status document or an archive object
-sharing the directory.
+filename pattern, so it cannot delete the status document or another file in the
+directory.
 
 ### Scheduling it
 
@@ -110,7 +102,7 @@ daily backup run late without alarming.
 > **One precision.** The status check compares the artifact's **size**, not its
 > hash. The recorded digest is validated for shape but is not recomputed against
 > the bytes on every status read. It is a freshness and consistency check, not a
-> continuous integrity check of your backup archive.
+> continuous integrity check of your backup artifact.
 
 <!-- docref: begin src=server/internal/maintenance/service.go#Service.InspectBackup:d8c2e6fd -->
 Control also inspects backup posture itself every 15 minutes, records the result
@@ -121,55 +113,6 @@ you instead.
 <!-- docref: end -->
 
 ---
-
-## The audit archive
-
-<!-- docref: begin src=server/internal/archive/archive.go#ArchiveStore:66c8a29a -->
-The archive holds integrity-sealed audit anchors and retained chain prefixes on
-the operator's off-host backup mount. It is a streaming store by design — a
-retained prefix can be large — and the interface has `put`, `get`, and `list`.
-
-**There is no delete.** Nothing in the archive is ever removed by the
-application.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/store/audit_archive.go#Store.WriteAuditPrefix:0e66b341 -->
-An archived prefix is deterministic JSON-lines: a header line naming the stream,
-the boundary, the boundary hash and the prior checkpoint, then one line per row
-in strict chain order — with a gap check while writing and a count
-reconciliation afterwards. It is a plain text format that can be read and
-verified without Cadestro.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/archive/fs.go#filesystem.Put:49f203c8 -->
-Writing is ordered for crash safety: the content is streamed and hashed to a
-temporary file in the same directory, fsync'ed; the checksum sidecar is written
-and fsync'ed **first**; then the data file is atomically renamed into place; then
-the directory is fsync'ed. A reader therefore never sees an object whose data is
-incomplete, and a present object always has a durable seal beside it.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/internal/maintenance/service.go#recurring:4c272529 -->
-Three audit jobs run on their own schedules: verification hourly, anchoring
-every 15 minutes, and retention daily.
-<!-- docref: end -->
-
-### Why the separate filesystem
-
-Because the archive is evidence *about* the database. Evidence that shares a
-failure domain with what it attests is not independent evidence — one bad disk,
-one bad `rm`, one ransomware run takes both. See
-[installation](installation.md#the-archive-mount) for how to satisfy it and
-[the security model](security-model.md#retention-and-archive) for what the
-archive proves.
-
-Note the honest limit: the enforced property is *different filesystem*. A second
-local disk passes. Getting it genuinely off-host is yours to arrange.
-
-### Backing up the archive
-
-Include the archive mount in whatever off-host copy you already run. There is no
-Cadestro-side replication.
 
 ---
 
@@ -190,7 +133,7 @@ The database alone is not enough:
 | `secrets/session-signing.pem` | existing sessions |
 | `certs/` | the CA **every enrolled device pinned** — lose it and you re-enroll the fleet |
 | `data/artifacts` | uploaded artifacts, not in the database |
-| `data/backups` | the audit archive |
+| `data/backups` | verified database backup artifacts |
 
 ### The procedure
 
@@ -218,25 +161,18 @@ read-write and chmods it to owner-only on every open.
 
 - **Schema version must match.** A snapshot from a different release's schema
   will not open. See [upgrades](upgrade.md).
-- **Restore the database and the archive as a matched pair.** A restored
-  database whose audit checkpoints reference archive objects that are not
-  present will fail audit verification and block retention — both fail closed,
-  by design, because a missing prefix is indistinguishable from a deleted one.
-- **The archive must still be on its own filesystem** or control will not start.
 
 ### What is unproven
 
 No code exercises a restore. Anything beyond "stop control, put the artifact at
-the database path, start control" is inference. In particular, nothing verifies
-that a restored database with a mismatched archive is recoverable — so if you
-depend on being able to restore, **test it on a spare machine before you need
-it.**
+the database path, start control" is inference, so if you depend on being able
+to restore, **test it on a spare machine before you need it.**
 
 ---
 
 ## Where to go next
 
-- [Security model](security-model.md#4-audit-guarantees) — what the audit
-  archive proves and how.
-- [Installation](installation.md) — the archive mount requirement.
+- [Security model](security-model.md#4-audit-guarantees) — what the audit log
+  records and how it is protected.
+- [Installation](installation.md) — deployment prerequisites.
 - [Upgrades](upgrade.md) — why a backup is a prerequisite.

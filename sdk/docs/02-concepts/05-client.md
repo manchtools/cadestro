@@ -13,12 +13,11 @@ inventory, log/osquery replies, and terminal traffic share the stream.
 ## Transport
 
 The agent validates control against the CA pinned at enrollment. Control
-derives device identity from the client certificate and checks revocation
-during the handshake.
+derives device identity from the client certificate during the handshake.
 
 Application frames are not separately signed. Both endpoints are trusted and
-there is no relay or offline verifier. Classified secret fields use
-recipient-bound X25519 envelopes as described in [Crypto](/concepts/crypto).
+there is no relay or offline verifier. Classified secret fields are handled at
+their authenticated feature sinks.
 
 ## Robustness
 

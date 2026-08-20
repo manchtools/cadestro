@@ -42,7 +42,7 @@
 	let scheduleParams = $state(defaultScheduleForm());
 
 	// FormKey resolved from the action's proto type. Returns null for actions
-	// whose type isn't in the registry (e.g. REBOOT, SYNC, SCRIPT_RUN — these
+	// whose type isn't in the registry (e.g. SCRIPT_RUN — these
 	// have no editable params shape and don't render a form).
 	const formKey = $derived.by((): FormKey | null => {
 		if (!action) return null;

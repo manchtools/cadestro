@@ -2,10 +2,8 @@ package agentstream
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/hex"
 	"io"
 	"log/slog"
 	"math/big"
@@ -26,7 +24,6 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
 	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -65,9 +62,15 @@ func (fakeSync) Sync(context.Context, string) (*pmv1.SyncState, error) {
 	return &pmv1.SyncState{SyncIntervalMinutes: 30}, nil
 }
 
-type fakeWaker struct{}
+type fakeLiveOperations struct{}
 
-func (fakeWaker) WakeDevice(context.Context, string) error { return nil }
+func (fakeLiveOperations) CompleteSyncDevice(context.Context, string, string, *pmv1.SyncDeviceResult) error {
+	return nil
+}
+
+func (fakeLiveOperations) CompleteRebootDevice(context.Context, string, string, *pmv1.RebootDeviceResult) error {
+	return nil
+}
 
 // seededExecution is one device with one acknowledged delivery holding one
 // pending occurrence — the state an agent is in when it reports a result.
@@ -101,9 +104,9 @@ func seedExecution(t *testing.T, raw *testdb.DB, at time.Time) seededExecution {
 	require.NoError(t, err)
 	_, err = raw.Exec(ctx, `
 		INSERT INTO deliveries (
-			delivery_id, device_id, manifest_id, manifest, state, pushed_at, acked_receipt_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $6)`,
-		seeded.deliveryID, seeded.deviceID, ulid.Make().String(), manifest, delivery.StateAckedReceipt, at)
+			delivery_id, device_id, manifest_id, manifest, state
+		) VALUES ($1, $2, $3, $4, $5)`,
+		seeded.deliveryID, seeded.deviceID, ulid.Make().String(), manifest, "PENDING")
 	require.NoError(t, err)
 	_, err = raw.Exec(ctx, `
 		INSERT INTO executions (
@@ -146,7 +149,7 @@ func newStreamFixture(t *testing.T) *streamFixture {
 		Deliveries:    &fakeDeliveryState{},
 		Executions:    execution.New(execution.Config{Store: st, Now: func() time.Time { return now }}),
 		DeviceResults: &fakeDeviceResults{},
-		Secrets:       fakeSecrets{}, Sync: fakeSync{}, Waker: fakeWaker{},
+		Secrets:       fakeSecrets{}, Sync: fakeSync{}, LiveOperations: fakeLiveOperations{},
 		TerminalSessions: connection.NewTerminalSessionRegistry(),
 		Logger:           slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Now:              func() time.Time { return now },
@@ -202,20 +205,6 @@ func TestPendingHelloPromotesAndOldActiveIsRejected(t *testing.T) {
 	if assert.ErrorAs(t, err, &connectErr) {
 		assert.Equal(t, connect.CodePermissionDenied, connectErr.Code())
 	}
-}
-
-func TestLegacyFingerprintBridgeRecordsAuthenticatedSerial(t *testing.T) {
-	f := newStreamFixture(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	digest := sha256.Sum256(nil)
-	_, err := f.raw.Exec(ctx, `UPDATE devices SET active_cert_serial = NULL, certificate_pem = X'01', cert_fingerprint = ?, cert_not_after = CURRENT_TIMESTAMP WHERE id = ?`, hex.EncodeToString(digest[:]), f.own.deviceID)
-	require.NoError(t, err)
-	f.open(t, ctx)
-	var serial, fingerprint any
-	require.NoError(t, f.raw.QueryRow(ctx, `SELECT active_cert_serial, cert_fingerprint FROM devices WHERE id = ?`, f.own.deviceID).Scan(&serial, &fingerprint))
-	require.Equal(t, "1", serial)
-	require.Nil(t, fingerprint)
 }
 
 func TestStreamRejectsAlreadyOpenPeerAfterSerialPromotion(t *testing.T) {

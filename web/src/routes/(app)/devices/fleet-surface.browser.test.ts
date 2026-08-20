@@ -352,7 +352,7 @@ describe('selection rides the pill into /assign', () => {
 			{ alpha: ['d1', 'd2'], beta: ['d3'] }
 		);
 
-	it('reports the real count, the groups it spans and the members that will queue', async () => {
+	it('reports the real count, the groups it spans and unavailable members', async () => {
 		fixture();
 		render(DevicesPage);
 		await vi.waitFor(() => expect(tiles().length).toBe(3));
@@ -362,7 +362,7 @@ describe('selection rides the pill into /assign', () => {
 		alpha.querySelectorAll<HTMLButtonElement>('[data-testid="fleet-tile"]')[0].click();
 
 		await vi.waitFor(() => expect(shell.pill.selection?.count).toBe(1));
-		expect(shell.pill.selection!.subtext).toBe('across 1 groups · 1 offline will queue');
+		expect(shell.pill.selection!.subtext).toBe('across 1 groups · 1 offline unavailable for live calls');
 		expect(shell.pill.selection!.subtextTone).toBe('warn');
 
 		document
@@ -371,7 +371,7 @@ describe('selection rides the pill into /assign', () => {
 			.click();
 
 		await vi.waitFor(() => expect(shell.pill.selection?.count).toBe(2));
-		expect(shell.pill.selection!.subtext).toBe('across 2 groups · 1 offline will queue');
+		expect(shell.pill.selection!.subtext).toBe('across 2 groups · 1 offline unavailable for live calls');
 	});
 
 	it('extends a range with shift-click, inside the clicked group only', async () => {

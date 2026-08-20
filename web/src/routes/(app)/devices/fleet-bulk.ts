@@ -1,15 +1,11 @@
 // The fleet's bulk-write seam — the two selection actions that write, beside
 // Assign (which lives on its own surface, see ../assign/assign-data.ts).
 //
-// Both writes are PER-DEVICE RPCs, because that is the only shape the control
-// contract has: DispatchInstantAction takes one device_id, SetDeviceLabel takes
-// one id. There is no bulk reboot and no bulk label on the wire, so the fan-out
-// is explicit and BOUNDED rather than an unbounded Promise.all storm.
+// Both writes are PER-DEVICE RPCs. There is no bulk reboot and no bulk label on
+// the wire, so the fan-out is explicit and BOUNDED rather than an unbounded
+// Promise.all storm.
 //
-//   Reboot — DispatchInstantAction(device_id, ACTION_TYPE_REBOOT). The dispatch
-//     is durable server state: an offline device keeps it queued until it
-//     reconnects, which is why the confirm dialog counts the offline members
-//     instead of silently dropping them from the selection.
+//   Reboot — RebootDevice(device_id), a live RPC requiring an active connection.
 //   Label  — SetDeviceLabel(id, key, value), the same call the device detail
 //     surface makes for a single device.
 //
@@ -18,7 +14,6 @@
 // devices behind it in the queue.
 import { apiClient } from '$lib/sdk';
 import { getLocalizedError } from '$lib/errors';
-import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
 /** Writes in flight. The same bound the assign lane commits with — enough to
  *  keep a large selection moving, small enough that one bulk action is not a
@@ -53,12 +48,11 @@ async function mapLimit<T, R>(
 	return out;
 }
 
-/** Dispatch a reboot to every selected device. Offline devices are included on
- *  purpose — the dispatch is queued durably, not lost. */
+/** Reboot every selected device through the live RPC. */
 export async function bulkReboot(deviceIds: readonly string[]): Promise<BulkOutcome[]> {
 	return mapLimit(deviceIds, WRITE_CONCURRENCY, async (deviceId) => {
 		try {
-			await apiClient.dispatchInstantAction(deviceId, ActionType.REBOOT);
+			await apiClient.rebootDevice(deviceId);
 			return { deviceId, ok: true };
 		} catch (error) {
 			return { deviceId, ok: false, error: getLocalizedError(error) };

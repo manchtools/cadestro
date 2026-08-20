@@ -36,10 +36,6 @@ enum ActionType {
   ACTION_TYPE_FILE = 400; // File management
   ACTION_TYPE_DIRECTORY = 401; // Directory management
 
-  // Instant actions (500-599) — agent-builtin, no parameters
-  ACTION_TYPE_REBOOT = 500; // Reboot the device (5-minute delay)
-  ACTION_TYPE_SYNC = 501; // Trigger immediate agent sync
-
   // System management (600-699)
   ACTION_TYPE_USER = 600; // User account management
   ACTION_TYPE_GROUP = 601; // Group membership management
@@ -65,7 +61,7 @@ enum ActionType {
 }
 
 // ============================================================================
-// Action - Pushed from server to agent
+// Action - Authored desired state compiled into a manifest for the agent
 // ============================================================================
 
 message Action {
@@ -762,9 +758,8 @@ message ActionResult {
   // one delivery legitimately produces several results with the same
   // action_id.
   //
-  // Both are mandatory. Every execution descends from a delivery — the pull
-  // path carries the same ManifestDelivery the push path does — so a result
-  // that can name neither did not come from an assignment.
+  // Both are mandatory. Every execution descends from a ManifestDelivery
+  // returned by Sync, so a result that can name neither is not attributable.
   // @gotags: validate:"required,ulid"
   string delivery_id = 11;
   // @gotags: validate:"required,ulid"

@@ -3,8 +3,8 @@
 Standing up a Cadestro control plane. The reader this page assumes is a Linux
 admin with Docker Compose, a domain, and a machine with a public address.
 
-Plan for **two DNS names** and **two filesystems**. Both are architectural, not
-preferences, and both are checked before anything starts.
+Plan for **two DNS names**. They are architectural, not a preference, and are
+checked before anything starts.
 
 ---
 
@@ -23,10 +23,6 @@ free disk, or a minimum Docker version — so satisfy those yourself.
   passed through to control without TLS termination while browser traffic is
   terminated at the proxy; one name cannot be routed both ways.
 <!-- docref: end -->
-
-**Two filesystems.** The database and the audit archive must not share one. See
-[the archive mount](#the-archive-mount) below — this is the single requirement
-most likely to stop an install, so decide it before you start.
 
 ---
 
@@ -54,7 +50,6 @@ It asks, in order:
 | Release to install | `RELEASE_TAG` | **no default** — you must name one |
 | Certificate challenge | `ACME_CHALLENGE` | `http01` (default) or `dns01` |
 | DNS provider code | `ACME_DNS_PROVIDER` | only asked for `dns01` |
-| Archive storage | — | `separate` (default) or `loopback` |
 
 <!-- docref: begin src=server/deploy/install.sh#check_control_domain:213169ce,server/deploy/install.sh#check_acme_email:77a9e4af,server/deploy/install.sh#check_release_tag:7d46e71a -->
 Each answer is validated and re-asked until it is valid. The validators reject
@@ -78,51 +73,11 @@ images, and brings the stack up.
 
 ---
 
-## The archive mount
+## Data and backups
 
-<!-- docref: begin src=server/deploy/setup.sh#@archive-isolation:6ded442f -->
-Cadestro refuses to run with its audit archive on the same filesystem as its
-database. The archive holds separately stored evidence *about* that database, so
-sharing a failure domain with it defeats the purpose: losing or tampering with
-one would silently take the other along.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/deploy/setup.sh#ensure_archive_isolation:54216653 -->
-Setup checks this **before generating any key material**, so a machine that
-cannot satisfy the requirement fails while nothing has been created yet, rather
-than after producing a CA you would have to discard. The comparison dereferences
-symlinks on purpose — which means a symlink at `data/backups` pointing at other
-storage is a fully supported arrangement, not a workaround.
-<!-- docref: end -->
-
-Two ways to satisfy it:
-
-```bash
-# Mount a separate filesystem there
-mount /dev/sdb1 /opt/cadestro/data/backups
-
-# ...or point it at storage you already have
-rmdir /opt/cadestro/data/backups
-ln -s /mnt/audit-archive /opt/cadestro/data/backups
-```
-
-<!-- docref: begin src=server/deploy/install.sh#check_archive_choice:af0920e6 -->
-There is a third option the installer offers, and it is deliberately unpleasant
-to choose: answering `loopback` creates a 2 GiB ext4 image file, mounts it at
-`data/backups`, and adds an fstab entry. It prints a warning first, because it
-gives you a technically distinct filesystem on the same physical storage. The
-startup check still passes — nothing is bypassed — but the separate-failure-
-domain property that the requirement exists for is gone. Use it to evaluate the
-product, not to run it.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/cmd/cadestro/config.go#validateArchiveIsolation:69e8ec75 -->
-The authority is control itself, which compares kernel device IDs at startup and
-refuses to run when they match. It fails closed: an unstattable path is an
-error, not a pass. There is deliberately **no configuration variable** to skip
-it — an option to disable a verification is the first thing an attacker looks
-for.
-<!-- docref: end -->
+Control stores the database under `data/control` and ordinary verified backup
+artifacts under `data/backups`. The backup script uses SQLite's online backup API;
+see [Backup and restore](backup-restore.md) for scheduling and recovery.
 
 ---
 
@@ -131,8 +86,8 @@ for.
 <!-- docref: begin src=server/deploy/setup.sh#main:47abbf98 -->
 `setup.sh` is the enforcing half of the installation. It never downloads, never
 prompts, and never touches Docker: it validates the environment, creates the
-directory tree with restrictive permissions, checks the archive isolation,
-writes the ACME overlay, generates the key material, renders the service
+directory tree with restrictive permissions, writes the ACME overlay, generates
+the key material, renders the service
 configuration, and verifies the resulting permissions.
 <!-- docref: end -->
 
@@ -185,7 +140,7 @@ compose networks.
 - **traefik** — the ingress, pinned to an exact version rather than a moving
   tag.
 - **control** — the control plane, holding the certificates and secrets as
-  read-only mounts and the database, artifacts, and archive as read-write ones.
+  read-only mounts and the database, artifacts, and backups as read-write ones.
 - **web** — the administration UI. Static build output: no volumes, no secrets,
   and no access to the agent network.
 
@@ -293,7 +248,7 @@ listen addresses must be present and distinct; the proxy sources must be valid
 addresses or CIDRs; the public base URL must be absolute HTTPS with no
 credentials, query, or fragment; the terminal URL must be a `wss://` URL; the
 database path must be absolute; the session key must be exactly an Ed25519
-private key; and the artifact and archive directories are proven writable by
+private key; and the artifact and backup directories are proven writable by
 actually creating and removing a file, not by inspecting mode bits.
 <!-- docref: end -->
 
@@ -313,7 +268,8 @@ curl -fsS https://control.example.com/ready
 ```
 
 <!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:8aac1435 -->
-Readiness checks that the database answers, that revocation lookups work, and
+Readiness checks that the database answers and that the active-certificate
+lookup works, and
 that the artifact path is writable. When backup posture is configured, a
 missing, invalid, failed, or stale backup also makes readiness fail. An
 explicitly disabled or unconfigured backup policy is skipped. Backup posture

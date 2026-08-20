@@ -42,14 +42,13 @@ func TestFrameNotAuthorizedSeparatesRejectionFromCrossActorClaims(t *testing.T) 
 	}
 
 	surviving := map[string]error{
-		"malformed result":     execution.ErrInvalidInput,
-		"stale transition":     execution.ErrInvalidTransition,
-		"conflicting replay":   execution.ErrConflictingReplay,
-		"malformed delivery":   delivery.ErrInvalidInput,
-		"stale delivery epoch": delivery.ErrStaleEpoch,
-		"unsupported frame":    errors.New("unsupported agent frame"),
-		"internal":             connect.NewError(connect.CodeInternal, errors.New("boom")),
-		"not found":            connect.NewError(connect.CodeNotFound, errors.New("gone")),
+		"malformed result":   execution.ErrInvalidInput,
+		"stale transition":   execution.ErrInvalidTransition,
+		"conflicting replay": execution.ErrConflictingReplay,
+		"malformed delivery": delivery.ErrInvalidInput,
+		"unsupported frame":  errors.New("unsupported agent frame"),
+		"internal":           connect.NewError(connect.CodeInternal, errors.New("boom")),
+		"not found":          connect.NewError(connect.CodeNotFound, errors.New("gone")),
 	}
 	for name, err := range surviving {
 		t.Run("continues/"+name, func(t *testing.T) {

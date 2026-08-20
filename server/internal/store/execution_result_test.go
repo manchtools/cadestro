@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/execution"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -46,27 +45,19 @@ func newExecutionResultFixture(t *testing.T, deliveryState, executionState strin
 		INSERT INTO devices (id, hostname, agent_version, registered_at)
 		VALUES ($1, 'device', 'v1', $2)`, f.deviceID, now)
 	require.NoError(t, err)
-	var pushedAt, ackedAt *time.Time
-	if deliveryState == delivery.StatePushed || deliveryState == delivery.StateAckedReceipt {
-		pushedAt = &now
-	}
-	if deliveryState == delivery.StateAckedReceipt {
-		ackedAt = &now
-	}
 	manifest, err := protojson.Marshal(&pmv1.Manifest{
 		ManifestId: f.manifestID,
 		Occurrences: []*pmv1.ManifestOccurrence{{
 			OccurrenceId: f.execution,
-			Action:       &pmv1.Action{Id: &pmv1.ActionId{Value: f.actionID}, Type: pmv1.ActionType_ACTION_TYPE_REBOOT},
+			Action:       &pmv1.Action{Id: &pmv1.ActionId{Value: f.actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE},
 		}},
 	})
 	require.NoError(t, err)
 	_, err = raw.Exec(context.Background(), `
 		INSERT INTO deliveries (
-			delivery_id, device_id, manifest_id, manifest, state,
-			pushed_at, acked_receipt_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		f.deliveryID, f.deviceID, f.manifestID, manifest, deliveryState, pushedAt, ackedAt)
+			delivery_id, device_id, manifest_id, manifest, state
+		) VALUES ($1, $2, $3, $4, $5)`,
+		f.deliveryID, f.deviceID, f.manifestID, manifest, deliveryState)
 	require.NoError(t, err)
 	_, err = raw.Exec(context.Background(), `
 		INSERT INTO executions (
@@ -88,7 +79,7 @@ func (f *executionResultFixture) result(status pmv1.ExecutionStatus) *pmv1.Actio
 }
 
 func TestExecutionResult_CommitsTerminalStateAndAbsorbsReplay(t *testing.T) {
-	f := newExecutionResultFixture(t, delivery.StateAckedReceipt, "pending")
+	f := newExecutionResultFixture(t, "PENDING", "pending")
 	completed := f.now.Add(-time.Minute)
 	result := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	result.CompletedAt = timestamppb.New(completed)
@@ -127,7 +118,7 @@ func TestExecutionResult_CommitsTerminalStateAndAbsorbsReplay(t *testing.T) {
 }
 
 func TestExecutionResult_RunningThenIndeterminate(t *testing.T) {
-	f := newExecutionResultFixture(t, delivery.StateAckedReceipt, "pending")
+	f := newExecutionResultFixture(t, "PENDING", "pending")
 	require.NoError(t, f.service.ApplyActionResult(context.Background(), f.deviceID,
 		f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_RUNNING)))
 	row, err := f.store.GetExecution(context.Background(), f.execution)
@@ -142,15 +133,15 @@ func TestExecutionResult_RunningThenIndeterminate(t *testing.T) {
 	assert.Equal(t, "indeterminate", row.Status)
 }
 
-func TestExecutionResult_EnforcesReceiptAndIdentityBindings(t *testing.T) {
-	f := newExecutionResultFixture(t, delivery.StatePushed, "pending")
+func TestExecutionResult_EnforcesIdentityBindings(t *testing.T) {
+	f := newExecutionResultFixture(t, "PENDING", "pending")
 	result := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
-	assert.ErrorIs(t, f.service.ApplyActionResult(context.Background(), f.deviceID, result), execution.ErrInvalidTransition)
+	assert.NoError(t, f.service.ApplyActionResult(context.Background(), f.deviceID, result))
 
 	wrongDevice := newID()
 	assert.ErrorIs(t, f.service.ApplyActionResult(context.Background(), wrongDevice, result), execution.ErrWrongDevice)
 
-	f2 := newExecutionResultFixture(t, delivery.StateAckedReceipt, "pending")
+	f2 := newExecutionResultFixture(t, "PENDING", "pending")
 	wrongAction := f2.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	wrongAction.ActionId.Value = newID()
 	assert.ErrorIs(t, f2.service.ApplyActionResult(context.Background(), f2.deviceID, wrongAction), execution.ErrWrongAction)
@@ -165,7 +156,7 @@ func TestExecutionResult_EnforcesReceiptAndIdentityBindings(t *testing.T) {
 }
 
 func TestExecutionOutputChunk_IsBoundedOwnedAndIdempotent(t *testing.T) {
-	f := newExecutionResultFixture(t, delivery.StateAckedReceipt, "running")
+	f := newExecutionResultFixture(t, "PENDING", "running")
 	chunk := &pmv1.OutputChunk{
 		ExecutionId: f.execution, Stream: pmv1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT,
 		Data: []byte("hello"), Sequence: 4,
@@ -194,7 +185,7 @@ func TestExecutionOutputChunk_IsBoundedOwnedAndIdempotent(t *testing.T) {
 // in validation before any read or write; the stream loop's log-and-continue
 // error handling keeps the agent connected through the rejection.
 func TestExecutionOutputChunk_PerExecutionBudget(t *testing.T) {
-	f := newExecutionResultFixture(t, delivery.StateAckedReceipt, "running")
+	f := newExecutionResultFixture(t, "PENDING", "running")
 	inBudget := &pmv1.OutputChunk{
 		ExecutionId: f.execution, Stream: pmv1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT,
 		Data: []byte("tail"), Sequence: execution.MaxOutputChunks - 1,
@@ -221,7 +212,7 @@ func TestExecutionOutputChunk_PerExecutionBudget(t *testing.T) {
 }
 
 func TestExecutionResult_RejectsMalformedAndCancelledTransitions(t *testing.T) {
-	f := newExecutionResultFixture(t, delivery.StateAckedReceipt, "cancelled")
+	f := newExecutionResultFixture(t, "PENDING", "cancelled")
 	err := f.service.ApplyActionResult(context.Background(), f.deviceID,
 		f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS))
 	assert.True(t, errors.Is(err, execution.ErrInvalidTransition) || errors.Is(err, execution.ErrConflictingReplay))

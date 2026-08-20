@@ -9,8 +9,6 @@ import {
 	RotateCw,
 	Database,
 	Folder,
-	Power,
-	RefreshCw,
 	UserCog,
 	KeyRound,
 	Shield,
@@ -102,18 +100,6 @@ export function getActionTypeInfo(type: ActionType): ActionTypeInfo {
 				label: m.actions_type_directory(),
 				icon: Folder,
 				description: m.actions_type_directory_description()
-			};
-		case ActionType.REBOOT:
-			return {
-				label: m.actions_type_reboot(),
-				icon: Power,
-				description: m.actions_type_reboot_description()
-			};
-		case ActionType.SYNC:
-			return {
-				label: m.actions_type_sync(),
-				icon: RefreshCw,
-				description: m.actions_type_sync_description()
 			};
 		case ActionType.USER:
 			return {
@@ -301,7 +287,7 @@ export { getActionTypeEnum, actionTypeToString, ACTION_TYPE_OPTIONS };
  * templates. Excluded on purpose:
  *
  *  - UPDATE            — site-specific reboot / security-only policy
- *  - REBOOT, SYNC      — instant actions, nothing to configure
+ *  - SCRIPT_RUN        — instant action, nothing to configure
  *  - USER, GROUP       — per-site account inventory (UIDs, SSH keys)
  *  - SSH               — SSH access lists are per-user/per-site
  *  - LPS               — password rotation for specific accounts

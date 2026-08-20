@@ -3,7 +3,7 @@
 	// steps), then pick the schedule. Nothing here commits — the pill owns Save.
 	import * as m from '$lib/paraglide/messages';
 	// The app's canonical type mapping, not the SDK's `actionTypeToString`: that
-	// one has no case for REBOOT/SYNC and falls through to "UNSPECIFIED", which
+	// one has no case for unsupported built-ins and falls through to "UNSPECIFIED", which
 	// would mislabel a real step.
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import type { ActionSet, ActionSetMember } from '$contract/cadestro/v1/control_pb';

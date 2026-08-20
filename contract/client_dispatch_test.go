@@ -66,6 +66,16 @@ func (h *blockingFanoutHandler) OnRevokeLuksDeviceKey(ctx context.Context, req *
 	return false, "blocked"
 }
 
+func (h *blockingFanoutHandler) OnSyncDevice(context.Context, *pm.SyncDeviceCommand) error {
+	h.enter()
+	return nil
+}
+
+func (h *blockingFanoutHandler) OnRebootDevice(context.Context, *pm.RebootDeviceCommand) error {
+	h.enter()
+	return nil
+}
+
 func waitForCond(t *testing.T, cond func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(2 * time.Second)
@@ -112,6 +122,26 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 		t.Errorf("total inventory handlers entered = %d, want %d (excess of %d must be dropped)", got, cap, fired-cap)
 	}
 
+	close(h.release)
+	waitForCond(t, func() bool { return atomic.LoadInt32(&h.inFlight) == 0 })
+}
+
+func TestDispatchServerMessage_LiveControlIsSingleFlight(t *testing.T) {
+	c := NewClient("https://control.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
+	h := &blockingFanoutHandler{release: make(chan struct{})}
+	first := &pm.ServerMessage{Id: NewULID(), Payload: &pm.ServerMessage_SyncDevice{SyncDevice: &pm.SyncDeviceCommand{}}}
+	if err := c.dispatchServerMessage(context.Background(), first, h); err != nil {
+		t.Fatal(err)
+	}
+	waitForCond(t, func() bool { return atomic.LoadInt32(&h.entered) == 1 })
+
+	second := &pm.ServerMessage{Id: NewULID(), Payload: &pm.ServerMessage_RebootDevice{RebootDevice: &pm.RebootDeviceCommand{}}}
+	if err := c.dispatchServerMessage(context.Background(), second, h); err == nil {
+		t.Fatal("busy live control must send a correlated failure")
+	}
+	if got := atomic.LoadInt32(&h.entered); got != 1 {
+		t.Fatalf("busy live control ran another handler: entered=%d", got)
+	}
 	close(h.release)
 	waitForCond(t, func() bool { return atomic.LoadInt32(&h.inFlight) == 0 })
 }

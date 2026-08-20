@@ -5,7 +5,6 @@
 	import { goto } from '$lib/navigation';
 	import { formatTimestampDateTime, formatDuration } from '$lib/sdk';
 	import { ExecutionStatus, DesiredState } from '$contract/cadestro/v1/common_pb';
-	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { Chip } from '$lib/components/fleet';
 	import type { FleetTone } from '$lib/components/fleet';
@@ -74,9 +73,7 @@
 		}
 	}
 
-	// Instant actions (reboot/sync) have no present/absent goal.
-	function goalLabel(desiredState: number, type: number): string {
-		if (type === ActionType.REBOOT || type === ActionType.SYNC) return m.executions_goal_execute();
+	function goalLabel(desiredState: number): string {
 		return desiredState === DesiredState.ABSENT
 			? m.executions_goal_absent()
 			: m.executions_goal_present();
@@ -154,7 +151,7 @@
 						</a>
 					</span>
 					<span class="font-mono text-xs text-muted-foreground">
-						{goalLabel(effect.desiredState ?? 0, effect.type)}
+						{goalLabel(effect.desiredState ?? 0)}
 						· {formatDuration(effect.durationMs)}
 						{#if (effect.status === ExecutionStatus.SUCCESS || effect.status === ExecutionStatus.FAILED) && typeof effect.changed === 'boolean'}
 							· {effect.changed ? m.executions_changed() : m.executions_unchanged()}

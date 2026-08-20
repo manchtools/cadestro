@@ -29,207 +29,23 @@ func assertLiveFields[V any](t *testing.T, name string, fields map[protoreflect.
 	}
 }
 
-// The current golden guards the exact public contract. The predecessor golden
-// separately preserves the evidence for the approved removal sets; it is a test
-// oracle, not a compatibility surface.
-const (
-	currentGoldenPath     = "testdata/rpc_golden.json"
-	predecessorGoldenPath = "testdata/rpc_golden_pre_spec41.json"
-)
+// The current golden guards the exact public contract. It is a target shape,
+// never a comparison against an archived protocol.
+const currentGoldenPath = "testdata/rpc_golden.json"
 
-// removedBySpec41 is the deletion set the spec enumerates: the gateway tier and
-// the relay-only plumbing that exists because an untrusted hop sat between agent
-// and control. Listed per service so a name cannot be attributed to the wrong one.
-var removedBySpec41 = map[string][]string{
-	"GatewayAuthService": {"EnrollGateway"},
-	"GatewayService":     {"ListGatewayTerminalSessions", "TerminateGatewayTerminalSession"},
-	"ControlService": {
-		"ListGateways",
-		"RevokeGatewayCertificate",
-		"GetCertificateRevocationList",
-	},
-	"InternalService": {
-		"ProxyGetLuksKey",
-		"ProxyStoreLpsPasswords",
-		"ProxyStoreLuksKey",
-		"ProxySyncActions",
-		"ProxyValidateLuksToken",
-		"ProxyValidateTerminalToken",
-		"RenewGatewayCertificate",
-		"VerifyDevice",
-	},
-}
-
-// removedLocalAuth is the second approved deletion delta: local human
-// authentication. Target design 5.2 — human identity is OIDC plus SCIM only;
-// there are no local accounts, passwords, TOTP secrets, or a local MFA
-// implementation, because MFA belongs to the identity provider. These nine are
-// the entire local-password/TOTP RPC surface.
-//
-// Everything else on the session path stays: RefreshToken, Logout,
-// GetCurrentUser, ListAuthMethods, and the SSO*/SCIM* families are the
-// OIDC-plus-SCIM flow itself, not local auth.
-var removedLocalAuth = map[string][]string{
-	"ControlService": {
-		"AdminDisableUserTOTP",
-		"DisableTOTP",
-		"GetTOTPStatus",
-		"Login",
-		"RegenerateBackupCodes",
-		"SetupTOTP",
-		"UpdateUserPassword",
-		"VerifyLoginTOTP",
-		"VerifyTOTP",
-	},
-}
-
-// removedAgentUnary is the target-design transport consolidation. AgentService
-// exposes one long-lived bidirectional stream; synchronization and token
-// validation are correlated frames on that stream, not parallel unary paths.
-var removedAgentUnary = map[string][]string{
-	"AgentService": {"SyncActions", "ValidateLuksToken"},
-}
-
-// removedManualUserLifecycle makes provisioning provider-owned. SCIM erases
-// SCIM-created subjects; the explicit replacement below erases only subjects
-// whose immutable creation provenance is OIDC JIT.
-var removedManualUserLifecycle = map[string][]string{
-	"ControlService": {
-		"CreateUser",
-		"DeleteUser",
-	},
-}
-
-// removedBroadSecretReads are replaced by metadata-only lists plus one-entry
-// reveal RPCs so the audit log identifies every plaintext access.
-var removedBroadSecretReads = map[string][]string{
-	"ControlService": {
-		"GetDeviceLpsPasswords",
-		"GetDeviceLuksKeys",
-	},
-}
-
-// removedCLIOnlyReads is the operator ruling that follows the removal of the
-// operator CLI: GetToken was the single-token read no remaining client issues.
-// The web client and the deployment probes read the token list, and a token's
-// bearer value is never recoverable from either, so the one-entry read carried
-// no capability the list does not.
-//
-// Its two siblings in that ruling — BeginCLILogin and ExchangeCLISession — are
-// absent from this map on purpose. They never existed in the predecessor, so
-// they were never a removal FROM it. They are recorded in retractedAdditions
-// instead.
-var removedCLIOnlyReads = map[string][]string{
-	"ControlService": {"GetToken"},
-}
-
-// retractedAdditions were approved ADDITIONS in an earlier revision of this
-// contract and have since been withdrawn by the same operator ruling that
-// removed GetToken. BeginCLILogin and ExchangeCLISession were the native CLI
-// login pair; the operator CLI is gone and nothing else ever called them.
-//
-// They need their own record because they are absent from BOTH goldens: the
-// predecessor never had them, and the target no longer does. Neither
-// removalDeltas (which requires presence in the predecessor) nor
-// additionDeltas (which requires presence in the target) can hold such a name,
-// so a withdrawn addition is invisible to every assertion in
-// TestRPCSurface_PredecessorDifferenceIsApproved — it would simply vanish from
-// the reasoning with nothing left claiming it was ever decided.
-//
-// TestRPCSurface_RetractedAdditionsAreAbsentEverywhere turns that record into
-// an assertion, and it is a strictly stronger one than the addition delta it
-// replaces: it checks the SHIPPED descriptors as well as both goldens, so a
-// resurrected handler cannot pass by having been left out of a JSON file.
-var retractedAdditions = map[string][]string{
-	"ControlService": {"BeginCLILogin", "ExchangeCLISession"},
-}
-
-// removalDeltas are the complete approved difference between the predecessor
-// and the target contract.
-var removalDeltas = map[string]map[string][]string{
-	"spec-41-gateway-removal": removedBySpec41,
-	"local-auth-removal":      removedLocalAuth,
-	"single-agent-stream":     removedAgentUnary,
-	"provider-owned-users":    removedManualUserLifecycle,
-	"auditable-secret-reads":  removedBroadSecretReads,
-	"cli-only-reads":          removedCLIOnlyReads,
-}
-
-// additionDeltas are intentional target RPCs with no predecessor equivalent.
-var additionDeltas = map[string]map[string][]string{
-	"jit-user-erasure": {
-		"ControlService": {"EraseJITUser"},
-	},
-	"auditable-secret-reveal": {
-		"ControlService": {
-			"ListLpsPasswords",
-			"ListLuksKeys",
-			"RevealLpsPassword",
-			"RevealLuksKey",
-		},
-	},
-}
-
-// TestRPCSurface_RetractedAdditionsAreAbsentEverywhere proves that a name the
-// contract added and then withdrew is gone from the shipped descriptors, not
-// merely missing from a golden. The live check is the load-bearing one: a
-// .pb.go orphaned by a moved proto still registers its service at init, so a
-// handler can keep answering while every JSON-level check reports clean.
-func TestRPCSurface_RetractedAdditionsAreAbsentEverywhere(t *testing.T) {
-	predecessor := loadGolden(t, predecessorGoldenPath, 180, 6)
-	current := loadGolden(t, currentGoldenPath, 150, 3)
+// The current contract must expose typed live control and no retired aliases.
+// These assertions inspect the shipped descriptors directly.
+func TestRPCSurface_CurrentTypedControl(t *testing.T) {
 	live := liveSurface(t)
-
-	named := 0
-	for service, methods := range retractedAdditions {
-		for _, method := range methods {
-			named++
-			key := service + "/" + method
-			if contains(predecessor.Services[service], method) {
-				t.Errorf("%s is recorded as a retracted addition but the predecessor already had it — "+
-					"it is an ordinary removal and belongs in removalDeltas", key)
-			}
-			if contains(current.Services[service], method) {
-				t.Errorf("%s is recorded as retracted but the target golden still lists it", key)
-			}
-			if contains(live[service], method) {
-				t.Errorf("%s is recorded as retracted but the shipped descriptors still serve it", key)
-			}
+	methods := live["ControlService"]
+	for _, name := range []string{"SyncDevice", "RebootDevice"} {
+		if !contains(methods, name) {
+			t.Errorf("MISSING current control RPC %s", name)
 		}
 	}
-	if named == 0 {
-		t.Fatal("matches-zero: retractedAdditions is empty, so this test proved nothing")
-	}
-}
-
-// retractedMessages are the request/response shapes deleted with the RPCs in
-// retractedAdditions and removedCLIOnlyReads. Deleting an RPC does not by
-// itself delete its messages, and an orphaned message keeps shipping to every
-// consumer as a live export.
-//
-// ExchangeCLISessionRequest.id_token and ExchangeCLISessionResponse's
-// access/refresh tokens were three of the justified-plaintext entries in
-// TestContract_SecretShapedFieldsAreClassifiedOrJustified. Their justifications
-// retire with this deletion, so this guard is what replaces them — and it is
-// the stronger claim: a justification PERMITS a secret-shaped field to ship
-// unclassified, whereas this forbids the carrier from existing at all.
-var retractedMessages = []protoreflect.Name{
-	"BeginCLILoginRequest",
-	"BeginCLILoginResponse",
-	"ExchangeCLISessionRequest",
-	"ExchangeCLISessionResponse",
-	"GetTokenRequest",
-	"GetTokenResponse",
-}
-
-func TestContract_RetractedMessagesAreGone(t *testing.T) {
-	messages := contractMessages(t)
-	if len(retractedMessages) == 0 {
-		t.Fatal("matches-zero: retractedMessages is empty, so this test proved nothing")
-	}
-	for _, name := range retractedMessages {
-		if _, ok := messages[name]; ok {
-			t.Errorf("message %s still ships — it was deleted with its RPC and has no remaining caller", name)
+	for _, name := range []string{"DispatchInstantAction", "DispatchAssignedActions"} {
+		if contains(methods, name) {
+			t.Errorf("retired control RPC %s still ships", name)
 		}
 	}
 }
@@ -267,53 +83,6 @@ func TestRPCSurface_ProviderCapabilitiesArePublic(t *testing.T) {
 			if field.Kind() != wantKind {
 				t.Errorf("%s.%s kind = %s, want %s", messageName, fieldName, field.Kind(), wantKind)
 			}
-		}
-	}
-}
-
-// retractedFields are the CLI-login residue the operator ruled out after the
-// operator CLI and its RPCs were deleted: the public OIDC client an operator
-// configured for native CLI login, and the capability flag that advertised
-// that login method to a client.
-//
-// They need their own guard because a FIELD deletion is invisible to every
-// other assertion in this file. The goldens record RPC names, and
-// TestContract_RetractedMessagesAreGone judges whole messages — but
-// IdentityProvider, CreateIdentityProviderRequest, UpdateIdentityProviderRequest
-// and AuthMethodProvider all still ship, so a re-added field would return
-// silently inside a message that is supposed to be there.
-//
-// Named by full name and checked against the registered descriptors: a
-// resurrected field cannot pass by being left out of a JSON file, and it
-// cannot pass by reappearing under a nested message either.
-var retractedFields = []protoreflect.FullName{
-	"cadestro.v1.IdentityProvider.cli_client_id",
-	"cadestro.v1.CreateIdentityProviderRequest.cli_client_id",
-	"cadestro.v1.UpdateIdentityProviderRequest.cli_client_id",
-	"cadestro.v1.AuthMethodProvider.cli_login",
-}
-
-func TestContract_RetractedFieldsAreGone(t *testing.T) {
-	if len(retractedFields) == 0 {
-		t.Fatal("matches-zero: retractedFields is empty, so this test proved nothing")
-	}
-	for _, name := range retractedFields {
-		// The parent must still exist, otherwise the lookup below would pass
-		// for the wrong reason — a message renamed out from under the entry
-		// would retire the check silently.
-		parent := name.Parent()
-		descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(parent)
-		if err != nil {
-			t.Errorf("%s names a retracted field of %s, which resolves to no descriptor", name, parent)
-			continue
-		}
-		message, ok := descriptor.(protoreflect.MessageDescriptor)
-		if !ok {
-			t.Errorf("%s is not a message, so %s cannot be judged", parent, name)
-			continue
-		}
-		if field := message.Fields().ByName(name.Name()); field != nil {
-			t.Errorf("%s still ships — the CLI login it served no longer exists", name)
 		}
 	}
 }
@@ -439,81 +208,6 @@ func TestRPCSurface_MatchesTargetGolden(t *testing.T) {
 	assertSurfaceEqual(t, got, want.Services)
 	if total := surfaceTotal(got); total != want.Total {
 		t.Errorf("RPC count: shipped %d, want %d", total, want.Total)
-	}
-}
-
-// TestRPCSurface_PredecessorDifferenceIsApproved proves that every departure
-// from the predecessor is named, including exactly 14 Gateway-only RPCs. This
-// records intentional deletion; it does not keep any predecessor endpoint live.
-func TestRPCSurface_PredecessorDifferenceIsApproved(t *testing.T) {
-	predecessor := loadGolden(t, predecessorGoldenPath, 180, 6)
-	current := loadGolden(t, currentGoldenPath, 150, 3)
-
-	seen := map[string]string{}
-	removed := 0
-	for delta, byService := range removalDeltas {
-		deltaCount := 0
-		for svc, names := range byService {
-			for _, name := range names {
-				key := svc + "/" + name
-				if owner, duplicate := seen[key]; duplicate {
-					t.Errorf("%s is claimed by both %q and %q", key, owner, delta)
-				}
-				seen[key] = delta
-				deltaCount++
-				if !contains(predecessor.Services[svc], name) {
-					t.Errorf("%s names %s, absent from the predecessor", delta, key)
-				}
-			}
-		}
-		if deltaCount == 0 {
-			t.Errorf("removal delta %q is empty", delta)
-		}
-		if delta == "spec-41-gateway-removal" && deltaCount != 14 {
-			t.Errorf("Gateway removal has %d RPCs, want exactly 14", deltaCount)
-		}
-		removed += deltaCount
-	}
-
-	wantCurrent := map[string][]string{}
-	for svc, methods := range predecessor.Services {
-		for _, method := range methods {
-			if _, isRemoved := seen[svc+"/"+method]; !isRemoved {
-				wantCurrent[svc] = append(wantCurrent[svc], method)
-			}
-		}
-		if len(wantCurrent[svc]) == 0 {
-			delete(wantCurrent, svc)
-		}
-	}
-	added := 0
-	seenAdditions := map[string]string{}
-	for delta, byService := range additionDeltas {
-		deltaCount := 0
-		for svc, names := range byService {
-			for _, name := range names {
-				key := svc + "/" + name
-				if owner, duplicate := seenAdditions[key]; duplicate {
-					t.Errorf("%s is added by both %q and %q", key, owner, delta)
-				}
-				seenAdditions[key] = delta
-				deltaCount++
-				if contains(predecessor.Services[svc], name) {
-					t.Errorf("%s names %s, already present in the predecessor", delta, key)
-				}
-				wantCurrent[svc] = append(wantCurrent[svc], name)
-			}
-			sort.Strings(wantCurrent[svc])
-		}
-		if deltaCount == 0 {
-			t.Errorf("addition delta %q is empty", delta)
-		}
-		added += deltaCount
-	}
-	assertSurfaceEqual(t, current.Services, wantCurrent)
-	if want := predecessor.Total - removed + added; current.Total != want {
-		t.Errorf("target total is %d, want predecessor %d minus %d approved removals plus %d approved additions = %d",
-			current.Total, predecessor.Total, removed, added, want)
 	}
 }
 
@@ -668,15 +362,15 @@ func TestContract_Namespace(t *testing.T) {
 	}
 }
 
-// Design §7.1–7.2 (manifest dispatch, stable delivery id, durable receipt,
-// per-action and per-manifest results) and §8 (classified mTLS secrets),
+// Design §7.1–7.2 (pull-only manifest delivery and durable results) and §8
+// (classified mTLS secrets),
 // asserted by exact name and exact type.
 func TestContract_TargetShape(t *testing.T) {
 	msgs := contractMessages(t)
 
 	for _, name := range []protoreflect.Name{
 		"Manifest", "ManifestProvenance", "ManifestOccurrence", "ManifestDelivery",
-		"DeliveryReceipt", "ManifestResult",
+		"ManifestResult",
 	} {
 		if _, ok := msgs[name]; !ok {
 			t.Errorf("message %s is absent from the shipped contract", name)
@@ -685,6 +379,17 @@ func TestContract_TargetShape(t *testing.T) {
 	for _, name := range []protoreflect.Name{"ActionDispatch", "SignedActionEnvelope"} {
 		if _, ok := msgs[name]; ok {
 			t.Errorf("message %s still ships — the signed-envelope dispatch path must be absent", name)
+		}
+	}
+	if _, ok := msgs["DeliveryReceipt"]; ok {
+		t.Error("message DeliveryReceipt still ships — Sync pull needs no transport receipt")
+	}
+	for _, field := range []struct{ message, name string }{
+		{"ServerMessage", "manifest_delivery"},
+		{"AgentMessage", "delivery_receipt"},
+	} {
+		if msgs[protoreflect.Name(field.message)].Fields().ByName(protoreflect.Name(field.name)) != nil {
+			t.Errorf("%s.%s still ships — policy transport must be pull-only", field.message, field.name)
 		}
 	}
 	// One dispatch model: the pull path carries the same durable unit as the
@@ -712,14 +417,11 @@ func TestContract_TargetShape(t *testing.T) {
 		{"UpdateActionSetScheduleRequest", "on_failure", protoreflect.EnumKind, "", false, "the set execution policy cannot be changed"},
 		{"ManifestDelivery", "delivery_id", protoreflect.StringKind, "", false, "delivery has no identity stable across transport retries"},
 		{"ManifestDelivery", "manifest", protoreflect.MessageKind, "Manifest", false, "the delivery carries no manifest"},
-		{"DeliveryReceipt", "delivery_id", protoreflect.StringKind, "", false, "the receipt names no delivery, so control cannot acknowledge one"},
 		{"ActionResult", "delivery_id", protoreflect.StringKind, "", false, "per-action result ingestion cannot be idempotent"},
 		{"ActionResult", "occurrence_id", protoreflect.StringKind, "", false, "per-action result ingestion cannot be idempotent"},
 		{"ManifestResult", "delivery_id", protoreflect.StringKind, "", false, "the manifest result cannot be matched to its delivery"},
 		{"ManifestResult", "manifest_id", protoreflect.StringKind, "", false, "the manifest result names no manifest"},
 		{"SyncState", "deliveries", protoreflect.MessageKind, "ManifestDelivery", true, "stream synchronization is not on the one dispatch model"},
-		{"ServerMessage", "manifest_delivery", protoreflect.MessageKind, "ManifestDelivery", false, "control cannot deliver a manifest"},
-		{"AgentMessage", "delivery_receipt", protoreflect.MessageKind, "DeliveryReceipt", false, "the agent cannot confirm durable receipt"},
 		{"AgentMessage", "manifest_result", protoreflect.MessageKind, "ManifestResult", false, "there is no result for the complete manifest"},
 	} {
 		md, ok := msgs[protoreflect.Name(f.msg)]

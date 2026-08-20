@@ -48,7 +48,7 @@ const CARRIED_IDS = [DEV_ONLINE_A, DEV_ONLINE_B, DEV_ASSIGNED, DEV_OFFLINE];
 const SET_PATCH = '01JR0A1E1R7S3T6V0W2X5Y4Z9B';
 const SET_HARDEN = '01JR0A2F2S8T4V7W1X3Y6Z5A0C';
 const ACTION_UPDATE = '01JR0A3G3T9V5W8X2Y4Z7A6B1D';
-const ACTION_REBOOT = '01JR0A4H4V0W6X9Y3Z5A8B7C2E';
+const ACTION_KERNEL_UPDATE = '01JR0A4H4V0W6X9Y3Z5A8B7C2E';
 
 const api = vi.hoisted(() => ({
 	getDevice: vi.fn(),
@@ -123,10 +123,10 @@ beforeEach(() => {
 				actionType: ActionType.UPDATE
 			}),
 			create(ActionSetMemberSchema, {
-				actionId: ACTION_REBOOT,
+				actionId: ACTION_KERNEL_UPDATE,
 				sortOrder: 1,
-				actionName: 'reboot if kernel changed',
-				actionType: ActionType.REBOOT
+				actionName: 'update kernel if changed',
+				actionType: ActionType.UPDATE
 			})
 		]
 	});
@@ -269,13 +269,13 @@ describe('assign — eligibility is derived from the two real reads', () => {
 
 		const steps = browser.getByTestId('assign-set-steps');
 		// Sort order, the app's own type label, the action's real name — and
-		// REBOOT must not degrade to "UNSPECIFIED" the way the SDK's own
+		// The action type must not degrade to "UNSPECIFIED" the way the SDK's own
 		// enum-to-string helper does.
 		await expect
 			.element(steps.getByText(`1 · ${m.actions_type_update()} · full system update`))
 			.toBeVisible();
 		await expect
-			.element(steps.getByText(`2 · ${m.actions_type_reboot()} · reboot if kernel changed`))
+			.element(steps.getByText(`2 · ${m.actions_type_update()} · update kernel if changed`))
 			.toBeVisible();
 	});
 });

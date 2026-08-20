@@ -3,7 +3,7 @@
 	import { getLocalizedError } from '$lib/errors';
 	import { base } from '$app/paths';
 	import { toast } from 'svelte-sonner';
-	import { apiClient, type Device, type ActionExecution, type InventoryTableResult, type DeviceAssignee, formatTimestampDateTime, formatDuration, ActionType } from '$lib/sdk';
+	import { apiClient, type Device, type ActionExecution, type InventoryTableResult, type DeviceAssignee, formatTimestampDateTime, formatDuration } from '$lib/sdk';
 	import { AssignmentTargetType, DeviceStatus, ExecutionStatus } from '$contract/cadestro/v1/common_pb';
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import { Button } from '$lib/components/ui/button';
@@ -239,10 +239,9 @@
 	async function dispatchReboot() {
 		dispatchingReboot = true;
 		try {
-			await apiClient.dispatchInstantAction(deviceId, ActionType.REBOOT);
+			await apiClient.rebootDevice(deviceId);
 			toast.success(m.instant_actions_reboot_dispatched());
 			rebootDialogOpen = false;
-			loadExecutions();
 		} catch (error) {
 			toast.error(getLocalizedError(error));
 			console.error(error);
@@ -254,9 +253,8 @@
 	async function dispatchSync() {
 		dispatchingSync = true;
 		try {
-			await apiClient.dispatchInstantAction(deviceId, ActionType.SYNC);
+			await apiClient.syncDevice(deviceId);
 			toast.success(m.instant_actions_sync_dispatched());
-			loadExecutions();
 		} catch (error) {
 			toast.error(getLocalizedError(error));
 			console.error(error);
@@ -271,7 +269,7 @@
 {/snippet}
 
 <div class="space-y-6">
-	<!-- Instant Actions -->
+	<!-- Live controls -->
 	<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 		{@render sectionLabel(m.instant_actions_title())}
 		<div class="mt-3 flex flex-wrap gap-3">
@@ -285,10 +283,6 @@
 				<Power class="mr-2 h-4 w-4" />
 				{dispatchingReboot ? m.instant_actions_dispatching() : m.instant_actions_reboot()}
 			</Button>
-				<Button variant="outline" onclick={() => (runScriptDialogOpen = true)}>
-					<Terminal class="mr-2 h-4 w-4" />
-					{m.instant_actions_run_script()}
-				</Button>
 				<Button variant="outline" onclick={() => openTerminal(deviceId, device.hostname)}>
 					<Terminal class="mr-2 h-4 w-4" />
 					{m.terminal_open()}
@@ -474,9 +468,15 @@
 	<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			{@render sectionLabel(m.device_detail_recent_executions())}
-			<Button variant="outline" onclick={() => goto(`/executions?device=${deviceId}`)}>
-				{m.common_view_all()}
-			</Button>
+			<div class="flex flex-wrap gap-2">
+				<Button variant="outline" onclick={() => (runScriptDialogOpen = true)}>
+					<Terminal class="mr-2 h-4 w-4" />
+					{m.instant_actions_run_script()}
+				</Button>
+				<Button variant="outline" onclick={() => goto(`/executions?device=${deviceId}`)}>
+					{m.common_view_all()}
+				</Button>
+			</div>
 		</div>
 		<div class="mt-3">
 			{#if executions.length === 0}

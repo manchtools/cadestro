@@ -3,7 +3,7 @@ package handler
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -13,7 +13,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/manchtools/cadestro/agent/internal/executor"
-	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/validate"
@@ -55,9 +54,8 @@ type Handler struct {
 	logger       *slog.Logger
 	executor     *executor.Executor
 	osquery      osqueryRunner // nil if osquery is not installed
-	scheduler    *scheduler.Scheduler
 	store        *store.Store
-	syncTrigger  chan<- struct{} // triggers an immediate action sync (for SYNC instant action)
+	syncTrigger  chan<- struct{} // triggers a full sync
 	mu           sync.Mutex      // protects connectedCh, connectedSet and the terminal* fields below
 	connectedCh  chan struct{}   // closed when welcome is received and connection is ready
 	connectedSet bool            // tracks if connectedCh has been closed
@@ -79,11 +77,10 @@ type Handler struct {
 }
 
 // NewHandler creates a new stream handler.
-func NewHandler(logger *slog.Logger, exec *executor.Executor, sched *scheduler.Scheduler, st *store.Store, syncTrigger chan<- struct{}) *Handler {
+func NewHandler(logger *slog.Logger, exec *executor.Executor, st *store.Store, syncTrigger chan<- struct{}) *Handler {
 	return &Handler{
 		logger:      logger,
 		executor:    exec,
-		scheduler:   sched,
 		store:       st,
 		syncTrigger: syncTrigger,
 		connectedCh: make(chan struct{}),
@@ -91,7 +88,7 @@ func NewHandler(logger *slog.Logger, exec *executor.Executor, sched *scheduler.S
 	}
 }
 
-func (h *Handler) OnSyncHint(context.Context, *pb.SyncHint) error {
+func (h *Handler) OnSyncDevice(context.Context, *pb.SyncDeviceCommand) error {
 	if h.syncTrigger == nil {
 		return nil
 	}
@@ -100,6 +97,13 @@ func (h *Handler) OnSyncHint(context.Context, *pb.SyncHint) error {
 	default:
 	}
 	return nil
+}
+
+func (h *Handler) OnRebootDevice(ctx context.Context, _ *pb.RebootDeviceCommand) error {
+	if h.executor == nil {
+		return errors.New("executor is unavailable")
+	}
+	return h.executor.Reboot(ctx)
 }
 
 // getOsquery returns the osquery registry, initializing it lazily on first use.
@@ -170,47 +174,6 @@ func (h *Handler) ResetConnection() {
 		h.connectedSet = false
 	}
 	h.mu.Unlock()
-}
-
-// OnManifestDelivery durably records a manifest before the SDK emits its
-// receipt. Execution is scheduler-driven from that record, never from the
-// transport callback, so a disconnected agent can finish received work.
-func (h *Handler) OnManifestDelivery(ctx context.Context, delivery *pb.ManifestDelivery) error {
-	return h.recordManifestDelivery(ctx, delivery)
-}
-
-// OnManifestDeliveryWithStreaming has the same durable boundary. Output is
-// emitted later by the scheduler; the receipt must not wait for execution.
-func (h *Handler) OnManifestDeliveryWithStreaming(ctx context.Context, delivery *pb.ManifestDelivery, _ func(*pb.OutputChunk) error) error {
-	return h.recordManifestDelivery(ctx, delivery)
-}
-
-func (h *Handler) recordManifestDelivery(ctx context.Context, delivery *pb.ManifestDelivery) error {
-	if h.scheduler != nil {
-		inserted, err := h.scheduler.RecordDelivery(ctx, delivery)
-		if err != nil {
-			return err
-		}
-		h.logger.Info("manifest durably recorded",
-			"delivery_id", delivery.GetDeliveryId(),
-			"manifest_id", delivery.GetManifest().GetManifestId(),
-			"new", inserted,
-		)
-		return nil
-	}
-	if h.store == nil {
-		return fmt.Errorf("record manifest delivery: agent store unavailable")
-	}
-	inserted, err := h.store.RecordManifestDelivery(ctx, delivery)
-	if err != nil {
-		return err
-	}
-	h.logger.Info("manifest durably recorded",
-		"delivery_id", delivery.GetDeliveryId(),
-		"manifest_id", delivery.GetManifest().GetManifestId(),
-		"new", inserted,
-	)
-	return nil
 }
 
 // maxLogOutputBytes caps each stream-line preview at 256 bytes

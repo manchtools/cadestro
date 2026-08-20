@@ -1020,7 +1020,7 @@ message DeviceGroup {
   int32 sync_interval_minutes = 9;
   // Per-group maintenance window. Empty means "no constraint": members
   // may receive dispatches at any time. When non-empty the agent gates
-  // non-instant action dispatch by the device-local-time union across
+  // action dispatch by the device-local-time union across
   // every group the device belongs to (device groups + user groups
   // reaching it via assignments).
   MaintenanceWindow maintenance_window = 10;
@@ -1361,8 +1361,7 @@ message ActionExecution {
   // Set when status is SCHEDULED (or was, before dispatch fired). The
   // UTC timestamp at which the deferred dispatch is configured to
   // fire. Populated when a Dispatch* request supplies the run_at
-  // field — DispatchActionRequest, DispatchInstantActionRequest,
-  // and friends — so the server can defer the dispatch until the
+  // field so the server can defer the dispatch until the
   // operator-chosen time.
   google.protobuf.Timestamp scheduled_for = 19;
 }
@@ -1412,15 +1411,19 @@ message DispatchToMultipleResponse {
   repeated ActionExecution executions = 1;
 }
 
-// Dispatch all actions assigned to a device (resolves definitions, sets, groups)
-message DispatchAssignedActionsRequest {
+message SyncDeviceRequest {
   // @gotags: validate:"required,ulid"
   string device_id = 1;
 }
 
-message DispatchAssignedActionsResponse {
-  repeated ActionExecution executions = 1;
+message SyncDeviceResponse {}
+
+message RebootDeviceRequest {
+  // @gotags: validate:"required,ulid"
+  string device_id = 1;
 }
+
+message RebootDeviceResponse {}
 
 // Dispatch all actions from an action set to a device
 message DispatchActionSetRequest {
@@ -1491,28 +1494,6 @@ message ListExecutionsResponse {
   repeated ActionExecution executions = 1;
   string next_page_token = 2;
   int32 total_count = 3;
-}
-
-// ============================================================================
-// Instant Actions (agent-builtin, no parameters)
-// ============================================================================
-
-message DispatchInstantActionRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required,ne=0"
-  ActionType instant_action = 2;
-  // Same semantics as DispatchActionRequest.run_at: when set, defer
-  // the instant action's dispatch until this UTC timestamp.
-  google.protobuf.Timestamp run_at = 3;
-  // Same semantics as DispatchActionRequest.respect_maintenance_window.
-  // For instant actions the default (false) is the operator-friendly
-  // choice — REBOOT-now should not be silently held by a freeze.
-  bool respect_maintenance_window = 4;
-}
-
-message DispatchInstantActionResponse {
-  ActionExecution execution = 1;
 }
 
 // CancelExecution prunes a scheduled or pending dispatch before it
@@ -2744,11 +2725,11 @@ service ControlService {
   // Action Dispatch & Execution
   rpc DispatchAction(DispatchActionRequest) returns (DispatchActionResponse);
   rpc DispatchToMultiple(DispatchToMultipleRequest) returns (DispatchToMultipleResponse);
-  rpc DispatchAssignedActions(DispatchAssignedActionsRequest) returns (DispatchAssignedActionsResponse);
+  rpc SyncDevice(SyncDeviceRequest) returns (SyncDeviceResponse);
+  rpc RebootDevice(RebootDeviceRequest) returns (RebootDeviceResponse);
   rpc DispatchActionSet(DispatchActionSetRequest) returns (DispatchActionSetResponse);
   rpc DispatchDefinition(DispatchDefinitionRequest) returns (DispatchDefinitionResponse);
   rpc DispatchToGroup(DispatchToGroupRequest) returns (DispatchToGroupResponse);
-  rpc DispatchInstantAction(DispatchInstantActionRequest) returns (DispatchInstantActionResponse);
   rpc CancelExecution(CancelExecutionRequest) returns (CancelExecutionResponse);
   rpc GetExecution(GetExecutionRequest) returns (GetExecutionResponse);
   rpc ListExecutions(ListExecutionsRequest) returns (ListExecutionsResponse);

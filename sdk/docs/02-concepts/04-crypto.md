@@ -1,7 +1,7 @@
 ---
 title: Crypto helpers
 label: Crypto
-description: AEAD, recipient-bound field sealing, and device certificate helpers.
+description: AEAD and device certificate helpers.
 ---
 
 # Crypto helpers
@@ -16,25 +16,8 @@ the operating-system CSPRNG. Wrong keys, wrong AAD, malformed ciphertext, and
 authentication failure return no plaintext.
 
 Server code binds each secret to its resource context and purpose. Transport
-field sealing is not reused as storage encryption.
-
-## Agent/control field sealing
-
-Classified protobuf fields carry versioned opaque X25519 envelopes in both
-directions. The sealing context binds:
-
-- protocol version and direction;
-- message and field;
-- device identity; and
-- the relevant action, delivery, or terminal session.
-
-Agent-to-control LPS/LUKS values seal to control. Control-to-agent secret
-values seal to that agent. Decryption occurs only at the narrow feature sink.
-A wrong recipient, context, or modified ciphertext fails closed.
-
-Field sealing reduces accidental plaintext exposure through generic protobuf
-formatting and debugging. Metadata-only logging and explicit secret-sink
-guards remain mandatory.
+uses the authenticated mTLS stream; at-rest AEAD is not reused as a transport
+protocol.
 
 ## Certificates
 

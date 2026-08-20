@@ -58,7 +58,7 @@ function scheduleToForm(action: ManagedAction): ScheduleFormState {
 }
 
 /** Hydrate a step from a persisted action. Returns null for action types with no
- *  registry entry (REBOOT / SYNC / SCRIPT_RUN have no editable params shape). */
+ *  registry entry (SCRIPT_RUN has no editable params shape). */
 export function stepFromAction(action: ManagedAction, sortOrder: number): StepDraft | null {
 	let key = formKeyFromActionType(action.type);
 	if (!key) return null;

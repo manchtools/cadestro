@@ -12,8 +12,7 @@ control server, and web UI build on. It ships three things:
 
 - **Protocol types** — the generated protobuf / Connect-RPC code for the
   Cadestro wire format.
-- **Crypto helpers** — CSR generation, certificate utilities, at-rest AEAD,
-  and recipient-bound field sealing.
+- **Crypto helpers** — CSR generation, certificate utilities, and at-rest AEAD.
 - **A Linux system-management library** — package managers, users, services,
   filesystems, disk encryption, networking, antivirus, CA trust, and more,
   behind one consistent, dependency-injected API.

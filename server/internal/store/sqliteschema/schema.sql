@@ -3,7 +3,6 @@
 -- not migrated and a SQLite installation always starts from this schema.
 
 PRAGMA user_version = 1;
-
 CREATE TABLE linux_uid_sequence (
     id         integer PRIMARY KEY CHECK (id = 1),
     next_value integer NOT NULL CHECK (next_value >= 10000)
@@ -235,15 +234,10 @@ CREATE TABLE devices (
     hostname                   text NOT NULL DEFAULT '',
     agent_version              text NOT NULL DEFAULT '',
     -- The Ed25519 key in the enrollment CSR is the immutable device identity.
-    -- Nullable only for rows created before this cutover; new enrollment rows
-    -- always set it and the partial unique index prevents identity churn.
+    -- New enrollment always sets the immutable CSR identity.
     enrollment_identity_public_key blob CHECK (enrollment_identity_public_key IS NULL OR length(enrollment_identity_public_key) = 32),
     certificate_pem            blob,
-    cert_fingerprint           text UNIQUE,
-    cert_not_after             timestamp,
-    -- Canonical lifecycle identity. Fingerprint/not-after remain only for the
-    -- legacy bridge while old rows are upgraded on their first authenticated
-    -- connection.
+    -- Canonical certificate lifecycle identity.
     active_cert_serial         text,
     pending_certificate_pem    blob,
     pending_cert_serial        text,
@@ -265,7 +259,7 @@ CREATE UNIQUE INDEX idx_devices_enrollment_identity
 
 CREATE TRIGGER devices_certificate_lifecycle_pair
 BEFORE INSERT ON devices
-WHEN (((NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)) AND NEW.cert_fingerprint IS NULL)
+WHEN (NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)
   OR ((NEW.pending_cert_serial IS NULL) <> (NEW.pending_certificate_pem IS NULL))
 BEGIN
     SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
@@ -273,14 +267,14 @@ END;
 
 CREATE TRIGGER devices_certificate_lifecycle_pair_update
 BEFORE UPDATE OF active_cert_serial, certificate_pem, pending_cert_serial, pending_certificate_pem ON devices
-WHEN (((NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)) AND NEW.cert_fingerprint IS NULL)
+WHEN (NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)
   OR ((NEW.pending_cert_serial IS NULL) <> (NEW.pending_certificate_pem IS NULL))
 BEGIN
     SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
 END;
 
--- Enrollment provenance is append-only. Legacy rows may backfill their first
--- CSR identity, but an established identity or token relation cannot change.
+-- Enrollment provenance is append-only; an established identity or token
+-- relation cannot change.
 CREATE TRIGGER devices_registration_token_immutable
 BEFORE UPDATE OF registration_token_id ON devices
 WHEN OLD.registration_token_id IS NOT NEW.registration_token_id
@@ -565,36 +559,21 @@ CREATE TABLE deliveries (
                          AND manifest_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
     manifest         text NOT NULL CHECK (json_valid(manifest)),
     state            text NOT NULL CHECK (state IN (
-                         'PENDING', 'PUSHED', 'ACKED_RECEIPT', 'SUCCEEDED',
-                         'PARTIAL', 'FAILED', 'EXPIRED', 'CANCELLED')),
+                         'PENDING', 'SUCCEEDED', 'PARTIAL', 'FAILED')),
     operation_id     text CHECK (operation_id IS NULL OR (
                          length(operation_id) = 26
                          AND operation_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*')),
-    push_epoch       integer NOT NULL DEFAULT 0 CHECK (push_epoch >= 0),
-    attempt_count    integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
     created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     available_at     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at       timestamp,
-    pushed_at        timestamp,
-    acked_receipt_at timestamp,
     terminal_at      timestamp,
     result_code      text NOT NULL DEFAULT '' CHECK (length(result_code) <= 64),
     CHECK (CASE state
-        WHEN 'PENDING' THEN pushed_at IS NULL AND acked_receipt_at IS NULL AND terminal_at IS NULL
-        WHEN 'PUSHED' THEN pushed_at IS NOT NULL AND acked_receipt_at IS NULL AND terminal_at IS NULL
-        WHEN 'ACKED_RECEIPT' THEN pushed_at IS NOT NULL AND acked_receipt_at IS NOT NULL AND terminal_at IS NULL
-        ELSE terminal_at IS NOT NULL END),
-    CHECK (state NOT IN ('SUCCEEDED', 'PARTIAL', 'FAILED') OR acked_receipt_at IS NOT NULL)
+        WHEN 'PENDING' THEN terminal_at IS NULL
+        ELSE terminal_at IS NOT NULL END)
 );
-CREATE INDEX deliveries_sweep_idx ON deliveries(available_at)
-    WHERE state IN ('PENDING', 'PUSHED');
-CREATE INDEX deliveries_device_pending_idx ON deliveries(device_id, created_at)
-    WHERE state IN ('PENDING', 'PUSHED');
 CREATE INDEX deliveries_device_idx ON deliveries(device_id, created_at DESC);
-CREATE INDEX deliveries_manifest_idx ON deliveries(manifest_id);
-CREATE INDEX deliveries_operation_idx ON deliveries(operation_id);
-CREATE INDEX deliveries_expiry_idx ON deliveries(expires_at)
-    WHERE expires_at IS NOT NULL AND terminal_at IS NULL;
+CREATE INDEX deliveries_device_pending_idx ON deliveries(device_id, available_at, created_at)
+    WHERE state = 'PENDING';
 
 CREATE TABLE executions (
     id               text PRIMARY KEY,
@@ -711,20 +690,14 @@ CREATE TABLE server_settings (
     updated_at                timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- One hash chain shared by operation and effect rows.
-CREATE TABLE audit_chain_head (
-    stream     text PRIMARY KEY,
-    head_hash  blob NOT NULL CHECK (length(head_hash) = 32),
-    height     integer NOT NULL DEFAULT 0 CHECK (height >= 0),
-    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-INSERT INTO audit_chain_head (stream, head_hash, height) VALUES ('control', zeroblob(32), 0);
-
+-- Append-only audit evidence. Mutations and sensitive reads are written in the
+-- same transaction as their state change. Rows are queryable without a
+-- separate storage or integrity side channel.
 CREATE TABLE audit_operations (
     operation_id          text PRIMARY KEY CHECK (
                               length(operation_id) = 26
                               AND operation_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
-    stream                text NOT NULL DEFAULT 'control' REFERENCES audit_chain_head(stream),
+    stream                text NOT NULL DEFAULT 'control',
     chain_seq             integer NOT NULL CHECK (chain_seq > 0),
     operation_class       text NOT NULL CHECK (operation_class IN (
                               'MUTATION', 'SENSITIVE_READ',
@@ -761,8 +734,6 @@ CREATE TABLE audit_operations (
     occurred_at           timestamp NOT NULL,
     sealed_detail         blob,
     sealed_detail_subject text,
-    prev_hash             blob NOT NULL CHECK (length(prev_hash) = 32),
-    row_hash              blob NOT NULL CHECK (length(row_hash) = 32),
     CHECK ((sealed_detail IS NULL) = (sealed_detail_subject IS NULL)),
     CHECK (sealed_detail_subject IS NULL OR (
         length(sealed_detail_subject) = 26
@@ -774,21 +745,13 @@ CREATE INDEX audit_operations_actor_idx ON audit_operations(actor_id, occurred_a
 CREATE INDEX audit_operations_class_idx ON audit_operations(operation_class, occurred_at DESC);
 CREATE INDEX audit_operations_descriptor_idx
     ON audit_operations(request_descriptor, occurred_at DESC);
-CREATE TRIGGER audit_operations_reject_effect_sequence_collision
-BEFORE INSERT ON audit_operations
-WHEN EXISTS (
-    SELECT 1 FROM audit_effects
-    WHERE stream = NEW.stream AND chain_seq = NEW.chain_seq
-) BEGIN
-    SELECT RAISE(ABORT, 'audit chain sequence already belongs to an effect');
-END;
 
 CREATE TABLE audit_effects (
     effect_id             text PRIMARY KEY CHECK (
                               length(effect_id) = 26
                               AND effect_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
     operation_id          text NOT NULL REFERENCES audit_operations(operation_id),
-    stream                text NOT NULL DEFAULT 'control' REFERENCES audit_chain_head(stream),
+    stream                text NOT NULL DEFAULT 'control',
     chain_seq             integer NOT NULL CHECK (chain_seq > 0),
     effect_seq            integer NOT NULL CHECK (effect_seq >= 0),
     resource_type         text NOT NULL CHECK (
@@ -823,8 +786,6 @@ CREATE TABLE audit_effects (
     sealed_detail         blob,
     sealed_detail_subject text,
     occurred_at           timestamp NOT NULL,
-    prev_hash             blob NOT NULL CHECK (length(prev_hash) = 32),
-    row_hash              blob NOT NULL CHECK (length(row_hash) = 32),
     CHECK ((evidence_kind = '') = (evidence_fingerprint = '')),
     CHECK ((sealed_detail IS NULL) = (sealed_detail_subject IS NULL)),
     CHECK (sealed_detail_subject IS NULL OR (
@@ -836,14 +797,6 @@ CREATE UNIQUE INDEX audit_effects_operation_seq_key ON audit_effects(operation_i
 CREATE INDEX audit_effects_resource_idx
     ON audit_effects(resource_type, resource_id, occurred_at DESC);
 CREATE INDEX audit_effects_operation_idx ON audit_effects(operation_id);
-CREATE TRIGGER audit_effects_reject_operation_sequence_collision
-BEFORE INSERT ON audit_effects
-WHEN EXISTS (
-    SELECT 1 FROM audit_operations
-    WHERE stream = NEW.stream AND chain_seq = NEW.chain_seq
-) BEGIN
-    SELECT RAISE(ABORT, 'audit chain sequence already belongs to an operation');
-END;
 CREATE TRIGGER audit_effects_validate_changed_fields
 BEFORE INSERT ON audit_effects
 WHEN EXISTS (
@@ -856,178 +809,50 @@ WHEN EXISTS (
     SELECT RAISE(ABORT, 'audit changed_fields contains an invalid field name');
 END;
 
--- The API-facing projection intentionally excludes sealed_detail. Effects are
--- the ordinary rows; an operation without effects still contributes evidence,
--- most importantly for rejected authentication attempts.
+-- API-facing projection excludes sealed details and other classified values.
 CREATE VIEW audit_event_rows AS
 SELECT
-    e.effect_id AS id,
-    e.chain_seq,
-    e.resource_type AS stream_type,
-    e.resource_id AS stream_id,
-    e.action AS event_type,
-    o.operation_id,
-    o.operation_class,
-    o.actor_type,
-    o.actor_id,
-    o.actor_fingerprint,
-    o.origin,
-    o.origin_fingerprint,
-    o.request_descriptor,
-    o.authorization_outcome,
-    o.authorization_detail,
-    o.result,
-    o.result_code,
-    e.outcome AS effect_outcome,
-    e.changed_fields,
-    e.before_ref,
-    e.after_ref,
-    e.before_flag,
-    e.after_flag,
-    e.before_count,
-    e.after_count,
-    e.evidence_kind,
-    e.evidence_fingerprint,
+    e.effect_id AS id, e.chain_seq, e.resource_type AS stream_type,
+    e.resource_id AS stream_id, e.action AS event_type,
+    o.operation_id, o.operation_class, o.actor_type, o.actor_id,
+    o.actor_fingerprint, o.origin, o.origin_fingerprint,
+    o.request_descriptor, o.authorization_outcome, o.authorization_detail,
+    o.result, o.result_code, e.outcome AS effect_outcome,
+    e.changed_fields, e.before_ref, e.after_ref, e.before_flag, e.after_flag,
+    e.before_count, e.after_count, e.evidence_kind, e.evidence_fingerprint,
     e.occurred_at
-FROM audit_effects e
-JOIN audit_operations o ON o.operation_id = e.operation_id
+FROM audit_effects e JOIN audit_operations o ON o.operation_id = e.operation_id
 WHERE e.stream = 'control'
-
 UNION ALL
-
 SELECT
-    o.operation_id AS id,
-    o.chain_seq,
+    o.operation_id AS id, o.chain_seq,
     CASE WHEN o.operation_class = 'REJECTED_AUTHENTICATION'
          THEN 'authentication' ELSE 'operation' END AS stream_type,
     o.operation_id AS stream_id,
     CASE WHEN o.operation_class = 'REJECTED_AUTHENTICATION'
          THEN 'AUTHENTICATION_REJECTED' ELSE o.operation_class END AS event_type,
-    o.operation_id,
-    o.operation_class,
-    o.actor_type,
-    o.actor_id,
-    o.actor_fingerprint,
-    o.origin,
-    o.origin_fingerprint,
-    o.request_descriptor,
-    o.authorization_outcome,
-    o.authorization_detail,
-    o.result,
-    o.result_code,
-    '' AS effect_outcome,
-    '[]' AS changed_fields,
-    CAST(NULL AS TEXT) AS before_ref,
-    CAST(NULL AS TEXT) AS after_ref,
-    CAST(NULL AS INTEGER) AS before_flag,
-    CAST(NULL AS INTEGER) AS after_flag,
-    CAST(NULL AS INTEGER) AS before_count,
-    CAST(NULL AS INTEGER) AS after_count,
-    '' AS evidence_kind,
-    '' AS evidence_fingerprint,
-    o.occurred_at
+    o.operation_id, o.operation_class, o.actor_type, o.actor_id,
+    o.actor_fingerprint, o.origin, o.origin_fingerprint,
+    o.request_descriptor, o.authorization_outcome, o.authorization_detail,
+    o.result, o.result_code, '' AS effect_outcome, '[]' AS changed_fields,
+    CAST(NULL AS TEXT), CAST(NULL AS TEXT), CAST(NULL AS INTEGER),
+    CAST(NULL AS INTEGER), CAST(NULL AS INTEGER), CAST(NULL AS INTEGER),
+    '' AS evidence_kind, '' AS evidence_fingerprint, o.occurred_at
 FROM audit_operations o
 WHERE o.stream = 'control'
-  AND NOT EXISTS (
-      SELECT 1 FROM audit_effects e WHERE e.operation_id = o.operation_id
-  );
+  AND NOT EXISTS (SELECT 1 FROM audit_effects e WHERE e.operation_id = o.operation_id);
 
-CREATE TABLE audit_chain_anchors (
-    anchor_id    text PRIMARY KEY CHECK (
-                     length(anchor_id) = 26
-                     AND anchor_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
-    stream       text NOT NULL REFERENCES audit_chain_head(stream),
-    chain_seq    integer NOT NULL CHECK (chain_seq > 0),
-    row_hash     blob NOT NULL CHECK (length(row_hash) = 32),
-    captured_at  timestamp NOT NULL,
-    external_ref text NOT NULL DEFAULT '' CHECK (length(external_ref) <= 200)
-);
-CREATE UNIQUE INDEX audit_chain_anchors_stream_seq_key
-    ON audit_chain_anchors(stream, chain_seq);
-CREATE INDEX audit_chain_anchors_captured_idx
-    ON audit_chain_anchors(stream, captured_at DESC);
-
-CREATE TABLE audit_chain_checkpoints (
-    checkpoint_id  text PRIMARY KEY CHECK (
-                       length(checkpoint_id) = 26
-                       AND checkpoint_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
-    stream         text NOT NULL REFERENCES audit_chain_head(stream),
-    boundary_seq   integer NOT NULL CHECK (boundary_seq > 0),
-    boundary_hash  blob NOT NULL CHECK (length(boundary_hash) = 32),
-    resume_seq     integer NOT NULL CHECK (resume_seq > boundary_seq),
-    deleted_rows   integer NOT NULL CHECK (deleted_rows >= 0),
-    archive_digest text NOT NULL CHECK (
-                       length(archive_digest) = 64
-                       AND archive_digest NOT GLOB '*[^0-9a-f]*'),
-    archive_ref    text NOT NULL CHECK (length(archive_ref) BETWEEN 1 AND 200),
-    archived_at    timestamp NOT NULL,
-    created_at     timestamp NOT NULL
-);
-CREATE UNIQUE INDEX audit_chain_checkpoints_stream_boundary_key
-    ON audit_chain_checkpoints(stream, boundary_seq);
-CREATE INDEX audit_chain_checkpoints_resume_idx
-    ON audit_chain_checkpoints(stream, resume_seq);
-
--- docref: anchor sqlite-audit-guards
--- Retention inserts one transaction-local intent row, deletes only the
--- archived prefix, then removes the intent before commit. A crash rolls all
--- three operations back. Ordinary DELETE remains structurally impossible.
-CREATE TABLE audit_retention_guard (
-    stream       text PRIMARY KEY REFERENCES audit_chain_head(stream),
-    boundary_seq integer NOT NULL CHECK (boundary_seq > 0)
-);
-CREATE TRIGGER audit_retention_guard_requires_closed_prefix
-BEFORE INSERT ON audit_retention_guard
-WHEN EXISTS (
-    SELECT 1
-    FROM audit_operations AS operation
-    JOIN audit_effects AS effect ON effect.operation_id = operation.operation_id
-    WHERE operation.stream = NEW.stream
-      AND operation.chain_seq <= NEW.boundary_seq
-      AND effect.chain_seq > NEW.boundary_seq
-) BEGIN
-    SELECT RAISE(ABORT, 'audit retention boundary is not a closed prefix');
-END;
-
-CREATE TRIGGER audit_operations_block_update
-BEFORE UPDATE ON audit_operations BEGIN
+CREATE TRIGGER audit_operations_block_update BEFORE UPDATE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
 END;
-CREATE TRIGGER audit_operations_block_delete
-BEFORE DELETE ON audit_operations
-WHEN NOT EXISTS (
-    SELECT 1 FROM audit_retention_guard
-    WHERE stream = OLD.stream AND OLD.chain_seq <= boundary_seq
-) BEGIN
+CREATE TRIGGER audit_operations_block_delete BEFORE DELETE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
 END;
-CREATE TRIGGER audit_effects_block_update
-BEFORE UPDATE ON audit_effects BEGIN
+CREATE TRIGGER audit_effects_block_update BEFORE UPDATE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
 END;
-CREATE TRIGGER audit_effects_block_delete
-BEFORE DELETE ON audit_effects
-WHEN NOT EXISTS (
-    SELECT 1 FROM audit_retention_guard
-    WHERE stream = OLD.stream AND OLD.chain_seq <= boundary_seq
-) BEGIN
+CREATE TRIGGER audit_effects_block_delete BEFORE DELETE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
-END;
-CREATE TRIGGER audit_chain_anchors_block_update
-BEFORE UPDATE ON audit_chain_anchors BEGIN
-    SELECT RAISE(ABORT, 'audit_chain_anchors is append-only');
-END;
-CREATE TRIGGER audit_chain_anchors_block_delete
-BEFORE DELETE ON audit_chain_anchors BEGIN
-    SELECT RAISE(ABORT, 'audit_chain_anchors is append-only');
-END;
-CREATE TRIGGER audit_chain_checkpoints_block_update
-BEFORE UPDATE ON audit_chain_checkpoints BEGIN
-    SELECT RAISE(ABORT, 'audit_chain_checkpoints is append-only');
-END;
-CREATE TRIGGER audit_chain_checkpoints_block_delete
-BEFORE DELETE ON audit_chain_checkpoints BEGIN
-    SELECT RAISE(ABORT, 'audit_chain_checkpoints is append-only');
 END;
 
 CREATE TABLE jobs (

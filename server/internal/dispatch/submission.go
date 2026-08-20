@@ -19,35 +19,27 @@ import (
 // ErrInvalidInput means no complete device delivery could be formed.
 var ErrInvalidInput = errors.New("invalid dispatch submission")
 
-// Waker is the lossy process-local optimization used after the database commit.
-// The delivery sweep remains the correctness path when Wake returns false.
-type Waker interface {
-	Wake(deliveryID string) bool
-}
-
-// Config supplies the direct store, bounded wake queue, and clock.
+// Config supplies the durable store and clock.
 type Config struct {
 	Store *store.Store
-	Waker Waker
 	Now   func() time.Time
 }
 
 // Service commits complete manifests and their visible execution rows.
 type Service struct {
 	store *store.Store
-	waker Waker
 	now   func() time.Time
 }
 
 // New constructs a submission service. Missing dependencies are boot defects.
 func New(cfg Config) *Service {
-	if cfg.Store == nil || cfg.Waker == nil {
-		panic("dispatch: store and waker are required")
+	if cfg.Store == nil {
+		panic("dispatch: store is required")
 	}
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	return &Service{store: cfg.Store, waker: cfg.Waker, now: cfg.Now}
+	return &Service{store: cfg.Store, now: cfg.Now}
 }
 
 // ManifestInput distinguishes catalog-backed occurrences from inline actions.
@@ -101,7 +93,7 @@ type preparedTarget struct {
 }
 
 // Submit commits every manifest and occurrence through the same audit
-// transaction. A wake is attempted only after the commit succeeds.
+// transaction. The agent retrieves committed work through Sync.
 func (s *Service) Submit(ctx context.Context, p SubmitParams) (Result, error) {
 	return s.SubmitBatch(ctx, SubmitBatchParams{
 		Operation: p.Operation,
@@ -112,7 +104,7 @@ func (s *Service) Submit(ctx context.Context, p SubmitParams) (Result, error) {
 }
 
 // SubmitBatch commits every target, manifest, and occurrence under one audit
-// operation. No device is woken unless the complete fan-out commits.
+// operation.
 func (s *Service) SubmitBatch(ctx context.Context, p SubmitBatchParams) (Result, error) {
 	if ctx == nil || len(p.Targets) == 0 {
 		return Result{}, ErrInvalidInput
@@ -226,9 +218,6 @@ func (s *Service) SubmitBatch(ctx context.Context, p SubmitBatchParams) (Result,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("submit dispatch: %w", err)
-	}
-	for _, id := range deliveryIDs {
-		s.waker.Wake(id)
 	}
 	return Result{DeliveryIDs: deliveryIDs, Executions: executions}, nil
 }

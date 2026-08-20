@@ -37,3 +37,9 @@ func (e *Executor) executeReboot(ctx context.Context) (*pb.CommandOutput, error)
 	}
 	return &pb.CommandOutput{Stdout: "Reboot scheduled in 5 minutes\n"}, nil
 }
+
+// Reboot schedules the same safe delayed reboot used by the agent runtime.
+func (e *Executor) Reboot(ctx context.Context) error {
+	_, err := e.executeReboot(ctx)
+	return err
+}

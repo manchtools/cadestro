@@ -92,7 +92,7 @@ func TestActionState_AuditFailureRollsBackCreate(t *testing.T) {
 	svc := authoring.New(authoring.Config{Store: st})
 
 	_, err := svc.CreateAction(context.Background(), store.AuditOperation{}, authoring.CreateActionParams{
-		Name: "must not exist", CreatedBy: newID(), Type: pmv1.ActionType_ACTION_TYPE_REBOOT,
+		Name: "must not exist", CreatedBy: newID(), Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`),
 	})
 	require.Error(t, err)
@@ -116,7 +116,7 @@ func TestActionState_UserMutationCannotChangeSystemAction(t *testing.T) {
 	svc := authoring.New(authoring.Config{Store: st})
 	createOp := actionOperation()
 	action, err := svc.CreateAction(context.Background(), createOp, authoring.CreateActionParams{
-		Name: "managed", CreatedBy: createOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_REBOOT,
+		Name: "managed", CreatedBy: createOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)

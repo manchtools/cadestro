@@ -247,9 +247,9 @@
   "instant_actions_reboot": "Reboot",
   "instant_actions_reboot_confirm_title": "Confirm Reboot",
   "instant_actions_reboot_confirm_description": "Are you sure you want to reboot \"{hostname}\"? The device will be rebooted in 5 minutes.",
-  "instant_actions_reboot_dispatched": "Reboot dispatched",
+  "instant_actions_reboot_dispatched": "Reboot requested",
   "instant_actions_sync": "Sync Now",
-  "instant_actions_sync_dispatched": "Sync dispatched",
+  "instant_actions_sync_dispatched": "Sync requested",
   "instant_actions_dispatching": "Dispatching...",
   "sync_1day": "1 day",
   "sync_1hour": "1 hour",
@@ -2360,7 +2360,7 @@
   "fleet_legend_idle": "never seen · hollow",
   "fleet_legend_decay": "fading = sync age",
   "fleet_selection_groups": "across {count} groups",
-  "fleet_selection_offline": "{count} offline will queue",
+  "fleet_selection_offline": "{count} offline unavailable for live calls",
   "fleet_selection_label": "{count} devices",
   "fleet_empty_title": "No devices enrolled",
   "fleet_empty_hint": "Enrol an agent with a registration token — it appears here as soon as it reports in.",
@@ -2383,23 +2383,8 @@
       }
     }
   ],
-  "bulk_reboot_confirm_description": "Each selected device gets its own reboot dispatch.",
+  "bulk_reboot_confirm_description": "Each selected device gets its own live reboot call; offline devices will fail.",
   "bulk_confirm_more": "+ {count} more",
-  "bulk_reboot_queued": [
-    {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
-      "match": {
-        "countPlural=one": "1 offline — queued until it reconnects",
-        "countPlural=other": "{count} offline — queued until they reconnect"
-      }
-    }
-  ],
   "bulk_reboot_dispatched": [
     {
       "declarations": [
@@ -2410,12 +2395,12 @@
         "countPlural"
       ],
       "match": {
-        "countPlural=one": "Reboot dispatched to 1 device",
-        "countPlural=other": "Reboot dispatched to {count} devices"
+        "countPlural=one": "Reboot requested on 1 device",
+        "countPlural=other": "Reboot requested on {count} devices"
       }
     }
   ],
-  "bulk_reboot_partial": "{ok} dispatched, {failed} failed",
+  "bulk_reboot_partial": "{ok} requested, {failed} failed",
   "bulk_label_dialog_title": [
     {
       "declarations": [

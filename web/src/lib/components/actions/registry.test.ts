@@ -91,9 +91,7 @@ describe('formKeyFromActionType', () => {
 	});
 
 	it('returns null for action types without a params form', () => {
-		// REBOOT/SYNC/SCRIPT_RUN have no editable params shape.
-		expect(formKeyFromActionType(ActionType.REBOOT)).toBeNull();
-		expect(formKeyFromActionType(ActionType.SYNC)).toBeNull();
+		// SCRIPT_RUN has no editable params shape.
 		expect(formKeyFromActionType(ActionType.SCRIPT_RUN)).toBeNull();
 	});
 });

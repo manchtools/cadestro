@@ -40,8 +40,8 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 		"AddActionToSet", "RemoveActionFromSet", "ReorderActionInSet",
 	)
 	state := authoring.New(authoring.Config{Store: f.store, Now: func() time.Time { return f.now }})
-	action1 := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_REBOOT)
-	action2 := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_SYNC)
+	action1 := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
+	action2 := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
 
 	created, err := f.handlers.CreateActionSet(ctx, connect.NewRequest(setCreate("baseline", pmv1.OnFailure_ON_FAILURE_STOP)))
 	require.NoError(t, err)
@@ -202,7 +202,7 @@ func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
 	require.NoError(t, err)
 	actionOp := actionOperation()
 	system, err := state.CreateAction(context.Background(), actionOp, authoring.CreateActionParams{
-		Name: "system", CreatedBy: actionOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_REBOOT,
+		Name: "system", CreatedBy: actionOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)
@@ -212,8 +212,8 @@ func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 
-	inScope := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_REBOOT)
-	outOfScope := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_SYNC)
+	inScope := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
+	outOfScope := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
 	groupA, groupB := newID(), newID()
 	_, err = f.raw.Exec(context.Background(),
 		`INSERT INTO device_groups (id, name) VALUES ($1, 'A'), ($2, 'B')`, groupA, groupB)

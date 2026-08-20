@@ -80,14 +80,6 @@ EOF
 chmod +x "$STUB_ROOT/download-bin/curl"
 cp "$STUB_ROOT/bin/docker" "$STUB_ROOT/bin/openssl" "$STUB_ROOT/download-bin/"
 
-# The loopback-archive path shells out to filesystem tooling that a test must
-# not really run: creating images, making filesystems, and mounting are root
-# operations whose effect the assertions read from the call log instead.
-# mountpoint reports "not mounted" so the preparation branch is always taken.
-for tool in truncate mkfs.ext4 mount; do
-    stub_command "$tool" 'exit 0'
-done
-stub_command mountpoint 'exit 1'
 cp "$STUB_ROOT/bin/truncate" "$STUB_ROOT/bin/mkfs.ext4" "$STUB_ROOT/bin/mount" \
     "$STUB_ROOT/bin/mountpoint" "$STUB_ROOT/download-bin/"
 
@@ -206,7 +198,7 @@ run_install_guided() {
     : > "$CALL_LOG"
     printf '%s' "$answers" | timeout 30 env \
         -u RELEASE_TAG -u ACME_CHALLENGE -u ACME_DNS_PROVIDER \
-        -u CONTROL_DOMAIN -u AGENT_DOMAIN -u ACME_EMAIL -u ARCHIVE_LOOPBACK \
+        -u CONTROL_DOMAIN -u AGENT_DOMAIN -u ACME_EMAIL \
         PATH="$bin_directory:$PATH" \
         INSTALL_DIR="$directory" \
         GITHUB_REPOSITORY=cadestro.invalid/server \
@@ -347,49 +339,6 @@ test_version_skew_between_script_and_tree_warns() {
     }
 }
 
-# The dangerous single-node choice never weakens control's own archive check:
-# it satisfies it by preparing a loopback filesystem at data/backups. The run
-# must say so loudly, prepare the image idempotently, persist the mount, and
-# then proceed all the way to the stack.
-test_guided_loopback_archive_prepares_same_disk_storage() {
-    local directory="$1" output answers fstab
-    fstab="$FIXTURE_ROOT/fstab.$$"
-    : > "$fstab"
-    answers=$'manage.example.test\nagents.example.test\nadmin@example.test\nv2026.08.09-rc2\n\nloopback\n'
-    output="$(run_install_guided "$directory" "$answers" "$STUB_ROOT/download-bin" "$fstab" 2>&1)" || {
-        printf 'guided loopback run failed: %s\n' "$output" >&2
-        return 1
-    }
-    grep -Fq 'DANGEROUS' <<<"$output" || {
-        printf 'the loopback choice was accepted without naming the danger: %s\n' "$output" >&2
-        return 1
-    }
-    grep -Eq 'mkfs\.ext4 .*backups\.img' "$CALL_LOG" || {
-        printf 'no filesystem was created for the loopback archive:\n%s\n' "$(cat "$CALL_LOG")" >&2
-        return 1
-    }
-    grep -Eq 'mount .*backups\.img' "$CALL_LOG" || {
-        printf 'the loopback archive was never mounted:\n%s\n' "$(cat "$CALL_LOG")" >&2
-        return 1
-    }
-    grep -Fq "$directory/data/backups.img" "$fstab" || {
-        printf 'the loopback mount was not persisted for reboots:\n%s\n' "$(cat "$fstab")" >&2
-        return 1
-    }
-    [[ -e "$directory/setup-ran-marker" ]] || {
-        printf 'setup.sh never ran although the archive was prepared\n' >&2
-        return 1
-    }
-    grep -Fq 'docker compose pull' "$CALL_LOG" || {
-        printf 'the stack was never started:\n%s\n' "$(cat "$CALL_LOG")" >&2
-        return 1
-    }
-    grep -Fq 'must point at this host' <<<"$output" || {
-        printf 'the success output does not remind about the DNS records: %s\n' "$output" >&2
-        return 1
-    }
-}
-
 test_missing_release_tag_refuses_before_downloading "$(new_install_dir)"
 printf 'PASS unset RELEASE_TAG refused before any download\n'
 test_invalid_challenge_refuses_before_downloading "$(new_install_dir)"
@@ -402,7 +351,5 @@ test_guided_answers_reach_the_release_tag "$(new_install_dir)"
 printf 'PASS guided answers drive the fetch and invalid input is re-asked\n'
 test_guided_dns01_marks_the_credential_for_self_pasting "$(new_install_dir)"
 printf 'PASS guided dns01 prepares the credential file and stops before setup.sh\n'
-test_guided_loopback_archive_prepares_same_disk_storage "$(new_install_dir)"
-printf 'PASS guided loopback archive prepares same-disk storage and reaches the stack\n'
 test_version_skew_between_script_and_tree_warns "$(new_install_dir)"
 printf 'PASS a tree whose install.sh differs from the running script is named\n'

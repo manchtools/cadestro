@@ -139,7 +139,7 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*pmv1.Manifest, e
 // OneShotAction creates the singleton manifest used by an explicit dispatch.
 // The Action schedule remains authoring/display data; the manifest carries the
 // structural one_shot flag, which is what makes the agent execute the delivery
-// exactly once on durable receipt instead of scheduling it. An empty manifest
+// exactly once after recording it instead of scheduling it. An empty manifest
 // schedule accompanies the flag but never stands in for it.
 func OneShotAction(action *pmv1.Action) (*pmv1.Manifest, error) {
 	if action == nil {
@@ -161,7 +161,7 @@ func OneShotAction(action *pmv1.Action) (*pmv1.Manifest, error) {
 
 // AsOneShot marks a manifest compiled from the catalog as an explicit dispatch.
 // The structural one_shot flag is what makes the agent execute the delivery
-// exactly once on durable receipt; clearing the compiled schedule stops the
+// exactly once; clearing the compiled schedule stops the
 // authored cadence from also being installed. The nested Actions keep their
 // authoring/display schedules.
 func AsOneShot(compiled *pmv1.Manifest) *pmv1.Manifest {

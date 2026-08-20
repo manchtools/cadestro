@@ -10,7 +10,7 @@
 //     proto conversion, so it cannot be created from a form at all.
 //
 // Intersecting them means a new registry entry appears on the wall the moment it
-// is registered, and REBOOT / SYNC / SCRIPT_RUN (no adapter) stay off it without
+// is registered, and SCRIPT_RUN (no adapter) stays off it without
 // anyone maintaining an exclusion list. `tileFormKeys()` lets a test assert the
 // wall covers the registry exactly, in both directions.
 

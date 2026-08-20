@@ -8,7 +8,6 @@ import (
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -385,9 +384,9 @@ func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[pmv1.D
 			effect := deviceEffect(req.Msg.Id, "DELETE", "is_deleted")
 			before, after := false, true
 			effect.BeforeFlag, effect.AfterFlag = &before, &after
-			if view.CertFingerprint != nil {
-				effect.EvidenceKind = "certificate_fingerprint"
-				effect.EvidenceFingerprint = auth.Fingerprint(*view.CertFingerprint)
+			if view.ActiveCertSerial != nil {
+				effect.EvidenceKind = "certificate_serial"
+				effect.EvidenceFingerprint = *view.ActiveCertSerial
 			}
 			rec.Effect(effect)
 			return nil

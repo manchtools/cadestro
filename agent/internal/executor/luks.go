@@ -616,7 +616,7 @@ func (e *Executor) revokeDeviceKeyInternal(ctx context.Context, localState *stor
 	return st.SetLuksDeviceKeyType(actionID, "none")
 }
 
-// RevokeLuksDeviceKey handles the instant action to revoke the device-bound key.
+// RevokeLuksDeviceKey handles the live request to revoke the device-bound key.
 // Called by the handler when a RevokeLuksDeviceKey stream message arrives.
 func (e *Executor) RevokeLuksDeviceKey(ctx context.Context, actionID string) (bool, string) {
 	st := e.getStore()

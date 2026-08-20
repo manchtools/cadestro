@@ -3,8 +3,8 @@
 ## The honest statement first
 
 **Cadestro is pre-1.0. There is no automatic schema migration machinery.** A
-release either documents one explicit offline cutover or requires a clean
-reinstall; startup never guesses how to transform old data.
+schema change requires a clean reinstall; startup never guesses how to
+transform old data.
 
 That is not a gap waiting to be filled in a later sprint; it is the current
 design, and this page describes what the code actually supports rather than what
@@ -19,7 +19,7 @@ migrated, not best-effort upgraded, refused.
 <!-- docref: end -->
 
 So: within a schema version, updating is a container image pull. Across one,
-follow the release's named offline cutover if it has one; otherwise reinstall.
+reinstall.
 
 ---
 
@@ -77,38 +77,12 @@ one cannot read.
 
 ## Across a schema version
 
-Unless the release names an offline cutover below, reinstall. Concretely:
+Reinstall across a schema version. Concretely:
 
 1. Take a [verified backup](backup-restore.md) and copy `certs/`, `secrets/`,
    and `data/artifacts` off the machine alongside it.
 2. Install the new release fresh.
 3. Re-enroll devices.
-
-For databases created before the reusable enrollment-token cutover, run
-[`upgrade-enrollment-tokens.sql`](upgrade-enrollment-tokens.sql) manually. It
-preserves token IDs, digests, expiry, and revocation state, and stops with
-reports for tokens without expiry or devices without an immutable token
-relation; those rows must be resolved by an operator rather than guessed. Run
-it with `sqlite3 -bail` so a failed guard cannot commit a partial rebuild. The
-legacy device foreign key remains `ON DELETE SET NULL`; the migration's
-SQLite-native `BEFORE DELETE` trigger is the equivalent append-only
-provenance guard for the rebuilt token table, so the relation cannot be
-refunded or moved without rebuilding the large devices table.
-
-For databases created before the certificate lifecycle cutover, stop control,
-take a verified backup, and run
-[`upgrade-certificate-lifecycle.sql`](upgrade-certificate-lifecycle.sql) with
-`sqlite3 -bail`. It adds the serial/pending columns and removes the obsolete
-revocation table; legacy fingerprints are bridged only when the actual mTLS
-peer leaf authenticates.
-
-For databases created before the generic device-secret cutover, stop control,
-take a verified backup, and first run
-[`upgrade-device-secrets.sql`](upgrade-device-secrets.sql) with `sqlite3 -bail`.
-Then run `cadestro migrate-device-secrets` with the deployed at-rest key. The
-command authenticates and re-encrypts every legacy LUKS/LPS value in one
-transaction before it removes duplicate ownership and ciphertext columns; one
-bad row leaves the old schema untouched.
 
 <!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:c85cea66 -->
 Restoring the old database into the new release is not a migration and will not

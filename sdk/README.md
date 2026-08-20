@@ -14,7 +14,7 @@ MIT, and intended to be embedded in other people's tools. See
 |------|---------|
 | `sys/` | Device capability implementations |
 | `pkg/` | Package-manager capabilities |
-| `crypto/` | Enrollment CSR, at-rest AEAD, and transport-field sealing helpers |
+| `crypto/` | Enrollment CSR, certificate, and at-rest AEAD helpers |
 | `cryptotest/` | Shared X.509 fixtures for the capability and agent test suites |
 | `logging/` | Metadata-only logging helpers |
 | `archtest/` | Architectural fitness functions over this module |

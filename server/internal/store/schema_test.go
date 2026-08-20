@@ -77,7 +77,7 @@ func TestSchema_UsesTextIdentifiersAndNoUUIDs(t *testing.T) {
 		SELECT m.name || '.' || p.name || ' ' || p.type
 		FROM sqlite_schema AS m, pragma_table_xinfo(m.name) AS p
 		WHERE m.type = 'table'
-		  AND p.name IN ('id', 'operation_id', 'effect_id', 'delivery_id', 'job_id', 'anchor_id', 'checkpoint_id')
+		  AND p.name IN ('id', 'operation_id', 'effect_id', 'delivery_id', 'job_id')
 		  AND NOT (m.name = 'linux_uid_sequence' AND p.name = 'id')
 		  AND m.name NOT GLOB 'search_fts_*'
 		  AND m.name NOT GLOB 'search_trigram_*'
@@ -113,19 +113,11 @@ func TestSchema_SearchDocumentsCannotStoreClassifiedAuditFields(t *testing.T) {
 
 func TestSchema_EveryAuditEvidenceTableHasAppendOnlyGuards(t *testing.T) {
 	_, raw := setupSQLite(t)
-	for _, table := range []string{"audit_operations", "audit_effects", "audit_chain_anchors", "audit_chain_checkpoints"} {
+	for _, table := range []string{"audit_operations", "audit_effects"} {
 		triggers := scanStrings(t, raw, `
 			SELECT name FROM sqlite_schema
 			WHERE type = 'trigger' AND tbl_name = ? AND name LIKE '%block_%'
 			ORDER BY name`, table)
 		assert.Len(t, triggers, 2, "%s needs UPDATE and DELETE guards", table)
 	}
-}
-
-func TestSchema_ChainHeadIsMutable(t *testing.T) {
-	_, raw := setupSQLite(t)
-	triggers := scanStrings(t, raw, `
-		SELECT name FROM sqlite_schema
-		WHERE type = 'trigger' AND tbl_name = 'audit_chain_head'`)
-	assert.Empty(t, triggers)
 }

@@ -15,6 +15,7 @@ const (
 	errPermissionDenied      = "permission_denied"
 	errValidationFailed      = "validation_failed"
 	errDeviceNotFound        = "device_not_found"
+	errDeviceUnavailable     = "device_unavailable"
 	errActionNotFound        = "action_not_found"
 	errActionSetMissing      = "action_set_not_found"
 	errDefinitionMissing     = "definition_not_found"

@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/agent.proto.
  */
 export const file_cadestro_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEiowgKDEFnZW50TWVzc2FnZRIKCgJpZBgBIAEoCRIjCgVoZWxsbxgKIAEoCzISLmNhZGVzdHJvLnYxLkhlbGxvSAASKwoJaGVhcnRiZWF0GAsgASgLMhYuY2FkZXN0cm8udjEuSGVhcnRiZWF0SAASMAoMc3luY19yZXF1ZXN0GAwgASgLMhguY2FkZXN0cm8udjEuU3luY1JlcXVlc3RIABIyCg1hY3Rpb25fcmVzdWx0GBQgASgLMhkuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0SAASMAoMb3V0cHV0X2NodW5rGBUgASgLMhguY2FkZXN0cm8udjEuT3V0cHV0Q2h1bmtIABI4ChBkZWxpdmVyeV9yZWNlaXB0GBYgASgLMhwuY2FkZXN0cm8udjEuRGVsaXZlcnlSZWNlaXB0SAASNgoPbWFuaWZlc3RfcmVzdWx0GBcgASgLMhsuY2FkZXN0cm8udjEuTWFuaWZlc3RSZXN1bHRIABIyCgxxdWVyeV9yZXN1bHQYHiABKAsyGi5jYWRlc3Ryby52MS5PU1F1ZXJ5UmVzdWx0SAASMQoJaW52ZW50b3J5GB8gASgLMhwuY2FkZXN0cm8udjEuRGV2aWNlSW52ZW50b3J5SAASNAoOc2VjdXJpdHlfYWxlcnQYKCABKAsyGi5jYWRlc3Ryby52MS5TZWN1cml0eUFsZXJ0SAASNgoMZ2V0X2x1a3Nfa2V5GDIgASgLMh4uY2FkZXN0cm8udjEuR2V0THVrc0tleVJlcXVlc3RIABI6Cg5zdG9yZV9sdWtzX2tleRgzIAEoCzIgLmNhZGVzdHJvLnYxLlN0b3JlTHVrc0tleVJlcXVlc3RIABJPCh1yZXZva2VfbHVrc19kZXZpY2Vfa2V5X3Jlc3VsdBg0IAEoCzImLmNhZGVzdHJvLnYxLlJldm9rZUx1a3NEZXZpY2VLZXlSZXN1bHRIABJEChNzdG9yZV9scHNfcGFzc3dvcmRzGDUgASgLMiUuY2FkZXN0cm8udjEuU3RvcmVMcHNQYXNzd29yZHNSZXF1ZXN0SAASRAoTdmFsaWRhdGVfbHVrc190b2tlbhg2IAEoCzIlLmNhZGVzdHJvLnYxLlZhbGlkYXRlTHVrc1Rva2VuUmVxdWVzdEgAEjcKEGxvZ19xdWVyeV9yZXN1bHQYPCABKAsyGy5jYWRlc3Ryby52MS5Mb2dRdWVyeVJlc3VsdEgAEjYKD3Rlcm1pbmFsX291dHB1dBhGIAEoCzIbLmNhZGVzdHJvLnYxLlRlcm1pbmFsT3V0cHV0SAASQQoVdGVybWluYWxfc3RhdGVfY2hhbmdlGEcgASgLMiAuY2FkZXN0cm8udjEuVGVybWluYWxTdGF0ZUNoYW5nZUgAQgkKB3BheWxvYWQicgoLT3V0cHV0Q2h1bmsSFAoMZXhlY3V0aW9uX2lkGAEgASgJEi0KBnN0cmVhbRgCIAEoDjIdLmNhZGVzdHJvLnYxLk91dHB1dFN0cmVhbVR5cGUSDAoEZGF0YRgDIAEoDBIQCghzZXF1ZW5jZRgEIAEoAyJ8CgVIZWxsbxIoCglkZXZpY2VfaWQYASABKAsyFS5jYWRlc3Ryby52MS5EZXZpY2VJZBIVCg1hZ2VudF92ZXJzaW9uGAIgASgJEhAKCGhvc3RuYW1lGAMgASgJEhIKCmF1dGhfdG9rZW4YBCABKAkSDAoEYXJjaBgFIAEoCSJ5CglIZWFydGJlYXQSKQoGdXB0aW1lGAEgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEhMKC2NwdV9wZXJjZW50GAIgASgCEhYKDm1lbW9yeV9wZXJjZW50GAMgASgCEhQKDGRpc2tfcGVyY2VudBgEIAEoAiK4AQoNU2VjdXJpdHlBbGVydBIsCgR0eXBlGAEgASgOMh4uY2FkZXN0cm8udjEuU2VjdXJpdHlBbGVydFR5cGUSDwoHbWVzc2FnZRgCIAEoCRI4CgdkZXRhaWxzGAMgAygLMicuY2FkZXN0cm8udjEuU2VjdXJpdHlBbGVydC5EZXRhaWxzRW50cnkaLgoMRGV0YWlsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi5wcKDVNlcnZlck1lc3NhZ2USCgoCaWQYASABKAkSKgoJc3luY19oaW50GAsgASgLMhUuY2FkZXN0cm8udjEuU3luY0hpbnRIABInCgd3ZWxjb21lGAogASgLMhQuY2FkZXN0cm8udjEuV2VsY29tZUgAEiwKCnN5bmNfc3RhdGUYDCABKAsyFi5jYWRlc3Ryby52MS5TeW5jU3RhdGVIABI6ChFtYW5pZmVzdF9kZWxpdmVyeRgUIAEoCzIdLmNhZGVzdHJvLnYxLk1hbmlmZXN0RGVsaXZlcnlIABIlCgVxdWVyeRgeIAEoCzIULmNhZGVzdHJvLnYxLk9TUXVlcnlIABI6ChFyZXF1ZXN0X2ludmVudG9yeRgfIAEoCzIdLmNhZGVzdHJvLnYxLlJlcXVlc3RJbnZlbnRvcnlIABIjCgVlcnJvchgoIAEoCzISLmNhZGVzdHJvLnYxLkVycm9ySAASNwoMZ2V0X2x1a3Nfa2V5GDIgASgLMh8uY2FkZXN0cm8udjEuR2V0THVrc0tleVJlc3BvbnNlSAASOwoOc3RvcmVfbHVrc19rZXkYMyABKAsyIS5jYWRlc3Ryby52MS5TdG9yZUx1a3NLZXlSZXNwb25zZUgAEkIKFnJldm9rZV9sdWtzX2RldmljZV9rZXkYNCABKAsyIC5jYWRlc3Ryby52MS5SZXZva2VMdWtzRGV2aWNlS2V5SAASRQoTc3RvcmVfbHBzX3Bhc3N3b3Jkcxg1IAEoCzImLmNhZGVzdHJvLnYxLlN0b3JlTHBzUGFzc3dvcmRzUmVzcG9uc2VIABJFChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiYuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZUgAEiwKCnJlc3VsdF9hY2sYGCABKAsyFi5jYWRlc3Ryby52MS5SZXN1bHRBY2tIABIqCglsb2dfcXVlcnkYPCABKAsyFS5jYWRlc3Ryby52MS5Mb2dRdWVyeUgAEjQKDnRlcm1pbmFsX3N0YXJ0GEYgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxTdGFydEgAEjQKDnRlcm1pbmFsX2lucHV0GEcgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxJbnB1dEgAEjYKD3Rlcm1pbmFsX3Jlc2l6ZRhIIAEoCzIbLmNhZGVzdHJvLnYxLlRlcm1pbmFsUmVzaXplSAASMgoNdGVybWluYWxfc3RvcBhJIAEoCzIZLmNhZGVzdHJvLnYxLlRlcm1pbmFsU3RvcEgAQgkKB3BheWxvYWQiCgoIU3luY0hpbnQicgoHV2VsY29tZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SGAoQZGV2aWNlX2xvZ2luX3VybBgDIAEoCSJVChJNYW5pZmVzdFByb3ZlbmFuY2USFQoNZGVmaW5pdGlvbl9pZBgBIAEoCRIVCg1hY3Rpb25fc2V0X2lkGAIgASgJEhEKCWFjdGlvbl9pZBgDIAEoCSJ8ChJNYW5pZmVzdE9jY3VycmVuY2USFQoNb2NjdXJyZW5jZV9pZBgBIAEoCRIjCgZhY3Rpb24YAiABKAsyEy5jYWRlc3Ryby52MS5BY3Rpb24SKgoKb25fZmFpbHVyZRgDIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZSL/AQoITWFuaWZlc3QSEwoLbWFuaWZlc3RfaWQYASABKAkSMwoKcHJvdmVuYW5jZRgCIAEoCzIfLmNhZGVzdHJvLnYxLk1hbmlmZXN0UHJvdmVuYW5jZRItCghzY2hlZHVsZRgDIAEoCzIbLmNhZGVzdHJvLnYxLkFjdGlvblNjaGVkdWxlEjIKEmRlZmF1bHRfb25fZmFpbHVyZRgEIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZRI0CgtvY2N1cnJlbmNlcxgFIAMoCzIfLmNhZGVzdHJvLnYxLk1hbmlmZXN0T2NjdXJyZW5jZRIQCghvbmVfc2hvdBgGIAEoCCJQChBNYW5pZmVzdERlbGl2ZXJ5EhMKC2RlbGl2ZXJ5X2lkGAEgASgJEicKCG1hbmlmZXN0GAIgASgLMhUuY2FkZXN0cm8udjEuTWFuaWZlc3QiJgoPRGVsaXZlcnlSZWNlaXB0EhMKC2RlbGl2ZXJ5X2lkGAEgASgJIr4BCg5NYW5pZmVzdFJlc3VsdBITCgtkZWxpdmVyeV9pZBgBIAEoCRITCgttYW5pZmVzdF9pZBgCIAEoCRIsCgZzdGF0dXMYAyABKA4yHC5jYWRlc3Ryby52MS5FeGVjdXRpb25TdGF0dXMSMAoMY29tcGxldGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgtkdXJhdGlvbl9tcxgFIAEoAxINCgVlcnJvchgGIAEoCSIrCglSZXN1bHRBY2sSEAoIYWNjZXB0ZWQYASABKAgSDAoEY29kZRgCIAEoCSImCgVFcnJvchIMCgRjb2RlGAEgASgJEg8KB21lc3NhZ2UYAiABKAkiiQEKB09TUXVlcnkSEAoIcXVlcnlfaWQYASABKAkSDQoFdGFibGUYAiABKAkSDwoHY29sdW1ucxgDIAMoCRIsCgV3aGVyZRgEIAMoCzIdLmNhZGVzdHJvLnYxLk9TUXVlcnlDb25kaXRpb24SDQoFbGltaXQYBSABKAUSDwoHcmF3X3NxbBgGIAEoCSJVChBPU1F1ZXJ5Q29uZGl0aW9uEg4KBmNvbHVtbhgBIAEoCRIiCgJvcBgCIAEoDjIWLmNhZGVzdHJvLnYxLk9TUXVlcnlPcBINCgV2YWx1ZRgDIAEoCSJoCg1PU1F1ZXJ5UmVzdWx0EhAKCHF1ZXJ5X2lkGAEgASgJEg8KB3N1Y2Nlc3MYAiABKAgSDQoFZXJyb3IYAyABKAkSJQoEcm93cxgEIAMoCzIXLmNhZGVzdHJvLnYxLk9TUXVlcnlSb3ciagoKT1NRdWVyeVJvdxIvCgRkYXRhGAEgAygLMiEuY2FkZXN0cm8udjEuT1NRdWVyeVJvdy5EYXRhRW50cnkaKwoJRGF0YUVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiPgoPRGV2aWNlSW52ZW50b3J5EisKBnRhYmxlcxgBIAMoCzIbLmNhZGVzdHJvLnYxLkludmVudG9yeVRhYmxlIksKDkludmVudG9yeVRhYmxlEhIKCnRhYmxlX25hbWUYASABKAkSJQoEcm93cxgCIAMoCzIXLmNhZGVzdHJvLnYxLk9TUXVlcnlSb3ciJAoQUmVxdWVzdEludmVudG9yeRIQCghxdWVyeV9pZBgBIAEoCSImChFHZXRMdWtzS2V5UmVxdWVzdBIRCglhY3Rpb25faWQYASABKAkiLQoSR2V0THVrc0tleVJlc3BvbnNlEhcKCnBhc3NwaHJhc2UYASABKAxCA4ABASKMAQoTU3RvcmVMdWtzS2V5UmVxdWVzdBIRCglhY3Rpb25faWQYASABKAkSEwoLZGV2aWNlX3BhdGgYAiABKAkSFwoKcGFzc3BocmFzZRgDIAEoDEIDgAEBEjQKD3JvdGF0aW9uX3JlYXNvbhgEIAEoDjIbLmNhZGVzdHJvLnYxLlJvdGF0aW9uUmVhc29uIicKFFN0b3JlTHVrc0tleVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgifwoTTHBzUGFzc3dvcmRSb3RhdGlvbhIQCgh1c2VybmFtZRgBIAEoCRIVCghwYXNzd29yZBgCIAEoDEIDgAEBEhIKCnJvdGF0ZWRfYXQYAyABKAkSKwoGcmVhc29uGAQgASgOMhsuY2FkZXN0cm8udjEuUm90YXRpb25SZWFzb24iYgoYU3RvcmVMcHNQYXNzd29yZHNSZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCRIzCglyb3RhdGlvbnMYAiADKAsyIC5jYWRlc3Ryby52MS5McHNQYXNzd29yZFJvdGF0aW9uIiwKGVN0b3JlTHBzUGFzc3dvcmRzUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIoChNSZXZva2VMdWtzRGV2aWNlS2V5EhEKCWFjdGlvbl9pZBgBIAEoCSJOChlSZXZva2VMdWtzRGV2aWNlS2V5UmVzdWx0EhEKCWFjdGlvbl9pZBgBIAEoCRIPCgdzdWNjZXNzGAIgASgIEg0KBWVycm9yGAMgASgJIikKGFZhbGlkYXRlTHVrc1Rva2VuUmVxdWVzdBINCgV0b2tlbhgBIAEoCSKPAQoZVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZRIRCglhY3Rpb25faWQYASABKAkSEwoLZGV2aWNlX3BhdGgYAiABKAkSEgoKbWluX2xlbmd0aBgDIAEoBRI2Cgpjb21wbGV4aXR5GAQgASgOMiIuY2FkZXN0cm8udjEuTHBzUGFzc3dvcmRDb21wbGV4aXR5Ig0KC1N5bmNSZXF1ZXN0Is0BCglTeW5jU3RhdGUSHQoVc3luY19pbnRlcnZhbF9taW51dGVzGAEgASgFEjEKCmRlbGl2ZXJpZXMYAiADKAsyHS5jYWRlc3Ryby52MS5NYW5pZmVzdERlbGl2ZXJ5EjoKEm1haW50ZW5hbmNlX3dpbmRvdxgDIAEoCzIeLmNhZGVzdHJvLnYxLk1haW50ZW5hbmNlV2luZG93EjIKDmRlc2lyZWRfcG9saWN5GAQgASgLMhouY2FkZXN0cm8udjEuRGVzaXJlZFBvbGljeSJLCg1EZXNpcmVkUG9saWN5EhAKCHJldmlzaW9uGAEgASgJEigKCW1hbmlmZXN0cxgCIAMoCzIVLmNhZGVzdHJvLnYxLk1hbmlmZXN0Iq8BCghMb2dRdWVyeRIQCghxdWVyeV9pZBgBIAEoCRINCgVsaW5lcxgCIAEoBRIMCgR1bml0GAMgASgJEg0KBXNpbmNlGAQgASgJEg0KBXVudGlsGAUgASgJEhAKCHByaW9yaXR5GAYgASgJEgwKBGdyZXAYByABKAkSDgoGa2VybmVsGAggASgIEiYKBnNvdXJjZRgJIAEoDjIWLmNhZGVzdHJvLnYxLkxvZ1NvdXJjZSJQCg5Mb2dRdWVyeVJlc3VsdBIQCghxdWVyeV9pZBgBIAEoCRIPCgdzdWNjZXNzGAIgASgIEg0KBWVycm9yGAMgASgJEgwKBGxvZ3MYBCABKAkiUQoNVGVybWluYWxTdGFydBISCgpzZXNzaW9uX2lkGAEgASgJEhAKCHR0eV91c2VyGAIgASgJEgwKBGNvbHMYAyABKA0SDAoEcm93cxgEIAEoDSIxCg1UZXJtaW5hbElucHV0EhIKCnNlc3Npb25faWQYASABKAkSDAoEZGF0YRgCIAEoDCJACg5UZXJtaW5hbFJlc2l6ZRISCgpzZXNzaW9uX2lkGAEgASgJEgwKBGNvbHMYAiABKA0SDAoEcm93cxgDIAEoDSIyCgxUZXJtaW5hbFN0b3ASEgoKc2Vzc2lvbl9pZBgBIAEoCRIOCgZyZWFzb24YAiABKAkiMgoOVGVybWluYWxPdXRwdXQSEgoKc2Vzc2lvbl9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIn0KE1Rlcm1pbmFsU3RhdGVDaGFuZ2USEgoKc2Vzc2lvbl9pZBgBIAEoCRIwCgVzdGF0ZRgCIAEoDjIhLmNhZGVzdHJvLnYxLlRlcm1pbmFsU2Vzc2lvblN0YXRlEhEKCWV4aXRfY29kZRgDIAEoBRINCgVlcnJvchgEIAEoCSp0ChBPdXRwdXRTdHJlYW1UeXBlEiIKHk9VVFBVVF9TVFJFQU1fVFlQRV9VTlNQRUNJRklFRBAAEh0KGU9VVFBVVF9TVFJFQU1fVFlQRV9TVERPVVQQARIdChlPVVRQVVRfU1RSRUFNX1RZUEVfU1RERVJSEAIqyAEKEVNlY3VyaXR5QWxlcnRUeXBlEiMKH1NFQ1VSSVRZX0FMRVJUX1RZUEVfVU5TUEVDSUZJRUQQABIzCi9TRUNVUklUWV9BTEVSVF9UWVBFX1NFUlZFUl9SRUFTU0lHTk1FTlRfQVRURU1QVBABEiwKKFNFQ1VSSVRZX0FMRVJUX1RZUEVfQ1JFREVOVElBTF9UQU1QRVJJTkcQAhIrCidTRUNVUklUWV9BTEVSVF9UWVBFX0lOVkFMSURfQ0VSVElGSUNBVEUQAyo5CglPbkZhaWx1cmUSFwoTT05fRkFJTFVSRV9DT05USU5VRRAAEhMKD09OX0ZBSUxVUkVfU1RPUBABKswBCglPU1F1ZXJ5T3ASGwoXT1NfUVVFUllfT1BfVU5TUEVDSUZJRUQQABISCg5PU19RVUVSWV9PUF9FURABEhIKDk9TX1FVRVJZX09QX05FEAISEgoOT1NfUVVFUllfT1BfR1QQAxISCg5PU19RVUVSWV9PUF9MVBAEEhIKDk9TX1FVRVJZX09QX0dFEAUSEgoOT1NfUVVFUllfT1BfTEUQBhIUChBPU19RVUVSWV9PUF9MSUtFEAcSFAoQT1NfUVVFUllfT1BfR0xPQhAIKjsKCUxvZ1NvdXJjZRIXChNMT0dfU09VUkNFX0pPVVJOQUxEEAASFQoRTE9HX1NPVVJDRV9TWVNMT0cQASqnAQoUVGVybWluYWxTZXNzaW9uU3RhdGUSJgoiVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9VTlNQRUNJRklFRBAAEiIKHlRFUk1JTkFMX1NFU1NJT05fU1RBVEVfU1RBUlRFRBABEiEKHVRFUk1JTkFMX1NFU1NJT05fU1RBVEVfRVhJVEVEEAISIAocVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9FUlJPUhADMlMKDEFnZW50U2VydmljZRJDCgZTdHJlYW0SGS5jYWRlc3Ryby52MS5BZ2VudE1lc3NhZ2UaGi5jYWRlc3Ryby52MS5TZXJ2ZXJNZXNzYWdlKAEwAUJHWkVnaXRodWIuY29tL21hbmNodG9vbHMvY2FkZXN0cm8vY29udHJhY3QvZ2VuL2dvL2NhZGVzdHJvL3YxO2NhZGVzdHJvdjFiBnByb3RvMw", [file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEi5wgKDEFnZW50TWVzc2FnZRIKCgJpZBgBIAEoCRIjCgVoZWxsbxgKIAEoCzISLmNhZGVzdHJvLnYxLkhlbGxvSAASKwoJaGVhcnRiZWF0GAsgASgLMhYuY2FkZXN0cm8udjEuSGVhcnRiZWF0SAASMAoMc3luY19yZXF1ZXN0GAwgASgLMhguY2FkZXN0cm8udjEuU3luY1JlcXVlc3RIABI7ChJzeW5jX2RldmljZV9yZXN1bHQYGCABKAsyHS5jYWRlc3Ryby52MS5TeW5jRGV2aWNlUmVzdWx0SAASPwoUcmVib290X2RldmljZV9yZXN1bHQYGSABKAsyHy5jYWRlc3Ryby52MS5SZWJvb3REZXZpY2VSZXN1bHRIABIyCg1hY3Rpb25fcmVzdWx0GBQgASgLMhkuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0SAASMAoMb3V0cHV0X2NodW5rGBUgASgLMhguY2FkZXN0cm8udjEuT3V0cHV0Q2h1bmtIABI2Cg9tYW5pZmVzdF9yZXN1bHQYFyABKAsyGy5jYWRlc3Ryby52MS5NYW5pZmVzdFJlc3VsdEgAEjIKDHF1ZXJ5X3Jlc3VsdBgeIAEoCzIaLmNhZGVzdHJvLnYxLk9TUXVlcnlSZXN1bHRIABIxCglpbnZlbnRvcnkYHyABKAsyHC5jYWRlc3Ryby52MS5EZXZpY2VJbnZlbnRvcnlIABI0Cg5zZWN1cml0eV9hbGVydBgoIAEoCzIaLmNhZGVzdHJvLnYxLlNlY3VyaXR5QWxlcnRIABI2CgxnZXRfbHVrc19rZXkYMiABKAsyHi5jYWRlc3Ryby52MS5HZXRMdWtzS2V5UmVxdWVzdEgAEjoKDnN0b3JlX2x1a3Nfa2V5GDMgASgLMiAuY2FkZXN0cm8udjEuU3RvcmVMdWtzS2V5UmVxdWVzdEgAEk8KHXJldm9rZV9sdWtzX2RldmljZV9rZXlfcmVzdWx0GDQgASgLMiYuY2FkZXN0cm8udjEuUmV2b2tlTHVrc0RldmljZUtleVJlc3VsdEgAEkQKE3N0b3JlX2xwc19wYXNzd29yZHMYNSABKAsyJS5jYWRlc3Ryby52MS5TdG9yZUxwc1Bhc3N3b3Jkc1JlcXVlc3RIABJEChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiUuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0SAASNwoQbG9nX3F1ZXJ5X3Jlc3VsdBg8IAEoCzIbLmNhZGVzdHJvLnYxLkxvZ1F1ZXJ5UmVzdWx0SAASNgoPdGVybWluYWxfb3V0cHV0GEYgASgLMhsuY2FkZXN0cm8udjEuVGVybWluYWxPdXRwdXRIABJBChV0ZXJtaW5hbF9zdGF0ZV9jaGFuZ2UYRyABKAsyIC5jYWRlc3Ryby52MS5UZXJtaW5hbFN0YXRlQ2hhbmdlSABCCQoHcGF5bG9hZCJyCgtPdXRwdXRDaHVuaxIUCgxleGVjdXRpb25faWQYASABKAkSLQoGc3RyZWFtGAIgASgOMh0uY2FkZXN0cm8udjEuT3V0cHV0U3RyZWFtVHlwZRIMCgRkYXRhGAMgASgMEhAKCHNlcXVlbmNlGAQgASgDInwKBUhlbGxvEigKCWRldmljZV9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkEhUKDWFnZW50X3ZlcnNpb24YAiABKAkSEAoIaG9zdG5hbWUYAyABKAkSEgoKYXV0aF90b2tlbhgEIAEoCRIMCgRhcmNoGAUgASgJInkKCUhlYXJ0YmVhdBIpCgZ1cHRpbWUYASABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SEwoLY3B1X3BlcmNlbnQYAiABKAISFgoObWVtb3J5X3BlcmNlbnQYAyABKAISFAoMZGlza19wZXJjZW50GAQgASgCIrgBCg1TZWN1cml0eUFsZXJ0EiwKBHR5cGUYASABKA4yHi5jYWRlc3Ryby52MS5TZWN1cml0eUFsZXJ0VHlwZRIPCgdtZXNzYWdlGAIgASgJEjgKB2RldGFpbHMYAyADKAsyJy5jYWRlc3Ryby52MS5TZWN1cml0eUFsZXJ0LkRldGFpbHNFbnRyeRouCgxEZXRhaWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLxBwoNU2VydmVyTWVzc2FnZRIKCgJpZBgBIAEoCRI1CgtzeW5jX2RldmljZRgLIAEoCzIeLmNhZGVzdHJvLnYxLlN5bmNEZXZpY2VDb21tYW5kSAASJwoHd2VsY29tZRgKIAEoCzIULmNhZGVzdHJvLnYxLldlbGNvbWVIABIsCgpzeW5jX3N0YXRlGAwgASgLMhYuY2FkZXN0cm8udjEuU3luY1N0YXRlSAASOQoNcmVib290X2RldmljZRgNIAEoCzIgLmNhZGVzdHJvLnYxLlJlYm9vdERldmljZUNvbW1hbmRIABIlCgVxdWVyeRgeIAEoCzIULmNhZGVzdHJvLnYxLk9TUXVlcnlIABI6ChFyZXF1ZXN0X2ludmVudG9yeRgfIAEoCzIdLmNhZGVzdHJvLnYxLlJlcXVlc3RJbnZlbnRvcnlIABIjCgVlcnJvchgoIAEoCzISLmNhZGVzdHJvLnYxLkVycm9ySAASNwoMZ2V0X2x1a3Nfa2V5GDIgASgLMh8uY2FkZXN0cm8udjEuR2V0THVrc0tleVJlc3BvbnNlSAASOwoOc3RvcmVfbHVrc19rZXkYMyABKAsyIS5jYWRlc3Ryby52MS5TdG9yZUx1a3NLZXlSZXNwb25zZUgAEkIKFnJldm9rZV9sdWtzX2RldmljZV9rZXkYNCABKAsyIC5jYWRlc3Ryby52MS5SZXZva2VMdWtzRGV2aWNlS2V5SAASRQoTc3RvcmVfbHBzX3Bhc3N3b3Jkcxg1IAEoCzImLmNhZGVzdHJvLnYxLlN0b3JlTHBzUGFzc3dvcmRzUmVzcG9uc2VIABJFChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiYuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZUgAEiwKCnJlc3VsdF9hY2sYGCABKAsyFi5jYWRlc3Ryby52MS5SZXN1bHRBY2tIABIqCglsb2dfcXVlcnkYPCABKAsyFS5jYWRlc3Ryby52MS5Mb2dRdWVyeUgAEjQKDnRlcm1pbmFsX3N0YXJ0GEYgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxTdGFydEgAEjQKDnRlcm1pbmFsX2lucHV0GEcgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxJbnB1dEgAEjYKD3Rlcm1pbmFsX3Jlc2l6ZRhIIAEoCzIbLmNhZGVzdHJvLnYxLlRlcm1pbmFsUmVzaXplSAASMgoNdGVybWluYWxfc3RvcBhJIAEoCzIZLmNhZGVzdHJvLnYxLlRlcm1pbmFsU3RvcEgAQgkKB3BheWxvYWQiEwoRU3luY0RldmljZUNvbW1hbmQiFQoTUmVib290RGV2aWNlQ29tbWFuZCIjChBTeW5jRGV2aWNlUmVzdWx0Eg8KB3N1Y2Nlc3MYASABKAgiJQoSUmVib290RGV2aWNlUmVzdWx0Eg8KB3N1Y2Nlc3MYASABKAgicgoHV2VsY29tZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SGAoQZGV2aWNlX2xvZ2luX3VybBgDIAEoCSJVChJNYW5pZmVzdFByb3ZlbmFuY2USFQoNZGVmaW5pdGlvbl9pZBgBIAEoCRIVCg1hY3Rpb25fc2V0X2lkGAIgASgJEhEKCWFjdGlvbl9pZBgDIAEoCSJ8ChJNYW5pZmVzdE9jY3VycmVuY2USFQoNb2NjdXJyZW5jZV9pZBgBIAEoCRIjCgZhY3Rpb24YAiABKAsyEy5jYWRlc3Ryby52MS5BY3Rpb24SKgoKb25fZmFpbHVyZRgDIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZSL/AQoITWFuaWZlc3QSEwoLbWFuaWZlc3RfaWQYASABKAkSMwoKcHJvdmVuYW5jZRgCIAEoCzIfLmNhZGVzdHJvLnYxLk1hbmlmZXN0UHJvdmVuYW5jZRItCghzY2hlZHVsZRgDIAEoCzIbLmNhZGVzdHJvLnYxLkFjdGlvblNjaGVkdWxlEjIKEmRlZmF1bHRfb25fZmFpbHVyZRgEIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZRI0CgtvY2N1cnJlbmNlcxgFIAMoCzIfLmNhZGVzdHJvLnYxLk1hbmlmZXN0T2NjdXJyZW5jZRIQCghvbmVfc2hvdBgGIAEoCCJQChBNYW5pZmVzdERlbGl2ZXJ5EhMKC2RlbGl2ZXJ5X2lkGAEgASgJEicKCG1hbmlmZXN0GAIgASgLMhUuY2FkZXN0cm8udjEuTWFuaWZlc3QivgEKDk1hbmlmZXN0UmVzdWx0EhMKC2RlbGl2ZXJ5X2lkGAEgASgJEhMKC21hbmlmZXN0X2lkGAIgASgJEiwKBnN0YXR1cxgDIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1cxIwCgxjb21wbGV0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2R1cmF0aW9uX21zGAUgASgDEg0KBWVycm9yGAYgASgJIisKCVJlc3VsdEFjaxIQCghhY2NlcHRlZBgBIAEoCBIMCgRjb2RlGAIgASgJIiYKBUVycm9yEgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCSKJAQoHT1NRdWVyeRIQCghxdWVyeV9pZBgBIAEoCRINCgV0YWJsZRgCIAEoCRIPCgdjb2x1bW5zGAMgAygJEiwKBXdoZXJlGAQgAygLMh0uY2FkZXN0cm8udjEuT1NRdWVyeUNvbmRpdGlvbhINCgVsaW1pdBgFIAEoBRIPCgdyYXdfc3FsGAYgASgJIlUKEE9TUXVlcnlDb25kaXRpb24SDgoGY29sdW1uGAEgASgJEiIKAm9wGAIgASgOMhYuY2FkZXN0cm8udjEuT1NRdWVyeU9wEg0KBXZhbHVlGAMgASgJImgKDU9TUXVlcnlSZXN1bHQSEAoIcXVlcnlfaWQYASABKAkSDwoHc3VjY2VzcxgCIAEoCBINCgVlcnJvchgDIAEoCRIlCgRyb3dzGAQgAygLMhcuY2FkZXN0cm8udjEuT1NRdWVyeVJvdyJqCgpPU1F1ZXJ5Um93Ei8KBGRhdGEYASADKAsyIS5jYWRlc3Ryby52MS5PU1F1ZXJ5Um93LkRhdGFFbnRyeRorCglEYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI+Cg9EZXZpY2VJbnZlbnRvcnkSKwoGdGFibGVzGAEgAygLMhsuY2FkZXN0cm8udjEuSW52ZW50b3J5VGFibGUiSwoOSW52ZW50b3J5VGFibGUSEgoKdGFibGVfbmFtZRgBIAEoCRIlCgRyb3dzGAIgAygLMhcuY2FkZXN0cm8udjEuT1NRdWVyeVJvdyIkChBSZXF1ZXN0SW52ZW50b3J5EhAKCHF1ZXJ5X2lkGAEgASgJIiYKEUdldEx1a3NLZXlSZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCSItChJHZXRMdWtzS2V5UmVzcG9uc2USFwoKcGFzc3BocmFzZRgBIAEoDEIDgAEBIowBChNTdG9yZUx1a3NLZXlSZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCRITCgtkZXZpY2VfcGF0aBgCIAEoCRIXCgpwYXNzcGhyYXNlGAMgASgMQgOAAQESNAoPcm90YXRpb25fcmVhc29uGAQgASgOMhsuY2FkZXN0cm8udjEuUm90YXRpb25SZWFzb24iJwoUU3RvcmVMdWtzS2V5UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJ/ChNMcHNQYXNzd29yZFJvdGF0aW9uEhAKCHVzZXJuYW1lGAEgASgJEhUKCHBhc3N3b3JkGAIgASgMQgOAAQESEgoKcm90YXRlZF9hdBgDIAEoCRIrCgZyZWFzb24YBCABKA4yGy5jYWRlc3Ryby52MS5Sb3RhdGlvblJlYXNvbiJiChhTdG9yZUxwc1Bhc3N3b3Jkc1JlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEjMKCXJvdGF0aW9ucxgCIAMoCzIgLmNhZGVzdHJvLnYxLkxwc1Bhc3N3b3JkUm90YXRpb24iLAoZU3RvcmVMcHNQYXNzd29yZHNSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIigKE1Jldm9rZUx1a3NEZXZpY2VLZXkSEQoJYWN0aW9uX2lkGAEgASgJIk4KGVJldm9rZUx1a3NEZXZpY2VLZXlSZXN1bHQSEQoJYWN0aW9uX2lkGAEgASgJEg8KB3N1Y2Nlc3MYAiABKAgSDQoFZXJyb3IYAyABKAkiKQoYVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0Eg0KBXRva2VuGAEgASgJIo8BChlWYWxpZGF0ZUx1a3NUb2tlblJlc3BvbnNlEhEKCWFjdGlvbl9pZBgBIAEoCRITCgtkZXZpY2VfcGF0aBgCIAEoCRISCgptaW5fbGVuZ3RoGAMgASgFEjYKCmNvbXBsZXhpdHkYBCABKA4yIi5jYWRlc3Ryby52MS5McHNQYXNzd29yZENvbXBsZXhpdHkiDQoLU3luY1JlcXVlc3QizQEKCVN5bmNTdGF0ZRIdChVzeW5jX2ludGVydmFsX21pbnV0ZXMYASABKAUSMQoKZGVsaXZlcmllcxgCIAMoCzIdLmNhZGVzdHJvLnYxLk1hbmlmZXN0RGVsaXZlcnkSOgoSbWFpbnRlbmFuY2Vfd2luZG93GAMgASgLMh4uY2FkZXN0cm8udjEuTWFpbnRlbmFuY2VXaW5kb3cSMgoOZGVzaXJlZF9wb2xpY3kYBCABKAsyGi5jYWRlc3Ryby52MS5EZXNpcmVkUG9saWN5IksKDURlc2lyZWRQb2xpY3kSEAoIcmV2aXNpb24YASABKAkSKAoJbWFuaWZlc3RzGAIgAygLMhUuY2FkZXN0cm8udjEuTWFuaWZlc3QirwEKCExvZ1F1ZXJ5EhAKCHF1ZXJ5X2lkGAEgASgJEg0KBWxpbmVzGAIgASgFEgwKBHVuaXQYAyABKAkSDQoFc2luY2UYBCABKAkSDQoFdW50aWwYBSABKAkSEAoIcHJpb3JpdHkYBiABKAkSDAoEZ3JlcBgHIAEoCRIOCgZrZXJuZWwYCCABKAgSJgoGc291cmNlGAkgASgOMhYuY2FkZXN0cm8udjEuTG9nU291cmNlIlAKDkxvZ1F1ZXJ5UmVzdWx0EhAKCHF1ZXJ5X2lkGAEgASgJEg8KB3N1Y2Nlc3MYAiABKAgSDQoFZXJyb3IYAyABKAkSDAoEbG9ncxgEIAEoCSJRCg1UZXJtaW5hbFN0YXJ0EhIKCnNlc3Npb25faWQYASABKAkSEAoIdHR5X3VzZXIYAiABKAkSDAoEY29scxgDIAEoDRIMCgRyb3dzGAQgASgNIjEKDVRlcm1pbmFsSW5wdXQSEgoKc2Vzc2lvbl9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIkAKDlRlcm1pbmFsUmVzaXplEhIKCnNlc3Npb25faWQYASABKAkSDAoEY29scxgCIAEoDRIMCgRyb3dzGAMgASgNIjIKDFRlcm1pbmFsU3RvcBISCgpzZXNzaW9uX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSIyCg5UZXJtaW5hbE91dHB1dBISCgpzZXNzaW9uX2lkGAEgASgJEgwKBGRhdGEYAiABKAwifQoTVGVybWluYWxTdGF0ZUNoYW5nZRISCgpzZXNzaW9uX2lkGAEgASgJEjAKBXN0YXRlGAIgASgOMiEuY2FkZXN0cm8udjEuVGVybWluYWxTZXNzaW9uU3RhdGUSEQoJZXhpdF9jb2RlGAMgASgFEg0KBWVycm9yGAQgASgJKnQKEE91dHB1dFN0cmVhbVR5cGUSIgoeT1VUUFVUX1NUUkVBTV9UWVBFX1VOU1BFQ0lGSUVEEAASHQoZT1VUUFVUX1NUUkVBTV9UWVBFX1NURE9VVBABEh0KGU9VVFBVVF9TVFJFQU1fVFlQRV9TVERFUlIQAirIAQoRU2VjdXJpdHlBbGVydFR5cGUSIwofU0VDVVJJVFlfQUxFUlRfVFlQRV9VTlNQRUNJRklFRBAAEjMKL1NFQ1VSSVRZX0FMRVJUX1RZUEVfU0VSVkVSX1JFQVNTSUdOTUVOVF9BVFRFTVBUEAESLAooU0VDVVJJVFlfQUxFUlRfVFlQRV9DUkVERU5USUFMX1RBTVBFUklORxACEisKJ1NFQ1VSSVRZX0FMRVJUX1RZUEVfSU5WQUxJRF9DRVJUSUZJQ0FURRADKjkKCU9uRmFpbHVyZRIXChNPTl9GQUlMVVJFX0NPTlRJTlVFEAASEwoPT05fRkFJTFVSRV9TVE9QEAEqzAEKCU9TUXVlcnlPcBIbChdPU19RVUVSWV9PUF9VTlNQRUNJRklFRBAAEhIKDk9TX1FVRVJZX09QX0VREAESEgoOT1NfUVVFUllfT1BfTkUQAhISCg5PU19RVUVSWV9PUF9HVBADEhIKDk9TX1FVRVJZX09QX0xUEAQSEgoOT1NfUVVFUllfT1BfR0UQBRISCg5PU19RVUVSWV9PUF9MRRAGEhQKEE9TX1FVRVJZX09QX0xJS0UQBxIUChBPU19RVUVSWV9PUF9HTE9CEAgqOwoJTG9nU291cmNlEhcKE0xPR19TT1VSQ0VfSk9VUk5BTEQQABIVChFMT0dfU09VUkNFX1NZU0xPRxABKqcBChRUZXJtaW5hbFNlc3Npb25TdGF0ZRImCiJURVJNSU5BTF9TRVNTSU9OX1NUQVRFX1VOU1BFQ0lGSUVEEAASIgoeVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9TVEFSVEVEEAESIQodVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9FWElURUQQAhIgChxURVJNSU5BTF9TRVNTSU9OX1NUQVRFX0VSUk9SEAMyUwoMQWdlbnRTZXJ2aWNlEkMKBlN0cmVhbRIZLmNhZGVzdHJvLnYxLkFnZW50TWVzc2FnZRoaLmNhZGVzdHJvLnYxLlNlcnZlck1lc3NhZ2UoATABQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.AgentMessage
@@ -58,6 +58,24 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "syncRequest";
   } | {
     /**
+     * Result of a control-originated live sync command.
+     * @gotags: validate:"omitempty"
+     *
+     * @generated from field: cadestro.v1.SyncDeviceResult sync_device_result = 24;
+     */
+    value: SyncDeviceResult;
+    case: "syncDeviceResult";
+  } | {
+    /**
+     * Result of a control-originated live reboot command.
+     * @gotags: validate:"omitempty"
+     *
+     * @generated from field: cadestro.v1.RebootDeviceResult reboot_device_result = 25;
+     */
+    value: RebootDeviceResult;
+    case: "rebootDeviceResult";
+  } | {
+    /**
      * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.ActionResult action_result = 20;
@@ -72,14 +90,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
      */
     value: OutputChunk;
     case: "outputChunk";
-  } | {
-    /**
-     * @gotags: validate:"omitempty"
-     *
-     * @generated from field: cadestro.v1.DeliveryReceipt delivery_receipt = 22;
-     */
-    value: DeliveryReceipt;
-    case: "deliveryReceipt";
   } | {
     /**
      * @gotags: validate:"omitempty"
@@ -371,14 +381,13 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
    */
   payload: {
     /**
-     * A lossy prompt to perform the normal authenticated Sync. It carries no
-     * policy and has no durable delivery semantics.
+     * Live operations have no policy or durable delivery semantics.
      * @gotags: validate:"omitempty"
      *
-     * @generated from field: cadestro.v1.SyncHint sync_hint = 11;
+     * @generated from field: cadestro.v1.SyncDeviceCommand sync_device = 11;
      */
-    value: SyncHint;
-    case: "syncHint";
+    value: SyncDeviceCommand;
+    case: "syncDevice";
   } | {
     /**
      * @gotags: validate:"omitempty"
@@ -399,10 +408,10 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     /**
      * @gotags: validate:"omitempty"
      *
-     * @generated from field: cadestro.v1.ManifestDelivery manifest_delivery = 20;
+     * @generated from field: cadestro.v1.RebootDeviceCommand reboot_device = 13;
      */
-    value: ManifestDelivery;
-    case: "manifestDelivery";
+    value: RebootDeviceCommand;
+    case: "rebootDevice";
   } | {
     /**
      * @gotags: validate:"omitempty"
@@ -429,7 +438,7 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "error";
   } | {
     /**
-     * LUKS key management responses + instant actions
+     * LUKS key management responses
      * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.GetLuksKeyResponse get_luks_key = 50;
@@ -530,17 +539,64 @@ export const ServerMessageSchema: GenMessage<ServerMessage> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 5);
 
 /**
- * @generated from message cadestro.v1.SyncHint
+ * @generated from message cadestro.v1.SyncDeviceCommand
  */
-export type SyncHint = Message<"cadestro.v1.SyncHint"> & {
+export type SyncDeviceCommand = Message<"cadestro.v1.SyncDeviceCommand"> & {
 };
 
 /**
- * Describes the message cadestro.v1.SyncHint.
- * Use `create(SyncHintSchema)` to create a new message.
+ * Describes the message cadestro.v1.SyncDeviceCommand.
+ * Use `create(SyncDeviceCommandSchema)` to create a new message.
  */
-export const SyncHintSchema: GenMessage<SyncHint> = /*@__PURE__*/
+export const SyncDeviceCommandSchema: GenMessage<SyncDeviceCommand> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 6);
+
+/**
+ * @generated from message cadestro.v1.RebootDeviceCommand
+ */
+export type RebootDeviceCommand = Message<"cadestro.v1.RebootDeviceCommand"> & {
+};
+
+/**
+ * Describes the message cadestro.v1.RebootDeviceCommand.
+ * Use `create(RebootDeviceCommandSchema)` to create a new message.
+ */
+export const RebootDeviceCommandSchema: GenMessage<RebootDeviceCommand> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 7);
+
+/**
+ * @generated from message cadestro.v1.SyncDeviceResult
+ */
+export type SyncDeviceResult = Message<"cadestro.v1.SyncDeviceResult"> & {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message cadestro.v1.SyncDeviceResult.
+ * Use `create(SyncDeviceResultSchema)` to create a new message.
+ */
+export const SyncDeviceResultSchema: GenMessage<SyncDeviceResult> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 8);
+
+/**
+ * @generated from message cadestro.v1.RebootDeviceResult
+ */
+export type RebootDeviceResult = Message<"cadestro.v1.RebootDeviceResult"> & {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message cadestro.v1.RebootDeviceResult.
+ * Use `create(RebootDeviceResultSchema)` to create a new message.
+ */
+export const RebootDeviceResultSchema: GenMessage<RebootDeviceResult> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 9);
 
 /**
  * @generated from message cadestro.v1.Welcome
@@ -575,7 +631,7 @@ export type Welcome = Message<"cadestro.v1.Welcome"> & {
  * Use `create(WelcomeSchema)` to create a new message.
  */
 export const WelcomeSchema: GenMessage<Welcome> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 7);
+  messageDesc(file_cadestro_v1_agent, 10);
 
 /**
  * ManifestProvenance is the bounded, structured record of where a manifest was
@@ -618,7 +674,7 @@ export type ManifestProvenance = Message<"cadestro.v1.ManifestProvenance"> & {
  * Use `create(ManifestProvenanceSchema)` to create a new message.
  */
 export const ManifestProvenanceSchema: GenMessage<ManifestProvenance> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 8);
+  messageDesc(file_cadestro_v1_agent, 11);
 
 /**
  * ManifestOccurrence is one authored position in a manifest's ordered list.
@@ -663,7 +719,7 @@ export type ManifestOccurrence = Message<"cadestro.v1.ManifestOccurrence"> & {
  * Use `create(ManifestOccurrenceSchema)` to create a new message.
  */
 export const ManifestOccurrenceSchema: GenMessage<ManifestOccurrence> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 9);
+  messageDesc(file_cadestro_v1_agent, 12);
 
 /**
  * Manifest is the unit of assignment the agent executes: a flat, ordered list
@@ -720,8 +776,8 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
   occurrences: ManifestOccurrence[];
 
   /**
-   * An explicit dispatch: the agent executes this delivery exactly once on
-   * durable receipt and never reschedules it. Marked structurally here — not
+   * An explicit dispatch: the agent executes this delivery exactly once after
+   * recording it locally and never reschedules it. Marked structurally here — not
    * by action type and not by schedule shape, because assigned manifests may
    * legitimately carry an empty schedule (agent-default drift cadence). A
    * one-shot delivery is also exempt from the agent's maintenance window: an
@@ -738,15 +794,11 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
  * Use `create(ManifestSchema)` to create a new message.
  */
 export const ManifestSchema: GenMessage<Manifest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 10);
+  messageDesc(file_cadestro_v1_agent, 13);
 
 /**
- * Control -> agent: one attempt to hand a complete manifest to a device.
- *
- * The delivery row, with the whole manifest in it, is committed before this
- * frame is sent. delivery_id is minted once at that commit and stays the same
- * across every transport retry, reconnect and sweep re-send, so the agent's
- * receipt table recognises a repeat and executes the work once.
+ * One durable one-shot manifest returned by Sync. delivery_id is minted once
+ * when the row is committed, so repeated Sync responses remain execute-once.
  *
  * @generated from message cadestro.v1.ManifestDelivery
  */
@@ -771,34 +823,7 @@ export type ManifestDelivery = Message<"cadestro.v1.ManifestDelivery"> & {
  * Use `create(ManifestDeliverySchema)` to create a new message.
  */
 export const ManifestDeliverySchema: GenMessage<ManifestDelivery> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 11);
-
-/**
- * Agent -> control: the delivery is durably recorded on the device.
- *
- * Sent ONLY after the agent has committed the delivery to its own store, never
- * on arrival. Control advances the delivery out of PUSHED when this frame
- * arrives and never on a successful socket write — a write that the device
- * never persisted must be retried, and it is this frame that distinguishes the
- * two.
- *
- * @generated from message cadestro.v1.DeliveryReceipt
- */
-export type DeliveryReceipt = Message<"cadestro.v1.DeliveryReceipt"> & {
-  /**
-   * @gotags: validate:"required,ulid"
-   *
-   * @generated from field: string delivery_id = 1;
-   */
-  deliveryId: string;
-};
-
-/**
- * Describes the message cadestro.v1.DeliveryReceipt.
- * Use `create(DeliveryReceiptSchema)` to create a new message.
- */
-export const DeliveryReceiptSchema: GenMessage<DeliveryReceipt> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 12);
+  messageDesc(file_cadestro_v1_agent, 14);
 
 /**
  * Agent -> control: the outcome of a complete manifest.
@@ -859,7 +884,7 @@ export type ManifestResult = Message<"cadestro.v1.ManifestResult"> & {
  * Use `create(ManifestResultSchema)` to create a new message.
  */
 export const ManifestResultSchema: GenMessage<ManifestResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 13);
+  messageDesc(file_cadestro_v1_agent, 15);
 
 /**
  * @generated from message cadestro.v1.ResultAck
@@ -881,7 +906,7 @@ export type ResultAck = Message<"cadestro.v1.ResultAck"> & {
  * Use `create(ResultAckSchema)` to create a new message.
  */
 export const ResultAckSchema: GenMessage<ResultAck> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 14);
+  messageDesc(file_cadestro_v1_agent, 16);
 
 /**
  * @generated from message cadestro.v1.Error
@@ -907,7 +932,7 @@ export type Error = Message<"cadestro.v1.Error"> & {
  * Use `create(ErrorSchema)` to create a new message.
  */
 export const ErrorSchema: GenMessage<Error> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 15);
+  messageDesc(file_cadestro_v1_agent, 17);
 
 /**
  * @generated from message cadestro.v1.OSQuery
@@ -962,7 +987,7 @@ export type OSQuery = Message<"cadestro.v1.OSQuery"> & {
  * Use `create(OSQuerySchema)` to create a new message.
  */
 export const OSQuerySchema: GenMessage<OSQuery> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 16);
+  messageDesc(file_cadestro_v1_agent, 18);
 
 /**
  * @generated from message cadestro.v1.OSQueryCondition
@@ -995,7 +1020,7 @@ export type OSQueryCondition = Message<"cadestro.v1.OSQueryCondition"> & {
  * Use `create(OSQueryConditionSchema)` to create a new message.
  */
 export const OSQueryConditionSchema: GenMessage<OSQueryCondition> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 17);
+  messageDesc(file_cadestro_v1_agent, 19);
 
 /**
  * @generated from message cadestro.v1.OSQueryResult
@@ -1035,7 +1060,7 @@ export type OSQueryResult = Message<"cadestro.v1.OSQueryResult"> & {
  * Use `create(OSQueryResultSchema)` to create a new message.
  */
 export const OSQueryResultSchema: GenMessage<OSQueryResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 18);
+  messageDesc(file_cadestro_v1_agent, 20);
 
 /**
  * @generated from message cadestro.v1.OSQueryRow
@@ -1054,7 +1079,7 @@ export type OSQueryRow = Message<"cadestro.v1.OSQueryRow"> & {
  * Use `create(OSQueryRowSchema)` to create a new message.
  */
 export const OSQueryRowSchema: GenMessage<OSQueryRow> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 19);
+  messageDesc(file_cadestro_v1_agent, 21);
 
 /**
  * @generated from message cadestro.v1.DeviceInventory
@@ -1071,7 +1096,7 @@ export type DeviceInventory = Message<"cadestro.v1.DeviceInventory"> & {
  * Use `create(DeviceInventorySchema)` to create a new message.
  */
 export const DeviceInventorySchema: GenMessage<DeviceInventory> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 20);
+  messageDesc(file_cadestro_v1_agent, 22);
 
 /**
  * @generated from message cadestro.v1.InventoryTable
@@ -1097,7 +1122,7 @@ export type InventoryTable = Message<"cadestro.v1.InventoryTable"> & {
  * Use `create(InventoryTableSchema)` to create a new message.
  */
 export const InventoryTableSchema: GenMessage<InventoryTable> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 21);
+  messageDesc(file_cadestro_v1_agent, 23);
 
 /**
  * Server -> Agent: request fresh inventory collection. query_id correlates the
@@ -1122,7 +1147,7 @@ export type RequestInventory = Message<"cadestro.v1.RequestInventory"> & {
  * Use `create(RequestInventorySchema)` to create a new message.
  */
 export const RequestInventorySchema: GenMessage<RequestInventory> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 22);
+  messageDesc(file_cadestro_v1_agent, 24);
 
 /**
  * Agent requests the current managed passphrase for a LUKS action.
@@ -1144,7 +1169,7 @@ export type GetLuksKeyRequest = Message<"cadestro.v1.GetLuksKeyRequest"> & {
  * Use `create(GetLuksKeyRequestSchema)` to create a new message.
  */
 export const GetLuksKeyRequestSchema: GenMessage<GetLuksKeyRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 23);
+  messageDesc(file_cadestro_v1_agent, 25);
 
 /**
  * @generated from message cadestro.v1.GetLuksKeyResponse
@@ -1171,7 +1196,7 @@ export type GetLuksKeyResponse = Message<"cadestro.v1.GetLuksKeyResponse"> & {
  * Use `create(GetLuksKeyResponseSchema)` to create a new message.
  */
 export const GetLuksKeyResponseSchema: GenMessage<GetLuksKeyResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 24);
+  messageDesc(file_cadestro_v1_agent, 26);
 
 /**
  * Agent stores a new managed passphrase on the server.
@@ -1228,7 +1253,7 @@ export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
  * Use `create(StoreLuksKeyRequestSchema)` to create a new message.
  */
 export const StoreLuksKeyRequestSchema: GenMessage<StoreLuksKeyRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 25);
+  messageDesc(file_cadestro_v1_agent, 27);
 
 /**
  * @generated from message cadestro.v1.StoreLuksKeyResponse
@@ -1245,7 +1270,7 @@ export type StoreLuksKeyResponse = Message<"cadestro.v1.StoreLuksKeyResponse"> &
  * Use `create(StoreLuksKeyResponseSchema)` to create a new message.
  */
 export const StoreLuksKeyResponseSchema: GenMessage<StoreLuksKeyResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 26);
+  messageDesc(file_cadestro_v1_agent, 28);
 
 /**
  * One password rotation the agent performed during an LPS execution.
@@ -1308,7 +1333,7 @@ export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
  * Use `create(LpsPasswordRotationSchema)` to create a new message.
  */
 export const LpsPasswordRotationSchema: GenMessage<LpsPasswordRotation> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 27);
+  messageDesc(file_cadestro_v1_agent, 29);
 
 /**
  * Agent reports the LPS rotations from one execution. Batched per action: an LPS
@@ -1340,7 +1365,7 @@ export type StoreLpsPasswordsRequest = Message<"cadestro.v1.StoreLpsPasswordsReq
  * Use `create(StoreLpsPasswordsRequestSchema)` to create a new message.
  */
 export const StoreLpsPasswordsRequestSchema: GenMessage<StoreLpsPasswordsRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 28);
+  messageDesc(file_cadestro_v1_agent, 30);
 
 /**
  * @generated from message cadestro.v1.StoreLpsPasswordsResponse
@@ -1357,11 +1382,11 @@ export type StoreLpsPasswordsResponse = Message<"cadestro.v1.StoreLpsPasswordsRe
  * Use `create(StoreLpsPasswordsResponseSchema)` to create a new message.
  */
 export const StoreLpsPasswordsResponseSchema: GenMessage<StoreLpsPasswordsResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 29);
+  messageDesc(file_cadestro_v1_agent, 31);
 
 /**
  * Server instructs agent to revoke the device-bound key in LUKS slot 7.
- * Dispatched as an instant action via the stream.
+ * Dispatched as a live operation via the stream.
  *
  * @generated from message cadestro.v1.RevokeLuksDeviceKey
  */
@@ -1379,7 +1404,7 @@ export type RevokeLuksDeviceKey = Message<"cadestro.v1.RevokeLuksDeviceKey"> & {
  * Use `create(RevokeLuksDeviceKeySchema)` to create a new message.
  */
 export const RevokeLuksDeviceKeySchema: GenMessage<RevokeLuksDeviceKey> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 30);
+  messageDesc(file_cadestro_v1_agent, 32);
 
 /**
  * Agent reports the result of revoking the device-bound key.
@@ -1412,7 +1437,7 @@ export type RevokeLuksDeviceKeyResult = Message<"cadestro.v1.RevokeLuksDeviceKey
  * Use `create(RevokeLuksDeviceKeyResultSchema)` to create a new message.
  */
 export const RevokeLuksDeviceKeyResultSchema: GenMessage<RevokeLuksDeviceKeyResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 31);
+  messageDesc(file_cadestro_v1_agent, 33);
 
 /**
  * @generated from message cadestro.v1.ValidateLuksTokenRequest
@@ -1433,7 +1458,7 @@ export type ValidateLuksTokenRequest = Message<"cadestro.v1.ValidateLuksTokenReq
  * Use `create(ValidateLuksTokenRequestSchema)` to create a new message.
  */
 export const ValidateLuksTokenRequestSchema: GenMessage<ValidateLuksTokenRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 32);
+  messageDesc(file_cadestro_v1_agent, 34);
 
 /**
  * @generated from message cadestro.v1.ValidateLuksTokenResponse
@@ -1471,7 +1496,7 @@ export type ValidateLuksTokenResponse = Message<"cadestro.v1.ValidateLuksTokenRe
  * Use `create(ValidateLuksTokenResponseSchema)` to create a new message.
  */
 export const ValidateLuksTokenResponseSchema: GenMessage<ValidateLuksTokenResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 33);
+  messageDesc(file_cadestro_v1_agent, 35);
 
 /**
  * @generated from message cadestro.v1.SyncRequest
@@ -1484,13 +1509,11 @@ export type SyncRequest = Message<"cadestro.v1.SyncRequest"> & {
  * Use `create(SyncRequestSchema)` to create a new message.
  */
 export const SyncRequestSchema: GenMessage<SyncRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 34);
+  messageDesc(file_cadestro_v1_agent, 36);
 
 /**
  * SyncState carries the current durable deliveries and device policy over the
- * existing authenticated stream. It is a state refresh, not a second dispatch
- * path: every included delivery retains its durable delivery_id and is handled
- * exactly like an unsolicited ManifestDelivery frame.
+ * existing authenticated stream.
  *
  * @generated from message cadestro.v1.SyncState
  */
@@ -1504,9 +1527,8 @@ export type SyncState = Message<"cadestro.v1.SyncState"> & {
   syncIntervalMinutes: number;
 
   /**
-   * Every delivery currently assigned to this device. delivery_id is the same
-   * value the push path would use for the same delivery row, so a manifest the
-   * agent already recorded from the stream is recognised as a repeat here.
+   * Every due one-shot delivery for this device. A stable delivery_id lets the
+   * agent absorb repeats after reconnects.
    * @gotags: validate:"omitempty,dive"
    *
    * @generated from field: repeated cadestro.v1.ManifestDelivery deliveries = 2;
@@ -1517,7 +1539,7 @@ export type SyncState = Message<"cadestro.v1.SyncState"> & {
    * Resolved maintenance window. Server-computed union across every
    * group the device belongs to (its own device groups plus any user
    * groups reaching it through an assignment). Empty schedule = no
-   * gating; the agent dispatches non-instant actions any time. Empty
+   * gating; the agent dispatches actions any time. Empty
    * is also the response when no groups carry a window. The agent
    * evaluates this against time.Now().Local() at dispatch time.
    *
@@ -1527,8 +1549,7 @@ export type SyncState = Message<"cadestro.v1.SyncState"> & {
 
   /**
    * Current assignment-derived desired state. Unlike deliveries, this is a
-   * replaceable snapshot: the agent reconciles it locally and sends no
-   * delivery receipt for these manifests.
+   * replaceable snapshot that the agent reconciles locally.
    *
    * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 4;
    */
@@ -1540,7 +1561,7 @@ export type SyncState = Message<"cadestro.v1.SyncState"> & {
  * Use `create(SyncStateSchema)` to create a new message.
  */
 export const SyncStateSchema: GenMessage<SyncState> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 35);
+  messageDesc(file_cadestro_v1_agent, 37);
 
 /**
  * @generated from message cadestro.v1.DesiredPolicy
@@ -1568,7 +1589,7 @@ export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
  * Use `create(DesiredPolicySchema)` to create a new message.
  */
 export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 36);
+  messageDesc(file_cadestro_v1_agent, 38);
 
 /**
  * Server -> Agent: request system log output
@@ -1645,7 +1666,7 @@ export type LogQuery = Message<"cadestro.v1.LogQuery"> & {
  * Use `create(LogQuerySchema)` to create a new message.
  */
 export const LogQuerySchema: GenMessage<LogQuery> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 37);
+  messageDesc(file_cadestro_v1_agent, 39);
 
 /**
  * Agent -> Server: journalctl output result
@@ -1685,7 +1706,7 @@ export type LogQueryResult = Message<"cadestro.v1.LogQueryResult"> & {
  * Use `create(LogQueryResultSchema)` to create a new message.
  */
 export const LogQueryResultSchema: GenMessage<LogQueryResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 38);
+  messageDesc(file_cadestro_v1_agent, 40);
 
 /**
  * Server -> Agent: open a PTY session as the given TTY user.
@@ -1732,7 +1753,7 @@ export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
  * Use `create(TerminalStartSchema)` to create a new message.
  */
 export const TerminalStartSchema: GenMessage<TerminalStart> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 39);
+  messageDesc(file_cadestro_v1_agent, 41);
 
 /**
  * Server -> Agent: stdin data for an active session.
@@ -1760,7 +1781,7 @@ export type TerminalInput = Message<"cadestro.v1.TerminalInput"> & {
  * Use `create(TerminalInputSchema)` to create a new message.
  */
 export const TerminalInputSchema: GenMessage<TerminalInput> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 40);
+  messageDesc(file_cadestro_v1_agent, 42);
 
 /**
  * Server -> Agent: window resize.
@@ -1796,7 +1817,7 @@ export type TerminalResize = Message<"cadestro.v1.TerminalResize"> & {
  * Use `create(TerminalResizeSchema)` to create a new message.
  */
 export const TerminalResizeSchema: GenMessage<TerminalResize> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 41);
+  messageDesc(file_cadestro_v1_agent, 43);
 
 /**
  * Server -> Agent: terminate an active session.
@@ -1828,7 +1849,7 @@ export type TerminalStop = Message<"cadestro.v1.TerminalStop"> & {
  * Use `create(TerminalStopSchema)` to create a new message.
  */
 export const TerminalStopSchema: GenMessage<TerminalStop> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 42);
+  messageDesc(file_cadestro_v1_agent, 44);
 
 /**
  * Agent -> Server: stdout/stderr data from the PTY.
@@ -1856,7 +1877,7 @@ export type TerminalOutput = Message<"cadestro.v1.TerminalOutput"> & {
  * Use `create(TerminalOutputSchema)` to create a new message.
  */
 export const TerminalOutputSchema: GenMessage<TerminalOutput> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 43);
+  messageDesc(file_cadestro_v1_agent, 45);
 
 /**
  * Agent -> Server: session state transition.
@@ -1903,7 +1924,7 @@ export type TerminalStateChange = Message<"cadestro.v1.TerminalStateChange"> & {
  * Use `create(TerminalStateChangeSchema)` to create a new message.
  */
 export const TerminalStateChangeSchema: GenMessage<TerminalStateChange> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 44);
+  messageDesc(file_cadestro_v1_agent, 46);
 
 /**
  * Output stream type for stdout/stderr differentiation

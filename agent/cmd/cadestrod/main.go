@@ -229,12 +229,11 @@ func main() {
 	// Start the scheduler in a goroutine
 	go sched.Start(ctx)
 
-	// Create sync trigger channel for instant SYNC actions
+	// Create the live full-sync trigger.
 	syncTrigger := make(chan struct{}, 1)
-	sched.SetSyncTrigger(syncTrigger)
 
 	// Create handler with scheduler integration
-	h := handler.NewHandler(logger, exec, sched, actionStore, syncTrigger)
+	h := handler.NewHandler(logger, exec, actionStore, syncTrigger)
 
 	// Enable action-based agent self-update. The binary path is
 	// resolved at runtime via os.Executable() so the self-update

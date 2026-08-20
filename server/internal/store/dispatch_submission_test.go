@@ -13,19 +13,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-type committedWaker struct {
-	store     *store.Store
-	ids       []string
-	committed bool
-}
-
-func (w *committedWaker) Wake(id string) bool {
-	w.ids = append(w.ids, id)
-	_, err := w.store.GetDelivery(context.Background(), id)
-	w.committed = err == nil
-	return false
-}
-
 func dispatchManifest() *pmv1.Manifest {
 	actionID := newID()
 	return &pmv1.Manifest{
@@ -35,7 +22,7 @@ func dispatchManifest() *pmv1.Manifest {
 		Occurrences: []*pmv1.ManifestOccurrence{{
 			OccurrenceId: newID(),
 			Action: &pmv1.Action{
-				Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_SYNC,
+				Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 				DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 60,
 			},
 			OnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
@@ -43,16 +30,15 @@ func dispatchManifest() *pmv1.Manifest {
 	}
 }
 
-func TestDispatchSubmission_CommitsManifestExecutionsAndAuditBeforeWake(t *testing.T) {
+func TestDispatchSubmission_CommitsManifestExecutionsAndAudit(t *testing.T) {
 	st, raw := setupSQLite(t)
 	deviceID := seedDevice(t, raw)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	waker := &committedWaker{store: st}
-	service := dispatch.New(dispatch.Config{Store: st, Waker: waker, Now: func() time.Time { return now }})
+	service := dispatch.New(dispatch.Config{Store: st, Now: func() time.Time { return now }})
 	manifest := dispatchManifest()
 	op := mutationOp()
-	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchInstantAction"
-	op.AuthorizationDetail = "DispatchInstantAction"
+	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchAction"
+	op.AuthorizationDetail = "DispatchAction"
 
 	result, err := service.Submit(context.Background(), dispatch.SubmitParams{
 		Operation: op, DeviceID: deviceID,
@@ -63,10 +49,7 @@ func TestDispatchSubmission_CommitsManifestExecutionsAndAuditBeforeWake(t *testi
 	require.Len(t, result.Executions, 1)
 	assert.Equal(t, manifest.Occurrences[0].OccurrenceId, result.Executions[0].ID)
 	assert.Equal(t, "pending", result.Executions[0].Status)
-	assert.Nil(t, result.Executions[0].ActionID, "an inline/instant action is not a catalog reference")
-	assert.Equal(t, result.DeliveryIDs, waker.ids)
-	assert.True(t, waker.committed, "the lossy wake must happen only after commit")
-
+	assert.Nil(t, result.Executions[0].ActionID, "an inline action is not a catalog reference")
 	deliveryRow, err := st.GetDelivery(context.Background(), result.DeliveryIDs[0])
 	require.NoError(t, err)
 	assert.Equal(t, "PENDING", deliveryRow.State)
@@ -85,8 +68,7 @@ func TestDispatchSubmission_SchedulingAndAuditFailure(t *testing.T) {
 	st, raw := setupSQLite(t)
 	deviceID := seedDevice(t, raw)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	waker := &committedWaker{store: st}
-	service := dispatch.New(dispatch.Config{Store: st, Waker: waker, Now: func() time.Time { return now }})
+	service := dispatch.New(dispatch.Config{Store: st, Now: func() time.Time { return now }})
 	scheduledFor := now.Add(2 * time.Hour)
 	op := mutationOp()
 	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchAction"
@@ -103,7 +85,8 @@ func TestDispatchSubmission_SchedulingAndAuditFailure(t *testing.T) {
 	assert.True(t, deliveryRow.AvailableAt.Equal(scheduledFor))
 
 	rejectAuditOperation(t, raw, "dispatch.rollback")
-	beforeWakes := len(waker.ids)
+	var beforeDeliveries int
+	require.NoError(t, raw.QueryRow(context.Background(), `SELECT count(*) FROM deliveries`).Scan(&beforeDeliveries))
 	op = mutationOp()
 	op.RequestDescriptor = "dispatch.rollback"
 	failedManifest := dispatchManifest()
@@ -112,7 +95,9 @@ func TestDispatchSubmission_SchedulingAndAuditFailure(t *testing.T) {
 		Manifests: []dispatch.ManifestInput{{Manifest: failedManifest}},
 	})
 	require.Error(t, err)
-	assert.Len(t, waker.ids, beforeWakes, "an uncommitted delivery must never wake")
+	var afterDeliveries int
+	require.NoError(t, raw.QueryRow(context.Background(), `SELECT count(*) FROM deliveries`).Scan(&afterDeliveries))
+	assert.Equal(t, beforeDeliveries, afterDeliveries, "audit failure must roll the delivery back")
 	_, err = st.GetExecution(context.Background(), failedManifest.Occurrences[0].OccurrenceId)
 	assert.True(t, store.IsNotFound(err), "audit failure must roll the execution back")
 }
@@ -121,8 +106,7 @@ func TestDispatchSubmission_MultiDeviceFailureRollsBackWholeFanout(t *testing.T)
 	st, raw := setupSQLite(t)
 	deviceID := seedDevice(t, raw)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	waker := &committedWaker{store: st}
-	service := dispatch.New(dispatch.Config{Store: st, Waker: waker, Now: func() time.Time { return now }})
+	service := dispatch.New(dispatch.Config{Store: st, Now: func() time.Time { return now }})
 	first, second := dispatchManifest(), dispatchManifest()
 	op := mutationOp()
 	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchToMultiple"
@@ -135,7 +119,9 @@ func TestDispatchSubmission_MultiDeviceFailureRollsBackWholeFanout(t *testing.T)
 		},
 	})
 	require.Error(t, err)
-	assert.Empty(t, waker.ids, "no part of an uncommitted fan-out may wake")
+	var deliveries int
+	require.NoError(t, raw.QueryRow(context.Background(), `SELECT count(*) FROM deliveries`).Scan(&deliveries))
+	assert.Zero(t, deliveries, "no part of a failed fan-out may commit")
 	for _, executionID := range []string{
 		first.Occurrences[0].OccurrenceId, second.Occurrences[0].OccurrenceId,
 	} {

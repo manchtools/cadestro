@@ -32,12 +32,6 @@ const (
 // already exist in the surrounding shell.
 var configEnviron = os.Environ
 
-// filesystemIDOf reports which filesystem holds a path. It is a package
-// variable for the same reason configEnviron is: creating a second real
-// filesystem needs root, so a test cannot otherwise exercise the accepting
-// side of the separation check the loader enforces below.
-var filesystemIDOf = filesystemDeviceID
-
 // configEnvironment declares every recognized option exactly once: the tag
 // names its variable and the field type selects its parser. The recognized set
 // is derived from these declarations rather than from a second list.
@@ -56,7 +50,6 @@ type configEnvironment struct {
 	LogFormat             string        `env:"CADESTRO_LOG_FORMAT"`
 	CertificateValidity   time.Duration `env:"CADESTRO_CERTIFICATE_VALIDITY"`
 	HeartbeatInterval     time.Duration `env:"CADESTRO_HEARTBEAT_INTERVAL"`
-	AuditRetention        time.Duration `env:"CADESTRO_AUDIT_RETENTION"`
 	ArtifactPath          string        `env:"CADESTRO_ARTIFACT_PATH"`
 	BackupPath            string        `env:"CADESTRO_BACKUP_PATH"`
 	BackupMaxLag          time.Duration `env:"CADESTRO_BACKUP_MAX_LAG"`
@@ -88,7 +81,6 @@ type Config struct {
 	LogFormat           string
 	CertificateValidity time.Duration
 	HeartbeatInterval   time.Duration
-	AuditRetention      time.Duration
 	ArtifactPath        string
 	BackupPath          string
 	BackupMaxLag        time.Duration
@@ -131,7 +123,6 @@ func loadConfig() (*Config, error) {
 		CORSAllowAll: document.CORSAllowAll,
 		LogLevel:     document.LogLevel, LogFormat: document.LogFormat,
 		CertificateValidity: document.CertificateValidity, HeartbeatInterval: document.HeartbeatInterval,
-		AuditRetention:    document.AuditRetention,
 		ArtifactPath:      document.ArtifactPath,
 		BackupPath:        document.BackupPath,
 		BackupMaxLag:      document.BackupMaxLag,
@@ -263,7 +254,6 @@ func defaultEnvironment() configEnvironment {
 		LogFormat:           "json",
 		CertificateValidity: 8760 * time.Hour,
 		HeartbeatInterval:   30 * time.Second,
-		AuditRetention:      2160 * time.Hour,
 		BackupMaxLag:        26 * time.Hour,
 		DatabasePath:        "/var/lib/cadestro/control.db",
 	}
@@ -314,12 +304,6 @@ func validateConfig(cfg *Config) error {
 	if err := validateWritableDirectory("backup_path", cfg.BackupPath); err != nil {
 		return err
 	}
-	if err := validateArchiveIsolation(cfg.DatabasePath, cfg.BackupPath); err != nil {
-		if !archiveIsolationRelaxed() {
-			return err
-		}
-		fmt.Fprintln(os.Stderr, "cadestro: DEVELOPMENT BUILD, audit archive separation not enforced:", err)
-	}
 	if _, err := webhook.New(cfg.WebhookURL); err != nil {
 		return err
 	}
@@ -355,49 +339,6 @@ func validateDatabasePath(path string) error {
 		return fmt.Errorf("database_path %q: %w", path, err)
 	}
 	return validateWritableDirectory("database_path parent", filepath.Dir(path))
-}
-
-// validateArchiveIsolation refuses to start control when the audit archive
-// shares a filesystem with the database it is evidence for.
-//
-// The archive holds the anchors that authenticate the audit chain's head and
-// the prefixes retention deleted live rows in exchange for. Both stop being
-// evidence the moment one actor can write to the database and the archive at
-// once: the same root, the same disk failure, or the same ransomware pass
-// takes the record and its proof together. Documentation states that the
-// chain's head is anchored separately, and an operator has to be able to say
-// that to an auditor, so it is a boot condition rather than a recommendation.
-//
-// Comparison is by filesystem, which is what a mount boundary actually is.
-// It is a floor, not a guarantee of remoteness: a second local disk passes
-// while sharing a machine. Anything stronger — a different host, different
-// credentials, immutable object storage — is the operator's to provide, and
-// this refuses the one case the process can prove is wrong on its own.
-func validateArchiveIsolation(databasePath, archivePath string) error {
-	databaseProbe := databasePath
-	if _, err := os.Stat(databasePath); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("database_path %q: %w", databasePath, err)
-		}
-		databaseProbe = filepath.Dir(databasePath)
-	}
-	databaseFilesystem, err := filesystemIDOf(databaseProbe)
-	if err != nil {
-		return fmt.Errorf("database_path %q: %w", databaseProbe, err)
-	}
-	archiveFilesystem, err := filesystemIDOf(archivePath)
-	if err != nil {
-		return fmt.Errorf("backup_path %q: %w", archivePath, err)
-	}
-	if databaseFilesystem != archiveFilesystem {
-		return nil
-	}
-	return fmt.Errorf(
-		"backup_path %q is on the same filesystem as the database at %q: the audit archive holds separately stored "+
-			"evidence for that database and must be a separate mount, ideally remote storage under different "+
-			"credentials, so that losing or tampering with one cannot silently take the other with it; mount a "+
-			"distinct filesystem and point CADESTRO_BACKUP_PATH at it",
-		archivePath, databaseProbe)
 }
 
 func validateWritableDirectory(name, path string) error {

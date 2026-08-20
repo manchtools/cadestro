@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
@@ -43,36 +44,6 @@ type scaleDelivery struct {
 	manifestID string
 }
 
-type scaleRouter struct {
-	ids    []string
-	agents map[string]*connection.Agent
-	sent   atomic.Int64
-}
-
-func newScaleRouter(ids []string) *scaleRouter {
-	agents := make(map[string]*connection.Agent, len(ids))
-	for _, id := range ids {
-		agents[id] = &connection.Agent{DeviceID: id, Epoch: 1}
-	}
-	return &scaleRouter{ids: append([]string(nil), ids...), agents: agents}
-}
-
-func (r *scaleRouter) Get(deviceID string) (*connection.Agent, bool) {
-	agent, ok := r.agents[deviceID]
-	return agent, ok
-}
-
-func (r *scaleRouter) List() []string { return append([]string(nil), r.ids...) }
-
-func (r *scaleRouter) SendAtEpoch(deviceID string, epoch int64, message *pmv1.ServerMessage) error {
-	agent, ok := r.agents[deviceID]
-	if !ok || agent.Epoch != epoch || message.GetManifestDelivery().GetDeliveryId() == "" {
-		return connection.ErrStaleConnection
-	}
-	r.sent.Add(1)
-	return nil
-}
-
 type latencySummary struct {
 	P50Millis float64 `json:"p50_ms"`
 	P95Millis float64 `json:"p95_ms"`
@@ -87,7 +58,6 @@ type sqliteScaleResult struct {
 	RegistrationMillis     float64        `json:"registration_ms"`
 	HeartbeatFlush         latencySummary `json:"heartbeat_flush"`
 	Dispatch               latencySummary `json:"dispatch"`
-	Receipt                latencySummary `json:"receipt"`
 	Result                 latencySummary `json:"result"`
 	Search                 latencySummary `json:"search"`
 	TerminalRoute          latencySummary `json:"terminal_route"`
@@ -97,8 +67,6 @@ type sqliteScaleResult struct {
 	RegistryBytesPerAgent  uint64         `json:"agent_registry_bytes_per_agent"`
 	PeakHeapGrowthBytes    uint64         `json:"peak_heap_growth_bytes"`
 	PeakGoroutines         int64          `json:"peak_goroutines"`
-	DeliveryQueueAccepted  int            `json:"delivery_queue_accepted"`
-	DeliveryQueueDropped   int            `json:"delivery_queue_dropped"`
 	JobQueueAccepted       int            `json:"job_queue_accepted"`
 	JobQueueDropped        int            `json:"job_queue_dropped"`
 }
@@ -140,16 +108,10 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	runtime.ReadMemStats(&afterAgents)
 	agentHeapGrowth := positiveDelta(afterAgents.Alloc, beforeAgents.Alloc)
 
-	router := newScaleRouter(deviceIDs)
 	deliveryState := delivery.New(delivery.Config{Store: st})
 	atRest, err := pmcrypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
 	require.NoError(t, err)
-	dispatcher := delivery.NewDispatcher(delivery.DispatcherConfig{
-		Store: st, State: deliveryState, Router: router,
-		Workers: scaleWorkers, QueueSize: scaleQueueSize, BatchSize: 256,
-		AtRest: atRest,
-	})
-	deliveryAccepted := fillDeliveryQueue(dispatcher)
+	syncer := agentsync.New(agentsync.Config{Store: st, Manager: manager, AtRest: atRest})
 	jobState := jobs.New(jobs.Config{
 		Store: st, LeaseDuration: 2 * time.Minute, RetryDelay: 30 * time.Second,
 	})
@@ -188,7 +150,7 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	results := make(chan workloadResult, 5)
 	go func() {
 		<-start
-		latencies, err := exerciseDeliveryLifecycle(ctx, dispatcher, deliveryState, deliveries)
+		latencies, err := exerciseDeliveryLifecycle(ctx, syncer, deliveryState, deliveries)
 		results <- workloadResult{name: "delivery", latencies: latencies, err: err}
 	}()
 	go func() {
@@ -234,32 +196,28 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	sampler.Wait()
 	require.NoError(t, workloadErr)
 
-	require.Equal(t, int64(scaleDeliveries), router.sent.Load())
 	assertScaleDatabaseState(t, ctx, raw, scaleAgents, scaleDeliveries)
 	backupLag := time.Since(backupCompleted)
 	result := sqliteScaleResult{
 		Agents: scaleAgents, Deliveries: scaleDeliveries,
 		ElapsedSeconds: elapsed.Seconds(), RegistrationMillis: milliseconds(registrationDuration),
 		HeartbeatFlush: summarizeLatency(latencies["heartbeat"]),
-		Dispatch:       summarizeLatency(latencies["dispatch"]), Receipt: summarizeLatency(latencies["receipt"]),
-		Result: summarizeLatency(latencies["result"]), Search: summarizeLatency(latencies["search"]),
+		Dispatch:       summarizeLatency(latencies["dispatch"]),
+		Result:         summarizeLatency(latencies["result"]), Search: summarizeLatency(latencies["search"]),
 		TerminalRoute:        summarizeLatency(latencies["terminal"]),
 		BackupDurationMillis: milliseconds(backupDuration), BackupLagSeconds: backupLag.Seconds(),
 		AgentRegistryHeapBytes: agentHeapGrowth, RegistryBytesPerAgent: agentHeapGrowth / scaleAgents,
-		PeakHeapGrowthBytes:   positiveDelta(peakHeap.Load(), beforeAgents.Alloc),
-		PeakGoroutines:        peakGoroutines.Load(),
-		DeliveryQueueAccepted: deliveryAccepted, DeliveryQueueDropped: scaleAgents - deliveryAccepted,
-		JobQueueAccepted: jobAccepted, JobQueueDropped: scaleAgents - jobAccepted,
+		PeakHeapGrowthBytes: positiveDelta(peakHeap.Load(), beforeAgents.Alloc),
+		PeakGoroutines:      peakGoroutines.Load(),
+		JobQueueAccepted:    jobAccepted, JobQueueDropped: scaleAgents - jobAccepted,
 	}
 	encoded, err := json.Marshal(result)
 	require.NoError(t, err)
 	t.Logf("SQLITE_SCALE_RESULT %s", encoded)
 
-	assert.Equal(t, scaleQueueSize, deliveryAccepted)
 	assert.Equal(t, scaleQueueSize, jobAccepted)
 	assert.Less(t, result.HeartbeatFlush.P99Millis, 30_000.0)
 	assert.Less(t, result.Dispatch.P99Millis, 10_000.0)
-	assert.Less(t, result.Receipt.P99Millis, 10_000.0)
 	assert.Less(t, result.Result.P99Millis, 10_000.0)
 	assert.Less(t, result.Search.P99Millis, 5_000.0)
 	assert.Less(t, result.TerminalRoute.P99Millis, 100.0)
@@ -296,7 +254,7 @@ func seedScaleDeliveries(t *testing.T, raw *testdb.DB, deviceIDs []string, now t
 		Schedule:   &pmv1.ActionSchedule{RunOnAssign: true},
 		Occurrences: []*pmv1.ManifestOccurrence{{
 			OccurrenceId: newID(),
-			Action:       &pmv1.Action{Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_REBOOT},
+			Action:       &pmv1.Action{Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE},
 		}},
 	}
 	payload, err := protojson.Marshal(manifest)
@@ -311,21 +269,11 @@ func seedScaleDeliveries(t *testing.T, raw *testdb.DB, deviceIDs []string, now t
 			INSERT INTO deliveries
 				(delivery_id, device_id, manifest_id, manifest, state, created_at, available_at)
 			VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			items[index].deliveryID, items[index].deviceID, manifestID, payload, delivery.StatePending, now, now)
+			items[index].deliveryID, items[index].deviceID, manifestID, payload, "PENDING", now, now)
 		require.NoError(t, err)
 	}
 	require.NoError(t, tx.Commit(context.Background()))
 	return items
-}
-
-func fillDeliveryQueue(dispatcher *delivery.Dispatcher) int {
-	accepted := 0
-	for range scaleAgents {
-		if dispatcher.Wake(newID()) {
-			accepted++
-		}
-	}
-	return accepted
 }
 
 func fillJobQueue(runner *jobs.Runner) int {
@@ -338,81 +286,23 @@ func fillJobQueue(runner *jobs.Runner) int {
 	return accepted
 }
 
-func exerciseDeliveryLifecycle(ctx context.Context, dispatcher *delivery.Dispatcher, state *delivery.Service, items []scaleDelivery) (map[string][]time.Duration, error) {
-	workCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	tasks := make(chan scaleDelivery)
-	type sample struct {
-		phase string
-		value time.Duration
-	}
-	samples := make(chan sample, len(items)*3)
-	errs := make(chan error, 1)
-	var workers sync.WaitGroup
-	for range scaleWorkers {
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
-			for item := range tasks {
-				for _, call := range []struct {
-					phase string
-					fn    func() error
-				}{
-					{"dispatch", func() error { return dispatcher.Dispatch(workCtx, item.deliveryID) }},
-					{"receipt", func() error {
-						changed, err := state.AcknowledgeReceipt(workCtx, item.deliveryID, item.deviceID)
-						if err == nil && !changed {
-							return errors.New("delivery receipt did not advance")
-						}
-						return err
-					}},
-					{"result", func() error {
-						changed, err := state.Complete(workCtx, item.deliveryID, item.deviceID, item.manifestID, delivery.StateSucceeded, "OK")
-						if err == nil && !changed {
-							return errors.New("delivery result did not advance")
-						}
-						return err
-					}},
-				} {
-					started := time.Now()
-					if err := call.fn(); err != nil {
-						cancel()
-						select {
-						case errs <- err:
-						default:
-						}
-						return
-					}
-					samples <- sample{phase: call.phase, value: time.Since(started)}
-				}
-			}
-		}()
-	}
-	go func() {
-		defer close(tasks)
-		for _, item := range items {
-			select {
-			case tasks <- item:
-			case <-workCtx.Done():
-				return
-			}
+func exerciseDeliveryLifecycle(ctx context.Context, syncer *agentsync.Service, state *delivery.Service, items []scaleDelivery) (map[string][]time.Duration, error) {
+	out := map[string][]time.Duration{"dispatch": {}, "result": {}}
+	for _, item := range items {
+		started := time.Now()
+		snapshot, err := syncer.Sync(ctx, item.deviceID)
+		if err != nil {
+			return nil, err
 		}
-	}()
-	workers.Wait()
-	close(samples)
-	select {
-	case err := <-errs:
-		return nil, err
-	default:
-	}
-	out := map[string][]time.Duration{"dispatch": {}, "receipt": {}, "result": {}}
-	for sample := range samples {
-		out[sample.phase] = append(out[sample.phase], sample.value)
-	}
-	for phase, values := range out {
-		if len(values) != len(items) {
-			return nil, fmt.Errorf("%s produced %d of %d samples", phase, len(values), len(items))
+		if len(snapshot.Deliveries) != 1 || snapshot.Deliveries[0].DeliveryId != item.deliveryID {
+			return nil, fmt.Errorf("sync did not return delivery %s", item.deliveryID)
 		}
+		out["dispatch"] = append(out["dispatch"], time.Since(started))
+		resultStarted := time.Now()
+		if _, err := state.Complete(ctx, item.deliveryID, item.deviceID, item.manifestID, delivery.StateSucceeded, "OK"); err != nil {
+			return nil, err
+		}
+		out["result"] = append(out["result"], time.Since(resultStarted))
 	}
 	return out, nil
 }

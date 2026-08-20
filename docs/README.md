@@ -15,8 +15,8 @@ of it.
 
 | | |
 |---|---|
-| **[Installation](installation.md)** | Standing up control: DNS, TLS, the compose stack, the archive mount, and first login. |
-| **[Enrollment](enrollment.md)** | Getting devices in: tokens, the installer, CA pinning, the mTLS stream, renewal, revocation. |
+| **[Installation](installation.md)** | Standing up control: DNS, TLS, the compose stack, and first login. |
+| **[Enrollment](enrollment.md)** | Getting devices in: tokens, the installer, CA pinning, the mTLS stream, renewal, and active-certificate admission. |
 | **[Backup and restore](backup-restore.md)** | What to keep, how the verified backup works, and the restore procedure the code actually supports. |
 | **[Upgrades](upgrade.md)** | Image pulls within a version; clean reinstall across one. Pre-1.0 reality, stated plainly. |
 

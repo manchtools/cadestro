@@ -412,15 +412,8 @@ const DefaultInventoryIntervalMinutes int32 = 1440
 // UserRow is one stored user.
 type UserRow = generated.User
 
-// AuditChainTip is a stream's current chain position.
-type AuditChainTip struct {
-	Stream   string
-	HeadHash []byte
-	Height   int64
-}
-
 // GetAuditOperation returns one operation row. ErrNotFound when the
-// operation is unknown or has been archived away by retention.
+// operation is unknown.
 func (s *Store) GetAuditOperation(ctx context.Context, operationID string) (AuditOperationRow, error) {
 	row, err := s.queries.GetAuditOperation(ctx, operationID)
 	if err != nil {
@@ -489,18 +482,6 @@ func (s *Store) CountAuditEventRows(ctx context.Context, filter AuditEventFilter
 		return 0, fmt.Errorf("audit: count event rows: %w", err)
 	}
 	return n, nil
-}
-
-// AuditChainTipOf returns the stream's current head without locking it.
-func (s *Store) AuditChainTipOf(ctx context.Context, stream string) (AuditChainTip, error) {
-	if stream == "" {
-		stream = DefaultAuditStream
-	}
-	row, err := s.queries.GetAuditChainHead(ctx, stream)
-	if err != nil {
-		return AuditChainTip{}, fmt.Errorf("audit: chain head: %w", translateNotFound(err))
-	}
-	return AuditChainTip{Stream: row.Stream, HeadHash: row.HeadHash, Height: row.Height}, nil
 }
 
 // CountAuditOperations returns how many operation rows a stream
@@ -890,23 +871,10 @@ func (s *Store) GetDelivery(ctx context.Context, id string) (DeliveryRow, error)
 	return row, nil
 }
 
-// ListDueDeliveries returns due, non-terminal deliveries for the
-// currently connected devices, oldest first.
-func (s *Store) ListDueDeliveries(ctx context.Context, deviceIDs []string, at time.Time, limit int32) ([]DeliveryRow, error) {
-	rows, err := s.queries.ListDueDeliveriesForDevices(ctx, generated.ListDueDeliveriesForDevicesParams{
-		DeviceIds: deviceIDs, AvailableAt: at, PageSize: int64(limit),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("delivery: list due for connected devices: %w", err)
-	}
-	return rows, nil
-}
-
-// ListDeviceDeliveries returns manifest deliveries that have not
-// reached durable agent receipt, oldest first.
-func (s *Store) ListDeviceDeliveries(ctx context.Context, deviceID string, limit int32) ([]DeliveryRow, error) {
-	rows, err := s.queries.ListSendableDeliveriesForDevice(ctx, generated.ListSendableDeliveriesForDeviceParams{
-		DeviceID: deviceID, Limit: int64(limit),
+// ListDueDeviceDeliveries returns pending one-shot work for device Sync.
+func (s *Store) ListDueDeviceDeliveries(ctx context.Context, deviceID string, at time.Time, limit int32) ([]DeliveryRow, error) {
+	rows, err := s.queries.ListDueDeliveriesForDevice(ctx, generated.ListDueDeliveriesForDeviceParams{
+		DeviceID: deviceID, AvailableAt: at, Limit: int64(limit),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("delivery: list sendable for device: %w", err)

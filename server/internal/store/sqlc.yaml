@@ -102,8 +102,6 @@ sql:
             go_type: "int32"
           - column: "assignments.mode"
             go_type: "int32"
-          - column: "deliveries.attempt_count"
-            go_type: "int32"
           - column: "executions.action_type"
             go_type: "int32"
           - column: "executions.desired_state"

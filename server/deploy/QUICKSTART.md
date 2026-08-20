@@ -17,57 +17,11 @@ The authoritative system design is
 ## Prepare
 
 Copy `.env.example` to `.env`, set the three required public values
-(`CONTROL_DOMAIN`, `AGENT_DOMAIN`, and `ACME_EMAIL`), then give the audit
-archive its own storage and run `./setup.sh`. `.env` carries only those values,
+(`CONTROL_DOMAIN`, `AGENT_DOMAIN`, and `ACME_EMAIL`), then run `./setup.sh`. `.env` carries only those values,
 the optional ACME challenge selection below, and `IMAGE_TAG`; it is Compose's
 own environment file, not control's configuration.
 
-### Storage for the audit archive
-
-<!-- docref: begin src=deploy/setup.sh#@archive-isolation:6ded442f,cmd/cadestro/config.go#validateArchiveIsolation:69e8ec75,cmd/cadestro/devauth_stub.go#archiveIsolationRelaxed:8de98d35 -->
-`data/backups` must be on a different filesystem from the SQLite database under
-`data/control`. Mount a second disk, an NFS or NAS export, or any
-remote-backed volume there:
-
-```bash
-mkdir -p data && ln -s /srv/cadestro-archive data/backups
-```
-
-A symlink works as well as a mount point: Compose bind-mounts whatever the path
-resolves to, so control sees that storage rather than the deploy tree's
-filesystem. If a previous run already created the empty directory, `rmdir
-data/backups` before linking.
-
-This is a requirement, not a recommendation. The archive holds the anchors and
-archived chain prefixes that prove the audit log was not rewritten, so control
-compares the two filesystems at startup and refuses to run when they match —
-there is no configuration variable that turns the check off. `setup.sh` applies
-the same comparison first, naming both paths, so a deployment that cannot boot
-is never rendered in the first place.
-<!-- docref: end -->
-
-For a single-node test box with no second disk, `ARCHIVE_LOOPBACK=1` (or
-answering `loopback` in the guided run) makes `install.sh` create a 2 GiB
-image at `data/backups.img`, mount it at `data/backups`, and persist the
-mount in `/etc/fstab`. The check is satisfied — the archive really is a
-separate filesystem — but it lives on the same disk, so it protects against
-nothing that takes the disk with it: one disk failure or ransomware pass
-still takes the audit log and its proof together. Test nodes only.
-
-`install.sh` runs `setup.sh` for you and therefore stops at the same point.
-Provide the archive storage under the install directory it created, then run
-`./setup.sh && ./deploy.sh` there. It has no default release: `RELEASE_TAG`
-must name a release tag such as `v2026.08.09-rc2`, because a branch name
-installs whatever that branch pointed at on the day it ran.
-
-Run from a terminal, `install.sh` asks for every value it was not given — the
-two domains, the ACME email, the release, the certificate challenge, and the
-archive storage choice — re-asking on invalid input with the same rules
-`setup.sh` enforces. Without a terminal nothing prompts: a missing value keeps
-refusing with the messages above, so scripted runs never hang. No prompt ever
-asks for a secret; a `dns01` install stops after unpacking with
-`config/traefik-dns.env` created empty at mode 0600, ready for the credential
-to be pasted into, and names the two commands that finish the install.
+Run `./setup.sh` to render the fresh deployment configuration. The audit log is stored transactionally in SQLite alongside the state it describes.
 
 ### Certificates without a reachable port 80
 
@@ -110,8 +64,7 @@ the DNS operator's other anycast nodes.
 
 Set `ACME_CHALLENGE` and `ACME_DNS_PROVIDER` in `install.sh`'s environment and
 it writes them into the `.env` it generates, but the credentials file can only
-be written after it has unpacked the tree, so it stops there as it does for the
-archive storage. Write the file into the install directory it created, then run
+be written after it has unpacked the tree. Write the file into the install directory it created, then run
 `./setup.sh && ./deploy.sh` there rather than `install.sh` again.
 
 Leave both unset for the default HTTP challenge; port 80 also carries the
@@ -120,18 +73,15 @@ redirect to HTTPS either way, so keep it published.
 Control is configured entirely by `CADESTRO_`-prefixed environment
 variables and reads no configuration file. `setup.sh` renders every one of them
 into `config/control.env`, and that file is where ordinary settings such as the
-log level or the retention windows are edited. `setup.sh` re-renders it on
+log level or the log settings are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
 <!-- docref: begin src=deploy/setup.sh#@generated-material:6df12966 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
-encryption and session keys, `config/control.env` with a 90-day
-audit-retention policy and the SQLite `CADESTRO_DATABASE_PATH`, and
+encryption and session keys, `config/control.env` with the SQLite `CADESTRO_DATABASE_PATH`, and
 `config/web.env` with the `PUBLIC_CONTROL_URL` the UI calls — the same origin
-control publishes its setup URL on, taken from `CONTROL_DOMAIN`. It first
-refuses, before generating any key material, when `data/backups` shares a
-filesystem with `data/control`, because control refuses to start on such a
-configuration, and equally when the chosen ACME challenge cannot work — an
+control publishes its setup URL on, taken from `CONTROL_DOMAIN`. It validates
+the chosen ACME challenge before generating key material — an
 unknown `ACME_CHALLENGE`, `dns01` without an `ACME_DNS_PROVIDER`, or
 `config/traefik-dns.env` missing, empty, or readable by other accounts. It then
 renders the challenge into `config/traefik-acme.env`, and creates an empty
@@ -146,7 +96,7 @@ reports success, and no secret value is ever printed.
 The public and agent hostnames must differ. Traefik terminates browser/API TLS
 for `CONTROL_DOMAIN`. For `AGENT_DOMAIN`, it passes TLS through and adds PROXY
 protocol v2 on an isolated network; control itself authenticates the device
-certificate and checks revocation.
+certificate and checks its active serial.
 <!-- docref: end -->
 
 <!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:da534a3f,deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
@@ -185,22 +135,10 @@ administrator.
 Use `./deploy.sh` for an update, `docker compose logs -f control` for logs, and
 `docker compose down` to stop the stack.
 
-Artifacts live under `data/artifacts`, and the audit archive and SQLite backups
-under `data/backups` — the separate storage prepared above. The SQLite database
-lives under `data/control`; ACME state lives under `data/traefik`. Never
-consolidate `data/backups` back onto the database's filesystem: control will
-refuse to start after the next restart.
+Artifacts live under `data/artifacts`; the SQLite database lives under
+`data/control`, and ACME state lives under `data/traefik`.
 
-<!-- docref: begin src=internal/maintenance/service.go#Service.RetainAudit:8584f810,cmd/cadestro/config.go#Config.AuditRetention:0e4ab606 -->
-Control writes integrity-sealed audit anchors and archive-before-delete chain
-prefixes to `CADESTRO_BACKUP_PATH`, and re-verifies every archived prefix
-against its recorded checkpoint digest before retention deletes anything more;
-`CADESTRO_AUDIT_RETENTION` defaults to 90 days. That path must be a
-filesystem of its own, which control enforces at startup; replicating it
-off-host is the stronger form of the same property and remains yours to
-arrange. Back up the database, artifacts, `certs`, and `secrets` as one
-deployment unit.
-<!-- docref: end -->
+
 
 <!-- docref: begin src=cmd/cadestro/config.go#Config.WebhookURL:341af9cf,internal/maintenance/service.go#Service.InspectSecurity:223fcf91,internal/maintenance/service.go#Service.InspectBackup:d8c2e6fd -->
 Set the optional `CADESTRO_WEBHOOK_URL` to an HTTPS endpoint to receive

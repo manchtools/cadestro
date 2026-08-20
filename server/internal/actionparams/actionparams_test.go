@@ -35,8 +35,6 @@ func TestPopulateAction_RejectsUnknownType(t *testing.T) {
 func TestPopulateAction_NoParamsTypesRemainEmpty(t *testing.T) {
 	for _, actionType := range []pm.ActionType{
 		pm.ActionType_ACTION_TYPE_UNSPECIFIED,
-		pm.ActionType_ACTION_TYPE_REBOOT,
-		pm.ActionType_ACTION_TYPE_SYNC,
 	} {
 		action := &pm.Action{}
 		require.NoError(t, actionparams.PopulateAction(action, int32(actionType), []byte(`{}`)))

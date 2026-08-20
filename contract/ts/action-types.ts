@@ -50,10 +50,6 @@ export function getActionTypeEnum(type: string): ActionType {
 			return ActionType.WIFI;
 		case 'AGENT_UPDATE':
 			return ActionType.AGENT_UPDATE;
-		case 'REBOOT':
-			return ActionType.REBOOT;
-		case 'SYNC':
-			return ActionType.SYNC;
 		default:
 			return ActionType.UNSPECIFIED;
 	}
@@ -106,10 +102,6 @@ export function actionTypeToString(type: ActionType): string {
 			return 'WIFI';
 		case ActionType.AGENT_UPDATE:
 			return 'AGENT_UPDATE';
-		case ActionType.REBOOT:
-			return 'REBOOT';
-		case ActionType.SYNC:
-			return 'SYNC';
 		default:
 			return 'UNSPECIFIED';
 	}
@@ -139,7 +131,5 @@ export const ACTION_TYPE_OPTIONS = [
 	{ value: 'GROUP', type: ActionType.GROUP },
 	{ value: 'SCRIPT_RUN', type: ActionType.SCRIPT_RUN },
 	{ value: 'WIFI', type: ActionType.WIFI },
-	{ value: 'AGENT_UPDATE', type: ActionType.AGENT_UPDATE },
-	{ value: 'REBOOT', type: ActionType.REBOOT },
-	{ value: 'SYNC', type: ActionType.SYNC }
+	{ value: 'AGENT_UPDATE', type: ActionType.AGENT_UPDATE }
 ] as const;

@@ -43,13 +43,7 @@ func TestFrameBudgetsArePerDeviceAndClass(t *testing.T) {
 }
 
 type fakeDeliveryState struct {
-	receiptDelivery, receiptDevice                      string
 	resultDelivery, resultDevice, manifest, state, code string
-}
-
-func (f *fakeDeliveryState) AcknowledgeReceipt(_ context.Context, deliveryID, deviceID string) (bool, error) {
-	f.receiptDelivery, f.receiptDevice = deliveryID, deviceID
-	return true, nil
 }
 
 func (f *fakeDeliveryState) Complete(_ context.Context, deliveryID, deviceID, manifestID, state, code string) (bool, error) {
@@ -77,6 +71,21 @@ type fakeDeviceResults struct {
 	queryDevice, logDevice, inventoryDevice, revocationDevice string
 }
 
+type recordingLiveOperations struct {
+	syncDevice, rebootDevice       string
+	syncOperation, rebootOperation string
+}
+
+func (f *recordingLiveOperations) CompleteSyncDevice(_ context.Context, deviceID, operationID string, _ *pmv1.SyncDeviceResult) error {
+	f.syncDevice, f.syncOperation = deviceID, operationID
+	return nil
+}
+
+func (f *recordingLiveOperations) CompleteRebootDevice(_ context.Context, deviceID, operationID string, _ *pmv1.RebootDeviceResult) error {
+	f.rebootDevice, f.rebootOperation = deviceID, operationID
+	return nil
+}
+
 func (f *fakeDeviceResults) CompleteOSQueryResult(_ context.Context, deviceID string, _ *pmv1.OSQueryResult) error {
 	f.queryDevice = deviceID
 	return nil
@@ -102,15 +111,17 @@ func TestHandleAgentMessageRoutesDirectDurableFrames(t *testing.T) {
 	deliveryState := &fakeDeliveryState{}
 	executionResults := &fakeExecutionResults{}
 	deviceResults := &fakeDeviceResults{}
+	liveOperations := &recordingLiveOperations{}
 	handler := &Handler{
 		deliveries: deliveryState, executions: executionResults, deviceResults: deviceResults,
-		terminalSessions: connection.NewTerminalSessionRegistry(),
+		liveOperations: liveOperations, terminalSessions: connection.NewTerminalSessionRegistry(),
 	}
 	agent := &connection.Agent{DeviceID: deviceID}
 
 	frames := []*pmv1.AgentMessage{
 		{Payload: &pmv1.AgentMessage_Heartbeat{Heartbeat: &pmv1.Heartbeat{}}},
-		{Payload: &pmv1.AgentMessage_DeliveryReceipt{DeliveryReceipt: &pmv1.DeliveryReceipt{DeliveryId: deliveryID}}},
+		{Id: "sync-operation", Payload: &pmv1.AgentMessage_SyncDeviceResult{SyncDeviceResult: &pmv1.SyncDeviceResult{Success: true}}},
+		{Id: "reboot-operation", Payload: &pmv1.AgentMessage_RebootDeviceResult{RebootDeviceResult: &pmv1.RebootDeviceResult{Success: true}}},
 		{Payload: &pmv1.AgentMessage_ManifestResult{ManifestResult: &pmv1.ManifestResult{
 			DeliveryId: deliveryID, ManifestId: manifestID,
 			Status: pmv1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE,
@@ -126,8 +137,6 @@ func TestHandleAgentMessageRoutesDirectDurableFrames(t *testing.T) {
 		require.NoError(t, handler.handleAgentMessage(context.Background(), agent, frame))
 	}
 
-	assert.Equal(t, deliveryID, deliveryState.receiptDelivery)
-	assert.Equal(t, deviceID, deliveryState.receiptDevice)
 	assert.Equal(t, deliveryID, deliveryState.resultDelivery)
 	assert.Equal(t, manifestID, deliveryState.manifest)
 	assert.Equal(t, delivery.StatePartial, deliveryState.state)
@@ -138,6 +147,10 @@ func TestHandleAgentMessageRoutesDirectDurableFrames(t *testing.T) {
 	assert.Equal(t, deviceID, deviceResults.logDevice)
 	assert.Equal(t, deviceID, deviceResults.inventoryDevice)
 	assert.Equal(t, deviceID, deviceResults.revocationDevice)
+	assert.Equal(t, deviceID, liveOperations.syncDevice)
+	assert.Equal(t, "sync-operation", liveOperations.syncOperation)
+	assert.Equal(t, deviceID, liveOperations.rebootDevice)
+	assert.Equal(t, "reboot-operation", liveOperations.rebootOperation)
 }
 
 func TestHandleAgentMessageEnforcesTerminalDeviceBinding(t *testing.T) {

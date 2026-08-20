@@ -114,4 +114,4 @@ It is intentionally skipped by the ordinary unit-test gate and logs one
 
 Trust-boundary tests must cover validation before authentication,
 authorization and scope rejection, transaction rollback on audit failure,
-certificate revocation, delivery replay, and secret exclusion.
+active-certificate admission, delivery replay, and secret exclusion.

@@ -55,14 +55,6 @@ type Client struct {
 	mu     sync.RWMutex
 	stream *connect.BidiStreamForClient[pm.AgentMessage, pm.ServerMessage]
 
-	// deliveryCh feeds the per-Run delivery worker. Manifest deliveries are
-	// handed to a single worker goroutine (off the receive loop) so recording
-	// and running one can no longer head-of-line-block TerminalStop/Input/
-	// Resize (WS13 #7). A single worker preserves one-at-a-time, in-order
-	// handling; the buffered channel bounds memory. Non-nil only while Run()
-	// is active; guarded by mu.
-	deliveryCh chan *pm.ManifestDelivery
-
 	// sendSem is a buffered-1 channel used as a ctx-aware send lock. It
 	// serializes all stream.Send() calls — concurrent writes on a bidi
 	// stream are not safe and can corrupt messages on the wire — while
@@ -80,15 +72,16 @@ type Client struct {
 	// Non-nil only while Run() is active; guarded by mu.
 	heartbeatUpdate chan time.Duration
 
-	// invSem and luksRevokeSem bound how many server-originated
+	// invSem, luksRevokeSem and liveControlSem bound how many server-originated
 	// RequestInventory / RevokeLuksDeviceKey handlers run concurrently.
 	// Each spawns a goroutine (inventory forks osquery; revoke does a
 	// request-response on the stream), so an unbounded flood from a
 	// compromised or buggy server could exhaust memory and goroutines.
 	// Acquisition is non-blocking: excess is DROPPED, not queued (WS6
 	// #11). Initialised by NewClient.
-	invSem        chan struct{}
-	luksRevokeSem chan struct{}
+	invSem         chan struct{}
+	luksRevokeSem  chan struct{}
+	liveControlSem chan struct{}
 }
 
 const (
@@ -98,7 +91,8 @@ const (
 	inventoryDispatchConcurrency = 2
 	// luksRevokeDispatchConcurrency bounds concurrent LUKS device-key
 	// revocations dispatched from the server.
-	luksRevokeDispatchConcurrency = 2
+	luksRevokeDispatchConcurrency  = 2
+	liveControlDispatchConcurrency = 1
 
 	// maxInboundMessageBytes bounds the size of a single inbound
 	// ServerMessage the agent will decode. The agent only ever receives
@@ -112,23 +106,17 @@ const (
 	// an oversized frame is torn down with a resource-exhausted error.
 	maxInboundMessageBytes = 16 << 20 // 16 MiB
 
-	// deliveryQueueDepth bounds how many manifest deliveries can wait for the
-	// single delivery worker (WS13 #7). Deep enough to absorb any legitimate
-	// burst; a backlog beyond it means a pathological flood, so the excess is
-	// dropped rather than queued unbounded or allowed to block the receive
-	// loop. Dropping is safe by construction: a dropped delivery was never
-	// receipted, so control redelivers it.
-	deliveryQueueDepth = 256
 )
 
 // NewClient creates a new SDK client.
 func NewClient(serverURL string, opts ...ClientOption) *Client {
 	c := &Client{
-		logger:        slog.Default(),
-		validator:     validate.NewValidator(),
-		sendSem:       make(chan struct{}, 1),
-		invSem:        make(chan struct{}, inventoryDispatchConcurrency),
-		luksRevokeSem: make(chan struct{}, luksRevokeDispatchConcurrency),
+		logger:         slog.Default(),
+		validator:      validate.NewValidator(),
+		sendSem:        make(chan struct{}, 1),
+		invSem:         make(chan struct{}, inventoryDispatchConcurrency),
+		luksRevokeSem:  make(chan struct{}, luksRevokeDispatchConcurrency),
+		liveControlSem: make(chan struct{}, liveControlDispatchConcurrency),
 	}
 
 	// http.DefaultClient (no Timeout) is correct here: the agent client
@@ -460,45 +448,16 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, opts .
 type StreamHandler interface {
 	// OnWelcome is called when the server sends a welcome message.
 	OnWelcome(ctx context.Context, welcome *pm.Welcome) error
-	// OnManifestDelivery is called when control delivers a manifest on the
-	// authenticated stream.
-	//
-	// The handler MUST durably record the delivery, keyed by its delivery_id,
-	// before returning nil. The SDK sends DeliveryReceipt only on a nil
-	// return, so a receipt can never claim durability the device does not
-	// have; control keeps redelivering until it sees one. A delivery_id the
-	// handler already holds is a retry: record-once, execute-once, return nil
-	// again so the receipt is re-sent.
-	//
-	// Returning an error means the delivery was NOT recorded. No receipt is
-	// sent and the error is logged; control redelivers.
-	//
-	// Execution is the handler's own business, driven off its durable record
-	// and reported asynchronously with SendActionResult (per occurrence) and
-	// SendManifestResult (once for the manifest).
-	OnManifestDelivery(ctx context.Context, delivery *pm.ManifestDelivery) error
 	// OnQuery is called when the server sends an OS query.
 	OnQuery(ctx context.Context, query *pm.OSQuery) (*pm.OSQueryResult, error)
 	// OnError is called when the server sends an error.
 	OnError(ctx context.Context, err *pm.Error) error
 }
 
-// SyncHintHandler receives a lossy prompt to run the normal agent-initiated
-// Sync. The hint carries no policy and may be dropped when the agent is busy.
-type SyncHintHandler interface {
-	OnSyncHint(context.Context, *pm.SyncHint) error
-}
-
-// StreamingHandler extends StreamHandler with output streaming during manifest
-// execution. Handlers that implement this interface receive a callback for
-// pushing output chunks as the manifest's occurrences run.
-type StreamingHandler interface {
-	StreamHandler
-	// OnManifestDeliveryWithStreaming carries the same durable-receipt
-	// contract as OnManifestDelivery — nil return means recorded, and only
-	// then does the SDK send the receipt. sendChunk streams per-occurrence
-	// output while the manifest executes.
-	OnManifestDeliveryWithStreaming(ctx context.Context, delivery *pm.ManifestDelivery, sendChunk func(*pm.OutputChunk) error) error
+// LiveControlHandler handles correlated control operations over the agent stream.
+type LiveControlHandler interface {
+	OnSyncDevice(context.Context, *pm.SyncDeviceCommand) error
+	OnRebootDevice(context.Context, *pm.RebootDeviceCommand) error
 }
 
 // LuksHandler extends StreamHandler with LUKS device-key revocation support.
@@ -719,22 +678,6 @@ func (c *Client) sendResultAwaitAck(ctx context.Context, message *pm.AgentMessag
 	}
 }
 
-// SendDeliveryReceipt confirms that a delivery is durably recorded on this
-// device. Control advances the delivery only on this frame, never on its own
-// successful socket write, so the caller MUST NOT send it before the local
-// commit has landed.
-//
-// runManifestDelivery calls this only after the handler returns nil, making the
-// durable-record-before-receipt ordering structural.
-func (c *Client) SendDeliveryReceipt(ctx context.Context, deliveryID string) error {
-	return c.send(ctx, &pm.AgentMessage{
-		Id: NewULID(),
-		Payload: &pm.AgentMessage_DeliveryReceipt{
-			DeliveryReceipt: &pm.DeliveryReceipt{DeliveryId: deliveryID},
-		},
-	})
-}
-
 // SendOutputChunk sends an output chunk during action execution.
 func (c *Client) SendOutputChunk(ctx context.Context, chunk *pm.OutputChunk) error {
 	return c.send(ctx, &pm.AgentMessage{
@@ -787,6 +730,16 @@ func (c *Client) SendInventory(ctx context.Context, inventory *pm.DeviceInventor
 			Inventory: inventory,
 		},
 	})
+}
+
+func (c *Client) sendSyncDeviceResult(ctx context.Context, id string, operationErr error) error {
+	result := &pm.SyncDeviceResult{Success: operationErr == nil}
+	return c.send(ctx, &pm.AgentMessage{Id: id, Payload: &pm.AgentMessage_SyncDeviceResult{SyncDeviceResult: result}})
+}
+
+func (c *Client) sendRebootDeviceResult(ctx context.Context, id string, operationErr error) error {
+	result := &pm.RebootDeviceResult{Success: operationErr == nil}
+	return c.send(ctx, &pm.AgentMessage{Id: id, Payload: &pm.AgentMessage_RebootDeviceResult{RebootDeviceResult: result}})
 }
 
 // SendTerminalOutput sends a stdout/stderr chunk from a remote terminal
@@ -1184,40 +1137,6 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		})
 	}
 
-	// Delivery worker (WS13 #7): manifest deliveries are recorded and run on
-	// this single goroutine, off the receive loop, so a long-running manifest
-	// cannot head-of-line-block terminal control frames. One worker =
-	// one-at-a-time, in-order handling; the buffered channel bounds memory.
-	// Published on the Client so dispatchServerMessage can enqueue; cleared +
-	// drained on Run exit.
-	deliveryCh := make(chan *pm.ManifestDelivery, deliveryQueueDepth)
-	workerCtx, cancelWorker := context.WithCancel(ctx)
-	c.mu.Lock()
-	c.deliveryCh = deliveryCh
-	c.mu.Unlock()
-	var deliveryWG sync.WaitGroup
-	deliveryWG.Add(1)
-	go func() {
-		defer deliveryWG.Done()
-		for delivery := range deliveryCh {
-			// Skip queued deliveries once the connection is going down rather
-			// than half-applying system state during teardown. Nothing is lost:
-			// no receipt was sent, so control redelivers on reconnect.
-			if workerCtx.Err() != nil {
-				continue
-			}
-			c.runManifestDelivery(workerCtx, delivery, handler)
-		}
-	}()
-	defer func() {
-		c.mu.Lock()
-		c.deliveryCh = nil
-		c.mu.Unlock()
-		cancelWorker()
-		close(deliveryCh)
-		deliveryWG.Wait()
-	}()
-
 	// Channel to receive messages from blocking Receive call
 	type receiveResult struct {
 		msg *pm.ServerMessage
@@ -1340,50 +1259,6 @@ func (c *Client) validateInbound(payload any) error {
 	return nil
 }
 
-// currentDeliveryCh returns the per-Run delivery worker channel, or nil when
-// Run() is not active (e.g. dispatchServerMessage driven directly by a unit
-// test).
-func (c *Client) currentDeliveryCh() chan *pm.ManifestDelivery {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.deliveryCh
-}
-
-// runManifestDelivery hands one delivery to the handler and, only if the
-// handler reports it durably recorded, sends the DeliveryReceipt. Run on the
-// single delivery worker goroutine (or inline as a test fallback).
-//
-// The receipt is sent here rather than by the handler so the ordering is
-// structural: there is no code path that emits a receipt without a nil return
-// from the handler, and none that returns nil without the handler having
-// committed. A handler error or panic therefore leaves the delivery
-// unacknowledged, which is the outcome that makes control redeliver.
-func (c *Client) runManifestDelivery(ctx context.Context, delivery *pm.ManifestDelivery, handler StreamHandler) {
-	defer func() {
-		if r := recover(); r != nil {
-			c.logger.Error("recovered panic while handling manifest delivery (non-fatal; no receipt sent)",
-				"delivery_id", delivery.GetDeliveryId(), "panic", fmt.Sprintf("%v", r))
-		}
-	}()
-	var err error
-	if streamingHandler, ok := handler.(StreamingHandler); ok {
-		sendChunk := func(chunk *pm.OutputChunk) error { return c.SendOutputChunk(ctx, chunk) }
-		err = streamingHandler.OnManifestDeliveryWithStreaming(ctx, delivery, sendChunk)
-	} else {
-		err = handler.OnManifestDelivery(ctx, delivery)
-	}
-	if err != nil {
-		// Not durably recorded: staying silent is the correct answer, because
-		// control's retry is the only thing that recovers this delivery.
-		c.logger.Error("manifest delivery not recorded; withholding receipt",
-			"delivery_id", delivery.GetDeliveryId(), "error", err)
-		return
-	}
-	if err := c.SendDeliveryReceipt(ctx, delivery.GetDeliveryId()); err != nil {
-		c.logger.Warn("failed to send delivery receipt", "delivery_id", delivery.GetDeliveryId(), "error", err)
-	}
-}
-
 func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessage, handler StreamHandler) (retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1402,12 +1277,45 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		}
 	}()
 	switch p := msg.Payload.(type) {
-	case *pm.ServerMessage_SyncHint:
-		if p.SyncHint == nil {
+	case *pm.ServerMessage_SyncDevice:
+		if p.SyncDevice == nil {
 			return nil
 		}
-		if h, ok := handler.(SyncHintHandler); ok {
-			return h.OnSyncHint(ctx, p.SyncHint)
+		select {
+		case c.liveControlSem <- struct{}{}:
+			c.safeGo("live-sync", func() {
+				defer func() { <-c.liveControlSem }()
+				operationErr := errors.New("live sync is unsupported")
+				if h, ok := handler.(LiveControlHandler); ok {
+					operationErr = h.OnSyncDevice(ctx, p.SyncDevice)
+				}
+				if err := c.sendSyncDeviceResult(ctx, msg.Id, operationErr); err != nil {
+					c.logger.Warn("failed to send live sync result", "error", err)
+				}
+			})
+			return nil
+		default:
+			return c.sendSyncDeviceResult(ctx, msg.Id, errors.New("another live operation is already running"))
+		}
+	case *pm.ServerMessage_RebootDevice:
+		if p.RebootDevice == nil {
+			return nil
+		}
+		select {
+		case c.liveControlSem <- struct{}{}:
+			c.safeGo("live-reboot", func() {
+				defer func() { <-c.liveControlSem }()
+				operationErr := errors.New("live reboot is unsupported")
+				if h, ok := handler.(LiveControlHandler); ok {
+					operationErr = h.OnRebootDevice(ctx, p.RebootDevice)
+				}
+				if err := c.sendRebootDeviceResult(ctx, msg.Id, operationErr); err != nil {
+					c.logger.Warn("failed to send live reboot result", "error", err)
+				}
+			})
+			return nil
+		default:
+			return c.sendRebootDeviceResult(ctx, msg.Id, errors.New("another live operation is already running"))
 		}
 	case *pm.ServerMessage_Welcome:
 		if p.Welcome == nil {
@@ -1418,39 +1326,6 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		if err := handler.OnWelcome(ctx, p.Welcome); err != nil {
 			return fmt.Errorf("handle welcome: %w", err)
 		}
-
-	case *pm.ServerMessage_ManifestDelivery:
-		// Malformed-oneof guard: a buggy or hostile peer can deliver a
-		// ServerMessage_ManifestDelivery whose inner message is nil, and
-		// reading through it is a nil-pointer dereference. Drop non-fatally.
-		if p.ManifestDelivery == nil {
-			c.logger.Warn("dropping manifest delivery with nil payload", "message_id", msg.Id)
-			return nil
-		}
-		if err := c.validateInbound(p.ManifestDelivery); err != nil {
-			c.logger.Warn("dropping invalid manifest delivery", "message_id", msg.Id, "error", err)
-			return nil
-		}
-		// Off-loop (WS13 #7): hand the delivery to the single per-Run worker so
-		// recording and running a manifest can't head-of-line-block
-		// TerminalStop/Input/Resize on the receive loop. The worker preserves
-		// one-at-a-time, in-order handling and sends the receipt itself.
-		if ch := c.currentDeliveryCh(); ch != nil {
-			select {
-			case ch <- p.ManifestDelivery:
-			default:
-				// A full queue means a pathological flood (a legit control never
-				// has deliveryQueueDepth deliveries outstanding). Drop with a
-				// loud warning rather than block the receive loop; no receipt
-				// goes out, so control redelivers.
-				c.logger.Warn("delivery queue full; dropping manifest delivery",
-					"message_id", msg.Id, "delivery_id", p.ManifestDelivery.GetDeliveryId(), "depth", deliveryQueueDepth)
-			}
-			return nil
-		}
-		// Fallback: no worker (dispatchServerMessage driven directly, e.g. a unit
-		// test, outside Run) — handle inline so behaviour is preserved.
-		c.runManifestDelivery(ctx, p.ManifestDelivery, handler)
 
 	case *pm.ServerMessage_Query:
 		if p.Query == nil {
@@ -1749,10 +1624,8 @@ func (c *Client) ValidateLuksToken(ctx context.Context, token string) (*Validate
 // SyncStateResult contains the current device state returned over the stream.
 type SyncStateResult struct {
 	// Deliveries are every manifest delivery currently assigned to this
-	// device, in exactly the form the stream pushes them. The caller records
-	// each one under its delivery_id and receipts it the same way, so a
-	// delivery already known from the stream is recognised as a repeat rather
-	// than executed twice.
+	// device. The caller records each one under its delivery_id, so repeated
+	// Sync responses do not execute it twice.
 	Deliveries []*pm.ManifestDelivery
 	// SyncIntervalMinutes is the effective sync interval for this device.
 	// 0 means use the default (30 minutes).
@@ -1761,15 +1634,14 @@ type SyncStateResult struct {
 	// group's window (device groups + user groups assigned to the
 	// device). nil means "no constraint" — the agent dispatches at any
 	// time. The agent evaluates this against time.Now().Local() before
-	// firing scheduler-driven dispatches; instant actions bypass the gate.
+	// firing scheduler-driven dispatches.
 	MaintenanceWindow *pm.MaintenanceWindow
-	// DesiredPolicy is the authenticated assignment snapshot. It is reconciled
-	// locally and does not use ManifestDelivery receipts.
+	// DesiredPolicy is the authenticated assignment snapshot reconciled locally.
 	DesiredPolicy *pm.DesiredPolicy
 }
 
-// Sync requests the current deliveries and device policy on the existing
-// stream. The caller records every delivery before sending its receipt.
+// Sync requests current one-shot work and desired policy on the existing
+// authenticated stream.
 func (c *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 	id := NewULID()
 	ch := c.registerPending(id)

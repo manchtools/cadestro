@@ -45,7 +45,7 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 		Occurrences: []*pmv1.ManifestOccurrence{{
 			OccurrenceId: newID(),
 			Action: &pmv1.Action{
-				Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_REBOOT,
+				Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 			},
 		}},
 	}
@@ -71,7 +71,7 @@ func TestDelivery_InsertCommitsCompleteManifestWithAudit(t *testing.T) {
 	f := newDeliveryFixture(t)
 	row, err := f.store.GetDelivery(context.Background(), f.deliveryID)
 	require.NoError(t, err)
-	assert.Equal(t, delivery.StatePending, row.State)
+	assert.Equal(t, "PENDING", row.State)
 	assert.Equal(t, f.deviceID, row.DeviceID)
 	assert.Equal(t, f.manifest.ManifestId, row.ManifestID)
 	require.NotNil(t, row.OperationID)
@@ -120,74 +120,14 @@ func TestDelivery_InsertRejectsAmbiguousOrDuplicateManifestIdentity(t *testing.T
 	assert.Equal(t, 1, count, "rejected manifests must not create delivery rows")
 }
 
-func TestDelivery_PushEpochAndReceiptStateMachine(t *testing.T) {
+func TestDelivery_ResultReplayIsIdempotentWithoutTransportReceipt(t *testing.T) {
 	f := newDeliveryFixture(t)
 	ctx := context.Background()
 
-	changed, err := f.service.MarkPushed(ctx, f.deliveryID, f.deviceID, 7)
-	require.NoError(t, err)
-	assert.True(t, changed)
-	changed, err = f.service.MarkPushed(ctx, f.deliveryID, f.deviceID, 3)
-	assert.ErrorIs(t, err, delivery.ErrStaleEpoch)
-	assert.False(t, changed)
-
-	changed, err = f.service.AcknowledgeReceipt(ctx, f.deliveryID, f.deviceID)
-	require.NoError(t, err)
-	assert.True(t, changed)
-	changed, err = f.service.AcknowledgeReceipt(ctx, f.deliveryID, f.deviceID)
-	require.NoError(t, err)
-	assert.False(t, changed, "receipt replay must be absorbed")
-
-	changed, err = f.service.Complete(ctx, f.deliveryID, f.deviceID, f.manifest.ManifestId, delivery.StateSucceeded, "OK")
+	changed, err := f.service.Complete(ctx, f.deliveryID, f.deviceID, f.manifest.ManifestId, delivery.StateSucceeded, "OK")
 	require.NoError(t, err)
 	assert.True(t, changed)
 	changed, err = f.service.Complete(ctx, f.deliveryID, f.deviceID, f.manifest.ManifestId, delivery.StateSucceeded, "OK")
 	require.NoError(t, err)
 	assert.False(t, changed, "result replay must be absorbed")
-
-	row, err := f.store.GetDelivery(ctx, f.deliveryID)
-	require.NoError(t, err)
-	assert.Equal(t, delivery.StateSucceeded, row.State)
-	assert.Equal(t, int64(7), row.PushEpoch)
-	assert.Equal(t, int32(1), row.AttemptCount, "a refused stale push must not count as an attempt")
-	actions := auditActions(t, f.raw, "delivery", f.deliveryID)
-	assert.Equal(t, []string{"CREATE", "PUSH", "ACK", "RESULT"}, actions)
-}
-
-func TestDelivery_RejectsOutOfOrderAndMismatchedFrames(t *testing.T) {
-	f := newDeliveryFixture(t)
-	ctx := context.Background()
-
-	changed, err := f.service.AcknowledgeReceipt(ctx, f.deliveryID, f.deviceID)
-	assert.ErrorIs(t, err, delivery.ErrInvalidTransition)
-	assert.False(t, changed)
-	changed, err = f.service.MarkPushed(ctx, f.deliveryID, newID(), 1)
-	assert.ErrorIs(t, err, delivery.ErrWrongDevice)
-	assert.False(t, changed)
-
-	changed, err = f.service.MarkPushed(ctx, f.deliveryID, f.deviceID, 1)
-	require.NoError(t, err)
-	assert.True(t, changed)
-	changed, err = f.service.AcknowledgeReceipt(ctx, f.deliveryID, f.deviceID)
-	require.NoError(t, err)
-	assert.True(t, changed)
-	changed, err = f.service.Complete(ctx, f.deliveryID, f.deviceID, newID(), delivery.StateSucceeded, "OK")
-	assert.ErrorIs(t, err, delivery.ErrWrongManifest)
-	assert.False(t, changed)
-}
-
-func TestDelivery_ReceiptAuditFailureRollsBackState(t *testing.T) {
-	f := newDeliveryFixture(t)
-	ctx := context.Background()
-	_, err := f.service.MarkPushed(ctx, f.deliveryID, f.deviceID, 1)
-	require.NoError(t, err)
-
-	rejectAuditEffect(t, f.raw, "ACK")
-
-	changed, err := f.service.AcknowledgeReceipt(ctx, f.deliveryID, f.deviceID)
-	require.Error(t, err)
-	assert.False(t, changed)
-	row, getErr := f.store.GetDelivery(ctx, f.deliveryID)
-	require.NoError(t, getErr)
-	assert.Equal(t, delivery.StatePushed, row.State, "a failed audit insert must roll the delivery state back")
 }

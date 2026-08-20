@@ -247,9 +247,9 @@
   "instant_actions_reboot": "Neustart",
   "instant_actions_reboot_confirm_title": "Neustart bestätigen",
   "instant_actions_reboot_confirm_description": "Möchten Sie \"{hostname}\" wirklich neu starten? Das Gerät wird in 5 Minuten neu gestartet.",
-  "instant_actions_reboot_dispatched": "Neustart gesendet",
+  "instant_actions_reboot_dispatched": "Neustart angefordert",
   "instant_actions_sync": "Jetzt synchronisieren",
-  "instant_actions_sync_dispatched": "Synchronisation gesendet",
+  "instant_actions_sync_dispatched": "Synchronisation angefordert",
   "instant_actions_dispatching": "Wird gesendet...",
   "sync_1day": "1 Tag",
   "sync_1hour": "1 Stunde",
@@ -2360,7 +2360,7 @@
   "fleet_legend_idle": "nie gesehen · hohl",
   "fleet_legend_decay": "verblassend = Sync-Alter",
   "fleet_selection_groups": "über {count} Gruppen",
-  "fleet_selection_offline": "{count} offline werden eingereiht",
+  "fleet_selection_offline": "{count} offline für Live-Aufrufe nicht erreichbar",
   "fleet_selection_label": "{count} Geräte",
   "fleet_empty_title": "Keine Geräte registriert",
   "fleet_empty_hint": "Registrieren Sie einen Agenten mit einem Registrierungstoken — er erscheint hier, sobald er sich meldet.",
@@ -2383,23 +2383,8 @@
       }
     }
   ],
-  "bulk_reboot_confirm_description": "Jedes ausgewählte Gerät erhält einen eigenen Neustart-Auftrag.",
+  "bulk_reboot_confirm_description": "Jedes ausgewählte Gerät erhält einen eigenen Live-Neustart-Aufruf; Offline-Geräte schlagen fehl.",
   "bulk_confirm_more": "+ {count} weitere",
-  "bulk_reboot_queued": [
-    {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
-      "match": {
-        "countPlural=one": "1 offline — wird eingereiht, bis es sich wieder verbindet",
-        "countPlural=other": "{count} offline — werden eingereiht, bis sie sich wieder verbinden"
-      }
-    }
-  ],
   "bulk_reboot_dispatched": [
     {
       "declarations": [
@@ -2410,12 +2395,12 @@
         "countPlural"
       ],
       "match": {
-        "countPlural=one": "Neustart an 1 Gerät gesendet",
-        "countPlural=other": "Neustart an {count} Geräte gesendet"
+        "countPlural=one": "Neustart für 1 Gerät angefordert",
+        "countPlural=other": "Neustart für {count} Geräte angefordert"
       }
     }
   ],
-  "bulk_reboot_partial": "{ok} gesendet, {failed} fehlgeschlagen",
+  "bulk_reboot_partial": "{ok} angefordert, {failed} fehlgeschlagen",
   "bulk_label_dialog_title": [
     {
       "declarations": [

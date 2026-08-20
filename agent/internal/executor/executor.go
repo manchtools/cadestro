@@ -365,8 +365,6 @@ func (e *Executor) ExecuteWithStreaming(ctx context.Context, env *pb.Action, cal
 		var changed bool
 		output, changed, execErr = e.executeWifiAction(ctx, env.GetWifi(), env.DesiredState, envActionID(env))
 		result.Changed = changed
-	case pb.ActionType_ACTION_TYPE_REBOOT:
-		output, execErr = e.executeReboot(ctx)
 	case pb.ActionType_ACTION_TYPE_AGENT_UPDATE:
 		var changed bool
 		output, changed, execErr = e.executeAgentUpdate(ctx, env.GetAgentUpdate())
@@ -672,9 +670,4 @@ func (e *Executor) executeShellStreaming(ctx context.Context, params *pb.ShellPa
 
 	e.logger.Debug("verification passed, remediation successful")
 	return execOutput, verifyOutput, true, nil
-}
-
-// IsInstantAction returns true if the action type is an instant action (agent-builtin, no parameters).
-func IsInstantAction(t pb.ActionType) bool {
-	return t == pb.ActionType_ACTION_TYPE_REBOOT || t == pb.ActionType_ACTION_TYPE_SYNC
 }

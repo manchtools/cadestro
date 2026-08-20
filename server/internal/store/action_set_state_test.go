@@ -29,8 +29,8 @@ func TestActionSetState_CRUDCompilesAuthoredOrderAndPolicy(t *testing.T) {
 	ctx := context.Background()
 	now := time.Date(2026, 8, 1, 14, 0, 0, 0, time.UTC)
 	svc := authoring.New(authoring.Config{Store: st, Now: func() time.Time { return now }})
-	action1 := createNoParamsAction(t, svc, pmv1.ActionType_ACTION_TYPE_REBOOT)
-	action2 := createNoParamsAction(t, svc, pmv1.ActionType_ACTION_TYPE_SYNC)
+	action1 := createNoParamsAction(t, svc, pmv1.ActionType_ACTION_TYPE_UPDATE)
+	action2 := createNoParamsAction(t, svc, pmv1.ActionType_ACTION_TYPE_UPDATE)
 
 	createOp := actionOperation()
 	set, err := svc.CreateActionSet(ctx, createOp, authoring.CreateActionSetParams{
@@ -118,7 +118,7 @@ func TestActionSetState_RejectsSystemActionMembership(t *testing.T) {
 	require.NoError(t, err)
 	actionOp := actionOperation()
 	action, err := svc.CreateAction(context.Background(), actionOp, authoring.CreateActionParams{
-		Name: "managed", CreatedBy: actionOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_REBOOT,
+		Name: "managed", CreatedBy: actionOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)

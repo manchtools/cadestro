@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -45,12 +44,6 @@ func newEnvironmentFixture(t *testing.T) environmentFixture {
 	backupPath := filepath.Join(directory, "backups")
 	require.NoError(t, os.Mkdir(artifactPath, 0o700))
 	require.NoError(t, os.Mkdir(backupPath, 0o700))
-	// A configuration that loads successfully now needs the audit archive on
-	// its own mount, which a test cannot create without root — so the fixture
-	// models one. Cases that are about the separation itself put the real
-	// probe back with useRealFilesystemProbe.
-	modelSeparateFilesystems(t, backupPath)
-
 	return environmentFixture{
 		sessionKey: sessionKey,
 		values: map[string]string{
@@ -87,31 +80,6 @@ func setEnvironment(t *testing.T, values map[string]string) {
 	previous := configEnviron
 	configEnviron = func() []string { return entries }
 	t.Cleanup(func() { configEnviron = previous })
-}
-
-// modelSeparateFilesystems makes archivePath report a filesystem of its own
-// while every other path keeps its real identifier, so a stat failure still
-// surfaces instead of being masked by the model.
-func modelSeparateFilesystems(t *testing.T, archivePath string) {
-	t.Helper()
-	real := filesystemIDOf
-	filesystemIDOf = func(path string) (uint64, error) {
-		id, err := real(path)
-		if err != nil || path != archivePath {
-			return id, err
-		}
-		return id + 1, nil
-	}
-	t.Cleanup(func() { filesystemIDOf = real })
-}
-
-// useRealFilesystemProbe undoes the fixture's model for cases that must be
-// judged against the kernel's answer.
-func useRealFilesystemProbe(t *testing.T) {
-	t.Helper()
-	modelled := filesystemIDOf
-	filesystemIDOf = filesystemDeviceID
-	t.Cleanup(func() { filesystemIDOf = modelled })
 }
 
 func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
@@ -151,7 +119,6 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Equal(t, ":8082", cfg.AgentListen)
 	assert.Equal(t, "json", cfg.LogFormat)
 	assert.Equal(t, 8760*time.Hour, cfg.CertificateValidity)
-	assert.Equal(t, 90*24*time.Hour, cfg.AuditRetention)
 	assert.Equal(t, 26*time.Hour, cfg.BackupMaxLag)
 	assert.Empty(t, cfg.PublicTLSCertFile)
 	assert.Empty(t, cfg.PublicTLSKeyFile)
@@ -215,12 +182,6 @@ func TestLoadConfigFailsClosedAndNamesTheOffendingVariable(t *testing.T) {
 				fixture.values["CADESTRO_CERTIFICATE_VALIDITY"] = "forever"
 			},
 			expected: []string{"CADESTRO_CERTIFICATE_VALIDITY"},
-		},
-		"non-positive duration": {
-			mutate: func(_ *testing.T, fixture environmentFixture) {
-				fixture.values["CADESTRO_AUDIT_RETENTION"] = "0h"
-			},
-			expected: []string{"CADESTRO_AUDIT_RETENTION"},
 		},
 		"missing encryption key": {
 			mutate: func(_ *testing.T, fixture environmentFixture) {
@@ -416,7 +377,7 @@ func TestParseCommandAcceptsSubcommandsAndRejectsEverythingElse(t *testing.T) {
 		assert.Equal(t, name, command)
 	}
 
-	const hint = " (accepted commands: bootstrap-admin, backup-status, migrate-device-secrets)"
+	const hint = " (accepted commands: bootstrap-admin, backup-status)"
 	for message, args := range map[string][]string{
 		"unexpected arguments: -config /etc/cadestro/control.json" + hint: {"-config", "/etc/cadestro/control.json"},
 		"unexpected arguments: --help" + hint:                             {"--help"},
@@ -428,83 +389,6 @@ func TestParseCommandAcceptsSubcommandsAndRejectsEverythingElse(t *testing.T) {
 		assert.EqualError(t, err, message, "%v must be rejected", args)
 		assert.Empty(t, command)
 	}
-}
-
-// TestLoadConfigRefusesAnArchiveOnTheDatabaseFilesystem holds the enforced
-// half of "the audit chain's head is anchored off-host": an archive sharing a
-// mount with the database it is evidence for is not off-host, and whoever can
-// rewrite one can rewrite both. This case uses the REAL filesystem probe —
-// two directories under one temp dir genuinely are one mount — so it fails if
-// the check is removed, weakened, or made to depend only on the test seam.
-func TestLoadConfigRefusesAnArchiveOnTheDatabaseFilesystem(t *testing.T) {
-	fixture := newEnvironmentFixture(t)
-	useRealFilesystemProbe(t)
-	setEnvironment(t, fixture.values)
-
-	cfg, err := loadConfig()
-	require.Error(t, err)
-	assert.Nil(t, cfg)
-	assert.ErrorContains(t, err, fixture.values["CADESTRO_BACKUP_PATH"])
-	assert.ErrorContains(t, err, filepath.Dir(fixture.values["CADESTRO_DATABASE_PATH"]))
-	assert.ErrorContains(t, err, "same filesystem")
-	assert.ErrorContains(t, err, "separate mount",
-		"the operator must be told what to do, not only that something is wrong")
-}
-
-// TestLoadConfigAcceptsAnArchiveOnADistinctFilesystem is the positive control:
-// the refusal above must be about the shared mount and nothing else.
-func TestLoadConfigAcceptsAnArchiveOnADistinctFilesystem(t *testing.T) {
-	fixture := newEnvironmentFixture(t)
-	setEnvironment(t, fixture.values)
-
-	cfg, err := loadConfig()
-	require.NoError(t, err)
-	assert.Equal(t, fixture.values["CADESTRO_BACKUP_PATH"], cfg.BackupPath)
-}
-
-func TestArchiveIsolationProbesAnExistingDatabaseFile(t *testing.T) {
-	directory := t.TempDir()
-	database := filepath.Join(directory, "control.db")
-	archive := filepath.Join(directory, "archive")
-	require.NoError(t, os.WriteFile(database, []byte("sqlite"), 0o600))
-	require.NoError(t, os.Mkdir(archive, 0o700))
-
-	real := filesystemIDOf
-	filesystemIDOf = func(path string) (uint64, error) {
-		switch path {
-		case database:
-			return 1, nil
-		case archive, directory:
-			return 2, nil
-		default:
-			return 0, fmt.Errorf("unexpected probe %q", path)
-		}
-	}
-	t.Cleanup(func() { filesystemIDOf = real })
-
-	require.NoError(t, validateArchiveIsolation(database, archive),
-		"a bind-mounted database file can be isolated even when its parent is not")
-}
-
-// TestFilesystemDeviceIDIdentifiesOneMount pins what that decision rests on.
-// A probe that failed open — reporting distinct identifiers for one mount, or
-// swallowing a stat error — would make the refusal above unreachable in
-// production while the seam-driven cases stayed green.
-func TestFilesystemDeviceIDIdentifiesOneMount(t *testing.T) {
-	directory := t.TempDir()
-	first := filepath.Join(directory, "first")
-	second := filepath.Join(directory, "second")
-	require.NoError(t, os.Mkdir(first, 0o700))
-	require.NoError(t, os.Mkdir(second, 0o700))
-
-	firstID, err := filesystemDeviceID(first)
-	require.NoError(t, err)
-	secondID, err := filesystemDeviceID(second)
-	require.NoError(t, err)
-	assert.Equal(t, firstID, secondID, "two directories in one temp dir share a filesystem")
-
-	_, err = filesystemDeviceID(filepath.Join(directory, "absent"))
-	assert.Error(t, err, "an unstattable path must fail closed rather than read as a distinct mount")
 }
 
 func TestValidateConfigRequiresWritableDataDirectories(t *testing.T) {

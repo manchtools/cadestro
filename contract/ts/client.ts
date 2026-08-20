@@ -97,11 +97,11 @@ import {
 	// Dispatch & Execution
 	DispatchActionRequestSchema,
 	DispatchToMultipleRequestSchema,
-	DispatchAssignedActionsRequestSchema,
 	DispatchActionSetRequestSchema,
 	DispatchDefinitionRequestSchema,
 	DispatchToGroupRequestSchema,
-	DispatchInstantActionRequestSchema,
+	RebootDeviceRequestSchema,
+	SyncDeviceRequestSchema,
 	CancelExecutionRequestSchema,
 	GetExecutionRequestSchema,
 	ListExecutionsRequestSchema,
@@ -1077,14 +1077,6 @@ export class ApiClient {
 		return response.executions;
 	}
 
-	async dispatchAssignedActions(deviceId: string) {
-		const client = this.getClient();
-		const response = await client.dispatchAssignedActions(
-			create(DispatchAssignedActionsRequestSchema, { deviceId })
-		);
-		return response.executions;
-	}
-
 	async dispatchActionSet(deviceId: string, actionSetId: string) {
 		const client = this.getClient();
 		const response = await client.dispatchActionSet(
@@ -1112,21 +1104,14 @@ export class ApiClient {
 		return response.executions;
 	}
 
-	async dispatchInstantAction(
-		deviceId: string,
-		instantAction: ActionType,
-		options?: { runAt?: Date; respectMaintenanceWindow?: boolean }
-	) {
+	async rebootDevice(deviceId: string) {
 		const client = this.getClient();
-		const response = await client.dispatchInstantAction(
-			create(DispatchInstantActionRequestSchema, {
-				deviceId,
-				instantAction,
-				runAt: options?.runAt ? timestampFromDate(options.runAt) : undefined,
-				respectMaintenanceWindow: options?.respectMaintenanceWindow ?? false
-			})
-		);
-		return response.execution;
+		await client.rebootDevice(create(RebootDeviceRequestSchema, { deviceId }));
+	}
+
+	async syncDevice(deviceId: string) {
+		const client = this.getClient();
+		await client.syncDevice(create(SyncDeviceRequestSchema, { deviceId }));
 	}
 
 	// CancelExecution prunes a scheduled or pending dispatch before it

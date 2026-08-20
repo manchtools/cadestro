@@ -18,7 +18,7 @@ import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 export const COMPLIANCE_BUCKET = 'compliance';
 
 /** Bucket id for an ActionType the page's type filter has no slug for (the
- *  filter menu omits REBOOT / SYNC / SCRIPT_RUN / WIFI). Such a bucket is
+ *  filter menu omits SCRIPT_RUN / WIFI). Such a bucket is
  *  counted honestly and rendered, but it is NOT clickable — narrowing the list
  *  to it is something this page's filter genuinely cannot express. */
 export const UNFILTERABLE_PREFIX = 'type:';

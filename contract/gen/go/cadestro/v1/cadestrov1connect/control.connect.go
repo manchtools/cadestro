@@ -312,9 +312,12 @@ const (
 	// ControlServiceDispatchToMultipleProcedure is the fully-qualified name of the ControlService's
 	// DispatchToMultiple RPC.
 	ControlServiceDispatchToMultipleProcedure = "/cadestro.v1.ControlService/DispatchToMultiple"
-	// ControlServiceDispatchAssignedActionsProcedure is the fully-qualified name of the
-	// ControlService's DispatchAssignedActions RPC.
-	ControlServiceDispatchAssignedActionsProcedure = "/cadestro.v1.ControlService/DispatchAssignedActions"
+	// ControlServiceSyncDeviceProcedure is the fully-qualified name of the ControlService's SyncDevice
+	// RPC.
+	ControlServiceSyncDeviceProcedure = "/cadestro.v1.ControlService/SyncDevice"
+	// ControlServiceRebootDeviceProcedure is the fully-qualified name of the ControlService's
+	// RebootDevice RPC.
+	ControlServiceRebootDeviceProcedure = "/cadestro.v1.ControlService/RebootDevice"
 	// ControlServiceDispatchActionSetProcedure is the fully-qualified name of the ControlService's
 	// DispatchActionSet RPC.
 	ControlServiceDispatchActionSetProcedure = "/cadestro.v1.ControlService/DispatchActionSet"
@@ -324,9 +327,6 @@ const (
 	// ControlServiceDispatchToGroupProcedure is the fully-qualified name of the ControlService's
 	// DispatchToGroup RPC.
 	ControlServiceDispatchToGroupProcedure = "/cadestro.v1.ControlService/DispatchToGroup"
-	// ControlServiceDispatchInstantActionProcedure is the fully-qualified name of the ControlService's
-	// DispatchInstantAction RPC.
-	ControlServiceDispatchInstantActionProcedure = "/cadestro.v1.ControlService/DispatchInstantAction"
 	// ControlServiceCancelExecutionProcedure is the fully-qualified name of the ControlService's
 	// CancelExecution RPC.
 	ControlServiceCancelExecutionProcedure = "/cadestro.v1.ControlService/CancelExecution"
@@ -615,11 +615,11 @@ type ControlServiceClient interface {
 	// Action Dispatch & Execution
 	DispatchAction(context.Context, *connect.Request[v1.DispatchActionRequest]) (*connect.Response[v1.DispatchActionResponse], error)
 	DispatchToMultiple(context.Context, *connect.Request[v1.DispatchToMultipleRequest]) (*connect.Response[v1.DispatchToMultipleResponse], error)
-	DispatchAssignedActions(context.Context, *connect.Request[v1.DispatchAssignedActionsRequest]) (*connect.Response[v1.DispatchAssignedActionsResponse], error)
+	SyncDevice(context.Context, *connect.Request[v1.SyncDeviceRequest]) (*connect.Response[v1.SyncDeviceResponse], error)
+	RebootDevice(context.Context, *connect.Request[v1.RebootDeviceRequest]) (*connect.Response[v1.RebootDeviceResponse], error)
 	DispatchActionSet(context.Context, *connect.Request[v1.DispatchActionSetRequest]) (*connect.Response[v1.DispatchActionSetResponse], error)
 	DispatchDefinition(context.Context, *connect.Request[v1.DispatchDefinitionRequest]) (*connect.Response[v1.DispatchDefinitionResponse], error)
 	DispatchToGroup(context.Context, *connect.Request[v1.DispatchToGroupRequest]) (*connect.Response[v1.DispatchToGroupResponse], error)
-	DispatchInstantAction(context.Context, *connect.Request[v1.DispatchInstantActionRequest]) (*connect.Response[v1.DispatchInstantActionResponse], error)
 	CancelExecution(context.Context, *connect.Request[v1.CancelExecutionRequest]) (*connect.Response[v1.CancelExecutionResponse], error)
 	GetExecution(context.Context, *connect.Request[v1.GetExecutionRequest]) (*connect.Response[v1.GetExecutionResponse], error)
 	ListExecutions(context.Context, *connect.Request[v1.ListExecutionsRequest]) (*connect.Response[v1.ListExecutionsResponse], error)
@@ -1269,10 +1269,16 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("DispatchToMultiple")),
 			connect.WithClientOptions(opts...),
 		),
-		dispatchAssignedActions: connect.NewClient[v1.DispatchAssignedActionsRequest, v1.DispatchAssignedActionsResponse](
+		syncDevice: connect.NewClient[v1.SyncDeviceRequest, v1.SyncDeviceResponse](
 			httpClient,
-			baseURL+ControlServiceDispatchAssignedActionsProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("DispatchAssignedActions")),
+			baseURL+ControlServiceSyncDeviceProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("SyncDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		rebootDevice: connect.NewClient[v1.RebootDeviceRequest, v1.RebootDeviceResponse](
+			httpClient,
+			baseURL+ControlServiceRebootDeviceProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RebootDevice")),
 			connect.WithClientOptions(opts...),
 		),
 		dispatchActionSet: connect.NewClient[v1.DispatchActionSetRequest, v1.DispatchActionSetResponse](
@@ -1291,12 +1297,6 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+ControlServiceDispatchToGroupProcedure,
 			connect.WithSchema(controlServiceMethods.ByName("DispatchToGroup")),
-			connect.WithClientOptions(opts...),
-		),
-		dispatchInstantAction: connect.NewClient[v1.DispatchInstantActionRequest, v1.DispatchInstantActionResponse](
-			httpClient,
-			baseURL+ControlServiceDispatchInstantActionProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("DispatchInstantAction")),
 			connect.WithClientOptions(opts...),
 		),
 		cancelExecution: connect.NewClient[v1.CancelExecutionRequest, v1.CancelExecutionResponse](
@@ -1752,11 +1752,11 @@ type controlServiceClient struct {
 	listAvailableActions              *connect.Client[v1.ListAvailableActionsRequest, v1.ListAvailableActionsResponse]
 	dispatchAction                    *connect.Client[v1.DispatchActionRequest, v1.DispatchActionResponse]
 	dispatchToMultiple                *connect.Client[v1.DispatchToMultipleRequest, v1.DispatchToMultipleResponse]
-	dispatchAssignedActions           *connect.Client[v1.DispatchAssignedActionsRequest, v1.DispatchAssignedActionsResponse]
+	syncDevice                        *connect.Client[v1.SyncDeviceRequest, v1.SyncDeviceResponse]
+	rebootDevice                      *connect.Client[v1.RebootDeviceRequest, v1.RebootDeviceResponse]
 	dispatchActionSet                 *connect.Client[v1.DispatchActionSetRequest, v1.DispatchActionSetResponse]
 	dispatchDefinition                *connect.Client[v1.DispatchDefinitionRequest, v1.DispatchDefinitionResponse]
 	dispatchToGroup                   *connect.Client[v1.DispatchToGroupRequest, v1.DispatchToGroupResponse]
-	dispatchInstantAction             *connect.Client[v1.DispatchInstantActionRequest, v1.DispatchInstantActionResponse]
 	cancelExecution                   *connect.Client[v1.CancelExecutionRequest, v1.CancelExecutionResponse]
 	getExecution                      *connect.Client[v1.GetExecutionRequest, v1.GetExecutionResponse]
 	listExecutions                    *connect.Client[v1.ListExecutionsRequest, v1.ListExecutionsResponse]
@@ -2288,9 +2288,14 @@ func (c *controlServiceClient) DispatchToMultiple(ctx context.Context, req *conn
 	return c.dispatchToMultiple.CallUnary(ctx, req)
 }
 
-// DispatchAssignedActions calls cadestro.v1.ControlService.DispatchAssignedActions.
-func (c *controlServiceClient) DispatchAssignedActions(ctx context.Context, req *connect.Request[v1.DispatchAssignedActionsRequest]) (*connect.Response[v1.DispatchAssignedActionsResponse], error) {
-	return c.dispatchAssignedActions.CallUnary(ctx, req)
+// SyncDevice calls cadestro.v1.ControlService.SyncDevice.
+func (c *controlServiceClient) SyncDevice(ctx context.Context, req *connect.Request[v1.SyncDeviceRequest]) (*connect.Response[v1.SyncDeviceResponse], error) {
+	return c.syncDevice.CallUnary(ctx, req)
+}
+
+// RebootDevice calls cadestro.v1.ControlService.RebootDevice.
+func (c *controlServiceClient) RebootDevice(ctx context.Context, req *connect.Request[v1.RebootDeviceRequest]) (*connect.Response[v1.RebootDeviceResponse], error) {
+	return c.rebootDevice.CallUnary(ctx, req)
 }
 
 // DispatchActionSet calls cadestro.v1.ControlService.DispatchActionSet.
@@ -2306,11 +2311,6 @@ func (c *controlServiceClient) DispatchDefinition(ctx context.Context, req *conn
 // DispatchToGroup calls cadestro.v1.ControlService.DispatchToGroup.
 func (c *controlServiceClient) DispatchToGroup(ctx context.Context, req *connect.Request[v1.DispatchToGroupRequest]) (*connect.Response[v1.DispatchToGroupResponse], error) {
 	return c.dispatchToGroup.CallUnary(ctx, req)
-}
-
-// DispatchInstantAction calls cadestro.v1.ControlService.DispatchInstantAction.
-func (c *controlServiceClient) DispatchInstantAction(ctx context.Context, req *connect.Request[v1.DispatchInstantActionRequest]) (*connect.Response[v1.DispatchInstantActionResponse], error) {
-	return c.dispatchInstantAction.CallUnary(ctx, req)
 }
 
 // CancelExecution calls cadestro.v1.ControlService.CancelExecution.
@@ -2720,11 +2720,11 @@ type ControlServiceHandler interface {
 	// Action Dispatch & Execution
 	DispatchAction(context.Context, *connect.Request[v1.DispatchActionRequest]) (*connect.Response[v1.DispatchActionResponse], error)
 	DispatchToMultiple(context.Context, *connect.Request[v1.DispatchToMultipleRequest]) (*connect.Response[v1.DispatchToMultipleResponse], error)
-	DispatchAssignedActions(context.Context, *connect.Request[v1.DispatchAssignedActionsRequest]) (*connect.Response[v1.DispatchAssignedActionsResponse], error)
+	SyncDevice(context.Context, *connect.Request[v1.SyncDeviceRequest]) (*connect.Response[v1.SyncDeviceResponse], error)
+	RebootDevice(context.Context, *connect.Request[v1.RebootDeviceRequest]) (*connect.Response[v1.RebootDeviceResponse], error)
 	DispatchActionSet(context.Context, *connect.Request[v1.DispatchActionSetRequest]) (*connect.Response[v1.DispatchActionSetResponse], error)
 	DispatchDefinition(context.Context, *connect.Request[v1.DispatchDefinitionRequest]) (*connect.Response[v1.DispatchDefinitionResponse], error)
 	DispatchToGroup(context.Context, *connect.Request[v1.DispatchToGroupRequest]) (*connect.Response[v1.DispatchToGroupResponse], error)
-	DispatchInstantAction(context.Context, *connect.Request[v1.DispatchInstantActionRequest]) (*connect.Response[v1.DispatchInstantActionResponse], error)
 	CancelExecution(context.Context, *connect.Request[v1.CancelExecutionRequest]) (*connect.Response[v1.CancelExecutionResponse], error)
 	GetExecution(context.Context, *connect.Request[v1.GetExecutionRequest]) (*connect.Response[v1.GetExecutionResponse], error)
 	ListExecutions(context.Context, *connect.Request[v1.ListExecutionsRequest]) (*connect.Response[v1.ListExecutionsResponse], error)
@@ -3370,10 +3370,16 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		connect.WithSchema(controlServiceMethods.ByName("DispatchToMultiple")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlServiceDispatchAssignedActionsHandler := connect.NewUnaryHandler(
-		ControlServiceDispatchAssignedActionsProcedure,
-		svc.DispatchAssignedActions,
-		connect.WithSchema(controlServiceMethods.ByName("DispatchAssignedActions")),
+	controlServiceSyncDeviceHandler := connect.NewUnaryHandler(
+		ControlServiceSyncDeviceProcedure,
+		svc.SyncDevice,
+		connect.WithSchema(controlServiceMethods.ByName("SyncDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceRebootDeviceHandler := connect.NewUnaryHandler(
+		ControlServiceRebootDeviceProcedure,
+		svc.RebootDevice,
+		connect.WithSchema(controlServiceMethods.ByName("RebootDevice")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceDispatchActionSetHandler := connect.NewUnaryHandler(
@@ -3392,12 +3398,6 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		ControlServiceDispatchToGroupProcedure,
 		svc.DispatchToGroup,
 		connect.WithSchema(controlServiceMethods.ByName("DispatchToGroup")),
-		connect.WithHandlerOptions(opts...),
-	)
-	controlServiceDispatchInstantActionHandler := connect.NewUnaryHandler(
-		ControlServiceDispatchInstantActionProcedure,
-		svc.DispatchInstantAction,
-		connect.WithSchema(controlServiceMethods.ByName("DispatchInstantAction")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceCancelExecutionHandler := connect.NewUnaryHandler(
@@ -3944,16 +3944,16 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceDispatchActionHandler.ServeHTTP(w, r)
 		case ControlServiceDispatchToMultipleProcedure:
 			controlServiceDispatchToMultipleHandler.ServeHTTP(w, r)
-		case ControlServiceDispatchAssignedActionsProcedure:
-			controlServiceDispatchAssignedActionsHandler.ServeHTTP(w, r)
+		case ControlServiceSyncDeviceProcedure:
+			controlServiceSyncDeviceHandler.ServeHTTP(w, r)
+		case ControlServiceRebootDeviceProcedure:
+			controlServiceRebootDeviceHandler.ServeHTTP(w, r)
 		case ControlServiceDispatchActionSetProcedure:
 			controlServiceDispatchActionSetHandler.ServeHTTP(w, r)
 		case ControlServiceDispatchDefinitionProcedure:
 			controlServiceDispatchDefinitionHandler.ServeHTTP(w, r)
 		case ControlServiceDispatchToGroupProcedure:
 			controlServiceDispatchToGroupHandler.ServeHTTP(w, r)
-		case ControlServiceDispatchInstantActionProcedure:
-			controlServiceDispatchInstantActionHandler.ServeHTTP(w, r)
 		case ControlServiceCancelExecutionProcedure:
 			controlServiceCancelExecutionHandler.ServeHTTP(w, r)
 		case ControlServiceGetExecutionProcedure:
@@ -4457,8 +4457,12 @@ func (UnimplementedControlServiceHandler) DispatchToMultiple(context.Context, *c
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DispatchToMultiple is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) DispatchAssignedActions(context.Context, *connect.Request[v1.DispatchAssignedActionsRequest]) (*connect.Response[v1.DispatchAssignedActionsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DispatchAssignedActions is not implemented"))
+func (UnimplementedControlServiceHandler) SyncDevice(context.Context, *connect.Request[v1.SyncDeviceRequest]) (*connect.Response[v1.SyncDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.SyncDevice is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) RebootDevice(context.Context, *connect.Request[v1.RebootDeviceRequest]) (*connect.Response[v1.RebootDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RebootDevice is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) DispatchActionSet(context.Context, *connect.Request[v1.DispatchActionSetRequest]) (*connect.Response[v1.DispatchActionSetResponse], error) {
@@ -4471,10 +4475,6 @@ func (UnimplementedControlServiceHandler) DispatchDefinition(context.Context, *c
 
 func (UnimplementedControlServiceHandler) DispatchToGroup(context.Context, *connect.Request[v1.DispatchToGroupRequest]) (*connect.Response[v1.DispatchToGroupResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DispatchToGroup is not implemented"))
-}
-
-func (UnimplementedControlServiceHandler) DispatchInstantAction(context.Context, *connect.Request[v1.DispatchInstantActionRequest]) (*connect.Response[v1.DispatchInstantActionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DispatchInstantAction is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) CancelExecution(context.Context, *connect.Request[v1.CancelExecutionRequest]) (*connect.Response[v1.CancelExecutionResponse], error) {

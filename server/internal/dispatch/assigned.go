@@ -16,8 +16,8 @@ import (
 )
 
 // CompileAssigned is the single assignment/compiler path used by both the
-// compatibility RPC and authenticated agent Sync. A nil visibility callback
-// is reserved for the mTLS device path; user RPCs provide their scope check.
+// admin RPC and authenticated agent Sync. A nil visibility callback is
+// reserved for the mTLS device path; user RPCs provide their scope check.
 func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Compiler, deviceID string, visible func(context.Context, string, string) error) ([]*pmv1.Manifest, error) {
 	paths, err := st.ListResolvedSources(ctx, deviceID)
 	if err != nil {

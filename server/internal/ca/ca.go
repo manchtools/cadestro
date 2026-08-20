@@ -186,8 +186,7 @@ func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) 
 }
 
 // serverCertValidity is the fixed short-lived TTL for control-plane server
-// certificates: 45 days, distinct from the agent-cert ca.validity. Short-lived
-// so an abandoned or revoked one self-expires within the window on its own.
+// certificates: 45 days, distinct from the agent-cert ca.validity.
 const serverCertValidity = 45 * 24 * time.Hour
 
 // IssueCertificateFromCSR signs an agent Certificate Signing Request and returns
@@ -365,8 +364,7 @@ func FingerprintFromPEM(certPEM []byte) (string, error) {
 	return hex.EncodeToString(fingerprint[:]), nil
 }
 
-// NotAfterFromPEM returns the expiry of a PEM-encoded certificate. Revocation
-// rows need not outlive the certificate because mTLS already rejects expiry.
+// NotAfterFromPEM returns the expiry of a PEM-encoded certificate.
 func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {
@@ -380,15 +378,10 @@ func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
 }
 
 // FingerprintFromCert computes the fingerprint of an already-parsed
-// certificate. It is byte-for-byte identical to FingerprintFromPEM /
-// IssueCertificateFromCSR (hex of SHA-256 over the DER), so a fingerprint the
-// control server stored or revoked matches one control derives from the
-// cert presented on an mTLS connection. cert.Raw is the DER encoding.
+// certificate. cert.Raw is the DER encoding.
 func FingerprintFromCert(cert *x509.Certificate) string {
 	// Defensive: callers reach this from the mTLS path where the leaf is
-	// already verified non-nil, but never panic on a hot request path. An empty
-	// fingerprint matches no revoked entry — a nil cert is already rejected by
-	// the peer-class / TLS checks upstream, so this fails safe, not open.
+	// already verified non-nil, but never panic on a hot request path.
 	if cert == nil {
 		return ""
 	}
