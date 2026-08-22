@@ -8,14 +8,12 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/manifest"
@@ -36,7 +34,6 @@ type Handlers struct {
 	compiler  *manifest.Compiler
 	submitter *Service
 	logger    *slog.Logger
-	validator *validator.Validate
 	sender    func(deviceID string, message *pmv1.ServerMessage) error
 	liveMu    sync.Mutex
 	live      map[string]pendingLiveOperation
@@ -66,23 +63,9 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 	return &Handlers{
 		store: cfg.Store, compiler: manifest.New(cfg.Store),
 		submitter: New(Config{Store: cfg.Store, Now: cfg.Now}),
-		logger:    cfg.Logger, validator: sdkvalidate.NewValidator(), sender: cfg.Sender,
+		logger:    cfg.Logger, sender: cfg.Sender,
 		live: make(map[string]pendingLiveOperation),
 	}
-}
-
-func (h *Handlers) validate(ctx context.Context, message any) error {
-	if detail, ok := sdkvalidate.Struct(h.validator, message); !ok {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	return h.validate(ctx, req.Msg)
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -154,9 +137,6 @@ func (h *Handlers) internal(ctx context.Context, operation string, err error) *c
 
 // DispatchAction compiles one catalog or inline Action and durably submits it.
 func (h *Handlers) DispatchAction(ctx context.Context, req *connect.Request[pmv1.DispatchActionRequest]) (*connect.Response[pmv1.DispatchActionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -206,9 +186,6 @@ func (h *Handlers) DispatchAction(ctx context.Context, req *connect.Request[pmv1
 // DispatchActionSet compiles the set once and submits its ordered occurrences
 // as one complete delivery.
 func (h *Handlers) DispatchActionSet(ctx context.Context, req *connect.Request[pmv1.DispatchActionSetRequest]) (*connect.Response[pmv1.DispatchActionSetResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -235,9 +212,6 @@ func (h *Handlers) DispatchActionSet(ctx context.Context, req *connect.Request[p
 // DispatchDefinition compiles one globally ordered runbook and commits it
 // atomically without mutating any authored schedule.
 func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[pmv1.DispatchDefinitionRequest]) (*connect.Response[pmv1.DispatchDefinitionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -263,9 +237,6 @@ func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[
 
 // DispatchToMultiple atomically submits one Action to every named device.
 func (h *Handlers) DispatchToMultiple(ctx context.Context, req *connect.Request[pmv1.DispatchToMultipleRequest]) (*connect.Response[pmv1.DispatchToMultipleResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -318,9 +289,6 @@ func (h *Handlers) DispatchToMultiple(ctx context.Context, req *connect.Request[
 // DispatchToGroup snapshots the group's live members, then atomically submits
 // one freshly identified copy of the selected source to every member.
 func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv1.DispatchToGroupRequest]) (*connect.Response[pmv1.DispatchToGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -412,9 +380,6 @@ func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[pmv
 
 // SyncDevice asks a connected agent to run its normal full Sync.
 func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[pmv1.SyncDeviceRequest]) (*connect.Response[pmv1.SyncDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -432,9 +397,6 @@ func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[pmv1.Syn
 
 // RebootDevice asks a connected agent to schedule its safe delayed reboot.
 func (h *Handlers) RebootDevice(ctx context.Context, req *connect.Request[pmv1.RebootDeviceRequest]) (*connect.Response[pmv1.RebootDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

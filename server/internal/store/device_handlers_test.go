@@ -174,135 +174,135 @@ func (f *deviceHandlerFixture) actor(perms ...string) context.Context {
 
 func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newDeviceHandlerFixture(t)
-	_, err := f.handlers.GetDevice(context.Background(), connect.NewRequest(&pmv1.GetDeviceRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetDevice)(context.Background(), connect.NewRequest(&pmv1.GetDeviceRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceInventory(context.Background(),
+	_, err = validated(f.handlers.GetDeviceInventory)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceInventoryRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.GetOSQueryResult(context.Background(),
+	_, err = validated(f.handlers.GetOSQueryResult)(context.Background(),
 		connect.NewRequest(&pmv1.GetOSQueryResultRequest{QueryId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceLogResult(context.Background(),
+	_, err = validated(f.handlers.GetDeviceLogResult)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceLogResultRequest{QueryId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceCompliance(context.Background(),
+	_, err = validated(f.handlers.GetDeviceCompliance)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceComplianceRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceCompliancePolicyStatus(context.Background(),
+	_, err = validated(f.handlers.GetDeviceCompliancePolicyStatus)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceCompliancePolicyStatusRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.GetExecution(context.Background(),
+	_, err = validated(f.handlers.GetExecution)(context.Background(),
 		connect.NewRequest(&pmv1.GetExecutionRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.CancelExecution(context.Background(),
+	_, err = validated(f.handlers.CancelExecution)(context.Background(),
 		connect.NewRequest(&pmv1.CancelExecutionRequest{ExecutionId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.ListLpsPasswords(context.Background(),
+	_, err = validated(f.handlers.ListLpsPasswords)(context.Background(),
 		connect.NewRequest(&pmv1.ListLpsPasswordsRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.RevealLpsPassword(context.Background(),
+	_, err = validated(f.handlers.RevealLpsPassword)(context.Background(),
 		connect.NewRequest(&pmv1.RevealLpsPasswordRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.ListLuksKeys(context.Background(),
+	_, err = validated(f.handlers.ListLuksKeys)(context.Background(),
 		connect.NewRequest(&pmv1.ListLuksKeysRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.RevealLuksKey(context.Background(),
+	_, err = validated(f.handlers.RevealLuksKey)(context.Background(),
 		connect.NewRequest(&pmv1.RevealLuksKeyRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.CreateLuksToken(context.Background(),
+	_, err = validated(f.handlers.CreateLuksToken)(context.Background(),
 		connect.NewRequest(&pmv1.CreateLuksTokenRequest{DeviceId: "bad", ActionId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.RevokeLuksDeviceKey(context.Background(),
+	_, err = validated(f.handlers.RevokeLuksDeviceKey)(context.Background(),
 		connect.NewRequest(&pmv1.RevokeLuksDeviceKeyRequest{DeviceId: "bad", ActionId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.DispatchOSQuery(context.Background(),
+	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
 		connect.NewRequest(&pmv1.DispatchOSQueryRequest{DeviceId: "bad", Table: "packages"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.QueryDeviceLogs(context.Background(),
+	_, err = validated(f.handlers.QueryDeviceLogs)(context.Background(),
 		connect.NewRequest(&pmv1.QueryDeviceLogsRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.RefreshDeviceInventory(context.Background(),
+	_, err = validated(f.handlers.RefreshDeviceInventory)(context.Background(),
 		connect.NewRequest(&pmv1.RefreshDeviceInventoryRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.StartTerminal(context.Background(),
+	_, err = validated(f.handlers.StartTerminal)(context.Background(),
 		connect.NewRequest(&pmv1.StartTerminalRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.StopTerminal(context.Background(),
+	_, err = validated(f.handlers.StopTerminal)(context.Background(),
 		connect.NewRequest(&pmv1.StopTerminalRequest{SessionId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.TerminateTerminalSession(context.Background(),
+	_, err = validated(f.handlers.TerminateTerminalSession)(context.Background(),
 		connect.NewRequest(&pmv1.TerminateTerminalSessionRequest{SessionId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.ListActiveTerminalSessions(context.Background(),
+	_, err = validated(f.handlers.ListActiveTerminalSessions)(context.Background(),
 		connect.NewRequest(&pmv1.ListActiveTerminalSessionsRequest{PageToken: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = f.handlers.DispatchOSQuery(context.Background(),
+	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
 		connect.NewRequest(&pmv1.DispatchOSQueryRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), "custom shape validation must precede authentication")
 
-	_, err = f.handlers.GetDevice(context.Background(), connect.NewRequest(&pmv1.GetDeviceRequest{Id: f.directID}))
+	_, err = validated(f.handlers.GetDevice)(context.Background(), connect.NewRequest(&pmv1.GetDeviceRequest{Id: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceInventory(context.Background(),
+	_, err = validated(f.handlers.GetDeviceInventory)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceInventoryRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.GetOSQueryResult(context.Background(),
+	_, err = validated(f.handlers.GetOSQueryResult)(context.Background(),
 		connect.NewRequest(&pmv1.GetOSQueryResultRequest{QueryId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceLogResult(context.Background(),
+	_, err = validated(f.handlers.GetDeviceLogResult)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceLogResultRequest{QueryId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceCompliance(context.Background(),
+	_, err = validated(f.handlers.GetDeviceCompliance)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceComplianceRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.GetDeviceCompliancePolicyStatus(context.Background(),
+	_, err = validated(f.handlers.GetDeviceCompliancePolicyStatus)(context.Background(),
 		connect.NewRequest(&pmv1.GetDeviceCompliancePolicyStatusRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.GetExecution(context.Background(),
+	_, err = validated(f.handlers.GetExecution)(context.Background(),
 		connect.NewRequest(&pmv1.GetExecutionRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.ListExecutions(context.Background(),
+	_, err = validated(f.handlers.ListExecutions)(context.Background(),
 		connect.NewRequest(&pmv1.ListExecutionsRequest{}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.CancelExecution(context.Background(),
+	_, err = validated(f.handlers.CancelExecution)(context.Background(),
 		connect.NewRequest(&pmv1.CancelExecutionRequest{ExecutionId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.ListLpsPasswords(context.Background(),
+	_, err = validated(f.handlers.ListLpsPasswords)(context.Background(),
 		connect.NewRequest(&pmv1.ListLpsPasswordsRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.RevealLpsPassword(context.Background(),
+	_, err = validated(f.handlers.RevealLpsPassword)(context.Background(),
 		connect.NewRequest(&pmv1.RevealLpsPasswordRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.ListLuksKeys(context.Background(),
+	_, err = validated(f.handlers.ListLuksKeys)(context.Background(),
 		connect.NewRequest(&pmv1.ListLuksKeysRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.RevealLuksKey(context.Background(),
+	_, err = validated(f.handlers.RevealLuksKey)(context.Background(),
 		connect.NewRequest(&pmv1.RevealLuksKeyRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.CreateLuksToken(context.Background(),
+	_, err = validated(f.handlers.CreateLuksToken)(context.Background(),
 		connect.NewRequest(&pmv1.CreateLuksTokenRequest{DeviceId: f.directID, ActionId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.RevokeLuksDeviceKey(context.Background(),
+	_, err = validated(f.handlers.RevokeLuksDeviceKey)(context.Background(),
 		connect.NewRequest(&pmv1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.DispatchOSQuery(context.Background(),
+	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
 		connect.NewRequest(&pmv1.DispatchOSQueryRequest{DeviceId: f.directID, Table: "packages"}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.QueryDeviceLogs(context.Background(),
+	_, err = validated(f.handlers.QueryDeviceLogs)(context.Background(),
 		connect.NewRequest(&pmv1.QueryDeviceLogsRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.RefreshDeviceInventory(context.Background(),
+	_, err = validated(f.handlers.RefreshDeviceInventory)(context.Background(),
 		connect.NewRequest(&pmv1.RefreshDeviceInventoryRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.StartTerminal(context.Background(),
+	_, err = validated(f.handlers.StartTerminal)(context.Background(),
 		connect.NewRequest(&pmv1.StartTerminalRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.StopTerminal(context.Background(),
+	_, err = validated(f.handlers.StopTerminal)(context.Background(),
 		connect.NewRequest(&pmv1.StopTerminalRequest{SessionId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.TerminateTerminalSession(context.Background(),
+	_, err = validated(f.handlers.TerminateTerminalSession)(context.Background(),
 		connect.NewRequest(&pmv1.TerminateTerminalSessionRequest{SessionId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = f.handlers.ListActiveTerminalSessions(context.Background(),
+	_, err = validated(f.handlers.ListActiveTerminalSessions)(context.Background(),
 		connect.NewRequest(&pmv1.ListActiveTerminalSessionsRequest{}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }

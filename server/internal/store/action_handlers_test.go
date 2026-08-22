@@ -66,10 +66,10 @@ func shellCreate(name string) *pmv1.CreateActionRequest {
 
 func TestActionHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := f.handlers.GetAction(context.Background(), connect.NewRequest(&pmv1.GetActionRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&pmv1.GetActionRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.GetAction(context.Background(), connect.NewRequest(&pmv1.GetActionRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&pmv1.GetActionRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

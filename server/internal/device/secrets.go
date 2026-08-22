@@ -28,9 +28,6 @@ const luksTokenTTL = 24 * time.Hour
 // ListLpsPasswords returns bounded current and historical LPS metadata. Its
 // store query does not select ciphertext.
 func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[pmv1.ListLpsPasswordsRequest]) (*connect.Response[pmv1.ListLpsPasswordsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -61,9 +58,6 @@ func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[pm
 // RevealLpsPassword returns one plaintext password only after the dedicated
 // reveal operation and its device/action/entry effects are durable.
 func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[pmv1.RevealLpsPasswordRequest]) (*connect.Response[pmv1.RevealLpsPasswordResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -104,9 +98,6 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[p
 // ListLuksKeys returns bounded current and historical LUKS metadata. Its store
 // query does not select ciphertext.
 func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[pmv1.ListLuksKeysRequest]) (*connect.Response[pmv1.ListLuksKeysResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -137,9 +128,6 @@ func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[pmv1.L
 // RevealLuksKey returns one plaintext passphrase only after the dedicated
 // reveal operation and its device/action/entry effects are durable.
 func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[pmv1.RevealLuksKeyRequest]) (*connect.Response[pmv1.RevealLuksKeyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -246,9 +234,6 @@ func (h *Handlers) recordSecretReveal(
 // CreateLuksToken atomically persists a hash of a one-time owner token with
 // its audit evidence. The plaintext is returned exactly once.
 func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv1.CreateLuksTokenRequest]) (*connect.Response[pmv1.CreateLuksTokenResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

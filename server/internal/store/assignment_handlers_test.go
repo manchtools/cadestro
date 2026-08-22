@@ -106,10 +106,10 @@ func newAssignmentHandlerFixture(t *testing.T) *assignmentHandlerFixture {
 
 func TestAssignmentHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newAssignmentHandlerFixture(t)
-	_, err := f.handlers.DeleteAssignment(context.Background(), connect.NewRequest(&pmv1.DeleteAssignmentRequest{Id: "bad"}))
+	_, err := validated(f.handlers.DeleteAssignment)(context.Background(), connect.NewRequest(&pmv1.DeleteAssignmentRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.DeleteAssignment(context.Background(), connect.NewRequest(&pmv1.DeleteAssignmentRequest{Id: newID()}))
+	_, err = validated(f.handlers.DeleteAssignment)(context.Background(), connect.NewRequest(&pmv1.DeleteAssignmentRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

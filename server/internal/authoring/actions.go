@@ -14,9 +14,6 @@ import (
 
 // CreateAction validates and writes one ordinary Action with its audit effect.
 func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[pmv1.CreateActionRequest]) (*connect.Response[pmv1.CreateActionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -49,9 +46,6 @@ func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[pmv1.C
 // GetAction returns one operator-visible Action without revealing system or
 // out-of-scope rows.
 func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[pmv1.GetActionRequest]) (*connect.Response[pmv1.GetActionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -75,9 +69,6 @@ func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[pmv1.GetA
 // ListActions returns a deterministic SQLite keyset page. Scope,
 // assignment and type filters are all applied before pagination.
 func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[pmv1.ListActionsRequest]) (*connect.Response[pmv1.ListActionsResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -133,9 +124,6 @@ func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[pmv1.Li
 
 // RenameAction replaces an Action name with audited last-write-wins CRUD.
 func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[pmv1.RenameActionRequest]) (*connect.Response[pmv1.UpdateActionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameAction")
 	if err != nil {
 		return nil, err
@@ -147,9 +135,6 @@ func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[pmv1.R
 
 // UpdateActionDescription replaces an Action description.
 func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Request[pmv1.UpdateActionDescriptionRequest]) (*connect.Response[pmv1.UpdateActionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateActionDescription")
 	if err != nil {
 		return nil, err
@@ -163,9 +148,6 @@ func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Req
 // UpdateActionParams replaces the mutable execution fields while keeping the
 // Action type immutable.
 func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[pmv1.UpdateActionParamsRequest]) (*connect.Response[pmv1.UpdateActionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, row, err := h.mutationAction(ctx, req.Msg.Id, "UpdateActionParams")
 	if err != nil {
 		return nil, err
@@ -184,9 +166,6 @@ func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[
 
 // DeleteAction soft-deletes an Action and its composition edges atomically.
 func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[pmv1.DeleteActionRequest]) (*connect.Response[pmv1.DeleteActionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteAction")
 	if err != nil {
 		return nil, err

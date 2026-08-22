@@ -69,16 +69,16 @@ func TestTokenHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	// well-formed one from the same anonymous caller gets as far as
 	// authentication. Asserted on both a read and a mutation so the ordering
 	// is a property of the package, not of one handler.
-	_, err := f.handlers.RenameToken(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: "bad", Name: "n"}))
+	_, err := validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: "bad", Name: "n"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.RenameToken(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: newID(), Name: "n"}))
+	_, err = validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: newID(), Name: "n"}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 
-	_, err = f.handlers.ListTokens(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{PageToken: "not-a-ulid"}))
+	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{PageToken: "not-a-ulid"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.ListTokens(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{}))
+	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

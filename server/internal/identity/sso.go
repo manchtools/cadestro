@@ -35,9 +35,6 @@ const authFlowBrowser = "browser"
 // the list to an address would report whether that address has an
 // account here, which is a free enumeration oracle on the login page.
 func (h *Handlers) ListAuthMethods(ctx context.Context, req *connect.Request[pmv1.ListAuthMethodsRequest]) (*connect.Response[pmv1.ListAuthMethodsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	providers, err := h.store.ListEnabledIdentityProviders(ctx)
 	if err != nil {
 		return nil, internalError(ctx, "failed to list authentication methods")
@@ -61,9 +58,6 @@ func (h *Handlers) ListAuthMethods(ctx context.Context, req *connect.Request[pmv
 // state, so an attacker who observes the redirect learns nothing that
 // lets them complete somebody else's exchange.
 func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[pmv1.GetSSOLoginURLRequest]) (*connect.Response[pmv1.GetSSOLoginURLResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	provider, err := h.store.GetIdentityProviderBySlug(ctx, req.Msg.Slug)
 	if err != nil {
 		if store.IsNotFound(err) {
@@ -157,9 +151,6 @@ func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[pmv1
 // groups and stamping the login. A failure anywhere leaves no half-made
 // account and no spent state.
 func (h *Handlers) SSOCallback(ctx context.Context, req *connect.Request[pmv1.SSOCallbackRequest]) (*connect.Response[pmv1.SSOCallbackResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	provider, err := h.store.GetIdentityProviderBySlug(ctx, req.Msg.Slug)
 	if err != nil {
 		if store.IsNotFound(err) {

@@ -96,9 +96,6 @@ func (r storeScopeResolver) DeviceGroupsForDevice(context.Context, string) ([]st
 
 // GetUser returns one subject.
 func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[pmv1.GetUserRequest]) (*connect.Response[pmv1.GetUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.resolveUserTarget(ctx, PermGetUser, req.Msg.Id); err != nil {
 		return nil, err
 	}
@@ -118,9 +115,6 @@ func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[pmv1.GetUse
 // The narrowing happens here, on rows already read, because the scope
 // set comes from the caller's token and the page is bounded.
 func (h *Handlers) ListUsers(ctx context.Context, req *connect.Request[pmv1.ListUsersRequest]) (*connect.Response[pmv1.ListUsersResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -189,9 +183,6 @@ func (h *Handlers) userInGroups(ctx context.Context, userID string, groups []str
 // EraseJITUser removes a subject created by optional OIDC JIT. SCIM-created
 // subjects fail closed because their lifecycle remains owned by SCIM.
 func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[pmv1.EraseJITUserRequest]) (*connect.Response[pmv1.EraseJITUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermEraseJITUser, req.Msg.Id)
 	if err != nil {
 		return nil, err
@@ -226,9 +217,6 @@ func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[pmv1.E
 // sealed under the subject's own key: erasing the subject destroys the
 // key and with it the readable form, while the attribution survives.
 func (h *Handlers) UpdateUserEmail(ctx context.Context, req *connect.Request[pmv1.UpdateUserEmailRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermUpdateUserEmail, req.Msg.Id)
 	if err != nil {
 		return nil, err
@@ -282,9 +270,6 @@ func (h *Handlers) UpdateUserEmail(ctx context.Context, req *connect.Request[pmv
 // session. The statement bumps session_version, so every token already
 // issued to them stops validating at the next refresh.
 func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[pmv1.SetUserDisabledRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -345,9 +330,6 @@ func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[pmv
 
 // UpdateUserProfile writes the OIDC profile fields.
 func (h *Handlers) UpdateUserProfile(ctx context.Context, req *connect.Request[pmv1.UpdateUserProfileRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermUpdateUserProfile, req.Msg.Id)
 	if err != nil {
 		return nil, err
@@ -398,9 +380,6 @@ func (h *Handlers) UpdateUserProfile(ctx context.Context, req *connect.Request[p
 // subject choose their own would let them collide with an existing
 // privileged account.
 func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Request[pmv1.UpdateUserLinuxUsernameRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -445,9 +424,6 @@ func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Req
 
 // UpdateUserSshSettings writes a subject's SSH access flags.
 func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Request[pmv1.UpdateUserSshSettingsRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermUpdateUserSshSettings, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -493,9 +469,6 @@ func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Reque
 // SetUserProvisioningEnabled toggles whether the subject's OS account
 // is provisioned on managed devices.
 func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.Request[pmv1.SetUserProvisioningEnabledRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermSetUserProvisioningEnabled, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -543,9 +516,6 @@ func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.
 // nothing, and the fingerprint the audit record needs comes from the
 // parse.
 func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[pmv1.AddUserSshKeyRequest]) (*connect.Response[pmv1.AddUserSshKeyResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermAddUserSshKey, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -601,9 +571,6 @@ func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[pmv1.
 
 // RemoveUserSshKey withdraws an authorized key.
 func (h *Handlers) RemoveUserSshKey(ctx context.Context, req *connect.Request[pmv1.RemoveUserSshKeyRequest]) (*connect.Response[pmv1.RemoveUserSshKeyResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	before, err := h.resolveUserTarget(ctx, PermRemoveUserSshKey, req.Msg.UserId)
 	if err != nil {
 		return nil, err

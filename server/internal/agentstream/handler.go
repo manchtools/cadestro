@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/delivery"
@@ -117,7 +117,7 @@ type Handler struct {
 	deviceLoginURL    string
 	heartbeatInterval time.Duration
 	now               func() time.Time
-	validator         interface{ Struct(any) error }
+	validator         protovalidate.Validator
 	frameLimiters     map[frameClass]*auth.RateLimiter
 	frameDropAudits   *auth.RateLimiter
 }
@@ -140,7 +140,7 @@ func New(cfg Config) *Handler {
 		terminalSessions: cfg.TerminalSessions, logger: cfg.Logger,
 		serverVersion: cfg.ServerVersion, deviceLoginURL: cfg.DeviceLoginURL,
 		heartbeatInterval: cfg.HeartbeatInterval, now: cfg.Now,
-		validator: sdkvalidate.NewValidator(),
+		validator: protovalidate.GlobalValidator,
 		// These are deliberately generous ingestion ceilings, not ordinary
 		// operating rates. A healthy agent stays far below every budget.
 		frameLimiters: map[frameClass]*auth.RateLimiter{
@@ -178,7 +178,7 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 	if err != nil {
 		return normalizeStreamClose(err)
 	}
-	if err := h.validator.Struct(first); err != nil {
+	if err := h.validator.Validate(first); err != nil {
 		return connect.NewError(connect.CodeInvalidArgument, errors.New("invalid hello frame"))
 	}
 	hello := first.GetHello()
@@ -254,7 +254,7 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 			if !h.peerCertificateActive(ctx, deviceID) {
 				return connect.NewError(connect.CodePermissionDenied, errors.New("certificate is no longer active"))
 			}
-			if err := h.validator.Struct(received.message); err != nil {
+			if err := h.validator.Validate(received.message); err != nil {
 				return connect.NewError(connect.CodeInvalidArgument, errors.New("invalid agent frame"))
 			}
 			if !h.allowFrame(deviceID, received.message) {

@@ -28,9 +28,6 @@ var (
 
 // CreateUserGroup creates one static or dynamic group in direct state.
 func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[pmv1.CreateUserGroupRequest]) (*connect.Response[pmv1.CreateUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -77,9 +74,6 @@ func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[pmv
 
 // GetUserGroup returns one visible group and its live members.
 func (h *Handlers) GetUserGroup(ctx context.Context, req *connect.Request[pmv1.GetUserGroupRequest]) (*connect.Response[pmv1.GetUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -105,9 +99,6 @@ func (h *Handlers) GetUserGroup(ctx context.Context, req *connect.Request[pmv1.G
 
 // ListUserGroups returns one scoped keyset page.
 func (h *Handlers) ListUserGroups(ctx context.Context, req *connect.Request[pmv1.ListUserGroupsRequest]) (*connect.Response[pmv1.ListUserGroupsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -154,9 +145,6 @@ func (h *Handlers) ListUserGroups(ctx context.Context, req *connect.Request[pmv1
 
 // UpdateUserGroup replaces the editable group metadata.
 func (h *Handlers) UpdateUserGroup(ctx context.Context, req *connect.Request[pmv1.UpdateUserGroupRequest]) (*connect.Response[pmv1.UpdateUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -193,9 +181,6 @@ func (h *Handlers) UpdateUserGroup(ctx context.Context, req *connect.Request[pmv
 
 // SetUserGroupMaintenanceWindow replaces one validated dispatch window.
 func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *connect.Request[pmv1.SetUserGroupMaintenanceWindowRequest]) (*connect.Response[pmv1.UpdateUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if err := maintenance.Validate(req.Msg.MaintenanceWindow); err != nil {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "invalid maintenance window")
 	}
@@ -239,9 +224,6 @@ func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *conne
 
 // DeleteUserGroup retires a group and removes its ordinary dependent state.
 func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[pmv1.DeleteUserGroupRequest]) (*connect.Response[pmv1.DeleteUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -316,9 +298,6 @@ func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[pmv
 
 // AddUserToGroup adds each requested user once to a static group.
 func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[pmv1.AddUserToGroupRequest]) (*connect.Response[pmv1.AddUserToGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	ids := requestedUserIDs(req.Msg.UserId, req.Msg.UserIds)
 	if len(ids) == 0 || len(ids) > maxUserGroupBatch {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "at least one user is required")
@@ -452,9 +431,6 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[pmv1
 
 // RemoveUserFromGroup removes one static membership.
 func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request[pmv1.RemoveUserFromGroupRequest]) (*connect.Response[pmv1.RemoveUserFromGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -522,9 +498,6 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 
 // ListUserGroupsForUser returns visible groups containing one subject.
 func (h *Handlers) ListUserGroupsForUser(ctx context.Context, req *connect.Request[pmv1.ListUserGroupsForUserRequest]) (*connect.Response[pmv1.ListUserGroupsForUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.resolveUserTarget(ctx, PermListUserGroupsForUser, req.Msg.UserId); err != nil {
 		return nil, err
 	}
@@ -551,9 +524,6 @@ func (h *Handlers) ListUserGroupsForUser(ctx context.Context, req *connect.Reque
 // members), and a rule-driven group is materialized as static (which keeps the
 // membership the rule produced). SCIM-managed groups are refused.
 func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Request[pmv1.UpdateUserGroupQueryRequest]) (*connect.Response[pmv1.UpdateUserGroupQueryResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -649,9 +619,6 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 
 // ValidateUserGroupQuery validates a query and previews its current match count.
 func (h *Handlers) ValidateUserGroupQuery(ctx context.Context, req *connect.Request[pmv1.ValidateUserGroupQueryRequest]) (*connect.Response[pmv1.ValidateUserGroupQueryResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -672,9 +639,6 @@ func (h *Handlers) ValidateUserGroupQuery(ctx context.Context, req *connect.Requ
 
 // EvaluateDynamicUserGroup reconciles one dynamic group's membership.
 func (h *Handlers) EvaluateDynamicUserGroup(ctx context.Context, req *connect.Request[pmv1.EvaluateDynamicUserGroupRequest]) (*connect.Response[pmv1.EvaluateDynamicUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err

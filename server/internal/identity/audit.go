@@ -64,9 +64,6 @@ type auditExportRow struct {
 // ListAuditEvents reads the dedicated append-only operation/effect log. It
 // never consults the abolished domain event store.
 func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[pmv1.ListAuditEventsRequest]) (*connect.Response[pmv1.ListAuditEventsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if err := validateAuditFilters(ctx, req.Msg.ActorId, []string{req.Msg.StreamType}, req.Msg.EventType); err != nil {
 		return nil, err
 	}
@@ -122,9 +119,6 @@ func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[pmv
 // ExportAuditEvents returns one bounded CSV or JSON fragment and records the
 // protected read before any bytes are returned to the caller.
 func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[pmv1.ExportAuditEventsRequest]) (*connect.Response[pmv1.ExportAuditEventsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if err := validateAuditFilters(ctx, req.Msg.ActorId, req.Msg.StreamTypes, req.Msg.EventType); err != nil {
 		return nil, err
 	}

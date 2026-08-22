@@ -12,10 +12,11 @@ import (
 
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"buf.build/go/protovalidate"
+
 	"github.com/manchtools/cadestro/agent/internal/executor"
 	"github.com/manchtools/cadestro/agent/internal/store"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"github.com/manchtools/cadestro/contract/validate"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/inventory"
 	syslog "github.com/manchtools/cadestro/sdk/sys/log"
@@ -28,7 +29,7 @@ const heartbeatQueryTimeout = 10 * time.Second
 
 // streamValidator rejects malformed messages at the agent boundary before any
 // privileged work. Control also validates before dispatch.
-var streamValidator = validate.NewValidator()
+var streamValidator = protovalidate.GlobalValidator
 
 // handlerRunner is the unprivileged runner OnLogQuery shells out through (the
 // agent runs as root; journalctl reads run directly, matching the prior
@@ -235,9 +236,9 @@ func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryRe
 	h.logger.Info("received query", "query_id", query.QueryId, "table", query.Table)
 
 	// Validate at the boundary before executing privileged work.
-	if msg, ok := validate.Struct(streamValidator, query); !ok {
-		h.logger.Warn("rejecting invalid query", "query_id", query.GetQueryId(), "error", msg)
-		return &pb.OSQueryResult{QueryId: query.GetQueryId(), Success: false, Error: msg}, nil
+	if err := streamValidator.Validate(query); err != nil {
+		h.logger.Warn("rejecting invalid query", "query_id", query.GetQueryId(), "error", err)
+		return &pb.OSQueryResult{QueryId: query.GetQueryId(), Success: false, Error: err.Error()}, nil
 	}
 
 	// Check if osquery is available (lazy init — detects installs without restart)
@@ -340,9 +341,9 @@ func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQu
 	h.logger.Info("received log query", "query_id", query.QueryId, "unit", query.Unit)
 
 	// Validate at the boundary before executing privileged work.
-	if msg, ok := validate.Struct(streamValidator, query); !ok {
-		h.logger.Warn("rejecting invalid log query", "query_id", query.GetQueryId(), "error", msg)
-		return &pb.LogQueryResult{QueryId: query.GetQueryId(), Success: false, Error: msg}, nil
+	if err := streamValidator.Validate(query); err != nil {
+		h.logger.Warn("rejecting invalid log query", "query_id", query.GetQueryId(), "error", err)
+		return &pb.LogQueryResult{QueryId: query.GetQueryId(), Success: false, Error: err.Error()}, nil
 	}
 
 	// The journalctl invocation — including the line cap, the priority

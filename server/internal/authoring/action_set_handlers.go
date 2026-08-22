@@ -14,9 +14,6 @@ import (
 
 // CreateActionSet writes one independently scheduled and failure-governed set.
 func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[pmv1.CreateActionSetRequest]) (*connect.Response[pmv1.CreateActionSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -41,9 +38,6 @@ func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[pmv
 
 // GetActionSet returns one visible set and its live ordered members.
 func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[pmv1.GetActionSetRequest]) (*connect.Response[pmv1.GetActionSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -72,9 +66,6 @@ func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[pmv1.G
 
 // ListActionSets returns a deterministic SQLite keyset page.
 func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[pmv1.ListActionSetsRequest]) (*connect.Response[pmv1.ListActionSetsResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -124,9 +115,6 @@ func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[pmv1
 
 // RenameActionSet replaces a set name.
 func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[pmv1.RenameActionSetRequest]) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "RenameActionSet")
 	if err != nil {
 		return nil, err
@@ -138,9 +126,6 @@ func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[pmv
 
 // UpdateActionSetDescription replaces a set description.
 func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.Request[pmv1.UpdateActionSetDescriptionRequest]) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "UpdateActionSetDescription")
 	if err != nil {
 		return nil, err
@@ -153,9 +138,6 @@ func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.
 
 // UpdateActionSetSchedule replaces the set schedule and failure policy.
 func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Request[pmv1.UpdateActionSetScheduleRequest]) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "UpdateActionSetSchedule")
 	if err != nil {
 		return nil, err
@@ -168,9 +150,6 @@ func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Req
 
 // DeleteActionSet soft-deletes a set and removes its composition edges.
 func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[pmv1.DeleteActionSetRequest]) (*connect.Response[pmv1.DeleteActionSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "DeleteActionSet")
 	if err != nil {
 		return nil, err
@@ -184,9 +163,6 @@ func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[pmv
 
 // AddActionToSet adds one visible, ordinary Action occurrence to a set.
 func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[pmv1.AddActionToSetRequest]) (*connect.Response[pmv1.AddActionToSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "AddActionToSet")
 	if err != nil {
 		return nil, err
@@ -218,9 +194,6 @@ func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[pmv1
 
 // RemoveActionFromSet removes one occurrence edge.
 func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request[pmv1.RemoveActionFromSetRequest]) (*connect.Response[pmv1.RemoveActionFromSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "RemoveActionFromSet")
 	if err != nil {
 		return nil, err
@@ -239,9 +212,6 @@ func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request
 
 // ReorderActionInSet replaces one occurrence's authored position.
 func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[pmv1.ReorderActionInSetRequest]) (*connect.Response[pmv1.ReorderActionInSetResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "ReorderActionInSet")
 	if err != nil {
 		return nil, err

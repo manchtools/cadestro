@@ -14,11 +14,11 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
 	contract "github.com/manchtools/cadestro/contract"
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -35,7 +35,6 @@ const (
 var (
 	ErrInvalidInput = errors.New("invalid authoring input")
 	ErrSystemAction = errors.New("system action cannot be changed by an operator")
-	actionValidator = sdkvalidate.NewValidator()
 )
 
 // Config supplies the direct store and the clock used for authored rows.
@@ -313,8 +312,8 @@ func validateActionData(id string, actionType pmv1.ActionType, desired pmv1.Desi
 	if err := normalizeStoredSecretsForValidation(params); err != nil {
 		return nil, err
 	}
-	if detail, ok := sdkvalidate.Struct(actionValidator, request); !ok {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidInput, detail)
+	if err := protovalidate.Validate(request); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidInput, err)
 	}
 	if err := validateActionSafety(params); err != nil {
 		return nil, err

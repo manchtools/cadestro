@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -38,7 +38,7 @@ type Service struct {
 	store     *store.Store
 	atRest    *pmcrypto.Encryptor
 	now       func() time.Time
-	validator interface{ Struct(any) error }
+	validator protovalidate.Validator
 }
 
 // New constructs the authenticated-stream secret service. At-rest encryption
@@ -52,13 +52,13 @@ func New(cfg Config) *Service {
 	}
 	return &Service{
 		store: cfg.Store, atRest: cfg.AtRest,
-		now: cfg.Now, validator: sdkvalidate.NewValidator(),
+		now: cfg.Now, validator: protovalidate.GlobalValidator,
 	}
 }
 
 // ValidateLuksToken consumes one device-bound token and returns its policy.
 func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, request *pmv1.ValidateLuksTokenRequest) (*pmv1.ValidateLuksTokenResponse, error) {
-	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Struct(request) != nil {
+	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
 	hash := sha256.Sum256([]byte(request.Token))
@@ -100,7 +100,7 @@ func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, reques
 
 // GetLuksKey opens at-rest ciphertext for the authenticated device stream.
 func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *pmv1.GetLuksKeyRequest) (*pmv1.GetLuksKeyResponse, error) {
-	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Struct(request) != nil {
+	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
 	key, err := s.store.GetCurrentLuksKeyForAgent(ctx, deviceID, request.ActionId)
@@ -130,7 +130,7 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *pmv1
 // StoreLuksKey encrypts an agent-to-control field at rest in the same audited
 // transaction that rotates the current row.
 func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pmv1.StoreLuksKeyRequest) (*pmv1.StoreLuksKeyResponse, error) {
-	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Struct(request) != nil {
+	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
 	if err := s.requireActionType(ctx, request.ActionId, pmv1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
@@ -186,7 +186,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 // of it. Malformed timestamps fall back to receipt time so credentials are not
 // discarded after the irreversible local change.
 func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, request *pmv1.StoreLpsPasswordsRequest) (*pmv1.StoreLpsPasswordsResponse, error) {
-	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Struct(request) != nil {
+	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
 	if err := s.requireActionType(ctx, request.ActionId, pmv1.ActionType_ACTION_TYPE_LPS); err != nil {

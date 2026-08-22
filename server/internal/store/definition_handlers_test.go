@@ -35,10 +35,10 @@ func createDefinitionSet(t *testing.T, state *authoring.Service, name string) st
 
 func TestDefinitionHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := f.handlers.GetDefinition(context.Background(), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.GetDefinition(context.Background(), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

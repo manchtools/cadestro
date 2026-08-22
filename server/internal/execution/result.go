@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -50,9 +50,7 @@ type Config struct {
 type Service struct {
 	store     *store.Store
 	now       func() time.Time
-	validator interface {
-		Struct(any) error
-	}
+	validator protovalidate.Validator
 }
 
 // New constructs the execution-result service.
@@ -63,7 +61,7 @@ func New(cfg Config) *Service {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	return &Service{store: cfg.Store, now: cfg.Now, validator: sdkvalidate.NewValidator()}
+	return &Service{store: cfg.Store, now: cfg.Now, validator: protovalidate.GlobalValidator}
 }
 
 // ApplyActionResult advances one authored occurrence. Replaying the same
@@ -73,7 +71,7 @@ func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result
 		!validID(result.ActionId.Value) || !validID(result.DeliveryId) || !validID(result.OccurrenceId) {
 		return ErrInvalidInput
 	}
-	if err := s.validator.Struct(result); err != nil || len(result.Metadata) != 0 {
+	if err := s.validator.Validate(result); err != nil || len(result.Metadata) != 0 {
 		return ErrInvalidInput
 	}
 	status, terminal := resultStatus(result.Status)

@@ -24,9 +24,6 @@ import (
 // StartTerminal persists the authorized session and mints one short-lived,
 // single-use bearer for control's process-local WebSocket bridge.
 func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[pmv1.StartTerminalRequest]) (*connect.Response[pmv1.StartTerminalResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -108,9 +105,6 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[pmv1.
 // StopTerminal accepts an idempotent owner stop, commits it, and then closes
 // the live bridge and agent PTY on a best-effort basis as required by contract.
 func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[pmv1.StopTerminalRequest]) (*connect.Response[pmv1.StopTerminalResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -164,9 +158,6 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[pmv1.S
 // ListActiveTerminalSessions enumerates only sessions with a live bridge in
 // this single control process, then applies exact filters, scope, and paging.
 func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.Request[pmv1.ListActiveTerminalSessionsRequest]) (*connect.Response[pmv1.ListActiveTerminalSessionsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if req.Msg.PageToken != "" {
 		if _, err := ulid.ParseStrict(req.Msg.PageToken); err != nil {
 			return nil, rpcError(ctx, errInvalidPageToken, connect.CodeInvalidArgument, "invalid page token")
@@ -253,9 +244,6 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 // TerminateTerminalSession is the forcible admin path. It records intent before
 // sending, surfaces a failed agent write, and only then commits terminal state.
 func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Request[pmv1.TerminateTerminalSessionRequest]) (*connect.Response[pmv1.TerminateTerminalSessionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

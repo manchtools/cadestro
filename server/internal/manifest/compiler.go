@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
+	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -25,8 +25,6 @@ var (
 	// live actions and therefore cannot become executable work.
 	ErrEmptyManifest = errors.New("manifest contains no actions")
 )
-
-var validator = sdkvalidate.NewValidator()
 
 // Compiler turns an Action, ActionSet or Definition into complete manifests.
 type Compiler struct {
@@ -256,8 +254,8 @@ func (c *Compiler) compileAction(row store.ActionRow) (*pmv1.Action, error) {
 			return nil, fmt.Errorf("manifest: action %s params: %w", row.ID, err)
 		}
 	}
-	if detail, ok := sdkvalidate.Struct(validator, action); !ok {
-		return nil, fmt.Errorf("manifest: action %s invalid: %s", row.ID, detail)
+	if err := protovalidate.Validate(action); err != nil {
+		return nil, fmt.Errorf("manifest: action %s invalid: %s", row.ID, err)
 	}
 	return action, nil
 }
@@ -371,8 +369,8 @@ func occurrence(action *pmv1.Action, policy pmv1.OnFailure) *pmv1.ManifestOccurr
 }
 
 func finish(manifest *pmv1.Manifest) (*pmv1.Manifest, error) {
-	if detail, ok := sdkvalidate.Struct(validator, manifest); !ok {
-		return nil, fmt.Errorf("manifest: compiled output invalid: %s", detail)
+	if err := protovalidate.Validate(manifest); err != nil {
+		return nil, fmt.Errorf("manifest: compiled output invalid: %s", err)
 	}
 	return manifest, nil
 }

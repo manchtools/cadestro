@@ -15,9 +15,6 @@ import (
 // there is no id a caller could substitute to read somebody else's
 // linked accounts.
 func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[pmv1.ListIdentityLinksRequest]) (*connect.Response[pmv1.ListIdentityLinksResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -48,9 +45,6 @@ func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[p
 // is OIDC only, so unlinking the last one would lock the subject out of
 // their own account with no local credential to fall back on.
 func (h *Handlers) UnlinkIdentity(ctx context.Context, req *connect.Request[pmv1.UnlinkIdentityRequest]) (*connect.Response[pmv1.UnlinkIdentityResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err

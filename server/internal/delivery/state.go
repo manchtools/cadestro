@@ -8,11 +8,11 @@ import (
 	"regexp"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -30,7 +30,6 @@ var (
 	ErrInvalidTransition = errors.New("invalid delivery transition")
 
 	resultCodePattern = regexp.MustCompile(`^[A-Za-z0-9_.-]{1,64}$`)
-	manifestValidator = sdkvalidate.NewValidator()
 )
 
 // InsertParams is the complete durable input for one device delivery.
@@ -71,7 +70,7 @@ func InsertInTx(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, p I
 }
 
 func validManifest(manifest *pmv1.Manifest) bool {
-	if _, ok := sdkvalidate.Struct(manifestValidator, manifest); !ok {
+	if protovalidate.Validate(manifest) != nil {
 		return false
 	}
 	p := manifest.GetProvenance()

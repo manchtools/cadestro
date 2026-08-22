@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	connectvalidate "connectrpc.com/validate"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
@@ -97,7 +98,7 @@ func newFixture(t *testing.T) *fixture {
 
 	mux := http.NewServeMux()
 	idHandlers.Mount(mux, connect.WithInterceptors(
-		identity.NewValidationInterceptor(),
+		connectvalidate.NewInterceptor(),
 		auth.NewAuthInterceptor(logger, jwt, auth.RateLimiters{}, auth.NewRejectionRecorder(st)),
 		auth.NewAuthzInterceptor(),
 	))

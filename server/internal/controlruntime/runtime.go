@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	connectvalidate "connectrpc.com/validate"
 
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/agentsecrets"
@@ -130,7 +131,7 @@ func New(cfg Config) *Runtime {
 		auth.NewRejectionRecorder(cfg.Store)).WithBootstrapAuthenticator(bootstrap)
 	controlOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
-			identity.NewValidationInterceptor(),
+			connectvalidate.NewInterceptor(),
 			metadataLoggingInterceptor(cfg.Logger, cfg.Now),
 			deadlineInterceptor(requestDeadline),
 			authentication,

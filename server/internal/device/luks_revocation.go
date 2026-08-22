@@ -21,9 +21,6 @@ var errRevocationStateChanged = errors.New("LUKS revocation state changed")
 // signature is involved: the stream already supplies peer authentication,
 // confidentiality, integrity, ordering, and replay protection.
 func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request[pmv1.RevokeLuksDeviceKeyRequest]) (*connect.Response[pmv1.RevokeLuksDeviceKeyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

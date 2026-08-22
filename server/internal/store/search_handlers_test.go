@@ -26,9 +26,9 @@ func TestSQLiteSearchHandlers_ValidateAuthorizeScopeAndAssign(t *testing.T) {
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	h := searchrpc.NewHandlers(st, slog.New(slog.NewTextHandler(io.Discard, nil)), func() time.Time { return now })
 
-	_, err := h.Search(ctx, connect.NewRequest(&pmv1.SearchRequest{Query: strings.Repeat("x", 1025)}))
+	_, err := validated(h.Search)(ctx, connect.NewRequest(&pmv1.SearchRequest{Query: strings.Repeat("x", 1025)}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = h.Search(ctx, connect.NewRequest(&pmv1.SearchRequest{Scope: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS}))
+	_, err = validated(h.Search)(ctx, connect.NewRequest(&pmv1.SearchRequest{Scope: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 
 	actorID, groupA, groupB := newID(), newID(), newID()

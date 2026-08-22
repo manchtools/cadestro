@@ -14,9 +14,6 @@ const serverSettingsID = "00000000000000000000000003"
 
 // GetServerSettings returns the singleton fleet settings row.
 func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[pmv1.GetServerSettingsRequest]) (*connect.Response[pmv1.GetServerSettingsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -32,9 +29,6 @@ func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[p
 
 // UpdateServerSettings replaces the two fleet-wide toggles directly.
 func (h *Handlers) UpdateServerSettings(ctx context.Context, req *connect.Request[pmv1.UpdateServerSettingsRequest]) (*connect.Response[pmv1.UpdateServerSettingsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err

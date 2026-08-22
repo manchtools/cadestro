@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	connectvalidate "connectrpc.com/validate"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
@@ -116,7 +117,7 @@ func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 	// The production chain, in production order: validate at the
 	// transport boundary, then authenticate, then authorize.
 	chain := connect.WithInterceptors(
-		identity.NewValidationInterceptor(),
+		connectvalidate.NewInterceptor(),
 		auth.NewAuthInterceptor(logger, jwt, auth.RateLimiters{}, auth.NewRejectionRecorder(st)).
 			WithBootstrapAuthenticator(boot),
 		auth.NewAuthzInterceptor(),

@@ -6,9 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/idp"
@@ -87,15 +85,14 @@ type Config struct {
 
 // Handlers implements the identity portion of the control service.
 type Handlers struct {
-	store     Store
-	logger    *slog.Logger
-	jwt       *auth.JWTManager
-	kek       *crypto.Encryptor
-	baseURL   string
-	newOIDC   ProviderFactory
-	linker    *idp.Linker
-	now       func() time.Time
-	validator *validator.Validate
+	store   Store
+	logger  *slog.Logger
+	jwt     *auth.JWTManager
+	kek     *crypto.Encryptor
+	baseURL string
+	newOIDC ProviderFactory
+	linker  *idp.Linker
+	now     func() time.Time
 }
 
 // New builds the identity handlers.
@@ -113,27 +110,15 @@ func New(cfg Config) *Handlers {
 		logger = slog.Default()
 	}
 	return &Handlers{
-		store:     cfg.Store,
-		logger:    logger,
-		jwt:       cfg.JWT,
-		kek:       cfg.KEK,
-		baseURL:   cfg.PublicBaseURL,
-		newOIDC:   newOIDC,
-		linker:    idp.NewLinker(cfg.KEK, now),
-		now:       now,
-		validator: sdkvalidate.NewValidator(),
+		store:   cfg.Store,
+		logger:  logger,
+		jwt:     cfg.JWT,
+		kek:     cfg.KEK,
+		baseURL: cfg.PublicBaseURL,
+		newOIDC: newOIDC,
+		linker:  idp.NewLinker(cfg.KEK, now),
+		now:     now,
 	}
-}
-
-// validate runs the request's declared constraints at the transport
-// boundary AND again at the handler. The interceptor covers the wire
-// path; the handler call covers every other caller and keeps the check
-// from being silently disabled by an interceptor-chain edit.
-func (h *Handlers) validate(ctx context.Context, msg any) error {
-	if detail, ok := sdkvalidate.Struct(h.validator, msg); !ok {
-		return rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
 }
 
 // requireActor returns the authenticated principal, or the

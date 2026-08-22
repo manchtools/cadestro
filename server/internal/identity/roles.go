@@ -19,9 +19,6 @@ var errConferredAuthority = errors.New("conferred authority exceeds actor author
 // ListPermissions returns the permission registry, so a role builder
 // can show what a role may contain and which scopes each key accepts.
 func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[pmv1.ListPermissionsRequest]) (*connect.Response[pmv1.ListPermissionsResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -38,9 +35,6 @@ func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[pmv
 // role builder, and a silent authorization gap if it was a typo for a
 // real one.
 func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[pmv1.CreateRoleRequest]) (*connect.Response[pmv1.CreateRoleResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -92,9 +86,6 @@ func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[pmv1.Cre
 
 // GetRole returns one role and how many subjects hold it.
 func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[pmv1.GetRoleRequest]) (*connect.Response[pmv1.GetRoleResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -120,9 +111,6 @@ func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[pmv1.GetRol
 
 // ListRoles pages the role catalogue.
 func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[pmv1.ListRolesRequest]) (*connect.Response[pmv1.ListRolesResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -154,9 +142,6 @@ func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[pmv1.List
 // from the code registry on every boot, so an edit here would be
 // silently undone rather than rejected.
 func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.UpdateRoleRequest]) (*connect.Response[pmv1.UpdateRoleResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -237,9 +222,6 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.Upd
 // from under them: silently dropping a grant is an authorization change
 // disguised as a catalogue edit.
 func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[pmv1.DeleteRoleRequest]) (*connect.Response[pmv1.DeleteRoleResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -297,9 +279,6 @@ func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[pmv1.Del
 
 // AssignRoleToUser grants a role to a subject, optionally at a scope.
 func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pmv1.AssignRoleToUserRequest]) (*connect.Response[pmv1.AssignRoleToUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -379,9 +358,6 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pm
 // unscoped grant when only scoped ones exist reports not-found rather
 // than silently taking a scoped grant or silently doing nothing.
 func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[pmv1.RevokeRoleFromUserRequest]) (*connect.Response[pmv1.RevokeRoleFromUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -443,9 +419,6 @@ func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[
 
 // AssignRoleToUserGroup grants a role to every member of a group.
 func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Request[pmv1.AssignRoleToUserGroupRequest]) (*connect.Response[pmv1.AssignRoleToUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -514,9 +487,6 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 
 // RevokeRoleFromUserGroup removes one named group grant.
 func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Request[pmv1.RevokeRoleFromUserGroupRequest]) (*connect.Response[pmv1.RevokeRoleFromUserGroupResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err

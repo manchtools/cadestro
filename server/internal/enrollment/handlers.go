@@ -10,13 +10,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/mtls"
@@ -42,7 +40,6 @@ type Handlers struct {
 	logger     *slog.Logger
 	now        func() time.Time
 	controlURL string
-	validator  *validator.Validate
 }
 
 // New constructs enrollment handlers and rejects incomplete boot wiring.
@@ -62,18 +59,7 @@ func New(cfg Config) *Handlers {
 	return &Handlers{
 		store: cfg.Store, ca: cfg.CA, logger: cfg.Logger, now: cfg.Now,
 		controlURL: cfg.ControlURL,
-		validator:  sdkvalidate.NewValidator(),
 	}
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	if detail, ok := sdkvalidate.Struct(h.validator, req.Msg); !ok {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
 }
 
 func (h *Handlers) internal(ctx context.Context, operation string, err error) *connect.Error {
@@ -103,9 +89,6 @@ func (h *Handlers) recordRejected(ctx context.Context, req connect.AnyRequest, p
 // The device relation is the token's durable use record; no mutable token
 // counter or human ownership is involved.
 func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.RegisterRequest]) (*connect.Response[pmv1.RegisterResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	identityKey, err := ca.EnrollmentIdentityFromCSR(req.Msg.Csr)
 	if err != nil {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid certificate signing request")
@@ -217,9 +200,6 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 // TLS peer. The existing certificate remains active until a fresh Hello over a
 // connection presenting the successor promotes it.
 func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pmv1.RenewCertificateRequest]) (*connect.Response[pmv1.RenewCertificateResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	peer, ok := mtls.PeerCertificateFromContext(ctx)
 	if !ok {
 		return nil, h.rejectCertificate(ctx, req, "MISSING_TLS_PEER")

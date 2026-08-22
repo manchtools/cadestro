@@ -10,12 +10,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -70,10 +68,9 @@ var sortFields = map[pmv1.SortField]string{
 
 // Handlers implements SQLite FTS5-backed search and its maintenance RPC.
 type Handlers struct {
-	store     *store.Store
-	logger    *slog.Logger
-	now       func() time.Time
-	validator *validator.Validate
+	store  *store.Store
+	logger *slog.Logger
+	now    func() time.Time
 }
 
 // NewHandlers constructs search handlers over authoritative SQLite state.
@@ -87,21 +84,7 @@ func NewHandlers(st *store.Store, logger *slog.Logger, now func() time.Time) *Ha
 	if now == nil {
 		now = time.Now
 	}
-	return &Handlers{store: st, logger: logger, now: now, validator: sdkvalidate.NewValidator()}
-}
-
-func (h *Handlers) validate(ctx context.Context, message any) error {
-	if detail, ok := sdkvalidate.Struct(h.validator, message); !ok {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	return h.validate(ctx, req.Msg)
+	return &Handlers{store: st, logger: logger, now: now}
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -141,9 +124,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, cl
 
 // Search returns one deterministic SQLite FTS5 page per requested facet.
 func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchRequest]) (*connect.Response[pmv1.SearchResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -250,9 +230,6 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 // RebuildSearchIndex performs explicit physical maintenance on the generated
 // SQLite search indexes and records the operation atomically.
 func (h *Handlers) RebuildSearchIndex(ctx context.Context, req *connect.Request[pmv1.RebuildSearchIndexRequest]) (*connect.Response[pmv1.RebuildSearchIndexResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

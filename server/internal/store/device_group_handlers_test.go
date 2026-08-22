@@ -37,10 +37,10 @@ func newDeviceGroupHandlerFixture(t *testing.T) *deviceGroupHandlerFixture {
 
 func TestDeviceGroupHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newDeviceGroupHandlerFixture(t)
-	_, err := f.handlers.GetDeviceGroup(context.Background(), connect.NewRequest(&pmv1.GetDeviceGroupRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetDeviceGroup)(context.Background(), connect.NewRequest(&pmv1.GetDeviceGroupRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.GetDeviceGroup(context.Background(), connect.NewRequest(&pmv1.GetDeviceGroupRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetDeviceGroup)(context.Background(), connect.NewRequest(&pmv1.GetDeviceGroupRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

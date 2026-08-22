@@ -32,9 +32,6 @@ func deviceEffect(deviceID, action string, fields ...string) store.AuditEffect {
 // CancelExecution atomically cancels an execution that has not begun. Later
 // states are an audited idempotent no-op.
 func (h *Handlers) CancelExecution(ctx context.Context, req *connect.Request[pmv1.CancelExecutionRequest]) (*connect.Response[pmv1.CancelExecutionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -88,9 +85,6 @@ func (h *Handlers) CancelExecution(ctx context.Context, req *connect.Request[pmv
 
 // SetDeviceLabel upserts one label in the same transaction as its audit effect.
 func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[pmv1.SetDeviceLabelRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -124,9 +118,6 @@ func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[pmv1
 
 // RemoveDeviceLabel removes one label. Missing labels are an idempotent success.
 func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[pmv1.RemoveDeviceLabelRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -160,9 +151,6 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[p
 
 // AssignDevice assigns distinct users and groups with one audited transaction.
 func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[pmv1.AssignDeviceRequest]) (*connect.Response[pmv1.AssignDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	userIDs := distinct(req.Msg.UserIds, req.Msg.UserId)
 	groupIDs := distinct(req.Msg.GroupIds, req.Msg.GroupId)
 	if len(userIDs) == 0 && len(groupIDs) == 0 {
@@ -248,9 +236,6 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[pmv1.A
 
 // UnassignDevice removes exactly one user or group assignment.
 func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[pmv1.UnassignDeviceRequest]) (*connect.Response[pmv1.UnassignDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if (req.Msg.UserId == "") == (req.Msg.GroupId == "") {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "exactly one user or group is required")
 	}
@@ -302,9 +287,6 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[pmv1
 
 // SetDeviceSyncInterval writes the device-level sync override directly.
 func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Request[pmv1.SetDeviceSyncIntervalRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -330,9 +312,6 @@ func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Reque
 
 // SetDeviceInventoryInterval writes the device-level inventory override.
 func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.Request[pmv1.SetDeviceInventoryIntervalRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if minutes := req.Msg.InventoryIntervalMinutes; minutes != 0 && (minutes < 120 || minutes > 10080) {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "inventory interval is out of range")
 	}
@@ -363,9 +342,6 @@ func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.
 // certificate, and records the audit effect. The active stream closes only
 // after that transaction commits.
 func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[pmv1.DeleteDeviceRequest]) (*connect.Response[pmv1.DeleteDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

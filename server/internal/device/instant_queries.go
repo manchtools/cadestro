@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
+	"google.golang.org/protobuf/proto"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
@@ -25,9 +27,6 @@ const (
 // DispatchOSQuery creates the pollable SQLite result before sending one
 // unsigned query frame over the authenticated agent stream.
 func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[pmv1.DispatchOSQueryRequest]) (*connect.Response[pmv1.DispatchOSQueryResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	hasTable := strings.TrimSpace(req.Msg.Table) != ""
 	hasRawSQL := strings.TrimSpace(req.Msg.RawSql) != ""
 	if hasTable == hasRawSQL {
@@ -82,9 +81,6 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[pmv
 // QueryDeviceLogs creates the pollable SQLite result before sending one
 // journal query over the authenticated agent stream.
 func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[pmv1.QueryDeviceLogsRequest]) (*connect.Response[pmv1.QueryDeviceLogsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -131,9 +127,6 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[pmv
 // RefreshDeviceInventory sends one immediate collection request. Periodic
 // inventory remains an agent decision; this path is only the operator trigger.
 func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Request[pmv1.RefreshDeviceInventoryRequest]) (*connect.Response[pmv1.RefreshDeviceInventoryResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -180,7 +173,7 @@ func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, r
 	if result == nil {
 		return errors.New("OS query result is required")
 	}
-	if err := validateAgentDeviceMessage(h, ctx, deviceID, result); err != nil {
+	if err := validateAgentDeviceMessage(ctx, deviceID, result); err != nil {
 		return err
 	}
 	if len(result.Rows) > maxInstantQueryRows {
@@ -221,7 +214,7 @@ func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, 
 	if result == nil {
 		return errors.New("log query result is required")
 	}
-	if err := validateAgentDeviceMessage(h, ctx, deviceID, result); err != nil {
+	if err := validateAgentDeviceMessage(ctx, deviceID, result); err != nil {
 		return err
 	}
 	if len(result.Logs) > maxAgentLogResultLen {
@@ -251,7 +244,7 @@ func (h *Handlers) StoreDeviceInventory(ctx context.Context, deviceID string, in
 	if inventory == nil {
 		return errors.New("device inventory is required")
 	}
-	if err := validateAgentDeviceMessage(h, ctx, deviceID, inventory); err != nil {
+	if err := validateAgentDeviceMessage(ctx, deviceID, inventory); err != nil {
 		return err
 	}
 	if len(inventory.Tables) > maxInventoryTables {
@@ -374,14 +367,21 @@ func (h *Handlers) completeAgentResult(
 	return err
 }
 
-func validateAgentDeviceMessage(h *Handlers, ctx context.Context, deviceID string, message any) error {
+func validateAgentDeviceMessage(ctx context.Context, deviceID string, message any) error {
 	if _, err := ulid.ParseStrict(deviceID); err != nil {
 		return fmt.Errorf("invalid device id: %w", err)
 	}
 	if message == nil {
 		return errors.New("agent message is required")
 	}
-	return h.validate(ctx, message)
+	msg, ok := message.(proto.Message)
+	if !ok {
+		return fmt.Errorf("agent message is not a proto.Message: %T", message)
+	}
+	if err := protovalidate.Validate(msg); err != nil {
+		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, err.Error())
+	}
+	return nil
 }
 
 func agentStreamOperation(deviceID, descriptor string) store.AuditOperation {

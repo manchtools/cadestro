@@ -58,10 +58,10 @@ func createPolicyAction(t *testing.T, state *authoring.Service, name string, isC
 
 func TestCompliancePolicyHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newComplianceHandlerFixture(t)
-	_, err := f.handlers.GetCompliancePolicy(context.Background(), connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetCompliancePolicy)(context.Background(), connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.GetCompliancePolicy(context.Background(), connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetCompliancePolicy)(context.Background(), connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

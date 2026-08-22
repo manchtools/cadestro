@@ -28,9 +28,6 @@ const scimTokenBytes = 32
 // provider and have it decrypt. It has no field on the wire in either
 // direction after this call: it is write-only by contract.
 func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Request[pmv1.CreateIdentityProviderRequest]) (*connect.Response[pmv1.CreateIdentityProviderResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -135,9 +132,6 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 
 // GetIdentityProvider returns one provider's configuration.
 func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request[pmv1.GetIdentityProviderRequest]) (*connect.Response[pmv1.GetIdentityProviderResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -156,9 +150,6 @@ func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request
 
 // ListIdentityProviders pages the configured providers.
 func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Request[pmv1.ListIdentityProvidersRequest]) (*connect.Response[pmv1.ListIdentityProvidersResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -191,9 +182,6 @@ func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Reque
 // and treating empty as "clear it" would silently break every login
 // through that provider.
 func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Request[pmv1.UpdateIdentityProviderRequest]) (*connect.Response[pmv1.UpdateIdentityProviderResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -305,9 +293,6 @@ func validateProviderClientID(ctx context.Context, clientID string) error {
 // The row is retired rather than erased: identity links point at it and
 // must stay resolvable as evidence of who was once bound where.
 func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Request[pmv1.DeleteIdentityProviderRequest]) (*connect.Response[pmv1.DeleteIdentityProviderResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -400,9 +385,6 @@ func (h *Handlers) setSCIM(
 	enable bool,
 	action string,
 ) (string, store.IdentityProviderRow, error) {
-	if err := h.validate(ctx, req.Any()); err != nil {
-		return "", store.IdentityProviderRow{}, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return "", store.IdentityProviderRow{}, err

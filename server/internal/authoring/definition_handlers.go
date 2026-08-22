@@ -14,9 +14,6 @@ import (
 
 // CreateDefinition writes one independently scheduled definition.
 func (h *Handlers) CreateDefinition(ctx context.Context, req *connect.Request[pmv1.CreateDefinitionRequest]) (*connect.Response[pmv1.CreateDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -41,9 +38,6 @@ func (h *Handlers) CreateDefinition(ctx context.Context, req *connect.Request[pm
 
 // GetDefinition returns one visible definition and its live ordered members.
 func (h *Handlers) GetDefinition(ctx context.Context, req *connect.Request[pmv1.GetDefinitionRequest]) (*connect.Response[pmv1.GetDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -72,9 +66,6 @@ func (h *Handlers) GetDefinition(ctx context.Context, req *connect.Request[pmv1.
 
 // ListDefinitions returns a deterministic SQLite keyset page.
 func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[pmv1.ListDefinitionsRequest]) (*connect.Response[pmv1.ListDefinitionsResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -123,9 +114,6 @@ func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[pmv
 
 // RenameDefinition replaces a definition name.
 func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[pmv1.RenameDefinitionRequest]) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "RenameDefinition")
 	if err != nil {
 		return nil, err
@@ -137,9 +125,6 @@ func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[pm
 
 // UpdateDefinitionDescription replaces a definition description.
 func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect.Request[pmv1.UpdateDefinitionDescriptionRequest]) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "UpdateDefinitionDescription")
 	if err != nil {
 		return nil, err
@@ -152,9 +137,6 @@ func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect
 
 // UpdateDefinitionSchedule replaces only the compilation-time schedule.
 func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Request[pmv1.UpdateDefinitionScheduleRequest]) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "UpdateDefinitionSchedule")
 	if err != nil {
 		return nil, err
@@ -168,9 +150,6 @@ func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Re
 // DeleteDefinition soft-deletes a definition and removes its composition
 // edges.
 func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[pmv1.DeleteDefinitionRequest]) (*connect.Response[pmv1.DeleteDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "DeleteDefinition")
 	if err != nil {
 		return nil, err
@@ -184,9 +163,6 @@ func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[pm
 
 // AddActionSetToDefinition adds one visible ActionSet to a definition.
 func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Request[pmv1.AddActionSetToDefinitionRequest]) (*connect.Response[pmv1.AddActionSetToDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "AddActionSetToDefinition")
 	if err != nil {
 		return nil, err
@@ -211,9 +187,6 @@ func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Re
 
 // RemoveActionSetFromDefinition removes one ActionSet edge.
 func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *connect.Request[pmv1.RemoveActionSetFromDefinitionRequest]) (*connect.Response[pmv1.RemoveActionSetFromDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "RemoveActionSetFromDefinition")
 	if err != nil {
 		return nil, err
@@ -232,9 +205,6 @@ func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *conne
 
 // ReorderActionSetInDefinition replaces one ActionSet edge position.
 func (h *Handlers) ReorderActionSetInDefinition(ctx context.Context, req *connect.Request[pmv1.ReorderActionSetInDefinitionRequest]) (*connect.Response[pmv1.ReorderActionSetInDefinitionResponse], error) {
-	if err := validateAuthoringRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "ReorderActionSetInDefinition")
 	if err != nil {
 		return nil, err

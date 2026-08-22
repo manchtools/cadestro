@@ -10,13 +10,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/middleware"
@@ -48,10 +46,9 @@ type HandlersConfig struct {
 
 // Handlers implements the explicit compliance-policy CRUD procedures.
 type Handlers struct {
-	store     *store.Store
-	state     *State
-	logger    *slog.Logger
-	validator *validator.Validate
+	store  *store.Store
+	state  *State
+	logger *slog.Logger
 }
 
 // NewHandlers constructs direct compliance-policy handlers.
@@ -64,18 +61,8 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, state: NewState(StateConfig{Store: cfg.Store, Now: cfg.Now}),
-		logger: cfg.Logger, validator: sdkvalidate.NewValidator(),
+		logger: cfg.Logger,
 	}
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	if detail, ok := sdkvalidate.Struct(h.validator, req.Msg); !ok {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -115,9 +102,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 
 // CreateCompliancePolicy creates one empty policy.
 func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.CreateCompliancePolicyRequest]) (*connect.Response[pmv1.CreateCompliancePolicyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -137,9 +121,6 @@ func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Requ
 
 // GetCompliancePolicy returns one visible policy with its live rules.
 func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.GetCompliancePolicyRequest]) (*connect.Response[pmv1.GetCompliancePolicyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -164,9 +145,6 @@ func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request
 
 // ListCompliancePolicies returns a deterministic SQLite keyset page.
 func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Request[pmv1.ListCompliancePoliciesRequest]) (*connect.Response[pmv1.ListCompliancePoliciesResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -212,9 +190,6 @@ func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Requ
 
 // RenameCompliancePolicy replaces a policy name.
 func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.RenameCompliancePolicyRequest]) (*connect.Response[pmv1.UpdateCompliancePolicyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameCompliancePolicy")
 	if err != nil {
 		return nil, err
@@ -226,9 +201,6 @@ func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Requ
 
 // UpdateCompliancePolicyDescription replaces a policy description.
 func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *connect.Request[pmv1.UpdateCompliancePolicyDescriptionRequest]) (*connect.Response[pmv1.UpdateCompliancePolicyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateCompliancePolicyDescription")
 	if err != nil {
 		return nil, err
@@ -241,9 +213,6 @@ func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *c
 
 // DeleteCompliancePolicy deletes one policy and its ordinary dependent state.
 func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.DeleteCompliancePolicyRequest]) (*connect.Response[pmv1.DeleteCompliancePolicyResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteCompliancePolicy")
 	if err != nil {
 		return nil, err
@@ -257,9 +226,6 @@ func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Requ
 
 // AddCompliancePolicyRule adds one visible compliance Action.
 func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Request[pmv1.AddCompliancePolicyRuleRequest]) (*connect.Response[pmv1.AddCompliancePolicyRuleResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "AddCompliancePolicyRule")
 	if err != nil {
 		return nil, err
@@ -289,9 +255,6 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 
 // RemoveCompliancePolicyRule removes one Action edge.
 func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.Request[pmv1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[pmv1.RemoveCompliancePolicyRuleResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "RemoveCompliancePolicyRule")
 	if err != nil {
 		return nil, err
@@ -310,9 +273,6 @@ func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.
 
 // UpdateCompliancePolicyRule replaces one rule grace period.
 func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.Request[pmv1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[pmv1.UpdateCompliancePolicyRuleResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "UpdateCompliancePolicyRule")
 	if err != nil {
 		return nil, err

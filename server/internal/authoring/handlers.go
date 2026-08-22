@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -31,11 +29,10 @@ type HandlersConfig struct {
 // Handlers implements the explicit Action, ActionSet and Definition authoring
 // RPCs.
 type Handlers struct {
-	store     *store.Store
-	state     *Service
-	logger    *slog.Logger
-	validator *validator.Validate
-	atRest    *pmcrypto.Encryptor
+	store  *store.Store
+	state  *Service
+	logger *slog.Logger
+	atRest *pmcrypto.Encryptor
 }
 
 // NewHandlers constructs the explicit authoring RPC handlers.
@@ -48,22 +45,8 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, state: New(Config{Store: cfg.Store, Now: cfg.Now}),
-		logger: cfg.Logger, validator: sdkvalidate.NewValidator(), atRest: cfg.AtRest,
+		logger: cfg.Logger, atRest: cfg.AtRest,
 	}
-}
-
-func (h *Handlers) validate(ctx context.Context, message any) error {
-	if detail, ok := sdkvalidate.Struct(h.validator, message); !ok {
-		return authoringRPCError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
-}
-
-func validateAuthoringRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return authoringRPCError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	return h.validate(ctx, req.Msg)
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {

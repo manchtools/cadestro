@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,7 +17,6 @@ import (
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/contract/maintenance"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/dynamicquery"
 	"github.com/manchtools/cadestro/server/internal/middleware"
@@ -36,10 +34,9 @@ type HandlersConfig struct {
 
 // Handlers implements explicit device-group CRUD and static membership.
 type Handlers struct {
-	store     *store.Store
-	state     *State
-	logger    *slog.Logger
-	validator *validator.Validate
+	store  *store.Store
+	state  *State
+	logger *slog.Logger
 }
 
 // NewHandlers constructs direct device-group handlers.
@@ -52,18 +49,8 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, state: NewState(Config{Store: cfg.Store, Now: cfg.Now}),
-		logger: cfg.Logger, validator: sdkvalidate.NewValidator(),
+		logger: cfg.Logger,
 	}
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, "request is required")
-	}
-	if detail, ok := sdkvalidate.Struct(h.validator, req.Msg); !ok {
-		return rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, detail)
-	}
-	return nil
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -120,9 +107,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 
 // CreateDeviceGroup creates one static or dynamic group.
 func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[pmv1.CreateDeviceGroupRequest]) (*connect.Response[pmv1.CreateDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -151,9 +135,6 @@ func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[p
 
 // GetDeviceGroup returns one visible group and its live members.
 func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[pmv1.GetDeviceGroupRequest]) (*connect.Response[pmv1.GetDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -190,9 +171,6 @@ func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[pmv1
 
 // ListDeviceGroups returns a scoped SQLite keyset page.
 func (h *Handlers) ListDeviceGroups(ctx context.Context, req *connect.Request[pmv1.ListDeviceGroupsRequest]) (*connect.Response[pmv1.ListDeviceGroupsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -241,9 +219,6 @@ func (h *Handlers) ListDeviceGroups(ctx context.Context, req *connect.Request[pm
 
 // ListDeviceGroupsForDevice returns visible groups containing one live device.
 func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.Request[pmv1.ListDeviceGroupsForDeviceRequest]) (*connect.Response[pmv1.ListDeviceGroupsForDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -281,9 +256,6 @@ func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.R
 
 // RenameDeviceGroup replaces a group name.
 func (h *Handlers) RenameDeviceGroup(ctx context.Context, req *connect.Request[pmv1.RenameDeviceGroupRequest]) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameDeviceGroup")
 	if err != nil {
 		return nil, err
@@ -295,9 +267,6 @@ func (h *Handlers) RenameDeviceGroup(ctx context.Context, req *connect.Request[p
 
 // UpdateDeviceGroupDescription replaces a description.
 func (h *Handlers) UpdateDeviceGroupDescription(ctx context.Context, req *connect.Request[pmv1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateDeviceGroupDescription")
 	if err != nil {
 		return nil, err
@@ -310,9 +279,6 @@ func (h *Handlers) UpdateDeviceGroupDescription(ctx context.Context, req *connec
 
 // UpdateDeviceGroupQuery replaces the group's membership mode and query.
 func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Request[pmv1.UpdateDeviceGroupQueryRequest]) (*connect.Response[pmv1.UpdateDeviceGroupQueryResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	const permission = "UpdateDynamicDeviceGroupQuery"
 	actor, err := h.mutationActor(ctx, req.Msg.Id, permission)
 	if err != nil {
@@ -333,9 +299,6 @@ func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Requ
 
 // DeleteDeviceGroup deletes a group and ordinary dependent state.
 func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[pmv1.DeleteDeviceGroupRequest]) (*connect.Response[pmv1.DeleteDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteDeviceGroup")
 	if err != nil {
 		return nil, err
@@ -349,9 +312,6 @@ func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[p
 
 // AddDeviceToGroup adds one or more devices to a static group.
 func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[pmv1.AddDeviceToGroupRequest]) (*connect.Response[pmv1.AddDeviceToGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	ids := append([]string(nil), req.Msg.DeviceIds...)
 	if req.Msg.DeviceId != "" {
 		ids = append(ids, req.Msg.DeviceId)
@@ -387,9 +347,6 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[pm
 
 // RemoveDeviceFromGroup removes one device from a static group.
 func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Request[pmv1.RemoveDeviceFromGroupRequest]) (*connect.Response[pmv1.RemoveDeviceFromGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.GroupId, "RemoveDeviceFromGroup")
 	if err != nil {
 		return nil, err
@@ -408,9 +365,6 @@ func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Reque
 
 // ValidateDynamicQuery validates a query and previews its current match count.
 func (h *Handlers) ValidateDynamicQuery(ctx context.Context, req *connect.Request[pmv1.ValidateDynamicQueryRequest]) (*connect.Response[pmv1.ValidateDynamicQueryResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -431,9 +385,6 @@ func (h *Handlers) ValidateDynamicQuery(ctx context.Context, req *connect.Reques
 
 // EvaluateDynamicGroup reconciles one materialized dynamic membership.
 func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Request[pmv1.EvaluateDynamicGroupRequest]) (*connect.Response[pmv1.EvaluateDynamicGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -457,9 +408,6 @@ func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Reques
 
 // SetDeviceGroupSyncInterval replaces the sync contribution.
 func (h *Handlers) SetDeviceGroupSyncInterval(ctx context.Context, req *connect.Request[pmv1.SetDeviceGroupSyncIntervalRequest]) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "SetDeviceGroupSyncInterval")
 	if err != nil {
 		return nil, err
@@ -472,9 +420,6 @@ func (h *Handlers) SetDeviceGroupSyncInterval(ctx context.Context, req *connect.
 
 // SetDeviceGroupInventoryInterval replaces the inventory contribution.
 func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *connect.Request[pmv1.SetDeviceGroupInventoryIntervalRequest]) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "SetDeviceGroupInventoryInterval")
 	if err != nil {
 		return nil, err
@@ -487,9 +432,6 @@ func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *con
 
 // SetDeviceGroupMaintenanceWindow replaces the device-local dispatch window.
 func (h *Handlers) SetDeviceGroupMaintenanceWindow(ctx context.Context, req *connect.Request[pmv1.SetDeviceGroupMaintenanceWindowRequest]) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if err := maintenance.Validate(req.Msg.MaintenanceWindow); err != nil {
 		return nil, rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, err.Error())
 	}

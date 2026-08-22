@@ -8,13 +8,11 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/middleware"
@@ -25,10 +23,9 @@ const defaultPageSize = int32(50)
 
 // Handlers implements explicit assignment CRUD.
 type Handlers struct {
-	store     *store.Store
-	state     *State
-	logger    *slog.Logger
-	validator *validator.Validate
+	store  *store.Store
+	state  *State
+	logger *slog.Logger
 }
 
 // New constructs direct assignment handlers.
@@ -42,18 +39,7 @@ func New(cfg Config) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, state: NewState(cfg), logger: logger,
-		validator: sdkvalidate.NewValidator(),
 	}
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, "request is required")
-	}
-	if detail, ok := sdkvalidate.Struct(h.validator, req.Msg); !ok {
-		return rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, detail)
-	}
-	return nil
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -88,9 +74,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 
 // CreateAssignment creates or idempotently returns one source-target edge.
 func (h *Handlers) CreateAssignment(ctx context.Context, req *connect.Request[pmv1.CreateAssignmentRequest]) (*connect.Response[pmv1.CreateAssignmentResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -112,9 +95,6 @@ func (h *Handlers) CreateAssignment(ctx context.Context, req *connect.Request[pm
 
 // DeleteAssignment soft-deletes one assignment edge.
 func (h *Handlers) DeleteAssignment(ctx context.Context, req *connect.Request[pmv1.DeleteAssignmentRequest]) (*connect.Response[pmv1.DeleteAssignmentResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -131,9 +111,6 @@ func (h *Handlers) DeleteAssignment(ctx context.Context, req *connect.Request[pm
 
 // ListAssignments returns a deterministic keyset page.
 func (h *Handlers) ListAssignments(ctx context.Context, req *connect.Request[pmv1.ListAssignmentsRequest]) (*connect.Response[pmv1.ListAssignmentsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -183,9 +160,6 @@ func (h *Handlers) ListAssignments(ctx context.Context, req *connect.Request[pmv
 
 // GetUserAssignments resolves direct and current user-group targets.
 func (h *Handlers) GetUserAssignments(ctx context.Context, req *connect.Request[pmv1.GetUserAssignmentsRequest]) (*connect.Response[pmv1.GetUserAssignmentsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -207,9 +181,6 @@ func (h *Handlers) GetUserAssignments(ctx context.Context, req *connect.Request[
 // device. EXCLUDED suppresses a source, UNINSTALL forces its resolved actions
 // absent, and AVAILABLE contributes only when selected.
 func (h *Handlers) GetDeviceAssignments(ctx context.Context, req *connect.Request[pmv1.GetDeviceAssignmentsRequest]) (*connect.Response[pmv1.GetDeviceAssignmentsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -401,9 +372,6 @@ func compliancePolicyToProto(row store.CompliancePolicyRow, rules []store.Compli
 // SetUserSelection persists one optional source choice for an accessible
 // device through the audited mutation primitive.
 func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[pmv1.SetUserSelectionRequest]) (*connect.Response[pmv1.SetUserSelectionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -426,9 +394,6 @@ func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[pm
 // ListAvailableActions returns each live AVAILABLE source once with its
 // current device selection and a complete action preview.
 func (h *Handlers) ListAvailableActions(ctx context.Context, req *connect.Request[pmv1.ListAvailableActionsRequest]) (*connect.Response[pmv1.ListAvailableActionsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err

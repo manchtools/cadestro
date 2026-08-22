@@ -5,10 +5,27 @@ import (
 	"strings"
 	"testing"
 
+	"connectrpc.com/connect"
+	connectvalidate "connectrpc.com/validate"
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
+
+func validated[Req, Resp any](
+	call func(context.Context, *connect.Request[Req]) (*connect.Response[Resp], error),
+) func(context.Context, *connect.Request[Req]) (*connect.Response[Resp], error) {
+	wrapped := connectvalidate.NewInterceptor().WrapUnary(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		return call(ctx, req.(*connect.Request[Req]))
+	})
+	return func(ctx context.Context, req *connect.Request[Req]) (*connect.Response[Resp], error) {
+		resp, err := wrapped(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return resp.(*connect.Response[Resp]), nil
+	}
+}
 
 func auditActions(t *testing.T, raw *testdb.DB, resourceType, resourceID string) []string {
 	t.Helper()

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"unicode/utf8"
 
+	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -240,8 +240,8 @@ func actionSetSchedule(schedule *pmv1.ActionSchedule) ([]byte, error) {
 	if schedule == nil {
 		return nil, ErrInvalidInput
 	}
-	if detail, ok := sdkvalidate.Struct(actionValidator, schedule); !ok {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidInput, detail)
+	if err := protovalidate.Validate(schedule); err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidInput, err)
 	}
 	raw, err := actionparams.ScheduleToRaw(schedule)
 	if err != nil {

@@ -50,9 +50,6 @@ func (h *Handlers) mintSession(ctx context.Context, userID, email string, sessio
 // insert, so two concurrent presentations of the same token cannot both
 // produce a new session.
 func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[pmv1.RefreshTokenRequest]) (*connect.Response[pmv1.RefreshTokenResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 
 	result, err := h.jwt.ValidateRefreshToken(req.Msg.RefreshToken, func(jti string) (bool, error) {
 		return h.store.IsTokenRevoked(ctx, jti)
@@ -105,9 +102,6 @@ func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[pmv1.R
 // value was not a real token tells an unauthenticated caller something
 // about it. The response is identical either way.
 func (h *Handlers) Logout(ctx context.Context, req *connect.Request[pmv1.LogoutRequest]) (*connect.Response[pmv1.LogoutResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	claims, err := h.jwt.ValidateToken(req.Msg.RefreshToken, auth.TokenTypeRefresh)
 	if err != nil {
 		return connect.NewResponse(&pmv1.LogoutResponse{}), nil
@@ -225,9 +219,6 @@ func (h *Handlers) rejectSession(ctx context.Context, req connect.AnyRequest, ms
 // resource. A principal that is not a subject — the reserved bootstrap
 // principal — has no record to return and gets not-found.
 func (h *Handlers) GetCurrentUser(ctx context.Context, req *connect.Request[pmv1.GetCurrentUserRequest]) (*connect.Response[pmv1.GetCurrentUserResponse], error) {
-	if err := h.validate(ctx, req.Msg); err != nil {
-		return nil, err
-	}
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err

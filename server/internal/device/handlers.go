@@ -10,14 +10,12 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/crypto"
@@ -65,7 +63,6 @@ type Handlers struct {
 	terminalSessions *connection.TerminalSessionRegistry
 	terminalURL      string
 	isConnected      func(string) bool
-	validator        *validator.Validate
 }
 
 // New constructs the device handlers. A missing store is a boot-time wiring
@@ -101,22 +98,7 @@ func New(cfg Config) *Handlers {
 		closeStream: cfg.CloseStream, agentSender: cfg.AgentSender, decryptor: cfg.Decryptor,
 		terminalTokens: cfg.TerminalTokens, terminalSessions: cfg.TerminalSessions,
 		terminalURL: terminalURL, isConnected: cfg.IsConnected,
-		validator: sdkvalidate.NewValidator(),
 	}
-}
-
-func (h *Handlers) validate(ctx context.Context, message any) error {
-	if detail, ok := sdkvalidate.Struct(h.validator, message); !ok {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	return h.validate(ctx, req.Msg)
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -252,9 +234,6 @@ func (h *Handlers) recordSensitiveRead(
 // ListDevices returns a keyset page narrowed in SQL by assignment, device
 // scope, status, and exact label matches.
 func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[pmv1.ListDevicesRequest]) (*connect.Response[pmv1.ListDevicesResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -316,9 +295,6 @@ func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[pmv1.Li
 
 // GetDevice returns one visible device without revealing hidden device IDs.
 func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[pmv1.GetDeviceRequest]) (*connect.Response[pmv1.GetDeviceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -332,9 +308,6 @@ func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[pmv1.GetD
 // GetDeviceInventory returns the latest directly stored osquery tables for a
 // visible device.
 func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[pmv1.GetDeviceInventoryRequest]) (*connect.Response[pmv1.GetDeviceInventoryResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -374,9 +347,6 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 
 // GetOSQueryResult returns one directly stored on-demand query result.
 func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pmv1.GetOSQueryResultRequest]) (*connect.Response[pmv1.GetOSQueryResultResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -426,9 +396,6 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pm
 
 // GetDeviceLogResult returns one directly stored remote log query result.
 func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[pmv1.GetDeviceLogResultRequest]) (*connect.Response[pmv1.GetDeviceLogResultResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -471,9 +438,6 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 // GetDeviceCompliance returns the current direct compliance rows for one
 // visible device.
 func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request[pmv1.GetDeviceComplianceRequest]) (*connect.Response[pmv1.GetDeviceComplianceResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -514,9 +478,6 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 // GetDeviceCompliancePolicyStatus returns the current direct policy-rule
 // evaluations for one visible device.
 func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *connect.Request[pmv1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[pmv1.GetDeviceCompliancePolicyStatusResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -623,9 +584,6 @@ func worseComplianceStatus(left, right pmv1.ComplianceStatus) pmv1.ComplianceSta
 
 // GetExecution returns one visible execution and its protected output.
 func (h *Handlers) GetExecution(ctx context.Context, req *connect.Request[pmv1.GetExecutionRequest]) (*connect.Response[pmv1.GetExecutionResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -661,9 +619,6 @@ func (h *Handlers) GetExecution(ctx context.Context, req *connect.Request[pmv1.G
 // ListExecutions returns a newest-first direct keyset page narrowed by the
 // caller's device visibility.
 func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[pmv1.ListExecutionsRequest]) (*connect.Response[pmv1.ListExecutionsResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -831,9 +786,6 @@ func boundedInt32(value int64) int32 {
 
 // ListDeviceAssignees returns the live users and groups assigned to a device.
 func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request[pmv1.ListDeviceAssigneesRequest]) (*connect.Response[pmv1.ListDeviceAssigneesResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}

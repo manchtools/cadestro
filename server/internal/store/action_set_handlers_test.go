@@ -25,10 +25,10 @@ func setCreate(name string, policy pmv1.OnFailure) *pmv1.CreateActionSetRequest 
 
 func TestActionSetHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := f.handlers.GetActionSet(context.Background(), connect.NewRequest(&pmv1.GetActionSetRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&pmv1.GetActionSetRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.GetActionSet(context.Background(), connect.NewRequest(&pmv1.GetActionSetRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&pmv1.GetActionSetRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 

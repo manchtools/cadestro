@@ -11,13 +11,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	sdkvalidate "github.com/manchtools/cadestro/contract/validate"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -35,11 +33,10 @@ type Config struct {
 
 // Handlers implements the registration-token control RPCs.
 type Handlers struct {
-	store     *store.Store
-	logger    *slog.Logger
-	now       func() time.Time
-	validator *validator.Validate
-	caPin     string
+	store  *store.Store
+	logger *slog.Logger
+	now    func() time.Time
+	caPin  string
 }
 
 // New constructs direct registration-token handlers.
@@ -59,18 +56,8 @@ func New(cfg Config) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, logger: cfg.Logger, now: cfg.Now,
-		validator: sdkvalidate.NewValidator(), caPin: cfg.CAFingerprint,
+		caPin: cfg.CAFingerprint,
 	}
-}
-
-func validateRequest[T any](h *Handlers, ctx context.Context, req *connect.Request[T]) error {
-	if req == nil || req.Msg == nil {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "request is required")
-	}
-	if detail, ok := sdkvalidate.Struct(h.validator, req.Msg); !ok {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, detail)
-	}
-	return nil
 }
 
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
@@ -117,9 +104,6 @@ func tokenEffect(id, action string, fields ...string) store.AuditEffect {
 
 // CreateToken mints a bearer value once and stores only its SHA-256 digest.
 func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.CreateTokenRequest]) (*connect.Response[pmv1.CreateTokenResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if req.Msg.Name == store.BootstrapAdminTokenName {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "token name is reserved")
 	}
@@ -187,9 +171,6 @@ func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.Cr
 
 // ListTokens returns a deterministic keyset page of live non-bootstrap tokens.
 func (h *Handlers) ListTokens(ctx context.Context, req *connect.Request[pmv1.ListTokensRequest]) (*connect.Response[pmv1.ListTokensResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if req.Msg.PageToken != "" {
 		if _, err := ulid.ParseStrict(req.Msg.PageToken); err != nil {
 			return nil, rpcError(ctx, errInvalidPageToken, connect.CodeInvalidArgument, "invalid page token")
@@ -231,9 +212,6 @@ func (h *Handlers) ListTokens(ctx context.Context, req *connect.Request[pmv1.Lis
 
 // RenameToken replaces a token name in the same transaction as its audit row.
 func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[pmv1.RenameTokenRequest]) (*connect.Response[pmv1.UpdateTokenResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	if req.Msg.Name == store.BootstrapAdminTokenName {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "token name is reserved")
 	}
@@ -272,9 +250,6 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[pmv1.Re
 
 // SetTokenDisabled changes whether a token may be consumed.
 func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[pmv1.SetTokenDisabledRequest]) (*connect.Response[pmv1.UpdateTokenResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -312,9 +287,6 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[pm
 
 // DeleteToken soft-deletes a token so prior bearer values stay unusable.
 func (h *Handlers) DeleteToken(ctx context.Context, req *connect.Request[pmv1.DeleteTokenRequest]) (*connect.Response[pmv1.DeleteTokenResponse], error) {
-	if err := validateRequest(h, ctx, req); err != nil {
-		return nil, err
-	}
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
