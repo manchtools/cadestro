@@ -7,6 +7,7 @@
 package cadestrov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -971,9 +972,8 @@ func (ComplianceStatus) EnumDescriptor() ([]byte, []int) {
 
 // Unique identifier for an action instance
 type ActionId struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Value         string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1017,9 +1017,8 @@ func (x *ActionId) GetValue() string {
 
 // Unique identifier for a device/agent
 type DeviceId struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Value         string `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1069,13 +1068,11 @@ type ErrorDetail struct {
 	// under that, and the bound prevents a misbehaving caller (or a future
 	// codepath that constructs the detail from user-supplied input) from
 	// pushing arbitrarily long payloads into client-side error toasts.
-	// @gotags: validate:"max=128"
-	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty" validate:"max=128"`
+	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
 	// Server-generated request ID for correlating errors with server logs.
 	// ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
 	// without inviting unbounded growth.
-	// @gotags: validate:"max=64"
-	RequestId     string `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty" validate:"max=64"`
+	RequestId     string `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1134,9 +1131,8 @@ func (x *ErrorDetail) GetRequestId() string {
 // wherever the device runs; the server never tries to interpret the
 // device's timezone.
 type MaintenanceWindow struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,dive"
-	Schedule      []*MaintenanceWindowEntry `protobuf:"bytes,1,rep,name=schedule,proto3" json:"schedule,omitempty" validate:"omitempty,dive"`
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Schedule      []*MaintenanceWindowEntry `protobuf:"bytes,1,rep,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1185,11 +1181,9 @@ func (x *MaintenanceWindow) GetSchedule() []*MaintenanceWindowEntry {
 // next day. `days` lists the weekdays the entry applies to using the
 // lowercase three-letter abbreviations mon|tue|wed|thu|fri|sat|sun.
 type MaintenanceWindowEntry struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=7,dive,oneof=mon tue wed thu fri sat sun"
-	Days []string `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty" validate:"required,min=1,max=7,dive,oneof=mon tue wed thu fri sat sun"`
-	// @gotags: validate:"required,min=11,max=11"
-	Allow         string `protobuf:"bytes,2,opt,name=allow,proto3" json:"allow,omitempty" validate:"required,min=11,max=11"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Days          []string               `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
+	Allow         string                 `protobuf:"bytes,2,opt,name=allow,proto3" json:"allow,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1240,13 +1234,10 @@ func (x *MaintenanceWindowEntry) GetAllow() string {
 
 // Output from command execution
 type CommandOutput struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty"
-	ExitCode int32 `protobuf:"varint,1,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,max=1048576"
-	Stdout string `protobuf:"bytes,2,opt,name=stdout,proto3" json:"stdout,omitempty" validate:"omitempty,max=1048576"`
-	// @gotags: validate:"omitempty,max=1048576"
-	Stderr        string `protobuf:"bytes,3,opt,name=stderr,proto3" json:"stderr,omitempty" validate:"omitempty,max=1048576"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExitCode      int32                  `protobuf:"varint,1,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	Stdout        string                 `protobuf:"bytes,2,opt,name=stdout,proto3" json:"stdout,omitempty"`
+	Stderr        string                 `protobuf:"bytes,3,opt,name=stderr,proto3" json:"stderr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1306,24 +1297,24 @@ var File_cadestro_v1_common_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x18cadestro/v1/common.proto\x12\vcadestro.v1\" \n" +
-	"\bActionId\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\tR\x05value\" \n" +
-	"\bDeviceId\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\tR\x05value\"@\n" +
-	"\vErrorDetail\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x12\x1d\n" +
+	"\x18cadestro/v1/common.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\"*\n" +
+	"\bActionId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"*\n" +
+	"\bDeviceId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"S\n" +
+	"\vErrorDetail\x12\x1c\n" +
+	"\x04code\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x04code\x12&\n" +
 	"\n" +
-	"request_id\x18\x02 \x01(\tR\trequestId\"T\n" +
+	"request_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x18@R\trequestId\"T\n" +
 	"\x11MaintenanceWindow\x12?\n" +
-	"\bschedule\x18\x01 \x03(\v2#.cadestro.v1.MaintenanceWindowEntryR\bschedule\"B\n" +
-	"\x16MaintenanceWindowEntry\x12\x12\n" +
-	"\x04days\x18\x01 \x03(\tR\x04days\x12\x14\n" +
-	"\x05allow\x18\x02 \x01(\tR\x05allow\"\\\n" +
+	"\bschedule\x18\x01 \x03(\v2#.cadestro.v1.MaintenanceWindowEntryR\bschedule\"\x85\x01\n" +
+	"\x16MaintenanceWindowEntry\x12H\n" +
+	"\x04days\x18\x01 \x03(\tB4\xbaH1\xc8\x01\x01\x92\x01+\b\x01\x10\a\"%r#R\x03monR\x03tueR\x03wedR\x03thuR\x03friR\x03satR\x03sunR\x04days\x12!\n" +
+	"\x05allow\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01\vR\x05allow\"x\n" +
 	"\rCommandOutput\x12\x1b\n" +
-	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12\x16\n" +
-	"\x06stdout\x18\x02 \x01(\tR\x06stdout\x12\x16\n" +
-	"\x06stderr\x18\x03 \x01(\tR\x06stderr*\xef\x02\n" +
+	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12$\n" +
+	"\x06stdout\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stdout\x12$\n" +
+	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\xef\x02\n" +
 	"\x0fExecutionStatus\x12 \n" +
 	"\x1cEXECUTION_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_PENDING\x10\x01\x12\x1c\n" +
