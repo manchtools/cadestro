@@ -3,8 +3,8 @@ package contract_test
 import (
 	"testing"
 
+	"buf.build/go/protovalidate"
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	pmvalidate "github.com/manchtools/cadestro/contract/validate"
 )
 
 // TestAgentUpdateArchRequiresSignedChecksumManifest pins the signed-only public contract.
@@ -18,7 +18,10 @@ func TestAgentUpdateArchRequiresSignedChecksumManifest(t *testing.T) {
 		t.Fatal("expected_sha256 remains as reserved pre-alpha contract history")
 	}
 
-	validator := pmvalidate.NewValidator()
+	validator, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
 		name        string
 		checksumURL string
@@ -30,10 +33,10 @@ func TestAgentUpdateArchRequiresSignedChecksumManifest(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			_, ok := pmvalidate.Struct(validator, &pm.AgentUpdateArch{
+			ok := validator.Validate(&pm.AgentUpdateArch{
 				BinaryUrl:   "https://releases.example/cadestrod-linux-amd64",
 				ChecksumUrl: tc.checksumURL,
-			})
+			}) == nil
 			if ok != tc.wantOK {
 				t.Fatalf("validation = %v, want %v", ok, tc.wantOK)
 			}

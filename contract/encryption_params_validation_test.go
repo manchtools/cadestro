@@ -4,9 +4,19 @@ import (
 	"strings"
 	"testing"
 
+	"buf.build/go/protovalidate"
+	"google.golang.org/protobuf/proto"
+
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	pmvalidate "github.com/manchtools/cadestro/contract/validate"
 )
+
+func validateStruct(v protovalidate.Validator, msg proto.Message) (string, bool) {
+	if err := v.Validate(msg); err != nil {
+		return err.Error(), false
+	}
+	return "", true
+}
 
 // EncryptionParams' two enum members decide what protects a LUKS volume, and
 // both carried a bare `omitempty`, which constrains nothing on an enum: any
@@ -75,13 +85,16 @@ func mentionsField(detail, field string) bool { return strings.Contains(detail, 
 // which is why the loops now require ok instead.
 func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	p := encryptionParamsFixture()
 	p.DeviceBoundKeyType = pm.EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM // legal
 	p.RotationIntervalDays = 0                                                                  // invalid, and unrelated to the enum
 
-	detail, ok := pmvalidate.Struct(v, p)
+	detail, ok := validateStruct(v, p)
 	if ok {
 		t.Fatalf("premise broken: rotation_interval_days = 0 must fail validation, got a pass (%s)", detail)
 	}
@@ -119,20 +132,23 @@ func encryptionAuthoringParamsFixture() *pm.EncryptionAuthoringParams {
 
 func TestEncryptionParams_RejectsUndefinedDeviceBoundKeyType(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	const field = "device_bound_key_type"
 
 	for _, kt := range definedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionParamsFixture()
 		p.DeviceBoundKeyType = kt
-		if detail, valid := pmvalidate.Struct(v, p); !valid {
+		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(kt), kt, detail)
 		}
 	}
 	for _, kt := range undefinedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionParamsFixture()
 		p.DeviceBoundKeyType = kt
-		detail, ok := pmvalidate.Struct(v, p)
+		detail, ok := validateStruct(v, p)
 		if ok {
 			t.Errorf("EncryptionParams with %s = %d passed validation; an out-of-range enum must be refused at the boundary, not silently degraded to 'no device-bound key' by the agent's switch default", field, int32(kt))
 			continue
@@ -180,20 +196,23 @@ func TestEncryptionAuthoringParams_RejectsUndefinedDeviceBoundKeyType(t *testing
 // added alongside omitempty rather than replacing it with a required rule.
 func TestEncryptionParams_RejectsUndefinedUserPassphraseComplexity(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	const field = "user_passphrase_complexity"
 
 	for _, c := range definedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
 		p := encryptionParamsFixture()
 		p.UserPassphraseComplexity = c
-		if detail, valid := pmvalidate.Struct(v, p); !valid {
+		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(c), c, detail)
 		}
 	}
 	for _, c := range undefinedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
 		p := encryptionParamsFixture()
 		p.UserPassphraseComplexity = c
-		detail, ok := pmvalidate.Struct(v, p)
+		detail, ok := validateStruct(v, p)
 		if ok {
 			t.Errorf("EncryptionParams with %s = %d passed validation; an out-of-range enum must be refused at the boundary rather than resolving to the agent's default alphabet", field, int32(c))
 			continue

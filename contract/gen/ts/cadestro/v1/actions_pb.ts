@@ -4,6 +4,7 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { ActionId, CommandOutput, DesiredState, ExecutionStatus } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
@@ -14,36 +15,28 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/actions.proto.
  */
 export const file_cadestro_v1_actions: GenFile = /*@__PURE__*/
-  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSKTCAoGQWN0aW9uEiEKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWQSJQoEdHlwZRgCIAEoDjIXLmNhZGVzdHJvLnYxLkFjdGlvblR5cGUSMAoNZGVzaXJlZF9zdGF0ZRgDIAEoDjIZLmNhZGVzdHJvLnYxLkRlc2lyZWRTdGF0ZRIXCg90aW1lb3V0X3NlY29uZHMYBCABKAUSLQoIc2NoZWR1bGUYBSABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZRItCgdwYWNrYWdlGAggASgLMhouY2FkZXN0cm8udjEuUGFja2FnZVBhcmFtc0gAEiwKA2FwcBgJIAEoCzIdLmNhZGVzdHJvLnYxLkFwcEluc3RhbGxQYXJhbXNIABIpCgVzaGVsbBgKIAEoCzIYLmNhZGVzdHJvLnYxLlNoZWxsUGFyYW1zSAASLQoHc2VydmljZRgLIAEoCzIaLmNhZGVzdHJvLnYxLlNlcnZpY2VQYXJhbXNIABInCgRmaWxlGAwgASgLMhcuY2FkZXN0cm8udjEuRmlsZVBhcmFtc0gAEisKBnVwZGF0ZRgNIAEoCzIZLmNhZGVzdHJvLnYxLlVwZGF0ZVBhcmFtc0gAEjMKCnJlcG9zaXRvcnkYDiABKAsyHS5jYWRlc3Ryby52MS5SZXBvc2l0b3J5UGFyYW1zSAASLQoHZmxhdHBhaxgPIAEoCzIaLmNhZGVzdHJvLnYxLkZsYXRwYWtQYXJhbXNIABIxCglkaXJlY3RvcnkYECABKAsyHC5jYWRlc3Ryby52MS5EaXJlY3RvcnlQYXJhbXNIABInCgR1c2VyGBEgASgLMhcuY2FkZXN0cm8udjEuVXNlclBhcmFtc0gAEiUKA3NzaBgSIAEoCzIWLmNhZGVzdHJvLnYxLlNzaFBhcmFtc0gAEicKBHNzaGQYEyABKAsyFy5jYWRlc3Ryby52MS5Tc2hkUGFyYW1zSAASNgoMYWRtaW5fcG9saWN5GBQgASgLMh4uY2FkZXN0cm8udjEuQWRtaW5Qb2xpY3lQYXJhbXNIABIlCgNscHMYFSABKAsyFi5jYWRlc3Ryby52MS5McHNQYXJhbXNIABIpCgVncm91cBgWIAEoCzIYLmNhZGVzdHJvLnYxLkdyb3VwUGFyYW1zSAASMwoKZW5jcnlwdGlvbhgXIAEoCzIdLmNhZGVzdHJvLnYxLkVuY3J5cHRpb25QYXJhbXNIABInCgR3aWZpGBggASgLMhcuY2FkZXN0cm8udjEuV2lmaVBhcmFtc0gAEjYKDGFnZW50X3VwZGF0ZRgZIAEoCzIeLmNhZGVzdHJvLnYxLkFnZW50VXBkYXRlUGFyYW1zSABCCAoGcGFyYW1zImgKDkFjdGlvblNjaGVkdWxlEgwKBGNyb24YASABKAkSFgoOaW50ZXJ2YWxfaG91cnMYAiABKAUSFQoNcnVuX29uX2Fzc2lnbhgDIAEoCBIZChFza2lwX2lmX3VuY2hhbmdlZBgEIAEoCCKiAQoNUGFja2FnZVBhcmFtcxIMCgRuYW1lGAEgASgJEg8KB3ZlcnNpb24YAiABKAkSFwoPYWxsb3dfZG93bmdyYWRlGAMgASgIEgsKA3BpbhgEIAEoCBIQCghhcHRfbmFtZRgFIAEoCRIQCghkbmZfbmFtZRgGIAEoCRITCgtwYWNtYW5fbmFtZRgHIAEoCRITCgt6eXBwZXJfbmFtZRgIIAEoCSJOChBBcHBJbnN0YWxsUGFyYW1zEgsKA3VybBgBIAEoCRIXCg9jaGVja3N1bV9zaGEyNTYYAiABKAkSFAoMaW5zdGFsbF9wYXRoGAMgASgJIocCCgtTaGVsbFBhcmFtcxIOCgZzY3JpcHQYASABKAkSEwoLaW50ZXJwcmV0ZXIYAiABKAkSEwoLcnVuX2FzX3Jvb3QYAyABKAgSGQoRd29ya2luZ19kaXJlY3RvcnkYBCABKAkSPgoLZW52aXJvbm1lbnQYBSADKAsyKS5jYWRlc3Ryby52MS5TaGVsbFBhcmFtcy5FbnZpcm9ubWVudEVudHJ5EhgKEGRldGVjdGlvbl9zY3JpcHQYBiABKAkSFQoNaXNfY29tcGxpYW5jZRgHIAEoCBoyChBFbnZpcm9ubWVudEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEifgoNU2VydmljZVBhcmFtcxIRCgl1bml0X25hbWUYASABKAkSNAoNZGVzaXJlZF9zdGF0ZRgCIAEoDjIdLmNhZGVzdHJvLnYxLlNlcnZpY2VVbml0U3RhdGUSDgoGZW5hYmxlGAMgASgIEhQKDHVuaXRfY29udGVudBgEIAEoCSJuCgpGaWxlUGFyYW1zEgwKBHBhdGgYASABKAkSDwoHY29udGVudBgCIAEoCRINCgVvd25lchgDIAEoCRINCgVncm91cBgEIAEoCRIMCgRtb2RlGAUgASgJEhUKDW1hbmFnZWRfYmxvY2sYBiABKAgiXgoPRGlyZWN0b3J5UGFyYW1zEgwKBHBhdGgYASABKAkSDQoFb3duZXIYAiABKAkSDQoFZ3JvdXAYAyABKAkSDAoEbW9kZRgEIAEoCRIRCglyZWN1cnNpdmUYBSABKAgiVQoMVXBkYXRlUGFyYW1zEhUKDXNlY3VyaXR5X29ubHkYASABKAgSEgoKYXV0b3JlbW92ZRgCIAEoCBIaChJyZWJvb3RfaWZfcmVxdWlyZWQYAyABKAgiUQoNRmxhdHBha1BhcmFtcxIOCgZhcHBfaWQYASABKAkSDgoGcmVtb3RlGAIgASgJEhMKC3N5c3RlbV93aWRlGAMgASgIEgsKA3BpbhgEIAEoCCLQAQoQUmVwb3NpdG9yeVBhcmFtcxIMCgRuYW1lGAEgASgJEicKA2FwdBgCIAEoCzIaLmNhZGVzdHJvLnYxLkFwdFJlcG9zaXRvcnkSJwoDZG5mGAMgASgLMhouY2FkZXN0cm8udjEuRG5mUmVwb3NpdG9yeRItCgZwYWNtYW4YBCABKAsyHS5jYWRlc3Ryby52MS5QYWNtYW5SZXBvc2l0b3J5Ei0KBnp5cHBlchgFIAEoCzIdLmNhZGVzdHJvLnYxLlp5cHBlclJlcG9zaXRvcnkinQEKDUFwdFJlcG9zaXRvcnkSCwoDdXJsGAEgASgJEhQKDGRpc3RyaWJ1dGlvbhgCIAEoCRISCgpjb21wb25lbnRzGAMgAygJEhMKC2dwZ19rZXlfdXJsGAQgASgJEg8KB2dwZ19rZXkYBSABKAkSDwoHdHJ1c3RlZBgGIAEoCBIMCgRhcmNoGAcgASgJEhAKCGRpc2FibGVkGAggASgIIpMBCg1EbmZSZXBvc2l0b3J5Eg8KB2Jhc2V1cmwYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSDwoHZW5hYmxlZBgDIAEoCBIQCghncGdjaGVjaxgEIAEoCBIOCgZncGdrZXkYBSABKAkSFwoPbW9kdWxlX2hvdGZpeGVzGAYgASgIEhAKCGRpc2FibGVkGAcgASgIIkcKEFBhY21hblJlcG9zaXRvcnkSDgoGc2VydmVyGAEgASgJEhEKCXNpZ19sZXZlbBgCIAEoCRIQCghkaXNhYmxlZBgDIAEoCCKcAQoQWnlwcGVyUmVwb3NpdG9yeRILCgN1cmwYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSDwoHZW5hYmxlZBgDIAEoCBITCgthdXRvcmVmcmVzaBgEIAEoCBIQCghncGdjaGVjaxgFIAEoCBIOCgZncGdrZXkYBiABKAkSDAoEdHlwZRgHIAEoCRIQCghkaXNhYmxlZBgIIAEoCCL/AQoKVXNlclBhcmFtcxIQCgh1c2VybmFtZRgBIAEoCRILCgN1aWQYAiABKAUSCwoDZ2lkGAMgASgFEhAKCGhvbWVfZGlyGAQgASgJEg0KBXNoZWxsGAUgASgJEhsKE3NzaF9hdXRob3JpemVkX2tleXMYBiADKAkSDwoHY29tbWVudBgHIAEoCRITCgtzeXN0ZW1fdXNlchgIIAEoCBITCgtjcmVhdGVfaG9tZRgJIAEoCBIQCghkaXNhYmxlZBgKIAEoCBIVCg1wcmltYXJ5X2dyb3VwGAsgASgJEg4KBmhpZGRlbhgMIAEoCBITCgtub19wYXNzd29yZBgNIAEoCCJPCgtHcm91cFBhcmFtcxIMCgRuYW1lGAEgASgJEg8KB21lbWJlcnMYAiADKAkSCwoDZ2lkGAMgASgFEhQKDHN5c3RlbV9ncm91cBgEIAEoCCJICglTc2hQYXJhbXMSFAoMYWxsb3dfcHVia2V5GAEgASgIEhYKDmFsbG93X3Bhc3N3b3JkGAIgASgIEg0KBXVzZXJzGAMgAygJIisKDVNzaGREaXJlY3RpdmUSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJIk4KClNzaGRQYXJhbXMSEAoIcHJpb3JpdHkYASABKA0SLgoKZGlyZWN0aXZlcxgCIAMoCzIaLmNhZGVzdHJvLnYxLlNzaGREaXJlY3RpdmUingEKEUFkbWluUG9saWN5UGFyYW1zEjMKDGFjY2Vzc19sZXZlbBgBIAEoDjIdLmNhZGVzdHJvLnYxLkFkbWluQWNjZXNzTGV2ZWwSDQoFdXNlcnMYAiADKAkSFQoNY3VzdG9tX2NvbmZpZxgDIAEoCRIuCgdiYWNrZW5kGAQgASgOMh0uY2FkZXN0cm8udjEuUHJpdmlsZWdlQmFja2VuZCKrAQoJTHBzUGFyYW1zEhEKCXVzZXJuYW1lcxgBIAMoCRIXCg9wYXNzd29yZF9sZW5ndGgYAiABKAUSNgoKY29tcGxleGl0eRgDIAEoDjIiLmNhZGVzdHJvLnYxLkxwc1Bhc3N3b3JkQ29tcGxleGl0eRIeChZyb3RhdGlvbl9pbnRlcnZhbF9kYXlzGAQgASgFEhoKEmdyYWNlX3BlcmlvZF9ob3VycxgFIAEoBSKXAgoQRW5jcnlwdGlvblBhcmFtcxIaCg1wcmVzaGFyZWRfa2V5GAEgASgMQgOAAQESHgoWcm90YXRpb25faW50ZXJ2YWxfZGF5cxgCIAEoBRIRCgltaW5fd29yZHMYAyABKAUSSAoVZGV2aWNlX2JvdW5kX2tleV90eXBlGAQgASgOMikuY2FkZXN0cm8udjEuRW5jcnlwdGlvbkRldmljZUJvdW5kS2V5VHlwZRIiChp1c2VyX3Bhc3NwaHJhc2VfbWluX2xlbmd0aBgFIAEoBRJGChp1c2VyX3Bhc3NwaHJhc2VfY29tcGxleGl0eRgGIAEoDjIiLmNhZGVzdHJvLnYxLkxwc1Bhc3N3b3JkQ29tcGxleGl0eSLjAQoKV2lmaVBhcmFtcxIMCgRzc2lkGAEgASgJEiwKCWF1dGhfdHlwZRgCIAEoDjIZLmNhZGVzdHJvLnYxLldpZmlBdXRoVHlwZRIQCgNwc2sYAyABKAxCA4ABARIPCgdjYV9jZXJ0GAQgASgJEhMKC2NsaWVudF9jZXJ0GAUgASgJEhcKCmNsaWVudF9rZXkYBiABKAxCA4ABARIQCghpZGVudGl0eRgHIAEoCRIUCgxhdXRvX2Nvbm5lY3QYCCABKAgSDgoGaGlkZGVuGAkgASgIEhAKCHByaW9yaXR5GAogASgFItoDCgxBY3Rpb25SZXN1bHQSKAoJYWN0aW9uX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWQSLAoGc3RhdHVzGAIgASgOMhwuY2FkZXN0cm8udjEuRXhlY3V0aW9uU3RhdHVzEg0KBWVycm9yGAMgASgJEioKBm91dHB1dBgEIAEoCzIaLmNhZGVzdHJvLnYxLkNvbW1hbmRPdXRwdXQSMAoMY29tcGxldGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBITCgtkdXJhdGlvbl9tcxgGIAEoAxIPCgdjaGFuZ2VkGAcgASgIEjkKCG1ldGFkYXRhGAggAygLMicuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0Lk1ldGFkYXRhRW50cnkSEQoJY29tcGxpYW50GAkgASgIEjQKEGRldGVjdGlvbl9vdXRwdXQYCiABKAsyGi5jYWRlc3Ryby52MS5Db21tYW5kT3V0cHV0EhMKC2RlbGl2ZXJ5X2lkGAsgASgJEhUKDW9jY3VycmVuY2VfaWQYDCABKAkaLwoNTWV0YWRhdGFFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjsKD0FnZW50VXBkYXRlQXJjaBISCgpiaW5hcnlfdXJsGAEgASgJEhQKDGNoZWNrc3VtX3VybBgCIAEoCSKeAQoRQWdlbnRVcGRhdGVQYXJhbXMSKwoFYW1kNjQYASABKAsyHC5jYWRlc3Ryby52MS5BZ2VudFVwZGF0ZUFyY2gSKwoFYXJtNjQYAiABKAsyHC5jYWRlc3Ryby52MS5BZ2VudFVwZGF0ZUFyY2gSFwoPYWxsb3dfZG93bmdyYWRlGAMgASgIEhYKDmFsbG93X3JlZGlyZWN0GAQgASgIKroECgpBY3Rpb25UeXBlEhsKF0FDVElPTl9UWVBFX1VOU1BFQ0lGSUVEEAASFwoTQUNUSU9OX1RZUEVfUEFDS0FHRRABEhYKEkFDVElPTl9UWVBFX1VQREFURRACEhoKFkFDVElPTl9UWVBFX1JFUE9TSVRPUlkQAxIZChVBQ1RJT05fVFlQRV9BUFBfSU1BR0UQZBITCg9BQ1RJT05fVFlQRV9ERUIQZRITCg9BQ1RJT05fVFlQRV9SUE0QZhIXChNBQ1RJT05fVFlQRV9GTEFUUEFLEGcSFgoRQUNUSU9OX1RZUEVfU0hFTEwQyAESGwoWQUNUSU9OX1RZUEVfU0NSSVBUX1JVThDJARIYChNBQ1RJT05fVFlQRV9TRVJWSUNFEKwCEhUKEEFDVElPTl9UWVBFX0ZJTEUQkAMSGgoVQUNUSU9OX1RZUEVfRElSRUNUT1JZEJEDEhUKEEFDVElPTl9UWVBFX1VTRVIQ2AQSFgoRQUNUSU9OX1RZUEVfR1JPVVAQ2QQSFAoPQUNUSU9OX1RZUEVfU1NIELwFEhUKEEFDVElPTl9UWVBFX1NTSEQQvQUSHQoYQUNUSU9OX1RZUEVfQURNSU5fUE9MSUNZEKAGEhQKD0FDVElPTl9UWVBFX0xQUxCEBxIbChZBQ1RJT05fVFlQRV9FTkNSWVBUSU9OEOgHEhUKEEFDVElPTl9UWVBFX1dJRkkQzAgSHQoYQUNUSU9OX1RZUEVfQUdFTlRfVVBEQVRFELAJKpgBChBTZXJ2aWNlVW5pdFN0YXRlEiIKHlNFUlZJQ0VfVU5JVF9TVEFURV9VTlNQRUNJRklFRBAAEh4KGlNFUlZJQ0VfVU5JVF9TVEFURV9TVEFSVEVEEAESHgoaU0VSVklDRV9VTklUX1NUQVRFX1NUT1BQRUQQAhIgChxTRVJWSUNFX1VOSVRfU1RBVEVfUkVTVEFSVEVEEAMq7QEKEEFkbWluQWNjZXNzTGV2ZWwSIgoeQURNSU5fQUNDRVNTX0xFVkVMX1VOU1BFQ0lGSUVEEAASGwoXQURNSU5fQUNDRVNTX0xFVkVMX0ZVTEwQARIeChpBRE1JTl9BQ0NFU1NfTEVWRUxfTElNSVRFRBACEh0KGUFETUlOX0FDQ0VTU19MRVZFTF9DVVNUT00QAxItCilBRE1JTl9BQ0NFU1NfTEVWRUxfVEVSTUlOQUxfQURNSU5fTElNSVRFRBAEEioKJkFETUlOX0FDQ0VTU19MRVZFTF9URVJNSU5BTF9BRE1JTl9GVUxMEAUqSgoQUHJpdmlsZWdlQmFja2VuZBIaChZQUklWSUxFR0VfQkFDS0VORF9TVURPEAASGgoWUFJJVklMRUdFX0JBQ0tFTkRfRE9BUxABKo8BChVMcHNQYXNzd29yZENvbXBsZXhpdHkSJwojTFBTX1BBU1NXT1JEX0NPTVBMRVhJVFlfVU5TUEVDSUZJRUQQABIoCiRMUFNfUEFTU1dPUkRfQ09NUExFWElUWV9BTFBIQU5VTUVSSUMQARIjCh9MUFNfUEFTU1dPUkRfQ09NUExFWElUWV9DT01QTEVYEAIqqQEKHEVuY3J5cHRpb25EZXZpY2VCb3VuZEtleVR5cGUSKQolRU5DUllQVElPTl9ERVZJQ0VfQk9VTkRfS0VZX1RZUEVfTk9ORRAAEigKJEVOQ1JZUFRJT05fREVWSUNFX0JPVU5EX0tFWV9UWVBFX1RQTRABEjQKMEVOQ1JZUFRJT05fREVWSUNFX0JPVU5EX0tFWV9UWVBFX1VTRVJfUEFTU1BIUkFTRRACKmIKDFdpZmlBdXRoVHlwZRIeChpXSUZJX0FVVEhfVFlQRV9VTlNQRUNJRklFRBAAEhYKEldJRklfQVVUSF9UWVBFX1BTSxABEhoKFldJRklfQVVUSF9UWVBFX0VBUF9UTFMQAkJHWkVnaXRodWIuY29tL21hbmNodG9vbHMvY2FkZXN0cm8vY29udHJhY3QvZ2VuL2dvL2NhZGVzdHJvL3YxO2NhZGVzdHJvdjFiBnByb3RvMw", [file_cadestro_v1_common, file_google_protobuf_timestamp]);
+  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSKyCAoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARItCgR0eXBlGAIgASgOMhcuY2FkZXN0cm8udjEuQWN0aW9uVHlwZUIGukgDyAEBEjAKDWRlc2lyZWRfc3RhdGUYAyABKA4yGS5jYWRlc3Ryby52MS5EZXNpcmVkU3RhdGUSJgoPdGltZW91dF9zZWNvbmRzGAQgASgFQg26SArYAQEaBRiQHCgAEi0KCHNjaGVkdWxlGAUgASgLMhsuY2FkZXN0cm8udjEuQWN0aW9uU2NoZWR1bGUSLQoHcGFja2FnZRgIIAEoCzIaLmNhZGVzdHJvLnYxLlBhY2thZ2VQYXJhbXNIABIsCgNhcHAYCSABKAsyHS5jYWRlc3Ryby52MS5BcHBJbnN0YWxsUGFyYW1zSAASKQoFc2hlbGwYCiABKAsyGC5jYWRlc3Ryby52MS5TaGVsbFBhcmFtc0gAEi0KB3NlcnZpY2UYCyABKAsyGi5jYWRlc3Ryby52MS5TZXJ2aWNlUGFyYW1zSAASJwoEZmlsZRgMIAEoCzIXLmNhZGVzdHJvLnYxLkZpbGVQYXJhbXNIABIrCgZ1cGRhdGUYDSABKAsyGS5jYWRlc3Ryby52MS5VcGRhdGVQYXJhbXNIABIzCgpyZXBvc2l0b3J5GA4gASgLMh0uY2FkZXN0cm8udjEuUmVwb3NpdG9yeVBhcmFtc0gAEi0KB2ZsYXRwYWsYDyABKAsyGi5jYWRlc3Ryby52MS5GbGF0cGFrUGFyYW1zSAASMQoJZGlyZWN0b3J5GBAgASgLMhwuY2FkZXN0cm8udjEuRGlyZWN0b3J5UGFyYW1zSAASJwoEdXNlchgRIAEoCzIXLmNhZGVzdHJvLnYxLlVzZXJQYXJhbXNIABIlCgNzc2gYEiABKAsyFi5jYWRlc3Ryby52MS5Tc2hQYXJhbXNIABInCgRzc2hkGBMgASgLMhcuY2FkZXN0cm8udjEuU3NoZFBhcmFtc0gAEjYKDGFkbWluX3BvbGljeRgUIAEoCzIeLmNhZGVzdHJvLnYxLkFkbWluUG9saWN5UGFyYW1zSAASJQoDbHBzGBUgASgLMhYuY2FkZXN0cm8u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Mg5eW2EtekEtWjAtOV0rJBInCgNhcHQYAiABKAsyGi5jYWRlc3Ryby52MS5BcHRSZXBvc2l0b3J5EicKA2RuZhgDIAEoCzIaLmNhZGVzdHJvLnYxLkRuZlJlcG9zaXRvcnkSLQoGcGFjbWFuGAQgASgLMh0uY2FkZXN0cm8udjEuUGFjbWFuUmVwb3NpdG9yeRItCgZ6eXBwZXIYBSABKAsyHS5jYWRlc3Ryby52MS5aeXBwZXJSZXBvc2l0b3J5IukCCg1BcHRSZXBvc2l0b3J5EhgKA3VybBgBIAEoCUILukgI2AEBcgOIAQESIAoMZGlzdHJpYnV0aW9uGAIgASgJQgq6SAfYAQFyAhhAEiAKCmNvbXBvbmVudHMYAyADKAlCDLpICZIBBiIEcgIYQBIgCgtncGdfa2V5X3VybBgEIAEoCUILukgI2AEBcgOIAQESHQoHZ3BnX2tleRgFIAEoCUIMukgJ2AEBcgQYgIAEEg8KB3RydXN0ZWQYBiABKAgSGAoEYXJjaBgHIAEoCUIKukgH2AEBcgIYIBIQCghkaXNhYmxlZBgIIAEoCDp8ukh5GncKLGFwdF9yZXBvc2l0b3J5LnVybF9yZXF1aXJlZF93aXRob3V0X2Rpc2FibGVkEiZ1cmwgaXMgcmVxdWlyZWQgdW5sZXNzIGRpc2FibGVkIGlzIHNldBofdGhpcy5kaXNhYmxlZCB8fCB0aGlzLnVybCAhPSAnJyK6AgoNRG5mUmVwb3NpdG9yeRIPCgdiYXNldXJsGAEgASgJEiAKC2Rlc2NyaXB0aW9uGAIgASgJQgu6SAjYAQFyAxj/ARIPCgdlbmFibGVkGAMgASgIEhAKCGdwZ2NoZWNrGAQgASgIEhsKBmdwZ2tleRgFIAEoCUILukgI2AEBcgOIAQESFwoPbW9kdWxlX2hvdGZpeGVzGAYgASgIEhAKCGRpc2FibGVkGAcgASgIOooBukiGARqDAQowZG5mX3JlcG9zaXRvcnkuYmFzZXVybF9yZXF1aXJlZF93aXRob3V0X2Rpc2FibGVkEipiYXNldXJsIGlzIHJlcXVpcmVkIHVubGVzcyBkaXNhYmxlZCBpcyBzZXQaI3RoaXMuZGlzYWJsZWQgfHwgdGhpcy5iYXNldXJsICE9ICcnIuEBChBQYWNtYW5SZXBvc2l0b3J5Eg4KBnNl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by52MS5FeGVjdXRpb25TdGF0dXNCBrpIA8gBARIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgCASKgoGb3V0cHV0GAQgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIwCgxjb21wbGV0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEh8KC2R1cmF0aW9uX21zGAYgASgDQgq6SAfYAQEiAigAEg8KB2NoYW5nZWQYByABKAgSOQoIbWV0YWRhdGEYCCADKAsyJy5jYWRlc3Ryby52MS5BY3Rpb25SZXN1bHQuTWV0YWRhdGFFbnRyeRIRCgljb21wbGlhbnQYCSABKAgSNAoQZGV0ZWN0aW9uX291dHB1dBgKIAEoCzIaLmNhZGVzdHJvLnYxLkNvbW1hbmRPdXRwdXQSHQoLZGVsaXZlcnlfaWQYCyABKAlCCLpIBXIDmAIBEh8KDW9jY3VycmVuY2VfaWQYDCABKAlCCLpIBXIDmAIBGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJpCg9BZ2VudFVwZGF0ZUFyY2gSKQoKYmluYXJ5X3VybBgBIAEoCUIVukgSyAEBcg06CGh0dHBzOi8viAEBEisKDGNoZWNrc3VtX3VybBgCIAEoCUIVukgSyAEBcg06CGh0dHBzOi8viAEBIp4BChFBZ2VudFVwZGF0ZVBhcmFtcxIrCgVhbWQ2NBgBIAEoCzIcLmNhZGVzdHJvLnYxLkFnZW50VXBkYXRlQXJjaBIrCgVhcm02NBgCIAEoCzIcLmNhZGVzdHJvLnYxLkFnZW50VXBkYXRlQXJjaBIXCg9hbGxvd19kb3duZ3JhZGUYAyABKAgSFgoOYWxsb3dfcmVkaXJlY3QYBCABKAgqugQKCkFjdGlvblR5cGUSGwoXQUNUSU9OX1RZUEVfVU5TUEVDSUZJRUQQABIXChNBQ1RJT05fVFlQRV9QQUNLQUdFEAESFgoSQUNUSU9OX1RZUEVfVVBEQVRFEAISGgoWQUNUSU9OX1RZUEVfUkVQT1NJVE9SWRADEhkKFUFDVElPTl9UWVBFX0FQUF9JTUFHRRBkEhMKD0FDVElPTl9UWVBFX0RFQhBlEhMKD0FDVElPTl9UWVBFX1JQTRBmEhcKE0FDVElPTl9UWVBFX0ZMQVRQQUsQZxIWChFBQ1RJT05fVFlQRV9TSEVMTBDIARIbChZBQ1RJT05fVFlQRV9TQ1JJUFRfUlVOEMkBEhgKE0FDVElPTl9UWVBFX1NFUlZJQ0UQrAISFQoQQUNUSU9OX1RZUEVfRklMRRCQAxIaChVBQ1RJT05fVFlQRV9ESVJFQ1RPUlkQkQMSFQoQQUNUSU9OX1RZUEVfVVNFUhDYBBIWChFBQ1RJT05fVFlQRV9HUk9VUBDZBBIUCg9BQ1RJT05fVFlQRV9TU0gQvAUSFQoQQUNUSU9OX1RZUEVfU1NIRBC9BRIdChhBQ1RJT05fVFlQRV9BRE1JTl9QT0xJQ1kQoAYSFAoPQUNUSU9OX1RZUEVfTFBTEIQHEhsKFkFDVElPTl9UWVBFX0VOQ1JZUFRJT04Q6AcSFQoQQUNUSU9OX1RZUEVfV0lGSRDMCBIdChhBQ1RJT05fVFlQRV9BR0VOVF9VUERBVEUQsAkqmAEKEFNlcnZpY2VVbml0U3RhdGUSIgoeU0VSVklDRV9VTklUX1NUQVRFX1VOU1BFQ0lGSUVEEAASHgoaU0VSVklDRV9VTklUX1NUQVRFX1NUQVJURUQQARIeChpTRVJWSUNFX1VOSVRfU1RBVEVfU1RPUFBFRBACEiAKHFNFUlZJQ0VfVU5JVF9TVEFURV9SRVNUQVJURUQQAyrtAQoQQWRtaW5BY2Nlc3NMZXZlbBIiCh5BRE1JTl9BQ0NFU1NfTEVWRUxfVU5TUEVDSUZJRUQQABIbChdBRE1JTl9BQ0NFU1NfTEVWRUxfRlVMTBABEh4KGkFETUlOX0FDQ0VTU19MRVZFTF9MSU1JVEVEEAISHQoZQURNSU5fQUNDRVNTX0xFVkVMX0NVU1RPTRADEi0KKUFETUlOX0FDQ0VTU19MRVZFTF9URVJNSU5BTF9BRE1JTl9MSU1JVEVEEAQSKgomQURNSU5fQUNDRVNTX0xFVkVMX1RFUk1JTkFMX0FETUlOX0ZVTEwQBSpKChBQcml2aWxlZ2VCYWNrZW5kEhoKFlBSSVZJTEVHRV9CQUNLRU5EX1NVRE8QABIaChZQUklWSUxFR0VfQkFDS0VORF9ET0FTEAEqjwEKFUxwc1Bhc3N3b3JkQ29tcGxleGl0eRInCiNMUFNfUEFTU1dPUkRfQ09NUExFWElUWV9VTlNQRUNJRklFRBAAEigKJExQU19QQVNTV09SRF9DT01QTEVYSVRZX0FMUEhBTlVNRVJJQxABEiMKH0xQU19QQVNTV09SRF9DT01QTEVYSVRZX0NPTVBMRVgQAiqpAQocRW5jcnlwdGlvbkRldmljZUJvdW5kS2V5VHlwZRIpCiVFTkNSWVBUSU9OX0RFVklDRV9CT1VORF9LRVlfVFlQRV9OT05FEAASKAokRU5DUllQVElPTl9ERVZJQ0VfQk9VTkRfS0VZX1RZUEVfVFBNEAESNAowRU5DUllQVElPTl9ERVZJQ0VfQk9VTkRfS0VZX1RZUEVfVVNFUl9QQVNTUEhSQVNFEAIqYgoMV2lmaUF1dGhUeXBlEh4KGldJRklfQVVUSF9UWVBFX1VOU1BFQ0lGSUVEEAASFgoSV0lGSV9BVVRIX1RZUEVfUFNLEAESGgoWV0lGSV9BVVRIX1RZUEVfRUFQX1RMUxACQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.Action
  */
 export type Action = Message<"cadestro.v1.Action"> & {
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.ActionId id = 1;
    */
   id?: ActionId;
 
   /**
-   * @gotags: validate:"required,ne=0"
-   *
    * @generated from field: cadestro.v1.ActionType type = 2;
    */
   type: ActionType;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: cadestro.v1.DesiredState desired_state = 3;
    */
   desiredState: DesiredState;
 
   /**
-   * @gotags: validate:"omitempty,gte=0,lte=3600"
-   *
    * @generated from field: int32 timeout_seconds = 4;
    */
   timeoutSeconds: number;
@@ -54,7 +47,6 @@ export type Action = Message<"cadestro.v1.Action"> & {
    * Manifest the occurrence belongs to, which fires every occurrence in
    * declared order. A singleton-Action manifest simply carries this schedule
    * at the manifest level.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 5;
    */
@@ -193,7 +185,6 @@ export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
   /**
    * Cron expression for scheduled execution (e.g., "0 3 * * *" for 3am daily)
    * If empty, uses default_interval_hours instead.
-   * @gotags: validate:"omitempty,max=128"
    *
    * @generated from field: string cron = 1;
    */
@@ -202,7 +193,6 @@ export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
   /**
    * Default interval in hours between executions (default: 8 hours for drift prevention)
    * Used when cron is not specified.
-   * @gotags: validate:"omitempty,gte=0,lte=8760"
    *
    * @generated from field: int32 interval_hours = 2;
    */
@@ -210,7 +200,6 @@ export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
 
   /**
    * Whether to run immediately when the action is first received
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool run_on_assign = 3;
    */
@@ -218,7 +207,6 @@ export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
 
   /**
    * Whether to skip execution if the previous run was successful and no changes detected
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool skip_if_unchanged = 4;
    */
@@ -239,29 +227,22 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   /**
    * Generic package name (used if manager-specific names not provided)
    * If set, this name is used for all package managers.
-   * @gotags: validate:"omitempty,max=255"
    *
    * @generated from field: string name = 1;
    */
   name: string;
 
   /**
-   * @gotags: validate:"omitempty,max=128"
-   *
    * @generated from field: string version = 2;
    */
   version: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: bool allow_downgrade = 3;
    */
   allowDowngrade: boolean;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: bool pin = 4;
    */
   pin: boolean;
@@ -269,7 +250,6 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   /**
    * Manager-specific package names (override generic name)
    * If a manager-specific name is empty, that manager will be skipped.
-   * @gotags: validate:"omitempty,max=255"
    *
    * Debian/Ubuntu (apt/apt-get)
    *
@@ -278,8 +258,6 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   aptName: string;
 
   /**
-   * @gotags: validate:"omitempty,max=255"
-   *
    * Fedora/RHEL (dnf/yum)
    *
    * @generated from field: string dnf_name = 6;
@@ -287,8 +265,6 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   dnfName: string;
 
   /**
-   * @gotags: validate:"omitempty,max=255"
-   *
    * Arch Linux (pacman)
    *
    * @generated from field: string pacman_name = 7;
@@ -296,8 +272,6 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   pacmanName: string;
 
   /**
-   * @gotags: validate:"omitempty,max=255"
-   *
    * openSUSE (zypper)
    *
    * @generated from field: string zypper_name = 8;
@@ -317,8 +291,6 @@ export const PackageParamsSchema: GenMessage<PackageParams> = /*@__PURE__*/
  */
 export type AppInstallParams = Message<"cadestro.v1.AppInstallParams"> & {
   /**
-   * @gotags: validate:"required,url"
-   *
    * @generated from field: string url = 1;
    */
   url: string;
@@ -327,15 +299,12 @@ export type AppInstallParams = Message<"cadestro.v1.AppInstallParams"> & {
    * Mandatory integrity for download-and-install actions (deb/rpm/
    * appimage): without it the agent would install a binary whose only
    * authenticity is TLS to a possibly-compromised origin. Lowercase hex.
-   * @gotags: validate:"required,len=64,hexadecimal"
    *
    * @generated from field: string checksum_sha256 = 2;
    */
   checksumSha256: string;
 
   /**
-   * @gotags: validate:"omitempty,startswith=/"
-   *
    * @generated from field: string install_path = 3;
    */
   installPath: string;
@@ -354,43 +323,33 @@ export const AppInstallParamsSchema: GenMessage<AppInstallParams> = /*@__PURE__*
 export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
   /**
    * Execution/remediation script (runs when detection_script is absent or exits non-zero)
-   * @gotags: validate:"omitempty,max=1048576"
    *
    * @generated from field: string script = 1;
    */
   script: string;
 
   /**
-   * @gotags: validate:"omitempty,max=255"
-   *
    * @generated from field: string interpreter = 2;
    */
   interpreter: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: bool run_as_root = 3;
    */
   runAsRoot: boolean;
 
   /**
-   * @gotags: validate:"omitempty,startswith=/"
-   *
    * @generated from field: string working_directory = 4;
    */
   workingDirectory: string;
 
   /**
-   * @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=4096"
-   *
    * @generated from field: map<string, string> environment = 5;
    */
   environment: { [key: string]: string };
 
   /**
    * Detection script: exit 0 = compliant (skip execution), non-zero = needs remediation
-   * @gotags: validate:"omitempty,max=1048576"
    *
    * @generated from field: string detection_script = 6;
    */
@@ -398,7 +357,6 @@ export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
 
   /**
    * When true, only the detection script runs (no remediation) and results are tracked as compliance checks
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool is_compliance = 7;
    */
@@ -420,29 +378,21 @@ export const ShellParamsSchema: GenMessage<ShellParams> = /*@__PURE__*/
  */
 export type ServiceParams = Message<"cadestro.v1.ServiceParams"> & {
   /**
-   * @gotags: validate:"required,min=1,max=255"
-   *
    * @generated from field: string unit_name = 1;
    */
   unitName: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: cadestro.v1.ServiceUnitState desired_state = 2;
    */
   desiredState: ServiceUnitState;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: bool enable = 3;
    */
   enable: boolean;
 
   /**
-   * @gotags: validate:"omitempty,max=65536"
-   *
    * @generated from field: string unit_content = 4;
    */
   unitContent: string;
@@ -460,36 +410,26 @@ export const ServiceParamsSchema: GenMessage<ServiceParams> = /*@__PURE__*/
  */
 export type FileParams = Message<"cadestro.v1.FileParams"> & {
   /**
-   * @gotags: validate:"required,startswith=/"
-   *
    * @generated from field: string path = 1;
    */
   path: string;
 
   /**
-   * @gotags: validate:"omitempty,max=10485760"
-   *
    * @generated from field: string content = 2;
    */
   content: string;
 
   /**
-   * @gotags: validate:"omitempty,max=32"
-   *
    * @generated from field: string owner = 3;
    */
   owner: string;
 
   /**
-   * @gotags: validate:"omitempty,max=32"
-   *
    * @generated from field: string group = 4;
    */
   group: string;
 
   /**
-   * @gotags: validate:"omitempty,max=4"
-   *
    * @generated from field: string mode = 5;
    */
   mode: string;
@@ -499,7 +439,6 @@ export type FileParams = Message<"cadestro.v1.FileParams"> & {
    * PRESENT: appends content if not already present in file.
    * ABSENT: removes only the content block, not the entire file.
    * Ownership and mode are still enforced.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool managed_block = 6;
    */
@@ -522,29 +461,22 @@ export const FileParamsSchema: GenMessage<FileParams> = /*@__PURE__*/
 export type DirectoryParams = Message<"cadestro.v1.DirectoryParams"> & {
   /**
    * Directory path (must be absolute)
-   * @gotags: validate:"required,startswith=/"
    *
    * @generated from field: string path = 1;
    */
   path: string;
 
   /**
-   * @gotags: validate:"omitempty,max=32"
-   *
    * @generated from field: string owner = 2;
    */
   owner: string;
 
   /**
-   * @gotags: validate:"omitempty,max=32"
-   *
    * @generated from field: string group = 3;
    */
   group: string;
 
   /**
-   * @gotags: validate:"omitempty,max=4"
-   *
    * @generated from field: string mode = 4;
    */
   mode: string;
@@ -552,7 +484,6 @@ export type DirectoryParams = Message<"cadestro.v1.DirectoryParams"> & {
   /**
    * Whether to create parent directories (like mkdir -p)
    * Default: true
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool recursive = 5;
    */
@@ -574,8 +505,6 @@ export const DirectoryParamsSchema: GenMessage<DirectoryParams> = /*@__PURE__*/
  */
 export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
   /**
-   * @gotags: validate:"omitempty"
-   *
    * Only install security updates (if supported)
    *
    * @generated from field: bool security_only = 1;
@@ -583,8 +512,6 @@ export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
   securityOnly: boolean;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * Remove unused dependencies after update
    *
    * @generated from field: bool autoremove = 2;
@@ -592,8 +519,6 @@ export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
   autoremove: boolean;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * Reboot system if updates require it
    *
    * @generated from field: bool reboot_if_required = 3;
@@ -617,7 +542,6 @@ export const UpdateParamsSchema: GenMessage<UpdateParams> = /*@__PURE__*/
 export type FlatpakParams = Message<"cadestro.v1.FlatpakParams"> & {
   /**
    * Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
-   * @gotags: validate:"required,min=1,max=255"
    *
    * @generated from field: string app_id = 1;
    */
@@ -625,7 +549,6 @@ export type FlatpakParams = Message<"cadestro.v1.FlatpakParams"> & {
 
   /**
    * Remote/repository name (default: "flathub")
-   * @gotags: validate:"omitempty,max=64"
    *
    * @generated from field: string remote = 2;
    */
@@ -634,7 +557,6 @@ export type FlatpakParams = Message<"cadestro.v1.FlatpakParams"> & {
   /**
    * Whether to install system-wide (true) or user-only (false)
    * Default: true (system-wide)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool system_wide = 3;
    */
@@ -642,7 +564,6 @@ export type FlatpakParams = Message<"cadestro.v1.FlatpakParams"> & {
 
   /**
    * Pin the application to prevent automatic updates
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool pin = 4;
    */
@@ -665,7 +586,6 @@ export const FlatpakParamsSchema: GenMessage<FlatpakParams> = /*@__PURE__*/
 export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
   /**
    * Repository name/identifier (used for file naming)
-   * @gotags: validate:"required,min=1,max=64,alphanum"
    *
    * @generated from field: string name = 1;
    */
@@ -673,7 +593,6 @@ export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
 
   /**
    * APT repository configuration (Debian/Ubuntu)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.AptRepository apt = 2;
    */
@@ -681,7 +600,6 @@ export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
 
   /**
    * DNF/YUM repository configuration (Fedora/RHEL)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.DnfRepository dnf = 3;
    */
@@ -689,7 +607,6 @@ export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
 
   /**
    * Pacman repository configuration (Arch Linux)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.PacmanRepository pacman = 4;
    */
@@ -697,7 +614,6 @@ export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
 
   /**
    * Zypper repository configuration (openSUSE)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.ZypperRepository zypper = 5;
    */
@@ -719,7 +635,6 @@ export const RepositoryParamsSchema: GenMessage<RepositoryParams> = /*@__PURE__*
 export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
   /**
    * Repository URL (e.g., "https://packages.example.com/apt")
-   * @gotags: validate:"required_without=Disabled,omitempty,url"
    *
    * @generated from field: string url = 1;
    */
@@ -727,7 +642,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * Distribution codename (e.g., "jammy", "bookworm")
-   * @gotags: validate:"omitempty,max=64"
    *
    * @generated from field: string distribution = 2;
    */
@@ -735,7 +649,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * Components (e.g., "main", "contrib", "non-free")
-   * @gotags: validate:"omitempty,dive,max=64"
    *
    * @generated from field: repeated string components = 3;
    */
@@ -743,7 +656,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * GPG key URL for repository signing
-   * @gotags: validate:"omitempty,url"
    *
    * @generated from field: string gpg_key_url = 4;
    */
@@ -751,7 +663,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * GPG key content (ASCII-armored, alternative to gpg_key_url)
-   * @gotags: validate:"omitempty,max=65536"
    *
    * @generated from field: string gpg_key = 5;
    */
@@ -759,7 +670,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * Whether to use signed-by (modern) or trusted=yes (legacy, less secure)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool trusted = 6;
    */
@@ -767,7 +677,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * Architecture filter (e.g., "amd64", "arm64")
-   * @gotags: validate:"omitempty,max=32"
    *
    * @generated from field: string arch = 7;
    */
@@ -775,7 +684,6 @@ export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
 
   /**
    * Set to true to disable/skip this repository manager
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool disabled = 8;
    */
@@ -797,7 +705,6 @@ export const AptRepositorySchema: GenMessage<AptRepository> = /*@__PURE__*/
 export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
   /**
    * Base URL for the repository (supports DNF variables like $releasever and $basearch)
-   * @gotags: validate:"required_without=Disabled,omitempty"
    *
    * @generated from field: string baseurl = 1;
    */
@@ -805,7 +712,6 @@ export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
 
   /**
    * Repository description
-   * @gotags: validate:"omitempty,max=255"
    *
    * @generated from field: string description = 2;
    */
@@ -813,7 +719,6 @@ export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
 
   /**
    * Whether the repository is enabled (default true)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool enabled = 3;
    */
@@ -821,7 +726,6 @@ export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
 
   /**
    * Whether to check GPG signatures
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool gpgcheck = 4;
    */
@@ -829,7 +733,6 @@ export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
 
   /**
    * GPG key URL
-   * @gotags: validate:"omitempty,url"
    *
    * @generated from field: string gpgkey = 5;
    */
@@ -837,7 +740,6 @@ export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
 
   /**
    * Module hotfixes (for modular content)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool module_hotfixes = 6;
    */
@@ -845,7 +747,6 @@ export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
 
   /**
    * Set to true to disable/skip this repository manager
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool disabled = 7;
    */
@@ -867,7 +768,6 @@ export const DnfRepositorySchema: GenMessage<DnfRepository> = /*@__PURE__*/
 export type PacmanRepository = Message<"cadestro.v1.PacmanRepository"> & {
   /**
    * Server URL (supports pacman variables like $repo and $arch)
-   * @gotags: validate:"required_without=Disabled,omitempty"
    *
    * @generated from field: string server = 1;
    */
@@ -875,7 +775,6 @@ export type PacmanRepository = Message<"cadestro.v1.PacmanRepository"> & {
 
   /**
    * SigLevel (e.g., "Optional TrustAll", "Required DatabaseOptional")
-   * @gotags: validate:"omitempty,max=128"
    *
    * @generated from field: string sig_level = 2;
    */
@@ -883,7 +782,6 @@ export type PacmanRepository = Message<"cadestro.v1.PacmanRepository"> & {
 
   /**
    * Set to true to disable/skip this repository manager
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool disabled = 3;
    */
@@ -905,7 +803,6 @@ export const PacmanRepositorySchema: GenMessage<PacmanRepository> = /*@__PURE__*
 export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
   /**
    * Repository URL
-   * @gotags: validate:"required_without=Disabled,omitempty,url"
    *
    * @generated from field: string url = 1;
    */
@@ -913,7 +810,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * Repository description/alias
-   * @gotags: validate:"omitempty,max=255"
    *
    * @generated from field: string description = 2;
    */
@@ -921,7 +817,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * Whether to enable the repository (default true)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool enabled = 3;
    */
@@ -929,7 +824,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * Whether to auto-refresh the repository
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool autorefresh = 4;
    */
@@ -937,7 +831,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * Whether to check GPG signatures
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool gpgcheck = 5;
    */
@@ -945,7 +838,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * GPG key URL
-   * @gotags: validate:"omitempty,url"
    *
    * @generated from field: string gpgkey = 6;
    */
@@ -953,7 +845,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * Repository type (e.g., "rpm-md", "yast2")
-   * @gotags: validate:"omitempty,max=32"
    *
    * @generated from field: string type = 7;
    */
@@ -961,7 +852,6 @@ export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
 
   /**
    * Set to true to disable/skip this repository manager
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool disabled = 8;
    */
@@ -984,7 +874,6 @@ export const ZypperRepositorySchema: GenMessage<ZypperRepository> = /*@__PURE__*
 export type UserParams = Message<"cadestro.v1.UserParams"> & {
   /**
    * Username (required)
-   * @gotags: validate:"required,min=1,max=32,alphanum"
    *
    * @generated from field: string username = 1;
    */
@@ -992,7 +881,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * User ID (optional - system assigns if not specified)
-   * @gotags: validate:"omitempty,gte=0,lte=65534"
    *
    * @generated from field: int32 uid = 2;
    */
@@ -1000,7 +888,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Primary group ID (optional - creates user's own group if not specified)
-   * @gotags: validate:"omitempty,gte=0,lte=65534"
    *
    * @generated from field: int32 gid = 3;
    */
@@ -1008,7 +895,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Home directory path (optional - defaults to /home/<username>)
-   * @gotags: validate:"omitempty,startswith=/"
    *
    * @generated from field: string home_dir = 4;
    */
@@ -1016,7 +902,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Login shell (optional - defaults to /bin/bash)
-   * @gotags: validate:"omitempty,startswith=/"
    *
    * @generated from field: string shell = 5;
    */
@@ -1024,7 +909,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * SSH authorized keys to add to ~/.ssh/authorized_keys
-   * @gotags: validate:"omitempty,dive,max=4096"
    *
    * @generated from field: repeated string ssh_authorized_keys = 6;
    */
@@ -1032,7 +916,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * GECOS field / user comment (full name, etc.)
-   * @gotags: validate:"omitempty,max=255"
    *
    * @generated from field: string comment = 7;
    */
@@ -1040,7 +923,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Create as system user (UID < 1000, no home directory by default)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool system_user = 8;
    */
@@ -1048,7 +930,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Create home directory (default: true for normal users, false for system users)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool create_home = 9;
    */
@@ -1056,7 +937,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Disable the user account (lock password, set shell to /usr/sbin/nologin)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool disabled = 10;
    */
@@ -1064,7 +944,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
 
   /**
    * Primary group name (alternative to gid - creates group if needed)
-   * @gotags: validate:"omitempty,max=32"
    *
    * @generated from field: string primary_group = 11;
    */
@@ -1073,7 +952,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
   /**
    * Hide user from graphical login screens (GDM, SDDM, LightDM).
    * Sets SystemAccount=true in AccountsService. No effect on headless systems.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool hidden = 12;
    */
@@ -1096,7 +974,6 @@ export type UserParams = Message<"cadestro.v1.UserParams"> & {
    * This flag is deliberately explicit, not derived from
    * Shell == "/usr/sbin/nologin": the password-good-to-have default
    * should not be flipped by a heuristic on a related field.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool no_password = 13;
    */
@@ -1119,7 +996,6 @@ export const UserParamsSchema: GenMessage<UserParams> = /*@__PURE__*/
 export type GroupParams = Message<"cadestro.v1.GroupParams"> & {
   /**
    * Group name (required)
-   * @gotags: validate:"required,min=1,max=32"
    *
    * @generated from field: string name = 1;
    */
@@ -1127,7 +1003,6 @@ export type GroupParams = Message<"cadestro.v1.GroupParams"> & {
 
   /**
    * Members to add to the group
-   * @gotags: validate:"omitempty,dive,min=1,max=32"
    *
    * @generated from field: repeated string members = 2;
    */
@@ -1135,7 +1010,6 @@ export type GroupParams = Message<"cadestro.v1.GroupParams"> & {
 
   /**
    * Group ID (optional - system assigns if not specified)
-   * @gotags: validate:"omitempty,gte=0,lte=65534"
    *
    * @generated from field: int32 gid = 3;
    */
@@ -1143,7 +1017,6 @@ export type GroupParams = Message<"cadestro.v1.GroupParams"> & {
 
   /**
    * Create as system group (GID < 1000)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool system_group = 4;
    */
@@ -1168,7 +1041,6 @@ export const GroupParamsSchema: GenMessage<GroupParams> = /*@__PURE__*/
 export type SshParams = Message<"cadestro.v1.SshParams"> & {
   /**
    * Allow public key authentication (default: true)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool allow_pubkey = 1;
    */
@@ -1176,7 +1048,6 @@ export type SshParams = Message<"cadestro.v1.SshParams"> & {
 
   /**
    * Allow password authentication (default: false)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool allow_password = 2;
    */
@@ -1184,7 +1055,6 @@ export type SshParams = Message<"cadestro.v1.SshParams"> & {
 
   /**
    * Users to add to the SSH access group (must be valid Linux usernames)
-   * @gotags: validate:"omitempty,dive,min=1,max=32"
    *
    * @generated from field: repeated string users = 3;
    */
@@ -1206,7 +1076,6 @@ export const SshParamsSchema: GenMessage<SshParams> = /*@__PURE__*/
 export type SshdDirective = Message<"cadestro.v1.SshdDirective"> & {
   /**
    * sshd_config directive name (e.g., "PermitRootLogin", "Port")
-   * @gotags: validate:"required,min=1,max=128"
    *
    * @generated from field: string key = 1;
    */
@@ -1214,7 +1083,6 @@ export type SshdDirective = Message<"cadestro.v1.SshdDirective"> & {
 
   /**
    * Directive value (e.g., "no", "22")
-   * @gotags: validate:"required,min=1,max=1024"
    *
    * @generated from field: string value = 2;
    */
@@ -1239,7 +1107,6 @@ export const SshdDirectiveSchema: GenMessage<SshdDirective> = /*@__PURE__*/
 export type SshdParams = Message<"cadestro.v1.SshdParams"> & {
   /**
    * Priority for config file ordering (auto-assigned by server, lower = loaded first)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: uint32 priority = 1;
    */
@@ -1247,7 +1114,6 @@ export type SshdParams = Message<"cadestro.v1.SshdParams"> & {
 
   /**
    * sshd_config directives to set
-   * @gotags: validate:"required,min=1,dive"
    *
    * @generated from field: repeated cadestro.v1.SshdDirective directives = 2;
    */
@@ -1275,7 +1141,6 @@ export const SshdParamsSchema: GenMessage<SshdParams> = /*@__PURE__*/
 export type AdminPolicyParams = Message<"cadestro.v1.AdminPolicyParams"> & {
   /**
    * Access level determines the policy template
-   * @gotags: validate:"required,ne=0"
    *
    * @generated from field: cadestro.v1.AdminAccessLevel access_level = 1;
    */
@@ -1283,7 +1148,6 @@ export type AdminPolicyParams = Message<"cadestro.v1.AdminPolicyParams"> & {
 
   /**
    * Users to add to the admin group (must be valid Linux usernames)
-   * @gotags: validate:"required,min=1,dive,min=1,max=32"
    *
    * @generated from field: repeated string users = 2;
    */
@@ -1294,7 +1158,6 @@ export type AdminPolicyParams = Message<"cadestro.v1.AdminPolicyParams"> & {
    * valid syntax for the chosen backend — sudoers grammar for SUDO and
    * doas.conf(5) grammar for DOAS. Use {group} as placeholder for the
    * auto-generated group name. Required when access_level is CUSTOM (3).
-   * @gotags: validate:"required_if=AccessLevel 3,max=65536"
    *
    * @generated from field: string custom_config = 3;
    */
@@ -1302,7 +1165,6 @@ export type AdminPolicyParams = Message<"cadestro.v1.AdminPolicyParams"> & {
 
   /**
    * Privilege backend. Unset means PRIVILEGE_BACKEND_SUDO.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.PrivilegeBackend backend = 4;
    */
@@ -1329,7 +1191,6 @@ export const AdminPolicyParamsSchema: GenMessage<AdminPolicyParams> = /*@__PURE_
 export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
   /**
    * Target user accounts (must exist on device)
-   * @gotags: validate:"required,min=1,dive,min=1,max=32"
    *
    * @generated from field: repeated string usernames = 1;
    */
@@ -1337,7 +1198,6 @@ export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
 
   /**
    * Password length (8-128)
-   * @gotags: validate:"required,gte=8,lte=128"
    *
    * @generated from field: int32 password_length = 2;
    */
@@ -1345,7 +1205,6 @@ export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
 
   /**
    * Password complexity
-   * @gotags: validate:"required,ne=0"
    *
    * @generated from field: cadestro.v1.LpsPasswordComplexity complexity = 3;
    */
@@ -1353,7 +1212,6 @@ export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
 
   /**
    * Days between scheduled rotations (1-365)
-   * @gotags: validate:"required,gte=1,lte=365"
    *
    * @generated from field: int32 rotation_interval_days = 4;
    */
@@ -1361,7 +1219,6 @@ export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
 
   /**
    * Hours after auth event before automatic rotation (0 = disabled)
-   * @gotags: validate:"omitempty,gte=0,lte=8760"
    *
    * @generated from field: int32 grace_period_hours = 5;
    */
@@ -1387,7 +1244,6 @@ export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
    * Pre-shared key for initial ownership, delivered only over authenticated mTLS.
    * The durable manifest carries the at-rest envelope until the authenticated
    * send boundary, so this bound includes AEAD/base64 overhead.
-   * @gotags: validate:"required,max=512"
    *
    * @generated from field: bytes preshared_key = 1;
    */
@@ -1395,7 +1251,6 @@ export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
 
   /**
    * Days between scheduled passphrase rotations (1-365)
-   * @gotags: validate:"required,gte=1,lte=365"
    *
    * @generated from field: int32 rotation_interval_days = 2;
    */
@@ -1403,7 +1258,6 @@ export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
 
   /**
    * Minimum words in generated managed passphrase (default 5, min 3, max 10)
-   * @gotags: validate:"omitempty,gte=3,lte=10"
    *
    * @generated from field: int32 min_words = 3;
    */
@@ -1414,7 +1268,6 @@ export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
    * Range-checked: the agent switches on this value and its default branch means
    * "no device-bound key", so an unvalidated out-of-range value would silently
    * downgrade a requested TPM enrollment instead of being refused.
-   * @gotags: validate:"omitempty,oneof=0 1 2"
    *
    * @generated from field: cadestro.v1.EncryptionDeviceBoundKeyType device_bound_key_type = 4;
    */
@@ -1422,7 +1275,6 @@ export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
 
   /**
    * Minimum length for user-defined passphrases (16-128, only used when device_bound_key_type = USER_PASSPHRASE)
-   * @gotags: validate:"omitempty,gte=16,lte=128"
    *
    * @generated from field: int32 user_passphrase_min_length = 5;
    */
@@ -1434,7 +1286,6 @@ export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
    * alphabet the agent draws the passphrase from, and its switch default is a
    * weaker alphabet than an out-of-range value was asking for. Stays optional —
    * UNSPECIFIED (0) is legal because the field only applies to USER_PASSPHRASE.
-   * @gotags: validate:"omitempty,oneof=0 1 2"
    *
    * @generated from field: cadestro.v1.LpsPasswordComplexity user_passphrase_complexity = 6;
    */
@@ -1458,7 +1309,6 @@ export const EncryptionParamsSchema: GenMessage<EncryptionParams> = /*@__PURE__*
 export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
   /**
    * Network name (SSID)
-   * @gotags: validate:"required,min=1,max=255"
    *
    * @generated from field: string ssid = 1;
    */
@@ -1466,7 +1316,6 @@ export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
 
   /**
    * Authentication type
-   * @gotags: validate:"required,ne=0"
    *
    * @generated from field: cadestro.v1.WifiAuthType auth_type = 2;
    */
@@ -1474,7 +1323,6 @@ export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
 
   /**
    * PSK authentication (WPA2/WPA3 Personal), delivered only over authenticated mTLS.
-   * @gotags: validate:"omitempty,max=256"
    *
    * @generated from field: bytes psk = 3;
    */
@@ -1482,7 +1330,6 @@ export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
 
   /**
    * EAP-TLS authentication (802.1X with client certificate)
-   * @gotags: validate:"omitempty"
    *
    * CA certificate (PEM)
    *
@@ -1491,8 +1338,6 @@ export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
   caCert: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * Client certificate (PEM)
    *
    * @generated from field: string client_cert = 5;
@@ -1501,15 +1346,12 @@ export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
 
   /**
    * Client private key (PEM), delivered only over authenticated mTLS.
-   * @gotags: validate:"omitempty,max=131072"
    *
    * @generated from field: bytes client_key = 6;
    */
   clientKey: Uint8Array;
 
   /**
-   * @gotags: validate:"omitempty,max=254"
-   *
    * EAP identity (e.g., user@corp.com)
    *
    * @generated from field: string identity = 7;
@@ -1533,7 +1375,6 @@ export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
 
   /**
    * Selection priority when multiple known networks are visible (higher wins).
-   * @gotags: validate:"omitempty,gte=-1,lte=999"
    *
    * @generated from field: int32 priority = 10;
    */
@@ -1552,43 +1393,31 @@ export const WifiParamsSchema: GenMessage<WifiParams> = /*@__PURE__*/
  */
 export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.ActionId action_id = 1;
    */
   actionId?: ActionId;
 
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.ExecutionStatus status = 2;
    */
   status: ExecutionStatus;
 
   /**
-   * @gotags: validate:"omitempty,max=4096"
-   *
    * @generated from field: string error = 3;
    */
   error: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: cadestro.v1.CommandOutput output = 4;
    */
   output?: CommandOutput;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: google.protobuf.Timestamp completed_at = 5;
    */
   completedAt?: Timestamp;
 
   /**
-   * @gotags: validate:"omitempty,gte=0"
-   *
    * @generated from field: int64 duration_ms = 6;
    */
   durationMs: bigint;
@@ -1602,7 +1431,6 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
 
   /**
    * Optional action-specific metadata (e.g., LPS password data)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: map<string, string> metadata = 8;
    */
@@ -1617,7 +1445,6 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
 
   /**
    * Detection script output (separate from execution output)
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.CommandOutput detection_output = 10;
    */
@@ -1635,15 +1462,12 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
    *
    * Both are mandatory. Every execution descends from a ManifestDelivery
    * returned by Sync, so a result that can name neither is not attributable.
-   * @gotags: validate:"required,ulid"
    *
    * @generated from field: string delivery_id = 11;
    */
   deliveryId: string;
 
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string occurrence_id = 12;
    */
   occurrenceId: string;
@@ -1664,7 +1488,6 @@ export const ActionResultSchema: GenMessage<ActionResult> = /*@__PURE__*/
 export type AgentUpdateArch = Message<"cadestro.v1.AgentUpdateArch"> & {
   /**
    * Direct download URL for the agent binary (HTTPS only)
-   * @gotags: validate:"required,url,startswith=https://"
    *
    * @generated from field: string binary_url = 1;
    */
@@ -1675,7 +1498,6 @@ export type AgentUpdateArch = Message<"cadestro.v1.AgentUpdateArch"> & {
    * The agent requires an adjacent detached signature and verifies the exact
    * manifest bytes with its embedded Ed25519 release-signing public key before
    * trusting the candidate binary hash. This is the only update-integrity path.
-   * @gotags: validate:"required,url,startswith=https://"
    *
    * @generated from field: string checksum_url = 2;
    */
@@ -1717,7 +1539,6 @@ export type AgentUpdateParams = Message<"cadestro.v1.AgentUpdateParams"> & {
    * reaches the agent over the authenticated mTLS stream, so a downgrade is
    * an explicit operator decision — the agent otherwise refuses an older
    * version (anti-rollback). Default false.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool allow_downgrade = 3;
    */
@@ -1733,7 +1554,6 @@ export type AgentUpdateParams = Message<"cadestro.v1.AgentUpdateParams"> & {
    * checksum manifest and an https->http downgrade is refused regardless.
    * This opts into a host-changing hop, not into unchecked bytes, and it is
    * an explicit operator decision either way.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool allow_redirect = 4;
    */

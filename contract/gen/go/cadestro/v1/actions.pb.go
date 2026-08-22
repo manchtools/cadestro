@@ -7,6 +7,7 @@
 package cadestrov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -460,22 +461,17 @@ func (WifiAuthType) EnumDescriptor() ([]byte, []int) {
 }
 
 type Action struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	Id *ActionId `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required"`
-	// @gotags: validate:"required,ne=0"
-	Type ActionType `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty" validate:"required,ne=0"`
-	// @gotags: validate:"omitempty"
-	DesiredState DesiredState `protobuf:"varint,3,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,gte=0,lte=3600"
-	TimeoutSeconds int32 `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty" validate:"omitempty,gte=0,lte=3600"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             *ActionId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type           ActionType             `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty"`
+	DesiredState   DesiredState           `protobuf:"varint,3,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
+	TimeoutSeconds int32                  `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
 	// The action's own authored schedule. It is carried for display and for
 	// authoring round-trips; execution is driven by the schedule on the
 	// Manifest the occurrence belongs to, which fires every occurrence in
 	// declared order. A singleton-Action manifest simply carries this schedule
 	// at the manifest level.
-	// @gotags: validate:"omitempty"
-	Schedule *ActionSchedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"omitempty"`
+	Schedule *ActionSchedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Type-specific parameters
 	//
 	// Types that are valid to be assigned to Params:
@@ -855,18 +851,14 @@ type ActionSchedule struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Cron expression for scheduled execution (e.g., "0 3 * * *" for 3am daily)
 	// If empty, uses default_interval_hours instead.
-	// @gotags: validate:"omitempty,max=128"
-	Cron string `protobuf:"bytes,1,opt,name=cron,proto3" json:"cron,omitempty" validate:"omitempty,max=128"`
+	Cron string `protobuf:"bytes,1,opt,name=cron,proto3" json:"cron,omitempty"`
 	// Default interval in hours between executions (default: 8 hours for drift prevention)
 	// Used when cron is not specified.
-	// @gotags: validate:"omitempty,gte=0,lte=8760"
-	IntervalHours int32 `protobuf:"varint,2,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty" validate:"omitempty,gte=0,lte=8760"`
+	IntervalHours int32 `protobuf:"varint,2,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
 	// Whether to run immediately when the action is first received
-	// @gotags: validate:"omitempty"
-	RunOnAssign bool `protobuf:"varint,3,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty" validate:"omitempty"`
+	RunOnAssign bool `protobuf:"varint,3,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty"`
 	// Whether to skip execution if the previous run was successful and no changes detected
-	// @gotags: validate:"omitempty"
-	SkipIfUnchanged bool `protobuf:"varint,4,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty" validate:"omitempty"`
+	SkipIfUnchanged bool `protobuf:"varint,4,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -933,24 +925,16 @@ type PackageParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Generic package name (used if manager-specific names not provided)
 	// If set, this name is used for all package managers.
-	// @gotags: validate:"omitempty,max=255"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,max=128"
-	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty" validate:"omitempty,max=128"`
-	// @gotags: validate:"omitempty"
-	AllowDowngrade bool `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty"
-	Pin bool `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty" validate:"omitempty"`
+	Name           string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Version        string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	AllowDowngrade bool   `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
+	Pin            bool   `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
 	// Manager-specific package names (override generic name)
 	// If a manager-specific name is empty, that manager will be skipped.
-	// @gotags: validate:"omitempty,max=255"
-	AptName string `protobuf:"bytes,5,opt,name=apt_name,json=aptName,proto3" json:"apt_name,omitempty" validate:"omitempty,max=255"` // Debian/Ubuntu (apt/apt-get)
-	// @gotags: validate:"omitempty,max=255"
-	DnfName string `protobuf:"bytes,6,opt,name=dnf_name,json=dnfName,proto3" json:"dnf_name,omitempty" validate:"omitempty,max=255"` // Fedora/RHEL (dnf/yum)
-	// @gotags: validate:"omitempty,max=255"
-	PacmanName string `protobuf:"bytes,7,opt,name=pacman_name,json=pacmanName,proto3" json:"pacman_name,omitempty" validate:"omitempty,max=255"` // Arch Linux (pacman)
-	// @gotags: validate:"omitempty,max=255"
-	ZypperName    string `protobuf:"bytes,8,opt,name=zypper_name,json=zypperName,proto3" json:"zypper_name,omitempty" validate:"omitempty,max=255"` // openSUSE (zypper)
+	AptName       string `protobuf:"bytes,5,opt,name=apt_name,json=aptName,proto3" json:"apt_name,omitempty"`          // Debian/Ubuntu (apt/apt-get)
+	DnfName       string `protobuf:"bytes,6,opt,name=dnf_name,json=dnfName,proto3" json:"dnf_name,omitempty"`          // Fedora/RHEL (dnf/yum)
+	PacmanName    string `protobuf:"bytes,7,opt,name=pacman_name,json=pacmanName,proto3" json:"pacman_name,omitempty"` // Arch Linux (pacman)
+	ZypperName    string `protobuf:"bytes,8,opt,name=zypper_name,json=zypperName,proto3" json:"zypper_name,omitempty"` // openSUSE (zypper)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1043,17 +1027,14 @@ func (x *PackageParams) GetZypperName() string {
 
 type AppInstallParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,url"
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty" validate:"required,url"`
+	Url   string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	// Mandatory integrity for download-and-install actions (deb/rpm/
 	// appimage): without it the agent would install a binary whose only
 	// authenticity is TLS to a possibly-compromised origin. Lowercase hex.
-	// @gotags: validate:"required,len=64,hexadecimal"
-	ChecksumSha256 string `protobuf:"bytes,2,opt,name=checksum_sha256,json=checksumSha256,proto3" json:"checksum_sha256,omitempty" validate:"required,len=64,hexadecimal"`
-	// @gotags: validate:"omitempty,startswith=/"
-	InstallPath   string `protobuf:"bytes,3,opt,name=install_path,json=installPath,proto3" json:"install_path,omitempty" validate:"omitempty,startswith=/"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ChecksumSha256 string `protobuf:"bytes,2,opt,name=checksum_sha256,json=checksumSha256,proto3" json:"checksum_sha256,omitempty"`
+	InstallPath    string `protobuf:"bytes,3,opt,name=install_path,json=installPath,proto3" json:"install_path,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AppInstallParams) Reset() {
@@ -1110,22 +1091,15 @@ func (x *AppInstallParams) GetInstallPath() string {
 type ShellParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Execution/remediation script (runs when detection_script is absent or exits non-zero)
-	// @gotags: validate:"omitempty,max=1048576"
-	Script string `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty" validate:"omitempty,max=1048576"`
-	// @gotags: validate:"omitempty,max=255"
-	Interpreter string `protobuf:"bytes,2,opt,name=interpreter,proto3" json:"interpreter,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty"
-	RunAsRoot bool `protobuf:"varint,3,opt,name=run_as_root,json=runAsRoot,proto3" json:"run_as_root,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,startswith=/"
-	WorkingDirectory string `protobuf:"bytes,4,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty" validate:"omitempty,startswith=/"`
-	// @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=4096"
-	Environment map[string]string `protobuf:"bytes,5,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=4096"`
+	Script           string            `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
+	Interpreter      string            `protobuf:"bytes,2,opt,name=interpreter,proto3" json:"interpreter,omitempty"`
+	RunAsRoot        bool              `protobuf:"varint,3,opt,name=run_as_root,json=runAsRoot,proto3" json:"run_as_root,omitempty"`
+	WorkingDirectory string            `protobuf:"bytes,4,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
+	Environment      map[string]string `protobuf:"bytes,5,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Detection script: exit 0 = compliant (skip execution), non-zero = needs remediation
-	// @gotags: validate:"omitempty,max=1048576"
-	DetectionScript string `protobuf:"bytes,6,opt,name=detection_script,json=detectionScript,proto3" json:"detection_script,omitempty" validate:"omitempty,max=1048576"`
+	DetectionScript string `protobuf:"bytes,6,opt,name=detection_script,json=detectionScript,proto3" json:"detection_script,omitempty"`
 	// When true, only the detection script runs (no remediation) and results are tracked as compliance checks
-	// @gotags: validate:"omitempty"
-	IsCompliance  bool `protobuf:"varint,7,opt,name=is_compliance,json=isCompliance,proto3" json:"is_compliance,omitempty" validate:"omitempty"`
+	IsCompliance  bool `protobuf:"varint,7,opt,name=is_compliance,json=isCompliance,proto3" json:"is_compliance,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1212,15 +1186,11 @@ func (x *ShellParams) GetIsCompliance() bool {
 // ServiceParams configures a systemd unit. unit_content is the verbatim unit
 // file written under /etc/systemd/system.
 type ServiceParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	UnitName string `protobuf:"bytes,1,opt,name=unit_name,json=unitName,proto3" json:"unit_name,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"omitempty"
-	DesiredState ServiceUnitState `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.ServiceUnitState" json:"desired_state,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty"
-	Enable bool `protobuf:"varint,3,opt,name=enable,proto3" json:"enable,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,max=65536"
-	UnitContent   string `protobuf:"bytes,4,opt,name=unit_content,json=unitContent,proto3" json:"unit_content,omitempty" validate:"omitempty,max=65536"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UnitName      string                 `protobuf:"bytes,1,opt,name=unit_name,json=unitName,proto3" json:"unit_name,omitempty"`
+	DesiredState  ServiceUnitState       `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.ServiceUnitState" json:"desired_state,omitempty"`
+	Enable        bool                   `protobuf:"varint,3,opt,name=enable,proto3" json:"enable,omitempty"`
+	UnitContent   string                 `protobuf:"bytes,4,opt,name=unit_content,json=unitContent,proto3" json:"unit_content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1284,23 +1254,17 @@ func (x *ServiceParams) GetUnitContent() string {
 }
 
 type FileParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,startswith=/"
-	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty" validate:"required,startswith=/"`
-	// @gotags: validate:"omitempty,max=10485760"
-	Content string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty" validate:"omitempty,max=10485760"`
-	// @gotags: validate:"omitempty,max=32"
-	Owner string `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,max=32"
-	Group string `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,max=4"
-	Mode string `protobuf:"bytes,5,opt,name=mode,proto3" json:"mode,omitempty" validate:"omitempty,max=4"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Path    string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Content string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Owner   string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
+	Group   string                 `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty"`
+	Mode    string                 `protobuf:"bytes,5,opt,name=mode,proto3" json:"mode,omitempty"`
 	// Managed block mode: if true, manages a content block within the file.
 	// PRESENT: appends content if not already present in file.
 	// ABSENT: removes only the content block, not the entire file.
 	// Ownership and mode are still enforced.
-	// @gotags: validate:"omitempty"
-	ManagedBlock  bool `protobuf:"varint,6,opt,name=managed_block,json=managedBlock,proto3" json:"managed_block,omitempty" validate:"omitempty"`
+	ManagedBlock  bool `protobuf:"varint,6,opt,name=managed_block,json=managedBlock,proto3" json:"managed_block,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1382,18 +1346,13 @@ func (x *FileParams) GetManagedBlock() bool {
 type DirectoryParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Directory path (must be absolute)
-	// @gotags: validate:"required,startswith=/"
-	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty" validate:"required,startswith=/"`
-	// @gotags: validate:"omitempty,max=32"
-	Owner string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,max=32"
-	Group string `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,max=4"
-	Mode string `protobuf:"bytes,4,opt,name=mode,proto3" json:"mode,omitempty" validate:"omitempty,max=4"`
+	Path  string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Owner string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	Group string `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
+	Mode  string `protobuf:"bytes,4,opt,name=mode,proto3" json:"mode,omitempty"`
 	// Whether to create parent directories (like mkdir -p)
 	// Default: true
-	// @gotags: validate:"omitempty"
-	Recursive     bool `protobuf:"varint,5,opt,name=recursive,proto3" json:"recursive,omitempty" validate:"omitempty"`
+	Recursive     bool `protobuf:"varint,5,opt,name=recursive,proto3" json:"recursive,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1466,13 +1425,10 @@ func (x *DirectoryParams) GetRecursive() bool {
 // UpdateParams configures system-wide package updates.
 // Respects version pinning (apt-mark hold / dnf versionlock).
 type UpdateParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty"
-	SecurityOnly bool `protobuf:"varint,1,opt,name=security_only,json=securityOnly,proto3" json:"security_only,omitempty" validate:"omitempty"` // Only install security updates (if supported)
-	// @gotags: validate:"omitempty"
-	Autoremove bool `protobuf:"varint,2,opt,name=autoremove,proto3" json:"autoremove,omitempty" validate:"omitempty"` // Remove unused dependencies after update
-	// @gotags: validate:"omitempty"
-	RebootIfRequired bool `protobuf:"varint,3,opt,name=reboot_if_required,json=rebootIfRequired,proto3" json:"reboot_if_required,omitempty" validate:"omitempty"` // Reboot system if updates require it
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	SecurityOnly     bool                   `protobuf:"varint,1,opt,name=security_only,json=securityOnly,proto3" json:"security_only,omitempty"`               // Only install security updates (if supported)
+	Autoremove       bool                   `protobuf:"varint,2,opt,name=autoremove,proto3" json:"autoremove,omitempty"`                                       // Remove unused dependencies after update
+	RebootIfRequired bool                   `protobuf:"varint,3,opt,name=reboot_if_required,json=rebootIfRequired,proto3" json:"reboot_if_required,omitempty"` // Reboot system if updates require it
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1533,18 +1489,14 @@ func (x *UpdateParams) GetRebootIfRequired() bool {
 type FlatpakParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
-	// @gotags: validate:"required,min=1,max=255"
-	AppId string `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty" validate:"required,min=1,max=255"`
+	AppId string `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
 	// Remote/repository name (default: "flathub")
-	// @gotags: validate:"omitempty,max=64"
-	Remote string `protobuf:"bytes,2,opt,name=remote,proto3" json:"remote,omitempty" validate:"omitempty,max=64"`
+	Remote string `protobuf:"bytes,2,opt,name=remote,proto3" json:"remote,omitempty"`
 	// Whether to install system-wide (true) or user-only (false)
 	// Default: true (system-wide)
-	// @gotags: validate:"omitempty"
-	SystemWide bool `protobuf:"varint,3,opt,name=system_wide,json=systemWide,proto3" json:"system_wide,omitempty" validate:"omitempty"`
+	SystemWide bool `protobuf:"varint,3,opt,name=system_wide,json=systemWide,proto3" json:"system_wide,omitempty"`
 	// Pin the application to prevent automatic updates
-	// @gotags: validate:"omitempty"
-	Pin           bool `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty" validate:"omitempty"`
+	Pin           bool `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1612,20 +1564,15 @@ func (x *FlatpakParams) GetPin() bool {
 type RepositoryParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Repository name/identifier (used for file naming)
-	// @gotags: validate:"required,min=1,max=64,alphanum"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64,alphanum"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// APT repository configuration (Debian/Ubuntu)
-	// @gotags: validate:"omitempty"
-	Apt *AptRepository `protobuf:"bytes,2,opt,name=apt,proto3" json:"apt,omitempty" validate:"omitempty"`
+	Apt *AptRepository `protobuf:"bytes,2,opt,name=apt,proto3" json:"apt,omitempty"`
 	// DNF/YUM repository configuration (Fedora/RHEL)
-	// @gotags: validate:"omitempty"
-	Dnf *DnfRepository `protobuf:"bytes,3,opt,name=dnf,proto3" json:"dnf,omitempty" validate:"omitempty"`
+	Dnf *DnfRepository `protobuf:"bytes,3,opt,name=dnf,proto3" json:"dnf,omitempty"`
 	// Pacman repository configuration (Arch Linux)
-	// @gotags: validate:"omitempty"
-	Pacman *PacmanRepository `protobuf:"bytes,4,opt,name=pacman,proto3" json:"pacman,omitempty" validate:"omitempty"`
+	Pacman *PacmanRepository `protobuf:"bytes,4,opt,name=pacman,proto3" json:"pacman,omitempty"`
 	// Zypper repository configuration (openSUSE)
-	// @gotags: validate:"omitempty"
-	Zypper        *ZypperRepository `protobuf:"bytes,5,opt,name=zypper,proto3" json:"zypper,omitempty" validate:"omitempty"`
+	Zypper        *ZypperRepository `protobuf:"bytes,5,opt,name=zypper,proto3" json:"zypper,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1699,29 +1646,21 @@ func (x *RepositoryParams) GetZypper() *ZypperRepository {
 type AptRepository struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Repository URL (e.g., "https://packages.example.com/apt")
-	// @gotags: validate:"required_without=Disabled,omitempty,url"
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty" validate:"required_without=Disabled,omitempty,url"`
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	// Distribution codename (e.g., "jammy", "bookworm")
-	// @gotags: validate:"omitempty,max=64"
-	Distribution string `protobuf:"bytes,2,opt,name=distribution,proto3" json:"distribution,omitempty" validate:"omitempty,max=64"`
+	Distribution string `protobuf:"bytes,2,opt,name=distribution,proto3" json:"distribution,omitempty"`
 	// Components (e.g., "main", "contrib", "non-free")
-	// @gotags: validate:"omitempty,dive,max=64"
-	Components []string `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty" validate:"omitempty,dive,max=64"`
+	Components []string `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty"`
 	// GPG key URL for repository signing
-	// @gotags: validate:"omitempty,url"
-	GpgKeyUrl string `protobuf:"bytes,4,opt,name=gpg_key_url,json=gpgKeyUrl,proto3" json:"gpg_key_url,omitempty" validate:"omitempty,url"`
+	GpgKeyUrl string `protobuf:"bytes,4,opt,name=gpg_key_url,json=gpgKeyUrl,proto3" json:"gpg_key_url,omitempty"`
 	// GPG key content (ASCII-armored, alternative to gpg_key_url)
-	// @gotags: validate:"omitempty,max=65536"
-	GpgKey string `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty" validate:"omitempty,max=65536"`
+	GpgKey string `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty"`
 	// Whether to use signed-by (modern) or trusted=yes (legacy, less secure)
-	// @gotags: validate:"omitempty"
-	Trusted bool `protobuf:"varint,6,opt,name=trusted,proto3" json:"trusted,omitempty" validate:"omitempty"`
+	Trusted bool `protobuf:"varint,6,opt,name=trusted,proto3" json:"trusted,omitempty"`
 	// Architecture filter (e.g., "amd64", "arm64")
-	// @gotags: validate:"omitempty,max=32"
-	Arch string `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty" validate:"omitempty,max=32"`
+	Arch string `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
 	// Set to true to disable/skip this repository manager
-	// @gotags: validate:"omitempty"
-	Disabled      bool `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty" validate:"omitempty"`
+	Disabled      bool `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1816,26 +1755,19 @@ func (x *AptRepository) GetDisabled() bool {
 type DnfRepository struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Base URL for the repository (supports DNF variables like $releasever and $basearch)
-	// @gotags: validate:"required_without=Disabled,omitempty"
-	Baseurl string `protobuf:"bytes,1,opt,name=baseurl,proto3" json:"baseurl,omitempty" validate:"required_without=Disabled,omitempty"`
+	Baseurl string `protobuf:"bytes,1,opt,name=baseurl,proto3" json:"baseurl,omitempty"`
 	// Repository description
-	// @gotags: validate:"omitempty,max=255"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=255"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// Whether the repository is enabled (default true)
-	// @gotags: validate:"omitempty"
-	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty" validate:"omitempty"`
+	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	// Whether to check GPG signatures
-	// @gotags: validate:"omitempty"
-	Gpgcheck bool `protobuf:"varint,4,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty" validate:"omitempty"`
+	Gpgcheck bool `protobuf:"varint,4,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
 	// GPG key URL
-	// @gotags: validate:"omitempty,url"
-	Gpgkey string `protobuf:"bytes,5,opt,name=gpgkey,proto3" json:"gpgkey,omitempty" validate:"omitempty,url"`
+	Gpgkey string `protobuf:"bytes,5,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
 	// Module hotfixes (for modular content)
-	// @gotags: validate:"omitempty"
-	ModuleHotfixes bool `protobuf:"varint,6,opt,name=module_hotfixes,json=moduleHotfixes,proto3" json:"module_hotfixes,omitempty" validate:"omitempty"`
+	ModuleHotfixes bool `protobuf:"varint,6,opt,name=module_hotfixes,json=moduleHotfixes,proto3" json:"module_hotfixes,omitempty"`
 	// Set to true to disable/skip this repository manager
-	// @gotags: validate:"omitempty"
-	Disabled      bool `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty" validate:"omitempty"`
+	Disabled      bool `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1923,14 +1855,11 @@ func (x *DnfRepository) GetDisabled() bool {
 type PacmanRepository struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Server URL (supports pacman variables like $repo and $arch)
-	// @gotags: validate:"required_without=Disabled,omitempty"
-	Server string `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty" validate:"required_without=Disabled,omitempty"`
+	Server string `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
 	// SigLevel (e.g., "Optional TrustAll", "Required DatabaseOptional")
-	// @gotags: validate:"omitempty,max=128"
-	SigLevel string `protobuf:"bytes,2,opt,name=sig_level,json=sigLevel,proto3" json:"sig_level,omitempty" validate:"omitempty,max=128"`
+	SigLevel string `protobuf:"bytes,2,opt,name=sig_level,json=sigLevel,proto3" json:"sig_level,omitempty"`
 	// Set to true to disable/skip this repository manager
-	// @gotags: validate:"omitempty"
-	Disabled      bool `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty" validate:"omitempty"`
+	Disabled      bool `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1990,29 +1919,21 @@ func (x *PacmanRepository) GetDisabled() bool {
 type ZypperRepository struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Repository URL
-	// @gotags: validate:"required_without=Disabled,omitempty,url"
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty" validate:"required_without=Disabled,omitempty,url"`
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
 	// Repository description/alias
-	// @gotags: validate:"omitempty,max=255"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=255"`
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// Whether to enable the repository (default true)
-	// @gotags: validate:"omitempty"
-	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty" validate:"omitempty"`
+	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	// Whether to auto-refresh the repository
-	// @gotags: validate:"omitempty"
-	Autorefresh bool `protobuf:"varint,4,opt,name=autorefresh,proto3" json:"autorefresh,omitempty" validate:"omitempty"`
+	Autorefresh bool `protobuf:"varint,4,opt,name=autorefresh,proto3" json:"autorefresh,omitempty"`
 	// Whether to check GPG signatures
-	// @gotags: validate:"omitempty"
-	Gpgcheck bool `protobuf:"varint,5,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty" validate:"omitempty"`
+	Gpgcheck bool `protobuf:"varint,5,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
 	// GPG key URL
-	// @gotags: validate:"omitempty,url"
-	Gpgkey string `protobuf:"bytes,6,opt,name=gpgkey,proto3" json:"gpgkey,omitempty" validate:"omitempty,url"`
+	Gpgkey string `protobuf:"bytes,6,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
 	// Repository type (e.g., "rpm-md", "yast2")
-	// @gotags: validate:"omitempty,max=32"
-	Type string `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty" validate:"omitempty,max=32"`
+	Type string `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
 	// Set to true to disable/skip this repository manager
-	// @gotags: validate:"omitempty"
-	Disabled      bool `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty" validate:"omitempty"`
+	Disabled      bool `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2108,42 +2029,30 @@ func (x *ZypperRepository) GetDisabled() bool {
 type UserParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Username (required)
-	// @gotags: validate:"required,min=1,max=32,alphanum"
-	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty" validate:"required,min=1,max=32,alphanum"`
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
 	// User ID (optional - system assigns if not specified)
-	// @gotags: validate:"omitempty,gte=0,lte=65534"
-	Uid int32 `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty" validate:"omitempty,gte=0,lte=65534"`
+	Uid int32 `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
 	// Primary group ID (optional - creates user's own group if not specified)
-	// @gotags: validate:"omitempty,gte=0,lte=65534"
-	Gid int32 `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty" validate:"omitempty,gte=0,lte=65534"`
+	Gid int32 `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
 	// Home directory path (optional - defaults to /home/<username>)
-	// @gotags: validate:"omitempty,startswith=/"
-	HomeDir string `protobuf:"bytes,4,opt,name=home_dir,json=homeDir,proto3" json:"home_dir,omitempty" validate:"omitempty,startswith=/"`
+	HomeDir string `protobuf:"bytes,4,opt,name=home_dir,json=homeDir,proto3" json:"home_dir,omitempty"`
 	// Login shell (optional - defaults to /bin/bash)
-	// @gotags: validate:"omitempty,startswith=/"
-	Shell string `protobuf:"bytes,5,opt,name=shell,proto3" json:"shell,omitempty" validate:"omitempty,startswith=/"`
+	Shell string `protobuf:"bytes,5,opt,name=shell,proto3" json:"shell,omitempty"`
 	// SSH authorized keys to add to ~/.ssh/authorized_keys
-	// @gotags: validate:"omitempty,dive,max=4096"
-	SshAuthorizedKeys []string `protobuf:"bytes,6,rep,name=ssh_authorized_keys,json=sshAuthorizedKeys,proto3" json:"ssh_authorized_keys,omitempty" validate:"omitempty,dive,max=4096"`
+	SshAuthorizedKeys []string `protobuf:"bytes,6,rep,name=ssh_authorized_keys,json=sshAuthorizedKeys,proto3" json:"ssh_authorized_keys,omitempty"`
 	// GECOS field / user comment (full name, etc.)
-	// @gotags: validate:"omitempty,max=255"
-	Comment string `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty" validate:"omitempty,max=255"`
+	Comment string `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
 	// Create as system user (UID < 1000, no home directory by default)
-	// @gotags: validate:"omitempty"
-	SystemUser bool `protobuf:"varint,8,opt,name=system_user,json=systemUser,proto3" json:"system_user,omitempty" validate:"omitempty"`
+	SystemUser bool `protobuf:"varint,8,opt,name=system_user,json=systemUser,proto3" json:"system_user,omitempty"`
 	// Create home directory (default: true for normal users, false for system users)
-	// @gotags: validate:"omitempty"
-	CreateHome bool `protobuf:"varint,9,opt,name=create_home,json=createHome,proto3" json:"create_home,omitempty" validate:"omitempty"`
+	CreateHome bool `protobuf:"varint,9,opt,name=create_home,json=createHome,proto3" json:"create_home,omitempty"`
 	// Disable the user account (lock password, set shell to /usr/sbin/nologin)
-	// @gotags: validate:"omitempty"
-	Disabled bool `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty" validate:"omitempty"`
+	Disabled bool `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	// Primary group name (alternative to gid - creates group if needed)
-	// @gotags: validate:"omitempty,max=32"
-	PrimaryGroup string `protobuf:"bytes,11,opt,name=primary_group,json=primaryGroup,proto3" json:"primary_group,omitempty" validate:"omitempty,max=32"`
+	PrimaryGroup string `protobuf:"bytes,11,opt,name=primary_group,json=primaryGroup,proto3" json:"primary_group,omitempty"`
 	// Hide user from graphical login screens (GDM, SDDM, LightDM).
 	// Sets SystemAccount=true in AccountsService. No effect on headless systems.
-	// @gotags: validate:"omitempty"
-	Hidden bool `protobuf:"varint,12,opt,name=hidden,proto3" json:"hidden,omitempty" validate:"omitempty"`
+	Hidden bool `protobuf:"varint,12,opt,name=hidden,proto3" json:"hidden,omitempty"`
 	// When true, the agent does NOT generate or set a temporary password
 	// for this account, nor report any lps.rotations metadata back to
 	// the server. The account is created with the shadow-locked default
@@ -2160,8 +2069,7 @@ type UserParams struct {
 	// This flag is deliberately explicit, not derived from
 	// Shell == "/usr/sbin/nologin": the password-good-to-have default
 	// should not be flipped by a heuristic on a related field.
-	// @gotags: validate:"omitempty"
-	NoPassword    bool `protobuf:"varint,13,opt,name=no_password,json=noPassword,proto3" json:"no_password,omitempty" validate:"omitempty"`
+	NoPassword    bool `protobuf:"varint,13,opt,name=no_password,json=noPassword,proto3" json:"no_password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2292,17 +2200,13 @@ func (x *UserParams) GetNoPassword() bool {
 type GroupParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Group name (required)
-	// @gotags: validate:"required,min=1,max=32"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=32"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Members to add to the group
-	// @gotags: validate:"omitempty,dive,min=1,max=32"
-	Members []string `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty" validate:"omitempty,dive,min=1,max=32"`
+	Members []string `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
 	// Group ID (optional - system assigns if not specified)
-	// @gotags: validate:"omitempty,gte=0,lte=65534"
-	Gid int32 `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty" validate:"omitempty,gte=0,lte=65534"`
+	Gid int32 `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
 	// Create as system group (GID < 1000)
-	// @gotags: validate:"omitempty"
-	SystemGroup   bool `protobuf:"varint,4,opt,name=system_group,json=systemGroup,proto3" json:"system_group,omitempty" validate:"omitempty"`
+	SystemGroup   bool `protobuf:"varint,4,opt,name=system_group,json=systemGroup,proto3" json:"system_group,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2372,14 +2276,11 @@ func (x *GroupParams) GetSystemGroup() bool {
 type SshParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Allow public key authentication (default: true)
-	// @gotags: validate:"omitempty"
-	AllowPubkey bool `protobuf:"varint,1,opt,name=allow_pubkey,json=allowPubkey,proto3" json:"allow_pubkey,omitempty" validate:"omitempty"`
+	AllowPubkey bool `protobuf:"varint,1,opt,name=allow_pubkey,json=allowPubkey,proto3" json:"allow_pubkey,omitempty"`
 	// Allow password authentication (default: false)
-	// @gotags: validate:"omitempty"
-	AllowPassword bool `protobuf:"varint,2,opt,name=allow_password,json=allowPassword,proto3" json:"allow_password,omitempty" validate:"omitempty"`
+	AllowPassword bool `protobuf:"varint,2,opt,name=allow_password,json=allowPassword,proto3" json:"allow_password,omitempty"`
 	// Users to add to the SSH access group (must be valid Linux usernames)
-	// @gotags: validate:"omitempty,dive,min=1,max=32"
-	Users         []string `protobuf:"bytes,3,rep,name=users,proto3" json:"users,omitempty" validate:"omitempty,dive,min=1,max=32"`
+	Users         []string `protobuf:"bytes,3,rep,name=users,proto3" json:"users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2439,11 +2340,9 @@ func (x *SshParams) GetUsers() []string {
 type SshdDirective struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// sshd_config directive name (e.g., "PermitRootLogin", "Port")
-	// @gotags: validate:"required,min=1,max=128"
-	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty" validate:"required,min=1,max=128"`
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// Directive value (e.g., "no", "22")
-	// @gotags: validate:"required,min=1,max=1024"
-	Value         string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty" validate:"required,min=1,max=1024"`
+	Value         string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2499,11 +2398,9 @@ func (x *SshdDirective) GetValue() string {
 type SshdParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Priority for config file ordering (auto-assigned by server, lower = loaded first)
-	// @gotags: validate:"omitempty"
-	Priority uint32 `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty" validate:"omitempty"`
+	Priority uint32 `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty"`
 	// sshd_config directives to set
-	// @gotags: validate:"required,min=1,dive"
-	Directives    []*SshdDirective `protobuf:"bytes,2,rep,name=directives,proto3" json:"directives,omitempty" validate:"required,min=1,dive"`
+	Directives    []*SshdDirective `protobuf:"bytes,2,rep,name=directives,proto3" json:"directives,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2562,20 +2459,16 @@ func (x *SshdParams) GetDirectives() []*SshdDirective {
 type AdminPolicyParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Access level determines the policy template
-	// @gotags: validate:"required,ne=0"
-	AccessLevel AdminAccessLevel `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=cadestro.v1.AdminAccessLevel" json:"access_level,omitempty" validate:"required,ne=0"`
+	AccessLevel AdminAccessLevel `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=cadestro.v1.AdminAccessLevel" json:"access_level,omitempty"`
 	// Users to add to the admin group (must be valid Linux usernames)
-	// @gotags: validate:"required,min=1,dive,min=1,max=32"
-	Users []string `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty" validate:"required,min=1,dive,min=1,max=32"`
+	Users []string `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
 	// Raw policy content (only used when access_level is CUSTOM). Must be
 	// valid syntax for the chosen backend — sudoers grammar for SUDO and
 	// doas.conf(5) grammar for DOAS. Use {group} as placeholder for the
 	// auto-generated group name. Required when access_level is CUSTOM (3).
-	// @gotags: validate:"required_if=AccessLevel 3,max=65536"
-	CustomConfig string `protobuf:"bytes,3,opt,name=custom_config,json=customConfig,proto3" json:"custom_config,omitempty" validate:"required_if=AccessLevel 3,max=65536"`
+	CustomConfig string `protobuf:"bytes,3,opt,name=custom_config,json=customConfig,proto3" json:"custom_config,omitempty"`
 	// Privilege backend. Unset means PRIVILEGE_BACKEND_SUDO.
-	// @gotags: validate:"omitempty"
-	Backend       PrivilegeBackend `protobuf:"varint,4,opt,name=backend,proto3,enum=cadestro.v1.PrivilegeBackend" json:"backend,omitempty" validate:"omitempty"`
+	Backend       PrivilegeBackend `protobuf:"varint,4,opt,name=backend,proto3,enum=cadestro.v1.PrivilegeBackend" json:"backend,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2647,20 +2540,15 @@ func (x *AdminPolicyParams) GetBackend() PrivilegeBackend {
 type LpsParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Target user accounts (must exist on device)
-	// @gotags: validate:"required,min=1,dive,min=1,max=32"
-	Usernames []string `protobuf:"bytes,1,rep,name=usernames,proto3" json:"usernames,omitempty" validate:"required,min=1,dive,min=1,max=32"`
+	Usernames []string `protobuf:"bytes,1,rep,name=usernames,proto3" json:"usernames,omitempty"`
 	// Password length (8-128)
-	// @gotags: validate:"required,gte=8,lte=128"
-	PasswordLength int32 `protobuf:"varint,2,opt,name=password_length,json=passwordLength,proto3" json:"password_length,omitempty" validate:"required,gte=8,lte=128"`
+	PasswordLength int32 `protobuf:"varint,2,opt,name=password_length,json=passwordLength,proto3" json:"password_length,omitempty"`
 	// Password complexity
-	// @gotags: validate:"required,ne=0"
-	Complexity LpsPasswordComplexity `protobuf:"varint,3,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty" validate:"required,ne=0"`
+	Complexity LpsPasswordComplexity `protobuf:"varint,3,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty"`
 	// Days between scheduled rotations (1-365)
-	// @gotags: validate:"required,gte=1,lte=365"
-	RotationIntervalDays int32 `protobuf:"varint,4,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty" validate:"required,gte=1,lte=365"`
+	RotationIntervalDays int32 `protobuf:"varint,4,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
 	// Hours after auth event before automatic rotation (0 = disabled)
-	// @gotags: validate:"omitempty,gte=0,lte=8760"
-	GracePeriodHours int32 `protobuf:"varint,5,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty" validate:"omitempty,gte=0,lte=8760"`
+	GracePeriodHours int32 `protobuf:"varint,5,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -2738,30 +2626,24 @@ type EncryptionParams struct {
 	// Pre-shared key for initial ownership, delivered only over authenticated mTLS.
 	// The durable manifest carries the at-rest envelope until the authenticated
 	// send boundary, so this bound includes AEAD/base64 overhead.
-	// @gotags: validate:"required,max=512"
-	PresharedKey []byte `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty" validate:"required,max=512"`
+	PresharedKey []byte `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty"`
 	// Days between scheduled passphrase rotations (1-365)
-	// @gotags: validate:"required,gte=1,lte=365"
-	RotationIntervalDays int32 `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty" validate:"required,gte=1,lte=365"`
+	RotationIntervalDays int32 `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
 	// Minimum words in generated managed passphrase (default 5, min 3, max 10)
-	// @gotags: validate:"omitempty,gte=3,lte=10"
-	MinWords int32 `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty" validate:"omitempty,gte=3,lte=10"`
+	MinWords int32 `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
 	// What to put in the device-bound key slot — TPM, user passphrase, or nothing.
 	// Range-checked: the agent switches on this value and its default branch means
 	// "no device-bound key", so an unvalidated out-of-range value would silently
 	// downgrade a requested TPM enrollment instead of being refused.
-	// @gotags: validate:"omitempty,oneof=0 1 2"
-	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty" validate:"omitempty,oneof=0 1 2"`
+	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
 	// Minimum length for user-defined passphrases (16-128, only used when device_bound_key_type = USER_PASSPHRASE)
-	// @gotags: validate:"omitempty,gte=16,lte=128"
-	UserPassphraseMinLength int32 `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty" validate:"omitempty,gte=16,lte=128"`
+	UserPassphraseMinLength int32 `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
 	// Complexity requirement for user-defined passphrases (only used when device_bound_key_type = USER_PASSPHRASE)
 	// Range-checked for the same reason as device_bound_key_type: this selects the
 	// alphabet the agent draws the passphrase from, and its switch default is a
 	// weaker alphabet than an out-of-range value was asking for. Stays optional —
 	// UNSPECIFIED (0) is legal because the field only applies to USER_PASSPHRASE.
-	// @gotags: validate:"omitempty,oneof=0 1 2"
-	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty" validate:"omitempty,oneof=0 1 2"`
+	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -2844,32 +2726,24 @@ func (x *EncryptionParams) GetUserPassphraseComplexity() LpsPasswordComplexity {
 type WifiParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Network name (SSID)
-	// @gotags: validate:"required,min=1,max=255"
-	Ssid string `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty" validate:"required,min=1,max=255"`
+	Ssid string `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
 	// Authentication type
-	// @gotags: validate:"required,ne=0"
-	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
+	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty"`
 	// PSK authentication (WPA2/WPA3 Personal), delivered only over authenticated mTLS.
-	// @gotags: validate:"omitempty,max=256"
-	Psk []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty" validate:"omitempty,max=256"`
+	Psk []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty"`
 	// EAP-TLS authentication (802.1X with client certificate)
-	// @gotags: validate:"omitempty"
-	CaCert string `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty" validate:"omitempty"` // CA certificate (PEM)
-	// @gotags: validate:"omitempty"
-	ClientCert string `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty" validate:"omitempty"` // Client certificate (PEM)
+	CaCert     string `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`             // CA certificate (PEM)
+	ClientCert string `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty"` // Client certificate (PEM)
 	// Client private key (PEM), delivered only over authenticated mTLS.
-	// @gotags: validate:"omitempty,max=131072"
-	ClientKey []byte `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty" validate:"omitempty,max=131072"`
-	// @gotags: validate:"omitempty,max=254"
-	Identity string `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty" validate:"omitempty,max=254"` // EAP identity (e.g., user@corp.com)
+	ClientKey []byte `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty"`
+	Identity  string `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty"` // EAP identity (e.g., user@corp.com)
 	// Connection settings
 	// Connect to this network automatically when in range.
 	AutoConnect bool `protobuf:"varint,8,opt,name=auto_connect,json=autoConnect,proto3" json:"auto_connect,omitempty"`
 	// Network does not broadcast its SSID (probe-scan required).
 	Hidden bool `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
 	// Selection priority when multiple known networks are visible (higher wins).
-	// @gotags: validate:"omitempty,gte=-1,lte=999"
-	Priority      int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty" validate:"omitempty,gte=-1,lte=999"`
+	Priority      int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2975,29 +2849,21 @@ func (x *WifiParams) GetPriority() int32 {
 }
 
 type ActionResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	ActionId *ActionId `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required"`
-	// @gotags: validate:"required"
-	Status ExecutionStatus `protobuf:"varint,2,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty" validate:"required"`
-	// @gotags: validate:"omitempty,max=4096"
-	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=4096"`
-	// @gotags: validate:"omitempty"
-	Output *CommandOutput `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty"
-	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,gte=0"
-	DurationMs int64 `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty" validate:"omitempty,gte=0"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	ActionId    *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	Status      ExecutionStatus        `protobuf:"varint,2,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
+	Error       string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Output      *CommandOutput         `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty"`
+	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
+	DurationMs  int64                  `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
 	// Whether the action made changes to the system (true) or state was already as desired (false)
 	Changed bool `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
 	// Optional action-specific metadata (e.g., LPS password data)
-	// @gotags: validate:"omitempty"
-	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty"`
+	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Detection script result: true if detection script exited 0 (compliant)
 	Compliant bool `protobuf:"varint,9,opt,name=compliant,proto3" json:"compliant,omitempty"`
 	// Detection script output (separate from execution output)
-	// @gotags: validate:"omitempty"
-	DetectionOutput *CommandOutput `protobuf:"bytes,10,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty" validate:"omitempty"`
+	DetectionOutput *CommandOutput `protobuf:"bytes,10,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
 	// The delivery this result belongs to, and the authored position within
 	// that delivery's manifest. Together they make ingestion idempotent:
 	// control keys the stored result on (delivery_id, occurrence_id), so a
@@ -3009,10 +2875,8 @@ type ActionResult struct {
 	//
 	// Both are mandatory. Every execution descends from a ManifestDelivery
 	// returned by Sync, so a result that can name neither is not attributable.
-	// @gotags: validate:"required,ulid"
-	DeliveryId string `protobuf:"bytes,11,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	OccurrenceId  string `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty" validate:"required,ulid"`
+	DeliveryId    string `protobuf:"bytes,11,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty"`
+	OccurrenceId  string `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3135,14 +2999,12 @@ func (x *ActionResult) GetOccurrenceId() string {
 type AgentUpdateArch struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Direct download URL for the agent binary (HTTPS only)
-	// @gotags: validate:"required,url,startswith=https://"
-	BinaryUrl string `protobuf:"bytes,1,opt,name=binary_url,json=binaryUrl,proto3" json:"binary_url,omitempty" validate:"required,url,startswith=https://"`
+	BinaryUrl string `protobuf:"bytes,1,opt,name=binary_url,json=binaryUrl,proto3" json:"binary_url,omitempty"`
 	// URL to the release's SHA256SUMS-style checksum manifest (HTTPS only).
 	// The agent requires an adjacent detached signature and verifies the exact
 	// manifest bytes with its embedded Ed25519 release-signing public key before
 	// trusting the candidate binary hash. This is the only update-integrity path.
-	// @gotags: validate:"required,url,startswith=https://"
-	ChecksumUrl   string `protobuf:"bytes,2,opt,name=checksum_url,json=checksumUrl,proto3" json:"checksum_url,omitempty" validate:"required,url,startswith=https://"`
+	ChecksumUrl   string `protobuf:"bytes,2,opt,name=checksum_url,json=checksumUrl,proto3" json:"checksum_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3205,8 +3067,7 @@ type AgentUpdateParams struct {
 	// reaches the agent over the authenticated mTLS stream, so a downgrade is
 	// an explicit operator decision — the agent otherwise refuses an older
 	// version (anti-rollback). Default false.
-	// @gotags: validate:"omitempty"
-	AllowDowngrade bool `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty" validate:"omitempty"`
+	AllowDowngrade bool `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
 	// When true, the agent follows a redirect that changes host or scheme
 	// while downloading the update binary and checksum manifest — e.g.
 	// GitHub release assets, which 302 from github.com to
@@ -3216,8 +3077,7 @@ type AgentUpdateParams struct {
 	// checksum manifest and an https->http downgrade is refused regardless.
 	// This opts into a host-changing hop, not into unchecked bytes, and it is
 	// an explicit operator decision either way.
-	// @gotags: validate:"omitempty"
-	AllowRedirect bool `protobuf:"varint,4,opt,name=allow_redirect,json=allowRedirect,proto3" json:"allow_redirect,omitempty" validate:"omitempty"`
+	AllowRedirect bool `protobuf:"varint,4,opt,name=allow_redirect,json=allowRedirect,proto3" json:"allow_redirect,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3284,12 +3144,13 @@ var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xda\t\n" +
-	"\x06Action\x12%\n" +
-	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdR\x02id\x12+\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\x04type\x12>\n" +
-	"\rdesired_state\x18\x03 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
-	"\x0ftimeout_seconds\x18\x04 \x01(\x05R\x0etimeoutSeconds\x127\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf9\t\n" +
+	"\x06Action\x12-\n" +
+	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x123\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12>\n" +
+	"\rdesired_state\x18\x03 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x126\n" +
+	"\x0ftimeout_seconds\x18\x04 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90\x1c(\x00R\x0etimeoutSeconds\x127\n" +
 	"\bschedule\x18\x05 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
 	"\apackage\x18\b \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
 	"\x03app\x18\t \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
@@ -3314,202 +3175,235 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"encryption\x12-\n" +
 	"\x04wifi\x18\x18 \x01(\v2\x17.cadestro.v1.WifiParamsH\x00R\x04wifi\x12C\n" +
 	"\fagent_update\x18\x19 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
-	"\x06params\"\x9b\x01\n" +
-	"\x0eActionSchedule\x12\x12\n" +
-	"\x04cron\x18\x01 \x01(\tR\x04cron\x12%\n" +
-	"\x0einterval_hours\x18\x02 \x01(\x05R\rintervalHours\x12\"\n" +
+	"\x06params\"\xb7\x01\n" +
+	"\x0eActionSchedule\x12\x1f\n" +
+	"\x04cron\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\x04cron\x124\n" +
+	"\x0einterval_hours\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\rintervalHours\x12\"\n" +
 	"\rrun_on_assign\x18\x03 \x01(\bR\vrunOnAssign\x12*\n" +
-	"\x11skip_if_unchanged\x18\x04 \x01(\bR\x0fskipIfUnchanged\"\xf0\x01\n" +
-	"\rPackageParams\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\x12'\n" +
+	"\x11skip_if_unchanged\x18\x04 \x01(\bR\x0fskipIfUnchanged\"\xbe\x02\n" +
+	"\rPackageParams\x12\x1f\n" +
+	"\x04name\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\x04name\x12%\n" +
+	"\aversion\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\aversion\x12'\n" +
 	"\x0fallow_downgrade\x18\x03 \x01(\bR\x0eallowDowngrade\x12\x10\n" +
-	"\x03pin\x18\x04 \x01(\bR\x03pin\x12\x19\n" +
-	"\bapt_name\x18\x05 \x01(\tR\aaptName\x12\x19\n" +
-	"\bdnf_name\x18\x06 \x01(\tR\adnfName\x12\x1f\n" +
-	"\vpacman_name\x18\a \x01(\tR\n" +
-	"pacmanName\x12\x1f\n" +
-	"\vzypper_name\x18\b \x01(\tR\n" +
-	"zypperName\"p\n" +
-	"\x10AppInstallParams\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\x12'\n" +
-	"\x0fchecksum_sha256\x18\x02 \x01(\tR\x0echecksumSha256\x12!\n" +
-	"\finstall_path\x18\x03 \x01(\tR\vinstallPath\"\xf1\x02\n" +
-	"\vShellParams\x12\x16\n" +
-	"\x06script\x18\x01 \x01(\tR\x06script\x12 \n" +
-	"\vinterpreter\x18\x02 \x01(\tR\vinterpreter\x12\x1e\n" +
-	"\vrun_as_root\x18\x03 \x01(\bR\trunAsRoot\x12+\n" +
-	"\x11working_directory\x18\x04 \x01(\tR\x10workingDirectory\x12K\n" +
-	"\venvironment\x18\x05 \x03(\v2).cadestro.v1.ShellParams.EnvironmentEntryR\venvironment\x12)\n" +
-	"\x10detection_script\x18\x06 \x01(\tR\x0fdetectionScript\x12#\n" +
+	"\x03pin\x18\x04 \x01(\bR\x03pin\x12&\n" +
+	"\bapt_name\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\aaptName\x12&\n" +
+	"\bdnf_name\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\adnfName\x12,\n" +
+	"\vpacman_name\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
+	"pacmanName\x12,\n" +
+	"\vzypper_name\x18\b \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
+	"zypperName\"\xa7\x01\n" +
+	"\x10AppInstallParams\x12\x1d\n" +
+	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\x03url\x12D\n" +
+	"\x0fchecksum_sha256\x18\x02 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x0echecksumSha256\x12.\n" +
+	"\finstall_path\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\vinstallPath\"\xbd\x03\n" +
+	"\vShellParams\x12$\n" +
+	"\x06script\x18\x01 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06script\x12-\n" +
+	"\vinterpreter\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vinterpreter\x12\x1e\n" +
+	"\vrun_as_root\x18\x03 \x01(\bR\trunAsRoot\x128\n" +
+	"\x11working_directory\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x10workingDirectory\x12a\n" +
+	"\venvironment\x18\x05 \x03(\v2).cadestro.v1.ShellParams.EnvironmentEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\x80 R\venvironment\x127\n" +
+	"\x10detection_script\x18\x06 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x0fdetectionScript\x12#\n" +
 	"\ris_compliance\x18\a \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xab\x01\n" +
-	"\rServiceParams\x12\x1b\n" +
-	"\tunit_name\x18\x01 \x01(\tR\bunitName\x12B\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc8\x01\n" +
+	"\rServiceParams\x12*\n" +
+	"\tunit_name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\bunitName\x12B\n" +
 	"\rdesired_state\x18\x02 \x01(\x0e2\x1d.cadestro.v1.ServiceUnitStateR\fdesiredState\x12\x16\n" +
-	"\x06enable\x18\x03 \x01(\bR\x06enable\x12!\n" +
-	"\funit_content\x18\x04 \x01(\tR\vunitContent\"\x9f\x01\n" +
+	"\x06enable\x18\x03 \x01(\bR\x06enable\x12/\n" +
+	"\funit_content\x18\x04 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80\x04R\vunitContent\"\xdf\x01\n" +
 	"\n" +
-	"FileParams\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x18\n" +
-	"\acontent\x18\x02 \x01(\tR\acontent\x12\x14\n" +
-	"\x05owner\x18\x03 \x01(\tR\x05owner\x12\x14\n" +
-	"\x05group\x18\x04 \x01(\tR\x05group\x12\x12\n" +
-	"\x04mode\x18\x05 \x01(\tR\x04mode\x12#\n" +
-	"\rmanaged_block\x18\x06 \x01(\bR\fmanagedBlock\"\x83\x01\n" +
-	"\x0fDirectoryParams\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x12\x14\n" +
-	"\x05owner\x18\x02 \x01(\tR\x05owner\x12\x14\n" +
-	"\x05group\x18\x03 \x01(\tR\x05group\x12\x12\n" +
-	"\x04mode\x18\x04 \x01(\tR\x04mode\x12\x1c\n" +
+	"FileParams\x12\x1f\n" +
+	"\x04path\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03:\x01/R\x04path\x12'\n" +
+	"\acontent\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xd8\x01\x01r\x05\x18\x80\x80\x80\x05R\acontent\x12 \n" +
+	"\x05owner\x18\x03 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05owner\x12 \n" +
+	"\x05group\x18\x04 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05group\x12\x1e\n" +
+	"\x04mode\x18\x05 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18\x04R\x04mode\x12#\n" +
+	"\rmanaged_block\x18\x06 \x01(\bR\fmanagedBlock\"\xb4\x01\n" +
+	"\x0fDirectoryParams\x12\x1f\n" +
+	"\x04path\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03:\x01/R\x04path\x12 \n" +
+	"\x05owner\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05owner\x12 \n" +
+	"\x05group\x18\x03 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05group\x12\x1e\n" +
+	"\x04mode\x18\x04 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18\x04R\x04mode\x12\x1c\n" +
 	"\trecursive\x18\x05 \x01(\bR\trecursive\"\x81\x01\n" +
 	"\fUpdateParams\x12#\n" +
 	"\rsecurity_only\x18\x01 \x01(\bR\fsecurityOnly\x12\x1e\n" +
 	"\n" +
 	"autoremove\x18\x02 \x01(\bR\n" +
 	"autoremove\x12,\n" +
-	"\x12reboot_if_required\x18\x03 \x01(\bR\x10rebootIfRequired\"q\n" +
-	"\rFlatpakParams\x12\x15\n" +
-	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x16\n" +
-	"\x06remote\x18\x02 \x01(\tR\x06remote\x12\x1f\n" +
+	"\x12reboot_if_required\x18\x03 \x01(\bR\x10rebootIfRequired\"\x8c\x01\n" +
+	"\rFlatpakParams\x12$\n" +
+	"\x06app_id\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x05appId\x12\"\n" +
+	"\x06remote\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x06remote\x12\x1f\n" +
 	"\vsystem_wide\x18\x03 \x01(\bR\n" +
 	"systemWide\x12\x10\n" +
-	"\x03pin\x18\x04 \x01(\bR\x03pin\"\xf0\x01\n" +
-	"\x10RepositoryParams\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
+	"\x03pin\x18\x04 \x01(\bR\x03pin\"\x8e\x02\n" +
+	"\x10RepositoryParams\x120\n" +
+	"\x04name\x18\x01 \x01(\tB\x1c\xbaH\x19\xc8\x01\x01r\x14\x10\x01\x18@2\x0e^[a-zA-Z0-9]+$R\x04name\x12,\n" +
 	"\x03apt\x18\x02 \x01(\v2\x1a.cadestro.v1.AptRepositoryR\x03apt\x12,\n" +
 	"\x03dnf\x18\x03 \x01(\v2\x1a.cadestro.v1.DnfRepositoryR\x03dnf\x125\n" +
 	"\x06pacman\x18\x04 \x01(\v2\x1d.cadestro.v1.PacmanRepositoryR\x06pacman\x125\n" +
-	"\x06zypper\x18\x05 \x01(\v2\x1d.cadestro.v1.ZypperRepositoryR\x06zypper\"\xe8\x01\n" +
-	"\rAptRepository\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\x12\"\n" +
-	"\fdistribution\x18\x02 \x01(\tR\fdistribution\x12\x1e\n" +
+	"\x06zypper\x18\x05 \x01(\v2\x1d.cadestro.v1.ZypperRepositoryR\x06zypper\"\xb4\x03\n" +
+	"\rAptRepository\x12\x1d\n" +
+	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x03url\x12.\n" +
+	"\fdistribution\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\fdistribution\x12,\n" +
 	"\n" +
-	"components\x18\x03 \x03(\tR\n" +
-	"components\x12\x1e\n" +
-	"\vgpg_key_url\x18\x04 \x01(\tR\tgpgKeyUrl\x12\x17\n" +
-	"\agpg_key\x18\x05 \x01(\tR\x06gpgKey\x12\x18\n" +
-	"\atrusted\x18\x06 \x01(\bR\atrusted\x12\x12\n" +
-	"\x04arch\x18\a \x01(\tR\x04arch\x12\x1a\n" +
-	"\bdisabled\x18\b \x01(\bR\bdisabled\"\xde\x01\n" +
+	"components\x18\x03 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x18@R\n" +
+	"components\x12+\n" +
+	"\vgpg_key_url\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\tgpgKeyUrl\x12%\n" +
+	"\agpg_key\x18\x05 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80\x04R\x06gpgKey\x12\x18\n" +
+	"\atrusted\x18\x06 \x01(\bR\atrusted\x12\x1e\n" +
+	"\x04arch\x18\a \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x04arch\x12\x1a\n" +
+	"\bdisabled\x18\b \x01(\bR\bdisabled:|\xbaHy\x1aw\n" +
+	",apt_repository.url_required_without_disabled\x12&url is required unless disabled is set\x1a\x1fthis.disabled || this.url != ''\"\x85\x03\n" +
 	"\rDnfRepository\x12\x18\n" +
-	"\abaseurl\x18\x01 \x01(\tR\abaseurl\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x18\n" +
+	"\abaseurl\x18\x01 \x01(\tR\abaseurl\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vdescription\x12\x18\n" +
 	"\aenabled\x18\x03 \x01(\bR\aenabled\x12\x1a\n" +
-	"\bgpgcheck\x18\x04 \x01(\bR\bgpgcheck\x12\x16\n" +
-	"\x06gpgkey\x18\x05 \x01(\tR\x06gpgkey\x12'\n" +
+	"\bgpgcheck\x18\x04 \x01(\bR\bgpgcheck\x12#\n" +
+	"\x06gpgkey\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x06gpgkey\x12'\n" +
 	"\x0fmodule_hotfixes\x18\x06 \x01(\bR\x0emoduleHotfixes\x12\x1a\n" +
-	"\bdisabled\x18\a \x01(\bR\bdisabled\"c\n" +
+	"\bdisabled\x18\a \x01(\bR\bdisabled:\x8a\x01\xbaH\x86\x01\x1a\x83\x01\n" +
+	"0dnf_repository.baseurl_required_without_disabled\x12*baseurl is required unless disabled is set\x1a#this.disabled || this.baseurl != ''\"\xfd\x01\n" +
 	"\x10PacmanRepository\x12\x16\n" +
-	"\x06server\x18\x01 \x01(\tR\x06server\x12\x1b\n" +
-	"\tsig_level\x18\x02 \x01(\tR\bsigLevel\x12\x1a\n" +
-	"\bdisabled\x18\x03 \x01(\bR\bdisabled\"\xe6\x01\n" +
-	"\x10ZypperRepository\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x18\n" +
+	"\x06server\x18\x01 \x01(\tR\x06server\x12(\n" +
+	"\tsig_level\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\bsigLevel\x12\x1a\n" +
+	"\bdisabled\x18\x03 \x01(\bR\bdisabled:\x8a\x01\xbaH\x86\x01\x1a\x83\x01\n" +
+	"2pacman_repository.server_required_without_disabled\x12)server is required unless disabled is set\x1a\"this.disabled || this.server != ''\"\x9a\x03\n" +
+	"\x10ZypperRepository\x12\x1d\n" +
+	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x03url\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vdescription\x12\x18\n" +
 	"\aenabled\x18\x03 \x01(\bR\aenabled\x12 \n" +
 	"\vautorefresh\x18\x04 \x01(\bR\vautorefresh\x12\x1a\n" +
-	"\bgpgcheck\x18\x05 \x01(\bR\bgpgcheck\x12\x16\n" +
-	"\x06gpgkey\x18\x06 \x01(\tR\x06gpgkey\x12\x12\n" +
-	"\x04type\x18\a \x01(\tR\x04type\x12\x1a\n" +
-	"\bdisabled\x18\b \x01(\bR\bdisabled\"\x83\x03\n" +
+	"\bgpgcheck\x18\x05 \x01(\bR\bgpgcheck\x12#\n" +
+	"\x06gpgkey\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x06gpgkey\x12\x1e\n" +
+	"\x04type\x18\a \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x04type\x12\x1a\n" +
+	"\bdisabled\x18\b \x01(\bR\bdisabled:\x7f\xbaH|\x1az\n" +
+	"/zypper_repository.url_required_without_disabled\x12&url is required unless disabled is set\x1a\x1fthis.disabled || this.url != ''\"\x83\x04\n" +
 	"\n" +
-	"UserParams\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x10\n" +
-	"\x03uid\x18\x02 \x01(\x05R\x03uid\x12\x10\n" +
-	"\x03gid\x18\x03 \x01(\x05R\x03gid\x12\x19\n" +
-	"\bhome_dir\x18\x04 \x01(\tR\ahomeDir\x12\x14\n" +
-	"\x05shell\x18\x05 \x01(\tR\x05shell\x12.\n" +
-	"\x13ssh_authorized_keys\x18\x06 \x03(\tR\x11sshAuthorizedKeys\x12\x18\n" +
-	"\acomment\x18\a \x01(\tR\acomment\x12\x1f\n" +
+	"UserParams\x128\n" +
+	"\busername\x18\x01 \x01(\tB\x1c\xbaH\x19\xc8\x01\x01r\x14\x10\x01\x18 2\x0e^[a-zA-Z0-9]+$R\busername\x12 \n" +
+	"\x03uid\x18\x02 \x01(\x05B\x0e\xbaH\v\xd8\x01\x01\x1a\x06\x18\xfe\xff\x03(\x00R\x03uid\x12 \n" +
+	"\x03gid\x18\x03 \x01(\x05B\x0e\xbaH\v\xd8\x01\x01\x1a\x06\x18\xfe\xff\x03(\x00R\x03gid\x12&\n" +
+	"\bhome_dir\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\ahomeDir\x12!\n" +
+	"\x05shell\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x05shell\x12=\n" +
+	"\x13ssh_authorized_keys\x18\x06 \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\x18\x80 R\x11sshAuthorizedKeys\x12%\n" +
+	"\acomment\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\acomment\x12\x1f\n" +
 	"\vsystem_user\x18\b \x01(\bR\n" +
 	"systemUser\x12\x1f\n" +
 	"\vcreate_home\x18\t \x01(\bR\n" +
 	"createHome\x12\x1a\n" +
 	"\bdisabled\x18\n" +
-	" \x01(\bR\bdisabled\x12#\n" +
-	"\rprimary_group\x18\v \x01(\tR\fprimaryGroup\x12\x16\n" +
+	" \x01(\bR\bdisabled\x12/\n" +
+	"\rprimary_group\x18\v \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\fprimaryGroup\x12\x16\n" +
 	"\x06hidden\x18\f \x01(\bR\x06hidden\x12\x1f\n" +
 	"\vno_password\x18\r \x01(\bR\n" +
-	"noPassword\"p\n" +
-	"\vGroupParams\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\amembers\x18\x02 \x03(\tR\amembers\x12\x10\n" +
-	"\x03gid\x18\x03 \x01(\x05R\x03gid\x12!\n" +
-	"\fsystem_group\x18\x04 \x01(\bR\vsystemGroup\"k\n" +
+	"noPassword\"\x9e\x01\n" +
+	"\vGroupParams\x12 \n" +
+	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\x04name\x12(\n" +
+	"\amembers\x18\x02 \x03(\tB\x0e\xbaH\v\x92\x01\b\"\x06r\x04\x10\x01\x18 R\amembers\x12 \n" +
+	"\x03gid\x18\x03 \x01(\x05B\x0e\xbaH\v\xd8\x01\x01\x1a\x06\x18\xfe\xff\x03(\x00R\x03gid\x12!\n" +
+	"\fsystem_group\x18\x04 \x01(\bR\vsystemGroup\"{\n" +
 	"\tSshParams\x12!\n" +
 	"\fallow_pubkey\x18\x01 \x01(\bR\vallowPubkey\x12%\n" +
-	"\x0eallow_password\x18\x02 \x01(\bR\rallowPassword\x12\x14\n" +
-	"\x05users\x18\x03 \x03(\tR\x05users\"7\n" +
-	"\rSshdDirective\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"d\n" +
+	"\x0eallow_password\x18\x02 \x01(\bR\rallowPassword\x12$\n" +
+	"\x05users\x18\x03 \x03(\tB\x0e\xbaH\v\x92\x01\b\"\x06r\x04\x10\x01\x18 R\x05users\"U\n" +
+	"\rSshdDirective\x12\x1f\n" +
+	"\x03key\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\x01R\x03key\x12#\n" +
+	"\x05value\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\x05value\"q\n" +
 	"\n" +
 	"SshdParams\x12\x1a\n" +
-	"\bpriority\x18\x01 \x01(\rR\bpriority\x12:\n" +
+	"\bpriority\x18\x01 \x01(\rR\bpriority\x12G\n" +
 	"\n" +
-	"directives\x18\x02 \x03(\v2\x1a.cadestro.v1.SshdDirectiveR\n" +
-	"directives\"\xc9\x01\n" +
-	"\x11AdminPolicyParams\x12@\n" +
-	"\faccess_level\x18\x01 \x01(\x0e2\x1d.cadestro.v1.AdminAccessLevelR\vaccessLevel\x12\x14\n" +
-	"\x05users\x18\x02 \x03(\tR\x05users\x12#\n" +
-	"\rcustom_config\x18\x03 \x01(\tR\fcustomConfig\x127\n" +
-	"\abackend\x18\x04 \x01(\x0e2\x1d.cadestro.v1.PrivilegeBackendR\abackend\"\xfa\x01\n" +
-	"\tLpsParams\x12\x1c\n" +
-	"\tusernames\x18\x01 \x03(\tR\tusernames\x12'\n" +
-	"\x0fpassword_length\x18\x02 \x01(\x05R\x0epasswordLength\x12B\n" +
+	"directives\x18\x02 \x03(\v2\x1a.cadestro.v1.SshdDirectiveB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\n" +
+	"directives\"\x9c\x03\n" +
+	"\x11AdminPolicyParams\x12H\n" +
+	"\faccess_level\x18\x01 \x01(\x0e2\x1d.cadestro.v1.AdminAccessLevelB\x06\xbaH\x03\xc8\x01\x01R\vaccessLevel\x12)\n" +
+	"\x05users\x18\x02 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
+	"\b\x01\"\x06r\x04\x10\x01\x18 R\x05users\x12.\n" +
+	"\rcustom_config\x18\x03 \x01(\tB\t\xbaH\x06r\x04\x18\x80\x80\x04R\fcustomConfig\x127\n" +
+	"\abackend\x18\x04 \x01(\x0e2\x1d.cadestro.v1.PrivilegeBackendR\abackend:\xa8\x01\xbaH\xa4\x01\x1a\xa1\x01\n" +
+	"4admin_policy_params.custom_config_required_if_custom\x125custom_config is required when access_level is CUSTOM\x1a2this.access_level != 3 || this.custom_config != ''\"\xc4\x02\n" +
+	"\tLpsParams\x121\n" +
+	"\tusernames\x18\x01 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
+	"\b\x01\"\x06r\x04\x10\x01\x18 R\tusernames\x126\n" +
+	"\x0fpassword_length\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xc8\x01\x01\x1a\x05\x18\x80\x01(\bR\x0epasswordLength\x12J\n" +
 	"\n" +
-	"complexity\x18\x03 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\n" +
-	"complexity\x124\n" +
-	"\x16rotation_interval_days\x18\x04 \x01(\x05R\x14rotationIntervalDays\x12,\n" +
-	"\x12grace_period_hours\x18\x05 \x01(\x05R\x10gracePeriodHours\"\x8c\x03\n" +
-	"\x10EncryptionParams\x12(\n" +
-	"\rpreshared_key\x18\x01 \x01(\fB\x03\x80\x01\x01R\fpresharedKey\x124\n" +
-	"\x16rotation_interval_days\x18\x02 \x01(\x05R\x14rotationIntervalDays\x12\x1b\n" +
-	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
-	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
-	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xc0\x02\n" +
+	"complexity\x18\x03 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"complexity\x12C\n" +
+	"\x16rotation_interval_days\x18\x04 \x01(\x05B\r\xbaH\n" +
+	"\xc8\x01\x01\x1a\x05\x18\xed\x02(\x01R\x14rotationIntervalDays\x12;\n" +
+	"\x12grace_period_hours\x18\x05 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\x10gracePeriodHours\"\xdd\x03\n" +
+	"\x10EncryptionParams\x123\n" +
+	"\rpreshared_key\x18\x01 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80\x04\x80\x01\x01R\fpresharedKey\x12C\n" +
+	"\x16rotation_interval_days\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xc8\x01\x01\x1a\x05\x18\xed\x02(\x01R\x14rotationIntervalDays\x12)\n" +
+	"\tmin_words\x18\x03 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18\n" +
+	"(\x03R\bminWords\x12i\n" +
+	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x12deviceBoundKeyType\x12J\n" +
+	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x80\x01(\x10R\x17userPassphraseMinLength\x12m\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x18userPassphraseComplexity\"\x93\x03\n" +
 	"\n" +
-	"WifiParams\x12\x12\n" +
-	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x126\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12\x15\n" +
-	"\x03psk\x18\x03 \x01(\fB\x03\x80\x01\x01R\x03psk\x12\x17\n" +
+	"WifiParams\x12!\n" +
+	"\x04ssid\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04ssid\x12>\n" +
+	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeB\x06\xbaH\x03\xc8\x01\x01R\bauthType\x12 \n" +
+	"\x03psk\x18\x03 \x01(\fB\x0e\xbaH\b\xd8\x01\x01z\x03\x18\x80\x02\x80\x01\x01R\x03psk\x12\x17\n" +
 	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
 	"\vclient_cert\x18\x05 \x01(\tR\n" +
-	"clientCert\x12\"\n" +
+	"clientCert\x12.\n" +
 	"\n" +
-	"client_key\x18\x06 \x01(\fB\x03\x80\x01\x01R\tclientKey\x12\x1a\n" +
-	"\bidentity\x18\a \x01(\tR\bidentity\x12!\n" +
+	"client_key\x18\x06 \x01(\fB\x0f\xbaH\t\xd8\x01\x01z\x04\x18\x80\x80\b\x80\x01\x01R\tclientKey\x12'\n" +
+	"\bidentity\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xfe\x01R\bidentity\x12!\n" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
-	"\x06hidden\x18\t \x01(\bR\x06hidden\x12\x1a\n" +
+	"\x06hidden\x18\t \x01(\bR\x06hidden\x122\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05R\bpriority\"\xe9\x04\n" +
-	"\fActionResult\x122\n" +
-	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdR\bactionId\x124\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\x06status\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x122\n" +
+	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\xa6\x05\n" +
+	"\fActionResult\x12:\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12!\n" +
+	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\x122\n" +
 	"\x06output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12=\n" +
-	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12\x1f\n" +
-	"\vduration_ms\x18\x06 \x01(\x03R\n" +
+	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12+\n" +
+	"\vduration_ms\x18\x06 \x01(\x03B\n" +
+	"\xbaH\a\xd8\x01\x01\"\x02(\x00R\n" +
 	"durationMs\x12\x18\n" +
 	"\achanged\x18\a \x01(\bR\achanged\x12C\n" +
 	"\bmetadata\x18\b \x03(\v2'.cadestro.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
 	"\tcompliant\x18\t \x01(\bR\tcompliant\x12E\n" +
 	"\x10detection_output\x18\n" +
-	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
-	"\vdelivery_id\x18\v \x01(\tR\n" +
-	"deliveryId\x12#\n" +
-	"\roccurrence_id\x18\f \x01(\tR\foccurrenceId\x1a;\n" +
+	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12)\n" +
+	"\vdelivery_id\x18\v \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"deliveryId\x12-\n" +
+	"\roccurrence_id\x18\f \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\foccurrenceId\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"S\n" +
-	"\x0fAgentUpdateArch\x12\x1d\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x81\x01\n" +
+	"\x0fAgentUpdateArch\x124\n" +
 	"\n" +
-	"binary_url\x18\x01 \x01(\tR\tbinaryUrl\x12!\n" +
-	"\fchecksum_url\x18\x02 \x01(\tR\vchecksumUrl\"\xcb\x01\n" +
+	"binary_url\x18\x01 \x01(\tB\x15\xbaH\x12\xc8\x01\x01r\r:\bhttps://\x88\x01\x01R\tbinaryUrl\x128\n" +
+	"\fchecksum_url\x18\x02 \x01(\tB\x15\xbaH\x12\xc8\x01\x01r\r:\bhttps://\x88\x01\x01R\vchecksumUrl\"\xcb\x01\n" +
 	"\x11AgentUpdateParams\x122\n" +
 	"\x05amd64\x18\x01 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05amd64\x122\n" +
 	"\x05arm64\x18\x02 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05arm64\x12'\n" +
