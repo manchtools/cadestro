@@ -7,7 +7,6 @@ import (
 	"buf.build/go/protovalidate"
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	pmvalidate "github.com/manchtools/cadestro/contract/validate"
 )
 
 func TestEnrollRequest_RequiresValidCAPin(t *testing.T) {
@@ -45,13 +44,16 @@ func TestEnrollRequest_RequiresValidCAPin(t *testing.T) {
 
 func TestCreateTokenResponse_RequiresCAPin(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	response := &pm.CreateTokenResponse{Token: &pm.RegistrationToken{}}
-	if _, ok := pmvalidate.Struct(v, response); ok {
+	if v.Validate(response) == nil {
 		t.Fatal("token creation without the enrollment CA pin passed validation")
 	}
 	response.CaFingerprintPin = strings.Repeat("a", 64)
-	if detail, ok := pmvalidate.Struct(v, response); !ok {
-		t.Fatalf("valid token creation response rejected: %s", detail)
+	if err := v.Validate(response); err != nil {
+		t.Fatalf("valid token creation response rejected: %s", err)
 	}
 }

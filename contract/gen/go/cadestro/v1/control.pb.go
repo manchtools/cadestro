@@ -7,6 +7,7 @@
 package cadestrov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -23,17 +24,13 @@ const (
 )
 
 type RegisterRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,max=255"
-	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty" validate:"required,max=255"`
-	// @gotags: validate:"required,min=1,max=253"
-	Hostname string `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty" validate:"required,min=1,max=253"`
-	// @gotags: validate:"required,min=1,max=32"
-	AgentVersion string `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty" validate:"required,min=1,max=32"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Token        string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Hostname     string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	AgentVersion string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
 	// Certificate Signing Request (PEM-encoded PKCS#10)
 	// Agent generates its own key pair and sends CSR for signing
-	// @gotags: validate:"required"
-	Csr           []byte `protobuf:"bytes,4,opt,name=csr,proto3" json:"csr,omitempty" validate:"required"`
+	Csr           []byte `protobuf:"bytes,4,opt,name=csr,proto3" json:"csr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,21 +94,17 @@ func (x *RegisterRequest) GetCsr() []byte {
 }
 
 type RegisterResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	DeviceId *DeviceId `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// mTLS credentials issued by control server
-	// @gotags: validate:"required"
-	CaCert []byte `protobuf:"bytes,2,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty" validate:"required"` // CA certificate (PEM)
+	CaCert []byte `protobuf:"bytes,2,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"` // CA certificate (PEM)
 	// Signed device certificate (PEM) - private key stays on agent
-	// @gotags: validate:"required"
-	Certificate []byte `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty" validate:"required"`
+	Certificate []byte `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty"`
 	// Control URL for the agent's streaming connection; the agent stores this and
 	// dials it for the AgentService bidi stream. Control terminates agent mTLS
 	// itself, so this is control's own agent-listener address, which is normally
 	// a different host from the web/API URL the agent registered against.
-	// @gotags: validate:"required,url"
-	ControlUrl    string `protobuf:"bytes,4,opt,name=control_url,json=controlUrl,proto3" json:"control_url,omitempty" validate:"required,url"`
+	ControlUrl    string `protobuf:"bytes,4,opt,name=control_url,json=controlUrl,proto3" json:"control_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -177,8 +170,7 @@ func (x *RegisterResponse) GetControlUrl() string {
 type RenewCertificateRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Certificate Signing Request (PEM-encoded PKCS#10)
-	// @gotags: validate:"required"
-	Csr           []byte `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty" validate:"required"`
+	Csr           []byte `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,9 +267,8 @@ func (x *RenewCertificateResponse) GetNotAfter() *timestamppb.Timestamp {
 }
 
 type RefreshTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	RefreshToken  string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty" validate:"required"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -380,9 +371,8 @@ func (x *RefreshTokenResponse) GetRefreshToken() string {
 }
 
 type LogoutRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	RefreshToken  string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty" validate:"required"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -888,10 +878,9 @@ func (x *SshPublicKey) GetAddedAt() *timestamppb.Timestamp {
 }
 
 type Role struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	Permissions   []string               `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -1121,9 +1110,8 @@ func (x *PermissionInfo) GetTargetKind() PermissionTargetKind {
 // Explicit local erasure for subjects created by optional OIDC JIT.
 // The control server rejects subjects created through SCIM.
 type EraseJITUserRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1202,9 +1190,8 @@ func (*EraseJITUserResponse) Descriptor() ([]byte, []int) {
 }
 
 type GetUserRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1291,11 +1278,9 @@ func (x *GetUserResponse) GetUser() *User {
 }
 
 type ListUsersRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1406,11 +1391,9 @@ func (x *ListUsersResponse) GetTotalCount() int32 {
 
 // Granular user updates
 type UpdateUserEmailRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,email"
-	Email         string `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty" validate:"required,email"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1460,10 +1443,9 @@ func (x *UpdateUserEmailRequest) GetEmail() string {
 }
 
 type SetUserDisabledRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	Disabled      bool   `protobuf:"varint,2,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Disabled      bool                   `protobuf:"varint,2,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1557,23 +1539,16 @@ func (x *UpdateUserResponse) GetUser() *User {
 }
 
 type UpdateUserProfileRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=255"
-	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,max=255"
-	GivenName string `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,max=255"
-	FamilyName string `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,max=64"
-	PreferredUsername string `protobuf:"bytes,5,opt,name=preferred_username,json=preferredUsername,proto3" json:"preferred_username,omitempty" validate:"omitempty,max=64"`
-	// @gotags: validate:"omitempty,max=2048"
-	Picture string `protobuf:"bytes,6,opt,name=picture,proto3" json:"picture,omitempty" validate:"omitempty,max=2048"`
-	// @gotags: validate:"omitempty,max=10"
-	Locale        string `protobuf:"bytes,7,opt,name=locale,proto3" json:"locale,omitempty" validate:"omitempty,max=10"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	DisplayName       string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	GivenName         string                 `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
+	FamilyName        string                 `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	PreferredUsername string                 `protobuf:"bytes,5,opt,name=preferred_username,json=preferredUsername,proto3" json:"preferred_username,omitempty"`
+	Picture           string                 `protobuf:"bytes,6,opt,name=picture,proto3" json:"picture,omitempty"`
+	Locale            string                 `protobuf:"bytes,7,opt,name=locale,proto3" json:"locale,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *UpdateUserProfileRequest) Reset() {
@@ -1656,13 +1631,10 @@ func (x *UpdateUserProfileRequest) GetLocale() string {
 }
 
 type AddUserSshKeyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=8192"
-	PublicKey string `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty" validate:"required,min=1,max=8192"`
-	// @gotags: validate:"omitempty,max=256"
-	Comment       string `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty" validate:"omitempty,max=256"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PublicKey     string                 `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	Comment       string                 `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1763,11 +1735,9 @@ func (x *AddUserSshKeyResponse) GetKey() *SshPublicKey {
 }
 
 type RemoveUserSshKeyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	KeyId         string `protobuf:"bytes,2,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	KeyId         string                 `protobuf:"bytes,2,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1853,12 +1823,11 @@ func (*RemoveUserSshKeyResponse) Descriptor() ([]byte, []int) {
 }
 
 type UpdateUserSshSettingsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId           string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	SshAccessEnabled bool   `protobuf:"varint,2,opt,name=ssh_access_enabled,json=sshAccessEnabled,proto3" json:"ssh_access_enabled,omitempty"`
-	SshAllowPubkey   bool   `protobuf:"varint,3,opt,name=ssh_allow_pubkey,json=sshAllowPubkey,proto3" json:"ssh_allow_pubkey,omitempty"`
-	SshAllowPassword bool   `protobuf:"varint,4,opt,name=ssh_allow_password,json=sshAllowPassword,proto3" json:"ssh_allow_password,omitempty"`
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	UserId           string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	SshAccessEnabled bool                   `protobuf:"varint,2,opt,name=ssh_access_enabled,json=sshAccessEnabled,proto3" json:"ssh_access_enabled,omitempty"`
+	SshAllowPubkey   bool                   `protobuf:"varint,3,opt,name=ssh_allow_pubkey,json=sshAllowPubkey,proto3" json:"ssh_allow_pubkey,omitempty"`
+	SshAllowPassword bool                   `protobuf:"varint,4,opt,name=ssh_allow_password,json=sshAllowPassword,proto3" json:"ssh_allow_password,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1922,11 +1891,9 @@ func (x *UpdateUserSshSettingsRequest) GetSshAllowPassword() bool {
 }
 
 type UpdateUserLinuxUsernameRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=32"
-	LinuxUsername string `protobuf:"bytes,2,opt,name=linux_username,json=linuxUsername,proto3" json:"linux_username,omitempty" validate:"required,min=1,max=32"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	LinuxUsername string                 `protobuf:"bytes,2,opt,name=linux_username,json=linuxUsername,proto3" json:"linux_username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2168,17 +2135,13 @@ func (x *Device) GetInventoryIntervalMinutes() int32 {
 }
 
 type ListDevicesRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PageSize  int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
 	// the listing to that single status.
-	// @gotags: validate:"omitempty,gte=0,lte=2"
-	StatusFilter DeviceStatus `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.DeviceStatus" json:"status_filter,omitempty" validate:"omitempty,gte=0,lte=2"`
-	// @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
-	LabelFilter   map[string]string `protobuf:"bytes,4,rep,name=label_filter,json=labelFilter,proto3" json:"label_filter,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=64,endkeys,max=1024"`
+	StatusFilter  DeviceStatus      `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.DeviceStatus" json:"status_filter,omitempty"`
+	LabelFilter   map[string]string `protobuf:"bytes,4,rep,name=label_filter,json=labelFilter,proto3" json:"label_filter,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	MyDevicesOnly bool              `protobuf:"varint,5,opt,name=my_devices_only,json=myDevicesOnly,proto3" json:"my_devices_only,omitempty"` // when true, only return devices assigned to the authenticated user
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2310,9 +2273,8 @@ func (x *ListDevicesResponse) GetTotalCount() int32 {
 }
 
 type GetDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2400,13 +2362,10 @@ func (x *GetDeviceResponse) GetDevice() *Device {
 
 // Granular device updates
 type SetDeviceLabelRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=64"
-	Key string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required,max=256"
-	Value         string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty" validate:"required,max=256"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Value         string                 `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2463,11 +2422,9 @@ func (x *SetDeviceLabelRequest) GetValue() string {
 }
 
 type RemoveDeviceLabelRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=64"
-	Key           string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty" validate:"required,min=1,max=64"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2561,9 +2518,8 @@ func (x *UpdateDeviceResponse) GetDevice() *Device {
 }
 
 type DeleteDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2644,17 +2600,12 @@ func (*DeleteDeviceResponse) Descriptor() ([]byte, []int) {
 // Device assignment (admin-only)
 // Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
 type AssignDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	GroupId string `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=256,dive,ulid"
-	UserIds []string `protobuf:"bytes,4,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty" validate:"omitempty,max=256,dive,ulid"`
-	// @gotags: validate:"omitempty,max=256,dive,ulid"
-	GroupIds      []string `protobuf:"bytes,5,rep,name=group_ids,json=groupIds,proto3" json:"group_ids,omitempty" validate:"omitempty,max=256,dive,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	GroupId       string                 `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	UserIds       []string               `protobuf:"bytes,4,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	GroupIds      []string               `protobuf:"bytes,5,rep,name=group_ids,json=groupIds,proto3" json:"group_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2770,13 +2721,10 @@ func (x *AssignDeviceResponse) GetDevice() *Device {
 
 // Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
 type UnassignDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	GroupId       string `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"omitempty,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	GroupId       string                 `protobuf:"bytes,3,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2940,9 +2888,8 @@ func (x *DeviceAssignee) GetName() string {
 }
 
 type ListDeviceAssigneesRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3030,11 +2977,9 @@ func (x *ListDeviceAssigneesResponse) GetAssignees() []*DeviceAssignee {
 
 // Update device sync interval
 type SetDeviceSyncIntervalRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"gte=0,lte=1440"
-	SyncIntervalMinutes int32 `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty" validate:"gte=0,lte=1440"` // 0 = use default (30 min), max 24 hours
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SyncIntervalMinutes int32                  `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"` // 0 = use default (30 min), max 24 hours
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -3085,11 +3030,9 @@ func (x *SetDeviceSyncIntervalRequest) GetSyncIntervalMinutes() int32 {
 
 // Update device inventory collection interval.
 type SetDeviceInventoryIntervalRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=120,lte=10080"
-	InventoryIntervalMinutes int32 `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty" validate:"omitempty,gte=120,lte=10080"` // 0 = inherit (group min, else 1440), else 2h–7d
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	InventoryIntervalMinutes int32                  `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"` // 0 = inherit (group min, else 1440), else 2h–7d
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -3247,15 +3190,12 @@ func (x *RegistrationToken) GetDisabled() bool {
 }
 
 type CreateTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=128"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=128"`
-	// @gotags: validate:"omitempty,min=0"
-	MaxUses int32 `protobuf:"varint,3,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty" validate:"omitempty,min=0"` // 0 = unlimited (for reusable tokens)
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	MaxUses int32                  `protobuf:"varint,3,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"` // 0 = unlimited (for reusable tokens)
 	// Enrollment tokens always expire. Set a sufficiently long TTL for the
 	// rollout; 0/unset is intentionally not a valid token.
-	// @gotags: validate:"required"
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty" validate:"required"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3316,8 +3256,7 @@ type CreateTokenResponse struct {
 	Token *RegistrationToken     `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	// SHA-256 fingerprint of the control CA certificate DER. Provisioning
 	// presents this beside token.value; agents require it during enrollment.
-	// @gotags: validate:"required,len=64,hexadecimal"
-	CaFingerprintPin string `protobuf:"bytes,2,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty" validate:"required,len=64,hexadecimal"`
+	CaFingerprintPin string `protobuf:"bytes,2,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -3367,12 +3306,10 @@ func (x *CreateTokenResponse) GetCaFingerprintPin() string {
 }
 
 type ListTokensRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken       string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
-	IncludeDisabled bool   `protobuf:"varint,3,opt,name=include_disabled,json=includeDisabled,proto3" json:"include_disabled,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PageSize        int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken       string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	IncludeDisabled bool                   `protobuf:"varint,3,opt,name=include_disabled,json=includeDisabled,proto3" json:"include_disabled,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -3490,11 +3427,9 @@ func (x *ListTokensResponse) GetTotalCount() int32 {
 
 // Granular token updates
 type RenameTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=128"
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=128"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3544,10 +3479,9 @@ func (x *RenameTokenRequest) GetName() string {
 }
 
 type SetTokenDisabledRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	Disabled      bool   `protobuf:"varint,2,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Disabled      bool                   `protobuf:"varint,2,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3641,9 +3575,8 @@ func (x *UpdateTokenResponse) GetToken() *RegistrationToken {
 }
 
 type DeleteTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4084,8 +4017,7 @@ type ManagedAction_AdminPolicy struct {
 }
 
 type ManagedAction_Lps struct {
-	// @gotags: validate:"omitempty"
-	Lps *LpsParams `protobuf:"bytes,24,opt,name=lps,proto3,oneof" validate:"omitempty"`
+	Lps *LpsParams `protobuf:"bytes,24,opt,name=lps,proto3,oneof"`
 }
 
 type ManagedAction_Group struct {
@@ -4141,19 +4073,13 @@ func (*ManagedAction_Wifi) isManagedAction_Params() {}
 func (*ManagedAction_AgentUpdate) isManagedAction_Params() {}
 
 type CreateActionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
-	// @gotags: validate:"required,ne=0"
-	Type ActionType `protobuf:"varint,3,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty" validate:"required,ne=0"`
-	// @gotags: validate:"omitempty"
-	DesiredState DesiredState `protobuf:"varint,4,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,gte=0,lte=3600"
-	TimeoutSeconds int32 `protobuf:"varint,5,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty" validate:"omitempty,gte=0,lte=3600"`
-	// @gotags: validate:"omitempty"
-	Schedule *ActionSchedule `protobuf:"bytes,6,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description    string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Type           ActionType             `protobuf:"varint,3,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty"`
+	DesiredState   DesiredState           `protobuf:"varint,4,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
+	TimeoutSeconds int32                  `protobuf:"varint,5,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
+	Schedule       *ActionSchedule        `protobuf:"bytes,6,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Types that are valid to be assigned to Params:
 	//
 	//	*CreateActionRequest_Package
@@ -4425,93 +4351,75 @@ type isCreateActionRequest_Params interface {
 }
 
 type CreateActionRequest_Package struct {
-	// @gotags: validate:"omitempty"
-	Package *PackageParams `protobuf:"bytes,7,opt,name=package,proto3,oneof" validate:"omitempty"`
+	Package *PackageParams `protobuf:"bytes,7,opt,name=package,proto3,oneof"`
 }
 
 type CreateActionRequest_App struct {
-	// @gotags: validate:"omitempty"
-	App *AppInstallParams `protobuf:"bytes,8,opt,name=app,proto3,oneof" validate:"omitempty"`
+	App *AppInstallParams `protobuf:"bytes,8,opt,name=app,proto3,oneof"`
 }
 
 type CreateActionRequest_Shell struct {
-	// @gotags: validate:"omitempty"
-	Shell *ShellParams `protobuf:"bytes,9,opt,name=shell,proto3,oneof" validate:"omitempty"`
+	Shell *ShellParams `protobuf:"bytes,9,opt,name=shell,proto3,oneof"`
 }
 
 type CreateActionRequest_Service struct {
-	// @gotags: validate:"omitempty"
-	Service *ServiceParams `protobuf:"bytes,10,opt,name=service,proto3,oneof" validate:"omitempty"`
+	Service *ServiceParams `protobuf:"bytes,10,opt,name=service,proto3,oneof"`
 }
 
 type CreateActionRequest_File struct {
-	// @gotags: validate:"omitempty"
-	File *FileParams `protobuf:"bytes,11,opt,name=file,proto3,oneof" validate:"omitempty"`
+	File *FileParams `protobuf:"bytes,11,opt,name=file,proto3,oneof"`
 }
 
 type CreateActionRequest_Update struct {
-	// @gotags: validate:"omitempty"
-	Update *UpdateParams `protobuf:"bytes,12,opt,name=update,proto3,oneof" validate:"omitempty"`
+	Update *UpdateParams `protobuf:"bytes,12,opt,name=update,proto3,oneof"`
 }
 
 type CreateActionRequest_Repository struct {
-	// @gotags: validate:"omitempty"
-	Repository *RepositoryParams `protobuf:"bytes,13,opt,name=repository,proto3,oneof" validate:"omitempty"`
+	Repository *RepositoryParams `protobuf:"bytes,13,opt,name=repository,proto3,oneof"`
 }
 
 type CreateActionRequest_Flatpak struct {
-	// @gotags: validate:"omitempty"
-	Flatpak *FlatpakParams `protobuf:"bytes,14,opt,name=flatpak,proto3,oneof" validate:"omitempty"`
+	Flatpak *FlatpakParams `protobuf:"bytes,14,opt,name=flatpak,proto3,oneof"`
 }
 
 type CreateActionRequest_Directory struct {
-	// @gotags: validate:"omitempty"
-	Directory *DirectoryParams `protobuf:"bytes,15,opt,name=directory,proto3,oneof" validate:"omitempty"`
+	Directory *DirectoryParams `protobuf:"bytes,15,opt,name=directory,proto3,oneof"`
 }
 
 type CreateActionRequest_User struct {
-	// @gotags: validate:"omitempty"
-	User *UserParams `protobuf:"bytes,16,opt,name=user,proto3,oneof" validate:"omitempty"`
+	User *UserParams `protobuf:"bytes,16,opt,name=user,proto3,oneof"`
 }
 
 type CreateActionRequest_Ssh struct {
-	// @gotags: validate:"omitempty"
-	Ssh *SshParams `protobuf:"bytes,17,opt,name=ssh,proto3,oneof" validate:"omitempty"`
+	Ssh *SshParams `protobuf:"bytes,17,opt,name=ssh,proto3,oneof"`
 }
 
 type CreateActionRequest_Sshd struct {
-	// @gotags: validate:"omitempty"
-	Sshd *SshdParams `protobuf:"bytes,18,opt,name=sshd,proto3,oneof" validate:"omitempty"`
+	Sshd *SshdParams `protobuf:"bytes,18,opt,name=sshd,proto3,oneof"`
 }
 
 type CreateActionRequest_AdminPolicy struct {
-	// @gotags: validate:"omitempty"
-	AdminPolicy *AdminPolicyParams `protobuf:"bytes,19,opt,name=admin_policy,json=adminPolicy,proto3,oneof" validate:"omitempty"`
+	AdminPolicy *AdminPolicyParams `protobuf:"bytes,19,opt,name=admin_policy,json=adminPolicy,proto3,oneof"`
 }
 
 type CreateActionRequest_Lps struct {
-	// @gotags: validate:"omitempty"
-	Lps *LpsParams `protobuf:"bytes,20,opt,name=lps,proto3,oneof" validate:"omitempty"`
+	Lps *LpsParams `protobuf:"bytes,20,opt,name=lps,proto3,oneof"`
 }
 
 type CreateActionRequest_Group struct {
-	// @gotags: validate:"omitempty"
-	Group *GroupParams `protobuf:"bytes,21,opt,name=group,proto3,oneof" validate:"omitempty"`
+	Group *GroupParams `protobuf:"bytes,21,opt,name=group,proto3,oneof"`
 }
 
 type CreateActionRequest_Encryption struct {
-	// @gotags: validate:"omitempty"
-	Encryption *EncryptionAuthoringParams `protobuf:"bytes,22,opt,name=encryption,proto3,oneof" validate:"omitempty"`
+	Encryption *EncryptionAuthoringParams `protobuf:"bytes,22,opt,name=encryption,proto3,oneof"`
 }
 
 type CreateActionRequest_Wifi struct {
-	// @gotags: validate:"omitempty"
-	Wifi *WifiAuthoringParams `protobuf:"bytes,23,opt,name=wifi,proto3,oneof" validate:"omitempty"`
+	Wifi *WifiAuthoringParams `protobuf:"bytes,23,opt,name=wifi,proto3,oneof"`
 }
 
 type CreateActionRequest_AgentUpdate struct {
-	// @gotags: validate:"omitempty"
-	AgentUpdate *AgentUpdateParams `protobuf:"bytes,24,opt,name=agent_update,json=agentUpdate,proto3,oneof" validate:"omitempty"`
+	AgentUpdate *AgentUpdateParams `protobuf:"bytes,24,opt,name=agent_update,json=agentUpdate,proto3,oneof"`
 }
 
 func (*CreateActionRequest_Package) isCreateActionRequest_Params() {}
@@ -4595,9 +4503,8 @@ func (x *CreateActionResponse) GetAction() *ManagedAction {
 }
 
 type GetActionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4684,13 +4591,11 @@ func (x *GetActionResponse) GetAction() *ManagedAction {
 }
 
 type ListActionsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty"
-	PageToken      string     `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
-	TypeFilter     ActionType `protobuf:"varint,3,opt,name=type_filter,json=typeFilter,proto3,enum=cadestro.v1.ActionType" json:"type_filter,omitempty"`
-	UnassignedOnly bool       `protobuf:"varint,4,opt,name=unassigned_only,json=unassignedOnly,proto3" json:"unassigned_only,omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PageSize       int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken      string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	TypeFilter     ActionType             `protobuf:"varint,3,opt,name=type_filter,json=typeFilter,proto3,enum=cadestro.v1.ActionType" json:"type_filter,omitempty"`
+	UnassignedOnly bool                   `protobuf:"varint,4,opt,name=unassigned_only,json=unassignedOnly,proto3" json:"unassigned_only,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -4814,11 +4719,9 @@ func (x *ListActionsResponse) GetTotalCount() int32 {
 }
 
 type RenameActionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4868,11 +4771,9 @@ func (x *RenameActionRequest) GetName() string {
 }
 
 type UpdateActionDescriptionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4922,15 +4823,11 @@ func (x *UpdateActionDescriptionRequest) GetDescription() string {
 }
 
 type UpdateActionParamsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty"
-	DesiredState DesiredState `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,gte=0,lte=3600"
-	TimeoutSeconds int32 `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty" validate:"omitempty,gte=0,lte=3600"`
-	// @gotags: validate:"omitempty"
-	Schedule *ActionSchedule `protobuf:"bytes,4,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	DesiredState   DesiredState           `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
+	TimeoutSeconds int32                  `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
+	Schedule       *ActionSchedule        `protobuf:"bytes,4,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Types that are valid to be assigned to Params:
 	//
 	//	*UpdateActionParamsRequest_Package
@@ -5188,93 +5085,75 @@ type isUpdateActionParamsRequest_Params interface {
 }
 
 type UpdateActionParamsRequest_Package struct {
-	// @gotags: validate:"omitempty"
-	Package *PackageParams `protobuf:"bytes,5,opt,name=package,proto3,oneof" validate:"omitempty"`
+	Package *PackageParams `protobuf:"bytes,5,opt,name=package,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_App struct {
-	// @gotags: validate:"omitempty"
-	App *AppInstallParams `protobuf:"bytes,6,opt,name=app,proto3,oneof" validate:"omitempty"`
+	App *AppInstallParams `protobuf:"bytes,6,opt,name=app,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Shell struct {
-	// @gotags: validate:"omitempty"
-	Shell *ShellParams `protobuf:"bytes,7,opt,name=shell,proto3,oneof" validate:"omitempty"`
+	Shell *ShellParams `protobuf:"bytes,7,opt,name=shell,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Service struct {
-	// @gotags: validate:"omitempty"
-	Service *ServiceParams `protobuf:"bytes,8,opt,name=service,proto3,oneof" validate:"omitempty"`
+	Service *ServiceParams `protobuf:"bytes,8,opt,name=service,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_File struct {
-	// @gotags: validate:"omitempty"
-	File *FileParams `protobuf:"bytes,9,opt,name=file,proto3,oneof" validate:"omitempty"`
+	File *FileParams `protobuf:"bytes,9,opt,name=file,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Update struct {
-	// @gotags: validate:"omitempty"
-	Update *UpdateParams `protobuf:"bytes,10,opt,name=update,proto3,oneof" validate:"omitempty"`
+	Update *UpdateParams `protobuf:"bytes,10,opt,name=update,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Repository struct {
-	// @gotags: validate:"omitempty"
-	Repository *RepositoryParams `protobuf:"bytes,11,opt,name=repository,proto3,oneof" validate:"omitempty"`
+	Repository *RepositoryParams `protobuf:"bytes,11,opt,name=repository,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Flatpak struct {
-	// @gotags: validate:"omitempty"
-	Flatpak *FlatpakParams `protobuf:"bytes,12,opt,name=flatpak,proto3,oneof" validate:"omitempty"`
+	Flatpak *FlatpakParams `protobuf:"bytes,12,opt,name=flatpak,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Directory struct {
-	// @gotags: validate:"omitempty"
-	Directory *DirectoryParams `protobuf:"bytes,13,opt,name=directory,proto3,oneof" validate:"omitempty"`
+	Directory *DirectoryParams `protobuf:"bytes,13,opt,name=directory,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_User struct {
-	// @gotags: validate:"omitempty"
-	User *UserParams `protobuf:"bytes,14,opt,name=user,proto3,oneof" validate:"omitempty"`
+	User *UserParams `protobuf:"bytes,14,opt,name=user,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Ssh struct {
-	// @gotags: validate:"omitempty"
-	Ssh *SshParams `protobuf:"bytes,15,opt,name=ssh,proto3,oneof" validate:"omitempty"`
+	Ssh *SshParams `protobuf:"bytes,15,opt,name=ssh,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Sshd struct {
-	// @gotags: validate:"omitempty"
-	Sshd *SshdParams `protobuf:"bytes,16,opt,name=sshd,proto3,oneof" validate:"omitempty"`
+	Sshd *SshdParams `protobuf:"bytes,16,opt,name=sshd,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_AdminPolicy struct {
-	// @gotags: validate:"omitempty"
-	AdminPolicy *AdminPolicyParams `protobuf:"bytes,17,opt,name=admin_policy,json=adminPolicy,proto3,oneof" validate:"omitempty"`
+	AdminPolicy *AdminPolicyParams `protobuf:"bytes,17,opt,name=admin_policy,json=adminPolicy,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Lps struct {
-	// @gotags: validate:"omitempty"
-	Lps *LpsParams `protobuf:"bytes,18,opt,name=lps,proto3,oneof" validate:"omitempty"`
+	Lps *LpsParams `protobuf:"bytes,18,opt,name=lps,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Group struct {
-	// @gotags: validate:"omitempty"
-	Group *GroupParams `protobuf:"bytes,19,opt,name=group,proto3,oneof" validate:"omitempty"`
+	Group *GroupParams `protobuf:"bytes,19,opt,name=group,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Encryption struct {
-	// @gotags: validate:"omitempty"
-	Encryption *EncryptionAuthoringParams `protobuf:"bytes,20,opt,name=encryption,proto3,oneof" validate:"omitempty"`
+	Encryption *EncryptionAuthoringParams `protobuf:"bytes,20,opt,name=encryption,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_Wifi struct {
-	// @gotags: validate:"omitempty"
-	Wifi *WifiAuthoringParams `protobuf:"bytes,21,opt,name=wifi,proto3,oneof" validate:"omitempty"`
+	Wifi *WifiAuthoringParams `protobuf:"bytes,21,opt,name=wifi,proto3,oneof"`
 }
 
 type UpdateActionParamsRequest_AgentUpdate struct {
-	// @gotags: validate:"omitempty"
-	AgentUpdate *AgentUpdateParams `protobuf:"bytes,22,opt,name=agent_update,json=agentUpdate,proto3,oneof" validate:"omitempty"`
+	AgentUpdate *AgentUpdateParams `protobuf:"bytes,22,opt,name=agent_update,json=agentUpdate,proto3,oneof"`
 }
 
 func (*UpdateActionParamsRequest_Package) isUpdateActionParamsRequest_Params() {}
@@ -5358,9 +5237,8 @@ func (x *UpdateActionResponse) GetAction() *ManagedAction {
 }
 
 type DeleteActionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5450,12 +5328,10 @@ type ActionSet struct {
 	// Schedule that triggers every member action when fired. Required.
 	// The set's schedule overrides each member action's own schedule —
 	// member actions never fire on their own when assigned via this set.
-	// @gotags: validate:"required"
-	Schedule *ActionSchedule `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule *ActionSchedule `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Failure policy resolved onto every occurrence in the compiled manifest.
 	// CONTINUE is the default; STOP must be selected explicitly.
-	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,9,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,9,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5554,14 +5430,12 @@ func (x *ActionSet) GetOnFailure() OnFailure {
 }
 
 type ActionSetMember struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ActionId string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	// Position of this action within the set's execution order. When the
 	// set's schedule fires, members are executed in ascending sort_order.
 	// Stable tiebreak by action_id for ties.
-	// @gotags: validate:"omitempty,gte=0"
-	SortOrder     int32      `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty" validate:"omitempty,gte=0"`
+	SortOrder     int32      `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
 	ActionName    string     `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
 	ActionType    ActionType `protobuf:"varint,4,opt,name=action_type,json=actionType,proto3,enum=cadestro.v1.ActionType" json:"action_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -5627,18 +5501,14 @@ func (x *ActionSetMember) GetActionType() ActionType {
 }
 
 type CreateActionSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// Schedule that triggers every member action when fired. Required:
 	// member actions never fire on their own when assigned via this set.
-	// @gotags: validate:"required"
-	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// CONTINUE is the default; STOP must be selected explicitly.
-	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,4,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,4,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5746,9 +5616,8 @@ func (x *CreateActionSetResponse) GetSet() *ActionSet {
 }
 
 type GetActionSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5843,12 +5712,10 @@ func (x *GetActionSetResponse) GetMembers() []*ActionSetMember {
 }
 
 type ListActionSetsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty"
-	PageToken      string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
-	UnassignedOnly bool   `protobuf:"varint,3,opt,name=unassigned_only,json=unassignedOnly,proto3" json:"unassigned_only,omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PageSize       int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken      string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	UnassignedOnly bool                   `protobuf:"varint,3,opt,name=unassigned_only,json=unassignedOnly,proto3" json:"unassigned_only,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -5965,11 +5832,9 @@ func (x *ListActionSetsResponse) GetTotalCount() int32 {
 }
 
 type RenameActionSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6019,11 +5884,9 @@ func (x *RenameActionSetRequest) GetName() string {
 }
 
 type UpdateActionSetDescriptionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6074,14 +5937,11 @@ func (x *UpdateActionSetDescriptionRequest) GetDescription() string {
 
 type UpdateActionSetScheduleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Replacement schedule for the set. Required.
-	// @gotags: validate:"required"
-	Schedule *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Replacement failure policy. CONTINUE is the default.
-	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6182,9 +6042,8 @@ func (x *UpdateActionSetResponse) GetSet() *ActionSet {
 }
 
 type DeleteActionSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6263,13 +6122,10 @@ func (*DeleteActionSetResponse) Descriptor() ([]byte, []int) {
 }
 
 type AddActionToSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SetId string `protobuf:"bytes,1,opt,name=set_id,json=setId,proto3" json:"set_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=0"
-	SortOrder     int32 `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty" validate:"omitempty,gte=0"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SetId         string                 `protobuf:"bytes,1,opt,name=set_id,json=setId,proto3" json:"set_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	SortOrder     int32                  `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6370,11 +6226,9 @@ func (x *AddActionToSetResponse) GetSet() *ActionSet {
 }
 
 type RemoveActionFromSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SetId string `protobuf:"bytes,1,opt,name=set_id,json=setId,proto3" json:"set_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId      string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SetId         string                 `protobuf:"bytes,1,opt,name=set_id,json=setId,proto3" json:"set_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6468,13 +6322,10 @@ func (x *RemoveActionFromSetResponse) GetSet() *ActionSet {
 }
 
 type ReorderActionInSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SetId string `protobuf:"bytes,1,opt,name=set_id,json=setId,proto3" json:"set_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"gte=0"
-	NewOrder      int32 `protobuf:"varint,3,opt,name=new_order,json=newOrder,proto3" json:"new_order,omitempty" validate:"gte=0"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SetId         string                 `protobuf:"bytes,1,opt,name=set_id,json=setId,proto3" json:"set_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	NewOrder      int32                  `protobuf:"varint,3,opt,name=new_order,json=newOrder,proto3" json:"new_order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6586,8 +6437,7 @@ type Definition struct {
 	// Schedule used by manifests compiled from this definition. Required.
 	// The override exists only on those emitted manifests: it does not rewrite
 	// member ActionSets, whose schedules still apply when assigned independently.
-	// @gotags: validate:"required"
-	Schedule      *ActionSchedule `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule      *ActionSchedule `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6679,15 +6529,13 @@ func (x *Definition) GetSchedule() *ActionSchedule {
 }
 
 type DefinitionMember struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionSetId string `protobuf:"bytes,1,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty" validate:"required,ulid"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	ActionSetId string                 `protobuf:"bytes,1,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
 	// Position of this set within the definition's execution order. When the
 	// definition's schedule fires, sets are walked in ascending sort_order
 	// and each set's actions execute in their own ascending sort_order.
 	// Stable tiebreak by action_set_id for ties.
-	// @gotags: validate:"omitempty,gte=0"
-	SortOrder     int32  `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty" validate:"omitempty,gte=0"`
+	SortOrder     int32  `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
 	ActionSetName string `protobuf:"bytes,3,opt,name=action_set_name,json=actionSetName,proto3" json:"action_set_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6745,15 +6593,12 @@ func (x *DefinitionMember) GetActionSetName() string {
 }
 
 type CreateDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// Schedule used by manifests compiled from this definition. Required. It
 	// overrides their manifest schedules without rewriting member ActionSets.
-	// @gotags: validate:"required"
-	Schedule      *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule      *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6854,9 +6699,8 @@ func (x *CreateDefinitionResponse) GetDefinition() *Definition {
 }
 
 type GetDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6951,11 +6795,9 @@ func (x *GetDefinitionResponse) GetMembers() []*DefinitionMember {
 }
 
 type ListDefinitionsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7065,11 +6907,9 @@ func (x *ListDefinitionsResponse) GetTotalCount() int32 {
 }
 
 type RenameDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7119,11 +6959,9 @@ func (x *RenameDefinitionRequest) GetName() string {
 }
 
 type UpdateDefinitionDescriptionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7174,12 +7012,10 @@ func (x *UpdateDefinitionDescriptionRequest) GetDescription() string {
 
 type UpdateDefinitionScheduleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Replacement schedule for manifests compiled from the definition. Required;
 	// member ActionSet schedules are not rewritten.
-	// @gotags: validate:"required"
-	Schedule      *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule      *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7273,9 +7109,8 @@ func (x *UpdateDefinitionResponse) GetDefinition() *Definition {
 }
 
 type DeleteDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7354,13 +7189,10 @@ func (*DeleteDefinitionResponse) Descriptor() ([]byte, []int) {
 }
 
 type AddActionSetToDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DefinitionId string `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionSetId string `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=0"
-	SortOrder     int32 `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty" validate:"omitempty,gte=0"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DefinitionId  string                 `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
+	ActionSetId   string                 `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
+	SortOrder     int32                  `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7461,11 +7293,9 @@ func (x *AddActionSetToDefinitionResponse) GetDefinition() *Definition {
 }
 
 type RemoveActionSetFromDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DefinitionId string `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionSetId   string `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DefinitionId  string                 `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
+	ActionSetId   string                 `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7559,13 +7389,10 @@ func (x *RemoveActionSetFromDefinitionResponse) GetDefinition() *Definition {
 }
 
 type ReorderActionSetInDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DefinitionId string `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionSetId string `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"gte=0"
-	NewOrder      int32 `protobuf:"varint,3,opt,name=new_order,json=newOrder,proto3" json:"new_order,omitempty" validate:"gte=0"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DefinitionId  string                 `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
+	ActionSetId   string                 `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
+	NewOrder      int32                  `protobuf:"varint,3,opt,name=new_order,json=newOrder,proto3" json:"new_order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7800,15 +7627,12 @@ func (x *DeviceGroup) GetInventoryIntervalMinutes() int32 {
 }
 
 type CreateDeviceGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// If true, membership is determined by dynamic_query instead of manual assignment
-	IsDynamic bool `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	// @gotags: validate:"omitempty,max=4096"
-	DynamicQuery  string `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty" validate:"omitempty,max=4096"` // Query for dynamic membership (see docs for syntax)
+	IsDynamic     bool   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"` // Query for dynamic membership (see docs for syntax)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7916,9 +7740,8 @@ func (x *CreateDeviceGroupResponse) GetGroup() *DeviceGroup {
 }
 
 type GetDeviceGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8089,11 +7912,9 @@ func (x *DeviceGroupMember) GetLastSeenAt() *timestamppb.Timestamp {
 }
 
 type ListDeviceGroupsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8203,9 +8024,8 @@ func (x *ListDeviceGroupsResponse) GetTotalCount() int32 {
 }
 
 type ListDeviceGroupsForDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8292,11 +8112,9 @@ func (x *ListDeviceGroupsForDeviceResponse) GetGroups() []*DeviceGroup {
 }
 
 type RenameDeviceGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8346,11 +8164,9 @@ func (x *RenameDeviceGroupRequest) GetName() string {
 }
 
 type UpdateDeviceGroupDescriptionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8444,9 +8260,8 @@ func (x *UpdateDeviceGroupResponse) GetGroup() *DeviceGroup {
 }
 
 type DeleteDeviceGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8525,13 +8340,10 @@ func (*DeleteDeviceGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type AddDeviceToGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	DeviceId string `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=256,dive,ulid"
-	DeviceIds     []string `protobuf:"bytes,3,rep,name=device_ids,json=deviceIds,proto3" json:"device_ids,omitempty" validate:"omitempty,max=256,dive,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	DeviceIds     []string               `protobuf:"bytes,3,rep,name=device_ids,json=deviceIds,proto3" json:"device_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8632,11 +8444,9 @@ func (x *AddDeviceToGroupResponse) GetGroup() *DeviceGroup {
 }
 
 type RemoveDeviceFromGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8732,12 +8542,10 @@ func (x *RemoveDeviceFromGroupResponse) GetGroup() *DeviceGroup {
 // Update a device group's dynamic query
 type UpdateDeviceGroupQueryRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// If true, membership is determined by dynamic_query instead of manual assignment
-	IsDynamic bool `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	// @gotags: validate:"omitempty,max=4096"
-	DynamicQuery  string `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty" validate:"omitempty,max=4096"` // Query for dynamic membership (see docs for syntax)
+	IsDynamic     bool   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"` // Query for dynamic membership (see docs for syntax)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8839,9 +8647,8 @@ func (x *UpdateDeviceGroupQueryResponse) GetGroup() *DeviceGroup {
 
 // Validate a dynamic query without creating a group
 type ValidateDynamicQueryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"max=4096"
-	Query         string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty" validate:"max=4096"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8945,9 +8752,8 @@ func (x *ValidateDynamicQueryResponse) GetMatchingDeviceCount() int32 {
 
 // Trigger re-evaluation of a dynamic group
 type EvaluateDynamicGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9051,11 +8857,9 @@ func (x *EvaluateDynamicGroupResponse) GetDevicesRemoved() int32 {
 
 // Update device group sync interval
 type SetDeviceGroupSyncIntervalRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"gte=0,lte=1440"
-	SyncIntervalMinutes int32 `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty" validate:"gte=0,lte=1440"` // 0 = use device/default, max 24 hours
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SyncIntervalMinutes int32                  `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"` // 0 = use device/default, max 24 hours
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -9106,11 +8910,9 @@ func (x *SetDeviceGroupSyncIntervalRequest) GetSyncIntervalMinutes() int32 {
 
 // Update device group inventory collection interval.
 type SetDeviceGroupInventoryIntervalRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=120,lte=10080"
-	InventoryIntervalMinutes int32 `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty" validate:"omitempty,gte=120,lte=10080"` // 0 = no group contribution, else 2h–7d
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	InventoryIntervalMinutes int32                  `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"` // 0 = no group contribution, else 2h–7d
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -9164,11 +8966,9 @@ func (x *SetDeviceGroupInventoryIntervalRequest) GetInventoryIntervalMinutes() i
 // the group's contribution to the device-side union, leaving the
 // device unconstrained by this group.
 type SetDeviceGroupMaintenanceWindowRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty"
-	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty" validate:"omitempty"`
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MaintenanceWindow *MaintenanceWindow     `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -9334,17 +9134,12 @@ func (x *Assignment) GetTargetName() string {
 }
 
 type CreateAssignmentRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,gte=1,lte=4"
-	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"required,gte=1,lte=4"`
-	// @gotags: validate:"required,ulid"
-	SourceId string `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,gte=1,lte=4"
-	TargetType AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty" validate:"required,gte=1,lte=4"`
-	// @gotags: validate:"required,ulid"
-	TargetId string `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty"
-	Mode          AssignmentMode `protobuf:"varint,5,opt,name=mode,proto3,enum=cadestro.v1.AssignmentMode" json:"mode,omitempty" validate:"omitempty"` // Defaults to REQUIRED (0)
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceType    AssignmentSourceType   `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceId      string                 `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	TargetType    AssignmentTargetType   `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty"`
+	TargetId      string                 `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	Mode          AssignmentMode         `protobuf:"varint,5,opt,name=mode,proto3,enum=cadestro.v1.AssignmentMode" json:"mode,omitempty"` // Defaults to REQUIRED (0)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9459,9 +9254,8 @@ func (x *CreateAssignmentResponse) GetAssignment() *Assignment {
 }
 
 type DeleteAssignmentRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9543,20 +9337,14 @@ type ListAssignmentsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// UNSPECIFIED (0) means "all source types"; non-zero filters to
 	// that single source type.
-	// @gotags: validate:"omitempty,gte=0,lte=4"
-	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"omitempty,gte=0,lte=4"`
-	// @gotags: validate:"omitempty,ulid"
-	SourceId string `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty" validate:"omitempty,ulid"`
+	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceId   string               `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
 	// UNSPECIFIED (0) means "all target types"; non-zero filters to
 	// that single target type.
-	// @gotags: validate:"omitempty,gte=0,lte=4"
-	TargetType AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty" validate:"omitempty,gte=0,lte=4"`
-	// @gotags: validate:"omitempty,ulid"
-	TargetId string `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	PageSize int32 `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	TargetType    AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty"`
+	TargetId      string               `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	PageSize      int32                `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string               `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9778,14 +9566,11 @@ func (x *UserSelection) GetUpdatedAt() *timestamppb.Timestamp {
 }
 
 type SetUserSelectionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,gte=1,lte=4"
-	SourceType AssignmentSourceType `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty" validate:"required,gte=1,lte=4"`
-	// @gotags: validate:"required,ulid"
-	SourceId      string `protobuf:"bytes,3,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty" validate:"required,ulid"`
-	Selected      bool   `protobuf:"varint,4,opt,name=selected,proto3" json:"selected,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	SourceType    AssignmentSourceType   `protobuf:"varint,2,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceId      string                 `protobuf:"bytes,3,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	Selected      bool                   `protobuf:"varint,4,opt,name=selected,proto3" json:"selected,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9893,9 +9678,8 @@ func (x *SetUserSelectionResponse) GetSelection() *UserSelection {
 }
 
 type ListAvailableActionsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10067,9 +9851,8 @@ func (x *ListAvailableActionsResponse) GetItems() []*AvailableItem {
 
 // Get all resolved actions for a device (expands groups, definitions, sets)
 type GetDeviceAssignmentsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10197,9 +9980,8 @@ func (x *GetDeviceAssignmentsResponse) GetDefinitionDetails() []*GetDefinitionRe
 
 // Get all assignments targeting a user (directly or via user groups)
 type GetUserAssignmentsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId        string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10479,9 +10261,8 @@ func (x *ActionExecution) GetScheduledFor() *timestamppb.Timestamp {
 }
 
 type DispatchActionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// Either use an action or inline action
 	//
 	// Types that are valid to be assigned to ActionSource:
@@ -10590,8 +10371,7 @@ type isDispatchActionRequest_ActionSource interface {
 }
 
 type DispatchActionRequest_ActionId struct {
-	// @gotags: validate:"omitempty,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3,oneof" validate:"omitempty,ulid"` // Reference to ManagedAction
+	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3,oneof"` // Reference to ManagedAction
 }
 
 type DispatchActionRequest_InlineAction struct {
@@ -10647,9 +10427,8 @@ func (x *DispatchActionResponse) GetExecution() *ActionExecution {
 }
 
 type DispatchToMultipleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=256,dive,ulid"
-	DeviceIds []string `protobuf:"bytes,1,rep,name=device_ids,json=deviceIds,proto3" json:"device_ids,omitempty" validate:"required,min=1,max=256,dive,ulid"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	DeviceIds []string               `protobuf:"bytes,1,rep,name=device_ids,json=deviceIds,proto3" json:"device_ids,omitempty"`
 	// Types that are valid to be assigned to ActionSource:
 	//
 	//	*DispatchToMultipleRequest_ActionId
@@ -10726,8 +10505,7 @@ type isDispatchToMultipleRequest_ActionSource interface {
 }
 
 type DispatchToMultipleRequest_ActionId struct {
-	// @gotags: validate:"omitempty,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3,oneof" validate:"omitempty,ulid"` // Reference to ManagedAction
+	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3,oneof"` // Reference to ManagedAction
 }
 
 type DispatchToMultipleRequest_InlineAction struct {
@@ -10783,9 +10561,8 @@ func (x *DispatchToMultipleResponse) GetExecutions() []*ActionExecution {
 }
 
 type SyncDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10864,9 +10641,8 @@ func (*SyncDeviceResponse) Descriptor() ([]byte, []int) {
 }
 
 type RebootDeviceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10946,11 +10722,9 @@ func (*RebootDeviceResponse) Descriptor() ([]byte, []int) {
 
 // Dispatch all actions from an action set to a device
 type DispatchActionSetRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionSetId   string `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	ActionSetId   string                 `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11045,11 +10819,9 @@ func (x *DispatchActionSetResponse) GetExecutions() []*ActionExecution {
 
 // Dispatch all actions from a definition to a device
 type DispatchDefinitionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	DefinitionId  string `protobuf:"bytes,2,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	DefinitionId  string                 `protobuf:"bytes,2,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11144,9 +10916,8 @@ func (x *DispatchDefinitionResponse) GetExecutions() []*ActionExecution {
 
 // Dispatch to a device group
 type DispatchToGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	GroupId string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
 	// Types that are valid to be assigned to ActionSource:
 	//
 	//	*DispatchToGroupRequest_ActionId
@@ -11243,18 +11014,15 @@ type isDispatchToGroupRequest_ActionSource interface {
 }
 
 type DispatchToGroupRequest_ActionId struct {
-	// @gotags: validate:"omitempty,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3,oneof" validate:"omitempty,ulid"`
+	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3,oneof"`
 }
 
 type DispatchToGroupRequest_ActionSetId struct {
-	// @gotags: validate:"omitempty,ulid"
-	ActionSetId string `protobuf:"bytes,3,opt,name=action_set_id,json=actionSetId,proto3,oneof" validate:"omitempty,ulid"`
+	ActionSetId string `protobuf:"bytes,3,opt,name=action_set_id,json=actionSetId,proto3,oneof"`
 }
 
 type DispatchToGroupRequest_DefinitionId struct {
-	// @gotags: validate:"omitempty,ulid"
-	DefinitionId string `protobuf:"bytes,4,opt,name=definition_id,json=definitionId,proto3,oneof" validate:"omitempty,ulid"`
+	DefinitionId string `protobuf:"bytes,4,opt,name=definition_id,json=definitionId,proto3,oneof"`
 }
 
 type DispatchToGroupRequest_InlineAction struct {
@@ -11314,9 +11082,8 @@ func (x *DispatchToGroupResponse) GetExecutions() []*ActionExecution {
 }
 
 type GetExecutionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11403,17 +11170,13 @@ func (x *GetExecutionResponse) GetExecution() *ActionExecution {
 }
 
 type ListExecutionsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	DeviceId     string          `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"omitempty,ulid"` // optional filter
-	StatusFilter ExecutionStatus `protobuf:"varint,4,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.ExecutionStatus" json:"status_filter,omitempty"`
-	TypeFilter   ActionType      `protobuf:"varint,5,opt,name=type_filter,json=typeFilter,proto3,enum=cadestro.v1.ActionType" json:"type_filter,omitempty"` // optional action type filter
-	// @gotags: validate:"omitempty,max=255"
-	Search        string `protobuf:"bytes,6,opt,name=search,proto3" json:"search,omitempty" validate:"omitempty,max=255"` // searches action name and device hostname
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // optional filter
+	StatusFilter  ExecutionStatus        `protobuf:"varint,4,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.ExecutionStatus" json:"status_filter,omitempty"`
+	TypeFilter    ActionType             `protobuf:"varint,5,opt,name=type_filter,json=typeFilter,proto3,enum=cadestro.v1.ActionType" json:"type_filter,omitempty"` // optional action type filter
+	Search        string                 `protobuf:"bytes,6,opt,name=search,proto3" json:"search,omitempty"`                                                        // searches action name and device hostname
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11556,9 +11319,8 @@ func (x *ListExecutionsResponse) GetTotalCount() int32 {
 // returned execution reflects whatever terminal state it reached on
 // its own.
 type CancelExecutionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ExecutionId   string `protobuf:"bytes,1,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExecutionId   string                 `protobuf:"bytes,1,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11754,17 +11516,12 @@ func (x *AuditEvent) GetOccurredAt() *timestamppb.Timestamp {
 }
 
 type ListAuditEventsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty,max=32"
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,ulid"
-	ActorId string `protobuf:"bytes,3,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=64"
-	StreamType string `protobuf:"bytes,4,opt,name=stream_type,json=streamType,proto3" json:"stream_type,omitempty" validate:"omitempty,max=64"`
-	// @gotags: validate:"omitempty,max=128"
-	EventType     string `protobuf:"bytes,5,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty" validate:"omitempty,max=128"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	ActorId       string                 `protobuf:"bytes,3,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	StreamType    string                 `protobuf:"bytes,4,opt,name=stream_type,json=streamType,proto3" json:"stream_type,omitempty"`
+	EventType     string                 `protobuf:"bytes,5,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11907,22 +11664,17 @@ func (x *ListAuditEventsResponse) GetTotalCount() int32 {
 type ExportAuditEventsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Export format: "csv" or "json".
-	// @gotags: validate:"required,oneof=csv json"
-	Format string `protobuf:"bytes,1,opt,name=format,proto3" json:"format,omitempty" validate:"required,oneof=csv json"`
-	// @gotags: validate:"omitempty,ulid"
-	ActorId string `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty" validate:"omitempty,ulid"`
+	Format  string `protobuf:"bytes,1,opt,name=format,proto3" json:"format,omitempty"`
+	ActorId string `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
 	// Empty = all stream types.
-	// @gotags: validate:"omitempty,max=64,dive,min=1,max=64"
-	StreamTypes []string `protobuf:"bytes,3,rep,name=stream_types,json=streamTypes,proto3" json:"stream_types,omitempty" validate:"omitempty,max=64,dive,min=1,max=64"`
+	StreamTypes []string `protobuf:"bytes,3,rep,name=stream_types,json=streamTypes,proto3" json:"stream_types,omitempty"`
 	// Case-insensitive substring match on the event type.
-	// @gotags: validate:"omitempty,max=128"
-	EventType string `protobuf:"bytes,4,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty" validate:"omitempty,max=128"`
+	EventType string `protobuf:"bytes,4,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
 	// Inclusive occurred_at lower/upper bounds; unset = unbounded.
 	OccurredFrom *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=occurred_from,json=occurredFrom,proto3" json:"occurred_from,omitempty"`
 	OccurredTo   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=occurred_to,json=occurredTo,proto3" json:"occurred_to,omitempty"`
 	// Cursor from the previous chunk; empty starts the export.
-	// @gotags: validate:"omitempty,max=32"
-	PageToken     string `protobuf:"bytes,7,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty,max=32"`
+	PageToken     string `protobuf:"bytes,7,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12166,9 +11918,8 @@ func (x *LpsPassword) GetRotationReason() RotationReason {
 }
 
 type ListLpsPasswordsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12265,9 +12016,8 @@ func (x *ListLpsPasswordsResponse) GetHistory() []*LpsPassword {
 }
 
 type RevealLpsPasswordRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12482,9 +12232,8 @@ func (x *LuksKey) GetRevocationAt() *timestamppb.Timestamp {
 }
 
 type ListLuksKeysRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12581,9 +12330,8 @@ func (x *ListLuksKeysResponse) GetHistory() []*LuksKey {
 }
 
 type RevealLuksKeyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12670,11 +12418,9 @@ func (x *RevealLuksKeyResponse) GetPassphrase() string {
 }
 
 type CreateLuksTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId      string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12787,11 +12533,9 @@ func (x *CreateLuksTokenResponse) GetCliCommand() string {
 }
 
 type RevokeLuksDeviceKeyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId      string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12878,18 +12622,13 @@ func (*RevokeLuksDeviceKeyResponse) Descriptor() ([]byte, []int) {
 
 // Dispatch an on-demand OSQuery to a connected device
 type DispatchOSQueryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required_without=RawSql,omitempty,min=1,max=64"
-	Table string `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty" validate:"required_without=RawSql,omitempty,min=1,max=64"`
-	// @gotags: validate:"omitempty,dive,max=64"
-	Columns []string `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty" validate:"omitempty,dive,max=64"`
-	// @gotags: validate:"omitempty,gte=0,lte=10000"
-	Limit int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty" validate:"omitempty,gte=0,lte=10000"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	Table    string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
+	Columns  []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
+	Limit    int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Raw SQL query — when set, table/columns/limit are ignored.
-	// @gotags: validate:"omitempty,max=4096"
-	RawSql        string `protobuf:"bytes,5,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty" validate:"omitempty,max=4096"`
+	RawSql        string `protobuf:"bytes,5,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13005,9 +12744,8 @@ func (x *DispatchOSQueryResponse) GetQueryId() string {
 
 // Poll for the result of a dispatched OSQuery
 type GetOSQueryResultRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId       string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13127,12 +12865,10 @@ func (x *GetOSQueryResultResponse) GetRows() []*OSQueryRow {
 
 // Get cached device inventory (hardware/software data collected by agent)
 type GetDeviceInventoryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// Optional: filter to specific tables (empty = all)
-	// @gotags: validate:"omitempty,dive,max=128"
-	TableNames    []string `protobuf:"bytes,2,rep,name=table_names,json=tableNames,proto3" json:"table_names,omitempty" validate:"omitempty,dive,max=128"`
+	TableNames    []string `protobuf:"bytes,2,rep,name=table_names,json=tableNames,proto3" json:"table_names,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13287,9 +13023,8 @@ func (x *GetDeviceInventoryResponse) GetTables() []*InventoryTableResult {
 
 // Request the agent to re-collect and send inventory
 type RefreshDeviceInventoryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13368,22 +13103,15 @@ func (*RefreshDeviceInventoryResponse) Descriptor() ([]byte, []int) {
 }
 
 type QueryDeviceLogsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=0,lte=10000"
-	Lines int32 `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty" validate:"omitempty,gte=0,lte=10000"`
-	// @gotags: validate:"omitempty,max=256"
-	Unit string `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty" validate:"omitempty,max=256"`
-	// @gotags: validate:"omitempty,max=64"
-	Since string `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty" validate:"omitempty,max=64"`
-	// @gotags: validate:"omitempty,max=64"
-	Until string `protobuf:"bytes,5,opt,name=until,proto3" json:"until,omitempty" validate:"omitempty,max=64"`
-	// @gotags: validate:"omitempty,max=32"
-	Priority string `protobuf:"bytes,6,opt,name=priority,proto3" json:"priority,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,max=256"
-	Grep          string `protobuf:"bytes,7,opt,name=grep,proto3" json:"grep,omitempty" validate:"omitempty,max=256"`
-	Kernel        bool   `protobuf:"varint,8,opt,name=kernel,proto3" json:"kernel,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	Lines         int32                  `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty"`
+	Unit          string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
+	Since         string                 `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty"`
+	Until         string                 `protobuf:"bytes,5,opt,name=until,proto3" json:"until,omitempty"`
+	Priority      string                 `protobuf:"bytes,6,opt,name=priority,proto3" json:"priority,omitempty"`
+	Grep          string                 `protobuf:"bytes,7,opt,name=grep,proto3" json:"grep,omitempty"`
+	Kernel        bool                   `protobuf:"varint,8,opt,name=kernel,proto3" json:"kernel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13519,9 +13247,8 @@ func (x *QueryDeviceLogsResponse) GetQueryId() string {
 }
 
 type GetDeviceLogResultRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId       string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13640,13 +13367,10 @@ func (x *GetDeviceLogResultResponse) GetLogs() string {
 }
 
 type CreateRoleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
-	// @gotags: validate:"omitempty"
-	Permissions   []string `protobuf:"bytes,3,rep,name=permissions,proto3" json:"permissions,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Permissions   []string               `protobuf:"bytes,3,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13747,9 +13471,8 @@ func (x *CreateRoleResponse) GetRole() *Role {
 }
 
 type GetRoleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13844,11 +13567,9 @@ func (x *GetRoleResponse) GetUserCount() int32 {
 }
 
 type ListRolesRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13958,15 +13679,11 @@ func (x *ListRolesResponse) GetTotalCount() int32 {
 }
 
 type UpdateRoleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	RoleId string `protobuf:"bytes,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
-	// @gotags: validate:"required,min=1"
-	Permissions   []string `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty" validate:"required,min=1"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoleId        string                 `protobuf:"bytes,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Permissions   []string               `protobuf:"bytes,4,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14074,9 +13791,8 @@ func (x *UpdateRoleResponse) GetRole() *Role {
 }
 
 type DeleteRoleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14155,13 +13871,10 @@ func (*DeleteRoleResponse) Descriptor() ([]byte, []int) {
 }
 
 type AssignRoleToUserRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	RoleId string `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=256,dive,ulid"
-	RoleIds []string `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty" validate:"omitempty,max=256,dive,ulid"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	UserId  string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RoleId  string                 `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	RoleIds []string               `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
 	// Optional grant scope. Paired-or-neither: both scope_kind and
 	// scope_id MUST be set together, or both absent. Absent =
 	// unscoped/global grant. Set = the grant's authorization extends only
@@ -14170,9 +13883,8 @@ type AssignRoleToUserRequest struct {
 	// must accept this scope_kind (PermissionInfo.target_kind must
 	// match), or the assignment is rejected. The actor must hold
 	// AssignRoleScope.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	ScopeId       string `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
+	ScopeKind     RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       string             `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14279,11 +13991,9 @@ func (*AssignRoleToUserResponse) Descriptor() ([]byte, []int) {
 }
 
 type RevokeRoleFromUserRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	RoleId string `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty" validate:"required,ulid"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RoleId string                 `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
 	// Optional grant scope identifying WHICH grant to revoke when the
 	// (user_id, role_id) pair has multiple grants at different
 	// scopes. Paired-or-neither with scope_id. Both absent = revoke
@@ -14291,9 +14001,8 @@ type RevokeRoleFromUserRequest struct {
 	// grant. The handler rejects "revoke unscoped" when only scoped
 	// grants exist (and vice versa) to surface ambiguity rather than
 	// silently no-op.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	ScopeId       string `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
+	ScopeKind     RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       string             `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14657,14 +14366,11 @@ func (x *UserGroupMember) GetAddedAt() *timestamppb.Timestamp {
 }
 
 type CreateUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
-	IsDynamic   bool   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	// @gotags: validate:"omitempty,max=4096"
-	DynamicQuery  string `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty" validate:"omitempty,max=4096"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	IsDynamic     bool                   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string                 `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14772,9 +14478,8 @@ func (x *CreateUserGroupResponse) GetGroup() *UserGroup {
 }
 
 type GetUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14869,11 +14574,9 @@ func (x *GetUserGroupResponse) GetMembers() []*UserGroupMember {
 }
 
 type ListUserGroupsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14983,13 +14686,10 @@ func (x *ListUserGroupsResponse) GetTotalCount() int32 {
 }
 
 type UpdateUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15090,9 +14790,8 @@ func (x *UpdateUserGroupResponse) GetGroup() *UserGroup {
 }
 
 type DeleteUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15171,13 +14870,10 @@ func (*DeleteUserGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type AddUserToGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=256,dive,ulid"
-	UserIds       []string `protobuf:"bytes,3,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty" validate:"omitempty,max=256,dive,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserIds       []string               `protobuf:"bytes,3,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15270,11 +14966,9 @@ func (*AddUserToGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type RemoveUserFromGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	UserId        string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15360,19 +15054,15 @@ func (*RemoveUserFromGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type AssignRoleToUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	RoleId string `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=256,dive,ulid"
-	RoleIds []string `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty" validate:"omitempty,max=256,dive,ulid"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	GroupId string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	RoleId  string                 `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	RoleIds []string               `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
 	// Optional grant scope. Same paired-or-neither semantics as
 	// AssignRoleToUserRequest.scope_*. Every member of the target
 	// user group inherits this scope through the grant.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	ScopeId       string `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
+	ScopeKind     RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       string             `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15479,18 +15169,15 @@ func (*AssignRoleToUserGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type RevokeRoleFromUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	GroupId string `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	RoleId string `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty" validate:"required,ulid"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	GroupId string                 `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	RoleId  string                 `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
 	// Optional grant scope identifying WHICH (user_group, role)
 	// grant to revoke when multiple scoped grants of the same role
 	// are attached to the same user group. Paired-or-neither with
 	// scope_id; same semantics as RevokeRoleFromUserRequest.
-	ScopeKind RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	ScopeId       string `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty" validate:"omitempty,ulid"`
+	ScopeKind     RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       string             `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15590,9 +15277,8 @@ func (*RevokeRoleFromUserGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type ListUserGroupsForUserRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId        string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15679,12 +15365,10 @@ func (x *ListUserGroupsForUserResponse) GetGroups() []*UserGroup {
 }
 
 type UpdateUserGroupQueryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id        string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	IsDynamic bool   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	// @gotags: validate:"omitempty,max=4096"
-	DynamicQuery  string `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty" validate:"omitempty,max=4096"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	IsDynamic     bool                   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string                 `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15785,9 +15469,8 @@ func (x *UpdateUserGroupQueryResponse) GetGroup() *UserGroup {
 }
 
 type ValidateUserGroupQueryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"max=4096"
-	Query         string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty" validate:"max=4096"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15890,9 +15573,8 @@ func (x *ValidateUserGroupQueryResponse) GetMatchingUserCount() int32 {
 }
 
 type EvaluateDynamicUserGroupRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -15999,11 +15681,9 @@ func (x *EvaluateDynamicUserGroupResponse) GetUsersRemoved() int32 {
 // device-side union for every device the user group reaches via an
 // assignment. Empty schedule = clear.
 type SetUserGroupMaintenanceWindowRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty"
-	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty" validate:"omitempty"`
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MaintenanceWindow *MaintenanceWindow     `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -16378,35 +16058,22 @@ func (x *IdentityLink) GetLastLoginAt() *timestamppb.Timestamp {
 }
 
 type CreateIdentityProviderRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required,min=1,max=64,alphanum"
-	Slug string `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty" validate:"required,min=1,max=64,alphanum"`
-	// @gotags: validate:"required,gte=1,lte=1"
-	ProviderType IdentityProviderType `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty" validate:"required,gte=1,lte=1"`
-	// @gotags: validate:"omitempty,max=255"
-	ClientId string `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,max=4096"
-	ClientSecret string `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty" validate:"omitempty,max=4096"`
-	// @gotags: validate:"required,url"
-	IssuerUrl string `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty" validate:"required,url"`
-	// @gotags: validate:"omitempty,url"
-	AuthorizationUrl string `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,url"
-	TokenUrl string `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,url"
-	UserinfoUrl string `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,dive,max=255"
-	Scopes          []string `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty" validate:"omitempty,dive,max=255"`
-	AutoCreateUsers bool     `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
-	AutoLinkByEmail bool     `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	DefaultRoleId string `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=255"
-	GroupClaim string `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-	GroupMapping map[string]string `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Slug             string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	ProviderType     IdentityProviderType   `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
+	ClientId         string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecret     string                 `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	IssuerUrl        string                 `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	AuthorizationUrl string                 `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
+	TokenUrl         string                 `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	UserinfoUrl      string                 `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
+	Scopes           []string               `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	AutoCreateUsers  bool                   `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
+	AutoLinkByEmail  bool                   `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
+	DefaultRoleId    string                 `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
+	GroupClaim       string                 `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
+	GroupMapping     map[string]string      `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// See IdentityProvider.trust_email_assertions. Default false (secure).
 	TrustEmailAssertions bool `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
@@ -16600,9 +16267,8 @@ func (x *CreateIdentityProviderResponse) GetProvider() *IdentityProvider {
 }
 
 type GetIdentityProviderRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -16689,11 +16355,9 @@ func (x *GetIdentityProviderResponse) GetProvider() *IdentityProvider {
 }
 
 type ListIdentityProvidersRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,min=1,max=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -16803,35 +16467,23 @@ func (x *ListIdentityProvidersResponse) GetTotalCount() int32 {
 }
 
 type UpdateIdentityProviderRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=64"
-	Name    string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=64"`
-	Enabled bool   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// @gotags: validate:"omitempty,max=255"
-	ClientId string `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty" validate:"omitempty,max=255"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Enabled  bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	ClientId string                 `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	// If empty, the existing secret is kept.
-	// @gotags: validate:"omitempty,max=4096"
-	ClientSecret string `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty" validate:"omitempty,max=4096"`
-	// @gotags: validate:"omitempty,url"
-	IssuerUrl string `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,url"
-	AuthorizationUrl string `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,url"
-	TokenUrl string `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,url"
-	UserinfoUrl string `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty" validate:"omitempty,url"`
-	// @gotags: validate:"omitempty,dive,max=255"
-	Scopes          []string `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty" validate:"omitempty,dive,max=255"`
-	AutoCreateUsers bool     `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
-	AutoLinkByEmail bool     `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
-	// @gotags: validate:"omitempty,ulid"
-	DefaultRoleId string `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,max=255"
-	GroupClaim string `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty" validate:"omitempty,max=255"`
-	// @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-	GroupMapping map[string]string `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=255,endkeys,max=255"`
+	ClientSecret     string            `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	IssuerUrl        string            `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	AuthorizationUrl string            `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
+	TokenUrl         string            `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	UserinfoUrl      string            `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
+	Scopes           []string          `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	AutoCreateUsers  bool              `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
+	AutoLinkByEmail  bool              `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
+	DefaultRoleId    string            `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
+	GroupClaim       string            `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
+	GroupMapping     map[string]string `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// See IdentityProvider.trust_email_assertions. Default false (secure).
 	TrustEmailAssertions bool `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
@@ -17025,9 +16677,8 @@ func (x *UpdateIdentityProviderResponse) GetProvider() *IdentityProvider {
 }
 
 type DeleteIdentityProviderRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17176,8 +16827,7 @@ func (x *AuthMethodProvider) GetBrowserLogin() bool {
 type ListAuthMethodsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Optional email to check user-specific auth methods.
-	// @gotags: validate:"omitempty,email,max=254"
-	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty" validate:"omitempty,email,max=254"`
+	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17264,11 +16914,9 @@ func (x *ListAuthMethodsResponse) GetProviders() []*AuthMethodProvider {
 }
 
 type GetSSOLoginURLRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Slug string `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required,url"
-	RedirectUrl   string `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty" validate:"required,url"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Slug          string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
+	RedirectUrl   string                 `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17362,13 +17010,10 @@ func (x *GetSSOLoginURLResponse) GetLoginUrl() string {
 }
 
 type SSOCallbackRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Slug string `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required"
-	Code string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty" validate:"required"`
-	// @gotags: validate:"required"
-	State         string `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty" validate:"required"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Slug          string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	State         string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17573,9 +17218,8 @@ func (x *ListIdentityLinksResponse) GetLinks() []*IdentityLink {
 }
 
 type UnlinkIdentityRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	LinkId        string `protobuf:"bytes,1,opt,name=link_id,json=linkId,proto3" json:"link_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LinkId        string                 `protobuf:"bytes,1,opt,name=link_id,json=linkId,proto3" json:"link_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17655,9 +17299,8 @@ func (*UnlinkIdentityResponse) Descriptor() ([]byte, []int) {
 
 // SCIM Provisioning
 type EnableSCIMRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17752,9 +17395,8 @@ func (x *EnableSCIMResponse) GetEndpointUrl() string {
 }
 
 type DisableSCIMRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17833,9 +17475,8 @@ func (*DisableSCIMResponse) Descriptor() ([]byte, []int) {
 }
 
 type RotateSCIMTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17922,9 +17563,8 @@ func (x *RotateSCIMTokenResponse) GetToken() string {
 }
 
 type GetDeviceComplianceRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18247,11 +17887,9 @@ func (x *CompliancePolicyRule) GetGracePeriodHours() int32 {
 }
 
 type CreateCompliancePolicyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18345,9 +17983,8 @@ func (x *CreateCompliancePolicyResponse) GetPolicy() *CompliancePolicy {
 }
 
 type GetCompliancePolicyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18434,11 +18071,9 @@ func (x *GetCompliancePolicyResponse) GetPolicy() *CompliancePolicy {
 }
 
 type ListCompliancePoliciesRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty"
-	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18548,11 +18183,9 @@ func (x *ListCompliancePoliciesResponse) GetTotalCount() int32 {
 }
 
 type RenameCompliancePolicyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,min=1,max=255"
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty" validate:"required,min=1,max=255"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18602,11 +18235,9 @@ func (x *RenameCompliancePolicyRequest) GetName() string {
 }
 
 type UpdateCompliancePolicyDescriptionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=1024"
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18700,9 +18331,8 @@ func (x *UpdateCompliancePolicyResponse) GetPolicy() *CompliancePolicy {
 }
 
 type DeleteCompliancePolicyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18781,13 +18411,10 @@ func (*DeleteCompliancePolicyResponse) Descriptor() ([]byte, []int) {
 }
 
 type AddCompliancePolicyRuleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	PolicyId string `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=0,lte=8760"
-	GracePeriodHours int32 `protobuf:"varint,3,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty" validate:"omitempty,gte=0,lte=8760"`
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PolicyId         string                 `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty"`
+	ActionId         string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	GracePeriodHours int32                  `protobuf:"varint,3,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -18888,11 +18515,9 @@ func (x *AddCompliancePolicyRuleResponse) GetPolicy() *CompliancePolicy {
 }
 
 type RemoveCompliancePolicyRuleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	PolicyId string `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId      string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PolicyId      string                 `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18986,13 +18611,10 @@ func (x *RemoveCompliancePolicyRuleResponse) GetPolicy() *CompliancePolicy {
 }
 
 type UpdateCompliancePolicyRuleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	PolicyId string `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=0,lte=8760"
-	GracePeriodHours int32 `protobuf:"varint,3,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty" validate:"omitempty,gte=0,lte=8760"`
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PolicyId         string                 `protobuf:"bytes,1,opt,name=policy_id,json=policyId,proto3" json:"policy_id,omitempty"`
+	ActionId         string                 `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	GracePeriodHours int32                  `protobuf:"varint,3,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -19093,9 +18715,8 @@ func (x *UpdateCompliancePolicyRuleResponse) GetPolicy() *CompliancePolicy {
 }
 
 type GetDeviceCompliancePolicyStatusRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId      string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -19427,24 +19048,17 @@ func (x *SearchDateFilter) GetEnd() int64 {
 
 type SearchRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,max=1024"
-	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty" validate:"omitempty,max=1024"`
+	Query string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	// UNSPECIFIED (0) means "all scopes".
-	// @gotags: validate:"omitempty,gte=0,lte=10"
-	Scope SearchScope `protobuf:"varint,2,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty" validate:"omitempty,gte=0,lte=10"`
+	Scope SearchScope `protobuf:"varint,2,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty"`
 	// Matches the handler's effective clamp ([1,200], else default 50).
-	// @gotags: validate:"omitempty,gte=0,lte=200"
-	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=0,lte=200"`
-	// @gotags: validate:"omitempty,max=4096"
-	PageToken   string              `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty,max=4096"`
+	PageSize    int32               `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken   string              `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	DateFilters []*SearchDateFilter `protobuf:"bytes,5,rep,name=date_filters,json=dateFilters,proto3" json:"date_filters,omitempty"`
-	// @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
-	TagFilters map[string]string `protobuf:"bytes,6,rep,name=tag_filters,json=tagFilters,proto3" json:"tag_filters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=64,endkeys,max=1024"` // field → value(s), pipe-separated for OR (e.g. "completed|failed")
+	TagFilters  map[string]string   `protobuf:"bytes,6,rep,name=tag_filters,json=tagFilters,proto3" json:"tag_filters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // field → value(s), pipe-separated for OR (e.g. "completed|failed")
 	// UNSPECIFIED (0) means "scope default"; server validates per-scope validity.
-	// @gotags: validate:"omitempty,gte=0,lte=21"
-	SortField SortField `protobuf:"varint,7,opt,name=sort_field,json=sortField,proto3,enum=cadestro.v1.SortField" json:"sort_field,omitempty" validate:"omitempty,gte=0,lte=21"`
-	// @gotags: validate:"omitempty,gte=0,lte=2"
-	SortDirection SortDirection `protobuf:"varint,8,opt,name=sort_direction,json=sortDirection,proto3,enum=cadestro.v1.SortDirection" json:"sort_direction,omitempty" validate:"omitempty,gte=0,lte=2"`
+	SortField     SortField     `protobuf:"varint,7,opt,name=sort_field,json=sortField,proto3,enum=cadestro.v1.SortField" json:"sort_field,omitempty"`
+	SortDirection SortDirection `protobuf:"varint,8,opt,name=sort_direction,json=sortDirection,proto3,enum=cadestro.v1.SortDirection" json:"sort_direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -19980,10 +19594,9 @@ func (x *UpdateServerSettingsResponse) GetSettings() *ServerSettings {
 }
 
 type SetUserProvisioningEnabledRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	UserId        string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"required,ulid"`
-	Enabled       bool   `protobuf:"varint,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Enabled       bool                   `protobuf:"varint,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20033,15 +19646,12 @@ func (x *SetUserProvisioningEnabledRequest) GetEnabled() bool {
 }
 
 type StartTerminalRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeviceId string `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required,ulid"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// Initial window size. The web client may send a Resize immediately
 	// after connecting if these turn out to be wrong.
-	// @gotags: validate:"omitempty,gt=0,lte=65535"
-	Cols uint32 `protobuf:"varint,2,opt,name=cols,proto3" json:"cols,omitempty" validate:"omitempty,gt=0,lte=65535"`
-	// @gotags: validate:"omitempty,gt=0,lte=65535"
-	Rows          uint32 `protobuf:"varint,3,opt,name=rows,proto3" json:"rows,omitempty" validate:"omitempty,gt=0,lte=65535"`
+	Cols          uint32 `protobuf:"varint,2,opt,name=cols,proto3" json:"cols,omitempty"`
+	Rows          uint32 `protobuf:"varint,3,opt,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20100,27 +19710,22 @@ func (x *StartTerminalRequest) GetRows() uint32 {
 type StartTerminalResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ULID identifying the session for the lifetime of the connection.
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
+	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// Short-lived bearer token the web client must append to terminal_url
 	// as ?token=<session_token> when opening the WebSocket. The token is
 	// intentionally returned separately from the URL so the URL can be
 	// logged or displayed without leaking the credential.
-	// @gotags: validate:"required,min=1"
-	SessionToken string `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty" validate:"required,min=1"`
+	SessionToken string `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	// Token-free base WebSocket URL of control's terminal endpoint
 	// (e.g. wss://control.example.com/terminal). Clients MUST construct
 	// the final connect URL by appending ?token=<session_token>; this
 	// field never embeds the token.
-	// @gotags: validate:"required,url,startswith=wss://"
-	TerminalUrl string `protobuf:"bytes,3,opt,name=terminal_url,json=terminalUrl,proto3" json:"terminal_url,omitempty" validate:"required,url,startswith=wss://"`
+	TerminalUrl string `protobuf:"bytes,3,opt,name=terminal_url,json=terminalUrl,proto3" json:"terminal_url,omitempty"`
 	// Token expiry; the client should connect well before this.
-	// @gotags: validate:"required"
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty" validate:"required"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// The TTY user the agent will spawn the shell as. Returned for the
 	// UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
-	// @gotags: validate:"required,min=1,max=64"
-	TtyUser       string `protobuf:"bytes,5,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty" validate:"required,min=1,max=64"`
+	TtyUser       string `protobuf:"bytes,5,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20223,9 +19828,8 @@ func (x *StartTerminalResponse) GetTtyUser() string {
 //   - Underlying agent failures DO surface as RPC errors so the admin
 //     knows the kill did not actually land.
 type StopTerminalRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId     string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20412,17 +20016,13 @@ func (x *TerminalSessionInfo) GetLastActivityAt() *timestamppb.Timestamp {
 // ListActiveTerminalSessionsRequest follows the project-wide pagination
 // contract: page_size + page_token in, next_page_token + total_count out.
 type ListActiveTerminalSessionsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,gte=1,lte=200"
-	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty" validate:"omitempty,gte=1,lte=200"`
-	// @gotags: validate:"omitempty"
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty" validate:"omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PageSize  int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// Optional filter: only sessions on this device.
-	// @gotags: validate:"omitempty,ulid"
-	DeviceId string `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"omitempty,ulid"`
+	DeviceId string `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// Optional filter: only sessions opened by this user.
-	// @gotags: validate:"omitempty,ulid"
-	UserId        string `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty" validate:"omitempty,ulid"`
+	UserId        string `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20551,13 +20151,11 @@ func (x *ListActiveTerminalSessionsResponse) GetTotalCount() int32 {
 // NotFound for unknown sessions, and records the reason in the audit
 // log alongside the terminating user.
 type TerminateTerminalSessionRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// Optional reason for the audit log; surfaced to the agent and the
 	// affected user.
-	// @gotags: validate:"omitempty,max=512"
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty" validate:"omitempty,max=512"`
+	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20647,24 +20245,18 @@ func (*TerminateTerminalSessionResponse) Descriptor() ([]byte, []int) {
 // it, while this shared update shape permits omission to preserve the current
 // value, and no response returns it.
 type EncryptionAuthoringParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,min=1,max=256"
-	PresharedKey *string `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3,oneof" json:"preshared_key,omitempty" validate:"omitempty,min=1,max=256"`
-	// @gotags: validate:"required,gte=1,lte=365"
-	RotationIntervalDays int32 `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty" validate:"required,gte=1,lte=365"`
-	// @gotags: validate:"omitempty,gte=3,lte=10"
-	MinWords int32 `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty" validate:"omitempty,gte=3,lte=10"`
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	PresharedKey         *string                `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3,oneof" json:"preshared_key,omitempty"`
+	RotationIntervalDays int32                  `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
+	MinWords             int32                  `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
 	// Range-checked for the same reason as EncryptionParams.device_bound_key_type:
 	// the agent's switch default means "no device-bound key", so an out-of-range
 	// value must be refused here rather than silently downgraded there.
-	// @gotags: validate:"omitempty,oneof=0 1 2"
-	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty" validate:"omitempty,oneof=0 1 2"`
-	// @gotags: validate:"omitempty,gte=16,lte=128"
-	UserPassphraseMinLength int32 `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty" validate:"omitempty,gte=16,lte=128"`
+	DeviceBoundKeyType      EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
+	UserPassphraseMinLength int32                        `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
 	// Range-checked for the same reason as EncryptionParams
 	// .user_passphrase_complexity, and optional for the same reason.
-	// @gotags: validate:"omitempty,oneof=0 1 2"
-	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty" validate:"omitempty,oneof=0 1 2"`
+	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -20830,25 +20422,17 @@ func (x *ManagedEncryptionParams) GetUserPassphraseComplexity() LpsPasswordCompl
 // WiFi action. psk and client_key are write-only; omission on update preserves
 // the applicable credential.
 type WifiAuthoringParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=255"
-	Ssid string `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty" validate:"required,min=1,max=255"`
-	// @gotags: validate:"required,ne=0"
-	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty" validate:"required,ne=0"`
-	// @gotags: validate:"omitempty,min=8,max=64"
-	Psk *string `protobuf:"bytes,3,opt,name=psk,proto3,oneof" json:"psk,omitempty" validate:"omitempty,min=8,max=64"`
-	// @gotags: validate:"omitempty"
-	CaCert string `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty"
-	ClientCert string `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,max=65536"
-	ClientKey *string `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3,oneof" json:"client_key,omitempty" validate:"omitempty,max=65536"`
-	// @gotags: validate:"omitempty,max=254"
-	Identity    string `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty" validate:"omitempty,max=254"`
-	AutoConnect bool   `protobuf:"varint,8,opt,name=auto_connect,json=autoConnect,proto3" json:"auto_connect,omitempty"`
-	Hidden      bool   `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
-	// @gotags: validate:"omitempty,gte=-1,lte=999"
-	Priority      int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty" validate:"omitempty,gte=-1,lte=999"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ssid          string                 `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
+	AuthType      WifiAuthType           `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty"`
+	Psk           *string                `protobuf:"bytes,3,opt,name=psk,proto3,oneof" json:"psk,omitempty"`
+	CaCert        string                 `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
+	ClientCert    string                 `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty"`
+	ClientKey     *string                `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3,oneof" json:"client_key,omitempty"`
+	Identity      string                 `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty"`
+	AutoConnect   bool                   `protobuf:"varint,8,opt,name=auto_connect,json=autoConnect,proto3" json:"auto_connect,omitempty"`
+	Hidden        bool                   `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
+	Priority      int32                  `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -21074,32 +20658,33 @@ var File_cadestro_v1_control_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x80\x01\n" +
-	"\x0fRegisterRequest\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\x12\x1a\n" +
-	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
-	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x12\x10\n" +
-	"\x03csr\x18\x04 \x01(\fR\x03csrJ\x04\b\x05\x10\x06\"\xa8\x01\n" +
-	"\x10RegisterResponse\x122\n" +
-	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdR\bdeviceId\x12\x17\n" +
-	"\aca_cert\x18\x02 \x01(\fR\x06caCert\x12 \n" +
-	"\vcertificate\x18\x03 \x01(\fR\vcertificate\x12\x1f\n" +
-	"\vcontrol_url\x18\x04 \x01(\tR\n" +
-	"controlUrlJ\x04\b\x05\x10\x06\"1\n" +
-	"\x17RenewCertificateRequest\x12\x10\n" +
-	"\x03csr\x18\x01 \x01(\fR\x03csrJ\x04\b\x02\x10\x03\"{\n" +
+	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1ecadestro/v1/validate_ext.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb2\x01\n" +
+	"\x0fRegisterRequest\x12!\n" +
+	"\x05token\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\xff\x01R\x05token\x12)\n" +
+	"\bhostname\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xfd\x01R\bhostname\x121\n" +
+	"\ragent_version\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\fagentVersion\x12\x18\n" +
+	"\x03csr\x18\x04 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csrJ\x04\b\x05\x10\x06\"\xcd\x01\n" +
+	"\x10RegisterResponse\x12:\n" +
+	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\x12\x1f\n" +
+	"\aca_cert\x18\x02 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x06caCert\x12(\n" +
+	"\vcertificate\x18\x03 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\vcertificate\x12,\n" +
+	"\vcontrol_url\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\n" +
+	"controlUrlJ\x04\b\x05\x10\x06\"9\n" +
+	"\x17RenewCertificateRequest\x12\x18\n" +
+	"\x03csr\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csrJ\x04\b\x02\x10\x03\"{\n" +
 	"\x18RenewCertificateResponse\x12 \n" +
 	"\vcertificate\x18\x01 \x01(\fR\vcertificate\x127\n" +
-	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfterJ\x04\b\x03\x10\x04\":\n" +
-	"\x13RefreshTokenRequest\x12#\n" +
-	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x99\x01\n" +
+	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfterJ\x04\b\x03\x10\x04\"B\n" +
+	"\x13RefreshTokenRequest\x12+\n" +
+	"\rrefresh_token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\frefreshToken\"\x99\x01\n" +
 	"\x14RefreshTokenResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x129\n" +
 	"\n" +
 	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12#\n" +
-	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\"4\n" +
-	"\rLogoutRequest\x12#\n" +
-	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x10\n" +
+	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\"<\n" +
+	"\rLogoutRequest\x12+\n" +
+	"\rrefresh_token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\frefreshToken\"\x10\n" +
 	"\x0eLogoutResponse\"\x17\n" +
 	"\x15GetCurrentUserRequest\"?\n" +
 	"\x16GetCurrentUserResponse\x12%\n" +
@@ -21142,10 +20727,10 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"public_key\x18\x02 \x01(\tR\tpublicKey\x12\x18\n" +
 	"\acomment\x18\x03 \x01(\tR\acomment\x125\n" +
-	"\badded_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\xc6\x01\n" +
+	"\badded_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\xd4\x01\n" +
 	"\x04Role\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
+	"\x04name\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12 \n" +
 	"\vpermissions\x18\x04 \x03(\tR\vpermissions\x129\n" +
 	"\n" +
@@ -21163,60 +20748,65 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x05group\x18\x02 \x01(\tR\x05group\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12B\n" +
 	"\vtarget_kind\x18\x04 \x01(\x0e2!.cadestro.v1.PermissionTargetKindR\n" +
-	"targetKind\"%\n" +
-	"\x13EraseJITUserRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
-	"\x14EraseJITUserResponse\" \n" +
-	"\x0eGetUserRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"8\n" +
+	"targetKind\"/\n" +
+	"\x13EraseJITUserRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x16\n" +
+	"\x14EraseJITUserResponse\"*\n" +
+	"\x0eGetUserRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"8\n" +
 	"\x0fGetUserResponse\x12%\n" +
-	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"N\n" +
-	"\x10ListUsersRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\\\n" +
+	"\x10ListUsersRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\x85\x01\n" +
 	"\x11ListUsersResponse\x12'\n" +
 	"\x05users\x18\x01 \x03(\v2\x11.cadestro.v1.UserR\x05users\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\">\n" +
-	"\x16UpdateUserEmailRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"D\n" +
-	"\x16SetUserDisabledRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
+	"totalCount\"T\n" +
+	"\x16UpdateUserEmailRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12 \n" +
+	"\x05email\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02`\x01R\x05email\"N\n" +
+	"\x16SetUserDisabledRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12\x1a\n" +
 	"\bdisabled\x18\x02 \x01(\bR\bdisabled\";\n" +
 	"\x12UpdateUserResponse\x12%\n" +
-	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\xee\x01\n" +
-	"\x18UpdateUserProfileRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
-	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x1d\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\xc4\x02\n" +
+	"\x18UpdateUserProfileRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12.\n" +
+	"\fdisplay_name\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vdisplayName\x12*\n" +
 	"\n" +
-	"given_name\x18\x03 \x01(\tR\tgivenName\x12\x1f\n" +
-	"\vfamily_name\x18\x04 \x01(\tR\n" +
-	"familyName\x12-\n" +
-	"\x12preferred_username\x18\x05 \x01(\tR\x11preferredUsername\x12\x18\n" +
-	"\apicture\x18\x06 \x01(\tR\apicture\x12\x16\n" +
-	"\x06locale\x18\a \x01(\tR\x06locale\"h\n" +
-	"\x14AddUserSshKeyRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
+	"given_name\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\tgivenName\x12,\n" +
+	"\vfamily_name\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
+	"familyName\x129\n" +
+	"\x12preferred_username\x18\x05 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x11preferredUsername\x12%\n" +
+	"\apicture\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x10R\apicture\x12\"\n" +
+	"\x06locale\x18\a \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18\n" +
+	"R\x06locale\"\x8e\x01\n" +
+	"\x14AddUserSshKeyRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x12,\n" +
 	"\n" +
-	"public_key\x18\x02 \x01(\tR\tpublicKey\x12\x18\n" +
-	"\acomment\x18\x03 \x01(\tR\acomment\"D\n" +
+	"public_key\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80@R\tpublicKey\x12%\n" +
+	"\acomment\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\acomment\"D\n" +
 	"\x15AddUserSshKeyResponse\x12+\n" +
-	"\x03key\x18\x01 \x01(\v2\x19.cadestro.v1.SshPublicKeyR\x03key\"I\n" +
-	"\x17RemoveUserSshKeyRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x15\n" +
-	"\x06key_id\x18\x02 \x01(\tR\x05keyId\"\x1a\n" +
-	"\x18RemoveUserSshKeyResponse\"\xbd\x01\n" +
-	"\x1cUpdateUserSshSettingsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x19.cadestro.v1.SshPublicKeyR\x03key\"]\n" +
+	"\x17RemoveUserSshKeyRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x12\x1f\n" +
+	"\x06key_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05keyId\"\x1a\n" +
+	"\x18RemoveUserSshKeyResponse\"\xc7\x01\n" +
+	"\x1cUpdateUserSshSettingsRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x12,\n" +
 	"\x12ssh_access_enabled\x18\x02 \x01(\bR\x10sshAccessEnabled\x12(\n" +
 	"\x10ssh_allow_pubkey\x18\x03 \x01(\bR\x0esshAllowPubkey\x12,\n" +
-	"\x12ssh_allow_password\x18\x04 \x01(\bR\x10sshAllowPassword\"`\n" +
-	"\x1eUpdateUserLinuxUsernameRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12%\n" +
-	"\x0elinux_username\x18\x02 \x01(\tR\rlinuxUsername\"\xfa\a\n" +
+	"\x12ssh_allow_password\x18\x04 \x01(\bR\x10sshAllowPassword\"x\n" +
+	"\x1eUpdateUserLinuxUsernameRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x123\n" +
+	"\x0elinux_username\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\rlinuxUsername\"\xfa\a\n" +
 	"\x06Device\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
@@ -21240,13 +20830,13 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x1ainventory_interval_minutes\x18\x12 \x01(\x05R\x18inventoryIntervalMinutes\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcd\x02\n" +
-	"\x12ListDevicesRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfd\x02\n" +
+	"\x12ListDevicesRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12>\n" +
-	"\rstatus_filter\x18\x03 \x01(\x0e2\x19.cadestro.v1.DeviceStatusR\fstatusFilter\x12S\n" +
-	"\flabel_filter\x18\x04 \x03(\v20.cadestro.v1.ListDevicesRequest.LabelFilterEntryR\vlabelFilter\x12&\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12K\n" +
+	"\rstatus_filter\x18\x03 \x01(\x0e2\x19.cadestro.v1.DeviceStatusB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\fstatusFilter\x12h\n" +
+	"\flabel_filter\x18\x04 \x03(\v20.cadestro.v1.ListDevicesRequest.LabelFilterEntryB\x13\xbaH\x10\x9a\x01\r\"\x04r\x02\x18@*\x05r\x03\x18\x80\bR\vlabelFilter\x12&\n" +
 	"\x0fmy_devices_only\x18\x05 \x01(\bR\rmyDevicesOnly\x1a>\n" +
 	"\x10LabelFilterEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -21255,51 +20845,55 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\adevices\x18\x01 \x03(\v2\x13.cadestro.v1.DeviceR\adevices\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\"\n" +
-	"\x10GetDeviceRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"@\n" +
+	"totalCount\",\n" +
+	"\x10GetDeviceRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"@\n" +
 	"\x11GetDeviceResponse\x12+\n" +
-	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"O\n" +
-	"\x15SetDeviceLabelRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\tR\x05value\"<\n" +
-	"\x18RemoveDeviceLabelRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\"C\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"t\n" +
+	"\x15SetDeviceLabelRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12\x1e\n" +
+	"\x03key\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x03key\x12!\n" +
+	"\x05value\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\x80\x02R\x05value\"T\n" +
+	"\x18RemoveDeviceLabelRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12\x1e\n" +
+	"\x03key\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x03key\"C\n" +
 	"\x14UpdateDeviceResponse\x12+\n" +
-	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"%\n" +
-	"\x13DeleteDeviceRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
-	"\x14DeleteDeviceResponse\"\x9e\x01\n" +
-	"\x13AssignDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
-	"\bgroup_id\x18\x03 \x01(\tR\agroupId\x12\x19\n" +
-	"\buser_ids\x18\x04 \x03(\tR\auserIds\x12\x1b\n" +
-	"\tgroup_ids\x18\x05 \x03(\tR\bgroupIds\"C\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"/\n" +
+	"\x13DeleteDeviceRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x16\n" +
+	"\x14DeleteDeviceResponse\"\xe6\x01\n" +
+	"\x13AssignDeviceRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06userId\x12#\n" +
+	"\bgroup_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\agroupId\x12.\n" +
+	"\buser_ids\x18\x04 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\xc0>\x01R\auserIds\x120\n" +
+	"\tgroup_ids\x18\x05 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\xc0>\x01R\bgroupIds\"C\n" +
 	"\x14AssignDeviceResponse\x12+\n" +
-	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"h\n" +
-	"\x15UnassignDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
-	"\bgroup_id\x18\x03 \x01(\tR\agroupId\"E\n" +
+	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"\x86\x01\n" +
+	"\x15UnassignDeviceRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06userId\x12#\n" +
+	"\bgroup_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\agroupId\"E\n" +
 	"\x16UnassignDeviceResponse\x12+\n" +
 	"\x06device\x18\x01 \x01(\v2\x13.cadestro.v1.DeviceR\x06device\"k\n" +
 	"\x0eDeviceAssignee\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
 	"\x04type\x18\x02 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\x04type\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\"9\n" +
-	"\x1aListDeviceAssigneesRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"X\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"C\n" +
+	"\x1aListDeviceAssigneesRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"X\n" +
 	"\x1bListDeviceAssigneesResponse\x129\n" +
-	"\tassignees\x18\x01 \x03(\v2\x1b.cadestro.v1.DeviceAssigneeR\tassignees\"b\n" +
-	"\x1cSetDeviceSyncIntervalRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x122\n" +
-	"\x15sync_interval_minutes\x18\x02 \x01(\x05R\x13syncIntervalMinutes\"q\n" +
-	"!SetDeviceInventoryIntervalRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
-	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05R\x18inventoryIntervalMinutes\"\xdc\x02\n" +
+	"\tassignees\x18\x01 \x03(\v2\x1b.cadestro.v1.DeviceAssigneeR\tassignees\"x\n" +
+	"\x1cSetDeviceSyncIntervalRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12>\n" +
+	"\x15sync_interval_minutes\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xa0\v(\x00R\x13syncIntervalMinutes\"\x8a\x01\n" +
+	"!SetDeviceInventoryIntervalRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12K\n" +
+	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xe0N(xR\x18inventoryIntervalMinutes\"\xdc\x02\n" +
 	"\x11RegistrationToken\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\x12\x12\n" +
@@ -21313,17 +20907,19 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\t \x01(\tR\tcreatedBy\x12\x1a\n" +
 	"\bdisabled\x18\n" +
-	" \x01(\bR\bdisabledJ\x04\b\x04\x10\x05J\x04\b\v\x10\fR\bone_timeR\bowner_id\"\x9e\x01\n" +
-	"\x12CreateTokenRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x19\n" +
-	"\bmax_uses\x18\x03 \x01(\x05R\amaxUses\x129\n" +
+	" \x01(\bR\bdisabledJ\x04\b\x04\x10\x05J\x04\b\v\x10\fR\bone_timeR\bowner_id\"\xc1\x01\n" +
+	"\x12CreateTokenRequest\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\x01R\x04name\x12%\n" +
+	"\bmax_uses\x18\x03 \x01(\x05B\n" +
+	"\xbaH\a\xd8\x01\x01\x1a\x02(\x00R\amaxUses\x12A\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAtJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x06R\bone_timeR\bowner_id\"y\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAtJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x06R\bone_timeR\bowner_id\"\x96\x01\n" +
 	"\x13CreateTokenResponse\x124\n" +
-	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\x12,\n" +
-	"\x12ca_fingerprint_pin\x18\x02 \x01(\tR\x10caFingerprintPin\"z\n" +
-	"\x11ListTokensRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\x12I\n" +
+	"\x12ca_fingerprint_pin\x18\x02 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x88\x01\n" +
+	"\x11ListTokensRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12)\n" +
 	"\x10include_disabled\x18\x03 \x01(\bR\x0fincludeDisabled\"\x95\x01\n" +
@@ -21331,17 +20927,18 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x06tokens\x18\x01 \x03(\v2\x1e.cadestro.v1.RegistrationTokenR\x06tokens\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"8\n" +
-	"\x12RenameTokenRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"E\n" +
-	"\x17SetTokenDisabledRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
+	"totalCount\"Q\n" +
+	"\x12RenameTokenRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12!\n" +
+	"\x04name\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\x01R\x04name\"O\n" +
+	"\x17SetTokenDisabledRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12\x1a\n" +
 	"\bdisabled\x18\x02 \x01(\bR\bdisabled\"K\n" +
 	"\x13UpdateTokenResponse\x124\n" +
-	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\"$\n" +
-	"\x12DeleteTokenRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x15\n" +
+	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\".\n" +
+	"\x12DeleteTokenRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x15\n" +
 	"\x13DeleteTokenResponse\"\xa3\v\n" +
 	"\rManagedAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -21380,14 +20977,16 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"encryption\x124\n" +
 	"\x04wifi\x18\x1b \x01(\v2\x1e.cadestro.v1.ManagedWifiParamsH\x00R\x04wifi\x12C\n" +
 	"\fagent_update\x18\x1c \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
-	"\x06params\"\x88\n" +
+	"\x06params\"\xbb\n" +
 	"\n" +
-	"\x13CreateActionRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12+\n" +
-	"\x04type\x18\x03 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\x04type\x12>\n" +
-	"\rdesired_state\x18\x04 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
-	"\x0ftimeout_seconds\x18\x05 \x01(\x05R\x0etimeoutSeconds\x127\n" +
+	"\x13CreateActionRequest\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x123\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x17.cadestro.v1.ActionTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12>\n" +
+	"\rdesired_state\x18\x04 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x126\n" +
+	"\x0ftimeout_seconds\x18\x05 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90\x1c(\x00R\x0etimeoutSeconds\x127\n" +
 	"\bschedule\x18\x06 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
 	"\apackage\x18\a \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
 	"\x03app\x18\b \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
@@ -21414,13 +21013,13 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\fagent_update\x18\x18 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
 	"\x06params\"J\n" +
 	"\x14CreateActionResponse\x122\n" +
-	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\"\n" +
-	"\x10GetActionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"G\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\",\n" +
+	"\x10GetActionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"G\n" +
 	"\x11GetActionResponse\x122\n" +
-	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\xb3\x01\n" +
-	"\x12ListActionsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\xc1\x01\n" +
+	"\x12ListActionsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x128\n" +
 	"\vtype_filter\x18\x03 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
@@ -21430,17 +21029,19 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\aactions\x18\x01 \x03(\v2\x1a.cadestro.v1.ManagedActionR\aactions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"9\n" +
-	"\x13RenameActionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"R\n" +
-	"\x1eUpdateActionDescriptionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xbb\t\n" +
-	"\x19UpdateActionParamsRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12>\n" +
-	"\rdesired_state\x18\x02 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x12'\n" +
-	"\x0ftimeout_seconds\x18\x03 \x01(\x05R\x0etimeoutSeconds\x127\n" +
+	"totalCount\"R\n" +
+	"\x13RenameActionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12!\n" +
+	"\x04name\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\"i\n" +
+	"\x1eUpdateActionDescriptionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"\xd4\t\n" +
+	"\x19UpdateActionParamsRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12>\n" +
+	"\rdesired_state\x18\x02 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x126\n" +
+	"\x0ftimeout_seconds\x18\x03 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90\x1c(\x00R\x0etimeoutSeconds\x127\n" +
 	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
 	"\apackage\x18\x05 \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
 	"\x03app\x18\x06 \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
@@ -21467,10 +21068,10 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\fagent_update\x18\x16 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
 	"\x06params\"J\n" +
 	"\x14UpdateActionResponse\x122\n" +
-	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"%\n" +
-	"\x13DeleteActionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
-	"\x14DeleteActionResponse\"\xf9\x02\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"/\n" +
+	"\x13DeleteActionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x16\n" +
+	"\x14DeleteActionResponse\"\x81\x03\n" +
 	"\tActionSet\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -21481,33 +21082,35 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\x06 \x01(\tR\tcreatedBy\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x127\n" +
-	"\bschedule\x18\b \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x125\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12?\n" +
+	"\bschedule\x18\b \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\x125\n" +
 	"\n" +
-	"on_failure\x18\t \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xa8\x01\n" +
-	"\x0fActionSetMember\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1d\n" +
+	"on_failure\x18\t \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xbe\x01\n" +
+	"\x0fActionSetMember\x12%\n" +
+	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12)\n" +
 	"\n" +
-	"sort_order\x18\x02 \x01(\x05R\tsortOrder\x12\x1f\n" +
+	"sort_order\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\xd8\x01\x01\x1a\x02(\x00R\tsortOrder\x12\x1f\n" +
 	"\vaction_name\x18\x03 \x01(\tR\n" +
 	"actionName\x128\n" +
 	"\vaction_type\x18\x04 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
-	"actionType\"\xbe\x01\n" +
-	"\x16CreateActionSetRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x127\n" +
-	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x125\n" +
+	"actionType\"\xe2\x01\n" +
+	"\x16CreateActionSetRequest\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12?\n" +
+	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\x125\n" +
 	"\n" +
 	"on_failure\x18\x04 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"C\n" +
 	"\x17CreateActionSetResponse\x12(\n" +
-	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"%\n" +
-	"\x13GetActionSetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"x\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"/\n" +
+	"\x13GetActionSetRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"x\n" +
 	"\x14GetActionSetResponse\x12(\n" +
 	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\x126\n" +
-	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.ActionSetMemberR\amembers\"|\n" +
-	"\x15ListActionSetsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.ActionSetMemberR\amembers\"\x8a\x01\n" +
+	"\x15ListActionSetsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12'\n" +
 	"\x0funassigned_only\x18\x03 \x01(\bR\x0eunassignedOnly\"\x8d\x01\n" +
@@ -21515,41 +21118,43 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x04sets\x18\x01 \x03(\v2\x16.cadestro.v1.ActionSetR\x04sets\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"<\n" +
-	"\x16RenameActionSetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"U\n" +
-	"!UpdateActionSetDescriptionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"\xa0\x01\n" +
-	"\x1eUpdateActionSetScheduleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x127\n" +
-	"\bschedule\x18\x02 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x125\n" +
+	"totalCount\"U\n" +
+	"\x16RenameActionSetRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12!\n" +
+	"\x04name\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\"l\n" +
+	"!UpdateActionSetDescriptionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"\xb2\x01\n" +
+	"\x1eUpdateActionSetScheduleRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12?\n" +
+	"\bschedule\x18\x02 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\x125\n" +
 	"\n" +
 	"on_failure\x18\x03 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"C\n" +
 	"\x17UpdateActionSetResponse\x12(\n" +
-	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"(\n" +
-	"\x16DeleteActionSetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x19\n" +
-	"\x17DeleteActionSetResponse\"j\n" +
-	"\x15AddActionToSetRequest\x12\x15\n" +
-	"\x06set_id\x18\x01 \x01(\tR\x05setId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\x12\x1d\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"2\n" +
+	"\x16DeleteActionSetRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x19\n" +
+	"\x17DeleteActionSetResponse\"\x8a\x01\n" +
+	"\x15AddActionToSetRequest\x12\x1f\n" +
+	"\x06set_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05setId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12)\n" +
 	"\n" +
-	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"B\n" +
+	"sort_order\x18\x03 \x01(\x05B\n" +
+	"\xbaH\a\xd8\x01\x01\x1a\x02(\x00R\tsortOrder\"B\n" +
 	"\x16AddActionToSetResponse\x12(\n" +
-	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"P\n" +
-	"\x1aRemoveActionFromSetRequest\x12\x15\n" +
-	"\x06set_id\x18\x01 \x01(\tR\x05setId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\"G\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"d\n" +
+	"\x1aRemoveActionFromSetRequest\x12\x1f\n" +
+	"\x06set_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05setId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"G\n" +
 	"\x1bRemoveActionFromSetResponse\x12(\n" +
-	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"l\n" +
-	"\x19ReorderActionInSetRequest\x12\x15\n" +
-	"\x06set_id\x18\x01 \x01(\tR\x05setId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\x12\x1b\n" +
-	"\tnew_order\x18\x03 \x01(\x05R\bnewOrder\"F\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"\x89\x01\n" +
+	"\x19ReorderActionInSetRequest\x12\x1f\n" +
+	"\x06set_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05setId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12$\n" +
+	"\tnew_order\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bnewOrder\"F\n" +
 	"\x1aReorderActionInSetResponse\x12(\n" +
-	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"\xc3\x02\n" +
+	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\"\xcb\x02\n" +
 	"\n" +
 	"Definition\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -21561,73 +21166,77 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_by\x18\x06 \x01(\tR\tcreatedBy\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x127\n" +
-	"\bschedule\x18\b \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\"}\n" +
-	"\x10DefinitionMember\x12\"\n" +
-	"\raction_set_id\x18\x01 \x01(\tR\vactionSetId\x12\x1d\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12?\n" +
+	"\bschedule\x18\b \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\"\x93\x01\n" +
+	"\x10DefinitionMember\x12,\n" +
+	"\raction_set_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vactionSetId\x12)\n" +
 	"\n" +
-	"sort_order\x18\x02 \x01(\x05R\tsortOrder\x12&\n" +
-	"\x0faction_set_name\x18\x03 \x01(\tR\ractionSetName\"\x88\x01\n" +
-	"\x17CreateDefinitionRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x127\n" +
-	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\"S\n" +
+	"sort_order\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\xd8\x01\x01\x1a\x02(\x00R\tsortOrder\x12&\n" +
+	"\x0faction_set_name\x18\x03 \x01(\tR\ractionSetName\"\xac\x01\n" +
+	"\x17CreateDefinitionRequest\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12?\n" +
+	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\"S\n" +
 	"\x18CreateDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
-	"definition\"&\n" +
-	"\x14GetDefinitionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x89\x01\n" +
+	"definition\"0\n" +
+	"\x14GetDefinitionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x89\x01\n" +
 	"\x15GetDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
 	"definition\x127\n" +
-	"\amembers\x18\x02 \x03(\v2\x1d.cadestro.v1.DefinitionMemberR\amembers\"T\n" +
-	"\x16ListDefinitionsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\amembers\x18\x02 \x03(\v2\x1d.cadestro.v1.DefinitionMemberR\amembers\"b\n" +
+	"\x16ListDefinitionsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\x9d\x01\n" +
 	"\x17ListDefinitionsResponse\x129\n" +
 	"\vdefinitions\x18\x01 \x03(\v2\x17.cadestro.v1.DefinitionR\vdefinitions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"=\n" +
-	"\x17RenameDefinitionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"V\n" +
-	"\"UpdateDefinitionDescriptionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"j\n" +
-	"\x1fUpdateDefinitionScheduleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x127\n" +
-	"\bschedule\x18\x02 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\"S\n" +
+	"totalCount\"V\n" +
+	"\x17RenameDefinitionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12!\n" +
+	"\x04name\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\"m\n" +
+	"\"UpdateDefinitionDescriptionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"|\n" +
+	"\x1fUpdateDefinitionScheduleRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12?\n" +
+	"\bschedule\x18\x02 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\"S\n" +
 	"\x18UpdateDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
-	"definition\")\n" +
-	"\x17DeleteDefinitionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
-	"\x18DeleteDefinitionResponse\"\x89\x01\n" +
-	"\x1fAddActionSetToDefinitionRequest\x12#\n" +
-	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\x12\x1d\n" +
+	"definition\"3\n" +
+	"\x17DeleteDefinitionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x1a\n" +
+	"\x18DeleteDefinitionResponse\"\xa9\x01\n" +
+	"\x1fAddActionSetToDefinitionRequest\x12-\n" +
+	"\rdefinition_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\fdefinitionId\x12,\n" +
+	"\raction_set_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vactionSetId\x12)\n" +
 	"\n" +
-	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"[\n" +
+	"sort_order\x18\x03 \x01(\x05B\n" +
+	"\xbaH\a\xd8\x01\x01\x1a\x02(\x00R\tsortOrder\"[\n" +
 	" AddActionSetToDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
-	"definition\"o\n" +
-	"$RemoveActionSetFromDefinitionRequest\x12#\n" +
-	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\"`\n" +
+	"definition\"\x83\x01\n" +
+	"$RemoveActionSetFromDefinitionRequest\x12-\n" +
+	"\rdefinition_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\fdefinitionId\x12,\n" +
+	"\raction_set_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vactionSetId\"`\n" +
 	"%RemoveActionSetFromDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
-	"definition\"\x8b\x01\n" +
-	"#ReorderActionSetInDefinitionRequest\x12#\n" +
-	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\x12\x1b\n" +
-	"\tnew_order\x18\x03 \x01(\x05R\bnewOrder\"_\n" +
+	"definition\"\xa8\x01\n" +
+	"#ReorderActionSetInDefinitionRequest\x12-\n" +
+	"\rdefinition_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\fdefinitionId\x12,\n" +
+	"\raction_set_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vactionSetId\x12$\n" +
+	"\tnew_order\x18\x03 \x01(\x05B\a\xbaH\x04\x1a\x02(\x00R\bnewOrder\"_\n" +
 	"$ReorderActionSetInDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
@@ -21647,17 +21256,18 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x15sync_interval_minutes\x18\t \x01(\x05R\x13syncIntervalMinutes\x12M\n" +
 	"\x12maintenance_window\x18\n" +
 	" \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x12<\n" +
-	"\x1ainventory_interval_minutes\x18\v \x01(\x05R\x18inventoryIntervalMinutes\"\x94\x01\n" +
-	"\x18CreateDeviceGroupRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
+	"\x1ainventory_interval_minutes\x18\v \x01(\x05R\x18inventoryIntervalMinutes\"\xbd\x01\n" +
+	"\x18CreateDeviceGroupRequest\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12\x1d\n" +
 	"\n" +
-	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x04 \x01(\tR\fdynamicQuery\"K\n" +
+	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x120\n" +
+	"\rdynamic_query\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"K\n" +
 	"\x19CreateDeviceGroupResponse\x12.\n" +
-	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"'\n" +
-	"\x15GetDeviceGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xa1\x01\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"1\n" +
+	"\x15GetDeviceGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\xa1\x01\n" +
 	"\x16GetDeviceGroupResponse\x12.\n" +
 	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\x12\x1d\n" +
 	"\n" +
@@ -21668,70 +21278,74 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
 	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x12<\n" +
 	"\flast_seen_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"lastSeenAt\"U\n" +
-	"\x17ListDeviceGroupsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"lastSeenAt\"c\n" +
+	"\x17ListDeviceGroupsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\x95\x01\n" +
 	"\x18ListDeviceGroupsResponse\x120\n" +
 	"\x06groups\x18\x01 \x03(\v2\x18.cadestro.v1.DeviceGroupR\x06groups\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"?\n" +
-	" ListDeviceGroupsForDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"U\n" +
+	"totalCount\"I\n" +
+	" ListDeviceGroupsForDeviceRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"U\n" +
 	"!ListDeviceGroupsForDeviceResponse\x120\n" +
-	"\x06groups\x18\x01 \x03(\v2\x18.cadestro.v1.DeviceGroupR\x06groups\">\n" +
-	"\x18RenameDeviceGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"W\n" +
-	"#UpdateDeviceGroupDescriptionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"K\n" +
+	"\x06groups\x18\x01 \x03(\v2\x18.cadestro.v1.DeviceGroupR\x06groups\"W\n" +
+	"\x18RenameDeviceGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12!\n" +
+	"\x04name\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\"n\n" +
+	"#UpdateDeviceGroupDescriptionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"K\n" +
 	"\x19UpdateDeviceGroupResponse\x12.\n" +
-	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"*\n" +
-	"\x18DeleteDeviceGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x1b\n" +
-	"\x19DeleteDeviceGroupResponse\"p\n" +
-	"\x17AddDeviceToGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\x1d\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"4\n" +
+	"\x18DeleteDeviceGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x1b\n" +
+	"\x19DeleteDeviceGroupResponse\"\x99\x01\n" +
+	"\x17AddDeviceToGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12%\n" +
+	"\tdevice_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\bdeviceId\x122\n" +
 	"\n" +
-	"device_ids\x18\x03 \x03(\tR\tdeviceIds\"J\n" +
+	"device_ids\x18\x03 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\xc0>\x01R\tdeviceIds\"J\n" +
 	"\x18AddDeviceToGroupResponse\x12.\n" +
-	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"V\n" +
-	"\x1cRemoveDeviceFromGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\"O\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"j\n" +
+	"\x1cRemoveDeviceFromGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12%\n" +
+	"\tdevice_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"O\n" +
 	"\x1dRemoveDeviceFromGroupResponse\x12.\n" +
-	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"s\n" +
-	"\x1dUpdateDeviceGroupQueryRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"\x8a\x01\n" +
+	"\x1dUpdateDeviceGroupQueryRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12\x1d\n" +
 	"\n" +
-	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x03 \x01(\tR\fdynamicQuery\"P\n" +
+	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x120\n" +
+	"\rdynamic_query\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"P\n" +
 	"\x1eUpdateDeviceGroupQueryResponse\x12.\n" +
-	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"3\n" +
-	"\x1bValidateDynamicQueryRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"~\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"=\n" +
+	"\x1bValidateDynamicQueryRequest\x12\x1e\n" +
+	"\x05query\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\x80 R\x05query\"~\n" +
 	"\x1cValidateDynamicQueryResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error\x122\n" +
-	"\x15matching_device_count\x18\x03 \x01(\x05R\x13matchingDeviceCount\"-\n" +
-	"\x1bEvaluateDynamicGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x9c\x01\n" +
+	"\x15matching_device_count\x18\x03 \x01(\x05R\x13matchingDeviceCount\"7\n" +
+	"\x1bEvaluateDynamicGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x9c\x01\n" +
 	"\x1cEvaluateDynamicGroupResponse\x12.\n" +
 	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\x12#\n" +
 	"\rdevices_added\x18\x02 \x01(\x05R\fdevicesAdded\x12'\n" +
-	"\x0fdevices_removed\x18\x03 \x01(\x05R\x0edevicesRemoved\"g\n" +
-	"!SetDeviceGroupSyncIntervalRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x122\n" +
-	"\x15sync_interval_minutes\x18\x02 \x01(\x05R\x13syncIntervalMinutes\"v\n" +
-	"&SetDeviceGroupInventoryIntervalRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
-	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05R\x18inventoryIntervalMinutes\"\x87\x01\n" +
-	"&SetDeviceGroupMaintenanceWindowRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12M\n" +
+	"\x0fdevices_removed\x18\x03 \x01(\x05R\x0edevicesRemoved\"}\n" +
+	"!SetDeviceGroupSyncIntervalRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12>\n" +
+	"\x15sync_interval_minutes\x18\x02 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xa0\v(\x00R\x13syncIntervalMinutes\"\x8f\x01\n" +
+	"&SetDeviceGroupInventoryIntervalRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12K\n" +
+	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xe0N(xR\x18inventoryIntervalMinutes\"\x91\x01\n" +
+	"&SetDeviceGroupMaintenanceWindowRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12M\n" +
 	"\x12maintenance_window\x18\x02 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\"\xab\x03\n" +
 	"\n" +
 	"Assignment\x12\x0e\n" +
@@ -21751,30 +21365,30 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"sourceName\x12\x1f\n" +
 	"\vtarget_name\x18\n" +
 	" \x01(\tR\n" +
-	"targetName\"\x8c\x02\n" +
-	"\x17CreateAssignmentRequest\x12B\n" +
-	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
-	"sourceType\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12B\n" +
-	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\n" +
-	"targetType\x12\x1b\n" +
-	"\ttarget_id\x18\x04 \x01(\tR\btargetId\x12/\n" +
+	"targetName\"\xc6\x02\n" +
+	"\x17CreateAssignmentRequest\x12U\n" +
+	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeB\x11\xbaH\x0e\xc8\x01\x01\x82\x01\b\x18\x01\x18\x02\x18\x03\x18\x04R\n" +
+	"sourceType\x12%\n" +
+	"\tsource_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bsourceId\x12U\n" +
+	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeB\x11\xbaH\x0e\xc8\x01\x01\x82\x01\b\x18\x01\x18\x02\x18\x03\x18\x04R\n" +
+	"targetType\x12%\n" +
+	"\ttarget_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\btargetId\x12/\n" +
 	"\x04mode\x18\x05 \x01(\x0e2\x1b.cadestro.v1.AssignmentModeR\x04mode\"S\n" +
 	"\x18CreateAssignmentResponse\x127\n" +
 	"\n" +
 	"assignment\x18\x01 \x01(\v2\x17.cadestro.v1.AssignmentR\n" +
-	"assignment\")\n" +
-	"\x17DeleteAssignmentRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
-	"\x18DeleteAssignmentResponse\"\x96\x02\n" +
-	"\x16ListAssignmentsRequest\x12B\n" +
-	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
-	"sourceType\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12B\n" +
-	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeR\n" +
-	"targetType\x12\x1b\n" +
-	"\ttarget_id\x18\x04 \x01(\tR\btargetId\x12\x1b\n" +
-	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"assignment\"3\n" +
+	"\x17DeleteAssignmentRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x1a\n" +
+	"\x18DeleteAssignmentResponse\"\xd2\x02\n" +
+	"\x16ListAssignmentsRequest\x12O\n" +
+	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\n" +
+	"sourceType\x12%\n" +
+	"\tsource_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\bsourceId\x12O\n" +
+	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\n" +
+	"targetType\x12%\n" +
+	"\ttarget_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\btargetId\x12)\n" +
+	"\tpage_size\x18\x05 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x06 \x01(\tR\tpageToken\"\x9d\x01\n" +
 	"\x17ListAssignmentsResponse\x129\n" +
@@ -21790,17 +21404,17 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\tsource_id\x18\x04 \x01(\tR\bsourceId\x12\x1a\n" +
 	"\bselected\x18\x05 \x01(\bR\bselected\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xb3\x01\n" +
-	"\x17SetUserSelectionRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12B\n" +
-	"\vsource_type\x18\x02 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
-	"sourceType\x12\x1b\n" +
-	"\tsource_id\x18\x03 \x01(\tR\bsourceId\x12\x1a\n" +
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xda\x01\n" +
+	"\x17SetUserSelectionRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12U\n" +
+	"\vsource_type\x18\x02 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeB\x11\xbaH\x0e\xc8\x01\x01\x82\x01\b\x18\x01\x18\x02\x18\x03\x18\x04R\n" +
+	"sourceType\x12%\n" +
+	"\tsource_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bsourceId\x12\x1a\n" +
 	"\bselected\x18\x04 \x01(\bR\bselected\"T\n" +
 	"\x18SetUserSelectionResponse\x128\n" +
-	"\tselection\x18\x01 \x01(\v2\x1a.cadestro.v1.UserSelectionR\tselection\":\n" +
-	"\x1bListAvailableActionsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x92\x02\n" +
+	"\tselection\x18\x01 \x01(\v2\x1a.cadestro.v1.UserSelectionR\tselection\"D\n" +
+	"\x1bListAvailableActionsRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\x92\x02\n" +
 	"\rAvailableItem\x12B\n" +
 	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeR\n" +
 	"sourceType\x12\x1b\n" +
@@ -21811,9 +21425,9 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\bselected\x18\x05 \x01(\bR\bselected\x124\n" +
 	"\aactions\x18\x06 \x03(\v2\x1a.cadestro.v1.ManagedActionR\aactions\"P\n" +
 	"\x1cListAvailableActionsResponse\x120\n" +
-	"\x05items\x18\x01 \x03(\v2\x1a.cadestro.v1.AvailableItemR\x05items\":\n" +
-	"\x1bGetDeviceAssignmentsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\xbc\x03\n" +
+	"\x05items\x18\x01 \x03(\v2\x1a.cadestro.v1.AvailableItemR\x05items\"D\n" +
+	"\x1bGetDeviceAssignmentsRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\xbc\x03\n" +
 	"\x1cGetDeviceAssignmentsResponse\x124\n" +
 	"\aactions\x18\x01 \x03(\v2\x1a.cadestro.v1.ManagedActionR\aactions\x127\n" +
 	"\vaction_sets\x18\x02 \x03(\v2\x16.cadestro.v1.ActionSetR\n" +
@@ -21821,9 +21435,9 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vdefinitions\x18\x03 \x03(\v2\x17.cadestro.v1.DefinitionR\vdefinitions\x12N\n" +
 	"\x13compliance_policies\x18\x04 \x03(\v2\x1d.cadestro.v1.CompliancePolicyR\x12compliancePolicies\x12O\n" +
 	"\x12action_set_details\x18\x05 \x03(\v2!.cadestro.v1.GetActionSetResponseR\x10actionSetDetails\x12Q\n" +
-	"\x12definition_details\x18\x06 \x03(\v2\".cadestro.v1.GetDefinitionResponseR\x11definitionDetails\"4\n" +
-	"\x19GetUserAssignmentsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"W\n" +
+	"\x12definition_details\x18\x06 \x03(\v2\".cadestro.v1.GetDefinitionResponseR\x11definitionDetails\">\n" +
+	"\x19GetUserAssignmentsRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\"W\n" +
 	"\x1aGetUserAssignmentsResponse\x129\n" +
 	"\vassignments\x18\x01 \x03(\v2\x17.cadestro.v1.AssignmentR\vassignments\"\xe1\x06\n" +
 	"\x0fActionExecution\x12\x0e\n" +
@@ -21851,79 +21465,79 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x10detection_output\x18\x11 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
 	"\vaction_name\x18\x12 \x01(\tR\n" +
 	"actionName\x12?\n" +
-	"\rscheduled_for\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\fscheduledFor\"\x91\x02\n" +
-	"\x15DispatchActionRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1d\n" +
-	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12:\n" +
+	"\rscheduled_for\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\fscheduledFor\"\xa5\x02\n" +
+	"\x15DispatchActionRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12'\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01H\x00R\bactionId\x12:\n" +
 	"\rinline_action\x18\x03 \x01(\v2\x13.cadestro.v1.ActionH\x00R\finlineAction\x121\n" +
 	"\x06run_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05runAt\x12<\n" +
 	"\x1arespect_maintenance_window\x18\x05 \x01(\bR\x18respectMaintenanceWindowB\x0f\n" +
 	"\raction_source\"T\n" +
 	"\x16DispatchActionResponse\x12:\n" +
-	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\xa6\x01\n" +
-	"\x19DispatchToMultipleRequest\x12\x1d\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\xc7\x01\n" +
+	"\x19DispatchToMultipleRequest\x124\n" +
 	"\n" +
-	"device_ids\x18\x01 \x03(\tR\tdeviceIds\x12\x1d\n" +
-	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12:\n" +
+	"device_ids\x18\x01 \x03(\tB\x15\xbaH\x12\xc8\x01\x01\x92\x01\f\b\x01\x10\x80\x02\"\x05r\x03\xc0>\x01R\tdeviceIds\x12'\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01H\x00R\bactionId\x12:\n" +
 	"\rinline_action\x18\x03 \x01(\v2\x13.cadestro.v1.ActionH\x00R\finlineActionB\x0f\n" +
 	"\raction_source\"Z\n" +
 	"\x1aDispatchToMultipleResponse\x12<\n" +
 	"\n" +
 	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
-	"executions\"0\n" +
-	"\x11SyncDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x14\n" +
-	"\x12SyncDeviceResponse\"2\n" +
-	"\x13RebootDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x16\n" +
-	"\x14RebootDeviceResponse\"[\n" +
-	"\x18DispatchActionSetRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\"Y\n" +
+	"executions\":\n" +
+	"\x11SyncDeviceRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\x14\n" +
+	"\x12SyncDeviceResponse\"<\n" +
+	"\x13RebootDeviceRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\x16\n" +
+	"\x14RebootDeviceResponse\"o\n" +
+	"\x18DispatchActionSetRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12,\n" +
+	"\raction_set_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vactionSetId\"Y\n" +
 	"\x19DispatchActionSetResponse\x12<\n" +
 	"\n" +
 	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
-	"executions\"]\n" +
-	"\x19DispatchDefinitionRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12#\n" +
-	"\rdefinition_id\x18\x02 \x01(\tR\fdefinitionId\"Z\n" +
+	"executions\"q\n" +
+	"\x19DispatchDefinitionRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12-\n" +
+	"\rdefinition_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\fdefinitionId\"Z\n" +
 	"\x1aDispatchDefinitionResponse\x12<\n" +
 	"\n" +
 	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
-	"executions\"\xec\x01\n" +
-	"\x16DispatchToGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x1d\n" +
-	"\taction_id\x18\x02 \x01(\tH\x00R\bactionId\x12$\n" +
-	"\raction_set_id\x18\x03 \x01(\tH\x00R\vactionSetId\x12%\n" +
-	"\rdefinition_id\x18\x04 \x01(\tH\x00R\fdefinitionId\x12:\n" +
+	"executions\"\x94\x02\n" +
+	"\x16DispatchToGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12'\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01H\x00R\bactionId\x12.\n" +
+	"\raction_set_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01H\x00R\vactionSetId\x12/\n" +
+	"\rdefinition_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01H\x00R\fdefinitionId\x12:\n" +
 	"\rinline_action\x18\x05 \x01(\v2\x13.cadestro.v1.ActionH\x00R\finlineActionB\x0f\n" +
 	"\raction_source\"W\n" +
 	"\x17DispatchToGroupResponse\x12<\n" +
 	"\n" +
 	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
-	"executions\"%\n" +
-	"\x13GetExecutionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"R\n" +
+	"executions\"/\n" +
+	"\x13GetExecutionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"R\n" +
 	"\x14GetExecutionResponse\x12:\n" +
-	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\x85\x02\n" +
-	"\x15ListExecutionsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\xaa\x02\n" +
+	"\x15ListExecutionsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x1b\n" +
-	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\x12A\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12%\n" +
+	"\tdevice_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\bdeviceId\x12A\n" +
 	"\rstatus_filter\x18\x04 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\fstatusFilter\x128\n" +
 	"\vtype_filter\x18\x05 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
-	"typeFilter\x12\x16\n" +
-	"\x06search\x18\x06 \x01(\tR\x06search\"\x9f\x01\n" +
+	"typeFilter\x12#\n" +
+	"\x06search\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\x06search\"\x9f\x01\n" +
 	"\x16ListExecutionsResponse\x12<\n" +
 	"\n" +
 	"executions\x18\x01 \x03(\v2\x1c.cadestro.v1.ActionExecutionR\n" +
 	"executions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\";\n" +
-	"\x16CancelExecutionRequest\x12!\n" +
-	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\"U\n" +
+	"totalCount\"E\n" +
+	"\x16CancelExecutionRequest\x12+\n" +
+	"\fexecution_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vexecutionId\"U\n" +
 	"\x17CancelExecutionResponse\x12:\n" +
 	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\x84\x02\n" +
 	"\n" +
@@ -21939,32 +21553,36 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\bactor_id\x18\x06 \x01(\tR\aactorId\x12\x12\n" +
 	"\x04data\x18\a \x01(\tR\x04data\x12;\n" +
 	"\voccurred_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"occurredAt\"\xaf\x01\n" +
-	"\x16ListAuditEventsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"occurredAt\"\xec\x01\n" +
+	"\x16ListAuditEventsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12)\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x19\n" +
-	"\bactor_id\x18\x03 \x01(\tR\aactorId\x12\x1f\n" +
-	"\vstream_type\x18\x04 \x01(\tR\n" +
-	"streamType\x12\x1d\n" +
+	"page_token\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\tpageToken\x12#\n" +
+	"\bactor_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\aactorId\x12+\n" +
+	"\vstream_type\x18\x04 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\n" +
+	"streamType\x12*\n" +
 	"\n" +
-	"event_type\x18\x05 \x01(\tR\teventType\"\x93\x01\n" +
+	"event_type\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\teventType\"\x93\x01\n" +
 	"\x17ListAuditEventsResponse\x12/\n" +
 	"\x06events\x18\x01 \x03(\v2\x17.cadestro.v1.AuditEventR\x06events\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\xac\x02\n" +
-	"\x18ExportAuditEventsRequest\x12\x16\n" +
-	"\x06format\x18\x01 \x01(\tR\x06format\x12\x19\n" +
-	"\bactor_id\x18\x02 \x01(\tR\aactorId\x12!\n" +
-	"\fstream_types\x18\x03 \x03(\tR\vstreamTypes\x12\x1d\n" +
+	"totalCount\"\xf9\x02\n" +
+	"\x18ExportAuditEventsRequest\x12+\n" +
+	"\x06format\x18\x01 \x01(\tB\x13\xbaH\x10\xc8\x01\x01r\vR\x03csvR\x04jsonR\x06format\x12#\n" +
+	"\bactor_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\aactorId\x126\n" +
+	"\fstream_types\x18\x03 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10@\"\x06r\x04\x10\x01\x18@R\vstreamTypes\x12*\n" +
 	"\n" +
-	"event_type\x18\x04 \x01(\tR\teventType\x12?\n" +
+	"event_type\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\teventType\x12?\n" +
 	"\roccurred_from\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\foccurredFrom\x12;\n" +
 	"\voccurred_to\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"occurredTo\x12\x1d\n" +
+	"occurredTo\x12)\n" +
 	"\n" +
-	"page_token\x18\a \x01(\tR\tpageToken\"Y\n" +
+	"page_token\x18\a \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\tpageToken\"Y\n" +
 	"\x19ExportAuditEventsResponse\x12\x14\n" +
 	"\x05chunk\x18\x01 \x01(\fR\x05chunk\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xbe\x02\n" +
@@ -21978,14 +21596,14 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\busername\x18\x06 \x01(\tR\busername\x129\n" +
 	"\n" +
 	"rotated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\trotatedAt\x12D\n" +
-	"\x0frotation_reason\x18\b \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x0erotationReason\"6\n" +
-	"\x17ListLpsPasswordsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x82\x01\n" +
+	"\x0frotation_reason\x18\b \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x0erotationReason\"@\n" +
+	"\x17ListLpsPasswordsRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\x82\x01\n" +
 	"\x18ListLpsPasswordsResponse\x122\n" +
 	"\acurrent\x18\x01 \x03(\v2\x18.cadestro.v1.LpsPasswordR\acurrent\x122\n" +
-	"\ahistory\x18\x02 \x03(\v2\x18.cadestro.v1.LpsPasswordR\ahistory\"*\n" +
-	"\x18RevealLpsPasswordRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
+	"\ahistory\x18\x02 \x03(\v2\x18.cadestro.v1.LpsPasswordR\ahistory\"4\n" +
+	"\x18RevealLpsPasswordRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"7\n" +
 	"\x19RevealLpsPasswordResponse\x12\x1a\n" +
 	"\bpassword\x18\x01 \x01(\tR\bpassword\"\xfb\x03\n" +
 	"\aLuksKey\x12\x0e\n" +
@@ -22003,49 +21621,52 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x11revocation_status\x18\t \x01(\x0e2!.cadestro.v1.LuksRevocationStatusR\x10revocationStatus\x12)\n" +
 	"\x10revocation_error\x18\n" +
 	" \x01(\tR\x0frevocationError\x12?\n" +
-	"\rrevocation_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\frevocationAt\"2\n" +
-	"\x13ListLuksKeysRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"v\n" +
+	"\rrevocation_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\frevocationAt\"<\n" +
+	"\x13ListLuksKeysRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"v\n" +
 	"\x14ListLuksKeysResponse\x12.\n" +
 	"\acurrent\x18\x01 \x03(\v2\x14.cadestro.v1.LuksKeyR\acurrent\x12.\n" +
-	"\ahistory\x18\x02 \x03(\v2\x14.cadestro.v1.LuksKeyR\ahistory\"&\n" +
-	"\x14RevealLuksKeyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"7\n" +
+	"\ahistory\x18\x02 \x03(\v2\x14.cadestro.v1.LuksKeyR\ahistory\"0\n" +
+	"\x14RevealLuksKeyRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"7\n" +
 	"\x15RevealLuksKeyResponse\x12\x1e\n" +
 	"\n" +
 	"passphrase\x18\x01 \x01(\tR\n" +
-	"passphrase\"R\n" +
-	"\x16CreateLuksTokenRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\"b\n" +
+	"passphrase\"f\n" +
+	"\x16CreateLuksTokenRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"b\n" +
 	"\x17CreateLuksTokenResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\x10\n" +
 	"\x03uri\x18\x02 \x01(\tR\x03uri\x12\x1f\n" +
 	"\vcli_command\x18\x03 \x01(\tR\n" +
-	"cliCommand\"V\n" +
-	"\x1aRevokeLuksDeviceKeyRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\"\x1d\n" +
-	"\x1bRevokeLuksDeviceKeyResponse\"\x94\x01\n" +
-	"\x16DispatchOSQueryRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x14\n" +
-	"\x05table\x18\x02 \x01(\tR\x05table\x12\x18\n" +
-	"\acolumns\x18\x03 \x03(\tR\acolumns\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x17\n" +
-	"\araw_sql\x18\x05 \x01(\tR\x06rawSql\"4\n" +
+	"cliCommand\"j\n" +
+	"\x1aRevokeLuksDeviceKeyRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"\x1d\n" +
+	"\x1bRevokeLuksDeviceKeyResponse\"\xea\x02\n" +
+	"\x16DispatchOSQueryRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12\"\n" +
+	"\x05table\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x10\x01\x18@R\x05table\x12&\n" +
+	"\acolumns\x18\x03 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x18@R\acolumns\x12#\n" +
+	"\x05limit\x18\x04 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90N(\x00R\x05limit\x12$\n" +
+	"\araw_sql\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x06rawSql:\x91\x01\xbaH\x8d\x01\x1a\x8a\x01\n" +
+	"7dispatch_osquery_request.table_required_without_raw_sql\x12'table is required unless raw_sql is set\x1a&this.table != '' || this.raw_sql != ''\"4\n" +
 	"\x17DispatchOSQueryResponse\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"4\n" +
-	"\x17GetOSQueryResultRequest\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"\xb0\x01\n" +
+	"\bquery_id\x18\x01 \x01(\tR\aqueryId\">\n" +
+	"\x17GetOSQueryResultRequest\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\"\xb0\x01\n" +
 	"\x18GetOSQueryResultResponse\x12\x19\n" +
 	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x1c\n" +
 	"\tcompleted\x18\x02 \x01(\bR\tcompleted\x12\x18\n" +
 	"\asuccess\x18\x03 \x01(\bR\asuccess\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12+\n" +
-	"\x04rows\x18\x05 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"Y\n" +
-	"\x19GetDeviceInventoryRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1f\n" +
-	"\vtable_names\x18\x02 \x03(\tR\n" +
+	"\x04rows\x18\x05 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"r\n" +
+	"\x19GetDeviceInventoryRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12.\n" +
+	"\vtable_names\x18\x02 \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\x18\x80\x01R\n" +
 	"tableNames\"\xa1\x01\n" +
 	"\x14InventoryTableResult\x12\x1d\n" +
 	"\n" +
@@ -22053,74 +21674,79 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\x12=\n" +
 	"\fcollected_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vcollectedAt\"W\n" +
 	"\x1aGetDeviceInventoryResponse\x129\n" +
-	"\x06tables\x18\x01 \x03(\v2!.cadestro.v1.InventoryTableResultR\x06tables\"<\n" +
-	"\x1dRefreshDeviceInventoryRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\" \n" +
-	"\x1eRefreshDeviceInventoryResponse\"\xd3\x01\n" +
-	"\x16QueryDeviceLogsRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x14\n" +
-	"\x05lines\x18\x02 \x01(\x05R\x05lines\x12\x12\n" +
-	"\x04unit\x18\x03 \x01(\tR\x04unit\x12\x14\n" +
-	"\x05since\x18\x04 \x01(\tR\x05since\x12\x14\n" +
-	"\x05until\x18\x05 \x01(\tR\x05until\x12\x1a\n" +
-	"\bpriority\x18\x06 \x01(\tR\bpriority\x12\x12\n" +
-	"\x04grep\x18\a \x01(\tR\x04grep\x12\x16\n" +
+	"\x06tables\x18\x01 \x03(\v2!.cadestro.v1.InventoryTableResultR\x06tables\"F\n" +
+	"\x1dRefreshDeviceInventoryRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\" \n" +
+	"\x1eRefreshDeviceInventoryResponse\"\xaa\x02\n" +
+	"\x16QueryDeviceLogsRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12#\n" +
+	"\x05lines\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90N(\x00R\x05lines\x12\x1f\n" +
+	"\x04unit\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\x04unit\x12 \n" +
+	"\x05since\x18\x04 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x05since\x12 \n" +
+	"\x05until\x18\x05 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x05until\x12&\n" +
+	"\bpriority\x18\x06 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\bpriority\x12\x1f\n" +
+	"\x04grep\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\x04grep\x12\x16\n" +
 	"\x06kernel\x18\b \x01(\bR\x06kernel\"4\n" +
 	"\x17QueryDeviceLogsResponse\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"6\n" +
-	"\x19GetDeviceLogResultRequest\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"\x99\x01\n" +
+	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"@\n" +
+	"\x19GetDeviceLogResultRequest\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\"\x99\x01\n" +
 	"\x1aGetDeviceLogResultResponse\x12\x19\n" +
 	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x1c\n" +
 	"\tcompleted\x18\x02 \x01(\bR\tcompleted\x12\x18\n" +
 	"\asuccess\x18\x03 \x01(\bR\asuccess\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12\x12\n" +
-	"\x04logs\x18\x05 \x01(\tR\x04logs\"k\n" +
-	"\x11CreateRoleRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12 \n" +
+	"\x04logs\x18\x05 \x01(\tR\x04logs\"\x86\x01\n" +
+	"\x11CreateRoleRequest\x12 \n" +
+	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12 \n" +
 	"\vpermissions\x18\x03 \x03(\tR\vpermissions\";\n" +
 	"\x12CreateRoleResponse\x12%\n" +
-	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\" \n" +
-	"\x0eGetRoleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"W\n" +
+	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\"*\n" +
+	"\x0eGetRoleRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"W\n" +
 	"\x0fGetRoleResponse\x12%\n" +
 	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\x12\x1d\n" +
 	"\n" +
-	"user_count\x18\x02 \x01(\x05R\tuserCount\"N\n" +
-	"\x10ListRolesRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"user_count\x18\x02 \x01(\x05R\tuserCount\"\\\n" +
+	"\x10ListRolesRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\x85\x01\n" +
 	"\x11ListRolesResponse\x12'\n" +
 	"\x05roles\x18\x01 \x03(\v2\x11.cadestro.v1.RoleR\x05roles\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\x84\x01\n" +
-	"\x11UpdateRoleRequest\x12\x17\n" +
-	"\arole_id\x18\x01 \x01(\tR\x06roleId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12 \n" +
-	"\vpermissions\x18\x04 \x03(\tR\vpermissions\";\n" +
+	"totalCount\"\xb6\x01\n" +
+	"\x11UpdateRoleRequest\x12!\n" +
+	"\arole_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06roleId\x12 \n" +
+	"\x04name\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12-\n" +
+	"\vdescription\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12-\n" +
+	"\vpermissions\x18\x04 \x03(\tB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\vpermissions\";\n" +
 	"\x12UpdateRoleResponse\x12%\n" +
-	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\"#\n" +
-	"\x11DeleteRoleRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12DeleteRoleResponse\"\xc1\x01\n" +
-	"\x17AssignRoleToUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
-	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12\x19\n" +
-	"\brole_ids\x18\x03 \x03(\tR\aroleIds\x12>\n" +
+	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\"-\n" +
+	"\x11DeleteRoleRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x14\n" +
+	"\x12DeleteRoleResponse\"\xf4\x01\n" +
+	"\x17AssignRoleToUserRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x12!\n" +
+	"\arole_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06roleId\x12.\n" +
+	"\brole_ids\x18\x03 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\xc0>\x01R\aroleIds\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x04 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
-	"\bscope_id\x18\x05 \x01(\tR\ascopeId\"\x1a\n" +
-	"\x18AssignRoleToUserResponse\"\xa8\x01\n" +
-	"\x19RevokeRoleFromUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
-	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12>\n" +
+	"scope_kind\x18\x04 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12#\n" +
+	"\bscope_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\ascopeId\"\x1a\n" +
+	"\x18AssignRoleToUserResponse\"\xc6\x01\n" +
+	"\x19RevokeRoleFromUserRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x12!\n" +
+	"\arole_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06roleId\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x03 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
-	"\bscope_id\x18\x04 \x01(\tR\ascopeId\"\x1c\n" +
+	"scope_kind\x18\x03 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12#\n" +
+	"\bscope_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\ascopeId\"\x1c\n" +
 	"\x1aRevokeRoleFromUserResponse\"\x18\n" +
 	"\x16ListPermissionsRequest\"X\n" +
 	"\x17ListPermissionsResponse\x12=\n" +
@@ -22143,88 +21769,90 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x0fUserGroupMember\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x125\n" +
-	"\badded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\x92\x01\n" +
-	"\x16CreateUserGroupRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
+	"\badded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\xba\x01\n" +
+	"\x16CreateUserGroupRequest\x12 \n" +
+	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12\x1d\n" +
 	"\n" +
-	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x04 \x01(\tR\fdynamicQuery\"G\n" +
+	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x120\n" +
+	"\rdynamic_query\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"G\n" +
 	"\x17CreateUserGroupResponse\x12,\n" +
-	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"%\n" +
-	"\x13GetUserGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"|\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"/\n" +
+	"\x13GetUserGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"|\n" +
 	"\x14GetUserGroupResponse\x12,\n" +
 	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\x126\n" +
-	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.UserGroupMemberR\amembers\"S\n" +
-	"\x15ListUserGroupsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.UserGroupMemberR\amembers\"a\n" +
+	"\x15ListUserGroupsRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\x91\x01\n" +
 	"\x16ListUserGroupsResponse\x12.\n" +
 	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"i\n" +
-	"\x16UpdateUserGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\"G\n" +
+	"totalCount\"\x8e\x01\n" +
+	"\x16UpdateUserGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12 \n" +
+	"\x04name\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12-\n" +
+	"\vdescription\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"G\n" +
 	"\x17UpdateUserGroupResponse\x12,\n" +
-	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"(\n" +
-	"\x16DeleteUserGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x19\n" +
-	"\x17DeleteUserGroupResponse\"f\n" +
-	"\x15AddUserToGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x19\n" +
-	"\buser_ids\x18\x03 \x03(\tR\auserIds\"\x18\n" +
-	"\x16AddUserToGroupResponse\"P\n" +
-	"\x1aRemoveUserFromGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x1d\n" +
-	"\x1bRemoveUserFromGroupResponse\"\xc8\x01\n" +
-	"\x1cAssignRoleToUserGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
-	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12\x19\n" +
-	"\brole_ids\x18\x03 \x03(\tR\aroleIds\x12>\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"2\n" +
+	"\x16DeleteUserGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x19\n" +
+	"\x17DeleteUserGroupResponse\"\x8f\x01\n" +
+	"\x15AddUserToGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06userId\x12.\n" +
+	"\buser_ids\x18\x03 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\xc0>\x01R\auserIds\"\x18\n" +
+	"\x16AddUserToGroupResponse\"d\n" +
+	"\x1aRemoveUserFromGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12!\n" +
+	"\auser_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\"\x1d\n" +
+	"\x1bRemoveUserFromGroupResponse\"\xfb\x01\n" +
+	"\x1cAssignRoleToUserGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12!\n" +
+	"\arole_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06roleId\x12.\n" +
+	"\brole_ids\x18\x03 \x03(\tB\x13\xbaH\x10\xd8\x01\x01\x92\x01\n" +
+	"\x10\x80\x02\"\x05r\x03\xc0>\x01R\aroleIds\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x04 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
-	"\bscope_id\x18\x05 \x01(\tR\ascopeId\"\x1f\n" +
-	"\x1dAssignRoleToUserGroupResponse\"\xaf\x01\n" +
-	"\x1eRevokeRoleFromUserGroupRequest\x12\x19\n" +
-	"\bgroup_id\x18\x01 \x01(\tR\agroupId\x12\x17\n" +
-	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12>\n" +
+	"scope_kind\x18\x04 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12#\n" +
+	"\bscope_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\ascopeId\"\x1f\n" +
+	"\x1dAssignRoleToUserGroupResponse\"\xcd\x01\n" +
+	"\x1eRevokeRoleFromUserGroupRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\agroupId\x12!\n" +
+	"\arole_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06roleId\x12>\n" +
 	"\n" +
-	"scope_kind\x18\x03 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12\x19\n" +
-	"\bscope_id\x18\x04 \x01(\tR\ascopeId\"!\n" +
-	"\x1fRevokeRoleFromUserGroupResponse\"7\n" +
-	"\x1cListUserGroupsForUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"O\n" +
+	"scope_kind\x18\x03 \x01(\x0e2\x1f.cadestro.v1.RoleGrantScopeKindR\tscopeKind\x12#\n" +
+	"\bscope_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\ascopeId\"!\n" +
+	"\x1fRevokeRoleFromUserGroupResponse\"A\n" +
+	"\x1cListUserGroupsForUserRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\"O\n" +
 	"\x1dListUserGroupsForUserResponse\x12.\n" +
-	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\"q\n" +
-	"\x1bUpdateUserGroupQueryRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\"\x88\x01\n" +
+	"\x1bUpdateUserGroupQueryRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12\x1d\n" +
 	"\n" +
-	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\x03 \x01(\tR\fdynamicQuery\"L\n" +
+	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x120\n" +
+	"\rdynamic_query\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"L\n" +
 	"\x1cUpdateUserGroupQueryResponse\x12,\n" +
-	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"5\n" +
-	"\x1dValidateUserGroupQueryRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"|\n" +
+	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"?\n" +
+	"\x1dValidateUserGroupQueryRequest\x12\x1e\n" +
+	"\x05query\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\x80 R\x05query\"|\n" +
 	"\x1eValidateUserGroupQueryResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error\x12.\n" +
-	"\x13matching_user_count\x18\x03 \x01(\x05R\x11matchingUserCount\"1\n" +
-	"\x1fEvaluateDynamicUserGroupRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x96\x01\n" +
+	"\x13matching_user_count\x18\x03 \x01(\x05R\x11matchingUserCount\";\n" +
+	"\x1fEvaluateDynamicUserGroupRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x96\x01\n" +
 	" EvaluateDynamicUserGroupResponse\x12,\n" +
 	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\x12\x1f\n" +
 	"\vusers_added\x18\x02 \x01(\x05R\n" +
 	"usersAdded\x12#\n" +
-	"\rusers_removed\x18\x03 \x01(\x05R\fusersRemoved\"\x85\x01\n" +
-	"$SetUserGroupMaintenanceWindowRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12M\n" +
+	"\rusers_removed\x18\x03 \x01(\x05R\fusersRemoved\"\x8f\x01\n" +
+	"$SetUserGroupMaintenanceWindowRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12M\n" +
 	"\x12maintenance_window\x18\x02 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\"\xa1\a\n" +
 	"\x10IdentityProvider\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -22269,91 +21897,94 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\rexternal_name\x18\b \x01(\tR\fexternalName\x127\n" +
 	"\tlinked_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\blinkedAt\x12>\n" +
 	"\rlast_login_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\xf1\x05\n" +
-	"\x1dCreateIdentityProviderRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04slug\x18\x02 \x01(\tR\x04slug\x12F\n" +
-	"\rprovider_type\x18\x03 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeR\fproviderType\x12\x1b\n" +
-	"\tclient_id\x18\x04 \x01(\tR\bclientId\x12#\n" +
-	"\rclient_secret\x18\x05 \x01(\tR\fclientSecret\x12\x1d\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\xb4\a\n" +
+	"\x1dCreateIdentityProviderRequest\x12 \n" +
+	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x120\n" +
+	"\x04slug\x18\x02 \x01(\tB\x1c\xbaH\x19\xc8\x01\x01r\x14\x10\x01\x18@2\x0e^[a-zA-Z0-9]+$R\x04slug\x12S\n" +
+	"\rprovider_type\x18\x03 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeB\v\xbaH\b\xc8\x01\x01\x82\x01\x02\b\x01R\fproviderType\x12(\n" +
+	"\tclient_id\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\bclientId\x120\n" +
+	"\rclient_secret\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fclientSecret\x12*\n" +
 	"\n" +
-	"issuer_url\x18\x06 \x01(\tR\tissuerUrl\x12+\n" +
-	"\x11authorization_url\x18\a \x01(\tR\x10authorizationUrl\x12\x1b\n" +
-	"\ttoken_url\x18\b \x01(\tR\btokenUrl\x12!\n" +
-	"\fuserinfo_url\x18\t \x01(\tR\vuserinfoUrl\x12\x16\n" +
+	"issuer_url\x18\x06 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tissuerUrl\x128\n" +
+	"\x11authorization_url\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x10authorizationUrl\x12(\n" +
+	"\ttoken_url\x18\b \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\btokenUrl\x12.\n" +
+	"\fuserinfo_url\x18\t \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\vuserinfoUrl\x12%\n" +
 	"\x06scopes\x18\n" +
-	" \x03(\tR\x06scopes\x12*\n" +
+	" \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\x18\xff\x01R\x06scopes\x12*\n" +
 	"\x11auto_create_users\x18\v \x01(\bR\x0fautoCreateUsers\x12+\n" +
-	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x12&\n" +
-	"\x0fdefault_role_id\x18\r \x01(\tR\rdefaultRoleId\x12\x1f\n" +
-	"\vgroup_claim\x18\x0e \x01(\tR\n" +
-	"groupClaim\x12a\n" +
-	"\rgroup_mapping\x18\x0f \x03(\v2<.cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
+	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x120\n" +
+	"\x0fdefault_role_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\rdefaultRoleId\x12,\n" +
+	"\vgroup_claim\x18\x0e \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
+	"groupClaim\x12w\n" +
+	"\rgroup_mapping\x18\x0f \x03(\v2<.cadestro.v1.CreateIdentityProviderRequest.GroupMappingEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\xff\x01R\fgroupMapping\x124\n" +
 	"\x16trust_email_assertions\x18\x10 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
 	"\x1eCreateIdentityProviderResponse\x129\n" +
-	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\",\n" +
-	"\x1aGetIdentityProviderRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"X\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"6\n" +
+	"\x1aGetIdentityProviderRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"X\n" +
 	"\x1bGetIdentityProviderResponse\x129\n" +
-	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"Z\n" +
-	"\x1cListIdentityProvidersRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"h\n" +
+	"\x1cListIdentityProvidersRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa5\x01\n" +
 	"\x1dListIdentityProvidersResponse\x12;\n" +
 	"\tproviders\x18\x01 \x03(\v2\x1d.cadestro.v1.IdentityProviderR\tproviders\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"\xbf\x05\n" +
-	"\x1dUpdateIdentityProviderRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\aenabled\x18\x03 \x01(\bR\aenabled\x12\x1b\n" +
-	"\tclient_id\x18\x04 \x01(\tR\bclientId\x12#\n" +
-	"\rclient_secret\x18\x05 \x01(\tR\fclientSecret\x12\x1d\n" +
+	"totalCount\"\xe1\x06\n" +
+	"\x1dUpdateIdentityProviderRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12 \n" +
+	"\x04name\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12\x18\n" +
+	"\aenabled\x18\x03 \x01(\bR\aenabled\x12(\n" +
+	"\tclient_id\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\bclientId\x120\n" +
+	"\rclient_secret\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fclientSecret\x12*\n" +
 	"\n" +
-	"issuer_url\x18\x06 \x01(\tR\tissuerUrl\x12+\n" +
-	"\x11authorization_url\x18\a \x01(\tR\x10authorizationUrl\x12\x1b\n" +
-	"\ttoken_url\x18\b \x01(\tR\btokenUrl\x12!\n" +
-	"\fuserinfo_url\x18\t \x01(\tR\vuserinfoUrl\x12\x16\n" +
+	"issuer_url\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\tissuerUrl\x128\n" +
+	"\x11authorization_url\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x10authorizationUrl\x12(\n" +
+	"\ttoken_url\x18\b \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\btokenUrl\x12.\n" +
+	"\fuserinfo_url\x18\t \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\vuserinfoUrl\x12%\n" +
 	"\x06scopes\x18\n" +
-	" \x03(\tR\x06scopes\x12*\n" +
+	" \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\x18\xff\x01R\x06scopes\x12*\n" +
 	"\x11auto_create_users\x18\v \x01(\bR\x0fautoCreateUsers\x12+\n" +
-	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x12&\n" +
-	"\x0fdefault_role_id\x18\r \x01(\tR\rdefaultRoleId\x12\x1f\n" +
-	"\vgroup_claim\x18\x0e \x01(\tR\n" +
-	"groupClaim\x12a\n" +
-	"\rgroup_mapping\x18\x0f \x03(\v2<.cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntryR\fgroupMapping\x124\n" +
+	"\x12auto_link_by_email\x18\f \x01(\bR\x0fautoLinkByEmail\x120\n" +
+	"\x0fdefault_role_id\x18\r \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\rdefaultRoleId\x12,\n" +
+	"\vgroup_claim\x18\x0e \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
+	"groupClaim\x12w\n" +
+	"\rgroup_mapping\x18\x0f \x03(\v2<.cadestro.v1.UpdateIdentityProviderRequest.GroupMappingEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\xff\x01R\fgroupMapping\x124\n" +
 	"\x16trust_email_assertions\x18\x10 \x01(\bR\x14trustEmailAssertions\x1a?\n" +
 	"\x11GroupMappingEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
 	"\x1eUpdateIdentityProviderResponse\x129\n" +
-	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"/\n" +
-	"\x1dDeleteIdentityProviderRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"9\n" +
+	"\x1dDeleteIdentityProviderRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\" \n" +
 	"\x1eDeleteIdentityProviderResponse\"\xa9\x01\n" +
 	"\x12AuthMethodProvider\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12F\n" +
 	"\rprovider_type\x18\x03 \x01(\x0e2!.cadestro.v1.IdentityProviderTypeR\fproviderType\x12#\n" +
-	"\rbrowser_login\x18\x04 \x01(\bR\fbrowserLogin\".\n" +
-	"\x16ListAuthMethodsRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\"X\n" +
+	"\rbrowser_login\x18\x04 \x01(\bR\fbrowserLogin\"=\n" +
+	"\x16ListAuthMethodsRequest\x12#\n" +
+	"\x05email\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xd8\x01\x01r\x05\x18\xfe\x01`\x01R\x05email\"X\n" +
 	"\x17ListAuthMethodsResponse\x12=\n" +
-	"\tproviders\x18\x01 \x03(\v2\x1f.cadestro.v1.AuthMethodProviderR\tproviders\"N\n" +
-	"\x15GetSSOLoginURLRequest\x12\x12\n" +
-	"\x04slug\x18\x01 \x01(\tR\x04slug\x12!\n" +
-	"\fredirect_url\x18\x02 \x01(\tR\vredirectUrl\"5\n" +
+	"\tproviders\x18\x01 \x03(\v2\x1f.cadestro.v1.AuthMethodProviderR\tproviders\"i\n" +
+	"\x15GetSSOLoginURLRequest\x12 \n" +
+	"\x04slug\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04slug\x12.\n" +
+	"\fredirect_url\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\vredirectUrl\"5\n" +
 	"\x16GetSSOLoginURLResponse\x12\x1b\n" +
-	"\tlogin_url\x18\x01 \x01(\tR\bloginUrl\"R\n" +
-	"\x12SSOCallbackRequest\x12\x12\n" +
-	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\x12\x14\n" +
-	"\x05state\x18\x03 \x01(\tR\x05state\"\xbf\x01\n" +
+	"\tlogin_url\x18\x01 \x01(\tR\bloginUrl\"p\n" +
+	"\x12SSOCallbackRequest\x12 \n" +
+	"\x04slug\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04slug\x12\x1a\n" +
+	"\x04code\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04code\x12\x1c\n" +
+	"\x05state\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05state\"\xbf\x01\n" +
 	"\x13SSOCallbackResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x129\n" +
@@ -22362,24 +21993,24 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x04user\x18\x04 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\x1a\n" +
 	"\x18ListIdentityLinksRequest\"L\n" +
 	"\x19ListIdentityLinksResponse\x12/\n" +
-	"\x05links\x18\x01 \x03(\v2\x19.cadestro.v1.IdentityLinkR\x05links\"0\n" +
-	"\x15UnlinkIdentityRequest\x12\x17\n" +
-	"\alink_id\x18\x01 \x01(\tR\x06linkId\"\x18\n" +
-	"\x16UnlinkIdentityResponse\"#\n" +
-	"\x11EnableSCIMRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"M\n" +
+	"\x05links\x18\x01 \x03(\v2\x19.cadestro.v1.IdentityLinkR\x05links\":\n" +
+	"\x15UnlinkIdentityRequest\x12!\n" +
+	"\alink_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06linkId\"\x18\n" +
+	"\x16UnlinkIdentityResponse\"-\n" +
+	"\x11EnableSCIMRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"M\n" +
 	"\x12EnableSCIMResponse\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12!\n" +
-	"\fendpoint_url\x18\x02 \x01(\tR\vendpointUrl\"$\n" +
-	"\x12DisableSCIMRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x15\n" +
-	"\x13DisableSCIMResponse\"(\n" +
-	"\x16RotateSCIMTokenRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"/\n" +
+	"\fendpoint_url\x18\x02 \x01(\tR\vendpointUrl\".\n" +
+	"\x12DisableSCIMRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x15\n" +
+	"\x13DisableSCIMResponse\"2\n" +
+	"\x16RotateSCIMTokenRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"/\n" +
 	"\x17RotateSCIMTokenResponse\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"9\n" +
-	"\x1aGetDeviceComplianceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x90\x01\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"C\n" +
+	"\x1aGetDeviceComplianceRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\x90\x01\n" +
 	"\x1bGetDeviceComplianceResponse\x125\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\x06status\x12:\n" +
 	"\x06checks\x18\x02 \x03(\v2\".cadestro.v1.ComplianceCheckResultR\x06checks\"\xf5\x01\n" +
@@ -22406,55 +22037,59 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
 	"\vaction_name\x18\x02 \x01(\tR\n" +
 	"actionName\x12,\n" +
-	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"U\n" +
-	"\x1dCreateCompliancePolicyRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"W\n" +
+	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"q\n" +
+	"\x1dCreateCompliancePolicyRequest\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"W\n" +
 	"\x1eCreateCompliancePolicyResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\",\n" +
-	"\x1aGetCompliancePolicyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"T\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"6\n" +
+	"\x1aGetCompliancePolicyRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"T\n" +
 	"\x1bGetCompliancePolicyResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"[\n" +
-	"\x1dListCompliancePoliciesRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"i\n" +
+	"\x1dListCompliancePoliciesRequest\x12)\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa4\x01\n" +
 	"\x1eListCompliancePoliciesResponse\x129\n" +
 	"\bpolicies\x18\x01 \x03(\v2\x1d.cadestro.v1.CompliancePolicyR\bpolicies\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"C\n" +
-	"\x1dRenameCompliancePolicyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"\\\n" +
-	"(UpdateCompliancePolicyDescriptionRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\"W\n" +
+	"totalCount\"\\\n" +
+	"\x1dRenameCompliancePolicyRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12!\n" +
+	"\x04name\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\"s\n" +
+	"(UpdateCompliancePolicyDescriptionRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12-\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\"W\n" +
 	"\x1eUpdateCompliancePolicyResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"/\n" +
-	"\x1dDeleteCompliancePolicyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
-	"\x1eDeleteCompliancePolicyResponse\"\x88\x01\n" +
-	"\x1eAddCompliancePolicyRuleRequest\x12\x1b\n" +
-	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\x12,\n" +
-	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"X\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"9\n" +
+	"\x1dDeleteCompliancePolicyRequest\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\" \n" +
+	"\x1eDeleteCompliancePolicyResponse\"\xab\x01\n" +
+	"\x1eAddCompliancePolicyRuleRequest\x12%\n" +
+	"\tpolicy_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bpolicyId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12;\n" +
+	"\x12grace_period_hours\x18\x03 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\x10gracePeriodHours\"X\n" +
 	"\x1fAddCompliancePolicyRuleResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"]\n" +
-	"!RemoveCompliancePolicyRuleRequest\x12\x1b\n" +
-	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\"[\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"q\n" +
+	"!RemoveCompliancePolicyRuleRequest\x12%\n" +
+	"\tpolicy_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bpolicyId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"[\n" +
 	"\"RemoveCompliancePolicyRuleResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"\x8b\x01\n" +
-	"!UpdateCompliancePolicyRuleRequest\x12\x1b\n" +
-	"\tpolicy_id\x18\x01 \x01(\tR\bpolicyId\x12\x1b\n" +
-	"\taction_id\x18\x02 \x01(\tR\bactionId\x12,\n" +
-	"\x12grace_period_hours\x18\x03 \x01(\x05R\x10gracePeriodHours\"[\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"\xae\x01\n" +
+	"!UpdateCompliancePolicyRuleRequest\x12%\n" +
+	"\tpolicy_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bpolicyId\x12%\n" +
+	"\taction_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12;\n" +
+	"\x12grace_period_hours\x18\x03 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\x10gracePeriodHours\"[\n" +
 	"\"UpdateCompliancePolicyRuleResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"E\n" +
-	"&GetDeviceCompliancePolicyStatusRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\xb0\x01\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"O\n" +
+	"&GetDeviceCompliancePolicyStatusRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\"\xb0\x01\n" +
 	"'GetDeviceCompliancePolicyStatusResponse\x12D\n" +
 	"\x0eoverall_status\x18\x01 \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\roverallStatus\x12?\n" +
 	"\bpolicies\x18\x02 \x03(\v2#.cadestro.v1.DevicePolicyEvaluationR\bpolicies\"\xcc\x01\n" +
@@ -22479,19 +22114,20 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x10SearchDateFilter\x12\x14\n" +
 	"\x05field\x18\x01 \x01(\tR\x05field\x12\x14\n" +
 	"\x05start\x18\x02 \x01(\x03R\x05start\x12\x10\n" +
-	"\x03end\x18\x03 \x01(\x03R\x03end\"\xd9\x03\n" +
-	"\rSearchRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\x12.\n" +
-	"\x05scope\x18\x02 \x01(\x0e2\x18.cadestro.v1.SearchScopeR\x05scope\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x03end\x18\x03 \x01(\x03R\x03end\"\xbe\x04\n" +
+	"\rSearchRequest\x12!\n" +
+	"\x05query\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05query\x12;\n" +
+	"\x05scope\x18\x02 \x01(\x0e2\x18.cadestro.v1.SearchScopeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x05scope\x12*\n" +
+	"\tpage_size\x18\x03 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xc8\x01(\x00R\bpageSize\x12*\n" +
 	"\n" +
-	"page_token\x18\x04 \x01(\tR\tpageToken\x12@\n" +
-	"\fdate_filters\x18\x05 \x03(\v2\x1d.cadestro.v1.SearchDateFilterR\vdateFilters\x12K\n" +
-	"\vtag_filters\x18\x06 \x03(\v2*.cadestro.v1.SearchRequest.TagFiltersEntryR\n" +
-	"tagFilters\x125\n" +
+	"page_token\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\tpageToken\x12@\n" +
+	"\fdate_filters\x18\x05 \x03(\v2\x1d.cadestro.v1.SearchDateFilterR\vdateFilters\x12`\n" +
+	"\vtag_filters\x18\x06 \x03(\v2*.cadestro.v1.SearchRequest.TagFiltersEntryB\x13\xbaH\x10\x9a\x01\r\"\x04r\x02\x18@*\x05r\x03\x18\x80\bR\n" +
+	"tagFilters\x12B\n" +
 	"\n" +
-	"sort_field\x18\a \x01(\x0e2\x16.cadestro.v1.SortFieldR\tsortField\x12A\n" +
-	"\x0esort_direction\x18\b \x01(\x0e2\x1a.cadestro.v1.SortDirectionR\rsortDirection\x1a=\n" +
+	"sort_field\x18\a \x01(\x0e2\x16.cadestro.v1.SortFieldB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\tsortField\x12N\n" +
+	"\x0esort_direction\x18\b \x01(\x0e2\x1a.cadestro.v1.SortDirectionB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\rsortDirection\x1a=\n" +
 	"\x0fTagFiltersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa1\x02\n" +
@@ -22522,25 +22158,26 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x19user_provisioning_enabled\x18\x01 \x01(\bR\x17userProvisioningEnabled\x12+\n" +
 	"\x12ssh_access_for_all\x18\x02 \x01(\bR\x0fsshAccessForAll\"W\n" +
 	"\x1cUpdateServerSettingsResponse\x127\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1b.cadestro.v1.ServerSettingsR\bsettings\"V\n" +
-	"!SetUserProvisioningEnabledRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
-	"\aenabled\x18\x02 \x01(\bR\aenabled\"[\n" +
-	"\x14StartTerminalRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x12\n" +
-	"\x04cols\x18\x02 \x01(\rR\x04cols\x12\x12\n" +
-	"\x04rows\x18\x03 \x01(\rR\x04rows\"\xd4\x01\n" +
-	"\x15StartTerminalResponse\x12\x1d\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1b.cadestro.v1.ServerSettingsR\bsettings\"`\n" +
+	"!SetUserProvisioningEnabledRequest\x12!\n" +
+	"\auser_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x06userId\x12\x18\n" +
+	"\aenabled\x18\x02 \x01(\bR\aenabled\"\x85\x01\n" +
+	"\x14StartTerminalRequest\x12%\n" +
+	"\tdevice_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bdeviceId\x12\"\n" +
+	"\x04cols\x18\x02 \x01(\rB\x0e\xbaH\v\xd8\x01\x01*\x06\x18\xff\xff\x03 \x00R\x04cols\x12\"\n" +
+	"\x04rows\x18\x03 \x01(\rB\x0e\xbaH\v\xd8\x01\x01*\x06\x18\xff\xff\x03 \x00R\x04rows\"\x95\x02\n" +
+	"\x15StartTerminalResponse\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12#\n" +
-	"\rsession_token\x18\x02 \x01(\tR\fsessionToken\x12!\n" +
-	"\fterminal_url\x18\x03 \x01(\tR\vterminalUrl\x129\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12/\n" +
+	"\rsession_token\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\fsessionToken\x126\n" +
+	"\fterminal_url\x18\x03 \x01(\tB\x13\xbaH\x10\xc8\x01\x01r\v:\x06wss://\x88\x01\x01R\vterminalUrl\x12A\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x19\n" +
-	"\btty_user\x18\x05 \x01(\tR\attyUser\"4\n" +
-	"\x13StopTerminalRequest\x12\x1d\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAt\x12'\n" +
+	"\btty_user\x18\x05 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\attyUser\">\n" +
+	"\x13StopTerminalRequest\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"\x16\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\"\x16\n" +
 	"\x14StopTerminalResponse\"\xce\x02\n" +
 	"\x13TerminalSessionInfo\x12\x1d\n" +
 	"\n" +
@@ -22553,30 +22190,34 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\btty_user\x18\x06 \x01(\tR\attyUser\x129\n" +
 	"\n" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12D\n" +
-	"\x10last_activity_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"\x95\x01\n" +
-	"!ListActiveTerminalSessionsRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\x10last_activity_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"\xb8\x01\n" +
+	"!ListActiveTerminalSessionsRequest\x12*\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xc8\x01(\x01R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x1b\n" +
-	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\x12\x17\n" +
-	"\auser_id\x18\x04 \x01(\tR\x06userId\"\xab\x01\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12%\n" +
+	"\tdevice_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\bdeviceId\x12!\n" +
+	"\auser_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06userId\"\xab\x01\n" +
 	"\"ListActiveTerminalSessionsResponse\x12<\n" +
 	"\bsessions\x18\x01 \x03(\v2 .cadestro.v1.TerminalSessionInfoR\bsessions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount\"X\n" +
-	"\x1fTerminateTerminalSessionRequest\x12\x1d\n" +
+	"totalCount\"o\n" +
+	"\x1fTerminateTerminalSessionRequest\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"\"\n" +
-	" TerminateTerminalSessionResponse\"\xac\x03\n" +
-	"\x19EncryptionAuthoringParams\x12-\n" +
-	"\rpreshared_key\x18\x01 \x01(\tB\x03\x80\x01\x01H\x00R\fpresharedKey\x88\x01\x01\x124\n" +
-	"\x16rotation_interval_days\x18\x02 \x01(\x05R\x14rotationIntervalDays\x12\x1b\n" +
-	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
-	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
-	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexityB\x10\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12#\n" +
+	"\x06reason\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x04R\x06reason\"\"\n" +
+	" TerminateTerminalSessionResponse\"\xfc\x03\n" +
+	"\x19EncryptionAuthoringParams\x127\n" +
+	"\rpreshared_key\x18\x01 \x01(\tB\r\xbaH\ar\x05\x10\x01\x18\x80\x02\x80\x01\x01H\x00R\fpresharedKey\x88\x01\x01\x12C\n" +
+	"\x16rotation_interval_days\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xc8\x01\x01\x1a\x05\x18\xed\x02(\x01R\x14rotationIntervalDays\x12)\n" +
+	"\tmin_words\x18\x03 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18\n" +
+	"(\x03R\bminWords\x12i\n" +
+	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x12deviceBoundKeyType\x12J\n" +
+	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x80\x01(\x10R\x17userPassphraseMinLength\x12m\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x18userPassphraseComplexityB\x10\n" +
 	"\x0e_preshared_key\"\xa3\x03\n" +
 	"\x17ManagedEncryptionParams\x128\n" +
 	"\x18preshared_key_configured\x18\x01 \x01(\bR\x16presharedKeyConfigured\x124\n" +
@@ -22584,21 +22225,22 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\tmin_words\x18\x03 \x01(\x05R\bminWords\x12\\\n" +
 	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeR\x12deviceBoundKeyType\x12;\n" +
 	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05R\x17userPassphraseMinLength\x12`\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xea\x02\n" +
-	"\x13WifiAuthoringParams\x12\x12\n" +
-	"\x04ssid\x18\x01 \x01(\tR\x04ssid\x126\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeR\bauthType\x12\x1a\n" +
-	"\x03psk\x18\x03 \x01(\tB\x03\x80\x01\x01H\x00R\x03psk\x88\x01\x01\x12\x17\n" +
+	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityR\x18userPassphraseComplexity\"\xb8\x03\n" +
+	"\x13WifiAuthoringParams\x12!\n" +
+	"\x04ssid\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04ssid\x12>\n" +
+	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeB\x06\xbaH\x03\xc8\x01\x01R\bauthType\x12#\n" +
+	"\x03psk\x18\x03 \x01(\tB\f\xbaH\x06r\x04\x10\b\x18@\x80\x01\x01H\x00R\x03psk\x88\x01\x01\x12\x17\n" +
 	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
 	"\vclient_cert\x18\x05 \x01(\tR\n" +
-	"clientCert\x12'\n" +
+	"clientCert\x120\n" +
 	"\n" +
-	"client_key\x18\x06 \x01(\tB\x03\x80\x01\x01H\x01R\tclientKey\x88\x01\x01\x12\x1a\n" +
-	"\bidentity\x18\a \x01(\tR\bidentity\x12!\n" +
+	"client_key\x18\x06 \x01(\tB\f\xbaH\x06r\x04\x18\x80\x80\x04\x80\x01\x01H\x01R\tclientKey\x88\x01\x01\x12'\n" +
+	"\bidentity\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xfe\x01R\bidentity\x12!\n" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
-	"\x06hidden\x18\t \x01(\bR\x06hidden\x12\x1a\n" +
+	"\x06hidden\x18\t \x01(\bR\x06hidden\x122\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05R\bpriorityB\x06\n" +
+	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriorityB\x06\n" +
 	"\x04_pskB\r\n" +
 	"\v_client_key\"\xe7\x02\n" +
 	"\x11ManagedWifiParams\x12\x12\n" +
@@ -23818,6 +23460,7 @@ func file_cadestro_v1_control_proto_init() {
 	file_cadestro_v1_actions_proto_init()
 	file_cadestro_v1_agent_proto_init()
 	file_cadestro_v1_common_proto_init()
+	file_cadestro_v1_validate_ext_proto_init()
 	file_cadestro_v1_control_proto_msgTypes[61].OneofWrappers = []any{
 		(*ManagedAction_Package)(nil),
 		(*ManagedAction_App)(nil),

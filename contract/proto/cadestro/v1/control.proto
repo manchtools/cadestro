@@ -2,9 +2,11 @@ syntax = "proto3";
 
 package cadestro.v1;
 
+import "buf/validate/validate.proto";
 import "cadestro/v1/actions.proto";
 import "cadestro/v1/agent.proto";
 import "cadestro/v1/common.proto";
+import "cadestro/v1/validate_ext.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
@@ -14,34 +16,40 @@ option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;
 // ============================================================================
 
 message RegisterRequest {
-  // @gotags: validate:"required,max=255"
-  string token = 1;
-  // @gotags: validate:"required,min=1,max=253"
-  string hostname = 2;
-  // @gotags: validate:"required,min=1,max=32"
-  string agent_version = 3;
+  string token = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 255
+  ];
+  string hostname = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 253
+  ];
+  string agent_version = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 32
+  ];
   // Certificate Signing Request (PEM-encoded PKCS#10)
   // Agent generates its own key pair and sends CSR for signing
-  // @gotags: validate:"required"
-  bytes csr = 4;
+  bytes csr = 4 [(buf.validate.field).required = true];
   reserved 5;
 }
 
 message RegisterResponse {
-  // @gotags: validate:"required"
-  DeviceId device_id = 1;
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   // mTLS credentials issued by control server
-  // @gotags: validate:"required"
-  bytes ca_cert = 2; // CA certificate (PEM)
+  bytes ca_cert = 2 [(buf.validate.field).required = true]; // CA certificate (PEM)
   // Signed device certificate (PEM) - private key stays on agent
-  // @gotags: validate:"required"
-  bytes certificate = 3;
+  bytes certificate = 3 [(buf.validate.field).required = true];
   // Control URL for the agent's streaming connection; the agent stores this and
   // dials it for the AgentService bidi stream. Control terminates agent mTLS
   // itself, so this is control's own agent-listener address, which is normally
   // a different host from the web/API URL the agent registered against.
-  // @gotags: validate:"required,url"
-  string control_url = 4;
+  string control_url = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ];
   reserved 5;
 }
 
@@ -51,8 +59,7 @@ message RegisterResponse {
 
 message RenewCertificateRequest {
   // Certificate Signing Request (PEM-encoded PKCS#10)
-  // @gotags: validate:"required"
-  bytes csr = 1;
+  bytes csr = 1 [(buf.validate.field).required = true];
   reserved 2;
 }
 
@@ -69,8 +76,7 @@ message RenewCertificateResponse {
 // ============================================================================
 
 message RefreshTokenRequest {
-  // @gotags: validate:"required"
-  string refresh_token = 1;
+  string refresh_token = 1 [(buf.validate.field).required = true];
 }
 
 message RefreshTokenResponse {
@@ -80,8 +86,7 @@ message RefreshTokenResponse {
 }
 
 message LogoutRequest {
-  // @gotags: validate:"required"
-  string refresh_token = 1;
+  string refresh_token = 1 [(buf.validate.field).required = true];
 }
 
 message LogoutResponse {}
@@ -143,8 +148,11 @@ message SshPublicKey {
 
 message Role {
   string id = 1;
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 2;
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
   string description = 3;
   repeated string permissions = 4;
   google.protobuf.Timestamp created_at = 5;
@@ -178,15 +186,13 @@ message PermissionInfo {
 // Explicit local erasure for subjects created by optional OIDC JIT.
 // The control server rejects subjects created through SCIM.
 message EraseJITUserRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message EraseJITUserResponse {}
 
 message GetUserRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetUserResponse {
@@ -194,9 +200,11 @@ message GetUserResponse {
 }
 
 message ListUsersRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -208,15 +216,15 @@ message ListUsersResponse {
 
 // Granular user updates
 message UpdateUserEmailRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,email"
-  string email = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string email = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.email = true
+  ];
 }
 
 message SetUserDisabledRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
   bool disabled = 2;
 }
 
@@ -225,29 +233,44 @@ message UpdateUserResponse {
 }
 
 message UpdateUserProfileRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,max=255"
-  string display_name = 2;
-  // @gotags: validate:"omitempty,max=255"
-  string given_name = 3;
-  // @gotags: validate:"omitempty,max=255"
-  string family_name = 4;
-  // @gotags: validate:"omitempty,max=64"
-  string preferred_username = 5;
-  // @gotags: validate:"omitempty,max=2048"
-  string picture = 6;
-  // @gotags: validate:"omitempty,max=10"
-  string locale = 7;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string display_name = 2 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string given_name = 3 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string family_name = 4 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string preferred_username = 5 [
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string picture = 6 [
+    (buf.validate.field).string.max_len = 2048,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string locale = 7 [
+    (buf.validate.field).string.max_len = 10,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddUserSshKeyRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
-  // @gotags: validate:"required,min=1,max=8192"
-  string public_key = 2;
-  // @gotags: validate:"omitempty,max=256"
-  string comment = 3;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  string public_key = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 8192
+  ];
+  string comment = 3 [
+    (buf.validate.field).string.max_len = 256,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddUserSshKeyResponse {
@@ -255,27 +278,26 @@ message AddUserSshKeyResponse {
 }
 
 message RemoveUserSshKeyRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
-  // @gotags: validate:"required,ulid"
-  string key_id = 2;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  string key_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RemoveUserSshKeyResponse {}
 
 message UpdateUserSshSettingsRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
   bool ssh_access_enabled = 2;
   bool ssh_allow_pubkey = 3;
   bool ssh_allow_password = 4;
 }
 
 message UpdateUserLinuxUsernameRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
-  // @gotags: validate:"required,min=1,max=32"
-  string linux_username = 2;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  string linux_username = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 32
+  ];
 }
 
 // ============================================================================
@@ -316,16 +338,22 @@ message Device {
 }
 
 message ListDevicesRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
   // UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
   // the listing to that single status.
-  // @gotags: validate:"omitempty,gte=0,lte=2"
-  DeviceStatus status_filter = 3;
-  // @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
-  map<string, string> label_filter = 4;
+  DeviceStatus status_filter = 3 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  map<string, string> label_filter = 4 [
+    (buf.validate.field).map.keys.string.max_len = 64,
+    (buf.validate.field).map.values.string.max_len = 1024
+  ];
   bool my_devices_only = 5; // when true, only return devices assigned to the authenticated user
 }
 
@@ -336,8 +364,7 @@ message ListDevicesResponse {
 }
 
 message GetDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDeviceResponse {
@@ -346,19 +373,25 @@ message GetDeviceResponse {
 
 // Granular device updates
 message SetDeviceLabelRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=64"
-  string key = 2;
-  // @gotags: validate:"required,max=256"
-  string value = 3;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string key = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string value = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 256
+  ];
 }
 
 message RemoveDeviceLabelRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=64"
-  string key = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string key = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
 }
 
 message UpdateDeviceResponse {
@@ -366,8 +399,7 @@ message UpdateDeviceResponse {
 }
 
 message DeleteDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteDeviceResponse {}
@@ -375,16 +407,19 @@ message DeleteDeviceResponse {}
 // Device assignment (admin-only)
 // Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
 message AssignDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string user_id = 2;
-  // @gotags: validate:"omitempty,ulid"
-  string group_id = 3;
-  // @gotags: validate:"omitempty,max=256,dive,ulid"
-  repeated string user_ids = 4;
-  // @gotags: validate:"omitempty,max=256,dive,ulid"
-  repeated string group_ids = 5;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  string group_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  repeated string user_ids = 4 [
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  repeated string group_ids = 5 [
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AssignDeviceResponse {
@@ -393,12 +428,9 @@ message AssignDeviceResponse {
 
 // Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
 message UnassignDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string user_id = 2;
-  // @gotags: validate:"omitempty,ulid"
-  string group_id = 3;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  string group_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message UnassignDeviceResponse {
@@ -415,8 +447,7 @@ message DeviceAssignee {
 }
 
 message ListDeviceAssigneesRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message ListDeviceAssigneesResponse {
@@ -425,18 +456,21 @@ message ListDeviceAssigneesResponse {
 
 // Update device sync interval
 message SetDeviceSyncIntervalRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"gte=0,lte=1440"
-  int32 sync_interval_minutes = 2; // 0 = use default (30 min), max 24 hours
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  int32 sync_interval_minutes = 2 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 1440
+  ]; // 0 = use default (30 min), max 24 hours
 }
 
 // Update device inventory collection interval.
 message SetDeviceInventoryIntervalRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,gte=120,lte=10080"
-  int32 inventory_interval_minutes = 2; // 0 = inherit (group min, else 1440), else 2h–7d
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  int32 inventory_interval_minutes = 2 [
+    (buf.validate.field).int32.gte = 120,
+    (buf.validate.field).int32.lte = 10080,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // 0 = inherit (group min, else 1440), else 2h–7d
 }
 
 // ============================================================================
@@ -460,28 +494,37 @@ message RegistrationToken {
 message CreateTokenRequest {
   reserved 2, 5;
   reserved "one_time", "owner_id";
-  // @gotags: validate:"required,min=1,max=128"
-  string name = 1;
-  // @gotags: validate:"omitempty,min=0"
-  int32 max_uses = 3; // 0 = unlimited (for reusable tokens)
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 128
+  ];
+  int32 max_uses = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // 0 = unlimited (for reusable tokens)
   // Enrollment tokens always expire. Set a sufficiently long TTL for the
   // rollout; 0/unset is intentionally not a valid token.
-  // @gotags: validate:"required"
-  google.protobuf.Timestamp expires_at = 4;
+  google.protobuf.Timestamp expires_at = 4 [(buf.validate.field).required = true];
 }
 
 message CreateTokenResponse {
   RegistrationToken token = 1;
   // SHA-256 fingerprint of the control CA certificate DER. Provisioning
   // presents this beside token.value; agents require it during enrollment.
-  // @gotags: validate:"required,len=64,hexadecimal"
-  string ca_fingerprint_pin = 2;
+  string ca_fingerprint_pin = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 64,
+    (buf.validate.field).string.pattern = "^[0-9a-fA-F]+$"
+  ];
 }
 
 message ListTokensRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
   bool include_disabled = 3;
 }
@@ -494,15 +537,16 @@ message ListTokensResponse {
 
 // Granular token updates
 message RenameTokenRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=128"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 128
+  ];
 }
 
 message SetTokenDisabledRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
   bool disabled = 2;
 }
 
@@ -511,8 +555,7 @@ message UpdateTokenResponse {
 }
 
 message DeleteTokenRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteTokenResponse {}
@@ -546,7 +589,6 @@ message ManagedAction {
     SshParams ssh = 21;
     SshdParams sshd = 22;
     AdminPolicyParams admin_policy = 23;
-    // @gotags: validate:"omitempty"
     LpsParams lps = 24;
     GroupParams group = 25;
     ManagedEncryptionParams encryption = 26;
@@ -556,55 +598,42 @@ message ManagedAction {
 }
 
 message CreateActionRequest {
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
-  // @gotags: validate:"required,ne=0"
-  ActionType type = 3;
-  // @gotags: validate:"omitempty"
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  ActionType type = 3 [(buf.validate.field).required = true];
   DesiredState desired_state = 4;
-  // @gotags: validate:"omitempty,gte=0,lte=3600"
-  int32 timeout_seconds = 5;
-  // @gotags: validate:"omitempty"
+  int32 timeout_seconds = 5 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 3600,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   ActionSchedule schedule = 6;
 
   oneof params {
-    // @gotags: validate:"omitempty"
     PackageParams package = 7;
-    // @gotags: validate:"omitempty"
     AppInstallParams app = 8;
-    // @gotags: validate:"omitempty"
     ShellParams shell = 9;
-    // @gotags: validate:"omitempty"
     ServiceParams service = 10;
-    // @gotags: validate:"omitempty"
     FileParams file = 11;
-    // @gotags: validate:"omitempty"
     UpdateParams update = 12;
-    // @gotags: validate:"omitempty"
     RepositoryParams repository = 13;
-    // @gotags: validate:"omitempty"
     FlatpakParams flatpak = 14;
-    // @gotags: validate:"omitempty"
     DirectoryParams directory = 15;
-    // @gotags: validate:"omitempty"
     UserParams user = 16;
-    // @gotags: validate:"omitempty"
     SshParams ssh = 17;
-    // @gotags: validate:"omitempty"
     SshdParams sshd = 18;
-    // @gotags: validate:"omitempty"
     AdminPolicyParams admin_policy = 19;
-    // @gotags: validate:"omitempty"
     LpsParams lps = 20;
-    // @gotags: validate:"omitempty"
     GroupParams group = 21;
-    // @gotags: validate:"omitempty"
     EncryptionAuthoringParams encryption = 22;
-    // @gotags: validate:"omitempty"
     WifiAuthoringParams wifi = 23;
-    // @gotags: validate:"omitempty"
     AgentUpdateParams agent_update = 24;
   }
 }
@@ -614,8 +643,7 @@ message CreateActionResponse {
 }
 
 message GetActionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetActionResponse {
@@ -623,9 +651,11 @@ message GetActionResponse {
 }
 
 message ListActionsRequest {
-  // @gotags: validate:"omitempty,gte=0,lte=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
   ActionType type_filter = 3;
   bool unassigned_only = 4;
@@ -638,65 +668,50 @@ message ListActionsResponse {
 }
 
 message RenameActionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
 }
 
 message UpdateActionDescriptionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateActionParamsRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty"
+  string id = 1 [(buf.validate.field).string.ulid = true];
   DesiredState desired_state = 2;
-  // @gotags: validate:"omitempty,gte=0,lte=3600"
-  int32 timeout_seconds = 3;
-  // @gotags: validate:"omitempty"
+  int32 timeout_seconds = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 3600,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   ActionSchedule schedule = 4;
 
   oneof params {
-    // @gotags: validate:"omitempty"
     PackageParams package = 5;
-    // @gotags: validate:"omitempty"
     AppInstallParams app = 6;
-    // @gotags: validate:"omitempty"
     ShellParams shell = 7;
-    // @gotags: validate:"omitempty"
     ServiceParams service = 8;
-    // @gotags: validate:"omitempty"
     FileParams file = 9;
-    // @gotags: validate:"omitempty"
     UpdateParams update = 10;
-    // @gotags: validate:"omitempty"
     RepositoryParams repository = 11;
-    // @gotags: validate:"omitempty"
     FlatpakParams flatpak = 12;
-    // @gotags: validate:"omitempty"
     DirectoryParams directory = 13;
-    // @gotags: validate:"omitempty"
     UserParams user = 14;
-    // @gotags: validate:"omitempty"
     SshParams ssh = 15;
-    // @gotags: validate:"omitempty"
     SshdParams sshd = 16;
-    // @gotags: validate:"omitempty"
     AdminPolicyParams admin_policy = 17;
-    // @gotags: validate:"omitempty"
     LpsParams lps = 18;
-    // @gotags: validate:"omitempty"
     GroupParams group = 19;
-    // @gotags: validate:"omitempty"
     EncryptionAuthoringParams encryption = 20;
-    // @gotags: validate:"omitempty"
     WifiAuthoringParams wifi = 21;
-    // @gotags: validate:"omitempty"
     AgentUpdateParams agent_update = 22;
   }
 }
@@ -706,8 +721,7 @@ message UpdateActionResponse {
 }
 
 message DeleteActionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteActionResponse {}
@@ -727,37 +741,39 @@ message ActionSet {
   // Schedule that triggers every member action when fired. Required.
   // The set's schedule overrides each member action's own schedule —
   // member actions never fire on their own when assigned via this set.
-  // @gotags: validate:"required"
-  ActionSchedule schedule = 8;
+  ActionSchedule schedule = 8 [(buf.validate.field).required = true];
   // Failure policy resolved onto every occurrence in the compiled manifest.
   // CONTINUE is the default; STOP must be selected explicitly.
-  // @gotags: validate:"omitempty"
   OnFailure on_failure = 9;
 }
 
 message ActionSetMember {
-  // @gotags: validate:"required,ulid"
-  string action_id = 1;
+  string action_id = 1 [(buf.validate.field).string.ulid = true];
   // Position of this action within the set's execution order. When the
   // set's schedule fires, members are executed in ascending sort_order.
   // Stable tiebreak by action_id for ties.
-  // @gotags: validate:"omitempty,gte=0"
-  int32 sort_order = 2;
+  int32 sort_order = 2 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string action_name = 3;
   ActionType action_type = 4;
 }
 
 message CreateActionSetRequest {
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Schedule that triggers every member action when fired. Required:
   // member actions never fire on their own when assigned via this set.
-  // @gotags: validate:"required"
-  ActionSchedule schedule = 3;
+  ActionSchedule schedule = 3 [(buf.validate.field).required = true];
   // CONTINUE is the default; STOP must be selected explicitly.
-  // @gotags: validate:"omitempty"
   OnFailure on_failure = 4;
 }
 
@@ -766,8 +782,7 @@ message CreateActionSetResponse {
 }
 
 message GetActionSetRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetActionSetResponse {
@@ -776,9 +791,11 @@ message GetActionSetResponse {
 }
 
 message ListActionSetsRequest {
-  // @gotags: validate:"omitempty,gte=0,lte=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
   bool unassigned_only = 3;
 }
@@ -790,27 +807,27 @@ message ListActionSetsResponse {
 }
 
 message RenameActionSetRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
 }
 
 message UpdateActionSetDescriptionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateActionSetScheduleRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
   // Replacement schedule for the set. Required.
-  // @gotags: validate:"required"
-  ActionSchedule schedule = 2;
+  ActionSchedule schedule = 2 [(buf.validate.field).required = true];
   // Replacement failure policy. CONTINUE is the default.
-  // @gotags: validate:"omitempty"
   OnFailure on_failure = 3;
 }
 
@@ -819,19 +836,18 @@ message UpdateActionSetResponse {
 }
 
 message DeleteActionSetRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteActionSetResponse {}
 
 message AddActionToSetRequest {
-  // @gotags: validate:"required,ulid"
-  string set_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
-  // @gotags: validate:"omitempty,gte=0"
-  int32 sort_order = 3;
+  string set_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  int32 sort_order = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddActionToSetResponse {
@@ -839,10 +855,8 @@ message AddActionToSetResponse {
 }
 
 message RemoveActionFromSetRequest {
-  // @gotags: validate:"required,ulid"
-  string set_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
+  string set_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RemoveActionFromSetResponse {
@@ -850,12 +864,9 @@ message RemoveActionFromSetResponse {
 }
 
 message ReorderActionInSetRequest {
-  // @gotags: validate:"required,ulid"
-  string set_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
-  // @gotags: validate:"gte=0"
-  int32 new_order = 3;
+  string set_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  int32 new_order = 3 [(buf.validate.field).int32.gte = 0];
 }
 
 message ReorderActionInSetResponse {
@@ -877,31 +888,35 @@ message Definition {
   // Schedule used by manifests compiled from this definition. Required.
   // The override exists only on those emitted manifests: it does not rewrite
   // member ActionSets, whose schedules still apply when assigned independently.
-  // @gotags: validate:"required"
-  ActionSchedule schedule = 8;
+  ActionSchedule schedule = 8 [(buf.validate.field).required = true];
 }
 
 message DefinitionMember {
-  // @gotags: validate:"required,ulid"
-  string action_set_id = 1;
+  string action_set_id = 1 [(buf.validate.field).string.ulid = true];
   // Position of this set within the definition's execution order. When the
   // definition's schedule fires, sets are walked in ascending sort_order
   // and each set's actions execute in their own ascending sort_order.
   // Stable tiebreak by action_set_id for ties.
-  // @gotags: validate:"omitempty,gte=0"
-  int32 sort_order = 2;
+  int32 sort_order = 2 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string action_set_name = 3;
 }
 
 message CreateDefinitionRequest {
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Schedule used by manifests compiled from this definition. Required. It
   // overrides their manifest schedules without rewriting member ActionSets.
-  // @gotags: validate:"required"
-  ActionSchedule schedule = 3;
+  ActionSchedule schedule = 3 [(buf.validate.field).required = true];
 }
 
 message CreateDefinitionResponse {
@@ -909,8 +924,7 @@ message CreateDefinitionResponse {
 }
 
 message GetDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDefinitionResponse {
@@ -919,9 +933,11 @@ message GetDefinitionResponse {
 }
 
 message ListDefinitionsRequest {
-  // @gotags: validate:"omitempty,gte=0,lte=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -932,26 +948,27 @@ message ListDefinitionsResponse {
 }
 
 message RenameDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
 }
 
 message UpdateDefinitionDescriptionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateDefinitionScheduleRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
   // Replacement schedule for manifests compiled from the definition. Required;
   // member ActionSet schedules are not rewritten.
-  // @gotags: validate:"required"
-  ActionSchedule schedule = 2;
+  ActionSchedule schedule = 2 [(buf.validate.field).required = true];
 }
 
 message UpdateDefinitionResponse {
@@ -959,19 +976,18 @@ message UpdateDefinitionResponse {
 }
 
 message DeleteDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteDefinitionResponse {}
 
 message AddActionSetToDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string definition_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_set_id = 2;
-  // @gotags: validate:"omitempty,gte=0"
-  int32 sort_order = 3;
+  string definition_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
+  int32 sort_order = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddActionSetToDefinitionResponse {
@@ -979,10 +995,8 @@ message AddActionSetToDefinitionResponse {
 }
 
 message RemoveActionSetFromDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string definition_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_set_id = 2;
+  string definition_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RemoveActionSetFromDefinitionResponse {
@@ -990,12 +1004,9 @@ message RemoveActionSetFromDefinitionResponse {
 }
 
 message ReorderActionSetInDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string definition_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_set_id = 2;
-  // @gotags: validate:"gte=0"
-  int32 new_order = 3;
+  string definition_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
+  int32 new_order = 3 [(buf.validate.field).int32.gte = 0];
 }
 
 message ReorderActionSetInDefinitionResponse {
@@ -1031,14 +1042,21 @@ message DeviceGroup {
 }
 
 message CreateDeviceGroupRequest {
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // If true, membership is determined by dynamic_query instead of manual assignment
   bool is_dynamic = 3;
-  // @gotags: validate:"omitempty,max=4096"
-  string dynamic_query = 4; // Query for dynamic membership (see docs for syntax)
+  string dynamic_query = 4 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // Query for dynamic membership (see docs for syntax)
 }
 
 message CreateDeviceGroupResponse {
@@ -1046,8 +1064,7 @@ message CreateDeviceGroupResponse {
 }
 
 message GetDeviceGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDeviceGroupResponse {
@@ -1064,9 +1081,11 @@ message DeviceGroupMember {
 }
 
 message ListDeviceGroupsRequest {
-  // @gotags: validate:"omitempty,gte=0,lte=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -1077,8 +1096,7 @@ message ListDeviceGroupsResponse {
 }
 
 message ListDeviceGroupsForDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message ListDeviceGroupsForDeviceResponse {
@@ -1086,17 +1104,20 @@ message ListDeviceGroupsForDeviceResponse {
 }
 
 message RenameDeviceGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
 }
 
 message UpdateDeviceGroupDescriptionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateDeviceGroupResponse {
@@ -1104,19 +1125,19 @@ message UpdateDeviceGroupResponse {
 }
 
 message DeleteDeviceGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteDeviceGroupResponse {}
 
 message AddDeviceToGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string device_id = 2;
-  // @gotags: validate:"omitempty,max=256,dive,ulid"
-  repeated string device_ids = 3;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string device_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  repeated string device_ids = 3 [
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddDeviceToGroupResponse {
@@ -1124,10 +1145,8 @@ message AddDeviceToGroupResponse {
 }
 
 message RemoveDeviceFromGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"required,ulid"
-  string device_id = 2;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string device_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RemoveDeviceFromGroupResponse {
@@ -1136,12 +1155,13 @@ message RemoveDeviceFromGroupResponse {
 
 // Update a device group's dynamic query
 message UpdateDeviceGroupQueryRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
   // If true, membership is determined by dynamic_query instead of manual assignment
   bool is_dynamic = 2;
-  // @gotags: validate:"omitempty,max=4096"
-  string dynamic_query = 3; // Query for dynamic membership (see docs for syntax)
+  string dynamic_query = 3 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // Query for dynamic membership (see docs for syntax)
 }
 
 message UpdateDeviceGroupQueryResponse {
@@ -1150,8 +1170,7 @@ message UpdateDeviceGroupQueryResponse {
 
 // Validate a dynamic query without creating a group
 message ValidateDynamicQueryRequest {
-  // @gotags: validate:"max=4096"
-  string query = 1;
+  string query = 1 [(buf.validate.field).string.max_len = 4096];
 }
 
 message ValidateDynamicQueryResponse {
@@ -1162,8 +1181,7 @@ message ValidateDynamicQueryResponse {
 
 // Trigger re-evaluation of a dynamic group
 message EvaluateDynamicGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message EvaluateDynamicGroupResponse {
@@ -1174,18 +1192,21 @@ message EvaluateDynamicGroupResponse {
 
 // Update device group sync interval
 message SetDeviceGroupSyncIntervalRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"gte=0,lte=1440"
-  int32 sync_interval_minutes = 2; // 0 = use device/default, max 24 hours
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  int32 sync_interval_minutes = 2 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 1440
+  ]; // 0 = use device/default, max 24 hours
 }
 
 // Update device group inventory collection interval.
 message SetDeviceGroupInventoryIntervalRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,gte=120,lte=10080"
-  int32 inventory_interval_minutes = 2; // 0 = no group contribution, else 2h–7d
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  int32 inventory_interval_minutes = 2 [
+    (buf.validate.field).int32.gte = 120,
+    (buf.validate.field).int32.lte = 10080,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // 0 = no group contribution, else 2h–7d
 }
 
 // Replace the device group's maintenance window. Pass an empty
@@ -1193,9 +1214,7 @@ message SetDeviceGroupInventoryIntervalRequest {
 // the group's contribution to the device-side union, leaving the
 // device unconstrained by this group.
 message SetDeviceGroupMaintenanceWindowRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty"
+  string id = 1 [(buf.validate.field).string.ulid = true];
   MaintenanceWindow maintenance_window = 2;
 }
 
@@ -1217,15 +1236,30 @@ message Assignment {
 }
 
 message CreateAssignmentRequest {
-  // @gotags: validate:"required,gte=1,lte=4"
-  AssignmentSourceType source_type = 1;
-  // @gotags: validate:"required,ulid"
-  string source_id = 2;
-  // @gotags: validate:"required,gte=1,lte=4"
-  AssignmentTargetType target_type = 3;
-  // @gotags: validate:"required,ulid"
-  string target_id = 4;
-  // @gotags: validate:"omitempty"
+  AssignmentSourceType source_type = 1 [
+    (buf.validate.field).enum = {
+      in: [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    (buf.validate.field).required = true
+  ];
+  string source_id = 2 [(buf.validate.field).string.ulid = true];
+  AssignmentTargetType target_type = 3 [
+    (buf.validate.field).enum = {
+      in: [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    (buf.validate.field).required = true
+  ];
+  string target_id = 4 [(buf.validate.field).string.ulid = true];
   AssignmentMode mode = 5; // Defaults to REQUIRED (0)
 }
 
@@ -1234,8 +1268,7 @@ message CreateAssignmentResponse {
 }
 
 message DeleteAssignmentRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteAssignmentResponse {}
@@ -1243,19 +1276,23 @@ message DeleteAssignmentResponse {}
 message ListAssignmentsRequest {
   // UNSPECIFIED (0) means "all source types"; non-zero filters to
   // that single source type.
-  // @gotags: validate:"omitempty,gte=0,lte=4"
-  AssignmentSourceType source_type = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string source_id = 2;
+  AssignmentSourceType source_type = 1 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string source_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // UNSPECIFIED (0) means "all target types"; non-zero filters to
   // that single target type.
-  // @gotags: validate:"omitempty,gte=0,lte=4"
-  AssignmentTargetType target_type = 3;
-  // @gotags: validate:"omitempty,ulid"
-  string target_id = 4;
-  // @gotags: validate:"omitempty,gte=0,lte=100"
-  int32 page_size = 5;
-  // @gotags: validate:"omitempty"
+  AssignmentTargetType target_type = 3 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string target_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  int32 page_size = 5 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 6;
 }
 
@@ -1279,12 +1316,19 @@ message UserSelection {
 }
 
 message SetUserSelectionRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required,gte=1,lte=4"
-  AssignmentSourceType source_type = 2;
-  // @gotags: validate:"required,ulid"
-  string source_id = 3;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  AssignmentSourceType source_type = 2 [
+    (buf.validate.field).enum = {
+      in: [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    (buf.validate.field).required = true
+  ];
+  string source_id = 3 [(buf.validate.field).string.ulid = true];
   bool selected = 4;
 }
 
@@ -1293,8 +1337,7 @@ message SetUserSelectionResponse {
 }
 
 message ListAvailableActionsRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message AvailableItem {
@@ -1312,8 +1355,7 @@ message ListAvailableActionsResponse {
 
 // Get all resolved actions for a device (expands groups, definitions, sets)
 message GetDeviceAssignmentsRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDeviceAssignmentsResponse {
@@ -1327,8 +1369,7 @@ message GetDeviceAssignmentsResponse {
 
 // Get all assignments targeting a user (directly or via user groups)
 message GetUserAssignmentsRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetUserAssignmentsResponse {
@@ -1367,12 +1408,10 @@ message ActionExecution {
 }
 
 message DispatchActionRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
   // Either use an action or inline action
   oneof action_source {
-    // @gotags: validate:"omitempty,ulid"
-    string action_id = 2; // Reference to ManagedAction
+    string action_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // Reference to ManagedAction
     Action inline_action = 3;
   }
   // When set, defer the dispatch until this UTC timestamp instead of
@@ -1398,11 +1437,14 @@ message DispatchActionResponse {
 }
 
 message DispatchToMultipleRequest {
-  // @gotags: validate:"required,min=1,max=256,dive,ulid"
-  repeated string device_ids = 1;
+  repeated string device_ids = 1 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).required = true,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true
+  ];
   oneof action_source {
-    // @gotags: validate:"omitempty,ulid"
-    string action_id = 2; // Reference to ManagedAction
+    string action_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // Reference to ManagedAction
     Action inline_action = 3;
   }
 }
@@ -1412,25 +1454,21 @@ message DispatchToMultipleResponse {
 }
 
 message SyncDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message SyncDeviceResponse {}
 
 message RebootDeviceRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message RebootDeviceResponse {}
 
 // Dispatch all actions from an action set to a device
 message DispatchActionSetRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_set_id = 2;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message DispatchActionSetResponse {
@@ -1439,10 +1477,8 @@ message DispatchActionSetResponse {
 
 // Dispatch all actions from a definition to a device
 message DispatchDefinitionRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required,ulid"
-  string definition_id = 2;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string definition_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message DispatchDefinitionResponse {
@@ -1451,15 +1487,11 @@ message DispatchDefinitionResponse {
 
 // Dispatch to a device group
 message DispatchToGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
   oneof action_source {
-    // @gotags: validate:"omitempty,ulid"
-    string action_id = 2;
-    // @gotags: validate:"omitempty,ulid"
-    string action_set_id = 3;
-    // @gotags: validate:"omitempty,ulid"
-    string definition_id = 4;
+    string action_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+    string action_set_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+    string definition_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
     Action inline_action = 5;
   }
 }
@@ -1469,8 +1501,7 @@ message DispatchToGroupResponse {
 }
 
 message GetExecutionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetExecutionResponse {
@@ -1478,16 +1509,19 @@ message GetExecutionResponse {
 }
 
 message ListExecutionsRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
-  // @gotags: validate:"omitempty,ulid"
-  string device_id = 3; // optional filter
+  string device_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // optional filter
   ExecutionStatus status_filter = 4;
   ActionType type_filter = 5; // optional action type filter
-  // @gotags: validate:"omitempty,max=255"
-  string search = 6; // searches action name and device hostname
+  string search = 6 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // searches action name and device hostname
 }
 
 message ListExecutionsResponse {
@@ -1502,8 +1536,7 @@ message ListExecutionsResponse {
 // returned execution reflects whatever terminal state it reached on
 // its own.
 message CancelExecutionRequest {
-  // @gotags: validate:"required,ulid"
-  string execution_id = 1;
+  string execution_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message CancelExecutionResponse {
@@ -1535,16 +1568,24 @@ message AuditEvent {
 }
 
 message ListAuditEventsRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty,max=32"
-  string page_token = 2;
-  // @gotags: validate:"omitempty,ulid"
-  string actor_id = 3;
-  // @gotags: validate:"omitempty,max=64"
-  string stream_type = 4;
-  // @gotags: validate:"omitempty,max=128"
-  string event_type = 5;
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string page_token = 2 [
+    (buf.validate.field).string.max_len = 32,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string actor_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  string stream_type = 4 [
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string event_type = 5 [
+    (buf.validate.field).string.max_len = 128,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message ListAuditEventsResponse {
@@ -1565,22 +1606,36 @@ message ListAuditEventsResponse {
 // ListAuditEvents.event_type), and an occurred_at range.
 message ExportAuditEventsRequest {
   // Export format: "csv" or "json".
-  // @gotags: validate:"required,oneof=csv json"
-  string format = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string actor_id = 2;
+  string format = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string = {
+      in: [
+        "csv",
+        "json"
+      ]
+    }
+  ];
+  string actor_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // Empty = all stream types.
-  // @gotags: validate:"omitempty,max=64,dive,min=1,max=64"
-  repeated string stream_types = 3;
+  repeated string stream_types = 3 [
+    (buf.validate.field).repeated.max_items = 64,
+    (buf.validate.field).repeated.items.string.min_len = 1,
+    (buf.validate.field).repeated.items.string.max_len = 64,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Case-insensitive substring match on the event type.
-  // @gotags: validate:"omitempty,max=128"
-  string event_type = 4;
+  string event_type = 4 [
+    (buf.validate.field).string.max_len = 128,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Inclusive occurred_at lower/upper bounds; unset = unbounded.
   google.protobuf.Timestamp occurred_from = 5;
   google.protobuf.Timestamp occurred_to = 6;
   // Cursor from the previous chunk; empty starts the export.
-  // @gotags: validate:"omitempty,max=32"
-  string page_token = 7;
+  string page_token = 7 [
+    (buf.validate.field).string.max_len = 32,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message ExportAuditEventsResponse {
@@ -1611,8 +1666,7 @@ message LpsPassword {
 }
 
 message ListLpsPasswordsRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message ListLpsPasswordsResponse {
@@ -1623,8 +1677,7 @@ message ListLpsPasswordsResponse {
 }
 
 message RevealLpsPasswordRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message RevealLpsPasswordResponse {
@@ -1654,8 +1707,7 @@ message LuksKey {
 }
 
 message ListLuksKeysRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message ListLuksKeysResponse {
@@ -1666,8 +1718,7 @@ message ListLuksKeysResponse {
 }
 
 message RevealLuksKeyRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message RevealLuksKeyResponse {
@@ -1675,10 +1726,8 @@ message RevealLuksKeyResponse {
 }
 
 message CreateLuksTokenRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message CreateLuksTokenResponse {
@@ -1691,10 +1740,8 @@ message CreateLuksTokenResponse {
 }
 
 message RevokeLuksDeviceKeyRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RevokeLuksDeviceKeyResponse {}
@@ -1705,17 +1752,29 @@ message RevokeLuksDeviceKeyResponse {}
 
 // Dispatch an on-demand OSQuery to a connected device
 message DispatchOSQueryRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"required_without=RawSql,omitempty,min=1,max=64"
-  string table = 2;
-  // @gotags: validate:"omitempty,dive,max=64"
-  repeated string columns = 3;
-  // @gotags: validate:"omitempty,gte=0,lte=10000"
-  int32 limit = 4;
+  option (buf.validate.message).cel = {
+    id: "dispatch_osquery_request.table_required_without_raw_sql"
+    message: "table is required unless raw_sql is set"
+    expression: "this.table != '' || this.raw_sql != ''"
+  };
+
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  string table = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  repeated string columns = 3 [(buf.validate.field).repeated.items.string.max_len = 64];
+  int32 limit = 4 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 10000,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Raw SQL query — when set, table/columns/limit are ignored.
-  // @gotags: validate:"omitempty,max=4096"
-  string raw_sql = 5;
+  string raw_sql = 5 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message DispatchOSQueryResponse {
@@ -1724,8 +1783,7 @@ message DispatchOSQueryResponse {
 
 // Poll for the result of a dispatched OSQuery
 message GetOSQueryResultRequest {
-  // @gotags: validate:"required,ulid"
-  string query_id = 1;
+  string query_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetOSQueryResultResponse {
@@ -1738,11 +1796,9 @@ message GetOSQueryResultResponse {
 
 // Get cached device inventory (hardware/software data collected by agent)
 message GetDeviceInventoryRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
   // Optional: filter to specific tables (empty = all)
-  // @gotags: validate:"omitempty,dive,max=128"
-  repeated string table_names = 2;
+  repeated string table_names = 2 [(buf.validate.field).repeated.items.string.max_len = 128];
 }
 
 message InventoryTableResult {
@@ -1757,8 +1813,7 @@ message GetDeviceInventoryResponse {
 
 // Request the agent to re-collect and send inventory
 message RefreshDeviceInventoryRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message RefreshDeviceInventoryResponse {}
@@ -1768,20 +1823,32 @@ message RefreshDeviceInventoryResponse {}
 // ============================================================================
 
 message QueryDeviceLogsRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
-  // @gotags: validate:"omitempty,gte=0,lte=10000"
-  int32 lines = 2;
-  // @gotags: validate:"omitempty,max=256"
-  string unit = 3;
-  // @gotags: validate:"omitempty,max=64"
-  string since = 4;
-  // @gotags: validate:"omitempty,max=64"
-  string until = 5;
-  // @gotags: validate:"omitempty,max=32"
-  string priority = 6;
-  // @gotags: validate:"omitempty,max=256"
-  string grep = 7;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  int32 lines = 2 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 10000,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string unit = 3 [
+    (buf.validate.field).string.max_len = 256,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string since = 4 [
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string until = 5 [
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string priority = 6 [
+    (buf.validate.field).string.max_len = 32,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string grep = 7 [
+    (buf.validate.field).string.max_len = 256,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   bool kernel = 8;
 }
 
@@ -1790,8 +1857,7 @@ message QueryDeviceLogsResponse {
 }
 
 message GetDeviceLogResultRequest {
-  // @gotags: validate:"required,ulid"
-  string query_id = 1;
+  string query_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDeviceLogResultResponse {
@@ -1807,11 +1873,15 @@ message GetDeviceLogResultResponse {
 // ============================================================================
 
 message CreateRoleRequest {
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
-  // @gotags: validate:"omitempty"
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   repeated string permissions = 3;
 }
 
@@ -1820,8 +1890,7 @@ message CreateRoleResponse {
 }
 
 message GetRoleRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetRoleResponse {
@@ -1830,9 +1899,11 @@ message GetRoleResponse {
 }
 
 message ListRolesRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -1843,14 +1914,20 @@ message ListRolesResponse {
 }
 
 message UpdateRoleRequest {
-  // @gotags: validate:"required,ulid"
-  string role_id = 1;
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 2;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 3;
-  // @gotags: validate:"required,min=1"
-  repeated string permissions = 4;
+  string role_id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string description = 3 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  repeated string permissions = 4 [
+    (buf.validate.field).repeated.min_items = 1,
+    (buf.validate.field).required = true
+  ];
 }
 
 message UpdateRoleResponse {
@@ -1858,19 +1935,19 @@ message UpdateRoleResponse {
 }
 
 message DeleteRoleRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteRoleResponse {}
 
 message AssignRoleToUserRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string role_id = 2;
-  // @gotags: validate:"omitempty,max=256,dive,ulid"
-  repeated string role_ids = 3;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  string role_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  repeated string role_ids = 3 [
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Optional grant scope. Paired-or-neither: both scope_kind and
   // scope_id MUST be set together, or both absent. Absent =
   // unscoped/global grant. Set = the grant's authorization extends only
@@ -1880,17 +1957,14 @@ message AssignRoleToUserRequest {
   // match), or the assignment is rejected. The actor must hold
   // AssignRoleScope.
   RoleGrantScopeKind scope_kind = 4;
-  // @gotags: validate:"omitempty,ulid"
-  string scope_id = 5;
+  string scope_id = 5 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message AssignRoleToUserResponse {}
 
 message RevokeRoleFromUserRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
-  // @gotags: validate:"required,ulid"
-  string role_id = 2;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  string role_id = 2 [(buf.validate.field).string.ulid = true];
   // Optional grant scope identifying WHICH grant to revoke when the
   // (user_id, role_id) pair has multiple grants at different
   // scopes. Paired-or-neither with scope_id. Both absent = revoke
@@ -1899,8 +1973,7 @@ message RevokeRoleFromUserRequest {
   // grants exist (and vice versa) to surface ambiguity rather than
   // silently no-op.
   RoleGrantScopeKind scope_kind = 3;
-  // @gotags: validate:"omitempty,ulid"
-  string scope_id = 4;
+  string scope_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message RevokeRoleFromUserResponse {}
@@ -1943,13 +2016,20 @@ message UserGroupMember {
 }
 
 message CreateUserGroupRequest {
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   bool is_dynamic = 3;
-  // @gotags: validate:"omitempty,max=4096"
-  string dynamic_query = 4;
+  string dynamic_query = 4 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message CreateUserGroupResponse {
@@ -1957,8 +2037,7 @@ message CreateUserGroupResponse {
 }
 
 message GetUserGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetUserGroupResponse {
@@ -1967,9 +2046,11 @@ message GetUserGroupResponse {
 }
 
 message ListUserGroupsRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -1980,12 +2061,16 @@ message ListUserGroupsResponse {
 }
 
 message UpdateUserGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 2;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 3;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string description = 3 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateUserGroupResponse {
@@ -1993,68 +2078,62 @@ message UpdateUserGroupResponse {
 }
 
 message DeleteUserGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteUserGroupResponse {}
 
 message AddUserToGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string user_id = 2;
-  // @gotags: validate:"omitempty,max=256,dive,ulid"
-  repeated string user_ids = 3;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  repeated string user_ids = 3 [
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddUserToGroupResponse {}
 
 message RemoveUserFromGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"required,ulid"
-  string user_id = 2;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string user_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RemoveUserFromGroupResponse {}
 
 message AssignRoleToUserGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string role_id = 2;
-  // @gotags: validate:"omitempty,max=256,dive,ulid"
-  repeated string role_ids = 3;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string role_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  repeated string role_ids = 3 [
+    (buf.validate.field).repeated.max_items = 256,
+    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Optional grant scope. Same paired-or-neither semantics as
   // AssignRoleToUserRequest.scope_*. Every member of the target
   // user group inherits this scope through the grant.
   RoleGrantScopeKind scope_kind = 4;
-  // @gotags: validate:"omitempty,ulid"
-  string scope_id = 5;
+  string scope_id = 5 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message AssignRoleToUserGroupResponse {}
 
 message RevokeRoleFromUserGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string group_id = 1;
-  // @gotags: validate:"required,ulid"
-  string role_id = 2;
+  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  string role_id = 2 [(buf.validate.field).string.ulid = true];
   // Optional grant scope identifying WHICH (user_group, role)
   // grant to revoke when multiple scoped grants of the same role
   // are attached to the same user group. Paired-or-neither with
   // scope_id; same semantics as RevokeRoleFromUserRequest.
   RoleGrantScopeKind scope_kind = 3;
-  // @gotags: validate:"omitempty,ulid"
-  string scope_id = 4;
+  string scope_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message RevokeRoleFromUserGroupResponse {}
 
 message ListUserGroupsForUserRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message ListUserGroupsForUserResponse {
@@ -2062,11 +2141,12 @@ message ListUserGroupsForUserResponse {
 }
 
 message UpdateUserGroupQueryRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
   bool is_dynamic = 2;
-  // @gotags: validate:"omitempty,max=4096"
-  string dynamic_query = 3;
+  string dynamic_query = 3 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateUserGroupQueryResponse {
@@ -2074,8 +2154,7 @@ message UpdateUserGroupQueryResponse {
 }
 
 message ValidateUserGroupQueryRequest {
-  // @gotags: validate:"max=4096"
-  string query = 1;
+  string query = 1 [(buf.validate.field).string.max_len = 4096];
 }
 
 message ValidateUserGroupQueryResponse {
@@ -2085,8 +2164,7 @@ message ValidateUserGroupQueryResponse {
 }
 
 message EvaluateDynamicUserGroupRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message EvaluateDynamicUserGroupResponse {
@@ -2100,9 +2178,7 @@ message EvaluateDynamicUserGroupResponse {
 // device-side union for every device the user group reaches via an
 // assignment. Empty schedule = clear.
 message SetUserGroupMaintenanceWindowRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty"
+  string id = 1 [(buf.validate.field).string.ulid = true];
   MaintenanceWindow maintenance_window = 2;
 }
 
@@ -2153,34 +2229,57 @@ message IdentityLink {
 }
 
 message CreateIdentityProviderRequest {
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 1;
-  // @gotags: validate:"required,min=1,max=64,alphanum"
-  string slug = 2;
-  // @gotags: validate:"required,gte=1,lte=1"
-  IdentityProviderType provider_type = 3;
-  // @gotags: validate:"omitempty,max=255"
-  string client_id = 4;
-  // @gotags: validate:"omitempty,max=4096"
-  string client_secret = 5;
-  // @gotags: validate:"required,url"
-  string issuer_url = 6;
-  // @gotags: validate:"omitempty,url"
-  string authorization_url = 7;
-  // @gotags: validate:"omitempty,url"
-  string token_url = 8;
-  // @gotags: validate:"omitempty,url"
-  string userinfo_url = 9;
-  // @gotags: validate:"omitempty,dive,max=255"
-  repeated string scopes = 10;
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string slug = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).string.pattern = "^[a-zA-Z0-9]+$"
+  ];
+  IdentityProviderType provider_type = 3 [
+    (buf.validate.field).enum.const = 1,
+    (buf.validate.field).required = true
+  ];
+  string client_id = 4 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string client_secret = 5 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string issuer_url = 6 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ];
+  string authorization_url = 7 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string token_url = 8 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string userinfo_url = 9 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  repeated string scopes = 10 [(buf.validate.field).repeated.items.string.max_len = 255];
   bool auto_create_users = 11;
   bool auto_link_by_email = 12;
-  // @gotags: validate:"omitempty,ulid"
-  string default_role_id = 13;
-  // @gotags: validate:"omitempty,max=255"
-  string group_claim = 14;
-  // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-  map<string, string> group_mapping = 15;
+  string default_role_id = 13 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  string group_claim = 14 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  map<string, string> group_mapping = 15 [
+    (buf.validate.field).map.keys.string.max_len = 255,
+    (buf.validate.field).map.values.string.max_len = 255
+  ];
   // See IdentityProvider.trust_email_assertions. Default false (secure).
   bool trust_email_assertions = 16;
 }
@@ -2190,8 +2289,7 @@ message CreateIdentityProviderResponse {
 }
 
 message GetIdentityProviderRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetIdentityProviderResponse {
@@ -2199,9 +2297,11 @@ message GetIdentityProviderResponse {
 }
 
 message ListIdentityProvidersRequest {
-  // @gotags: validate:"omitempty,min=1,max=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -2212,34 +2312,50 @@ message ListIdentityProvidersResponse {
 }
 
 message UpdateIdentityProviderRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=64"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
   bool enabled = 3;
-  // @gotags: validate:"omitempty,max=255"
-  string client_id = 4;
+  string client_id = 4 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // If empty, the existing secret is kept.
-  // @gotags: validate:"omitempty,max=4096"
-  string client_secret = 5;
-  // @gotags: validate:"omitempty,url"
-  string issuer_url = 6;
-  // @gotags: validate:"omitempty,url"
-  string authorization_url = 7;
-  // @gotags: validate:"omitempty,url"
-  string token_url = 8;
-  // @gotags: validate:"omitempty,url"
-  string userinfo_url = 9;
-  // @gotags: validate:"omitempty,dive,max=255"
-  repeated string scopes = 10;
+  string client_secret = 5 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string issuer_url = 6 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string authorization_url = 7 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string token_url = 8 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string userinfo_url = 9 [
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  repeated string scopes = 10 [(buf.validate.field).repeated.items.string.max_len = 255];
   bool auto_create_users = 11;
   bool auto_link_by_email = 12;
-  // @gotags: validate:"omitempty,ulid"
-  string default_role_id = 13;
-  // @gotags: validate:"omitempty,max=255"
-  string group_claim = 14;
-  // @gotags: validate:"omitempty,dive,keys,max=255,endkeys,max=255"
-  map<string, string> group_mapping = 15;
+  string default_role_id = 13 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  string group_claim = 14 [
+    (buf.validate.field).string.max_len = 255,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  map<string, string> group_mapping = 15 [
+    (buf.validate.field).map.keys.string.max_len = 255,
+    (buf.validate.field).map.values.string.max_len = 255
+  ];
   // See IdentityProvider.trust_email_assertions. Default false (secure).
   bool trust_email_assertions = 16;
 }
@@ -2249,8 +2365,7 @@ message UpdateIdentityProviderResponse {
 }
 
 message DeleteIdentityProviderRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteIdentityProviderResponse {}
@@ -2268,8 +2383,11 @@ message AuthMethodProvider {
 
 message ListAuthMethodsRequest {
   // Optional email to check user-specific auth methods.
-  // @gotags: validate:"omitempty,email,max=254"
-  string email = 1;
+  string email = 1 [
+    (buf.validate.field).string.email = true,
+    (buf.validate.field).string.max_len = 254,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message ListAuthMethodsResponse {
@@ -2277,10 +2395,15 @@ message ListAuthMethodsResponse {
 }
 
 message GetSSOLoginURLRequest {
-  // @gotags: validate:"required,min=1,max=64"
-  string slug = 1;
-  // @gotags: validate:"required,url"
-  string redirect_url = 2;
+  string slug = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string redirect_url = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ];
 }
 
 message GetSSOLoginURLResponse {
@@ -2288,12 +2411,13 @@ message GetSSOLoginURLResponse {
 }
 
 message SSOCallbackRequest {
-  // @gotags: validate:"required,min=1,max=64"
-  string slug = 1;
-  // @gotags: validate:"required"
-  string code = 2;
-  // @gotags: validate:"required"
-  string state = 3;
+  string slug = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string code = 2 [(buf.validate.field).required = true];
+  string state = 3 [(buf.validate.field).required = true];
 }
 
 message SSOCallbackResponse {
@@ -2314,16 +2438,14 @@ message ListIdentityLinksResponse {
 }
 
 message UnlinkIdentityRequest {
-  // @gotags: validate:"required,ulid"
-  string link_id = 1;
+  string link_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message UnlinkIdentityResponse {}
 
 // SCIM Provisioning
 message EnableSCIMRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message EnableSCIMResponse {
@@ -2332,15 +2454,13 @@ message EnableSCIMResponse {
 }
 
 message DisableSCIMRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DisableSCIMResponse {}
 
 message RotateSCIMTokenRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message RotateSCIMTokenResponse {
@@ -2352,8 +2472,7 @@ message RotateSCIMTokenResponse {
 // ============================================================================
 
 message GetDeviceComplianceRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDeviceComplianceResponse {
@@ -2390,10 +2509,15 @@ message CompliancePolicyRule {
 }
 
 message CreateCompliancePolicyRequest {
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message CreateCompliancePolicyResponse {
@@ -2401,8 +2525,7 @@ message CreateCompliancePolicyResponse {
 }
 
 message GetCompliancePolicyRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetCompliancePolicyResponse {
@@ -2410,9 +2533,11 @@ message GetCompliancePolicyResponse {
 }
 
 message ListCompliancePoliciesRequest {
-  // @gotags: validate:"omitempty,gte=0,lte=100"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
 }
 
@@ -2423,17 +2548,20 @@ message ListCompliancePoliciesResponse {
 }
 
 message RenameCompliancePolicyRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"required,min=1,max=255"
-  string name = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
 }
 
 message UpdateCompliancePolicyDescriptionRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
-  // @gotags: validate:"omitempty,max=1024"
-  string description = 2;
+  string id = 1 [(buf.validate.field).string.ulid = true];
+  string description = 2 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateCompliancePolicyResponse {
@@ -2441,19 +2569,19 @@ message UpdateCompliancePolicyResponse {
 }
 
 message DeleteCompliancePolicyRequest {
-  // @gotags: validate:"required,ulid"
-  string id = 1;
+  string id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message DeleteCompliancePolicyResponse {}
 
 message AddCompliancePolicyRuleRequest {
-  // @gotags: validate:"required,ulid"
-  string policy_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
-  // @gotags: validate:"omitempty,gte=0,lte=8760"
-  int32 grace_period_hours = 3;
+  string policy_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  int32 grace_period_hours = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 8760,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message AddCompliancePolicyRuleResponse {
@@ -2461,10 +2589,8 @@ message AddCompliancePolicyRuleResponse {
 }
 
 message RemoveCompliancePolicyRuleRequest {
-  // @gotags: validate:"required,ulid"
-  string policy_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
+  string policy_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
 }
 
 message RemoveCompliancePolicyRuleResponse {
@@ -2472,12 +2598,13 @@ message RemoveCompliancePolicyRuleResponse {
 }
 
 message UpdateCompliancePolicyRuleRequest {
-  // @gotags: validate:"required,ulid"
-  string policy_id = 1;
-  // @gotags: validate:"required,ulid"
-  string action_id = 2;
-  // @gotags: validate:"omitempty,gte=0,lte=8760"
-  int32 grace_period_hours = 3;
+  string policy_id = 1 [(buf.validate.field).string.ulid = true];
+  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  int32 grace_period_hours = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 8760,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message UpdateCompliancePolicyRuleResponse {
@@ -2485,8 +2612,7 @@ message UpdateCompliancePolicyRuleResponse {
 }
 
 message GetDeviceCompliancePolicyStatusRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message GetDeviceCompliancePolicyStatusResponse {
@@ -2524,24 +2650,39 @@ message SearchDateFilter {
 }
 
 message SearchRequest {
-  // @gotags: validate:"omitempty,max=1024"
-  string query = 1;
+  string query = 1 [
+    (buf.validate.field).string.max_len = 1024,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // UNSPECIFIED (0) means "all scopes".
-  // @gotags: validate:"omitempty,gte=0,lte=10"
-  SearchScope scope = 2;
+  SearchScope scope = 2 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Matches the handler's effective clamp ([1,200], else default 50).
-  // @gotags: validate:"omitempty,gte=0,lte=200"
-  int32 page_size = 3;
-  // @gotags: validate:"omitempty,max=4096"
-  string page_token = 4;
+  int32 page_size = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 200,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string page_token = 4 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   repeated SearchDateFilter date_filters = 5;
-  // @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
-  map<string, string> tag_filters = 6; // field → value(s), pipe-separated for OR (e.g. "completed|failed")
+  map<string, string> tag_filters = 6 [
+    (buf.validate.field).map.keys.string.max_len = 64,
+    (buf.validate.field).map.values.string.max_len = 1024
+  ]; // field → value(s), pipe-separated for OR (e.g. "completed|failed")
   // UNSPECIFIED (0) means "scope default"; server validates per-scope validity.
-  // @gotags: validate:"omitempty,gte=0,lte=21"
-  SortField sort_field = 7;
-  // @gotags: validate:"omitempty,gte=0,lte=2"
-  SortDirection sort_direction = 8;
+  SortField sort_field = 7 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  SortDirection sort_direction = 8 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message SearchResult {
@@ -2589,8 +2730,7 @@ message UpdateServerSettingsResponse {
 // ============================================================================
 
 message SetUserProvisioningEnabledRequest {
-  // @gotags: validate:"required,ulid"
-  string user_id = 1;
+  string user_id = 1 [(buf.validate.field).string.ulid = true];
   bool enabled = 2;
 }
 
@@ -2835,39 +2975,50 @@ service ControlService {
 // operations gated by the corresponding permissions.
 
 message StartTerminalRequest {
-  // @gotags: validate:"required,ulid"
-  string device_id = 1;
+  string device_id = 1 [(buf.validate.field).string.ulid = true];
   // Initial window size. The web client may send a Resize immediately
   // after connecting if these turn out to be wrong.
-  // @gotags: validate:"omitempty,gt=0,lte=65535"
-  uint32 cols = 2;
-  // @gotags: validate:"omitempty,gt=0,lte=65535"
-  uint32 rows = 3;
+  uint32 cols = 2 [
+    (buf.validate.field).uint32.gt = 0,
+    (buf.validate.field).uint32.lte = 65535,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  uint32 rows = 3 [
+    (buf.validate.field).uint32.gt = 0,
+    (buf.validate.field).uint32.lte = 65535,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message StartTerminalResponse {
   // ULID identifying the session for the lifetime of the connection.
-  // @gotags: validate:"required,ulid"
-  string session_id = 1;
+  string session_id = 1 [(buf.validate.field).string.ulid = true];
   // Short-lived bearer token the web client must append to terminal_url
   // as ?token=<session_token> when opening the WebSocket. The token is
   // intentionally returned separately from the URL so the URL can be
   // logged or displayed without leaking the credential.
-  // @gotags: validate:"required,min=1"
-  string session_token = 2;
+  string session_token = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
   // Token-free base WebSocket URL of control's terminal endpoint
   // (e.g. wss://control.example.com/terminal). Clients MUST construct
   // the final connect URL by appending ?token=<session_token>; this
   // field never embeds the token.
-  // @gotags: validate:"required,url,startswith=wss://"
-  string terminal_url = 3;
+  string terminal_url = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true,
+    (buf.validate.field).string.prefix = "wss://"
+  ];
   // Token expiry; the client should connect well before this.
-  // @gotags: validate:"required"
-  google.protobuf.Timestamp expires_at = 4;
+  google.protobuf.Timestamp expires_at = 4 [(buf.validate.field).required = true];
   // The TTY user the agent will spawn the shell as. Returned for the
   // UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
-  // @gotags: validate:"required,min=1,max=64"
-  string tty_user = 5;
+  string tty_user = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
 }
 
 // StopTerminal vs TerminateTerminalSession
@@ -2903,8 +3054,7 @@ message StartTerminalResponse {
 //   - Underlying agent failures DO surface as RPC errors so the admin
 //     knows the kill did not actually land.
 message StopTerminalRequest {
-  // @gotags: validate:"required,ulid"
-  string session_id = 1;
+  string session_id = 1 [(buf.validate.field).string.ulid = true];
 }
 
 message StopTerminalResponse {}
@@ -2929,16 +3079,16 @@ message TerminalSessionInfo {
 // ListActiveTerminalSessionsRequest follows the project-wide pagination
 // contract: page_size + page_token in, next_page_token + total_count out.
 message ListActiveTerminalSessionsRequest {
-  // @gotags: validate:"omitempty,gte=1,lte=200"
-  int32 page_size = 1;
-  // @gotags: validate:"omitempty"
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 200,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   string page_token = 2;
   // Optional filter: only sessions on this device.
-  // @gotags: validate:"omitempty,ulid"
-  string device_id = 3;
+  string device_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // Optional filter: only sessions opened by this user.
-  // @gotags: validate:"omitempty,ulid"
-  string user_id = 4;
+  string user_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListActiveTerminalSessionsResponse {
@@ -2953,12 +3103,13 @@ message ListActiveTerminalSessionsResponse {
 // NotFound for unknown sessions, and records the reason in the audit
 // log alongside the terminating user.
 message TerminateTerminalSessionRequest {
-  // @gotags: validate:"required,ulid"
-  string session_id = 1;
+  string session_id = 1 [(buf.validate.field).string.ulid = true];
   // Optional reason for the audit log; surfaced to the agent and the
   // affected user.
-  // @gotags: validate:"omitempty,max=512"
-  string reason = 2;
+  string reason = 2 [
+    (buf.validate.field).string.max_len = 512,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message TerminateTerminalSessionResponse {}
@@ -2968,23 +3119,39 @@ message TerminateTerminalSessionResponse {}
 // it, while this shared update shape permits omission to preserve the current
 // value, and no response returns it.
 message EncryptionAuthoringParams {
-  // @gotags: validate:"omitempty,min=1,max=256"
-  optional string preshared_key = 1 [debug_redact = true];
-  // @gotags: validate:"required,gte=1,lte=365"
-  int32 rotation_interval_days = 2;
-  // @gotags: validate:"omitempty,gte=3,lte=10"
-  int32 min_words = 3;
+  optional string preshared_key = 1 [
+    debug_redact = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 256
+  ];
+  int32 rotation_interval_days = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 365
+  ];
+  int32 min_words = 3 [
+    (buf.validate.field).int32.gte = 3,
+    (buf.validate.field).int32.lte = 10,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Range-checked for the same reason as EncryptionParams.device_bound_key_type:
   // the agent's switch default means "no device-bound key", so an out-of-range
   // value must be refused here rather than silently downgraded there.
-  // @gotags: validate:"omitempty,oneof=0 1 2"
-  EncryptionDeviceBoundKeyType device_bound_key_type = 4;
-  // @gotags: validate:"omitempty,gte=16,lte=128"
-  int32 user_passphrase_min_length = 5;
+  EncryptionDeviceBoundKeyType device_bound_key_type = 4 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  int32 user_passphrase_min_length = 5 [
+    (buf.validate.field).int32.gte = 16,
+    (buf.validate.field).int32.lte = 128,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   // Range-checked for the same reason as EncryptionParams
   // .user_passphrase_complexity, and optional for the same reason.
-  // @gotags: validate:"omitempty,oneof=0 1 2"
-  LpsPasswordComplexity user_passphrase_complexity = 6;
+  LpsPasswordComplexity user_passphrase_complexity = 6 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 // ManagedEncryptionParams is safe for ordinary action reads.
@@ -3001,24 +3168,34 @@ message ManagedEncryptionParams {
 // WiFi action. psk and client_key are write-only; omission on update preserves
 // the applicable credential.
 message WifiAuthoringParams {
-  // @gotags: validate:"required,min=1,max=255"
-  string ssid = 1;
-  // @gotags: validate:"required,ne=0"
-  WifiAuthType auth_type = 2;
-  // @gotags: validate:"omitempty,min=8,max=64"
-  optional string psk = 3 [debug_redact = true];
-  // @gotags: validate:"omitempty"
+  string ssid = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  WifiAuthType auth_type = 2 [(buf.validate.field).required = true];
+  optional string psk = 3 [
+    debug_redact = true,
+    (buf.validate.field).string.min_len = 8,
+    (buf.validate.field).string.max_len = 64
+  ];
   string ca_cert = 4;
-  // @gotags: validate:"omitempty"
   string client_cert = 5;
-  // @gotags: validate:"omitempty,max=65536"
-  optional string client_key = 6 [debug_redact = true];
-  // @gotags: validate:"omitempty,max=254"
-  string identity = 7;
+  optional string client_key = 6 [
+    debug_redact = true,
+    (buf.validate.field).string.max_len = 65536
+  ];
+  string identity = 7 [
+    (buf.validate.field).string.max_len = 254,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
   bool auto_connect = 8;
   bool hidden = 9;
-  // @gotags: validate:"omitempty,gte=-1,lte=999"
-  int32 priority = 10;
+  int32 priority = 10 [
+    (buf.validate.field).int32.gte = -1,
+    (buf.validate.field).int32.lte = 999,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 // ManagedWifiParams is safe for ordinary action reads.

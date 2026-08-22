@@ -8,7 +8,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	pmvalidate "github.com/manchtools/cadestro/contract/validate"
 )
 
 func validateStruct(v protovalidate.Validator, msg proto.Message) (string, bool) {
@@ -161,20 +160,23 @@ func TestEncryptionParams_RejectsUndefinedDeviceBoundKeyType(t *testing.T) {
 
 func TestEncryptionAuthoringParams_RejectsUndefinedDeviceBoundKeyType(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	const field = "device_bound_key_type"
 
 	for _, kt := range definedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.DeviceBoundKeyType = kt
-		if detail, valid := pmvalidate.Struct(v, p); !valid {
+		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(kt), kt, detail)
 		}
 	}
 	for _, kt := range undefinedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.DeviceBoundKeyType = kt
-		detail, ok := pmvalidate.Struct(v, p)
+		detail, ok := validateStruct(v, p)
 		if ok {
 			t.Errorf("EncryptionAuthoringParams with %s = %d passed validation; the operator-facing write boundary must range-check the enum", field, int32(kt))
 			continue
@@ -225,20 +227,23 @@ func TestEncryptionParams_RejectsUndefinedUserPassphraseComplexity(t *testing.T)
 
 func TestEncryptionAuthoringParams_RejectsUndefinedUserPassphraseComplexity(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	const field = "user_passphrase_complexity"
 
 	for _, c := range definedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.UserPassphraseComplexity = c
-		if detail, valid := pmvalidate.Struct(v, p); !valid {
+		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(c), c, detail)
 		}
 	}
 	for _, c := range undefinedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.UserPassphraseComplexity = c
-		detail, ok := pmvalidate.Struct(v, p)
+		detail, ok := validateStruct(v, p)
 		if ok {
 			t.Errorf("EncryptionAuthoringParams with %s = %d passed validation; the operator-facing write boundary must range-check the enum", field, int32(c))
 			continue
