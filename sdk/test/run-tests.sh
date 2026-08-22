@@ -63,6 +63,6 @@ done
 
 podman exec -w /workspace "$CONTAINER_NAME" \
     runuser -u cadestro -- env "LANG=${TEST_LOCALE}" "LC_ALL=${TEST_LOCALE}" \
-        /usr/local/go/bin/go test \
+        /usr/local/go/bin/go test -p 1 \
         -v -tags=integration -count=1 -timeout=10m \
         "${INTEGRATION_PKGS[@]/#/./}"

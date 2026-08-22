@@ -246,7 +246,7 @@ jobs:
 
       - run: |
           docker run --rm cadestro-sdk-test \
-            go test -tags=container -count=1 -timeout=10m ./...
+            go test -p 1 -tags=container -count=1 -timeout=10m ./...
 ```
 
 ### Build caching

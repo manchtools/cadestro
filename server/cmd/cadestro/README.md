@@ -93,7 +93,7 @@ loopback and refuses requests without the matching token.
 
 ```bash
 go build ./cmd/cadestro
-go test ./...
+go test -p 1 ./...
 make sqlc-generate
 make sqlc-check
 ```
@@ -104,7 +104,7 @@ Generated sqlc and protobuf outputs are never edited by hand.
 Run the explicit SQLite 10,000-agent gate with:
 
 ```bash
-CADESTRO_RUN_SCALE_TEST=1 go test ./internal/store \
+CADESTRO_RUN_SCALE_TEST=1 go test -p 1 ./internal/store \
   -run '^TestSQLiteScale_MixedWorkloadAtTenThousandAgents$' -count=1 -v -timeout 10m
 ```
 

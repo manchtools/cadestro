@@ -99,7 +99,7 @@ jobs:
           go-version-file: sdk/go.mod
 
       - name: go test (excludes integration-tagged files)
-        run: go test -race -short ./...
+        run: go test -p 1 -race -short ./...
 
   # NOTE: the validate-tag coverage gate is now the Go test
   # TestEveryBoundableRequestFieldCarriesValidateTag
@@ -120,11 +120,11 @@ jobs:
           go-version-file: sdk/go.mod
 
       - name: Run pkg unit tests
-        run: go test -v -race -short ./...
+        run: go test -p 1 -v -race -short ./...
         working-directory: sdk/pkg
 
       - name: Run sys unit tests
-        run: go test -v -race ./sys/user/ -run TestGeneratePassword
+        run: go test -p 1 -v -race ./sys/user/ -run TestGeneratePassword
         working-directory: sdk
 
   test-sys:
@@ -158,7 +158,7 @@ jobs:
         run: |
           docker exec -w /workspace cadestro-sdk-test \
             runuser -u cadestro -- env LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 \
-              /usr/local/go/bin/go test \
+              /usr/local/go/bin/go test -p 1 \
               -v -tags=integration -count=1 -timeout=10m \
               ./sdk/sys/exec/ ./sdk/sys/fs/ ./sdk/sys/user/ ./sdk/sys/service/ \
               ./sdk/sys/timesync/ ./sdk/sys/log/ ./sdk/sys/dns/ ./sdk/sys/desktop/
@@ -203,7 +203,7 @@ jobs:
           # unavailable — this job guarantees it, so a skip would pass
           # vacuously.
           docker exec -w /workspace -e CADESTRO_NM_REQUIRED=1 cadestro-sdk-nm \
-            /usr/local/go/bin/go test -tags=integration -count=1 -v -timeout=5m \
+            /usr/local/go/bin/go test -p 1 -tags=integration -count=1 -v -timeout=5m \
               -run Integration ./sdk/sys/network/
 
       - name: Cleanup
@@ -348,7 +348,7 @@ jobs:
       - name: Run container tests
         run: |
           docker run --rm --shm-size=512m --cap-add NET_ADMIN cadestro-sdk-container \
-            go test -tags=container -count=1 -v ${{ matrix.path }} -run Container
+            go test -p 1 -tags=container -count=1 -v ${{ matrix.path }} -run Container
 
   # The non-Debian distro families. Where the per-capability Debian matrix above
   # builds one image per cell, each distro here builds its image ONCE and runs
@@ -395,7 +395,7 @@ jobs:
       - name: Run base-stage container tests
         run: |
           docker run --rm --shm-size=512m --cap-add NET_ADMIN cadestro-base \
-            go test -tags=container -count=1 -v -run Container \
+            go test -p 1 -tags=container -count=1 -v -run Container \
             ./sdk/sys/encryption/ ./sdk/sys/firewall/ ./sdk/sys/netconfig/ ./sdk/sys/inventory/ \
             ./sdk/sys/catrust/ ./sdk/sys/terminal/ ./sdk/sys/desktop/ ./sdk/sys/smart/ \
             ./sdk/sys/reboot/ ./sdk/sys/repo/ ./sdk/pkg/ ${{ matrix.notify }}
@@ -404,7 +404,7 @@ jobs:
         run: |
           docker build -f sdk/test/Dockerfile.${{ matrix.distro }} --target with-clamav -t cadestro-clamav .
           docker run --rm cadestro-clamav \
-            go test -tags=container -count=1 -v -run Container ./sdk/sys/antivirus/
+            go test -p 1 -tags=container -count=1 -v -run Container ./sdk/sys/antivirus/
 
   test-apt:
     name: Integration Tests (apt)
@@ -422,11 +422,11 @@ jobs:
         run: sudo apt-get update
 
       - name: Run integration tests
-        run: go test -v -race ./...
+        run: go test -p 1 -v -race ./...
         working-directory: sdk/pkg
 
       - name: Run tests with coverage
-        run: go test -coverprofile=coverage-apt.out ./...
+        run: go test -p 1 -coverprofile=coverage-apt.out ./...
         working-directory: sdk/pkg
 
       - name: Upload coverage
@@ -452,11 +452,11 @@ jobs:
         run: dnf makecache
 
       - name: Run integration tests
-        run: go test -v ./...
+        run: go test -p 1 -v ./...
         working-directory: sdk/pkg
 
       - name: Run tests with coverage
-        run: go test -coverprofile=coverage-dnf.out ./...
+        run: go test -p 1 -coverprofile=coverage-dnf.out ./...
         working-directory: sdk/pkg
 
       - name: Upload coverage
@@ -470,7 +470,7 @@ jobs:
       # same module but `./...` there does not reach sys/repo). The
       # apt/pacman/zypper repo tests self-skip here.
       - name: Run repo Manager container tests (real dnf)
-        run: go test -tags=container -count=1 -v -run Container ./sys/repo/
+        run: go test -p 1 -tags=container -count=1 -v -run Container ./sys/repo/
         working-directory: sdk
 
   # pacman/zypper are the two package managers with zero real-tool coverage
@@ -492,13 +492,13 @@ jobs:
         run: pacman -Sy --noconfirm go git
 
       - name: Run integration tests
-        run: go test -v ./...
+        run: go test -p 1 -v ./...
         working-directory: sdk/pkg
 
       # repo Manager pacman backend: real /etc/pacman.conf [section]
       # write/remove against the actual pacman (root container).
       - name: Run repo Manager container tests (real pacman)
-        run: go test -tags=container -count=1 -v -run Container ./sys/repo/
+        run: go test -p 1 -tags=container -count=1 -v -run Container ./sys/repo/
         working-directory: sdk
 
   test-zypper:
@@ -520,7 +520,7 @@ jobs:
       # go.mod requirement. GOTOOLCHAIN=auto lets the first `go` invocation
       # fetch the exact toolchain the module declares.
       - name: Run integration tests
-        run: go test -v ./...
+        run: go test -p 1 -v ./...
         working-directory: sdk/pkg
         env:
           GOTOOLCHAIN: auto
@@ -528,7 +528,7 @@ jobs:
       # repo Manager zypper backend: real `zypper addrepo`/`lr`/`removerepo`
       # round-trip (root container). GOTOOLCHAIN=auto for Leap's older go.
       - name: Run repo Manager container tests (real zypper)
-        run: go test -tags=container -count=1 -v -run Container ./sys/repo/
+        run: go test -p 1 -tags=container -count=1 -v -run Container ./sys/repo/
         working-directory: sdk
         env:
           GOTOOLCHAIN: auto

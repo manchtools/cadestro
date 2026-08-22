@@ -4,7 +4,7 @@
 
 ```bash
 go build ./cmd/cadestro
-go test ./...
+go test -p 1 ./...
 ```
 
 Tests run against real SQLite database files, one isolated file per test —

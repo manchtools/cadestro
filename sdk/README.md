@@ -51,7 +51,7 @@ repository resolves the module.
 Useful focused commands:
 
 ```bash
-env GOWORK=off go test ./...
+env GOWORK=off go test -p 1 ./...
 docref check
 ```
 

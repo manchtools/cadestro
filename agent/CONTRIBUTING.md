@@ -20,11 +20,11 @@ Rules the CI enforces (self-discovering guards in `internal/archtest/`):
 # Distro matrix lane (debian; swap the Dockerfile suffix for fedora/opensuse/archlinux)
 cd .. && docker build -f agent/test/Dockerfile.integration -t cadestro-agent-test .
 docker run --rm cadestro-agent-test \
-  go test -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run Integration
+  go test -p 1 -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run Integration
 
 # Privileged edge lane
 docker run --rm --privileged cadestro-agent-test \
-  go test -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run EdgeCase
+  go test -p 1 -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run EdgeCase
 ```
 
 The build context is the **repository root**, and the image copies `contract/`, `sdk/`, and `agent/` into it: `agent/go.mod` replaces the contract and the SDK with those sibling directories, so an image built from `agent/` alone cannot resolve them. There is no branch-override mode — `internal/archtest` fails the build if one reappears, because an out-of-tree resolution means CI tested code this repository does not contain.

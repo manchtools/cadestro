@@ -40,7 +40,7 @@ echo "== staticcheck"
 staticcheck ./...
 
 echo "== go test"
-go test ./... -count=1
+go test -p 1 ./... -count=1
 
 # buf runs from proto/ — proto/buf.yaml is the module root, so
 # `import "cadestro/v1/common.proto"` only resolves from there. CI sets

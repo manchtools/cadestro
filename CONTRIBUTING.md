@@ -11,8 +11,8 @@ undeclared dependency, and that is what CI certifies against.
 |---|---|
 | `contract/` | `cd contract && ./scripts/verify.sh` |
 | `sdk/` | `cd sdk && ./scripts/verify.sh` |
-| `agent/` | `cd agent && GOWORK=off go build ./... && GOWORK=off go vet ./... && GOWORK=off go test ./...` |
-| `server/` | `cd server && GOWORK=off go build ./... && GOWORK=off go vet ./... && GOWORK=off go test -timeout 30m ./...` |
+| `agent/` | `cd agent && GOWORK=off go build ./... && GOWORK=off go vet ./... && GOWORK=off go test -p 1 ./...` |
+| `server/` | `cd server && GOWORK=off go build ./... && GOWORK=off go vet ./... && GOWORK=off go test -p 1 -timeout 30m ./...` |
 | `web/` | `cd web && npm ci && npm run check && npm test` |
 
 The contract and SDK gates are scripts because they run more than Go: the

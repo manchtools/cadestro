@@ -77,7 +77,7 @@ jobs:
         with:
           go-version-file: contract/go.mod
 
-      - run: go test -race -count=1 ./...
+      - run: go test -race -count=1 -p 1 ./...
 
   proto-lint:
     name: Proto lint + format
