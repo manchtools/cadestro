@@ -205,7 +205,7 @@ message ListUsersRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListUsersResponse {
@@ -343,7 +343,7 @@ message ListDevicesRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
   // the listing to that single status.
   DeviceStatus status_filter = 3 [
@@ -525,7 +525,7 @@ message ListTokensRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   bool include_disabled = 3;
 }
 
@@ -656,7 +656,7 @@ message ListActionsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   ActionType type_filter = 3;
   bool unassigned_only = 4;
 }
@@ -796,7 +796,7 @@ message ListActionSetsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   bool unassigned_only = 3;
 }
 
@@ -938,7 +938,7 @@ message ListDefinitionsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListDefinitionsResponse {
@@ -1086,7 +1086,7 @@ message ListDeviceGroupsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListDeviceGroupsResponse {
@@ -1293,7 +1293,7 @@ message ListAssignmentsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 6;
+  string page_token = 6 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListAssignmentsResponse {
@@ -1514,7 +1514,7 @@ message ListExecutionsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   string device_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // optional filter
   ExecutionStatus status_filter = 4;
   ActionType type_filter = 5; // optional action type filter
@@ -1882,7 +1882,7 @@ message CreateRoleRequest {
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  repeated string permissions = 3;
+  repeated string permissions = 3 [(buf.validate.field).repeated.max_items = 256];
 }
 
 message CreateRoleResponse {
@@ -1904,7 +1904,7 @@ message ListRolesRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListRolesResponse {
@@ -2051,7 +2051,7 @@ message ListUserGroupsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListUserGroupsResponse {
@@ -2302,7 +2302,7 @@ message ListIdentityProvidersRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListIdentityProvidersResponse {
@@ -2538,7 +2538,7 @@ message ListCompliancePoliciesRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
 
 message ListCompliancePoliciesResponse {
@@ -3084,7 +3084,7 @@ message ListActiveTerminalSessionsRequest {
     (buf.validate.field).int32.lte = 200,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2;
+  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // Optional filter: only sessions on this device.
   string device_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // Optional filter: only sessions opened by this user.

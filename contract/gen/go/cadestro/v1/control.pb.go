@@ -20755,11 +20755,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x0eGetUserRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"8\n" +
 	"\x0fGetUserResponse\x12%\n" +
-	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"\\\n" +
+	"\x04user\x18\x01 \x01(\v2\x11.cadestro.v1.UserR\x04user\"f\n" +
 	"\x10ListUsersRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x85\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\x85\x01\n" +
 	"\x11ListUsersResponse\x12'\n" +
 	"\x05users\x18\x01 \x03(\v2\x11.cadestro.v1.UserR\x05users\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -20830,11 +20830,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x1ainventory_interval_minutes\x18\x12 \x01(\x05R\x18inventoryIntervalMinutes\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfd\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x87\x03\n" +
 	"\x12ListDevicesRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12K\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\x12K\n" +
 	"\rstatus_filter\x18\x03 \x01(\x0e2\x19.cadestro.v1.DeviceStatusB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\fstatusFilter\x12h\n" +
 	"\flabel_filter\x18\x04 \x03(\v20.cadestro.v1.ListDevicesRequest.LabelFilterEntryB\x13\xbaH\x10\x9a\x01\r\"\x04r\x02\x18@*\x05r\x03\x18\x80\bR\vlabelFilter\x12&\n" +
 	"\x0fmy_devices_only\x18\x05 \x01(\bR\rmyDevicesOnly\x1a>\n" +
@@ -20917,11 +20917,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAtJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x06R\bone_timeR\bowner_id\"\x96\x01\n" +
 	"\x13CreateTokenResponse\x124\n" +
 	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\x12I\n" +
-	"\x12ca_fingerprint_pin\x18\x02 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x88\x01\n" +
+	"\x12ca_fingerprint_pin\x18\x02 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x92\x01\n" +
 	"\x11ListTokensRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12)\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\x12)\n" +
 	"\x10include_disabled\x18\x03 \x01(\bR\x0fincludeDisabled\"\x95\x01\n" +
 	"\x12ListTokensResponse\x126\n" +
 	"\x06tokens\x18\x01 \x03(\v2\x1e.cadestro.v1.RegistrationTokenR\x06tokens\x12&\n" +
@@ -21017,11 +21017,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x10GetActionRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"G\n" +
 	"\x11GetActionResponse\x122\n" +
-	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\xc1\x01\n" +
+	"\x06action\x18\x01 \x01(\v2\x1a.cadestro.v1.ManagedActionR\x06action\"\xcb\x01\n" +
 	"\x12ListActionsRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x128\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\x128\n" +
 	"\vtype_filter\x18\x03 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
 	"typeFilter\x12'\n" +
 	"\x0funassigned_only\x18\x04 \x01(\bR\x0eunassignedOnly\"\x94\x01\n" +
@@ -21108,11 +21108,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"x\n" +
 	"\x14GetActionSetResponse\x12(\n" +
 	"\x03set\x18\x01 \x01(\v2\x16.cadestro.v1.ActionSetR\x03set\x126\n" +
-	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.ActionSetMemberR\amembers\"\x8a\x01\n" +
+	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.ActionSetMemberR\amembers\"\x94\x01\n" +
 	"\x15ListActionSetsRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12'\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\x12'\n" +
 	"\x0funassigned_only\x18\x03 \x01(\bR\x0eunassignedOnly\"\x8d\x01\n" +
 	"\x16ListActionSetsResponse\x12*\n" +
 	"\x04sets\x18\x01 \x03(\v2\x16.cadestro.v1.ActionSetR\x04sets\x12&\n" +
@@ -21189,11 +21189,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
 	"definition\x127\n" +
-	"\amembers\x18\x02 \x03(\v2\x1d.cadestro.v1.DefinitionMemberR\amembers\"b\n" +
+	"\amembers\x18\x02 \x03(\v2\x1d.cadestro.v1.DefinitionMemberR\amembers\"l\n" +
 	"\x16ListDefinitionsRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x9d\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\x9d\x01\n" +
 	"\x17ListDefinitionsResponse\x129\n" +
 	"\vdefinitions\x18\x01 \x03(\v2\x17.cadestro.v1.DefinitionR\vdefinitions\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -21278,11 +21278,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12#\n" +
 	"\ragent_version\x18\x03 \x01(\tR\fagentVersion\x12<\n" +
 	"\flast_seen_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"lastSeenAt\"c\n" +
+	"lastSeenAt\"m\n" +
 	"\x17ListDeviceGroupsRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x95\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\x95\x01\n" +
 	"\x18ListDeviceGroupsResponse\x120\n" +
 	"\x06groups\x18\x01 \x03(\v2\x18.cadestro.v1.DeviceGroupR\x06groups\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -21380,7 +21380,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"assignment\"3\n" +
 	"\x17DeleteAssignmentRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"\x1a\n" +
-	"\x18DeleteAssignmentResponse\"\xd2\x02\n" +
+	"\x18DeleteAssignmentResponse\"\xdc\x02\n" +
 	"\x16ListAssignmentsRequest\x12O\n" +
 	"\vsource_type\x18\x01 \x01(\x0e2!.cadestro.v1.AssignmentSourceTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\n" +
 	"sourceType\x12%\n" +
@@ -21388,9 +21388,9 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vtarget_type\x18\x03 \x01(\x0e2!.cadestro.v1.AssignmentTargetTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\n" +
 	"targetType\x12%\n" +
 	"\ttarget_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\btargetId\x12)\n" +
-	"\tpage_size\x18\x05 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x05 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x06 \x01(\tR\tpageToken\"\x9d\x01\n" +
+	"page_token\x18\x06 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\x9d\x01\n" +
 	"\x17ListAssignmentsResponse\x129\n" +
 	"\vassignments\x18\x01 \x03(\v2\x17.cadestro.v1.AssignmentR\vassignments\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -21519,11 +21519,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x13GetExecutionRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"R\n" +
 	"\x14GetExecutionResponse\x12:\n" +
-	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\xaa\x02\n" +
+	"\texecution\x18\x01 \x01(\v2\x1c.cadestro.v1.ActionExecutionR\texecution\"\xb4\x02\n" +
 	"\x15ListExecutionsRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12%\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\x12%\n" +
 	"\tdevice_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\bdeviceId\x12A\n" +
 	"\rstatus_filter\x18\x04 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\fstatusFilter\x128\n" +
 	"\vtype_filter\x18\x05 \x01(\x0e2\x17.cadestro.v1.ActionTypeR\n" +
@@ -21700,11 +21700,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\tcompleted\x18\x02 \x01(\bR\tcompleted\x12\x18\n" +
 	"\asuccess\x18\x03 \x01(\bR\asuccess\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12\x12\n" +
-	"\x04logs\x18\x05 \x01(\tR\x04logs\"\x86\x01\n" +
+	"\x04logs\x18\x05 \x01(\tR\x04logs\"\x91\x01\n" +
 	"\x11CreateRoleRequest\x12 \n" +
 	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12-\n" +
-	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12 \n" +
-	"\vpermissions\x18\x03 \x03(\tR\vpermissions\";\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12+\n" +
+	"\vpermissions\x18\x03 \x03(\tB\t\xbaH\x06\x92\x01\x03\x10\x80\x02R\vpermissions\";\n" +
 	"\x12CreateRoleResponse\x12%\n" +
 	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\"*\n" +
 	"\x0eGetRoleRequest\x12\x18\n" +
@@ -21712,11 +21712,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x0fGetRoleResponse\x12%\n" +
 	"\x04role\x18\x01 \x01(\v2\x11.cadestro.v1.RoleR\x04role\x12\x1d\n" +
 	"\n" +
-	"user_count\x18\x02 \x01(\x05R\tuserCount\"\\\n" +
+	"user_count\x18\x02 \x01(\x05R\tuserCount\"f\n" +
 	"\x10ListRolesRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x85\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\x85\x01\n" +
 	"\x11ListRolesResponse\x12'\n" +
 	"\x05roles\x18\x01 \x03(\v2\x11.cadestro.v1.RoleR\x05roles\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -21782,11 +21782,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"|\n" +
 	"\x14GetUserGroupResponse\x12,\n" +
 	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\x126\n" +
-	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.UserGroupMemberR\amembers\"a\n" +
+	"\amembers\x18\x02 \x03(\v2\x1c.cadestro.v1.UserGroupMemberR\amembers\"k\n" +
 	"\x15ListUserGroupsRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\x91\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\x91\x01\n" +
 	"\x16ListUserGroupsResponse\x12.\n" +
 	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -21927,11 +21927,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x1aGetIdentityProviderRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"X\n" +
 	"\x1bGetIdentityProviderResponse\x129\n" +
-	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"h\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderR\bprovider\"r\n" +
 	"\x1cListIdentityProvidersRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa5\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\xa5\x01\n" +
 	"\x1dListIdentityProvidersResponse\x12;\n" +
 	"\tproviders\x18\x01 \x03(\v2\x1d.cadestro.v1.IdentityProviderR\tproviders\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -22047,11 +22047,11 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x1aGetCompliancePolicyRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\"T\n" +
 	"\x1bGetCompliancePolicyResponse\x125\n" +
-	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"i\n" +
+	"\x06policy\x18\x01 \x01(\v2\x1d.cadestro.v1.CompliancePolicyR\x06policy\"s\n" +
 	"\x1dListCompliancePoliciesRequest\x12)\n" +
-	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12\x1d\n" +
+	"\tpage_size\x18\x01 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x00R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\"\xa4\x01\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\"\xa4\x01\n" +
 	"\x1eListCompliancePoliciesResponse\x129\n" +
 	"\bpolicies\x18\x01 \x03(\v2\x1d.cadestro.v1.CompliancePolicyR\bpolicies\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
@@ -22190,12 +22190,12 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\btty_user\x18\x06 \x01(\tR\attyUser\x129\n" +
 	"\n" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12D\n" +
-	"\x10last_activity_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"\xb8\x01\n" +
+	"\x10last_activity_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"\xc2\x01\n" +
 	"!ListActiveTerminalSessionsRequest\x12*\n" +
 	"\tpage_size\x18\x01 \x01(\x05B\r\xbaH\n" +
-	"\xd8\x01\x01\x1a\x05\x18\xc8\x01(\x01R\bpageSize\x12\x1d\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xc8\x01(\x01R\bpageSize\x12'\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12%\n" +
+	"page_token\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\tpageToken\x12%\n" +
 	"\tdevice_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\bdeviceId\x12!\n" +
 	"\auser_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xc0>\x01R\x06userId\"\xab\x01\n" +
 	"\"ListActiveTerminalSessionsResponse\x12<\n" +
