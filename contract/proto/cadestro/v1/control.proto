@@ -33,7 +33,6 @@ message RegisterRequest {
   // Certificate Signing Request (PEM-encoded PKCS#10)
   // Agent generates its own key pair and sends CSR for signing
   bytes csr = 4 [(buf.validate.field).required = true];
-  reserved 5;
 }
 
 message RegisterResponse {
@@ -50,7 +49,6 @@ message RegisterResponse {
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true
   ];
-  reserved 5;
 }
 
 // ============================================================================
@@ -60,7 +58,6 @@ message RegisterResponse {
 message RenewCertificateRequest {
   // Certificate Signing Request (PEM-encoded PKCS#10)
   bytes csr = 1 [(buf.validate.field).required = true];
-  reserved 2;
 }
 
 message RenewCertificateResponse {
@@ -68,7 +65,6 @@ message RenewCertificateResponse {
   bytes certificate = 1;
   // Certificate expiry
   google.protobuf.Timestamp not_after = 2;
-  reserved 3;
 }
 
 // ============================================================================
@@ -478,34 +474,30 @@ message SetDeviceInventoryIntervalRequest {
 // ============================================================================
 
 message RegistrationToken {
-  reserved 4, 11;
-  reserved "one_time", "owner_id";
   string id = 1;
   string value = 2; // Only returned on creation
   string name = 3;
-  int32 max_uses = 5; // 0 = unlimited
-  int32 current_uses = 6; // Derived COUNT(devices.registration_token_id); never stored on tokens
-  google.protobuf.Timestamp expires_at = 7;
-  google.protobuf.Timestamp created_at = 8;
-  string created_by = 9;
-  bool disabled = 10;
+  int32 max_uses = 4; // 0 = unlimited
+  int32 current_uses = 5; // Derived COUNT(devices.registration_token_id); never stored on tokens
+  google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp created_at = 7;
+  string created_by = 8;
+  bool disabled = 9;
 }
 
 message CreateTokenRequest {
-  reserved 2, 5;
-  reserved "one_time", "owner_id";
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 128
   ];
-  int32 max_uses = 3 [
+  int32 max_uses = 2 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ]; // 0 = unlimited (for reusable tokens)
   // Enrollment tokens always expire. Set a sufficiently long TTL for the
   // rollout; 0/unset is intentionally not a valid token.
-  google.protobuf.Timestamp expires_at = 4 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp expires_at = 3 [(buf.validate.field).required = true];
 }
 
 message CreateTokenResponse {

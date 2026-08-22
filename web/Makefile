@@ -22,16 +22,10 @@ install:
 # Override either var on the command line when running against a
 # different marketplace instance, e.g.:
 #   make dev PUBLIC_MARKETPLACE_URL=https://marketplace.example.com
-#
-# VITE_SKIP_AUTH defaults to 1 here (TEMPORARY: fake admin session so the
-# UI starts without a control server; compile-time dev-only, see
-# src/lib/dev/skip-auth.ts). Run `make dev VITE_SKIP_AUTH=0` for the real
-# login flow.
 dev:
 	PUBLIC_SKIP_FEATURE_FLAGS=true \
 	PUBLIC_ENABLE_MARKETPLACE=$${PUBLIC_ENABLE_MARKETPLACE:-true} \
 	PUBLIC_MARKETPLACE_URL=$${PUBLIC_MARKETPLACE_URL:-http://marketplace.localhost:5180} \
-	VITE_SKIP_AUTH=$${VITE_SKIP_AUTH:-1} \
 	npm run dev
 
 # Production build

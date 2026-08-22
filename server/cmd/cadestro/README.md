@@ -82,15 +82,6 @@ search semantics. PostgreSQL is removed and guarded against return.
 
 ## Development
 
-<!-- docref: begin src=cmd/cadestro/devauth.go#wrapDevAuth:42bbf137,cmd/cadestro/devauth.go#devAuthEnabled:4a7b3325 -->
-The development session endpoint is available only in a `devauth` build run
-with `CADESTRO_DEV_AUTH=1` and a `CADESTRO_DEV_AUTH_TOKEN` of at least 32 bytes. Start Vite
-with the same token; its loopback-only proxy injects the token and forwards the
-original client address into `/dev/session` without exposing the token to
-browser code. Control requires both proxy and original client hops to be
-loopback and refuses requests without the matching token.
-<!-- docref: end -->
-
 ```bash
 go build ./cmd/cadestro
 go test -p 1 ./...

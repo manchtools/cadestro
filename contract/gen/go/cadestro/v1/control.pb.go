@@ -3086,12 +3086,12 @@ type RegistrationToken struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"` // Only returned on creation
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	MaxUses       int32                  `protobuf:"varint,5,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`             // 0 = unlimited
-	CurrentUses   int32                  `protobuf:"varint,6,opt,name=current_uses,json=currentUses,proto3" json:"current_uses,omitempty"` // Derived COUNT(devices.registration_token_id); never stored on tokens
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CreatedBy     string                 `protobuf:"bytes,9,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	Disabled      bool                   `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	MaxUses       int32                  `protobuf:"varint,4,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`             // 0 = unlimited
+	CurrentUses   int32                  `protobuf:"varint,5,opt,name=current_uses,json=currentUses,proto3" json:"current_uses,omitempty"` // Derived COUNT(devices.registration_token_id); never stored on tokens
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedBy     string                 `protobuf:"bytes,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	Disabled      bool                   `protobuf:"varint,9,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3192,10 +3192,10 @@ func (x *RegistrationToken) GetDisabled() bool {
 type CreateTokenRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	MaxUses int32                  `protobuf:"varint,3,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"` // 0 = unlimited (for reusable tokens)
+	MaxUses int32                  `protobuf:"varint,2,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"` // 0 = unlimited (for reusable tokens)
 	// Enrollment tokens always expire. Set a sufficiently long TTL for the
 	// rollout; 0/unset is intentionally not a valid token.
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -20658,24 +20658,24 @@ var File_cadestro_v1_control_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1ecadestro/v1/validate_ext.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb2\x01\n" +
+	"\x19cadestro/v1/control.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x17cadestro/v1/agent.proto\x1a\x18cadestro/v1/common.proto\x1a\x1ecadestro/v1/validate_ext.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xac\x01\n" +
 	"\x0fRegisterRequest\x12!\n" +
 	"\x05token\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\xff\x01R\x05token\x12)\n" +
 	"\bhostname\x18\x02 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x01\x18\xfd\x01R\bhostname\x121\n" +
 	"\ragent_version\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\fagentVersion\x12\x18\n" +
-	"\x03csr\x18\x04 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csrJ\x04\b\x05\x10\x06\"\xcd\x01\n" +
+	"\x03csr\x18\x04 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csr\"\xc7\x01\n" +
 	"\x10RegisterResponse\x12:\n" +
 	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\x12\x1f\n" +
 	"\aca_cert\x18\x02 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x06caCert\x12(\n" +
 	"\vcertificate\x18\x03 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\vcertificate\x12,\n" +
 	"\vcontrol_url\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\n" +
-	"controlUrlJ\x04\b\x05\x10\x06\"9\n" +
+	"controlUrl\"3\n" +
 	"\x17RenewCertificateRequest\x12\x18\n" +
-	"\x03csr\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csrJ\x04\b\x02\x10\x03\"{\n" +
+	"\x03csr\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csr\"u\n" +
 	"\x18RenewCertificateResponse\x12 \n" +
 	"\vcertificate\x18\x01 \x01(\fR\vcertificate\x127\n" +
-	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfterJ\x04\b\x03\x10\x04\"B\n" +
+	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bnotAfter\"B\n" +
 	"\x13RefreshTokenRequest\x12+\n" +
 	"\rrefresh_token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\frefreshToken\"\x99\x01\n" +
 	"\x14RefreshTokenResponse\x12!\n" +
@@ -20893,28 +20893,27 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"!SetDeviceInventoryIntervalRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12K\n" +
 	"\x1ainventory_interval_minutes\x18\x02 \x01(\x05B\r\xbaH\n" +
-	"\xd8\x01\x01\x1a\x05\x18\xe0N(xR\x18inventoryIntervalMinutes\"\xdc\x02\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xe0N(xR\x18inventoryIntervalMinutes\"\xbc\x02\n" +
 	"\x11RegistrationToken\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x19\n" +
-	"\bmax_uses\x18\x05 \x01(\x05R\amaxUses\x12!\n" +
-	"\fcurrent_uses\x18\x06 \x01(\x05R\vcurrentUses\x129\n" +
+	"\bmax_uses\x18\x04 \x01(\x05R\amaxUses\x12!\n" +
+	"\fcurrent_uses\x18\x05 \x01(\x05R\vcurrentUses\x129\n" +
 	"\n" +
-	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
+	"expires_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"created_by\x18\t \x01(\tR\tcreatedBy\x12\x1a\n" +
-	"\bdisabled\x18\n" +
-	" \x01(\bR\bdisabledJ\x04\b\x04\x10\x05J\x04\b\v\x10\fR\bone_timeR\bowner_id\"\xc1\x01\n" +
+	"created_by\x18\b \x01(\tR\tcreatedBy\x12\x1a\n" +
+	"\bdisabled\x18\t \x01(\bR\bdisabled\"\xa1\x01\n" +
 	"\x12CreateTokenRequest\x12!\n" +
 	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x01\x18\x80\x01R\x04name\x12%\n" +
-	"\bmax_uses\x18\x03 \x01(\x05B\n" +
+	"\bmax_uses\x18\x02 \x01(\x05B\n" +
 	"\xbaH\a\xd8\x01\x01\x1a\x02(\x00R\amaxUses\x12A\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAtJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x06R\bone_timeR\bowner_id\"\x96\x01\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAt\"\x96\x01\n" +
 	"\x13CreateTokenResponse\x124\n" +
 	"\x05token\x18\x01 \x01(\v2\x1e.cadestro.v1.RegistrationTokenR\x05token\x12I\n" +
 	"\x12ca_fingerprint_pin\x18\x02 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x92\x01\n" +

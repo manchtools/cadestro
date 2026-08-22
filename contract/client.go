@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -321,31 +320,6 @@ func newHTTPClientWithTLS(tlsConfig *tls.Config) *http.Client {
 		slog.Default().Warn("failed to configure HTTP/2 transport; falling back to HTTP/1.1 (bidirectional streaming will not work)", "error", err)
 	}
 	return &http.Client{Transport: transport}
-}
-
-// WithH2C configures the client to use HTTP/2 cleartext (h2c) without TLS.
-// This is useful for development/testing when connecting to servers that
-// use h2c instead of HTTPS.
-// WARNING: Only use this for development/testing - data is not encrypted!
-func WithH2C() ClientOption {
-	return &funcOption{func(c *Client, httpClient **http.Client) {
-		*httpClient = &http.Client{
-			Transport: &http2.Transport{
-				// Allow h2c (HTTP/2 without TLS)
-				AllowHTTP: true,
-				// Use a custom DialTLSContext that returns a plain TCP connection
-				DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
-					d := net.Dialer{
-						Timeout:   30 * time.Second,
-						KeepAlive: 30 * time.Second,
-					}
-					return d.DialContext(ctx, network, addr)
-				},
-				// Disable connection pooling to avoid stale connections
-				DisableCompression: true,
-			},
-		}
-	}}
 }
 
 // bootstrapHTTPClient is the default client for the unauthenticated

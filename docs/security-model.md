@@ -58,37 +58,6 @@ carry a SHA-256 fingerprint of the origin, which is enough to correlate events
 from one source without storing an address log.
 <!-- docref: end -->
 
-### The development bypass
-
-Cadestro ships a development authentication bypass. It is worth describing
-precisely, because "there is a bypass" is the kind of sentence that deserves
-detail rather than reassurance.
-
-<!-- docref: begin src=server/cmd/cadestro/devauth_stub.go#wrapDevAuth:93667767 -->
-**It is not in the production binary.** The bypass lives behind a `devauth`
-build tag. The default build compiles a stub whose wrapper returns the handler
-unchanged. There is deliberately no configuration variable to enable it — an
-option to skip authentication is the first thing an attacker looks for.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/cmd/cadestro/devauth.go#devAuthEnabled:4a7b3325 -->
-Even in a build that contains it, it stays off unless an environment variable is
-set *and* a token of at least 32 characters is configured. Compiling it in is
-not enabling it.
-<!-- docref: end -->
-
-<!-- docref: begin src=server/cmd/cadestro/devauth.go#devRequestIsLocal:76043d91 -->
-And when enabled, it authorizes the **original client**, not the connection it
-sees. A development proxy terminates the browser's connection, so a loopback
-peer address proves only that the proxy is local. The check therefore requires a
-forwarded-for header to be present (its absence is a refusal), refuses a request
-carrying an RFC 7239 `Forwarded` header, and requires every address in the chain
-— plus any real-IP header — to be loopback. A remotely reachable proxy cannot
-turn its own local backend connection into evidence of a local caller. The
-request must also carry the token, compared in constant time, and any origin
-must be one of four fixed development origins.
-<!-- docref: end -->
-
 ---
 
 ## 2. Identity

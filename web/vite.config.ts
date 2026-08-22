@@ -9,7 +9,6 @@ import { defineConfig } from 'vite';
 // ever talks to this (trusted, basic-ssl) dev origin, so control's self-signed
 // cert never needs manual acceptance. Override with VITE_DEV_CONTROL_URL.
 const DEV_CONTROL_TARGET = process.env.VITE_DEV_CONTROL_URL || 'https://127.0.0.1:8081';
-const DEV_AUTH_TOKEN = process.env.CADESTRO_DEV_AUTH_TOKEN || '';
 
 export default defineConfig({
 	define: {
@@ -26,8 +25,6 @@ export default defineConfig({
 		dedupe: ['@bufbuild/protobuf']
 	},
 	server: {
-		// This proxy holds CADESTRO_DEV_AUTH_TOKEN and can mint administrator
-		// sessions, so it must never accept a non-loopback client.
 		host: '127.0.0.1',
 		// Vite 5.4+ rejects unknown Host headers to protect against DNS
 		// rebinding. The marketplace iframe flow depends on accessing
@@ -45,13 +42,6 @@ export default defineConfig({
 				target: DEV_CONTROL_TARGET,
 				changeOrigin: true,
 				secure: false
-			},
-			'/dev/session': {
-				target: DEV_CONTROL_TARGET,
-				changeOrigin: true,
-				secure: false,
-				xfwd: true,
-				headers: DEV_AUTH_TOKEN ? { 'X-Cadestro-Dev-Auth': DEV_AUTH_TOKEN } : {}
 			},
 			'/health': { target: DEV_CONTROL_TARGET, changeOrigin: true, secure: false }
 		}

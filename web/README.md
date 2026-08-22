@@ -110,9 +110,7 @@ package has to exist for a build to resolve it.
 |----------|-------------|
 | `PUBLIC_CONTROL_URL` | Origin of the control server this UI talks to, read at runtime by the server that serves the app. Set, it preconfigures the browser so a fresh install never stops at `/setup`; unset, the app asks for the URL there as before. The reference deployment renders it from `CONTROL_DOMAIN` and serves the UI on that same origin. |
 | `BASE_PATH` | Base path prefix for non-root deployments (default: `/`). Affects SvelteKit `base`, the PWA scope, and the version-pinning cookie path. |
-| `CADESTRO_DEV_AUTH_TOKEN` | Server-side-only token shared with a control `devauth` build. Use at least 32 random bytes; the loopback-only Vite proxy injects it into `/dev/session` and forwards the original client address without exposing the token to browser code. |
 | `VITE_DEV_CONTROL_URL` | Control target for the local Vite proxy (default: `https://127.0.0.1:8081`). |
-| `VITE_SKIP_AUTH` | **Temporary, dev-only.** `1` seeds a fake admin session so the UI starts without a control server (RPCs still fail; pages show their empty/error states). `make dev` sets it by default; use `make dev VITE_SKIP_AUTH=0` (or plain `npm run dev`) for the real login flow. Compile-time-guarded via `import.meta.env.DEV` — it has no effect in production builds. Close the tab or log out to drop the fake session. |
 
 The control server URL is a runtime value, never a build-time one. `PUBLIC_CONTROL_URL`
 seeds it once, before the first route guard runs; the operator can still change

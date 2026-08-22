@@ -1,7 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	// Dev-only, compile-time-guarded; see the module for the removal note.
-	import '$lib/dev/skip-auth';
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import { pwaInfo } from 'virtual:pwa-info';
