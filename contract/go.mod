@@ -3,6 +3,7 @@ module github.com/manchtools/cadestro/contract
 go 1.25.12
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260709200747-435963d16310.1
 	connectrpc.com/connect v1.20.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/oklog/ulid/v2 v2.1.2

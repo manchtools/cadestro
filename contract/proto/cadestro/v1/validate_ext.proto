@@ -1,0 +1,15 @@
+syntax = "proto2";
+
+package cadestro.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
+
+extend buf.validate.StringRules {
+  optional bool ulid_optional = 1000 [(buf.validate.predefined).cel = {
+    id: "string.ulid_optional"
+    message: "value must be empty or a valid ULID"
+    expression: "!rule || this == '' || this.matches('^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$')"
+  }];
+}

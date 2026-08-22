@@ -64,13 +64,7 @@ gofmt-gen:
 generate-go:
 	@rm -f $(GEN_DIR)/go/cadestro/v1/*.pb.go $(GEN_DIR)/go/cadestro/v1/cadestrov1connect/*.connect.go
 	@mkdir -p $(GEN_DIR)/go/cadestro/v1
-	protoc \
-		--proto_path=$(PROTO_DIR) \
-		--go_out=$(GEN_DIR)/go \
-		--go_opt=paths=source_relative \
-		--connect-go_out=$(GEN_DIR)/go \
-		--connect-go_opt=paths=source_relative \
-		$(PROTO_DIR)/cadestro/v1/*.proto
+	$(BUF) generate --template buf.gen.go.yaml
 
 inject-tags:
 	protoc-go-inject-tag -input="$(GEN_DIR)/go/cadestro/v1/*.pb.go"
@@ -80,7 +74,7 @@ inject-tags:
 # release, so a stale *_pb.ts ships to consumers as a live export.
 generate-ts:
 	@rm -f $(GEN_DIR)/ts/cadestro/v1/*_pb.ts
-	$(BUF) generate
+	$(BUF) generate --template buf.gen.ts.yaml
 
 clean:
 	rm -rf $(GEN_DIR)
