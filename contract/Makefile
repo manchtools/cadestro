@@ -1,4 +1,4 @@
-.PHONY: generate generate-go generate-ts gofmt-gen clean install-tools
+.PHONY: generate generate-go generate-ts clean install-tools
 
 # Proto source directory
 PROTO_DIR := proto
@@ -24,30 +24,13 @@ BUF := $(MAKEFILE_DIR)scripts/buf.sh
 # .pb.go file and fail the generated-drift gate on unrelated PRs. Bumping the
 # module in go.mod moves the plugin with it. `go list -m` fails loudly if a
 # module disappears, so an empty version can never silently mean @latest.
-# protoc-go-inject-tag is recorded the same way, as a go.mod tool dependency,
-# so it is pinned rather than @latest.
 install-tools:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@$$(go list -m -f '{{.Version}}' google.golang.org/protobuf)
 	go install connectrpc.com/connect/cmd/protoc-gen-connect-go@$$(go list -m -f '{{.Version}}' connectrpc.com/connect)
-	go install github.com/favadi/protoc-go-inject-tag@$$(go list -m -f '{{.Version}}' github.com/favadi/protoc-go-inject-tag)
 
-# NOT prerequisites: make may satisfy those in any order, and concurrently
-# under -j. This pipeline is strictly ordered — protoc writes the files,
-# inject-tags rewrites their struct tags, gofmt cleans up after inject-tags —
-# so the stages are invoked in sequence instead.
 generate:
 	$(MAKE) generate-go
-	$(MAKE) inject-tags
-	$(MAKE) gofmt-gen
 	$(MAKE) generate-ts
-
-# protoc-go-inject-tag rewrites struct tags but does NOT re-run gofmt
-# afterwards, so its output can leave the generated .pb.go files with
-# multi-field struct alignment that gofmt -l flags. Run gofmt -w over
-# the gen directory once at the end of the Go pipeline to keep the
-# committed gen files clean against `gofmt -l ./...`.
-gofmt-gen:
-	gofmt -w $(GEN_DIR)/go
 
 # protoc writes outputs; it never deletes outputs whose INPUT is gone. Removing
 # or MOVING a .proto therefore leaves an orphaned .pb.go behind — and because a
@@ -65,9 +48,6 @@ generate-go:
 	@rm -f $(GEN_DIR)/go/cadestro/v1/*.pb.go $(GEN_DIR)/go/cadestro/v1/cadestrov1connect/*.connect.go
 	@mkdir -p $(GEN_DIR)/go/cadestro/v1
 	$(BUF) generate --template buf.gen.go.yaml
-
-inject-tags:
-	protoc-go-inject-tag -input="$(GEN_DIR)/go/cadestro/v1/*.pb.go"
 
 # Same orphan problem as generate-go: buf writes outputs and leaves behind any
 # whose .proto input was deleted, and gen/ts is archived directly into the npm
