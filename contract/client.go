@@ -17,14 +17,14 @@ import (
 	"sync"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
-	"github.com/go-playground/validator/v10"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/net/http2"
+	"google.golang.org/protobuf/proto"
 
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
-	"github.com/manchtools/cadestro/contract/validate"
 )
 
 // Heartbeat interval bounds. The SDK clamps server-supplied values from
@@ -49,9 +49,9 @@ type Client struct {
 	// not leak a transport per reconnect attempt (WS13 #8).
 	httpClient *http.Client
 
-	// validator enforces the inbound `validate` gotags on each server command
+	// validator enforces the inbound buf.validate rules on each server command
 	// before dispatch. Created in NewClient.
-	validator *validator.Validate
+	validator protovalidate.Validator
 
 	mu     sync.RWMutex
 	stream *connect.BidiStreamForClient[pm.AgentMessage, pm.ServerMessage]
@@ -115,9 +115,13 @@ const (
 
 // NewClient creates a new SDK client.
 func NewClient(serverURL string, opts ...ClientOption) *Client {
+	v, err := protovalidate.New()
+	if err != nil {
+		panic(fmt.Sprintf("contract: building protovalidate validator failed: %v", err))
+	}
 	c := &Client{
 		logger:         slog.Default(),
-		validator:      validate.NewValidator(),
+		validator:      v,
 		sendSem:        make(chan struct{}, 1),
 		invSem:         make(chan struct{}, inventoryDispatchConcurrency),
 		luksRevokeSem:  make(chan struct{}, luksRevokeDispatchConcurrency),
@@ -1273,14 +1277,19 @@ func (c *Client) safeGo(label string, fn func()) {
 // a malformed-but-non-nil frame (out-of-range PTY dims, non-ULID session id,
 // empty action envelope) past the SDK boundary into a handler.
 func (c *Client) validateInbound(payload any) error {
+	msg, ok := payload.(proto.Message)
+	if !ok {
+		return fmt.Errorf("inbound payload is not a proto.Message: %T", payload)
+	}
 	v := c.validator
 	if v == nil {
-		v = validate.NewValidator()
+		var err error
+		v, err = protovalidate.New()
+		if err != nil {
+			return err
+		}
 	}
-	if msg, ok := validate.Struct(v, payload); !ok {
-		return errors.New(msg)
-	}
-	return nil
+	return v.Validate(msg)
 }
 
 func (c *Client) validateServerMessage(msg *pm.ServerMessage) error {

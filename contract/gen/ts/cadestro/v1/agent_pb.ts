@@ -4,10 +4,12 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { Action, ActionResult, ActionSchedule, LpsPasswordComplexity } from "./actions_pb";
 import { file_cadestro_v1_actions } from "./actions_pb";
 import type { DeviceId, ExecutionStatus, MaintenanceWindow, RotationReason } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
+import { file_cadestro_v1_validate_ext } from "./validate_ext_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
@@ -16,15 +18,13 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/agent.proto.
  */
 export const file_cadestro_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEi5wgKDEFnZW50TWVzc2FnZRIKCgJpZBgBIAEoCRIjCgVoZWxsbxgKIAEoCzISLmNhZGVzdHJvLnYxLkhlbGxvSAASKwoJaGVhcnRiZWF0GAsgASgLMhYuY2FkZXN0cm8udjEuSGVhcnRiZWF0SAASMAoMc3luY19yZXF1ZXN0GAwgASgLMhguY2FkZXN0cm8udjEuU3luY1JlcXVlc3RIABI7ChJzeW5jX2RldmljZV9yZXN1bHQYGCABKAsyHS5jYWRlc3Ryby52MS5TeW5jRGV2aWNlUmVzdWx0SAASPwoUcmVib290X2RldmljZV9yZXN1bHQYGSABKAsyHy5jYWRlc3Ryby52MS5SZWJvb3REZXZpY2VSZXN1bHRIABIyCg1hY3Rpb25fcmVzdWx0GBQgASgLMhkuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0SAASMAoMb3V0cHV0X2NodW5rGBUgASgLMhguY2FkZXN0cm8udjEuT3V0cHV0Q2h1bmtIABI2Cg9tYW5pZmVzdF9yZXN1bHQYFyABKAsyGy5jYWRlc3Ryby52MS5NYW5pZmVzdFJlc3VsdEgAEjIKDHF1ZXJ5X3Jlc3VsdBgeIAEoCzIaLmNhZGVzdHJvLnYxLk9TUXVlcnlSZXN1bHRIABIxCglpbnZlbnRvcnkYHyABKAsyHC5jYWRlc3Ryby52MS5EZXZpY2VJbnZlbnRvcnlIABI0Cg5zZWN1cml0eV9hbGVydBgoIAEoCzIaLmNhZGVzdHJvLnYxLlNlY3VyaXR5QWxlcnRIABI2CgxnZXRfbHVrc19rZXkYMiABKAsyHi5jYWRlc3Ryby52MS5HZXRMdWtzS2V5UmVxdWVzdEgAEjoKDnN0b3JlX2x1a3Nfa2V5GDMgASgLMiAuY2FkZXN0cm8udjEuU3RvcmVMdWtzS2V5UmVxdWVzdEgAEk8KHXJldm9rZV9sdWtzX2RldmljZV9rZXlfcmVzdWx0GDQgASgLMiYuY2FkZXN0cm8udjEuUmV2b2tlTHVrc0RldmljZUtleVJlc3VsdEgAEkQKE3N0b3JlX2xwc19wYXNzd29yZHMYNSABKAsyJS5jYWRlc3Ryby52MS5TdG9yZUxwc1Bhc3N3b3Jkc1JlcXVlc3RIABJEChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiUuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0SAASNwoQbG9nX3F1ZXJ5X3Jlc3VsdBg8IAEoCzIbLmNhZGVzdHJvLnYxLkxvZ1F1ZXJ5UmVzdWx0SAASNgoPdGVybWluYWxfb3V0cHV0GEYgASgLMhsuY2FkZXN0cm8udjEuVGVybWluYWxPdXRwdXRIABJBChV0ZXJtaW5hbF9zdGF0ZV9jaGFuZ2UYRyABKAsyIC5jYWRlc3Ryby52MS5UZXJtaW5hbFN0YXRlQ2hhbmdlSABCCQoHcGF5bG9hZCJyCgtPdXRwdXRDaHVuaxIUCgxleGVjdXRpb25faWQYASABKAkSLQoGc3RyZWFtGAIgASgOMh0uY2FkZXN0cm8udjEuT3V0cHV0U3RyZWFtVHlwZRIMCgRkYXRhGAMgASgMEhAKCHNlcXVlbmNlGAQgASgDInwKBUhlbGxvEigKCWRldmljZV9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkEhUKDWFnZW50X3ZlcnNpb24YAiABKAkSEAoIaG9zdG5hbWUYAyABKAkSEgoKYXV0aF90b2tlbhgEIAEoCRIMCgRhcmNoGAUgASgJInkKCUhlYXJ0YmVhdBIpCgZ1cHRpbWUYASABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SEwoLY3B1X3BlcmNlbnQYAiABKAISFgoObWVtb3J5X3BlcmNlbnQYAyABKAISFAoMZGlza19wZXJjZW50GAQgASgCIrgBCg1TZWN1cml0eUFsZXJ0EiwKBHR5cGUYASABKA4yHi5jYWRlc3Ryby52MS5TZWN1cml0eUFsZXJ0VHlwZRIPCgdtZXNzYWdlGAIgASgJEjgKB2RldGFpbHMYAyADKAsyJy5jYWRlc3Ryby52MS5TZWN1cml0eUFsZXJ0LkRldGFpbHNFbnRyeRouCgxEZXRhaWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLxBwoNU2VydmVyTWVzc2FnZRIKCgJpZBgBIAEoCRI1CgtzeW5jX2RldmljZRgLIAEoCzIeLmNhZGVzdHJvLnYxLlN5bmNEZXZpY2VDb21tYW5kSAASJwoHd2VsY29tZRgKIAEoCzIULmNhZGVzdHJvLnYxLldlbGNvbWVIABIsCgpzeW5jX3N0YXRlGAwgASgLMhYuY2FkZXN0cm8udjEuU3luY1N0YXRlSAASOQoNcmVib290X2RldmljZRgNIAEoCzIgLmNhZGVzdHJvLnYxLlJlYm9vdERldmljZUNvbW1hbmRIABIlCgVxdWVyeRgeIAEoCzIULmNhZGVzdHJvLnYxLk9TUXVlcnlIABI6ChFyZXF1ZXN0X2ludmVudG9yeRgfIAEoCzIdLmNhZGVzdHJvLnYxLlJlcXVlc3RJbnZlbnRvcnlIABIjCgVlcnJvchgoIAEoCzISLmNhZGVzdHJvLnYxLkVycm9ySAASNwoMZ2V0X2x1a3Nfa2V5GDIgASgLMh8uY2FkZXN0cm8udjEuR2V0THVrc0tleVJlc3BvbnNlSAASOwoOc3RvcmVfbHVrc19rZXkYMyABKAsyIS5jYWRlc3Ryby52MS5TdG9yZUx1a3NLZXlSZXNwb25zZUgAEkIKFnJldm9rZV9sdWtzX2RldmljZV9rZXkYNCABKAsyIC5jYWRlc3Ryby52MS5SZXZva2VMdWtzRGV2aWNlS2V5SAASRQoTc3RvcmVfbHBzX3Bhc3N3b3Jkcxg1IAEoCzImLmNhZGVzdHJvLnYxLlN0b3JlTHBzUGFzc3dvcmRzUmVzcG9uc2VIABJFChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiYuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZUgAEiwKCnJlc3VsdF9hY2sYGCABKAsyFi5jYWRlc3Ryby52MS5SZXN1bHRBY2tIABIqCglsb2dfcXVlcnkYPCABKAsyFS5jYWRlc3Ryby52MS5Mb2dRdWVyeUgAEjQKDnRlcm1pbmFsX3N0YXJ0GEYgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxTdGFydEgAEjQKDnRlcm1pbmFsX2lucHV0GEcgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxJbnB1dEgAEjYKD3Rlcm1pbmFsX3Jlc2l6ZRhIIAEoCzIbLmNhZGVzdHJvLnYxLlRlcm1pbmFsUmVzaXplSAASMgoNdGVybWluYWxfc3RvcBhJIAEoCzIZLmNhZGVzdHJvLnYxLlRlcm1pbmFsU3RvcEgAQgkKB3BheWxvYWQiEwoRU3luY0RldmljZUNvbW1hbmQiFQoTUmVib290RGV2aWNlQ29tbWFuZCIjChBTeW5jRGV2aWNlUmVzdWx0Eg8KB3N1Y2Nlc3MYASABKAgiJQoSUmVib290RGV2aWNlUmVzdWx0Eg8KB3N1Y2Nlc3MYASABKAgicgoHV2VsY29tZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SGAoQZGV2aWNlX2xvZ2luX3VybBgDIAEoCSJVChJNYW5pZmVzdFByb3ZlbmFuY2USFQoNZGVmaW5pdGlvbl9pZBgBIAEoCRIVCg1hY3Rpb25fc2V0X2lkGAIgASgJEhEKCWFjdGlvbl9pZBgDIAEoCSJ8ChJNYW5pZmVzdE9jY3VycmVuY2USFQoNb2NjdXJyZW5jZV9pZBgBIAEoCRIjCgZhY3Rpb24YAiABKAsyEy5jYWRlc3Ryby52MS5BY3Rpb24SKgoKb25fZmFpbHVyZRgDIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZSL/AQoITWFuaWZlc3QSEwoLbWFuaWZlc3RfaWQYASABKAkSMwoKcHJvdmVuYW5jZRgCIAEoCzIfLmNhZGVzdHJvLnYxLk1hbmlmZXN0UHJvdmVuYW5jZRItCghzY2hlZHVsZRgDIAEoCzIbLmNhZGVzdHJvLnYxLkFjdGlvblNjaGVkdWxlEjIKEmRlZmF1bHRfb25fZmFpbHVyZRgEIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZRI0CgtvY2N1cnJlbmNlcxgFIAMoCzIfLmNhZGVzdHJvLnYxLk1hbmlmZXN0T2NjdXJyZW5jZRIQCghvbmVfc2hvdBgGIAEoCCJQChBNYW5pZmVzdERlbGl2ZXJ5EhMKC2RlbGl2ZXJ5X2lkGAEgASgJEicKCG1hbmlmZXN0GAIgASgLMhUuY2FkZXN0cm8udjEuTWFuaWZlc3QivgEKDk1hbmlmZXN0UmVzdWx0EhMKC2RlbGl2ZXJ5X2lkGAEgASgJEhMKC21hbmlmZXN0X2lkGAIgASgJEiwKBnN0YXR1cxgDIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1cxIwCgxjb21wbGV0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2R1cmF0aW9uX21zGAUgASgDEg0KBWVycm9yGAYgASgJIisKCVJlc3VsdEFjaxIQCghhY2NlcHRlZBgBIAEoCBIMCgRjb2RlGAIgASgJIiYKBUVycm9yEgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCSKJAQoHT1NRdWVyeRIQCghxdWVyeV9pZBgBIAEoCRINCgV0YWJsZRgCIAEoCRIPCgdjb2x1bW5zGAMgAygJEiwKBXdoZXJlGAQgAygLMh0uY2FkZXN0cm8udjEuT1NRdWVyeUNvbmRpdGlvbhINCgVsaW1pdBgFIAEoBRIPCgdyYXdfc3FsGAYgASgJIlUKEE9TUXVlcnlDb25kaXRpb24SDgoGY29sdW1uGAEgASgJEiIKAm9wGAIgASgOMhYuY2FkZXN0cm8udjEuT1NRdWVyeU9wEg0KBXZhbHVlGAMgASgJImgKDU9TUXVlcnlSZXN1bHQSEAoIcXVlcnlfaWQYASABKAkSDwoHc3VjY2VzcxgCIAEoCBINCgVlcnJvchgDIAEoCRIlCgRyb3dzGAQgAygLMhcuY2FkZXN0cm8udjEuT1NRdWVyeVJvdyJqCgpPU1F1ZXJ5Um93Ei8KBGRhdGEYASADKAsyIS5jYWRlc3Ryby52MS5PU1F1ZXJ5Um93LkRhdGFFbnRyeRorCglEYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI+Cg9EZXZpY2VJbnZlbnRvcnkSKwoGdGFibGVzGAEgAygLMhsuY2FkZXN0cm8udjEuSW52ZW50b3J5VGFibGUiSwoOSW52ZW50b3J5VGFibGUSEgoKdGFibGVfbmFtZRgBIAEoCRIlCgRyb3dzGAIgAygLMhcuY2FkZXN0cm8udjEuT1NRdWVyeVJvdyIkChBSZXF1ZXN0SW52ZW50b3J5EhAKCHF1ZXJ5X2lkGAEgASgJIiYKEUdldEx1a3NLZXlSZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCSItChJHZXRMdWtzS2V5UmVzcG9uc2USFwoKcGFzc3BocmFzZRgBIAEoDEIDgAEBIowBChNTdG9yZUx1a3NLZXlSZXF1ZXN0EhEKCWFjdGlvbl9pZBgBIAEoCRITCgtkZXZpY2VfcGF0aBgCIAEoCRIXCgpwYXNzcGhyYXNlGAMgASgMQgOAAQESNAoPcm90YXRpb25fcmVhc29uGAQgASgOMhsuY2FkZXN0cm8udjEuUm90YXRpb25SZWFzb24iJwoUU3RvcmVMdWtzS2V5UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJ/ChNMcHNQYXNzd29yZFJvdGF0aW9uEhAKCHVzZXJuYW1lGAEgASgJEhUKCHBhc3N3b3JkGAIgASgMQgOAAQESEgoKcm90YXRlZF9hdBgDIAEoCRIrCgZyZWFzb24YBCABKA4yGy5jYWRlc3Ryby52MS5Sb3RhdGlvblJlYXNvbiJiChhTdG9yZUxwc1Bhc3N3b3Jkc1JlcXVlc3QSEQoJYWN0aW9uX2lkGAEgASgJEjMKCXJvdGF0aW9ucxgCIAMoCzIgLmNhZGVzdHJvLnYxLkxwc1Bhc3N3b3JkUm90YXRpb24iLAoZU3RvcmVMcHNQYXNzd29yZHNSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIigKE1Jldm9rZUx1a3NEZXZpY2VLZXkSEQoJYWN0aW9uX2lkGAEgASgJIk4KGVJldm9rZUx1a3NEZXZpY2VLZXlSZXN1bHQSEQoJYWN0aW9uX2lkGAEgASgJEg8KB3N1Y2Nlc3MYAiABKAgSDQoFZXJyb3IYAyABKAkiKQoYVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0Eg0KBXRva2VuGAEgASgJIo8BChlWYWxpZGF0ZUx1a3NUb2tlblJlc3BvbnNlEhEKCWFjdGlvbl9pZBgBIAEoCRITCgtkZXZpY2VfcGF0aBgCIAEoCRISCgptaW5fbGVuZ3RoGAMgASgFEjYKCmNvbXBsZXhpdHkYBCABKA4yIi5jYWRlc3Ryby52MS5McHNQYXNzd29yZENvbXBsZXhpdHkiDQoLU3luY1JlcXVlc3QizQEKCVN5bmNTdGF0ZRIdChVzeW5jX2ludGVydmFsX21pbnV0ZXMYASABKAUSMQoKZGVsaXZlcmllcxgCIAMoCzIdLmNhZGVzdHJvLnYxLk1hbmlmZXN0RGVsaXZlcnkSOgoSbWFpbnRlbmFuY2Vfd2luZG93GAMgASgLMh4uY2FkZXN0cm8udjEuTWFpbnRlbmFuY2VXaW5kb3cSMgoOZGVzaXJlZF9wb2xpY3kYBCABKAsyGi5jYWRlc3Ryby52MS5EZXNpcmVkUG9saWN5IksKDURlc2lyZWRQb2xpY3kSEAoIcmV2aXNpb24YASABKAkSKAoJbWFuaWZlc3RzGAIgAygLMhUuY2FkZXN0cm8udjEuTWFuaWZlc3QirwEKCExvZ1F1ZXJ5EhAKCHF1ZXJ5X2lkGAEgASgJEg0KBWxpbmVzGAIgASgFEgwKBHVuaXQYAyABKAkSDQoFc2luY2UYBCABKAkSDQoFdW50aWwYBSABKAkSEAoIcHJpb3JpdHkYBiABKAkSDAoEZ3JlcBgHIAEoCRIOCgZrZXJuZWwYCCABKAgSJgoGc291cmNlGAkgASgOMhYuY2FkZXN0cm8udjEuTG9nU291cmNlIlAKDkxvZ1F1ZXJ5UmVzdWx0EhAKCHF1ZXJ5X2lkGAEgASgJEg8KB3N1Y2Nlc3MYAiABKAgSDQoFZXJyb3IYAyABKAkSDAoEbG9ncxgEIAEoCSJRCg1UZXJtaW5hbFN0YXJ0EhIKCnNlc3Npb25faWQYASABKAkSEAoIdHR5X3VzZXIYAiABKAkSDAoEY29scxgDIAEoDRIMCgRyb3dzGAQgASgNIjEKDVRlcm1pbmFsSW5wdXQSEgoKc2Vzc2lvbl9pZBgBIAEoCRIMCgRkYXRhGAIgASgMIkAKDlRlcm1pbmFsUmVzaXplEhIKCnNlc3Npb25faWQYASABKAkSDAoEY29scxgCIAEoDRIMCgRyb3dzGAMgASgNIjIKDFRlcm1pbmFsU3RvcBISCgpzZXNzaW9uX2lkGAEgASgJEg4KBnJlYXNvbhgCIAEoCSIyCg5UZXJtaW5hbE91dHB1dBISCgpzZXNzaW9uX2lkGAEgASgJEgwKBGRhdGEYAiABKAwifQoTVGVybWluYWxTdGF0ZUNoYW5nZRISCgpzZXNzaW9uX2lkGAEgASgJEjAKBXN0YXRlGAIgASgOMiEuY2FkZXN0cm8udjEuVGVybWluYWxTZXNzaW9uU3RhdGUSEQoJZXhpdF9jb2RlGAMgASgFEg0KBWVycm9yGAQgASgJKnQKEE91dHB1dFN0cmVhbVR5cGUSIgoeT1VUUFVUX1NUUkVBTV9UWVBFX1VOU1BFQ0lGSUVEEAASHQoZT1VUUFVUX1NUUkVBTV9UWVBFX1NURE9VVBABEh0KGU9VVFBVVF9TVFJFQU1fVFlQRV9TVERFUlIQAirIAQoRU2VjdXJpdHlBbGVydFR5cGUSIwofU0VDVVJJVFlfQUxFUlRfVFlQRV9VTlNQRUNJRklFRBAAEjMKL1NFQ1VSSVRZX0FMRVJUX1RZUEVfU0VSVkVSX1JFQVNTSUdOTUVOVF9BVFRFTVBUEAESLAooU0VDVVJJVFlfQUxFUlRfVFlQRV9DUkVERU5USUFMX1RBTVBFUklORxACEisKJ1NFQ1VSSVRZX0FMRVJUX1RZUEVfSU5WQUxJRF9DRVJUSUZJQ0FURRADKjkKCU9uRmFpbHVyZRIXChNPTl9GQUlMVVJFX0NPTlRJTlVFEAASEwoPT05fRkFJTFVSRV9TVE9QEAEqzAEKCU9TUXVlcnlPcBIbChdPU19RVUVSWV9PUF9VTlNQRUNJRklFRBAAEhIKDk9TX1FVRVJZX09QX0VREAESEgoOT1NfUVVFUllfT1BfTkUQAhISCg5PU19RVUVSWV9PUF9HVBADEhIKDk9TX1FVRVJZX09QX0xUEAQSEgoOT1NfUVVFUllfT1BfR0UQBRISCg5PU19RVUVSWV9PUF9MRRAGEhQKEE9TX1FVRVJZX09QX0xJS0UQBxIUChBPU19RVUVSWV9PUF9HTE9CEAgqOwoJTG9nU291cmNlEhcKE0xPR19TT1VSQ0VfSk9VUk5BTEQQABIVChFMT0dfU09VUkNFX1NZU0xPRxABKqcBChRUZXJtaW5hbFNlc3Npb25TdGF0ZRImCiJURVJNSU5BTF9TRVNTSU9OX1NUQVRFX1VOU1BFQ0lGSUVEEAASIgoeVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9TVEFSVEVEEAESIQodVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9FWElURUQQAhIgChxURVJNSU5BTF9TRVNTSU9OX1NUQVRFX0VSUk9SEAMyUwoMQWdlbnRTZXJ2aWNlEkMKBlN0cmVhbRIZLmNhZGVzdHJvLnYxLkFnZW50TWVzc2FnZRoaLmNhZGVzdHJvLnYxLlNlcnZlck1lc3NhZ2UoATABQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEi8QgKDEFnZW50TWVzc2FnZRIUCgJpZBgBIAEoCUIIukgFcgOYAgESIwoFaGVsbG8YCiABKAsyEi5jYWRlc3Ryby52MS5IZWxsb0gAEisKCWhlYXJ0YmVhdBgLIAEoCzIWLmNhZGVzdHJvLnYxLkhlYXJ0YmVhdEgAEjAKDHN5bmNfcmVxdWVzdBgMIAEoCzIYLmNhZGVzdHJvLnYxLlN5bmNSZXF1ZXN0SAASOwoSc3luY19kZXZpY2VfcmVzdWx0GBggASgLMh0uY2FkZXN0cm8udjEuU3luY0RldmljZVJlc3VsdEgAEj8KFHJlYm9vdF9kZXZpY2VfcmVzdWx0GBkgASgLMh8uY2FkZXN0cm8udjEuUmVib290RGV2aWNlUmVzdWx0SAASMgoNYWN0aW9uX3Jlc3VsdBgUIAEoCzIZLmNhZGVzdHJvLnYxLkFjdGlvblJlc3VsdEgAEjAKDG91dHB1dF9jaHVuaxgVIAEoCzIYLmNhZGVzdHJvLnYxLk91dHB1dENodW5rSAASNgoPbWFuaWZlc3RfcmVzdWx0GBcgASgLMhsuY2FkZXN0cm8udjEuTWFuaWZlc3RSZXN1bHRIABIyCgxxdWVyeV9yZXN1bHQYHiABKAsyGi5jYWRlc3Ryby52MS5PU1F1ZXJ5UmVzdWx0SAASMQoJaW52ZW50b3J5GB8gASgLMhwuY2FkZXN0cm8udjEuRGV2aWNlSW52ZW50b3J5SAASNAoOc2VjdXJpdHlfYWxlcnQYKCABKAsyGi5jYWRlc3Ryby52MS5TZWN1cml0eUFsZXJ0SAASNgoMZ2V0X2x1a3Nfa2V5GDIgASgLMh4uY2FkZXN0cm8udjEuR2V0THVrc0tleVJlcXVlc3RIABI6Cg5zdG9yZV9sdWtzX2tleRgzIAEoCzIgLmNhZGVzdHJvLnYxLlN0b3JlTHVrc0tleVJlcXVlc3RIABJPCh1yZXZva2VfbHVrc19kZXZpY2Vfa2V5X3Jlc3VsdBg0IAEoCzImLmNhZGVzdHJvLnYxLlJldm9rZUx1a3NEZXZpY2VLZXlSZXN1bHRIABJEChNzdG9yZV9scHNfcGFzc3dvcmRzGDUgASgLMiUuY2FkZXN0cm8udjEuU3RvcmVMcHNQYXNzd29yZHNSZXF1ZXN0SAASRAoTdmFsaWRhdGVfbHVrc190b2tlbhg2IAEoCzIlLmNhZGVzdHJvLnYxLlZhbGlkYXRlTHVrc1Rva2VuUmVxdWVzdEgAEjcKEGxvZ19xdWVyeV9yZXN1bHQYPCABKAsyGy5jYWRlc3Ryby52MS5Mb2dRdWVyeVJlc3VsdEgAEjYKD3Rlcm1pbmFsX291dHB1dBhGIAEoCzIbLmNhZGVzdHJvLnYxLlRlcm1pbmFsT3V0cHV0SAASQQoVdGVybWluYWxfc3RhdGVfY2hhbmdlGEcgASgLMiAuY2FkZXN0cm8udjEuVGVybWluYWxTdGF0ZUNoYW5nZUgAQgkKB3BheWxvYWQimwEKC091dHB1dENodW5rEh4KDGV4ZWN1dGlvbl9pZBgBIAEoCUIIukgFcgOYAgESNQoGc3RyZWFtGAIgASgOMh0uY2FkZXN0cm8udjEuT3V0cHV0U3RyZWFtVHlwZUIGukgDyAEBEhoKBGRhdGEYAyABKAxCDLpICcgBAXoEGICABBIZCghzZXF1ZW5jZRgEIAEoA0IHukgEIgIoACK6AQoFSGVsbG8SMAoJZGV2aWNlX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuRGV2aWNlSWRCBrpIA8gBARIjCg1hZ2VudF92ZXJzaW9uGAIgASgJQgy6SAnIAQFyBBABGCASHwoIaG9zdG5hbWUYAyABKAlCDbpICsgBAXIFEAEY/QESHwoKYXV0aF90b2tlbhgEIAEoCUILukgI2AEBcgMYgCASGAoEYXJjaBgFIAEoCUIKukgH2AEBcgIYECK1AQoJSGVhcnRiZWF0EikKBnVwdGltZRgBIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhInCgtjcHVfcGVyY2VudBgCIAEoAkISukgP2AEBCgodAADIQi0AAAAAEioKDm1lbW9yeV9wZXJjZW50GAMgASgCQhK6SA/YAQEKCh0AAMhCLQAAAAASKAoMZGlza19wZXJjZW50GAQgASgCQhK6SA/YAQEKCh0AAMhCLQAAAAAi5AEKDVNlY3VyaXR5QWxlcnQSNAoEdHlwZRgBIAEoDjIeLmNhZGVzdHJvLnYxLlNlY3VyaXR5QWxlcnRUeXBlQga6SAPIAQESHgoHbWVzc2FnZRgCIAEoCUINukgKyAEBcgUQARiACBJNCgdkZXRhaWxzGAMgAygLMicuY2FkZXN0cm8udjEuU2VjdXJpdHlBbGVydC5EZXRhaWxzRW50cnlCE7pIEJoBDSIEcgIYQCoFcgMYgAgaLgoMRGV0YWlsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi+wcKDVNlcnZlck1lc3NhZ2USFAoCaWQYASABKAlCCLpIBXIDmAIBEjUKC3N5bmNfZGV2aWNlGAsgASgLMh4uY2FkZXN0cm8udjEuU3luY0RldmljZUNvbW1hbmRIABInCgd3ZWxjb21lGAogASgLMhQuY2FkZXN0cm8udjEuV2VsY29tZUgAEiwKCnN5bmNfc3RhdGUYDCABKAsyFi5jYWRlc3Ryby52MS5TeW5jU3RhdGVIABI5Cg1yZWJvb3RfZGV2aWNlGA0gASgLMiAuY2FkZXN0cm8udjEuUmVib290RGV2aWNlQ29tbWFuZEgAEiUKBXF1ZXJ5GB4gASgLMhQuY2FkZXN0cm8udjEuT1NRdWVyeUgAEjoKEXJlcXVlc3RfaW52ZW50b3J5GB8gASgLMh0uY2FkZXN0cm8udjEuUmVxdWVzdEludmVudG9yeUgAEiMKBWVycm9yGCggASgLMhIuY2FkZXN0cm8udjEuRXJyb3JIABI3CgxnZXRfbHVrc19rZXkYMiABKAsyHy5jYWRlc3Ryby52MS5HZXRMdWtzS2V5UmVzcG9uc2VIABI7Cg5zdG9yZV9sdWtzX2tleRgzIAEoCzIhLmNhZGVzdHJvLnYxLlN0b3JlTHVrc0tleVJlc3BvbnNlSAASQgoWcmV2b2tlX2x1a3NfZGV2aWNlX2tleRg0IAEoCzIgLmNhZGVzdHJvLnYxLlJldm9rZUx1a3NEZXZpY2VLZXlIABJFChNzdG9yZV9scHNfcGFzc3dvcmRzGDUgASgLMiYuY2FkZXN0cm8udjEuU3RvcmVMcHNQYXNzd29yZHNSZXNwb25zZUgAEkUKE3ZhbGlkYXRlX2x1a3NfdG9rZW4YNiABKAsyJi5jYWRlc3Ryby52MS5WYWxpZGF0ZUx1a3NUb2tlblJlc3BvbnNlSAASLAoKcmVzdWx0X2FjaxgYIAEoCzIWLmNhZGVzdHJvLnYxLlJlc3VsdEFja0gAEioKCWxvZ19xdWVyeRg8IAEoCzIVLmNhZGVzdHJvLnYxLkxvZ1F1ZXJ5SAASNAoOdGVybWluYWxfc3RhcnQYRiABKAsyGi5jYWRlc3Ryby52MS5UZXJtaW5hbFN0YXJ0SAASNAoOdGVybWluYWxfaW5wdXQYRyABKAsyGi5jYWRlc3Ryby52MS5UZXJtaW5hbElucHV0SAASNgoPdGVybWluYWxfcmVzaXplGEggASgLMhsuY2FkZXN0cm8udjEuVGVybWluYWxSZXNpemVIABIyCg10ZXJtaW5hbF9zdG9wGEkgASgLMhkuY2FkZXN0cm8udjEuVGVybWluYWxTdG9wSABCCQoHcGF5bG9hZCITChFTeW5jRGV2aWNlQ29tbWFuZCIVChNSZWJvb3REZXZpY2VDb21tYW5kIiMKEFN5bmNEZXZpY2VSZXN1bHQSDwoHc3VjY2VzcxgBIAEoCCIlChJSZWJvb3REZXZpY2VSZXN1bHQSDwoHc3VjY2VzcxgBIAEoCCKAAQoHV2VsY29tZRIkCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCUIMukgJyAEBcgQQARggEjUKEmhlYXJ0YmVhdF9pbnRlcnZhbBgCIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIYChBkZXZpY2VfbG9naW5fdXJsGAMgASgJInwKEk1hbmlmZXN0UHJvdmVuYW5jZRIiCg1kZWZpbml0aW9uX2lkGAEgASgJQgu6SAjYAQFyA8A+ARIiCg1hY3Rpb25fc2V0X2lkGAIgASgJQgu6SAjYAQFyA8A+ARIeCglhY3Rpb25faWQYAyABKAlCC7pICNgBAXIDwD4BIo4BChJNYW5pZmVzdE9jY3VycmVuY2USHwoNb2NjdXJyZW5jZV9pZBgBIAEoCUIIukgFcgOYAgESKwoGYWN0aW9uGAIgASgLMhMuY2FkZXN0cm8udjEuQWN0aW9uQga6SAPIAQESKgoKb25fZmFpbHVyZRgDIAEoDjIWLmNhZGVzdHJvLnYxLk9uRmFpbHVyZSKmAgoITWFuaWZlc3QSHQoLbWFuaWZlc3RfaWQYASABKAlCCLpIBXIDmAIBEjsKCnByb3ZlbmFuY2UYAiABKAsyHy5jYWRlc3Ryby52MS5NYW5pZmVzdFByb3ZlbmFuY2VCBrpIA8gBARI1CghzY2hlZHVs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dGF0aW9uX3JlYXNvbhgEIAEoDjIbLmNhZGVzdHJvLnYxLlJvdGF0aW9uUmVhc29uQg26SArIAQGCAQQYARgCIicKFFN0b3JlTHVrc0tleVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgitwEKE0xwc1Bhc3N3b3JkUm90YXRpb24SHgoIdXNlcm5hbWUYASABKAlCDLpICcgBAXIEEAEYQBIgCghwYXNzd29yZBgCIAEoDEIOgAEBukgIyAEBegMYgAESIAoKcm90YXRlZF9hdBgDIAEoCUIMukgJyAEBcgQQARhAEjwKBnJlYXNvbhgEIAEoDjIbLmNhZGVzdHJvLnYxLlJvdGF0aW9uUmVhc29uQg+6SAzIAQGCAQYYARgCGAMifAoYU3RvcmVMcHNQYXNzd29yZHNSZXF1ZXN0EhsKCWFjdGlvbl9pZBgBIAEoCUIIukgFcgOYAgESQwoJcm90YXRpb25zGAIgAygLMiAuY2FkZXN0cm8udjEuTHBzUGFzc3dvcmRSb3RhdGlvbkIOukgLyAEBkgEFCAEQgAIiLAoZU3RvcmVMcHNQYXNzd29yZHNSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIjIKE1Jldm9rZUx1a3NEZXZpY2VLZXkSGwoJYWN0aW9uX2lkGAEgASgJQgi6SAVyA5gCASJlChlSZXZva2VMdWtzRGV2aWNlS2V5UmVzdWx0EhsKCWFjdGlvbl9pZBgBIAEoCUIIukgFcgOYAgESDwoHc3VjY2VzcxgCIAEoCBIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgAgiMwoYVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0EhcKBXRva2VuGAEgASgJQgi6SAVyA5gCASKPAQoZVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZRIRCglhY3Rpb25faWQYASABKAkSEwoLZGV2aWNlX3BhdGgYAiABKAkSEgoKbWluX2xlbmd0aBgDIAEoBRI2Cgpjb21wbGV4aXR5GAQgASgOMiIuY2FkZXN0cm8udjEuTHBzUGFzc3dvcmRDb21wbGV4aXR5Ig0KC1N5bmNSZXF1ZXN0Is0BCglTeW5jU3RhdGUSHQoVc3luY19pbnRlcnZhbF9taW51dGVzGAEgASgFEjEKCmRlbGl2ZXJpZXMYAiADKAsyHS5jYWRlc3Ryby52MS5NYW5pZmVzdERlbGl2ZXJ5EjoKEm1haW50ZW5hbmNlX3dpbmRvdxgDIAEoCzIeLmNhZGVzdHJvLnYxLk1haW50ZW5hbmNlV2luZG93EjIKDmRlc2lyZWRfcG9saWN5GAQgASgLMhouY2FkZXN0cm8udjEuRGVzaXJlZFBvbGljeSJVCg1EZXNpcmVkUG9saWN5EhoKCHJldmlzaW9uGAEgASgJQgi6SAVyA5gCARIoCgltYW5pZmVzdHMYAiADKAsyFS5jYWRlc3Ryby52MS5NYW5pZmVzdCKGAgoITG9nUXVlcnkSGgoIcXVlcnlfaWQYASABKAlCCLpIBXIDmAIBEhwKBWxpbmVzGAIgASgFQg26SArYAQEaBRiQTigAEhkKBHVuaXQYAyABKAlCC7pICNgBAXIDGIACEhkKBXNpbmNlGAQgASgJQgq6SAfYAQFyAhhAEhkKBXVudGlsGAUgASgJQgq6SAfYAQFyAhhAEhwKCHByaW9yaXR5GAYgASgJQgq6SAfYAQFyAhggEhkKBGdyZXAYByABKAlCC7pICNgBAXIDGIACEg4KBmtlcm5lbBgIIAEoCBImCgZzb3VyY2UYCSABKA4yFi5jYWRlc3Ryby52MS5Mb2dTb3VyY2UiZwoOTG9nUXVlcnlSZXN1bHQSGgoIcXVlcnlfaWQYASABKAlCCLpIBXIDmAIBEg8KB3N1Y2Nlc3MYAiABKAgSGgoFZXJyb3IYAyABKAlCC7pICNgBAXIDGIAIEgwKBGxvZ3MYBCABKAkiiQEKDVRlcm1pbmFsU3RhcnQSHAoKc2Vzc2lvbl9pZBgBIAEoCUIIukgFcgOYAgESHgoIdHR5X3VzZXIYAiABKAlCDLpICcgBAXIEEAEYQBIcCgRjb2xzGAMgASgNQg66SAvIAQEqBhj//wMgABIcCgRyb3dzGAQgASgNQg66SAvIAQEqBhj//wMgACJJCg1UZXJtaW5hbElucHV0EhwKCnNlc3Npb25faWQYASABKAlCCLpIBXIDmAIBEhoKBGRhdGEYAiABKAxCDLpICcgBAXoEGICABCJqCg5UZXJtaW5hbFJlc2l6ZRIcCgpzZXNzaW9uX2lkGAEgASgJQgi6SAVyA5gCARIcCgRjb2xzGAIgASgNQg66SAvIAQEqBhj//wMgABIcCgRyb3dzGAMgASgNQg66SAvIAQEqBhj//wMgACJJCgxUZXJtaW5hbFN0b3ASHAoKc2Vzc2lvbl9pZBgBIAEoCUIIukgFcgOYAgESGwoGcmVhc29uGAIgASgJQgu6SAjYAQFyAxiABCJKCg5UZXJtaW5hbE91dHB1dBIcCgpzZXNzaW9uX2lkGAEgASgJQgi6SAVyA5gCARIaCgRkYXRhGAIgASgMQgy6SAnIAQF6BBiAgAQinAEKE1Rlcm1pbmFsU3RhdGVDaGFuZ2USHAoKc2Vzc2lvbl9pZBgBIAEoCUIIukgFcgOYAgESOAoFc3RhdGUYAiABKA4yIS5jYWRlc3Ryby52MS5UZXJtaW5hbFNlc3Npb25TdGF0ZUIGukgDyAEBEhEKCWV4aXRfY29kZRgDIAEoBRIaCgVlcnJvchgEIAEoCUILukgI2AEBcgMYgAgqdAoQT3V0cHV0U3RyZWFtVHlwZRIiCh5PVVRQVVRfU1RSRUFNX1RZUEVfVU5TUEVDSUZJRUQQABIdChlPVVRQVVRfU1RSRUFNX1RZUEVfU1RET1VUEAESHQoZT1VUUFVUX1NUUkVBTV9UWVBFX1NUREVSUhACKsgBChFTZWN1cml0eUFsZXJ0VHlwZRIjCh9TRUNVUklUWV9BTEVSVF9UWVBFX1VOU1BFQ0lGSUVEEAASMwovU0VDVVJJVFlfQUxFUlRfVFlQRV9TRVJWRVJfUkVBU1NJR05NRU5UX0FUVEVNUFQQARIsCihTRUNVUklUWV9BTEVSVF9UWVBFX0NSRURFTlRJQUxfVEFNUEVSSU5HEAISKwonU0VDVVJJVFlfQUxFUlRfVFlQRV9JTlZBTElEX0NFUlRJRklDQVRFEAMqOQoJT25GYWlsdXJlEhcKE09OX0ZBSUxVUkVfQ09OVElOVUUQABITCg9PTl9GQUlMVVJFX1NUT1AQASrMAQoJT1NRdWVyeU9wEhsKF09TX1FVRVJZX09QX1VOU1BFQ0lGSUVEEAASEgoOT1NfUVVFUllfT1BfRVEQARISCg5PU19RVUVSWV9PUF9ORRACEhIKDk9TX1FVRVJZX09QX0dUEAMSEgoOT1NfUVVFUllfT1BfTFQQBBISCg5PU19RVUVSWV9PUF9HRRAFEhIKDk9TX1FVRVJZX09QX0xFEAYSFAoQT1NfUVVFUllfT1BfTElLRRAHEhQKEE9TX1FVRVJZX09QX0dMT0IQCCo7CglMb2dTb3VyY2USFwoTTE9HX1NPVVJDRV9KT1VSTkFMRBAAEhUKEUxPR19TT1VSQ0VfU1lTTE9HEAEqpwEKFFRlcm1pbmFsU2Vzc2lvblN0YXRlEiYKIlRFUk1JTkFMX1NFU1NJT05fU1RBVEVfVU5TUEVDSUZJRUQQABIiCh5URVJNSU5BTF9TRVNTSU9OX1NUQVRFX1NUQVJURUQQARIhCh1URVJNSU5BTF9TRVNTSU9OX1NUQVRFX0VYSVRFRBACEiAKHFRFUk1JTkFMX1NFU1NJT05fU1RBVEVfRVJST1IQAzJTCgxBZ2VudFNlcnZpY2USQwoGU3RyZWFtEhkuY2FkZXN0cm8udjEuQWdlbnRNZXNzYWdlGhouY2FkZXN0cm8udjEuU2VydmVyTWVzc2FnZSgBMAFCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_cadestro_v1_validate_ext, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.AgentMessage
  */
 export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -34,24 +34,18 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
    */
   payload: {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.Hello hello = 10;
      */
     value: Hello;
     case: "hello";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.Heartbeat heartbeat = 11;
      */
     value: Heartbeat;
     case: "heartbeat";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.SyncRequest sync_request = 12;
      */
     value: SyncRequest;
@@ -59,7 +53,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   } | {
     /**
      * Result of a control-originated live sync command.
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.SyncDeviceResult sync_device_result = 24;
      */
@@ -68,7 +61,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   } | {
     /**
      * Result of a control-originated live reboot command.
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.RebootDeviceResult reboot_device_result = 25;
      */
@@ -76,48 +68,36 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "rebootDeviceResult";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.ActionResult action_result = 20;
      */
     value: ActionResult;
     case: "actionResult";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.OutputChunk output_chunk = 21;
      */
     value: OutputChunk;
     case: "outputChunk";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.ManifestResult manifest_result = 23;
      */
     value: ManifestResult;
     case: "manifestResult";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.OSQueryResult query_result = 30;
      */
     value: OSQueryResult;
     case: "queryResult";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.DeviceInventory inventory = 31;
      */
     value: DeviceInventory;
     case: "inventory";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.SecurityAlert security_alert = 40;
      */
     value: SecurityAlert;
@@ -125,7 +105,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   } | {
     /**
      * LUKS key management (via stream, not separate RPCs)
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.GetLuksKeyRequest get_luks_key = 50;
      */
@@ -133,16 +112,12 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "getLuksKey";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.StoreLuksKeyRequest store_luks_key = 51;
      */
     value: StoreLuksKeyRequest;
     case: "storeLuksKey";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.RevokeLuksDeviceKeyResult revoke_luks_device_key_result = 52;
      */
     value: RevokeLuksDeviceKeyResult;
@@ -150,7 +125,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   } | {
     /**
      * LPS password rotations, batched per execution.
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.StoreLpsPasswordsRequest store_lps_passwords = 53;
      */
@@ -158,8 +132,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "storeLpsPasswords";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.ValidateLuksTokenRequest validate_luks_token = 54;
      */
     value: ValidateLuksTokenRequest;
@@ -167,7 +139,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   } | {
     /**
      * Log query result (journalctl output)
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.LogQueryResult log_query_result = 60;
      */
@@ -176,7 +147,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
   } | {
     /**
      * Remote terminal (PTY) session messages
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.TerminalOutput terminal_output = 70;
      */
@@ -184,8 +154,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "terminalOutput";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.TerminalStateChange terminal_state_change = 71;
      */
     value: TerminalStateChange;
@@ -207,29 +175,21 @@ export const AgentMessageSchema: GenMessage<AgentMessage> = /*@__PURE__*/
  */
 export type OutputChunk = Message<"cadestro.v1.OutputChunk"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string execution_id = 1;
    */
   executionId: string;
 
   /**
-   * @gotags: validate:"required,ne=0"
-   *
    * @generated from field: cadestro.v1.OutputStreamType stream = 2;
    */
   stream: OutputStreamType;
 
   /**
-   * @gotags: validate:"required,max=65536"
-   *
    * @generated from field: bytes data = 3;
    */
   data: Uint8Array;
 
   /**
-   * @gotags: validate:"gte=0"
-   *
    * @generated from field: int64 sequence = 4;
    */
   sequence: bigint;
@@ -247,36 +207,26 @@ export const OutputChunkSchema: GenMessage<OutputChunk> = /*@__PURE__*/
  */
 export type Hello = Message<"cadestro.v1.Hello"> & {
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.DeviceId device_id = 1;
    */
   deviceId?: DeviceId;
 
   /**
-   * @gotags: validate:"required,min=1,max=32"
-   *
    * @generated from field: string agent_version = 2;
    */
   agentVersion: string;
 
   /**
-   * @gotags: validate:"required,min=1,max=253"
-   *
    * @generated from field: string hostname = 3;
    */
   hostname: string;
 
   /**
-   * @gotags: validate:"omitempty,max=4096"
-   *
    * @generated from field: string auth_token = 4;
    */
   authToken: string;
 
   /**
-   * @gotags: validate:"omitempty,max=16"
-   *
    * @generated from field: string arch = 5;
    */
   arch: string;
@@ -294,29 +244,21 @@ export const HelloSchema: GenMessage<Hello> = /*@__PURE__*/
  */
 export type Heartbeat = Message<"cadestro.v1.Heartbeat"> & {
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: google.protobuf.Duration uptime = 1;
    */
   uptime?: Duration;
 
   /**
-   * @gotags: validate:"omitempty,gte=0,lte=100"
-   *
    * @generated from field: float cpu_percent = 2;
    */
   cpuPercent: number;
 
   /**
-   * @gotags: validate:"omitempty,gte=0,lte=100"
-   *
    * @generated from field: float memory_percent = 3;
    */
   memoryPercent: number;
 
   /**
-   * @gotags: validate:"omitempty,gte=0,lte=100"
-   *
    * @generated from field: float disk_percent = 4;
    */
   diskPercent: number;
@@ -336,22 +278,17 @@ export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
  */
 export type SecurityAlert = Message<"cadestro.v1.SecurityAlert"> & {
   /**
-   * @gotags: validate:"required,ne=0"
-   *
    * @generated from field: cadestro.v1.SecurityAlertType type = 1;
    */
   type: SecurityAlertType;
 
   /**
-   * @gotags: validate:"required,min=1,max=1024"
-   *
    * @generated from field: string message = 2;
    */
   message: string;
 
   /**
    * Additional context as key-value pairs
-   * @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
    *
    * @generated from field: map<string, string> details = 3;
    */
@@ -370,8 +307,6 @@ export const SecurityAlertSchema: GenMessage<SecurityAlert> = /*@__PURE__*/
  */
 export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -382,7 +317,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
   payload: {
     /**
      * Live operations have no policy or durable delivery semantics.
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.SyncDeviceCommand sync_device = 11;
      */
@@ -390,48 +324,36 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "syncDevice";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.Welcome welcome = 10;
      */
     value: Welcome;
     case: "welcome";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.SyncState sync_state = 12;
      */
     value: SyncState;
     case: "syncState";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.RebootDeviceCommand reboot_device = 13;
      */
     value: RebootDeviceCommand;
     case: "rebootDevice";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.OSQuery query = 30;
      */
     value: OSQuery;
     case: "query";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.RequestInventory request_inventory = 31;
      */
     value: RequestInventory;
     case: "requestInventory";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.Error error = 40;
      */
     value: Error;
@@ -439,7 +361,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
   } | {
     /**
      * LUKS key management responses
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.GetLuksKeyResponse get_luks_key = 50;
      */
@@ -447,32 +368,24 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "getLuksKey";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.StoreLuksKeyResponse store_luks_key = 51;
      */
     value: StoreLuksKeyResponse;
     case: "storeLuksKey";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.RevokeLuksDeviceKey revoke_luks_device_key = 52;
      */
     value: RevokeLuksDeviceKey;
     case: "revokeLuksDeviceKey";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.StoreLpsPasswordsResponse store_lps_passwords = 53;
      */
     value: StoreLpsPasswordsResponse;
     case: "storeLpsPasswords";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.ValidateLuksTokenResponse validate_luks_token = 54;
      */
     value: ValidateLuksTokenResponse;
@@ -480,7 +393,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
   } | {
     /**
      * Correlated application acknowledgement for result ingestion.
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.ResultAck result_ack = 24;
      */
@@ -489,7 +401,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
   } | {
     /**
      * Log query dispatch (journalctl)
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.LogQuery log_query = 60;
      */
@@ -498,7 +409,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
   } | {
     /**
      * Remote terminal (PTY) session control
-     * @gotags: validate:"omitempty"
      *
      * @generated from field: cadestro.v1.TerminalStart terminal_start = 70;
      */
@@ -506,24 +416,18 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "terminalStart";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.TerminalInput terminal_input = 71;
      */
     value: TerminalInput;
     case: "terminalInput";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.TerminalResize terminal_resize = 72;
      */
     value: TerminalResize;
     case: "terminalResize";
   } | {
     /**
-     * @gotags: validate:"omitempty"
-     *
      * @generated from field: cadestro.v1.TerminalStop terminal_stop = 73;
      */
     value: TerminalStop;
@@ -603,15 +507,11 @@ export const RebootDeviceResultSchema: GenMessage<RebootDeviceResult> = /*@__PUR
  */
 export type Welcome = Message<"cadestro.v1.Welcome"> & {
   /**
-   * @gotags: validate:"required,min=1,max=32"
-   *
    * @generated from field: string server_version = 1;
    */
   serverVersion: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: google.protobuf.Duration heartbeat_interval = 2;
    */
   heartbeatInterval?: Duration;
@@ -648,22 +548,16 @@ export const WelcomeSchema: GenMessage<Welcome> = /*@__PURE__*/
  */
 export type ManifestProvenance = Message<"cadestro.v1.ManifestProvenance"> & {
   /**
-   * @gotags: validate:"omitempty,ulid"
-   *
    * @generated from field: string definition_id = 1;
    */
   definitionId: string;
 
   /**
-   * @gotags: validate:"omitempty,ulid"
-   *
    * @generated from field: string action_set_id = 2;
    */
   actionSetId: string;
 
   /**
-   * @gotags: validate:"omitempty,ulid"
-   *
    * @generated from field: string action_id = 3;
    */
   actionId: string;
@@ -690,15 +584,11 @@ export const ManifestProvenanceSchema: GenMessage<ManifestProvenance> = /*@__PUR
  */
 export type ManifestOccurrence = Message<"cadestro.v1.ManifestOccurrence"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string occurrence_id = 1;
    */
   occurrenceId: string;
 
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.Action action = 2;
    */
   action?: Action;
@@ -707,7 +597,6 @@ export type ManifestOccurrence = Message<"cadestro.v1.ManifestOccurrence"> & {
    * What the manifest does if this occurrence fails. Control resolves the
    * set's declared policy onto each position, so the agent reads this value
    * and needs no fallback.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.OnFailure on_failure = 3;
    */
@@ -733,15 +622,11 @@ export const ManifestOccurrenceSchema: GenMessage<ManifestOccurrence> = /*@__PUR
  */
 export type Manifest = Message<"cadestro.v1.Manifest"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string manifest_id = 1;
    */
   manifestId: string;
 
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.ManifestProvenance provenance = 2;
    */
   provenance?: ManifestProvenance;
@@ -751,7 +636,6 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
    * order when it does. It is the only schedule the agent executes on — the
    * per-Action schedule field is authoring data, not an execution trigger.
    * run_on_assign and skip_if_unchanged keep their existing meaning.
-   * @gotags: validate:"required"
    *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 3;
    */
@@ -761,7 +645,6 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
    * The set-level failure policy, as authored. Each occurrence carries the
    * resolved value it executes under; this records what the set declared, so
    * the agent's logs and results can name the policy rather than infer it.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.OnFailure default_on_failure = 4;
    */
@@ -769,7 +652,6 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
 
   /**
    * Execution order is list order.
-   * @gotags: validate:"required,min=1,dive"
    *
    * @generated from field: repeated cadestro.v1.ManifestOccurrence occurrences = 5;
    */
@@ -782,7 +664,6 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
    * legitimately carry an empty schedule (agent-default drift cadence). A
    * one-shot delivery is also exempt from the agent's maintenance window: an
    * operator dispatching "now" means now; only scheduled work defers.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: bool one_shot = 6;
    */
@@ -804,15 +685,11 @@ export const ManifestSchema: GenMessage<Manifest> = /*@__PURE__*/
  */
 export type ManifestDelivery = Message<"cadestro.v1.ManifestDelivery"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string delivery_id = 1;
    */
   deliveryId: string;
 
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.Manifest manifest = 2;
    */
   manifest?: Manifest;
@@ -837,43 +714,31 @@ export const ManifestDeliverySchema: GenMessage<ManifestDelivery> = /*@__PURE__*
  */
 export type ManifestResult = Message<"cadestro.v1.ManifestResult"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string delivery_id = 1;
    */
   deliveryId: string;
 
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string manifest_id = 2;
    */
   manifestId: string;
 
   /**
-   * @gotags: validate:"required,ne=0"
-   *
    * @generated from field: cadestro.v1.ExecutionStatus status = 3;
    */
   status: ExecutionStatus;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: google.protobuf.Timestamp completed_at = 4;
    */
   completedAt?: Timestamp;
 
   /**
-   * @gotags: validate:"omitempty,gte=0"
-   *
    * @generated from field: int64 duration_ms = 5;
    */
   durationMs: bigint;
 
   /**
-   * @gotags: validate:"omitempty,max=4096"
-   *
    * @generated from field: string error = 6;
    */
   error: string;
@@ -913,15 +778,11 @@ export const ResultAckSchema: GenMessage<ResultAck> = /*@__PURE__*/
  */
 export type Error = Message<"cadestro.v1.Error"> & {
   /**
-   * @gotags: validate:"required,min=1,max=64"
-   *
    * @generated from field: string code = 1;
    */
   code: string;
 
   /**
-   * @gotags: validate:"required,min=1,max=1024"
-   *
    * @generated from field: string message = 2;
    */
   message: string;
@@ -939,43 +800,32 @@ export const ErrorSchema: GenMessage<Error> = /*@__PURE__*/
  */
 export type OSQuery = Message<"cadestro.v1.OSQuery"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string query_id = 1;
    */
   queryId: string;
 
   /**
-   * @gotags: validate:"required_without=RawSql,omitempty,min=1,max=64"
-   *
    * @generated from field: string table = 2;
    */
   table: string;
 
   /**
-   * @gotags: validate:"omitempty,dive,max=64"
-   *
    * @generated from field: repeated string columns = 3;
    */
   columns: string[];
 
   /**
-   * @gotags: validate:"omitempty,dive"
-   *
    * @generated from field: repeated cadestro.v1.OSQueryCondition where = 4;
    */
   where: OSQueryCondition[];
 
   /**
-   * @gotags: validate:"omitempty,gte=0,lte=10000"
-   *
    * @generated from field: int32 limit = 5;
    */
   limit: number;
 
   /**
    * Raw SQL query — when set, table/columns/where/limit are ignored.
-   * @gotags: validate:"omitempty,max=4096"
    *
    * @generated from field: string raw_sql = 6;
    */
@@ -994,22 +844,16 @@ export const OSQuerySchema: GenMessage<OSQuery> = /*@__PURE__*/
  */
 export type OSQueryCondition = Message<"cadestro.v1.OSQueryCondition"> & {
   /**
-   * @gotags: validate:"required,min=1,max=64"
-   *
    * @generated from field: string column = 1;
    */
   column: string;
 
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: cadestro.v1.OSQueryOp op = 2;
    */
   op: OSQueryOp;
 
   /**
-   * @gotags: validate:"required,max=4096"
-   *
    * @generated from field: string value = 3;
    */
   value: string;
@@ -1027,29 +871,21 @@ export const OSQueryConditionSchema: GenMessage<OSQueryCondition> = /*@__PURE__*
  */
 export type OSQueryResult = Message<"cadestro.v1.OSQueryResult"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string query_id = 1;
    */
   queryId: string;
 
   /**
-   * @gotags: validate:"omitempty"
-   *
    * @generated from field: bool success = 2;
    */
   success: boolean;
 
   /**
-   * @gotags: validate:"omitempty,max=1024"
-   *
    * @generated from field: string error = 3;
    */
   error: string;
 
   /**
-   * @gotags: validate:"omitempty,dive"
-   *
    * @generated from field: repeated cadestro.v1.OSQueryRow rows = 4;
    */
   rows: OSQueryRow[];
@@ -1067,8 +903,6 @@ export const OSQueryResultSchema: GenMessage<OSQueryResult> = /*@__PURE__*/
  */
 export type OSQueryRow = Message<"cadestro.v1.OSQueryRow"> & {
   /**
-   * @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=65536"
-   *
    * @generated from field: map<string, string> data = 1;
    */
   data: { [key: string]: string };
@@ -1103,15 +937,11 @@ export const DeviceInventorySchema: GenMessage<DeviceInventory> = /*@__PURE__*/
  */
 export type InventoryTable = Message<"cadestro.v1.InventoryTable"> & {
   /**
-   * @gotags: validate:"required,min=1,max=64"
-   *
    * @generated from field: string table_name = 1;
    */
   tableName: string;
 
   /**
-   * @gotags: validate:"omitempty,dive"
-   *
    * @generated from field: repeated cadestro.v1.OSQueryRow rows = 2;
    */
   rows: OSQueryRow[];
@@ -1135,8 +965,6 @@ export const InventoryTableSchema: GenMessage<InventoryTable> = /*@__PURE__*/
  */
 export type RequestInventory = Message<"cadestro.v1.RequestInventory"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string query_id = 1;
    */
   queryId: string;
@@ -1157,8 +985,6 @@ export const RequestInventorySchema: GenMessage<RequestInventory> = /*@__PURE__*
  */
 export type GetLuksKeyRequest = Message<"cadestro.v1.GetLuksKeyRequest"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string action_id = 1;
    */
   actionId: string;
@@ -1184,7 +1010,6 @@ export type GetLuksKeyResponse = Message<"cadestro.v1.GetLuksKeyResponse"> & {
    * fields whose plaintext may only be touched at an enumerated sink, so a
    * slog or fmt argument fails the build instead of shipping a credential into
    * a log.
-   * @gotags: validate:"required,max=4096"
    *
    * @generated from field: bytes passphrase = 1;
    */
@@ -1206,8 +1031,6 @@ export const GetLuksKeyResponseSchema: GenMessage<GetLuksKeyResponse> = /*@__PUR
  */
 export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string action_id = 1;
    */
   actionId: string;
@@ -1217,7 +1040,6 @@ export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
    * value is only ever a local block-device path, and without a ceiling an
    * authenticated agent can send a transport-sized string that is validated,
    * encrypted and persisted.
-   * @gotags: validate:"required,startswith=/,max=4096"
    *
    * @generated from field: string device_path = 2;
    */
@@ -1228,7 +1050,6 @@ export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
    * control encrypts it under its resource-context AAD before persistence.
    * debug_redact is the secret classification (see
    * GetLuksKeyResponse.passphrase).
-   * @gotags: validate:"required,max=4096"
    *
    * @generated from field: bytes passphrase = 3;
    */
@@ -1241,7 +1062,6 @@ export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
    * AUTH_GRACE — that reason belongs to LPS, where a user
    * authenticated during the grace period. Validated against the enum
    * at the boundary.
-   * @gotags: validate:"required,oneof=1 2"
    *
    * @generated from field: cadestro.v1.RotationReason rotation_reason = 4;
    */
@@ -1280,7 +1100,6 @@ export const StoreLuksKeyResponseSchema: GenMessage<StoreLuksKeyResponse> = /*@_
 export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
   /**
    * Local Linux username whose password was rotated.
-   * @gotags: validate:"required,min=1,max=64"
    *
    * @generated from field: string username = 1;
    */
@@ -1291,7 +1110,6 @@ export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
    * encrypted with the owning device/action context before persistence.
    * debug_redact is the secret classification (see
    * GetLuksKeyResponse.passphrase).
-   * @gotags: validate:"required,max=128"
    *
    * @generated from field: bytes password = 2;
    */
@@ -1309,7 +1127,6 @@ export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
    * credential the operator now needs. The handler normalises what it can and
    * keeps the rotation; length is still bounded.
    * (TestAgentOps_StoreLpsPasswords_PersistsWholeBatch pins this.)
-   * @gotags: validate:"required,min=1,max=64"
    *
    * @generated from field: string rotated_at = 3;
    */
@@ -1321,7 +1138,6 @@ export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
    * authenticates during the post-rotation grace window — an LPS-only path that
    * signals "rotate now to limit the leaked-password window", never emitted from
    * LUKS. Stored on the event as the lowercase string form.
-   * @gotags: validate:"required,oneof=1 2 3"
    *
    * @generated from field: cadestro.v1.RotationReason reason = 4;
    */
@@ -1343,8 +1159,6 @@ export const LpsPasswordRotationSchema: GenMessage<LpsPasswordRotation> = /*@__P
  */
 export type StoreLpsPasswordsRequest = Message<"cadestro.v1.StoreLpsPasswordsRequest"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string action_id = 1;
    */
   actionId: string;
@@ -1353,7 +1167,6 @@ export type StoreLpsPasswordsRequest = Message<"cadestro.v1.StoreLpsPasswordsReq
    * One entry per managed local account on the device. Capped: each entry costs
    * a validation pass, an encryption, and a row, and no real device manages
    * anything near this many accounts.
-   * @gotags: validate:"required,min=1,max=256,dive"
    *
    * @generated from field: repeated cadestro.v1.LpsPasswordRotation rotations = 2;
    */
@@ -1392,8 +1205,6 @@ export const StoreLpsPasswordsResponseSchema: GenMessage<StoreLpsPasswordsRespon
  */
 export type RevokeLuksDeviceKey = Message<"cadestro.v1.RevokeLuksDeviceKey"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string action_id = 1;
    */
   actionId: string;
@@ -1413,8 +1224,6 @@ export const RevokeLuksDeviceKeySchema: GenMessage<RevokeLuksDeviceKey> = /*@__P
  */
 export type RevokeLuksDeviceKeyResult = Message<"cadestro.v1.RevokeLuksDeviceKeyResult"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string action_id = 1;
    */
   actionId: string;
@@ -1425,8 +1234,6 @@ export type RevokeLuksDeviceKeyResult = Message<"cadestro.v1.RevokeLuksDeviceKey
   success: boolean;
 
   /**
-   * @gotags: validate:"omitempty,max=1024"
-   *
    * @generated from field: string error = 3;
    */
   error: string;
@@ -1446,7 +1253,6 @@ export type ValidateLuksTokenRequest = Message<"cadestro.v1.ValidateLuksTokenReq
   /**
    * The one-time token the operator was shown, as issued by
    * ControlService.CreateLuksToken.
-   * @gotags: validate:"required,ulid"
    *
    * @generated from field: string token = 1;
    */
@@ -1529,7 +1335,6 @@ export type SyncState = Message<"cadestro.v1.SyncState"> & {
   /**
    * Every due one-shot delivery for this device. A stable delivery_id lets the
    * agent absorb repeats after reconnects.
-   * @gotags: validate:"omitempty,dive"
    *
    * @generated from field: repeated cadestro.v1.ManifestDelivery deliveries = 2;
    */
@@ -1569,7 +1374,6 @@ export const SyncStateSchema: GenMessage<SyncState> = /*@__PURE__*/
 export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
   /**
    * Stable revision of the resolved device policy.
-   * @gotags: validate:"required,ulid"
    *
    * @generated from field: string revision = 1;
    */
@@ -1577,7 +1381,6 @@ export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
 
   /**
    * One globally ordered runbook for the device. Empty containers are omitted.
-   * @gotags: validate:"omitempty,dive"
    *
    * @generated from field: repeated cadestro.v1.Manifest manifests = 2;
    */
@@ -1598,50 +1401,36 @@ export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
  */
 export type LogQuery = Message<"cadestro.v1.LogQuery"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string query_id = 1;
    */
   queryId: string;
 
   /**
-   * @gotags: validate:"omitempty,gte=0,lte=10000"
-   *
    * @generated from field: int32 lines = 2;
    */
   lines: number;
 
   /**
-   * @gotags: validate:"omitempty,max=256"
-   *
    * @generated from field: string unit = 3;
    */
   unit: string;
 
   /**
-   * @gotags: validate:"omitempty,max=64"
-   *
    * @generated from field: string since = 4;
    */
   since: string;
 
   /**
-   * @gotags: validate:"omitempty,max=64"
-   *
    * @generated from field: string until = 5;
    */
   until: string;
 
   /**
-   * @gotags: validate:"omitempty,max=32"
-   *
    * @generated from field: string priority = 6;
    */
   priority: string;
 
   /**
-   * @gotags: validate:"omitempty,max=256"
-   *
    * @generated from field: string grep = 7;
    */
   grep: string;
@@ -1654,7 +1443,6 @@ export type LogQuery = Message<"cadestro.v1.LogQuery"> & {
   /**
    * Log source. Defaults to LOG_SOURCE_JOURNALD. Agents without
    * support for a requested source return an error.
-   * @gotags: validate:"omitempty"
    *
    * @generated from field: cadestro.v1.LogSource source = 9;
    */
@@ -1675,8 +1463,6 @@ export const LogQuerySchema: GenMessage<LogQuery> = /*@__PURE__*/
  */
 export type LogQueryResult = Message<"cadestro.v1.LogQueryResult"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string query_id = 1;
    */
   queryId: string;
@@ -1687,8 +1473,6 @@ export type LogQueryResult = Message<"cadestro.v1.LogQueryResult"> & {
   success: boolean;
 
   /**
-   * @gotags: validate:"omitempty,max=1024"
-   *
    * @generated from field: string error = 3;
    */
   error: string;
@@ -1718,8 +1502,6 @@ export const LogQueryResultSchema: GenMessage<LogQueryResult> = /*@__PURE__*/
  */
 export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string session_id = 1;
    */
   sessionId: string;
@@ -1727,22 +1509,17 @@ export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
   /**
    * The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
    * never uses the original Linux username for the shell.
-   * @gotags: validate:"required,min=1,max=64"
    *
    * @generated from field: string tty_user = 2;
    */
   ttyUser: string;
 
   /**
-   * @gotags: validate:"required,gt=0,lte=65535"
-   *
    * @generated from field: uint32 cols = 3;
    */
   cols: number;
 
   /**
-   * @gotags: validate:"required,gt=0,lte=65535"
-   *
    * @generated from field: uint32 rows = 4;
    */
   rows: number;
@@ -1762,15 +1539,11 @@ export const TerminalStartSchema: GenMessage<TerminalStart> = /*@__PURE__*/
  */
 export type TerminalInput = Message<"cadestro.v1.TerminalInput"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string session_id = 1;
    */
   sessionId: string;
 
   /**
-   * @gotags: validate:"required,max=65536"
-   *
    * @generated from field: bytes data = 2;
    */
   data: Uint8Array;
@@ -1791,22 +1564,16 @@ export const TerminalInputSchema: GenMessage<TerminalInput> = /*@__PURE__*/
  */
 export type TerminalResize = Message<"cadestro.v1.TerminalResize"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string session_id = 1;
    */
   sessionId: string;
 
   /**
-   * @gotags: validate:"required,gt=0,lte=65535"
-   *
    * @generated from field: uint32 cols = 2;
    */
   cols: number;
 
   /**
-   * @gotags: validate:"required,gt=0,lte=65535"
-   *
    * @generated from field: uint32 rows = 3;
    */
   rows: number;
@@ -1830,15 +1597,11 @@ export const TerminalResizeSchema: GenMessage<TerminalResize> = /*@__PURE__*/
  */
 export type TerminalStop = Message<"cadestro.v1.TerminalStop"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string session_id = 1;
    */
   sessionId: string;
 
   /**
-   * @gotags: validate:"omitempty,max=512"
-   *
    * @generated from field: string reason = 2;
    */
   reason: string;
@@ -1858,15 +1621,11 @@ export const TerminalStopSchema: GenMessage<TerminalStop> = /*@__PURE__*/
  */
 export type TerminalOutput = Message<"cadestro.v1.TerminalOutput"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string session_id = 1;
    */
   sessionId: string;
 
   /**
-   * @gotags: validate:"required,max=65536"
-   *
    * @generated from field: bytes data = 2;
    */
   data: Uint8Array;
@@ -1890,15 +1649,11 @@ export const TerminalOutputSchema: GenMessage<TerminalOutput> = /*@__PURE__*/
  */
 export type TerminalStateChange = Message<"cadestro.v1.TerminalStateChange"> & {
   /**
-   * @gotags: validate:"required,ulid"
-   *
    * @generated from field: string session_id = 1;
    */
   sessionId: string;
 
   /**
-   * @gotags: validate:"required,ne=0"
-   *
    * @generated from field: cadestro.v1.TerminalSessionState state = 2;
    */
   state: TerminalSessionState;
@@ -1912,7 +1667,6 @@ export type TerminalStateChange = Message<"cadestro.v1.TerminalStateChange"> & {
 
   /**
    * Set when state is ERROR.
-   * @gotags: validate:"omitempty,max=1024"
    *
    * @generated from field: string error = 4;
    */

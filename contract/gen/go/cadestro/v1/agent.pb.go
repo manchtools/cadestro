@@ -7,6 +7,7 @@
 package cadestrov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
@@ -357,8 +358,7 @@ func (TerminalSessionState) EnumDescriptor() ([]byte, []int) {
 
 type AgentMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*AgentMessage_Hello
@@ -605,104 +605,85 @@ type isAgentMessage_Payload interface {
 }
 
 type AgentMessage_Hello struct {
-	// @gotags: validate:"omitempty"
-	Hello *Hello `protobuf:"bytes,10,opt,name=hello,proto3,oneof" validate:"omitempty"`
+	Hello *Hello `protobuf:"bytes,10,opt,name=hello,proto3,oneof"`
 }
 
 type AgentMessage_Heartbeat struct {
-	// @gotags: validate:"omitempty"
-	Heartbeat *Heartbeat `protobuf:"bytes,11,opt,name=heartbeat,proto3,oneof" validate:"omitempty"`
+	Heartbeat *Heartbeat `protobuf:"bytes,11,opt,name=heartbeat,proto3,oneof"`
 }
 
 type AgentMessage_SyncRequest struct {
-	// @gotags: validate:"omitempty"
-	SyncRequest *SyncRequest `protobuf:"bytes,12,opt,name=sync_request,json=syncRequest,proto3,oneof" validate:"omitempty"`
+	SyncRequest *SyncRequest `protobuf:"bytes,12,opt,name=sync_request,json=syncRequest,proto3,oneof"`
 }
 
 type AgentMessage_SyncDeviceResult struct {
 	// Result of a control-originated live sync command.
-	// @gotags: validate:"omitempty"
-	SyncDeviceResult *SyncDeviceResult `protobuf:"bytes,24,opt,name=sync_device_result,json=syncDeviceResult,proto3,oneof" validate:"omitempty"`
+	SyncDeviceResult *SyncDeviceResult `protobuf:"bytes,24,opt,name=sync_device_result,json=syncDeviceResult,proto3,oneof"`
 }
 
 type AgentMessage_RebootDeviceResult struct {
 	// Result of a control-originated live reboot command.
-	// @gotags: validate:"omitempty"
-	RebootDeviceResult *RebootDeviceResult `protobuf:"bytes,25,opt,name=reboot_device_result,json=rebootDeviceResult,proto3,oneof" validate:"omitempty"`
+	RebootDeviceResult *RebootDeviceResult `protobuf:"bytes,25,opt,name=reboot_device_result,json=rebootDeviceResult,proto3,oneof"`
 }
 
 type AgentMessage_ActionResult struct {
-	// @gotags: validate:"omitempty"
-	ActionResult *ActionResult `protobuf:"bytes,20,opt,name=action_result,json=actionResult,proto3,oneof" validate:"omitempty"`
+	ActionResult *ActionResult `protobuf:"bytes,20,opt,name=action_result,json=actionResult,proto3,oneof"`
 }
 
 type AgentMessage_OutputChunk struct {
-	// @gotags: validate:"omitempty"
-	OutputChunk *OutputChunk `protobuf:"bytes,21,opt,name=output_chunk,json=outputChunk,proto3,oneof" validate:"omitempty"`
+	OutputChunk *OutputChunk `protobuf:"bytes,21,opt,name=output_chunk,json=outputChunk,proto3,oneof"`
 }
 
 type AgentMessage_ManifestResult struct {
-	// @gotags: validate:"omitempty"
-	ManifestResult *ManifestResult `protobuf:"bytes,23,opt,name=manifest_result,json=manifestResult,proto3,oneof" validate:"omitempty"`
+	ManifestResult *ManifestResult `protobuf:"bytes,23,opt,name=manifest_result,json=manifestResult,proto3,oneof"`
 }
 
 type AgentMessage_QueryResult struct {
-	// @gotags: validate:"omitempty"
-	QueryResult *OSQueryResult `protobuf:"bytes,30,opt,name=query_result,json=queryResult,proto3,oneof" validate:"omitempty"`
+	QueryResult *OSQueryResult `protobuf:"bytes,30,opt,name=query_result,json=queryResult,proto3,oneof"`
 }
 
 type AgentMessage_Inventory struct {
-	// @gotags: validate:"omitempty"
-	Inventory *DeviceInventory `protobuf:"bytes,31,opt,name=inventory,proto3,oneof" validate:"omitempty"`
+	Inventory *DeviceInventory `protobuf:"bytes,31,opt,name=inventory,proto3,oneof"`
 }
 
 type AgentMessage_SecurityAlert struct {
-	// @gotags: validate:"omitempty"
-	SecurityAlert *SecurityAlert `protobuf:"bytes,40,opt,name=security_alert,json=securityAlert,proto3,oneof" validate:"omitempty"`
+	SecurityAlert *SecurityAlert `protobuf:"bytes,40,opt,name=security_alert,json=securityAlert,proto3,oneof"`
 }
 
 type AgentMessage_GetLuksKey struct {
 	// LUKS key management (via stream, not separate RPCs)
-	// @gotags: validate:"omitempty"
-	GetLuksKey *GetLuksKeyRequest `protobuf:"bytes,50,opt,name=get_luks_key,json=getLuksKey,proto3,oneof" validate:"omitempty"`
+	GetLuksKey *GetLuksKeyRequest `protobuf:"bytes,50,opt,name=get_luks_key,json=getLuksKey,proto3,oneof"`
 }
 
 type AgentMessage_StoreLuksKey struct {
-	// @gotags: validate:"omitempty"
-	StoreLuksKey *StoreLuksKeyRequest `protobuf:"bytes,51,opt,name=store_luks_key,json=storeLuksKey,proto3,oneof" validate:"omitempty"`
+	StoreLuksKey *StoreLuksKeyRequest `protobuf:"bytes,51,opt,name=store_luks_key,json=storeLuksKey,proto3,oneof"`
 }
 
 type AgentMessage_RevokeLuksDeviceKeyResult struct {
-	// @gotags: validate:"omitempty"
-	RevokeLuksDeviceKeyResult *RevokeLuksDeviceKeyResult `protobuf:"bytes,52,opt,name=revoke_luks_device_key_result,json=revokeLuksDeviceKeyResult,proto3,oneof" validate:"omitempty"`
+	RevokeLuksDeviceKeyResult *RevokeLuksDeviceKeyResult `protobuf:"bytes,52,opt,name=revoke_luks_device_key_result,json=revokeLuksDeviceKeyResult,proto3,oneof"`
 }
 
 type AgentMessage_StoreLpsPasswords struct {
 	// LPS password rotations, batched per execution.
-	// @gotags: validate:"omitempty"
-	StoreLpsPasswords *StoreLpsPasswordsRequest `protobuf:"bytes,53,opt,name=store_lps_passwords,json=storeLpsPasswords,proto3,oneof" validate:"omitempty"`
+	StoreLpsPasswords *StoreLpsPasswordsRequest `protobuf:"bytes,53,opt,name=store_lps_passwords,json=storeLpsPasswords,proto3,oneof"`
 }
 
 type AgentMessage_ValidateLuksToken struct {
-	// @gotags: validate:"omitempty"
-	ValidateLuksToken *ValidateLuksTokenRequest `protobuf:"bytes,54,opt,name=validate_luks_token,json=validateLuksToken,proto3,oneof" validate:"omitempty"`
+	ValidateLuksToken *ValidateLuksTokenRequest `protobuf:"bytes,54,opt,name=validate_luks_token,json=validateLuksToken,proto3,oneof"`
 }
 
 type AgentMessage_LogQueryResult struct {
 	// Log query result (journalctl output)
-	// @gotags: validate:"omitempty"
-	LogQueryResult *LogQueryResult `protobuf:"bytes,60,opt,name=log_query_result,json=logQueryResult,proto3,oneof" validate:"omitempty"`
+	LogQueryResult *LogQueryResult `protobuf:"bytes,60,opt,name=log_query_result,json=logQueryResult,proto3,oneof"`
 }
 
 type AgentMessage_TerminalOutput struct {
 	// Remote terminal (PTY) session messages
-	// @gotags: validate:"omitempty"
-	TerminalOutput *TerminalOutput `protobuf:"bytes,70,opt,name=terminal_output,json=terminalOutput,proto3,oneof" validate:"omitempty"`
+	TerminalOutput *TerminalOutput `protobuf:"bytes,70,opt,name=terminal_output,json=terminalOutput,proto3,oneof"`
 }
 
 type AgentMessage_TerminalStateChange struct {
-	// @gotags: validate:"omitempty"
-	TerminalStateChange *TerminalStateChange `protobuf:"bytes,71,opt,name=terminal_state_change,json=terminalStateChange,proto3,oneof" validate:"omitempty"`
+	TerminalStateChange *TerminalStateChange `protobuf:"bytes,71,opt,name=terminal_state_change,json=terminalStateChange,proto3,oneof"`
 }
 
 func (*AgentMessage_Hello) isAgentMessage_Payload() {}
@@ -745,15 +726,11 @@ func (*AgentMessage_TerminalStateChange) isAgentMessage_Payload() {}
 
 // Output chunk sent during action execution (Agent -> Server)
 type OutputChunk struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ExecutionId string `protobuf:"bytes,1,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ne=0"
-	Stream OutputStreamType `protobuf:"varint,2,opt,name=stream,proto3,enum=cadestro.v1.OutputStreamType" json:"stream,omitempty" validate:"required,ne=0"`
-	// @gotags: validate:"required,max=65536"
-	Data []byte `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty" validate:"required,max=65536"`
-	// @gotags: validate:"gte=0"
-	Sequence      int64 `protobuf:"varint,4,opt,name=sequence,proto3" json:"sequence,omitempty" validate:"gte=0"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExecutionId   string                 `protobuf:"bytes,1,opt,name=execution_id,json=executionId,proto3" json:"execution_id,omitempty"`
+	Stream        OutputStreamType       `protobuf:"varint,2,opt,name=stream,proto3,enum=cadestro.v1.OutputStreamType" json:"stream,omitempty"`
+	Data          []byte                 `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Sequence      int64                  `protobuf:"varint,4,opt,name=sequence,proto3" json:"sequence,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -817,17 +794,12 @@ func (x *OutputChunk) GetSequence() int64 {
 }
 
 type Hello struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	DeviceId *DeviceId `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"required"`
-	// @gotags: validate:"required,min=1,max=32"
-	AgentVersion string `protobuf:"bytes,2,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty" validate:"required,min=1,max=32"`
-	// @gotags: validate:"required,min=1,max=253"
-	Hostname string `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty" validate:"required,min=1,max=253"`
-	// @gotags: validate:"omitempty,max=4096"
-	AuthToken string `protobuf:"bytes,4,opt,name=auth_token,json=authToken,proto3" json:"auth_token,omitempty" validate:"omitempty,max=4096"`
-	// @gotags: validate:"omitempty,max=16"
-	Arch          string `protobuf:"bytes,5,opt,name=arch,proto3" json:"arch,omitempty" validate:"omitempty,max=16"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	AgentVersion  string                 `protobuf:"bytes,2,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
+	Hostname      string                 `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	AuthToken     string                 `protobuf:"bytes,4,opt,name=auth_token,json=authToken,proto3" json:"auth_token,omitempty"`
+	Arch          string                 `protobuf:"bytes,5,opt,name=arch,proto3" json:"arch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -898,15 +870,11 @@ func (x *Hello) GetArch() string {
 }
 
 type Heartbeat struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty"
-	Uptime *durationpb.Duration `protobuf:"bytes,1,opt,name=uptime,proto3" json:"uptime,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	CpuPercent float32 `protobuf:"fixed32,2,opt,name=cpu_percent,json=cpuPercent,proto3" json:"cpu_percent,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	MemoryPercent float32 `protobuf:"fixed32,3,opt,name=memory_percent,json=memoryPercent,proto3" json:"memory_percent,omitempty" validate:"omitempty,gte=0,lte=100"`
-	// @gotags: validate:"omitempty,gte=0,lte=100"
-	DiskPercent   float32 `protobuf:"fixed32,4,opt,name=disk_percent,json=diskPercent,proto3" json:"disk_percent,omitempty" validate:"omitempty,gte=0,lte=100"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Uptime        *durationpb.Duration   `protobuf:"bytes,1,opt,name=uptime,proto3" json:"uptime,omitempty"`
+	CpuPercent    float32                `protobuf:"fixed32,2,opt,name=cpu_percent,json=cpuPercent,proto3" json:"cpu_percent,omitempty"`
+	MemoryPercent float32                `protobuf:"fixed32,3,opt,name=memory_percent,json=memoryPercent,proto3" json:"memory_percent,omitempty"`
+	DiskPercent   float32                `protobuf:"fixed32,4,opt,name=disk_percent,json=diskPercent,proto3" json:"disk_percent,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -971,14 +939,11 @@ func (x *Heartbeat) GetDiskPercent() float32 {
 
 // Security alert sent from agent to server for audit logging
 type SecurityAlert struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ne=0"
-	Type SecurityAlertType `protobuf:"varint,1,opt,name=type,proto3,enum=cadestro.v1.SecurityAlertType" json:"type,omitempty" validate:"required,ne=0"`
-	// @gotags: validate:"required,min=1,max=1024"
-	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty" validate:"required,min=1,max=1024"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Type    SecurityAlertType      `protobuf:"varint,1,opt,name=type,proto3,enum=cadestro.v1.SecurityAlertType" json:"type,omitempty"`
+	Message string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	// Additional context as key-value pairs
-	// @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=1024"
-	Details       map[string]string `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=64,endkeys,max=1024"`
+	Details       map[string]string `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1036,8 +1001,7 @@ func (x *SecurityAlert) GetDetails() map[string]string {
 
 type ServerMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty" validate:"required,ulid"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*ServerMessage_SyncDevice
@@ -1275,97 +1239,79 @@ type isServerMessage_Payload interface {
 
 type ServerMessage_SyncDevice struct {
 	// Live operations have no policy or durable delivery semantics.
-	// @gotags: validate:"omitempty"
-	SyncDevice *SyncDeviceCommand `protobuf:"bytes,11,opt,name=sync_device,json=syncDevice,proto3,oneof" validate:"omitempty"`
+	SyncDevice *SyncDeviceCommand `protobuf:"bytes,11,opt,name=sync_device,json=syncDevice,proto3,oneof"`
 }
 
 type ServerMessage_Welcome struct {
-	// @gotags: validate:"omitempty"
-	Welcome *Welcome `protobuf:"bytes,10,opt,name=welcome,proto3,oneof" validate:"omitempty"`
+	Welcome *Welcome `protobuf:"bytes,10,opt,name=welcome,proto3,oneof"`
 }
 
 type ServerMessage_SyncState struct {
-	// @gotags: validate:"omitempty"
-	SyncState *SyncState `protobuf:"bytes,12,opt,name=sync_state,json=syncState,proto3,oneof" validate:"omitempty"`
+	SyncState *SyncState `protobuf:"bytes,12,opt,name=sync_state,json=syncState,proto3,oneof"`
 }
 
 type ServerMessage_RebootDevice struct {
-	// @gotags: validate:"omitempty"
-	RebootDevice *RebootDeviceCommand `protobuf:"bytes,13,opt,name=reboot_device,json=rebootDevice,proto3,oneof" validate:"omitempty"`
+	RebootDevice *RebootDeviceCommand `protobuf:"bytes,13,opt,name=reboot_device,json=rebootDevice,proto3,oneof"`
 }
 
 type ServerMessage_Query struct {
-	// @gotags: validate:"omitempty"
-	Query *OSQuery `protobuf:"bytes,30,opt,name=query,proto3,oneof" validate:"omitempty"`
+	Query *OSQuery `protobuf:"bytes,30,opt,name=query,proto3,oneof"`
 }
 
 type ServerMessage_RequestInventory struct {
-	// @gotags: validate:"omitempty"
-	RequestInventory *RequestInventory `protobuf:"bytes,31,opt,name=request_inventory,json=requestInventory,proto3,oneof" validate:"omitempty"`
+	RequestInventory *RequestInventory `protobuf:"bytes,31,opt,name=request_inventory,json=requestInventory,proto3,oneof"`
 }
 
 type ServerMessage_Error struct {
-	// @gotags: validate:"omitempty"
-	Error *Error `protobuf:"bytes,40,opt,name=error,proto3,oneof" validate:"omitempty"`
+	Error *Error `protobuf:"bytes,40,opt,name=error,proto3,oneof"`
 }
 
 type ServerMessage_GetLuksKey struct {
 	// LUKS key management responses
-	// @gotags: validate:"omitempty"
-	GetLuksKey *GetLuksKeyResponse `protobuf:"bytes,50,opt,name=get_luks_key,json=getLuksKey,proto3,oneof" validate:"omitempty"`
+	GetLuksKey *GetLuksKeyResponse `protobuf:"bytes,50,opt,name=get_luks_key,json=getLuksKey,proto3,oneof"`
 }
 
 type ServerMessage_StoreLuksKey struct {
-	// @gotags: validate:"omitempty"
-	StoreLuksKey *StoreLuksKeyResponse `protobuf:"bytes,51,opt,name=store_luks_key,json=storeLuksKey,proto3,oneof" validate:"omitempty"`
+	StoreLuksKey *StoreLuksKeyResponse `protobuf:"bytes,51,opt,name=store_luks_key,json=storeLuksKey,proto3,oneof"`
 }
 
 type ServerMessage_RevokeLuksDeviceKey struct {
-	// @gotags: validate:"omitempty"
-	RevokeLuksDeviceKey *RevokeLuksDeviceKey `protobuf:"bytes,52,opt,name=revoke_luks_device_key,json=revokeLuksDeviceKey,proto3,oneof" validate:"omitempty"`
+	RevokeLuksDeviceKey *RevokeLuksDeviceKey `protobuf:"bytes,52,opt,name=revoke_luks_device_key,json=revokeLuksDeviceKey,proto3,oneof"`
 }
 
 type ServerMessage_StoreLpsPasswords struct {
-	// @gotags: validate:"omitempty"
-	StoreLpsPasswords *StoreLpsPasswordsResponse `protobuf:"bytes,53,opt,name=store_lps_passwords,json=storeLpsPasswords,proto3,oneof" validate:"omitempty"`
+	StoreLpsPasswords *StoreLpsPasswordsResponse `protobuf:"bytes,53,opt,name=store_lps_passwords,json=storeLpsPasswords,proto3,oneof"`
 }
 
 type ServerMessage_ValidateLuksToken struct {
-	// @gotags: validate:"omitempty"
-	ValidateLuksToken *ValidateLuksTokenResponse `protobuf:"bytes,54,opt,name=validate_luks_token,json=validateLuksToken,proto3,oneof" validate:"omitempty"`
+	ValidateLuksToken *ValidateLuksTokenResponse `protobuf:"bytes,54,opt,name=validate_luks_token,json=validateLuksToken,proto3,oneof"`
 }
 
 type ServerMessage_ResultAck struct {
 	// Correlated application acknowledgement for result ingestion.
-	// @gotags: validate:"omitempty"
-	ResultAck *ResultAck `protobuf:"bytes,24,opt,name=result_ack,json=resultAck,proto3,oneof" validate:"omitempty"`
+	ResultAck *ResultAck `protobuf:"bytes,24,opt,name=result_ack,json=resultAck,proto3,oneof"`
 }
 
 type ServerMessage_LogQuery struct {
 	// Log query dispatch (journalctl)
-	// @gotags: validate:"omitempty"
-	LogQuery *LogQuery `protobuf:"bytes,60,opt,name=log_query,json=logQuery,proto3,oneof" validate:"omitempty"`
+	LogQuery *LogQuery `protobuf:"bytes,60,opt,name=log_query,json=logQuery,proto3,oneof"`
 }
 
 type ServerMessage_TerminalStart struct {
 	// Remote terminal (PTY) session control
-	// @gotags: validate:"omitempty"
-	TerminalStart *TerminalStart `protobuf:"bytes,70,opt,name=terminal_start,json=terminalStart,proto3,oneof" validate:"omitempty"`
+	TerminalStart *TerminalStart `protobuf:"bytes,70,opt,name=terminal_start,json=terminalStart,proto3,oneof"`
 }
 
 type ServerMessage_TerminalInput struct {
-	// @gotags: validate:"omitempty"
-	TerminalInput *TerminalInput `protobuf:"bytes,71,opt,name=terminal_input,json=terminalInput,proto3,oneof" validate:"omitempty"`
+	TerminalInput *TerminalInput `protobuf:"bytes,71,opt,name=terminal_input,json=terminalInput,proto3,oneof"`
 }
 
 type ServerMessage_TerminalResize struct {
-	// @gotags: validate:"omitempty"
-	TerminalResize *TerminalResize `protobuf:"bytes,72,opt,name=terminal_resize,json=terminalResize,proto3,oneof" validate:"omitempty"`
+	TerminalResize *TerminalResize `protobuf:"bytes,72,opt,name=terminal_resize,json=terminalResize,proto3,oneof"`
 }
 
 type ServerMessage_TerminalStop struct {
-	// @gotags: validate:"omitempty"
-	TerminalStop *TerminalStop `protobuf:"bytes,73,opt,name=terminal_stop,json=terminalStop,proto3,oneof" validate:"omitempty"`
+	TerminalStop *TerminalStop `protobuf:"bytes,73,opt,name=terminal_stop,json=terminalStop,proto3,oneof"`
 }
 
 func (*ServerMessage_SyncDevice) isServerMessage_Payload() {}
@@ -1565,11 +1511,9 @@ func (x *RebootDeviceResult) GetSuccess() bool {
 }
 
 type Welcome struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=32"
-	ServerVersion string `protobuf:"bytes,1,opt,name=server_version,json=serverVersion,proto3" json:"server_version,omitempty" validate:"required,min=1,max=32"`
-	// @gotags: validate:"omitempty"
-	HeartbeatInterval *durationpb.Duration `protobuf:"bytes,2,opt,name=heartbeat_interval,json=heartbeatInterval,proto3" json:"heartbeat_interval,omitempty" validate:"omitempty"`
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ServerVersion     string                 `protobuf:"bytes,1,opt,name=server_version,json=serverVersion,proto3" json:"server_version,omitempty"`
+	HeartbeatInterval *durationpb.Duration   `protobuf:"bytes,2,opt,name=heartbeat_interval,json=heartbeatInterval,proto3" json:"heartbeat_interval,omitempty"`
 	// Base URL for browser-based device login (configurable, defaults to the
 	// bundled Cadestro web UI).
 	// Used by PAM module to open the OIDC login page for display manager sessions.
@@ -1639,13 +1583,10 @@ func (x *Welcome) GetDeviceLoginUrl() string {
 // runbook, an ActionSet assignment sets action_set_id alone, and a singleton
 // Action assignment sets action_id alone.
 type ManifestProvenance struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,ulid"
-	DefinitionId string `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	ActionSetId string `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty" validate:"omitempty,ulid"`
-	// @gotags: validate:"omitempty,ulid"
-	ActionId      string `protobuf:"bytes,3,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"omitempty,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DefinitionId  string                 `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
+	ActionSetId   string                 `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
+	ActionId      string                 `protobuf:"bytes,3,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1710,16 +1651,13 @@ func (x *ManifestProvenance) GetActionId() string {
 // at each position; they are not collapsed, and the distinct occurrence_ids
 // are what keeps their results apart.
 type ManifestOccurrence struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	OccurrenceId string `protobuf:"bytes,1,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required"
-	Action *Action `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty" validate:"required"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	OccurrenceId string                 `protobuf:"bytes,1,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	Action       *Action                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	// What the manifest does if this occurrence fails. Control resolves the
 	// set's declared policy onto each position, so the agent reads this value
 	// and needs no fallback.
-	// @gotags: validate:"omitempty"
-	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty" validate:"omitempty"`
+	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1782,33 +1720,27 @@ func (x *ManifestOccurrence) GetOnFailure() OnFailure {
 // creates one manifest; assigning a Definition creates one globally ordered
 // runbook. Explicit Definition dispatch uses the same runbook representation.
 type Manifest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ManifestId string `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required"
-	Provenance *ManifestProvenance `protobuf:"bytes,2,opt,name=provenance,proto3" json:"provenance,omitempty" validate:"required"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	ManifestId string                 `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
+	Provenance *ManifestProvenance    `protobuf:"bytes,2,opt,name=provenance,proto3" json:"provenance,omitempty"`
 	// The schedule that fires this manifest: every occurrence runs in declared
 	// order when it does. It is the only schedule the agent executes on — the
 	// per-Action schedule field is authoring data, not an execution trigger.
 	// run_on_assign and skip_if_unchanged keep their existing meaning.
-	// @gotags: validate:"required"
-	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty" validate:"required"`
+	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// The set-level failure policy, as authored. Each occurrence carries the
 	// resolved value it executes under; this records what the set declared, so
 	// the agent's logs and results can name the policy rather than infer it.
-	// @gotags: validate:"omitempty"
-	DefaultOnFailure OnFailure `protobuf:"varint,4,opt,name=default_on_failure,json=defaultOnFailure,proto3,enum=cadestro.v1.OnFailure" json:"default_on_failure,omitempty" validate:"omitempty"`
+	DefaultOnFailure OnFailure `protobuf:"varint,4,opt,name=default_on_failure,json=defaultOnFailure,proto3,enum=cadestro.v1.OnFailure" json:"default_on_failure,omitempty"`
 	// Execution order is list order.
-	// @gotags: validate:"required,min=1,dive"
-	Occurrences []*ManifestOccurrence `protobuf:"bytes,5,rep,name=occurrences,proto3" json:"occurrences,omitempty" validate:"required,min=1,dive"`
+	Occurrences []*ManifestOccurrence `protobuf:"bytes,5,rep,name=occurrences,proto3" json:"occurrences,omitempty"`
 	// An explicit dispatch: the agent executes this delivery exactly once after
 	// recording it locally and never reschedules it. Marked structurally here — not
 	// by action type and not by schedule shape, because assigned manifests may
 	// legitimately carry an empty schedule (agent-default drift cadence). A
 	// one-shot delivery is also exempt from the agent's maintenance window: an
 	// operator dispatching "now" means now; only scheduled work defers.
-	// @gotags: validate:"omitempty"
-	OneShot       bool `protobuf:"varint,6,opt,name=one_shot,json=oneShot,proto3" json:"one_shot,omitempty" validate:"omitempty"`
+	OneShot       bool `protobuf:"varint,6,opt,name=one_shot,json=oneShot,proto3" json:"one_shot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1888,11 +1820,9 @@ func (x *Manifest) GetOneShot() bool {
 // One durable one-shot manifest returned by Sync. delivery_id is minted once
 // when the row is committed, so repeated Sync responses remain execute-once.
 type ManifestDelivery struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeliveryId string `protobuf:"bytes,1,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required"
-	Manifest      *Manifest `protobuf:"bytes,2,opt,name=manifest,proto3" json:"manifest,omitempty" validate:"required"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeliveryId    string                 `protobuf:"bytes,1,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty"`
+	Manifest      *Manifest              `protobuf:"bytes,2,opt,name=manifest,proto3" json:"manifest,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1948,19 +1878,13 @@ func (x *ManifestDelivery) GetManifest() *Manifest {
 // aggregate: SUCCESS when every executed occurrence succeeded, FAILED when any
 // did, and INDETERMINATE when a crash left an occurrence's effect unknown.
 type ManifestResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	DeliveryId string `protobuf:"bytes,1,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ulid"
-	ManifestId string `protobuf:"bytes,2,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ne=0"
-	Status ExecutionStatus `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty" validate:"required,ne=0"`
-	// @gotags: validate:"omitempty"
-	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,gte=0"
-	DurationMs int64 `protobuf:"varint,5,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty" validate:"omitempty,gte=0"`
-	// @gotags: validate:"omitempty,max=4096"
-	Error         string `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=4096"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeliveryId    string                 `protobuf:"bytes,1,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty"`
+	ManifestId    string                 `protobuf:"bytes,2,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
+	Status        ExecutionStatus        `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
+	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
+	DurationMs    int64                  `protobuf:"varint,5,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	Error         string                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2090,11 +2014,9 @@ func (x *ResultAck) GetCode() string {
 }
 
 type Error struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required,min=1,max=1024"
-	Message       string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty" validate:"required,min=1,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2144,20 +2066,14 @@ func (x *Error) GetMessage() string {
 }
 
 type OSQuery struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required_without=RawSql,omitempty,min=1,max=64"
-	Table string `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty" validate:"required_without=RawSql,omitempty,min=1,max=64"`
-	// @gotags: validate:"omitempty,dive,max=64"
-	Columns []string `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty" validate:"omitempty,dive,max=64"`
-	// @gotags: validate:"omitempty,dive"
-	Where []*OSQueryCondition `protobuf:"bytes,4,rep,name=where,proto3" json:"where,omitempty" validate:"omitempty,dive"`
-	// @gotags: validate:"omitempty,gte=0,lte=10000"
-	Limit int32 `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty" validate:"omitempty,gte=0,lte=10000"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	QueryId string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Table   string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
+	Columns []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
+	Where   []*OSQueryCondition    `protobuf:"bytes,4,rep,name=where,proto3" json:"where,omitempty"`
+	Limit   int32                  `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Raw SQL query — when set, table/columns/where/limit are ignored.
-	// @gotags: validate:"omitempty,max=4096"
-	RawSql        string `protobuf:"bytes,6,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty" validate:"omitempty,max=4096"`
+	RawSql        string `protobuf:"bytes,6,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2235,13 +2151,10 @@ func (x *OSQuery) GetRawSql() string {
 }
 
 type OSQueryCondition struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	Column string `protobuf:"bytes,1,opt,name=column,proto3" json:"column,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required"
-	Op OSQueryOp `protobuf:"varint,2,opt,name=op,proto3,enum=cadestro.v1.OSQueryOp" json:"op,omitempty" validate:"required"`
-	// @gotags: validate:"required,max=4096"
-	Value         string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty" validate:"required,max=4096"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Column        string                 `protobuf:"bytes,1,opt,name=column,proto3" json:"column,omitempty"`
+	Op            OSQueryOp              `protobuf:"varint,2,opt,name=op,proto3,enum=cadestro.v1.OSQueryOp" json:"op,omitempty"`
+	Value         string                 `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2298,15 +2211,11 @@ func (x *OSQueryCondition) GetValue() string {
 }
 
 type OSQueryResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty"
-	Success bool `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty" validate:"omitempty"`
-	// @gotags: validate:"omitempty,max=1024"
-	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=1024"`
-	// @gotags: validate:"omitempty,dive"
-	Rows          []*OSQueryRow `protobuf:"bytes,4,rep,name=rows,proto3" json:"rows,omitempty" validate:"omitempty,dive"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Rows          []*OSQueryRow          `protobuf:"bytes,4,rep,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2370,9 +2279,8 @@ func (x *OSQueryResult) GetRows() []*OSQueryRow {
 }
 
 type OSQueryRow struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"omitempty,dive,keys,max=64,endkeys,max=65536"
-	Data          map[string]string `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value" validate:"omitempty,dive,keys,max=64,endkeys,max=65536"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          map[string]string      `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2459,11 +2367,9 @@ func (x *DeviceInventory) GetTables() []*InventoryTable {
 }
 
 type InventoryTable struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,min=1,max=64"
-	TableName string `protobuf:"bytes,1,opt,name=table_name,json=tableName,proto3" json:"table_name,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"omitempty,dive"
-	Rows          []*OSQueryRow `protobuf:"bytes,2,rep,name=rows,proto3" json:"rows,omitempty" validate:"omitempty,dive"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TableName     string                 `protobuf:"bytes,1,opt,name=table_name,json=tableName,proto3" json:"table_name,omitempty"`
+	Rows          []*OSQueryRow          `protobuf:"bytes,2,rep,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2518,9 +2424,8 @@ func (x *InventoryTable) GetRows() []*OSQueryRow {
 // Agent-initiated periodic inventory (on connect + every 24h) does NOT travel
 // this message — it is the agent's own decision, not a command.
 type RequestInventory struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId       string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2565,9 +2470,8 @@ func (x *RequestInventory) GetQueryId() string {
 // Agent requests the current managed passphrase for a LUKS action.
 // device_id is omitted — control derives the device from the mTLS certificate.
 type GetLuksKeyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionId      string `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2619,8 +2523,7 @@ type GetLuksKeyResponse struct {
 	// fields whose plaintext may only be touched at an enumerated sink, so a
 	// slog or fmt argument fails the build instead of shipping a credential into
 	// a log.
-	// @gotags: validate:"required,max=4096"
-	Passphrase    []byte `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required,max=4096"`
+	Passphrase    []byte `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2665,29 +2568,25 @@ func (x *GetLuksKeyResponse) GetPassphrase() []byte {
 // Agent stores a new managed passphrase on the server.
 // The server must confirm receipt before the agent removes the old key from LUKS.
 type StoreLuksKeyRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ActionId string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	// Auto-detected device path (e.g., "/dev/sda2"). Bounded at PATH_MAX: the
 	// value is only ever a local block-device path, and without a ceiling an
 	// authenticated agent can send a transport-sized string that is validated,
 	// encrypted and persisted.
-	// @gotags: validate:"required,startswith=/,max=4096"
-	DevicePath string `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty" validate:"required,startswith=/,max=4096"`
+	DevicePath string `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
 	// The managed passphrase, delivered only on the authenticated mTLS stream;
 	// control encrypts it under its resource-context AAD before persistence.
 	// debug_redact is the secret classification (see
 	// GetLuksKeyResponse.passphrase).
-	// @gotags: validate:"required,max=4096"
-	Passphrase []byte `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty" validate:"required,max=4096"`
+	Passphrase []byte `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
 	// Why this rotation happened. INITIAL on the first time the action
 	// runs on a device (no previous passphrase to retain); SCHEDULED for
 	// any subsequent policy-driven rotation. LUKS does not use
 	// AUTH_GRACE — that reason belongs to LPS, where a user
 	// authenticated during the grace period. Validated against the enum
 	// at the boundary.
-	// @gotags: validate:"required,oneof=1 2"
-	RotationReason RotationReason `protobuf:"varint,4,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty" validate:"required,oneof=1 2"`
+	RotationReason RotationReason `protobuf:"varint,4,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2798,14 +2697,12 @@ func (x *StoreLuksKeyResponse) GetSuccess() bool {
 type LpsPasswordRotation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Local Linux username whose password was rotated.
-	// @gotags: validate:"required,min=1,max=64"
-	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty" validate:"required,min=1,max=64"`
+	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
 	// The rotated password, delivered only on the authenticated mTLS stream and
 	// encrypted with the owning device/action context before persistence.
 	// debug_redact is the secret classification (see
 	// GetLuksKeyResponse.passphrase).
-	// @gotags: validate:"required,max=128"
-	Password []byte `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty" validate:"required,max=128"`
+	Password []byte `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
 	// RFC 3339 timestamp the agent observed the rotation. Control keeps the
 	// agent's clock here rather than re-stamping at receipt, so the timeline
 	// reflects the device's reality.
@@ -2817,15 +2714,13 @@ type LpsPasswordRotation struct {
 	// credential the operator now needs. The handler normalises what it can and
 	// keeps the rotation; length is still bounded.
 	// (TestAgentOps_StoreLpsPasswords_PersistsWholeBatch pins this.)
-	// @gotags: validate:"required,min=1,max=64"
-	RotatedAt string `protobuf:"bytes,3,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty" validate:"required,min=1,max=64"`
+	RotatedAt string `protobuf:"bytes,3,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty"`
 	// Why this rotation happened. INITIAL the first time the LPS action ran for
 	// the user; SCHEDULED for a policy-driven rotation; AUTH_GRACE when a user
 	// authenticates during the post-rotation grace window — an LPS-only path that
 	// signals "rotate now to limit the leaked-password window", never emitted from
 	// LUKS. Stored on the event as the lowercase string form.
-	// @gotags: validate:"required,oneof=1 2 3"
-	Reason        RotationReason `protobuf:"varint,4,opt,name=reason,proto3,enum=cadestro.v1.RotationReason" json:"reason,omitempty" validate:"required,oneof=1 2 3"`
+	Reason        RotationReason `protobuf:"varint,4,opt,name=reason,proto3,enum=cadestro.v1.RotationReason" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2891,14 +2786,12 @@ func (x *LpsPasswordRotation) GetReason() RotationReason {
 // Agent reports the LPS rotations from one execution. Batched per action: an LPS
 // run rotates every managed local account on the device.
 type StoreLpsPasswordsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ActionId string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	// One entry per managed local account on the device. Capped: each entry costs
 	// a validation pass, an encryption, and a row, and no real device manages
 	// anything near this many accounts.
-	// @gotags: validate:"required,min=1,max=256,dive"
-	Rotations     []*LpsPasswordRotation `protobuf:"bytes,2,rep,name=rotations,proto3" json:"rotations,omitempty" validate:"required,min=1,max=256,dive"`
+	Rotations     []*LpsPasswordRotation `protobuf:"bytes,2,rep,name=rotations,proto3" json:"rotations,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2994,9 +2887,8 @@ func (x *StoreLpsPasswordsResponse) GetSuccess() bool {
 // Server instructs agent to revoke the device-bound key in LUKS slot 7.
 // Dispatched as a live operation via the stream.
 type RevokeLuksDeviceKey struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionId      string `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3040,12 +2932,10 @@ func (x *RevokeLuksDeviceKey) GetActionId() string {
 
 // Agent reports the result of revoking the device-bound key.
 type RevokeLuksDeviceKeyResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	ActionId string `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty" validate:"required,ulid"`
-	Success  bool   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
-	// @gotags: validate:"omitempty,max=1024"
-	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=1024"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3105,8 +2995,7 @@ type ValidateLuksTokenRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The one-time token the operator was shown, as issued by
 	// ControlService.CreateLuksToken.
-	// @gotags: validate:"required,ulid"
-	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty" validate:"required,ulid"`
+	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3264,8 +3153,7 @@ type SyncState struct {
 	SyncIntervalMinutes int32 `protobuf:"varint,1,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
 	// Every due one-shot delivery for this device. A stable delivery_id lets the
 	// agent absorb repeats after reconnects.
-	// @gotags: validate:"omitempty,dive"
-	Deliveries []*ManifestDelivery `protobuf:"bytes,2,rep,name=deliveries,proto3" json:"deliveries,omitempty" validate:"omitempty,dive"`
+	Deliveries []*ManifestDelivery `protobuf:"bytes,2,rep,name=deliveries,proto3" json:"deliveries,omitempty"`
 	// Resolved maintenance window. Server-computed union across every
 	// group the device belongs to (its own device groups plus any user
 	// groups reaching it through an assignment). Empty schedule = no
@@ -3341,11 +3229,9 @@ func (x *SyncState) GetDesiredPolicy() *DesiredPolicy {
 type DesiredPolicy struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Stable revision of the resolved device policy.
-	// @gotags: validate:"required,ulid"
-	Revision string `protobuf:"bytes,1,opt,name=revision,proto3" json:"revision,omitempty" validate:"required,ulid"`
+	Revision string `protobuf:"bytes,1,opt,name=revision,proto3" json:"revision,omitempty"`
 	// One globally ordered runbook for the device. Empty containers are omitted.
-	// @gotags: validate:"omitempty,dive"
-	Manifests     []*Manifest `protobuf:"bytes,2,rep,name=manifests,proto3" json:"manifests,omitempty" validate:"omitempty,dive"`
+	Manifests     []*Manifest `protobuf:"bytes,2,rep,name=manifests,proto3" json:"manifests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3396,26 +3282,18 @@ func (x *DesiredPolicy) GetManifests() []*Manifest {
 
 // Server -> Agent: request system log output
 type LogQuery struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,gte=0,lte=10000"
-	Lines int32 `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty" validate:"omitempty,gte=0,lte=10000"`
-	// @gotags: validate:"omitempty,max=256"
-	Unit string `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty" validate:"omitempty,max=256"`
-	// @gotags: validate:"omitempty,max=64"
-	Since string `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty" validate:"omitempty,max=64"`
-	// @gotags: validate:"omitempty,max=64"
-	Until string `protobuf:"bytes,5,opt,name=until,proto3" json:"until,omitempty" validate:"omitempty,max=64"`
-	// @gotags: validate:"omitempty,max=32"
-	Priority string `protobuf:"bytes,6,opt,name=priority,proto3" json:"priority,omitempty" validate:"omitempty,max=32"`
-	// @gotags: validate:"omitempty,max=256"
-	Grep   string `protobuf:"bytes,7,opt,name=grep,proto3" json:"grep,omitempty" validate:"omitempty,max=256"`
-	Kernel bool   `protobuf:"varint,8,opt,name=kernel,proto3" json:"kernel,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	QueryId  string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Lines    int32                  `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty"`
+	Unit     string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
+	Since    string                 `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty"`
+	Until    string                 `protobuf:"bytes,5,opt,name=until,proto3" json:"until,omitempty"`
+	Priority string                 `protobuf:"bytes,6,opt,name=priority,proto3" json:"priority,omitempty"`
+	Grep     string                 `protobuf:"bytes,7,opt,name=grep,proto3" json:"grep,omitempty"`
+	Kernel   bool                   `protobuf:"varint,8,opt,name=kernel,proto3" json:"kernel,omitempty"`
 	// Log source. Defaults to LOG_SOURCE_JOURNALD. Agents without
 	// support for a requested source return an error.
-	// @gotags: validate:"omitempty"
-	Source        LogSource `protobuf:"varint,9,opt,name=source,proto3,enum=cadestro.v1.LogSource" json:"source,omitempty" validate:"omitempty"`
+	Source        LogSource `protobuf:"varint,9,opt,name=source,proto3,enum=cadestro.v1.LogSource" json:"source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3515,12 +3393,10 @@ func (x *LogQuery) GetSource() LogSource {
 
 // Agent -> Server: journalctl output result
 type LogQueryResult struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	QueryId string `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty" validate:"required,ulid"`
-	Success bool   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
-	// @gotags: validate:"omitempty,max=1024"
-	Error string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=1024"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	QueryId string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Success bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
+	Error   string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	// Raw journalctl output (plain text)
 	Logs          string `protobuf:"bytes,4,opt,name=logs,proto3" json:"logs,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -3590,17 +3466,13 @@ func (x *LogQueryResult) GetLogs() string {
 // before allocating the PTY. The shell is activated for the duration of
 // the session and reverted to nologin on disconnect.
 type TerminalStart struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	// The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
 	// never uses the original Linux username for the shell.
-	// @gotags: validate:"required,min=1,max=64"
-	TtyUser string `protobuf:"bytes,2,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty" validate:"required,min=1,max=64"`
-	// @gotags: validate:"required,gt=0,lte=65535"
-	Cols uint32 `protobuf:"varint,3,opt,name=cols,proto3" json:"cols,omitempty" validate:"required,gt=0,lte=65535"`
-	// @gotags: validate:"required,gt=0,lte=65535"
-	Rows          uint32 `protobuf:"varint,4,opt,name=rows,proto3" json:"rows,omitempty" validate:"required,gt=0,lte=65535"`
+	TtyUser       string `protobuf:"bytes,2,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
+	Cols          uint32 `protobuf:"varint,3,opt,name=cols,proto3" json:"cols,omitempty"`
+	Rows          uint32 `protobuf:"varint,4,opt,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3665,11 +3537,9 @@ func (x *TerminalStart) GetRows() uint32 {
 
 // Server -> Agent: stdin data for an active session.
 type TerminalInput struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,max=65536"
-	Data          []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty" validate:"required,max=65536"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Data          []byte                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3721,13 +3591,10 @@ func (x *TerminalInput) GetData() []byte {
 // Server -> Agent: window resize.
 // The agent forwards the new size to the PTY via TIOCSWINSZ.
 type TerminalResize struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,gt=0,lte=65535"
-	Cols uint32 `protobuf:"varint,2,opt,name=cols,proto3" json:"cols,omitempty" validate:"required,gt=0,lte=65535"`
-	// @gotags: validate:"required,gt=0,lte=65535"
-	Rows          uint32 `protobuf:"varint,3,opt,name=rows,proto3" json:"rows,omitempty" validate:"required,gt=0,lte=65535"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Cols          uint32                 `protobuf:"varint,2,opt,name=cols,proto3" json:"cols,omitempty"`
+	Rows          uint32                 `protobuf:"varint,3,opt,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3789,11 +3656,9 @@ func (x *TerminalResize) GetRows() uint32 {
 // ControlService.TerminateTerminalSession so the agent can surface it in
 // logs and the audit trail records why the session was killed.
 type TerminalStop struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"omitempty,max=512"
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty" validate:"omitempty,max=512"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3844,11 +3709,9 @@ func (x *TerminalStop) GetReason() string {
 
 // Agent -> Server: stdout/stderr data from the PTY.
 type TerminalOutput struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,max=65536"
-	Data          []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty" validate:"required,max=65536"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Data          []byte                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3903,16 +3766,13 @@ func (x *TerminalOutput) GetData() []byte {
 // exit_code populated. ERROR is sent for any failure that ends the
 // session early, with error populated.
 type TerminalStateChange struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,ulid"
-	SessionId string `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty" validate:"required,ulid"`
-	// @gotags: validate:"required,ne=0"
-	State TerminalSessionState `protobuf:"varint,2,opt,name=state,proto3,enum=cadestro.v1.TerminalSessionState" json:"state,omitempty" validate:"required,ne=0"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SessionId string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	State     TerminalSessionState   `protobuf:"varint,2,opt,name=state,proto3,enum=cadestro.v1.TerminalSessionState" json:"state,omitempty"`
 	// Set when state is EXITED.
 	ExitCode int32 `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
 	// Set when state is ERROR.
-	// @gotags: validate:"omitempty,max=1024"
-	Error         string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=1024"`
+	Error         string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3979,9 +3839,9 @@ var File_cadestro_v1_agent_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x92\v\n" +
-	"\fAgentMessage\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12*\n" +
+	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1ecadestro/v1/validate_ext.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9c\v\n" +
+	"\fAgentMessage\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12*\n" +
 	"\x05hello\x18\n" +
 	" \x01(\v2\x12.cadestro.v1.HelloH\x00R\x05hello\x126\n" +
 	"\theartbeat\x18\v \x01(\v2\x16.cadestro.v1.HeartbeatH\x00R\theartbeat\x12=\n" +
@@ -4003,34 +3863,43 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x10log_query_result\x18< \x01(\v2\x1b.cadestro.v1.LogQueryResultH\x00R\x0elogQueryResult\x12F\n" +
 	"\x0fterminal_output\x18F \x01(\v2\x1b.cadestro.v1.TerminalOutputH\x00R\x0eterminalOutput\x12V\n" +
 	"\x15terminal_state_change\x18G \x01(\v2 .cadestro.v1.TerminalStateChangeH\x00R\x13terminalStateChangeB\t\n" +
-	"\apayload\"\x97\x01\n" +
-	"\vOutputChunk\x12!\n" +
-	"\fexecution_id\x18\x01 \x01(\tR\vexecutionId\x125\n" +
-	"\x06stream\x18\x02 \x01(\x0e2\x1d.cadestro.v1.OutputStreamTypeR\x06stream\x12\x12\n" +
-	"\x04data\x18\x03 \x01(\fR\x04data\x12\x1a\n" +
-	"\bsequence\x18\x04 \x01(\x03R\bsequence\"\xaf\x01\n" +
-	"\x05Hello\x122\n" +
-	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdR\bdeviceId\x12#\n" +
-	"\ragent_version\x18\x02 \x01(\tR\fagentVersion\x12\x1a\n" +
-	"\bhostname\x18\x03 \x01(\tR\bhostname\x12\x1d\n" +
+	"\apayload\"\xc0\x01\n" +
+	"\vOutputChunk\x12+\n" +
+	"\fexecution_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\vexecutionId\x12=\n" +
+	"\x06stream\x18\x02 \x01(\x0e2\x1d.cadestro.v1.OutputStreamTypeB\x06\xbaH\x03\xc8\x01\x01R\x06stream\x12 \n" +
+	"\x04data\x18\x03 \x01(\fB\f\xbaH\t\xc8\x01\x01z\x04\x18\x80\x80\x04R\x04data\x12#\n" +
+	"\bsequence\x18\x04 \x01(\x03B\a\xbaH\x04\"\x02(\x00R\bsequence\"\xed\x01\n" +
+	"\x05Hello\x12:\n" +
+	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\x121\n" +
+	"\ragent_version\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\fagentVersion\x12)\n" +
+	"\bhostname\x18\x03 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xfd\x01R\bhostname\x12*\n" +
 	"\n" +
-	"auth_token\x18\x04 \x01(\tR\tauthToken\x12\x12\n" +
-	"\x04arch\x18\x05 \x01(\tR\x04arch\"\xa9\x01\n" +
+	"auth_token\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\tauthToken\x12\x1e\n" +
+	"\x04arch\x18\x05 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18\x10R\x04arch\"\xe5\x01\n" +
 	"\tHeartbeat\x121\n" +
-	"\x06uptime\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x06uptime\x12\x1f\n" +
-	"\vcpu_percent\x18\x02 \x01(\x02R\n" +
-	"cpuPercent\x12%\n" +
-	"\x0ememory_percent\x18\x03 \x01(\x02R\rmemoryPercent\x12!\n" +
-	"\fdisk_percent\x18\x04 \x01(\x02R\vdiskPercent\"\xdc\x01\n" +
-	"\rSecurityAlert\x122\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1e.cadestro.v1.SecurityAlertTypeR\x04type\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12A\n" +
-	"\adetails\x18\x03 \x03(\v2'.cadestro.v1.SecurityAlert.DetailsEntryR\adetails\x1a:\n" +
+	"\x06uptime\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x06uptime\x123\n" +
+	"\vcpu_percent\x18\x02 \x01(\x02B\x12\xbaH\x0f\xd8\x01\x01\n" +
+	"\n" +
+	"\x1d\x00\x00\xc8B-\x00\x00\x00\x00R\n" +
+	"cpuPercent\x129\n" +
+	"\x0ememory_percent\x18\x03 \x01(\x02B\x12\xbaH\x0f\xd8\x01\x01\n" +
+	"\n" +
+	"\x1d\x00\x00\xc8B-\x00\x00\x00\x00R\rmemoryPercent\x125\n" +
+	"\fdisk_percent\x18\x04 \x01(\x02B\x12\xbaH\x0f\xd8\x01\x01\n" +
+	"\n" +
+	"\x1d\x00\x00\xc8B-\x00\x00\x00\x00R\vdiskPercent\"\x88\x02\n" +
+	"\rSecurityAlert\x12:\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1e.cadestro.v1.SecurityAlertTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12'\n" +
+	"\amessage\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\amessage\x12V\n" +
+	"\adetails\x18\x03 \x03(\v2'.cadestro.v1.SecurityAlert.DetailsEntryB\x13\xbaH\x10\x9a\x01\r\"\x04r\x02\x18@*\x05r\x03\x18\x80\bR\adetails\x1a:\n" +
 	"\fDetailsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe9\t\n" +
-	"\rServerMessage\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12A\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf3\t\n" +
+	"\rServerMessage\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12A\n" +
 	"\vsync_device\x18\v \x01(\v2\x1e.cadestro.v1.SyncDeviceCommandH\x00R\n" +
 	"syncDevice\x120\n" +
 	"\awelcome\x18\n" +
@@ -4060,115 +3929,120 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x10SyncDeviceResult\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\".\n" +
 	"\x12RebootDeviceResult\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xa4\x01\n" +
-	"\aWelcome\x12%\n" +
-	"\x0eserver_version\x18\x01 \x01(\tR\rserverVersion\x12H\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb2\x01\n" +
+	"\aWelcome\x123\n" +
+	"\x0eserver_version\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\rserverVersion\x12H\n" +
 	"\x12heartbeat_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x11heartbeatInterval\x12(\n" +
-	"\x10device_login_url\x18\x03 \x01(\tR\x0edeviceLoginUrl\"z\n" +
-	"\x12ManifestProvenance\x12#\n" +
-	"\rdefinition_id\x18\x01 \x01(\tR\fdefinitionId\x12\"\n" +
-	"\raction_set_id\x18\x02 \x01(\tR\vactionSetId\x12\x1b\n" +
-	"\taction_id\x18\x03 \x01(\tR\bactionId\"\x9d\x01\n" +
-	"\x12ManifestOccurrence\x12#\n" +
-	"\roccurrence_id\x18\x01 \x01(\tR\foccurrenceId\x12+\n" +
-	"\x06action\x18\x02 \x01(\v2\x13.cadestro.v1.ActionR\x06action\x125\n" +
+	"\x10device_login_url\x18\x03 \x01(\tR\x0edeviceLoginUrl\"\xa1\x01\n" +
+	"\x12ManifestProvenance\x120\n" +
+	"\rdefinition_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\fdefinitionId\x12/\n" +
+	"\raction_set_id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\vactionSetId\x12(\n" +
+	"\taction_id\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\bactionId\"\xaf\x01\n" +
+	"\x12ManifestOccurrence\x12-\n" +
+	"\roccurrence_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\foccurrenceId\x123\n" +
+	"\x06action\x18\x02 \x01(\v2\x13.cadestro.v1.ActionB\x06\xbaH\x03\xc8\x01\x01R\x06action\x125\n" +
 	"\n" +
-	"on_failure\x18\x03 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xc9\x02\n" +
-	"\bManifest\x12\x1f\n" +
-	"\vmanifest_id\x18\x01 \x01(\tR\n" +
-	"manifestId\x12?\n" +
+	"on_failure\x18\x03 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xf0\x02\n" +
+	"\bManifest\x12)\n" +
+	"\vmanifest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"manifestId\x12G\n" +
 	"\n" +
-	"provenance\x18\x02 \x01(\v2\x1f.cadestro.v1.ManifestProvenanceR\n" +
-	"provenance\x127\n" +
-	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x12D\n" +
-	"\x12default_on_failure\x18\x04 \x01(\x0e2\x16.cadestro.v1.OnFailureR\x10defaultOnFailure\x12A\n" +
-	"\voccurrences\x18\x05 \x03(\v2\x1f.cadestro.v1.ManifestOccurrenceR\voccurrences\x12\x19\n" +
-	"\bone_shot\x18\x06 \x01(\bR\aoneShot\"f\n" +
-	"\x10ManifestDelivery\x12\x1f\n" +
-	"\vdelivery_id\x18\x01 \x01(\tR\n" +
-	"deliveryId\x121\n" +
-	"\bmanifest\x18\x02 \x01(\v2\x15.cadestro.v1.ManifestR\bmanifest\"\xfe\x01\n" +
-	"\x0eManifestResult\x12\x1f\n" +
-	"\vdelivery_id\x18\x01 \x01(\tR\n" +
-	"deliveryId\x12\x1f\n" +
-	"\vmanifest_id\x18\x02 \x01(\tR\n" +
-	"manifestId\x124\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusR\x06status\x12=\n" +
-	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12\x1f\n" +
-	"\vduration_ms\x18\x05 \x01(\x03R\n" +
-	"durationMs\x12\x14\n" +
-	"\x05error\x18\x06 \x01(\tR\x05error\";\n" +
+	"provenance\x18\x02 \x01(\v2\x1f.cadestro.v1.ManifestProvenanceB\x06\xbaH\x03\xc8\x01\x01R\n" +
+	"provenance\x12?\n" +
+	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\x12D\n" +
+	"\x12default_on_failure\x18\x04 \x01(\x0e2\x16.cadestro.v1.OnFailureR\x10defaultOnFailure\x12N\n" +
+	"\voccurrences\x18\x05 \x03(\v2\x1f.cadestro.v1.ManifestOccurrenceB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\voccurrences\x12\x19\n" +
+	"\bone_shot\x18\x06 \x01(\bR\aoneShot\"x\n" +
+	"\x10ManifestDelivery\x12)\n" +
+	"\vdelivery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"deliveryId\x129\n" +
+	"\bmanifest\x18\x02 \x01(\v2\x15.cadestro.v1.ManifestB\x06\xbaH\x03\xc8\x01\x01R\bmanifest\"\xb3\x02\n" +
+	"\x0eManifestResult\x12)\n" +
+	"\vdelivery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"deliveryId\x12)\n" +
+	"\vmanifest_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"manifestId\x12<\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12=\n" +
+	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12+\n" +
+	"\vduration_ms\x18\x05 \x01(\x03B\n" +
+	"\xbaH\a\xd8\x01\x01\"\x02(\x00R\n" +
+	"durationMs\x12!\n" +
+	"\x05error\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\";\n" +
 	"\tResultAck\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\"5\n" +
-	"\x05Error\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xb8\x01\n" +
-	"\aOSQuery\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x14\n" +
-	"\x05table\x18\x02 \x01(\tR\x05table\x12\x18\n" +
-	"\acolumns\x18\x03 \x03(\tR\acolumns\x123\n" +
-	"\x05where\x18\x04 \x03(\v2\x1d.cadestro.v1.OSQueryConditionR\x05where\x12\x14\n" +
-	"\x05limit\x18\x05 \x01(\x05R\x05limit\x12\x17\n" +
-	"\araw_sql\x18\x06 \x01(\tR\x06rawSql\"h\n" +
-	"\x10OSQueryCondition\x12\x16\n" +
-	"\x06column\x18\x01 \x01(\tR\x06column\x12&\n" +
-	"\x02op\x18\x02 \x01(\x0e2\x16.cadestro.v1.OSQueryOpR\x02op\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\tR\x05value\"\x87\x01\n" +
-	"\rOSQueryResult\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x12+\n" +
-	"\x04rows\x18\x04 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"|\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"R\n" +
+	"\x05Error\x12 \n" +
+	"\x04code\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04code\x12'\n" +
+	"\amessage\x18\x02 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\amessage\"\xfa\x02\n" +
+	"\aOSQuery\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12\"\n" +
+	"\x05table\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x10\x01\x18@R\x05table\x12&\n" +
+	"\acolumns\x18\x03 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x18@R\acolumns\x123\n" +
+	"\x05where\x18\x04 \x03(\v2\x1d.cadestro.v1.OSQueryConditionR\x05where\x12#\n" +
+	"\x05limit\x18\x05 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90N(\x00R\x05limit\x12$\n" +
+	"\araw_sql\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x06rawSql:~\xbaH{\x1ay\n" +
+	"&osquery.table_required_without_raw_sql\x12'table is required unless raw_sql is set\x1a&this.table != '' || this.raw_sql != ''\"\x8b\x01\n" +
+	"\x10OSQueryCondition\x12$\n" +
+	"\x06column\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x06column\x12.\n" +
+	"\x02op\x18\x02 \x01(\x0e2\x16.cadestro.v1.OSQueryOpB\x06\xbaH\x03\xc8\x01\x01R\x02op\x12!\n" +
+	"\x05value\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\x80 R\x05value\"\x9e\x01\n" +
+	"\rOSQueryResult\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
+	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error\x12+\n" +
+	"\x04rows\x18\x04 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"\x92\x01\n" +
 	"\n" +
-	"OSQueryRow\x125\n" +
-	"\x04data\x18\x01 \x03(\v2!.cadestro.v1.OSQueryRow.DataEntryR\x04data\x1a7\n" +
+	"OSQueryRow\x12K\n" +
+	"\x04data\x18\x01 \x03(\v2!.cadestro.v1.OSQueryRow.DataEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x04r\x02\x18@*\x06r\x04\x18\x80\x80\x04R\x04data\x1a7\n" +
 	"\tDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"F\n" +
 	"\x0fDeviceInventory\x123\n" +
-	"\x06tables\x18\x01 \x03(\v2\x1b.cadestro.v1.InventoryTableR\x06tables\"\\\n" +
-	"\x0eInventoryTable\x12\x1d\n" +
+	"\x06tables\x18\x01 \x03(\v2\x1b.cadestro.v1.InventoryTableR\x06tables\"j\n" +
+	"\x0eInventoryTable\x12+\n" +
 	"\n" +
-	"table_name\x18\x01 \x01(\tR\ttableName\x12+\n" +
-	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"-\n" +
-	"\x10RequestInventory\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\"0\n" +
-	"\x11GetLuksKeyRequest\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\"9\n" +
-	"\x12GetLuksKeyResponse\x12#\n" +
+	"table_name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\ttableName\x12+\n" +
+	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"7\n" +
+	"\x10RequestInventory\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\":\n" +
+	"\x11GetLuksKeyRequest\x12%\n" +
+	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"D\n" +
+	"\x12GetLuksKeyResponse\x12.\n" +
 	"\n" +
-	"passphrase\x18\x01 \x01(\fB\x03\x80\x01\x01R\n" +
-	"passphrase\"\xbe\x01\n" +
-	"\x13StoreLuksKeyRequest\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
-	"\vdevice_path\x18\x02 \x01(\tR\n" +
-	"devicePath\x12#\n" +
+	"passphrase\x18\x01 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80 \x80\x01\x01R\n" +
+	"passphrase\"\xf2\x01\n" +
+	"\x13StoreLuksKeyRequest\x12%\n" +
+	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12/\n" +
+	"\vdevice_path\x18\x02 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x18\x80 :\x01/R\n" +
+	"devicePath\x12.\n" +
 	"\n" +
-	"passphrase\x18\x03 \x01(\fB\x03\x80\x01\x01R\n" +
-	"passphrase\x12D\n" +
-	"\x0frotation_reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x0erotationReason\"0\n" +
+	"passphrase\x18\x03 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80 \x80\x01\x01R\n" +
+	"passphrase\x12S\n" +
+	"\x0frotation_reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonB\r\xbaH\n" +
+	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x0erotationReason\"0\n" +
 	"\x14StoreLuksKeyResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xa6\x01\n" +
-	"\x13LpsPasswordRotation\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1f\n" +
-	"\bpassword\x18\x02 \x01(\fB\x03\x80\x01\x01R\bpassword\x12\x1d\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xde\x01\n" +
+	"\x13LpsPasswordRotation\x12(\n" +
+	"\busername\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\busername\x12*\n" +
+	"\bpassword\x18\x02 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80\x01\x80\x01\x01R\bpassword\x12+\n" +
 	"\n" +
-	"rotated_at\x18\x03 \x01(\tR\trotatedAt\x123\n" +
-	"\x06reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonR\x06reason\"w\n" +
-	"\x18StoreLpsPasswordsRequest\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\x12>\n" +
-	"\trotations\x18\x02 \x03(\v2 .cadestro.v1.LpsPasswordRotationR\trotations\"5\n" +
+	"rotated_at\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\trotatedAt\x12D\n" +
+	"\x06reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonB\x0f\xbaH\f\xc8\x01\x01\x82\x01\x06\x18\x01\x18\x02\x18\x03R\x06reason\"\x91\x01\n" +
+	"\x18StoreLpsPasswordsRequest\x12%\n" +
+	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12N\n" +
+	"\trotations\x18\x02 \x03(\v2 .cadestro.v1.LpsPasswordRotationB\x0e\xbaH\v\xc8\x01\x01\x92\x01\x05\b\x01\x10\x80\x02R\trotations\"5\n" +
 	"\x19StoreLpsPasswordsResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"2\n" +
-	"\x13RevokeLuksDeviceKey\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\"h\n" +
-	"\x19RevokeLuksDeviceKeyResult\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"0\n" +
-	"\x18ValidateLuksTokenRequest\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"\xbc\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"<\n" +
+	"\x13RevokeLuksDeviceKey\x12%\n" +
+	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"\x7f\n" +
+	"\x19RevokeLuksDeviceKeyResult\x12%\n" +
+	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
+	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error\":\n" +
+	"\x18ValidateLuksTokenRequest\x12\x1e\n" +
+	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05token\"\xbc\x01\n" +
 	"\x19ValidateLuksTokenResponse\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
 	"\vdevice_path\x18\x02 \x01(\tR\n" +
@@ -4185,54 +4059,58 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"deliveries\x18\x02 \x03(\v2\x1d.cadestro.v1.ManifestDeliveryR\n" +
 	"deliveries\x12M\n" +
 	"\x12maintenance_window\x18\x03 \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x12A\n" +
-	"\x0edesired_policy\x18\x04 \x01(\v2\x1a.cadestro.v1.DesiredPolicyR\rdesiredPolicy\"`\n" +
-	"\rDesiredPolicy\x12\x1a\n" +
-	"\brevision\x18\x01 \x01(\tR\brevision\x123\n" +
-	"\tmanifests\x18\x02 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\xf3\x01\n" +
-	"\bLogQuery\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x14\n" +
-	"\x05lines\x18\x02 \x01(\x05R\x05lines\x12\x12\n" +
-	"\x04unit\x18\x03 \x01(\tR\x04unit\x12\x14\n" +
-	"\x05since\x18\x04 \x01(\tR\x05since\x12\x14\n" +
-	"\x05until\x18\x05 \x01(\tR\x05until\x12\x1a\n" +
-	"\bpriority\x18\x06 \x01(\tR\bpriority\x12\x12\n" +
-	"\x04grep\x18\a \x01(\tR\x04grep\x12\x16\n" +
+	"\x0edesired_policy\x18\x04 \x01(\v2\x1a.cadestro.v1.DesiredPolicyR\rdesiredPolicy\"j\n" +
+	"\rDesiredPolicy\x12$\n" +
+	"\brevision\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\brevision\x123\n" +
+	"\tmanifests\x18\x02 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\xca\x02\n" +
+	"\bLogQuery\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12#\n" +
+	"\x05lines\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\xd8\x01\x01\x1a\x05\x18\x90N(\x00R\x05lines\x12\x1f\n" +
+	"\x04unit\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\x04unit\x12 \n" +
+	"\x05since\x18\x04 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x05since\x12 \n" +
+	"\x05until\x18\x05 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x05until\x12&\n" +
+	"\bpriority\x18\x06 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x18 R\bpriority\x12\x1f\n" +
+	"\x04grep\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\x04grep\x12\x16\n" +
 	"\x06kernel\x18\b \x01(\bR\x06kernel\x12.\n" +
-	"\x06source\x18\t \x01(\x0e2\x16.cadestro.v1.LogSourceR\x06source\"o\n" +
-	"\x0eLogQueryResult\x12\x19\n" +
-	"\bquery_id\x18\x01 \x01(\tR\aqueryId\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\x12\x12\n" +
-	"\x04logs\x18\x04 \x01(\tR\x04logs\"q\n" +
-	"\rTerminalStart\x12\x1d\n" +
+	"\x06source\x18\t \x01(\x0e2\x16.cadestro.v1.LogSourceR\x06source\"\x86\x01\n" +
+	"\x0eLogQueryResult\x12#\n" +
+	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
+	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error\x12\x12\n" +
+	"\x04logs\x18\x04 \x01(\tR\x04logs\"\xa9\x01\n" +
+	"\rTerminalStart\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x19\n" +
-	"\btty_user\x18\x02 \x01(\tR\attyUser\x12\x12\n" +
-	"\x04cols\x18\x03 \x01(\rR\x04cols\x12\x12\n" +
-	"\x04rows\x18\x04 \x01(\rR\x04rows\"B\n" +
-	"\rTerminalInput\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12'\n" +
+	"\btty_user\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\attyUser\x12\"\n" +
+	"\x04cols\x18\x03 \x01(\rB\x0e\xbaH\v\xc8\x01\x01*\x06\x18\xff\xff\x03 \x00R\x04cols\x12\"\n" +
+	"\x04rows\x18\x04 \x01(\rB\x0e\xbaH\v\xc8\x01\x01*\x06\x18\xff\xff\x03 \x00R\x04rows\"Z\n" +
+	"\rTerminalInput\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\fR\x04data\"W\n" +
-	"\x0eTerminalResize\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12 \n" +
+	"\x04data\x18\x02 \x01(\fB\f\xbaH\t\xc8\x01\x01z\x04\x18\x80\x80\x04R\x04data\"\x81\x01\n" +
+	"\x0eTerminalResize\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04cols\x18\x02 \x01(\rR\x04cols\x12\x12\n" +
-	"\x04rows\x18\x03 \x01(\rR\x04rows\"E\n" +
-	"\fTerminalStop\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12\"\n" +
+	"\x04cols\x18\x02 \x01(\rB\x0e\xbaH\v\xc8\x01\x01*\x06\x18\xff\xff\x03 \x00R\x04cols\x12\"\n" +
+	"\x04rows\x18\x03 \x01(\rB\x0e\xbaH\v\xc8\x01\x01*\x06\x18\xff\xff\x03 \x00R\x04rows\"\\\n" +
+	"\fTerminalStop\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"C\n" +
-	"\x0eTerminalOutput\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12#\n" +
+	"\x06reason\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x04R\x06reason\"[\n" +
+	"\x0eTerminalOutput\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\fR\x04data\"\xa0\x01\n" +
-	"\x13TerminalStateChange\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12 \n" +
+	"\x04data\x18\x02 \x01(\fB\f\xbaH\t\xc8\x01\x01z\x04\x18\x80\x80\x04R\x04data\"\xbf\x01\n" +
+	"\x13TerminalStateChange\x12'\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x127\n" +
-	"\x05state\x18\x02 \x01(\x0e2!.cadestro.v1.TerminalSessionStateR\x05state\x12\x1b\n" +
-	"\texit_code\x18\x03 \x01(\x05R\bexitCode\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error*t\n" +
+	"session_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\tsessionId\x12?\n" +
+	"\x05state\x18\x02 \x01(\x0e2!.cadestro.v1.TerminalSessionStateB\x06\xbaH\x03\xc8\x01\x01R\x05state\x12\x1b\n" +
+	"\texit_code\x18\x03 \x01(\x05R\bexitCode\x12!\n" +
+	"\x05error\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error*t\n" +
 	"\x10OutputStreamType\x12\"\n" +
 	"\x1eOUTPUT_STREAM_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19OUTPUT_STREAM_TYPE_STDOUT\x10\x01\x12\x1d\n" +
@@ -4432,6 +4310,7 @@ func file_cadestro_v1_agent_proto_init() {
 	}
 	file_cadestro_v1_actions_proto_init()
 	file_cadestro_v1_common_proto_init()
+	file_cadestro_v1_validate_ext_proto_init()
 	file_cadestro_v1_agent_proto_msgTypes[0].OneofWrappers = []any{
 		(*AgentMessage_Hello)(nil),
 		(*AgentMessage_Heartbeat)(nil),

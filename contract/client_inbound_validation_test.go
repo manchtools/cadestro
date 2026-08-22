@@ -5,15 +5,16 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/reflect/protoregistry"
+
+	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // recordingHandler implements StreamHandler plus every optional command
@@ -53,9 +54,8 @@ func (h *recordingHandler) OnRevokeLuksDeviceKey(context.Context, *pm.RevokeLuks
 	return false, ""
 }
 
-// validULID is a syntactically valid ULID; badULID fails the
-// `validate:"required,ulid"` rule the command payloads carry on their
-// query_id / action_id field.
+// validULID is a syntactically valid ULID; badULID fails the string.ulid
+// rule the command payloads carry on their query_id / action_id field.
 const (
 	validULID = "01HQ0000000000000000000000"
 	badULID   = "not-a-ulid"
@@ -141,7 +141,7 @@ func settle() { time.Sleep(150 * time.Millisecond) }
 
 // TestDispatchValidatesEveryInboundCommand is the self-discovering regression
 // guard for P0.3: it walks EVERY ServerMessage oneof arm whose payload carries
-// `validate` gotags and asserts that dispatchServerMessage runs validateInbound
+// buf.validate rules and asserts that dispatchServerMessage runs validateInbound
 // for it — so a newly-added command RPC cannot silently skip validation again.
 //
 // Exemptions are by intrinsic KIND, not a name list:
@@ -156,23 +156,19 @@ func settle() { time.Sleep(150 * time.Millisecond) }
 // vacuously.
 func TestDispatchValidatesEveryInboundCommand(t *testing.T) {
 	// 1. Discover, from the descriptor, the ServerMessage oneof arms whose Go
-	//    payload type carries validate gotags.
+	//    payload type carries buf.validate rules.
 	md := (&pm.ServerMessage{}).ProtoReflect().Descriptor()
 	oneof := md.Oneofs().ByName("payload")
 	if oneof == nil {
 		t.Fatal("ServerMessage has no 'payload' oneof — descriptor drift")
 	}
-	validatable := map[string]bool{} // wrapper Go type name -> has validate gotags
+	validatable := map[string]bool{} // wrapper Go type name -> has buf.validate rules
 	for i := 0; i < oneof.Fields().Len(); i++ {
 		fd := oneof.Fields().Get(i)
 		if fd.Message() == nil {
 			continue // scalar oneof arm (none today)
 		}
-		gt := messageGoType(fd.Message().FullName())
-		if gt == nil {
-			t.Fatalf("cannot resolve Go type for %s (registry drift)", fd.Message().FullName())
-		}
-		if typeHasValidateTag(gt, map[reflect.Type]bool{}) {
+		if messageHasValidateRule(fd.Message(), map[protoreflect.FullName]bool{}) {
 			validatable["ServerMessage_"+goCamel(string(fd.Name()))] = true
 		}
 	}
@@ -187,7 +183,7 @@ func TestDispatchValidatesEveryInboundCommand(t *testing.T) {
 	for wrapper := range validatable {
 		info, handled := cases[wrapper]
 		if !handled {
-			t.Errorf("oneof arm %q carries validate gotags but has no dispatchServerMessage case — unhandled inbound (drift)", wrapper)
+			t.Errorf("oneof arm %q carries buf.validate rules but has no dispatchServerMessage case — unhandled inbound (drift)", wrapper)
 			continue
 		}
 		if info.deliversPending || info.lifecycle {
@@ -289,50 +285,25 @@ func parseDispatchCases(t *testing.T) map[string]dispatchCaseInfo {
 
 // messageGoType resolves a proto message full name to its generated Go pointer
 // type via the global type registry.
-func messageGoType(name protoreflect.FullName) reflect.Type {
-	mt, err := protoregistry.GlobalTypes.FindMessageByName(name)
-	if err != nil {
-		return nil
-	}
-	return reflect.TypeOf(mt.New().Interface())
-}
-
-// typeHasValidateTag reports whether t (or any nested message type reachable
-// from it) declares a non-empty `validate` struct tag. seen guards against
-// recursive proto types; pass a fresh map per top-level query.
-func typeHasValidateTag(t reflect.Type, seen map[reflect.Type]bool) bool {
-	for t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Struct || seen[t] {
+// messageHasValidateRule reports whether md (or any nested message type
+// reachable from it) carries a buf.validate field or message rule. seen
+// guards against recursive proto types; pass a fresh map per top-level query.
+func messageHasValidateRule(md protoreflect.MessageDescriptor, seen map[protoreflect.FullName]bool) bool {
+	if seen[md.FullName()] {
 		return false
 	}
-	seen[t] = true
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		if f.PkgPath != "" {
-			continue // unexported (state, sizeCache, unknownFields)
-		}
-		if v, ok := f.Tag.Lookup("validate"); ok && v != "" {
+	seen[md.FullName()] = true
+	if proto.HasExtension(md.Options(), validate.E_Message) {
+		return true
+	}
+	fields := md.Fields()
+	for i := 0; i < fields.Len(); i++ {
+		fd := fields.Get(i)
+		if proto.HasExtension(fd.Options(), validate.E_Field) {
 			return true
 		}
-		ft := f.Type
-		for ft.Kind() == reflect.Ptr {
-			ft = ft.Elem()
-		}
-		switch ft.Kind() {
-		case reflect.Struct:
-			if typeHasValidateTag(ft, seen) {
-				return true
-			}
-		case reflect.Slice:
-			et := ft.Elem()
-			for et.Kind() == reflect.Ptr {
-				et = et.Elem()
-			}
-			if et.Kind() == reflect.Struct && typeHasValidateTag(et, seen) {
-				return true
-			}
+		if fd.Message() != nil && messageHasValidateRule(fd.Message(), seen) {
+			return true
 		}
 	}
 	return false
