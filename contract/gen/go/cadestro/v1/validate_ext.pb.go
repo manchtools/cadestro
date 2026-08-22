@@ -45,7 +45,7 @@ const file_cadestro_v1_validate_ext_proto_rawDesc = "" +
 	"\x1ecadestro/v1/validate_ext.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto:\xd7\x01\n" +
 	"\rulid_optional\x12\x19.buf.validate.StringRules\x18\xe8\a \x01(\bB\x95\x01\xc2H\x91\x01\n" +
 	"\x8e\x01\n" +
-	"\x14string.ulid_optional\x12#value must be empty or a valid ULID\x1aQ!rule || this == '' || this.matches('^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$')R\fulidOptionalBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1"
+	"\x14string.ulid_optional\x12#value must be empty or a valid ULID\x1aQ!rule || this == '' || this.matches('^[0-7][0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{25}$')R\fulidOptionalBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\beditionsp\xe8\a"
 
 var file_cadestro_v1_validate_ext_proto_goTypes = []any{
 	(*validate.StringRules)(nil), // 0: buf.validate.StringRules
