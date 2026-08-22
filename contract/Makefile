@@ -24,12 +24,12 @@ BUF := $(MAKEFILE_DIR)scripts/buf.sh
 # .pb.go file and fail the generated-drift gate on unrelated PRs. Bumping the
 # module in go.mod moves the plugin with it. `go list -m` fails loudly if a
 # module disappears, so an empty version can never silently mean @latest.
-# protoc-go-inject-tag is a build-only tool absent from go.mod and stays
-# @latest deliberately.
+# protoc-go-inject-tag is recorded the same way, as a go.mod tool dependency,
+# so it is pinned rather than @latest.
 install-tools:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@$$(go list -m -f '{{.Version}}' google.golang.org/protobuf)
 	go install connectrpc.com/connect/cmd/protoc-gen-connect-go@$$(go list -m -f '{{.Version}}' connectrpc.com/connect)
-	go install github.com/favadi/protoc-go-inject-tag@latest
+	go install github.com/favadi/protoc-go-inject-tag@$$(go list -m -f '{{.Version}}' github.com/favadi/protoc-go-inject-tag)
 
 # NOT prerequisites: make may satisfy those in any order, and concurrently
 # under -j. This pipeline is strictly ordered — protoc writes the files,
