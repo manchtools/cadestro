@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package cadestro.v1;
 
+import "buf/validate/validate.proto";
+import "cadestro/v1/validate_ext.proto";
+
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
 // ============================================================================
@@ -26,10 +29,11 @@ service DeviceAuthService {
 // ============================================================================
 
 message EnrollRequest {
-  // @gotags: validate:"required,url"
-  string server_url = 1; // Control server URL (https only — enforced agent-side)
-  // @gotags: validate:"required"
-  string token = 2; // Registration token from web UI
+  string server_url = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ]; // Control server URL (https only — enforced agent-side)
+  string token = 2 [(buf.validate.field).required = true]; // Registration token from web UI
   // Required out-of-band CA fingerprint pin: the 64-char hex SHA-256 of
   // the control CA certificate DER. The agent verifies the CA
   // returned by registration matches this pin BEFORE trusting it,
@@ -40,8 +44,11 @@ message EnrollRequest {
   // (openssl emits uppercase, colon-separated) and the agent compares
   // with EqualFold, so the `hexadecimal` tag is intentionally permissive
   // on case.
-  // @gotags: validate:"required,len=64,hexadecimal"
-  string ca_fingerprint_pin = 3;
+  string ca_fingerprint_pin = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.len = 64,
+    (buf.validate.field).string.pattern = "^[0-9a-fA-F]+$"
+  ];
 }
 
 message EnrollResponse {
@@ -53,19 +60,23 @@ message EnrollResponse {
   // always have a default value, so
   // "required" here means "must be present in the wire payload" —
   // protovalidate enforces no extra runtime check beyond that.
-  // @gotags: validate:"required"
-  bool success = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string device_id = 2; // Assigned device ID on success
-  // @gotags: validate:"omitempty,max=4096"
-  string error = 3; // Error message on failure
+  bool success = 1 [(buf.validate.field).required = true];
+  string device_id = 2 [
+    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // Assigned device ID on success
+  string error = 3 [
+    (buf.validate.field).string.max_len = 4096,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // Error message on failure
 }
 
 message GetEnrollmentStatusRequest {}
 
 message GetEnrollmentStatusResponse {
-  // @gotags: validate:"required"
-  bool enrolled = 1;
-  // @gotags: validate:"omitempty,ulid"
-  string device_id = 2; // Empty if not enrolled
+  bool enrolled = 1 [(buf.validate.field).required = true];
+  string device_id = 2 [
+    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ]; // Empty if not enrolled
 }

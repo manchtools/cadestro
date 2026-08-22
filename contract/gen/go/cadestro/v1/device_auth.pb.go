@@ -7,6 +7,7 @@
 package cadestrov1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -22,11 +23,9 @@ const (
 )
 
 type EnrollRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required,url"
-	ServerUrl string `protobuf:"bytes,1,opt,name=server_url,json=serverUrl,proto3" json:"server_url,omitempty" validate:"required,url"` // Control server URL (https only — enforced agent-side)
-	// @gotags: validate:"required"
-	Token string `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty" validate:"required"` // Registration token from web UI
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ServerUrl string                 `protobuf:"bytes,1,opt,name=server_url,json=serverUrl,proto3" json:"server_url,omitempty"` // Control server URL (https only — enforced agent-side)
+	Token     string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`                          // Registration token from web UI
 	// Required out-of-band CA fingerprint pin: the 64-char hex SHA-256 of
 	// the control CA certificate DER. The agent verifies the CA
 	// returned by registration matches this pin BEFORE trusting it,
@@ -37,8 +36,7 @@ type EnrollRequest struct {
 	// (openssl emits uppercase, colon-separated) and the agent compares
 	// with EqualFold, so the `hexadecimal` tag is intentionally permissive
 	// on case.
-	// @gotags: validate:"required,len=64,hexadecimal"
-	CaFingerprintPin string `protobuf:"bytes,3,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty" validate:"required,len=64,hexadecimal"`
+	CaFingerprintPin string `protobuf:"bytes,3,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -104,12 +102,9 @@ type EnrollResponse struct {
 	// always have a default value, so
 	// "required" here means "must be present in the wire payload" —
 	// protovalidate enforces no extra runtime check beyond that.
-	// @gotags: validate:"required"
-	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty" validate:"required"`
-	// @gotags: validate:"omitempty,ulid"
-	DeviceId string `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"omitempty,ulid"` // Assigned device ID on success
-	// @gotags: validate:"omitempty,max=4096"
-	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty" validate:"omitempty,max=4096"` // Error message on failure
+	Success       bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	DeviceId      string `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Assigned device ID on success
+	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`                       // Error message on failure
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,11 +197,9 @@ func (*GetEnrollmentStatusRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetEnrollmentStatusResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// @gotags: validate:"required"
-	Enrolled bool `protobuf:"varint,1,opt,name=enrolled,proto3" json:"enrolled,omitempty" validate:"required"`
-	// @gotags: validate:"omitempty,ulid"
-	DeviceId      string `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty" validate:"omitempty,ulid"` // Empty if not enrolled
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enrolled      bool                   `protobuf:"varint,1,opt,name=enrolled,proto3" json:"enrolled,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Empty if not enrolled
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -259,20 +252,20 @@ var File_cadestro_v1_device_auth_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_device_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcadestro/v1/device_auth.proto\x12\vcadestro.v1\"r\n" +
-	"\rEnrollRequest\x12\x1d\n" +
+	"\x1dcadestro/v1/device_auth.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1ecadestro/v1/validate_ext.proto\"\xa4\x01\n" +
+	"\rEnrollRequest\x12*\n" +
 	"\n" +
-	"server_url\x18\x01 \x01(\tR\tserverUrl\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\x12,\n" +
-	"\x12ca_fingerprint_pin\x18\x03 \x01(\tR\x10caFingerprintPin\"]\n" +
-	"\x0eEnrollResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"\x1c\n" +
-	"\x1aGetEnrollmentStatusRequest\"V\n" +
-	"\x1bGetEnrollmentStatusResponse\x12\x1a\n" +
-	"\benrolled\x18\x01 \x01(\bR\benrolled\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId2\xc0\x01\n" +
+	"server_url\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tserverUrl\x12\x1c\n" +
+	"\x05token\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\x12I\n" +
+	"\x12ca_fingerprint_pin\x18\x03 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x7f\n" +
+	"\x0eEnrollResponse\x12 \n" +
+	"\asuccess\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\asuccess\x12(\n" +
+	"\tdevice_id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\bdeviceId\x12!\n" +
+	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\"\x1c\n" +
+	"\x1aGetEnrollmentStatusRequest\"k\n" +
+	"\x1bGetEnrollmentStatusResponse\x12\"\n" +
+	"\benrolled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\benrolled\x12(\n" +
+	"\tdevice_id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\bdeviceId2\xc0\x01\n" +
 	"\x11DeviceAuthService\x12A\n" +
 	"\x06Enroll\x12\x1a.cadestro.v1.EnrollRequest\x1a\x1b.cadestro.v1.EnrollResponse\x12h\n" +
 	"\x13GetEnrollmentStatus\x12'.cadestro.v1.GetEnrollmentStatusRequest\x1a(.cadestro.v1.GetEnrollmentStatusResponseBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
@@ -313,6 +306,7 @@ func file_cadestro_v1_device_auth_proto_init() {
 	if File_cadestro_v1_device_auth_proto != nil {
 		return
 	}
+	file_cadestro_v1_validate_ext_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

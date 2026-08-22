@@ -4,21 +4,21 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import { file_cadestro_v1_validate_ext } from "./validate_ext_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cadestro/v1/device_auth.proto.
  */
 export const file_cadestro_v1_device_auth: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jYWRlc3Ryby92MS9kZXZpY2VfYXV0aC5wcm90bxILY2FkZXN0cm8udjEiTgoNRW5yb2xsUmVxdWVzdBISCgpzZXJ2ZXJfdXJsGAEgASgJEg0KBXRva2VuGAIgASgJEhoKEmNhX2ZpbmdlcnByaW50X3BpbhgDIAEoCSJDCg5FbnJvbGxSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEhEKCWRldmljZV9pZBgCIAEoCRINCgVlcnJvchgDIAEoCSIcChpHZXRFbnJvbGxtZW50U3RhdHVzUmVxdWVzdCJCChtHZXRFbnJvbGxtZW50U3RhdHVzUmVzcG9uc2USEAoIZW5yb2xsZWQYASABKAgSEQoJZGV2aWNlX2lkGAIgASgJMsABChFEZXZpY2VBdXRoU2VydmljZRJBCgZFbnJvbGwSGi5jYWRlc3Ryby52MS5FbnJvbGxSZXF1ZXN0GhsuY2FkZXN0cm8udjEuRW5yb2xsUmVzcG9uc2USaAoTR2V0RW5yb2xsbWVudFN0YXR1cxInLmNhZGVzdHJvLnYxLkdldEVucm9sbG1lbnRTdGF0dXNSZXF1ZXN0GiguY2FkZXN0cm8udjEuR2V0RW5yb2xsbWVudFN0YXR1c1Jlc3BvbnNlQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z");
+  fileDesc("Ch1jYWRlc3Ryby92MS9kZXZpY2VfYXV0aC5wcm90bxILY2FkZXN0cm8udjEigAEKDUVucm9sbFJlcXVlc3QSHwoKc2VydmVyX3VybBgBIAEoCUILukgIyAEBcgOIAQESFQoFdG9rZW4YAiABKAlCBrpIA8gBARI3ChJjYV9maW5nZXJwcmludF9waW4YAyABKAlCG7pIGMgBAXITMg5eWzAtOWEtZkEtRl0rJJgBQCJlCg5FbnJvbGxSZXNwb25zZRIXCgdzdWNjZXNzGAEgASgIQga6SAPIAQESHgoJZGV2aWNlX2lkGAIgASgJQgu6SAjYAQFyA8A+ARIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgCAiHAoaR2V0RW5yb2xsbWVudFN0YXR1c1JlcXVlc3QiVwobR2V0RW5yb2xsbWVudFN0YXR1c1Jlc3BvbnNlEhgKCGVucm9sbGVkGAEgASgIQga6SAPIAQESHgoJZGV2aWNlX2lkGAIgASgJQgu6SAjYAQFyA8A+ATLAAQoRRGV2aWNlQXV0aFNlcnZpY2USQQoGRW5yb2xsEhouY2FkZXN0cm8udjEuRW5yb2xsUmVxdWVzdBobLmNhZGVzdHJvLnYxLkVucm9sbFJlc3BvbnNlEmgKE0dldEVucm9sbG1lbnRTdGF0dXMSJy5jYWRlc3Ryby52MS5HZXRFbnJvbGxtZW50U3RhdHVzUmVxdWVzdBooLmNhZGVzdHJvLnYxLkdldEVucm9sbG1lbnRTdGF0dXNSZXNwb25zZUJHWkVnaXRodWIuY29tL21hbmNodG9vbHMvY2FkZXN0cm8vY29udHJhY3QvZ2VuL2dvL2NhZGVzdHJvL3YxO2NhZGVzdHJvdjFiBnByb3RvMw", [file_buf_validate_validate, file_cadestro_v1_validate_ext]);
 
 /**
  * @generated from message cadestro.v1.EnrollRequest
  */
 export type EnrollRequest = Message<"cadestro.v1.EnrollRequest"> & {
   /**
-   * @gotags: validate:"required,url"
-   *
    * Control server URL (https only — enforced agent-side)
    *
    * @generated from field: string server_url = 1;
@@ -26,8 +26,6 @@ export type EnrollRequest = Message<"cadestro.v1.EnrollRequest"> & {
   serverUrl: string;
 
   /**
-   * @gotags: validate:"required"
-   *
    * Registration token from web UI
    *
    * @generated from field: string token = 2;
@@ -45,7 +43,6 @@ export type EnrollRequest = Message<"cadestro.v1.EnrollRequest"> & {
    * (openssl emits uppercase, colon-separated) and the agent compares
    * with EqualFold, so the `hexadecimal` tag is intentionally permissive
    * on case.
-   * @gotags: validate:"required,len=64,hexadecimal"
    *
    * @generated from field: string ca_fingerprint_pin = 3;
    */
@@ -72,15 +69,12 @@ export type EnrollResponse = Message<"cadestro.v1.EnrollResponse"> & {
    * always have a default value, so
    * "required" here means "must be present in the wire payload" —
    * protovalidate enforces no extra runtime check beyond that.
-   * @gotags: validate:"required"
    *
    * @generated from field: bool success = 1;
    */
   success: boolean;
 
   /**
-   * @gotags: validate:"omitempty,ulid"
-   *
    * Assigned device ID on success
    *
    * @generated from field: string device_id = 2;
@@ -88,8 +82,6 @@ export type EnrollResponse = Message<"cadestro.v1.EnrollResponse"> & {
   deviceId: string;
 
   /**
-   * @gotags: validate:"omitempty,max=4096"
-   *
    * Error message on failure
    *
    * @generated from field: string error = 3;
@@ -122,15 +114,11 @@ export const GetEnrollmentStatusRequestSchema: GenMessage<GetEnrollmentStatusReq
  */
 export type GetEnrollmentStatusResponse = Message<"cadestro.v1.GetEnrollmentStatusResponse"> & {
   /**
-   * @gotags: validate:"required"
-   *
    * @generated from field: bool enrolled = 1;
    */
   enrolled: boolean;
 
   /**
-   * @gotags: validate:"omitempty,ulid"
-   *
    * Empty if not enrolled
    *
    * @generated from field: string device_id = 2;

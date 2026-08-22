@@ -4,13 +4,18 @@ import (
 	"strings"
 	"testing"
 
+	"buf.build/go/protovalidate"
+
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	pmvalidate "github.com/manchtools/cadestro/contract/validate"
 )
 
 func TestEnrollRequest_RequiresValidCAPin(t *testing.T) {
 	t.Parallel()
-	v := pmvalidate.NewValidator()
+	v, err := protovalidate.New()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	tests := []struct {
 		name, pin string
@@ -28,9 +33,9 @@ func TestEnrollRequest_RequiresValidCAPin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			_, ok := pmvalidate.Struct(v, &pm.EnrollRequest{
+			ok := v.Validate(&pm.EnrollRequest{
 				ServerUrl: "https://control.example.test", Token: "token", CaFingerprintPin: tc.pin,
-			})
+			}) == nil
 			if ok != tc.wantOK {
 				t.Fatalf("pin validation = %v, want %v", ok, tc.wantOK)
 			}
