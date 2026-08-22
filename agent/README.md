@@ -487,7 +487,7 @@ The agent communicates with the server via bidirectional stream messages (`GetLu
 
 #### LUKS passphrase daemon
 
-<!-- docref: begin src=agent/cmd/cadestrod/cmd_luks.go#resolveLuksToken:0972a499,agent/internal/luksd/peercred.go#peerAuthorized:8ce20012,agent/internal/luksd/server.go#Daemon.Start:80dfc23a -->
+<!-- docref: begin src=agent/cmd/cadestrod/cmd_luks.go#resolveLuksToken:0972a499,agent/internal/luksd/peercred.go#peerAuthorized:8ce20012,agent/internal/luksd/server.go#Daemon.Start:3b6c5c93,agent/internal/luksd/server.go#maxConcurrentRequests:76eeabdb,agent/internal/luksd/server.go#maxRequestBytes:7140212e,agent/internal/luksd/protocol.go#minPassphraseLength:d3798d5e -->
 When `device_bound_key_type` is `USER_PASSPHRASE`, the user sets their slot-7
 passphrase with `cadestrod luks set-passphrase` and supplies the token
 by private file, environment variable, or hidden prompt. This command is
@@ -503,13 +503,27 @@ The client sends **only** `{token, passphrase}`. The root agent then, with its
    single-use, and short-TTL**; the socket additionally requires the peer UID
    to match Linux's kernel-maintained audit login UID, without assuming a
    numeric UID range (so AD/SSSD and locally configured login UIDs work);
-2. enforces the passphrase **policy and reuse** rules server-side (the
-   unprivileged client cannot read the root-owned reuse history);
+2. enforces the passphrase **policy and reuse** rules server-side — flooring
+   the minimum length at 16 characters regardless of what the server supplies
+   (the unprivileged client cannot read the root-owned reuse history);
 3. fetches the managed key and runs `cryptsetup` directly — no `--data-dir`, no
    sudo.
 
 The device-bound, single-use token authorizes the operation. Matching the peer
-UID to the audit login UID is an additional local admission control.
+UID to the audit login UID is an additional local admission control — unlike
+the agent's other privileged socket, whose only legitimate client is the agent
+itself and which enforces a strict same-uid rule, this socket must also admit
+the endpoint user's own unprivileged CLI, so the audit login UID is what makes
+that possible without opening the daemon to an arbitrary local uid.
+
+The daemon bounds concurrent handlers to 4 and each request to 90 seconds end
+to end, and caps a request read to 64 KiB before decoding. Setting a
+passphrase is one person at a keyboard; without these bounds a local caller
+could hold open as many pre-authorization handlers as the root agent has
+descriptors, or pin a root goroutine indefinitely behind a stalled control
+call or a wedged `cryptsetup`. An excess connection is refused immediately
+(`busy`) rather than queued, so the caller sees a retry signal instead of a
+hang.
 <!-- docref: end -->
 
 ### Repository (`REPOSITORY`)

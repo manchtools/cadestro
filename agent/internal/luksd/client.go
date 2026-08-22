@@ -8,23 +8,14 @@ import (
 	"time"
 )
 
-// PassphraseReader collects the user's chosen passphrase (e.g. an
-// interactive terminal prompt with confirmation + retries). It returns an
-// empty string with a nil error if the user failed to provide a matching
-// passphrase, so the client refuses to send. Injectable for tests.
 type PassphraseReader func() (string, error)
 
-// Client is the UNPRIVILEGED side run by `cadestrod luks
-// set-passphrase`. It collects the passphrase and sends EXACTLY
-// {token, passphrase} to the root daemon socket — never credentials, a
-// data dir, or a store path. All privileged work happens in the daemon.
 type Client struct {
 	socketPath string
 	dialer     func() (net.Conn, error)
-	now        func() time.Time // clock seam; defaults to time.Now
+	now        func() time.Time
 }
 
-// NewClient returns a client for the given socket path.
 func NewClient(socketPath string) *Client {
 	if socketPath == "" {
 		socketPath = DefaultSocketPath
@@ -36,10 +27,6 @@ func NewClient(socketPath string) *Client {
 	return c
 }
 
-// SetPassphrase collects the passphrase via read and submits it with the
-// token to the daemon. It returns nil on success and surfaces the
-// daemon's error otherwise. An empty passphrase (read failed/aborted) is
-// refused without contacting the daemon.
 func (c *Client) SetPassphrase(token string, read PassphraseReader) error {
 	if token == "" {
 		return errors.New("token is required")

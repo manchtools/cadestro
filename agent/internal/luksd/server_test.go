@@ -20,9 +20,7 @@ import (
 	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-const goodPassphrase = "correct-horse-battery-staple-42" // >= 16 chars
-
-// ---- fakes ---------------------------------------------------------------
+const goodPassphrase = "correct-horse-battery-staple-42"
 
 type fakeSession struct {
 	mu             sync.Mutex
@@ -81,7 +79,7 @@ func (f *fakeStore) AddLuksPassphraseHash(actionID, hash string) error {
 
 type spyEnroller struct {
 	order   *[]string
-	addArgs []string // "devicePath/slot/newKey"
+	addArgs []string
 	kills   int
 	wipes   int
 	addErr  error
@@ -118,12 +116,6 @@ func validResult() *sdk.ValidateLuksTokenResult {
 	}
 }
 
-// ---- tests ---------------------------------------------------------------
-
-// WS6 #1/#19: authorization is the server token validated over the agent's
-// own connection — never the socket peer. A missing token is rejected with
-// no validation and no enrollment; a token the server rejects yields no
-// enrollment; on success, validation runs BEFORE any device mutation.
 func TestLuksDaemon_RejectsRequestWithoutToken(t *testing.T) {
 	t.Run("absent token", func(t *testing.T) {
 		sess := &fakeSession{}
@@ -163,7 +155,6 @@ func TestLuksDaemon_RejectsRequestWithoutToken(t *testing.T) {
 		require.NotEmpty(t, order)
 		assert.Equal(t, "validate", order[0], "validation must precede any device mutation")
 		assert.Contains(t, order, "addkey")
-		// validate index < addkey index
 		vi, ai := indexOf(order, "validate"), indexOf(order, "addkey")
 		assert.Less(t, vi, ai)
 		assert.Equal(t, "user_passphrase", st.setTypeArg)
@@ -171,21 +162,15 @@ func TestLuksDaemon_RejectsRequestWithoutToken(t *testing.T) {
 	})
 }
 
-// WS6: when the agent is not connected to the control there is no session
-// to authorize against — fail closed, never enroll.
 func TestLuksDaemon_RejectsWhenNotConnected(t *testing.T) {
 	enr := &spyEnroller{}
 	d := NewDaemon("", &fakeStore{}, enr, nil)
-	// no SetSession
 	resp := d.handleRequest(context.Background(), Request{Token: "t", Passphrase: goodPassphrase})
 	assert.False(t, resp.OK)
 	assert.Equal(t, CodeNotConnected, resp.Code)
 	assert.Empty(t, enr.addArgs)
 }
 
-// WS6: device-bound / single-use / TTL are enforced by ValidateLuksToken
-// server-side; the daemon must RESPECT a rejection (wrong device, consumed,
-// expired) and never enroll. Modeled by a validator that rejects.
 func TestLuksDaemon_TokenIsDeviceBoundAndSingleUse(t *testing.T) {
 	for _, name := range []string{"wrong-device", "already-consumed", "expired"} {
 		t.Run(name, func(t *testing.T) {
@@ -201,9 +186,6 @@ func TestLuksDaemon_TokenIsDeviceBoundAndSingleUse(t *testing.T) {
 	}
 }
 
-// WS6 #1/#19: the wire request carries ONLY {token, passphrase}. There is
-// no data-dir/store-path field (self-discovering: fails if one is added),
-// and an injected "data_dir" JSON field is ignored, not honored.
 func TestLuksDaemon_NeverReadsDataDirOrCredentialStore(t *testing.T) {
 	typ := reflect.TypeOf(Request{})
 	for i := 0; i < typ.NumField(); i++ {
@@ -214,7 +196,6 @@ func TestLuksDaemon_NeverReadsDataDirOrCredentialStore(t *testing.T) {
 		assert.NotContains(t, name, "cred", "Request must not carry a credentials field: %s", f.Name)
 	}
 
-	// An injected data_dir is silently dropped by the decoder.
 	var req Request
 	dec := json.NewDecoder(strings.NewReader(`{"token":"t","passphrase":"p","data_dir":"/evil/store"}`))
 	require.NoError(t, dec.Decode(&req))
@@ -222,9 +203,6 @@ func TestLuksDaemon_NeverReadsDataDirOrCredentialStore(t *testing.T) {
 	assert.Equal(t, "p", req.Passphrase)
 }
 
-// WS6 #1: the passphrase policy (min length / complexity) is enforced in
-// the DAEMON, not trusted from the unprivileged client. A too-short
-// passphrase is rejected without enrolling.
 func TestLuksDaemon_PassphraseValidatedServerSide(t *testing.T) {
 	sess := &fakeSession{validateResult: validResult(), keyResult: "managed-key"}
 	enr := &spyEnroller{}
@@ -237,8 +215,6 @@ func TestLuksDaemon_PassphraseValidatedServerSide(t *testing.T) {
 	assert.Empty(t, enr.addArgs, "a policy-failing passphrase must not be enrolled")
 }
 
-// WS6: an existing device-bound key is revoked before the user passphrase
-// is enrolled — and the revoke runs before the add.
 func TestLuksDaemon_RevokesExistingKeyBeforeEnroll(t *testing.T) {
 	var order []string
 	sess := &fakeSession{order: &order, validateResult: validResult(), keyResult: "managed-key"}
@@ -253,18 +229,23 @@ func TestLuksDaemon_RevokesExistingKeyBeforeEnroll(t *testing.T) {
 	assert.Less(t, indexOf(order, "wipetpm"), indexOf(order, "addkey"), "revoke must precede enroll")
 }
 
-// F2: the socket is NOT world-readable. connect(2) needs only write
-// permission, so 0666 handed out a read bit the protocol never used while
-// advertising the socket as an open channel — and, with no SO_PEERCRED check,
-// the mode was the only thing standing between any local uid and a root
-// daemon that writes LUKS keyslots. The peer-credential gate is now the
-// load-bearing control (see peercred.go); the mode stops overstating what the
-// file permissions decide. Stale sockets are still cleared on start and the
-// socket is still removed on shutdown.
+func TestLuksDaemon_RecordsEmptyKeyTypeWhenEnrollFailsAfterRevoke(t *testing.T) {
+	sess := &fakeSession{validateResult: validResult(), keyResult: "managed-key"}
+	enr := &spyEnroller{addErr: errors.New("cryptsetup: device busy")}
+	st := &fakeStore{state: &store.LuksState{DeviceKeyType: "tpm"}}
+	d := NewDaemon("", st, enr, nil)
+	d.SetSession(sess)
+
+	resp := d.handleRequest(context.Background(), Request{Token: "tok", Passphrase: goodPassphrase})
+	assert.False(t, resp.OK)
+	assert.Equal(t, CodeInternal, resp.Code)
+	assert.Equal(t, 1, enr.wipes, "existing TPM key still revoked")
+	assert.Equal(t, "none", st.setTypeArg, "store must not keep claiming a device key exists once the old one was revoked and re-enroll failed")
+}
+
 func TestLuksDaemon_SocketModeAndCleanup(t *testing.T) {
 	dir := t.TempDir()
 	sock := filepath.Join(dir, "luks.sock")
-	// Plant a stale file at the socket path.
 	require.NoError(t, os.WriteFile(sock, []byte("stale"), 0o600))
 
 	d := NewDaemon(sock, &fakeStore{}, &spyEnroller{}, nil)
@@ -272,7 +253,6 @@ func TestLuksDaemon_SocketModeAndCleanup(t *testing.T) {
 	done := make(chan struct{})
 	go func() { defer close(done); _ = d.Start(ctx) }()
 
-	// Wait for the socket to appear as a socket (stale file replaced).
 	waitFor(t, func() bool {
 		info, err := os.Stat(sock)
 		return err == nil && info.Mode()&os.ModeSocket != 0
@@ -287,8 +267,6 @@ func TestLuksDaemon_SocketModeAndCleanup(t *testing.T) {
 	_, statErr := os.Stat(sock)
 	assert.True(t, os.IsNotExist(statErr), "socket must be removed on shutdown")
 }
-
-// ---- helpers -------------------------------------------------------------
 
 func indexOf(s []string, v string) int {
 	for i, x := range s {

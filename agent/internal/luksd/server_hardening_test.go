@@ -18,7 +18,6 @@ import (
 	sdk "github.com/manchtools/cadestro/contract"
 )
 
-// startDaemon runs a daemon on a temp socket and returns its path.
 func startDaemon(t *testing.T, sess Session) string {
 	t.Helper()
 	sock := filepath.Join(t.TempDir(), "luks.sock")
@@ -44,7 +43,6 @@ func startDaemon(t *testing.T, sess Session) string {
 	return sock
 }
 
-// submit sends one request over the socket and returns the decoded response.
 func submit(sock string, req Request) (Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -54,9 +52,6 @@ func submit(sock string, req Request) (Response, error) {
 	}
 	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(10 * time.Second))
-	// A saturated daemon may send CodeBusy and close before this client finishes
-	// writing. Preserve that valid response instead of turning the race into a
-	// broken-pipe test failure.
 	writeErr := json.NewEncoder(conn).Encode(req)
 	var resp Response
 	if err := json.NewDecoder(conn).Decode(&resp); err != nil {
@@ -68,8 +63,6 @@ func submit(sock string, req Request) (Response, error) {
 	return resp, nil
 }
 
-// ctxRecordingSession captures the context the daemon hands to the request
-// path, and can hold a request open until released.
 type ctxRecordingSession struct {
 	mu      sync.Mutex
 	ctx     context.Context
@@ -118,10 +111,6 @@ func (s *ctxRecordingSession) peakInFlight() int {
 	return s.peak
 }
 
-// TestLuksDaemon_RequestContextHasADeadline is F21. The handler inherits the
-// process-root context, so a control call that never returns — a stalled
-// stream, a wedged cryptsetup — pins a root goroutine on a socket any local
-// user can connect to, for the lifetime of the agent.
 func TestLuksDaemon_RequestContextHasADeadline(t *testing.T) {
 	sess := &ctxRecordingSession{}
 	sock := startDaemon(t, sess)
@@ -140,9 +129,6 @@ func TestLuksDaemon_RequestContextHasADeadline(t *testing.T) {
 	}
 }
 
-// TestLuksDaemon_BoundsConcurrentHandlers is the other half of F21: nothing
-// limits how many pre-authorization handlers a local caller may have running
-// at once against the root daemon.
 func TestLuksDaemon_BoundsConcurrentHandlers(t *testing.T) {
 	const attempts = 16
 	gate := make(chan struct{})

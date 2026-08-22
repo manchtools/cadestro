@@ -14,9 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestPeerCredListener_AcceptsSameUIDPeer is the positive control: a connection
-// from THIS process must still be admitted by the guarded listener. It relies
-// on the Linux SO_PEERCRED implementation of peerCredentialsOf, so it is Linux-only.
 func TestPeerCredListener_AcceptsSameUIDPeer(t *testing.T) {
 	socket := filepath.Join(t.TempDir(), "peer.sock")
 	base, err := net.Listen("unix", socket)
@@ -51,11 +48,6 @@ func TestPeerCredListener_AcceptsSameUIDPeer(t *testing.T) {
 	}
 }
 
-// TestPeerCredListener_RefusesPeerWithUnreadableCredentials is the fail-closed
-// half. A non-unix connection has no peer credential to read, and on Linux the
-// getsockopt does NOT say so — it answers with the local process's own
-// credentials, which would read as "the peer is us". The listener must close
-// and skip such a connection rather than hand it to a root handler.
 func TestPeerCredListener_RefusesPeerWithUnreadableCredentials(t *testing.T) {
 	base, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
@@ -84,11 +76,6 @@ func TestPeerCredListener_RefusesPeerWithUnreadableCredentials(t *testing.T) {
 	}
 }
 
-// TestLuksDaemon_SocketRemainsConnectableAtTightenedMode is the feature's
-// positive control at the wire: a 0622 socket must still accept a connect(2)
-// from the unprivileged endpoint client. connect(2) needs write permission
-// only, but if that were wrong the entire LUKS user-passphrase flow would be
-// dead rather than merely tightened.
 func TestLuksDaemon_SocketRemainsConnectableAtTightenedMode(t *testing.T) {
 	sess := &ctxRecordingSession{}
 	sock := startDaemon(t, sess)

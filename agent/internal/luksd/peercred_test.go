@@ -6,15 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestPeerAuthorized pins the LUKS socket's peer-credential decision. A test
-// process cannot connect as a foreign uid without privileges, so the pure
-// decision is unit-tested directly and the wired-up listener gets a
-// same-uid positive control in peercred_linux_test.go.
-//
-// The rule differs from enroll.sock's on purpose: this client is the endpoint
-// user's UNPRIVILEGED CLI, so same-uid would delete the feature. What must not
-// pass is a service account — the identity a remote compromise lands in, and
-// the one that would use a token scraped out of /proc.
 func TestPeerAuthorized(t *testing.T) {
 	cases := []struct {
 		name             string

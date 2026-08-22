@@ -8,18 +8,11 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// sysencEnroller is the production Enroller: it runs the privileged cryptsetup
-// slot operations through the SDK encryption Manager with the daemon's own
-// (root) credentials. The daemon already runs as root, so the Manager is built
-// over a Direct runner — no sudo, no --data-dir. LUKS keys are written to a
-// key-file sink (never argv), so they are wrapped as multiline secrets to pass
-// through verbatim (a key may legitimately contain any byte).
 type sysencEnroller struct {
 	mgr sysenc.Manager
-	err error // deferred construction error, surfaced fail-closed from each method
+	err error
 }
 
-// NewSysencEnroller returns the production Enroller.
 func NewSysencEnroller() Enroller {
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
