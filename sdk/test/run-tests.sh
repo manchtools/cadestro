@@ -13,6 +13,7 @@ set -euo pipefail
 
 CONTAINER_NAME="cadestro-sdk-test-$$"
 IMAGE_NAME="cadestro-sdk-test"
+CONTAINER_LIMITS=(--memory=6g --cpus=4)
 
 cleanup() {
     podman stop -t 2 "$CONTAINER_NAME" 2>/dev/null || true
@@ -24,7 +25,7 @@ echo "==> Building test image..."
 podman build -f sdk/test/Dockerfile.integration -t "$IMAGE_NAME" .
 
 echo "==> Starting systemd container..."
-podman run -d --privileged --name "$CONTAINER_NAME" "$IMAGE_NAME"
+podman run -d --privileged "${CONTAINER_LIMITS[@]}" --name "$CONTAINER_NAME" "$IMAGE_NAME"
 
 echo "==> Waiting for systemd to boot..."
 for i in $(seq 1 30); do
