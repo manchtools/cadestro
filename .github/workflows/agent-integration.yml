@@ -70,7 +70,7 @@ jobs:
             /go/bin/gotestsum \
               --format testdox \
               --format-hide-empty-pkg \
-              -- -tags=integration -count=1 -timeout=10m \
+              -- -p 1 -tags=integration -count=1 -timeout=10m \
               ./agent/internal/executor/ -run Integration
 
   integration-edgecase:
@@ -92,5 +92,5 @@ jobs:
             /go/bin/gotestsum \
               --format testdox \
               --format-hide-empty-pkg \
-              -- -tags=integration -count=1 -timeout=10m \
+              -- -p 1 -tags=integration -count=1 -timeout=10m \
               ./agent/internal/executor/ -run Integration -run EdgeCase
