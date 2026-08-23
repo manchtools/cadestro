@@ -359,7 +359,7 @@ returned**. If the evidence cannot be written, the secret is not revealed.
 
 ### Append-only
 
-<!-- docref: begin src=server/internal/store/sqliteschema/schema.sql#@audit-append-only:a1d8df43 -->
+<!-- docref: begin src=server/internal/store/migrations/00001_init.sql#@audit-append-only:e521b67d -->
 Append-only is enforced by database triggers, not by application discipline —
 an `UPDATE` or `DELETE` on either audit table is refused outright. The event
 rows remain queryable in the database for the lifetime of the deployment.

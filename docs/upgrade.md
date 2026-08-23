@@ -10,12 +10,13 @@ That is not a gap waiting to be filled in a later sprint; it is the current
 design, and this page describes what the code actually supports rather than what
 a mature product would.
 
-<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:05f20fae -->
-Schema handling is a three-way decision at startup, and there is no migration
-runner anywhere in the server. An empty database gets the baseline schema
-applied in one transaction. A database already at the current version is opened.
-**Any other version is refused** with an unsupported-schema-version error — not
-migrated, not best-effort upgraded, refused.
+<!-- docref: begin src=server/internal/store/store.go#migrateSQLite:9c229738 -->
+Schema handling at startup is a single idempotent apply, through an embedded
+goose migration runner: an empty database gets the one pre-1.0 baseline
+migration applied, and a database already at that baseline is left alone. There
+is no chain of accumulated migrations to walk and no data transformation
+between schema versions — pre-1.0 the baseline is rewritten in place rather
+than extended, so there is exactly one migration to apply.
 <!-- docref: end -->
 
 So: within a schema version, updating is a container image pull. Across one,
@@ -84,7 +85,7 @@ Reinstall across a schema version. Concretely:
 2. Install the new release fresh.
 3. Re-enroll devices.
 
-<!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:e20a97cf -->
+<!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:f91d0fc3 -->
 Restoring the old database into the new release is not a migration and will not
 be treated as one: the store's non-creating open path requires the exact current
 schema version and refuses anything else. A database from a different schema
