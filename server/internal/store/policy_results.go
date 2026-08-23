@@ -12,6 +12,9 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/manchtools/cadestro/server/internal/store/generated"
+	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 var ErrPolicyResultConflict = errors.New("policy result conflicts with stored replay")
@@ -31,11 +34,12 @@ func (s *Store) RecordPolicyActionResult(ctx context.Context, deviceID string, r
 	digest := sha256.Sum256(hashBytes)
 	hash := hex.EncodeToString(digest[:])
 	now := s.now().UTC()
-	return s.recordPolicyResult(ctx, deviceID, func(tx *sql.Tx) error {
-		var existing, existingDevice string
-		err := tx.QueryRow(`SELECT result_hash, device_id FROM policy_action_results WHERE run_id = ? AND occurrence_id = ?`, result.GetDeliveryId(), result.GetOccurrenceId()).Scan(&existing, &existingDevice)
+	return s.recordPolicyResult(ctx, deviceID, func(ctx context.Context, tx *Tx) error {
+		existing, err := tx.GetPolicyActionResult(ctx, generated.GetPolicyActionResultParams{
+			RunID: result.GetDeliveryId(), OccurrenceID: result.GetOccurrenceId(),
+		})
 		if err == nil {
-			if existingDevice != deviceID || existing != hash {
+			if existing.DeviceID != deviceID || existing.ResultHash != hash {
 				return ErrPolicyResultConflict
 			}
 			return nil
@@ -43,11 +47,11 @@ func (s *Store) RecordPolicyActionResult(ctx context.Context, deviceID string, r
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
-		_, err = tx.Exec(`INSERT INTO policy_action_results
-			(run_id, occurrence_id, device_id, action_id, result_hash, payload, created_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`, result.GetDeliveryId(), result.GetOccurrenceId(), deviceID,
-			result.GetActionId().GetValue(), hash, payload, now)
-		return err
+		return tx.InsertPolicyActionResult(ctx, generated.InsertPolicyActionResultParams{
+			RunID: result.GetDeliveryId(), OccurrenceID: result.GetOccurrenceId(), DeviceID: deviceID,
+			ActionID: result.GetActionId().GetValue(), ResultHash: hash,
+			Payload: sqlitetype.JSON(payload), CreatedAt: now,
+		})
 	})
 }
 
@@ -56,11 +60,11 @@ func (s *Store) RecordPolicyManifestResult(ctx context.Context, deviceID, runID,
 		return errors.New("policy manifest result: missing identity")
 	}
 	now := s.now().UTC()
-	return s.recordPolicyResult(ctx, deviceID, func(tx *sql.Tx) error {
-		var existingState, existingCode, existingDevice, existingManifest string
-		err := tx.QueryRow(`SELECT state, result_code, device_id, manifest_id FROM policy_manifest_results WHERE run_id = ?`, runID).Scan(&existingState, &existingCode, &existingDevice, &existingManifest)
+	return s.recordPolicyResult(ctx, deviceID, func(ctx context.Context, tx *Tx) error {
+		existing, err := tx.GetPolicyManifestResult(ctx, runID)
 		if err == nil {
-			if existingDevice != deviceID || existingManifest != manifestID || existingState != state || existingCode != code {
+			if existing.DeviceID != deviceID || existing.ManifestID != manifestID ||
+				existing.State != state || existing.ResultCode != code {
 				return ErrPolicyResultConflict
 			}
 			return nil
@@ -68,22 +72,22 @@ func (s *Store) RecordPolicyManifestResult(ctx context.Context, deviceID, runID,
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
-		_, err = tx.Exec(`INSERT INTO policy_manifest_results
-			(run_id, device_id, manifest_id, state, result_code, created_at)
-			VALUES (?, ?, ?, ?, ?, ?)`, runID, deviceID, manifestID, state, code, now)
-		return err
+		return tx.InsertPolicyManifestResult(ctx, generated.InsertPolicyManifestResultParams{
+			RunID: runID, DeviceID: deviceID, ManifestID: manifestID, State: state,
+			ResultCode: code, CreatedAt: now,
+		})
 	})
 }
 
-func (s *Store) recordPolicyResult(ctx context.Context, actorID string, write func(*sql.Tx) error) error {
+func (s *Store) recordPolicyResult(ctx context.Context, actorID string, write func(context.Context, *Tx) error) error {
 	operationID := ulid.Make().String()
 	_, err := s.WithAudit(ctx, AuditOperation{
 		OperationID: operationID, Class: ClassMutation, ActorType: "agent", ActorID: actorID,
 		Origin: "agent_stream", RequestDescriptor: "agent.policy_result",
 		AuthorizationOutcome: AuthorizationAllowed, AuthorizationDetail: "device_mtls",
 		Result: ResultSuccess, ResultCode: "OK",
-	}, func(_ context.Context, tx *Tx, _ *AuditRecorder) error {
-		return write(tx.raw)
+	}, func(ctx context.Context, tx *Tx, _ *AuditRecorder) error {
+		return write(ctx, tx)
 	})
 	return err
 }

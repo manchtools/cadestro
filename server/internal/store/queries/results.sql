@@ -333,3 +333,29 @@ SELECT id FROM executions WHERE action_id = ? ORDER BY id;
 
 -- name: ListExecutionIDsForDevice :many
 SELECT id FROM executions WHERE device_id = ? ORDER BY id;
+
+-- name: GetPolicyActionResult :one
+SELECT result_hash, device_id
+FROM policy_action_results
+WHERE run_id = sqlc.arg(run_id) AND occurrence_id = sqlc.arg(occurrence_id);
+
+-- name: InsertPolicyActionResult :exec
+INSERT INTO policy_action_results (
+    run_id, occurrence_id, device_id, action_id, result_hash, payload, created_at
+) VALUES (
+    sqlc.arg(run_id), sqlc.arg(occurrence_id), sqlc.arg(device_id), sqlc.arg(action_id),
+    sqlc.arg(result_hash), sqlc.arg(payload), sqlc.arg(created_at)
+);
+
+-- name: GetPolicyManifestResult :one
+SELECT state, result_code, device_id, manifest_id
+FROM policy_manifest_results
+WHERE run_id = ?;
+
+-- name: InsertPolicyManifestResult :exec
+INSERT INTO policy_manifest_results (
+    run_id, device_id, manifest_id, state, result_code, created_at
+) VALUES (
+    sqlc.arg(run_id), sqlc.arg(device_id), sqlc.arg(manifest_id), sqlc.arg(state),
+    sqlc.arg(result_code), sqlc.arg(created_at)
+);

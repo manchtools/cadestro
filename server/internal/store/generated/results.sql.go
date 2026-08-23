@@ -422,6 +422,54 @@ func (q *Queries) GetOSQueryResult(ctx context.Context, queryID string) (GetOSQu
 	return i, err
 }
 
+const getPolicyActionResult = `-- name: GetPolicyActionResult :one
+SELECT result_hash, device_id
+FROM policy_action_results
+WHERE run_id = ?1 AND occurrence_id = ?2
+`
+
+type GetPolicyActionResultParams struct {
+	RunID        string `json:"run_id"`
+	OccurrenceID string `json:"occurrence_id"`
+}
+
+type GetPolicyActionResultRow struct {
+	ResultHash string `json:"result_hash"`
+	DeviceID   string `json:"device_id"`
+}
+
+func (q *Queries) GetPolicyActionResult(ctx context.Context, arg GetPolicyActionResultParams) (GetPolicyActionResultRow, error) {
+	row := q.db.QueryRowContext(ctx, getPolicyActionResult, arg.RunID, arg.OccurrenceID)
+	var i GetPolicyActionResultRow
+	err := row.Scan(&i.ResultHash, &i.DeviceID)
+	return i, err
+}
+
+const getPolicyManifestResult = `-- name: GetPolicyManifestResult :one
+SELECT state, result_code, device_id, manifest_id
+FROM policy_manifest_results
+WHERE run_id = ?
+`
+
+type GetPolicyManifestResultRow struct {
+	State      string `json:"state"`
+	ResultCode string `json:"result_code"`
+	DeviceID   string `json:"device_id"`
+	ManifestID string `json:"manifest_id"`
+}
+
+func (q *Queries) GetPolicyManifestResult(ctx context.Context, runID string) (GetPolicyManifestResultRow, error) {
+	row := q.db.QueryRowContext(ctx, getPolicyManifestResult, runID)
+	var i GetPolicyManifestResultRow
+	err := row.Scan(
+		&i.State,
+		&i.ResultCode,
+		&i.DeviceID,
+		&i.ManifestID,
+	)
+	return i, err
+}
+
 const insertExecution = `-- name: InsertExecution :one
 INSERT INTO executions (
     id, delivery_id, device_id, action_id, action_type, desired_state, params,
@@ -568,6 +616,68 @@ func (q *Queries) InsertPendingOSQueryResult(ctx context.Context, arg InsertPend
 		arg.QueryID,
 		arg.DeviceID,
 		arg.TableName,
+		arg.CreatedAt,
+	)
+	return err
+}
+
+const insertPolicyActionResult = `-- name: InsertPolicyActionResult :exec
+INSERT INTO policy_action_results (
+    run_id, occurrence_id, device_id, action_id, result_hash, payload, created_at
+) VALUES (
+    ?1, ?2, ?3, ?4,
+    ?5, ?6, ?7
+)
+`
+
+type InsertPolicyActionResultParams struct {
+	RunID        string          `json:"run_id"`
+	OccurrenceID string          `json:"occurrence_id"`
+	DeviceID     string          `json:"device_id"`
+	ActionID     string          `json:"action_id"`
+	ResultHash   string          `json:"result_hash"`
+	Payload      sqlitetype.JSON `json:"payload"`
+	CreatedAt    time.Time       `json:"created_at"`
+}
+
+func (q *Queries) InsertPolicyActionResult(ctx context.Context, arg InsertPolicyActionResultParams) error {
+	_, err := q.db.ExecContext(ctx, insertPolicyActionResult,
+		arg.RunID,
+		arg.OccurrenceID,
+		arg.DeviceID,
+		arg.ActionID,
+		arg.ResultHash,
+		arg.Payload,
+		arg.CreatedAt,
+	)
+	return err
+}
+
+const insertPolicyManifestResult = `-- name: InsertPolicyManifestResult :exec
+INSERT INTO policy_manifest_results (
+    run_id, device_id, manifest_id, state, result_code, created_at
+) VALUES (
+    ?1, ?2, ?3, ?4,
+    ?5, ?6
+)
+`
+
+type InsertPolicyManifestResultParams struct {
+	RunID      string    `json:"run_id"`
+	DeviceID   string    `json:"device_id"`
+	ManifestID string    `json:"manifest_id"`
+	State      string    `json:"state"`
+	ResultCode string    `json:"result_code"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+func (q *Queries) InsertPolicyManifestResult(ctx context.Context, arg InsertPolicyManifestResultParams) error {
+	_, err := q.db.ExecContext(ctx, insertPolicyManifestResult,
+		arg.RunID,
+		arg.DeviceID,
+		arg.ManifestID,
+		arg.State,
+		arg.ResultCode,
 		arg.CreatedAt,
 	)
 	return err

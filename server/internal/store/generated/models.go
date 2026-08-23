@@ -445,13 +445,13 @@ type OsqueryResult struct {
 }
 
 type PolicyActionResult struct {
-	RunID        string    `json:"run_id"`
-	OccurrenceID string    `json:"occurrence_id"`
-	DeviceID     string    `json:"device_id"`
-	ActionID     string    `json:"action_id"`
-	ResultHash   string    `json:"result_hash"`
-	Payload      string    `json:"payload"`
-	CreatedAt    time.Time `json:"created_at"`
+	RunID        string          `json:"run_id"`
+	OccurrenceID string          `json:"occurrence_id"`
+	DeviceID     string          `json:"device_id"`
+	ActionID     string          `json:"action_id"`
+	ResultHash   string          `json:"result_hash"`
+	Payload      sqlitetype.JSON `json:"payload"`
+	CreatedAt    time.Time       `json:"created_at"`
 }
 
 type PolicyManifestResult struct {

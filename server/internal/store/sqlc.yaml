@@ -52,6 +52,8 @@ sql:
             go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "compliance_results.detection_output"
             go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
+          - column: "policy_action_results.payload"
+            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "users.session_version"
             go_type: "int32"
           - column: "users.linux_uid"
