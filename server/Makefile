@@ -20,10 +20,10 @@ help:
 	@echo "  sqlc-check     fail if generated code is stale (run sqlc-generate first)"
 
 # Regenerate the sqlc query layer. Runs from internal/store so the image sees
-# sqlc.yaml, queries/, and sqliteschema/schema.sql — the single SQLite baseline
-# that sqlc.yaml declares as its schema. There is no migrations directory: the
-# datastore is embedded SQLite and the baseline is created fresh, so the schema
-# is one file rather than an ordered migration set.
+# sqlc.yaml, queries/, and migrations/ — the goose migration directory that
+# sqlc.yaml declares as its schema. sqlc parses the up migrations and ignores
+# the down migrations, so the ordered migration set doubles as the schema
+# source with nothing else to keep in sync.
 #
 # A clean regeneration is a no-op. If sqlc-generate produces a diff, commit the
 # regenerated output; never hand-edit generated/.
@@ -34,7 +34,7 @@ sqlc-generate:
 	@set -eu; \
 	stage=$$(mktemp -d internal/store/.sqlc.XXXXXX); \
 	trap 'rm -rf "$$stage"' EXIT INT TERM; \
-	cp -R internal/store/sqlc.yaml internal/store/sqliteschema internal/store/queries "$$stage/"; \
+	cp -R internal/store/sqlc.yaml internal/store/migrations internal/store/queries "$$stage/"; \
 	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
 		-v "$$(realpath "$$stage")":/src:Z -w /src $(SQLC_IMAGE) generate; \
 	mv internal/store/generated "$$stage/previous"; \
@@ -49,8 +49,6 @@ sqlc-generate:
 # Fail if generated code is out of date. Wired into CI as the "sqlc drift"
 # workflow (.github/workflows/server-sqlc.yml, at the repository root — GitHub
 # honours workflows only there). It runs on any change to queries/,
-# sqliteschema/, sqlc.yaml, generated/, or this file. There is no migrations
-# directory and no schema overlay: the datastore is embedded SQLite and the
-# baseline is created fresh, so the schema is one file.
+# migrations/, sqlc.yaml, generated/, or this file.
 sqlc-check: sqlc-generate
 	git diff --exit-code internal/store/generated

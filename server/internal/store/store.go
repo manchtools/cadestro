@@ -12,6 +12,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -22,11 +23,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite"
 
 	"github.com/manchtools/cadestro/server/internal/store/generated"
-	"github.com/manchtools/cadestro/server/internal/store/sqliteschema"
 )
+
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
+
+const migrationsDir = "migrations"
 
 // Tx is the transaction-bound query handle handed to a WithAudit callback.
 // Generated domain queries stay exported through the embedded handle; raw SQL
@@ -72,7 +78,7 @@ func New(ctx context.Context, path string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := initializeSQLite(ctx, db); err != nil {
+	if err := migrateSQLite(ctx, db); err != nil {
 		_ = db.Close()
 		return nil, err
 	}
@@ -86,14 +92,9 @@ func NewWithoutMigrations(ctx context.Context, path string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	version, err := sqliteSchemaVersion(ctx, db)
-	if err != nil {
+	if err := verifySQLiteMigrated(ctx, db); err != nil {
 		_ = db.Close()
 		return nil, err
-	}
-	if version != 1 {
-		_ = db.Close()
-		return nil, fmt.Errorf("open SQLite database: schema version is %d, want 1", version)
 	}
 	return newStore(db), nil
 }
@@ -169,56 +170,45 @@ func sqliteDSN(path string) (string, error) {
 		"&_time_format=sqlite", nil
 }
 
-func initializeSQLite(ctx context.Context, db *sql.DB) error {
-	version, err := sqliteSchemaVersion(ctx, db)
-	if err != nil {
-		return err
+func configureGoose() error {
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return fmt.Errorf("configure SQLite migration dialect: %w", err)
 	}
-	switch version {
-	case 0:
-		schema, err := sqliteschema.FS.ReadFile("schema.sql")
-		if err != nil {
-			return fmt.Errorf("read SQLite baseline: %w", err)
-		}
-		tx, err := db.BeginTx(ctx, nil)
-		if err != nil {
-			return fmt.Errorf("begin SQLite baseline: %w", err)
-		}
-		var current int
-		if err := tx.QueryRowContext(ctx, "PRAGMA user_version").Scan(&current); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("recheck SQLite schema version: %w", err)
-		}
-		if current != 0 {
-			if err := tx.Commit(); err != nil {
-				return fmt.Errorf("close SQLite baseline check: %w", err)
-			}
-			if current == 1 {
-				return nil
-			}
-			return fmt.Errorf("open SQLite database: unsupported schema version %d", current)
-		}
-		if _, err := tx.ExecContext(ctx, string(schema)); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("apply SQLite baseline: %w", err)
-		}
-		if err := tx.Commit(); err != nil {
-			return fmt.Errorf("commit SQLite baseline: %w", err)
-		}
-		return nil
-	case 1:
-		return nil
-	default:
-		return fmt.Errorf("open SQLite database: unsupported schema version %d", version)
-	}
+	goose.SetBaseFS(migrationsFS)
+	goose.SetLogger(goose.NopLogger())
+	return nil
 }
 
-func sqliteSchemaVersion(ctx context.Context, db *sql.DB) (int, error) {
-	var version int
-	if err := db.QueryRowContext(ctx, "PRAGMA user_version").Scan(&version); err != nil {
-		return 0, fmt.Errorf("read SQLite schema version: %w", err)
+func migrateSQLite(ctx context.Context, db *sql.DB) error {
+	if err := configureGoose(); err != nil {
+		return err
 	}
-	return version, nil
+	if err := goose.UpContext(ctx, db, migrationsDir); err != nil {
+		return fmt.Errorf("apply SQLite migrations: %w", err)
+	}
+	return nil
+}
+
+func verifySQLiteMigrated(ctx context.Context, db *sql.DB) error {
+	if err := configureGoose(); err != nil {
+		return err
+	}
+	migrations, err := goose.CollectMigrations(migrationsDir, 0, goose.MaxVersion)
+	if err != nil {
+		return fmt.Errorf("collect SQLite migrations: %w", err)
+	}
+	var want int64
+	if len(migrations) > 0 {
+		want = migrations[len(migrations)-1].Version
+	}
+	got, err := goose.GetDBVersionContext(ctx, db)
+	if err != nil {
+		return fmt.Errorf("read SQLite migration version: %w", err)
+	}
+	if got != want {
+		return fmt.Errorf("open SQLite database: schema version is %d, want %d", got, want)
+	}
+	return nil
 }
 
 func newStore(db *sql.DB) *Store {

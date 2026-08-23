@@ -34,11 +34,13 @@ reviews:
         definitions.
 
     # ---- server ---------------------------------------------------------
-    - path: "server/internal/store/sqliteschema/*.sql"
+    - path: "server/internal/store/migrations/*.sql"
       instructions: >
         The approved final datastore is embedded SQLite in WAL mode with
-        synchronous=FULL and FTS5. There is one clean-break pre-alpha baseline,
-        no PostgreSQL data migration or compatibility schema. Audit
+        synchronous=FULL and FTS5, applied through goose as the single schema
+        source. There is one clean-break pre-alpha baseline migration, no
+        PostgreSQL data migration or compatibility schema, and no accumulating
+        migration chain — the baseline is rewritten in place. Audit
         operations/effects are append-only evidence, never application state.
         Reject anything that revives removed architecture or weakens the
         audit-chain and retention guards.

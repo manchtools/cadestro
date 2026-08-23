@@ -2,7 +2,8 @@
 -- Cadestro SQLite baseline. The project is pre-alpha: PostgreSQL data is
 -- not migrated and a SQLite installation always starts from this schema.
 
-PRAGMA user_version = 1;
+-- +goose Up
+
 CREATE TABLE linux_uid_sequence (
     id         integer PRIMARY KEY CHECK (id = 1),
     next_value integer NOT NULL CHECK (next_value >= 10000)
@@ -257,6 +258,7 @@ CREATE UNIQUE INDEX idx_devices_enrollment_identity
     ON devices(enrollment_identity_public_key)
     WHERE enrollment_identity_public_key IS NOT NULL;
 
+-- +goose StatementBegin
 CREATE TRIGGER devices_certificate_lifecycle_pair
 BEFORE INSERT ON devices
 WHEN (NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)
@@ -264,7 +266,9 @@ WHEN (NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)
 BEGIN
     SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
 END;
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TRIGGER devices_certificate_lifecycle_pair_update
 BEFORE UPDATE OF active_cert_serial, certificate_pem, pending_cert_serial, pending_certificate_pem ON devices
 WHEN (NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)
@@ -272,16 +276,20 @@ WHEN (NEW.active_cert_serial IS NULL) <> (NEW.certificate_pem IS NULL)
 BEGIN
     SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
 END;
+-- +goose StatementEnd
 
 -- Enrollment provenance is append-only; an established identity or token
 -- relation cannot change.
+-- +goose StatementBegin
 CREATE TRIGGER devices_registration_token_immutable
 BEFORE UPDATE OF registration_token_id ON devices
 WHEN OLD.registration_token_id IS NOT NEW.registration_token_id
 BEGIN
     SELECT RAISE(ABORT, 'device enrollment token provenance is immutable');
 END;
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TRIGGER devices_enrollment_identity_immutable
 BEFORE UPDATE OF enrollment_identity_public_key ON devices
 WHEN OLD.enrollment_identity_public_key IS NOT NULL
@@ -289,6 +297,7 @@ WHEN OLD.enrollment_identity_public_key IS NOT NULL
 BEGIN
     SELECT RAISE(ABORT, 'device enrollment identity is immutable');
 END;
+-- +goose StatementEnd
 
 CREATE TABLE device_labels (
     device_id text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
@@ -797,6 +806,7 @@ CREATE UNIQUE INDEX audit_effects_operation_seq_key ON audit_effects(operation_i
 CREATE INDEX audit_effects_resource_idx
     ON audit_effects(resource_type, resource_id, occurred_at DESC);
 CREATE INDEX audit_effects_operation_idx ON audit_effects(operation_id);
+-- +goose StatementBegin
 CREATE TRIGGER audit_effects_validate_changed_fields
 BEFORE INSERT ON audit_effects
 WHEN EXISTS (
@@ -808,6 +818,7 @@ WHEN EXISTS (
 ) BEGIN
     SELECT RAISE(ABORT, 'audit changed_fields contains an invalid field name');
 END;
+-- +goose StatementEnd
 
 -- API-facing projection excludes sealed details and other classified values.
 CREATE VIEW audit_event_rows AS
@@ -843,18 +854,26 @@ WHERE o.stream = 'control'
   AND NOT EXISTS (SELECT 1 FROM audit_effects e WHERE e.operation_id = o.operation_id);
 
 -- docref: begin audit-append-only
+-- +goose StatementBegin
 CREATE TRIGGER audit_operations_block_update BEFORE UPDATE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
 END;
+-- +goose StatementEnd
+-- +goose StatementBegin
 CREATE TRIGGER audit_operations_block_delete BEFORE DELETE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
 END;
+-- +goose StatementEnd
+-- +goose StatementBegin
 CREATE TRIGGER audit_effects_block_update BEFORE UPDATE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
 END;
+-- +goose StatementEnd
+-- +goose StatementBegin
 CREATE TRIGGER audit_effects_block_delete BEFORE DELETE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
 END;
+-- +goose StatementEnd
 -- docref: end audit-append-only
 
 CREATE TABLE jobs (
@@ -921,18 +940,23 @@ CREATE VIRTUAL TABLE search_trigram USING fts5(
     tokenize = "trigram remove_diacritics 1"
 );
 
+-- +goose StatementBegin
 CREATE TRIGGER search_documents_insert AFTER INSERT ON search_documents BEGIN
     INSERT INTO search_fts(rowid, primary_text, description, related_text)
     VALUES (NEW.rowid, NEW.primary_text, NEW.description, NEW.related_text);
     INSERT INTO search_trigram(rowid, primary_text, description, related_text)
     VALUES (NEW.rowid, NEW.primary_text, NEW.description, NEW.related_text);
 END;
+-- +goose StatementEnd
+-- +goose StatementBegin
 CREATE TRIGGER search_documents_delete AFTER DELETE ON search_documents BEGIN
     INSERT INTO search_fts(search_fts, rowid, primary_text, description, related_text)
     VALUES ('delete', OLD.rowid, OLD.primary_text, OLD.description, OLD.related_text);
     INSERT INTO search_trigram(search_trigram, rowid, primary_text, description, related_text)
     VALUES ('delete', OLD.rowid, OLD.primary_text, OLD.description, OLD.related_text);
 END;
+-- +goose StatementEnd
+-- +goose StatementBegin
 CREATE TRIGGER search_documents_update AFTER UPDATE ON search_documents BEGIN
     INSERT INTO search_fts(search_fts, rowid, primary_text, description, related_text)
     VALUES ('delete', OLD.rowid, OLD.primary_text, OLD.description, OLD.related_text);
@@ -943,6 +967,7 @@ CREATE TRIGGER search_documents_update AFTER UPDATE ON search_documents BEGIN
     INSERT INTO search_trigram(rowid, primary_text, description, related_text)
     VALUES (NEW.rowid, NEW.primary_text, NEW.description, NEW.related_text);
 END;
+-- +goose StatementEnd
 
 INSERT INTO server_settings (id, updated_at)
 VALUES ('00000000000000000000000003', '2026-01-01 00:00:00+00:00');
@@ -953,4 +978,3 @@ INSERT INTO roles (id, name, description, permissions, is_system, created_at, up
 VALUES ('00000000000000000000000002', 'User', 'Basic user access', '[]', true,
         '2026-01-01 00:00:00+00:00', '2026-01-01 00:00:00+00:00');
 
-PRAGMA user_version = 1;

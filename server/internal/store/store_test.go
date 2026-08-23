@@ -34,9 +34,15 @@ func TestNew_RunsMigrations(t *testing.T) {
 	require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM roles WHERE is_system`).Scan(&roles))
 	assert.Equal(t, int64(2), roles)
 
-	var version int
-	require.NoError(t, pool.QueryRow(ctx, `PRAGMA user_version`).Scan(&version))
-	assert.Equal(t, 1, version)
+	var tables int64
+	require.NoError(t, pool.QueryRow(ctx, `
+		SELECT count(*) FROM sqlite_schema WHERE type = 'table' AND name = 'devices'`).Scan(&tables))
+	assert.Equal(t, int64(1), tables, "a fresh database must have the devices table from the goose migration")
+
+	var appliedVersion int64
+	require.NoError(t, pool.QueryRow(ctx, `
+		SELECT version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1`).Scan(&appliedVersion))
+	assert.Equal(t, int64(1), appliedVersion, "goose must record the baseline migration as applied")
 }
 
 func TestSQLiteFile_IsPrivateAndReadOnlyOpenDoesNotCreate(t *testing.T) {

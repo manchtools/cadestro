@@ -8,6 +8,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,6 +80,7 @@ func TestSchema_UsesTextIdentifiersAndNoUUIDs(t *testing.T) {
 		WHERE m.type = 'table'
 		  AND p.name IN ('id', 'operation_id', 'effect_id', 'delivery_id', 'job_id')
 		  AND NOT (m.name = 'linux_uid_sequence' AND p.name = 'id')
+		  AND m.name <> 'goose_db_version'
 		  AND m.name NOT GLOB 'search_fts_*'
 		  AND m.name NOT GLOB 'search_trigram_*'
 		  AND upper(p.type) <> 'TEXT'`)
@@ -120,4 +122,36 @@ func TestSchema_EveryAuditEvidenceTableHasAppendOnlyGuards(t *testing.T) {
 			ORDER BY name`, table)
 		assert.Len(t, triggers, 2, "%s needs UPDATE and DELETE guards", table)
 	}
+}
+
+func TestSchema_EnforcesCaseInsensitiveActiveEmailUniqueness(t *testing.T) {
+	_, raw := setupSQLite(t)
+	ctx := context.Background()
+	_, err := raw.Exec(ctx, `INSERT INTO users (id, email) VALUES ($1, $2)`, newID(), "operator@example.test")
+	require.NoError(t, err)
+	_, err = raw.Exec(ctx, `INSERT INTO users (id, email) VALUES ($1, $2)`, newID(), "OPERATOR@example.test")
+	assert.ErrorContains(t, err, "UNIQUE constraint failed")
+}
+
+func TestSchema_AuditTablesRejectUpdateAndDelete(t *testing.T) {
+	st, raw := setupSQLite(t)
+	ctx := context.Background()
+	id := newID()
+	_, err := st.WithAudit(ctx, mutationOp(), func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
+		if err := insertDevice(ctx, tx, id, "schema-append-only.example.test"); err != nil {
+			return err
+		}
+		rec.Effect(deviceEffect(id))
+		return nil
+	})
+	require.NoError(t, err)
+
+	_, err = raw.Exec(ctx, `UPDATE audit_operations SET result = 'FAILURE'`)
+	assert.ErrorContains(t, err, "append-only")
+	_, err = raw.Exec(ctx, `DELETE FROM audit_operations`)
+	assert.ErrorContains(t, err, "append-only")
+	_, err = raw.Exec(ctx, `UPDATE audit_effects SET outcome = 'REJECTED'`)
+	assert.ErrorContains(t, err, "append-only")
+	_, err = raw.Exec(ctx, `DELETE FROM audit_effects`)
+	assert.ErrorContains(t, err, "append-only")
 }
