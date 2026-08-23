@@ -12,6 +12,7 @@ package store
 
 import (
 	"database/sql"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -36,15 +37,50 @@ type queryPlanRow struct {
 	detail string
 }
 
+var searchDocumentRefreshQueryNames = map[string]string{
+	"actions":             "RefreshActionsSearchDocument",
+	"action_sets":         "RefreshActionSetsSearchDocument",
+	"definitions":         "RefreshDefinitionsSearchDocument",
+	"compliance_policies": "RefreshCompliancePoliciesSearchDocument",
+	"devices":             "RefreshDevicesSearchDocument",
+	"device_groups":       "RefreshDeviceGroupsSearchDocument",
+	"users":               "RefreshUsersSearchDocument",
+	"user_groups":         "RefreshUserGroupsSearchDocument",
+	"executions":          "RefreshExecutionsSearchDocument",
+	"audit_events":        "RefreshAuditEventsSearchDocument",
+}
+
+var generatedExecQueryExpression = regexp.MustCompile("(?s)-- name: (\\w+) :exec\\n(.*?)\\n`")
+
+func loadSearchDocumentStatements(t *testing.T) map[string]string {
+	t.Helper()
+	source, err := os.ReadFile(filepath.Join("generated", "search.sql.go"))
+	require.NoError(t, err)
+
+	byQueryName := make(map[string]string)
+	for _, match := range generatedExecQueryExpression.FindAllStringSubmatch(string(source), -1) {
+		byQueryName[match[1]] = match[2]
+	}
+
+	statements := make(map[string]string, len(searchDocumentRefreshQueryNames))
+	for scope, queryName := range searchDocumentRefreshQueryNames {
+		statement, ok := byQueryName[queryName]
+		require.Truef(t, ok, "generated/search.sql.go has no %s statement", queryName)
+		statements[scope] = statement
+	}
+	return statements
+}
+
 func TestSearchDocumentStatementsSeekTheSingleEntityByPrimaryKey(t *testing.T) {
 	t.Parallel()
 
-	require.NotEmpty(t, searchDocumentStatements,
+	statements := loadSearchDocumentStatements(t)
+	require.NotEmpty(t, statements,
 		"matches-zero guard: no search-document statements were discovered")
 
 	db := openSearchPlanDatabase(t)
 
-	for scope, statement := range searchDocumentStatements {
+	for scope, statement := range statements {
 		t.Run(scope, func(t *testing.T) {
 			table, alias := searchDocumentSource(t, statement)
 			key := primaryKeyColumn(t, db, table)

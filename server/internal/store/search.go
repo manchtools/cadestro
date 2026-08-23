@@ -403,84 +403,65 @@ func (s *Store) filterSearchDocuments(ctx context.Context, p SearchParams, docum
 func (s *Store) visibleSearchIDs(ctx context.Context, p SearchParams, ids []string) (map[string]bool, error) {
 	requested := sqlitetype.StringList(ids)
 	groups := sqlitetype.StringList(p.ScopeGroupIDs)
-	base, predicate := searchVisibilitySQL(p.Scope)
-	if base == "" {
-		return nil, ErrInvalidSearch
-	}
-	statement := `WITH requested(id) AS (SELECT CAST(value AS TEXT) FROM json_each(?)),
-allowed_groups(id) AS (SELECT CAST(value AS TEXT) FROM json_each(?))
-SELECT base.id FROM ` + base + ` JOIN requested ON requested.id = base.id WHERE ` + predicate
 	assigned := ""
 	if p.AssignedUserID != nil {
 		assigned = *p.AssignedUserID
 	}
-	args := []any{requested, groups}
-	if p.Scope == "devices" || p.Scope == "executions" {
-		args = append(args, p.ScopeRestricted, assigned, assigned, assigned)
-	} else if p.Scope != "audit_events" {
-		args = append(args, p.ScopeRestricted)
-	}
-	rows, err := s.db.QueryContext(ctx, statement, args...)
+	visibleIDs, err := s.queryVisibleSearchIDs(ctx, p.Scope, requested, groups, p.ScopeRestricted, assigned)
 	if err != nil {
 		return nil, fmt.Errorf("search %s visibility: %w", p.Scope, err)
 	}
-	defer rows.Close()
-	visible := make(map[string]bool, len(ids))
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("search %s visibility scan: %w", p.Scope, err)
-		}
+	visible := make(map[string]bool, len(visibleIDs))
+	for _, id := range visibleIDs {
 		visible[id] = true
 	}
-	return visible, rows.Err()
+	return visible, nil
 }
 
-func searchVisibilitySQL(scope string) (base, predicate string) {
+func (s *Store) queryVisibleSearchIDs(ctx context.Context, scope string, requested, groups sqlitetype.StringList, restricted bool, assigned string) ([]string, error) {
 	switch scope {
 	case "actions":
-		return "actions base", `base.is_deleted = FALSE AND base.is_system = FALSE AND (NOT ? OR EXISTS (
-SELECT 1 FROM assignments a JOIN allowed_groups g ON g.id = a.target_id
-WHERE a.source_type = 'action' AND a.source_id = base.id AND a.is_deleted = FALSE
-AND a.target_type IN ('device_group', 'user_group')))`
+		return s.queries.VisibleActionsSearchIDs(ctx, generated.VisibleActionsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "action_sets":
-		return "action_sets base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (
-SELECT 1 FROM assignments a JOIN allowed_groups g ON g.id = a.target_id
-WHERE a.source_type = 'action_set' AND a.source_id = base.id AND a.is_deleted = FALSE
-AND a.target_type IN ('device_group', 'user_group')))`
+		return s.queries.VisibleActionSetsSearchIDs(ctx, generated.VisibleActionSetsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "definitions":
-		return "definitions base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (
-SELECT 1 FROM assignments a JOIN allowed_groups g ON g.id = a.target_id
-WHERE a.source_type = 'definition' AND a.source_id = base.id AND a.is_deleted = FALSE
-AND a.target_type IN ('device_group', 'user_group')))`
+		return s.queries.VisibleDefinitionsSearchIDs(ctx, generated.VisibleDefinitionsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "compliance_policies":
-		return "compliance_policies base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (
-SELECT 1 FROM assignments a JOIN allowed_groups g ON g.id = a.target_id
-WHERE a.source_type = 'compliance_policy' AND a.source_id = base.id AND a.is_deleted = FALSE
-AND a.target_type IN ('device_group', 'user_group')))`
+		return s.queries.VisibleCompliancePoliciesSearchIDs(ctx, generated.VisibleCompliancePoliciesSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "devices":
-		return "devices base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (
-SELECT 1 FROM device_group_members m JOIN allowed_groups g ON g.id = m.group_id WHERE m.device_id = base.id))
-AND (? = '' OR EXISTS (SELECT 1 FROM device_assigned_users u WHERE u.device_id = base.id AND u.user_id = ?)
-OR EXISTS (SELECT 1 FROM device_assigned_groups dag JOIN user_group_members m ON m.group_id = dag.group_id
-WHERE dag.device_id = base.id AND m.user_id = ?))`
+		return s.queries.VisibleDevicesSearchIDs(ctx, generated.VisibleDevicesSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted, AssignedUserID: assigned,
+		})
 	case "device_groups":
-		return "device_groups base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (SELECT 1 FROM allowed_groups g WHERE g.id = base.id))`
+		return s.queries.VisibleDeviceGroupsSearchIDs(ctx, generated.VisibleDeviceGroupsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "users":
-		return "users base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (
-SELECT 1 FROM user_group_members m JOIN allowed_groups g ON g.id = m.group_id WHERE m.user_id = base.id))`
+		return s.queries.VisibleUsersSearchIDs(ctx, generated.VisibleUsersSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "user_groups":
-		return "user_groups base", `base.is_deleted = FALSE AND (NOT ? OR EXISTS (SELECT 1 FROM allowed_groups g WHERE g.id = base.id))`
+		return s.queries.VisibleUserGroupsSearchIDs(ctx, generated.VisibleUserGroupsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
+		})
 	case "executions":
-		return "executions base", `EXISTS (SELECT 1 FROM devices d WHERE d.id = base.device_id AND d.is_deleted = FALSE)
-AND (NOT ? OR EXISTS (SELECT 1 FROM device_group_members m JOIN allowed_groups g ON g.id = m.group_id WHERE m.device_id = base.device_id))
-AND (? = '' OR EXISTS (SELECT 1 FROM device_assigned_users u WHERE u.device_id = base.device_id AND u.user_id = ?)
-OR EXISTS (SELECT 1 FROM device_assigned_groups dag JOIN user_group_members m ON m.group_id = dag.group_id
-WHERE dag.device_id = base.device_id AND m.user_id = ?))`
+		return s.queries.VisibleExecutionsSearchIDs(ctx, generated.VisibleExecutionsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted, AssignedUserID: assigned,
+		})
 	case "audit_events":
-		return "(SELECT operation_id AS id FROM audit_operations) base", `TRUE`
+		return s.queries.VisibleAuditEventsSearchIDs(ctx, generated.VisibleAuditEventsSearchIDsParams{
+			RequestedJson: requested, AllowedGroupsJson: groups,
+		})
 	default:
-		return "", ""
+		return nil, ErrInvalidSearch
 	}
 }
 

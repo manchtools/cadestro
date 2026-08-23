@@ -32,7 +32,7 @@ func (s *Store) RecordHeartbeatTelemetry(ctx context.Context, snapshot map[strin
 	}
 	slices.Sort(ids)
 	for batch := range slices.Chunk(ids, heartbeatBatchSize) {
-		if err := s.withTx(ctx, func(raw *sql.Tx, queries *db.Queries) error {
+		if err := s.withTx(ctx, func(_ *sql.Tx, queries *db.Queries) error {
 			for _, id := range batch {
 				seenAt := snapshot[id].UTC().Truncate(time.Microsecond)
 				if _, err := queries.RecordDeviceHeartbeat(ctx, db.RecordDeviceHeartbeatParams{
@@ -40,7 +40,7 @@ func (s *Store) RecordHeartbeatTelemetry(ctx context.Context, snapshot map[strin
 				}); err != nil {
 					return err
 				}
-				if err := refreshSearchDocument(ctx, raw, queries, "devices", id); err != nil {
+				if err := refreshSearchDocument(ctx, queries, "devices", id); err != nil {
 					return err
 				}
 			}
