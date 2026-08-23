@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
 // Search documents are derived application state. The audit primitive calls
@@ -14,7 +16,7 @@ type searchTouch struct {
 	resourceID   string
 }
 
-func refreshSearchDocumentsForEffects(ctx context.Context, tx *sql.Tx, effects []AuditEffect, touches []searchTouch) error {
+func refreshSearchDocumentsForEffects(ctx context.Context, raw *sql.Tx, q *generated.Queries, effects []AuditEffect, touches []searchTouch) error {
 	seen := make(map[string]struct{}, len(effects)+len(touches))
 	refresh := func(resourceType, resourceID string) error {
 		if resourceID == "" {
@@ -29,7 +31,7 @@ func refreshSearchDocumentsForEffects(ctx context.Context, tx *sql.Tx, effects [
 			return nil
 		}
 		seen[key] = struct{}{}
-		return refreshSearchDocument(ctx, tx, scope, resourceID)
+		return refreshSearchDocument(ctx, raw, q, scope, resourceID)
 	}
 	for _, effect := range effects {
 		scope := searchScopeForResource(effect.ResourceType)
@@ -73,30 +75,57 @@ func searchScopeForResource(resourceType string) string {
 	}
 }
 
-func refreshSearchDocument(ctx context.Context, tx *sql.Tx, scope, id string) error {
+func refreshSearchDocument(ctx context.Context, raw *sql.Tx, q *generated.Queries, scope, id string) error {
 	statement, ok := searchDocumentStatements[scope]
 	if !ok {
 		return fmt.Errorf("refresh search document: unknown scope %q", scope)
 	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM search_documents WHERE scope = ? AND entity_id = ?`, scope, id); err != nil {
+	if err := q.DeleteSearchDocument(ctx, generated.DeleteSearchDocumentParams{Scope: scope, EntityID: id}); err != nil {
 		return fmt.Errorf("refresh %s search document: delete: %w", scope, err)
 	}
-	if _, err := tx.ExecContext(ctx, statement, id); err != nil {
+	if _, err := raw.ExecContext(ctx, statement, id); err != nil {
 		return fmt.Errorf("refresh %s search document: insert: %w", scope, err)
 	}
 	return nil
 }
 
-func rebuildSearchDocuments(ctx context.Context, tx *sql.Tx) error {
-	if _, err := tx.ExecContext(ctx, `DELETE FROM search_documents`); err != nil {
+func rebuildSearchDocuments(ctx context.Context, q *generated.Queries) error {
+	if err := q.DeleteAllSearchDocuments(ctx); err != nil {
 		return fmt.Errorf("rebuild search documents: clear: %w", err)
 	}
 	for _, spec := range searchDocumentSpecs {
-		if _, err := tx.ExecContext(ctx, searchDocumentRebuildStatements[spec.scope]); err != nil {
+		if err := rebuildSearchDocumentsForScope(ctx, q, spec.scope); err != nil {
 			return fmt.Errorf("rebuild %s search documents: %w", spec.scope, err)
 		}
 	}
 	return nil
+}
+
+func rebuildSearchDocumentsForScope(ctx context.Context, q *generated.Queries, scope string) error {
+	switch scope {
+	case "actions":
+		return q.RebuildActionsSearchDocuments(ctx)
+	case "action_sets":
+		return q.RebuildActionSetsSearchDocuments(ctx)
+	case "definitions":
+		return q.RebuildDefinitionsSearchDocuments(ctx)
+	case "compliance_policies":
+		return q.RebuildCompliancePoliciesSearchDocuments(ctx)
+	case "devices":
+		return q.RebuildDevicesSearchDocuments(ctx)
+	case "device_groups":
+		return q.RebuildDeviceGroupsSearchDocuments(ctx)
+	case "users":
+		return q.RebuildUsersSearchDocuments(ctx)
+	case "user_groups":
+		return q.RebuildUserGroupsSearchDocuments(ctx)
+	case "executions":
+		return q.RebuildExecutionsSearchDocuments(ctx)
+	case "audit_events":
+		return q.RebuildAuditEventsSearchDocuments(ctx)
+	default:
+		return fmt.Errorf("rebuild search documents: unknown scope %q", scope)
+	}
 }
 
 // searchDocumentSpec states one scope's projection exactly once. The
@@ -129,28 +158,16 @@ func (spec searchDocumentSpec) singleEntityStatement() string {
 	return spec.body + "\nWHERE " + spec.key + " AND " + spec.filter
 }
 
-func (spec searchDocumentSpec) rebuildStatement() string {
-	if spec.filter == "" {
-		return spec.body
-	}
-	return spec.body + "\nWHERE " + spec.filter
-}
+var searchDocumentStatements = buildSearchDocumentStatements()
 
-var searchDocumentStatements, searchDocumentRebuildStatements = buildSearchDocumentStatements()
-
-func buildSearchDocumentStatements() (single, rebuild map[string]string) {
-	single = make(map[string]string, len(searchDocumentSpecs))
-	rebuild = make(map[string]string, len(searchDocumentSpecs))
+func buildSearchDocumentStatements() map[string]string {
+	single := make(map[string]string, len(searchDocumentSpecs))
 	for _, spec := range searchDocumentSpecs {
 		single[spec.scope] = spec.singleEntityStatement()
-		rebuild[spec.scope] = spec.rebuildStatement()
 	}
-	return single, rebuild
+	return single
 }
 
-// One registration point per scope: rebuildSearchDocuments walks this slice in
-// order, and both statement maps are derived from it, so no scope can be
-// refreshable without also being rebuildable.
 var searchDocumentSpecs = []searchDocumentSpec{{
 	scope: "actions",
 	key:   "a.id = ?",

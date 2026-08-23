@@ -491,15 +491,15 @@ type ScimGroupMapping struct {
 }
 
 type SearchDocument struct {
-	Rowid       int64  `json:"rowid"`
-	Scope       string `json:"scope"`
-	EntityID    string `json:"entity_id"`
-	PrimaryText string `json:"primary_text"`
-	Description string `json:"description"`
-	RelatedText string `json:"related_text"`
-	SortText    string `json:"sort_text"`
-	MemberCount int64  `json:"member_count"`
-	Fields      string `json:"fields"`
+	Rowid       int64           `json:"rowid"`
+	Scope       string          `json:"scope"`
+	EntityID    string          `json:"entity_id"`
+	PrimaryText string          `json:"primary_text"`
+	Description string          `json:"description"`
+	RelatedText string          `json:"related_text"`
+	SortText    string          `json:"sort_text"`
+	MemberCount int64           `json:"member_count"`
+	Fields      sqlitetype.JSON `json:"fields"`
 }
 
 type SearchFt struct {

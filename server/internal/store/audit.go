@@ -129,7 +129,7 @@ func (s *Store) WithAudit(ctx context.Context, op AuditOperation, mutate func(co
 				return err
 			}
 		}
-		if err := refreshSearchDocumentsForEffects(ctx, raw, rec.effects, rec.searchTouches); err != nil {
+		if err := refreshSearchDocumentsForEffects(ctx, raw, q, rec.effects, rec.searchTouches); err != nil {
 			return err
 		}
 		seq, err := tx.NextAuditEventSeq(ctx, op.Stream)
@@ -157,7 +157,7 @@ func (s *Store) WithAudit(ctx context.Context, op AuditOperation, mutate func(co
 			}
 			out.EffectSeqs = append(out.EffectSeqs, seq)
 		}
-		if err := refreshSearchDocument(ctx, raw, "audit_events", op.OperationID); err != nil {
+		if err := refreshSearchDocument(ctx, raw, q, "audit_events", op.OperationID); err != nil {
 			return err
 		}
 		out.OperationID, out.Stream, out.HeadSeq = op.OperationID, op.Stream, seq
@@ -202,7 +202,7 @@ func (s *Store) WithAuditEffects(ctx context.Context, operationID string, mutate
 		if len(rec.effects) == 0 {
 			return fmt.Errorf("%w: a continuation of %s recorded nothing", ErrAuditEffectRequired, operationID)
 		}
-		if err := refreshSearchDocumentsForEffects(ctx, raw, rec.effects, rec.searchTouches); err != nil {
+		if err := refreshSearchDocumentsForEffects(ctx, raw, q, rec.effects, rec.searchTouches); err != nil {
 			return err
 		}
 		nextEffect, err := q.NextAuditEffectSeq(ctx, operationID)
@@ -225,7 +225,7 @@ func (s *Store) WithAuditEffects(ctx context.Context, operationID string, mutate
 			}
 			out.EffectSeqs = append(out.EffectSeqs, seq)
 		}
-		if err := refreshSearchDocument(ctx, raw, "audit_events", operationID); err != nil {
+		if err := refreshSearchDocument(ctx, raw, q, "audit_events", operationID); err != nil {
 			return err
 		}
 		out.OperationID, out.Stream, out.HeadSeq = operationID, parent.Stream, seq

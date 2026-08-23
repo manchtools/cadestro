@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/manchtools/cadestro/server/internal/store/generated"
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
@@ -176,43 +178,82 @@ func validSearchFilters(p SearchParams, facet sqliteSearchFacet) bool {
 }
 
 func (s *Store) searchDocuments(ctx context.Context, scope, query string, exact bool) ([]searchDocument, error) {
-	statement := `SELECT entity_id, primary_text, description, related_text,
-member_count, fields FROM search_documents WHERE scope = ?`
-	args := []any{scope}
-	if exact && strings.TrimSpace(query) != "" {
+	trimmed := strings.TrimSpace(query)
+	switch {
+	case exact && trimmed != "":
 		expression := ftsPrefixExpression(query)
 		if expression == "" {
 			return []searchDocument{}, nil
 		}
-		statement += ` AND (rowid IN (SELECT rowid FROM search_fts WHERE search_fts MATCH ?)
-OR lower(entity_id) LIKE lower(?) ESCAPE '\')`
-		args = append(args, expression, escapeLikePrefix(strings.TrimSpace(query))+"%")
-	} else if !exact {
+		return s.searchDocumentsExact(ctx, scope, expression, escapeLikePrefix(trimmed)+"%")
+	case !exact:
 		if expression := ftsTrigramExpression(query); expression != "" {
-			statement += ` AND rowid IN (SELECT rowid FROM search_trigram WHERE search_trigram MATCH ?)`
-			args = append(args, expression)
+			return s.searchDocumentsTrigram(ctx, scope, expression)
 		}
+		return s.searchDocumentsPlain(ctx, scope)
+	default:
+		return s.searchDocumentsPlain(ctx, scope)
 	}
-	statement += ` ORDER BY entity_id`
-	if !exact || strings.TrimSpace(query) == "" {
-		statement += ` LIMIT ?`
-		args = append(args, fuzzyCandidateLimit)
-	}
-	rows, err := s.db.QueryContext(ctx, statement, args...)
+}
+
+const searchDocumentsExactStatement = `SELECT entity_id, primary_text, description, related_text,
+member_count, fields FROM search_documents WHERE scope = ?
+AND (rowid IN (SELECT rowid FROM search_fts WHERE search_fts MATCH ?)
+OR lower(entity_id) LIKE lower(?) ESCAPE '\')
+ORDER BY entity_id`
+
+const searchDocumentsTrigramStatement = `SELECT entity_id, primary_text, description, related_text,
+member_count, fields FROM search_documents WHERE scope = ?
+AND rowid IN (SELECT rowid FROM search_trigram WHERE search_trigram MATCH ?)
+ORDER BY entity_id LIMIT ?`
+
+func (s *Store) searchDocumentsExact(ctx context.Context, scope, expression, prefix string) ([]searchDocument, error) {
+	rows, err := s.db.QueryContext(ctx, searchDocumentsExactStatement, scope, expression, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("search %s documents: %w", scope, err)
 	}
 	defer rows.Close()
+	return scanSearchDocuments(rows, scope)
+}
+
+func (s *Store) searchDocumentsTrigram(ctx context.Context, scope, expression string) ([]searchDocument, error) {
+	rows, err := s.db.QueryContext(ctx, searchDocumentsTrigramStatement, scope, expression, fuzzyCandidateLimit)
+	if err != nil {
+		return nil, fmt.Errorf("search %s documents: %w", scope, err)
+	}
+	defer rows.Close()
+	return scanSearchDocuments(rows, scope)
+}
+
+func (s *Store) searchDocumentsPlain(ctx context.Context, scope string) ([]searchDocument, error) {
+	rows, err := s.queries.SearchDocumentsPlain(ctx, generated.SearchDocumentsPlainParams{
+		Scope: scope, RowLimit: fuzzyCandidateLimit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("search %s documents: %w", scope, err)
+	}
+	documents := make([]searchDocument, 0, len(rows))
+	for _, row := range rows {
+		document, err := newSearchDocument(row.EntityID, row.PrimaryText, row.Description, row.RelatedText, row.MemberCount, row.Fields)
+		if err != nil {
+			return nil, fmt.Errorf("search %s fields: %w", scope, err)
+		}
+		documents = append(documents, document)
+	}
+	return documents, nil
+}
+
+func scanSearchDocuments(rows *sql.Rows, scope string) ([]searchDocument, error) {
 	documents := make([]searchDocument, 0)
 	for rows.Next() {
-		var document searchDocument
+		var id, name, description, related string
+		var memberCount int64
 		var fields []byte
-		if err := rows.Scan(&document.row.ID, &document.row.Name, &document.row.Description,
-			&document.related, &document.row.MemberCount, &fields); err != nil {
+		if err := rows.Scan(&id, &name, &description, &related, &memberCount, &fields); err != nil {
 			return nil, fmt.Errorf("search %s scan: %w", scope, err)
 		}
-		document.row.Fields = make(map[string]string)
-		if err := json.Unmarshal(fields, &document.row.Fields); err != nil {
+		document, err := newSearchDocument(id, name, description, related, memberCount, fields)
+		if err != nil {
 			return nil, fmt.Errorf("search %s fields: %w", scope, err)
 		}
 		documents = append(documents, document)
@@ -221,6 +262,17 @@ OR lower(entity_id) LIKE lower(?) ESCAPE '\')`
 		return nil, fmt.Errorf("search %s rows: %w", scope, err)
 	}
 	return documents, nil
+}
+
+func newSearchDocument(id, name, description, related string, memberCount int64, fields []byte) (searchDocument, error) {
+	document := searchDocument{
+		row:     SearchRow{ID: id, Name: name, Description: description, MemberCount: memberCount, Fields: make(map[string]string)},
+		related: related,
+	}
+	if err := json.Unmarshal(fields, &document.row.Fields); err != nil {
+		return searchDocument{}, err
+	}
+	return document, nil
 }
 
 func escapeLikePrefix(value string) string {
@@ -436,7 +488,7 @@ WHERE dag.device_id = base.device_id AND m.user_id = ?))`
 // content table and records the operator action in the audit chain.
 func (s *Store) RebuildSearchIndexes(ctx context.Context, op AuditOperation) error {
 	_, err := s.WithAudit(ctx, op, func(ctx context.Context, tx *Tx, rec *AuditRecorder) error {
-		if err := rebuildSearchDocuments(ctx, tx.raw); err != nil {
+		if err := rebuildSearchDocuments(ctx, tx.Queries); err != nil {
 			return err
 		}
 		rec.Effect(AuditEffect{ResourceType: "server_settings", ResourceID: "00000000000000000000000003", Action: "REBUILD_SEARCH", Outcome: EffectApplied})

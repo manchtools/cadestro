@@ -40,7 +40,7 @@ func (s *Store) RecordHeartbeatTelemetry(ctx context.Context, snapshot map[strin
 				}); err != nil {
 					return err
 				}
-				if err := refreshSearchDocument(ctx, raw, "devices", id); err != nil {
+				if err := refreshSearchDocument(ctx, raw, queries, "devices", id); err != nil {
 					return err
 				}
 			}

@@ -608,3 +608,24 @@ func TestSQLiteSearch_ActionDocumentCarriesDesiredState(t *testing.T) {
 	assert.Equal(t, "1", remove.Fields["desired_state"],
 		"a remove action must not be indexed as an install")
 }
+
+func TestSQLiteSearch_EmptyQueryListsWholeScope(t *testing.T) {
+	st, raw := setupSQLite(t)
+	ctx := context.Background()
+	now := time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC)
+	firstID, secondID, thirdID := newID(), newID(), newID()
+
+	_, err := raw.Exec(ctx, `INSERT INTO actions (id, name, action_type, params, created_at, updated_at) VALUES
+		($1, 'Alpha', 100, '{}', $4, $4),
+		($2, 'Bravo', 100, '{}', $4, $4),
+		($3, 'Charlie', 100, '{}', $4, $4)`, firstID, secondID, thirdID, now)
+	require.NoError(t, err)
+	rebuildSearchFixture(t, st)
+
+	rows, total, err := st.Search(ctx, store.SearchParams{Scope: "actions", Query: "", Limit: 50})
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), total, "an empty query lists every live document in the scope")
+	require.Len(t, rows, 3)
+	names := []string{rows[0].Name, rows[1].Name, rows[2].Name}
+	assert.ElementsMatch(t, []string{"Alpha", "Bravo", "Charlie"}, names)
+}
