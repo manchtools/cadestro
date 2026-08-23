@@ -28,7 +28,7 @@ get them.
   persistence fails, the state change rolls back. Sensitive reads are their
   own audited operations, and secret values never enter logs or audit
   payloads.
-<!-- docref: begin src=internal/scim/users_write.go#Handler.provisionSubject:3b57e30f,internal/idp/linker.go#Linker.createUser:7858b2ad,internal/identity/users.go#Handlers.EraseJITUser:6cc8f91a -->
+<!-- docref: begin src=internal/scim/users_write.go#Handler.provisionSubject:3b57e30f,internal/idp/linker.go#Linker.createUser:7858b2ad,internal/identity/users.go#Handlers.EraseJITUser:d797382e -->
 - **Uses enterprise identity from day one.** Human accounts come from SCIM
   lifecycle management or per-provider OIDC just-in-time creation — there is
   no manual user creation and no local passwords. JIT-created subjects have an

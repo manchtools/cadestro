@@ -76,7 +76,7 @@ into `config/control.env`, and that file is where ordinary settings such as the
 log level or the log settings are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:6df12966 -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:908e4cd7 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
 encryption and session keys, `config/control.env` with the SQLite `CADESTRO_DATABASE_PATH`, and
 `config/web.env` with the `PUBLIC_CONTROL_URL` the UI calls — the same origin
@@ -157,7 +157,7 @@ with `docker compose exec control cadestro backup-status`;
 `CADESTRO_BACKUP_MAX_LAG` defaults to 26 hours.
 <!-- docref: end -->
 
-<!-- docref: begin src=internal/store/reads.go#ListDueDeliveries:bbaaa8a0,internal/store/search.go#Search:3244914e -->
+<!-- docref: begin src=internal/store/reads.go#ListDueDeviceDeliveries:81e79f32,internal/store/search.go#Search:3244914e -->
 Pending dispatch is ordinary SQLite state. Search uses SQLite FTS5. There is no
 broker, projector rebuild, dynamic proxy provider, or auxiliary search process
 to operate.

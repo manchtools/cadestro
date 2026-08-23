@@ -27,7 +27,7 @@ Control must fail readiness when the schema is not current, required keys or CA
 material are unusable, artifact paths are not writable, or the agent listener
 cannot enforce active certificate serial admission.
 
-<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:8eacfc02,cmd/cadestro/config.go#configEnvironment:7338cd89,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
+<!-- docref: begin src=cmd/cadestro/main.go#parseCommand:dfecd82c,cmd/cadestro/config.go#configEnvironment:985fd7cf,cmd/cadestro/config.go#readEnvironment:88fc4d61,cmd/cadestro/config.go#parseList:02da4e62 -->
 Configuration is entirely environmental: every option is its own documented
 `CADESTRO_`-prefixed variable. There is no configuration file and no
 `-config` flag, and the only accepted top-level arguments are the
@@ -58,7 +58,7 @@ Initial administration uses the host-authorized `bootstrap-admin` command to
 produce a single-use, short-lived URL. Configure OIDC/SCIM immediately; there
 is no local administrator password.
 
-<!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/cadestro/main.go#parseCommand:8eacfc02 -->
+<!-- docref: begin src=cmd/cadestro/bootstrap_admin.go#writeBootstrapAdminOutput:665c9c92,cmd/cadestro/main.go#parseCommand:dfecd82c -->
 To hand the token to another tool instead of a browser, request the pipe-safe
 form explicitly:
 
@@ -91,7 +91,7 @@ make sqlc-check
 
 Generated sqlc and protobuf outputs are never edited by hand.
 
-<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cfb58496 -->
+<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:5db396bd -->
 Run the explicit SQLite 10,000-agent gate with:
 
 ```bash
