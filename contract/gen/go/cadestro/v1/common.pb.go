@@ -917,6 +917,277 @@ func (LuksRevocationStatus) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
 }
 
+// ErrorCode is the fixed vocabulary of machine-readable codes an
+// ErrorDetail carries. A client branches on the code, never on the
+// message.
+type ErrorCode int32
+
+const (
+	ErrorCode_ERROR_CODE_UNSPECIFIED                       ErrorCode = 0
+	ErrorCode_ERROR_CODE_ACTION_ALREADY_IN_SET             ErrorCode = 1
+	ErrorCode_ERROR_CODE_ACTION_NOT_COMPLIANCE             ErrorCode = 2
+	ErrorCode_ERROR_CODE_ACTION_NOT_FOUND                  ErrorCode = 3
+	ErrorCode_ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION  ErrorCode = 4
+	ErrorCode_ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND       ErrorCode = 5
+	ErrorCode_ERROR_CODE_ACTION_SET_NOT_FOUND              ErrorCode = 6
+	ErrorCode_ERROR_CODE_ASSIGNMENT_NOT_FOUND              ErrorCode = 7
+	ErrorCode_ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND       ErrorCode = 8
+	ErrorCode_ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND       ErrorCode = 9
+	ErrorCode_ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE         ErrorCode = 10
+	ErrorCode_ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION       ErrorCode = 11
+	ErrorCode_ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE         ErrorCode = 12
+	ErrorCode_ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE         ErrorCode = 13
+	ErrorCode_ERROR_CODE_CANNOT_UNLINK_OTHER_USER          ErrorCode = 14
+	ErrorCode_ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION ErrorCode = 15
+	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS     ErrorCode = 16
+	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND       ErrorCode = 17
+	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS     ErrorCode = 18
+	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND  ErrorCode = 19
+	ErrorCode_ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND       ErrorCode = 20
+	ErrorCode_ERROR_CODE_DEFINITION_NOT_FOUND              ErrorCode = 21
+	ErrorCode_ERROR_CODE_DEVICE_ALREADY_IN_GROUP           ErrorCode = 22
+	ErrorCode_ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND     ErrorCode = 23
+	ErrorCode_ERROR_CODE_DEVICE_GROUP_NAME_EXISTS          ErrorCode = 24
+	ErrorCode_ERROR_CODE_DEVICE_GROUP_NOT_FOUND            ErrorCode = 25
+	ErrorCode_ERROR_CODE_DEVICE_NOT_CONNECTED              ErrorCode = 26
+	ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND                  ErrorCode = 27
+	ErrorCode_ERROR_CODE_DEVICE_UNAVAILABLE                ErrorCode = 28
+	ErrorCode_ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY       ErrorCode = 29
+	ErrorCode_ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED  ErrorCode = 30
+	ErrorCode_ERROR_CODE_EMAIL_ALREADY_EXISTS              ErrorCode = 31
+	ErrorCode_ERROR_CODE_EXECUTION_NOT_FOUND               ErrorCode = 32
+	ErrorCode_ERROR_CODE_GRANT_NOT_FOUND                   ErrorCode = 33
+	ErrorCode_ERROR_CODE_GROUP_ALREADY_HAS_ROLE            ErrorCode = 34
+	ErrorCode_ERROR_CODE_GROUP_NOT_DYNAMIC                 ErrorCode = 35
+	ErrorCode_ERROR_CODE_IDENTITY_LINK_NOT_FOUND           ErrorCode = 36
+	ErrorCode_ERROR_CODE_INTERNAL_ERROR                    ErrorCode = 37
+	ErrorCode_ERROR_CODE_INVALID_DYNAMIC_QUERY             ErrorCode = 38
+	ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN                ErrorCode = 39
+	ErrorCode_ERROR_CODE_INVALID_QUERY                     ErrorCode = 40
+	ErrorCode_ERROR_CODE_LAST_AUTH_METHOD                  ErrorCode = 41
+	ErrorCode_ERROR_CODE_LPS_PASSWORD_NOT_FOUND            ErrorCode = 42
+	ErrorCode_ERROR_CODE_LUKS_KEY_ALREADY_REVOKED          ErrorCode = 43
+	ErrorCode_ERROR_CODE_LUKS_KEY_NOT_FOUND                ErrorCode = 44
+	ErrorCode_ERROR_CODE_LUKS_KEY_REVOCATION_PENDING       ErrorCode = 45
+	ErrorCode_ERROR_CODE_NO_ASSIGNMENT_FOUND               ErrorCode = 46
+	ErrorCode_ERROR_CODE_NOT_AUTHENTICATED                 ErrorCode = 47
+	ErrorCode_ERROR_CODE_PERMISSION_DENIED                 ErrorCode = 48
+	ErrorCode_ERROR_CODE_PROVIDER_DISABLED                 ErrorCode = 49
+	ErrorCode_ERROR_CODE_PROVIDER_NOT_FOUND                ErrorCode = 50
+	ErrorCode_ERROR_CODE_PROVIDER_SLUG_EXISTS              ErrorCode = 51
+	ErrorCode_ERROR_CODE_QUERY_RESULT_NOT_FOUND            ErrorCode = 52
+	ErrorCode_ERROR_CODE_RATE_LIMITED                      ErrorCode = 53
+	ErrorCode_ERROR_CODE_ROLE_IN_USE                       ErrorCode = 54
+	ErrorCode_ERROR_CODE_ROLE_NAME_EXISTS                  ErrorCode = 55
+	ErrorCode_ERROR_CODE_ROLE_NOT_FOUND                    ErrorCode = 56
+	ErrorCode_ERROR_CODE_SCIM_ALREADY_ENABLED              ErrorCode = 57
+	ErrorCode_ERROR_CODE_SCIM_MANAGED_RESOURCE             ErrorCode = 58
+	ErrorCode_ERROR_CODE_SCIM_NOT_ENABLED                  ErrorCode = 59
+	ErrorCode_ERROR_CODE_SCOPE_NOT_PERMITTED               ErrorCode = 60
+	ErrorCode_ERROR_CODE_SSO_NO_MATCHING_ACCOUNT           ErrorCode = 61
+	ErrorCode_ERROR_CODE_SSO_STATE_EXPIRED                 ErrorCode = 62
+	ErrorCode_ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET   ErrorCode = 63
+	ErrorCode_ERROR_CODE_TERMINAL_NOT_CONFIGURED           ErrorCode = 64
+	ErrorCode_ERROR_CODE_TERMINAL_SESSION_NOT_FOUND        ErrorCode = 65
+	ErrorCode_ERROR_CODE_TOKEN_EXPIRED                     ErrorCode = 66
+	ErrorCode_ERROR_CODE_TOKEN_NOT_FOUND                   ErrorCode = 67
+	ErrorCode_ERROR_CODE_UNIMPLEMENTED                     ErrorCode = 68
+	ErrorCode_ERROR_CODE_USER_ALREADY_HAS_ROLE             ErrorCode = 69
+	ErrorCode_ERROR_CODE_USER_ALREADY_IN_GROUP             ErrorCode = 70
+	ErrorCode_ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND       ErrorCode = 71
+	ErrorCode_ERROR_CODE_USER_GROUP_NAME_EXISTS            ErrorCode = 72
+	ErrorCode_ERROR_CODE_USER_GROUP_NOT_FOUND              ErrorCode = 73
+	ErrorCode_ERROR_CODE_USER_NOT_FOUND                    ErrorCode = 74
+	ErrorCode_ERROR_CODE_VALIDATION_FAILED                 ErrorCode = 75
+)
+
+// Enum value maps for ErrorCode.
+var (
+	ErrorCode_name = map[int32]string{
+		0:  "ERROR_CODE_UNSPECIFIED",
+		1:  "ERROR_CODE_ACTION_ALREADY_IN_SET",
+		2:  "ERROR_CODE_ACTION_NOT_COMPLIANCE",
+		3:  "ERROR_CODE_ACTION_NOT_FOUND",
+		4:  "ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION",
+		5:  "ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND",
+		6:  "ERROR_CODE_ACTION_SET_NOT_FOUND",
+		7:  "ERROR_CODE_ASSIGNMENT_NOT_FOUND",
+		8:  "ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND",
+		9:  "ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND",
+		10: "ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE",
+		11: "ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION",
+		12: "ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE",
+		13: "ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE",
+		14: "ERROR_CODE_CANNOT_UNLINK_OTHER_USER",
+		15: "ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION",
+		16: "ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS",
+		17: "ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND",
+		18: "ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS",
+		19: "ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND",
+		20: "ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND",
+		21: "ERROR_CODE_DEFINITION_NOT_FOUND",
+		22: "ERROR_CODE_DEVICE_ALREADY_IN_GROUP",
+		23: "ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND",
+		24: "ERROR_CODE_DEVICE_GROUP_NAME_EXISTS",
+		25: "ERROR_CODE_DEVICE_GROUP_NOT_FOUND",
+		26: "ERROR_CODE_DEVICE_NOT_CONNECTED",
+		27: "ERROR_CODE_DEVICE_NOT_FOUND",
+		28: "ERROR_CODE_DEVICE_UNAVAILABLE",
+		29: "ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY",
+		30: "ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED",
+		31: "ERROR_CODE_EMAIL_ALREADY_EXISTS",
+		32: "ERROR_CODE_EXECUTION_NOT_FOUND",
+		33: "ERROR_CODE_GRANT_NOT_FOUND",
+		34: "ERROR_CODE_GROUP_ALREADY_HAS_ROLE",
+		35: "ERROR_CODE_GROUP_NOT_DYNAMIC",
+		36: "ERROR_CODE_IDENTITY_LINK_NOT_FOUND",
+		37: "ERROR_CODE_INTERNAL_ERROR",
+		38: "ERROR_CODE_INVALID_DYNAMIC_QUERY",
+		39: "ERROR_CODE_INVALID_PAGE_TOKEN",
+		40: "ERROR_CODE_INVALID_QUERY",
+		41: "ERROR_CODE_LAST_AUTH_METHOD",
+		42: "ERROR_CODE_LPS_PASSWORD_NOT_FOUND",
+		43: "ERROR_CODE_LUKS_KEY_ALREADY_REVOKED",
+		44: "ERROR_CODE_LUKS_KEY_NOT_FOUND",
+		45: "ERROR_CODE_LUKS_KEY_REVOCATION_PENDING",
+		46: "ERROR_CODE_NO_ASSIGNMENT_FOUND",
+		47: "ERROR_CODE_NOT_AUTHENTICATED",
+		48: "ERROR_CODE_PERMISSION_DENIED",
+		49: "ERROR_CODE_PROVIDER_DISABLED",
+		50: "ERROR_CODE_PROVIDER_NOT_FOUND",
+		51: "ERROR_CODE_PROVIDER_SLUG_EXISTS",
+		52: "ERROR_CODE_QUERY_RESULT_NOT_FOUND",
+		53: "ERROR_CODE_RATE_LIMITED",
+		54: "ERROR_CODE_ROLE_IN_USE",
+		55: "ERROR_CODE_ROLE_NAME_EXISTS",
+		56: "ERROR_CODE_ROLE_NOT_FOUND",
+		57: "ERROR_CODE_SCIM_ALREADY_ENABLED",
+		58: "ERROR_CODE_SCIM_MANAGED_RESOURCE",
+		59: "ERROR_CODE_SCIM_NOT_ENABLED",
+		60: "ERROR_CODE_SCOPE_NOT_PERMITTED",
+		61: "ERROR_CODE_SSO_NO_MATCHING_ACCOUNT",
+		62: "ERROR_CODE_SSO_STATE_EXPIRED",
+		63: "ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET",
+		64: "ERROR_CODE_TERMINAL_NOT_CONFIGURED",
+		65: "ERROR_CODE_TERMINAL_SESSION_NOT_FOUND",
+		66: "ERROR_CODE_TOKEN_EXPIRED",
+		67: "ERROR_CODE_TOKEN_NOT_FOUND",
+		68: "ERROR_CODE_UNIMPLEMENTED",
+		69: "ERROR_CODE_USER_ALREADY_HAS_ROLE",
+		70: "ERROR_CODE_USER_ALREADY_IN_GROUP",
+		71: "ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND",
+		72: "ERROR_CODE_USER_GROUP_NAME_EXISTS",
+		73: "ERROR_CODE_USER_GROUP_NOT_FOUND",
+		74: "ERROR_CODE_USER_NOT_FOUND",
+		75: "ERROR_CODE_VALIDATION_FAILED",
+	}
+	ErrorCode_value = map[string]int32{
+		"ERROR_CODE_UNSPECIFIED":                       0,
+		"ERROR_CODE_ACTION_ALREADY_IN_SET":             1,
+		"ERROR_CODE_ACTION_NOT_COMPLIANCE":             2,
+		"ERROR_CODE_ACTION_NOT_FOUND":                  3,
+		"ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION":  4,
+		"ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND":       5,
+		"ERROR_CODE_ACTION_SET_NOT_FOUND":              6,
+		"ERROR_CODE_ASSIGNMENT_NOT_FOUND":              7,
+		"ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND":       8,
+		"ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND":       9,
+		"ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE":         10,
+		"ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION":       11,
+		"ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE":         12,
+		"ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE":         13,
+		"ERROR_CODE_CANNOT_UNLINK_OTHER_USER":          14,
+		"ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION": 15,
+		"ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS":     16,
+		"ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND":       17,
+		"ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS":     18,
+		"ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND":  19,
+		"ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND":       20,
+		"ERROR_CODE_DEFINITION_NOT_FOUND":              21,
+		"ERROR_CODE_DEVICE_ALREADY_IN_GROUP":           22,
+		"ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND":     23,
+		"ERROR_CODE_DEVICE_GROUP_NAME_EXISTS":          24,
+		"ERROR_CODE_DEVICE_GROUP_NOT_FOUND":            25,
+		"ERROR_CODE_DEVICE_NOT_CONNECTED":              26,
+		"ERROR_CODE_DEVICE_NOT_FOUND":                  27,
+		"ERROR_CODE_DEVICE_UNAVAILABLE":                28,
+		"ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY":       29,
+		"ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED":  30,
+		"ERROR_CODE_EMAIL_ALREADY_EXISTS":              31,
+		"ERROR_CODE_EXECUTION_NOT_FOUND":               32,
+		"ERROR_CODE_GRANT_NOT_FOUND":                   33,
+		"ERROR_CODE_GROUP_ALREADY_HAS_ROLE":            34,
+		"ERROR_CODE_GROUP_NOT_DYNAMIC":                 35,
+		"ERROR_CODE_IDENTITY_LINK_NOT_FOUND":           36,
+		"ERROR_CODE_INTERNAL_ERROR":                    37,
+		"ERROR_CODE_INVALID_DYNAMIC_QUERY":             38,
+		"ERROR_CODE_INVALID_PAGE_TOKEN":                39,
+		"ERROR_CODE_INVALID_QUERY":                     40,
+		"ERROR_CODE_LAST_AUTH_METHOD":                  41,
+		"ERROR_CODE_LPS_PASSWORD_NOT_FOUND":            42,
+		"ERROR_CODE_LUKS_KEY_ALREADY_REVOKED":          43,
+		"ERROR_CODE_LUKS_KEY_NOT_FOUND":                44,
+		"ERROR_CODE_LUKS_KEY_REVOCATION_PENDING":       45,
+		"ERROR_CODE_NO_ASSIGNMENT_FOUND":               46,
+		"ERROR_CODE_NOT_AUTHENTICATED":                 47,
+		"ERROR_CODE_PERMISSION_DENIED":                 48,
+		"ERROR_CODE_PROVIDER_DISABLED":                 49,
+		"ERROR_CODE_PROVIDER_NOT_FOUND":                50,
+		"ERROR_CODE_PROVIDER_SLUG_EXISTS":              51,
+		"ERROR_CODE_QUERY_RESULT_NOT_FOUND":            52,
+		"ERROR_CODE_RATE_LIMITED":                      53,
+		"ERROR_CODE_ROLE_IN_USE":                       54,
+		"ERROR_CODE_ROLE_NAME_EXISTS":                  55,
+		"ERROR_CODE_ROLE_NOT_FOUND":                    56,
+		"ERROR_CODE_SCIM_ALREADY_ENABLED":              57,
+		"ERROR_CODE_SCIM_MANAGED_RESOURCE":             58,
+		"ERROR_CODE_SCIM_NOT_ENABLED":                  59,
+		"ERROR_CODE_SCOPE_NOT_PERMITTED":               60,
+		"ERROR_CODE_SSO_NO_MATCHING_ACCOUNT":           61,
+		"ERROR_CODE_SSO_STATE_EXPIRED":                 62,
+		"ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET":   63,
+		"ERROR_CODE_TERMINAL_NOT_CONFIGURED":           64,
+		"ERROR_CODE_TERMINAL_SESSION_NOT_FOUND":        65,
+		"ERROR_CODE_TOKEN_EXPIRED":                     66,
+		"ERROR_CODE_TOKEN_NOT_FOUND":                   67,
+		"ERROR_CODE_UNIMPLEMENTED":                     68,
+		"ERROR_CODE_USER_ALREADY_HAS_ROLE":             69,
+		"ERROR_CODE_USER_ALREADY_IN_GROUP":             70,
+		"ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND":       71,
+		"ERROR_CODE_USER_GROUP_NAME_EXISTS":            72,
+		"ERROR_CODE_USER_GROUP_NOT_FOUND":              73,
+		"ERROR_CODE_USER_NOT_FOUND":                    74,
+		"ERROR_CODE_VALIDATION_FAILED":                 75,
+	}
+)
+
+func (x ErrorCode) Enum() *ErrorCode {
+	p := new(ErrorCode)
+	*p = x
+	return p
+}
+
+func (x ErrorCode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ErrorCode) Descriptor() protoreflect.EnumDescriptor {
+	return file_cadestro_v1_common_proto_enumTypes[14].Descriptor()
+}
+
+func (ErrorCode) Type() protoreflect.EnumType {
+	return &file_cadestro_v1_common_proto_enumTypes[14]
+}
+
+func (x ErrorCode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ErrorCode.Descriptor instead.
+func (ErrorCode) EnumDescriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
+}
+
 // Compliance status for a device based on detection scripts
 type ComplianceStatus int32
 
@@ -954,11 +1225,11 @@ func (x ComplianceStatus) String() string {
 }
 
 func (ComplianceStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[14].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[15].Descriptor()
 }
 
 func (ComplianceStatus) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[14]
+	return &file_cadestro_v1_common_proto_enumTypes[15]
 }
 
 func (x ComplianceStatus) Number() protoreflect.EnumNumber {
@@ -967,7 +1238,7 @@ func (x ComplianceStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ComplianceStatus.Descriptor instead.
 func (ComplianceStatus) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
 }
 
 // Unique identifier for an action instance
@@ -1063,12 +1334,7 @@ func (x *DeviceId) GetValue() string {
 // Structured error detail attached to Connect-RPC errors.
 type ErrorDetail struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Machine-readable error code (e.g., "user_not_found", "email_already_exists").
-	// Capped at 128 chars — every existing code uses snake_case names well
-	// under that, and the bound prevents a misbehaving caller (or a future
-	// codepath that constructs the detail from user-supplied input) from
-	// pushing arbitrarily long payloads into client-side error toasts.
-	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	Code  ErrorCode              `protobuf:"varint,1,opt,name=code,proto3,enum=cadestro.v1.ErrorCode" json:"code,omitempty"`
 	// Server-generated request ID for correlating errors with server logs.
 	// ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
 	// without inviting unbounded growth.
@@ -1107,11 +1373,11 @@ func (*ErrorDetail) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ErrorDetail) GetCode() string {
+func (x *ErrorDetail) GetCode() ErrorCode {
 	if x != nil {
 		return x.Code
 	}
-	return ""
+	return ErrorCode_ERROR_CODE_UNSPECIFIED
 }
 
 func (x *ErrorDetail) GetRequestId() string {
@@ -1301,9 +1567,9 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\bActionId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"*\n" +
 	"\bDeviceId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"S\n" +
-	"\vErrorDetail\x12\x1c\n" +
-	"\x04code\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\x04code\x12&\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"k\n" +
+	"\vErrorDetail\x124\n" +
+	"\x04code\x18\x01 \x01(\x0e2\x16.cadestro.v1.ErrorCodeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04code\x12&\n" +
 	"\n" +
 	"request_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x18@R\trequestId\"T\n" +
 	"\x11MaintenanceWindow\x12?\n" +
@@ -1414,7 +1680,85 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x1bLUKS_REVOCATION_STATUS_NONE\x10\x01\x12%\n" +
 	"!LUKS_REVOCATION_STATUS_DISPATCHED\x10\x02\x12\"\n" +
 	"\x1eLUKS_REVOCATION_STATUS_SUCCESS\x10\x03\x12!\n" +
-	"\x1dLUKS_REVOCATION_STATUS_FAILED\x10\x04*\x9e\x01\n" +
+	"\x1dLUKS_REVOCATION_STATUS_FAILED\x10\x04*\xde\x16\n" +
+	"\tErrorCode\x12\x1a\n" +
+	"\x16ERROR_CODE_UNSPECIFIED\x10\x00\x12$\n" +
+	" ERROR_CODE_ACTION_ALREADY_IN_SET\x10\x01\x12$\n" +
+	" ERROR_CODE_ACTION_NOT_COMPLIANCE\x10\x02\x12\x1f\n" +
+	"\x1bERROR_CODE_ACTION_NOT_FOUND\x10\x03\x12/\n" +
+	"+ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION\x10\x04\x12*\n" +
+	"&ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND\x10\x05\x12#\n" +
+	"\x1fERROR_CODE_ACTION_SET_NOT_FOUND\x10\x06\x12#\n" +
+	"\x1fERROR_CODE_ASSIGNMENT_NOT_FOUND\x10\a\x12*\n" +
+	"&ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND\x10\b\x12*\n" +
+	"&ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND\x10\t\x12(\n" +
+	"$ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE\x10\n" +
+	"\x12*\n" +
+	"&ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION\x10\v\x12(\n" +
+	"$ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE\x10\f\x12(\n" +
+	"$ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE\x10\r\x12'\n" +
+	"#ERROR_CODE_CANNOT_UNLINK_OTHER_USER\x10\x0e\x120\n" +
+	",ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION\x10\x0f\x12,\n" +
+	"(ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS\x10\x10\x12*\n" +
+	"&ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND\x10\x11\x12,\n" +
+	"(ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS\x10\x12\x12/\n" +
+	"+ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND\x10\x13\x12*\n" +
+	"&ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND\x10\x14\x12#\n" +
+	"\x1fERROR_CODE_DEFINITION_NOT_FOUND\x10\x15\x12&\n" +
+	"\"ERROR_CODE_DEVICE_ALREADY_IN_GROUP\x10\x16\x12,\n" +
+	"(ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND\x10\x17\x12'\n" +
+	"#ERROR_CODE_DEVICE_GROUP_NAME_EXISTS\x10\x18\x12%\n" +
+	"!ERROR_CODE_DEVICE_GROUP_NOT_FOUND\x10\x19\x12#\n" +
+	"\x1fERROR_CODE_DEVICE_NOT_CONNECTED\x10\x1a\x12\x1f\n" +
+	"\x1bERROR_CODE_DEVICE_NOT_FOUND\x10\x1b\x12!\n" +
+	"\x1dERROR_CODE_DEVICE_UNAVAILABLE\x10\x1c\x12*\n" +
+	"&ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY\x10\x1d\x12/\n" +
+	"+ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED\x10\x1e\x12#\n" +
+	"\x1fERROR_CODE_EMAIL_ALREADY_EXISTS\x10\x1f\x12\"\n" +
+	"\x1eERROR_CODE_EXECUTION_NOT_FOUND\x10 \x12\x1e\n" +
+	"\x1aERROR_CODE_GRANT_NOT_FOUND\x10!\x12%\n" +
+	"!ERROR_CODE_GROUP_ALREADY_HAS_ROLE\x10\"\x12 \n" +
+	"\x1cERROR_CODE_GROUP_NOT_DYNAMIC\x10#\x12&\n" +
+	"\"ERROR_CODE_IDENTITY_LINK_NOT_FOUND\x10$\x12\x1d\n" +
+	"\x19ERROR_CODE_INTERNAL_ERROR\x10%\x12$\n" +
+	" ERROR_CODE_INVALID_DYNAMIC_QUERY\x10&\x12!\n" +
+	"\x1dERROR_CODE_INVALID_PAGE_TOKEN\x10'\x12\x1c\n" +
+	"\x18ERROR_CODE_INVALID_QUERY\x10(\x12\x1f\n" +
+	"\x1bERROR_CODE_LAST_AUTH_METHOD\x10)\x12%\n" +
+	"!ERROR_CODE_LPS_PASSWORD_NOT_FOUND\x10*\x12'\n" +
+	"#ERROR_CODE_LUKS_KEY_ALREADY_REVOKED\x10+\x12!\n" +
+	"\x1dERROR_CODE_LUKS_KEY_NOT_FOUND\x10,\x12*\n" +
+	"&ERROR_CODE_LUKS_KEY_REVOCATION_PENDING\x10-\x12\"\n" +
+	"\x1eERROR_CODE_NO_ASSIGNMENT_FOUND\x10.\x12 \n" +
+	"\x1cERROR_CODE_NOT_AUTHENTICATED\x10/\x12 \n" +
+	"\x1cERROR_CODE_PERMISSION_DENIED\x100\x12 \n" +
+	"\x1cERROR_CODE_PROVIDER_DISABLED\x101\x12!\n" +
+	"\x1dERROR_CODE_PROVIDER_NOT_FOUND\x102\x12#\n" +
+	"\x1fERROR_CODE_PROVIDER_SLUG_EXISTS\x103\x12%\n" +
+	"!ERROR_CODE_QUERY_RESULT_NOT_FOUND\x104\x12\x1b\n" +
+	"\x17ERROR_CODE_RATE_LIMITED\x105\x12\x1a\n" +
+	"\x16ERROR_CODE_ROLE_IN_USE\x106\x12\x1f\n" +
+	"\x1bERROR_CODE_ROLE_NAME_EXISTS\x107\x12\x1d\n" +
+	"\x19ERROR_CODE_ROLE_NOT_FOUND\x108\x12#\n" +
+	"\x1fERROR_CODE_SCIM_ALREADY_ENABLED\x109\x12$\n" +
+	" ERROR_CODE_SCIM_MANAGED_RESOURCE\x10:\x12\x1f\n" +
+	"\x1bERROR_CODE_SCIM_NOT_ENABLED\x10;\x12\"\n" +
+	"\x1eERROR_CODE_SCOPE_NOT_PERMITTED\x10<\x12&\n" +
+	"\"ERROR_CODE_SSO_NO_MATCHING_ACCOUNT\x10=\x12 \n" +
+	"\x1cERROR_CODE_SSO_STATE_EXPIRED\x10>\x12.\n" +
+	"*ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET\x10?\x12&\n" +
+	"\"ERROR_CODE_TERMINAL_NOT_CONFIGURED\x10@\x12)\n" +
+	"%ERROR_CODE_TERMINAL_SESSION_NOT_FOUND\x10A\x12\x1c\n" +
+	"\x18ERROR_CODE_TOKEN_EXPIRED\x10B\x12\x1e\n" +
+	"\x1aERROR_CODE_TOKEN_NOT_FOUND\x10C\x12\x1c\n" +
+	"\x18ERROR_CODE_UNIMPLEMENTED\x10D\x12$\n" +
+	" ERROR_CODE_USER_ALREADY_HAS_ROLE\x10E\x12$\n" +
+	" ERROR_CODE_USER_ALREADY_IN_GROUP\x10F\x12*\n" +
+	"&ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND\x10G\x12%\n" +
+	"!ERROR_CODE_USER_GROUP_NAME_EXISTS\x10H\x12#\n" +
+	"\x1fERROR_CODE_USER_GROUP_NOT_FOUND\x10I\x12\x1d\n" +
+	"\x19ERROR_CODE_USER_NOT_FOUND\x10J\x12 \n" +
+	"\x1cERROR_CODE_VALIDATION_FAILED\x10K*\x9e\x01\n" +
 	"\x10ComplianceStatus\x12\x1d\n" +
 	"\x19COMPLIANCE_STATUS_UNKNOWN\x10\x00\x12\x1f\n" +
 	"\x1bCOMPLIANCE_STATUS_COMPLIANT\x10\x01\x12#\n" +
@@ -1433,7 +1777,7 @@ func file_cadestro_v1_common_proto_rawDescGZIP() []byte {
 	return file_cadestro_v1_common_proto_rawDescData
 }
 
-var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
+var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
 var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_cadestro_v1_common_proto_goTypes = []any{
 	(ExecutionStatus)(0),           // 0: cadestro.v1.ExecutionStatus
@@ -1450,21 +1794,23 @@ var file_cadestro_v1_common_proto_goTypes = []any{
 	(IdentityProviderType)(0),      // 11: cadestro.v1.IdentityProviderType
 	(RotationReason)(0),            // 12: cadestro.v1.RotationReason
 	(LuksRevocationStatus)(0),      // 13: cadestro.v1.LuksRevocationStatus
-	(ComplianceStatus)(0),          // 14: cadestro.v1.ComplianceStatus
-	(*ActionId)(nil),               // 15: cadestro.v1.ActionId
-	(*DeviceId)(nil),               // 16: cadestro.v1.DeviceId
-	(*ErrorDetail)(nil),            // 17: cadestro.v1.ErrorDetail
-	(*MaintenanceWindow)(nil),      // 18: cadestro.v1.MaintenanceWindow
-	(*MaintenanceWindowEntry)(nil), // 19: cadestro.v1.MaintenanceWindowEntry
-	(*CommandOutput)(nil),          // 20: cadestro.v1.CommandOutput
+	(ErrorCode)(0),                 // 14: cadestro.v1.ErrorCode
+	(ComplianceStatus)(0),          // 15: cadestro.v1.ComplianceStatus
+	(*ActionId)(nil),               // 16: cadestro.v1.ActionId
+	(*DeviceId)(nil),               // 17: cadestro.v1.DeviceId
+	(*ErrorDetail)(nil),            // 18: cadestro.v1.ErrorDetail
+	(*MaintenanceWindow)(nil),      // 19: cadestro.v1.MaintenanceWindow
+	(*MaintenanceWindowEntry)(nil), // 20: cadestro.v1.MaintenanceWindowEntry
+	(*CommandOutput)(nil),          // 21: cadestro.v1.CommandOutput
 }
 var file_cadestro_v1_common_proto_depIdxs = []int32{
-	19, // 0: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
-	1,  // [1:1] is the sub-list for method output_type
-	1,  // [1:1] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	14, // 0: cadestro.v1.ErrorDetail.code:type_name -> cadestro.v1.ErrorCode
+	20, // 1: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
+	2,  // [2:2] is the sub-list for method output_type
+	2,  // [2:2] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_common_proto_init() }
@@ -1477,7 +1823,7 @@ func file_cadestro_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)),
-			NumEnums:      15,
+			NumEnums:      16,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,

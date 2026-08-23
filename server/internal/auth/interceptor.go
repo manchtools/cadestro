@@ -20,10 +20,10 @@ import (
 
 // Error code constants carried in the structured error detail.
 const (
-	errRateLimited      = "rate_limited"
-	errNotAuthenticated = "not_authenticated"
-	errTokenExpired     = "token_expired"
-	errPermissionDenied = "permission_denied"
+	errRateLimited      = pmv1.ErrorCode_ERROR_CODE_RATE_LIMITED
+	errNotAuthenticated = pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errTokenExpired     = pmv1.ErrorCode_ERROR_CODE_TOKEN_EXPIRED
+	errPermissionDenied = pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
 )
 
 // ControlProcedurePrefix is the Connect path prefix every control
@@ -518,7 +518,9 @@ func (i *AuthInterceptor) applyPublicLimiters(ctx context.Context, procedure str
 func (i *AuthInterceptor) rejectAuthentication(
 	ctx context.Context,
 	req connect.AnyRequest,
-	procedure, reason, credential string,
+	procedure string,
+	reason pmv1.ErrorCode,
+	credential string,
 	code connect.Code,
 	message string,
 ) error {
@@ -526,7 +528,7 @@ func (i *AuthInterceptor) rejectAuthentication(
 	if i.rejections != nil && (i.limiters.Rejected == nil || i.limiters.Rejected.Allow("rej:"+ip)) {
 		att := RejectedAuthentication{
 			Procedure:             procedure,
-			Reason:                reason,
+			Reason:                auditReasonString(reason),
 			CredentialFingerprint: Fingerprint(credential),
 			OriginFingerprint:     Fingerprint(ip),
 		}
@@ -630,11 +632,15 @@ func (i *AuthzInterceptor) WrapStreamingHandler(connect.StreamingHandlerFunc) co
 // authErrorCtx builds a connect error carrying the structured detail
 // the web client correlates on. The message is a fixed string; no
 // request input and no credential material reaches it.
-func authErrorCtx(ctx context.Context, code string, connectCode connect.Code, msg string) *connect.Error {
+func authErrorCtx(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, msg string) *connect.Error {
 	e := connect.NewError(connectCode, errors.New(msg))
 	detail := &pmv1.ErrorDetail{Code: code, RequestId: middleware.RequestIDFromContext(ctx)}
 	if d, err := connect.NewErrorDetail(detail); err == nil {
 		e.AddDetail(d)
 	}
 	return e
+}
+
+func auditReasonString(code pmv1.ErrorCode) string {
+	return strings.ToLower(strings.TrimPrefix(code.String(), "ERROR_CODE_"))
 }

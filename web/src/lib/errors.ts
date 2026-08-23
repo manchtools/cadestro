@@ -1,59 +1,60 @@
 import * as m from '$lib/paraglide/messages';
+import { ErrorCode } from '$contract/cadestro/v1/common_pb';
 import { getErrorCode, getRequestId } from '$contractClient/client';
 
-const errorMessages: Record<string, () => string> = {
-	not_authenticated: m.error_not_authenticated,
-	token_expired: m.error_token_expired,
-	permission_denied: m.error_permission_denied,
-	rate_limited: m.error_rate_limited,
-	user_not_found: m.error_user_not_found,
-	device_not_found: m.error_device_not_found,
-	action_not_found: m.error_action_not_found,
-	action_set_not_found: m.error_action_set_not_found,
-	definition_not_found: m.error_definition_not_found,
-	device_group_not_found: m.error_device_group_not_found,
-	user_group_not_found: m.error_user_group_not_found,
-	role_not_found: m.error_role_not_found,
-	provider_not_found: m.error_provider_not_found,
-	identity_link_not_found: m.error_identity_link_not_found,
-	token_not_found: m.error_token_not_found,
-	execution_not_found: m.error_execution_not_found,
-	assignment_not_found: m.error_assignment_not_found,
-	email_already_exists: m.error_email_already_exists,
-	user_group_name_exists: m.error_user_group_name_exists,
-	device_group_name_exists: m.error_device_group_name_exists,
-	role_name_exists: m.error_role_name_exists,
-	provider_slug_exists: m.error_provider_slug_exists,
-	user_already_has_role: m.error_user_already_has_role,
-	group_already_has_role: m.error_group_already_has_role,
-	user_already_in_group: m.error_user_already_in_group,
-	device_already_in_group: m.error_device_already_in_group,
-	provider_disabled: m.error_provider_disabled,
-	group_not_dynamic: m.error_group_not_dynamic,
-	dynamic_group_manual_modify: m.error_dynamic_group_manual_modify,
-	cannot_delete_system_role: m.error_cannot_delete_system_role,
-	cannot_rename_system_role: m.error_cannot_rename_system_role,
-	cannot_modify_system_action: m.error_cannot_modify_system_action,
-	role_in_use: m.error_role_in_use,
-	scim_already_enabled: m.error_scim_already_enabled,
-	scim_not_enabled: m.error_scim_not_enabled,
-	scim_managed_resource: m.error_scim_managed_resource,
-	sso_state_expired: m.error_sso_state_expired,
-	no_assignment_found: m.error_no_assignment_found,
-	device_not_connected: m.error_device_not_connected,
-	cannot_unlink_other_user: m.error_cannot_unlink_other_user,
-	last_auth_method: m.error_last_auth_method,
-	validation_failed: m.error_validation_failed,
-	invalid_page_token: m.error_invalid_page_token,
-	invalid_query: m.error_invalid_query,
-	internal_error: m.error_internal,
-	unimplemented: m.error_unimplemented,
-	compliance_policy_not_found: m.error_compliance_policy_not_found,
-	compliance_policy_name_exists: m.error_compliance_policy_name_exists,
-	action_not_compliance: m.error_action_not_compliance,
-	terminal_not_configured: m.error_terminal_not_configured,
-	terminal_linux_username_not_set: m.error_terminal_linux_username_not_set,
-	query_result_not_found: m.error_query_result_not_found
+const errorMessages: Partial<Record<ErrorCode, () => string>> = {
+	[ErrorCode.NOT_AUTHENTICATED]: m.error_not_authenticated,
+	[ErrorCode.TOKEN_EXPIRED]: m.error_token_expired,
+	[ErrorCode.PERMISSION_DENIED]: m.error_permission_denied,
+	[ErrorCode.RATE_LIMITED]: m.error_rate_limited,
+	[ErrorCode.USER_NOT_FOUND]: m.error_user_not_found,
+	[ErrorCode.DEVICE_NOT_FOUND]: m.error_device_not_found,
+	[ErrorCode.ACTION_NOT_FOUND]: m.error_action_not_found,
+	[ErrorCode.ACTION_SET_NOT_FOUND]: m.error_action_set_not_found,
+	[ErrorCode.DEFINITION_NOT_FOUND]: m.error_definition_not_found,
+	[ErrorCode.DEVICE_GROUP_NOT_FOUND]: m.error_device_group_not_found,
+	[ErrorCode.USER_GROUP_NOT_FOUND]: m.error_user_group_not_found,
+	[ErrorCode.ROLE_NOT_FOUND]: m.error_role_not_found,
+	[ErrorCode.PROVIDER_NOT_FOUND]: m.error_provider_not_found,
+	[ErrorCode.IDENTITY_LINK_NOT_FOUND]: m.error_identity_link_not_found,
+	[ErrorCode.TOKEN_NOT_FOUND]: m.error_token_not_found,
+	[ErrorCode.EXECUTION_NOT_FOUND]: m.error_execution_not_found,
+	[ErrorCode.ASSIGNMENT_NOT_FOUND]: m.error_assignment_not_found,
+	[ErrorCode.EMAIL_ALREADY_EXISTS]: m.error_email_already_exists,
+	[ErrorCode.USER_GROUP_NAME_EXISTS]: m.error_user_group_name_exists,
+	[ErrorCode.DEVICE_GROUP_NAME_EXISTS]: m.error_device_group_name_exists,
+	[ErrorCode.ROLE_NAME_EXISTS]: m.error_role_name_exists,
+	[ErrorCode.PROVIDER_SLUG_EXISTS]: m.error_provider_slug_exists,
+	[ErrorCode.USER_ALREADY_HAS_ROLE]: m.error_user_already_has_role,
+	[ErrorCode.GROUP_ALREADY_HAS_ROLE]: m.error_group_already_has_role,
+	[ErrorCode.USER_ALREADY_IN_GROUP]: m.error_user_already_in_group,
+	[ErrorCode.DEVICE_ALREADY_IN_GROUP]: m.error_device_already_in_group,
+	[ErrorCode.PROVIDER_DISABLED]: m.error_provider_disabled,
+	[ErrorCode.GROUP_NOT_DYNAMIC]: m.error_group_not_dynamic,
+	[ErrorCode.DYNAMIC_GROUP_MANUAL_MODIFY]: m.error_dynamic_group_manual_modify,
+	[ErrorCode.CANNOT_DELETE_SYSTEM_ROLE]: m.error_cannot_delete_system_role,
+	[ErrorCode.CANNOT_RENAME_SYSTEM_ROLE]: m.error_cannot_rename_system_role,
+	[ErrorCode.CANNOT_MODIFY_SYSTEM_ACTION]: m.error_cannot_modify_system_action,
+	[ErrorCode.ROLE_IN_USE]: m.error_role_in_use,
+	[ErrorCode.SCIM_ALREADY_ENABLED]: m.error_scim_already_enabled,
+	[ErrorCode.SCIM_NOT_ENABLED]: m.error_scim_not_enabled,
+	[ErrorCode.SCIM_MANAGED_RESOURCE]: m.error_scim_managed_resource,
+	[ErrorCode.SSO_STATE_EXPIRED]: m.error_sso_state_expired,
+	[ErrorCode.NO_ASSIGNMENT_FOUND]: m.error_no_assignment_found,
+	[ErrorCode.DEVICE_NOT_CONNECTED]: m.error_device_not_connected,
+	[ErrorCode.CANNOT_UNLINK_OTHER_USER]: m.error_cannot_unlink_other_user,
+	[ErrorCode.LAST_AUTH_METHOD]: m.error_last_auth_method,
+	[ErrorCode.VALIDATION_FAILED]: m.error_validation_failed,
+	[ErrorCode.INVALID_PAGE_TOKEN]: m.error_invalid_page_token,
+	[ErrorCode.INVALID_QUERY]: m.error_invalid_query,
+	[ErrorCode.INTERNAL_ERROR]: m.error_internal,
+	[ErrorCode.UNIMPLEMENTED]: m.error_unimplemented,
+	[ErrorCode.COMPLIANCE_POLICY_NOT_FOUND]: m.error_compliance_policy_not_found,
+	[ErrorCode.COMPLIANCE_POLICY_NAME_EXISTS]: m.error_compliance_policy_name_exists,
+	[ErrorCode.ACTION_NOT_COMPLIANCE]: m.error_action_not_compliance,
+	[ErrorCode.TERMINAL_NOT_CONFIGURED]: m.error_terminal_not_configured,
+	[ErrorCode.TERMINAL_LINUX_USERNAME_NOT_SET]: m.error_terminal_linux_username_not_set,
+	[ErrorCode.QUERY_RESULT_NOT_FOUND]: m.error_query_result_not_found
 };
 
 /**
@@ -61,19 +62,20 @@ const errorMessages: Record<string, () => string> = {
  * Falls back to the raw error message if no i18n mapping exists.
  */
 /** Error codes where the cause is obvious — no request ID needed in the message. */
-const userFacingCodes = new Set([
-	'not_authenticated',
-	'token_expired',
-	'permission_denied',
-	'rate_limited',
-	'validation_failed'
+const userFacingCodes = new Set<ErrorCode>([
+	ErrorCode.NOT_AUTHENTICATED,
+	ErrorCode.TOKEN_EXPIRED,
+	ErrorCode.PERMISSION_DENIED,
+	ErrorCode.RATE_LIMITED,
+	ErrorCode.VALIDATION_FAILED
 ]);
 
 export function getLocalizedError(error: unknown): string {
 	const code = getErrorCode(error);
 	let msg: string;
-	if (code && errorMessages[code]) {
-		msg = errorMessages[code]();
+	const localized = code !== undefined ? errorMessages[code] : undefined;
+	if (localized) {
+		msg = localized();
 	} else if (error instanceof Error) {
 		msg = error.message;
 	} else {
@@ -81,7 +83,7 @@ export function getLocalizedError(error: unknown): string {
 	}
 
 	// Append request ID for non-obvious errors so users can report them
-	if (!code || !userFacingCodes.has(code)) {
+	if (code === undefined || !userFacingCodes.has(code)) {
 		const requestId = getRequestId(error);
 		if (requestId) {
 			msg += ` (Request ID: ${requestId})`;

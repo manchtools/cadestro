@@ -202,7 +202,7 @@ func (h *Handlers) rejectSession(ctx context.Context, req connect.AnyRequest, ms
 		RequestDescriptor:    req.Spec().Procedure,
 		AuthorizationOutcome: store.AuthorizationDenied,
 		Result:               store.ResultRejected,
-		ResultCode:           ErrTokenExpired,
+		ResultCode:           auditResultCode(ErrTokenExpired),
 	}
 	if ip := auth.ClientIP(req); ip != "" {
 		op.OriginFingerprint = auth.Fingerprint(ip)

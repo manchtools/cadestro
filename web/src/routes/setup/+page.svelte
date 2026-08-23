@@ -20,6 +20,7 @@
 	import { configStore, apiClient } from '$lib/sdk';
 	import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 	import { checkAndSwitchVersion } from '$lib/version';
+	import { ErrorCode } from '$contract/cadestro/v1/common_pb';
 	import { getLocalizedError, getErrorCode } from '$lib/errors';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -180,7 +181,7 @@
 
 	function isTokenRejected(err: unknown): boolean {
 		if (err instanceof ConnectError && err.code === Code.Unauthenticated) return true;
-		return getErrorCode(err) === 'not_authenticated';
+		return getErrorCode(err) === ErrorCode.NOT_AUTHENTICATED;
 	}
 
 	function scrubFragment() {

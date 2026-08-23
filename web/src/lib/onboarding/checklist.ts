@@ -11,6 +11,7 @@
 //      not evidence of an empty fleet;
 //   3. progress is derived from the rows that answered, never from a constant.
 import { ConnectError, Code } from '@connectrpc/connect';
+import { ErrorCode } from '$contract/cadestro/v1/common_pb';
 import { apiClient } from '$lib/sdk';
 import { getErrorCode } from '$lib/errors';
 import * as m from '$lib/paraglide/messages';
@@ -38,7 +39,7 @@ export interface ChecklistRow {
 }
 
 function denied(err: unknown): boolean {
-	if (getErrorCode(err) === 'permission_denied') return true;
+	if (getErrorCode(err) === ErrorCode.PERMISSION_DENIED) return true;
 	// Transport-level denial: the server may reject before it attaches a domain
 	// error detail, and that is still "you may not read this".
 	return err instanceof ConnectError && err.code === Code.PermissionDenied;

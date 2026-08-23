@@ -229,6 +229,7 @@ import {
 import type { ActionType, Action, ActionSchedule } from '../gen/ts/cadestro/v1/actions_pb';
 import {
 	type ExecutionStatus,
+	ErrorCode,
 	ErrorDetailSchema,
 	type MaintenanceWindow,
 	AssignmentSourceType,
@@ -1841,11 +1842,11 @@ export class ApiClient {
 /**
  * Extract the error code from a ConnectError's ErrorDetail, if present.
  */
-export function getErrorCode(error: unknown): string | undefined {
+export function getErrorCode(error: unknown): ErrorCode | undefined {
 	if (error instanceof ConnectError) {
 		const details = error.findDetails(ErrorDetailSchema);
 		const first = details[0];
-		if (first && first.code) {
+		if (first && first.code !== ErrorCode.UNSPECIFIED) {
 			return first.code;
 		}
 	}

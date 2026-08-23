@@ -11,22 +11,22 @@ import (
 )
 
 const (
-	errNotAuthenticated         = "not_authenticated"
-	errPermissionDenied         = "permission_denied"
-	errValidationFailed         = "validation_failed"
-	errInvalidPageToken         = "invalid_page_token"
-	errInternal                 = "internal_error"
-	errActionNotFound           = "action_not_found"
-	errActionSetNotFound        = "action_set_not_found"
-	errActionAlreadyInSet       = "action_already_in_set"
-	errActionSetMemberNotFound  = "action_set_member_not_found"
-	errDefinitionNotFound       = "definition_not_found"
-	errActionSetAlreadyInDef    = "action_set_already_in_definition"
-	errDefinitionMemberNotFound = "definition_member_not_found"
-	errCannotModifySystemAction = "cannot_modify_system_action"
+	errNotAuthenticated         = pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errPermissionDenied         = pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
+	errValidationFailed         = pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
+	errInvalidPageToken         = pmv1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN
+	errInternal                 = pmv1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
+	errActionNotFound           = pmv1.ErrorCode_ERROR_CODE_ACTION_NOT_FOUND
+	errActionSetNotFound        = pmv1.ErrorCode_ERROR_CODE_ACTION_SET_NOT_FOUND
+	errActionAlreadyInSet       = pmv1.ErrorCode_ERROR_CODE_ACTION_ALREADY_IN_SET
+	errActionSetMemberNotFound  = pmv1.ErrorCode_ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND
+	errDefinitionNotFound       = pmv1.ErrorCode_ERROR_CODE_DEFINITION_NOT_FOUND
+	errActionSetAlreadyInDef    = pmv1.ErrorCode_ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION
+	errDefinitionMemberNotFound = pmv1.ErrorCode_ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND
+	errCannotModifySystemAction = pmv1.ErrorCode_ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION
 )
 
-func authoringRPCError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+func authoringRPCError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
 		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
@@ -37,6 +37,6 @@ func authoringRPCError(ctx context.Context, code string, connectCode connect.Cod
 	return err
 }
 
-func authoringNotFound(ctx context.Context, code, message string) *connect.Error {
+func authoringNotFound(ctx context.Context, code pmv1.ErrorCode, message string) *connect.Error {
 	return authoringRPCError(ctx, code, connect.CodeNotFound, message)
 }

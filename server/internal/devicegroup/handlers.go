@@ -56,14 +56,14 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
 	actor, ok := auth.UserFromContext(ctx)
 	if !ok {
-		return nil, rpcError(ctx, "not_authenticated", connect.CodeUnauthenticated, "not authenticated")
+		return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED, connect.CodeUnauthenticated, "not authenticated")
 	}
 	return actor, nil
 }
 
 func (h *Handlers) authorize(ctx context.Context, permission, resourceID string) error {
 	if !auth.AuthorizeContext(ctx, permission, resourceID) {
-		return rpcError(ctx, "permission_denied", connect.CodePermissionDenied, "permission denied")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED, connect.CodePermissionDenied, "permission denied")
 	}
 	return nil
 }
@@ -74,7 +74,7 @@ func (h *Handlers) readScope(ctx context.Context, permission, id string) error {
 	}
 	groups, restricted := auth.DeviceScopeListFilter(ctx, permission)
 	if restricted && !contains(groups, id) {
-		return rpcError(ctx, "device_group_not_found", connect.CodeNotFound, "device group not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_GROUP_NOT_FOUND, connect.CodeNotFound, "device group not found")
 	}
 	return nil
 }
@@ -85,7 +85,7 @@ func (h *Handlers) writeScope(ctx context.Context, permission, id string) error 
 	}
 	groups, restricted := auth.DeviceScopeListFilter(ctx, permission)
 	if restricted && !contains(groups, id) {
-		return rpcError(ctx, "permission_denied", connect.CodePermissionDenied, "permission denied")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED, connect.CodePermissionDenied, "permission denied")
 	}
 	return nil
 }
@@ -116,7 +116,7 @@ func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[p
 		permission = "CreateDynamicDeviceGroup"
 	}
 	if !auth.HasPermission(ctx, permission) {
-		return nil, rpcError(ctx, "permission_denied", connect.CodePermissionDenied, "permission denied")
+		return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED, connect.CodePermissionDenied, "permission denied")
 	}
 	row, err := h.state.Create(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceCreateDeviceGroupProcedure, permission), CreateParams{
@@ -178,7 +178,7 @@ func (h *Handlers) ListDeviceGroups(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 	if !validPageToken(req.Msg.PageToken) {
-		return nil, rpcError(ctx, "invalid_page_token", connect.CodeInvalidArgument, "invalid page token")
+		return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN, connect.CodeInvalidArgument, "invalid page token")
 	}
 	limit := req.Msg.PageSize
 	if limit == 0 {
@@ -227,7 +227,7 @@ func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.R
 	}
 	if _, err := h.store.GetDevice(ctx, req.Msg.DeviceId); err != nil {
 		if store.IsNotFound(err) {
-			return nil, rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+			return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 		}
 		return nil, h.internal(ctx, "read device for groups", err)
 	}
@@ -317,7 +317,7 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[pm
 		ids = append(ids, req.Msg.DeviceId)
 	}
 	if len(ids) == 0 || len(ids) > maxBatchDevices {
-		return nil, rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, "at least one device is required")
+		return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, "at least one device is required")
 	}
 	actor, err := h.mutationActor(ctx, req.Msg.GroupId, "AddDeviceToGroup")
 	if err != nil {
@@ -329,7 +329,7 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[pm
 		}
 		if _, err := h.store.GetDevice(ctx, id); err != nil {
 			if store.IsNotFound(err) {
-				return nil, rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+				return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 			}
 			return nil, h.internal(ctx, "read device membership target", err)
 		}
@@ -433,7 +433,7 @@ func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *con
 // SetDeviceGroupMaintenanceWindow replaces the device-local dispatch window.
 func (h *Handlers) SetDeviceGroupMaintenanceWindow(ctx context.Context, req *connect.Request[pmv1.SetDeviceGroupMaintenanceWindowRequest]) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
 	if err := maintenance.Validate(req.Msg.MaintenanceWindow); err != nil {
-		return nil, rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, err.Error())
+		return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, err.Error())
 	}
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "SetDeviceGroupMaintenanceWindow")
 	if err != nil {
@@ -488,7 +488,7 @@ func (h *Handlers) enforceDeviceScope(ctx context.Context, permission, deviceID 
 	if connect.CodeOf(err) == connect.CodeInternal {
 		return h.internal(ctx, "resolve device scope", err)
 	}
-	return rpcError(ctx, "permission_denied", connect.CodePermissionDenied, "permission denied")
+	return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED, connect.CodePermissionDenied, "permission denied")
 }
 
 // enforceDeviceReadScope is the read-path counterpart of enforceDeviceScope: an
@@ -502,7 +502,7 @@ func (h *Handlers) enforceDeviceReadScope(ctx context.Context, permission, devic
 	if connect.CodeOf(err) == connect.CodeInternal {
 		return h.internal(ctx, "resolve device scope", err)
 	}
-	return rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+	return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 }
 
 func (h *Handlers) updated(ctx context.Context, operation string, row store.DeviceGroupView, err error) (*connect.Response[pmv1.UpdateDeviceGroupResponse], error) {
@@ -556,17 +556,17 @@ func (h *Handlers) groupProto(row store.DeviceGroupView) (*pmv1.DeviceGroup, err
 func (h *Handlers) mapError(ctx context.Context, operation string, err error) error {
 	switch {
 	case errors.Is(err, ErrInvalidInput):
-		return rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, "invalid device group")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, "invalid device group")
 	case errors.Is(err, ErrInvalidQuery):
-		return rpcError(ctx, "invalid_dynamic_query", connect.CodeInvalidArgument, "invalid dynamic query")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_INVALID_DYNAMIC_QUERY, connect.CodeInvalidArgument, "invalid dynamic query")
 	case errors.Is(err, ErrStaticGroup):
-		return rpcError(ctx, "group_not_dynamic", connect.CodeFailedPrecondition, "group is not dynamic")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_GROUP_NOT_DYNAMIC, connect.CodeFailedPrecondition, "group is not dynamic")
 	case errors.Is(err, ErrDynamicGroup):
-		return rpcError(ctx, "dynamic_group_membership_managed", connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED, connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
 	case errors.Is(err, ErrMemberNotFound):
-		return rpcError(ctx, "device_group_member_not_found", connect.CodeNotFound, "device group member not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND, connect.CodeNotFound, "device group member not found")
 	case store.IsNotFound(err):
-		return rpcError(ctx, "device_group_not_found", connect.CodeNotFound, "device group not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_GROUP_NOT_FOUND, connect.CodeNotFound, "device group not found")
 	default:
 		return h.internal(ctx, operation, err)
 	}
@@ -574,7 +574,7 @@ func (h *Handlers) mapError(ctx context.Context, operation string, err error) er
 
 func (h *Handlers) internal(ctx context.Context, operation string, err error) *connect.Error {
 	h.logger.Error("device-group RPC failed", "operation", operation, "error", err)
-	return rpcError(ctx, "internal_error", connect.CodeInternal, "internal error")
+	return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_INTERNAL_ERROR, connect.CodeInternal, "internal error")
 }
 
 func contains(values []string, wanted string) bool {
@@ -601,7 +601,7 @@ func boundedCount(value int64) int32 {
 	return int32(value)
 }
 
-func rpcError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+func rpcError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
 		Code: code, RequestId: middleware.RequestIDFromContext(ctx),

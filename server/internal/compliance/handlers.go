@@ -24,17 +24,17 @@ import (
 const (
 	defaultPageSize = int32(50)
 
-	errNotAuthenticated    = "not_authenticated"
-	errPermissionDenied    = "permission_denied"
-	errValidationFailed    = "validation_failed"
-	errInvalidPageToken    = "invalid_page_token"
-	errInternal            = "internal_error"
-	errPolicyNotFound      = "compliance_policy_not_found"
-	errActionNotFound      = "action_not_found"
-	errActionNotCompliance = "action_not_compliance"
-	errActionNoDetection   = "compliance_action_needs_detection"
-	errRuleExists          = "compliance_policy_rule_exists"
-	errPolicyRuleNotFound  = "compliance_policy_rule_not_found"
+	errNotAuthenticated    = pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errPermissionDenied    = pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
+	errValidationFailed    = pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
+	errInvalidPageToken    = pmv1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN
+	errInternal            = pmv1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
+	errPolicyNotFound      = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND
+	errActionNotFound      = pmv1.ErrorCode_ERROR_CODE_ACTION_NOT_FOUND
+	errActionNotCompliance = pmv1.ErrorCode_ERROR_CODE_ACTION_NOT_COMPLIANCE
+	errActionNoDetection   = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION
+	errRuleExists          = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS
+	errPolicyRuleNotFound  = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND
 )
 
 // HandlersConfig supplies the direct store and process-local seams.
@@ -508,7 +508,7 @@ func boundedCount(n int64) int32 {
 	return int32(n)
 }
 
-func rpcError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+func rpcError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
 		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
@@ -519,7 +519,7 @@ func rpcError(ctx context.Context, code string, connectCode connect.Code, messag
 	return err
 }
 
-func notFound(ctx context.Context, code, message string) *connect.Error {
+func notFound(ctx context.Context, code pmv1.ErrorCode, message string) *connect.Error {
 	return rpcError(ctx, code, connect.CodeNotFound, message)
 }
 

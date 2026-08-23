@@ -45,14 +45,14 @@ func New(cfg Config) *Handlers {
 func (h *Handlers) actor(ctx context.Context) (*auth.UserContext, error) {
 	actor, ok := auth.UserFromContext(ctx)
 	if !ok {
-		return nil, rpcError(ctx, "not_authenticated", connect.CodeUnauthenticated, "not authenticated")
+		return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED, connect.CodeUnauthenticated, "not authenticated")
 	}
 	return actor, nil
 }
 
 func (h *Handlers) authorize(ctx context.Context, permission, resourceID string) error {
 	if !auth.AuthorizeContext(ctx, permission, resourceID) {
-		return rpcError(ctx, "permission_denied", connect.CodePermissionDenied, "permission denied")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED, connect.CodePermissionDenied, "permission denied")
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func (h *Handlers) ListAssignments(ctx context.Context, req *connect.Request[pmv
 	}
 	if req.Msg.PageToken != "" {
 		if _, err := ulid.ParseStrict(req.Msg.PageToken); err != nil {
-			return nil, rpcError(ctx, "invalid_page_token", connect.CodeInvalidArgument, "invalid page token")
+			return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN, connect.CodeInvalidArgument, "invalid page token")
 		}
 	}
 	sourceType, _ := sourceTypeName(req.Msg.SourceType)
@@ -189,7 +189,7 @@ func (h *Handlers) GetDeviceAssignments(ctx context.Context, req *connect.Reques
 	}
 	if _, err := h.store.GetDevice(ctx, req.Msg.DeviceId); err != nil {
 		if store.IsNotFound(err) {
-			return nil, rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+			return nil, rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 		}
 		return nil, h.internal(ctx, "read assignment device", err)
 	}
@@ -439,11 +439,11 @@ func (r assignmentScopeResolver) UserGroupsForUser(ctx context.Context, userID s
 
 func (h *Handlers) requireDeviceAccess(ctx context.Context, actor *auth.UserContext, deviceID string) error {
 	if !auth.AuthorizeContext(ctx, "ListDevices", deviceID) {
-		return rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 	}
 	if _, err := h.store.GetDevice(ctx, deviceID); err != nil {
 		if store.IsNotFound(err) {
-			return rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+			return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 		}
 		return h.internal(ctx, "read selection device", err)
 	}
@@ -452,7 +452,7 @@ func (h *Handlers) requireDeviceAccess(ctx context.Context, actor *auth.UserCont
 			if connect.CodeOf(err) == connect.CodeInternal {
 				return h.internal(ctx, "resolve selection device scope", err)
 			}
-			return rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+			return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 		}
 		return nil
 	}
@@ -461,7 +461,7 @@ func (h *Handlers) requireDeviceAccess(ctx context.Context, actor *auth.UserCont
 		return h.internal(ctx, "check selection device assignment", err)
 	}
 	if !assigned {
-		return rpcError(ctx, "device_not_found", connect.CodeNotFound, "device not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 	}
 	return nil
 }
@@ -529,17 +529,17 @@ func userSelectionToProto(row store.UserSelectionRow) *pmv1.UserSelection {
 func (h *Handlers) mapError(ctx context.Context, operation string, err error) error {
 	switch {
 	case errors.Is(err, ErrInvalidInput):
-		return rpcError(ctx, "validation_failed", connect.CodeInvalidArgument, "invalid assignment")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, "invalid assignment")
 	case errors.Is(err, ErrSourceNotFound):
-		return rpcError(ctx, "assignment_source_not_found", connect.CodeNotFound, "assignment source not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND, connect.CodeNotFound, "assignment source not found")
 	case errors.Is(err, ErrTargetNotFound):
-		return rpcError(ctx, "assignment_target_not_found", connect.CodeNotFound, "assignment target not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND, connect.CodeNotFound, "assignment target not found")
 	case errors.Is(err, ErrNotFound), store.IsNotFound(err):
-		return rpcError(ctx, "assignment_not_found", connect.CodeNotFound, "assignment not found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_ASSIGNMENT_NOT_FOUND, connect.CodeNotFound, "assignment not found")
 	case errors.Is(err, ErrSystemAction):
-		return rpcError(ctx, "cannot_modify_system_action", connect.CodeFailedPrecondition, "system action cannot be assigned directly")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION, connect.CodeFailedPrecondition, "system action cannot be assigned directly")
 	case errors.Is(err, ErrNoAvailableAssignment):
-		return rpcError(ctx, "no_assignment_found", connect.CodeNotFound, "no available assignment found")
+		return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_NO_ASSIGNMENT_FOUND, connect.CodeNotFound, "no available assignment found")
 	default:
 		return h.internal(ctx, operation, err)
 	}
@@ -547,7 +547,7 @@ func (h *Handlers) mapError(ctx context.Context, operation string, err error) er
 
 func (h *Handlers) internal(ctx context.Context, operation string, err error) *connect.Error {
 	h.logger.Error("assignment RPC failed", "operation", operation, "error", err)
-	return rpcError(ctx, "internal_error", connect.CodeInternal, "internal error")
+	return rpcError(ctx, pmv1.ErrorCode_ERROR_CODE_INTERNAL_ERROR, connect.CodeInternal, "internal error")
 }
 
 func assignmentToProto(row store.AssignmentView) *pmv1.Assignment {
@@ -601,7 +601,7 @@ func boundedCount(value int64) int32 {
 	return int32(value)
 }
 
-func rpcError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+func rpcError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
 		Code: code, RequestId: middleware.RequestIDFromContext(ctx),

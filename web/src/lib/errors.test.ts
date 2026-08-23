@@ -6,15 +6,16 @@
 // error message and append the request ID.
 
 import { describe, it, expect, vi } from 'vitest';
+import { ErrorCode } from '$contract/cadestro/v1/common_pb';
 
 // Mock the SDK's getErrorCode / getRequestId so we can drive arbitrary
 // shapes through getLocalizedError without needing a real ConnectError.
 vi.mock('$contractClient/client', () => ({
 	getErrorCode: (e: unknown) => {
 		if (e && typeof e === 'object' && 'code' in e) {
-			return (e as { code: string }).code;
+			return (e as { code: ErrorCode }).code;
 		}
-		return null;
+		return undefined;
 	},
 	getRequestId: (e: unknown) => {
 		if (e && typeof e === 'object' && 'requestId' in e) {
@@ -30,17 +31,17 @@ import { getLocalizedError } from './errors';
 
 describe('getLocalizedError', () => {
 	it('returns a localized message for a known code', () => {
-		const msg = getLocalizedError({ code: 'user_not_found' });
+		const msg = getLocalizedError({ code: ErrorCode.USER_NOT_FOUND });
 		expect(typeof msg).toBe('string');
 		expect(msg.length).toBeGreaterThan(0);
-		// `user_not_found` is a user-facing code — must NOT have a Request ID
-		// suffix (see userFacingCodes set in errors.ts).
+		// `USER_NOT_FOUND` carries no requestId in this fixture, so no
+		// Request ID suffix is expected regardless of userFacingCodes.
 		expect(msg).not.toMatch(/Request ID/);
 	});
 
 	it('appends a Request ID for non-user-facing codes', () => {
 		const msg = getLocalizedError({
-			code: 'role_in_use',
+			code: ErrorCode.ROLE_IN_USE,
 			requestId: 'req-123'
 		});
 		expect(msg).toMatch(/Request ID: req-123/);

@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	errNotAuthenticated = "not_authenticated"
-	errPermissionDenied = "permission_denied"
-	errValidationFailed = "validation_failed"
-	errInvalidPageToken = "invalid_page_token"
-	errInternal         = "internal_error"
+	errNotAuthenticated = pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errPermissionDenied = pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
+	errValidationFailed = pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
+	errInvalidPageToken = pmv1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN
+	errInternal         = pmv1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
 )
 
-func rpcError(ctx context.Context, code string, connectCode connect.Code, message string) *connect.Error {
+func rpcError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
 		Code: code, RequestId: middleware.RequestIDFromContext(ctx),

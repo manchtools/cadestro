@@ -545,7 +545,7 @@ func (h *Handlers) compileError(ctx context.Context, operation string, err error
 	}
 }
 
-func (h *Handlers) collectionCompileError(ctx context.Context, resource, code, operation string, err error) error {
+func (h *Handlers) collectionCompileError(ctx context.Context, resource string, code pmv1.ErrorCode, operation string, err error) error {
 	switch {
 	case store.IsNotFound(err):
 		return notFound(ctx, code, resource+" not found")

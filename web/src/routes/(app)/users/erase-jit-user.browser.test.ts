@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
 import { create } from '@bufbuild/protobuf';
 import { Code, ConnectError } from '@connectrpc/connect';
-import { ErrorDetailSchema } from '$contract/cadestro/v1/common_pb';
+import { ErrorCode, ErrorDetailSchema } from '$contract/cadestro/v1/common_pb';
 import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
 import * as m from '$lib/paraglide/messages';
 import UsersPage from './+page.svelte';
@@ -30,7 +30,7 @@ vi.mock('$lib/sdk', async (importOriginal) => ({
 // carrying ErrorDetail.code = "scim_managed_resource".
 function scimManagedRejection() {
 	return new ConnectError('user is managed by scim', Code.FailedPrecondition, undefined, [
-		{ desc: ErrorDetailSchema, value: { code: 'scim_managed_resource' } }
+		{ desc: ErrorDetailSchema, value: { code: ErrorCode.SCIM_MANAGED_RESOURCE } }
 	]);
 }
 

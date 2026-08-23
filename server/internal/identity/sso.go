@@ -342,7 +342,7 @@ func (h *Handlers) rejectSSO(ctx context.Context, req connect.AnyRequest, provid
 		RequestDescriptor:    req.Spec().Procedure,
 		AuthorizationOutcome: store.AuthorizationDenied,
 		Result:               store.ResultRejected,
-		ResultCode:           ErrSSONoMatchingAccount,
+		ResultCode:           auditResultCode(ErrSSONoMatchingAccount),
 		AuthorizationDetail:  providerID,
 	}
 	if ip := auth.ClientIP(req); ip != "" {
