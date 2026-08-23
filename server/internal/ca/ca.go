@@ -1,4 +1,3 @@
-// Package ca provides a certificate authority for issuing device certificates.
 package ca
 
 import (
@@ -21,13 +20,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
-// ErrInvalidCSR marks caller-controlled certificate requests that cannot be
-// issued. Handlers use it to distinguish InvalidArgument from CA failures.
 var ErrInvalidCSR = errors.New("invalid certificate signing request")
 
-// EnrollmentIdentityFromCSR validates the canonical enrollment CSR and
-// returns its Ed25519 public key. The key is the device identity used for
-// idempotent retries.
 func EnrollmentIdentityFromCSR(csrPEM []byte) ([]byte, error) {
 	_, key, err := parseEnrollmentCSR(csrPEM)
 	if err != nil {
@@ -64,22 +58,18 @@ func parseEnrollmentCSR(csrPEM []byte) (*x509.CertificateRequest, ed25519.Public
 	return csr, key, nil
 }
 
-// CA is a certificate authority that issues device certificates.
 type CA struct {
-	cert      *x509.Certificate
-	key       crypto.Signer
-	validity  time.Duration
-	trustPool *x509.CertPool   // the active CA only
-	now       func() time.Time // clock seam; defaults to time.Now, overridden in tests
+	cert         *x509.Certificate
+	key          crypto.Signer
+	validity     time.Duration
+	activeCAPool *x509.CertPool
+	now          func() time.Time
 }
 
-// Option configures a CA.
 type Option func(*CA)
 
-// WithClock overrides the time source (tests). The default is time.Now.
 func WithClock(now func() time.Time) Option { return func(c *CA) { c.now = now } }
 
-// Certificate holds a PEM-encoded certificate and private key.
 type Certificate struct {
 	CertPEM     []byte
 	KeyPEM      []byte
@@ -87,8 +77,6 @@ type Certificate struct {
 	NotAfter    time.Time
 }
 
-// SerialFromCert returns the canonical lower-case hexadecimal serial used by
-// the device lifecycle store and the authenticated TLS peer context.
 func SerialFromCert(cert *x509.Certificate) (string, error) {
 	if cert == nil || cert.SerialNumber == nil || cert.SerialNumber.Sign() < 0 {
 		return "", errors.New("certificate serial is required")
@@ -96,7 +84,6 @@ func SerialFromCert(cert *x509.Certificate) (string, error) {
 	return cert.SerialNumber.Text(16), nil
 }
 
-// SerialFromPEM extracts a certificate serial after strict PEM decoding.
 func SerialFromPEM(certPEM []byte) (string, error) {
 	block, rest := pem.Decode(certPEM)
 	if block == nil || block.Type != "CERTIFICATE" || len(bytes.TrimSpace(rest)) != 0 {
@@ -109,7 +96,6 @@ func SerialFromPEM(certPEM []byte) (string, error) {
 	return SerialFromCert(cert)
 }
 
-// New creates a new CA from PEM-encoded certificate and key files.
 func New(certPath, keyPath string, validity time.Duration, opts ...Option) (*CA, error) {
 	certPEM, err := os.ReadFile(certPath)
 	if err != nil {
@@ -132,7 +118,6 @@ func New(certPath, keyPath string, validity time.Duration, opts ...Option) (*CA,
 	return NewFromPEM(certPEM, keyPEM, validity, opts...)
 }
 
-// NewFromPEM creates a new CA from PEM-encoded certificate and key bytes.
 func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) (*CA, error) {
 	certBlock, _ := pem.Decode(certPEM)
 	if certBlock == nil {
@@ -173,11 +158,11 @@ func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) 
 	pool.AddCert(cert)
 
 	c := &CA{
-		cert:      cert,
-		key:       key,
-		validity:  validity,
-		trustPool: pool,
-		now:       time.Now,
+		cert:         cert,
+		key:          key,
+		validity:     validity,
+		activeCAPool: pool,
+		now:          time.Now,
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -185,25 +170,15 @@ func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) 
 	return c, nil
 }
 
-// serverCertValidity is the fixed short-lived TTL for control-plane server
-// certificates: 45 days, distinct from the agent-cert ca.validity.
-const serverCertValidity = 45 * 24 * time.Hour
+const (
+	serverCertValidity = 45 * 24 * time.Hour
+	clockSkewAllowance = time.Minute
+)
 
-// IssueCertificateFromCSR signs an agent Certificate Signing Request and returns
-// the certificate. The private key stays on the agent - this method only signs
-// the CSR. Agent certs carry the agent peer class and the CA's default validity.
 func (ca *CA) IssueCertificateFromCSR(deviceID string, csrPEM []byte) (*Certificate, error) {
 	return ca.issueFromCSR(deviceID, csrPEM, mtls.PeerClassAgent, ca.validity, nil)
 }
 
-// IssueServerCertificateFromCSR signs a CSR for a control-plane TLS SERVER —
-// today only the datastore integration tests, which need a cert something can
-// actually be served on. CN = SerialNumber = id, the control peer class, and a
-// server-chosen DNS SAN when hostname is non-empty.
-//
-// The DNS SAN is server-chosen here, never CSR-supplied: issueFromCSR rejects a
-// CSR that requests SANs of its own, so a caller cannot mint a certificate for
-// a hostname the server did not assign.
 func (ca *CA) IssueServerCertificateFromCSR(id string, csrPEM []byte, hostname string) (*Certificate, error) {
 	var dnsNames []string
 	if hostname != "" {
@@ -212,21 +187,12 @@ func (ca *CA) IssueServerCertificateFromCSR(id string, csrPEM []byte, hostname s
 	return ca.issueFromCSR(id, csrPEM, mtls.PeerClassControl, serverCertValidity, dnsNames)
 }
 
-// issueFromCSR is the shared issuance body. deviceID becomes the cert CN and
-// Subject.SerialNumber; class selects the peer-class URI SAN stamped on the
-// cert; validity sets NotAfter; dnsNames are server-chosen DNS SANs (a server
-// hostname). The CA authoritatively stamps the identity, class, and any DNS
-// SANs — caller-supplied SANs in the CSR are rejected below — so an enrolling
-// peer can never mint a different identity, peer class, or hostname than the
-// server assigns.
 func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass, validity time.Duration, dnsNames []string) (*Certificate, error) {
-	// Parse, authenticate, and constrain the CSR before issuing anything.
 	csr, _, err := parseEnrollmentCSR(csrPEM)
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate serial number
 	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
 	if err != nil {
 		return nil, fmt.Errorf("generate serial number: %w", err)
@@ -235,69 +201,55 @@ func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass,
 	now := ca.now()
 	notAfter := now.Add(validity)
 
-	// Stamp the SPIFFE URI SAN that marks this cert's peer class. The
-	// agent listener requires the agent class, so a leaked control-class cert
-	// cannot be replayed against it and vice versa. The class is server-chosen
-	// here, never CSR-supplied.
 	peerURI, err := mtls.PeerClassURI(class)
 	if err != nil {
 		return nil, fmt.Errorf("build peer-class URI: %w", err)
-	}
-
-	// Agent certs are TLS clients only. A cert carrying a server hostname is
-	// also serving TLS on it, so it needs ServerAuth as well — a client-only
-	// cert fails a peer's ServerAuth check. Keyed on the DNS SAN rather than on
-	// a peer class, because it is the SAN that says this cert is served.
-	extKeyUsage := []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
-	if len(dnsNames) > 0 {
-		extKeyUsage = append(extKeyUsage, x509.ExtKeyUsageServerAuth)
 	}
 
 	template := &x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   deviceID,
+			SerialNumber: deviceID,
 			Organization: []string{"cadestro"},
 		},
-		NotBefore:             now.Add(-1 * time.Minute), // Allow for clock skew
+		NotBefore:             now.Add(-clockSkewAllowance),
 		NotAfter:              notAfter,
 		KeyUsage:              x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           extKeyUsage,
+		ExtKeyUsage:           certExtKeyUsage(len(dnsNames) > 0),
 		BasicConstraintsValid: true,
 		URIs:                  []*url.URL{peerURI},
-		// Server-chosen DNS SANs (a server hostname). Empty for agent certs.
-		DNSNames: dnsNames,
+		DNSNames:              dnsNames,
 	}
 
-	// Add device ID to the Subject's SerialNumber field
-	template.Subject.SerialNumber = deviceID
-
-	// Sign the certificate using the public key from the CSR
 	certDER, err := x509.CreateCertificate(rand.Reader, template, ca.cert, csr.PublicKey, ca.key)
 	if err != nil {
 		return nil, fmt.Errorf("create certificate: %w", err)
 	}
 
-	// Encode certificate to PEM
 	certPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: certDER,
 	})
 
-	// Calculate fingerprint (SHA256 of DER-encoded certificate)
 	fingerprint := sha256.Sum256(certDER)
 
 	return &Certificate{
 		CertPEM:     certPEM,
-		KeyPEM:      nil, // Private key stays on agent
+		KeyPEM:      nil,
 		Fingerprint: hex.EncodeToString(fingerprint[:]),
 		NotAfter:    notAfter,
 	}, nil
 }
 
-// VerifyCertificate verifies a PEM-encoded certificate was signed by a trusted CA.
-// Uses the trust pool (which may contain multiple CA certs for rotation).
-// Returns the device ID (CN) if valid.
+func certExtKeyUsage(servesTLS bool) []x509.ExtKeyUsage {
+	usage := []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
+	if servesTLS {
+		usage = append(usage, x509.ExtKeyUsageServerAuth)
+	}
+	return usage
+}
+
 func (ca *CA) VerifyCertificate(certPEM []byte) (string, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {
@@ -310,7 +262,7 @@ func (ca *CA) VerifyCertificate(certPEM []byte) (string, error) {
 	}
 
 	if _, err := cert.Verify(x509.VerifyOptions{
-		Roots:     ca.trustPool,
+		Roots:     ca.activeCAPool,
 		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 	}); err != nil {
 		return "", fmt.Errorf("certificate verification failed: %w", err)
@@ -318,12 +270,10 @@ func (ca *CA) VerifyCertificate(certPEM []byte) (string, error) {
 	return cert.Subject.CommonName, nil
 }
 
-// TrustPool returns the active CA trust pool used for certificate verification.
 func (ca *CA) TrustPool() *x509.CertPool {
-	return ca.trustPool
+	return ca.activeCAPool
 }
 
-// CACertPEM returns the PEM-encoded CA certificate.
 func (ca *CA) CACertPEM() []byte {
 	return pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
@@ -331,21 +281,17 @@ func (ca *CA) CACertPEM() []byte {
 	})
 }
 
-// parsePrivateKey tries to parse a private key in various formats.
 func parsePrivateKey(der []byte) (crypto.Signer, error) {
-	// Try PKCS8 first
 	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
 		if signer, ok := key.(crypto.Signer); ok {
 			return signer, nil
 		}
 	}
 
-	// Try EC private key
 	if key, err := x509.ParseECPrivateKey(der); err == nil {
 		return key, nil
 	}
 
-	// Try RSA private key (PKCS1)
 	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
 		return key, nil
 	}
@@ -353,7 +299,6 @@ func parsePrivateKey(der []byte) (crypto.Signer, error) {
 	return nil, fmt.Errorf("unsupported private key format")
 }
 
-// FingerprintFromPEM extracts the fingerprint from a PEM-encoded certificate.
 func FingerprintFromPEM(certPEM []byte) (string, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {
@@ -364,7 +309,6 @@ func FingerprintFromPEM(certPEM []byte) (string, error) {
 	return hex.EncodeToString(fingerprint[:]), nil
 }
 
-// NotAfterFromPEM returns the expiry of a PEM-encoded certificate.
 func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {
@@ -377,11 +321,7 @@ func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
 	return cert.NotAfter, nil
 }
 
-// FingerprintFromCert computes the fingerprint of an already-parsed
-// certificate. cert.Raw is the DER encoding.
 func FingerprintFromCert(cert *x509.Certificate) string {
-	// Defensive: callers reach this from the mTLS path where the leaf is
-	// already verified non-nil, but never panic on a hot request path.
 	if cert == nil {
 		return ""
 	}
@@ -389,7 +329,6 @@ func FingerprintFromCert(cert *x509.Certificate) string {
 	return hex.EncodeToString(fingerprint[:])
 }
 
-// DeviceIDFromPEM extracts the device ID from a PEM-encoded certificate.
 func DeviceIDFromPEM(certPEM []byte) (string, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {
@@ -404,8 +343,6 @@ func DeviceIDFromPEM(certPEM []byte) (string, error) {
 	return cert.Subject.CommonName, nil
 }
 
-// AssertCSRMatchesCert applies the renewal key proof to the TLS leaf already
-// authenticated by the transport.
 func AssertCSRMatchesCert(cert *x509.Certificate, csrPEM []byte) error {
 	if cert == nil {
 		return errors.New("certificate is required")

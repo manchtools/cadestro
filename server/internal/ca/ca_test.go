@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"net"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -112,6 +113,77 @@ func TestAssertCSRMatchesCert(t *testing.T) {
 	})
 	t.Run("malformed CSR PEM rejected", func(t *testing.T) {
 		assert.Error(t, ca.AssertCSRMatchesCert(peer, []byte("not a csr")))
+	})
+}
+
+func TestSerialFromCert_CanonicalLowercaseHex(t *testing.T) {
+	certPEM, keyPEM := generateTestCA(t)
+	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
+	require.NoError(t, err)
+	csrPEM, _ := generateCSR(t, "device-001")
+	issued, err := c.IssueCertificateFromCSR("device-001", csrPEM)
+	require.NoError(t, err)
+	block, _ := pem.Decode(issued.CertPEM)
+	parsed, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+
+	serial, err := ca.SerialFromCert(parsed)
+	require.NoError(t, err)
+	assert.Equal(t, strings.ToLower(serial), serial, "serial must already be lower-case")
+	assert.Equal(t, parsed.SerialNumber.Text(16), serial)
+}
+
+func TestSerialFromCert_RejectsMissingOrNegativeSerial(t *testing.T) {
+	_, err := ca.SerialFromCert(nil)
+	assert.Error(t, err)
+
+	_, err = ca.SerialFromCert(&x509.Certificate{})
+	assert.Error(t, err, "a certificate with no serial number must be rejected")
+
+	_, err = ca.SerialFromCert(&x509.Certificate{SerialNumber: big.NewInt(-1)})
+	assert.Error(t, err, "a negative serial number must be rejected")
+}
+
+func TestSerialFromPEM_MatchesSerialFromCert(t *testing.T) {
+	certPEM, keyPEM := generateTestCA(t)
+	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
+	require.NoError(t, err)
+	csrPEM, _ := generateCSR(t, "device-001")
+	issued, err := c.IssueCertificateFromCSR("device-001", csrPEM)
+	require.NoError(t, err)
+	block, _ := pem.Decode(issued.CertPEM)
+	parsed, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+
+	fromCert, err := ca.SerialFromCert(parsed)
+	require.NoError(t, err)
+	fromPEM, err := ca.SerialFromPEM(issued.CertPEM)
+	require.NoError(t, err)
+	assert.Equal(t, fromCert, fromPEM)
+}
+
+func TestSerialFromPEM_StrictDecoding(t *testing.T) {
+	certPEM, keyPEM := generateTestCA(t)
+	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
+	require.NoError(t, err)
+	csrPEM, _ := generateCSR(t, "device-001")
+	issued, err := c.IssueCertificateFromCSR("device-001", csrPEM)
+	require.NoError(t, err)
+
+	t.Run("wrong PEM block type rejected", func(t *testing.T) {
+		block, _ := pem.Decode(issued.CertPEM)
+		require.NotNil(t, block)
+		block.Type = "CERTIFICATE REQUEST"
+		_, err := ca.SerialFromPEM(pem.EncodeToMemory(block))
+		assert.Error(t, err)
+	})
+	t.Run("trailing data after PEM rejected", func(t *testing.T) {
+		_, err := ca.SerialFromPEM(append(append([]byte(nil), issued.CertPEM...), []byte("trailing")...))
+		assert.Error(t, err)
+	})
+	t.Run("malformed PEM rejected", func(t *testing.T) {
+		_, err := ca.SerialFromPEM([]byte("not a certificate"))
+		assert.Error(t, err)
 	})
 }
 

@@ -150,7 +150,7 @@ sent during enrollment and not sent during renewal.
 The CSR carries a subject common name and **nothing else** — no SANs of any
 kind. That is not an omission; the server enforces it:
 
-<!-- docref: begin src=server/internal/ca/ca.go#CA.issueFromCSR:3fbb020f -->
+<!-- docref: begin src=server/internal/ca/ca.go#CA.issueFromCSR:a37fd616 -->
 Issuance verifies the CSR's self-signature, requires an Ed25519 public key, and
 **rejects any CSR that requests subject alternative names**. The CSR's common
 name is then discarded. Everything identifying in the issued certificate is
