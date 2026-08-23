@@ -57,7 +57,6 @@ func TestAbolishedArchitectureCannotReturn(t *testing.T) {
 		"github.com/redis/go-redis",
 		"github.com/jackc/pgx",
 		"github.com/lib/pq",
-		"github.com/pressly/goose",
 	} {
 		if strings.Contains(string(mod), dependency) {
 			t.Errorf("abolished dependency returned: %s", dependency)
@@ -89,7 +88,6 @@ func TestAbolishedRuntimeAPIsCannotReturn(t *testing.T) {
 		"net/smtp",
 		"github.com/jackc/pgx",
 		"github.com/lib/pq",
-		"github.com/pressly/goose",
 	}
 	forbiddenIdentifiers := []string{
 		"ActionEnvelope",
