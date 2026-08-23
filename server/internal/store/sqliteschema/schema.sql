@@ -842,6 +842,7 @@ FROM audit_operations o
 WHERE o.stream = 'control'
   AND NOT EXISTS (SELECT 1 FROM audit_effects e WHERE e.operation_id = o.operation_id);
 
+-- docref: begin audit-append-only
 CREATE TRIGGER audit_operations_block_update BEFORE UPDATE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
 END;
@@ -854,6 +855,7 @@ END;
 CREATE TRIGGER audit_effects_block_delete BEFORE DELETE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
 END;
+-- docref: end audit-append-only
 
 CREATE TABLE jobs (
     job_id        text PRIMARY KEY CHECK (

@@ -22,7 +22,7 @@ rest of this page is what each part of it does and why.
 
 ## 1. Issue a registration token
 
-<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:5889b437,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:294e61c8 -->
+<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:1eee71f6,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:5fa6aaf2 -->
 Tokens are minted by `ControlService.CreateToken`. A token has a name, a
 required future expiry, and an optional global maximum use count where **zero
 means unlimited**. Each successful new device enrollment is one immutable use
@@ -40,7 +40,7 @@ The token's plaintext exists exactly once. Control stores only its SHA-256
 digest, and the read RPCs never return the value again — so a token that was not
 copied at creation must be replaced, not recovered.
 
-<!-- docref: begin src=contract/proto/cadestro/v1/control.proto#CreateTokenResponse:4772e9f2 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/control.proto#CreateTokenResponse:073a976b -->
 The creation response carries a second, equally important value: the **CA
 fingerprint pin**. It travels beside the token because the two are useless apart
 — the token authorizes the agent *to* control, and the pin is what tells the
@@ -124,7 +124,7 @@ an error unconditionally and every connection is refused. The feature is not
 "best effort" off Linux; it is closed.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:c61214e9 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:6abe0cc7 -->
 The handler applies a global rate limit of five enrollment attempts per rolling
 minute, and serializes the rest of the work under a mutex so that concurrent
 callers cannot each pass the "already enrolled?" check and register duplicate
@@ -167,7 +167,7 @@ control plane. This is the certificate's *peer class*, and because a CSR may not
 request URIs, a device cannot ask to be issued a control-plane identity.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/cmd/cadestro/config.go#defaultEnvironment:950ca863 -->
+<!-- docref: begin src=server/cmd/cadestro/config.go#defaultEnvironment:fc5c4e1c -->
 Device certificate lifetime defaults to 8760 hours — one year — and is
 configurable with `CADESTRO_CERTIFICATE_VALIDITY`.
 <!-- docref: end -->
@@ -189,7 +189,7 @@ exactly 64 hex characters, and lowercased. A malformed pin fails before any CSR
 is generated and before any network call is made.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/device_auth.proto#EnrollRequest:eb23f690 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/device_auth.proto#EnrollRequest:53f6ae03 -->
 The pin is a required field on the wire, constrained to 64 hexadecimal
 characters. **There is no trust-on-first-use path.** An enrollment without a pin
 is not a less secure enrollment; it is not an enrollment.
@@ -239,7 +239,7 @@ certificate's peer class must be `agent`. The stream handler then admits only
 the device's active certificate serial.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/agentstream/handler.go#Handler.recordHello:a542688d -->
+<!-- docref: begin src=server/internal/agentstream/handler.go#Handler.recordHello:95d29635 -->
 The application layer then performs the lifecycle transition in the Hello
 transaction: the first frame must be a Hello, its device id must equal the
 mTLS identity, and a pending serial may promote only after that fresh Hello.
@@ -275,7 +275,7 @@ If the B configuration or connection fails, the agent falls back to A and uses
 the existing periodic sync cadence to retry. There is no forced stream close,
 retry goroutine, CA response, or trust-bundle rotation.
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:5f189181 -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:af87f4ad -->
 The renewal handler runs behind the authenticated agent listener, checks the
 CSR against the actual TLS peer leaf, and stages one pending successor in the
 device row. A retry returns the existing pending certificate where possible;
@@ -297,7 +297,7 @@ after certificate promotion.
 
 ## What enrollment writes into the audit log
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:f4aa857a -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:1917894f -->
 A successful new registration records the device creation as an effect of one
 audited operation whose actor is the registration token itself, identified by
 its digest rather than its value. A same-identity retry is audited as an

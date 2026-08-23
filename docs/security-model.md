@@ -111,7 +111,7 @@ account" error, so a login attempt cannot probe which of the three conditions
 failed.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/users.go#Handlers.EraseJITUser:6cc8f91a -->
+<!-- docref: begin src=server/internal/identity/users.go#Handlers.EraseJITUser:d797382e -->
 Erasure is correspondingly narrow. The erase RPC refuses any subject that was
 not created by OIDC just-in-time provisioning — a SCIM-managed user is erased
 through SCIM, and the RPC says so rather than deleting a record the directory
@@ -176,7 +176,7 @@ by a list of exceptions someone has to maintain.
 
 ### Authorization
 
-<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:a3ba0530 -->
+<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:a3354971 -->
 Permissions live in one registry — roughly 165 entries, each declaring its key,
 its UI grouping, its description, and the kind of target it acts on. That target
 kind is what decides whether a permission can be scoped to a group, and the zero
@@ -222,7 +222,7 @@ expiry, and rejects an access token presented where a refresh token belongs. An
 access token lives five minutes; a refresh token seven days.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/session.go#Handlers.RefreshToken:27ffccfc -->
+<!-- docref: begin src=server/internal/identity/session.go#Handlers.RefreshToken:11427c55 -->
 Permissions ride only on the short-lived access token; refresh re-reads
 authority from the database. So revoking a role takes effect within five
 minutes rather than at the end of a seven-day session. Refresh also rejects a
@@ -299,7 +299,7 @@ on rather than merely written.
 
 ### One operation, its effects, one transaction
 
-<!-- docref: begin src=server/internal/store/audit.go#AuditOperation:42ce04d3,server/internal/store/audit.go#AuditEffect:4a8afbb5 -->
+<!-- docref: begin src=server/internal/store/audit.go#AuditOperation:7c6dba4b,server/internal/store/audit.go#AuditEffect:279a4c80 -->
 Every audited event is one **operation** row plus one or more **effect** rows.
 The operation records who acted, from where, what they invoked, whether
 authorization allowed it, and the outcome. Each effect records one resource that
@@ -311,13 +311,13 @@ digest with a named kind. That is not stylistic: it is what makes it
 structurally impossible for a credential to end up in the audit log.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/audit.go#Store.WithAudit,server/internal/store/store.go#Store.withTx -->
+<!-- docref: begin src=server/internal/store/audit.go#Store.WithAudit:850de46e,server/internal/store/store.go#Store.withTx:f0b64994 -->
 The mutation and its audit rows are written in **one** database transaction. The
 audited-write primitive opens a transaction, runs the mutation, appends the
 operation and effects, and commits them together.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/audit_test.go#TestWithAudit_AuditWriteFailureRollsBackTheMutation:c4d3f8a3 -->
+<!-- docref: begin src=server/internal/store/audit_test.go#TestWithAudit_RollsBackStateWhenAuditFails:84b9a208 -->
 The consequence is the guarantee that matters: **if the audit write fails, the
 mutation is rolled back with it.** A test proves this against a real database
 with a real failure — an effect the schema refuses — and then asserts the
@@ -359,7 +359,7 @@ returned**. If the evidence cannot be written, the secret is not revealed.
 
 ### Append-only
 
-<!-- docref: begin src=server/internal/store/sqliteschema/schema.sql#audit_operations -->
+<!-- docref: begin src=server/internal/store/sqliteschema/schema.sql#@audit-append-only:a1d8df43 -->
 Append-only is enforced by database triggers, not by application discipline —
 an `UPDATE` or `DELETE` on either audit table is refused outright. The event
 rows remain queryable in the database for the lifetime of the deployment.
@@ -377,7 +377,7 @@ returning protected data.
 
 ### Secrets in transit use the authenticated device stream
 
-<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:2c626707,server/internal/agentsecrets/service.go#Service.GetLuksKey:3e34dad4 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:68d4d881,server/internal/agentsecrets/service.go#Service.GetLuksKey:5ad82508 -->
 Agent-facing secrets are raw bytes inside the mutually authenticated TLS
 connection. The peer certificate supplies the device identity, so Cadestro does
 not add a second recipient-key envelope, request device identifier, or

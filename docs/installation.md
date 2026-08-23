@@ -83,7 +83,7 @@ see [Backup and restore](backup-restore.md) for scheduling and recovery.
 
 ## What setup generates
 
-<!-- docref: begin src=server/deploy/setup.sh#main:47abbf98 -->
+<!-- docref: begin src=server/deploy/setup.sh#main:654e85a9 -->
 `setup.sh` is the enforcing half of the installation. It never downloads, never
 prompts, and never touches Docker: it validates the environment, creates the
 directory tree with restrictive permissions, writes the ACME overlay, generates
@@ -97,7 +97,7 @@ configuration file is data; sourcing it would make it code, and a stray
 backtick in a domain name would execute.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#@generated-material:6df12966 -->
+<!-- docref: begin src=server/deploy/setup.sh#@generated-material:908e4cd7 -->
 Generated once and then retained: the internal CA, the control-plane server
 certificate, the at-rest encryption key, and the session signing key.
 <!-- docref: end -->
@@ -219,7 +219,7 @@ Open the URL. The setup page reads the token out of the fragment, holds it in
 memory, and spends it configuring your first identity provider. From then on you
 log in through that provider.
 
-<!-- docref: begin src=server/cmd/cadestro/main.go#parseCommand:8eacfc02 -->
+<!-- docref: begin src=server/cmd/cadestro/main.go#parseCommand:dfecd82c -->
 The control binary accepts exactly two subcommands — `bootstrap-admin` and
 `backup-status`. Anything else exits with a usage error rather than being
 interpreted.
@@ -242,7 +242,7 @@ silently leaving the default in place. Error messages name variables, never
 their values.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/cmd/cadestro/config.go#validateConfig:1aad560c,server/cmd/cadestro/config.go#validateWritableDirectory:0881f863 -->
+<!-- docref: begin src=server/cmd/cadestro/config.go#validateConfig:8dff7139,server/cmd/cadestro/config.go#validateWritableDirectory:0881f863 -->
 Validation is thorough and happens before anything opens a socket: the two
 listen addresses must be present and distinct; the proxy sources must be valid
 addresses or CIDRs; the public base URL must be absolute HTTPS with no
