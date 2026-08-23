@@ -6,7 +6,7 @@ is how these get scheduled, delivered, and reported.
 
 ## How every action behaves
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteWithStreaming:a8f6cb01 -->
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteWithStreaming:417d960c -->
 One dispatch switch maps an action type to its implementation. An unrecognised
 type is refused rather than ignored, so a contract the agent is too old to
 understand fails loudly instead of silently doing nothing.
@@ -38,7 +38,7 @@ below; it is not universal, and the exceptions are deliberate.
 
 ### Package
 
-<!-- docref: begin src=agent/internal/executor/action_package.go#Executor.executePackage:3a356e64,contract/proto/cadestro/v1/actions.proto#PackageParams:b0220890 -->
+<!-- docref: begin src=agent/internal/executor/action_package.go#Executor.executePackage:3a356e64,contract/proto/cadestro/v1/actions.proto#PackageParams:8ff14120 -->
 Installs or removes a package through the host's detected package manager,
 probing the installed state first and failing closed if that probe errors.
 
@@ -57,7 +57,7 @@ apply the hold is a real action failure, not a warning.
 
 ### Update
 
-<!-- docref: begin src=agent/internal/executor/action_update.go#Executor.executeUpdate:7af07503,contract/proto/cadestro/v1/actions.proto#UpdateParams:5efdd421 -->
+<!-- docref: begin src=agent/internal/executor/action_update.go#Executor.executeUpdate:7af07503,contract/proto/cadestro/v1/actions.proto#UpdateParams:cc7d27eb -->
 A system-wide upgrade: repair the package manager, refresh the index, upgrade
 everything, optionally autoremove, then detect whether a reboot is now required.
 
@@ -72,7 +72,7 @@ asked of a backend that cannot express it (see the platform table below).
 
 ### Repository
 
-<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:abc92a2d,contract/proto/cadestro/v1/actions.proto#RepositoryParams:7b4adaa8 -->
+<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:abc92a2d,contract/proto/cadestro/v1/actions.proto#RepositoryParams:108a9362 -->
 Adds or removes an external package repository, after a network-free validation
 pre-flight.
 
@@ -94,7 +94,7 @@ The APT block takes a signing key by URL (https only, body capped at 10 MiB and
 
 ### AppImage
 
-<!-- docref: begin src=agent/internal/executor/action_appimage.go#Executor.executeAppImage:9302672f,contract/proto/cadestro/v1/actions.proto#AppInstallParams:76caae4c -->
+<!-- docref: begin src=agent/internal/executor/action_appimage.go#Executor.executeAppImage:9302672f,contract/proto/cadestro/v1/actions.proto#AppInstallParams:9f00505b -->
 Fetches an AppImage to the install directory (default `/opt/appimages`) at mode
 `0755`, atomically.
 
@@ -137,7 +137,7 @@ a wrong guess.
 
 ### Flatpak
 
-<!-- docref: begin src=agent/internal/executor/action_flatpak.go#Executor.executeFlatpak:e05bba49,contract/proto/cadestro/v1/actions.proto#FlatpakParams:9451b1ba -->
+<!-- docref: begin src=agent/internal/executor/action_flatpak.go#Executor.executeFlatpak:e05bba49,contract/proto/cadestro/v1/actions.proto#FlatpakParams:57593e47 -->
 Installs or removes a Flatpak application, system-wide or per signed-in desktop
 user.
 
@@ -158,7 +158,7 @@ Uninstalling should not depend on who happens to be logged in.
 
 ### Shell / Script run
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.executeShellStreaming:a1d14e71,contract/proto/cadestro/v1/actions.proto#ShellParams:0ec72f48 -->
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.executeShellStreaming:a1d14e71,contract/proto/cadestro/v1/actions.proto#ShellParams:144d2cec -->
 The general escape hatch, with a detection/remediation/verify flow and
 line-by-line output streaming.
 
@@ -181,7 +181,7 @@ detection output and compliance flag on its result.
 
 ## Services
 
-<!-- docref: begin src=agent/internal/executor/action_service.go#Executor.executeService:1607f3f9,contract/proto/cadestro/v1/actions.proto#ServiceParams:6fec68cc -->
+<!-- docref: begin src=agent/internal/executor/action_service.go#Executor.executeService:1607f3f9,contract/proto/cadestro/v1/actions.proto#ServiceParams:5292a421 -->
 Writes a unit file if one is supplied, converges enable/disable, and drives the
 run state.
 
@@ -205,7 +205,7 @@ action fires, which is what "restart nightly" needs to mean.
 
 ### File
 
-<!-- docref: begin src=agent/internal/executor/action_file.go#Executor.executeFile:5b6351ea,contract/proto/cadestro/v1/actions.proto#FileParams:2db44133 -->
+<!-- docref: begin src=agent/internal/executor/action_file.go#Executor.executeFile:5b6351ea,contract/proto/cadestro/v1/actions.proto#FileParams:e5ad3099 -->
 Writes a file atomically with owner, group, and mode, or deletes it.
 
 `path` must be absolute and is symlink-resolved before use. `content` is capped
@@ -224,7 +224,7 @@ a `..` can walk out of the guard.
 
 ### Directory
 
-<!-- docref: begin src=agent/internal/executor/action_directory.go#Executor.executeDirectory:9675ee4c,contract/proto/cadestro/v1/actions.proto#DirectoryParams:d1d2593e -->
+<!-- docref: begin src=agent/internal/executor/action_directory.go#Executor.executeDirectory:9675ee4c,contract/proto/cadestro/v1/actions.proto#DirectoryParams:d431ae82 -->
 Creates a directory with mode and ownership applied through a no-follow
 directory descriptor, or removes it recursively.
 
@@ -240,29 +240,29 @@ as an error rather than being quietly ignored.
 
 ---
 
-## Instant actions
+## Live operations
 
-<!-- docref: begin src=agent/internal/executor/executor.go#IsInstantAction:401666e5 -->
-Two action types take no parameters at all and are classified as instant.
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#SyncDeviceCommand:bd14f8bc,contract/proto/cadestro/v1/agent.proto#RebootDeviceCommand:b5476de2 -->
+Reboot and sync take no parameters and are not `ManagedAction`s: the operator
+invokes them directly (`RebootDevice`, `SyncDevice` on `ControlService`), and
+the server delivers each as a single stream message rather than a
+policy-compiled manifest entry. See [live
+operations](policy-model.md#3-pull-synchronization).
 <!-- docref: end -->
 
 ### Reboot
 
 <!-- docref: begin src=agent/internal/executor/action_reboot.go#Executor.executeReboot:36ef5b8c -->
 Broadcasts a best-effort notification to logged-in users, then schedules a
-reboot five minutes out.
-
-It **fails closed when no privileged runner is configured** rather than
-reporting a success that never happens. Reboot is also the one action whose
-completion is proven rather than assumed: see the boot-id mechanism in [the
-policy model](policy-model.md#5-offline-autonomy).
+reboot five minutes out. It **fails closed when no privileged runner is
+configured** rather than reporting a success that never happens.
 <!-- docref: end -->
 
 ### Sync
 
-Triggers an immediate agent sync. It is handled by the scheduler before the
-executor is reached — it pokes the sync trigger and reports success — so it is
-the one action type with no executor branch.
+Pokes the agent's sync trigger and acknowledges the request; the agent's own
+scheduler runs the actual sync, so this reports the request was received, not
+that the sync completed.
 
 ---
 
@@ -270,7 +270,7 @@ the one action type with no executor branch.
 
 ### User
 
-<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.executeUser:be2dec1c,contract/proto/cadestro/v1/actions.proto#UserParams:253c7f4f -->
+<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.executeUser:be2dec1c,contract/proto/cadestro/v1/actions.proto#UserParams:ea58c2fa -->
 Creates, updates, locks, or removes a local account.
 
 `username` is validated. `uid`/`gid` are applied only when greater than zero, so
@@ -300,7 +300,7 @@ metadata; they use the authenticated control stream.
 
 ### Group
 
-<!-- docref: begin src=agent/internal/executor/group.go#Executor.executeGroup:3a0a08cc,contract/proto/cadestro/v1/actions.proto#GroupParams:3253df6b -->
+<!-- docref: begin src=agent/internal/executor/group.go#Executor.executeGroup:3a0a08cc,contract/proto/cadestro/v1/actions.proto#GroupParams:2389ce38 -->
 Creates a group if missing and syncs its membership to **exactly** the declared
 set — adding what is missing and removing what is extra. `gid` is applied only
 when greater than zero; `system_group` places it below 1000.
@@ -314,7 +314,7 @@ when greater than zero; `system_group` places it below 1000.
 
 ### SSH
 
-<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSsh:5d8532f4,contract/proto/cadestro/v1/actions.proto#SshParams:c8bd2df2 -->
+<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSsh:5d8532f4,contract/proto/cadestro/v1/actions.proto#SshParams:0d2115e1 -->
 Grants SSH access to a named set of users, by creating a per-action Linux group
 and a `sshd_config.d` drop-in containing a `Match Group` block for it.
 
@@ -328,7 +328,7 @@ the machine.
 
 ### SSHD
 
-<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSshd:57eeeef9,contract/proto/cadestro/v1/actions.proto#SshdParams:0404be19 -->
+<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSshd:57eeeef9,contract/proto/cadestro/v1/actions.proto#SshdParams:4b6b9970 -->
 Sets global sshd directives through a numbered drop-in, where `priority` is the
 numeric filename prefix that determines load order.
 
@@ -343,7 +343,7 @@ newline would be a directive injection. Validated with `sshd -t` and reloaded.
 
 ## Privilege delegation
 
-<!-- docref: begin src=agent/internal/executor/sudo.go#Executor.executeSudo:8010e22a,contract/proto/cadestro/v1/actions.proto#AdminPolicyParams:fb87f1a1 -->
+<!-- docref: begin src=agent/internal/executor/sudo.go#Executor.executeSudo:8010e22a,contract/proto/cadestro/v1/actions.proto#AdminPolicyParams:c2a89b15 -->
 Creates a per-action Linux group and a `/etc/sudoers.d/` drop-in at mode `0440
 root:root`, validated with `visudo -c` before installation, and syncs the group's
 members.
@@ -374,7 +374,7 @@ three.
 
 ### Local password solution (LPS)
 
-<!-- docref: begin src=agent/internal/executor/lps.go#Executor.executeLps:a3c9b7f9,contract/proto/cadestro/v1/actions.proto#LpsParams:70cc723b -->
+<!-- docref: begin src=agent/internal/executor/lps.go#Executor.executeLps:a3c9b7f9,contract/proto/cadestro/v1/actions.proto#LpsParams:3d4b4a57 -->
 Rotates a random password per managed local account — the LAPS pattern — and
 reports it to control.
 
@@ -399,7 +399,7 @@ is no local password store or device identity.
 
 ### Disk encryption (LUKS)
 
-<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:d673138a,contract/proto/cadestro/v1/actions.proto#EncryptionParams:b0703a68 -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:d673138a,contract/proto/cadestro/v1/actions.proto#EncryptionParams:503a1dfa -->
 Takes ownership of the machine's LUKS volume and manages its passphrase.
 
 `preshared_key` is delivered only on the authenticated device's mTLS stream and
@@ -425,7 +425,7 @@ requested TPM enrollment instead of being refused.
 
 ### WiFi
 
-<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeWifiAction:faa8baea,agent/internal/executor/wifi.go#Executor.executeWifi:cd15c3ba,contract/proto/cadestro/v1/actions.proto#WifiParams:6fd2eeda -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeWifiAction:faa8baea,agent/internal/executor/wifi.go#Executor.executeWifi:cd15c3ba,contract/proto/cadestro/v1/actions.proto#WifiParams:bd82074d -->
 Manages a NetworkManager connection profile.
 
 `ssid` and `auth_type` are required, and the auth type selects which secret is
@@ -446,7 +446,7 @@ unchanged rather than failing.
 
 ## Agent self-update
 
-<!-- docref: begin src=agent/internal/executor/agent_update.go#Executor.executeAgentUpdate:b4a12c97,contract/proto/cadestro/v1/actions.proto#AgentUpdateParams:e8611183 -->
+<!-- docref: begin src=agent/internal/executor/agent_update.go#Executor.executeAgentUpdate:b4a12c97,contract/proto/cadestro/v1/actions.proto#AgentUpdateParams:2cff2cac -->
 Replaces the agent binary with a newer one, at most once per sync cycle.
 
 The agent picks the entry matching its own architecture and **no matching entry
@@ -463,7 +463,7 @@ subcommands, then replaces atomically with a backup and signals a graceful
 restart.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#AgentUpdateArch:41e95e5c -->
+<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#AgentUpdateArch:e6dec03f -->
 Each architecture entry is a binary URL plus a checksum-manifest URL, both https.
 The agent requires a detached signature next to the manifest and verifies the
 **exact manifest bytes** against its embedded Ed25519 release-signing public key

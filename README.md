@@ -100,9 +100,9 @@ Fedora, AlmaLinux, Arch, and openSUSE in addition to its Debian base lanes.
 Other distributions may work; these are the ones a merge cannot break silently.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:cfb58496 -->
+<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:5db396bd -->
 **Scale target: one control instance for 10,000 connected agents.** There is a
-gate for it — a mixed dispatch, receipt, result, heartbeat, terminal, and search
+gate for it — a mixed dispatch, result, heartbeat, terminal, and search
 workload at that agent count with latency assertions. It is **operator-run, not
 CI-run**: it skips unless explicitly enabled, so treat the number as a target
 this repository can demonstrate on request, not as something every merge proves.

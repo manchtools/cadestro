@@ -10,7 +10,7 @@ That is not a gap waiting to be filled in a later sprint; it is the current
 design, and this page describes what the code actually supports rather than what
 a mature product would.
 
-<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:2b2f4c56 -->
+<!-- docref: begin src=server/internal/store/store.go#initializeSQLite:05f20fae -->
 Schema handling is a three-way decision at startup, and there is no migration
 runner anywhere in the server. An empty database gets the baseline schema
 applied in one transaction. A database already at the current version is opened.
@@ -84,7 +84,7 @@ Reinstall across a schema version. Concretely:
 2. Install the new release fresh.
 3. Re-enroll devices.
 
-<!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:c85cea66 -->
+<!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:e20a97cf -->
 Restoring the old database into the new release is not a migration and will not
 be treated as one: the store's non-creating open path requires the exact current
 schema version and refuses anything else. A database from a different schema
