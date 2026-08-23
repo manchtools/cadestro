@@ -323,9 +323,18 @@ message ManifestResult {
   ];
 }
 
+// ResultAckCode explains why the server accepted or rejected a result
+// delivery. ACCEPTED/REJECTED mirror the accepted field; the code
+// exists for the rejection message the agent surfaces to its caller.
+enum ResultAckCode {
+  RESULT_ACK_CODE_UNSPECIFIED = 0;
+  RESULT_ACK_CODE_ACCEPTED = 1;
+  RESULT_ACK_CODE_REJECTED = 2;
+}
+
 message ResultAck {
   bool accepted = 1;
-  string code = 2;
+  ResultAckCode code = 2 [(buf.validate.field).enum.defined_only = true];
 }
 
 message Error {

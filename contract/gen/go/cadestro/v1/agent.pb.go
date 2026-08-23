@@ -180,6 +180,58 @@ func (OnFailure) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{2}
 }
 
+// ResultAckCode explains why the server accepted or rejected a result
+// delivery. ACCEPTED/REJECTED mirror the accepted field; the code
+// exists for the rejection message the agent surfaces to its caller.
+type ResultAckCode int32
+
+const (
+	ResultAckCode_RESULT_ACK_CODE_UNSPECIFIED ResultAckCode = 0
+	ResultAckCode_RESULT_ACK_CODE_ACCEPTED    ResultAckCode = 1
+	ResultAckCode_RESULT_ACK_CODE_REJECTED    ResultAckCode = 2
+)
+
+// Enum value maps for ResultAckCode.
+var (
+	ResultAckCode_name = map[int32]string{
+		0: "RESULT_ACK_CODE_UNSPECIFIED",
+		1: "RESULT_ACK_CODE_ACCEPTED",
+		2: "RESULT_ACK_CODE_REJECTED",
+	}
+	ResultAckCode_value = map[string]int32{
+		"RESULT_ACK_CODE_UNSPECIFIED": 0,
+		"RESULT_ACK_CODE_ACCEPTED":    1,
+		"RESULT_ACK_CODE_REJECTED":    2,
+	}
+)
+
+func (x ResultAckCode) Enum() *ResultAckCode {
+	p := new(ResultAckCode)
+	*p = x
+	return p
+}
+
+func (x ResultAckCode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ResultAckCode) Descriptor() protoreflect.EnumDescriptor {
+	return file_cadestro_v1_agent_proto_enumTypes[3].Descriptor()
+}
+
+func (ResultAckCode) Type() protoreflect.EnumType {
+	return &file_cadestro_v1_agent_proto_enumTypes[3]
+}
+
+func (x ResultAckCode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ResultAckCode.Descriptor instead.
+func (ResultAckCode) EnumDescriptor() ([]byte, []int) {
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{3}
+}
+
 type OSQueryOp int32
 
 const (
@@ -231,11 +283,11 @@ func (x OSQueryOp) String() string {
 }
 
 func (OSQueryOp) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_agent_proto_enumTypes[3].Descriptor()
+	return file_cadestro_v1_agent_proto_enumTypes[4].Descriptor()
 }
 
 func (OSQueryOp) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_agent_proto_enumTypes[3]
+	return &file_cadestro_v1_agent_proto_enumTypes[4]
 }
 
 func (x OSQueryOp) Number() protoreflect.EnumNumber {
@@ -244,7 +296,7 @@ func (x OSQueryOp) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use OSQueryOp.Descriptor instead.
 func (OSQueryOp) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{4}
 }
 
 // LogSource selects which system log source the agent queries.
@@ -283,11 +335,11 @@ func (x LogSource) String() string {
 }
 
 func (LogSource) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_agent_proto_enumTypes[4].Descriptor()
+	return file_cadestro_v1_agent_proto_enumTypes[5].Descriptor()
 }
 
 func (LogSource) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_agent_proto_enumTypes[4]
+	return &file_cadestro_v1_agent_proto_enumTypes[5]
 }
 
 func (x LogSource) Number() protoreflect.EnumNumber {
@@ -296,7 +348,7 @@ func (x LogSource) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use LogSource.Descriptor instead.
 func (LogSource) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{5}
 }
 
 // Terminal session lifecycle states reported by the agent.
@@ -340,11 +392,11 @@ func (x TerminalSessionState) String() string {
 }
 
 func (TerminalSessionState) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_agent_proto_enumTypes[5].Descriptor()
+	return file_cadestro_v1_agent_proto_enumTypes[6].Descriptor()
 }
 
 func (TerminalSessionState) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_agent_proto_enumTypes[5]
+	return &file_cadestro_v1_agent_proto_enumTypes[6]
 }
 
 func (x TerminalSessionState) Number() protoreflect.EnumNumber {
@@ -353,7 +405,7 @@ func (x TerminalSessionState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TerminalSessionState.Descriptor instead.
 func (TerminalSessionState) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{6}
 }
 
 type AgentMessage struct {
@@ -1964,7 +2016,7 @@ func (x *ManifestResult) GetError() string {
 type ResultAck struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Accepted      bool                   `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
-	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	Code          ResultAckCode          `protobuf:"varint,2,opt,name=code,proto3,enum=cadestro.v1.ResultAckCode" json:"code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2006,11 +2058,11 @@ func (x *ResultAck) GetAccepted() bool {
 	return false
 }
 
-func (x *ResultAck) GetCode() string {
+func (x *ResultAck) GetCode() ResultAckCode {
 	if x != nil {
 		return x.Code
 	}
-	return ""
+	return ResultAckCode_RESULT_ACK_CODE_UNSPECIFIED
 }
 
 type Error struct {
@@ -3967,10 +4019,10 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\vduration_ms\x18\x05 \x01(\x03B\n" +
 	"\xbaH\a\xd8\x01\x01\"\x02(\x00R\n" +
 	"durationMs\x12!\n" +
-	"\x05error\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\";\n" +
+	"\x05error\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\"a\n" +
 	"\tResultAck\x12\x1a\n" +
-	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\"R\n" +
+	"\baccepted\x18\x01 \x01(\bR\baccepted\x128\n" +
+	"\x04code\x18\x02 \x01(\x0e2\x1a.cadestro.v1.ResultAckCodeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04code\"R\n" +
 	"\x05Error\x12 \n" +
 	"\x04code\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04code\x12'\n" +
 	"\amessage\x18\x02 \x01(\tB\r\xbaH\n" +
@@ -4122,7 +4174,11 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"'SECURITY_ALERT_TYPE_INVALID_CERTIFICATE\x10\x03*9\n" +
 	"\tOnFailure\x12\x17\n" +
 	"\x13ON_FAILURE_CONTINUE\x10\x00\x12\x13\n" +
-	"\x0fON_FAILURE_STOP\x10\x01*\xcc\x01\n" +
+	"\x0fON_FAILURE_STOP\x10\x01*l\n" +
+	"\rResultAckCode\x12\x1f\n" +
+	"\x1bRESULT_ACK_CODE_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18RESULT_ACK_CODE_ACCEPTED\x10\x01\x12\x1c\n" +
+	"\x18RESULT_ACK_CODE_REJECTED\x10\x02*\xcc\x01\n" +
 	"\tOSQueryOp\x12\x1b\n" +
 	"\x17OS_QUERY_OP_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eOS_QUERY_OP_EQ\x10\x01\x12\x12\n" +
@@ -4156,151 +4212,153 @@ func file_cadestro_v1_agent_proto_rawDescGZIP() []byte {
 	return file_cadestro_v1_agent_proto_rawDescData
 }
 
-var file_cadestro_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_cadestro_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
 var file_cadestro_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
 var file_cadestro_v1_agent_proto_goTypes = []any{
 	(OutputStreamType)(0),             // 0: cadestro.v1.OutputStreamType
 	(SecurityAlertType)(0),            // 1: cadestro.v1.SecurityAlertType
 	(OnFailure)(0),                    // 2: cadestro.v1.OnFailure
-	(OSQueryOp)(0),                    // 3: cadestro.v1.OSQueryOp
-	(LogSource)(0),                    // 4: cadestro.v1.LogSource
-	(TerminalSessionState)(0),         // 5: cadestro.v1.TerminalSessionState
-	(*AgentMessage)(nil),              // 6: cadestro.v1.AgentMessage
-	(*OutputChunk)(nil),               // 7: cadestro.v1.OutputChunk
-	(*Hello)(nil),                     // 8: cadestro.v1.Hello
-	(*Heartbeat)(nil),                 // 9: cadestro.v1.Heartbeat
-	(*SecurityAlert)(nil),             // 10: cadestro.v1.SecurityAlert
-	(*ServerMessage)(nil),             // 11: cadestro.v1.ServerMessage
-	(*SyncDeviceCommand)(nil),         // 12: cadestro.v1.SyncDeviceCommand
-	(*RebootDeviceCommand)(nil),       // 13: cadestro.v1.RebootDeviceCommand
-	(*SyncDeviceResult)(nil),          // 14: cadestro.v1.SyncDeviceResult
-	(*RebootDeviceResult)(nil),        // 15: cadestro.v1.RebootDeviceResult
-	(*Welcome)(nil),                   // 16: cadestro.v1.Welcome
-	(*ManifestProvenance)(nil),        // 17: cadestro.v1.ManifestProvenance
-	(*ManifestOccurrence)(nil),        // 18: cadestro.v1.ManifestOccurrence
-	(*Manifest)(nil),                  // 19: cadestro.v1.Manifest
-	(*ManifestDelivery)(nil),          // 20: cadestro.v1.ManifestDelivery
-	(*ManifestResult)(nil),            // 21: cadestro.v1.ManifestResult
-	(*ResultAck)(nil),                 // 22: cadestro.v1.ResultAck
-	(*Error)(nil),                     // 23: cadestro.v1.Error
-	(*OSQuery)(nil),                   // 24: cadestro.v1.OSQuery
-	(*OSQueryCondition)(nil),          // 25: cadestro.v1.OSQueryCondition
-	(*OSQueryResult)(nil),             // 26: cadestro.v1.OSQueryResult
-	(*OSQueryRow)(nil),                // 27: cadestro.v1.OSQueryRow
-	(*DeviceInventory)(nil),           // 28: cadestro.v1.DeviceInventory
-	(*InventoryTable)(nil),            // 29: cadestro.v1.InventoryTable
-	(*RequestInventory)(nil),          // 30: cadestro.v1.RequestInventory
-	(*GetLuksKeyRequest)(nil),         // 31: cadestro.v1.GetLuksKeyRequest
-	(*GetLuksKeyResponse)(nil),        // 32: cadestro.v1.GetLuksKeyResponse
-	(*StoreLuksKeyRequest)(nil),       // 33: cadestro.v1.StoreLuksKeyRequest
-	(*StoreLuksKeyResponse)(nil),      // 34: cadestro.v1.StoreLuksKeyResponse
-	(*LpsPasswordRotation)(nil),       // 35: cadestro.v1.LpsPasswordRotation
-	(*StoreLpsPasswordsRequest)(nil),  // 36: cadestro.v1.StoreLpsPasswordsRequest
-	(*StoreLpsPasswordsResponse)(nil), // 37: cadestro.v1.StoreLpsPasswordsResponse
-	(*RevokeLuksDeviceKey)(nil),       // 38: cadestro.v1.RevokeLuksDeviceKey
-	(*RevokeLuksDeviceKeyResult)(nil), // 39: cadestro.v1.RevokeLuksDeviceKeyResult
-	(*ValidateLuksTokenRequest)(nil),  // 40: cadestro.v1.ValidateLuksTokenRequest
-	(*ValidateLuksTokenResponse)(nil), // 41: cadestro.v1.ValidateLuksTokenResponse
-	(*SyncRequest)(nil),               // 42: cadestro.v1.SyncRequest
-	(*SyncState)(nil),                 // 43: cadestro.v1.SyncState
-	(*DesiredPolicy)(nil),             // 44: cadestro.v1.DesiredPolicy
-	(*LogQuery)(nil),                  // 45: cadestro.v1.LogQuery
-	(*LogQueryResult)(nil),            // 46: cadestro.v1.LogQueryResult
-	(*TerminalStart)(nil),             // 47: cadestro.v1.TerminalStart
-	(*TerminalInput)(nil),             // 48: cadestro.v1.TerminalInput
-	(*TerminalResize)(nil),            // 49: cadestro.v1.TerminalResize
-	(*TerminalStop)(nil),              // 50: cadestro.v1.TerminalStop
-	(*TerminalOutput)(nil),            // 51: cadestro.v1.TerminalOutput
-	(*TerminalStateChange)(nil),       // 52: cadestro.v1.TerminalStateChange
-	nil,                               // 53: cadestro.v1.SecurityAlert.DetailsEntry
-	nil,                               // 54: cadestro.v1.OSQueryRow.DataEntry
-	(*ActionResult)(nil),              // 55: cadestro.v1.ActionResult
-	(*DeviceId)(nil),                  // 56: cadestro.v1.DeviceId
-	(*durationpb.Duration)(nil),       // 57: google.protobuf.Duration
-	(*Action)(nil),                    // 58: cadestro.v1.Action
-	(*ActionSchedule)(nil),            // 59: cadestro.v1.ActionSchedule
-	(ExecutionStatus)(0),              // 60: cadestro.v1.ExecutionStatus
-	(*timestamppb.Timestamp)(nil),     // 61: google.protobuf.Timestamp
-	(RotationReason)(0),               // 62: cadestro.v1.RotationReason
-	(LpsPasswordComplexity)(0),        // 63: cadestro.v1.LpsPasswordComplexity
-	(*MaintenanceWindow)(nil),         // 64: cadestro.v1.MaintenanceWindow
+	(ResultAckCode)(0),                // 3: cadestro.v1.ResultAckCode
+	(OSQueryOp)(0),                    // 4: cadestro.v1.OSQueryOp
+	(LogSource)(0),                    // 5: cadestro.v1.LogSource
+	(TerminalSessionState)(0),         // 6: cadestro.v1.TerminalSessionState
+	(*AgentMessage)(nil),              // 7: cadestro.v1.AgentMessage
+	(*OutputChunk)(nil),               // 8: cadestro.v1.OutputChunk
+	(*Hello)(nil),                     // 9: cadestro.v1.Hello
+	(*Heartbeat)(nil),                 // 10: cadestro.v1.Heartbeat
+	(*SecurityAlert)(nil),             // 11: cadestro.v1.SecurityAlert
+	(*ServerMessage)(nil),             // 12: cadestro.v1.ServerMessage
+	(*SyncDeviceCommand)(nil),         // 13: cadestro.v1.SyncDeviceCommand
+	(*RebootDeviceCommand)(nil),       // 14: cadestro.v1.RebootDeviceCommand
+	(*SyncDeviceResult)(nil),          // 15: cadestro.v1.SyncDeviceResult
+	(*RebootDeviceResult)(nil),        // 16: cadestro.v1.RebootDeviceResult
+	(*Welcome)(nil),                   // 17: cadestro.v1.Welcome
+	(*ManifestProvenance)(nil),        // 18: cadestro.v1.ManifestProvenance
+	(*ManifestOccurrence)(nil),        // 19: cadestro.v1.ManifestOccurrence
+	(*Manifest)(nil),                  // 20: cadestro.v1.Manifest
+	(*ManifestDelivery)(nil),          // 21: cadestro.v1.ManifestDelivery
+	(*ManifestResult)(nil),            // 22: cadestro.v1.ManifestResult
+	(*ResultAck)(nil),                 // 23: cadestro.v1.ResultAck
+	(*Error)(nil),                     // 24: cadestro.v1.Error
+	(*OSQuery)(nil),                   // 25: cadestro.v1.OSQuery
+	(*OSQueryCondition)(nil),          // 26: cadestro.v1.OSQueryCondition
+	(*OSQueryResult)(nil),             // 27: cadestro.v1.OSQueryResult
+	(*OSQueryRow)(nil),                // 28: cadestro.v1.OSQueryRow
+	(*DeviceInventory)(nil),           // 29: cadestro.v1.DeviceInventory
+	(*InventoryTable)(nil),            // 30: cadestro.v1.InventoryTable
+	(*RequestInventory)(nil),          // 31: cadestro.v1.RequestInventory
+	(*GetLuksKeyRequest)(nil),         // 32: cadestro.v1.GetLuksKeyRequest
+	(*GetLuksKeyResponse)(nil),        // 33: cadestro.v1.GetLuksKeyResponse
+	(*StoreLuksKeyRequest)(nil),       // 34: cadestro.v1.StoreLuksKeyRequest
+	(*StoreLuksKeyResponse)(nil),      // 35: cadestro.v1.StoreLuksKeyResponse
+	(*LpsPasswordRotation)(nil),       // 36: cadestro.v1.LpsPasswordRotation
+	(*StoreLpsPasswordsRequest)(nil),  // 37: cadestro.v1.StoreLpsPasswordsRequest
+	(*StoreLpsPasswordsResponse)(nil), // 38: cadestro.v1.StoreLpsPasswordsResponse
+	(*RevokeLuksDeviceKey)(nil),       // 39: cadestro.v1.RevokeLuksDeviceKey
+	(*RevokeLuksDeviceKeyResult)(nil), // 40: cadestro.v1.RevokeLuksDeviceKeyResult
+	(*ValidateLuksTokenRequest)(nil),  // 41: cadestro.v1.ValidateLuksTokenRequest
+	(*ValidateLuksTokenResponse)(nil), // 42: cadestro.v1.ValidateLuksTokenResponse
+	(*SyncRequest)(nil),               // 43: cadestro.v1.SyncRequest
+	(*SyncState)(nil),                 // 44: cadestro.v1.SyncState
+	(*DesiredPolicy)(nil),             // 45: cadestro.v1.DesiredPolicy
+	(*LogQuery)(nil),                  // 46: cadestro.v1.LogQuery
+	(*LogQueryResult)(nil),            // 47: cadestro.v1.LogQueryResult
+	(*TerminalStart)(nil),             // 48: cadestro.v1.TerminalStart
+	(*TerminalInput)(nil),             // 49: cadestro.v1.TerminalInput
+	(*TerminalResize)(nil),            // 50: cadestro.v1.TerminalResize
+	(*TerminalStop)(nil),              // 51: cadestro.v1.TerminalStop
+	(*TerminalOutput)(nil),            // 52: cadestro.v1.TerminalOutput
+	(*TerminalStateChange)(nil),       // 53: cadestro.v1.TerminalStateChange
+	nil,                               // 54: cadestro.v1.SecurityAlert.DetailsEntry
+	nil,                               // 55: cadestro.v1.OSQueryRow.DataEntry
+	(*ActionResult)(nil),              // 56: cadestro.v1.ActionResult
+	(*DeviceId)(nil),                  // 57: cadestro.v1.DeviceId
+	(*durationpb.Duration)(nil),       // 58: google.protobuf.Duration
+	(*Action)(nil),                    // 59: cadestro.v1.Action
+	(*ActionSchedule)(nil),            // 60: cadestro.v1.ActionSchedule
+	(ExecutionStatus)(0),              // 61: cadestro.v1.ExecutionStatus
+	(*timestamppb.Timestamp)(nil),     // 62: google.protobuf.Timestamp
+	(RotationReason)(0),               // 63: cadestro.v1.RotationReason
+	(LpsPasswordComplexity)(0),        // 64: cadestro.v1.LpsPasswordComplexity
+	(*MaintenanceWindow)(nil),         // 65: cadestro.v1.MaintenanceWindow
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
-	8,  // 0: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
-	9,  // 1: cadestro.v1.AgentMessage.heartbeat:type_name -> cadestro.v1.Heartbeat
-	42, // 2: cadestro.v1.AgentMessage.sync_request:type_name -> cadestro.v1.SyncRequest
-	14, // 3: cadestro.v1.AgentMessage.sync_device_result:type_name -> cadestro.v1.SyncDeviceResult
-	15, // 4: cadestro.v1.AgentMessage.reboot_device_result:type_name -> cadestro.v1.RebootDeviceResult
-	55, // 5: cadestro.v1.AgentMessage.action_result:type_name -> cadestro.v1.ActionResult
-	7,  // 6: cadestro.v1.AgentMessage.output_chunk:type_name -> cadestro.v1.OutputChunk
-	21, // 7: cadestro.v1.AgentMessage.manifest_result:type_name -> cadestro.v1.ManifestResult
-	26, // 8: cadestro.v1.AgentMessage.query_result:type_name -> cadestro.v1.OSQueryResult
-	28, // 9: cadestro.v1.AgentMessage.inventory:type_name -> cadestro.v1.DeviceInventory
-	10, // 10: cadestro.v1.AgentMessage.security_alert:type_name -> cadestro.v1.SecurityAlert
-	31, // 11: cadestro.v1.AgentMessage.get_luks_key:type_name -> cadestro.v1.GetLuksKeyRequest
-	33, // 12: cadestro.v1.AgentMessage.store_luks_key:type_name -> cadestro.v1.StoreLuksKeyRequest
-	39, // 13: cadestro.v1.AgentMessage.revoke_luks_device_key_result:type_name -> cadestro.v1.RevokeLuksDeviceKeyResult
-	36, // 14: cadestro.v1.AgentMessage.store_lps_passwords:type_name -> cadestro.v1.StoreLpsPasswordsRequest
-	40, // 15: cadestro.v1.AgentMessage.validate_luks_token:type_name -> cadestro.v1.ValidateLuksTokenRequest
-	46, // 16: cadestro.v1.AgentMessage.log_query_result:type_name -> cadestro.v1.LogQueryResult
-	51, // 17: cadestro.v1.AgentMessage.terminal_output:type_name -> cadestro.v1.TerminalOutput
-	52, // 18: cadestro.v1.AgentMessage.terminal_state_change:type_name -> cadestro.v1.TerminalStateChange
+	9,  // 0: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
+	10, // 1: cadestro.v1.AgentMessage.heartbeat:type_name -> cadestro.v1.Heartbeat
+	43, // 2: cadestro.v1.AgentMessage.sync_request:type_name -> cadestro.v1.SyncRequest
+	15, // 3: cadestro.v1.AgentMessage.sync_device_result:type_name -> cadestro.v1.SyncDeviceResult
+	16, // 4: cadestro.v1.AgentMessage.reboot_device_result:type_name -> cadestro.v1.RebootDeviceResult
+	56, // 5: cadestro.v1.AgentMessage.action_result:type_name -> cadestro.v1.ActionResult
+	8,  // 6: cadestro.v1.AgentMessage.output_chunk:type_name -> cadestro.v1.OutputChunk
+	22, // 7: cadestro.v1.AgentMessage.manifest_result:type_name -> cadestro.v1.ManifestResult
+	27, // 8: cadestro.v1.AgentMessage.query_result:type_name -> cadestro.v1.OSQueryResult
+	29, // 9: cadestro.v1.AgentMessage.inventory:type_name -> cadestro.v1.DeviceInventory
+	11, // 10: cadestro.v1.AgentMessage.security_alert:type_name -> cadestro.v1.SecurityAlert
+	32, // 11: cadestro.v1.AgentMessage.get_luks_key:type_name -> cadestro.v1.GetLuksKeyRequest
+	34, // 12: cadestro.v1.AgentMessage.store_luks_key:type_name -> cadestro.v1.StoreLuksKeyRequest
+	40, // 13: cadestro.v1.AgentMessage.revoke_luks_device_key_result:type_name -> cadestro.v1.RevokeLuksDeviceKeyResult
+	37, // 14: cadestro.v1.AgentMessage.store_lps_passwords:type_name -> cadestro.v1.StoreLpsPasswordsRequest
+	41, // 15: cadestro.v1.AgentMessage.validate_luks_token:type_name -> cadestro.v1.ValidateLuksTokenRequest
+	47, // 16: cadestro.v1.AgentMessage.log_query_result:type_name -> cadestro.v1.LogQueryResult
+	52, // 17: cadestro.v1.AgentMessage.terminal_output:type_name -> cadestro.v1.TerminalOutput
+	53, // 18: cadestro.v1.AgentMessage.terminal_state_change:type_name -> cadestro.v1.TerminalStateChange
 	0,  // 19: cadestro.v1.OutputChunk.stream:type_name -> cadestro.v1.OutputStreamType
-	56, // 20: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
-	57, // 21: cadestro.v1.Heartbeat.uptime:type_name -> google.protobuf.Duration
+	57, // 20: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
+	58, // 21: cadestro.v1.Heartbeat.uptime:type_name -> google.protobuf.Duration
 	1,  // 22: cadestro.v1.SecurityAlert.type:type_name -> cadestro.v1.SecurityAlertType
-	53, // 23: cadestro.v1.SecurityAlert.details:type_name -> cadestro.v1.SecurityAlert.DetailsEntry
-	12, // 24: cadestro.v1.ServerMessage.sync_device:type_name -> cadestro.v1.SyncDeviceCommand
-	16, // 25: cadestro.v1.ServerMessage.welcome:type_name -> cadestro.v1.Welcome
-	43, // 26: cadestro.v1.ServerMessage.sync_state:type_name -> cadestro.v1.SyncState
-	13, // 27: cadestro.v1.ServerMessage.reboot_device:type_name -> cadestro.v1.RebootDeviceCommand
-	24, // 28: cadestro.v1.ServerMessage.query:type_name -> cadestro.v1.OSQuery
-	30, // 29: cadestro.v1.ServerMessage.request_inventory:type_name -> cadestro.v1.RequestInventory
-	23, // 30: cadestro.v1.ServerMessage.error:type_name -> cadestro.v1.Error
-	32, // 31: cadestro.v1.ServerMessage.get_luks_key:type_name -> cadestro.v1.GetLuksKeyResponse
-	34, // 32: cadestro.v1.ServerMessage.store_luks_key:type_name -> cadestro.v1.StoreLuksKeyResponse
-	38, // 33: cadestro.v1.ServerMessage.revoke_luks_device_key:type_name -> cadestro.v1.RevokeLuksDeviceKey
-	37, // 34: cadestro.v1.ServerMessage.store_lps_passwords:type_name -> cadestro.v1.StoreLpsPasswordsResponse
-	41, // 35: cadestro.v1.ServerMessage.validate_luks_token:type_name -> cadestro.v1.ValidateLuksTokenResponse
-	22, // 36: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
-	45, // 37: cadestro.v1.ServerMessage.log_query:type_name -> cadestro.v1.LogQuery
-	47, // 38: cadestro.v1.ServerMessage.terminal_start:type_name -> cadestro.v1.TerminalStart
-	48, // 39: cadestro.v1.ServerMessage.terminal_input:type_name -> cadestro.v1.TerminalInput
-	49, // 40: cadestro.v1.ServerMessage.terminal_resize:type_name -> cadestro.v1.TerminalResize
-	50, // 41: cadestro.v1.ServerMessage.terminal_stop:type_name -> cadestro.v1.TerminalStop
-	57, // 42: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
-	58, // 43: cadestro.v1.ManifestOccurrence.action:type_name -> cadestro.v1.Action
+	54, // 23: cadestro.v1.SecurityAlert.details:type_name -> cadestro.v1.SecurityAlert.DetailsEntry
+	13, // 24: cadestro.v1.ServerMessage.sync_device:type_name -> cadestro.v1.SyncDeviceCommand
+	17, // 25: cadestro.v1.ServerMessage.welcome:type_name -> cadestro.v1.Welcome
+	44, // 26: cadestro.v1.ServerMessage.sync_state:type_name -> cadestro.v1.SyncState
+	14, // 27: cadestro.v1.ServerMessage.reboot_device:type_name -> cadestro.v1.RebootDeviceCommand
+	25, // 28: cadestro.v1.ServerMessage.query:type_name -> cadestro.v1.OSQuery
+	31, // 29: cadestro.v1.ServerMessage.request_inventory:type_name -> cadestro.v1.RequestInventory
+	24, // 30: cadestro.v1.ServerMessage.error:type_name -> cadestro.v1.Error
+	33, // 31: cadestro.v1.ServerMessage.get_luks_key:type_name -> cadestro.v1.GetLuksKeyResponse
+	35, // 32: cadestro.v1.ServerMessage.store_luks_key:type_name -> cadestro.v1.StoreLuksKeyResponse
+	39, // 33: cadestro.v1.ServerMessage.revoke_luks_device_key:type_name -> cadestro.v1.RevokeLuksDeviceKey
+	38, // 34: cadestro.v1.ServerMessage.store_lps_passwords:type_name -> cadestro.v1.StoreLpsPasswordsResponse
+	42, // 35: cadestro.v1.ServerMessage.validate_luks_token:type_name -> cadestro.v1.ValidateLuksTokenResponse
+	23, // 36: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
+	46, // 37: cadestro.v1.ServerMessage.log_query:type_name -> cadestro.v1.LogQuery
+	48, // 38: cadestro.v1.ServerMessage.terminal_start:type_name -> cadestro.v1.TerminalStart
+	49, // 39: cadestro.v1.ServerMessage.terminal_input:type_name -> cadestro.v1.TerminalInput
+	50, // 40: cadestro.v1.ServerMessage.terminal_resize:type_name -> cadestro.v1.TerminalResize
+	51, // 41: cadestro.v1.ServerMessage.terminal_stop:type_name -> cadestro.v1.TerminalStop
+	58, // 42: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
+	59, // 43: cadestro.v1.ManifestOccurrence.action:type_name -> cadestro.v1.Action
 	2,  // 44: cadestro.v1.ManifestOccurrence.on_failure:type_name -> cadestro.v1.OnFailure
-	17, // 45: cadestro.v1.Manifest.provenance:type_name -> cadestro.v1.ManifestProvenance
-	59, // 46: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
+	18, // 45: cadestro.v1.Manifest.provenance:type_name -> cadestro.v1.ManifestProvenance
+	60, // 46: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
 	2,  // 47: cadestro.v1.Manifest.default_on_failure:type_name -> cadestro.v1.OnFailure
-	18, // 48: cadestro.v1.Manifest.occurrences:type_name -> cadestro.v1.ManifestOccurrence
-	19, // 49: cadestro.v1.ManifestDelivery.manifest:type_name -> cadestro.v1.Manifest
-	60, // 50: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
-	61, // 51: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
-	25, // 52: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
-	3,  // 53: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
-	27, // 54: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
-	54, // 55: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
-	29, // 56: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
-	27, // 57: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
-	62, // 58: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
-	62, // 59: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
-	35, // 60: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
-	63, // 61: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	20, // 62: cadestro.v1.SyncState.deliveries:type_name -> cadestro.v1.ManifestDelivery
-	64, // 63: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
-	44, // 64: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	19, // 65: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	4,  // 66: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
-	5,  // 67: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
-	6,  // 68: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	11, // 69: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	69, // [69:70] is the sub-list for method output_type
-	68, // [68:69] is the sub-list for method input_type
-	68, // [68:68] is the sub-list for extension type_name
-	68, // [68:68] is the sub-list for extension extendee
-	0,  // [0:68] is the sub-list for field type_name
+	19, // 48: cadestro.v1.Manifest.occurrences:type_name -> cadestro.v1.ManifestOccurrence
+	20, // 49: cadestro.v1.ManifestDelivery.manifest:type_name -> cadestro.v1.Manifest
+	61, // 50: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
+	62, // 51: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
+	3,  // 52: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
+	26, // 53: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
+	4,  // 54: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
+	28, // 55: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
+	55, // 56: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
+	30, // 57: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
+	28, // 58: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
+	63, // 59: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
+	63, // 60: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
+	36, // 61: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
+	64, // 62: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	21, // 63: cadestro.v1.SyncState.deliveries:type_name -> cadestro.v1.ManifestDelivery
+	65, // 64: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	45, // 65: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	20, // 66: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	5,  // 67: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
+	6,  // 68: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
+	7,  // 69: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	12, // 70: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	70, // [70:71] is the sub-list for method output_type
+	69, // [69:70] is the sub-list for method input_type
+	69, // [69:69] is the sub-list for extension type_name
+	69, // [69:69] is the sub-list for extension extendee
+	0,  // [0:69] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }
@@ -4357,7 +4415,7 @@ func file_cadestro_v1_agent_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_agent_proto_rawDesc), len(file_cadestro_v1_agent_proto_rawDesc)),
-			NumEnums:      6,
+			NumEnums:      7,
 			NumMessages:   49,
 			NumExtensions: 0,
 			NumServices:   1,

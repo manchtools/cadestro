@@ -376,9 +376,9 @@ func (h *Handler) sendResultAck(agent *connection.Agent, messageID string, resul
 	}
 	ack := &pmv1.ResultAck{Accepted: resultErr == nil}
 	if resultErr == nil {
-		ack.Code = "ACCEPTED"
+		ack.Code = pmv1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED
 	} else {
-		ack.Code = "REJECTED"
+		ack.Code = pmv1.ResultAckCode_RESULT_ACK_CODE_REJECTED
 	}
 	return agent.Send(&pmv1.ServerMessage{Id: messageID, Payload: &pmv1.ServerMessage_ResultAck{ResultAck: ack}})
 }
