@@ -2870,7 +2870,7 @@ type ActionResult struct {
 	// result replayed after a reconnect updates the same row instead of
 	// creating a second one. action_id alone cannot do this — duplicate
 	// authored occurrences of the same action are preserved and executed, so
-	// one delivery legitimately produces several results with the same
+	// one authored occurrence legitimately produces several results with the same
 	// action_id.
 	RunId         string `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	OccurrenceId  string `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`

@@ -94,7 +94,7 @@ import {
 	// User Selections
 	ListAvailableActionsRequestSchema,
 	SetUserSelectionRequestSchema,
-	// Dispatch & Execution
+	// Live control
 	RebootDeviceRequestSchema,
 	SyncDeviceRequestSchema,
 	// Audit Log

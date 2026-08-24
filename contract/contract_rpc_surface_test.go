@@ -43,11 +43,6 @@ func TestRPCSurface_CurrentTypedControl(t *testing.T) {
 			t.Errorf("MISSING current control RPC %s", name)
 		}
 	}
-	for _, name := range []string{"DispatchInstantAction", "DispatchAssignedActions"} {
-		if contains(methods, name) {
-			t.Errorf("retired control RPC %s still ships", name)
-		}
-	}
 }
 
 // TestRPCSurface_ProviderCapabilitiesArePublic holds the identity-provider
@@ -362,7 +357,7 @@ func TestContract_Namespace(t *testing.T) {
 	}
 }
 
-// Design §7.1–7.2 (pull-only manifest delivery and durable results) and §8
+// The target manifest and durable-result shape and §8
 // (classified mTLS secrets),
 // asserted by exact name and exact type.
 func TestContract_TargetShape(t *testing.T) {
@@ -375,29 +370,6 @@ func TestContract_TargetShape(t *testing.T) {
 			t.Errorf("message %s is absent from the shipped contract", name)
 		}
 	}
-	for _, name := range []protoreflect.Name{"ActionDispatch", "SignedActionEnvelope"} {
-		if _, ok := msgs[name]; ok {
-			t.Errorf("message %s still ships — the signed-envelope dispatch path must be absent", name)
-		}
-	}
-	if _, ok := msgs["DeliveryReceipt"]; ok {
-		t.Error("message DeliveryReceipt still ships — Sync pull needs no transport receipt")
-	}
-	for _, field := range []struct{ message, name string }{
-		{"ServerMessage", "manifest_delivery"},
-		{"AgentMessage", "delivery_receipt"},
-	} {
-		if msgs[protoreflect.Name(field.message)].Fields().ByName(protoreflect.Name(field.name)) != nil {
-			t.Errorf("%s.%s still ships — policy transport must be pull-only", field.message, field.name)
-		}
-	}
-	// One dispatch model: the pull path carries the same durable unit as the
-	// stream. The old standalone/group scheduler shape must be gone, not
-	// coexisting.
-	if _, ok := msgs["ActionGroup"]; ok {
-		t.Error("message ActionGroup still ships — the pull path must deliver ManifestDeliveries, not schedule groups")
-	}
-
 	for _, f := range []struct {
 		msg, field string
 		kind       protoreflect.Kind

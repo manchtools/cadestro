@@ -108,7 +108,7 @@
 		{/snippet}
 	</QueryBuilder>
 
-	<p class="text-xs text-faint">{m.assign_rule_dispatch_hint()}</p>
+	<p class="text-xs text-faint">{m.assign_rule_assignment_hint()}</p>
 
 	{#if savingGroup}
 		<p class="text-xs text-muted-foreground" data-testid="assign-rule-saving">

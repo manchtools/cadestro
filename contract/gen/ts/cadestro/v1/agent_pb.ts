@@ -1122,7 +1122,7 @@ export const StoreLpsPasswordsResponseSchema: GenMessage<StoreLpsPasswordsRespon
 
 /**
  * Server instructs agent to revoke the device-bound key in LUKS slot 7.
- * Dispatched as a live operation via the stream.
+ * Requested as a live operation via the stream.
  *
  * @generated from message cadestro.v1.RevokeLuksDeviceKey
  */
@@ -1258,16 +1258,16 @@ export type SyncState = Message<"cadestro.v1.SyncState"> & {
    * Resolved maintenance window. Server-computed union across every
    * group the device belongs to (its own device groups plus any user
    * groups reaching it through an assignment). Empty schedule = no
-   * gating; the agent dispatches actions any time. Empty
+   * gating; the agent runs assigned policy any time. Empty
    * is also the response when no groups carry a window. The agent
-   * evaluates this against time.Now().Local() at dispatch time.
+   * evaluates this against time.Now().Local() at run time.
    *
    * @generated from field: cadestro.v1.MaintenanceWindow maintenance_window = 2;
    */
   maintenanceWindow?: MaintenanceWindow;
 
   /**
-   * Current assignment-derived desired state. Unlike deliveries, this is a
+   * Current assignment-derived desired state. This is a
    * replaceable snapshot that the agent reconciles locally.
    *
    * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 3;
@@ -1826,7 +1826,7 @@ export const TerminalSessionStateSchema: GenEnum<TerminalSessionState> = /*@__PU
  */
 export const AgentService: GenService<{
   /**
-   * The only agent-control transport. Handshake, synchronization, dispatch,
+   * The only agent-control transport. Handshake, synchronization, live control,
    * results, secret operations and terminal traffic all use this stream.
    *
    * @generated from rpc cadestro.v1.AgentService.Stream

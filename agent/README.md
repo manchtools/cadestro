@@ -1,6 +1,6 @@
 # Cadestro Agent
 
-The Cadestro Agent runs on managed devices and executes actions dispatched from the Control Server. It supports autonomous operation, executing scheduled actions even when disconnected from the server.
+The Cadestro Agent runs on managed devices and executes assignment-derived policy. It supports autonomous operation, executing scheduled actions even when disconnected from the server.
 
 The sole workspace system-design authority is
 `../DESIGN_2026_07_31/00_TARGET_DESIGN.md`. This README documents the agent
@@ -8,7 +8,7 @@ surface and must not override it.
 
 ## Architecture
 
-The executor delegates low-level system operations to the SDK's `sys/` packages (`sys/exec`, `sys/fs`, `sys/user`, `sys/systemd`), keeping the agent focused on action dispatch, idempotency checks, and result reporting.
+The executor delegates low-level system operations to the SDK's `sys/` packages (`sys/exec`, `sys/fs`, `sys/user`, `sys/systemd`), keeping the agent focused on policy runs, idempotency checks, and result reporting.
 
 LUKS and LPS key material uses the authenticated mTLS stream and
 direct control stream. If the agent cannot seal a new value to the pinned
@@ -40,7 +40,7 @@ control key, it refuses before changing the device secret.
 ┌───────────────────────────┐   ┌─────────────────────────────────┐
 │  Control :8081 (API)      │   │  Control :8082 (agent mTLS)     │
 │  - Token validation       │   │   - Bidirectional streaming     │
-│  - Certificate signing    │   │   - Action dispatch             │
+│  - Certificate signing    │   │   - Policy synchronization      │
 │  - Returns the stream URL │   │   - Heartbeats & results        │
 └───────────────────────────┘   └─────────────────────────────────┘
 
@@ -617,12 +617,12 @@ When enabled, the scheduler checks if the system state already matches the desir
 
 The offline scheduler and the SDK stream loop are hardened against corrupt local state, clock excursions, crashes, and a compromised server:
 
-- **Maintenance window fails closed on decode error.** The active maintenance window is persisted to the agent's SQLite store so a restart inside a freeze keeps gating. If that persisted window exists but cannot be proto-decoded (a corrupt or tampered settings row), the scheduler does **not** boot unconstrained — it enters a deny-until-next-sync state that defers every due dispatch until the next successful window sync overwrites the bad row. A truly-absent window (a never-synced device) still boots unconstrained, the same default a fresh install gets.
+- **Maintenance window fails closed on decode error.** The active maintenance window is persisted to the agent's SQLite store so a restart inside a freeze keeps gating. If that persisted window exists but cannot be proto-decoded (a corrupt or tampered settings row), the scheduler does **not** boot unconstrained — it enters a deny-until-next-sync state that defers every due policy run until the next successful window sync overwrites the bad row. A truly-absent window (a never-synced device) still boots unconstrained, the same default a fresh install gets.
 - **Forward clock jumps are clamped.** A future-dated `next_execute_at` cursor (left behind by a transient forward wall-clock excursion that was later corrected back) is clamped to at most `now + interval`, so a single clock jump can delay drift-prevention by at most one interval instead of suppressing it indefinitely.
 - **Crash-replay guard.** The due cursor is advanced one interval **before** an action executes, so a crash between execution and result recording does not silently re-run a non-idempotent action on the next boot. (Best-effort for non-idempotent actions; idempotent actions are unaffected, and the authoritative cursor is still written when the result is recorded.)
 - **One handler panic cannot crash the agent.** The SDK stream-dispatch loop wraps each inbound `ServerMessage` in a scoped `recover()` and isolates its goroutine fan-out, so a panic triggered by a malformed or hostile frame from a compromised server is logged and dropped as non-fatal rather than crash-looping the agent (a fleet DoS). Oversized inbound frames are refused (resource-exhausted) instead of being allocated, and PTY dimensions are validated before use. See the SDK README "Stream-loop robustness".
 - **The offline results table is bounded independently of sync state.** Synced results are pruned after the retention period, but unsynced results are also evicted past a hard age ceiling (30 days) and the table is capped to a maximum row count (oldest first) — so an agent that cannot reach the server for a long time cannot exhaust local disk with undelivered results. When unsynced (undelivered) results are dropped, the scheduler logs a warning.
-- **A server-dispatched action runs off the receive loop.** Actions execute on a single worker goroutine (in order, one at a time), so a long-running action no longer head-of-line-blocks terminal control frames (Stop/Input/Resize). The privileged terminal-setup steps (usermod, chown) also run under a bounded context, so a slow/hung step surfaces an error within a deadline instead of wedging the loop. On reconnect the prior connection's idle transport connections are released, so a long-lived reconnect loop doesn't leak sockets.
+- **An assigned action runs off the receive loop.** Actions execute on a single worker goroutine (in order, one at a time), so a long-running action no longer head-of-line-blocks terminal control frames (Stop/Input/Resize). The privileged terminal-setup steps (usermod, chown) also run under a bounded context, so a slow/hung step surfaces an error within a deadline instead of wedging the loop. On reconnect the prior connection's idle transport connections are released, so a long-lived reconnect loop doesn't leak sockets.
 - **Shutdown joins the scheduler before the store closes.** `Scheduler.Stop()` blocks until the run loop has returned; on SIGTERM the agent calls it before closing the offline store, so an action executing at shutdown finishes recording its result rather than racing the store close (no lost result / use-after-close). The offline store also re-asserts `0700` on its data dir and `0600` on the DB files (incl. WAL/SHM) on every `New()`.
 
 ## Package Manager Detection

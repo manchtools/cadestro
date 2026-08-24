@@ -438,8 +438,8 @@
 	}
 
 	/** A dot only where the entity really carries a status field. Devices use
-	 *  the same five-minute heartbeat window as `searchResultToDevice`;
-	 *  executions use their status enum; a user's only status is `disabled`.
+	 *  the same five-minute heartbeat window as `searchResultToDevice`; a
+	 *  user's only status is `disabled`.
 	 *
 	 *  The tone is also the row's status WORD (`TONE_LABEL`), so the buckets have
 	 *  to mean what the fleet's words say: `idle` is "never seen" and nothing

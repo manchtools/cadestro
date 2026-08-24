@@ -1,7 +1,7 @@
 ---
 title: Agent client
 label: Client
-description: The direct long-lived mTLS stream, bounded dispatch, and maintenance windows.
+description: The direct long-lived mTLS stream, bounded message routing, and maintenance windows.
 ---
 
 # Agent client

@@ -3434,8 +3434,8 @@ export type DeviceGroup = Message<"cadestro.v1.DeviceGroup"> & {
 
   /**
    * Per-group maintenance window. Empty means "no constraint": members
-   * may receive dispatches at any time. When non-empty the agent gates
-   * action dispatch by the device-local-time union across
+   * may run assigned policy actions at any time. When non-empty the agent gates
+   * policy runs by the device-local-time union across
    * every group the device belongs to (device groups + user groups
    * reaching it via assignments).
    *
@@ -5954,7 +5954,7 @@ export type UserGroup = Message<"cadestro.v1.UserGroup"> & {
   /**
    * Per-group maintenance window. Same semantics as
    * DeviceGroup.maintenance_window: when a user group reaches a device
-   * through an assignment, that device gates dispatches by the union of
+   * through an assignment, that device gates policy runs by the union of
    * every reaching group's window (the device's own groups plus any
    * user groups reaching it). Empty means "no constraint" for this
    * group's contribution to the union.

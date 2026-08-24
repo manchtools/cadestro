@@ -16,7 +16,7 @@ option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;
 // ============================================================================
 
 service AgentService {
-  // The only agent-control transport. Handshake, synchronization, dispatch,
+  // The only agent-control transport. Handshake, synchronization, live control,
   // results, secret operations and terminal traffic all use this stream.
   rpc Stream(stream AgentMessage) returns (stream ServerMessage);
 }
@@ -568,7 +568,7 @@ message StoreLpsPasswordsResponse {
 }
 
 // Server instructs agent to revoke the device-bound key in LUKS slot 7.
-// Dispatched as a live operation via the stream.
+// Requested as a live operation via the stream.
 message RevokeLuksDeviceKey {
   string action_id = 1 [(buf.validate.field).string.ulid = true];
 }
@@ -618,12 +618,12 @@ message SyncState {
   // Resolved maintenance window. Server-computed union across every
   // group the device belongs to (its own device groups plus any user
   // groups reaching it through an assignment). Empty schedule = no
-  // gating; the agent dispatches actions any time. Empty
+  // gating; the agent runs assigned policy any time. Empty
   // is also the response when no groups carry a window. The agent
-  // evaluates this against time.Now().Local() at dispatch time.
+  // evaluates this against time.Now().Local() at run time.
   MaintenanceWindow maintenance_window = 2;
 
-  // Current assignment-derived desired state. Unlike deliveries, this is a
+  // Current assignment-derived desired state. This is a
   // replaceable snapshot that the agent reconciles locally.
   DesiredPolicy desired_policy = 3;
 }

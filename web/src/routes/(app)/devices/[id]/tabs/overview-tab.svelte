@@ -196,7 +196,7 @@
 		dispatchingReboot = true;
 		try {
 			await apiClient.rebootDevice(deviceId);
-			toast.success(m.instant_actions_reboot_dispatched());
+			toast.success(m.instant_actions_reboot_requested());
 			rebootDialogOpen = false;
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -210,7 +210,7 @@
 		dispatchingSync = true;
 		try {
 			await apiClient.syncDevice(deviceId);
-			toast.success(m.instant_actions_sync_dispatched());
+			toast.success(m.instant_actions_sync_requested());
 		} catch (error) {
 			toast.error(getLocalizedError(error));
 			console.error(error);
@@ -233,11 +233,11 @@
 				<span class="mr-2 h-4 w-4" class:animate-spin={dispatchingSync}>
 					<RotateCw class="h-4 w-4" />
 				</span>
-				{dispatchingSync ? m.instant_actions_dispatching() : m.instant_actions_sync()}
+				{dispatchingSync ? m.instant_actions_requesting() : m.instant_actions_sync()}
 			</Button>
 			<Button variant="outline" onclick={() => (rebootDialogOpen = true)} disabled={dispatchingReboot}>
 				<Power class="mr-2 h-4 w-4" />
-				{dispatchingReboot ? m.instant_actions_dispatching() : m.instant_actions_reboot()}
+				{dispatchingReboot ? m.instant_actions_requesting() : m.instant_actions_reboot()}
 			</Button>
 				<Button variant="outline" onclick={() => openTerminal(deviceId, device.hostname)}>
 					<Terminal class="mr-2 h-4 w-4" />
@@ -468,7 +468,7 @@
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
 			<AlertDialog.Action onclick={dispatchReboot} disabled={dispatchingReboot}>
-				{dispatchingReboot ? m.instant_actions_dispatching() : m.instant_actions_reboot()}
+				{dispatchingReboot ? m.instant_actions_requesting() : m.instant_actions_reboot()}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

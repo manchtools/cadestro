@@ -1457,7 +1457,7 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
    * result replayed after a reconnect updates the same row instead of
    * creating a second one. action_id alone cannot do this — duplicate
    * authored occurrences of the same action are preserved and executed, so
-   * one delivery legitimately produces several results with the same
+   * one authored occurrence legitimately produces several results with the same
    * action_id.
    *
    *

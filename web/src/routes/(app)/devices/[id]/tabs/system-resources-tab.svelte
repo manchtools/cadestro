@@ -409,7 +409,7 @@
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
 			<AlertDialog.Action onclick={revokeLuksDeviceKeyFlow} disabled={luksRevokeDispatching}>
-				{luksRevokeDispatching ? m.instant_actions_dispatching() : m.luks_revoke_device_key()}
+				{luksRevokeDispatching ? m.instant_actions_requesting() : m.luks_revoke_device_key()}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

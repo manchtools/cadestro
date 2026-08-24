@@ -179,8 +179,8 @@ func registryPermissions() []permEntry {
 		{"RenameToken", "Tokens", "Rename tokens", TargetUnspecified},
 		{"SetTokenDisabled", "Tokens", "Disable/enable tokens", TargetUnspecified},
 		{"DeleteToken", "Tokens", "Delete tokens", TargetUnspecified},
-		// Actions — org-tier objects (authored once, dispatched
-		// per-device); scoping happens on the dispatch RPCs, not
+		// Actions — org-tier objects (authored once, assigned
+		// per-device); scoping happens on assignment and live-control RPCs, not
 		// the action CRUD.
 		{"CreateAction", "Actions", "Create actions", TargetUnspecified},
 		{"GetAction", "Actions", "View actions", TargetUnspecified},
@@ -250,7 +250,7 @@ func registryPermissions() []permEntry {
 		// User Selections
 		{"SetUserSelection", "User Selections", "Manage user selections", TargetUnspecified},
 		{"ListAvailableActions", "User Selections", "List available actions", TargetUnspecified},
-		// Dispatch
+		// Live control
 		{"SyncDevice", "Live Control", "Sync device", TargetDevice},
 		{"RebootDevice", "Live Control", "Reboot device", TargetDevice},
 		// OSQuery

@@ -36,14 +36,14 @@ enum ExecutionStatus {
   // agent chose not to perform this time, e.g. maintenance window)
   // in that NOT_APPLICABLE is a property of the device+action pair,
   // not of the moment.
-  EXECUTION_STATUS_NOT_APPLICABLE = 9;
+  EXECUTION_STATUS_NOT_APPLICABLE = 8;
   // The agent persisted STARTED before a non-idempotent side effect and
   // then crashed, so whether the effect landed is unknown. Reported on
   // recovery instead of silently re-running the action: a second attempt
   // could double-apply, and claiming FAILED would be a guess. Terminal
   // from the agent's side — resolving it is an operator/product decision
   // (a reboot resolves via the boot marker; other actions do not).
-  EXECUTION_STATUS_INDETERMINATE = 10;
+  EXECUTION_STATUS_INDETERMINATE = 9;
 }
 
 // Desired state for stateful actions
@@ -313,13 +313,13 @@ enum ComplianceStatus {
   COMPLIANCE_STATUS_IN_GRACE_PERIOD = 3;
 }
 
-// MaintenanceWindow gates action dispatch by device-local wall-clock
+// MaintenanceWindow gates scheduled policy runs by device-local wall-clock
 // time. A window is a positive allowlist: when the schedule is empty
 // the window is "always allowed" — the feature is opt-in and existing
 // groups carry an empty window with zero behavioural change.
 //
 // Multiple entries combine as OR. The agent evaluates against
-// time.Now().Local() at dispatch time so "02:00 local" means 02:00
+// time.Now().Local() at run time so "02:00 local" means 02:00
 // wherever the device runs; the server never tries to interpret the
 // device's timezone.
 message MaintenanceWindow {

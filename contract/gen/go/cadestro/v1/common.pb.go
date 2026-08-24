@@ -44,29 +44,29 @@ const (
 	// agent chose not to perform this time, e.g. maintenance window)
 	// in that NOT_APPLICABLE is a property of the device+action pair,
 	// not of the moment.
-	ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE ExecutionStatus = 9
+	ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE ExecutionStatus = 8
 	// The agent persisted STARTED before a non-idempotent side effect and
 	// then crashed, so whether the effect landed is unknown. Reported on
 	// recovery instead of silently re-running the action: a second attempt
 	// could double-apply, and claiming FAILED would be a guess. Terminal
 	// from the agent's side — resolving it is an operator/product decision
 	// (a reboot resolves via the boot marker; other actions do not).
-	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE ExecutionStatus = 10
+	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE ExecutionStatus = 9
 )
 
 // Enum value maps for ExecutionStatus.
 var (
 	ExecutionStatus_name = map[int32]string{
-		0:  "EXECUTION_STATUS_UNSPECIFIED",
-		1:  "EXECUTION_STATUS_PENDING",
-		2:  "EXECUTION_STATUS_RUNNING",
-		3:  "EXECUTION_STATUS_SUCCESS",
-		4:  "EXECUTION_STATUS_FAILED",
-		5:  "EXECUTION_STATUS_SKIPPED",
-		6:  "EXECUTION_STATUS_TIMEOUT",
-		7:  "EXECUTION_STATUS_CANCELLED",
-		9:  "EXECUTION_STATUS_NOT_APPLICABLE",
-		10: "EXECUTION_STATUS_INDETERMINATE",
+		0: "EXECUTION_STATUS_UNSPECIFIED",
+		1: "EXECUTION_STATUS_PENDING",
+		2: "EXECUTION_STATUS_RUNNING",
+		3: "EXECUTION_STATUS_SUCCESS",
+		4: "EXECUTION_STATUS_FAILED",
+		5: "EXECUTION_STATUS_SKIPPED",
+		6: "EXECUTION_STATUS_TIMEOUT",
+		7: "EXECUTION_STATUS_CANCELLED",
+		8: "EXECUTION_STATUS_NOT_APPLICABLE",
+		9: "EXECUTION_STATUS_INDETERMINATE",
 	}
 	ExecutionStatus_value = map[string]int32{
 		"EXECUTION_STATUS_UNSPECIFIED":    0,
@@ -77,8 +77,8 @@ var (
 		"EXECUTION_STATUS_SKIPPED":        5,
 		"EXECUTION_STATUS_TIMEOUT":        6,
 		"EXECUTION_STATUS_CANCELLED":      7,
-		"EXECUTION_STATUS_NOT_APPLICABLE": 9,
-		"EXECUTION_STATUS_INDETERMINATE":  10,
+		"EXECUTION_STATUS_NOT_APPLICABLE": 8,
+		"EXECUTION_STATUS_INDETERMINATE":  9,
 	}
 )
 
@@ -1368,13 +1368,13 @@ func (x *ErrorDetail) GetRequestId() string {
 	return ""
 }
 
-// MaintenanceWindow gates action dispatch by device-local wall-clock
+// MaintenanceWindow gates scheduled policy runs by device-local wall-clock
 // time. A window is a positive allowlist: when the schedule is empty
 // the window is "always allowed" — the feature is opt-in and existing
 // groups carry an empty window with zero behavioural change.
 //
 // Multiple entries combine as OR. The agent evaluates against
-// time.Now().Local() at dispatch time so "02:00 local" means 02:00
+// time.Now().Local() at run time so "02:00 local" means 02:00
 // wherever the device runs; the server never tries to interpret the
 // device's timezone.
 type MaintenanceWindow struct {
@@ -1571,9 +1571,8 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x18EXECUTION_STATUS_SKIPPED\x10\x05\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_TIMEOUT\x10\x06\x12\x1e\n" +
 	"\x1aEXECUTION_STATUS_CANCELLED\x10\a\x12#\n" +
-	"\x1fEXECUTION_STATUS_NOT_APPLICABLE\x10\t\x12\"\n" +
-	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\n" +
-	"*C\n" +
+	"\x1fEXECUTION_STATUS_NOT_APPLICABLE\x10\b\x12\"\n" +
+	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\t*C\n" +
 	"\fDesiredState\x12\x19\n" +
 	"\x15DESIRED_STATE_PRESENT\x10\x00\x12\x18\n" +
 	"\x14DESIRED_STATE_ABSENT\x10\x01*\x8a\x01\n" +

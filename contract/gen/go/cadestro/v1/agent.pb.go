@@ -2734,7 +2734,7 @@ func (x *StoreLpsPasswordsResponse) GetSuccess() bool {
 }
 
 // Server instructs agent to revoke the device-bound key in LUKS slot 7.
-// Dispatched as a live operation via the stream.
+// Requested as a live operation via the stream.
 type RevokeLuksDeviceKey struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
@@ -3002,11 +3002,11 @@ type SyncState struct {
 	// Resolved maintenance window. Server-computed union across every
 	// group the device belongs to (its own device groups plus any user
 	// groups reaching it through an assignment). Empty schedule = no
-	// gating; the agent dispatches actions any time. Empty
+	// gating; the agent runs assigned policy any time. Empty
 	// is also the response when no groups carry a window. The agent
-	// evaluates this against time.Now().Local() at dispatch time.
+	// evaluates this against time.Now().Local() at run time.
 	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
-	// Current assignment-derived desired state. Unlike deliveries, this is a
+	// Current assignment-derived desired state. This is a
 	// replaceable snapshot that the agent reconciles locally.
 	DesiredPolicy *DesiredPolicy `protobuf:"bytes,3,opt,name=desired_policy,json=desiredPolicy,proto3" json:"desired_policy,omitempty"`
 	unknownFields protoimpl.UnknownFields

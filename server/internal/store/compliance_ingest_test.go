@@ -27,6 +27,7 @@ type complianceIngestFixture struct {
 	service *execution.Service
 	ctx     context.Context
 }
+
 func newComplianceIngestFixture(t *testing.T) *complianceIngestFixture {
 	t.Helper()
 	f := newDeviceHandlerFixture(t)
@@ -73,7 +74,7 @@ func (f *complianceIngestFixture) policy(t *testing.T, name string, rules map[st
 	return id
 }
 
-// report runs one occurrence of an action on a device end to end: a delivery
+// report runs one occurrence of an action on a device end to end: a policy run
 // the agent acknowledged, an execution row, and the agent's ActionResult
 // applied through the real execution service.
 func (f *complianceIngestFixture) report(

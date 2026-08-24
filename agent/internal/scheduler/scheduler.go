@@ -59,7 +59,7 @@ func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Schedul
 		results:  make(chan *ExecutionResult, 100),
 	}
 	if window, err := loadMaintenanceWindow(st); err != nil {
-		logger.Error("persisted maintenance window is unreadable; denying dispatch until sync", "error", err)
+		logger.Error("persisted maintenance window is unreadable; denying scheduled policy runs until sync", "error", err)
 		s.windowDecodeFailed = true
 	} else {
 		s.window = window
@@ -162,7 +162,7 @@ func (s *Scheduler) runDue(ctx context.Context) {
 		s.logger.Error("load due manifests", "error", err)
 		return
 	}
-	allowed := s.dispatchAllowed(s.now().Local())
+	allowed := s.runAllowed(s.now().Local())
 	for _, stored := range workItems {
 		if ctx.Err() != nil {
 			return
@@ -272,7 +272,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 
 	finished := s.now().UTC()
 	manifestResult := &pb.ManifestResult{
-		RunId:  work.RunID,
+		RunId:       work.RunID,
 		ManifestId:  manifest.GetManifestId(),
 		Status:      aggregate,
 		CompletedAt: timestamppb.New(finished),
@@ -327,7 +327,7 @@ func (s *Scheduler) SetMaintenanceWindow(window *pb.MaintenanceWindow) {
 	}
 }
 
-func (s *Scheduler) dispatchAllowed(at time.Time) bool {
+func (s *Scheduler) runAllowed(at time.Time) bool {
 	s.windowMu.RLock()
 	defer s.windowMu.RUnlock()
 	return !s.windowDecodeFailed && maintenance.IsAllowed(s.window, at)

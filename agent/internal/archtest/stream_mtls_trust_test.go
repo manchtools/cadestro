@@ -44,7 +44,7 @@ const streamMTLSConfigHelper = "configureAgentMTLS"
 // control-stream dial.
 //
 // The stream is the agent's standing, fully-privileged channel: it carries
-// action dispatch, terminal I/O, LUKS passphrases and LPS passwords. Its
+// policy synchronization, terminal I/O, LUKS passphrases and LPS passwords. Its
 // server-verification trust must therefore be the enrollment CA ALONE —
 // sdk.WithMTLSFromPEM sets RootCAs to exactly that CA, so no publicly
 // trusted certificate can impersonate control however the agent's DNS or

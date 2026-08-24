@@ -127,7 +127,6 @@
 		{ id: 'definition', label: m.audit_stream_type_definition() },
 		{ id: 'device_group', label: m.audit_stream_type_device_group() },
 		{ id: 'token', label: m.audit_stream_type_token() },
-		{ id: 'execution', label: m.audit_stream_type_execution() },
 		{ id: 'assignment', label: m.audit_stream_type_assignment() },
 		{ id: 'user_selection', label: m.audit_stream_type_user_selection() },
 		{ id: 'role', label: m.audit_stream_type_role() },

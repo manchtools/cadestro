@@ -193,7 +193,7 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	require.Empty(t, state.DesiredPolicy.Manifests, "unassignment must be observable on the next pull")
 }
 
-func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing.T) {
+func TestDeviceControlHandlers_LiveOperationsUseTypedStreamWithoutPolicyWork(t *testing.T) {
 	var f *deviceControlFixture
 	sender := func(deviceID string, message *cadestrov1.ServerMessage) error {
 		assert.Equal(t, f.deviceID, deviceID)
@@ -218,7 +218,7 @@ func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing
 	require.NoError(t, err)
 }
 
-func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
+func TestDeviceControlHandlers_LiveOperationRequiresConnection(t *testing.T) {
 	f := newDeviceControlFixture(t)
 	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"),
 		connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
@@ -233,7 +233,7 @@ func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
 	assert.Equal(t, string(store.EffectFailed), effects[1].Outcome)
 }
 
-func TestDispatchHandlers_MountsExactInitialSurface(t *testing.T) {
+func TestDeviceControlHandlers_MountsExactInitialSurface(t *testing.T) {
 	f := newDeviceControlFixture(t)
 	assert.ElementsMatch(t, []string{
 		cadestrov1connect.ControlServiceSyncDeviceProcedure,

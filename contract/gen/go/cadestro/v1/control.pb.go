@@ -7506,8 +7506,8 @@ type DeviceGroup struct {
 	// Takes precedence over device-level setting
 	SyncIntervalMinutes int32 `protobuf:"varint,9,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
 	// Per-group maintenance window. Empty means "no constraint": members
-	// may receive dispatches at any time. When non-empty the agent gates
-	// action dispatch by the device-local-time union across
+	// may run assigned policy actions at any time. When non-empty the agent gates
+	// policy runs by the device-local-time union across
 	// every group the device belongs to (device groups + user groups
 	// reaching it via assignments).
 	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,10,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
@@ -13011,7 +13011,7 @@ type UserGroup struct {
 	IsScimManaged bool                   `protobuf:"varint,8,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
 	// Per-group maintenance window. Same semantics as
 	// DeviceGroup.maintenance_window: when a user group reaches a device
-	// through an assignment, that device gates dispatches by the union of
+	// through an assignment, that device gates policy runs by the union of
 	// every reaching group's window (the device's own groups plus any
 	// user groups reaching it). Empty means "no constraint" for this
 	// group's contribution to the union.

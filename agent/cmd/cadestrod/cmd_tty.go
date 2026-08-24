@@ -52,7 +52,7 @@ func runTTY(args []string) int {
 	// privilege backend is the only path to the mutator.
 	//
 	// An earlier revision also required the call to originate from an
-	// interactive TTY so a server-dispatched `ACTION_TYPE_SHELL` couldn't
+	// interactive TTY so an assigned shell action couldn't
 	// flip the flag remotely. That gate was dropped in this revision:
 	// the `script(1)` utility routes around it in one line (pty
 	// allocation makes the stdin check pass), so the gate only added

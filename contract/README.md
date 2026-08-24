@@ -16,7 +16,7 @@ See [`../LICENSING.md`](../LICENSING.md).
 - Generated Go and TypeScript packages live in `gen/go/cadestro/v1/` and
   `gen/ts/cadestro/v1/`.
 - `AgentService` exposes one bidirectional `Stream`. Handshake, synchronization,
-  heartbeats, manifest delivery and receipts, results, secret operations, and
+  heartbeats, assignment synchronization and results, secret operations, and
   terminal traffic are frames on that stream.
 - Agent certificates authenticate the direct mTLS connection. Application
   frames are not separately signed.

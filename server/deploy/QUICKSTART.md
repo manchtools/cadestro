@@ -157,8 +157,8 @@ with `docker compose exec control cadestro backup-status`;
 `CADESTRO_BACKUP_MAX_LAG` defaults to 26 hours.
 <!-- docref: end -->
 
-<!-- docref: begin src=internal/store/reads.go#ListDueDeviceDeliveries:81e79f32,internal/store/search.go#Search:3244914e -->
-Pending dispatch is ordinary SQLite state. Search uses SQLite FTS5. There is no
+<!-- docref: begin src=internal/store/search.go#Search:3244914e -->
+Assignment-derived policy state is ordinary SQLite state. Search uses SQLite FTS5. There is no
 broker, projector rebuild, dynamic proxy provider, or auxiliary search process
 to operate.
 <!-- docref: end -->

@@ -217,7 +217,7 @@
 		if (ids.length === 0 || running) return;
 		running = true;
 		try {
-			report(await bulkReboot(ids), m.bulk_reboot_dispatched, m.bulk_reboot_partial);
+			report(await bulkReboot(ids), m.bulk_reboot_requested, m.bulk_reboot_partial);
 		} finally {
 			running = false;
 			rebootOpen = false;
@@ -454,7 +454,7 @@
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
 			<AlertDialog.Action data-testid="bulk-reboot-confirm" disabled={running} onclick={() => void runReboot()}>
-				{running ? m.instant_actions_dispatching() : m.instant_actions_reboot()}
+				{running ? m.instant_actions_requesting() : m.instant_actions_reboot()}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

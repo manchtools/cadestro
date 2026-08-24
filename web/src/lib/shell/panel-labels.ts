@@ -10,14 +10,12 @@ import * as m from '$lib/paraglide/messages';
 /** Stack caption — a category standing in for several parked windows. */
 export const PANEL_KIND_PLURAL: Record<string, () => string> = {
 	device: m.nav_devices,
-	execution: m.nav_executions,
 	window: m.shell_windows
 };
 
 /** Card subtitle — the single panel's own kind. */
 export const PANEL_KIND_SINGULAR: Record<string, () => string> = {
 	device: m.shell_kind_device,
-	execution: m.shell_kind_execution,
 	window: m.shell_kind_window
 };
 
