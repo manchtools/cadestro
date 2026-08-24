@@ -171,11 +171,13 @@ printf 'verify: predecessor initials absent as an identifier prefix (positive co
 # is instead of who used to own it). The check above cannot see this shape;
 # there is no hyphen to anchor on.
 #
-# The initials alone are too generic to forbid as a bare identifier — "pm" is
-# a legitimate two-letter local variable (a package-manager handle is one),
-# and the initials open dozens of unrelated test-fixture strings elsewhere in
-# the tree (usernames, group names) that this check has no mandate to touch.
-# What a reintroduced alias always looks like, and what nothing else does, is
+# The initials alone are too generic to forbid as a bare identifier by this
+# check — "pm" is a legitimate two-letter local variable (a package-manager
+# handle is one). Until the test-fixture sweep below, the initials also opened
+# dozens of unrelated fixture strings (usernames, group names) a bare-identifier
+# scan had no mandate to touch; that constraint is gone once those are renamed,
+# and the check after this one picks up exactly that gap. What a reintroduced
+# alias always looks like, and what nothing else does, is
 # the shape a Go import spec writes: the alias immediately followed by
 # whitespace and the opening quote of the import path. Anchoring there
 # instead of on the bare initials is what keeps this a hard failure instead
@@ -211,6 +213,56 @@ if [[ ${#alias_hits[@]} -gt 0 ]]; then
 fi
 
 printf 'verify: predecessor initials absent as a Go import alias (positive control matched, tree clean)\n'
+
+# The initials also survived as bare test-fixture strings: not an alias, not
+# hyphenated, just the two letters glued straight onto whatever the fixture
+# named — pmrunas, pmgrpuser1, pmnonexistent12345, pmttytest, and ~40 more like
+# them, 105 occurrences across 15 test files before this pass. That is what the
+# alias check above could not widen to cover; with the fixtures renamed to the
+# cadestro- spelling, this scan is finally the true zero it was blocked from
+# being.
+#
+# It still cannot fire on a bare two-letter "pm", so the pattern requires at
+# least two more identifier characters glued directly on: nothing between "pm"
+# and the closing quote, dot, slash, or whitespace but more identifier. Checked
+# against every near-miss actually in this tree today: PMK (a WPA pairwise
+# master key, sdk/sys/network — one letter after "pm", under the floor), the
+# abandonedPackages negative assertion "pm.v1" (contract_rpc_surface_test.go,
+# already allowlisted above — a dot right after "pm", under the floor), the
+# stale import path .../gen/go/pm/v1 (a slash right after "pm"), and the bare
+# "pm" package-manager handle itself. None of them clears two, and every one of
+# the 105 renamed fixtures cleared it by a wide margin (2 letters at the
+# shortest — pmrt — up to 16).
+#
+# This is a heuristic, not a structural impossibility like the two checks
+# above it, and it has one known way to misfire: a real bare identifier that
+# happens to start "pm" and clears the two-character floor — pmap (a Linux
+# diagnostic tool) is the closest real example, not referenced anywhere in this
+# tree today. If one is ever genuinely needed as a Go string or identifier,
+# allowlist it here with the same justification style as the file-level
+# allowlist above; do not widen the floor to dodge it, that just narrows what
+# the check catches. Scoped to *.go, reusing the same tracked-file list as the
+# alias check.
+bare_re="\\b${initials_head}m[A-Za-z0-9_]{2,}"
+
+bare_control=$(mktemp) || fail "could not create the bare-identifier positive control"
+trap 'rm -f "$initials_control" "$alias_control" "$bare_control"' EXIT
+printf 'name := "%smrunas"\n' "$initials_head" > "$bare_control"
+grep -IiE -- "$bare_re" "$bare_control" >/dev/null \
+    || fail "bare-identifier positive control did not match — the scan is broken, not the tree"
+
+mapfile -t bare_hits < <(
+    printf '%s\0' "${alias_go_files[@]}" \
+        | xargs -0 grep -IiEl -- "$bare_re" \
+        | sort
+)
+if [[ ${#bare_hits[@]} -gt 0 ]]; then
+    echo "verify: the predecessor initials survive as a bare identifier:" >&2
+    printf '  %s\n' "${bare_hits[@]}" >&2
+    fail "rename these to the cadestro- spelling"
+fi
+
+printf 'verify: predecessor initials absent as a bare identifier (positive control matched, tree clean)\n'
 
 # Every module directory that exists must carry its own LICENSE, and every
 # module named in LICENSING.md must be one of the known set (drift guard).
