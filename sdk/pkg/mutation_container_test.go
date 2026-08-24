@@ -82,7 +82,7 @@ func TestApt_InstallRemove_Container(t *testing.T) {
 	ctx := mutCtx(t)
 	cleanupPkg(t, m, false)
 
-	if _, err := m.Install(ctx, InstallOptions{}, mutTestPackage); err != nil {
+	if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: mutTestPackage}); err != nil {
 		t.Fatalf("Install(%s): %v", mutTestPackage, err)
 	}
 	if ok, err := m.IsInstalled(ctx, mutTestPackage); err != nil || !ok {
@@ -103,7 +103,7 @@ func TestApt_PinUnpin_Container(t *testing.T) {
 	m := aptMutManager(t)
 	ctx := mutCtx(t)
 	cleanupPkg(t, m, true)
-	if _, err := m.Install(ctx, InstallOptions{}, mutTestPackage); err != nil {
+	if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: mutTestPackage}); err != nil {
 		t.Fatalf("Install: %v", err)
 	}
 
@@ -157,14 +157,10 @@ func TestApt_InstallLocal_Container(t *testing.T) {
 	}
 }
 
-// TestApt_UpgradeAll_Container runs a full dist-upgrade on the freshly-updated
-// container: it must complete without error. The point is that the real
-// dist-upgrade argv/flow succeeds (a flag or parse regression would fail), not a
-// specific upgrade delta — a minimal base image may have nothing to upgrade.
 func TestApt_UpgradeAll_Container(t *testing.T) {
 	m := aptMutManager(t)
 	ctx := mutCtx(t)
-	if _, err := m.UpgradeAll(ctx, UpgradeOptions{}); err != nil {
+	if _, err := m.UpgradeAll(ctx); err != nil {
 		t.Fatalf("UpgradeAll: %v", err)
 	}
 }

@@ -15,6 +15,11 @@ func dnfM(t *testing.T) (Manager, *exectest.FakeRunner) {
 	return mustNew(t, Dnf)
 }
 
+func dnf5M(t *testing.T) (Manager, *exectest.FakeRunner) {
+	t.Helper()
+	return mustNew(t, Dnf5)
+}
+
 func TestDnf_Version(t *testing.T) {
 	t.Run("first line", func(t *testing.T) {
 		m, f := dnfM(t)
@@ -41,7 +46,7 @@ func TestDnf_Install(t *testing.T) {
 	t.Run("multiple latest", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{}, "vim", "git"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim"}, InstallSpec{Name: "git"}); err != nil {
 			t.Fatal(err)
 		}
 		c := f.Calls()[0]
@@ -52,46 +57,27 @@ func TestDnf_Install(t *testing.T) {
 	t.Run("pinned version uses name-version", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{Version: "8.2.3"}, "vim"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "8.2.3"}); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "vim-8.2.3") {
 			t.Errorf("argv=%q want name-version", a)
 		}
 	})
-	t.Run("downgrade retries via explicit downgrade", func(t *testing.T) {
+	t.Run("dnf4 exact downgrade spec", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "newer already installed"}, nil) // install fails
-		ok(f, "")                                                                   // downgrade succeeds
-		if _, err := m.Install(ctx, InstallOptions{Version: "1.0", AllowDowngrade: true}, "vim"); err != nil {
-			t.Fatalf("downgrade retry should succeed, got %v", err)
+		ok(f, "")
+		if _, err := m.Install(ctx, InstallOptions{AllowDowngrade: true}, InstallSpec{Name: "vim", Version: "1.0"}); err != nil {
+			t.Fatal(err)
 		}
-		calls := f.Calls()
-		if len(calls) != 2 {
-			t.Fatalf("want install then downgrade, got %d calls", len(calls))
-		}
-		if a := argv(calls[0]); !strings.Contains(a, "--allowerasing") {
-			t.Errorf("first call argv=%q, want --allowerasing", a)
-		}
-		if a := argv(calls[1]); a != "dnf downgrade -y vim-1.0" {
-			t.Errorf("retry argv=%q", a)
-		}
-	})
-	t.Run("downgrade NOT retried after a runner/exec failure", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied) // install fails to even run
-		_, err := m.Install(ctx, InstallOptions{Version: "1.0", AllowDowngrade: true}, "vim")
-		if !errors.Is(err, sysexec.ErrEscalationDenied) {
-			t.Fatalf("err=%v, want the original escalation error", err)
-		}
-		if len(f.Calls()) != 1 {
-			t.Errorf("a non-exit failure must not trigger a second (downgrade) command, ran %d", len(f.Calls()))
+		if got := argv(f.Calls()[0]); got != "dnf install -y vim-1.0" {
+			t.Fatalf("argv=%q", got)
 		}
 	})
 	t.Run("install failure without downgrade is returned", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 1, Stderr: "no package"}, nil)
-		_, err := m.Install(ctx, InstallOptions{}, "ghost")
+		_, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "ghost"})
 		var ce *sysexec.CommandError
 		if !errors.As(err, &ce) || ce.ExitCode != 1 {
 			t.Fatalf("err=%v want CommandError", err)
@@ -108,39 +94,53 @@ func TestDnf_Install(t *testing.T) {
 	})
 	t.Run("bad name", func(t *testing.T) {
 		m, f := dnfM(t)
-		if _, err := m.Install(ctx, InstallOptions{}, "v;m"); err == nil || len(f.Calls()) != 0 {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "v;m"}); err == nil || len(f.Calls()) != 0 {
 			t.Fatal("want rejection, no exec")
 		}
 	})
 	t.Run("bad version", func(t *testing.T) {
 		m, f := dnfM(t)
-		if _, err := m.Install(ctx, InstallOptions{Version: "1;0"}, "vim"); err == nil || len(f.Calls()) != 0 {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "1;0"}); err == nil || len(f.Calls()) != 0 {
 			t.Fatal("want version rejection, no exec")
 		}
 	})
-	t.Run("version with multiple packages rejected", func(t *testing.T) {
+	t.Run("multiple package versions", func(t *testing.T) {
 		m, f := dnfM(t)
-		if _, err := m.Install(ctx, InstallOptions{Version: "1.0"}, "vim", "git"); err == nil || len(f.Calls()) != 0 {
-			t.Fatal("want one-package rejection")
+		ok(f, "")
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "1.0"}, InstallSpec{Name: "git", Version: "2.0"}); err != nil {
+			t.Fatal(err)
+		}
+		if got := argv(f.Calls()[0]); got != "dnf install -y vim-1.0 git-2.0" {
+			t.Fatalf("argv=%q", got)
 		}
 	})
 }
 
+func TestDnf5_AllowDowngrade(t *testing.T) {
+	m, f := dnf5M(t)
+	ok(f, "")
+	if _, err := m.Install(context.Background(), InstallOptions{AllowDowngrade: true}, InstallSpec{Name: "vim", Version: "1.0"}, InstallSpec{Name: "git", Version: "2.0"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := argv(f.Calls()[0]); got != "dnf5 install -y --allow-downgrade vim-1.0 git-2.0" {
+		t.Fatalf("argv=%q", got)
+	}
+}
+
 func TestDnf_Remove(t *testing.T) {
 	ctx := context.Background()
-	t.Run("remove (purge ignored)", func(t *testing.T) {
+	t.Run("purge is unsupported", func(t *testing.T) {
 		m, f := dnfM(t)
-		ok(f, "")
-		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}, "vim"); err != nil {
-			t.Fatal(err)
+		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}, "vim"); !errors.Is(err, ErrUnsupported) {
+			t.Fatalf("err=%v, want ErrUnsupported", err)
 		}
-		if argv(f.Calls()[0]) != "dnf remove -y vim" {
-			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		if len(f.Calls()) != 0 {
+			t.Fatalf("unsupported purge ran %d commands", len(f.Calls()))
 		}
 	})
-	t.Run("empty no-op", func(t *testing.T) {
+	t.Run("empty purge no-op", func(t *testing.T) {
 		m, f := dnfM(t)
-		if _, err := m.Remove(ctx, RemoveOptions{}); err != nil || len(f.Calls()) != 0 {
+		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}); err != nil || len(f.Calls()) != 0 {
 			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
 		}
 	})
@@ -193,7 +193,7 @@ func TestDnf_Upgrade(t *testing.T) {
 	t.Run("UpgradeAll", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "")
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{}); err != nil {
+		if _, err := m.UpgradeAll(ctx); err != nil {
 			t.Fatal(err)
 		}
 		if argv(f.Calls()[0]) != "dnf upgrade -y" {
@@ -227,101 +227,6 @@ func TestDnf_Upgrade(t *testing.T) {
 	})
 }
 
-func TestDnf_PinUnpin(t *testing.T) {
-	ctx := context.Background()
-	t.Run("pin installs plugin when absent then locks", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // versionlock --help: plugin absent
-		ok(f, "")                                // install plugin
-		ok(f, "")                                // versionlock add
-		if _, err := m.Pin(ctx, "vim"); err != nil {
-			t.Fatal(err)
-		}
-		calls := f.Calls()
-		if len(calls) != 3 {
-			t.Fatalf("want help+install+add, got %d", len(calls))
-		}
-		if !strings.Contains(argv(calls[1]), "python3-dnf-plugin-versionlock") {
-			t.Errorf("plugin install argv=%q", argv(calls[1]))
-		}
-		if argv(calls[2]) != "dnf versionlock add vim" {
-			t.Errorf("lock argv=%q", argv(calls[2]))
-		}
-	})
-	t.Run("pin with plugin present skips install", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 0}, nil) // versionlock --help ok
-		ok(f, "")                                // versionlock add
-		if _, err := m.Pin(ctx, "vim"); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.Calls()) != 2 {
-			t.Fatalf("want help+add, got %d", len(f.Calls()))
-		}
-	})
-	t.Run("unpin", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 0}, nil) // help ok
-		ok(f, "")                                // versionlock delete
-		if _, err := m.Unpin(ctx, "vim"); err != nil {
-			t.Fatal(err)
-		}
-		if argv(f.Calls()[1]) != "dnf versionlock delete vim" {
-			t.Errorf("argv=%q", argv(f.Calls()[1]))
-		}
-	})
-	t.Run("plugin install failure is surfaced", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil)                      // help: absent
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "no plugin"}, nil) // install fails
-		if _, err := m.Pin(ctx, "vim"); err == nil {
-			t.Fatal("want plugin-install failure")
-		}
-	})
-	t.Run("probe runner failure does not trigger a plugin install", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied) // versionlock --help can't run
-		if _, err := m.Pin(ctx, "vim"); !errors.Is(err, sysexec.ErrEscalationDenied) {
-			t.Fatalf("err=%v, want the probe's runner error", err)
-		}
-		if len(f.Calls()) != 1 {
-			t.Errorf("a probe runner failure must not escalate into a plugin install, ran %d", len(f.Calls()))
-		}
-	})
-	t.Run("unpin surfaces plugin install failure", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil)                      // help: absent
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "no plugin"}, nil) // install fails
-		if _, err := m.Unpin(ctx, "vim"); err == nil {
-			t.Fatal("want plugin-install failure")
-		}
-	})
-	t.Run("pin empty no-op", func(t *testing.T) {
-		m, f := dnfM(t)
-		if _, err := m.Pin(ctx); err != nil || len(f.Calls()) != 0 {
-			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
-		}
-	})
-	t.Run("unpin empty no-op", func(t *testing.T) {
-		m, f := dnfM(t)
-		if _, err := m.Unpin(ctx); err != nil || len(f.Calls()) != 0 {
-			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
-		}
-	})
-	t.Run("pin bad name", func(t *testing.T) {
-		m, f := dnfM(t)
-		if _, err := m.Pin(ctx, "v;m"); err == nil || len(f.Calls()) != 0 {
-			t.Fatal("want rejection")
-		}
-	})
-	t.Run("unpin bad name", func(t *testing.T) {
-		m, f := dnfM(t)
-		if _, err := m.Unpin(ctx, "v;m"); err == nil || len(f.Calls()) != 0 {
-			t.Fatal("want rejection")
-		}
-	})
-}
-
 func TestDnf_Autoremove(t *testing.T) {
 	m, f := dnfM(t)
 	ok(f, "")
@@ -331,135 +236,6 @@ func TestDnf_Autoremove(t *testing.T) {
 	if c := f.Calls()[0]; argv(c) != "dnf autoremove -y" || !c.Escalate {
 		t.Errorf("argv=%q escalate=%v", argv(c), c.Escalate)
 	}
-}
-
-func TestDnf_Repair(t *testing.T) {
-	ctx := context.Background()
-	t.Run("happy path runs three steps", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "") // history redo
-		ok(f, "") // remove --duplicates
-		ok(f, "") // rpm --verifydb
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatal(err)
-		}
-		if len(f.Calls()) != 3 {
-			t.Fatalf("want 3 repair commands, got %d", len(f.Calls()))
-		}
-	})
-	t.Run("intermediate failures are swallowed", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "x"}, nil)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "y"}, nil)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "z"}, nil)
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatalf("best-effort repair must not fail, got %v", err)
-		}
-	})
-	t.Run("cancellation propagates", func(t *testing.T) {
-		cctx, cancel := context.WithCancel(context.Background())
-		cancel()
-		m, _ := dnfM(t)
-		if _, err := m.Repair(cctx); !errors.Is(err, context.Canceled) {
-			t.Fatalf("err=%v want context.Canceled", err)
-		}
-	})
-	t.Run("rpm --verifydb runner error is swallowed (best-effort)", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "")                                        // history redo
-		ok(f, "")                                        // remove --duplicates
-		f.Push(sysexec.Result{}, errors.New("rpm gone")) // rpm --verifydb: runner error, not just non-zero exit
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatalf("a non-cancellation verifydb runner error must be swallowed, got %v", err)
-		}
-	})
-
-	// Gap #5: when `rpm --verifydb` reports CORRUPTION (a non-zero exit), Repair
-	// escalates to `rpm --rebuilddb` to rebuild the rpm database — the recovery
-	// step the agent's UPDATE action used to shell itself. The rebuild is itself
-	// best-effort (a wedged rebuild is logged, not fatal), mirroring every other
-	// repair step.
-	t.Run("verifydb corruption escalates to rpm --rebuilddb", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "")                                                         // history redo
-		ok(f, "")                                                         // remove --duplicates
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "rpmdb corrupt"}, nil) // rpm --verifydb: corruption
-		ok(f, "")                                                         // rpm --rebuilddb
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatalf("rebuilddb is best-effort, must not fail: %v", err)
-		}
-		calls := f.Calls()
-		if len(calls) != 4 {
-			t.Fatalf("want 4 steps (…verifydb, rebuilddb), got %d: %v", len(calls), calls)
-		}
-		last := calls[3]
-		if last.Name != "rpm" || len(last.Args) != 1 || last.Args[0] != "--rebuilddb" {
-			t.Errorf("4th step = %s %v, want rpm --rebuilddb", last.Name, last.Args)
-		}
-		if !last.Escalate {
-			t.Error("rpm --rebuilddb mutates the rpmdb; it must escalate")
-		}
-	})
-
-	// The corollary: a CLEAN verifydb (exit 0) does NOT rebuild — the costly
-	// rebuild only runs when corruption is actually reported.
-	t.Run("clean verifydb does NOT rebuild", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "") // history redo
-		ok(f, "") // remove --duplicates
-		ok(f, "") // rpm --verifydb: clean
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatal(err)
-		}
-		for _, c := range f.Calls() {
-			for _, a := range c.Args {
-				if a == "--rebuilddb" {
-					t.Fatal("a clean verifydb must NOT trigger rpm --rebuilddb")
-				}
-			}
-		}
-		if len(f.Calls()) != 3 {
-			t.Fatalf("clean verifydb → 3 steps, got %d", len(f.Calls()))
-		}
-	})
-
-	// A verifydb RUNNER error (binary gone) is not "corruption reported" — there
-	// is no rpmdb verdict to act on, so no rebuild is attempted.
-	t.Run("verifydb runner error does NOT rebuild", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "")
-		ok(f, "")
-		f.Push(sysexec.Result{}, errors.New("rpm gone")) // verifydb: runner failure, not a corruption verdict
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatalf("swallowed best-effort, got %v", err)
-		}
-		for _, c := range f.Calls() {
-			for _, a := range c.Args {
-				if a == "--rebuilddb" {
-					t.Fatal("a verifydb runner error must NOT trigger a rebuild (no corruption verdict)")
-				}
-			}
-		}
-	})
-
-	// rebuilddb after corruption respects cancellation: a context cancelled before
-	// the rebuild stops the chain rather than running an escalated command.
-	t.Run("cancellation before rebuild stops the chain", func(t *testing.T) {
-		cctx, cancel := context.WithCancel(context.Background())
-		f := newFake()
-		ok(f, "") // history redo
-		ok(f, "") // remove --duplicates
-		// verifydb reports corruption, then the context is cancelled before rebuild.
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "corrupt"}, nil)
-		r := &cancelAfterRunner{inner: f, n: 3, cancel: cancel}
-		dm, err := New(Dnf, r)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := dm.Repair(cctx); !errors.Is(err, context.Canceled) {
-			t.Fatalf("err = %v, want context.Canceled from the cancelled rebuild", err)
-		}
-	})
 }
 
 func TestDnf_Search(t *testing.T) {
@@ -503,22 +279,12 @@ func TestDnf_List(t *testing.T) {
 	t.Run("parses rpm query", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "vim\t8.2-1\tx86_64\t3000\tVi IMproved\nshort\tline\n")
-		ok(f, "vim-8.2-1.x86_64\n") // getPinnedSet (versionlock list)
 		pkgs, err := m.List(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(pkgs) != 1 || pkgs[0].Name != "vim" || pkgs[0].Size != 3000 || !pkgs[0].Pinned {
+		if len(pkgs) != 1 || pkgs[0].Name != "vim" || pkgs[0].Size != 3000 {
 			t.Fatalf("pkgs=%+v", pkgs)
-		}
-	})
-	t.Run("pin-set failure tolerated", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "vim\t8.2-1\tx86_64\t3000\tVi IMproved\n")
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // versionlock list fails -> nil set
-		pkgs, err := m.List(context.Background())
-		if err != nil || len(pkgs) != 1 || pkgs[0].Pinned {
-			t.Fatalf("pkgs=%+v err=%v", pkgs, err)
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
@@ -562,39 +328,28 @@ func TestDnf_ListUpgradable(t *testing.T) {
 
 func TestDnf_Show(t *testing.T) {
 	ctx := context.Background()
-	t.Run("installed and pinned", func(t *testing.T) {
+	t.Run("installed", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "Version      : 8.2\nRelease      : 1.fc39\nArchitecture : x86_64\nSize         : 3.0 M\nSummary      : Vi IMproved\nRepository   : updates\n")
 		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled rpm -q
-		ok(f, "vim-8.2-1\n")                     // IsPinned versionlock list
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "installed" || p.Version != "8.2-1.fc39" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 || !p.Pinned {
+		if p.Status != "installed" || p.Version != "8.2-1.fc39" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 {
 			t.Fatalf("p=%+v", p)
 		}
 	})
-	t.Run("available not installed, versionlock plugin absent tolerated", func(t *testing.T) {
+	t.Run("available not installed", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "Version : 8.2\n")
 		f.Push(sysexec.Result{ExitCode: 1}, nil) // rpm -q: not installed
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // versionlock list: plugin absent -> not pinned
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "available" || p.Pinned {
+		if p.Status != "available" {
 			t.Fatalf("p=%+v", p)
-		}
-	})
-	t.Run("pin-check runner failure propagates", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "Version : 8.2\n")
-		f.Push(sysexec.Result{ExitCode: 0}, nil)            // installed
-		f.Push(sysexec.Result{}, errors.New("versionlock")) // IsPinned runner failure
-		if _, err := m.Show(ctx, "vim"); err == nil {
-			t.Fatal("a runner failure in the pin check must propagate")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
@@ -689,10 +444,10 @@ func TestDnf_InstalledVersion(t *testing.T) {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
 	})
-	t.Run("not installed -> empty", func(t *testing.T) {
+	t.Run("not installed -> ErrNotFound", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 1}, nil)
-		if v, err := m.InstalledVersion(ctx, "ghost"); err != nil || v != "" {
+		if v, err := m.InstalledVersion(ctx, "ghost"); !errors.Is(err, ErrNotFound) || v != "" {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
 	})
@@ -733,28 +488,28 @@ func TestDnf_HasUpdates(t *testing.T) {
 	t.Run("exit 100 means updates", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 100}, nil)
-		if got, err := m.HasUpdates(ctx, false); err != nil || !got {
+		if got, err := m.HasUpdates(ctx); err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("exit 0 means none", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 0}, nil)
-		if got, err := m.HasUpdates(ctx, false); err != nil || got {
+		if got, err := m.HasUpdates(ctx); err != nil || got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("unexpected exit code surfaces as an error", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 1, Stderr: "metadata problem"}, nil)
-		if _, err := m.HasUpdates(ctx, false); err == nil {
+		if _, err := m.HasUpdates(ctx); err == nil {
 			t.Fatal("a non-0/100 check-update exit must be surfaced, not reported as 'no updates'")
 		}
 	})
 	t.Run("security flag added", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 100}, nil)
-		if _, err := m.HasUpdates(ctx, true); err != nil {
+		if _, err := m.HasSecurityUpdates(ctx); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "--security") {
@@ -764,71 +519,98 @@ func TestDnf_HasUpdates(t *testing.T) {
 	t.Run("exec error", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{}, errors.New("boom"))
-		if _, err := m.HasUpdates(ctx, false); err == nil {
+		if _, err := m.HasUpdates(ctx); err == nil {
 			t.Fatal("want error")
 		}
 	})
 }
 
-func TestDnf_IsPinned(t *testing.T) {
+func TestDnf_VersionLock(t *testing.T) {
 	ctx := context.Background()
-	t.Run("locked", func(t *testing.T) {
+	t.Run("pin and unpin use dnf", func(t *testing.T) {
 		m, f := dnfM(t)
-		ok(f, "vim-8.2-1.x86_64\ngit-2.39-1.x86_64\n")
-		if got, err := m.IsPinned(ctx, "vim"); err != nil || !got {
-			t.Fatalf("got=%v err=%v", got, err)
-		}
-	})
-	t.Run("not locked", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "git-2.39-1.x86_64\n")
-		if got, err := m.IsPinned(ctx, "vim"); err != nil || got {
-			t.Fatalf("got=%v err=%v", got, err)
-		}
-	})
-	t.Run("plugin absent is tolerated (false)", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil)
-		if got, err := m.IsPinned(ctx, "vim"); err != nil || got {
-			t.Fatalf("got=%v err=%v", got, err)
-		}
-	})
-	t.Run("bad name", func(t *testing.T) {
-		m, f := dnfM(t)
-		if _, err := m.IsPinned(ctx, "v;m"); err == nil || len(f.Calls()) != 0 {
-			t.Fatal("want rejection")
-		}
-	})
-}
-
-func TestDnf_ListPinned(t *testing.T) {
-	t.Run("lists locked with versions", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 0}, nil) // ensureVersionLock: help ok
-		ok(f, "vim-8.2-1.x86_64\n\n")            // versionlock list
-		ok(f, "8.2-1\n")                         // InstalledVersion(vim)
-		pkgs, err := m.ListPinned(context.Background())
-		if err != nil {
+		ok(f, "")
+		ok(f, "")
+		if _, err := m.Pin(ctx, "vim"); err != nil {
 			t.Fatal(err)
 		}
-		if len(pkgs) != 1 || pkgs[0].Name != "vim" || pkgs[0].Version != "8.2-1" || !pkgs[0].Pinned {
-			t.Fatalf("pkgs=%+v", pkgs)
+		ok(f, "")
+		ok(f, "")
+		if _, err := m.Unpin(ctx, "vim"); err != nil {
+			t.Fatal(err)
+		}
+		calls := f.Calls()
+		if got := argv(calls[1]); got != "dnf versionlock add vim" {
+			t.Fatalf("pin argv=%q", got)
+		}
+		if got := argv(calls[3]); got != "dnf versionlock delete vim" {
+			t.Fatalf("unpin argv=%q", got)
 		}
 	})
-	t.Run("plugin install failure surfaced", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil)               // help absent
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "no"}, nil) // install fails
-		if _, err := m.ListPinned(context.Background()); err == nil {
-			t.Fatal("want error")
+	t.Run("dnf5 uses dnf5", func(t *testing.T) {
+		m, f := dnf5M(t)
+		ok(f, "")
+		ok(f, "")
+		if _, err := m.Pin(ctx, "vim"); err != nil {
+			t.Fatal(err)
+		}
+		if got := argv(f.Calls()[1]); got != "dnf5 versionlock add vim" {
+			t.Fatalf("argv=%q", got)
 		}
 	})
-	t.Run("versionlock list error", func(t *testing.T) {
+	t.Run("dnf5 parses package stanzas", func(t *testing.T) {
+		m, f := dnf5M(t)
+		ok(f, "")
+		ok(f, "Package name: vim\nVersion: 8.2\nCondition: >= 8.0\n\n")
+		got, err := m.IsPinned(ctx, "vim")
+		if err != nil || !got {
+			t.Fatalf("isPinned=%v err=%v", got, err)
+		}
+		ok(f, "")
+		ok(f, "Package name: vim\nVersion: 8.2\nCondition: >= 8.0\n")
+		ok(f, "8.2\n")
+		pkgs, err := m.ListPinned(ctx)
+		if err != nil || len(pkgs) != 1 || pkgs[0].Name != "vim" {
+			t.Fatalf("pkgs=%+v err=%v", pkgs, err)
+		}
+	})
+	t.Run("absent subcommand is unsupported", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 0}, nil)     // help ok
-		f.Push(sysexec.Result{}, errors.New("boom")) // list errors
-		if _, err := m.ListPinned(context.Background()); err == nil {
-			t.Fatal("want error")
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if _, err := m.Pin(ctx, "vim"); !errors.Is(err, ErrUnsupported) {
+			t.Fatalf("err=%v", err)
+		}
+		if len(f.Calls()) != 1 {
+			t.Fatalf("calls=%d", len(f.Calls()))
+		}
+	})
+	t.Run("invalid name before probe", func(t *testing.T) {
+		m, f := dnfM(t)
+		if _, err := m.Pin(ctx, "v;m"); !errors.Is(err, ErrInvalidArgument) || len(f.Calls()) != 0 {
+			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
+		}
+	})
+	t.Run("runner error propagates", func(t *testing.T) {
+		m, f := dnfM(t)
+		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+		if _, err := m.Pin(ctx, "vim"); !errors.Is(err, sysexec.ErrEscalationDenied) {
+			t.Fatalf("err=%v", err)
+		}
+	})
+	t.Run("is pinned and list pinned", func(t *testing.T) {
+		m, f := dnfM(t)
+		ok(f, "")
+		ok(f, "vim-8.2-1.x86_64\n")
+		got, err := m.IsPinned(ctx, "vim")
+		if err != nil || !got {
+			t.Fatalf("isPinned=%v err=%v", got, err)
+		}
+		ok(f, "")
+		ok(f, "vim-8.2-1.x86_64\n")
+		ok(f, "8.2-1\n")
+		pkgs, err := m.ListPinned(ctx)
+		if err != nil || len(pkgs) != 1 || pkgs[0].Name != "vim" {
+			t.Fatalf("pkgs=%+v err=%v", pkgs, err)
 		}
 	})
 }
@@ -892,14 +674,6 @@ func TestDnf_ParseSize(t *testing.T) {
 
 func TestDnf_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
-	t.Run("List: getPinnedSet runner failure", func(t *testing.T) {
-		m, f := dnfM(t)
-		ok(f, "vim\t8.2-1\tx86_64\t3000\tVi IMproved\n")    // rpm -qa
-		f.Push(sysexec.Result{}, errors.New("versionlock")) // getPinnedSet probe
-		if _, err := m.List(ctx); err == nil {
-			t.Fatal("a getPinnedSet runner failure must propagate")
-		}
-	})
 	t.Run("ListUpgradable: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 100, Stdout: "vim.x86_64 8.2-2 updates\n"}, nil) // check-update
@@ -918,8 +692,8 @@ func TestDnf_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 0}, nil)    // ensureVersionLock help
-		ok(f, "vim-8.2-1.x86_64\n")                 // versionlock list
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
+		ok(f, "vim-8.2-1.x86_64\n")
 		f.Push(sysexec.Result{}, errors.New("rpm")) // InstalledVersion
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")

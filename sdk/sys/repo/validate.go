@@ -83,7 +83,7 @@ func (m *manager) Validate(r Repository) error {
 		if r.Apt != nil {
 			return validateApt(r.Apt)
 		}
-	case pkg.Dnf:
+	case pkg.Dnf, pkg.Dnf5:
 		if r.Dnf != nil {
 			return validateDnf(r.Dnf)
 		}

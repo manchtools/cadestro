@@ -26,7 +26,7 @@ func TestApt_Version(t *testing.T) {
 		if err != nil || v != "2.7.14build2" {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
-		if argv(f.Calls()[0]) != "apt --version" || f.Calls()[0].Escalate {
+		if argv(f.Calls()[0]) != "apt-get --version" || f.Calls()[0].Escalate {
 			t.Errorf("argv = %q (escalate=%v)", argv(f.Calls()[0]), f.Calls()[0].Escalate)
 		}
 	})
@@ -63,11 +63,11 @@ func TestApt_Install(t *testing.T) {
 	t.Run("multiple packages, latest", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{}, "vim", "git"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim"}, InstallSpec{Name: "git"}); err != nil {
 			t.Fatal(err)
 		}
 		c := f.Calls()[0]
-		if argv(c) != "apt install -y --fix-broken vim git" || !c.Escalate {
+		if argv(c) != "apt-get install -y vim git" || !c.Escalate {
 			t.Errorf("argv = %q (escalate=%v)", argv(c), c.Escalate)
 		}
 		if len(c.Env) == 0 || c.Env[0] != "DEBIAN_FRONTEND=noninteractive" {
@@ -77,7 +77,7 @@ func TestApt_Install(t *testing.T) {
 	t.Run("pinned version", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{Version: "2:8.2.3995-1ubuntu2"}, "vim"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "2:8.2.3995-1ubuntu2"}); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "vim=2:8.2.3995-1ubuntu2") {
@@ -87,7 +87,7 @@ func TestApt_Install(t *testing.T) {
 	t.Run("allow downgrade", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{Version: "1.0", AllowDowngrade: true}, "vim"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{AllowDowngrade: true}, InstallSpec{Name: "vim", Version: "1.0"}); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "--allow-downgrades") {
@@ -105,7 +105,7 @@ func TestApt_Install(t *testing.T) {
 	})
 	t.Run("bad name rejected before exec", func(t *testing.T) {
 		m, f := aptM(t)
-		_, err := m.Install(ctx, InstallOptions{}, "vim;rm -rf /")
+		_, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim;rm -rf /"})
 		if err == nil || !strings.Contains(err.Error(), "invalid package name") {
 			t.Fatalf("err = %v, want validation rejection", err)
 		}
@@ -115,7 +115,7 @@ func TestApt_Install(t *testing.T) {
 	})
 	t.Run("bad version rejected before exec", func(t *testing.T) {
 		m, f := aptM(t)
-		_, err := m.Install(ctx, InstallOptions{Version: "1.0;evil"}, "vim")
+		_, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "1.0;evil"})
 		if err == nil || !strings.Contains(err.Error(), "version") {
 			t.Fatalf("err = %v, want version rejection", err)
 		}
@@ -123,19 +123,19 @@ func TestApt_Install(t *testing.T) {
 			t.Error("rejected version must run nothing")
 		}
 	})
-	t.Run("version with multiple packages rejected", func(t *testing.T) {
+	t.Run("multiple package versions", func(t *testing.T) {
 		m, f := aptM(t)
-		_, err := m.Install(ctx, InstallOptions{Version: "1.0"}, "vim", "git")
-		if err == nil || !strings.Contains(err.Error(), "exactly one package") {
-			t.Fatalf("err = %v, want one-package rejection", err)
+		ok(f, "")
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "1.0"}, InstallSpec{Name: "git", Version: "2.0"}); err != nil {
+			t.Fatal(err)
 		}
-		if len(f.Calls()) != 0 {
-			t.Error("must run nothing")
+		if got := argv(f.Calls()[0]); got != "apt-get install -y vim=1.0 git=2.0" {
+			t.Fatalf("argv=%q", got)
 		}
 	})
 	t.Run("version with zero packages rejected", func(t *testing.T) {
 		m, _ := aptM(t)
-		if _, err := m.Install(ctx, InstallOptions{Version: "1.0"}); err == nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Version: "1.0"}); err == nil {
 			t.Fatal("version with no package must be rejected")
 		}
 	})
@@ -149,7 +149,7 @@ func TestApt_Remove(t *testing.T) {
 		if _, err := m.Remove(ctx, RemoveOptions{}, "vim"); err != nil {
 			t.Fatal(err)
 		}
-		if argv(f.Calls()[0]) != "apt remove -y vim" {
+		if argv(f.Calls()[0]) != "apt-get remove -y vim" {
 			t.Errorf("argv = %q", argv(f.Calls()[0]))
 		}
 	})
@@ -159,7 +159,7 @@ func TestApt_Remove(t *testing.T) {
 		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}, "vim"); err != nil {
 			t.Fatal(err)
 		}
-		if argv(f.Calls()[0]) != "apt purge -y vim" {
+		if argv(f.Calls()[0]) != "apt-get purge -y vim" {
 			t.Errorf("argv = %q, want purge", argv(f.Calls()[0]))
 		}
 	})
@@ -184,21 +184,21 @@ func TestApt_Update(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := f.Calls()[0]
-	if argv(c) != "apt update" || !c.Escalate {
+	if argv(c) != "apt-get update" || !c.Escalate {
 		t.Errorf("argv = %q (escalate=%v)", argv(c), c.Escalate)
 	}
 }
 
 func TestApt_Upgrade(t *testing.T) {
 	ctx := context.Background()
-	t.Run("UpgradeAll -> dist-upgrade", func(t *testing.T) {
+	t.Run("UpgradeAll -> upgrade", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "")
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{}); err != nil {
+		if _, err := m.UpgradeAll(ctx); err != nil {
 			t.Fatal(err)
 		}
-		if a := argv(f.Calls()[0]); !strings.HasPrefix(a, "apt dist-upgrade -y") {
-			t.Errorf("argv = %q, want dist-upgrade", a)
+		if a := argv(f.Calls()[0]); !strings.HasPrefix(a, "apt-get upgrade -y") {
+			t.Errorf("argv = %q, want apt-get upgrade", a)
 		}
 	})
 	t.Run("empty Upgrade is a no-op (not a full upgrade)", func(t *testing.T) {
@@ -283,7 +283,7 @@ func TestApt_Autoremove(t *testing.T) {
 	if _, err := m.Autoremove(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if c := f.Calls()[0]; argv(c) != "apt autoremove -y" || !c.Escalate {
+	if c := f.Calls()[0]; argv(c) != "apt-get autoremove -y" || !c.Escalate {
 		t.Errorf("argv = %q (escalate=%v)", argv(c), c.Escalate)
 	}
 }
@@ -291,7 +291,7 @@ func TestApt_Autoremove(t *testing.T) {
 func TestApt_WriteFailure(t *testing.T) {
 	m, f := aptM(t)
 	f.Push(sysexec.Result{ExitCode: 100, Stderr: "E: Unable to locate package ghost"}, nil)
-	_, err := m.Install(context.Background(), InstallOptions{}, "ghost")
+	_, err := m.Install(context.Background(), InstallOptions{}, InstallSpec{Name: "ghost"})
 	var ce *sysexec.CommandError
 	if !errors.As(err, &ce) || ce.ExitCode != 100 {
 		t.Fatalf("err = %v, want CommandError(exit 100)", err)
@@ -307,71 +307,6 @@ func TestApt_WriteExecError(t *testing.T) {
 	if _, err := m.Update(context.Background()); !errors.Is(err, sysexec.ErrEscalationDenied) {
 		t.Fatalf("err = %v, want ErrEscalationDenied", err)
 	}
-}
-
-func TestApt_Repair(t *testing.T) {
-	ctx := context.Background()
-	t.Run("happy path", func(t *testing.T) {
-		stubLookPath(t, "apt")
-		stubStatFile(t, nil) // no lock files present
-		m, f := mustNew(t, Apt)
-		ok(f, "") // dpkg --configure -a
-		ok(f, "") // apt --fix-broken install
-		ok(f, "") // apt update
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatal(err)
-		}
-		var got []string
-		for _, c := range f.Calls() {
-			got = append(got, c.Name+" "+strings.Join(c.Args[:1], ""))
-		}
-		if len(f.Calls()) != 3 {
-			t.Fatalf("want 3 repair commands, got %d: %v", len(f.Calls()), got)
-		}
-	})
-	t.Run("intermediate failures are warnings, final failure returned", func(t *testing.T) {
-		stubLookPath(t, "apt")
-		stubStatFile(t, nil)
-		m, f := mustNew(t, Apt)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "dpkg busy"}, nil)     // configure fails (warn)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "still broken"}, nil)  // fix-broken fails (warn)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "update failed"}, nil) // update fails (returned)
-		_, err := m.Repair(ctx)
-		if err == nil || !strings.Contains(err.Error(), "apt update failed") {
-			t.Fatalf("err = %v, want apt update failure", err)
-		}
-	})
-	t.Run("cancelled context stops at lock loop", func(t *testing.T) {
-		stubLookPath(t, "apt")
-		stubStatFile(t, nil)
-		cctx, cancel := context.WithCancel(context.Background())
-		cancel()
-		m, f := mustNew(t, Apt)
-		if _, err := m.Repair(cctx); !errors.Is(err, context.Canceled) {
-			t.Fatalf("err = %v, want context.Canceled", err)
-		}
-		if len(f.Calls()) != 0 {
-			t.Error("cancelled repair must run nothing")
-		}
-	})
-	t.Run("cancellation during a best-effort step is propagated", func(t *testing.T) {
-		stubLookPath(t, "apt")
-		stubStatFile(t, nil) // locks absent -> lock loop makes no runner calls
-		ctx2, cancel := context.WithCancel(context.Background())
-		// dpkg --configure -a (runner call 1) succeeds; the context is then
-		// cancelled, so the next best-effort step (apt --fix-broken) fails closed
-		// and Repair propagates the cancellation.
-		inner := newFake()
-		inner.Push(sysexec.Result{}, nil) // dpkg --configure -a
-		r := &cancelAfterRunner{inner: inner, n: 1, cancel: cancel}
-		m, err := New(Apt, r)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := m.Repair(ctx2); !errors.Is(err, context.Canceled) {
-			t.Fatalf("err = %v, want context.Canceled", err)
-		}
-	})
 }
 
 // --- reads -----------------------------------------------------------------
@@ -403,12 +338,11 @@ func TestApt_Search(t *testing.T) {
 }
 
 func TestApt_List(t *testing.T) {
-	t.Run("parses installed, applies size and pin", func(t *testing.T) {
+	t.Run("parses installed and applies size", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "vim\t2:8.2\tamd64\tinstall ok installed\t3000\tVi IMproved\n"+
 			"halfpkg\t1.0\tamd64\tdeinstall ok config-files\t10\tleftover\n"+
 			"short\tfields\n")
-		ok(f, "vim\n") // getPinnedSet (apt-mark showhold)
 		pkgs, err := m.List(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -417,16 +351,8 @@ func TestApt_List(t *testing.T) {
 			t.Fatalf("want only the installed package, got %+v", pkgs)
 		}
 		p := pkgs[0]
-		if p.Name != "vim" || p.Size != 3000*1024 || p.Description != "Vi IMproved" || !p.Pinned {
+		if p.Name != "vim" || p.Size != 3000*1024 || p.Description != "Vi IMproved" {
 			t.Errorf("package = %+v", p)
-		}
-	})
-	t.Run("pin-set lookup runner failure propagates", func(t *testing.T) {
-		m, f := aptM(t)
-		ok(f, "vim\t2:8.2\tamd64\tinstall ok installed\t3000\tVi IMproved\n")
-		f.Push(sysexec.Result{}, errors.New("apt-mark missing")) // getPinnedSet runner failure
-		if _, err := m.List(context.Background()); err == nil {
-			t.Fatal("a runner failure in the pin-set lookup must propagate, not be swallowed")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
@@ -441,8 +367,7 @@ func TestApt_List(t *testing.T) {
 func TestApt_ListUpgradable(t *testing.T) {
 	t.Run("parses upgradable rows", func(t *testing.T) {
 		m, f := aptM(t)
-		ok(f, "Listing...\n"+
-			"vim/jammy-updates 2:8.2.2 amd64 [upgradable from: 2:8.2.1]\n"+
+		ok(f, "Inst vim (2:8.2.2 jammy-updates )\n"+
 			"garbage line without match\n")
 		ups, err := m.ListUpgradable(context.Background())
 		if err != nil {
@@ -452,7 +377,7 @@ func TestApt_ListUpgradable(t *testing.T) {
 			t.Fatalf("ups = %+v", ups)
 		}
 		u := ups[0]
-		if u.Name != "vim" || u.NewVersion != "2:8.2.2" || u.CurrentVersion != "2:8.2.1" || u.Architecture != "amd64" {
+		if u.Name != "vim" || u.NewVersion != "2:8.2.2" || u.Repository != "jammy-updates" || u.CurrentVersion != "" {
 			t.Errorf("update = %+v", u)
 		}
 	})
@@ -467,16 +392,15 @@ func TestApt_ListUpgradable(t *testing.T) {
 
 func TestApt_Show(t *testing.T) {
 	ctx := context.Background()
-	t.Run("installed and pinned", func(t *testing.T) {
+	t.Run("installed", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\nArchitecture: amd64\nInstalled-Size: 3000\nDescription: Vi IMproved\n")
 		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled: dpkg -s -> installed
-		ok(f, "vim\n")                           // IsPinned: apt-mark showhold vim
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "installed" || p.Version != "2:8.2" || p.Size != 3000*1024 || !p.Pinned {
+		if p.Status != "installed" || p.Version != "2:8.2" || p.Size != 3000*1024 {
 			t.Errorf("pkg = %+v", p)
 		}
 	})
@@ -484,22 +408,12 @@ func TestApt_Show(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\n")
 		f.Push(sysexec.Result{ExitCode: 1}, nil) // dpkg -s -> not installed
-		ok(f, "")                                // apt-mark showhold vim -> not pinned
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "available" || p.Pinned {
+		if p.Status != "available" {
 			t.Errorf("pkg = %+v", p)
-		}
-	})
-	t.Run("pin-check runner failure propagates", func(t *testing.T) {
-		m, f := aptM(t)
-		ok(f, "Package: vim\nVersion: 2:8.2\n")
-		f.Push(sysexec.Result{ExitCode: 0}, nil)             // IsInstalled -> installed
-		f.Push(sysexec.Result{}, errors.New("apt-mark err")) // IsPinned runner failure
-		if _, err := m.Show(ctx, "vim"); err == nil {
-			t.Fatal("a runner failure in the pin check must propagate")
 		}
 	})
 	t.Run("exec error on show", func(t *testing.T) {
@@ -598,12 +512,11 @@ func TestApt_InstalledVersion(t *testing.T) {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
 	})
-	t.Run("absent package returns empty, not error", func(t *testing.T) {
-		// dpkg-query exits non-zero for an unknown package — a benign miss.
+	t.Run("absent package returns ErrNotFound", func(t *testing.T) {
 		m, f := aptM(t)
 		f.Push(sysexec.Result{ExitCode: 1, Stderr: "no packages found matching ghost"}, nil)
-		if v, err := m.InstalledVersion(ctx, "ghost"); err != nil || v != "" {
-			t.Fatalf("v=%q err=%v, want \"\",nil for an absent package", v, err)
+		if v, err := m.InstalledVersion(ctx, "ghost"); !errors.Is(err, ErrNotFound) || v != "" {
+			t.Fatalf("v=%q err=%v, want ErrNotFound", v, err)
 		}
 	})
 	t.Run("runner error propagates", func(t *testing.T) {
@@ -642,7 +555,7 @@ func TestApt_HasUpdates(t *testing.T) {
 	t.Run("Inst lines mean updates", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Reading package lists...\nInst vim [2:8.2.1] (2:8.2.2 jammy [amd64])\nConf vim\n")
-		got, err := m.HasUpdates(context.Background(), false)
+		got, err := m.HasUpdates(context.Background())
 		if err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
@@ -650,14 +563,14 @@ func TestApt_HasUpdates(t *testing.T) {
 	t.Run("no Inst lines mean none", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Reading package lists...\nCalculating upgrade...\n")
-		if got, err := m.HasUpdates(context.Background(), true); err != nil || got {
+		if got, err := m.HasUpdates(context.Background()); err != nil || got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
 		f.Push(sysexec.Result{}, errors.New("boom"))
-		if _, err := m.HasUpdates(context.Background(), false); err == nil {
+		if _, err := m.HasUpdates(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
 	})
@@ -704,7 +617,7 @@ func TestApt_ListPinned(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(pkgs) != 2 || pkgs[0].Name != "vim" || pkgs[0].Version != "2:8.2" || !pkgs[0].Pinned {
+		if len(pkgs) != 2 || pkgs[0].Name != "vim" || pkgs[0].Version != "2:8.2" {
 			t.Fatalf("pkgs = %+v", pkgs)
 		}
 	})

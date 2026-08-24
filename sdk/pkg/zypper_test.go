@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -48,7 +49,7 @@ func TestZypper_Install(t *testing.T) {
 	t.Run("latest", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{}, "vim", "git"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim"}, InstallSpec{Name: "git"}); err != nil {
 			t.Fatal(err)
 		}
 		c := f.Calls()[0]
@@ -59,7 +60,7 @@ func TestZypper_Install(t *testing.T) {
 	t.Run("pinned version", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{Version: "9.0-1"}, "vim"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "9.0-1"}); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "vim=9.0-1") {
@@ -69,7 +70,7 @@ func TestZypper_Install(t *testing.T) {
 	t.Run("allow downgrade adds --oldpackage", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "")
-		if _, err := m.Install(ctx, InstallOptions{Version: "1.0", AllowDowngrade: true}, "vim"); err != nil {
+		if _, err := m.Install(ctx, InstallOptions{AllowDowngrade: true}, InstallSpec{Name: "vim", Version: "1.0"}); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "--oldpackage") {
@@ -84,39 +85,42 @@ func TestZypper_Install(t *testing.T) {
 	})
 	t.Run("bad name", func(t *testing.T) {
 		m, f := zypperM(t)
-		if _, err := m.Install(ctx, InstallOptions{}, "v;m"); err == nil || len(f.Calls()) != 0 {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "v;m"}); err == nil || len(f.Calls()) != 0 {
 			t.Fatal("want rejection")
 		}
 	})
 	t.Run("bad version", func(t *testing.T) {
 		m, f := zypperM(t)
-		if _, err := m.Install(ctx, InstallOptions{Version: "1;0"}, "vim"); err == nil || len(f.Calls()) != 0 {
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "1;0"}); err == nil || len(f.Calls()) != 0 {
 			t.Fatal("want rejection")
 		}
 	})
-	t.Run("version with multiple packages rejected", func(t *testing.T) {
+	t.Run("multiple package versions", func(t *testing.T) {
 		m, f := zypperM(t)
-		if _, err := m.Install(ctx, InstallOptions{Version: "1.0"}, "vim", "git"); err == nil || len(f.Calls()) != 0 {
-			t.Fatal("want one-package rejection")
+		ok(f, "")
+		if _, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim", Version: "1.0"}, InstallSpec{Name: "git", Version: "2.0"}); err != nil {
+			t.Fatal(err)
+		}
+		if got := argv(f.Calls()[0]); got != "zypper --non-interactive install vim=1.0 git=2.0" {
+			t.Fatalf("argv=%q", got)
 		}
 	})
 }
 
 func TestZypper_Remove(t *testing.T) {
 	ctx := context.Background()
-	t.Run("remove (purge ignored)", func(t *testing.T) {
+	t.Run("purge is unsupported", func(t *testing.T) {
 		m, f := zypperM(t)
-		ok(f, "")
-		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}, "vim"); err != nil {
-			t.Fatal(err)
+		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}, "vim"); !errors.Is(err, ErrUnsupported) {
+			t.Fatalf("err=%v, want ErrUnsupported", err)
 		}
-		if argv(f.Calls()[0]) != "zypper --non-interactive remove vim" {
-			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		if len(f.Calls()) != 0 {
+			t.Fatalf("unsupported purge ran %d commands", len(f.Calls()))
 		}
 	})
-	t.Run("empty no-op", func(t *testing.T) {
+	t.Run("empty purge no-op", func(t *testing.T) {
 		m, f := zypperM(t)
-		if _, err := m.Remove(ctx, RemoveOptions{}); err != nil || len(f.Calls()) != 0 {
+		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}); err != nil || len(f.Calls()) != 0 {
 			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
 		}
 	})
@@ -140,16 +144,26 @@ func TestZypper_UpdateUpgrade(t *testing.T) {
 			t.Errorf("argv=%q", argv(f.Calls()[0]))
 		}
 	})
-	t.Run("UpgradeAll -> dist-upgrade", func(t *testing.T) {
+	t.Run("UpgradeAll -> update", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "")
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{}); err != nil {
+		if _, err := m.UpgradeAll(ctx); err != nil {
 			t.Fatal(err)
 		}
-		if argv(f.Calls()[0]) != "zypper --non-interactive dist-upgrade" {
+		if argv(f.Calls()[0]) != "zypper --non-interactive update" {
 			t.Errorf("argv=%q", argv(f.Calls()[0]))
 		}
 	})
+	for _, code := range []int{102, 103} {
+		t.Run(fmt.Sprintf("UpgradeAll informational exit %d", code), func(t *testing.T) {
+			m, f := zypperM(t)
+			f.Push(sysexec.Result{ExitCode: code}, nil)
+			res, err := m.UpgradeAll(ctx)
+			if err != nil || res.ExitCode != code {
+				t.Fatalf("res=%+v err=%v", res, err)
+			}
+		})
+	}
 	t.Run("empty Upgrade is a no-op", func(t *testing.T) {
 		m, f := zypperM(t)
 		if _, err := m.Upgrade(ctx); err != nil {
@@ -186,88 +200,13 @@ func TestZypper_UpdateUpgrade(t *testing.T) {
 
 func TestZypper_Autoremove(t *testing.T) {
 	m, f := zypperM(t)
-	if _, err := m.Autoremove(context.Background()); err != nil {
-		t.Fatal(err)
+	if _, err := m.Autoremove(context.Background()); !errors.Is(err, ErrUnsupported) {
+		t.Fatalf("err=%v, want ErrUnsupported", err)
 	}
 	if len(f.Calls()) != 0 {
-		t.Errorf("zypper autoremove is a documented no-op, ran %d commands", len(f.Calls()))
+		t.Errorf("unsupported autoremove ran %d commands", len(f.Calls()))
 	}
 }
-
-// Repair mirrors dnf's best-effort recovery (both are rpm-based): clear a stale
-// zypp PID lock, then clean → refresh → verify → (rpmdb verify, rebuild only on
-// corruption). Every step is best-effort — a wedged step is logged, not fatal,
-// so e.g. a failed refresh does not skip the rpmdb rebuild — and only a
-// cancelled context aborts the chain.
-func TestZypper_Repair(t *testing.T) {
-	ctx := context.Background()
-	t.Run("runs the full best-effort sequence in order", func(t *testing.T) {
-		stubStatFile(t, nil) // no /run/zypp.pid → lock step is a no-op
-		m, f := zypperM(t)
-		ok(f, "") // zypper clean --all
-		ok(f, "") // zypper refresh
-		ok(f, "") // zypper verify --recommends
-		ok(f, "") // rpm --verifydb (clean)
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatal(err)
-		}
-		want := []string{
-			"zypper --non-interactive clean --all",
-			"zypper --non-interactive refresh",
-			"zypper --non-interactive verify --recommends",
-			"rpm --verifydb",
-		}
-		calls := f.Calls()
-		if len(calls) != len(want) {
-			t.Fatalf("ran %d steps, want %d: %v", len(calls), len(want), calls)
-		}
-		for i := range want {
-			if argv(calls[i]) != want[i] {
-				t.Errorf("step %d argv = %q, want %q", i, argv(calls[i]), want[i])
-			}
-		}
-	})
-	t.Run("a failed step is best-effort: the chain continues, no error", func(t *testing.T) {
-		stubStatFile(t, nil)
-		m, f := zypperM(t)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "clean failed"}, nil) // clean fails
-		ok(f, "")                                                        // refresh
-		ok(f, "")                                                        // verify
-		ok(f, "")                                                        // verifydb clean
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatalf("a non-cancellation step failure must be swallowed, got %v", err)
-		}
-		if n := len(f.Calls()); n != 4 {
-			t.Errorf("the chain must continue past a failed step (4 calls), ran %d", n)
-		}
-	})
-	t.Run("rpmdb corruption escalates to rpm --rebuilddb", func(t *testing.T) {
-		stubStatFile(t, nil)
-		m, f := zypperM(t)
-		ok(f, "")                                                         // clean
-		ok(f, "")                                                         // refresh
-		ok(f, "")                                                         // verify
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "rpmdb corrupt"}, nil) // verifydb: corruption
-		ok(f, "")                                                         // rebuilddb
-		if _, err := m.Repair(ctx); err != nil {
-			t.Fatal(err)
-		}
-		calls := f.Calls()
-		if len(calls) != 5 || argv(calls[4]) != "rpm --rebuilddb" {
-			t.Errorf("verifydb corruption must escalate to rpm --rebuilddb, calls=%v", calls)
-		}
-	})
-	t.Run("cancellation aborts", func(t *testing.T) {
-		stubStatFile(t, nil)
-		cctx, cancel := context.WithCancel(context.Background())
-		cancel()
-		m, _ := zypperM(t)
-		if _, err := m.Repair(cctx); !errors.Is(err, context.Canceled) {
-			t.Fatalf("err=%v", err)
-		}
-	})
-}
-
 func TestZypper_Search(t *testing.T) {
 	ctx := context.Background()
 	t.Run("parses table after header", func(t *testing.T) {
@@ -308,22 +247,12 @@ func TestZypper_List(t *testing.T) {
 	t.Run("parses rpm query with pin", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "vim\t9.0-1\tx86_64\t3000\tVi IMproved\nshort\tline\n")
-		ok(f, "# | Name | Type | Repository\n---+------+------+-----------\n1 | vim | package |\n") // locks
 		pkgs, err := m.List(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(pkgs) != 1 || pkgs[0].Name != "vim" || pkgs[0].Size != 3000 || !pkgs[0].Pinned {
+		if len(pkgs) != 1 || pkgs[0].Name != "vim" || pkgs[0].Size != 3000 {
 			t.Fatalf("pkgs=%+v", pkgs)
-		}
-	})
-	t.Run("pin-set failure tolerated", func(t *testing.T) {
-		m, f := zypperM(t)
-		ok(f, "vim\t9.0-1\tx86_64\t3000\tVi IMproved\n")
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // locks fails -> nil set
-		pkgs, err := m.List(context.Background())
-		if err != nil || len(pkgs) != 1 || pkgs[0].Pinned {
-			t.Fatalf("pkgs=%+v err=%v", pkgs, err)
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
@@ -382,16 +311,15 @@ func TestZypper_ListUpgradable(t *testing.T) {
 func TestZypper_Show(t *testing.T) {
 	ctx := context.Background()
 	info := "Information for package vim:\nRepository     : repo-oss\nName           : vim\nVersion        : 9.0-2\nArch           : x86_64\nInstalled Size : 3.0 MiB\nStatus         : up-to-date (installed)\nSummary        : Vi IMproved\n"
-	t.Run("installed and pinned", func(t *testing.T) {
+	t.Run("installed", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, info)
-		f.Push(sysexec.Result{ExitCode: 0}, nil)                 // IsInstalled rpm -q
-		ok(f, "1 | vim | package |\n--+\n1 | vim | package |\n") // IsPinned zypper locks
+		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled rpm -q
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "installed" || p.Version != "9.0-2" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 || p.Repository != "repo-oss" || !p.Pinned {
+		if p.Status != "installed" || p.Version != "9.0-2" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 || p.Repository != "repo-oss" {
 			t.Fatalf("p=%+v", p)
 		}
 	})
@@ -404,7 +332,7 @@ func TestZypper_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "available" || p.Pinned {
+		if p.Status != "available" {
 			t.Fatalf("p=%+v", p)
 		}
 	})
@@ -516,10 +444,10 @@ func TestZypper_IsInstalledVersionCount(t *testing.T) {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
 	})
-	t.Run("InstalledVersion not installed -> empty", func(t *testing.T) {
+	t.Run("InstalledVersion not installed -> ErrNotFound", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{ExitCode: 1}, nil)
-		if v, err := m.InstalledVersion(ctx, "ghost"); err != nil || v != "" {
+		if v, err := m.InstalledVersion(ctx, "ghost"); !errors.Is(err, ErrNotFound) || v != "" {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
 	})
@@ -557,28 +485,35 @@ func TestZypper_HasUpdates(t *testing.T) {
 	t.Run("exit 100 means updates", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{ExitCode: 100}, nil)
-		if got, err := m.HasUpdates(ctx, false); err != nil || !got {
+		if got, err := m.HasUpdates(ctx); err != nil || !got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("exit 101 means security updates", func(t *testing.T) {
+		m, f := zypperM(t)
+		f.Push(sysexec.Result{ExitCode: 101}, nil)
+		if got, err := m.HasUpdates(ctx); err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("exit 0 with table row means updates", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{ExitCode: 0, Stdout: "S | Repo | Name\nv | repo | vim\n"}, nil)
-		if got, err := m.HasUpdates(ctx, false); err != nil || !got {
+		if got, err := m.HasUpdates(ctx); err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("exit 0 no rows means none", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{ExitCode: 0, Stdout: "No updates found.\n"}, nil)
-		if got, err := m.HasUpdates(ctx, false); err != nil || got {
+		if got, err := m.HasUpdates(ctx); err != nil || got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("a real-error exit fails closed, not silent 'no updates'", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{ExitCode: 6}, nil) // 6 = no repositories: a real failure
-		got, err := m.HasUpdates(ctx, false)
+		got, err := m.HasUpdates(ctx)
 		// A failed update check must surface as an error — reporting "no updates"
 		// would tell a patch/compliance caller it is up to date when the check broke.
 		// Matches dnf.HasUpdates, which returns a CommandError on its default branch.
@@ -592,17 +527,24 @@ func TestZypper_HasUpdates(t *testing.T) {
 	t.Run("security flag added", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{ExitCode: 100}, nil)
-		if _, err := m.HasUpdates(ctx, true); err != nil {
+		if _, err := m.HasSecurityUpdates(ctx); err != nil {
 			t.Fatal(err)
 		}
 		if a := argv(f.Calls()[0]); !strings.Contains(a, "--category security") {
 			t.Errorf("argv=%q want security category", a)
 		}
 	})
+	t.Run("security exit 101 means updates", func(t *testing.T) {
+		m, f := zypperM(t)
+		f.Push(sysexec.Result{ExitCode: 101}, nil)
+		if got, err := m.HasSecurityUpdates(ctx); err != nil || !got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := zypperM(t)
 		f.Push(sysexec.Result{}, errors.New("boom"))
-		if _, err := m.HasUpdates(ctx, false); err == nil {
+		if _, err := m.HasUpdates(ctx); err == nil {
 			t.Fatal("want error")
 		}
 	})
@@ -667,7 +609,7 @@ func TestZypper_ListPinnedAndIsPinned(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(pkgs) != 2 || pkgs[0].Name != "vim" || pkgs[0].Version != "9.0-1" || !pkgs[0].Pinned {
+		if len(pkgs) != 2 || pkgs[0].Name != "vim" || pkgs[0].Version != "9.0-1" {
 			t.Fatalf("pkgs=%+v", pkgs)
 		}
 	})
@@ -743,29 +685,12 @@ func TestZypper_ParseValueAndSize(t *testing.T) {
 
 func TestZypper_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
-	t.Run("List: getPinnedSet runner failure", func(t *testing.T) {
-		m, f := zypperM(t)
-		ok(f, "vim\t9.0-1\tx86_64\t3000\tVi IMproved\n") // rpm -qa
-		f.Push(sysexec.Result{}, errors.New("locks"))    // getPinnedSet probe
-		if _, err := m.List(ctx); err == nil {
-			t.Fatal("a getPinnedSet runner failure must propagate")
-		}
-	})
 	t.Run("Show: IsInstalled runner failure", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "Name : vim\nVersion : 9.0-2\n")      // info
 		f.Push(sysexec.Result{}, errors.New("rpm")) // IsInstalled
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("an IsInstalled runner failure must propagate")
-		}
-	})
-	t.Run("Show: IsPinned runner failure", func(t *testing.T) {
-		m, f := zypperM(t)
-		ok(f, "Name : vim\nVersion : 9.0-2\n")        // info
-		f.Push(sysexec.Result{ExitCode: 0}, nil)      // IsInstalled (installed)
-		f.Push(sysexec.Result{}, errors.New("locks")) // IsPinned probe
-		if _, err := m.Show(ctx, "vim"); err == nil {
-			t.Fatal("an IsPinned runner failure must propagate")
 		}
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {

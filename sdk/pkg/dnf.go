@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -14,7 +13,8 @@ import (
 
 // dnf drives the Fedora/RHEL package manager (dnf / rpm) over an injected Runner.
 type dnf struct {
-	r sysexec.Runner
+	r       sysexec.Runner
+	command string
 }
 
 var _ Manager = (*dnf)(nil)
@@ -33,76 +33,59 @@ func parseNEVRAName(nevra string) string {
 	return nevra[:loc[0]]
 }
 
-func (d *dnf) Backend() Backend { return Dnf }
+func (d *dnf) Backend() Backend {
+	if d.command == "dnf5" {
+		return Dnf5
+	}
+	return Dnf
+}
 
 // write runs a privileged dnf command and maps a non-zero exit to an error,
 // returning the command Result (stdout/stderr/exit) on both the success and
 // non-zero-exit paths.
 func (d *dnf) write(ctx context.Context, args ...string) (sysexec.Result, error) {
-	res, err := runPriv(ctx, d.r, true, nil, "dnf", args...)
+	res, err := runPriv(ctx, d.r, true, nil, d.command, args...)
 	if err != nil {
 		return sysexec.Result{}, err
 	}
-	return res, asCommandError("dnf", res)
+	return res, asCommandError(d.command, res)
 }
 
 // Version returns the dnf version string.
 func (d *dnf) Version(ctx context.Context) (string, error) {
-	out, err := readOut(ctx, d.r, "dnf", "--version")
+	out, err := readOut(ctx, d.r, d.command, "--version")
 	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(strings.SplitN(out, "\n", 2)[0]), nil
 }
 
-// Install installs packages. opts.Version pins a single package (dnf name-version
-// form); opts.AllowDowngrade adds --allowerasing and, on failure, retries an
-// explicit `dnf downgrade`.
-func (d *dnf) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
-	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return sysexec.Result{}, err
-	}
-	if opts.Version != "" && len(packages) != 1 {
-		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
-	}
-	if len(packages) == 0 {
+func (d *dnf) Install(ctx context.Context, opts InstallOptions, specs ...InstallSpec) (sysexec.Result, error) {
+	if len(specs) == 0 {
 		return sysexec.Result{}, nil
 	}
+	for _, spec := range specs {
+		if err := ValidatePackageName(spec.Name); err != nil {
+			return sysexec.Result{}, err
+		}
+		if err := ValidatePackageVersion(spec.Version); err != nil {
+			return sysexec.Result{}, err
+		}
+	}
 	args := []string{"install", "-y"}
-	if opts.AllowDowngrade {
-		args = append(args, "--allowerasing")
+	if opts.AllowDowngrade && d.command == "dnf5" {
+		args = append(args, "--allow-downgrade")
 	}
-	var pkgSpec string
-	if opts.Version != "" {
-		pkgSpec = fmt.Sprintf("%s-%s", packages[0], opts.Version)
-		args = append(args, pkgSpec)
-	} else {
-		args = append(args, packages...)
+	for _, spec := range specs {
+		if spec.Version == "" {
+			args = append(args, spec.Name)
+		} else {
+			args = append(args, fmt.Sprintf("%s-%s", spec.Name, spec.Version))
+		}
 	}
-
-	res, err := d.write(ctx, args...)
-	// Only retry as an explicit downgrade when dnf itself rejected the install
-	// (a non-zero exit). An exec/escalation/context failure must not trigger a
-	// second escalated command.
-	var ce *sysexec.CommandError
-	if errors.As(err, &ce) && opts.AllowDowngrade && opts.Version != "" {
-		return d.write(ctx, "downgrade", "-y", pkgSpec)
-	}
-	return res, err
+	return d.write(ctx, args...)
 }
 
-// InstallLocal installs a local .rpm file through dnf, resolving its
-// dependencies from the configured repositories (unlike a bare `rpm -i`). When
-// the file is OLDER than the installed version dnf refuses to "install" it; with
-// opts.AllowDowngrade that rejection is retried as an explicit `dnf downgrade`.
-// opts.AllowUnsigned adds --nogpgcheck so an out-of-band-verified unsigned rpm is
-// accepted (it is carried into the downgrade retry too). dnf5 rejects a "--"
-// end-of-options separator, so it is NOT used; the path is kept safe by
-// ValidateLocalPackagePath, which requires an absolute path that can never be
-// flag-shaped.
 func (d *dnf) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
 		return sysexec.Result{}, err
@@ -111,31 +94,21 @@ func (d *dnf) InstallLocal(ctx context.Context, path string, opts InstallLocalOp
 	if opts.AllowUnsigned {
 		flags = append(flags, "--nogpgcheck")
 	}
-	if opts.AllowDowngrade {
-		flags = append(flags, "--allowerasing")
+	if opts.AllowDowngrade && d.command == "dnf5" {
+		flags = append(flags, "--allow-downgrade")
 	}
-	res, err := d.write(ctx, append(flags, path)...)
-	// Retry as an explicit downgrade ONLY when dnf itself rejected the install
-	// (a non-zero exit); an exec/escalation/context failure must not trigger a
-	// second escalated command. The downgrade carries the same GPG policy.
-	var ce *sysexec.CommandError
-	if errors.As(err, &ce) && opts.AllowDowngrade {
-		dargs := []string{"downgrade", "-y"}
-		if opts.AllowUnsigned {
-			dargs = append(dargs, "--nogpgcheck")
-		}
-		return d.write(ctx, append(dargs, path)...)
-	}
-	return res, err
+	return d.write(ctx, append(flags, path)...)
 }
 
-// Remove removes packages. dnf has no purge concept, so opts.Purge is a no-op.
-func (d *dnf) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
+func (d *dnf) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if opts.Purge {
+		return sysexec.Result{}, fmt.Errorf("dnf purge: %w", ErrUnsupported)
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	return d.write(ctx, append([]string{"remove", "-y"}, packages...)...)
 }
@@ -143,72 +116,68 @@ func (d *dnf) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (
 // Update refreshes metadata via `dnf check-update` (exit 100 = updates available
 // is a success, not an error).
 func (d *dnf) Update(ctx context.Context) (sysexec.Result, error) {
-	res, err := runPriv(ctx, d.r, true, nil, "dnf", "check-update")
+	res, err := runPriv(ctx, d.r, true, nil, d.command, "check-update")
 	if err != nil {
 		return sysexec.Result{}, err
 	}
 	if res.ExitCode == 0 || res.ExitCode == 100 {
 		return res, nil
 	}
-	return res, asCommandError("dnf", res)
+	return res, asCommandError(d.command, res)
 }
 
 // Upgrade upgrades the named packages, or all packages with no names.
 func (d *dnf) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
+	if len(packages) == 0 {
+		return sysexec.Result{}, nil
+	}
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
-	}
-	if len(packages) == 0 {
-		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	return d.write(ctx, append([]string{"upgrade", "-y"}, packages...)...)
 }
 
 // UpgradeAll performs a full system upgrade (dnf upgrade).
-func (d *dnf) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
-	args := []string{"upgrade", "-y"}
-	if opts.SecurityOnly {
-		args = append(args, "--security")
-	}
-	return d.write(ctx, args...)
+func (d *dnf) UpgradeAll(ctx context.Context) (sysexec.Result, error) {
+	return d.write(ctx, "upgrade", "-y")
 }
 
-// ensureVersionLock installs the versionlock plugin if its subcommand is absent.
-func (d *dnf) ensureVersionLock(ctx context.Context) error {
-	_, ok, err := probe(ctx, d.r, "dnf", "versionlock", "--help")
+func (d *dnf) UpgradeSecurity(ctx context.Context) (sysexec.Result, error) {
+	return d.write(ctx, "upgrade", "-y", "--security")
+}
+
+func (d *dnf) versionLockAvailable(ctx context.Context) error {
+	_, ok, err := probe(ctx, d.r, d.command, "versionlock", "--help")
 	if err != nil {
-		return err // runner/context failure — do not escalate into a plugin install
+		return err
 	}
-	if ok {
-		return nil // plugin already present
+	if !ok {
+		return fmt.Errorf("%s versionlock: %w", d.command, ErrUnsupported)
 	}
-	_, err = d.write(ctx, "install", "-y", "python3-dnf-plugin-versionlock")
-	return err
+	return nil
 }
 
-// Pin holds packages back (dnf versionlock add), installing the plugin if needed.
 func (d *dnf) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
 	}
-	if err := d.ensureVersionLock(ctx); err != nil {
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
+	}
+	if err := d.versionLockAvailable(ctx); err != nil {
 		return sysexec.Result{}, err
 	}
 	return d.write(ctx, append([]string{"versionlock", "add"}, packages...)...)
 }
 
-// Unpin releases held packages (dnf versionlock delete).
 func (d *dnf) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
 	}
-	if err := d.ensureVersionLock(ctx); err != nil {
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
+	}
+	if err := d.versionLockAvailable(ctx); err != nil {
 		return sysexec.Result{}, err
 	}
 	return d.write(ctx, append([]string{"versionlock", "delete"}, packages...)...)
@@ -219,37 +188,12 @@ func (d *dnf) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	return d.write(ctx, "autoremove", "-y")
 }
 
-// Repair re-runs the last transaction, drops duplicate packages, and verifies
-// the rpm database — escalating to a full `rpm --rebuilddb` when --verifydb
-// reports CORRUPTION. Every step is best-effort (logged, not fatal) except a
-// context cancellation, which short-circuits. The returned Result is that of the
-// last step run (or the step that cancelled).
-func (d *dnf) Repair(ctx context.Context) (sysexec.Result, error) {
-	steps := []struct {
-		what string
-		run  func() (sysexec.Result, error)
-	}{
-		{"dnf history redo last", func() (sysexec.Result, error) { return d.write(ctx, "history", "redo", "last", "-y") }},
-		{"dnf remove --duplicates", func() (sysexec.Result, error) { return d.write(ctx, "remove", "--duplicates", "-y") }},
-		{"rpm --verifydb", func() (sysexec.Result, error) { return verifyOrRebuildRPMDB(ctx, d.r) }},
-	}
-	var last sysexec.Result
-	for _, s := range steps {
-		res, err := s.run()
-		last = res
-		if err := bestEffortStep(ctx, s.what, err); err != nil {
-			return res, err
-		}
-	}
-	return last, nil
-}
-
 // Search searches package names/summaries (exit 1 = no matches).
 func (d *dnf) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	if err := ValidateSearchQuery(query); err != nil {
 		return nil, err
 	}
-	res, err := runRead(ctx, d.r, "dnf", "search", "-q", query)
+	res, err := runRead(ctx, d.r, d.command, "search", "-q", query)
 	if err != nil {
 		return nil, err
 	}
@@ -257,13 +201,11 @@ func (d *dnf) Search(ctx context.Context, query string) ([]SearchResult, error) 
 		return nil, nil
 	}
 	if res.ExitCode != 0 {
-		return nil, asCommandError("dnf", res)
+		return nil, asCommandError(d.command, res)
 	}
 
 	var results []SearchResult
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		if strings.HasPrefix(line, "=") || line == "" {
 			continue
 		}
@@ -288,15 +230,9 @@ func (d *dnf) List(ctx context.Context) ([]Package, error) {
 		return nil, err
 	}
 
-	pinned, err := d.getPinnedSet(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, "\t")
 		if len(fields) < 4 {
 			continue
 		}
@@ -312,7 +248,6 @@ func (d *dnf) List(ctx context.Context) ([]Package, error) {
 			Status:       "installed",
 			Size:         size,
 			Description:  desc,
-			Pinned:       pinned[fields[0]],
 		})
 	}
 	return packages, nil
@@ -320,18 +255,16 @@ func (d *dnf) List(ctx context.Context) ([]Package, error) {
 
 // ListUpgradable lists packages with an available upgrade (check-update exit 100).
 func (d *dnf) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
-	res, err := runRead(ctx, d.r, "dnf", "check-update", "-q")
+	res, err := runRead(ctx, d.r, d.command, "check-update", "-q")
 	if err != nil {
 		return nil, err
 	}
 	if res.ExitCode != 0 && res.ExitCode != 100 {
-		return nil, asCommandError("dnf", res)
+		return nil, asCommandError(d.command, res)
 	}
 
 	var updates []PackageUpdate
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		if line == "" {
 			continue
 		}
@@ -365,15 +298,13 @@ func (d *dnf) Show(ctx context.Context, name string) (*Package, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
-	out, err := readOut(ctx, d.r, "dnf", "info", "-q", name)
+	out, err := readOut(ctx, d.r, d.command, "info", "-q", name)
 	if err != nil {
 		return nil, err
 	}
 
 	pkg := &Package{Name: name, Status: "available"}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version"):
 			pkg.Version = parseColonValue(line)
@@ -405,11 +336,6 @@ func (d *dnf) Show(ctx context.Context, name string) (*Package, error) {
 	if installed {
 		pkg.Status = "installed"
 	}
-	pinned, err := d.IsPinned(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	pkg.Pinned = pinned
 	return pkg, nil
 }
 
@@ -418,22 +344,23 @@ func (d *dnf) ListVersions(ctx context.Context, name string) (*VersionInfo, erro
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
-	out, err := readOut(ctx, d.r, "dnf", "list", "--showduplicates", "-q", name)
+	out, err := readOut(ctx, d.r, d.command, "list", "--showduplicates", "-q", name)
 	if err != nil {
 		return nil, err
 	}
 
 	info := &VersionInfo{Name: name}
 	installed, err := d.InstalledVersion(ctx, name)
+	if errors.Is(err, ErrNotFound) {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
 	info.Installed = installed
 
 	seen := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		if line == "" || strings.HasPrefix(line, "Installed") || strings.HasPrefix(line, "Available") {
 			continue
 		}
@@ -475,7 +402,6 @@ func (d *dnf) IsInstalled(ctx context.Context, name string) (bool, error) {
 	return res.ExitCode == 0, nil
 }
 
-// InstalledVersion returns the installed version of a package, or "" if absent.
 func (d *dnf) InstalledVersion(ctx context.Context, name string) (string, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return "", err
@@ -485,7 +411,7 @@ func (d *dnf) InstalledVersion(ctx context.Context, name string) (string, error)
 		return "", err
 	}
 	if res.ExitCode != 0 {
-		return "", nil // not installed
+		return "", fmt.Errorf("%s package %s: %w", d.command, name, ErrNotFound)
 	}
 	return strings.TrimSpace(res.Stdout), nil
 }
@@ -500,12 +426,8 @@ func (d *dnf) InstalledCount(ctx context.Context) (int, error) {
 }
 
 // HasUpdates reports whether updates are available (dnf check-update exit 100).
-func (d *dnf) HasUpdates(ctx context.Context, securityOnly bool) (bool, error) {
-	args := []string{"check-update", "-q"}
-	if securityOnly {
-		args = append(args, "--security")
-	}
-	res, err := runRead(ctx, d.r, "dnf", args...)
+func (d *dnf) HasUpdates(ctx context.Context) (bool, error) {
+	res, err := runRead(ctx, d.r, d.command, "check-update", "-q")
 	if err != nil {
 		return false, err
 	}
@@ -515,80 +437,83 @@ func (d *dnf) HasUpdates(ctx context.Context, securityOnly bool) (bool, error) {
 	case 100:
 		return true, nil
 	default:
-		return false, asCommandError("dnf", res)
+		return false, asCommandError(d.command, res)
 	}
 }
 
-// IsPinned reports whether a package is versionlocked. Tolerant of an absent
-// plugin (reports false rather than erroring).
+func (d *dnf) HasSecurityUpdates(ctx context.Context) (bool, error) {
+	res, err := runRead(ctx, d.r, d.command, "check-update", "-q", "--security")
+	if err != nil {
+		return false, err
+	}
+	switch res.ExitCode {
+	case 0:
+		return false, nil
+	case 100:
+		return true, nil
+	default:
+		return false, asCommandError(d.command, res)
+	}
+}
+
 func (d *dnf) IsPinned(ctx context.Context, name string) (bool, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return false, err
 	}
-	out, ok, err := probe(ctx, d.r, "dnf", "versionlock", "list", "-q")
+	if err := d.versionLockAvailable(ctx); err != nil {
+		return false, err
+	}
+	out, err := readOut(ctx, d.r, d.command, "versionlock", "list", "-q")
 	if err != nil {
 		return false, err
 	}
-	if !ok {
-		return false, nil // versionlock plugin absent → not pinned
-	}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if line := strings.TrimSpace(scanner.Text()); line != "" && parseNEVRAName(line) == name {
+	for _, pinned := range versionLockNames(d.command, out) {
+		if pinned == name {
 			return true, nil
 		}
 	}
 	return false, nil
 }
 
-// ListPinned lists versionlocked packages (installing the plugin if needed).
 func (d *dnf) ListPinned(ctx context.Context) ([]Package, error) {
-	if err := d.ensureVersionLock(ctx); err != nil {
+	if err := d.versionLockAvailable(ctx); err != nil {
 		return nil, err
 	}
-	out, err := readOut(ctx, d.r, "dnf", "versionlock", "list", "-q")
+	out, err := readOut(ctx, d.r, d.command, "versionlock", "list", "-q")
 	if err != nil {
 		return nil, err
 	}
-
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		name := parseNEVRAName(line)
+	for _, name := range versionLockNames(d.command, out) {
 		version, err := d.InstalledVersion(ctx, name)
 		if err != nil {
 			return nil, err
 		}
-		packages = append(packages, Package{
-			Name:    name,
-			Version: version,
-			Status:  "installed",
-			Pinned:  true,
-		})
+		packages = append(packages, Package{Name: name, Version: version, Status: "installed"})
 	}
 	return packages, nil
 }
 
-func (d *dnf) getPinnedSet(ctx context.Context) (map[string]bool, error) {
-	out, ok, err := probe(ctx, d.r, "dnf", "versionlock", "list", "-q")
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, nil // versionlock plugin absent → nothing pinned
-	}
-	pinned := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if line := strings.TrimSpace(scanner.Text()); line != "" {
-			pinned[parseNEVRAName(line)] = true
+func versionLockNames(command, out string) []string {
+	var names []string
+	for line := range strings.SplitSeq(out, "\n") {
+		line = strings.TrimSpace(line)
+		if command == "dnf5" {
+			name, ok := strings.CutPrefix(line, "Package name:")
+			if !ok {
+				continue
+			}
+			name = strings.TrimSpace(name)
+			if ValidatePackageName(name) == nil {
+				names = append(names, name)
+			}
+			continue
+		}
+		if line != "" {
+			names = append(names, parseNEVRAName(line))
 		}
 	}
-	return pinned, nil
+	return names
 }
 
 // parseSize renders dnf's human size into bytes. ok=false means the text was

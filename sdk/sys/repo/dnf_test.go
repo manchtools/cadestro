@@ -47,6 +47,29 @@ func TestDnf_Apply_WritesRepoFileImportsKeyAndRefreshes(t *testing.T) {
 	}
 }
 
+func TestDnf5_ApplyRemoveValidate(t *testing.T) {
+	m, ff, fr := newTestManager(t, pkg.Dnf5)
+	r := Repository{Name: "corp", Dnf: &DnfConfig{BaseURL: "https://h/r", Enabled: true}}
+	if err := m.Validate(r); err != nil {
+		t.Fatal(err)
+	}
+	fr.Push(sysexec.Result{}, nil)
+	if out, err := m.Apply(context.Background(), r); err != nil || !out.Changed {
+		t.Fatalf("Apply = %+v, %v", out, err)
+	}
+	want := "[corp]\nname=corp\nbaseurl=https://h/r\nenabled=1\ngpgcheck=0\n"
+	if got := ff.wrote("/etc/yum.repos.d/corp.repo"); got != want {
+		t.Fatalf("repo file = %q, want %q", got, want)
+	}
+	if got := argvs(fr); len(got) != 1 || got[0] != "dnf5 -y makecache --repo corp" {
+		t.Fatalf("commands = %v, want dnf5 refresh", got)
+	}
+	ff.present["/etc/yum.repos.d/corp.repo"] = true
+	if out, err := m.Remove(context.Background(), "corp"); err != nil || !out.Changed || !ff.didCall("Remove:/etc/yum.repos.d/corp.repo") {
+		t.Fatalf("Remove = %+v, %v", out, err)
+	}
+}
+
 func TestDnf_Apply_NoKeyDisabledNoGpgcheck(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Dnf)
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{

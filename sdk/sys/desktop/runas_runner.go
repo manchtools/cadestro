@@ -18,8 +18,8 @@ import (
 //
 //	r, _ := exec.NewRunner(exec.Direct) // the agent runs as root
 //	ru, _ := desktop.RunAsRunner(r, session)
-//	fp, _ := pkg.New(pkg.Flatpak, ru, pkg.WithUserScope())
-//	fp.Install(ctx, pkg.InstallOptions{Remote: "flathub"}, "org.x.App") // installs for `session`
+//	fp, _ := pkg.NewUserFlatpak(ru)
+//	fp.Install(ctx, "flathub", "org.x.App") // installs for `session`
 //
 // The base Runner MUST run as root: runuser performs the privilege DROP to the
 // target user, so the wrapped command is never escalated again. The caller's

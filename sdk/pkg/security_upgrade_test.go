@@ -20,18 +20,13 @@ func stubUnattendedUpgradePaths(t *testing.T, paths ...string) {
 	t.Cleanup(func() { unattendedUpgradeBinPaths = orig })
 }
 
-// TestUpgradeAll_SecurityOnly pins the per-backend security-only upgrade contract
-// added so callers (the agent's UPDATE action) can apply ONLY security updates
-// through the SDK instead of shelling out. apt/dnf/zypper support it natively;
-// pacman (rolling) and flatpak (no security channel) fail closed with
-// ErrSecurityOnlyUnsupported rather than silently doing a full upgrade.
 func TestUpgradeAll_SecurityOnly(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("dnf upgrade --security", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "")
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true}); err != nil {
+		if _, err := m.UpgradeSecurity(ctx); err != nil {
 			t.Fatal(err)
 		}
 		if got := argv(f.Calls()[0]); got != "dnf upgrade -y --security" {
@@ -42,7 +37,7 @@ func TestUpgradeAll_SecurityOnly(t *testing.T) {
 	t.Run("zypper patch --category security", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "")
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true}); err != nil {
+		if _, err := m.UpgradeSecurity(ctx); err != nil {
 			t.Fatal(err)
 		}
 		if got := argv(f.Calls()[0]); got != "zypper --non-interactive patch --category security" {
@@ -55,7 +50,7 @@ func TestUpgradeAll_SecurityOnly(t *testing.T) {
 		stubLookPath(t, "apt", "apt-get", "unattended-upgrade")
 		m, f := mustNew(t, Apt)
 		ok(f, "")
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true}); err != nil {
+		if _, err := m.UpgradeSecurity(ctx); err != nil {
 			t.Fatal(err)
 		}
 		c := f.Calls()[0]
@@ -69,7 +64,7 @@ func TestUpgradeAll_SecurityOnly(t *testing.T) {
 	t.Run("apt without unattended-upgrade fails closed (ErrBackendUnavailable, no command run)", func(t *testing.T) {
 		stubUnattendedUpgradePaths(t) // no known absolute paths, and $PATH won't resolve it either
 		m, f := aptM(t)               // stub resolves apt/apt-get only — unattended-upgrade absent
-		_, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true})
+		_, err := m.UpgradeSecurity(ctx)
 		if !errors.Is(err, sysexec.ErrBackendUnavailable) {
 			t.Fatalf("err = %v, want ErrBackendUnavailable", err)
 		}
@@ -80,15 +75,58 @@ func TestUpgradeAll_SecurityOnly(t *testing.T) {
 
 	t.Run("pacman security-only unsupported", func(t *testing.T) {
 		m, _ := pacmanM(t)
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true}); !errors.Is(err, ErrSecurityOnlyUnsupported) {
-			t.Errorf("err = %v, want ErrSecurityOnlyUnsupported", err)
+		if _, err := m.UpgradeSecurity(ctx); !errors.Is(err, ErrUnsupported) {
+			t.Errorf("err = %v, want ErrUnsupported", err)
 		}
 	})
 
 	t.Run("flatpak security-only unsupported", func(t *testing.T) {
 		m, _ := flatpakM(t)
-		if _, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true}); !errors.Is(err, ErrSecurityOnlyUnsupported) {
-			t.Errorf("err = %v, want ErrSecurityOnlyUnsupported", err)
+		if _, err := m.HasSecurityUpdates(ctx); !errors.Is(err, ErrUnsupported) {
+			t.Errorf("err = %v, want ErrUnsupported", err)
+		}
+	})
+}
+
+func TestApt_HasSecurityUpdates(t *testing.T) {
+	ctx := context.Background()
+	t.Run("packages", func(t *testing.T) {
+		stubUnattendedUpgradePaths(t)
+		stubLookPath(t, "unattended-upgrade")
+		m, f := mustNew(t, Apt)
+		ok(f, "Packages that will be upgraded: vim\n")
+		got, err := m.HasSecurityUpdates(ctx)
+		if err != nil || !got || argv(f.Calls()[0]) != "/usr/bin/unattended-upgrade --dry-run --verbose" {
+			t.Fatalf("got=%v err=%v argv=%q", got, err, argv(f.Calls()[0]))
+		}
+	})
+	t.Run("no packages", func(t *testing.T) {
+		stubUnattendedUpgradePaths(t)
+		stubLookPath(t, "unattended-upgrade")
+		m, f := mustNew(t, Apt)
+		ok(f, "No packages will be upgraded.\n")
+		got, err := m.HasSecurityUpdates(ctx)
+		if err != nil || got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("nonzero", func(t *testing.T) {
+		stubUnattendedUpgradePaths(t)
+		stubLookPath(t, "unattended-upgrade")
+		m, f := mustNew(t, Apt)
+		f.Push(sysexec.Result{ExitCode: 2}, nil)
+		if _, err := m.HasSecurityUpdates(ctx); err == nil {
+			t.Fatal("want error")
+		}
+	})
+	t.Run("runner error", func(t *testing.T) {
+		stubUnattendedUpgradePaths(t)
+		stubLookPath(t, "unattended-upgrade")
+		m, f := mustNew(t, Apt)
+		runnerErr := errors.New("boom")
+		f.Push(sysexec.Result{}, runnerErr)
+		if _, err := m.HasSecurityUpdates(ctx); !errors.Is(err, runnerErr) {
+			t.Fatalf("err=%v, want runner error", err)
 		}
 	})
 }

@@ -9,7 +9,6 @@ type Package struct {
 	Status       string // installed, available, upgradable, pinned
 	Size         int64  // installed size in bytes
 	Repository   string
-	Pinned       bool // whether the package is pinned (hold)
 }
 
 // LocalPackage is the identity read out of a LOCAL package file (a .deb, .rpm or
@@ -55,28 +54,24 @@ type AvailableVersion struct {
 	Size       int64
 }
 
+// InstallSpec names one package and optionally pins its version.
+type InstallSpec struct {
+	Name    string
+	Version string
+}
+
 // InstallOptions configures an Install call.
 type InstallOptions struct {
-	// Version pins the install to a specific version. When set, exactly one
-	// package name must be given (a version applies to a single package).
-	Version string
 	// AllowDowngrade permits installing a lower version than the one installed.
 	AllowDowngrade bool
-	// Remote names the flatpak remote to install FROM (e.g. "flathub"). It is
-	// honored only by the flatpak backend — where it disambiguates which remote
-	// provides the app instead of relying on flatpak's auto-resolution — and is
-	// ignored by the native package managers. Empty selects flatpak's default
-	// resolution.
-	Remote string
 }
 
 // InstallLocalOptions configures an InstallLocal call.
 type InstallLocalOptions struct {
 	// AllowDowngrade permits installing a package file whose version is lower
 	// than the one currently installed. Honored on apt (--allow-downgrades),
-	// dnf (retried as an explicit downgrade when the install is rejected) and
-	// zypper (--oldpackage). pacman -U downgrades regardless, and a flatpak
-	// bundle has no version-ordering concept, so it is a no-op on those two.
+	// dnf5 (--allow-downgrade) and zypper (--oldpackage). DNF4 exact package
+	// specifications and local files already select the requested version.
 	AllowDowngrade bool
 	// AllowUnsigned skips the backend's GPG signature check for the local file.
 	// It is secure-default-OFF: with the default (false) an unsigned local .rpm
@@ -90,14 +85,11 @@ type InstallLocalOptions struct {
 	//   - apt:    no-op — a local .deb carries no per-file signature to skip
 	//   - pacman: NOT honored — `pacman -U` enforces the repo SigLevel and has no
 	//             per-invocation bypass; the install stays signature-checked
-	//   - flatpak: no-op — a bundle's signing is not a per-file GPG check
 	AllowUnsigned bool
 }
 
 // RemoveOptions configures a Remove call.
 type RemoveOptions struct {
-	// Purge also removes configuration/data where the backend distinguishes it
-	// (apt purge / pacman -Rns / flatpak --delete-data). On backends with no
-	// such distinction it is equivalent to a plain remove.
+	// Purge also removes configuration/data where the backend distinguishes it.
 	Purge bool
 }

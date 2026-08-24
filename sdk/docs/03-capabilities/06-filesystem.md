@@ -54,12 +54,12 @@ err = m.Remove(ctx, "/var/lib/cadestro/state/stale.tmp")
 
 ## Why use this instead of `os`
 
-<!-- docref: begin src=sys/fs/fs.go#New:3ac54444 -->
+<!-- docref: begin src=sys/fs/fs.go#New:f3eda3e4 -->
 `New` returns the filesystem Manager over the injected Runner; a nil Runner is
 rejected.
 <!-- docref: end -->
 
-<!-- docref: begin src=sys/fs/fs.go#manager.direct:9e4adeb0 -->
+<!-- docref: begin src=sys/fs/fs.go#manager.direct:2f9b9073 -->
 The operations are privilege-backend-keyed: as root (a `Direct` Runner) they
 take a TOCTOU-safe, fd-anchored path — each step operates on an open directory
 handle, so a symlink swapped in mid-operation can't redirect a write or delete

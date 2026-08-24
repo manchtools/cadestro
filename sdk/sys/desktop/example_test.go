@@ -32,6 +32,6 @@ func ExampleManager_ActiveSessions() {
 			log.Print(err)
 			continue
 		}
-		_ = ru // e.g. pkg.New(pkg.Flatpak, ru, pkg.WithUserScope()).Install(ctx, …)
+		_ = ru // pass ru to pkg.NewUserFlatpak for a per-user install
 	}
 }

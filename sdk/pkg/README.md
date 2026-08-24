@@ -29,18 +29,17 @@ if err != nil {
 
 ctx := context.Background()
 
-// Install latest
-err = m.Install(ctx, pkg.InstallOptions{}, "nginx", "curl")
+// Install latest packages.
+_, err = m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "nginx"}, pkg.InstallSpec{Name: "curl"})
 
-// Install a pinned version (exactly one package when Version is set)
-err = m.Install(ctx, pkg.InstallOptions{Version: "1.24.0-1"}, "nginx")
+// Each package carries its own optional version.
+_, err = m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "nginx", Version: "1.24.0-1"})
 
-// Allow a downgrade
-err = m.Install(ctx, pkg.InstallOptions{Version: "1.22.0-1", AllowDowngrade: true}, "nginx")
+// Allow a downgrade where the backend supports it.
+_, err = m.Install(ctx, pkg.InstallOptions{AllowDowngrade: true}, pkg.InstallSpec{Name: "nginx", Version: "1.22.0-1"})
 ```
 
-Mutating methods (`Install`/`Remove`/`Update`/`Upgrade`/`Pin`/`Unpin`/`Repair`/
-`Autoremove`) return `error` only — a non-zero exit becomes an
+Mutating methods return the command result and an error — a non-zero exit becomes an
 `*exec.CommandError` carrying the exit code and stderr (`errors.As` to inspect).
 Query methods return typed results.
 
@@ -50,8 +49,8 @@ Query methods return typed results.
 backends are installed (it lists, in priority order; it never picks):
 
 ```go
-for _, b := range pkg.Detect(ctx) {
-    fmt.Println(b) // "apt", "dnf", "flatpak", ...
+for _, b := range pkg.Detect() {
+    fmt.Println(b) // "apt", "dnf", ...
 }
 m, err := pkg.New(pkg.Dnf, r)
 ```
@@ -62,17 +61,16 @@ An unknown backend or a nil runner is rejected (`pkg.ErrUnknownBackend` /
 ## Mutations
 
 ```go
-m.Install(ctx, pkg.InstallOptions{}, "nginx")
-m.InstallLocal(ctx, "/var/cache/pm/app.deb", pkg.InstallLocalOptions{}) // a downloaded .deb/.rpm/pacman/flatpak file, deps resolved
+m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "nginx"})
+m.InstallLocal(ctx, "/var/cache/pm/app.deb", pkg.InstallLocalOptions{})
 m.Remove(ctx, pkg.RemoveOptions{}, "nginx")
-m.Remove(ctx, pkg.RemoveOptions{Purge: true}, "nginx") // also delete config/data where supported
-m.Update(ctx)                                          // refresh metadata
-m.Upgrade(ctx)                                         // full system upgrade (no names)
-m.Upgrade(ctx, "nginx", "curl")                        // upgrade specific packages
-m.Pin(ctx, "nginx")                                    // hold back from upgrades
+m.Remove(ctx, pkg.RemoveOptions{Purge: true}, "nginx")
+m.Update(ctx)
+m.UpgradeAll(ctx)
+m.Upgrade(ctx, "nginx", "curl")
+m.Pin(ctx, "nginx")
 m.Unpin(ctx, "nginx")
-m.Autoremove(ctx)                                      // remove now-unneeded deps (no-op on zypper)
-m.Repair(ctx)                                          // clear stale locks / fix broken state
+m.Autoremove(ctx)
 ```
 
 Reads run unprivileged; mutations escalate through the Runner's backend
@@ -87,9 +85,10 @@ updates, _ := m.ListUpgradable(ctx)      // []PackageUpdate
 p, _ := m.Show(ctx, "nginx")             // *Package
 info, _ := m.ListVersions(ctx, "nginx")  // *VersionInfo
 ok, _ := m.IsInstalled(ctx, "nginx")
-v, _ := m.InstalledVersion(ctx, "nginx") // "" if absent
+v, _ := m.InstalledVersion(ctx, "nginx") // ErrNotFound if absent
 n, _ := m.InstalledCount(ctx)
-has, _ := m.HasUpdates(ctx, false)       // true if any update; pass true for security-only (where supported)
+has, _ := m.HasUpdates(ctx)             // true if any update
+security, _ := m.HasSecurityUpdates(ctx) // true if security updates exist
 pinned, _ := m.IsPinned(ctx, "nginx")
 held, _ := m.ListPinned(ctx)
 results, _ := m.Search(ctx, "nginx")
@@ -97,30 +96,25 @@ results, _ := m.Search(ctx, "nginx")
 
 ## Flatpak
 
-`New(pkg.Flatpak, r)` returns a value that also satisfies `FlatpakManager`,
-adding remote (repository) management. Use `WithUserScope()` to operate on the
-per-user installation (`--user`, unprivileged) instead of the system one:
+Flatpak has a separate concrete manager because it is not a native distro
+backend. Use the system or per-user constructor explicitly:
 
 ```go
-m, _ := pkg.New(pkg.Flatpak, r)                 // system scope (--system, escalated)
-mu, _ := pkg.New(pkg.Flatpak, r, pkg.WithUserScope()) // per-user (--user, unprivileged)
-
-if fm, ok := m.(pkg.FlatpakManager); ok {
-    fm.AddRemote(ctx, "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
-    remotes, _ := fm.ListRemotes(ctx)
-    fm.RemoveRemote(ctx, "flathub")
-}
+m, _ := pkg.NewFlatpak(r)
+mu, _ := pkg.NewUserFlatpak(r)
+m.AddRemote(ctx, "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo")
+remotes, _ := m.ListRemotes(ctx)
+_, _ = mu.List(ctx)
 ```
 
 `AddRemote` validates the alias (`ValidateRemoteName`) and the URL
-(`ValidateRepoBaseURL`, https only). Flatpak does not support traditional
-version pinning, so `InstallOptions.Version` is validated but ignored for it.
+(`ValidateRepoBaseURL`, https only). Flatpak installs use application IDs and
+an explicit remote; it does not use native package versions.
 
 ## Types
 
 ```go
 type InstallOptions struct {
-    Version        string // pins a single package; requires exactly one name
     AllowDowngrade bool
 }
 
@@ -139,7 +133,6 @@ type RemoveOptions struct {
 type Package struct {
     Name, Version, Architecture, Description, Status, Repository string
     Size                                                         int64 // bytes
-    Pinned                                                       bool
 }
 
 type PackageUpdate struct {
@@ -158,10 +151,9 @@ type VersionInfo struct {
 | Backend | Systems | `Detect` binary | Pinning |
 |---------|---------|-----------------|---------|
 | `pkg.Apt` | Debian, Ubuntu, Mint | `apt-get` | `apt-mark hold/unhold` |
-| `pkg.Dnf` | Fedora, RHEL 8+, CentOS Stream | `dnf` | `dnf versionlock` (plugin auto-installed) |
+| `pkg.Dnf` | Fedora, RHEL 8+, CentOS Stream | `dnf` | `dnf versionlock` when available |
 | `pkg.Pacman` | Arch, Manjaro | `pacman` | `IgnorePkg` in `/etc/pacman.conf` |
 | `pkg.Zypper` | openSUSE, SLES | `zypper` | `zypper addlock/removelock` |
-| `pkg.Flatpak` | Cross-distro | `flatpak` | `flatpak mask` |
 
 ## Argument-Hardening Validators
 
@@ -204,7 +196,7 @@ manager is invoked:
 f := exectest.New(exec.Direct)
 f.Push(exec.Result{Stdout: "..."}, nil)
 m, _ := pkg.New(pkg.Apt, f)
-m.Install(ctx, pkg.InstallOptions{}, "nginx")
+m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "nginx"})
 // f.Calls()[0] is the recorded `apt install -y --fix-broken nginx`
 ```
 
@@ -216,5 +208,5 @@ m.Install(ctx, pkg.InstallOptions{}, "nginx")
 - **Version formats**: apt `1.24.0-1ubuntu1`, dnf `1.24.0-1.fc39`, pacman
   `1.24.0-1`, zypper `1.24.0-1.1`. Flatpak addresses bundles by application ID
   (e.g. `org.mozilla.firefox`) and has no version pin.
-- **Pinning setup**: dnf auto-installs `python3-dnf-plugin-versionlock` on first
-  use; pacman edits `/etc/pacman.conf` (root). apt/zypper need no setup.
+- **Pinning setup**: dnf uses its installed versionlock command when available;
+  pacman edits `/etc/pacman.conf` (root). apt/zypper need no setup.

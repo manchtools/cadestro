@@ -7,16 +7,16 @@
 //	r, _ := exec.NewRunner(exec.Sudo)
 //	m, err := pkg.New(pkg.Apt, r)
 //	if err != nil { ... }
-//	if err := m.Install(ctx, pkg.InstallOptions{}, "vim", "git"); err != nil { ... }
+//	if _, err := m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "vim"}, pkg.InstallSpec{Name: "git"}); err != nil { ... }
 //
 // Reads (Search/List/Show/IsInstalled/…) run unprivileged; mutations
-// (Install/InstallLocal/Remove/Update/Upgrade/Pin/Unpin/Repair/Autoremove) run
+// (Install/InstallLocal/Remove/Update/Upgrade/Pin/Unpin/Autoremove) run
 // through the Runner's privilege backend. Every package-name, version, and
 // local-file-path argument is validated before it can reach argv — there is no
 // opt-out.
 //
-// Use Detect to discover which backends are installed; it lists and never picks,
-// so the caller decides (a host can have both a native manager and flatpak).
+// Use Detect to discover which native backends are installed; it lists and
+// never picks, so the caller decides.
 package pkg
 
 import (
@@ -32,22 +32,6 @@ import (
 // (including the zero value). Fail-closed: no silent default.
 var ErrUnknownBackend = errors.New("pkg: unknown package-manager backend")
 
-// ErrSecurityOnlyUnsupported is returned by UpgradeAll when UpgradeOptions.
-// SecurityOnly is set on a backend that has no security-only upgrade path:
-// pacman (a rolling release with no security/non-security distinction) and
-// flatpak (no security channel). Fail-closed: the SDK never silently performs a
-// full upgrade when only security updates were requested.
-var ErrSecurityOnlyUnsupported = errors.New("pkg: security-only upgrade not supported by this backend")
-
-// UpgradeOptions configures UpgradeAll.
-type UpgradeOptions struct {
-	// SecurityOnly restricts the upgrade to security updates. Supported on apt
-	// (simulate dist-upgrade, then upgrade only packages from a security suite),
-	// dnf (--security) and zypper (patch --category security). pacman and flatpak
-	// return ErrSecurityOnlyUnsupported.
-	SecurityOnly bool
-}
-
 // lookPath is the exec.LookPath seam used by Detect and apt's apt/apt-get
 // resolution so binary discovery can be stubbed in tests.
 var lookPath = exec.LookPath
@@ -61,12 +45,12 @@ const (
 	Apt Backend = iota + 1
 	// Dnf is the Fedora/RHEL package manager (dnf / rpm).
 	Dnf
+	// Dnf5 is the Fedora/RHEL package manager backed by dnf5.
+	Dnf5
 	// Pacman is the Arch Linux package manager.
 	Pacman
 	// Zypper is the openSUSE/SLES package manager (zypper / rpm).
 	Zypper
-	// Flatpak is the cross-distro application bundle manager.
-	Flatpak
 )
 
 // String returns the canonical lowercase backend name.
@@ -76,12 +60,12 @@ func (b Backend) String() string {
 		return "apt"
 	case Dnf:
 		return "dnf"
+	case Dnf5:
+		return "dnf5"
 	case Pacman:
 		return "pacman"
 	case Zypper:
 		return "zypper"
-	case Flatpak:
-		return "flatpak"
 	default:
 		return fmt.Sprintf("Backend(%d)", int(b))
 	}
@@ -123,16 +107,16 @@ type Manager interface {
 	// an absolute filesystem path (ValidateLocalPackagePath). The name a crafted
 	// file embeds is untrusted, so it is validated against the backend's
 	// package-name grammar before being returned; a flag-shaped or
-	// metacharacter-bearing name is rejected. The flatpak backend has no clean
-	// local name-introspection command and returns a not-supported error.
+	// metacharacter-bearing name is rejected.
 	LocalPackageInfo(ctx context.Context, path string) (*LocalPackage, error)
-	// InstalledVersion returns the installed version of name, or "" if absent.
+	// InstalledVersion returns the installed version of name, or ErrNotFound.
 	InstalledVersion(ctx context.Context, name string) (string, error)
 	// InstalledCount returns the number of installed packages.
 	InstalledCount(ctx context.Context) (int, error)
-	// HasUpdates reports whether any update is available. When securityOnly is
-	// true only security updates are considered (where the backend supports it).
-	HasUpdates(ctx context.Context, securityOnly bool) (bool, error)
+	// HasUpdates reports whether any update is available.
+	HasUpdates(ctx context.Context) (bool, error)
+	// HasSecurityUpdates reports whether security updates are available.
+	HasSecurityUpdates(ctx context.Context) (bool, error)
 	// IsPinned reports whether name is held back from upgrades.
 	IsPinned(ctx context.Context, name string) (bool, error)
 	// ListPinned returns the packages held back from upgrades.
@@ -140,12 +124,10 @@ type Manager interface {
 
 	// --- mutations (privileged) ---
 
-	// Install installs the named packages. opts.Version pins a single package
-	// (exactly one name required when set); opts.AllowDowngrade permits a lower
-	// version than installed.
-	Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error)
+	// Install installs each package specification in one transaction.
+	Install(ctx context.Context, opts InstallOptions, specs ...InstallSpec) (sysexec.Result, error)
 	// InstallLocal installs a package from a local file already on disk — a
-	// downloaded .deb, .rpm, pacman package, or flatpak bundle — rather than by
+	// downloaded .deb, .rpm, or pacman package — rather than by
 	// name from a configured repository, resolving dependencies from the
 	// configured repositories where the backend supports it (apt/dnf/zypper/
 	// pacman). path must be an ABSOLUTE filesystem path to the package file;
@@ -156,8 +138,7 @@ type Manager interface {
 	// authenticity is established out of band — secure-default-off.
 	InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (sysexec.Result, error)
 	// Remove removes the named packages. opts.Purge also deletes configuration
-	// where the backend distinguishes it (apt/pacman/flatpak); elsewhere Purge
-	// is equivalent to a plain remove.
+	// where the backend distinguishes it.
 	Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error)
 	// Update refreshes the package metadata/database.
 	Update(ctx context.Context) (sysexec.Result, error)
@@ -165,103 +146,60 @@ type Manager interface {
 	// full upgrade) — an accidentally-empty list must never upgrade the whole
 	// system. Use UpgradeAll for that.
 	Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error)
-	// UpgradeAll performs a full system upgrade (apt dist-upgrade / dnf upgrade /
-	// pacman -Syu / zypper dist-upgrade / flatpak update). With
-	// opts.SecurityOnly it upgrades only security updates where the backend
-	// supports it (apt/dnf/zypper); pacman and flatpak return
-	// ErrSecurityOnlyUnsupported.
-	UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error)
+	// UpgradeAll performs a full system upgrade.
+	UpgradeAll(ctx context.Context) (sysexec.Result, error)
+	// UpgradeSecurity applies only security updates.
+	UpgradeSecurity(ctx context.Context) (sysexec.Result, error)
 	// Pin holds the named packages back from upgrades.
 	Pin(ctx context.Context, packages ...string) (sysexec.Result, error)
 	// Unpin releases the named packages so they upgrade again.
 	Unpin(ctx context.Context, packages ...string) (sysexec.Result, error)
-	// Repair attempts to fix a wedged package-manager state (stale locks,
-	// interrupted transactions, broken dependencies). It runs several recovery
-	// commands; the returned Result is that of the final (or first failing) step.
-	Repair(ctx context.Context) (sysexec.Result, error)
 	// Autoremove removes packages installed only as now-unneeded dependencies.
-	// It is a no-op (zero Result, nil error) on backends with no native equivalent.
 	Autoremove(ctx context.Context) (sysexec.Result, error)
-}
-
-// FlatpakManager is the Manager returned by New(Flatpak, …); it adds remote
-// (repository) management, which has no analogue on the native managers.
-// Callers reach it with a type assertion:
-//
-//	if fm, ok := m.(pkg.FlatpakManager); ok { fm.AddRemote(ctx, "flathub", url) }
-type FlatpakManager interface {
-	Manager
-	// AddRemote registers a flatpak remote. name must be a valid remote alias
-	// and url an https repository URL.
-	AddRemote(ctx context.Context, name, url string) error
-	// RemoveRemote deletes a flatpak remote.
-	RemoveRemote(ctx context.Context, name string) error
-	// ListRemotes returns the configured flatpak remote names.
-	ListRemotes(ctx context.Context) ([]string, error)
-}
-
-// Option customizes a Manager at construction.
-type Option func(*config)
-
-type config struct {
-	// system selects flatpak --system (escalated) over --user (unprivileged).
-	// Ignored by the native managers, which always operate system-wide.
-	system bool
-}
-
-// WithUserScope makes a flatpak Manager operate on the per-user installation
-// (--user, unprivileged) instead of the system installation. It has no effect
-// on the native package managers.
-func WithUserScope() Option {
-	return func(c *config) { c.system = false }
 }
 
 // New builds a Manager for backend b driven by runner. A nil runner or an
 // unknown backend is rejected (fail-closed). New is pure — it does not probe
 // the host; use Detect to learn which backends are installed.
-func New(b Backend, runner sysexec.Runner, opts ...Option) (Manager, error) {
+func New(b Backend, runner sysexec.Runner) (Manager, error) {
 	if runner == nil {
 		return nil, fmt.Errorf("pkg: %w", sysexec.ErrRunnerRequired)
-	}
-	cfg := config{system: true}
-	for _, o := range opts {
-		if o != nil {
-			o(&cfg)
-		}
 	}
 	switch b {
 	case Apt:
 		return &apt{r: runner}, nil
 	case Dnf:
-		return &dnf{r: runner}, nil
+		return &dnf{r: runner, command: "dnf"}, nil
+	case Dnf5:
+		return &dnf{r: runner, command: "dnf5"}, nil
 	case Pacman:
 		return &pacman{r: runner}, nil
 	case Zypper:
 		return &zypper{r: runner}, nil
-	case Flatpak:
-		return &flatpak{r: runner, system: cfg.system}, nil
 	default:
 		return nil, fmt.Errorf("%w: %d", ErrUnknownBackend, int(b))
 	}
 }
 
 // Detect returns the package-manager backends whose primary binary resolves on
-// PATH, in priority order (native managers before flatpak). The result may be
-// empty (no supported manager) or hold several entries (e.g. a native manager
-// plus flatpak). It lists; it never picks — the caller chooses.
-func Detect(ctx context.Context) []Backend {
+// PATH, in priority order. The result may be empty or hold several entries. It
+// lists; it never picks — the caller chooses.
+func Detect() []Backend {
 	var found []Backend
 	for _, c := range []struct {
 		bin string
 		b   Backend
 	}{
 		{"apt-get", Apt},
+		{"dnf5", Dnf5},
 		{"dnf", Dnf},
 		{"pacman", Pacman},
 		{"zypper", Zypper},
-		{"flatpak", Flatpak},
 	} {
 		if _, err := lookPath(c.bin); err == nil {
+			if c.b == Dnf && len(found) > 0 && found[len(found)-1] == Dnf5 {
+				continue
+			}
 			found = append(found, c.b)
 		}
 	}

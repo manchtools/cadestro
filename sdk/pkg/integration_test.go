@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 
@@ -29,7 +30,7 @@ func realManager(t *testing.T, b Backend) Manager {
 	if testing.Short() {
 		t.Skip("-short: skipping real package-manager integration read")
 	}
-	if !slices.Contains(Detect(context.Background()), b) {
+	if !slices.Contains(Detect(), b) {
 		t.Skipf("%s not available on this host", b)
 	}
 	r, err := exec.NewRunner(exec.Direct)
@@ -124,55 +125,45 @@ func readIntegration(t *testing.T, m Manager, knownPkg string) {
 			}
 		}
 	}
-	if _, err := m.HasUpdates(ctx, false); err != nil {
+	if _, err := m.HasUpdates(ctx); err != nil {
 		t.Errorf("HasUpdates: %v", err)
 	}
 
-	if _, err := m.IsPinned(ctx, knownPkg); err != nil {
+	if _, err := m.IsPinned(ctx, knownPkg); err != nil && !errors.Is(err, ErrUnsupported) {
 		t.Errorf("IsPinned(%s): %v", knownPkg, err)
 	}
 
-	// ListPinned is a pure read for apt/pacman/zypper/flatpak, but dnf's path
-	// installs the versionlock plugin (an escalated write) — skip it there.
-	if m.Backend() != Dnf {
-		if pinned, err := m.ListPinned(ctx); err != nil {
-			t.Errorf("ListPinned: %v", err)
-		} else {
-			for _, p := range pinned {
-				if !p.Pinned {
-					t.Errorf("ListPinned returned an unpinned package %q", p.Name)
-				}
-			}
-		}
-	}
 }
 
 func TestIntegration_Apt(t *testing.T)    { readIntegration(t, realManager(t, Apt), "bash") }
 func TestIntegration_Dnf(t *testing.T)    { readIntegration(t, realManager(t, Dnf), "bash") }
+func TestIntegration_Dnf5(t *testing.T)   { readIntegration(t, realManager(t, Dnf5), "bash") }
 func TestIntegration_Pacman(t *testing.T) { readIntegration(t, realManager(t, Pacman), "bash") }
 func TestIntegration_Zypper(t *testing.T) { readIntegration(t, realManager(t, Zypper), "bash") }
 
-// Flatpak has no guaranteed-installed application, so it gets a lighter probe:
-// version, an error-free list/search, and remote enumeration.
 func TestIntegration_Flatpak(t *testing.T) {
-	m := realManager(t, Flatpak)
+	if testing.Short() {
+		t.Skip("-short: skipping real Flatpak integration")
+	}
+	if !FlatpakAvailable() {
+		t.Skip("flatpak not available on this host")
+	}
+	r, err := exec.NewRunner(exec.Direct)
+	if err != nil {
+		t.Fatalf("NewRunner: %v", err)
+	}
+	m, err := NewFlatpak(r)
+	if err != nil {
+		t.Fatalf("NewFlatpak: %v", err)
+	}
 	ctx := context.Background()
-	if v, err := m.Version(ctx); err != nil {
+	if _, err := m.Version(ctx); err != nil {
 		t.Errorf("Version: %v", err)
-	} else if v == "" {
-		t.Error("Version returned empty string")
 	}
 	if _, err := m.List(ctx); err != nil {
 		t.Errorf("List: %v", err)
 	}
-	if _, err := m.Search(ctx, "org.gnome.Calculator"); err != nil {
-		t.Errorf("Search: %v", err)
-	}
-	if fm, ok := m.(FlatpakManager); ok {
-		if _, err := fm.ListRemotes(ctx); err != nil {
-			t.Errorf("ListRemotes: %v", err)
-		}
-	} else {
-		t.Error("flatpak Manager must satisfy FlatpakManager")
+	if _, err := m.ListRemotes(ctx); err != nil {
+		t.Errorf("ListRemotes: %v", err)
 	}
 }

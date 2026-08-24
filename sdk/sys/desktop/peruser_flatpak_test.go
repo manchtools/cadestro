@@ -24,11 +24,11 @@ func TestPerUserFlatpak_Composition(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunAsRunner: %v", err)
 	}
-	fp, err := pkg.New(pkg.Flatpak, ru, pkg.WithUserScope())
+	fp, err := pkg.NewUserFlatpak(ru)
 	if err != nil {
-		t.Fatalf("pkg.New(Flatpak): %v", err)
+		t.Fatalf("pkg.NewUserFlatpak: %v", err)
 	}
-	if _, err := fp.Install(context.Background(), pkg.InstallOptions{Remote: "flathub"}, "org.x.App"); err != nil {
+	if _, err := fp.Install(context.Background(), "flathub", "org.x.App"); err != nil {
 		t.Fatalf("Install: %v", err)
 	}
 

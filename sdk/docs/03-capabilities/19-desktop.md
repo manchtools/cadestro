@@ -45,13 +45,12 @@ ru, err := desktop.RunAsRunner(r, session) // r is the root Runner
 if err != nil {
     return err
 }
-// ru is an exec.Runner that executes AS the session's user — compose it like any
-// other Runner, e.g. a per-user Flatpak manager:
-fp, _ := pkg.New(pkg.Flatpak, ru, pkg.WithUserScope())
-_, err = fp.Install(ctx, pkg.InstallOptions{Remote: "flathub"}, "org.x.App")
+// ru is an exec.Runner that executes as the session's user.
+fp, _ := pkg.NewUserFlatpak(ru)
+_, err = fp.Install(ctx, "flathub", "org.x.App")
 ```
 
-<!-- docref: begin src=sys/desktop/runas_runner.go#RunAsRunner:f70588a4 -->
+<!-- docref: begin src=sys/desktop/runas_runner.go#RunAsRunner:778eae21 -->
 `RunAsRunner` wraps a base Runner so every command it runs executes as the
 session's user via `runuser`, with a per-user environment: `HOME`, `USER`,
 `XDG_RUNTIME_DIR`, and the session bus address. `PATH` is always re-applied last
@@ -63,7 +62,7 @@ user-scoped command.
 <!-- docref: end -->
 
 {% callout type="info" title="It's a Runner, not a one-shot" %}
-<!-- docref: begin src=sys/desktop/runas_runner.go#RunAsRunner:f70588a4 -->
+<!-- docref: begin src=sys/desktop/runas_runner.go#RunAsRunner:778eae21 -->
 `RunAsRunner` returns an `exec.Runner` you compose with any capability (a per-user
 Flatpak manager, a script exec), so the privilege drop and environment are wired
 in once and reused — no separate streaming pipeline to build.

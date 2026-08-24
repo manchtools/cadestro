@@ -70,7 +70,7 @@ func (m *manager) applyDnf(ctx context.Context, name string, c *DnfConfig) (Outc
 		m.runNonFatal(ctx, &log, "warning: failed to import GPG key", "rpm", sysexec.SeparatePositionals([]string{"--import"}, c.GPGKey)...)
 	}
 
-	m.runNonFatal(ctx, &log, "warning: failed to refresh repo metadata", "dnf", "-y", "makecache", "--repo", name)
+	m.runNonFatal(ctx, &log, "warning: failed to refresh repo metadata", m.b.String(), "-y", "makecache", "--repo", name)
 
 	return out(log.String(), true), nil
 }

@@ -59,7 +59,7 @@ func TestValidatePackageName_RejectsOptionInjection(t *testing.T) {
 		"$(reboot)",
 		"pkg\nmalicious",
 		"pkg\x00",
-		"pkg=1.2.3", // apt name=version goes via InstallOptions.Version
+		"pkg=1.2.3", // apt name=version is represented by InstallSpec.Version
 		"pkg*",      // glob
 		"pkg?",
 		"pkg>out",

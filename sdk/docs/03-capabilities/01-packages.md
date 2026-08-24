@@ -1,15 +1,15 @@
 ---
 title: Packages
 label: Packages
-description: Install, remove, upgrade, and query software across apt, dnf, pacman, zypper, and flatpak behind one Manager.
+description: Install, remove, upgrade, and query software across native Linux package managers, with a separate Flatpak manager.
 icon: "📦"
 ---
 
 # Packages
 
-`pkg` manages software through the host's native package manager behind a single
-`Manager` interface. One set of calls drives apt, dnf, pacman, zypper, or
-flatpak — you pick the backend, the SDK speaks its dialect.
+`pkg` manages software through the host's native package manager behind a
+single `Manager` interface. One set of calls drives apt, dnf, pacman, or
+zypper. Flatpak has a separate concrete manager with explicit remotes.
 
 It follows the [architecture](/concepts/architecture): build a Runner, choose a
 [Backend](/concepts/backends), get a Manager.
@@ -25,7 +25,7 @@ if err != nil {
     return err
 }
 
-backends := pkg.Detect(ctx) // e.g. [apt] on Debian, [dnf] on Fedora
+backends := pkg.Detect() // e.g. [apt] on Debian, [dnf] on Fedora
 if len(backends) == 0 {
     return errors.New("no supported package manager on this host")
 }
@@ -36,13 +36,13 @@ if err != nil {
 }
 ```
 
-<!-- docref: begin src=pkg/pkg.go#Detect:374bb12a -->
+<!-- docref: begin src=pkg/pkg.go#Detect:8927e775 -->
 `Detect` lists the backends whose tool is present on `PATH`; it never picks one
 and never constructs a Manager — the caller reads the list, chooses explicitly,
 and passes that choice to `New`. There is no hidden auto-detection.
 <!-- docref: end -->
 
-<!-- docref: begin src=pkg/pkg.go#New:e40499cf -->
+<!-- docref: begin src=pkg/pkg.go#New:2be34fca -->
 `New` is pure and fail-closed: it validates the backend and rejects a nil
 Runner before returning a Manager, and it does **not** probe the host. A
 zero-value or unimplemented backend is an error, not a silent default — so a
@@ -55,7 +55,7 @@ Every mutation returns the command's `exec.Result` (exit code, stdout, stderr)
 so a caller can surface exactly what the package manager did:
 
 ```go
-res, err := m.Install(ctx, pkg.InstallOptions{}, "vim", "git")
+res, err := m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "vim"}, pkg.InstallSpec{Name: "git"})
 if err != nil {
     return fmt.Errorf("install failed: %w", err)
 }
@@ -71,7 +71,7 @@ if _, err := m.Remove(ctx, pkg.RemoveOptions{}, "telnet"); err != nil {
 if _, err := m.Update(ctx); err != nil {
     return err
 }
-if _, err := m.UpgradeAll(ctx, pkg.UpgradeOptions{}); err != nil {
+if _, err := m.UpgradeAll(ctx); err != nil {
     return err
 }
 
@@ -86,54 +86,49 @@ if _, err := m.Autoremove(ctx); err != nil {
 }
 ```
 
-<!-- docref: begin src=pkg/dnf.go#dnf.Install:24ff67e3 -->
-Package names are passed as operands after a `--` separator, so a name that
-begins with `-` can never be reinterpreted as a flag, and every mutation returns
-the package manager's `exec.Result`.
+<!-- docref: begin src=pkg/dnf.go#dnf.Install:b9bab404 -->
+Package specifications are passed as validated operands, and every mutation
+returns the package manager's `exec.Result`.
 <!-- docref: end -->
 
 ## Query installed state
 
-<!-- docref: begin src=sys/exec/runner.go#Direct:ed029c0e,pkg/exec.go#runRead:cc3d492f -->
+<!-- docref: begin src=sys/exec/runner.go#Direct:ed029c0e,pkg/exec.go#runRead:50c48e99 -->
 Reads never escalate — the query path runs each command without the privilege
 wrapper, so a `Direct` Runner is enough:
 <!-- docref: end -->
 
 ```go
 ok, err := m.IsInstalled(ctx, "curl")
-ver, err := m.InstalledVersion(ctx, "curl") // "" when absent
+ver, err := m.InstalledVersion(ctx, "curl") // ErrNotFound when absent
 n, err := m.InstalledCount(ctx)             // total installed packages
 ```
 
-<!-- docref: begin src=pkg/dnf.go#dnf.IsInstalled:28231b96,pkg/dnf.go#dnf.InstalledVersion:f0b1ff2e -->
+<!-- docref: begin src=pkg/dnf.go#dnf.IsInstalled:28231b96,pkg/dnf.go#dnf.InstalledVersion:01a1110e -->
 The queries are unprivileged: `IsInstalled` reports whether a package is present,
-and `InstalledVersion` returns its version or an empty string when it isn't
-installed.
+and `InstalledVersion` returns its version or an `ErrNotFound` error.
 <!-- docref: end -->
 
 ## Backends
 
 <!-- docref: begin src=pkg/pkg.go#Backend:11393461 -->
-The backend is fixed at construction and selected from an explicit set —
-apt, dnf, pacman, zypper, and flatpak. The zero value is invalid; only
+The backend is fixed at construction and selected from apt, dnf, pacman, or
+zypper. Flatpak has its own concrete manager. The zero value is invalid; only
 implemented backends exist, so there is no "unknown backend" that silently does
 nothing.
 <!-- docref: end -->
 
 Behavioural differences the Manager smooths over but you should know about:
 
-<!-- docref: begin src=pkg/pkg.go#Manager:48758d2d,pkg/pacman.go#pacman.UpgradeAll:ac396816 -->
+<!-- docref: begin src=pkg/pkg.go#Manager:1fbc3b2c,pkg/pacman.go#pacman.UpgradeAll:3da8f270 -->
 - `Update` is the explicit index refresh; `UpgradeAll` maps to the backend's
-  full upgrade (`apt dist-upgrade` / `dnf upgrade` / `zypper dist-upgrade` /
-  `flatpak update`) and does **not** re-sync the index first — except
+  full upgrade (`apt upgrade` / `dnf upgrade` / `zypper update`) and does
+  **not** re-sync the index first — except
   **pacman**, whose `-Syu` syncs the database and upgrades in one transaction
   (Arch does not support partial upgrades).
-- `UpgradeOptions.SecurityOnly` narrows the upgrade to security updates where
-  the backend supports it (apt / dnf / zypper); **pacman** and **flatpak** have
-  no security-only concept and fail closed with `ErrSecurityOnlyUnsupported`
-  rather than silently running a full upgrade.
-- **flatpak** installs are per-remote application IDs, not distro package names;
-  use it for desktop apps, the distro backends for system packages.
+- `UpgradeSecurity` applies security updates where supported, and
+  `HasSecurityUpdates` reports whether any are available. Pacman returns
+  `ErrUnsupported` for both security operations.
 - `Upgrade` with an empty package list is a **no-op**, never a full upgrade —
   an accidentally-empty list must not upgrade the whole system; `UpgradeAll` is
   the explicit way to do that. `Autoremove` prunes no-longer-needed

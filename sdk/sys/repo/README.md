@@ -1,6 +1,6 @@
 # Repository management SDK
 
-Configure external package-manager repositories (apt, dnf, pacman, zypper)
+Configure external package-manager repositories (apt, dnf/dnf5, pacman, zypper)
 through a single `Manager` interface built over an injected `exec.Runner` — no
 global state, fully unit-testable with `exectest.FakeRunner` (no host, no sudo,
 no container).
@@ -27,7 +27,7 @@ r, err := exec.NewRunner(exec.Direct) // the agent runs as root; elsewhere Sudo/
 if err != nil {
     log.Fatalf("new runner: %v", err)
 }
-m, err := repo.New(pkg.Dnf, r) // pkg.Apt / pkg.Dnf / pkg.Pacman / pkg.Zypper
+m, err := repo.New(pkg.Dnf, r) // pkg.Apt / pkg.Dnf / pkg.Dnf5 / pkg.Pacman / pkg.Zypper
 if err != nil {
     log.Fatalf("new repo manager: %v", err) // unsupported backend (flatpak/unknown) or nil runner
 }
@@ -44,9 +44,9 @@ out, err := m.Apply(ctx, repo.Repository{Name: "corp", Dnf: &repo.DnfConfig{
 _, err = m.Remove(ctx, "corp") // idempotent: removing an absent repo is a no-op
 ```
 
-Discover which backends exist with `pkg.Detect(ctx)` — repositories belong to a
+Discover which backends exist with `pkg.Detect()` — repositories belong to a
 package manager, so `repo` has no separate detector. Flatpak has no native-style
-repository (its remotes live on `pkg.FlatpakManager`), so `New` rejects it with
+repository (its remotes live on a concrete Flatpak manager), so `New` rejects it with
 `ErrUnsupportedBackend`.
 
 ## Design notes

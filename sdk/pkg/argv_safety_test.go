@@ -48,7 +48,7 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 		t.Fatal("matches-zero guard: Manager has no methods")
 	}
 	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
-	backends := []Backend{Apt, Dnf, Pacman, Zypper, Flatpak}
+	backends := []Backend{Apt, Dnf, Dnf5, Pacman, Zypper}
 	checked := 0
 
 	isStringOperand := func(ft reflect.Type, p int) bool {
@@ -130,7 +130,7 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 // while an ordinary query reaches the tool unchanged.
 func TestSearch_RejectsFlagShapedQuery(t *testing.T) {
 	ctx := context.Background()
-	for _, b := range []Backend{Apt, Dnf, Pacman, Zypper, Flatpak} {
+	for _, b := range []Backend{Apt, Dnf, Dnf5, Pacman, Zypper} {
 		t.Run(b.String(), func(t *testing.T) {
 			stubLookPath(t, "apt", "apt-get", "dnf", "pacman", "zypper", "flatpak")
 			m, f := mustNew(t, b)

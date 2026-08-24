@@ -1,14 +1,13 @@
 package pkg
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
@@ -16,9 +15,7 @@ import (
 // apt drives the Debian/Ubuntu package manager (apt / apt-get / dpkg / apt-mark)
 // over an injected Runner.
 type apt struct {
-	r       sysexec.Runner
-	cmdOnce sync.Once
-	aptCmd  string // cached "apt" or "apt-get"
+	r sysexec.Runner
 }
 
 var _ Manager = (*apt)(nil)
@@ -38,28 +35,9 @@ var dpkgConfOptions = []string{
 
 func (a *apt) Backend() Backend { return Apt }
 
-// aptCommand returns "apt" when available, else "apt-get" (cached).
-func (a *apt) aptCommand() string {
-	a.cmdOnce.Do(func() {
-		if _, err := lookPath("apt"); err == nil {
-			a.aptCmd = "apt"
-		} else {
-			a.aptCmd = "apt-get"
-		}
-	})
-	return a.aptCmd
-}
-
-func (a *apt) hasApt() bool { return a.aptCommand() == "apt" }
-
-// write runs a privileged apt-family command and maps a non-zero exit to an
-// *exec.CommandError. "apt"/"apt-get" are resolved to the preferred binary;
-// other commands (dpkg, apt-mark) run as named. The command's Result (stdout,
-// stderr, exit code) is returned on both the success and non-zero-exit paths;
-// only an unrunnable command yields the zero Result.
 func (a *apt) write(ctx context.Context, cmd string, args ...string) (sysexec.Result, error) {
 	if cmd == "apt" || cmd == "apt-get" {
-		cmd = a.aptCommand()
+		cmd = "apt-get"
 	}
 	res, err := runPriv(ctx, a.r, true, aptWriteEnv, cmd, args...)
 	if err != nil {
@@ -70,7 +48,7 @@ func (a *apt) write(ctx context.Context, cmd string, args ...string) (sysexec.Re
 
 // Version returns the apt version string.
 func (a *apt) Version(ctx context.Context) (string, error) {
-	out, err := readOut(ctx, a.r, a.aptCommand(), "--version")
+	out, err := readOut(ctx, a.r, "apt-get", "--version")
 	if err != nil {
 		return "", err
 	}
@@ -81,28 +59,26 @@ func (a *apt) Version(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-// Install installs packages, using --fix-broken to resolve dependency issues.
-func (a *apt) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
-	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return sysexec.Result{}, err
-	}
-	if opts.Version != "" && len(packages) != 1 {
-		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
-	}
-	if len(packages) == 0 {
+func (a *apt) Install(ctx context.Context, opts InstallOptions, specs ...InstallSpec) (sysexec.Result, error) {
+	if len(specs) == 0 {
 		return sysexec.Result{}, nil
 	}
-	args := []string{"install", "-y", "--fix-broken"}
+	args := []string{"install", "-y"}
 	if opts.AllowDowngrade {
 		args = append(args, "--allow-downgrades")
 	}
-	if opts.Version != "" {
-		args = append(args, fmt.Sprintf("%s=%s", packages[0], opts.Version))
-	} else {
-		args = append(args, packages...)
+	for _, spec := range specs {
+		if err := ValidatePackageName(spec.Name); err != nil {
+			return sysexec.Result{}, err
+		}
+		if err := ValidatePackageVersion(spec.Version); err != nil {
+			return sysexec.Result{}, err
+		}
+		if spec.Version == "" {
+			args = append(args, spec.Name)
+		} else {
+			args = append(args, fmt.Sprintf("%s=%s", spec.Name, spec.Version))
+		}
 	}
 	return a.write(ctx, "apt", args...)
 }
@@ -127,11 +103,11 @@ func (a *apt) InstallLocal(ctx context.Context, path string, opts InstallLocalOp
 
 // Remove removes packages; opts.Purge deletes configuration files too.
 func (a *apt) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	verb := "remove"
 	if opts.Purge {
@@ -146,28 +122,25 @@ func (a *apt) Update(ctx context.Context) (sysexec.Result, error) {
 	return a.write(ctx, "apt", "update")
 }
 
-// Upgrade upgrades the named packages; with no names it runs a full
-// dist-upgrade (which can add/remove packages to satisfy held-back deps).
 func (a *apt) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
+	if len(packages) == 0 {
+		return sysexec.Result{}, nil
+	}
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
-	}
-	if len(packages) == 0 {
-		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	args := append([]string{"install", "-y", "--only-upgrade"}, dpkgConfOptions...)
 	args = append(args, packages...)
 	return a.write(ctx, "apt", args...)
 }
 
-// UpgradeAll performs a full distribution upgrade (apt dist-upgrade), or — with
-// opts.SecurityOnly — applies only security updates via unattended-upgrade.
-func (a *apt) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
-	if opts.SecurityOnly {
-		return a.securityUpgrade(ctx)
-	}
-	args := append([]string{"dist-upgrade", "-y"}, dpkgConfOptions...)
-	return a.write(ctx, "apt", args...)
+func (a *apt) UpgradeAll(ctx context.Context) (sysexec.Result, error) {
+	args := append([]string{"upgrade", "-y"}, dpkgConfOptions...)
+	return a.write(ctx, "apt-get", args...)
+}
+
+func (a *apt) UpgradeSecurity(ctx context.Context) (sysexec.Result, error) {
+	return a.securityUpgrade(ctx)
 }
 
 // securityUpgrade applies only security updates via unattended-upgrade — Debian/
@@ -212,22 +185,22 @@ func resolveUnattendedUpgrade() (string, error) {
 
 // Pin holds packages (apt-mark hold).
 func (a *apt) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	return a.write(ctx, "apt-mark", append([]string{"hold"}, packages...)...)
 }
 
 // Unpin releases held packages (apt-mark unhold).
 func (a *apt) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	return a.write(ctx, "apt-mark", append([]string{"unhold"}, packages...)...)
 }
@@ -235,43 +208,6 @@ func (a *apt) Unpin(ctx context.Context, packages ...string) (sysexec.Result, er
 // Autoremove removes packages installed only as now-unneeded dependencies.
 func (a *apt) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	return a.write(ctx, "apt", "autoremove", "-y")
-}
-
-// Repair clears stale dpkg/apt locks, reconfigures interrupted packages, fixes
-// broken dependencies, and refreshes the index. The returned Result is that of
-// the final `apt update` step (or the step that failed hard); best-effort steps
-// whose failures are swallowed do not change the returned Result.
-func (a *apt) Repair(ctx context.Context) (sysexec.Result, error) {
-	for _, lf := range []string{
-		"/var/lib/dpkg/lock",
-		"/var/lib/dpkg/lock-frontend",
-		"/var/lib/apt/lists/lock",
-		"/var/cache/apt/archives/lock",
-	} {
-		if err := removeStaleLock(ctx, a.r, lf); err != nil {
-			return sysexec.Result{}, err
-		}
-	}
-
-	fixArgs := append([]string{"--fix-broken", "install", "-y"}, dpkgConfOptions...)
-	steps := []struct {
-		what string
-		run  func() (sysexec.Result, error)
-	}{
-		{"dpkg --configure -a", func() (sysexec.Result, error) { return a.write(ctx, "dpkg", "--configure", "-a") }},
-		{"apt --fix-broken install", func() (sysexec.Result, error) { return a.write(ctx, "apt", fixArgs...) }},
-	}
-	for _, s := range steps {
-		res, err := s.run()
-		if err := bestEffortStep(ctx, s.what, err); err != nil {
-			return res, err
-		}
-	}
-	res, err := a.write(ctx, "apt", "update")
-	if err != nil {
-		return res, repairErr(ctx, "apt update failed", err)
-	}
-	return res, nil
 }
 
 // Search searches package names. It always uses `apt-cache search`, which emits
@@ -288,9 +224,8 @@ func (a *apt) Search(ctx context.Context, query string) ([]SearchResult, error) 
 	}
 
 	var results []SearchResult
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		parts := strings.SplitN(scanner.Text(), " - ", 2)
+	for line := range strings.SplitSeq(out, "\n") {
+		parts := strings.SplitN(line, " - ", 2)
 		if len(parts) < 2 {
 			continue
 		}
@@ -310,15 +245,9 @@ func (a *apt) List(ctx context.Context) ([]Package, error) {
 		return nil, err
 	}
 
-	pinned, err := a.getPinnedSet(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, "\t")
 		if len(fields) < 5 {
 			continue
 		}
@@ -337,36 +266,31 @@ func (a *apt) List(ctx context.Context) ([]Package, error) {
 			Status:       "installed",
 			Size:         size * 1024,
 			Description:  desc,
-			Pinned:       pinned[fields[0]],
 		})
 	}
 	return packages, nil
 }
 
-var aptUpgradableRe = regexp.MustCompile(`^([^/]+)/(\S+)\s+(\S+)\s+(\S+)\s+\[upgradable from: ([^\]]+)\]`)
+var aptSimulatedInstallRe = regexp.MustCompile(`^Inst\s+(\S+)\s+\((\S+)\s+(\S+)`)
 
 // ListUpgradable lists packages with an available upgrade. `list --upgradable`
 // is an apt-CLI subcommand, so it uses the resolved apt command.
 func (a *apt) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
-	out, err := readOut(ctx, a.r, a.aptCommand(), "list", "--upgradable")
+	out, err := readOut(ctx, a.r, "apt-get", "-s", "upgrade")
 	if err != nil {
 		return nil, err
 	}
 
 	var updates []PackageUpdate
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	scanner.Scan() // skip header
-	for scanner.Scan() {
-		m := aptUpgradableRe.FindStringSubmatch(scanner.Text())
-		if len(m) < 6 {
+	for line := range strings.SplitSeq(out, "\n") {
+		m := aptSimulatedInstallRe.FindStringSubmatch(line)
+		if len(m) < 4 {
 			continue
 		}
 		updates = append(updates, PackageUpdate{
-			Name:           m[1],
-			Repository:     m[2],
-			NewVersion:     m[3],
-			Architecture:   m[4],
-			CurrentVersion: m[5],
+			Name:       m[1],
+			NewVersion: m[2],
+			Repository: m[3],
 		})
 	}
 	return updates, nil
@@ -377,19 +301,13 @@ func (a *apt) Show(ctx context.Context, name string) (*Package, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
-	cmd := "apt-cache"
-	if a.hasApt() {
-		cmd = "apt"
-	}
-	out, err := readOut(ctx, a.r, cmd, "show", name)
+	out, err := readOut(ctx, a.r, "apt-cache", "show", name)
 	if err != nil {
 		return nil, err
 	}
 
 	pkg := &Package{Name: name}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version:"):
 			pkg.Version = strings.TrimSpace(strings.TrimPrefix(line, "Version:"))
@@ -413,11 +331,6 @@ func (a *apt) Show(ctx context.Context, name string) (*Package, error) {
 	} else {
 		pkg.Status = "available"
 	}
-	pinned, err := a.IsPinned(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	pkg.Pinned = pinned
 	return pkg, nil
 }
 
@@ -433,15 +346,17 @@ func (a *apt) ListVersions(ctx context.Context, name string) (*VersionInfo, erro
 
 	info := &VersionInfo{Name: name}
 	installed, err := a.InstalledVersion(ctx, name)
+	if errors.Is(err, ErrNotFound) {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
 	info.Installed = installed
 
 	seen := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "|") // package | version | repository
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, "|")
 		if len(fields) < 3 {
 			continue
 		}
@@ -514,8 +429,6 @@ func (a *apt) IsInstalled(ctx context.Context, name string) (bool, error) {
 	return res.ExitCode == 0, nil
 }
 
-// InstalledVersion returns the installed version of a package, or "" if absent
-// (dpkg-query exits non-zero for an unknown package — a benign miss, not an error).
 func (a *apt) InstalledVersion(ctx context.Context, name string) (string, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return "", err
@@ -525,7 +438,7 @@ func (a *apt) InstalledVersion(ctx context.Context, name string) (string, error)
 		return "", err
 	}
 	if !ok {
-		return "", nil
+		return "", fmt.Errorf("apt package %s: %w", name, ErrNotFound)
 	}
 	return strings.TrimSpace(out), nil
 }
@@ -539,21 +452,32 @@ func (a *apt) InstalledCount(ctx context.Context) (int, error) {
 	return countNonEmptyLines(out), nil
 }
 
-// HasUpdates reports whether any package can be upgraded. apt has no reliable
-// security-only filter, so securityOnly is accepted but not honored here.
-func (a *apt) HasUpdates(ctx context.Context, securityOnly bool) (bool, error) {
-	_ = securityOnly
-	out, err := readOut(ctx, a.r, a.aptCommand(), "-s", "upgrade")
+func (a *apt) HasUpdates(ctx context.Context) (bool, error) {
+	out, err := readOut(ctx, a.r, "apt-get", "-s", "upgrade")
 	if err != nil {
 		return false, err
 	}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "Inst ") {
+	for line := range strings.SplitSeq(out, "\n") {
+		if strings.HasPrefix(line, "Inst ") {
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+func (a *apt) HasSecurityUpdates(ctx context.Context) (bool, error) {
+	bin, err := resolveUnattendedUpgrade()
+	if err != nil {
+		return false, err
+	}
+	res, err := runRead(ctx, a.r, bin, "--dry-run", "--verbose")
+	if err != nil {
+		return false, err
+	}
+	if res.ExitCode != 0 {
+		return false, asCommandError(bin, res)
+	}
+	return strings.Contains(res.Stdout, "Packages that will be upgraded") || strings.Contains(res.Stdout, "The following packages will be upgraded"), nil
 }
 
 // IsPinned reports whether a package is held (apt-mark showhold <name>).
@@ -576,9 +500,8 @@ func (a *apt) ListPinned(ctx context.Context) ([]Package, error) {
 	}
 
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		name := strings.TrimSpace(scanner.Text())
+	for line := range strings.SplitSeq(out, "\n") {
+		name := strings.TrimSpace(line)
 		if name == "" {
 			continue
 		}
@@ -590,23 +513,7 @@ func (a *apt) ListPinned(ctx context.Context) ([]Package, error) {
 			Name:    name,
 			Version: version,
 			Status:  "installed",
-			Pinned:  true,
 		})
 	}
 	return packages, nil
-}
-
-func (a *apt) getPinnedSet(ctx context.Context) (map[string]bool, error) {
-	out, err := readOut(ctx, a.r, "apt-mark", "showhold")
-	if err != nil {
-		return nil, err
-	}
-	pinned := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if name := strings.TrimSpace(scanner.Text()); name != "" {
-			pinned[name] = true
-		}
-	}
-	return pinned, nil
 }

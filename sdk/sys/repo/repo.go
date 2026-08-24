@@ -25,8 +25,7 @@
 // manager itself resolves. No exec.Secret is involved.
 //
 // Repositories belong to a package manager, so callers discover the backend with
-// pkg.Detect — repo has no separate Detect. Flatpak has no native-style repo
-// (its remotes live on pkg.FlatpakManager), so New rejects it.
+// pkg.Detect — repo has no separate Detect.
 package repo
 
 import (
@@ -48,9 +47,8 @@ import (
 // a real read error (permission, I/O, escalation) still propagates.
 func isReadAbsent(err error) bool { return errors.Is(err, os.ErrNotExist) }
 
-// ErrUnsupportedBackend is returned by New for a backend that has no
-// native-style repository configuration: flatpak (whose remotes live on
-// pkg.FlatpakManager) and the zero/unknown value. Fail-closed: no silent default.
+// ErrUnsupportedBackend is returned by New for a backend without repository
+// configuration. Fail-closed: no silent default.
 var ErrUnsupportedBackend = errors.New("repo: unsupported package-manager backend")
 
 // ErrInvalidName is returned when a repository name is empty, too long, or
@@ -213,7 +211,7 @@ func New(b pkg.Backend, runner sysexec.Runner) (Manager, error) {
 		return nil, fmt.Errorf("repo: %w", sysexec.ErrRunnerRequired)
 	}
 	switch b {
-	case pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper:
+	case pkg.Apt, pkg.Dnf, pkg.Dnf5, pkg.Pacman, pkg.Zypper:
 		// supported
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedBackend, b)
@@ -239,7 +237,7 @@ func (m *manager) Apply(ctx context.Context, r Repository) (Outcome, error) {
 			return Outcome{}, fmt.Errorf("%w: apt", ErrMissingConfig)
 		}
 		return m.applyApt(ctx, r.Name, r.Apt)
-	case pkg.Dnf:
+	case pkg.Dnf, pkg.Dnf5:
 		if r.Dnf == nil {
 			return Outcome{}, fmt.Errorf("%w: dnf", ErrMissingConfig)
 		}
@@ -269,7 +267,7 @@ func (m *manager) Remove(ctx context.Context, name string) (Outcome, error) {
 	switch m.b {
 	case pkg.Apt:
 		return m.removeApt(ctx, name)
-	case pkg.Dnf:
+	case pkg.Dnf, pkg.Dnf5:
 		return m.removeDnf(ctx, name)
 	case pkg.Pacman:
 		return m.removePacman(ctx, name)

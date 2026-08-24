@@ -147,7 +147,7 @@ func TestDST_ArgvAndSecretInvariants(t *testing.T) {
 	t.Logf("DST argv/secret: seed=%d iters=%d (replay with CADESTRO_DST_SEED=%d)", seed, iters, seed)
 	r := rand.New(rand.NewSource(seed))
 	ctx := context.Background()
-	backends := []pkg.Backend{pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper, pkg.Flatpak}
+	backends := []pkg.Backend{pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper}
 	totalCmds := 0
 
 	for i := 0; i < iters; i++ {
@@ -162,7 +162,7 @@ func TestDST_ArgvAndSecretInvariants(t *testing.T) {
 		switch r.Intn(6) {
 		case 0:
 			m, _ := pkg.New(backends[r.Intn(len(backends))], fr)
-			_, _ = m.Install(ctx, pkg.InstallOptions{}, input)
+			_, _ = m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: input})
 		case 1:
 			m, _ := pkg.New(backends[r.Intn(len(backends))], fr)
 			_, _ = m.Remove(ctx, pkg.RemoveOptions{}, input)

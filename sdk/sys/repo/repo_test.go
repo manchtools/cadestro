@@ -131,7 +131,7 @@ func TestNew_NilRunnerRejected(t *testing.T) {
 
 func TestNew_UnsupportedBackendRejected(t *testing.T) {
 	fr := exectest.New(sysexec.Direct)
-	for _, b := range []pkg.Backend{pkg.Flatpak, pkg.Backend(0), pkg.Backend(99)} {
+	for _, b := range []pkg.Backend{pkg.Backend(0), pkg.Backend(99)} {
 		if _, err := New(b, fr); !errors.Is(err, ErrUnsupportedBackend) {
 			t.Errorf("New(%v) err = %v, want ErrUnsupportedBackend", b, err)
 		}
@@ -140,7 +140,7 @@ func TestNew_UnsupportedBackendRejected(t *testing.T) {
 
 func TestNew_SupportedBackends(t *testing.T) {
 	fr := exectest.New(sysexec.Direct)
-	for _, b := range []pkg.Backend{pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper} {
+	for _, b := range []pkg.Backend{pkg.Apt, pkg.Dnf, pkg.Dnf5, pkg.Pacman, pkg.Zypper} {
 		m, err := New(b, fr)
 		if err != nil {
 			t.Fatalf("New(%s): %v", b, err)
@@ -166,7 +166,7 @@ func TestNew_FSConstructionErrorPropagates(t *testing.T) {
 // A Manager with an out-of-range backend (only constructable by bypassing New)
 // must fail closed rather than silently no-op.
 func TestApplyRemove_UnreachableBackendFailsClosed(t *testing.T) {
-	m := &manager{b: pkg.Flatpak, r: exectest.New(sysexec.Direct), fsm: newFakeFS()}
+	m := &manager{b: pkg.Backend(99), r: exectest.New(sysexec.Direct), fsm: newFakeFS()}
 	if _, err := m.Apply(context.Background(), Repository{Name: "x"}); !errors.Is(err, ErrUnsupportedBackend) {
 		t.Errorf("Apply err = %v, want ErrUnsupportedBackend", err)
 	}
@@ -184,6 +184,7 @@ func TestApply_MissingConfigForBackend(t *testing.T) {
 	}{
 		{pkg.Apt, Repository{Name: "x"}},
 		{pkg.Dnf, Repository{Name: "x"}},
+		{pkg.Dnf5, Repository{Name: "x"}},
 		{pkg.Pacman, Repository{Name: "x"}},
 		{pkg.Zypper, Repository{Name: "x"}},
 	}

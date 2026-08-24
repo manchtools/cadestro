@@ -41,10 +41,10 @@ func stubLookPath(t *testing.T, present ...string) {
 }
 
 // mustNew builds a Manager over a fresh FakeRunner and fails the test on error.
-func mustNew(t *testing.T, b Backend, opts ...Option) (Manager, *exectest.FakeRunner) {
+func mustNew(t *testing.T, b Backend) (Manager, *exectest.FakeRunner) {
 	t.Helper()
 	f := newFake()
-	m, err := New(b, f, opts...)
+	m, err := New(b, f)
 	if err != nil {
 		t.Fatalf("New(%v): %v", b, err)
 	}
@@ -66,7 +66,7 @@ func TestMutationsReturnCommandOutput(t *testing.T) {
 	t.Run("install surfaces stdout on success", func(t *testing.T) {
 		m, f := mustNew(t, Apt)
 		f.Push(sysexec.Result{Stdout: "Setting up vim ...\n", ExitCode: 0}, nil)
-		res, err := m.Install(ctx, InstallOptions{}, "vim")
+		res, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim"})
 		if err != nil {
 			t.Fatalf("Install err = %v", err)
 		}
@@ -85,7 +85,7 @@ func TestMutationsReturnCommandOutput(t *testing.T) {
 			Stderr:   "E: Unable to locate package vim\n",
 			ExitCode: 100,
 		}, nil)
-		res, err := m.Install(ctx, InstallOptions{}, "vim")
+		res, err := m.Install(ctx, InstallOptions{}, InstallSpec{Name: "vim"})
 		if err == nil {
 			t.Fatal("Install err = nil, want a non-zero-exit error")
 		}
@@ -102,7 +102,7 @@ func TestMutationsReturnCommandOutput(t *testing.T) {
 // --- New -------------------------------------------------------------------
 
 func TestNew_AllBackends(t *testing.T) {
-	for _, b := range []Backend{Apt, Dnf, Pacman, Zypper, Flatpak} {
+	for _, b := range []Backend{Apt, Dnf, Dnf5, Pacman, Zypper} {
 		m, err := New(b, newFake())
 		if err != nil {
 			t.Fatalf("New(%v) unexpected error: %v", b, err)
@@ -128,75 +128,6 @@ func TestNew_RejectsNilRunner(t *testing.T) {
 	}
 }
 
-func TestNew_FlatpakIsFlatpakManager(t *testing.T) {
-	m, err := New(Flatpak, newFake())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := m.(FlatpakManager); !ok {
-		t.Fatalf("New(Flatpak) is %T, want a FlatpakManager", m)
-	}
-}
-
-func TestNew_NativeBackendsAreNotFlatpakManager(t *testing.T) {
-	for _, b := range []Backend{Apt, Dnf, Pacman, Zypper} {
-		m, err := New(b, newFake())
-		if err != nil {
-			t.Fatalf("New(%v): %v", b, err)
-		}
-		if _, ok := m.(FlatpakManager); ok {
-			t.Errorf("%v unexpectedly satisfies FlatpakManager", b)
-		}
-	}
-}
-
-// WithUserScope must flip flatpak to --user and drop escalation; the default is
-// --system and escalated.
-func TestNew_FlatpakScopeOption(t *testing.T) {
-	t.Run("default is system + escalated", func(t *testing.T) {
-		m, f := mustNew(t, Flatpak)
-		ok(f, "")
-		if _, err := m.Update(context.Background()); err != nil {
-			t.Fatal(err)
-		}
-		c := f.Calls()[0]
-		if !c.Escalate {
-			t.Error("system-scope flatpak must escalate")
-		}
-		if !strings.Contains(argv(c), "--system") {
-			t.Errorf("argv = %q, want --system", argv(c))
-		}
-	})
-	t.Run("WithUserScope is user + unescalated", func(t *testing.T) {
-		m, f := mustNew(t, Flatpak, WithUserScope())
-		ok(f, "")
-		if _, err := m.Update(context.Background()); err != nil {
-			t.Fatal(err)
-		}
-		c := f.Calls()[0]
-		if c.Escalate {
-			t.Error("user-scope flatpak must NOT escalate")
-		}
-		if !strings.Contains(argv(c), "--user") {
-			t.Errorf("argv = %q, want --user", argv(c))
-		}
-	})
-}
-
-// WithUserScope is documented as flatpak-only; applying it to a native backend
-// must not change its (always-escalated) behaviour.
-func TestNew_UserScopeIgnoredByNativeBackends(t *testing.T) {
-	m, f := mustNew(t, Apt, WithUserScope())
-	stubLookPath(t, "apt")
-	ok(f, "")
-	if _, err := m.Update(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	if c := f.Calls()[0]; !c.Escalate {
-		t.Error("native apt must escalate regardless of WithUserScope")
-	}
-}
-
 // --- Backend.String --------------------------------------------------------
 
 func TestBackend_String(t *testing.T) {
@@ -205,7 +136,7 @@ func TestBackend_String(t *testing.T) {
 		Dnf:         "dnf",
 		Pacman:      "pacman",
 		Zypper:      "zypper",
-		Flatpak:     "flatpak",
+		Dnf5:        "dnf5",
 		Backend(0):  "Backend(0)",
 		Backend(99): "Backend(99)",
 	}
@@ -229,14 +160,13 @@ func TestDetect(t *testing.T) {
 		{"dnf only", []string{"dnf"}, []Backend{Dnf}},
 		{"pacman only", []string{"pacman"}, []Backend{Pacman}},
 		{"zypper only", []string{"zypper"}, []Backend{Zypper}},
-		{"flatpak only", []string{"flatpak"}, []Backend{Flatpak}},
-		{"native + flatpak", []string{"dnf", "flatpak"}, []Backend{Dnf, Flatpak}},
-		{"priority order", []string{"flatpak", "zypper", "apt-get"}, []Backend{Apt, Zypper, Flatpak}},
+		{"dnf5 preferred", []string{"dnf5", "dnf"}, []Backend{Dnf5}},
+		{"priority order", []string{"zypper", "apt-get"}, []Backend{Apt, Zypper}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			stubLookPath(t, tc.present...)
-			got := Detect(context.Background())
+			got := Detect()
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("Detect() = %v, want %v", got, tc.want)
 			}

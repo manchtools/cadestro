@@ -1,10 +1,9 @@
 package pkg
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
-	"log/slog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -37,6 +36,9 @@ func (z *zypper) write(ctx context.Context, args ...string) (sysexec.Result, err
 	if err != nil {
 		return sysexec.Result{}, err
 	}
+	if isZypperInfoExit(res.ExitCode) {
+		return res, nil
+	}
 	return res, asCommandError("zypper", res)
 }
 
@@ -53,29 +55,26 @@ func (z *zypper) Version(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-// Install installs packages. opts.Version pins a single package (name=version);
-// opts.AllowDowngrade adds --oldpackage.
-func (z *zypper) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
-	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return sysexec.Result{}, err
-	}
-	if opts.Version != "" && len(packages) != 1 {
-		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
-	}
-	if len(packages) == 0 {
+func (z *zypper) Install(ctx context.Context, opts InstallOptions, specs ...InstallSpec) (sysexec.Result, error) {
+	if len(specs) == 0 {
 		return sysexec.Result{}, nil
 	}
 	args := []string{"--non-interactive", "install"}
 	if opts.AllowDowngrade {
 		args = append(args, "--oldpackage")
 	}
-	if opts.Version != "" {
-		args = append(args, fmt.Sprintf("%s=%s", packages[0], opts.Version))
-	} else {
-		args = append(args, packages...)
+	for _, spec := range specs {
+		if err := ValidatePackageName(spec.Name); err != nil {
+			return sysexec.Result{}, err
+		}
+		if err := ValidatePackageVersion(spec.Version); err != nil {
+			return sysexec.Result{}, err
+		}
+		if spec.Version == "" {
+			args = append(args, spec.Name)
+		} else {
+			args = append(args, fmt.Sprintf("%s=%s", spec.Name, spec.Version))
+		}
 	}
 	return z.write(ctx, args...)
 }
@@ -101,14 +100,15 @@ func (z *zypper) InstallLocal(ctx context.Context, path string, opts InstallLoca
 	return z.write(ctx, append(flags, path)...)
 }
 
-// Remove removes packages. zypper does not distinguish purge from remove, so
-// opts.Purge is a no-op.
-func (z *zypper) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
+func (z *zypper) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if opts.Purge {
+		return sysexec.Result{}, fmt.Errorf("zypper purge: %w", ErrUnsupported)
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "remove"}, packages...)...)
 }
@@ -118,63 +118,26 @@ func (z *zypper) Update(ctx context.Context) (sysexec.Result, error) {
 	return z.write(ctx, "--non-interactive", "refresh")
 }
 
-// Upgrade upgrades the named packages, or runs a full dist-upgrade with no names.
 func (z *zypper) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
+	if len(packages) == 0 {
+		return sysexec.Result{}, nil
+	}
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
-	}
-	if len(packages) == 0 {
-		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "update"}, packages...)...)
 }
 
-// UpgradeAll performs a full distribution upgrade (zypper dist-upgrade).
-func (z *zypper) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
-	if opts.SecurityOnly {
-		// zypper patches are security-categorised; patch --category security
-		// applies only the security patches.
-		return z.write(ctx, "--non-interactive", "patch", "--category", "security")
-	}
-	return z.write(ctx, "--non-interactive", "dist-upgrade")
+func (z *zypper) UpgradeAll(ctx context.Context) (sysexec.Result, error) {
+	return z.write(ctx, "--non-interactive", "update")
 }
 
-// Autoremove is a no-op: zypper has no single-shot unneeded-package removal
-// matching apt/dnf autoremove semantics.
-func (z *zypper) Autoremove(ctx context.Context) (sysexec.Result, error) {
-	slog.Debug("zypper has no native autoremove; skipping")
-	return sysexec.Result{}, nil
+func (z *zypper) UpgradeSecurity(ctx context.Context) (sysexec.Result, error) {
+	return z.write(ctx, "--non-interactive", "patch", "--category", "security")
 }
 
-// Repair recovers a wedged zypper/rpm state, mirroring dnf's best-effort
-// recovery (both are rpm-based). It clears a stale zypp PID lock, then runs
-// clean / refresh / verify and (only on rpmdb corruption) a rebuild. Every
-// package step is best-effort — a single wedged step is logged and the chain
-// continues, so e.g. a failed refresh does not skip the rpmdb rebuild — and only
-// a cancelled context aborts the chain (each step fails closed via runPriv). The
-// last step's Result is returned.
-func (z *zypper) Repair(ctx context.Context) (sysexec.Result, error) {
-	if err := removeStaleZyppLock(ctx, z.r, "/run/zypp.pid"); err != nil {
-		return sysexec.Result{}, err
-	}
-	steps := []struct {
-		what string
-		run  func() (sysexec.Result, error)
-	}{
-		{"zypper clean --all", func() (sysexec.Result, error) { return z.write(ctx, "--non-interactive", "clean", "--all") }},
-		{"zypper refresh", func() (sysexec.Result, error) { return z.write(ctx, "--non-interactive", "refresh") }},
-		{"zypper verify", func() (sysexec.Result, error) { return z.write(ctx, "--non-interactive", "verify", "--recommends") }},
-		{"rpm --verifydb", func() (sysexec.Result, error) { return verifyOrRebuildRPMDB(ctx, z.r) }},
-	}
-	var last sysexec.Result
-	for _, s := range steps {
-		res, err := s.run()
-		last = res
-		if err := bestEffortStep(ctx, s.what, err); err != nil {
-			return res, err
-		}
-	}
-	return last, nil
+func (z *zypper) Autoremove(context.Context) (sysexec.Result, error) {
+	return sysexec.Result{}, fmt.Errorf("zypper autoremove: %w", ErrUnsupported)
 }
 
 // Search searches packages (exit 104 = no matches).
@@ -194,10 +157,8 @@ func (z *zypper) Search(ctx context.Context, query string) ([]SearchResult, erro
 	}
 
 	var results []SearchResult
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
 	headerPassed := false
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		if strings.HasPrefix(line, "---") || strings.HasPrefix(line, "+-") {
 			headerPassed = true
 			continue
@@ -221,6 +182,25 @@ func (z *zypper) Search(ctx context.Context, query string) ([]SearchResult, erro
 	return results, nil
 }
 
+func (z *zypper) HasSecurityUpdates(ctx context.Context) (bool, error) {
+	res, err := runRead(ctx, z.r, "zypper", "--non-interactive", "list-patches", "--category", "security")
+	if err != nil {
+		return false, err
+	}
+	if res.ExitCode == 100 || res.ExitCode == 101 {
+		return true, nil
+	}
+	if !isZypperInfoExit(res.ExitCode) {
+		return false, asCommandError("zypper", res)
+	}
+	for _, line := range strings.Split(res.Stdout, "\n") {
+		if strings.Contains(line, "v |") || strings.Contains(line, "i |") {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // List lists installed packages (via rpm).
 func (z *zypper) List(ctx context.Context) ([]Package, error) {
 	out, err := readOut(ctx, z.r, "rpm", "-qa", "--queryformat",
@@ -229,15 +209,9 @@ func (z *zypper) List(ctx context.Context) ([]Package, error) {
 		return nil, err
 	}
 
-	pinned, err := z.getPinnedSet(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, "\t")
 		if len(fields) < 4 {
 			continue
 		}
@@ -253,7 +227,6 @@ func (z *zypper) List(ctx context.Context) ([]Package, error) {
 			Status:       "installed",
 			Size:         size,
 			Description:  desc,
-			Pinned:       pinned[fields[0]],
 		})
 	}
 	return packages, nil
@@ -272,10 +245,8 @@ func (z *zypper) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 	}
 
 	var updates []PackageUpdate
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
 	headerPassed := false
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		if strings.HasPrefix(line, "---") || strings.HasPrefix(line, "+-") {
 			headerPassed = true
 			continue
@@ -318,9 +289,7 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 	}
 
 	pkg := &Package{Name: name, Status: "available"}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version"):
 			pkg.Version = parseColonValue(line)
@@ -350,11 +319,6 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 	if installed {
 		pkg.Status = "installed"
 	}
-	pinned, err := z.IsPinned(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	pkg.Pinned = pinned
 	return pkg, nil
 }
 
@@ -372,6 +336,9 @@ func (z *zypper) ListVersions(ctx context.Context, name string) (*VersionInfo, e
 
 	info := &VersionInfo{Name: name}
 	installed, err := z.InstalledVersion(ctx, name)
+	if errors.Is(err, ErrNotFound) {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -385,10 +352,8 @@ func (z *zypper) ListVersions(ctx context.Context, name string) (*VersionInfo, e
 	}
 
 	seen := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
 	headerPassed := false
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		if strings.HasPrefix(line, "---") || strings.HasPrefix(line, "+-") {
 			headerPassed = true
 			continue
@@ -437,7 +402,6 @@ func (z *zypper) IsInstalled(ctx context.Context, name string) (bool, error) {
 	return res.ExitCode == 0, nil
 }
 
-// InstalledVersion returns the installed version of a package, or "" if absent.
 func (z *zypper) InstalledVersion(ctx context.Context, name string) (string, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return "", err
@@ -447,7 +411,7 @@ func (z *zypper) InstalledVersion(ctx context.Context, name string) (string, err
 		return "", err
 	}
 	if res.ExitCode != 0 {
-		return "", nil
+		return "", fmt.Errorf("zypper package %s: %w", name, ErrNotFound)
 	}
 	return strings.TrimSpace(res.Stdout), nil
 }
@@ -463,28 +427,22 @@ func (z *zypper) InstalledCount(ctx context.Context) (int, error) {
 
 // HasUpdates reports whether any update is available (list-updates: exit 100, or
 // exit 0 with an update/patch table row).
-func (z *zypper) HasUpdates(ctx context.Context, securityOnly bool) (bool, error) {
-	args := []string{"--non-interactive", "list-updates"}
-	if securityOnly {
-		args = append(args, "--type", "patch", "--category", "security")
-	}
-	res, err := runRead(ctx, z.r, "zypper", args...)
+func (z *zypper) HasUpdates(ctx context.Context) (bool, error) {
+	res, err := runRead(ctx, z.r, "zypper", "--non-interactive", "list-updates")
 	if err != nil {
 		return false, err
 	}
-	if res.ExitCode == 100 {
+	if res.ExitCode == 100 || res.ExitCode == 101 {
 		return true, nil
 	}
-	if res.ExitCode != 0 {
+	if !isZypperInfoExit(res.ExitCode) {
 		// A real-error exit (6 = no repositories, 4 = ZYPP problem / lock held /
 		// network failure) must surface, never silently read as "no updates" — that
 		// would tell a patch/compliance caller it is up to date when the check broke.
 		// Matches dnf.HasUpdates' default branch.
 		return false, asCommandError("zypper", res)
 	}
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		if strings.Contains(line, "v |") || strings.Contains(line, "i |") {
 			return true, nil
 		}
@@ -494,22 +452,22 @@ func (z *zypper) HasUpdates(ctx context.Context, securityOnly bool) (bool, error
 
 // Pin holds packages back (zypper addlock).
 func (z *zypper) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "addlock"}, packages...)...)
 }
 
 // Unpin releases held packages (zypper removelock).
 func (z *zypper) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "removelock"}, packages...)...)
 }
@@ -522,10 +480,8 @@ func (z *zypper) ListPinned(ctx context.Context) ([]Package, error) {
 	}
 
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
 	headerPassed := false
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		if strings.HasPrefix(line, "---") || strings.HasPrefix(line, "+-") {
 			headerPassed = true
 			continue
@@ -545,7 +501,6 @@ func (z *zypper) ListPinned(ctx context.Context) ([]Package, error) {
 			Name:    m[1],
 			Version: version,
 			Status:  "installed",
-			Pinned:  true,
 		})
 	}
 	return packages, nil
@@ -564,31 +519,12 @@ func (z *zypper) IsPinned(ctx context.Context, name string) (bool, error) {
 		return false, nil
 	}
 	re := regexp.MustCompile(`^\s*\d+\s*\|\s*` + regexp.QuoteMeta(name) + `\s*\|`)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if re.MatchString(scanner.Text()) {
+	for line := range strings.SplitSeq(out, "\n") {
+		if re.MatchString(line) {
 			return true, nil
 		}
 	}
 	return false, nil
-}
-
-func (z *zypper) getPinnedSet(ctx context.Context) (map[string]bool, error) {
-	out, ok, err := probe(ctx, z.r, "zypper", "--non-interactive", "locks")
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, nil
-	}
-	pinned := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if m := zypperLockRe.FindStringSubmatch(scanner.Text()); len(m) >= 2 {
-			pinned[m[1]] = true
-		}
-	}
-	return pinned, nil
 }
 
 // parseZypperSize renders zypper's human size into bytes. ok=false means the

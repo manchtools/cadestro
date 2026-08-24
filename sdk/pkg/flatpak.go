@@ -1,31 +1,44 @@
 package pkg
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// flatpak drives the cross-distro application bundle manager over an injected
-// Runner. system selects the --system installation (escalated) over --user
-// (unprivileged); see WithUserScope.
-type flatpak struct {
+// FlatpakManager drives Flatpak over an injected runner.
+type FlatpakManager struct {
 	r      sysexec.Runner
 	system bool
 }
 
-var (
-	_ Manager        = (*flatpak)(nil)
-	_ FlatpakManager = (*flatpak)(nil)
-)
+// NewFlatpak creates a system-scope manager.
+func NewFlatpak(runner sysexec.Runner) (*FlatpakManager, error) {
+	if runner == nil {
+		return nil, fmt.Errorf("flatpak runner: %w", sysexec.ErrRunnerRequired)
+	}
+	return &FlatpakManager{r: runner, system: true}, nil
+}
 
-func (f *flatpak) Backend() Backend { return Flatpak }
+// NewUserFlatpak creates a per-user manager.
+func NewUserFlatpak(runner sysexec.Runner) (*FlatpakManager, error) {
+	if runner == nil {
+		return nil, fmt.Errorf("flatpak runner: %w", sysexec.ErrRunnerRequired)
+	}
+	return &FlatpakManager{r: runner}, nil
+}
+
+// FlatpakAvailable reports whether the Flatpak binary is installed.
+func FlatpakAvailable() bool {
+	_, err := lookPath("flatpak")
+	return err == nil
+}
 
 // scope returns the installation-scope flag for the configured mode.
-func (f *flatpak) scope() string {
+func (f *FlatpakManager) scope() string {
 	if f.system {
 		return "--system"
 	}
@@ -35,7 +48,7 @@ func (f *flatpak) scope() string {
 // write runs a privileged flatpak command. It escalates only in system scope;
 // --user operations run unprivileged. The command Result is returned on both
 // the success and non-zero-exit paths.
-func (f *flatpak) write(ctx context.Context, args ...string) (sysexec.Result, error) {
+func (f *FlatpakManager) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, f.r, f.system, nil, "flatpak", args...)
 	if err != nil {
 		return sysexec.Result{}, err
@@ -44,7 +57,7 @@ func (f *flatpak) write(ctx context.Context, args ...string) (sysexec.Result, er
 }
 
 // Version returns the flatpak version string ("Flatpak 1.14.4").
-func (f *flatpak) Version(ctx context.Context) (string, error) {
+func (f *FlatpakManager) Version(ctx context.Context) (string, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "--version")
 	if err != nil {
 		return "", err
@@ -56,32 +69,20 @@ func (f *flatpak) Version(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-// Install installs application bundles. Flatpak does not support traditional
-// version pinning, so opts.Version is validated but ignored (use commits/refs
-// for exact version control). All named bundles are installed at latest.
-func (f *flatpak) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
-	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return sysexec.Result{}, err
-	}
-	if opts.Remote != "" {
-		if err := ValidateRemoteName(opts.Remote); err != nil {
-			return sysexec.Result{}, err
-		}
-	}
-	if len(packages) == 0 {
+// Install installs refs from an explicit remote.
+func (f *FlatpakManager) Install(ctx context.Context, remote string, refs ...string) (sysexec.Result, error) {
+	if len(refs) == 0 {
 		return sysexec.Result{}, nil
 	}
-	// An explicit remote is the operator's disambiguation of which remote provides
-	// the app; it precedes the app refs (`flatpak install <scope> <remote> <refs>`).
-	// ValidateRemoteName has rejected a flag-shaped value, so it is a safe operand.
-	args := []string{"install", "-y", "--noninteractive", f.scope()}
-	if opts.Remote != "" {
-		args = append(args, opts.Remote)
+	if err := ValidateRemoteName(remote); err != nil {
+		return sysexec.Result{}, err
 	}
-	args = append(args, packages...)
+	if err := ValidatePackageNames(refs); err != nil {
+		return sysexec.Result{}, err
+	}
+	args := []string{"install", "-y", "--noninteractive", f.scope()}
+	args = append(args, remote)
+	args = append(args, refs...)
 	return f.write(ctx, args...)
 }
 
@@ -91,7 +92,7 @@ func (f *flatpak) Install(ctx context.Context, opts InstallOptions, packages ...
 // per-file GPG check). System scope escalates, --user does not.
 // ValidateLocalPackagePath requires an absolute path, so the operand can never
 // be flag-shaped.
-func (f *flatpak) InstallLocal(ctx context.Context, path string, _ InstallLocalOptions) (sysexec.Result, error) {
+func (f *FlatpakManager) InstallLocal(ctx context.Context, path string, _ InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
 		return sysexec.Result{}, err
 	}
@@ -100,12 +101,12 @@ func (f *flatpak) InstallLocal(ctx context.Context, path string, _ InstallLocalO
 }
 
 // Remove uninstalls bundles; opts.Purge also deletes per-app data (--delete-data).
-func (f *flatpak) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
-	if err := ValidatePackageNames(packages); err != nil {
-		return sysexec.Result{}, err
-	}
+func (f *FlatpakManager) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
+	}
+	if err := ValidatePackageNames(packages); err != nil {
+		return sysexec.Result{}, err
 	}
 	args := []string{"uninstall", "-y", "--noninteractive"}
 	if opts.Purge {
@@ -117,48 +118,38 @@ func (f *flatpak) Remove(ctx context.Context, opts RemoveOptions, packages ...st
 }
 
 // Update refreshes appstream metadata for the configured remotes.
-func (f *flatpak) Update(ctx context.Context) (sysexec.Result, error) {
+func (f *FlatpakManager) Update(ctx context.Context) (sysexec.Result, error) {
 	return f.write(ctx, "update", "--appstream", "-y", "--noninteractive", f.scope())
 }
 
 // Upgrade updates the named bundles, or all installed bundles with no names.
-func (f *flatpak) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
+func (f *FlatpakManager) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
+	if len(packages) == 0 {
+		return sysexec.Result{}, nil
+	}
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
-	}
-	if len(packages) == 0 {
-		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll updates everything (flatpak update with no refs)
 	}
 	args := append([]string{"update", "-y", "--noninteractive", f.scope()}, packages...)
 	return f.write(ctx, args...)
 }
 
 // UpgradeAll updates every installed app/runtime (flatpak update with no refs).
-func (f *flatpak) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
-	if opts.SecurityOnly {
-		// flatpak has no security/non-security update distinction — it updates
-		// apps/runtimes to latest. Fail closed rather than do a full update.
-		return sysexec.Result{}, ErrSecurityOnlyUnsupported
-	}
+func (f *FlatpakManager) UpgradeAll(ctx context.Context) (sysexec.Result, error) {
 	return f.write(ctx, "update", "-y", "--noninteractive", f.scope())
 }
 
+func (f *FlatpakManager) HasSecurityUpdates(context.Context) (bool, error) {
+	return false, fmt.Errorf("flatpak security updates: %w", ErrUnsupported)
+}
+
 // Autoremove removes unused runtimes/extensions (flatpak uninstall --unused).
-func (f *flatpak) Autoremove(ctx context.Context) (sysexec.Result, error) {
+func (f *FlatpakManager) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	return f.write(ctx, "uninstall", "--unused", "-y", "--noninteractive", f.scope())
 }
 
-// Repair runs `flatpak repair`, restoring a consistent installation state.
-func (f *flatpak) Repair(ctx context.Context) (sysexec.Result, error) {
-	res, err := f.write(ctx, "repair", f.scope())
-	if err != nil {
-		return res, repairErr(ctx, "flatpak repair failed", err)
-	}
-	return res, nil
-}
-
 // Search searches configured remotes (exit 1 = no matches).
-func (f *flatpak) Search(ctx context.Context, query string) ([]SearchResult, error) {
+func (f *FlatpakManager) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	if err := ValidateSearchQuery(query); err != nil {
 		return nil, err
 	}
@@ -174,41 +165,38 @@ func (f *flatpak) Search(ctx context.Context, query string) ([]SearchResult, err
 	}
 
 	var results []SearchResult
-	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
-	// The first line is a header iff it has no tab; otherwise it is data.
-	if scanner.Scan() {
-		first := scanner.Text()
+	lines := strings.SplitSeq(res.Stdout, "\n")
+	first := ""
+	firstLine := true
+	for line := range lines {
+		if !firstLine {
+			if r := parseFlatpakSearchLine(line); r != nil {
+				results = append(results, *r)
+			}
+			continue
+		}
+		firstLine = false
+		first = line
 		if strings.Contains(first, "\t") {
 			if r := parseFlatpakSearchLine(first); r != nil {
 				results = append(results, *r)
 			}
 		}
 	}
-	for scanner.Scan() {
-		if r := parseFlatpakSearchLine(scanner.Text()); r != nil {
-			results = append(results, *r)
-		}
-	}
 	return results, nil
 }
 
 // List lists installed application bundles.
-func (f *flatpak) List(ctx context.Context) ([]Package, error) {
+func (f *FlatpakManager) List(ctx context.Context) ([]Package, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "list",
 		"--columns=application,version,arch,size,description,origin", f.scope())
 	if err != nil {
 		return nil, err
 	}
 
-	pinned, err := f.getPinnedSet(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, "\t")
 		if len(fields) < 4 {
 			continue
 		}
@@ -236,14 +224,13 @@ func (f *flatpak) List(ctx context.Context) ([]Package, error) {
 			Size:         size,
 			Description:  desc,
 			Repository:   repo,
-			Pinned:       pinned[fields[0]],
 		})
 	}
 	return packages, nil
 }
 
 // ListUpgradable lists bundles with an available update.
-func (f *flatpak) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
+func (f *FlatpakManager) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "remote-ls", "--updates",
 		"--columns=application,version,origin", f.scope())
 	if err != nil {
@@ -251,9 +238,8 @@ func (f *flatpak) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 	}
 
 	var updates []PackageUpdate
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, "\t")
 		if len(fields) < 2 {
 			continue
 		}
@@ -277,7 +263,7 @@ func (f *flatpak) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 
 // Show returns detailed information about a bundle, falling back to the flathub
 // remote when the bundle is not installed.
-func (f *flatpak) Show(ctx context.Context, name string) (*Package, error) {
+func (f *FlatpakManager) Show(ctx context.Context, name string) (*Package, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
@@ -292,9 +278,7 @@ func (f *flatpak) Show(ctx context.Context, name string) (*Package, error) {
 	}
 
 	pkg := &Package{Name: name, Status: "installed"}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version:"):
 			pkg.Version = parseFlatpakValue(line)
@@ -315,15 +299,10 @@ func (f *flatpak) Show(ctx context.Context, name string) (*Package, error) {
 		}
 	}
 
-	pinned, err := f.IsPinned(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-	pkg.Pinned = pinned
 	return pkg, nil
 }
 
-func (f *flatpak) showFromRemote(ctx context.Context, name string) (*Package, error) {
+func (f *FlatpakManager) showFromRemote(ctx context.Context, name string) (*Package, error) {
 	// A runner/context failure propagates; a non-zero exit means the bundle is
 	// not offered by the remote.
 	out, ok, err := probe(ctx, f.r, "flatpak", "remote-info", "flathub", name)
@@ -335,9 +314,7 @@ func (f *flatpak) showFromRemote(ctx context.Context, name string) (*Package, er
 	}
 
 	pkg := &Package{Name: name, Status: "available", Repository: "flathub"}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		line := scanner.Text()
+	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version:"):
 			pkg.Version = parseFlatpakValue(line)
@@ -356,12 +333,15 @@ func (f *flatpak) showFromRemote(ctx context.Context, name string) (*Package, er
 }
 
 // ListVersions reports the single remote (flathub) version for a bundle.
-func (f *flatpak) ListVersions(ctx context.Context, name string) (*VersionInfo, error) {
+func (f *FlatpakManager) ListVersions(ctx context.Context, name string) (*VersionInfo, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
 	info := &VersionInfo{Name: name}
 	installed, err := f.InstalledVersion(ctx, name)
+	if errors.Is(err, ErrNotFound) {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -374,9 +354,8 @@ func (f *flatpak) ListVersions(ctx context.Context, name string) (*VersionInfo, 
 	if !ok {
 		return info, nil // not available on flathub
 	}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if line := scanner.Text(); strings.HasPrefix(line, "Version:") {
+	for line := range strings.SplitSeq(out, "\n") {
+		if strings.HasPrefix(line, "Version:") {
 			info.Versions = append(info.Versions, AvailableVersion{
 				Version:    parseFlatpakValue(line),
 				Repository: "flathub",
@@ -391,12 +370,12 @@ func (f *flatpak) ListVersions(ctx context.Context, name string) (*VersionInfo, 
 // non-installing name-introspection command (its ref must be trusted from the
 // bundle metadata, which `flatpak install` itself reads), so rather than guess a
 // name from an attacker-influenced bundle this fails closed with a clear error.
-func (f *flatpak) LocalPackageInfo(_ context.Context, _ string) (*LocalPackage, error) {
-	return nil, fmt.Errorf("pkg: LocalPackageInfo is not supported for flatpak (a bundle has no introspectable local package name)")
+func (f *FlatpakManager) LocalPackageInfo(_ context.Context, _ string) (*LocalPackage, error) {
+	return nil, fmt.Errorf("flatpak local package info: %w", ErrUnsupported)
 }
 
 // IsInstalled reports whether a bundle is installed (flatpak info exits 0).
-func (f *flatpak) IsInstalled(ctx context.Context, name string) (bool, error) {
+func (f *FlatpakManager) IsInstalled(ctx context.Context, name string) (bool, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return false, err
 	}
@@ -407,8 +386,8 @@ func (f *flatpak) IsInstalled(ctx context.Context, name string) (bool, error) {
 	return res.ExitCode == 0, nil
 }
 
-// InstalledVersion returns the installed version of a bundle, or "" if absent.
-func (f *flatpak) InstalledVersion(ctx context.Context, name string) (string, error) {
+// InstalledVersion returns the installed version of a bundle, or ErrNotFound.
+func (f *FlatpakManager) InstalledVersion(ctx context.Context, name string) (string, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return "", err
 	}
@@ -417,13 +396,13 @@ func (f *flatpak) InstalledVersion(ctx context.Context, name string) (string, er
 		return "", err
 	}
 	if res.ExitCode != 0 {
-		return "", nil
+		return "", fmt.Errorf("flatpak package %s: %w", name, ErrNotFound)
 	}
 	return strings.TrimSpace(res.Stdout), nil
 }
 
 // InstalledCount returns the number of installed bundles.
-func (f *flatpak) InstalledCount(ctx context.Context) (int, error) {
+func (f *FlatpakManager) InstalledCount(ctx context.Context) (int, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "list", "--columns=application", f.scope())
 	if err != nil {
 		return 0, err
@@ -431,10 +410,8 @@ func (f *flatpak) InstalledCount(ctx context.Context) (int, error) {
 	return countNonEmptyLines(out), nil
 }
 
-// HasUpdates reports whether any bundle has an available update. Flatpak has no
-// security-only feed, so securityOnly is ignored.
-func (f *flatpak) HasUpdates(ctx context.Context, securityOnly bool) (bool, error) {
-	_ = securityOnly
+// HasUpdates reports whether any bundle has an available update.
+func (f *FlatpakManager) HasUpdates(ctx context.Context) (bool, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "remote-ls", "--updates", "--columns=application", f.scope())
 	if err != nil {
 		return false, err
@@ -445,7 +422,10 @@ func (f *flatpak) HasUpdates(ctx context.Context, securityOnly bool) (bool, erro
 // Pin masks bundles so they are held back from updates. Best-effort across the
 // set: every bundle is attempted and the last error (if any) is returned, along
 // with the last command's Result.
-func (f *flatpak) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
+func (f *FlatpakManager) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
+	if len(packages) == 0 {
+		return sysexec.Result{}, nil
+	}
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
 	}
@@ -462,7 +442,10 @@ func (f *flatpak) Pin(ctx context.Context, packages ...string) (sysexec.Result, 
 }
 
 // Unpin removes the mask so bundles update again.
-func (f *flatpak) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
+func (f *FlatpakManager) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
+	if len(packages) == 0 {
+		return sysexec.Result{}, nil
+	}
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
 	}
@@ -479,16 +462,15 @@ func (f *flatpak) Unpin(ctx context.Context, packages ...string) (sysexec.Result
 }
 
 // ListPinned lists masked bundles.
-func (f *flatpak) ListPinned(ctx context.Context) ([]Package, error) {
+func (f *FlatpakManager) ListPinned(ctx context.Context) ([]Package, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "mask", f.scope())
 	if err != nil {
 		return nil, err
 	}
 
 	var packages []Package
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		name := strings.TrimSpace(scanner.Text())
+	for line := range strings.SplitSeq(out, "\n") {
+		name := strings.TrimSpace(line)
 		if name == "" {
 			continue
 		}
@@ -500,14 +482,13 @@ func (f *flatpak) ListPinned(ctx context.Context) ([]Package, error) {
 			Name:    name,
 			Version: version,
 			Status:  "installed",
-			Pinned:  true,
 		})
 	}
 	return packages, nil
 }
 
 // IsPinned reports whether a bundle is masked.
-func (f *flatpak) IsPinned(ctx context.Context, name string) (bool, error) {
+func (f *FlatpakManager) IsPinned(ctx context.Context, name string) (bool, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return false, err
 	}
@@ -518,37 +499,18 @@ func (f *flatpak) IsPinned(ctx context.Context, name string) (bool, error) {
 	if !ok {
 		return false, nil
 	}
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if strings.TrimSpace(scanner.Text()) == name {
+	for line := range strings.SplitSeq(out, "\n") {
+		if strings.TrimSpace(line) == name {
 			return true, nil
 		}
 	}
 	return false, nil
 }
 
-func (f *flatpak) getPinnedSet(ctx context.Context) (map[string]bool, error) {
-	out, ok, err := probe(ctx, f.r, "flatpak", "mask", f.scope())
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, nil
-	}
-	pinned := make(map[string]bool)
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if name := strings.TrimSpace(scanner.Text()); name != "" {
-			pinned[name] = true
-		}
-	}
-	return pinned, nil
-}
-
 // AddRemote registers a flatpak remote. name must be a valid remote alias and
 // url an https repository URL (validated to keep flag/metacharacter and
 // plaintext-transport inputs off the argv and out of the trust path).
-func (f *flatpak) AddRemote(ctx context.Context, name, url string) error {
+func (f *FlatpakManager) AddRemote(ctx context.Context, name, url string) error {
 	if err := ValidateRemoteName(name); err != nil {
 		return err
 	}
@@ -562,7 +524,7 @@ func (f *flatpak) AddRemote(ctx context.Context, name, url string) error {
 }
 
 // RemoveRemote deletes a flatpak remote.
-func (f *flatpak) RemoveRemote(ctx context.Context, name string) error {
+func (f *FlatpakManager) RemoveRemote(ctx context.Context, name string) error {
 	if err := ValidateRemoteName(name); err != nil {
 		return err
 	}
@@ -571,15 +533,14 @@ func (f *flatpak) RemoveRemote(ctx context.Context, name string) error {
 }
 
 // ListRemotes returns the configured flatpak remote names.
-func (f *flatpak) ListRemotes(ctx context.Context) ([]string, error) {
+func (f *FlatpakManager) ListRemotes(ctx context.Context) ([]string, error) {
 	out, err := readOut(ctx, f.r, "flatpak", "remotes", "--columns=name", f.scope())
 	if err != nil {
 		return nil, err
 	}
 	var remotes []string
-	scanner := bufio.NewScanner(strings.NewReader(out))
-	for scanner.Scan() {
-		if name := strings.TrimSpace(scanner.Text()); name != "" {
+	for line := range strings.SplitSeq(out, "\n") {
+		if name := strings.TrimSpace(line); name != "" {
 			remotes = append(remotes, name)
 		}
 	}

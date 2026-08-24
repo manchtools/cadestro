@@ -27,7 +27,7 @@ func TestInstallLocal_GoldenArgv(t *testing.T) {
 			t.Fatal(err)
 		}
 		c := f.Calls()[0]
-		want := "apt install -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold /opt/app.deb"
+		want := "apt-get install -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold /opt/app.deb"
 		if argv(c) != want || !c.Escalate {
 			t.Errorf("argv = %q (escalate=%v)\n want %q escalated", argv(c), c.Escalate, want)
 		}
@@ -82,7 +82,7 @@ func TestInstallLocal_GoldenArgv(t *testing.T) {
 	})
 
 	t.Run("flatpak user scope is unescalated", func(t *testing.T) {
-		m, f := flatpakM(t, WithUserScope())
+		m, f := flatpakM(t, true)
 		ok(f, "")
 		if _, err := m.InstallLocal(ctx, "/opt/app.flatpak", InstallLocalOptions{}); err != nil {
 			t.Fatal(err)
@@ -121,38 +121,14 @@ func TestInstallLocal_AllowDowngrade(t *testing.T) {
 		}
 	})
 
-	t.Run("dnf retries as an explicit downgrade when the install is rejected", func(t *testing.T) {
+	t.Run("dnf4 local downgrade uses one install", func(t *testing.T) {
 		m, f := dnfM(t)
-		// dnf refuses to "install" an older local rpm (non-zero exit) — the
-		// AllowDowngrade path must retry it as `dnf downgrade`.
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "package app-1.0 is already installed"}, nil)
 		ok(f, "")
 		if _, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{AllowDowngrade: true}); err != nil {
 			t.Fatal(err)
 		}
-		calls := f.Calls()
-		if len(calls) != 2 {
-			t.Fatalf("got %d calls, want 2 (install then downgrade)", len(calls))
-		}
-		if argv(calls[0]) != "dnf install -y --allowerasing /opt/app.rpm" {
-			t.Errorf("first argv = %q", argv(calls[0]))
-		}
-		if argv(calls[1]) != "dnf downgrade -y /opt/app.rpm" || !calls[1].Escalate {
-			t.Errorf("retry argv = %q (escalate=%v)", argv(calls[1]), calls[1].Escalate)
-		}
-	})
-
-	t.Run("dnf does NOT retry on a runner/exec failure", func(t *testing.T) {
-		m, f := dnfM(t)
-		// An exec/escalation failure (err != nil, not a non-zero exit) must not
-		// trigger a second escalated command — mirrors Install's guard.
-		f.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
-		_, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{AllowDowngrade: true})
-		if !errors.Is(err, sysexec.ErrEscalationUnavailable) {
-			t.Fatalf("err = %v, want ErrEscalationUnavailable", err)
-		}
-		if n := len(f.Calls()); n != 1 {
-			t.Errorf("got %d calls, want 1 (no downgrade retry after an exec failure)", n)
+		if got := argv(f.Calls()[0]); got != "dnf install -y /opt/app.rpm" || len(f.Calls()) != 1 {
+			t.Fatalf("calls=%d argv=%q", len(f.Calls()), got)
 		}
 	})
 
@@ -214,32 +190,13 @@ func TestInstallLocal_AllowUnsigned(t *testing.T) {
 		}
 	})
 
-	t.Run("dnf carries --nogpgcheck into the downgrade retry too", func(t *testing.T) {
-		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "package app-1.0 is already installed"}, nil)
-		ok(f, "")
-		if _, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{AllowUnsigned: true, AllowDowngrade: true}); err != nil {
-			t.Fatal(err)
-		}
-		calls := f.Calls()
-		if len(calls) != 2 {
-			t.Fatalf("got %d calls, want 2", len(calls))
-		}
-		if argv(calls[0]) != "dnf install -y --nogpgcheck --allowerasing /opt/app.rpm" {
-			t.Errorf("install argv = %q", argv(calls[0]))
-		}
-		if argv(calls[1]) != "dnf downgrade -y --nogpgcheck /opt/app.rpm" {
-			t.Errorf("downgrade retry argv = %q, want --nogpgcheck carried through", argv(calls[1]))
-		}
-	})
-
 	t.Run("apt is a no-op (a local .deb has no per-file signature)", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "")
 		if _, err := m.InstallLocal(ctx, "/opt/app.deb", InstallLocalOptions{AllowUnsigned: true}); err != nil {
 			t.Fatal(err)
 		}
-		want := "apt install -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold /opt/app.deb"
+		want := "apt-get install -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold /opt/app.deb"
 		if a := argv(f.Calls()[0]); a != want {
 			t.Errorf("argv = %q, want the UNCHANGED apt form (no GPG flag)", a)
 		}
@@ -305,7 +262,7 @@ func TestInstallLocal_RejectsUnsafePathBeforeRunner(t *testing.T) {
 		{"newline", "/opt/a\nb.deb"},
 		{"nul", "/opt/a\x00b.deb"},
 	}
-	backends := []Backend{Apt, Dnf, Pacman, Zypper, Flatpak}
+	backends := []Backend{Apt, Dnf, Dnf5, Pacman, Zypper}
 
 	for _, b := range backends {
 		for _, tc := range bad {

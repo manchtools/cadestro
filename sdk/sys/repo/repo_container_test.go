@@ -45,7 +45,7 @@ fGAUk8ja+rIzBA==
 
 func realRepoMgr(t *testing.T, b pkg.Backend) Manager {
 	t.Helper()
-	if !slices.Contains(pkg.Detect(context.Background()), b) {
+	if !slices.Contains(pkg.Detect(), b) {
 		t.Skipf("%s not installed here; repo backend not exercisable", b)
 	}
 	r, err := sysexec.NewRunner(sysexec.Direct)
