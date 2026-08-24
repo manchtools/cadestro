@@ -20,7 +20,6 @@
 	import PageShell from '$lib/components/page-shell.svelte';
 	import AssignmentsCard from '$lib/components/assignments-card.svelte';
 	import ContainerScheduleCard from '$lib/components/container-schedule-card.svelte';
-	import DispatchToDeviceDialog from '$lib/components/dispatch-to-device-dialog.svelte';
 	import ActionSetBuilder from '$lib/components/actions/pipeline/action-set-builder.svelte';
 	import { Chip } from '$lib/components/fleet';
 	import type { ActionSchedule } from '$contract/cadestro/v1/actions_pb';
@@ -34,7 +33,6 @@
 	let library = $state<ManagedAction[]>([]);
 	let loading = $state(true);
 	let deleteDialogOpen = $state(false);
-	let dispatchDialogOpen = $state(false);
 	// Bumped after every reload so the builder remounts on a fresh baseline
 	// instead of trying to reconcile a committed draft against new server state.
 	let revision = $state(0);
@@ -127,9 +125,6 @@
 			{#if actionSet}
 				<Chip tone="idle" label={m.action_sets_count({ count: members.length })} />
 			{/if}
-			<Button variant="outline" onclick={() => (dispatchDialogOpen = true)} disabled={!actionSet}>
-				{m.dispatch_to_device_run_button()}
-			</Button>
 			<Button variant="outline" onclick={loadData} disabled={loading}>
 				<span class="mr-2 h-4 w-4" class:animate-spin={loading}>
 					<RefreshCw class="h-4 w-4" />
@@ -180,10 +175,4 @@
 	title={m.action_sets_delete_dialog_title()}
 	description={m.action_sets_delete_dialog_description({ name: actionSet?.name ?? '' })}
 	onconfirm={deleteSet}
-/>
-
-<DispatchToDeviceDialog
-	bind:open={dispatchDialogOpen}
-	title={m.dispatch_to_device_action_set_title()}
-	actionSetId={setId}
 />

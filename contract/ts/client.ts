@@ -5,7 +5,7 @@
 import { createClient, Code, ConnectError } from '@connectrpc/connect';
 import { createConnectTransport } from '@connectrpc/connect-web';
 import { create } from '@bufbuild/protobuf';
-import { timestampFromDate, type Timestamp } from '@bufbuild/protobuf/wkt';
+import { type Timestamp } from '@bufbuild/protobuf/wkt';
 
 import {
 	ControlService,
@@ -95,16 +95,8 @@ import {
 	ListAvailableActionsRequestSchema,
 	SetUserSelectionRequestSchema,
 	// Dispatch & Execution
-	DispatchActionRequestSchema,
-	DispatchToMultipleRequestSchema,
-	DispatchActionSetRequestSchema,
-	DispatchDefinitionRequestSchema,
-	DispatchToGroupRequestSchema,
 	RebootDeviceRequestSchema,
 	SyncDeviceRequestSchema,
-	CancelExecutionRequestSchema,
-	GetExecutionRequestSchema,
-	ListExecutionsRequestSchema,
 	// Audit Log
 	ListAuditEventsRequestSchema,
 	ExportAuditEventsRequestSchema,
@@ -201,7 +193,6 @@ import {
 	type Definition,
 	type DeviceGroup,
 	type Assignment,
-	type ActionExecution,
 	type AuditEvent,
 	type CreateActionRequest,
 	type CreateActionSetRequest,
@@ -226,9 +217,8 @@ import {
 	type StartTerminalResponse,
 	type TerminalSessionInfo
 } from '../gen/ts/cadestro/v1/control_pb';
-import type { ActionType, Action, ActionSchedule } from '../gen/ts/cadestro/v1/actions_pb';
+import type { ActionType, ActionSchedule } from '../gen/ts/cadestro/v1/actions_pb';
 import {
-	type ExecutionStatus,
 	ErrorCode,
 	ErrorDetailSchema,
 	type MaintenanceWindow,
@@ -1029,82 +1019,6 @@ export class ApiClient {
 		);
 	}
 
-	// ============================================================================
-	// Action Dispatch & Execution
-	// ============================================================================
-
-	async dispatchAction(
-		deviceId: string,
-		actionId: string,
-		options?: { runAt?: Date; respectMaintenanceWindow?: boolean }
-	) {
-		const client = this.getClient();
-		const response = await client.dispatchAction(
-			create(DispatchActionRequestSchema, {
-				deviceId,
-				actionSource: { case: 'actionId', value: actionId },
-				runAt: options?.runAt ? timestampFromDate(options.runAt) : undefined,
-				respectMaintenanceWindow: options?.respectMaintenanceWindow ?? false
-			})
-		);
-		return response.execution;
-	}
-
-	async dispatchInlineAction(
-		deviceId: string,
-		action: Action,
-		options?: { runAt?: Date; respectMaintenanceWindow?: boolean }
-	) {
-		const client = this.getClient();
-		const response = await client.dispatchAction(
-			create(DispatchActionRequestSchema, {
-				deviceId,
-				actionSource: { case: 'inlineAction', value: action },
-				runAt: options?.runAt ? timestampFromDate(options.runAt) : undefined,
-				respectMaintenanceWindow: options?.respectMaintenanceWindow ?? false
-			})
-		);
-		return response.execution;
-	}
-
-	async dispatchToMultiple(deviceIds: string[], actionId: string) {
-		const client = this.getClient();
-		const response = await client.dispatchToMultiple(
-			create(DispatchToMultipleRequestSchema, {
-				deviceIds,
-				actionSource: { case: 'actionId', value: actionId }
-			})
-		);
-		return response.executions;
-	}
-
-	async dispatchActionSet(deviceId: string, actionSetId: string) {
-		const client = this.getClient();
-		const response = await client.dispatchActionSet(
-			create(DispatchActionSetRequestSchema, { deviceId, actionSetId })
-		);
-		return response.executions;
-	}
-
-	async dispatchDefinition(deviceId: string, definitionId: string) {
-		const client = this.getClient();
-		const response = await client.dispatchDefinition(
-			create(DispatchDefinitionRequestSchema, { deviceId, definitionId })
-		);
-		return response.executions;
-	}
-
-	async dispatchToGroup(
-		groupId: string,
-		actionSource: { case: 'actionId'; value: string } | { case: 'actionSetId'; value: string } | { case: 'definitionId'; value: string }
-	) {
-		const client = this.getClient();
-		const response = await client.dispatchToGroup(
-			create(DispatchToGroupRequestSchema, { groupId, actionSource })
-		);
-		return response.executions;
-	}
-
 	async rebootDevice(deviceId: string) {
 		const client = this.getClient();
 		await client.rebootDevice(create(RebootDeviceRequestSchema, { deviceId }));
@@ -1113,44 +1027,6 @@ export class ApiClient {
 	async syncDevice(deviceId: string) {
 		const client = this.getClient();
 		await client.syncDevice(create(SyncDeviceRequestSchema, { deviceId }));
-	}
-
-	// CancelExecution prunes a scheduled or pending dispatch before it
-	// fires. Idempotent and best-effort — once an execution leaves the
-	// SCHEDULED / PENDING window the cancel is a no-op and the returned
-	// execution reflects whatever terminal state it reached on its own.
-	// See archived server#57.
-	async cancelExecution(executionId: string) {
-		const client = this.getClient();
-		const response = await client.cancelExecution(
-			create(CancelExecutionRequestSchema, { executionId })
-		);
-		return response.execution;
-	}
-
-	async getExecution(id: string) {
-		const client = this.getClient();
-		const response = await client.getExecution(create(GetExecutionRequestSchema, { id }));
-		return response.execution;
-	}
-
-	async listExecutions(
-		pageSize: number = 50,
-		pageToken: string = '',
-		deviceId: string = '',
-		statusFilter?: ExecutionStatus,
-		typeFilter?: ActionType,
-		search: string = ''
-	) {
-		const client = this.getClient();
-		return client.listExecutions(
-			create(ListExecutionsRequestSchema, {
-				pageSize, pageToken, deviceId,
-				statusFilter: statusFilter ?? 0,
-				typeFilter: typeFilter ?? 0,
-				search,
-			})
-		);
 	}
 
 	async listLpsPasswords(deviceId: string) {
@@ -1871,7 +1747,7 @@ export function getRequestId(error: unknown): string | undefined {
 // Re-export types for convenience
 export type {
 	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
-	DeviceGroup, Assignment, ActionExecution, AuditEvent, InventoryTableResult,
+	DeviceGroup, Assignment, AuditEvent, InventoryTableResult,
 	Role, PermissionInfo, UserGroup, UserGroupMember, IdentityProvider, IdentityLink,
 	LpsPassword, LuksKey, CreateActionRequest, UpdateActionParamsRequest,
 	AvailableItem, DeviceAssignee, CompliancePolicy, CompliancePolicyRule, DevicePolicyEvaluation,

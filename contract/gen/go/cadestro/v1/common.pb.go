@@ -33,19 +33,8 @@ const (
 	ExecutionStatus_EXECUTION_STATUS_FAILED      ExecutionStatus = 4
 	ExecutionStatus_EXECUTION_STATUS_SKIPPED     ExecutionStatus = 5
 	ExecutionStatus_EXECUTION_STATUS_TIMEOUT     ExecutionStatus = 6
-	// Queued for delayed dispatch — the Dispatch* request carried a
-	// run_at timestamp, so the server deferred the dispatch until
-	// that future time. Transitions to PENDING / RUNNING when the
-	// deferred task fires, then onward to a terminal status the same
-	// way as any other execution.
-	ExecutionStatus_EXECUTION_STATUS_SCHEDULED ExecutionStatus = 7
-	// Operator cancelled the dispatch via
-	// ControlService.CancelExecution. CancelExecution acts only
-	// while the execution is still in SCHEDULED or PENDING — once
-	// the agent has picked it up (RUNNING) or it has reached a
-	// terminal status, the cancel is a no-op and the row keeps its
-	// observed outcome.
-	ExecutionStatus_EXECUTION_STATUS_CANCELLED ExecutionStatus = 8
+	// Operator-cancelled action result.
+	ExecutionStatus_EXECUTION_STATUS_CANCELLED ExecutionStatus = 7
 	// The action is structurally inapplicable to this device — e.g.
 	// security_only on a package manager with no security-patch
 	// scoping, a DEB action on an rpm host, a FLATPAK action with no
@@ -75,8 +64,7 @@ var (
 		4:  "EXECUTION_STATUS_FAILED",
 		5:  "EXECUTION_STATUS_SKIPPED",
 		6:  "EXECUTION_STATUS_TIMEOUT",
-		7:  "EXECUTION_STATUS_SCHEDULED",
-		8:  "EXECUTION_STATUS_CANCELLED",
+		7:  "EXECUTION_STATUS_CANCELLED",
 		9:  "EXECUTION_STATUS_NOT_APPLICABLE",
 		10: "EXECUTION_STATUS_INDETERMINATE",
 	}
@@ -88,8 +76,7 @@ var (
 		"EXECUTION_STATUS_FAILED":         4,
 		"EXECUTION_STATUS_SKIPPED":        5,
 		"EXECUTION_STATUS_TIMEOUT":        6,
-		"EXECUTION_STATUS_SCHEDULED":      7,
-		"EXECUTION_STATUS_CANCELLED":      8,
+		"EXECUTION_STATUS_CANCELLED":      7,
 		"EXECUTION_STATUS_NOT_APPLICABLE": 9,
 		"EXECUTION_STATUS_INDETERMINATE":  10,
 	}
@@ -527,24 +514,22 @@ const (
 	SearchScope_SEARCH_SCOPE_USERS               SearchScope = 6
 	SearchScope_SEARCH_SCOPE_DEVICE_GROUPS       SearchScope = 7
 	SearchScope_SEARCH_SCOPE_USER_GROUPS         SearchScope = 8
-	SearchScope_SEARCH_SCOPE_EXECUTIONS          SearchScope = 9
-	SearchScope_SEARCH_SCOPE_AUDIT_EVENTS        SearchScope = 10
+	SearchScope_SEARCH_SCOPE_AUDIT_EVENTS        SearchScope = 9
 )
 
 // Enum value maps for SearchScope.
 var (
 	SearchScope_name = map[int32]string{
-		0:  "SEARCH_SCOPE_UNSPECIFIED",
-		1:  "SEARCH_SCOPE_ACTIONS",
-		2:  "SEARCH_SCOPE_ACTION_SETS",
-		3:  "SEARCH_SCOPE_DEFINITIONS",
-		4:  "SEARCH_SCOPE_COMPLIANCE_POLICIES",
-		5:  "SEARCH_SCOPE_DEVICES",
-		6:  "SEARCH_SCOPE_USERS",
-		7:  "SEARCH_SCOPE_DEVICE_GROUPS",
-		8:  "SEARCH_SCOPE_USER_GROUPS",
-		9:  "SEARCH_SCOPE_EXECUTIONS",
-		10: "SEARCH_SCOPE_AUDIT_EVENTS",
+		0: "SEARCH_SCOPE_UNSPECIFIED",
+		1: "SEARCH_SCOPE_ACTIONS",
+		2: "SEARCH_SCOPE_ACTION_SETS",
+		3: "SEARCH_SCOPE_DEFINITIONS",
+		4: "SEARCH_SCOPE_COMPLIANCE_POLICIES",
+		5: "SEARCH_SCOPE_DEVICES",
+		6: "SEARCH_SCOPE_USERS",
+		7: "SEARCH_SCOPE_DEVICE_GROUPS",
+		8: "SEARCH_SCOPE_USER_GROUPS",
+		9: "SEARCH_SCOPE_AUDIT_EVENTS",
 	}
 	SearchScope_value = map[string]int32{
 		"SEARCH_SCOPE_UNSPECIFIED":         0,
@@ -556,8 +541,7 @@ var (
 		"SEARCH_SCOPE_USERS":               6,
 		"SEARCH_SCOPE_DEVICE_GROUPS":       7,
 		"SEARCH_SCOPE_USER_GROUPS":         8,
-		"SEARCH_SCOPE_EXECUTIONS":          9,
-		"SEARCH_SCOPE_AUDIT_EVENTS":        10,
+		"SEARCH_SCOPE_AUDIT_EVENTS":        9,
 	}
 )
 
@@ -1580,7 +1564,7 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\rCommandOutput\x12\x1b\n" +
 	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12$\n" +
 	"\x06stdout\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stdout\x12$\n" +
-	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\xef\x02\n" +
+	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\xcf\x02\n" +
 	"\x0fExecutionStatus\x12 \n" +
 	"\x1cEXECUTION_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_PENDING\x10\x01\x12\x1c\n" +
@@ -1589,8 +1573,7 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x17EXECUTION_STATUS_FAILED\x10\x04\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_SKIPPED\x10\x05\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_TIMEOUT\x10\x06\x12\x1e\n" +
-	"\x1aEXECUTION_STATUS_SCHEDULED\x10\a\x12\x1e\n" +
-	"\x1aEXECUTION_STATUS_CANCELLED\x10\b\x12#\n" +
+	"\x1aEXECUTION_STATUS_CANCELLED\x10\a\x12#\n" +
 	"\x1fEXECUTION_STATUS_NOT_APPLICABLE\x10\t\x12\"\n" +
 	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\n" +
 	"*C\n" +
@@ -1625,7 +1608,7 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\fDeviceStatus\x12\x1d\n" +
 	"\x19DEVICE_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14DEVICE_STATUS_ONLINE\x10\x01\x12\x19\n" +
-	"\x15DEVICE_STATUS_OFFLINE\x10\x02*\xd3\x02\n" +
+	"\x15DEVICE_STATUS_OFFLINE\x10\x02*\xb6\x02\n" +
 	"\vSearchScope\x12\x1c\n" +
 	"\x18SEARCH_SCOPE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14SEARCH_SCOPE_ACTIONS\x10\x01\x12\x1c\n" +
@@ -1635,10 +1618,8 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x14SEARCH_SCOPE_DEVICES\x10\x05\x12\x16\n" +
 	"\x12SEARCH_SCOPE_USERS\x10\x06\x12\x1e\n" +
 	"\x1aSEARCH_SCOPE_DEVICE_GROUPS\x10\a\x12\x1c\n" +
-	"\x18SEARCH_SCOPE_USER_GROUPS\x10\b\x12\x1b\n" +
-	"\x17SEARCH_SCOPE_EXECUTIONS\x10\t\x12\x1d\n" +
-	"\x19SEARCH_SCOPE_AUDIT_EVENTS\x10\n" +
-	"*\xe0\x04\n" +
+	"\x18SEARCH_SCOPE_USER_GROUPS\x10\b\x12\x1d\n" +
+	"\x19SEARCH_SCOPE_AUDIT_EVENTS\x10\t*\xe0\x04\n" +
 	"\tSortField\x12\x1a\n" +
 	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fSORT_FIELD_NAME\x10\x01\x12\x13\n" +

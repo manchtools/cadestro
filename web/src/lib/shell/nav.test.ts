@@ -58,8 +58,7 @@ describe('nav tables — the pill row', () => {
 			'/devices',
 			'/actions',
 			'/compliance-policies',
-			'/audit',
-			'/executions'
+			'/audit'
 		]);
 	});
 

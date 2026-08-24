@@ -8,7 +8,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
@@ -28,13 +27,12 @@ type complianceIngestFixture struct {
 	service *execution.Service
 	ctx     context.Context
 }
-
 func newComplianceIngestFixture(t *testing.T) *complianceIngestFixture {
 	t.Helper()
 	f := newDeviceHandlerFixture(t)
 	return &complianceIngestFixture{
 		deviceHandlerFixture: f,
-		service:              execution.New(execution.Config{Store: f.store, Now: func() time.Time { return f.now }}),
+		service:              execution.New(execution.Config{Store: f.store}),
 		ctx:                  f.actor("GetDeviceCompliance", "GetDeviceCompliancePolicyStatus"),
 	}
 }
@@ -84,36 +82,11 @@ func (f *complianceIngestFixture) report(
 	detection *cadestrov1.CommandOutput, at time.Time,
 ) {
 	t.Helper()
-	occurrenceID, deliveryID, manifestID := newID(), newID(), newID()
-	manifest, err := protojson.Marshal(&cadestrov1.Manifest{
-		ManifestId: manifestID,
-		Occurrences: []*cadestrov1.ManifestOccurrence{{
-			OccurrenceId: occurrenceID,
-			Action: &cadestrov1.Action{
-				Id: &cadestrov1.ActionId{Value: actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
-			},
-		}},
-	})
-	require.NoError(t, err)
-	_, err = f.raw.Exec(context.Background(), `
-		INSERT INTO deliveries (
-			delivery_id, device_id, manifest_id, manifest, state,
-			created_at, available_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $6)`,
-		deliveryID, deviceID, manifestID, string(manifest), "PENDING", f.now)
-	require.NoError(t, err)
-	_, err = f.raw.Exec(context.Background(), `
-		INSERT INTO executions (
-			id, delivery_id, device_id, action_id, action_type, desired_state, params,
-			timeout_seconds, status, created_at, created_by_type, created_by_id
-		) VALUES ($1, $2, $3, $4, $5, 0, '{}', 300, 'pending', $6, 'user', $7)`,
-		occurrenceID, deliveryID, deviceID, actionID,
-		int32(cadestrov1.ActionType_ACTION_TYPE_SHELL), f.now, f.actorID)
-	require.NoError(t, err)
+	occurrenceID, runID := newID(), newID()
 
 	result := &cadestrov1.ActionResult{
 		ActionId: &cadestrov1.ActionId{Value: actionID}, Status: status,
-		DeliveryId: deliveryID, OccurrenceId: occurrenceID,
+		RunId: runID, OccurrenceId: occurrenceID,
 		CompletedAt: timestamppb.New(at), Compliant: compliant, DetectionOutput: detection,
 	}
 	require.NoError(t, f.service.ApplyActionResult(context.Background(), deviceID, result))

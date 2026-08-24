@@ -11,17 +11,13 @@ import (
 )
 
 const (
-	errNotAuthenticated      = cadestrov1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
-	errPermissionDenied      = cadestrov1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
-	errValidationFailed      = cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
-	errDeviceNotFound        = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND
-	errDeviceUnavailable     = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_UNAVAILABLE
-	errActionNotFound        = cadestrov1.ErrorCode_ERROR_CODE_ACTION_NOT_FOUND
-	errActionSetMissing      = cadestrov1.ErrorCode_ERROR_CODE_ACTION_SET_NOT_FOUND
-	errDefinitionMissing     = cadestrov1.ErrorCode_ERROR_CODE_DEFINITION_NOT_FOUND
-	errDeviceGroupMissing    = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_GROUP_NOT_FOUND
-	errAssignedSourceMissing = cadestrov1.ErrorCode_ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND
-	errInternal              = cadestrov1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
+	errNotAuthenticated   = cadestrov1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errPermissionDenied   = cadestrov1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
+	errValidationFailed   = cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
+	errDeviceNotFound     = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND
+	errDeviceUnavailable  = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_UNAVAILABLE
+	errDeviceGroupMissing = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_GROUP_NOT_FOUND
+	errInternal           = cadestrov1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
 )
 
 func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, message string) *connect.Error {

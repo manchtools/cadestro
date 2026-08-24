@@ -50,7 +50,7 @@ const api = vi.hoisted(() => ({
 	getActionSet: vi.fn(),
 	listAssignments: vi.fn(),
 	createAssignment: vi.fn(),
-	dispatchActionSet: vi.fn(),
+	syncDevice: vi.fn(),
 	validateDynamicQuery: vi.fn(),
 	createDeviceGroup: vi.fn(),
 	evaluateDynamicGroup: vi.fn()
@@ -101,7 +101,7 @@ beforeEach(() => {
 	api.getActionSet.mockResolvedValue({ set: SETS[0], members: [] });
 	api.listAssignments.mockResolvedValue({ assignments: [], nextPageToken: '' });
 	api.createAssignment.mockResolvedValue({});
-	api.dispatchActionSet.mockResolvedValue([]);
+	api.syncDevice.mockResolvedValue(undefined);
 	api.validateDynamicQuery.mockResolvedValue({
 		valid: true,
 		error: '',
@@ -342,8 +342,7 @@ describe('assign by rule — the commit is group-create then assignment', () => 
 		expect(api.createDeviceGroup.mock.invocationCallOrder[0]).toBeLessThan(
 			api.createAssignment.mock.invocationCallOrder[0]
 		);
-		// A rule target dispatches nothing: DispatchActionSet is per device.
-		expect(api.dispatchActionSet).not.toHaveBeenCalled();
+		expect(api.syncDevice).not.toHaveBeenCalled();
 		await vi.waitFor(() => expect(nav.goto).toHaveBeenCalledWith(`/device-groups/${GROUP_ID}`), {
 			timeout: 3000
 		});
@@ -386,7 +385,7 @@ describe('assign by rule — save as group without assigning', () => {
 		await vi.waitFor(() => expect(api.createDeviceGroup).toHaveBeenCalledTimes(1), { timeout: 3000 });
 		expect(api.createDeviceGroup).toHaveBeenCalledWith(GROUP_NAME, '', true, QUERY);
 		expect(api.createAssignment, 'saving a group assigns nothing').not.toHaveBeenCalled();
-		expect(api.dispatchActionSet).not.toHaveBeenCalled();
+		expect(api.syncDevice).not.toHaveBeenCalled();
 		await expect
 			.element(browser.getByTestId('assign-rule-saved').getByRole('link'))
 			.toHaveAttribute('href', `/device-groups/${GROUP_ID}`);

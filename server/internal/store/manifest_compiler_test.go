@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/manchtools/cadestro/server/internal/testdb"
@@ -12,9 +11,7 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/manifest"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -143,57 +140,6 @@ func TestManifestCompiler_DefinitionSkipsEmptyAndDeletedMembers(t *testing.T) {
 		"a definition with only empty or deleted members has no executable runbook")
 }
 
-func dispatchableAction() *cadestrov1.Action {
-	return &cadestrov1.Action{
-		Id: &cadestrov1.ActionId{Value: newID()}, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
-		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
-		Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "printf once"}},
-	}
-}
-
-func TestManifestCompiler_OneShotActionMarksManifestStructurally(t *testing.T) {
-	compiled, err := manifest.OneShotAction(dispatchableAction())
-	require.NoError(t, err)
-	assert.True(t, compiled.GetOneShot(),
-		"an explicit dispatch is one-shot by the structural manifest flag, not by schedule shape")
-}
-
-func TestManifestCompiler_FreshCopyPreservesOneShotMarking(t *testing.T) {
-	source, err := manifest.OneShotAction(dispatchableAction())
-	require.NoError(t, err)
-	source.OneShot = true
-
-	fresh, err := manifest.FreshCopy(source)
-	require.NoError(t, err)
-	assert.True(t, fresh.GetOneShot(), "a per-device copy stays one-shot")
-	assert.NotEqual(t, source.ManifestId, fresh.ManifestId)
-}
-
-func TestManifestCompiler_AssignedCompilationIsNotOneShot(t *testing.T) {
-	f := newManifestFixture(t)
-	unscheduled := newID()
-	_, err := f.raw.Exec(context.Background(), `
-		INSERT INTO actions
-			(id, name, action_type, desired_state, params, timeout_seconds, schedule, created_at)
-		VALUES ($1, 'unscheduled', $2, 1, '{}', 30, '{}', CURRENT_TIMESTAMP)
-	`, unscheduled, int32(cadestrov1.ActionType_ACTION_TYPE_UPDATE))
-	require.NoError(t, err)
-
-	single, err := f.compiler.Action(context.Background(), unscheduled)
-	require.NoError(t, err)
-	require.NotNil(t, single.Schedule)
-	assert.False(t, single.GetOneShot(),
-		"an empty compiled schedule is not what makes assigned work one-shot")
-
-	set, err := f.compiler.ActionSet(context.Background(), f.set1)
-	require.NoError(t, err)
-	assert.False(t, set.GetOneShot())
-
-	definition, err := f.compiler.Definition(context.Background(), f.definition)
-	require.NoError(t, err)
-	assert.False(t, definition.GetOneShot())
-}
-
 func TestManifestCompiler_RejectsMalformedStoredParams(t *testing.T) {
 	f := newManifestFixture(t)
 	_, err := f.raw.Exec(context.Background(), `
@@ -207,7 +153,7 @@ func TestManifestCompiler_RejectsMalformedStoredParams(t *testing.T) {
 func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *testing.T) {
 	st, raw := setupSQLite(t)
 	ctx := context.Background()
-	deviceID := seedDevice(t, raw)
+	seedDevice(t, raw)
 	atRest, err := crypto.NewEncryptor("0303030303030303030303030303030303030303030303030303030303030303")
 	require.NoError(t, err)
 	actionID := newID()
@@ -231,30 +177,6 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 	require.NoError(t, err)
 	catalogCiphertext := compiled.Occurrences[0].Action.GetEncryption().PresharedKey
 	require.NotEmpty(t, catalogCiphertext)
-
-	service := dispatch.New(dispatch.Config{Store: st})
-	op := mutationOp()
-	op.RequestDescriptor = "/cadestro.v1.ControlService/DispatchAction"
-	result, err := service.Submit(ctx, dispatch.SubmitParams{
-		Operation: op, DeviceID: deviceID,
-		Manifests: []dispatch.ManifestInput{{Manifest: compiled, PersistActionIDs: true}},
-	})
-	require.NoError(t, err)
-
-	delivery, err := st.GetDelivery(ctx, result.DeliveryIDs[0])
-	require.NoError(t, err)
-	var executionParams string
-	require.NoError(t, raw.QueryRow(ctx, `SELECT params FROM executions WHERE id = $1`,
-		result.Executions[0].ID).Scan(&executionParams))
-	for name, value := range map[string]string{
-		"delivery manifest": string(delivery.Manifest), "execution params": executionParams,
-	} {
-		assert.False(t, strings.Contains(value, plaintext), name)
-		assert.False(t, strings.Contains(value, ciphertext), name)
-	}
-	var persisted cadestrov1.EncryptionParams
-	require.NoError(t, protojson.Unmarshal([]byte(executionParams), &persisted))
-	assert.Equal(t, catalogCiphertext, persisted.GetPresharedKey())
 
 	outbound := proto.Clone(compiled).(*cadestrov1.Manifest)
 	require.NoError(t, manifest.MaterializeSecrets(outbound, atRest))

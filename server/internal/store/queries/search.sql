@@ -133,26 +133,6 @@ SELECT 'user_groups', g.id, g.name, g.description, g.id, lower(g.name),
 FROM user_groups g
 WHERE g.is_deleted = false;
 
--- name: RebuildExecutionsSearchDocuments :exec
-INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, fields)
-SELECT 'executions', e.id, COALESCE(d.hostname, e.device_id), COALESCE(a.name, ''),
-       e.id || ' ' || e.device_id || ' ' || COALESCE(e.action_id, '') || ' ' || COALESCE(a.name, '') || ' ' || COALESCE(d.hostname, ''),
-       COALESCE(strftime('%s', e.created_at), '0'),
-       json_object(
-         'device_id', e.device_id, 'action_id', COALESCE(e.action_id, ''),
-         'device_hostname', COALESCE(d.hostname, ''), 'action_name', COALESCE(a.name, ''),
-         'status', e.status, 'action_type', CAST(e.action_type AS TEXT),
-         'desired_state', CAST(e.desired_state AS TEXT),
-         'changed', CASE WHEN e.changed THEN 'true' ELSE 'false' END,
-         'compliant', CASE WHEN e.compliant THEN 'true' ELSE 'false' END,
-         'created_at', COALESCE(strftime('%s', e.created_at), '0'),
-         'scheduled_for', COALESCE(strftime('%s', e.scheduled_for), '0'),
-         'completed_at', COALESCE(strftime('%s', e.completed_at), '0'))
-FROM executions e
-JOIN devices d ON d.id = e.device_id
-LEFT JOIN actions a ON a.id = e.action_id
-WHERE d.is_deleted = false;
-
 -- name: RebuildAuditEventsSearchDocuments :exec
 INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, fields)
 SELECT 'audit_events', o.operation_id, o.request_descriptor, o.authorization_detail,
@@ -303,26 +283,6 @@ SELECT 'user_groups', g.id, g.name, g.description, g.id, lower(g.name),
 FROM user_groups g
 WHERE g.id = sqlc.arg(id) AND g.is_deleted = false;
 
--- name: RefreshExecutionsSearchDocument :exec
-INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, fields)
-SELECT 'executions', e.id, COALESCE(d.hostname, e.device_id), COALESCE(a.name, ''),
-       e.id || ' ' || e.device_id || ' ' || COALESCE(e.action_id, '') || ' ' || COALESCE(a.name, '') || ' ' || COALESCE(d.hostname, ''),
-       COALESCE(strftime('%s', e.created_at), '0'),
-       json_object(
-         'device_id', e.device_id, 'action_id', COALESCE(e.action_id, ''),
-         'device_hostname', COALESCE(d.hostname, ''), 'action_name', COALESCE(a.name, ''),
-         'status', e.status, 'action_type', CAST(e.action_type AS TEXT),
-         'desired_state', CAST(e.desired_state AS TEXT),
-         'changed', CASE WHEN e.changed THEN 'true' ELSE 'false' END,
-         'compliant', CASE WHEN e.compliant THEN 'true' ELSE 'false' END,
-         'created_at', COALESCE(strftime('%s', e.created_at), '0'),
-         'scheduled_for', COALESCE(strftime('%s', e.scheduled_for), '0'),
-         'completed_at', COALESCE(strftime('%s', e.completed_at), '0'))
-FROM executions e
-JOIN devices d ON d.id = e.device_id
-LEFT JOIN actions a ON a.id = e.action_id
-WHERE e.id = sqlc.arg(id) AND d.is_deleted = false;
-
 -- name: RefreshAuditEventsSearchDocument :exec
 INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, fields)
 SELECT 'audit_events', o.operation_id, o.request_descriptor, o.authorization_detail,
@@ -402,16 +362,6 @@ WITH requested(id) AS (SELECT CAST(value AS TEXT) FROM json_each(sqlc.arg(reques
      allowed_groups(id) AS (SELECT CAST(value AS TEXT) FROM json_each(sqlc.arg(allowed_groups_json)))
 SELECT base.id FROM user_groups base JOIN requested ON requested.id = base.id
 WHERE base.is_deleted = FALSE AND (NOT sqlc.arg(scope_restricted) OR EXISTS (SELECT 1 FROM allowed_groups g WHERE g.id = base.id));
-
--- name: VisibleExecutionsSearchIDs :many
-WITH requested(id) AS (SELECT CAST(value AS TEXT) FROM json_each(sqlc.arg(requested_json))),
-     allowed_groups(id) AS (SELECT CAST(value AS TEXT) FROM json_each(sqlc.arg(allowed_groups_json)))
-SELECT base.id FROM executions base JOIN requested ON requested.id = base.id
-WHERE EXISTS (SELECT 1 FROM devices d WHERE d.id = base.device_id AND d.is_deleted = FALSE)
-AND (NOT sqlc.arg(scope_restricted) OR EXISTS (SELECT 1 FROM device_group_members m JOIN allowed_groups g ON g.id = m.group_id WHERE m.device_id = base.device_id))
-AND (sqlc.arg(assigned_user_id) = '' OR EXISTS (SELECT 1 FROM device_assigned_users u WHERE u.device_id = base.device_id AND u.user_id = sqlc.arg(assigned_user_id))
-OR EXISTS (SELECT 1 FROM device_assigned_groups dag JOIN user_group_members m ON m.group_id = dag.group_id
-WHERE dag.device_id = base.device_id AND m.user_id = sqlc.arg(assigned_user_id)));
 
 -- name: VisibleAuditEventsSearchIDs :many
 WITH requested(id) AS (SELECT CAST(value AS TEXT) FROM json_each(sqlc.arg(requested_json))),

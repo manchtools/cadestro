@@ -1,18 +1,14 @@
 <script lang="ts">
 	import { goto } from '$lib/navigation';
 	import { getLocalizedError } from '$lib/errors';
-	import { base } from '$app/paths';
 	import { toast } from 'svelte-sonner';
-	import { apiClient, type Device, type ActionExecution, type InventoryTableResult, type DeviceAssignee, formatTimestampDateTime, formatDuration } from '$lib/sdk';
-	import { AssignmentTargetType, DeviceStatus, ExecutionStatus } from '$contract/cadestro/v1/common_pb';
-	import { getActionTypeLabel } from '$lib/components/actions/action-type';
+	import { apiClient, type Device, type InventoryTableResult, type DeviceAssignee, formatTimestampDateTime } from '$lib/sdk';
+	import { AssignmentTargetType, DeviceStatus } from '$contract/cadestro/v1/common_pb';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
-	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Chip } from '$lib/components/fleet';
 	import type { FleetTone } from '$lib/components/fleet/tone';
-	import { getExecutionStatusTone } from '$lib/execution-status';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import ConfirmDeleteDialog from '$lib/components/confirm-delete-dialog.svelte';
 	import SyncIntervalDialog, { formatSyncInterval } from '$lib/components/sync-interval-dialog.svelte';
@@ -24,7 +20,6 @@
 		Tag,
 		Plus,
 		X,
-		Zap,
 		Clock,
 		UserPlus,
 		Power,
@@ -35,7 +30,6 @@
 		Terminal
 	} from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import RunScriptDialog from './run-script-dialog.svelte';
 	import { openTerminal } from '$lib/shell/shell.svelte';
 
 	interface Props {
@@ -48,7 +42,6 @@
 
 	let { device, deviceId, inventory, refreshKey, ondeviceupdate }: Props = $props();
 
-	let executions = $state<ActionExecution[]>([]);
 	let labelDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 	let syncIntervalDialogOpen = $state(false);
@@ -57,13 +50,11 @@
 	let rebootDialogOpen = $state(false);
 	let dispatchingReboot = $state(false);
 	let dispatchingSync = $state(false);
-	let runScriptDialogOpen = $state(false);
 	let assignees = $state<DeviceAssignee[]>([]);
 
 	$effect(() => {
 		// Track refreshKey to reload when parent triggers refresh
 		void refreshKey;
-		loadExecutions();
 		loadAssignees();
 	});
 
@@ -95,41 +86,6 @@
 		return `${mb.toFixed(0)} MB`;
 	}
 
-	async function loadExecutions() {
-		try {
-			// One call. This used to follow up with a sequential GetAction per
-			// distinct action just to read its name — up to 20 extra round trips to
-			// render five rows, enough on its own to trip the authenticated rate
-			// limiter and fail the page it was decorating. The server already
-			// resolves the name into the execution row (control.proto
-			// ActionExecution.action_name), which is what every other execution
-			// surface in the app reads.
-			const response = await apiClient.listExecutions(20, '', deviceId);
-			executions = response.executions;
-		} catch (error) {
-			console.error('Failed to load executions:', error);
-		}
-	}
-
-	function getActionName(execution: ActionExecution): string {
-		// Empty for inline actions (dispatched instantly, never stored), which is
-		// exactly when the type label is the honest name.
-		return execution.actionName || getActionTypeLabel(execution.type);
-	}
-
-	function getExecutionStatusLabel(status: ExecutionStatus): string {
-		switch (status) {
-			case ExecutionStatus.PENDING: return m.executions_status_pending();
-			case ExecutionStatus.RUNNING: return m.executions_status_running();
-			case ExecutionStatus.SUCCESS: return m.executions_status_success();
-			case ExecutionStatus.FAILED: return m.executions_status_failed();
-			case ExecutionStatus.INDETERMINATE: return m.executions_status_indeterminate();
-			case ExecutionStatus.SKIPPED: return m.executions_status_skipped();
-			case ExecutionStatus.NOT_APPLICABLE: return m.executions_status_not_applicable();
-			case ExecutionStatus.TIMEOUT: return m.executions_status_timeout();
-			default: return m.executions_status_unknown();
-		}
-	}
 
 	// Connectivity in the fleet vocabulary: reachable, unreachable, or a device
 	// control has never heard from.
@@ -464,64 +420,6 @@
 		</section>
 	</div>
 
-	<!-- Recent Executions -->
-	<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
-		<div class="flex flex-wrap items-center justify-between gap-2">
-			{@render sectionLabel(m.device_detail_recent_executions())}
-			<div class="flex flex-wrap gap-2">
-				<Button variant="outline" onclick={() => (runScriptDialogOpen = true)}>
-					<Terminal class="mr-2 h-4 w-4" />
-					{m.instant_actions_run_script()}
-				</Button>
-				<Button variant="outline" onclick={() => goto(`/executions?device=${deviceId}`)}>
-					{m.common_view_all()}
-				</Button>
-			</div>
-		</div>
-		<div class="mt-3">
-			{#if executions.length === 0}
-				<div class="flex flex-col items-center justify-center py-8 text-center">
-					<Zap class="h-8 w-8 text-muted-foreground mb-2" />
-					<p class="text-muted-foreground">{m.device_detail_no_executions()}</p>
-				</div>
-			{:else}
-				<Table.Root>
-					<Table.Header>
-						<Table.Row>
-							<Table.Head>{m.executions_table_action()}</Table.Head>
-							<Table.Head>{m.executions_table_status()}</Table.Head>
-							<Table.Head>{m.executions_table_created()}</Table.Head>
-							<Table.Head>{m.executions_table_duration()}</Table.Head>
-						</Table.Row>
-					</Table.Header>
-					<Table.Body>
-						{#each executions.slice(0, 5) as execution}
-							<Table.Row>
-								<Table.Cell>
-									<a href="{base}/executions/{execution.id}" class="hover:underline">
-										{getActionName(execution)}
-									</a>
-								</Table.Cell>
-								<Table.Cell>
-									<Chip
-										tone={getExecutionStatusTone(execution.status)}
-										label={getExecutionStatusLabel(execution.status)}
-									/>
-								</Table.Cell>
-								<Table.Cell class="text-sm">
-									{formatTimestampDateTime(execution.createdAt)}
-								</Table.Cell>
-								<Table.Cell class="text-sm">
-									{formatDuration(execution.durationMs)}
-								</Table.Cell>
-							</Table.Row>
-						{/each}
-					</Table.Body>
-				</Table.Root>
-			{/if}
-		</div>
-	</section>
-
 	<!-- Danger Zone -->
 	<section class="rounded-xl border border-crit/50 bg-surface p-4 shadow-plate">
 		<p class="text-sm font-semibold text-crit">{m.common_danger_zone()}</p>
@@ -575,7 +473,5 @@
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
-
-	<RunScriptDialog bind:open={runScriptDialogOpen} {deviceId} ondispatched={loadExecutions} />
 
 <AssignDeviceDialog bind:open={assignDialogOpen} hostname={device.hostname} existingUserIds={assignees.filter(a => a.type === AssignmentTargetType.USER).map(a => a.id)} existingGroupIds={assignees.filter(a => a.type === AssignmentTargetType.USER_GROUP).map(a => a.id)} onassign={assignDevice} />

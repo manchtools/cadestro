@@ -19,8 +19,6 @@ import {
 	UserSchema,
 	type Device,
 	DeviceSchema,
-	type ActionExecution,
-	ActionExecutionSchema,
 	type AuditEvent,
 	AuditEventSchema,
 	type SearchResult
@@ -235,23 +233,6 @@ export function searchResultToDevice(r: SearchResult): Device {
 		complianceStatus: intOr(f['compliance_status'], 0),
 		registeredAt: timestampFromSeconds(f['registered_at']),
 		lastSeenAt: timestampFromSeconds(f['last_seen_at'])
-	});
-}
-
-/** ActionExecution doesn't carry a deviceHostname field — the search
- *  index does (for free-text search), but the typed proto only has
- *  device_id. Pages that want the hostname inline can read it off
- *  SearchResult.fields['device_hostname']. */
-export function searchResultToExecution(r: SearchResult): ActionExecution {
-	const f = r.fields;
-	return create(ActionExecutionSchema, {
-		id: r.id,
-		actionId: f['action_id'] ?? '',
-		actionName: f['action_name'] ?? '',
-		type: intOr(f['action_type'], ActionType.UNSPECIFIED) as ActionType,
-		deviceId: f['device_id'] ?? '',
-		status: intOr(f['status'], 0),
-		createdAt: timestampFromSeconds(f['created_at'])
 	});
 }
 

@@ -42,14 +42,6 @@ sql:
             go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "definitions.schedule"
             go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
-          - column: "deliveries.manifest"
-            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
-          - column: "executions.params"
-            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
-          - column: "executions.output"
-            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
-          - column: "executions.detection_output"
-            go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "compliance_results.detection_output"
             go_type: {import: "github.com/manchtools/cadestro/server/internal/store/sqlitetype", package: "sqlitetype", type: "JSON"}
           - column: "policy_action_results.payload"
@@ -105,14 +97,6 @@ sql:
           - column: "assignments.sort_order"
             go_type: "int32"
           - column: "assignments.mode"
-            go_type: "int32"
-          - column: "executions.action_type"
-            go_type: "int32"
-          - column: "executions.desired_state"
-            go_type: "int32"
-          - column: "executions.timeout_seconds"
-            go_type: "int32"
-          - column: "execution_output_chunks.sequence"
             go_type: "int32"
           - column: "compliance_policy_rules.grace_period_hours"
             go_type: "int32"

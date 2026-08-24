@@ -78,7 +78,7 @@ func TestSchema_UsesTextIdentifiersAndNoUUIDs(t *testing.T) {
 		SELECT m.name || '.' || p.name || ' ' || p.type
 		FROM sqlite_schema AS m, pragma_table_xinfo(m.name) AS p
 		WHERE m.type = 'table'
-		  AND p.name IN ('id', 'operation_id', 'effect_id', 'delivery_id', 'job_id')
+		  AND p.name IN ('id', 'operation_id', 'effect_id', 'job_id')
 		  AND NOT (m.name = 'linux_uid_sequence' AND p.name = 'id')
 		  AND m.name <> 'goose_db_version'
 		  AND m.name NOT GLOB 'search_fts_*'

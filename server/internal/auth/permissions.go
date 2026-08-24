@@ -251,17 +251,8 @@ func registryPermissions() []permEntry {
 		{"SetUserSelection", "User Selections", "Manage user selections", TargetUnspecified},
 		{"ListAvailableActions", "User Selections", "List available actions", TargetUnspecified},
 		// Dispatch
-		{"DispatchAction", "Dispatch", "Dispatch single action", TargetDevice},
-		{"DispatchToMultiple", "Dispatch", "Dispatch to multiple devices", TargetDevice},
 		{"SyncDevice", "Live Control", "Sync device", TargetDevice},
 		{"RebootDevice", "Live Control", "Reboot device", TargetDevice},
-		{"DispatchActionSet", "Dispatch", "Dispatch action set", TargetDevice},
-		{"DispatchDefinition", "Dispatch", "Dispatch definition", TargetDevice},
-		{"DispatchToGroup", "Dispatch", "Dispatch to device group", TargetDevice},
-		// Executions
-		{"GetExecution", "Executions", "View executions", TargetDevice},
-		{"ListExecutions", "Executions", "List executions", TargetDevice},
-		{"CancelExecution", "Executions", "Cancel pending executions", TargetDevice},
 		// OSQuery
 		{"DispatchOSQuery", "OSQuery", "Run OSQuery on device", TargetDevice},
 		{"GetOSQueryResult", "OSQuery", "View OSQuery results", TargetDevice},

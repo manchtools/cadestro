@@ -150,7 +150,7 @@ func (s *Service) RenameAction(ctx context.Context, op store.AuditOperation, id,
 		}
 		out = row
 		rec.Effect(actionEffect(id, "UPDATE", "name"))
-		return refreshActionDependents(ctx, tx, rec, id, true)
+		return refreshActionDependents(ctx, tx, rec, id)
 	})
 	return out, s.classifyWriteError(ctx, id, allowSystem, err)
 }
@@ -171,7 +171,7 @@ func (s *Service) UpdateActionDescription(ctx context.Context, op store.AuditOpe
 		}
 		out = row
 		rec.Effect(actionEffect(id, "UPDATE", "description"))
-		return refreshActionDependents(ctx, tx, rec, id, false)
+		return refreshActionDependents(ctx, tx, rec, id)
 	})
 	return out, s.classifyWriteError(ctx, id, allowSystem, err)
 }
@@ -253,7 +253,7 @@ func (s *Service) DeleteAction(ctx context.Context, op store.AuditOperation, id 
 	}
 	now := s.now().UTC()
 	_, err := s.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-		if err := refreshActionDependents(ctx, tx, rec, id, false); err != nil {
+		if err := refreshActionDependents(ctx, tx, rec, id); err != nil {
 			return err
 		}
 		if _, err := tx.DeleteActionMemberships(ctx, id); err != nil {

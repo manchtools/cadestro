@@ -184,32 +184,6 @@ func (q *Queries) RebuildDevicesSearchDocuments(ctx context.Context) error {
 	return err
 }
 
-const rebuildExecutionsSearchDocuments = `-- name: RebuildExecutionsSearchDocuments :exec
-INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, fields)
-SELECT 'executions', e.id, COALESCE(d.hostname, e.device_id), COALESCE(a.name, ''),
-       e.id || ' ' || e.device_id || ' ' || COALESCE(e.action_id, '') || ' ' || COALESCE(a.name, '') || ' ' || COALESCE(d.hostname, ''),
-       COALESCE(strftime('%s', e.created_at), '0'),
-       json_object(
-         'device_id', e.device_id, 'action_id', COALESCE(e.action_id, ''),
-         'device_hostname', COALESCE(d.hostname, ''), 'action_name', COALESCE(a.name, ''),
-         'status', e.status, 'action_type', CAST(e.action_type AS TEXT),
-         'desired_state', CAST(e.desired_state AS TEXT),
-         'changed', CASE WHEN e.changed THEN 'true' ELSE 'false' END,
-         'compliant', CASE WHEN e.compliant THEN 'true' ELSE 'false' END,
-         'created_at', COALESCE(strftime('%s', e.created_at), '0'),
-         'scheduled_for', COALESCE(strftime('%s', e.scheduled_for), '0'),
-         'completed_at', COALESCE(strftime('%s', e.completed_at), '0'))
-FROM executions e
-JOIN devices d ON d.id = e.device_id
-LEFT JOIN actions a ON a.id = e.action_id
-WHERE d.is_deleted = false
-`
-
-func (q *Queries) RebuildExecutionsSearchDocuments(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, rebuildExecutionsSearchDocuments)
-	return err
-}
-
 const rebuildUserGroupsSearchDocuments = `-- name: RebuildUserGroupsSearchDocuments :exec
 INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, member_count, fields)
 SELECT 'user_groups', g.id, g.name, g.description, g.id, lower(g.name),
@@ -405,32 +379,6 @@ WHERE d.id = ?1 AND d.is_deleted = false
 
 func (q *Queries) RefreshDevicesSearchDocument(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, refreshDevicesSearchDocument, id)
-	return err
-}
-
-const refreshExecutionsSearchDocument = `-- name: RefreshExecutionsSearchDocument :exec
-INSERT INTO search_documents (scope, entity_id, primary_text, description, related_text, sort_text, fields)
-SELECT 'executions', e.id, COALESCE(d.hostname, e.device_id), COALESCE(a.name, ''),
-       e.id || ' ' || e.device_id || ' ' || COALESCE(e.action_id, '') || ' ' || COALESCE(a.name, '') || ' ' || COALESCE(d.hostname, ''),
-       COALESCE(strftime('%s', e.created_at), '0'),
-       json_object(
-         'device_id', e.device_id, 'action_id', COALESCE(e.action_id, ''),
-         'device_hostname', COALESCE(d.hostname, ''), 'action_name', COALESCE(a.name, ''),
-         'status', e.status, 'action_type', CAST(e.action_type AS TEXT),
-         'desired_state', CAST(e.desired_state AS TEXT),
-         'changed', CASE WHEN e.changed THEN 'true' ELSE 'false' END,
-         'compliant', CASE WHEN e.compliant THEN 'true' ELSE 'false' END,
-         'created_at', COALESCE(strftime('%s', e.created_at), '0'),
-         'scheduled_for', COALESCE(strftime('%s', e.scheduled_for), '0'),
-         'completed_at', COALESCE(strftime('%s', e.completed_at), '0'))
-FROM executions e
-JOIN devices d ON d.id = e.device_id
-LEFT JOIN actions a ON a.id = e.action_id
-WHERE e.id = ?1 AND d.is_deleted = false
-`
-
-func (q *Queries) RefreshExecutionsSearchDocument(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, refreshExecutionsSearchDocument, id)
 	return err
 }
 
@@ -780,52 +728,6 @@ type VisibleDevicesSearchIDsParams struct {
 
 func (q *Queries) VisibleDevicesSearchIDs(ctx context.Context, arg VisibleDevicesSearchIDsParams) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, visibleDevicesSearchIDs,
-		arg.ScopeRestricted,
-		arg.AssignedUserID,
-		arg.RequestedJson,
-		arg.AllowedGroupsJson,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []string{}
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const visibleExecutionsSearchIDs = `-- name: VisibleExecutionsSearchIDs :many
-WITH requested(id) AS (SELECT CAST(value AS TEXT) FROM json_each(?3)),
-     allowed_groups(id) AS (SELECT CAST(value AS TEXT) FROM json_each(?4))
-SELECT base.id FROM executions base JOIN requested ON requested.id = base.id
-WHERE EXISTS (SELECT 1 FROM devices d WHERE d.id = base.device_id AND d.is_deleted = FALSE)
-AND (NOT ?1 OR EXISTS (SELECT 1 FROM device_group_members m JOIN allowed_groups g ON g.id = m.group_id WHERE m.device_id = base.device_id))
-AND (?2 = '' OR EXISTS (SELECT 1 FROM device_assigned_users u WHERE u.device_id = base.device_id AND u.user_id = ?2)
-OR EXISTS (SELECT 1 FROM device_assigned_groups dag JOIN user_group_members m ON m.group_id = dag.group_id
-WHERE dag.device_id = base.device_id AND m.user_id = ?2))
-`
-
-type VisibleExecutionsSearchIDsParams struct {
-	ScopeRestricted   interface{} `json:"scope_restricted"`
-	AssignedUserID    interface{} `json:"assigned_user_id"`
-	RequestedJson     interface{} `json:"requested_json"`
-	AllowedGroupsJson interface{} `json:"allowed_groups_json"`
-}
-
-func (q *Queries) VisibleExecutionsSearchIDs(ctx context.Context, arg VisibleExecutionsSearchIDsParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, visibleExecutionsSearchIDs,
 		arg.ScopeRestricted,
 		arg.AssignedUserID,
 		arg.RequestedJson,

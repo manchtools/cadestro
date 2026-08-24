@@ -19,8 +19,6 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 	actionID, actionSS, setID, definitionID, policyID := newID(), newID(), newID(), newID(), newID()
 	deviceID, deviceGroupID := newID(), newID()
 	userID, roleID, grantID, userGroupID := newID(), newID(), newID(), newID()
-	executionID := newID()
-	deliveryID := newID()
 
 	statements := []struct {
 		query string
@@ -41,9 +39,6 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 			VALUES ($1, $2, 'Straßenprüfung München', $3)`, []any{policyID, actionID, now}},
 		{`INSERT INTO devices (id, hostname, agent_version, registered_at, last_seen_at)
 			VALUES ($1, 'db-01.eu.example', '2.4.0', $2, $2)`, []any{deviceID, now}},
-		{`INSERT INTO deliveries
-			(delivery_id, device_id, manifest_id, manifest, state, created_at, available_at)
-			VALUES ($1, $2, $3, '{}', 'PENDING', $4, $4)`, []any{deliveryID, deviceID, newID(), now}},
 		{`INSERT INTO device_labels (device_id, key, value) VALUES ($1, 'environment', 'production')`, []any{deviceID}},
 		{`INSERT INTO device_inventory (device_id, table_name, rows, collected_at)
 			VALUES ($1, 'os_version', '[{"name":"Ubuntu","version":"26.04","arch":"amd64"}]', $2)`, []any{deviceID, now}},
@@ -57,8 +52,6 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 		{`INSERT INTO user_roles (grant_id, user_id, role_id, assigned_at) VALUES ($1, $2, $3, $4)`, []any{grantID, userID, roleID, now}},
 		{`INSERT INTO user_groups (id, name, description, created_at, updated_at) VALUES ($1, 'München operators', 'night shift', $2, $2)`, []any{userGroupID, now}},
 		{`INSERT INTO user_group_members (group_id, user_id, added_at) VALUES ($1, $2, $3)`, []any{userGroupID, userID, now}},
-		{`INSERT INTO executions (id, delivery_id, device_id, action_id, action_type, desired_state, params, timeout_seconds, status, created_at)
-			VALUES ($1, $2, $3, $4, 100, 1, '{}', 90, 'pending', $5)`, []any{executionID, deliveryID, deviceID, actionID, now}},
 	}
 	for _, statement := range statements {
 		_, err := raw.Exec(ctx, statement.query, statement.args...)
@@ -79,11 +72,11 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 
 	auditRecord, err := st.RecordOperation(ctx, store.AuditOperation{
 		Class: store.ClassMutation, ActorType: "user", ActorID: userID,
-		Origin: "control_rpc", RequestDescriptor: "/cadestro.v1.ControlService/DispatchAction",
-		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "DispatchAction",
+		Origin: "control_rpc", RequestDescriptor: "/cadestro.v1.ControlService/ListActions",
+		AuthorizationOutcome: store.AuthorizationAllowed, AuthorizationDetail: "ListActions",
 		Result: store.ResultSuccess, ResultCode: "OK",
 	}, store.AuditEffect{
-		ResourceType: "action", ResourceID: actionID, Action: "DISPATCH", Outcome: store.EffectApplied,
+		ResourceType: "action", ResourceID: actionID, Action: "READ", Outcome: store.EffectApplied,
 	})
 	require.NoError(t, err)
 	var auditOccurredAt time.Time
@@ -120,10 +113,7 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 	assert.Equal(t, userID, requireOneSearchRow(t, search("users", "Fleet")).ID)
 	assert.Equal(t, deviceGroupID, requireOneSearchRow(t, search("device_groups", "Mün")).ID)
 	assert.Equal(t, userGroupID, requireOneSearchRow(t, search("user_groups", "Mün")).ID)
-	executionRow := requireOneSearchRow(t, search("executions", "Straße"))
-	assert.Equal(t, executionID, executionRow.ID)
-	assert.Equal(t, actionID, executionRow.Fields["action_id"])
-	auditRow := requireOneSearchRow(t, search("audit_events", "DispatchAction"))
+	auditRow := requireOneSearchRow(t, search("audit_events", "ListActions"))
 	assert.Equal(t, actionID, auditRow.Fields["stream_id"])
 	assert.Equal(t, userID, requireOneSearchRow(t, search("users", "ops@example")).ID)
 	assert.Equal(t, deviceID, requireOneSearchRow(t, search("devices", deviceID[:8])).ID)
@@ -163,9 +153,6 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 		{"device_groups", "member_count", []string{"1"}, 1},
 		{"user_groups", "is_dynamic", []string{"false"}, 1},
 		{"user_groups", "member_count", []string{"1"}, 1},
-		{"executions", "status", []string{"pending"}, 1},
-		{"executions", "action_type", []string{"100"}, 1},
-		{"executions", "device_id", []string{deviceID}, 1},
 		{"audit_events", "stream_type", []string{"action"}, 1},
 		{"audit_events", "actor_type", []string{"user"}, 1},
 		{"audit_events", "actor_id", []string{userID}, 1},
@@ -189,7 +176,6 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 		"users":               {"email", "display_name", "disabled", "last_login_at", "created_at"},
 		"device_groups":       {"name", "member_count", "created_at"},
 		"user_groups":         {"name", "member_count", "created_at"},
-		"executions":          {"device_hostname", "status", "action_type", "created_at"},
 		"audit_events":        {"event_type", "stream_type", "actor_type", "occurred_at"},
 	}
 	for scope, fields := range sortCases {
@@ -204,7 +190,7 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 		"definitions": {"created_at", "updated_at"}, "compliance_policies": {"created_at"},
 		"devices": {"registered_at", "last_seen_at"}, "users": {"created_at"},
 		"device_groups": {"created_at"}, "user_groups": {"created_at"},
-		"executions": {"created_at"}, "audit_events": {"occurred_at"},
+		"audit_events": {"occurred_at"},
 	}
 	for scope, fields := range dateCases {
 		for _, field := range fields {
@@ -227,7 +213,7 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 	}{
 		{"actions", deviceGroupID}, {"action_sets", deviceGroupID}, {"definitions", deviceGroupID},
 		{"compliance_policies", deviceGroupID}, {"devices", deviceGroupID}, {"device_groups", deviceGroupID},
-		{"users", userGroupID}, {"user_groups", userGroupID}, {"executions", deviceGroupID},
+		{"users", userGroupID}, {"user_groups", userGroupID},
 	}
 	for _, tc := range scopeCases {
 		_, total, err := st.Search(ctx, store.SearchParams{
@@ -240,7 +226,7 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 	service := authoring.New(authoring.Config{Store: st, Now: func() time.Time { return now }})
 	_, err = service.RenameAction(ctx, actionOperation(), actionID, "QuasarNadel", false)
 	require.NoError(t, err)
-	for _, scope := range []string{"actions", "action_sets", "definitions", "compliance_policies", "executions"} {
+	for _, scope := range []string{"actions", "action_sets", "definitions", "compliance_policies"} {
 		row := requireOneSearchRow(t, search(scope, "QuasarNadel"))
 		assert.NotEmpty(t, row.ID, scope)
 	}
@@ -253,9 +239,6 @@ func TestSQLiteSearch_CoversEveryFacetWithPrefixAndCurrentJoins(t *testing.T) {
 	for _, scope := range []string{"actions", "action_sets", "definitions", "compliance_policies"} {
 		assert.Empty(t, search(scope, "QuasarNadel"), scope)
 	}
-	assert.Equal(t, executionID, requireOneSearchRow(t, search("executions", "QuasarNadel")).ID,
-		"historical execution documents retain the action name after authoring deletion")
-
 	require.NoError(t, service.DeleteActionSet(ctx, actionOperation(), setID))
 	assert.Empty(t, search("definitions", "ObsidianKamm"),
 		"deleting a set refreshes definitions after their former composition edge is removed")

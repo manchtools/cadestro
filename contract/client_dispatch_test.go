@@ -46,9 +46,6 @@ func (h *blockingFanoutHandler) enter() {
 func (h *blockingFanoutHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	return nil
 }
-func (h *blockingFanoutHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
-	return nil
-}
 func (h *blockingFanoutHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }

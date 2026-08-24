@@ -615,12 +615,12 @@ func (c *Client) SendHeartbeat(ctx context.Context, hb *cadestrov1.Heartbeat) er
 }
 
 // SendActionResult reports the outcome of one occurrence. The result must
-// carry the delivery_id and occurrence_id it descends from; control keys
+// carry the run_id and occurrence_id it descends from; control keys
 // ingestion on that pair, so a result replayed after a reconnect updates the
 // same row instead of creating a second one.
 func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.ActionResult) error {
 	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: result}}
-	if result == nil || result.GetDeliveryId() == "" || result.GetOccurrenceId() == "" {
+	if result == nil || result.GetRunId() == "" || result.GetOccurrenceId() == "" {
 		return c.send(ctx, message)
 	}
 	return c.sendResultAwaitAck(ctx, message)
@@ -630,7 +630,7 @@ func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.Action
 // its occurrences have reported individually.
 func (c *Client) SendManifestResult(ctx context.Context, result *cadestrov1.ManifestResult) error {
 	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: result}}
-	if result == nil || result.GetDeliveryId() == "" || result.GetManifestId() == "" {
+	if result == nil || result.GetRunId() == "" || result.GetManifestId() == "" {
 		return c.send(ctx, message)
 	}
 	return c.sendResultAwaitAck(ctx, message)
@@ -1697,10 +1697,6 @@ func (c *Client) ValidateLuksToken(ctx context.Context, token string) (*Validate
 
 // SyncStateResult contains the current device state returned over the stream.
 type SyncStateResult struct {
-	// Deliveries are every manifest delivery currently assigned to this
-	// device. The caller records each one under its delivery_id, so repeated
-	// Sync responses do not execute it twice.
-	Deliveries []*cadestrov1.ManifestDelivery
 	// SyncIntervalMinutes is the effective sync interval for this device.
 	// 0 means use the default (30 minutes).
 	SyncIntervalMinutes int32
@@ -1714,8 +1710,7 @@ type SyncStateResult struct {
 	DesiredPolicy *cadestrov1.DesiredPolicy
 }
 
-// Sync requests current one-shot work and desired policy on the existing
-// authenticated stream.
+// Sync requests the current desired policy on the existing authenticated stream.
 func (c *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 	id := NewULID()
 	ch := c.registerPending(id)
@@ -1744,7 +1739,6 @@ func (c *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 			return nil, fmt.Errorf("invalid SyncState response: %w", err)
 		}
 		return &SyncStateResult{
-			Deliveries:          state.Deliveries,
 			SyncIntervalMinutes: state.SyncIntervalMinutes,
 			MaintenanceWindow:   state.MaintenanceWindow,
 			DesiredPolicy:       state.DesiredPolicy,

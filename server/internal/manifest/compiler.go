@@ -134,43 +134,6 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manif
 	return finish(runbook)
 }
 
-// OneShotAction creates the singleton manifest used by an explicit dispatch.
-// The Action schedule remains authoring/display data; the manifest carries the
-// structural one_shot flag, which is what makes the agent execute the delivery
-// exactly once after recording it instead of scheduling it. An empty manifest
-// schedule accompanies the flag but never stands in for it.
-func OneShotAction(action *cadestrov1.Action) (*cadestrov1.Manifest, error) {
-	if action == nil {
-		return nil, ErrInvalidInput
-	}
-	cloned, ok := proto.Clone(action).(*cadestrov1.Action)
-	if !ok || cloned.GetId() == nil || !validInput(context.Background(), cloned.Id.Value) {
-		return nil, ErrInvalidInput
-	}
-	return finish(&cadestrov1.Manifest{
-		ManifestId:       ulid.Make().String(),
-		Provenance:       &cadestrov1.ManifestProvenance{ActionId: cloned.Id.Value},
-		Schedule:         &cadestrov1.ActionSchedule{},
-		DefaultOnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
-		Occurrences:      []*cadestrov1.ManifestOccurrence{occurrence(cloned, cadestrov1.OnFailure_ON_FAILURE_CONTINUE)},
-		OneShot:          true,
-	})
-}
-
-// AsOneShot marks a manifest compiled from the catalog as an explicit dispatch.
-// The structural one_shot flag is what makes the agent execute the delivery
-// exactly once; clearing the compiled schedule stops the
-// authored cadence from also being installed. The nested Actions keep their
-// authoring/display schedules.
-func AsOneShot(compiled *cadestrov1.Manifest) *cadestrov1.Manifest {
-	if compiled == nil {
-		return nil
-	}
-	compiled.Schedule = &cadestrov1.ActionSchedule{}
-	compiled.OneShot = true
-	return compiled
-}
-
 // FreshCopy preserves compiled semantics while reminting delivery-local
 // manifest and occurrence identities for another target device.
 func FreshCopy(compiled *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {

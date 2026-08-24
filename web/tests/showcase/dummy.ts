@@ -4,7 +4,7 @@
 //
 // SearchScope enum values (from contract/gen/ts/cadestro/v1/common_pb.ts):
 //   ACTIONS=1 ACTION_SETS=2 DEFINITIONS=3 COMPLIANCE_POLICIES=4
-//   DEVICES=5 USERS=6 DEVICE_GROUPS=7 USER_GROUPS=8 EXECUTIONS=9
+//   DEVICES=5 USERS=6 DEVICE_GROUPS=7 USER_GROUPS=8 AUDIT_EVENTS=9
 
 // Fixed reference instant so every render is byte-for-byte reproducible:
 // relative timestamps ("5 minutes ago", "last seen 2h ago") are computed by
@@ -462,9 +462,7 @@ export const ALL_PERMISSIONS = [
 	'RemoveDeviceFromGroup','ValidateDynamicQuery','EvaluateDynamicGroup','SetDeviceGroupSyncInterval',
 	'SetDeviceGroupInventoryInterval','SetDeviceGroupMaintenanceWindow','CreateAssignment','DeleteAssignment',
 	'ListAssignments','GetDeviceAssignments','GetUserAssignments','SetUserSelection',
-	'ListAvailableActions','DispatchAction','DispatchToMultiple',
-	'DispatchActionSet','DispatchDefinition','DispatchToGroup','RebootDevice','SyncDevice',
-	'GetExecution','ListExecutions','CancelExecution','DispatchOSQuery',
+	'ListAvailableActions','RebootDevice','SyncDevice','DispatchOSQuery',
 	'GetOSQueryResult','GetDeviceInventory','RefreshDeviceInventory','QueryDeviceLogs',
 	'GetDeviceLogResult','GetDeviceCompliance','GetDeviceCompliance:assigned','CreateCompliancePolicy',
 	'GetCompliancePolicy','ListCompliancePolicies','RenameCompliancePolicy','UpdateCompliancePolicyDescription',
@@ -501,7 +499,7 @@ export function listRolesResponse() {
 				description: 'Run actions, assign actions, view audit',
 				permissions: [
 					'ListDevices', 'AssignDevice', 'ListActions', 'CreateAction',
-					'ListActionSets', 'CreateActionSet', 'ListExecutions',
+					'ListActionSets', 'CreateActionSet',
 					'ListDeviceGroups', 'CreateDeviceGroup', 'Search',
 				],
 				isSystem: false,
@@ -511,7 +509,7 @@ export function listRolesResponse() {
 				name: 'Compliance Reviewer',
 				description: 'Read-only access to audit + compliance policies',
 				permissions: [
-					'ListDevices', 'ListExecutions', 'ListCompliancePolicies',
+					'ListDevices', 'ListCompliancePolicies',
 					'CreateCompliancePolicy', 'ViewAudit', 'Search',
 				],
 				isSystem: false,
@@ -520,7 +518,7 @@ export function listRolesResponse() {
 				id: '01J6XYZSHOWCASEROLE0004',
 				name: 'Read-only Auditor',
 				description: 'View-only access; surfaces nothing destructive',
-				permissions: ['ListDevices', 'ListActions', 'ListExecutions', 'ViewAudit', 'Search'],
+				permissions: ['ListDevices', 'ListActions', 'ViewAudit', 'Search'],
 				isSystem: false,
 			},
 		],
@@ -981,108 +979,7 @@ export function getCompliancePolicyResponse(id: string) {
 }
 
 // ===========================================================================
-// Executions  (search scope 9 · detail)
-// ===========================================================================
-
-const EXEC_STATUS = { PENDING: 1, RUNNING: 2, SUCCESS: 3, FAILED: 4, SCHEDULED: 7, CANCELLED: 8 };
-
-export const DUMMY_EXECUTIONS = [
-	{
-		id: '01J6XYZSHOWCASEEXEC00001',
-		device_id: '01J6XYZSHOWCASEDEVICE0001',
-		device_hostname: 'edge-01.berlin',
-		action_id: '01J6XYZSHOWCASEACTION002',
-		action_name: 'Apply security updates',
-		action_type: 2,
-		status: EXEC_STATUS.SUCCESS,
-		created_at: now - 3 * hour,
-		duration_ms: 41_300,
-	},
-	{
-		id: '01J6XYZSHOWCASEEXEC00002',
-		device_id: '01J6XYZSHOWCASEDEVICE0002',
-		device_hostname: 'edge-02.berlin',
-		action_id: '01J6XYZSHOWCASEACTION008',
-		action_name: 'Run kernel-lockdown audit',
-		action_type: 200,
-		status: EXEC_STATUS.FAILED,
-		created_at: now - 5 * hour,
-		duration_ms: 2_100,
-	},
-	{
-		id: '01J6XYZSHOWCASEEXEC00003',
-		device_id: '01J6XYZSHOWCASEDEVICE0003',
-		device_hostname: 'lab-07.frankfurt',
-		action_id: '01J6XYZSHOWCASEACTION001',
-		action_name: 'Install nginx',
-		action_type: 1,
-		status: EXEC_STATUS.RUNNING,
-		created_at: now - 2 * min,
-		duration_ms: 0,
-	},
-	{
-		id: '01J6XYZSHOWCASEEXEC00004',
-		device_id: '01J6XYZSHOWCASEDEVICE0004',
-		device_hostname: 'ws-design-12',
-		action_id: '01J6XYZSHOWCASEACTION004',
-		action_name: 'Flatpak: Firefox ESR',
-		action_type: 103,
-		status: EXEC_STATUS.SCHEDULED,
-		created_at: now + 8 * hour,
-		duration_ms: 0,
-	},
-];
-
-export function executionsAsSearchResults() {
-	return {
-		results: DUMMY_EXECUTIONS.map((e) => ({
-			id: e.id,
-			name: e.action_name,
-			description: e.device_hostname,
-			scope: 9,
-			memberCount: 0,
-			fields: {
-				action_id: e.action_id,
-				action_name: e.action_name,
-				action_type: String(e.action_type),
-				device_id: e.device_id,
-				device_hostname: e.device_hostname,
-				status: String(e.status),
-				created_at: String(e.created_at),
-			},
-		})),
-		nextPageToken: '',
-		totalCount: DUMMY_EXECUTIONS.length,
-	};
-}
-
-export function getExecutionResponse(id: string) {
-	const e = DUMMY_EXECUTIONS.find((x) => x.id === id) ?? DUMMY_EXECUTIONS[0];
-	return {
-		execution: {
-			id: e.id,
-			deviceId: e.device_id,
-			actionId: e.action_id,
-			actionName: e.action_name,
-			type: e.action_type,
-			status: e.status,
-			error: e.status === EXEC_STATUS.FAILED ? 'check returned non-zero: kernel.lockdown not set' : '',
-			createdAt: isoFromSec(e.created_at),
-			dispatchedAt: isoFromSec(e.created_at),
-			completedAt: e.duration_ms > 0 ? isoFromSec(e.created_at + Math.floor(e.duration_ms / 1000)) : undefined,
-			durationMs: String(e.duration_ms),
-			createdBy: 'sam.reiter',
-			output: {
-				stdout: e.status === EXEC_STATUS.FAILED ? '' : 'Reading package lists...\nUpgraded 4 packages.',
-				stderr: e.status === EXEC_STATUS.FAILED ? 'kernel.lockdown=none (expected: confidentiality)' : '',
-				exitCode: e.status === EXEC_STATUS.FAILED ? 1 : 0,
-			},
-		},
-	};
-}
-
-// ===========================================================================
-// Audit events  (search scope 10)
+// Audit events  (search scope 9)
 // ===========================================================================
 
 export const DUMMY_AUDIT_EVENTS = [
@@ -1100,7 +997,7 @@ export function auditEventsAsSearchResults() {
 			id: e.id,
 			name: e.event_type,
 			description: '',
-			scope: 10,
+			scope: 9,
 			memberCount: 0,
 			fields: {
 				stream_type: e.stream_type,
@@ -1245,7 +1142,7 @@ export function getRoleResponse(id: string) {
 
 const PERMISSION_GROUPS: Array<[string, string[]]> = [
 	['Devices', ['ListDevices', 'GetDevice', 'AssignDevice', 'UnassignDevice', 'DeleteDevice']],
-	['Actions', ['ListActions', 'CreateAction', 'RenameAction', 'DeleteAction', 'DispatchAction']],
+	['Actions', ['ListActions', 'CreateAction', 'RenameAction', 'DeleteAction']],
 	// Provisioning is provider-owned: there is no CreateUser or DeleteUser
 	// permission to catalogue, and EraseJITUser is the only local erase.
 	['Users', ['ListUsers', 'SetUserDisabled', 'UpdateUserProfile', 'EraseJITUser']],

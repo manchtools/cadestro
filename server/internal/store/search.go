@@ -73,7 +73,6 @@ var sqliteSearchFacets = map[string]sqliteSearchFacet{
 	"device_groups":       {"created_at", keys("name", "member_count", "created_at"), keys("is_dynamic", "member_count"), keys("created_at")},
 	"users":               {"created_at", keys("email", "display_name", "linux_username", "disabled", "created_at", "last_login_at"), keys("disabled", "role"), keys("created_at", "last_login_at")},
 	"user_groups":         {"created_at", keys("name", "member_count", "created_at"), keys("is_dynamic", "member_count"), keys("created_at")},
-	"executions":          {"created_at", keys("created_at", "completed_at", "status", "action_type", "device_hostname", "action_name"), keys("status", "action_type", "desired_state", "changed", "compliant", "device_id"), keys("created_at", "scheduled_for", "completed_at")},
 	"audit_events":        {"occurred_at", keys("event_type", "stream_type", "actor_type", "occurred_at"), keys("stream_type", "actor_type", "actor_id"), keys("occurred_at")},
 }
 
@@ -451,10 +450,6 @@ func (s *Store) queryVisibleSearchIDs(ctx context.Context, scope string, request
 	case "user_groups":
 		return s.queries.VisibleUserGroupsSearchIDs(ctx, generated.VisibleUserGroupsSearchIDsParams{
 			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted,
-		})
-	case "executions":
-		return s.queries.VisibleExecutionsSearchIDs(ctx, generated.VisibleExecutionsSearchIDsParams{
-			RequestedJson: requested, AllowedGroupsJson: groups, ScopeRestricted: restricted, AssignedUserID: assigned,
 		})
 	case "audit_events":
 		return s.queries.VisibleAuditEventsSearchIDs(ctx, generated.VisibleAuditEventsSearchIDsParams{

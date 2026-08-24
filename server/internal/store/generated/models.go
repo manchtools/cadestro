@@ -201,19 +201,6 @@ type DefinitionMember struct {
 	AddedAt      *time.Time `json:"added_at"`
 }
 
-type Delivery struct {
-	DeliveryID  string          `json:"delivery_id"`
-	DeviceID    string          `json:"device_id"`
-	ManifestID  string          `json:"manifest_id"`
-	Manifest    sqlitetype.JSON `json:"manifest"`
-	State       string          `json:"state"`
-	OperationID *string         `json:"operation_id"`
-	CreatedAt   time.Time       `json:"created_at"`
-	AvailableAt time.Time       `json:"available_at"`
-	TerminalAt  *time.Time      `json:"terminal_at"`
-	ResultCode  string          `json:"result_code"`
-}
-
 type Device struct {
 	ID                          string     `json:"id"`
 	Hostname                    string     `json:"hostname"`
@@ -291,39 +278,6 @@ type DeviceSecret struct {
 	Version    int64     `json:"version"`
 	Ciphertext string    `json:"ciphertext"`
 	CreatedAt  time.Time `json:"created_at"`
-}
-
-type Execution struct {
-	ID              string          `json:"id"`
-	DeliveryID      string          `json:"delivery_id"`
-	DeviceID        string          `json:"device_id"`
-	ActionID        *string         `json:"action_id"`
-	ActionType      int32           `json:"action_type"`
-	DesiredState    int32           `json:"desired_state"`
-	Params          sqlitetype.JSON `json:"params"`
-	TimeoutSeconds  int32           `json:"timeout_seconds"`
-	Status          string          `json:"status"`
-	Error           *string         `json:"error"`
-	Output          sqlitetype.JSON `json:"output"`
-	DetectionOutput sqlitetype.JSON `json:"detection_output"`
-	Changed         bool            `json:"changed"`
-	Compliant       bool            `json:"compliant"`
-	CreatedAt       *time.Time      `json:"created_at"`
-	ScheduledFor    *time.Time      `json:"scheduled_for"`
-	DispatchedAt    *time.Time      `json:"dispatched_at"`
-	StartedAt       *time.Time      `json:"started_at"`
-	CompletedAt     *time.Time      `json:"completed_at"`
-	DurationMs      *int64          `json:"duration_ms"`
-	CreatedByType   string          `json:"created_by_type"`
-	CreatedByID     string          `json:"created_by_id"`
-}
-
-type ExecutionOutputChunk struct {
-	ExecutionID string    `json:"execution_id"`
-	Stream      string    `json:"stream"`
-	Sequence    int32     `json:"sequence"`
-	Data        []byte    `json:"data"`
-	ReceivedAt  time.Time `json:"received_at"`
 }
 
 type IdentityLink struct {

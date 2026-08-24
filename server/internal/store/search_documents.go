@@ -67,8 +67,6 @@ func searchScopeForResource(resourceType string) string {
 		return "users"
 	case "user_group":
 		return "user_groups"
-	case "execution":
-		return "executions"
 	default:
 		return ""
 	}
@@ -102,8 +100,6 @@ func insertSearchDocument(ctx context.Context, q *generated.Queries, scope, id s
 		return q.RefreshUsersSearchDocument(ctx, id)
 	case "user_groups":
 		return q.RefreshUserGroupsSearchDocument(ctx, id)
-	case "executions":
-		return q.RefreshExecutionsSearchDocument(ctx, id)
 	case "audit_events":
 		return q.RefreshAuditEventsSearchDocument(ctx, id)
 	default:
@@ -113,7 +109,7 @@ func insertSearchDocument(ctx context.Context, q *generated.Queries, scope, id s
 
 var searchDocumentScopes = []string{
 	"actions", "action_sets", "definitions", "compliance_policies", "devices",
-	"device_groups", "users", "user_groups", "executions", "audit_events",
+	"device_groups", "users", "user_groups", "audit_events",
 }
 
 func rebuildSearchDocuments(ctx context.Context, q *generated.Queries) error {
@@ -146,8 +142,6 @@ func rebuildSearchDocumentsForScope(ctx context.Context, q *generated.Queries, s
 		return q.RebuildUsersSearchDocuments(ctx)
 	case "user_groups":
 		return q.RebuildUserGroupsSearchDocuments(ctx)
-	case "executions":
-		return q.RebuildExecutionsSearchDocuments(ctx)
 	case "audit_events":
 		return q.RebuildAuditEventsSearchDocuments(ctx)
 	default:

@@ -161,29 +161,3 @@ func TestPeriodicSyncRenewalRunsBeforeSync(t *testing.T) {
 	default:
 	}
 }
-
-func TestSyncPendingResultsPreservesFailedResultForRetry(t *testing.T) {
-	st, err := store.New(t.TempDir())
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, st.Close()) })
-	delivery := &cadestrov1.ManifestDelivery{
-		DeliveryId: "01K00000000000000000000011",
-		Manifest:   &cadestrov1.Manifest{ManifestId: "01K00000000000000000000012", Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true}, Occurrences: []*cadestrov1.ManifestOccurrence{{OccurrenceId: "01K00000000000000000000013", Action: &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: "01K00000000000000000000014"}}}}},
-	}
-	_, err = st.RecordManifestDelivery(context.Background(), delivery)
-	require.NoError(t, err)
-	_, err = st.BeginManifestRun(delivery, time.Now())
-	require.NoError(t, err)
-	occurrence := delivery.GetManifest().GetOccurrences()[0]
-	require.NoError(t, st.MarkOccurrenceStarted(delivery.GetDeliveryId(), occurrence.GetOccurrenceId(), time.Now()))
-	_, err = st.RecoverInterruptedOccurrences()
-	require.NoError(t, err)
-	sched := scheduler.New(st, nil, slog.Default())
-	client := sdk.NewClient("http://127.0.0.1:1")
-	syncPendingResults(context.Background(), sched, client, slog.Default())
-	syncPendingResults(context.Background(), sched, client, slog.Default())
-	pending, err := sched.GetPendingResults()
-	require.NoError(t, err)
-	require.Len(t, pending, 1)
-	require.Equal(t, occurrence.GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId())
-}

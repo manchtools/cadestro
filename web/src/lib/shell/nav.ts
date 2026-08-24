@@ -15,7 +15,6 @@ import {
 	Send,
 	ShieldCheck,
 	ScrollText,
-	Activity,
 	Group,
 	Key,
 	Layers,
@@ -66,7 +65,6 @@ export const PRIMARY_SECTIONS: NavEntry[] = [
 	// are the page titles, but five long labels overflow the capsule.
 	{ href: '/compliance-policies', label: m.nav_compliance_short, icon: ShieldCheck, permission: 'ListCompliancePolicies' },
 	{ href: '/audit', label: m.nav_audit_short, icon: ScrollText, permission: 'ListAuditEvents' },
-	{ href: '/executions', label: m.nav_executions, icon: Activity, permission: 'ListExecutions' }
 ];
 
 /** Everything else, behind the overflow — two groups.

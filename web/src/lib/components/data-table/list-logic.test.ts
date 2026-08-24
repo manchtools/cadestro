@@ -129,7 +129,7 @@ describe('buildSearchArgs', () => {
 // for the ones that do.
 describe('buildSearchArgs date filters', () => {
 	const config = {
-		scope: SearchScope.EXECUTIONS,
+		scope: SearchScope.DEVICES,
 		sortFieldMap: { created: SortField.CREATED_AT } as Record<string, SortField>
 	};
 	const base = {

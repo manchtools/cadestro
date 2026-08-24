@@ -7,7 +7,7 @@ import { timestampDate } from '@bufbuild/protobuf/wkt';
 export { ApiClient, type ClientOptions } from './client';
 export type {
 	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
-	DeviceGroup, Assignment, ActionExecution, AuditEvent, InventoryTableResult,
+	DeviceGroup, Assignment, AuditEvent, InventoryTableResult,
 	Role, PermissionInfo, UserGroup, UserGroupMember, IdentityProvider, IdentityLink,
 	LpsPassword, LuksKey, CreateActionRequest, UpdateActionParamsRequest
 } from './client';

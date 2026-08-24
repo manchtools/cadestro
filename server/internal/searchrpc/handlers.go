@@ -38,7 +38,6 @@ var searchFacets = []facet{
 	{name: "users", wire: cadestrov1.SearchScope_SEARCH_SCOPE_USERS, permission: "ListUsers"},
 	{name: "device_groups", wire: cadestrov1.SearchScope_SEARCH_SCOPE_DEVICE_GROUPS, permission: "ListDeviceGroups"},
 	{name: "user_groups", wire: cadestrov1.SearchScope_SEARCH_SCOPE_USER_GROUPS, permission: "ListUserGroups"},
-	{name: "executions", wire: cadestrov1.SearchScope_SEARCH_SCOPE_EXECUTIONS, permission: "ListExecutions"},
 	{name: "audit_events", wire: cadestrov1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS, permission: "ListAuditEvents"},
 }
 
@@ -280,8 +279,6 @@ func (h *Handlers) applyScope(ctx context.Context, actor *auth.UserContext, name
 		params.ScopeGroupIDs, params.ScopeRestricted = auth.UserScopeListFilter(ctx, "ListUsers")
 	case "user_groups":
 		params.ScopeGroupIDs, params.ScopeRestricted = auth.UserScopeListFilter(ctx, "ListUserGroups")
-	case "executions":
-		params.ScopeGroupIDs, params.ScopeRestricted = auth.DeviceScopeListFilter(ctx, "ListExecutions")
 	}
 }
 

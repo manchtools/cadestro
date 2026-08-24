@@ -191,12 +191,6 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	_, err = validated(f.handlers.GetDeviceCompliancePolicyStatus)(context.Background(),
 		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = validated(f.handlers.GetExecution)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetExecutionRequest{Id: "bad"}))
-	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = validated(f.handlers.CancelExecution)(context.Background(),
-		connect.NewRequest(&cadestrov1.CancelExecutionRequest{ExecutionId: "bad"}))
-	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.ListLpsPasswords)(context.Background(),
 		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -256,15 +250,6 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliancePolicyStatus)(context.Background(),
 		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: f.directID}))
-	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = validated(f.handlers.GetExecution)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetExecutionRequest{Id: newID()}))
-	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = validated(f.handlers.ListExecutions)(context.Background(),
-		connect.NewRequest(&cadestrov1.ListExecutionsRequest{}))
-	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
-	_, err = validated(f.handlers.CancelExecution)(context.Background(),
-		connect.NewRequest(&cadestrov1.CancelExecutionRequest{ExecutionId: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.ListLpsPasswords)(context.Background(),
 		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: f.directID}))
@@ -559,209 +544,6 @@ func TestDeviceHandlers_GetDeviceLogResultReadsDirectState(t *testing.T) {
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
 		"device_log_result", staleID)
-}
-
-func TestDeviceHandlers_GetDeviceComplianceReadsDirectState(t *testing.T) {
-	f := newComplianceIngestFixture(t)
-	firstFailed := f.now.Add(-2 * time.Hour)
-	graceActionID := f.complianceAction(t, "grace check")
-	failedActionID := f.complianceAction(t, "failed check")
-	policyID := f.policy(t, "baseline", map[string]int32{graceActionID: 4, failedActionID: 0})
-	f.report(t, f.groupID, graceActionID, cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, false,
-		&cadestrov1.CommandOutput{ExitCode: 1, Stdout: "grace drift"}, firstFailed)
-	f.report(t, f.groupID, failedActionID, cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, false,
-		&cadestrov1.CommandOutput{ExitCode: 2, Stderr: "failed drift"}, firstFailed)
-	ctx := f.ctx
-
-	complianceResponse, err := f.handlers.GetDeviceCompliance(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: f.groupID}))
-	require.NoError(t, err)
-	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, complianceResponse.Msg.Status)
-	require.Len(t, complianceResponse.Msg.Checks, 2)
-	checks := make(map[string]*cadestrov1.ComplianceCheckResult, len(complianceResponse.Msg.Checks))
-	for _, check := range complianceResponse.Msg.Checks {
-		checks[check.ActionId] = check
-	}
-	assert.Equal(t, int32(1), checks[graceActionID].DetectionOutput.ExitCode)
-	assert.Equal(t, "failed drift", checks[failedActionID].DetectionOutput.Stderr)
-
-	policyResponse, err := f.handlers.GetDeviceCompliancePolicyStatus(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: f.groupID}))
-	require.NoError(t, err)
-	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, policyResponse.Msg.OverallStatus)
-	require.Len(t, policyResponse.Msg.Policies, 1)
-	policy := policyResponse.Msg.Policies[0]
-	assert.Equal(t, policyID, policy.PolicyId)
-	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, policy.Status)
-	require.Len(t, policy.Rules, 2)
-	for _, rule := range policy.Rules {
-		if rule.ActionId == graceActionID {
-			assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD, rule.Status)
-			assert.True(t, rule.GraceExpiresAt.AsTime().Equal(firstFailed.Add(4*time.Hour)))
-		}
-	}
-	assertSensitiveDeviceRead(t, f.deviceHandlerFixture,
-		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
-		"device_compliance", f.groupID)
-	assertSensitiveDeviceRead(t, f.deviceHandlerFixture,
-		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		"device_compliance_policy_status", f.groupID)
-
-	_, err = f.raw.Exec(context.Background(), `
-		UPDATE compliance_results SET detection_output = '{"unknown":"field"}'
-		WHERE device_id = $1 AND action_id = $2`, f.groupID, graceActionID)
-	require.NoError(t, err)
-	_, err = f.handlers.GetDeviceCompliance(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: f.groupID}))
-	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "invalid output must not be silently dropped")
-}
-
-func TestDeviceHandlers_ExecutionReadsUseDirectKeysetAndScope(t *testing.T) {
-	f := newDeviceHandlerFixture(t)
-	actionID := newID()
-	groupExecutionID, directExecutionID, outsideExecutionID := newID(), newID(), newID()
-	_, err := f.raw.Exec(context.Background(), `
-		INSERT INTO actions (id, name, action_type, params, created_by)
-		VALUES ($1, 'catalog execution', 200, '{}', $2)`, actionID, f.actorID)
-	require.NoError(t, err)
-	for _, row := range []struct {
-		id, deviceID, status string
-		actionID             *string
-		actionType           int32
-		output               string
-	}{
-		{groupExecutionID, f.groupID, "success", &actionID, 200, `{"exitCode":0,"stdout":"done"}`},
-		{directExecutionID, f.directID, "pending", nil, int32(cadestrov1.ActionType_ACTION_TYPE_UPDATE), ``},
-		{outsideExecutionID, f.outsideID, "failed", &actionID, 200, `{"exitCode":1,"stderr":"hidden"}`},
-	} {
-		deliveryID := seedDelivery(t, f.raw, row.deviceID, f.now)
-		_, err := f.raw.Exec(context.Background(), `
-			INSERT INTO executions
-				(id, delivery_id, device_id, action_id, action_type, desired_state, status, output,
-				 created_at, created_by_type, created_by_id)
-			VALUES ($1, $2, $3, $4, $5, 0, $6, $7, $8, 'user', $9)`,
-			row.id, deliveryID, row.deviceID, row.actionID, row.actionType, row.status,
-			nullJSON(row.output), f.now, f.actorID)
-		require.NoError(t, err)
-	}
-	scoped := auth.WithUser(context.Background(), &auth.UserContext{
-		ID: f.actorID, Kind: auth.PrincipalUser,
-		Permissions: []string{"GetExecution", "ListExecutions"},
-		ScopedGrants: []auth.ScopedGrant{
-			{Permission: "GetExecution", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: f.scopeGroup},
-			{Permission: "ListExecutions", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: f.scopeGroup},
-		},
-	})
-
-	got, err := f.handlers.GetExecution(scoped,
-		connect.NewRequest(&cadestrov1.GetExecutionRequest{Id: groupExecutionID}))
-	require.NoError(t, err)
-	assert.Equal(t, "catalog execution", got.Msg.Execution.ActionName)
-	assert.Equal(t, "done", got.Msg.Execution.Output.Stdout)
-	_, err = f.handlers.GetExecution(scoped,
-		connect.NewRequest(&cadestrov1.GetExecutionRequest{Id: outsideExecutionID}))
-	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "scope must not disclose the execution")
-
-	listed, err := f.handlers.ListExecutions(scoped,
-		connect.NewRequest(&cadestrov1.ListExecutionsRequest{}))
-	require.NoError(t, err)
-	require.Len(t, listed.Msg.Executions, 1)
-	assert.Equal(t, groupExecutionID, listed.Msg.Executions[0].Id)
-	assert.Equal(t, int32(1), listed.Msg.TotalCount)
-
-	global := f.actor("GetExecution", "ListExecutions")
-	first, err := f.handlers.ListExecutions(global,
-		connect.NewRequest(&cadestrov1.ListExecutionsRequest{PageSize: 2}))
-	require.NoError(t, err)
-	require.Len(t, first.Msg.Executions, 2)
-	assert.NotEmpty(t, first.Msg.NextPageToken)
-	second, err := f.handlers.ListExecutions(global,
-		connect.NewRequest(&cadestrov1.ListExecutionsRequest{PageSize: 2, PageToken: first.Msg.NextPageToken}))
-	require.NoError(t, err)
-	require.Len(t, second.Msg.Executions, 1)
-	assert.Empty(t, second.Msg.NextPageToken)
-	assert.NotContains(t, []string{first.Msg.Executions[0].Id, first.Msg.Executions[1].Id}, second.Msg.Executions[0].Id)
-	assert.Equal(t, int32(3), second.Msg.TotalCount)
-
-	searched, err := f.handlers.ListExecutions(global,
-		connect.NewRequest(&cadestrov1.ListExecutionsRequest{
-			Search: "catalog", TypeFilter: cadestrov1.ActionType_ACTION_TYPE_SHELL,
-			StatusFilter: cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
-		}))
-	require.NoError(t, err)
-	require.Len(t, searched.Msg.Executions, 1)
-	assert.Equal(t, groupExecutionID, searched.Msg.Executions[0].Id)
-	_, err = f.handlers.ListExecutions(global,
-		connect.NewRequest(&cadestrov1.ListExecutionsRequest{StatusFilter: cadestrov1.ExecutionStatus(99)}))
-	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-
-	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetExecutionProcedure,
-		"execution", groupExecutionID)
-	operation, err := latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceListExecutionsProcedure)
-	require.NoError(t, err)
-	assert.Equal(t, string(store.ClassSensitiveRead), operation.OperationClass)
-	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	assert.Empty(t, effects, "a collection read has no fabricated resource effect")
-}
-
-func nullJSON(value string) any {
-	if value == "" {
-		return nil
-	}
-	return value
-}
-
-func TestDeviceHandlers_CancelExecutionIsDirectAndIdempotent(t *testing.T) {
-	f := newDeviceHandlerFixture(t)
-	pendingID, terminalID, rollbackID := newID(), newID(), newID()
-	deliveryID := seedDelivery(t, f.raw, f.directID, f.now)
-	for _, row := range []struct{ id, status string }{
-		{pendingID, "pending"}, {terminalID, "success"}, {rollbackID, "scheduled"},
-	} {
-		_, err := f.raw.Exec(context.Background(), `
-			INSERT INTO executions
-				(id, delivery_id, device_id, action_type, desired_state, status, created_at, created_by_type, created_by_id)
-			VALUES ($1, $2, $3, 200, 0, $4, $5, 'user', $6)`,
-			row.id, deliveryID, f.directID, row.status, f.now, f.actorID)
-		require.NoError(t, err)
-	}
-	ctx := f.actor("CancelExecution")
-
-	cancelled, err := f.handlers.CancelExecution(ctx,
-		connect.NewRequest(&cadestrov1.CancelExecutionRequest{ExecutionId: pendingID}))
-	require.NoError(t, err)
-	assert.Equal(t, cadestrov1.ExecutionStatus_EXECUTION_STATUS_CANCELLED, cancelled.Msg.Execution.Status)
-	assert.NotNil(t, cancelled.Msg.Execution.CompletedAt)
-	operation, err := latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceCancelExecutionProcedure)
-	require.NoError(t, err)
-	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	require.Len(t, effects, 1)
-	assert.Equal(t, "execution", effects[0].ResourceType)
-	assert.Equal(t, pendingID, effects[0].ResourceID)
-	assert.Equal(t, "CANCEL", effects[0].Action)
-
-	unchanged, err := f.handlers.CancelExecution(ctx,
-		connect.NewRequest(&cadestrov1.CancelExecutionRequest{ExecutionId: terminalID}))
-	require.NoError(t, err)
-	assert.Equal(t, cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS, unchanged.Msg.Execution.Status)
-	operation, err = latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceCancelExecutionProcedure)
-	require.NoError(t, err)
-	effects, err = f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	assert.Empty(t, effects, "an idempotent no-op has no fabricated state-change effect")
-
-	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/CancelExecution")
-	_, err = f.handlers.CancelExecution(ctx,
-		connect.NewRequest(&cadestrov1.CancelExecutionRequest{ExecutionId: rollbackID}))
-	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
-	rolledBack, err := f.store.GetExecution(context.Background(), rollbackID)
-	require.NoError(t, err)
-	assert.Equal(t, "scheduled", rolledBack.Status, "audit failure must roll the cancellation back")
 }
 
 func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t *testing.T) {
@@ -1500,7 +1282,7 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	ctx := f.actor(
 		"SetDeviceLabel", "RemoveDeviceLabel", "AssignDevice", "UnassignDevice",
 		"ListDeviceAssignees", "SetDeviceSyncInterval", "SetDeviceInventoryInterval", "DeleteDevice",
-		"CancelExecution", "CreateLuksToken", "RevokeLuksDeviceKey", "DispatchOSQuery",
+		"CreateLuksToken", "RevokeLuksDeviceKey", "DispatchOSQuery",
 		"QueryDeviceLogs", "RefreshDeviceInventory", "StartTerminal", "StopTerminal",
 		"TerminateTerminalSession",
 	)
@@ -1548,17 +1330,6 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1440), updated.Msg.Device.InventoryIntervalMinutes)
-	executionID := newID()
-	deliveryID := seedDelivery(t, f.raw, f.directID, f.now)
-	_, err = f.raw.Exec(context.Background(), `
-		INSERT INTO executions
-			(id, delivery_id, device_id, action_type, desired_state, status, created_at, created_by_type, created_by_id)
-		VALUES ($1, $2, $3, 200, 0, 'scheduled', $4, 'user', $5)`,
-		executionID, deliveryID, f.directID, f.now, f.actorID)
-	require.NoError(t, err)
-	_, err = f.handlers.CancelExecution(ctx,
-		connect.NewRequest(&cadestrov1.CancelExecutionRequest{ExecutionId: executionID}))
-	require.NoError(t, err)
 	encryptionActionID := newID()
 	_, err = f.raw.Exec(context.Background(), `
 		INSERT INTO actions (id, name, action_type, params, created_by)
@@ -1633,9 +1404,6 @@ func TestDeviceHandlers_MountsExactSurface(t *testing.T) {
 		cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
 		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
 		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		cadestrov1connect.ControlServiceGetExecutionProcedure,
-		cadestrov1connect.ControlServiceListExecutionsProcedure,
-		cadestrov1connect.ControlServiceCancelExecutionProcedure,
 		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
 		cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
 		cadestrov1connect.ControlServiceListLuksKeysProcedure,
@@ -1665,8 +1433,6 @@ func TestDeviceHandlers_MountsExactSurface(t *testing.T) {
 		cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
 		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
 		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		cadestrov1connect.ControlServiceGetExecutionProcedure,
-		cadestrov1connect.ControlServiceListExecutionsProcedure,
 		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
 		cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
 		cadestrov1connect.ControlServiceListLuksKeysProcedure,

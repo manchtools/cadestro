@@ -32,12 +32,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetDeviceComplianceProcedure, h.GetDeviceCompliance, opts...))
 	register(cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure, h.GetDeviceCompliancePolicyStatus, opts...))
-	register(cadestrov1connect.ControlServiceGetExecutionProcedure,
-		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetExecutionProcedure, h.GetExecution, opts...))
-	register(cadestrov1connect.ControlServiceListExecutionsProcedure,
-		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListExecutionsProcedure, h.ListExecutions, opts...))
-	register(cadestrov1connect.ControlServiceCancelExecutionProcedure,
-		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCancelExecutionProcedure, h.CancelExecution, opts...))
 	register(cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListLpsPasswordsProcedure, h.ListLpsPasswords, opts...))
 	register(cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
@@ -93,7 +87,6 @@ func MutationProcedures() []string {
 		cadestrov1connect.ControlServiceSetDeviceSyncIntervalProcedure,
 		cadestrov1connect.ControlServiceSetDeviceInventoryIntervalProcedure,
 		cadestrov1connect.ControlServiceDeleteDeviceProcedure,
-		cadestrov1connect.ControlServiceCancelExecutionProcedure,
 		cadestrov1connect.ControlServiceCreateLuksTokenProcedure,
 		cadestrov1connect.ControlServiceRevokeLuksDeviceKeyProcedure,
 		cadestrov1connect.ControlServiceDispatchOSQueryProcedure,
@@ -123,8 +116,6 @@ func SensitiveReadProcedures() []string {
 		cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
 		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure,
 		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		cadestrov1connect.ControlServiceGetExecutionProcedure,
-		cadestrov1connect.ControlServiceListExecutionsProcedure,
 		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
 		cadestrov1connect.ControlServiceRevealLpsPasswordProcedure,
 		cadestrov1connect.ControlServiceListLuksKeysProcedure,

@@ -18,7 +18,7 @@ func TestPolicyResultsAreOwnerBoundAndReplaySafe(t *testing.T) {
 	_, err := raw.Exec(context.Background(), `INSERT INTO devices (id, hostname, agent_version, registered_at) VALUES ($1, 'device', 'v1', $2)`, deviceID, time.Now())
 	require.NoError(t, err)
 	result := &cadestrov1.ActionResult{
-		ActionId: &cadestrov1.ActionId{Value: actionID}, DeliveryId: runID, OccurrenceId: occurrenceID,
+		ActionId: &cadestrov1.ActionId{Value: actionID}, RunId: runID, OccurrenceId: occurrenceID,
 		Status: cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
 	}
 	require.NoError(t, st.RecordPolicyActionResult(context.Background(), deviceID, result))

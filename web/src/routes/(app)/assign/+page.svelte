@@ -16,7 +16,6 @@
 	//
 	// Every state on screen is read, never assumed. No ring plan (the contract
 	// has no ring orchestration), no timed or maintenance-window dispatch of a
-	// SET (DispatchActionSetRequest carries neither field) — see assign-data.ts
 	// for the full RPC mapping.
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
@@ -321,7 +320,6 @@
 		toast.success(m.assign_commit_success({ count: outcomes.length }));
 		setCarried(null);
 		clearAssignDraft();
-		void goto(`${base}/executions`);
 	}
 
 	// ── rule commit ──────────────────────────────────────────────────────────

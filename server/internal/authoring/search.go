@@ -9,7 +9,7 @@ import (
 // refreshActionDependents records the fixed cross-row documents that embed an
 // action's current name or description. Call it before deleting composition
 // edges so the former parents are not lost.
-func refreshActionDependents(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, actionID string, executions bool) error {
+func refreshActionDependents(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, actionID string) error {
 	setIDs, err := tx.ListContainingActionSetIDs(ctx, actionID)
 	if err != nil {
 		return err
@@ -26,16 +26,6 @@ func refreshActionDependents(ctx context.Context, tx *store.Tx, rec *store.Audit
 	}
 	for _, policyID := range policyIDs {
 		rec.RefreshSearch("compliance_policy", policyID)
-	}
-	if !executions {
-		return nil
-	}
-	executionIDs, err := tx.ListExecutionIDsForAction(ctx, &actionID)
-	if err != nil {
-		return err
-	}
-	for _, executionID := range executionIDs {
-		rec.RefreshSearch("execution", executionID)
 	}
 	return nil
 }

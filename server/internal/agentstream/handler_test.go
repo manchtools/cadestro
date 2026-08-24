@@ -11,7 +11,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 )
 
 func TestFrameBudgetsArePerDeviceAndClass(t *testing.T) {
@@ -42,28 +41,13 @@ func TestFrameBudgetsArePerDeviceAndClass(t *testing.T) {
 	assert.False(t, h.allowFrame("device-1", hello))
 }
 
-type fakeDeliveryState struct {
-	resultDelivery, resultDevice, manifest, state, code string
-}
-
-func (f *fakeDeliveryState) Complete(_ context.Context, deliveryID, deviceID, manifestID, state, code string) (bool, error) {
-	f.resultDelivery, f.resultDevice, f.manifest, f.state, f.code = deliveryID, deviceID, manifestID, state, code
-	return true, nil
-}
-
 type fakeExecutionResults struct {
-	resultDevice, outputDevice string
-	result                     *cadestrov1.ActionResult
-	output                     *cadestrov1.OutputChunk
+	resultDevice string
+	result       *cadestrov1.ActionResult
 }
 
 func (f *fakeExecutionResults) ApplyActionResult(_ context.Context, deviceID string, result *cadestrov1.ActionResult) error {
 	f.resultDevice, f.result = deviceID, result
-	return nil
-}
-
-func (f *fakeExecutionResults) AppendOutputChunk(_ context.Context, deviceID string, output *cadestrov1.OutputChunk) error {
-	f.outputDevice, f.output = deviceID, output
 	return nil
 }
 
@@ -106,14 +90,13 @@ func (f *fakeDeviceResults) CompleteLuksKeyRevocation(_ context.Context, deviceI
 	return nil
 }
 
-func TestHandleAgentMessageRoutesDirectDurableFrames(t *testing.T) {
-	deviceID, deliveryID, manifestID := "device", "delivery", "manifest"
-	deliveryState := &fakeDeliveryState{}
+func TestHandleAgentMessageRoutesRetainedFrames(t *testing.T) {
+	deviceID := "device"
 	executionResults := &fakeExecutionResults{}
 	deviceResults := &fakeDeviceResults{}
 	liveOperations := &recordingLiveOperations{}
 	handler := &Handler{
-		deliveries: deliveryState, executions: executionResults, deviceResults: deviceResults,
+		executions: executionResults, deviceResults: deviceResults,
 		liveOperations: liveOperations, terminalSessions: connection.NewTerminalSessionRegistry(),
 	}
 	agent := &connection.Agent{DeviceID: deviceID}
@@ -122,12 +105,7 @@ func TestHandleAgentMessageRoutesDirectDurableFrames(t *testing.T) {
 		{Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}}},
 		{Id: "sync-operation", Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: &cadestrov1.SyncDeviceResult{Success: true}}},
 		{Id: "reboot-operation", Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: &cadestrov1.RebootDeviceResult{Success: true}}},
-		{Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: &cadestrov1.ManifestResult{
-			DeliveryId: deliveryID, ManifestId: manifestID,
-			Status: cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE,
-		}}},
 		{Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: &cadestrov1.ActionResult{OccurrenceId: "occurrence"}}},
-		{Payload: &cadestrov1.AgentMessage_OutputChunk{OutputChunk: &cadestrov1.OutputChunk{ExecutionId: "occurrence"}}},
 		{Payload: &cadestrov1.AgentMessage_QueryResult{QueryResult: &cadestrov1.OSQueryResult{QueryId: "query"}}},
 		{Payload: &cadestrov1.AgentMessage_LogQueryResult{LogQueryResult: &cadestrov1.LogQueryResult{QueryId: "log"}}},
 		{Payload: &cadestrov1.AgentMessage_Inventory{Inventory: &cadestrov1.DeviceInventory{}}},
@@ -137,12 +115,7 @@ func TestHandleAgentMessageRoutesDirectDurableFrames(t *testing.T) {
 		require.NoError(t, handler.handleAgentMessage(context.Background(), agent, frame))
 	}
 
-	assert.Equal(t, deliveryID, deliveryState.resultDelivery)
-	assert.Equal(t, manifestID, deliveryState.manifest)
-	assert.Equal(t, delivery.StatePartial, deliveryState.state)
-	assert.Equal(t, "INDETERMINATE", deliveryState.code)
 	assert.Equal(t, deviceID, executionResults.resultDevice)
-	assert.Equal(t, deviceID, executionResults.outputDevice)
 	assert.Equal(t, deviceID, deviceResults.queryDevice)
 	assert.Equal(t, deviceID, deviceResults.logDevice)
 	assert.Equal(t, deviceID, deviceResults.inventoryDevice)
@@ -180,9 +153,9 @@ func TestManifestResultStateAcceptsOnlyAggregateOutcomes(t *testing.T) {
 		state  string
 		code   string
 	}{
-		{cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS, delivery.StateSucceeded, "SUCCESS"},
-		{cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, delivery.StateFailed, "FAILED"},
-		{cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, delivery.StatePartial, "INDETERMINATE"},
+		{cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS, "SUCCEEDED", "SUCCESS"},
+		{cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, "FAILED", "FAILED"},
+		{cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, "PARTIAL", "INDETERMINATE"},
 	}
 	for _, test := range tests {
 		state, code, err := manifestResultState(&cadestrov1.ManifestResult{Status: test.status})

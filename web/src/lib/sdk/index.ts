@@ -23,7 +23,6 @@ export type {
 	Definition,
 	DeviceGroup,
 	Assignment,
-	ActionExecution,
 	AuditEvent,
 	InventoryTableResult,
 	Role,

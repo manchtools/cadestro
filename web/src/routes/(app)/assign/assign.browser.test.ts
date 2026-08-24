@@ -56,7 +56,7 @@ const api = vi.hoisted(() => ({
 	getActionSet: vi.fn(),
 	listAssignments: vi.fn(),
 	createAssignment: vi.fn(),
-	dispatchActionSet: vi.fn()
+	syncDevice: vi.fn()
 }));
 
 const nav = vi.hoisted(() => ({ goto: vi.fn() }));
@@ -144,7 +144,7 @@ beforeEach(() => {
 		nextPageToken: ''
 	});
 	api.createAssignment.mockResolvedValue({});
-	api.dispatchActionSet.mockResolvedValue([]);
+	api.syncDevice.mockResolvedValue(undefined);
 });
 
 /** The pill context this page owns, once its effect has published it. */
@@ -297,7 +297,7 @@ describe('assign — the pill is the only commit surface', () => {
 		expect(shell.pill.context?.valid).toBe(true);
 	});
 
-	it('assigns and dispatches exactly the carried ids', async () => {
+	it('assigns and syncs exactly the carried ids', async () => {
 		await render(AssignPage);
 		await contextReady();
 		await chooseSet();
@@ -316,14 +316,14 @@ describe('assign — the pill is the only commit surface', () => {
 				id,
 				AssignmentMode.REQUIRED
 			);
-			expect(api.dispatchActionSet).toHaveBeenCalledWith(id, SET_PATCH);
+			expect(api.syncDevice).toHaveBeenCalledWith(id);
 		}
 		expect(api.createAssignment.mock.calls.map((c) => c[3]).sort()).toEqual(
 			[...CARRIED_IDS].sort()
 		);
 	});
 
-	it('assigns without dispatching when the schedule is the set’s own', async () => {
+	it('assigns without syncing when the schedule is the set’s own', async () => {
 		await render(AssignPage);
 		await contextReady();
 		await chooseSet();
@@ -335,17 +335,17 @@ describe('assign — the pill is the only commit surface', () => {
 			() => expect(api.createAssignment).toHaveBeenCalledTimes(CARRIED_IDS.length),
 			{ timeout: 3000 }
 		);
-		expect(api.dispatchActionSet).not.toHaveBeenCalled();
+		expect(api.syncDevice).not.toHaveBeenCalled();
 	});
 
-	it('clears the carried selection and hands over to executions on success', async () => {
+	it('clears the carried selection on success', async () => {
 		await render(AssignPage);
 		await contextReady();
 		await chooseSet();
 
 		commitContext();
 
-		await vi.waitFor(() => expect(nav.goto).toHaveBeenCalledWith('/executions'), { timeout: 3000 });
+		await vi.waitFor(() => expect(toaster.success).toHaveBeenCalled(), { timeout: 3000 });
 		expect(getCarried()).toBeNull();
 		expect(toaster.success).toHaveBeenCalledWith(m.assign_commit_success({ count: 4 }));
 		expect(shell.pill.context).toBeNull();

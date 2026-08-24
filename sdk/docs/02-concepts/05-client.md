@@ -7,7 +7,7 @@ description: The direct long-lived mTLS stream, bounded dispatch, and maintenanc
 # Agent client
 
 The client maintains one outbound bidirectional mTLS stream directly between
-agent and control. Handshake, synchronization, heartbeats, delivery, results,
+agent and control. Handshake, synchronization, heartbeats, assignments, results,
 inventory, log/osquery replies, and terminal traffic share the stream.
 
 ## Transport
@@ -28,9 +28,9 @@ their authenticated feature sinks.
 - isolate a handler panic without leaking secrets; and
 - preserve on-wire ordering.
 
-Control commits a delivery before sending it. The agent durably records its
-`delivery_id` before acknowledging receipt. Retries reuse the same ID and
-results are idempotent.
+Control commits an assignment before synchronization. The agent durably
+records each run before acknowledging its results. Retries reuse the same
+`run_id` and results are idempotent.
 
 Before a non-idempotent side effect, the agent records `STARTED`. A crash
 after that point reports `INDETERMINATE` instead of repeating the effect.

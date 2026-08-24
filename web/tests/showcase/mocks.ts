@@ -17,7 +17,6 @@ import {
 	definitionsAsSearchResults,
 	deviceGroupsAsSearchResults,
 	devicesAsSearchResults,
-	executionsAsSearchResults,
 	getActionResponse,
 	getActionSetResponse,
 	getCompliancePolicyResponse,
@@ -26,7 +25,6 @@ import {
 	getDeviceCompliancePolicyStatusResponse,
 	getDeviceGroupResponse,
 	getDeviceInventoryResponse,
-	getExecutionResponse,
 	getIdentityProviderResponse,
 	getRoleResponse,
 	getServerSettingsResponse,
@@ -69,8 +67,7 @@ function searchResponseFor(scope: number | string | undefined): unknown {
 	if (scope === 6 || s === 'SEARCH_SCOPE_USERS') return usersAsSearchResults();
 	if (scope === 7 || s === 'SEARCH_SCOPE_DEVICE_GROUPS') return deviceGroupsAsSearchResults();
 	if (scope === 8 || s === 'SEARCH_SCOPE_USER_GROUPS') return userGroupsAsSearchResults();
-	if (scope === 9 || s === 'SEARCH_SCOPE_EXECUTIONS') return executionsAsSearchResults();
-	if (scope === 10 || s === 'SEARCH_SCOPE_AUDIT_EVENTS') return auditEventsAsSearchResults();
+	if (scope === 9 || s === 'SEARCH_SCOPE_AUDIT_EVENTS') return auditEventsAsSearchResults();
 	return { results: [], nextPageToken: '', totalCount: 0 };
 }
 
@@ -192,9 +189,6 @@ export async function mockControlServiceExtras(page: Page): Promise<void> {
 	await page.route('**/cadestro.v1.ControlService/GetActionSet', byId(getActionSetResponse));
 	await page.route('**/cadestro.v1.ControlService/GetDefinition', byId(getDefinitionResponse));
 	await page.route('**/cadestro.v1.ControlService/GetCompliancePolicy', byId(getCompliancePolicyResponse));
-
-	// Executions.
-	await page.route('**/cadestro.v1.ControlService/GetExecution', byId(getExecutionResponse));
 
 	// Users / groups / roles / permissions.
 	await page.route('**/cadestro.v1.ControlService/ListUsers', async (route) => {

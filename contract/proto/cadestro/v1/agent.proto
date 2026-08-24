@@ -248,8 +248,8 @@ message ManifestProvenance {
 
 // ManifestOccurrence is one authored position in a manifest's ordered list.
 //
-// Occurrence identity is NOT delivery identity: occurrence_id names a position
-// the author created, delivery_id names one attempt to hand the whole manifest
+// Occurrence identity is NOT run identity: occurrence_id names a position
+// the author created, run_id names one execution of the whole manifest
 // to a device. Duplicate authored occurrences — the same action reached twice
 // through different sets composing one definition — are preserved and executed
 // at each position; they are not collapsed, and the distinct occurrence_ids
@@ -286,30 +286,16 @@ message Manifest {
     (buf.validate.field).repeated.min_items = 1,
     (buf.validate.field).required = true
   ];
-  // An explicit dispatch: the agent executes this delivery exactly once after
-  // recording it locally and never reschedules it. Marked structurally here — not
-  // by action type and not by schedule shape, because assigned manifests may
-  // legitimately carry an empty schedule (agent-default drift cadence). A
-  // one-shot delivery is also exempt from the agent's maintenance window: an
-  // operator dispatching "now" means now; only scheduled work defers.
-  bool one_shot = 6;
-}
-
-// One durable one-shot manifest returned by Sync. delivery_id is minted once
-// when the row is committed, so repeated Sync responses remain execute-once.
-message ManifestDelivery {
-  string delivery_id = 1 [(buf.validate.field).string.ulid = true];
-  Manifest manifest = 2 [(buf.validate.field).required = true];
 }
 
 // Agent -> control: the outcome of a complete manifest.
 //
-// Results exist per action (ActionResult, carrying the same delivery_id plus
+// Results exist per action (ActionResult, carrying the same run_id plus
 // its occurrence_id) and once for the manifest as a whole. status is the
 // aggregate: SUCCESS when every executed occurrence succeeded, FAILED when any
 // did, and INDETERMINATE when a crash left an occurrence's effect unknown.
 message ManifestResult {
-  string delivery_id = 1 [(buf.validate.field).string.ulid = true];
+  string run_id = 1 [(buf.validate.field).string.ulid = true];
   string manifest_id = 2 [(buf.validate.field).string.ulid = true];
   ExecutionStatus status = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp completed_at = 4;
@@ -646,16 +632,11 @@ message ValidateLuksTokenResponse {
 
 message SyncRequest {}
 
-// SyncState carries the current durable deliveries and device policy over the
-// existing authenticated stream.
+// SyncState carries the device policy over the existing authenticated stream.
 message SyncState {
   // Effective sync interval in minutes for this device. The agent uses it for
   // the next sync; 0 means the default (30 minutes).
   int32 sync_interval_minutes = 1;
-
-  // Every due one-shot delivery for this device. A stable delivery_id lets the
-  // agent absorb repeats after reconnects.
-  repeated ManifestDelivery deliveries = 2;
 
   // Resolved maintenance window. Server-computed union across every
   // group the device belongs to (its own device groups plus any user
@@ -663,11 +644,11 @@ message SyncState {
   // gating; the agent dispatches actions any time. Empty
   // is also the response when no groups carry a window. The agent
   // evaluates this against time.Now().Local() at dispatch time.
-  MaintenanceWindow maintenance_window = 3;
+  MaintenanceWindow maintenance_window = 2;
 
   // Current assignment-derived desired state. Unlike deliveries, this is a
   // replaceable snapshot that the agent reconciles locally.
-  DesiredPolicy desired_policy = 4;
+  DesiredPolicy desired_policy = 3;
 }
 
 message DesiredPolicy {

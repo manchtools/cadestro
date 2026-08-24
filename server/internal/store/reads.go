@@ -36,12 +36,8 @@ type AuditEventFilter struct {
 	BeforeSeq    int64
 	Limit        int32
 }
-
 // DeviceRow is one stored device.
 type DeviceRow = generated.Device
-
-// DeliveryRow is one durable manifest delivery.
-type DeliveryRow = generated.Delivery
 
 // JobRow is one durable scheduled job.
 type JobRow = generated.Job
@@ -337,44 +333,6 @@ type DeviceComplianceEvaluation = generated.ListDeviceComplianceEvaluationsRow
 
 // ExecutionView is one current execution with its live action name when the
 // catalogue action still exists.
-type ExecutionView struct {
-	ID              string
-	DeliveryID      string
-	DeviceID        string
-	ActionID        *string
-	ActionType      int32
-	DesiredState    int32
-	Status          string
-	Error           *string
-	Output          []byte
-	DetectionOutput []byte
-	Changed         bool
-	Compliant       bool
-	CreatedAt       *time.Time
-	ScheduledFor    *time.Time
-	DispatchedAt    *time.Time
-	CompletedAt     *time.Time
-	DurationMs      *int64
-	CreatedByID     string
-	ActionName      string
-}
-
-// ExecutionListFilter contains the keyset, exact filters, search text, and
-// device visibility shared by the execution list and count reads.
-type ExecutionListFilter struct {
-	AfterID         string
-	Limit           int32
-	DeviceID        string
-	Status          string
-	ActionType      int32
-	Search          string
-	ScopeRestricted bool
-	ScopeGroupIDs   []string
-	AssignedUserID  *string
-}
-
-// LpsPasswordView is one LPS entry's display metadata. The ciphertext is
-// deliberately absent and can only be fetched through GetLpsPasswordForReveal.
 type LpsPasswordView struct {
 	ID, DeviceID, DeviceHostname, ActionID, ActionName string
 	Username, RotationReason                           string
@@ -861,27 +819,6 @@ func (s *Store) ListCompliancePolicyRules(ctx context.Context, policyID string) 
 	return rows, nil
 }
 
-// GetDelivery returns one durable manifest delivery. ErrNotFound when the
-// delivery id is unknown.
-func (s *Store) GetDelivery(ctx context.Context, id string) (DeliveryRow, error) {
-	row, err := s.queries.GetDelivery(ctx, id)
-	if err != nil {
-		return DeliveryRow{}, fmt.Errorf("delivery: get: %w", translateNotFound(err))
-	}
-	return row, nil
-}
-
-// ListDueDeviceDeliveries returns pending one-shot work for device Sync.
-func (s *Store) ListDueDeviceDeliveries(ctx context.Context, deviceID string, at time.Time, limit int32) ([]DeliveryRow, error) {
-	rows, err := s.queries.ListDueDeliveriesForDevice(ctx, generated.ListDueDeliveriesForDeviceParams{
-		DeviceID: deviceID, AvailableAt: at, Limit: int64(limit),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("delivery: list sendable for device: %w", err)
-	}
-	return rows, nil
-}
-
 // ListDeviceMaintenanceWindows returns every non-empty device- and user-group
 // window that constrains one device.
 func (s *Store) ListDeviceMaintenanceWindows(ctx context.Context, deviceID string) ([][]byte, error) {
@@ -1303,66 +1240,6 @@ func (s *Store) ListDeviceComplianceEvaluations(ctx context.Context, deviceID st
 		return nil, fmt.Errorf("compliance: list device evaluations: %w", err)
 	}
 	return rows, nil
-}
-
-// GetExecution returns one current execution by identifier.
-func (s *Store) GetExecution(ctx context.Context, id string) (ExecutionView, error) {
-	row, err := s.queries.GetExecutionView(ctx, id)
-	if err != nil {
-		return ExecutionView{}, fmt.Errorf("execution: get: %w", translateNotFound(err))
-	}
-	return executionView(row), nil
-}
-
-// ListExecutions returns a newest-first keyset page.
-func (s *Store) ListExecutions(ctx context.Context, filter ExecutionListFilter) ([]ExecutionView, error) {
-	if filter.Limit < 0 || filter.Limit > 101 {
-		return nil, fmt.Errorf("execution: list limit must be between 0 and 101")
-	}
-	if filter.Limit == 0 {
-		filter.Limit = 50
-	}
-	rows, err := s.queries.ListExecutionViews(ctx, generated.ListExecutionViewsParams{
-		AfterID: filter.AfterID, DeviceID: filter.DeviceID,
-		Status: filter.Status, ActionType: filter.ActionType, Search: filter.Search,
-		ScopeRestricted: filter.ScopeRestricted, ScopeGroupIdsJson: sqlitetype.StringList(filter.ScopeGroupIDs),
-		AssignedUserID: filter.AssignedUserID, RowLimit: int64(filter.Limit),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("execution: list: %w", err)
-	}
-	views := make([]ExecutionView, len(rows))
-	for i, row := range rows {
-		views[i] = executionView(generated.GetExecutionViewRow(row))
-	}
-	return views, nil
-}
-
-// CountExecutions counts the same filtered population as ListExecutions.
-func (s *Store) CountExecutions(ctx context.Context, filter ExecutionListFilter) (int64, error) {
-	n, err := s.queries.CountExecutionViews(ctx, generated.CountExecutionViewsParams{
-		DeviceID: filter.DeviceID, Status: filter.Status,
-		ActionType: filter.ActionType, Search: filter.Search,
-		ScopeRestricted: filter.ScopeRestricted, ScopeGroupIdsJson: sqlitetype.StringList(filter.ScopeGroupIDs),
-		AssignedUserID: filter.AssignedUserID,
-	})
-	if err != nil {
-		return 0, fmt.Errorf("execution: count: %w", err)
-	}
-	return n, nil
-}
-
-func executionView(row generated.GetExecutionViewRow) ExecutionView {
-	return ExecutionView{
-		ID: row.ID, DeliveryID: row.DeliveryID, DeviceID: row.DeviceID, ActionID: row.ActionID,
-		ActionType: int32(row.ActionType), DesiredState: int32(row.DesiredState),
-		Status: row.Status, Error: row.Error, Output: row.Output,
-		DetectionOutput: row.DetectionOutput, Changed: row.Changed,
-		Compliant: row.Compliant, CreatedAt: row.CreatedAt,
-		ScheduledFor: row.ScheduledFor, DispatchedAt: row.DispatchedAt,
-		CompletedAt: row.CompletedAt, DurationMs: row.DurationMs,
-		CreatedByID: row.CreatedByID, ActionName: row.ActionName,
-	}
 }
 
 // ListDeviceLpsPasswords returns current rows and at most three historical

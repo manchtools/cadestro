@@ -16,13 +16,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/jobs"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/testdb"
@@ -30,19 +28,12 @@ import (
 
 const (
 	scaleAgents          = 10_000
-	scaleDeliveries      = 1_000
 	scaleTerminalFrames  = 50_000
 	scaleHeartbeatRounds = 5
 	scaleSearches        = 100
 	scaleWorkers         = 16
 	scaleQueueSize       = 1_024
 )
-
-type scaleDelivery struct {
-	deliveryID string
-	deviceID   string
-	manifestID string
-}
 
 type latencySummary struct {
 	P50Millis float64 `json:"p50_ms"`
@@ -53,12 +44,10 @@ type latencySummary struct {
 
 type sqliteScaleResult struct {
 	Agents                 int            `json:"agents"`
-	Deliveries             int            `json:"deliveries"`
 	ElapsedSeconds         float64        `json:"elapsed_seconds"`
 	RegistrationMillis     float64        `json:"registration_ms"`
 	HeartbeatFlush         latencySummary `json:"heartbeat_flush"`
-	Dispatch               latencySummary `json:"dispatch"`
-	Result                 latencySummary `json:"result"`
+	Sync                   latencySummary `json:"sync"`
 	Search                 latencySummary `json:"search"`
 	TerminalRoute          latencySummary `json:"terminal_route"`
 	BackupDurationMillis   float64        `json:"backup_duration_ms"`
@@ -86,7 +75,6 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	st, raw := setupSQLitePool(t, 32)
 	now := time.Now().UTC()
 	deviceIDs := seedScaleDevices(t, raw, now)
-	deliveries := seedScaleDeliveries(t, raw, deviceIDs, now)
 	// The bulk seed writes device rows directly. Production cannot: every device
 	// mutation refreshes its search document inside the same audited
 	// transaction. Rebuild once through the production path so the search
@@ -108,7 +96,6 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	runtime.ReadMemStats(&afterAgents)
 	agentHeapGrowth := positiveDelta(afterAgents.Alloc, beforeAgents.Alloc)
 
-	deliveryState := delivery.New(delivery.Config{Store: st})
 	atRest, err := crypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
 	require.NoError(t, err)
 	syncer := agentsync.New(agentsync.Config{Store: st, Manager: manager, AtRest: atRest})
@@ -150,8 +137,8 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	results := make(chan workloadResult, 5)
 	go func() {
 		<-start
-		latencies, err := exerciseDeliveryLifecycle(ctx, syncer, deliveryState, deliveries)
-		results <- workloadResult{name: "delivery", latencies: latencies, err: err}
+		latencies, err := exerciseSync(ctx, syncer, deviceIDs)
+		results <- workloadResult{name: "sync", latencies: latencies, err: err}
 	}()
 	go func() {
 		<-start
@@ -196,14 +183,13 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	sampler.Wait()
 	require.NoError(t, workloadErr)
 
-	assertScaleDatabaseState(t, ctx, raw, scaleAgents, scaleDeliveries)
+	assertScaleDatabaseState(t, ctx, raw, scaleAgents)
 	backupLag := time.Since(backupCompleted)
 	result := sqliteScaleResult{
-		Agents: scaleAgents, Deliveries: scaleDeliveries,
+		Agents:         scaleAgents,
 		ElapsedSeconds: elapsed.Seconds(), RegistrationMillis: milliseconds(registrationDuration),
 		HeartbeatFlush: summarizeLatency(latencies["heartbeat"]),
-		Dispatch:       summarizeLatency(latencies["dispatch"]),
-		Result:         summarizeLatency(latencies["result"]), Search: summarizeLatency(latencies["search"]),
+		Sync:           summarizeLatency(latencies["sync"]), Search: summarizeLatency(latencies["search"]),
 		TerminalRoute:        summarizeLatency(latencies["terminal"]),
 		BackupDurationMillis: milliseconds(backupDuration), BackupLagSeconds: backupLag.Seconds(),
 		AgentRegistryHeapBytes: agentHeapGrowth, RegistryBytesPerAgent: agentHeapGrowth / scaleAgents,
@@ -217,8 +203,7 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 
 	assert.Equal(t, scaleQueueSize, jobAccepted)
 	assert.Less(t, result.HeartbeatFlush.P99Millis, 30_000.0)
-	assert.Less(t, result.Dispatch.P99Millis, 10_000.0)
-	assert.Less(t, result.Result.P99Millis, 10_000.0)
+	assert.Less(t, result.Sync.P99Millis, 10_000.0)
 	assert.Less(t, result.Search.P99Millis, 5_000.0)
 	assert.Less(t, result.TerminalRoute.P99Millis, 100.0)
 	assert.Less(t, result.BackupDurationMillis, 120_000.0)
@@ -245,37 +230,6 @@ func seedScaleDevices(t *testing.T, raw *testdb.DB, now time.Time) []string {
 	return ids
 }
 
-func seedScaleDeliveries(t *testing.T, raw *testdb.DB, deviceIDs []string, now time.Time) []scaleDelivery {
-	t.Helper()
-	manifestID, actionID := newID(), newID()
-	manifest := &cadestrov1.Manifest{
-		ManifestId: manifestID,
-		Provenance: &cadestrov1.ManifestProvenance{ActionId: actionID},
-		Schedule:   &cadestrov1.ActionSchedule{RunOnAssign: true},
-		Occurrences: []*cadestrov1.ManifestOccurrence{{
-			OccurrenceId: newID(),
-			Action:       &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE},
-		}},
-	}
-	payload, err := protojson.Marshal(manifest)
-	require.NoError(t, err)
-	items := make([]scaleDelivery, scaleDeliveries)
-	tx, err := raw.Begin(context.Background())
-	require.NoError(t, err)
-	defer func() { _ = tx.Rollback(context.Background()) }()
-	for index := range scaleDeliveries {
-		items[index] = scaleDelivery{deliveryID: newID(), deviceID: deviceIDs[index], manifestID: manifestID}
-		_, err = tx.Exec(context.Background(), `
-			INSERT INTO deliveries
-				(delivery_id, device_id, manifest_id, manifest, state, created_at, available_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			items[index].deliveryID, items[index].deviceID, manifestID, payload, "PENDING", now, now)
-		require.NoError(t, err)
-	}
-	require.NoError(t, tx.Commit(context.Background()))
-	return items
-}
-
 func fillJobQueue(runner *jobs.Runner) int {
 	accepted := 0
 	for range scaleAgents {
@@ -286,23 +240,15 @@ func fillJobQueue(runner *jobs.Runner) int {
 	return accepted
 }
 
-func exerciseDeliveryLifecycle(ctx context.Context, syncer *agentsync.Service, state *delivery.Service, items []scaleDelivery) (map[string][]time.Duration, error) {
-	out := map[string][]time.Duration{"dispatch": {}, "result": {}}
-	for _, item := range items {
+func exerciseSync(ctx context.Context, syncer *agentsync.Service, deviceIDs []string) (map[string][]time.Duration, error) {
+	out := map[string][]time.Duration{"sync": {}}
+	for _, deviceID := range deviceIDs[:scaleSearches] {
 		started := time.Now()
-		snapshot, err := syncer.Sync(ctx, item.deviceID)
+		_, err := syncer.Sync(ctx, deviceID)
 		if err != nil {
 			return nil, err
 		}
-		if len(snapshot.Deliveries) != 1 || snapshot.Deliveries[0].DeliveryId != item.deliveryID {
-			return nil, fmt.Errorf("sync did not return delivery %s", item.deliveryID)
-		}
-		out["dispatch"] = append(out["dispatch"], time.Since(started))
-		resultStarted := time.Now()
-		if _, err := state.Complete(ctx, item.deliveryID, item.deviceID, item.manifestID, delivery.StateSucceeded, "OK"); err != nil {
-			return nil, err
-		}
-		out["result"] = append(out["result"], time.Since(resultStarted))
+		out["sync"] = append(out["sync"], time.Since(started))
 	}
 	return out, nil
 }
@@ -443,13 +389,11 @@ func positiveDelta(after, before uint64) uint64 {
 	return after - before
 }
 
-func assertScaleDatabaseState(t *testing.T, ctx context.Context, raw *testdb.DB, agents, deliveries int) {
+func assertScaleDatabaseState(t *testing.T, ctx context.Context, raw *testdb.DB, agents int) {
 	t.Helper()
-	var storedAgents, seenAgents, completedDeliveries int
+	var storedAgents, seenAgents int
 	require.NoError(t, raw.QueryRow(ctx, `SELECT count(*) FROM devices`).Scan(&storedAgents))
 	require.NoError(t, raw.QueryRow(ctx, `SELECT count(*) FROM devices WHERE last_seen_at IS NOT NULL`).Scan(&seenAgents))
-	require.NoError(t, raw.QueryRow(ctx, `SELECT count(*) FROM deliveries WHERE state = 'SUCCEEDED'`).Scan(&completedDeliveries))
 	assert.Equal(t, agents, storedAgents)
 	assert.Equal(t, agents, seenAgents)
-	assert.Equal(t, deliveries, completedDeliveries)
 }

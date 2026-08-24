@@ -12,7 +12,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
@@ -110,30 +109,6 @@ func (f *dispatchHandlerFixture) actor(perms ...string) context.Context {
 	})
 }
 
-func (f *dispatchHandlerFixture) manifest(deliveryID string) *cadestrov1.Manifest {
-	f.t.Helper()
-	row, err := f.store.GetDelivery(context.Background(), deliveryID)
-	require.NoError(f.t, err)
-	var result cadestrov1.Manifest
-	require.NoError(f.t, protojson.Unmarshal(row.Manifest, &result))
-	return &result
-}
-
-func (f *dispatchHandlerFixture) deliveryIDs() []string {
-	f.t.Helper()
-	rows, err := f.raw.Query(context.Background(), `SELECT delivery_id FROM deliveries ORDER BY rowid`)
-	require.NoError(f.t, err)
-	defer rows.Close()
-	var ids []string
-	for rows.Next() {
-		var id string
-		require.NoError(f.t, rows.Scan(&id))
-		ids = append(ids, id)
-	}
-	require.NoError(f.t, rows.Err())
-	return ids
-}
-
 func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, targetID string, mode cadestrov1.AssignmentMode) {
 	f.t.Helper()
 	_, err := f.raw.Exec(context.Background(), `
@@ -159,9 +134,6 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 		Now:         func() time.Time { return f.now },
 		AtRest:      f.atRest,
 	})
-	rows, err := f.store.ListDueDeviceDeliveries(context.Background(), f.deviceID, f.now, 10)
-	require.NoError(t, err)
-	require.Empty(t, rows, "policy must not be materialized before an agent pulls it")
 	otherState, err := syncer.Sync(context.Background(), f.otherDevice)
 	require.NoError(t, err)
 	require.NotNil(t, otherState.DesiredPolicy)
@@ -169,7 +141,6 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 
 	state, err := syncer.Sync(context.Background(), f.deviceID)
 	require.NoError(t, err)
-	require.Empty(t, state.Deliveries, "assignment policy is returned only in the explicit Sync snapshot")
 	require.NotNil(t, state.DesiredPolicy)
 	require.Len(t, state.DesiredPolicy.Manifests, 1, "a Definition is one globally ordered runbook")
 	require.Len(t, state.DesiredPolicy.Manifests[0].Occurrences, 2)
@@ -215,72 +186,11 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	assert.NotEqual(t, reordered.DesiredPolicy.Revision, forced.DesiredPolicy.Revision)
 	assert.NotEqual(t, reordered.DesiredPolicy.Manifests[0].ManifestId, forced.DesiredPolicy.Manifests[0].ManifestId)
 
-	rows, err = f.store.ListDueDeviceDeliveries(context.Background(), f.deviceID, f.now, 10)
-	require.NoError(t, err)
-	require.Empty(t, rows, "Sync policy is not a server delivery")
-
 	_, err = f.raw.Exec(context.Background(), `DELETE FROM assignments WHERE source_id IN ($1, $2)`, f.definition, f.actionID)
 	require.NoError(t, err)
 	state, err = syncer.Sync(context.Background(), f.deviceID)
 	require.NoError(t, err)
 	require.Empty(t, state.DesiredPolicy.Manifests, "unassignment must be observable on the next pull")
-	rows, err = f.store.ListDueDeviceDeliveries(context.Background(), f.deviceID, f.now, 10)
-	require.NoError(t, err)
-	require.Empty(t, rows)
-}
-
-func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
-	ctx := f.actor("DispatchAction")
-
-	catalog, err := f.handlers.DispatchAction(ctx, connect.NewRequest(&cadestrov1.DispatchActionRequest{
-		DeviceId: f.deviceID,
-		ActionSource: &cadestrov1.DispatchActionRequest_ActionId{
-			ActionId: f.actionID,
-		},
-	}))
-	require.NoError(t, err)
-	ids := f.deliveryIDs()
-	require.Len(t, ids, 1)
-	assert.Equal(t, f.actionID, catalog.Msg.Execution.ActionId)
-	assert.Equal(t, cadestrov1.ExecutionStatus_EXECUTION_STATUS_PENDING, catalog.Msg.Execution.Status)
-	catalogManifest := f.manifest(ids[0])
-	require.NotNil(t, catalogManifest.Schedule)
-	assert.Empty(t, catalogManifest.Schedule.Cron,
-		"an explicit dispatch runs once instead of adopting the authored manifest schedule")
-	assert.Zero(t, catalogManifest.Schedule.IntervalHours)
-	assert.False(t, catalogManifest.Schedule.RunOnAssign)
-	assert.False(t, catalogManifest.Schedule.SkipIfUnchanged)
-	require.Len(t, catalogManifest.Occurrences, 1)
-	assert.Equal(t, "0 4 * * *", catalogManifest.Occurrences[0].Action.Schedule.Cron,
-		"the nested Action keeps its authoring/display schedule")
-
-	inlineID := newID()
-	inline, err := f.handlers.DispatchAction(ctx, connect.NewRequest(&cadestrov1.DispatchActionRequest{
-		DeviceId: f.deviceID,
-		ActionSource: &cadestrov1.DispatchActionRequest_InlineAction{InlineAction: &cadestrov1.Action{
-			Id: &cadestrov1.ActionId{Value: inlineID}, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
-			DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
-			Params:       &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "printf inline"}},
-		}},
-	}))
-	require.NoError(t, err)
-	ids = f.deliveryIDs()
-	require.Len(t, ids, 2)
-	assert.Empty(t, inline.Msg.Execution.ActionId, "an inline action is not a catalog reference")
-	inlineManifest := f.manifest(ids[1])
-	assert.Equal(t, inlineID, inlineManifest.Provenance.ActionId)
-	assert.Equal(t, "printf inline", inlineManifest.Occurrences[0].Action.GetShell().Script)
-	assert.Equal(t, int32(300), inlineManifest.Occurrences[0].Action.TimeoutSeconds)
-
-	operation, err := latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceDispatchActionProcedure)
-	require.NoError(t, err)
-	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	require.Len(t, effects, 2)
-	assert.ElementsMatch(t, []string{"delivery", "execution"},
-		[]string{effects[0].ResourceType, effects[1].ResourceType})
 }
 
 func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing.T) {
@@ -306,16 +216,6 @@ func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing
 	require.NoError(t, err)
 	_, err = f.handlers.RebootDevice(f.actor("RebootDevice"), connect.NewRequest(&cadestrov1.RebootDeviceRequest{DeviceId: f.deviceID}))
 	require.NoError(t, err)
-	assert.Empty(t, f.deliveryIDs())
-
-	_, err = f.handlers.DispatchAction(f.actor("DispatchAction"), connect.NewRequest(&cadestrov1.DispatchActionRequest{
-		DeviceId: f.deviceID,
-		ActionSource: &cadestrov1.DispatchActionRequest_InlineAction{InlineAction: &cadestrov1.Action{
-			Id: &cadestrov1.ActionId{Value: newID()}, Type: cadestrov1.ActionType_ACTION_TYPE_USER,
-			Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "mismatch"}},
-		}},
-	}))
-	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
 
 func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
@@ -333,199 +233,11 @@ func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
 	assert.Equal(t, string(store.EffectFailed), effects[1].Outcome)
 }
 
-func TestDispatchHandlers_ActionSetAndDefinitionPreserveComposition(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
-	setResponse, err := f.handlers.DispatchActionSet(f.actor("DispatchActionSet"),
-		connect.NewRequest(&cadestrov1.DispatchActionSetRequest{
-			DeviceId: f.deviceID, ActionSetId: f.set1,
-		}))
-	require.NoError(t, err)
-	require.Len(t, setResponse.Msg.Executions, 1)
-	ids := f.deliveryIDs()
-	require.Len(t, ids, 1)
-	setManifest := f.manifest(ids[0])
-	assert.Equal(t, f.set1, setManifest.Provenance.ActionSetId)
-	assert.Empty(t, setManifest.Schedule.Cron)
-	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, setManifest.DefaultOnFailure)
-	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, setManifest.Occurrences[0].OnFailure)
-
-	definitionResponse, err := f.handlers.DispatchDefinition(f.actor("DispatchDefinition"),
-		connect.NewRequest(&cadestrov1.DispatchDefinitionRequest{
-			DeviceId: f.deviceID, DefinitionId: f.definition,
-		}))
-	require.NoError(t, err)
-	require.Len(t, definitionResponse.Msg.Executions, 2, "one execution is created per ordered occurrence")
-	ids = f.deliveryIDs()
-	require.Len(t, ids, 2)
-	definitionManifest := f.manifest(ids[1])
-	assert.Equal(t, f.definition, definitionManifest.Provenance.DefinitionId)
-	assert.Empty(t, definitionManifest.Provenance.ActionSetId)
-	require.Len(t, definitionManifest.Occurrences, 2)
-	assert.Equal(t, []string{f.actionID, f.actionID}, []string{
-		definitionManifest.Occurrences[0].Action.Id.Value,
-		definitionManifest.Occurrences[1].Action.Id.Value,
-	}, "definition set order is preserved")
-	assert.Equal(t, []cadestrov1.OnFailure{
-		cadestrov1.OnFailure_ON_FAILURE_STOP, cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
-	}, []cadestrov1.OnFailure{
-		definitionManifest.Occurrences[0].OnFailure,
-		definitionManifest.Occurrences[1].OnFailure,
-	})
-	operation, err := latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceDispatchDefinitionProcedure)
-	require.NoError(t, err)
-	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	require.Len(t, effects, 3, "one delivery and two occurrence executions share one initiating operation")
-	row, err := f.store.GetDelivery(context.Background(), ids[1])
-	require.NoError(t, err)
-	require.NotNil(t, row.OperationID)
-	assert.Equal(t, operation.OperationID, *row.OperationID)
-
-	var set1Schedule, set2Schedule string
-	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT (SELECT schedule FROM action_sets WHERE id = $1),
-		       (SELECT schedule FROM action_sets WHERE id = $2)`, f.set1, f.set2).
-		Scan(&set1Schedule, &set2Schedule))
-	assert.JSONEq(t, `{"cron":"0 2 * * *"}`, set1Schedule)
-	assert.JSONEq(t, `{"runOnAssign":true}`, set2Schedule)
-}
-
-func TestDispatchHandlers_ExplicitDispatchMarksEveryManifestOneShot(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
-
-	_, err := f.handlers.DispatchAction(f.actor("DispatchAction"),
-		connect.NewRequest(&cadestrov1.DispatchActionRequest{
-			DeviceId:     f.deviceID,
-			ActionSource: &cadestrov1.DispatchActionRequest_ActionId{ActionId: f.actionID},
-		}))
-	require.NoError(t, err)
-	ids := f.deliveryIDs()
-	require.Len(t, ids, 1)
-	catalog := f.manifest(ids[0])
-	assert.True(t, catalog.GetOneShot(),
-		"an explicitly dispatched catalog action executes exactly once")
-	assert.Empty(t, catalog.Schedule.Cron)
-
-	_, err = f.handlers.DispatchActionSet(f.actor("DispatchActionSet"),
-		connect.NewRequest(&cadestrov1.DispatchActionSetRequest{
-			DeviceId: f.deviceID, ActionSetId: f.set1,
-		}))
-	require.NoError(t, err)
-	ids = f.deliveryIDs()
-	require.Len(t, ids, 2)
-	set := f.manifest(ids[1])
-	assert.True(t, set.GetOneShot(),
-		"an explicitly dispatched ActionSet executes exactly once")
-	assert.Empty(t, set.Schedule.Cron)
-
-	_, err = f.handlers.DispatchDefinition(f.actor("DispatchDefinition"),
-		connect.NewRequest(&cadestrov1.DispatchDefinitionRequest{
-			DeviceId: f.deviceID, DefinitionId: f.definition,
-		}))
-	require.NoError(t, err)
-	ids = f.deliveryIDs()
-	require.Len(t, ids, 3)
-	for _, deliveryID := range ids[2:] {
-		compiled := f.manifest(deliveryID)
-		assert.True(t, compiled.GetOneShot(),
-			"an explicitly dispatched Definition runbook executes exactly once")
-		assert.Empty(t, compiled.Schedule.Cron)
-	}
-}
-
-func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
-	multiple, err := f.handlers.DispatchToMultiple(f.actor("DispatchToMultiple"),
-		connect.NewRequest(&cadestrov1.DispatchToMultipleRequest{
-			DeviceIds: []string{f.deviceID, f.otherDevice},
-			ActionSource: &cadestrov1.DispatchToMultipleRequest_ActionId{
-				ActionId: f.actionID,
-			},
-		}))
-	require.NoError(t, err)
-	require.Len(t, multiple.Msg.Executions, 2)
-	assert.Equal(t, []string{f.deviceID, f.otherDevice}, []string{
-		multiple.Msg.Executions[0].DeviceId, multiple.Msg.Executions[1].DeviceId,
-	})
-	ids := f.deliveryIDs()
-	require.Len(t, ids, 2)
-	firstManifest, secondManifest := f.manifest(ids[0]), f.manifest(ids[1])
-	assert.NotEqual(t, firstManifest.ManifestId, secondManifest.ManifestId)
-	assert.NotEqual(t, firstManifest.Occurrences[0].OccurrenceId, secondManifest.Occurrences[0].OccurrenceId)
-	operation, err := latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceDispatchToMultipleProcedure)
-	require.NoError(t, err)
-	effects, err := f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	require.Len(t, effects, 4)
-
-	group, err := f.handlers.DispatchToGroup(f.actor("DispatchToGroup"),
-		connect.NewRequest(&cadestrov1.DispatchToGroupRequest{
-			GroupId: f.groupID,
-			ActionSource: &cadestrov1.DispatchToGroupRequest_DefinitionId{
-				DefinitionId: f.definition,
-			},
-		}))
-	require.NoError(t, err)
-	require.Len(t, group.Msg.Executions, 4, "one runbook is copied to each of two devices")
-	require.Len(t, f.deliveryIDs(), 4)
-	counts := map[string]int{}
-	for _, execution := range group.Msg.Executions {
-		counts[execution.DeviceId]++
-	}
-	assert.Equal(t, map[string]int{f.deviceID: 2, f.otherDevice: 2}, counts)
-	operation, err = latestOperationFor(t, f.store, f.raw,
-		cadestrov1connect.ControlServiceDispatchToGroupProcedure)
-	require.NoError(t, err)
-	effects, err = f.store.ListAuditEffects(context.Background(), operation.OperationID)
-	require.NoError(t, err)
-	require.Len(t, effects, 6, "two deliveries and four executions share the group operation")
-}
-
-func TestDispatchHandlers_RefuseUnauthorizedAndMissingTargetsWithoutWork(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
-	request := connect.NewRequest(&cadestrov1.DispatchActionRequest{
-		DeviceId: f.deviceID,
-		ActionSource: &cadestrov1.DispatchActionRequest_ActionId{
-			ActionId: f.actionID,
-		},
-	})
-	_, err := f.handlers.DispatchAction(f.actor(), request)
-	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-
-	request.Msg.DeviceId = newID()
-	_, err = f.handlers.DispatchAction(f.actor("DispatchAction"), request)
-	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
-	_, err = f.handlers.DispatchToMultiple(f.actor("DispatchToMultiple"),
-		connect.NewRequest(&cadestrov1.DispatchToMultipleRequest{
-			DeviceIds: []string{f.deviceID, f.deviceID},
-			ActionSource: &cadestrov1.DispatchToMultipleRequest_ActionId{
-				ActionId: f.actionID,
-			},
-		}))
-	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	emptyGroup := newID()
-	_, err = f.raw.Exec(context.Background(), `
-		INSERT INTO device_groups (id, name, created_at) VALUES ($1, 'empty', $2)`, emptyGroup, f.now)
-	require.NoError(t, err)
-	_, err = f.handlers.DispatchToGroup(f.actor("DispatchToGroup"),
-		connect.NewRequest(&cadestrov1.DispatchToGroupRequest{GroupId: emptyGroup}))
-	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err),
-		"an empty group must not make a missing action source look successful")
-	assert.Empty(t, f.deliveryIDs())
-}
-
 func TestDispatchHandlers_MountsExactInitialSurface(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
 	assert.ElementsMatch(t, []string{
-		cadestrov1connect.ControlServiceDispatchActionProcedure,
 		cadestrov1connect.ControlServiceSyncDeviceProcedure,
 		cadestrov1connect.ControlServiceRebootDeviceProcedure,
-		cadestrov1connect.ControlServiceDispatchActionSetProcedure,
-		cadestrov1connect.ControlServiceDispatchDefinitionProcedure,
-		cadestrov1connect.ControlServiceDispatchToMultipleProcedure,
-		cadestrov1connect.ControlServiceDispatchToGroupProcedure,
 	}, f.handlers.MountActions(http.NewServeMux()))
 	assert.ElementsMatch(t, f.handlers.MountActions(http.NewServeMux()), dispatch.MutationProcedures())
 }

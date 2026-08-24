@@ -14,7 +14,6 @@
       "AssignDevice",
       "AssignRoleToUser",
       "AssignRoleToUserGroup",
-      "CancelExecution",
       "CreateAction",
       "CreateActionSet",
       "CreateAssignment",
@@ -38,12 +37,7 @@
       "DeleteToken",
       "DeleteUserGroup",
       "DisableSCIM",
-      "DispatchAction",
-      "DispatchActionSet",
-      "DispatchDefinition",
       "DispatchOSQuery",
-      "DispatchToGroup",
-      "DispatchToMultiple",
       "EnableSCIM",
       "EraseJITUser",
       "EvaluateDynamicGroup",
@@ -61,7 +55,6 @@
       "GetDeviceGroup",
       "GetDeviceInventory",
       "GetDeviceLogResult",
-      "GetExecution",
       "GetIdentityProvider",
       "GetOSQueryResult",
       "GetRole",
@@ -83,7 +76,6 @@
       "ListDeviceGroups",
       "ListDeviceGroupsForDevice",
       "ListDevices",
-      "ListExecutions",
       "ListIdentityLinks",
       "ListIdentityProviders",
       "ListLpsPasswords",
@@ -169,5 +161,5 @@
       "GetEnrollmentStatus"
     ]
   },
-  "total": 161
+  "total": 153
 }

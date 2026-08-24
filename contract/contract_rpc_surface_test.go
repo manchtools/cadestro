@@ -369,8 +369,7 @@ func TestContract_TargetShape(t *testing.T) {
 	msgs := contractMessages(t)
 
 	for _, name := range []protoreflect.Name{
-		"Manifest", "ManifestProvenance", "ManifestOccurrence", "ManifestDelivery",
-		"ManifestResult",
+		"Manifest", "ManifestProvenance", "ManifestOccurrence", "ManifestResult",
 	} {
 		if _, ok := msgs[name]; !ok {
 			t.Errorf("message %s is absent from the shipped contract", name)
@@ -415,13 +414,10 @@ func TestContract_TargetShape(t *testing.T) {
 		{"ActionSet", "on_failure", protoreflect.EnumKind, "", false, "the set cannot retain its authored failure policy"},
 		{"CreateActionSetRequest", "on_failure", protoreflect.EnumKind, "", false, "a set cannot be authored with STOP"},
 		{"UpdateActionSetScheduleRequest", "on_failure", protoreflect.EnumKind, "", false, "the set execution policy cannot be changed"},
-		{"ManifestDelivery", "delivery_id", protoreflect.StringKind, "", false, "delivery has no identity stable across transport retries"},
-		{"ManifestDelivery", "manifest", protoreflect.MessageKind, "Manifest", false, "the delivery carries no manifest"},
-		{"ActionResult", "delivery_id", protoreflect.StringKind, "", false, "per-action result ingestion cannot be idempotent"},
+		{"ActionResult", "run_id", protoreflect.StringKind, "", false, "per-action result ingestion cannot be idempotent"},
 		{"ActionResult", "occurrence_id", protoreflect.StringKind, "", false, "per-action result ingestion cannot be idempotent"},
-		{"ManifestResult", "delivery_id", protoreflect.StringKind, "", false, "the manifest result cannot be matched to its delivery"},
+		{"ManifestResult", "run_id", protoreflect.StringKind, "", false, "the manifest result cannot be matched to its run"},
 		{"ManifestResult", "manifest_id", protoreflect.StringKind, "", false, "the manifest result names no manifest"},
-		{"SyncState", "deliveries", protoreflect.MessageKind, "ManifestDelivery", true, "stream synchronization is not on the one dispatch model"},
 		{"AgentMessage", "manifest_result", protoreflect.MessageKind, "ManifestResult", false, "there is no result for the complete manifest"},
 	} {
 		md, ok := msgs[protoreflect.Name(f.msg)]

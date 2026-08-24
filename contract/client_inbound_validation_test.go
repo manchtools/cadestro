@@ -29,9 +29,6 @@ type recordingHandler struct {
 }
 
 func (h *recordingHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
-func (h *recordingHandler) OnManifestDelivery(context.Context, *cadestrov1.ManifestDelivery) error {
-	return nil
-}
 func (h *recordingHandler) OnQuery(context.Context, *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	atomic.AddInt32(&h.osqueryCalls, 1)
 	return nil, nil

@@ -9,13 +9,10 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
-	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -28,15 +25,14 @@ type HandlersConfig struct {
 	Now    func() time.Time
 }
 
-// Handlers implements direct manifest dispatch RPCs.
+// Handlers implements live device-control RPCs.
 type Handlers struct {
-	store     *store.Store
-	compiler  *manifest.Compiler
-	submitter *Service
-	logger    *slog.Logger
-	sender    func(deviceID string, message *cadestrov1.ServerMessage) error
-	liveMu    sync.Mutex
-	live      map[string]pendingLiveOperation
+	store    *store.Store
+	compiler *manifest.Compiler
+	logger   *slog.Logger
+	sender   func(deviceID string, message *cadestrov1.ServerMessage) error
+	liveMu   sync.Mutex
+	live     map[string]pendingLiveOperation
 }
 
 type pendingLiveOperation struct {
@@ -52,7 +48,7 @@ type liveOperationResult struct {
 
 const liveOperationTimeout = 20 * time.Second
 
-// NewHandlers constructs direct dispatch handlers.
+// NewHandlers constructs live device-control handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
 	if cfg.Store == nil {
 		panic("dispatch: handler store is required")
@@ -62,8 +58,7 @@ func NewHandlers(cfg HandlersConfig) *Handlers {
 	}
 	return &Handlers{
 		store: cfg.Store, compiler: manifest.New(cfg.Store),
-		submitter: New(Config{Store: cfg.Store, Now: cfg.Now}),
-		logger:    cfg.Logger, sender: cfg.Sender,
+		logger: cfg.Logger, sender: cfg.Sender,
 		live: make(map[string]pendingLiveOperation),
 	}
 }
@@ -133,249 +128,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 func (h *Handlers) internal(ctx context.Context, operation string, err error) *connect.Error {
 	h.logger.Error("dispatch RPC failed", "operation", operation, "error", err)
 	return rpcError(ctx, errInternal, connect.CodeInternal, "internal error")
-}
-
-// DispatchAction compiles one catalog or inline Action and durably submits it.
-func (h *Handlers) DispatchAction(ctx context.Context, req *connect.Request[cadestrov1.DispatchActionRequest]) (*connect.Response[cadestrov1.DispatchActionResponse], error) {
-	actor, err := h.actor(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.target(ctx, actor, "DispatchAction", req.Msg.DeviceId); err != nil {
-		return nil, err
-	}
-
-	var input ManifestInput
-	switch source := req.Msg.ActionSource.(type) {
-	case *cadestrov1.DispatchActionRequest_ActionId:
-		compiled, err := h.catalogActionTemplate(ctx, source.ActionId)
-		if err != nil {
-			return nil, err
-		}
-		input = ManifestInput{Manifest: compiled, PersistActionIDs: true}
-	case *cadestrov1.DispatchActionRequest_InlineAction:
-		compiled, err := h.inlineTemplate(ctx, source.InlineAction)
-		if err != nil {
-			return nil, err
-		}
-		input = ManifestInput{Manifest: compiled}
-	default:
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument,
-			"either action_id or inline_action is required")
-	}
-
-	scheduledFor, err := futureTime(req.Msg.RunAt)
-	if err != nil {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "run_at must be a valid future timestamp")
-	}
-	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchActionProcedure, "DispatchAction"),
-		DeviceID:  req.Msg.DeviceId, Manifests: []ManifestInput{input}, ScheduledFor: scheduledFor,
-	})
-	if err != nil {
-		if errors.Is(err, ErrInvalidInput) {
-			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid dispatch")
-		}
-		return nil, h.internal(ctx, "submit action dispatch", err)
-	}
-	return connect.NewResponse(&cadestrov1.DispatchActionResponse{
-		Execution: createdExecutionToProto(result.Executions[0]),
-	}), nil
-}
-
-// DispatchActionSet compiles the set once and submits its ordered occurrences
-// as one complete delivery.
-func (h *Handlers) DispatchActionSet(ctx context.Context, req *connect.Request[cadestrov1.DispatchActionSetRequest]) (*connect.Response[cadestrov1.DispatchActionSetResponse], error) {
-	actor, err := h.actor(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.target(ctx, actor, "DispatchActionSet", req.Msg.DeviceId); err != nil {
-		return nil, err
-	}
-	compiled, err := h.catalogActionSetTemplate(ctx, req.Msg.ActionSetId)
-	if err != nil {
-		return nil, err
-	}
-	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchActionSetProcedure, "DispatchActionSet"),
-		DeviceID:  req.Msg.DeviceId, Manifests: catalogManifests(compiled),
-	})
-	if err != nil {
-		return nil, h.submitError(ctx, "submit action set dispatch", err)
-	}
-	return connect.NewResponse(&cadestrov1.DispatchActionSetResponse{
-		Executions: createdExecutionsToProto(result.Executions),
-	}), nil
-}
-
-// DispatchDefinition compiles one globally ordered runbook and commits it
-// atomically without mutating any authored schedule.
-func (h *Handlers) DispatchDefinition(ctx context.Context, req *connect.Request[cadestrov1.DispatchDefinitionRequest]) (*connect.Response[cadestrov1.DispatchDefinitionResponse], error) {
-	actor, err := h.actor(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.target(ctx, actor, "DispatchDefinition", req.Msg.DeviceId); err != nil {
-		return nil, err
-	}
-	compiled, err := h.catalogDefinitionTemplate(ctx, req.Msg.DefinitionId)
-	if err != nil {
-		return nil, err
-	}
-	result, err := h.submitter.Submit(ctx, SubmitParams{
-		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchDefinitionProcedure, "DispatchDefinition"),
-		DeviceID:  req.Msg.DeviceId, Manifests: catalogManifests(compiled),
-	})
-	if err != nil {
-		return nil, h.submitError(ctx, "submit definition dispatch", err)
-	}
-	return connect.NewResponse(&cadestrov1.DispatchDefinitionResponse{
-		Executions: createdExecutionsToProto(result.Executions),
-	}), nil
-}
-
-// DispatchToMultiple atomically submits one Action to every named device.
-func (h *Handlers) DispatchToMultiple(ctx context.Context, req *connect.Request[cadestrov1.DispatchToMultipleRequest]) (*connect.Response[cadestrov1.DispatchToMultipleResponse], error) {
-	actor, err := h.actor(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if hasDuplicateIDs(req.Msg.DeviceIds) {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "device_ids contains duplicates")
-	}
-	for _, deviceID := range req.Msg.DeviceIds {
-		if err := h.target(ctx, actor, "DispatchToMultiple", deviceID); err != nil {
-			return nil, err
-		}
-	}
-
-	var targets []TargetInput
-	switch source := req.Msg.ActionSource.(type) {
-	case *cadestrov1.DispatchToMultipleRequest_ActionId:
-		compiled, err := h.catalogActionTemplate(ctx, source.ActionId)
-		if err != nil {
-			return nil, err
-		}
-		targets, err = freshTargets(req.Msg.DeviceIds, []*cadestrov1.Manifest{compiled}, true)
-		if err != nil {
-			return nil, h.internal(ctx, "prepare multi-device dispatch", err)
-		}
-	case *cadestrov1.DispatchToMultipleRequest_InlineAction:
-		compiled, err := h.inlineTemplate(ctx, source.InlineAction)
-		if err != nil {
-			return nil, err
-		}
-		targets, err = freshTargets(req.Msg.DeviceIds, []*cadestrov1.Manifest{compiled}, false)
-		if err != nil {
-			return nil, h.internal(ctx, "prepare multi-device dispatch", err)
-		}
-	default:
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument,
-			"either action_id or inline_action is required")
-	}
-	result, err := h.submitter.SubmitBatch(ctx, SubmitBatchParams{
-		Operation: h.operation(req, actor, cadestrov1connect.ControlServiceDispatchToMultipleProcedure, "DispatchToMultiple"),
-		Targets:   targets,
-	})
-	if err != nil {
-		return nil, h.submitError(ctx, "submit multi-device dispatch", err)
-	}
-	return connect.NewResponse(&cadestrov1.DispatchToMultipleResponse{
-		Executions: createdExecutionsToProto(result.Executions),
-	}), nil
-}
-
-// DispatchToGroup snapshots the group's live members, then atomically submits
-// one freshly identified copy of the selected source to every member.
-func (h *Handlers) DispatchToGroup(ctx context.Context, req *connect.Request[cadestrov1.DispatchToGroupRequest]) (*connect.Response[cadestrov1.DispatchToGroupResponse], error) {
-	actor, err := h.actor(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !auth.AuthorizeContext(ctx, "DispatchToGroup", req.Msg.GroupId) {
-		return nil, rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied, "permission denied")
-	}
-	if req.Msg.ActionSource == nil {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "an action source is required")
-	}
-	if _, err := h.store.GetDeviceGroup(ctx, req.Msg.GroupId); err != nil {
-		if store.IsNotFound(err) {
-			return nil, notFound(ctx, errDeviceGroupMissing, "device group not found")
-		}
-		return nil, h.internal(ctx, "read dispatch device group", err)
-	}
-	if groups, restricted := auth.DeviceScopeListFilter(ctx, "DispatchToGroup"); restricted && !containsID(groups, req.Msg.GroupId) {
-		return nil, notFound(ctx, errDeviceGroupMissing, "device group not found")
-	}
-	members, err := h.store.ListDeviceGroupMembers(ctx, req.Msg.GroupId)
-	if err != nil {
-		return nil, h.internal(ctx, "list dispatch group members", err)
-	}
-	deviceIDs := make([]string, len(members))
-	if len(members) == 0 && !auth.HasPermission(ctx, "DispatchToGroup") {
-		return nil, notFound(ctx, errDeviceGroupMissing, "device group not found")
-	}
-	for i, member := range members {
-		deviceIDs[i] = member.DeviceID
-		if err := h.target(ctx, actor, "DispatchToGroup", member.DeviceID); err != nil {
-			return nil, err
-		}
-	}
-
-	op := h.operation(req, actor, cadestrov1connect.ControlServiceDispatchToGroupProcedure, "DispatchToGroup")
-	if len(deviceIDs) == 0 {
-		_, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
-			ResourceType: "device_group", ResourceID: req.Msg.GroupId,
-			Action: "DISPATCH", Outcome: store.EffectApplied,
-		})
-		if err != nil {
-			return nil, h.internal(ctx, "audit empty group dispatch", err)
-		}
-		return connect.NewResponse(&cadestrov1.DispatchToGroupResponse{}), nil
-	}
-	var templates []*cadestrov1.Manifest
-	persistActionIDs := true
-	switch source := req.Msg.ActionSource.(type) {
-	case *cadestrov1.DispatchToGroupRequest_ActionId:
-		compiled, err := h.catalogActionTemplate(ctx, source.ActionId)
-		if err != nil {
-			return nil, err
-		}
-		templates = []*cadestrov1.Manifest{compiled}
-	case *cadestrov1.DispatchToGroupRequest_ActionSetId:
-		compiled, err := h.catalogActionSetTemplate(ctx, source.ActionSetId)
-		if err != nil {
-			return nil, err
-		}
-		templates = []*cadestrov1.Manifest{compiled}
-	case *cadestrov1.DispatchToGroupRequest_DefinitionId:
-		compiled, err := h.catalogDefinitionTemplate(ctx, source.DefinitionId)
-		if err != nil {
-			return nil, err
-		}
-		templates = []*cadestrov1.Manifest{compiled}
-	case *cadestrov1.DispatchToGroupRequest_InlineAction:
-		compiled, err := h.inlineTemplate(ctx, source.InlineAction)
-		if err != nil {
-			return nil, err
-		}
-		templates = []*cadestrov1.Manifest{compiled}
-		persistActionIDs = false
-	default:
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "an action source is required")
-	}
-	targets, err := freshTargets(deviceIDs, templates, persistActionIDs)
-	if err != nil {
-		return nil, h.internal(ctx, "prepare group dispatch", err)
-	}
-	result, err := h.submitter.SubmitBatch(ctx, SubmitBatchParams{Operation: op, Targets: targets})
-	if err != nil {
-		return nil, h.submitError(ctx, "submit group dispatch", err)
-	}
-	return connect.NewResponse(&cadestrov1.DispatchToGroupResponse{
-		Executions: createdExecutionsToProto(result.Executions),
-	}), nil
 }
 
 // SyncDevice asks a connected agent to run its normal full Sync.
@@ -532,187 +284,4 @@ func (h *Handlers) CompleteRebootDevice(ctx context.Context, deviceID, operation
 		return errors.New("reboot device result is required")
 	}
 	return h.completeLiveOperation(ctx, deviceID, operationID, "REBOOT", result.GetSuccess())
-}
-
-func (h *Handlers) compileError(ctx context.Context, operation string, err error) error {
-	switch {
-	case store.IsNotFound(err):
-		return notFound(ctx, errActionNotFound, "action not found")
-	case errors.Is(err, manifest.ErrInvalidInput), errors.Is(err, manifest.ErrEmptyManifest):
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid action")
-	default:
-		return h.internal(ctx, operation, err)
-	}
-}
-
-func (h *Handlers) collectionCompileError(ctx context.Context, resource string, code cadestrov1.ErrorCode, operation string, err error) error {
-	switch {
-	case store.IsNotFound(err):
-		return notFound(ctx, code, resource+" not found")
-	case errors.Is(err, manifest.ErrInvalidInput):
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid "+resource)
-	case errors.Is(err, manifest.ErrEmptyManifest):
-		return rpcError(ctx, errValidationFailed, connect.CodeFailedPrecondition, resource+" contains no executable actions")
-	default:
-		return h.internal(ctx, operation, err)
-	}
-}
-
-func (h *Handlers) submitError(ctx context.Context, operation string, err error) error {
-	if errors.Is(err, ErrInvalidInput) {
-		return rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid dispatch")
-	}
-	return h.internal(ctx, operation, err)
-}
-
-func catalogManifests(manifests ...*cadestrov1.Manifest) []ManifestInput {
-	inputs := make([]ManifestInput, len(manifests))
-	for i, compiled := range manifests {
-		inputs[i] = ManifestInput{Manifest: compiled, PersistActionIDs: true}
-	}
-	return inputs
-}
-
-func (h *Handlers) catalogActionTemplate(ctx context.Context, actionID string) (*cadestrov1.Manifest, error) {
-	compiled, err := h.compiler.Action(ctx, actionID)
-	if err != nil {
-		return nil, h.compileError(ctx, "compile dispatched action", err)
-	}
-	visible, err := authoring.ActionVisibleToCaller(ctx, h.store, actionID)
-	if err != nil {
-		return nil, h.internal(ctx, "resolve dispatched action scope", err)
-	}
-	if !visible {
-		return nil, notFound(ctx, errActionNotFound, "action not found")
-	}
-	return manifest.AsOneShot(compiled), nil
-}
-
-func (h *Handlers) catalogActionSetTemplate(ctx context.Context, setID string) (*cadestrov1.Manifest, error) {
-	compiled, err := h.compiler.ActionSet(ctx, setID)
-	if err != nil {
-		return nil, h.collectionCompileError(ctx, "action set", errActionSetMissing, "compile dispatched action set", err)
-	}
-	visible, err := authoring.ActionSetVisibleToCaller(ctx, h.store, setID)
-	if err != nil {
-		return nil, h.internal(ctx, "resolve dispatched action set scope", err)
-	}
-	if !visible {
-		return nil, notFound(ctx, errActionSetMissing, "action set not found")
-	}
-	return manifest.AsOneShot(compiled), nil
-}
-
-func (h *Handlers) catalogDefinitionTemplate(ctx context.Context, definitionID string) (*cadestrov1.Manifest, error) {
-	compiled, err := h.compiler.Definition(ctx, definitionID)
-	if err != nil {
-		return nil, h.collectionCompileError(ctx, "definition", errDefinitionMissing, "compile dispatched definition", err)
-	}
-	visible, err := authoring.DefinitionVisibleToCaller(ctx, h.store, definitionID)
-	if err != nil {
-		return nil, h.internal(ctx, "resolve dispatched definition scope", err)
-	}
-	if !visible {
-		return nil, notFound(ctx, errDefinitionMissing, "definition not found")
-	}
-	return manifest.AsOneShot(compiled), nil
-}
-
-func (h *Handlers) inlineTemplate(ctx context.Context, action *cadestrov1.Action) (*cadestrov1.Manifest, error) {
-	if action == nil {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid inline action")
-	}
-	if action.Type == cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION || action.Type == cadestrov1.ActionType_ACTION_TYPE_WIFI {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument,
-			"credential-bearing actions must be authored before dispatch")
-	}
-	inline := proto.Clone(action).(*cadestrov1.Action)
-	if inline.TimeoutSeconds == 0 {
-		inline.TimeoutSeconds = 300
-	}
-	if err := authoring.ValidateExecutableAction(inline); err != nil {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid inline action")
-	}
-	compiled, err := manifest.OneShotAction(inline)
-	if err != nil {
-		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid inline action")
-	}
-	return compiled, nil
-}
-
-func freshTargets(deviceIDs []string, templates []*cadestrov1.Manifest, persistActionIDs bool) ([]TargetInput, error) {
-	targets := make([]TargetInput, len(deviceIDs))
-	for deviceIndex, deviceID := range deviceIDs {
-		inputs := make([]ManifestInput, len(templates))
-		for manifestIndex, template := range templates {
-			compiled, err := manifest.FreshCopy(template)
-			if err != nil {
-				return nil, err
-			}
-			inputs[manifestIndex] = ManifestInput{Manifest: compiled, PersistActionIDs: persistActionIDs}
-		}
-		targets[deviceIndex] = TargetInput{DeviceID: deviceID, Manifests: inputs}
-	}
-	return targets, nil
-}
-
-func hasDuplicateIDs(ids []string) bool {
-	seen := make(map[string]struct{}, len(ids))
-	for _, id := range ids {
-		if _, duplicate := seen[id]; duplicate {
-			return true
-		}
-		seen[id] = struct{}{}
-	}
-	return false
-}
-
-func containsID(ids []string, wanted string) bool {
-	for _, id := range ids {
-		if id == wanted {
-			return true
-		}
-	}
-	return false
-}
-
-func futureTime(value *timestamppb.Timestamp) (*time.Time, error) {
-	if value == nil {
-		return nil, nil
-	}
-	if err := value.CheckValid(); err != nil {
-		return nil, err
-	}
-	result := value.AsTime().UTC()
-	return &result, nil
-}
-
-func createdExecutionToProto(row store.ExecutionView) *cadestrov1.ActionExecution {
-	status := cadestrov1.ExecutionStatus_EXECUTION_STATUS_PENDING
-	if row.Status == "scheduled" {
-		status = cadestrov1.ExecutionStatus_EXECUTION_STATUS_SCHEDULED
-	}
-	result := &cadestrov1.ActionExecution{
-		Id: row.ID, DeviceId: row.DeviceID, Type: cadestrov1.ActionType(row.ActionType),
-		DesiredState: cadestrov1.DesiredState(row.DesiredState), Status: status,
-		CreatedBy: row.CreatedByID,
-	}
-	if row.ActionID != nil {
-		result.ActionId = *row.ActionID
-	}
-	if row.CreatedAt != nil {
-		result.CreatedAt = timestamppb.New(*row.CreatedAt)
-	}
-	if row.ScheduledFor != nil {
-		result.ScheduledFor = timestamppb.New(*row.ScheduledFor)
-	}
-	return result
-}
-
-func createdExecutionsToProto(rows []store.ExecutionView) []*cadestrov1.ActionExecution {
-	result := make([]*cadestrov1.ActionExecution, len(rows))
-	for i := range rows {
-		result[i] = createdExecutionToProto(rows[i])
-	}
-	return result
 }

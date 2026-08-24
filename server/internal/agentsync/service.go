@@ -22,8 +22,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-const maxSyncDeliveries = int32(1024)
-
 var (
 	ErrInvalidInput = errors.New("invalid agent sync input")
 	ErrNotConnected = errors.New("agent stream is not connected")
@@ -71,29 +69,6 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*cadestrov1.SyncSt
 	if !connected || agent == nil || agent.Terminated() {
 		return nil, ErrNotConnected
 	}
-	now := s.now()
-	rows, err := s.store.ListDueDeviceDeliveries(ctx, deviceID, now, maxSyncDeliveries)
-	if err != nil {
-		return nil, err
-	}
-	deliveries := make([]*cadestrov1.ManifestDelivery, 0, len(rows))
-	for _, row := range rows {
-		// A delivery remains pullable until its terminal result. The stable id
-		// lets the agent absorb repeated Sync responses locally.
-		manifest := &cadestrov1.Manifest{}
-		if err := protojson.Unmarshal(row.Manifest, manifest); err != nil {
-			return nil, fmt.Errorf("decode delivery %s manifest: %w", row.DeliveryID, err)
-		}
-		if manifest.ManifestId != row.ManifestID {
-			return nil, fmt.Errorf("delivery %s manifest id mismatch", row.DeliveryID)
-		}
-		if err := manifestpkg.MaterializeSecrets(manifest, s.atRest); err != nil {
-			return nil, err
-		}
-		deliveries = append(deliveries, &cadestrov1.ManifestDelivery{
-			DeliveryId: row.DeliveryID, Manifest: manifest,
-		})
-	}
 	var desiredPolicy *cadestrov1.DesiredPolicy
 	if s.assignments != nil {
 		manifests, err := s.assignments.AssignedPolicy(ctx, deviceID)
@@ -117,7 +92,6 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*cadestrov1.SyncSt
 	}
 	return &cadestrov1.SyncState{
 		SyncIntervalMinutes: device.SyncIntervalMinutes,
-		Deliveries:          deliveries,
 		MaintenanceWindow:   window,
 		DesiredPolicy:       desiredPolicy,
 	}, nil

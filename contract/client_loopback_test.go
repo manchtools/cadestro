@@ -537,7 +537,7 @@ func TestRun_UnknownServerMessage_DoesNotTerminate(t *testing.T) {
 		// Push a Welcome so we can observe end-to-end dispatch worked.
 		if err := s.Send(&cadestrov1.ServerMessage{
 			Id:      NewULID(),
-			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}},
+			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{ServerVersion: "test"}},
 		}); err != nil {
 			return err
 		}
@@ -606,9 +606,6 @@ type welcomeRecordingHandler struct {
 
 func (h *welcomeRecordingHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	h.welcomed.Store(true)
-	return nil
-}
-func (h *welcomeRecordingHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
 	return nil
 }
 func (h *welcomeRecordingHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {

@@ -15,9 +15,6 @@ import (
 type noopStreamHandler struct{}
 
 func (noopStreamHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
-func (noopStreamHandler) OnManifestDelivery(context.Context, *cadestrov1.ManifestDelivery) error {
-	return nil
-}
 func (noopStreamHandler) OnQuery(context.Context, *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }

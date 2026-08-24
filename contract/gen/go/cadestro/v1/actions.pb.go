@@ -2864,18 +2864,15 @@ type ActionResult struct {
 	Compliant bool `protobuf:"varint,9,opt,name=compliant,proto3" json:"compliant,omitempty"`
 	// Detection script output (separate from execution output)
 	DetectionOutput *CommandOutput `protobuf:"bytes,10,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
-	// The delivery this result belongs to, and the authored position within
-	// that delivery's manifest. Together they make ingestion idempotent:
-	// control keys the stored result on (delivery_id, occurrence_id), so a
+	// The run this result belongs to, and the authored position within
+	// that run's manifest. Together they make ingestion idempotent:
+	// control keys the stored result on (run_id, occurrence_id), so a
 	// result replayed after a reconnect updates the same row instead of
 	// creating a second one. action_id alone cannot do this — duplicate
 	// authored occurrences of the same action are preserved and executed, so
 	// one delivery legitimately produces several results with the same
 	// action_id.
-	//
-	// Both are mandatory. Every execution descends from a ManifestDelivery
-	// returned by Sync, so a result that can name neither is not attributable.
-	DeliveryId    string `protobuf:"bytes,11,opt,name=delivery_id,json=deliveryId,proto3" json:"delivery_id,omitempty"`
+	RunId         string `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	OccurrenceId  string `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2981,9 +2978,9 @@ func (x *ActionResult) GetDetectionOutput() *CommandOutput {
 	return nil
 }
 
-func (x *ActionResult) GetDeliveryId() string {
+func (x *ActionResult) GetRunId() string {
 	if x != nil {
-		return x.DeliveryId
+		return x.RunId
 	}
 	return ""
 }
@@ -3379,7 +3376,7 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
 	"\x06hidden\x18\t \x01(\bR\x06hidden\x122\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\xa6\x05\n" +
+	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\x9c\x05\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12!\n" +
@@ -3393,9 +3390,8 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\bmetadata\x18\b \x03(\v2'.cadestro.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
 	"\tcompliant\x18\t \x01(\bR\tcompliant\x12E\n" +
 	"\x10detection_output\x18\n" +
-	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12)\n" +
-	"\vdelivery_id\x18\v \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
-	"deliveryId\x12-\n" +
+	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
+	"\x06run_id\x18\v \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05runId\x12-\n" +
 	"\roccurrence_id\x18\f \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\foccurrenceId\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

@@ -44,13 +44,12 @@ npm run preview
 - **Action sets and definitions** — ordered collections with drag-to-reorder
 - **Assignment policies** — source-to-target with REQUIRED/AVAILABLE/EXCLUDED modes, batch support
 - **Assign surface** — one page for two targeting modes: a *carried* selection handed over from the fleet (these devices, now) and a *rule* that compiles to a dynamic device group and keeps applying (whatever matches, now and later — gated by an explicit confirm)
-- **Operations feed** — executions cluster into operation cards instead of reading as a log; the same Search RPC still owns query, filters, sorting and paging underneath
 - **Compliance policies** — rules with grace periods, per-device evaluation status, policy inheritance through device groups
 - **Dynamic RBAC** — custom roles, user groups with additive permissions, per-permission granularity. The role editor is a permission matrix whose groups are discovered from `ListPermissions`, and it commits from the pill rather than from a Save button
 - **OIDC login** — identity providers, identity linking, and auto-created users; MFA stays at the IdP. There is no manual user creation; JIT-created users can be erased locally, SCIM-managed users are deprovisioned by the identity provider
 - **SCIM v2 provisioning** — enable/disable, token rotation, group mapping
 - **Full-text search** — the stable Search RPC, backed by SQLite FTS5 on the control server
-- **Audit log viewer** — operation/effect evidence without exposing secrets
+- **Audit log viewer** — operation and effect evidence remains searchable through the stable Search RPC
 - **Skeleton loading states** — all searchable pages use skeleton tables during load
 - **Row-list grammar** — entity lists are dense headerless rows, not tables: an icon or status tile, the name over its ULID, chips for state, a right-aligned stamp, and the former column headers moved into a sort bar
 - **Onboarding** — a first-run welcome per (server, user), a coach-mark tour bound to anchors that really exist on the page (a missing anchor drops its step instead of pointing at nothing), and a getting-started checklist on an empty fleet

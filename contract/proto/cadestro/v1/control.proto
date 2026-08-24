@@ -1368,83 +1368,6 @@ message GetUserAssignmentsResponse {
   repeated Assignment assignments = 1;
 }
 
-// ============================================================================
-// Action Dispatch & Execution
-// ============================================================================
-
-message ActionExecution {
-  string id = 1;
-  string device_id = 2;
-  string action_id = 3; // Reference to ManagedAction
-  ActionType type = 4;
-  ExecutionStatus status = 5;
-  string error = 6;
-  CommandOutput output = 7; // Final output (set on completion)
-  google.protobuf.Timestamp created_at = 8;
-  google.protobuf.Timestamp dispatched_at = 9;
-  google.protobuf.Timestamp completed_at = 10;
-  int64 duration_ms = 11;
-  string created_by = 12;
-  CommandOutput live_output = 13; // Streaming output received so far (useful when status is RUNNING)
-  DesiredState desired_state = 14; // Whether the action was meant to install/enable (PRESENT) or remove/disable (ABSENT)
-  bool changed = 15; // Whether the execution made changes to the system (false = state was already as desired)
-  bool compliant = 16; // Detection script result: true if compliant
-  CommandOutput detection_output = 17; // Detection script output
-  string action_name = 18; // Resolved from the action row (empty for inline actions)
-  // Set when status is SCHEDULED (or was, before dispatch fired). The
-  // UTC timestamp at which the deferred dispatch is configured to
-  // fire. Populated when a Dispatch* request supplies the run_at
-  // field so the server can defer the dispatch until the
-  // operator-chosen time.
-  google.protobuf.Timestamp scheduled_for = 19;
-}
-
-message DispatchActionRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
-  // Either use an action or inline action
-  oneof action_source {
-    string action_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // Reference to ManagedAction
-    Action inline_action = 3;
-  }
-  // When set, defer the dispatch until this UTC timestamp instead of
-  // running it immediately. The execution record is created up front
-  // with status SCHEDULED so the operator can see the pending dispatch
-  // in the execution-history UI before it fires; on run_at the
-  // deferred dispatch hits the standard path and the execution
-  // transitions through PENDING / RUNNING and then onward to a
-  // terminal status (SUCCESS, FAILED, TIMEOUT, SKIPPED, or
-  // CANCELLED) the same as any immediate dispatch. Cancelable via
-  // CancelExecution until the dispatch fires. Must be in the future
-  // at scheduling time.
-  google.protobuf.Timestamp run_at = 4;
-  // When true, the dispatched action still respects the device's
-  // maintenance window if the device has one configured. The default
-  // (false) bypasses the window so admins can override an active
-  // freeze.
-  bool respect_maintenance_window = 5;
-}
-
-message DispatchActionResponse {
-  ActionExecution execution = 1;
-}
-
-message DispatchToMultipleRequest {
-  repeated string device_ids = 1 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).required = true,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true
-  ];
-  oneof action_source {
-    string action_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // Reference to ManagedAction
-    Action inline_action = 3;
-  }
-}
-
-message DispatchToMultipleResponse {
-  repeated ActionExecution executions = 1;
-}
-
 message SyncDeviceRequest {
   string device_id = 1 [(buf.validate.field).string.ulid = true];
 }
@@ -1456,87 +1379,6 @@ message RebootDeviceRequest {
 }
 
 message RebootDeviceResponse {}
-
-// Dispatch all actions from an action set to a device
-message DispatchActionSetRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
-}
-
-message DispatchActionSetResponse {
-  repeated ActionExecution executions = 1;
-}
-
-// Dispatch all actions from a definition to a device
-message DispatchDefinitionRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
-  string definition_id = 2 [(buf.validate.field).string.ulid = true];
-}
-
-message DispatchDefinitionResponse {
-  repeated ActionExecution executions = 1;
-}
-
-// Dispatch to a device group
-message DispatchToGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
-  oneof action_source {
-    string action_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-    string action_set_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-    string definition_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-    Action inline_action = 5;
-  }
-}
-
-message DispatchToGroupResponse {
-  repeated ActionExecution executions = 1;
-}
-
-message GetExecutionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message GetExecutionResponse {
-  ActionExecution execution = 1;
-}
-
-message ListExecutionsRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  string device_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true]; // optional filter
-  ExecutionStatus status_filter = 4;
-  ActionType type_filter = 5; // optional action type filter
-  string search = 6 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ]; // searches action name and device hostname
-}
-
-message ListExecutionsResponse {
-  repeated ActionExecution executions = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-// CancelExecution prunes a scheduled or pending dispatch before it
-// fires. Idempotent and best-effort: once an execution leaves the
-// SCHEDULED / PENDING window the cancel is a documented no-op and the
-// returned execution reflects whatever terminal state it reached on
-// its own.
-message CancelExecutionRequest {
-  string execution_id = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message CancelExecutionResponse {
-  // The execution after the cancel attempt. Status will be CANCELLED
-  // when the dispatch was still pending; otherwise the execution
-  // reflects whatever state it had reached on its own.
-  ActionExecution execution = 1;
-}
 
 // ============================================================================
 // Audit Log
@@ -2854,17 +2696,9 @@ service ControlService {
   rpc SetUserSelection(SetUserSelectionRequest) returns (SetUserSelectionResponse);
   rpc ListAvailableActions(ListAvailableActionsRequest) returns (ListAvailableActionsResponse);
 
-  // Action Dispatch & Execution
-  rpc DispatchAction(DispatchActionRequest) returns (DispatchActionResponse);
-  rpc DispatchToMultiple(DispatchToMultipleRequest) returns (DispatchToMultipleResponse);
+  // Agent synchronization and live device control
   rpc SyncDevice(SyncDeviceRequest) returns (SyncDeviceResponse);
   rpc RebootDevice(RebootDeviceRequest) returns (RebootDeviceResponse);
-  rpc DispatchActionSet(DispatchActionSetRequest) returns (DispatchActionSetResponse);
-  rpc DispatchDefinition(DispatchDefinitionRequest) returns (DispatchDefinitionResponse);
-  rpc DispatchToGroup(DispatchToGroupRequest) returns (DispatchToGroupResponse);
-  rpc CancelExecution(CancelExecutionRequest) returns (CancelExecutionResponse);
-  rpc GetExecution(GetExecutionRequest) returns (GetExecutionResponse);
-  rpc ListExecutions(ListExecutionsRequest) returns (ListExecutionsResponse);
 
   // Audit Log
   rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);

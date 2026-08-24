@@ -19,7 +19,6 @@ const (
 	errInternal                = cadestrov1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
 	errDeviceNotFound          = cadestrov1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND
 	errQueryResultMissing      = cadestrov1.ErrorCode_ERROR_CODE_QUERY_RESULT_NOT_FOUND
-	errExecutionNotFound       = cadestrov1.ErrorCode_ERROR_CODE_EXECUTION_NOT_FOUND
 	errActionNotFound          = cadestrov1.ErrorCode_ERROR_CODE_ACTION_NOT_FOUND
 	errLpsPasswordNotFound     = cadestrov1.ErrorCode_ERROR_CODE_LPS_PASSWORD_NOT_FOUND
 	errLuksKeyNotFound         = cadestrov1.ErrorCode_ERROR_CODE_LUKS_KEY_NOT_FOUND

@@ -35,7 +35,7 @@ sqlc-generate:
 	stage=$$(mktemp -d internal/store/.sqlc.XXXXXX); \
 	trap 'rm -rf "$$stage"' EXIT INT TERM; \
 	cp -R internal/store/sqlc.yaml internal/store/migrations internal/store/queries "$$stage/"; \
-	$(DOCKER) run --rm --user "$$(id -u):$$(id -g)" \
+	$(DOCKER) run --rm --memory=6g --cpus=4 --user "$$(id -u):$$(id -g)" \
 		-v "$$(realpath "$$stage")":/src:Z -w /src $(SQLC_IMAGE) generate; \
 	mv internal/store/generated "$$stage/previous"; \
 	if mv "$$stage/generated" internal/store/generated; then \

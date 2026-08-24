@@ -180,11 +180,8 @@ var requiredForeignKeys = []string{
 	"terminal_sessions.device_id -> devices",
 	"terminal_sessions.user_id -> users",
 	"user_selections.device_id -> devices",
-	"executions.device_id -> devices",
-	"executions.action_id -> actions",
 	"device_labels.device_id -> devices",
 	"devices.registration_token_id -> tokens",
-	"deliveries.device_id -> devices",
 
 	"device_secrets.device_id -> devices",
 	"lps_passwords.id -> device_secrets",
@@ -231,7 +228,6 @@ func TestForeignKeys_EveryDomainLinkIsDeclared(t *testing.T) {
 // References that stay unconstrained on purpose, each for a reason a
 // well-meaning future change would undo.
 var unconstrainedReferences = map[string]string{
-	"deliveries.operation_id": "the audit log is evidence, not state: retention must never be blocked by a delivery",
 
 	"assignments.source_id":     "polymorphic: the parent table is chosen by a sibling column",
 	"assignments.target_id":     "polymorphic: the parent table is chosen by a sibling column",
@@ -240,7 +236,6 @@ var unconstrainedReferences = map[string]string{
 	"user_groups.dynamic_query":   "a query, not a reference",
 	"device_groups.dynamic_query": "a query, not a reference",
 
-	"executions.created_by_id":        "historical actor: constraining it would rewrite what happened",
 	"security_alerts.acknowledged_by": "historical actor: constraining it would rewrite what happened",
 	"terminal_sessions.terminated_by": "historical actor: constraining it would rewrite what happened",
 	"user_roles.assigned_by":          "historical actor: constraining it would rewrite what happened",
@@ -280,13 +275,6 @@ func TestForeignKeys_RejectOrphanRows(t *testing.T) {
 	exec(t, pool, `INSERT INTO actions (id, name, action_type) VALUES ($1, 'rotate', 1)`, actionID)
 	user := seedUser(t, pool)
 	role := seedRole(t, pool)
-
-	t.Run("delivery for an unknown device", func(t *testing.T) {
-		err := execFails(t, pool, `INSERT INTO deliveries
-			(delivery_id, device_id, manifest_id, manifest, state)
-			VALUES ($1, $2, $3, '{}', 'PENDING')`, newID(), newID(), newID())
-		assert.Contains(t, err.Error(), "FOREIGN KEY constraint failed")
-	})
 
 	t.Run("membership in an unknown group", func(t *testing.T) {
 		err := execFails(t, pool,

@@ -24,7 +24,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/controlrpc"
 	"github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/device"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
@@ -99,8 +98,7 @@ func New(cfg Config) *Runtime {
 	manager := connection.NewManager()
 	sessions := connection.NewTerminalSessionRegistry()
 	tokens := terminal.NewTokenStore(terminal.NewMemoryBackend(cfg.Now), terminal.WithClock(cfg.Now))
-	deliveryState := delivery.New(delivery.Config{Store: cfg.Store, Now: cfg.Now})
-	executionResults := execution.New(execution.Config{Store: cfg.Store, Now: cfg.Now})
+	executionResults := execution.New(execution.Config{Store: cfg.Store})
 	deviceHandlers := device.New(device.Config{
 		Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now,
 		CloseStream: manager.Unregister, AgentSender: manager, Decryptor: cfg.AtRest,
@@ -118,7 +116,7 @@ func New(cfg Config) *Runtime {
 		AtRest: cfg.AtRest,
 	})
 	agentService := agentstream.New(agentstream.Config{
-		Store: cfg.Store, Manager: manager, Deliveries: deliveryState, Executions: executionResults,
+		Store: cfg.Store, Manager: manager, PolicyResults: cfg.Store, Executions: executionResults,
 		DeviceResults: deviceHandlers, Secrets: secretService, Sync: syncService,
 		LiveOperations:   dispatchHandlers,
 		TerminalSessions: sessions, Logger: cfg.Logger, ServerVersion: cfg.Version,

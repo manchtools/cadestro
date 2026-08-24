@@ -1,7 +1,6 @@
 package store
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -27,10 +26,9 @@ const (
 )
 
 type ScheduledWork struct {
-	Delivery      *pb.ManifestDelivery
+	Manifest      *pb.Manifest
 	WorkID        string
 	RunID         string
-	Kind          string
 	ReceivedAt    time.Time
 	LastExecuted  *time.Time
 	NextExecuteAt time.Time
@@ -52,14 +50,13 @@ type PendingResult struct {
 
 func (s *Store) resolveWorkID(id string) (string, error) {
 	var workID string
-	if err := s.db.QueryRow(`SELECT delivery_id FROM scheduled_work WHERE delivery_id = ? OR run_id = ?`, id, id).Scan(&workID); err != nil {
+	if err := s.db.QueryRow(`SELECT work_id FROM scheduled_work WHERE work_id = ? OR run_id = ?`, id, id).Scan(&workID); err != nil {
 		return "", err
 	}
 	return workID, nil
 }
 
-// ReconcilePolicy replaces only assignment-derived manifests. Explicit
-// deliveries remain untouched; authenticated Sync is the policy boundary.
+// ReconcilePolicy replaces assignment-derived manifests from authenticated Sync.
 func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if policy == nil {
 		return errors.New("reconcile policy: missing snapshot")
@@ -92,7 +89,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("reconcile policy: read revision: %w", err)
 	}
-	rows, err := tx.Query("SELECT delivery_id, run_in_progress FROM scheduled_work WHERE kind = 'policy' AND retired = FALSE")
+	rows, err := tx.Query("SELECT work_id, run_in_progress FROM scheduled_work WHERE retired = FALSE")
 	if err != nil {
 		return fmt.Errorf("reconcile policy: list: %w", err)
 	}
@@ -117,10 +114,10 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	}
 	for _, work := range stale {
 		if work.active {
-			if _, err := tx.Exec("UPDATE scheduled_work SET retired = TRUE WHERE delivery_id = ? AND kind = 'policy'", work.id); err != nil {
+			if _, err := tx.Exec("UPDATE scheduled_work SET retired = TRUE WHERE work_id = ?", work.id); err != nil {
 				return fmt.Errorf("reconcile policy: retire %s: %w", work.id, err)
 			}
-		} else if _, err := tx.Exec("DELETE FROM scheduled_work WHERE delivery_id = ? AND kind = 'policy'", work.id); err != nil {
+		} else if _, err := tx.Exec("DELETE FROM scheduled_work WHERE work_id = ?", work.id); err != nil {
 			return fmt.Errorf("reconcile policy: remove %s: %w", work.id, err)
 		}
 	}
@@ -131,9 +128,9 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 			return fmt.Errorf("reconcile policy: marshal %s: %w", id, err)
 		}
 		var existing int
-		err = tx.QueryRow("SELECT 1 FROM scheduled_work WHERE delivery_id = ? AND kind = 'policy'", id).Scan(&existing)
+		err = tx.QueryRow("SELECT 1 FROM scheduled_work WHERE work_id = ?", id).Scan(&existing)
 		if err == nil {
-			if _, err := tx.Exec("UPDATE scheduled_work SET retired = FALSE WHERE delivery_id = ?", id); err != nil {
+			if _, err := tx.Exec("UPDATE scheduled_work SET retired = FALSE WHERE work_id = ?", id); err != nil {
 				return fmt.Errorf("reconcile policy: revive %s: %w", id, err)
 			}
 			continue
@@ -142,8 +139,8 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 			return err
 		}
 		if _, err := tx.Exec(`INSERT INTO scheduled_work
-			(delivery_id, run_id, manifest_blob, kind, retired, received_at, next_execute_at)
-			VALUES (?, ?, ?, 'policy', FALSE, ?, ?)`, id, id, blob, now, calculateNextExecuteFromSchedule(manifest.GetSchedule(), nil, false, now)); err != nil {
+			(work_id, run_id, manifest_blob, retired, received_at, next_execute_at)
+			VALUES (?, ?, ?, FALSE, ?, ?)`, id, id, blob, now, calculateNextExecuteFromSchedule(manifest.GetSchedule(), nil, false, now)); err != nil {
 			return fmt.Errorf("reconcile policy: insert %s: %w", id, err)
 		}
 		for position, occurrence := range manifest.GetOccurrences() {
@@ -151,7 +148,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 				return errors.New("reconcile policy: malformed occurrence")
 			}
 			if _, err := tx.Exec(`INSERT INTO scheduled_work_occurrences
-				(delivery_id, occurrence_id, position, action_id) VALUES (?, ?, ?, ?)`,
+				(work_id, occurrence_id, position, action_id) VALUES (?, ?, ?, ?)`,
 				id, occurrence.GetOccurrenceId(), position, occurrence.GetAction().GetId().GetValue()); err != nil {
 				return fmt.Errorf("reconcile policy: insert occurrence: %w", err)
 			}
@@ -164,117 +161,44 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	return tx.Commit()
 }
 
-// RecordManifestDelivery commits a delivery and every authored occurrence in
-// one transaction. A replay with identical bytes is accepted without changing
-// its schedule or execution state; the same delivery ID with different bytes
-// is rejected.
-func (s *Store) RecordManifestDelivery(ctx context.Context, delivery *pb.ManifestDelivery) (bool, error) {
-	if delivery == nil || delivery.GetDeliveryId() == "" || delivery.GetManifest() == nil {
-		return false, errors.New("record manifest delivery: missing delivery identity or manifest")
-	}
-	manifest := delivery.GetManifest()
-	if len(manifest.GetOccurrences()) == 0 {
-		return false, errors.New("record manifest delivery: manifest has no occurrences")
-	}
-	seen := make(map[string]struct{}, len(manifest.GetOccurrences()))
-	for _, occurrence := range manifest.GetOccurrences() {
-		if occurrence == nil || occurrence.GetOccurrenceId() == "" || occurrence.GetAction().GetId().GetValue() == "" {
-			return false, errors.New("record manifest delivery: malformed occurrence")
-		}
-		if _, exists := seen[occurrence.GetOccurrenceId()]; exists {
-			return false, fmt.Errorf("record manifest delivery: duplicate occurrence %s", occurrence.GetOccurrenceId())
-		}
-		seen[occurrence.GetOccurrenceId()] = struct{}{}
-	}
-
-	blob, err := marshalStoredProto(manifest)
-	if err != nil {
-		return false, fmt.Errorf("record manifest delivery: marshal manifest: %w", err)
-	}
-	now := s.now().UTC()
-	next := calculateNextExecuteFromSchedule(manifest.GetSchedule(), nil, false, now)
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return false, fmt.Errorf("record manifest delivery: begin: %w", err)
-	}
-	defer tx.Rollback()
-
-	var existing []byte
-	err = tx.QueryRow("SELECT manifest_blob FROM scheduled_work WHERE delivery_id = ?", delivery.GetDeliveryId()).Scan(&existing)
-	if err == nil {
-		if !bytes.Equal(existing, blob) {
-			return false, errors.New("record manifest delivery: delivery ID replayed with different manifest")
-		}
-		return false, tx.Commit()
-	}
-	if !errors.Is(err, sql.ErrNoRows) {
-		return false, fmt.Errorf("record manifest delivery: lookup: %w", err)
-	}
-
-	if _, err := tx.Exec(`
-		INSERT INTO scheduled_work
-		    (delivery_id, run_id, manifest_blob, kind, received_at, next_execute_at)
-		VALUES (?, ?, ?, 'delivery', ?, ?)
-	`, delivery.GetDeliveryId(), delivery.GetDeliveryId(), blob, now, next); err != nil {
-		return false, fmt.Errorf("record manifest delivery: insert: %w", err)
-	}
-	for position, occurrence := range manifest.GetOccurrences() {
-		if _, err := tx.Exec(`
-			INSERT INTO scheduled_work_occurrences
-			    (delivery_id, occurrence_id, position, action_id)
-			VALUES (?, ?, ?, ?)
-		`, delivery.GetDeliveryId(), occurrence.GetOccurrenceId(), position, occurrence.GetAction().GetId().GetValue()); err != nil {
-			return false, fmt.Errorf("record manifest occurrence: %w", err)
-		}
-	}
-	if err := tx.Commit(); err != nil {
-		return false, fmt.Errorf("record manifest delivery: commit: %w", err)
-	}
-	return true, nil
-}
-
 func (s *Store) GetDueScheduledWork(ctx context.Context) ([]ScheduledWork, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT delivery_id, kind, COALESCE(run_id, ''), manifest_blob,
+		SELECT work_id, COALESCE(run_id, ''), manifest_blob,
 		       received_at, last_executed_at, next_execute_at,
 		       run_started_at, run_in_progress
 		FROM scheduled_work
 		WHERE (retired = FALSE OR run_in_progress = TRUE)
-		  AND (run_in_progress = TRUE
-		       OR (next_execute_at <= ? AND one_shot_run_at IS NULL))
-		ORDER BY run_in_progress DESC, next_execute_at, delivery_id
+		  AND (run_in_progress = TRUE OR next_execute_at <= ?)
+		ORDER BY run_in_progress DESC, next_execute_at, work_id
 	`, s.now().UTC())
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var deliveries []ScheduledWork
+	var workItems []ScheduledWork
 	for rows.Next() {
-		var deliveryID, kind, runID string
+		var workID, runID string
 		var blob []byte
 		var stored ScheduledWork
 		var last, runStarted sql.NullTime
 		if err := rows.Scan(
-			&deliveryID, &kind, &runID, &blob, &stored.ReceivedAt, &last,
+			&workID, &runID, &blob, &stored.ReceivedAt, &last,
 			&stored.NextExecuteAt, &runStarted, &stored.RunInProgress,
 		); err != nil {
 			return nil, err
 		}
 		manifest := &pb.Manifest{}
 		if err := unmarshalStoredProto(blob, manifest); err != nil {
-			return nil, fmt.Errorf("decode manifest delivery %s: %w", deliveryID, err)
+			return nil, fmt.Errorf("decode manifest work %s: %w", workID, err)
 		}
 		if runID == "" {
-			runID = deliveryID
+			runID = workID
 		}
-		stored.WorkID, stored.RunID, stored.Kind = deliveryID, runID, kind
-		stored.Delivery = &pb.ManifestDelivery{DeliveryId: runID, Manifest: manifest}
+		stored.WorkID, stored.RunID = workID, runID
+		stored.Manifest = manifest
 		if last.Valid {
 			lastTime := last.Time
 			stored.LastExecuted = &lastTime
@@ -283,17 +207,17 @@ func (s *Store) GetDueScheduledWork(ctx context.Context) ([]ScheduledWork, error
 			runStartedTime := runStarted.Time
 			stored.RunStartedAt = &runStartedTime
 		}
-		deliveries = append(deliveries, stored)
+		workItems = append(workItems, stored)
 	}
-	return deliveries, rows.Err()
+	return workItems, rows.Err()
 }
 
 func (s *Store) GetManifestActions() ([]*StoredAction, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	rows, err := s.db.Query(`
-		SELECT delivery_id, manifest_blob, received_at, last_executed_at, next_execute_at
-		FROM scheduled_work WHERE retired = FALSE ORDER BY received_at, delivery_id
+		SELECT work_id, manifest_blob, received_at, last_executed_at, next_execute_at
+		FROM scheduled_work WHERE retired = FALSE ORDER BY received_at, work_id
 	`)
 	if err != nil {
 		return nil, err
@@ -301,16 +225,16 @@ func (s *Store) GetManifestActions() ([]*StoredAction, error) {
 	defer rows.Close()
 	var actions []*StoredAction
 	for rows.Next() {
-		var deliveryID string
+		var workID string
 		var blob []byte
 		var received, next time.Time
 		var last sql.NullTime
-		if err := rows.Scan(&deliveryID, &blob, &received, &last, &next); err != nil {
+		if err := rows.Scan(&workID, &blob, &received, &last, &next); err != nil {
 			return nil, err
 		}
 		manifest := &pb.Manifest{}
 		if err := unmarshalStoredProto(blob, manifest); err != nil {
-			return nil, fmt.Errorf("decode manifest delivery %s: %w", deliveryID, err)
+			return nil, fmt.Errorf("decode manifest work %s: %w", workID, err)
 		}
 		for _, occurrence := range manifest.GetOccurrences() {
 			stored := &StoredAction{
@@ -331,9 +255,9 @@ func (s *Store) GetManifestActions() ([]*StoredAction, error) {
 
 // BeginManifestRun advances the manifest cursor before any side effect. An
 // interrupted run stays active and resumes from its durable occurrence states.
-func (s *Store) BeginManifestRun(delivery *pb.ManifestDelivery, startedAt time.Time) (time.Time, error) {
-	if delivery == nil || delivery.GetManifest() == nil {
-		return time.Time{}, errors.New("begin manifest run: missing delivery")
+func (s *Store) BeginManifestRun(work *ScheduledWork, startedAt time.Time) (time.Time, error) {
+	if work == nil || work.Manifest == nil || work.WorkID == "" {
+		return time.Time{}, errors.New("begin manifest run: missing work")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -343,14 +267,14 @@ func (s *Store) BeginManifestRun(delivery *pb.ManifestDelivery, startedAt time.T
 	}
 	defer tx.Rollback()
 	var inProgress bool
-	var kind, runID, workID string
+	var runID, workID string
 	var priorStarted sql.NullTime
 	if err := tx.QueryRow(`
-		SELECT delivery_id, kind, COALESCE(run_id, ''), run_in_progress, run_started_at
+		SELECT work_id, COALESCE(run_id, ''), run_in_progress, run_started_at
 		FROM scheduled_work
-		WHERE (delivery_id = ? OR run_id = ?)
+		WHERE (work_id = ? OR run_id = ?)
 		  AND (retired = FALSE OR run_in_progress = TRUE)
-	`, delivery.GetDeliveryId(), delivery.GetDeliveryId()).Scan(&workID, &kind, &runID, &inProgress, &priorStarted); err != nil {
+	`, work.WorkID, work.RunID).Scan(&workID, &runID, &inProgress, &priorStarted); err != nil {
 		return time.Time{}, err
 	}
 	if runID == "" {
@@ -368,49 +292,43 @@ func (s *Store) BeginManifestRun(delivery *pb.ManifestDelivery, startedAt time.T
 	var started int
 	if err := tx.QueryRow(`
 		SELECT COUNT(*) FROM scheduled_work_occurrences
-		WHERE delivery_id = ? AND state = ?
+		WHERE work_id = ? AND state = ?
 	`, workID, OccurrenceStarted).Scan(&started); err != nil {
 		return time.Time{}, err
 	}
 	if started != 0 {
-		return time.Time{}, fmt.Errorf("begin manifest run: delivery %s has interrupted occurrences", delivery.GetDeliveryId())
+		return time.Time{}, fmt.Errorf("begin manifest run: work %s has interrupted occurrences", work.WorkID)
 	}
 	if _, err := tx.Exec(`
 		UPDATE scheduled_work_occurrences
 		SET state = ?, started_at = NULL, completed_at = NULL,
 		    result_status = NULL, result_error = ''
-		WHERE delivery_id = ?
+		WHERE work_id = ?
 	`, OccurrencePending, workID); err != nil {
 		return time.Time{}, err
 	}
 	startedAt = startedAt.UTC()
-	next := calculateNextExecuteFromSchedule(delivery.GetManifest().GetSchedule(), &startedAt, false, s.now())
-	// Starting a one-shot run is what makes it terminal, and it is recorded in
-	// the same transaction as the cursor it overrides. An interrupted run
-	// returned above without reaching here, so a crash still resumes from
-	// run_in_progress rather than being written off as already run.
-	oneShotRunAt := sql.NullTime{Time: startedAt, Valid: delivery.GetManifest().GetOneShot()}
-	if kind == "policy" && (runID == "" || runID == workID) {
+	next := calculateNextExecuteFromSchedule(work.Manifest.GetSchedule(), &startedAt, false, s.now())
+	if runID == "" || runID == workID {
 		runID = ulid.Make().String()
 	}
 	if _, err := tx.Exec(`
 		UPDATE scheduled_work
 		SET run_id = ?, last_executed_at = ?, next_execute_at = ?,
-		    run_started_at = ?, run_in_progress = TRUE,
-		    one_shot_run_at = ?
-		WHERE delivery_id = ?
-	`, runID, startedAt, next, startedAt, oneShotRunAt, workID); err != nil {
+		    run_started_at = ?, run_in_progress = TRUE
+		WHERE work_id = ?
+	`, runID, startedAt, next, startedAt, workID); err != nil {
 		return time.Time{}, err
 	}
 	if err := tx.Commit(); err != nil {
 		return time.Time{}, err
 	}
-	delivery.DeliveryId = runID
+	work.RunID = runID
 	return startedAt, nil
 }
 
-func (s *Store) MarkOccurrenceStarted(deliveryID, occurrenceID string, startedAt time.Time) error {
-	workID, err := s.resolveWorkID(deliveryID)
+func (s *Store) MarkOccurrenceStarted(workID, occurrenceID string, startedAt time.Time) error {
+	workID, err := s.resolveWorkID(workID)
 	if err != nil {
 		return err
 	}
@@ -418,7 +336,7 @@ func (s *Store) MarkOccurrenceStarted(deliveryID, occurrenceID string, startedAt
 	defer s.mu.Unlock()
 	result, err := s.db.Exec(`
 		UPDATE scheduled_work_occurrences SET state = ?, started_at = ?, completed_at = NULL
-		WHERE delivery_id = ? AND occurrence_id = ? AND state = ?
+		WHERE work_id = ? AND occurrence_id = ? AND state = ?
 	`, OccurrenceStarted, startedAt.UTC(), workID, occurrenceID, OccurrencePending)
 	if err != nil {
 		return err
@@ -428,13 +346,13 @@ func (s *Store) MarkOccurrenceStarted(deliveryID, occurrenceID string, startedAt
 		return err
 	}
 	if changed != 1 {
-		return fmt.Errorf("mark occurrence started: invalid state for %s/%s", deliveryID, occurrenceID)
+		return fmt.Errorf("mark occurrence started: invalid state for %s/%s", workID, occurrenceID)
 	}
 	return nil
 }
 
-func (s *Store) GetManifestOccurrenceStates(deliveryID string) (map[string]ManifestOccurrenceState, error) {
-	workID, err := s.resolveWorkID(deliveryID)
+func (s *Store) GetManifestOccurrenceStates(workID string) (map[string]ManifestOccurrenceState, error) {
+	workID, err := s.resolveWorkID(workID)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +360,7 @@ func (s *Store) GetManifestOccurrenceStates(deliveryID string) (map[string]Manif
 	defer s.mu.RUnlock()
 	rows, err := s.db.Query(`
 		SELECT occurrence_id, state, result_status, result_error
-		FROM scheduled_work_occurrences WHERE delivery_id = ? ORDER BY position
+		FROM scheduled_work_occurrences WHERE work_id = ? ORDER BY position
 	`, workID)
 	if err != nil {
 		return nil, err
@@ -465,8 +383,8 @@ func (s *Store) GetManifestOccurrenceStates(deliveryID string) (map[string]Manif
 }
 
 func (s *Store) RecordOccurrenceResult(result *pb.ActionResult, suppressUnchanged bool) (string, bool, error) {
-	if result == nil || result.GetDeliveryId() == "" || result.GetOccurrenceId() == "" {
-		return "", false, errors.New("record occurrence result: missing delivery or occurrence identity")
+	if result == nil || result.GetRunId() == "" || result.GetOccurrenceId() == "" {
+		return "", false, errors.New("record occurrence result: missing work or occurrence identity")
 	}
 	state, err := occurrenceState(result.GetStatus())
 	if err != nil {
@@ -480,7 +398,7 @@ func (s *Store) RecordOccurrenceResult(result *pb.ActionResult, suppressUnchange
 	if err != nil {
 		return "", false, err
 	}
-	workID, err := s.resolveWorkID(result.GetDeliveryId())
+	workID, err := s.resolveWorkID(result.GetRunId())
 	if err != nil {
 		return "", false, err
 	}
@@ -495,14 +413,14 @@ func (s *Store) RecordOccurrenceResult(result *pb.ActionResult, suppressUnchange
 	var previousHash string
 	if err := tx.QueryRow(`
 		SELECT last_result_hash FROM scheduled_work_occurrences
-		WHERE delivery_id = ? AND occurrence_id = ? AND state = ?
+		WHERE work_id = ? AND occurrence_id = ? AND state = ?
 	`, workID, result.GetOccurrenceId(), OccurrenceStarted).Scan(&previousHash); err != nil {
 		return "", false, err
 	}
 	updated, err := tx.Exec(`
 		UPDATE scheduled_work_occurrences
 		SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?
-		WHERE delivery_id = ? AND occurrence_id = ? AND state = ?
+		WHERE work_id = ? AND occurrence_id = ? AND state = ?
 	`, state, now, result.GetStatus(), result.GetError(), resultHash,
 		workID, result.GetOccurrenceId(), OccurrenceStarted)
 	if err != nil {
@@ -541,7 +459,7 @@ func actionResultHash(result *pb.ActionResult) (string, error) {
 	stable := proto.Clone(result).(*pb.ActionResult)
 	stable.CompletedAt = nil
 	stable.DurationMs = 0
-	stable.DeliveryId = ""
+	stable.RunId = ""
 	stable.OccurrenceId = ""
 	encoded, err := canonicalProtoBytes(stable)
 	if err != nil {
@@ -552,15 +470,15 @@ func actionResultHash(result *pb.ActionResult) (string, error) {
 }
 
 func (s *Store) RecordManifestResult(result *pb.ManifestResult) (string, error) {
-	if result == nil || result.GetDeliveryId() == "" || result.GetManifestId() == "" {
+	if result == nil || result.GetRunId() == "" || result.GetManifestId() == "" {
 		return "", errors.New("record manifest result: missing identity")
 	}
 	return s.recordResult("MANIFEST", result, func(tx *sql.Tx, _ time.Time) error {
 		updated, err := tx.Exec(`
 			UPDATE scheduled_work
 			SET run_in_progress = FALSE, run_started_at = NULL
-			WHERE (delivery_id = ? OR run_id = ?) AND run_in_progress = TRUE
-		`, result.GetDeliveryId(), result.GetDeliveryId())
+			WHERE (work_id = ? OR run_id = ?) AND run_in_progress = TRUE
+		`, result.GetRunId(), result.GetRunId())
 		if err != nil {
 			return err
 		}
@@ -571,11 +489,11 @@ func (s *Store) RecordManifestResult(result *pb.ManifestResult) (string, error) 
 		if rows != 1 {
 			return errors.New("record manifest result: manifest run is not active")
 		}
-		_, err = tx.Exec(`DELETE FROM scheduled_work WHERE (delivery_id = ? OR run_id = ?) AND kind = 'policy' AND retired = TRUE`, result.GetDeliveryId(), result.GetDeliveryId())
+		_, err = tx.Exec(`DELETE FROM scheduled_work WHERE (work_id = ? OR run_id = ?) AND retired = TRUE`, result.GetRunId(), result.GetRunId())
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(`UPDATE scheduled_work SET run_id = NULL WHERE (delivery_id = ? OR run_id = ?) AND kind = 'policy'`, result.GetDeliveryId(), result.GetDeliveryId())
+		_, err = tx.Exec(`UPDATE scheduled_work SET run_id = NULL WHERE (work_id = ? OR run_id = ?)`, result.GetRunId(), result.GetRunId())
 		return nil
 	})
 }
@@ -667,22 +585,22 @@ func (s *Store) RecoverInterruptedOccurrences() ([]PendingResult, error) {
 	}
 	defer tx.Rollback()
 	rows, err := tx.Query(`
-		SELECT COALESCE(sw.run_id, o.delivery_id), o.delivery_id, o.occurrence_id, o.action_id
+		SELECT COALESCE(sw.run_id, o.work_id), o.work_id, o.occurrence_id, o.action_id
 		FROM scheduled_work_occurrences o
-		JOIN scheduled_work sw ON sw.delivery_id = o.delivery_id
+		JOIN scheduled_work sw ON sw.work_id = o.work_id
 		WHERE o.state = ?
-		ORDER BY o.delivery_id, o.position
+		ORDER BY o.work_id, o.position
 	`, OccurrenceStarted)
 	if err != nil {
 		return nil, err
 	}
 	type interrupted struct {
-		runID, deliveryID, occurrenceID, actionID string
+		runID, workID, occurrenceID, actionID string
 	}
 	var interruptedRows []interrupted
 	for rows.Next() {
 		var item interrupted
-		if err := rows.Scan(&item.runID, &item.deliveryID, &item.occurrenceID, &item.actionID); err != nil {
+		if err := rows.Scan(&item.runID, &item.workID, &item.occurrenceID, &item.actionID); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -701,7 +619,7 @@ func (s *Store) RecoverInterruptedOccurrences() ([]PendingResult, error) {
 		message := "agent restarted after STARTED; effect is unknown and was not repeated"
 		result := &pb.ActionResult{
 			ActionId:     &pb.ActionId{Value: item.actionID},
-			DeliveryId:   item.runID,
+			RunId:   item.runID,
 			OccurrenceId: item.occurrenceID,
 			Status:       status,
 			Error:        message,
@@ -725,8 +643,8 @@ func (s *Store) RecoverInterruptedOccurrences() ([]PendingResult, error) {
 		if _, err := tx.Exec(`
 			UPDATE scheduled_work_occurrences
 			SET state = ?, completed_at = ?, result_status = ?, result_error = ?
-			WHERE delivery_id = ? AND occurrence_id = ? AND state = ?
-		`, state, now, status, message, item.deliveryID, item.occurrenceID, OccurrenceStarted); err != nil {
+			WHERE work_id = ? AND occurrence_id = ? AND state = ?
+		`, state, now, status, message, item.workID, item.occurrenceID, OccurrenceStarted); err != nil {
 			return nil, err
 		}
 		recovered = append(recovered, PendingResult{ID: id, ActionResult: result})

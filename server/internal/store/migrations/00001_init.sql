@@ -57,7 +57,6 @@ CREATE TABLE user_encryption_keys (
     wrapped_dek text NOT NULL,
     created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
 -- JSON arrays are used for the three list-valued columns. This keeps the
 -- schema native to SQLite and lets json_each provide indexed set membership.
 CREATE TABLE roles (
@@ -558,68 +557,6 @@ CREATE TABLE user_selections (
 );
 CREATE INDEX idx_user_selections_device ON user_selections(device_id);
 
-CREATE TABLE deliveries (
-    delivery_id      text PRIMARY KEY CHECK (
-                         length(delivery_id) = 26
-                         AND delivery_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
-    device_id        text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-    manifest_id      text NOT NULL CHECK (
-                         length(manifest_id) = 26
-                         AND manifest_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*'),
-    manifest         text NOT NULL CHECK (json_valid(manifest)),
-    state            text NOT NULL CHECK (state IN (
-                         'PENDING', 'SUCCEEDED', 'PARTIAL', 'FAILED')),
-    operation_id     text CHECK (operation_id IS NULL OR (
-                         length(operation_id) = 26
-                         AND operation_id NOT GLOB '*[^0-9A-HJKMNP-TV-Z]*')),
-    created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    available_at     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    terminal_at      timestamp,
-    result_code      text NOT NULL DEFAULT '' CHECK (length(result_code) <= 64),
-    CHECK (CASE state
-        WHEN 'PENDING' THEN terminal_at IS NULL
-        ELSE terminal_at IS NOT NULL END)
-);
-CREATE INDEX deliveries_device_idx ON deliveries(device_id, created_at DESC);
-CREATE INDEX deliveries_device_pending_idx ON deliveries(device_id, available_at, created_at)
-    WHERE state = 'PENDING';
-
-CREATE TABLE executions (
-    id               text PRIMARY KEY,
-    delivery_id      text NOT NULL REFERENCES deliveries(delivery_id) ON DELETE CASCADE,
-    device_id        text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-    action_id        text REFERENCES actions(id) ON DELETE SET NULL,
-    action_type      integer NOT NULL,
-    desired_state    integer NOT NULL DEFAULT 0,
-    params           text NOT NULL DEFAULT '{}' CHECK (
-                         json_valid(params) AND json_type(params) = 'object'),
-    timeout_seconds  integer NOT NULL DEFAULT 0,
-    status           text NOT NULL CHECK (status IN (
-                         'scheduled', 'pending', 'running', 'success', 'failed',
-                         'skipped', 'timeout', 'cancelled', 'not_applicable', 'indeterminate')),
-    error            text,
-    output           text CHECK (output IS NULL OR json_valid(output)),
-    detection_output text CHECK (detection_output IS NULL OR json_valid(detection_output)),
-    changed          boolean NOT NULL DEFAULT false,
-    compliant        boolean NOT NULL DEFAULT false,
-    created_at       timestamp,
-    scheduled_for    timestamp,
-    dispatched_at    timestamp,
-    started_at       timestamp,
-    completed_at     timestamp,
-    duration_ms      integer,
-    created_by_type  text NOT NULL DEFAULT '',
-    created_by_id    text NOT NULL DEFAULT '',
-    UNIQUE (delivery_id, id)
-);
-CREATE INDEX idx_executions_device ON executions(device_id);
-CREATE INDEX idx_executions_status ON executions(status);
-CREATE INDEX idx_executions_device_status ON executions(device_id, status);
-CREATE INDEX idx_executions_delivery ON executions(delivery_id);
-
--- Assignment runs are accepted on the authenticated Sync/result stream and
--- never become transport deliveries. These append-only result rows retain
--- owner-bound replay evidence without inventing a delivery receipt.
 CREATE TABLE policy_action_results (
     run_id       text NOT NULL,
     occurrence_id text NOT NULL,
@@ -637,15 +574,6 @@ CREATE TABLE policy_manifest_results (
     state       text NOT NULL,
     result_code text NOT NULL,
     created_at  timestamp NOT NULL
-);
-
-CREATE TABLE execution_output_chunks (
-    execution_id text NOT NULL REFERENCES executions(id) ON DELETE CASCADE,
-    stream       text NOT NULL CHECK (stream IN ('stdout', 'stderr')),
-    sequence     integer NOT NULL CHECK (sequence >= 0),
-    data         blob NOT NULL CHECK (length(data) <= 65536),
-    received_at  timestamp NOT NULL,
-    PRIMARY KEY (execution_id, stream, sequence)
 );
 
 CREATE TABLE compliance_policies (

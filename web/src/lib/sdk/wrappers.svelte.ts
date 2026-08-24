@@ -125,7 +125,7 @@ export { useDraft, type DraftType } from './draft.svelte';
 export type { ServerConfig } from '$contractClient/config';
 export type {
 	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
-	DeviceGroup, Assignment, ActionExecution, AuditEvent, InventoryTableResult,
+	DeviceGroup, Assignment, AuditEvent, InventoryTableResult,
 	Role, PermissionInfo, UserGroup, UserGroupMember, IdentityProvider, IdentityLink,
 	LpsPassword, LuksKey
 } from '$contractClient/client';

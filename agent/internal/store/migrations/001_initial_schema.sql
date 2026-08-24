@@ -5,9 +5,11 @@ CREATE TABLE settings (
     value TEXT NOT NULL
 );
 
-CREATE TABLE manifest_deliveries (
-    delivery_id TEXT PRIMARY KEY,
+CREATE TABLE scheduled_work (
+    work_id TEXT PRIMARY KEY,
+    run_id TEXT UNIQUE,
     manifest_blob BLOB NOT NULL,
+    retired BOOLEAN NOT NULL DEFAULT FALSE,
     received_at DATETIME NOT NULL,
     last_executed_at DATETIME,
     next_execute_at DATETIME NOT NULL,
@@ -15,11 +17,10 @@ CREATE TABLE manifest_deliveries (
     run_in_progress BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE INDEX idx_manifest_deliveries_due
-    ON manifest_deliveries(next_execute_at);
+CREATE INDEX idx_scheduled_work_due ON scheduled_work(next_execute_at);
 
-CREATE TABLE manifest_occurrences (
-    delivery_id TEXT NOT NULL,
+CREATE TABLE scheduled_work_occurrences (
+    work_id TEXT NOT NULL,
     occurrence_id TEXT NOT NULL,
     position INTEGER NOT NULL,
     action_id TEXT NOT NULL,
@@ -30,9 +31,9 @@ CREATE TABLE manifest_occurrences (
     result_status INTEGER,
     result_error TEXT NOT NULL DEFAULT '',
     last_result_hash TEXT NOT NULL DEFAULT '',
-    PRIMARY KEY (delivery_id, occurrence_id),
-    UNIQUE (delivery_id, position),
-    FOREIGN KEY (delivery_id) REFERENCES manifest_deliveries(delivery_id) ON DELETE CASCADE
+    PRIMARY KEY (work_id, occurrence_id),
+    UNIQUE (work_id, position),
+    FOREIGN KEY (work_id) REFERENCES scheduled_work(work_id) ON DELETE CASCADE
 );
 
 CREATE TABLE result_outbox (
@@ -44,12 +45,8 @@ CREATE TABLE result_outbox (
     synced BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE INDEX idx_result_outbox_pending
-    ON result_outbox(sequence) WHERE synced = FALSE;
+CREATE INDEX idx_result_outbox_pending ON result_outbox(sequence) WHERE synced = FALSE;
 
--- LUKS/LPS state deliberately outlives an individual delivery. The executor
--- needs it to safely reconcile key ownership and password rotation after the
--- manifest that established the policy is superseded.
 CREATE TABLE luks_state (
     action_id TEXT PRIMARY KEY,
     device_path TEXT NOT NULL DEFAULT '',
@@ -65,8 +62,7 @@ CREATE TABLE luks_user_passphrase_history (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_luks_passphrase_history_action
-    ON luks_user_passphrase_history(action_id);
+CREATE INDEX idx_luks_passphrase_history_action ON luks_user_passphrase_history(action_id);
 
 CREATE TABLE lps_state (
     action_id TEXT NOT NULL,
@@ -82,6 +78,6 @@ DROP TABLE lps_state;
 DROP TABLE luks_user_passphrase_history;
 DROP TABLE luks_state;
 DROP TABLE result_outbox;
-DROP TABLE manifest_occurrences;
-DROP TABLE manifest_deliveries;
+DROP TABLE scheduled_work_occurrences;
+DROP TABLE scheduled_work;
 DROP TABLE settings;

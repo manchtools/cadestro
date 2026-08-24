@@ -4,7 +4,6 @@ import (
 	"context"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/oklog/ulid/v2"
 
@@ -35,19 +34,6 @@ func setupSQLitePool(t *testing.T, _ int) (*store.Store, *testdb.DB) {
 func setupSQLite(t *testing.T) (*store.Store, *testdb.DB) {
 	t.Helper()
 	return setupSQLitePool(t, 0)
-}
-
-func seedDelivery(t *testing.T, raw *testdb.DB, deviceID string, now time.Time) string {
-	t.Helper()
-	deliveryID := newID()
-	if _, err := raw.Exec(context.Background(), `
-		INSERT INTO deliveries
-			(delivery_id, device_id, manifest_id, manifest, state, created_at, available_at)
-		VALUES ($1, $2, $3, '{}', 'PENDING', $4, $4)`,
-		deliveryID, deviceID, newID(), now); err != nil {
-		t.Fatalf("seed delivery: %v", err)
-	}
-	return deliveryID
 }
 
 func newID() string { return ulid.Make().String() }

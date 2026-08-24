@@ -2,8 +2,6 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$lib/navigation';
 	import { page } from '$app/state';
-	import { toast } from 'svelte-sonner';
-	import { getLocalizedError } from '$lib/errors';
 	import {
 		apiClient,
 		type ManagedAction,
@@ -20,7 +18,7 @@
 	import { Chip } from '$lib/components/fleet';
 	import type { FleetTone } from '$lib/components/fleet/tone';
 	import { Button } from '$lib/components/ui/button';
-	import { ShieldCheck, Layers, BookOpen, Zap, Search, Play } from '@lucide/svelte';
+	import { ShieldCheck, Layers, BookOpen, Zap, Search } from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import * as m from '$lib/paraglide/messages';
 
@@ -202,41 +200,6 @@
 		return actionParentsMap.get(actionId) || [];
 	}
 
-	// Tracks which row is currently dispatching so the matching Play
-	// button can show a spinner / stay disabled. Keyed by
-	// "sourceType:sourceId" — same shape as directAssignmentMap.
-	let dispatchingKey = $state<string | null>(null);
-
-	async function dispatchFor(
-		sourceType: AssignmentSourceType,
-		sourceId: string,
-		displayName: string
-	) {
-		const key = `${sourceType}:${sourceId}`;
-		dispatchingKey = key;
-		try {
-			switch (sourceType) {
-				case AssignmentSourceType.ACTION:
-					await apiClient.dispatchAction(deviceId, sourceId);
-					break;
-				case AssignmentSourceType.ACTION_SET:
-					await apiClient.dispatchActionSet(deviceId, sourceId);
-					break;
-				case AssignmentSourceType.DEFINITION:
-					await apiClient.dispatchDefinition(deviceId, sourceId);
-					break;
-				default:
-					toast.error(m.policies_dispatch_unsupported({ name: displayName }));
-					return;
-			}
-			toast.success(m.policies_dispatch_dispatched({ name: displayName }));
-		} catch (error) {
-			toast.error(getLocalizedError(error));
-			console.error(error);
-		} finally {
-			dispatchingKey = null;
-		}
-	}
 </script>
 
 <div class="space-y-4">
@@ -269,7 +232,6 @@
 					<div class="space-y-2">
 						{#each definitions as def}
 							{@const assignment = getDirectAssignment(AssignmentSourceType.DEFINITION, def.id)}
-							{@const dispatchKey = `${AssignmentSourceType.DEFINITION}:${def.id}`}
 							<div
 								role="button"
 								tabindex="0"
@@ -303,19 +265,6 @@
 											{m.policies_inherited()}
 										</Badge>
 									{/if}
-									<Button
-										variant="ghost"
-										size="icon"
-										class="h-7 w-7"
-										title={m.policies_dispatch_button_title()}
-										disabled={dispatchingKey !== null}
-										onclick={(e) => {
-											e.stopPropagation();
-											dispatchFor(AssignmentSourceType.DEFINITION, def.id, def.name);
-										}}
-									>
-										<Play class={`h-3.5 w-3.5 ${dispatchingKey === dispatchKey ? "animate-pulse" : ""}`} />
-									</Button>
 								</div>
 							</div>
 						{/each}
@@ -337,7 +286,6 @@
 					<div class="space-y-2">
 						{#each actionSets as set}
 							{@const assignment = getDirectAssignment(AssignmentSourceType.ACTION_SET, set.id)}
-							{@const dispatchKey = `${AssignmentSourceType.ACTION_SET}:${set.id}`}
 							<div
 								role="button"
 								tabindex="0"
@@ -371,19 +319,6 @@
 											{m.policies_inherited()}
 										</Badge>
 									{/if}
-									<Button
-										variant="ghost"
-										size="icon"
-										class="h-7 w-7"
-										title={m.policies_dispatch_button_title()}
-										disabled={dispatchingKey !== null}
-										onclick={(e) => {
-											e.stopPropagation();
-											dispatchFor(AssignmentSourceType.ACTION_SET, set.id, set.name);
-										}}
-									>
-										<Play class={`h-3.5 w-3.5 ${dispatchingKey === dispatchKey ? "animate-pulse" : ""}`} />
-									</Button>
 								</div>
 							</div>
 						{/each}
@@ -431,7 +366,6 @@
 									{@const typeInfo = getActionTypeInfo(action.type)}
 									{@const TypeIcon = typeInfo.icon}
 									{@const assignment = getDirectAssignment(AssignmentSourceType.ACTION, action.id)}
-									{@const dispatchKey = `${AssignmentSourceType.ACTION}:${action.id}`}
 									<Table.Row
 										class="cursor-pointer"
 										onclick={() => openActionSheet(action.id)}
@@ -458,19 +392,6 @@
 											</div>
 										</Table.Cell>
 										<Table.Cell class="text-right">
-											<Button
-												variant="ghost"
-												size="icon"
-												class="h-7 w-7"
-												title={m.policies_dispatch_button_title()}
-												disabled={dispatchingKey !== null}
-												onclick={(e) => {
-													e.stopPropagation();
-													dispatchFor(AssignmentSourceType.ACTION, action.id, action.name);
-												}}
-											>
-												<Play class={`h-3.5 w-3.5 ${dispatchingKey === dispatchKey ? "animate-pulse" : ""}`} />
-											</Button>
 										</Table.Cell>
 									</Table.Row>
 								{/each}

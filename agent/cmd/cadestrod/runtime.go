@@ -355,7 +355,7 @@ func periodicSync(
 }
 
 // sendScheduledResults consumes the scheduler's Results channel and sends execution results to the server.
-// This ensures that results from scheduled actions (including one-shot work) are reported back.
+// This ensures that results from scheduled actions are reported back.
 func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) {
 	for {
 		select {
@@ -377,8 +377,7 @@ func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *schedu
 	}
 }
 
-// syncStateFromControl requests durable deliveries and current device policy on
-// the already-established control stream.
+// syncStateFromControl requests current device policy on the already-established control stream.
 // Returns the effective sync interval from the server (0 means use default).
 func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) time.Duration {
 	logger.Info("synchronizing state from control")
@@ -387,13 +386,6 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 	if err != nil {
 		logger.Warn("failed to synchronize state from control", "error", err)
 		return 0
-	}
-
-	for _, delivery := range result.Deliveries {
-		if _, err := sched.RecordDelivery(ctx, delivery); err != nil {
-			logger.Error("failed to durably record synced delivery", "delivery_id", delivery.GetDeliveryId(), "error", err)
-			continue
-		}
 	}
 
 	// Apply the resolved maintenance window from the same response so the
@@ -416,10 +408,7 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 		syncInterval = defaultSyncInterval
 	}
 
-	logger.Info("manifests synced from server",
-		"delivery_total", len(result.Deliveries),
-		"sync_interval", syncInterval.String(),
-	)
+	logger.Info("manifests synced from server", "sync_interval", syncInterval.String())
 
 	return syncInterval
 }

@@ -69,16 +69,8 @@ func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Schedul
 
 func (s *Scheduler) Results() <-chan *ExecutionResult { return s.results }
 
-func (s *Scheduler) RecordDelivery(ctx context.Context, delivery *pb.ManifestDelivery) (bool, error) {
-	inserted, err := s.store.RecordManifestDelivery(ctx, delivery)
-	if err == nil && inserted {
-		s.Wake()
-	}
-	return inserted, err
-}
-
-// ReconcilePolicy replaces assignment-derived work without touching explicit
-// deliveries. Policy snapshots arrive through authenticated Sync.
+// ReconcilePolicy replaces assignment-derived work. Policy snapshots arrive
+// through authenticated Sync.
 func (s *Scheduler) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if err := s.store.ReconcilePolicy(ctx, policy); err != nil {
 		return err
@@ -165,23 +157,20 @@ func (s *Scheduler) runDue(ctx context.Context) {
 		s.logger.Error("recover interrupted occurrences", "error", err)
 		return
 	}
-	deliveries, err := s.store.GetDueScheduledWork(ctx)
+	workItems, err := s.store.GetDueScheduledWork(ctx)
 	if err != nil {
 		s.logger.Error("load due manifests", "error", err)
 		return
 	}
 	allowed := s.dispatchAllowed(s.now().Local())
-	for _, stored := range deliveries {
+	for _, stored := range workItems {
 		if ctx.Err() != nil {
 			return
 		}
-		// An explicit dispatch is exempt from the maintenance window — an
-		// operator asking for it "now" means now. Assigned work keeps
-		// deferring until the window opens.
-		if !allowed && !stored.Delivery.GetManifest().GetOneShot() {
+		if !allowed {
 			continue
 		}
-		s.executeManifest(ctx, stored.Delivery)
+		s.executeManifest(ctx, stored)
 	}
 }
 
@@ -196,16 +185,16 @@ func (s *Scheduler) recoverInterruptedOccurrences() error {
 	return nil
 }
 
-func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDelivery) {
-	manifest := delivery.GetManifest()
-	started, err := s.store.BeginManifestRun(delivery, s.now().UTC())
+func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWork) {
+	manifest := work.Manifest
+	started, err := s.store.BeginManifestRun(&work, s.now().UTC())
 	if err != nil {
-		s.logger.Error("begin manifest run", "delivery_id", delivery.GetDeliveryId(), "error", err)
+		s.logger.Error("begin manifest run", "work_id", work.RunID, "error", err)
 		return
 	}
-	states, err := s.store.GetManifestOccurrenceStates(delivery.GetDeliveryId())
+	states, err := s.store.GetManifestOccurrenceStates(work.RunID)
 	if err != nil {
-		s.logger.Error("load occurrence states", "delivery_id", delivery.GetDeliveryId(), "error", err)
+		s.logger.Error("load occurrence states", "work_id", work.RunID, "error", err)
 		return
 	}
 	s.executor.ResetUpdateCycle()
@@ -236,8 +225,8 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 			continue
 		}
 
-		if err := s.store.MarkOccurrenceStarted(delivery.GetDeliveryId(), occurrence.GetOccurrenceId(), s.now()); err != nil {
-			s.logger.Error("mark occurrence started", "delivery_id", delivery.GetDeliveryId(), "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
+		if err := s.store.MarkOccurrenceStarted(work.RunID, occurrence.GetOccurrenceId(), s.now()); err != nil {
+			s.logger.Error("mark occurrence started", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
 			aggregate = pb.ExecutionStatus_EXECUTION_STATUS_FAILED
 			aggregateError = "failed to durably mark occurrence STARTED"
 			break
@@ -259,7 +248,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 			// and the next run cannot silently repeat the effect.
 			return
 		}
-		result.DeliveryId = delivery.GetDeliveryId()
+		result.RunId = work.RunID
 		result.OccurrenceId = occurrence.GetOccurrenceId()
 		if result.CompletedAt == nil {
 			result.CompletedAt = timestamppb.New(s.now())
@@ -269,7 +258,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 			!result.GetChanged()
 		resultID, suppressed, err := s.store.RecordOccurrenceResult(result, suppressUnchanged)
 		if err != nil {
-			s.logger.Error("record occurrence result", "delivery_id", delivery.GetDeliveryId(), "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
+			s.logger.Error("record occurrence result", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
 			return
 		}
 		if !suppressed {
@@ -283,7 +272,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 
 	finished := s.now().UTC()
 	manifestResult := &pb.ManifestResult{
-		DeliveryId:  delivery.GetDeliveryId(),
+		RunId:  work.RunID,
 		ManifestId:  manifest.GetManifestId(),
 		Status:      aggregate,
 		CompletedAt: timestamppb.New(finished),
@@ -292,7 +281,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, delivery *pb.ManifestDe
 	}
 	resultID, err := s.store.RecordManifestResult(manifestResult)
 	if err != nil {
-		s.logger.Error("record manifest result", "delivery_id", delivery.GetDeliveryId(), "error", err)
+		s.logger.Error("record manifest result", "work_id", work.RunID, "error", err)
 		return
 	}
 	s.publish(&ExecutionResult{ResultID: resultID, ManifestResult: manifestResult})

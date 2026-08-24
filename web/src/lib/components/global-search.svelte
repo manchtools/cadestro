@@ -41,7 +41,6 @@
 		ShieldCheck,
 		Users,
 		UsersRound,
-		Activity,
 		ScrollText,
 		Search,
 		AppWindow,
@@ -96,7 +95,6 @@
 		{ scope: SearchScope.COMPLIANCE_POLICIES, label: () => m.search_group_compliance_policies(), icon: ShieldCheck, route: '/compliance-policies', detail: true },
 		{ scope: SearchScope.USERS, label: () => m.search_group_users(), icon: Users, route: '/users', detail: true },
 		{ scope: SearchScope.USER_GROUPS, label: () => m.search_group_user_groups(), icon: UsersRound, route: '/user-groups', detail: true },
-		{ scope: SearchScope.EXECUTIONS, label: () => m.search_group_executions(), icon: Activity, route: '/executions', detail: true },
 		{ scope: SearchScope.AUDIT_EVENTS, label: () => m.search_group_audit_events(), icon: ScrollText, route: '/audit', detail: false }
 	];
 	const FACET_BY_SCOPE = new Map(FACETS.map((f) => [f.scope, f]));
@@ -454,22 +452,6 @@
 			if (!Number.isFinite(seen) || seen <= 0) return 'idle';
 			return Math.floor(Date.now() / 1000) - seen < 300 ? 'ok' : 'crit';
 		}
-		if (r.scope === SearchScope.EXECUTIONS) {
-			switch (parseInt(f['status'] ?? '0', 10)) {
-				case 3:
-					return 'ok'; // SUCCESS
-				case 4:
-				case 6:
-					return 'crit'; // FAILED / TIMEOUT
-				case 2:
-					return 'info'; // RUNNING
-				case 1:
-				case 7:
-					return 'warn'; // PENDING / SCHEDULED
-				default:
-					return 'idle';
-			}
-		}
 		if (r.scope === SearchScope.USERS && f['disabled'] === 'true') return 'idle';
 		return null;
 	}
@@ -496,10 +478,6 @@
 			}
 			case SearchScope.USERS:
 				parts.push(f['display_name'] || f['linux_username']);
-				break;
-			case SearchScope.EXECUTIONS:
-				parts.push(f['action_name'] || f['device_hostname']);
-				parts.push(relative(f['created_at']));
 				break;
 			case SearchScope.AUDIT_EVENTS:
 				parts.push([f['actor_type'], f['stream_type']].filter(Boolean).join(' · '));

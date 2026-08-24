@@ -18,7 +18,6 @@ type recordingExecutor struct {
 	executed []string
 	status   map[string]pb.ExecutionStatus
 }
-
 func (e *recordingExecutor) ExecuteAction(_ context.Context, action *pb.Action) *pb.ActionResult {
 	id := action.GetId().GetValue()
 	e.executed = append(e.executed, id)
@@ -31,78 +30,16 @@ func (e *recordingExecutor) ExecuteAction(_ context.Context, action *pb.Action) 
 
 func (*recordingExecutor) ResetUpdateCycle() {}
 
-func scheduledDelivery(onFailure pb.OnFailure) *pb.ManifestDelivery {
-	return &pb.ManifestDelivery{
-		DeliveryId: "01K00000000000000000000011",
-		Manifest: &pb.Manifest{
-			ManifestId: "01K00000000000000000000012",
-			Schedule:   &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
-			Occurrences: []*pb.ManifestOccurrence{
-				{OccurrenceId: "01K00000000000000000000013", OnFailure: onFailure, Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000014"}, Type: pb.ActionType_ACTION_TYPE_PACKAGE}},
-				{OccurrenceId: "01K00000000000000000000015", Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000016"}, Type: pb.ActionType_ACTION_TYPE_SERVICE}},
-			},
+func scheduledManifest(onFailure pb.OnFailure) *pb.Manifest {
+	return &pb.Manifest{
+		ManifestId: "01K00000000000000000000012",
+		Schedule:   &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
+		Occurrences: []*pb.ManifestOccurrence{
+			{OccurrenceId: "01K00000000000000000000013", OnFailure: onFailure, Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000014"}, Type: pb.ActionType_ACTION_TYPE_PACKAGE}},
+			{OccurrenceId: "01K00000000000000000000015", Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000016"}, Type: pb.ActionType_ACTION_TYPE_SERVICE}},
 		},
 	}
 }
-
-// oneShotDelivery mirrors what control's explicit dispatch compiles: the
-// structural one_shot marker and a schedule carrying no cadence. The empty
-// schedule is not the marker — assigned manifests may carry the same one.
-func oneShotDelivery() *pb.ManifestDelivery {
-	return &pb.ManifestDelivery{
-		DeliveryId: "01K00000000000000000000021",
-		Manifest: &pb.Manifest{
-			ManifestId: "01K00000000000000000000022",
-			OneShot:    true,
-			Schedule:   &pb.ActionSchedule{},
-			Occurrences: []*pb.ManifestOccurrence{{
-				OccurrenceId: "01K00000000000000000000023",
-				Action:       &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000024"}, Type: pb.ActionType_ACTION_TYPE_PACKAGE},
-			}},
-		},
-	}
-}
-
-// An operator dispatching "now" means now: a one-shot delivery is exempt from
-// the maintenance window. Assigned work in the very same sweep must still
-// defer, so the exemption cannot be a blanket opening of the gate.
-func TestOneShotDispatchRunsWhileWindowDefersScheduledWork(t *testing.T) {
-	st, err := store.New(t.TempDir())
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, st.Close()) })
-	// A Wednesday. No real UTC offset (-12h..+14h) can carry it onto a Sunday,
-	// so the Sunday-only window below denies dispatch on every test host.
-	now := time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC)
-	st.SetClockForTest(func() time.Time { return now })
-	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
-	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	sched.now = func() time.Time { return now }
-	sched.SetMaintenanceWindow(&pb.MaintenanceWindow{Schedule: []*pb.MaintenanceWindowEntry{
-		{Days: []string{"sun"}, Allow: "03:00-04:00"},
-	}})
-	require.False(t, sched.dispatchAllowed(sched.now().Local()),
-		"fixture precondition: the window must deny scheduled dispatch at the fake clock")
-
-	scheduled := scheduledDelivery(pb.OnFailure_ON_FAILURE_CONTINUE)
-	_, err = sched.RecordDelivery(context.Background(), scheduled)
-	require.NoError(t, err)
-	oneShot := oneShotDelivery()
-	_, err = sched.RecordDelivery(context.Background(), oneShot)
-	require.NoError(t, err)
-
-	sched.runDue(context.Background())
-
-	require.Equal(t,
-		[]string{oneShot.GetManifest().GetOccurrences()[0].GetAction().GetId().GetValue()},
-		exec.executed,
-		"the one-shot must run despite the closed window; the assigned manifest must not")
-
-	due, err := st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1, "the deferred assigned manifest stays due; the finished one-shot does not return")
-	require.Equal(t, scheduled.GetDeliveryId(), due[0].Delivery.GetDeliveryId())
-}
-
 func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
@@ -112,14 +49,9 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
 	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	sched.now = func() time.Time { return now }
-	delivery := scheduledDelivery(pb.OnFailure_ON_FAILURE_CONTINUE)
+	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_CONTINUE)
 
-	inserted, err := sched.RecordDelivery(context.Background(), delivery)
-	require.NoError(t, err)
-	require.True(t, inserted)
-	inserted, err = sched.RecordDelivery(context.Background(), delivery)
-	require.NoError(t, err)
-	require.False(t, inserted)
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
 
 	sched.runDue(context.Background())
 	require.Equal(t, []string{
@@ -132,8 +64,8 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	pending, err := st.GetPendingResults()
 	require.NoError(t, err)
 	require.Len(t, pending, 3)
-	require.Equal(t, delivery.GetDeliveryId(), pending[0].ActionResult.GetDeliveryId())
-	require.Equal(t, delivery.GetManifest().GetOccurrences()[0].GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId())
+	require.NotEmpty(t, pending[0].ActionResult.GetRunId())
+	require.Equal(t, manifest.GetOccurrences()[0].GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId())
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS, pending[2].ManifestResult.GetStatus())
 }
 
@@ -141,12 +73,11 @@ func TestManifestStopPolicyRecordsRemainingOccurrenceAsSkipped(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
-	delivery := scheduledDelivery(pb.OnFailure_ON_FAILURE_STOP)
-	firstID := delivery.GetManifest().GetOccurrences()[0].GetAction().GetId().GetValue()
+	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_STOP)
+	firstID := manifest.GetOccurrences()[0].GetAction().GetId().GetValue()
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{firstID: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}}
 	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	_, err = sched.RecordDelivery(context.Background(), delivery)
-	require.NoError(t, err)
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
 	sched.runDue(context.Background())
 	require.Equal(t, []string{firstID}, exec.executed)
 
@@ -163,13 +94,12 @@ func TestSkipIfUnchangedSuppressesRepeatedActionOutputButStillExecutes(t *testin
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	st.SetClockForTest(func() time.Time { return now })
-	delivery := scheduledDelivery(pb.OnFailure_ON_FAILURE_CONTINUE)
-	delivery.Manifest.Schedule.SkipIfUnchanged = true
+	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_CONTINUE)
+	manifest.Schedule.SkipIfUnchanged = true
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
 	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	sched.now = func() time.Time { return now }
-	_, err = sched.RecordDelivery(context.Background(), delivery)
-	require.NoError(t, err)
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
 
 	sched.runDue(context.Background())
 	now = now.Add(8 * time.Hour)

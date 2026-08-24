@@ -54,7 +54,7 @@ generate-go:
 # release, so a stale *_pb.ts ships to consumers as a live export.
 generate-ts:
 	@rm -f $(GEN_DIR)/ts/cadestro/v1/*_pb.ts
-	$(BUF) generate --template buf.gen.ts.yaml
+	$(BUF) generate --include-imports --template buf.gen.ts.yaml
 
 clean:
 	rm -rf $(GEN_DIR)

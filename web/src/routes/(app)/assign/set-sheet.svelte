@@ -26,17 +26,14 @@
 		steps: ActionSetMember[];
 		stepsLoading?: boolean;
 		schedule: AssignSchedule;
-		/** Off for a rule target: DispatchActionSet is per device and the rule's
+		/** Off for a rule target: the group assignment is evaluated by agents and the rule's
 		 *  matches are the server's, so there is no "now" to offer. */
 		showSchedule?: boolean;
 		onselect: (id: string) => void;
 		onschedule: (schedule: AssignSchedule) => void;
 	} = $props();
 
-	// Exactly the two schedules DispatchActionSet / CreateAssignment support.
-	// DispatchActionSetRequest has no run_at and no respect_maintenance_window,
-	// so "at time" and "maintenance window" would be UI for a capability the
-	// contract does not have.
+	// Immediate assignments sync the device; scheduled assignments use the set policy.
 	const SCHEDULES: { value: AssignSchedule; label: () => string; hint: () => string }[] = [
 		{ value: 'now', label: m.assign_schedule_now, hint: m.assign_schedule_now_hint },
 		{

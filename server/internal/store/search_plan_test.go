@@ -1,15 +1,5 @@
 package store
 
-// A single-entity search-document refresh runs inside the process-wide writer
-// lock on every audited mutation, so its query plan is an availability
-// property rather than a micro-optimization: if SQLite drives the outermost
-// loop with a scan, every mutation costs O(that table) and the executions
-// scope, which is never pruned, makes that cost grow without bound.
-//
-// The plan is asserted against SQLite's real planner and the real baseline
-// schema because only a measured plan decides whether a predicate is sargable.
-// Statement text alone cannot show it.
-
 import (
 	"database/sql"
 	"os"
@@ -46,7 +36,6 @@ var searchDocumentRefreshQueryNames = map[string]string{
 	"device_groups":       "RefreshDeviceGroupsSearchDocument",
 	"users":               "RefreshUsersSearchDocument",
 	"user_groups":         "RefreshUserGroupsSearchDocument",
-	"executions":          "RefreshExecutionsSearchDocument",
 	"audit_events":        "RefreshAuditEventsSearchDocument",
 }
 

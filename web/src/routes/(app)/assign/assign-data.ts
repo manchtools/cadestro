@@ -17,11 +17,7 @@
 //   CreateAssignment(ACTION_SET, set, DEVICE, device, REQUIRED) per device —
 //     the server treats a repeated active tuple as idempotent and returns the
 //     existing row, which is what makes "will update in place" honest.
-//   DispatchActionSet(device, set) per device, only for the `now` schedule.
-//     DispatchActionSetRequest carries neither run_at nor
-//     respect_maintenance_window (unlike DispatchAction), so a timed or
-//     maintenance-window dispatch of a SET is not on the contract and this
-//     surface does not offer one.
+//   SyncDevice(device) after an immediate assignment so the agent pulls it.
 //
 // B3 — targeting by rule
 //   The rule is not a target type of its own: an Assignment targets a
@@ -32,7 +28,7 @@
 //   The count behind the rule comes from ValidateDynamicQuery — the only RPC
 //   that answers for an ARBITRARY query. EvaluateDynamicGroup takes a group id
 //   and MUTATES membership, so it is never used as a preview.
-//   Nothing is dispatched for a rule target: DispatchActionSet is per DEVICE and
+//   Nothing is synced for a rule target: the group assignment is evaluated by agents.
 //   the matching devices of an unsaved rule are not listable (ListDevices
 //   filters by status/labels only), so this surface refuses to guess a fan-out.
 
@@ -172,7 +168,7 @@ export async function commitAssign(
 				AssignmentMode.REQUIRED
 			);
 			if (schedule === 'now') {
-				await apiClient.dispatchActionSet(deviceId, setId);
+				await apiClient.syncDevice(deviceId);
 			}
 			return { deviceId, ok: true };
 		} catch (error) {

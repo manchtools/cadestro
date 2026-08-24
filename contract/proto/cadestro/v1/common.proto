@@ -25,19 +25,8 @@ enum ExecutionStatus {
   EXECUTION_STATUS_FAILED = 4;
   EXECUTION_STATUS_SKIPPED = 5;
   EXECUTION_STATUS_TIMEOUT = 6;
-  // Queued for delayed dispatch — the Dispatch* request carried a
-  // run_at timestamp, so the server deferred the dispatch until
-  // that future time. Transitions to PENDING / RUNNING when the
-  // deferred task fires, then onward to a terminal status the same
-  // way as any other execution.
-  EXECUTION_STATUS_SCHEDULED = 7;
-  // Operator cancelled the dispatch via
-  // ControlService.CancelExecution. CancelExecution acts only
-  // while the execution is still in SCHEDULED or PENDING — once
-  // the agent has picked it up (RUNNING) or it has reached a
-  // terminal status, the cancel is a no-op and the row keeps its
-  // observed outcome.
-  EXECUTION_STATUS_CANCELLED = 8;
+	// Operator-cancelled action result.
+	EXECUTION_STATUS_CANCELLED = 7;
   // The action is structurally inapplicable to this device — e.g.
   // security_only on a package manager with no security-patch
   // scoping, a DEB action on an rpm host, a FLATPAK action with no
@@ -151,8 +140,7 @@ enum SearchScope {
   SEARCH_SCOPE_USERS = 6;
   SEARCH_SCOPE_DEVICE_GROUPS = 7;
   SEARCH_SCOPE_USER_GROUPS = 8;
-  SEARCH_SCOPE_EXECUTIONS = 9;
-  SEARCH_SCOPE_AUDIT_EVENTS = 10;
+	SEARCH_SCOPE_AUDIT_EVENTS = 9;
 }
 
 // SortField is the column a Search orders by. Shared across all scopes

@@ -24,7 +24,6 @@
 	import ConfirmDeleteDialog from '$lib/components/confirm-delete-dialog.svelte';
 	import PageShell from '$lib/components/page-shell.svelte';
 	import AssignmentsCard from '$lib/components/assignments-card.svelte';
-	import DispatchToDeviceDialog from '$lib/components/dispatch-to-device-dialog.svelte';
 	import { Chip } from '$lib/components/fleet';
 	import { formKeyFromActionType } from '$lib/components/actions/registry';
 	import { ArrowLeft, RefreshCw, Clock } from '@lucide/svelte';
@@ -41,7 +40,6 @@
 	let action = $state<ManagedAction | null>(null);
 	let loading = $state(true);
 	let deleteDialogOpen = $state(false);
-	let dispatchDialogOpen = $state(false);
 	// Remount key for the editor: a reload must rebase its draft on the new body.
 	let revision = $state(0);
 
@@ -137,9 +135,6 @@
 				<h1 class="truncate text-2xl font-bold">{action?.name ?? m.common_loading()}</h1>
 				<p class="font-mono text-xs text-faint">{actionId}</p>
 			</div>
-			<Button variant="outline" onclick={() => (dispatchDialogOpen = true)} disabled={!action}>
-				{m.dispatch_to_device_run_button()}
-			</Button>
 			<Button variant="outline" onclick={loadActionData} disabled={loading}>
 				<span class="mr-2 h-4 w-4" class:animate-spin={loading}>
 					<RefreshCw class="h-4 w-4" />
@@ -230,10 +225,4 @@
 	title={m.actions_delete_dialog_title()}
 	description={m.actions_delete_dialog_description({ name: action?.name ?? '' })}
 	onconfirm={deleteAction}
-/>
-
-<DispatchToDeviceDialog
-	bind:open={dispatchDialogOpen}
-	title={m.dispatch_to_device_action_title()}
-	actionId={actionId}
 />

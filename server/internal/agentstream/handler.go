@@ -21,8 +21,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	"github.com/manchtools/cadestro/server/internal/delivery"
-	"github.com/manchtools/cadestro/server/internal/execution"
 	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -51,15 +49,14 @@ type DeviceResults interface {
 	CompleteLuksKeyRevocation(context.Context, string, *cadestrov1.RevokeLuksDeviceKeyResult) error
 }
 
-// DeliveryState records terminal manifest results.
-type DeliveryState interface {
-	Complete(context.Context, string, string, string, string, string) (bool, error)
+// PolicyResults records assignment manifest results.
+type PolicyResults interface {
+	RecordPolicyManifestResult(context.Context, string, string, string, string, string) error
 }
 
 // ExecutionResults commits per-occurrence results and streamed output.
 type ExecutionResults interface {
 	ApplyActionResult(context.Context, string, *cadestrov1.ActionResult) error
-	AppendOutputChunk(context.Context, string, *cadestrov1.OutputChunk) error
 }
 
 // Secrets owns the narrow feature sinks for LUKS and LPS fields.
@@ -70,7 +67,7 @@ type Secrets interface {
 	StoreLpsPasswords(context.Context, string, *cadestrov1.StoreLpsPasswordsRequest) (*cadestrov1.StoreLpsPasswordsResponse, error)
 }
 
-// SyncSource returns the durable delivery backlog and current scheduling policy
+// SyncSource returns the current assignment policy and scheduling state
 // for the authenticated device.
 type SyncSource interface {
 	Sync(context.Context, string) (*cadestrov1.SyncState, error)
@@ -85,7 +82,7 @@ type LiveOperationResults interface {
 type Config struct {
 	Store             *store.Store
 	Manager           *connection.Manager
-	Deliveries        DeliveryState
+	PolicyResults     PolicyResults
 	Executions        ExecutionResults
 	DeviceResults     DeviceResults
 	Secrets           Secrets
@@ -105,7 +102,7 @@ type Handler struct {
 
 	store             *store.Store
 	manager           *connection.Manager
-	deliveries        DeliveryState
+	policyResults     PolicyResults
 	executions        ExecutionResults
 	deviceResults     DeviceResults
 	secrets           Secrets
@@ -124,7 +121,7 @@ type Handler struct {
 
 // New constructs the direct AgentService handler.
 func New(cfg Config) *Handler {
-	if cfg.Store == nil || cfg.Manager == nil || cfg.Deliveries == nil || cfg.Executions == nil ||
+	if cfg.Store == nil || cfg.Manager == nil || cfg.PolicyResults == nil || cfg.Executions == nil ||
 		cfg.DeviceResults == nil || cfg.Secrets == nil || cfg.Sync == nil || cfg.LiveOperations == nil || cfg.TerminalSessions == nil {
 		panic("agentstream: complete direct service wiring is required")
 	}
@@ -135,7 +132,7 @@ func New(cfg Config) *Handler {
 		cfg.Now = time.Now
 	}
 	return &Handler{
-		store: cfg.Store, manager: cfg.Manager, deliveries: cfg.Deliveries, executions: cfg.Executions,
+		store: cfg.Store, manager: cfg.Manager, policyResults: cfg.PolicyResults, executions: cfg.Executions,
 		deviceResults: cfg.DeviceResults, secrets: cfg.Secrets, sync: cfg.Sync, liveOperations: cfg.LiveOperations,
 		terminalSessions: cfg.TerminalSessions, logger: cfg.Logger,
 		serverVersion: cfg.ServerVersion, deviceLoginURL: cfg.DeviceLoginURL,
@@ -323,7 +320,7 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 			_ = h.sendResultAck(agent, message.Id, err)
 			return err
 		}
-		_, err = h.deliveries.Complete(ctx, payload.ManifestResult.DeliveryId, deviceID,
+		err = h.policyResults.RecordPolicyManifestResult(ctx, deviceID, payload.ManifestResult.RunId,
 			payload.ManifestResult.ManifestId, state, code)
 		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
 			return ackErr
@@ -335,8 +332,6 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 			return ackErr
 		}
 		return err
-	case *cadestrov1.AgentMessage_OutputChunk:
-		return h.executions.AppendOutputChunk(ctx, deviceID, payload.OutputChunk)
 	case *cadestrov1.AgentMessage_QueryResult:
 		return h.deviceResults.CompleteOSQueryResult(ctx, deviceID, payload.QueryResult)
 	case *cadestrov1.AgentMessage_LogQueryResult:
@@ -459,12 +454,7 @@ var errForeignTerminalSession = errors.New("terminal session belongs to another 
 // until it is.
 func frameNotAuthorized(err error) bool {
 	switch {
-	case errors.Is(err, errForeignTerminalSession),
-		errors.Is(err, execution.ErrWrongDevice),
-		errors.Is(err, execution.ErrWrongDelivery),
-		errors.Is(err, execution.ErrWrongAction),
-		errors.Is(err, delivery.ErrWrongDevice),
-		errors.Is(err, delivery.ErrWrongManifest):
+	case errors.Is(err, errForeignTerminalSession):
 		return true
 	}
 	var connectErr *connect.Error
@@ -532,15 +522,6 @@ func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *cades
 				ResourceType: "device", ResourceID: deviceID, Action: "CONNECT", Outcome: store.EffectApplied,
 				ChangedFields: changed,
 			})
-			if current.Hostname != hello.Hostname {
-				executionIDs, err := tx.ListExecutionIDsForDevice(ctx, deviceID)
-				if err != nil {
-					return err
-				}
-				for _, executionID := range executionIDs {
-					recorder.RefreshSearch("execution", executionID)
-				}
-			}
 			return nil
 		})
 	return err
@@ -588,11 +569,11 @@ func manifestResultState(result *cadestrov1.ManifestResult) (state, code string,
 	}
 	switch result.Status {
 	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
-		return delivery.StateSucceeded, "SUCCESS", nil
+		return "SUCCEEDED", "SUCCESS", nil
 	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED:
-		return delivery.StateFailed, "FAILED", nil
+		return "FAILED", "FAILED", nil
 	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
-		return delivery.StatePartial, "INDETERMINATE", nil
+		return "PARTIAL", "INDETERMINATE", nil
 	default:
 		return "", "", errors.New("invalid manifest result status")
 	}

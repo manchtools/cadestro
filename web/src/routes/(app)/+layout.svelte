@@ -32,7 +32,6 @@
 	import StageRail from '$lib/components/shell/stage-rail.svelte';
 	import PersistentTerminalDrawer from '$lib/components/terminal/persistent-terminal-drawer.svelte';
 	import DeviceWindow from '$lib/components/devices/device-window.svelte';
-	import ExecutionWindow from '$lib/components/executions/execution-window.svelte';
 	import Panel from '$lib/components/shell/panel.svelte';
 	import OnboardingHost from '$lib/components/onboarding/onboarding-host.svelte';
 
@@ -173,8 +172,6 @@
 			{#snippet content()}
 				{#if p.kind === 'device'}
 					<DeviceWindow deviceId={p.refId} />
-				{:else if p.kind === 'execution'}
-					<ExecutionWindow executionId={p.refId} />
 				{/if}
 			{/snippet}
 		</Panel>

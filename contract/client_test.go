@@ -54,9 +54,6 @@ type fakeTerminalHandler struct {
 func (h *fakeTerminalHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	return nil
 }
-func (h *fakeTerminalHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
-	return nil
-}
 func (h *fakeTerminalHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
@@ -85,9 +82,6 @@ func (h *fakeTerminalHandler) OnTerminalStop(ctx context.Context, req *cadestrov
 type fakeBareHandler struct{}
 
 func (fakeBareHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error { return nil }
-func (fakeBareHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
-	return nil
-}
 func (fakeBareHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
@@ -473,9 +467,6 @@ type recordingWelcomeHandler struct {
 
 func (h *recordingWelcomeHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	h.called = true
-	return nil
-}
-func (h *recordingWelcomeHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
 	return nil
 }
 func (h *recordingWelcomeHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
