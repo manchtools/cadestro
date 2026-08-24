@@ -25,8 +25,8 @@ enum ExecutionStatus {
   EXECUTION_STATUS_FAILED = 4;
   EXECUTION_STATUS_SKIPPED = 5;
   EXECUTION_STATUS_TIMEOUT = 6;
-	// Operator-cancelled action result.
-	EXECUTION_STATUS_CANCELLED = 7;
+  // Operator-cancelled action result.
+  EXECUTION_STATUS_CANCELLED = 7;
   // The action is structurally inapplicable to this device — e.g.
   // security_only on a package manager with no security-patch
   // scoping, a DEB action on an rpm host, a FLATPAK action with no
@@ -140,7 +140,7 @@ enum SearchScope {
   SEARCH_SCOPE_USERS = 6;
   SEARCH_SCOPE_DEVICE_GROUPS = 7;
   SEARCH_SCOPE_USER_GROUPS = 8;
-	SEARCH_SCOPE_AUDIT_EVENTS = 9;
+  SEARCH_SCOPE_AUDIT_EVENTS = 9;
 }
 
 // SortField is the column a Search orders by. Shared across all scopes

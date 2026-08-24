@@ -900,16 +900,16 @@ message ActionResult {
   bool compliant = 9;
   // Detection script output (separate from execution output)
   CommandOutput detection_output = 10;
-	// The run this result belongs to, and the authored position within
-	// that run's manifest. Together they make ingestion idempotent:
-	// control keys the stored result on (run_id, occurrence_id), so a
+  // The run this result belongs to, and the authored position within
+  // that run's manifest. Together they make ingestion idempotent:
+  // control keys the stored result on (run_id, occurrence_id), so a
   // result replayed after a reconnect updates the same row instead of
   // creating a second one. action_id alone cannot do this — duplicate
   // authored occurrences of the same action are preserved and executed, so
-	// one authored occurrence legitimately produces several results with the same
+  // one authored occurrence legitimately produces several results with the same
   // action_id.
   //
-	string run_id = 11 [(buf.validate.field).string.ulid = true];
+  string run_id = 11 [(buf.validate.field).string.ulid = true];
   string occurrence_id = 12 [(buf.validate.field).string.ulid = true];
 }
 
