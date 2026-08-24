@@ -8,7 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/idp"
@@ -34,14 +34,14 @@ const authFlowBrowser = "browser"
 // answer whatever email is supplied: the enabled providers. Tailoring
 // the list to an address would report whether that address has an
 // account here, which is a free enumeration oracle on the login page.
-func (h *Handlers) ListAuthMethods(ctx context.Context, req *connect.Request[pmv1.ListAuthMethodsRequest]) (*connect.Response[pmv1.ListAuthMethodsResponse], error) {
+func (h *Handlers) ListAuthMethods(ctx context.Context, req *connect.Request[cadestrov1.ListAuthMethodsRequest]) (*connect.Response[cadestrov1.ListAuthMethodsResponse], error) {
 	providers, err := h.store.ListEnabledIdentityProviders(ctx)
 	if err != nil {
 		return nil, internalError(ctx, "failed to list authentication methods")
 	}
-	resp := &pmv1.ListAuthMethodsResponse{}
+	resp := &cadestrov1.ListAuthMethodsResponse{}
 	for _, p := range providers {
-		resp.Providers = append(resp.Providers, &pmv1.AuthMethodProvider{
+		resp.Providers = append(resp.Providers, &cadestrov1.AuthMethodProvider{
 			Slug:         p.Slug,
 			Name:         p.Name,
 			ProviderType: providerTypeToProto(p.ProviderType),
@@ -57,7 +57,7 @@ func (h *Handlers) ListAuthMethods(ctx context.Context, req *connect.Request[pmv
 // server-side against the state value. The browser carries only the
 // state, so an attacker who observes the redirect learns nothing that
 // lets them complete somebody else's exchange.
-func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[pmv1.GetSSOLoginURLRequest]) (*connect.Response[pmv1.GetSSOLoginURLResponse], error) {
+func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[cadestrov1.GetSSOLoginURLRequest]) (*connect.Response[cadestrov1.GetSSOLoginURLResponse], error) {
 	provider, err := h.store.GetIdentityProviderBySlug(ctx, req.Msg.Slug)
 	if err != nil {
 		if store.IsNotFound(err) {
@@ -138,7 +138,7 @@ func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[pmv1
 		return nil, internalError(ctx, "failed to start the login flow")
 	}
 
-	return connect.NewResponse(&pmv1.GetSSOLoginURLResponse{
+	return connect.NewResponse(&cadestrov1.GetSSOLoginURLResponse{
 		LoginUrl: oidcClient.AuthCodeURL(state, nonce, verifier),
 	}), nil
 }
@@ -150,7 +150,7 @@ func (h *Handlers) GetSSOLoginURL(ctx context.Context, req *connect.Request[pmv1
 // resolving or provisioning the subject, reconciling their mapped
 // groups and stamping the login. A failure anywhere leaves no half-made
 // account and no spent state.
-func (h *Handlers) SSOCallback(ctx context.Context, req *connect.Request[pmv1.SSOCallbackRequest]) (*connect.Response[pmv1.SSOCallbackResponse], error) {
+func (h *Handlers) SSOCallback(ctx context.Context, req *connect.Request[cadestrov1.SSOCallbackRequest]) (*connect.Response[cadestrov1.SSOCallbackResponse], error) {
 	provider, err := h.store.GetIdentityProviderBySlug(ctx, req.Msg.Slug)
 	if err != nil {
 		if store.IsNotFound(err) {
@@ -192,7 +192,7 @@ func (h *Handlers) SSOCallback(ctx context.Context, req *connect.Request[pmv1.SS
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.SSOCallbackResponse{
+	return connect.NewResponse(&cadestrov1.SSOCallbackResponse{
 		AccessToken: completed.AccessToken, RefreshToken: completed.RefreshToken,
 		ExpiresAt: timestampValue(completed.ExpiresAt), User: completed.User,
 	}), nil
@@ -202,7 +202,7 @@ type completedLogin struct {
 	AccessToken  string
 	RefreshToken string
 	ExpiresAt    time.Time
-	User         *pmv1.User
+	User         *cadestrov1.User
 }
 
 func (h *Handlers) completeLogin(ctx context.Context, req connect.AnyRequest, provider store.IdentityProviderRow, claims *idp.UserClaims) (*completedLogin, error) {

@@ -7,7 +7,7 @@ import (
 	"buf.build/go/protovalidate"
 	"google.golang.org/protobuf/proto"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func validateStruct(v protovalidate.Validator, msg proto.Message) (string, bool) {
@@ -90,8 +90,8 @@ func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 	}
 
 	p := encryptionParamsFixture()
-	p.DeviceBoundKeyType = pm.EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM // legal
-	p.RotationIntervalDays = 0                                                                  // invalid, and unrelated to the enum
+	p.DeviceBoundKeyType = cadestrov1.EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM // legal
+	p.RotationIntervalDays = 0                                                                          // invalid, and unrelated to the enum
 
 	detail, ok := validateStruct(v, p)
 	if ok {
@@ -110,8 +110,8 @@ func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 
 // encryptionParamsFixture is a fully valid EncryptionParams; each test mutates
 // exactly one enum member so that member is the only thing under test.
-func encryptionParamsFixture() *pm.EncryptionParams {
-	return &pm.EncryptionParams{
+func encryptionParamsFixture() *cadestrov1.EncryptionParams {
+	return &cadestrov1.EncryptionParams{
 		PresharedKey:            make([]byte, 61),
 		RotationIntervalDays:    30,
 		MinWords:                5,
@@ -121,8 +121,8 @@ func encryptionParamsFixture() *pm.EncryptionParams {
 
 // encryptionAuthoringParamsFixture is the same for the write-boundary shape,
 // whose preshared_key is optional on update.
-func encryptionAuthoringParamsFixture() *pm.EncryptionAuthoringParams {
-	return &pm.EncryptionAuthoringParams{
+func encryptionAuthoringParamsFixture() *cadestrov1.EncryptionAuthoringParams {
+	return &cadestrov1.EncryptionAuthoringParams{
 		RotationIntervalDays:    30,
 		MinWords:                5,
 		UserPassphraseMinLength: 16,
@@ -137,14 +137,14 @@ func TestEncryptionParams_RejectsUndefinedDeviceBoundKeyType(t *testing.T) {
 	}
 	const field = "device_bound_key_type"
 
-	for _, kt := range definedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
+	for _, kt := range definedEnumValues[cadestrov1.EncryptionDeviceBoundKeyType](t, cadestrov1.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionParamsFixture()
 		p.DeviceBoundKeyType = kt
 		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(kt), kt, detail)
 		}
 	}
-	for _, kt := range undefinedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
+	for _, kt := range undefinedEnumValues[cadestrov1.EncryptionDeviceBoundKeyType](t, cadestrov1.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionParamsFixture()
 		p.DeviceBoundKeyType = kt
 		detail, ok := validateStruct(v, p)
@@ -166,14 +166,14 @@ func TestEncryptionAuthoringParams_RejectsUndefinedDeviceBoundKeyType(t *testing
 	}
 	const field = "device_bound_key_type"
 
-	for _, kt := range definedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
+	for _, kt := range definedEnumValues[cadestrov1.EncryptionDeviceBoundKeyType](t, cadestrov1.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.DeviceBoundKeyType = kt
 		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(kt), kt, detail)
 		}
 	}
-	for _, kt := range undefinedEnumValues[pm.EncryptionDeviceBoundKeyType](t, pm.EncryptionDeviceBoundKeyType_name) {
+	for _, kt := range undefinedEnumValues[cadestrov1.EncryptionDeviceBoundKeyType](t, cadestrov1.EncryptionDeviceBoundKeyType_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.DeviceBoundKeyType = kt
 		detail, ok := validateStruct(v, p)
@@ -204,14 +204,14 @@ func TestEncryptionParams_RejectsUndefinedUserPassphraseComplexity(t *testing.T)
 	}
 	const field = "user_passphrase_complexity"
 
-	for _, c := range definedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
+	for _, c := range definedEnumValues[cadestrov1.LpsPasswordComplexity](t, cadestrov1.LpsPasswordComplexity_name) {
 		p := encryptionParamsFixture()
 		p.UserPassphraseComplexity = c
 		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(c), c, detail)
 		}
 	}
-	for _, c := range undefinedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
+	for _, c := range undefinedEnumValues[cadestrov1.LpsPasswordComplexity](t, cadestrov1.LpsPasswordComplexity_name) {
 		p := encryptionParamsFixture()
 		p.UserPassphraseComplexity = c
 		detail, ok := validateStruct(v, p)
@@ -233,14 +233,14 @@ func TestEncryptionAuthoringParams_RejectsUndefinedUserPassphraseComplexity(t *t
 	}
 	const field = "user_passphrase_complexity"
 
-	for _, c := range definedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
+	for _, c := range definedEnumValues[cadestrov1.LpsPasswordComplexity](t, cadestrov1.LpsPasswordComplexity_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.UserPassphraseComplexity = c
 		if detail, valid := validateStruct(v, p); !valid {
 			t.Errorf("defined %s = %d (%s) must validate, got: %s", field, int32(c), c, detail)
 		}
 	}
-	for _, c := range undefinedEnumValues[pm.LpsPasswordComplexity](t, pm.LpsPasswordComplexity_name) {
+	for _, c := range undefinedEnumValues[cadestrov1.LpsPasswordComplexity](t, cadestrov1.LpsPasswordComplexity_name) {
 		p := encryptionAuthoringParamsFixture()
 		p.UserPassphraseComplexity = c
 		detail, ok := validateStruct(v, p)

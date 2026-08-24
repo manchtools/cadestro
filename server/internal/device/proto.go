@@ -7,22 +7,22 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 const onlineWindow = 5 * time.Minute
 
-func (h *Handlers) toProto(view store.DeviceView) *pmv1.Device {
-	device := &pmv1.Device{
+func (h *Handlers) toProto(view store.DeviceView) *cadestrov1.Device {
+	device := &cadestrov1.Device{
 		Id: view.ID, Hostname: view.Hostname, AgentVersion: view.AgentVersion,
-		Status:                   pmv1.DeviceStatus_DEVICE_STATUS_OFFLINE,
+		Status:                   cadestrov1.DeviceStatus_DEVICE_STATUS_OFFLINE,
 		Labels:                   make(map[string]string, len(view.Labels)),
 		AssignedUserIds:          append([]string(nil), view.AssignedUserIDs...),
 		AssignedGroupIds:         append([]string(nil), view.AssignedGroupIDs...),
 		SyncIntervalMinutes:      view.SyncIntervalMinutes,
 		InventoryIntervalMinutes: view.InventoryIntervalMinutes,
-		ComplianceStatus:         pmv1.ComplianceStatus(view.ComplianceStatus),
+		ComplianceStatus:         cadestrov1.ComplianceStatus(view.ComplianceStatus),
 		ComplianceTotal:          view.ComplianceTotal, CompliancePassing: view.CompliancePassing,
 	}
 	for key, value := range view.Labels {
@@ -34,7 +34,7 @@ func (h *Handlers) toProto(view store.DeviceView) *pmv1.Device {
 	if view.LastSeenAt != nil {
 		device.LastSeenAt = timestamppb.New(*view.LastSeenAt)
 		if view.LastSeenAt.After(h.now().Add(-onlineWindow)) {
-			device.Status = pmv1.DeviceStatus_DEVICE_STATUS_ONLINE
+			device.Status = cadestrov1.DeviceStatus_DEVICE_STATUS_ONLINE
 		}
 	}
 	if block, _ := pem.Decode(view.CertificatePem); block != nil {

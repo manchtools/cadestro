@@ -14,7 +14,7 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/luksd"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // runAgent connects to the control and processes messages.
@@ -456,7 +456,7 @@ func syncPendingResults(ctx context.Context, sched *scheduler.Scheduler, client 
 	}
 }
 
-func sendResult(ctx context.Context, client *sdk.Client, action *pm.ActionResult, manifest *pm.ManifestResult) error {
+func sendResult(ctx context.Context, client *sdk.Client, action *cadestrov1.ActionResult, manifest *cadestrov1.ManifestResult) error {
 	switch {
 	case action != nil && manifest == nil:
 		return client.SendActionResult(ctx, action)
@@ -483,15 +483,15 @@ func sendSecurityAlert(ctx context.Context, client *sdk.Client, alert *pendingSe
 	)
 
 	// Map alert type string to proto enum
-	var alertType pm.SecurityAlertType
+	var alertType cadestrov1.SecurityAlertType
 	switch alert.alertType {
 	case "server_reassignment_attempt":
-		alertType = pm.SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT
+		alertType = cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT
 	default:
-		alertType = pm.SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED
+		alertType = cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED
 	}
 
-	protoAlert := &pm.SecurityAlert{
+	protoAlert := &cadestrov1.SecurityAlert{
 		Type:    alertType,
 		Message: alert.message,
 		Details: map[string]string{

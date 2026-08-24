@@ -9,7 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // WS15 #2 — stream-dispatch robustness.
@@ -46,21 +46,25 @@ func (h *panicStreamingHandler) signalRan() {
 	}
 }
 
-func (h *panicStreamingHandler) OnWelcome(ctx context.Context, w *pm.Welcome) error { return nil }
-func (h *panicStreamingHandler) OnQuery(ctx context.Context, q *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (h *panicStreamingHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
+	return nil
+}
+func (h *panicStreamingHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (h *panicStreamingHandler) OnError(ctx context.Context, e *pm.Error) error { return nil }
+func (h *panicStreamingHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
-func (h *panicStreamingHandler) CollectInventory(ctx context.Context) *pm.DeviceInventory { return nil }
-func (h *panicStreamingHandler) OnRequestInventory(ctx context.Context, req *pm.RequestInventory) *pm.DeviceInventory {
+func (h *panicStreamingHandler) CollectInventory(ctx context.Context) *cadestrov1.DeviceInventory {
+	return nil
+}
+func (h *panicStreamingHandler) OnRequestInventory(ctx context.Context, req *cadestrov1.RequestInventory) *cadestrov1.DeviceInventory {
 	if h.panicInv {
 		h.signalRan()
 		panic("boom: inventory handler exploded")
 	}
 	return nil
 }
-func (h *panicStreamingHandler) OnRevokeLuksDeviceKey(ctx context.Context, req *pm.RevokeLuksDeviceKey) (bool, string) {
+func (h *panicStreamingHandler) OnRevokeLuksDeviceKey(ctx context.Context, req *cadestrov1.RevokeLuksDeviceKey) (bool, string) {
 	if h.panicRevoke {
 		h.signalRan()
 		panic("boom: revoke handler exploded")
@@ -72,10 +76,10 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 	t.Run("fan-out leg: inventory goroutine panic must not crash the process", func(t *testing.T) {
 		c := NewClient("https://gw.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
 		h := &panicStreamingHandler{ran: make(chan struct{}), panicInv: true}
-		msg := &pm.ServerMessage{
+		msg := &cadestrov1.ServerMessage{
 			Id: NewULID(),
-			Payload: &pm.ServerMessage_RequestInventory{
-				RequestInventory: &pm.RequestInventory{QueryId: "01HQ0000000000000000000000"},
+			Payload: &cadestrov1.ServerMessage_RequestInventory{
+				RequestInventory: &cadestrov1.RequestInventory{QueryId: "01HQ0000000000000000000000"},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
@@ -95,10 +99,10 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 	t.Run("fan-out leg: luks-revoke goroutine panic must not crash the process", func(t *testing.T) {
 		c := NewClient("https://gw.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
 		h := &panicStreamingHandler{ran: make(chan struct{}), panicRevoke: true}
-		msg := &pm.ServerMessage{
+		msg := &cadestrov1.ServerMessage{
 			Id: NewULID(),
-			Payload: &pm.ServerMessage_RevokeLuksDeviceKey{
-				RevokeLuksDeviceKey: &pm.RevokeLuksDeviceKey{ActionId: "01HQ0000000000000000000000"},
+			Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
+				RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: "01HQ0000000000000000000000"},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
@@ -129,13 +133,13 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 
 	t.Run("within limit: normal message round-trips", func(t *testing.T) {
 		l := newAgentLoopback(t)
-		welcomeOnce := func(ctx context.Context, s *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+		welcomeOnce := func(ctx context.Context, s *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 			if _, err := s.Receive(); err != nil {
 				return err
 			}
-			if err := s.Send(&pm.ServerMessage{
+			if err := s.Send(&cadestrov1.ServerMessage{
 				Id:      NewULID(),
-				Payload: &pm.ServerMessage_Welcome{Welcome: &pm.Welcome{ServerVersion: "test"}},
+				Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{ServerVersion: "test"}},
 			}); err != nil {
 				return err
 			}
@@ -168,7 +172,7 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 
 	t.Run("over limit: oversized inbound frame is refused (resource exhausted)", func(t *testing.T) {
 		l := newAgentLoopback(t)
-		oversize := func(ctx context.Context, s *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+		oversize := func(ctx context.Context, s *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 			if _, err := s.Receive(); err != nil {
 				return err
 			}
@@ -178,10 +182,10 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 			for i := range big {
 				big[i] = 'a'
 			}
-			_ = s.Send(&pm.ServerMessage{
+			_ = s.Send(&cadestrov1.ServerMessage{
 				Id: NewULID(),
-				Payload: &pm.ServerMessage_Error{
-					Error: &pm.Error{Code: "x", Message: string(big)},
+				Payload: &cadestrov1.ServerMessage_Error{
+					Error: &cadestrov1.Error{Code: "x", Message: string(big)},
 				},
 			})
 			for {

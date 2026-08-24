@@ -11,7 +11,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -260,10 +260,10 @@ func IsComplianceAction(row store.ActionRow) bool {
 }
 
 func validateComplianceAction(row store.ActionRow) error {
-	if pmv1.ActionType(row.ActionType) != pmv1.ActionType_ACTION_TYPE_SHELL {
+	if cadestrov1.ActionType(row.ActionType) != cadestrov1.ActionType_ACTION_TYPE_SHELL {
 		return ErrActionNotCompliance
 	}
-	action := &pmv1.ManagedAction{Type: pmv1.ActionType(row.ActionType)}
+	action := &cadestrov1.ManagedAction{Type: cadestrov1.ActionType(row.ActionType)}
 	if err := actionparams.PopulateManagedAction(action, action.Type, row.Params); err != nil {
 		return fmt.Errorf("compliance: decode action params: %w", err)
 	}

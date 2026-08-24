@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -14,7 +14,7 @@ import (
 // The RPC takes no subject: it is self-service by construction, so
 // there is no id a caller could substitute to read somebody else's
 // linked accounts.
-func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[pmv1.ListIdentityLinksRequest]) (*connect.Response[pmv1.ListIdentityLinksResponse], error) {
+func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[cadestrov1.ListIdentityLinksRequest]) (*connect.Response[cadestrov1.ListIdentityLinksResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -24,13 +24,13 @@ func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[p
 	}
 	if !actor.CanOwnResources() {
 		// A principal that is no subject owns no links.
-		return connect.NewResponse(&pmv1.ListIdentityLinksResponse{}), nil
+		return connect.NewResponse(&cadestrov1.ListIdentityLinksResponse{}), nil
 	}
 	links, err := h.store.ListIdentityLinksForUser(ctx, actor.ID)
 	if err != nil {
 		return nil, internalError(ctx, "failed to list identity links")
 	}
-	resp := &pmv1.ListIdentityLinksResponse{}
+	resp := &cadestrov1.ListIdentityLinksResponse{}
 	for _, l := range links {
 		resp.Links = append(resp.Links, linkToProto(l))
 	}
@@ -44,7 +44,7 @@ func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[p
 // bindings. And the caller's LAST link cannot be removed: human login
 // is OIDC only, so unlinking the last one would lock the subject out of
 // their own account with no local credential to fall back on.
-func (h *Handlers) UnlinkIdentity(ctx context.Context, req *connect.Request[pmv1.UnlinkIdentityRequest]) (*connect.Response[pmv1.UnlinkIdentityResponse], error) {
+func (h *Handlers) UnlinkIdentity(ctx context.Context, req *connect.Request[cadestrov1.UnlinkIdentityRequest]) (*connect.Response[cadestrov1.UnlinkIdentityResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -100,5 +100,5 @@ func (h *Handlers) UnlinkIdentity(ctx context.Context, req *connect.Request[pmv1
 		}
 		return nil, internalError(ctx, "failed to unlink identity")
 	}
-	return connect.NewResponse(&pmv1.UnlinkIdentityResponse{}), nil
+	return connect.NewResponse(&cadestrov1.UnlinkIdentityResponse{}), nil
 }

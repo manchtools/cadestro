@@ -5,7 +5,7 @@ package actionparams
 import (
 	"fmt"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -75,9 +75,9 @@ func UnmarshalActionParams(raw []byte, msg proto.Message) error {
 // params oneof (so reaching the switch default is expected, not an error).
 // UNSPECIFIED is the zero value. Any other unhandled type is a new ActionType that the params
 // registry forgot to wire up (paramsFieldByActionType in registry.go).
-func isNoParamsActionType(t pm.ActionType) bool {
+func isNoParamsActionType(t cadestrov1.ActionType) bool {
 	switch t {
-	case pm.ActionType_ACTION_TYPE_UNSPECIFIED:
+	case cadestrov1.ActionType_ACTION_TYPE_UNSPECIFIED:
 		return true
 	default:
 		return false
@@ -90,14 +90,14 @@ func isNoParamsActionType(t pm.ActionType) bool {
 // so callers can fail closed (retry/dead-letter, log) instead of dispatching an
 // action with empty/nil params (#368). The per-type mapping lives in the single
 // proto-reflection registry (registry.go), not a switch.
-func PopulateAction(action *pm.Action, actionType int32, paramsJSON []byte) error {
-	return populateParamsOneof(action, pm.ActionType(actionType), paramsJSON)
+func PopulateAction(action *cadestrov1.Action, actionType int32, paramsJSON []byte) error {
+	return populateParamsOneof(action, cadestrov1.ActionType(actionType), paramsJSON)
 }
 
 // PopulateManagedAction deserializes params JSON into an API-format
 // ManagedAction proto. Used by the control server API (action list/get
 // responses). Fail-closed identically to PopulateAction.
-func PopulateManagedAction(action *pm.ManagedAction, actionType pm.ActionType, paramsJSON []byte) error {
+func PopulateManagedAction(action *cadestrov1.ManagedAction, actionType cadestrov1.ActionType, paramsJSON []byte) error {
 	return populateParamsOneof(action, actionType, paramsJSON)
 }
 
@@ -105,6 +105,6 @@ func PopulateManagedAction(action *pm.ManagedAction, actionType pm.ActionType, p
 // API input shape. Encryption and WiFi deliberately differ from their
 // redacted read and agent-wire shapes, so persisted authoring validation uses
 // this carrier.
-func PopulateUpdateActionParams(request *pm.UpdateActionParamsRequest, actionType pm.ActionType, paramsJSON []byte) error {
+func PopulateUpdateActionParams(request *cadestrov1.UpdateActionParamsRequest, actionType cadestrov1.ActionType, paramsJSON []byte) error {
 	return populateParamsOneof(request, actionType, paramsJSON)
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 )
@@ -46,10 +46,10 @@ func TestEnroll_RetryReusesPendingIdentityAfterResponseLoss(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	var csrs [][]byte
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			csrs = append(csrs, append([]byte(nil), req.Msg.Csr...))
-			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:    &pm.DeviceId{Value: "retry-device"},
+			return connect.NewResponse(&cadestrov1.RegisterResponse{
+				DeviceId:    &cadestrov1.DeviceId{Value: "retry-device"},
 				CaCert:      caPEM,
 				Certificate: []byte(fakeLeafPEM),
 				ControlUrl:  "https://gw.example.com",
@@ -61,8 +61,8 @@ func TestEnroll_RetryReusesPendingIdentityAfterResponseLoss(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", store, slog.Default(), nil)
 	h.registerOpts = trustServer(srv)
 	h.credStore = &failFinalSaveStore{credentialStore: store}
-	req := func() *connect.Request[pm.EnrollRequest] {
-		return connect.NewRequest(&pm.EnrollRequest{ServerUrl: srv.URL, Token: "reusable", CaFingerprintPin: caPin(t, caPEM)})
+	req := func() *connect.Request[cadestrov1.EnrollRequest] {
+		return connect.NewRequest(&cadestrov1.EnrollRequest{ServerUrl: srv.URL, Token: "reusable", CaFingerprintPin: caPin(t, caPEM)})
 	}
 	first, err := h.Enroll(context.Background(), req())
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestEnroll_RetryReusesPendingIdentityAfterResponseLoss(t *testing.T) {
 func TestEnroll_RateLimitRejectsSixthInWindow(t *testing.T) {
 	var registerCalls int32
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			atomic.AddInt32(&registerCalls, 1)
 			return nil, connect.NewError(connect.CodePermissionDenied, nil)
 		},
@@ -101,14 +101,14 @@ func TestEnroll_RateLimitRejectsSixthInWindow(t *testing.T) {
 	h.now = func() time.Time { return fixed } // all attempts land in one window
 
 	for i := 0; i < 5; i++ {
-		resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 			ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin,
 		}))
 		require.NoError(t, err)
 		assert.Contains(t, resp.Msg.Error, "registration failed", "attempt %d should reach (and fail) registration", i+1)
 	}
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin,
 	}))
 	require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestEnroll_RateLimitRejectsSixthInWindow(t *testing.T) {
 func TestEnroll_RateLimitSlidingWindowEviction(t *testing.T) {
 	var registerCalls int32
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			atomic.AddInt32(&registerCalls, 1)
 			return nil, connect.NewError(connect.CodePermissionDenied, nil)
 		},
@@ -140,7 +140,7 @@ func TestEnroll_RateLimitSlidingWindowEviction(t *testing.T) {
 
 	// Exhaust the window: 5 reach (and fail) registration, the 6th is rate-limited.
 	for i := 0; i < 6; i++ {
-		_, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin}))
+		_, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin}))
 		require.NoError(t, err)
 	}
 	require.EqualValues(t, 5, atomic.LoadInt32(&registerCalls), "only 5 attempts may reach the network within one window")
@@ -148,7 +148,7 @@ func TestEnroll_RateLimitSlidingWindowEviction(t *testing.T) {
 	// Advance past the 1-minute window: the prior attempts are evicted, so a
 	// fresh attempt is allowed through to registration again.
 	now = now.Add(61 * time.Second)
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin}))
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin}))
 	require.NoError(t, err)
 	assert.Contains(t, resp.Msg.Error, "registration failed", "after the window resets, enrollment is allowed through again")
 	assert.EqualValues(t, 6, atomic.LoadInt32(&registerCalls), "a fresh attempt after the window must reach registration")
@@ -164,10 +164,10 @@ func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	pin := caPin(t, caPEM)
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			atomic.AddInt32(&registerCalls, 1)
-			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:    &pm.DeviceId{Value: "dev-123"},
+			return connect.NewResponse(&cadestrov1.RegisterResponse{
+				DeviceId:    &cadestrov1.DeviceId{Value: "dev-123"},
 				CaCert:      caPEM,
 				Certificate: []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
 				ControlUrl:  "https://gw.example.com:8443",
@@ -186,7 +186,7 @@ func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if _, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+			if _, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 				ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: pin,
 			})); err != nil {
 				errCh <- err
@@ -220,9 +220,9 @@ func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mock := &mockRegisterService{
-				registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-					return connect.NewResponse(&pm.RegisterResponse{
-						DeviceId:    &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
+				registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+					return connect.NewResponse(&cadestrov1.RegisterResponse{
+						DeviceId:    &cadestrov1.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
 						CaCert:      tc.ca,
 						Certificate: tc.cert,
 						ControlUrl:  "https://gw.example.com",
@@ -234,7 +234,7 @@ func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 			h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), nil)
 			h.registerOpts = trustServer(srv)
 
-			resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+			resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 				ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin,
 			}))
 			require.NoError(t, err)
@@ -252,13 +252,13 @@ func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 // token, hostname, and version, and a valid self-signed CSR whose key it
 // keeps (#8) — the "private key never leaves the agent" contract.
 func TestEnroll_BindsOutboundRegisterRequest(t *testing.T) {
-	var captured *pm.RegisterRequest
+	var captured *cadestrov1.RegisterRequest
 	caPEM := genTestCAPEM(t)
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			captured = req.Msg
-			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:    &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
+			return connect.NewResponse(&cadestrov1.RegisterResponse{
+				DeviceId:    &cadestrov1.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
 				CaCert:      caPEM,
 				Certificate: []byte(fakeLeafPEM),
 				ControlUrl:  "https://gw.example.com",
@@ -270,7 +270,7 @@ func TestEnroll_BindsOutboundRegisterRequest(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), nil)
 	h.registerOpts = trustServer(srv)
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: srv.URL, Token: "test-token", CaFingerprintPin: caPin(t, caPEM),
 	}))
 	require.NoError(t, err)
@@ -298,7 +298,7 @@ func TestEnroll_SaveFailureFailsClosed(t *testing.T) {
 	h.registerOpts = trustServer(srv)
 	h.credStore = &failingStore{credentialStore: h.credStore, saveErr: errors.New("disk full")}
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: caPin(t, caPEM),
 	}))
 	require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestEnroll_SaveFailureFailsClosed(t *testing.T) {
 	assert.Contains(t, resp.Msg.Error, "save credentials")
 	assert.False(t, called, "onEnrolled must not fire when Save fails")
 
-	st, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	st, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, st.Msg.Enrolled, "status cache must not be primed on Save failure")
 }

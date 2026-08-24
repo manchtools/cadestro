@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // Agent represents a connected agent.
@@ -20,7 +20,7 @@ type Agent struct {
 	Version     string
 	ConnectedAt time.Time
 	LastSeen    time.Time
-	Stream      *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]
+	Stream      *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]
 	sendMu      sync.Mutex
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -29,7 +29,7 @@ type Agent struct {
 	// Register; it is a seam because connect.BidiStream is a concrete type with
 	// no interface, so a test cannot otherwise produce the case that matters
 	// here — a write that blocks because the device stopped reading.
-	write func(*pm.ServerMessage) error
+	write func(*cadestrov1.ServerMessage) error
 
 	// setWriteDeadline arms the TRANSPORT's write deadline, so a blocked write
 	// returns instead of being abandoned. Production wires it to
@@ -69,7 +69,7 @@ var SendTimeout = 10 * time.Second
 //
 // A transport with no deadline support leaves the write unbounded — the
 // pre-existing behaviour, and better than pretending to bound it.
-func (a *Agent) Send(msg *pm.ServerMessage) error {
+func (a *Agent) Send(msg *cadestrov1.ServerMessage) error {
 	// Acquire the send lock FIRST, then check the context. If we checked
 	// the context before locking, Close() could race in between — cancelling
 	// the ctx while our goroutine still holds a stale "not done" read — and
@@ -187,7 +187,7 @@ func NewManager() *Manager {
 // the handler's request ctx so the agent's lifetime ends when the RPC
 // ends (graceful shutdown, client disconnect). Close() still cancels
 // independently for Unregister-driven teardown.
-func (m *Manager) Register(parentCtx context.Context, deviceID, hostname, version string, stream *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) *Agent {
+func (m *Manager) Register(parentCtx context.Context, deviceID, hostname, version string, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) *Agent {
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	agent := &Agent{
@@ -285,7 +285,7 @@ func (m *Manager) LastSeenSnapshot() map[string]time.Time {
 }
 
 // Send sends a message to a specific agent.
-func (m *Manager) Send(deviceID string, msg *pm.ServerMessage) error {
+func (m *Manager) Send(deviceID string, msg *cadestrov1.ServerMessage) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	agent, ok := m.agents[deviceID]
@@ -298,7 +298,7 @@ func (m *Manager) Send(deviceID string, msg *pm.ServerMessage) error {
 }
 
 // Broadcast sends a message to all connected agents.
-func (m *Manager) Broadcast(msg *pm.ServerMessage) {
+func (m *Manager) Broadcast(msg *cadestrov1.ServerMessage) {
 	m.mu.RLock()
 	agents := make([]*Agent, 0, len(m.agents))
 	for _, agent := range m.agents {

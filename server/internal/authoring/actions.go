@@ -6,14 +6,14 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // CreateAction validates and writes one ordinary Action with its audit effect.
-func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[pmv1.CreateActionRequest]) (*connect.Response[pmv1.CreateActionResponse], error) {
+func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[cadestrov1.CreateActionRequest]) (*connect.Response[cadestrov1.CreateActionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -40,12 +40,12 @@ func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[pmv1.C
 	if err != nil {
 		return nil, h.internal(ctx, "encode created action", err)
 	}
-	return connect.NewResponse(&pmv1.CreateActionResponse{Action: action}), nil
+	return connect.NewResponse(&cadestrov1.CreateActionResponse{Action: action}), nil
 }
 
 // GetAction returns one operator-visible Action without revealing system or
 // out-of-scope rows.
-func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[pmv1.GetActionRequest]) (*connect.Response[pmv1.GetActionResponse], error) {
+func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[cadestrov1.GetActionRequest]) (*connect.Response[cadestrov1.GetActionResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -63,12 +63,12 @@ func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[pmv1.GetA
 	if err != nil {
 		return nil, h.internal(ctx, "encode action", err)
 	}
-	return connect.NewResponse(&pmv1.GetActionResponse{Action: action}), nil
+	return connect.NewResponse(&cadestrov1.GetActionResponse{Action: action}), nil
 }
 
 // ListActions returns a deterministic SQLite keyset page. Scope,
 // assignment and type filters are all applied before pagination.
-func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[pmv1.ListActionsRequest]) (*connect.Response[pmv1.ListActionsResponse], error) {
+func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[cadestrov1.ListActionsRequest]) (*connect.Response[cadestrov1.ListActionsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[pmv1.Li
 	if !validPageToken(req.Msg.PageToken) {
 		return nil, authoringRPCError(ctx, errInvalidPageToken, connect.CodeInvalidArgument, "invalid page token")
 	}
-	if _, ok := pmv1.ActionType_name[int32(req.Msg.TypeFilter)]; !ok {
+	if _, ok := cadestrov1.ActionType_name[int32(req.Msg.TypeFilter)]; !ok {
 		return nil, authoringRPCError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid action type filter")
 	}
 	limit := req.Msg.PageSize
@@ -106,7 +106,7 @@ func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[pmv1.Li
 	if err != nil {
 		return nil, h.internal(ctx, "count actions", err)
 	}
-	actions := make([]*pmv1.ManagedAction, len(rows))
+	actions := make([]*cadestrov1.ManagedAction, len(rows))
 	for i := range rows {
 		actions[i], err = ActionToProto(rows[i])
 		if err != nil {
@@ -117,13 +117,13 @@ func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[pmv1.Li
 	if hasMore {
 		next = rows[len(rows)-1].ID
 	}
-	return connect.NewResponse(&pmv1.ListActionsResponse{
+	return connect.NewResponse(&cadestrov1.ListActionsResponse{
 		Actions: actions, NextPageToken: next, TotalCount: boundedCount(total),
 	}), nil
 }
 
 // RenameAction replaces an Action name with audited last-write-wins CRUD.
-func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[pmv1.RenameActionRequest]) (*connect.Response[pmv1.UpdateActionResponse], error) {
+func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameAction")
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[pmv1.R
 }
 
 // UpdateActionDescription replaces an Action description.
-func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Request[pmv1.UpdateActionDescriptionRequest]) (*connect.Response[pmv1.UpdateActionResponse], error) {
+func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateActionDescription")
 	if err != nil {
 		return nil, err
@@ -147,12 +147,12 @@ func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Req
 
 // UpdateActionParams replaces the mutable execution fields while keeping the
 // Action type immutable.
-func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[pmv1.UpdateActionParamsRequest]) (*connect.Response[pmv1.UpdateActionResponse], error) {
+func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionParamsRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	actor, row, err := h.mutationAction(ctx, req.Msg.Id, "UpdateActionParams")
 	if err != nil {
 		return nil, err
 	}
-	params, err := h.requestParams(req.Msg, pmv1.ActionType(row.ActionType), req.Msg.Id, row.Params)
+	params, err := h.requestParams(req.Msg, cadestrov1.ActionType(row.ActionType), req.Msg.Id, row.Params)
 	if err != nil {
 		return nil, h.actionError(ctx, "validate updated action params", err)
 	}
@@ -165,7 +165,7 @@ func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[
 }
 
 // DeleteAction soft-deletes an Action and its composition edges atomically.
-func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[pmv1.DeleteActionRequest]) (*connect.Response[pmv1.DeleteActionResponse], error) {
+func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[cadestrov1.DeleteActionRequest]) (*connect.Response[cadestrov1.DeleteActionResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteAction")
 	if err != nil {
 		return nil, err
@@ -174,7 +174,7 @@ func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[pmv1.D
 		cadestrov1connect.ControlServiceDeleteActionProcedure, "DeleteAction"), req.Msg.Id, false); err != nil {
 		return nil, h.actionError(ctx, "delete action", err)
 	}
-	return connect.NewResponse(&pmv1.DeleteActionResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteActionResponse{}), nil
 }
 
 func (h *Handlers) operatorAction(ctx context.Context, id string) (store.ActionRow, error) {
@@ -248,7 +248,7 @@ func (h *Handlers) mutationActor(ctx context.Context, id, permission string) (*a
 	return actor, err
 }
 
-func (h *Handlers) updatedAction(ctx context.Context, operation string, row store.ActionRow, err error) (*connect.Response[pmv1.UpdateActionResponse], error) {
+func (h *Handlers) updatedAction(ctx context.Context, operation string, row store.ActionRow, err error) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	if err != nil {
 		return nil, h.actionError(ctx, operation, err)
 	}
@@ -256,5 +256,5 @@ func (h *Handlers) updatedAction(ctx context.Context, operation string, row stor
 	if err != nil {
 		return nil, h.internal(ctx, "encode updated action", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateActionResponse{Action: action}), nil
+	return connect.NewResponse(&cadestrov1.UpdateActionResponse{Action: action}), nil
 }

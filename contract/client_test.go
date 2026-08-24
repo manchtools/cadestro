@@ -9,9 +9,8 @@ import (
 	"testing"
 	"time"
 
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // TestBootstrapHTTPClient_Bounded pins the transport hardening for the
@@ -38,10 +37,10 @@ func TestBootstrapHTTPClient_Bounded(t *testing.T) {
 // fakeTerminalHandler is a minimal StreamHandler+TerminalHandler that
 // records every call so dispatch tests can assert against it.
 type fakeTerminalHandler struct {
-	startCalls  []*pm.TerminalStart
-	inputCalls  []*pm.TerminalInput
-	resizeCalls []*pm.TerminalResize
-	stopCalls   []*pm.TerminalStop
+	startCalls  []*cadestrov1.TerminalStart
+	inputCalls  []*cadestrov1.TerminalInput
+	resizeCalls []*cadestrov1.TerminalResize
+	stopCalls   []*cadestrov1.TerminalStop
 
 	// Per-method error overrides for failure-path tests.
 	startErr  error
@@ -52,30 +51,30 @@ type fakeTerminalHandler struct {
 
 // StreamHandler bits — we don't care about them in dispatch tests, so
 // they're stubs that record nothing and return nil.
-func (h *fakeTerminalHandler) OnWelcome(ctx context.Context, w *pm.Welcome) error {
+func (h *fakeTerminalHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	return nil
 }
-func (h *fakeTerminalHandler) OnManifestDelivery(ctx context.Context, d *pm.ManifestDelivery) error {
+func (h *fakeTerminalHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
 	return nil
 }
-func (h *fakeTerminalHandler) OnQuery(ctx context.Context, q *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (h *fakeTerminalHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (h *fakeTerminalHandler) OnError(ctx context.Context, e *pm.Error) error { return nil }
+func (h *fakeTerminalHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
-func (h *fakeTerminalHandler) OnTerminalStart(ctx context.Context, req *pm.TerminalStart) error {
+func (h *fakeTerminalHandler) OnTerminalStart(ctx context.Context, req *cadestrov1.TerminalStart) error {
 	h.startCalls = append(h.startCalls, req)
 	return h.startErr
 }
-func (h *fakeTerminalHandler) OnTerminalInput(ctx context.Context, req *pm.TerminalInput) error {
+func (h *fakeTerminalHandler) OnTerminalInput(ctx context.Context, req *cadestrov1.TerminalInput) error {
 	h.inputCalls = append(h.inputCalls, req)
 	return h.inputErr
 }
-func (h *fakeTerminalHandler) OnTerminalResize(ctx context.Context, req *pm.TerminalResize) error {
+func (h *fakeTerminalHandler) OnTerminalResize(ctx context.Context, req *cadestrov1.TerminalResize) error {
 	h.resizeCalls = append(h.resizeCalls, req)
 	return h.resizeErr
 }
-func (h *fakeTerminalHandler) OnTerminalStop(ctx context.Context, req *pm.TerminalStop) error {
+func (h *fakeTerminalHandler) OnTerminalStop(ctx context.Context, req *cadestrov1.TerminalStop) error {
 	h.stopCalls = append(h.stopCalls, req)
 	return h.stopErr
 }
@@ -85,14 +84,14 @@ func (h *fakeTerminalHandler) OnTerminalStop(ctx context.Context, req *pm.Termin
 // without terminal support is silently dropped (no error).
 type fakeBareHandler struct{}
 
-func (fakeBareHandler) OnWelcome(ctx context.Context, w *pm.Welcome) error { return nil }
-func (fakeBareHandler) OnManifestDelivery(ctx context.Context, d *pm.ManifestDelivery) error {
+func (fakeBareHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error { return nil }
+func (fakeBareHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
 	return nil
 }
-func (fakeBareHandler) OnQuery(ctx context.Context, q *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (fakeBareHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (fakeBareHandler) OnError(ctx context.Context, e *pm.Error) error { return nil }
+func (fakeBareHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
 // newTestClient builds a Client that can run dispatchServerMessage but
 // is not actually connected to any server. The dispatch tests never
@@ -103,12 +102,12 @@ func newTestClient() *Client {
 
 // makeTerminalMsg builds a ServerMessage carrying one of the four
 // Terminal* payload variants. Used by both routing and error tests.
-func makeTerminalMsg(name string) *pm.ServerMessage {
-	msg := &pm.ServerMessage{Id: NewULID()}
+func makeTerminalMsg(name string) *cadestrov1.ServerMessage {
+	msg := &cadestrov1.ServerMessage{Id: NewULID()}
 	switch name {
 	case "TerminalStart":
-		msg.Payload = &pm.ServerMessage_TerminalStart{
-			TerminalStart: &pm.TerminalStart{
+		msg.Payload = &cadestrov1.ServerMessage_TerminalStart{
+			TerminalStart: &cadestrov1.TerminalStart{
 				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
 				TtyUser:   "cadestro-tty-test",
 				Cols:      80,
@@ -116,23 +115,23 @@ func makeTerminalMsg(name string) *pm.ServerMessage {
 			},
 		}
 	case "TerminalInput":
-		msg.Payload = &pm.ServerMessage_TerminalInput{
-			TerminalInput: &pm.TerminalInput{
+		msg.Payload = &cadestrov1.ServerMessage_TerminalInput{
+			TerminalInput: &cadestrov1.TerminalInput{
 				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
 				Data:      []byte("ls -la\n"),
 			},
 		}
 	case "TerminalResize":
-		msg.Payload = &pm.ServerMessage_TerminalResize{
-			TerminalResize: &pm.TerminalResize{
+		msg.Payload = &cadestrov1.ServerMessage_TerminalResize{
+			TerminalResize: &cadestrov1.TerminalResize{
 				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
 				Cols:      120,
 				Rows:      40,
 			},
 		}
 	case "TerminalStop":
-		msg.Payload = &pm.ServerMessage_TerminalStop{
-			TerminalStop: &pm.TerminalStop{
+		msg.Payload = &cadestrov1.ServerMessage_TerminalStop{
+			TerminalStop: &cadestrov1.TerminalStop{
 				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
 				Reason:    "admin terminate",
 			},
@@ -281,11 +280,11 @@ func TestDispatch_Terminal_NoHandler_DropsSilently(t *testing.T) {
 	c := newTestClient()
 	bare := fakeBareHandler{}
 
-	cases := []*pm.ServerMessage{
-		{Id: NewULID(), Payload: &pm.ServerMessage_TerminalStart{TerminalStart: &pm.TerminalStart{SessionId: "01"}}},
-		{Id: NewULID(), Payload: &pm.ServerMessage_TerminalInput{TerminalInput: &pm.TerminalInput{SessionId: "01"}}},
-		{Id: NewULID(), Payload: &pm.ServerMessage_TerminalResize{TerminalResize: &pm.TerminalResize{SessionId: "01"}}},
-		{Id: NewULID(), Payload: &pm.ServerMessage_TerminalStop{TerminalStop: &pm.TerminalStop{SessionId: "01"}}},
+	cases := []*cadestrov1.ServerMessage{
+		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalStart{TerminalStart: &cadestrov1.TerminalStart{SessionId: "01"}}},
+		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalInput{TerminalInput: &cadestrov1.TerminalInput{SessionId: "01"}}},
+		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalResize{TerminalResize: &cadestrov1.TerminalResize{SessionId: "01"}}},
+		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{SessionId: "01"}}},
 	}
 	for _, msg := range cases {
 		if err := c.dispatchServerMessage(context.Background(), msg, bare); err != nil {
@@ -306,7 +305,7 @@ func TestDispatch_UnknownPayload_DropsSilently(t *testing.T) {
 	c := newTestClient()
 	h := &fakeTerminalHandler{}
 
-	msg := &pm.ServerMessage{Id: NewULID()}
+	msg := &cadestrov1.ServerMessage{Id: NewULID()}
 	if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
 		t.Errorf("dispatch unknown payload: unexpected error: %v", err)
 	}
@@ -348,7 +347,7 @@ func TestApplyWelcomeHeartbeat_ClampsAndPushes(t *testing.T) {
 			c.heartbeatUpdate = hb
 			c.mu.Unlock()
 
-			c.applyWelcomeHeartbeat(&pm.Welcome{
+			c.applyWelcomeHeartbeat(&cadestrov1.Welcome{
 				HeartbeatInterval: durationpb.New(tc.input),
 			})
 
@@ -371,12 +370,12 @@ func TestApplyWelcomeHeartbeat_ClampsAndPushes(t *testing.T) {
 func TestApplyWelcomeHeartbeat_NoOpCases(t *testing.T) {
 	cases := []struct {
 		name string
-		w    *pm.Welcome
+		w    *cadestrov1.Welcome
 	}{
 		{"nil welcome", nil},
-		{"unset field", &pm.Welcome{}},
-		{"zero duration", &pm.Welcome{HeartbeatInterval: durationpb.New(0)}},
-		{"negative duration", &pm.Welcome{HeartbeatInterval: durationpb.New(-5 * time.Second)}},
+		{"unset field", &cadestrov1.Welcome{}},
+		{"zero duration", &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(0)}},
+		{"negative duration", &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(-5 * time.Second)}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -403,7 +402,7 @@ func TestApplyWelcomeHeartbeat_NoOpCases(t *testing.T) {
 func TestApplyWelcomeHeartbeat_NoRunActive(t *testing.T) {
 	c := newTestClient()
 	// heartbeatUpdate is nil by default.
-	c.applyWelcomeHeartbeat(&pm.Welcome{
+	c.applyWelcomeHeartbeat(&cadestrov1.Welcome{
 		HeartbeatInterval: durationpb.New(42 * time.Second),
 	})
 	// Assertion is the absence of a panic.
@@ -420,8 +419,8 @@ func TestApplyWelcomeHeartbeat_LatestWins(t *testing.T) {
 	c.heartbeatUpdate = hb
 	c.mu.Unlock()
 
-	c.applyWelcomeHeartbeat(&pm.Welcome{HeartbeatInterval: durationpb.New(10 * time.Second)})
-	c.applyWelcomeHeartbeat(&pm.Welcome{HeartbeatInterval: durationpb.New(45 * time.Second)})
+	c.applyWelcomeHeartbeat(&cadestrov1.Welcome{HeartbeatInterval: durationpb.New(10 * time.Second)})
+	c.applyWelcomeHeartbeat(&cadestrov1.Welcome{HeartbeatInterval: durationpb.New(45 * time.Second)})
 
 	got := <-hb
 	if got != 45*time.Second {
@@ -445,9 +444,9 @@ func TestDispatch_Welcome_AppliesHeartbeatAndHandler(t *testing.T) {
 	c.mu.Unlock()
 
 	rec := &recordingWelcomeHandler{}
-	msg := &pm.ServerMessage{
+	msg := &cadestrov1.ServerMessage{
 		Id: NewULID(),
-		Payload: &pm.ServerMessage_Welcome{Welcome: &pm.Welcome{
+		Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{
 			ServerVersion:     "test",
 			HeartbeatInterval: durationpb.New(60 * time.Second),
 		}},
@@ -472,14 +471,14 @@ type recordingWelcomeHandler struct {
 	called bool
 }
 
-func (h *recordingWelcomeHandler) OnWelcome(ctx context.Context, w *pm.Welcome) error {
+func (h *recordingWelcomeHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	h.called = true
 	return nil
 }
-func (h *recordingWelcomeHandler) OnManifestDelivery(ctx context.Context, d *pm.ManifestDelivery) error {
+func (h *recordingWelcomeHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
 	return nil
 }
-func (h *recordingWelcomeHandler) OnQuery(ctx context.Context, q *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (h *recordingWelcomeHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (h *recordingWelcomeHandler) OnError(ctx context.Context, e *pm.Error) error { return nil }
+func (h *recordingWelcomeHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }

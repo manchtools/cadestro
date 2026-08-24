@@ -17,7 +17,7 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
@@ -40,14 +40,14 @@ type agentLoopback struct {
 // AgentMessage so tests can assert on them after the fact.
 type recordingAgentHandler struct {
 	mu       sync.Mutex
-	received []*pm.AgentMessage
+	received []*cadestrov1.AgentMessage
 
-	onStream func(ctx context.Context, stream *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error
+	onStream func(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error
 	// syncState, when set, is returned verbatim for a stream SyncRequest.
-	syncState *pm.SyncState
+	syncState *cadestrov1.SyncState
 }
 
-func (h *recordingAgentHandler) Stream(ctx context.Context, s *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+func (h *recordingAgentHandler) Stream(ctx context.Context, s *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 	if h.onStream != nil {
 		return h.onStream(ctx, s)
 	}
@@ -65,11 +65,11 @@ func (h *recordingAgentHandler) Stream(ctx context.Context, s *connect.BidiStrea
 		if msg.GetSyncRequest() != nil {
 			state := h.syncState
 			if state == nil {
-				state = &pm.SyncState{}
+				state = &cadestrov1.SyncState{}
 			}
-			if err := s.Send(&pm.ServerMessage{
+			if err := s.Send(&cadestrov1.ServerMessage{
 				Id:      msg.Id,
-				Payload: &pm.ServerMessage_SyncState{SyncState: state},
+				Payload: &cadestrov1.ServerMessage_SyncState{SyncState: state},
 			}); err != nil {
 				return err
 			}
@@ -77,10 +77,10 @@ func (h *recordingAgentHandler) Stream(ctx context.Context, s *connect.BidiStrea
 	}
 }
 
-func (h *recordingAgentHandler) snapshot() []*pm.AgentMessage {
+func (h *recordingAgentHandler) snapshot() []*cadestrov1.AgentMessage {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	out := make([]*pm.AgentMessage, len(h.received))
+	out := make([]*cadestrov1.AgentMessage, len(h.received))
 	copy(out, h.received)
 	return out
 }
@@ -136,18 +136,18 @@ type controlLoopback struct {
 type recordingControlHandler struct {
 	cadestrov1connect.UnimplementedControlServiceHandler
 
-	registerFn         func(*connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error)
-	renewCertificateFn func(*connect.Request[pm.RenewCertificateRequest]) (*connect.Response[pm.RenewCertificateResponse], error)
+	registerFn         func(*connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error)
+	renewCertificateFn func(*connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error)
 }
 
-func (h *recordingControlHandler) Register(ctx context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+func (h *recordingControlHandler) Register(ctx context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 	if h.registerFn != nil {
 		return h.registerFn(req)
 	}
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("Register not stubbed"))
 }
 
-func (h *recordingControlHandler) RenewCertificate(ctx context.Context, req *connect.Request[pm.RenewCertificateRequest]) (*connect.Response[pm.RenewCertificateResponse], error) {
+func (h *recordingControlHandler) RenewCertificate(ctx context.Context, req *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
 	if h.renewCertificateFn != nil {
 		return h.renewCertificateFn(req)
 	}
@@ -179,11 +179,11 @@ func newControlLoopback(t *testing.T) *controlLoopback {
 func TestRegisterAgent_HappyPath(t *testing.T) {
 	cl := newControlLoopback(t)
 
-	var observed *pm.RegisterRequest
-	cl.handler.registerFn = func(req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+	var observed *cadestrov1.RegisterRequest
+	cl.handler.registerFn = func(req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 		observed = req.Msg
-		return connect.NewResponse(&pm.RegisterResponse{
-			DeviceId:    &pm.DeviceId{Value: "01HXXXXXXXXXXXXXXXXXXXXXX0"},
+		return connect.NewResponse(&cadestrov1.RegisterResponse{
+			DeviceId:    &cadestrov1.DeviceId{Value: "01HXXXXXXXXXXXXXXXXXXXXXX0"},
 			CaCert:      []byte("ca"),
 			Certificate: []byte("cert"),
 			ControlUrl:  "https://control.example",
@@ -217,7 +217,7 @@ func TestRegisterAgent_HappyPath(t *testing.T) {
 
 func TestRegisterAgent_ServerErrorPropagates(t *testing.T) {
 	cl := newControlLoopback(t)
-	cl.handler.registerFn = func(_ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+	cl.handler.registerFn = func(_ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("bad token"))
 	}
 
@@ -238,10 +238,10 @@ func TestRenewCertificate_HappyPath(t *testing.T) {
 	cl := newControlLoopback(t)
 
 	notAfter := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
-	var observed *pm.RenewCertificateRequest
-	cl.handler.renewCertificateFn = func(req *connect.Request[pm.RenewCertificateRequest]) (*connect.Response[pm.RenewCertificateResponse], error) {
+	var observed *cadestrov1.RenewCertificateRequest
+	cl.handler.renewCertificateFn = func(req *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
 		observed = req.Msg
-		return connect.NewResponse(&pm.RenewCertificateResponse{
+		return connect.NewResponse(&cadestrov1.RenewCertificateResponse{
 			Certificate: []byte("renewed-cert"),
 			NotAfter:    timestamppb.New(notAfter),
 		}), nil
@@ -278,7 +278,7 @@ func TestRenewCertificate_HappyPath(t *testing.T) {
 
 func TestRenewCertificate_ServerErrorPropagates(t *testing.T) {
 	cl := newControlLoopback(t)
-	cl.handler.renewCertificateFn = func(_ *connect.Request[pm.RenewCertificateRequest]) (*connect.Response[pm.RenewCertificateResponse], error) {
+	cl.handler.renewCertificateFn = func(_ *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("expired cert"))
 	}
 
@@ -321,10 +321,10 @@ func TestConnect_DoubleConnectErrors(t *testing.T) {
 // bug).
 func TestSync_MapsMessageFieldsThroughFacade(t *testing.T) {
 	l := newAgentLoopback(t)
-	l.handler.syncState = &pm.SyncState{
+	l.handler.syncState = &cadestrov1.SyncState{
 		SyncIntervalMinutes: 42,
-		MaintenanceWindow: &pm.MaintenanceWindow{
-			Schedule: []*pm.MaintenanceWindowEntry{
+		MaintenanceWindow: &cadestrov1.MaintenanceWindow{
+			Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"sat", "sun"}, Allow: "22:00-06:00"},
 			},
 		},
@@ -363,7 +363,7 @@ func TestSend_BeforeConnect_ReturnsError(t *testing.T) {
 	l := newAgentLoopback(t)
 	c := l.newClient()
 
-	if err := c.SendHeartbeat(context.Background(), &pm.Heartbeat{}); err == nil {
+	if err := c.SendHeartbeat(context.Background(), &cadestrov1.Heartbeat{}); err == nil {
 		t.Fatal("SendHeartbeat without Connect should error")
 	}
 }
@@ -380,7 +380,7 @@ func TestSend_AfterClose_ReturnsError(t *testing.T) {
 	if err := c.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
-	if err := c.SendHeartbeat(context.Background(), &pm.Heartbeat{}); err == nil {
+	if err := c.SendHeartbeat(context.Background(), &cadestrov1.Heartbeat{}); err == nil {
 		t.Fatal("SendHeartbeat after Close should error")
 	}
 }
@@ -438,8 +438,8 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 				// distinguishable from the SendHello above; ActionId encodes
 				// the (goroutine, sequence) pair so we can detect any
 				// dropped or mangled message after the fact.
-				ar := &pm.ActionResult{
-					ActionId: &pm.ActionId{Value: fmt.Sprintf("g%d-i%d", g, i)},
+				ar := &cadestrov1.ActionResult{
+					ActionId: &cadestrov1.ActionId{Value: fmt.Sprintf("g%d-i%d", g, i)},
 				}
 				if err := c.SendActionResult(ctx, ar); err != nil {
 					t.Errorf("send g=%d i=%d: %v", g, i, err)
@@ -461,7 +461,7 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 	// The server's Stream goroutine runs concurrently with this test;
 	// poll briefly until every message has landed.
 	deadline := time.Now().Add(5 * time.Second)
-	var got []*pm.AgentMessage
+	var got []*cadestrov1.AgentMessage
 	want := 1 + goroutines*perG // SendHello + the fan-out
 	for {
 		got = l.handler.snapshot()
@@ -512,7 +512,7 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 func TestDispatch_NilPayload_IsDropped(t *testing.T) {
 	c := NewClient("http://localhost:0")
 	handler := &fakeTerminalHandler{}
-	msg := &pm.ServerMessage{Id: NewULID()} // Payload nil = forward-compat case
+	msg := &cadestrov1.ServerMessage{Id: NewULID()} // Payload nil = forward-compat case
 	if err := c.dispatchServerMessage(context.Background(), msg, handler); err != nil {
 		t.Fatalf("nil payload should not error: %v", err)
 	}
@@ -529,21 +529,21 @@ func TestRun_UnknownServerMessage_DoesNotTerminate(t *testing.T) {
 
 	var welcomed atomic.Bool
 
-	l.handler.onStream = func(ctx context.Context, s *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+	l.handler.onStream = func(ctx context.Context, s *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 		// Wait for the agent's Hello before pushing anything back.
 		if _, err := s.Receive(); err != nil {
 			return err
 		}
 		// Push a Welcome so we can observe end-to-end dispatch worked.
-		if err := s.Send(&pm.ServerMessage{
+		if err := s.Send(&cadestrov1.ServerMessage{
 			Id:      NewULID(),
-			Payload: &pm.ServerMessage_Welcome{Welcome: &pm.Welcome{}},
+			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}},
 		}); err != nil {
 			return err
 		}
 		// Then push a payload-less ServerMessage. The client must drop
 		// it (default branch) and keep running.
-		if err := s.Send(&pm.ServerMessage{Id: NewULID()}); err != nil {
+		if err := s.Send(&cadestrov1.ServerMessage{Id: NewULID()}); err != nil {
 			return err
 		}
 		// Drain anything else the agent sends until the request side
@@ -604,17 +604,17 @@ type welcomeRecordingHandler struct {
 	welcomed *atomic.Bool
 }
 
-func (h *welcomeRecordingHandler) OnWelcome(ctx context.Context, w *pm.Welcome) error {
+func (h *welcomeRecordingHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	h.welcomed.Store(true)
 	return nil
 }
-func (h *welcomeRecordingHandler) OnManifestDelivery(ctx context.Context, d *pm.ManifestDelivery) error {
+func (h *welcomeRecordingHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
 	return nil
 }
-func (h *welcomeRecordingHandler) OnQuery(ctx context.Context, q *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (h *welcomeRecordingHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (h *welcomeRecordingHandler) OnError(ctx context.Context, e *pm.Error) error { return nil }
+func (h *welcomeRecordingHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
 // ---------------------------------------------------------------------------
 // mTLS — proves WithMTLSFromPEM actually installs the client certificate
@@ -674,8 +674,8 @@ func startMTLSTestServer(t *testing.T, serverCertPEM, serverKeyPEM []byte, clien
 		t.Fatalf("server keypair: %v", err)
 	}
 	handler := &recordingControlHandler{}
-	handler.registerFn = func(*connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-		return connect.NewResponse(&pm.RegisterResponse{DeviceId: &pm.DeviceId{Value: "ok"}}), nil
+	handler.registerFn = func(*connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+		return connect.NewResponse(&cadestrov1.RegisterResponse{DeviceId: &cadestrov1.DeviceId{Value: "ok"}}), nil
 	}
 	path, h := cadestrov1connect.NewControlServiceHandler(handler)
 	mux := http.NewServeMux()
@@ -783,8 +783,8 @@ func TestWithMTLSFromPEMAndSystemRoots_RejectsUntrustedServer(t *testing.T) {
 
 func TestWithHTTPClient_AppliedToControlCalls(t *testing.T) {
 	cl := newControlLoopback(t)
-	cl.handler.registerFn = func(_ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-		return connect.NewResponse(&pm.RegisterResponse{DeviceId: &pm.DeviceId{Value: "id"}}), nil
+	cl.handler.registerFn = func(_ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+		return connect.NewResponse(&cadestrov1.RegisterResponse{DeviceId: &cadestrov1.DeviceId{Value: "id"}}), nil
 	}
 
 	var called atomic.Int32

@@ -10,7 +10,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -51,11 +51,11 @@ func NewState(cfg Config) *State {
 
 // CreateParams is one complete assignment edge.
 type CreateParams struct {
-	SourceType pmv1.AssignmentSourceType
+	SourceType cadestrov1.AssignmentSourceType
 	SourceID   string
-	TargetType pmv1.AssignmentTargetType
+	TargetType cadestrov1.AssignmentTargetType
 	TargetID   string
-	Mode       pmv1.AssignmentMode
+	Mode       cadestrov1.AssignmentMode
 	CreatedBy  string
 }
 
@@ -159,7 +159,7 @@ func (s *State) SetUserSelection(
 	ctx context.Context,
 	op store.AuditOperation,
 	deviceID string,
-	sourceType pmv1.AssignmentSourceType,
+	sourceType cadestrov1.AssignmentSourceType,
 	sourceID string,
 	selected bool,
 	actorID string,
@@ -221,17 +221,17 @@ type referenceQueries interface {
 func (s *State) validateReferences(ctx context.Context, q referenceQueries, p CreateParams) error {
 	var err error
 	switch p.SourceType {
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION:
 		var action db.Action
 		action, err = q.GetManifestAction(ctx, p.SourceID)
 		if err == nil && action.IsSystem {
 			return ErrSystemAction
 		}
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET:
 		_, err = q.GetManifestActionSet(ctx, p.SourceID)
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_DEFINITION:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_DEFINITION:
 		_, err = q.GetManifestDefinition(ctx, p.SourceID)
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY:
 		_, err = q.GetAuthoringCompliancePolicy(ctx, p.SourceID)
 	default:
 		return ErrInvalidInput
@@ -244,13 +244,13 @@ func (s *State) validateReferences(ctx context.Context, q referenceQueries, p Cr
 	}
 
 	switch p.TargetType {
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE:
 		_, err = q.GetDevice(ctx, p.TargetID)
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP:
 		_, err = q.GetDeviceGroupID(ctx, p.TargetID)
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER:
 		_, err = q.GetUser(ctx, p.TargetID)
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP:
 		_, err = q.GetUserGroup(ctx, p.TargetID)
 	default:
 		return ErrInvalidInput
@@ -264,38 +264,38 @@ func (s *State) validateReferences(ctx context.Context, q referenceQueries, p Cr
 	return nil
 }
 
-func sourceTypeName(value pmv1.AssignmentSourceType) (string, bool) {
+func sourceTypeName(value cadestrov1.AssignmentSourceType) (string, bool) {
 	switch value {
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION:
 		return "action", true
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET:
 		return "action_set", true
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_DEFINITION:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_DEFINITION:
 		return "definition", true
-	case pmv1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY:
+	case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY:
 		return "compliance_policy", true
 	default:
 		return "", false
 	}
 }
 
-func targetTypeName(value pmv1.AssignmentTargetType) (string, bool) {
+func targetTypeName(value cadestrov1.AssignmentTargetType) (string, bool) {
 	switch value {
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE:
 		return "device", true
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP:
 		return "device_group", true
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER:
 		return "user", true
-	case pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP:
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP:
 		return "user_group", true
 	default:
 		return "", false
 	}
 }
 
-func validMode(value pmv1.AssignmentMode) bool {
-	_, ok := pmv1.AssignmentMode_name[int32(value)]
+func validMode(value cadestrov1.AssignmentMode) bool {
+	_, ok := cadestrov1.AssignmentMode_name[int32(value)]
 	return ok
 }
 

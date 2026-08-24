@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/agentsecrets"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -27,8 +27,8 @@ func newAgentSecretFixture(t *testing.T) (*store.Store, *testdb.DB, *pmcrypto.En
 	_, err = raw.Exec(context.Background(), `
 		INSERT INTO actions (id, name, action_type, params, created_at, updated_at)
 		VALUES ($1, 'disk encryption', $3, '{}', $4, $4), ($2, 'local passwords', $5, '{}', $4, $4)`,
-		luks, lps, int32(pmv1.ActionType_ACTION_TYPE_ENCRYPTION), now,
-		int32(pmv1.ActionType_ACTION_TYPE_LPS))
+		luks, lps, int32(cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION), now,
+		int32(cadestrov1.ActionType_ACTION_TYPE_LPS))
 	require.NoError(t, err)
 	return st, raw, atRest, device, luks, lps
 }
@@ -39,9 +39,9 @@ func TestAgentSecretsLuksUsesGenericCiphertextAndPlaintextWireBytes(t *testing.T
 	svc := agentsecrets.New(agentsecrets.Config{Store: st, AtRest: atRest, Now: func() time.Time { return now }})
 	ctx := context.Background()
 	const passphrase = "correct horse battery staple"
-	_, err := svc.StoreLuksKey(ctx, device, &pmv1.StoreLuksKeyRequest{
+	_, err := svc.StoreLuksKey(ctx, device, &cadestrov1.StoreLuksKeyRequest{
 		ActionId: action, DevicePath: "/dev/vda3", Passphrase: []byte(passphrase),
-		RotationReason: pmv1.RotationReason_ROTATION_REASON_INITIAL,
+		RotationReason: cadestrov1.RotationReason_ROTATION_REASON_INITIAL,
 	})
 	require.NoError(t, err)
 	row, err := st.GetCurrentLuksKeyForAgent(ctx, device, action)
@@ -53,7 +53,7 @@ func TestAgentSecretsLuksUsesGenericCiphertextAndPlaintextWireBytes(t *testing.T
 		pmcrypto.DeviceSecretAAD(row.ID, device, "luks", action, 1))
 	require.NoError(t, err)
 	require.Equal(t, passphrase, opened)
-	got, err := svc.GetLuksKey(ctx, device, &pmv1.GetLuksKeyRequest{ActionId: action})
+	got, err := svc.GetLuksKey(ctx, device, &cadestrov1.GetLuksKeyRequest{ActionId: action})
 	require.NoError(t, err)
 	require.Equal(t, []byte(passphrase), got.Passphrase)
 }
@@ -63,9 +63,9 @@ func TestAgentSecretsLpsBatchIsAtomicAndStoresNoPlaintext(t *testing.T) {
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	svc := agentsecrets.New(agentsecrets.Config{Store: st, AtRest: atRest, Now: func() time.Time { return now }})
 	ctx := context.Background()
-	request := &pmv1.StoreLpsPasswordsRequest{ActionId: action, Rotations: []*pmv1.LpsPasswordRotation{
-		{Username: "alice", Password: []byte("alice-secret"), RotatedAt: now.Format(time.RFC3339Nano), Reason: pmv1.RotationReason_ROTATION_REASON_SCHEDULED},
-		{Username: "bob", Password: []byte("bob-secret"), RotatedAt: now.Format(time.RFC3339Nano), Reason: pmv1.RotationReason_ROTATION_REASON_SCHEDULED},
+	request := &cadestrov1.StoreLpsPasswordsRequest{ActionId: action, Rotations: []*cadestrov1.LpsPasswordRotation{
+		{Username: "alice", Password: []byte("alice-secret"), RotatedAt: now.Format(time.RFC3339Nano), Reason: cadestrov1.RotationReason_ROTATION_REASON_SCHEDULED},
+		{Username: "bob", Password: []byte("bob-secret"), RotatedAt: now.Format(time.RFC3339Nano), Reason: cadestrov1.RotationReason_ROTATION_REASON_SCHEDULED},
 	}}
 	_, err := svc.StoreLpsPasswords(ctx, device, request)
 	require.NoError(t, err)

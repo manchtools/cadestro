@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -81,9 +81,9 @@ func TestListDeviceGroupsForDevice_OutOfScopeDeviceIsNotAnExistenceOracle(t *tes
 	outOfScopeDevice := newID()
 	seedScopedDevice(t, raw, otherGroup, outOfScopeDevice)
 
-	call := func(caller *auth.UserContext, deviceID string) (*connect.Response[pmv1.ListDeviceGroupsForDeviceResponse], error) {
+	call := func(caller *auth.UserContext, deviceID string) (*connect.Response[cadestrov1.ListDeviceGroupsForDeviceResponse], error) {
 		return h.ListDeviceGroupsForDevice(auth.WithUser(ctx, caller),
-			connect.NewRequest(&pmv1.ListDeviceGroupsForDeviceRequest{DeviceId: deviceID}))
+			connect.NewRequest(&cadestrov1.ListDeviceGroupsForDeviceRequest{DeviceId: deviceID}))
 	}
 
 	t.Run("restricted caller: out-of-scope existing device reads as NotFound", func(t *testing.T) {

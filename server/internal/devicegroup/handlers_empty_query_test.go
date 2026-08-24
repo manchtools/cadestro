@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
@@ -41,14 +41,14 @@ func TestCreateDeviceGroup_EmptyDynamicQueryIsTheMatchAllRule(t *testing.T) {
 	}
 	callerCtx := auth.WithUser(ctx, creator)
 
-	created, err := h.CreateDeviceGroup(callerCtx, connect.NewRequest(&pmv1.CreateDeviceGroupRequest{
+	created, err := h.CreateDeviceGroup(callerCtx, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
 		Name: "everything", IsDynamic: true, DynamicQuery: "",
 	}))
 	require.NoError(t, err, "an empty dynamic query is the documented match-all rule and must be creatable")
 	require.NotNil(t, created.Msg.Group)
 	assert.True(t, created.Msg.Group.IsDynamic)
 
-	evaluated, err := h.EvaluateDynamicGroup(callerCtx, connect.NewRequest(&pmv1.EvaluateDynamicGroupRequest{
+	evaluated, err := h.EvaluateDynamicGroup(callerCtx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{
 		Id: created.Msg.Group.Id,
 	}))
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestCreateDeviceGroup_MalformedDynamicQueryStaysRejected(t *testing.T) {
 		Permissions: []string{"CreateDynamicDeviceGroup"},
 	}
 	_, err := h.CreateDeviceGroup(auth.WithUser(context.Background(), creator),
-		connect.NewRequest(&pmv1.CreateDeviceGroupRequest{
+		connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
 			Name: "broken", IsDynamic: true, DynamicQuery: `device.labels.env equals`,
 		}))
 	require.Error(t, err)

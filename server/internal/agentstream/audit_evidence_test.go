@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
@@ -61,8 +61,8 @@ func TestRecordSecurityAlertCommitsOperationAndEffect(t *testing.T) {
 
 	// The longest alert name in the enum: 47 characters, which is what makes
 	// the discriminator's column choice load-bearing.
-	alert := &pmv1.SecurityAlert{
-		Type:    pmv1.SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT,
+	alert := &cadestrov1.SecurityAlert{
+		Type:    cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT,
 		Message: "control endpoint was rewritten under the agent",
 	}
 	require.NoError(t, handler.recordSecurityAlert(context.Background(), deviceID, alert))
@@ -101,8 +101,8 @@ func TestRecordFrameDropCommitsOperationAndEffect(t *testing.T) {
 	handler := auditHandler(st)
 	deviceID := ulid.Make().String()
 
-	message := &pmv1.AgentMessage{
-		Id: ulid.Make().String(), Payload: &pmv1.AgentMessage_Heartbeat{Heartbeat: &pmv1.Heartbeat{}},
+	message := &cadestrov1.AgentMessage{
+		Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}},
 	}
 	handler.recordFrameDrop(context.Background(), deviceID, message)
 

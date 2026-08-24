@@ -10,7 +10,7 @@ import (
 	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -40,7 +40,7 @@ func New(st *store.Store) *Compiler {
 }
 
 // Action creates the singleton manifest for one authored Action.
-func (c *Compiler) Action(ctx context.Context, id string) (*pmv1.Manifest, error) {
+func (c *Compiler) Action(ctx context.Context, id string) (*cadestrov1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
 	}
@@ -54,19 +54,19 @@ func (c *Compiler) Action(ctx context.Context, id string) (*pmv1.Manifest, error
 	}
 	schedule := action.Schedule
 	if schedule == nil {
-		schedule = &pmv1.ActionSchedule{}
+		schedule = &cadestrov1.ActionSchedule{}
 	}
-	return finish(&pmv1.Manifest{
+	return finish(&cadestrov1.Manifest{
 		ManifestId:       ulid.Make().String(),
-		Provenance:       &pmv1.ManifestProvenance{ActionId: id},
+		Provenance:       &cadestrov1.ManifestProvenance{ActionId: id},
 		Schedule:         schedule,
-		DefaultOnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
-		Occurrences:      []*pmv1.ManifestOccurrence{occurrence(action, pmv1.OnFailure_ON_FAILURE_CONTINUE)},
+		DefaultOnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
+		Occurrences:      []*cadestrov1.ManifestOccurrence{occurrence(action, cadestrov1.OnFailure_ON_FAILURE_CONTINUE)},
 	})
 }
 
 // ActionSet flattens one set into a manifest in authored member order.
-func (c *Compiler) ActionSet(ctx context.Context, id string) (*pmv1.Manifest, error) {
+func (c *Compiler) ActionSet(ctx context.Context, id string) (*cadestrov1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
 	}
@@ -78,11 +78,11 @@ func (c *Compiler) ActionSet(ctx context.Context, id string) (*pmv1.Manifest, er
 	if err != nil {
 		return nil, err
 	}
-	return c.compileSet(set, rows, &pmv1.ManifestProvenance{ActionSetId: id}, nil)
+	return c.compileSet(set, rows, &cadestrov1.ManifestProvenance{ActionSetId: id}, nil)
 }
 
 // Definition flattens a Definition into one globally ordered runbook.
-func (c *Compiler) Definition(ctx context.Context, id string) (*pmv1.Manifest, error) {
+func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
 	}
@@ -106,18 +106,18 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*pmv1.Manifest, e
 	if err != nil {
 		return nil, fmt.Errorf("manifest definition schedule: %w", err)
 	}
-	runbook := &pmv1.Manifest{
-		ManifestId: ulid.Make().String(), Provenance: &pmv1.ManifestProvenance{DefinitionId: id},
-		Schedule: schedule, DefaultOnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
-		Occurrences: make([]*pmv1.ManifestOccurrence, 0),
+	runbook := &cadestrov1.Manifest{
+		ManifestId: ulid.Make().String(), Provenance: &cadestrov1.ManifestProvenance{DefinitionId: id},
+		Schedule: schedule, DefaultOnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
+		Occurrences: make([]*cadestrov1.ManifestOccurrence, 0),
 	}
 	for _, set := range sets {
 		setRows := actionsBySet[set.ID]
 		if len(setRows) == 0 {
 			continue
 		}
-		policy := pmv1.OnFailure(set.OnFailure)
-		if policy != pmv1.OnFailure_ON_FAILURE_CONTINUE && policy != pmv1.OnFailure_ON_FAILURE_STOP {
+		policy := cadestrov1.OnFailure(set.OnFailure)
+		if policy != cadestrov1.OnFailure_ON_FAILURE_CONTINUE && policy != cadestrov1.OnFailure_ON_FAILURE_STOP {
 			return nil, fmt.Errorf("action set %s has invalid failure policy %d", set.ID, set.OnFailure)
 		}
 		for _, row := range setRows {
@@ -139,20 +139,20 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*pmv1.Manifest, e
 // structural one_shot flag, which is what makes the agent execute the delivery
 // exactly once after recording it instead of scheduling it. An empty manifest
 // schedule accompanies the flag but never stands in for it.
-func OneShotAction(action *pmv1.Action) (*pmv1.Manifest, error) {
+func OneShotAction(action *cadestrov1.Action) (*cadestrov1.Manifest, error) {
 	if action == nil {
 		return nil, ErrInvalidInput
 	}
-	cloned, ok := proto.Clone(action).(*pmv1.Action)
+	cloned, ok := proto.Clone(action).(*cadestrov1.Action)
 	if !ok || cloned.GetId() == nil || !validInput(context.Background(), cloned.Id.Value) {
 		return nil, ErrInvalidInput
 	}
-	return finish(&pmv1.Manifest{
+	return finish(&cadestrov1.Manifest{
 		ManifestId:       ulid.Make().String(),
-		Provenance:       &pmv1.ManifestProvenance{ActionId: cloned.Id.Value},
-		Schedule:         &pmv1.ActionSchedule{},
-		DefaultOnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
-		Occurrences:      []*pmv1.ManifestOccurrence{occurrence(cloned, pmv1.OnFailure_ON_FAILURE_CONTINUE)},
+		Provenance:       &cadestrov1.ManifestProvenance{ActionId: cloned.Id.Value},
+		Schedule:         &cadestrov1.ActionSchedule{},
+		DefaultOnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
+		Occurrences:      []*cadestrov1.ManifestOccurrence{occurrence(cloned, cadestrov1.OnFailure_ON_FAILURE_CONTINUE)},
 		OneShot:          true,
 	})
 }
@@ -162,22 +162,22 @@ func OneShotAction(action *pmv1.Action) (*pmv1.Manifest, error) {
 // exactly once; clearing the compiled schedule stops the
 // authored cadence from also being installed. The nested Actions keep their
 // authoring/display schedules.
-func AsOneShot(compiled *pmv1.Manifest) *pmv1.Manifest {
+func AsOneShot(compiled *cadestrov1.Manifest) *cadestrov1.Manifest {
 	if compiled == nil {
 		return nil
 	}
-	compiled.Schedule = &pmv1.ActionSchedule{}
+	compiled.Schedule = &cadestrov1.ActionSchedule{}
 	compiled.OneShot = true
 	return compiled
 }
 
 // FreshCopy preserves compiled semantics while reminting delivery-local
 // manifest and occurrence identities for another target device.
-func FreshCopy(compiled *pmv1.Manifest) (*pmv1.Manifest, error) {
+func FreshCopy(compiled *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {
 	if compiled == nil {
 		return nil, ErrInvalidInput
 	}
-	cloned, ok := proto.Clone(compiled).(*pmv1.Manifest)
+	cloned, ok := proto.Clone(compiled).(*cadestrov1.Manifest)
 	if !ok {
 		return nil, ErrInvalidInput
 	}
@@ -191,7 +191,7 @@ func FreshCopy(compiled *pmv1.Manifest) (*pmv1.Manifest, error) {
 	return finish(cloned)
 }
 
-func (c *Compiler) compileSet(set store.ActionSetRow, rows []store.ActionRow, provenance *pmv1.ManifestProvenance, scheduleOverride []byte) (*pmv1.Manifest, error) {
+func (c *Compiler) compileSet(set store.ActionSetRow, rows []store.ActionRow, provenance *cadestrov1.ManifestProvenance, scheduleOverride []byte) (*cadestrov1.Manifest, error) {
 	if len(rows) == 0 {
 		return nil, ErrEmptyManifest
 	}
@@ -203,16 +203,16 @@ func (c *Compiler) compileSet(set store.ActionSetRow, rows []store.ActionRow, pr
 	if err != nil {
 		return nil, fmt.Errorf("manifest schedule: %w", err)
 	}
-	policy := pmv1.OnFailure(set.OnFailure)
-	if policy != pmv1.OnFailure_ON_FAILURE_CONTINUE && policy != pmv1.OnFailure_ON_FAILURE_STOP {
+	policy := cadestrov1.OnFailure(set.OnFailure)
+	if policy != cadestrov1.OnFailure_ON_FAILURE_CONTINUE && policy != cadestrov1.OnFailure_ON_FAILURE_STOP {
 		return nil, fmt.Errorf("action set %s has invalid failure policy %d", set.ID, set.OnFailure)
 	}
-	manifest := &pmv1.Manifest{
+	manifest := &cadestrov1.Manifest{
 		ManifestId:       ulid.Make().String(),
 		Provenance:       provenance,
 		Schedule:         schedule,
 		DefaultOnFailure: policy,
-		Occurrences:      make([]*pmv1.ManifestOccurrence, 0, len(rows)),
+		Occurrences:      make([]*cadestrov1.ManifestOccurrence, 0, len(rows)),
 	}
 	for _, row := range rows {
 		action, err := c.compileAction(row)
@@ -224,31 +224,31 @@ func (c *Compiler) compileSet(set store.ActionSetRow, rows []store.ActionRow, pr
 	return finish(manifest)
 }
 
-func (c *Compiler) compileAction(row store.ActionRow) (*pmv1.Action, error) {
+func (c *Compiler) compileAction(row store.ActionRow) (*cadestrov1.Action, error) {
 	schedule, err := actionparams.ParseSchedule(row.Schedule)
 	if err != nil {
 		return nil, fmt.Errorf("manifest: action %s schedule: %w", row.ID, err)
 	}
-	action := &pmv1.Action{
-		Id:             &pmv1.ActionId{Value: row.ID},
-		Type:           pmv1.ActionType(row.ActionType),
-		DesiredState:   pmv1.DesiredState(row.DesiredState),
+	action := &cadestrov1.Action{
+		Id:             &cadestrov1.ActionId{Value: row.ID},
+		Type:           cadestrov1.ActionType(row.ActionType),
+		DesiredState:   cadestrov1.DesiredState(row.DesiredState),
 		TimeoutSeconds: row.TimeoutSeconds,
 		Schedule:       schedule,
 	}
 	switch action.Type {
-	case pmv1.ActionType_ACTION_TYPE_ENCRYPTION:
+	case cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION:
 		params, err := c.encryptionParams(row)
 		if err != nil {
 			return nil, fmt.Errorf("manifest: action %s params: %w", row.ID, err)
 		}
-		action.Params = &pmv1.Action_Encryption{Encryption: params}
-	case pmv1.ActionType_ACTION_TYPE_WIFI:
+		action.Params = &cadestrov1.Action_Encryption{Encryption: params}
+	case cadestrov1.ActionType_ACTION_TYPE_WIFI:
 		params, err := c.wifiParams(row)
 		if err != nil {
 			return nil, fmt.Errorf("manifest: action %s params: %w", row.ID, err)
 		}
-		action.Params = &pmv1.Action_Wifi{Wifi: params}
+		action.Params = &cadestrov1.Action_Wifi{Wifi: params}
 	default:
 		if err := actionparams.PopulateAction(action, row.ActionType, row.Params); err != nil {
 			return nil, fmt.Errorf("manifest: action %s params: %w", row.ID, err)
@@ -260,8 +260,8 @@ func (c *Compiler) compileAction(row store.ActionRow) (*pmv1.Action, error) {
 	return action, nil
 }
 
-func (c *Compiler) encryptionParams(row store.ActionRow) (*pmv1.EncryptionParams, error) {
-	stored := &pmv1.EncryptionAuthoringParams{}
+func (c *Compiler) encryptionParams(row store.ActionRow) (*cadestrov1.EncryptionParams, error) {
+	stored := &cadestrov1.EncryptionAuthoringParams{}
 	if err := actionparams.UnmarshalActionParams(row.Params, stored); err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func (c *Compiler) encryptionParams(row store.ActionRow) (*pmv1.EncryptionParams
 	if err != nil {
 		return nil, err
 	}
-	return &pmv1.EncryptionParams{
+	return &cadestrov1.EncryptionParams{
 		PresharedKey: secret, RotationIntervalDays: stored.RotationIntervalDays,
 		MinWords: stored.MinWords, DeviceBoundKeyType: stored.DeviceBoundKeyType,
 		UserPassphraseMinLength:  stored.UserPassphraseMinLength,
@@ -277,21 +277,21 @@ func (c *Compiler) encryptionParams(row store.ActionRow) (*pmv1.EncryptionParams
 	}, nil
 }
 
-func (c *Compiler) wifiParams(row store.ActionRow) (*pmv1.WifiParams, error) {
-	stored := &pmv1.WifiAuthoringParams{}
+func (c *Compiler) wifiParams(row store.ActionRow) (*cadestrov1.WifiParams, error) {
+	stored := &cadestrov1.WifiAuthoringParams{}
 	if err := actionparams.UnmarshalActionParams(row.Params, stored); err != nil {
 		return nil, err
 	}
-	params := &pmv1.WifiParams{
+	params := &cadestrov1.WifiParams{
 		Ssid: stored.Ssid, AuthType: stored.AuthType, CaCert: stored.CaCert,
 		ClientCert: stored.ClientCert, Identity: stored.Identity,
 		AutoConnect: stored.AutoConnect, Hidden: stored.Hidden, Priority: stored.Priority,
 	}
 	var err error
 	switch stored.AuthType {
-	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
+	case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
 		params.Psk, err = secretActionField(stored.GetPsk())
-	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
+	case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
 		params.ClientKey, err = secretActionField(stored.GetClientKey())
 	default:
 		return nil, errors.New("unsupported WiFi authentication type")
@@ -308,7 +308,7 @@ func secretActionField(ciphertext string) ([]byte, error) {
 
 // MaterializeSecrets opens catalog ciphertext only for the authenticated
 // device stream. Callers must pass a copy that is never persisted.
-func MaterializeSecrets(manifest *pmv1.Manifest, atRest *pmcrypto.Encryptor) error {
+func MaterializeSecrets(manifest *cadestrov1.Manifest, atRest *pmcrypto.Encryptor) error {
 	if manifest == nil || atRest == nil {
 		return errors.New("manifest secret materialization requires manifest and cipher")
 	}
@@ -329,17 +329,17 @@ func MaterializeSecrets(manifest *pmv1.Manifest, atRest *pmcrypto.Encryptor) err
 			return nil
 		}
 		switch params := occurrence.Action.Params.(type) {
-		case *pmv1.Action_Encryption:
+		case *cadestrov1.Action_Encryption:
 			if err := open(&params.Encryption.PresharedKey, pmcrypto.PurposeActionEncryptionPresharedKey); err != nil {
 				return err
 			}
-		case *pmv1.Action_Wifi:
+		case *cadestrov1.Action_Wifi:
 			switch params.Wifi.AuthType {
-			case pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
+			case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
 				if err := open(&params.Wifi.Psk, pmcrypto.PurposeActionWifiPSK); err != nil {
 					return err
 				}
-			case pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
+			case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
 				if err := open(&params.Wifi.ClientKey, pmcrypto.PurposeActionWifiClientKey); err != nil {
 					return err
 				}
@@ -349,26 +349,26 @@ func MaterializeSecrets(manifest *pmv1.Manifest, atRest *pmcrypto.Encryptor) err
 	return nil
 }
 
-func requiredSchedule(raw []byte) (*pmv1.ActionSchedule, error) {
+func requiredSchedule(raw []byte) (*cadestrov1.ActionSchedule, error) {
 	schedule, err := actionparams.ParseSchedule(raw)
 	if err != nil {
 		return nil, err
 	}
 	if schedule == nil {
-		schedule = &pmv1.ActionSchedule{}
+		schedule = &cadestrov1.ActionSchedule{}
 	}
 	return schedule, nil
 }
 
-func occurrence(action *pmv1.Action, policy pmv1.OnFailure) *pmv1.ManifestOccurrence {
-	return &pmv1.ManifestOccurrence{
+func occurrence(action *cadestrov1.Action, policy cadestrov1.OnFailure) *cadestrov1.ManifestOccurrence {
+	return &cadestrov1.ManifestOccurrence{
 		OccurrenceId: ulid.Make().String(),
 		Action:       action,
 		OnFailure:    policy,
 	}
 }
 
-func finish(manifest *pmv1.Manifest) (*pmv1.Manifest, error) {
+func finish(manifest *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {
 	if err := protovalidate.Validate(manifest); err != nil {
 		return nil, fmt.Errorf("manifest: compiled output invalid: %s", err)
 	}

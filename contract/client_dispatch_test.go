@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // WS6 #11: dispatchServerMessage spawned an UNBOUNDED goroutine for every
@@ -43,35 +43,37 @@ func (h *blockingFanoutHandler) enter() {
 	atomic.AddInt32(&h.inFlight, -1)
 }
 
-func (h *blockingFanoutHandler) OnWelcome(ctx context.Context, w *pm.Welcome) error { return nil }
-func (h *blockingFanoutHandler) OnManifestDelivery(ctx context.Context, d *pm.ManifestDelivery) error {
+func (h *blockingFanoutHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	return nil
 }
-func (h *blockingFanoutHandler) OnQuery(ctx context.Context, q *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (h *blockingFanoutHandler) OnManifestDelivery(ctx context.Context, d *cadestrov1.ManifestDelivery) error {
+	return nil
+}
+func (h *blockingFanoutHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (h *blockingFanoutHandler) OnError(ctx context.Context, e *pm.Error) error { return nil }
+func (h *blockingFanoutHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
-func (h *blockingFanoutHandler) CollectInventory(ctx context.Context) *pm.DeviceInventory {
+func (h *blockingFanoutHandler) CollectInventory(ctx context.Context) *cadestrov1.DeviceInventory {
 	return nil // agent-initiated path; unused by these dispatch tests
 }
 
-func (h *blockingFanoutHandler) OnRequestInventory(ctx context.Context, req *pm.RequestInventory) *pm.DeviceInventory {
+func (h *blockingFanoutHandler) OnRequestInventory(ctx context.Context, req *cadestrov1.RequestInventory) *cadestrov1.DeviceInventory {
 	h.enter()
 	return nil // nil → dispatch skips SendInventory (no stream in test)
 }
 
-func (h *blockingFanoutHandler) OnRevokeLuksDeviceKey(ctx context.Context, req *pm.RevokeLuksDeviceKey) (bool, string) {
+func (h *blockingFanoutHandler) OnRevokeLuksDeviceKey(ctx context.Context, req *cadestrov1.RevokeLuksDeviceKey) (bool, string) {
 	h.enter()
 	return false, "blocked"
 }
 
-func (h *blockingFanoutHandler) OnSyncDevice(context.Context, *pm.SyncDeviceCommand) error {
+func (h *blockingFanoutHandler) OnSyncDevice(context.Context, *cadestrov1.SyncDeviceCommand) error {
 	h.enter()
 	return nil
 }
 
-func (h *blockingFanoutHandler) OnRebootDevice(context.Context, *pm.RebootDeviceCommand) error {
+func (h *blockingFanoutHandler) OnRebootDevice(context.Context, *cadestrov1.RebootDeviceCommand) error {
 	h.enter()
 	return nil
 }
@@ -94,10 +96,10 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 
 	const fired = 50
 	for i := 0; i < fired; i++ {
-		msg := &pm.ServerMessage{
+		msg := &cadestrov1.ServerMessage{
 			Id: "m",
-			Payload: &pm.ServerMessage_RequestInventory{
-				RequestInventory: &pm.RequestInventory{QueryId: "01HQ0000000000000000000000"},
+			Payload: &cadestrov1.ServerMessage_RequestInventory{
+				RequestInventory: &cadestrov1.RequestInventory{QueryId: "01HQ0000000000000000000000"},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
@@ -129,13 +131,13 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 func TestDispatchServerMessage_LiveControlIsSingleFlight(t *testing.T) {
 	c := NewClient("https://control.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
 	h := &blockingFanoutHandler{release: make(chan struct{})}
-	first := &pm.ServerMessage{Id: NewULID(), Payload: &pm.ServerMessage_SyncDevice{SyncDevice: &pm.SyncDeviceCommand{}}}
+	first := &cadestrov1.ServerMessage{Id: NewULID(), Payload: &cadestrov1.ServerMessage_SyncDevice{SyncDevice: &cadestrov1.SyncDeviceCommand{}}}
 	if err := c.dispatchServerMessage(context.Background(), first, h); err != nil {
 		t.Fatal(err)
 	}
 	waitForCond(t, func() bool { return atomic.LoadInt32(&h.entered) == 1 })
 
-	second := &pm.ServerMessage{Id: NewULID(), Payload: &pm.ServerMessage_RebootDevice{RebootDevice: &pm.RebootDeviceCommand{}}}
+	second := &cadestrov1.ServerMessage{Id: NewULID(), Payload: &cadestrov1.ServerMessage_RebootDevice{RebootDevice: &cadestrov1.RebootDeviceCommand{}}}
 	if err := c.dispatchServerMessage(context.Background(), second, h); err == nil {
 		t.Fatal("busy live control must send a correlated failure")
 	}
@@ -152,10 +154,10 @@ func TestDispatchServerMessage_LuksRevokeConcurrencyBounded(t *testing.T) {
 
 	const fired = 50
 	for i := 0; i < fired; i++ {
-		msg := &pm.ServerMessage{
+		msg := &cadestrov1.ServerMessage{
 			Id: "m",
-			Payload: &pm.ServerMessage_RevokeLuksDeviceKey{
-				RevokeLuksDeviceKey: &pm.RevokeLuksDeviceKey{ActionId: "01HQ0000000000000000000000"},
+			Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
+				RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: "01HQ0000000000000000000000"},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {

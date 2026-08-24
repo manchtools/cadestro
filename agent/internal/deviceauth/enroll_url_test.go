@@ -9,9 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-
 	"github.com/manchtools/cadestro/agent/internal/credentials"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // TestEnroll_RejectsNonHTTPSServerURL pins the https-only gate (#2/#16):
@@ -35,7 +34,7 @@ func TestEnroll_RejectsNonHTTPSServerURL(t *testing.T) {
 			credStore := credentials.NewStore(t.TempDir())
 			h := NewEnrollHandler("h", "dev", credStore, slog.Default(), nil)
 
-			resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+			resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 				ServerUrl: u, Token: "some-token", CaFingerprintPin: testCAPin,
 			}))
 			require.NoError(t, err)
@@ -62,7 +61,7 @@ func TestEnroll_PerFieldRequired(t *testing.T) {
 			credStore := credentials.NewStore(t.TempDir())
 			h := NewEnrollHandler("h", "dev", credStore, slog.Default(), nil)
 
-			resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+			resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 				ServerUrl: tc.url, Token: tc.token, CaFingerprintPin: testCAPin,
 			}))
 			require.NoError(t, err)

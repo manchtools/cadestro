@@ -8,7 +8,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -23,7 +23,7 @@ type CreateDefinitionParams struct {
 	Name        string
 	Description string
 	CreatedBy   string
-	Schedule    *pmv1.ActionSchedule
+	Schedule    *cadestrov1.ActionSchedule
 }
 
 // CreateDefinition inserts one independently scheduled authored definition.
@@ -99,7 +99,7 @@ func (s *Service) UpdateDefinitionDescription(ctx context.Context, op store.Audi
 
 // UpdateDefinitionSchedule replaces only the schedule used during Definition
 // manifest compilation. It does not mutate any member ActionSet.
-func (s *Service) UpdateDefinitionSchedule(ctx context.Context, op store.AuditOperation, id string, schedule *pmv1.ActionSchedule) (store.DefinitionRow, error) {
+func (s *Service) UpdateDefinitionSchedule(ctx context.Context, op store.AuditOperation, id string, schedule *cadestrov1.ActionSchedule) (store.DefinitionRow, error) {
 	if ctx == nil || !validID(id) {
 		return store.DefinitionRow{}, ErrInvalidInput
 	}

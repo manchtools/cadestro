@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/idp"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -40,11 +40,11 @@ func TestListAuthMethods_ReturnsEnabledProvidersAndNothingAboutTheEmail(t *testi
 	f.insertProvider("retired", func(s *providerSeed) { s.Enabled = false })
 	known := f.seedSubject()
 
-	forKnown, err := f.client.ListAuthMethods(f.ctx(), connect.NewRequest(&pmv1.ListAuthMethodsRequest{
+	forKnown, err := f.client.ListAuthMethods(f.ctx(), connect.NewRequest(&cadestrov1.ListAuthMethodsRequest{
 		Email: known.Email,
 	}))
 	require.NoError(t, err)
-	forUnknown, err := f.client.ListAuthMethods(f.ctx(), connect.NewRequest(&pmv1.ListAuthMethodsRequest{
+	forUnknown, err := f.client.ListAuthMethods(f.ctx(), connect.NewRequest(&cadestrov1.ListAuthMethodsRequest{
 		Email: "nobody@test.example",
 	}))
 	require.NoError(t, err)
@@ -74,7 +74,7 @@ func TestGetSSOLoginURL_MintsStateAndRecordsOnlyItsDigest(t *testing.T) {
 	f := newFixture(t, withProviderFactory(loopbackProviderFactory))
 	providerID := f.insertProvider("corp", func(s *providerSeed) { s.IssuerURL = oidc.URL })
 
-	resp, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&pmv1.GetSSOLoginURLRequest{
+	resp, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&cadestrov1.GetSSOLoginURLRequest{
 		Slug: "corp", RedirectUrl: testBaseURL + "/auth/callback",
 	}))
 	require.NoError(t, err)
@@ -105,12 +105,12 @@ func TestGetSSOLoginURL_ReportsADisabledProviderAsAbsent(t *testing.T) {
 	f := newFixture(t, withProviderFactory(discardProviderFactory))
 	f.insertProvider("retired", func(s *providerSeed) { s.Enabled = false })
 
-	_, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&pmv1.GetSSOLoginURLRequest{
+	_, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&cadestrov1.GetSSOLoginURLRequest{
 		Slug: "retired", RedirectUrl: testBaseURL + "/auth/callback",
 	}))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
-	_, err = f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&pmv1.GetSSOLoginURLRequest{
+	_, err = f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&cadestrov1.GetSSOLoginURLRequest{
 		Slug: "never-existed", RedirectUrl: testBaseURL + "/auth/callback",
 	}))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err),
@@ -122,7 +122,7 @@ func TestGetSSOLoginURL_RejectsAMalformedRedirect(t *testing.T) {
 	f := newFixture(t, withProviderFactory(discardProviderFactory))
 	f.insertProvider("corp", nil)
 
-	_, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&pmv1.GetSSOLoginURLRequest{
+	_, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&cadestrov1.GetSSOLoginURLRequest{
 		Slug: "corp", RedirectUrl: "not a url",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
@@ -148,7 +148,7 @@ func TestSSOCallback_AutoCreatesASubjectAndIssuesASession(t *testing.T) {
 	state := f.startLogin("corp")
 	oidc.nonce = f.nonceFor(state)
 
-	resp, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	resp, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
@@ -190,12 +190,12 @@ func TestSSOCallback_RefusesAReplayedState(t *testing.T) {
 
 	state := f.startLogin("corp")
 	oidc.nonce = f.nonceFor(state)
-	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
 
-	_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
@@ -227,7 +227,7 @@ func TestSSOCallback_RefusesToAutoLinkAnAlreadyBoundAccount(t *testing.T) {
 
 	state := f.startLogin("attacker")
 	oidc.nonce = f.nonceFor(state)
-	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "attacker", Code: "auth-code", State: state,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -257,7 +257,7 @@ func TestSSOCallback_LinksAnAlreadyBoundAccountWhenEmailAssertionsAreTrusted(t *
 
 	state := f.startLogin("second")
 	oidc.nonce = f.nonceFor(state)
-	resp, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	resp, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "second", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
@@ -283,7 +283,7 @@ func TestSSOCallback_LinksAnUnboundAccountByEmail(t *testing.T) {
 
 	state := f.startLogin("corp")
 	oidc.nonce = f.nonceFor(state)
-	resp, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	resp, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
@@ -306,7 +306,7 @@ func TestSSOCallback_IgnoresAnUnverifiedEmailClaim(t *testing.T) {
 
 	state := f.startLogin("corp")
 	oidc.nonce = f.nonceFor(state)
-	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -330,7 +330,7 @@ func TestSSOCallback_RefusesADisabledSubject(t *testing.T) {
 
 	state := f.startLogin("corp")
 	oidc.nonce = f.nonceFor(state)
-	_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
@@ -346,7 +346,7 @@ func TestSSOCallback_RefusesAStateFromAnotherProvider(t *testing.T) {
 	f.insertProvider("second", func(s *providerSeed) { s.IssuerURL = oidc.URL; s.AutoCreateUsers = true })
 
 	state := f.startLogin("first")
-	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "second", Code: "auth-code", State: state,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -387,7 +387,7 @@ func TestSSOCallback_RefusesAStateMintedForAnotherFlow(t *testing.T) {
 				state, providerID, tc.flowKind, testBaseURL+"/auth/callback", f.now.Add(10*time.Minute))
 			require.NoError(t, err)
 
-			_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+			_, err = f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 				Slug: "corp", Code: "auth-code", State: state,
 			}))
 			assert.Equal(t, tc.wantCode, connectCodeOf(t, err))
@@ -407,7 +407,7 @@ func TestSSOCallback_RejectsAMissingCode(t *testing.T) {
 	f := newFixture(t, withProviderFactory(discardProviderFactory))
 	f.insertProvider("corp", nil)
 
-	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", State: "some-state",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
@@ -432,7 +432,7 @@ func TestSSOCallback_RefreshesTheSubjectDocumentLastLogin(t *testing.T) {
 
 	state := f.startLogin("corp")
 	oidc.nonce = f.nonceFor(state)
-	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&pmv1.SSOCallbackRequest{
+	_, err := f.client.SSOCallback(f.ctx(), connect.NewRequest(&cadestrov1.SSOCallbackRequest{
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
@@ -452,7 +452,7 @@ func TestSSOCallback_RefreshesTheSubjectDocumentLastLogin(t *testing.T) {
 // startLogin drives GetSSOLoginURL and returns the minted state.
 func (f *fixture) startLogin(slug string) string {
 	f.t.Helper()
-	resp, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&pmv1.GetSSOLoginURLRequest{
+	resp, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&cadestrov1.GetSSOLoginURLRequest{
 		Slug: slug, RedirectUrl: testBaseURL + "/auth/callback",
 	}))
 	require.NoError(f.t, err)

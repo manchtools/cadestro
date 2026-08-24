@@ -11,15 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 )
 
-func definitionCreate(name string) *pmv1.CreateDefinitionRequest {
-	return &pmv1.CreateDefinitionRequest{
-		Name: name, Schedule: &pmv1.ActionSchedule{Cron: "0 1 * * *"},
+func definitionCreate(name string) *cadestrov1.CreateDefinitionRequest {
+	return &cadestrov1.CreateDefinitionRequest{
+		Name: name, Schedule: &cadestrov1.ActionSchedule{Cron: "0 1 * * *"},
 	}
 }
 
@@ -27,7 +27,7 @@ func createDefinitionSet(t *testing.T, state *authoring.Service, name string) st
 	t.Helper()
 	op := actionOperation()
 	set, err := state.CreateActionSet(context.Background(), op, authoring.CreateActionSetParams{
-		Name: name, CreatedBy: op.ActorID, Schedule: &pmv1.ActionSchedule{Cron: "0 4 * * *"},
+		Name: name, CreatedBy: op.ActorID, Schedule: &cadestrov1.ActionSchedule{Cron: "0 4 * * *"},
 	})
 	require.NoError(t, err)
 	return set.ID
@@ -35,10 +35,10 @@ func createDefinitionSet(t *testing.T, state *authoring.Service, name string) st
 
 func TestDefinitionHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -59,21 +59,21 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, int32(0), created.Msg.Definition.MemberCount)
 	assert.Equal(t, "0 1 * * *", created.Msg.Definition.Schedule.Cron)
 
-	added, err := f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&pmv1.AddActionSetToDefinitionRequest{
+	added, err := f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
 		DefinitionId: definitionID, ActionSetId: set2, SortOrder: 20,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), added.Msg.Definition.MemberCount)
-	_, err = f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&pmv1.AddActionSetToDefinitionRequest{
+	_, err = f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
 		DefinitionId: definitionID, ActionSetId: set1, SortOrder: 10,
 	}))
 	require.NoError(t, err)
-	_, err = f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&pmv1.AddActionSetToDefinitionRequest{
+	_, err = f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
 		DefinitionId: definitionID, ActionSetId: set1, SortOrder: 30,
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
-	got, err := f.handlers.GetDefinition(ctx, connect.NewRequest(&pmv1.GetDefinitionRequest{Id: definitionID}))
+	got, err := f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 2)
 	assert.Equal(t, set1, got.Msg.Members[0].ActionSetId)
@@ -81,42 +81,42 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, set2, got.Msg.Members[1].ActionSetId)
 	assert.Equal(t, int32(2), got.Msg.Definition.MemberCount)
 
-	renamed, err := f.handlers.RenameDefinition(ctx, connect.NewRequest(&pmv1.RenameDefinitionRequest{Id: definitionID, Name: "renamed"}))
+	renamed, err := f.handlers.RenameDefinition(ctx, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: definitionID, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Definition.Name)
-	described, err := f.handlers.UpdateDefinitionDescription(ctx, connect.NewRequest(&pmv1.UpdateDefinitionDescriptionRequest{
+	described, err := f.handlers.UpdateDefinitionDescription(ctx, connect.NewRequest(&cadestrov1.UpdateDefinitionDescriptionRequest{
 		Id: definitionID, Description: "direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "direct state", described.Msg.Definition.Description)
-	scheduled, err := f.handlers.UpdateDefinitionSchedule(ctx, connect.NewRequest(&pmv1.UpdateDefinitionScheduleRequest{
-		Id: definitionID, Schedule: &pmv1.ActionSchedule{IntervalHours: 12},
+	scheduled, err := f.handlers.UpdateDefinitionSchedule(ctx, connect.NewRequest(&cadestrov1.UpdateDefinitionScheduleRequest{
+		Id: definitionID, Schedule: &cadestrov1.ActionSchedule{IntervalHours: 12},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(12), scheduled.Msg.Definition.Schedule.IntervalHours)
 
-	reordered, err := f.handlers.ReorderActionSetInDefinition(ctx, connect.NewRequest(&pmv1.ReorderActionSetInDefinitionRequest{
+	reordered, err := f.handlers.ReorderActionSetInDefinition(ctx, connect.NewRequest(&cadestrov1.ReorderActionSetInDefinitionRequest{
 		DefinitionId: definitionID, ActionSetId: set2, NewOrder: 0,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), reordered.Msg.Definition.MemberCount)
-	got, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&pmv1.GetDefinitionRequest{Id: definitionID}))
+	got, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
 	require.NoError(t, err)
 	assert.Equal(t, set2, got.Msg.Members[0].ActionSetId)
 
-	removed, err := f.handlers.RemoveActionSetFromDefinition(ctx, connect.NewRequest(&pmv1.RemoveActionSetFromDefinitionRequest{
+	removed, err := f.handlers.RemoveActionSetFromDefinition(ctx, connect.NewRequest(&cadestrov1.RemoveActionSetFromDefinitionRequest{
 		DefinitionId: definitionID, ActionSetId: set1,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), removed.Msg.Definition.MemberCount)
-	_, err = f.handlers.RemoveActionSetFromDefinition(ctx, connect.NewRequest(&pmv1.RemoveActionSetFromDefinitionRequest{
+	_, err = f.handlers.RemoveActionSetFromDefinition(ctx, connect.NewRequest(&cadestrov1.RemoveActionSetFromDefinitionRequest{
 		DefinitionId: definitionID, ActionSetId: set1,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
-	_, err = f.handlers.DeleteDefinition(ctx, connect.NewRequest(&pmv1.DeleteDefinitionRequest{Id: definitionID}))
+	_, err = f.handlers.DeleteDefinition(ctx, connect.NewRequest(&cadestrov1.DeleteDefinitionRequest{Id: definitionID}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&pmv1.GetDefinitionRequest{Id: definitionID}))
+	_, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range authoring.DefinitionMutationProcedures() {
@@ -134,7 +134,7 @@ func TestDefinitionHandlers_KeysetAndDirectScope(t *testing.T) {
 	create := func(name string) string {
 		op := actionOperation()
 		row, err := state.CreateDefinition(context.Background(), op, authoring.CreateDefinitionParams{
-			Name: name, CreatedBy: op.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+			Name: name, CreatedBy: op.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 		})
 		require.NoError(t, err)
 		return row.ID
@@ -159,30 +159,30 @@ func TestDefinitionHandlers_KeysetAndDirectScope(t *testing.T) {
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA,
 		}},
 	})
-	_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&pmv1.GetDefinitionRequest{Id: directID}))
+	_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: directID}))
 	require.NoError(t, err)
 	for _, id := range []string{outsideID, unassignedID} {
-		_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&pmv1.GetDefinitionRequest{Id: id}))
+		_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: id}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&pmv1.RenameDefinitionRequest{Id: outsideID, Name: "denied"}))
+	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: outsideID, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&pmv1.RenameDefinitionRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: directID, Name: "allowed"}))
 	require.NoError(t, err)
 
-	list, err := f.handlers.ListDefinitions(scoped, connect.NewRequest(&pmv1.ListDefinitionsRequest{}))
+	list, err := f.handlers.ListDefinitions(scoped, connect.NewRequest(&cadestrov1.ListDefinitionsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, list.Msg.Definitions, 1)
 	assert.Equal(t, directID, list.Msg.Definitions[0].Id)
 	assert.Equal(t, int32(1), list.Msg.TotalCount)
 
 	global := f.actor("ListDefinitions")
-	page, err := f.handlers.ListDefinitions(global, connect.NewRequest(&pmv1.ListDefinitionsRequest{PageSize: 1}))
+	page, err := f.handlers.ListDefinitions(global, connect.NewRequest(&cadestrov1.ListDefinitionsRequest{PageSize: 1}))
 	require.NoError(t, err)
 	require.Len(t, page.Msg.Definitions, 1)
 	assert.NotEmpty(t, page.Msg.NextPageToken)
 	assert.Equal(t, int32(3), page.Msg.TotalCount)
-	all, err := f.handlers.ListDefinitions(global, connect.NewRequest(&pmv1.ListDefinitionsRequest{}))
+	all, err := f.handlers.ListDefinitions(global, connect.NewRequest(&cadestrov1.ListDefinitionsRequest{}))
 	require.NoError(t, err)
 	ids := []string{all.Msg.Definitions[0].Id, all.Msg.Definitions[1].Id, all.Msg.Definitions[2].Id}
 	sort.Strings(ids)
@@ -196,7 +196,7 @@ func TestDefinitionHandlers_AddRequiresVisibleActionSet(t *testing.T) {
 	state := authoring.New(authoring.Config{Store: f.store})
 	definitionOp := actionOperation()
 	definition, err := state.CreateDefinition(context.Background(), definitionOp, authoring.CreateDefinitionParams{
-		Name: "target", CreatedBy: definitionOp.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+		Name: "target", CreatedBy: definitionOp.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.NoError(t, err)
 	inScope := createDefinitionSet(t, state, "in")
@@ -219,11 +219,11 @@ func TestDefinitionHandlers_AddRequiresVisibleActionSet(t *testing.T) {
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA,
 		}},
 	})
-	_, err = f.handlers.AddActionSetToDefinition(scoped, connect.NewRequest(&pmv1.AddActionSetToDefinitionRequest{
+	_, err = f.handlers.AddActionSetToDefinition(scoped, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
 		DefinitionId: definition.ID, ActionSetId: outOfScope,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
-	_, err = f.handlers.AddActionSetToDefinition(scoped, connect.NewRequest(&pmv1.AddActionSetToDefinitionRequest{
+	_, err = f.handlers.AddActionSetToDefinition(scoped, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
 		DefinitionId: definition.ID, ActionSetId: inScope,
 	}))
 	require.NoError(t, err)
@@ -234,13 +234,13 @@ func TestDefinitionHandlers_CorruptStoredScheduleFailsClosed(t *testing.T) {
 	state := authoring.New(authoring.Config{Store: f.store})
 	op := actionOperation()
 	definition, err := state.CreateDefinition(context.Background(), op, authoring.CreateDefinitionParams{
-		Name: "safe", CreatedBy: op.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+		Name: "safe", CreatedBy: op.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.NoError(t, err)
 	_, err = f.raw.Exec(context.Background(), `UPDATE definitions SET schedule = '{}' WHERE id = $1`, definition.ID)
 	require.NoError(t, err)
 
-	_, err = f.handlers.GetDefinition(f.actor("GetDefinition"), connect.NewRequest(&pmv1.GetDefinitionRequest{Id: definition.ID}))
+	_, err = f.handlers.GetDefinition(f.actor("GetDefinition"), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definition.ID}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 

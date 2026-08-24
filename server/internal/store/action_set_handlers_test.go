@@ -11,24 +11,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 )
 
-func setCreate(name string, policy pmv1.OnFailure) *pmv1.CreateActionSetRequest {
-	return &pmv1.CreateActionSetRequest{
-		Name: name, Schedule: &pmv1.ActionSchedule{Cron: "0 4 * * *"}, OnFailure: policy,
+func setCreate(name string, policy cadestrov1.OnFailure) *cadestrov1.CreateActionSetRequest {
+	return &cadestrov1.CreateActionSetRequest{
+		Name: name, Schedule: &cadestrov1.ActionSchedule{Cron: "0 4 * * *"}, OnFailure: policy,
 	}
 }
 
 func TestActionSetHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&pmv1.GetActionSetRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&pmv1.GetActionSetRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -40,74 +40,74 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 		"AddActionToSet", "RemoveActionFromSet", "ReorderActionInSet",
 	)
 	state := authoring.New(authoring.Config{Store: f.store, Now: func() time.Time { return f.now }})
-	action1 := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
-	action2 := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
+	action1 := createNoParamsAction(t, state, cadestrov1.ActionType_ACTION_TYPE_UPDATE)
+	action2 := createNoParamsAction(t, state, cadestrov1.ActionType_ACTION_TYPE_UPDATE)
 
-	created, err := f.handlers.CreateActionSet(ctx, connect.NewRequest(setCreate("baseline", pmv1.OnFailure_ON_FAILURE_STOP)))
+	created, err := f.handlers.CreateActionSet(ctx, connect.NewRequest(setCreate("baseline", cadestrov1.OnFailure_ON_FAILURE_STOP)))
 	require.NoError(t, err)
 	setID := created.Msg.Set.Id
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, created.Msg.Set.OnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, created.Msg.Set.OnFailure)
 	assert.Equal(t, int32(0), created.Msg.Set.MemberCount)
 	assert.Equal(t, "0 4 * * *", created.Msg.Set.Schedule.Cron)
 
-	added, err := f.handlers.AddActionToSet(ctx, connect.NewRequest(&pmv1.AddActionToSetRequest{
+	added, err := f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
 		SetId: setID, ActionId: action2.ID, SortOrder: 20,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), added.Msg.Set.MemberCount)
-	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&pmv1.AddActionToSetRequest{
+	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
 		SetId: setID, ActionId: action1.ID, SortOrder: 10,
 	}))
 	require.NoError(t, err)
-	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&pmv1.AddActionToSetRequest{
+	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
 		SetId: setID, ActionId: action1.ID, SortOrder: 30,
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
-	got, err := f.handlers.GetActionSet(ctx, connect.NewRequest(&pmv1.GetActionSetRequest{Id: setID}))
+	got, err := f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 2)
 	assert.Equal(t, action1.ID, got.Msg.Members[0].ActionId)
 	assert.Equal(t, action2.ID, got.Msg.Members[1].ActionId)
 	assert.Equal(t, int32(2), got.Msg.Set.MemberCount)
 
-	renamed, err := f.handlers.RenameActionSet(ctx, connect.NewRequest(&pmv1.RenameActionSetRequest{Id: setID, Name: "renamed"}))
+	renamed, err := f.handlers.RenameActionSet(ctx, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: setID, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Set.Name)
-	described, err := f.handlers.UpdateActionSetDescription(ctx, connect.NewRequest(&pmv1.UpdateActionSetDescriptionRequest{
+	described, err := f.handlers.UpdateActionSetDescription(ctx, connect.NewRequest(&cadestrov1.UpdateActionSetDescriptionRequest{
 		Id: setID, Description: "direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "direct state", described.Msg.Set.Description)
-	policy, err := f.handlers.UpdateActionSetSchedule(ctx, connect.NewRequest(&pmv1.UpdateActionSetScheduleRequest{
-		Id: setID, Schedule: &pmv1.ActionSchedule{IntervalHours: 12}, OnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
+	policy, err := f.handlers.UpdateActionSetSchedule(ctx, connect.NewRequest(&cadestrov1.UpdateActionSetScheduleRequest{
+		Id: setID, Schedule: &cadestrov1.ActionSchedule{IntervalHours: 12}, OnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(12), policy.Msg.Set.Schedule.IntervalHours)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_CONTINUE, policy.Msg.Set.OnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_CONTINUE, policy.Msg.Set.OnFailure)
 
-	reordered, err := f.handlers.ReorderActionInSet(ctx, connect.NewRequest(&pmv1.ReorderActionInSetRequest{
+	reordered, err := f.handlers.ReorderActionInSet(ctx, connect.NewRequest(&cadestrov1.ReorderActionInSetRequest{
 		SetId: setID, ActionId: action2.ID, NewOrder: 0,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), reordered.Msg.Set.MemberCount)
-	got, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&pmv1.GetActionSetRequest{Id: setID}))
+	got, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
 	require.NoError(t, err)
 	assert.Equal(t, action2.ID, got.Msg.Members[0].ActionId)
 
-	removed, err := f.handlers.RemoveActionFromSet(ctx, connect.NewRequest(&pmv1.RemoveActionFromSetRequest{
+	removed, err := f.handlers.RemoveActionFromSet(ctx, connect.NewRequest(&cadestrov1.RemoveActionFromSetRequest{
 		SetId: setID, ActionId: action1.ID,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), removed.Msg.Set.MemberCount)
-	_, err = f.handlers.RemoveActionFromSet(ctx, connect.NewRequest(&pmv1.RemoveActionFromSetRequest{
+	_, err = f.handlers.RemoveActionFromSet(ctx, connect.NewRequest(&cadestrov1.RemoveActionFromSetRequest{
 		SetId: setID, ActionId: action1.ID,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
-	_, err = f.handlers.DeleteActionSet(ctx, connect.NewRequest(&pmv1.DeleteActionSetRequest{Id: setID}))
+	_, err = f.handlers.DeleteActionSet(ctx, connect.NewRequest(&cadestrov1.DeleteActionSetRequest{Id: setID}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&pmv1.GetActionSetRequest{Id: setID}))
+	_, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range authoring.ActionSetMutationProcedures() {
@@ -125,7 +125,7 @@ func TestActionSetHandlers_KeysetAndTransitiveScope(t *testing.T) {
 	create := func(name string) string {
 		op := actionOperation()
 		row, err := state.CreateActionSet(context.Background(), op, authoring.CreateActionSetParams{
-			Name: name, CreatedBy: op.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+			Name: name, CreatedBy: op.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 		})
 		require.NoError(t, err)
 		return row.ID
@@ -158,19 +158,19 @@ func TestActionSetHandlers_KeysetAndTransitiveScope(t *testing.T) {
 		}},
 	})
 	for _, id := range []string{directID, transitiveID} {
-		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&pmv1.GetActionSetRequest{Id: id}))
+		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: id}))
 		require.NoError(t, err)
 	}
 	for _, id := range []string{outsideID, unassignedID} {
-		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&pmv1.GetActionSetRequest{Id: id}))
+		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: id}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&pmv1.RenameActionSetRequest{Id: transitiveID, Name: "denied"}))
+	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: transitiveID, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&pmv1.RenameActionSetRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: directID, Name: "allowed"}))
 	require.NoError(t, err)
 
-	list, err := f.handlers.ListActionSets(scoped, connect.NewRequest(&pmv1.ListActionSetsRequest{}))
+	list, err := f.handlers.ListActionSets(scoped, connect.NewRequest(&cadestrov1.ListActionSetsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, list.Msg.Sets, 2)
 	ids := []string{list.Msg.Sets[0].Id, list.Msg.Sets[1].Id}
@@ -181,12 +181,12 @@ func TestActionSetHandlers_KeysetAndTransitiveScope(t *testing.T) {
 	assert.Equal(t, int32(2), list.Msg.TotalCount)
 
 	global := f.actor("ListActionSets")
-	page, err := f.handlers.ListActionSets(global, connect.NewRequest(&pmv1.ListActionSetsRequest{PageSize: 1}))
+	page, err := f.handlers.ListActionSets(global, connect.NewRequest(&cadestrov1.ListActionSetsRequest{PageSize: 1}))
 	require.NoError(t, err)
 	require.Len(t, page.Msg.Sets, 1)
 	assert.NotEmpty(t, page.Msg.NextPageToken)
 	assert.Equal(t, int32(4), page.Msg.TotalCount)
-	unassigned, err := f.handlers.ListActionSets(global, connect.NewRequest(&pmv1.ListActionSetsRequest{UnassignedOnly: true}))
+	unassigned, err := f.handlers.ListActionSets(global, connect.NewRequest(&cadestrov1.ListActionSetsRequest{UnassignedOnly: true}))
 	require.NoError(t, err)
 	require.Len(t, unassigned.Msg.Sets, 2)
 	assert.ElementsMatch(t, []string{transitiveID, unassignedID}, []string{unassigned.Msg.Sets[0].Id, unassigned.Msg.Sets[1].Id})
@@ -197,23 +197,23 @@ func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
 	state := authoring.New(authoring.Config{Store: f.store})
 	setOp := actionOperation()
 	set, err := state.CreateActionSet(context.Background(), setOp, authoring.CreateActionSetParams{
-		Name: "target", CreatedBy: setOp.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+		Name: "target", CreatedBy: setOp.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.NoError(t, err)
 	actionOp := actionOperation()
 	system, err := state.CreateAction(context.Background(), actionOp, authoring.CreateActionParams{
-		Name: "system", CreatedBy: actionOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
+		Name: "system", CreatedBy: actionOp.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)
 	ctx := f.actor("AddActionToSet")
-	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&pmv1.AddActionToSetRequest{
+	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
 		SetId: set.ID, ActionId: system.ID,
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 
-	inScope := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
-	outOfScope := createNoParamsAction(t, state, pmv1.ActionType_ACTION_TYPE_UPDATE)
+	inScope := createNoParamsAction(t, state, cadestrov1.ActionType_ACTION_TYPE_UPDATE)
+	outOfScope := createNoParamsAction(t, state, cadestrov1.ActionType_ACTION_TYPE_UPDATE)
 	groupA, groupB := newID(), newID()
 	_, err = f.raw.Exec(context.Background(),
 		`INSERT INTO device_groups (id, name) VALUES ($1, 'A'), ($2, 'B')`, groupA, groupB)
@@ -232,11 +232,11 @@ func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA,
 		}},
 	})
-	_, err = f.handlers.AddActionToSet(scoped, connect.NewRequest(&pmv1.AddActionToSetRequest{
+	_, err = f.handlers.AddActionToSet(scoped, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
 		SetId: set.ID, ActionId: outOfScope.ID,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "membership must not import an out-of-scope action")
-	_, err = f.handlers.AddActionToSet(scoped, connect.NewRequest(&pmv1.AddActionToSetRequest{
+	_, err = f.handlers.AddActionToSet(scoped, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
 		SetId: set.ID, ActionId: inScope.ID,
 	}))
 	require.NoError(t, err)
@@ -247,7 +247,7 @@ func TestActionSetHandlers_CorruptStoredPolicyFailsClosed(t *testing.T) {
 	state := authoring.New(authoring.Config{Store: f.store})
 	op := actionOperation()
 	set, err := state.CreateActionSet(context.Background(), op, authoring.CreateActionSetParams{
-		Name: "safe", CreatedBy: op.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+		Name: "safe", CreatedBy: op.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.NoError(t, err)
 	conn, err := f.raw.Conn(context.Background())
@@ -262,7 +262,7 @@ func TestActionSetHandlers_CorruptStoredPolicyFailsClosed(t *testing.T) {
 	_, err = conn.Exec(context.Background(), `UPDATE action_sets SET on_failure = 99 WHERE id = $1`, set.ID)
 	require.NoError(t, err)
 
-	_, err = f.handlers.GetActionSet(f.actor("GetActionSet"), connect.NewRequest(&pmv1.GetActionSetRequest{Id: set.ID}))
+	_, err = f.handlers.GetActionSet(f.actor("GetActionSet"), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: set.ID}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 

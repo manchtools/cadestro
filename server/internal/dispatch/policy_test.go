@@ -8,13 +8,13 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
 
-	pmp "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func TestLiveOperationCorrelationIgnoresLateResultsButRejectsWrongDevice(t *testing.T) {
 	h := &Handlers{live: make(map[string]pendingLiveOperation)}
 	deviceID, otherDeviceID, operationID := ulid.Make().String(), ulid.Make().String(), ulid.Make().String()
-	result := &pmp.SyncDeviceResult{Success: true}
+	result := &cadestrov1.SyncDeviceResult{Success: true}
 
 	// A response may race an admin timeout. It is stale, not a reason to tear
 	// down the otherwise healthy authenticated agent stream.
@@ -31,11 +31,11 @@ func TestLiveOperationCorrelationIgnoresLateResultsButRejectsWrongDevice(t *test
 }
 
 func TestStablePolicyIdentityIsReplaySafeAndContentSensitive(t *testing.T) {
-	manifest := &pmp.Manifest{
-		Provenance: &pmp.ManifestProvenance{ActionId: ulid.Make().String()},
-		Schedule:   &pmp.ActionSchedule{IntervalHours: 8},
-		Occurrences: []*pmp.ManifestOccurrence{{
-			Action:       &pmp.Action{Id: &pmp.ActionId{Value: ulid.Make().String()}, Type: pmp.ActionType_ACTION_TYPE_UPDATE},
+	manifest := &cadestrov1.Manifest{
+		Provenance: &cadestrov1.ManifestProvenance{ActionId: ulid.Make().String()},
+		Schedule:   &cadestrov1.ActionSchedule{IntervalHours: 8},
+		Occurrences: []*cadestrov1.ManifestOccurrence{{
+			Action:       &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: ulid.Make().String()}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE},
 			OccurrenceId: ulid.Make().String(),
 		}},
 	}

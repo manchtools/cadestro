@@ -18,7 +18,7 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	contract "github.com/manchtools/cadestro/contract"
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -66,11 +66,11 @@ type CreateActionParams struct {
 	Name           string
 	Description    string
 	CreatedBy      string
-	Type           pmv1.ActionType
-	DesiredState   pmv1.DesiredState
+	Type           cadestrov1.ActionType
+	DesiredState   cadestrov1.DesiredState
 	Params         []byte
 	TimeoutSeconds int32
-	Schedule       *pmv1.ActionSchedule
+	Schedule       *cadestrov1.ActionSchedule
 	System         bool
 }
 
@@ -79,10 +79,10 @@ type CreateActionParams struct {
 // the existing explicit RPC contract.
 type UpdateActionParams struct {
 	ID             string
-	DesiredState   pmv1.DesiredState
+	DesiredState   cadestrov1.DesiredState
 	Params         []byte
 	TimeoutSeconds int32
-	Schedule       *pmv1.ActionSchedule
+	Schedule       *cadestrov1.ActionSchedule
 	AllowSystem    bool
 }
 
@@ -200,7 +200,7 @@ func (s *Service) UpdateActionParams(ctx context.Context, op store.AuditOperatio
 			return store.ActionRow{}, fmt.Errorf("authoring: stored action schedule: %w", err)
 		}
 	}
-	params, err := validateActionData(p.ID, pmv1.ActionType(existing.ActionType), p.DesiredState, timeout, scheduleForValidation, p.Params)
+	params, err := validateActionData(p.ID, cadestrov1.ActionType(existing.ActionType), p.DesiredState, timeout, scheduleForValidation, p.Params)
 	if err != nil {
 		return store.ActionRow{}, err
 	}
@@ -284,11 +284,11 @@ func (s *Service) DeleteAction(ctx context.Context, op store.AuditOperation, id 
 	return s.classifyWriteError(ctx, id, allowSystem, err)
 }
 
-func validateActionData(id string, actionType pmv1.ActionType, desired pmv1.DesiredState, timeout int32, schedule *pmv1.ActionSchedule, raw []byte) ([]byte, error) {
-	if _, ok := pmv1.ActionType_name[int32(actionType)]; !ok || actionType == pmv1.ActionType_ACTION_TYPE_UNSPECIFIED {
+func validateActionData(id string, actionType cadestrov1.ActionType, desired cadestrov1.DesiredState, timeout int32, schedule *cadestrov1.ActionSchedule, raw []byte) ([]byte, error) {
+	if _, ok := cadestrov1.ActionType_name[int32(actionType)]; !ok || actionType == cadestrov1.ActionType_ACTION_TYPE_UNSPECIFIED {
 		return nil, ErrInvalidInput
 	}
-	if _, ok := pmv1.DesiredState_name[int32(desired)]; !ok || timeout < 0 || timeout > 3600 {
+	if _, ok := cadestrov1.DesiredState_name[int32(desired)]; !ok || timeout < 0 || timeout > 3600 {
 		return nil, ErrInvalidInput
 	}
 	canonical, err := canonicalJSONObject(raw)
@@ -299,7 +299,7 @@ func validateActionData(id string, actionType pmv1.ActionType, desired pmv1.Desi
 	if !validID(actionID) {
 		actionID = ulid.Make().String()
 	}
-	request := &pmv1.UpdateActionParamsRequest{
+	request := &cadestrov1.UpdateActionParamsRequest{
 		Id: actionID, DesiredState: desired, TimeoutSeconds: timeout, Schedule: schedule,
 	}
 	if err := actionparams.PopulateUpdateActionParams(request, actionType, canonical); err != nil {
@@ -323,19 +323,19 @@ func validateActionData(id string, actionType pmv1.ActionType, desired pmv1.Desi
 
 func normalizeStoredSecretsForValidation(params proto.Message) error {
 	switch value := params.(type) {
-	case *pmv1.EncryptionAuthoringParams:
+	case *cadestrov1.EncryptionAuthoringParams:
 		if value.PresharedKey == nil || !pmcrypto.IsEncryptedValue(value.GetPresharedKey()) {
 			return ErrInvalidInput
 		}
 		value.PresharedKey = stringPointer("configured")
-	case *pmv1.WifiAuthoringParams:
+	case *cadestrov1.WifiAuthoringParams:
 		switch value.AuthType {
-		case pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
+		case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
 			if value.Psk == nil || !pmcrypto.IsEncryptedValue(value.GetPsk()) || value.ClientKey != nil {
 				return ErrInvalidInput
 			}
 			value.Psk = stringPointer("configured")
-		case pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
+		case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
 			if value.ClientKey == nil || !pmcrypto.IsEncryptedValue(value.GetClientKey()) || value.Psk != nil {
 				return ErrInvalidInput
 			}
@@ -349,14 +349,14 @@ func normalizeStoredSecretsForValidation(params proto.Message) error {
 
 // ValidateExecutableAction applies the same type, parameter, and safety rules
 // used by persisted Actions to an inline Action before it enters a manifest.
-func ValidateExecutableAction(action *pmv1.Action) error {
+func ValidateExecutableAction(action *cadestrov1.Action) error {
 	if action == nil || !validID(action.GetId().GetValue()) {
 		return ErrInvalidInput
 	}
 	params := actionparams.ExtractParamsMsg(action)
 	if params == nil {
 		// UPDATE is the only action whose empty params oneof is meaningful.
-		if action.Type != pmv1.ActionType_ACTION_TYPE_UPDATE {
+		if action.Type != cadestrov1.ActionType_ACTION_TYPE_UPDATE {
 			return ErrInvalidInput
 		}
 	} else if !actionparams.ParamsMatchType(action, action.Type) {
@@ -377,22 +377,22 @@ func ValidateExecutableAction(action *pmv1.Action) error {
 
 func validateActionSafety(params proto.Message) error {
 	switch p := params.(type) {
-	case *pmv1.ShellParams:
+	case *cadestrov1.ShellParams:
 		if p.Script == "" && p.DetectionScript == "" {
 			return fmt.Errorf("%w: shell action needs a script or detection script", ErrInvalidInput)
 		}
 		if p.IsCompliance && strings.TrimSpace(p.DetectionScript) == "" {
 			return fmt.Errorf("%w: compliance shell action is detection-only and needs a detection script", ErrInvalidInput)
 		}
-	case *pmv1.AppInstallParams:
+	case *cadestrov1.AppInstallParams:
 		if !strings.HasPrefix(strings.ToLower(p.Url), "https://") || !isLowerHex64(p.ChecksumSha256) {
 			return fmt.Errorf("%w: application install requires HTTPS and a lowercase SHA-256", ErrInvalidInput)
 		}
-	case *pmv1.AgentUpdateParams:
+	case *cadestrov1.AgentUpdateParams:
 		if p.Amd64 == nil && p.Arm64 == nil {
 			return fmt.Errorf("%w: agent update needs at least one architecture", ErrInvalidInput)
 		}
-		for _, arch := range []*pmv1.AgentUpdateArch{p.Amd64, p.Arm64} {
+		for _, arch := range []*cadestrov1.AgentUpdateArch{p.Amd64, p.Arm64} {
 			if arch == nil {
 				continue
 			}

@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -248,13 +248,13 @@ func seedScaleDevices(t *testing.T, raw *testdb.DB, now time.Time) []string {
 func seedScaleDeliveries(t *testing.T, raw *testdb.DB, deviceIDs []string, now time.Time) []scaleDelivery {
 	t.Helper()
 	manifestID, actionID := newID(), newID()
-	manifest := &pmv1.Manifest{
+	manifest := &cadestrov1.Manifest{
 		ManifestId: manifestID,
-		Provenance: &pmv1.ManifestProvenance{ActionId: actionID},
-		Schedule:   &pmv1.ActionSchedule{RunOnAssign: true},
-		Occurrences: []*pmv1.ManifestOccurrence{{
+		Provenance: &cadestrov1.ManifestProvenance{ActionId: actionID},
+		Schedule:   &cadestrov1.ActionSchedule{RunOnAssign: true},
+		Occurrences: []*cadestrov1.ManifestOccurrence{{
 			OccurrenceId: newID(),
-			Action:       &pmv1.Action{Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE},
+			Action:       &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE},
 		}},
 	}
 	payload, err := protojson.Marshal(manifest)
@@ -343,7 +343,7 @@ func exerciseSearch(ctx context.Context, st *store.Store) ([]time.Duration, erro
 
 func exerciseTerminal(ctx context.Context, registry *connection.TerminalSessionRegistry, sessionID string) ([]time.Duration, error) {
 	latencies := make([]time.Duration, 0, scaleTerminalFrames)
-	message := &pmv1.AgentMessage{}
+	message := &cadestrov1.AgentMessage{}
 	for range scaleTerminalFrames {
 		if err := ctx.Err(); err != nil {
 			return nil, err

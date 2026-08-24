@@ -13,7 +13,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
@@ -24,17 +24,17 @@ import (
 const (
 	defaultPageSize = int32(50)
 
-	errNotAuthenticated    = pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
-	errPermissionDenied    = pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
-	errValidationFailed    = pmv1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
-	errInvalidPageToken    = pmv1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN
-	errInternal            = pmv1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
-	errPolicyNotFound      = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND
-	errActionNotFound      = pmv1.ErrorCode_ERROR_CODE_ACTION_NOT_FOUND
-	errActionNotCompliance = pmv1.ErrorCode_ERROR_CODE_ACTION_NOT_COMPLIANCE
-	errActionNoDetection   = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION
-	errRuleExists          = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS
-	errPolicyRuleNotFound  = pmv1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND
+	errNotAuthenticated    = cadestrov1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errPermissionDenied    = cadestrov1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
+	errValidationFailed    = cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED
+	errInvalidPageToken    = cadestrov1.ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN
+	errInternal            = cadestrov1.ErrorCode_ERROR_CODE_INTERNAL_ERROR
+	errPolicyNotFound      = cadestrov1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND
+	errActionNotFound      = cadestrov1.ErrorCode_ERROR_CODE_ACTION_NOT_FOUND
+	errActionNotCompliance = cadestrov1.ErrorCode_ERROR_CODE_ACTION_NOT_COMPLIANCE
+	errActionNoDetection   = cadestrov1.ErrorCode_ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION
+	errRuleExists          = cadestrov1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS
+	errPolicyRuleNotFound  = cadestrov1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND
 )
 
 // HandlersConfig supplies the direct store and process-local seams.
@@ -101,7 +101,7 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 }
 
 // CreateCompliancePolicy creates one empty policy.
-func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.CreateCompliancePolicyRequest]) (*connect.Response[pmv1.CreateCompliancePolicyResponse], error) {
+func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.CreateCompliancePolicyRequest]) (*connect.Response[cadestrov1.CreateCompliancePolicyResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -116,11 +116,11 @@ func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, h.policyError(ctx, "create policy", err)
 	}
-	return connect.NewResponse(&pmv1.CreateCompliancePolicyResponse{Policy: policyToProto(row, 0, nil)}), nil
+	return connect.NewResponse(&cadestrov1.CreateCompliancePolicyResponse{Policy: policyToProto(row, 0, nil)}), nil
 }
 
 // GetCompliancePolicy returns one visible policy with its live rules.
-func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.GetCompliancePolicyRequest]) (*connect.Response[pmv1.GetCompliancePolicyResponse], error) {
+func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.GetCompliancePolicyRequest]) (*connect.Response[cadestrov1.GetCompliancePolicyResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -138,13 +138,13 @@ func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, h.internal(ctx, "list policy rules", err)
 	}
-	return connect.NewResponse(&pmv1.GetCompliancePolicyResponse{
+	return connect.NewResponse(&cadestrov1.GetCompliancePolicyResponse{
 		Policy: policyToProto(row, int64(len(rules)), rules),
 	}), nil
 }
 
 // ListCompliancePolicies returns a deterministic SQLite keyset page.
-func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Request[pmv1.ListCompliancePoliciesRequest]) (*connect.Response[pmv1.ListCompliancePoliciesResponse], error) {
+func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Request[cadestrov1.ListCompliancePoliciesRequest]) (*connect.Response[cadestrov1.ListCompliancePoliciesResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, h.internal(ctx, "count policies", err)
 	}
-	policies := make([]*pmv1.CompliancePolicy, len(views))
+	policies := make([]*cadestrov1.CompliancePolicy, len(views))
 	for i, view := range views {
 		policies[i] = policyToProto(view.CompliancePolicyRow, view.LiveRuleCount, nil)
 	}
@@ -183,13 +183,13 @@ func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Requ
 	if hasMore {
 		next = views[len(views)-1].ID
 	}
-	return connect.NewResponse(&pmv1.ListCompliancePoliciesResponse{
+	return connect.NewResponse(&cadestrov1.ListCompliancePoliciesResponse{
 		Policies: policies, NextPageToken: next, TotalCount: boundedCount(total),
 	}), nil
 }
 
 // RenameCompliancePolicy replaces a policy name.
-func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.RenameCompliancePolicyRequest]) (*connect.Response[pmv1.UpdateCompliancePolicyResponse], error) {
+func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.RenameCompliancePolicyRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameCompliancePolicy")
 	if err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Requ
 }
 
 // UpdateCompliancePolicyDescription replaces a policy description.
-func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *connect.Request[pmv1.UpdateCompliancePolicyDescriptionRequest]) (*connect.Response[pmv1.UpdateCompliancePolicyResponse], error) {
+func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyDescriptionRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateCompliancePolicyDescription")
 	if err != nil {
 		return nil, err
@@ -212,7 +212,7 @@ func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *c
 }
 
 // DeleteCompliancePolicy deletes one policy and its ordinary dependent state.
-func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Request[pmv1.DeleteCompliancePolicyRequest]) (*connect.Response[pmv1.DeleteCompliancePolicyResponse], error) {
+func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.DeleteCompliancePolicyRequest]) (*connect.Response[cadestrov1.DeleteCompliancePolicyResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteCompliancePolicy")
 	if err != nil {
 		return nil, err
@@ -221,11 +221,11 @@ func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Requ
 		cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure, "DeleteCompliancePolicy"), req.Msg.Id); err != nil {
 		return nil, h.policyError(ctx, "delete policy", err)
 	}
-	return connect.NewResponse(&pmv1.DeleteCompliancePolicyResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteCompliancePolicyResponse{}), nil
 }
 
 // AddCompliancePolicyRule adds one visible compliance Action.
-func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Request[pmv1.AddCompliancePolicyRuleRequest]) (*connect.Response[pmv1.AddCompliancePolicyRuleResponse], error) {
+func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.AddCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.AddCompliancePolicyRuleResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "AddCompliancePolicyRule")
 	if err != nil {
 		return nil, err
@@ -250,11 +250,11 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.AddCompliancePolicyRuleResponse{Policy: policy}), nil
+	return connect.NewResponse(&cadestrov1.AddCompliancePolicyRuleResponse{Policy: policy}), nil
 }
 
 // RemoveCompliancePolicyRule removes one Action edge.
-func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.Request[pmv1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[pmv1.RemoveCompliancePolicyRuleResponse], error) {
+func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.RemoveCompliancePolicyRuleResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "RemoveCompliancePolicyRule")
 	if err != nil {
 		return nil, err
@@ -268,11 +268,11 @@ func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.RemoveCompliancePolicyRuleResponse{Policy: policy}), nil
+	return connect.NewResponse(&cadestrov1.RemoveCompliancePolicyRuleResponse{Policy: policy}), nil
 }
 
 // UpdateCompliancePolicyRule replaces one rule grace period.
-func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.Request[pmv1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[pmv1.UpdateCompliancePolicyRuleResponse], error) {
+func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyRuleResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "UpdateCompliancePolicyRule")
 	if err != nil {
 		return nil, err
@@ -286,7 +286,7 @@ func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.UpdateCompliancePolicyRuleResponse{Policy: policy}), nil
+	return connect.NewResponse(&cadestrov1.UpdateCompliancePolicyRuleResponse{Policy: policy}), nil
 }
 
 func (h *Handlers) operatorPolicy(ctx context.Context, id string) (store.CompliancePolicyRow, error) {
@@ -410,7 +410,7 @@ func groupsOverlap(left, right []string) bool {
 	return false
 }
 
-func (h *Handlers) updatedPolicy(ctx context.Context, operation string, row store.CompliancePolicyRow, err error) (*connect.Response[pmv1.UpdateCompliancePolicyResponse], error) {
+func (h *Handlers) updatedPolicy(ctx context.Context, operation string, row store.CompliancePolicyRow, err error) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
 	if err != nil {
 		return nil, h.policyError(ctx, operation, err)
 	}
@@ -418,12 +418,12 @@ func (h *Handlers) updatedPolicy(ctx context.Context, operation string, row stor
 	if err != nil {
 		return nil, h.internal(ctx, "list updated policy rules", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateCompliancePolicyResponse{
+	return connect.NewResponse(&cadestrov1.UpdateCompliancePolicyResponse{
 		Policy: policyToProto(row, int64(len(rules)), rules),
 	}), nil
 }
 
-func (h *Handlers) policyResponse(ctx context.Context, id string) (*pmv1.CompliancePolicy, error) {
+func (h *Handlers) policyResponse(ctx context.Context, id string) (*cadestrov1.CompliancePolicy, error) {
 	row, err := h.store.GetAuthoringCompliancePolicy(ctx, id)
 	if err != nil {
 		return nil, h.policyError(ctx, "read changed policy", err)
@@ -473,8 +473,8 @@ func (h *Handlers) addRuleError(ctx context.Context, policyID, actionID string, 
 	return h.internal(ctx, "add policy rule", err)
 }
 
-func policyToProto(row store.CompliancePolicyRow, ruleCount int64, rules []store.CompliancePolicyRuleView) *pmv1.CompliancePolicy {
-	policy := &pmv1.CompliancePolicy{
+func policyToProto(row store.CompliancePolicyRow, ruleCount int64, rules []store.CompliancePolicyRuleView) *cadestrov1.CompliancePolicy {
+	policy := &cadestrov1.CompliancePolicy{
 		Id: row.ID, Name: row.Name, Description: row.Description,
 		RuleCount: boundedCount(ruleCount), CreatedBy: row.CreatedBy,
 	}
@@ -482,9 +482,9 @@ func policyToProto(row store.CompliancePolicyRow, ruleCount int64, rules []store
 		policy.CreatedAt = timestamppb.New(*row.CreatedAt)
 	}
 	if rules != nil {
-		policy.Rules = make([]*pmv1.CompliancePolicyRule, len(rules))
+		policy.Rules = make([]*cadestrov1.CompliancePolicyRule, len(rules))
 		for i, rule := range rules {
-			policy.Rules[i] = &pmv1.CompliancePolicyRule{
+			policy.Rules[i] = &cadestrov1.CompliancePolicyRule{
 				ActionId: rule.ActionID, ActionName: rule.ActionName,
 				GracePeriodHours: rule.GracePeriodHours,
 			}
@@ -508,9 +508,9 @@ func boundedCount(n int64) int32 {
 	return int32(n)
 }
 
-func rpcError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
+func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
-	detail, detailErr := connect.NewErrorDetail(&pmv1.ErrorDetail{
+	detail, detailErr := connect.NewErrorDetail(&cadestrov1.ErrorDetail{
 		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
 	})
 	if detailErr == nil {
@@ -519,7 +519,7 @@ func rpcError(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code
 	return err
 }
 
-func notFound(ctx context.Context, code pmv1.ErrorCode, message string) *connect.Error {
+func notFound(ctx context.Context, code cadestrov1.ErrorCode, message string) *connect.Error {
 	return rpcError(ctx, code, connect.CodeNotFound, message)
 }
 

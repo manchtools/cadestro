@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 )
 
@@ -21,7 +21,7 @@ import (
 func TestScheduleRoundTrip_PreservesExplicitFalse(t *testing.T) {
 	// A present schedule whose run_on_assign / skip_if_unchanged are their zero
 	// value EXPLICITLY must serialise with those keys present.
-	s := &pm.ActionSchedule{Cron: "0 0 * * *", RunOnAssign: false, SkipIfUnchanged: false}
+	s := &cadestrov1.ActionSchedule{Cron: "0 0 * * *", RunOnAssign: false, SkipIfUnchanged: false}
 	raw, err := actionparams.ScheduleToRaw(s)
 	require.NoError(t, err)
 	require.NotNil(t, raw)
@@ -71,12 +71,12 @@ func TestScheduleToRaw_NilOrEmptyIsAbsent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, rawNil, "nil schedule must serialise to nil so the event omits the schedule key")
 
-	rawEmpty, err := actionparams.ScheduleToRaw(&pm.ActionSchedule{})
+	rawEmpty, err := actionparams.ScheduleToRaw(&cadestrov1.ActionSchedule{})
 	require.NoError(t, err)
 	assert.Nil(t, rawEmpty, "an all-default schedule is omitted")
 
 	// A schedule with ANY non-default field is NOT empty and serialises.
-	rawOnFlag, err := actionparams.ScheduleToRaw(&pm.ActionSchedule{RunOnAssign: true})
+	rawOnFlag, err := actionparams.ScheduleToRaw(&cadestrov1.ActionSchedule{RunOnAssign: true})
 	require.NoError(t, err)
 	require.NotNil(t, rawOnFlag, "a schedule with run_on_assign set must serialise")
 	got := actionparams.ScheduleFromJSON(rawOnFlag)

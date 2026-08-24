@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -24,7 +24,7 @@ type deliveryFixture struct {
 	raw        *testdb.DB
 	now        time.Time
 	deviceID   string
-	manifest   *pmv1.Manifest
+	manifest   *cadestrov1.Manifest
 	deliveryID string
 	service    *delivery.Service
 	atRest     *pmcrypto.Encryptor
@@ -38,14 +38,14 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	require.NoError(t, err)
 	deviceID := seedDevice(t, raw)
 	actionID, manifestID := newID(), newID()
-	manifest := &pmv1.Manifest{
+	manifest := &cadestrov1.Manifest{
 		ManifestId: manifestID,
-		Provenance: &pmv1.ManifestProvenance{ActionId: actionID},
-		Schedule:   &pmv1.ActionSchedule{RunOnAssign: true},
-		Occurrences: []*pmv1.ManifestOccurrence{{
+		Provenance: &cadestrov1.ManifestProvenance{ActionId: actionID},
+		Schedule:   &cadestrov1.ActionSchedule{RunOnAssign: true},
+		Occurrences: []*cadestrov1.ManifestOccurrence{{
 			OccurrenceId: newID(),
-			Action: &pmv1.Action{
-				Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
+			Action: &cadestrov1.Action{
+				Id: &cadestrov1.ActionId{Value: actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
 			},
 		}},
 	}
@@ -76,7 +76,7 @@ func TestDelivery_InsertCommitsCompleteManifestWithAudit(t *testing.T) {
 	assert.Equal(t, f.manifest.ManifestId, row.ManifestID)
 	require.NotNil(t, row.OperationID)
 
-	var stored pmv1.Manifest
+	var stored cadestrov1.Manifest
 	require.NoError(t, protojson.Unmarshal(row.Manifest, &stored))
 	assert.True(t, proto.Equal(f.manifest, &stored), "the durable row must carry the complete manifest")
 	effects, err := f.store.ListAuditEffects(context.Background(), *row.OperationID)
@@ -88,20 +88,20 @@ func TestDelivery_InsertCommitsCompleteManifestWithAudit(t *testing.T) {
 
 func TestDelivery_InsertRejectsAmbiguousOrDuplicateManifestIdentity(t *testing.T) {
 	f := newDeliveryFixture(t)
-	tests := map[string]func(*pmv1.Manifest){
-		"ambiguous provenance": func(manifest *pmv1.Manifest) {
+	tests := map[string]func(*cadestrov1.Manifest){
+		"ambiguous provenance": func(manifest *cadestrov1.Manifest) {
 			manifest.Provenance.ActionSetId = newID()
 		},
-		"duplicate occurrence": func(manifest *pmv1.Manifest) {
-			manifest.Occurrences = append(manifest.Occurrences, proto.Clone(manifest.Occurrences[0]).(*pmv1.ManifestOccurrence))
+		"duplicate occurrence": func(manifest *cadestrov1.Manifest) {
+			manifest.Occurrences = append(manifest.Occurrences, proto.Clone(manifest.Occurrences[0]).(*cadestrov1.ManifestOccurrence))
 		},
-		"missing nested action id": func(manifest *pmv1.Manifest) {
+		"missing nested action id": func(manifest *cadestrov1.Manifest) {
 			manifest.Occurrences[0].Action.Id.Value = ""
 		},
 	}
 	for name, breakManifest := range tests {
 		t.Run(name, func(t *testing.T) {
-			manifest := proto.Clone(f.manifest).(*pmv1.Manifest)
+			manifest := proto.Clone(f.manifest).(*cadestrov1.Manifest)
 			manifest.ManifestId = newID()
 			breakManifest(manifest)
 			op := mutationOp()

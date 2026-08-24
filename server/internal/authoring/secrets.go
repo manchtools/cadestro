@@ -5,15 +5,15 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 )
 
-func (h *Handlers) requestParams(message proto.Message, actionType pmv1.ActionType, actionID string, current []byte) ([]byte, error) {
+func (h *Handlers) requestParams(message proto.Message, actionType cadestrov1.ActionType, actionID string, current []byte) ([]byte, error) {
 	params := actionparams.ExtractParamsMsg(message)
 	if params == nil {
-		if actionType == pmv1.ActionType_ACTION_TYPE_ENCRYPTION || actionType == pmv1.ActionType_ACTION_TYPE_WIFI {
+		if actionType == cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION || actionType == cadestrov1.ActionType_ACTION_TYPE_WIFI {
 			return nil, ErrInvalidInput
 		}
 		return []byte("{}"), nil
@@ -22,9 +22,9 @@ func (h *Handlers) requestParams(message proto.Message, actionType pmv1.ActionTy
 		return nil, ErrInvalidInput
 	}
 	switch value := params.(type) {
-	case *pmv1.EncryptionAuthoringParams:
+	case *cadestrov1.EncryptionAuthoringParams:
 		return h.prepareEncryptionParams(actionID, value, current)
-	case *pmv1.WifiAuthoringParams:
+	case *cadestrov1.WifiAuthoringParams:
 		return h.prepareWifiParams(actionID, value, current)
 	default:
 		raw, err := actionparams.MarshalActionParams(params)
@@ -35,13 +35,13 @@ func (h *Handlers) requestParams(message proto.Message, actionType pmv1.ActionTy
 	}
 }
 
-func (h *Handlers) prepareEncryptionParams(actionID string, input *pmv1.EncryptionAuthoringParams, current []byte) ([]byte, error) {
-	prepared := proto.Clone(input).(*pmv1.EncryptionAuthoringParams)
+func (h *Handlers) prepareEncryptionParams(actionID string, input *cadestrov1.EncryptionAuthoringParams, current []byte) ([]byte, error) {
+	prepared := proto.Clone(input).(*cadestrov1.EncryptionAuthoringParams)
 	if prepared.PresharedKey == nil {
 		if len(current) == 0 {
 			return nil, ErrInvalidInput
 		}
-		stored := &pmv1.EncryptionAuthoringParams{}
+		stored := &cadestrov1.EncryptionAuthoringParams{}
 		if err := actionparams.UnmarshalActionParams(current, stored); err != nil || stored.PresharedKey == nil ||
 			!pmcrypto.IsEncryptedValue(stored.GetPresharedKey()) {
 			return nil, ErrInvalidInput
@@ -61,9 +61,9 @@ func (h *Handlers) prepareEncryptionParams(actionID string, input *pmv1.Encrypti
 	return actionparams.MarshalActionParams(prepared)
 }
 
-func (h *Handlers) prepareWifiParams(actionID string, input *pmv1.WifiAuthoringParams, current []byte) ([]byte, error) {
-	prepared := proto.Clone(input).(*pmv1.WifiAuthoringParams)
-	stored := &pmv1.WifiAuthoringParams{}
+func (h *Handlers) prepareWifiParams(actionID string, input *cadestrov1.WifiAuthoringParams, current []byte) ([]byte, error) {
+	prepared := proto.Clone(input).(*cadestrov1.WifiAuthoringParams)
+	stored := &cadestrov1.WifiAuthoringParams{}
 	if len(current) > 0 {
 		if err := actionparams.UnmarshalActionParams(current, stored); err != nil {
 			return nil, ErrInvalidInput
@@ -71,18 +71,18 @@ func (h *Handlers) prepareWifiParams(actionID string, input *pmv1.WifiAuthoringP
 	}
 
 	switch prepared.AuthType {
-	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
+	case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
 		prepared.ClientKey = nil
 		secret, err := h.prepareOptionalSecret(actionID, prepared.Psk, stored.Psk,
-			stored.AuthType == pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK, pmcrypto.PurposeActionWifiPSK)
+			stored.AuthType == cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK, pmcrypto.PurposeActionWifiPSK)
 		if err != nil {
 			return nil, err
 		}
 		prepared.Psk = secret
-	case pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
+	case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
 		prepared.Psk = nil
 		secret, err := h.prepareOptionalSecret(actionID, prepared.ClientKey, stored.ClientKey,
-			stored.AuthType == pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS, pmcrypto.PurposeActionWifiClientKey)
+			stored.AuthType == cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS, pmcrypto.PurposeActionWifiClientKey)
 		if err != nil {
 			return nil, err
 		}
@@ -110,14 +110,14 @@ func (h *Handlers) prepareOptionalSecret(actionID string, supplied, stored *stri
 	return stringPointer(ciphertext), nil
 }
 
-func populateManagedParams(action *pmv1.ManagedAction, actionType pmv1.ActionType, raw []byte) error {
+func populateManagedParams(action *cadestrov1.ManagedAction, actionType cadestrov1.ActionType, raw []byte) error {
 	switch actionType {
-	case pmv1.ActionType_ACTION_TYPE_ENCRYPTION:
-		stored := &pmv1.EncryptionAuthoringParams{}
+	case cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION:
+		stored := &cadestrov1.EncryptionAuthoringParams{}
 		if err := actionparams.UnmarshalActionParams(raw, stored); err != nil {
 			return err
 		}
-		action.Params = &pmv1.ManagedAction_Encryption{Encryption: &pmv1.ManagedEncryptionParams{
+		action.Params = &cadestrov1.ManagedAction_Encryption{Encryption: &cadestrov1.ManagedEncryptionParams{
 			PresharedKeyConfigured: stored.PresharedKey != nil && pmcrypto.IsEncryptedValue(stored.GetPresharedKey()),
 			RotationIntervalDays:   stored.RotationIntervalDays, MinWords: stored.MinWords,
 			DeviceBoundKeyType:       stored.DeviceBoundKeyType,
@@ -125,12 +125,12 @@ func populateManagedParams(action *pmv1.ManagedAction, actionType pmv1.ActionTyp
 			UserPassphraseComplexity: stored.UserPassphraseComplexity,
 		}}
 		return nil
-	case pmv1.ActionType_ACTION_TYPE_WIFI:
-		stored := &pmv1.WifiAuthoringParams{}
+	case cadestrov1.ActionType_ACTION_TYPE_WIFI:
+		stored := &cadestrov1.WifiAuthoringParams{}
 		if err := actionparams.UnmarshalActionParams(raw, stored); err != nil {
 			return err
 		}
-		action.Params = &pmv1.ManagedAction_Wifi{Wifi: &pmv1.ManagedWifiParams{
+		action.Params = &cadestrov1.ManagedAction_Wifi{Wifi: &cadestrov1.ManagedWifiParams{
 			Ssid: stored.Ssid, AuthType: stored.AuthType,
 			PskConfigured: stored.Psk != nil && pmcrypto.IsEncryptedValue(stored.GetPsk()),
 			CaCert:        stored.CaCert, ClientCert: stored.ClientCert,

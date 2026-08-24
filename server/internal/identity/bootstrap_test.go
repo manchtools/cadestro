@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/identity"
@@ -39,14 +39,14 @@ func TestBootstrapToken_AdmitsTheReservedPrincipalExactlyOnce(t *testing.T) {
 	assert.NotEqual(t, issued.Token, storedHash)
 
 	// First presentation works.
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Bootstrap Admins", Permissions: []string{"ListUsers"},
 	}, issued.Token))
 	require.NoError(t, err, "the reserved principal may define a role on a fresh deployment")
 
 	// Second presentation of the SAME value is refused: the spend is a
 	// conditional write, not a read-then-write.
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Second Try", Permissions: []string{"ListUsers"},
 	}, issued.Token))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
@@ -65,7 +65,7 @@ func TestBootstrapToken_MayGrantTheFirstAdminRole(t *testing.T) {
 	require.NoError(t, err)
 	subject := f.seedSubject()
 
-	_, err = f.client.AssignRoleToUser(f.ctx(), bootstrapAuthed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), bootstrapAuthed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: auth.AdminRoleID,
 	}, issued.Token))
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestBootstrapToken_AttributesItsWritesToTheReservedPrincipal(t *testing.T) 
 	issued, err := f.boot.Issue(f.ctx())
 	require.NoError(t, err)
 
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Bootstrap Admins", Permissions: []string{"ListUsers"},
 	}, issued.Token))
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestBootstrapToken_ExpiresAndIsThenUnusable(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, live)
 
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Too Late", Permissions: []string{"ListUsers"},
 	}, issued.Token))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -148,12 +148,12 @@ func TestBootstrapToken_IssuingAgainRetiresTheOutstandingToken(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), live)
 
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "From The Old Token", Permissions: []string{"ListUsers"},
 	}, first.Token))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "From The New Token", Permissions: []string{"ListUsers"},
 	}, second.Token))
 	require.NoError(t, err)
@@ -214,7 +214,7 @@ func TestBootstrapPrincipal_HoldsOnlyTheSetupAuthority(t *testing.T) {
 	issued, err := f.boot.Issue(f.ctx())
 	require.NoError(t, err)
 	subject := f.seedSubject()
-	_, err = f.client.SetUserDisabled(f.ctx(), bootstrapAuthed(&pmv1.SetUserDisabledRequest{
+	_, err = f.client.SetUserDisabled(f.ctx(), bootstrapAuthed(&cadestrov1.SetUserDisabledRequest{
 		Id: subject.ID, Disabled: true,
 	}, issued.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err),
@@ -230,7 +230,7 @@ func TestBootstrapToken_IsNotAcceptedAsABearerToken(t *testing.T) {
 	issued, err := f.boot.Issue(f.ctx())
 	require.NoError(t, err)
 
-	_, err = f.client.CreateRole(f.ctx(), authed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), authed(&cadestrov1.CreateRoleRequest{
 		Name: "Wrong Scheme", Permissions: []string{"ListUsers"},
 	}, issued.Token))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
@@ -249,7 +249,7 @@ func TestBootstrapToken_RejectsAnUnknownValue(t *testing.T) {
 	_, err := f.boot.Issue(f.ctx())
 	require.NoError(t, err)
 
-	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&pmv1.CreateRoleRequest{
+	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Guessed", Permissions: []string{"ListUsers"},
 	}, "not-the-token"))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))

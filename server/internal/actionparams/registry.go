@@ -3,7 +3,7 @@ package actionparams
 import (
 	"fmt"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -33,28 +33,28 @@ const paramsOneofName protoreflect.Name = "params"
 // target messages by registryFieldsAreValid (exercised in the charter
 // test), so a proto rename or a typo here is caught structurally rather than
 // silently mis-routing params.
-var paramsFieldByActionType = map[pm.ActionType]protoreflect.Name{
-	pm.ActionType_ACTION_TYPE_PACKAGE:      "package",
-	pm.ActionType_ACTION_TYPE_APP_IMAGE:    "app",
-	pm.ActionType_ACTION_TYPE_DEB:          "app",
-	pm.ActionType_ACTION_TYPE_RPM:          "app",
-	pm.ActionType_ACTION_TYPE_FLATPAK:      "flatpak",
-	pm.ActionType_ACTION_TYPE_SHELL:        "shell",
-	pm.ActionType_ACTION_TYPE_SCRIPT_RUN:   "shell",
-	pm.ActionType_ACTION_TYPE_SERVICE:      "service",
-	pm.ActionType_ACTION_TYPE_FILE:         "file",
-	pm.ActionType_ACTION_TYPE_UPDATE:       "update",
-	pm.ActionType_ACTION_TYPE_REPOSITORY:   "repository",
-	pm.ActionType_ACTION_TYPE_DIRECTORY:    "directory",
-	pm.ActionType_ACTION_TYPE_USER:         "user",
-	pm.ActionType_ACTION_TYPE_GROUP:        "group",
-	pm.ActionType_ACTION_TYPE_SSH:          "ssh",
-	pm.ActionType_ACTION_TYPE_SSHD:         "sshd",
-	pm.ActionType_ACTION_TYPE_ADMIN_POLICY: "admin_policy",
-	pm.ActionType_ACTION_TYPE_LPS:          "lps",
-	pm.ActionType_ACTION_TYPE_ENCRYPTION:   "encryption",
-	pm.ActionType_ACTION_TYPE_WIFI:         "wifi",
-	pm.ActionType_ACTION_TYPE_AGENT_UPDATE: "agent_update",
+var paramsFieldByActionType = map[cadestrov1.ActionType]protoreflect.Name{
+	cadestrov1.ActionType_ACTION_TYPE_PACKAGE:      "package",
+	cadestrov1.ActionType_ACTION_TYPE_APP_IMAGE:    "app",
+	cadestrov1.ActionType_ACTION_TYPE_DEB:          "app",
+	cadestrov1.ActionType_ACTION_TYPE_RPM:          "app",
+	cadestrov1.ActionType_ACTION_TYPE_FLATPAK:      "flatpak",
+	cadestrov1.ActionType_ACTION_TYPE_SHELL:        "shell",
+	cadestrov1.ActionType_ACTION_TYPE_SCRIPT_RUN:   "shell",
+	cadestrov1.ActionType_ACTION_TYPE_SERVICE:      "service",
+	cadestrov1.ActionType_ACTION_TYPE_FILE:         "file",
+	cadestrov1.ActionType_ACTION_TYPE_UPDATE:       "update",
+	cadestrov1.ActionType_ACTION_TYPE_REPOSITORY:   "repository",
+	cadestrov1.ActionType_ACTION_TYPE_DIRECTORY:    "directory",
+	cadestrov1.ActionType_ACTION_TYPE_USER:         "user",
+	cadestrov1.ActionType_ACTION_TYPE_GROUP:        "group",
+	cadestrov1.ActionType_ACTION_TYPE_SSH:          "ssh",
+	cadestrov1.ActionType_ACTION_TYPE_SSHD:         "sshd",
+	cadestrov1.ActionType_ACTION_TYPE_ADMIN_POLICY: "admin_policy",
+	cadestrov1.ActionType_ACTION_TYPE_LPS:          "lps",
+	cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION:   "encryption",
+	cadestrov1.ActionType_ACTION_TYPE_WIFI:         "wifi",
+	cadestrov1.ActionType_ACTION_TYPE_AGENT_UPDATE: "agent_update",
 }
 
 // populateParamsOneof unmarshals paramsJSON into the params-oneof field of msg
@@ -67,7 +67,7 @@ var paramsFieldByActionType = map[pm.ActionType]protoreflect.Name{
 // failure OR an unhandled action type returns an error so callers never
 // dispatch an action with empty/nil params (#368). Param-less instant
 // types and the zero value leave the oneof unset and return nil.
-func populateParamsOneof(msg proto.Message, actionType pm.ActionType, paramsJSON []byte) error {
+func populateParamsOneof(msg proto.Message, actionType cadestrov1.ActionType, paramsJSON []byte) error {
 	if isNoParamsActionType(actionType) {
 		return nil
 	}
@@ -92,7 +92,7 @@ func populateParamsOneof(msg proto.Message, actionType pm.ActionType, paramsJSON
 }
 
 // ExtractParamsMsg returns the concrete params sub-message populated in the
-// `params` oneof of msg (e.g. *pm.ShellParams), or nil if the oneof is unset or
+// `params` oneof of msg (e.g. *cadestrov1.ShellParams), or nil if the oneof is unset or
 // msg carries no such oneof. Replaces the per-message extract* switch tables
 // (Action / CreateActionRequest / UpdateActionParamsRequest) with one reflective
 // WhichOneof walk — the inverse of populateParamsOneof.
@@ -124,13 +124,13 @@ func ExtractParamsMsg(msg proto.Message) proto.Message {
 //   - ACTION_TYPE_UPDATE additionally matches when the oneof is unset (an update
 //     with no params kicks off whatever the agent considers an update);
 //   - param-less / unknown types never match here (they don't carry a params oneof).
-func ParamsMatchType(msg proto.Message, actionType pm.ActionType) bool {
+func ParamsMatchType(msg proto.Message, actionType cadestrov1.ActionType) bool {
 	want, ok := paramsFieldByActionType[actionType]
 	if !ok {
 		return false
 	}
 	if msg == nil {
-		return actionType == pm.ActionType_ACTION_TYPE_UPDATE
+		return actionType == cadestrov1.ActionType_ACTION_TYPE_UPDATE
 	}
 	m := msg.ProtoReflect()
 	od := m.Descriptor().Oneofs().ByName(paramsOneofName)
@@ -138,7 +138,7 @@ func ParamsMatchType(msg proto.Message, actionType pm.ActionType) bool {
 		return false
 	}
 	set := m.WhichOneof(od)
-	if actionType == pm.ActionType_ACTION_TYPE_UPDATE && set == nil {
+	if actionType == cadestrov1.ActionType_ACTION_TYPE_UPDATE && set == nil {
 		return true
 	}
 	return set != nil && set.Name() == want

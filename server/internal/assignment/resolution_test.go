@@ -6,23 +6,23 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 func TestResolveSourcesAppliesModePrecedence(t *testing.T) {
-	path := func(sourceID string, mode pmv1.AssignmentMode, selected bool) store.ResolvedAssignmentSource {
+	path := func(sourceID string, mode cadestrov1.AssignmentMode, selected bool) store.ResolvedAssignmentSource {
 		return store.ResolvedAssignmentSource{
 			SourceType: "action", SourceID: sourceID, Mode: int64(mode), Selected: selected,
 		}
 	}
 	paths := []store.ResolvedAssignmentSource{
-		path("excluded", pmv1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED, false),
-		path("excluded", pmv1.AssignmentMode_ASSIGNMENT_MODE_EXCLUDED, false),
-		path("uninstall", pmv1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED, false),
-		path("uninstall", pmv1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL, false),
-		path("unselected", pmv1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE, false),
-		path("selected", pmv1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE, true),
+		path("excluded", cadestrov1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED, false),
+		path("excluded", cadestrov1.AssignmentMode_ASSIGNMENT_MODE_EXCLUDED, false),
+		path("uninstall", cadestrov1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED, false),
+		path("uninstall", cadestrov1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL, false),
+		path("unselected", cadestrov1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE, false),
+		path("selected", cadestrov1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE, true),
 	}
 
 	resolved, err := ResolveSources(paths)

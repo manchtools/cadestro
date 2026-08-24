@@ -9,7 +9,7 @@ import (
 	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -25,8 +25,8 @@ type CreateActionSetParams struct {
 	Name        string
 	Description string
 	CreatedBy   string
-	Schedule    *pmv1.ActionSchedule
-	OnFailure   pmv1.OnFailure
+	Schedule    *cadestrov1.ActionSchedule
+	OnFailure   cadestrov1.OnFailure
 }
 
 // CreateActionSet inserts one set with an independent schedule and failure
@@ -102,7 +102,7 @@ func (s *Service) UpdateActionSetDescription(ctx context.Context, op store.Audit
 }
 
 // UpdateActionSetPolicy replaces the schedule and failure policy together.
-func (s *Service) UpdateActionSetPolicy(ctx context.Context, op store.AuditOperation, id string, schedule *pmv1.ActionSchedule, policy pmv1.OnFailure) (store.ActionSetRow, error) {
+func (s *Service) UpdateActionSetPolicy(ctx context.Context, op store.AuditOperation, id string, schedule *cadestrov1.ActionSchedule, policy cadestrov1.OnFailure) (store.ActionSetRow, error) {
 	if ctx == nil || !validID(id) || !validFailurePolicy(policy) {
 		return store.ActionSetRow{}, ErrInvalidInput
 	}
@@ -236,7 +236,7 @@ func (s *Service) DeleteActionSet(ctx context.Context, op store.AuditOperation, 
 	return translateNotFound(err)
 }
 
-func actionSetSchedule(schedule *pmv1.ActionSchedule) ([]byte, error) {
+func actionSetSchedule(schedule *cadestrov1.ActionSchedule) ([]byte, error) {
 	if schedule == nil {
 		return nil, ErrInvalidInput
 	}
@@ -248,13 +248,13 @@ func actionSetSchedule(schedule *pmv1.ActionSchedule) ([]byte, error) {
 		return nil, err
 	}
 	if raw == nil {
-		return actionparams.ScheduleToRaw(&pmv1.ActionSchedule{IntervalHours: 8})
+		return actionparams.ScheduleToRaw(&cadestrov1.ActionSchedule{IntervalHours: 8})
 	}
 	return raw, nil
 }
 
-func validFailurePolicy(policy pmv1.OnFailure) bool {
-	return policy == pmv1.OnFailure_ON_FAILURE_CONTINUE || policy == pmv1.OnFailure_ON_FAILURE_STOP
+func validFailurePolicy(policy cadestrov1.OnFailure) bool {
+	return policy == cadestrov1.OnFailure_ON_FAILURE_CONTINUE || policy == cadestrov1.OnFailure_ON_FAILURE_STOP
 }
 
 func actionSetEffect(id, action string, fields ...string) store.AuditEffect {

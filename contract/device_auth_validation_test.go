@@ -6,7 +6,7 @@ import (
 
 	"buf.build/go/protovalidate"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func TestEnrollRequest_RequiresValidCAPin(t *testing.T) {
@@ -32,7 +32,7 @@ func TestEnrollRequest_RequiresValidCAPin(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ok := v.Validate(&pm.EnrollRequest{
+			ok := v.Validate(&cadestrov1.EnrollRequest{
 				ServerUrl: "https://control.example.test", Token: "token", CaFingerprintPin: tc.pin,
 			}) == nil
 			if ok != tc.wantOK {
@@ -48,7 +48,7 @@ func TestCreateTokenResponse_RequiresCAPin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response := &pm.CreateTokenResponse{Token: &pm.RegistrationToken{}}
+	response := &cadestrov1.CreateTokenResponse{Token: &cadestrov1.RegistrationToken{}}
 	if v.Validate(response) == nil {
 		t.Fatal("token creation without the enrollment CA pin passed validation")
 	}

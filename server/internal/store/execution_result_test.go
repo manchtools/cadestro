@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/execution"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -45,11 +45,11 @@ func newExecutionResultFixture(t *testing.T, deliveryState, executionState strin
 		INSERT INTO devices (id, hostname, agent_version, registered_at)
 		VALUES ($1, 'device', 'v1', $2)`, f.deviceID, now)
 	require.NoError(t, err)
-	manifest, err := protojson.Marshal(&pmv1.Manifest{
+	manifest, err := protojson.Marshal(&cadestrov1.Manifest{
 		ManifestId: f.manifestID,
-		Occurrences: []*pmv1.ManifestOccurrence{{
+		Occurrences: []*cadestrov1.ManifestOccurrence{{
 			OccurrenceId: f.execution,
-			Action:       &pmv1.Action{Id: &pmv1.ActionId{Value: f.actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE},
+			Action:       &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: f.actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE},
 		}},
 	})
 	require.NoError(t, err)
@@ -70,10 +70,10 @@ func newExecutionResultFixture(t *testing.T, deliveryState, executionState strin
 	return f
 }
 
-func (f *executionResultFixture) result(status pmv1.ExecutionStatus) *pmv1.ActionResult {
+func (f *executionResultFixture) result(status cadestrov1.ExecutionStatus) *cadestrov1.ActionResult {
 	f.t.Helper()
-	return &pmv1.ActionResult{
-		ActionId: &pmv1.ActionId{Value: f.actionID}, Status: status,
+	return &cadestrov1.ActionResult{
+		ActionId: &cadestrov1.ActionId{Value: f.actionID}, Status: status,
 		DeliveryId: f.deliveryID, OccurrenceId: f.execution,
 	}
 }
@@ -81,13 +81,13 @@ func (f *executionResultFixture) result(status pmv1.ExecutionStatus) *pmv1.Actio
 func TestExecutionResult_CommitsTerminalStateAndAbsorbsReplay(t *testing.T) {
 	f := newExecutionResultFixture(t, "PENDING", "pending")
 	completed := f.now.Add(-time.Minute)
-	result := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
+	result := f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	result.CompletedAt = timestamppb.New(completed)
 	result.DurationMs = 1234
 	result.Changed = true
 	result.Compliant = true
-	result.Output = &pmv1.CommandOutput{ExitCode: 0, Stdout: "done"}
-	result.DetectionOutput = &pmv1.CommandOutput{ExitCode: 0, Stdout: "compliant"}
+	result.Output = &cadestrov1.CommandOutput{ExitCode: 0, Stdout: "done"}
+	result.DetectionOutput = &cadestrov1.CommandOutput{ExitCode: 0, Stdout: "compliant"}
 
 	require.NoError(t, f.service.ApplyActionResult(context.Background(), f.deviceID, result))
 	row, err := f.store.GetExecution(context.Background(), f.execution)
@@ -111,7 +111,7 @@ func TestExecutionResult_CommitsTerminalStateAndAbsorbsReplay(t *testing.T) {
 		`SELECT COUNT(*) FROM audit_operations WHERE request_descriptor = 'execution.result'`).Scan(&after))
 	assert.Equal(t, before, after, "an identical replay is not another mutation")
 
-	conflict := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_FAILED)
+	conflict := f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED)
 	conflict.Error = "different outcome"
 	err = f.service.ApplyActionResult(context.Background(), f.deviceID, conflict)
 	assert.ErrorIs(t, err, execution.ErrConflictingReplay)
@@ -120,12 +120,12 @@ func TestExecutionResult_CommitsTerminalStateAndAbsorbsReplay(t *testing.T) {
 func TestExecutionResult_RunningThenIndeterminate(t *testing.T) {
 	f := newExecutionResultFixture(t, "PENDING", "pending")
 	require.NoError(t, f.service.ApplyActionResult(context.Background(), f.deviceID,
-		f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_RUNNING)))
+		f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_RUNNING)))
 	row, err := f.store.GetExecution(context.Background(), f.execution)
 	require.NoError(t, err)
 	assert.Equal(t, "running", row.Status)
 
-	indeterminate := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE)
+	indeterminate := f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE)
 	indeterminate.Error = "agent restarted after STARTED"
 	require.NoError(t, f.service.ApplyActionResult(context.Background(), f.deviceID, indeterminate))
 	row, err = f.store.GetExecution(context.Background(), f.execution)
@@ -135,35 +135,35 @@ func TestExecutionResult_RunningThenIndeterminate(t *testing.T) {
 
 func TestExecutionResult_EnforcesIdentityBindings(t *testing.T) {
 	f := newExecutionResultFixture(t, "PENDING", "pending")
-	result := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
+	result := f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	assert.NoError(t, f.service.ApplyActionResult(context.Background(), f.deviceID, result))
 
 	wrongDevice := newID()
 	assert.ErrorIs(t, f.service.ApplyActionResult(context.Background(), wrongDevice, result), execution.ErrWrongDevice)
 
 	f2 := newExecutionResultFixture(t, "PENDING", "pending")
-	wrongAction := f2.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
+	wrongAction := f2.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	wrongAction.ActionId.Value = newID()
 	assert.ErrorIs(t, f2.service.ApplyActionResult(context.Background(), f2.deviceID, wrongAction), execution.ErrWrongAction)
 
-	wrongDelivery := f2.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
+	wrongDelivery := f2.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	wrongDelivery.DeliveryId = newID()
 	assert.ErrorIs(t, f2.service.ApplyActionResult(context.Background(), f2.deviceID, wrongDelivery), execution.ErrWrongDelivery)
 
-	invalid := f2.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
+	invalid := f2.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS)
 	invalid.Metadata = map[string]string{"lps.rotations": "must never ride result metadata"}
 	assert.ErrorIs(t, f2.service.ApplyActionResult(context.Background(), f2.deviceID, invalid), execution.ErrInvalidInput)
 }
 
 func TestExecutionOutputChunk_IsBoundedOwnedAndIdempotent(t *testing.T) {
 	f := newExecutionResultFixture(t, "PENDING", "running")
-	chunk := &pmv1.OutputChunk{
-		ExecutionId: f.execution, Stream: pmv1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT,
+	chunk := &cadestrov1.OutputChunk{
+		ExecutionId: f.execution, Stream: cadestrov1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT,
 		Data: []byte("hello"), Sequence: 4,
 	}
 	require.NoError(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, chunk))
 	require.NoError(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, chunk))
-	conflict := proto.Clone(chunk).(*pmv1.OutputChunk)
+	conflict := proto.Clone(chunk).(*cadestrov1.OutputChunk)
 	conflict.Data = []byte("different")
 	assert.ErrorIs(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, conflict), execution.ErrConflictingReplay)
 	var count int
@@ -173,7 +173,7 @@ func TestExecutionOutputChunk_IsBoundedOwnedAndIdempotent(t *testing.T) {
 
 	err := f.service.AppendOutputChunk(context.Background(), newID(), chunk)
 	assert.ErrorIs(t, err, execution.ErrWrongDevice)
-	oversized := proto.Clone(chunk).(*pmv1.OutputChunk)
+	oversized := proto.Clone(chunk).(*cadestrov1.OutputChunk)
 	oversized.Data = bytes.Repeat([]byte{'x'}, 64*1024+1)
 	assert.ErrorIs(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, oversized), execution.ErrInvalidInput)
 }
@@ -186,20 +186,20 @@ func TestExecutionOutputChunk_IsBoundedOwnedAndIdempotent(t *testing.T) {
 // error handling keeps the agent connected through the rejection.
 func TestExecutionOutputChunk_PerExecutionBudget(t *testing.T) {
 	f := newExecutionResultFixture(t, "PENDING", "running")
-	inBudget := &pmv1.OutputChunk{
-		ExecutionId: f.execution, Stream: pmv1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT,
+	inBudget := &cadestrov1.OutputChunk{
+		ExecutionId: f.execution, Stream: cadestrov1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT,
 		Data: []byte("tail"), Sequence: execution.MaxOutputChunks - 1,
 	}
 	require.NoError(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, inBudget),
 		"the last in-budget sequence must stay accepted")
 
-	over := proto.Clone(inBudget).(*pmv1.OutputChunk)
+	over := proto.Clone(inBudget).(*cadestrov1.OutputChunk)
 	over.Data = []byte("over")
 	over.Sequence = execution.MaxOutputChunks
 	assert.ErrorIs(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, over),
 		execution.ErrInvalidInput, "the first over-budget sequence must be rejected")
 
-	far := proto.Clone(inBudget).(*pmv1.OutputChunk)
+	far := proto.Clone(inBudget).(*cadestrov1.OutputChunk)
 	far.Data = []byte("far")
 	far.Sequence = execution.MaxOutputChunks * 100
 	assert.ErrorIs(t, f.service.AppendOutputChunk(context.Background(), f.deviceID, far),
@@ -214,10 +214,10 @@ func TestExecutionOutputChunk_PerExecutionBudget(t *testing.T) {
 func TestExecutionResult_RejectsMalformedAndCancelledTransitions(t *testing.T) {
 	f := newExecutionResultFixture(t, "PENDING", "cancelled")
 	err := f.service.ApplyActionResult(context.Background(), f.deviceID,
-		f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS))
+		f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS))
 	assert.True(t, errors.Is(err, execution.ErrInvalidTransition) || errors.Is(err, execution.ErrConflictingReplay))
 
-	malformed := f.result(pmv1.ExecutionStatus_EXECUTION_STATUS_RUNNING)
+	malformed := f.result(cadestrov1.ExecutionStatus_EXECUTION_STATUS_RUNNING)
 	malformed.Error = "running is not terminal"
 	assert.ErrorIs(t, f.service.ApplyActionResult(context.Background(), f.deviceID, malformed), execution.ErrInvalidInput)
 }

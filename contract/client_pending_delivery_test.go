@@ -7,21 +7,21 @@ import (
 	"testing"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // noopStreamHandler satisfies StreamHandler; these cases never reach a handler
 // callback, they only exercise the pending-delivery routing.
 type noopStreamHandler struct{}
 
-func (noopStreamHandler) OnWelcome(context.Context, *pm.Welcome) error { return nil }
-func (noopStreamHandler) OnManifestDelivery(context.Context, *pm.ManifestDelivery) error {
+func (noopStreamHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
+func (noopStreamHandler) OnManifestDelivery(context.Context, *cadestrov1.ManifestDelivery) error {
 	return nil
 }
-func (noopStreamHandler) OnQuery(context.Context, *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (noopStreamHandler) OnQuery(context.Context, *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (noopStreamHandler) OnError(context.Context, *pm.Error) error { return nil }
+func (noopStreamHandler) OnError(context.Context, *cadestrov1.Error) error { return nil }
 
 func quietLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
@@ -52,45 +52,45 @@ func testSecretBytes() []byte {
 func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 	cases := []struct {
 		name    string
-		payload func() *pm.ServerMessage
+		payload func() *cadestrov1.ServerMessage
 	}{
 		{
 			name: "StoreLuksKey",
-			payload: func() *pm.ServerMessage {
-				return &pm.ServerMessage{Payload: &pm.ServerMessage_StoreLuksKey{
-					StoreLuksKey: &pm.StoreLuksKeyResponse{Success: true},
+			payload: func() *cadestrov1.ServerMessage {
+				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_StoreLuksKey{
+					StoreLuksKey: &cadestrov1.StoreLuksKeyResponse{Success: true},
 				}}
 			},
 		},
 		{
 			name: "GetLuksKey",
-			payload: func() *pm.ServerMessage {
-				return &pm.ServerMessage{Payload: &pm.ServerMessage_GetLuksKey{
-					GetLuksKey: &pm.GetLuksKeyResponse{Passphrase: testSecretBytes()},
+			payload: func() *cadestrov1.ServerMessage {
+				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_GetLuksKey{
+					GetLuksKey: &cadestrov1.GetLuksKeyResponse{Passphrase: testSecretBytes()},
 				}}
 			},
 		},
 		{
 			name: "StoreLpsPasswords",
-			payload: func() *pm.ServerMessage {
-				return &pm.ServerMessage{Payload: &pm.ServerMessage_StoreLpsPasswords{
-					StoreLpsPasswords: &pm.StoreLpsPasswordsResponse{Success: true},
+			payload: func() *cadestrov1.ServerMessage {
+				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_StoreLpsPasswords{
+					StoreLpsPasswords: &cadestrov1.StoreLpsPasswordsResponse{Success: true},
 				}}
 			},
 		},
 		{
 			name: "ValidateLuksToken",
-			payload: func() *pm.ServerMessage {
-				return &pm.ServerMessage{Payload: &pm.ServerMessage_ValidateLuksToken{
-					ValidateLuksToken: &pm.ValidateLuksTokenResponse{ActionId: NewULID()},
+			payload: func() *cadestrov1.ServerMessage {
+				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_ValidateLuksToken{
+					ValidateLuksToken: &cadestrov1.ValidateLuksTokenResponse{ActionId: NewULID()},
 				}}
 			},
 		},
 		{
 			name: "SyncState",
-			payload: func() *pm.ServerMessage {
-				return &pm.ServerMessage{Payload: &pm.ServerMessage_SyncState{
-					SyncState: &pm.SyncState{},
+			payload: func() *cadestrov1.ServerMessage {
+				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_SyncState{
+					SyncState: &cadestrov1.SyncState{},
 				}}
 			},
 		},
@@ -177,10 +177,10 @@ func TestDispatchServerMessage_DeliversCorrelatedErrorToTheWaiter(t *testing.T) 
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 
-	msg := &pm.ServerMessage{
+	msg := &cadestrov1.ServerMessage{
 		Id: id,
-		Payload: &pm.ServerMessage_Error{
-			Error: &pm.Error{Code: "internal", Message: "failed to store LPS passwords"},
+		Payload: &cadestrov1.ServerMessage_Error{
+			Error: &cadestrov1.Error{Code: "internal", Message: "failed to store LPS passwords"},
 		},
 	}
 
@@ -209,10 +209,10 @@ func TestDispatchServerMessage_UncorrelatedErrorStillReachesTheHandler(t *testin
 	c := &Client{logger: quietLogger()}
 	handler := &recordingErrHandler{}
 
-	msg := &pm.ServerMessage{
+	msg := &cadestrov1.ServerMessage{
 		Id: NewULID(), // nothing is waiting on this
-		Payload: &pm.ServerMessage_Error{
-			Error: &pm.Error{Code: "internal", Message: "server-originated"},
+		Payload: &cadestrov1.ServerMessage_Error{
+			Error: &cadestrov1.Error{Code: "internal", Message: "server-originated"},
 		},
 	}
 	if err := c.dispatchServerMessage(context.Background(), msg, handler); err != nil {
@@ -228,7 +228,7 @@ type recordingErrHandler struct {
 	calls int
 }
 
-func (h *recordingErrHandler) OnError(context.Context, *pm.Error) error {
+func (h *recordingErrHandler) OnError(context.Context, *cadestrov1.Error) error {
 	h.calls++
 	return nil
 }

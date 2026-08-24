@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
@@ -28,10 +28,10 @@ var testCAPin = strings.Repeat("0", 64)
 type mockRegisterService struct {
 	cadestrov1connect.UnimplementedControlServiceHandler
 
-	registerFunc func(context.Context, *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error)
+	registerFunc func(context.Context, *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error)
 }
 
-func (m *mockRegisterService) Register(ctx context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+func (m *mockRegisterService) Register(ctx context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 	if m.registerFunc != nil {
 		return m.registerFunc(ctx, req)
 	}
@@ -60,9 +60,9 @@ func trustServer(srv *httptest.Server) []sdk.ClientOption {
 func TestEnroll_Success(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, req *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:    &pm.DeviceId{Value: "dev-123"},
+		registerFunc: func(_ context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+			return connect.NewResponse(&cadestrov1.RegisterResponse{
+				DeviceId:    &cadestrov1.DeviceId{Value: "dev-123"},
 				CaCert:      caPEM,
 				Certificate: []byte("-----BEGIN CERTIFICATE-----\nfake-cert\n-----END CERTIFICATE-----\n"),
 				ControlUrl:  "https://gw.example.com:8443",
@@ -80,7 +80,7 @@ func TestEnroll_Success(t *testing.T) {
 	})
 	handler.registerOpts = trustServer(srv)
 
-	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: srv.URL, Token: "test-token", CaFingerprintPin: caPin(t, caPEM),
 	}))
 	require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestEnroll_MissingFields(t *testing.T) {
 	logger := slog.Default()
 	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
 
-	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: "",
 		Token:     "",
 	}))
@@ -129,7 +129,7 @@ func TestEnroll_AlreadyEnrolled(t *testing.T) {
 	logger := slog.Default()
 	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
 
-	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        "https://example.com",
 		Token:            "token",
 		CaFingerprintPin: testCAPin,
@@ -142,7 +142,7 @@ func TestEnroll_AlreadyEnrolled(t *testing.T) {
 
 func TestEnroll_RegistrationFails(t *testing.T) {
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			return nil, connect.NewError(connect.CodePermissionDenied, nil)
 		},
 	}
@@ -153,7 +153,7 @@ func TestEnroll_RegistrationFails(t *testing.T) {
 	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
 	handler.registerOpts = trustServer(srv)
 
-	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := handler.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: srv.URL, Token: "bad-token", CaFingerprintPin: testCAPin,
 	}))
 	require.NoError(t, err)
@@ -166,7 +166,7 @@ func TestGetEnrollmentStatus_NotEnrolled(t *testing.T) {
 	logger := slog.Default()
 	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
 
-	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Enrolled)
 	assert.Empty(t, resp.Msg.DeviceId)
@@ -185,7 +185,7 @@ func TestGetEnrollmentStatus_Enrolled(t *testing.T) {
 	logger := slog.Default()
 	handler := NewEnrollHandler("test-host", "dev", credStore, logger, nil)
 
-	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Enrolled)
 	assert.Equal(t, "dev-abc", resp.Msg.DeviceId)
@@ -194,9 +194,9 @@ func TestGetEnrollmentStatus_Enrolled(t *testing.T) {
 func TestEnrollServer_EndToEnd(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:    &pm.DeviceId{Value: "dev-e2e"},
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+			return connect.NewResponse(&cadestrov1.RegisterResponse{
+				DeviceId:    &cadestrov1.DeviceId{Value: "dev-e2e"},
 				CaCert:      caPEM,
 				Certificate: []byte("-----BEGIN CERTIFICATE-----\ncert\n-----END CERTIFICATE-----\n"),
 				ControlUrl:  "https://gw.example.com",
@@ -243,12 +243,12 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	client := cadestrov1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
 
 	// Check status: not enrolled
-	status, err := client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	status, err := client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, status.Msg.Enrolled)
 
 	// Enroll
-	resp, err := client.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := client.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: controlSrv.URL, Token: "test-token", CaFingerprintPin: caPin(t, caPEM),
 	}))
 	require.NoError(t, err)
@@ -264,7 +264,7 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	}
 
 	// Check status again: enrolled
-	status, err = client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	status, err = client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, status.Msg.Enrolled)
 	assert.Equal(t, "dev-e2e", status.Msg.DeviceId)

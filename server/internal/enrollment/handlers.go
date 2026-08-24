@@ -13,7 +13,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
@@ -88,7 +88,7 @@ func (h *Handlers) recordRejected(ctx context.Context, req connect.AnyRequest, p
 // Register binds one reusable token to one canonical Ed25519 device identity.
 // The device relation is the token's durable use record; no mutable token
 // counter or human ownership is involved.
-func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.RegisterRequest]) (*connect.Response[pmv1.RegisterResponse], error) {
+func (h *Handlers) Register(ctx context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 	identityKey, err := ca.EnrollmentIdentityFromCSR(req.Msg.Csr)
 	if err != nil {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid certificate signing request")
@@ -190,8 +190,8 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 	if cert == nil || len(cert.CertPEM) == 0 {
 		return nil, h.internal(ctx, "commit enrollment", errors.New("certificate missing after enrollment"))
 	}
-	return connect.NewResponse(&pmv1.RegisterResponse{
-		DeviceId: &pmv1.DeviceId{Value: device.ID}, CaCert: h.ca.CACertPEM(),
+	return connect.NewResponse(&cadestrov1.RegisterResponse{
+		DeviceId: &cadestrov1.DeviceId{Value: device.ID}, CaCert: h.ca.CACertPEM(),
 		Certificate: cert.CertPEM, ControlUrl: h.controlURL,
 	}), nil
 }
@@ -199,7 +199,7 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[pmv1.Regis
 // RenewCertificate issues at most one pending successor for the authenticated
 // TLS peer. The existing certificate remains active until a fresh Hello over a
 // connection presenting the successor promotes it.
-func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pmv1.RenewCertificateRequest]) (*connect.Response[pmv1.RenewCertificateResponse], error) {
+func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
 	peer, ok := mtls.PeerCertificateFromContext(ctx)
 	if !ok {
 		return nil, h.rejectCertificate(ctx, req, "MISSING_TLS_PEER")
@@ -284,12 +284,12 @@ func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[pm
 	if newCert == nil || len(newCert.CertPEM) == 0 {
 		return nil, h.internal(ctx, "commit certificate renewal", errors.New("pending certificate missing"))
 	}
-	return connect.NewResponse(&pmv1.RenewCertificateResponse{
+	return connect.NewResponse(&cadestrov1.RenewCertificateResponse{
 		Certificate: newCert.CertPEM, NotAfter: timestamppb.New(newCert.NotAfter),
 	}), nil
 }
 
-func (h *Handlers) rejectCertificate(ctx context.Context, req *connect.Request[pmv1.RenewCertificateRequest], reason string) error {
+func (h *Handlers) rejectCertificate(ctx context.Context, req *connect.Request[cadestrov1.RenewCertificateRequest], reason string) error {
 	fingerprint := ""
 	if peer, ok := mtls.PeerCertificateFromContext(ctx); ok {
 		fingerprint = ca.FingerprintFromCert(peer)

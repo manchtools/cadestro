@@ -27,7 +27,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/crypto"
@@ -261,7 +261,7 @@ func (f *fixture) grantRoleToUserGroup(groupID, roleID string) {
 
 func (f *fixture) enableSCIM(providerID string) string {
 	f.t.Helper()
-	resp, err := f.control.EnableSCIM(f.ctx(), authed(&pmv1.EnableSCIMRequest{Id: providerID}, f.adminToken))
+	resp, err := f.control.EnableSCIM(f.ctx(), authed(&cadestrov1.EnableSCIMRequest{Id: providerID}, f.adminToken))
 	require.NoError(f.t, err)
 	require.NotEmpty(f.t, resp.Msg.Token)
 	return resp.Msg.Token
@@ -269,7 +269,7 @@ func (f *fixture) enableSCIM(providerID string) string {
 
 func (f *fixture) rotateSCIM(providerID string) string {
 	f.t.Helper()
-	resp, err := f.control.RotateSCIMToken(f.ctx(), authed(&pmv1.RotateSCIMTokenRequest{Id: providerID}, f.adminToken))
+	resp, err := f.control.RotateSCIMToken(f.ctx(), authed(&cadestrov1.RotateSCIMTokenRequest{Id: providerID}, f.adminToken))
 	require.NoError(f.t, err)
 	require.NotEmpty(f.t, resp.Msg.Token)
 	return resp.Msg.Token
@@ -277,7 +277,7 @@ func (f *fixture) rotateSCIM(providerID string) string {
 
 func (f *fixture) disableSCIM(providerID string) {
 	f.t.Helper()
-	_, err := f.control.DisableSCIM(f.ctx(), authed(&pmv1.DisableSCIMRequest{Id: providerID}, f.adminToken))
+	_, err := f.control.DisableSCIM(f.ctx(), authed(&cadestrov1.DisableSCIMRequest{Id: providerID}, f.adminToken))
 	require.NoError(f.t, err)
 }
 

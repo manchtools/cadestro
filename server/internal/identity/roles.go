@@ -8,7 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -18,14 +18,14 @@ var errConferredAuthority = errors.New("conferred authority exceeds actor author
 
 // ListPermissions returns the permission registry, so a role builder
 // can show what a role may contain and which scopes each key accepts.
-func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[pmv1.ListPermissionsRequest]) (*connect.Response[pmv1.ListPermissionsResponse], error) {
+func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[cadestrov1.ListPermissionsRequest]) (*connect.Response[cadestrov1.ListPermissionsResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
 	if err := h.authorize(ctx, PermListPermissions, ""); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.ListPermissionsResponse{Permissions: permissionsToProto()}), nil
+	return connect.NewResponse(&cadestrov1.ListPermissionsResponse{Permissions: permissionsToProto()}), nil
 }
 
 // CreateRole defines a new role.
@@ -34,7 +34,7 @@ func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[pmv
 // would sit in the array doing nothing — invisible dead weight in the
 // role builder, and a silent authorization gap if it was a typo for a
 // real one.
-func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[pmv1.CreateRoleRequest]) (*connect.Response[pmv1.CreateRoleResponse], error) {
+func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[cadestrov1.CreateRoleRequest]) (*connect.Response[cadestrov1.CreateRoleResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -81,11 +81,11 @@ func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[pmv1.Cre
 		}
 		return nil, internalError(ctx, "failed to create role")
 	}
-	return connect.NewResponse(&pmv1.CreateRoleResponse{Role: roleToProto(created)}), nil
+	return connect.NewResponse(&cadestrov1.CreateRoleResponse{Role: roleToProto(created)}), nil
 }
 
 // GetRole returns one role and how many subjects hold it.
-func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[pmv1.GetRoleRequest]) (*connect.Response[pmv1.GetRoleResponse], error) {
+func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[cadestrov1.GetRoleRequest]) (*connect.Response[cadestrov1.GetRoleResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -103,14 +103,14 @@ func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[pmv1.GetRol
 	if err != nil {
 		return nil, internalError(ctx, "failed to count role holders")
 	}
-	return connect.NewResponse(&pmv1.GetRoleResponse{
+	return connect.NewResponse(&cadestrov1.GetRoleResponse{
 		Role:      roleToProto(role),
 		UserCount: int32(holders),
 	}), nil
 }
 
 // ListRoles pages the role catalogue.
-func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[pmv1.ListRolesRequest]) (*connect.Response[pmv1.ListRolesResponse], error) {
+func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[cadestrov1.ListRolesRequest]) (*connect.Response[cadestrov1.ListRolesResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[pmv1.List
 	if err != nil {
 		return nil, internalError(ctx, "failed to count roles")
 	}
-	resp := &pmv1.ListRolesResponse{TotalCount: int32(total)}
+	resp := &cadestrov1.ListRolesResponse{TotalCount: int32(total)}
 	for _, r := range rows {
 		resp.Roles = append(resp.Roles, roleToProto(r))
 	}
@@ -141,7 +141,7 @@ func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[pmv1.List
 // System roles are refused: the reconciler rewrites their permissions
 // from the code registry on every boot, so an edit here would be
 // silently undone rather than rejected.
-func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.UpdateRoleRequest]) (*connect.Response[pmv1.UpdateRoleResponse], error) {
+func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[cadestrov1.UpdateRoleRequest]) (*connect.Response[cadestrov1.UpdateRoleResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.Upd
 		}
 		return nil, internalError(ctx, "failed to update role")
 	}
-	return connect.NewResponse(&pmv1.UpdateRoleResponse{Role: roleToProto(updated)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateRoleResponse{Role: roleToProto(updated)}), nil
 }
 
 // DeleteRole retires a role.
@@ -221,7 +221,7 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[pmv1.Upd
 // A role that anyone still holds is refused rather than deleted out
 // from under them: silently dropping a grant is an authorization change
 // disguised as a catalogue edit.
-func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[pmv1.DeleteRoleRequest]) (*connect.Response[pmv1.DeleteRoleResponse], error) {
+func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[cadestrov1.DeleteRoleRequest]) (*connect.Response[cadestrov1.DeleteRoleResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -274,11 +274,11 @@ func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[pmv1.Del
 		}
 		return nil, internalError(ctx, "failed to delete role")
 	}
-	return connect.NewResponse(&pmv1.DeleteRoleResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteRoleResponse{}), nil
 }
 
 // AssignRoleToUser grants a role to a subject, optionally at a scope.
-func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pmv1.AssignRoleToUserRequest]) (*connect.Response[pmv1.AssignRoleToUserResponse], error) {
+func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[cadestrov1.AssignRoleToUserRequest]) (*connect.Response[cadestrov1.AssignRoleToUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -348,7 +348,7 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pm
 		}
 		return nil, internalError(ctx, "failed to assign role")
 	}
-	return connect.NewResponse(&pmv1.AssignRoleToUserResponse{}), nil
+	return connect.NewResponse(&cadestrov1.AssignRoleToUserResponse{}), nil
 }
 
 // RevokeRoleFromUser removes ONE named grant.
@@ -357,7 +357,7 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[pm
 // conditional on that description matching. Asking to revoke the
 // unscoped grant when only scoped ones exist reports not-found rather
 // than silently taking a scoped grant or silently doing nothing.
-func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[pmv1.RevokeRoleFromUserRequest]) (*connect.Response[pmv1.RevokeRoleFromUserResponse], error) {
+func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[cadestrov1.RevokeRoleFromUserRequest]) (*connect.Response[cadestrov1.RevokeRoleFromUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -414,11 +414,11 @@ func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[
 		}
 		return nil, internalError(ctx, "failed to revoke role")
 	}
-	return connect.NewResponse(&pmv1.RevokeRoleFromUserResponse{}), nil
+	return connect.NewResponse(&cadestrov1.RevokeRoleFromUserResponse{}), nil
 }
 
 // AssignRoleToUserGroup grants a role to every member of a group.
-func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Request[pmv1.AssignRoleToUserGroupRequest]) (*connect.Response[pmv1.AssignRoleToUserGroupResponse], error) {
+func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Request[cadestrov1.AssignRoleToUserGroupRequest]) (*connect.Response[cadestrov1.AssignRoleToUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -482,11 +482,11 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 		// than shown a constraint name.
 		return nil, notFound(ctx, ErrRoleNotFound, "group or role not found")
 	}
-	return connect.NewResponse(&pmv1.AssignRoleToUserGroupResponse{}), nil
+	return connect.NewResponse(&cadestrov1.AssignRoleToUserGroupResponse{}), nil
 }
 
 // RevokeRoleFromUserGroup removes one named group grant.
-func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Request[pmv1.RevokeRoleFromUserGroupRequest]) (*connect.Response[pmv1.RevokeRoleFromUserGroupResponse], error) {
+func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Request[cadestrov1.RevokeRoleFromUserGroupRequest]) (*connect.Response[cadestrov1.RevokeRoleFromUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -536,7 +536,7 @@ func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Req
 		}
 		return nil, internalError(ctx, "failed to revoke role")
 	}
-	return connect.NewResponse(&pmv1.RevokeRoleFromUserGroupResponse{}), nil
+	return connect.NewResponse(&cadestrov1.RevokeRoleFromUserGroupResponse{}), nil
 }
 
 // checkPermissionKeys rejects any permission that is not in the
@@ -576,11 +576,11 @@ func (h *Handlers) checkPermissionKeys(ctx context.Context, keys []string) ([]st
 //     grant at all — that would extend their reach to the whole fleet.
 func (h *Handlers) checkGrantScope(
 	ctx context.Context,
-	kind pmv1.RoleGrantScopeKind,
+	kind cadestrov1.RoleGrantScopeKind,
 	scopeID string,
 	roleIDs []string,
 ) (*string, *string, error) {
-	unscoped := kind == pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED && scopeID == ""
+	unscoped := kind == cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED && scopeID == ""
 	if unscoped {
 		if err := h.enforceConferredAuthority(ctx, roleIDs); err != nil {
 			return nil, nil, err
@@ -595,7 +595,7 @@ func (h *Handlers) checkGrantScope(
 	// Paired-or-neither. A half-set scope is a request whose meaning is
 	// undefined, and guessing which half was intended is how an
 	// unscoped grant gets minted by accident.
-	if kind == pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED || scopeID == "" {
+	if kind == cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED || scopeID == "" {
 		return nil, nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument,
 			"scope_kind and scope_id must be set together or both omitted")
 	}
@@ -696,11 +696,11 @@ func checkPermissionSubset(actor, conferred []string) error {
 // grant it validates only the shape: the caller is describing which
 // existing grant to remove, and whether that description matches is
 // decided by the conditional delete.
-func (h *Handlers) describedScope(ctx context.Context, kind pmv1.RoleGrantScopeKind, scopeID string) (*string, *string, error) {
-	if kind == pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED && scopeID == "" {
+func (h *Handlers) describedScope(ctx context.Context, kind cadestrov1.RoleGrantScopeKind, scopeID string) (*string, *string, error) {
+	if kind == cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED && scopeID == "" {
 		return nil, nil, nil
 	}
-	if kind == pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED || scopeID == "" {
+	if kind == cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED || scopeID == "" {
 		return nil, nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument,
 			"scope_kind and scope_id must be set together or both omitted")
 	}

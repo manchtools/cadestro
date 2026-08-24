@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -45,7 +45,7 @@ func newDispatchHandlerFixture(t *testing.T) *dispatchHandlerFixture {
 	return newDispatchHandlerFixtureWithSender(t, nil)
 }
 
-func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *pmv1.ServerMessage) error) *dispatchHandlerFixture {
+func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *cadestrov1.ServerMessage) error) *dispatchHandlerFixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
@@ -69,8 +69,8 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *pmv1
 		INSERT INTO actions
 			(id, name, action_type, desired_state, params, timeout_seconds, schedule, created_at)
 		VALUES ($1, 'catalog shell', $2, $3, $4, 90, $5, $6)`,
-		f.actionID, int32(pmv1.ActionType_ACTION_TYPE_SHELL),
-		int32(pmv1.DesiredState_DESIRED_STATE_ABSENT),
+		f.actionID, int32(cadestrov1.ActionType_ACTION_TYPE_SHELL),
+		int32(cadestrov1.DesiredState_DESIRED_STATE_ABSENT),
 		`{"script":"printf catalog","interpreter":"/bin/sh"}`,
 		`{"cron":"0 4 * * *"}`, now)
 	require.NoError(t, err)
@@ -80,7 +80,7 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *pmv1
 			($1, 'first set', '{"cron":"0 2 * * *"}', $3, $5),
 			($2, 'second set', '{"runOnAssign":true}', $4, $5)`,
 		f.set1, f.set2,
-		int32(pmv1.OnFailure_ON_FAILURE_STOP), int32(pmv1.OnFailure_ON_FAILURE_CONTINUE),
+		int32(cadestrov1.OnFailure_ON_FAILURE_STOP), int32(cadestrov1.OnFailure_ON_FAILURE_CONTINUE),
 		now)
 	require.NoError(t, err)
 	_, err = raw.Exec(context.Background(), `
@@ -110,11 +110,11 @@ func (f *dispatchHandlerFixture) actor(perms ...string) context.Context {
 	})
 }
 
-func (f *dispatchHandlerFixture) manifest(deliveryID string) *pmv1.Manifest {
+func (f *dispatchHandlerFixture) manifest(deliveryID string) *cadestrov1.Manifest {
 	f.t.Helper()
 	row, err := f.store.GetDelivery(context.Background(), deliveryID)
 	require.NoError(f.t, err)
-	var result pmv1.Manifest
+	var result cadestrov1.Manifest
 	require.NoError(f.t, protojson.Unmarshal(row.Manifest, &result))
 	return &result
 }
@@ -134,7 +134,7 @@ func (f *dispatchHandlerFixture) deliveryIDs() []string {
 	return ids
 }
 
-func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, targetID string, mode pmv1.AssignmentMode) {
+func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, targetID string, mode cadestrov1.AssignmentMode) {
 	f.t.Helper()
 	_, err := f.raw.Exec(context.Background(), `
 		INSERT INTO assignments
@@ -146,7 +146,7 @@ func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, target
 
 func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
-	f.assign("definition", f.definition, "device", f.deviceID, pmv1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED)
+	f.assign("definition", f.definition, "device", f.deviceID, cadestrov1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED)
 
 	manager := connection.NewManager()
 	agent := manager.Register(context.Background(), f.deviceID, "device", "v1", nil)
@@ -173,8 +173,8 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	require.NotNil(t, state.DesiredPolicy)
 	require.Len(t, state.DesiredPolicy.Manifests, 1, "a Definition is one globally ordered runbook")
 	require.Len(t, state.DesiredPolicy.Manifests[0].Occurrences, 2)
-	require.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, state.DesiredPolicy.Manifests[0].Occurrences[0].OnFailure)
-	require.Equal(t, pmv1.OnFailure_ON_FAILURE_CONTINUE, state.DesiredPolicy.Manifests[0].Occurrences[1].OnFailure)
+	require.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, state.DesiredPolicy.Manifests[0].Occurrences[0].OnFailure)
+	require.Equal(t, cadestrov1.OnFailure_ON_FAILURE_CONTINUE, state.DesiredPolicy.Manifests[0].Occurrences[1].OnFailure)
 	firstRevision := state.DesiredPolicy.Revision
 	firstManifestID := state.DesiredPolicy.Manifests[0].ManifestId
 	// Repeated compilation must keep the authored revision and manifest
@@ -209,7 +209,7 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	// required-mode identity when the source is toggled.
 	_, err = f.raw.Exec(context.Background(), `DELETE FROM assignments WHERE source_id = $1`, f.definition)
 	require.NoError(t, err)
-	f.assign("definition", f.definition, "device", f.deviceID, pmv1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL)
+	f.assign("definition", f.definition, "device", f.deviceID, cadestrov1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL)
 	forced, err := syncer.Sync(context.Background(), f.deviceID)
 	require.NoError(t, err)
 	assert.NotEqual(t, reordered.DesiredPolicy.Revision, forced.DesiredPolicy.Revision)
@@ -233,9 +233,9 @@ func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *t
 	f := newDispatchHandlerFixture(t)
 	ctx := f.actor("DispatchAction")
 
-	catalog, err := f.handlers.DispatchAction(ctx, connect.NewRequest(&pmv1.DispatchActionRequest{
+	catalog, err := f.handlers.DispatchAction(ctx, connect.NewRequest(&cadestrov1.DispatchActionRequest{
 		DeviceId: f.deviceID,
-		ActionSource: &pmv1.DispatchActionRequest_ActionId{
+		ActionSource: &cadestrov1.DispatchActionRequest_ActionId{
 			ActionId: f.actionID,
 		},
 	}))
@@ -243,7 +243,7 @@ func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *t
 	ids := f.deliveryIDs()
 	require.Len(t, ids, 1)
 	assert.Equal(t, f.actionID, catalog.Msg.Execution.ActionId)
-	assert.Equal(t, pmv1.ExecutionStatus_EXECUTION_STATUS_PENDING, catalog.Msg.Execution.Status)
+	assert.Equal(t, cadestrov1.ExecutionStatus_EXECUTION_STATUS_PENDING, catalog.Msg.Execution.Status)
 	catalogManifest := f.manifest(ids[0])
 	require.NotNil(t, catalogManifest.Schedule)
 	assert.Empty(t, catalogManifest.Schedule.Cron,
@@ -256,12 +256,12 @@ func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *t
 		"the nested Action keeps its authoring/display schedule")
 
 	inlineID := newID()
-	inline, err := f.handlers.DispatchAction(ctx, connect.NewRequest(&pmv1.DispatchActionRequest{
+	inline, err := f.handlers.DispatchAction(ctx, connect.NewRequest(&cadestrov1.DispatchActionRequest{
 		DeviceId: f.deviceID,
-		ActionSource: &pmv1.DispatchActionRequest_InlineAction{InlineAction: &pmv1.Action{
-			Id: &pmv1.ActionId{Value: inlineID}, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-			DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-			Params:       &pmv1.Action_Shell{Shell: &pmv1.ShellParams{Script: "printf inline"}},
+		ActionSource: &cadestrov1.DispatchActionRequest_InlineAction{InlineAction: &cadestrov1.Action{
+			Id: &cadestrov1.ActionId{Value: inlineID}, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+			DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+			Params:       &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "printf inline"}},
 		}},
 	}))
 	require.NoError(t, err)
@@ -285,16 +285,16 @@ func TestDispatchHandlers_CatalogAndInlineActionsUseDurableOneShotManifests(t *t
 
 func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing.T) {
 	var f *dispatchHandlerFixture
-	sender := func(deviceID string, message *pmv1.ServerMessage) error {
+	sender := func(deviceID string, message *cadestrov1.ServerMessage) error {
 		assert.Equal(t, f.deviceID, deviceID)
 		switch message.GetPayload().(type) {
-		case *pmv1.ServerMessage_SyncDevice:
+		case *cadestrov1.ServerMessage_SyncDevice:
 			go func() {
-				_ = f.handlers.CompleteSyncDevice(context.Background(), deviceID, message.Id, &pmv1.SyncDeviceResult{Success: true})
+				_ = f.handlers.CompleteSyncDevice(context.Background(), deviceID, message.Id, &cadestrov1.SyncDeviceResult{Success: true})
 			}()
-		case *pmv1.ServerMessage_RebootDevice:
+		case *cadestrov1.ServerMessage_RebootDevice:
 			go func() {
-				_ = f.handlers.CompleteRebootDevice(context.Background(), deviceID, message.Id, &pmv1.RebootDeviceResult{Success: true})
+				_ = f.handlers.CompleteRebootDevice(context.Background(), deviceID, message.Id, &cadestrov1.RebootDeviceResult{Success: true})
 			}()
 		default:
 			t.Fatalf("unexpected live payload %T", message.GetPayload())
@@ -302,17 +302,17 @@ func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing
 		return nil
 	}
 	f = newDispatchHandlerFixtureWithSender(t, sender)
-	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"), connect.NewRequest(&pmv1.SyncDeviceRequest{DeviceId: f.deviceID}))
+	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"), connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
 	require.NoError(t, err)
-	_, err = f.handlers.RebootDevice(f.actor("RebootDevice"), connect.NewRequest(&pmv1.RebootDeviceRequest{DeviceId: f.deviceID}))
+	_, err = f.handlers.RebootDevice(f.actor("RebootDevice"), connect.NewRequest(&cadestrov1.RebootDeviceRequest{DeviceId: f.deviceID}))
 	require.NoError(t, err)
 	assert.Empty(t, f.deliveryIDs())
 
-	_, err = f.handlers.DispatchAction(f.actor("DispatchAction"), connect.NewRequest(&pmv1.DispatchActionRequest{
+	_, err = f.handlers.DispatchAction(f.actor("DispatchAction"), connect.NewRequest(&cadestrov1.DispatchActionRequest{
 		DeviceId: f.deviceID,
-		ActionSource: &pmv1.DispatchActionRequest_InlineAction{InlineAction: &pmv1.Action{
-			Id: &pmv1.ActionId{Value: newID()}, Type: pmv1.ActionType_ACTION_TYPE_USER,
-			Params: &pmv1.Action_Shell{Shell: &pmv1.ShellParams{Script: "mismatch"}},
+		ActionSource: &cadestrov1.DispatchActionRequest_InlineAction{InlineAction: &cadestrov1.Action{
+			Id: &cadestrov1.ActionId{Value: newID()}, Type: cadestrov1.ActionType_ACTION_TYPE_USER,
+			Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "mismatch"}},
 		}},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -321,7 +321,7 @@ func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing
 func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
 	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"),
-		connect.NewRequest(&pmv1.SyncDeviceRequest{DeviceId: f.deviceID}))
+		connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 
 	operation, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceSyncDeviceProcedure)
@@ -336,7 +336,7 @@ func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
 func TestDispatchHandlers_ActionSetAndDefinitionPreserveComposition(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
 	setResponse, err := f.handlers.DispatchActionSet(f.actor("DispatchActionSet"),
-		connect.NewRequest(&pmv1.DispatchActionSetRequest{
+		connect.NewRequest(&cadestrov1.DispatchActionSetRequest{
 			DeviceId: f.deviceID, ActionSetId: f.set1,
 		}))
 	require.NoError(t, err)
@@ -346,11 +346,11 @@ func TestDispatchHandlers_ActionSetAndDefinitionPreserveComposition(t *testing.T
 	setManifest := f.manifest(ids[0])
 	assert.Equal(t, f.set1, setManifest.Provenance.ActionSetId)
 	assert.Empty(t, setManifest.Schedule.Cron)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, setManifest.DefaultOnFailure)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, setManifest.Occurrences[0].OnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, setManifest.DefaultOnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, setManifest.Occurrences[0].OnFailure)
 
 	definitionResponse, err := f.handlers.DispatchDefinition(f.actor("DispatchDefinition"),
-		connect.NewRequest(&pmv1.DispatchDefinitionRequest{
+		connect.NewRequest(&cadestrov1.DispatchDefinitionRequest{
 			DeviceId: f.deviceID, DefinitionId: f.definition,
 		}))
 	require.NoError(t, err)
@@ -365,9 +365,9 @@ func TestDispatchHandlers_ActionSetAndDefinitionPreserveComposition(t *testing.T
 		definitionManifest.Occurrences[0].Action.Id.Value,
 		definitionManifest.Occurrences[1].Action.Id.Value,
 	}, "definition set order is preserved")
-	assert.Equal(t, []pmv1.OnFailure{
-		pmv1.OnFailure_ON_FAILURE_STOP, pmv1.OnFailure_ON_FAILURE_CONTINUE,
-	}, []pmv1.OnFailure{
+	assert.Equal(t, []cadestrov1.OnFailure{
+		cadestrov1.OnFailure_ON_FAILURE_STOP, cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
+	}, []cadestrov1.OnFailure{
 		definitionManifest.Occurrences[0].OnFailure,
 		definitionManifest.Occurrences[1].OnFailure,
 	})
@@ -395,9 +395,9 @@ func TestDispatchHandlers_ExplicitDispatchMarksEveryManifestOneShot(t *testing.T
 	f := newDispatchHandlerFixture(t)
 
 	_, err := f.handlers.DispatchAction(f.actor("DispatchAction"),
-		connect.NewRequest(&pmv1.DispatchActionRequest{
+		connect.NewRequest(&cadestrov1.DispatchActionRequest{
 			DeviceId:     f.deviceID,
-			ActionSource: &pmv1.DispatchActionRequest_ActionId{ActionId: f.actionID},
+			ActionSource: &cadestrov1.DispatchActionRequest_ActionId{ActionId: f.actionID},
 		}))
 	require.NoError(t, err)
 	ids := f.deliveryIDs()
@@ -408,7 +408,7 @@ func TestDispatchHandlers_ExplicitDispatchMarksEveryManifestOneShot(t *testing.T
 	assert.Empty(t, catalog.Schedule.Cron)
 
 	_, err = f.handlers.DispatchActionSet(f.actor("DispatchActionSet"),
-		connect.NewRequest(&pmv1.DispatchActionSetRequest{
+		connect.NewRequest(&cadestrov1.DispatchActionSetRequest{
 			DeviceId: f.deviceID, ActionSetId: f.set1,
 		}))
 	require.NoError(t, err)
@@ -420,7 +420,7 @@ func TestDispatchHandlers_ExplicitDispatchMarksEveryManifestOneShot(t *testing.T
 	assert.Empty(t, set.Schedule.Cron)
 
 	_, err = f.handlers.DispatchDefinition(f.actor("DispatchDefinition"),
-		connect.NewRequest(&pmv1.DispatchDefinitionRequest{
+		connect.NewRequest(&cadestrov1.DispatchDefinitionRequest{
 			DeviceId: f.deviceID, DefinitionId: f.definition,
 		}))
 	require.NoError(t, err)
@@ -437,9 +437,9 @@ func TestDispatchHandlers_ExplicitDispatchMarksEveryManifestOneShot(t *testing.T
 func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
 	multiple, err := f.handlers.DispatchToMultiple(f.actor("DispatchToMultiple"),
-		connect.NewRequest(&pmv1.DispatchToMultipleRequest{
+		connect.NewRequest(&cadestrov1.DispatchToMultipleRequest{
 			DeviceIds: []string{f.deviceID, f.otherDevice},
-			ActionSource: &pmv1.DispatchToMultipleRequest_ActionId{
+			ActionSource: &cadestrov1.DispatchToMultipleRequest_ActionId{
 				ActionId: f.actionID,
 			},
 		}))
@@ -461,9 +461,9 @@ func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testin
 	require.Len(t, effects, 4)
 
 	group, err := f.handlers.DispatchToGroup(f.actor("DispatchToGroup"),
-		connect.NewRequest(&pmv1.DispatchToGroupRequest{
+		connect.NewRequest(&cadestrov1.DispatchToGroupRequest{
 			GroupId: f.groupID,
-			ActionSource: &pmv1.DispatchToGroupRequest_DefinitionId{
+			ActionSource: &cadestrov1.DispatchToGroupRequest_DefinitionId{
 				DefinitionId: f.definition,
 			},
 		}))
@@ -485,9 +485,9 @@ func TestDispatchHandlers_MultiDeviceAndGroupFanoutAreSingleOperations(t *testin
 
 func TestDispatchHandlers_RefuseUnauthorizedAndMissingTargetsWithoutWork(t *testing.T) {
 	f := newDispatchHandlerFixture(t)
-	request := connect.NewRequest(&pmv1.DispatchActionRequest{
+	request := connect.NewRequest(&cadestrov1.DispatchActionRequest{
 		DeviceId: f.deviceID,
-		ActionSource: &pmv1.DispatchActionRequest_ActionId{
+		ActionSource: &cadestrov1.DispatchActionRequest_ActionId{
 			ActionId: f.actionID,
 		},
 	})
@@ -498,9 +498,9 @@ func TestDispatchHandlers_RefuseUnauthorizedAndMissingTargetsWithoutWork(t *test
 	_, err = f.handlers.DispatchAction(f.actor("DispatchAction"), request)
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	_, err = f.handlers.DispatchToMultiple(f.actor("DispatchToMultiple"),
-		connect.NewRequest(&pmv1.DispatchToMultipleRequest{
+		connect.NewRequest(&cadestrov1.DispatchToMultipleRequest{
 			DeviceIds: []string{f.deviceID, f.deviceID},
-			ActionSource: &pmv1.DispatchToMultipleRequest_ActionId{
+			ActionSource: &cadestrov1.DispatchToMultipleRequest_ActionId{
 				ActionId: f.actionID,
 			},
 		}))
@@ -510,7 +510,7 @@ func TestDispatchHandlers_RefuseUnauthorizedAndMissingTargetsWithoutWork(t *test
 		INSERT INTO device_groups (id, name, created_at) VALUES ($1, 'empty', $2)`, emptyGroup, f.now)
 	require.NoError(t, err)
 	_, err = f.handlers.DispatchToGroup(f.actor("DispatchToGroup"),
-		connect.NewRequest(&pmv1.DispatchToGroupRequest{GroupId: emptyGroup}))
+		connect.NewRequest(&cadestrov1.DispatchToGroupRequest{GroupId: emptyGroup}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err),
 		"an empty group must not make a missing action source look successful")
 	assert.Empty(t, f.deliveryIDs())

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/assignment"
 	"github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -18,7 +18,7 @@ import (
 // CompileAssigned is the single assignment/compiler path used by both the
 // admin RPC and authenticated agent Sync. A nil visibility callback is
 // reserved for the mTLS device path; user RPCs provide their scope check.
-func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Compiler, deviceID string, visible func(context.Context, string, string) error) ([]*pmv1.Manifest, error) {
+func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Compiler, deviceID string, visible func(context.Context, string, string) error) ([]*cadestrov1.Manifest, error) {
 	paths, err := st.ListResolvedSources(ctx, deviceID)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 		byType[source.Row.SourceType] = append(byType[source.Row.SourceType], source)
 	}
 
-	manifests := make([]*pmv1.Manifest, 0)
+	manifests := make([]*cadestrov1.Manifest, 0)
 	absorbedSets := make(map[string]struct{})
 	absorbedActions := make(map[string]struct{})
 	emittedActions := make(map[string]struct{})
@@ -188,26 +188,26 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 
 // AssignedPolicy returns the authenticated device snapshot without applying
 // a user caller's authoring visibility filter.
-func (h *Handlers) AssignedPolicy(ctx context.Context, deviceID string) ([]*pmv1.Manifest, error) {
+func (h *Handlers) AssignedPolicy(ctx context.Context, deviceID string) ([]*cadestrov1.Manifest, error) {
 	return CompileAssigned(ctx, h.store, h.compiler, deviceID, nil)
 }
 
-func forceAbsent(compiled *pmv1.Manifest, enabled bool) {
+func forceAbsent(compiled *cadestrov1.Manifest, enabled bool) {
 	if !enabled {
 		return
 	}
 	for _, occurrence := range compiled.Occurrences {
-		occurrence.Action.DesiredState = pmv1.DesiredState_DESIRED_STATE_ABSENT
+		occurrence.Action.DesiredState = cadestrov1.DesiredState_DESIRED_STATE_ABSENT
 	}
 }
 
-func rememberManifestActions(seen map[string]struct{}, compiled *pmv1.Manifest) {
+func rememberManifestActions(seen map[string]struct{}, compiled *cadestrov1.Manifest) {
 	for _, occurrence := range compiled.Occurrences {
 		seen[occurrence.Action.Id.Value] = struct{}{}
 	}
 }
 
-func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifest *pmv1.Manifest, sourceType, sourceID, extra string) error {
+func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifest *cadestrov1.Manifest, sourceType, sourceID, extra string) error {
 	seed, err := sourceIdentity(ctx, st, sourceType, sourceID, extra)
 	if err != nil {
 		return err
@@ -222,8 +222,8 @@ func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifes
 // stablePolicyIdentity remains a small pure helper for callers that already
 // hold a fully authored manifest. Assignment pull uses the source canonical
 // content above so outbound secret materialization cannot enter the identity.
-func stablePolicyIdentity(manifest *pmv1.Manifest) {
-	clone := proto.Clone(manifest).(*pmv1.Manifest)
+func stablePolicyIdentity(manifest *cadestrov1.Manifest) {
+	clone := proto.Clone(manifest).(*cadestrov1.Manifest)
 	clone.ManifestId = ""
 	for _, occurrence := range clone.Occurrences {
 		occurrence.OccurrenceId = ""

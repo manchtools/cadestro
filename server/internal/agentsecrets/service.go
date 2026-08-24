@@ -14,7 +14,7 @@ import (
 	"buf.build/go/protovalidate"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -57,7 +57,7 @@ func New(cfg Config) *Service {
 }
 
 // ValidateLuksToken consumes one device-bound token and returns its policy.
-func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, request *pmv1.ValidateLuksTokenRequest) (*pmv1.ValidateLuksTokenResponse, error) {
+func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, request *cadestrov1.ValidateLuksTokenRequest) (*cadestrov1.ValidateLuksTokenResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
@@ -92,14 +92,14 @@ func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, reques
 	} else if !store.IsNotFound(err) {
 		return nil, err
 	}
-	return &pmv1.ValidateLuksTokenResponse{
+	return &cadestrov1.ValidateLuksTokenResponse{
 		ActionId: token.ActionID, DevicePath: devicePath, MinLength: token.MinLength,
-		Complexity: pmv1.LpsPasswordComplexity(token.Complexity),
+		Complexity: cadestrov1.LpsPasswordComplexity(token.Complexity),
 	}, nil
 }
 
 // GetLuksKey opens at-rest ciphertext for the authenticated device stream.
-func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *pmv1.GetLuksKeyRequest) (*pmv1.GetLuksKeyResponse, error) {
+func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *cadestrov1.GetLuksKeyRequest) (*cadestrov1.GetLuksKeyResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
@@ -124,16 +124,16 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *pmv1
 	}); err != nil {
 		return nil, err
 	}
-	return &pmv1.GetLuksKeyResponse{Passphrase: []byte(plaintext)}, nil
+	return &cadestrov1.GetLuksKeyResponse{Passphrase: []byte(plaintext)}, nil
 }
 
 // StoreLuksKey encrypts an agent-to-control field at rest in the same audited
 // transaction that rotates the current row.
-func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pmv1.StoreLuksKeyRequest) (*pmv1.StoreLuksKeyResponse, error) {
+func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *cadestrov1.StoreLuksKeyRequest) (*cadestrov1.StoreLuksKeyResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
-	if err := s.requireActionType(ctx, request.ActionId, pmv1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
+	if err := s.requireActionType(ctx, request.ActionId, cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
 		return nil, err
 	}
 	plaintext, err := copySecret(request.Passphrase)
@@ -152,7 +152,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 		return nil, fmt.Errorf("encrypt generic LUKS passphrase at rest: %w", err)
 	}
 	reason, ok := rotationReason(request.RotationReason)
-	if !ok || request.RotationReason == pmv1.RotationReason_ROTATION_REASON_AUTH_GRACE {
+	if !ok || request.RotationReason == cadestrov1.RotationReason_ROTATION_REASON_AUTH_GRACE {
 		return nil, ErrInvalidInput
 	}
 	now := s.now().UTC().Truncate(time.Microsecond)
@@ -179,17 +179,17 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *pm
 	if err != nil {
 		return nil, err
 	}
-	return &pmv1.StoreLuksKeyResponse{Success: true}, nil
+	return &cadestrov1.StoreLuksKeyResponse{Success: true}, nil
 }
 
 // StoreLpsPasswords commits the whole already-performed rotation batch or none
 // of it. Malformed timestamps fall back to receipt time so credentials are not
 // discarded after the irreversible local change.
-func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, request *pmv1.StoreLpsPasswordsRequest) (*pmv1.StoreLpsPasswordsResponse, error) {
+func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, request *cadestrov1.StoreLpsPasswordsRequest) (*cadestrov1.StoreLpsPasswordsResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
-	if err := s.requireActionType(ctx, request.ActionId, pmv1.ActionType_ACTION_TYPE_LPS); err != nil {
+	if err := s.requireActionType(ctx, request.ActionId, cadestrov1.ActionType_ACTION_TYPE_LPS); err != nil {
 		return nil, err
 	}
 	type preparedRotation struct {
@@ -260,7 +260,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 	if err != nil {
 		return nil, err
 	}
-	return &pmv1.StoreLpsPasswordsResponse{Success: true}, nil
+	return &cadestrov1.StoreLpsPasswordsResponse{Success: true}, nil
 }
 
 func copySecret(value []byte) ([]byte, error) {
@@ -272,24 +272,24 @@ func copySecret(value []byte) ([]byte, error) {
 	return append([]byte(nil), value...), nil
 }
 
-func (s *Service) requireActionType(ctx context.Context, actionID string, expected pmv1.ActionType) error {
+func (s *Service) requireActionType(ctx context.Context, actionID string, expected cadestrov1.ActionType) error {
 	action, err := s.store.GetManifestAction(ctx, actionID)
 	if err != nil {
 		return err
 	}
-	if pmv1.ActionType(action.ActionType) != expected {
+	if cadestrov1.ActionType(action.ActionType) != expected {
 		return ErrWrongActionType
 	}
 	return nil
 }
 
-func rotationReason(reason pmv1.RotationReason) (string, bool) {
+func rotationReason(reason cadestrov1.RotationReason) (string, bool) {
 	switch reason {
-	case pmv1.RotationReason_ROTATION_REASON_INITIAL:
+	case cadestrov1.RotationReason_ROTATION_REASON_INITIAL:
 		return "initial", true
-	case pmv1.RotationReason_ROTATION_REASON_SCHEDULED:
+	case cadestrov1.RotationReason_ROTATION_REASON_SCHEDULED:
 		return "scheduled", true
-	case pmv1.RotationReason_ROTATION_REASON_AUTH_GRACE:
+	case cadestrov1.RotationReason_ROTATION_REASON_AUTH_GRACE:
 		return "auth_grace", true
 	default:
 		return "", false

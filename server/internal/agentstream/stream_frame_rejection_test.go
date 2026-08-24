@@ -21,7 +21,7 @@ import (
 	"golang.org/x/net/http2"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/execution"
@@ -40,35 +40,35 @@ import (
 
 type fakeSecrets struct{}
 
-func (fakeSecrets) ValidateLuksToken(context.Context, string, *pmv1.ValidateLuksTokenRequest) (*pmv1.ValidateLuksTokenResponse, error) {
-	return &pmv1.ValidateLuksTokenResponse{}, nil
+func (fakeSecrets) ValidateLuksToken(context.Context, string, *cadestrov1.ValidateLuksTokenRequest) (*cadestrov1.ValidateLuksTokenResponse, error) {
+	return &cadestrov1.ValidateLuksTokenResponse{}, nil
 }
 
-func (fakeSecrets) GetLuksKey(context.Context, string, *pmv1.GetLuksKeyRequest) (*pmv1.GetLuksKeyResponse, error) {
-	return &pmv1.GetLuksKeyResponse{}, nil
+func (fakeSecrets) GetLuksKey(context.Context, string, *cadestrov1.GetLuksKeyRequest) (*cadestrov1.GetLuksKeyResponse, error) {
+	return &cadestrov1.GetLuksKeyResponse{}, nil
 }
 
-func (fakeSecrets) StoreLuksKey(context.Context, string, *pmv1.StoreLuksKeyRequest) (*pmv1.StoreLuksKeyResponse, error) {
-	return &pmv1.StoreLuksKeyResponse{}, nil
+func (fakeSecrets) StoreLuksKey(context.Context, string, *cadestrov1.StoreLuksKeyRequest) (*cadestrov1.StoreLuksKeyResponse, error) {
+	return &cadestrov1.StoreLuksKeyResponse{}, nil
 }
 
-func (fakeSecrets) StoreLpsPasswords(context.Context, string, *pmv1.StoreLpsPasswordsRequest) (*pmv1.StoreLpsPasswordsResponse, error) {
-	return &pmv1.StoreLpsPasswordsResponse{}, nil
+func (fakeSecrets) StoreLpsPasswords(context.Context, string, *cadestrov1.StoreLpsPasswordsRequest) (*cadestrov1.StoreLpsPasswordsResponse, error) {
+	return &cadestrov1.StoreLpsPasswordsResponse{}, nil
 }
 
 type fakeSync struct{}
 
-func (fakeSync) Sync(context.Context, string) (*pmv1.SyncState, error) {
-	return &pmv1.SyncState{SyncIntervalMinutes: 30}, nil
+func (fakeSync) Sync(context.Context, string) (*cadestrov1.SyncState, error) {
+	return &cadestrov1.SyncState{SyncIntervalMinutes: 30}, nil
 }
 
 type fakeLiveOperations struct{}
 
-func (fakeLiveOperations) CompleteSyncDevice(context.Context, string, string, *pmv1.SyncDeviceResult) error {
+func (fakeLiveOperations) CompleteSyncDevice(context.Context, string, string, *cadestrov1.SyncDeviceResult) error {
 	return nil
 }
 
-func (fakeLiveOperations) CompleteRebootDevice(context.Context, string, string, *pmv1.RebootDeviceResult) error {
+func (fakeLiveOperations) CompleteRebootDevice(context.Context, string, string, *cadestrov1.RebootDeviceResult) error {
 	return nil
 }
 
@@ -92,12 +92,12 @@ func seedExecution(t *testing.T, raw *testdb.DB, at time.Time) seededExecution {
 		INSERT INTO devices (id, hostname, agent_version, certificate_pem, active_cert_serial, registered_at)
 		VALUES ($1, $2, 'v1', X'01', '1', $3)`, seeded.deviceID, "host-"+seeded.deviceID, at)
 	require.NoError(t, err)
-	manifest, err := protojson.Marshal(&pmv1.Manifest{
+	manifest, err := protojson.Marshal(&cadestrov1.Manifest{
 		ManifestId: ulid.Make().String(),
-		Occurrences: []*pmv1.ManifestOccurrence{{
+		Occurrences: []*cadestrov1.ManifestOccurrence{{
 			OccurrenceId: seeded.occurrence,
-			Action: &pmv1.Action{
-				Id: &pmv1.ActionId{Value: seeded.actionID}, Type: pmv1.ActionType_ACTION_TYPE_ENCRYPTION,
+			Action: &cadestrov1.Action{
+				Id: &cadestrov1.ActionId{Value: seeded.actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION,
 			},
 		}},
 	})
@@ -196,8 +196,8 @@ func TestPendingHelloPromotesAndOldActiveIsRejected(t *testing.T) {
 
 	f.peerSerial = big.NewInt(1)
 	stream := f.client.Stream(ctx)
-	require.NoError(t, stream.Send(&pmv1.AgentMessage{Id: ulid.Make().String(), Payload: &pmv1.AgentMessage_Hello{Hello: &pmv1.Hello{
-		DeviceId: &pmv1.DeviceId{Value: f.own.deviceID}, AgentVersion: "v1", Hostname: "device",
+	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
+		DeviceId: &cadestrov1.DeviceId{Value: f.own.deviceID}, AgentVersion: "v1", Hostname: "device",
 	}}}))
 	_, err = stream.Receive()
 	require.Error(t, err)
@@ -224,14 +224,14 @@ func TestStreamRejectsAlreadyOpenPeerAfterSerialPromotion(t *testing.T) {
 }
 
 // open completes the handshake and returns a stream ready for result frames.
-func (f *streamFixture) open(t *testing.T, ctx context.Context) *connect.BidiStreamForClient[pmv1.AgentMessage, pmv1.ServerMessage] {
+func (f *streamFixture) open(t *testing.T, ctx context.Context) *connect.BidiStreamForClient[cadestrov1.AgentMessage, cadestrov1.ServerMessage] {
 	t.Helper()
 	stream := f.client.Stream(ctx)
 	t.Cleanup(func() { _ = stream.CloseRequest() })
-	require.NoError(t, stream.Send(&pmv1.AgentMessage{
+	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{
 		Id: ulid.Make().String(),
-		Payload: &pmv1.AgentMessage_Hello{Hello: &pmv1.Hello{
-			DeviceId: &pmv1.DeviceId{Value: f.own.deviceID}, AgentVersion: "v1", Hostname: "device",
+		Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
+			DeviceId: &cadestrov1.DeviceId{Value: f.own.deviceID}, AgentVersion: "v1", Hostname: "device",
 		}},
 	}))
 	welcome, err := stream.Receive()
@@ -241,21 +241,21 @@ func (f *streamFixture) open(t *testing.T, ctx context.Context) *connect.BidiStr
 }
 
 // luksResult is the frame the agent's LUKS success path actually produces.
-func luksResult(seeded seededExecution, metadata map[string]string) *pmv1.AgentMessage {
-	return &pmv1.AgentMessage{
+func luksResult(seeded seededExecution, metadata map[string]string) *cadestrov1.AgentMessage {
+	return &cadestrov1.AgentMessage{
 		Id: ulid.Make().String(),
-		Payload: &pmv1.AgentMessage_ActionResult{ActionResult: &pmv1.ActionResult{
-			ActionId: &pmv1.ActionId{Value: seeded.actionID}, Status: pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
+		Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: &cadestrov1.ActionResult{
+			ActionId: &cadestrov1.ActionId{Value: seeded.actionID}, Status: cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
 			DeliveryId: seeded.deliveryID, OccurrenceId: seeded.occurrence, Changed: true,
-			Output:   &pmv1.CommandOutput{Stdout: "LUKS: ownership taken, managed passphrase set\n"},
+			Output:   &cadestrov1.CommandOutput{Stdout: "LUKS: ownership taken, managed passphrase set\n"},
 			Metadata: metadata,
 		}},
 	}
 }
 
-func syncRequest() *pmv1.AgentMessage {
-	return &pmv1.AgentMessage{
-		Id: ulid.Make().String(), Payload: &pmv1.AgentMessage_SyncRequest{SyncRequest: &pmv1.SyncRequest{}},
+func syncRequest() *cadestrov1.AgentMessage {
+	return &cadestrov1.AgentMessage{
+		Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_SyncRequest{SyncRequest: &cadestrov1.SyncRequest{}},
 	}
 }
 

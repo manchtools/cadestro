@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -18,7 +18,7 @@ func TestCreateRole_RecordsThePermissionCount(t *testing.T) {
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateRole", "GetRole"}})
 
-	resp, err := f.client.CreateRole(f.ctx(), authed(&pmv1.CreateRoleRequest{
+	resp, err := f.client.CreateRole(f.ctx(), authed(&cadestrov1.CreateRoleRequest{
 		Name:        "Auditors",
 		Description: "Read the audit log",
 		Permissions: []string{"ListAuditEvents", "ListUsers"},
@@ -41,7 +41,7 @@ func TestCreateRole_RejectsUnknownPermissionKey(t *testing.T) {
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateRole"}})
 
-	_, err := f.client.CreateRole(f.ctx(), authed(&pmv1.CreateRoleRequest{
+	_, err := f.client.CreateRole(f.ctx(), authed(&cadestrov1.CreateRoleRequest{
 		Name:        "Typo",
 		Permissions: []string{"ListUsers", "LsitDevices"},
 	}, admin.Token))
@@ -55,7 +55,7 @@ func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T)
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateRole", "UpdateRole", "AssignRoleToUser", "ListUsers", "GetUser"}})
 
-	_, err := f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
+	_, err := f.client.UpdateRole(f.ctx(), authed(&cadestrov1.UpdateRoleRequest{
 		RoleId:      auth.AdminRoleID,
 		Name:        "Admin",
 		Permissions: []string{"ListUsers"},
@@ -64,7 +64,7 @@ func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T)
 		"a system role is reconciled from the code registry; an edit here would be silently undone")
 
 	// An ordinary role, held by a subject, then edited.
-	created, err := f.client.CreateRole(f.ctx(), authed(&pmv1.CreateRoleRequest{
+	created, err := f.client.CreateRole(f.ctx(), authed(&cadestrov1.CreateRoleRequest{
 		Name: "Operators", Permissions: []string{"ListUsers"},
 	}, admin.Token))
 	require.NoError(t, err)
@@ -75,7 +75,7 @@ func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T)
 	before, err := f.store.GetUserSessionState(f.ctx(), holder.ID)
 	require.NoError(t, err)
 
-	_, err = f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
+	_, err = f.client.UpdateRole(f.ctx(), authed(&cadestrov1.UpdateRoleRequest{
 		RoleId: created.Msg.Role.Id, Name: "Platform Operators", Permissions: []string{"ListUsers", "GetUser"},
 	}, admin.Token))
 	require.NoError(t, err)
@@ -109,7 +109,7 @@ func TestUpdateRole_RefusesPermissionsOutsideActorAuthority(t *testing.T) {
 	require.NoError(t, err)
 	beforeAudit := f.countAuditOperations()
 
-	_, err = f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
+	_, err = f.client.UpdateRole(f.ctx(), authed(&cadestrov1.UpdateRoleRequest{
 		RoleId: role, Name: before.Name, Permissions: []string{"GetUser", "ListUsers"},
 	}, admin.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
@@ -123,7 +123,7 @@ func TestDeleteRole_RefusesARoleSomebodyStillHolds(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateRole", "DeleteRole"}})
-	created, err := f.client.CreateRole(f.ctx(), authed(&pmv1.CreateRoleRequest{
+	created, err := f.client.CreateRole(f.ctx(), authed(&cadestrov1.CreateRoleRequest{
 		Name: "Temporary", Permissions: []string{"ListUsers"},
 	}, admin.Token))
 	require.NoError(t, err)
@@ -131,14 +131,14 @@ func TestDeleteRole_RefusesARoleSomebodyStillHolds(t *testing.T) {
 	holder := f.seedSubject()
 	f.insertUserRoleGrant(holder.ID, created.Msg.Role.Id, "", "")
 
-	_, err = f.client.DeleteRole(f.ctx(), authed(&pmv1.DeleteRoleRequest{Id: created.Msg.Role.Id}, admin.Token))
+	_, err = f.client.DeleteRole(f.ctx(), authed(&cadestrov1.DeleteRoleRequest{Id: created.Msg.Role.Id}, admin.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err),
 		"dropping a held role would be an authorization change disguised as a catalogue edit")
 
 	// Once nobody holds it, the delete goes through.
 	_, err = f.raw.Exec(f.ctx(), `DELETE FROM user_roles WHERE role_id = $1`, created.Msg.Role.Id)
 	require.NoError(t, err)
-	_, err = f.client.DeleteRole(f.ctx(), authed(&pmv1.DeleteRoleRequest{Id: created.Msg.Role.Id}, admin.Token))
+	_, err = f.client.DeleteRole(f.ctx(), authed(&cadestrov1.DeleteRoleRequest{Id: created.Msg.Role.Id}, admin.Token))
 	require.NoError(t, err)
 
 	op := f.onlyOperationFor(cadestrov1connect.ControlServiceDeleteRoleProcedure)
@@ -157,7 +157,7 @@ func TestAssignRoleToUser_GrantsAndInvalidatesTheSubjectSession(t *testing.T) {
 	before, err := f.store.GetUserSessionState(f.ctx(), subject.ID)
 	require.NoError(t, err)
 
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -186,7 +186,7 @@ func TestAssignRoleToUser_ConferredPrivilegeCannotExceedActorAuthority(t *testin
 	subject := f.seedSubject()
 	beforeAudit := f.countAuditOperations()
 
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: auth.AdminRoleID,
 	}, actor.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
@@ -203,7 +203,7 @@ func TestAssignRoleToUser_AllowsPrivilegeSubsetOrEqualToActor(t *testing.T) {
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"CreateRole", "ListUsers"})
 
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, actor.Token))
 	require.NoError(t, err)
@@ -219,7 +219,7 @@ func TestAssignRoleToUserGroup_RefusesAdminRoleWithoutAdminAuthority(t *testing.
 	group := f.insertUserGroup()
 	beforeAudit := f.countAuditOperations()
 
-	_, err := f.client.AssignRoleToUserGroup(f.ctx(), authed(&pmv1.AssignRoleToUserGroupRequest{
+	_, err := f.client.AssignRoleToUserGroup(f.ctx(), authed(&cadestrov1.AssignRoleToUserGroupRequest{
 		GroupId: group, RoleId: auth.AdminRoleID,
 	}, actor.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
@@ -240,10 +240,10 @@ func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 	role := f.insertRole([]string{"UpdateUserProfile"})
 	groupA, groupB := f.insertUserGroup(), f.insertUserGroup()
 
-	for _, req := range []*pmv1.AssignRoleToUserRequest{
+	for _, req := range []*cadestrov1.AssignRoleToUserRequest{
 		{UserId: subject.ID, RoleId: role},
-		{UserId: subject.ID, RoleId: role, ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP, ScopeId: groupA},
-		{UserId: subject.ID, RoleId: role, ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP, ScopeId: groupB},
+		{UserId: subject.ID, RoleId: role, ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP, ScopeId: groupA},
+		{UserId: subject.ID, RoleId: role, ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP, ScopeId: groupB},
 	} {
 		_, err := f.client.AssignRoleToUser(f.ctx(), authed(req, admin.Token))
 		require.NoError(t, err)
@@ -254,7 +254,7 @@ func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 	assert.Len(t, grants, 3, "one role, three distinct grants")
 
 	// Revoking "the unscoped grant" takes exactly that one.
-	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&pmv1.RevokeRoleFromUserRequest{
+	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -267,7 +267,7 @@ func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 
 	// Revoking it a second time matches nothing and says so, rather
 	// than silently taking a scoped grant.
-	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&pmv1.RevokeRoleFromUserRequest{
+	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
@@ -280,11 +280,11 @@ func TestAssignRoleToUser_RejectsDuplicateGrantAtTheSameScope(t *testing.T) {
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"ListUsers"})
 
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	assert.Equal(t, connect.CodeAlreadyExists, connectCodeOf(t, err))
@@ -301,10 +301,10 @@ func TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole(t *testing.T
 	group := f.insertUserGroup()
 
 	privileged := f.insertRole([]string{"AssignRoleToUser"})
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId:    subject.ID,
 		RoleId:    privileged,
-		ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
+		ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
 		ScopeId:   group,
 	}, admin.Token))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
@@ -315,7 +315,7 @@ func TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole(t *testing.T
 
 	// The same role granted globally is allowed because the actor holds the
 	// privilege it confers; the restriction is on scoped privilege grants.
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: privileged,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -342,10 +342,10 @@ func TestAssignRoleToUser_EveryPrivilegeGrantingPermissionRefusesAScope(t *testi
 		t.Run(key, func(t *testing.T) {
 			subject := f.seedSubject()
 			role := f.insertRole([]string{key})
-			_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+			_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 				UserId:    subject.ID,
 				RoleId:    role,
-				ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
+				ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
 				ScopeId:   group,
 			}, admin.Token))
 			assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err),
@@ -365,18 +365,18 @@ func TestAssignRoleToUser_RefusesAScopeOfTheWrongKind(t *testing.T) {
 	deviceGroup := f.insertDeviceGroup()
 
 	deviceRole := f.insertRole([]string{"GetDevice"})
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId:    subject.ID,
 		RoleId:    deviceRole,
-		ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
+		ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
 		ScopeId:   userGroup,
 	}, admin.Token))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId:    subject.ID,
 		RoleId:    deviceRole,
-		ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP,
+		ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP,
 		ScopeId:   deviceGroup,
 	}, admin.Token))
 	require.NoError(t, err, "the matching scope kind is accepted")
@@ -389,10 +389,10 @@ func TestAssignRoleToUser_RejectsHalfSetScope(t *testing.T) {
 	subject := f.seedSubject()
 	role := f.insertRole([]string{"UpdateUserProfile"})
 
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId:    subject.ID,
 		RoleId:    role,
-		ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
+		ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
 	}, admin.Token))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err),
 		"guessing which half of a scope was meant is how an unscoped grant gets minted by accident")
@@ -414,25 +414,25 @@ func TestAssignRoleToUser_ScopeLimitedAdminCannotEscapeTheirScope(t *testing.T) 
 		grant{Permissions: []string{"AssignRoleScope"}, ScopeKind: auth.ScopeKindUserGroup, ScopeID: ownScope},
 	)
 
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, confined.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err),
 		"an unscoped grant would extend a confined admin's reach to the whole fleet")
 
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId:    subject.ID,
 		RoleId:    role,
-		ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
+		ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
 		ScopeId:   otherScope,
 	}, confined.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err),
 		"a confined admin cannot mint a grant outside their own scope authority")
 
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId:    subject.ID,
 		RoleId:    role,
-		ScopeKind: pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
+		ScopeKind: cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP,
 		ScopeId:   ownScope,
 	}, confined.Token))
 	require.NoError(t, err, "inside their own scope authority they may grant")
@@ -458,7 +458,7 @@ func TestAssignRoleToUserGroup_GrantsAndRevokesByScope(t *testing.T) {
 	assert.Zero(t, total)
 	assert.Empty(t, rows)
 
-	_, err = f.client.AssignRoleToUserGroup(f.ctx(), authed(&pmv1.AssignRoleToUserGroupRequest{
+	_, err = f.client.AssignRoleToUserGroup(f.ctx(), authed(&cadestrov1.AssignRoleToUserGroupRequest{
 		GroupId: group, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -481,7 +481,7 @@ func TestAssignRoleToUserGroup_GrantsAndRevokesByScope(t *testing.T) {
 	effect := f.effectWithAction(f.effectsOf(op.OperationID), "GRANT")
 	assert.Equal(t, grants[0].GrantID, effect.ResourceID)
 
-	_, err = f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&pmv1.RevokeRoleFromUserGroupRequest{
+	_, err = f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserGroupRequest{
 		GroupId: group, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -536,7 +536,7 @@ func TestUserSearchDocument_TracksDirectRoleGrantLifecycle(t *testing.T) {
 	assert.Equal(t, "", doc.Fields["role_names"], "no grant, no chip")
 	assert.Equal(t, "", doc.Fields["role_ids"])
 
-	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -545,7 +545,7 @@ func TestUserSearchDocument_TracksDirectRoleGrantLifecycle(t *testing.T) {
 		"assigning a role must land its name in the subject's document in the same transaction")
 	assert.Equal(t, role, doc.Fields["role_ids"])
 
-	_, err = f.client.UpdateRole(f.ctx(), authed(&pmv1.UpdateRoleRequest{
+	_, err = f.client.UpdateRole(f.ctx(), authed(&cadestrov1.UpdateRoleRequest{
 		RoleId: role, Name: "Renamed Platform Crew", Permissions: []string{"ListUsers"},
 	}, admin.Token))
 	require.NoError(t, err)
@@ -554,7 +554,7 @@ func TestUserSearchDocument_TracksDirectRoleGrantLifecycle(t *testing.T) {
 		"renaming a role must refresh every holder's document field, not only its free text")
 	assert.Equal(t, role, doc.Fields["role_ids"])
 
-	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&pmv1.RevokeRoleFromUserRequest{
+	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -585,7 +585,7 @@ func TestUserSearchDocument_TracksGroupInheritedRoleFields(t *testing.T) {
 	assert.Equal(t, "", doc.Fields["inherited_role_names"])
 	assert.Equal(t, "", doc.Fields["inherited_role_ids"])
 
-	_, err = f.client.AssignRoleToUserGroup(f.ctx(), authed(&pmv1.AssignRoleToUserGroupRequest{
+	_, err = f.client.AssignRoleToUserGroup(f.ctx(), authed(&cadestrov1.AssignRoleToUserGroupRequest{
 		GroupId: group, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -596,7 +596,7 @@ func TestUserSearchDocument_TracksGroupInheritedRoleFields(t *testing.T) {
 	assert.Equal(t, "", doc.Fields["role_names"],
 		"a group-conferred role is not a direct grant and must not render as one")
 
-	_, err = f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&pmv1.RevokeRoleFromUserGroupRequest{
+	_, err = f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserGroupRequest{
 		GroupId: group, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
@@ -613,7 +613,7 @@ func TestRevokeRoleFromUser_AllowsRemovingFinalAdminGrant(t *testing.T) {
 	f.insertUserRoleGrant(soleAdmin.ID, auth.AdminRoleID, "", "")
 	token := f.mintToken(soleAdmin.ID, soleAdmin.Email)
 
-	_, err := f.client.RevokeRoleFromUser(f.ctx(), authed(&pmv1.RevokeRoleFromUserRequest{
+	_, err := f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
 		UserId: soleAdmin.ID, RoleId: auth.AdminRoleID,
 	}, token))
 	require.NoError(t, err)
@@ -634,7 +634,7 @@ func TestRevokeRoleFromUserGroup_AllowsRemovingFinalAdminGrant(t *testing.T) {
 	require.NoError(t, err)
 	token := f.mintToken(soleAdmin.ID, soleAdmin.Email)
 
-	_, err = f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&pmv1.RevokeRoleFromUserGroupRequest{
+	_, err = f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserGroupRequest{
 		GroupId: group, RoleId: auth.AdminRoleID,
 	}, token))
 	require.NoError(t, err)
@@ -660,7 +660,7 @@ func TestGroupInheritedRole_ConfersItsPermissions(t *testing.T) {
 	token := f.mintToken(member.ID, member.Email)
 
 	target := f.seedSubject()
-	_, err = f.client.UpdateUserProfile(f.ctx(), authed(&pmv1.UpdateUserProfileRequest{
+	_, err = f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
 		Id: target.ID, DisplayName: "via group",
 	}, token))
 	require.NoError(t, err, "a role held through a group is real authority")
@@ -706,20 +706,20 @@ func TestListPermissions_ExposesTheRegistryWithTargetKinds(t *testing.T) {
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"ListPermissions"}})
 
-	resp, err := f.client.ListPermissions(f.ctx(), authed(&pmv1.ListPermissionsRequest{}, admin.Token))
+	resp, err := f.client.ListPermissions(f.ctx(), authed(&cadestrov1.ListPermissionsRequest{}, admin.Token))
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.Permissions, len(auth.AllPermissions()))
 
-	byKey := make(map[string]*pmv1.PermissionInfo, len(resp.Msg.Permissions))
+	byKey := make(map[string]*cadestrov1.PermissionInfo, len(resp.Msg.Permissions))
 	for _, p := range resp.Msg.Permissions {
 		byKey[p.Key] = p
 	}
 	require.Contains(t, byKey, "GetDevice")
-	assert.Equal(t, pmv1.PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE, byKey["GetDevice"].TargetKind)
+	assert.Equal(t, cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE, byKey["GetDevice"].TargetKind)
 	require.Contains(t, byKey, "GetUser")
-	assert.Equal(t, pmv1.PermissionTargetKind_PERMISSION_TARGET_KIND_USER, byKey["GetUser"].TargetKind)
+	assert.Equal(t, cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_USER, byKey["GetUser"].TargetKind)
 	require.Contains(t, byKey, "CreateRole")
-	assert.Equal(t, pmv1.PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED, byKey["CreateRole"].TargetKind,
+	assert.Equal(t, cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED, byKey["CreateRole"].TargetKind,
 		"a privilege-granting permission is never scopable, so it declares no target kind")
 
 	// No local-credential or second-factor permission survives: human

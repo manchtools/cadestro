@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // countingStore counts Load() calls so the test can prove the costly
@@ -56,7 +56,7 @@ func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	store := &flakyStore{exists: true, err: errors.New("decrypt failed")}
 	h := newStatusHandler(store)
 
-	resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Enrolled, "a load failure must report not-enrolled")
 
@@ -64,7 +64,7 @@ func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	// not cached.
 	store.err = nil
 	store.creds = &credentials.Credentials{DeviceID: "dev-recovered"}
-	resp, err = h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	resp, err = h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Enrolled, "a transient load failure must not be cached as not-enrolled")
 	assert.Equal(t, "dev-recovered", resp.Msg.DeviceId)
@@ -78,7 +78,7 @@ func TestGetEnrollmentStatus_LoadsAtMostOnce(t *testing.T) {
 	h := newStatusHandler(store)
 
 	for i := 0; i < 50; i++ {
-		resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+		resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 		require.NoError(t, err)
 		assert.True(t, resp.Msg.Enrolled)
 		assert.Equal(t, "dev-cached", resp.Msg.DeviceId)
@@ -99,7 +99,7 @@ func TestGetEnrollmentStatus_ConcurrentFloodLoadsOnce(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, _ = h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+			_, _ = h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 		}()
 	}
 	wg.Wait()
@@ -112,7 +112,7 @@ func TestGetEnrollmentStatus_NotEnrolledNeverLoads(t *testing.T) {
 	store := &countingStore{exists: false}
 	h := newStatusHandler(store)
 
-	resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Enrolled)
 	assert.Equal(t, int64(0), store.loads.Load(), "un-enrolled status must not derive the key")

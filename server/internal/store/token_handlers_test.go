@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/registrationtoken"
@@ -69,16 +69,16 @@ func TestTokenHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	// well-formed one from the same anonymous caller gets as far as
 	// authentication. Asserted on both a read and a mutation so the ordering
 	// is a property of the package, not of one handler.
-	_, err := validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: "bad", Name: "n"}))
+	_, err := validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: "bad", Name: "n"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&pmv1.RenameTokenRequest{Id: newID(), Name: "n"}))
+	_, err = validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: newID(), Name: "n"}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{PageToken: "not-a-ulid"}))
+	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&cadestrov1.ListTokensRequest{PageToken: "not-a-ulid"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&pmv1.ListTokensRequest{}))
+	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -91,7 +91,7 @@ func TestTokenHandlers_ExpiryIsRequiredAndFutureDated(t *testing.T) {
 		"now":     timestamp(f.now),
 	} {
 		t.Run(name, func(t *testing.T) {
-			_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{
+			_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&cadestrov1.CreateTokenRequest{
 				Name: name, ExpiresAt: expiry,
 			}))
 			assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -104,7 +104,7 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	ctx := f.actor("CreateToken", "ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
 	expires := f.now.Add(48 * time.Hour)
 
-	created, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{
+	created, err := f.handlers.CreateToken(ctx, connect.NewRequest(&cadestrov1.CreateTokenRequest{
 		Name: "rack enrollment", MaxUses: 3, ExpiresAt: timestamp(expires),
 	}))
 	require.NoError(t, err)
@@ -122,36 +122,36 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 
 	// The list is the only read path, so it is where the "a stored bearer
 	// value is never recoverable" property has to hold.
-	stored, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{}))
+	stored, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	require.NoError(t, err)
 	require.Len(t, stored.Msg.Tokens, 1)
 	assert.Equal(t, tokenID, stored.Msg.Tokens[0].Id)
 	assert.Empty(t, stored.Msg.Tokens[0].Value, "stored tokens are never recoverable")
 
-	renamed, err := f.handlers.RenameToken(ctx, connect.NewRequest(&pmv1.RenameTokenRequest{Id: tokenID, Name: "renamed"}))
+	renamed, err := f.handlers.RenameToken(ctx, connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: tokenID, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Token.Name)
 
-	disabled, err := f.handlers.SetTokenDisabled(ctx, connect.NewRequest(&pmv1.SetTokenDisabledRequest{Id: tokenID, Disabled: true}))
+	disabled, err := f.handlers.SetTokenDisabled(ctx, connect.NewRequest(&cadestrov1.SetTokenDisabledRequest{Id: tokenID, Disabled: true}))
 	require.NoError(t, err)
 	assert.True(t, disabled.Msg.Token.Disabled)
 
-	hidden, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{}))
+	hidden, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	require.NoError(t, err)
 	assert.Empty(t, hidden.Msg.Tokens)
 	assert.Zero(t, hidden.Msg.TotalCount)
-	visible, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{IncludeDisabled: true}))
+	visible, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{IncludeDisabled: true}))
 	require.NoError(t, err)
 	require.Len(t, visible.Msg.Tokens, 1)
 	assert.Empty(t, visible.Msg.Tokens[0].Value)
 
-	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&pmv1.DeleteTokenRequest{Id: tokenID}))
+	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: tokenID}))
 	require.NoError(t, err)
-	gone, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{IncludeDisabled: true}))
+	gone, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{IncludeDisabled: true}))
 	require.NoError(t, err)
 	assert.Empty(t, gone.Msg.Tokens, "a deleted token is gone from the widest read the surface offers")
 	assert.Zero(t, gone.Msg.TotalCount)
-	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&pmv1.DeleteTokenRequest{Id: tokenID}))
+	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: tokenID}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "a second delete finds nothing")
 
 	for _, procedure := range registrationtoken.MutationProcedures() {
@@ -165,18 +165,18 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 
 func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	f := newTokenHandlerFixture(t)
-	_, err := f.handlers.CreateToken(f.actor("CreateToken:self"), connect.NewRequest(&pmv1.CreateTokenRequest{
+	_, err := f.handlers.CreateToken(f.actor("CreateToken:self"), connect.NewRequest(&cadestrov1.CreateTokenRequest{
 		Name: "self token", MaxUses: 99, ExpiresAt: timestamp(f.now.Add(7 * 24 * time.Hour)),
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	self, err := f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&pmv1.CreateTokenRequest{
+	self, err := f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&cadestrov1.CreateTokenRequest{
 		Name: "my device", MaxUses: 99, ExpiresAt: timestamp(f.now.Add(7 * 24 * time.Hour)),
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(99), self.Msg.Token.MaxUses)
 	assert.True(t, self.Msg.Token.ExpiresAt.AsTime().Equal(f.now.Add(7*24*time.Hour)))
 
-	_, err = f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&pmv1.CreateTokenRequest{
+	_, err = f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&cadestrov1.CreateTokenRequest{
 		Name: store.BootstrapAdminTokenName,
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -189,7 +189,7 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 		bootstrapID, strings.Repeat("a", 64), store.BootstrapAdminTokenName, f.now.Add(time.Hour), f.now, auth.BootstrapPrincipalID)
 	require.NoError(t, err)
 	operator := f.actor("ListTokens", "RenameToken", "SetTokenDisabled", "DeleteToken")
-	listed, err := f.handlers.ListTokens(operator, connect.NewRequest(&pmv1.ListTokensRequest{}))
+	listed, err := f.handlers.ListTokens(operator, connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Tokens, 1, "only the ordinary self token is visible")
 	assert.Equal(t, self.Msg.Token.Id, listed.Msg.Tokens[0].Id)
@@ -199,7 +199,7 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	// that used to carry this assertion is gone, so the widest list — the one
 	// that deliberately includes disabled rows — has to carry it instead: an
 	// exclusion that only held for the narrow page would be no exclusion.
-	for name, req := range map[string]*pmv1.ListTokensRequest{
+	for name, req := range map[string]*cadestrov1.ListTokensRequest{
 		"default page":       {},
 		"including disabled": {IncludeDisabled: true},
 		"paged":              {PageSize: 100},
@@ -216,15 +216,15 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 
 	for name, call := range map[string]func() error{
 		"rename": func() error {
-			_, err := f.handlers.RenameToken(operator, connect.NewRequest(&pmv1.RenameTokenRequest{Id: bootstrapID, Name: "stolen"}))
+			_, err := f.handlers.RenameToken(operator, connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: bootstrapID, Name: "stolen"}))
 			return err
 		},
 		"disable": func() error {
-			_, err := f.handlers.SetTokenDisabled(operator, connect.NewRequest(&pmv1.SetTokenDisabledRequest{Id: bootstrapID, Disabled: true}))
+			_, err := f.handlers.SetTokenDisabled(operator, connect.NewRequest(&cadestrov1.SetTokenDisabledRequest{Id: bootstrapID, Disabled: true}))
 			return err
 		},
 		"delete": func() error {
-			_, err := f.handlers.DeleteToken(operator, connect.NewRequest(&pmv1.DeleteTokenRequest{Id: bootstrapID}))
+			_, err := f.handlers.DeleteToken(operator, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: bootstrapID}))
 			return err
 		},
 	} {
@@ -238,7 +238,7 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	assert.False(t, bootstrapDeleted)
 	assert.False(t, bootstrapDisabled)
 
-	_, err = f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&pmv1.CreateTokenRequest{
+	_, err = f.handlers.CreateToken(f.actor("CreateToken"), connect.NewRequest(&cadestrov1.CreateTokenRequest{
 		Name: "missing expiry",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -248,15 +248,15 @@ func TestTokenHandlers_KeysetPaginationAndMountSurface(t *testing.T) {
 	f := newTokenHandlerFixture(t)
 	ctx := f.actor("CreateToken", "ListTokens")
 	for _, name := range []string{"one", "two", "three"} {
-		_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&pmv1.CreateTokenRequest{Name: name, ExpiresAt: timestamp(f.now.Add(24 * time.Hour))}))
+		_, err := f.handlers.CreateToken(ctx, connect.NewRequest(&cadestrov1.CreateTokenRequest{Name: name, ExpiresAt: timestamp(f.now.Add(24 * time.Hour))}))
 		require.NoError(t, err)
 	}
-	first, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{PageSize: 2}))
+	first, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{PageSize: 2}))
 	require.NoError(t, err)
 	require.Len(t, first.Msg.Tokens, 2)
 	require.NotEmpty(t, first.Msg.NextPageToken)
 	assert.Equal(t, int32(3), first.Msg.TotalCount)
-	second, err := f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{
+	second, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{
 		PageSize: 2, PageToken: first.Msg.NextPageToken,
 	}))
 	require.NoError(t, err)
@@ -264,7 +264,7 @@ func TestTokenHandlers_KeysetPaginationAndMountSurface(t *testing.T) {
 	assert.Empty(t, second.Msg.NextPageToken)
 	assert.NotEqual(t, first.Msg.Tokens[1].Id, second.Msg.Tokens[0].Id)
 
-	_, err = f.handlers.ListTokens(ctx, connect.NewRequest(&pmv1.ListTokensRequest{PageToken: "not-a-ulid"}))
+	_, err = f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{PageToken: "not-a-ulid"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
 	mounted := f.handlers.Mount(http.NewServeMux())

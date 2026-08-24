@@ -12,7 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	sdkterminal "github.com/manchtools/cadestro/sdk/sys/terminal"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -23,7 +23,7 @@ import (
 
 // StartTerminal persists the authorized session and mints one short-lived,
 // single-use bearer for control's process-local WebSocket bridge.
-func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[pmv1.StartTerminalRequest]) (*connect.Response[pmv1.StartTerminalResponse], error) {
+func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cadestrov1.StartTerminalRequest]) (*connect.Response[cadestrov1.StartTerminalResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[pmv1.
 		}
 		return nil, h.internal(ctx, "commit terminal session", err)
 	}
-	return connect.NewResponse(&pmv1.StartTerminalResponse{
+	return connect.NewResponse(&cadestrov1.StartTerminalResponse{
 		SessionId: sessionID, SessionToken: minted.Token, TerminalUrl: h.terminalURL,
 		ExpiresAt: timestamppb.New(minted.ExpiresAt), TtyUser: ttyUser,
 	}), nil
@@ -104,7 +104,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[pmv1.
 
 // StopTerminal accepts an idempotent owner stop, commits it, and then closes
 // the live bridge and agent PTY on a best-effort basis as required by contract.
-func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[pmv1.StopTerminalRequest]) (*connect.Response[pmv1.StopTerminalResponse], error) {
+func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[cadestrov1.StopTerminalRequest]) (*connect.Response[cadestrov1.StopTerminalResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[pmv1.S
 	session, err := h.store.GetOpenTerminalSession(ctx, req.Msg.SessionId)
 	if err != nil {
 		if store.IsNotFound(err) {
-			return connect.NewResponse(&pmv1.StopTerminalResponse{}), nil
+			return connect.NewResponse(&cadestrov1.StopTerminalResponse{}), nil
 		}
 		return nil, h.internal(ctx, "read terminal session", err)
 	}
@@ -152,12 +152,12 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[pmv1.S
 	if err := h.terminalTokens.Revoke(ctx, session.SessionID); err != nil {
 		h.logger.Error("failed to revoke stopped terminal token", "session_id", session.SessionID, "error", err)
 	}
-	return connect.NewResponse(&pmv1.StopTerminalResponse{}), nil
+	return connect.NewResponse(&cadestrov1.StopTerminalResponse{}), nil
 }
 
 // ListActiveTerminalSessions enumerates only sessions with a live bridge in
 // this single control process, then applies exact filters, scope, and paging.
-func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.Request[pmv1.ListActiveTerminalSessionsRequest]) (*connect.Response[pmv1.ListActiveTerminalSessionsResponse], error) {
+func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.Request[cadestrov1.ListActiveTerminalSessionsRequest]) (*connect.Response[cadestrov1.ListActiveTerminalSessionsResponse], error) {
 	if req.Msg.PageToken != "" {
 		if _, err := ulid.ParseStrict(req.Msg.PageToken); err != nil {
 			return nil, rpcError(ctx, errInvalidPageToken, connect.CodeInvalidArgument, "invalid page token")
@@ -173,7 +173,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 
 	live := h.terminalSessions.List()
 	sort.Slice(live, func(i, j int) bool { return live[i].SessionID > live[j].SessionID })
-	all := make([]*pmv1.TerminalSessionInfo, 0, len(live))
+	all := make([]*cadestrov1.TerminalSessionInfo, 0, len(live))
 	for _, current := range live {
 		if req.Msg.DeviceId != "" && current.DeviceID != req.Msg.DeviceId {
 			continue
@@ -199,7 +199,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 			return nil, h.internal(ctx, "verify live terminal session",
 				fmt.Errorf("registry metadata does not match session %s", current.SessionID))
 		}
-		all = append(all, &pmv1.TerminalSessionInfo{
+		all = append(all, &cadestrov1.TerminalSessionInfo{
 			SessionId: row.SessionID, UserId: row.UserID, UserEmail: row.UserEmail,
 			DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname, TtyUser: row.TtyUser,
 			StartedAt: timestamppb.New(row.StartedAt), LastActivityAt: timestamppb.New(current.LastActivity()),
@@ -210,7 +210,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 	if pageSize == 0 {
 		pageSize = defaultPageSize
 	}
-	page := make([]*pmv1.TerminalSessionInfo, 0, pageSize)
+	page := make([]*cadestrov1.TerminalSessionInfo, 0, pageSize)
 	for _, session := range all {
 		if req.Msg.PageToken != "" && session.SessionId >= req.Msg.PageToken {
 			continue
@@ -236,14 +236,14 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 	if _, err := h.store.RecordOperation(ctx, op); err != nil {
 		return nil, h.internal(ctx, "record terminal session list", err)
 	}
-	return connect.NewResponse(&pmv1.ListActiveTerminalSessionsResponse{
+	return connect.NewResponse(&cadestrov1.ListActiveTerminalSessionsResponse{
 		Sessions: page, NextPageToken: next, TotalCount: int32(total),
 	}), nil
 }
 
 // TerminateTerminalSession is the forcible admin path. It records intent before
 // sending, surfaces a failed agent write, and only then commits terminal state.
-func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Request[pmv1.TerminateTerminalSessionRequest]) (*connect.Response[pmv1.TerminateTerminalSessionResponse], error) {
+func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Request[cadestrov1.TerminateTerminalSessionRequest]) (*connect.Response[cadestrov1.TerminateTerminalSessionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -282,9 +282,9 @@ func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Re
 	}
 
 	if live != nil {
-		err = h.agentSender.Send(session.DeviceID, &pmv1.ServerMessage{
+		err = h.agentSender.Send(session.DeviceID, &cadestrov1.ServerMessage{
 			Id: ulid.Make().String(),
-			Payload: &pmv1.ServerMessage_TerminalStop{TerminalStop: &pmv1.TerminalStop{
+			Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{
 				SessionId: session.SessionID, Reason: req.Msg.Reason,
 			}},
 		})
@@ -326,7 +326,7 @@ func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Re
 	if err := h.terminalTokens.Revoke(ctx, session.SessionID); err != nil {
 		h.logger.Error("failed to revoke terminated terminal token", "session_id", session.SessionID, "error", err)
 	}
-	return connect.NewResponse(&pmv1.TerminateTerminalSessionResponse{}), nil
+	return connect.NewResponse(&cadestrov1.TerminateTerminalSessionResponse{}), nil
 }
 
 func (h *Handlers) requireTerminalPermission(ctx context.Context, permission, resourceID string) error {
@@ -361,9 +361,9 @@ func (h *Handlers) terminalDeviceInScope(ctx context.Context, deviceID string) (
 }
 
 func (h *Handlers) sendTerminalStop(deviceID, sessionID, reason string) {
-	if err := h.agentSender.Send(deviceID, &pmv1.ServerMessage{
+	if err := h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
 		Id: ulid.Make().String(),
-		Payload: &pmv1.ServerMessage_TerminalStop{TerminalStop: &pmv1.TerminalStop{
+		Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{
 			SessionId: sessionID, Reason: reason,
 		}},
 	}); err != nil {

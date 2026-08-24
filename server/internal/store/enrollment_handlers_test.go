@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
@@ -102,8 +102,8 @@ func (f *enrollmentFixture) insertToken(plaintext string, maxUses int32, expires
 	return id
 }
 
-func registerRequest(token string, csr []byte, _ byte) *connect.Request[pmv1.RegisterRequest] {
-	return connect.NewRequest(&pmv1.RegisterRequest{
+func registerRequest(token string, csr []byte, _ byte) *connect.Request[cadestrov1.RegisterRequest] {
+	return connect.NewRequest(&cadestrov1.RegisterRequest{
 		Token: token, Hostname: "host-1", AgentVersion: "v1", Csr: csr,
 	})
 }
@@ -119,7 +119,7 @@ func renewalContext(t *testing.T, certPEM []byte, deviceID string) context.Conte
 
 func TestEnrollment_ValidatesBeforeCredentialUse(t *testing.T) {
 	f := newEnrollmentFixture(t)
-	_, err := f.handlers.Register(context.Background(), connect.NewRequest(&pmv1.RegisterRequest{Token: "unknown"}))
+	_, err := f.handlers.Register(context.Background(), connect.NewRequest(&cadestrov1.RegisterRequest{Token: "unknown"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
 	token := "still-usable"
@@ -179,7 +179,7 @@ func TestEnrollment_BoundedTokenWinsExactlyAtGlobalBoundary(t *testing.T) {
 	const callers = 12
 	var succeeded atomic.Int32
 	var denied atomic.Int32
-	requests := make([]*connect.Request[pmv1.RegisterRequest], callers)
+	requests := make([]*connect.Request[cadestrov1.RegisterRequest], callers)
 	for i := range requests {
 		csr, _ := newEnrollmentIdentity(t)
 		requests[i] = registerRequest(token, csr, byte(0x33+i))
@@ -278,7 +278,7 @@ func TestEnrollment_RenewalStagesPendingSuccessor(t *testing.T) {
 	oldFingerprint, err := ca.FingerprintFromPEM(registered.Msg.Certificate)
 	require.NoError(t, err)
 
-	renewed, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&pmv1.RenewCertificateRequest{
+	renewed, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&cadestrov1.RenewCertificateRequest{
 		Csr: enrollmentCSR(t, identity),
 	}))
 	require.NoError(t, err)
@@ -298,7 +298,7 @@ func TestEnrollment_RenewalStagesPendingSuccessor(t *testing.T) {
 		`SELECT pending_cert_serial FROM devices WHERE id = $1`, deviceID).Scan(&pendingSerial))
 	assert.NotEmpty(t, pendingSerial)
 
-	retry, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&pmv1.RenewCertificateRequest{
+	retry, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&cadestrov1.RenewCertificateRequest{
 		Csr: enrollmentCSR(t, identity),
 	}))
 	require.NoError(t, err)
@@ -314,7 +314,7 @@ func TestEnrollment_RenewalRequiresSameIdentityKey(t *testing.T) {
 	require.NoError(t, err)
 	otherCSR, _ := newEnrollmentIdentity(t)
 
-	_, err = f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, registered.Msg.DeviceId.Value), connect.NewRequest(&pmv1.RenewCertificateRequest{
+	_, err = f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, registered.Msg.DeviceId.Value), connect.NewRequest(&cadestrov1.RenewCertificateRequest{
 		Csr: otherCSR,
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))

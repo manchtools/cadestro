@@ -11,10 +11,9 @@ import (
 	"time"
 
 	"buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // recordingHandler implements StreamHandler plus every optional command
@@ -29,27 +28,27 @@ type recordingHandler struct {
 	luksCalls      int32
 }
 
-func (h *recordingHandler) OnWelcome(context.Context, *pm.Welcome) error { return nil }
-func (h *recordingHandler) OnManifestDelivery(context.Context, *pm.ManifestDelivery) error {
+func (h *recordingHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
+func (h *recordingHandler) OnManifestDelivery(context.Context, *cadestrov1.ManifestDelivery) error {
 	return nil
 }
-func (h *recordingHandler) OnQuery(context.Context, *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (h *recordingHandler) OnQuery(context.Context, *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	atomic.AddInt32(&h.osqueryCalls, 1)
 	return nil, nil
 }
-func (h *recordingHandler) OnError(context.Context, *pm.Error) error { return nil }
-func (h *recordingHandler) CollectInventory(context.Context) *pm.DeviceInventory {
+func (h *recordingHandler) OnError(context.Context, *cadestrov1.Error) error { return nil }
+func (h *recordingHandler) CollectInventory(context.Context) *cadestrov1.DeviceInventory {
 	return nil
 }
-func (h *recordingHandler) OnRequestInventory(context.Context, *pm.RequestInventory) *pm.DeviceInventory {
+func (h *recordingHandler) OnRequestInventory(context.Context, *cadestrov1.RequestInventory) *cadestrov1.DeviceInventory {
 	atomic.AddInt32(&h.inventoryCalls, 1)
 	return nil
 }
-func (h *recordingHandler) OnLogQuery(context.Context, *pm.LogQuery) (*pm.LogQueryResult, error) {
+func (h *recordingHandler) OnLogQuery(context.Context, *cadestrov1.LogQuery) (*cadestrov1.LogQueryResult, error) {
 	atomic.AddInt32(&h.logQueryCalls, 1)
 	return nil, nil
 }
-func (h *recordingHandler) OnRevokeLuksDeviceKey(context.Context, *pm.RevokeLuksDeviceKey) (bool, string) {
+func (h *recordingHandler) OnRevokeLuksDeviceKey(context.Context, *cadestrov1.RevokeLuksDeviceKey) (bool, string) {
 	atomic.AddInt32(&h.luksCalls, 1)
 	return false, ""
 }
@@ -76,26 +75,26 @@ const (
 // (the rejection — the point of the test), and a valid ULID DOES (so the test
 // can't pass vacuously because the handler interface went unsatisfied).
 func TestDispatch_RejectsInvalidInboundCommands(t *testing.T) {
-	mkOSQuery := func(id string) *pm.ServerMessage {
-		return &pm.ServerMessage{Id: "m", Payload: &pm.ServerMessage_Query{
-			Query: &pm.OSQuery{QueryId: id, Table: "processes"}}}
+	mkOSQuery := func(id string) *cadestrov1.ServerMessage {
+		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_Query{
+			Query: &cadestrov1.OSQuery{QueryId: id, Table: "processes"}}}
 	}
-	mkInventory := func(id string) *pm.ServerMessage {
-		return &pm.ServerMessage{Id: "m", Payload: &pm.ServerMessage_RequestInventory{
-			RequestInventory: &pm.RequestInventory{QueryId: id}}}
+	mkInventory := func(id string) *cadestrov1.ServerMessage {
+		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_RequestInventory{
+			RequestInventory: &cadestrov1.RequestInventory{QueryId: id}}}
 	}
-	mkLogQuery := func(id string) *pm.ServerMessage {
-		return &pm.ServerMessage{Id: "m", Payload: &pm.ServerMessage_LogQuery{
-			LogQuery: &pm.LogQuery{QueryId: id}}}
+	mkLogQuery := func(id string) *cadestrov1.ServerMessage {
+		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_LogQuery{
+			LogQuery: &cadestrov1.LogQuery{QueryId: id}}}
 	}
-	mkLuks := func(id string) *pm.ServerMessage {
-		return &pm.ServerMessage{Id: "m", Payload: &pm.ServerMessage_RevokeLuksDeviceKey{
-			RevokeLuksDeviceKey: &pm.RevokeLuksDeviceKey{ActionId: id}}}
+	mkLuks := func(id string) *cadestrov1.ServerMessage {
+		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
+			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: id}}}
 	}
 
 	cases := []struct {
 		name  string
-		build func(id string) *pm.ServerMessage
+		build func(id string) *cadestrov1.ServerMessage
 		count func(*recordingHandler) int32
 	}{
 		{"OSQuery", mkOSQuery, func(h *recordingHandler) int32 { return atomic.LoadInt32(&h.osqueryCalls) }},
@@ -157,7 +156,7 @@ func settle() { time.Sleep(150 * time.Millisecond) }
 func TestDispatchValidatesEveryInboundCommand(t *testing.T) {
 	// 1. Discover, from the descriptor, the ServerMessage oneof arms whose Go
 	//    payload type carries buf.validate rules.
-	md := (&pm.ServerMessage{}).ProtoReflect().Descriptor()
+	md := (&cadestrov1.ServerMessage{}).ProtoReflect().Descriptor()
 	oneof := md.Oneofs().ByName("payload")
 	if oneof == nil {
 		t.Fatal("ServerMessage has no 'payload' oneof — descriptor drift")

@@ -17,7 +17,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
@@ -45,10 +45,10 @@ var errCertificateNotActive = errors.New("certificate is not active for device")
 
 // DeviceResults is the direct sink for device-owned result frames.
 type DeviceResults interface {
-	CompleteOSQueryResult(context.Context, string, *pmv1.OSQueryResult) error
-	CompleteLogQueryResult(context.Context, string, *pmv1.LogQueryResult) error
-	StoreDeviceInventory(context.Context, string, *pmv1.DeviceInventory) error
-	CompleteLuksKeyRevocation(context.Context, string, *pmv1.RevokeLuksDeviceKeyResult) error
+	CompleteOSQueryResult(context.Context, string, *cadestrov1.OSQueryResult) error
+	CompleteLogQueryResult(context.Context, string, *cadestrov1.LogQueryResult) error
+	StoreDeviceInventory(context.Context, string, *cadestrov1.DeviceInventory) error
+	CompleteLuksKeyRevocation(context.Context, string, *cadestrov1.RevokeLuksDeviceKeyResult) error
 }
 
 // DeliveryState records terminal manifest results.
@@ -58,27 +58,27 @@ type DeliveryState interface {
 
 // ExecutionResults commits per-occurrence results and streamed output.
 type ExecutionResults interface {
-	ApplyActionResult(context.Context, string, *pmv1.ActionResult) error
-	AppendOutputChunk(context.Context, string, *pmv1.OutputChunk) error
+	ApplyActionResult(context.Context, string, *cadestrov1.ActionResult) error
+	AppendOutputChunk(context.Context, string, *cadestrov1.OutputChunk) error
 }
 
 // Secrets owns the narrow feature sinks for LUKS and LPS fields.
 type Secrets interface {
-	ValidateLuksToken(context.Context, string, *pmv1.ValidateLuksTokenRequest) (*pmv1.ValidateLuksTokenResponse, error)
-	GetLuksKey(context.Context, string, *pmv1.GetLuksKeyRequest) (*pmv1.GetLuksKeyResponse, error)
-	StoreLuksKey(context.Context, string, *pmv1.StoreLuksKeyRequest) (*pmv1.StoreLuksKeyResponse, error)
-	StoreLpsPasswords(context.Context, string, *pmv1.StoreLpsPasswordsRequest) (*pmv1.StoreLpsPasswordsResponse, error)
+	ValidateLuksToken(context.Context, string, *cadestrov1.ValidateLuksTokenRequest) (*cadestrov1.ValidateLuksTokenResponse, error)
+	GetLuksKey(context.Context, string, *cadestrov1.GetLuksKeyRequest) (*cadestrov1.GetLuksKeyResponse, error)
+	StoreLuksKey(context.Context, string, *cadestrov1.StoreLuksKeyRequest) (*cadestrov1.StoreLuksKeyResponse, error)
+	StoreLpsPasswords(context.Context, string, *cadestrov1.StoreLpsPasswordsRequest) (*cadestrov1.StoreLpsPasswordsResponse, error)
 }
 
 // SyncSource returns the durable delivery backlog and current scheduling policy
 // for the authenticated device.
 type SyncSource interface {
-	Sync(context.Context, string) (*pmv1.SyncState, error)
+	Sync(context.Context, string) (*cadestrov1.SyncState, error)
 }
 
 type LiveOperationResults interface {
-	CompleteSyncDevice(context.Context, string, string, *pmv1.SyncDeviceResult) error
-	CompleteRebootDevice(context.Context, string, string, *pmv1.RebootDeviceResult) error
+	CompleteSyncDevice(context.Context, string, string, *cadestrov1.SyncDeviceResult) error
+	CompleteRebootDevice(context.Context, string, string, *cadestrov1.RebootDeviceResult) error
 }
 
 // Config supplies the direct services used by AgentService.
@@ -169,7 +169,7 @@ func (h *Handler) Close() {
 }
 
 // Stream owns one authenticated device connection.
-func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.AgentMessage, pmv1.ServerMessage]) error {
+func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 	deviceID, ok := DeviceIDFromContext(ctx)
 	if !ok || !validID(deviceID) {
 		return connect.NewError(connect.CodeUnauthenticated, errors.New("authenticated device identity required"))
@@ -210,19 +210,19 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 		agent.WaitForInFlightSend()
 	}()
 
-	welcome := &pmv1.Welcome{
+	welcome := &cadestrov1.Welcome{
 		ServerVersion: h.serverVersion, DeviceLoginUrl: h.deviceLoginURL,
 	}
 	if h.heartbeatInterval > 0 {
 		welcome.HeartbeatInterval = durationpb.New(h.heartbeatInterval)
 	}
-	if err := agent.Send(&pmv1.ServerMessage{
-		Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_Welcome{Welcome: welcome},
+	if err := agent.Send(&cadestrov1.ServerMessage{
+		Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_Welcome{Welcome: welcome},
 	}); err != nil {
 		return fmt.Errorf("send welcome: %w", err)
 	}
 	type received struct {
-		message *pmv1.AgentMessage
+		message *cadestrov1.AgentMessage
 		err     error
 	}
 	receivedCh := make(chan received, 1)
@@ -275,7 +275,7 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[pmv1.Ag
 	}
 }
 
-func (h *Handler) recordFrameDrop(ctx context.Context, deviceID string, message *pmv1.AgentMessage) {
+func (h *Handler) recordFrameDrop(ctx context.Context, deviceID string, message *cadestrov1.AgentMessage) {
 	class := frameClassOf(message)
 	if h.frameDropAudits != nil && !h.frameDropAudits.Allow(deviceID) {
 		return
@@ -299,25 +299,25 @@ func (h *Handler) recordFrameDrop(ctx context.Context, deviceID string, message 
 	h.logger.Warn("agent frame rate limit exceeded", "device_id", deviceID, "class", class)
 }
 
-func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agent, message *pmv1.AgentMessage) error {
+func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agent, message *cadestrov1.AgentMessage) error {
 	deviceID := agent.DeviceID
 	switch payload := message.Payload.(type) {
-	case *pmv1.AgentMessage_Heartbeat:
+	case *cadestrov1.AgentMessage_Heartbeat:
 		return nil
-	case *pmv1.AgentMessage_SyncRequest:
+	case *cadestrov1.AgentMessage_SyncRequest:
 		response, err := h.sync.Sync(ctx, deviceID)
 		return h.sendResponse(agent, message.Id, response, err)
-	case *pmv1.AgentMessage_SyncDeviceResult:
+	case *cadestrov1.AgentMessage_SyncDeviceResult:
 		if payload.SyncDeviceResult == nil {
 			return errors.New("sync device result is required")
 		}
 		return h.liveOperations.CompleteSyncDevice(ctx, deviceID, message.Id, payload.SyncDeviceResult)
-	case *pmv1.AgentMessage_RebootDeviceResult:
+	case *cadestrov1.AgentMessage_RebootDeviceResult:
 		if payload.RebootDeviceResult == nil {
 			return errors.New("reboot device result is required")
 		}
 		return h.liveOperations.CompleteRebootDevice(ctx, deviceID, message.Id, payload.RebootDeviceResult)
-	case *pmv1.AgentMessage_ManifestResult:
+	case *cadestrov1.AgentMessage_ManifestResult:
 		state, code, err := manifestResultState(payload.ManifestResult)
 		if err != nil {
 			_ = h.sendResultAck(agent, message.Id, err)
@@ -329,41 +329,41 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 			return ackErr
 		}
 		return err
-	case *pmv1.AgentMessage_ActionResult:
+	case *cadestrov1.AgentMessage_ActionResult:
 		err := h.executions.ApplyActionResult(ctx, deviceID, payload.ActionResult)
 		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
 			return ackErr
 		}
 		return err
-	case *pmv1.AgentMessage_OutputChunk:
+	case *cadestrov1.AgentMessage_OutputChunk:
 		return h.executions.AppendOutputChunk(ctx, deviceID, payload.OutputChunk)
-	case *pmv1.AgentMessage_QueryResult:
+	case *cadestrov1.AgentMessage_QueryResult:
 		return h.deviceResults.CompleteOSQueryResult(ctx, deviceID, payload.QueryResult)
-	case *pmv1.AgentMessage_LogQueryResult:
+	case *cadestrov1.AgentMessage_LogQueryResult:
 		return h.deviceResults.CompleteLogQueryResult(ctx, deviceID, payload.LogQueryResult)
-	case *pmv1.AgentMessage_Inventory:
+	case *cadestrov1.AgentMessage_Inventory:
 		return h.deviceResults.StoreDeviceInventory(ctx, deviceID, payload.Inventory)
-	case *pmv1.AgentMessage_RevokeLuksDeviceKeyResult:
+	case *cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult:
 		return h.deviceResults.CompleteLuksKeyRevocation(ctx, deviceID, payload.RevokeLuksDeviceKeyResult)
-	case *pmv1.AgentMessage_SecurityAlert:
+	case *cadestrov1.AgentMessage_SecurityAlert:
 		return h.recordSecurityAlert(ctx, deviceID, payload.SecurityAlert)
-	case *pmv1.AgentMessage_GetLuksKey:
+	case *cadestrov1.AgentMessage_GetLuksKey:
 		response, err := h.secrets.GetLuksKey(ctx, deviceID, payload.GetLuksKey)
 		return h.sendResponse(agent, message.Id, response, err)
-	case *pmv1.AgentMessage_StoreLuksKey:
+	case *cadestrov1.AgentMessage_StoreLuksKey:
 		response, err := h.secrets.StoreLuksKey(ctx, deviceID, payload.StoreLuksKey)
 		return h.sendResponse(agent, message.Id, response, err)
-	case *pmv1.AgentMessage_StoreLpsPasswords:
+	case *cadestrov1.AgentMessage_StoreLpsPasswords:
 		response, err := h.secrets.StoreLpsPasswords(ctx, deviceID, payload.StoreLpsPasswords)
 		return h.sendResponse(agent, message.Id, response, err)
-	case *pmv1.AgentMessage_ValidateLuksToken:
+	case *cadestrov1.AgentMessage_ValidateLuksToken:
 		response, err := h.secrets.ValidateLuksToken(ctx, deviceID, payload.ValidateLuksToken)
 		return h.sendResponse(agent, message.Id, response, err)
-	case *pmv1.AgentMessage_TerminalOutput:
+	case *cadestrov1.AgentMessage_TerminalOutput:
 		return h.routeTerminal(deviceID, payload.TerminalOutput.SessionId, message)
-	case *pmv1.AgentMessage_TerminalStateChange:
+	case *cadestrov1.AgentMessage_TerminalStateChange:
 		return h.routeTerminal(deviceID, payload.TerminalStateChange.SessionId, message)
-	case *pmv1.AgentMessage_Hello:
+	case *cadestrov1.AgentMessage_Hello:
 		return errors.New("hello is only valid as the first frame")
 	default:
 		return errors.New("unsupported agent frame")
@@ -374,16 +374,16 @@ func (h *Handler) sendResultAck(agent *connection.Agent, messageID string, resul
 	if agent == nil || messageID == "" {
 		return nil
 	}
-	ack := &pmv1.ResultAck{Accepted: resultErr == nil}
+	ack := &cadestrov1.ResultAck{Accepted: resultErr == nil}
 	if resultErr == nil {
-		ack.Code = pmv1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED
+		ack.Code = cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED
 	} else {
-		ack.Code = pmv1.ResultAckCode_RESULT_ACK_CODE_REJECTED
+		ack.Code = cadestrov1.ResultAckCode_RESULT_ACK_CODE_REJECTED
 	}
-	return agent.Send(&pmv1.ServerMessage{Id: messageID, Payload: &pmv1.ServerMessage_ResultAck{ResultAck: ack}})
+	return agent.Send(&cadestrov1.ServerMessage{Id: messageID, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: ack}})
 }
 
-func (h *Handler) allowFrame(deviceID string, message *pmv1.AgentMessage) bool {
+func (h *Handler) allowFrame(deviceID string, message *cadestrov1.AgentMessage) bool {
 	if h == nil || h.frameLimiters == nil {
 		return true
 	}
@@ -391,20 +391,20 @@ func (h *Handler) allowFrame(deviceID string, message *pmv1.AgentMessage) bool {
 	return limiter == nil || limiter.Allow(deviceID)
 }
 
-func frameClassOf(message *pmv1.AgentMessage) frameClass {
+func frameClassOf(message *cadestrov1.AgentMessage) frameClass {
 	if message == nil {
 		return frameState
 	}
 	switch message.Payload.(type) {
-	case *pmv1.AgentMessage_Hello:
+	case *cadestrov1.AgentMessage_Hello:
 		return frameHello
-	case *pmv1.AgentMessage_Heartbeat:
+	case *cadestrov1.AgentMessage_Heartbeat:
 		return frameTelemetry
-	case *pmv1.AgentMessage_SecurityAlert:
+	case *cadestrov1.AgentMessage_SecurityAlert:
 		return frameAudit
-	case *pmv1.AgentMessage_OutputChunk:
+	case *cadestrov1.AgentMessage_OutputChunk:
 		return frameBulk
-	case *pmv1.AgentMessage_TerminalOutput, *pmv1.AgentMessage_TerminalStateChange:
+	case *cadestrov1.AgentMessage_TerminalOutput, *cadestrov1.AgentMessage_TerminalStateChange:
 		return frameTerminal
 	default:
 		return frameState
@@ -414,25 +414,25 @@ func frameClassOf(message *pmv1.AgentMessage) frameClass {
 func (h *Handler) sendResponse(agent *connection.Agent, messageID string, response any, operationErr error) error {
 	if operationErr != nil {
 		h.logger.Warn("agent request failed", "device_id", agent.DeviceID, "error", operationErr)
-		return agent.Send(&pmv1.ServerMessage{
+		return agent.Send(&cadestrov1.ServerMessage{
 			Id: messageID,
-			Payload: &pmv1.ServerMessage_Error{Error: &pmv1.Error{
+			Payload: &cadestrov1.ServerMessage_Error{Error: &cadestrov1.Error{
 				Code: connect.CodeFailedPrecondition.String(), Message: "secret operation failed",
 			}},
 		})
 	}
-	message := &pmv1.ServerMessage{Id: messageID}
+	message := &cadestrov1.ServerMessage{Id: messageID}
 	switch response := response.(type) {
-	case *pmv1.GetLuksKeyResponse:
-		message.Payload = &pmv1.ServerMessage_GetLuksKey{GetLuksKey: response}
-	case *pmv1.StoreLuksKeyResponse:
-		message.Payload = &pmv1.ServerMessage_StoreLuksKey{StoreLuksKey: response}
-	case *pmv1.StoreLpsPasswordsResponse:
-		message.Payload = &pmv1.ServerMessage_StoreLpsPasswords{StoreLpsPasswords: response}
-	case *pmv1.ValidateLuksTokenResponse:
-		message.Payload = &pmv1.ServerMessage_ValidateLuksToken{ValidateLuksToken: response}
-	case *pmv1.SyncState:
-		message.Payload = &pmv1.ServerMessage_SyncState{SyncState: response}
+	case *cadestrov1.GetLuksKeyResponse:
+		message.Payload = &cadestrov1.ServerMessage_GetLuksKey{GetLuksKey: response}
+	case *cadestrov1.StoreLuksKeyResponse:
+		message.Payload = &cadestrov1.ServerMessage_StoreLuksKey{StoreLuksKey: response}
+	case *cadestrov1.StoreLpsPasswordsResponse:
+		message.Payload = &cadestrov1.ServerMessage_StoreLpsPasswords{StoreLpsPasswords: response}
+	case *cadestrov1.ValidateLuksTokenResponse:
+		message.Payload = &cadestrov1.ServerMessage_ValidateLuksToken{ValidateLuksToken: response}
+	case *cadestrov1.SyncState:
+		message.Payload = &cadestrov1.ServerMessage_SyncState{SyncState: response}
 	default:
 		return errors.New("unsupported agent response")
 	}
@@ -477,7 +477,7 @@ func frameNotAuthorized(err error) bool {
 	return false
 }
 
-func (h *Handler) routeTerminal(deviceID, sessionID string, message *pmv1.AgentMessage) error {
+func (h *Handler) routeTerminal(deviceID, sessionID string, message *cadestrov1.AgentMessage) error {
 	session := h.terminalSessions.Get(sessionID)
 	if session == nil {
 		return nil
@@ -489,7 +489,7 @@ func (h *Handler) routeTerminal(deviceID, sessionID string, message *pmv1.AgentM
 	return nil
 }
 
-func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *pmv1.Hello) error {
+func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *cadestrov1.Hello) error {
 	now := h.now().UTC().Truncate(time.Microsecond)
 	_, err := h.store.WithAudit(ctx, agentOperation(deviceID, "Hello"),
 		func(ctx context.Context, tx *store.Tx, recorder *store.AuditRecorder) error {
@@ -565,8 +565,8 @@ func (h *Handler) peerCertificateActive(ctx context.Context, deviceID string) bo
 	return false
 }
 
-func (h *Handler) recordSecurityAlert(ctx context.Context, deviceID string, alert *pmv1.SecurityAlert) error {
-	if alert == nil || alert.Type == pmv1.SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED {
+func (h *Handler) recordSecurityAlert(ctx context.Context, deviceID string, alert *cadestrov1.SecurityAlert) error {
+	if alert == nil || alert.Type == cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED {
 		return errors.New("invalid security alert")
 	}
 	op := agentOperation(deviceID, "SecurityAlert")
@@ -582,16 +582,16 @@ func (h *Handler) recordSecurityAlert(ctx context.Context, deviceID string, aler
 	return err
 }
 
-func manifestResultState(result *pmv1.ManifestResult) (state, code string, err error) {
+func manifestResultState(result *cadestrov1.ManifestResult) (state, code string, err error) {
 	if result == nil {
 		return "", "", errors.New("manifest result is required")
 	}
 	switch result.Status {
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
 		return delivery.StateSucceeded, "SUCCESS", nil
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_FAILED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED:
 		return delivery.StateFailed, "FAILED", nil
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
 		return delivery.StatePartial, "INDETERMINATE", nil
 	default:
 		return "", "", errors.New("invalid manifest result status")

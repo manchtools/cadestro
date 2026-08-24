@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"testing"
 
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/stretchr/testify/require"
-
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const testULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
@@ -41,9 +40,9 @@ func TestClient_CloseIdleConnections(t *testing.T) {
 // dropped before the handler; a conformant frame reaches it.
 func TestDispatch_DropsInvalidInbound(t *testing.T) {
 	ctx := context.Background()
-	start := func(sid, tty string, cols, rows uint32) *pm.ServerMessage {
-		return &pm.ServerMessage{Id: NewULID(), Payload: &pm.ServerMessage_TerminalStart{
-			TerminalStart: &pm.TerminalStart{SessionId: sid, TtyUser: tty, Cols: cols, Rows: rows},
+	start := func(sid, tty string, cols, rows uint32) *cadestrov1.ServerMessage {
+		return &cadestrov1.ServerMessage{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalStart{
+			TerminalStart: &cadestrov1.TerminalStart{SessionId: sid, TtyUser: tty, Cols: cols, Rows: rows},
 		}}
 	}
 

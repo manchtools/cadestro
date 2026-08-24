@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 )
@@ -18,7 +18,7 @@ func TestRefreshToken_RotatesAndRevokesTheOldToken(t *testing.T) {
 	subject := f.seedActor(grant{Permissions: []string{"GetCurrentUser"}})
 	pair := f.mintPair(subject.ID, subject.Email)
 
-	resp, err := f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{
+	resp, err := f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: pair.RefreshToken,
 	}))
 	require.NoError(t, err)
@@ -26,7 +26,7 @@ func TestRefreshToken_RotatesAndRevokesTheOldToken(t *testing.T) {
 	assert.NotEqual(t, pair.RefreshToken, resp.Msg.RefreshToken, "the refresh token rotates")
 
 	// The spent token cannot be replayed.
-	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{
+	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: pair.RefreshToken,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -54,12 +54,12 @@ func TestRefreshToken_RefusesASessionMintedUnderOldAuthority(t *testing.T) {
 	pair := f.mintPair(subject.ID, subject.Email)
 
 	role := f.insertRole([]string{"ListUsers"})
-	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&pmv1.AssignRoleToUserRequest{
+	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: subject.ID, RoleId: role,
 	}, admin.Token))
 	require.NoError(t, err)
 
-	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{
+	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: pair.RefreshToken,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
@@ -73,12 +73,12 @@ func TestRefreshToken_RefusesADisabledSubject(t *testing.T) {
 	subject := f.seedActor(grant{Permissions: []string{"GetCurrentUser"}})
 	pair := f.mintPair(subject.ID, subject.Email)
 
-	_, err := f.client.SetUserDisabled(f.ctx(), authed(&pmv1.SetUserDisabledRequest{
+	_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
 		Id: subject.ID, Disabled: true,
 	}, admin.Token))
 	require.NoError(t, err)
 
-	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{
+	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: pair.RefreshToken,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -90,7 +90,7 @@ func TestRefreshToken_RefusesAForgedToken(t *testing.T) {
 	subject := f.seedSubject()
 	forged := f.forgedToken(subject.ID, subject.Email, nil)
 
-	_, err := f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{
+	_, err := f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: forged,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
@@ -103,7 +103,7 @@ func TestRefreshToken_RefusesAForgedToken(t *testing.T) {
 func TestRefreshToken_RejectsAnEmptyRequest(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	_, err := f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{}))
+	_, err := f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 	assert.Zero(t, f.countAuditOperations())
 }
@@ -114,17 +114,17 @@ func TestLogout_RevokesTheSessionAndIsIdempotent(t *testing.T) {
 	subject := f.seedActor(grant{Permissions: []string{"GetCurrentUser"}})
 	pair := f.mintPair(subject.ID, subject.Email)
 
-	_, err := f.client.Logout(f.ctx(), connect.NewRequest(&pmv1.LogoutRequest{RefreshToken: pair.RefreshToken}))
+	_, err := f.client.Logout(f.ctx(), connect.NewRequest(&cadestrov1.LogoutRequest{RefreshToken: pair.RefreshToken}))
 	require.NoError(t, err)
 
-	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&pmv1.RefreshTokenRequest{
+	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: pair.RefreshToken,
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err), "the session is over")
 
 	// Logging out twice is not an error, and the second attempt records
 	// that it changed nothing.
-	_, err = f.client.Logout(f.ctx(), connect.NewRequest(&pmv1.LogoutRequest{RefreshToken: pair.RefreshToken}))
+	_, err = f.client.Logout(f.ctx(), connect.NewRequest(&cadestrov1.LogoutRequest{RefreshToken: pair.RefreshToken}))
 	require.NoError(t, err)
 
 	ops := f.operationsFor(cadestrov1connect.ControlServiceLogoutProcedure)
@@ -144,7 +144,7 @@ func TestLogout_TreatsAnUnusableTokenAsAlreadyEnded(t *testing.T) {
 	f := newFixture(t)
 	subject := f.seedSubject()
 
-	_, err := f.client.Logout(f.ctx(), connect.NewRequest(&pmv1.LogoutRequest{
+	_, err := f.client.Logout(f.ctx(), connect.NewRequest(&cadestrov1.LogoutRequest{
 		RefreshToken: f.forgedToken(subject.ID, subject.Email, nil),
 	}))
 	require.NoError(t, err)
@@ -166,7 +166,7 @@ func TestGetCurrentUser_ReturnsTheCallersOwnRecord(t *testing.T) {
 	provider := f.insertProvider("corp", nil)
 	f.insertIdentityLink(subject.ID, provider, "external-1")
 
-	resp, err := f.client.GetCurrentUser(f.ctx(), authed(&pmv1.GetCurrentUserRequest{}, subject.Token))
+	resp, err := f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, subject.Token))
 	require.NoError(t, err)
 	require.NotNil(t, resp.Msg.User)
 	assert.Equal(t, subject.ID, resp.Msg.User.Id)
@@ -179,7 +179,7 @@ func TestGetCurrentUser_ReturnsTheCallersOwnRecord(t *testing.T) {
 func TestGetCurrentUser_RefusesAnUnauthenticatedCaller(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	_, err := f.client.GetCurrentUser(f.ctx(), connect.NewRequest(&pmv1.GetCurrentUserRequest{}))
+	_, err := f.client.GetCurrentUser(f.ctx(), connect.NewRequest(&cadestrov1.GetCurrentUserRequest{}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 }
 
@@ -192,7 +192,7 @@ func TestRejectedAuthentication_RecordsItsOwnOperationClass(t *testing.T) {
 	subject := f.seedSubject()
 	forged := f.forgedToken(subject.ID, subject.Email, allPermissionKeys())
 
-	_, err := f.client.GetCurrentUser(f.ctx(), authed(&pmv1.GetCurrentUserRequest{}, forged))
+	_, err := f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, forged))
 	require.Error(t, err)
 
 	op := f.onlyOperationFor(cadestrov1connect.ControlServiceGetCurrentUserProcedure)
@@ -214,7 +214,7 @@ func TestRejectedAuthentication_DistinguishesExpiryFromEverythingElse(t *testing
 	f := newFixture(t)
 	subject := f.seedSubject()
 
-	_, err := f.client.GetCurrentUser(f.ctx(), authed(&pmv1.GetCurrentUserRequest{},
+	_, err := f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{},
 		f.expiredToken(subject.ID, subject.Email)))
 	require.Error(t, err)
 

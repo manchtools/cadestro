@@ -14,7 +14,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -103,7 +103,7 @@ func tokenEffect(id, action string, fields ...string) store.AuditEffect {
 }
 
 // CreateToken mints a bearer value once and stores only its SHA-256 digest.
-func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.CreateTokenRequest]) (*connect.Response[pmv1.CreateTokenResponse], error) {
+func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[cadestrov1.CreateTokenRequest]) (*connect.Response[cadestrov1.CreateTokenResponse], error) {
 	if req.Msg.Name == store.BootstrapAdminTokenName {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "token name is reserved")
 	}
@@ -166,11 +166,11 @@ func (h *Handlers) CreateToken(ctx context.Context, req *connect.Request[pmv1.Cr
 	}
 	out := tokenToProto(row)
 	out.Value = plaintext
-	return connect.NewResponse(&pmv1.CreateTokenResponse{Token: out, CaFingerprintPin: h.caPin}), nil
+	return connect.NewResponse(&cadestrov1.CreateTokenResponse{Token: out, CaFingerprintPin: h.caPin}), nil
 }
 
 // ListTokens returns a deterministic keyset page of live non-bootstrap tokens.
-func (h *Handlers) ListTokens(ctx context.Context, req *connect.Request[pmv1.ListTokensRequest]) (*connect.Response[pmv1.ListTokensResponse], error) {
+func (h *Handlers) ListTokens(ctx context.Context, req *connect.Request[cadestrov1.ListTokensRequest]) (*connect.Response[cadestrov1.ListTokensResponse], error) {
 	if req.Msg.PageToken != "" {
 		if _, err := ulid.ParseStrict(req.Msg.PageToken); err != nil {
 			return nil, rpcError(ctx, errInvalidPageToken, connect.CodeInvalidArgument, "invalid page token")
@@ -201,17 +201,17 @@ func (h *Handlers) ListTokens(ctx context.Context, req *connect.Request[pmv1.Lis
 		rows = rows[:pageSize]
 		next = rows[len(rows)-1].ID
 	}
-	out := make([]*pmv1.RegistrationToken, len(rows))
+	out := make([]*cadestrov1.RegistrationToken, len(rows))
 	for i, row := range rows {
 		out[i] = tokenToProto(row)
 	}
-	return connect.NewResponse(&pmv1.ListTokensResponse{
+	return connect.NewResponse(&cadestrov1.ListTokensResponse{
 		Tokens: out, NextPageToken: next, TotalCount: boundedCount(count),
 	}), nil
 }
 
 // RenameToken replaces a token name in the same transaction as its audit row.
-func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[pmv1.RenameTokenRequest]) (*connect.Response[pmv1.UpdateTokenResponse], error) {
+func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[cadestrov1.RenameTokenRequest]) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {
 	if req.Msg.Name == store.BootstrapAdminTokenName {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "token name is reserved")
 	}
@@ -245,11 +245,11 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[pmv1.Re
 	if err != nil {
 		return nil, h.writeError(ctx, "rename token", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateTokenResponse{Token: tokenToProto(row)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateTokenResponse{Token: tokenToProto(row)}), nil
 }
 
 // SetTokenDisabled changes whether a token may be consumed.
-func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[pmv1.SetTokenDisabledRequest]) (*connect.Response[pmv1.UpdateTokenResponse], error) {
+func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[cadestrov1.SetTokenDisabledRequest]) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -282,11 +282,11 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[pm
 	if err != nil {
 		return nil, h.writeError(ctx, "set token disabled", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateTokenResponse{Token: tokenToProto(row)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateTokenResponse{Token: tokenToProto(row)}), nil
 }
 
 // DeleteToken soft-deletes a token so prior bearer values stay unusable.
-func (h *Handlers) DeleteToken(ctx context.Context, req *connect.Request[pmv1.DeleteTokenRequest]) (*connect.Response[pmv1.DeleteTokenResponse], error) {
+func (h *Handlers) DeleteToken(ctx context.Context, req *connect.Request[cadestrov1.DeleteTokenRequest]) (*connect.Response[cadestrov1.DeleteTokenResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -308,7 +308,7 @@ func (h *Handlers) DeleteToken(ctx context.Context, req *connect.Request[pmv1.De
 	if err != nil {
 		return nil, h.writeError(ctx, "delete token", err)
 	}
-	return connect.NewResponse(&pmv1.DeleteTokenResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteTokenResponse{}), nil
 }
 
 func (h *Handlers) writeError(ctx context.Context, operation string, err error) error {
@@ -318,8 +318,8 @@ func (h *Handlers) writeError(ctx context.Context, operation string, err error) 
 	return h.internal(ctx, operation, err)
 }
 
-func tokenToProto(row store.RegistrationTokenRow) *pmv1.RegistrationToken {
-	out := &pmv1.RegistrationToken{
+func tokenToProto(row store.RegistrationTokenRow) *cadestrov1.RegistrationToken {
+	out := &cadestrov1.RegistrationToken{
 		Id: row.ID, Name: row.Name, MaxUses: row.MaxUses, CurrentUses: row.CurrentUses,
 		CreatedBy: row.CreatedBy, Disabled: row.Disabled,
 	}

@@ -16,7 +16,8 @@ import (
 var protoJSONAllowlist = map[string]string{}
 
 // protoPkgPathSuffix identifies the generated protobuf package regardless of
-// the import alias a file chooses (conventionally "pm"). It must track the
+// the import alias a file chooses (conventionally none — the bare package
+// name cadestrov1). It must track the
 // module that hosts the generated code: matched as a suffix, a stale value
 // matches nothing, and this guard's matches-zero check is what turns that
 // into a failure instead of a silent pass.
@@ -32,9 +33,9 @@ const protoPkgPathSuffix = "/contract/gen/go/cadestro/v1"
 // pm.CommandOutput sites; this guard stops the smell from returning.
 //
 // Heuristic (documented per the archtest design constraints): a value is
-// "proto-typed" when it is a composite literal of a proto type (pm.Foo{} /
-// &pm.Foo{}) or a local variable declared with a proto type (var v pm.Foo /
-// v := pm.Foo{} / v := &pm.Foo{}), possibly addressed (&v). The proto import
+// "proto-typed" when it is a composite literal of a proto type (cadestrov1.Foo{} /
+// &cadestrov1.Foo{}) or a local variable declared with a proto type (var v cadestrov1.Foo /
+// v := cadestrov1.Foo{} / v := &cadestrov1.Foo{}), possibly addressed (&v). The proto import
 // alias is self-discovered from the import path, not hardcoded. The
 // field-selector shape (json.Marshal(x.ProtoField)) and indirection through a
 // helper are not resolvable without type information and are a documented blind
@@ -101,7 +102,7 @@ func TestNoStdlibJSONOfProtoMessage(t *testing.T) {
 
 // protoImportAliases returns the set of local names by which f imports the
 // generated protobuf package (path suffix protoPkgPathSuffix). Self-discovered
-// from the import block so the guard is not tied to the conventional "pm".
+// from the import block so the guard is not tied to any one alias choice.
 func protoImportAliases(f *ast.File) map[string]bool {
 	out := map[string]bool{}
 	for _, imp := range f.Imports {
@@ -183,8 +184,8 @@ func jsonSerdeTarget(call *ast.CallExpr, jsonAlias string) (ast.Expr, bool) {
 }
 
 // protoTypedLocals returns the set of local variable names in fn whose declared
-// type is a proto message — via an explicit type (var v pm.Foo / var v *pm.Foo)
-// or a composite-literal initialiser (v := pm.Foo{} / v := &pm.Foo{}).
+// type is a proto message — via an explicit type (var v cadestrov1.Foo / var v *cadestrov1.Foo)
+// or a composite-literal initialiser (v := cadestrov1.Foo{} / v := &cadestrov1.Foo{}).
 func protoTypedLocals(fn *ast.FuncDecl, aliases map[string]bool) map[string]bool {
 	out := map[string]bool{}
 	if len(aliases) == 0 {
@@ -226,7 +227,7 @@ func protoTypedLocals(fn *ast.FuncDecl, aliases map[string]bool) map[string]bool
 }
 
 // isProtoTypeExpr reports whether a TYPE expression denotes a proto type
-// (pm.Foo) or pointer to one (*pm.Foo), qualified by a proto import alias.
+// (cadestrov1.Foo) or pointer to one (*cadestrov1.Foo), qualified by a proto import alias.
 func isProtoTypeExpr(e ast.Expr, aliases map[string]bool) bool {
 	switch x := e.(type) {
 	case *ast.StarExpr:
@@ -239,7 +240,7 @@ func isProtoTypeExpr(e ast.Expr, aliases map[string]bool) bool {
 }
 
 // exprIsProtoComposite reports whether a VALUE expression is a proto composite
-// literal pm.Foo{...} or &pm.Foo{...}.
+// literal cadestrov1.Foo{...} or &cadestrov1.Foo{...}.
 func exprIsProtoComposite(e ast.Expr, aliases map[string]bool) bool {
 	switch x := e.(type) {
 	case *ast.UnaryExpr:

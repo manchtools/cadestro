@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
@@ -48,7 +48,7 @@ type Config struct {
 // AgentSender is the only outbound transport capability an instant device
 // operation needs. The connection manager satisfies it directly.
 type AgentSender interface {
-	Send(deviceID string, message *pmv1.ServerMessage) error
+	Send(deviceID string, message *cadestrov1.ServerMessage) error
 }
 
 // Handlers implements the device CRUD procedures.
@@ -233,7 +233,7 @@ func (h *Handlers) recordSensitiveRead(
 
 // ListDevices returns a keyset page narrowed in SQL by assignment, device
 // scope, status, and exact label matches.
-func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[pmv1.ListDevicesRequest]) (*connect.Response[pmv1.ListDevicesResponse], error) {
+func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[cadestrov1.ListDevicesRequest]) (*connect.Response[cadestrov1.ListDevicesResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -277,7 +277,7 @@ func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[pmv1.Li
 	if err != nil {
 		return nil, h.internal(ctx, "count devices", err)
 	}
-	devices := make([]*pmv1.Device, len(views))
+	devices := make([]*cadestrov1.Device, len(views))
 	for i := range views {
 		devices[i] = h.toProto(views[i])
 	}
@@ -288,13 +288,13 @@ func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[pmv1.Li
 	if total > math.MaxInt32 {
 		total = math.MaxInt32
 	}
-	return connect.NewResponse(&pmv1.ListDevicesResponse{
+	return connect.NewResponse(&cadestrov1.ListDevicesResponse{
 		Devices: devices, NextPageToken: next, TotalCount: int32(total),
 	}), nil
 }
 
 // GetDevice returns one visible device without revealing hidden device IDs.
-func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[pmv1.GetDeviceRequest]) (*connect.Response[pmv1.GetDeviceResponse], error) {
+func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceRequest]) (*connect.Response[cadestrov1.GetDeviceResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -302,12 +302,12 @@ func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[pmv1.GetD
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.GetDeviceResponse{Device: h.toProto(view)}), nil
+	return connect.NewResponse(&cadestrov1.GetDeviceResponse{Device: h.toProto(view)}), nil
 }
 
 // GetDeviceInventory returns the latest directly stored osquery tables for a
 // visible device.
-func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[pmv1.GetDeviceInventoryRequest]) (*connect.Response[pmv1.GetDeviceInventoryResponse], error) {
+func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceInventoryRequest]) (*connect.Response[cadestrov1.GetDeviceInventoryResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -322,17 +322,17 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, h.internal(ctx, "list device inventory", err)
 	}
-	tables := make([]*pmv1.InventoryTableResult, len(rows))
+	tables := make([]*cadestrov1.InventoryTableResult, len(rows))
 	for i, row := range rows {
 		var values []map[string]string
 		if err := json.Unmarshal(row.Rows, &values); err != nil {
 			return nil, h.internal(ctx, "decode device inventory", err)
 		}
-		protoRows := make([]*pmv1.OSQueryRow, len(values))
+		protoRows := make([]*cadestrov1.OSQueryRow, len(values))
 		for j, value := range values {
-			protoRows[j] = &pmv1.OSQueryRow{Data: value}
+			protoRows[j] = &cadestrov1.OSQueryRow{Data: value}
 		}
-		tables[i] = &pmv1.InventoryTableResult{
+		tables[i] = &cadestrov1.InventoryTableResult{
 			TableName: row.TableName, Rows: protoRows,
 			CollectedAt: timestamppb.New(row.CollectedAt),
 		}
@@ -342,11 +342,11 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 		"device_inventory", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.GetDeviceInventoryResponse{Tables: tables}), nil
+	return connect.NewResponse(&cadestrov1.GetDeviceInventoryResponse{Tables: tables}), nil
 }
 
 // GetOSQueryResult returns one directly stored on-demand query result.
-func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pmv1.GetOSQueryResultRequest]) (*connect.Response[pmv1.GetOSQueryResultResponse], error) {
+func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[cadestrov1.GetOSQueryResultRequest]) (*connect.Response[cadestrov1.GetOSQueryResultResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -368,7 +368,7 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pm
 		return nil, err
 	}
 
-	response := &pmv1.GetOSQueryResultResponse{
+	response := &cadestrov1.GetOSQueryResultResponse{
 		QueryId: result.QueryID, Completed: result.Completed,
 		Success: result.Success, Error: result.Error,
 	}
@@ -381,9 +381,9 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pm
 		if err := json.Unmarshal(result.Rows, &values); err != nil {
 			return nil, h.internal(ctx, "decode osquery result", err)
 		}
-		response.Rows = make([]*pmv1.OSQueryRow, len(values))
+		response.Rows = make([]*cadestrov1.OSQueryRow, len(values))
 		for i, value := range values {
-			response.Rows[i] = &pmv1.OSQueryRow{Data: value}
+			response.Rows[i] = &cadestrov1.OSQueryRow{Data: value}
 		}
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
@@ -395,7 +395,7 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[pm
 }
 
 // GetDeviceLogResult returns one directly stored remote log query result.
-func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[pmv1.GetDeviceLogResultRequest]) (*connect.Response[pmv1.GetDeviceLogResultResponse], error) {
+func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceLogResultRequest]) (*connect.Response[cadestrov1.GetDeviceLogResultResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -417,7 +417,7 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 
-	response := &pmv1.GetDeviceLogResultResponse{
+	response := &cadestrov1.GetDeviceLogResultResponse{
 		QueryId: result.QueryID, Completed: result.Completed,
 		Success: result.Success, Error: result.Error, Logs: result.Logs,
 	}
@@ -437,7 +437,7 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 
 // GetDeviceCompliance returns the current direct compliance rows for one
 // visible device.
-func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request[pmv1.GetDeviceComplianceRequest]) (*connect.Response[pmv1.GetDeviceComplianceResponse], error) {
+func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceComplianceRequest]) (*connect.Response[cadestrov1.GetDeviceComplianceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -453,13 +453,13 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, h.internal(ctx, "list device compliance", err)
 	}
-	checks := make([]*pmv1.ComplianceCheckResult, len(rows))
+	checks := make([]*cadestrov1.ComplianceCheckResult, len(rows))
 	for i, row := range rows {
 		output, err := decodeCommandOutput(row.DetectionOutput)
 		if err != nil {
 			return nil, h.internal(ctx, "decode compliance output", err)
 		}
-		checks[i] = &pmv1.ComplianceCheckResult{
+		checks[i] = &cadestrov1.ComplianceCheckResult{
 			ActionId: row.ActionID, ActionName: row.ActionName,
 			Compliant: row.Compliant, DetectionOutput: output,
 			CheckedAt: timestamppb.New(row.CheckedAt),
@@ -470,14 +470,14 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 		"device_compliance", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.GetDeviceComplianceResponse{
-		Status: pmv1.ComplianceStatus(view.ComplianceStatus), Checks: checks,
+	return connect.NewResponse(&cadestrov1.GetDeviceComplianceResponse{
+		Status: cadestrov1.ComplianceStatus(view.ComplianceStatus), Checks: checks,
 	}), nil
 }
 
 // GetDeviceCompliancePolicyStatus returns the current direct policy-rule
 // evaluations for one visible device.
-func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *connect.Request[pmv1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[pmv1.GetDeviceCompliancePolicyStatusResponse], error) {
+func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[cadestrov1.GetDeviceCompliancePolicyStatusResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -494,16 +494,16 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 		return nil, h.internal(ctx, "list device compliance policies", err)
 	}
 
-	policies := make([]*pmv1.DevicePolicyEvaluation, 0)
-	var policy *pmv1.DevicePolicyEvaluation
+	policies := make([]*cadestrov1.DevicePolicyEvaluation, 0)
+	var policy *cadestrov1.DevicePolicyEvaluation
 	for _, row := range rows {
 		if !validComplianceStatus(row.Status) {
 			return nil, h.internal(ctx, "decode policy compliance status", fmt.Errorf("unknown status %d", row.Status))
 		}
 		if policy == nil || policy.PolicyId != row.PolicyID {
-			policy = &pmv1.DevicePolicyEvaluation{
+			policy = &cadestrov1.DevicePolicyEvaluation{
 				PolicyId: row.PolicyID, PolicyName: row.PolicyName,
-				Status: pmv1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT,
+				Status: cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT,
 			}
 			policies = append(policies, policy)
 		}
@@ -511,9 +511,9 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 		if err != nil {
 			return nil, h.internal(ctx, "decode policy compliance output", err)
 		}
-		rule := &pmv1.DevicePolicyRuleEvaluation{
+		rule := &cadestrov1.DevicePolicyRuleEvaluation{
 			ActionId: row.ActionID, ActionName: row.ActionName,
-			Status: pmv1.ComplianceStatus(row.Status), Compliant: row.Compliant,
+			Status: cadestrov1.ComplianceStatus(row.Status), Compliant: row.Compliant,
 			GracePeriodHours: row.GracePeriodHours, DetectionOutput: output,
 		}
 		if row.CheckedAt != nil {
@@ -535,16 +535,16 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 		"GetDeviceCompliancePolicyStatus", "device_compliance_policy_status", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.GetDeviceCompliancePolicyStatusResponse{
-		OverallStatus: pmv1.ComplianceStatus(view.ComplianceStatus), Policies: policies,
+	return connect.NewResponse(&cadestrov1.GetDeviceCompliancePolicyStatusResponse{
+		OverallStatus: cadestrov1.ComplianceStatus(view.ComplianceStatus), Policies: policies,
 	}), nil
 }
 
-func decodeCommandOutput(raw []byte) (*pmv1.CommandOutput, error) {
+func decodeCommandOutput(raw []byte) (*cadestrov1.CommandOutput, error) {
 	if len(raw) == 0 {
 		return nil, nil
 	}
-	output := &pmv1.CommandOutput{}
+	output := &cadestrov1.CommandOutput{}
 	if err := protojson.Unmarshal(raw, output); err != nil {
 		return nil, err
 	}
@@ -552,25 +552,25 @@ func decodeCommandOutput(raw []byte) (*pmv1.CommandOutput, error) {
 }
 
 func validComplianceStatus(status int32) bool {
-	switch pmv1.ComplianceStatus(status) {
-	case pmv1.ComplianceStatus_COMPLIANCE_STATUS_UNKNOWN,
-		pmv1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT,
-		pmv1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT,
-		pmv1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD:
+	switch cadestrov1.ComplianceStatus(status) {
+	case cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNKNOWN,
+		cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT,
+		cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT,
+		cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD:
 		return true
 	default:
 		return false
 	}
 }
 
-func worseComplianceStatus(left, right pmv1.ComplianceStatus) pmv1.ComplianceStatus {
-	priority := func(status pmv1.ComplianceStatus) int {
+func worseComplianceStatus(left, right cadestrov1.ComplianceStatus) cadestrov1.ComplianceStatus {
+	priority := func(status cadestrov1.ComplianceStatus) int {
 		switch status {
-		case pmv1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT:
+		case cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT:
 			return 3
-		case pmv1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD:
+		case cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD:
 			return 2
-		case pmv1.ComplianceStatus_COMPLIANCE_STATUS_UNKNOWN:
+		case cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNKNOWN:
 			return 1
 		default:
 			return 0
@@ -583,7 +583,7 @@ func worseComplianceStatus(left, right pmv1.ComplianceStatus) pmv1.ComplianceSta
 }
 
 // GetExecution returns one visible execution and its protected output.
-func (h *Handlers) GetExecution(ctx context.Context, req *connect.Request[pmv1.GetExecutionRequest]) (*connect.Response[pmv1.GetExecutionResponse], error) {
+func (h *Handlers) GetExecution(ctx context.Context, req *connect.Request[cadestrov1.GetExecutionRequest]) (*connect.Response[cadestrov1.GetExecutionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -613,12 +613,12 @@ func (h *Handlers) GetExecution(ctx context.Context, req *connect.Request[pmv1.G
 		"execution", row.ID); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.GetExecutionResponse{Execution: execution}), nil
+	return connect.NewResponse(&cadestrov1.GetExecutionResponse{Execution: execution}), nil
 }
 
 // ListExecutions returns a newest-first direct keyset page narrowed by the
 // caller's device visibility.
-func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[pmv1.ListExecutionsRequest]) (*connect.Response[pmv1.ListExecutionsResponse], error) {
+func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[cadestrov1.ListExecutionsRequest]) (*connect.Response[cadestrov1.ListExecutionsResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -635,8 +635,8 @@ func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[pmv1
 	if !ok {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid execution status")
 	}
-	if req.Msg.TypeFilter != pmv1.ActionType_ACTION_TYPE_UNSPECIFIED {
-		if _, ok := pmv1.ActionType_name[int32(req.Msg.TypeFilter)]; !ok {
+	if req.Msg.TypeFilter != cadestrov1.ActionType_ACTION_TYPE_UNSPECIFIED {
+		if _, ok := cadestrov1.ActionType_name[int32(req.Msg.TypeFilter)]; !ok {
 			return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "invalid action type")
 		}
 	}
@@ -668,7 +668,7 @@ func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[pmv1
 	if err != nil {
 		return nil, h.internal(ctx, "count executions", err)
 	}
-	executions := make([]*pmv1.ActionExecution, len(rows))
+	executions := make([]*cadestrov1.ActionExecution, len(rows))
 	for i, row := range rows {
 		executions[i], err = executionToProto(row)
 		if err != nil {
@@ -684,16 +684,16 @@ func (h *Handlers) ListExecutions(ctx context.Context, req *connect.Request[pmv1
 		"execution", ""); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.ListExecutionsResponse{
+	return connect.NewResponse(&cadestrov1.ListExecutionsResponse{
 		Executions: executions, NextPageToken: next, TotalCount: boundedInt32(total),
 	}), nil
 }
 
-func executionToProto(row store.ExecutionView) (*pmv1.ActionExecution, error) {
-	if _, ok := pmv1.ActionType_name[row.ActionType]; !ok || row.ActionType == 0 {
+func executionToProto(row store.ExecutionView) (*cadestrov1.ActionExecution, error) {
+	if _, ok := cadestrov1.ActionType_name[row.ActionType]; !ok || row.ActionType == 0 {
 		return nil, fmt.Errorf("invalid action type %d", row.ActionType)
 	}
-	if _, ok := pmv1.DesiredState_name[row.DesiredState]; !ok {
+	if _, ok := cadestrov1.DesiredState_name[row.DesiredState]; !ok {
 		return nil, fmt.Errorf("invalid desired state %d", row.DesiredState)
 	}
 	status, ok := executionStatusFromString(row.Status)
@@ -708,9 +708,9 @@ func executionToProto(row store.ExecutionView) (*pmv1.ActionExecution, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decode detection output: %w", err)
 	}
-	execution := &pmv1.ActionExecution{
-		Id: row.ID, DeviceId: row.DeviceID, Type: pmv1.ActionType(row.ActionType),
-		Status: status, DesiredState: pmv1.DesiredState(row.DesiredState),
+	execution := &cadestrov1.ActionExecution{
+		Id: row.ID, DeviceId: row.DeviceID, Type: cadestrov1.ActionType(row.ActionType),
+		Status: status, DesiredState: cadestrov1.DesiredState(row.DesiredState),
 		Output: output, DetectionOutput: detectionOutput,
 		Changed: row.Changed, Compliant: row.Compliant,
 		CreatedBy: row.CreatedByID, ActionName: row.ActionName,
@@ -739,42 +739,42 @@ func executionToProto(row store.ExecutionView) (*pmv1.ActionExecution, error) {
 	return execution, nil
 }
 
-func executionStatusToString(status pmv1.ExecutionStatus) (string, bool) {
+func executionStatusToString(status cadestrov1.ExecutionStatus) (string, bool) {
 	switch status {
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED:
 		return "", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_PENDING:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_PENDING:
 		return "pending", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_RUNNING:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_RUNNING:
 		return "running", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
 		return "success", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_FAILED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED:
 		return "failed", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_SKIPPED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SKIPPED:
 		return "skipped", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_TIMEOUT:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_TIMEOUT:
 		return "timeout", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_SCHEDULED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SCHEDULED:
 		return "scheduled", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_CANCELLED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_CANCELLED:
 		return "cancelled", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE:
 		return "not_applicable", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
 		return "indeterminate", true
 	default:
 		return "", false
 	}
 }
 
-func executionStatusFromString(status string) (pmv1.ExecutionStatus, bool) {
-	for value := pmv1.ExecutionStatus_EXECUTION_STATUS_PENDING; value <= pmv1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE; value++ {
+func executionStatusFromString(status string) (cadestrov1.ExecutionStatus, bool) {
+	for value := cadestrov1.ExecutionStatus_EXECUTION_STATUS_PENDING; value <= cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE; value++ {
 		if name, _ := executionStatusToString(value); name == status {
 			return value, true
 		}
 	}
-	return pmv1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED, false
+	return cadestrov1.ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED, false
 }
 
 func boundedInt32(value int64) int32 {
@@ -785,7 +785,7 @@ func boundedInt32(value int64) int32 {
 }
 
 // ListDeviceAssignees returns the live users and groups assigned to a device.
-func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request[pmv1.ListDeviceAssigneesRequest]) (*connect.Response[pmv1.ListDeviceAssigneesResponse], error) {
+func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceAssigneesRequest]) (*connect.Response[cadestrov1.ListDeviceAssigneesResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -799,18 +799,18 @@ func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request
 		}
 		return nil, h.internal(ctx, "list device assignees", err)
 	}
-	assignees := make([]*pmv1.DeviceAssignee, len(rows))
+	assignees := make([]*cadestrov1.DeviceAssignee, len(rows))
 	for i, row := range rows {
-		var kind pmv1.AssignmentTargetType
+		var kind cadestrov1.AssignmentTargetType
 		switch row.Kind {
 		case "user":
-			kind = pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER
+			kind = cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER
 		case "user_group":
-			kind = pmv1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP
+			kind = cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP
 		default:
 			return nil, h.internal(ctx, "list device assignees", fmt.Errorf("unknown assignee kind"))
 		}
-		assignees[i] = &pmv1.DeviceAssignee{Id: row.ID, Type: kind, Name: row.Name}
+		assignees[i] = &cadestrov1.DeviceAssignee{Id: row.ID, Type: kind, Name: row.Name}
 	}
-	return connect.NewResponse(&pmv1.ListDeviceAssigneesResponse{Assignees: assignees}), nil
+	return connect.NewResponse(&cadestrov1.ListDeviceAssigneesResponse{Assignees: assignees}), nil
 }

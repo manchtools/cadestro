@@ -6,7 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -31,7 +31,7 @@ func deviceEffect(deviceID, action string, fields ...string) store.AuditEffect {
 
 // CancelExecution atomically cancels an execution that has not begun. Later
 // states are an audited idempotent no-op.
-func (h *Handlers) CancelExecution(ctx context.Context, req *connect.Request[pmv1.CancelExecutionRequest]) (*connect.Response[pmv1.CancelExecutionResponse], error) {
+func (h *Handlers) CancelExecution(ctx context.Context, req *connect.Request[cadestrov1.CancelExecutionRequest]) (*connect.Response[cadestrov1.CancelExecutionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -80,11 +80,11 @@ func (h *Handlers) CancelExecution(ctx context.Context, req *connect.Request[pmv
 	if err != nil {
 		return nil, h.internal(ctx, "decode cancelled execution", err)
 	}
-	return connect.NewResponse(&pmv1.CancelExecutionResponse{Execution: message}), nil
+	return connect.NewResponse(&cadestrov1.CancelExecutionResponse{Execution: message}), nil
 }
 
 // SetDeviceLabel upserts one label in the same transaction as its audit effect.
-func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[pmv1.SetDeviceLabelRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
+func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceLabelRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[pmv1
 }
 
 // RemoveDeviceLabel removes one label. Missing labels are an idempotent success.
-func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[pmv1.RemoveDeviceLabelRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
+func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[cadestrov1.RemoveDeviceLabelRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[p
 }
 
 // AssignDevice assigns distinct users and groups with one audited transaction.
-func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[pmv1.AssignDeviceRequest]) (*connect.Response[pmv1.AssignDeviceResponse], error) {
+func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadestrov1.AssignDeviceRequest]) (*connect.Response[cadestrov1.AssignDeviceResponse], error) {
 	userIDs := distinct(req.Msg.UserIds, req.Msg.UserId)
 	groupIDs := distinct(req.Msg.GroupIds, req.Msg.GroupId)
 	if len(userIDs) == 0 && len(groupIDs) == 0 {
@@ -231,11 +231,11 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[pmv1.A
 	if err != nil {
 		return nil, h.internal(ctx, "read assigned device", err)
 	}
-	return connect.NewResponse(&pmv1.AssignDeviceResponse{Device: h.toProto(updated)}), nil
+	return connect.NewResponse(&cadestrov1.AssignDeviceResponse{Device: h.toProto(updated)}), nil
 }
 
 // UnassignDevice removes exactly one user or group assignment.
-func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[pmv1.UnassignDeviceRequest]) (*connect.Response[pmv1.UnassignDeviceResponse], error) {
+func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cadestrov1.UnassignDeviceRequest]) (*connect.Response[cadestrov1.UnassignDeviceResponse], error) {
 	if (req.Msg.UserId == "") == (req.Msg.GroupId == "") {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "exactly one user or group is required")
 	}
@@ -282,11 +282,11 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[pmv1
 	if err != nil {
 		return nil, h.internal(ctx, "read unassigned device", err)
 	}
-	return connect.NewResponse(&pmv1.UnassignDeviceResponse{Device: h.toProto(view)}), nil
+	return connect.NewResponse(&cadestrov1.UnassignDeviceResponse{Device: h.toProto(view)}), nil
 }
 
 // SetDeviceSyncInterval writes the device-level sync override directly.
-func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Request[pmv1.SetDeviceSyncIntervalRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
+func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceSyncIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -311,7 +311,7 @@ func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Reque
 }
 
 // SetDeviceInventoryInterval writes the device-level inventory override.
-func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.Request[pmv1.SetDeviceInventoryIntervalRequest]) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
+func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceInventoryIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	if minutes := req.Msg.InventoryIntervalMinutes; minutes != 0 && (minutes < 120 || minutes > 10080) {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "inventory interval is out of range")
 	}
@@ -341,7 +341,7 @@ func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.
 // DeleteDevice atomically soft-deletes the device, revokes its current
 // certificate, and records the audit effect. The active stream closes only
 // after that transaction commits.
-func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[pmv1.DeleteDeviceRequest]) (*connect.Response[pmv1.DeleteDeviceResponse], error) {
+func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[cadestrov1.DeleteDeviceRequest]) (*connect.Response[cadestrov1.DeleteDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -371,15 +371,15 @@ func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[pmv1.D
 		return nil, h.internal(ctx, "delete device", err)
 	}
 	h.closeStream(req.Msg.Id)
-	return connect.NewResponse(&pmv1.DeleteDeviceResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteDeviceResponse{}), nil
 }
 
-func (h *Handlers) updatedDevice(ctx context.Context, deviceID string) (*connect.Response[pmv1.UpdateDeviceResponse], error) {
+func (h *Handlers) updatedDevice(ctx context.Context, deviceID string) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	view, err := h.store.GetDeviceView(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "read updated device", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateDeviceResponse{Device: h.toProto(view)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateDeviceResponse{Device: h.toProto(view)}), nil
 }
 
 func distinct(ids []string, extra string) []string {

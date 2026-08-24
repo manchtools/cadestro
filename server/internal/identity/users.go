@@ -12,7 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/ssh"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -95,7 +95,7 @@ func (r storeScopeResolver) DeviceGroupsForDevice(context.Context, string) ([]st
 }
 
 // GetUser returns one subject.
-func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[pmv1.GetUserRequest]) (*connect.Response[pmv1.GetUserResponse], error) {
+func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[cadestrov1.GetUserRequest]) (*connect.Response[cadestrov1.GetUserResponse], error) {
 	if _, err := h.resolveUserTarget(ctx, PermGetUser, req.Msg.Id); err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[pmv1.GetUse
 		}
 		return nil, internalError(ctx, "failed to load user")
 	}
-	return connect.NewResponse(&pmv1.GetUserResponse{User: userToProto(view)}), nil
+	return connect.NewResponse(&cadestrov1.GetUserResponse{User: userToProto(view)}), nil
 }
 
 // ListUsers pages the subject list.
@@ -114,7 +114,7 @@ func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[pmv1.GetUse
 // A caller confined to user groups sees only subjects in those groups.
 // The narrowing happens here, on rows already read, because the scope
 // set comes from the caller's token and the page is bounded.
-func (h *Handlers) ListUsers(ctx context.Context, req *connect.Request[pmv1.ListUsersRequest]) (*connect.Response[pmv1.ListUsersResponse], error) {
+func (h *Handlers) ListUsers(ctx context.Context, req *connect.Request[cadestrov1.ListUsersRequest]) (*connect.Response[cadestrov1.ListUsersResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (h *Handlers) ListUsers(ctx context.Context, req *connect.Request[pmv1.List
 		return nil, internalError(ctx, "failed to list users")
 	}
 
-	resp := &pmv1.ListUsersResponse{}
+	resp := &cadestrov1.ListUsersResponse{}
 	for _, row := range rows {
 		if restricted {
 			visible, err := h.userInGroups(ctx, row.ID, scopeGroups)
@@ -182,7 +182,7 @@ func (h *Handlers) userInGroups(ctx context.Context, userID string, groups []str
 
 // EraseJITUser removes a subject created by optional OIDC JIT. SCIM-created
 // subjects fail closed because their lifecycle remains owned by SCIM.
-func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[pmv1.EraseJITUserRequest]) (*connect.Response[pmv1.EraseJITUserResponse], error) {
+func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[cadestrov1.EraseJITUserRequest]) (*connect.Response[cadestrov1.EraseJITUserResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermEraseJITUser, req.Msg.Id)
 	if err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[pmv1.E
 		h.logger.Error("failed to erase JIT user", "error", err, "user_id", before.ID)
 		return nil, internalError(ctx, "failed to erase user")
 	}
-	return connect.NewResponse(&pmv1.EraseJITUserResponse{}), nil
+	return connect.NewResponse(&cadestrov1.EraseJITUserResponse{}), nil
 }
 
 // UpdateUserEmail changes a subject's address.
@@ -216,7 +216,7 @@ func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[pmv1.E
 // personal data, so both go into the audit record as class-three detail
 // sealed under the subject's own key: erasing the subject destroys the
 // key and with it the readable form, while the attribution survives.
-func (h *Handlers) UpdateUserEmail(ctx context.Context, req *connect.Request[pmv1.UpdateUserEmailRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) UpdateUserEmail(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserEmailRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermUpdateUserEmail, req.Msg.Id)
 	if err != nil {
 		return nil, err
@@ -269,7 +269,7 @@ func (h *Handlers) UpdateUserEmail(ctx context.Context, req *connect.Request[pmv
 // SetUserDisabled retires or restores a subject's ability to hold a
 // session. The statement bumps session_version, so every token already
 // issued to them stops validating at the next refresh.
-func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[pmv1.SetUserDisabledRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[cadestrov1.SetUserDisabledRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -329,7 +329,7 @@ func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[pmv
 }
 
 // UpdateUserProfile writes the OIDC profile fields.
-func (h *Handlers) UpdateUserProfile(ctx context.Context, req *connect.Request[pmv1.UpdateUserProfileRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) UpdateUserProfile(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserProfileRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermUpdateUserProfile, req.Msg.Id)
 	if err != nil {
 		return nil, err
@@ -379,7 +379,7 @@ func (h *Handlers) UpdateUserProfile(ctx context.Context, req *connect.Request[p
 // terminal accounts on every device the subject can reach, so letting a
 // subject choose their own would let them collide with an existing
 // privileged account.
-func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Request[pmv1.UpdateUserLinuxUsernameRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserLinuxUsernameRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -423,7 +423,7 @@ func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Req
 }
 
 // UpdateUserSshSettings writes a subject's SSH access flags.
-func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Request[pmv1.UpdateUserSshSettingsRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserSshSettingsRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermUpdateUserSshSettings, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -468,7 +468,7 @@ func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Reque
 
 // SetUserProvisioningEnabled toggles whether the subject's OS account
 // is provisioned on managed devices.
-func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.Request[pmv1.SetUserProvisioningEnabledRequest]) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.Request[cadestrov1.SetUserProvisioningEnabledRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermSetUserProvisioningEnabled, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -515,7 +515,7 @@ func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.
 // written to every managed device's authorized_keys and silently do
 // nothing, and the fingerprint the audit record needs comes from the
 // parse.
-func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[pmv1.AddUserSshKeyRequest]) (*connect.Response[pmv1.AddUserSshKeyResponse], error) {
+func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[cadestrov1.AddUserSshKeyRequest]) (*connect.Response[cadestrov1.AddUserSshKeyResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermAddUserSshKey, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -566,11 +566,11 @@ func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[pmv1.
 	if err != nil {
 		return nil, internalError(ctx, "failed to add ssh key")
 	}
-	return connect.NewResponse(&pmv1.AddUserSshKeyResponse{Key: sshKeyToProto(stored)}), nil
+	return connect.NewResponse(&cadestrov1.AddUserSshKeyResponse{Key: sshKeyToProto(stored)}), nil
 }
 
 // RemoveUserSshKey withdraws an authorized key.
-func (h *Handlers) RemoveUserSshKey(ctx context.Context, req *connect.Request[pmv1.RemoveUserSshKeyRequest]) (*connect.Response[pmv1.RemoveUserSshKeyResponse], error) {
+func (h *Handlers) RemoveUserSshKey(ctx context.Context, req *connect.Request[cadestrov1.RemoveUserSshKeyRequest]) (*connect.Response[cadestrov1.RemoveUserSshKeyResponse], error) {
 	before, err := h.resolveUserTarget(ctx, PermRemoveUserSshKey, req.Msg.UserId)
 	if err != nil {
 		return nil, err
@@ -610,17 +610,17 @@ func (h *Handlers) RemoveUserSshKey(ctx context.Context, req *connect.Request[pm
 		}
 		return nil, internalError(ctx, "failed to remove ssh key")
 	}
-	return connect.NewResponse(&pmv1.RemoveUserSshKeyResponse{}), nil
+	return connect.NewResponse(&cadestrov1.RemoveUserSshKeyResponse{}), nil
 }
 
 // updatedUserResponse re-reads the subject after a write so the caller
 // sees committed state rather than what the handler believed it wrote.
-func (h *Handlers) updatedUserResponse(ctx context.Context, userID string) (*connect.Response[pmv1.UpdateUserResponse], error) {
+func (h *Handlers) updatedUserResponse(ctx context.Context, userID string) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
 	view, err := h.loadUserView(ctx, userID)
 	if err != nil {
 		return nil, internalError(ctx, "failed to load user")
 	}
-	return connect.NewResponse(&pmv1.UpdateUserResponse{User: userToProto(view)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateUserResponse{User: userToProto(view)}), nil
 }
 
 // sealSubjectTransition seals a before→after pair under the subject's

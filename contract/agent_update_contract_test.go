@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"buf.build/go/protovalidate"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // TestAgentUpdateArchRequiresSignedChecksumManifest pins the signed-only public contract.
 func TestAgentUpdateArchRequiresSignedChecksumManifest(t *testing.T) {
 	t.Parallel()
-	descriptor := (&pm.AgentUpdateArch{}).ProtoReflect().Descriptor()
+	descriptor := (&cadestrov1.AgentUpdateArch{}).ProtoReflect().Descriptor()
 	if descriptor.Fields().ByName("expected_sha256") != nil || descriptor.Fields().ByNumber(3) != nil {
 		t.Fatal("expected_sha256 remains in the public agent-update contract")
 	}
@@ -33,7 +33,7 @@ func TestAgentUpdateArchRequiresSignedChecksumManifest(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ok := validator.Validate(&pm.AgentUpdateArch{
+			ok := validator.Validate(&cadestrov1.AgentUpdateArch{
 				BinaryUrl:   "https://releases.example/cadestrod-linux-amd64",
 				ChecksumUrl: tc.checksumURL,
 			}) == nil

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -43,8 +43,8 @@ type userView struct {
 	ScopeNames map[string]string
 }
 
-func userToProto(v userView) *pmv1.User {
-	u := &pmv1.User{
+func userToProto(v userView) *cadestrov1.User {
+	u := &cadestrov1.User{
 		Id:                      v.Row.ID,
 		Email:                   v.Row.Email,
 		CreatedAt:               timestamp(v.Row.CreatedAt),
@@ -73,7 +73,7 @@ func userToProto(v userView) *pmv1.User {
 		u.RoleGrants = append(u.RoleGrants, grantToProto(g, v.ScopeNames))
 	}
 	for _, r := range v.InheritedRoles {
-		u.InheritedRoles = append(u.InheritedRoles, &pmv1.InheritedRole{
+		u.InheritedRoles = append(u.InheritedRoles, &cadestrov1.InheritedRole{
 			RoleId:    r.RoleID,
 			RoleName:  r.RoleName,
 			GroupId:   r.GroupID,
@@ -83,8 +83,8 @@ func userToProto(v userView) *pmv1.User {
 	return u
 }
 
-func sshKeyToProto(k store.UserSSHKeyRow) *pmv1.SshPublicKey {
-	out := &pmv1.SshPublicKey{Id: k.KeyID, AddedAt: timestampValue(k.AddedAt)}
+func sshKeyToProto(k store.UserSSHKeyRow) *cadestrov1.SshPublicKey {
+	out := &cadestrov1.SshPublicKey{Id: k.KeyID, AddedAt: timestampValue(k.AddedAt)}
 	if k.PublicKey != nil {
 		out.PublicKey = *k.PublicKey
 	}
@@ -94,8 +94,8 @@ func sshKeyToProto(k store.UserSSHKeyRow) *pmv1.SshPublicKey {
 	return out
 }
 
-func roleToProto(r store.RoleRow) *pmv1.Role {
-	return &pmv1.Role{
+func roleToProto(r store.RoleRow) *cadestrov1.Role {
+	return &cadestrov1.Role{
 		Id:          r.ID,
 		Name:        r.Name,
 		Description: r.Description,
@@ -105,8 +105,8 @@ func roleToProto(r store.RoleRow) *pmv1.Role {
 	}
 }
 
-func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow) (*pmv1.UserGroup, error) {
-	group := &pmv1.UserGroup{
+func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow) (*cadestrov1.UserGroup, error) {
+	group := &cadestrov1.UserGroup{
 		Id: row.ID, Name: row.Name, Description: row.Description,
 		MemberCount: boundedIdentityCount(row.LiveMemberCount),
 		CreatedAt:   timestampValue(row.CreatedAt), IsDynamic: row.IsDynamic,
@@ -116,7 +116,7 @@ func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow)
 		group.DynamicQuery = *row.DynamicQuery
 	}
 	if len(row.MaintenanceWindow) > 0 && string(row.MaintenanceWindow) != "{}" {
-		window := &pmv1.MaintenanceWindow{}
+		window := &cadestrov1.MaintenanceWindow{}
 		if err := protojson.Unmarshal(row.MaintenanceWindow, window); err != nil {
 			return nil, err
 		}
@@ -125,7 +125,7 @@ func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow)
 		}
 	}
 	for _, grant := range grants {
-		wire := &pmv1.RoleGrant{
+		wire := &cadestrov1.RoleGrant{
 			Role: roleToProto(grant.Role), ScopeKind: scopeKindToProto(grant.ScopeKind),
 		}
 		if grant.ScopeID != nil {
@@ -136,8 +136,8 @@ func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow)
 	return group, nil
 }
 
-func grantToProto(g store.RoleGrantRow, scopeNames map[string]string) *pmv1.RoleGrant {
-	out := &pmv1.RoleGrant{
+func grantToProto(g store.RoleGrantRow, scopeNames map[string]string) *cadestrov1.RoleGrant {
+	out := &cadestrov1.RoleGrant{
 		Role:      roleToProto(g.Role),
 		ScopeKind: scopeKindToProto(g.ScopeKind),
 	}
@@ -150,47 +150,47 @@ func grantToProto(g store.RoleGrantRow, scopeNames map[string]string) *pmv1.Role
 
 // scopeKindToProto maps the stored scope discriminator onto the wire
 // enum. A nil discriminator is an unscoped grant.
-func scopeKindToProto(kind *string) pmv1.RoleGrantScopeKind {
+func scopeKindToProto(kind *string) cadestrov1.RoleGrantScopeKind {
 	if kind == nil {
-		return pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED
+		return cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED
 	}
 	switch *kind {
 	case auth.ScopeKindDeviceGroup:
-		return pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP
+		return cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP
 	case auth.ScopeKindUserGroup:
-		return pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP
+		return cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP
 	default:
-		return pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED
+		return cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED
 	}
 }
 
 // scopeKindFromProto maps a wire scope kind onto the stored
 // discriminator. An unrecognised kind is reported as invalid rather
 // than silently becoming an unscoped (fleet-wide) grant.
-func scopeKindFromProto(kind pmv1.RoleGrantScopeKind) (string, bool) {
+func scopeKindFromProto(kind cadestrov1.RoleGrantScopeKind) (string, bool) {
 	switch kind {
-	case pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP:
+	case cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP:
 		return auth.ScopeKindDeviceGroup, true
-	case pmv1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP:
+	case cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP:
 		return auth.ScopeKindUserGroup, true
 	default:
 		return "", false
 	}
 }
 
-func targetKindToProto(k auth.PermissionTargetKind) pmv1.PermissionTargetKind {
+func targetKindToProto(k auth.PermissionTargetKind) cadestrov1.PermissionTargetKind {
 	switch k {
 	case auth.TargetDevice:
-		return pmv1.PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE
+		return cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE
 	case auth.TargetUser:
-		return pmv1.PermissionTargetKind_PERMISSION_TARGET_KIND_USER
+		return cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_USER
 	default:
-		return pmv1.PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED
+		return cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED
 	}
 }
 
-func linkToProto(l store.IdentityLinkWithProviderRow) *pmv1.IdentityLink {
-	return &pmv1.IdentityLink{
+func linkToProto(l store.IdentityLinkWithProviderRow) *cadestrov1.IdentityLink {
+	return &cadestrov1.IdentityLink{
 		Id:            l.ID,
 		UserId:        l.UserID,
 		ProviderId:    l.ProviderID,
@@ -209,8 +209,8 @@ func linkToProto(l store.IdentityLinkWithProviderRow) *pmv1.IdentityLink {
 // client_secret_encrypted has no wire field and scim_token_hash has no
 // wire field: the secret is write-only by contract and the token is
 // shown exactly once, at the moment it is minted.
-func (h *Handlers) providerToProto(p store.IdentityProviderRow) *pmv1.IdentityProvider {
-	out := &pmv1.IdentityProvider{
+func (h *Handlers) providerToProto(p store.IdentityProviderRow) *cadestrov1.IdentityProvider {
+	out := &cadestrov1.IdentityProvider{
 		Id:                   p.ID,
 		Name:                 p.Name,
 		Slug:                 p.Slug,
@@ -240,15 +240,15 @@ func (h *Handlers) providerToProto(p store.IdentityProviderRow) *pmv1.IdentityPr
 
 const providerTypeOIDC = "oidc"
 
-func providerTypeToProto(t string) pmv1.IdentityProviderType {
+func providerTypeToProto(t string) cadestrov1.IdentityProviderType {
 	if t == providerTypeOIDC {
-		return pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC
+		return cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC
 	}
-	return pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_UNSPECIFIED
+	return cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_UNSPECIFIED
 }
 
-func providerTypeFromProto(t pmv1.IdentityProviderType) (string, bool) {
-	if t == pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC {
+func providerTypeFromProto(t cadestrov1.IdentityProviderType) (string, bool) {
+	if t == cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC {
 		return providerTypeOIDC, true
 	}
 	return "", false
@@ -258,11 +258,11 @@ func (h *Handlers) scimEndpointURL(providerID string) string {
 	return strings.TrimSuffix(h.baseURL, "/") + "/scim/v2/" + providerID
 }
 
-func permissionsToProto() []*pmv1.PermissionInfo {
+func permissionsToProto() []*cadestrov1.PermissionInfo {
 	all := auth.AllPermissions()
-	out := make([]*pmv1.PermissionInfo, 0, len(all))
+	out := make([]*cadestrov1.PermissionInfo, 0, len(all))
 	for _, p := range all {
-		out = append(out, &pmv1.PermissionInfo{
+		out = append(out, &cadestrov1.PermissionInfo{
 			Key:         p.Key,
 			Group:       p.Group,
 			Description: p.Description,

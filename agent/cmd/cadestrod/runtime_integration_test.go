@@ -19,18 +19,18 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
 type runtimeStreamService struct {
 	cadestrov1connect.UnimplementedAgentServiceHandler
-	state *pm.SyncState
+	state *cadestrov1.SyncState
 	mu    sync.Mutex
 	syncs chan string
 }
 
-func (s *runtimeStreamService) Stream(ctx context.Context, stream *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+func (s *runtimeStreamService) Stream(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 	for {
 		message, err := stream.Receive()
 		if err != nil {
@@ -38,14 +38,14 @@ func (s *runtimeStreamService) Stream(ctx context.Context, stream *connect.BidiS
 		}
 		switch {
 		case message.GetHello() != nil:
-			if err := stream.Send(&pm.ServerMessage{Id: message.Id, Payload: &pm.ServerMessage_Welcome{Welcome: &pm.Welcome{}}}); err != nil {
+			if err := stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}}); err != nil {
 				return err
 			}
 		case message.GetSyncRequest() != nil:
 			s.mu.Lock()
 			s.syncs <- message.Id
 			s.mu.Unlock()
-			if err := stream.Send(&pm.ServerMessage{Id: message.Id, Payload: &pm.ServerMessage_SyncState{SyncState: s.state}}); err != nil {
+			if err := stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_SyncState{SyncState: s.state}}); err != nil {
 				return err
 			}
 		}
@@ -58,7 +58,7 @@ type runtimeLoopback struct {
 	close   func()
 }
 
-func newRuntimeLoopback(t *testing.T, state *pm.SyncState) *runtimeLoopback {
+func newRuntimeLoopback(t *testing.T, state *cadestrov1.SyncState) *runtimeLoopback {
 	t.Helper()
 	probe, err := net.Listen("tcp", "127.0.0.1:0")
 	if errors.Is(err, syscall.EPERM) {
@@ -101,7 +101,7 @@ func testRuntimeScheduler(t *testing.T) *scheduler.Scheduler {
 }
 
 func TestPeriodicSyncLiveTriggerSendsFullSync(t *testing.T) {
-	loopback := newRuntimeLoopback(t, &pm.SyncState{})
+	loopback := newRuntimeLoopback(t, &cadestrov1.SyncState{})
 	t.Cleanup(loopback.close)
 	trigger := make(chan struct{}, 1)
 	updates := make(chan time.Duration, 1)
@@ -117,7 +117,7 @@ func TestPeriodicSyncLiveTriggerSendsFullSync(t *testing.T) {
 }
 
 func TestPeriodicSyncPropagatesServerInterval(t *testing.T) {
-	loopback := newRuntimeLoopback(t, &pm.SyncState{SyncIntervalMinutes: 7})
+	loopback := newRuntimeLoopback(t, &cadestrov1.SyncState{SyncIntervalMinutes: 7})
 	t.Cleanup(loopback.close)
 	trigger := make(chan struct{}, 1)
 	updates := make(chan time.Duration, 1)
@@ -139,7 +139,7 @@ func TestPeriodicSyncPropagatesServerInterval(t *testing.T) {
 }
 
 func TestPeriodicSyncRenewalRunsBeforeSync(t *testing.T) {
-	loopback := newRuntimeLoopback(t, &pm.SyncState{})
+	loopback := newRuntimeLoopback(t, &cadestrov1.SyncState{})
 	t.Cleanup(loopback.close)
 	trigger := make(chan struct{}, 1)
 	before := make(chan struct{}, 1)
@@ -166,9 +166,9 @@ func TestSyncPendingResultsPreservesFailedResultForRetry(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
-	delivery := &pm.ManifestDelivery{
+	delivery := &cadestrov1.ManifestDelivery{
 		DeliveryId: "01K00000000000000000000011",
-		Manifest:   &pm.Manifest{ManifestId: "01K00000000000000000000012", Schedule: &pm.ActionSchedule{RunOnAssign: true}, Occurrences: []*pm.ManifestOccurrence{{OccurrenceId: "01K00000000000000000000013", Action: &pm.Action{Id: &pm.ActionId{Value: "01K00000000000000000000014"}}}}},
+		Manifest:   &cadestrov1.Manifest{ManifestId: "01K00000000000000000000012", Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true}, Occurrences: []*cadestrov1.ManifestOccurrence{{OccurrenceId: "01K00000000000000000000013", Action: &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: "01K00000000000000000000014"}}}}},
 	}
 	_, err = st.RecordManifestDelivery(context.Background(), delivery)
 	require.NoError(t, err)

@@ -12,7 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -36,7 +36,7 @@ var (
 type InsertParams struct {
 	OperationID string
 	DeviceID    string
-	Manifest    *pmv1.Manifest
+	Manifest    *cadestrov1.Manifest
 	AvailableAt time.Time
 }
 
@@ -69,7 +69,7 @@ func InsertInTx(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, p I
 	return deliveryID, nil
 }
 
-func validManifest(manifest *pmv1.Manifest) bool {
+func validManifest(manifest *cadestrov1.Manifest) bool {
 	if protovalidate.Validate(manifest) != nil {
 		return false
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/compliance"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -110,11 +110,11 @@ func recordComplianceFinding(ctx context.Context, tx *store.Tx, rec *store.Audit
 // spent, measured against the check that produced the finding.
 func ruleStatus(compliant bool, firstFailedAt *time.Time, graceHours int32, checkedAt time.Time) int32 {
 	if compliant {
-		return int32(pmv1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT)
+		return int32(cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT)
 	}
 	if firstFailedAt != nil && graceHours > 0 &&
 		checkedAt.Before(firstFailedAt.Add(time.Duration(graceHours)*time.Hour)) {
-		return int32(pmv1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD)
+		return int32(cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD)
 	}
-	return int32(pmv1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT)
+	return int32(cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT)
 }

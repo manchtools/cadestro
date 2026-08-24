@@ -13,7 +13,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -63,7 +63,7 @@ type auditExportRow struct {
 
 // ListAuditEvents reads the dedicated append-only operation/effect log. It
 // never consults the abolished domain event store.
-func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[pmv1.ListAuditEventsRequest]) (*connect.Response[pmv1.ListAuditEventsResponse], error) {
+func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[cadestrov1.ListAuditEventsRequest]) (*connect.Response[cadestrov1.ListAuditEventsResponse], error) {
 	if err := validateAuditFilters(ctx, req.Msg.ActorId, []string{req.Msg.StreamType}, req.Msg.EventType); err != nil {
 		return nil, err
 	}
@@ -111,14 +111,14 @@ func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[pmv
 	if count > math.MaxInt32 {
 		count = math.MaxInt32
 	}
-	return connect.NewResponse(&pmv1.ListAuditEventsResponse{
+	return connect.NewResponse(&cadestrov1.ListAuditEventsResponse{
 		Events: events, NextPageToken: next, TotalCount: int32(count),
 	}), nil
 }
 
 // ExportAuditEvents returns one bounded CSV or JSON fragment and records the
 // protected read before any bytes are returned to the caller.
-func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[pmv1.ExportAuditEventsRequest]) (*connect.Response[pmv1.ExportAuditEventsResponse], error) {
+func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[cadestrov1.ExportAuditEventsRequest]) (*connect.Response[cadestrov1.ExportAuditEventsResponse], error) {
 	if err := validateAuditFilters(ctx, req.Msg.ActorId, req.Msg.StreamTypes, req.Msg.EventType); err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[p
 	if hasMore {
 		next = strconv.FormatInt(rows[len(rows)-1].ChainSeq, 10)
 	}
-	return connect.NewResponse(&pmv1.ExportAuditEventsResponse{Chunk: chunk, NextPageToken: next}), nil
+	return connect.NewResponse(&cadestrov1.ExportAuditEventsResponse{Chunk: chunk, NextPageToken: next}), nil
 }
 
 func validateAuditFilters(ctx context.Context, actorID string, streamTypes []string, eventType string) error {
@@ -242,8 +242,8 @@ func auditDateBounds(ctx context.Context, from, to *timestamppb.Timestamp) (time
 	return lower, upper, nil
 }
 
-func auditRowsToProto(rows []store.AuditEventRow) ([]*pmv1.AuditEvent, error) {
-	events := make([]*pmv1.AuditEvent, len(rows))
+func auditRowsToProto(rows []store.AuditEventRow) ([]*cadestrov1.AuditEvent, error) {
+	events := make([]*cadestrov1.AuditEvent, len(rows))
 	for i, row := range rows {
 		data, err := json.Marshal(auditEventData{
 			OperationID: row.OperationID, OperationClass: row.OperationClass,
@@ -259,7 +259,7 @@ func auditRowsToProto(rows []store.AuditEventRow) ([]*pmv1.AuditEvent, error) {
 		if err != nil {
 			return nil, err
 		}
-		events[i] = &pmv1.AuditEvent{
+		events[i] = &cadestrov1.AuditEvent{
 			Id: row.ID, EventType: row.EventType, StreamType: row.StreamType,
 			StreamId: row.StreamID, ActorType: row.ActorType, ActorId: row.ActorID,
 			Data: string(data), OccurredAt: timestamppb.New(row.OccurredAt),
@@ -268,7 +268,7 @@ func auditRowsToProto(rows []store.AuditEventRow) ([]*pmv1.AuditEvent, error) {
 	return events, nil
 }
 
-func encodeAuditExport(events []*pmv1.AuditEvent, format string, first, last bool) ([]byte, error) {
+func encodeAuditExport(events []*cadestrov1.AuditEvent, format string, first, last bool) ([]byte, error) {
 	rows := make([]auditExportRow, len(events))
 	for i, event := range events {
 		rows[i] = auditExportRow{

@@ -11,7 +11,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
@@ -96,7 +96,7 @@ func normalizePin(pin string) (string, error) {
 }
 
 // Enroll registers the agent with the PM server using the provided token.
-func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.EnrollRequest]) (*connect.Response[pm.EnrollResponse], error) {
+func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestrov1.EnrollRequest]) (*connect.Response[cadestrov1.EnrollResponse], error) {
 	// Rate limiting: max 5 attempts per minute
 	h.rateMu.Lock()
 	now := h.now()
@@ -114,7 +114,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 
 	if count > 5 {
 		h.logger.Warn("enrollment rate limit exceeded")
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   "rate limit exceeded, try again later",
 		}), nil
@@ -129,14 +129,14 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	h.logger.Info("enrollment request received", "server_url", req.Msg.ServerUrl)
 
 	if req.Msg.ServerUrl == "" || req.Msg.Token == "" {
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   "server_url and token are required",
 		}), nil
 	}
 	pin, err := normalizePin(req.Msg.CaFingerprintPin)
 	if err != nil {
-		return connect.NewResponse(&pm.EnrollResponse{Success: false, Error: err.Error()}), nil
+		return connect.NewResponse(&cadestrov1.EnrollResponse{Success: false, Error: err.Error()}), nil
 	}
 
 	// https-only gate (WS9 #2/#16): refuse a cleartext or malformed
@@ -144,7 +144,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	// agent has no trust anchor yet, so a non-TLS endpoint would let a
 	// MITM substitute the control URL and a malicious CA.
 	if err := sdk.ValidateHTTPSURL(req.Msg.ServerUrl); err != nil {
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   fmt.Sprintf("server_url must be an https URL: %v", err),
 		}), nil
@@ -157,7 +157,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	if h.credStore.Exists() {
 		creds, err := h.credStore.Load()
 		if err != nil {
-			return connect.NewResponse(&pm.EnrollResponse{
+			return connect.NewResponse(&cadestrov1.EnrollResponse{
 				Success: false,
 				Error:   fmt.Sprintf("failed to load credentials: %v", err),
 			}), nil
@@ -166,7 +166,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 			csrPEM = append([]byte(nil), creds.PendingCSR...)
 			keyPEM = append([]byte(nil), creds.PendingPrivateKey...)
 		} else {
-			return connect.NewResponse(&pm.EnrollResponse{
+			return connect.NewResponse(&cadestrov1.EnrollResponse{
 				Success:  true,
 				DeviceId: creds.DeviceID,
 				Error:    "agent is already enrolled",
@@ -180,7 +180,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 		csrPEM, keyPEM, err = pmcrypto.GenerateCSR(h.hostname)
 		if err != nil {
 			h.logger.Error("failed to generate CSR", "error", err)
-			return connect.NewResponse(&pm.EnrollResponse{
+			return connect.NewResponse(&cadestrov1.EnrollResponse{
 				Success: false,
 				Error:   fmt.Sprintf("failed to generate CSR: %v", err),
 			}), nil
@@ -193,7 +193,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 			PendingCSR:        csrPEM,
 		}); err != nil {
 			h.logger.Error("failed to save pending enrollment identity", "error", err)
-			return connect.NewResponse(&pm.EnrollResponse{
+			return connect.NewResponse(&cadestrov1.EnrollResponse{
 				Success: false,
 				Error:   fmt.Sprintf("failed to save credentials: %v", err),
 			}), nil
@@ -207,7 +207,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	result, err := sdk.RegisterAgent(ctx, req.Msg.ServerUrl, req.Msg.Token, h.hostname, h.version, csrPEM, registerOpts...)
 	if err != nil {
 		h.logger.Error("registration failed", "error", err)
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   fmt.Sprintf("registration failed: %v", err),
 		}), nil
@@ -215,7 +215,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 
 	// Verify we received CA cert and signed certificate
 	if len(result.CACert) == 0 || len(result.Certificate) == 0 {
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   "server did not provide mTLS certificates",
 		}), nil
@@ -228,7 +228,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	// operators paste it from tools like openssl (uppercase, colon-sep).
 	got, fpErr := pmcrypto.CAFingerprintFromPEM(result.CACert)
 	if fpErr != nil {
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   fmt.Sprintf("cannot fingerprint server CA: %v", fpErr),
 		}), nil
@@ -236,7 +236,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	if !strings.EqualFold(got, pin) {
 		h.logger.Error("enrollment CA fingerprint mismatch — refusing to trust server CA",
 			"expected_pin", pin, "server_ca_fingerprint", got)
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   "CA fingerprint mismatch: the server CA does not match the pinned fingerprint",
 		}), nil
@@ -254,7 +254,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 	// Save credentials
 	if err := h.credStore.Save(creds); err != nil {
 		h.logger.Error("failed to save credentials", "error", err)
-		return connect.NewResponse(&pm.EnrollResponse{
+		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   fmt.Sprintf("failed to save credentials: %v", err),
 		}), nil
@@ -274,7 +274,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 		h.onEnrolled(creds)
 	}
 
-	return connect.NewResponse(&pm.EnrollResponse{
+	return connect.NewResponse(&cadestrov1.EnrollResponse{
 		Success:  true,
 		DeviceId: result.DeviceID,
 	}), nil
@@ -288,12 +288,12 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[pm.Enro
 // DoS against the root agent process. We cache the device id after the
 // first successful load and serialize that single load behind statusMu
 // (so a concurrent flood collapses to one derivation, not N).
-func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Request[pm.GetEnrollmentStatusRequest]) (*connect.Response[pm.GetEnrollmentStatusResponse], error) {
+func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Request[cadestrov1.GetEnrollmentStatusRequest]) (*connect.Response[cadestrov1.GetEnrollmentStatusResponse], error) {
 	h.statusMu.Lock()
 	defer h.statusMu.Unlock()
 
 	if h.statusCached {
-		return connect.NewResponse(&pm.GetEnrollmentStatusResponse{
+		return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 			Enrolled: true,
 			DeviceId: h.cachedDeviceID,
 		}), nil
@@ -302,7 +302,7 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 	// Cheap stat; never triggers Argon2id. Not cached so a later
 	// enrollment is still observed.
 	if !h.credStore.Exists() {
-		return connect.NewResponse(&pm.GetEnrollmentStatusResponse{
+		return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 			Enrolled: false,
 		}), nil
 	}
@@ -313,14 +313,14 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 		// Pending enrollment material is deliberately not an active identity.
 		// Don't cache the failure: a transient decrypt error shouldn't
 		// pin "not enrolled" for the process lifetime.
-		return connect.NewResponse(&pm.GetEnrollmentStatusResponse{
+		return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 			Enrolled: false,
 		}), nil
 	}
 
 	h.cachedDeviceID = creds.DeviceID
 	h.statusCached = true
-	return connect.NewResponse(&pm.GetEnrollmentStatusResponse{
+	return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 		Enrolled: true,
 		DeviceId: creds.DeviceID,
 	}), nil

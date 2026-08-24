@@ -6,7 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -49,7 +49,7 @@ func (h *Handlers) mintSession(ctx context.Context, userID, email string, sessio
 // and then revoked BEFORE the replacement is minted — a conditional
 // insert, so two concurrent presentations of the same token cannot both
 // produce a new session.
-func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[pmv1.RefreshTokenRequest]) (*connect.Response[pmv1.RefreshTokenResponse], error) {
+func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[cadestrov1.RefreshTokenRequest]) (*connect.Response[cadestrov1.RefreshTokenResponse], error) {
 
 	result, err := h.jwt.ValidateRefreshToken(req.Msg.RefreshToken, func(jti string) (bool, error) {
 		return h.store.IsTokenRevoked(ctx, jti)
@@ -87,7 +87,7 @@ func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[pmv1.R
 	if err != nil {
 		return nil, internalError(ctx, "failed to issue session")
 	}
-	return connect.NewResponse(&pmv1.RefreshTokenResponse{
+	return connect.NewResponse(&cadestrov1.RefreshTokenResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 		ExpiresAt:    timestampValue(tokens.ExpiresAt),
@@ -101,10 +101,10 @@ func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[pmv1.R
 // described as "make sure this is dead", and reporting that a presented
 // value was not a real token tells an unauthenticated caller something
 // about it. The response is identical either way.
-func (h *Handlers) Logout(ctx context.Context, req *connect.Request[pmv1.LogoutRequest]) (*connect.Response[pmv1.LogoutResponse], error) {
+func (h *Handlers) Logout(ctx context.Context, req *connect.Request[cadestrov1.LogoutRequest]) (*connect.Response[cadestrov1.LogoutResponse], error) {
 	claims, err := h.jwt.ValidateToken(req.Msg.RefreshToken, auth.TokenTypeRefresh)
 	if err != nil {
-		return connect.NewResponse(&pmv1.LogoutResponse{}), nil
+		return connect.NewResponse(&cadestrov1.LogoutResponse{}), nil
 	}
 	var exp time.Time
 	if claims.ExpiresAt != nil {
@@ -113,7 +113,7 @@ func (h *Handlers) Logout(ctx context.Context, req *connect.Request[pmv1.LogoutR
 	if _, err := h.revokeRefreshToken(ctx, req, claims.ID, exp, claims.UserID, "LOGOUT"); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.LogoutResponse{}), nil
+	return connect.NewResponse(&cadestrov1.LogoutResponse{}), nil
 }
 
 // revokeRefreshToken records a session token id on the revocation list
@@ -218,7 +218,7 @@ func (h *Handlers) rejectSession(ctx context.Context, req connect.AnyRequest, ms
 // It is the one user read with no permission target: the caller is the
 // resource. A principal that is not a subject — the reserved bootstrap
 // principal — has no record to return and gets not-found.
-func (h *Handlers) GetCurrentUser(ctx context.Context, req *connect.Request[pmv1.GetCurrentUserRequest]) (*connect.Response[pmv1.GetCurrentUserResponse], error) {
+func (h *Handlers) GetCurrentUser(ctx context.Context, req *connect.Request[cadestrov1.GetCurrentUserRequest]) (*connect.Response[cadestrov1.GetCurrentUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -237,5 +237,5 @@ func (h *Handlers) GetCurrentUser(ctx context.Context, req *connect.Request[pmv1
 		}
 		return nil, internalError(ctx, "failed to load user")
 	}
-	return connect.NewResponse(&pmv1.GetCurrentUserResponse{User: userToProto(view)}), nil
+	return connect.NewResponse(&cadestrov1.GetCurrentUserResponse{User: userToProto(view)}), nil
 }

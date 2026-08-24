@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
@@ -37,14 +37,14 @@ func newManifestFixture(t *testing.T) *manifestFixture {
 		VALUES
 			($1, 'first', $3, 1, '{}', 30, '{"runOnAssign":true}', CURRENT_TIMESTAMP),
 			($2, 'second', $4, 2, '{}', 60, '{"cron":"0 3 * * *"}', CURRENT_TIMESTAMP)
-	`, action1, action2, int32(pmv1.ActionType_ACTION_TYPE_UPDATE), int32(pmv1.ActionType_ACTION_TYPE_UPDATE))
+	`, action1, action2, int32(cadestrov1.ActionType_ACTION_TYPE_UPDATE), int32(cadestrov1.ActionType_ACTION_TYPE_UPDATE))
 	require.NoError(t, err)
 	set1, set2 := newID(), newID()
 	_, err = raw.Exec(ctx, `
 		INSERT INTO action_sets (id, name, schedule, on_failure, created_at) VALUES
 			($1, 'daily', '{"cron":"0 4 * * *"}', $3, CURRENT_TIMESTAMP),
 			($2, 'on assign', '{"runOnAssign":true}', $4, CURRENT_TIMESTAMP)
-	`, set1, set2, int32(pmv1.OnFailure_ON_FAILURE_STOP), int32(pmv1.OnFailure_ON_FAILURE_CONTINUE))
+	`, set1, set2, int32(cadestrov1.OnFailure_ON_FAILURE_STOP), int32(cadestrov1.OnFailure_ON_FAILURE_CONTINUE))
 	require.NoError(t, err)
 	_, err = raw.Exec(ctx, `
 		INSERT INTO action_set_members (set_id, action_id, sort_order, added_at) VALUES
@@ -77,7 +77,7 @@ func TestManifestCompiler_ActionCreatesSingleton(t *testing.T) {
 	assert.Empty(t, got.Provenance.ActionSetId)
 	assert.True(t, got.Schedule.RunOnAssign)
 	assert.Equal(t, f.action1, got.Occurrences[0].Action.Id.Value)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_CONTINUE, got.Occurrences[0].OnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_CONTINUE, got.Occurrences[0].OnFailure)
 }
 
 func TestManifestCompiler_ActionSetFlattensInAuthoredOrder(t *testing.T) {
@@ -86,12 +86,12 @@ func TestManifestCompiler_ActionSetFlattensInAuthoredOrder(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, f.set1, got.Provenance.ActionSetId)
 	assert.Equal(t, "0 4 * * *", got.Schedule.Cron)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, got.DefaultOnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, got.DefaultOnFailure)
 	require.Len(t, got.Occurrences, 2)
 	assert.Equal(t, f.action1, got.Occurrences[0].Action.Id.Value)
 	assert.Equal(t, f.action2, got.Occurrences[1].Action.Id.Value)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, got.Occurrences[0].OnFailure)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, got.Occurrences[1].OnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, got.Occurrences[0].OnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, got.Occurrences[1].OnFailure)
 	assert.NotEqual(t, got.Occurrences[0].OccurrenceId, got.Occurrences[1].OccurrenceId)
 }
 
@@ -108,10 +108,10 @@ func TestManifestCompiler_DefinitionFlattensGlobalOrderAndPolicies(t *testing.T)
 		got.Occurrences[0].Action.Id.Value, got.Occurrences[1].Action.Id.Value,
 		got.Occurrences[2].Action.Id.Value,
 	}, "definition member order precedes each set's authored action order")
-	assert.Equal(t, []pmv1.OnFailure{
-		pmv1.OnFailure_ON_FAILURE_CONTINUE, pmv1.OnFailure_ON_FAILURE_STOP,
-		pmv1.OnFailure_ON_FAILURE_STOP,
-	}, []pmv1.OnFailure{
+	assert.Equal(t, []cadestrov1.OnFailure{
+		cadestrov1.OnFailure_ON_FAILURE_CONTINUE, cadestrov1.OnFailure_ON_FAILURE_STOP,
+		cadestrov1.OnFailure_ON_FAILURE_STOP,
+	}, []cadestrov1.OnFailure{
 		got.Occurrences[0].OnFailure, got.Occurrences[1].OnFailure,
 		got.Occurrences[2].OnFailure,
 	})
@@ -143,11 +143,11 @@ func TestManifestCompiler_DefinitionSkipsEmptyAndDeletedMembers(t *testing.T) {
 		"a definition with only empty or deleted members has no executable runbook")
 }
 
-func dispatchableAction() *pmv1.Action {
-	return &pmv1.Action{
-		Id: &pmv1.ActionId{Value: newID()}, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
-		Params: &pmv1.Action_Shell{Shell: &pmv1.ShellParams{Script: "printf once"}},
+func dispatchableAction() *cadestrov1.Action {
+	return &cadestrov1.Action{
+		Id: &cadestrov1.ActionId{Value: newID()}, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
+		Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "printf once"}},
 	}
 }
 
@@ -176,7 +176,7 @@ func TestManifestCompiler_AssignedCompilationIsNotOneShot(t *testing.T) {
 		INSERT INTO actions
 			(id, name, action_type, desired_state, params, timeout_seconds, schedule, created_at)
 		VALUES ($1, 'unscheduled', $2, 1, '{}', 30, '{}', CURRENT_TIMESTAMP)
-	`, unscheduled, int32(pmv1.ActionType_ACTION_TYPE_UPDATE))
+	`, unscheduled, int32(cadestrov1.ActionType_ACTION_TYPE_UPDATE))
 	require.NoError(t, err)
 
 	single, err := f.compiler.Action(context.Background(), unscheduled)
@@ -198,7 +198,7 @@ func TestManifestCompiler_RejectsMalformedStoredParams(t *testing.T) {
 	f := newManifestFixture(t)
 	_, err := f.raw.Exec(context.Background(), `
 		UPDATE actions SET action_type = $2, params = '{"unexpected":true}' WHERE id = $1
-	`, f.action2, int32(pmv1.ActionType_ACTION_TYPE_SHELL))
+	`, f.action2, int32(cadestrov1.ActionType_ACTION_TYPE_SHELL))
 	require.NoError(t, err)
 	_, err = f.compiler.Action(context.Background(), f.action2)
 	require.Error(t, err)
@@ -215,7 +215,7 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 	ciphertext, err := atRest.EncryptWithContext(plaintext,
 		pmcrypto.RowAAD(actionID, pmcrypto.PurposeActionEncryptionPresharedKey))
 	require.NoError(t, err)
-	stored, err := actionparams.MarshalActionParams(&pmv1.EncryptionAuthoringParams{
+	stored, err := actionparams.MarshalActionParams(&cadestrov1.EncryptionAuthoringParams{
 		PresharedKey: &ciphertext, RotationIntervalDays: 30, MinWords: 5,
 	})
 	require.NoError(t, err)
@@ -223,8 +223,8 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 		INSERT INTO actions
 			(id, name, action_type, desired_state, params, timeout_seconds, schedule, created_at)
 		VALUES ($1, 'encrypted disk', $2, $3, $4, 300, '{}', CURRENT_TIMESTAMP)`,
-		actionID, int32(pmv1.ActionType_ACTION_TYPE_ENCRYPTION),
-		int32(pmv1.DesiredState_DESIRED_STATE_PRESENT), stored)
+		actionID, int32(cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION),
+		int32(cadestrov1.DesiredState_DESIRED_STATE_PRESENT), stored)
 	require.NoError(t, err)
 
 	compiled, err := manifest.New(st).Action(ctx, actionID)
@@ -252,16 +252,16 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 		assert.False(t, strings.Contains(value, plaintext), name)
 		assert.False(t, strings.Contains(value, ciphertext), name)
 	}
-	var persisted pmv1.EncryptionParams
+	var persisted cadestrov1.EncryptionParams
 	require.NoError(t, protojson.Unmarshal([]byte(executionParams), &persisted))
 	assert.Equal(t, catalogCiphertext, persisted.GetPresharedKey())
 
-	outbound := proto.Clone(compiled).(*pmv1.Manifest)
+	outbound := proto.Clone(compiled).(*cadestrov1.Manifest)
 	require.NoError(t, manifest.MaterializeSecrets(outbound, atRest))
 	assert.Equal(t, []byte(plaintext), outbound.Occurrences[0].Action.GetEncryption().PresharedKey)
 	assert.Equal(t, catalogCiphertext, compiled.Occurrences[0].Action.GetEncryption().PresharedKey,
 		"materialization must not mutate the durable compiler output")
-	tampered := proto.Clone(compiled).(*pmv1.Manifest)
+	tampered := proto.Clone(compiled).(*cadestrov1.Manifest)
 	tampered.Occurrences[0].Action.Id.Value = newID()
 	assert.Error(t, manifest.MaterializeSecrets(tampered, atRest), "the action id is part of the at-rest AAD")
 }

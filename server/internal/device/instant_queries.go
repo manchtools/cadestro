@@ -12,7 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -26,7 +26,7 @@ const (
 
 // DispatchOSQuery creates the pollable SQLite result before sending one
 // unsigned query frame over the authenticated agent stream.
-func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[pmv1.DispatchOSQueryRequest]) (*connect.Response[pmv1.DispatchOSQueryResponse], error) {
+func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cadestrov1.DispatchOSQueryRequest]) (*connect.Response[cadestrov1.DispatchOSQueryResponse], error) {
 	hasTable := strings.TrimSpace(req.Msg.Table) != ""
 	hasRawSQL := strings.TrimSpace(req.Msg.RawSql) != ""
 	if hasTable == hasRawSQL {
@@ -62,9 +62,9 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[pmv
 		return nil, h.internal(ctx, "commit OS query", err)
 	}
 
-	err = h.agentSender.Send(req.Msg.DeviceId, &pmv1.ServerMessage{
+	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: queryID,
-		Payload: &pmv1.ServerMessage_Query{Query: &pmv1.OSQuery{
+		Payload: &cadestrov1.ServerMessage_Query{Query: &cadestrov1.OSQuery{
 			QueryId: queryID, Table: req.Msg.Table, Columns: req.Msg.Columns,
 			Limit: req.Msg.Limit, RawSql: req.Msg.RawSql,
 		}},
@@ -75,12 +75,12 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[pmv
 		}
 		return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 	}
-	return connect.NewResponse(&pmv1.DispatchOSQueryResponse{QueryId: queryID}), nil
+	return connect.NewResponse(&cadestrov1.DispatchOSQueryResponse{QueryId: queryID}), nil
 }
 
 // QueryDeviceLogs creates the pollable SQLite result before sending one
 // journal query over the authenticated agent stream.
-func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[pmv1.QueryDeviceLogsRequest]) (*connect.Response[pmv1.QueryDeviceLogsResponse], error) {
+func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cadestrov1.QueryDeviceLogsRequest]) (*connect.Response[cadestrov1.QueryDeviceLogsResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -107,9 +107,9 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[pmv
 		return nil, h.internal(ctx, "commit log query", err)
 	}
 
-	err = h.agentSender.Send(req.Msg.DeviceId, &pmv1.ServerMessage{
+	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: queryID,
-		Payload: &pmv1.ServerMessage_LogQuery{LogQuery: &pmv1.LogQuery{
+		Payload: &cadestrov1.ServerMessage_LogQuery{LogQuery: &cadestrov1.LogQuery{
 			QueryId: queryID, Lines: req.Msg.Lines, Unit: req.Msg.Unit,
 			Since: req.Msg.Since, Until: req.Msg.Until, Priority: req.Msg.Priority,
 			Grep: req.Msg.Grep, Kernel: req.Msg.Kernel,
@@ -121,12 +121,12 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[pmv
 		}
 		return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 	}
-	return connect.NewResponse(&pmv1.QueryDeviceLogsResponse{QueryId: queryID}), nil
+	return connect.NewResponse(&cadestrov1.QueryDeviceLogsResponse{QueryId: queryID}), nil
 }
 
 // RefreshDeviceInventory sends one immediate collection request. Periodic
 // inventory remains an agent decision; this path is only the operator trigger.
-func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Request[pmv1.RefreshDeviceInventoryRequest]) (*connect.Response[pmv1.RefreshDeviceInventoryResponse], error) {
+func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Request[cadestrov1.RefreshDeviceInventoryRequest]) (*connect.Response[cadestrov1.RefreshDeviceInventoryResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -145,14 +145,14 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, h.internal(ctx, "record inventory refresh", err)
 	}
-	err = h.agentSender.Send(req.Msg.DeviceId, &pmv1.ServerMessage{
+	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: requestID,
-		Payload: &pmv1.ServerMessage_RequestInventory{
-			RequestInventory: &pmv1.RequestInventory{QueryId: requestID},
+		Payload: &cadestrov1.ServerMessage_RequestInventory{
+			RequestInventory: &cadestrov1.RequestInventory{QueryId: requestID},
 		},
 	})
 	if err == nil {
-		return connect.NewResponse(&pmv1.RefreshDeviceInventoryResponse{}), nil
+		return connect.NewResponse(&cadestrov1.RefreshDeviceInventoryResponse{}), nil
 	}
 	_, auditErr := h.store.WithAuditEffects(ctx, record.OperationID,
 		func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {
@@ -169,7 +169,7 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 }
 
 // CompleteOSQueryResult commits an authenticated agent's result directly.
-func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, result *pmv1.OSQueryResult) error {
+func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, result *cadestrov1.OSQueryResult) error {
 	if result == nil {
 		return errors.New("OS query result is required")
 	}
@@ -210,7 +210,7 @@ func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, r
 }
 
 // CompleteLogQueryResult commits an authenticated agent's bounded log result.
-func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, result *pmv1.LogQueryResult) error {
+func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, result *cadestrov1.LogQueryResult) error {
 	if result == nil {
 		return errors.New("log query result is required")
 	}
@@ -240,7 +240,7 @@ func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, 
 }
 
 // StoreDeviceInventory replaces each reported table in one audited transaction.
-func (h *Handlers) StoreDeviceInventory(ctx context.Context, deviceID string, inventory *pmv1.DeviceInventory) error {
+func (h *Handlers) StoreDeviceInventory(ctx context.Context, deviceID string, inventory *cadestrov1.DeviceInventory) error {
 	if inventory == nil {
 		return errors.New("device inventory is required")
 	}

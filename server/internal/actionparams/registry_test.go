@@ -7,22 +7,22 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func TestEveryActionTypeUsesOneParamsRegistry(t *testing.T) {
-	require.NotEmpty(t, pm.ActionType_name)
+	require.NotEmpty(t, cadestrov1.ActionType_name)
 	ok, detail := registryFieldsAreValid(
-		&pm.Action{}, &pm.ManagedAction{}, &pm.CreateActionRequest{}, &pm.UpdateActionParamsRequest{},
+		&cadestrov1.Action{}, &cadestrov1.ManagedAction{}, &cadestrov1.CreateActionRequest{}, &cadestrov1.UpdateActionParamsRequest{},
 	)
 	require.Truef(t, ok, "registry inconsistent with the contract: %s", detail)
 
-	for value, name := range pm.ActionType_name {
-		actionType := pm.ActionType(value)
+	for value, name := range cadestrov1.ActionType_name {
+		actionType := cadestrov1.ActionType(value)
 		t.Run(name, func(t *testing.T) {
-			action := &pm.Action{}
+			action := &cadestrov1.Action{}
 			require.NoError(t, PopulateAction(action, value, []byte(`{}`)))
-			managed := &pm.ManagedAction{}
+			managed := &cadestrov1.ManagedAction{}
 			require.NoError(t, PopulateManagedAction(managed, actionType, []byte(`{}`)))
 
 			_, registered := paramsFieldByActionType[actionType]
@@ -39,7 +39,7 @@ func TestEveryActionTypeUsesOneParamsRegistry(t *testing.T) {
 			managedParams := ExtractParamsMsg(managed)
 			require.NotNil(t, actionParams)
 			require.NotNil(t, managedParams)
-			if actionType == pm.ActionType_ACTION_TYPE_ENCRYPTION || actionType == pm.ActionType_ACTION_TYPE_WIFI {
+			if actionType == cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION || actionType == cadestrov1.ActionType_ACTION_TYPE_WIFI {
 				assert.NotEqual(t, proto.MessageName(actionParams), proto.MessageName(managedParams))
 			} else {
 				assert.Equal(t, proto.MessageName(actionParams), proto.MessageName(managedParams))
@@ -50,12 +50,12 @@ func TestEveryActionTypeUsesOneParamsRegistry(t *testing.T) {
 }
 
 func TestParamsMatchType_RejectsMismatchedOneof(t *testing.T) {
-	mismatch := &pm.Action{}
-	require.NoError(t, PopulateAction(mismatch, int32(pm.ActionType_ACTION_TYPE_SSH), []byte(`{}`)))
-	assert.False(t, ParamsMatchType(mismatch, pm.ActionType_ACTION_TYPE_USER))
-	assert.True(t, ParamsMatchType(mismatch, pm.ActionType_ACTION_TYPE_SSH))
+	mismatch := &cadestrov1.Action{}
+	require.NoError(t, PopulateAction(mismatch, int32(cadestrov1.ActionType_ACTION_TYPE_SSH), []byte(`{}`)))
+	assert.False(t, ParamsMatchType(mismatch, cadestrov1.ActionType_ACTION_TYPE_USER))
+	assert.True(t, ParamsMatchType(mismatch, cadestrov1.ActionType_ACTION_TYPE_SSH))
 
-	empty := &pm.Action{}
-	assert.True(t, ParamsMatchType(empty, pm.ActionType_ACTION_TYPE_UPDATE))
-	assert.False(t, ParamsMatchType(empty, pm.ActionType_ACTION_TYPE_PACKAGE))
+	empty := &cadestrov1.Action{}
+	assert.True(t, ParamsMatchType(empty, cadestrov1.ActionType_ACTION_TYPE_UPDATE))
+	assert.False(t, ParamsMatchType(empty, cadestrov1.ActionType_ACTION_TYPE_PACKAGE))
 }

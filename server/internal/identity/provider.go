@@ -10,7 +10,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -27,7 +27,7 @@ const scimTokenBytes = 32
 // own row, so a database-level attacker cannot relocate it to another
 // provider and have it decrypt. It has no field on the wire in either
 // direction after this call: it is write-only by contract.
-func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Request[pmv1.CreateIdentityProviderRequest]) (*connect.Response[pmv1.CreateIdentityProviderResponse], error) {
+func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.CreateIdentityProviderRequest]) (*connect.Response[cadestrov1.CreateIdentityProviderResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -127,11 +127,11 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 		h.logger.Error("failed to create identity provider", "error", err)
 		return nil, internalError(ctx, "failed to create identity provider")
 	}
-	return connect.NewResponse(&pmv1.CreateIdentityProviderResponse{Provider: h.providerToProto(created)}), nil
+	return connect.NewResponse(&cadestrov1.CreateIdentityProviderResponse{Provider: h.providerToProto(created)}), nil
 }
 
 // GetIdentityProvider returns one provider's configuration.
-func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request[pmv1.GetIdentityProviderRequest]) (*connect.Response[pmv1.GetIdentityProviderResponse], error) {
+func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.GetIdentityProviderRequest]) (*connect.Response[cadestrov1.GetIdentityProviderResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -145,11 +145,11 @@ func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request
 		}
 		return nil, internalError(ctx, "failed to load identity provider")
 	}
-	return connect.NewResponse(&pmv1.GetIdentityProviderResponse{Provider: h.providerToProto(row)}), nil
+	return connect.NewResponse(&cadestrov1.GetIdentityProviderResponse{Provider: h.providerToProto(row)}), nil
 }
 
 // ListIdentityProviders pages the configured providers.
-func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Request[pmv1.ListIdentityProvidersRequest]) (*connect.Response[pmv1.ListIdentityProvidersResponse], error) {
+func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Request[cadestrov1.ListIdentityProvidersRequest]) (*connect.Response[cadestrov1.ListIdentityProvidersResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Reque
 	if err != nil {
 		return nil, internalError(ctx, "failed to count identity providers")
 	}
-	resp := &pmv1.ListIdentityProvidersResponse{TotalCount: int32(total)}
+	resp := &cadestrov1.ListIdentityProvidersResponse{TotalCount: int32(total)}
 	for _, r := range rows {
 		resp.Providers = append(resp.Providers, h.providerToProto(r))
 	}
@@ -181,7 +181,7 @@ func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Reque
 // write-only, so a client that never received it cannot echo it back,
 // and treating empty as "clear it" would silently break every login
 // through that provider.
-func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Request[pmv1.UpdateIdentityProviderRequest]) (*connect.Response[pmv1.UpdateIdentityProviderResponse], error) {
+func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.UpdateIdentityProviderRequest]) (*connect.Response[cadestrov1.UpdateIdentityProviderResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -272,7 +272,7 @@ func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Requ
 		}
 		return nil, internalError(ctx, "failed to update identity provider")
 	}
-	return connect.NewResponse(&pmv1.UpdateIdentityProviderResponse{Provider: h.providerToProto(updated)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateIdentityProviderResponse{Provider: h.providerToProto(updated)}), nil
 }
 
 // validateProviderClientID is the whole client rule that survives the removal
@@ -292,7 +292,7 @@ func validateProviderClientID(ctx context.Context, clientID string) error {
 //
 // The row is retired rather than erased: identity links point at it and
 // must stay resolvable as evidence of who was once bound where.
-func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Request[pmv1.DeleteIdentityProviderRequest]) (*connect.Response[pmv1.DeleteIdentityProviderResponse], error) {
+func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.DeleteIdentityProviderRequest]) (*connect.Response[cadestrov1.DeleteIdentityProviderResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -335,17 +335,17 @@ func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Requ
 		}
 		return nil, internalError(ctx, "failed to delete identity provider")
 	}
-	return connect.NewResponse(&pmv1.DeleteIdentityProviderResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteIdentityProviderResponse{}), nil
 }
 
 // EnableSCIM turns on directory provisioning and mints the bearer token
 // the directory will present.
-func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[pmv1.EnableSCIMRequest]) (*connect.Response[pmv1.EnableSCIMResponse], error) {
+func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[cadestrov1.EnableSCIMRequest]) (*connect.Response[cadestrov1.EnableSCIMResponse], error) {
 	token, provider, err := h.setSCIM(ctx, req, req.Msg.Id, PermEnableSCIM, true, "ENABLE_SCIM")
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.EnableSCIMResponse{
+	return connect.NewResponse(&cadestrov1.EnableSCIMResponse{
 		Token:       token,
 		EndpointUrl: h.scimEndpointURL(provider.ID),
 	}), nil
@@ -353,7 +353,7 @@ func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[pmv1.Ena
 
 // RotateSCIMToken replaces the directory's bearer token. The previous
 // token stops working the moment this commits.
-func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[pmv1.RotateSCIMTokenRequest]) (*connect.Response[pmv1.RotateSCIMTokenResponse], error) {
+func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[cadestrov1.RotateSCIMTokenRequest]) (*connect.Response[cadestrov1.RotateSCIMTokenResponse], error) {
 	provider, err := h.store.GetIdentityProvider(ctx, req.Msg.Id)
 	if err == nil && !provider.ScimEnabled {
 		return nil, rpcError(ctx, ErrSCIMNotEnabled, connect.CodeFailedPrecondition, "SCIM is not enabled for this provider")
@@ -362,17 +362,17 @@ func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[pmv
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.RotateSCIMTokenResponse{Token: token}), nil
+	return connect.NewResponse(&cadestrov1.RotateSCIMTokenResponse{Token: token}), nil
 }
 
 // DisableSCIM turns directory provisioning off and clears the stored
 // token digest, so a token issued earlier cannot be replayed if SCIM is
 // later re-enabled.
-func (h *Handlers) DisableSCIM(ctx context.Context, req *connect.Request[pmv1.DisableSCIMRequest]) (*connect.Response[pmv1.DisableSCIMResponse], error) {
+func (h *Handlers) DisableSCIM(ctx context.Context, req *connect.Request[cadestrov1.DisableSCIMRequest]) (*connect.Response[cadestrov1.DisableSCIMResponse], error) {
 	if _, _, err := h.setSCIM(ctx, req, req.Msg.Id, PermDisableSCIM, false, "DISABLE_SCIM"); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.DisableSCIMResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DisableSCIMResponse{}), nil
 }
 
 // setSCIM is the shared body of enable, rotate and disable. Only the

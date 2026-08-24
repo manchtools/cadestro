@@ -8,24 +8,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-func dispatchManifest() *pmv1.Manifest {
+func dispatchManifest() *cadestrov1.Manifest {
 	actionID := newID()
-	return &pmv1.Manifest{
+	return &cadestrov1.Manifest{
 		ManifestId: newID(),
-		Provenance: &pmv1.ManifestProvenance{ActionId: actionID},
-		Schedule:   &pmv1.ActionSchedule{},
-		Occurrences: []*pmv1.ManifestOccurrence{{
+		Provenance: &cadestrov1.ManifestProvenance{ActionId: actionID},
+		Schedule:   &cadestrov1.ActionSchedule{},
+		Occurrences: []*cadestrov1.ManifestOccurrence{{
 			OccurrenceId: newID(),
-			Action: &pmv1.Action{
-				Id: &pmv1.ActionId{Value: actionID}, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
-				DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 60,
+			Action: &cadestrov1.Action{
+				Id: &cadestrov1.ActionId{Value: actionID}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
+				DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 60,
 			},
-			OnFailure: pmv1.OnFailure_ON_FAILURE_CONTINUE,
+			OnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
 		}},
 	}
 }

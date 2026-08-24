@@ -9,10 +9,9 @@ import (
 	"testing"
 	"time"
 
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func TestManager_RegisterGet(t *testing.T) {
@@ -222,7 +221,7 @@ func TestAgent_SendDoesNotBlockForeverOnAStalledDevice(t *testing.T) {
 	stalledDevice(t, agent)
 
 	done := make(chan error, 1)
-	go func() { done <- agent.Send(&pm.ServerMessage{}) }()
+	go func() { done <- agent.Send(&cadestrov1.ServerMessage{}) }()
 
 	select {
 	case err := <-done:
@@ -251,13 +250,13 @@ func TestAgent_StalledDeviceDoesNotBlockAnother(t *testing.T) {
 	stalledDevice(t, stalled)
 
 	var delivered atomic.Int32
-	healthy.write = func(*pm.ServerMessage) error { delivered.Add(1); return nil }
+	healthy.write = func(*cadestrov1.ServerMessage) error { delivered.Add(1); return nil }
 
 	stalledDone := make(chan struct{})
-	go func() { defer close(stalledDone); _ = stalled.Send(&pm.ServerMessage{}) }()
+	go func() { defer close(stalledDone); _ = stalled.Send(&cadestrov1.ServerMessage{}) }()
 	time.Sleep(10 * time.Millisecond) // let the stalled write take its lock
 
-	require.NoError(t, healthy.Send(&pm.ServerMessage{}),
+	require.NoError(t, healthy.Send(&cadestrov1.ServerMessage{}),
 		"a healthy device must be reachable while another is wedged")
 	assert.Equal(t, int32(1), delivered.Load())
 
@@ -278,10 +277,10 @@ func TestAgent_SendAfterTimeoutIsRefusedNotQueued(t *testing.T) {
 
 	writes := stalledDevice(t, agent)
 
-	require.ErrorIs(t, agent.Send(&pm.ServerMessage{}), ErrSendTimeout)
+	require.ErrorIs(t, agent.Send(&cadestrov1.ServerMessage{}), ErrSendTimeout)
 
 	start := time.Now()
-	err := agent.Send(&pm.ServerMessage{})
+	err := agent.Send(&cadestrov1.ServerMessage{})
 	assert.ErrorIs(t, err, ErrAgentNotConnected)
 	assert.Less(t, time.Since(start), SendTimeout,
 		"the retry must be refused immediately, not wait out another timeout")
@@ -312,7 +311,7 @@ func stalledDevice(t *testing.T, a *Agent) *atomic.Int32 {
 		}
 		return nil
 	})
-	a.write = func(*pm.ServerMessage) error {
+	a.write = func(*cadestrov1.ServerMessage) error {
 		writes.Add(1)
 		select {
 		case d := <-deadline:
@@ -338,14 +337,14 @@ func TestAgent_WaitForInFlightSendBlocksUntilTheWriteReleases(t *testing.T) {
 
 	entered := make(chan struct{})
 	release := make(chan struct{})
-	agent.write = func(*pm.ServerMessage) error {
+	agent.write = func(*cadestrov1.ServerMessage) error {
 		close(entered)
 		<-release
 		return nil
 	}
 
 	sendDone := make(chan struct{})
-	go func() { defer close(sendDone); _ = agent.Send(&pm.ServerMessage{}) }()
+	go func() { defer close(sendDone); _ = agent.Send(&cadestrov1.ServerMessage{}) }()
 	<-entered
 
 	waited := make(chan struct{})

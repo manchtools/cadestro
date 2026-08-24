@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
@@ -15,19 +15,19 @@ func TestServerSettings_DirectAuditedCRUD(t *testing.T) {
 	f := newFixture(t)
 	operator := f.seedActor(grant{Permissions: []string{"GetServerSettings", "UpdateServerSettings"}})
 
-	initial, err := f.client.GetServerSettings(f.ctx(), authed(&pmv1.GetServerSettingsRequest{}, operator.Token))
+	initial, err := f.client.GetServerSettings(f.ctx(), authed(&cadestrov1.GetServerSettingsRequest{}, operator.Token))
 	require.NoError(t, err)
 	assert.False(t, initial.Msg.Settings.UserProvisioningEnabled)
 	assert.False(t, initial.Msg.Settings.SshAccessForAll)
 
-	updated, err := f.client.UpdateServerSettings(f.ctx(), authed(&pmv1.UpdateServerSettingsRequest{
+	updated, err := f.client.UpdateServerSettings(f.ctx(), authed(&cadestrov1.UpdateServerSettingsRequest{
 		UserProvisioningEnabled: true, SshAccessForAll: true,
 	}, operator.Token))
 	require.NoError(t, err)
 	assert.True(t, updated.Msg.Settings.UserProvisioningEnabled)
 	assert.True(t, updated.Msg.Settings.SshAccessForAll)
 
-	stored, err := f.client.GetServerSettings(f.ctx(), authed(&pmv1.GetServerSettingsRequest{}, operator.Token))
+	stored, err := f.client.GetServerSettings(f.ctx(), authed(&cadestrov1.GetServerSettingsRequest{}, operator.Token))
 	require.NoError(t, err)
 	assert.Equal(t, updated.Msg.Settings, stored.Msg.Settings)
 

@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
@@ -59,7 +59,7 @@ func New(cfg Config) *Service {
 }
 
 // Sync returns due one-shot work plus the device's current assignment snapshot.
-func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, error) {
+func (s *Service) Sync(ctx context.Context, deviceID string) (*cadestrov1.SyncState, error) {
 	if ctx == nil || !validID(deviceID) {
 		return nil, ErrInvalidInput
 	}
@@ -76,11 +76,11 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 	if err != nil {
 		return nil, err
 	}
-	deliveries := make([]*pmv1.ManifestDelivery, 0, len(rows))
+	deliveries := make([]*cadestrov1.ManifestDelivery, 0, len(rows))
 	for _, row := range rows {
 		// A delivery remains pullable until its terminal result. The stable id
 		// lets the agent absorb repeated Sync responses locally.
-		manifest := &pmv1.Manifest{}
+		manifest := &cadestrov1.Manifest{}
 		if err := protojson.Unmarshal(row.Manifest, manifest); err != nil {
 			return nil, fmt.Errorf("decode delivery %s manifest: %w", row.DeliveryID, err)
 		}
@@ -90,11 +90,11 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 		if err := manifestpkg.MaterializeSecrets(manifest, s.atRest); err != nil {
 			return nil, err
 		}
-		deliveries = append(deliveries, &pmv1.ManifestDelivery{
+		deliveries = append(deliveries, &cadestrov1.ManifestDelivery{
 			DeliveryId: row.DeliveryID, Manifest: manifest,
 		})
 	}
-	var desiredPolicy *pmv1.DesiredPolicy
+	var desiredPolicy *cadestrov1.DesiredPolicy
 	if s.assignments != nil {
 		manifests, err := s.assignments.AssignedPolicy(ctx, deviceID)
 		if err != nil {
@@ -105,7 +105,7 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 				return nil, err
 			}
 		}
-		desiredPolicy = &pmv1.DesiredPolicy{Revision: policyRevision(manifests), Manifests: manifests}
+		desiredPolicy = &cadestrov1.DesiredPolicy{Revision: policyRevision(manifests), Manifests: manifests}
 	}
 	windows, err := s.store.ListDeviceMaintenanceWindows(ctx, deviceID)
 	if err != nil {
@@ -115,7 +115,7 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 	if err != nil {
 		return nil, err
 	}
-	return &pmv1.SyncState{
+	return &cadestrov1.SyncState{
 		SyncIntervalMinutes: device.SyncIntervalMinutes,
 		Deliveries:          deliveries,
 		MaintenanceWindow:   window,
@@ -123,16 +123,16 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*pmv1.SyncState, e
 	}, nil
 }
 
-func policyRevision(manifests []*pmv1.Manifest) string {
-	identity := make([]*pmv1.Manifest, 0, len(manifests))
+func policyRevision(manifests []*cadestrov1.Manifest) string {
+	identity := make([]*cadestrov1.Manifest, 0, len(manifests))
 	for _, manifest := range manifests {
 		if manifest == nil {
 			continue
 		}
-		clone := proto.Clone(manifest).(*pmv1.Manifest)
+		clone := proto.Clone(manifest).(*cadestrov1.Manifest)
 		for _, occurrence := range clone.Occurrences {
 			if occurrence != nil && occurrence.Action != nil {
-				occurrence.Action = &pmv1.Action{
+				occurrence.Action = &cadestrov1.Action{
 					Id: occurrence.Action.Id, Type: occurrence.Action.Type,
 					DesiredState: occurrence.Action.DesiredState,
 				}
@@ -140,7 +140,7 @@ func policyRevision(manifests []*pmv1.Manifest) string {
 		}
 		identity = append(identity, clone)
 	}
-	payload, err := proto.MarshalOptions{Deterministic: true}.Marshal(&pmv1.DesiredPolicy{Manifests: identity})
+	payload, err := proto.MarshalOptions{Deterministic: true}.Marshal(&cadestrov1.DesiredPolicy{Manifests: identity})
 	if err != nil {
 		payload = nil
 	}
@@ -149,10 +149,10 @@ func policyRevision(manifests []*pmv1.Manifest) string {
 	return ulid.ULID(digest[:16]).String()
 }
 
-func unionMaintenanceWindows(rows [][]byte) (*pmv1.MaintenanceWindow, error) {
-	windows := make([]*pmv1.MaintenanceWindow, 0, len(rows))
+func unionMaintenanceWindows(rows [][]byte) (*cadestrov1.MaintenanceWindow, error) {
+	windows := make([]*cadestrov1.MaintenanceWindow, 0, len(rows))
 	for _, row := range rows {
-		window := &pmv1.MaintenanceWindow{}
+		window := &cadestrov1.MaintenanceWindow{}
 		if err := protojson.Unmarshal(row, window); err != nil {
 			return nil, fmt.Errorf("decode maintenance window: %w", err)
 		}

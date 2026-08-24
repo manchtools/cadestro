@@ -8,7 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -20,7 +20,7 @@ var errRevocationStateChanged = errors.New("LUKS revocation state changed")
 // action over the device's authenticated mTLS stream. No queue or application
 // signature is involved: the stream already supplies peer authentication,
 // confidentiality, integrity, ordering, and replay protection.
-func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request[pmv1.RevokeLuksDeviceKeyRequest]) (*connect.Response[pmv1.RevokeLuksDeviceKeyResponse], error) {
+func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request[cadestrov1.RevokeLuksDeviceKeyRequest]) (*connect.Response[cadestrov1.RevokeLuksDeviceKeyResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -65,14 +65,14 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 		return nil, h.internal(ctx, "commit LUKS revocation", err)
 	}
 
-	err = h.agentSender.Send(req.Msg.DeviceId, &pmv1.ServerMessage{
+	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: revocationID,
-		Payload: &pmv1.ServerMessage_RevokeLuksDeviceKey{
-			RevokeLuksDeviceKey: &pmv1.RevokeLuksDeviceKey{ActionId: req.Msg.ActionId},
+		Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
+			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: req.Msg.ActionId},
 		},
 	})
 	if err == nil {
-		return connect.NewResponse(&pmv1.RevokeLuksDeviceKeyResponse{}), nil
+		return connect.NewResponse(&cadestrov1.RevokeLuksDeviceKeyResponse{}), nil
 	}
 
 	failedAt := h.now().UTC()
@@ -97,7 +97,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 
 // CompleteLuksKeyRevocation applies an agent result directly. A replay or stale
 // result updates no row but is still recorded as rejected audit evidence.
-func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID string, result *pmv1.RevokeLuksDeviceKeyResult) error {
+func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID string, result *cadestrov1.RevokeLuksDeviceKeyResult) error {
 	if _, err := ulid.ParseStrict(deviceID); err != nil {
 		return fmt.Errorf("invalid device id: %w", err)
 	}

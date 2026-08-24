@@ -14,7 +14,7 @@ package contract
 import (
 	"testing"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func TestAdminAccessLevel_WireNumbersAreStable(t *testing.T) {
@@ -23,12 +23,12 @@ func TestAdminAccessLevel_WireNumbersAreStable(t *testing.T) {
 		got  int32
 		want int32
 	}{
-		{"UNSPECIFIED", int32(pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED), 0},
-		{"FULL", int32(pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL), 1},
-		{"LIMITED", int32(pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED), 2},
-		{"CUSTOM", int32(pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM), 3},
-		{"TERMINAL_ADMIN_LIMITED", int32(pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED), 4},
-		{"TERMINAL_ADMIN_FULL", int32(pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL), 5},
+		{"UNSPECIFIED", int32(cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED), 0},
+		{"FULL", int32(cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL), 1},
+		{"LIMITED", int32(cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED), 2},
+		{"CUSTOM", int32(cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM), 3},
+		{"TERMINAL_ADMIN_LIMITED", int32(cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED), 4},
+		{"TERMINAL_ADMIN_FULL", int32(cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL), 5},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -44,14 +44,14 @@ func TestAdminAccessLevel_WireNumbersAreStable(t *testing.T) {
 // new names. Both new values must be present and distinct from every
 // older value.
 func TestAdminAccessLevel_TerminalAdminValuesAreDistinct(t *testing.T) {
-	tlim := pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED
-	tfull := pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL
+	tlim := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED
+	tfull := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL
 
-	olds := []pm.AdminAccessLevel{
-		pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED,
-		pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
-		pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED,
-		pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM,
+	olds := []cadestrov1.AdminAccessLevel{
+		cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED,
+		cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
+		cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED,
+		cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM,
 	}
 	for _, o := range olds {
 		if tlim == o {
@@ -70,10 +70,10 @@ func TestAdminAccessLevel_TerminalAdminValuesAreDistinct(t *testing.T) {
 // generated .String() output so a future re-numbering can't drift the
 // human label silently.
 func TestAdminAccessLevel_TerminalAdminValuesHaveStringNames(t *testing.T) {
-	if got := pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED.String(); got != "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED" {
+	if got := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED.String(); got != "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED" {
 		t.Fatalf("TERMINAL_ADMIN_LIMITED.String() = %q; want %q", got, "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED")
 	}
-	if got := pm.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL.String(); got != "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL" {
+	if got := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL.String(); got != "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL" {
 		t.Fatalf("TERMINAL_ADMIN_FULL.String() = %q; want %q", got, "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL")
 	}
 }

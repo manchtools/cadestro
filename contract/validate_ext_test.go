@@ -5,7 +5,7 @@ import (
 
 	"buf.build/go/protovalidate"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func TestUlidOptional_AcceptsEmptyValidRejectsGarbage(t *testing.T) {
@@ -27,7 +27,7 @@ func TestUlidOptional_AcceptsEmptyValidRejectsGarbage(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := v.Validate(&pm.ListUsersRequest{PageToken: tc.pageToken})
+			err := v.Validate(&cadestrov1.ListUsersRequest{PageToken: tc.pageToken})
 			if ok := err == nil; ok != tc.wantOK {
 				t.Fatalf("ListUsersRequest{PageToken: %q} validate = %v (err: %v), want ok=%v", tc.pageToken, ok, err, tc.wantOK)
 			}

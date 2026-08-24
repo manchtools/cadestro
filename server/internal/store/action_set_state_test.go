@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-func createNoParamsAction(t *testing.T, svc *authoring.Service, actionType pmv1.ActionType) store.ActionRow {
+func createNoParamsAction(t *testing.T, svc *authoring.Service, actionType cadestrov1.ActionType) store.ActionRow {
 	t.Helper()
 	op := actionOperation()
 	row, err := svc.CreateAction(context.Background(), op, authoring.CreateActionParams{
@@ -29,17 +29,17 @@ func TestActionSetState_CRUDCompilesAuthoredOrderAndPolicy(t *testing.T) {
 	ctx := context.Background()
 	now := time.Date(2026, 8, 1, 14, 0, 0, 0, time.UTC)
 	svc := authoring.New(authoring.Config{Store: st, Now: func() time.Time { return now }})
-	action1 := createNoParamsAction(t, svc, pmv1.ActionType_ACTION_TYPE_UPDATE)
-	action2 := createNoParamsAction(t, svc, pmv1.ActionType_ACTION_TYPE_UPDATE)
+	action1 := createNoParamsAction(t, svc, cadestrov1.ActionType_ACTION_TYPE_UPDATE)
+	action2 := createNoParamsAction(t, svc, cadestrov1.ActionType_ACTION_TYPE_UPDATE)
 
 	createOp := actionOperation()
 	set, err := svc.CreateActionSet(ctx, createOp, authoring.CreateActionSetParams{
 		Name: "daily baseline", Description: "ordered", CreatedBy: createOp.ActorID,
-		Schedule:  &pmv1.ActionSchedule{Cron: "0 4 * * *"},
-		OnFailure: pmv1.OnFailure_ON_FAILURE_STOP,
+		Schedule:  &cadestrov1.ActionSchedule{Cron: "0 4 * * *"},
+		OnFailure: cadestrov1.OnFailure_ON_FAILURE_STOP,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, int32(pmv1.OnFailure_ON_FAILURE_STOP), set.OnFailure)
+	assert.Equal(t, int32(cadestrov1.OnFailure_ON_FAILURE_STOP), set.OnFailure)
 	var staleCounter bool
 	require.NoError(t, raw.QueryRow(ctx, `
 		SELECT EXISTS (SELECT 1 FROM pragma_table_xinfo('action_sets') WHERE name = 'member_count')
@@ -60,7 +60,7 @@ func TestActionSetState_CRUDCompilesAuthoredOrderAndPolicy(t *testing.T) {
 	require.Len(t, compiled.Occurrences, 2)
 	assert.Equal(t, action1.ID, compiled.Occurrences[0].Action.Id.Value)
 	assert.Equal(t, action2.ID, compiled.Occurrences[1].Action.Id.Value)
-	assert.Equal(t, pmv1.OnFailure_ON_FAILURE_STOP, compiled.DefaultOnFailure)
+	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, compiled.DefaultOnFailure)
 
 	require.NoError(t, svc.ReorderActionInSet(ctx, actionOperation(), set.ID, action2.ID, 0))
 	members, err := st.ListActionSetMembers(ctx, set.ID)
@@ -100,7 +100,7 @@ func TestActionSetState_AuditFailureRollsBackCreate(t *testing.T) {
 	st, _ := setupSQLite(t)
 	svc := authoring.New(authoring.Config{Store: st})
 	_, err := svc.CreateActionSet(context.Background(), store.AuditOperation{}, authoring.CreateActionSetParams{
-		Name: "must not exist", CreatedBy: newID(), Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+		Name: "must not exist", CreatedBy: newID(), Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.Error(t, err)
 	count, err := st.CountActionSets(context.Background())
@@ -113,12 +113,12 @@ func TestActionSetState_RejectsSystemActionMembership(t *testing.T) {
 	svc := authoring.New(authoring.Config{Store: st})
 	setOp := actionOperation()
 	set, err := svc.CreateActionSet(context.Background(), setOp, authoring.CreateActionSetParams{
-		Name: "operator set", CreatedBy: setOp.ActorID, Schedule: &pmv1.ActionSchedule{RunOnAssign: true},
+		Name: "operator set", CreatedBy: setOp.ActorID, Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.NoError(t, err)
 	actionOp := actionOperation()
 	action, err := svc.CreateAction(context.Background(), actionOp, authoring.CreateActionParams{
-		Name: "managed", CreatedBy: actionOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
+		Name: "managed", CreatedBy: actionOp.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)

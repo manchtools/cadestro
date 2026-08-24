@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/searchrpc"
@@ -26,9 +26,9 @@ func TestSQLiteSearchHandlers_ValidateAuthorizeScopeAndAssign(t *testing.T) {
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	h := searchrpc.NewHandlers(st, slog.New(slog.NewTextHandler(io.Discard, nil)), func() time.Time { return now })
 
-	_, err := validated(h.Search)(ctx, connect.NewRequest(&pmv1.SearchRequest{Query: strings.Repeat("x", 1025)}))
+	_, err := validated(h.Search)(ctx, connect.NewRequest(&cadestrov1.SearchRequest{Query: strings.Repeat("x", 1025)}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	_, err = validated(h.Search)(ctx, connect.NewRequest(&pmv1.SearchRequest{Scope: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS}))
+	_, err = validated(h.Search)(ctx, connect.NewRequest(&cadestrov1.SearchRequest{Scope: cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 
 	actorID, groupA, groupB := newID(), newID(), newID()
@@ -60,36 +60,36 @@ func TestSQLiteSearchHandlers_ValidateAuthorizeScopeAndAssign(t *testing.T) {
 	searchOnly := auth.WithUser(ctx, &auth.UserContext{
 		ID: actorID, Kind: auth.PrincipalUser, Permissions: []string{"Search"},
 	})
-	_, err = h.Search(searchOnly, connect.NewRequest(&pmv1.SearchRequest{Scope: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS}))
+	_, err = h.Search(searchOnly, connect.NewRequest(&cadestrov1.SearchRequest{Scope: cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "Search never bypasses the facet's List permission")
 
 	scoped := auth.WithUser(ctx, &auth.UserContext{
 		ID: actorID, Kind: auth.PrincipalUser, Permissions: []string{"Search", "ListActions", "ListDevices"},
 		ScopedGrants: []auth.ScopedGrant{{Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA}},
 	})
-	resp, err := h.Search(scoped, connect.NewRequest(&pmv1.SearchRequest{
-		Scope: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS, Query: "Scoped", SortField: pmv1.SortField_SORT_FIELD_NAME,
-		SortDirection: pmv1.SortDirection_SORT_DIRECTION_ASC,
+	resp, err := h.Search(scoped, connect.NewRequest(&cadestrov1.SearchRequest{
+		Scope: cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS, Query: "Scoped", SortField: cadestrov1.SortField_SORT_FIELD_NAME,
+		SortDirection: cadestrov1.SortDirection_SORT_DIRECTION_ASC,
 	}))
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.Results, 1)
 	assert.Equal(t, actionA, resp.Msg.Results[0].Id)
-	assert.Equal(t, pmv1.SearchScope_SEARCH_SCOPE_ACTIONS, resp.Msg.Results[0].Scope)
+	assert.Equal(t, cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS, resp.Msg.Results[0].Scope)
 	assert.Equal(t, int32(1), resp.Msg.TotalCount)
 
 	assigned := auth.WithUser(ctx, &auth.UserContext{
 		ID: actorID, Kind: auth.PrincipalUser, Permissions: []string{"Search", "ListDevices:assigned"},
 	})
-	resp, err = h.Search(assigned, connect.NewRequest(&pmv1.SearchRequest{
-		Scope: pmv1.SearchScope_SEARCH_SCOPE_DEVICES, PageSize: 200,
+	resp, err = h.Search(assigned, connect.NewRequest(&cadestrov1.SearchRequest{
+		Scope: cadestrov1.SearchScope_SEARCH_SCOPE_DEVICES, PageSize: 200,
 	}))
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.Results, 1)
 	assert.Equal(t, deviceA, resp.Msg.Results[0].Id)
 	assert.Equal(t, int32(1), resp.Msg.TotalCount)
 
-	_, err = h.Search(scoped, connect.NewRequest(&pmv1.SearchRequest{
-		Scope: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS, PageToken: "-1",
+	_, err = h.Search(scoped, connect.NewRequest(&cadestrov1.SearchRequest{
+		Scope: cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS, PageToken: "-1",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
@@ -116,8 +116,8 @@ func TestSQLiteSearchHandlers_AuditSearchAndRebuildRecordEvidence(t *testing.T) 
 		ID: actorID, Kind: auth.PrincipalUser,
 		Permissions: []string{"Search", "ListAuditEvents", "RebuildSearchIndex"},
 	})
-	resp, err := h.Search(auditor, connect.NewRequest(&pmv1.SearchRequest{
-		Scope: pmv1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS, Query: "DeleteAction",
+	resp, err := h.Search(auditor, connect.NewRequest(&cadestrov1.SearchRequest{
+		Scope: cadestrov1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS, Query: "DeleteAction",
 	}))
 	require.NoError(t, err)
 	require.NotEmpty(t, resp.Msg.Results)
@@ -134,7 +134,7 @@ func TestSQLiteSearchHandlers_AuditSearchAndRebuildRecordEvidence(t *testing.T) 
 	assert.Equal(t, "SEARCH", effectAction)
 	assert.Equal(t, int64(len(resp.Msg.Results)), returned)
 
-	_, err = h.RebuildSearchIndex(auditor, connect.NewRequest(&pmv1.RebuildSearchIndexRequest{}))
+	_, err = h.RebuildSearchIndex(auditor, connect.NewRequest(&cadestrov1.RebuildSearchIndexRequest{}))
 	require.NoError(t, err)
 	err = raw.QueryRow(ctx, `SELECT e.action FROM audit_operations o
 		JOIN audit_effects e ON e.operation_id = o.operation_id

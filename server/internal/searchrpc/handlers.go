@@ -12,7 +12,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -25,45 +25,45 @@ const (
 
 type facet struct {
 	name       string
-	wire       pmv1.SearchScope
+	wire       cadestrov1.SearchScope
 	permission string
 }
 
 var searchFacets = []facet{
-	{name: "actions", wire: pmv1.SearchScope_SEARCH_SCOPE_ACTIONS, permission: "ListActions"},
-	{name: "action_sets", wire: pmv1.SearchScope_SEARCH_SCOPE_ACTION_SETS, permission: "ListActionSets"},
-	{name: "definitions", wire: pmv1.SearchScope_SEARCH_SCOPE_DEFINITIONS, permission: "ListDefinitions"},
-	{name: "compliance_policies", wire: pmv1.SearchScope_SEARCH_SCOPE_COMPLIANCE_POLICIES, permission: "ListCompliancePolicies"},
-	{name: "devices", wire: pmv1.SearchScope_SEARCH_SCOPE_DEVICES, permission: "ListDevices"},
-	{name: "users", wire: pmv1.SearchScope_SEARCH_SCOPE_USERS, permission: "ListUsers"},
-	{name: "device_groups", wire: pmv1.SearchScope_SEARCH_SCOPE_DEVICE_GROUPS, permission: "ListDeviceGroups"},
-	{name: "user_groups", wire: pmv1.SearchScope_SEARCH_SCOPE_USER_GROUPS, permission: "ListUserGroups"},
-	{name: "executions", wire: pmv1.SearchScope_SEARCH_SCOPE_EXECUTIONS, permission: "ListExecutions"},
-	{name: "audit_events", wire: pmv1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS, permission: "ListAuditEvents"},
+	{name: "actions", wire: cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS, permission: "ListActions"},
+	{name: "action_sets", wire: cadestrov1.SearchScope_SEARCH_SCOPE_ACTION_SETS, permission: "ListActionSets"},
+	{name: "definitions", wire: cadestrov1.SearchScope_SEARCH_SCOPE_DEFINITIONS, permission: "ListDefinitions"},
+	{name: "compliance_policies", wire: cadestrov1.SearchScope_SEARCH_SCOPE_COMPLIANCE_POLICIES, permission: "ListCompliancePolicies"},
+	{name: "devices", wire: cadestrov1.SearchScope_SEARCH_SCOPE_DEVICES, permission: "ListDevices"},
+	{name: "users", wire: cadestrov1.SearchScope_SEARCH_SCOPE_USERS, permission: "ListUsers"},
+	{name: "device_groups", wire: cadestrov1.SearchScope_SEARCH_SCOPE_DEVICE_GROUPS, permission: "ListDeviceGroups"},
+	{name: "user_groups", wire: cadestrov1.SearchScope_SEARCH_SCOPE_USER_GROUPS, permission: "ListUserGroups"},
+	{name: "executions", wire: cadestrov1.SearchScope_SEARCH_SCOPE_EXECUTIONS, permission: "ListExecutions"},
+	{name: "audit_events", wire: cadestrov1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS, permission: "ListAuditEvents"},
 }
 
-var sortFields = map[pmv1.SortField]string{
-	pmv1.SortField_SORT_FIELD_NAME:              "name",
-	pmv1.SortField_SORT_FIELD_TYPE:              "type",
-	pmv1.SortField_SORT_FIELD_HOSTNAME:          "hostname",
-	pmv1.SortField_SORT_FIELD_COMPLIANCE_STATUS: "compliance_status",
-	pmv1.SortField_SORT_FIELD_EMAIL:             "email",
-	pmv1.SortField_SORT_FIELD_DISPLAY_NAME:      "display_name",
-	pmv1.SortField_SORT_FIELD_DISABLED:          "disabled",
-	pmv1.SortField_SORT_FIELD_MEMBER_COUNT:      "member_count",
-	pmv1.SortField_SORT_FIELD_STATUS:            "status",
-	pmv1.SortField_SORT_FIELD_ACTION_TYPE:       "action_type",
-	pmv1.SortField_SORT_FIELD_DEVICE_HOSTNAME:   "device_hostname",
-	pmv1.SortField_SORT_FIELD_ACTOR_TYPE:        "actor_type",
-	pmv1.SortField_SORT_FIELD_STREAM_TYPE:       "stream_type",
-	pmv1.SortField_SORT_FIELD_EVENT_TYPE:        "event_type",
-	pmv1.SortField_SORT_FIELD_RULE_COUNT:        "rule_count",
-	pmv1.SortField_SORT_FIELD_LAST_LOGIN_AT:     "last_login_at",
-	pmv1.SortField_SORT_FIELD_CREATED_AT:        "created_at",
-	pmv1.SortField_SORT_FIELD_UPDATED_AT:        "updated_at",
-	pmv1.SortField_SORT_FIELD_LAST_SEEN_AT:      "last_seen_at",
-	pmv1.SortField_SORT_FIELD_REGISTERED_AT:     "registered_at",
-	pmv1.SortField_SORT_FIELD_OCCURRED_AT:       "occurred_at",
+var sortFields = map[cadestrov1.SortField]string{
+	cadestrov1.SortField_SORT_FIELD_NAME:              "name",
+	cadestrov1.SortField_SORT_FIELD_TYPE:              "type",
+	cadestrov1.SortField_SORT_FIELD_HOSTNAME:          "hostname",
+	cadestrov1.SortField_SORT_FIELD_COMPLIANCE_STATUS: "compliance_status",
+	cadestrov1.SortField_SORT_FIELD_EMAIL:             "email",
+	cadestrov1.SortField_SORT_FIELD_DISPLAY_NAME:      "display_name",
+	cadestrov1.SortField_SORT_FIELD_DISABLED:          "disabled",
+	cadestrov1.SortField_SORT_FIELD_MEMBER_COUNT:      "member_count",
+	cadestrov1.SortField_SORT_FIELD_STATUS:            "status",
+	cadestrov1.SortField_SORT_FIELD_ACTION_TYPE:       "action_type",
+	cadestrov1.SortField_SORT_FIELD_DEVICE_HOSTNAME:   "device_hostname",
+	cadestrov1.SortField_SORT_FIELD_ACTOR_TYPE:        "actor_type",
+	cadestrov1.SortField_SORT_FIELD_STREAM_TYPE:       "stream_type",
+	cadestrov1.SortField_SORT_FIELD_EVENT_TYPE:        "event_type",
+	cadestrov1.SortField_SORT_FIELD_RULE_COUNT:        "rule_count",
+	cadestrov1.SortField_SORT_FIELD_LAST_LOGIN_AT:     "last_login_at",
+	cadestrov1.SortField_SORT_FIELD_CREATED_AT:        "created_at",
+	cadestrov1.SortField_SORT_FIELD_UPDATED_AT:        "updated_at",
+	cadestrov1.SortField_SORT_FIELD_LAST_SEEN_AT:      "last_seen_at",
+	cadestrov1.SortField_SORT_FIELD_REGISTERED_AT:     "registered_at",
+	cadestrov1.SortField_SORT_FIELD_OCCURRED_AT:       "occurred_at",
 }
 
 // Handlers implements SQLite FTS5-backed search and its maintenance RPC.
@@ -123,7 +123,7 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, cl
 }
 
 // Search returns one deterministic SQLite FTS5 page per requested facet.
-func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchRequest]) (*connect.Response[pmv1.SearchResponse], error) {
+func (h *Handlers) Search(ctx context.Context, req *connect.Request[cadestrov1.SearchRequest]) (*connect.Response[cadestrov1.SearchResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -133,8 +133,8 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 	}
 
 	query := strings.TrimSpace(req.Msg.Query)
-	if query == "" && req.Msg.Scope == pmv1.SearchScope_SEARCH_SCOPE_UNSPECIFIED && len(req.Msg.DateFilters) == 0 && len(req.Msg.TagFilters) == 0 {
-		return connect.NewResponse(&pmv1.SearchResponse{}), nil
+	if query == "" && req.Msg.Scope == cadestrov1.SearchScope_SEARCH_SCOPE_UNSPECIFIED && len(req.Msg.DateFilters) == 0 && len(req.Msg.TagFilters) == 0 {
+		return connect.NewResponse(&cadestrov1.SearchResponse{}), nil
 	}
 	pageSize := req.Msg.PageSize
 	if pageSize == 0 {
@@ -161,7 +161,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 		tagFilters[field] = strings.Split(value, "|")
 	}
 	sortField := ""
-	if req.Msg.SortField != pmv1.SortField_SORT_FIELD_UNSPECIFIED {
+	if req.Msg.SortField != cadestrov1.SortField_SORT_FIELD_UNSPECIFIED {
 		var ok bool
 		sortField, ok = sortFields[req.Msg.SortField]
 		if !ok {
@@ -169,13 +169,13 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 		}
 	}
 
-	response := &pmv1.SearchResponse{}
+	response := &cadestrov1.SearchResponse{}
 	var total int64
 	var auditCount int64
 	more := false
 	for _, current := range selected {
 		if !h.facetAllowed(ctx, actor, current) {
-			if req.Msg.Scope != pmv1.SearchScope_SEARCH_SCOPE_UNSPECIFIED {
+			if req.Msg.Scope != cadestrov1.SearchScope_SEARCH_SCOPE_UNSPECIFIED {
 				return nil, rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied, "permission denied")
 			}
 			continue
@@ -183,7 +183,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 		params := store.SearchParams{
 			Scope: current.name, Query: query, Offset: offset, Limit: pageSize,
 			DateRanges: dateRanges, TagFilters: tagFilters, SortField: sortField,
-			Descending:  req.Msg.SortDirection != pmv1.SortDirection_SORT_DIRECTION_ASC,
+			Descending:  req.Msg.SortDirection != cadestrov1.SortDirection_SORT_DIRECTION_ASC,
 			OnlineSince: h.now().UTC().Add(-5 * time.Minute),
 		}
 		h.applyScope(ctx, actor, current.name, &params)
@@ -195,7 +195,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 			return nil, h.internal(ctx, "query SQLite", searchErr)
 		}
 		for _, row := range rows {
-			response.Results = append(response.Results, &pmv1.SearchResult{
+			response.Results = append(response.Results, &cadestrov1.SearchResult{
 				Id: row.ID, Name: row.Name, Description: row.Description, Scope: current.wire,
 				MemberCount: boundedInt32(row.MemberCount), Fields: row.Fields,
 			})
@@ -209,7 +209,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 		}
 	}
 
-	if req.Msg.Scope == pmv1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS {
+	if req.Msg.Scope == cadestrov1.SearchScope_SEARCH_SCOPE_AUDIT_EVENTS {
 		op := h.operation(req, actor, store.ClassSensitiveRead,
 			cadestrov1connect.ControlServiceSearchProcedure, "ListAuditEvents")
 		op.OperationID = ulid.Make().String()
@@ -229,7 +229,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[pmv1.SearchR
 
 // RebuildSearchIndex performs explicit physical maintenance on the generated
 // SQLite search indexes and records the operation atomically.
-func (h *Handlers) RebuildSearchIndex(ctx context.Context, req *connect.Request[pmv1.RebuildSearchIndexRequest]) (*connect.Response[pmv1.RebuildSearchIndexResponse], error) {
+func (h *Handlers) RebuildSearchIndex(ctx context.Context, req *connect.Request[cadestrov1.RebuildSearchIndexRequest]) (*connect.Response[cadestrov1.RebuildSearchIndexResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -242,11 +242,11 @@ func (h *Handlers) RebuildSearchIndex(ctx context.Context, req *connect.Request[
 	if err := h.store.RebuildSearchIndexes(ctx, op); err != nil {
 		return nil, h.internal(ctx, "rebuild SQLite indexes", err)
 	}
-	return connect.NewResponse(&pmv1.RebuildSearchIndexResponse{}), nil
+	return connect.NewResponse(&cadestrov1.RebuildSearchIndexResponse{}), nil
 }
 
-func selectedFacets(scope pmv1.SearchScope) ([]facet, error) {
-	if scope == pmv1.SearchScope_SEARCH_SCOPE_UNSPECIFIED {
+func selectedFacets(scope cadestrov1.SearchScope) ([]facet, error) {
+	if scope == cadestrov1.SearchScope_SEARCH_SCOPE_UNSPECIFIED {
 		return searchFacets[:8], nil
 	}
 	for _, current := range searchFacets {

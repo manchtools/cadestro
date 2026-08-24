@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -43,14 +43,14 @@ func newComplianceHandlerFixture(t *testing.T) *complianceHandlerFixture {
 
 func createPolicyAction(t *testing.T, state *authoring.Service, name string, isCompliance bool) string {
 	t.Helper()
-	params, err := actionparams.MarshalActionParams(&pmv1.ShellParams{
+	params, err := actionparams.MarshalActionParams(&cadestrov1.ShellParams{
 		Interpreter: "/bin/sh", DetectionScript: "exit 0", IsCompliance: isCompliance,
 	})
 	require.NoError(t, err)
 	op := actionOperation()
 	action, err := state.CreateAction(context.Background(), op, authoring.CreateActionParams{
-		Name: name, CreatedBy: op.ActorID, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, Params: params,
+		Name: name, CreatedBy: op.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, Params: params,
 	})
 	require.NoError(t, err)
 	return action.ID
@@ -58,10 +58,10 @@ func createPolicyAction(t *testing.T, state *authoring.Service, name string, isC
 
 func TestCompliancePolicyHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newComplianceHandlerFixture(t)
-	_, err := validated(f.handlers.GetCompliancePolicy)(context.Background(), connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetCompliancePolicy)(context.Background(), connect.NewRequest(&cadestrov1.GetCompliancePolicyRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetCompliancePolicy)(context.Background(), connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetCompliancePolicy)(context.Background(), connect.NewRequest(&cadestrov1.GetCompliancePolicyRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -75,7 +75,7 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	actionState := authoring.New(authoring.Config{Store: f.store, Now: func() time.Time { return f.now }})
 	actionID := createPolicyAction(t, actionState, "detect drift", true)
 
-	created, err := f.handlers.CreateCompliancePolicy(ctx, connect.NewRequest(&pmv1.CreateCompliancePolicyRequest{
+	created, err := f.handlers.CreateCompliancePolicy(ctx, connect.NewRequest(&cadestrov1.CreateCompliancePolicyRequest{
 		Name: "baseline", Description: "required state",
 	}))
 	require.NoError(t, err)
@@ -83,7 +83,7 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	assert.Equal(t, int32(0), created.Msg.Policy.RuleCount)
 	assert.True(t, created.Msg.Policy.CreatedAt.AsTime().Equal(f.now))
 
-	added, err := f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&pmv1.AddCompliancePolicyRuleRequest{
+	added, err := f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
 		PolicyId: policyID, ActionId: actionID, GracePeriodHours: 24,
 	}))
 	require.NoError(t, err)
@@ -98,39 +98,39 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	assert.Equal(t, int64(1), total)
 	require.Len(t, rows, 1)
 	assert.Equal(t, actionID, rows[0].ID)
-	_, err = f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&pmv1.AddCompliancePolicyRuleRequest{
+	_, err = f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
 		PolicyId: policyID, ActionId: actionID,
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
-	updatedRule, err := f.handlers.UpdateCompliancePolicyRule(ctx, connect.NewRequest(&pmv1.UpdateCompliancePolicyRuleRequest{
+	updatedRule, err := f.handlers.UpdateCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.UpdateCompliancePolicyRuleRequest{
 		PolicyId: policyID, ActionId: actionID, GracePeriodHours: 48,
 	}))
 	require.NoError(t, err)
 	require.Len(t, updatedRule.Msg.Policy.Rules, 1)
 	assert.Equal(t, int32(48), updatedRule.Msg.Policy.Rules[0].GracePeriodHours)
 
-	renamed, err := f.handlers.RenameCompliancePolicy(ctx, connect.NewRequest(&pmv1.RenameCompliancePolicyRequest{
+	renamed, err := f.handlers.RenameCompliancePolicy(ctx, connect.NewRequest(&cadestrov1.RenameCompliancePolicyRequest{
 		Id: policyID, Name: "renamed",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Policy.Name)
-	described, err := f.handlers.UpdateCompliancePolicyDescription(ctx, connect.NewRequest(&pmv1.UpdateCompliancePolicyDescriptionRequest{
+	described, err := f.handlers.UpdateCompliancePolicyDescription(ctx, connect.NewRequest(&cadestrov1.UpdateCompliancePolicyDescriptionRequest{
 		Id: policyID, Description: "direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "direct state", described.Msg.Policy.Description)
 
-	got, err := f.handlers.GetCompliancePolicy(ctx, connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: policyID}))
+	got, err := f.handlers.GetCompliancePolicy(ctx, connect.NewRequest(&cadestrov1.GetCompliancePolicyRequest{Id: policyID}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Policy.Rules, 1)
 	assert.Equal(t, int32(1), got.Msg.Policy.RuleCount)
-	listed, err := f.handlers.ListCompliancePolicies(ctx, connect.NewRequest(&pmv1.ListCompliancePoliciesRequest{}))
+	listed, err := f.handlers.ListCompliancePolicies(ctx, connect.NewRequest(&cadestrov1.ListCompliancePoliciesRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Policies, 1)
 	assert.Equal(t, int32(1), listed.Msg.Policies[0].RuleCount)
 
-	removed, err := f.handlers.RemoveCompliancePolicyRule(ctx, connect.NewRequest(&pmv1.RemoveCompliancePolicyRuleRequest{
+	removed, err := f.handlers.RemoveCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.RemoveCompliancePolicyRuleRequest{
 		PolicyId: policyID, ActionId: actionID,
 	}))
 	require.NoError(t, err)
@@ -144,14 +144,14 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	assert.Equal(t, int64(1), total)
 	require.Len(t, rows, 1)
 	assert.Equal(t, actionID, rows[0].ID)
-	_, err = f.handlers.RemoveCompliancePolicyRule(ctx, connect.NewRequest(&pmv1.RemoveCompliancePolicyRuleRequest{
+	_, err = f.handlers.RemoveCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.RemoveCompliancePolicyRuleRequest{
 		PolicyId: policyID, ActionId: actionID,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
-	_, err = f.handlers.DeleteCompliancePolicy(ctx, connect.NewRequest(&pmv1.DeleteCompliancePolicyRequest{Id: policyID}))
+	_, err = f.handlers.DeleteCompliancePolicy(ctx, connect.NewRequest(&cadestrov1.DeleteCompliancePolicyRequest{Id: policyID}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetCompliancePolicy(ctx, connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: policyID}))
+	_, err = f.handlers.GetCompliancePolicy(ctx, connect.NewRequest(&cadestrov1.GetCompliancePolicyRequest{Id: policyID}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range compliance.MutationProcedures() {
@@ -177,7 +177,7 @@ func TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions(t *testing
 	require.NoError(t, err)
 
 	global := f.actor("AddCompliancePolicyRule")
-	_, err = f.handlers.AddCompliancePolicyRule(global, connect.NewRequest(&pmv1.AddCompliancePolicyRuleRequest{
+	_, err = f.handlers.AddCompliancePolicyRule(global, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
 		PolicyId: policy.ID, ActionId: nonCompliance,
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
@@ -200,11 +200,11 @@ func TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions(t *testing
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA,
 		}},
 	})
-	_, err = f.handlers.AddCompliancePolicyRule(scoped, connect.NewRequest(&pmv1.AddCompliancePolicyRuleRequest{
+	_, err = f.handlers.AddCompliancePolicyRule(scoped, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
 		PolicyId: policy.ID, ActionId: outOfScope,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
-	_, err = f.handlers.AddCompliancePolicyRule(scoped, connect.NewRequest(&pmv1.AddCompliancePolicyRuleRequest{
+	_, err = f.handlers.AddCompliancePolicyRule(scoped, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
 		PolicyId: policy.ID, ActionId: inScope,
 	}))
 	require.NoError(t, err)
@@ -216,7 +216,7 @@ func TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions(t *testing
 // guard that also refuses this shape.
 func insertDetectionlessComplianceAction(t *testing.T, raw *testdb.DB, name, detection string) string {
 	t.Helper()
-	params, err := actionparams.MarshalActionParams(&pmv1.ShellParams{
+	params, err := actionparams.MarshalActionParams(&cadestrov1.ShellParams{
 		Interpreter: "/bin/sh", Script: "echo remediate",
 		DetectionScript: detection, IsCompliance: true,
 	})
@@ -226,7 +226,7 @@ func insertDetectionlessComplianceAction(t *testing.T, raw *testdb.DB, name, det
 		INSERT INTO actions
 			(id, name, action_type, desired_state, params, timeout_seconds, created_at)
 		VALUES ($1, $2, $3, 1, $4, 60, CURRENT_TIMESTAMP)
-	`, id, name, int32(pmv1.ActionType_ACTION_TYPE_SHELL), string(params))
+	`, id, name, int32(cadestrov1.ActionType_ACTION_TYPE_SHELL), string(params))
 	require.NoError(t, err)
 	return id
 }
@@ -259,7 +259,7 @@ func TestCompliancePolicyHandlers_RefuseComplianceActionWithoutDetectionScript(t
 			require.NotErrorIs(t, stateErr, compliance.ErrActionNotCompliance,
 				"the refusal names the missing detection script, not the classification")
 
-			_, rpcErr := f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&pmv1.AddCompliancePolicyRuleRequest{
+			_, rpcErr := f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
 				PolicyId: policy.ID, ActionId: actionID,
 			}))
 			assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(rpcErr))
@@ -300,30 +300,30 @@ func TestCompliancePolicyHandlers_KeysetAndDirectScope(t *testing.T) {
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA,
 		}},
 	})
-	_, err = f.handlers.GetCompliancePolicy(scoped, connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: directID}))
+	_, err = f.handlers.GetCompliancePolicy(scoped, connect.NewRequest(&cadestrov1.GetCompliancePolicyRequest{Id: directID}))
 	require.NoError(t, err)
 	for _, id := range []string{outsideID, unassignedID} {
-		_, err = f.handlers.GetCompliancePolicy(scoped, connect.NewRequest(&pmv1.GetCompliancePolicyRequest{Id: id}))
+		_, err = f.handlers.GetCompliancePolicy(scoped, connect.NewRequest(&cadestrov1.GetCompliancePolicyRequest{Id: id}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameCompliancePolicy(scoped, connect.NewRequest(&pmv1.RenameCompliancePolicyRequest{Id: outsideID, Name: "denied"}))
+	_, err = f.handlers.RenameCompliancePolicy(scoped, connect.NewRequest(&cadestrov1.RenameCompliancePolicyRequest{Id: outsideID, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	_, err = f.handlers.RenameCompliancePolicy(scoped, connect.NewRequest(&pmv1.RenameCompliancePolicyRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameCompliancePolicy(scoped, connect.NewRequest(&cadestrov1.RenameCompliancePolicyRequest{Id: directID, Name: "allowed"}))
 	require.NoError(t, err)
 
-	list, err := f.handlers.ListCompliancePolicies(scoped, connect.NewRequest(&pmv1.ListCompliancePoliciesRequest{}))
+	list, err := f.handlers.ListCompliancePolicies(scoped, connect.NewRequest(&cadestrov1.ListCompliancePoliciesRequest{}))
 	require.NoError(t, err)
 	require.Len(t, list.Msg.Policies, 1)
 	assert.Equal(t, directID, list.Msg.Policies[0].Id)
 	assert.Equal(t, int32(1), list.Msg.TotalCount)
 
 	global := f.actor("ListCompliancePolicies")
-	page, err := f.handlers.ListCompliancePolicies(global, connect.NewRequest(&pmv1.ListCompliancePoliciesRequest{PageSize: 1}))
+	page, err := f.handlers.ListCompliancePolicies(global, connect.NewRequest(&cadestrov1.ListCompliancePoliciesRequest{PageSize: 1}))
 	require.NoError(t, err)
 	require.Len(t, page.Msg.Policies, 1)
 	assert.NotEmpty(t, page.Msg.NextPageToken)
 	assert.Equal(t, int32(3), page.Msg.TotalCount)
-	all, err := f.handlers.ListCompliancePolicies(global, connect.NewRequest(&pmv1.ListCompliancePoliciesRequest{}))
+	all, err := f.handlers.ListCompliancePolicies(global, connect.NewRequest(&cadestrov1.ListCompliancePoliciesRequest{}))
 	require.NoError(t, err)
 	ids := []string{all.Msg.Policies[0].Id, all.Msg.Policies[1].Id, all.Msg.Policies[2].Id}
 	sort.Strings(ids)
@@ -377,9 +377,9 @@ func TestCompliancePolicyRules_ProvideTransitiveActionReadScope(t *testing.T) {
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupID,
 		}},
 	})
-	_, err = f.actionHandlerFixture.handlers.GetAction(scoped, connect.NewRequest(&pmv1.GetActionRequest{Id: actionID}))
+	_, err = f.actionHandlerFixture.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: actionID}))
 	require.NoError(t, err)
-	listed, err := f.actionHandlerFixture.handlers.ListActions(scoped, connect.NewRequest(&pmv1.ListActionsRequest{}))
+	listed, err := f.actionHandlerFixture.handlers.ListActions(scoped, connect.NewRequest(&cadestrov1.ListActionsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Actions, 1)
 	assert.Equal(t, actionID, listed.Msg.Actions[0].Id)

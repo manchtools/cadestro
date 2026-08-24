@@ -6,14 +6,14 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // CreateDefinition writes one independently scheduled definition.
-func (h *Handlers) CreateDefinition(ctx context.Context, req *connect.Request[pmv1.CreateDefinitionRequest]) (*connect.Response[pmv1.CreateDefinitionResponse], error) {
+func (h *Handlers) CreateDefinition(ctx context.Context, req *connect.Request[cadestrov1.CreateDefinitionRequest]) (*connect.Response[cadestrov1.CreateDefinitionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -33,11 +33,11 @@ func (h *Handlers) CreateDefinition(ctx context.Context, req *connect.Request[pm
 	if err != nil {
 		return nil, h.internal(ctx, "encode created definition", err)
 	}
-	return connect.NewResponse(&pmv1.CreateDefinitionResponse{Definition: definition}), nil
+	return connect.NewResponse(&cadestrov1.CreateDefinitionResponse{Definition: definition}), nil
 }
 
 // GetDefinition returns one visible definition and its live ordered members.
-func (h *Handlers) GetDefinition(ctx context.Context, req *connect.Request[pmv1.GetDefinitionRequest]) (*connect.Response[pmv1.GetDefinitionResponse], error) {
+func (h *Handlers) GetDefinition(ctx context.Context, req *connect.Request[cadestrov1.GetDefinitionRequest]) (*connect.Response[cadestrov1.GetDefinitionResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -59,13 +59,13 @@ func (h *Handlers) GetDefinition(ctx context.Context, req *connect.Request[pmv1.
 	if err != nil {
 		return nil, h.internal(ctx, "encode definition", err)
 	}
-	return connect.NewResponse(&pmv1.GetDefinitionResponse{
+	return connect.NewResponse(&cadestrov1.GetDefinitionResponse{
 		Definition: definition, Members: DefinitionMembersToProto(members),
 	}), nil
 }
 
 // ListDefinitions returns a deterministic SQLite keyset page.
-func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[pmv1.ListDefinitionsRequest]) (*connect.Response[pmv1.ListDefinitionsResponse], error) {
+func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[cadestrov1.ListDefinitionsRequest]) (*connect.Response[cadestrov1.ListDefinitionsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[pmv
 	if err != nil {
 		return nil, h.internal(ctx, "count definitions", err)
 	}
-	definitions := make([]*pmv1.Definition, len(views))
+	definitions := make([]*cadestrov1.Definition, len(views))
 	for i, view := range views {
 		definitions[i], err = DefinitionToProto(view.DefinitionRow, view.LiveMemberCount)
 		if err != nil {
@@ -107,13 +107,13 @@ func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[pmv
 	if hasMore {
 		next = views[len(views)-1].ID
 	}
-	return connect.NewResponse(&pmv1.ListDefinitionsResponse{
+	return connect.NewResponse(&cadestrov1.ListDefinitionsResponse{
 		Definitions: definitions, NextPageToken: next, TotalCount: boundedCount(total),
 	}), nil
 }
 
 // RenameDefinition replaces a definition name.
-func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[pmv1.RenameDefinitionRequest]) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
+func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[cadestrov1.RenameDefinitionRequest]) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "RenameDefinition")
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[pm
 }
 
 // UpdateDefinitionDescription replaces a definition description.
-func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect.Request[pmv1.UpdateDefinitionDescriptionRequest]) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
+func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateDefinitionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "UpdateDefinitionDescription")
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect
 }
 
 // UpdateDefinitionSchedule replaces only the compilation-time schedule.
-func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Request[pmv1.UpdateDefinitionScheduleRequest]) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
+func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Request[cadestrov1.UpdateDefinitionScheduleRequest]) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "UpdateDefinitionSchedule")
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Re
 
 // DeleteDefinition soft-deletes a definition and removes its composition
 // edges.
-func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[pmv1.DeleteDefinitionRequest]) (*connect.Response[pmv1.DeleteDefinitionResponse], error) {
+func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[cadestrov1.DeleteDefinitionRequest]) (*connect.Response[cadestrov1.DeleteDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "DeleteDefinition")
 	if err != nil {
 		return nil, err
@@ -158,11 +158,11 @@ func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[pm
 		cadestrov1connect.ControlServiceDeleteDefinitionProcedure, "DeleteDefinition"), req.Msg.Id); err != nil {
 		return nil, h.definitionError(ctx, "delete definition", err)
 	}
-	return connect.NewResponse(&pmv1.DeleteDefinitionResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteDefinitionResponse{}), nil
 }
 
 // AddActionSetToDefinition adds one visible ActionSet to a definition.
-func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Request[pmv1.AddActionSetToDefinitionRequest]) (*connect.Response[pmv1.AddActionSetToDefinitionResponse], error) {
+func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Request[cadestrov1.AddActionSetToDefinitionRequest]) (*connect.Response[cadestrov1.AddActionSetToDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "AddActionSetToDefinition")
 	if err != nil {
 		return nil, err
@@ -182,11 +182,11 @@ func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Re
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.AddActionSetToDefinitionResponse{Definition: definition}), nil
+	return connect.NewResponse(&cadestrov1.AddActionSetToDefinitionResponse{Definition: definition}), nil
 }
 
 // RemoveActionSetFromDefinition removes one ActionSet edge.
-func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *connect.Request[pmv1.RemoveActionSetFromDefinitionRequest]) (*connect.Response[pmv1.RemoveActionSetFromDefinitionResponse], error) {
+func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *connect.Request[cadestrov1.RemoveActionSetFromDefinitionRequest]) (*connect.Response[cadestrov1.RemoveActionSetFromDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "RemoveActionSetFromDefinition")
 	if err != nil {
 		return nil, err
@@ -200,11 +200,11 @@ func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *conne
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.RemoveActionSetFromDefinitionResponse{Definition: definition}), nil
+	return connect.NewResponse(&cadestrov1.RemoveActionSetFromDefinitionResponse{Definition: definition}), nil
 }
 
 // ReorderActionSetInDefinition replaces one ActionSet edge position.
-func (h *Handlers) ReorderActionSetInDefinition(ctx context.Context, req *connect.Request[pmv1.ReorderActionSetInDefinitionRequest]) (*connect.Response[pmv1.ReorderActionSetInDefinitionResponse], error) {
+func (h *Handlers) ReorderActionSetInDefinition(ctx context.Context, req *connect.Request[cadestrov1.ReorderActionSetInDefinitionRequest]) (*connect.Response[cadestrov1.ReorderActionSetInDefinitionResponse], error) {
 	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "ReorderActionSetInDefinition")
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (h *Handlers) ReorderActionSetInDefinition(ctx context.Context, req *connec
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.ReorderActionSetInDefinitionResponse{Definition: definition}), nil
+	return connect.NewResponse(&cadestrov1.ReorderActionSetInDefinitionResponse{Definition: definition}), nil
 }
 
 func (h *Handlers) definitionError(ctx context.Context, operation string, err error) error {
@@ -296,7 +296,7 @@ func (h *Handlers) mutationDefinitionActor(ctx context.Context, id, permission s
 	return actor, nil
 }
 
-func (h *Handlers) updatedDefinition(ctx context.Context, operation string, row store.DefinitionRow, err error) (*connect.Response[pmv1.UpdateDefinitionResponse], error) {
+func (h *Handlers) updatedDefinition(ctx context.Context, operation string, row store.DefinitionRow, err error) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
 	if err != nil {
 		return nil, h.definitionError(ctx, operation, err)
 	}
@@ -308,10 +308,10 @@ func (h *Handlers) updatedDefinition(ctx context.Context, operation string, row 
 	if err != nil {
 		return nil, h.internal(ctx, "encode updated definition", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateDefinitionResponse{Definition: definition}), nil
+	return connect.NewResponse(&cadestrov1.UpdateDefinitionResponse{Definition: definition}), nil
 }
 
-func (h *Handlers) definitionResponse(ctx context.Context, id string) (*pmv1.Definition, error) {
+func (h *Handlers) definitionResponse(ctx context.Context, id string) (*cadestrov1.Definition, error) {
 	row, err := h.store.GetManifestDefinition(ctx, id)
 	if err != nil {
 		return nil, h.definitionError(ctx, "read changed definition", err)

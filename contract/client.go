@@ -22,7 +22,7 @@ import (
 	"golang.org/x/net/http2"
 	"google.golang.org/protobuf/proto"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
@@ -53,7 +53,7 @@ type Client struct {
 	validator protovalidate.Validator
 
 	mu     sync.RWMutex
-	stream *connect.BidiStreamForClient[pm.AgentMessage, pm.ServerMessage]
+	stream *connect.BidiStreamForClient[cadestrov1.AgentMessage, cadestrov1.ServerMessage]
 
 	// sendSem is a buffered-1 channel used as a ctx-aware send lock. It
 	// serializes all stream.Send() calls — concurrent writes on a bidi
@@ -65,7 +65,7 @@ type Client struct {
 
 	// pendingMu protects correlated request-response traffic on the stream.
 	pendingMu       sync.Mutex
-	pendingRequests map[string]chan *pm.ServerMessage
+	pendingRequests map[string]chan *cadestrov1.ServerMessage
 
 	// heartbeatUpdate is the channel Run's heartbeat goroutine reads
 	// to reset its ticker when Welcome arrives with a new interval.
@@ -375,7 +375,7 @@ func RegisterAgent(ctx context.Context, controlURL string, token, hostname, agen
 
 	controlClient := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
 
-	req := connect.NewRequest(&pm.RegisterRequest{
+	req := connect.NewRequest(&cadestrov1.RegisterRequest{
 		Token:        token,
 		Hostname:     hostname,
 		AgentVersion: agentVersion,
@@ -412,7 +412,7 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, opts .
 
 	controlClient := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
 
-	req := connect.NewRequest(&pm.RenewCertificateRequest{
+	req := connect.NewRequest(&cadestrov1.RenewCertificateRequest{
 		Csr: csr,
 	})
 
@@ -430,17 +430,17 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, opts .
 // StreamHandler handles messages received from the server.
 type StreamHandler interface {
 	// OnWelcome is called when the server sends a welcome message.
-	OnWelcome(ctx context.Context, welcome *pm.Welcome) error
+	OnWelcome(ctx context.Context, welcome *cadestrov1.Welcome) error
 	// OnQuery is called when the server sends an OS query.
-	OnQuery(ctx context.Context, query *pm.OSQuery) (*pm.OSQueryResult, error)
+	OnQuery(ctx context.Context, query *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error)
 	// OnError is called when the server sends an error.
-	OnError(ctx context.Context, err *pm.Error) error
+	OnError(ctx context.Context, err *cadestrov1.Error) error
 }
 
 // LiveControlHandler handles correlated control operations over the agent stream.
 type LiveControlHandler interface {
-	OnSyncDevice(context.Context, *pm.SyncDeviceCommand) error
-	OnRebootDevice(context.Context, *pm.RebootDeviceCommand) error
+	OnSyncDevice(context.Context, *cadestrov1.SyncDeviceCommand) error
+	OnRebootDevice(context.Context, *cadestrov1.RebootDeviceCommand) error
 }
 
 // LuksHandler extends StreamHandler with LUKS device-key revocation support.
@@ -451,7 +451,7 @@ type LuksHandler interface {
 	// LUKS device-bound key. The full message is delivered rather than the
 	// bare action_id so the handler keeps whatever context later fields add.
 	// Returns (success, errorMessage).
-	OnRevokeLuksDeviceKey(ctx context.Context, req *pm.RevokeLuksDeviceKey) (bool, string)
+	OnRevokeLuksDeviceKey(ctx context.Context, req *cadestrov1.RevokeLuksDeviceKey) (bool, string)
 }
 
 // LogQueryHandler extends StreamHandler with remote log query support.
@@ -459,7 +459,7 @@ type LuksHandler interface {
 type LogQueryHandler interface {
 	StreamHandler
 	// OnLogQuery is called when the server sends a log query request.
-	OnLogQuery(ctx context.Context, query *pm.LogQuery) (*pm.LogQueryResult, error)
+	OnLogQuery(ctx context.Context, query *cadestrov1.LogQuery) (*cadestrov1.LogQueryResult, error)
 }
 
 // InventoryHandler extends StreamHandler with device inventory collection support.
@@ -469,11 +469,11 @@ type InventoryHandler interface {
 	// CollectInventory gathers hardware/software inventory from the device on
 	// the agent's OWN schedule (on connect + every 24h). Returns nil if
 	// collection is unavailable (e.g. osquery not installed).
-	CollectInventory(ctx context.Context) *pm.DeviceInventory
+	CollectInventory(ctx context.Context) *cadestrov1.DeviceInventory
 	// OnRequestInventory handles a control-originated RequestInventory,
 	// collecting the same inventory on demand and correlating it with the
 	// request's query_id. Returns nil when collection is unavailable.
-	OnRequestInventory(ctx context.Context, req *pm.RequestInventory) *pm.DeviceInventory
+	OnRequestInventory(ctx context.Context, req *cadestrov1.RequestInventory) *cadestrov1.DeviceInventory
 }
 
 // TerminalHandler extends StreamHandler with remote terminal (PTY) session
@@ -498,19 +498,19 @@ type TerminalHandler interface {
 	// The handler should validate tty_user, allocate the PTY, kick off
 	// I/O goroutines, and send a TERMINAL_SESSION_STATE_STARTED state
 	// change. If allocation fails, it MUST send a STATE_ERROR instead.
-	OnTerminalStart(ctx context.Context, req *pm.TerminalStart) error
+	OnTerminalStart(ctx context.Context, req *cadestrov1.TerminalStart) error
 	// OnTerminalInput is called for every stdin frame from the server.
 	// The handler should write the bytes to the PTY of the matching
 	// session_id and ignore (with a debug log) frames for unknown
 	// sessions.
-	OnTerminalInput(ctx context.Context, req *pm.TerminalInput) error
+	OnTerminalInput(ctx context.Context, req *cadestrov1.TerminalInput) error
 	// OnTerminalResize forwards a TIOCSWINSZ to the session's PTY.
 	// Unknown sessions are ignored.
-	OnTerminalResize(ctx context.Context, req *pm.TerminalResize) error
+	OnTerminalResize(ctx context.Context, req *cadestrov1.TerminalResize) error
 	// OnTerminalStop terminates the session and reverts any side effects
 	// (shell unmask, temp home cleanup, etc.). Unknown sessions are
 	// idempotent no-ops so the server can fire and forget on disconnect.
-	OnTerminalStop(ctx context.Context, req *pm.TerminalStop) error
+	OnTerminalStop(ctx context.Context, req *cadestrov1.TerminalStop) error
 }
 
 // Connect establishes a bidirectional stream with the server.
@@ -540,7 +540,7 @@ func (c *Client) Connect(ctx context.Context) error {
 // caller has already given up on ctx, so the on-wire serialization guarantee
 // is preserved. A send that is abandoned on ctx stays pending until the
 // stream is torn down (Close / run-ctx cancel on reconnect), which resets it.
-func (c *Client) send(ctx context.Context, msg *pm.AgentMessage) error {
+func (c *Client) send(ctx context.Context, msg *cadestrov1.AgentMessage) error {
 	c.mu.RLock()
 	stream := c.stream
 	c.mu.RUnlock()
@@ -590,11 +590,11 @@ func (c *Client) SendHello(ctx context.Context, hostname, agentVersion string) e
 	authToken := c.authToken
 	c.mu.RUnlock()
 
-	return c.send(ctx, &pm.AgentMessage{
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_Hello{
-			Hello: &pm.Hello{
-				DeviceId:     &pm.DeviceId{Value: deviceID},
+		Payload: &cadestrov1.AgentMessage_Hello{
+			Hello: &cadestrov1.Hello{
+				DeviceId:     &cadestrov1.DeviceId{Value: deviceID},
 				AgentVersion: agentVersion,
 				Hostname:     hostname,
 				AuthToken:    authToken,
@@ -605,10 +605,10 @@ func (c *Client) SendHello(ctx context.Context, hostname, agentVersion string) e
 }
 
 // SendHeartbeat sends a heartbeat message to the server.
-func (c *Client) SendHeartbeat(ctx context.Context, hb *pm.Heartbeat) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendHeartbeat(ctx context.Context, hb *cadestrov1.Heartbeat) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_Heartbeat{
+		Payload: &cadestrov1.AgentMessage_Heartbeat{
 			Heartbeat: hb,
 		},
 	})
@@ -618,8 +618,8 @@ func (c *Client) SendHeartbeat(ctx context.Context, hb *pm.Heartbeat) error {
 // carry the delivery_id and occurrence_id it descends from; control keys
 // ingestion on that pair, so a result replayed after a reconnect updates the
 // same row instead of creating a second one.
-func (c *Client) SendActionResult(ctx context.Context, result *pm.ActionResult) error {
-	message := &pm.AgentMessage{Id: NewULID(), Payload: &pm.AgentMessage_ActionResult{ActionResult: result}}
+func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.ActionResult) error {
+	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: result}}
 	if result == nil || result.GetDeliveryId() == "" || result.GetOccurrenceId() == "" {
 		return c.send(ctx, message)
 	}
@@ -628,15 +628,15 @@ func (c *Client) SendActionResult(ctx context.Context, result *pm.ActionResult) 
 
 // SendManifestResult reports the outcome of a complete manifest, once, after
 // its occurrences have reported individually.
-func (c *Client) SendManifestResult(ctx context.Context, result *pm.ManifestResult) error {
-	message := &pm.AgentMessage{Id: NewULID(), Payload: &pm.AgentMessage_ManifestResult{ManifestResult: result}}
+func (c *Client) SendManifestResult(ctx context.Context, result *cadestrov1.ManifestResult) error {
+	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: result}}
 	if result == nil || result.GetDeliveryId() == "" || result.GetManifestId() == "" {
 		return c.send(ctx, message)
 	}
 	return c.sendResultAwaitAck(ctx, message)
 }
 
-func (c *Client) sendResultAwaitAck(ctx context.Context, message *pm.AgentMessage) error {
+func (c *Client) sendResultAwaitAck(ctx context.Context, message *cadestrov1.AgentMessage) error {
 	id := message.Id
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
@@ -662,76 +662,76 @@ func (c *Client) sendResultAwaitAck(ctx context.Context, message *pm.AgentMessag
 }
 
 // SendOutputChunk sends an output chunk during action execution.
-func (c *Client) SendOutputChunk(ctx context.Context, chunk *pm.OutputChunk) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendOutputChunk(ctx context.Context, chunk *cadestrov1.OutputChunk) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_OutputChunk{
+		Payload: &cadestrov1.AgentMessage_OutputChunk{
 			OutputChunk: chunk,
 		},
 	})
 }
 
 // SendQueryResult sends an OS query result to the server.
-func (c *Client) SendQueryResult(ctx context.Context, result *pm.OSQueryResult) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendQueryResult(ctx context.Context, result *cadestrov1.OSQueryResult) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_QueryResult{
+		Payload: &cadestrov1.AgentMessage_QueryResult{
 			QueryResult: result,
 		},
 	})
 }
 
 // SendLogQueryResult sends a log query result to the server.
-func (c *Client) SendLogQueryResult(ctx context.Context, result *pm.LogQueryResult) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendLogQueryResult(ctx context.Context, result *cadestrov1.LogQueryResult) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_LogQueryResult{
+		Payload: &cadestrov1.AgentMessage_LogQueryResult{
 			LogQueryResult: result,
 		},
 	})
 }
 
 // SendSecurityAlert sends a security alert to the server for audit logging.
-func (c *Client) SendSecurityAlert(ctx context.Context, alert *pm.SecurityAlert) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendSecurityAlert(ctx context.Context, alert *cadestrov1.SecurityAlert) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_SecurityAlert{
+		Payload: &cadestrov1.AgentMessage_SecurityAlert{
 			SecurityAlert: alert,
 		},
 	})
 }
 
 // SendInventory sends device inventory to the server.
-func (c *Client) SendInventory(ctx context.Context, inventory *pm.DeviceInventory) error {
+func (c *Client) SendInventory(ctx context.Context, inventory *cadestrov1.DeviceInventory) error {
 	if inventory == nil {
 		return nil
 	}
 
-	return c.send(ctx, &pm.AgentMessage{
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_Inventory{
+		Payload: &cadestrov1.AgentMessage_Inventory{
 			Inventory: inventory,
 		},
 	})
 }
 
 func (c *Client) sendSyncDeviceResult(ctx context.Context, id string, operationErr error) error {
-	result := &pm.SyncDeviceResult{Success: operationErr == nil}
-	return c.send(ctx, &pm.AgentMessage{Id: id, Payload: &pm.AgentMessage_SyncDeviceResult{SyncDeviceResult: result}})
+	result := &cadestrov1.SyncDeviceResult{Success: operationErr == nil}
+	return c.send(ctx, &cadestrov1.AgentMessage{Id: id, Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: result}})
 }
 
 func (c *Client) sendRebootDeviceResult(ctx context.Context, id string, operationErr error) error {
-	result := &pm.RebootDeviceResult{Success: operationErr == nil}
-	return c.send(ctx, &pm.AgentMessage{Id: id, Payload: &pm.AgentMessage_RebootDeviceResult{RebootDeviceResult: result}})
+	result := &cadestrov1.RebootDeviceResult{Success: operationErr == nil}
+	return c.send(ctx, &cadestrov1.AgentMessage{Id: id, Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: result}})
 }
 
 // SendTerminalOutput sends a stdout/stderr chunk from a remote terminal
 // session back to the server. The TerminalHandler is responsible for
 // chunking PTY reads to fit the proto's 64KB max data size.
-func (c *Client) SendTerminalOutput(ctx context.Context, out *pm.TerminalOutput) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendTerminalOutput(ctx context.Context, out *cadestrov1.TerminalOutput) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_TerminalOutput{
+		Payload: &cadestrov1.AgentMessage_TerminalOutput{
 			TerminalOutput: out,
 		},
 	})
@@ -742,10 +742,10 @@ func (c *Client) SendTerminalOutput(ctx context.Context, out *pm.TerminalOutput)
 // the PTY is allocated, EXITED when the shell process exits cleanly,
 // and ERROR for any failure that ends the session before STARTED or
 // in flight.
-func (c *Client) SendTerminalStateChange(ctx context.Context, change *pm.TerminalStateChange) error {
-	return c.send(ctx, &pm.AgentMessage{
+func (c *Client) SendTerminalStateChange(ctx context.Context, change *cadestrov1.TerminalStateChange) error {
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_TerminalStateChange{
+		Payload: &cadestrov1.AgentMessage_TerminalStateChange{
 			TerminalStateChange: change,
 		},
 	})
@@ -761,10 +761,10 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) ([]byte, error
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 
-	if err := c.send(ctx, &pm.AgentMessage{
+	if err := c.send(ctx, &cadestrov1.AgentMessage{
 		Id: id,
-		Payload: &pm.AgentMessage_GetLuksKey{
-			GetLuksKey: &pm.GetLuksKeyRequest{
+		Payload: &cadestrov1.AgentMessage_GetLuksKey{
+			GetLuksKey: &cadestrov1.GetLuksKeyRequest{
 				ActionId: actionID,
 			},
 		},
@@ -800,15 +800,15 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) ([]byte, error
 //
 // passphrase is plaintext inside the authenticated mTLS stream. Control derives
 // the device identity from that stream and encrypts the value before storage.
-func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, passphrase []byte, reason pm.RotationReason) error {
+func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, passphrase []byte, reason cadestrov1.RotationReason) error {
 	id := NewULID()
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 
-	if err := c.send(ctx, &pm.AgentMessage{
+	if err := c.send(ctx, &cadestrov1.AgentMessage{
 		Id: id,
-		Payload: &pm.AgentMessage_StoreLuksKey{
-			StoreLuksKey: &pm.StoreLuksKeyRequest{
+		Payload: &cadestrov1.AgentMessage_StoreLuksKey{
+			StoreLuksKey: &cadestrov1.StoreLuksKeyRequest{
 				ActionId:       actionID,
 				DevicePath:     devicePath,
 				Passphrase:     passphrase,
@@ -850,7 +850,7 @@ func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, 
 // Request/response are correlated by message id like every other stream call, so
 // a failed batch is reported rather than silently dropped: LPS rotations are
 // unrecoverable if lost — the agent has already changed the local password.
-func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotations []*pm.LpsPasswordRotation) error {
+func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotations []*cadestrov1.LpsPasswordRotation) error {
 	if len(rotations) == 0 {
 		return errors.New("refusing to send an empty LPS rotation batch")
 	}
@@ -859,10 +859,10 @@ func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotatio
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 
-	if err := c.send(ctx, &pm.AgentMessage{
+	if err := c.send(ctx, &cadestrov1.AgentMessage{
 		Id: id,
-		Payload: &pm.AgentMessage_StoreLpsPasswords{
-			StoreLpsPasswords: &pm.StoreLpsPasswordsRequest{
+		Payload: &cadestrov1.AgentMessage_StoreLpsPasswords{
+			StoreLpsPasswords: &cadestrov1.StoreLpsPasswordsRequest{
 				ActionId:  actionID,
 				Rotations: rotations,
 			},
@@ -894,10 +894,10 @@ func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotatio
 
 // SendRevokeLuksDeviceKeyResult sends the result of a LUKS device key revocation back to the server.
 func (c *Client) SendRevokeLuksDeviceKeyResult(ctx context.Context, actionID string, success bool, errMsg string) error {
-	return c.send(ctx, &pm.AgentMessage{
+	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: NewULID(),
-		Payload: &pm.AgentMessage_RevokeLuksDeviceKeyResult{
-			RevokeLuksDeviceKeyResult: &pm.RevokeLuksDeviceKeyResult{
+		Payload: &cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult{
+			RevokeLuksDeviceKeyResult: &cadestrov1.RevokeLuksDeviceKeyResult{
 				ActionId: actionID,
 				Success:  success,
 				Error:    errMsg,
@@ -907,11 +907,11 @@ func (c *Client) SendRevokeLuksDeviceKeyResult(ctx context.Context, actionID str
 }
 
 // registerPending creates a channel for receiving a correlated response.
-func (c *Client) registerPending(id string) chan *pm.ServerMessage {
-	ch := make(chan *pm.ServerMessage, 1)
+func (c *Client) registerPending(id string) chan *cadestrov1.ServerMessage {
+	ch := make(chan *cadestrov1.ServerMessage, 1)
 	c.pendingMu.Lock()
 	if c.pendingRequests == nil {
-		c.pendingRequests = make(map[string]chan *pm.ServerMessage)
+		c.pendingRequests = make(map[string]chan *cadestrov1.ServerMessage)
 	}
 	c.pendingRequests[id] = ch
 	c.pendingMu.Unlock()
@@ -936,7 +936,7 @@ func (c *Client) unregisterPending(id string) {
 // forever. We log the drop so duplicates are visible in agent logs but
 // keep the receive loop moving rather than stalling on a defunct
 // request channel.
-func (c *Client) deliverPending(msg *pm.ServerMessage) bool {
+func (c *Client) deliverPending(msg *cadestrov1.ServerMessage) bool {
 	c.pendingMu.Lock()
 	ch, ok := c.pendingRequests[msg.Id]
 	c.pendingMu.Unlock()
@@ -951,7 +951,7 @@ func (c *Client) deliverPending(msg *pm.ServerMessage) bool {
 }
 
 // Receive receives the next message from the server.
-func (c *Client) Receive(ctx context.Context) (*pm.ServerMessage, error) {
+func (c *Client) Receive(ctx context.Context) (*cadestrov1.ServerMessage, error) {
 	c.mu.RLock()
 	stream := c.stream
 	c.mu.RUnlock()
@@ -1067,7 +1067,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 			case d := <-hbUpdate:
 				ticker.Reset(d)
 			case <-ticker.C:
-				hb := &pm.Heartbeat{}
+				hb := &cadestrov1.Heartbeat{}
 				// Handler can populate heartbeat data if needed
 				if err := c.SendHeartbeat(heartbeatCtx, hb); err != nil {
 					heartbeatErr <- err
@@ -1087,7 +1087,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 			// 1s/3s/9s backoff. The 24-hour ticker means a single
 			// transient send failure (network blip on connect) would
 			// otherwise stall inventory for a full day. F035.
-			sendWithRetry := func(inv *pm.DeviceInventory) {
+			sendWithRetry := func(inv *cadestrov1.DeviceInventory) {
 				const maxAttempts = 3
 				delay := time.Second
 				for attempt := 1; attempt <= maxAttempts; attempt++ {
@@ -1131,7 +1131,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 
 	// Channel to receive messages from blocking Receive call
 	type receiveResult struct {
-		msg *pm.ServerMessage
+		msg *cadestrov1.ServerMessage
 		err error
 	}
 	msgCh := make(chan receiveResult, 1)
@@ -1183,7 +1183,7 @@ func normalizeHeartbeatInterval(interval time.Duration) time.Duration {
 // when no Run() is currently active. The update channel has capacity
 // 1 and latest-wins semantics — a stale pending update is dropped so
 // the goroutine always picks up the most recent value the server sent.
-func (c *Client) applyWelcomeHeartbeat(w *pm.Welcome) {
+func (c *Client) applyWelcomeHeartbeat(w *cadestrov1.Welcome) {
 	if w == nil || w.HeartbeatInterval == nil {
 		return
 	}
@@ -1266,7 +1266,7 @@ func (c *Client) validateInbound(payload any) error {
 	return v.Validate(msg)
 }
 
-func (c *Client) validateServerMessage(msg *pm.ServerMessage) error {
+func (c *Client) validateServerMessage(msg *cadestrov1.ServerMessage) error {
 	c.mu.RLock()
 	strict := c.requireWelcome
 	c.mu.RUnlock()
@@ -1292,26 +1292,26 @@ func (c *Client) validateServerMessage(msg *pm.ServerMessage) error {
 	return c.validateInbound(msg)
 }
 
-func correlatedResponsePayload(msg *pm.ServerMessage) any {
+func correlatedResponsePayload(msg *cadestrov1.ServerMessage) any {
 	switch p := msg.Payload.(type) {
-	case *pm.ServerMessage_SyncState:
+	case *cadestrov1.ServerMessage_SyncState:
 		return p.SyncState
-	case *pm.ServerMessage_GetLuksKey:
+	case *cadestrov1.ServerMessage_GetLuksKey:
 		return p.GetLuksKey
-	case *pm.ServerMessage_StoreLuksKey:
+	case *cadestrov1.ServerMessage_StoreLuksKey:
 		return p.StoreLuksKey
-	case *pm.ServerMessage_StoreLpsPasswords:
+	case *cadestrov1.ServerMessage_StoreLpsPasswords:
 		return p.StoreLpsPasswords
-	case *pm.ServerMessage_ValidateLuksToken:
+	case *cadestrov1.ServerMessage_ValidateLuksToken:
 		return p.ValidateLuksToken
-	case *pm.ServerMessage_ResultAck:
+	case *cadestrov1.ServerMessage_ResultAck:
 		return p.ResultAck
 	default:
 		return nil
 	}
 }
 
-func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessage, handler StreamHandler) (retErr error) {
+func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.ServerMessage, handler StreamHandler) (retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
 			var payloadType string
@@ -1333,14 +1333,14 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 	}
 	c.mu.Lock()
 	if c.requireWelcome && !c.welcomed {
-		if _, ok := msg.Payload.(*pm.ServerMessage_Welcome); !ok {
+		if _, ok := msg.Payload.(*cadestrov1.ServerMessage_Welcome); !ok {
 			c.mu.Unlock()
 			return errors.New("first server message must be Welcome")
 		}
 	}
 	c.mu.Unlock()
 	switch p := msg.Payload.(type) {
-	case *pm.ServerMessage_SyncDevice:
+	case *cadestrov1.ServerMessage_SyncDevice:
 		if p.SyncDevice == nil {
 			return nil
 		}
@@ -1360,7 +1360,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		default:
 			return c.sendSyncDeviceResult(ctx, msg.Id, errors.New("another live operation is already running"))
 		}
-	case *pm.ServerMessage_RebootDevice:
+	case *cadestrov1.ServerMessage_RebootDevice:
 		if p.RebootDevice == nil {
 			return nil
 		}
@@ -1380,7 +1380,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 		default:
 			return c.sendRebootDeviceResult(ctx, msg.Id, errors.New("another live operation is already running"))
 		}
-	case *pm.ServerMessage_Welcome:
+	case *cadestrov1.ServerMessage_Welcome:
 		if p.Welcome == nil {
 			c.logger.Warn("dropping Welcome with nil payload", "message_id", msg.Id)
 			return nil
@@ -1393,7 +1393,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			return fmt.Errorf("handle welcome: %w", err)
 		}
 
-	case *pm.ServerMessage_Query:
+	case *cadestrov1.ServerMessage_Query:
 		if p.Query == nil {
 			c.logger.Warn("dropping Query with nil payload", "message_id", msg.Id)
 			return nil
@@ -1412,7 +1412,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			}
 		}
 
-	case *pm.ServerMessage_Error:
+	case *cadestrov1.ServerMessage_Error:
 		if p.Error == nil {
 			c.logger.Warn("dropping Error with nil payload", "message_id", msg.Id)
 			return nil
@@ -1434,12 +1434,12 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			return fmt.Errorf("handle error: %w", err)
 		}
 
-	case *pm.ServerMessage_SyncState,
-		*pm.ServerMessage_GetLuksKey,
-		*pm.ServerMessage_StoreLuksKey,
-		*pm.ServerMessage_StoreLpsPasswords,
-		*pm.ServerMessage_ValidateLuksToken,
-		*pm.ServerMessage_ResultAck:
+	case *cadestrov1.ServerMessage_SyncState,
+		*cadestrov1.ServerMessage_GetLuksKey,
+		*cadestrov1.ServerMessage_StoreLuksKey,
+		*cadestrov1.ServerMessage_StoreLpsPasswords,
+		*cadestrov1.ServerMessage_ValidateLuksToken,
+		*cadestrov1.ServerMessage_ResultAck:
 		if err := c.validateInbound(correlatedResponsePayload(msg)); err != nil {
 			return fmt.Errorf("invalid correlated response: %w", err)
 		}
@@ -1460,7 +1460,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			c.logger.Debug("dropping correlated response without waiter", "message_id", msg.Id)
 		}
 
-	case *pm.ServerMessage_RequestInventory:
+	case *cadestrov1.ServerMessage_RequestInventory:
 		if p.RequestInventory == nil {
 			c.logger.Warn("dropping RequestInventory with nil payload", "message_id", msg.Id)
 			return nil
@@ -1492,7 +1492,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			}
 		}
 
-	case *pm.ServerMessage_LogQuery:
+	case *cadestrov1.ServerMessage_LogQuery:
 		if p.LogQuery == nil {
 			c.logger.Warn("dropping LogQuery with nil payload", "message_id", msg.Id)
 			return nil
@@ -1513,7 +1513,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			}
 		}
 
-	case *pm.ServerMessage_RevokeLuksDeviceKey:
+	case *cadestrov1.ServerMessage_RevokeLuksDeviceKey:
 		if p.RevokeLuksDeviceKey == nil {
 			// A buggy server could deliver a nil payload; dropping it avoids
 			// a nil dereference.
@@ -1552,7 +1552,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			}
 		}
 
-	case *pm.ServerMessage_TerminalStart:
+	case *cadestrov1.ServerMessage_TerminalStart:
 		if p.TerminalStart == nil {
 			c.logger.Warn("dropping TerminalStart with nil payload", "message_id", msg.Id)
 			return nil
@@ -1570,7 +1570,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 				"session_id", p.TerminalStart.SessionId)
 		}
 
-	case *pm.ServerMessage_TerminalInput:
+	case *cadestrov1.ServerMessage_TerminalInput:
 		if p.TerminalInput == nil {
 			c.logger.Warn("dropping TerminalInput with nil payload", "message_id", msg.Id)
 			return nil
@@ -1585,7 +1585,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			}
 		}
 
-	case *pm.ServerMessage_TerminalResize:
+	case *cadestrov1.ServerMessage_TerminalResize:
 		if p.TerminalResize == nil {
 			c.logger.Warn("dropping TerminalResize with nil payload", "message_id", msg.Id)
 			return nil
@@ -1600,7 +1600,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *pm.ServerMessag
 			}
 		}
 
-	case *pm.ServerMessage_TerminalStop:
+	case *cadestrov1.ServerMessage_TerminalStop:
 		if p.TerminalStop == nil {
 			c.logger.Warn("dropping TerminalStop with nil payload", "message_id", msg.Id)
 			return nil
@@ -1652,7 +1652,7 @@ type ValidateLuksTokenResult struct {
 	ActionID   string
 	DevicePath string
 	MinLength  int32
-	Complexity pm.LpsPasswordComplexity
+	Complexity cadestrov1.LpsPasswordComplexity
 }
 
 // ValidateLuksToken validates and atomically consumes a one-time LUKS token on
@@ -1661,10 +1661,10 @@ func (c *Client) ValidateLuksToken(ctx context.Context, token string) (*Validate
 	id := NewULID()
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
-	if err := c.send(ctx, &pm.AgentMessage{
+	if err := c.send(ctx, &cadestrov1.AgentMessage{
 		Id: id,
-		Payload: &pm.AgentMessage_ValidateLuksToken{
-			ValidateLuksToken: &pm.ValidateLuksTokenRequest{Token: token},
+		Payload: &cadestrov1.AgentMessage_ValidateLuksToken{
+			ValidateLuksToken: &cadestrov1.ValidateLuksTokenRequest{Token: token},
 		},
 	}); err != nil {
 		return nil, fmt.Errorf("send validate luks token request: %w", err)
@@ -1700,7 +1700,7 @@ type SyncStateResult struct {
 	// Deliveries are every manifest delivery currently assigned to this
 	// device. The caller records each one under its delivery_id, so repeated
 	// Sync responses do not execute it twice.
-	Deliveries []*pm.ManifestDelivery
+	Deliveries []*cadestrov1.ManifestDelivery
 	// SyncIntervalMinutes is the effective sync interval for this device.
 	// 0 means use the default (30 minutes).
 	SyncIntervalMinutes int32
@@ -1709,9 +1709,9 @@ type SyncStateResult struct {
 	// device). nil means "no constraint" — the agent dispatches at any
 	// time. The agent evaluates this against time.Now().Local() before
 	// firing scheduler-driven dispatches.
-	MaintenanceWindow *pm.MaintenanceWindow
+	MaintenanceWindow *cadestrov1.MaintenanceWindow
 	// DesiredPolicy is the authenticated assignment snapshot reconciled locally.
-	DesiredPolicy *pm.DesiredPolicy
+	DesiredPolicy *cadestrov1.DesiredPolicy
 }
 
 // Sync requests current one-shot work and desired policy on the existing
@@ -1720,9 +1720,9 @@ func (c *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 	id := NewULID()
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
-	if err := c.send(ctx, &pm.AgentMessage{
+	if err := c.send(ctx, &cadestrov1.AgentMessage{
 		Id:      id,
-		Payload: &pm.AgentMessage_SyncRequest{SyncRequest: &pm.SyncRequest{}},
+		Payload: &cadestrov1.AgentMessage_SyncRequest{SyncRequest: &cadestrov1.SyncRequest{}},
 	}); err != nil {
 		return nil, fmt.Errorf("send sync request: %w", err)
 	}

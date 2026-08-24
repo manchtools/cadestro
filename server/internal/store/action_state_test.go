@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -28,10 +28,10 @@ func TestActionState_CRUDCommitsWithAudit(t *testing.T) {
 	createOp := actionOperation()
 	action, err := svc.CreateAction(ctx, createOp, authoring.CreateActionParams{
 		Name: "bootstrap shell", Description: "initial", CreatedBy: createOp.ActorID,
-		Type:         pmv1.ActionType_ACTION_TYPE_SHELL,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
+		Type:         cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 		Params:       []byte(`{"interpreter":"/bin/sh","script":"printf ok"}`),
-		Schedule:     &pmv1.ActionSchedule{RunOnAssign: true},
+		Schedule:     &cadestrov1.ActionSchedule{RunOnAssign: true},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, int32(300), action.TimeoutSeconds, "create applies the existing default")
@@ -44,9 +44,9 @@ func TestActionState_CRUDCommitsWithAudit(t *testing.T) {
 
 	updateOp := actionOperation()
 	updated, err := svc.UpdateActionParams(ctx, updateOp, authoring.UpdateActionParams{
-		ID: action.ID, DesiredState: pmv1.DesiredState_DESIRED_STATE_ABSENT,
+		ID: action.ID, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_ABSENT,
 		Params:         []byte(`{"script":"printf changed","interpreter":"/bin/sh"}`),
-		TimeoutSeconds: 45, Schedule: &pmv1.ActionSchedule{Cron: "0 5 * * *"},
+		TimeoutSeconds: 45, Schedule: &cadestrov1.ActionSchedule{Cron: "0 5 * * *"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, int32(45), updated.TimeoutSeconds)
@@ -54,7 +54,7 @@ func TestActionState_CRUDCommitsWithAudit(t *testing.T) {
 		"canonical bytes do not depend on caller key order")
 	preserveOp := actionOperation()
 	preserved, err := svc.UpdateActionParams(ctx, preserveOp, authoring.UpdateActionParams{
-		ID: action.ID, DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
+		ID: action.ID, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 		Params: []byte(`{"script":"printf again","interpreter":"/bin/sh"}`),
 	})
 	require.NoError(t, err)
@@ -92,7 +92,7 @@ func TestActionState_AuditFailureRollsBackCreate(t *testing.T) {
 	svc := authoring.New(authoring.Config{Store: st})
 
 	_, err := svc.CreateAction(context.Background(), store.AuditOperation{}, authoring.CreateActionParams{
-		Name: "must not exist", CreatedBy: newID(), Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
+		Name: "must not exist", CreatedBy: newID(), Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`),
 	})
 	require.Error(t, err)
@@ -102,7 +102,7 @@ func TestActionState_AuditFailureRollsBackCreate(t *testing.T) {
 
 	validOp := actionOperation()
 	_, err = svc.CreateAction(context.Background(), validOp, authoring.CreateActionParams{
-		Name: "unknown params", CreatedBy: validOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
+		Name: "unknown params", CreatedBy: validOp.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
 		Params: []byte(`{"unexpected":true}`),
 	})
 	require.Error(t, err)
@@ -116,7 +116,7 @@ func TestActionState_UserMutationCannotChangeSystemAction(t *testing.T) {
 	svc := authoring.New(authoring.Config{Store: st})
 	createOp := actionOperation()
 	action, err := svc.CreateAction(context.Background(), createOp, authoring.CreateActionParams{
-		Name: "managed", CreatedBy: createOp.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
+		Name: "managed", CreatedBy: createOp.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)

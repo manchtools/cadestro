@@ -14,7 +14,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -27,7 +27,7 @@ const luksTokenTTL = 24 * time.Hour
 
 // ListLpsPasswords returns bounded current and historical LPS metadata. Its
 // store query does not select ciphertext.
-func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[pmv1.ListLpsPasswordsRequest]) (*connect.Response[pmv1.ListLpsPasswordsResponse], error) {
+func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[cadestrov1.ListLpsPasswordsRequest]) (*connect.Response[cadestrov1.ListLpsPasswordsResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -52,12 +52,12 @@ func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[pm
 		"ListLpsPasswords", "device_lps_passwords", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.ListLpsPasswordsResponse{Current: current, History: history}), nil
+	return connect.NewResponse(&cadestrov1.ListLpsPasswordsResponse{Current: current, History: history}), nil
 }
 
 // RevealLpsPassword returns one plaintext password only after the dedicated
 // reveal operation and its device/action/entry effects are durable.
-func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[pmv1.RevealLpsPasswordRequest]) (*connect.Response[pmv1.RevealLpsPasswordResponse], error) {
+func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[cadestrov1.RevealLpsPasswordRequest]) (*connect.Response[cadestrov1.RevealLpsPasswordResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -92,12 +92,12 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[p
 		"RevealLpsPassword", "lps_password", secret.ID, secret.DeviceID, secret.ActionID); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.RevealLpsPasswordResponse{Password: password}), nil
+	return connect.NewResponse(&cadestrov1.RevealLpsPasswordResponse{Password: password}), nil
 }
 
 // ListLuksKeys returns bounded current and historical LUKS metadata. Its store
 // query does not select ciphertext.
-func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[pmv1.ListLuksKeysRequest]) (*connect.Response[pmv1.ListLuksKeysResponse], error) {
+func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[cadestrov1.ListLuksKeysRequest]) (*connect.Response[cadestrov1.ListLuksKeysResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -122,12 +122,12 @@ func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[pmv1.L
 		"ListLuksKeys", "device_luks_keys", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.ListLuksKeysResponse{Current: current, History: history}), nil
+	return connect.NewResponse(&cadestrov1.ListLuksKeysResponse{Current: current, History: history}), nil
 }
 
 // RevealLuksKey returns one plaintext passphrase only after the dedicated
 // reveal operation and its device/action/entry effects are durable.
-func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[pmv1.RevealLuksKeyRequest]) (*connect.Response[pmv1.RevealLuksKeyResponse], error) {
+func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[cadestrov1.RevealLuksKeyRequest]) (*connect.Response[cadestrov1.RevealLuksKeyResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -162,17 +162,17 @@ func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[pmv1.
 		"RevealLuksKey", "luks_key", secret.ID, secret.DeviceID, secret.ActionID); err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.RevealLuksKeyResponse{Passphrase: passphrase}), nil
+	return connect.NewResponse(&cadestrov1.RevealLuksKeyResponse{Passphrase: passphrase}), nil
 }
 
-func (h *Handlers) lpsPasswordsToProto(rows []store.LpsPasswordView) ([]*pmv1.LpsPassword, error) {
-	out := make([]*pmv1.LpsPassword, len(rows))
+func (h *Handlers) lpsPasswordsToProto(rows []store.LpsPasswordView) ([]*cadestrov1.LpsPassword, error) {
+	out := make([]*cadestrov1.LpsPassword, len(rows))
 	for i, row := range rows {
 		reason, ok := rotationReasonFromString(row.RotationReason)
 		if !ok {
 			return nil, fmt.Errorf("invalid LPS rotation reason %q", row.RotationReason)
 		}
-		out[i] = &pmv1.LpsPassword{
+		out[i] = &cadestrov1.LpsPassword{
 			Id: row.ID, DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname,
 			ActionId: row.ActionID, ActionName: row.ActionName,
 			Username:  row.Username,
@@ -182,14 +182,14 @@ func (h *Handlers) lpsPasswordsToProto(rows []store.LpsPasswordView) ([]*pmv1.Lp
 	return out, nil
 }
 
-func (h *Handlers) luksKeysToProto(rows []store.LuksKeyView) ([]*pmv1.LuksKey, error) {
-	out := make([]*pmv1.LuksKey, len(rows))
+func (h *Handlers) luksKeysToProto(rows []store.LuksKeyView) ([]*cadestrov1.LuksKey, error) {
+	out := make([]*cadestrov1.LuksKey, len(rows))
 	for i, row := range rows {
 		reason, ok := rotationReasonFromString(row.RotationReason)
 		if !ok {
 			return nil, fmt.Errorf("invalid LUKS rotation reason %q", row.RotationReason)
 		}
-		key := &pmv1.LuksKey{
+		key := &cadestrov1.LuksKey{
 			Id: row.ID, DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname,
 			ActionId: row.ActionID, ActionName: row.ActionName,
 			DevicePath: row.DevicePath,
@@ -233,7 +233,7 @@ func (h *Handlers) recordSecretReveal(
 
 // CreateLuksToken atomically persists a hash of a one-time owner token with
 // its audit evidence. The plaintext is returned exactly once.
-func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv1.CreateLuksTokenRequest]) (*connect.Response[pmv1.CreateLuksTokenResponse], error) {
+func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cadestrov1.CreateLuksTokenRequest]) (*connect.Response[cadestrov1.CreateLuksTokenResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -256,11 +256,11 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 		}
 		return nil, h.internal(ctx, "read LUKS token action", err)
 	}
-	if pmv1.ActionType(action.ActionType) != pmv1.ActionType_ACTION_TYPE_ENCRYPTION {
+	if cadestrov1.ActionType(action.ActionType) != cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument,
 			"action is not an encryption action")
 	}
-	var params pmv1.EncryptionAuthoringParams
+	var params cadestrov1.EncryptionAuthoringParams
 	if err := actionparams.UnmarshalActionParams(action.Params, &params); err != nil {
 		return nil, h.internal(ctx, "decode encryption action params", err)
 	}
@@ -268,7 +268,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 	if minLength < 16 {
 		minLength = 16
 	}
-	if _, ok := pmv1.LpsPasswordComplexity_name[int32(params.UserPassphraseComplexity)]; !ok {
+	if _, ok := cadestrov1.LpsPasswordComplexity_name[int32(params.UserPassphraseComplexity)]; !ok {
 		return nil, h.internal(ctx, "decode encryption action params",
 			fmt.Errorf("invalid passphrase complexity %d", params.UserPassphraseComplexity))
 	}
@@ -305,7 +305,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[pmv
 	if err != nil {
 		return nil, h.internal(ctx, "create LUKS token", err)
 	}
-	return connect.NewResponse(&pmv1.CreateLuksTokenResponse{
+	return connect.NewResponse(&cadestrov1.CreateLuksTokenResponse{
 		Token: token,
 		Uri:   "cadestro://luks/set-passphrase?token=" + token,
 		// The advertised command carries NEITHER the token nor sudo (F2).
@@ -329,30 +329,30 @@ func (h *Handlers) openStoredSecret(ciphertext string, aad []byte) (string, erro
 	return h.decryptor.DecryptWithContext(ciphertext, aad)
 }
 
-func rotationReasonFromString(value string) (pmv1.RotationReason, bool) {
+func rotationReasonFromString(value string) (cadestrov1.RotationReason, bool) {
 	switch value {
 	case "initial":
-		return pmv1.RotationReason_ROTATION_REASON_INITIAL, true
+		return cadestrov1.RotationReason_ROTATION_REASON_INITIAL, true
 	case "scheduled":
-		return pmv1.RotationReason_ROTATION_REASON_SCHEDULED, true
+		return cadestrov1.RotationReason_ROTATION_REASON_SCHEDULED, true
 	case "auth_grace":
-		return pmv1.RotationReason_ROTATION_REASON_AUTH_GRACE, true
+		return cadestrov1.RotationReason_ROTATION_REASON_AUTH_GRACE, true
 	default:
-		return pmv1.RotationReason_ROTATION_REASON_UNSPECIFIED, false
+		return cadestrov1.RotationReason_ROTATION_REASON_UNSPECIFIED, false
 	}
 }
 
-func luksRevocationStatusFromString(value string) (pmv1.LuksRevocationStatus, bool) {
+func luksRevocationStatusFromString(value string) (cadestrov1.LuksRevocationStatus, bool) {
 	switch value {
 	case "none":
-		return pmv1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_NONE, true
+		return cadestrov1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_NONE, true
 	case "dispatched":
-		return pmv1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_DISPATCHED, true
+		return cadestrov1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_DISPATCHED, true
 	case "success":
-		return pmv1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_SUCCESS, true
+		return cadestrov1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_SUCCESS, true
 	case "failed":
-		return pmv1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_FAILED, true
+		return cadestrov1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_FAILED, true
 	default:
-		return pmv1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_UNSPECIFIED, false
+		return cadestrov1.LuksRevocationStatus_LUKS_REVOCATION_STATUS_UNSPECIFIED, false
 	}
 }

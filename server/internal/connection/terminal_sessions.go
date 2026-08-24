@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // TerminalSession represents a live WebSocket terminal bridge session
@@ -25,7 +25,7 @@ type TerminalSession struct {
 	// receive loop. If the channel is full, RouteAgentMessage drops
 	// the message (the user sees a brief stutter, which is acceptable
 	// for a terminal UI).
-	OutputCh chan *pm.AgentMessage
+	OutputCh chan *cadestrov1.AgentMessage
 
 	mu             sync.Mutex
 	lastActivityAt time.Time
@@ -45,7 +45,7 @@ func NewTerminalSession(sessionID, deviceID, userID, ttyUser string, cols, rows 
 		Rows:           rows,
 		StartedAt:      startedAt,
 		lastActivityAt: startedAt,
-		OutputCh:       make(chan *pm.AgentMessage, 64),
+		OutputCh:       make(chan *cadestrov1.AgentMessage, 64),
 		now:            clock,
 	}
 }
@@ -120,7 +120,7 @@ func (r *TerminalSessionRegistry) Get(sessionID string) *TerminalSession {
 // every TerminalOutput/TerminalStateChange frame. It must never
 // block the receive loop, so a full channel drops the message
 // rather than blocking.
-func (r *TerminalSessionRegistry) RouteAgentMessage(sessionID string, msg *pm.AgentMessage) bool {
+func (r *TerminalSessionRegistry) RouteAgentMessage(sessionID string, msg *cadestrov1.AgentMessage) bool {
 	// Hold RLock through the entire send so Unregister (which takes
 	// the write lock before closing OutputCh) cannot race with us.
 	// Without this, Unregister can close OutputCh between our lookup

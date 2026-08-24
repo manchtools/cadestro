@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -53,12 +53,12 @@ func (f *actionHandlerFixture) actor(perms ...string) context.Context {
 	})
 }
 
-func shellCreate(name string) *pmv1.CreateActionRequest {
-	return &pmv1.CreateActionRequest{
-		Name: name, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Schedule:     &pmv1.ActionSchedule{RunOnAssign: true},
-		Params: &pmv1.CreateActionRequest_Shell{Shell: &pmv1.ShellParams{
+func shellCreate(name string) *cadestrov1.CreateActionRequest {
+	return &cadestrov1.CreateActionRequest{
+		Name: name, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Schedule:     &cadestrov1.ActionSchedule{RunOnAssign: true},
+		Params: &cadestrov1.CreateActionRequest_Shell{Shell: &cadestrov1.ShellParams{
 			Interpreter: "/bin/sh", Script: "printf ok",
 		}},
 	}
@@ -66,10 +66,10 @@ func shellCreate(name string) *pmv1.CreateActionRequest {
 
 func TestActionHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&pmv1.GetActionRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&cadestrov1.GetActionRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&pmv1.GetActionRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&cadestrov1.GetActionRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -87,24 +87,24 @@ func TestActionHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	assert.Equal(t, "printf ok", created.Msg.Action.GetShell().Script)
 	assert.True(t, created.Msg.Action.CreatedAt.AsTime().Equal(f.now))
 
-	got, err := f.handlers.GetAction(ctx, connect.NewRequest(&pmv1.GetActionRequest{Id: id}))
+	got, err := f.handlers.GetAction(ctx, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
 	require.NoError(t, err)
 	assert.Equal(t, "bootstrap", got.Msg.Action.Name)
 
-	renamed, err := f.handlers.RenameAction(ctx, connect.NewRequest(&pmv1.RenameActionRequest{Id: id, Name: "renamed"}))
+	renamed, err := f.handlers.RenameAction(ctx, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: id, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Action.Name)
 
-	described, err := f.handlers.UpdateActionDescription(ctx, connect.NewRequest(&pmv1.UpdateActionDescriptionRequest{
+	described, err := f.handlers.UpdateActionDescription(ctx, connect.NewRequest(&cadestrov1.UpdateActionDescriptionRequest{
 		Id: id, Description: "audited direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "audited direct state", described.Msg.Action.Description)
 
-	updated, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&pmv1.UpdateActionParamsRequest{
-		Id: id, DesiredState: pmv1.DesiredState_DESIRED_STATE_ABSENT,
-		TimeoutSeconds: 45, Schedule: &pmv1.ActionSchedule{Cron: "0 5 * * *"},
-		Params: &pmv1.UpdateActionParamsRequest_Shell{Shell: &pmv1.ShellParams{
+	updated, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
+		Id: id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_ABSENT,
+		TimeoutSeconds: 45, Schedule: &cadestrov1.ActionSchedule{Cron: "0 5 * * *"},
+		Params: &cadestrov1.UpdateActionParamsRequest_Shell{Shell: &cadestrov1.ShellParams{
 			Interpreter: "/bin/bash", Script: "printf changed",
 		}},
 	}))
@@ -112,15 +112,15 @@ func TestActionHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	assert.Equal(t, int32(45), updated.Msg.Action.TimeoutSeconds)
 	assert.Equal(t, "printf changed", updated.Msg.Action.GetShell().Script)
 
-	listed, err := f.handlers.ListActions(ctx, connect.NewRequest(&pmv1.ListActionsRequest{}))
+	listed, err := f.handlers.ListActions(ctx, connect.NewRequest(&cadestrov1.ListActionsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Actions, 1)
 	assert.Equal(t, id, listed.Msg.Actions[0].Id)
 	assert.Equal(t, int32(1), listed.Msg.TotalCount)
 
-	_, err = f.handlers.DeleteAction(ctx, connect.NewRequest(&pmv1.DeleteActionRequest{Id: id}))
+	_, err = f.handlers.DeleteAction(ctx, connect.NewRequest(&cadestrov1.DeleteActionRequest{Id: id}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetAction(ctx, connect.NewRequest(&pmv1.GetActionRequest{Id: id}))
+	_, err = f.handlers.GetAction(ctx, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range authoring.ActionMutationProcedures() {
@@ -135,36 +135,36 @@ func TestActionHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testing.T) {
 	f := newActionHandlerFixture(t)
 	ctx := f.actor("CreateAction", "GetAction", "UpdateActionParams")
-	_, err := f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "missing key", Type: pmv1.ActionType_ACTION_TYPE_ENCRYPTION,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
+	_, err := f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "missing key", Type: cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 	}))
 	require.Error(t, err)
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	alreadyEncrypted := "enc:v1:caller-supplied-envelope"
-	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "double wrapped disk key", Type: pmv1.ActionType_ACTION_TYPE_ENCRYPTION,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pmv1.CreateActionRequest_Encryption{Encryption: &pmv1.EncryptionAuthoringParams{
+	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "double wrapped disk key", Type: cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Params: &cadestrov1.CreateActionRequest_Encryption{Encryption: &cadestrov1.EncryptionAuthoringParams{
 			PresharedKey: &alreadyEncrypted,
 		}},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err),
 		"a client cannot smuggle an envelope through the plaintext authoring boundary")
-	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "double wrapped WiFi key", Type: pmv1.ActionType_ACTION_TYPE_WIFI,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pmv1.CreateActionRequest_Wifi{Wifi: &pmv1.WifiAuthoringParams{
-			Ssid: "office", AuthType: pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK, Psk: &alreadyEncrypted,
+	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "double wrapped WiFi key", Type: cadestrov1.ActionType_ACTION_TYPE_WIFI,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Params: &cadestrov1.CreateActionRequest_Wifi{Wifi: &cadestrov1.WifiAuthoringParams{
+			Ssid: "office", AuthType: cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK, Psk: &alreadyEncrypted,
 		}},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
 	diskKey := "correct horse battery staple"
-	created, err := f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "disk ownership", Type: pmv1.ActionType_ACTION_TYPE_ENCRYPTION,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pmv1.CreateActionRequest_Encryption{Encryption: &pmv1.EncryptionAuthoringParams{
+	created, err := f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "disk ownership", Type: cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Params: &cadestrov1.CreateActionRequest_Encryption{Encryption: &cadestrov1.EncryptionAuthoringParams{
 			PresharedKey: &diskKey, RotationIntervalDays: 30, MinWords: 5,
 		}},
 	}))
@@ -176,12 +176,12 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 		`SELECT params FROM actions WHERE id = $1`, created.Msg.Action.Id).Scan(&before))
 	assert.NotContains(t, before, diskKey)
 	assert.Contains(t, before, "enc:v1:")
-	beforeParams := &pmv1.EncryptionAuthoringParams{}
+	beforeParams := &cadestrov1.EncryptionAuthoringParams{}
 	require.NoError(t, actionparams.UnmarshalActionParams([]byte(before), beforeParams))
 
-	updated, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&pmv1.UpdateActionParamsRequest{
-		Id: created.Msg.Action.Id, DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pmv1.UpdateActionParamsRequest_Encryption{Encryption: &pmv1.EncryptionAuthoringParams{
+	updated, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
+		Id: created.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Params: &cadestrov1.UpdateActionParamsRequest_Encryption{Encryption: &cadestrov1.EncryptionAuthoringParams{
 			RotationIntervalDays: 60, MinWords: 6,
 		}},
 	}))
@@ -191,17 +191,17 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 	require.NoError(t, f.raw.QueryRow(context.Background(),
 		`SELECT params FROM actions WHERE id = $1`, created.Msg.Action.Id).Scan(&after))
 	assert.Contains(t, after, "enc:v1:")
-	afterParams := &pmv1.EncryptionAuthoringParams{}
+	afterParams := &cadestrov1.EncryptionAuthoringParams{}
 	require.NoError(t, actionparams.UnmarshalActionParams([]byte(after), afterParams))
 	assert.Equal(t, beforeParams.GetPresharedKey(), afterParams.GetPresharedKey(),
 		"omitting the write-only input must preserve the existing ciphertext")
 
 	wifiPSK := "wireless-secret"
-	wifi, err := f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "office WiFi", Type: pmv1.ActionType_ACTION_TYPE_WIFI,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pmv1.CreateActionRequest_Wifi{Wifi: &pmv1.WifiAuthoringParams{
-			Ssid: "office", AuthType: pmv1.WifiAuthType_WIFI_AUTH_TYPE_PSK,
+	wifi, err := f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "office WiFi", Type: cadestrov1.ActionType_ACTION_TYPE_WIFI,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Params: &cadestrov1.CreateActionRequest_Wifi{Wifi: &cadestrov1.WifiAuthoringParams{
+			Ssid: "office", AuthType: cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK,
 			Psk: &wifiPSK, AutoConnect: true,
 		}},
 	}))
@@ -210,10 +210,10 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 	assert.False(t, wifi.Msg.Action.GetWifi().ClientKeyConfigured)
 
 	clientKey := "-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----"
-	updatedWifi, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&pmv1.UpdateActionParamsRequest{
-		Id: wifi.Msg.Action.Id, DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pmv1.UpdateActionParamsRequest_Wifi{Wifi: &pmv1.WifiAuthoringParams{
-			Ssid: "office", AuthType: pmv1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS,
+	updatedWifi, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
+		Id: wifi.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Params: &cadestrov1.UpdateActionParamsRequest_Wifi{Wifi: &cadestrov1.WifiAuthoringParams{
+			Ssid: "office", AuthType: cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS,
 			ClientKey: &clientKey, Identity: "device@example.test", AutoConnect: true,
 		}},
 	}))
@@ -225,7 +225,7 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 		`SELECT params FROM actions WHERE id = $1`, updatedWifi.Msg.Action.Id).Scan(&wifiStored))
 	assert.NotContains(t, wifiStored, wifiPSK)
 	assert.NotContains(t, wifiStored, clientKey)
-	storedWifi := &pmv1.WifiAuthoringParams{}
+	storedWifi := &cadestrov1.WifiAuthoringParams{}
 	require.NoError(t, actionparams.UnmarshalActionParams([]byte(wifiStored), storedWifi))
 	assert.Nil(t, storedWifi.Psk, "switching auth mode clears the now-irrelevant secret")
 	assert.True(t, pmcrypto.IsEncryptedValue(storedWifi.GetClientKey()))
@@ -234,27 +234,27 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 	f := newActionHandlerFixture(t)
 	state := authoring.New(authoring.Config{Store: f.store, Now: func() time.Time { return f.now }})
-	create := func(name string, actionType pmv1.ActionType, system bool) string {
+	create := func(name string, actionType cadestrov1.ActionType, system bool) string {
 		op := actionOperation()
 		row, err := state.CreateAction(context.Background(), op, authoring.CreateActionParams{
 			Name: name, CreatedBy: op.ActorID, Type: actionType,
-			DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
+			DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 			Params: func() []byte {
-				if actionType == pmv1.ActionType_ACTION_TYPE_SHELL || actionType == pmv1.ActionType_ACTION_TYPE_SCRIPT_RUN {
+				if actionType == cadestrov1.ActionType_ACTION_TYPE_SHELL || actionType == cadestrov1.ActionType_ACTION_TYPE_SCRIPT_RUN {
 					return []byte(`{"interpreter":"/bin/sh","script":"printf ok"}`)
 				}
 				return []byte(`{}`)
 			}(),
-			Schedule: &pmv1.ActionSchedule{RunOnAssign: true}, System: system,
+			Schedule: &cadestrov1.ActionSchedule{RunOnAssign: true}, System: system,
 		})
 		require.NoError(t, err)
 		return row.ID
 	}
-	directID := create("direct", pmv1.ActionType_ACTION_TYPE_SHELL, false)
-	transitiveID := create("transitive", pmv1.ActionType_ACTION_TYPE_UPDATE, false)
-	outsideID := create("outside", pmv1.ActionType_ACTION_TYPE_UPDATE, false)
-	unassignedID := create("unassigned", pmv1.ActionType_ACTION_TYPE_SCRIPT_RUN, false)
-	systemID := create("system", pmv1.ActionType_ACTION_TYPE_UPDATE, true)
+	directID := create("direct", cadestrov1.ActionType_ACTION_TYPE_SHELL, false)
+	transitiveID := create("transitive", cadestrov1.ActionType_ACTION_TYPE_UPDATE, false)
+	outsideID := create("outside", cadestrov1.ActionType_ACTION_TYPE_UPDATE, false)
+	unassignedID := create("unassigned", cadestrov1.ActionType_ACTION_TYPE_SCRIPT_RUN, false)
+	systemID := create("system", cadestrov1.ActionType_ACTION_TYPE_UPDATE, true)
 
 	groupA, groupB, setID := newID(), newID(), newID()
 	raw := f.raw
@@ -285,19 +285,19 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 		}},
 	})
 	for _, id := range []string{directID, transitiveID} {
-		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&pmv1.GetActionRequest{Id: id}))
+		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
 		require.NoError(t, err)
 	}
 	for _, id := range []string{outsideID, unassignedID, systemID} {
-		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&pmv1.GetActionRequest{Id: id}))
+		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&pmv1.RenameActionRequest{Id: transitiveID, Name: "denied"}))
+	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: transitiveID, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "transitive visibility never grants write scope")
-	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&pmv1.RenameActionRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: directID, Name: "allowed"}))
 	require.NoError(t, err)
 
-	list, err := f.handlers.ListActions(scoped, connect.NewRequest(&pmv1.ListActionsRequest{}))
+	list, err := f.handlers.ListActions(scoped, connect.NewRequest(&cadestrov1.ListActionsRequest{}))
 	require.NoError(t, err)
 	ids := []string{list.Msg.Actions[0].Id, list.Msg.Actions[1].Id}
 	sort.Strings(ids)
@@ -307,11 +307,11 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 	assert.Equal(t, int32(2), list.Msg.TotalCount)
 
 	global := f.actor("ListActions")
-	page1, err := f.handlers.ListActions(global, connect.NewRequest(&pmv1.ListActionsRequest{PageSize: 1}))
+	page1, err := f.handlers.ListActions(global, connect.NewRequest(&cadestrov1.ListActionsRequest{PageSize: 1}))
 	require.NoError(t, err)
 	require.Len(t, page1.Msg.Actions, 1)
 	require.NotEmpty(t, page1.Msg.NextPageToken)
-	page2, err := f.handlers.ListActions(global, connect.NewRequest(&pmv1.ListActionsRequest{
+	page2, err := f.handlers.ListActions(global, connect.NewRequest(&cadestrov1.ListActionsRequest{
 		PageSize: 1, PageToken: page1.Msg.NextPageToken,
 	}))
 	require.NoError(t, err)
@@ -319,14 +319,14 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 	assert.NotEqual(t, page1.Msg.Actions[0].Id, page2.Msg.Actions[0].Id)
 	assert.Equal(t, int32(4), page2.Msg.TotalCount, "system actions are absent from the operator surface")
 
-	unassigned, err := f.handlers.ListActions(global, connect.NewRequest(&pmv1.ListActionsRequest{UnassignedOnly: true}))
+	unassigned, err := f.handlers.ListActions(global, connect.NewRequest(&cadestrov1.ListActionsRequest{UnassignedOnly: true}))
 	require.NoError(t, err)
 	require.Len(t, unassigned.Msg.Actions, 2)
 	unassignedIDs := []string{unassigned.Msg.Actions[0].Id, unassigned.Msg.Actions[1].Id}
 	assert.ElementsMatch(t, []string{transitiveID, unassignedID}, unassignedIDs,
 		"membership is not an assignment; only direct assignment rows exclude an action")
-	typeFiltered, err := f.handlers.ListActions(global, connect.NewRequest(&pmv1.ListActionsRequest{
-		TypeFilter: pmv1.ActionType_ACTION_TYPE_SCRIPT_RUN,
+	typeFiltered, err := f.handlers.ListActions(global, connect.NewRequest(&cadestrov1.ListActionsRequest{
+		TypeFilter: cadestrov1.ActionType_ACTION_TYPE_SCRIPT_RUN,
 	}))
 	require.NoError(t, err)
 	require.Len(t, typeFiltered.Msg.Actions, 1)
@@ -338,14 +338,14 @@ func TestActionHandlers_CorruptStoredParamsFailClosed(t *testing.T) {
 	state := authoring.New(authoring.Config{Store: f.store})
 	op := actionOperation()
 	action, err := state.CreateAction(context.Background(), op, authoring.CreateActionParams{
-		Name: "safe", CreatedBy: op.ActorID, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
+		Name: "safe", CreatedBy: op.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
 		Params: []byte(`{"interpreter":"/bin/sh","script":"printf ok"}`),
 	})
 	require.NoError(t, err)
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = '{"bogus":true}' WHERE id = $1`, action.ID)
 	require.NoError(t, err)
 
-	_, err = f.handlers.GetAction(f.actor("GetAction"), connect.NewRequest(&pmv1.GetActionRequest{Id: action.ID}))
+	_, err = f.handlers.GetAction(f.actor("GetAction"), connect.NewRequest(&cadestrov1.GetActionRequest{Id: action.ID}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 
@@ -353,34 +353,34 @@ func TestActionHandlers_RejectUnsafeOrMismatchedParamsAndSystemMutation(t *testi
 	f := newActionHandlerFixture(t)
 	ctx := f.actor("CreateAction", "RenameAction")
 
-	_, err := f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "empty shell", Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-		Params: &pmv1.CreateActionRequest_Shell{Shell: &pmv1.ShellParams{Interpreter: "/bin/sh"}},
+	_, err := f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "empty shell", Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		Params: &cadestrov1.CreateActionRequest_Shell{Shell: &cadestrov1.ShellParams{Interpreter: "/bin/sh"}},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "insecure package", Type: pmv1.ActionType_ACTION_TYPE_DEB,
-		Params: &pmv1.CreateActionRequest_App{App: &pmv1.AppInstallParams{
+	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "insecure package", Type: cadestrov1.ActionType_ACTION_TYPE_DEB,
+		Params: &cadestrov1.CreateActionRequest_App{App: &cadestrov1.AppInstallParams{
 			Url: "http://example.test/pkg.deb", ChecksumSha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		}},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "mismatch", Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-		Params: &pmv1.CreateActionRequest_Service{Service: &pmv1.ServiceParams{UnitName: "sshd"}},
+	_, err = f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "mismatch", Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		Params: &cadestrov1.CreateActionRequest_Service{Service: &cadestrov1.ServiceParams{UnitName: "sshd"}},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
 	state := authoring.New(authoring.Config{Store: f.store})
 	op := actionOperation()
 	system, err := state.CreateAction(context.Background(), op, authoring.CreateActionParams{
-		Name: "system", CreatedBy: op.ActorID, Type: pmv1.ActionType_ACTION_TYPE_UPDATE,
+		Name: "system", CreatedBy: op.ActorID, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE,
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)
-	_, err = f.handlers.RenameAction(ctx, connect.NewRequest(&pmv1.RenameActionRequest{Id: system.ID, Name: "operator"}))
+	_, err = f.handlers.RenameAction(ctx, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: system.ID, Name: "operator"}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 }
 
@@ -393,10 +393,10 @@ func TestActionHandlers_RejectComplianceShellWithoutDetectionScript(t *testing.T
 		{"blank", " \t\n "},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-				Name: "compliance " + tc.name, Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-				DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
-				Params: &pmv1.CreateActionRequest_Shell{Shell: &pmv1.ShellParams{
+			_, err := f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+				Name: "compliance " + tc.name, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+				DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
+				Params: &cadestrov1.CreateActionRequest_Shell{Shell: &cadestrov1.ShellParams{
 					Interpreter: "/bin/sh", Script: "echo remediate",
 					DetectionScript: tc.detection, IsCompliance: true,
 				}},
@@ -406,19 +406,19 @@ func TestActionHandlers_RejectComplianceShellWithoutDetectionScript(t *testing.T
 		})
 	}
 
-	created, err := f.handlers.CreateAction(ctx, connect.NewRequest(&pmv1.CreateActionRequest{
-		Name: "compliance detect", Type: pmv1.ActionType_ACTION_TYPE_SHELL,
-		DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
-		Params: &pmv1.CreateActionRequest_Shell{Shell: &pmv1.ShellParams{
+	created, err := f.handlers.CreateAction(ctx, connect.NewRequest(&cadestrov1.CreateActionRequest{
+		Name: "compliance detect", Type: cadestrov1.ActionType_ACTION_TYPE_SHELL,
+		DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, TimeoutSeconds: 300,
+		Params: &cadestrov1.CreateActionRequest_Shell{Shell: &cadestrov1.ShellParams{
 			Interpreter: "/bin/sh", DetectionScript: "exit 0", IsCompliance: true,
 		}},
 	}))
 	require.NoError(t, err, "a compliance action carrying a detection script stays authorable")
 
-	_, err = f.handlers.UpdateActionParams(ctx, connect.NewRequest(&pmv1.UpdateActionParamsRequest{
-		Id: created.Msg.Action.Id, DesiredState: pmv1.DesiredState_DESIRED_STATE_PRESENT,
+	_, err = f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
+		Id: created.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 		TimeoutSeconds: 300,
-		Params: &pmv1.UpdateActionParamsRequest_Shell{Shell: &pmv1.ShellParams{
+		Params: &cadestrov1.UpdateActionParamsRequest_Shell{Shell: &cadestrov1.ShellParams{
 			Interpreter: "/bin/sh", Script: "echo remediate", IsCompliance: true,
 		}},
 	}))

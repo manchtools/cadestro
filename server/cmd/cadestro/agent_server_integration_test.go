@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/agentstream"
@@ -33,7 +33,7 @@ type integrationAgentService struct {
 	hello chan string
 }
 
-func (s *integrationAgentService) Stream(ctx context.Context, stream *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+func (s *integrationAgentService) Stream(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 	first, err := stream.Receive()
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (s *integrationAgentService) Stream(ctx context.Context, stream *connect.Bi
 	} else {
 		s.hello <- got
 	}
-	if err := stream.Send(&pm.ServerMessage{Id: first.Id, Payload: &pm.ServerMessage_Welcome{Welcome: &pm.Welcome{}}}); err != nil {
+	if err := stream.Send(&cadestrov1.ServerMessage{Id: first.Id, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}}); err != nil {
 		return err
 	}
 	<-ctx.Done()
@@ -183,11 +183,11 @@ func TestBuildAgentServerRejectsMissingAndWrongClientIdentity(t *testing.T) {
 
 type integrationStreamHandler struct{}
 
-func (integrationStreamHandler) OnWelcome(context.Context, *pm.Welcome) error { return nil }
-func (integrationStreamHandler) OnQuery(context.Context, *pm.OSQuery) (*pm.OSQueryResult, error) {
+func (integrationStreamHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
+func (integrationStreamHandler) OnQuery(context.Context, *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error) {
 	return nil, nil
 }
-func (integrationStreamHandler) OnError(context.Context, *pm.Error) error { return nil }
+func (integrationStreamHandler) OnError(context.Context, *cadestrov1.Error) error { return nil }
 
 func integrationCA(t *testing.T) ([]byte, []byte, *ca.CA) {
 	t.Helper()

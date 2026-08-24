@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
@@ -18,12 +18,12 @@ func TestAuditBoundary_ValidationPrecedesAuthentication(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	_, err := f.client.ListAuditEvents(f.ctx(), connect.NewRequest(&pmv1.ListAuditEventsRequest{
+	_, err := f.client.ListAuditEvents(f.ctx(), connect.NewRequest(&cadestrov1.ListAuditEventsRequest{
 		ActorId: "not-a-ulid",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 
-	_, err = f.client.ExportAuditEvents(f.ctx(), connect.NewRequest(&pmv1.ExportAuditEventsRequest{
+	_, err = f.client.ExportAuditEvents(f.ctx(), connect.NewRequest(&cadestrov1.ExportAuditEventsRequest{
 		Format: "xml",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
@@ -36,12 +36,12 @@ func TestAuditEvents_ReadTheAppendOnlyEffectLog(t *testing.T) {
 		"GetServerSettings", "UpdateServerSettings", "ListAuditEvents",
 	}})
 
-	_, err := f.client.UpdateServerSettings(f.ctx(), authed(&pmv1.UpdateServerSettingsRequest{
+	_, err := f.client.UpdateServerSettings(f.ctx(), authed(&cadestrov1.UpdateServerSettingsRequest{
 		UserProvisioningEnabled: true,
 	}, operator.Token))
 	require.NoError(t, err)
 
-	resp, err := f.client.ListAuditEvents(f.ctx(), authed(&pmv1.ListAuditEventsRequest{
+	resp, err := f.client.ListAuditEvents(f.ctx(), authed(&cadestrov1.ListAuditEventsRequest{
 		PageSize:   10,
 		StreamType: "server_settings",
 		EventType:  "provision",
@@ -72,10 +72,10 @@ func TestAuditEvents_KeepOperationOnlyRejectedAuthentication(t *testing.T) {
 	f := newFixture(t)
 	operator := f.seedActor(grant{Permissions: []string{"ListAuditEvents"}})
 
-	_, err := f.client.GetServerSettings(f.ctx(), authed(&pmv1.GetServerSettingsRequest{}, "invalid-token"))
+	_, err := f.client.GetServerSettings(f.ctx(), authed(&cadestrov1.GetServerSettingsRequest{}, "invalid-token"))
 	require.Error(t, err)
 
-	resp, err := f.client.ListAuditEvents(f.ctx(), authed(&pmv1.ListAuditEventsRequest{
+	resp, err := f.client.ListAuditEvents(f.ctx(), authed(&cadestrov1.ListAuditEventsRequest{
 		StreamType: "authentication",
 		EventType:  "reject",
 	}, operator.Token))
@@ -97,13 +97,13 @@ func TestAuditEvents_UseStableKeysetPagination(t *testing.T) {
 		"GetServerSettings", "UpdateServerSettings", "ListAuditEvents",
 	}})
 
-	_, err := f.client.UpdateServerSettings(f.ctx(), authed(&pmv1.UpdateServerSettingsRequest{
+	_, err := f.client.UpdateServerSettings(f.ctx(), authed(&cadestrov1.UpdateServerSettingsRequest{
 		UserProvisioningEnabled: true,
 		SshAccessForAll:         true,
 	}, operator.Token))
 	require.NoError(t, err)
 
-	first, err := f.client.ListAuditEvents(f.ctx(), authed(&pmv1.ListAuditEventsRequest{
+	first, err := f.client.ListAuditEvents(f.ctx(), authed(&cadestrov1.ListAuditEventsRequest{
 		PageSize:   1,
 		StreamType: "server_settings",
 	}, operator.Token))
@@ -112,7 +112,7 @@ func TestAuditEvents_UseStableKeysetPagination(t *testing.T) {
 	assert.Equal(t, int32(2), first.Msg.TotalCount)
 	require.NotEmpty(t, first.Msg.NextPageToken)
 
-	second, err := f.client.ListAuditEvents(f.ctx(), authed(&pmv1.ListAuditEventsRequest{
+	second, err := f.client.ListAuditEvents(f.ctx(), authed(&cadestrov1.ListAuditEventsRequest{
 		PageSize:   1,
 		PageToken:  first.Msg.NextPageToken,
 		StreamType: "server_settings",
@@ -130,12 +130,12 @@ func TestExportAuditEvents_UsesTheSameSafeRowsAndAuditsTheRead(t *testing.T) {
 		"GetServerSettings", "UpdateServerSettings", "ListAuditEvents",
 	}})
 
-	_, err := f.client.UpdateServerSettings(f.ctx(), authed(&pmv1.UpdateServerSettingsRequest{
+	_, err := f.client.UpdateServerSettings(f.ctx(), authed(&cadestrov1.UpdateServerSettingsRequest{
 		UserProvisioningEnabled: true,
 	}, operator.Token))
 	require.NoError(t, err)
 
-	resp, err := f.client.ExportAuditEvents(f.ctx(), authed(&pmv1.ExportAuditEventsRequest{
+	resp, err := f.client.ExportAuditEvents(f.ctx(), authed(&cadestrov1.ExportAuditEventsRequest{
 		Format: "json",
 	}, operator.Token))
 	require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestExportAuditEvents_UsesTheSameSafeRowsAndAuditsTheRead(t *testing.T) {
 		[]any{rows[0]["event_type"], rows[1]["event_type"]})
 	assert.NotContains(t, string(resp.Msg.Chunk), "sealed_detail")
 
-	csvResp, err := f.client.ExportAuditEvents(f.ctx(), authed(&pmv1.ExportAuditEventsRequest{
+	csvResp, err := f.client.ExportAuditEvents(f.ctx(), authed(&cadestrov1.ExportAuditEventsRequest{
 		Format:      "csv",
 		StreamTypes: []string{"server_settings"},
 	}, operator.Token))

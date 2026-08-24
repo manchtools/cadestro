@@ -15,7 +15,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	sysenc "github.com/manchtools/cadestro/sdk/sys/encryption"
 )
 
@@ -279,11 +279,11 @@ func (d *Daemon) handleRequest(ctx context.Context, req Request) Response {
 	return Response{OK: true, Code: CodeOK}
 }
 
-func mapComplexity(c pm.LpsPasswordComplexity) sysenc.Complexity {
+func mapComplexity(c cadestrov1.LpsPasswordComplexity) sysenc.Complexity {
 	switch c {
-	case pm.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC:
+	case cadestrov1.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC:
 		return sysenc.ComplexityAlphanumeric
-	case pm.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX:
+	case cadestrov1.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX:
 		return sysenc.ComplexityComplex
 	default:
 		return sysenc.ComplexityNone

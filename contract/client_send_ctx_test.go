@@ -8,7 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 // WS16 finding #1: the Send* methods take a ctx but (*Client).send ignored
@@ -26,7 +26,7 @@ import (
 func newStalledLoopback(t *testing.T) *agentLoopback {
 	t.Helper()
 	l := newAgentLoopback(t)
-	l.handler.onStream = func(ctx context.Context, _ *connect.BidiStream[pm.AgentMessage, pm.ServerMessage]) error {
+	l.handler.onStream = func(ctx context.Context, _ *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 		// Hold the stream open without ever draining the inbound side.
 		<-ctx.Done()
 		return nil
@@ -60,8 +60,8 @@ func connectCancellable(t *testing.T, c *Client) {
 
 // bigTerminalOutput is intentionally far larger than the ~64 KiB HTTP/2
 // flow-control window so a single Send to a non-draining peer blocks mid-write.
-func bigTerminalOutput() *pm.TerminalOutput {
-	return &pm.TerminalOutput{
+func bigTerminalOutput() *cadestrov1.TerminalOutput {
+	return &cadestrov1.TerminalOutput{
 		SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
 		Data:      make([]byte, 2<<20), // 2 MiB
 	}
@@ -144,7 +144,7 @@ func TestSend_DoesNotSerializeAllTrafficBehindOneStalledSend(t *testing.T) {
 	go func() {
 		vctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		defer cancel()
-		done <- c.SendHeartbeat(vctx, &pm.Heartbeat{})
+		done <- c.SendHeartbeat(vctx, &cadestrov1.Heartbeat{})
 	}()
 
 	select {
@@ -176,9 +176,9 @@ func TestSendTerminalStateChange_HonorsContextDeadline(t *testing.T) {
 	go func() {
 		sctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		defer cancel()
-		done <- c.SendTerminalStateChange(sctx, &pm.TerminalStateChange{
+		done <- c.SendTerminalStateChange(sctx, &cadestrov1.TerminalStateChange{
 			SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
-			State:     pm.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED,
+			State:     cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED,
 		})
 	}()
 
@@ -201,7 +201,7 @@ func TestSend_DrainingPeer_NoRegression(t *testing.T) {
 
 	connectCancellable(t, c)
 
-	if err := c.SendHeartbeat(context.Background(), &pm.Heartbeat{}); err != nil {
+	if err := c.SendHeartbeat(context.Background(), &cadestrov1.Heartbeat{}); err != nil {
 		t.Fatalf("SendHeartbeat against a draining peer should succeed, got %v", err)
 	}
 }

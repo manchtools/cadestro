@@ -16,7 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -66,7 +66,7 @@ func New(cfg Config) *Service {
 
 // ApplyActionResult advances one authored occurrence. Replaying the same
 // terminal result is a successful no-op; a different result is rejected.
-func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result *pmv1.ActionResult) error {
+func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result *cadestrov1.ActionResult) error {
 	if ctx == nil || !validID(deviceID) || result == nil || result.ActionId == nil ||
 		!validID(result.ActionId.Value) || !validID(result.DeliveryId) || !validID(result.OccurrenceId) {
 		return ErrInvalidInput
@@ -199,7 +199,7 @@ func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result
 
 // AppendOutputChunk stores one bounded stream position. Duplicate frames are
 // absorbed by the primary key and do not create duplicate audit evidence.
-func (s *Service) AppendOutputChunk(ctx context.Context, deviceID string, chunk *pmv1.OutputChunk) error {
+func (s *Service) AppendOutputChunk(ctx context.Context, deviceID string, chunk *cadestrov1.OutputChunk) error {
 	if ctx == nil || !validID(deviceID) || chunk == nil || !validID(chunk.ExecutionId) ||
 		chunk.Sequence < 0 || chunk.Sequence >= MaxOutputChunks ||
 		len(chunk.Data) == 0 || len(chunk.Data) > maxOutputChunkBytes {
@@ -207,9 +207,9 @@ func (s *Service) AppendOutputChunk(ctx context.Context, deviceID string, chunk 
 	}
 	stream := ""
 	switch chunk.Stream {
-	case pmv1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT:
+	case cadestrov1.OutputStreamType_OUTPUT_STREAM_TYPE_STDOUT:
 		stream = "stdout"
-	case pmv1.OutputStreamType_OUTPUT_STREAM_TYPE_STDERR:
+	case cadestrov1.OutputStreamType_OUTPUT_STREAM_TYPE_STDERR:
 		stream = "stderr"
 	default:
 		return ErrInvalidInput
@@ -262,28 +262,28 @@ func validID(id string) bool {
 	return err == nil
 }
 
-func resultStatus(status pmv1.ExecutionStatus) (string, bool) {
+func resultStatus(status cadestrov1.ExecutionStatus) (string, bool) {
 	switch status {
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_RUNNING:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_RUNNING:
 		return "running", false
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS:
 		return "success", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_FAILED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED:
 		return "failed", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_SKIPPED:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_SKIPPED:
 		return "skipped", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_TIMEOUT:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_TIMEOUT:
 		return "timeout", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE:
 		return "not_applicable", true
-	case pmv1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
+	case cadestrov1.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE:
 		return "indeterminate", true
 	default:
 		return "", false
 	}
 }
 
-func hasTerminalData(result *pmv1.ActionResult) bool {
+func hasTerminalData(result *cadestrov1.ActionResult) bool {
 	return result.CompletedAt != nil || result.DurationMs != 0 || result.Error != "" ||
 		result.Output != nil || result.DetectionOutput != nil || result.Changed || result.Compliant
 }
@@ -298,7 +298,7 @@ func resultTime(value *timestamppb.Timestamp, now func() time.Time) (time.Time, 
 	return value.AsTime().UTC().Truncate(time.Microsecond), nil
 }
 
-func marshalOutput(output *pmv1.CommandOutput) ([]byte, error) {
+func marshalOutput(output *cadestrov1.CommandOutput) ([]byte, error) {
 	if output == nil {
 		return nil, nil
 	}
@@ -306,7 +306,7 @@ func marshalOutput(output *pmv1.CommandOutput) ([]byte, error) {
 }
 
 func occurrenceActionID(raw []byte, occurrenceID string) (string, error) {
-	manifest := &pmv1.Manifest{}
+	manifest := &cadestrov1.Manifest{}
 	if err := protojson.Unmarshal(raw, manifest); err != nil {
 		return "", err
 	}
@@ -331,7 +331,7 @@ func isTerminal(status string) bool {
 	}
 }
 
-func sameTerminalResult(row store.ExecutionView, result *pmv1.ActionResult, status string, completedAt time.Time, output, detectionOutput []byte) bool {
+func sameTerminalResult(row store.ExecutionView, result *cadestrov1.ActionResult, status string, completedAt time.Time, output, detectionOutput []byte) bool {
 	if row.Status != status || row.Changed != result.Changed || row.Compliant != result.Compliant ||
 		row.CompletedAt == nil || !row.CompletedAt.Equal(completedAt) || row.DurationMs == nil || *row.DurationMs != result.DurationMs {
 		return false
@@ -347,7 +347,7 @@ func equalOutput(stored, received []byte) bool {
 	if len(stored) == 0 || len(received) == 0 {
 		return len(stored) == len(received)
 	}
-	left, right := &pmv1.CommandOutput{}, &pmv1.CommandOutput{}
+	left, right := &cadestrov1.CommandOutput{}, &cadestrov1.CommandOutput{}
 	if protojson.Unmarshal(stored, left) != nil || protojson.Unmarshal(received, right) != nil {
 		return bytes.Equal(stored, received)
 	}

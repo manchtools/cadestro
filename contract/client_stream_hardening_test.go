@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func strictDispatchClient() *Client {
@@ -16,11 +16,11 @@ func strictDispatchClient() *Client {
 }
 
 func TestDispatchRejectsInvalidServerEnvelope(t *testing.T) {
-	for name, msg := range map[string]*pm.ServerMessage{
+	for name, msg := range map[string]*cadestrov1.ServerMessage{
 		"nil":                 nil,
-		"bad id":              {Id: "not-a-ulid", Payload: &pm.ServerMessage_Welcome{Welcome: &pm.Welcome{}}},
+		"bad id":              {Id: "not-a-ulid", Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}},
 		"nil payload":         {Id: NewULID()},
-		"nil payload message": {Id: NewULID(), Payload: &pm.ServerMessage_Welcome{}},
+		"nil payload message": {Id: NewULID(), Payload: &cadestrov1.ServerMessage_Welcome{}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := strictDispatchClient().dispatchServerMessage(context.Background(), msg, fakeBareHandler{}); err == nil {
@@ -32,9 +32,9 @@ func TestDispatchRejectsInvalidServerEnvelope(t *testing.T) {
 
 func TestDispatchRejectsBeforeWelcome(t *testing.T) {
 	c := strictDispatchClient()
-	msg := &pm.ServerMessage{
+	msg := &cadestrov1.ServerMessage{
 		Id: NewULID(),
-		Payload: &pm.ServerMessage_Query{Query: &pm.OSQuery{
+		Payload: &cadestrov1.ServerMessage_Query{Query: &cadestrov1.OSQuery{
 			QueryId: validULID,
 			Table:   "processes",
 		}},

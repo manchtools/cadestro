@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/crypto"
@@ -19,10 +19,10 @@ func TestCreateIdentityProvider_SealsTheSecretAndNeverReturnsIt(t *testing.T) {
 	admin := f.seedActor(grant{Permissions: []string{"CreateIdentityProvider", "GetIdentityProvider"}})
 
 	const secret = "super-secret-client-value"
-	resp, err := f.client.CreateIdentityProvider(f.ctx(), authed(&pmv1.CreateIdentityProviderRequest{
+	resp, err := f.client.CreateIdentityProvider(f.ctx(), authed(&cadestrov1.CreateIdentityProviderRequest{
 		Name:                 "Corp IdP",
 		Slug:                 "corp",
-		ProviderType:         pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
+		ProviderType:         cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
 		ClientId:             "client-id",
 		ClientSecret:         secret,
 		IssuerUrl:            "https://idp.example/",
@@ -78,18 +78,18 @@ func TestCreateIdentityProvider_RequiresAClientID(t *testing.T) {
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateIdentityProvider"}})
 
-	for name, mutate := range map[string]func(*pmv1.CreateIdentityProviderRequest){
-		"no client id": func(*pmv1.CreateIdentityProviderRequest) {},
-		"a secret with no client id": func(req *pmv1.CreateIdentityProviderRequest) {
+	for name, mutate := range map[string]func(*cadestrov1.CreateIdentityProviderRequest){
+		"no client id": func(*cadestrov1.CreateIdentityProviderRequest) {},
+		"a secret with no client id": func(req *cadestrov1.CreateIdentityProviderRequest) {
 			req.ClientSecret = "orphaned-secret"
 		},
-		"a default role but no client id": func(req *pmv1.CreateIdentityProviderRequest) {
+		"a default role but no client id": func(req *cadestrov1.CreateIdentityProviderRequest) {
 			req.DefaultRoleId = auth.AdminRoleID
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			req := &pmv1.CreateIdentityProviderRequest{
-				Name: "Invalid", Slug: "invalid", ProviderType: pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
+			req := &cadestrov1.CreateIdentityProviderRequest{
+				Name: "Invalid", Slug: "invalid", ProviderType: cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
 				IssuerUrl: "https://idp.example/",
 			}
 			mutate(req)
@@ -111,10 +111,10 @@ func TestCreateIdentityProvider_RejectsADuplicateSlug(t *testing.T) {
 	admin := f.seedActor(grant{Permissions: []string{"CreateIdentityProvider"}})
 	f.insertProvider("corp", nil)
 
-	_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&pmv1.CreateIdentityProviderRequest{
+	_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&cadestrov1.CreateIdentityProviderRequest{
 		Name:         "Another",
 		Slug:         "corp",
-		ProviderType: pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
+		ProviderType: cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
 		ClientId:     "client",
 		ClientSecret: "secret",
 		IssuerUrl:    "https://other.example/",
@@ -127,10 +127,10 @@ func TestCreateIdentityProvider_RejectsAMalformedIssuer(t *testing.T) {
 	f := newFixture(t)
 	admin := f.seedActor(grant{Permissions: []string{"CreateIdentityProvider"}})
 
-	_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&pmv1.CreateIdentityProviderRequest{
+	_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&cadestrov1.CreateIdentityProviderRequest{
 		Name:         "Corp",
 		Slug:         "corp",
-		ProviderType: pmv1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
+		ProviderType: cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
 		ClientId:     "client",
 		ClientSecret: "secret",
 		IssuerUrl:    "not a url",
@@ -155,7 +155,7 @@ func TestUpdateIdentityProvider_EmptySecretKeepsTheStoredOne(t *testing.T) {
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT client_secret_encrypted FROM identity_providers WHERE id = $1`, providerID).Scan(&before))
 
-	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
+	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&cadestrov1.UpdateIdentityProviderRequest{
 		Id:        providerID,
 		Name:      "Renamed",
 		Enabled:   true,
@@ -199,7 +199,7 @@ func TestUpdateIdentityProvider_RefusesToDropTheClientID(t *testing.T) {
 		Scan(&beforeClientID, &beforeSecret))
 	require.NotEmpty(t, beforeSecret, "the fixture must hold a secret or the retention check proves nothing")
 
-	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
+	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&cadestrov1.UpdateIdentityProviderRequest{
 		Id: providerID, Name: "Unusable", Enabled: true,
 		IssuerUrl: "https://idp.example/",
 	}, admin.Token))
@@ -223,7 +223,7 @@ func TestUpdateIdentityProvider_RecordsTheEmailAssertionTransition(t *testing.T)
 		s.TrustEmailAssertions = false
 	})
 
-	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
+	_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&cadestrov1.UpdateIdentityProviderRequest{
 		Id:                   providerID,
 		Name:                 "Corp",
 		Enabled:              true,
@@ -250,10 +250,10 @@ func TestDeleteIdentityProvider_RetiresTheRowAndLeavesLinksResolvable(t *testing
 	providerID := f.insertProvider("corp", nil)
 	linkID := f.insertIdentityLink(subject.ID, providerID, "external-1")
 
-	_, err := f.client.DeleteIdentityProvider(f.ctx(), authed(&pmv1.DeleteIdentityProviderRequest{Id: providerID}, admin.Token))
+	_, err := f.client.DeleteIdentityProvider(f.ctx(), authed(&cadestrov1.DeleteIdentityProviderRequest{Id: providerID}, admin.Token))
 	require.NoError(t, err)
 
-	_, err = f.client.GetIdentityProvider(f.ctx(), authed(&pmv1.GetIdentityProviderRequest{Id: providerID}, admin.Token))
+	_, err = f.client.GetIdentityProvider(f.ctx(), authed(&cadestrov1.GetIdentityProviderRequest{Id: providerID}, admin.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
 	link, err := f.store.GetIdentityLink(f.ctx(), linkID)
@@ -269,7 +269,7 @@ func TestEnableSCIM_ShowsTheTokenOnceAndStoresOnlyItsDigest(t *testing.T) {
 	}})
 	providerID := f.insertProvider("corp", nil)
 
-	enabled, err := f.client.EnableSCIM(f.ctx(), authed(&pmv1.EnableSCIMRequest{Id: providerID}, admin.Token))
+	enabled, err := f.client.EnableSCIM(f.ctx(), authed(&cadestrov1.EnableSCIMRequest{Id: providerID}, admin.Token))
 	require.NoError(t, err)
 	require.NotEmpty(t, enabled.Msg.Token)
 	assert.Contains(t, enabled.Msg.EndpointUrl, providerID)
@@ -281,13 +281,13 @@ func TestEnableSCIM_ShowsTheTokenOnceAndStoresOnlyItsDigest(t *testing.T) {
 	assert.NotEqual(t, enabled.Msg.Token, storedHash, "the token itself is never stored")
 
 	// Reading the provider back never re-serves the token.
-	got, err := f.client.GetIdentityProvider(f.ctx(), authed(&pmv1.GetIdentityProviderRequest{Id: providerID}, admin.Token))
+	got, err := f.client.GetIdentityProvider(f.ctx(), authed(&cadestrov1.GetIdentityProviderRequest{Id: providerID}, admin.Token))
 	require.NoError(t, err)
 	assert.True(t, got.Msg.Provider.ScimEnabled)
 	assert.NotContains(t, got.Msg.Provider.String(), enabled.Msg.Token)
 
 	// Rotation replaces the digest, so the previous token is dead.
-	rotated, err := f.client.RotateSCIMToken(f.ctx(), authed(&pmv1.RotateSCIMTokenRequest{Id: providerID}, admin.Token))
+	rotated, err := f.client.RotateSCIMToken(f.ctx(), authed(&cadestrov1.RotateSCIMTokenRequest{Id: providerID}, admin.Token))
 	require.NoError(t, err)
 	assert.NotEqual(t, enabled.Msg.Token, rotated.Msg.Token)
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
@@ -296,7 +296,7 @@ func TestEnableSCIM_ShowsTheTokenOnceAndStoresOnlyItsDigest(t *testing.T) {
 
 	// Disabling clears the digest, so a token issued earlier cannot be
 	// replayed if SCIM is turned back on.
-	_, err = f.client.DisableSCIM(f.ctx(), authed(&pmv1.DisableSCIMRequest{Id: providerID}, admin.Token))
+	_, err = f.client.DisableSCIM(f.ctx(), authed(&cadestrov1.DisableSCIMRequest{Id: providerID}, admin.Token))
 	require.NoError(t, err)
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT scim_token_hash FROM identity_providers WHERE id = $1`, providerID).Scan(&storedHash))
@@ -319,7 +319,7 @@ func TestRotateSCIMToken_RefusesWhenSCIMWasNeverEnabled(t *testing.T) {
 	admin := f.seedActor(grant{Permissions: []string{"RotateSCIMToken"}})
 	providerID := f.insertProvider("corp", nil)
 
-	_, err := f.client.RotateSCIMToken(f.ctx(), authed(&pmv1.RotateSCIMTokenRequest{Id: providerID}, admin.Token))
+	_, err := f.client.RotateSCIMToken(f.ctx(), authed(&cadestrov1.RotateSCIMTokenRequest{Id: providerID}, admin.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 	assert.Zero(t, f.countAuditOperations())
 }
@@ -332,17 +332,17 @@ func TestIdentityProviderRPCs_ReportAnUnknownProviderAsNotFound(t *testing.T) {
 	}})
 	missing := newULID()
 
-	_, err := f.client.GetIdentityProvider(f.ctx(), authed(&pmv1.GetIdentityProviderRequest{Id: missing}, admin.Token))
+	_, err := f.client.GetIdentityProvider(f.ctx(), authed(&cadestrov1.GetIdentityProviderRequest{Id: missing}, admin.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
-	_, err = f.client.UpdateIdentityProvider(f.ctx(), authed(&pmv1.UpdateIdentityProviderRequest{
+	_, err = f.client.UpdateIdentityProvider(f.ctx(), authed(&cadestrov1.UpdateIdentityProviderRequest{
 		Id: missing, Name: "X",
 	}, admin.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
-	_, err = f.client.DeleteIdentityProvider(f.ctx(), authed(&pmv1.DeleteIdentityProviderRequest{Id: missing}, admin.Token))
+	_, err = f.client.DeleteIdentityProvider(f.ctx(), authed(&cadestrov1.DeleteIdentityProviderRequest{Id: missing}, admin.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
-	_, err = f.client.EnableSCIM(f.ctx(), authed(&pmv1.EnableSCIMRequest{Id: missing}, admin.Token))
+	_, err = f.client.EnableSCIM(f.ctx(), authed(&cadestrov1.EnableSCIMRequest{Id: missing}, admin.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 }

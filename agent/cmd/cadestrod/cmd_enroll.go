@@ -15,7 +15,7 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/manchtools/cadestro/agent/internal/deviceauth"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
@@ -145,7 +145,7 @@ func runEnroll(args []string) {
 	client := cadestrov1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
 
 	// Check enrollment status first
-	status, err := client.GetEnrollmentStatus(ctx, connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	status, err := client.GetEnrollmentStatus(ctx, connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: cannot connect to agent enrollment socket at %s\n", *socketPath)
 		fmt.Fprintln(os.Stderr, "Is the agent service running? Check: systemctl status cadestrod")
@@ -161,7 +161,7 @@ func runEnroll(args []string) {
 	// a TLS-bypass field; agents always validate the server cert
 	// during enrollment. The CA fingerprint pin is verified
 	// server-side before the returned CA is trusted.
-	resp, err := client.Enroll(ctx, connect.NewRequest(&pm.EnrollRequest{
+	resp, err := client.Enroll(ctx, connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        *server,
 		Token:            resolvedToken,
 		CaFingerprintPin: strings.ReplaceAll(strings.TrimSpace(caPin), ":", ""),

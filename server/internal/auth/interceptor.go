@@ -13,17 +13,17 @@ import (
 	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v5"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/middleware"
 )
 
 // Error code constants carried in the structured error detail.
 const (
-	errRateLimited      = pmv1.ErrorCode_ERROR_CODE_RATE_LIMITED
-	errNotAuthenticated = pmv1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
-	errTokenExpired     = pmv1.ErrorCode_ERROR_CODE_TOKEN_EXPIRED
-	errPermissionDenied = pmv1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
+	errRateLimited      = cadestrov1.ErrorCode_ERROR_CODE_RATE_LIMITED
+	errNotAuthenticated = cadestrov1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
+	errTokenExpired     = cadestrov1.ErrorCode_ERROR_CODE_TOKEN_EXPIRED
+	errPermissionDenied = cadestrov1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
 )
 
 // ControlProcedurePrefix is the Connect path prefix every control
@@ -519,7 +519,7 @@ func (i *AuthInterceptor) rejectAuthentication(
 	ctx context.Context,
 	req connect.AnyRequest,
 	procedure string,
-	reason pmv1.ErrorCode,
+	reason cadestrov1.ErrorCode,
 	credential string,
 	code connect.Code,
 	message string,
@@ -632,15 +632,15 @@ func (i *AuthzInterceptor) WrapStreamingHandler(connect.StreamingHandlerFunc) co
 // authErrorCtx builds a connect error carrying the structured detail
 // the web client correlates on. The message is a fixed string; no
 // request input and no credential material reaches it.
-func authErrorCtx(ctx context.Context, code pmv1.ErrorCode, connectCode connect.Code, msg string) *connect.Error {
+func authErrorCtx(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, msg string) *connect.Error {
 	e := connect.NewError(connectCode, errors.New(msg))
-	detail := &pmv1.ErrorDetail{Code: code, RequestId: middleware.RequestIDFromContext(ctx)}
+	detail := &cadestrov1.ErrorDetail{Code: code, RequestId: middleware.RequestIDFromContext(ctx)}
 	if d, err := connect.NewErrorDetail(detail); err == nil {
 		e.AddDetail(d)
 	}
 	return e
 }
 
-func auditReasonString(code pmv1.ErrorCode) string {
+func auditReasonString(code cadestrov1.ErrorCode) string {
 	return strings.ToLower(strings.TrimPrefix(code.String(), "ERROR_CODE_"))
 }

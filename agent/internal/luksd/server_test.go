@@ -17,7 +17,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/store"
 	sdk "github.com/manchtools/cadestro/contract"
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const goodPassphrase = "correct-horse-battery-staple-42"
@@ -112,7 +112,7 @@ func validResult() *sdk.ValidateLuksTokenResult {
 		ActionID:   "01HXLUKSDAEMON000000000000",
 		DevicePath: "/dev/mapper/test",
 		MinLength:  16,
-		Complexity: pm.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED,
+		Complexity: cadestrov1.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED,
 	}
 }
 

@@ -8,17 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func newTestSession(id string) *TerminalSession {
 	return NewTerminalSession(id, "dev-1", "user-1", "cadestro-tty-alice", 80, 24)
 }
 
-func outputMsg() *pm.AgentMessage {
-	return &pm.AgentMessage{
-		Payload: &pm.AgentMessage_TerminalOutput{
-			TerminalOutput: &pm.TerminalOutput{SessionId: "s1", Data: []byte("x")},
+func outputMsg() *cadestrov1.AgentMessage {
+	return &cadestrov1.AgentMessage{
+		Payload: &cadestrov1.AgentMessage_TerminalOutput{
+			TerminalOutput: &cadestrov1.TerminalOutput{SessionId: "s1", Data: []byte("x")},
 		},
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -25,8 +25,8 @@ import (
 // assign, never on a drift interval") observable on the wire instead of being
 // silently dropped and re-defaulted — the cadestro-tty createHome bug class. And the
 // field set is now declared exactly once (the proto), not three times.
-func ScheduleToRaw(s *pm.ActionSchedule) (json.RawMessage, error) {
-	if s == nil || proto.Equal(s, &pm.ActionSchedule{}) {
+func ScheduleToRaw(s *cadestrov1.ActionSchedule) (json.RawMessage, error) {
+	if s == nil || proto.Equal(s, &cadestrov1.ActionSchedule{}) {
 		return nil, nil
 	}
 	b, err := marshalOptions.Marshal(s)
@@ -42,7 +42,7 @@ func ScheduleToRaw(s *pm.ActionSchedule) (json.RawMessage, error) {
 // existence, distinct from absence). Empty input, `{}`, or `null` decode to nil
 // (no schedule configured) so callers leave the proto field unset rather than
 // carrying an all-zeros placeholder.
-func ScheduleFromJSON(data []byte) *pm.ActionSchedule {
+func ScheduleFromJSON(data []byte) *cadestrov1.ActionSchedule {
 	s, err := ParseSchedule(data)
 	if err != nil {
 		if len(bytes.TrimSpace(data)) > 0 {
@@ -57,7 +57,7 @@ func ScheduleFromJSON(data []byte) *pm.ActionSchedule {
 // ParseSchedule is the fail-closed form of ScheduleFromJSON. Compilation and
 // dispatch paths use it so malformed or unknown stored fields cannot silently
 // change the work sent to an agent.
-func ParseSchedule(data []byte) (*pm.ActionSchedule, error) {
+func ParseSchedule(data []byte) (*cadestrov1.ActionSchedule, error) {
 	// Probe for object presence first: an empty object carries no schedule,
 	// while a populated object is a schedule even if all fields are zero. This
 	// is what distinguishes "explicitly set" from "unset" — protojson alone
@@ -73,7 +73,7 @@ func ParseSchedule(data []byte) (*pm.ActionSchedule, error) {
 		// `{}`, `null` (decodes to nil map), or absent → no schedule.
 		return nil, nil
 	}
-	var s pm.ActionSchedule
+	var s cadestrov1.ActionSchedule
 	if err := unmarshalOpts.Unmarshal(data, &s); err != nil {
 		return nil, fmt.Errorf("decode schedule fields: %w", err)
 	}

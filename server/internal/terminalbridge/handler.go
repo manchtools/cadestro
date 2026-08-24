@@ -15,7 +15,7 @@ import (
 	"github.com/coder/websocket"
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -135,9 +135,9 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		if !stopSent.CompareAndSwap(false, true) {
 			return
 		}
-		_ = h.manager.Send(metadata.DeviceID, &pmv1.ServerMessage{
-			Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_TerminalStop{
-				TerminalStop: &pmv1.TerminalStop{SessionId: sessionID, Reason: reason},
+		_ = h.manager.Send(metadata.DeviceID, &cadestrov1.ServerMessage{
+			Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalStop{
+				TerminalStop: &cadestrov1.TerminalStop{SessionId: sessionID, Reason: reason},
 			},
 		})
 	}
@@ -151,9 +151,9 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		}
 	}()
 
-	if err := h.manager.Send(metadata.DeviceID, &pmv1.ServerMessage{
-		Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_TerminalStart{
-			TerminalStart: &pmv1.TerminalStart{
+	if err := h.manager.Send(metadata.DeviceID, &cadestrov1.ServerMessage{
+		Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalStart{
+			TerminalStart: &cadestrov1.TerminalStart{
 				SessionId: sessionID, TtyUser: metadata.TtyUser, Cols: metadata.Cols, Rows: metadata.Rows,
 			},
 		},
@@ -223,17 +223,17 @@ func (h *Handler) waitForStarted(ctx context.Context, session *connection.Termin
 			if !ok {
 				return errTerminalEnded
 			}
-			state, ok := message.Payload.(*pmv1.AgentMessage_TerminalStateChange)
+			state, ok := message.Payload.(*cadestrov1.AgentMessage_TerminalStateChange)
 			if !ok || state.TerminalStateChange == nil {
 				continue
 			}
 			switch state.TerminalStateChange.State {
-			case pmv1.TerminalSessionState_TERMINAL_SESSION_STATE_STARTED:
+			case cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_STARTED:
 				return nil
-			case pmv1.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED:
+			case cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED:
 				_ = ws.Close(websocket.StatusInternalError, "terminal ended before start")
 				return errTerminalEnded
-			case pmv1.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR:
+			case cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR:
 				_ = ws.Close(websocket.StatusInternalError, "device terminal failed")
 				return errAgentTerminalFailure
 			}
@@ -256,9 +256,9 @@ func (h *Handler) clientToAgent(ctx context.Context, ws *websocket.Conn, session
 		session.Touch()
 		switch messageType {
 		case websocket.MessageBinary:
-			if err := h.manager.Send(deviceID, &pmv1.ServerMessage{
-				Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_TerminalInput{
-					TerminalInput: &pmv1.TerminalInput{SessionId: session.SessionID, Data: data},
+			if err := h.manager.Send(deviceID, &cadestrov1.ServerMessage{
+				Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalInput{
+					TerminalInput: &cadestrov1.TerminalInput{SessionId: session.SessionID, Data: data},
 				},
 			}); err != nil {
 				return connection.ErrAgentNotConnected
@@ -268,9 +268,9 @@ func (h *Handler) clientToAgent(ctx context.Context, ws *websocket.Conn, session
 			if json.Unmarshal(data, &resize) != nil || resize.Type != "resize" || resize.Cols == 0 || resize.Rows == 0 {
 				continue
 			}
-			if err := h.manager.Send(deviceID, &pmv1.ServerMessage{
-				Id: ulid.Make().String(), Payload: &pmv1.ServerMessage_TerminalResize{
-					TerminalResize: &pmv1.TerminalResize{SessionId: session.SessionID, Cols: resize.Cols, Rows: resize.Rows},
+			if err := h.manager.Send(deviceID, &cadestrov1.ServerMessage{
+				Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalResize{
+					TerminalResize: &cadestrov1.TerminalResize{SessionId: session.SessionID, Cols: resize.Cols, Rows: resize.Rows},
 				},
 			}); err != nil {
 				return connection.ErrAgentNotConnected
@@ -290,21 +290,21 @@ func (h *Handler) agentToClient(ctx context.Context, ws *websocket.Conn, session
 			}
 			session.Touch()
 			switch payload := message.Payload.(type) {
-			case *pmv1.AgentMessage_TerminalOutput:
+			case *cadestrov1.AgentMessage_TerminalOutput:
 				if payload.TerminalOutput == nil {
 					return errAgentTerminalFailure
 				}
 				if err := ws.Write(ctx, websocket.MessageBinary, payload.TerminalOutput.Data); err != nil {
 					return err
 				}
-			case *pmv1.AgentMessage_TerminalStateChange:
+			case *cadestrov1.AgentMessage_TerminalStateChange:
 				if payload.TerminalStateChange == nil {
 					return errAgentTerminalFailure
 				}
-				if payload.TerminalStateChange.State == pmv1.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED {
+				if payload.TerminalStateChange.State == cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED {
 					return nil
 				}
-				if payload.TerminalStateChange.State == pmv1.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR {
+				if payload.TerminalStateChange.State == cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR {
 					return errAgentTerminalFailure
 				}
 			}

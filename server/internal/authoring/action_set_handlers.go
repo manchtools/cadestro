@@ -6,14 +6,14 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 // CreateActionSet writes one independently scheduled and failure-governed set.
-func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[pmv1.CreateActionSetRequest]) (*connect.Response[pmv1.CreateActionSetResponse], error) {
+func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[cadestrov1.CreateActionSetRequest]) (*connect.Response[cadestrov1.CreateActionSetResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -33,11 +33,11 @@ func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[pmv
 	if err != nil {
 		return nil, h.internal(ctx, "encode created action set", err)
 	}
-	return connect.NewResponse(&pmv1.CreateActionSetResponse{Set: set}), nil
+	return connect.NewResponse(&cadestrov1.CreateActionSetResponse{Set: set}), nil
 }
 
 // GetActionSet returns one visible set and its live ordered members.
-func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[pmv1.GetActionSetRequest]) (*connect.Response[pmv1.GetActionSetResponse], error) {
+func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[cadestrov1.GetActionSetRequest]) (*connect.Response[cadestrov1.GetActionSetResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -59,13 +59,13 @@ func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[pmv1.G
 	if err != nil {
 		return nil, h.internal(ctx, "encode action set", err)
 	}
-	return connect.NewResponse(&pmv1.GetActionSetResponse{
+	return connect.NewResponse(&cadestrov1.GetActionSetResponse{
 		Set: set, Members: ActionSetMembersToProto(members),
 	}), nil
 }
 
 // ListActionSets returns a deterministic SQLite keyset page.
-func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[pmv1.ListActionSetsRequest]) (*connect.Response[pmv1.ListActionSetsResponse], error) {
+func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[cadestrov1.ListActionSetsRequest]) (*connect.Response[cadestrov1.ListActionSetsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[pmv1
 	if err != nil {
 		return nil, h.internal(ctx, "count action sets", err)
 	}
-	sets := make([]*pmv1.ActionSet, len(views))
+	sets := make([]*cadestrov1.ActionSet, len(views))
 	for i, view := range views {
 		sets[i], err = ActionSetToProto(view.ActionSetRow, view.MemberCount)
 		if err != nil {
@@ -108,13 +108,13 @@ func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[pmv1
 	if hasMore {
 		next = views[len(views)-1].ID
 	}
-	return connect.NewResponse(&pmv1.ListActionSetsResponse{
+	return connect.NewResponse(&cadestrov1.ListActionSetsResponse{
 		Sets: sets, NextPageToken: next, TotalCount: boundedCount(total),
 	}), nil
 }
 
 // RenameActionSet replaces a set name.
-func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[pmv1.RenameActionSetRequest]) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
+func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[cadestrov1.RenameActionSetRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "RenameActionSet")
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[pmv
 }
 
 // UpdateActionSetDescription replaces a set description.
-func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.Request[pmv1.UpdateActionSetDescriptionRequest]) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
+func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionSetDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "UpdateActionSetDescription")
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.
 }
 
 // UpdateActionSetSchedule replaces the set schedule and failure policy.
-func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Request[pmv1.UpdateActionSetScheduleRequest]) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
+func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionSetScheduleRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "UpdateActionSetSchedule")
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Req
 }
 
 // DeleteActionSet soft-deletes a set and removes its composition edges.
-func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[pmv1.DeleteActionSetRequest]) (*connect.Response[pmv1.DeleteActionSetResponse], error) {
+func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[cadestrov1.DeleteActionSetRequest]) (*connect.Response[cadestrov1.DeleteActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "DeleteActionSet")
 	if err != nil {
 		return nil, err
@@ -158,11 +158,11 @@ func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[pmv
 		cadestrov1connect.ControlServiceDeleteActionSetProcedure, "DeleteActionSet"), req.Msg.Id); err != nil {
 		return nil, h.actionSetError(ctx, "delete action set", err)
 	}
-	return connect.NewResponse(&pmv1.DeleteActionSetResponse{}), nil
+	return connect.NewResponse(&cadestrov1.DeleteActionSetResponse{}), nil
 }
 
 // AddActionToSet adds one visible, ordinary Action occurrence to a set.
-func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[pmv1.AddActionToSetRequest]) (*connect.Response[pmv1.AddActionToSetResponse], error) {
+func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[cadestrov1.AddActionToSetRequest]) (*connect.Response[cadestrov1.AddActionToSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "AddActionToSet")
 	if err != nil {
 		return nil, err
@@ -189,11 +189,11 @@ func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[pmv1
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.AddActionToSetResponse{Set: set}), nil
+	return connect.NewResponse(&cadestrov1.AddActionToSetResponse{Set: set}), nil
 }
 
 // RemoveActionFromSet removes one occurrence edge.
-func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request[pmv1.RemoveActionFromSetRequest]) (*connect.Response[pmv1.RemoveActionFromSetResponse], error) {
+func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request[cadestrov1.RemoveActionFromSetRequest]) (*connect.Response[cadestrov1.RemoveActionFromSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "RemoveActionFromSet")
 	if err != nil {
 		return nil, err
@@ -207,11 +207,11 @@ func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.RemoveActionFromSetResponse{Set: set}), nil
+	return connect.NewResponse(&cadestrov1.RemoveActionFromSetResponse{Set: set}), nil
 }
 
 // ReorderActionInSet replaces one occurrence's authored position.
-func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[pmv1.ReorderActionInSetRequest]) (*connect.Response[pmv1.ReorderActionInSetResponse], error) {
+func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[cadestrov1.ReorderActionInSetRequest]) (*connect.Response[cadestrov1.ReorderActionInSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "ReorderActionInSet")
 	if err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, err
 	}
-	return connect.NewResponse(&pmv1.ReorderActionInSetResponse{Set: set}), nil
+	return connect.NewResponse(&cadestrov1.ReorderActionInSetResponse{Set: set}), nil
 }
 
 func (h *Handlers) actionSetError(ctx context.Context, operation string, err error) error {
@@ -324,7 +324,7 @@ func (h *Handlers) mutationActionSetActor(ctx context.Context, id, permission st
 	return actor, nil
 }
 
-func (h *Handlers) updatedActionSet(ctx context.Context, operation string, row store.ActionSetRow, err error) (*connect.Response[pmv1.UpdateActionSetResponse], error) {
+func (h *Handlers) updatedActionSet(ctx context.Context, operation string, row store.ActionSetRow, err error) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	if err != nil {
 		return nil, h.actionSetError(ctx, operation, err)
 	}
@@ -336,10 +336,10 @@ func (h *Handlers) updatedActionSet(ctx context.Context, operation string, row s
 	if err != nil {
 		return nil, h.internal(ctx, "encode updated action set", err)
 	}
-	return connect.NewResponse(&pmv1.UpdateActionSetResponse{Set: set}), nil
+	return connect.NewResponse(&cadestrov1.UpdateActionSetResponse{Set: set}), nil
 }
 
-func (h *Handlers) actionSetResponse(ctx context.Context, id string) (*pmv1.ActionSet, error) {
+func (h *Handlers) actionSetResponse(ctx context.Context, id string) (*cadestrov1.ActionSet, error) {
 	row, err := h.store.GetManifestActionSet(ctx, id)
 	if err != nil {
 		return nil, h.actionSetError(ctx, "read changed action set", err)

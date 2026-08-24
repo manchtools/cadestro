@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -13,7 +13,7 @@ import (
 const serverSettingsID = "00000000000000000000000003"
 
 // GetServerSettings returns the singleton fleet settings row.
-func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[pmv1.GetServerSettingsRequest]) (*connect.Response[pmv1.GetServerSettingsResponse], error) {
+func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[cadestrov1.GetServerSettingsRequest]) (*connect.Response[cadestrov1.GetServerSettingsResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
@@ -24,11 +24,11 @@ func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[p
 	if err != nil {
 		return nil, internalError(ctx, "failed to load server settings")
 	}
-	return connect.NewResponse(&pmv1.GetServerSettingsResponse{Settings: settingsToProto(row)}), nil
+	return connect.NewResponse(&cadestrov1.GetServerSettingsResponse{Settings: settingsToProto(row)}), nil
 }
 
 // UpdateServerSettings replaces the two fleet-wide toggles directly.
-func (h *Handlers) UpdateServerSettings(ctx context.Context, req *connect.Request[pmv1.UpdateServerSettingsRequest]) (*connect.Response[pmv1.UpdateServerSettingsResponse], error) {
+func (h *Handlers) UpdateServerSettings(ctx context.Context, req *connect.Request[cadestrov1.UpdateServerSettingsRequest]) (*connect.Response[cadestrov1.UpdateServerSettingsResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
 		return nil, err
@@ -72,11 +72,11 @@ func (h *Handlers) UpdateServerSettings(ctx context.Context, req *connect.Reques
 	if err != nil {
 		return nil, internalError(ctx, "failed to update server settings")
 	}
-	return connect.NewResponse(&pmv1.UpdateServerSettingsResponse{Settings: settingsToProto(updated)}), nil
+	return connect.NewResponse(&cadestrov1.UpdateServerSettingsResponse{Settings: settingsToProto(updated)}), nil
 }
 
-func settingsToProto(row store.ServerSettingsRow) *pmv1.ServerSettings {
-	return &pmv1.ServerSettings{
+func settingsToProto(row store.ServerSettingsRow) *cadestrov1.ServerSettings {
+	return &cadestrov1.ServerSettings{
 		UserProvisioningEnabled: row.UserProvisioningEnabled,
 		SshAccessForAll:         row.SshAccessForAll,
 	}

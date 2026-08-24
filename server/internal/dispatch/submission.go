@@ -9,7 +9,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	pmv1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -45,7 +45,7 @@ func New(cfg Config) *Service {
 // ManifestInput distinguishes catalog-backed occurrences from inline actions.
 // A manifest never mixes the two forms.
 type ManifestInput struct {
-	Manifest         *pmv1.Manifest
+	Manifest         *cadestrov1.Manifest
 	PersistActionIDs bool
 }
 
@@ -222,7 +222,7 @@ func (s *Service) SubmitBatch(ctx context.Context, p SubmitBatchParams) (Result,
 	return Result{DeliveryIDs: deliveryIDs, Executions: executions}, nil
 }
 
-func actionParams(action *pmv1.Action) ([]byte, error) {
+func actionParams(action *cadestrov1.Action) ([]byte, error) {
 	params := actionparams.ExtractParamsMsg(action)
 	if params == nil {
 		return []byte("{}"), nil

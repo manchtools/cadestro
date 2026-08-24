@@ -10,10 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pm "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
@@ -28,9 +27,9 @@ func genTestCAPEM(t *testing.T) []byte {
 
 func caReturningMock(caPEM []byte) *mockRegisterService {
 	return &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
-			return connect.NewResponse(&pm.RegisterResponse{
-				DeviceId:    &pm.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+			return connect.NewResponse(&cadestrov1.RegisterResponse{
+				DeviceId:    &cadestrov1.DeviceId{Value: "01HZZZZZZZZZZZZZZZZZZZZZZZZ"},
 				CaCert:      caPEM,
 				Certificate: []byte(fakeLeafPEM),
 				ControlUrl:  "https://gw.example.com:8443",
@@ -49,7 +48,7 @@ func caPin(t *testing.T, caPEM []byte) string {
 func TestEnroll_CAPinRequiredBeforeRegistration(t *testing.T) {
 	called := false
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			called = true
 			return nil, nil
 		},
@@ -60,7 +59,7 @@ func TestEnroll_CAPinRequiredBeforeRegistration(t *testing.T) {
 	h.registerOpts = trustServer(srv)
 
 	for _, pin := range []string{"", "abcd", strings.Repeat("z", 64)} {
-		resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+		resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 			ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: pin,
 		}))
 		require.NoError(t, err)
@@ -82,7 +81,7 @@ func TestEnroll_CAPinMatchAccepted(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), nil)
 	h.registerOpts = trustServer(srv)
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        srv.URL,
 		Token:            "tok",
 		CaFingerprintPin: wantFP,
@@ -114,7 +113,7 @@ func TestEnroll_CAPinMatchNormalized(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), nil)
 	h.registerOpts = trustServer(srv)
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        srv.URL,
 		Token:            "tok",
 		CaFingerprintPin: pinPasted,
@@ -134,7 +133,7 @@ func TestEnroll_CAPinMismatchRejected(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), func(*credentials.Credentials) { called = true })
 	h.registerOpts = trustServer(srv)
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        srv.URL,
 		Token:            "tok",
 		CaFingerprintPin: strings.Repeat("0", 64), // wrong pin
@@ -149,7 +148,7 @@ func TestEnroll_CAPinMismatchRejected(t *testing.T) {
 	assert.False(t, called, "onEnrolled must not fire on a pin mismatch")
 
 	// Status cache must not be primed.
-	st, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&pm.GetEnrollmentStatusRequest{}))
+	st, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, st.Msg.Enrolled)
 }
@@ -158,9 +157,9 @@ func TestEnroll_CAPinRejectsBeforeBearerToken(t *testing.T) {
 	var calls int
 	caPEM := genTestCAPEM(t)
 	mock := &mockRegisterService{
-		registerFunc: func(_ context.Context, _ *connect.Request[pm.RegisterRequest]) (*connect.Response[pm.RegisterResponse], error) {
+		registerFunc: func(_ context.Context, _ *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 			calls++
-			return connect.NewResponse(&pm.RegisterResponse{CaCert: caPEM}), nil
+			return connect.NewResponse(&cadestrov1.RegisterResponse{CaCert: caPEM}), nil
 		},
 	}
 	srv := startMockControlServer(t, mock)
@@ -170,7 +169,7 @@ func TestEnroll_CAPinRejectsBeforeBearerToken(t *testing.T) {
 	wrongPin := strings.Repeat("f", 64)
 	h.registerOpts = append(trustServer(srv), sdk.WithCAPin(wrongPin))
 
-	resp, err := h.Enroll(context.Background(), connect.NewRequest(&pm.EnrollRequest{
+	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: srv.URL, Token: "must-not-cross", CaFingerprintPin: wrongPin,
 	}))
 	require.NoError(t, err)
