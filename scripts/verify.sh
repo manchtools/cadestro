@@ -165,6 +165,53 @@ fi
 
 printf 'verify: predecessor initials absent as an identifier prefix (positive control matched, tree clean)\n'
 
+# The initials also showed up with no hyphen at all: a Go import alias built
+# directly from them (pmv1, pmexec, pmcrypto — real, on ~150 files, before
+# they were swept to the package's own name or to a name that says what it
+# is instead of who used to own it). The check above cannot see this shape;
+# there is no hyphen to anchor on.
+#
+# The initials alone are too generic to forbid as a bare identifier — "pm" is
+# a legitimate two-letter local variable (a package-manager handle is one),
+# and the initials open dozens of unrelated test-fixture strings elsewhere in
+# the tree (usernames, group names) that this check has no mandate to touch.
+# What a reintroduced alias always looks like, and what nothing else does, is
+# the shape a Go import spec writes: the alias immediately followed by
+# whitespace and the opening quote of the import path. Anchoring there
+# instead of on the bare initials is what keeps this a hard failure instead
+# of a grep a human has to triage.
+#
+# Scoped to *.go — that shape cannot occur in any other file type. As above,
+# there is no allowlist: nothing in the tree has a reason today to alias an
+# import to a name starting with these initials, so a hit here is always a
+# violation, and the positive control proves the scan before a zero result is
+# trusted. The pattern is assembled from the same fragment as above, so this
+# file matches neither check.
+alias_re="\\b${initials_head}m[A-Za-z0-9_]*[[:space:]]+\""
+
+alias_control=$(mktemp) || fail "could not create the import-alias positive control"
+trap 'rm -f "$initials_control" "$alias_control"' EXIT
+printf 'import (\n\t%smv1 "example.com/x"\n)\n' "$initials_head" > "$alias_control"
+grep -IiE -- "$alias_re" "$alias_control" >/dev/null \
+    || fail "import-alias positive control did not match — the scan is broken, not the tree"
+
+mapfile -t alias_go_files < <(git ls-files -- '*.go')
+[[ ${#alias_go_files[@]} -gt 0 ]] \
+    || fail "import-alias scan found no tracked Go files — the scan is broken, not the tree"
+
+mapfile -t alias_hits < <(
+    printf '%s\0' "${alias_go_files[@]}" \
+        | xargs -0 grep -IiEl -- "$alias_re" \
+        | sort
+)
+if [[ ${#alias_hits[@]} -gt 0 ]]; then
+    echo "verify: the predecessor initials survive as a Go import alias:" >&2
+    printf '  %s\n' "${alias_hits[@]}" >&2
+    fail "rename these to the package's real name, or a name that says what it is"
+fi
+
+printf 'verify: predecessor initials absent as a Go import alias (positive control matched, tree clean)\n'
+
 # Every module directory that exists must carry its own LICENSE, and every
 # module named in LICENSING.md must be one of the known set (drift guard).
 known="contract sdk agent server web"
