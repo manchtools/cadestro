@@ -33,7 +33,7 @@ func TestRunShellScript_RunAsRootFalseNoSessions(t *testing.T) {
 	out, err := e.runShellScript(context.Background(), &pb.ShellParams{
 		Script:    "echo hello",
 		RunAsRoot: false,
-	}, "echo hello", nil)
+	}, "echo hello")
 
 	if err != nil {
 		t.Fatalf("expected no error on empty-session per-user shell (no-op success), got: %v", err)
@@ -79,7 +79,7 @@ func TestRunShellScript_RunAsRootFalseDispatchesToLoop(t *testing.T) {
 		// addresses.
 		Script:    "id -un",
 		RunAsRoot: false,
-	}, "id -un", nil)
+	}, "id -un")
 
 	if err != nil {
 		// Per-user execution can fail if runuser isn't available
@@ -102,7 +102,7 @@ func TestRunShellScript_RunAsRootFalseDispatchesToLoop(t *testing.T) {
 
 // TestStripHomeAndUser pins the env-cleanup helper that runs before
 // per-user fan-out: HOME/USER from the agent's env baseline are
-// dropped because runAsUserStreaming sets per-user values via
+// dropped because runAsUser sets per-user values via
 // desktop.EnvFor. Pin the absence so a future refactor doesn't
 // regress and start sending mismatched HOME/USER pairs (the
 // per-user one wins via Go's last-write-wins, but the duplicate is

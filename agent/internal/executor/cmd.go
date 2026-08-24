@@ -17,9 +17,6 @@ func mustDirectRunner() sysexec.Runner {
 	return r
 }
 
-// OutputCallback is a type alias for the SDK OutputCallback.
-type OutputCallback = sysexec.OutputCallback
-
 // toOutput converts an SDK Result to a protobuf CommandOutput.
 func toOutput(r *sysexec.Result) *pb.CommandOutput {
 	if r == nil {
@@ -38,7 +35,7 @@ func toOutput(r *sysexec.Result) *pb.CommandOutput {
 // "the command failed" (e.g. `if err != nil { return ..., err }`). Without this
 // mapping a failed sudo command would look like success. (Streaming callers, by
 // contrast, want the exit code in the output to report a script's status, so
-// runCmdStreaming/runAsUserStreaming deliberately do NOT use this.)
+// command helpers deliberately do NOT use this.)
 func asCmdError(name string, r sysexec.Result, err error) error {
 	if err != nil {
 		return err

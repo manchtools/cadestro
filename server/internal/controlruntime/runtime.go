@@ -25,8 +25,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/controlrpc"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/device"
+	"github.com/manchtools/cadestro/server/internal/devicecontrol"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
-	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
 	"github.com/manchtools/cadestro/server/internal/execution"
 	"github.com/manchtools/cadestro/server/internal/identity"
@@ -108,17 +108,17 @@ func New(cfg Config) *Runtime {
 	secretService := agentsecrets.New(agentsecrets.Config{
 		Store: cfg.Store, AtRest: cfg.AtRest, Now: cfg.Now,
 	})
-	dispatchHandlers := dispatch.NewHandlers(dispatch.HandlersConfig{
+	deviceControl := devicecontrol.NewHandlers(devicecontrol.HandlersConfig{
 		Store: cfg.Store, Sender: manager.Send, Logger: cfg.Logger, Now: cfg.Now,
 	})
 	syncService := agentsync.New(agentsync.Config{
-		Store: cfg.Store, Manager: manager, Assignments: dispatchHandlers,
+		Store: cfg.Store, Manager: manager, Assignments: deviceControl,
 		AtRest: cfg.AtRest,
 	})
 	agentService := agentstream.New(agentstream.Config{
 		Store: cfg.Store, Manager: manager, PolicyResults: cfg.Store, Executions: executionResults,
 		DeviceResults: deviceHandlers, Secrets: secretService, Sync: syncService,
-		LiveOperations:   dispatchHandlers,
+		LiveOperations:   deviceControl,
 		TerminalSessions: sessions, Logger: cfg.Logger, ServerVersion: cfg.Version,
 		HeartbeatInterval: cfg.HeartbeatInterval, Now: cfg.Now,
 	})
@@ -156,9 +156,9 @@ func New(cfg Config) *Runtime {
 		RegistrationTokens: registrationtoken.New(registrationtoken.Config{
 			Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now, CAFingerprint: caFingerprint,
 		}),
-		Compliance: compliance.NewHandlers(compliance.HandlersConfig{Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now}),
-		Dispatch:   dispatchHandlers,
-		Search:     searchrpc.NewHandlers(cfg.Store, cfg.Logger, cfg.Now),
+		Compliance:    compliance.NewHandlers(compliance.HandlersConfig{Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now}),
+		DeviceControl: deviceControl,
+		Search:        searchrpc.NewHandlers(cfg.Store, cfg.Logger, cfg.Now),
 	}.Mount(publicMux, controlOptions...)
 
 	scimHandler := scim.New(scim.Config{Store: cfg.Store, Logger: cfg.Logger, KEK: cfg.AtRest, Now: cfg.Now})

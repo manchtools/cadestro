@@ -765,7 +765,7 @@ journalctl -u cadestrod -f
 ## Auto-Update
 
 The agent self-updates via the `ACTION_TYPE_AGENT_UPDATE` action. Admins
-schedule it on managed devices; the authenticated direct delivery carries an
+schedule it on managed devices; the authenticated assignment carries an
 HTTPS `binary_url` and the publisher's HTTPS `checksum_url`.
 
 ### Integrity: publisher-signed checksum manifest
@@ -793,7 +793,7 @@ hash or public-key bypass for automatic updates.
 
 The agent refuses a candidate **older** than the running version
 (`vYYYY.MM.PP` comparison); an unparseable version fails closed. A downgrade
-requires `allow_downgrade` in the authenticated delivery.
+requires `allow_downgrade` in the authenticated assignment.
 
 ### Update Process
 

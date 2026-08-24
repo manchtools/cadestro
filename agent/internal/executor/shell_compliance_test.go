@@ -39,12 +39,12 @@ func TestComplianceShellWithoutDetectionScriptFailsClosed(t *testing.T) {
 
 	e := NewExecutor(nil)
 	e.runner = rec
-	execOut, detectionOut, changed, err := e.executeShellStreaming(context.Background(), &pb.ShellParams{
+	execOut, detectionOut, changed, err := e.executeShell(context.Background(), &pb.ShellParams{
 		IsCompliance:    true,
 		Script:          "touch /tmp/cadestro-compliance-remediation-must-never-run",
 		DetectionScript: "",
 		RunAsRoot:       true,
-	}, nil)
+	})
 
 	// Asserted before the error so a regression reports BOTH symptoms: the
 	// remediation body reaching the runner is the severe half.
@@ -70,12 +70,12 @@ func TestComplianceShellRunsDetectionOnly(t *testing.T) {
 	)
 	e := NewExecutor(nil)
 	e.runner = rec
-	execOut, detectionOut, changed, err := e.executeShellStreaming(context.Background(), &pb.ShellParams{
+	execOut, detectionOut, changed, err := e.executeShell(context.Background(), &pb.ShellParams{
 		IsCompliance:    true,
 		Script:          remediation,
 		DetectionScript: detection,
 		RunAsRoot:       true,
-	}, nil)
+	})
 
 	require.NoError(t, err)
 	require.Len(t, rec.cmds, 1, "detection runs exactly once and nothing else is dispatched")

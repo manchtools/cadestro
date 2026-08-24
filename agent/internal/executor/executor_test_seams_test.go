@@ -35,8 +35,8 @@ func testExecutor() *Executor {
 	return e
 }
 
-func runAsUserStreaming(ctx context.Context, s desktop.Session, extraEnv []string, dir, name string, args []string, callback OutputCallback) (*pb.CommandOutput, error) {
-	return testExecutor().runAsUserStreaming(ctx, s, extraEnv, dir, name, args, callback)
+func runAsUser(ctx context.Context, s desktop.Session, extraEnv []string, dir, name string, args []string) (*pb.CommandOutput, error) {
+	return testExecutor().runAsUser(ctx, s, extraEnv, dir, name, args)
 }
 func atomicWriteFile(ctx context.Context, path, content, mode, owner, group string) error {
 	return testExecutor().atomicWriteFile(ctx, path, content, mode, owner, group)

@@ -14,8 +14,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/compliance"
 	"github.com/manchtools/cadestro/server/internal/device"
+	"github.com/manchtools/cadestro/server/internal/devicecontrol"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
-	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
 	"github.com/manchtools/cadestro/server/internal/identity"
 	"github.com/manchtools/cadestro/server/internal/registrationtoken"
@@ -28,7 +28,7 @@ func TestMountIsExactControlServiceDescriptorSet(t *testing.T) {
 		Authoring: &authoring.Handlers{}, Assignments: &assignment.Handlers{},
 		DeviceGroups: &devicegroup.Handlers{}, Devices: &device.Handlers{},
 		RegistrationTokens: &registrationtoken.Handlers{}, Compliance: &compliance.Handlers{},
-		Dispatch: &dispatch.Handlers{}, Search: &searchrpc.Handlers{},
+		DeviceControl: &devicecontrol.Handlers{}, Search: &searchrpc.Handlers{},
 	}
 	mounted := handlers.Mount(http.NewServeMux())
 	got := make(map[string]struct{}, len(mounted))

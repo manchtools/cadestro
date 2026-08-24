@@ -5,8 +5,8 @@ mTLS agents, and a transactional audit log.
 
 Cadestro is for teams running tens to thousands of Linux machines —
 workstations, servers, kiosks — who need enrollment, desired-state policy,
-one-shot dispatch, and audit evidence without operating a database cluster to
-get them.
+live device control, and audit evidence without operating a database cluster
+to get them.
 
 ## What it does
 
@@ -20,9 +20,9 @@ get them.
   disk encryption, Wi-Fi, and more. Agents store their manifests durably and
   re-apply them on cron or drift intervals even without a server connection,
   honoring per-device maintenance windows.
-- **Dispatches one-shot work exactly once.** Explicit dispatches commit
-  durably before send, execute once on durable receipt, and bypass maintenance
-  windows on purpose.
+- **Applies assigned policy on synchronization.** Devices receive their
+  compiled assignment snapshot, retain scheduled work locally, and reconcile
+  it on drift intervals even while control is unavailable.
 - **Produces audit evidence by construction.** Every mutation commits in the
   same transaction as its audit operation and effect rows; if audit
   persistence fails, the state change rolls back. Sensitive reads are their
@@ -75,7 +75,7 @@ Full walkthrough: [deploy/QUICKSTART.md](deploy/QUICKSTART.md).
 ## Architecture
 
 One control process owns the API, the dedicated agent mTLS listener, identity,
-authorization, dispatch, search, and audit, with all state in an embedded
+authorization, device control, search, and audit, with all state in an embedded
 SQLite database (WAL mode, `synchronous=FULL`, FTS5 search). Agents connect
 outbound; control never dials a device. There is no external database, queue,
 or cache to operate.

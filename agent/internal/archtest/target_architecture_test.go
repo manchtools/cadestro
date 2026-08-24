@@ -27,8 +27,7 @@ func TestTargetArchitectureHasNoAbolishedAgentRuntime(t *testing.T) {
 		"GetDueGroups(",
 		"MarkRebootStarted",
 	}
-	required := map[string]bool{
-	}
+	required := map[string]bool{}
 	files := 0
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -101,11 +100,7 @@ func TestAgentUsesOneFreshManifestSchema(t *testing.T) {
 	// os.ReadDir sorts by name, so requiring that baseline FIRST rejects a
 	// second baseline, a renamed one, and anything numbered ahead of it.
 	//
-	// The assertion is about the baseline, not a file count. The tracked
-	// baseline is immutable, so schema for new behavior (002 one-shot
-	// terminality) is an ordinary numbered forward migration. Abolished
-	// architecture is caught by the forbidden-marker sweep above.
-	if len(migrations) == 0 || migrations[0] != "001_initial_schema.sql" {
-		t.Fatalf("agent schema must start from the fresh manifest-native baseline, got %v", migrations)
+	if len(migrations) != 1 || migrations[0] != "001_initial_schema.sql" {
+		t.Fatalf("agent schema must contain exactly 001_initial_schema.sql, got %v", migrations)
 	}
 }

@@ -72,19 +72,10 @@ func mustEncManager(r sysexec.Runner) sysenc.Manager {
 	return m
 }
 
-// runAsUserStreaming runs `name args...` as the given session's user
-// with real-time line-streaming via callback, mirroring
-// runCmdStreaming for the per-user execution path. The wrapper
+// runAsUser runs `name args...` as the given session's user. The wrapper
 // builds `runuser -u <user> -- <name> <args...>` and hands the
-// resulting args + env (desktop defaults plus extraEnv) to the
-// SDK's RunStreaming so callers don't need a separate streaming
-// pipeline implementation.
-//
-// The callback receives lines tagged with the underlying child's
-// stream type (stdout/stderr); if the caller wants to multiplex
-// multiple users into one stream they should wrap the callback to
-// prepend a per-user prefix before forwarding.
-func (e *Executor) runAsUserStreaming(ctx context.Context, s desktop.Session, extraEnv []string, dir string, name string, args []string, callback OutputCallback) (*pb.CommandOutput, error) {
+// resulting args + env (desktop defaults plus extraEnv) to the SDK runner.
+func (e *Executor) runAsUser(ctx context.Context, s desktop.Session, extraEnv []string, dir string, name string, args []string) (*pb.CommandOutput, error) {
 	if name == "" {
 		return nil, errEmptyName
 	}
@@ -104,7 +95,7 @@ func (e *Executor) runAsUserStreaming(ctx context.Context, s desktop.Session, ex
 	if err != nil {
 		return nil, err
 	}
-	r, err := ru.Stream(ctx, sysexec.Command{Name: name, Args: args, Env: extraEnv, Dir: dir}, callback)
+	r, err := ru.Run(ctx, sysexec.Command{Name: name, Args: args, Env: extraEnv, Dir: dir})
 	return toOutput(&r), err
 }
 
@@ -119,4 +110,4 @@ var (
 
 type errPerUser string
 
-func (e errPerUser) Error() string { return "executor.runAsUserStreaming: " + string(e) }
+func (e errPerUser) Error() string { return "executor.runAsUser: " + string(e) }

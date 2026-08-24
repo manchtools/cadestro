@@ -661,16 +661,6 @@ func (c *Client) sendResultAwaitAck(ctx context.Context, message *cadestrov1.Age
 	}
 }
 
-// SendOutputChunk sends an output chunk during action execution.
-func (c *Client) SendOutputChunk(ctx context.Context, chunk *cadestrov1.OutputChunk) error {
-	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
-		Payload: &cadestrov1.AgentMessage_OutputChunk{
-			OutputChunk: chunk,
-		},
-	})
-}
-
 // SendQueryResult sends an OS query result to the server.
 func (c *Client) SendQueryResult(ctx context.Context, result *cadestrov1.OSQueryResult) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{

@@ -33,7 +33,6 @@ const (
 	frameHello     frameClass = "hello"
 	frameTelemetry frameClass = "telemetry"
 	frameAudit     frameClass = "audit"
-	frameBulk      frameClass = "bulk"
 	frameTerminal  frameClass = "terminal"
 )
 
@@ -145,7 +144,6 @@ func New(cfg Config) *Handler {
 			frameHello:     auth.NewRateLimiter(10, frameRateWindow),
 			frameTelemetry: auth.NewRateLimiter(12, frameRateWindow),
 			frameAudit:     auth.NewRateLimiter(30, frameRateWindow),
-			frameBulk:      auth.NewRateLimiter(4097, frameRateWindow),
 			frameTerminal:  auth.NewRateLimiter(6000, frameRateWindow),
 		},
 		frameDropAudits: auth.NewRateLimiter(1, frameRateWindow),
@@ -397,8 +395,6 @@ func frameClassOf(message *cadestrov1.AgentMessage) frameClass {
 		return frameTelemetry
 	case *cadestrov1.AgentMessage_SecurityAlert:
 		return frameAudit
-	case *cadestrov1.AgentMessage_OutputChunk:
-		return frameBulk
 	case *cadestrov1.AgentMessage_TerminalOutput, *cadestrov1.AgentMessage_TerminalStateChange:
 		return frameTerminal
 	default:

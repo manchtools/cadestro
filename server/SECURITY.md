@@ -68,12 +68,13 @@ unaudited telemetry writer. Shared boundaries and exact-set tests enforce
 coverage for RPCs, sensitive reads, rejected authentication, SCIM, enrollment,
 jobs, and background writers.
 
-### Dispatch
+### Device control
 
-Control commits complete one-shot work before synchronization. The agent
-durably records each manifest before scheduling it. Stable delivery IDs,
-idempotent result ingestion, and an explicit INDETERMINATE outcome prevent
-silent replay of non-idempotent effects.
+Assignments compile into a deterministic manifest snapshot during device
+synchronization. Sync and reboot are the only ordinary control-to-agent
+commands. Policy results are keyed by run identity and remain idempotent
+across reconnects; an explicit INDETERMINATE outcome prevents silent replay
+of non-idempotent effects.
 
 ## Deployment requirements
 

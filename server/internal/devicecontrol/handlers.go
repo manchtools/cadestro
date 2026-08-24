@@ -1,4 +1,4 @@
-package dispatch
+package devicecontrol
 
 import (
 	"context"
@@ -51,7 +51,7 @@ const liveOperationTimeout = 20 * time.Second
 // NewHandlers constructs live device-control handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
 	if cfg.Store == nil {
-		panic("dispatch: handler store is required")
+		panic("devicecontrol: handler store is required")
 	}
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
@@ -78,7 +78,7 @@ func (r deviceScopeResolver) DeviceGroupsForDevice(ctx context.Context, deviceID
 }
 
 func (deviceScopeResolver) UserGroupsForUser(context.Context, string) ([]string, error) {
-	return nil, errors.New("dispatch: user scope resolution is unavailable")
+	return nil, errors.New("devicecontrol: user scope resolution is unavailable")
 }
 
 func (h *Handlers) target(ctx context.Context, actor *auth.UserContext, permission, deviceID string) error {
@@ -89,12 +89,12 @@ func (h *Handlers) target(ctx context.Context, actor *auth.UserContext, permissi
 		if store.IsNotFound(err) {
 			return notFound(ctx, errDeviceNotFound, "device not found")
 		}
-		return h.internal(ctx, "read dispatch device", err)
+		return h.internal(ctx, "read device control target", err)
 	}
 	if auth.HasPermission(ctx, permission) {
 		if err := auth.EnforceDeviceScopeOnBaseTier(ctx, deviceScopeResolver{h.store}, permission, deviceID); err != nil {
 			if connect.CodeOf(err) == connect.CodeInternal {
-				return h.internal(ctx, "resolve dispatch device scope", err)
+				return h.internal(ctx, "resolve device control scope", err)
 			}
 			return notFound(ctx, errDeviceNotFound, "device not found")
 		}
@@ -102,7 +102,7 @@ func (h *Handlers) target(ctx context.Context, actor *auth.UserContext, permissi
 	}
 	assigned, err := h.store.IsDeviceAssignedToUser(ctx, deviceID, actor.ID)
 	if err != nil {
-		return h.internal(ctx, "check dispatch device assignment", err)
+		return h.internal(ctx, "check device control assignment", err)
 	}
 	if !assigned {
 		return notFound(ctx, errDeviceNotFound, "device not found")
@@ -126,7 +126,7 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 }
 
 func (h *Handlers) internal(ctx context.Context, operation string, err error) *connect.Error {
-	h.logger.Error("dispatch RPC failed", "operation", operation, "error", err)
+	h.logger.Error("device control RPC failed", "operation", operation, "error", err)
 	return rpcError(ctx, errInternal, connect.CodeInternal, "internal error")
 }
 
@@ -139,7 +139,7 @@ func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[cadestro
 	if err := h.target(ctx, actor, "SyncDevice", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	if err := h.dispatchLiveOperation(ctx, req, actor, req.Msg.DeviceId, "SYNC",
+	if err := h.liveControlOperation(ctx, req, actor, req.Msg.DeviceId, "SYNC",
 		cadestrov1connect.ControlServiceSyncDeviceProcedure, "SyncDevice",
 		&cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_SyncDevice{SyncDevice: &cadestrov1.SyncDeviceCommand{}}}); err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (h *Handlers) RebootDevice(ctx context.Context, req *connect.Request[cadest
 	if err := h.target(ctx, actor, "RebootDevice", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	if err := h.dispatchLiveOperation(ctx, req, actor, req.Msg.DeviceId, "REBOOT",
+	if err := h.liveControlOperation(ctx, req, actor, req.Msg.DeviceId, "REBOOT",
 		cadestrov1connect.ControlServiceRebootDeviceProcedure, "RebootDevice",
 		&cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_RebootDevice{RebootDevice: &cadestrov1.RebootDeviceCommand{}}}); err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (h *Handlers) RebootDevice(ctx context.Context, req *connect.Request[cadest
 	return connect.NewResponse(&cadestrov1.RebootDeviceResponse{}), nil
 }
 
-func (h *Handlers) dispatchLiveOperation(ctx context.Context, req connect.AnyRequest, actor *auth.UserContext,
+func (h *Handlers) liveControlOperation(ctx context.Context, req connect.AnyRequest, actor *auth.UserContext,
 	deviceID, action, procedure, permission string, message *cadestrov1.ServerMessage) error {
 	op := h.operation(req, actor, procedure, permission)
 	op.OperationID = ulid.Make().String()

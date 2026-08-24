@@ -18,7 +18,6 @@ const errorMessages: Partial<Record<ErrorCode, () => string>> = {
 	[ErrorCode.PROVIDER_NOT_FOUND]: m.error_provider_not_found,
 	[ErrorCode.IDENTITY_LINK_NOT_FOUND]: m.error_identity_link_not_found,
 	[ErrorCode.TOKEN_NOT_FOUND]: m.error_token_not_found,
-	[ErrorCode.EXECUTION_NOT_FOUND]: m.error_execution_not_found,
 	[ErrorCode.ASSIGNMENT_NOT_FOUND]: m.error_assignment_not_found,
 	[ErrorCode.EMAIL_ALREADY_EXISTS]: m.error_email_already_exists,
 	[ErrorCode.USER_GROUP_NAME_EXISTS]: m.error_user_group_name_exists,

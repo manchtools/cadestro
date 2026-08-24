@@ -47,7 +47,7 @@ func TestReconcilePolicyIsReceiptFreeAndRemovesUnassignedWork(t *testing.T) {
 	require.Len(t, due, 1)
 
 	// An empty assignment snapshot removes the prior policy locally without a
-	// synthetic delivery row.
+	// synthetic policy row.
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: "01K00000000000000000000015"}))
 	due, err = st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
@@ -116,7 +116,7 @@ func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing
 	require.NotEqual(t, workID, firstRun, "a policy firing must have a distinct run identity")
 
 	_, err = st.RecordManifestResult(&pb.ManifestResult{
-		RunId: firstRun,
+		RunId:      firstRun,
 		ManifestId: manifest.GetManifestId(),
 	})
 	require.NoError(t, err)

@@ -1,5 +1,5 @@
-// Package agentsync builds a stream synchronization state from durable explicit
-// delivery rows and the authenticated device's assignment snapshot.
+// Package agentsync builds stream synchronization state from scheduled policy
+// work and the authenticated device's assignment snapshot.
 package agentsync
 
 import (
@@ -17,7 +17,7 @@ import (
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/dispatch"
+	"github.com/manchtools/cadestro/server/internal/devicecontrol"
 	manifestpkg "github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -31,7 +31,7 @@ var (
 type Config struct {
 	Store       *store.Store
 	Manager     *connection.Manager
-	Assignments *dispatch.Handlers
+	Assignments *devicecontrol.Handlers
 	Now         func() time.Time
 	AtRest      *crypto.Encryptor
 }
@@ -40,7 +40,7 @@ type Config struct {
 type Service struct {
 	store       *store.Store
 	manager     *connection.Manager
-	assignments *dispatch.Handlers
+	assignments *devicecontrol.Handlers
 	now         func() time.Time
 	atRest      *crypto.Encryptor
 }
@@ -56,7 +56,7 @@ func New(cfg Config) *Service {
 	return &Service{store: cfg.Store, manager: cfg.Manager, assignments: cfg.Assignments, now: cfg.Now, atRest: cfg.AtRest}
 }
 
-// Sync returns due one-shot work plus the device's current assignment snapshot.
+// Sync returns the device's current assignment snapshot and scheduling state.
 func (s *Service) Sync(ctx context.Context, deviceID string) (*cadestrov1.SyncState, error) {
 	if ctx == nil || !validID(deviceID) {
 		return nil, ErrInvalidInput

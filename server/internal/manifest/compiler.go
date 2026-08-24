@@ -134,7 +134,7 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manif
 	return finish(runbook)
 }
 
-// FreshCopy preserves compiled semantics while reminting delivery-local
+// FreshCopy preserves compiled semantics while reminting policy-local
 // manifest and occurrence identities for another target device.
 func FreshCopy(compiled *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {
 	if compiled == nil {

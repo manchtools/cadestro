@@ -29,12 +29,12 @@ func (r *recordingBaseRunner) Stream(_ context.Context, c sysexec.Command, _ sys
 
 func (r *recordingBaseRunner) Backend() sysexec.PrivilegeBackend { return sysexec.Direct }
 
-// TestRunAsUserStreaming_WorkingDirAndPerUserEnv pins the A4 adoption: per-user
+// TestRunAsUser_WorkingDirAndPerUserEnv pins the A4 adoption: per-user
 // script execution now goes through desktop.RunAsRunner, so the wrapped runuser
 // command carries the action's working directory (Command.Dir, now honored by
 // RunAsRunner), the per-user HOME/USER, and the curated per-user PATH (not the
 // agent root's). No hand-built runuser/env splicing remains in the agent.
-func TestRunAsUserStreaming_WorkingDirAndPerUserEnv(t *testing.T) {
+func TestRunAsUser_WorkingDirAndPerUserEnv(t *testing.T) {
 	prev := executorRunner
 	t.Cleanup(func() { executorRunner = prev })
 	rec := &recordingBaseRunner{}
@@ -43,7 +43,7 @@ func TestRunAsUserStreaming_WorkingDirAndPerUserEnv(t *testing.T) {
 	s := desktop.Session{Username: "alice", UID: 1000, Home: "/home/alice"}
 
 	// An explicit working directory must reach the wrapped runuser command.
-	_, err := runAsUserStreaming(context.Background(), s, nil, "/work/dir", "/bin/echo", []string{"hi"}, nil)
+	_, err := runAsUser(context.Background(), s, nil, "/work/dir", "/bin/echo", []string{"hi"})
 	require.NoError(t, err)
 	require.Len(t, rec.cmds, 1)
 	cmd := rec.cmds[0]
@@ -57,7 +57,7 @@ func TestRunAsUserStreaming_WorkingDirAndPerUserEnv(t *testing.T) {
 
 	// An empty working directory defaults to the user's home.
 	rec.cmds = nil
-	_, err = runAsUserStreaming(context.Background(), s, nil, "", "/bin/echo", []string{"hi"}, nil)
+	_, err = runAsUser(context.Background(), s, nil, "", "/bin/echo", []string{"hi"})
 	require.NoError(t, err)
 	require.Len(t, rec.cmds, 1)
 	assert.Equal(t, "/home/alice", rec.cmds[0].Dir, "empty WorkingDirectory defaults to the user's home")

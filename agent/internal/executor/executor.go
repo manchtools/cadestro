@@ -241,13 +241,7 @@ func (e *Executor) getActionStore() ActionStore {
 
 // ExecuteAction runs one manifest occurrence.
 func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.ActionResult {
-	return e.ExecuteWithStreaming(ctx, action, nil)
-}
-
-// ExecuteWithStreaming runs an action with optional output
-// streaming. The callback is called for each line of output as it's produced
-// (for shell actions).
-func (e *Executor) ExecuteWithStreaming(ctx context.Context, env *pb.Action, callback OutputCallback) *pb.ActionResult {
+	env := action
 	start := e.now()
 
 	result := &pb.ActionResult{
@@ -300,7 +294,7 @@ func (e *Executor) ExecuteWithStreaming(ctx context.Context, env *pb.Action, cal
 	case pb.ActionType_ACTION_TYPE_SHELL, pb.ActionType_ACTION_TYPE_SCRIPT_RUN:
 		var detectionOutput *pb.CommandOutput
 		var changed bool
-		output, detectionOutput, changed, execErr = e.executeShellStreaming(ctx, env.GetShell(), callback)
+		output, detectionOutput, changed, execErr = e.executeShell(ctx, env.GetShell())
 		result.Changed = changed
 		result.DetectionOutput = detectionOutput
 		if env.GetShell().GetIsCompliance() {
@@ -432,7 +426,7 @@ func (e *Executor) ExecuteWithStreaming(ctx context.Context, env *pb.Action, cal
 // privilege contract instead of hard-coding "sudo -n".
 //
 // RunAsRoot=false fans the script out to every active graphical
-// desktop session via desktop.ActiveSessions + runAsUserStreaming
+// desktop session via desktop.ActiveSessions + runAsUser
 // (#79). Pre-fix this branch silently ran the script as the agent's
 // own UID (root in production) — exactly the bug profile that
 // SystemWide=false suffered for Flatpak. The new contract: an
@@ -441,7 +435,7 @@ func (e *Executor) ExecuteWithStreaming(ctx context.Context, env *pb.Action, cal
 // fallback. Empty-set policy matches the Flatpak path: log Warn
 // and return success no-op so the next reconciliation tick retries
 // once a user signs in.
-func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, script string, callback OutputCallback) (*pb.CommandOutput, error) {
+func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, script string) (*pb.CommandOutput, error) {
 	interpreter := params.Interpreter
 	if interpreter == "" {
 		interpreter = "/bin/sh"
@@ -480,17 +474,17 @@ func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, s
 
 	args := []string{"-c", script}
 	if params.RunAsRoot {
-		r, err := e.runnerOrDirect().Stream(ctx, sysexec.Command{
+		r, err := e.runnerOrDirect().Run(ctx, sysexec.Command{
 			Name:     interpreter,
 			Args:     args,
 			Env:      envVars,
 			Dir:      params.WorkingDirectory,
 			Escalate: true,
-		}, callback)
+		})
 		return toOutput(&r), err
 	}
 	// RunAsRoot=false → per-user fan-out.
-	return e.runShellScriptPerUser(ctx, params, interpreter, args, envVars, callback)
+	return e.runShellScriptPerUser(ctx, params, interpreter, args, envVars)
 }
 
 // runShellScriptPerUser implements the RunAsRoot=false path: fans
@@ -502,8 +496,8 @@ func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, s
 //
 // The merged output's ExitCode is 0 if every user succeeded,
 // otherwise the first non-zero exit so the action result can still
-// drive the changed/failed bookkeeping in executeShellStreaming.
-func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellParams, interpreter string, args []string, envVars []string, callback OutputCallback) (*pb.CommandOutput, error) {
+// drive the changed/failed bookkeeping in executeShell.
+func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellParams, interpreter string, args []string, envVars []string) (*pb.CommandOutput, error) {
 	sessions, err := e.deps.desktop.ActiveSessions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("enumerate active desktop sessions: %w", err)
@@ -518,7 +512,7 @@ func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellPa
 
 	// Strip HOME / USER from the caller-supplied env baseline —
 	// desktop.EnvFor sets the per-user values inside
-	// runAsUserStreaming, and a duplicate from envVars would only
+	// runAsUser, and a duplicate from envVars would only
 	// confuse readers (Go's exec.Cmd takes the last occurrence,
 	// which is the per-user one, but the duplicates make the env
 	// list noisy in audit logs).
@@ -528,13 +522,7 @@ func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellPa
 	var firstFailure error
 	for _, s := range sessions {
 		userPrefix := "[user=" + s.Username + "] "
-		var wrappedCB OutputCallback
-		if callback != nil {
-			wrappedCB = func(streamType sysexec.StreamType, line string, seq int64) {
-				callback(streamType, userPrefix+line, seq)
-			}
-		}
-		out, runErr := e.runAsUserStreaming(ctx, s, extraEnv, params.WorkingDirectory, interpreter, args, wrappedCB)
+		out, runErr := e.runAsUser(ctx, s, extraEnv, params.WorkingDirectory, interpreter, args)
 		if out != nil {
 			if out.Stdout != "" {
 				merged.Stdout += userPrefix + out.Stdout
@@ -582,7 +570,7 @@ func stripHomeAndUser(envVars []string) []string {
 	return out
 }
 
-// executeShellStreaming executes a shell action with optional detection/execution/verification flow.
+// executeShell executes a shell action with detection/execution/verification flow.
 // Returns (executionOutput, detectionOutput, changed, error).
 //
 // Flow:
@@ -594,7 +582,7 @@ func stripHomeAndUser(envVars []string) []string {
 //  3. No script (detection-only): return non-compliant status
 //  4. Run script (remediation)
 //  5. Re-run detection_script to verify
-func (e *Executor) executeShellStreaming(ctx context.Context, params *pb.ShellParams, callback OutputCallback) (*pb.CommandOutput, *pb.CommandOutput, bool, error) {
+func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*pb.CommandOutput, *pb.CommandOutput, bool, error) {
 	if params == nil {
 		return nil, nil, false, fmt.Errorf("shell params required")
 	}
@@ -615,7 +603,7 @@ func (e *Executor) executeShellStreaming(ctx context.Context, params *pb.ShellPa
 			return nil, nil, false, fmt.Errorf("compliance action requires a non-empty detection script; refusing to run its execution script")
 		}
 		e.logger.Debug("compliance mode: running detection script only")
-		detectionOutput, err := e.runShellScript(ctx, params, params.DetectionScript, nil)
+		detectionOutput, err := e.runShellScript(ctx, params, params.DetectionScript)
 		if err != nil {
 			return nil, detectionOutput, false, err
 		}
@@ -627,13 +615,13 @@ func (e *Executor) executeShellStreaming(ctx context.Context, params *pb.ShellPa
 		if params.Script == "" {
 			return nil, nil, false, fmt.Errorf("at least one of script or detection_script is required")
 		}
-		output, err := e.runShellScript(ctx, params, params.Script, callback)
+		output, err := e.runShellScript(ctx, params, params.Script)
 		return output, nil, true, err
 	}
 
 	// Step 1: Run detection script
 	e.logger.Debug("running detection script")
-	detectionOutput, err := e.runShellScript(ctx, params, params.DetectionScript, nil)
+	detectionOutput, err := e.runShellScript(ctx, params, params.DetectionScript)
 	if err != nil {
 		return nil, detectionOutput, false, fmt.Errorf("detection script error: %w", err)
 	}
@@ -652,14 +640,14 @@ func (e *Executor) executeShellStreaming(ctx context.Context, params *pb.ShellPa
 
 	// Step 4: Run execution/remediation script
 	e.logger.Debug("detection script failed (non-zero), running remediation script")
-	execOutput, execErr := e.runShellScript(ctx, params, params.Script, callback)
+	execOutput, execErr := e.runShellScript(ctx, params, params.Script)
 	if execErr != nil {
 		return execOutput, detectionOutput, true, execErr
 	}
 
 	// Step 5: Re-run detection script to verify remediation
 	e.logger.Debug("re-running detection script to verify remediation")
-	verifyOutput, verifyErr := e.runShellScript(ctx, params, params.DetectionScript, nil)
+	verifyOutput, verifyErr := e.runShellScript(ctx, params, params.DetectionScript)
 	if verifyErr != nil {
 		return execOutput, verifyOutput, true, fmt.Errorf("verification detection script error: %w", verifyErr)
 	}

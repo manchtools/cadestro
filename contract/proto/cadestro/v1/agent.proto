@@ -37,7 +37,6 @@ message AgentMessage {
     // Result of a control-originated live reboot command.
     RebootDeviceResult reboot_device_result = 25;
     ActionResult action_result = 20;
-    OutputChunk output_chunk = 21;
     ManifestResult manifest_result = 23;
     OSQueryResult query_result = 30;
     DeviceInventory inventory = 31;
@@ -55,28 +54,6 @@ message AgentMessage {
     TerminalOutput terminal_output = 70;
     TerminalStateChange terminal_state_change = 71;
   }
-}
-
-// ============================================================================
-// Output Streaming
-// ============================================================================
-
-// Output stream type for stdout/stderr differentiation
-enum OutputStreamType {
-  OUTPUT_STREAM_TYPE_UNSPECIFIED = 0;
-  OUTPUT_STREAM_TYPE_STDOUT = 1;
-  OUTPUT_STREAM_TYPE_STDERR = 2;
-}
-
-// Output chunk sent during action execution (Agent -> Server)
-message OutputChunk {
-  string execution_id = 1 [(buf.validate.field).string.ulid = true];
-  OutputStreamType stream = 2 [(buf.validate.field).required = true];
-  bytes data = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 65536
-  ];
-  int64 sequence = 4 [(buf.validate.field).int64.gte = 0];
 }
 
 message Hello {
@@ -158,7 +135,7 @@ message ServerMessage {
   string id = 1 [(buf.validate.field).string.ulid = true];
 
   oneof payload {
-    // Live operations have no policy or durable delivery semantics.
+    // Live operations have no policy or durable work semantics.
     SyncDeviceCommand sync_device = 11;
     Welcome welcome = 10;
     SyncState sync_state = 12;
@@ -210,7 +187,7 @@ message Welcome {
 }
 
 // ============================================================================
-// Manifests and durable delivery
+// Manifests and durable policy work
 // ============================================================================
 
 // OnFailure decides what the rest of a manifest does after an occurrence
@@ -268,7 +245,7 @@ message ManifestOccurrence {
 //
 // Assigning an Action creates a singleton manifest; assigning an ActionSet
 // creates one manifest; assigning a Definition creates one globally ordered
-// runbook. Explicit Definition dispatch uses the same runbook representation.
+// runbook. Assignment of a Definition uses the same runbook representation.
 message Manifest {
   string manifest_id = 1 [(buf.validate.field).string.ulid = true];
   ManifestProvenance provenance = 2 [(buf.validate.field).required = true];
@@ -310,7 +287,7 @@ message ManifestResult {
 }
 
 // ResultAckCode explains why the server accepted or rejected a result
-// delivery. ACCEPTED/REJECTED mirror the accepted field; the code
+// result. ACCEPTED/REJECTED mirror the accepted field; the code
 // exists for the rejection message the agent surfaces to its caller.
 enum ResultAckCode {
   RESULT_ACK_CODE_UNSPECIFIED = 0;

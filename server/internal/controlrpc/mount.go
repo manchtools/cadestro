@@ -10,8 +10,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/authoring"
 	"github.com/manchtools/cadestro/server/internal/compliance"
 	"github.com/manchtools/cadestro/server/internal/device"
+	"github.com/manchtools/cadestro/server/internal/devicecontrol"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
-	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
 	"github.com/manchtools/cadestro/server/internal/identity"
 	"github.com/manchtools/cadestro/server/internal/registrationtoken"
@@ -30,7 +30,7 @@ type Handlers struct {
 	Devices            *device.Handlers
 	RegistrationTokens *registrationtoken.Handlers
 	Compliance         *compliance.Handlers
-	Dispatch           *dispatch.Handlers
+	DeviceControl      *devicecontrol.Handlers
 	Search             *searchrpc.Handlers
 }
 
@@ -38,7 +38,7 @@ type Handlers struct {
 func (h Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil || h.Identity == nil || h.Enrollment == nil || h.Authoring == nil ||
 		h.Assignments == nil || h.DeviceGroups == nil || h.Devices == nil ||
-		h.RegistrationTokens == nil || h.Compliance == nil || h.Dispatch == nil || h.Search == nil {
+		h.RegistrationTokens == nil || h.Compliance == nil || h.DeviceControl == nil || h.Search == nil {
 		panic("controlrpc: complete handler wiring is required")
 	}
 	var mounted []string
@@ -52,7 +52,7 @@ func (h Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []str
 	mounted = append(mounted, h.Devices.Mount(mux, opts...)...)
 	mounted = append(mounted, h.RegistrationTokens.Mount(mux, opts...)...)
 	mounted = append(mounted, h.Compliance.MountPolicies(mux, opts...)...)
-	mounted = append(mounted, h.Dispatch.MountActions(mux, opts...)...)
+	mounted = append(mounted, h.DeviceControl.MountLiveControl(mux, opts...)...)
 	mounted = append(mounted, h.Search.Mount(mux, opts...)...)
 	return mounted
 }

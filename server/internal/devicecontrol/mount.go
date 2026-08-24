@@ -1,4 +1,4 @@
-package dispatch
+package devicecontrol
 
 import (
 	"net/http"
@@ -8,10 +8,10 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// MountActions registers live device-control procedures.
-func (h *Handlers) MountActions(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
+// MountLiveControl registers live device-control procedures.
+func (h *Handlers) MountLiveControl(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
-		panic("dispatch: mux is required")
+	panic("devicecontrol: mux is required")
 	}
 	mounted := make([]string, 0, 2)
 	register := func(procedure string, handler http.Handler) {
@@ -25,8 +25,8 @@ func (h *Handlers) MountActions(mux *http.ServeMux, opts ...connect.HandlerOptio
 	return mounted
 }
 
-// MutationProcedures is the exact audited dispatch surface implemented here.
-func MutationProcedures() []string {
+// LiveControlProcedures is the exact audited live-control surface implemented here.
+func LiveControlProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceSyncDeviceProcedure,
 		cadestrov1connect.ControlServiceRebootDeviceProcedure,

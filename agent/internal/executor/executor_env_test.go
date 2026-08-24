@@ -37,7 +37,7 @@ func TestRunShellScript_RejectsBlocklistedEnvVar(t *testing.T) {
 				RunAsRoot:   true,
 				Environment: map[string]string{name: "/tmp/evil"},
 			}
-			out, err := e.runShellScript(ctx, params, "echo hi", nil)
+			out, err := e.runShellScript(ctx, params, "echo hi")
 			if err == nil {
 				t.Fatalf("runShellScript with %s = nil error, want rejection before exec", name)
 			}
@@ -60,7 +60,7 @@ func TestRunShellScript_RejectsBlocklistedEnvVar(t *testing.T) {
 			RunAsRoot:   true,
 			Environment: map[string]string{"MYAPP_FLAG": "1"},
 		}
-		_, err := e.runShellScript(ctx, params, "echo hi", nil)
+		_, err := e.runShellScript(ctx, params, "echo hi")
 		if err != nil && strings.Contains(err.Error(), "is not allowed") {
 			t.Errorf("MYAPP_FLAG was rejected by the env gate (%v); an application variable must pass", err)
 		}
@@ -90,7 +90,7 @@ func TestRunShellScript_DoesNotInjectReservedLocaleVar(t *testing.T) {
 				RunAsRoot:   true,
 				Environment: map[string]string{name: "C.UTF-8"},
 			}
-			_, err := e.runShellScript(ctx, params, "echo hi", nil)
+			_, err := e.runShellScript(ctx, params, "echo hi")
 			if err == nil {
 				t.Fatalf("runShellScript setting reserved %s = nil error, want rejection before exec", name)
 			}
@@ -108,7 +108,7 @@ func TestRunShellScript_DoesNotInjectReservedLocaleVar(t *testing.T) {
 			RunAsRoot:   true,
 			Environment: map[string]string{"MYAPP_FLAG": "1"},
 		}
-		_, err := e.runShellScript(ctx, params, "echo hi", nil)
+		_, err := e.runShellScript(ctx, params, "echo hi")
 		if errors.Is(err, sysexec.ErrReservedEnvVar) {
 			t.Errorf("MYAPP_FLAG must not be treated as a reserved var, got %v", err)
 		}

@@ -29,10 +29,10 @@ func TestExecutorsKeepRunnerAndManagerOwnership(t *testing.T) {
 	}
 
 	params := &pb.ShellParams{RunAsRoot: true, Interpreter: "/bin/sh", WorkingDirectory: t.TempDir()}
-	if _, err := eOne.runShellScript(context.Background(), params, "true", nil); err != nil {
+	if _, err := eOne.runShellScript(context.Background(), params, "true"); err != nil {
 		t.Fatalf("executor one shell: %v", err)
 	}
-	if _, err := eTwo.runShellScript(context.Background(), params, "true", nil); err != nil {
+	if _, err := eTwo.runShellScript(context.Background(), params, "true"); err != nil {
 		t.Fatalf("executor two shell: %v", err)
 	}
 	if len(runnerOne.cmds) != 1 || len(runnerTwo.cmds) != 1 {

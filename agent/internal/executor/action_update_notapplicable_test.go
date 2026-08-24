@@ -197,7 +197,7 @@ func TestExecuteAction_SecurityOnly_NotApplicableStatus(t *testing.T) {
 		Type:   pb.ActionType_ACTION_TYPE_UPDATE,
 		Params: &pb.Action_Update{Update: &pb.UpdateParams{SecurityOnly: true}},
 	}
-	result := e.ExecuteWithStreaming(context.Background(), action, nil)
+	result := e.ExecuteAction(context.Background(), action)
 
 	if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE {
 		t.Fatalf("expected NOT_APPLICABLE, got %s (error: %s)", result.Status, result.Error)

@@ -19,15 +19,15 @@ import (
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/dispatch"
+	"github.com/manchtools/cadestro/server/internal/devicecontrol"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-type dispatchHandlerFixture struct {
+type deviceControlFixture struct {
 	t           *testing.T
 	store       *store.Store
 	raw         *testdb.DB
-	handlers    *dispatch.Handlers
+	handlers    *devicecontrol.Handlers
 	now         time.Time
 	actorID     string
 	deviceID    string
@@ -40,15 +40,15 @@ type dispatchHandlerFixture struct {
 	atRest      *crypto.Encryptor
 }
 
-func newDispatchHandlerFixture(t *testing.T) *dispatchHandlerFixture {
-	return newDispatchHandlerFixtureWithSender(t, nil)
+func newDeviceControlFixture(t *testing.T) *deviceControlFixture {
+	return newDeviceControlFixtureWithSender(t, nil)
 }
 
-func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *cadestrov1.ServerMessage) error) *dispatchHandlerFixture {
+func newDeviceControlFixtureWithSender(t *testing.T, sender func(string, *cadestrov1.ServerMessage) error) *deviceControlFixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	f := &dispatchHandlerFixture{
+	f := &deviceControlFixture{
 		t: t, store: st, raw: raw, now: now, actorID: newID(),
 		deviceID: seedDevice(t, raw), otherDevice: seedDevice(t, raw),
 		groupID: newID(), actionID: newID(),
@@ -94,7 +94,7 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *cade
 		INSERT INTO definition_members (definition_id, action_set_id, sort_order, added_at) VALUES
 			($1, $2, 0, $4), ($1, $3, 1, $4)`, f.definition, f.set1, f.set2, now)
 	require.NoError(t, err)
-	f.handlers = dispatch.NewHandlers(dispatch.HandlersConfig{
+	f.handlers = devicecontrol.NewHandlers(devicecontrol.HandlersConfig{
 		Store:  st,
 		Sender: sender,
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -103,13 +103,13 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *cade
 	return f
 }
 
-func (f *dispatchHandlerFixture) actor(perms ...string) context.Context {
+func (f *deviceControlFixture) actor(perms ...string) context.Context {
 	return auth.WithUser(context.Background(), &auth.UserContext{
 		ID: f.actorID, Kind: auth.PrincipalUser, Permissions: perms,
 	})
 }
 
-func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, targetID string, mode cadestrov1.AssignmentMode) {
+func (f *deviceControlFixture) assign(sourceType, sourceID, targetType, targetID string, mode cadestrov1.AssignmentMode) {
 	f.t.Helper()
 	_, err := f.raw.Exec(context.Background(), `
 		INSERT INTO assignments
@@ -120,7 +120,7 @@ func (f *dispatchHandlerFixture) assign(sourceType, sourceID, targetType, target
 }
 
 func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
+	f := newDeviceControlFixture(t)
 	f.assign("definition", f.definition, "device", f.deviceID, cadestrov1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED)
 
 	manager := connection.NewManager()
@@ -194,7 +194,7 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 }
 
 func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing.T) {
-	var f *dispatchHandlerFixture
+	var f *deviceControlFixture
 	sender := func(deviceID string, message *cadestrov1.ServerMessage) error {
 		assert.Equal(t, f.deviceID, deviceID)
 		switch message.GetPayload().(type) {
@@ -211,7 +211,7 @@ func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing
 		}
 		return nil
 	}
-	f = newDispatchHandlerFixtureWithSender(t, sender)
+	f = newDeviceControlFixtureWithSender(t, sender)
 	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"), connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
 	require.NoError(t, err)
 	_, err = f.handlers.RebootDevice(f.actor("RebootDevice"), connect.NewRequest(&cadestrov1.RebootDeviceRequest{DeviceId: f.deviceID}))
@@ -219,7 +219,7 @@ func TestDispatchHandlers_LiveOperationsUseTypedStreamWithoutDelivery(t *testing
 }
 
 func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
+	f := newDeviceControlFixture(t)
 	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"),
 		connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
@@ -234,10 +234,10 @@ func TestDispatchHandlers_LiveOperationRequiresConnection(t *testing.T) {
 }
 
 func TestDispatchHandlers_MountsExactInitialSurface(t *testing.T) {
-	f := newDispatchHandlerFixture(t)
+	f := newDeviceControlFixture(t)
 	assert.ElementsMatch(t, []string{
 		cadestrov1connect.ControlServiceSyncDeviceProcedure,
 		cadestrov1connect.ControlServiceRebootDeviceProcedure,
-	}, f.handlers.MountActions(http.NewServeMux()))
-	assert.ElementsMatch(t, f.handlers.MountActions(http.NewServeMux()), dispatch.MutationProcedures())
+	}, f.handlers.MountLiveControl(http.NewServeMux()))
+	assert.ElementsMatch(t, f.handlers.MountLiveControl(http.NewServeMux()), devicecontrol.LiveControlProcedures())
 }

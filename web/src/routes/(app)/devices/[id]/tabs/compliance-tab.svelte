@@ -276,7 +276,7 @@
 							<pre class="whitespace-pre-wrap text-destructive">{check.detectionOutput.stderr}</pre>
 						{/if}
 						<div class="mt-1 text-muted-foreground">
-							{m.execution_detail_exit_code({ code: check.detectionOutput.exitCode })}
+							{m.compliance_result_exit_code({ code: check.detectionOutput.exitCode })}
 						</div>
 					</div>
 				</div>

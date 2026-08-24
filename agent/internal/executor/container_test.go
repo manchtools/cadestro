@@ -184,14 +184,14 @@ func TestIntegration_ShellScriptRunsThroughRealRunner(t *testing.T) {
 	e := newTestExecutor()
 
 	out, err := e.runShellScript(context.Background(),
-		&pb.ShellParams{RunAsRoot: true}, "true", nil)
+		&pb.ShellParams{RunAsRoot: true}, "true")
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, int32(0), out.ExitCode)
 
 	// Script that fails
 	out, err = e.runShellScript(context.Background(),
-		&pb.ShellParams{RunAsRoot: true}, "exit 42", nil)
+		&pb.ShellParams{RunAsRoot: true}, "exit 42")
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, int32(42), out.ExitCode)
