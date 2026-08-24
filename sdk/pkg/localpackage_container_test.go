@@ -30,8 +30,8 @@ func TestLocalPackageInfo_AptRealDeb_Container(t *testing.T) {
 	control := "Package: cadestro-testpkg\n" +
 		"Version: 1.2.3\n" +
 		"Architecture: all\n" +
-		"Maintainer: PM Test <test@cadestro.invalid>\n" +
-		"Description: PM LocalPackageInfo real-execution fixture\n"
+		"Maintainer: Cadestro Test <test@cadestro.invalid>\n" +
+		"Description: Cadestro LocalPackageInfo real-execution fixture\n"
 	if err := os.WriteFile(filepath.Join(pkgRoot, "DEBIAN", "control"), []byte(control), 0o644); err != nil {
 		t.Fatal(err)
 	}

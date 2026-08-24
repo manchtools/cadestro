@@ -93,7 +93,7 @@ func TestInstallRemove_RealTrustStore_Container(t *testing.T) {
 			defer cancel()
 
 			const name = "cadestro-container-test-ca"
-			const cn = "pm container test root"
+			const cn = "cadestro container test root"
 			pemBytes := selfSignedCA(t, cn)
 			pemPath := filepath.Join(t.TempDir(), "ca.pem")
 			if err := os.WriteFile(pemPath, pemBytes, 0o644); err != nil {

@@ -35,7 +35,7 @@ func TestNotifyAll_RealWall_Container(t *testing.T) {
 	// succeeds (writes nowhere). A non-nil error means the real wall rejected our
 	// argv/stdin — exactly the drift we want to catch. notify-send is skipped by
 	// the SDK when no D-Bus session exists, so NotifyAll must return nil here.
-	if err := m.NotifyAll(ctx, "PM Container Test", "hello from the container test"); err != nil {
+	if err := m.NotifyAll(ctx, "Cadestro Container Test", "hello from the container test"); err != nil {
 		t.Fatalf("NotifyAll via real wall returned error: %v", err)
 	}
 }

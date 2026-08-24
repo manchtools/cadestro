@@ -274,7 +274,7 @@ func TestRepoSecurity_DnfGpgcheckZeroDropsKeyImport_Container(t *testing.T) {
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	if _, err := m.Apply(ctx, Repository{Name: name, Dnf: &DnfConfig{
-		BaseURL: "https://example.com/cadestro-sec-el9", Description: "PM Sec", Enabled: true,
+		BaseURL: "https://example.com/cadestro-sec-el9", Description: "Cadestro Sec", Enabled: true,
 		GPGCheck: false, GPGKey: "https://example.com/cadestro-sec-el9/RPM-GPG-KEY",
 	}}); err != nil {
 		t.Fatalf("Apply(dnf gpgcheck=0): %v", err)
@@ -370,7 +370,7 @@ func TestRepoSecurity_ZypperNoGpgcheck_OperatorOverride_Container(t *testing.T) 
 	t.Cleanup(func() { _, _ = m.Remove(context.Background(), name) })
 
 	if _, err := m.Apply(ctx, Repository{Name: name, Zypper: &ZypperConfig{
-		URL: "https://example.com/cadestro-sec-suite", Description: "PM Sec", Enabled: false,
+		URL: "https://example.com/cadestro-sec-suite", Description: "Cadestro Sec", Enabled: false,
 		Autorefresh: false, GPGCheck: false,
 	}}); err != nil {
 		t.Fatalf("Apply(zypper --no-gpgcheck) is an allowed operator override but failed: %v", err)

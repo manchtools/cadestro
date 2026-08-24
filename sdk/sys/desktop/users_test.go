@@ -220,7 +220,7 @@ func flatpakFixture(t *testing.T) (Manager, string) {
 }
 
 func TestUsersWithFlatpakInstall_ReturnsUsersWithTheApp(t *testing.T) {
-	const appID = "com.example.PmTest"
+	const appID = "com.example.CadestroTest"
 	m, home := flatpakFixture(t)
 	appDir := filepath.Join(home, ".local", "share", "flatpak", "app", appID)
 	if err := os.MkdirAll(appDir, 0o755); err != nil {
@@ -236,7 +236,7 @@ func TestUsersWithFlatpakInstall_ReturnsUsersWithTheApp(t *testing.T) {
 }
 
 func TestUsersWithFlatpakInstall_ExcludesUsersWithoutTheApp(t *testing.T) {
-	const appID = "com.example.PmTest"
+	const appID = "com.example.CadestroTest"
 	m, _ := flatpakFixture(t) // no app dir created
 	got, err := m.UsersWithFlatpakInstall(context.Background(), appID)
 	if err != nil {

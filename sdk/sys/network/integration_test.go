@@ -66,7 +66,7 @@ func TestApplyPSK_Integration(t *testing.T) {
 	defer cancel()
 
 	const name = "cadestro-test-wifi"
-	const ssid = "PMTestNet"
+	const ssid = "CadestroTestNet"
 	const pskValue = "cadestro-test-passphrase-123"
 	keyfile := keyfileDir + "/" + name + ".nmconnection"
 	t.Cleanup(func() { _ = m.Delete(context.Background(), name, network.DeleteOptions{}) })

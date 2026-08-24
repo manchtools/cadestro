@@ -171,7 +171,7 @@ func TestDnf_ApplyRemove_Container(t *testing.T) {
 	// gpgcheck=0 operator override is exercised separately in
 	// repo_security_container_test.go so it is never modelled as the normal case.
 	repo := Repository{Name: name, Dnf: &DnfConfig{
-		BaseURL: "https://example.com/cadestro-test-el9", Description: "PM Test", Enabled: true,
+		BaseURL: "https://example.com/cadestro-test-el9", Description: "Cadestro Test", Enabled: true,
 		GPGCheck: true, GPGKey: "https://example.com/cadestro-test-el9/RPM-GPG-KEY",
 	}}
 
@@ -183,7 +183,7 @@ func TestDnf_ApplyRemove_Container(t *testing.T) {
 		t.Error("first Apply should report Changed=true")
 	}
 	body := readFile(t, repoFile)
-	for _, want := range []string{"[" + name + "]", "name=PM Test", "baseurl=https://example.com/cadestro-test-el9", "enabled=1", "gpgcheck=1", "gpgkey=https://example.com/cadestro-test-el9/RPM-GPG-KEY"} {
+	for _, want := range []string{"[" + name + "]", "name=Cadestro Test", "baseurl=https://example.com/cadestro-test-el9", "enabled=1", "gpgcheck=1", "gpgkey=https://example.com/cadestro-test-el9/RPM-GPG-KEY"} {
 		if !strings.Contains(body, want) {
 			t.Errorf(".repo missing %q:\n%s", want, body)
 		}
@@ -266,7 +266,7 @@ func TestZypper_ApplyRemove_Container(t *testing.T) {
 	// Happy path keeps signature checking ON (the secure default); the
 	// --no-gpgcheck operator override lives in repo_security_container_test.go.
 	repo := Repository{Name: name, Zypper: &ZypperConfig{
-		URL: "https://example.com/cadestro-test-suite", Description: "PM Test", Enabled: false, Autorefresh: false, GPGCheck: true,
+		URL: "https://example.com/cadestro-test-suite", Description: "Cadestro Test", Enabled: false, Autorefresh: false, GPGCheck: true,
 	}}
 
 	o, err := m.Apply(ctx, repo)
