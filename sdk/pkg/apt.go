@@ -10,13 +10,13 @@ import (
 	"strings"
 	"sync"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // apt drives the Debian/Ubuntu package manager (apt / apt-get / dpkg / apt-mark)
 // over an injected Runner.
 type apt struct {
-	r       pmexec.Runner
+	r       sysexec.Runner
 	cmdOnce sync.Once
 	aptCmd  string // cached "apt" or "apt-get"
 }
@@ -57,13 +57,13 @@ func (a *apt) hasApt() bool { return a.aptCommand() == "apt" }
 // other commands (dpkg, apt-mark) run as named. The command's Result (stdout,
 // stderr, exit code) is returned on both the success and non-zero-exit paths;
 // only an unrunnable command yields the zero Result.
-func (a *apt) write(ctx context.Context, cmd string, args ...string) (pmexec.Result, error) {
+func (a *apt) write(ctx context.Context, cmd string, args ...string) (sysexec.Result, error) {
 	if cmd == "apt" || cmd == "apt-get" {
 		cmd = a.aptCommand()
 	}
 	res, err := runPriv(ctx, a.r, true, aptWriteEnv, cmd, args...)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return res, asCommandError(cmd, res)
 }
@@ -82,18 +82,18 @@ func (a *apt) Version(ctx context.Context) (string, error) {
 }
 
 // Install installs packages, using --fix-broken to resolve dependency issues.
-func (a *apt) Install(ctx context.Context, opts InstallOptions, packages ...string) (pmexec.Result, error) {
+func (a *apt) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if opts.Version != "" && len(packages) != 1 {
-		return pmexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
+		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	args := []string{"install", "-y", "--fix-broken"}
 	if opts.AllowDowngrade {
@@ -113,9 +113,9 @@ func (a *apt) Install(ctx context.Context, opts InstallOptions, packages ...stri
 // so the operand can never be flag-shaped; the conffile-default options keep a
 // postinst that touches a conffile non-interactive. opts.AllowUnsigned is a
 // no-op here — a local .deb carries no per-file signature to skip.
-func (a *apt) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (pmexec.Result, error) {
+func (a *apt) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	flags := []string{"install", "-y"}
 	flags = append(flags, dpkgConfOptions...)
@@ -126,12 +126,12 @@ func (a *apt) InstallLocal(ctx context.Context, path string, opts InstallLocalOp
 }
 
 // Remove removes packages; opts.Purge deletes configuration files too.
-func (a *apt) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (pmexec.Result, error) {
+func (a *apt) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	verb := "remove"
 	if opts.Purge {
@@ -142,18 +142,18 @@ func (a *apt) Remove(ctx context.Context, opts RemoveOptions, packages ...string
 }
 
 // Update refreshes the package index.
-func (a *apt) Update(ctx context.Context) (pmexec.Result, error) {
+func (a *apt) Update(ctx context.Context) (sysexec.Result, error) {
 	return a.write(ctx, "apt", "update")
 }
 
 // Upgrade upgrades the named packages; with no names it runs a full
 // dist-upgrade (which can add/remove packages to satisfy held-back deps).
-func (a *apt) Upgrade(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (a *apt) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
+		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	args := append([]string{"install", "-y", "--only-upgrade"}, dpkgConfOptions...)
 	args = append(args, packages...)
@@ -162,7 +162,7 @@ func (a *apt) Upgrade(ctx context.Context, packages ...string) (pmexec.Result, e
 
 // UpgradeAll performs a full distribution upgrade (apt dist-upgrade), or — with
 // opts.SecurityOnly — applies only security updates via unattended-upgrade.
-func (a *apt) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Result, error) {
+func (a *apt) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
 	if opts.SecurityOnly {
 		return a.securityUpgrade(ctx)
 	}
@@ -176,10 +176,10 @@ func (a *apt) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Resul
 // heuristic) and handles holds, kernel transitions and conffile prompts. It
 // requires the unattended-upgrades package; if absent it fails closed with an
 // actionable error rather than silently performing a full upgrade.
-func (a *apt) securityUpgrade(ctx context.Context) (pmexec.Result, error) {
+func (a *apt) securityUpgrade(ctx context.Context) (sysexec.Result, error) {
 	bin, err := resolveUnattendedUpgrade()
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return a.write(ctx, bin, "-v")
 }
@@ -207,33 +207,33 @@ func resolveUnattendedUpgrade() (string, error) {
 	if p, err := lookPath("unattended-upgrade"); err == nil {
 		return p, nil
 	}
-	return "", fmt.Errorf("%w: unattended-upgrade not found — install the unattended-upgrades package for apt security-only upgrades", pmexec.ErrBackendUnavailable)
+	return "", fmt.Errorf("%w: unattended-upgrade not found — install the unattended-upgrades package for apt security-only upgrades", sysexec.ErrBackendUnavailable)
 }
 
 // Pin holds packages (apt-mark hold).
-func (a *apt) Pin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (a *apt) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return a.write(ctx, "apt-mark", append([]string{"hold"}, packages...)...)
 }
 
 // Unpin releases held packages (apt-mark unhold).
-func (a *apt) Unpin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (a *apt) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return a.write(ctx, "apt-mark", append([]string{"unhold"}, packages...)...)
 }
 
 // Autoremove removes packages installed only as now-unneeded dependencies.
-func (a *apt) Autoremove(ctx context.Context) (pmexec.Result, error) {
+func (a *apt) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	return a.write(ctx, "apt", "autoremove", "-y")
 }
 
@@ -241,7 +241,7 @@ func (a *apt) Autoremove(ctx context.Context) (pmexec.Result, error) {
 // broken dependencies, and refreshes the index. The returned Result is that of
 // the final `apt update` step (or the step that failed hard); best-effort steps
 // whose failures are swallowed do not change the returned Result.
-func (a *apt) Repair(ctx context.Context) (pmexec.Result, error) {
+func (a *apt) Repair(ctx context.Context) (sysexec.Result, error) {
 	for _, lf := range []string{
 		"/var/lib/dpkg/lock",
 		"/var/lib/dpkg/lock-frontend",
@@ -249,17 +249,17 @@ func (a *apt) Repair(ctx context.Context) (pmexec.Result, error) {
 		"/var/cache/apt/archives/lock",
 	} {
 		if err := removeStaleLock(ctx, a.r, lf); err != nil {
-			return pmexec.Result{}, err
+			return sysexec.Result{}, err
 		}
 	}
 
 	fixArgs := append([]string{"--fix-broken", "install", "-y"}, dpkgConfOptions...)
 	steps := []struct {
 		what string
-		run  func() (pmexec.Result, error)
+		run  func() (sysexec.Result, error)
 	}{
-		{"dpkg --configure -a", func() (pmexec.Result, error) { return a.write(ctx, "dpkg", "--configure", "-a") }},
-		{"apt --fix-broken install", func() (pmexec.Result, error) { return a.write(ctx, "apt", fixArgs...) }},
+		{"dpkg --configure -a", func() (sysexec.Result, error) { return a.write(ctx, "dpkg", "--configure", "-a") }},
+		{"apt --fix-broken install", func() (sysexec.Result, error) { return a.write(ctx, "apt", fixArgs...) }},
 	}
 	for _, s := range steps {
 		res, err := s.run()

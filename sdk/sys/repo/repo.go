@@ -38,7 +38,7 @@ import (
 	"strings"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
@@ -158,7 +158,7 @@ type ZypperConfig struct {
 // no-op (the configuration already matched), which lets a caller suppress
 // spurious state-change events.
 type Outcome struct {
-	Result  pmexec.Result
+	Result  sysexec.Result
 	Changed bool
 }
 
@@ -194,13 +194,13 @@ type fsManager interface {
 
 // newFS builds the fs.Manager each Manager delegates privileged file ops to,
 // over the same injected Runner. A package var so tests override it with a fake.
-var newFS = func(r pmexec.Runner) (fsManager, error) { return fs.New(r) }
+var newFS = func(r sysexec.Runner) (fsManager, error) { return fs.New(r) }
 
 // manager is the single Manager implementation; the per-backend behavior is
 // selected by b (validated at construction), so there is no per-backend type.
 type manager struct {
 	b   pkg.Backend
-	r   pmexec.Runner
+	r   sysexec.Runner
 	fsm fsManager
 }
 
@@ -208,9 +208,9 @@ type manager struct {
 // or a backend without native repository support (flatpak, the zero value) is
 // rejected (fail-closed). New is pure — it does not probe the host; use
 // pkg.Detect to learn which backends are installed.
-func New(b pkg.Backend, runner pmexec.Runner) (Manager, error) {
+func New(b pkg.Backend, runner sysexec.Runner) (Manager, error) {
 	if runner == nil {
-		return nil, fmt.Errorf("repo: %w", pmexec.ErrRunnerRequired)
+		return nil, fmt.Errorf("repo: %w", sysexec.ErrRunnerRequired)
 	}
 	switch b {
 	case pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper:
@@ -282,25 +282,25 @@ func (m *manager) Remove(ctx context.Context, name string) (Outcome, error) {
 
 // out builds a successful Outcome from an accumulated log and changed flag.
 func out(log string, changed bool) Outcome {
-	return Outcome{Result: pmexec.Result{ExitCode: 0, Stdout: log}, Changed: changed}
+	return Outcome{Result: sysexec.Result{ExitCode: 0, Stdout: log}, Changed: changed}
 }
 
 // fsResultErr builds a failure Result carrying the accumulated log as stdout and
 // the error text as stderr, for the paths that return both a Result and an error.
-func fsResultErr(log string, err error) pmexec.Result {
-	return pmexec.Result{ExitCode: 1, Stdout: log, Stderr: err.Error()}
+func fsResultErr(log string, err error) sysexec.Result {
+	return sysexec.Result{ExitCode: 1, Stdout: log, Stderr: err.Error()}
 }
 
 // runPriv runs an escalated package-manager command through the Runner and folds
 // a non-zero exit into an *exec.CommandError (the error is nil only on a clean
 // exit). The Result is returned in all cases so a caller can surface stdout.
-func (m *manager) runPriv(ctx context.Context, name string, args ...string) (pmexec.Result, error) {
-	res, err := m.r.Run(ctx, pmexec.Command{Name: name, Args: args, Escalate: true})
+func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+	res, err := m.r.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
 	if err != nil {
 		return res, err
 	}
 	if res.ExitCode != 0 {
-		return res, &pmexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
+		return res, &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 	}
 	return res, nil
 }
@@ -326,8 +326,8 @@ func (m *manager) runNonFatal(ctx context.Context, log *strings.Builder, warnMsg
 // processes a public key, needs no privilege, and must not touch any file —
 // fs.Manager performs the privileged keyring write). A non-zero exit folds into
 // an *exec.CommandError.
-func (m *manager) runStdin(ctx context.Context, stdin []byte, name string, args ...string) (pmexec.Result, error) {
-	cmd := pmexec.Command{Name: name, Args: args}
+func (m *manager) runStdin(ctx context.Context, stdin []byte, name string, args ...string) (sysexec.Result, error) {
+	cmd := sysexec.Command{Name: name, Args: args}
 	if len(stdin) > 0 {
 		cmd.Stdin = bytes.NewReader(stdin)
 	}
@@ -336,7 +336,7 @@ func (m *manager) runStdin(ctx context.Context, stdin []byte, name string, args 
 		return res, err
 	}
 	if res.ExitCode != 0 {
-		return res, &pmexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
+		return res, &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 	}
 	return res, nil
 }

@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/timesync"
 )
 
@@ -27,7 +27,7 @@ func TestStatus_Integration(t *testing.T) {
 	if len(backends) == 0 {
 		t.Skip("no time-sync backend on PATH")
 	}
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}

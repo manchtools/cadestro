@@ -29,7 +29,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func requireUseradd(t *testing.T) {
@@ -57,7 +57,7 @@ func mkUser(t *testing.T, name, homeDir string) *user.User {
 
 func realDesktop(t *testing.T, opts ...Option) Manager {
 	t.Helper()
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
@@ -127,7 +127,7 @@ func TestRunAsRunner_Container(t *testing.T) {
 	uid, _ := strconv.Atoi(u.Uid)
 	gid, _ := strconv.Atoi(u.Gid)
 	s := Session{Username: "pmrunas", UID: uid, GID: gid, Home: u.HomeDir, RuntimeDir: "/run/user/" + u.Uid}
-	base, err := pmexec.NewRunner(pmexec.Direct)
+	base, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
@@ -138,7 +138,7 @@ func TestRunAsRunner_Container(t *testing.T) {
 	ctx := deskCtx(t)
 
 	// Identity: `id -un` must print the target user — proves the real privilege drop.
-	res, err := ru.Run(ctx, pmexec.Command{Name: "id", Args: []string{"-un"}})
+	res, err := ru.Run(ctx, sysexec.Command{Name: "id", Args: []string{"-un"}})
 	if err != nil {
 		t.Fatalf("run id -un as pmrunas: %v", err)
 	}
@@ -148,7 +148,7 @@ func TestRunAsRunner_Container(t *testing.T) {
 
 	// Environment: HOME/USER are the user's; PATH is the curated UserPath (the
 	// user's ~/.local/bin first), NOT root's inherited PATH.
-	res2, err := ru.Run(ctx, pmexec.Command{Name: "sh", Args: []string{"-c", `printf '%s|%s|%s' "$HOME" "$USER" "$PATH"`}})
+	res2, err := ru.Run(ctx, sysexec.Command{Name: "sh", Args: []string{"-c", `printf '%s|%s|%s' "$HOME" "$USER" "$PATH"`}})
 	if err != nil {
 		t.Fatalf("run env probe as pmrunas: %v", err)
 	}
@@ -164,7 +164,7 @@ func TestRunAsRunner_Container(t *testing.T) {
 	// unset would print the test's cwd. Setting Command.Dir must make the real
 	// child run there — proving Dir survives the runuser wrap (the RunAsCommand
 	// parity that RunAsRunner now provides).
-	res3, err := ru.Run(ctx, pmexec.Command{Name: "pwd", Dir: u.HomeDir})
+	res3, err := ru.Run(ctx, sysexec.Command{Name: "pwd", Dir: u.HomeDir})
 	if err != nil {
 		t.Fatalf("run pwd as pmrunas with Dir: %v", err)
 	}

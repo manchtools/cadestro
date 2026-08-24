@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // stubUnattendedUpgradePaths overrides the known absolute-path probe list so the
@@ -70,7 +70,7 @@ func TestUpgradeAll_SecurityOnly(t *testing.T) {
 		stubUnattendedUpgradePaths(t) // no known absolute paths, and $PATH won't resolve it either
 		m, f := aptM(t)               // stub resolves apt/apt-get only — unattended-upgrade absent
 		_, err := m.UpgradeAll(ctx, UpgradeOptions{SecurityOnly: true})
-		if !errors.Is(err, pmexec.ErrBackendUnavailable) {
+		if !errors.Is(err, sysexec.ErrBackendUnavailable) {
 			t.Fatalf("err = %v, want ErrBackendUnavailable", err)
 		}
 		if len(f.Calls()) != 0 {
@@ -126,7 +126,7 @@ func TestResolveUnattendedUpgrade_FallsBackToPath(t *testing.T) {
 	}
 
 	stubLookPath(t) // resolves nothing
-	if _, err := resolveUnattendedUpgrade(); !errors.Is(err, pmexec.ErrBackendUnavailable) {
+	if _, err := resolveUnattendedUpgrade(); !errors.Is(err, sysexec.ErrBackendUnavailable) {
 		t.Fatalf("err = %v, want ErrBackendUnavailable", err)
 	}
 }

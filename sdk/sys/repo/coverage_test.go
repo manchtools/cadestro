@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
@@ -26,7 +26,7 @@ func TestApply_ValidatesBeforeWork(t *testing.T) {
 // non-fatal step is surfaced as a warning.
 func TestRunPriv_RunnerErrorBranch(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Dnf)
-	fr.Push(pmexec.Result{}, pmexec.ErrEscalationDenied) // makecache (no key → first call)
+	fr.Push(sysexec.Result{}, sysexec.ErrEscalationDenied) // makecache (no key → first call)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r"}})
 	if err != nil {
 		t.Fatalf("a non-fatal step's runner error must not fail Apply, got %v", err)
@@ -39,7 +39,7 @@ func TestRunPriv_RunnerErrorBranch(t *testing.T) {
 // A runner-level error during gpg --dearmor is fatal (the key path can't proceed).
 func TestRunStdin_RunnerErrorBranch(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{}, pmexec.ErrEscalationUnavailable)
+	fr.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a", GPGKey: []byte("k")}}); err == nil ||
 		!strings.Contains(err.Error(), "dearmor GPG key") {
 		t.Fatalf("err = %v, want a wrapped dearmor failure on a runner error", err)
@@ -50,8 +50,8 @@ func TestRunStdin_RunnerErrorBranch(t *testing.T) {
 func TestApply_StdoutIsLogged(t *testing.T) {
 	t.Run("dnf", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Dnf)
-		fr.Push(pmexec.Result{Stdout: "imported-key\n"}, nil)    // rpm --import
-		fr.Push(pmexec.Result{Stdout: "metadata cached\n"}, nil) // makecache
+		fr.Push(sysexec.Result{Stdout: "imported-key\n"}, nil)    // rpm --import
+		fr.Push(sysexec.Result{Stdout: "metadata cached\n"}, nil) // makecache
 		out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r", GPGCheck: true, GPGKey: "https://h/K"}})
 		if err != nil {
 			t.Fatal(err)
@@ -63,7 +63,7 @@ func TestApply_StdoutIsLogged(t *testing.T) {
 	t.Run("pacman", func(t *testing.T) {
 		m, ff, fr := newTestManager(t, pkg.Pacman)
 		ff.read["/etc/pacman.conf"] = []byte("[options]\n")
-		fr.Push(pmexec.Result{Stdout: "synced db\n"}, nil)
+		fr.Push(sysexec.Result{Stdout: "synced db\n"}, nil)
 		out, _ := m.Apply(context.Background(), Repository{Name: "r", Pacman: &PacmanConfig{Server: "https://h/"}})
 		if !strings.Contains(out.Result.Stdout, "synced db") {
 			t.Errorf("pacman stdout not logged: %q", out.Result.Stdout)
@@ -71,7 +71,7 @@ func TestApply_StdoutIsLogged(t *testing.T) {
 	})
 	t.Run("apt update", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Apt)
-		fr.Push(pmexec.Result{Stdout: "Hit:1 https://h/a\n"}, nil) // apt-get update (no key → first call)
+		fr.Push(sysexec.Result{Stdout: "Hit:1 https://h/a\n"}, nil) // apt-get update (no key → first call)
 		out, _ := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a"}})
 		if !strings.Contains(out.Result.Stdout, "Hit:1") {
 			t.Errorf("apt-get update stdout not logged: %q", out.Result.Stdout)
@@ -79,11 +79,11 @@ func TestApply_StdoutIsLogged(t *testing.T) {
 	})
 	t.Run("zypper", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(pmexec.Result{}, nil)                       // removerepo
-		fr.Push(pmexec.Result{Stdout: "added repo\n"}, nil) // addrepo
-		fr.Push(pmexec.Result{}, nil)                       // disable
-		fr.Push(pmexec.Result{Stdout: "imported\n"}, nil)   // rpm import
-		fr.Push(pmexec.Result{Stdout: "refreshed\n"}, nil)  // refresh
+		fr.Push(sysexec.Result{}, nil)                       // removerepo
+		fr.Push(sysexec.Result{Stdout: "added repo\n"}, nil) // addrepo
+		fr.Push(sysexec.Result{}, nil)                       // disable
+		fr.Push(sysexec.Result{Stdout: "imported\n"}, nil)   // rpm import
+		fr.Push(sysexec.Result{Stdout: "refreshed\n"}, nil)  // refresh
 		out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true, GPGKey: "https://h/K"}})
 		if err != nil {
 			t.Fatal(err)
@@ -144,7 +144,7 @@ func TestApt_Apply_RepoFileReadErrorIsFatal(t *testing.T) {
 
 func TestApt_UpdateAptKey_ReadKeyErrorIsFatal(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{Stdout: "BINKEY"}, nil)
+	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil)
 	ff.errs["ReadFile:/etc/apt/keyrings/r.gpg"] = errors.New("io")
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a", GPGKey: []byte("k")}}); err == nil ||
 		!strings.Contains(err.Error(), "read existing GPG key") {
@@ -243,7 +243,7 @@ func TestApt_Cleanup_SkipBranches(t *testing.T) {
 // The best-effort pre-add removerepo failure is a logged note, never fatal.
 func TestZypper_Apply_PreRemoveFailureIsNoted(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "not found"}, nil) // pre-removerepo fails
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "not found"}, nil) // pre-removerepo fails
 	// addrepo + disable + refresh unscripted → clean.
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true}})
 	if err != nil {
@@ -256,9 +256,9 @@ func TestZypper_Apply_PreRemoveFailureIsNoted(t *testing.T) {
 
 func TestZypper_Apply_DisableFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(pmexec.Result{}, nil)                               // removerepo
-	fr.Push(pmexec.Result{}, nil)                               // addrepo
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "disable"}, nil) // modifyrepo --disable fails
+	fr.Push(sysexec.Result{}, nil)                               // removerepo
+	fr.Push(sysexec.Result{}, nil)                               // addrepo
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "disable"}, nil) // modifyrepo --disable fails
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true, Enabled: false}}); err == nil ||
 		!strings.Contains(err.Error(), "disable repo") {
 		t.Fatalf("err = %v, want a wrapped disable failure", err)
@@ -269,9 +269,9 @@ func TestZypper_Apply_DisableFailureIsFatal(t *testing.T) {
 func TestZypper_Apply_EnableAndAutorefreshFailures(t *testing.T) {
 	t.Run("enable fails", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(pmexec.Result{}, nil) // removerepo
-		fr.Push(pmexec.Result{}, nil) // addrepo
-		fr.Push(pmexec.Result{ExitCode: 1, Stderr: "enable"}, nil)
+		fr.Push(sysexec.Result{}, nil) // removerepo
+		fr.Push(sysexec.Result{}, nil) // addrepo
+		fr.Push(sysexec.Result{ExitCode: 1, Stderr: "enable"}, nil)
 		if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true, Enabled: true}}); err == nil ||
 			!strings.Contains(err.Error(), "enable repo") {
 			t.Fatalf("err = %v, want a wrapped enable failure", err)
@@ -279,10 +279,10 @@ func TestZypper_Apply_EnableAndAutorefreshFailures(t *testing.T) {
 	})
 	t.Run("refresh failure non-fatal", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(pmexec.Result{}, nil)                                   // removerepo
-		fr.Push(pmexec.Result{}, nil)                                   // addrepo
-		fr.Push(pmexec.Result{}, nil)                                   // disable
-		fr.Push(pmexec.Result{ExitCode: 1, Stderr: "refresh net"}, nil) // refresh
+		fr.Push(sysexec.Result{}, nil)                                   // removerepo
+		fr.Push(sysexec.Result{}, nil)                                   // addrepo
+		fr.Push(sysexec.Result{}, nil)                                   // disable
+		fr.Push(sysexec.Result{ExitCode: 1, Stderr: "refresh net"}, nil) // refresh
 		out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true}})
 		if err != nil {
 			t.Fatalf("final refresh failure must be non-fatal, got %v", err)

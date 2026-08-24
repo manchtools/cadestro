@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -39,7 +39,7 @@ func TestApt_Version(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("not found"))
+		f.Push(sysexec.Result{}, errors.New("not found"))
 		if _, err := m.Version(context.Background()); err == nil {
 			t.Fatal("want exec error")
 		}
@@ -290,9 +290,9 @@ func TestApt_Autoremove(t *testing.T) {
 
 func TestApt_WriteFailure(t *testing.T) {
 	m, f := aptM(t)
-	f.Push(pmexec.Result{ExitCode: 100, Stderr: "E: Unable to locate package ghost"}, nil)
+	f.Push(sysexec.Result{ExitCode: 100, Stderr: "E: Unable to locate package ghost"}, nil)
 	_, err := m.Install(context.Background(), InstallOptions{}, "ghost")
-	var ce *pmexec.CommandError
+	var ce *sysexec.CommandError
 	if !errors.As(err, &ce) || ce.ExitCode != 100 {
 		t.Fatalf("err = %v, want CommandError(exit 100)", err)
 	}
@@ -303,8 +303,8 @@ func TestApt_WriteFailure(t *testing.T) {
 
 func TestApt_WriteExecError(t *testing.T) {
 	m, f := aptM(t)
-	f.Push(pmexec.Result{}, pmexec.ErrEscalationDenied)
-	if _, err := m.Update(context.Background()); !errors.Is(err, pmexec.ErrEscalationDenied) {
+	f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+	if _, err := m.Update(context.Background()); !errors.Is(err, sysexec.ErrEscalationDenied) {
 		t.Fatalf("err = %v, want ErrEscalationDenied", err)
 	}
 }
@@ -333,9 +333,9 @@ func TestApt_Repair(t *testing.T) {
 		stubLookPath(t, "apt")
 		stubStatFile(t, nil)
 		m, f := mustNew(t, Apt)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "dpkg busy"}, nil)     // configure fails (warn)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "still broken"}, nil)  // fix-broken fails (warn)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "update failed"}, nil) // update fails (returned)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "dpkg busy"}, nil)     // configure fails (warn)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "still broken"}, nil)  // fix-broken fails (warn)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "update failed"}, nil) // update fails (returned)
 		_, err := m.Repair(ctx)
 		if err == nil || !strings.Contains(err.Error(), "apt update failed") {
 			t.Fatalf("err = %v, want apt update failure", err)
@@ -362,7 +362,7 @@ func TestApt_Repair(t *testing.T) {
 		// cancelled, so the next best-effort step (apt --fix-broken) fails closed
 		// and Repair propagates the cancellation.
 		inner := newFake()
-		inner.Push(pmexec.Result{}, nil) // dpkg --configure -a
+		inner.Push(sysexec.Result{}, nil) // dpkg --configure -a
 		r := &cancelAfterRunner{inner: inner, n: 1, cancel: cancel}
 		m, err := New(Apt, r)
 		if err != nil {
@@ -395,7 +395,7 @@ func TestApt_Search(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.Search(context.Background(), "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -424,14 +424,14 @@ func TestApt_List(t *testing.T) {
 	t.Run("pin-set lookup runner failure propagates", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "vim\t2:8.2\tamd64\tinstall ok installed\t3000\tVi IMproved\n")
-		f.Push(pmexec.Result{}, errors.New("apt-mark missing")) // getPinnedSet runner failure
+		f.Push(sysexec.Result{}, errors.New("apt-mark missing")) // getPinnedSet runner failure
 		if _, err := m.List(context.Background()); err == nil {
 			t.Fatal("a runner failure in the pin-set lookup must propagate, not be swallowed")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.List(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -458,7 +458,7 @@ func TestApt_ListUpgradable(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.ListUpgradable(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -470,8 +470,8 @@ func TestApt_Show(t *testing.T) {
 	t.Run("installed and pinned", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\nArchitecture: amd64\nInstalled-Size: 3000\nDescription: Vi IMproved\n")
-		f.Push(pmexec.Result{ExitCode: 0}, nil) // IsInstalled: dpkg -s -> installed
-		ok(f, "vim\n")                          // IsPinned: apt-mark showhold vim
+		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled: dpkg -s -> installed
+		ok(f, "vim\n")                           // IsPinned: apt-mark showhold vim
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -483,8 +483,8 @@ func TestApt_Show(t *testing.T) {
 	t.Run("available (not installed)", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\n")
-		f.Push(pmexec.Result{ExitCode: 1}, nil) // dpkg -s -> not installed
-		ok(f, "")                               // apt-mark showhold vim -> not pinned
+		f.Push(sysexec.Result{ExitCode: 1}, nil) // dpkg -s -> not installed
+		ok(f, "")                                // apt-mark showhold vim -> not pinned
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -496,15 +496,15 @@ func TestApt_Show(t *testing.T) {
 	t.Run("pin-check runner failure propagates", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\n")
-		f.Push(pmexec.Result{ExitCode: 0}, nil)             // IsInstalled -> installed
-		f.Push(pmexec.Result{}, errors.New("apt-mark err")) // IsPinned runner failure
+		f.Push(sysexec.Result{ExitCode: 0}, nil)             // IsInstalled -> installed
+		f.Push(sysexec.Result{}, errors.New("apt-mark err")) // IsPinned runner failure
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("a runner failure in the pin check must propagate")
 		}
 	})
 	t.Run("exec error on show", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -537,14 +537,14 @@ func TestApt_ListVersions(t *testing.T) {
 	t.Run("installed-version runner failure propagates", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "  vim | 2:8.2 | http://archive jammy/main amd64\n")
-		f.Push(pmexec.Result{}, errors.New("dpkg-query err")) // InstalledVersion runner failure
+		f.Push(sysexec.Result{}, errors.New("dpkg-query err")) // InstalledVersion runner failure
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a runner failure in the installed-version lookup must propagate")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -561,7 +561,7 @@ func TestApt_IsInstalled(t *testing.T) {
 	ctx := context.Background()
 	t.Run("installed (exit 0)", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{ExitCode: 0}, nil)
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
 		got, err := m.IsInstalled(ctx, "vim")
 		if err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
@@ -569,14 +569,14 @@ func TestApt_IsInstalled(t *testing.T) {
 	})
 	t.Run("not installed (exit 1)", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if got, err := m.IsInstalled(ctx, "ghost"); err != nil || got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.IsInstalled(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -601,14 +601,14 @@ func TestApt_InstalledVersion(t *testing.T) {
 	t.Run("absent package returns empty, not error", func(t *testing.T) {
 		// dpkg-query exits non-zero for an unknown package — a benign miss.
 		m, f := aptM(t)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "no packages found matching ghost"}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "no packages found matching ghost"}, nil)
 		if v, err := m.InstalledVersion(ctx, "ghost"); err != nil || v != "" {
 			t.Fatalf("v=%q err=%v, want \"\",nil for an absent package", v, err)
 		}
 	})
 	t.Run("runner error propagates", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.InstalledVersion(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -631,7 +631,7 @@ func TestApt_InstalledCount(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.InstalledCount(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -656,7 +656,7 @@ func TestApt_HasUpdates(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.HasUpdates(context.Background(), false); err == nil {
 			t.Fatal("want error")
 		}
@@ -681,7 +681,7 @@ func TestApt_IsPinned(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.IsPinned(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -710,7 +710,7 @@ func TestApt_ListPinned(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := aptM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.ListPinned(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -723,16 +723,16 @@ func TestApt_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("Show: IsInstalled runner failure", func(t *testing.T) {
 		m, f := aptM(t)
-		ok(f, "Package: vim\nVersion: 2:8.2\n")               // show
-		f.Push(pmexec.Result{}, errors.New("dpkg -s failed")) // IsInstalled
+		ok(f, "Package: vim\nVersion: 2:8.2\n")                // show
+		f.Push(sysexec.Result{}, errors.New("dpkg -s failed")) // IsInstalled
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("an IsInstalled runner failure must propagate")
 		}
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := aptM(t)
-		ok(f, "vim\n")                                           // apt-mark showhold
-		f.Push(pmexec.Result{}, errors.New("dpkg-query failed")) // InstalledVersion
+		ok(f, "vim\n")                                            // apt-mark showhold
+		f.Push(sysexec.Result{}, errors.New("dpkg-query failed")) // InstalledVersion
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}

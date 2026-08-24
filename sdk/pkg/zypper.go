@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // zypper drives the openSUSE/SLES package manager (zypper / rpm) over an
 // injected Runner.
 type zypper struct {
-	r pmexec.Runner
+	r sysexec.Runner
 }
 
 var _ Manager = (*zypper)(nil)
@@ -32,10 +32,10 @@ func isZypperInfoExit(code int) bool {
 
 func (z *zypper) Backend() Backend { return Zypper }
 
-func (z *zypper) write(ctx context.Context, args ...string) (pmexec.Result, error) {
+func (z *zypper) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, z.r, true, nil, "zypper", args...)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return res, asCommandError("zypper", res)
 }
@@ -55,18 +55,18 @@ func (z *zypper) Version(ctx context.Context) (string, error) {
 
 // Install installs packages. opts.Version pins a single package (name=version);
 // opts.AllowDowngrade adds --oldpackage.
-func (z *zypper) Install(ctx context.Context, opts InstallOptions, packages ...string) (pmexec.Result, error) {
+func (z *zypper) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if opts.Version != "" && len(packages) != 1 {
-		return pmexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
+		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	args := []string{"--non-interactive", "install"}
 	if opts.AllowDowngrade {
@@ -87,9 +87,9 @@ func (z *zypper) Install(ctx context.Context, opts InstallOptions, packages ...s
 // --no-gpg-checks, which would also drop repository-metadata verification).
 // ValidateLocalPackagePath requires an absolute path, so the operand can never
 // be flag-shaped.
-func (z *zypper) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (pmexec.Result, error) {
+func (z *zypper) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	flags := []string{"--non-interactive", "install"}
 	if opts.AllowUnsigned {
@@ -103,34 +103,34 @@ func (z *zypper) InstallLocal(ctx context.Context, path string, opts InstallLoca
 
 // Remove removes packages. zypper does not distinguish purge from remove, so
 // opts.Purge is a no-op.
-func (z *zypper) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (pmexec.Result, error) {
+func (z *zypper) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "remove"}, packages...)...)
 }
 
 // Update refreshes the repositories.
-func (z *zypper) Update(ctx context.Context) (pmexec.Result, error) {
+func (z *zypper) Update(ctx context.Context) (sysexec.Result, error) {
 	return z.write(ctx, "--non-interactive", "refresh")
 }
 
 // Upgrade upgrades the named packages, or runs a full dist-upgrade with no names.
-func (z *zypper) Upgrade(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (z *zypper) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
+		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "update"}, packages...)...)
 }
 
 // UpgradeAll performs a full distribution upgrade (zypper dist-upgrade).
-func (z *zypper) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Result, error) {
+func (z *zypper) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
 	if opts.SecurityOnly {
 		// zypper patches are security-categorised; patch --category security
 		// applies only the security patches.
@@ -141,9 +141,9 @@ func (z *zypper) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Re
 
 // Autoremove is a no-op: zypper has no single-shot unneeded-package removal
 // matching apt/dnf autoremove semantics.
-func (z *zypper) Autoremove(ctx context.Context) (pmexec.Result, error) {
+func (z *zypper) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	slog.Debug("zypper has no native autoremove; skipping")
-	return pmexec.Result{}, nil
+	return sysexec.Result{}, nil
 }
 
 // Repair recovers a wedged zypper/rpm state, mirroring dnf's best-effort
@@ -153,20 +153,20 @@ func (z *zypper) Autoremove(ctx context.Context) (pmexec.Result, error) {
 // continues, so e.g. a failed refresh does not skip the rpmdb rebuild — and only
 // a cancelled context aborts the chain (each step fails closed via runPriv). The
 // last step's Result is returned.
-func (z *zypper) Repair(ctx context.Context) (pmexec.Result, error) {
+func (z *zypper) Repair(ctx context.Context) (sysexec.Result, error) {
 	if err := removeStaleZyppLock(ctx, z.r, "/run/zypp.pid"); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	steps := []struct {
 		what string
-		run  func() (pmexec.Result, error)
+		run  func() (sysexec.Result, error)
 	}{
-		{"zypper clean --all", func() (pmexec.Result, error) { return z.write(ctx, "--non-interactive", "clean", "--all") }},
-		{"zypper refresh", func() (pmexec.Result, error) { return z.write(ctx, "--non-interactive", "refresh") }},
-		{"zypper verify", func() (pmexec.Result, error) { return z.write(ctx, "--non-interactive", "verify", "--recommends") }},
-		{"rpm --verifydb", func() (pmexec.Result, error) { return verifyOrRebuildRPMDB(ctx, z.r) }},
+		{"zypper clean --all", func() (sysexec.Result, error) { return z.write(ctx, "--non-interactive", "clean", "--all") }},
+		{"zypper refresh", func() (sysexec.Result, error) { return z.write(ctx, "--non-interactive", "refresh") }},
+		{"zypper verify", func() (sysexec.Result, error) { return z.write(ctx, "--non-interactive", "verify", "--recommends") }},
+		{"rpm --verifydb", func() (sysexec.Result, error) { return verifyOrRebuildRPMDB(ctx, z.r) }},
 	}
-	var last pmexec.Result
+	var last sysexec.Result
 	for _, s := range steps {
 		res, err := s.run()
 		last = res
@@ -493,23 +493,23 @@ func (z *zypper) HasUpdates(ctx context.Context, securityOnly bool) (bool, error
 }
 
 // Pin holds packages back (zypper addlock).
-func (z *zypper) Pin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (z *zypper) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "addlock"}, packages...)...)
 }
 
 // Unpin releases held packages (zypper removelock).
-func (z *zypper) Unpin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (z *zypper) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return z.write(ctx, append([]string{"--non-interactive", "removelock"}, packages...)...)
 }

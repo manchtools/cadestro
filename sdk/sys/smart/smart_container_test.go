@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/smart"
 )
 
@@ -32,7 +32,7 @@ func realSmart(t *testing.T) smart.Collector {
 	if _, err := osexec.LookPath("smartctl"); err != nil {
 		t.Skip("smartctl not installed here; SMART collector not exercisable")
 	}
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

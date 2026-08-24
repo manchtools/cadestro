@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // stubStatFile overrides the statFile seam: paths in exist resolve, all others
@@ -57,7 +57,7 @@ func TestRemoveStaleLock_FileAbsent(t *testing.T) {
 func TestRemoveStaleLock_InconclusiveProbeKeepsLock(t *testing.T) {
 	stubStatFile(t, nil, "/lock")
 	f := newFake()
-	f.Push(pmexec.Result{ExitCode: 3}, nil) // fuser: probe failure, not the "stale" 1
+	f.Push(sysexec.Result{ExitCode: 3}, nil) // fuser: probe failure, not the "stale" 1
 	if err := removeStaleLock(context.Background(), f, "/lock"); err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestRemoveStaleLock_InconclusiveProbeKeepsLock(t *testing.T) {
 func TestRemoveStaleLock_FuserExecErrorKeepsLock(t *testing.T) {
 	stubStatFile(t, nil, "/lock")
 	f := newFake()
-	f.Push(pmexec.Result{}, errors.New("fuser: command not found"))
+	f.Push(sysexec.Result{}, errors.New("fuser: command not found"))
 	if err := removeStaleLock(context.Background(), f, "/lock"); err != nil {
 		t.Fatalf("a failed probe must be tolerated, got %v", err)
 	}
@@ -81,8 +81,8 @@ func TestRemoveStaleLock_FuserExecErrorKeepsLock(t *testing.T) {
 func TestRemoveStaleLock_RmExecErrorTolerated(t *testing.T) {
 	stubStatFile(t, nil, "/lock")
 	f := newFake()
-	f.Push(pmexec.Result{ExitCode: 1}, nil)           // stale
-	f.Push(pmexec.Result{}, errors.New("rm: denied")) // removal fails
+	f.Push(sysexec.Result{ExitCode: 1}, nil)           // stale
+	f.Push(sysexec.Result{}, errors.New("rm: denied")) // removal fails
 	if err := removeStaleLock(context.Background(), f, "/lock"); err != nil {
 		t.Fatalf("a failed removal is best-effort, got %v", err)
 	}
@@ -147,13 +147,13 @@ func TestRemoveStaleLock_CtxCancelledAfterStat(t *testing.T) {
 // completed, letting a test drive a capability into a mid-sequence cancellation
 // (e.g. cancelled between the fuser probe and the rm).
 type cancelAfterRunner struct {
-	inner  pmexec.Runner
+	inner  sysexec.Runner
 	n      int
 	cancel context.CancelFunc
 	calls  int
 }
 
-func (c *cancelAfterRunner) Run(ctx context.Context, cmd pmexec.Command) (pmexec.Result, error) {
+func (c *cancelAfterRunner) Run(ctx context.Context, cmd sysexec.Command) (sysexec.Result, error) {
 	res, err := c.inner.Run(ctx, cmd)
 	c.calls++
 	if c.calls == c.n {
@@ -162,11 +162,11 @@ func (c *cancelAfterRunner) Run(ctx context.Context, cmd pmexec.Command) (pmexec
 	return res, err
 }
 
-func (c *cancelAfterRunner) Stream(ctx context.Context, cmd pmexec.Command, onLine pmexec.OutputCallback) (pmexec.Result, error) {
+func (c *cancelAfterRunner) Stream(ctx context.Context, cmd sysexec.Command, onLine sysexec.OutputCallback) (sysexec.Result, error) {
 	return c.inner.Stream(ctx, cmd, onLine)
 }
 
-func (c *cancelAfterRunner) Backend() pmexec.PrivilegeBackend { return c.inner.Backend() }
+func (c *cancelAfterRunner) Backend() sysexec.PrivilegeBackend { return c.inner.Backend() }
 
 // When the context is cancelled after a stale probe but before the rm, the rm's
 // fail-closed ctx.Err() is reported as the cancellation, not swallowed.
@@ -174,7 +174,7 @@ func TestRemoveStaleLock_CtxCancelledDuringRemoval(t *testing.T) {
 	stubStatFile(t, nil, "/lock")
 	ctx, cancel := context.WithCancel(context.Background())
 	inner := newFake()
-	inner.Push(pmexec.Result{ExitCode: 1}, nil) // fuser: stale
+	inner.Push(sysexec.Result{ExitCode: 1}, nil) // fuser: stale
 	r := &cancelAfterRunner{inner: inner, n: 1, cancel: cancel}
 	if err := removeStaleLock(ctx, r, "/lock"); !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %v, want context.Canceled from the rm step", err)
@@ -206,9 +206,9 @@ func TestBestEffortStep(t *testing.T) {
 
 func TestRepairErr(t *testing.T) {
 	t.Run("wraps the cause", func(t *testing.T) {
-		cause := &pmexec.CommandError{Name: "apt", ExitCode: 1, Stderr: "boom"}
+		cause := &sysexec.CommandError{Name: "apt", ExitCode: 1, Stderr: "boom"}
 		err := repairErr(context.Background(), "apt update failed", cause)
-		if err == nil || !errors.As(err, new(*pmexec.CommandError)) {
+		if err == nil || !errors.As(err, new(*sysexec.CommandError)) {
 			t.Fatalf("repairErr must wrap the cause, got %v", err)
 		}
 	})
@@ -255,7 +255,7 @@ func TestRemoveStaleZyppLock_LivePIDKept(t *testing.T) {
 	stubStatFile(t, nil, "/run/zypp.pid")
 	stubReadFile(t, "4242\n", nil)
 	f := newFake()
-	f.Push(pmexec.Result{ExitCode: 0}, nil) // kill -0: process is alive
+	f.Push(sysexec.Result{ExitCode: 0}, nil) // kill -0: process is alive
 	if err := removeStaleZyppLock(context.Background(), f, "/run/zypp.pid"); err != nil {
 		t.Fatal(err)
 	}
@@ -277,8 +277,8 @@ func TestRemoveStaleZyppLock_DeadPIDRemoved(t *testing.T) {
 	stubStatFile(t, nil, "/run/zypp.pid")
 	stubReadFile(t, "4242\n", nil)
 	f := newFake()
-	f.Push(pmexec.Result{ExitCode: 1}, nil) // kill -0: ESRCH, the process is gone
-	f.Push(pmexec.Result{}, nil)            // rm -f
+	f.Push(sysexec.Result{ExitCode: 1}, nil) // kill -0: ESRCH, the process is gone
+	f.Push(sysexec.Result{}, nil)            // rm -f
 	if err := removeStaleZyppLock(context.Background(), f, "/run/zypp.pid"); err != nil {
 		t.Fatal(err)
 	}
@@ -295,7 +295,7 @@ func TestRemoveStaleZyppLock_EmptyFileRemoved(t *testing.T) {
 	stubStatFile(t, nil, "/run/zypp.pid")
 	stubReadFile(t, "  \n", nil) // empty/whitespace: no live holder to harm
 	f := newFake()
-	f.Push(pmexec.Result{}, nil) // rm -f
+	f.Push(sysexec.Result{}, nil) // rm -f
 	if err := removeStaleZyppLock(context.Background(), f, "/run/zypp.pid"); err != nil {
 		t.Fatal(err)
 	}
@@ -338,7 +338,7 @@ func TestRemoveStaleZyppLock_LivenessProbeExecErrorKeepsLock(t *testing.T) {
 	stubStatFile(t, nil, "/run/zypp.pid")
 	stubReadFile(t, "4242\n", nil)
 	f := newFake()
-	f.Push(pmexec.Result{}, errors.New("kill: not found")) // probe could not run
+	f.Push(sysexec.Result{}, errors.New("kill: not found")) // probe could not run
 	if err := removeStaleZyppLock(context.Background(), f, "/run/zypp.pid"); err != nil {
 		t.Fatalf("an inconclusive probe is best-effort, got %v", err)
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -101,8 +101,8 @@ func TestZypper_Apply_NoGpgcheckAndDisabled(t *testing.T) {
 
 func TestZypper_Apply_AddrepoFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(pmexec.Result{}, nil)                                        // removerepo (pre) clean
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "addrepo: bad url"}, nil) // addrepo fails
+	fr.Push(sysexec.Result{}, nil)                                        // removerepo (pre) clean
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "addrepo: bad url"}, nil) // addrepo fails
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true}})
 	if err == nil || !strings.Contains(err.Error(), "add repository") {
 		t.Fatalf("err = %v, want a wrapped addrepo failure", err)
@@ -114,9 +114,9 @@ func TestZypper_Apply_AddrepoFailureIsFatal(t *testing.T) {
 
 func TestZypper_Apply_DescriptionFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(pmexec.Result{}, nil)                                        // removerepo
-	fr.Push(pmexec.Result{}, nil)                                        // addrepo ok
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "modifyrepo: name"}, nil) // modifyrepo --name fails
+	fr.Push(sysexec.Result{}, nil)                                        // removerepo
+	fr.Push(sysexec.Result{}, nil)                                        // addrepo ok
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "modifyrepo: name"}, nil) // modifyrepo --name fails
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{
 		URL: "https://h/r", GPGCheck: true, Description: "X",
 	}}); err == nil || !strings.Contains(err.Error(), "set repo description") {
@@ -127,10 +127,10 @@ func TestZypper_Apply_DescriptionFailureIsFatal(t *testing.T) {
 func TestZypper_Apply_KeyImportFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
 	// removerepo, addrepo, enable all clean; rpm --import fails; refresh clean.
-	fr.Push(pmexec.Result{}, nil)                                  // removerepo
-	fr.Push(pmexec.Result{}, nil)                                  // addrepo
-	fr.Push(pmexec.Result{}, nil)                                  // modifyrepo --enable
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "rpm import"}, nil) // rpm --import
+	fr.Push(sysexec.Result{}, nil)                                  // removerepo
+	fr.Push(sysexec.Result{}, nil)                                  // addrepo
+	fr.Push(sysexec.Result{}, nil)                                  // modifyrepo --enable
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "rpm import"}, nil) // rpm --import
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{
 		URL: "https://h/r", GPGCheck: true, Enabled: true, GPGKey: "https://h/K",
 	}})
@@ -163,7 +163,7 @@ func TestZypper_Remove(t *testing.T) {
 		// exit non-zero. So idempotency must be keyed off the message, not the
 		// exit code (the earlier fake scripted exit 1, hiding that removing an
 		// absent repo wrongly reported Changed=true against real zypper).
-		fr.Push(pmexec.Result{ExitCode: 0, Stderr: "Repository 'corp' not found by alias, number or URI."}, nil)
+		fr.Push(sysexec.Result{ExitCode: 0, Stderr: "Repository 'corp' not found by alias, number or URI."}, nil)
 		out, err := m.Remove(context.Background(), "corp")
 		if err != nil {
 			t.Fatalf("a 'not found' removerepo must be a no-op, got %v", err)
@@ -174,7 +174,7 @@ func TestZypper_Remove(t *testing.T) {
 	})
 	t.Run("other failure is fatal", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(pmexec.Result{ExitCode: 1, Stderr: "permission denied"}, nil)
+		fr.Push(sysexec.Result{ExitCode: 1, Stderr: "permission denied"}, nil)
 		if _, err := m.Remove(context.Background(), "corp"); err == nil ||
 			!strings.Contains(err.Error(), "remove repository") {
 			t.Fatalf("err = %v, want a wrapped removerepo failure", err)

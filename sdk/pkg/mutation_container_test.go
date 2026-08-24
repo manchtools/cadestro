@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // mutTestPackage is a tiny, dependency-light package in the Debian archive —
@@ -34,7 +34,7 @@ func aptMutManager(t *testing.T) Manager {
 	if _, err := osexec.LookPath("apt-get"); err != nil {
 		t.Skip("apt-get not on PATH; apt mutation tests not exercisable")
 	}
-	r, err := pmexec.NewRunner(pmexec.Direct) // the container runs the test as root
+	r, err := sysexec.NewRunner(sysexec.Direct) // the container runs the test as root
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

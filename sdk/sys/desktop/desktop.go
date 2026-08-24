@@ -36,7 +36,7 @@ import (
 	osexec "os/exec"
 	"os/user"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // defaultHomeRoot is the directory HomeUsers enumerates unless overridden with
@@ -88,7 +88,7 @@ type Manager interface {
 
 // manager is the single Manager implementation.
 type manager struct {
-	r        pmexec.Runner
+	r        sysexec.Runner
 	homeRoot string
 }
 
@@ -103,9 +103,9 @@ func WithHomeRoot(dir string) Option {
 
 // New builds a desktop Manager driven by runner. A nil runner is rejected
 // (fail-closed). New is pure — it does not probe the host.
-func New(runner pmexec.Runner, opts ...Option) (Manager, error) {
+func New(runner sysexec.Runner, opts ...Option) (Manager, error) {
 	if runner == nil {
-		return nil, fmt.Errorf("desktop: %w", pmexec.ErrRunnerRequired)
+		return nil, fmt.Errorf("desktop: %w", sysexec.ErrRunnerRequired)
 	}
 	m := &manager{r: runner, homeRoot: defaultHomeRoot}
 	for _, opt := range opts {

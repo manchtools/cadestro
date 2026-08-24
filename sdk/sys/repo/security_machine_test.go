@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
@@ -59,7 +59,7 @@ func TestAptTrustSecurityMachine(t *testing.T) {
 			m, ff, fr := newTestManager(t, pkg.Apt)
 			seedAptTrustState(ff, tr.from)
 			if tr.repo.Apt != nil && len(tr.repo.Apt.GPGKey) > 0 {
-				fr.Push(pmexec.Result{Stdout: "BINKEY"}, nil)
+				fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil)
 			}
 
 			_, err := m.Apply(context.Background(), tr.repo)

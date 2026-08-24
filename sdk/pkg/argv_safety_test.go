@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // indexOf returns the first index of want in args, or -1.
@@ -109,10 +109,10 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 					if idx < 0 {
 						continue // this command does not carry the flag-shaped token
 					}
-					sep := indexOf(c.Args, pmexec.EndOfOptions)
+					sep := indexOf(c.Args, sysexec.EndOfOptions)
 					if sep < 0 || sep > idx {
 						t.Errorf("%s.%s (operand #%d): %q reaches argv as an OPTION — no %q separator before it: %s %v",
-							b, name, target, flag, pmexec.EndOfOptions, c.Name, c.Args)
+							b, name, target, flag, sysexec.EndOfOptions, c.Name, c.Args)
 					}
 				}
 				checked++

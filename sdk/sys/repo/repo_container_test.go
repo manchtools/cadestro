@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // armoredTestKey is a throwaway ed25519 PUBLIC key (no secret committed) used to
@@ -48,7 +48,7 @@ func realRepoMgr(t *testing.T, b pkg.Backend) Manager {
 	if !slices.Contains(pkg.Detect(context.Background()), b) {
 		t.Skipf("%s not installed here; repo backend not exercisable", b)
 	}
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

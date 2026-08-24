@@ -3,7 +3,7 @@ package desktop
 import (
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // EnvFor builds the minimum environment a user-scoped command needs
@@ -62,5 +62,5 @@ func validateExtraEnv(extraEnv []string) error {
 		}
 		filtered = append(filtered, e)
 	}
-	return pmexec.ValidateCommandEnv(filtered)
+	return sysexec.ValidateCommandEnv(filtered)
 }

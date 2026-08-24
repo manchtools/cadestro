@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Session is a single active graphical desktop session.
@@ -107,7 +107,7 @@ func (m *manager) ActiveSessions(ctx context.Context) ([]Session, error) {
 // that AREN'T one of those two patterns get surfaced as an actual error so
 // genuine permission/IO faults still page operators.
 func (m *manager) listSessionIDs(ctx context.Context) ([]string, error) {
-	res, err := m.r.Run(ctx, pmexec.Command{Name: loginctlPath, Args: []string{"list-sessions", "--no-legend"}})
+	res, err := m.r.Run(ctx, sysexec.Command{Name: loginctlPath, Args: []string{"list-sessions", "--no-legend"}})
 	if err != nil {
 		return nil, fmt.Errorf("loginctl list-sessions: %w", err)
 	}
@@ -137,7 +137,7 @@ func (m *manager) listSessionIDs(ctx context.Context) ([]string, error) {
 // logout) is treated as "skip" rather than failing the whole ActiveSessions
 // call.
 func (m *manager) loadSession(ctx context.Context, id string) (Session, bool, error) {
-	res, err := m.r.Run(ctx, pmexec.Command{Name: loginctlPath, Args: []string{
+	res, err := m.r.Run(ctx, sysexec.Command{Name: loginctlPath, Args: []string{
 		"show-session", id,
 		"--property=Name",
 		"--property=User",

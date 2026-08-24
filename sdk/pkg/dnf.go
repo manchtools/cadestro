@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // dnf drives the Fedora/RHEL package manager (dnf / rpm) over an injected Runner.
 type dnf struct {
-	r pmexec.Runner
+	r sysexec.Runner
 }
 
 var _ Manager = (*dnf)(nil)
@@ -38,10 +38,10 @@ func (d *dnf) Backend() Backend { return Dnf }
 // write runs a privileged dnf command and maps a non-zero exit to an error,
 // returning the command Result (stdout/stderr/exit) on both the success and
 // non-zero-exit paths.
-func (d *dnf) write(ctx context.Context, args ...string) (pmexec.Result, error) {
+func (d *dnf) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, d.r, true, nil, "dnf", args...)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return res, asCommandError("dnf", res)
 }
@@ -58,18 +58,18 @@ func (d *dnf) Version(ctx context.Context) (string, error) {
 // Install installs packages. opts.Version pins a single package (dnf name-version
 // form); opts.AllowDowngrade adds --allowerasing and, on failure, retries an
 // explicit `dnf downgrade`.
-func (d *dnf) Install(ctx context.Context, opts InstallOptions, packages ...string) (pmexec.Result, error) {
+func (d *dnf) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if opts.Version != "" && len(packages) != 1 {
-		return pmexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
+		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	args := []string{"install", "-y"}
 	if opts.AllowDowngrade {
@@ -87,7 +87,7 @@ func (d *dnf) Install(ctx context.Context, opts InstallOptions, packages ...stri
 	// Only retry as an explicit downgrade when dnf itself rejected the install
 	// (a non-zero exit). An exec/escalation/context failure must not trigger a
 	// second escalated command.
-	var ce *pmexec.CommandError
+	var ce *sysexec.CommandError
 	if errors.As(err, &ce) && opts.AllowDowngrade && opts.Version != "" {
 		return d.write(ctx, "downgrade", "-y", pkgSpec)
 	}
@@ -103,9 +103,9 @@ func (d *dnf) Install(ctx context.Context, opts InstallOptions, packages ...stri
 // end-of-options separator, so it is NOT used; the path is kept safe by
 // ValidateLocalPackagePath, which requires an absolute path that can never be
 // flag-shaped.
-func (d *dnf) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (pmexec.Result, error) {
+func (d *dnf) InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	flags := []string{"install", "-y"}
 	if opts.AllowUnsigned {
@@ -118,7 +118,7 @@ func (d *dnf) InstallLocal(ctx context.Context, path string, opts InstallLocalOp
 	// Retry as an explicit downgrade ONLY when dnf itself rejected the install
 	// (a non-zero exit); an exec/escalation/context failure must not trigger a
 	// second escalated command. The downgrade carries the same GPG policy.
-	var ce *pmexec.CommandError
+	var ce *sysexec.CommandError
 	if errors.As(err, &ce) && opts.AllowDowngrade {
 		dargs := []string{"downgrade", "-y"}
 		if opts.AllowUnsigned {
@@ -130,22 +130,22 @@ func (d *dnf) InstallLocal(ctx context.Context, path string, opts InstallLocalOp
 }
 
 // Remove removes packages. dnf has no purge concept, so opts.Purge is a no-op.
-func (d *dnf) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (pmexec.Result, error) {
+func (d *dnf) Remove(ctx context.Context, _ RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return d.write(ctx, append([]string{"remove", "-y"}, packages...)...)
 }
 
 // Update refreshes metadata via `dnf check-update` (exit 100 = updates available
 // is a success, not an error).
-func (d *dnf) Update(ctx context.Context) (pmexec.Result, error) {
+func (d *dnf) Update(ctx context.Context) (sysexec.Result, error) {
 	res, err := runPriv(ctx, d.r, true, nil, "dnf", "check-update")
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if res.ExitCode == 0 || res.ExitCode == 100 {
 		return res, nil
@@ -154,18 +154,18 @@ func (d *dnf) Update(ctx context.Context) (pmexec.Result, error) {
 }
 
 // Upgrade upgrades the named packages, or all packages with no names.
-func (d *dnf) Upgrade(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (d *dnf) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
+		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	return d.write(ctx, append([]string{"upgrade", "-y"}, packages...)...)
 }
 
 // UpgradeAll performs a full system upgrade (dnf upgrade).
-func (d *dnf) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Result, error) {
+func (d *dnf) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
 	args := []string{"upgrade", "-y"}
 	if opts.SecurityOnly {
 		args = append(args, "--security")
@@ -187,35 +187,35 @@ func (d *dnf) ensureVersionLock(ctx context.Context) error {
 }
 
 // Pin holds packages back (dnf versionlock add), installing the plugin if needed.
-func (d *dnf) Pin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (d *dnf) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	if err := d.ensureVersionLock(ctx); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return d.write(ctx, append([]string{"versionlock", "add"}, packages...)...)
 }
 
 // Unpin releases held packages (dnf versionlock delete).
-func (d *dnf) Unpin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (d *dnf) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	if err := d.ensureVersionLock(ctx); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return d.write(ctx, append([]string{"versionlock", "delete"}, packages...)...)
 }
 
 // Autoremove removes packages installed only as now-unneeded dependencies.
-func (d *dnf) Autoremove(ctx context.Context) (pmexec.Result, error) {
+func (d *dnf) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	return d.write(ctx, "autoremove", "-y")
 }
 
@@ -224,16 +224,16 @@ func (d *dnf) Autoremove(ctx context.Context) (pmexec.Result, error) {
 // reports CORRUPTION. Every step is best-effort (logged, not fatal) except a
 // context cancellation, which short-circuits. The returned Result is that of the
 // last step run (or the step that cancelled).
-func (d *dnf) Repair(ctx context.Context) (pmexec.Result, error) {
+func (d *dnf) Repair(ctx context.Context) (sysexec.Result, error) {
 	steps := []struct {
 		what string
-		run  func() (pmexec.Result, error)
+		run  func() (sysexec.Result, error)
 	}{
-		{"dnf history redo last", func() (pmexec.Result, error) { return d.write(ctx, "history", "redo", "last", "-y") }},
-		{"dnf remove --duplicates", func() (pmexec.Result, error) { return d.write(ctx, "remove", "--duplicates", "-y") }},
-		{"rpm --verifydb", func() (pmexec.Result, error) { return verifyOrRebuildRPMDB(ctx, d.r) }},
+		{"dnf history redo last", func() (sysexec.Result, error) { return d.write(ctx, "history", "redo", "last", "-y") }},
+		{"dnf remove --duplicates", func() (sysexec.Result, error) { return d.write(ctx, "remove", "--duplicates", "-y") }},
+		{"rpm --verifydb", func() (sysexec.Result, error) { return verifyOrRebuildRPMDB(ctx, d.r) }},
 	}
-	var last pmexec.Result
+	var last sysexec.Result
 	for _, s := range steps {
 		res, err := s.run()
 		last = res

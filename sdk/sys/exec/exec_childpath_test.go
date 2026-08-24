@@ -6,15 +6,15 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // Command.ChildPath is the TRUSTED seam for running with a curated PATH (the
 // per-user runuser fan-out). The curated path must be the PATH the child sees
 // even though PATH is blocklisted from caller Env.
-func runnerForChildPathTest(t *testing.T) pmexec.Runner {
+func runnerForChildPathTest(t *testing.T) sysexec.Runner {
 	t.Helper()
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
@@ -22,7 +22,7 @@ func runnerForChildPathTest(t *testing.T) pmexec.Runner {
 }
 
 func TestRunnerChildPath_AppliesCuratedPath(t *testing.T) {
-	res, err := runnerForChildPathTest(t).Run(context.Background(), pmexec.Command{
+	res, err := runnerForChildPathTest(t).Run(context.Background(), sysexec.Command{
 		Name: "sh", Args: []string{"-c", "printf %s \"$PATH\""},
 		Env:       []string{"MARKER=1"},
 		ChildPath: "/curated/bin:/usr/bin",
@@ -44,7 +44,7 @@ func TestRunnerChildPath_AppliesCuratedPath(t *testing.T) {
 func TestRunnerChildPath_EmptyEnvStillIsolates(t *testing.T) {
 	t.Setenv("CADESTRO_PARENT_SECRET", "leaked-from-root")
 
-	res, err := runnerForChildPathTest(t).Run(context.Background(), pmexec.Command{
+	res, err := runnerForChildPathTest(t).Run(context.Background(), sysexec.Command{
 		Name: "sh", Args: []string{"-c", "printf %s \"$PATH|${CADESTRO_PARENT_SECRET:-unset}\""},
 		ChildPath: "/curated/bin",
 	})
@@ -60,10 +60,10 @@ func TestRunnerChildPath_EmptyEnvStillIsolates(t *testing.T) {
 // The boundary check still applies with a curated ChildPath: a blocklisted env
 // var in Env is refused, so an untrusted caller cannot smuggle one past the seam.
 func TestRunnerChildPath_StillRejectsBlockedEnv(t *testing.T) {
-	_, err := runnerForChildPathTest(t).Run(context.Background(), pmexec.Command{
+	_, err := runnerForChildPathTest(t).Run(context.Background(), sysexec.Command{
 		Name: "true", Env: []string{"LD_PRELOAD=/tmp/evil.so"}, ChildPath: "/usr/bin",
 	})
-	if !errors.Is(err, pmexec.ErrBlockedEnvVar) {
+	if !errors.Is(err, sysexec.ErrBlockedEnvVar) {
 		t.Fatalf("err = %v, want ErrBlockedEnvVar", err)
 	}
 }

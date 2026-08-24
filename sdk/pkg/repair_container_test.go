@@ -24,17 +24,17 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 const containerDpkgLock = "/var/lib/dpkg/lock"
 
-func containerRunner(t *testing.T) pmexec.Runner {
+func containerRunner(t *testing.T) sysexec.Runner {
 	t.Helper()
 	// The container runs the test as root (matching the production agent:
 	// systemd User=root), so the Direct backend runs commands without a
 	// privilege wrapper.
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

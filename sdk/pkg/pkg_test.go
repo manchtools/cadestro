@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -15,10 +15,10 @@ import (
 
 // newFake returns a FakeRunner reporting the Direct backend. Escalate is still
 // recorded on each Command, so escalation assertions work regardless.
-func newFake() *exectest.FakeRunner { return exectest.New(pmexec.Direct) }
+func newFake() *exectest.FakeRunner { return exectest.New(sysexec.Direct) }
 
 // argv renders a recorded Command as "name arg1 arg2 …" for substring asserts.
-func argv(c pmexec.Command) string {
+func argv(c sysexec.Command) string {
 	return strings.Join(append([]string{c.Name}, c.Args...), " ")
 }
 
@@ -52,7 +52,7 @@ func mustNew(t *testing.T, b Backend, opts ...Option) (Manager, *exectest.FakeRu
 }
 
 // ok scripts the next runner call as a clean success with the given stdout.
-func ok(f *exectest.FakeRunner, stdout string) { f.Push(pmexec.Result{Stdout: stdout}, nil) }
+func ok(f *exectest.FakeRunner, stdout string) { f.Push(sysexec.Result{Stdout: stdout}, nil) }
 
 // TestMutationsReturnCommandOutput pins the contract that a Manager mutation
 // returns the package manager's command output (exec.Result), not just an error
@@ -65,7 +65,7 @@ func TestMutationsReturnCommandOutput(t *testing.T) {
 
 	t.Run("install surfaces stdout on success", func(t *testing.T) {
 		m, f := mustNew(t, Apt)
-		f.Push(pmexec.Result{Stdout: "Setting up vim ...\n", ExitCode: 0}, nil)
+		f.Push(sysexec.Result{Stdout: "Setting up vim ...\n", ExitCode: 0}, nil)
 		res, err := m.Install(ctx, InstallOptions{}, "vim")
 		if err != nil {
 			t.Fatalf("Install err = %v", err)
@@ -80,7 +80,7 @@ func TestMutationsReturnCommandOutput(t *testing.T) {
 
 	t.Run("install surfaces stdout+stderr+exit AND CommandError on failure", func(t *testing.T) {
 		m, f := mustNew(t, Apt)
-		f.Push(pmexec.Result{
+		f.Push(sysexec.Result{
 			Stdout:   "Reading package lists...\n",
 			Stderr:   "E: Unable to locate package vim\n",
 			ExitCode: 100,
@@ -89,7 +89,7 @@ func TestMutationsReturnCommandOutput(t *testing.T) {
 		if err == nil {
 			t.Fatal("Install err = nil, want a non-zero-exit error")
 		}
-		var ce *pmexec.CommandError
+		var ce *sysexec.CommandError
 		if !errors.As(err, &ce) {
 			t.Fatalf("err = %v, want *exec.CommandError", err)
 		}
@@ -123,7 +123,7 @@ func TestNew_RejectsUnknownBackend(t *testing.T) {
 
 func TestNew_RejectsNilRunner(t *testing.T) {
 	_, err := New(Apt, nil)
-	if !errors.Is(err, pmexec.ErrRunnerRequired) {
+	if !errors.Is(err, sysexec.ErrRunnerRequired) {
 		t.Errorf("New(Apt, nil) error = %v, want ErrRunnerRequired", err)
 	}
 }

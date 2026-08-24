@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // TestInstallLocal_GoldenArgv pins the per-backend command for installing a
@@ -125,7 +125,7 @@ func TestInstallLocal_AllowDowngrade(t *testing.T) {
 		m, f := dnfM(t)
 		// dnf refuses to "install" an older local rpm (non-zero exit) — the
 		// AllowDowngrade path must retry it as `dnf downgrade`.
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "package app-1.0 is already installed"}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "package app-1.0 is already installed"}, nil)
 		ok(f, "")
 		if _, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{AllowDowngrade: true}); err != nil {
 			t.Fatal(err)
@@ -146,9 +146,9 @@ func TestInstallLocal_AllowDowngrade(t *testing.T) {
 		m, f := dnfM(t)
 		// An exec/escalation failure (err != nil, not a non-zero exit) must not
 		// trigger a second escalated command — mirrors Install's guard.
-		f.Push(pmexec.Result{}, pmexec.ErrEscalationUnavailable)
+		f.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
 		_, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{AllowDowngrade: true})
-		if !errors.Is(err, pmexec.ErrEscalationUnavailable) {
+		if !errors.Is(err, sysexec.ErrEscalationUnavailable) {
 			t.Fatalf("err = %v, want ErrEscalationUnavailable", err)
 		}
 		if n := len(f.Calls()); n != 1 {
@@ -216,7 +216,7 @@ func TestInstallLocal_AllowUnsigned(t *testing.T) {
 
 	t.Run("dnf carries --nogpgcheck into the downgrade retry too", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "package app-1.0 is already installed"}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "package app-1.0 is already installed"}, nil)
 		ok(f, "")
 		if _, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{AllowUnsigned: true, AllowDowngrade: true}); err != nil {
 			t.Fatal(err)
@@ -330,7 +330,7 @@ func TestInstallLocal_SurfacesResultAndError(t *testing.T) {
 
 	t.Run("success surfaces stdout", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(pmexec.Result{Stdout: "Installed: app-2.0\n"}, nil)
+		f.Push(sysexec.Result{Stdout: "Installed: app-2.0\n"}, nil)
 		res, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{})
 		if err != nil {
 			t.Fatal(err)
@@ -342,9 +342,9 @@ func TestInstallLocal_SurfacesResultAndError(t *testing.T) {
 
 	t.Run("non-zero exit surfaces CommandError with the Result", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(pmexec.Result{Stdout: "out\n", Stderr: "Error: nothing provides libfoo\n", ExitCode: 1}, nil)
+		f.Push(sysexec.Result{Stdout: "out\n", Stderr: "Error: nothing provides libfoo\n", ExitCode: 1}, nil)
 		res, err := m.InstallLocal(ctx, "/opt/app.rpm", InstallLocalOptions{})
-		var ce *pmexec.CommandError
+		var ce *sysexec.CommandError
 		if !errors.As(err, &ce) || ce.ExitCode != 1 {
 			t.Fatalf("err = %v, want *exec.CommandError exit 1", err)
 		}

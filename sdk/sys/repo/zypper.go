@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // applyZypper configures a zypper repository with `zypper addrepo` (preceded by a
@@ -49,7 +49,7 @@ func (m *manager) applyZypper(ctx context.Context, name string, c *ZypperConfig)
 			log.WriteString(res.Stderr)
 		}
 		return Outcome{
-			Result:  pmexec.Result{ExitCode: 1, Stdout: log.String(), Stderr: res.Stderr},
+			Result:  sysexec.Result{ExitCode: 1, Stdout: log.String(), Stderr: res.Stderr},
 			Changed: false,
 		}, fmt.Errorf("add repository: %w", err)
 	}
@@ -78,7 +78,7 @@ func (m *manager) applyZypper(ctx context.Context, name string, c *ZypperConfig)
 	// verifies nothing — a trust downgrade. Same single-switch rule as
 	// applyDnf.
 	if c.GPGCheck && c.GPGKey != "" {
-		m.runNonFatal(ctx, &log, "warning: failed to import GPG key", "rpm", pmexec.SeparatePositionals([]string{"--import"}, c.GPGKey)...)
+		m.runNonFatal(ctx, &log, "warning: failed to import GPG key", "rpm", sysexec.SeparatePositionals([]string{"--import"}, c.GPGKey)...)
 	}
 	m.runNonFatal(ctx, &log, "warning: failed to refresh repo", "zypper", "--non-interactive", "refresh", name)
 

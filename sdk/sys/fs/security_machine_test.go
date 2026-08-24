@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -40,7 +40,7 @@ func TestFileMutationSecurityMachine(t *testing.T) {
 
 	for _, step := range steps {
 		t.Run(step.name, func(t *testing.T) {
-			r := exectest.New(pmexec.Sudo)
+			r := exectest.New(sysexec.Sudo)
 			m := mustManager(t, r)
 			err := runFileMutationStep(m, step.action)
 			if step.wantReject {

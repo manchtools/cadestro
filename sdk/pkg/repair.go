@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // statFile is the os.Stat seam used by removeStaleLock so the lock-file probe
@@ -56,7 +56,7 @@ func repairErr(ctx context.Context, msg string, err error) error {
 // Returns ctx.Err() the moment the context is cancelled so callers short-circuit
 // cleanly; a failure to remove the file is logged (best-effort) and does not
 // return an error, but a context cancellation always wins over the warning path.
-func removeStaleLock(ctx context.Context, r pmexec.Runner, path string) error {
+func removeStaleLock(ctx context.Context, r sysexec.Runner, path string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func removeStaleLock(ctx context.Context, r pmexec.Runner, path string) error {
 // holder and is removed. Like removeStaleLock, a cancelled context wins over the
 // best-effort warning paths, and a failed probe/read leaves the lock in place
 // (never delete on an inconclusive result).
-func removeStaleZyppLock(ctx context.Context, r pmexec.Runner, path string) error {
+func removeStaleZyppLock(ctx context.Context, r sysexec.Runner, path string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func isAllDigits(s string) bool {
 // runner failure (binary missing, context cancelled) yields no corruption
 // verdict, so no rebuild. The rebuild's result/error is returned for the
 // caller's best-effort handling.
-func verifyOrRebuildRPMDB(ctx context.Context, r pmexec.Runner) (pmexec.Result, error) {
+func verifyOrRebuildRPMDB(ctx context.Context, r sysexec.Runner) (sysexec.Result, error) {
 	res, err := runRead(ctx, r, "rpm", "--verifydb")
 	if err != nil {
 		return res, err

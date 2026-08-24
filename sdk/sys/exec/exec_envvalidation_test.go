@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // The Runner enforces the SDK env hijack boundary (audit finding #8) on
@@ -15,9 +15,9 @@ import (
 // branch (e.g. log a security violation) rather than treat it as a generic exec
 // failure. These cases pin the breadth of the blocklist end-to-end through the
 // real Runner.
-func runnerForEnvTest(t *testing.T) pmexec.Runner {
+func runnerForEnvTest(t *testing.T) sysexec.Runner {
 	t.Helper()
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
@@ -34,8 +34,8 @@ func TestRunner_RejectsBlockedEnvVars(t *testing.T) {
 	}
 	r := runnerForEnvTest(t)
 	for _, e := range blocked {
-		_, err := r.Run(context.Background(), pmexec.Command{Name: "true", Env: []string{e}})
-		if !errors.Is(err, pmexec.ErrBlockedEnvVar) {
+		_, err := r.Run(context.Background(), sysexec.Command{Name: "true", Env: []string{e}})
+		if !errors.Is(err, sysexec.ErrBlockedEnvVar) {
 			t.Errorf("Run with Env %q err = %v, want ErrBlockedEnvVar", e, err)
 		}
 	}
@@ -43,8 +43,8 @@ func TestRunner_RejectsBlockedEnvVars(t *testing.T) {
 
 func TestRunner_RejectsMalformedEnvEntry(t *testing.T) {
 	r := runnerForEnvTest(t)
-	_, err := r.Run(context.Background(), pmexec.Command{Name: "true", Env: []string{"NOTKEY_EQUALS_VALUE"}})
-	if !errors.Is(err, pmexec.ErrInvalidEnvVar) {
+	_, err := r.Run(context.Background(), sysexec.Command{Name: "true", Env: []string{"NOTKEY_EQUALS_VALUE"}})
+	if !errors.Is(err, sysexec.ErrInvalidEnvVar) {
 		t.Fatalf("err = %v, want ErrInvalidEnvVar", err)
 	}
 }
@@ -53,7 +53,7 @@ func TestRunner_RejectsMalformedEnvEntry(t *testing.T) {
 // visible to the child.
 func TestRunner_AcceptsSafeEnvVar(t *testing.T) {
 	r := runnerForEnvTest(t)
-	res, err := r.Run(context.Background(), pmexec.Command{
+	res, err := r.Run(context.Background(), sysexec.Command{
 		Name: "sh", Args: []string{"-c", "printf %s \"$CADESTRO_AUDIT_TEST_MARKER\""},
 		Env: []string{"CADESTRO_AUDIT_TEST_MARKER=ok"},
 	})

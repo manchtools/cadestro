@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -44,7 +44,7 @@ func mustManager(t *testing.T, f *exectest.FakeRunner) Manager {
 // shelled through the Runner, so the FakeRunner records the exact argv.
 func sudoMgr(t *testing.T) (*exectest.FakeRunner, Manager) {
 	t.Helper()
-	f := exectest.New(pmexec.Sudo)
+	f := exectest.New(sysexec.Sudo)
 	return f, mustManager(t, f)
 }
 
@@ -54,16 +54,16 @@ func sudoMgr(t *testing.T) (*exectest.FakeRunner, Manager) {
 // succeed without real root.
 func directManager(t *testing.T) Manager {
 	t.Helper()
-	return mustManager(t, exectest.New(pmexec.Direct))
+	return mustManager(t, exectest.New(sysexec.Direct))
 }
 
 // argv renders a recorded Command as "name arg1 arg2 …".
-func argv(c pmexec.Command) string {
+func argv(c sysexec.Command) string {
 	return strings.TrimSpace(c.Name + " " + strings.Join(c.Args, " "))
 }
 
 // stdinOf reads back the stdin a recorded Command carried (nil → "").
-func stdinOf(t *testing.T, c pmexec.Command) string {
+func stdinOf(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {
 		return ""
@@ -76,10 +76,10 @@ func stdinOf(t *testing.T, c pmexec.Command) string {
 }
 
 func TestNew_NilRunnerRejected(t *testing.T) {
-	if _, err := New(nil); !errors.Is(err, pmexec.ErrRunnerRequired) {
+	if _, err := New(nil); !errors.Is(err, sysexec.ErrRunnerRequired) {
 		t.Fatalf("New(nil) error = %v, want ErrRunnerRequired", err)
 	}
-	if _, err := New(exectest.New(pmexec.Sudo)); err != nil {
+	if _, err := New(exectest.New(sysexec.Sudo)); err != nil {
 		t.Fatalf("New(runner) = %v, want nil", err)
 	}
 }
@@ -141,8 +141,8 @@ func TestWriteFile_Escalated_WithBackupArg(t *testing.T) {
 }
 
 func TestWriteFile_Escalated_ScriptFailure(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "mktemp: cannot create"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "mktemp: cannot create"}, nil)
 	m := mustManager(t, f)
 	err := m.WriteFile(context.Background(), "/etc/app.conf", []byte("x"), WriteOptions{})
 	if err == nil || !strings.Contains(err.Error(), "write file") {
@@ -170,10 +170,10 @@ func TestWriteFile_Escalated_RefusesUnsafeParent(t *testing.T) {
 }
 
 func TestWriteFile_Escalated_RunnerErrorPropagates(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{}, pmexec.ErrEscalationDenied) // the root shell can't escalate
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied) // the root shell can't escalate
 	m := mustManager(t, f)
-	if err := m.WriteFile(context.Background(), "/etc/app.conf", []byte("x"), WriteOptions{}); !errors.Is(err, pmexec.ErrEscalationDenied) {
+	if err := m.WriteFile(context.Background(), "/etc/app.conf", []byte("x"), WriteOptions{}); !errors.Is(err, sysexec.ErrEscalationDenied) {
 		t.Fatalf("err = %v, want ErrEscalationDenied", err)
 	}
 }
@@ -211,10 +211,10 @@ func TestWriteFile_CancelledCtxBeforeAnyWork(t *testing.T) {
 // --- ReadFile / Exists -----------------------------------------------------
 
 func TestReadFile_ReturnsStdoutVerbatim(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
+	f := exectest.New(sysexec.Sudo)
 	// The Runner returns cat's stdout verbatim, trailing newline included, so the
 	// bytes round-trip exactly with what WriteFile wrote — no re-add, no strip.
-	f.Push(pmexec.Result{Stdout: "line1\nline2\n"}, nil)
+	f.Push(sysexec.Result{Stdout: "line1\nline2\n"}, nil)
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/etc/app.conf")
 	if err != nil {
@@ -235,8 +235,8 @@ func TestReadFile_DoesNotReAddNewline(t *testing.T) {
 	// ReadFile must return the Runner's stdout untouched — no re-add (the old
 	// global path stripped + re-added a newline; the Runner preserves it, so a
 	// re-add would double it). Newline normalization is the Runner's job.
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{Stdout: "no-newline"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{Stdout: "no-newline"}, nil)
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/etc/app.conf")
 	if err != nil {
@@ -248,8 +248,8 @@ func TestReadFile_DoesNotReAddNewline(t *testing.T) {
 }
 
 func TestReadFile_MissingIsErrNotExist(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "cat: /x: No such file or directory"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "cat: /x: No such file or directory"}, nil)
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/x")
 	// Explicit-absence contract: missing → wrapped os.ErrNotExist, not silent empty.
@@ -259,7 +259,7 @@ func TestReadFile_MissingIsErrNotExist(t *testing.T) {
 }
 
 func TestReadFile_EmptyFile(t *testing.T) {
-	f := exectest.New(pmexec.Sudo) // unscripted → exit 0, empty stdout
+	f := exectest.New(sysexec.Sudo) // unscripted → exit 0, empty stdout
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/empty")
 	if err != nil || got != nil {
@@ -268,10 +268,10 @@ func TestReadFile_EmptyFile(t *testing.T) {
 }
 
 func TestReadFile_OtherErrorIsCommandError(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "cat: /etc/shadow: Permission denied"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "cat: /etc/shadow: Permission denied"}, nil)
 	m := mustManager(t, f)
-	if _, err := m.ReadFile(context.Background(), "/etc/shadow"); !errors.As(err, new(*pmexec.CommandError)) {
+	if _, err := m.ReadFile(context.Background(), "/etc/shadow"); !errors.As(err, new(*sysexec.CommandError)) {
 		t.Fatalf("err = %v, want *exec.CommandError for a non-absent cat failure", err)
 	}
 }
@@ -283,23 +283,23 @@ func TestReadFile_OtherErrorIsCommandError(t *testing.T) {
 // it as a command error. The error reason always trails the path, so only a
 // genuine ENOENT ends with the phrase.
 func TestReadFile_PresentFileWithNoSuchFileInPathNotMisclassified(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "cat: /data/No such file.txt: Permission denied"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "cat: /data/No such file.txt: Permission denied"}, nil)
 	m := mustManager(t, f)
 	_, err := m.ReadFile(context.Background(), "/data/No such file.txt")
 	if errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("ReadFile err = %v; a present file failing with Permission denied must NOT be classified absent", err)
 	}
-	if !errors.As(err, new(*pmexec.CommandError)) {
+	if !errors.As(err, new(*sysexec.CommandError)) {
 		t.Fatalf("err = %v, want *exec.CommandError", err)
 	}
 }
 
 func TestReadFile_RunnerErrorPropagatesAndValidatesPath(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{}, pmexec.ErrEscalationUnavailable)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
 	m := mustManager(t, f)
-	if _, err := m.ReadFile(context.Background(), "/x"); !errors.Is(err, pmexec.ErrEscalationUnavailable) {
+	if _, err := m.ReadFile(context.Background(), "/x"); !errors.Is(err, sysexec.ErrEscalationUnavailable) {
 		t.Errorf("err = %v, want ErrEscalationUnavailable", err)
 	}
 	if _, err := m.ReadFile(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
@@ -309,7 +309,7 @@ func TestReadFile_RunnerErrorPropagatesAndValidatesPath(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	t.Run("present", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo) // unscripted → exit 0
+		f := exectest.New(sysexec.Sudo) // unscripted → exit 0
 		ok, err := mustManager(t, f).Exists(context.Background(), "/etc/hosts")
 		if err != nil || !ok {
 			t.Fatalf("Exists = (%v,%v), want (true,nil)", ok, err)
@@ -319,22 +319,22 @@ func TestExists(t *testing.T) {
 		}
 	})
 	t.Run("absent", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		ok, err := mustManager(t, f).Exists(context.Background(), "/nope")
 		if err != nil || ok {
 			t.Fatalf("Exists = (%v,%v), want (false,nil)", ok, err)
 		}
 	})
 	t.Run("runner error fails closed", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, pmexec.ErrEscalationDenied)
-		if _, err := mustManager(t, f).Exists(context.Background(), "/x"); !errors.Is(err, pmexec.ErrEscalationDenied) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+		if _, err := mustManager(t, f).Exists(context.Background(), "/x"); !errors.Is(err, sysexec.ErrEscalationDenied) {
 			t.Fatalf("err = %v, want the runner error, not a silent 'absent'", err)
 		}
 	})
 	t.Run("invalid path", func(t *testing.T) {
-		if _, err := mustManager(t, exectest.New(pmexec.Sudo)).Exists(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
+		if _, err := mustManager(t, exectest.New(sysexec.Sudo)).Exists(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
 			t.Fatalf("err = %v, want ErrInvalidPath", err)
 		}
 	})
@@ -353,10 +353,10 @@ func TestSetMode(t *testing.T) {
 }
 
 func TestSetMode_NonZeroExitAndValidate(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "chmod: bad"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod: bad"}, nil)
 	m := mustManager(t, f)
-	if err := m.SetMode(context.Background(), "/etc/app.conf", 0o600); !errors.As(err, new(*pmexec.CommandError)) {
+	if err := m.SetMode(context.Background(), "/etc/app.conf", 0o600); !errors.As(err, new(*sysexec.CommandError)) {
 		t.Errorf("err = %v, want *exec.CommandError", err)
 	}
 	if err := m.SetMode(context.Background(), "-rf", 0o600); !errors.Is(err, ErrInvalidPath) {
@@ -429,8 +429,8 @@ func TestCopy(t *testing.T) {
 		}
 	})
 	t.Run("cp failure", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "cp: nope"}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "cp: nope"}, nil)
 		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{}); err == nil ||
 			!strings.Contains(err.Error(), "copy file") {
 			t.Errorf("err = %v, want a wrapped cp failure", err)
@@ -472,7 +472,7 @@ func TestCopyTree(t *testing.T) {
 		if names := callNames(calls); strings.Join(names, ",") != "cp,chmod,chown" {
 			t.Fatalf("calls = %v, want cp,chmod,chown", names)
 		}
-		var chmod, chown pmexec.Command
+		var chmod, chown sysexec.Command
 		for _, c := range calls {
 			switch c.Name {
 			case "chmod":
@@ -491,8 +491,8 @@ func TestCopyTree(t *testing.T) {
 		}
 	})
 	t.Run("cp failure wrapped", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "cp: cannot stat"}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "cp: cannot stat"}, nil)
 		if err := mustManager(t, f).CopyTree(context.Background(), "/a", "/b", WriteOptions{}); err == nil ||
 			!strings.Contains(err.Error(), "copy tree") {
 			t.Errorf("err = %v, want a wrapped cp failure", err)
@@ -536,14 +536,14 @@ func TestMkdir(t *testing.T) {
 		}
 	})
 	t.Run("mkdir failure", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "mkdir: exists"}, nil)
-		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{}); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "mkdir: exists"}, nil)
+		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError", err)
 		}
 	})
 	t.Run("invalid path", func(t *testing.T) {
-		if err := mustManager(t, exectest.New(pmexec.Sudo)).Mkdir(context.Background(), "-rf", MkdirOptions{}); !errors.Is(err, ErrInvalidPath) {
+		if err := mustManager(t, exectest.New(sysexec.Sudo)).Mkdir(context.Background(), "-rf", MkdirOptions{}); !errors.Is(err, ErrInvalidPath) {
 			t.Errorf("err = %v, want ErrInvalidPath", err)
 		}
 	})
@@ -560,9 +560,9 @@ func TestRemove(t *testing.T) {
 	if err := m.Remove(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
 		t.Errorf("Remove(bad path) err = %v, want ErrInvalidPath", err)
 	}
-	f2 := exectest.New(pmexec.Sudo)
-	f2.Push(pmexec.Result{ExitCode: 1, Stderr: "rm: denied"}, nil)
-	if err := mustManager(t, f2).Remove(context.Background(), "/tmp/x"); !errors.As(err, new(*pmexec.CommandError)) {
+	f2 := exectest.New(sysexec.Sudo)
+	f2.Push(sysexec.Result{ExitCode: 1, Stderr: "rm: denied"}, nil)
+	if err := mustManager(t, f2).Remove(context.Background(), "/tmp/x"); !errors.As(err, new(*sysexec.CommandError)) {
 		t.Errorf("err = %v, want *exec.CommandError", err)
 	}
 }
@@ -570,7 +570,7 @@ func TestRemove(t *testing.T) {
 // --- RemoveDir (escalated path; the Direct fd path is in remove_dir_test.go) -
 
 func TestRemoveDir_Escalated(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
+	f := exectest.New(sysexec.Sudo)
 	m := mustManager(t, f)
 	if err := m.RemoveDir(context.Background(), "/srv/app/data"); err != nil {
 		t.Fatal(err)
@@ -594,9 +594,9 @@ func TestRemoveDir_Rejections(t *testing.T) {
 }
 
 func TestRemoveDir_EscalatedNonZeroExit(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "rm: busy"}, nil)
-	if err := mustManager(t, f).RemoveDir(context.Background(), "/srv/app"); !errors.As(err, new(*pmexec.CommandError)) {
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "rm: busy"}, nil)
+	if err := mustManager(t, f).RemoveDir(context.Background(), "/srv/app"); !errors.As(err, new(*sysexec.CommandError)) {
 		t.Errorf("err = %v, want *exec.CommandError", err)
 	}
 }
@@ -605,8 +605,8 @@ func TestRemoveDir_EscalatedNonZeroExit(t *testing.T) {
 
 func TestIsReadOnly(t *testing.T) {
 	t.Run("ro", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{Stdout: "ro,relatime\n"}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{Stdout: "ro,relatime\n"}, nil)
 		ro, err := mustManager(t, f).IsReadOnly(context.Background(), "/")
 		if err != nil || !ro {
 			t.Fatalf("IsReadOnly = (%v,%v), want (true,nil)", ro, err)
@@ -616,29 +616,29 @@ func TestIsReadOnly(t *testing.T) {
 		}
 	})
 	t.Run("rw", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{Stdout: "rw,relatime\n"}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{Stdout: "rw,relatime\n"}, nil)
 		ro, err := mustManager(t, f).IsReadOnly(context.Background(), "/")
 		if err != nil || ro {
 			t.Fatalf("IsReadOnly = (%v,%v), want (false,nil)", ro, err)
 		}
 	})
 	t.Run("non-zero exit", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
-		if _, err := mustManager(t, f).IsReadOnly(context.Background(), "/x"); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if _, err := mustManager(t, f).IsReadOnly(context.Background(), "/x"); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError", err)
 		}
 	})
 	t.Run("runner error", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, errors.New("findmnt missing"))
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, errors.New("findmnt missing"))
 		if _, err := mustManager(t, f).IsReadOnly(context.Background(), "/x"); err == nil {
 			t.Error("want the runner error to propagate")
 		}
 	})
 	t.Run("invalid path rejected before exec", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
+		f := exectest.New(sysexec.Sudo)
 		if _, err := mustManager(t, f).IsReadOnly(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
 			t.Errorf("err = %v, want ErrInvalidPath", err)
 		}
@@ -657,7 +657,7 @@ func TestRemountRW(t *testing.T) {
 		t.Errorf("argv = %q, want mount target after --", got)
 	}
 
-	fInvalid := exectest.New(pmexec.Sudo)
+	fInvalid := exectest.New(sysexec.Sudo)
 	if err := mustManager(t, fInvalid).RemountRW(context.Background(), "-O"); !errors.Is(err, ErrInvalidPath) {
 		t.Errorf("RemountRW(flag-shaped path) err = %v, want ErrInvalidPath", err)
 	}
@@ -665,8 +665,8 @@ func TestRemountRW(t *testing.T) {
 		t.Errorf("RemountRW(flag-shaped path) ran %d command(s) before validation; want 0", n)
 	}
 
-	f2 := exectest.New(pmexec.Sudo)
-	f2.Push(pmexec.Result{ExitCode: 1, Stderr: "mount: ro"}, nil)
+	f2 := exectest.New(sysexec.Sudo)
+	f2.Push(sysexec.Result{ExitCode: 1, Stderr: "mount: ro"}, nil)
 	if err := mustManager(t, f2).RemountRW(context.Background(), "/"); err == nil ||
 		!strings.Contains(err.Error(), "remount") {
 		t.Errorf("err = %v, want a wrapped remount failure", err)
@@ -675,8 +675,8 @@ func TestRemountRW(t *testing.T) {
 
 func TestListMounts(t *testing.T) {
 	t.Run("parses findmnt rows", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{Stdout: "/dev/sda1 / ext4 rw,relatime\n/dev/sda2 /usr ext4 ro,relatime\nproc /proc proc rw,nosuid\ntmpfs /run tmpfs rw,nosuid\n"}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{Stdout: "/dev/sda1 / ext4 rw,relatime\n/dev/sda2 /usr ext4 ro,relatime\nproc /proc proc rw,nosuid\ntmpfs /run tmpfs rw,nosuid\n"}, nil)
 		got, err := mustManager(t, f).ListMounts(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -700,9 +700,9 @@ func TestListMounts(t *testing.T) {
 		}
 	})
 	t.Run("ro is an exact option token, not a substring", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
+		f := exectest.New(sysexec.Sudo)
 		// "errors=remount-ro" contains "ro" as a substring but the mount is rw.
-		f.Push(pmexec.Result{Stdout: "/dev/sda1 / ext4 rw,errors=remount-ro\n"}, nil)
+		f.Push(sysexec.Result{Stdout: "/dev/sda1 / ext4 rw,errors=remount-ro\n"}, nil)
 		got, err := mustManager(t, f).ListMounts(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -712,8 +712,8 @@ func TestListMounts(t *testing.T) {
 		}
 	})
 	t.Run("skips malformed and blank rows", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{Stdout: "/dev/sda1 / ext4 rw\nbroken\n\n/dev/sdb /data xfs ro\n"}, nil)
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{Stdout: "/dev/sda1 / ext4 rw\nbroken\n\n/dev/sdb /data xfs ro\n"}, nil)
 		got, err := mustManager(t, f).ListMounts(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -723,15 +723,15 @@ func TestListMounts(t *testing.T) {
 		}
 	})
 	t.Run("findmnt non-zero exit is a command error", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "findmnt: bad"}, nil)
-		if _, err := mustManager(t, f).ListMounts(context.Background()); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "findmnt: bad"}, nil)
+		if _, err := mustManager(t, f).ListMounts(context.Background()); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError", err)
 		}
 	})
 	t.Run("runner error propagates", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, errors.New("findmnt missing"))
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, errors.New("findmnt missing"))
 		if _, err := mustManager(t, f).ListMounts(context.Background()); err == nil {
 			t.Error("a runner error must propagate")
 		}
@@ -786,7 +786,7 @@ func TestGetOwnership_SelfAndMissing(t *testing.T) {
 }
 
 // callNames extracts the command names from a recorded call log.
-func callNames(calls []pmexec.Command) []string {
+func callNames(calls []sysexec.Command) []string {
 	out := make([]string, len(calls))
 	for i, c := range calls {
 		out[i] = c.Name
@@ -848,18 +848,18 @@ func TestWriteFile_Direct_SafeReplaceError(t *testing.T) {
 
 func TestCopy_PostCopyFailures(t *testing.T) {
 	t.Run("chmod fails", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, nil)                             // cp ok
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "chmod"}, nil) // chmod fails
-		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{Mode: 0o600}); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, nil)                             // cp ok
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod"}, nil) // chmod fails
+		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{Mode: 0o600}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chmod", err)
 		}
 	})
 	t.Run("chown fails", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, nil)                             // cp ok
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "chown"}, nil) // chown fails
-		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{Owner: "root"}); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, nil)                             // cp ok
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chown"}, nil) // chown fails
+		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{Owner: "root"}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chown", err)
 		}
 	})
@@ -867,18 +867,18 @@ func TestCopy_PostCopyFailures(t *testing.T) {
 
 func TestMkdir_PostMkdirFailures(t *testing.T) {
 	t.Run("chmod fails", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, nil)                             // mkdir ok
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "chmod"}, nil) // chmod fails
-		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{Mode: 0o750}); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, nil)                             // mkdir ok
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod"}, nil) // chmod fails
+		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{Mode: 0o750}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chmod", err)
 		}
 	})
 	t.Run("chown fails", func(t *testing.T) {
-		f := exectest.New(pmexec.Sudo)
-		f.Push(pmexec.Result{}, nil)                             // mkdir ok
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "chown"}, nil) // chown fails
-		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{Owner: "app"}); !errors.As(err, new(*pmexec.CommandError)) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{}, nil)                             // mkdir ok
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chown"}, nil) // chown fails
+		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{Owner: "app"}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chown", err)
 		}
 	})
@@ -917,9 +917,9 @@ func TestWriteFile_Direct_FchownError(t *testing.T) {
 
 func TestRunChecked_RunnerErrorPropagates(t *testing.T) {
 	// SetMode routes through runChecked; a runner (not exit) error must surface.
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{}, pmexec.ErrEscalationUnavailable)
-	if err := mustManager(t, f).SetMode(context.Background(), "/etc/app.conf", 0o644); !errors.Is(err, pmexec.ErrEscalationUnavailable) {
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
+	if err := mustManager(t, f).SetMode(context.Background(), "/etc/app.conf", 0o644); !errors.Is(err, sysexec.ErrEscalationUnavailable) {
 		t.Fatalf("err = %v, want ErrEscalationUnavailable", err)
 	}
 }

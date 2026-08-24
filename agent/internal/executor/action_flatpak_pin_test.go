@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // fakeFlatpakPinMgr is a minimal pkg.Manager that drives ensureFlatpakPinned's
@@ -28,9 +28,9 @@ func (f *fakeFlatpakPinMgr) IsPinned(ctx context.Context, name string) (bool, er
 	return f.pinned, f.pinnedErr
 }
 
-func (f *fakeFlatpakPinMgr) Pin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (f *fakeFlatpakPinMgr) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	f.pinCalls = append(f.pinCalls, packages...)
-	return pmexec.Result{}, f.pinErr
+	return sysexec.Result{}, f.pinErr
 }
 
 // Pinning is part of the requested desired state. ensureFlatpakPinned must

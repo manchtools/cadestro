@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/sys/desktop"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func systemdRunning() bool {
@@ -29,7 +29,7 @@ func TestActiveSessions_Integration(t *testing.T) {
 	if _, err := osexec.LookPath("loginctl"); err != nil {
 		t.Skip("loginctl not present; logind path not exercisable")
 	}
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}

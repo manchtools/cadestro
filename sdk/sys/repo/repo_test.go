@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
@@ -101,9 +101,9 @@ func newTestManager(t *testing.T, b pkg.Backend) (*manager, *fakeFS, *exectest.F
 	t.Helper()
 	ff := newFakeFS()
 	orig := newFS
-	newFS = func(pmexec.Runner) (fsManager, error) { return ff, nil }
+	newFS = func(sysexec.Runner) (fsManager, error) { return ff, nil }
 	t.Cleanup(func() { newFS = orig })
-	fr := exectest.New(pmexec.Direct)
+	fr := exectest.New(sysexec.Direct)
 	m, err := New(b, fr)
 	if err != nil {
 		t.Fatalf("New(%s): %v", b, err)
@@ -124,13 +124,13 @@ func argvs(fr *exectest.FakeRunner) []string {
 // --- New -------------------------------------------------------------------
 
 func TestNew_NilRunnerRejected(t *testing.T) {
-	if _, err := New(pkg.Apt, nil); !errors.Is(err, pmexec.ErrRunnerRequired) {
+	if _, err := New(pkg.Apt, nil); !errors.Is(err, sysexec.ErrRunnerRequired) {
 		t.Fatalf("New(nil runner) err = %v, want ErrRunnerRequired", err)
 	}
 }
 
 func TestNew_UnsupportedBackendRejected(t *testing.T) {
-	fr := exectest.New(pmexec.Direct)
+	fr := exectest.New(sysexec.Direct)
 	for _, b := range []pkg.Backend{pkg.Flatpak, pkg.Backend(0), pkg.Backend(99)} {
 		if _, err := New(b, fr); !errors.Is(err, ErrUnsupportedBackend) {
 			t.Errorf("New(%v) err = %v, want ErrUnsupportedBackend", b, err)
@@ -139,7 +139,7 @@ func TestNew_UnsupportedBackendRejected(t *testing.T) {
 }
 
 func TestNew_SupportedBackends(t *testing.T) {
-	fr := exectest.New(pmexec.Direct)
+	fr := exectest.New(sysexec.Direct)
 	for _, b := range []pkg.Backend{pkg.Apt, pkg.Dnf, pkg.Pacman, pkg.Zypper} {
 		m, err := New(b, fr)
 		if err != nil {
@@ -154,9 +154,9 @@ func TestNew_SupportedBackends(t *testing.T) {
 func TestNew_FSConstructionErrorPropagates(t *testing.T) {
 	orig := newFS
 	sentinel := errors.New("fs boom")
-	newFS = func(pmexec.Runner) (fsManager, error) { return nil, sentinel }
+	newFS = func(sysexec.Runner) (fsManager, error) { return nil, sentinel }
 	t.Cleanup(func() { newFS = orig })
-	if _, err := New(pkg.Apt, exectest.New(pmexec.Direct)); !errors.Is(err, sentinel) {
+	if _, err := New(pkg.Apt, exectest.New(sysexec.Direct)); !errors.Is(err, sentinel) {
 		t.Fatalf("New err = %v, want the fs construction error", err)
 	}
 }
@@ -166,7 +166,7 @@ func TestNew_FSConstructionErrorPropagates(t *testing.T) {
 // A Manager with an out-of-range backend (only constructable by bypassing New)
 // must fail closed rather than silently no-op.
 func TestApplyRemove_UnreachableBackendFailsClosed(t *testing.T) {
-	m := &manager{b: pkg.Flatpak, r: exectest.New(pmexec.Direct), fsm: newFakeFS()}
+	m := &manager{b: pkg.Flatpak, r: exectest.New(sysexec.Direct), fsm: newFakeFS()}
 	if _, err := m.Apply(context.Background(), Repository{Name: "x"}); !errors.Is(err, ErrUnsupportedBackend) {
 		t.Errorf("Apply err = %v, want ErrUnsupportedBackend", err)
 	}

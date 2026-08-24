@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestDnf_Apply_WritesRepoFileImportsKeyAndRefreshes(t *testing.T) {
@@ -101,7 +101,7 @@ func TestDnf_Apply_Idempotent(t *testing.T) {
 
 func TestDnf_Apply_KeyImportFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Dnf)
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "rpm: import failed"}, nil) // rpm --import
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "rpm: import failed"}, nil) // rpm --import
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{
 		BaseURL: "https://h/r", GPGCheck: true, GPGKey: "https://h/KEY",
 	}})
@@ -118,7 +118,7 @@ func TestDnf_Apply_KeyImportFailureIsNonFatal(t *testing.T) {
 
 func TestDnf_Apply_RefreshFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Dnf)
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "makecache failed"}, nil) // makecache (no key → first cmd)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "makecache failed"}, nil) // makecache (no key → first cmd)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r"}})
 	if err != nil {
 		t.Fatalf("refresh failure must be non-fatal, got %v", err)

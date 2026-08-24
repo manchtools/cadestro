@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // RunAsRunner wraps a base [exec.Runner] so every command it runs executes AS the
@@ -24,9 +24,9 @@ import (
 // The base Runner MUST run as root: runuser performs the privilege DROP to the
 // target user, so the wrapped command is never escalated again. The caller's
 // command env is screened by the same hijack blocklist the Runner enforces.
-func RunAsRunner(base pmexec.Runner, s Session) (pmexec.Runner, error) {
+func RunAsRunner(base sysexec.Runner, s Session) (sysexec.Runner, error) {
 	if base == nil {
-		return nil, fmt.Errorf("desktop.RunAsRunner: %w", pmexec.ErrRunnerRequired)
+		return nil, fmt.Errorf("desktop.RunAsRunner: %w", sysexec.ErrRunnerRequired)
 	}
 	if s.Username == "" {
 		return nil, fmt.Errorf("desktop.RunAsRunner: session has empty Username")
@@ -35,24 +35,24 @@ func RunAsRunner(base pmexec.Runner, s Session) (pmexec.Runner, error) {
 }
 
 type runAsRunner struct {
-	base pmexec.Runner
+	base sysexec.Runner
 	s    Session
 }
 
-func (ra *runAsRunner) Backend() pmexec.PrivilegeBackend { return ra.base.Backend() }
+func (ra *runAsRunner) Backend() sysexec.PrivilegeBackend { return ra.base.Backend() }
 
-func (ra *runAsRunner) Run(ctx context.Context, c pmexec.Command) (pmexec.Result, error) {
+func (ra *runAsRunner) Run(ctx context.Context, c sysexec.Command) (sysexec.Result, error) {
 	wrapped, err := ra.wrap(c)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return ra.base.Run(ctx, wrapped)
 }
 
-func (ra *runAsRunner) Stream(ctx context.Context, c pmexec.Command, onLine pmexec.OutputCallback) (pmexec.Result, error) {
+func (ra *runAsRunner) Stream(ctx context.Context, c sysexec.Command, onLine sysexec.OutputCallback) (sysexec.Result, error) {
 	wrapped, err := ra.wrap(c)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return ra.base.Stream(ctx, wrapped, onLine)
 }
@@ -62,12 +62,12 @@ func (ra *runAsRunner) Stream(ctx context.Context, c pmexec.Command, onLine pmex
 // environment. PATH is forced last (a caller-supplied PATH is dropped);
 // the rest of the caller's env is screened through the hijack blocklist because
 // it is spliced into the inner env wrapper, which the base Runner does not screen.
-func (ra *runAsRunner) wrap(c pmexec.Command) (pmexec.Command, error) {
+func (ra *runAsRunner) wrap(c sysexec.Command) (sysexec.Command, error) {
 	if c.Name == "" {
-		return pmexec.Command{}, fmt.Errorf("desktop.RunAsRunner: command name is required")
+		return sysexec.Command{}, fmt.Errorf("desktop.RunAsRunner: command name is required")
 	}
 	if err := validateExtraEnv(c.Env); err != nil {
-		return pmexec.Command{}, err
+		return sysexec.Command{}, err
 	}
 	env := EnvFor(ra.s)
 	for _, e := range c.Env {
@@ -81,7 +81,7 @@ func (ra *runAsRunner) wrap(c pmexec.Command) (pmexec.Command, error) {
 	args := append([]string{"-u", ra.s.Username, "--", envPath}, env...)
 	args = append(args, c.Name)
 	args = append(args, c.Args...)
-	return pmexec.Command{
+	return sysexec.Command{
 		Name:     runuserPath,
 		Args:     args,
 		Dir:      c.Dir, // run in the caller's working dir (default: the user's home)

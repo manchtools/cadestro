@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // validPacmanPkgName restricts IgnorePkg values to safe characters, preventing
@@ -17,17 +17,17 @@ var validPacmanPkgName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._+-]*$`)
 
 // pacman drives the Arch Linux package manager over an injected Runner.
 type pacman struct {
-	r pmexec.Runner
+	r sysexec.Runner
 }
 
 var _ Manager = (*pacman)(nil)
 
 func (p *pacman) Backend() Backend { return Pacman }
 
-func (p *pacman) write(ctx context.Context, args ...string) (pmexec.Result, error) {
+func (p *pacman) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, p.r, true, nil, "pacman", args...)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return res, asCommandError("pacman", res)
 }
@@ -53,18 +53,18 @@ func (p *pacman) Version(ctx context.Context) (string, error) {
 // Install installs packages. With opts.Version it targets a single package via
 // the name=version form (pacman can only satisfy this if the version is in a
 // configured repo); opts.AllowDowngrade adds `--overwrite '*'`.
-func (p *pacman) Install(ctx context.Context, opts InstallOptions, packages ...string) (pmexec.Result, error) {
+func (p *pacman) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if opts.Version != "" && len(packages) != 1 {
-		return pmexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
+		return sysexec.Result{}, fmt.Errorf("pkg: InstallOptions.Version requires exactly one package, got %d", len(packages))
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	if opts.Version == "" {
 		return p.write(ctx, append([]string{"-S", "--noconfirm", "--needed"}, packages...)...)
@@ -85,20 +85,20 @@ func (p *pacman) Install(ctx context.Context, opts InstallOptions, packages ...s
 // the install stays signature-checked (a relaxed SigLevel is a pacman.conf
 // concern, out of scope here). ValidateLocalPackagePath requires an absolute
 // path, so the operand can never be flag-shaped.
-func (p *pacman) InstallLocal(ctx context.Context, path string, _ InstallLocalOptions) (pmexec.Result, error) {
+func (p *pacman) InstallLocal(ctx context.Context, path string, _ InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return p.write(ctx, "-U", "--noconfirm", path)
 }
 
 // Remove removes packages; opts.Purge uses -Rns (with deps + config files).
-func (p *pacman) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (pmexec.Result, error) {
+func (p *pacman) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	flag := "-R"
 	if opts.Purge {
@@ -108,40 +108,40 @@ func (p *pacman) Remove(ctx context.Context, opts RemoveOptions, packages ...str
 }
 
 // Update syncs the package databases (-Sy).
-func (p *pacman) Update(ctx context.Context) (pmexec.Result, error) {
+func (p *pacman) Update(ctx context.Context) (sysexec.Result, error) {
 	return p.write(ctx, "-Sy", "--noconfirm")
 }
 
 // Upgrade upgrades the named packages, or the whole system (-Syu) with no names.
-func (p *pacman) Upgrade(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (p *pacman) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
+		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll does a full upgrade
 	}
 	return p.write(ctx, append([]string{"-S", "--noconfirm"}, packages...)...)
 }
 
 // UpgradeAll performs a full system upgrade (pacman -Syu).
-func (p *pacman) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Result, error) {
+func (p *pacman) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
 	if opts.SecurityOnly {
 		// Arch is a rolling release with no security/non-security split — there
 		// is no way to apply only security updates. Fail closed rather than
 		// silently run a full upgrade.
-		return pmexec.Result{}, ErrSecurityOnlyUnsupported
+		return sysexec.Result{}, ErrSecurityOnlyUnsupported
 	}
 	return p.write(ctx, "-Syu", "--noconfirm")
 }
 
 // Autoremove removes orphaned packages (installed as deps, no longer required).
-func (p *pacman) Autoremove(ctx context.Context) (pmexec.Result, error) {
+func (p *pacman) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	res, err := runRead(ctx, p.r, "pacman", "-Qtdq")
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if res.ExitCode == 1 {
-		return pmexec.Result{}, nil // no orphans
+		return sysexec.Result{}, nil // no orphans
 	}
 	if res.ExitCode != 0 {
 		return res, asCommandError("pacman", res)
@@ -153,7 +153,7 @@ func (p *pacman) Autoremove(ctx context.Context) (pmexec.Result, error) {
 		}
 	}
 	if len(orphans) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	return p.write(ctx, append([]string{"-Rns", "--noconfirm"}, orphans...)...)
 }
@@ -169,22 +169,22 @@ const pacmanKeyring = "archlinux"
 // best-effort: an already-initialized keyring or a transient gpg hiccup is
 // logged, not fatal — only the final `-Syy` refresh failure (or a context
 // cancellation) is returned.
-func (p *pacman) Repair(ctx context.Context) (pmexec.Result, error) {
+func (p *pacman) Repair(ctx context.Context) (sysexec.Result, error) {
 	if err := removeStaleLock(ctx, p.r, "/var/lib/pacman/db.lck"); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 
 	steps := []struct {
 		what string
-		run  func() (pmexec.Result, error)
+		run  func() (sysexec.Result, error)
 	}{
-		{"pacman-key --init", func() (pmexec.Result, error) { return p.keyWrite(ctx, "--init") }},
-		{"pacman-key --populate", func() (pmexec.Result, error) { return p.keyWrite(ctx, "--populate", pacmanKeyring) }},
+		{"pacman-key --init", func() (sysexec.Result, error) { return p.keyWrite(ctx, "--init") }},
+		{"pacman-key --populate", func() (sysexec.Result, error) { return p.keyWrite(ctx, "--populate", pacmanKeyring) }},
 	}
 	for _, s := range steps {
 		_, err := s.run()
 		if err := bestEffortStep(ctx, s.what, err); err != nil {
-			return pmexec.Result{}, err
+			return sysexec.Result{}, err
 		}
 	}
 
@@ -197,10 +197,10 @@ func (p *pacman) Repair(ctx context.Context) (pmexec.Result, error) {
 
 // keyWrite runs an escalated `pacman-key` command, mapping a non-zero exit to an
 // *exec.CommandError so bestEffortStep can classify it.
-func (p *pacman) keyWrite(ctx context.Context, args ...string) (pmexec.Result, error) {
+func (p *pacman) keyWrite(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, p.r, true, nil, "pacman-key", args...)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return res, asCommandError("pacman-key", res)
 }
@@ -504,25 +504,25 @@ func (p *pacman) HasUpdates(ctx context.Context, securityOnly bool) (bool, error
 // Pin holds packages by adding them to IgnorePkg in /etc/pacman.conf. Pinning is
 // a config-file edit, not a package transaction, so it has no command output to
 // surface — the returned Result is the zero Result.
-func (p *pacman) Pin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (p *pacman) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	// Second, stricter gate: IgnorePkg values land in pacman.conf, so reject any
 	// name that could inject a config directive even though ValidatePackageNames
 	// already passed.
 	for _, name := range packages {
 		if !validPacmanPkgName.MatchString(name) {
-			return pmexec.Result{}, fmt.Errorf("invalid package name %q: must match [a-zA-Z0-9][a-zA-Z0-9._+-]*", name)
+			return sysexec.Result{}, fmt.Errorf("invalid package name %q: must match [a-zA-Z0-9][a-zA-Z0-9._+-]*", name)
 		}
 	}
 
 	conf, err := p.readConf(ctx)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	ignored := getIgnoredPackages(conf)
 	for _, name := range packages {
@@ -530,21 +530,21 @@ func (p *pacman) Pin(ctx context.Context, packages ...string) (pmexec.Result, er
 			ignored = append(ignored, name)
 		}
 	}
-	return pmexec.Result{}, p.writeIgnorePkg(ctx, conf, ignored)
+	return sysexec.Result{}, p.writeIgnorePkg(ctx, conf, ignored)
 }
 
 // Unpin releases packages by removing them from IgnorePkg. Like Pin, this is a
 // config-file edit with no command output (zero Result).
-func (p *pacman) Unpin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (p *pacman) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	conf, err := p.readConf(ctx)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	var kept []string
 	for _, name := range getIgnoredPackages(conf) {
@@ -552,7 +552,7 @@ func (p *pacman) Unpin(ctx context.Context, packages ...string) (pmexec.Result, 
 			kept = append(kept, name)
 		}
 	}
-	return pmexec.Result{}, p.writeIgnorePkg(ctx, conf, kept)
+	return sysexec.Result{}, p.writeIgnorePkg(ctx, conf, kept)
 }
 
 // ListPinned lists IgnorePkg-held packages.

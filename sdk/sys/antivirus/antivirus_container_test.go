@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/sdk/sys/antivirus"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // marker is the exact string the baked custom .ndb signature matches. Keep in
@@ -38,7 +38,7 @@ func realAV(t *testing.T) antivirus.Manager {
 	if !hasClamscan(t) {
 		t.Skip("clamscan not installed here; ClamAV backend not exercisable")
 	}
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

@@ -32,7 +32,7 @@ import (
 	"os"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ErrInvalidPath is returned by ValidatePath when the supplied path would be
@@ -165,21 +165,21 @@ type Manager interface {
 // manager is the single Manager implementation; the privilege strategy is the
 // Runner's, so there is no per-backend type.
 type manager struct {
-	r pmexec.Runner
+	r sysexec.Runner
 }
 
 // New builds a filesystem Manager driven by runner. A nil runner is rejected
 // (fail-closed). New is pure — it does not probe the host.
-func New(runner pmexec.Runner) (Manager, error) {
+func New(runner sysexec.Runner) (Manager, error) {
 	if runner == nil {
-		return nil, fmt.Errorf("fs: %w", pmexec.ErrRunnerRequired)
+		return nil, fmt.Errorf("fs: %w", sysexec.ErrRunnerRequired)
 	}
 	return &manager{r: runner}, nil
 }
 
 // direct reports whether the Runner runs as root with no escalation wrapper, in
 // which case the fd-anchored, symlink-safe code paths apply.
-func (m *manager) direct() bool { return m.r.Backend() == pmexec.Direct }
+func (m *manager) direct() bool { return m.r.Backend() == sysexec.Direct }
 
 // runPriv runs an escalated command through the Runner. A non-zero exit is in
 // Result.ExitCode (not the error); the error is non-nil only when the command
@@ -189,17 +189,17 @@ func (m *manager) direct() bool { return m.r.Backend() == pmexec.Direct }
 // stable English form regardless of host locale — ReadFile's "No such file"
 // missing-file detection depends on it (a localized cat error would otherwise be
 // misread as a hard failure).
-func (m *manager) runPriv(ctx context.Context, name string, args ...string) (pmexec.Result, error) {
-	return m.r.Run(ctx, pmexec.Command{Name: name, Args: args, Escalate: true})
+func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
 }
 
 // runPrivStdin is runPriv with stdin (the tee write path).
-func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, args ...string) (pmexec.Result, error) {
+func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, args ...string) (sysexec.Result, error) {
 	var in *strings.Reader
 	if stdin != "" {
 		in = strings.NewReader(stdin)
 	}
-	cmd := pmexec.Command{Name: name, Args: args, Escalate: true}
+	cmd := sysexec.Command{Name: name, Args: args, Escalate: true}
 	if in != nil {
 		cmd.Stdin = in
 	}
@@ -208,17 +208,17 @@ func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, a
 
 // runQuery runs an unprivileged read (findmnt) through the Runner. The Runner
 // forces the C locale, keeping the output parse locale-stable.
-func (m *manager) runQuery(ctx context.Context, name string, args ...string) (pmexec.Result, error) {
-	return m.r.Run(ctx, pmexec.Command{Name: name, Args: args})
+func (m *manager) runQuery(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args})
 }
 
 // cmdError turns a completed command's Result into a typed error when its exit
 // code is non-zero; a clean exit returns nil.
-func cmdError(name string, res pmexec.Result) error {
+func cmdError(name string, res sysexec.Result) error {
 	if res.ExitCode == 0 {
 		return nil
 	}
-	return &pmexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
+	return &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 }
 
 // isENOENTStderr reports whether a coreutils/find stderr line is the kernel's

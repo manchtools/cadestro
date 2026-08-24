@@ -6,19 +6,19 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
 func TestRunAsRunner_WrapsCommandAsUser(t *testing.T) {
-	base := exectest.New(pmexec.Direct)
-	base.Push(pmexec.Result{}, nil)
+	base := exectest.New(sysexec.Direct)
+	base.Push(sysexec.Result{}, nil)
 	s := Session{Username: "alice", UID: 1000, Home: "/home/alice", RuntimeDir: "/run/user/1000"}
 	ra, err := RunAsRunner(base, s)
 	if err != nil {
 		t.Fatalf("RunAsRunner: %v", err)
 	}
-	if _, err := ra.Run(context.Background(), pmexec.Command{Name: "flatpak", Args: []string{"install", "--user", "org.x.App"}}); err != nil {
+	if _, err := ra.Run(context.Background(), sysexec.Command{Name: "flatpak", Args: []string{"install", "--user", "org.x.App"}}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	c := base.Calls()[0]
@@ -43,11 +43,11 @@ func TestRunAsRunner_WrapsCommandAsUser(t *testing.T) {
 // point a user-scoped command at an attacker-controlled bin dir (parity with the
 // dropped RunAsCommand path this replaced).
 func TestRunAsRunner_CallerPathDropped(t *testing.T) {
-	base := exectest.New(pmexec.Direct)
-	base.Push(pmexec.Result{}, nil)
+	base := exectest.New(sysexec.Direct)
+	base.Push(sysexec.Result{}, nil)
 	s := Session{Username: "alice", UID: 1000, Home: "/home/alice", RuntimeDir: "/run/user/1000"}
 	ra, _ := RunAsRunner(base, s)
-	if _, err := ra.Run(context.Background(), pmexec.Command{Name: "flatpak", Env: []string{"PATH=/attacker/bin"}}); err != nil {
+	if _, err := ra.Run(context.Background(), sysexec.Command{Name: "flatpak", Env: []string{"PATH=/attacker/bin"}}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	args := base.Calls()[0].Args
@@ -71,11 +71,11 @@ func TestRunAsRunner_CallerPathDropped(t *testing.T) {
 // run from the action's WorkingDirectory) must actually run there — not silently
 // in the agent's cwd.
 func TestRunAsRunner_PropagatesCallerDir(t *testing.T) {
-	base := exectest.New(pmexec.Direct)
-	base.Push(pmexec.Result{}, nil)
+	base := exectest.New(sysexec.Direct)
+	base.Push(sysexec.Result{}, nil)
 	s := Session{Username: "alice", UID: 1000, Home: "/home/alice", RuntimeDir: "/run/user/1000"}
 	ra, _ := RunAsRunner(base, s)
-	if _, err := ra.Run(context.Background(), pmexec.Command{Name: "script.sh", Dir: "/home/alice/work"}); err != nil {
+	if _, err := ra.Run(context.Background(), sysexec.Command{Name: "script.sh", Dir: "/home/alice/work"}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	if got := base.Calls()[0].Dir; got != "/home/alice/work" {
@@ -87,7 +87,7 @@ func TestRunAsRunner_Rejects(t *testing.T) {
 	if _, err := RunAsRunner(nil, Session{Username: "alice"}); err == nil {
 		t.Error("nil base Runner must be rejected")
 	}
-	if _, err := RunAsRunner(exectest.New(pmexec.Direct), Session{}); err == nil {
+	if _, err := RunAsRunner(exectest.New(sysexec.Direct), Session{}); err == nil {
 		t.Error("a session with no Username must be rejected (would silently run as the agent's UID)")
 	}
 }
@@ -96,10 +96,10 @@ func TestRunAsRunner_Rejects(t *testing.T) {
 // its Env must be refused before it reaches the user-scoped command (the inner
 // env bypasses the base Runner's own screening).
 func TestRunAsRunner_ScreensHijackEnv(t *testing.T) {
-	base := exectest.New(pmexec.Direct)
+	base := exectest.New(sysexec.Direct)
 	s := Session{Username: "alice", UID: 1000, Home: "/home/alice", RuntimeDir: "/run/user/1000"}
 	ra, _ := RunAsRunner(base, s)
-	_, err := ra.Run(context.Background(), pmexec.Command{Name: "flatpak", Args: []string{"list"}, Env: []string{"LD_PRELOAD=/tmp/evil.so"}})
+	_, err := ra.Run(context.Background(), sysexec.Command{Name: "flatpak", Args: []string{"list"}, Env: []string{"LD_PRELOAD=/tmp/evil.so"}})
 	if err == nil {
 		t.Fatal("LD_PRELOAD in the command env must be rejected")
 	}

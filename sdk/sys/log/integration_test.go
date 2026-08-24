@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	syslog "github.com/manchtools/cadestro/sdk/sys/log"
 )
 
@@ -22,7 +22,7 @@ func systemdRunning() bool {
 
 func newJournald(t *testing.T) syslog.Source {
 	t.Helper()
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}

@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // flatpak drives the cross-distro application bundle manager over an injected
 // Runner. system selects the --system installation (escalated) over --user
 // (unprivileged); see WithUserScope.
 type flatpak struct {
-	r      pmexec.Runner
+	r      sysexec.Runner
 	system bool
 }
 
@@ -35,10 +35,10 @@ func (f *flatpak) scope() string {
 // write runs a privileged flatpak command. It escalates only in system scope;
 // --user operations run unprivileged. The command Result is returned on both
 // the success and non-zero-exit paths.
-func (f *flatpak) write(ctx context.Context, args ...string) (pmexec.Result, error) {
+func (f *flatpak) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, f.r, f.system, nil, "flatpak", args...)
 	if err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	return res, asCommandError("flatpak", res)
 }
@@ -59,20 +59,20 @@ func (f *flatpak) Version(ctx context.Context) (string, error) {
 // Install installs application bundles. Flatpak does not support traditional
 // version pinning, so opts.Version is validated but ignored (use commits/refs
 // for exact version control). All named bundles are installed at latest.
-func (f *flatpak) Install(ctx context.Context, opts InstallOptions, packages ...string) (pmexec.Result, error) {
+func (f *flatpak) Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if err := ValidatePackageVersion(opts.Version); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if opts.Remote != "" {
 		if err := ValidateRemoteName(opts.Remote); err != nil {
-			return pmexec.Result{}, err
+			return sysexec.Result{}, err
 		}
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	// An explicit remote is the operator's disambiguation of which remote provides
 	// the app; it precedes the app refs (`flatpak install <scope> <remote> <refs>`).
@@ -91,21 +91,21 @@ func (f *flatpak) Install(ctx context.Context, opts InstallOptions, packages ...
 // per-file GPG check). System scope escalates, --user does not.
 // ValidateLocalPackagePath requires an absolute path, so the operand can never
 // be flag-shaped.
-func (f *flatpak) InstallLocal(ctx context.Context, path string, _ InstallLocalOptions) (pmexec.Result, error) {
+func (f *flatpak) InstallLocal(ctx context.Context, path string, _ InstallLocalOptions) (sysexec.Result, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	flags := []string{"install", "-y", "--noninteractive", f.scope()}
 	return f.write(ctx, append(flags, path)...)
 }
 
 // Remove uninstalls bundles; opts.Purge also deletes per-app data (--delete-data).
-func (f *flatpak) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (pmexec.Result, error) {
+func (f *flatpak) Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil
+		return sysexec.Result{}, nil
 	}
 	args := []string{"uninstall", "-y", "--noninteractive"}
 	if opts.Purge {
@@ -117,39 +117,39 @@ func (f *flatpak) Remove(ctx context.Context, opts RemoveOptions, packages ...st
 }
 
 // Update refreshes appstream metadata for the configured remotes.
-func (f *flatpak) Update(ctx context.Context) (pmexec.Result, error) {
+func (f *flatpak) Update(ctx context.Context) (sysexec.Result, error) {
 	return f.write(ctx, "update", "--appstream", "-y", "--noninteractive", f.scope())
 }
 
 // Upgrade updates the named bundles, or all installed bundles with no names.
-func (f *flatpak) Upgrade(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (f *flatpak) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
 	if len(packages) == 0 {
-		return pmexec.Result{}, nil // empty is a no-op; UpgradeAll updates everything (flatpak update with no refs)
+		return sysexec.Result{}, nil // empty is a no-op; UpgradeAll updates everything (flatpak update with no refs)
 	}
 	args := append([]string{"update", "-y", "--noninteractive", f.scope()}, packages...)
 	return f.write(ctx, args...)
 }
 
 // UpgradeAll updates every installed app/runtime (flatpak update with no refs).
-func (f *flatpak) UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Result, error) {
+func (f *flatpak) UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error) {
 	if opts.SecurityOnly {
 		// flatpak has no security/non-security update distinction — it updates
 		// apps/runtimes to latest. Fail closed rather than do a full update.
-		return pmexec.Result{}, ErrSecurityOnlyUnsupported
+		return sysexec.Result{}, ErrSecurityOnlyUnsupported
 	}
 	return f.write(ctx, "update", "-y", "--noninteractive", f.scope())
 }
 
 // Autoremove removes unused runtimes/extensions (flatpak uninstall --unused).
-func (f *flatpak) Autoremove(ctx context.Context) (pmexec.Result, error) {
+func (f *flatpak) Autoremove(ctx context.Context) (sysexec.Result, error) {
 	return f.write(ctx, "uninstall", "--unused", "-y", "--noninteractive", f.scope())
 }
 
 // Repair runs `flatpak repair`, restoring a consistent installation state.
-func (f *flatpak) Repair(ctx context.Context) (pmexec.Result, error) {
+func (f *flatpak) Repair(ctx context.Context) (sysexec.Result, error) {
 	res, err := f.write(ctx, "repair", f.scope())
 	if err != nil {
 		return res, repairErr(ctx, "flatpak repair failed", err)
@@ -445,11 +445,11 @@ func (f *flatpak) HasUpdates(ctx context.Context, securityOnly bool) (bool, erro
 // Pin masks bundles so they are held back from updates. Best-effort across the
 // set: every bundle is attempted and the last error (if any) is returned, along
 // with the last command's Result.
-func (f *flatpak) Pin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (f *flatpak) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
-	var last pmexec.Result
+	var last sysexec.Result
 	var lastErr error
 	for _, name := range packages {
 		res, err := f.write(ctx, "mask", name, f.scope())
@@ -462,11 +462,11 @@ func (f *flatpak) Pin(ctx context.Context, packages ...string) (pmexec.Result, e
 }
 
 // Unpin removes the mask so bundles update again.
-func (f *flatpak) Unpin(ctx context.Context, packages ...string) (pmexec.Result, error) {
+func (f *flatpak) Unpin(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if err := ValidatePackageNames(packages); err != nil {
-		return pmexec.Result{}, err
+		return sysexec.Result{}, err
 	}
-	var last pmexec.Result
+	var last sysexec.Result
 	var lastErr error
 	for _, name := range packages {
 		res, err := f.write(ctx, "mask", "--remove", name, f.scope())

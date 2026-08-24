@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -31,10 +31,10 @@ func names(entries []DirEntry) []string {
 // --- ReadDir (escalated / find path) --------------------------------------
 
 func TestReadDir_Sudo_ParsesFindOutput(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
+	f := exectest.New(sysexec.Sudo)
 	// `%y/%f` per line: a single type char, '/', then the basename (a basename
 	// never contains '/', so the first '/' is an unambiguous separator).
-	f.Push(pmexec.Result{Stdout: "f/foo.sources\nd/sub\nl/legacy.list\n"}, nil)
+	f.Push(sysexec.Result{Stdout: "f/foo.sources\nd/sub\nl/legacy.list\n"}, nil)
 	m := mustManager(t, f)
 
 	got, err := m.ReadDir(context.Background(), "/etc/apt/sources.list.d")
@@ -58,7 +58,7 @@ func TestReadDir_Sudo_ParsesFindOutput(t *testing.T) {
 }
 
 func TestReadDir_Sudo_EmptyDir(t *testing.T) {
-	f := exectest.New(pmexec.Sudo) // unscripted → exit 0, empty stdout
+	f := exectest.New(sysexec.Sudo) // unscripted → exit 0, empty stdout
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/empty")
 	if err != nil || len(got) != 0 {
 		t.Fatalf("ReadDir(empty) = (%v, %v), want (empty, nil)", got, err)
@@ -66,8 +66,8 @@ func TestReadDir_Sudo_EmptyDir(t *testing.T) {
 }
 
 func TestReadDir_Sudo_MissingDirIsErrNotExist(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "find: '/x': No such file or directory"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "find: '/x': No such file or directory"}, nil)
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/x")
 	// Explicit-absence contract: a missing dir is a wrapped os.ErrNotExist, not a
 	// silent empty listing.
@@ -77,17 +77,17 @@ func TestReadDir_Sudo_MissingDirIsErrNotExist(t *testing.T) {
 }
 
 func TestReadDir_Sudo_OtherErrorIsCommandError(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "find: '/etc/secret': Permission denied"}, nil)
-	if _, err := mustManager(t, f).ReadDir(context.Background(), "/etc/secret"); !errors.As(err, new(*pmexec.CommandError)) {
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "find: '/etc/secret': Permission denied"}, nil)
+	if _, err := mustManager(t, f).ReadDir(context.Background(), "/etc/secret"); !errors.As(err, new(*sysexec.CommandError)) {
 		t.Fatalf("err = %v, want *exec.CommandError for a non-absent find failure", err)
 	}
 }
 
 func TestReadDir_Sudo_RunnerErrorPropagates(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{}, pmexec.ErrEscalationUnavailable)
-	if _, err := mustManager(t, f).ReadDir(context.Background(), "/x"); !errors.Is(err, pmexec.ErrEscalationUnavailable) {
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
+	if _, err := mustManager(t, f).ReadDir(context.Background(), "/x"); !errors.Is(err, sysexec.ErrEscalationUnavailable) {
 		t.Fatalf("err = %v, want ErrEscalationUnavailable", err)
 	}
 }
@@ -96,8 +96,8 @@ func TestReadDir_Sudo_RunnerErrorPropagates(t *testing.T) {
 // surface as an error mirroring the Direct path — never a silent empty listing,
 // and NOT the absence sentinel (the file exists, it just isn't a directory).
 func TestReadDir_Sudo_NotADirIsError(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{ExitCode: 1, Stderr: "find: '/etc/hostname/': Not a directory"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{ExitCode: 1, Stderr: "find: '/etc/hostname/': Not a directory"}, nil)
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/etc/hostname")
 	if err == nil || got != nil {
 		t.Fatalf("ReadDir(regular file) = (%v, %v), want (nil, error)", got, err)
@@ -105,7 +105,7 @@ func TestReadDir_Sudo_NotADirIsError(t *testing.T) {
 	if errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("err = %v, want a non-directory command error, not the absence sentinel", err)
 	}
-	if !errors.As(err, new(*pmexec.CommandError)) {
+	if !errors.As(err, new(*sysexec.CommandError)) {
 		t.Fatalf("err = %v, want *exec.CommandError", err)
 	}
 }
@@ -114,8 +114,8 @@ func TestReadDir_Sudo_NotADirIsError(t *testing.T) {
 // on a non-directory (a bare `find /file` exits 0 with no output, which would
 // read as a silently-empty directory). Pin that the slash reaches the argv.
 func TestReadDir_Sudo_FindTargetsDirectoryWithTrailingSlash(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
-	f.Push(pmexec.Result{Stdout: "f/a.conf\n"}, nil)
+	f := exectest.New(sysexec.Sudo)
+	f.Push(sysexec.Result{Stdout: "f/a.conf\n"}, nil)
 	if _, err := mustManager(t, f).ReadDir(context.Background(), "/etc/app"); err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestReadDir_Sudo_FindTargetsDirectoryWithTrailingSlash(t *testing.T) {
 }
 
 func TestReadDir_Sudo_InvalidPathRejectedBeforeExec(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
+	f := exectest.New(sysexec.Sudo)
 	if _, err := mustManager(t, f).ReadDir(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
 		t.Fatalf("err = %v, want ErrInvalidPath", err)
 	}
@@ -139,9 +139,9 @@ func TestReadDir_Sudo_InvalidPathRejectedBeforeExec(t *testing.T) {
 }
 
 func TestReadDir_Sudo_SkipsMalformedAndBlankLines(t *testing.T) {
-	f := exectest.New(pmexec.Sudo)
+	f := exectest.New(sysexec.Sudo)
 	// A blank line (defensive) and a line with no '/' are skipped, not panicked on.
-	f.Push(pmexec.Result{Stdout: "f/ok.sources\n\nbogusnoslash\nd/d1\n"}, nil)
+	f.Push(sysexec.Result{Stdout: "f/ok.sources\n\nbogusnoslash\nd/d1\n"}, nil)
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/d")
 	if err != nil {
 		t.Fatal(err)

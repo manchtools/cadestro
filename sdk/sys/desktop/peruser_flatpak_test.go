@@ -7,7 +7,7 @@ import (
 
 	"github.com/manchtools/cadestro/sdk/pkg"
 	"github.com/manchtools/cadestro/sdk/sys/desktop"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -16,8 +16,8 @@ import (
 // transaction AS the target desktop user (Gap 7), honoring an explicit remote
 // (Gap 6) — with NO flatpak-backend changes, composed purely through the Runner.
 func TestPerUserFlatpak_Composition(t *testing.T) {
-	base := exectest.New(pmexec.Direct)
-	base.Push(pmexec.Result{}, nil)
+	base := exectest.New(sysexec.Direct)
+	base.Push(sysexec.Result{}, nil)
 	s := desktop.Session{Username: "alice", UID: 1000, Home: "/home/alice", RuntimeDir: "/run/user/1000"}
 
 	ru, err := desktop.RunAsRunner(base, s)

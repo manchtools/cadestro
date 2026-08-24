@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/sys/dns"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // systemdRunning reports whether systemd is PID 1 (so resolvectl/systemctl can
@@ -148,7 +148,7 @@ func newResolved(t *testing.T) dns.Manager {
 	// `systemctl restart`, `resolvectl`) must go through `sudo -n`. This exercises
 	// the exact escalation seam production uses (where the agent runs as root and
 	// Direct is a no-op wrapper) — the capability code is escalation-agnostic.
-	r, err := pmexec.NewRunner(pmexec.Sudo)
+	r, err := sysexec.NewRunner(sysexec.Sudo)
 	if err != nil {
 		t.Fatalf("NewRunner(Sudo): %v", err)
 	}
@@ -164,18 +164,18 @@ func newResolved(t *testing.T) dns.Manager {
 // logged, not fatal, so they never mask the test's own verdict.
 func restoreResolved(t *testing.T) {
 	t.Helper()
-	r, err := pmexec.NewRunner(pmexec.Sudo)
+	r, err := sysexec.NewRunner(sysexec.Sudo)
 	if err != nil {
 		t.Logf("restore: NewRunner: %v", err)
 		return
 	}
 	ctx := context.Background()
-	if _, err := r.Run(ctx, pmexec.Command{
+	if _, err := r.Run(ctx, sysexec.Command{
 		Name: "rm", Args: []string{"-f", "/etc/systemd/resolved.conf.d/10-cadestro.conf"}, Escalate: true,
 	}); err != nil {
 		t.Logf("restore: rm drop-in: %v", err)
 	}
-	if _, err := r.Run(ctx, pmexec.Command{
+	if _, err := r.Run(ctx, sysexec.Command{
 		Name: "systemctl", Args: []string{"restart", "systemd-resolved"}, Escalate: true,
 	}); err != nil {
 		t.Logf("restore: restart resolved: %v", err)
@@ -186,12 +186,12 @@ func restoreResolved(t *testing.T) {
 // returning it to baseline. Best-effort: logged, never fatal.
 func revertLink(t *testing.T, iface string) {
 	t.Helper()
-	r, err := pmexec.NewRunner(pmexec.Sudo)
+	r, err := sysexec.NewRunner(sysexec.Sudo)
 	if err != nil {
 		t.Logf("revert: NewRunner: %v", err)
 		return
 	}
-	if _, err := r.Run(context.Background(), pmexec.Command{
+	if _, err := r.Run(context.Background(), sysexec.Command{
 		Name: "resolvectl", Args: []string{"revert", iface}, Escalate: true,
 	}); err != nil {
 		t.Logf("revert: resolvectl revert %s: %v", iface, err)

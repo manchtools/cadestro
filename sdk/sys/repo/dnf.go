@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
@@ -67,7 +67,7 @@ func (m *manager) applyDnf(ctx context.Context, name string, c *DnfConfig) (Outc
 	// trust it system-wide while the repository itself verifies nothing — a trust
 	// downgrade. Honor gpgcheck as the single switch and never import behind it.
 	if c.GPGCheck && c.GPGKey != "" {
-		m.runNonFatal(ctx, &log, "warning: failed to import GPG key", "rpm", pmexec.SeparatePositionals([]string{"--import"}, c.GPGKey)...)
+		m.runNonFatal(ctx, &log, "warning: failed to import GPG key", "rpm", sysexec.SeparatePositionals([]string{"--import"}, c.GPGKey)...)
 	}
 
 	m.runNonFatal(ctx, &log, "warning: failed to refresh repo metadata", "dnf", "-y", "makecache", "--repo", name)

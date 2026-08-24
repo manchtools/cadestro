@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -16,8 +16,8 @@ import (
 // tool error → propagated, never read as "zero managed rules").
 func TestNftablesList_NoTableEmptyButRealErrorPropagates(t *testing.T) {
 	t.Run("missing table → wrapped os.ErrNotExist", func(t *testing.T) {
-		r := exectest.New(pmexec.Direct)
-		r.Push(pmexec.Result{ExitCode: 1, Stderr: "Error: No such file or directory"}, nil)
+		r := exectest.New(sysexec.Direct)
+		r.Push(sysexec.Result{ExitCode: 1, Stderr: "Error: No such file or directory"}, nil)
 		n := &nftables{base: base{ns: "app", cmd: cmd{r: r}}}
 		rules, err := n.List(context.Background())
 		if !errors.Is(err, os.ErrNotExist) {
@@ -28,8 +28,8 @@ func TestNftablesList_NoTableEmptyButRealErrorPropagates(t *testing.T) {
 		}
 	})
 	t.Run("a real nft failure propagates", func(t *testing.T) {
-		r := exectest.New(pmexec.Direct)
-		r.Push(pmexec.Result{ExitCode: 1, Stderr: "Error: Operation not permitted"}, nil)
+		r := exectest.New(sysexec.Direct)
+		r.Push(sysexec.Result{ExitCode: 1, Stderr: "Error: Operation not permitted"}, nil)
 		n := &nftables{base: base{ns: "app", cmd: cmd{r: r}}}
 		if _, err := n.List(context.Background()); err == nil {
 			t.Fatal("a real nft failure must propagate, not read as 'no managed rules'")
@@ -38,10 +38,10 @@ func TestNftablesList_NoTableEmptyButRealErrorPropagates(t *testing.T) {
 }
 
 func TestUfwList_EscalationFailurePropagates(t *testing.T) {
-	r := exectest.New(pmexec.Direct)
-	r.Push(pmexec.Result{}, pmexec.ErrEscalationDenied)
+	r := exectest.New(sysexec.Direct)
+	r.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
 	u := &ufw{base: base{ns: "app", cmd: cmd{r: r}}}
-	if _, err := u.List(context.Background()); !errors.Is(err, pmexec.ErrEscalationDenied) {
+	if _, err := u.List(context.Background()); !errors.Is(err, sysexec.ErrEscalationDenied) {
 		t.Fatalf("ufw List err = %v, want ErrEscalationDenied propagated (not silent 'no rules')", err)
 	}
 }

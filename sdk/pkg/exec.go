@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // runRead executes an unprivileged read-side query (Info / Search / List /
@@ -19,8 +19,8 @@ import (
 // Result.ExitCode (NOT as an error) — read callers branch on specific codes (e.g.
 // dnf check-update's 100, dpkg -s's 1) — so the returned error is non-nil only
 // when the command could not be executed at all.
-func runRead(ctx context.Context, r pmexec.Runner, name string, args ...string) (pmexec.Result, error) {
-	return r.Run(ctx, pmexec.Command{Name: name, Args: args})
+func runRead(ctx context.Context, r sysexec.Runner, name string, args ...string) (sysexec.Result, error) {
+	return r.Run(ctx, sysexec.Command{Name: name, Args: args})
 }
 
 // probe runs an unprivileged read whose non-zero exit is a benign domain signal
@@ -29,7 +29,7 @@ func runRead(ctx context.Context, r pmexec.Runner, name string, args ...string) 
 // context cancellation) propagates. It returns (stdout, ok, err): ok is true
 // only on a clean (exit 0) run. This is the seam that keeps tolerant lookups
 // from masking cancellations and executor failures as a benign miss.
-func probe(ctx context.Context, r pmexec.Runner, name string, args ...string) (string, bool, error) {
+func probe(ctx context.Context, r sysexec.Runner, name string, args ...string) (string, bool, error) {
 	res, err := runRead(ctx, r, name, args...)
 	if err != nil {
 		return "", false, err
@@ -44,8 +44,8 @@ func probe(ctx context.Context, r pmexec.Runner, name string, args ...string) (s
 // of the forced C locale. Like runRead, a non-zero exit is in Result.ExitCode,
 // not the error; callers convert it via asCommandError when a non-zero exit
 // means failure (most do; dnf check-update does not).
-func runPriv(ctx context.Context, r pmexec.Runner, escalate bool, env []string, name string, args ...string) (pmexec.Result, error) {
-	return r.Run(ctx, pmexec.Command{
+func runPriv(ctx context.Context, r sysexec.Runner, escalate bool, env []string, name string, args ...string) (sysexec.Result, error) {
+	return r.Run(ctx, sysexec.Command{
 		Name:     name,
 		Args:     args,
 		Env:      env,
@@ -58,25 +58,25 @@ func runPriv(ctx context.Context, r pmexec.Runner, escalate bool, env []string, 
 // returning stdout on a clean exit and an *exec.CommandError otherwise. Reads
 // that branch on a specific exit code (dpkg -s's 1, dnf check-update's 100,
 // search's "no matches" codes) call runRead directly and inspect Result.ExitCode.
-func readOut(ctx context.Context, r pmexec.Runner, name string, args ...string) (string, error) {
+func readOut(ctx context.Context, r sysexec.Runner, name string, args ...string) (string, error) {
 	res, err := runRead(ctx, r, name, args...)
 	if err != nil {
 		return "", err
 	}
 	if res.ExitCode != 0 {
-		return "", &pmexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
+		return "", &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 	}
 	return res.Stdout, nil
 }
 
 // runPrivStdin is the stdin-bearing companion of runPriv (pacman.conf rewrite
 // via tee). An empty stdin sends no input.
-func runPrivStdin(ctx context.Context, r pmexec.Runner, escalate bool, env []string, stdin, name string, args ...string) (pmexec.Result, error) {
+func runPrivStdin(ctx context.Context, r sysexec.Runner, escalate bool, env []string, stdin, name string, args ...string) (sysexec.Result, error) {
 	var in io.Reader
 	if stdin != "" {
 		in = strings.NewReader(stdin)
 	}
-	return r.Run(ctx, pmexec.Command{
+	return r.Run(ctx, sysexec.Command{
 		Name:     name,
 		Args:     args,
 		Env:      env,
@@ -90,11 +90,11 @@ func runPrivStdin(ctx context.Context, r pmexec.Runner, escalate bool, env []str
 // the mutating methods rely on. A clean exit returns nil. The exit code and
 // stderr are preserved on *exec.CommandError so callers can branch via
 // errors.As.
-func asCommandError(name string, res pmexec.Result) error {
+func asCommandError(name string, res sysexec.Result) error {
 	if res.ExitCode == 0 {
 		return nil
 	}
-	return &pmexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
+	return &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 }
 
 // rpmLocalPackageInfo reads NAME / VERSION-RELEASE / ARCH out of a local .rpm via
@@ -103,7 +103,7 @@ func asCommandError(name string, res pmexec.Result) error {
 // untrusted, so it is re-validated with ValidateRpmPackageName before it is
 // returned — a flag-shaped or metacharacter-bearing name is rejected here, not
 // passed on to a later rpm -q/-e as an option.
-func rpmLocalPackageInfo(ctx context.Context, r pmexec.Runner, path string) (*LocalPackage, error) {
+func rpmLocalPackageInfo(ctx context.Context, r sysexec.Runner, path string) (*LocalPackage, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
 		return nil, err
 	}

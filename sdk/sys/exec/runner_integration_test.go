@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // These integration tests exercise REAL privilege escalation through the Runner
@@ -17,7 +17,7 @@ import (
 // (see test/Dockerfile.integration). The previous coverage lived in the deleted
 // legacy exec_test.go's Privileged* tests; this is its Runner equivalent.
 
-func sudoRunner(t *testing.T) pmexec.Runner {
+func sudoRunner(t *testing.T) sysexec.Runner {
 	t.Helper()
 	if _, err := exec.LookPath("sudo"); err != nil {
 		t.Skip("sudo not on PATH; escalation integration leg not exercisable here")
@@ -28,7 +28,7 @@ func sudoRunner(t *testing.T) pmexec.Runner {
 	if err := exec.Command("sudo", "-n", "true").Run(); err != nil {
 		t.Skipf("sudo present but non-interactive escalation is unavailable: %v", err)
 	}
-	r, err := pmexec.NewRunner(pmexec.Sudo)
+	r, err := sysexec.NewRunner(sysexec.Sudo)
 	if err != nil {
 		t.Fatalf("NewRunner(Sudo): %v", err)
 	}
@@ -37,7 +37,7 @@ func sudoRunner(t *testing.T) pmexec.Runner {
 
 // An escalated command runs as root: `sudo -n id -u` reports uid 0.
 func TestRunner_EscalatedRunsAsRoot_Integration(t *testing.T) {
-	res, err := sudoRunner(t).Run(context.Background(), pmexec.Command{Name: "id", Args: []string{"-u"}, Escalate: true})
+	res, err := sudoRunner(t).Run(context.Background(), sysexec.Command{Name: "id", Args: []string{"-u"}, Escalate: true})
 	if err != nil {
 		t.Fatalf("escalated Run err = %v", err)
 	}
@@ -48,7 +48,7 @@ func TestRunner_EscalatedRunsAsRoot_Integration(t *testing.T) {
 
 // Escalated stdin is delivered to the privileged child.
 func TestRunner_EscalatedStdin_Integration(t *testing.T) {
-	res, err := sudoRunner(t).Run(context.Background(), pmexec.Command{
+	res, err := sudoRunner(t).Run(context.Background(), sysexec.Command{
 		Name: "cat", Escalate: true, Stdin: strings.NewReader("escalated-input"),
 	})
 	if err != nil {
@@ -63,9 +63,9 @@ func TestRunner_EscalatedStdin_Integration(t *testing.T) {
 func TestRunner_EscalatedStreaming_Integration(t *testing.T) {
 	var lines []string
 	res, err := sudoRunner(t).Stream(context.Background(),
-		pmexec.Command{Name: "sh", Args: []string{"-c", "printf 'line1\\nline2\\nline3\\n'"}, Escalate: true},
-		func(s pmexec.StreamType, line string, _ int64) {
-			if s == pmexec.StreamStdout {
+		sysexec.Command{Name: "sh", Args: []string{"-c", "printf 'line1\\nline2\\nline3\\n'"}, Escalate: true},
+		func(s sysexec.StreamType, line string, _ int64) {
+			if s == sysexec.StreamStdout {
 				lines = append(lines, strings.TrimRight(line, "\n"))
 			}
 		})
@@ -83,7 +83,7 @@ func TestRunner_EscalatedStreaming_Integration(t *testing.T) {
 // A nonexistent command is rejected (command-not-found) BEFORE escalation —
 // resolveAbsolute fails, so the wrapper is never invoked.
 func TestRunner_EscalatedCommandNotFound_Integration(t *testing.T) {
-	_, err := sudoRunner(t).Run(context.Background(), pmexec.Command{Name: "nonexistent-command-12345", Escalate: true})
+	_, err := sudoRunner(t).Run(context.Background(), sysexec.Command{Name: "nonexistent-command-12345", Escalate: true})
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent escalated command")
 	}

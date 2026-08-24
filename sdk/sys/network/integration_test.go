@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
@@ -54,7 +54,7 @@ func requireNM(t *testing.T) {
 
 func TestApplyPSK_Integration(t *testing.T) {
 	requireNM(t)
-	r, err := pmexec.NewRunner(pmexec.Direct) // root → Direct
+	r, err := sysexec.NewRunner(sysexec.Direct) // root → Direct
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestApplyPSK_Integration(t *testing.T) {
 	keyfile := keyfileDir + "/" + name + ".nmconnection"
 	t.Cleanup(func() { _ = m.Delete(context.Background(), name, network.DeleteOptions{}) })
 
-	psk, err := pmexec.NewSecret(pskValue)
+	psk, err := sysexec.NewSecret(pskValue)
 	if err != nil {
 		t.Fatalf("NewSecret: %v", err)
 	}

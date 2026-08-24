@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestRunRead_BuildsUnprivilegedCommand(t *testing.T) {
@@ -32,7 +32,7 @@ func TestRunRead_BuildsUnprivilegedCommand(t *testing.T) {
 
 func TestRunRead_PropagatesExecError(t *testing.T) {
 	f := newFake()
-	f.Push(pmexec.Result{}, errors.New("binary not found"))
+	f.Push(sysexec.Result{}, errors.New("binary not found"))
 	if _, err := runRead(context.Background(), f, "apt", "--version"); err == nil {
 		t.Fatal("want exec error")
 	}
@@ -106,9 +106,9 @@ func TestReadOut(t *testing.T) {
 	})
 	t.Run("non-zero exit is a CommandError", func(t *testing.T) {
 		f := newFake()
-		f.Push(pmexec.Result{ExitCode: 2, Stderr: "no such file"}, nil)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "no such file"}, nil)
 		_, err := readOut(context.Background(), f, "dpkg-query", "-W", "ghost")
-		var ce *pmexec.CommandError
+		var ce *sysexec.CommandError
 		if !errors.As(err, &ce) {
 			t.Fatalf("err = %v, want *exec.CommandError", err)
 		}
@@ -118,7 +118,7 @@ func TestReadOut(t *testing.T) {
 	})
 	t.Run("exec error is propagated raw", func(t *testing.T) {
 		f := newFake()
-		f.Push(pmexec.Result{}, errors.New("permission denied"))
+		f.Push(sysexec.Result{}, errors.New("permission denied"))
 		if _, err := readOut(context.Background(), f, "rpm", "-qa"); err == nil {
 			t.Fatal("want exec error")
 		}
@@ -126,11 +126,11 @@ func TestReadOut(t *testing.T) {
 }
 
 func TestAsCommandError(t *testing.T) {
-	if err := asCommandError("apt", pmexec.Result{ExitCode: 0}); err != nil {
+	if err := asCommandError("apt", sysexec.Result{ExitCode: 0}); err != nil {
 		t.Errorf("exit 0 must be nil, got %v", err)
 	}
-	err := asCommandError("apt", pmexec.Result{ExitCode: 100, Stderr: "boom"})
-	var ce *pmexec.CommandError
+	err := asCommandError("apt", sysexec.Result{ExitCode: 100, Stderr: "boom"})
+	var ce *sysexec.CommandError
 	if !errors.As(err, &ce) || ce.ExitCode != 100 || ce.Name != "apt" || ce.Stderr != "boom" {
 		t.Errorf("CommandError = %+v (err=%v)", ce, err)
 	}

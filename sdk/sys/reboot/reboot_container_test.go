@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
@@ -32,7 +32,7 @@ const debianRebootMarker = "/var/run/reboot-required"
 // contract on a real filesystem (no needs-restarting on the Debian image, so the
 // marker is the sole signal).
 func TestIsRequired_Marker_Container(t *testing.T) {
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

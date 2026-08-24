@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 // stdinOf reads back the stdin a recorded command carried (the FakeRunner never
 // consumes it, so it is still readable).
-func stdinOf(t *testing.T, c pmexec.Command) string {
+func stdinOf(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {
 		return ""
@@ -29,7 +29,7 @@ func stdinOf(t *testing.T, c pmexec.Command) string {
 
 func TestApt_Apply_DearmorsKeyWritesSourcesAndUpdates(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{Stdout: "BINKEY"}, nil) // gpg --dearmor → binary keyring on stdout
+	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil) // gpg --dearmor → binary keyring on stdout
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{
 		URL:          "https://h/a",
 		Distribution: "bookworm",
@@ -100,7 +100,7 @@ func TestApt_Apply_TrustedNoKey(t *testing.T) {
 
 func TestApt_Apply_Idempotent(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{Stdout: "BINKEY"}, nil) // gpg --dearmor
+	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil) // gpg --dearmor
 	keyFile := "/etc/apt/keyrings/corp.gpg"
 	repoFile := "/etc/apt/sources.list.d/corp.sources"
 	ff.read[keyFile] = []byte("BINKEY") // keyring already matches the dearmored key
@@ -130,7 +130,7 @@ func TestApt_Apply_Idempotent(t *testing.T) {
 
 func TestApt_Apply_KeyDiffersTriggersRewrite(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{Stdout: "NEWKEY"}, nil)
+	fr.Push(sysexec.Result{Stdout: "NEWKEY"}, nil)
 	keyFile := "/etc/apt/keyrings/corp.gpg"
 	ff.read[keyFile] = []byte("OLDKEY") // installed key differs from dearmored
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{
@@ -152,7 +152,7 @@ func TestApt_Apply_KeyDiffersTriggersRewrite(t *testing.T) {
 
 func TestApt_Apply_DearmorFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{ExitCode: 2, Stderr: "gpg: no valid OpenPGP data"}, nil)
+	fr.Push(sysexec.Result{ExitCode: 2, Stderr: "gpg: no valid OpenPGP data"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{
 		URL: "https://h/a", GPGKey: []byte("not a key"),
 	}})
@@ -215,7 +215,7 @@ func TestApt_Apply_ConflictCleanup_ListFormatKey(t *testing.T) {
 func TestApt_Apply_ConflictScanErrorIsNonFatal(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
 	ff.errs["ReadDir:/etc/apt/sources.list.d"] = errors.New("io")
-	fr.Push(pmexec.Result{Stdout: "BINKEY"}, nil)
+	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{URL: "https://h/a", GPGKey: []byte("k")}})
 	if err != nil {
 		t.Fatalf("a conflict-scan error must not fail Apply, got %v", err)
@@ -263,7 +263,7 @@ func TestApt_Apply_MkdirAndWriteErrorsAreFatal(t *testing.T) {
 	})
 	t.Run("keyring write error", func(t *testing.T) {
 		m, ff, fr := newTestManager(t, pkg.Apt)
-		fr.Push(pmexec.Result{Stdout: "BINKEY"}, nil)
+		fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil)
 		ff.errs["WriteFile:/etc/apt/keyrings/r.gpg"] = errors.New("ro")
 		_, err := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a", GPGKey: []byte("k")}})
 		if err == nil || !strings.Contains(err.Error(), "install GPG key") {
@@ -274,7 +274,7 @@ func TestApt_Apply_MkdirAndWriteErrorsAreFatal(t *testing.T) {
 
 func TestApt_Apply_UpdateFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "could not resolve host"}, nil) // apt-get update fails
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "could not resolve host"}, nil) // apt-get update fails
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a"}})
 	if err != nil {
 		t.Fatalf("apt-get update failure must be non-fatal, got %v", err)
@@ -346,7 +346,7 @@ func TestApt_Apply_MalformedSourcesRollsBackAndFails(t *testing.T) {
 	t.Run("prior content is restored", func(t *testing.T) {
 		m, ff, fr := newTestManager(t, pkg.Apt)
 		ff.read[repoFile] = []byte("# old good content\n")
-		fr.Push(pmexec.Result{}, fmt.Errorf("apt-get: exit 100: E: Malformed entry 1 in sources file %s (absolute Suite Component)", repoFile))
+		fr.Push(sysexec.Result{}, fmt.Errorf("apt-get: exit 100: E: Malformed entry 1 in sources file %s (absolute Suite Component)", repoFile))
 
 		out, err := m.Apply(context.Background(), Repository{Name: "docker", Apt: &AptConfig{
 			URL:          "https://download.docker.com/linux/ubuntu",
@@ -368,7 +368,7 @@ func TestApt_Apply_MalformedSourcesRollsBackAndFails(t *testing.T) {
 		m, ff, fr := newTestManager(t, pkg.Apt)
 		// The path arrives ONLY via Result.Stderr — pins that the guard
 		// reads the raw streams, not just the folded error string (CR).
-		fr.Push(pmexec.Result{
+		fr.Push(sysexec.Result{
 			ExitCode: 100,
 			Stderr:   fmt.Sprintf("E: Malformed entry 1 in sources file %s (absolute Suite Component)", repoFile),
 		}, errors.New("apt-get: exit 100"))
@@ -393,7 +393,7 @@ func TestApt_Apply_MalformedSourcesRollsBackAndFails(t *testing.T) {
 // hosts with unrelated apt breakage.
 func TestApt_Apply_UnrelatedUpdateFailureStaysWarning(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(pmexec.Result{}, fmt.Errorf("apt-get: exit 100: Could not resolve 'download.docker.com'"))
+	fr.Push(sysexec.Result{}, fmt.Errorf("apt-get: exit 100: Could not resolve 'download.docker.com'"))
 
 	out, err := m.Apply(context.Background(), Repository{Name: "docker", Apt: &AptConfig{
 		URL:          "https://download.docker.com/linux/ubuntu",

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/manchtools/cadestro/sdk/pkg"
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestPacman_Apply_AppendsSectionAndSyncs(t *testing.T) {
@@ -90,7 +90,7 @@ func TestPacman_Apply_NoSigLevel(t *testing.T) {
 func TestPacman_Apply_SyncFailureIsNonFatal(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Pacman)
 	ff.read["/etc/pacman.conf"] = []byte("[options]\n")
-	fr.Push(pmexec.Result{ExitCode: 1, Stderr: "db sync failed"}, nil)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "db sync failed"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Pacman: &PacmanConfig{Server: "https://h/"}})
 	if err != nil {
 		t.Fatalf("db-sync failure must be non-fatal, got %v", err)

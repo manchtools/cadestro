@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -38,7 +38,7 @@ func TestPacman_Version(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.Version(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -194,8 +194,8 @@ func TestPacman_UpdateUpgrade(t *testing.T) {
 	})
 	t.Run("write exec error surfaced", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, pmexec.ErrEscalationDenied)
-		if _, err := m.Update(ctx); !errors.Is(err, pmexec.ErrEscalationDenied) {
+		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+		if _, err := m.Update(ctx); !errors.Is(err, sysexec.ErrEscalationDenied) {
 			t.Fatalf("err=%v want ErrEscalationDenied", err)
 		}
 	})
@@ -217,7 +217,7 @@ func TestPacman_Autoremove(t *testing.T) {
 	})
 	t.Run("no orphans (exit 1)", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if _, err := m.Autoremove(ctx); err != nil {
 			t.Fatal(err)
 		}
@@ -237,14 +237,14 @@ func TestPacman_Autoremove(t *testing.T) {
 	})
 	t.Run("query failure surfaced", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 2, Stderr: "db error"}, nil)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "db error"}, nil)
 		if _, err := m.Autoremove(ctx); err == nil {
 			t.Fatal("want error")
 		}
 	})
 	t.Run("query exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.Autoremove(ctx); err == nil {
 			t.Fatal("want error")
 		}
@@ -292,9 +292,9 @@ func TestPacman_Repair(t *testing.T) {
 	t.Run("keyring init failure is best-effort, repair continues", func(t *testing.T) {
 		stubStatFile(t, nil)
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 2, Stderr: "gpg: keyring already initialized"}, nil) // --init fails
-		ok(f, "")                                                                           // --populate
-		ok(f, "")                                                                           // -Syy
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "gpg: keyring already initialized"}, nil) // --init fails
+		ok(f, "")                                                                            // --populate
+		ok(f, "")                                                                            // -Syy
 		if _, err := m.Repair(ctx); err != nil {
 			t.Fatalf("a failed keyring --init must be swallowed, got %v", err)
 		}
@@ -308,7 +308,7 @@ func TestPacman_Repair(t *testing.T) {
 		m, f := pacmanM(t)
 		ok(f, "") // pacman-key --init
 		ok(f, "") // pacman-key --populate
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "sync failed"}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "sync failed"}, nil)
 		if _, err := m.Repair(ctx); err == nil || !strings.Contains(err.Error(), "pacman -Syy failed") {
 			t.Fatalf("err=%v", err)
 		}
@@ -359,21 +359,21 @@ func TestPacman_Search(t *testing.T) {
 	})
 	t.Run("exit 1 means no matches", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if res, err := m.Search(ctx, "ghost"); err != nil || res != nil {
 			t.Fatalf("res=%v err=%v", res, err)
 		}
 	})
 	t.Run("other non-zero is an error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 2, Stderr: "broken"}, nil)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "broken"}, nil)
 		if _, err := m.Search(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.Search(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -405,14 +405,14 @@ func TestPacman_List(t *testing.T) {
 	t.Run("pin-set lookup failure propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
 		ok(f, "vim 9.0-1\n")
-		f.Push(pmexec.Result{}, errors.New("cat failed")) // reading pacman.conf fails
+		f.Push(sysexec.Result{}, errors.New("cat failed")) // reading pacman.conf fails
 		if _, err := m.List(context.Background()); err == nil {
 			t.Fatal("an unreadable pacman.conf must propagate, not be swallowed")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.List(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -441,21 +441,21 @@ func TestPacman_ListUpgradable(t *testing.T) {
 	})
 	t.Run("exit 1 means none", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if ups, err := m.ListUpgradable(ctx); err != nil || ups != nil {
 			t.Fatalf("ups=%v err=%v", ups, err)
 		}
 	})
 	t.Run("other non-zero is an error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 2, Stderr: "x"}, nil)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "x"}, nil)
 		if _, err := m.ListUpgradable(ctx); err == nil {
 			t.Fatal("want error")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.ListUpgradable(ctx); err == nil {
 			t.Fatal("want error")
 		}
@@ -467,8 +467,8 @@ func TestPacman_Show(t *testing.T) {
 	installedInfo := "Name            : vim\nVersion         : 9.0-1\nDescription     : Vi Improved\nArchitecture    : x86_64\nInstalled Size  : 3.00 MiB\nRepository      : extra\n"
 	t.Run("installed via -Qi, pinned", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Qi
-		ok(f, "[options]\nIgnorePkg = vim\n")                          // IsPinned cat conf
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Qi
+		ok(f, "[options]\nIgnorePkg = vim\n")                           // IsPinned cat conf
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -479,9 +479,9 @@ func TestPacman_Show(t *testing.T) {
 	})
 	t.Run("available via -Si", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)                        // -Qi: not installed
-		f.Push(pmexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Si
-		ok(f, samplePacmanConf)                                        // IsPinned
+		f.Push(sysexec.Result{ExitCode: 1}, nil)                        // -Qi: not installed
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Si
+		ok(f, samplePacmanConf)                                         // IsPinned
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -492,31 +492,31 @@ func TestPacman_Show(t *testing.T) {
 	})
 	t.Run("pin-check failure propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Qi
-		f.Push(pmexec.Result{}, errors.New("cat failed"))              // IsPinned -> readConf error
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Qi
+		f.Push(sysexec.Result{}, errors.New("cat failed"))              // IsPinned -> readConf error
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("a pin-check failure must propagate")
 		}
 	})
 	t.Run("-Qi exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
 	})
 	t.Run("not installed and not in any repo -> package not found", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil) // -Qi: not installed
-		f.Push(pmexec.Result{ExitCode: 1}, nil) // -Si: not in any sync repo
+		f.Push(sysexec.Result{ExitCode: 1}, nil) // -Qi: not installed
+		f.Push(sysexec.Result{ExitCode: 1}, nil) // -Si: not in any sync repo
 		if _, err := m.Show(ctx, "ghost"); err == nil || !strings.Contains(err.Error(), "not found") {
 			t.Fatalf("err=%v, want a 'package not found' error", err)
 		}
 	})
 	t.Run("-Si runner error propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)           // -Qi not installed
-		f.Push(pmexec.Result{}, errors.New("db corrupt")) // -Si runner failure
+		f.Push(sysexec.Result{ExitCode: 1}, nil)           // -Qi not installed
+		f.Push(sysexec.Result{}, errors.New("db corrupt")) // -Si runner failure
 		if _, err := m.Show(ctx, "ghost"); err == nil {
 			t.Fatal("a -Si runner failure must propagate")
 		}
@@ -545,15 +545,15 @@ func TestPacman_ListVersions(t *testing.T) {
 	})
 	t.Run("installed-version runner failure propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("pacman -Q failed")) // InstalledVersion runner failure
+		f.Push(sysexec.Result{}, errors.New("pacman -Q failed")) // InstalledVersion runner failure
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a runner failure in the installed-version lookup must propagate")
 		}
 	})
 	t.Run("not in any repo returns info without versions", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "vim 9.0-1\n")                    // InstalledVersion
-		f.Push(pmexec.Result{ExitCode: 1}, nil) // -Si: not in any sync repo (benign)
+		ok(f, "vim 9.0-1\n")                     // InstalledVersion
+		f.Push(sysexec.Result{ExitCode: 1}, nil) // -Si: not in any sync repo (benign)
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil || len(info.Versions) != 0 {
 			t.Fatalf("info=%+v err=%v", info, err)
@@ -561,8 +561,8 @@ func TestPacman_ListVersions(t *testing.T) {
 	})
 	t.Run("-Si runner failure propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "vim 9.0-1\n")                      // InstalledVersion
-		f.Push(pmexec.Result{}, errors.New("db")) // -Si runner failure
+		ok(f, "vim 9.0-1\n")                       // InstalledVersion
+		f.Push(sysexec.Result{}, errors.New("db")) // -Si runner failure
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a -Si runner failure must propagate")
 		}
@@ -579,21 +579,21 @@ func TestPacman_IsInstalledAndVersion(t *testing.T) {
 	ctx := context.Background()
 	t.Run("installed", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 0}, nil)
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
 		if got, err := m.IsInstalled(ctx, "vim"); err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("not installed", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if got, err := m.IsInstalled(ctx, "ghost"); err != nil || got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
 	})
 	t.Run("IsInstalled exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.IsInstalled(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -613,7 +613,7 @@ func TestPacman_IsInstalledAndVersion(t *testing.T) {
 	})
 	t.Run("InstalledVersion not installed -> empty", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if v, err := m.InstalledVersion(ctx, "ghost"); err != nil || v != "" {
 			t.Fatalf("v=%q err=%v", v, err)
 		}
@@ -627,7 +627,7 @@ func TestPacman_IsInstalledAndVersion(t *testing.T) {
 	})
 	t.Run("InstalledVersion exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.InstalledVersion(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -650,7 +650,7 @@ func TestPacman_InstalledCount(t *testing.T) {
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.InstalledCount(context.Background()); err == nil {
 			t.Fatal("want error")
 		}
@@ -668,7 +668,7 @@ func TestPacman_HasUpdates(t *testing.T) {
 	})
 	t.Run("none (exit 1)", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if got, err := m.HasUpdates(ctx, false); err != nil || got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
@@ -682,14 +682,14 @@ func TestPacman_HasUpdates(t *testing.T) {
 	})
 	t.Run("other non-zero is an error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{ExitCode: 2, Stderr: "x"}, nil)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "x"}, nil)
 		if _, err := m.HasUpdates(ctx, false); err == nil {
 			t.Fatal("want error")
 		}
 	})
 	t.Run("exec error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("boom"))
+		f.Push(sysexec.Result{}, errors.New("boom"))
 		if _, err := m.HasUpdates(ctx, false); err == nil {
 			t.Fatal("want error")
 		}
@@ -747,7 +747,7 @@ func TestPacman_Pin(t *testing.T) {
 	})
 	t.Run("readConf failure surfaced", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("cat failed"))
+		f.Push(sysexec.Result{}, errors.New("cat failed"))
 		if _, err := m.Pin(ctx, "vim"); err == nil || !strings.Contains(err.Error(), "pacman.conf") {
 			t.Fatalf("err=%v", err)
 		}
@@ -755,7 +755,7 @@ func TestPacman_Pin(t *testing.T) {
 	t.Run("tee failure surfaced", func(t *testing.T) {
 		m, f := pacmanM(t)
 		ok(f, samplePacmanConf)
-		f.Push(pmexec.Result{ExitCode: 1, Stderr: "permission denied"}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "permission denied"}, nil)
 		if _, err := m.Pin(ctx, "vim"); err == nil {
 			t.Fatal("want tee failure")
 		}
@@ -763,8 +763,8 @@ func TestPacman_Pin(t *testing.T) {
 	t.Run("tee exec error surfaced", func(t *testing.T) {
 		m, f := pacmanM(t)
 		ok(f, samplePacmanConf)
-		f.Push(pmexec.Result{}, pmexec.ErrEscalationDenied)
-		if _, err := m.Pin(ctx, "vim"); !errors.Is(err, pmexec.ErrEscalationDenied) {
+		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+		if _, err := m.Pin(ctx, "vim"); !errors.Is(err, sysexec.ErrEscalationDenied) {
 			t.Fatalf("err=%v want ErrEscalationDenied", err)
 		}
 	})
@@ -798,7 +798,7 @@ func TestPacman_Unpin(t *testing.T) {
 	})
 	t.Run("readConf failure surfaced", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("cat failed"))
+		f.Push(sysexec.Result{}, errors.New("cat failed"))
 		if _, err := m.Unpin(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -822,7 +822,7 @@ func TestPacman_ListPinnedAndIsPinned(t *testing.T) {
 	})
 	t.Run("ListPinned readConf error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("cat failed"))
+		f.Push(sysexec.Result{}, errors.New("cat failed"))
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("want error")
 		}
@@ -840,7 +840,7 @@ func TestPacman_ListPinnedAndIsPinned(t *testing.T) {
 	})
 	t.Run("IsPinned readConf error", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(pmexec.Result{}, errors.New("cat failed"))
+		f.Push(sysexec.Result{}, errors.New("cat failed"))
 		if _, err := m.IsPinned(ctx, "vim"); err == nil {
 			t.Fatal("want error")
 		}
@@ -945,7 +945,7 @@ func TestPacman_ParseValueAndSize(t *testing.T) {
 }
 
 // readAll drains a recorded Command's stdin reader.
-func readAll(t *testing.T, c pmexec.Command) string {
+func readAll(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {
 		return ""
@@ -966,16 +966,16 @@ func TestPacman_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("ListUpgradable: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "git 2.39-1\n")                     // -Qu (simple format triggers InstalledVersion)
-		f.Push(pmexec.Result{}, errors.New("-Q")) // InstalledVersion
+		ok(f, "git 2.39-1\n")                      // -Qu (simple format triggers InstalledVersion)
+		f.Push(sysexec.Result{}, errors.New("-Q")) // InstalledVersion
 		if _, err := m.ListUpgradable(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "[options]\nIgnorePkg = linux\n")   // readConf
-		f.Push(pmexec.Result{}, errors.New("-Q")) // InstalledVersion
+		ok(f, "[options]\nIgnorePkg = linux\n")    // readConf
+		f.Push(sysexec.Result{}, errors.New("-Q")) // InstalledVersion
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}

@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 func TestLocalPackageInfo_AptRealDeb_Container(t *testing.T) {
@@ -40,7 +40,7 @@ func TestLocalPackageInfo_AptRealDeb_Container(t *testing.T) {
 		t.Fatalf("dpkg-deb --build: %v\n%s", err, out)
 	}
 
-	r, err := pmexec.NewRunner(pmexec.Direct)
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}

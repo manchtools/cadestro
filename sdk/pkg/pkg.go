@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
 // ErrUnknownBackend is returned by New for a Backend the SDK does not implement
@@ -143,7 +143,7 @@ type Manager interface {
 	// Install installs the named packages. opts.Version pins a single package
 	// (exactly one name required when set); opts.AllowDowngrade permits a lower
 	// version than installed.
-	Install(ctx context.Context, opts InstallOptions, packages ...string) (pmexec.Result, error)
+	Install(ctx context.Context, opts InstallOptions, packages ...string) (sysexec.Result, error)
 	// InstallLocal installs a package from a local file already on disk — a
 	// downloaded .deb, .rpm, pacman package, or flatpak bundle — rather than by
 	// name from a configured repository, resolving dependencies from the
@@ -154,34 +154,34 @@ type Manager interface {
 	// the one currently installed; opts.AllowUnsigned skips the backend's GPG
 	// check (dnf --nogpgcheck / zypper --allow-unsigned-rpm) for a file whose
 	// authenticity is established out of band — secure-default-off.
-	InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (pmexec.Result, error)
+	InstallLocal(ctx context.Context, path string, opts InstallLocalOptions) (sysexec.Result, error)
 	// Remove removes the named packages. opts.Purge also deletes configuration
 	// where the backend distinguishes it (apt/pacman/flatpak); elsewhere Purge
 	// is equivalent to a plain remove.
-	Remove(ctx context.Context, opts RemoveOptions, packages ...string) (pmexec.Result, error)
+	Remove(ctx context.Context, opts RemoveOptions, packages ...string) (sysexec.Result, error)
 	// Update refreshes the package metadata/database.
-	Update(ctx context.Context) (pmexec.Result, error)
+	Update(ctx context.Context) (sysexec.Result, error)
 	// Upgrade upgrades the named packages. With NO names it is a no-op (not a
 	// full upgrade) — an accidentally-empty list must never upgrade the whole
 	// system. Use UpgradeAll for that.
-	Upgrade(ctx context.Context, packages ...string) (pmexec.Result, error)
+	Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error)
 	// UpgradeAll performs a full system upgrade (apt dist-upgrade / dnf upgrade /
 	// pacman -Syu / zypper dist-upgrade / flatpak update). With
 	// opts.SecurityOnly it upgrades only security updates where the backend
 	// supports it (apt/dnf/zypper); pacman and flatpak return
 	// ErrSecurityOnlyUnsupported.
-	UpgradeAll(ctx context.Context, opts UpgradeOptions) (pmexec.Result, error)
+	UpgradeAll(ctx context.Context, opts UpgradeOptions) (sysexec.Result, error)
 	// Pin holds the named packages back from upgrades.
-	Pin(ctx context.Context, packages ...string) (pmexec.Result, error)
+	Pin(ctx context.Context, packages ...string) (sysexec.Result, error)
 	// Unpin releases the named packages so they upgrade again.
-	Unpin(ctx context.Context, packages ...string) (pmexec.Result, error)
+	Unpin(ctx context.Context, packages ...string) (sysexec.Result, error)
 	// Repair attempts to fix a wedged package-manager state (stale locks,
 	// interrupted transactions, broken dependencies). It runs several recovery
 	// commands; the returned Result is that of the final (or first failing) step.
-	Repair(ctx context.Context) (pmexec.Result, error)
+	Repair(ctx context.Context) (sysexec.Result, error)
 	// Autoremove removes packages installed only as now-unneeded dependencies.
 	// It is a no-op (zero Result, nil error) on backends with no native equivalent.
-	Autoremove(ctx context.Context) (pmexec.Result, error)
+	Autoremove(ctx context.Context) (sysexec.Result, error)
 }
 
 // FlatpakManager is the Manager returned by New(Flatpak, …); it adds remote
@@ -219,9 +219,9 @@ func WithUserScope() Option {
 // New builds a Manager for backend b driven by runner. A nil runner or an
 // unknown backend is rejected (fail-closed). New is pure — it does not probe
 // the host; use Detect to learn which backends are installed.
-func New(b Backend, runner pmexec.Runner, opts ...Option) (Manager, error) {
+func New(b Backend, runner sysexec.Runner, opts ...Option) (Manager, error) {
 	if runner == nil {
-		return nil, fmt.Errorf("pkg: %w", pmexec.ErrRunnerRequired)
+		return nil, fmt.Errorf("pkg: %w", sysexec.ErrRunnerRequired)
 	}
 	cfg := config{system: true}
 	for _, o := range opts {

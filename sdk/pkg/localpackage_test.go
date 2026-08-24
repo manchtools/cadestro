@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	pmexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
@@ -296,7 +296,7 @@ func TestLocalPackageInfo_AcceptsRpmPlusName(t *testing.T) {
 // half-populated info.
 func TestLocalPackageInfo_ReadFailurePropagates(t *testing.T) {
 	m, f := aptM(t)
-	f.Push(pmexec.Result{ExitCode: 2, Stderr: "dpkg-deb: error: not a debian archive\n"}, nil)
+	f.Push(sysexec.Result{ExitCode: 2, Stderr: "dpkg-deb: error: not a debian archive\n"}, nil)
 	info, err := m.LocalPackageInfo(context.Background(), "/tmp/not-a.deb")
 	if err == nil {
 		t.Fatal("a non-zero dpkg-deb exit must surface as an error")
