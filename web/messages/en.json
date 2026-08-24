@@ -1066,7 +1066,7 @@
   "assign_schedule_label": "Schedule",
   "assign_schedule_now": "now",
   "assign_schedule_on_schedule": "on the set's schedule",
-  "assign_schedule_now_hint": "Assigns the set and syncs it immediately when the device is online. Offline devices apply the assignment when they reconnect.",
+  "assign_schedule_now_hint": "Assigns the set and syncs it immediately when the device is online. Devices without a connection apply the assignment when they reconnect.",
   "assign_schedule_on_schedule_hint": "Assigns the set as standing policy. It runs on the set's own schedule.",
   "assign_pill_title": "Assign · {label}",
   "assign_commit_label": "Assign to {count} →",
@@ -2135,7 +2135,7 @@
   "terminal_sessions_terminate_failed": "Failed to terminate session",
   "error_terminal_not_configured": "Remote terminal sessions are not configured on this server",
   "error_terminal_linux_username_not_set": "Please set your Linux username before opening a terminal",
-  "error_query_result_not_found": "Query result is not available — it may have expired or been dispatched to an offline device.",
+  "error_query_result_not_found": "Query result is not available — it may have expired or is no longer available.",
   "nav_marketplace": "Marketplace",
   "marketplace_title": "Marketplace",
   "marketplace_subtitle": "Browse and import templates from the Cadestro marketplace.",
@@ -2254,7 +2254,7 @@
       }
     }
   ],
-  "bulk_reboot_confirm_description": "Each selected device gets its own live reboot call; offline devices will fail.",
+  "bulk_reboot_confirm_description": "Each selected device gets its own live reboot call; devices without a connection will fail.",
   "bulk_confirm_more": "+ {count} more",
   "bulk_reboot_requested": [
     {

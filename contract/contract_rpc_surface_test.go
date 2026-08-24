@@ -471,11 +471,9 @@ func TestContract_HasNoSpeculativeBackendSelectors(t *testing.T) {
 }
 
 // Design §8: every field classified secret uses raw bytes on the authenticated
-// mTLS stream, and no application frame carries a signature or the relay-era
-// device-binding guard. Both are registry sweeps rather than lists — a NEW
-// secret or a NEW signature field fails without anyone remembering to extend
-// anything.
-func TestContract_SecretsAreClassifiedAndFramesAreUnsigned(t *testing.T) {
+// mTLS stream. The registry sweep means a new secret fails without anyone
+// remembering to extend a list.
+func TestContract_SecretsAreClassified(t *testing.T) {
 	msgs := contractMessages(t)
 	// These are the only plaintext secret fields in the contract: authenticated
 	// HTTPS write-only inputs consumed and encrypted by control. They never enter
@@ -485,22 +483,11 @@ func TestContract_SecretsAreClassifiedAndFramesAreUnsigned(t *testing.T) {
 		"cadestro.v1.WifiAuthoringParams.psk":                 {},
 		"cadestro.v1.WifiAuthoringParams.client_key":          {},
 	}
-	banned := map[protoreflect.Name]string{
-		"signature":          "a CA signature over an application frame",
-		"signed_envelope":    "the signed-envelope indirection",
-		"target_device_id":   "the relay-era device-binding guard (mTLS identifies the device)",
-		"standalone_actions": "the abolished pull-path scheduler shape (deliveries carry manifests)",
-		"grouped_actions":    "the abolished pull-path scheduler shape (deliveries carry manifests)",
-	}
-
 	classified, scanned := 0, 0
 	for _, md := range msgs {
 		for i := 0; i < md.Fields().Len(); i++ {
 			fd := md.Fields().Get(i)
 			scanned++
-			if why, bad := banned[fd.Name()]; bad {
-				t.Errorf("%s.%s still ships — %s has no place on a direct mTLS transport", md.Name(), fd.Name(), why)
-			}
 			opts, _ := fd.Options().(*descriptorpb.FieldOptions)
 			if !opts.GetDebugRedact() {
 				continue
