@@ -470,9 +470,6 @@ func TestContract_HasNoSpeculativeBackendSelectors(t *testing.T) {
 	}
 }
 
-// Design §8: every field classified secret uses raw bytes on the authenticated
-// mTLS stream. The registry sweep means a new secret fails without anyone
-// remembering to extend a list.
 func TestContract_SecretsAreClassified(t *testing.T) {
 	msgs := contractMessages(t)
 	// These are the only plaintext secret fields in the contract: authenticated

@@ -1066,7 +1066,7 @@
   "assign_schedule_label": "Zeitplan",
   "assign_schedule_now": "sofort",
   "assign_schedule_on_schedule": "nach Satzzeitplan",
-  "assign_schedule_now_hint": "Weist den Satz zu und synchronisiert ihn sofort, wenn das Gerät online ist. Geräte ohne Verbindung übernehmen die Zuweisung bei der nächsten Verbindung.",
+  "assign_schedule_now_hint": "Weist den Satz zu und synchronisiert ihn sofort, wenn das Gerät online ist. Offline-Geräte übernehmen die Zuweisung bei der nächsten Verbindung.",
   "assign_schedule_on_schedule_hint": "Weist den Satz als dauerhafte Richtlinie zu. Er läuft nach seinem eigenen Zeitplan.",
   "assign_pill_title": "Zuweisen · {label}",
   "assign_commit_label": "{count} zuweisen →",
@@ -2254,7 +2254,7 @@
       }
     }
   ],
-  "bulk_reboot_confirm_description": "Jedes ausgewählte Gerät erhält einen eigenen Live-Neustart-Aufruf; Geräte ohne Verbindung schlagen fehl.",
+  "bulk_reboot_confirm_description": "Jedes ausgewählte Gerät erhält einen eigenen Live-Neustart-Aufruf; Offline-Geräte schlagen fehl.",
   "bulk_confirm_more": "+ {count} weitere",
   "bulk_reboot_requested": [
     {
