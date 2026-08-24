@@ -22,7 +22,7 @@ func TestOpenRunsShellAsTargetUser_Container(t *testing.T) {
 	if _, err := osexec.LookPath("useradd"); err != nil {
 		t.Skip("useradd not on PATH")
 	}
-	const u = "pmttytest"
+	const u = "cadestrottytest"
 	_ = osexec.Command("userdel", "-r", u).Run() // best-effort clean slate
 	if out, err := osexec.Command("useradd", "-m", "-s", "/bin/bash", u).CombinedOutput(); err != nil {
 		t.Skipf("cannot create test user (need root?): %v\n%s", err, out)

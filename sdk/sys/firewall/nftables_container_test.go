@@ -55,7 +55,7 @@ func findRule(rules []Rule, id string) (Rule, bool) {
 // RemoveRule round-trip against real nft, including idempotency.
 func TestNftablesApplyListRemove_Container(t *testing.T) {
 	requireNft(t)
-	m := nftMgr(t, "pmrt")
+	m := nftMgr(t, "cadestrort")
 	ctx, cancel := context.WithTimeout(context.Background(), fwCtxTimeout)
 	defer cancel()
 
@@ -110,7 +110,7 @@ func TestNftablesApplyListRemove_Container(t *testing.T) {
 // "rule thought-applied but not enforced" state.
 func TestNftablesV4MappedIPv6_Container(t *testing.T) {
 	requireNft(t)
-	m := nftMgr(t, "pmv4m")
+	m := nftMgr(t, "cadestrov4m")
 	ctx, cancel := context.WithTimeout(context.Background(), fwCtxTimeout)
 	defer cancel()
 

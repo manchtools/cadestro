@@ -81,8 +81,8 @@ func deskCtx(t *testing.T) context.Context {
 func TestHomeUsers_Container(t *testing.T) {
 	requireUseradd(t)
 	root := t.TempDir()
-	alice := mkUser(t, "pmhomealice", filepath.Join(root, "pmhomealice"))
-	_ = mkUser(t, "pmhomebob", filepath.Join(root, "pmhomebob"))
+	alice := mkUser(t, "cadestrohomealice", filepath.Join(root, "cadestrohomealice"))
+	_ = mkUser(t, "cadestrohomebob", filepath.Join(root, "cadestrohomebob"))
 
 	// Decoys that must NOT be enumerated.
 	if err := os.Mkdir(filepath.Join(root, "ghost"), 0o755); err != nil { // dir with no account
@@ -104,12 +104,12 @@ func TestHomeUsers_Container(t *testing.T) {
 		names = append(names, s.Username)
 	}
 	slices.Sort(names)
-	if want := []string{"pmhomealice", "pmhomebob"}; !slices.Equal(names, want) {
+	if want := []string{"cadestrohomealice", "cadestrohomebob"}; !slices.Equal(names, want) {
 		t.Errorf("HomeUsers = %v, want %v (ghost/.hidden/lost+found must be skipped)", names, want)
 	}
 	// The returned account must carry the canonical UID/Home from passwd.
 	for _, s := range got {
-		if s.Username == "pmhomealice" {
+		if s.Username == "cadestrohomealice" {
 			if strconv.Itoa(s.UID) != alice.Uid || s.Home != alice.HomeDir {
 				t.Errorf("alice session = uid %d home %q, want uid %s home %q", s.UID, s.Home, alice.Uid, alice.HomeDir)
 			}
@@ -122,11 +122,11 @@ func TestHomeUsers_Container(t *testing.T) {
 // runuser) with the per-user HOME/USER and the curated PATH.
 func TestRunAsRunner_Container(t *testing.T) {
 	requireUseradd(t)
-	home := filepath.Join(t.TempDir(), "pmrunas")
-	u := mkUser(t, "pmrunas", home)
+	home := filepath.Join(t.TempDir(), "cadestrorunas")
+	u := mkUser(t, "cadestrorunas", home)
 	uid, _ := strconv.Atoi(u.Uid)
 	gid, _ := strconv.Atoi(u.Gid)
-	s := Session{Username: "pmrunas", UID: uid, GID: gid, Home: u.HomeDir, RuntimeDir: "/run/user/" + u.Uid}
+	s := Session{Username: "cadestrorunas", UID: uid, GID: gid, Home: u.HomeDir, RuntimeDir: "/run/user/" + u.Uid}
 	base, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
@@ -140,21 +140,21 @@ func TestRunAsRunner_Container(t *testing.T) {
 	// Identity: `id -un` must print the target user — proves the real privilege drop.
 	res, err := ru.Run(ctx, sysexec.Command{Name: "id", Args: []string{"-un"}})
 	if err != nil {
-		t.Fatalf("run id -un as pmrunas: %v", err)
+		t.Fatalf("run id -un as cadestrorunas: %v", err)
 	}
-	if got := strings.TrimSpace(res.Stdout); got != "pmrunas" {
-		t.Errorf("id -un = %q, want pmrunas (privilege was not dropped)", got)
+	if got := strings.TrimSpace(res.Stdout); got != "cadestrorunas" {
+		t.Errorf("id -un = %q, want cadestrorunas (privilege was not dropped)", got)
 	}
 
 	// Environment: HOME/USER are the user's; PATH is the curated UserPath (the
 	// user's ~/.local/bin first), NOT root's inherited PATH.
 	res2, err := ru.Run(ctx, sysexec.Command{Name: "sh", Args: []string{"-c", `printf '%s|%s|%s' "$HOME" "$USER" "$PATH"`}})
 	if err != nil {
-		t.Fatalf("run env probe as pmrunas: %v", err)
+		t.Fatalf("run env probe as cadestrorunas: %v", err)
 	}
 	parts := strings.SplitN(strings.TrimRight(res2.Stdout, "\n"), "|", 3)
-	if len(parts) != 3 || parts[0] != u.HomeDir || parts[1] != "pmrunas" {
-		t.Errorf("env = %v, want HOME=%q USER=pmrunas", parts, u.HomeDir)
+	if len(parts) != 3 || parts[0] != u.HomeDir || parts[1] != "cadestrorunas" {
+		t.Errorf("env = %v, want HOME=%q USER=cadestrorunas", parts, u.HomeDir)
 	}
 	if !strings.HasPrefix(parts[2], u.HomeDir+"/.local/bin:") {
 		t.Errorf("PATH = %q, want it to start with the user's ~/.local/bin", parts[2])
@@ -166,7 +166,7 @@ func TestRunAsRunner_Container(t *testing.T) {
 	// parity that RunAsRunner now provides).
 	res3, err := ru.Run(ctx, sysexec.Command{Name: "pwd", Dir: u.HomeDir})
 	if err != nil {
-		t.Fatalf("run pwd as pmrunas with Dir: %v", err)
+		t.Fatalf("run pwd as cadestrorunas with Dir: %v", err)
 	}
 	if got := strings.TrimSpace(res3.Stdout); got != u.HomeDir {
 		t.Errorf("pwd = %q, want %q (Command.Dir was not honored)", got, u.HomeDir)
@@ -177,10 +177,10 @@ func TestRunAsRunner_Container(t *testing.T) {
 // directory: only the user with $HOME/.local/share/flatpak/app/<appID> is returned.
 func TestUsersWithFlatpakInstall_Container(t *testing.T) {
 	requireUseradd(t)
-	const appID = "org.test.PMApp"
+	const appID = "org.test.CadestroApp"
 	root := t.TempDir()
-	flat := mkUser(t, "pmflatuser", filepath.Join(root, "pmflatuser"))
-	_ = mkUser(t, "pmplainuser", filepath.Join(root, "pmplainuser"))
+	flat := mkUser(t, "cadestroflatuser", filepath.Join(root, "cadestroflatuser"))
+	_ = mkUser(t, "cadestroplainuser", filepath.Join(root, "cadestroplainuser"))
 	if err := os.MkdirAll(filepath.Join(flat.HomeDir, ".local/share/flatpak/app", appID), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -189,12 +189,12 @@ func TestUsersWithFlatpakInstall_Container(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UsersWithFlatpakInstall: %v", err)
 	}
-	if len(got) != 1 || got[0].Username != "pmflatuser" {
+	if len(got) != 1 || got[0].Username != "cadestroflatuser" {
 		names := make([]string, len(got))
 		for i, s := range got {
 			names[i] = s.Username
 		}
-		t.Errorf("UsersWithFlatpakInstall = %v, want [pmflatuser] only", names)
+		t.Errorf("UsersWithFlatpakInstall = %v, want [cadestroflatuser] only", names)
 	}
 }
 

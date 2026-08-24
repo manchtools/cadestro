@@ -107,7 +107,7 @@ func TestNew_FailClosed(t *testing.T) {
 
 func TestNew_AcceptsValidNamespace(t *testing.T) {
 	r := &recordingRunner{}
-	for _, ns := range []string{"app", "pm_firewall", "a", "some_app_42", strings.Repeat("a", 31)} {
+	for _, ns := range []string{"app", "cadestro_firewall", "a", "some_app_42", strings.Repeat("a", 31)} {
 		if _, err := New(Nftables, ns, r); err != nil {
 			t.Errorf("New(%q) = %v, want nil", ns, err)
 		}

@@ -31,7 +31,7 @@ func newManager(t *testing.T) user.Manager {
 }
 
 func testUsername(suffix string) string {
-	return fmt.Sprintf("pmtest%s%d", suffix, os.Getpid()%10000)
+	return fmt.Sprintf("cadestrotest%s%d", suffix, os.Getpid()%10000)
 }
 
 func cleanupUser(t *testing.T, m user.Manager, username string) {
@@ -116,7 +116,7 @@ func TestGet_Integration(t *testing.T) {
 }
 
 func TestGetNonexistent_Integration(t *testing.T) {
-	if _, err := newManager(t).Get(context.Background(), "pmnonexistent12345"); err == nil {
+	if _, err := newManager(t).Get(context.Background(), "cadestrononexistent12345"); err == nil {
 		t.Fatal("expected error for non-existent user")
 	}
 }
@@ -127,7 +127,7 @@ func TestExists_Integration(t *testing.T) {
 	if ok, err := m.Exists(ctx, "root"); err != nil || !ok {
 		t.Errorf("Exists(root) = (%v,%v), want (true,nil)", ok, err)
 	}
-	if ok, err := m.Exists(ctx, "pmnonexistent12345"); err != nil || ok {
+	if ok, err := m.Exists(ctx, "cadestrononexistent12345"); err != nil || ok {
 		t.Error("non-existent user reported as existing")
 	}
 }
@@ -188,7 +188,7 @@ func TestDeleteWithHome_Integration(t *testing.T) {
 }
 
 func TestDeleteNonexistent_Integration(t *testing.T) {
-	err := newManager(t).Delete(context.Background(), "pmnonexistent12345", user.DeleteOptions{})
+	err := newManager(t).Delete(context.Background(), "cadestrononexistent12345", user.DeleteOptions{})
 	if err == nil {
 		t.Fatal("expected error deleting a non-existent user")
 	}

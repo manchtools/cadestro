@@ -819,7 +819,7 @@ func TestIntegration_Directory(t *testing.T) {
 func TestIntegration_User(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	username := "pmtestuser"
+	username := "cadestrotestuser"
 
 	t.Cleanup(func() { cleanupTestUser(t, username) })
 
@@ -904,7 +904,7 @@ func TestIntegration_User_CreateHomeRespected(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("ExplicitFalse_NoHomeCreated", func(t *testing.T) {
-		username := "pmtestnohome"
+		username := "cadestrotestnohome"
 		homeDir := "/home/" + username
 		t.Cleanup(func() {
 			cleanupTestUser(t, username)
@@ -933,7 +933,7 @@ func TestIntegration_User_CreateHomeRespected(t *testing.T) {
 	})
 
 	t.Run("ExplicitTrue_HomeCreated", func(t *testing.T) {
-		username := "pmtestwithhome"
+		username := "cadestrotestwithhome"
 		homeDir := "/home/" + username
 		t.Cleanup(func() {
 			cleanupTestUser(t, username)
@@ -977,7 +977,7 @@ func TestIntegration_User_NoPassword(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("NoPasswordTrue_NoChpasswdNoLpsMetadata", func(t *testing.T) {
-		username := "pmtestnopass"
+		username := "cadestrotestnopass"
 		t.Cleanup(func() { cleanupTestUser(t, username) })
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_USER, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -1018,7 +1018,7 @@ func TestIntegration_User_NoPassword(t *testing.T) {
 		// Regression guard: the existing temp-password path must still
 		// work when NoPassword is unset / false. If a future commit
 		// accidentally flips the gate, this catches it.
-		username := "pmtestwithpass"
+		username := "cadestrotestwithpass"
 		t.Cleanup(func() { cleanupTestUser(t, username) })
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_USER, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -1043,7 +1043,7 @@ func TestIntegration_User_NoPassword(t *testing.T) {
 func TestIntegration_User_ReapplyNoPasswordStaysStar(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	username := "pmtestreapplylock"
+	username := "cadestrotestreapplylock"
 	t.Cleanup(func() { cleanupTestUser(t, username) })
 
 	params := &pb.UserParams{
@@ -1093,7 +1093,7 @@ func TestIntegration_User_ReapplyNoPasswordStaysStar(t *testing.T) {
 func TestIntegration_User_DisabledNoPasswordIsLocked(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	username := "pmtestdisablednopass"
+	username := "cadestrotestdisablednopass"
 	t.Cleanup(func() { cleanupTestUser(t, username) })
 
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_USER, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -1122,12 +1122,12 @@ func TestIntegration_User_DisabledNoPasswordIsLocked(t *testing.T) {
 func TestIntegration_Group(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	groupName := "pmtestgroup"
+	groupName := "cadestrotestgroup"
 
 	t.Cleanup(func() {
 		cleanupTestGroup(t, groupName)
-		cleanupTestUser(t, "pmgrpuser1")
-		cleanupTestUser(t, "pmgrpuser2")
+		cleanupTestUser(t, "cadestrogrpuser1")
+		cleanupTestUser(t, "cadestrogrpuser2")
 	})
 
 	t.Run("Create", func(t *testing.T) {
@@ -1150,26 +1150,26 @@ func TestIntegration_Group(t *testing.T) {
 	})
 
 	t.Run("AddMembers", func(t *testing.T) {
-		ensureTestUser(t, "pmgrpuser1")
-		ensureTestUser(t, "pmgrpuser2")
+		ensureTestUser(t, "cadestrogrpuser1")
+		ensureTestUser(t, "cadestrogrpuser2")
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_GROUP, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Group{Group: &pb.GroupParams{
 			Name:    groupName,
-			Members: []string{"pmgrpuser1", "pmgrpuser2"},
+			Members: []string{"cadestrogrpuser1", "cadestrogrpuser2"},
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
 		assertChanged(t, result, true)
-		if !userInGroup(ctx, "pmgrpuser1", groupName) {
-			t.Error("pmgrpuser1 not in group")
+		if !userInGroup(ctx, "cadestrogrpuser1", groupName) {
+			t.Error("cadestrogrpuser1 not in group")
 		}
-		if !userInGroup(ctx, "pmgrpuser2", groupName) {
-			t.Error("pmgrpuser2 not in group")
+		if !userInGroup(ctx, "cadestrogrpuser2", groupName) {
+			t.Error("cadestrogrpuser2 not in group")
 		}
 	})
 
 	t.Run("EmptyMembersRemovesAll", func(t *testing.T) {
-		// After AddMembers, the group has pmgrpuser1 and pmgrpuser2.
+		// After AddMembers, the group has cadestrogrpuser1 and cadestrogrpuser2.
 		// Syncing with an empty members list should remove them all
 		// but keep the group itself.
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_GROUP, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -1183,11 +1183,11 @@ func TestIntegration_Group(t *testing.T) {
 		if v, _ := groupExists(context.Background(), groupName); !v {
 			t.Error("group should still exist")
 		}
-		if userInGroup(ctx, "pmgrpuser1", groupName) {
-			t.Error("pmgrpuser1 should have been removed from group")
+		if userInGroup(ctx, "cadestrogrpuser1", groupName) {
+			t.Error("cadestrogrpuser1 should have been removed from group")
 		}
-		if userInGroup(ctx, "pmgrpuser2", groupName) {
-			t.Error("pmgrpuser2 should have been removed from group")
+		if userInGroup(ctx, "cadestrogrpuser2", groupName) {
+			t.Error("cadestrogrpuser2 should have been removed from group")
 		}
 	})
 
@@ -1212,11 +1212,11 @@ func TestIntegration_Sudo(t *testing.T) {
 	ctx := context.Background()
 	actionID := "sudotest01"
 
-	ensureTestUser(t, "pmsudouser")
+	ensureTestUser(t, "cadestrosudouser")
 	t.Cleanup(func() {
 		sudoRemove(sudoersFilePath(actionID))
 		sudoRun("groupdel", sanitizeSudoGroupName(actionID)).Run()
-		cleanupTestUser(t, "pmsudouser")
+		cleanupTestUser(t, "cadestrosudouser")
 	})
 
 	t.Run("SetupFullAccess", func(t *testing.T) {
@@ -1226,7 +1226,7 @@ func TestIntegration_Sudo(t *testing.T) {
 			DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 			Params: &pb.Action_AdminPolicy{AdminPolicy: &pb.AdminPolicyParams{
 				AccessLevel: pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
-				Users:       []string{"pmsudouser"},
+				Users:       []string{"cadestrosudouser"},
 			}},
 		}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -1251,7 +1251,7 @@ func TestIntegration_Sudo(t *testing.T) {
 			DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 			Params: &pb.Action_AdminPolicy{AdminPolicy: &pb.AdminPolicyParams{
 				AccessLevel: pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
-				Users:       []string{"pmsudouser"},
+				Users:       []string{"cadestrosudouser"},
 			}},
 		}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -1266,7 +1266,7 @@ func TestIntegration_Sudo(t *testing.T) {
 			DesiredState: pb.DesiredState_DESIRED_STATE_ABSENT,
 			Params: &pb.Action_AdminPolicy{AdminPolicy: &pb.AdminPolicyParams{
 				AccessLevel: pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
-				Users:       []string{"pmsudouser"},
+				Users:       []string{"cadestrosudouser"},
 			}},
 		}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -1294,10 +1294,10 @@ func TestIntegration_SSH(t *testing.T) {
 	t.Cleanup(func() {
 		sudoRemove(sshConfigPath(actionID))
 		sudoRun("groupdel", sshGroupName(actionID)).Run()
-		cleanupTestUser(t, "pmsshuser")
+		cleanupTestUser(t, "cadestrosshuser")
 	})
 
-	ensureTestUser(t, "pmsshuser")
+	ensureTestUser(t, "cadestrosshuser")
 
 	t.Run("SetupAccess", func(t *testing.T) {
 		action := &pb.Action{
@@ -1305,7 +1305,7 @@ func TestIntegration_SSH(t *testing.T) {
 			Type:         pb.ActionType_ACTION_TYPE_SSH,
 			DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 			Params: &pb.Action_Ssh{Ssh: &pb.SshParams{
-				Users:         []string{"pmsshuser"},
+				Users:         []string{"cadestrosshuser"},
 				AllowPubkey:   true,
 				AllowPassword: false,
 			}},
@@ -1328,7 +1328,7 @@ func TestIntegration_SSH(t *testing.T) {
 			Type:         pb.ActionType_ACTION_TYPE_SSH,
 			DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 			Params: &pb.Action_Ssh{Ssh: &pb.SshParams{
-				Users:         []string{"pmsshuser"},
+				Users:         []string{"cadestrosshuser"},
 				AllowPubkey:   true,
 				AllowPassword: false,
 			}},
@@ -1344,7 +1344,7 @@ func TestIntegration_SSH(t *testing.T) {
 			Type:         pb.ActionType_ACTION_TYPE_SSH,
 			DesiredState: pb.DesiredState_DESIRED_STATE_ABSENT,
 			Params: &pb.Action_Ssh{Ssh: &pb.SshParams{
-				Users: []string{"pmsshuser"},
+				Users: []string{"cadestrosshuser"},
 			}},
 		}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -1480,7 +1480,7 @@ func TestIntegration_LPS(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 	actionID := "lpstest01"
-	username := "pmlpsuser"
+	username := "cadestrolpsuser"
 
 	ensureTestUser(t, username)
 	t.Cleanup(func() {
@@ -1672,7 +1672,7 @@ func TestIntegration_Repository(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
 	ctx := context.Background()
-	repoName := "pmtestrepo"
+	repoName := "cadestrotestrepo"
 
 	t.Cleanup(func() {
 		sudoRemove(fmt.Sprintf("/etc/apt/sources.list.d/%s.sources", repoName))
@@ -1810,7 +1810,7 @@ func TestIntegration_Repository_Dnf(t *testing.T) {
 	skipIfNoDnf(t)
 	e := newTestExecutor()
 	ctx := context.Background()
-	repoName := "pmtestrepo"
+	repoName := "cadestrotestrepo"
 
 	t.Cleanup(func() {
 		sudoRemove(fmt.Sprintf("/etc/yum.repos.d/%s.repo", repoName))
@@ -1822,7 +1822,7 @@ func TestIntegration_Repository_Dnf(t *testing.T) {
 			Name: repoName,
 			Dnf: &pb.DnfRepository{
 				Baseurl:     "https://example.com/repo",
-				Description: "PM Test Repo",
+				Description: "Cadestro Test Repo",
 				Enabled:     true,
 				Gpgcheck:    false,
 			},
@@ -2041,7 +2041,7 @@ func TestIntegration_Repository_Pacman(t *testing.T) {
 	skipIfNoPacman(t)
 	e := newTestExecutor()
 	ctx := context.Background()
-	repoName := "pmtestrepo"
+	repoName := "cadestrotestrepo"
 
 	t.Cleanup(func() {
 		// Restore pacman.conf by removing the test repo section
@@ -2187,7 +2187,7 @@ func TestIntegration_Repository_Zypper(t *testing.T) {
 	skipIfNoZypper(t)
 	e := newTestExecutor()
 	ctx := context.Background()
-	repoName := "pmtestrepo"
+	repoName := "cadestrotestrepo"
 
 	t.Cleanup(func() {
 		sudoRun("zypper", "--non-interactive", "removerepo", repoName).Run()
@@ -2199,7 +2199,7 @@ func TestIntegration_Repository_Zypper(t *testing.T) {
 			Name: repoName,
 			Zypper: &pb.ZypperRepository{
 				Url:         "https://example.com/repo",
-				Description: "PM Test Repo",
+				Description: "Cadestro Test Repo",
 				Enabled:     true,
 				Gpgcheck:    false,
 			},
@@ -2390,10 +2390,10 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 	ctx := context.Background()
 	actionID := "lpsedge01"
 
-	ensureTestUser(t, "pmlpsedge")
+	ensureTestUser(t, "cadestrolpsedge")
 	t.Cleanup(func() {
 		_ = e.store.DeleteLpsState(actionID)
-		cleanupTestUser(t, "pmlpsedge")
+		cleanupTestUser(t, "cadestrolpsedge")
 	})
 
 	// LPS should treat empty state as initial rotation
@@ -2402,7 +2402,7 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 		Type:         pb.ActionType_ACTION_TYPE_LPS,
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params: &pb.Action_Lps{Lps: &pb.LpsParams{
-			Usernames:            []string{"pmlpsedge"},
+			Usernames:            []string{"cadestrolpsedge"},
 			PasswordLength:       16,
 			RotationIntervalDays: 30,
 			Complexity:           pb.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC,
@@ -2419,8 +2419,8 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 	if len(states) == 0 {
 		t.Error("LPS state not written after initial rotation")
 	}
-	if us, ok := states["pmlpsedge"]; !ok {
-		t.Error("LPS state missing for user pmlpsedge")
+	if us, ok := states["cadestrolpsedge"]; !ok {
+		t.Error("LPS state missing for user cadestrolpsedge")
 	} else if us.PasswordHash == "" {
 		t.Error("LPS password hash is empty")
 	}
@@ -2435,7 +2435,7 @@ func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 	ctx := context.Background()
 	actionID := "sudoedge01"
 
-	ensureTestUser(t, "pmsudoedge")
+	ensureTestUser(t, "cadestrosudoedge")
 
 	backupDir := "/etc/sudoers.d.bak"
 	origDir := "/etc/sudoers.d"
@@ -2455,7 +2455,7 @@ func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 		sudoRun("mv", backupDir, origDir).Run()
 		// Restore original /etc/sudoers (remove the appended rules)
 		sudoRun("mv", "/etc/sudoers.bak", "/etc/sudoers").Run()
-		cleanupTestUser(t, "pmsudoedge")
+		cleanupTestUser(t, "cadestrosudoedge")
 	})
 
 	action := &pb.Action{
@@ -2464,7 +2464,7 @@ func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params: &pb.Action_AdminPolicy{AdminPolicy: &pb.AdminPolicyParams{
 			AccessLevel: pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
-			Users:       []string{"pmsudoedge"},
+			Users:       []string{"cadestrosudoedge"},
 		}},
 	}
 	result := e.ExecuteAction(ctx, testAction(action))
@@ -2918,7 +2918,7 @@ func TestIntegration_EdgeCase_UserExistsDifferentShell(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	username := "pmedgeuser"
+	username := "cadestroedgeuser"
 	// Create user with /bin/bash
 	sudoRun("useradd", "-s", "/bin/bash", username).Run()
 	t.Cleanup(func() { cleanupTestUser(t, username) })
@@ -3261,7 +3261,7 @@ func TestIntegration_EdgeCase_ShellTimeout(t *testing.T) {
 func TestIntegration_EdgeCase_UserDeleteWhileLoggedIn(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	username := "pmedgelogin"
+	username := "cadestroedgelogin"
 
 	ensureTestUser(t, username)
 	t.Cleanup(func() { cleanupTestUser(t, username) })
@@ -3289,7 +3289,7 @@ func TestIntegration_EdgeCase_UserDeleteWhileLoggedIn(t *testing.T) {
 func TestIntegration_EdgeCase_GroupIsPrimaryGroup(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	username := "pmedgeprimgrp"
+	username := "cadestroedgeprimgrp"
 	groupName := username // useradd creates a primary group matching username
 
 	t.Cleanup(func() {
@@ -3440,13 +3440,13 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 		sudoRemove(brokenPath)
 		sudoRemove(sudoersFilePath(actionID))
 		sudoRun("groupdel", sanitizeSudoGroupName(actionID)).Run()
-		cleanupTestUser(t, "pmedgesudo")
+		cleanupTestUser(t, "cadestroedgesudo")
 	})
 
 	// Write invalid sudoers syntax
 	sudoWriteFile(brokenPath, []byte("INVALID SUDOERS SYNTAX !!!\n"))
 
-	ensureTestUser(t, "pmedgesudo")
+	ensureTestUser(t, "cadestroedgesudo")
 
 	// The executor should still be able to write its own valid sudoers file
 	action := &pb.Action{
@@ -3455,7 +3455,7 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params: &pb.Action_AdminPolicy{AdminPolicy: &pb.AdminPolicyParams{
 			AccessLevel: pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL,
-			Users:       []string{"pmedgesudo"},
+			Users:       []string{"cadestroedgesudo"},
 		}},
 	}
 	result := e.ExecuteAction(ctx, testAction(action))
@@ -3476,7 +3476,7 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	username := "pmedgesshperm"
+	username := "cadestroedgesshperm"
 
 	t.Cleanup(func() { cleanupTestUser(t, username) })
 	ensureTestUser(t, username)
@@ -3796,7 +3796,7 @@ func TestIntegration_EdgeCase_RepositoryExpiredGPGKey(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	repoName := "pmedgeexpiredgpg"
+	repoName := "cadestroedgeexpiredgpg"
 	t.Cleanup(func() {
 		sudoRemove(fmt.Sprintf("/etc/apt/sources.list.d/%s.sources", repoName))
 		sudoRemove(fmt.Sprintf("/etc/apt/keyrings/%s.gpg", repoName))

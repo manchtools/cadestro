@@ -40,7 +40,7 @@ func TestGroupCreateDelete_Integration(t *testing.T) {
 }
 
 func TestGroupDeleteNonexistent_Integration(t *testing.T) {
-	if err := newManager(t).GroupDelete(context.Background(), "pmnonexistentgrp12345"); err == nil {
+	if err := newManager(t).GroupDelete(context.Background(), "cadestrononexistentgrp12345"); err == nil {
 		t.Fatal("expected error deleting a non-existent group")
 	}
 }
@@ -51,7 +51,7 @@ func TestGroupExists_Integration(t *testing.T) {
 	if ok, err := m.GroupExists(ctx, "root"); err != nil || !ok {
 		t.Errorf("GroupExists(root) = (%v,%v), want (true,nil)", ok, err)
 	}
-	if ok, err := m.GroupExists(ctx, "pmnonexistentgrp12345"); err != nil || ok {
+	if ok, err := m.GroupExists(ctx, "cadestrononexistentgrp12345"); err != nil || ok {
 		t.Error("non-existent group reported as existing")
 	}
 }

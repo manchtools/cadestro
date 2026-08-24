@@ -75,10 +75,10 @@ func adversarialInput(r *rand.Rand) string {
 	case 1:
 		return base() // plausibly valid
 	case 2:
-		return "-pmEVIL" + base() // flag-shaped (distinctive marker so it can never
+		return "-cadestroEVIL" + base() // flag-shaped (distinctive marker so it can never
 		//                           coincide with a tool's own legitimate flag)
 	case 3:
-		return "--pmEVIL" + base() // long-flag-shaped, distinctive
+		return "--cadestroEVIL" + base() // long-flag-shaped, distinctive
 	case 4:
 		return base() + "\n" + base() // newline injection
 	case 5:
