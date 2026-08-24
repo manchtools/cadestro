@@ -19,7 +19,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -38,7 +38,7 @@ type dispatchHandlerFixture struct {
 	set1        string
 	set2        string
 	definition  string
-	atRest      *pmcrypto.Encryptor
+	atRest      *crypto.Encryptor
 }
 
 func newDispatchHandlerFixture(t *testing.T) *dispatchHandlerFixture {
@@ -54,7 +54,7 @@ func newDispatchHandlerFixtureWithSender(t *testing.T, sender func(string, *cade
 		deviceID: seedDevice(t, raw), otherDevice: seedDevice(t, raw),
 		groupID: newID(), actionID: newID(),
 	}
-	atRest, err := pmcrypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
+	atRest, err := crypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
 	require.NoError(t, err)
 	f.atRest = atRest
 	_, err = raw.Exec(context.Background(), `

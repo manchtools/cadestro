@@ -21,7 +21,7 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/jobs"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -109,7 +109,7 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	agentHeapGrowth := positiveDelta(afterAgents.Alloc, beforeAgents.Alloc)
 
 	deliveryState := delivery.New(delivery.Config{Store: st})
-	atRest, err := pmcrypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
+	atRest, err := crypto.NewEncryptor("0101010101010101010101010101010101010101010101010101010101010101")
 	require.NoError(t, err)
 	syncer := agentsync.New(agentsync.Config{Store: st, Manager: manager, AtRest: atRest})
 	jobState := jobs.New(jobs.Config{

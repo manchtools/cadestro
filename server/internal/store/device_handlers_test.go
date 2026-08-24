@@ -24,7 +24,7 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/device"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -45,7 +45,7 @@ type deviceHandlerFixture struct {
 	userGroup  string
 	scopeGroup string
 	closed     []string
-	encryptor  *pmcrypto.Encryptor
+	encryptor  *crypto.Encryptor
 	sender     *fakeAgentSender
 	tokens     *terminal.TokenStore
 	sessions   *connection.TerminalSessionRegistry
@@ -66,7 +66,7 @@ func newDeviceHandlerFixture(t *testing.T) *deviceHandlerFixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	encryptor, err := pmcrypto.NewEncryptor(strings.Repeat("01", 32))
+	encryptor, err := crypto.NewEncryptor(strings.Repeat("01", 32))
 	require.NoError(t, err)
 	f := &deviceHandlerFixture{
 		t: t, store: st, raw: raw, now: now,
@@ -787,10 +787,10 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		current := i == 0
 		rotatedAt := f.now.Add(-time.Duration(i) * time.Hour)
 		password, err := f.encryptor.EncryptWithContext("local-secret",
-			pmcrypto.DeviceSecretAAD(lpsIDs[i], f.directID, "lps", lpsActionID, 1))
+			crypto.DeviceSecretAAD(lpsIDs[i], f.directID, "lps", lpsActionID, 1))
 		require.NoError(t, err)
 		passphrase, err := f.encryptor.EncryptWithContext("disk-secret",
-			pmcrypto.DeviceSecretAAD(luksIDs[i], f.directID, "luks", luksActionID, 1))
+			crypto.DeviceSecretAAD(luksIDs[i], f.directID, "luks", luksActionID, 1))
 		require.NoError(t, err)
 		_, err = f.raw.Exec(context.Background(), `INSERT INTO device_secrets (id, device_id, kind, subject, version, ciphertext) VALUES ($1, $2, 'lps', $3, 1, $4)`, lpsIDs[i], f.directID, lpsActionID, password)
 		require.NoError(t, err)

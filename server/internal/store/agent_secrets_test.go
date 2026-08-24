@@ -8,16 +8,16 @@ import (
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/agentsecrets"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/testdb"
 	"github.com/stretchr/testify/require"
 )
 
-func newAgentSecretFixture(t *testing.T) (*store.Store, *testdb.DB, *pmcrypto.Encryptor, string, string, string) {
+func newAgentSecretFixture(t *testing.T) (*store.Store, *testdb.DB, *crypto.Encryptor, string, string, string) {
 	t.Helper()
 	st, raw := setupSQLite(t)
-	atRest, err := pmcrypto.NewEncryptor(strings.Repeat("01", 32))
+	atRest, err := crypto.NewEncryptor(strings.Repeat("01", 32))
 	require.NoError(t, err)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	device, luks, lps := newID(), newID(), newID()
@@ -50,7 +50,7 @@ func TestAgentSecretsLuksUsesGenericCiphertextAndPlaintextWireBytes(t *testing.T
 	require.NoError(t, err)
 	require.True(t, strings.HasPrefix(secret.Ciphertext, "enc:v1:"))
 	opened, err := atRest.DecryptWithContext(secret.Ciphertext,
-		pmcrypto.DeviceSecretAAD(row.ID, device, "luks", action, 1))
+		crypto.DeviceSecretAAD(row.ID, device, "luks", action, 1))
 	require.NoError(t, err)
 	require.Equal(t, passphrase, opened)
 	got, err := svc.GetLuksKey(ctx, device, &cadestrov1.GetLuksKeyRequest{ActionId: action})

@@ -11,7 +11,7 @@ import (
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	"github.com/manchtools/cadestro/server/internal/manifest"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -208,12 +208,12 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 	st, raw := setupSQLite(t)
 	ctx := context.Background()
 	deviceID := seedDevice(t, raw)
-	atRest, err := pmcrypto.NewEncryptor("0303030303030303030303030303030303030303030303030303030303030303")
+	atRest, err := crypto.NewEncryptor("0303030303030303030303030303030303030303030303030303030303030303")
 	require.NoError(t, err)
 	actionID := newID()
 	const plaintext = "initial-volume-secret"
 	ciphertext, err := atRest.EncryptWithContext(plaintext,
-		pmcrypto.RowAAD(actionID, pmcrypto.PurposeActionEncryptionPresharedKey))
+		crypto.RowAAD(actionID, crypto.PurposeActionEncryptionPresharedKey))
 	require.NoError(t, err)
 	stored, err := actionparams.MarshalActionParams(&cadestrov1.EncryptionAuthoringParams{
 		PresharedKey: &ciphertext, RotationIntervalDays: 30, MinWords: 5,

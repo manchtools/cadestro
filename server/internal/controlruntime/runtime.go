@@ -23,7 +23,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/compliance"
 	"github.com/manchtools/cadestro/server/internal/connection"
 	"github.com/manchtools/cadestro/server/internal/controlrpc"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/device"
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
@@ -53,7 +53,7 @@ type Config struct {
 	Store                  *store.Store
 	CA                     *ca.CA
 	JWT                    *auth.JWTManager
-	AtRest                 *pmcrypto.Encryptor
+	AtRest                 *crypto.Encryptor
 	Logger                 *slog.Logger
 	Version                string
 	PublicBaseURL          string

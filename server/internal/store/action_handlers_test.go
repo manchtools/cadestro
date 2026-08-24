@@ -19,7 +19,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/authoring"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -37,7 +37,7 @@ func newActionHandlerFixture(t *testing.T) *actionHandlerFixture {
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	f := &actionHandlerFixture{t: t, store: st, raw: raw, now: now, actorID: newID()}
-	atRest, err := pmcrypto.NewEncryptor("0202020202020202020202020202020202020202020202020202020202020202")
+	atRest, err := crypto.NewEncryptor("0202020202020202020202020202020202020202020202020202020202020202")
 	require.NoError(t, err)
 	f.handlers = authoring.NewHandlers(authoring.HandlersConfig{
 		Store: st, AtRest: atRest, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -228,7 +228,7 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 	storedWifi := &cadestrov1.WifiAuthoringParams{}
 	require.NoError(t, actionparams.UnmarshalActionParams([]byte(wifiStored), storedWifi))
 	assert.Nil(t, storedWifi.Psk, "switching auth mode clears the now-irrelevant secret")
-	assert.True(t, pmcrypto.IsEncryptedValue(storedWifi.GetClientKey()))
+	assert.True(t, crypto.IsEncryptedValue(storedWifi.GetClientKey()))
 }
 
 func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {

@@ -16,7 +16,7 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/connection"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/dispatch"
 	manifestpkg "github.com/manchtools/cadestro/server/internal/manifest"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -35,7 +35,7 @@ type Config struct {
 	Manager     *connection.Manager
 	Assignments *dispatch.Handlers
 	Now         func() time.Time
-	AtRest      *pmcrypto.Encryptor
+	AtRest      *crypto.Encryptor
 }
 
 // Service implements durable stream synchronization.
@@ -44,7 +44,7 @@ type Service struct {
 	manager     *connection.Manager
 	assignments *dispatch.Handlers
 	now         func() time.Time
-	atRest      *pmcrypto.Encryptor
+	atRest      *crypto.Encryptor
 }
 
 // New constructs the agent sync service.

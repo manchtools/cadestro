@@ -12,7 +12,7 @@ import (
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	"google.golang.org/protobuf/proto"
 )
@@ -300,7 +300,7 @@ func (c *Compiler) wifiParams(row store.ActionRow) (*cadestrov1.WifiParams, erro
 }
 
 func secretActionField(ciphertext string) ([]byte, error) {
-	if !pmcrypto.IsEncryptedValue(ciphertext) {
+	if !crypto.IsEncryptedValue(ciphertext) {
 		return nil, errors.New("action secret compiler requires encrypted storage")
 	}
 	return []byte(ciphertext), nil
@@ -308,7 +308,7 @@ func secretActionField(ciphertext string) ([]byte, error) {
 
 // MaterializeSecrets opens catalog ciphertext only for the authenticated
 // device stream. Callers must pass a copy that is never persisted.
-func MaterializeSecrets(manifest *cadestrov1.Manifest, atRest *pmcrypto.Encryptor) error {
+func MaterializeSecrets(manifest *cadestrov1.Manifest, atRest *crypto.Encryptor) error {
 	if manifest == nil || atRest == nil {
 		return errors.New("manifest secret materialization requires manifest and cipher")
 	}
@@ -321,7 +321,7 @@ func MaterializeSecrets(manifest *cadestrov1.Manifest, atRest *pmcrypto.Encrypto
 			if value == nil || len(*value) == 0 {
 				return nil
 			}
-			plaintext, err := atRest.DecryptWithContext(string(*value), pmcrypto.RowAAD(actionID, purpose))
+			plaintext, err := atRest.DecryptWithContext(string(*value), crypto.RowAAD(actionID, purpose))
 			if err != nil {
 				return fmt.Errorf("open manifest secret: %w", err)
 			}
@@ -330,17 +330,17 @@ func MaterializeSecrets(manifest *cadestrov1.Manifest, atRest *pmcrypto.Encrypto
 		}
 		switch params := occurrence.Action.Params.(type) {
 		case *cadestrov1.Action_Encryption:
-			if err := open(&params.Encryption.PresharedKey, pmcrypto.PurposeActionEncryptionPresharedKey); err != nil {
+			if err := open(&params.Encryption.PresharedKey, crypto.PurposeActionEncryptionPresharedKey); err != nil {
 				return err
 			}
 		case *cadestrov1.Action_Wifi:
 			switch params.Wifi.AuthType {
 			case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
-				if err := open(&params.Wifi.Psk, pmcrypto.PurposeActionWifiPSK); err != nil {
+				if err := open(&params.Wifi.Psk, crypto.PurposeActionWifiPSK); err != nil {
 					return err
 				}
 			case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
-				if err := open(&params.Wifi.ClientKey, pmcrypto.PurposeActionWifiClientKey); err != nil {
+				if err := open(&params.Wifi.ClientKey, crypto.PurposeActionWifiClientKey); err != nil {
 					return err
 				}
 			}

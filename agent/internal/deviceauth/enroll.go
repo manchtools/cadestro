@@ -16,7 +16,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
-	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 // credentialStore is the slice of *credentials.Store the enrollment
@@ -177,7 +177,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 	if len(csrPEM) == 0 {
 		// Generate key pair and CSR locally — private key never leaves the agent.
 		h.logger.Debug("generating key pair and CSR")
-		csrPEM, keyPEM, err = pmcrypto.GenerateCSR(h.hostname)
+		csrPEM, keyPEM, err = sdkcrypto.GenerateCSR(h.hostname)
 		if err != nil {
 			h.logger.Error("failed to generate CSR", "error", err)
 			return connect.NewResponse(&cadestrov1.EnrollResponse{
@@ -226,7 +226,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 	// first-enrollment trust-anchor swap is refused. The pin is
 	// normalized (colons stripped) and compared case-insensitively, since
 	// operators paste it from tools like openssl (uppercase, colon-sep).
-	got, fpErr := pmcrypto.CAFingerprintFromPEM(result.CACert)
+	got, fpErr := sdkcrypto.CAFingerprintFromPEM(result.CACert)
 	if fpErr != nil {
 		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,

@@ -20,7 +20,7 @@ import (
 	contract "github.com/manchtools/cadestro/contract"
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
@@ -324,19 +324,19 @@ func validateActionData(id string, actionType cadestrov1.ActionType, desired cad
 func normalizeStoredSecretsForValidation(params proto.Message) error {
 	switch value := params.(type) {
 	case *cadestrov1.EncryptionAuthoringParams:
-		if value.PresharedKey == nil || !pmcrypto.IsEncryptedValue(value.GetPresharedKey()) {
+		if value.PresharedKey == nil || !crypto.IsEncryptedValue(value.GetPresharedKey()) {
 			return ErrInvalidInput
 		}
 		value.PresharedKey = stringPointer("configured")
 	case *cadestrov1.WifiAuthoringParams:
 		switch value.AuthType {
 		case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
-			if value.Psk == nil || !pmcrypto.IsEncryptedValue(value.GetPsk()) || value.ClientKey != nil {
+			if value.Psk == nil || !crypto.IsEncryptedValue(value.GetPsk()) || value.ClientKey != nil {
 				return ErrInvalidInput
 			}
 			value.Psk = stringPointer("configured")
 		case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
-			if value.ClientKey == nil || !pmcrypto.IsEncryptedValue(value.GetClientKey()) || value.Psk != nil {
+			if value.ClientKey == nil || !crypto.IsEncryptedValue(value.GetClientKey()) || value.Psk != nil {
 				return ErrInvalidInput
 			}
 			value.ClientKey = stringPointer("configured")

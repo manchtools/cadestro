@@ -17,7 +17,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/controlruntime"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/jobs"
 	"github.com/manchtools/cadestro/server/internal/maintenance"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -95,7 +95,7 @@ func run(cfg *Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("load session signer: %w", err)
 	}
-	atRest, err := pmcrypto.NewEncryptor(cfg.EncryptionKey)
+	atRest, err := crypto.NewEncryptor(cfg.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("load at-rest encryption key: %w", err)
 	}

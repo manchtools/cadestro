@@ -18,7 +18,7 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/auth"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -83,7 +83,7 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[c
 		return nil, h.internal(ctx, "read generic LPS password", err)
 	}
 	password, err := h.openStoredSecret(stored.Ciphertext,
-		pmcrypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
+		crypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
 	if err != nil {
 		return nil, h.internal(ctx, "open LPS password", err)
 	}
@@ -153,7 +153,7 @@ func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[cades
 		return nil, h.internal(ctx, "read generic LUKS key", err)
 	}
 	passphrase, err := h.openStoredSecret(stored.Ciphertext,
-		pmcrypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
+		crypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
 	if err != nil {
 		return nil, h.internal(ctx, "open LUKS passphrase", err)
 	}

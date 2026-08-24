@@ -15,7 +15,7 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -29,14 +29,14 @@ var (
 // Config supplies persistence and the mandatory at-rest cipher.
 type Config struct {
 	Store  *store.Store
-	AtRest *pmcrypto.Encryptor
+	AtRest *crypto.Encryptor
 	Now    func() time.Time
 }
 
 // Service implements the authenticated agent secret operations.
 type Service struct {
 	store     *store.Store
-	atRest    *pmcrypto.Encryptor
+	atRest    *crypto.Encryptor
 	now       func() time.Time
 	validator protovalidate.Validator
 }
@@ -115,7 +115,7 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *cade
 		return nil, err
 	}
 	plaintext, err := s.atRest.DecryptWithContext(stored.Ciphertext,
-		pmcrypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
+		crypto.DeviceSecretAAD(stored.ID, stored.DeviceID, stored.Kind, stored.Subject, uint32(stored.Version)))
 	if err != nil {
 		return nil, fmt.Errorf("open LUKS passphrase at rest: %w", err)
 	}
@@ -147,7 +147,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *ca
 	// non-relocatable onto a sibling rotation row.
 	rowID := ulid.Make().String()
 	genericCiphertext, err := s.atRest.EncryptWithContext(string(plaintext),
-		pmcrypto.DeviceSecretAAD(rowID, deviceID, "luks", request.ActionId, 1))
+		crypto.DeviceSecretAAD(rowID, deviceID, "luks", request.ActionId, 1))
 	if err != nil {
 		return nil, fmt.Errorf("encrypt generic LUKS passphrase at rest: %w", err)
 	}
@@ -217,7 +217,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		// ciphertext between them; the username is not a unique discriminator.
 		rowID := ulid.Make().String()
 		genericCiphertext, genericEncryptErr := s.atRest.EncryptWithContext(string(plaintext),
-			pmcrypto.DeviceSecretAAD(rowID, deviceID, "lps", request.ActionId, 1))
+			crypto.DeviceSecretAAD(rowID, deviceID, "lps", request.ActionId, 1))
 		clear(plaintext)
 		if genericEncryptErr != nil {
 			return nil, fmt.Errorf("encrypt generic LPS password at rest: %w", genericEncryptErr)

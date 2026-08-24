@@ -11,7 +11,7 @@ import (
 	"github.com/oklog/ulid/v2"
 
 	"github.com/manchtools/cadestro/server/internal/auth"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
@@ -21,7 +21,7 @@ const defaultAuthoringPageSize = int32(50)
 // used by the authoring RPC handlers.
 type HandlersConfig struct {
 	Store  *store.Store
-	AtRest *pmcrypto.Encryptor
+	AtRest *crypto.Encryptor
 	Logger *slog.Logger
 	Now    func() time.Time
 }
@@ -32,7 +32,7 @@ type Handlers struct {
 	store  *store.Store
 	state  *Service
 	logger *slog.Logger
-	atRest *pmcrypto.Encryptor
+	atRest *crypto.Encryptor
 }
 
 // NewHandlers constructs the explicit authoring RPC handlers.

@@ -13,7 +13,7 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
 
@@ -40,7 +40,7 @@ func caReturningMock(caPEM []byte) *mockRegisterService {
 
 func caPin(t *testing.T, caPEM []byte) string {
 	t.Helper()
-	pin, err := pmcrypto.CAFingerprintFromPEM(caPEM)
+	pin, err := sdkcrypto.CAFingerprintFromPEM(caPEM)
 	require.NoError(t, err)
 	return pin
 }

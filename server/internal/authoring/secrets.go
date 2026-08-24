@@ -7,7 +7,7 @@ import (
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/actionparams"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 )
 
 func (h *Handlers) requestParams(message proto.Message, actionType cadestrov1.ActionType, actionID string, current []byte) ([]byte, error) {
@@ -43,16 +43,16 @@ func (h *Handlers) prepareEncryptionParams(actionID string, input *cadestrov1.En
 		}
 		stored := &cadestrov1.EncryptionAuthoringParams{}
 		if err := actionparams.UnmarshalActionParams(current, stored); err != nil || stored.PresharedKey == nil ||
-			!pmcrypto.IsEncryptedValue(stored.GetPresharedKey()) {
+			!crypto.IsEncryptedValue(stored.GetPresharedKey()) {
 			return nil, ErrInvalidInput
 		}
 		prepared.PresharedKey = stringPointer(stored.GetPresharedKey())
 	} else {
-		if prepared.GetPresharedKey() == "" || pmcrypto.IsEncryptedValue(prepared.GetPresharedKey()) {
+		if prepared.GetPresharedKey() == "" || crypto.IsEncryptedValue(prepared.GetPresharedKey()) {
 			return nil, ErrInvalidInput
 		}
 		ciphertext, err := h.atRest.EncryptWithContext(prepared.GetPresharedKey(),
-			pmcrypto.RowAAD(actionID, pmcrypto.PurposeActionEncryptionPresharedKey))
+			crypto.RowAAD(actionID, crypto.PurposeActionEncryptionPresharedKey))
 		if err != nil {
 			return nil, fmt.Errorf("authoring: encrypt encryption pre-shared key: %w", err)
 		}
@@ -74,7 +74,7 @@ func (h *Handlers) prepareWifiParams(actionID string, input *cadestrov1.WifiAuth
 	case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK:
 		prepared.ClientKey = nil
 		secret, err := h.prepareOptionalSecret(actionID, prepared.Psk, stored.Psk,
-			stored.AuthType == cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK, pmcrypto.PurposeActionWifiPSK)
+			stored.AuthType == cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_PSK, crypto.PurposeActionWifiPSK)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (h *Handlers) prepareWifiParams(actionID string, input *cadestrov1.WifiAuth
 	case cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS:
 		prepared.Psk = nil
 		secret, err := h.prepareOptionalSecret(actionID, prepared.ClientKey, stored.ClientKey,
-			stored.AuthType == cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS, pmcrypto.PurposeActionWifiClientKey)
+			stored.AuthType == cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS, crypto.PurposeActionWifiClientKey)
 		if err != nil {
 			return nil, err
 		}
@@ -95,15 +95,15 @@ func (h *Handlers) prepareWifiParams(actionID string, input *cadestrov1.WifiAuth
 
 func (h *Handlers) prepareOptionalSecret(actionID string, supplied, stored *string, mayPreserve bool, purpose string) (*string, error) {
 	if supplied == nil {
-		if !mayPreserve || stored == nil || !pmcrypto.IsEncryptedValue(*stored) {
+		if !mayPreserve || stored == nil || !crypto.IsEncryptedValue(*stored) {
 			return nil, ErrInvalidInput
 		}
 		return stringPointer(*stored), nil
 	}
-	if *supplied == "" || pmcrypto.IsEncryptedValue(*supplied) {
+	if *supplied == "" || crypto.IsEncryptedValue(*supplied) {
 		return nil, ErrInvalidInput
 	}
-	ciphertext, err := h.atRest.EncryptWithContext(*supplied, pmcrypto.RowAAD(actionID, purpose))
+	ciphertext, err := h.atRest.EncryptWithContext(*supplied, crypto.RowAAD(actionID, purpose))
 	if err != nil {
 		return nil, fmt.Errorf("authoring: encrypt action credential: %w", err)
 	}
@@ -118,7 +118,7 @@ func populateManagedParams(action *cadestrov1.ManagedAction, actionType cadestro
 			return err
 		}
 		action.Params = &cadestrov1.ManagedAction_Encryption{Encryption: &cadestrov1.ManagedEncryptionParams{
-			PresharedKeyConfigured: stored.PresharedKey != nil && pmcrypto.IsEncryptedValue(stored.GetPresharedKey()),
+			PresharedKeyConfigured: stored.PresharedKey != nil && crypto.IsEncryptedValue(stored.GetPresharedKey()),
 			RotationIntervalDays:   stored.RotationIntervalDays, MinWords: stored.MinWords,
 			DeviceBoundKeyType:       stored.DeviceBoundKeyType,
 			UserPassphraseMinLength:  stored.UserPassphraseMinLength,
@@ -132,9 +132,9 @@ func populateManagedParams(action *cadestrov1.ManagedAction, actionType cadestro
 		}
 		action.Params = &cadestrov1.ManagedAction_Wifi{Wifi: &cadestrov1.ManagedWifiParams{
 			Ssid: stored.Ssid, AuthType: stored.AuthType,
-			PskConfigured: stored.Psk != nil && pmcrypto.IsEncryptedValue(stored.GetPsk()),
+			PskConfigured: stored.Psk != nil && crypto.IsEncryptedValue(stored.GetPsk()),
 			CaCert:        stored.CaCert, ClientCert: stored.ClientCert,
-			ClientKeyConfigured: stored.ClientKey != nil && pmcrypto.IsEncryptedValue(stored.GetClientKey()),
+			ClientKeyConfigured: stored.ClientKey != nil && crypto.IsEncryptedValue(stored.GetClientKey()),
 			Identity:            stored.Identity, AutoConnect: stored.AutoConnect,
 			Hidden: stored.Hidden, Priority: stored.Priority,
 		}}

@@ -12,7 +12,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
-	pmcrypto "github.com/manchtools/cadestro/sdk/crypto"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 func presentPendingCertificate(pending, fallbackActive bool) bool {
@@ -103,7 +103,7 @@ func renewCertificateIfDue(ctx context.Context, credStore *credentials.Store, cr
 	if !force && !certificateRenewalDue(cert, now()) {
 		return false, nil
 	}
-	csr, err := pmcrypto.GenerateCSRFromKey(hostname, creds.PrivateKey)
+	csr, err := sdkcrypto.GenerateCSRFromKey(hostname, creds.PrivateKey)
 	if err != nil {
 		return false, err
 	}

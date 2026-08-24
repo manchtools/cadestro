@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	pmcrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/delivery"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -27,14 +27,14 @@ type deliveryFixture struct {
 	manifest   *cadestrov1.Manifest
 	deliveryID string
 	service    *delivery.Service
-	atRest     *pmcrypto.Encryptor
+	atRest     *crypto.Encryptor
 }
 
 func newDeliveryFixture(t *testing.T) *deliveryFixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	atRest, err := pmcrypto.NewEncryptor(strings.Repeat("01", 32))
+	atRest, err := crypto.NewEncryptor(strings.Repeat("01", 32))
 	require.NoError(t, err)
 	deviceID := seedDevice(t, raw)
 	actionID, manifestID := newID(), newID()
