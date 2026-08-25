@@ -204,6 +204,8 @@ type UserClaims struct {
 	Groups            []string
 }
 
+type oidcClaims map[string]json.RawMessage
+
 // VerifyAndExtractClaims verifies the id_token and extracts claims.
 func (p *OIDCProvider) VerifyAndExtractClaims(ctx context.Context, oauth2Token *oauth2.Token, expectedNonce string) (*UserClaims, error) {
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
@@ -224,7 +226,7 @@ func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNo
 		return nil, fmt.Errorf("nonce mismatch")
 	}
 
-	var claims map[string]any
+	var claims oidcClaims
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, fmt.Errorf("extract claims: %w", err)
 	}
@@ -233,14 +235,7 @@ func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNo
 		Subject: idToken.Subject,
 	}
 
-	// Only trust the email for linking / auto-create when the IdP asserts it
-	// is verified (#359). Without this gate, an attacker who can set an
-	// arbitrary, unverified email at the IdP (common with multi-tenant Azure
-	// AD or self-service IdPs) could set it to a local admin's address and,
-	// with AutoLinkByEmail on, receive that admin's session. The external
-	// identity is keyed on the subject regardless; only the email field —
-	// which the linker uses for auto-link/auto-create — is gated.
-	if email, ok := claims["email"].(string); ok && email != "" {
+	if email, ok := claimString(claims["email"]); ok && email != "" {
 		if claimIsTrue(claims["email_verified"]) {
 			userClaims.Email = email
 		} else {
@@ -248,26 +243,25 @@ func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNo
 				"subject", idToken.Subject)
 		}
 	}
-	if name, ok := claims["name"].(string); ok {
+	if name, ok := claimString(claims["name"]); ok {
 		userClaims.Name = name
 	}
-	if v, ok := claims["given_name"].(string); ok {
+	if v, ok := claimString(claims["given_name"]); ok {
 		userClaims.GivenName = v
 	}
-	if v, ok := claims["family_name"].(string); ok {
+	if v, ok := claimString(claims["family_name"]); ok {
 		userClaims.FamilyName = v
 	}
-	if v, ok := claims["preferred_username"].(string); ok {
+	if v, ok := claimString(claims["preferred_username"]); ok {
 		userClaims.PreferredUsername = v
 	}
-	if v, ok := claims["picture"].(string); ok {
+	if v, ok := claimString(claims["picture"]); ok {
 		userClaims.Picture = v
 	}
-	if v, ok := claims["locale"].(string); ok {
+	if v, ok := claimString(claims["locale"]); ok {
 		userClaims.Locale = v
 	}
 
-	// Extract groups from the configured claim
 	if p.GroupClaim != "" {
 		userClaims.Groups = extractGroups(claims, p.GroupClaim)
 	}
@@ -275,26 +269,25 @@ func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNo
 	return userClaims, nil
 }
 
-// claimIsTrue interprets an OIDC boolean claim. The spec defines
-// email_verified as a JSON boolean, but some IdPs (and some proxies) emit it
-// as the string "true"/"false"; accept both. Anything else — including an
-// absent claim — is treated as not-true, which is the fail-closed default.
-func claimIsTrue(v any) bool {
-	switch t := v.(type) {
-	case bool:
-		return t
-	case string:
-		return t == "true"
+func claimString(v json.RawMessage) (string, bool) {
+	var value *string
+	if err := json.Unmarshal(v, &value); err != nil || value == nil {
+		return "", false
 	}
-	return false
+	return *value, true
 }
 
-// extractGroups extracts group names from claims.
-// Supports nested claims using dot notation (e.g. "realm_access.roles").
-func extractGroups(claims map[string]any, claimName string) []string {
-	var value any
+func claimIsTrue(v json.RawMessage) bool {
+	var boolValue bool
+	if err := json.Unmarshal(v, &boolValue); err == nil {
+		return boolValue
+	}
+	var stringValue string
+	return json.Unmarshal(v, &stringValue) == nil && stringValue == "true"
+}
 
-	// Support nested claims with dot notation
+func extractGroups(claims oidcClaims, claimName string) []string {
+	var value json.RawMessage
 	parts := strings.Split(claimName, ".")
 	current := claims
 	for i, part := range parts {
@@ -305,8 +298,8 @@ func extractGroups(claims map[string]any, claimName string) []string {
 		if i == len(parts)-1 {
 			value = v
 		} else {
-			next, ok := v.(map[string]any)
-			if !ok {
+			var next oidcClaims
+			if err := json.Unmarshal(v, &next); err != nil {
 				return nil
 			}
 			current = next
@@ -317,28 +310,23 @@ func extractGroups(claims map[string]any, claimName string) []string {
 		return nil
 	}
 
-	switch v := value.(type) {
-	case []any:
-		groups := make([]string, 0, len(v))
-		for _, item := range v {
-			if s, ok := item.(string); ok {
-				groups = append(groups, s)
-			}
-		}
-		return groups
-	case string:
-		// Some providers return space-separated groups
-		return strings.Fields(v)
-	default:
-		// Try JSON unmarshal
-		data, err := json.Marshal(v)
-		if err != nil {
+	var groupString *string
+	if err := json.Unmarshal(value, &groupString); err == nil {
+		if groupString == nil {
 			return nil
 		}
-		var groups []string
-		if err := json.Unmarshal(data, &groups); err != nil {
-			return nil
-		}
-		return groups
+		return strings.Fields(*groupString)
 	}
+
+	var rawGroups []json.RawMessage
+	if err := json.Unmarshal(value, &rawGroups); err != nil {
+		return nil
+	}
+	groups := make([]string, 0, len(rawGroups))
+	for _, rawGroup := range rawGroups {
+		if group, ok := claimString(rawGroup); ok {
+			groups = append(groups, group)
+		}
+	}
+	return groups
 }
