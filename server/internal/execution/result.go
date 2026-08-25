@@ -30,7 +30,7 @@ func New(cfg Config) *Service {
 
 func (s *Service) ApplyActionResult(ctx context.Context, deviceID string, result *cadestrov1.ActionResult) error {
 	if ctx == nil || !validID(deviceID) || result == nil || result.ActionId == nil ||
-		!validID(result.ActionId.Value) || !validID(result.RunId) || !validID(result.OccurrenceId) {
+		!validID(result.ActionId.Value) || !validID(result.GetRunId().GetValue()) || !validID(result.GetOccurrenceId().GetValue()) {
 		return ErrInvalidInput
 	}
 	if err := s.validator.Validate(result); err != nil || len(result.Metadata) != 0 {

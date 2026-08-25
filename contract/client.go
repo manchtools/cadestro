@@ -611,7 +611,7 @@ func (c *Client) SendHeartbeat(ctx context.Context, hb *cadestrov1.Heartbeat) er
 // same row instead of creating a second one.
 func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.ActionResult) error {
 	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: result}}
-	if result == nil || result.GetRunId() == "" || result.GetOccurrenceId() == "" {
+	if result == nil || result.GetRunId().GetValue() == "" || result.GetOccurrenceId().GetValue() == "" {
 		return c.send(ctx, message)
 	}
 	return c.sendResultAwaitAck(ctx, message)

@@ -105,7 +105,7 @@ func TestHandleAgentMessageRoutesRetainedFrames(t *testing.T) {
 		{Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}}},
 		{Id: "sync-operation", Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: &cadestrov1.SyncDeviceResult{Success: true}}},
 		{Id: "reboot-operation", Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: &cadestrov1.RebootDeviceResult{Success: true}}},
-		{Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: &cadestrov1.ActionResult{OccurrenceId: "occurrence"}}},
+		{Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: &cadestrov1.ActionResult{OccurrenceId: &cadestrov1.OccurrenceId{Value: "occurrence"}}}},
 		{Payload: &cadestrov1.AgentMessage_QueryResult{QueryResult: &cadestrov1.OSQueryResult{QueryId: "query"}}},
 		{Payload: &cadestrov1.AgentMessage_LogQueryResult{LogQueryResult: &cadestrov1.LogQueryResult{QueryId: "log"}}},
 		{Payload: &cadestrov1.AgentMessage_Inventory{Inventory: &cadestrov1.DeviceInventory{}}},

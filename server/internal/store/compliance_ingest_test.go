@@ -87,7 +87,7 @@ func (f *complianceIngestFixture) report(
 
 	result := &cadestrov1.ActionResult{
 		ActionId: &cadestrov1.ActionId{Value: actionID}, Status: status,
-		RunId: runID, OccurrenceId: occurrenceID,
+		RunId: &cadestrov1.RunId{Value: runID}, OccurrenceId: &cadestrov1.OccurrenceId{Value: occurrenceID},
 		CompletedAt: timestamppb.New(at), Compliant: compliant, DetectionOutput: detection,
 	}
 	require.NoError(t, f.service.ApplyActionResult(context.Background(), deviceID, result))

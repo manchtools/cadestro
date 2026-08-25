@@ -198,8 +198,8 @@ func TestRecoverInterruptedOccurrenceQueuesIndeterminate(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, pending, 1)
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, pending[0].ActionResult.GetStatus())
-	require.Equal(t, due[0].RunID, pending[0].ActionResult.GetRunId())
-	require.Equal(t, occurrence.GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId())
+	require.Equal(t, due[0].RunID, pending[0].ActionResult.GetRunId().GetValue())
+	require.Equal(t, occurrence.GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId().GetValue())
 
 	_, err = st.RecoverInterruptedOccurrences(context.Background())
 	require.NoError(t, err)

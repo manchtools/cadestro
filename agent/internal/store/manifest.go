@@ -317,7 +317,7 @@ func (s *Store) GetManifestOccurrenceStates(ctx context.Context, workID string) 
 }
 
 func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionResult, suppressUnchanged bool) (string, bool, error) {
-	if result == nil || result.GetRunId() == "" || result.GetOccurrenceId() == "" {
+	if result == nil || result.GetRunId().GetValue() == "" || result.GetOccurrenceId().GetValue() == "" {
 		return "", false, errors.New("record occurrence result: missing work or occurrence identity")
 	}
 	state, err := occurrenceState(result.GetStatus())
@@ -332,7 +332,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	if err != nil {
 		return "", false, err
 	}
-	workID, err := s.resolveWorkID(ctx, result.GetRunId())
+	workID, err := s.resolveWorkID(ctx, result.GetRunId().GetValue())
 	if err != nil {
 		return "", false, err
 	}
@@ -346,7 +346,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	defer tx.Rollback()
 	queries := s.queries.WithTx(tx)
 	previousHash, err := queries.GetStartedOccurrenceHash(ctx, generated.GetStartedOccurrenceHashParams{
-		WorkID: workID, OccurrenceID: result.GetOccurrenceId(), State: OccurrenceStarted,
+		WorkID: workID, OccurrenceID: result.GetOccurrenceId().GetValue(), State: OccurrenceStarted,
 	})
 	if err != nil {
 		return "", false, err
@@ -354,7 +354,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	status := int32(result.GetStatus())
 	updated, err := queries.RecordOccurrence(ctx, generated.RecordOccurrenceParams{
 		State: state, CompletedAt: timePtr(now), ResultStatus: &status, ResultError: result.GetError(), LastResultHash: resultHash,
-		WorkID: workID, OccurrenceID: result.GetOccurrenceId(), State_2: OccurrenceStarted,
+		WorkID: workID, OccurrenceID: result.GetOccurrenceId().GetValue(), State_2: OccurrenceStarted,
 	})
 	if err != nil {
 		return "", false, err
@@ -385,8 +385,8 @@ func actionResultHash(result *pb.ActionResult) (string, error) {
 	stable := proto.Clone(result).(*pb.ActionResult)
 	stable.CompletedAt = nil
 	stable.Duration = nil
-	stable.RunId = ""
-	stable.OccurrenceId = ""
+	stable.RunId = nil
+	stable.OccurrenceId = nil
 	encoded, err := canonicalProtoBytes(stable)
 	if err != nil {
 		return "", fmt.Errorf("hash action result: %w", err)
@@ -508,8 +508,8 @@ func (s *Store) RecoverInterruptedOccurrences(ctx context.Context) ([]PendingRes
 		message := "agent restarted after STARTED; effect is unknown and was not repeated"
 		result := &pb.ActionResult{
 			ActionId:     &pb.ActionId{Value: item.actionID},
-			RunId:        item.runID,
-			OccurrenceId: item.occurrenceID,
+			RunId:        &pb.RunId{Value: item.runID},
+			OccurrenceId: &pb.OccurrenceId{Value: item.occurrenceID},
 			Status:       status,
 			Error:        message,
 			CompletedAt:  timestamppb.New(now),

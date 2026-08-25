@@ -907,8 +907,8 @@ message ActionResult {
   // one authored occurrence legitimately produces several results with the same
   // action_id.
   //
-  string run_id = 11 [(buf.validate.field).string.ulid = true];
-  string occurrence_id = 12 [(buf.validate.field).string.ulid = true];
+  RunId run_id = 11 [(buf.validate.field).required = true];
+  OccurrenceId occurrence_id = 12 [(buf.validate.field).required = true];
 }
 
 // ============================================================================

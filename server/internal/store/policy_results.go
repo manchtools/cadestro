@@ -23,7 +23,7 @@ import (
 var ErrPolicyResultConflict = errors.New("policy result conflicts with stored replay")
 
 func (s *Store) RecordPolicyActionResult(ctx context.Context, deviceID string, result *pb.ActionResult) error {
-	if result == nil || deviceID == "" || result.GetRunId() == "" || result.GetOccurrenceId() == "" {
+	if result == nil || deviceID == "" || result.GetRunId().GetValue() == "" || result.GetOccurrenceId().GetValue() == "" {
 		return errors.New("policy action result: missing identity")
 	}
 	payload, err := protojson.Marshal(result)
@@ -45,7 +45,7 @@ func (s *Store) RecordPolicyActionResult(ctx context.Context, deviceID string, r
 	}
 	return s.recordPolicyResult(ctx, deviceID, func(ctx context.Context, tx *Tx, rec *AuditRecorder) error {
 		existing, err := tx.GetPolicyActionResult(ctx, generated.GetPolicyActionResultParams{
-			RunID: result.GetRunId(), OccurrenceID: result.GetOccurrenceId(),
+			RunID: result.GetRunId().GetValue(), OccurrenceID: result.GetOccurrenceId().GetValue(),
 		})
 		if err == nil {
 			if existing.DeviceID != deviceID || existing.ResultHash != hash {
@@ -57,7 +57,7 @@ func (s *Store) RecordPolicyActionResult(ctx context.Context, deviceID string, r
 			return err
 		}
 		if err := tx.InsertPolicyActionResult(ctx, generated.InsertPolicyActionResultParams{
-			RunID: result.GetRunId(), OccurrenceID: result.GetOccurrenceId(), DeviceID: deviceID,
+			RunID: result.GetRunId().GetValue(), OccurrenceID: result.GetOccurrenceId().GetValue(), DeviceID: deviceID,
 			ActionID: result.GetActionId().GetValue(), ResultHash: hash,
 			Payload: sqlitetype.JSON(payload), CreatedAt: now,
 		}); err != nil {

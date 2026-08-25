@@ -2873,8 +2873,8 @@ type ActionResult struct {
 	// authored occurrences of the same action are preserved and executed, so
 	// one authored occurrence legitimately produces several results with the same
 	// action_id.
-	RunId         string `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	OccurrenceId  string `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	RunId         *RunId        `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	OccurrenceId  *OccurrenceId `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2979,18 +2979,18 @@ func (x *ActionResult) GetDetectionOutput() *CommandOutput {
 	return nil
 }
 
-func (x *ActionResult) GetRunId() string {
+func (x *ActionResult) GetRunId() *RunId {
 	if x != nil {
 		return x.RunId
 	}
-	return ""
+	return nil
 }
 
-func (x *ActionResult) GetOccurrenceId() string {
+func (x *ActionResult) GetOccurrenceId() *OccurrenceId {
 	if x != nil {
 		return x.OccurrenceId
 	}
-	return ""
+	return nil
 }
 
 // Per-architecture binary source authenticated by a signed checksum manifest.
@@ -3377,7 +3377,7 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
 	"\x06hidden\x18\t \x01(\bR\x06hidden\x122\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\xb0\x05\n" +
+	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\xdb\x05\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12!\n" +
@@ -3389,9 +3389,9 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\bmetadata\x18\b \x03(\v2'.cadestro.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
 	"\tcompliant\x18\t \x01(\bR\tcompliant\x12E\n" +
 	"\x10detection_output\x18\n" +
-	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12\x1f\n" +
-	"\x06run_id\x18\v \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05runId\x12-\n" +
-	"\roccurrence_id\x18\f \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\foccurrenceId\x1a;\n" +
+	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x121\n" +
+	"\x06run_id\x18\v \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
+	"\roccurrence_id\x18\f \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x81\x01\n" +
@@ -3513,6 +3513,8 @@ var file_cadestro_v1_actions_proto_goTypes = []any{
 	(*CommandOutput)(nil),             // 39: cadestro.v1.CommandOutput
 	(*timestamppb.Timestamp)(nil),     // 40: google.protobuf.Timestamp
 	(*durationpb.Duration)(nil),       // 41: google.protobuf.Duration
+	(*RunId)(nil),                     // 42: cadestro.v1.RunId
+	(*OccurrenceId)(nil),              // 43: cadestro.v1.OccurrenceId
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	36, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
@@ -3557,13 +3559,15 @@ var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	41, // 39: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
 	35, // 40: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
 	39, // 41: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	32, // 42: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
-	32, // 43: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
-	44, // [44:44] is the sub-list for method output_type
-	44, // [44:44] is the sub-list for method input_type
-	44, // [44:44] is the sub-list for extension type_name
-	44, // [44:44] is the sub-list for extension extendee
-	0,  // [0:44] is the sub-list for field type_name
+	42, // 42: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
+	43, // 43: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	32, // 44: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
+	32, // 45: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
+	46, // [46:46] is the sub-list for method output_type
+	46, // [46:46] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }

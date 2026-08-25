@@ -249,8 +249,8 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			// and the next run cannot silently repeat the effect.
 			return
 		}
-		result.RunId = work.RunID
-		result.OccurrenceId = occurrence.GetOccurrenceId()
+		result.RunId = &pb.RunId{Value: work.RunID}
+		result.OccurrenceId = &pb.OccurrenceId{Value: occurrence.GetOccurrenceId()}
 		if result.CompletedAt == nil {
 			result.CompletedAt = timestamppb.New(s.now())
 		}

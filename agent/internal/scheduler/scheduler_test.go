@@ -65,8 +65,8 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	pending, err := st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 3)
-	require.NotEmpty(t, pending[0].ActionResult.GetRunId())
-	require.Equal(t, manifest.GetOccurrences()[0].GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId())
+	require.NotEmpty(t, pending[0].ActionResult.GetRunId().GetValue())
+	require.Equal(t, manifest.GetOccurrences()[0].GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId().GetValue())
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS, pending[2].ManifestResult.GetStatus())
 }
 
