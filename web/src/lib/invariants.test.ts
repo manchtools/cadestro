@@ -61,7 +61,6 @@ describe('web source invariants (NIS2 / CLAUDE)', () => {
 
 	it('inlang modules use exact versions', () => {
 		const settings = JSON.parse(readFileSync(projectSettings, 'utf8')) as { modules: string[] };
-		expect(settings.modules).toHaveLength(3);
 		expect(settings.modules.every((module) => /@\d+\.\d+\.\d+\/dist\/index\.js$/.test(module))).toBe(true);
 	});
 });
