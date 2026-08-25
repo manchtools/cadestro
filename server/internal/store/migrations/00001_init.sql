@@ -1,6 +1,4 @@
 
-
-
 -- +goose Up
 
 CREATE TABLE linux_uid_sequence (
@@ -49,14 +47,11 @@ CREATE TABLE user_ssh_keys (
 );
 CREATE INDEX idx_user_ssh_keys_user ON user_ssh_keys(user_id);
 
-
-
 CREATE TABLE user_encryption_keys (
     user_id     text PRIMARY KEY,
     wrapped_dek text NOT NULL,
     created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
 
 CREATE TABLE roles (
     id          text PRIMARY KEY,
@@ -233,7 +228,6 @@ CREATE TABLE devices (
     hostname                   text NOT NULL DEFAULT '',
     agent_version              text NOT NULL DEFAULT '',
 
-
     enrollment_identity_public_key blob CHECK (enrollment_identity_public_key IS NULL OR length(enrollment_identity_public_key) = 32),
     certificate_pem            blob,
 
@@ -275,8 +269,6 @@ BEGIN
     SELECT RAISE(ABORT, 'certificate serial and PEM must be stored together');
 END;
 -- +goose StatementEnd
-
-
 
 -- +goose StatementBegin
 CREATE TRIGGER devices_registration_token_immutable
@@ -424,7 +416,6 @@ CREATE INDEX idx_terminal_sessions_device_started
 CREATE INDEX idx_terminal_sessions_user_started
     ON terminal_sessions(user_id, started_at DESC);
 
-
 CREATE TABLE actions (
     id               text PRIMARY KEY,
     name             text NOT NULL,
@@ -442,8 +433,6 @@ CREATE TABLE actions (
     updated_at       timestamp,
     is_deleted       boolean NOT NULL DEFAULT false
 );
-
-
 
 CREATE TABLE device_secrets (
     id          text PRIMARY KEY,
@@ -626,9 +615,6 @@ CREATE TABLE server_settings (
     updated_at                timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
-
 CREATE TABLE audit_operations (
     operation_id          text PRIMARY KEY CHECK (
                               length(operation_id) = 26
@@ -747,7 +733,6 @@ WHEN EXISTS (
 END;
 -- +goose StatementEnd
 
-
 CREATE VIEW audit_event_rows AS
 SELECT
     e.effect_id AS id, e.chain_seq, e.resource_type AS stream_type,
@@ -835,8 +820,6 @@ CREATE INDEX jobs_lease_idx ON jobs(claimed_until) WHERE state = 'CLAIMED';
 CREATE INDEX jobs_kind_idx ON jobs(kind, due_at);
 CREATE UNIQUE INDEX jobs_dedupe_live_key ON jobs(dedupe_key)
     WHERE dedupe_key IS NOT NULL AND state IN ('PENDING', 'CLAIMED');
-
-
 
 CREATE TABLE search_documents (
     rowid        integer PRIMARY KEY,
