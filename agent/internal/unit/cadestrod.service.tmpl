@@ -32,8 +32,10 @@ ProtectControlGroups=true
 RestrictRealtime={{if .RestrictRealtime}}true{{else}}false{{end}}
 RestrictSUIDSGID=false
 
+# docref: begin capability-boundary
 AmbientCapabilities=CAP_SETUID CAP_SETGID
 CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_SYS_ADMIN CAP_KILL CAP_SETFCAP CAP_NET_RAW
+# docref: end capability-boundary
 
 PrivateNetwork=false
 

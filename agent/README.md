@@ -843,6 +843,43 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
+<!-- docref: begin src=agent/internal/unit/cadestrod.service.tmpl#@capability-boundary:afa64cbb -->
+The packaged service runs as `root` because its action surface mutates host
+state: package installation, systemd units, `/etc`, users and groups, LUKS
+volumes, terminal sessions, and signed credential storage. The unit deliberately
+leaves `ProtectSystem`, `ProtectHome`, `PrivateTmp`, `ProtectKernelTunables`,
+and `ProtectKernelModules` disabled because those sandboxes would block the
+host mutations they are meant to perform. `NoNewPrivileges` and
+`RestrictSUIDSGID` remain disabled for uid/gid transitions and package hooks;
+`PrivateNetwork=false` keeps the control connection and host firewall namespace
+available. `ProtectControlGroups=true` remains enabled because the agent does
+not manage cgroups. The agent itself listens only on its Unix sockets, not on a
+TCP port.
+
+`AmbientCapabilities` contains only `CAP_SETUID` and `CAP_SETGID`. That makes
+the per-user terminal transition explicit for child processes and preserves
+that boundary if the service later drops uid while retaining those capabilities.
+`CapabilityBoundingSet` is the hard ceiling for the agent and its children; it
+does not grant capabilities by itself and prevents omitted capabilities from
+being recovered through `execve`.
+
+| Capability | Kernel operation required by the agent's host actions |
+|---|---|
+| `CAP_SETUID` | Change uid for per-user `cadestro-tty-*` terminal shells. |
+| `CAP_SETGID` | Change gid and supplementary groups for per-user terminal shells. |
+| `CAP_AUDIT_WRITE` | Preserve kernel audit writes from setuid-root children, including policy-selected sudo actions. |
+| `CAP_CHOWN` | Change ownership during package hooks and configuration writes. |
+| `CAP_DAC_OVERRIDE` | Override discretionary file permissions while managing protected host files. |
+| `CAP_FOWNER` | Override owner checks for chmod and other file metadata operations. |
+| `CAP_NET_BIND_SERVICE` | Permit daemons restarted by shell actions to bind privileged ports. |
+| `CAP_NET_ADMIN` | Manage host firewall state through `ufw`, `firewall-cmd`, or `nft`. |
+| `CAP_SYS_ADMIN` | Mount and unmount volumes during LUKS operations. |
+| `CAP_KILL` | Signal other-uid terminal process groups during session teardown. |
+| `CAP_SETFCAP` | Allow `dpkg` and `rpm` package hooks to set file capabilities. |
+| `CAP_NET_RAW` | Allow file-capability tools such as `ping` and raw-socket children. |
+
+<!-- docref: end -->
+
 Manage with:
 
 ```bash
