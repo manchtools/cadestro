@@ -39,7 +39,7 @@ func Open(ctx context.Context, path string) (*DB, error) {
 		return nil, fmt.Errorf("resolve SQLite test path: %w", err)
 	}
 	dsn := (&url.URL{Scheme: "file", Path: absolute}).String() +
-		"?_pragma=busy_timeout%285000%29&_pragma=foreign_keys%281%29&_time_format=sqlite"
+		"?_pragma=busy_timeout%285000%29&_pragma=foreign_keys%281%29&_pragma=journal_mode%28WAL%29&_pragma=synchronous%28FULL%29&_time_format=sqlite"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open raw SQLite test database: %w", err)
