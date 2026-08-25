@@ -8,3 +8,6 @@ include = ["deploy/QUICKSTART.md", "SECURITY.md", "README.md", "cmd/cadestro/REA
 
 [check]
 level = "strict"
+
+[anchors]
+include = ["deploy/**"]

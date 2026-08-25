@@ -41,4 +41,4 @@ include = [
 # whose prose introduced them. Scoping discovery and scoping resolution are
 # different questions, and only the first one belongs to a single owner.
 [anchors]
-include = ["agent/**", ".github/**"]
+include = ["agent/**", ".github/**", "server/internal/store/migrations/00001_init.sql"]
