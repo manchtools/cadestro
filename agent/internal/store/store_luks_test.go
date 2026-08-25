@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,31 +23,31 @@ func TestLuksState_RoundTrip(t *testing.T) {
 	const devicePath = "/dev/mapper/luks-test"
 
 	// Absent → (nil, nil)
-	got, err := st.GetLuksState(actionID)
+	got, err := st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	require.Nil(t, got, "no state before any write")
 
-	require.NoError(t, st.SetLuksOwnershipTaken(actionID, devicePath))
-	got, err = st.GetLuksState(actionID)
+	require.NoError(t, st.SetLuksOwnershipTaken(context.Background(), actionID, devicePath))
+	got, err = st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.True(t, got.OwnershipTaken)
 	assert.Equal(t, devicePath, got.DevicePath)
 	assert.Equal(t, "none", got.DeviceKeyType)
 
-	require.NoError(t, st.SetLuksDeviceKeyType(actionID, "user_passphrase"))
-	got, err = st.GetLuksState(actionID)
+	require.NoError(t, st.SetLuksDeviceKeyType(context.Background(), actionID, "user_passphrase"))
+	got, err = st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.Equal(t, "user_passphrase", got.DeviceKeyType)
 
 	rotAt := time.Date(2026, 6, 1, 12, 0, 0, 0, time.UTC)
-	require.NoError(t, st.SetLuksLastRotatedAt(actionID, rotAt))
-	got, err = st.GetLuksState(actionID)
+	require.NoError(t, st.SetLuksLastRotatedAt(context.Background(), actionID, rotAt))
+	got, err = st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.True(t, got.LastRotatedAt.Equal(rotAt), "last_rotated_at round-trips: got %v want %v", got.LastRotatedAt, rotAt)
 
-	require.NoError(t, st.DeleteLuksState(actionID))
-	got, err = st.GetLuksState(actionID)
+	require.NoError(t, st.DeleteLuksState(context.Background(), actionID))
+	got, err = st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.Nil(t, got, "state gone after delete")
 }
@@ -62,10 +63,10 @@ func TestLuksPassphraseHistory_KeepsThreeMostRecent(t *testing.T) {
 	const actionID = "01HXLUKSHIST00000000000000"
 	inserted := []string{"h1", "h2", "h3", "h4", "h5"}
 	for _, h := range inserted {
-		require.NoError(t, st.AddLuksPassphraseHash(actionID, h))
+		require.NoError(t, st.AddLuksPassphraseHash(context.Background(), actionID, h))
 	}
 
-	got, err := st.GetLuksPassphraseHashes(actionID)
+	got, err := st.GetLuksPassphraseHashes(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.Len(t, got, 3, "exactly the 3 most recent hashes are retained")
 	for _, h := range got {
@@ -82,10 +83,10 @@ func TestLpsState_RoundTrip(t *testing.T) {
 	const actionID = "01HXLPSSTATE000000000000000"
 	rotAt := time.Date(2026, 6, 2, 9, 30, 0, 0, time.UTC)
 
-	require.NoError(t, st.SetLpsUserState(actionID, "alice", rotAt, "hashA"))
-	require.NoError(t, st.SetLpsUserState(actionID, "bob", rotAt, "hashB"))
+	require.NoError(t, st.SetLpsUserState(context.Background(), actionID, "alice", rotAt, "hashA"))
+	require.NoError(t, st.SetLpsUserState(context.Background(), actionID, "bob", rotAt, "hashB"))
 
-	states, err := st.GetLpsState(actionID)
+	states, err := st.GetLpsState(context.Background(), actionID)
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 	require.Contains(t, states, "alice")
@@ -93,13 +94,13 @@ func TestLpsState_RoundTrip(t *testing.T) {
 	assert.True(t, states["alice"].LastRotatedAt.Equal(rotAt))
 
 	// Upsert overwrites.
-	require.NoError(t, st.SetLpsUserState(actionID, "alice", rotAt, "hashA2"))
-	states, err = st.GetLpsState(actionID)
+	require.NoError(t, st.SetLpsUserState(context.Background(), actionID, "alice", rotAt, "hashA2"))
+	states, err = st.GetLpsState(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.Equal(t, "hashA2", states["alice"].PasswordHash)
 
-	require.NoError(t, st.DeleteLpsState(actionID))
-	states, err = st.GetLpsState(actionID)
+	require.NoError(t, st.DeleteLpsState(context.Background(), actionID))
+	states, err = st.GetLpsState(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.Empty(t, states)
 }
@@ -120,7 +121,7 @@ func TestAgentDB_FileModeIs0600(t *testing.T) {
 	defer st.Close()
 
 	// Force a WAL write so the -wal/-shm sidecars exist and are checked.
-	require.NoError(t, st.SetLuksOwnershipTaken("01HXMODECHECK0000000000000", "/dev/mapper/x"))
+	require.NoError(t, st.SetLuksOwnershipTaken(context.Background(), "01HXMODECHECK0000000000000", "/dev/mapper/x"))
 
 	for _, name := range []string{"agent.db", "agent.db-wal", "agent.db-shm"} {
 		path := filepath.Join(dir, name)

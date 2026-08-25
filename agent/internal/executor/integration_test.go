@@ -1485,7 +1485,7 @@ func TestIntegration_LPS(t *testing.T) {
 	ensureTestUser(t, username)
 	t.Cleanup(func() {
 		cleanupTestUser(t, username)
-		_ = e.store.DeleteLpsState(actionID)
+		_ = e.store.DeleteLpsState(ctx, actionID)
 	})
 
 	t.Run("InitialRotation", func(t *testing.T) {
@@ -1537,7 +1537,7 @@ func TestIntegration_LPS(t *testing.T) {
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
 		assertChanged(t, result, true)
-		states, err := e.store.GetLpsState(actionID)
+		states, err := e.store.GetLpsState(ctx, actionID)
 		if err != nil {
 			t.Fatalf("failed to check LPS state: %v", err)
 		}
@@ -2279,7 +2279,7 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 
 	ensureTestUser(t, "cadestrolpsedge")
 	t.Cleanup(func() {
-		_ = e.store.DeleteLpsState(actionID)
+		_ = e.store.DeleteLpsState(ctx, actionID)
 		cleanupTestUser(t, "cadestrolpsedge")
 	})
 
@@ -2299,7 +2299,7 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 	assertSuccess(t, result)
 
 	// Verify state was persisted in SQLite
-	states, err := e.store.GetLpsState(actionID)
+	states, err := e.store.GetLpsState(ctx, actionID)
 	if err != nil {
 		t.Fatalf("failed to get LPS state: %v", err)
 	}

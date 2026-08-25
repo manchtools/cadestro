@@ -1,6 +1,9 @@
 package store
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 // TTYSettingKey is the settings row key storing the local TTY toggle state.
 // Value is "1"/"true"/"enabled" (case-insensitive, whitespace-trimmed)
@@ -21,8 +24,8 @@ const TTYSettingKey = "tty.enabled"
 // instead of strict "1" only — the writer below still emits canonical
 // "1"/"0", but a manual sqlite edit using "true" should not silently
 // disable.
-func (s *Store) IsTTYEnabled() (bool, error) {
-	v, err := s.GetSetting(TTYSettingKey)
+func (s *Store) IsTTYEnabled(ctx context.Context) (bool, error) {
+	v, err := s.GetSetting(ctx, TTYSettingKey)
 	if err != nil {
 		return false, err
 	}
@@ -34,10 +37,10 @@ func (s *Store) IsTTYEnabled() (bool, error) {
 }
 
 // SetTTYEnabled toggles the TTY state. Passing true enables, false disables.
-func (s *Store) SetTTYEnabled(enabled bool) error {
+func (s *Store) SetTTYEnabled(ctx context.Context, enabled bool) error {
 	v := "0"
 	if enabled {
 		v = "1"
 	}
-	return s.SetSetting(TTYSettingKey, v)
+	return s.SetSetting(ctx, TTYSettingKey, v)
 }

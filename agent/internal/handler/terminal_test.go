@@ -58,7 +58,7 @@ func newTestHandlerWithTTY(t *testing.T, ttyEnabled bool) (*Handler, *fakeSender
 		t.Fatalf("new store: %v", err)
 	}
 	t.Cleanup(func() { st.Close() })
-	if err := st.SetTTYEnabled(ttyEnabled); err != nil {
+	if err := st.SetTTYEnabled(context.Background(), ttyEnabled); err != nil {
 		t.Fatalf("set tty toggle: %v", err)
 	}
 	h := &Handler{

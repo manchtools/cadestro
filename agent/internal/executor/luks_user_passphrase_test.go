@@ -26,7 +26,7 @@ func TestReconcileDeviceKey_UserPassphrasePersistsModeAndConverges(t *testing.T)
 
 	const actionID = "01HXLUKSUSERPASS0000000000"
 	const devicePath = "/dev/mapper/test"
-	require.NoError(t, st.SetLuksOwnershipTaken(actionID, devicePath))
+	require.NoError(t, st.SetLuksOwnershipTaken(context.Background(), actionID, devicePath))
 
 	e := &Executor{logger: slog.Default(), now: time.Now}
 	e.SetStore(st)
@@ -36,7 +36,7 @@ func TestReconcileDeviceKey_UserPassphrasePersistsModeAndConverges(t *testing.T)
 	}
 
 	// First reconcile from a fresh "none" device: a real change.
-	ls, err := st.GetLuksState(actionID)
+	ls, err := st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	require.Equal(t, "none", ls.DeviceKeyType)
 
@@ -45,7 +45,7 @@ func TestReconcileDeviceKey_UserPassphrasePersistsModeAndConverges(t *testing.T)
 	assert.True(t, changed, "first reconcile to user_passphrase is a change")
 
 	// The mode must be persisted.
-	ls2, err := st.GetLuksState(actionID)
+	ls2, err := st.GetLuksState(context.Background(), actionID)
 	require.NoError(t, err)
 	assert.Equal(t, "user_passphrase", ls2.DeviceKeyType,
 		"reconcile must persist the user_passphrase mode so it converges")

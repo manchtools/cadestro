@@ -97,7 +97,7 @@ func testRuntimeScheduler(t *testing.T) *scheduler.Scheduler {
 	state, err := store.New(t.TempDir())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, state.Close()) })
-	return scheduler.New(state, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	return scheduler.New(context.Background(), state, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
 }
 
 func TestPeriodicSyncLiveTriggerSendsFullSync(t *testing.T) {

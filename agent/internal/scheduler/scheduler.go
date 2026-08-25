@@ -49,7 +49,7 @@ type Scheduler struct {
 	windowDecodeFailed bool
 }
 
-func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Scheduler {
+func New(ctx context.Context, st *store.Store, executor ActionExecutor, logger *slog.Logger) *Scheduler {
 	s := &Scheduler{
 		store:    st,
 		executor: executor,
@@ -58,7 +58,7 @@ func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Schedul
 		wakeCh:   make(chan struct{}, 1),
 		results:  make(chan *ExecutionResult, 100),
 	}
-	if window, err := loadMaintenanceWindow(st); err != nil {
+	if window, err := loadMaintenanceWindow(ctx, st); err != nil {
 		logger.Error("persisted maintenance window is unreadable; denying scheduled policy runs until sync", "error", err)
 		s.windowDecodeFailed = true
 	} else {
@@ -79,12 +79,12 @@ func (s *Scheduler) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolic
 	return nil
 }
 
-func (s *Scheduler) GetPendingResults() ([]store.PendingResult, error) {
-	return s.store.GetPendingResults()
+func (s *Scheduler) GetPendingResults(ctx context.Context) ([]store.PendingResult, error) {
+	return s.store.GetPendingResults(ctx)
 }
 
-func (s *Scheduler) MarkPendingResultSynced(id string) error {
-	return s.store.MarkPendingResultSynced(id)
+func (s *Scheduler) MarkPendingResultSynced(ctx context.Context, id string) error {
+	return s.store.MarkPendingResultSynced(ctx, id)
 }
 
 func (s *Scheduler) Wake() {
@@ -116,7 +116,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 	s.mu.Unlock()
 	defer close(done)
 
-	if err := s.recoverInterruptedOccurrences(); err != nil {
+	if err := s.recoverInterruptedOccurrences(ctx); err != nil {
 		s.logger.Error("failed to recover interrupted occurrences; refusing to schedule", "error", err)
 		return
 	}
@@ -153,7 +153,7 @@ func (s *Scheduler) Stop() {
 }
 
 func (s *Scheduler) runDue(ctx context.Context) {
-	if err := s.recoverInterruptedOccurrences(); err != nil {
+	if err := s.recoverInterruptedOccurrences(ctx); err != nil {
 		s.logger.Error("recover interrupted occurrences", "error", err)
 		return
 	}
@@ -174,8 +174,8 @@ func (s *Scheduler) runDue(ctx context.Context) {
 	}
 }
 
-func (s *Scheduler) recoverInterruptedOccurrences() error {
-	recovered, recoverErr := s.store.RecoverInterruptedOccurrences()
+func (s *Scheduler) recoverInterruptedOccurrences(ctx context.Context) error {
+	recovered, recoverErr := s.store.RecoverInterruptedOccurrences(ctx)
 	if recoverErr != nil {
 		return recoverErr
 	}
@@ -187,12 +187,12 @@ func (s *Scheduler) recoverInterruptedOccurrences() error {
 
 func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWork) {
 	manifest := work.Manifest
-	started, err := s.store.BeginManifestRun(&work, s.now().UTC())
+	started, err := s.store.BeginManifestRun(ctx, &work, s.now().UTC())
 	if err != nil {
 		s.logger.Error("begin manifest run", "work_id", work.RunID, "error", err)
 		return
 	}
-	states, err := s.store.GetManifestOccurrenceStates(work.RunID)
+	states, err := s.store.GetManifestOccurrenceStates(ctx, work.RunID)
 	if err != nil {
 		s.logger.Error("load occurrence states", "work_id", work.RunID, "error", err)
 		return
@@ -225,7 +225,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			continue
 		}
 
-		if err := s.store.MarkOccurrenceStarted(work.RunID, occurrence.GetOccurrenceId(), s.now()); err != nil {
+		if err := s.store.MarkOccurrenceStarted(ctx, work.RunID, occurrence.GetOccurrenceId(), s.now()); err != nil {
 			s.logger.Error("mark occurrence started", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
 			aggregate = pb.ExecutionStatus_EXECUTION_STATUS_FAILED
 			aggregateError = "failed to durably mark occurrence STARTED"
@@ -256,7 +256,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 		suppressUnchanged := manifest.GetSchedule().GetSkipIfUnchanged() &&
 			result.GetStatus() == pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&
 			!result.GetChanged()
-		resultID, suppressed, err := s.store.RecordOccurrenceResult(result, suppressUnchanged)
+		resultID, suppressed, err := s.store.RecordOccurrenceResult(ctx, result, suppressUnchanged)
 		if err != nil {
 			s.logger.Error("record occurrence result", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
 			return
@@ -279,7 +279,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 		DurationMs:  finished.Sub(started).Milliseconds(),
 		Error:       aggregateError,
 	}
-	resultID, err := s.store.RecordManifestResult(manifestResult)
+	resultID, err := s.store.RecordManifestResult(ctx, manifestResult)
 	if err != nil {
 		s.logger.Error("record manifest result", "work_id", work.RunID, "error", err)
 		return
@@ -309,11 +309,11 @@ func (s *Scheduler) publish(result *ExecutionResult) {
 }
 
 // GetStoredActions supplies the LUKS conflict check from the manifest store.
-func (s *Scheduler) GetStoredActions() ([]*store.StoredAction, error) {
-	return s.store.GetManifestActions()
+func (s *Scheduler) GetStoredActions(ctx context.Context) ([]*store.StoredAction, error) {
+	return s.store.GetManifestActions(ctx)
 }
 
-func (s *Scheduler) SetMaintenanceWindow(window *pb.MaintenanceWindow) {
+func (s *Scheduler) SetMaintenanceWindow(ctx context.Context, window *pb.MaintenanceWindow) {
 	var normalized *pb.MaintenanceWindow
 	if window != nil && len(window.GetSchedule()) != 0 {
 		normalized = proto.Clone(window).(*pb.MaintenanceWindow)
@@ -322,7 +322,7 @@ func (s *Scheduler) SetMaintenanceWindow(window *pb.MaintenanceWindow) {
 	s.window = normalized
 	s.windowDecodeFailed = false
 	s.windowMu.Unlock()
-	if err := storeMaintenanceWindow(s.store, normalized); err != nil {
+	if err := storeMaintenanceWindow(ctx, s.store, normalized); err != nil {
 		s.logger.Warn("persist maintenance window", "error", err)
 	}
 }
@@ -333,8 +333,8 @@ func (s *Scheduler) runAllowed(at time.Time) bool {
 	return !s.windowDecodeFailed && maintenance.IsAllowed(s.window, at)
 }
 
-func loadMaintenanceWindow(st *store.Store) (*pb.MaintenanceWindow, error) {
-	raw, err := st.GetSetting(maintenanceWindowSettingKey)
+func loadMaintenanceWindow(ctx context.Context, st *store.Store) (*pb.MaintenanceWindow, error) {
+	raw, err := st.GetSetting(ctx, maintenanceWindowSettingKey)
 	if err != nil || raw == "" {
 		return nil, err
 	}
@@ -348,13 +348,13 @@ func loadMaintenanceWindow(st *store.Store) (*pb.MaintenanceWindow, error) {
 	return window, nil
 }
 
-func storeMaintenanceWindow(st *store.Store, window *pb.MaintenanceWindow) error {
+func storeMaintenanceWindow(ctx context.Context, st *store.Store, window *pb.MaintenanceWindow) error {
 	if window == nil || len(window.GetSchedule()) == 0 {
-		return st.DeleteSetting(maintenanceWindowSettingKey)
+		return st.DeleteSetting(ctx, maintenanceWindowSettingKey)
 	}
 	raw, err := proto.Marshal(window)
 	if err != nil {
 		return err
 	}
-	return st.SetSetting(maintenanceWindowSettingKey, string(raw))
+	return st.SetSetting(ctx, maintenanceWindowSettingKey, string(raw))
 }

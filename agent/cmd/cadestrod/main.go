@@ -223,7 +223,7 @@ func main() {
 	// Initialize the scheduler for autonomous action execution
 	exec := executor.NewExecutor(runner)
 	exec.SetStore(actionStore)
-	sched := scheduler.New(actionStore, exec, logger)
+	sched := scheduler.New(ctx, actionStore, exec, logger)
 	exec.SetActionStore(sched)
 
 	// Start the scheduler in a goroutine

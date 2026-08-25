@@ -1,8 +1,11 @@
 package store
 
 import (
+	"context"
 	"testing"
 )
+
+var ttyTestContext = context.Background()
 
 // IsTTYEnabled's accept-list is exercised DIRECTLY via SetSetting (not via
 // SetTTYEnabled, which only ever writes the canonical "1"/"0") so the test
@@ -21,10 +24,10 @@ func TestIsTTYEnabled_AcceptListExactBothDirections(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer st.Close()
-			if err := st.SetSetting(TTYSettingKey, v); err != nil {
+			if err := st.SetSetting(ttyTestContext, TTYSettingKey, v); err != nil {
 				t.Fatal(err)
 			}
-			enabled, err := st.IsTTYEnabled()
+			enabled, err := st.IsTTYEnabled(ttyTestContext)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -41,10 +44,10 @@ func TestIsTTYEnabled_AcceptListExactBothDirections(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer st.Close()
-			if err := st.SetSetting(TTYSettingKey, v); err != nil {
+			if err := st.SetSetting(ttyTestContext, TTYSettingKey, v); err != nil {
 				t.Fatal(err)
 			}
-			enabled, err := st.IsTTYEnabled()
+			enabled, err := st.IsTTYEnabled(ttyTestContext)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -62,7 +65,7 @@ func TestTTYDefault_Disabled(t *testing.T) {
 	}
 	defer st.Close()
 
-	enabled, err := st.IsTTYEnabled()
+	enabled, err := st.IsTTYEnabled(ttyTestContext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,10 +82,10 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 	defer st.Close()
 
 	// Enable
-	if err := st.SetTTYEnabled(true); err != nil {
+	if err := st.SetTTYEnabled(ttyTestContext, true); err != nil {
 		t.Fatal(err)
 	}
-	enabled, err := st.IsTTYEnabled()
+	enabled, err := st.IsTTYEnabled(ttyTestContext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,19 +94,19 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 	}
 
 	// Idempotent enable
-	if err := st.SetTTYEnabled(true); err != nil {
+	if err := st.SetTTYEnabled(ttyTestContext, true); err != nil {
 		t.Fatal(err)
 	}
-	enabled, _ = st.IsTTYEnabled()
+	enabled, _ = st.IsTTYEnabled(ttyTestContext)
 	if !enabled {
 		t.Error("expected enabled after second SetTTYEnabled(true)")
 	}
 
 	// Disable
-	if err := st.SetTTYEnabled(false); err != nil {
+	if err := st.SetTTYEnabled(ttyTestContext, false); err != nil {
 		t.Fatal(err)
 	}
-	enabled, err = st.IsTTYEnabled()
+	enabled, err = st.IsTTYEnabled(ttyTestContext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,10 +115,10 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 	}
 
 	// Idempotent disable
-	if err := st.SetTTYEnabled(false); err != nil {
+	if err := st.SetTTYEnabled(ttyTestContext, false); err != nil {
 		t.Fatal(err)
 	}
-	enabled, _ = st.IsTTYEnabled()
+	enabled, _ = st.IsTTYEnabled(ttyTestContext)
 	if enabled {
 		t.Error("expected still disabled after second SetTTYEnabled(false)")
 	}
@@ -129,7 +132,7 @@ func TestTTY_PersistsAcrossReopen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTTYEnabled(true); err != nil {
+	if err := st.SetTTYEnabled(ttyTestContext, true); err != nil {
 		t.Fatal(err)
 	}
 	if err := st.Close(); err != nil {
@@ -143,7 +146,7 @@ func TestTTY_PersistsAcrossReopen(t *testing.T) {
 	}
 	defer st2.Close()
 
-	enabled, err := st2.IsTTYEnabled()
+	enabled, err := st2.IsTTYEnabled(ttyTestContext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +162,7 @@ func TestSettings_GetMissingReturnsEmpty(t *testing.T) {
 	}
 	defer st.Close()
 
-	value, err := st.GetSetting("nonexistent")
+	value, err := st.GetSetting(ttyTestContext, "nonexistent")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,14 +178,14 @@ func TestSettings_SetOverwrites(t *testing.T) {
 	}
 	defer st.Close()
 
-	if err := st.SetSetting("key", "v1"); err != nil {
+	if err := st.SetSetting(ttyTestContext, "key", "v1"); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetSetting("key", "v2"); err != nil {
+	if err := st.SetSetting(ttyTestContext, "key", "v2"); err != nil {
 		t.Fatal(err)
 	}
 
-	value, _ := st.GetSetting("key")
+	value, _ := st.GetSetting(ttyTestContext, "key")
 	if value != "v2" {
 		t.Errorf("expected %q, got %q", "v2", value)
 	}

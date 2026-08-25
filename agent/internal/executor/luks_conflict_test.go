@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"log/slog"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ type fakeActionStore struct {
 	err     error
 }
 
-func (f *fakeActionStore) GetStoredActions() ([]*store.StoredAction, error) {
+func (f *fakeActionStore) GetStoredActions(ctx context.Context) ([]*store.StoredAction, error) {
 	return f.actions, f.err
 }
 
@@ -59,7 +60,7 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 			encAction("weak", 3, none, present, t0),
 			encAction("strong", 7, none, present, t0),
 		})
-		winner, err := resolveLuksConflict(e.getActionStore(), "weak")
+		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "weak")
 		require.NoError(t, err)
 		assert.Equal(t, "strong", winner, "the stronger min_words policy must win")
 	})
@@ -69,7 +70,7 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 			encAction("plain", 5, none, present, t0),
 			encAction("complex", 5, complex, present, t0),
 		})
-		winner, err := resolveLuksConflict(e.getActionStore(), "plain")
+		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "plain")
 		require.NoError(t, err)
 		assert.Equal(t, "complex", winner)
 	})
@@ -79,7 +80,7 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 			encAction("newer", 5, complex, present, t0.Add(time.Hour)),
 			encAction("older", 5, complex, present, t0),
 		})
-		winner, err := resolveLuksConflict(e.getActionStore(), "newer")
+		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "newer")
 		require.NoError(t, err)
 		assert.Equal(t, "older", winner, "oldest assignment wins on a full tie")
 	})
@@ -98,14 +99,14 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 		})
 		// Only one live ENCRYPTION candidate → it wins despite the
 		// stronger ABSENT one being present.
-		winner, err := resolveLuksConflict(e.getActionStore(), "live")
+		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "live")
 		require.NoError(t, err)
 		assert.Equal(t, "live", winner)
 	})
 
 	t.Run("single candidate returns itself", func(t *testing.T) {
 		e := newExec([]*store.StoredAction{encAction("solo", 5, none, present, t0)})
-		winner, err := resolveLuksConflict(e.getActionStore(), "solo")
+		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "solo")
 		require.NoError(t, err)
 		assert.Equal(t, "solo", winner)
 	})
@@ -118,7 +119,7 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 		})
 		// Even when THIS action is the strong one, query as the weak one:
 		// the winner must be the strongest, never the caller by default.
-		winner, err := resolveLuksConflict(e.getActionStore(), "weak")
+		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "weak")
 		require.NoError(t, err)
 		assert.Equal(t, "strong", winner)
 	})

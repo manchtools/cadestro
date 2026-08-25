@@ -23,8 +23,28 @@ KEY_OPTS    := $(if $(KEY),-i $(KEY),)
 SSH_OPTS    := -t $(KEY_OPTS)
 SCP_OPTS    := $(KEY_OPTS)
 
+sqlc-generate:
+	@set -eu; \
+	command -v docker >/dev/null; \
+	stage=$$(mktemp -d internal/store/.sqlc.XXXXXX); \
+	trap 'rm -rf "$$stage"' EXIT INT TERM; \
+	cp -R internal/store/sqlc.yaml internal/store/migrations internal/store/queries "$$stage/"; \
+	docker run --rm --memory=6g --cpus=4 --user "$$(id -u):$$(id -g)" \
+		-v "$$(realpath "$$stage")":/src:Z -w /src sqlc/sqlc:1.31.1 generate; \
+	mv internal/store/generated "$$stage/previous"; \
+	if mv "$$stage/generated" internal/store/generated; then \
+		rm -rf "$$stage"; \
+		trap - EXIT INT TERM; \
+	else \
+		mv "$$stage/previous" internal/store/generated; \
+		exit 1; \
+	fi
+
+sqlc-check: sqlc-generate
+	git diff --exit-code internal/store/generated
+
 # ── Targets ────────────────────────────────────────────────────
-.PHONY: build deploy install logs status restart stop \
+.PHONY: build deploy install logs status restart stop sqlc-generate sqlc-check \
     test-integration-debian test-integration-fedora \
     test-integration-opensuse test-integration-archlinux test-integration-all \
     test-integration-edgecase

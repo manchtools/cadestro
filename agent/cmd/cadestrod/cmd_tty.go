@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -76,24 +77,25 @@ func runTTY(args []string) int {
 		return 1
 	}
 	defer st.Close()
+	ctx := context.Background()
 
 	switch sub {
 	case "enable":
-		if err := st.SetTTYEnabled(true); err != nil {
+		if err := st.SetTTYEnabled(ctx, true); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			return 1
 		}
 		fmt.Println("TTY enabled.")
 		return 0
 	case "disable":
-		if err := st.SetTTYEnabled(false); err != nil {
+		if err := st.SetTTYEnabled(ctx, false); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			return 1
 		}
 		fmt.Println("TTY disabled.")
 		return 0
 	case "status":
-		enabled, err := st.IsTTYEnabled()
+		enabled, err := st.IsTTYEnabled(ctx)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			return 1

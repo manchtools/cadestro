@@ -370,7 +370,7 @@ func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *schedu
 				logger.Warn("failed to send scheduled result", "result_id", result.ResultID, "error", err)
 				continue
 			}
-			if err := sched.MarkPendingResultSynced(result.ResultID); err != nil {
+			if err := sched.MarkPendingResultSynced(ctx, result.ResultID); err != nil {
 				logger.Warn("failed to mark result synced", "result_id", result.ResultID, "error", err)
 			}
 		}
@@ -393,7 +393,7 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 	// the new window — and persisted via the scheduler so an agent
 	// restart inside an active freeze keeps deferring instead of
 	// blasting through queued work. See archived server#58.
-	sched.SetMaintenanceWindow(result.MaintenanceWindow)
+	sched.SetMaintenanceWindow(ctx, result.MaintenanceWindow)
 	if result.DesiredPolicy != nil {
 		if err := sched.ReconcilePolicy(ctx, result.DesiredPolicy); err != nil {
 			logger.Warn("failed to reconcile assigned policy", "error", err)
@@ -416,7 +416,7 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 // syncPendingResults sends any unsynced execution results to the server.
 // This is called on connection to sync results that were stored while offline.
 func syncPendingResults(ctx context.Context, sched *scheduler.Scheduler, client *sdk.Client, logger *slog.Logger) {
-	results, err := sched.GetPendingResults()
+	results, err := sched.GetPendingResults(ctx)
 	if err != nil {
 		logger.Warn("failed to get unsynced results", "error", err)
 		return
@@ -439,7 +439,7 @@ func syncPendingResults(ctx context.Context, sched *scheduler.Scheduler, client 
 			logger.Warn("failed to send pending result", "result_id", r.ID, "error", err)
 			continue
 		}
-		if err := sched.MarkPendingResultSynced(r.ID); err != nil {
+		if err := sched.MarkPendingResultSynced(ctx, r.ID); err != nil {
 			logger.Warn("failed to mark result synced", "result_id", r.ID, "error", err)
 		}
 	}

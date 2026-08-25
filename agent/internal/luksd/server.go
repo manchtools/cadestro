@@ -25,10 +25,10 @@ type Session interface {
 }
 
 type StateStore interface {
-	GetLuksState(actionID string) (*store.LuksState, error)
-	GetLuksPassphraseHashes(actionID string) ([]string, error)
-	SetLuksDeviceKeyType(actionID, keyType string) error
-	AddLuksPassphraseHash(actionID, hash string) error
+	GetLuksState(ctx context.Context, actionID string) (*store.LuksState, error)
+	GetLuksPassphraseHashes(ctx context.Context, actionID string) ([]string, error)
+	SetLuksDeviceKeyType(ctx context.Context, actionID, keyType string) error
+	AddLuksPassphraseHash(ctx context.Context, actionID, hash string) error
 }
 
 type Enroller interface {
@@ -219,7 +219,7 @@ func (d *Daemon) handleRequest(ctx context.Context, req Request) Response {
 		return errResponse(CodePassphrasePolicy, vErr)
 	}
 
-	recent, err := d.store.GetLuksPassphraseHashes(result.ActionID)
+	recent, err := d.store.GetLuksPassphraseHashes(ctx, result.ActionID)
 	if err != nil {
 		d.logger.Warn("LUKS daemon: failed to read passphrase history", "action_id", result.ActionID, "error", err)
 		return errResponse(CodeInternal, "failed to check passphrase history")
@@ -234,7 +234,7 @@ func (d *Daemon) handleRequest(ctx context.Context, req Request) Response {
 		return errResponse(CodeKeyUnavailable, "failed to fetch the managed key")
 	}
 
-	localState, err := d.store.GetLuksState(result.ActionID)
+	localState, err := d.store.GetLuksState(ctx, result.ActionID)
 	if err != nil {
 		d.logger.Error("LUKS daemon: failed to read local state", "action_id", result.ActionID, "error", err)
 		return errResponse(CodeInternal, "failed to read local LUKS state")
@@ -260,18 +260,18 @@ func (d *Daemon) handleRequest(ctx context.Context, req Request) Response {
 	if err := d.enroller.AddKeyToSlot(ctx, result.DevicePath, userPassphraseSlot, managedKey, req.Passphrase); err != nil {
 		d.logger.Error("luksd: set passphrase failed", "device", result.DevicePath, "error", err)
 		if revoked {
-			if serr := d.store.SetLuksDeviceKeyType(result.ActionID, "none"); serr != nil {
+			if serr := d.store.SetLuksDeviceKeyType(ctx, result.ActionID, "none"); serr != nil {
 				d.logger.Error("luksd: failed to record emptied key slot after failed enroll", "action_id", result.ActionID, "error", serr)
 			}
 		}
 		return errResponse(CodeInternal, "failed to set passphrase")
 	}
 
-	if err := d.store.SetLuksDeviceKeyType(result.ActionID, "user_passphrase"); err != nil {
+	if err := d.store.SetLuksDeviceKeyType(ctx, result.ActionID, "user_passphrase"); err != nil {
 		d.logger.Error("LUKS daemon: failed to persist device key type", "action_id", result.ActionID, "error", err)
 		return errResponse(CodeInternal, "passphrase was set but local state update failed; rerun to recover")
 	}
-	if err := d.store.AddLuksPassphraseHash(result.ActionID, sysenc.HashPassphrase(req.Passphrase)); err != nil {
+	if err := d.store.AddLuksPassphraseHash(ctx, result.ActionID, sysenc.HashPassphrase(req.Passphrase)); err != nil {
 		d.logger.Error("LUKS daemon: failed to persist passphrase history", "action_id", result.ActionID, "error", err)
 		return errResponse(CodeInternal, "passphrase was set but history update failed")
 	}

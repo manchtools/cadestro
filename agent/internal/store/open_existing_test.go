@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -27,14 +28,14 @@ func TestOpenExisting_OpensWithoutMigrating(t *testing.T) {
 
 	svc, err := New(dir) // service creates + migrates
 	require.NoError(t, err)
-	require.NoError(t, svc.SetTTYEnabled(true))
+	require.NoError(t, svc.SetTTYEnabled(context.Background(), true))
 	require.NoError(t, svc.Close())
 
 	cli, err := OpenExisting(dir) // CLI re-opens, no migration
 	require.NoError(t, err)
 	defer cli.Close()
 
-	enabled, err := cli.IsTTYEnabled()
+	enabled, err := cli.IsTTYEnabled(context.Background())
 	require.NoError(t, err)
 	assert.True(t, enabled, "OpenExisting must read the setting the service wrote")
 }

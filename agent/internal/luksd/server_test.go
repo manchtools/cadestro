@@ -62,17 +62,17 @@ type fakeStore struct {
 	addedHashes []string
 }
 
-func (f *fakeStore) GetLuksState(actionID string) (*store.LuksState, error) {
+func (f *fakeStore) GetLuksState(ctx context.Context, actionID string) (*store.LuksState, error) {
 	return f.state, f.stateErr
 }
-func (f *fakeStore) GetLuksPassphraseHashes(actionID string) ([]string, error) {
+func (f *fakeStore) GetLuksPassphraseHashes(ctx context.Context, actionID string) ([]string, error) {
 	return f.hashes, nil
 }
-func (f *fakeStore) SetLuksDeviceKeyType(actionID, keyType string) error {
+func (f *fakeStore) SetLuksDeviceKeyType(ctx context.Context, actionID, keyType string) error {
 	f.setTypeArg = keyType
 	return nil
 }
-func (f *fakeStore) AddLuksPassphraseHash(actionID, hash string) error {
+func (f *fakeStore) AddLuksPassphraseHash(ctx context.Context, actionID, hash string) error {
 	f.addedHashes = append(f.addedHashes, hash)
 	return nil
 }

@@ -10,6 +10,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export GOWORK=off
 
+echo "== sqlc drift"
+make sqlc-check
+
 echo "== gofmt"
 # No `|| true`: swallowing a gofmt FAILURE reports an empty violation list, so
 # the check would pass precisely when it could not run.

@@ -48,7 +48,7 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	st.SetClockForTest(func() time.Time { return now })
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
-	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	sched.now = func() time.Time { return now }
 	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_CONTINUE)
 
@@ -62,7 +62,7 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	sched.runDue(context.Background())
 	require.Len(t, exec.executed, 2, "the transport replay must not create another due run")
 
-	pending, err := st.GetPendingResults()
+	pending, err := st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 3)
 	require.NotEmpty(t, pending[0].ActionResult.GetRunId())
@@ -77,12 +77,12 @@ func TestManifestStopPolicyRecordsRemainingOccurrenceAsSkipped(t *testing.T) {
 	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_STOP)
 	firstID := manifest.GetOccurrences()[0].GetAction().GetId().GetValue()
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{firstID: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}}
-	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
 	sched.runDue(context.Background())
 	require.Equal(t, []string{firstID}, exec.executed)
 
-	pending, err := st.GetPendingResults()
+	pending, err := st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 3)
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_SKIPPED, pending[1].ActionResult.GetStatus())
@@ -98,7 +98,7 @@ func TestSkipIfUnchangedSuppressesRepeatedActionOutputButStillExecutes(t *testin
 	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_CONTINUE)
 	manifest.Schedule.SkipIfUnchanged = true
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
-	sched := New(st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	sched.now = func() time.Time { return now }
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
 
@@ -107,7 +107,7 @@ func TestSkipIfUnchangedSuppressesRepeatedActionOutputButStillExecutes(t *testin
 	sched.runDue(context.Background())
 	require.Len(t, exec.executed, 4, "deduplication must not suppress reconciliation")
 
-	pending, err := st.GetPendingResults()
+	pending, err := st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 4, "the repeated action outputs are suppressed; each manifest result remains")
 	actionResults := 0

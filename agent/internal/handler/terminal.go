@@ -302,7 +302,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
 		return nil
 	}
-	enabled, err := h.store.IsTTYEnabled()
+	enabled, err := h.store.IsTTYEnabled(ctx)
 	if err != nil {
 		logger.Warn("failed to read tty toggle state; refusing session", "error", err)
 		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")

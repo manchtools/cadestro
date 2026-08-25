@@ -109,13 +109,13 @@ func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing
 	workID := due[0].WorkID
 	require.NotEmpty(t, workID)
 	require.NoError(t, func() error {
-		_, err := st.BeginManifestRun(&due[0], now)
+		_, err := st.BeginManifestRun(context.Background(), &due[0], now)
 		return err
 	}())
 	firstRun := due[0].RunID
 	require.NotEqual(t, workID, firstRun, "a policy firing must have a distinct run identity")
 
-	_, err = st.RecordManifestResult(&pb.ManifestResult{
+	_, err = st.RecordManifestResult(context.Background(), &pb.ManifestResult{
 		RunId:      firstRun,
 		ManifestId: manifest.GetManifestId(),
 	})
@@ -127,14 +127,14 @@ func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing
 	require.Len(t, due, 1)
 	require.NotEqual(t, firstRun, due[0].RunID, "recurring policy firing must receive a fresh run identity")
 	secondRun := due[0].RunID
-	_, err = st.BeginManifestRun(&due[0], now)
+	_, err = st.BeginManifestRun(context.Background(), &due[0], now)
 	require.NoError(t, err)
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: "01K000000000000000000000025"}))
 	due, err = st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1, "retired work remains resumable while its run is active")
 	require.True(t, due[0].RunInProgress)
-	_, err = st.RecordManifestResult(&pb.ManifestResult{RunId: secondRun, ManifestId: manifest.GetManifestId()})
+	_, err = st.RecordManifestResult(context.Background(), &pb.ManifestResult{RunId: secondRun, ManifestId: manifest.GetManifestId()})
 	require.NoError(t, err)
 	var remaining int
 	require.NoError(t, st.db.QueryRow(`SELECT COUNT(*) FROM scheduled_work WHERE work_id = ?`, workID).Scan(&remaining))
@@ -154,7 +154,7 @@ func TestRecordManifestResultReturnsCleanupFailure(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, due, 1)
 	require.NoError(t, func() error {
-		_, err := st.BeginManifestRun(&due[0], time.Now())
+		_, err := st.BeginManifestRun(context.Background(), &due[0], time.Now())
 		return err
 	}())
 	_, err = st.db.Exec(`
@@ -167,7 +167,7 @@ func TestRecordManifestResultReturnsCleanupFailure(t *testing.T) {
 	`)
 	require.NoError(t, err)
 
-	_, err = st.RecordManifestResult(&pb.ManifestResult{
+	_, err = st.RecordManifestResult(context.Background(), &pb.ManifestResult{
 		RunId:      due[0].RunID,
 		ManifestId: manifest.GetManifestId(),
 	})
@@ -187,23 +187,23 @@ func TestRecoverInterruptedOccurrenceQueuesIndeterminate(t *testing.T) {
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1)
-	_, err = st.BeginManifestRun(&due[0], time.Now())
+	_, err = st.BeginManifestRun(context.Background(), &due[0], time.Now())
 	require.NoError(t, err)
 	occurrence := manifest.GetOccurrences()[0]
-	require.NoError(t, st.MarkOccurrenceStarted(due[0].RunID, occurrence.GetOccurrenceId(), time.Now()))
+	require.NoError(t, st.MarkOccurrenceStarted(context.Background(), due[0].RunID, occurrence.GetOccurrenceId(), time.Now()))
 
-	_, err = st.RecoverInterruptedOccurrences()
+	_, err = st.RecoverInterruptedOccurrences(context.Background())
 	require.NoError(t, err)
-	pending, err := st.GetPendingResults()
+	pending, err := st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 1)
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, pending[0].ActionResult.GetStatus())
 	require.Equal(t, due[0].RunID, pending[0].ActionResult.GetRunId())
 	require.Equal(t, occurrence.GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId())
 
-	_, err = st.RecoverInterruptedOccurrences()
+	_, err = st.RecoverInterruptedOccurrences(context.Background())
 	require.NoError(t, err)
-	pending, err = st.GetPendingResults()
+	pending, err = st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 1, "recovery must be idempotent")
 }

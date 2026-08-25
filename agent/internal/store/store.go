@@ -2,6 +2,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	_ "modernc.org/sqlite"
 
+	"github.com/manchtools/cadestro/agent/internal/store/generated"
 	"github.com/manchtools/cadestro/agent/internal/store/migrations"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
@@ -30,9 +32,10 @@ const (
 
 // Store serializes access to the agent's local durable state.
 type Store struct {
-	db  *sql.DB
-	mu  sync.RWMutex
-	now func() time.Time
+	db      *sql.DB
+	queries *generated.Queries
+	mu      sync.RWMutex
+	now     func() time.Time
 }
 
 // StoredAction is the minimal view used to resolve overlapping LUKS policies.
@@ -96,7 +99,7 @@ func open(dataDir string, migrate bool) (*Store, error) {
 			return closeOnError(fmt.Errorf("restrict %s mode: %w", filepath.Base(path), err))
 		}
 	}
-	return &Store{db: db, now: time.Now}, nil
+	return &Store{db: db, queries: generated.New(db), now: time.Now}, nil
 }
 
 func verifyRestrictiveDirMode(dir string) error {
@@ -186,23 +189,24 @@ type LuksState struct {
 	LastRotatedAt  time.Time
 }
 
-func (s *Store) GetLuksState(actionID string) (*LuksState, error) {
+func (s *Store) GetLuksState(ctx context.Context, actionID string) (*LuksState, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	var state LuksState
-	var lastRotated string
-	err := s.db.QueryRow(
-		"SELECT action_id, device_path, ownership_taken, device_key_type, last_rotated_at FROM luks_state WHERE action_id = ?",
-		actionID,
-	).Scan(&state.ActionID, &state.DevicePath, &state.OwnershipTaken, &state.DeviceKeyType, &lastRotated)
+	row, err := s.queries.GetLuksState(ctx, actionID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	if lastRotated != "" {
-		state.LastRotatedAt, err = time.Parse(time.RFC3339, lastRotated)
+	state := LuksState{
+		ActionID:       row.ActionID,
+		DevicePath:     row.DevicePath,
+		OwnershipTaken: row.OwnershipTaken,
+		DeviceKeyType:  row.DeviceKeyType,
+	}
+	if row.LastRotatedAt != "" {
+		state.LastRotatedAt, err = time.Parse(time.RFC3339, row.LastRotatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("parse LUKS last_rotated_at: %w", err)
 		}
@@ -210,84 +214,51 @@ func (s *Store) GetLuksState(actionID string) (*LuksState, error) {
 	return &state, nil
 }
 
-func (s *Store) SetLuksOwnershipTaken(actionID, devicePath string) error {
+func (s *Store) SetLuksOwnershipTaken(ctx context.Context, actionID, devicePath string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec(`
-		INSERT INTO luks_state (action_id, device_path, ownership_taken, device_key_type, last_rotated_at)
-		VALUES (?, ?, TRUE, 'none', ?)
-		ON CONFLICT(action_id) DO UPDATE SET
-			device_path = excluded.device_path,
-			ownership_taken = TRUE,
-			last_rotated_at = excluded.last_rotated_at
-	`, actionID, devicePath, s.now().UTC().Format(time.RFC3339))
-	return err
+	return s.queries.SetLuksOwnershipTaken(ctx, generated.SetLuksOwnershipTakenParams{
+		ActionID: actionID, DevicePath: devicePath, LastRotatedAt: s.now().UTC().Format(time.RFC3339),
+	})
 }
 
-func (s *Store) SetLuksDeviceKeyType(actionID, keyType string) error {
+func (s *Store) SetLuksDeviceKeyType(ctx context.Context, actionID, keyType string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec("UPDATE luks_state SET device_key_type = ? WHERE action_id = ?", keyType, actionID)
-	return err
+	return s.queries.SetLuksDeviceKeyType(ctx, generated.SetLuksDeviceKeyTypeParams{DeviceKeyType: keyType, ActionID: actionID})
 }
 
-func (s *Store) SetLuksLastRotatedAt(actionID string, at time.Time) error {
+func (s *Store) SetLuksLastRotatedAt(ctx context.Context, actionID string, at time.Time) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec("UPDATE luks_state SET last_rotated_at = ? WHERE action_id = ?", at.UTC().Format(time.RFC3339), actionID)
-	return err
+	return s.queries.SetLuksLastRotatedAt(ctx, generated.SetLuksLastRotatedAtParams{LastRotatedAt: at.UTC().Format(time.RFC3339), ActionID: actionID})
 }
 
-func (s *Store) DeleteLuksState(actionID string) error {
+func (s *Store) DeleteLuksState(ctx context.Context, actionID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec("DELETE FROM luks_state WHERE action_id = ?", actionID)
-	return err
+	return s.queries.DeleteLuksState(ctx, actionID)
 }
 
-func (s *Store) GetLuksPassphraseHashes(actionID string) ([]string, error) {
+func (s *Store) GetLuksPassphraseHashes(ctx context.Context, actionID string) ([]string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	rows, err := s.db.Query(`
-		SELECT passphrase_hash FROM luks_user_passphrase_history
-		WHERE action_id = ? ORDER BY created_at DESC, id DESC LIMIT 3
-	`, actionID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var hashes []string
-	for rows.Next() {
-		var hash string
-		if err := rows.Scan(&hash); err != nil {
-			return nil, err
-		}
-		hashes = append(hashes, hash)
-	}
-	return hashes, rows.Err()
+	return s.queries.GetLuksPassphraseHashes(ctx, actionID)
 }
 
-func (s *Store) AddLuksPassphraseHash(actionID, hash string) error {
+func (s *Store) AddLuksPassphraseHash(ctx context.Context, actionID, hash string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	tx, err := s.db.Begin()
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	if _, err := tx.Exec(
-		"INSERT INTO luks_user_passphrase_history (action_id, passphrase_hash) VALUES (?, ?)",
-		actionID, hash,
-	); err != nil {
+	queries := s.queries.WithTx(tx)
+	if err := queries.AddLuksPassphraseHash(ctx, generated.AddLuksPassphraseHashParams{ActionID: actionID, PassphraseHash: hash}); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(`
-		DELETE FROM luks_user_passphrase_history
-		WHERE action_id = ? AND id NOT IN (
-			SELECT id FROM luks_user_passphrase_history
-			WHERE action_id = ? ORDER BY created_at DESC, id DESC LIMIT 3
-		)
-	`, actionID, actionID); err != nil {
+	if err := queries.PruneLuksPassphraseHashes(ctx, generated.PruneLuksPassphraseHashesParams{ActionID: actionID, ActionID_2: actionID}); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -301,79 +272,59 @@ type LpsUserState struct {
 	PasswordHash  string
 }
 
-func (s *Store) GetLpsState(actionID string) (map[string]*LpsUserState, error) {
+func (s *Store) GetLpsState(ctx context.Context, actionID string) (map[string]*LpsUserState, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	rows, err := s.db.Query(
-		"SELECT action_id, username, last_rotated_at, password_hash FROM lps_state WHERE action_id = ?",
-		actionID,
-	)
+	rows, err := s.queries.GetLpsState(ctx, actionID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 	users := make(map[string]*LpsUserState)
-	for rows.Next() {
-		var state LpsUserState
-		var lastRotated string
-		if err := rows.Scan(&state.ActionID, &state.Username, &lastRotated, &state.PasswordHash); err != nil {
-			return nil, err
-		}
-		if lastRotated != "" {
-			state.LastRotatedAt, err = time.Parse(time.RFC3339, lastRotated)
+	for _, row := range rows {
+		state := LpsUserState{ActionID: row.ActionID, Username: row.Username, PasswordHash: row.PasswordHash}
+		if row.LastRotatedAt != "" {
+			state.LastRotatedAt, err = time.Parse(time.RFC3339, row.LastRotatedAt)
 			if err != nil {
 				return nil, fmt.Errorf("parse LPS last_rotated_at for %s: %w", state.Username, err)
 			}
 		}
 		users[state.Username] = &state
 	}
-	return users, rows.Err()
+	return users, nil
 }
 
-func (s *Store) SetLpsUserState(actionID, username string, lastRotatedAt time.Time, passwordHash string) error {
+func (s *Store) SetLpsUserState(ctx context.Context, actionID, username string, lastRotatedAt time.Time, passwordHash string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec(`
-		INSERT INTO lps_state (action_id, username, last_rotated_at, password_hash)
-		VALUES (?, ?, ?, ?)
-		ON CONFLICT(action_id, username) DO UPDATE SET
-			last_rotated_at = excluded.last_rotated_at,
-			password_hash = excluded.password_hash
-	`, actionID, username, lastRotatedAt.UTC().Format(time.RFC3339), passwordHash)
-	return err
+	return s.queries.SetLpsUserState(ctx, generated.SetLpsUserStateParams{
+		ActionID: actionID, Username: username, LastRotatedAt: lastRotatedAt.UTC().Format(time.RFC3339), PasswordHash: passwordHash,
+	})
 }
 
-func (s *Store) DeleteLpsState(actionID string) error {
+func (s *Store) DeleteLpsState(ctx context.Context, actionID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec("DELETE FROM lps_state WHERE action_id = ?", actionID)
-	return err
+	return s.queries.DeleteLpsState(ctx, actionID)
 }
 
-func (s *Store) GetSetting(key string) (string, error) {
+func (s *Store) GetSetting(ctx context.Context, key string) (string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	var value string
-	err := s.db.QueryRow("SELECT value FROM settings WHERE key = ?", key).Scan(&value)
+	value, err := s.queries.GetSetting(ctx, key)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", nil
 	}
 	return value, err
 }
 
-func (s *Store) SetSetting(key, value string) error {
+func (s *Store) SetSetting(ctx context.Context, key, value string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec(`
-		INSERT INTO settings (key, value) VALUES (?, ?)
-		ON CONFLICT(key) DO UPDATE SET value = excluded.value
-	`, key, value)
-	return err
+	return s.queries.SetSetting(ctx, generated.SetSettingParams{Key: key, Value: value})
 }
 
-func (s *Store) DeleteSetting(key string) error {
+func (s *Store) DeleteSetting(ctx context.Context, key string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec("DELETE FROM settings WHERE key = ?", key)
-	return err
+	return s.queries.DeleteSetting(ctx, key)
 }

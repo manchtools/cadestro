@@ -79,7 +79,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 	var output strings.Builder
 
 	// Load state from SQLite
-	userStates, err := st.GetLpsState(actionID)
+	userStates, err := st.GetLpsState(ctx, actionID)
 	if err != nil {
 		e.logger.Warn("failed to load LPS state, will treat as initial rotation", "action_id", actionID, "error", err)
 		userStates = make(map[string]*store.LpsUserState)
@@ -201,7 +201,7 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		// carries no credential copy.
 		hash := sha256.Sum256([]byte(plaintext))
 		hashStr := hex.EncodeToString(hash[:])
-		if err := st.SetLpsUserState(actionID, username, now, hashStr); err != nil {
+		if err := st.SetLpsUserState(context.WithoutCancel(ctx), actionID, username, now, hashStr); err != nil {
 			// The password WAS rotated (a durable side effect), but if the
 			// rotation state fails to persist, last_rotated_at/password_hash stay
 			// stale and the NEXT cycle re-rotates. Surface it as an action error
@@ -255,12 +255,12 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 }
 
 // removeLpsManagement handles ABSENT state — stops managing, cleans up state.
-func (e *Executor) removeLpsManagement(_ context.Context, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
+func (e *Executor) removeLpsManagement(ctx context.Context, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
 	st := e.getStore()
 	if st == nil {
 		return nil, false, nil, fmt.Errorf("agent store not configured")
 	}
-	userStates, err := st.GetLpsState(actionID)
+	userStates, err := st.GetLpsState(ctx, actionID)
 	if err != nil {
 		// Sibling of the DeleteLpsState fail-closed below. Treating
 		// a lookup failure as "no users to clean up" would let the
@@ -272,7 +272,7 @@ func (e *Executor) removeLpsManagement(_ context.Context, actionID string) (*pb.
 	}
 
 	if len(userStates) > 0 {
-		if err := st.DeleteLpsState(actionID); err != nil {
+		if err := st.DeleteLpsState(ctx, actionID); err != nil {
 			// Mirror the LUKS ABSENT-transition fix: returning
 			// success here would tell the control plane the action
 			// set is removed while leaving the local state row
