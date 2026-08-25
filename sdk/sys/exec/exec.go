@@ -56,24 +56,6 @@ func awaitStatusOrKill(c *cmd.Cmd, statusChan <-chan cmd.Status) cmd.Status {
 	}
 }
 
-// validateEnvVars enforces the SDK env boundary: every entry must be
-// KEY=VALUE and the key must not be on the BlockedEnvVars list (PATH,
-// LD_PRELOAD, BASH_ENV, GCONV_PATH, LD_LIBRARY_PATH, …). This is the one
-// place the audit-finding-#8 check lives; the Runner runs it (via
-// buildChildEnv) before composing the child env.
-func validateEnvVars(envVars []string) error {
-	for _, e := range envVars {
-		key, _, ok := strings.Cut(e, "=")
-		if !ok {
-			return fmt.Errorf("%w: env entry must be KEY=VALUE, got %q", ErrInvalidEnvVar, e)
-		}
-		if !IsAllowedEnvVar(key) {
-			return fmt.Errorf("%w: refusing to forward env var %q to child (hijack-prone names like LD_PRELOAD, PATH, BASH_ENV are refused at this boundary)", ErrBlockedEnvVar, key)
-		}
-	}
-	return nil
-}
-
 // ValidateCommandEnv checks a Command.Env slice with the EXACT rules the real
 // Runner enforces before it spawns any child: each entry must be KEY=VALUE
 // (ErrInvalidEnvVar), the key must not be a hijack-prone name on the blocklist
@@ -84,8 +66,14 @@ func validateEnvVars(envVars []string) error {
 // adversarial Command.Env is rejected the same way against a fake as against a
 // real Runner.
 func ValidateCommandEnv(env []string) error {
-	if err := validateEnvVars(env); err != nil {
-		return err
+	for _, e := range env {
+		key, _, ok := strings.Cut(e, "=")
+		if !ok {
+			return fmt.Errorf("%w: env entry must be KEY=VALUE, got %q", ErrInvalidEnvVar, e)
+		}
+		if !IsAllowedEnvVar(key) {
+			return fmt.Errorf("%w: refusing to forward env var %q to child (hijack-prone names like LD_PRELOAD, PATH, BASH_ENV are refused at this boundary)", ErrBlockedEnvVar, key)
+		}
 	}
 	for _, e := range env {
 		if key, _, _ := strings.Cut(e, "="); isReservedEnvVar(key) {

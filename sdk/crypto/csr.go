@@ -37,21 +37,10 @@ func GenerateCSR(hostname string) (csrPEM, keyPEM []byte, err error) {
 		return nil, nil, fmt.Errorf("generate key pair: %w", err)
 	}
 
-	template := &x509.CertificateRequest{
-		Subject: pkix.Name{
-			CommonName: hostname,
-		},
-	}
-
-	csrDER, err := x509.CreateCertificateRequest(rand.Reader, template, privateKey)
+	csrPEM, err = generateCSR(hostname, privateKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("create CSR: %w", err)
+		return nil, nil, err
 	}
-
-	csrPEM = pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE REQUEST",
-		Bytes: csrDER,
-	})
 
 	keyDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
@@ -85,23 +74,14 @@ func GenerateCSRFromKey(hostname string, keyPEM []byte) (csrPEM []byte, err erro
 		return nil, fmt.Errorf("%w: got %T", ErrUnsupportedKeyType, parsed)
 	}
 
-	// No SANs — see GenerateCSR for the rationale. Renewal CSRs
-	// follow the same shape as initial-enrolment CSRs.
-	template := &x509.CertificateRequest{
-		Subject: pkix.Name{
-			CommonName: hostname,
-		},
-	}
+	return generateCSR(hostname, privateKey)
+}
 
+func generateCSR(hostname string, privateKey ed25519.PrivateKey) ([]byte, error) {
+	template := &x509.CertificateRequest{Subject: pkix.Name{CommonName: hostname}}
 	csrDER, err := x509.CreateCertificateRequest(rand.Reader, template, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("create CSR: %w", err)
 	}
-
-	csrPEM = pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE REQUEST",
-		Bytes: csrDER,
-	})
-
-	return csrPEM, nil
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDER}), nil
 }
