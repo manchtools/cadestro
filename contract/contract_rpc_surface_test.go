@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	_ "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1" // registers the contract descriptors
+	_ "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func assertLiveFields[V any](t *testing.T, name string, fields map[protoreflect.FullName]V) {
@@ -29,12 +29,8 @@ func assertLiveFields[V any](t *testing.T, name string, fields map[protoreflect.
 	}
 }
 
-// The current golden guards the exact public contract. It is a target shape,
-// never a comparison against an archived protocol.
 const currentGoldenPath = "testdata/rpc_golden.json"
 
-// The current contract must expose typed live control and no retired aliases.
-// These assertions inspect the shipped descriptors directly.
 func TestRPCSurface_CurrentTypedControl(t *testing.T) {
 	live := liveSurface(t)
 	methods := live["ControlService"]
@@ -45,10 +41,6 @@ func TestRPCSurface_CurrentTypedControl(t *testing.T) {
 	}
 }
 
-// TestRPCSurface_ProviderCapabilitiesArePublic holds the identity-provider
-// capability shape that a login client reads before it offers a method. One
-// OIDC client remains — the browser client — so client_id is the field every
-// provider shape carries and browser_login is the capability derived from it.
 func TestRPCSurface_ProviderCapabilitiesArePublic(t *testing.T) {
 	for messageName, fields := range map[protoreflect.FullName]map[protoreflect.Name]protoreflect.Kind{
 		"cadestro.v1.IdentityProvider": {
@@ -97,15 +89,11 @@ func loadGolden(t *testing.T, path string, minimumTotal, minimumServices int) go
 	if err := json.Unmarshal(raw, &g); err != nil {
 		t.Fatalf("parse golden: %v", err)
 	}
-	// Matches-zero: a golden that decayed to empty would make every assertion
-	// below trivially true.
+
 	if g.Total < minimumTotal || len(g.Services) < minimumServices {
 		t.Fatalf("golden %s looks truncated (total=%d services=%d)", path, g.Total, len(g.Services))
 	}
-	// Self-consistency: `total` is recorded independently of the per-service
-	// lists, so it is a second witness. Editing a name out of a list without
-	// touching the total — the shape of a golden co-edited to match a mistaken
-	// implementation change — fails here.
+
 	sum := 0
 	for _, v := range g.Services {
 		sum += len(v)
@@ -116,13 +104,8 @@ func loadGolden(t *testing.T, path string, minimumTotal, minimumServices int) go
 	return g
 }
 
-// contractPackage is the protobuf namespace the contract ships under
-// (target design §2). Every descriptor-level assertion in this file is scoped
-// to it, so a stray descriptor from another module can never satisfy one.
 const contractPackage = "cadestro.v1"
 
-// liveSurface enumerates services and methods from the registered contract
-// descriptors — the artifact that actually ships, not the .proto text.
 func liveSurface(t *testing.T) map[string][]string {
 	t.Helper()
 	out := map[string][]string{}
@@ -134,10 +117,7 @@ func liveSurface(t *testing.T) map[string][]string {
 		for i := 0; i < svcs.Len(); i++ {
 			sd := svcs.Get(i)
 			name := string(sd.Name())
-			// Record the service key BEFORE walking methods. Recording it only
-			// inside the method loop made a zero-method service invisible, so
-			// `service GatewayService {}` would have satisfied both tests below
-			// — the exact vacuous-pass this file exists to prevent.
+
 			if _, ok := out[name]; !ok {
 				out[name] = []string{}
 			}
@@ -194,9 +174,6 @@ func surfaceTotal(surface map[string][]string) int {
 	return total
 }
 
-// TestRPCSurface_MatchesTargetGolden proves the deployed contract is exactly
-// the reviewed target surface. The expected side never comes from the live
-// descriptor, so an accidental deletion cannot disappear from both sides.
 func TestRPCSurface_MatchesTargetGolden(t *testing.T) {
 	want := loadGolden(t, currentGoldenPath, 150, 3)
 	got := liveSurface(t)
@@ -206,10 +183,6 @@ func TestRPCSurface_MatchesTargetGolden(t *testing.T) {
 	}
 }
 
-// TestRPCSurface_SecretListsCannotLeakPlaintext holds the API boundary that
-// makes each plaintext access independently auditable. Lists expose stable
-// entry identifiers and metadata; only the one-entry reveal responses carry a
-// secret value.
 func TestRPCSurface_SecretListsCannotLeakPlaintext(t *testing.T) {
 	for _, message := range []protoreflect.FullName{
 		"cadestro.v1.LpsPassword",
@@ -246,16 +219,6 @@ func TestRPCSurface_SecretListsCannotLeakPlaintext(t *testing.T) {
 	}
 }
 
-// TestRPCSurface_GatewayServicesAreGone names the whole-service deletions
-// separately: the enumeration above compares METHOD names, so a service
-// stripped to zero methods raises nothing there — its (empty) method list
-// matches an absent expectation vacuously. Every service whose entire method
-// set spec 41 removes has to be named here or nothing checks it at all.
-//
-// InternalService was missing from this list, which is the failure the comment
-// describes: internal.proto is deleted, and had it survived with its methods
-// intact the enumeration would have caught it — but a partially-stripped one
-// would have passed both.
 func TestRPCSurface_GatewayServicesAreGone(t *testing.T) {
 	live := liveSurface(t)
 	for _, svc := range []string{"GatewayAuthService", "GatewayService", "InternalService"} {
@@ -275,15 +238,6 @@ func contains(hay []string, needle string) bool {
 	return false
 }
 
-// ---------------------------------------------------------------------------
-// Contract shape guard: the message-level properties the target design fixes.
-// Subject is the registered descriptor set, i.e. what actually ships.
-// ---------------------------------------------------------------------------
-
-// contractMessages returns every message (nested included) in the namespace
-// that declares AgentService. The namespace is discovered, not hardcoded, so
-// the sweeps below keep scanning the real descriptors while the namespace
-// itself is being renamed; TestContract_Namespace judges the name.
 func contractMessages(t *testing.T) map[protoreflect.Name]protoreflect.MessageDescriptor {
 	t.Helper()
 	var pkg protoreflect.FullName
@@ -317,15 +271,6 @@ func contractMessages(t *testing.T) map[protoreflect.Name]protoreflect.MessageDe
 	return out
 }
 
-// Design §2: the contract lives under cadestro.v1. Both directions, so a
-// rename that copied instead of moved (stale descriptors still registering at
-// init) fails here.
-// abandonedPackages are every namespace this contract has previously shipped
-// under. Each rename ADDS to this list rather than replacing it: protoc leaves
-// an orphaned .pb.go behind whenever a source file moves, and a .pb.go
-// registers its descriptors at init, so a copied-instead-of-moved rename keeps
-// the old namespace live in protoregistry while every source-level check
-// reports clean. Dropping an older entry would retire that evidence.
 var abandonedPackages = []string{"pm.v1", "powermanage.v1"}
 
 func TestContract_Namespace(t *testing.T) {
@@ -357,9 +302,6 @@ func TestContract_Namespace(t *testing.T) {
 	}
 }
 
-// The target manifest and durable-result shape and §8
-// (classified mTLS secrets),
-// asserted by exact name and exact type.
 func TestContract_TargetShape(t *testing.T) {
 	msgs := contractMessages(t)
 
@@ -373,7 +315,7 @@ func TestContract_TargetShape(t *testing.T) {
 	for _, f := range []struct {
 		msg, field string
 		kind       protoreflect.Kind
-		msgType    protoreflect.Name // required when kind is MessageKind
+		msgType    protoreflect.Name
 		list       bool
 		why        string
 	}{
@@ -425,8 +367,6 @@ func TestContract_TargetShape(t *testing.T) {
 		}
 	}
 
-	// §7.2: a crash after a persisted STARTED reports INDETERMINATE instead of
-	// silently re-running. The enum is reached through the field that uses it.
 	if status := msgs["ActionResult"].Fields().ByName("status"); status == nil || status.Enum() == nil {
 		t.Error("ActionResult has no enum-typed status field")
 	} else if status.Enum().Values().ByName("EXECUTION_STATUS_INDETERMINATE") == nil {
@@ -435,8 +375,6 @@ func TestContract_TargetShape(t *testing.T) {
 	}
 }
 
-// Design §3 requires exactly one agent-control transport. This exact-set check
-// prevents a future convenience RPC from silently reintroducing a second path.
 func TestContract_AgentServiceIsOneStream(t *testing.T) {
 	live := liveSurface(t)
 	methods, ok := live["AgentService"]
@@ -448,9 +386,6 @@ func TestContract_AgentServiceIsOneStream(t *testing.T) {
 	}
 }
 
-// Design §9–§10: single-implementation details are not public selectors.
-// Speculative backend fields become selectable product surface even when no
-// runtime implements the alternatives.
 func TestContract_HasNoSpeculativeBackendSelectors(t *testing.T) {
 	msgs := contractMessages(t)
 	for _, name := range []protoreflect.Name{"ServiceParams", "EncryptionParams", "WifiParams"} {
@@ -483,9 +418,7 @@ func TestContract_HasNoSpeculativeBackendSelectors(t *testing.T) {
 
 func TestContract_SecretsAreClassified(t *testing.T) {
 	msgs := contractMessages(t)
-	// These are the only plaintext secret fields in the contract: authenticated
-	// HTTPS write-only inputs consumed and encrypted by control. They never enter
-	// an agent-facing frame and no response message contains them.
+
 	writeOnlyInputs := map[protoreflect.FullName]struct{}{
 		"cadestro.v1.EncryptionAuthoringParams.preshared_key": {},
 		"cadestro.v1.WifiAuthoringParams.psk":                 {},
@@ -520,10 +453,6 @@ func TestContract_SecretsAreClassified(t *testing.T) {
 	}
 }
 
-// Design §8: credentials authored by an operator are never ordinary strings
-// in the Action message delivered to an agent. These exact fields were the gap
-// that the general classification sweep could not see while they were left
-// unclassified, so pin both their classification and their wire type.
 func TestContract_ActionCredentialsAreDirectBytes(t *testing.T) {
 	messages := contractMessages(t)
 	for messageName, fieldNames := range map[protoreflect.Name][]protoreflect.Name{
@@ -552,17 +481,6 @@ func TestContract_ActionCredentialsAreDirectBytes(t *testing.T) {
 	}
 }
 
-// Design §8: classification cannot be the only source of truth. A secret-like
-// name that lacks the marker would otherwise be invisible to every downstream
-// redaction/sealing guard at once. Metadata and deliberately plaintext public
-// API fields must be named explicitly here with a narrow justification.
-//
-// An entry retires only when its FIELD is gone: assertLiveFields below fails on
-// a justification that resolves to no descriptor, so an entry cannot be dropped
-// to silence a finding while the field still ships. The message-level guard in
-// TestContract_RetractedMessagesAreGone covers the other direction — a whole
-// message deleted with the RPC that carried it must not return, because its
-// secret-shaped fields would come back with no justification and no marker.
 func TestContract_SecretShapedFieldsAreClassifiedOrJustified(t *testing.T) {
 	secretName := regexp.MustCompile(`(?i)(token|secret|hmac|signature|fingerprint|password|passwd|digest|apikey|psk|private_key|preshared_key|client_key)`)
 	metadataSuffixes := []string{

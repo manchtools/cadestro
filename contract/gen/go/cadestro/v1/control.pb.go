@@ -24,13 +24,11 @@ const (
 )
 
 type RegisterRequest struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	Token        string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	Hostname     string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	AgentVersion string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
-	// Certificate Signing Request (PEM-encoded PKCS#10)
-	// Agent generates its own key pair and sends CSR for signing
-	Csr           []byte `protobuf:"bytes,4,opt,name=csr,proto3" json:"csr,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Hostname      string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	AgentVersion  string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
+	Csr           []byte                 `protobuf:"bytes,4,opt,name=csr,proto3" json:"csr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -94,17 +92,11 @@ func (x *RegisterRequest) GetCsr() []byte {
 }
 
 type RegisterResponse struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	// mTLS credentials issued by control server
-	CaCert []byte `protobuf:"bytes,2,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"` // CA certificate (PEM)
-	// Signed device certificate (PEM) - private key stays on agent
-	Certificate []byte `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	// Control URL for the agent's streaming connection; the agent stores this and
-	// dials it for the AgentService bidi stream. Control terminates agent mTLS
-	// itself, so this is control's own agent-listener address, which is normally
-	// a different host from the web/API URL the agent registered against.
-	ControlUrl    string `protobuf:"bytes,4,opt,name=control_url,json=controlUrl,proto3" json:"control_url,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	CaCert        []byte                 `protobuf:"bytes,2,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
+	Certificate   []byte                 `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty"`
+	ControlUrl    string                 `protobuf:"bytes,4,opt,name=control_url,json=controlUrl,proto3" json:"control_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -168,9 +160,8 @@ func (x *RegisterResponse) GetControlUrl() string {
 }
 
 type RenewCertificateRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Certificate Signing Request (PEM-encoded PKCS#10)
-	Csr           []byte `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Csr           []byte                 `protobuf:"bytes,1,opt,name=csr,proto3" json:"csr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -213,10 +204,8 @@ func (x *RenewCertificateRequest) GetCsr() []byte {
 }
 
 type RenewCertificateResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// New signed certificate (PEM)
-	Certificate []byte `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	// Certificate expiry
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Certificate   []byte                 `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
 	NotAfter      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=not_after,json=notAfter,proto3" json:"not_after,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -531,37 +520,30 @@ func (x *GetCurrentUserResponse) GetUser() *User {
 }
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            *UserId                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastLoginAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
-	Disabled      bool                   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	IdentityLinks []*IdentityLink        `protobuf:"bytes,6,rep,name=identity_links,json=identityLinks,proto3" json:"identity_links,omitempty"`
-	// OIDC profile scope properties
-	DisplayName       string `protobuf:"bytes,7,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	GivenName         string `protobuf:"bytes,8,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
-	FamilyName        string `protobuf:"bytes,9,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
-	PreferredUsername string `protobuf:"bytes,10,opt,name=preferred_username,json=preferredUsername,proto3" json:"preferred_username,omitempty"`
-	Picture           string `protobuf:"bytes,11,opt,name=picture,proto3" json:"picture,omitempty"`
-	Locale            string `protobuf:"bytes,12,opt,name=locale,proto3" json:"locale,omitempty"`
-	// Linux identity
-	LinuxUsername string `protobuf:"bytes,13,opt,name=linux_username,json=linuxUsername,proto3" json:"linux_username,omitempty"`
-	LinuxUid      int32  `protobuf:"varint,14,opt,name=linux_uid,json=linuxUid,proto3" json:"linux_uid,omitempty"`
-	// SSH access settings
-	SshPublicKeys           []*SshPublicKey  `protobuf:"bytes,15,rep,name=ssh_public_keys,json=sshPublicKeys,proto3" json:"ssh_public_keys,omitempty"`
-	SshAccessEnabled        bool             `protobuf:"varint,16,opt,name=ssh_access_enabled,json=sshAccessEnabled,proto3" json:"ssh_access_enabled,omitempty"`
-	SshAllowPubkey          bool             `protobuf:"varint,17,opt,name=ssh_allow_pubkey,json=sshAllowPubkey,proto3" json:"ssh_allow_pubkey,omitempty"`
-	SshAllowPassword        bool             `protobuf:"varint,18,opt,name=ssh_allow_password,json=sshAllowPassword,proto3" json:"ssh_allow_password,omitempty"`
-	UserProvisioningEnabled bool             `protobuf:"varint,19,opt,name=user_provisioning_enabled,json=userProvisioningEnabled,proto3" json:"user_provisioning_enabled,omitempty"`
-	InheritedRoles          []*InheritedRole `protobuf:"bytes,20,rep,name=inherited_roles,json=inheritedRoles,proto3" json:"inherited_roles,omitempty"`
-	// The user's directly-assigned roles, one entry per grant, carrying each
-	// grant's scope. This is the role surface: a role granted both globally and
-	// scoped to a device group appears as two RoleGrant entries, and revocation
-	// names the grant, not just the role.
-	RoleGrants    []*RoleGrant `protobuf:"bytes,21,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	Id                      *UserId                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email                   string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	CreatedAt               *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastLoginAt             *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
+	Disabled                bool                   `protobuf:"varint,5,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	IdentityLinks           []*IdentityLink        `protobuf:"bytes,6,rep,name=identity_links,json=identityLinks,proto3" json:"identity_links,omitempty"`
+	DisplayName             string                 `protobuf:"bytes,7,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	GivenName               string                 `protobuf:"bytes,8,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
+	FamilyName              string                 `protobuf:"bytes,9,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	PreferredUsername       string                 `protobuf:"bytes,10,opt,name=preferred_username,json=preferredUsername,proto3" json:"preferred_username,omitempty"`
+	Picture                 string                 `protobuf:"bytes,11,opt,name=picture,proto3" json:"picture,omitempty"`
+	Locale                  string                 `protobuf:"bytes,12,opt,name=locale,proto3" json:"locale,omitempty"`
+	LinuxUsername           string                 `protobuf:"bytes,13,opt,name=linux_username,json=linuxUsername,proto3" json:"linux_username,omitempty"`
+	LinuxUid                int32                  `protobuf:"varint,14,opt,name=linux_uid,json=linuxUid,proto3" json:"linux_uid,omitempty"`
+	SshPublicKeys           []*SshPublicKey        `protobuf:"bytes,15,rep,name=ssh_public_keys,json=sshPublicKeys,proto3" json:"ssh_public_keys,omitempty"`
+	SshAccessEnabled        bool                   `protobuf:"varint,16,opt,name=ssh_access_enabled,json=sshAccessEnabled,proto3" json:"ssh_access_enabled,omitempty"`
+	SshAllowPubkey          bool                   `protobuf:"varint,17,opt,name=ssh_allow_pubkey,json=sshAllowPubkey,proto3" json:"ssh_allow_pubkey,omitempty"`
+	SshAllowPassword        bool                   `protobuf:"varint,18,opt,name=ssh_allow_password,json=sshAllowPassword,proto3" json:"ssh_allow_password,omitempty"`
+	UserProvisioningEnabled bool                   `protobuf:"varint,19,opt,name=user_provisioning_enabled,json=userProvisioningEnabled,proto3" json:"user_provisioning_enabled,omitempty"`
+	InheritedRoles          []*InheritedRole       `protobuf:"bytes,20,rep,name=inherited_roles,json=inheritedRoles,proto3" json:"inherited_roles,omitempty"`
+	RoleGrants              []*RoleGrant           `protobuf:"bytes,21,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -961,11 +943,6 @@ func (x *Role) GetIsSystem() bool {
 	return false
 }
 
-// A single role grant on a user or user group, with its optional scope
-// scope_kind == UNSPECIFIED is an unscoped/global grant (scope_id
-// and scope_name empty). For a scoped grant, scope_id is the device- or
-// user-group id and scope_name is that group's resolved display name
-// (empty if the group was deleted).
 type RoleGrant struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Role          *Role                  `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
@@ -1035,16 +1012,11 @@ func (x *RoleGrant) GetScopeName() string {
 }
 
 type PermissionInfo struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Key         string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Group       string                 `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
-	Description string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	// Classifies what kind of target this permission acts on, which
-	// determines whether (and how) it can be scoped on a role grant.
-	// UNSPECIFIED = not scopable (fail-closed default). DEVICE = takes
-	// RoleGrantScopeKind=DEVICE_GROUP. USER = takes USER_GROUP.
-	// Surfaced so the web role-builder can gate the scope picker.
-	TargetKind    PermissionTargetKind `protobuf:"varint,4,opt,name=target_kind,json=targetKind,proto3,enum=cadestro.v1.PermissionTargetKind" json:"target_kind,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Group         string                 `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	TargetKind    PermissionTargetKind   `protobuf:"varint,4,opt,name=target_kind,json=targetKind,proto3,enum=cadestro.v1.PermissionTargetKind" json:"target_kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1107,8 +1079,6 @@ func (x *PermissionInfo) GetTargetKind() PermissionTargetKind {
 	return PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED
 }
 
-// Explicit local erasure for subjects created by optional OIDC JIT.
-// The control server rejects subjects created through SCIM.
 type EraseJITUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *UserId                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1389,7 +1359,6 @@ func (x *ListUsersResponse) GetTotalCount() int32 {
 	return 0
 }
 
-// Granular user updates
 type UpdateUserEmailRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *UserId                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1943,37 +1912,25 @@ func (x *UpdateUserLinuxUsernameRequest) GetLinuxUsername() string {
 }
 
 type Device struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	Id           *DeviceId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Hostname     string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	AgentVersion string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
-	// Online / offline, derived from last_seen_at on the server.
-	Status           DeviceStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=cadestro.v1.DeviceStatus" json:"status,omitempty"`
-	RegisteredAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
-	LastSeenAt       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
-	CertExpiresAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=cert_expires_at,json=certExpiresAt,proto3" json:"cert_expires_at,omitempty"`
-	Labels           map[string]string      `protobuf:"bytes,8,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	AssignedUserIds  []*UserId              `protobuf:"bytes,9,rep,name=assigned_user_ids,json=assignedUserIds,proto3" json:"assigned_user_ids,omitempty"`
-	AssignedGroupIds []*UserGroupId         `protobuf:"bytes,10,rep,name=assigned_group_ids,json=assignedGroupIds,proto3" json:"assigned_group_ids,omitempty"`
-	// Stream synchronization interval in minutes (0 = use default of 30 minutes).
-	SyncIntervalMinutes int32 `protobuf:"varint,11,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
-	// Compliance status based on detection scripts
-	ComplianceStatus    ComplianceStatus       `protobuf:"varint,12,opt,name=compliance_status,json=complianceStatus,proto3,enum=cadestro.v1.ComplianceStatus" json:"compliance_status,omitempty"`
-	ComplianceCheckedAt *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=compliance_checked_at,json=complianceCheckedAt,proto3" json:"compliance_checked_at,omitempty"`
-	ComplianceTotal     int32                  `protobuf:"varint,14,opt,name=compliance_total,json=complianceTotal,proto3" json:"compliance_total,omitempty"`       // Total number of compliance checks
-	CompliancePassing   int32                  `protobuf:"varint,15,opt,name=compliance_passing,json=compliancePassing,proto3" json:"compliance_passing,omitempty"` // Number of passing checks
-	// Freshness of the server-scheduled inventory collection.
-	// last_inventory_at is MAX(collected_at) across the device's inventory;
-	// unset when no inventory has ever been collected.
-	LastInventoryAt *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=last_inventory_at,json=lastInventoryAt,proto3" json:"last_inventory_at,omitempty"`
-	// True when inventory age exceeds the resolved interval plus grace
-	// (max(1h, 25% of interval)) — computed server-side from policy, so it
-	// is valid even while the device is offline.
-	InventoryOverdue bool `protobuf:"varint,17,opt,name=inventory_overdue,json=inventoryOverdue,proto3" json:"inventory_overdue,omitempty"`
-	// Device-level inventory interval override in minutes. Resolution:
-	// device override first, then group minimum, then the 1440-minute
-	// server default; 0 means inherit.
-	InventoryIntervalMinutes int32 `protobuf:"varint,18,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       *DeviceId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Hostname                 string                 `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	AgentVersion             string                 `protobuf:"bytes,3,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
+	Status                   DeviceStatus           `protobuf:"varint,4,opt,name=status,proto3,enum=cadestro.v1.DeviceStatus" json:"status,omitempty"`
+	RegisteredAt             *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
+	LastSeenAt               *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	CertExpiresAt            *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=cert_expires_at,json=certExpiresAt,proto3" json:"cert_expires_at,omitempty"`
+	Labels                   map[string]string      `protobuf:"bytes,8,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AssignedUserIds          []*UserId              `protobuf:"bytes,9,rep,name=assigned_user_ids,json=assignedUserIds,proto3" json:"assigned_user_ids,omitempty"`
+	AssignedGroupIds         []*UserGroupId         `protobuf:"bytes,10,rep,name=assigned_group_ids,json=assignedGroupIds,proto3" json:"assigned_group_ids,omitempty"`
+	SyncIntervalMinutes      int32                  `protobuf:"varint,11,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
+	ComplianceStatus         ComplianceStatus       `protobuf:"varint,12,opt,name=compliance_status,json=complianceStatus,proto3,enum=cadestro.v1.ComplianceStatus" json:"compliance_status,omitempty"`
+	ComplianceCheckedAt      *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=compliance_checked_at,json=complianceCheckedAt,proto3" json:"compliance_checked_at,omitempty"`
+	ComplianceTotal          int32                  `protobuf:"varint,14,opt,name=compliance_total,json=complianceTotal,proto3" json:"compliance_total,omitempty"`
+	CompliancePassing        int32                  `protobuf:"varint,15,opt,name=compliance_passing,json=compliancePassing,proto3" json:"compliance_passing,omitempty"`
+	LastInventoryAt          *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=last_inventory_at,json=lastInventoryAt,proto3" json:"last_inventory_at,omitempty"`
+	InventoryOverdue         bool                   `protobuf:"varint,17,opt,name=inventory_overdue,json=inventoryOverdue,proto3" json:"inventory_overdue,omitempty"`
+	InventoryIntervalMinutes int32                  `protobuf:"varint,18,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -2135,14 +2092,12 @@ func (x *Device) GetInventoryIntervalMinutes() int32 {
 }
 
 type ListDevicesRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	PageSize  int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
-	// the listing to that single status.
-	StatusFilter  DeviceStatus      `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.DeviceStatus" json:"status_filter,omitempty"`
-	LabelFilter   map[string]string `protobuf:"bytes,4,rep,name=label_filter,json=labelFilter,proto3" json:"label_filter,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	MyDevicesOnly bool              `protobuf:"varint,5,opt,name=my_devices_only,json=myDevicesOnly,proto3" json:"my_devices_only,omitempty"` // when true, only return devices assigned to the authenticated user
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	StatusFilter  DeviceStatus           `protobuf:"varint,3,opt,name=status_filter,json=statusFilter,proto3,enum=cadestro.v1.DeviceStatus" json:"status_filter,omitempty"`
+	LabelFilter   map[string]string      `protobuf:"bytes,4,rep,name=label_filter,json=labelFilter,proto3" json:"label_filter,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	MyDevicesOnly bool                   `protobuf:"varint,5,opt,name=my_devices_only,json=myDevicesOnly,proto3" json:"my_devices_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2360,7 +2315,6 @@ func (x *GetDeviceResponse) GetDevice() *Device {
 	return nil
 }
 
-// Granular device updates
 type SetDeviceLabelRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *DeviceId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2597,8 +2551,6 @@ func (*DeleteDeviceResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{41}
 }
 
-// Device assignment (admin-only)
-// Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
 type AssignDeviceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
@@ -2719,7 +2671,6 @@ func (x *AssignDeviceResponse) GetDevice() *Device {
 	return nil
 }
 
-// Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
 type UnassignDeviceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
@@ -2825,13 +2776,10 @@ func (x *UnassignDeviceResponse) GetDevice() *Device {
 }
 
 type DeviceAssignee struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    *GroupId               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Subset of AssignmentTargetType: only USER and USER_GROUP are valid
-	// values for a device assignee. DEVICE and DEVICE_GROUP are rejected
-	// at write time.
-	Type          AssignmentTargetType `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.AssignmentTargetType" json:"type,omitempty"`
-	Name          string               `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"` // User email or group name
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *GroupId               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type          AssignmentTargetType   `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.AssignmentTargetType" json:"type,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2975,11 +2923,10 @@ func (x *ListDeviceAssigneesResponse) GetAssignees() []*DeviceAssignee {
 	return nil
 }
 
-// Update device sync interval
 type SetDeviceSyncIntervalRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Id                  *DeviceId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	SyncIntervalMinutes int32                  `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"` // 0 = use default (30 min), max 24 hours
+	SyncIntervalMinutes int32                  `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -3028,11 +2975,10 @@ func (x *SetDeviceSyncIntervalRequest) GetSyncIntervalMinutes() int32 {
 	return 0
 }
 
-// Update device inventory collection interval.
 type SetDeviceInventoryIntervalRequest struct {
 	state                    protoimpl.MessageState `protogen:"open.v1"`
 	Id                       *DeviceId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	InventoryIntervalMinutes int32                  `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"` // 0 = inherit (group min, else 1440), else 2h–7d
+	InventoryIntervalMinutes int32                  `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -3084,10 +3030,10 @@ func (x *SetDeviceInventoryIntervalRequest) GetInventoryIntervalMinutes() int32 
 type RegistrationToken struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *RegistrationTokenId   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"` // Only returned on creation
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	MaxUses       int32                  `protobuf:"varint,4,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`             // 0 = unlimited
-	CurrentUses   int32                  `protobuf:"varint,5,opt,name=current_uses,json=currentUses,proto3" json:"current_uses,omitempty"` // Derived COUNT(devices.registration_token_id); never stored on tokens
+	MaxUses       int32                  `protobuf:"varint,4,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`
+	CurrentUses   int32                  `protobuf:"varint,5,opt,name=current_uses,json=currentUses,proto3" json:"current_uses,omitempty"`
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	CreatedBy     string                 `protobuf:"bytes,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
@@ -3190,11 +3136,9 @@ func (x *RegistrationToken) GetDisabled() bool {
 }
 
 type CreateTokenRequest struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	MaxUses int32                  `protobuf:"varint,2,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"` // 0 = unlimited (for reusable tokens)
-	// Enrollment tokens always expire. Set a sufficiently long TTL for the
-	// rollout; 0/unset is intentionally not a valid token.
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	MaxUses       int32                  `protobuf:"varint,2,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3252,11 +3196,9 @@ func (x *CreateTokenRequest) GetExpiresAt() *timestamppb.Timestamp {
 }
 
 type CreateTokenResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Token *RegistrationToken     `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	// SHA-256 fingerprint of the control CA certificate DER. Provisioning
-	// presents this beside token.value; agents require it during enrollment.
-	CaFingerprintPin string `protobuf:"bytes,2,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty"`
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Token            *RegistrationToken     `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	CaFingerprintPin string                 `protobuf:"bytes,2,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -3425,7 +3367,6 @@ func (x *ListTokensResponse) GetTotalCount() int32 {
 	return 0
 }
 
-// Granular token updates
 type RenameTokenRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *RegistrationTokenId   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -5317,21 +5258,16 @@ func (*DeleteActionResponse) Descriptor() ([]byte, []int) {
 }
 
 type ActionSet struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Id          *ActionSetId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	MemberCount int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CreatedBy   string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	UpdatedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	// Schedule that triggers every member action when fired. Required.
-	// The set's schedule overrides each member action's own schedule —
-	// member actions never fire on their own when assigned via this set.
-	Schedule *ActionSchedule `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// Failure policy resolved onto every occurrence in the compiled manifest.
-	// CONTINUE is the default; STOP must be selected explicitly.
-	OnFailure     OnFailure `protobuf:"varint,9,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *ActionSetId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	MemberCount   int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedBy     string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Schedule      *ActionSchedule        `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	OnFailure     OnFailure              `protobuf:"varint,9,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5430,14 +5366,11 @@ func (x *ActionSet) GetOnFailure() OnFailure {
 }
 
 type ActionSetMember struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	// Position of this action within the set's execution order. When the
-	// set's schedule fires, members are executed in ascending sort_order.
-	// Stable tiebreak by action_id for ties.
-	SortOrder     int32      `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
-	ActionName    string     `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
-	ActionType    ActionType `protobuf:"varint,4,opt,name=action_type,json=actionType,proto3,enum=cadestro.v1.ActionType" json:"action_type,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	SortOrder     int32                  `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
+	ActionName    string                 `protobuf:"bytes,3,opt,name=action_name,json=actionName,proto3" json:"action_name,omitempty"`
+	ActionType    ActionType             `protobuf:"varint,4,opt,name=action_type,json=actionType,proto3,enum=cadestro.v1.ActionType" json:"action_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5501,14 +5434,11 @@ func (x *ActionSetMember) GetActionType() ActionType {
 }
 
 type CreateActionSetRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// Schedule that triggers every member action when fired. Required:
-	// member actions never fire on their own when assigned via this set.
-	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// CONTINUE is the default; STOP must be selected explicitly.
-	OnFailure     OnFailure `protobuf:"varint,4,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Schedule      *ActionSchedule        `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	OnFailure     OnFailure              `protobuf:"varint,4,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5936,12 +5866,10 @@ func (x *UpdateActionSetDescriptionRequest) GetDescription() string {
 }
 
 type UpdateActionSetScheduleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    *ActionSetId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Replacement schedule for the set. Required.
-	Schedule *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// Replacement failure policy. CONTINUE is the default.
-	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *ActionSetId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Schedule      *ActionSchedule        `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	OnFailure     OnFailure              `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6426,18 +6354,15 @@ func (x *ReorderActionInSetResponse) GetSet() *ActionSet {
 }
 
 type Definition struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Id          *DefinitionId          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name        string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	MemberCount int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CreatedBy   string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	UpdatedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	// Schedule used by manifests compiled from this definition. Required.
-	// The override exists only on those emitted manifests: it does not rewrite
-	// member ActionSets, whose schedules still apply when assigned independently.
-	Schedule      *ActionSchedule `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *DefinitionId          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	MemberCount   int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedBy     string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Schedule      *ActionSchedule        `protobuf:"bytes,8,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6529,14 +6454,10 @@ func (x *Definition) GetSchedule() *ActionSchedule {
 }
 
 type DefinitionMember struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	ActionSetId *ActionSetId           `protobuf:"bytes,1,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
-	// Position of this set within the definition's execution order. When the
-	// definition's schedule fires, sets are walked in ascending sort_order
-	// and each set's actions execute in their own ascending sort_order.
-	// Stable tiebreak by action_set_id for ties.
-	SortOrder     int32  `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
-	ActionSetName string `protobuf:"bytes,3,opt,name=action_set_name,json=actionSetName,proto3" json:"action_set_name,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionSetId   *ActionSetId           `protobuf:"bytes,1,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
+	SortOrder     int32                  `protobuf:"varint,2,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
+	ActionSetName string                 `protobuf:"bytes,3,opt,name=action_set_name,json=actionSetName,proto3" json:"action_set_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6593,12 +6514,10 @@ func (x *DefinitionMember) GetActionSetName() string {
 }
 
 type CreateDefinitionRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// Schedule used by manifests compiled from this definition. Required. It
-	// overrides their manifest schedules without rewriting member ActionSets.
-	Schedule      *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Schedule      *ActionSchedule        `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7011,11 +6930,9 @@ func (x *UpdateDefinitionDescriptionRequest) GetDescription() string {
 }
 
 type UpdateDefinitionScheduleRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    *DefinitionId          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Replacement schedule for manifests compiled from the definition. Required;
-	// member ActionSet schedules are not rewritten.
-	Schedule      *ActionSchedule `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *DefinitionId          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Schedule      *ActionSchedule        `protobuf:"bytes,2,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7493,28 +7410,18 @@ func (x *ReorderActionSetInDefinitionResponse) GetDefinition() *Definition {
 }
 
 type DeviceGroup struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	Id           *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description  string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	MemberCount  int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	CreatedAt    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	CreatedBy    string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	IsDynamic    bool                   `protobuf:"varint,7,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`         // True if membership is determined by dynamic_query
-	DynamicQuery string                 `protobuf:"bytes,8,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"` // Query for dynamic membership (verbose syntax)
-	// Sync interval in minutes for devices in this group (0 = use device/default)
-	// Takes precedence over device-level setting
-	SyncIntervalMinutes int32 `protobuf:"varint,9,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
-	// Per-group maintenance window. Empty means "no constraint": members
-	// may run assigned policy actions at any time. When non-empty the agent gates
-	// policy runs by the device-local-time union across
-	// every group the device belongs to (device groups + user groups
-	// reaching it via assignments).
-	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,10,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
-	// Inventory collection interval in minutes for devices in this group
-	// (0 = no group contribution). A device resolves its interval as:
-	// device override, else MIN across its groups, else 1440.
-	InventoryIntervalMinutes int32 `protobuf:"varint,11,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Id                       *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description              string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	MemberCount              int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	CreatedAt                *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedBy                string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	IsDynamic                bool                   `protobuf:"varint,7,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery             string                 `protobuf:"bytes,8,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	SyncIntervalMinutes      int32                  `protobuf:"varint,9,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
+	MaintenanceWindow        *MaintenanceWindow     `protobuf:"bytes,10,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
+	InventoryIntervalMinutes int32                  `protobuf:"varint,11,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -7627,12 +7534,11 @@ func (x *DeviceGroup) GetInventoryIntervalMinutes() int32 {
 }
 
 type CreateDeviceGroupRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	Name        string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// If true, membership is determined by dynamic_query instead of manual assignment
-	IsDynamic     bool   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"` // Query for dynamic membership (see docs for syntax)
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	IsDynamic     bool                   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string                 `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8539,13 +8445,11 @@ func (x *RemoveDeviceFromGroupResponse) GetGroup() *DeviceGroup {
 	return nil
 }
 
-// Update a device group's dynamic query
 type UpdateDeviceGroupQueryRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// If true, membership is determined by dynamic_query instead of manual assignment
-	IsDynamic     bool   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"` // Query for dynamic membership (see docs for syntax)
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	IsDynamic     bool                   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery  string                 `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8645,7 +8549,6 @@ func (x *UpdateDeviceGroupQueryResponse) GetGroup() *DeviceGroup {
 	return nil
 }
 
-// Validate a dynamic query without creating a group
 type ValidateDynamicQueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
@@ -8693,8 +8596,8 @@ func (x *ValidateDynamicQueryRequest) GetQuery() string {
 type ValidateDynamicQueryResponse struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Valid               bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`
-	Error               string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`                                                           // Error message if not valid
-	MatchingDeviceCount int32                  `protobuf:"varint,3,opt,name=matching_device_count,json=matchingDeviceCount,proto3" json:"matching_device_count,omitempty"` // Number of devices that would match
+	Error               string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	MatchingDeviceCount int32                  `protobuf:"varint,3,opt,name=matching_device_count,json=matchingDeviceCount,proto3" json:"matching_device_count,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -8750,7 +8653,6 @@ func (x *ValidateDynamicQueryResponse) GetMatchingDeviceCount() int32 {
 	return 0
 }
 
-// Trigger re-evaluation of a dynamic group
 type EvaluateDynamicGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -8855,11 +8757,10 @@ func (x *EvaluateDynamicGroupResponse) GetDevicesRemoved() int32 {
 	return 0
 }
 
-// Update device group sync interval
 type SetDeviceGroupSyncIntervalRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Id                  *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	SyncIntervalMinutes int32                  `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"` // 0 = use device/default, max 24 hours
+	SyncIntervalMinutes int32                  `protobuf:"varint,2,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -8908,11 +8809,10 @@ func (x *SetDeviceGroupSyncIntervalRequest) GetSyncIntervalMinutes() int32 {
 	return 0
 }
 
-// Update device group inventory collection interval.
 type SetDeviceGroupInventoryIntervalRequest struct {
 	state                    protoimpl.MessageState `protogen:"open.v1"`
 	Id                       *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	InventoryIntervalMinutes int32                  `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"` // 0 = no group contribution, else 2h–7d
+	InventoryIntervalMinutes int32                  `protobuf:"varint,2,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -8961,10 +8861,6 @@ func (x *SetDeviceGroupInventoryIntervalRequest) GetInventoryIntervalMinutes() i
 	return 0
 }
 
-// Replace the device group's maintenance window. Pass an empty
-// MaintenanceWindow (or omit the schedule) to clear it — that drops
-// the group's contribution to the device-side union, leaving the
-// device unconstrained by this group.
 type SetDeviceGroupMaintenanceWindowRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -9139,7 +9035,7 @@ type CreateAssignmentRequest struct {
 	SourceId      *AssignmentSourceId    `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
 	TargetType    AssignmentTargetType   `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty"`
 	TargetId      *AssignmentTargetId    `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
-	Mode          AssignmentMode         `protobuf:"varint,5,opt,name=mode,proto3,enum=cadestro.v1.AssignmentMode" json:"mode,omitempty"` // Defaults to REQUIRED (0)
+	Mode          AssignmentMode         `protobuf:"varint,5,opt,name=mode,proto3,enum=cadestro.v1.AssignmentMode" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9334,17 +9230,13 @@ func (*DeleteAssignmentResponse) Descriptor() ([]byte, []int) {
 }
 
 type ListAssignmentsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// UNSPECIFIED (0) means "all source types"; non-zero filters to
-	// that single source type.
-	SourceType AssignmentSourceType `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
-	SourceId   *AssignmentSourceId  `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
-	// UNSPECIFIED (0) means "all target types"; non-zero filters to
-	// that single target type.
-	TargetType    AssignmentTargetType `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty"`
-	TargetId      *AssignmentTargetId  `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
-	PageSize      int32                `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string               `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceType    AssignmentSourceType   `protobuf:"varint,1,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
+	SourceId      *AssignmentSourceId    `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	TargetType    AssignmentTargetType   `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=cadestro.v1.AssignmentTargetType" json:"target_type,omitempty"`
+	TargetId      *AssignmentTargetId    `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -9487,7 +9379,7 @@ type UserSelection struct {
 	DeviceId      *DeviceId              `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	SourceType    AssignmentSourceType   `protobuf:"varint,3,opt,name=source_type,json=sourceType,proto3,enum=cadestro.v1.AssignmentSourceType" json:"source_type,omitempty"`
 	SourceId      *AssignmentSourceId    `protobuf:"bytes,4,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
-	Selected      bool                   `protobuf:"varint,5,opt,name=selected,proto3" json:"selected,omitempty"` // true=user wants it (present), false=user rejected (absent)
+	Selected      bool                   `protobuf:"varint,5,opt,name=selected,proto3" json:"selected,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -9728,7 +9620,7 @@ type AvailableItem struct {
 	SourceName        string                 `protobuf:"bytes,3,opt,name=source_name,json=sourceName,proto3" json:"source_name,omitempty"`
 	SourceDescription string                 `protobuf:"bytes,4,opt,name=source_description,json=sourceDescription,proto3" json:"source_description,omitempty"`
 	Selected          bool                   `protobuf:"varint,5,opt,name=selected,proto3" json:"selected,omitempty"`
-	Actions           []*ManagedAction       `protobuf:"bytes,6,rep,name=actions,proto3" json:"actions,omitempty"` // preview of contained actions
+	Actions           []*ManagedAction       `protobuf:"bytes,6,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -9849,7 +9741,6 @@ func (x *ListAvailableActionsResponse) GetItems() []*AvailableItem {
 	return nil
 }
 
-// Get all resolved actions for a device (expands groups, definitions, sets)
 type GetDeviceAssignmentsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
@@ -9978,7 +9869,6 @@ func (x *GetDeviceAssignmentsResponse) GetDefinitionDetails() []*GetDefinitionRe
 	return nil
 }
 
-// Get all assignments targeting a user (directly or via user groups)
 type GetUserAssignmentsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        *UserId                `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -10227,12 +10117,6 @@ func (*RebootDeviceResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{162}
 }
 
-// AuditEvent mirrors a row from the append-only audit log. The
-// event_type, stream_type, and actor_type fields are intentionally
-// string-typed (open set): the log records dozens of event types across
-// every domain, and a new one must not require a proto enum bump. The
-// web UI populates filter dropdowns from the distinct values returned by
-// ListAuditEvents rather than from a typed enum.
 type AuditEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *AuditEventId          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -10469,30 +10353,15 @@ func (x *ListAuditEventsResponse) GetTotalCount() int32 {
 	return 0
 }
 
-// ExportAuditEvents streams the audit log as CSV or JSON for DSAR /
-// external review. It is a *unary, chunked* export on purpose: the control server's
-// interceptors are deliberately fail-closed on streaming RPCs, so the
-// client loops — pass the returned next_page_token back until it comes
-// back empty, concatenating the chunks. The server applies the same
-// read-side redaction and the same permission gate as ListAuditEvents.
-//
-// Filters mirror what the audit view can express: exact actor, a set
-// of stream types, an event-type substring match (same semantics as
-// ListAuditEvents.event_type), and an occurred_at range.
 type ExportAuditEventsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Export format: "csv" or "json".
-	Format  string        `protobuf:"bytes,1,opt,name=format,proto3" json:"format,omitempty"`
-	ActorId *AuditActorId `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
-	// Empty = all stream types.
-	StreamTypes []string `protobuf:"bytes,3,rep,name=stream_types,json=streamTypes,proto3" json:"stream_types,omitempty"`
-	// Case-insensitive substring match on the event type.
-	EventType string `protobuf:"bytes,4,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
-	// Inclusive occurred_at lower/upper bounds; unset = unbounded.
-	OccurredFrom *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=occurred_from,json=occurredFrom,proto3" json:"occurred_from,omitempty"`
-	OccurredTo   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=occurred_to,json=occurredTo,proto3" json:"occurred_to,omitempty"`
-	// Cursor from the previous chunk; empty starts the export.
-	PageToken     string `protobuf:"bytes,7,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Format        string                 `protobuf:"bytes,1,opt,name=format,proto3" json:"format,omitempty"`
+	ActorId       *AuditActorId          `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	StreamTypes   []string               `protobuf:"bytes,3,rep,name=stream_types,json=streamTypes,proto3" json:"stream_types,omitempty"`
+	EventType     string                 `protobuf:"bytes,4,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	OccurredFrom  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=occurred_from,json=occurredFrom,proto3" json:"occurred_from,omitempty"`
+	OccurredTo    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=occurred_to,json=occurredTo,proto3" json:"occurred_to,omitempty"`
+	PageToken     string                 `protobuf:"bytes,7,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10577,14 +10446,9 @@ func (x *ExportAuditEventsRequest) GetPageToken() string {
 }
 
 type ExportAuditEventsResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The next fragment of the export artifact. Chunks concatenate to
-	// one valid CSV file (header on the first chunk) or one valid JSON
-	// array. A chunk can be empty (e.g. a filter matching zero events
-	// still yields the CSV header / "[]").
-	Chunk []byte `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
-	// Empty when the export is complete.
-	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Chunk         []byte                 `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10633,8 +10497,6 @@ func (x *ExportAuditEventsResponse) GetNextPageToken() string {
 	return ""
 }
 
-// LPS password metadata stored per device. Plaintext is available only from
-// RevealLpsPassword so each access has an independent audit operation.
 type LpsPassword struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             *LpsPasswordId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -10780,11 +10642,9 @@ func (x *ListLpsPasswordsRequest) GetDeviceId() *DeviceId {
 }
 
 type ListLpsPasswordsResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Current entries (one per LPS action and username assigned to the device).
-	Current []*LpsPassword `protobuf:"bytes,1,rep,name=current,proto3" json:"current,omitempty"`
-	// Previous entries (most recent first, max 3 per action).
-	History       []*LpsPassword `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Current       []*LpsPassword         `protobuf:"bytes,1,rep,name=current,proto3" json:"current,omitempty"`
+	History       []*LpsPassword         `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -10921,8 +10781,6 @@ func (x *RevealLpsPasswordResponse) GetPassword() string {
 	return ""
 }
 
-// LUKS key metadata stored per device. Plaintext is available only from
-// RevealLuksKey so each access has an independent audit operation.
 type LuksKey struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Id               *LuksKeyId             `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -10934,12 +10792,10 @@ type LuksKey struct {
 	RotatedAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty"`
 	RotationReason   RotationReason         `protobuf:"varint,8,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty"`
 	RevocationStatus LuksRevocationStatus   `protobuf:"varint,9,opt,name=revocation_status,json=revocationStatus,proto3,enum=cadestro.v1.LuksRevocationStatus" json:"revocation_status,omitempty"`
-	// Error message if revocation failed
-	RevocationError string `protobuf:"bytes,10,opt,name=revocation_error,json=revocationError,proto3" json:"revocation_error,omitempty"`
-	// Timestamp of last revocation event
-	RevocationAt  *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=revocation_at,json=revocationAt,proto3" json:"revocation_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RevocationError  string                 `protobuf:"bytes,10,opt,name=revocation_error,json=revocationError,proto3" json:"revocation_error,omitempty"`
+	RevocationAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=revocation_at,json=revocationAt,proto3" json:"revocation_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *LuksKey) Reset() {
@@ -11094,11 +10950,9 @@ func (x *ListLuksKeysRequest) GetDeviceId() *DeviceId {
 }
 
 type ListLuksKeysResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Current key metadata (one per LUKS action assigned to the device).
-	Current []*LuksKey `protobuf:"bytes,1,rep,name=current,proto3" json:"current,omitempty"`
-	// Previous key metadata (most recent first, max 3 per action).
-	History       []*LuksKey `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Current       []*LuksKey             `protobuf:"bytes,1,rep,name=current,proto3" json:"current,omitempty"`
+	History       []*LuksKey             `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11288,13 +11142,10 @@ func (x *CreateLuksTokenRequest) GetActionId() *ActionId {
 }
 
 type CreateLuksTokenResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// One-time UUID token
-	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	// URI for opening terminal: cadestro://luks/set-passphrase?token=<token-value>
-	Uri string `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
-	// CLI command: cadestrod luks set-passphrase --token <token-value>
-	CliCommand    string `protobuf:"bytes,3,opt,name=cli_command,json=cliCommand,proto3" json:"cli_command,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Uri           string                 `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
+	CliCommand    string                 `protobuf:"bytes,3,opt,name=cli_command,json=cliCommand,proto3" json:"cli_command,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11438,15 +11289,13 @@ func (*RevokeLuksDeviceKeyResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{181}
 }
 
-// Dispatch an on-demand OSQuery to a connected device
 type DispatchOSQueryRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	Table    string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
-	Columns  []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
-	Limit    int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	// Raw SQL query — when set, table/columns/limit are ignored.
-	RawSql        string `protobuf:"bytes,5,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	Table         string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
+	Columns       []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
+	Limit         int32                  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	RawSql        string                 `protobuf:"bytes,5,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11560,7 +11409,6 @@ func (x *DispatchOSQueryResponse) GetQueryId() *QueryId {
 	return nil
 }
 
-// Poll for the result of a dispatched OSQuery
 type GetOSQueryResultRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
@@ -11681,12 +11529,10 @@ func (x *GetOSQueryResultResponse) GetRows() []*OSQueryRow {
 	return nil
 }
 
-// Get cached device inventory (hardware/software data collected by agent)
 type GetDeviceInventoryRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	// Optional: filter to specific tables (empty = all)
-	TableNames    []string `protobuf:"bytes,2,rep,name=table_names,json=tableNames,proto3" json:"table_names,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	TableNames    []string               `protobuf:"bytes,2,rep,name=table_names,json=tableNames,proto3" json:"table_names,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11839,7 +11685,6 @@ func (x *GetDeviceInventoryResponse) GetTables() []*InventoryTableResult {
 	return nil
 }
 
-// Request the agent to re-collect and send inventory
 type RefreshDeviceInventoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
@@ -12689,20 +12534,12 @@ func (*DeleteRoleResponse) Descriptor() ([]byte, []int) {
 }
 
 type AssignRoleToUserRequest struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	UserId  *UserId                `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	RoleId  *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
-	RoleIds []*RoleId              `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
-	// Optional grant scope. Paired-or-neither: both scope_kind and
-	// scope_id MUST be set together, or both absent. Absent =
-	// unscoped/global grant. Set = the grant's authorization extends only
-	// to members of the group identified by scope_id, and scope_kind
-	// selects which kind of group that is. Every permission in the role
-	// must accept this scope_kind (PermissionInfo.target_kind must
-	// match), or the assignment is rejected. The actor must hold
-	// AssignRoleScope.
-	ScopeKind     RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	ScopeId       *ScopeId           `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        *UserId                `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RoleId        *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	RoleIds       []*RoleId              `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
+	ScopeKind     RoleGrantScopeKind     `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       *ScopeId               `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12809,18 +12646,11 @@ func (*AssignRoleToUserResponse) Descriptor() ([]byte, []int) {
 }
 
 type RevokeRoleFromUserRequest struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	UserId *UserId                `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	RoleId *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
-	// Optional grant scope identifying WHICH grant to revoke when the
-	// (user_id, role_id) pair has multiple grants at different
-	// scopes. Paired-or-neither with scope_id. Both absent = revoke
-	// the unscoped grant; both set = revoke that one specific scoped
-	// grant. The handler rejects "revoke unscoped" when only scoped
-	// grants exist (and vice versa) to surface ambiguity rather than
-	// silently no-op.
-	ScopeKind     RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	ScopeId       *ScopeId           `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        *UserId                `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RoleId        *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	ScopeKind     RoleGrantScopeKind     `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       *ScopeId               `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13000,27 +12830,19 @@ func (x *ListPermissionsResponse) GetPermissions() []*PermissionInfo {
 }
 
 type UserGroup struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            *UserGroupId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	MemberCount   int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	IsDynamic     bool                   `protobuf:"varint,6,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string                 `protobuf:"bytes,7,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
-	IsScimManaged bool                   `protobuf:"varint,8,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
-	// Per-group maintenance window. Same semantics as
-	// DeviceGroup.maintenance_window: when a user group reaches a device
-	// through an assignment, that device gates policy runs by the union of
-	// every reaching group's window (the device's own groups plus any
-	// user groups reaching it). Empty means "no constraint" for this
-	// group's contribution to the union.
-	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,9,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
-	// The group's assigned roles, one entry per grant, carrying each grant's
-	// scope. See User.role_grants.
-	RoleGrants    []*RoleGrant `protobuf:"bytes,10,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                *UserGroupId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name              string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description       string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	MemberCount       int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	IsDynamic         bool                   `protobuf:"varint,6,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
+	DynamicQuery      string                 `protobuf:"bytes,7,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	IsScimManaged     bool                   `protobuf:"varint,8,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
+	MaintenanceWindow *MaintenanceWindow     `protobuf:"bytes,9,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
+	RoleGrants        []*RoleGrant           `protobuf:"bytes,10,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *UserGroup) Reset() {
@@ -13872,15 +13694,12 @@ func (*RemoveUserFromGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type AssignRoleToUserGroupRequest struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	GroupId *UserGroupId           `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	RoleId  *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
-	RoleIds []*RoleId              `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
-	// Optional grant scope. Same paired-or-neither semantics as
-	// AssignRoleToUserRequest.scope_*. Every member of the target
-	// user group inherits this scope through the grant.
-	ScopeKind     RoleGrantScopeKind `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	ScopeId       *ScopeId           `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       *UserGroupId           `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	RoleId        *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	RoleIds       []*RoleId              `protobuf:"bytes,3,rep,name=role_ids,json=roleIds,proto3" json:"role_ids,omitempty"`
+	ScopeKind     RoleGrantScopeKind     `protobuf:"varint,4,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       *ScopeId               `protobuf:"bytes,5,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13987,15 +13806,11 @@ func (*AssignRoleToUserGroupResponse) Descriptor() ([]byte, []int) {
 }
 
 type RevokeRoleFromUserGroupRequest struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	GroupId *UserGroupId           `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
-	RoleId  *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
-	// Optional grant scope identifying WHICH (user_group, role)
-	// grant to revoke when multiple scoped grants of the same role
-	// are attached to the same user group. Paired-or-neither with
-	// scope_id; same semantics as RevokeRoleFromUserRequest.
-	ScopeKind     RoleGrantScopeKind `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
-	ScopeId       *ScopeId           `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupId       *UserGroupId           `protobuf:"bytes,1,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	RoleId        *RoleId                `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	ScopeKind     RoleGrantScopeKind     `protobuf:"varint,3,opt,name=scope_kind,json=scopeKind,proto3,enum=cadestro.v1.RoleGrantScopeKind" json:"scope_kind,omitempty"`
+	ScopeId       *ScopeId               `protobuf:"bytes,4,opt,name=scope_id,json=scopeId,proto3" json:"scope_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14494,10 +14309,6 @@ func (x *EvaluateDynamicUserGroupResponse) GetUsersRemoved() int32 {
 	return 0
 }
 
-// Replace the user group's maintenance window. Same semantics as
-// SetDeviceGroupMaintenanceWindowRequest. The window contributes to a
-// device-side union for every device the user group reaches via an
-// assignment. Empty schedule = clear.
 type SetUserGroupMaintenanceWindowRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Id                *UserGroupId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -14551,33 +14362,28 @@ func (x *SetUserGroupMaintenanceWindowRequest) GetMaintenanceWindow() *Maintenan
 }
 
 type IdentityProvider struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	Id           *IdentityProviderId    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name         string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Slug         string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
-	ProviderType IdentityProviderType   `protobuf:"varint,4,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
-	Enabled      bool                   `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	ClientId     *OidcClientId          `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	// client_secret is not returned in responses (write-only).
-	IssuerUrl        string                 `protobuf:"bytes,7,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
-	AuthorizationUrl string                 `protobuf:"bytes,8,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
-	TokenUrl         string                 `protobuf:"bytes,9,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
-	UserinfoUrl      string                 `protobuf:"bytes,10,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
-	Scopes           []string               `protobuf:"bytes,11,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	AutoCreateUsers  bool                   `protobuf:"varint,12,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
-	AutoLinkByEmail  bool                   `protobuf:"varint,13,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
-	DefaultRoleId    *RoleId                `protobuf:"bytes,14,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
-	GroupClaim       string                 `protobuf:"bytes,15,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
-	GroupMapping     map[string]string      `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // external group name → user_group_id
-	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ScimEnabled      bool                   `protobuf:"varint,19,opt,name=scim_enabled,json=scimEnabled,proto3" json:"scim_enabled,omitempty"`
-	ScimEndpointUrl  string                 `protobuf:"bytes,20,opt,name=scim_endpoint_url,json=scimEndpointUrl,proto3" json:"scim_endpoint_url,omitempty"` // read-only, computed by server
-	// trust_email_assertions: operator opt-in to delegate email-identity
-	// assertion to this IdP. When true, SCIM AutoLinkByEmail may bind an asserted
-	// email to a pre-existing account; default false refuses that
-	// (account-takeover guard across providers).
-	TrustEmailAssertions bool `protobuf:"varint,21,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Id                   *IdentityProviderId    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Slug                 string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
+	ProviderType         IdentityProviderType   `protobuf:"varint,4,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
+	Enabled              bool                   `protobuf:"varint,5,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	ClientId             *OidcClientId          `protobuf:"bytes,6,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	IssuerUrl            string                 `protobuf:"bytes,7,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	AuthorizationUrl     string                 `protobuf:"bytes,8,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
+	TokenUrl             string                 `protobuf:"bytes,9,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	UserinfoUrl          string                 `protobuf:"bytes,10,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
+	Scopes               []string               `protobuf:"bytes,11,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	AutoCreateUsers      bool                   `protobuf:"varint,12,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
+	AutoLinkByEmail      bool                   `protobuf:"varint,13,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
+	DefaultRoleId        *RoleId                `protobuf:"bytes,14,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
+	GroupClaim           string                 `protobuf:"bytes,15,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
+	GroupMapping         map[string]string      `protobuf:"bytes,16,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	CreatedAt            *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt            *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ScimEnabled          bool                   `protobuf:"varint,19,opt,name=scim_enabled,json=scimEnabled,proto3" json:"scim_enabled,omitempty"`
+	ScimEndpointUrl      string                 `protobuf:"bytes,20,opt,name=scim_endpoint_url,json=scimEndpointUrl,proto3" json:"scim_endpoint_url,omitempty"`
+	TrustEmailAssertions bool                   `protobuf:"varint,21,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -14876,24 +14682,23 @@ func (x *IdentityLink) GetLastLoginAt() *timestamppb.Timestamp {
 }
 
 type CreateIdentityProviderRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Name             string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Slug             string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
-	ProviderType     IdentityProviderType   `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
-	ClientId         *OidcClientId          `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret     string                 `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	IssuerUrl        string                 `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
-	AuthorizationUrl string                 `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
-	TokenUrl         string                 `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
-	UserinfoUrl      string                 `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
-	Scopes           []string               `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	AutoCreateUsers  bool                   `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
-	AutoLinkByEmail  bool                   `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
-	DefaultRoleId    *RoleId                `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
-	GroupClaim       string                 `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
-	GroupMapping     map[string]string      `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// See IdentityProvider.trust_email_assertions. Default false (secure).
-	TrustEmailAssertions bool `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Name                 string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Slug                 string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	ProviderType         IdentityProviderType   `protobuf:"varint,3,opt,name=provider_type,json=providerType,proto3,enum=cadestro.v1.IdentityProviderType" json:"provider_type,omitempty"`
+	ClientId             *OidcClientId          `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecret         string                 `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	IssuerUrl            string                 `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	AuthorizationUrl     string                 `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
+	TokenUrl             string                 `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	UserinfoUrl          string                 `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
+	Scopes               []string               `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	AutoCreateUsers      bool                   `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
+	AutoLinkByEmail      bool                   `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
+	DefaultRoleId        *RoleId                `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
+	GroupClaim           string                 `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
+	GroupMapping         map[string]string      `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	TrustEmailAssertions bool                   `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -15285,25 +15090,23 @@ func (x *ListIdentityProvidersResponse) GetTotalCount() int32 {
 }
 
 type UpdateIdentityProviderRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Id       *IdentityProviderId    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Enabled  bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	ClientId *OidcClientId          `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	// If empty, the existing secret is kept.
-	ClientSecret     string            `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	IssuerUrl        string            `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
-	AuthorizationUrl string            `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
-	TokenUrl         string            `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
-	UserinfoUrl      string            `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
-	Scopes           []string          `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	AutoCreateUsers  bool              `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
-	AutoLinkByEmail  bool              `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
-	DefaultRoleId    *RoleId           `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
-	GroupClaim       string            `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
-	GroupMapping     map[string]string `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// See IdentityProvider.trust_email_assertions. Default false (secure).
-	TrustEmailAssertions bool `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Id                   *IdentityProviderId    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Enabled              bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	ClientId             *OidcClientId          `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecret         string                 `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	IssuerUrl            string                 `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	AuthorizationUrl     string                 `protobuf:"bytes,7,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
+	TokenUrl             string                 `protobuf:"bytes,8,opt,name=token_url,json=tokenUrl,proto3" json:"token_url,omitempty"`
+	UserinfoUrl          string                 `protobuf:"bytes,9,opt,name=userinfo_url,json=userinfoUrl,proto3" json:"userinfo_url,omitempty"`
+	Scopes               []string               `protobuf:"bytes,10,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	AutoCreateUsers      bool                   `protobuf:"varint,11,opt,name=auto_create_users,json=autoCreateUsers,proto3" json:"auto_create_users,omitempty"`
+	AutoLinkByEmail      bool                   `protobuf:"varint,12,opt,name=auto_link_by_email,json=autoLinkByEmail,proto3" json:"auto_link_by_email,omitempty"`
+	DefaultRoleId        *RoleId                `protobuf:"bytes,13,opt,name=default_role_id,json=defaultRoleId,proto3" json:"default_role_id,omitempty"`
+	GroupClaim           string                 `protobuf:"bytes,14,opt,name=group_claim,json=groupClaim,proto3" json:"group_claim,omitempty"`
+	GroupMapping         map[string]string      `protobuf:"bytes,15,rep,name=group_mapping,json=groupMapping,proto3" json:"group_mapping,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	TrustEmailAssertions bool                   `protobuf:"varint,16,opt,name=trust_email_assertions,json=trustEmailAssertions,proto3" json:"trust_email_assertions,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -15643,9 +15446,8 @@ func (x *AuthMethodProvider) GetBrowserLogin() bool {
 }
 
 type ListAuthMethodsRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Optional email to check user-specific auth methods.
-	Email         string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -16115,7 +15917,6 @@ func (*UnlinkIdentityResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{262}
 }
 
-// SCIM Provisioning
 type EnableSCIMRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *IdentityProviderId    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -16162,8 +15963,8 @@ func (x *EnableSCIMRequest) GetId() *IdentityProviderId {
 
 type EnableSCIMResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`                                // plaintext token, shown once
-	EndpointUrl   string                 `protobuf:"bytes,2,opt,name=endpoint_url,json=endpointUrl,proto3" json:"endpoint_url,omitempty"` // full SCIM endpoint URL
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	EndpointUrl   string                 `protobuf:"bytes,2,opt,name=endpoint_url,json=endpointUrl,proto3" json:"endpoint_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -16338,7 +16139,7 @@ func (x *RotateSCIMTokenRequest) GetId() *IdentityProviderId {
 
 type RotateSCIMTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"` // new plaintext token, shown once
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17806,9 +17607,9 @@ func (x *DevicePolicyRuleEvaluation) GetDetectionOutput() *CommandOutput {
 
 type SearchDateFilter struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Field         string                 `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`  // index field name: "created_at", "updated_at", "occurred_at"
-	Start         int64                  `protobuf:"varint,2,opt,name=start,proto3" json:"start,omitempty"` // unix epoch seconds, 0 = no lower bound
-	End           int64                  `protobuf:"varint,3,opt,name=end,proto3" json:"end,omitempty"`     // unix epoch seconds, 0 = no upper bound
+	Field         string                 `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
+	Start         int64                  `protobuf:"varint,2,opt,name=start,proto3" json:"start,omitempty"`
+	End           int64                  `protobuf:"varint,3,opt,name=end,proto3" json:"end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17865,18 +17666,15 @@ func (x *SearchDateFilter) GetEnd() int64 {
 }
 
 type SearchRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Query string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	// UNSPECIFIED (0) means "all scopes".
-	Scope SearchScope `protobuf:"varint,2,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty"`
-	// Matches the handler's effective clamp ([1,200], else default 50).
-	PageSize    int32               `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken   string              `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	DateFilters []*SearchDateFilter `protobuf:"bytes,5,rep,name=date_filters,json=dateFilters,proto3" json:"date_filters,omitempty"`
-	TagFilters  map[string]string   `protobuf:"bytes,6,rep,name=tag_filters,json=tagFilters,proto3" json:"tag_filters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // field → value(s), pipe-separated for OR (e.g. "completed|failed")
-	// UNSPECIFIED (0) means "scope default"; server validates per-scope validity.
-	SortField     SortField     `protobuf:"varint,7,opt,name=sort_field,json=sortField,proto3,enum=cadestro.v1.SortField" json:"sort_field,omitempty"`
-	SortDirection SortDirection `protobuf:"varint,8,opt,name=sort_direction,json=sortDirection,proto3,enum=cadestro.v1.SortDirection" json:"sort_direction,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	Scope         SearchScope            `protobuf:"varint,2,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty"`
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	DateFilters   []*SearchDateFilter    `protobuf:"bytes,5,rep,name=date_filters,json=dateFilters,proto3" json:"date_filters,omitempty"`
+	TagFilters    map[string]string      `protobuf:"bytes,6,rep,name=tag_filters,json=tagFilters,proto3" json:"tag_filters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	SortField     SortField              `protobuf:"varint,7,opt,name=sort_field,json=sortField,proto3,enum=cadestro.v1.SortField" json:"sort_field,omitempty"`
+	SortDirection SortDirection          `protobuf:"varint,8,opt,name=sort_direction,json=sortDirection,proto3,enum=cadestro.v1.SortDirection" json:"sort_direction,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -17974,7 +17772,7 @@ type SearchResult struct {
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	Scope         SearchScope            `protobuf:"varint,4,opt,name=scope,proto3,enum=cadestro.v1.SearchScope" json:"scope,omitempty"`
 	MemberCount   int32                  `protobuf:"varint,5,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
-	Fields        map[string]string      `protobuf:"bytes,6,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // all hash fields from the search index
+	Fields        map[string]string      `protobuf:"bytes,6,rep,name=fields,proto3" json:"fields,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18464,12 +18262,10 @@ func (x *SetUserProvisioningEnabledRequest) GetEnabled() bool {
 }
 
 type StartTerminalRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	// Initial window size. The web client may send a Resize immediately
-	// after connecting if these turn out to be wrong.
-	Cols          uint32 `protobuf:"varint,2,opt,name=cols,proto3" json:"cols,omitempty"`
-	Rows          uint32 `protobuf:"varint,3,opt,name=rows,proto3" json:"rows,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	Cols          uint32                 `protobuf:"varint,2,opt,name=cols,proto3" json:"cols,omitempty"`
+	Rows          uint32                 `protobuf:"varint,3,opt,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18526,24 +18322,12 @@ func (x *StartTerminalRequest) GetRows() uint32 {
 }
 
 type StartTerminalResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// ULID identifying the session for the lifetime of the connection.
-	SessionId *SessionId `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// Short-lived bearer token the web client must append to terminal_url
-	// as ?token=<session_token> when opening the WebSocket. The token is
-	// intentionally returned separately from the URL so the URL can be
-	// logged or displayed without leaking the credential.
-	SessionToken string `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
-	// Token-free base WebSocket URL of control's terminal endpoint
-	// (e.g. wss://control.example.com/terminal). Clients MUST construct
-	// the final connect URL by appending ?token=<session_token>; this
-	// field never embeds the token.
-	TerminalUrl string `protobuf:"bytes,3,opt,name=terminal_url,json=terminalUrl,proto3" json:"terminal_url,omitempty"`
-	// Token expiry; the client should connect well before this.
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	// The TTY user the agent will spawn the shell as. Returned for the
-	// UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
-	TtyUser       string `protobuf:"bytes,5,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
+	TerminalUrl   string                 `protobuf:"bytes,3,opt,name=terminal_url,json=terminalUrl,proto3" json:"terminal_url,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	TtyUser       string                 `protobuf:"bytes,5,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18613,38 +18397,6 @@ func (x *StartTerminalResponse) GetTtyUser() string {
 	return ""
 }
 
-// StopTerminal vs TerminateTerminalSession
-//
-// These two RPCs both end a session but have different semantics and
-// permission requirements; implementations MUST honour the split:
-//
-// StopTerminal — graceful, owner-initiated stop.
-//   - Caller MUST be the user that opened the session (the same
-//     identity that received it from StartTerminal). Other users get
-//     PermissionDenied even if they hold admin permissions; admins
-//     wanting to kill someone else's session must use
-//     TerminateTerminalSession.
-//   - Idempotent: calling StopTerminal twice on the same session_id
-//     returns OK both times. An unknown or already-ended session
-//     returns OK with no body, NOT NotFound, so clients can fire and
-//     forget on disconnect.
-//   - No reason field: graceful stops are audited only by the ordinary
-//     session-ended record.
-//   - Agent failures while delivering the stop signal are logged but
-//     never surface as RPC errors — the session is considered closed
-//     once the control server has accepted the request.
-//
-// TerminateTerminalSession — admin/forcible termination.
-//   - Caller MUST hold the TerminateTerminalSession permission;
-//     ownership is NOT sufficient (use StopTerminal for that path).
-//   - NOT idempotent in the same sense: an unknown session returns
-//     NotFound so the admin can distinguish "killed it" from "it was
-//     already gone".
-//   - Carries a reason that is recorded in the audit log alongside the
-//     terminating user and surfaced to the agent so the user sees why
-//     their session disappeared.
-//   - Underlying agent failures DO surface as RPC errors so the admin
-//     knows the kill did not actually land.
 type StopTerminalRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -18725,21 +18477,15 @@ func (*StopTerminalResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{310}
 }
 
-// TerminalSessionInfo is the admin view of an active session, returned
-// by ListActiveTerminalSessions and used by the admin UI for display.
 type TerminalSessionInfo struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	SessionId *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// ID and email of the Cadestro user who opened the session.
-	UserId    *UserId `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	UserEmail string  `protobuf:"bytes,3,opt,name=user_email,json=userEmail,proto3" json:"user_email,omitempty"`
-	// Target device.
-	DeviceId       *DeviceId `protobuf:"bytes,4,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	DeviceHostname string    `protobuf:"bytes,5,opt,name=device_hostname,json=deviceHostname,proto3" json:"device_hostname,omitempty"`
-	// The dedicated TTY user the shell is running as.
-	TtyUser   string                 `protobuf:"bytes,6,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
-	StartedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	// Last activity timestamp (any input or output traffic).
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	SessionId      *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	UserId         *UserId                `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserEmail      string                 `protobuf:"bytes,3,opt,name=user_email,json=userEmail,proto3" json:"user_email,omitempty"`
+	DeviceId       *DeviceId              `protobuf:"bytes,4,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	DeviceHostname string                 `protobuf:"bytes,5,opt,name=device_hostname,json=deviceHostname,proto3" json:"device_hostname,omitempty"`
+	TtyUser        string                 `protobuf:"bytes,6,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
+	StartedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	LastActivityAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_activity_at,json=lastActivityAt,proto3" json:"last_activity_at,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -18831,16 +18577,12 @@ func (x *TerminalSessionInfo) GetLastActivityAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// ListActiveTerminalSessionsRequest follows the project-wide pagination
-// contract: page_size + page_token in, next_page_token + total_count out.
 type ListActiveTerminalSessionsRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	PageSize  int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// Optional filter: only sessions on this device.
-	DeviceId *DeviceId `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	// Optional filter: only sessions opened by this user.
-	UserId        *UserId `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	DeviceId      *DeviceId              `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	UserId        *UserId                `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -18963,17 +18705,10 @@ func (x *ListActiveTerminalSessionsResponse) GetTotalCount() int32 {
 	return 0
 }
 
-// See the StopTerminal vs TerminateTerminalSession comment block above
-// for the full semantic split. Summary: this is the admin/forcible
-// path, gated by the TerminateTerminalSession permission, returns
-// NotFound for unknown sessions, and records the reason in the audit
-// log alongside the terminating user.
 type TerminateTerminalSessionRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	SessionId *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// Optional reason for the audit log; surfaced to the agent and the
-	// affected user.
-	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -19058,23 +18793,14 @@ func (*TerminateTerminalSessionResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_control_proto_rawDescGZIP(), []int{315}
 }
 
-// EncryptionAuthoringParams is the HTTPS write boundary for an operator-authored
-// encryption action. preshared_key is write-only: the create handler requires
-// it, while this shared update shape permits omission to preserve the current
-// value, and no response returns it.
 type EncryptionAuthoringParams struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	PresharedKey         *string                `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3,oneof" json:"preshared_key,omitempty"`
-	RotationIntervalDays int32                  `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
-	MinWords             int32                  `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
-	// Range-checked for the same reason as EncryptionParams.device_bound_key_type:
-	// the agent's switch default means "no device-bound key", so an out-of-range
-	// value must be refused here rather than silently downgraded there.
-	DeviceBoundKeyType      EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
-	UserPassphraseMinLength int32                        `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
-	// Range-checked for the same reason as EncryptionParams
-	// .user_passphrase_complexity, and optional for the same reason.
-	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
+	state                    protoimpl.MessageState       `protogen:"open.v1"`
+	PresharedKey             *string                      `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3,oneof" json:"preshared_key,omitempty"`
+	RotationIntervalDays     int32                        `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
+	MinWords                 int32                        `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
+	DeviceBoundKeyType       EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
+	UserPassphraseMinLength  int32                        `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
+	UserPassphraseComplexity LpsPasswordComplexity        `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -19151,7 +18877,6 @@ func (x *EncryptionAuthoringParams) GetUserPassphraseComplexity() LpsPasswordCom
 	return LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED
 }
 
-// ManagedEncryptionParams is safe for ordinary action reads.
 type ManagedEncryptionParams struct {
 	state                    protoimpl.MessageState       `protogen:"open.v1"`
 	PresharedKeyConfigured   bool                         `protobuf:"varint,1,opt,name=preshared_key_configured,json=presharedKeyConfigured,proto3" json:"preshared_key_configured,omitempty"`
@@ -19236,9 +18961,6 @@ func (x *ManagedEncryptionParams) GetUserPassphraseComplexity() LpsPasswordCompl
 	return LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED
 }
 
-// WifiAuthoringParams is the HTTPS write boundary for an operator-authored
-// WiFi action. psk and client_key are write-only; omission on update preserves
-// the applicable credential.
 type WifiAuthoringParams struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ssid          string                 `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
@@ -19355,7 +19077,6 @@ func (x *WifiAuthoringParams) GetPriority() int32 {
 	return 0
 }
 
-// ManagedWifiParams is safe for ordinary action reads.
 type ManagedWifiParams struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Ssid                string                 `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`

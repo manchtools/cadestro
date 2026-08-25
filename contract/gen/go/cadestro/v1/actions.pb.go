@@ -27,40 +27,28 @@ const (
 type ActionType int32
 
 const (
-	ActionType_ACTION_TYPE_UNSPECIFIED ActionType = 0
-	// Package management (1-99)
-	ActionType_ACTION_TYPE_PACKAGE    ActionType = 1 // Generic package (apt/dnf/pacman/zypper based on distro)
-	ActionType_ACTION_TYPE_UPDATE     ActionType = 2 // System-wide package update (respects pinning)
-	ActionType_ACTION_TYPE_REPOSITORY ActionType = 3 // External repository configuration
-	// Application installation (100-199)
-	ActionType_ACTION_TYPE_APP_IMAGE ActionType = 100 // AppImage
-	ActionType_ACTION_TYPE_DEB       ActionType = 101 // Direct .deb
-	ActionType_ACTION_TYPE_RPM       ActionType = 102 // Direct .rpm
-	ActionType_ACTION_TYPE_FLATPAK   ActionType = 103 // Flatpak application
-	// Scripts (200-299)
-	ActionType_ACTION_TYPE_SHELL      ActionType = 200 // Shell script
-	ActionType_ACTION_TYPE_SCRIPT_RUN ActionType = 201 // One-off script execution (not scheduled)
-	// Services (300-399)
-	ActionType_ACTION_TYPE_SERVICE ActionType = 300 // Service unit (systemd; the only backend the SDK implements)
-	// Files (400-499)
-	ActionType_ACTION_TYPE_FILE      ActionType = 400 // File management
-	ActionType_ACTION_TYPE_DIRECTORY ActionType = 401 // Directory management
-	// System management (600-699)
-	ActionType_ACTION_TYPE_USER  ActionType = 600 // User account management
-	ActionType_ACTION_TYPE_GROUP ActionType = 601 // Group membership management
-	// SSH access management (700-799)
-	ActionType_ACTION_TYPE_SSH  ActionType = 700 // SSH access configuration
-	ActionType_ACTION_TYPE_SSHD ActionType = 701 // SSH daemon configuration
-	// Privilege management (800-899)
-	ActionType_ACTION_TYPE_ADMIN_POLICY ActionType = 800 // Administrative privilege policy (sudoers or doas)
-	// Password management (900-999)
-	ActionType_ACTION_TYPE_LPS ActionType = 900 // Local Password Solution
-	// Encryption management (1000-1099)
-	ActionType_ACTION_TYPE_ENCRYPTION ActionType = 1000 // LUKS disk encryption management
-	// Network management (1100-1199)
-	ActionType_ACTION_TYPE_WIFI ActionType = 1100 // WiFi connection management
-	// Agent management (1200-1299)
-	ActionType_ACTION_TYPE_AGENT_UPDATE ActionType = 1200 // Agent self-update
+	ActionType_ACTION_TYPE_UNSPECIFIED  ActionType = 0
+	ActionType_ACTION_TYPE_PACKAGE      ActionType = 1
+	ActionType_ACTION_TYPE_UPDATE       ActionType = 2
+	ActionType_ACTION_TYPE_REPOSITORY   ActionType = 3
+	ActionType_ACTION_TYPE_APP_IMAGE    ActionType = 100
+	ActionType_ACTION_TYPE_DEB          ActionType = 101
+	ActionType_ACTION_TYPE_RPM          ActionType = 102
+	ActionType_ACTION_TYPE_FLATPAK      ActionType = 103
+	ActionType_ACTION_TYPE_SHELL        ActionType = 200
+	ActionType_ACTION_TYPE_SCRIPT_RUN   ActionType = 201
+	ActionType_ACTION_TYPE_SERVICE      ActionType = 300
+	ActionType_ACTION_TYPE_FILE         ActionType = 400
+	ActionType_ACTION_TYPE_DIRECTORY    ActionType = 401
+	ActionType_ACTION_TYPE_USER         ActionType = 600
+	ActionType_ACTION_TYPE_GROUP        ActionType = 601
+	ActionType_ACTION_TYPE_SSH          ActionType = 700
+	ActionType_ACTION_TYPE_SSHD         ActionType = 701
+	ActionType_ACTION_TYPE_ADMIN_POLICY ActionType = 800
+	ActionType_ACTION_TYPE_LPS          ActionType = 900
+	ActionType_ACTION_TYPE_ENCRYPTION   ActionType = 1000
+	ActionType_ACTION_TYPE_WIFI         ActionType = 1100
+	ActionType_ACTION_TYPE_AGENT_UPDATE ActionType = 1200
 )
 
 // Enum value maps for ActionType.
@@ -194,24 +182,15 @@ func (ServiceUnitState) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{1}
 }
 
-// AdminAccessLevel defines the level of administrative access granted.
-// The server renders FULL/LIMITED into the concrete policy file format
-// for the selected PrivilegeBackend (sudoers or doas); CUSTOM carries
-// raw admin-authored config that must be valid syntax for the chosen
-// backend. TERMINAL_ADMIN_LIMITED and TERMINAL_ADMIN_FULL are used by
-// the server's TerminalAdmin reconciler — they route the agent to two
-// passwordless templates designed for cadestro-tty-* accounts (which have
-// no password to prompt for). Operator-authored AdminPolicy actions
-// should continue to use FULL/LIMITED/CUSTOM.
 type AdminAccessLevel int32
 
 const (
 	AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED            AdminAccessLevel = 0
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL                   AdminAccessLevel = 1 // Unrestricted access (password required)
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED                AdminAccessLevel = 2 // System management commands only (password required)
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM                 AdminAccessLevel = 3 // Admin-defined raw policy
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED AdminAccessLevel = 4 // Passwordless LIMITED variant for cadestro-tty-* TerminalAdmin grants
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL    AdminAccessLevel = 5 // Passwordless FULL variant for cadestro-tty-* TerminalAdmin grants
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL                   AdminAccessLevel = 1
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED                AdminAccessLevel = 2
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM                 AdminAccessLevel = 3
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED AdminAccessLevel = 4
+	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL    AdminAccessLevel = 5
 )
 
 // Enum value maps for AdminAccessLevel.
@@ -261,15 +240,11 @@ func (AdminAccessLevel) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
 }
 
-// PrivilegeBackend selects which privilege-escalation tool the agent
-// uses, both for its own operations and for rendering admin policies.
-// The agent reads its configured backend at startup and passes it to
-// the SDK via exec.SetPrivilegeBackend.
 type PrivilegeBackend int32
 
 const (
-	PrivilegeBackend_PRIVILEGE_BACKEND_SUDO PrivilegeBackend = 0 // Default. Drops files into /etc/sudoers.d/.
-	PrivilegeBackend_PRIVILEGE_BACKEND_DOAS PrivilegeBackend = 1 // Drops files into /etc/doas.d/.
+	PrivilegeBackend_PRIVILEGE_BACKEND_SUDO PrivilegeBackend = 0
+	PrivilegeBackend_PRIVILEGE_BACKEND_DOAS PrivilegeBackend = 1
 )
 
 // Enum value maps for PrivilegeBackend.
@@ -311,13 +286,12 @@ func (PrivilegeBackend) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
 }
 
-// LpsPasswordComplexity defines the character set for generated passwords.
 type LpsPasswordComplexity int32
 
 const (
 	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED  LpsPasswordComplexity = 0
-	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC LpsPasswordComplexity = 1 // a-z, A-Z, 0-9
-	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX      LpsPasswordComplexity = 2 // a-z, A-Z, 0-9, special characters
+	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC LpsPasswordComplexity = 1
+	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX      LpsPasswordComplexity = 2
 )
 
 // Enum value maps for LpsPasswordComplexity.
@@ -361,13 +335,12 @@ func (LpsPasswordComplexity) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
 }
 
-// EncryptionDeviceBoundKeyType determines what goes in LUKS slot 7.
 type EncryptionDeviceBoundKeyType int32
 
 const (
-	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE            EncryptionDeviceBoundKeyType = 0 // Managed passphrase only, no device-bound key
-	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM             EncryptionDeviceBoundKeyType = 1 // TPM2 auto-unlock at boot
-	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE EncryptionDeviceBoundKeyType = 2 // User-defined passphrase via CLI
+	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE            EncryptionDeviceBoundKeyType = 0
+	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM             EncryptionDeviceBoundKeyType = 1
+	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE EncryptionDeviceBoundKeyType = 2
 )
 
 // Enum value maps for EncryptionDeviceBoundKeyType.
@@ -411,13 +384,12 @@ func (EncryptionDeviceBoundKeyType) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
 }
 
-// WiFi authentication type.
 type WifiAuthType int32
 
 const (
 	WifiAuthType_WIFI_AUTH_TYPE_UNSPECIFIED WifiAuthType = 0
-	WifiAuthType_WIFI_AUTH_TYPE_PSK         WifiAuthType = 1 // WPA2/WPA3 Personal (password)
-	WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS     WifiAuthType = 2 // 802.1X with client certificate
+	WifiAuthType_WIFI_AUTH_TYPE_PSK         WifiAuthType = 1
+	WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS     WifiAuthType = 2
 )
 
 // Enum value maps for WifiAuthType.
@@ -467,14 +439,7 @@ type Action struct {
 	Type           ActionType             `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty"`
 	DesiredState   DesiredState           `protobuf:"varint,3,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
 	TimeoutSeconds int32                  `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
-	// The action's own authored schedule. It is carried for display and for
-	// authoring round-trips; execution is driven by the schedule on the
-	// Manifest the occurrence belongs to, which fires every occurrence in
-	// declared order. A singleton-Action manifest simply carries this schedule
-	// at the manifest level.
-	Schedule *ActionSchedule `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// Type-specific parameters
-	//
+	Schedule       *ActionSchedule        `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Types that are valid to be assigned to Params:
 	//
 	//	*Action_Package
@@ -846,20 +811,12 @@ func (*Action_Wifi) isAction_Params() {}
 
 func (*Action_AgentUpdate) isAction_Params() {}
 
-// ActionSchedule defines when an action should be executed by the agent.
-// Actions run autonomously on the agent even without server connection.
 type ActionSchedule struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Cron expression for scheduled execution (e.g., "0 3 * * *" for 3am daily)
-	// If empty, uses default_interval_hours instead.
-	Cron string `protobuf:"bytes,1,opt,name=cron,proto3" json:"cron,omitempty"`
-	// Default interval in hours between executions (default: 8 hours for drift prevention)
-	// Used when cron is not specified.
-	IntervalHours int32 `protobuf:"varint,2,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
-	// Whether to run immediately when the action is first received
-	RunOnAssign bool `protobuf:"varint,3,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty"`
-	// Whether to skip execution if the previous run was successful and no changes detected
-	SkipIfUnchanged bool `protobuf:"varint,4,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Cron            string                 `protobuf:"bytes,1,opt,name=cron,proto3" json:"cron,omitempty"`
+	IntervalHours   int32                  `protobuf:"varint,2,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
+	RunOnAssign     bool                   `protobuf:"varint,3,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty"`
+	SkipIfUnchanged bool                   `protobuf:"varint,4,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -923,21 +880,17 @@ func (x *ActionSchedule) GetSkipIfUnchanged() bool {
 }
 
 type PackageParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Generic package name (used if manager-specific names not provided)
-	// If set, this name is used for all package managers.
-	Name           string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Version        string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	AllowDowngrade bool   `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
-	Pin            bool   `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
-	// Manager-specific package names (override generic name)
-	// If a manager-specific name is empty, that manager will be skipped.
-	AptName       string `protobuf:"bytes,5,opt,name=apt_name,json=aptName,proto3" json:"apt_name,omitempty"`          // Debian/Ubuntu (apt/apt-get)
-	DnfName       string `protobuf:"bytes,6,opt,name=dnf_name,json=dnfName,proto3" json:"dnf_name,omitempty"`          // Fedora/RHEL (dnf/yum)
-	PacmanName    string `protobuf:"bytes,7,opt,name=pacman_name,json=pacmanName,proto3" json:"pacman_name,omitempty"` // Arch Linux (pacman)
-	ZypperName    string `protobuf:"bytes,8,opt,name=zypper_name,json=zypperName,proto3" json:"zypper_name,omitempty"` // openSUSE (zypper)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Version        string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	AllowDowngrade bool                   `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
+	Pin            bool                   `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
+	AptName        string                 `protobuf:"bytes,5,opt,name=apt_name,json=aptName,proto3" json:"apt_name,omitempty"`
+	DnfName        string                 `protobuf:"bytes,6,opt,name=dnf_name,json=dnfName,proto3" json:"dnf_name,omitempty"`
+	PacmanName     string                 `protobuf:"bytes,7,opt,name=pacman_name,json=pacmanName,proto3" json:"pacman_name,omitempty"`
+	ZypperName     string                 `protobuf:"bytes,8,opt,name=zypper_name,json=zypperName,proto3" json:"zypper_name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *PackageParams) Reset() {
@@ -1027,13 +980,10 @@ func (x *PackageParams) GetZypperName() string {
 }
 
 type AppInstallParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Url   string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	// Mandatory integrity for download-and-install actions (deb/rpm/
-	// appimage): without it the agent would install a binary whose only
-	// authenticity is TLS to a possibly-compromised origin. Lowercase hex.
-	ChecksumSha256 string `protobuf:"bytes,2,opt,name=checksum_sha256,json=checksumSha256,proto3" json:"checksum_sha256,omitempty"`
-	InstallPath    string `protobuf:"bytes,3,opt,name=install_path,json=installPath,proto3" json:"install_path,omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Url            string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	ChecksumSha256 string                 `protobuf:"bytes,2,opt,name=checksum_sha256,json=checksumSha256,proto3" json:"checksum_sha256,omitempty"`
+	InstallPath    string                 `protobuf:"bytes,3,opt,name=install_path,json=installPath,proto3" json:"install_path,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1090,19 +1040,16 @@ func (x *AppInstallParams) GetInstallPath() string {
 }
 
 type ShellParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Execution/remediation script (runs when detection_script is absent or exits non-zero)
-	Script           string            `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
-	Interpreter      string            `protobuf:"bytes,2,opt,name=interpreter,proto3" json:"interpreter,omitempty"`
-	RunAsRoot        bool              `protobuf:"varint,3,opt,name=run_as_root,json=runAsRoot,proto3" json:"run_as_root,omitempty"`
-	WorkingDirectory string            `protobuf:"bytes,4,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
-	Environment      map[string]string `protobuf:"bytes,5,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Detection script: exit 0 = compliant (skip execution), non-zero = needs remediation
-	DetectionScript string `protobuf:"bytes,6,opt,name=detection_script,json=detectionScript,proto3" json:"detection_script,omitempty"`
-	// When true, only the detection script runs (no remediation) and results are tracked as compliance checks
-	IsCompliance  bool `protobuf:"varint,7,opt,name=is_compliance,json=isCompliance,proto3" json:"is_compliance,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Script           string                 `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
+	Interpreter      string                 `protobuf:"bytes,2,opt,name=interpreter,proto3" json:"interpreter,omitempty"`
+	RunAsRoot        bool                   `protobuf:"varint,3,opt,name=run_as_root,json=runAsRoot,proto3" json:"run_as_root,omitempty"`
+	WorkingDirectory string                 `protobuf:"bytes,4,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
+	Environment      map[string]string      `protobuf:"bytes,5,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	DetectionScript  string                 `protobuf:"bytes,6,opt,name=detection_script,json=detectionScript,proto3" json:"detection_script,omitempty"`
+	IsCompliance     bool                   `protobuf:"varint,7,opt,name=is_compliance,json=isCompliance,proto3" json:"is_compliance,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ShellParams) Reset() {
@@ -1184,8 +1131,6 @@ func (x *ShellParams) GetIsCompliance() bool {
 	return false
 }
 
-// ServiceParams configures a systemd unit. unit_content is the verbatim unit
-// file written under /etc/systemd/system.
 type ServiceParams struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UnitName      string                 `protobuf:"bytes,1,opt,name=unit_name,json=unitName,proto3" json:"unit_name,omitempty"`
@@ -1255,17 +1200,13 @@ func (x *ServiceParams) GetUnitContent() string {
 }
 
 type FileParams struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Path    string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Content string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	Owner   string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
-	Group   string                 `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty"`
-	Mode    string                 `protobuf:"bytes,5,opt,name=mode,proto3" json:"mode,omitempty"`
-	// Managed block mode: if true, manages a content block within the file.
-	// PRESENT: appends content if not already present in file.
-	// ABSENT: removes only the content block, not the entire file.
-	// Ownership and mode are still enforced.
-	ManagedBlock  bool `protobuf:"varint,6,opt,name=managed_block,json=managedBlock,proto3" json:"managed_block,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
+	Group         string                 `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty"`
+	Mode          string                 `protobuf:"bytes,5,opt,name=mode,proto3" json:"mode,omitempty"`
+	ManagedBlock  bool                   `protobuf:"varint,6,opt,name=managed_block,json=managedBlock,proto3" json:"managed_block,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1342,18 +1283,13 @@ func (x *FileParams) GetManagedBlock() bool {
 	return false
 }
 
-// DirectoryParams configures directory management.
-// Creates or removes directories with optional ownership and permissions.
 type DirectoryParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Directory path (must be absolute)
-	Path  string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Owner string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	Group string `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
-	Mode  string `protobuf:"bytes,4,opt,name=mode,proto3" json:"mode,omitempty"`
-	// Whether to create parent directories (like mkdir -p)
-	// Default: true
-	Recursive     bool `protobuf:"varint,5,opt,name=recursive,proto3" json:"recursive,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	Owner         string                 `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	Group         string                 `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
+	Mode          string                 `protobuf:"bytes,4,opt,name=mode,proto3" json:"mode,omitempty"`
+	Recursive     bool                   `protobuf:"varint,5,opt,name=recursive,proto3" json:"recursive,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1423,13 +1359,11 @@ func (x *DirectoryParams) GetRecursive() bool {
 	return false
 }
 
-// UpdateParams configures system-wide package updates.
-// Respects version pinning (apt-mark hold / dnf versionlock).
 type UpdateParams struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	SecurityOnly     bool                   `protobuf:"varint,1,opt,name=security_only,json=securityOnly,proto3" json:"security_only,omitempty"`               // Only install security updates (if supported)
-	Autoremove       bool                   `protobuf:"varint,2,opt,name=autoremove,proto3" json:"autoremove,omitempty"`                                       // Remove unused dependencies after update
-	RebootIfRequired bool                   `protobuf:"varint,3,opt,name=reboot_if_required,json=rebootIfRequired,proto3" json:"reboot_if_required,omitempty"` // Reboot system if updates require it
+	SecurityOnly     bool                   `protobuf:"varint,1,opt,name=security_only,json=securityOnly,proto3" json:"security_only,omitempty"`
+	Autoremove       bool                   `protobuf:"varint,2,opt,name=autoremove,proto3" json:"autoremove,omitempty"`
+	RebootIfRequired bool                   `protobuf:"varint,3,opt,name=reboot_if_required,json=rebootIfRequired,proto3" json:"reboot_if_required,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1485,19 +1419,12 @@ func (x *UpdateParams) GetRebootIfRequired() bool {
 	return false
 }
 
-// FlatpakParams configures Flatpak application installation.
-// Similar to AppImage but uses the Flatpak package manager.
 type FlatpakParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
-	AppId *FlatpakAppId `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	// Remote/repository name (default: "flathub")
-	Remote string `protobuf:"bytes,2,opt,name=remote,proto3" json:"remote,omitempty"`
-	// Whether to install system-wide (true) or user-only (false)
-	// Default: true (system-wide)
-	SystemWide bool `protobuf:"varint,3,opt,name=system_wide,json=systemWide,proto3" json:"system_wide,omitempty"`
-	// Pin the application to prevent automatic updates
-	Pin           bool `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AppId         *FlatpakAppId          `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Remote        string                 `protobuf:"bytes,2,opt,name=remote,proto3" json:"remote,omitempty"`
+	SystemWide    bool                   `protobuf:"varint,3,opt,name=system_wide,json=systemWide,proto3" json:"system_wide,omitempty"`
+	Pin           bool                   `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1560,20 +1487,13 @@ func (x *FlatpakParams) GetPin() bool {
 	return false
 }
 
-// RepositoryParams configures external package repositories.
-// Each package manager has its own configuration format.
 type RepositoryParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Repository name/identifier (used for file naming)
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// APT repository configuration (Debian/Ubuntu)
-	Apt *AptRepository `protobuf:"bytes,2,opt,name=apt,proto3" json:"apt,omitempty"`
-	// DNF/YUM repository configuration (Fedora/RHEL)
-	Dnf *DnfRepository `protobuf:"bytes,3,opt,name=dnf,proto3" json:"dnf,omitempty"`
-	// Pacman repository configuration (Arch Linux)
-	Pacman *PacmanRepository `protobuf:"bytes,4,opt,name=pacman,proto3" json:"pacman,omitempty"`
-	// Zypper repository configuration (openSUSE)
-	Zypper        *ZypperRepository `protobuf:"bytes,5,opt,name=zypper,proto3" json:"zypper,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Apt           *AptRepository         `protobuf:"bytes,2,opt,name=apt,proto3" json:"apt,omitempty"`
+	Dnf           *DnfRepository         `protobuf:"bytes,3,opt,name=dnf,proto3" json:"dnf,omitempty"`
+	Pacman        *PacmanRepository      `protobuf:"bytes,4,opt,name=pacman,proto3" json:"pacman,omitempty"`
+	Zypper        *ZypperRepository      `protobuf:"bytes,5,opt,name=zypper,proto3" json:"zypper,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1643,25 +1563,16 @@ func (x *RepositoryParams) GetZypper() *ZypperRepository {
 	return nil
 }
 
-// AptRepository configures a Debian/Ubuntu APT repository.
 type AptRepository struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Repository URL (e.g., "https://packages.example.com/apt")
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	// Distribution codename (e.g., "jammy", "bookworm")
-	Distribution string `protobuf:"bytes,2,opt,name=distribution,proto3" json:"distribution,omitempty"`
-	// Components (e.g., "main", "contrib", "non-free")
-	Components []string `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty"`
-	// GPG key URL for repository signing
-	GpgKeyUrl string `protobuf:"bytes,4,opt,name=gpg_key_url,json=gpgKeyUrl,proto3" json:"gpg_key_url,omitempty"`
-	// GPG key content (ASCII-armored, alternative to gpg_key_url)
-	GpgKey string `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty"`
-	// Whether to use signed-by (modern) or trusted=yes (legacy, less secure)
-	Trusted bool `protobuf:"varint,6,opt,name=trusted,proto3" json:"trusted,omitempty"`
-	// Architecture filter (e.g., "amd64", "arm64")
-	Arch string `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
-	// Set to true to disable/skip this repository manager
-	Disabled      bool `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Distribution  string                 `protobuf:"bytes,2,opt,name=distribution,proto3" json:"distribution,omitempty"`
+	Components    []string               `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty"`
+	GpgKeyUrl     string                 `protobuf:"bytes,4,opt,name=gpg_key_url,json=gpgKeyUrl,proto3" json:"gpg_key_url,omitempty"`
+	GpgKey        string                 `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty"`
+	Trusted       bool                   `protobuf:"varint,6,opt,name=trusted,proto3" json:"trusted,omitempty"`
+	Arch          string                 `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
+	Disabled      bool                   `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1752,25 +1663,17 @@ func (x *AptRepository) GetDisabled() bool {
 	return false
 }
 
-// DnfRepository configures a Fedora/RHEL DNF/YUM repository.
 type DnfRepository struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Base URL for the repository (supports DNF variables like $releasever and $basearch)
-	Baseurl string `protobuf:"bytes,1,opt,name=baseurl,proto3" json:"baseurl,omitempty"`
-	// Repository description
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// Whether the repository is enabled (default true)
-	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// Whether to check GPG signatures
-	Gpgcheck bool `protobuf:"varint,4,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
-	// GPG key URL
-	Gpgkey string `protobuf:"bytes,5,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
-	// Module hotfixes (for modular content)
-	ModuleHotfixes bool `protobuf:"varint,6,opt,name=module_hotfixes,json=moduleHotfixes,proto3" json:"module_hotfixes,omitempty"`
-	// Set to true to disable/skip this repository manager
-	Disabled      bool `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Baseurl        string                 `protobuf:"bytes,1,opt,name=baseurl,proto3" json:"baseurl,omitempty"`
+	Description    string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Enabled        bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Gpgcheck       bool                   `protobuf:"varint,4,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
+	Gpgkey         string                 `protobuf:"bytes,5,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
+	ModuleHotfixes bool                   `protobuf:"varint,6,opt,name=module_hotfixes,json=moduleHotfixes,proto3" json:"module_hotfixes,omitempty"`
+	Disabled       bool                   `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *DnfRepository) Reset() {
@@ -1852,15 +1755,11 @@ func (x *DnfRepository) GetDisabled() bool {
 	return false
 }
 
-// PacmanRepository configures an Arch Linux pacman repository.
 type PacmanRepository struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Server URL (supports pacman variables like $repo and $arch)
-	Server string `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
-	// SigLevel (e.g., "Optional TrustAll", "Required DatabaseOptional")
-	SigLevel string `protobuf:"bytes,2,opt,name=sig_level,json=sigLevel,proto3" json:"sig_level,omitempty"`
-	// Set to true to disable/skip this repository manager
-	Disabled      bool `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Server        string                 `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
+	SigLevel      string                 `protobuf:"bytes,2,opt,name=sig_level,json=sigLevel,proto3" json:"sig_level,omitempty"`
+	Disabled      bool                   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1916,25 +1815,16 @@ func (x *PacmanRepository) GetDisabled() bool {
 	return false
 }
 
-// ZypperRepository configures an openSUSE zypper repository.
 type ZypperRepository struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Repository URL
-	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	// Repository description/alias
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// Whether to enable the repository (default true)
-	Enabled bool `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// Whether to auto-refresh the repository
-	Autorefresh bool `protobuf:"varint,4,opt,name=autorefresh,proto3" json:"autorefresh,omitempty"`
-	// Whether to check GPG signatures
-	Gpgcheck bool `protobuf:"varint,5,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
-	// GPG key URL
-	Gpgkey string `protobuf:"bytes,6,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
-	// Repository type (e.g., "rpm-md", "yast2")
-	Type string `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
-	// Set to true to disable/skip this repository manager
-	Disabled      bool `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Enabled       bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Autorefresh   bool                   `protobuf:"varint,4,opt,name=autorefresh,proto3" json:"autorefresh,omitempty"`
+	Gpgcheck      bool                   `protobuf:"varint,5,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
+	Gpgkey        string                 `protobuf:"bytes,6,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
+	Type          string                 `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
+	Disabled      bool                   `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2025,54 +1915,23 @@ func (x *ZypperRepository) GetDisabled() bool {
 	return false
 }
 
-// UserParams configures user account management.
-// Supports creating, updating, deactivating, and removing user accounts.
 type UserParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Username (required)
-	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	// User ID (optional - system assigns if not specified)
-	Uid int32 `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
-	// Primary group ID (optional - creates user's own group if not specified)
-	Gid int32 `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
-	// Home directory path (optional - defaults to /home/<username>)
-	HomeDir string `protobuf:"bytes,4,opt,name=home_dir,json=homeDir,proto3" json:"home_dir,omitempty"`
-	// Login shell (optional - defaults to /bin/bash)
-	Shell string `protobuf:"bytes,5,opt,name=shell,proto3" json:"shell,omitempty"`
-	// SSH authorized keys to add to ~/.ssh/authorized_keys
-	SshAuthorizedKeys []string `protobuf:"bytes,6,rep,name=ssh_authorized_keys,json=sshAuthorizedKeys,proto3" json:"ssh_authorized_keys,omitempty"`
-	// GECOS field / user comment (full name, etc.)
-	Comment string `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
-	// Create as system user (UID < 1000, no home directory by default)
-	SystemUser bool `protobuf:"varint,8,opt,name=system_user,json=systemUser,proto3" json:"system_user,omitempty"`
-	// Create home directory (default: true for normal users, false for system users)
-	CreateHome bool `protobuf:"varint,9,opt,name=create_home,json=createHome,proto3" json:"create_home,omitempty"`
-	// Disable the user account (lock password, set shell to /usr/sbin/nologin)
-	Disabled bool `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	// Primary group name (alternative to gid - creates group if needed)
-	PrimaryGroup string `protobuf:"bytes,11,opt,name=primary_group,json=primaryGroup,proto3" json:"primary_group,omitempty"`
-	// Hide user from graphical login screens (GDM, SDDM, LightDM).
-	// Sets SystemAccount=true in AccountsService. No effect on headless systems.
-	Hidden bool `protobuf:"varint,12,opt,name=hidden,proto3" json:"hidden,omitempty"`
-	// When true, the agent does NOT generate or set a temporary password
-	// for this account, nor report any lps.rotations metadata back to
-	// the server. The account is created with the shadow-locked default
-	// ('!'), so no PAM-protected login path (password, su) succeeds; a
-	// root setuid invocation (e.g. the agent's terminal session opener)
-	// still works because it bypasses PAM.
-	//
-	// Intended for system-managed nologin accounts that are only ever
-	// reached via setuid — cadestro-tty-* is the canonical case. Do NOT set
-	// this for general-purpose users: passwords are good to have for
-	// any account that might ever need a PAM-protected login path, and
-	// setting no_password here locks that path closed.
-	//
-	// This flag is deliberately explicit, not derived from
-	// Shell == "/usr/sbin/nologin": the password-good-to-have default
-	// should not be flipped by a heuristic on a related field.
-	NoPassword    bool `protobuf:"varint,13,opt,name=no_password,json=noPassword,proto3" json:"no_password,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Username          string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Uid               int32                  `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
+	Gid               int32                  `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
+	HomeDir           string                 `protobuf:"bytes,4,opt,name=home_dir,json=homeDir,proto3" json:"home_dir,omitempty"`
+	Shell             string                 `protobuf:"bytes,5,opt,name=shell,proto3" json:"shell,omitempty"`
+	SshAuthorizedKeys []string               `protobuf:"bytes,6,rep,name=ssh_authorized_keys,json=sshAuthorizedKeys,proto3" json:"ssh_authorized_keys,omitempty"`
+	Comment           string                 `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
+	SystemUser        bool                   `protobuf:"varint,8,opt,name=system_user,json=systemUser,proto3" json:"system_user,omitempty"`
+	CreateHome        bool                   `protobuf:"varint,9,opt,name=create_home,json=createHome,proto3" json:"create_home,omitempty"`
+	Disabled          bool                   `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
+	PrimaryGroup      string                 `protobuf:"bytes,11,opt,name=primary_group,json=primaryGroup,proto3" json:"primary_group,omitempty"`
+	Hidden            bool                   `protobuf:"varint,12,opt,name=hidden,proto3" json:"hidden,omitempty"`
+	NoPassword        bool                   `protobuf:"varint,13,opt,name=no_password,json=noPassword,proto3" json:"no_password,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *UserParams) Reset() {
@@ -2196,18 +2055,12 @@ func (x *UserParams) GetNoPassword() bool {
 	return false
 }
 
-// GroupParams configures Linux group management.
-// Creates or removes a group and manages its members.
 type GroupParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Group name (required)
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Members to add to the group
-	Members []string `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
-	// Group ID (optional - system assigns if not specified)
-	Gid int32 `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
-	// Create as system group (GID < 1000)
-	SystemGroup   bool `protobuf:"varint,4,opt,name=system_group,json=systemGroup,proto3" json:"system_group,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Members       []string               `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
+	Gid           int32                  `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
+	SystemGroup   bool                   `protobuf:"varint,4,opt,name=system_group,json=systemGroup,proto3" json:"system_group,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2270,18 +2123,11 @@ func (x *GroupParams) GetSystemGroup() bool {
 	return false
 }
 
-// SshParams configures SSH access for a user.
-// Creates an sshd_config.d drop-in file with a Match Group directive.
-// Each action creates a Linux group cadestro-ssh-{actionId} and users are added
-// to the group. SSH keys and home directory are managed by the User action type.
 type SshParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Allow public key authentication (default: true)
-	AllowPubkey bool `protobuf:"varint,1,opt,name=allow_pubkey,json=allowPubkey,proto3" json:"allow_pubkey,omitempty"`
-	// Allow password authentication (default: false)
-	AllowPassword bool `protobuf:"varint,2,opt,name=allow_password,json=allowPassword,proto3" json:"allow_password,omitempty"`
-	// Users to add to the SSH access group (must be valid Linux usernames)
-	Users         []string `protobuf:"bytes,3,rep,name=users,proto3" json:"users,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AllowPubkey   bool                   `protobuf:"varint,1,opt,name=allow_pubkey,json=allowPubkey,proto3" json:"allow_pubkey,omitempty"`
+	AllowPassword bool                   `protobuf:"varint,2,opt,name=allow_password,json=allowPassword,proto3" json:"allow_password,omitempty"`
+	Users         []string               `protobuf:"bytes,3,rep,name=users,proto3" json:"users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2337,13 +2183,10 @@ func (x *SshParams) GetUsers() []string {
 	return nil
 }
 
-// SshdDirective represents a single sshd_config key-value directive.
 type SshdDirective struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// sshd_config directive name (e.g., "PermitRootLogin", "Port")
-	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// Directive value (e.g., "no", "22")
-	Value         string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2392,16 +2235,10 @@ func (x *SshdDirective) GetValue() string {
 	return ""
 }
 
-// SshdParams configures the SSH daemon via sshd_config.d drop-in files.
-// Each action creates a numbered config file for ordering (e.g., 0000-*.conf, 0001-*.conf).
-// Priority is auto-assigned by the server based on creation order.
-// The sshd service is automatically reloaded when configuration changes.
 type SshdParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Priority for config file ordering (auto-assigned by server, lower = loaded first)
-	Priority uint32 `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty"`
-	// sshd_config directives to set
-	Directives    []*SshdDirective `protobuf:"bytes,2,rep,name=directives,proto3" json:"directives,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Priority      uint32                 `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty"`
+	Directives    []*SshdDirective       `protobuf:"bytes,2,rep,name=directives,proto3" json:"directives,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2450,26 +2287,12 @@ func (x *SshdParams) GetDirectives() []*SshdDirective {
 	return nil
 }
 
-// AdminPolicyParams configures privilege-delegation policies.
-// Under PRIVILEGE_BACKEND_SUDO the action manages /etc/sudoers.d/
-// drop-ins; under PRIVILEGE_BACKEND_DOAS it manages /etc/doas.d/
-// drop-ins. Each action creates a Linux group cadestro-sudo-{actionId}
-// and the corresponding policy file. Users specified in the users
-// list are added to the group. When removed, the group and policy
-// file are cleaned up.
 type AdminPolicyParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Access level determines the policy template
-	AccessLevel AdminAccessLevel `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=cadestro.v1.AdminAccessLevel" json:"access_level,omitempty"`
-	// Users to add to the admin group (must be valid Linux usernames)
-	Users []string `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
-	// Raw policy content (only used when access_level is CUSTOM). Must be
-	// valid syntax for the chosen backend — sudoers grammar for SUDO and
-	// doas.conf(5) grammar for DOAS. Use {group} as placeholder for the
-	// auto-generated group name. Required when access_level is CUSTOM (3).
-	CustomConfig string `protobuf:"bytes,3,opt,name=custom_config,json=customConfig,proto3" json:"custom_config,omitempty"`
-	// Privilege backend. Unset means PRIVILEGE_BACKEND_SUDO.
-	Backend       PrivilegeBackend `protobuf:"varint,4,opt,name=backend,proto3,enum=cadestro.v1.PrivilegeBackend" json:"backend,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccessLevel   AdminAccessLevel       `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=cadestro.v1.AdminAccessLevel" json:"access_level,omitempty"`
+	Users         []string               `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
+	CustomConfig  string                 `protobuf:"bytes,3,opt,name=custom_config,json=customConfig,proto3" json:"custom_config,omitempty"`
+	Backend       PrivilegeBackend       `protobuf:"varint,4,opt,name=backend,proto3,enum=cadestro.v1.PrivilegeBackend" json:"backend,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2532,26 +2355,15 @@ func (x *AdminPolicyParams) GetBackend() PrivilegeBackend {
 	return PrivilegeBackend_PRIVILEGE_BACKEND_SUDO
 }
 
-// LpsParams configures Local Password Solution (LAPS-like) password management.
-// Each action targets one or more user accounts. The agent generates a random
-// password for each user based on configured length/complexity, sets it via
-// chpasswd, kills all user sessions, and reports the passwords back to the
-// server. Rotation occurs independently per user on a schedule and optionally
-// after authentication events.
 type LpsParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Target user accounts (must exist on device)
-	Usernames []string `protobuf:"bytes,1,rep,name=usernames,proto3" json:"usernames,omitempty"`
-	// Password length (8-128)
-	PasswordLength int32 `protobuf:"varint,2,opt,name=password_length,json=passwordLength,proto3" json:"password_length,omitempty"`
-	// Password complexity
-	Complexity LpsPasswordComplexity `protobuf:"varint,3,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty"`
-	// Days between scheduled rotations (1-365)
-	RotationIntervalDays int32 `protobuf:"varint,4,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
-	// Hours after auth event before automatic rotation (0 = disabled)
-	GracePeriodHours int32 `protobuf:"varint,5,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Usernames            []string               `protobuf:"bytes,1,rep,name=usernames,proto3" json:"usernames,omitempty"`
+	PasswordLength       int32                  `protobuf:"varint,2,opt,name=password_length,json=passwordLength,proto3" json:"password_length,omitempty"`
+	Complexity           LpsPasswordComplexity  `protobuf:"varint,3,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty"`
+	RotationIntervalDays int32                  `protobuf:"varint,4,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
+	GracePeriodHours     int32                  `protobuf:"varint,5,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *LpsParams) Reset() {
@@ -2619,32 +2431,14 @@ func (x *LpsParams) GetGracePeriodHours() int32 {
 	return 0
 }
 
-// EncryptionParams configures LUKS disk encryption management. The agent
-// auto-detects the primary encrypted volume, generates and rotates a managed
-// passphrase, and can enroll a TPM or user passphrase in the device-bound slot.
 type EncryptionParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Pre-shared key for initial ownership, delivered only over authenticated mTLS.
-	// The durable manifest carries the at-rest envelope until the authenticated
-	// send boundary, so this bound includes AEAD/base64 overhead.
-	PresharedKey []byte `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty"`
-	// Days between scheduled passphrase rotations (1-365)
-	RotationIntervalDays int32 `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
-	// Minimum words in generated managed passphrase (default 5, min 3, max 10)
-	MinWords int32 `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
-	// What to put in the device-bound key slot — TPM, user passphrase, or nothing.
-	// Range-checked: the agent switches on this value and its default branch means
-	// "no device-bound key", so an unvalidated out-of-range value would silently
-	// downgrade a requested TPM enrollment instead of being refused.
-	DeviceBoundKeyType EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
-	// Minimum length for user-defined passphrases (16-128, only used when device_bound_key_type = USER_PASSPHRASE)
-	UserPassphraseMinLength int32 `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
-	// Complexity requirement for user-defined passphrases (only used when device_bound_key_type = USER_PASSPHRASE)
-	// Range-checked for the same reason as device_bound_key_type: this selects the
-	// alphabet the agent draws the passphrase from, and its switch default is a
-	// weaker alphabet than an out-of-range value was asking for. Stays optional —
-	// UNSPECIFIED (0) is legal because the field only applies to USER_PASSPHRASE.
-	UserPassphraseComplexity LpsPasswordComplexity `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
+	state                    protoimpl.MessageState       `protogen:"open.v1"`
+	PresharedKey             []byte                       `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty"`
+	RotationIntervalDays     int32                        `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
+	MinWords                 int32                        `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
+	DeviceBoundKeyType       EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
+	UserPassphraseMinLength  int32                        `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
+	UserPassphraseComplexity LpsPasswordComplexity        `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -2721,30 +2515,18 @@ func (x *EncryptionParams) GetUserPassphraseComplexity() LpsPasswordComplexity {
 	return LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED
 }
 
-// WifiParams configures NetworkManager WiFi connection management.
-// Each action creates a connection profile named cadestro-wifi-{actionId}. Supports PSK (password) and
-// EAP-TLS (certificate) authentication.
 type WifiParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Network name (SSID)
-	Ssid string `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
-	// Authentication type
-	AuthType WifiAuthType `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty"`
-	// PSK authentication (WPA2/WPA3 Personal), delivered only over authenticated mTLS.
-	Psk []byte `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty"`
-	// EAP-TLS authentication (802.1X with client certificate)
-	CaCert     string `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`             // CA certificate (PEM)
-	ClientCert string `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty"` // Client certificate (PEM)
-	// Client private key (PEM), delivered only over authenticated mTLS.
-	ClientKey []byte `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty"`
-	Identity  string `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty"` // EAP identity (e.g., user@corp.com)
-	// Connection settings
-	// Connect to this network automatically when in range.
-	AutoConnect bool `protobuf:"varint,8,opt,name=auto_connect,json=autoConnect,proto3" json:"auto_connect,omitempty"`
-	// Network does not broadcast its SSID (probe-scan required).
-	Hidden bool `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
-	// Selection priority when multiple known networks are visible (higher wins).
-	Priority      int32 `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ssid          string                 `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
+	AuthType      WifiAuthType           `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty"`
+	Psk           []byte                 `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty"`
+	CaCert        string                 `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
+	ClientCert    string                 `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty"`
+	ClientKey     []byte                 `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty"`
+	Identity      string                 `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty"`
+	AutoConnect   bool                   `protobuf:"varint,8,opt,name=auto_connect,json=autoConnect,proto3" json:"auto_connect,omitempty"`
+	Hidden        bool                   `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
+	Priority      int32                  `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2850,33 +2632,21 @@ func (x *WifiParams) GetPriority() int32 {
 }
 
 type ActionResult struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	ActionId    *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	Status      ExecutionStatus        `protobuf:"varint,2,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
-	Error       string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	Output      *CommandOutput         `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty"`
-	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	Duration    *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
-	// Whether the action made changes to the system (true) or state was already as desired (false)
-	Changed bool `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
-	// Optional action-specific metadata (e.g., LPS password data)
-	Metadata map[string]string `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Detection script result: true if detection script exited 0 (compliant)
-	Compliant bool `protobuf:"varint,9,opt,name=compliant,proto3" json:"compliant,omitempty"`
-	// Detection script output (separate from execution output)
-	DetectionOutput *CommandOutput `protobuf:"bytes,10,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
-	// The run this result belongs to, and the authored position within
-	// that run's manifest. Together they make ingestion idempotent:
-	// control keys the stored result on (run_id, occurrence_id), so a
-	// result replayed after a reconnect updates the same row instead of
-	// creating a second one. action_id alone cannot do this — duplicate
-	// authored occurrences of the same action are preserved and executed, so
-	// one authored occurrence legitimately produces several results with the same
-	// action_id.
-	RunId         *RunId        `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	OccurrenceId  *OccurrenceId `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ActionId        *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	Status          ExecutionStatus        `protobuf:"varint,2,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
+	Error           string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Output          *CommandOutput         `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty"`
+	CompletedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
+	Duration        *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
+	Changed         bool                   `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
+	Metadata        map[string]string      `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Compliant       bool                   `protobuf:"varint,9,opt,name=compliant,proto3" json:"compliant,omitempty"`
+	DetectionOutput *CommandOutput         `protobuf:"bytes,10,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
+	RunId           *RunId                 `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	OccurrenceId    *OccurrenceId          `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ActionResult) Reset() {
@@ -2993,16 +2763,10 @@ func (x *ActionResult) GetOccurrenceId() *OccurrenceId {
 	return nil
 }
 
-// Per-architecture binary source authenticated by a signed checksum manifest.
 type AgentUpdateArch struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Direct download URL for the agent binary (HTTPS only)
-	BinaryUrl string `protobuf:"bytes,1,opt,name=binary_url,json=binaryUrl,proto3" json:"binary_url,omitempty"`
-	// URL to the release's SHA256SUMS-style checksum manifest (HTTPS only).
-	// The agent requires an adjacent detached signature and verifies the exact
-	// manifest bytes with its embedded Ed25519 release-signing public key before
-	// trusting the candidate binary hash. This is the only update-integrity path.
-	ChecksumUrl   string `protobuf:"bytes,2,opt,name=checksum_url,json=checksumUrl,proto3" json:"checksum_url,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BinaryUrl     string                 `protobuf:"bytes,1,opt,name=binary_url,json=binaryUrl,proto3" json:"binary_url,omitempty"`
+	ChecksumUrl   string                 `protobuf:"bytes,2,opt,name=checksum_url,json=checksumUrl,proto3" json:"checksum_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3051,33 +2815,14 @@ func (x *AgentUpdateArch) GetChecksumUrl() string {
 	return ""
 }
 
-// AgentUpdateParams configures agent self-update via direct binary download.
-// At least one architecture must be specified. The agent selects the entry
-// matching its own architecture (runtime.GOARCH) and skips if no match.
 type AgentUpdateParams struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// AMD64 (x86_64) binary source
-	Amd64 *AgentUpdateArch `protobuf:"bytes,1,opt,name=amd64,proto3" json:"amd64,omitempty"`
-	// ARM64 (aarch64) binary source
-	Arm64 *AgentUpdateArch `protobuf:"bytes,2,opt,name=arm64,proto3" json:"arm64,omitempty"`
-	// When true, the agent installs the target binary even if its version
-	// is older than or equal to the running version (downgrade). The flag
-	// reaches the agent over the authenticated mTLS stream, so a downgrade is
-	// an explicit operator decision — the agent otherwise refuses an older
-	// version (anti-rollback). Default false.
-	AllowDowngrade bool `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
-	// When true, the agent follows a redirect that changes host or scheme
-	// while downloading the update binary and checksum manifest — e.g.
-	// GitHub release assets, which 302 from github.com to
-	// release-assets.githubusercontent.com. Default false: a cross-origin
-	// redirect is refused and the download must reach the configured host
-	// directly. The binary is still verified against the publisher-signed
-	// checksum manifest and an https->http downgrade is refused regardless.
-	// This opts into a host-changing hop, not into unchecked bytes, and it is
-	// an explicit operator decision either way.
-	AllowRedirect bool `protobuf:"varint,4,opt,name=allow_redirect,json=allowRedirect,proto3" json:"allow_redirect,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Amd64          *AgentUpdateArch       `protobuf:"bytes,1,opt,name=amd64,proto3" json:"amd64,omitempty"`
+	Arm64          *AgentUpdateArch       `protobuf:"bytes,2,opt,name=arm64,proto3" json:"arm64,omitempty"`
+	AllowDowngrade bool                   `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
+	AllowRedirect  bool                   `protobuf:"varint,4,opt,name=allow_redirect,json=allowRedirect,proto3" json:"allow_redirect,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AgentUpdateParams) Reset() {

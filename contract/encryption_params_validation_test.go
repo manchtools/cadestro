@@ -17,23 +17,6 @@ func validateStruct(v protovalidate.Validator, msg proto.Message) (string, bool)
 	return "", true
 }
 
-// EncryptionParams' two enum members decide what protects a LUKS volume, and
-// both carried a bare `omitempty`, which constrains nothing on an enum: any
-// int32 rode through the boundary and the agent's switch over the value fell
-// through to its default. For device_bound_key_type that default means "no
-// device-bound key", so a request for TPM enrollment carrying an out-of-range
-// value produced a volume with no device-bound key, silently, while the stored
-// action still read as configured. An enum the boundary does not range-check is
-// an enum the sink has to guess about.
-//
-// Both message shapes carry both fields: EncryptionParams is what the agent
-// receives, and EncryptionAuthoringParams is the operator-facing HTTPS write
-// boundary that feeds it. Validating only the agent-facing shape would leave
-// the front door open.
-
-// definedEnumValues discovers an enum's legal values from its generated _name
-// map rather than hardcoding them, so adding a variant to the contract cannot
-// leave this test asserting a stale set.
 func definedEnumValues[E ~int32](t *testing.T, names map[int32]string) []E {
 	t.Helper()
 	var defined []E
@@ -46,9 +29,6 @@ func definedEnumValues[E ~int32](t *testing.T, names map[int32]string) []E {
 	return defined
 }
 
-// undefinedEnumValues returns values outside the enum, filtered against the same
-// _name map so a candidate that later becomes a legal member cannot silently
-// stay in the list and turn this into a test of the opposite claim.
 func undefinedEnumValues[E ~int32](t *testing.T, names map[int32]string) []E {
 	t.Helper()
 	var out []E
@@ -63,25 +43,8 @@ func undefinedEnumValues[E ~int32](t *testing.T, names map[int32]string) []E {
 	return out
 }
 
-// mentionsField reports whether the validator's detail string blames the field
-// under test. Used for the REJECTION cases, where the point is that the refusal
-// is attributed to the enum and not to some other member. The acceptance cases
-// deliberately do NOT use it — see TestDefinedEnumLoopsRequireAValidFixture.
 func mentionsField(detail, field string) bool { return strings.Contains(detail, field) }
 
-// TestDefinedEnumLoopsRequireAValidFixture pins the blind spot the acceptance
-// loops used to have, so it cannot be reintroduced.
-//
-// Those loops originally asserted only "the detail does not mention my field".
-// That predicate is silently satisfied whenever validation fails for an
-// UNRELATED reason: the detail names the other member, never ours, so the loop
-// reports success while proving nothing about the enum it exists to test.
-//
-// This reproduces exactly that state — a params value whose enum is a defined,
-// legal value but whose rotation_interval_days is invalid — and pins both
-// halves: validation genuinely fails, AND the detail genuinely does not name the
-// enum. Those two facts together are what made the old predicate a false pass,
-// which is why the loops now require ok instead.
 func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 	t.Parallel()
 	v, err := protovalidate.New()
@@ -90,8 +53,8 @@ func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 	}
 
 	p := encryptionParamsFixture()
-	p.DeviceBoundKeyType = cadestrov1.EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM // legal
-	p.RotationIntervalDays = 0                                                                          // invalid, and unrelated to the enum
+	p.DeviceBoundKeyType = cadestrov1.EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM
+	p.RotationIntervalDays = 0
 
 	detail, ok := validateStruct(v, p)
 	if ok {
@@ -100,16 +63,12 @@ func TestDefinedEnumLoopsRequireAValidFixture(t *testing.T) {
 	if !mentionsField(detail, "rotation_interval_days") {
 		t.Errorf("expected the unrelated member to be blamed, got: %s", detail)
 	}
-	// The old acceptance predicate was `!mentionsField(detail, field)`. Here that
-	// is true while validation is failing — a false pass. Requiring ok is what
-	// closes it.
+
 	if mentionsField(detail, "device_bound_key_type") {
 		t.Errorf("premise broken: a legal enum value must not be blamed, got: %s", detail)
 	}
 }
 
-// encryptionParamsFixture is a fully valid EncryptionParams; each test mutates
-// exactly one enum member so that member is the only thing under test.
 func encryptionParamsFixture() *cadestrov1.EncryptionParams {
 	return &cadestrov1.EncryptionParams{
 		PresharedKey:            make([]byte, 61),
@@ -119,8 +78,6 @@ func encryptionParamsFixture() *cadestrov1.EncryptionParams {
 	}
 }
 
-// encryptionAuthoringParamsFixture is the same for the write-boundary shape,
-// whose preshared_key is optional on update.
 func encryptionAuthoringParamsFixture() *cadestrov1.EncryptionAuthoringParams {
 	return &cadestrov1.EncryptionAuthoringParams{
 		RotationIntervalDays:    30,
@@ -187,15 +144,6 @@ func TestEncryptionAuthoringParams_RejectsUndefinedDeviceBoundKeyType(t *testing
 	}
 }
 
-// user_passphrase_complexity is the same defect class in the same two messages:
-// a bare `omitempty` on an enum. It selects the alphabet the agent draws a
-// user-defined passphrase from, so an unvalidated value reaching the agent's
-// switch falls through to its default alphabet — a weaker passphrase than the
-// operator asked for, with nothing at the boundary saying so.
-//
-// The field stays OPTIONAL: it only applies when device_bound_key_type is
-// USER_PASSPHRASE, so UNSPECIFIED (0) remains legal and the range check is
-// added alongside omitempty rather than replacing it with a required rule.
 func TestEncryptionParams_RejectsUndefinedUserPassphraseComplexity(t *testing.T) {
 	t.Parallel()
 	v, err := protovalidate.New()

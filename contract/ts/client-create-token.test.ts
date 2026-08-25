@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ApiClient } from './client';
 
-// Regression for the wrapper that returned response.token and dropped the
-// caFingerprintPin riding beside it by contract: agents require the pin at
-// install time (-p), so every token created through this wrapper was
-// un-enrollable without recomputing the pin out of band.
 describe('createToken keeps the CA fingerprint pin beside the token', () => {
 	it('returns the full response, token and pin together', async () => {
 		const pin = 'ab'.repeat(32);
@@ -14,9 +10,7 @@ describe('createToken keeps the CA fingerprint pin beside the token', () => {
 				caFingerprintPin: pin
 			})
 		};
-		// getClient is private to the class but is an ordinary property at
-		// runtime; substituting `this` is the smallest seam that exercises the
-		// real wrapper body without a network transport.
+
 		const createToken = ApiClient.prototype.createToken as unknown as (
 			this: { getClient: () => typeof stubClient },
 			name: string,

@@ -1,5 +1,4 @@
-// Server configuration store with persistence.
-// Plain TypeScript — no framework dependencies.
+
 
 import { logger, describeError } from './logger.js';
 

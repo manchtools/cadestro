@@ -34,8 +34,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// Allowed weekday tokens. Order matches time.Weekday so we can index
-// into it directly when matching entries.
 var weekdayTokens = [7]string{"sun", "mon", "tue", "wed", "thu", "fri", "sat"}
 
 // ErrInvalidEntry is returned by Validate when the schedule contains
@@ -95,9 +93,6 @@ func Union(windows ...*cadestrov1.MaintenanceWindow) *cadestrov1.MaintenanceWind
 	return out
 }
 
-// validateEntry checks a single MaintenanceWindowEntry for shape.
-// Returns the underlying parse error so Validate can wrap it with
-// the entry index for a useful operator-facing message.
 func validateEntry(e *cadestrov1.MaintenanceWindowEntry) error {
 	if e == nil {
 		return errors.New("nil entry")
@@ -121,41 +116,31 @@ func validateEntry(e *cadestrov1.MaintenanceWindowEntry) error {
 	return nil
 }
 
-// entryAllows checks t against one (days, range) entry. Crosses
-// midnight when the range's start is after its end: in that case
-// "match before midnight today" OR "match after midnight on the
-// previous-day-listed-in-days".
 func entryAllows(e *cadestrov1.MaintenanceWindowEntry, t time.Time) bool {
 	if e == nil {
 		return false
 	}
 	startMin, endMin, err := parseRange(e.Allow)
 	if err != nil {
-		// A malformed entry that slipped past Validate should never
-		// allow dispatch — fail-closed beats fail-open here because
-		// the operator's intent was a constraint and an unparseable
-		// constraint is never "allow everything".
+
 		return false
 	}
 	tMin := t.Hour()*60 + t.Minute()
 	today := weekdayTokens[t.Weekday()]
-	// Same-day branch — including the crossing-midnight case where
-	// the active piece on `today` runs from startMin to end-of-day.
+
 	if entryListsDay(e, today) {
 		if startMin <= endMin {
 			if tMin >= startMin && tMin < endMin {
 				return true
 			}
 		} else {
-			// crosses midnight: today the range is startMin .. 23:59
+
 			if tMin >= startMin {
 				return true
 			}
 		}
 	}
-	// Crossing-midnight tail — the early-morning hours belong to the
-	// previous day's range. Check whether `yesterday` is listed and
-	// the current minute is before that range's end.
+
 	if startMin > endMin {
 		yesterday := weekdayTokens[(int(t.Weekday())+6)%7]
 		if entryListsDay(e, yesterday) && tMin < endMin {
@@ -174,9 +159,6 @@ func entryListsDay(e *cadestrov1.MaintenanceWindowEntry, day string) bool {
 	return false
 }
 
-// parseRange parses "HH:MM-HH:MM" into start/end minute-of-day. Both
-// must be 24h, and start may equal end (degenerate empty range that
-// allows nothing). start > end means the range crosses midnight.
 func parseRange(s string) (int, int, error) {
 	if len(s) != 11 || s[5] != '-' {
 		return 0, 0, fmt.Errorf("allow %q must be HH:MM-HH:MM", s)
@@ -199,10 +181,7 @@ func parseClock(s string) (int, error) {
 	if len(s) != 5 || s[2] != ':' {
 		return 0, fmt.Errorf("clock %q must be HH:MM", s)
 	}
-	// strconv.Atoi accepts a leading sign ("+9", "-1"), so a signed hour or
-	// minute ("+9:00") would slip through the range check below. Require both
-	// fields to be exactly two ASCII digits before parsing — the wire format is
-	// fixed-width zero-padded HH:MM, never a signed integer.
+
 	if !isTwoDigits(s[:2]) {
 		return 0, fmt.Errorf("hour %q must be two digits", s[:2])
 	}
@@ -220,9 +199,6 @@ func parseClock(s string) (int, error) {
 	return h*60 + m, nil
 }
 
-// isTwoDigits reports whether s is exactly two ASCII digits (0-9). Used to
-// reject signed/non-numeric clock fields that strconv.Atoi would otherwise
-// accept (a leading '+' or '-').
 func isTwoDigits(s string) bool {
 	if len(s) != 2 {
 		return false
@@ -230,10 +206,6 @@ func isTwoDigits(s string) bool {
 	return s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9'
 }
 
-// isWeekdayToken accepts only the canonical lowercase tokens used by the
-// evaluator. ToLower'ing here would validate "MON" but entryListsDay would
-// silently never match it at runtime. Callers that want case-insensitive input
-// must canonicalize before calling Validate.
 func isWeekdayToken(d string) bool {
 	if len(d) != 3 {
 		return false

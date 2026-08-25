@@ -1,6 +1,4 @@
-// Cadestro API Client.
-// Plain TypeScript — no framework dependencies.
-// Dependencies (auth store, config) are injected via ClientOptions.
+
 
 import { createClient, Code, ConnectError } from '@connectrpc/connect';
 import { createConnectTransport } from '@connectrpc/connect-web';
@@ -38,7 +36,7 @@ import {
 	RenameTokenRequestSchema,
 	SetTokenDisabledRequestSchema,
 	DeleteTokenRequestSchema,
-	// Actions (renamed from definitions)
+
 	CreateActionRequestSchema,
 	GetActionRequestSchema,
 	ListActionsRequestSchema,
@@ -46,7 +44,7 @@ import {
 	UpdateActionDescriptionRequestSchema,
 	UpdateActionParamsRequestSchema,
 	DeleteActionRequestSchema,
-	// Action Sets
+
 	CreateActionSetRequestSchema,
 	GetActionSetRequestSchema,
 	ListActionSetsRequestSchema,
@@ -57,7 +55,7 @@ import {
 	AddActionToSetRequestSchema,
 	RemoveActionFromSetRequestSchema,
 	ReorderActionInSetRequestSchema,
-	// Definitions (collection of action sets)
+
 	CreateDefinitionRequestSchema,
 	GetDefinitionRequestSchema,
 	ListDefinitionsRequestSchema,
@@ -68,7 +66,7 @@ import {
 	AddActionSetToDefinitionRequestSchema,
 	RemoveActionSetFromDefinitionRequestSchema,
 	ReorderActionSetInDefinitionRequestSchema,
-	// Device Groups
+
 	CreateDeviceGroupRequestSchema,
 	GetDeviceGroupRequestSchema,
 	ListDeviceGroupsRequestSchema,
@@ -85,38 +83,38 @@ import {
 	SetDeviceGroupInventoryIntervalRequestSchema,
 	SetDeviceGroupMaintenanceWindowRequestSchema,
 	SetUserGroupMaintenanceWindowRequestSchema,
-	// Assignments
+
 	CreateAssignmentRequestSchema,
 	DeleteAssignmentRequestSchema,
 	ListAssignmentsRequestSchema,
 	GetDeviceAssignmentsRequestSchema,
 	GetUserAssignmentsRequestSchema,
-	// User Selections
+
 	ListAvailableActionsRequestSchema,
 	SetUserSelectionRequestSchema,
-	// Live control
+
 	RebootDeviceRequestSchema,
 	SyncDeviceRequestSchema,
-	// Audit Log
+
 	ListAuditEventsRequestSchema,
 	ExportAuditEventsRequestSchema,
-	// LPS
+
 	ListLpsPasswordsRequestSchema,
 	RevealLpsPasswordRequestSchema,
-	// LUKS
+
 	ListLuksKeysRequestSchema,
 	RevealLuksKeyRequestSchema,
 	CreateLuksTokenRequestSchema,
 	RevokeLuksDeviceKeyRequestSchema,
-	// OSQuery & Inventory
+
 	DispatchOSQueryRequestSchema,
 	GetOSQueryResultRequestSchema,
 	GetDeviceInventoryRequestSchema,
 	RefreshDeviceInventoryRequestSchema,
-	// Device Logs
+
 	QueryDeviceLogsRequestSchema,
 	GetDeviceLogResultRequestSchema,
-	// Roles & Permissions
+
 	CreateRoleRequestSchema,
 	GetRoleRequestSchema,
 	ListRolesRequestSchema,
@@ -125,7 +123,7 @@ import {
 	AssignRoleToUserRequestSchema,
 	RevokeRoleFromUserRequestSchema,
 	ListPermissionsRequestSchema,
-	// User Groups
+
 	CreateUserGroupRequestSchema,
 	GetUserGroupRequestSchema,
 	ListUserGroupsRequestSchema,
@@ -139,7 +137,7 @@ import {
 	UpdateUserGroupQueryRequestSchema,
 	ValidateUserGroupQueryRequestSchema,
 	EvaluateDynamicUserGroupRequestSchema,
-	// Identity Providers & SSO
+
 	ListAuthMethodsRequestSchema,
 	GetSSOLoginURLRequestSchema,
 	SSOCallbackRequestSchema,
@@ -153,21 +151,21 @@ import {
 	EnableSCIMRequestSchema,
 	DisableSCIMRequestSchema,
 	RotateSCIMTokenRequestSchema,
-	// Search
+
 	SearchRequestSchema,
 	SearchDateFilterSchema,
 	RebuildSearchIndexRequestSchema,
-	// Server Settings
+
 	GetServerSettingsRequestSchema,
 	UpdateServerSettingsRequestSchema,
-	// User Provisioning
+
 	SetUserProvisioningEnabledRequestSchema,
-	// Agent Update
+
 	type SearchResult,
-	// Compliance
+
 	GetDeviceComplianceRequestSchema,
 	type GetDeviceComplianceResponse,
-	// Compliance Policies
+
 	CreateCompliancePolicyRequestSchema,
 	GetCompliancePolicyRequestSchema,
 	ListCompliancePoliciesRequestSchema,
@@ -247,13 +245,6 @@ export interface ClientOptions {
 export class ApiClient {
 	private opts: ClientOptions;
 
-	// Cached transport. createConnectTransport allocates a fetch
-	// wrapper + interceptor chain on every call; before this cache,
-	// every RPC built one from scratch even though the
-	// authentication interceptor closes over `this.opts` and never
-	// changes shape. Keyed by the resolved baseUrl so a runtime
-	// server-URL switch (multi-tenant, environment swap) rebuilds
-	// transparently.
 	private cachedTransport: ReturnType<typeof createConnectTransport> | null = null;
 	private cachedTransportUrl: string | null = null;
 
@@ -305,11 +296,6 @@ export class ApiClient {
 		return transport;
 	}
 
-	// Cached typed client. createClient generates a proxy over the
-	// transport for every method on ControlService — re-running it on
-	// every RPC call (~160 sites) is wasted work. Re-cache only when
-	// the underlying transport reference changes (URL change, token
-	// refresh swap, etc.).
 	private cachedClient: ReturnType<typeof createClient<typeof ControlService>> | null = null;
 	private cachedClientTransport: ReturnType<typeof createConnectTransport> | null = null;
 
@@ -323,9 +309,6 @@ export class ApiClient {
 		return this.cachedClient;
 	}
 
-	// Auth-only transport (no token interceptor — login itself
-	// produces the token). Cached on the same key as the primary
-	// transport since the URL is the only meaningful input.
 	private cachedAuthTransport: ReturnType<typeof createConnectTransport> | null = null;
 	private cachedAuthTransportUrl: string | null = null;
 
@@ -343,7 +326,6 @@ export class ApiClient {
 		return transport;
 	}
 
-	// Cached typed auth client (same rationale as cachedClient above).
 	private cachedAuthClient: ReturnType<typeof createClient<typeof ControlService>> | null = null;
 	private cachedAuthClientTransport: ReturnType<typeof createConnectTransport> | null = null;
 
@@ -356,10 +338,6 @@ export class ApiClient {
 		this.cachedAuthClientTransport = transport;
 		return this.cachedAuthClient;
 	}
-
-	// ============================================================================
-	// Authentication
-	// ============================================================================
 
 	async refreshTokenRPC() {
 		const client = this.getAuthClient();
@@ -385,10 +363,6 @@ export class ApiClient {
 		}
 		return response.user;
 	}
-
-	// ============================================================================
-	// Users
-	// ============================================================================
 
 	async eraseJITUser(id: string) {
 		const client = this.getClient();
@@ -474,10 +448,6 @@ export class ApiClient {
 		return response.user;
 	}
 
-	// ============================================================================
-	// Devices
-	// ============================================================================
-
 	async listDevices(
 		pageSize: number = 50,
 		pageToken: string = '',
@@ -558,10 +528,6 @@ export class ApiClient {
 		return response.device;
 	}
 
-	// ============================================================================
-	// Registration Tokens
-	// ============================================================================
-
 	async createToken(
 		name: string,
 		maxUses: number = 0,
@@ -577,9 +543,7 @@ export class ApiClient {
 					: undefined
 			})
 		);
-		// Return the whole response, not just the token: caFingerprintPin rides
-		// beside token.value by contract — agents cannot enroll without it, so a
-		// wrapper that dropped it made every web-created token un-enrollable.
+
 		return response;
 	}
 
@@ -610,10 +574,6 @@ export class ApiClient {
 		const client = this.getClient();
 		await client.deleteToken(create(DeleteTokenRequestSchema, { id: { value: id } }));
 	}
-
-	// ============================================================================
-	// Actions (single executable actions)
-	// ============================================================================
 
 	async createAction(data: Omit<CreateActionRequest, '$typeName'>) {
 		const client = this.getClient();
@@ -664,10 +624,6 @@ export class ApiClient {
 		const client = this.getClient();
 		await client.deleteAction(create(DeleteActionRequestSchema, { id: { value: id } }));
 	}
-
-	// ============================================================================
-	// Action Sets (collection of actions)
-	// ============================================================================
 
 	async createActionSet(data: Omit<CreateActionSetRequest, '$typeName'>) {
 		const client = this.getClient();
@@ -742,10 +698,6 @@ export class ApiClient {
 		return response.set;
 	}
 
-	// ============================================================================
-	// Definitions (collection of action sets)
-	// ============================================================================
-
 	async createDefinition(data: Omit<CreateDefinitionRequest, '$typeName'>) {
 		const client = this.getClient();
 		const response = await client.createDefinition(
@@ -818,10 +770,6 @@ export class ApiClient {
 		);
 		return response.definition;
 	}
-
-	// ============================================================================
-	// Device Groups
-	// ============================================================================
 
 	async createDeviceGroup(name: string, description: string = '', isDynamic: boolean = false, dynamicQuery: string = '') {
 		const client = this.getClient();
@@ -936,10 +884,6 @@ export class ApiClient {
 		return response.group;
 	}
 
-	// ============================================================================
-	// Assignments
-	// ============================================================================
-
 	async createAssignment(
 		sourceType: AssignmentSourceType,
 		sourceId: string,
@@ -999,10 +943,6 @@ export class ApiClient {
 			create(GetUserAssignmentsRequestSchema, { userId: { value: userId } })
 		);
 	}
-
-	// ============================================================================
-	// User Selections (available assignments)
-	// ============================================================================
 
 	async listAvailableActions(deviceId: string) {
 		const client = this.getClient();
@@ -1071,20 +1011,12 @@ export class ApiClient {
 		);
 	}
 
-	// ============================================================================
-	// Device Compliance
-	// ============================================================================
-
 	async getDeviceCompliance(deviceId: string): Promise<GetDeviceComplianceResponse> {
 		const client = this.getClient();
 		return client.getDeviceCompliance(
 			create(GetDeviceComplianceRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
-
-	// ============================================================================
-	// Compliance Policies
-	// ============================================================================
 
 	async createCompliancePolicy(name: string, description: string = '') {
 		const client = this.getClient();
@@ -1163,10 +1095,6 @@ export class ApiClient {
 		);
 	}
 
-	// ============================================================================
-	// OSQuery & Device Inventory
-	// ============================================================================
-
 	async getDeviceInventory(deviceId: string, tableNames?: string[]) {
 		const client = this.getClient();
 		return client.getDeviceInventory(
@@ -1238,12 +1166,6 @@ export class ApiClient {
 		);
 	}
 
-	/**
-	 * One chunk of the audit-log export (spec 26). The export is unary
-	 * and chunked: pass the returned nextPageToken back until it comes
-	 * back empty, concatenating the chunks into one valid CSV file or
-	 * JSON array.
-	 */
 	async exportAuditEvents(options: {
 		format: 'csv' | 'json';
 		actorId?: string;
@@ -1259,10 +1181,6 @@ export class ApiClient {
 			actorId: options.actorId ? { value: options.actorId } : undefined,
 		}));
 	}
-
-	// ============================================================================
-	// Roles & Permissions
-	// ============================================================================
 
 	async createRole(name: string, description: string, permissions: string[]) {
 		const client = this.getClient();
@@ -1327,10 +1245,6 @@ export class ApiClient {
 			create(ListPermissionsRequestSchema, {})
 		);
 	}
-
-	// ============================================================================
-	// User Groups
-	// ============================================================================
 
 	async createUserGroup(name: string, description: string = '', isDynamic: boolean = false, dynamicQuery: string = '') {
 		const client = this.getClient();
@@ -1443,10 +1357,6 @@ export class ApiClient {
 		return response.group;
 	}
 
-	// ============================================================================
-	// Identity Providers & SSO
-	// ============================================================================
-
 	async listAuthMethods(email: string = '') {
 		const client = this.getAuthClient();
 		return client.listAuthMethods(
@@ -1508,13 +1418,6 @@ export class ApiClient {
 		return response.provider;
 	}
 
-	// Bootstrap-only provider registration. The host-authorized bootstrap-admin
-	// token is presented to control as `Authorization: Cadestro-Bootstrap <T>`
-	// (NOT a Bearer session token) and is spent on exactly this one call. It goes
-	// through the auth transport — the one WITHOUT the session/Bearer interceptor —
-	// so no access token is ever attached, and the scheme is set as a per-call
-	// header override rather than forking a second transport config. The caller
-	// must never persist or log the token.
 	async createIdentityProviderWithBootstrapToken(
 		bootstrapToken: string,
 		data: {
@@ -1629,7 +1532,6 @@ export class ApiClient {
 		return client.rotateSCIMToken(create(RotateSCIMTokenRequestSchema, { id: { value: id } }));
 	}
 
-	// Search
 	async search(
 		query: string,
 		scope: SearchScope = SearchScope.UNSPECIFIED,
@@ -1658,7 +1560,6 @@ export class ApiClient {
 		await client.rebuildSearchIndex(create(RebuildSearchIndexRequestSchema, {}));
 	}
 
-	// Server Settings
 	async getServerSettings() {
 		const client = this.getClient();
 		return client.getServerSettings(create(GetServerSettingsRequestSchema, {}));
@@ -1672,7 +1573,6 @@ export class ApiClient {
 		}));
 	}
 
-	// User Provisioning Per-User
 	async setUserProvisioningEnabled(userId: string, enabled: boolean) {
 		const client = this.getClient();
 		return client.setUserProvisioningEnabled(create(SetUserProvisioningEnabledRequestSchema, {
@@ -1681,15 +1581,6 @@ export class ApiClient {
 		}));
 	}
 
-	// Remote terminal (PTY) sessions.
-	//
-	// startTerminal mints a short-lived session token + public control
-	// WebSocket URL; stopTerminal ends the session gracefully (owner-
-	// initiated, idempotent). The admin-only listActiveTerminalSessions
-	// / terminateTerminalSession pair is for moderation — see the
-	// StopTerminal vs TerminateTerminalSession block in control.proto
-	// for the full semantic split (ownership vs admin, audit reason,
-	// idempotency vs NotFound on unknown sessions).
 	async startTerminal(deviceId: string, cols: number = 80, rows: number = 24) {
 		const client = this.getClient();
 		return client.startTerminal(create(StartTerminalRequestSchema, {
@@ -1731,9 +1622,6 @@ export class ApiClient {
 
 }
 
-/**
- * Extract the error code from a ConnectError's ErrorDetail, if present.
- */
 export function getErrorCode(error: unknown): ErrorCode | undefined {
 	if (error instanceof ConnectError) {
 		const details = error.findDetails(ErrorDetailSchema);
@@ -1745,10 +1633,6 @@ export function getErrorCode(error: unknown): ErrorCode | undefined {
 	return undefined;
 }
 
-/**
- * Extract the request ID from a ConnectError's ErrorDetail, if present.
- * Users can report this ID to correlate with server-side logs.
- */
 export function getRequestId(error: unknown): string | undefined {
 	if (error instanceof ConnectError) {
 		const details = error.findDetails(ErrorDetailSchema);
@@ -1760,7 +1644,6 @@ export function getRequestId(error: unknown): string | undefined {
 	return undefined;
 }
 
-// Re-export types for convenience
 export type {
 	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
 	DeviceGroup, Assignment, AuditEvent, InventoryTableResult,

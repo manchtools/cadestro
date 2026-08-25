@@ -12,23 +12,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// WS15 #2 — stream-dispatch robustness.
-//
-// The SDK Client drives the agent's long-lived bidi stream. Run() treats a
-// non-nil return from dispatchServerMessage as FATAL and tears the connection
-// down. The design intent of WS15:
-//
-//   - A panic inside ANY handler method (including the spawned goroutine
-//     fan-out legs) must be caught and turned into a NON-fatal, logged drop —
-//     one bad handler invocation must not crash-loop the whole agent (fleet
-//     DoS). It must NOT propagate as the returned error.
-//   - The inbound ServerMessage size must be bounded so the client refuses an
-//     over-large frame (resource-exhausted) rather than allocating it.
-
-// ---------------------------------------------------------------------------
-// #2 — handler panic recovery
-// ---------------------------------------------------------------------------
-
 type panicStreamingHandler struct {
 	ran         chan struct{}
 	panicInv    bool
@@ -85,14 +68,13 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
 			t.Fatalf("dispatch returned error: %v", err)
 		}
-		// The handler runs in a spawned goroutine; wait for it to enter and
-		// panic. A missing recover crashes the whole test binary (RED).
+
 		select {
 		case <-h.ran:
 		case <-time.After(2 * time.Second):
 			t.Fatal("inventory handler never ran")
 		}
-		// Give the recovered goroutine a moment to unwind cleanly.
+
 		time.Sleep(50 * time.Millisecond)
 	})
 
@@ -117,15 +99,6 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// inbound message-size bound
-// ---------------------------------------------------------------------------
-
-// TestRun_InboundMessageSizeBounded proves the client refuses an over-large
-// inbound ServerMessage (resource-exhausted) instead of allocating it, and
-// that a message within the limit still round-trips. Asserting BOTH sides
-// (limit+1 fails AND a normal message succeeds) means the test cannot pass
-// against an unbounded client OR a client whose limit is absurdly small.
 func TestRun_InboundMessageSizeBounded(t *testing.T) {
 	if maxInboundMessageBytes <= 0 {
 		t.Fatalf("maxInboundMessageBytes = %d, want a positive bound", maxInboundMessageBytes)
@@ -176,8 +149,7 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 			if _, err := s.Receive(); err != nil {
 				return err
 			}
-			// A LogQueryResult whose Logs field exceeds the inbound bound by a
-			// comfortable margin. The wire frame is therefore > maxInboundMessageBytes.
+
 			big := make([]byte, maxInboundMessageBytes+(1<<20))
 			for i := range big {
 				big[i] = 'a'

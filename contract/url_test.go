@@ -2,16 +2,13 @@ package contract
 
 import "testing"
 
-// TestValidateHTTPSURL pins the https-only trust-boundary rule. Invalid
-// cases are sourced from intent (a cleartext/opaque/hostless/credential-
-// bearing endpoint must fail closed), not from the parser under test.
 func TestValidateHTTPSURL(t *testing.T) {
 	accept := []string{
 		"https://control.example.com",
 		"https://control.example.com:8081",
 		"https://control.example.com:8081/path",
-		"  https://control.example.com  ", // leading/trailing whitespace trimmed
-		"Https://control.example.com",     // case-variant scheme normalizes to https
+		"  https://control.example.com  ",
+		"Https://control.example.com",
 	}
 	for _, u := range accept {
 		t.Run("ok/"+u, func(t *testing.T) {
@@ -22,17 +19,17 @@ func TestValidateHTTPSURL(t *testing.T) {
 	}
 
 	reject := []string{
-		"",                           // ABSENT
-		"http://control.example.com", // cleartext
-		"HTTP://control.example.com", // case variant of cleartext
-		"h2c://control.example.com",  // wrong scheme
-		"ftp://x",                    // wrong scheme
-		"control.example.com",        // scheme-less
-		"https:foo",                  // opaque
-		"https:",                     // scheme, no host
-		"https://",                   // no host
-		"https://user:pass@host",     // embedded credentials
-		"https://host#frag",          // fragment
+		"",
+		"http://control.example.com",
+		"HTTP://control.example.com",
+		"h2c://control.example.com",
+		"ftp://x",
+		"control.example.com",
+		"https:foo",
+		"https:",
+		"https://",
+		"https://user:pass@host",
+		"https://host#frag",
 	}
 	for _, u := range reject {
 		t.Run("reject/"+u, func(t *testing.T) {

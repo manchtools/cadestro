@@ -22,36 +22,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Execution status for any action
 type ExecutionStatus int32
 
 const (
-	ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED ExecutionStatus = 0
-	ExecutionStatus_EXECUTION_STATUS_PENDING     ExecutionStatus = 1
-	ExecutionStatus_EXECUTION_STATUS_RUNNING     ExecutionStatus = 2
-	ExecutionStatus_EXECUTION_STATUS_SUCCESS     ExecutionStatus = 3
-	ExecutionStatus_EXECUTION_STATUS_FAILED      ExecutionStatus = 4
-	ExecutionStatus_EXECUTION_STATUS_SKIPPED     ExecutionStatus = 5
-	ExecutionStatus_EXECUTION_STATUS_TIMEOUT     ExecutionStatus = 6
-	// Operator-cancelled action result.
-	ExecutionStatus_EXECUTION_STATUS_CANCELLED ExecutionStatus = 7
-	// The action is structurally inapplicable to this device — e.g.
-	// security_only on a package manager with no security-patch
-	// scoping, a DEB action on an rpm host, a FLATPAK action with no
-	// flatpak installed. Terminal, non-error: nothing was executed
-	// (fail-closed), and the machine-readable reason travels in the
-	// result error field. Distinct from SKIPPED (a run the server or
-	// agent chose not to perform this time, e.g. maintenance window)
-	// in that NOT_APPLICABLE is a property of the device+action pair,
-	// not of the moment.
+	ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED    ExecutionStatus = 0
+	ExecutionStatus_EXECUTION_STATUS_PENDING        ExecutionStatus = 1
+	ExecutionStatus_EXECUTION_STATUS_RUNNING        ExecutionStatus = 2
+	ExecutionStatus_EXECUTION_STATUS_SUCCESS        ExecutionStatus = 3
+	ExecutionStatus_EXECUTION_STATUS_FAILED         ExecutionStatus = 4
+	ExecutionStatus_EXECUTION_STATUS_SKIPPED        ExecutionStatus = 5
+	ExecutionStatus_EXECUTION_STATUS_TIMEOUT        ExecutionStatus = 6
+	ExecutionStatus_EXECUTION_STATUS_CANCELLED      ExecutionStatus = 7
 	ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE ExecutionStatus = 8
-	// The agent persisted STARTED before a non-idempotent side effect and
-	// then crashed, so whether the effect landed is unknown. Reported on
-	// recovery instead of silently re-running the action: a second attempt
-	// could double-apply, and claiming FAILED would be a guess. Terminal
-	// from the agent's side — resolving it is an operator/product decision
-	// (a reboot resolves via the boot marker; other actions do not).
-	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE ExecutionStatus = 9
+	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE  ExecutionStatus = 9
 )
 
 // Enum value maps for ExecutionStatus.
@@ -109,12 +92,11 @@ func (ExecutionStatus) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{0}
 }
 
-// Desired state for stateful actions
 type DesiredState int32
 
 const (
-	DesiredState_DESIRED_STATE_PRESENT DesiredState = 0 // Install/create/enable
-	DesiredState_DESIRED_STATE_ABSENT  DesiredState = 1 // Remove/delete/disable
+	DesiredState_DESIRED_STATE_PRESENT DesiredState = 0
+	DesiredState_DESIRED_STATE_ABSENT  DesiredState = 1
 )
 
 // Enum value maps for DesiredState.
@@ -156,14 +138,13 @@ func (DesiredState) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
-// Assignment mode determines how an action is applied to a target
 type AssignmentMode int32
 
 const (
-	AssignmentMode_ASSIGNMENT_MODE_REQUIRED  AssignmentMode = 0 // Mandatory: action will be applied
-	AssignmentMode_ASSIGNMENT_MODE_AVAILABLE AssignmentMode = 1 // Optional: user can select
-	AssignmentMode_ASSIGNMENT_MODE_EXCLUDED  AssignmentMode = 2 // Blocked: action won't be applied on this target
-	AssignmentMode_ASSIGNMENT_MODE_UNINSTALL AssignmentMode = 3 // Apply action but force desired_state to ABSENT
+	AssignmentMode_ASSIGNMENT_MODE_REQUIRED  AssignmentMode = 0
+	AssignmentMode_ASSIGNMENT_MODE_AVAILABLE AssignmentMode = 1
+	AssignmentMode_ASSIGNMENT_MODE_EXCLUDED  AssignmentMode = 2
+	AssignmentMode_ASSIGNMENT_MODE_UNINSTALL AssignmentMode = 3
 )
 
 // Enum value maps for AssignmentMode.
@@ -209,8 +190,6 @@ func (AssignmentMode) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
-// AssignmentSourceType identifies what kind of policy artefact an
-// Assignment links to a target.
 type AssignmentSourceType int32
 
 const (
@@ -266,8 +245,6 @@ func (AssignmentSourceType) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{3}
 }
 
-// AssignmentTargetType identifies what kind of subject an Assignment
-// applies to.
 type AssignmentTargetType int32
 
 const (
@@ -323,16 +300,9 @@ func (AssignmentTargetType) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
-// RoleGrantScopeKind names which kind of group anchors a scoped role
-// grant. Kinds are exclusive — a grant is either device-group-scoped,
-// user-group-scoped, or unscoped/global (UNSPECIFIED). Permissions
-// declare a single target kind on their PermissionInfo; a grant whose
-// scope_kind doesn't match every permission in the role is rejected at
-// the role-assignment handler.
 type RoleGrantScopeKind int32
 
 const (
-	// UNSPECIFIED on a grant means the grant is unscoped/global.
 	RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED  RoleGrantScopeKind = 0
 	RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP RoleGrantScopeKind = 1
 	RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP   RoleGrantScopeKind = 2
@@ -379,31 +349,12 @@ func (RoleGrantScopeKind) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
-// PermissionTargetKind classifies the target kind a permission acts
-// on, which determines which RoleGrantScopeKind it accepts on a
-// scoped grant. Returned on
-// PermissionInfo by ListPermissions so the role-builder UI can
-// surface scopable permissions and gate the scope picker by kind.
-//
-// Fail-closed semantic: a permission that does not explicitly
-// declare a target kind is NOT scopable — granting it with any
-// scope_kind is rejected by the role-assignment handler. New
-// permissions added without an explicit kind silently land at the
-// safe default. Use DEVICE / USER ONLY when the permission's
-// authorization decision can be expressed as "scope-id matches a
-// group containing this device/user".
 type PermissionTargetKind int32
 
 const (
-	// UNSPECIFIED — not scopable. Org-tier permissions
-	// (CreateRole, server settings, IDP/SCIM, audit) and any
-	// permission whose authorization decision can't be expressed as
-	// a group-membership check stay at UNSPECIFIED.
 	PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED PermissionTargetKind = 0
-	// DEVICE — scopable with RoleGrantScopeKind=DEVICE_GROUP only.
-	PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE PermissionTargetKind = 1
-	// USER — scopable with RoleGrantScopeKind=USER_GROUP only.
-	PermissionTargetKind_PERMISSION_TARGET_KIND_USER PermissionTargetKind = 2
+	PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE      PermissionTargetKind = 1
+	PermissionTargetKind_PERMISSION_TARGET_KIND_USER        PermissionTargetKind = 2
 )
 
 // Enum value maps for PermissionTargetKind.
@@ -447,9 +398,6 @@ func (PermissionTargetKind) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
-// DeviceStatus is computed by the server from the device's last_seen_at
-// timestamp, so it is wire-only — no column stores it. UNSPECIFIED on
-// the request means "no status filter".
 type DeviceStatus int32
 
 const (
@@ -499,9 +447,6 @@ func (DeviceStatus) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
-// SearchScope identifies which search index a SearchRequest targets,
-// and which index a SearchResult came from. UNSPECIFIED on the request
-// means "all scopes".
 type SearchScope int32
 
 const (
@@ -572,10 +517,6 @@ func (SearchScope) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
-// SortField is the column a Search orders by. Shared across all scopes
-// (the union of sortable columns); the server validates per-scope validity
-// (scopeSortableFields) and maps each value to that scope's index field.
-// UNSPECIFIED means "use the scope's default sort".
 type SortField int32
 
 const (
@@ -682,8 +623,6 @@ func (SortField) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
-// SortDirection is the order for a Search sort. UNSPECIFIED lets the
-// server pick the field's natural default.
 type SortDirection int32
 
 const (
@@ -733,9 +672,6 @@ func (SortDirection) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
-// IdentityProviderType identifies the auth protocol an
-// IdentityProvider speaks. Today only OIDC ships, but the enum is
-// forward-looking — SAML2, LDAP, etc. can be added later.
 type IdentityProviderType int32
 
 const (
@@ -782,13 +718,6 @@ func (IdentityProviderType) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
 }
 
-// RotationReason classifies why a credential rotation happened. The
-// agent emits INITIAL (first time the action ran on the device, no
-// previous credential to retain), SCHEDULED (interval-based policy
-// rotation), and AUTH_GRACE (LPS only — user authenticated since the
-// last rotation and the grace period has now elapsed). Used by LUKS
-// passphrase rotations (INITIAL / SCHEDULED only — LUKS does not run
-// the auth-grace path) and LPS password rotations.
 type RotationReason int32
 
 const (
@@ -841,11 +770,6 @@ func (RotationReason) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
 }
 
-// LuksRevocationStatus tracks the lifecycle of a LUKS passphrase
-// revocation. NONE is the wire-default for keys that have not been
-// revoked. Once an admin triggers revocation the key moves through
-// DISPATCHED (work committed) and then SUCCESS or FAILED based on the
-// agent's response.
 type LuksRevocationStatus int32
 
 const (
@@ -901,9 +825,6 @@ func (LuksRevocationStatus) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
 }
 
-// ErrorCode is the fixed vocabulary of machine-readable codes an
-// ErrorDetail carries. A client branches on the code, never on the
-// message.
 type ErrorCode int32
 
 const (
@@ -1169,7 +1090,6 @@ func (ErrorCode) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
 }
 
-// Compliance status for a device based on detection scripts
 type ComplianceStatus int32
 
 const (
@@ -1222,7 +1142,6 @@ func (ComplianceStatus) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
 }
 
-// Unique identifier for an action instance
 type ActionId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -1267,7 +1186,6 @@ func (x *ActionId) GetValue() string {
 	return ""
 }
 
-// Unique identifier for a device/agent
 type DeviceId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -2808,14 +2726,10 @@ func (x *ExternalIdentityId) GetValue() string {
 	return ""
 }
 
-// Structured error detail attached to Connect-RPC errors.
 type ErrorDetail struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Code  ErrorCode              `protobuf:"varint,1,opt,name=code,proto3,enum=cadestro.v1.ErrorCode" json:"code,omitempty"`
-	// Server-generated request ID for correlating errors with server logs.
-	// ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
-	// without inviting unbounded growth.
-	RequestId     *RequestId `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          ErrorCode              `protobuf:"varint,1,opt,name=code,proto3,enum=cadestro.v1.ErrorCode" json:"code,omitempty"`
+	RequestId     *RequestId             `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2864,15 +2778,6 @@ func (x *ErrorDetail) GetRequestId() *RequestId {
 	return nil
 }
 
-// MaintenanceWindow gates scheduled policy runs by device-local wall-clock
-// time. A window is a positive allowlist: when the schedule is empty
-// the window is "always allowed" — the feature is opt-in and existing
-// groups carry an empty window with zero behavioural change.
-//
-// Multiple entries combine as OR. The agent evaluates against
-// time.Now().Local() at run time so "02:00 local" means 02:00
-// wherever the device runs; the server never tries to interpret the
-// device's timezone.
 type MaintenanceWindow struct {
 	state         protoimpl.MessageState    `protogen:"open.v1"`
 	Schedule      []*MaintenanceWindowEntry `protobuf:"bytes,1,rep,name=schedule,proto3" json:"schedule,omitempty"`
@@ -2917,12 +2822,6 @@ func (x *MaintenanceWindow) GetSchedule() []*MaintenanceWindowEntry {
 	return nil
 }
 
-// One entry in a MaintenanceWindow: a set of weekdays and a single
-// allowed clock range. `allow` uses 24-hour HH:MM-HH:MM in local time
-// (e.g. "22:00-06:00"). Crossing midnight is supported: when the
-// range's start is greater than its end the window continues into the
-// next day. `days` lists the weekdays the entry applies to using the
-// lowercase three-letter abbreviations mon|tue|wed|thu|fri|sat|sun.
 type MaintenanceWindowEntry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Days          []string               `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
@@ -2975,7 +2874,6 @@ func (x *MaintenanceWindowEntry) GetAllow() string {
 	return ""
 }
 
-// Output from command execution
 type CommandOutput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ExitCode      int32                  `protobuf:"varint,1,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`

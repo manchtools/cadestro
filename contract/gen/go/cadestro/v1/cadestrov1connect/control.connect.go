@@ -482,15 +482,11 @@ const (
 
 // ControlServiceClient is a client for the cadestro.v1.ControlService service.
 type ControlServiceClient interface {
-	// Agent Registration
 	Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error)
-	// Certificate Renewal
 	RenewCertificate(context.Context, *connect.Request[v1.RenewCertificateRequest]) (*connect.Response[v1.RenewCertificateResponse], error)
-	// Authentication
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error)
-	// SSO / Identity Providers
 	ListAuthMethods(context.Context, *connect.Request[v1.ListAuthMethodsRequest]) (*connect.Response[v1.ListAuthMethodsResponse], error)
 	GetSSOLoginURL(context.Context, *connect.Request[v1.GetSSOLoginURLRequest]) (*connect.Response[v1.GetSSOLoginURLResponse], error)
 	SSOCallback(context.Context, *connect.Request[v1.SSOCallbackRequest]) (*connect.Response[v1.SSOCallbackResponse], error)
@@ -501,11 +497,9 @@ type ControlServiceClient interface {
 	DeleteIdentityProvider(context.Context, *connect.Request[v1.DeleteIdentityProviderRequest]) (*connect.Response[v1.DeleteIdentityProviderResponse], error)
 	ListIdentityLinks(context.Context, *connect.Request[v1.ListIdentityLinksRequest]) (*connect.Response[v1.ListIdentityLinksResponse], error)
 	UnlinkIdentity(context.Context, *connect.Request[v1.UnlinkIdentityRequest]) (*connect.Response[v1.UnlinkIdentityResponse], error)
-	// SCIM Provisioning
 	EnableSCIM(context.Context, *connect.Request[v1.EnableSCIMRequest]) (*connect.Response[v1.EnableSCIMResponse], error)
 	DisableSCIM(context.Context, *connect.Request[v1.DisableSCIMRequest]) (*connect.Response[v1.DisableSCIMResponse], error)
 	RotateSCIMToken(context.Context, *connect.Request[v1.RotateSCIMTokenRequest]) (*connect.Response[v1.RotateSCIMTokenResponse], error)
-	// Users
 	EraseJITUser(context.Context, *connect.Request[v1.EraseJITUserRequest]) (*connect.Response[v1.EraseJITUserResponse], error)
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
@@ -516,7 +510,6 @@ type ControlServiceClient interface {
 	AddUserSshKey(context.Context, *connect.Request[v1.AddUserSshKeyRequest]) (*connect.Response[v1.AddUserSshKeyResponse], error)
 	RemoveUserSshKey(context.Context, *connect.Request[v1.RemoveUserSshKeyRequest]) (*connect.Response[v1.RemoveUserSshKeyResponse], error)
 	UpdateUserSshSettings(context.Context, *connect.Request[v1.UpdateUserSshSettingsRequest]) (*connect.Response[v1.UpdateUserResponse], error)
-	// Devices
 	ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error)
 	GetDevice(context.Context, *connect.Request[v1.GetDeviceRequest]) (*connect.Response[v1.GetDeviceResponse], error)
 	SetDeviceLabel(context.Context, *connect.Request[v1.SetDeviceLabelRequest]) (*connect.Response[v1.UpdateDeviceResponse], error)
@@ -527,13 +520,11 @@ type ControlServiceClient interface {
 	SetDeviceSyncInterval(context.Context, *connect.Request[v1.SetDeviceSyncIntervalRequest]) (*connect.Response[v1.UpdateDeviceResponse], error)
 	SetDeviceInventoryInterval(context.Context, *connect.Request[v1.SetDeviceInventoryIntervalRequest]) (*connect.Response[v1.UpdateDeviceResponse], error)
 	DeleteDevice(context.Context, *connect.Request[v1.DeleteDeviceRequest]) (*connect.Response[v1.DeleteDeviceResponse], error)
-	// Registration Tokens
 	CreateToken(context.Context, *connect.Request[v1.CreateTokenRequest]) (*connect.Response[v1.CreateTokenResponse], error)
 	ListTokens(context.Context, *connect.Request[v1.ListTokensRequest]) (*connect.Response[v1.ListTokensResponse], error)
 	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
-	// Actions (single executable)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
 	ListActions(context.Context, *connect.Request[v1.ListActionsRequest]) (*connect.Response[v1.ListActionsResponse], error)
@@ -541,7 +532,6 @@ type ControlServiceClient interface {
 	UpdateActionDescription(context.Context, *connect.Request[v1.UpdateActionDescriptionRequest]) (*connect.Response[v1.UpdateActionResponse], error)
 	UpdateActionParams(context.Context, *connect.Request[v1.UpdateActionParamsRequest]) (*connect.Response[v1.UpdateActionResponse], error)
 	DeleteAction(context.Context, *connect.Request[v1.DeleteActionRequest]) (*connect.Response[v1.DeleteActionResponse], error)
-	// Action Sets (collection of actions)
 	CreateActionSet(context.Context, *connect.Request[v1.CreateActionSetRequest]) (*connect.Response[v1.CreateActionSetResponse], error)
 	GetActionSet(context.Context, *connect.Request[v1.GetActionSetRequest]) (*connect.Response[v1.GetActionSetResponse], error)
 	ListActionSets(context.Context, *connect.Request[v1.ListActionSetsRequest]) (*connect.Response[v1.ListActionSetsResponse], error)
@@ -552,7 +542,6 @@ type ControlServiceClient interface {
 	AddActionToSet(context.Context, *connect.Request[v1.AddActionToSetRequest]) (*connect.Response[v1.AddActionToSetResponse], error)
 	RemoveActionFromSet(context.Context, *connect.Request[v1.RemoveActionFromSetRequest]) (*connect.Response[v1.RemoveActionFromSetResponse], error)
 	ReorderActionInSet(context.Context, *connect.Request[v1.ReorderActionInSetRequest]) (*connect.Response[v1.ReorderActionInSetResponse], error)
-	// Definitions (collection of action sets)
 	CreateDefinition(context.Context, *connect.Request[v1.CreateDefinitionRequest]) (*connect.Response[v1.CreateDefinitionResponse], error)
 	GetDefinition(context.Context, *connect.Request[v1.GetDefinitionRequest]) (*connect.Response[v1.GetDefinitionResponse], error)
 	ListDefinitions(context.Context, *connect.Request[v1.ListDefinitionsRequest]) (*connect.Response[v1.ListDefinitionsResponse], error)
@@ -563,7 +552,6 @@ type ControlServiceClient interface {
 	AddActionSetToDefinition(context.Context, *connect.Request[v1.AddActionSetToDefinitionRequest]) (*connect.Response[v1.AddActionSetToDefinitionResponse], error)
 	RemoveActionSetFromDefinition(context.Context, *connect.Request[v1.RemoveActionSetFromDefinitionRequest]) (*connect.Response[v1.RemoveActionSetFromDefinitionResponse], error)
 	ReorderActionSetInDefinition(context.Context, *connect.Request[v1.ReorderActionSetInDefinitionRequest]) (*connect.Response[v1.ReorderActionSetInDefinitionResponse], error)
-	// Device Groups
 	CreateDeviceGroup(context.Context, *connect.Request[v1.CreateDeviceGroupRequest]) (*connect.Response[v1.CreateDeviceGroupResponse], error)
 	GetDeviceGroup(context.Context, *connect.Request[v1.GetDeviceGroupRequest]) (*connect.Response[v1.GetDeviceGroupResponse], error)
 	ListDeviceGroups(context.Context, *connect.Request[v1.ListDeviceGroupsRequest]) (*connect.Response[v1.ListDeviceGroupsResponse], error)
@@ -579,38 +567,29 @@ type ControlServiceClient interface {
 	SetDeviceGroupSyncInterval(context.Context, *connect.Request[v1.SetDeviceGroupSyncIntervalRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
 	SetDeviceGroupInventoryInterval(context.Context, *connect.Request[v1.SetDeviceGroupInventoryIntervalRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
 	SetDeviceGroupMaintenanceWindow(context.Context, *connect.Request[v1.SetDeviceGroupMaintenanceWindowRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
-	// Assignments
 	CreateAssignment(context.Context, *connect.Request[v1.CreateAssignmentRequest]) (*connect.Response[v1.CreateAssignmentResponse], error)
 	DeleteAssignment(context.Context, *connect.Request[v1.DeleteAssignmentRequest]) (*connect.Response[v1.DeleteAssignmentResponse], error)
 	ListAssignments(context.Context, *connect.Request[v1.ListAssignmentsRequest]) (*connect.Response[v1.ListAssignmentsResponse], error)
 	GetDeviceAssignments(context.Context, *connect.Request[v1.GetDeviceAssignmentsRequest]) (*connect.Response[v1.GetDeviceAssignmentsResponse], error)
 	GetUserAssignments(context.Context, *connect.Request[v1.GetUserAssignmentsRequest]) (*connect.Response[v1.GetUserAssignmentsResponse], error)
-	// User Selections (for available assignments)
 	SetUserSelection(context.Context, *connect.Request[v1.SetUserSelectionRequest]) (*connect.Response[v1.SetUserSelectionResponse], error)
 	ListAvailableActions(context.Context, *connect.Request[v1.ListAvailableActionsRequest]) (*connect.Response[v1.ListAvailableActionsResponse], error)
-	// Agent synchronization and live device control
 	SyncDevice(context.Context, *connect.Request[v1.SyncDeviceRequest]) (*connect.Response[v1.SyncDeviceResponse], error)
 	RebootDevice(context.Context, *connect.Request[v1.RebootDeviceRequest]) (*connect.Response[v1.RebootDeviceResponse], error)
-	// Audit Log
 	ListAuditEvents(context.Context, *connect.Request[v1.ListAuditEventsRequest]) (*connect.Response[v1.ListAuditEventsResponse], error)
 	ExportAuditEvents(context.Context, *connect.Request[v1.ExportAuditEventsRequest]) (*connect.Response[v1.ExportAuditEventsResponse], error)
-	// LPS (Local Password Solution)
 	ListLpsPasswords(context.Context, *connect.Request[v1.ListLpsPasswordsRequest]) (*connect.Response[v1.ListLpsPasswordsResponse], error)
 	RevealLpsPassword(context.Context, *connect.Request[v1.RevealLpsPasswordRequest]) (*connect.Response[v1.RevealLpsPasswordResponse], error)
-	// LUKS (Disk Encryption)
 	ListLuksKeys(context.Context, *connect.Request[v1.ListLuksKeysRequest]) (*connect.Response[v1.ListLuksKeysResponse], error)
 	RevealLuksKey(context.Context, *connect.Request[v1.RevealLuksKeyRequest]) (*connect.Response[v1.RevealLuksKeyResponse], error)
 	CreateLuksToken(context.Context, *connect.Request[v1.CreateLuksTokenRequest]) (*connect.Response[v1.CreateLuksTokenResponse], error)
 	RevokeLuksDeviceKey(context.Context, *connect.Request[v1.RevokeLuksDeviceKeyRequest]) (*connect.Response[v1.RevokeLuksDeviceKeyResponse], error)
-	// OSQuery / Device Inventory
 	DispatchOSQuery(context.Context, *connect.Request[v1.DispatchOSQueryRequest]) (*connect.Response[v1.DispatchOSQueryResponse], error)
 	GetOSQueryResult(context.Context, *connect.Request[v1.GetOSQueryResultRequest]) (*connect.Response[v1.GetOSQueryResultResponse], error)
 	GetDeviceInventory(context.Context, *connect.Request[v1.GetDeviceInventoryRequest]) (*connect.Response[v1.GetDeviceInventoryResponse], error)
 	RefreshDeviceInventory(context.Context, *connect.Request[v1.RefreshDeviceInventoryRequest]) (*connect.Response[v1.RefreshDeviceInventoryResponse], error)
-	// Device Logs
 	QueryDeviceLogs(context.Context, *connect.Request[v1.QueryDeviceLogsRequest]) (*connect.Response[v1.QueryDeviceLogsResponse], error)
 	GetDeviceLogResult(context.Context, *connect.Request[v1.GetDeviceLogResultRequest]) (*connect.Response[v1.GetDeviceLogResultResponse], error)
-	// Roles & Permissions
 	CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error)
 	GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error)
 	ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error)
@@ -619,7 +598,6 @@ type ControlServiceClient interface {
 	AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error)
 	RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error)
 	ListPermissions(context.Context, *connect.Request[v1.ListPermissionsRequest]) (*connect.Response[v1.ListPermissionsResponse], error)
-	// User Groups
 	CreateUserGroup(context.Context, *connect.Request[v1.CreateUserGroupRequest]) (*connect.Response[v1.CreateUserGroupResponse], error)
 	GetUserGroup(context.Context, *connect.Request[v1.GetUserGroupRequest]) (*connect.Response[v1.GetUserGroupResponse], error)
 	ListUserGroups(context.Context, *connect.Request[v1.ListUserGroupsRequest]) (*connect.Response[v1.ListUserGroupsResponse], error)
@@ -634,9 +612,7 @@ type ControlServiceClient interface {
 	ValidateUserGroupQuery(context.Context, *connect.Request[v1.ValidateUserGroupQueryRequest]) (*connect.Response[v1.ValidateUserGroupQueryResponse], error)
 	EvaluateDynamicUserGroup(context.Context, *connect.Request[v1.EvaluateDynamicUserGroupRequest]) (*connect.Response[v1.EvaluateDynamicUserGroupResponse], error)
 	SetUserGroupMaintenanceWindow(context.Context, *connect.Request[v1.SetUserGroupMaintenanceWindowRequest]) (*connect.Response[v1.UpdateUserGroupResponse], error)
-	// Device Compliance
 	GetDeviceCompliance(context.Context, *connect.Request[v1.GetDeviceComplianceRequest]) (*connect.Response[v1.GetDeviceComplianceResponse], error)
-	// Compliance Policies
 	CreateCompliancePolicy(context.Context, *connect.Request[v1.CreateCompliancePolicyRequest]) (*connect.Response[v1.CreateCompliancePolicyResponse], error)
 	GetCompliancePolicy(context.Context, *connect.Request[v1.GetCompliancePolicyRequest]) (*connect.Response[v1.GetCompliancePolicyResponse], error)
 	ListCompliancePolicies(context.Context, *connect.Request[v1.ListCompliancePoliciesRequest]) (*connect.Response[v1.ListCompliancePoliciesResponse], error)
@@ -647,15 +623,11 @@ type ControlServiceClient interface {
 	RemoveCompliancePolicyRule(context.Context, *connect.Request[v1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[v1.RemoveCompliancePolicyRuleResponse], error)
 	UpdateCompliancePolicyRule(context.Context, *connect.Request[v1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[v1.UpdateCompliancePolicyRuleResponse], error)
 	GetDeviceCompliancePolicyStatus(context.Context, *connect.Request[v1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[v1.GetDeviceCompliancePolicyStatusResponse], error)
-	// Search
 	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 	RebuildSearchIndex(context.Context, *connect.Request[v1.RebuildSearchIndexRequest]) (*connect.Response[v1.RebuildSearchIndexResponse], error)
-	// Server Settings
 	GetServerSettings(context.Context, *connect.Request[v1.GetServerSettingsRequest]) (*connect.Response[v1.GetServerSettingsResponse], error)
 	UpdateServerSettings(context.Context, *connect.Request[v1.UpdateServerSettingsRequest]) (*connect.Response[v1.UpdateServerSettingsResponse], error)
-	// User Provisioning Per-User
 	SetUserProvisioningEnabled(context.Context, *connect.Request[v1.SetUserProvisioningEnabledRequest]) (*connect.Response[v1.UpdateUserResponse], error)
-	// Remote Terminal (PTY) sessions
 	StartTerminal(context.Context, *connect.Request[v1.StartTerminalRequest]) (*connect.Response[v1.StartTerminalResponse], error)
 	StopTerminal(context.Context, *connect.Request[v1.StopTerminalRequest]) (*connect.Response[v1.StopTerminalResponse], error)
 	ListActiveTerminalSessions(context.Context, *connect.Request[v1.ListActiveTerminalSessionsRequest]) (*connect.Response[v1.ListActiveTerminalSessionsResponse], error)
@@ -2483,15 +2455,11 @@ func (c *controlServiceClient) TerminateTerminalSession(ctx context.Context, req
 
 // ControlServiceHandler is an implementation of the cadestro.v1.ControlService service.
 type ControlServiceHandler interface {
-	// Agent Registration
 	Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error)
-	// Certificate Renewal
 	RenewCertificate(context.Context, *connect.Request[v1.RenewCertificateRequest]) (*connect.Response[v1.RenewCertificateResponse], error)
-	// Authentication
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error)
-	// SSO / Identity Providers
 	ListAuthMethods(context.Context, *connect.Request[v1.ListAuthMethodsRequest]) (*connect.Response[v1.ListAuthMethodsResponse], error)
 	GetSSOLoginURL(context.Context, *connect.Request[v1.GetSSOLoginURLRequest]) (*connect.Response[v1.GetSSOLoginURLResponse], error)
 	SSOCallback(context.Context, *connect.Request[v1.SSOCallbackRequest]) (*connect.Response[v1.SSOCallbackResponse], error)
@@ -2502,11 +2470,9 @@ type ControlServiceHandler interface {
 	DeleteIdentityProvider(context.Context, *connect.Request[v1.DeleteIdentityProviderRequest]) (*connect.Response[v1.DeleteIdentityProviderResponse], error)
 	ListIdentityLinks(context.Context, *connect.Request[v1.ListIdentityLinksRequest]) (*connect.Response[v1.ListIdentityLinksResponse], error)
 	UnlinkIdentity(context.Context, *connect.Request[v1.UnlinkIdentityRequest]) (*connect.Response[v1.UnlinkIdentityResponse], error)
-	// SCIM Provisioning
 	EnableSCIM(context.Context, *connect.Request[v1.EnableSCIMRequest]) (*connect.Response[v1.EnableSCIMResponse], error)
 	DisableSCIM(context.Context, *connect.Request[v1.DisableSCIMRequest]) (*connect.Response[v1.DisableSCIMResponse], error)
 	RotateSCIMToken(context.Context, *connect.Request[v1.RotateSCIMTokenRequest]) (*connect.Response[v1.RotateSCIMTokenResponse], error)
-	// Users
 	EraseJITUser(context.Context, *connect.Request[v1.EraseJITUserRequest]) (*connect.Response[v1.EraseJITUserResponse], error)
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
@@ -2517,7 +2483,6 @@ type ControlServiceHandler interface {
 	AddUserSshKey(context.Context, *connect.Request[v1.AddUserSshKeyRequest]) (*connect.Response[v1.AddUserSshKeyResponse], error)
 	RemoveUserSshKey(context.Context, *connect.Request[v1.RemoveUserSshKeyRequest]) (*connect.Response[v1.RemoveUserSshKeyResponse], error)
 	UpdateUserSshSettings(context.Context, *connect.Request[v1.UpdateUserSshSettingsRequest]) (*connect.Response[v1.UpdateUserResponse], error)
-	// Devices
 	ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error)
 	GetDevice(context.Context, *connect.Request[v1.GetDeviceRequest]) (*connect.Response[v1.GetDeviceResponse], error)
 	SetDeviceLabel(context.Context, *connect.Request[v1.SetDeviceLabelRequest]) (*connect.Response[v1.UpdateDeviceResponse], error)
@@ -2528,13 +2493,11 @@ type ControlServiceHandler interface {
 	SetDeviceSyncInterval(context.Context, *connect.Request[v1.SetDeviceSyncIntervalRequest]) (*connect.Response[v1.UpdateDeviceResponse], error)
 	SetDeviceInventoryInterval(context.Context, *connect.Request[v1.SetDeviceInventoryIntervalRequest]) (*connect.Response[v1.UpdateDeviceResponse], error)
 	DeleteDevice(context.Context, *connect.Request[v1.DeleteDeviceRequest]) (*connect.Response[v1.DeleteDeviceResponse], error)
-	// Registration Tokens
 	CreateToken(context.Context, *connect.Request[v1.CreateTokenRequest]) (*connect.Response[v1.CreateTokenResponse], error)
 	ListTokens(context.Context, *connect.Request[v1.ListTokensRequest]) (*connect.Response[v1.ListTokensResponse], error)
 	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
-	// Actions (single executable)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
 	ListActions(context.Context, *connect.Request[v1.ListActionsRequest]) (*connect.Response[v1.ListActionsResponse], error)
@@ -2542,7 +2505,6 @@ type ControlServiceHandler interface {
 	UpdateActionDescription(context.Context, *connect.Request[v1.UpdateActionDescriptionRequest]) (*connect.Response[v1.UpdateActionResponse], error)
 	UpdateActionParams(context.Context, *connect.Request[v1.UpdateActionParamsRequest]) (*connect.Response[v1.UpdateActionResponse], error)
 	DeleteAction(context.Context, *connect.Request[v1.DeleteActionRequest]) (*connect.Response[v1.DeleteActionResponse], error)
-	// Action Sets (collection of actions)
 	CreateActionSet(context.Context, *connect.Request[v1.CreateActionSetRequest]) (*connect.Response[v1.CreateActionSetResponse], error)
 	GetActionSet(context.Context, *connect.Request[v1.GetActionSetRequest]) (*connect.Response[v1.GetActionSetResponse], error)
 	ListActionSets(context.Context, *connect.Request[v1.ListActionSetsRequest]) (*connect.Response[v1.ListActionSetsResponse], error)
@@ -2553,7 +2515,6 @@ type ControlServiceHandler interface {
 	AddActionToSet(context.Context, *connect.Request[v1.AddActionToSetRequest]) (*connect.Response[v1.AddActionToSetResponse], error)
 	RemoveActionFromSet(context.Context, *connect.Request[v1.RemoveActionFromSetRequest]) (*connect.Response[v1.RemoveActionFromSetResponse], error)
 	ReorderActionInSet(context.Context, *connect.Request[v1.ReorderActionInSetRequest]) (*connect.Response[v1.ReorderActionInSetResponse], error)
-	// Definitions (collection of action sets)
 	CreateDefinition(context.Context, *connect.Request[v1.CreateDefinitionRequest]) (*connect.Response[v1.CreateDefinitionResponse], error)
 	GetDefinition(context.Context, *connect.Request[v1.GetDefinitionRequest]) (*connect.Response[v1.GetDefinitionResponse], error)
 	ListDefinitions(context.Context, *connect.Request[v1.ListDefinitionsRequest]) (*connect.Response[v1.ListDefinitionsResponse], error)
@@ -2564,7 +2525,6 @@ type ControlServiceHandler interface {
 	AddActionSetToDefinition(context.Context, *connect.Request[v1.AddActionSetToDefinitionRequest]) (*connect.Response[v1.AddActionSetToDefinitionResponse], error)
 	RemoveActionSetFromDefinition(context.Context, *connect.Request[v1.RemoveActionSetFromDefinitionRequest]) (*connect.Response[v1.RemoveActionSetFromDefinitionResponse], error)
 	ReorderActionSetInDefinition(context.Context, *connect.Request[v1.ReorderActionSetInDefinitionRequest]) (*connect.Response[v1.ReorderActionSetInDefinitionResponse], error)
-	// Device Groups
 	CreateDeviceGroup(context.Context, *connect.Request[v1.CreateDeviceGroupRequest]) (*connect.Response[v1.CreateDeviceGroupResponse], error)
 	GetDeviceGroup(context.Context, *connect.Request[v1.GetDeviceGroupRequest]) (*connect.Response[v1.GetDeviceGroupResponse], error)
 	ListDeviceGroups(context.Context, *connect.Request[v1.ListDeviceGroupsRequest]) (*connect.Response[v1.ListDeviceGroupsResponse], error)
@@ -2580,38 +2540,29 @@ type ControlServiceHandler interface {
 	SetDeviceGroupSyncInterval(context.Context, *connect.Request[v1.SetDeviceGroupSyncIntervalRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
 	SetDeviceGroupInventoryInterval(context.Context, *connect.Request[v1.SetDeviceGroupInventoryIntervalRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
 	SetDeviceGroupMaintenanceWindow(context.Context, *connect.Request[v1.SetDeviceGroupMaintenanceWindowRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
-	// Assignments
 	CreateAssignment(context.Context, *connect.Request[v1.CreateAssignmentRequest]) (*connect.Response[v1.CreateAssignmentResponse], error)
 	DeleteAssignment(context.Context, *connect.Request[v1.DeleteAssignmentRequest]) (*connect.Response[v1.DeleteAssignmentResponse], error)
 	ListAssignments(context.Context, *connect.Request[v1.ListAssignmentsRequest]) (*connect.Response[v1.ListAssignmentsResponse], error)
 	GetDeviceAssignments(context.Context, *connect.Request[v1.GetDeviceAssignmentsRequest]) (*connect.Response[v1.GetDeviceAssignmentsResponse], error)
 	GetUserAssignments(context.Context, *connect.Request[v1.GetUserAssignmentsRequest]) (*connect.Response[v1.GetUserAssignmentsResponse], error)
-	// User Selections (for available assignments)
 	SetUserSelection(context.Context, *connect.Request[v1.SetUserSelectionRequest]) (*connect.Response[v1.SetUserSelectionResponse], error)
 	ListAvailableActions(context.Context, *connect.Request[v1.ListAvailableActionsRequest]) (*connect.Response[v1.ListAvailableActionsResponse], error)
-	// Agent synchronization and live device control
 	SyncDevice(context.Context, *connect.Request[v1.SyncDeviceRequest]) (*connect.Response[v1.SyncDeviceResponse], error)
 	RebootDevice(context.Context, *connect.Request[v1.RebootDeviceRequest]) (*connect.Response[v1.RebootDeviceResponse], error)
-	// Audit Log
 	ListAuditEvents(context.Context, *connect.Request[v1.ListAuditEventsRequest]) (*connect.Response[v1.ListAuditEventsResponse], error)
 	ExportAuditEvents(context.Context, *connect.Request[v1.ExportAuditEventsRequest]) (*connect.Response[v1.ExportAuditEventsResponse], error)
-	// LPS (Local Password Solution)
 	ListLpsPasswords(context.Context, *connect.Request[v1.ListLpsPasswordsRequest]) (*connect.Response[v1.ListLpsPasswordsResponse], error)
 	RevealLpsPassword(context.Context, *connect.Request[v1.RevealLpsPasswordRequest]) (*connect.Response[v1.RevealLpsPasswordResponse], error)
-	// LUKS (Disk Encryption)
 	ListLuksKeys(context.Context, *connect.Request[v1.ListLuksKeysRequest]) (*connect.Response[v1.ListLuksKeysResponse], error)
 	RevealLuksKey(context.Context, *connect.Request[v1.RevealLuksKeyRequest]) (*connect.Response[v1.RevealLuksKeyResponse], error)
 	CreateLuksToken(context.Context, *connect.Request[v1.CreateLuksTokenRequest]) (*connect.Response[v1.CreateLuksTokenResponse], error)
 	RevokeLuksDeviceKey(context.Context, *connect.Request[v1.RevokeLuksDeviceKeyRequest]) (*connect.Response[v1.RevokeLuksDeviceKeyResponse], error)
-	// OSQuery / Device Inventory
 	DispatchOSQuery(context.Context, *connect.Request[v1.DispatchOSQueryRequest]) (*connect.Response[v1.DispatchOSQueryResponse], error)
 	GetOSQueryResult(context.Context, *connect.Request[v1.GetOSQueryResultRequest]) (*connect.Response[v1.GetOSQueryResultResponse], error)
 	GetDeviceInventory(context.Context, *connect.Request[v1.GetDeviceInventoryRequest]) (*connect.Response[v1.GetDeviceInventoryResponse], error)
 	RefreshDeviceInventory(context.Context, *connect.Request[v1.RefreshDeviceInventoryRequest]) (*connect.Response[v1.RefreshDeviceInventoryResponse], error)
-	// Device Logs
 	QueryDeviceLogs(context.Context, *connect.Request[v1.QueryDeviceLogsRequest]) (*connect.Response[v1.QueryDeviceLogsResponse], error)
 	GetDeviceLogResult(context.Context, *connect.Request[v1.GetDeviceLogResultRequest]) (*connect.Response[v1.GetDeviceLogResultResponse], error)
-	// Roles & Permissions
 	CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error)
 	GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error)
 	ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error)
@@ -2620,7 +2571,6 @@ type ControlServiceHandler interface {
 	AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error)
 	RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error)
 	ListPermissions(context.Context, *connect.Request[v1.ListPermissionsRequest]) (*connect.Response[v1.ListPermissionsResponse], error)
-	// User Groups
 	CreateUserGroup(context.Context, *connect.Request[v1.CreateUserGroupRequest]) (*connect.Response[v1.CreateUserGroupResponse], error)
 	GetUserGroup(context.Context, *connect.Request[v1.GetUserGroupRequest]) (*connect.Response[v1.GetUserGroupResponse], error)
 	ListUserGroups(context.Context, *connect.Request[v1.ListUserGroupsRequest]) (*connect.Response[v1.ListUserGroupsResponse], error)
@@ -2635,9 +2585,7 @@ type ControlServiceHandler interface {
 	ValidateUserGroupQuery(context.Context, *connect.Request[v1.ValidateUserGroupQueryRequest]) (*connect.Response[v1.ValidateUserGroupQueryResponse], error)
 	EvaluateDynamicUserGroup(context.Context, *connect.Request[v1.EvaluateDynamicUserGroupRequest]) (*connect.Response[v1.EvaluateDynamicUserGroupResponse], error)
 	SetUserGroupMaintenanceWindow(context.Context, *connect.Request[v1.SetUserGroupMaintenanceWindowRequest]) (*connect.Response[v1.UpdateUserGroupResponse], error)
-	// Device Compliance
 	GetDeviceCompliance(context.Context, *connect.Request[v1.GetDeviceComplianceRequest]) (*connect.Response[v1.GetDeviceComplianceResponse], error)
-	// Compliance Policies
 	CreateCompliancePolicy(context.Context, *connect.Request[v1.CreateCompliancePolicyRequest]) (*connect.Response[v1.CreateCompliancePolicyResponse], error)
 	GetCompliancePolicy(context.Context, *connect.Request[v1.GetCompliancePolicyRequest]) (*connect.Response[v1.GetCompliancePolicyResponse], error)
 	ListCompliancePolicies(context.Context, *connect.Request[v1.ListCompliancePoliciesRequest]) (*connect.Response[v1.ListCompliancePoliciesResponse], error)
@@ -2648,15 +2596,11 @@ type ControlServiceHandler interface {
 	RemoveCompliancePolicyRule(context.Context, *connect.Request[v1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[v1.RemoveCompliancePolicyRuleResponse], error)
 	UpdateCompliancePolicyRule(context.Context, *connect.Request[v1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[v1.UpdateCompliancePolicyRuleResponse], error)
 	GetDeviceCompliancePolicyStatus(context.Context, *connect.Request[v1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[v1.GetDeviceCompliancePolicyStatusResponse], error)
-	// Search
 	Search(context.Context, *connect.Request[v1.SearchRequest]) (*connect.Response[v1.SearchResponse], error)
 	RebuildSearchIndex(context.Context, *connect.Request[v1.RebuildSearchIndexRequest]) (*connect.Response[v1.RebuildSearchIndexResponse], error)
-	// Server Settings
 	GetServerSettings(context.Context, *connect.Request[v1.GetServerSettingsRequest]) (*connect.Response[v1.GetServerSettingsResponse], error)
 	UpdateServerSettings(context.Context, *connect.Request[v1.UpdateServerSettingsRequest]) (*connect.Response[v1.UpdateServerSettingsResponse], error)
-	// User Provisioning Per-User
 	SetUserProvisioningEnabled(context.Context, *connect.Request[v1.SetUserProvisioningEnabledRequest]) (*connect.Response[v1.UpdateUserResponse], error)
-	// Remote Terminal (PTY) sessions
 	StartTerminal(context.Context, *connect.Request[v1.StartTerminalRequest]) (*connect.Response[v1.StartTerminalResponse], error)
 	StopTerminal(context.Context, *connect.Request[v1.StopTerminalRequest]) (*connect.Response[v1.StopTerminalResponse], error)
 	ListActiveTerminalSessions(context.Context, *connect.Request[v1.ListActiveTerminalSessionsRequest]) (*connect.Response[v1.ListActiveTerminalSessionsResponse], error)

@@ -21,11 +21,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// agentLoopback wires an in-process AgentService handler behind an h2c
-// httptest.Server so the SDK Client can talk to it over a real Connect-RPC
-// bidirectional stream. Earlier client-side tests stubbed dispatchServerMessage
-// directly; this fixture exercises the actual stream.Send / stream.Receive
-// boundary, which is where send serialisation and codec issues live.
 type agentLoopback struct {
 	srv        *httptest.Server
 	serverURL  string
@@ -33,17 +28,12 @@ type agentLoopback struct {
 	httpClient *http.Client
 }
 
-// recordingAgentHandler is the server-side AgentServiceHandler the SDK Client
-// talks to in tests. The Stream method has a customisable onStream hook for
-// tests that need to push server-initiated frames (Welcome, malformed messages,
-// etc.); without a hook it drains the inbound side and records every received
-// AgentMessage so tests can assert on them after the fact.
 type recordingAgentHandler struct {
 	mu       sync.Mutex
 	received []*cadestrov1.AgentMessage
 
 	onStream func(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error
-	// syncState, when set, is returned verbatim for a stream SyncRequest.
+
 	syncState *cadestrov1.SyncState
 }
 
@@ -93,10 +83,6 @@ func newAgentLoopback(t *testing.T) *agentLoopback {
 	mux := http.NewServeMux()
 	mux.Handle(path, h)
 
-	// Go 1.24+ replaced golang.org/x/net/http2/h2c with first-party
-	// unencrypted-HTTP/2 support on http.Server and http.Transport
-	// via http.Protocols.SetUnencryptedHTTP2 — both sides must opt in
-	// for connect-rpc's bidi stream to negotiate h2c.
 	proto := new(http.Protocols)
 	proto.SetUnencryptedHTTP2(true)
 
@@ -124,9 +110,6 @@ func (l *agentLoopback) newClient(extra ...ClientOption) *Client {
 	return NewClient(l.serverURL, opts...)
 }
 
-// controlLoopback wires an in-process ControlService handler behind a plain
-// httptest.Server. Register and RenewCertificate are unary and travel over
-// HTTP/1.1 fine, so no h2c is needed here.
 type controlLoopback struct {
 	srv       *httptest.Server
 	serverURL string
@@ -171,10 +154,6 @@ func newControlLoopback(t *testing.T) *controlLoopback {
 		handler:   handler,
 	}
 }
-
-// ---------------------------------------------------------------------------
-// RegisterAgent and RenewCertificate
-// ---------------------------------------------------------------------------
 
 func TestRegisterAgent_HappyPath(t *testing.T) {
 	cl := newControlLoopback(t)
@@ -262,20 +241,6 @@ func TestRenewCertificate_HappyPath(t *testing.T) {
 	}
 }
 
-// TestFetchGatewayCRL_HappyPath and TestFetchGatewayCRL_ServerErrorPropagates
-// were removed with FetchGatewayCRL itself (spec 41). They exercised an agent
-// fetching the gateway CRL from control; with no gateway there is no such fetch,
-// and re-scoping the list to control's own certificate would be circular.
-//
-// Replacement coverage, deliberately stronger than these were: the RPC's
-// ABSENCE is now asserted by TestRPCSurface_MatchesTargetGolden in
-// contract_rpc_surface_test.go. A stub test proves an endpoint answers; the
-// contract test proves the endpoint is gone and the shipped set is exact.
-//
-// The surviving direction — control refusing a revoked AGENT certificate at the
-// mTLS handshake — is server-side and is covered by spec 41 criteria 4-6 in the
-// server repository, not here.
-
 func TestRenewCertificate_ServerErrorPropagates(t *testing.T) {
 	cl := newControlLoopback(t)
 	cl.handler.renewCertificateFn = func(_ *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
@@ -295,10 +260,6 @@ func TestRenewCertificate_ServerErrorPropagates(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Stream lifecycle: Connect / Close / outbound guards
-// ---------------------------------------------------------------------------
-
 func TestConnect_DoubleConnectErrors(t *testing.T) {
 	l := newAgentLoopback(t)
 	c := l.newClient()
@@ -315,10 +276,6 @@ func TestConnect_DoubleConnectErrors(t *testing.T) {
 	}
 }
 
-// TestSync_MapsMessageFieldsThroughFacade guards the hand-written
-// SyncStateResult facade against drift: a proto regen that adds a field but
-// forgets the facade mapping would silently drop it (the recurring facade-lag
-// bug).
 func TestSync_MapsMessageFieldsThroughFacade(t *testing.T) {
 	l := newAgentLoopback(t)
 	l.handler.syncState = &cadestrov1.SyncState{
@@ -353,7 +310,7 @@ func TestSync_MapsMessageFieldsThroughFacade(t *testing.T) {
 		res.MaintenanceWindow.Schedule[0].Days[1] != "sun" {
 		t.Errorf("MaintenanceWindow mismatch: %+v", res.MaintenanceWindow)
 	}
-	// A scalar alongside the message field: the facade drops these independently.
+
 	if res.SyncIntervalMinutes != 42 {
 		t.Errorf("SyncIntervalMinutes = %d, want 42", res.SyncIntervalMinutes)
 	}
@@ -402,11 +359,6 @@ func TestClose_IsIdempotent(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Send serialisation — the headline guarantee in client.go:447
-// (c.sendMu serialises every stream.Send to prevent on-wire corruption).
-// ---------------------------------------------------------------------------
-
 func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 	l := newAgentLoopback(t)
 	c := l.newClient(WithAuth("device-x", "tok"))
@@ -434,10 +386,7 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 		go func(g int) {
 			defer wg.Done()
 			for i := 0; i < perG; i++ {
-				// Use SendActionResult so the recorded payload variant is
-				// distinguishable from the SendHello above; ActionId encodes
-				// the (goroutine, sequence) pair so we can detect any
-				// dropped or mangled message after the fact.
+
 				ar := &cadestrov1.ActionResult{
 					ActionId: &cadestrov1.ActionId{Value: fmt.Sprintf("g%d-i%d", g, i)},
 				}
@@ -450,19 +399,13 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 	}
 	wg.Wait()
 
-	// Half-close the request side so the server's Receive loop returns
-	// io.EOF and frees the goroutine. CloseRequest is what stream.Close
-	// (via Client.Close) calls; here we do it directly because we want
-	// the server-side snapshot before the client tears the stream down.
 	if err := c.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
 
-	// The server's Stream goroutine runs concurrently with this test;
-	// poll briefly until every message has landed.
 	deadline := time.Now().Add(5 * time.Second)
 	var got []*cadestrov1.AgentMessage
-	want := 1 + goroutines*perG // SendHello + the fan-out
+	want := 1 + goroutines*perG
 	for {
 		got = l.handler.snapshot()
 		if len(got) >= want || time.Now().After(deadline) {
@@ -474,14 +417,10 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 		t.Fatalf("received %d messages, want %d (drops or dupes break serialisation guarantee)", len(got), want)
 	}
 
-	// Hello must be the first frame on the wire — SendHello fires before
-	// the fan-out, and sendMu makes "happens-before this point => arrives
-	// first" a real guarantee.
 	if got[0].GetHello() == nil {
 		t.Errorf("first message = %T, want Hello", got[0].Payload)
 	}
 
-	// Every (goroutine,index) pair must arrive exactly once.
 	seen := make(map[string]int)
 	for _, m := range got[1:] {
 		ar := m.GetActionResult()
@@ -501,60 +440,41 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Server-side oddities the SDK must survive
-// ---------------------------------------------------------------------------
-
-// dispatchServerMessage must drop unknown / nil ServerMessage payloads
-// silently (default branch in client.go:1077). A return error there tears
-// down the agent connection on every unrecognised frame, which is much worse
-// than dropping.
 func TestDispatch_NilPayload_IsDropped(t *testing.T) {
 	c := NewClient("http://localhost:0")
 	handler := &fakeTerminalHandler{}
-	msg := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}} // Payload nil = forward-compat case
+	msg := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}}
 	if err := c.dispatchServerMessage(context.Background(), msg, handler); err != nil {
 		t.Fatalf("nil payload should not error: %v", err)
 	}
-	// And no spurious dispatch happened.
+
 	if len(handler.startCalls)+len(handler.inputCalls)+len(handler.resizeCalls)+len(handler.stopCalls) != 0 {
 		t.Error("nil payload still reached a handler method")
 	}
 }
 
-// Run() must shrug off a malformed/unknown server frame (no panic, no fatal
-// error) and let the receive loop keep running until the context is cancelled.
 func TestRun_UnknownServerMessage_DoesNotTerminate(t *testing.T) {
 	l := newAgentLoopback(t)
 
 	var welcomed atomic.Bool
 
 	l.handler.onStream = func(ctx context.Context, s *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
-		// Wait for the agent's Hello before pushing anything back.
+
 		if _, err := s.Receive(); err != nil {
 			return err
 		}
-		// Push a Welcome so we can observe end-to-end dispatch worked.
+
 		if err := s.Send(&cadestrov1.ServerMessage{
 			Id:      &cadestrov1.MessageId{Value: NewULID()},
 			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{ServerVersion: "test"}},
 		}); err != nil {
 			return err
 		}
-		// Then push a payload-less ServerMessage. The client must drop
-		// it (default branch) and keep running.
+
 		if err := s.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}}); err != nil {
 			return err
 		}
-		// Drain anything else the agent sends until the request side
-		// closes. Any Receive error here means the stream is done —
-		// EOF on a clean Close, context.Canceled on ctx.Cancel, or a
-		// connect-wrapped cancellation. The fake is intentionally
-		// agnostic about which: its only job is to keep the stream
-		// open while the test drives the client; the test's own
-		// assertions (welcomed.Load, ctx.Cancel) judge correctness.
-		// Returning nil here so an unexpected error doesn't tear down
-		// the server side and mask the test's real failure mode.
+
 		for {
 			if _, err := s.Receive(); err != nil {
 				return nil
@@ -576,9 +496,6 @@ func TestRun_UnknownServerMessage_DoesNotTerminate(t *testing.T) {
 		done <- c.Run(ctx, "host", "v1", 50*time.Millisecond, handler)
 	}()
 
-	// Wait for OnWelcome to fire; that proves the receive loop survived
-	// the malformed frame after it (Run's receive goroutine keeps reading
-	// until ctx is done or a fatal error occurs).
 	deadline := time.Now().Add(5 * time.Second)
 	for !welcomed.Load() {
 		if time.Now().After(deadline) {
@@ -590,9 +507,9 @@ func TestRun_UnknownServerMessage_DoesNotTerminate(t *testing.T) {
 	cancel()
 	select {
 	case err := <-done:
-		// ctx.Cancel or transport-level cancel are both acceptable shutdown paths.
+
 		if err != nil && !errors.Is(err, context.Canceled) {
-			// Connect wraps cancellation; accept any error after cancel.
+
 			t.Logf("Run returned: %v (after cancel)", err)
 		}
 	case <-time.After(5 * time.Second):
@@ -612,12 +529,6 @@ func (h *welcomeRecordingHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQ
 	return nil, nil
 }
 func (h *welcomeRecordingHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
-
-// ---------------------------------------------------------------------------
-// mTLS — proves WithMTLSFromPEM actually installs the client certificate
-// the server will see during the handshake, not just a TLS config that
-// happens to compile.
-// ---------------------------------------------------------------------------
 
 func TestWithMTLSFromPEM_ClientPresentsCertificate(t *testing.T) {
 	caPEM, caKey, caCert := genCA(t, "test-ca")
@@ -646,7 +557,7 @@ func TestWithMTLSFromPEM_ClientPresentsCertificate(t *testing.T) {
 	})
 
 	t.Run("without cert handshake fails", func(t *testing.T) {
-		// Same CA so the server cert verifies, but no client identity.
+
 		tlsConfig := &tls.Config{
 			RootCAs:    caPool,
 			MinVersion: tls.VersionTLS13,
@@ -660,10 +571,6 @@ func TestWithMTLSFromPEM_ClientPresentsCertificate(t *testing.T) {
 	})
 }
 
-// startMTLSTestServer starts an httptest TLS server presenting serverCert/Key
-// and requiring a client certificate verified against clientCAPool. It returns
-// the server URL. Shared by the mTLS option tests so the boilerplate lives in
-// one place.
 func startMTLSTestServer(t *testing.T, serverCertPEM, serverKeyPEM []byte, clientCAPool *x509.CertPool) string {
 	t.Helper()
 	serverCert, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
@@ -689,15 +596,9 @@ func startMTLSTestServer(t *testing.T, serverCertPEM, serverKeyPEM []byte, clien
 	return srv.URL
 }
 
-// TestWithMTLSFromPEM_RejectsServerSignedByForeignCA pins the strict trust
-// property: the client trusts the internal CA only,
-// so a server whose certificate is signed by a different ("public"/system) CA
-// must be rejected even though it presents a syntactically valid chain. Without
-// this, a publicly-trusted cert with a matching SNI could impersonate control.
 func TestWithMTLSFromPEM_RejectsServerSignedByForeignCA(t *testing.T) {
 	internalCAPEM, _, _ := genCA(t, "internal-ca")
-	// The client identity is signed by the internal CA so the SERVER accepts the
-	// client; the rejection under test must be the CLIENT refusing the server.
+
 	internalCAForClientPEM, internalKey, internalCert := genCA(t, "internal-ca-2")
 	clientCertPEM, clientKeyPEM := genLeaf(t, internalCert, internalKey, "device-client", false)
 	clientCAPool := x509.NewCertPool()
@@ -705,7 +606,6 @@ func TestWithMTLSFromPEM_RejectsServerSignedByForeignCA(t *testing.T) {
 		t.Fatal("AppendCertsFromPEM(client ca)")
 	}
 
-	// Server cert signed by a FOREIGN CA the strict client does not trust.
 	foreignCAPEM, foreignKey, foreignCert := genCA(t, "foreign-public-ca")
 	_ = foreignCAPEM
 	serverCertPEM, serverKeyPEM := genLeaf(t, foreignCert, foreignKey, "127.0.0.1", true)
@@ -722,9 +622,6 @@ func TestWithMTLSFromPEM_RejectsServerSignedByForeignCA(t *testing.T) {
 	}
 }
 
-// TestWithMTLSFromPEMAndSystemRoots_TrustsInternalCA pins that the system-roots
-// variant adds the internal CA to the trust pool (WS9 #10 — the variant had no
-// coverage at all): a server signed by the internal CA is accepted.
 func TestWithMTLSFromPEMAndSystemRoots_TrustsInternalCA(t *testing.T) {
 	caPEM, caKey, caCert := genCA(t, "internal-ca")
 	serverCertPEM, serverKeyPEM := genLeaf(t, caCert, caKey, "127.0.0.1", true)
@@ -749,10 +646,6 @@ func TestWithMTLSFromPEMAndSystemRoots_TrustsInternalCA(t *testing.T) {
 	}
 }
 
-// TestWithMTLSFromPEMAndSystemRoots_RejectsUntrustedServer pins that broadening
-// the pool to system roots does NOT blanket-trust everything: a server signed by
-// a random CA that is neither the internal CA nor a host system root is still
-// rejected (WS9 #10).
 func TestWithMTLSFromPEMAndSystemRoots_RejectsUntrustedServer(t *testing.T) {
 	internalCAPEM, _, _ := genCA(t, "internal-ca")
 	clientCAPEM, clientKey, clientCACert := genCA(t, "internal-ca-2")
@@ -762,7 +655,6 @@ func TestWithMTLSFromPEMAndSystemRoots_RejectsUntrustedServer(t *testing.T) {
 		t.Fatal("AppendCertsFromPEM(client ca)")
 	}
 
-	// Server signed by a CA that is neither the internal CA nor a system root.
 	_, foreignKey, foreignCert := genCA(t, "untrusted-ca")
 	serverCertPEM, serverKeyPEM := genLeaf(t, foreignCert, foreignKey, "127.0.0.1", true)
 	srvURL := startMTLSTestServer(t, serverCertPEM, serverKeyPEM, clientCAPool)
@@ -803,7 +695,3 @@ func TestWithHTTPClient_AppliedToControlCalls(t *testing.T) {
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
-
-// ---------------------------------------------------------------------------
-// Cert generation helpers
-// ---------------------------------------------------------------------------

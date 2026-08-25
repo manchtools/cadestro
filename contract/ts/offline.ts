@@ -1,5 +1,4 @@
-// Offline sync store using IndexedDB.
-// Plain TypeScript — no framework dependencies.
+
 
 import { openDB, type IDBPDatabase } from 'idb';
 import { logger, describeError } from './logger.js';
@@ -47,24 +46,6 @@ export type DraftType =
 	| 'device-label'
 	| 'dispatch-action';
 
-/**
- * DraftPayloadMap is intentionally empty so frontend code can declare
- * narrowed per-type shapes via TypeScript module augmentation:
- *
- *   declare module '@manchtools/cadestro-contract/ts/offline' {
- *     interface DraftPayloadMap {
- *       'create-user': { email: string; displayName: string };
- *     }
- *   }
- *
- * Declaration merging cannot *narrow* a property that is already
- * declared on an interface (e.g. `unknown` cannot be replaced with a
- * struct), so the defaults live on a separate `BuiltinDraftPayloadMap`
- * type that the lookup falls back to. After augmentation
- * `store.getDraft('create-user')` returns the augmented shape;
- * un-augmented keys still resolve to `unknown`. F031 in
- * TECH_DEBT_AUDIT.md.
- */
 export interface DraftPayloadMap {}
 
 type BuiltinDraftPayloadMap = {
@@ -140,10 +121,6 @@ export class OfflineStore {
 	): Promise<void> {
 		const key = `${type}:${id}`;
 
-		// Persist to IndexedDB FIRST. Only update the in-memory map after a
-		// successful write — otherwise the UI would advertise "saved" while
-		// the next page load loses the data. The error is rethrown so the
-		// caller can surface it.
 		try {
 			const db = await getDB();
 			await db.put('drafts', {
@@ -166,7 +143,6 @@ export class OfflineStore {
 	async clearDraft(type: DraftType, id: string = 'default'): Promise<void> {
 		const key = `${type}:${id}`;
 
-		// Same ordering rule as saveDraft — persist before mutating in-memory.
 		try {
 			const db = await getDB();
 			await db.delete('drafts', key);

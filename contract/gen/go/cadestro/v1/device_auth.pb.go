@@ -23,20 +23,10 @@ const (
 )
 
 type EnrollRequest struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	ServerUrl string                 `protobuf:"bytes,1,opt,name=server_url,json=serverUrl,proto3" json:"server_url,omitempty"` // Control server URL (https only — enforced agent-side)
-	Token     string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`                          // Registration token from web UI
-	// Required out-of-band CA fingerprint pin: the 64-char hex SHA-256 of
-	// the control CA certificate DER. The agent verifies the CA
-	// returned by registration matches this pin BEFORE trusting it,
-	// defending against a first-enrollment trust-anchor swap. Delivered by
-	// the operator alongside the token (e.g. cadestro://…?token=…&pin=…).
-	// Missing or mismatched pins fail closed; enrollment has no
-	// trust-on-first-use path. Case-insensitive: the enroll CLI strips colons
-	// (openssl emits uppercase, colon-separated) and the agent compares
-	// with EqualFold, so the `hexadecimal` tag is intentionally permissive
-	// on case.
-	CaFingerprintPin string `protobuf:"bytes,3,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty"`
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ServerUrl        string                 `protobuf:"bytes,1,opt,name=server_url,json=serverUrl,proto3" json:"server_url,omitempty"`
+	Token            string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+	CaFingerprintPin string                 `protobuf:"bytes,3,opt,name=ca_fingerprint_pin,json=caFingerprintPin,proto3" json:"ca_fingerprint_pin,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -93,18 +83,10 @@ func (x *EnrollRequest) GetCaFingerprintPin() string {
 }
 
 type EnrollResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The other two fields below are conditioned on this — success=true
-	// means device_id is populated and error is empty; success=false
-	// means error is populated and device_id is empty. The bool itself
-	// is unconditional but we tag it explicit-required so the
-	// proto-validate coverage tool stops counting it as a gap. Bools
-	// always have a default value, so
-	// "required" here means "must be present in the wire payload" —
-	// protovalidate enforces no extra runtime check beyond that.
-	Success       bool      `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	DeviceId      *DeviceId `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Assigned device ID on success
-	Error         string    `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`                       // Error message on failure
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	DeviceId      *DeviceId              `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -199,7 +181,7 @@ func (*GetEnrollmentStatusRequest) Descriptor() ([]byte, []int) {
 type GetEnrollmentStatusResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Enrolled      bool                   `protobuf:"varint,1,opt,name=enrolled,proto3" json:"enrolled,omitempty"`
-	DeviceId      *DeviceId              `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Empty if not enrolled
+	DeviceId      *DeviceId              `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

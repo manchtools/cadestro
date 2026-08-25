@@ -1,11 +1,8 @@
-// Pure action type conversion utilities — no framework dependencies.
+
 import { ActionType } from '../gen/ts/cadestro/v1/actions_pb';
 
 export { ActionType };
 
-/**
- * Convert a string action type name to the ActionType enum value.
- */
 export function getActionTypeEnum(type: string): ActionType {
 	switch (type) {
 		case 'PACKAGE':
@@ -55,9 +52,6 @@ export function getActionTypeEnum(type: string): ActionType {
 	}
 }
 
-/**
- * Convert an ActionType enum value to its string name.
- */
 export function actionTypeToString(type: ActionType): string {
 	switch (type) {
 		case ActionType.PACKAGE:
@@ -107,9 +101,6 @@ export function actionTypeToString(type: ActionType): string {
 	}
 }
 
-/**
- * Static list of action type options (value + enum) for forms and filters.
- */
 export const ACTION_TYPE_OPTIONS = [
 	{ value: 'PACKAGE', type: ActionType.PACKAGE },
 	{ value: 'REPOSITORY', type: ActionType.REPOSITORY },

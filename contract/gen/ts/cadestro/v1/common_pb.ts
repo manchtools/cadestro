@@ -14,8 +14,6 @@ export const file_cadestro_v1_common: GenFile = /*@__PURE__*/
   fileDesc("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Il4KDUNvbW1hbmRPdXRwdXQSEQoJZXhpdF9jb2RlGAEgASgFEhwKBnN0ZG91dBgCIAEoCUIMukgJ2AEBcgQYgIBAEhwKBnN0ZGVychgDIAEoCUIMukgJ2AEBcgQYgIBAKs8CCg9FeGVjdXRpb25TdGF0dXMSIAocRVhFQ1VUSU9OX1NUQVRVU19VTlNQRUNJRklFRBAAEhwKGEVYRUNVVElPTl9TVEFUVVNfUEVORElORxABEhwKGEVYRUNVVElPTl9TVEFUVVNfUlVOTklORxACEhwKGEVYRUNVVElPTl9TVEFUVVNfU1VDQ0VTUxADEhsKF0VYRUNVVElPTl9TVEFUVVNfRkFJTEVEEAQSHAoYRVhFQ1VUSU9OX1NUQVRVU19TS0lQUEVEEAUSHAoYRVhFQ1VUSU9OX1NUQVRVU19USU1FT1VUEAYSHgoaRVhFQ1VUSU9OX1NUQVRVU19DQU5DRUxMRUQQBxIjCh9FWEVDVVRJT05fU1RBVFVTX05PVF9BUFBMSUNBQkxFEAgSIgoeRVhFQ1VUSU9OX1NUQVRVU19JTkRFVEVSTUlOQVRFEAkqQwoMRGVzaXJlZFN0YXRlEhkKFURFU0lSRURfU1RBVEVfUFJFU0VOVBAAEhgKFERFU0lSRURfU1RBVEVfQUJTRU5UEAEqigEKDkFzc2lnbm1lbnRNb2RlEhwKGEFTU0lHTk1FTlRfTU9ERV9SRVFVSVJFRBAAEh0KGUFTU0lHTk1FTlRfTU9ERV9BVkFJTEFCTEUQARIcChhBU1NJR05NRU5UX01PREVfRVhDTFVERUQQAhIdChlBU1NJR05NRU5UX01PREVfVU5JTlNUQUxMEAMq3QEKFEFzc2lnbm1lbnRTb3VyY2VUeXBlEiYKIkFTU0lHTk1FTlRfU09VUkNFX1RZUEVfVU5TUEVDSUZJRUQQABIhCh1BU1NJR05NRU5UX1NPVVJDRV9UWVBFX0FDVElPThABEiUKIUFTU0lHTk1FTlRfU09VUkNFX1RZUEVfQUNUSU9OX1NFVBACEiUKIUFTU0lHTk1FTlRfU09VUkNFX1RZUEVfREVGSU5JVElPThADEiwKKEFTU0lHTk1FTlRfU09VUkNFX1RZUEVfQ09NUExJQU5DRV9QT0xJQ1kQBCrSAQoUQXNzaWdubWVudFRhcmdldFR5cGUSJgoiQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9VTlNQRUNJRklFRBAAEiEKHUFTU0lHTk1FTlRfVEFSR0VUX1RZUEVfREVWSUNFEAESJwojQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9ERVZJQ0VfR1JPVVAQAhIfChtBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VTRVIQAxIlCiFBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VTRVJfR1JPVVAQBCqJAQoSUm9sZUdyYW50U2NvcGVLaW5kEiUKIVJPTEVfR1JBTlRfU0NPUEVfS0lORF9VTlNQRUNJRklFRBAAEiYKIlJPTEVfR1JBTlRfU0NPUEVfS0lORF9ERVZJQ0VfR1JPVVAQARIkCiBST0xFX0dSQU5UX1NDT1BFX0tJTkRfVVNFUl9HUk9VUBACKoIBChRQZXJtaXNzaW9uVGFyZ2V0S2luZBImCiJQRVJNSVNTSU9OX1RBUkdFVF9LSU5EX1VOU1BFQ0lGSUVEEAASIQodUEVSTUlTU0lPTl9UQVJHRVRfS0lORF9ERVZJQ0UQARIfChtQRVJNSVNTSU9OX1RBUkdFVF9LSU5EX1VTRVIQAipiCgxEZXZpY2VTdGF0dXMSHQoZREVWSUNFX1NUQVRVU19VTlNQRUNJRklFRBAAEhgKFERFVklDRV9TVEFUVVNfT05MSU5FEAESGQoVREVWSUNFX1NUQVRVU19PRkZMSU5FEAIqtgIKC1NlYXJjaFNjb3BlEhwKGFNFQVJDSF9TQ09QRV9VTlNQRUNJRklFRBAAEhgKFFNFQVJDSF9TQ09QRV9BQ1RJT05TEAESHAoYU0VBUkNIX1NDT1BFX0FDVElPTl9TRVRTEAISHAoYU0VBUkNIX1NDT1BFX0RFRklOSVRJT05TEAMSJAogU0VBUkNIX1NDT1BFX0NPTVBMSUFOQ0VfUE9MSUNJRVMQBBIYChRTRUFSQ0hfU0NPUEVfREVWSUNFUxAFEhYKElNFQVJDSF9TQ09QRV9VU0VSUxAGEh4KGlNFQVJDSF9TQ09QRV9ERVZJQ0VfR1JPVVBTEAcSHAoYU0VBUkNIX1NDT1BFX1VTRVJfR1JPVVBTEAgSHQoZU0VBUkNIX1NDT1BFX0FVRElUX0VWRU5UUxAJKuAECglTb3J0RmllbGQSGgoWU09SVF9GSUVMRF9VTlNQRUNJRklFRBAAEhMKD1NPUlRfRklFTERfTkFNRRABEhMKD1NPUlRfRklFTERfVFlQRRACEhcKE1NPUlRfRklFTERfSE9TVE5BTUUQAxIgChxTT1JUX0ZJRUxEX0NPTVBMSUFOQ0VfU1RBVFVTEAQSFAoQU09SVF9GSUVMRF9FTUFJTBAFEhsKF1NPUlRfRklFTERfRElTUExBWV9OQU1FEAYSFwoTU09SVF9GSUVMRF9ESVNBQkxFRBAHEhsKF1NPUlRfRklFTERfTUVNQkVSX0NPVU5UEAgSFQoRU09SVF9GSUVMRF9TVEFUVVMQCRIaChZTT1JUX0ZJRUxEX0FDVElPTl9UWVBFEAoSHgoaU09SVF9GSUVMRF9ERVZJQ0VfSE9TVE5BTUUQCxIZChVTT1JUX0ZJRUxEX0FDVE9SX1RZUEUQDBIaChZTT1JUX0ZJRUxEX1NUUkVBTV9UWVBFEA0SGQoVU09SVF9GSUVMRF9FVkVOVF9UWVBFEA4SGQoVU09SVF9GSUVMRF9SVUxFX0NPVU5UEA8SHAoYU09SVF9GSUVMRF9MQVNUX0xPR0lOX0FUEBASGQoVU09SVF9GSUVMRF9DUkVBVEVEX0FUEBESGQoVU09SVF9GSUVMRF9VUERBVEVEX0FUEBISGwoXU09SVF9GSUVMRF9MQVNUX1NFRU5fQVQQExIcChhTT1JUX0ZJRUxEX1JFR0lTVEVSRURfQVQQFBIaChZTT1JUX0ZJRUxEX09DQ1VSUkVEX0FUEBUqYAoNU29ydERpcmVjdGlvbhIeChpTT1JUX0RJUkVDVElPTl9VTlNQRUNJRklFRBAAEhYKElNPUlRfRElSRUNUSU9OX0FTQxABEhcKE1NPUlRfRElSRUNUSU9OX0RFU0MQAipfChRJZGVudGl0eVByb3ZpZGVyVHlwZRImCiJJREVOVElUWV9QUk9WSURFUl9UWVBFX1VOU1BFQ0lGSUVEEAASHwobSURFTlRJVFlfUFJPVklERVJfVFlQRV9PSURDEAEqjQEKDlJvdGF0aW9uUmVhc29uEh8KG1JPVEFUSU9OX1JFQVNPTl9VTlNQRUNJRklFRBAAEhsKF1JPVEFUSU9OX1JFQVNPTl9JTklUSUFMEAESHQoZUk9UQVRJT05fUkVBU09OX1NDSEVEVUxFRBACEh4KGlJPVEFUSU9OX1JFQVNPTl9BVVRIX0dSQUNFEAMqzQEKFEx1a3NSZXZvY2F0aW9uU3RhdHVzEiYKIkxVS1NfUkVWT0NBVElPTl9TVEFUVVNfVU5TUEVDSUZJRUQQABIfChtMVUtTX1JFVk9DQVRJT05fU1RBVFVTX05PTkUQARIlCiFMVUtTX1JFVk9DQVRJT05fU1RBVFVTX0RJU1BBVENIRUQQAhIiCh5MVUtTX1JFVk9DQVRJT05fU1RBVFVTX1NVQ0NFU1MQAxIhCh1MVUtTX1JFVk9DQVRJT05fU1RBVFVTX0ZBSUxFRBAEKroWCglFcnJvckNvZGUSGgoWRVJST1JfQ09ERV9VTlNQRUNJRklFRBAAEiQKIEVSUk9SX0NPREVfQUNUSU9OX0FMUkVBRFlfSU5fU0VUEAESJAogRVJST1JfQ09ERV9BQ1RJT05fTk9UX0NPTVBMSUFOQ0UQAhIfChtFUlJPUl9DT0RFX0FDVElPTl9OT1RfRk9VTkQQAxIvCitFUlJPUl9DT0RFX0FDVElPTl9TRVRfQUxSRUFEWV9JTl9ERUZJTklUSU9OEAQSKgomRVJST1JfQ09ERV9BQ1RJT05fU0VUX01FTUJFUl9OT1RfRk9VTkQQBRIjCh9FUlJPUl9DT0RFX0FDVElPTl9TRVRfTk9UX0ZPVU5EEAYSIwofRVJST1JfQ09ERV9BU1NJR05NRU5UX05PVF9GT1VORBAHEioKJkVSUk9SX0NPREVfQVNTSUdOTUVOVF9TT1VSQ0VfTk9UX0ZPVU5EEAgSKgomRVJST1JfQ09ERV9BU1NJR05NRU5UX1RBUkdFVF9OT1RfRk9VTkQQCRIoCiRFUlJPUl9DT0RFX0NBTk5PVF9ERUxFVEVfU1lTVEVNX1JPTEUQChIqCiZFUlJPUl9DT0RFX0NBTk5PVF9NT0RJRllfU1lTVEVNX0FDVElPThALEigKJEVSUk9SX0NPREVfQ0FOTk9UX01PRElGWV9TWVNURU1fUk9MRRAMEigKJEVSUk9SX0NPREVfQ0FOTk9UX1JFTkFNRV9TWVNURU1fUk9MRRANEicKI0VSUk9SX0NPREVfQ0FOTk9UX1VOTElOS19PVEhFUl9VU0VSEA4SMAosRVJST1JfQ09ERV9DT01QTElBTkNFX0FDVElPTl9ORUVEU19ERVRFQ1RJT04QDxIsCihFUlJPUl9DT0RFX0NPTVBMSUFOQ0VfUE9MSUNZX05BTUVfRVhJU1RTEBASKgomRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9OT1RfRk9VTkQQERIsCihFUlJPUl9DT0RFX0NPTVBMSUFOQ0VfUE9MSUNZX1JVTEVfRVhJU1RTEBISLworRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9SVUxFX05PVF9GT1VORBATEioKJkVSUk9SX0NPREVfREVGSU5JVElPTl9NRU1CRVJfTk9UX0ZPVU5EEBQSIwofRVJST1JfQ09ERV9ERUZJTklUSU9OX05PVF9GT1VORBAVEiYKIkVSUk9SX0NPREVfREVWSUNFX0FMUkVBRFlfSU5fR1JPVVAQFhIsCihFUlJPUl9DT0RFX0RFVklDRV9HUk9VUF9NRU1CRVJfTk9UX0ZPVU5EEBcSJwojRVJST1JfQ09ERV9ERVZJQ0VfR1JPVVBfTkFNRV9FWElTVFMQGBIlCiFFUlJPUl9DT0RFX0RFVklDRV9HUk9VUF9OT1RfRk9VTkQQGRIjCh9FUlJPUl9DT0RFX0RFVklDRV9OT1RfQ09OTkVDVEVEEBoSHwobRVJST1JfQ09ERV9ERVZJQ0VfTk9UX0ZPVU5EEBsSIQodRVJST1JfQ09ERV9ERVZJQ0VfVU5BVkFJTEFCTEUQHBIqCiZFUlJPUl9DT0RFX0RZTkFNSUNfR1JPVVBfTUFOVUFMX01PRElGWRAdEi8KK0VSUk9SX0NPREVfRFlOQU1JQ19HUk9VUF9NRU1CRVJTSElQX01BTkFHRUQQHhIjCh9FUlJPUl9DT0RFX0VNQUlMX0FMUkVBRFlfRVhJU1RTEB8SHgoaRVJST1JfQ09ERV9HUkFOVF9OT1RfRk9VTkQQIBIlCiFFUlJPUl9DT0RFX0dST1VQX0FMUkVBRFlfSEFTX1JPTEUQIRIgChxFUlJPUl9DT0RFX0dST1VQX05PVF9EWU5BTUlDECISJgoiRVJST1JfQ09ERV9JREVOVElUWV9MSU5LX05PVF9GT1VORBAjEh0KGUVSUk9SX0NPREVfSU5URVJOQUxfRVJST1IQJBIkCiBFUlJPUl9DT0RFX0lOVkFMSURfRFlOQU1JQ19RVUVSWRAlEiEKHUVSUk9SX0NPREVfSU5WQUxJRF9QQUdFX1RPS0VOECYSHAoYRVJST1JfQ09ERV9JTlZBTElEX1FVRVJZECcSHwobRVJST1JfQ09ERV9MQVNUX0FVVEhfTUVUSE9EECgSJQohRVJST1JfQ09ERV9MUFNfUEFTU1dPUkRfTk9UX0ZPVU5EECkSJwojRVJST1JfQ09ERV9MVUtTX0tFWV9BTFJFQURZX1JFVk9LRUQQKhIhCh1FUlJPUl9DT0RFX0xVS1NfS0VZX05PVF9GT1VORBArEioKJkVSUk9SX0NPREVfTFVLU19LRVlfUkVWT0NBVElPTl9QRU5ESU5HECwSIgoeRVJST1JfQ09ERV9OT19BU1NJR05NRU5UX0ZPVU5EEC0SIAocRVJST1JfQ09ERV9OT1RfQVVUSEVOVElDQVRFRBAuEiAKHEVSUk9SX0NPREVfUEVSTUlTU0lPTl9ERU5JRUQQLxIgChxFUlJPUl9DT0RFX1BST1ZJREVSX0RJU0FCTEVEEDASIQodRVJST1JfQ09ERV9QUk9WSURFUl9OT1RfRk9VTkQQMRIjCh9FUlJPUl9DT0RFX1BST1ZJREVSX1NMVUdfRVhJU1RTEDISJQohRVJST1JfQ09ERV9RVUVSWV9SRVNVTFRfTk9UX0ZPVU5EEDMSGwoXRVJST1JfQ09ERV9SQVRFX0xJTUlURUQQNBIaChZFUlJPUl9DT0RFX1JPTEVfSU5fVVNFEDUSHwobRVJST1JfQ09ERV9ST0xFX05BTUVfRVhJU1RTEDYSHQoZRVJST1JfQ09ERV9ST0xFX05PVF9GT1VORBA3EiMKH0VSUk9SX0NPREVfU0NJTV9BTFJFQURZX0VOQUJMRUQQOBIkCiBFUlJPUl9DT0RFX1NDSU1fTUFOQUdFRF9SRVNPVVJDRRA5Eh8KG0VSUk9SX0NPREVfU0NJTV9OT1RfRU5BQkxFRBA6EiIKHkVSUk9SX0NPREVfU0NPUEVfTk9UX1BFUk1JVFRFRBA7EiYKIkVSUk9SX0NPREVfU1NPX05PX01BVENISU5HX0FDQ09VTlQQPBIgChxFUlJPUl9DT0RFX1NTT19TVEFURV9FWFBJUkVEED0SLgoqRVJST1JfQ09ERV9URVJNSU5BTF9MSU5VWF9VU0VSTkFNRV9OT1RfU0VUED4SJgoiRVJST1JfQ09ERV9URVJNSU5BTF9OT1RfQ09ORklHVVJFRBA/EikKJUVSUk9SX0NPREVfVEVSTUlOQUxfU0VTU0lPTl9OT1RfRk9VTkQQQBIcChhFUlJPUl9DT0RFX1RPS0VOX0VYUElSRUQQQRIeChpFUlJPUl9DT0RFX1RPS0VOX05PVF9GT1VORBBCEhwKGEVSUk9SX0NPREVfVU5JTVBMRU1FTlRFRBBDEiQKIEVSUk9SX0NPREVfVVNFUl9BTFJFQURZX0hBU19ST0xFEEQSJAogRVJST1JfQ09ERV9VU0VSX0FMUkVBRFlfSU5fR1JPVVAQRRIqCiZFUlJPUl9DT0RFX1VTRVJfR1JPVVBfTUVNQkVSX05PVF9GT1VORBBGEiUKIUVSUk9SX0NPREVfVVNFUl9HUk9VUF9OQU1FX0VYSVNUUxBHEiMKH0VSUk9SX0NPREVfVVNFUl9HUk9VUF9OT1RfRk9VTkQQSBIdChlFUlJPUl9DT0RFX1VTRVJfTk9UX0ZPVU5EEEkSIAocRVJST1JfQ09ERV9WQUxJREFUSU9OX0ZBSUxFRBBKKp4BChBDb21wbGlhbmNlU3RhdHVzEh0KGUNPTVBMSUFOQ0VfU1RBVFVTX1VOS05PV04QABIfChtDT01QTElBTkNFX1NUQVRVU19DT01QTElBTlQQARIjCh9DT01QTElBTkNFX1NUQVRVU19OT05fQ09NUExJQU5UEAISJQohQ09NUExJQU5DRV9TVEFUVVNfSU5fR1JBQ0VfUEVSSU9EEANCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate]);
 
 /**
- * Unique identifier for an action instance
- *
  * @generated from message cadestro.v1.ActionId
  */
 export type ActionId = Message<"cadestro.v1.ActionId"> & {
@@ -33,8 +31,6 @@ export const ActionIdSchema: GenMessage<ActionId> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_common, 0);
 
 /**
- * Unique identifier for a device/agent
- *
  * @generated from message cadestro.v1.DeviceId
  */
 export type DeviceId = Message<"cadestro.v1.DeviceId"> & {
@@ -630,8 +626,6 @@ export const ExternalIdentityIdSchema: GenMessage<ExternalIdentityId> = /*@__PUR
   messageDesc(file_cadestro_v1_common, 35);
 
 /**
- * Structured error detail attached to Connect-RPC errors.
- *
  * @generated from message cadestro.v1.ErrorDetail
  */
 export type ErrorDetail = Message<"cadestro.v1.ErrorDetail"> & {
@@ -641,10 +635,6 @@ export type ErrorDetail = Message<"cadestro.v1.ErrorDetail"> & {
   code: ErrorCode;
 
   /**
-   * Server-generated request ID for correlating errors with server logs.
-   * ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
-   * without inviting unbounded growth.
-   *
    * @generated from field: cadestro.v1.RequestId request_id = 2;
    */
   requestId?: RequestId;
@@ -658,16 +648,6 @@ export const ErrorDetailSchema: GenMessage<ErrorDetail> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_common, 36);
 
 /**
- * MaintenanceWindow gates scheduled policy runs by device-local wall-clock
- * time. A window is a positive allowlist: when the schedule is empty
- * the window is "always allowed" — the feature is opt-in and existing
- * groups carry an empty window with zero behavioural change.
- *
- * Multiple entries combine as OR. The agent evaluates against
- * time.Now().Local() at run time so "02:00 local" means 02:00
- * wherever the device runs; the server never tries to interpret the
- * device's timezone.
- *
  * @generated from message cadestro.v1.MaintenanceWindow
  */
 export type MaintenanceWindow = Message<"cadestro.v1.MaintenanceWindow"> & {
@@ -685,13 +665,6 @@ export const MaintenanceWindowSchema: GenMessage<MaintenanceWindow> = /*@__PURE_
   messageDesc(file_cadestro_v1_common, 37);
 
 /**
- * One entry in a MaintenanceWindow: a set of weekdays and a single
- * allowed clock range. `allow` uses 24-hour HH:MM-HH:MM in local time
- * (e.g. "22:00-06:00"). Crossing midnight is supported: when the
- * range's start is greater than its end the window continues into the
- * next day. `days` lists the weekdays the entry applies to using the
- * lowercase three-letter abbreviations mon|tue|wed|thu|fri|sat|sun.
- *
  * @generated from message cadestro.v1.MaintenanceWindowEntry
  */
 export type MaintenanceWindowEntry = Message<"cadestro.v1.MaintenanceWindowEntry"> & {
@@ -714,8 +687,6 @@ export const MaintenanceWindowEntrySchema: GenMessage<MaintenanceWindowEntry> = 
   messageDesc(file_cadestro_v1_common, 38);
 
 /**
- * Output from command execution
- *
  * @generated from message cadestro.v1.CommandOutput
  */
 export type CommandOutput = Message<"cadestro.v1.CommandOutput"> & {
@@ -743,8 +714,6 @@ export const CommandOutputSchema: GenMessage<CommandOutput> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_common, 39);
 
 /**
- * Execution status for any action
- *
  * @generated from enum cadestro.v1.ExecutionStatus
  */
 export enum ExecutionStatus {
@@ -784,35 +753,16 @@ export enum ExecutionStatus {
   TIMEOUT = 6,
 
   /**
-   * Operator-cancelled action result.
-   *
    * @generated from enum value: EXECUTION_STATUS_CANCELLED = 7;
    */
   CANCELLED = 7,
 
   /**
-   * The action is structurally inapplicable to this device — e.g.
-   * security_only on a package manager with no security-patch
-   * scoping, a DEB action on an rpm host, a FLATPAK action with no
-   * flatpak installed. Terminal, non-error: nothing was executed
-   * (fail-closed), and the machine-readable reason travels in the
-   * result error field. Distinct from SKIPPED (a run the server or
-   * agent chose not to perform this time, e.g. maintenance window)
-   * in that NOT_APPLICABLE is a property of the device+action pair,
-   * not of the moment.
-   *
    * @generated from enum value: EXECUTION_STATUS_NOT_APPLICABLE = 8;
    */
   NOT_APPLICABLE = 8,
 
   /**
-   * The agent persisted STARTED before a non-idempotent side effect and
-   * then crashed, so whether the effect landed is unknown. Reported on
-   * recovery instead of silently re-running the action: a second attempt
-   * could double-apply, and claiming FAILED would be a guess. Terminal
-   * from the agent's side — resolving it is an operator/product decision
-   * (a reboot resolves via the boot marker; other actions do not).
-   *
    * @generated from enum value: EXECUTION_STATUS_INDETERMINATE = 9;
    */
   INDETERMINATE = 9,
@@ -825,21 +775,15 @@ export const ExecutionStatusSchema: GenEnum<ExecutionStatus> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 0);
 
 /**
- * Desired state for stateful actions
- *
  * @generated from enum cadestro.v1.DesiredState
  */
 export enum DesiredState {
   /**
-   * Install/create/enable
-   *
    * @generated from enum value: DESIRED_STATE_PRESENT = 0;
    */
   PRESENT = 0,
 
   /**
-   * Remove/delete/disable
-   *
    * @generated from enum value: DESIRED_STATE_ABSENT = 1;
    */
   ABSENT = 1,
@@ -852,35 +796,25 @@ export const DesiredStateSchema: GenEnum<DesiredState> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 1);
 
 /**
- * Assignment mode determines how an action is applied to a target
- *
  * @generated from enum cadestro.v1.AssignmentMode
  */
 export enum AssignmentMode {
   /**
-   * Mandatory: action will be applied
-   *
    * @generated from enum value: ASSIGNMENT_MODE_REQUIRED = 0;
    */
   REQUIRED = 0,
 
   /**
-   * Optional: user can select
-   *
    * @generated from enum value: ASSIGNMENT_MODE_AVAILABLE = 1;
    */
   AVAILABLE = 1,
 
   /**
-   * Blocked: action won't be applied on this target
-   *
    * @generated from enum value: ASSIGNMENT_MODE_EXCLUDED = 2;
    */
   EXCLUDED = 2,
 
   /**
-   * Apply action but force desired_state to ABSENT
-   *
    * @generated from enum value: ASSIGNMENT_MODE_UNINSTALL = 3;
    */
   UNINSTALL = 3,
@@ -893,9 +827,6 @@ export const AssignmentModeSchema: GenEnum<AssignmentMode> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 2);
 
 /**
- * AssignmentSourceType identifies what kind of policy artefact an
- * Assignment links to a target.
- *
  * @generated from enum cadestro.v1.AssignmentSourceType
  */
 export enum AssignmentSourceType {
@@ -932,9 +863,6 @@ export const AssignmentSourceTypeSchema: GenEnum<AssignmentSourceType> = /*@__PU
   enumDesc(file_cadestro_v1_common, 3);
 
 /**
- * AssignmentTargetType identifies what kind of subject an Assignment
- * applies to.
- *
  * @generated from enum cadestro.v1.AssignmentTargetType
  */
 export enum AssignmentTargetType {
@@ -971,19 +899,10 @@ export const AssignmentTargetTypeSchema: GenEnum<AssignmentTargetType> = /*@__PU
   enumDesc(file_cadestro_v1_common, 4);
 
 /**
- * RoleGrantScopeKind names which kind of group anchors a scoped role
- * grant. Kinds are exclusive — a grant is either device-group-scoped,
- * user-group-scoped, or unscoped/global (UNSPECIFIED). Permissions
- * declare a single target kind on their PermissionInfo; a grant whose
- * scope_kind doesn't match every permission in the role is rejected at
- * the role-assignment handler.
- *
  * @generated from enum cadestro.v1.RoleGrantScopeKind
  */
 export enum RoleGrantScopeKind {
   /**
-   * UNSPECIFIED on a grant means the grant is unscoped/global.
-   *
    * @generated from enum value: ROLE_GRANT_SCOPE_KIND_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
@@ -1006,43 +925,20 @@ export const RoleGrantScopeKindSchema: GenEnum<RoleGrantScopeKind> = /*@__PURE__
   enumDesc(file_cadestro_v1_common, 5);
 
 /**
- * PermissionTargetKind classifies the target kind a permission acts
- * on, which determines which RoleGrantScopeKind it accepts on a
- * scoped grant. Returned on
- * PermissionInfo by ListPermissions so the role-builder UI can
- * surface scopable permissions and gate the scope picker by kind.
- *
- * Fail-closed semantic: a permission that does not explicitly
- * declare a target kind is NOT scopable — granting it with any
- * scope_kind is rejected by the role-assignment handler. New
- * permissions added without an explicit kind silently land at the
- * safe default. Use DEVICE / USER ONLY when the permission's
- * authorization decision can be expressed as "scope-id matches a
- * group containing this device/user".
- *
  * @generated from enum cadestro.v1.PermissionTargetKind
  */
 export enum PermissionTargetKind {
   /**
-   * UNSPECIFIED — not scopable. Org-tier permissions
-   * (CreateRole, server settings, IDP/SCIM, audit) and any
-   * permission whose authorization decision can't be expressed as
-   * a group-membership check stay at UNSPECIFIED.
-   *
    * @generated from enum value: PERMISSION_TARGET_KIND_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
-   * DEVICE — scopable with RoleGrantScopeKind=DEVICE_GROUP only.
-   *
    * @generated from enum value: PERMISSION_TARGET_KIND_DEVICE = 1;
    */
   DEVICE = 1,
 
   /**
-   * USER — scopable with RoleGrantScopeKind=USER_GROUP only.
-   *
    * @generated from enum value: PERMISSION_TARGET_KIND_USER = 2;
    */
   USER = 2,
@@ -1055,10 +951,6 @@ export const PermissionTargetKindSchema: GenEnum<PermissionTargetKind> = /*@__PU
   enumDesc(file_cadestro_v1_common, 6);
 
 /**
- * DeviceStatus is computed by the server from the device's last_seen_at
- * timestamp, so it is wire-only — no column stores it. UNSPECIFIED on
- * the request means "no status filter".
- *
  * @generated from enum cadestro.v1.DeviceStatus
  */
 export enum DeviceStatus {
@@ -1085,10 +977,6 @@ export const DeviceStatusSchema: GenEnum<DeviceStatus> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 7);
 
 /**
- * SearchScope identifies which search index a SearchRequest targets,
- * and which index a SearchResult came from. UNSPECIFIED on the request
- * means "all scopes".
- *
  * @generated from enum cadestro.v1.SearchScope
  */
 export enum SearchScope {
@@ -1150,11 +1038,6 @@ export const SearchScopeSchema: GenEnum<SearchScope> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 8);
 
 /**
- * SortField is the column a Search orders by. Shared across all scopes
- * (the union of sortable columns); the server validates per-scope validity
- * (scopeSortableFields) and maps each value to that scope's index field.
- * UNSPECIFIED means "use the scope's default sort".
- *
  * @generated from enum cadestro.v1.SortField
  */
 export enum SortField {
@@ -1276,9 +1159,6 @@ export const SortFieldSchema: GenEnum<SortField> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 9);
 
 /**
- * SortDirection is the order for a Search sort. UNSPECIFIED lets the
- * server pick the field's natural default.
- *
  * @generated from enum cadestro.v1.SortDirection
  */
 export enum SortDirection {
@@ -1305,10 +1185,6 @@ export const SortDirectionSchema: GenEnum<SortDirection> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 10);
 
 /**
- * IdentityProviderType identifies the auth protocol an
- * IdentityProvider speaks. Today only OIDC ships, but the enum is
- * forward-looking — SAML2, LDAP, etc. can be added later.
- *
  * @generated from enum cadestro.v1.IdentityProviderType
  */
 export enum IdentityProviderType {
@@ -1330,14 +1206,6 @@ export const IdentityProviderTypeSchema: GenEnum<IdentityProviderType> = /*@__PU
   enumDesc(file_cadestro_v1_common, 11);
 
 /**
- * RotationReason classifies why a credential rotation happened. The
- * agent emits INITIAL (first time the action ran on the device, no
- * previous credential to retain), SCHEDULED (interval-based policy
- * rotation), and AUTH_GRACE (LPS only — user authenticated since the
- * last rotation and the grace period has now elapsed). Used by LUKS
- * passphrase rotations (INITIAL / SCHEDULED only — LUKS does not run
- * the auth-grace path) and LPS password rotations.
- *
  * @generated from enum cadestro.v1.RotationReason
  */
 export enum RotationReason {
@@ -1369,12 +1237,6 @@ export const RotationReasonSchema: GenEnum<RotationReason> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 12);
 
 /**
- * LuksRevocationStatus tracks the lifecycle of a LUKS passphrase
- * revocation. NONE is the wire-default for keys that have not been
- * revoked. Once an admin triggers revocation the key moves through
- * DISPATCHED (work committed) and then SUCCESS or FAILED based on the
- * agent's response.
- *
  * @generated from enum cadestro.v1.LuksRevocationStatus
  */
 export enum LuksRevocationStatus {
@@ -1411,10 +1273,6 @@ export const LuksRevocationStatusSchema: GenEnum<LuksRevocationStatus> = /*@__PU
   enumDesc(file_cadestro_v1_common, 13);
 
 /**
- * ErrorCode is the fixed vocabulary of machine-readable codes an
- * ErrorDetail carries. A client branches on the code, never on the
- * message.
- *
  * @generated from enum cadestro.v1.ErrorCode
  */
 export enum ErrorCode {
@@ -1801,8 +1659,6 @@ export const ErrorCodeSchema: GenEnum<ErrorCode> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 14);
 
 /**
- * Compliance status for a device based on detection scripts
- *
  * @generated from enum cadestro.v1.ComplianceStatus
  */
 export enum ComplianceStatus {

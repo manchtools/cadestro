@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { ActionType } from '../gen/ts/cadestro/v1/actions_pb';
 import { getActionTypeEnum, actionTypeToString, ACTION_TYPE_OPTIONS } from './action-types';
 
-// Self-discovering guard: every member of the GENERATED enum must survive the
-// hand-written mappings. A new proto action type that misses a switch case
-// fails here instead of silently rendering "UNSPECIFIED".
 const enumMembers = Object.entries(ActionType).filter(
 	(e): e is [string, ActionType] => typeof e[1] === 'number' && e[1] !== ActionType.UNSPECIFIED
 );

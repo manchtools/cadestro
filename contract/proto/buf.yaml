@@ -6,18 +6,13 @@ deps:
 lint:
   use:
     - STANDARD
-  # Some RPCs deliberately share request or response shapes instead of adding
-  # one-field wrapper messages solely to satisfy a naming convention.
+
   except:
     - RPC_REQUEST_STANDARD_NAME
     - RPC_RESPONSE_STANDARD_NAME
-    # Several RPCs deliberately share a response type (e.g. multiple
-    # mutation paths that all return the updated entity). Renaming
-    # them per-RPC would force the server / agent / web to track 10+
-    # near-identical types per resource; the existing pattern is the
-    # documented choice for this codebase.
+
     - RPC_REQUEST_RESPONSE_UNIQUE
-    # Several enums use a meaningful domain default as their zero value.
+
     - ENUM_ZERO_VALUE_SUFFIX
 breaking:
   use:

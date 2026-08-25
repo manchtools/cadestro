@@ -13,10 +13,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
-// TestBootstrapHTTPClient_Bounded pins the transport hardening for the
-// unauthenticated RegisterAgent/RenewCertificate bootstrap calls
-// (sdk#104): a bounded timeout (no hang/DoS) and a TLS 1.3 floor.
-// RegisterAgent and RenewCertificate use this as their default client.
 func TestBootstrapHTTPClient_Bounded(t *testing.T) {
 	c := bootstrapHTTPClient()
 	if c.Timeout == 0 {
@@ -34,23 +30,18 @@ func TestBootstrapHTTPClient_Bounded(t *testing.T) {
 	}
 }
 
-// fakeTerminalHandler is a minimal StreamHandler+TerminalHandler that
-// records every call so dispatch tests can assert against it.
 type fakeTerminalHandler struct {
 	startCalls  []*cadestrov1.TerminalStart
 	inputCalls  []*cadestrov1.TerminalInput
 	resizeCalls []*cadestrov1.TerminalResize
 	stopCalls   []*cadestrov1.TerminalStop
 
-	// Per-method error overrides for failure-path tests.
 	startErr  error
 	inputErr  error
 	resizeErr error
 	stopErr   error
 }
 
-// StreamHandler bits — we don't care about them in dispatch tests, so
-// they're stubs that record nothing and return nil.
 func (h *fakeTerminalHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error {
 	return nil
 }
@@ -76,9 +67,6 @@ func (h *fakeTerminalHandler) OnTerminalStop(ctx context.Context, req *cadestrov
 	return h.stopErr
 }
 
-// fakeBareHandler implements StreamHandler but NOT TerminalHandler.
-// Used to verify that dispatching a Terminal* message at a handler
-// without terminal support is silently dropped (no error).
 type fakeBareHandler struct{}
 
 func (fakeBareHandler) OnWelcome(ctx context.Context, w *cadestrov1.Welcome) error { return nil }
@@ -87,15 +75,10 @@ func (fakeBareHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQuery) (*cad
 }
 func (fakeBareHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
-// newTestClient builds a Client that can run dispatchServerMessage but
-// is not actually connected to any server. The dispatch tests never
-// touch the underlying stream, so the missing transport is fine.
 func newTestClient() *Client {
 	return NewClient("http://localhost:0")
 }
 
-// makeTerminalMsg builds a ServerMessage carrying one of the four
-// Terminal* payload variants. Used by both routing and error tests.
 func makeTerminalMsg(name string) *cadestrov1.ServerMessage {
 	msg := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}}
 	switch name {
@@ -134,12 +117,6 @@ func makeTerminalMsg(name string) *cadestrov1.ServerMessage {
 	return msg
 }
 
-// TestDispatch_Terminal_Routing is the table-driven covering test for
-// the four Terminal* dispatch cases. Each row picks a payload, dispatches
-// it through dispatchServerMessage, then runs case-specific assertions
-// against the fake handler's recorded calls. Keeps the per-case error
-// messages identical to the previous one-test-per-case shape so test
-// failures stay readable.
 func TestDispatch_Terminal_Routing(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -210,18 +187,11 @@ func TestDispatch_Terminal_Routing(t *testing.T) {
 	}
 }
 
-// Handler errors must propagate from dispatchServerMessage so the
-// stream can be torn down. The wrapper text must mention the message
-// kind so operators can spot the failing path in logs — without that,
-// every terminal failure looks identical in the error tail.
-//
-// Asserted for all four Terminal* methods so the wrapper contract is
-// enforced uniformly, not just for Start.
 func TestDispatch_Terminal_HandlerErrorPropagates(t *testing.T) {
 	cases := []struct {
 		name    string
 		setErr  func(h *fakeTerminalHandler, want error)
-		wantSub string // substring expected in err.Error()
+		wantSub string
 	}{
 		{
 			name:    "TerminalStart",
@@ -266,10 +236,6 @@ func TestDispatch_Terminal_HandlerErrorPropagates(t *testing.T) {
 	}
 }
 
-// A handler that does NOT implement TerminalHandler must silently
-// drop terminal messages — no error, no panic. Critical for the
-// transition window where the proto has shipped but agents haven't
-// implemented terminal support yet.
 func TestDispatch_Terminal_NoHandler_DropsSilently(t *testing.T) {
 	c := newTestClient()
 	bare := fakeBareHandler{}
@@ -287,14 +253,6 @@ func TestDispatch_Terminal_NoHandler_DropsSilently(t *testing.T) {
 	}
 }
 
-// An unknown / unrecognized ServerMessage payload (e.g. a future
-// variant from a newer server build) must NOT tear down the
-// connection. Returning an error from dispatchServerMessage causes
-// Run to terminate the stream, which is the wrong behaviour for an
-// unknown frame — silently drop it instead.
-//
-// We synthesize "unknown" by passing a ServerMessage with a nil
-// payload, which the type switch hits as the default case.
 func TestDispatch_UnknownPayload_DropsSilently(t *testing.T) {
 	c := newTestClient()
 	h := &fakeTerminalHandler{}
@@ -303,23 +261,15 @@ func TestDispatch_UnknownPayload_DropsSilently(t *testing.T) {
 	if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
 		t.Errorf("dispatch unknown payload: unexpected error: %v", err)
 	}
-	// And no handler method should have been touched.
+
 	if len(h.startCalls)+len(h.inputCalls)+len(h.resizeCalls)+len(h.stopCalls) != 0 {
 		t.Errorf("unknown payload should not invoke any handler method")
 	}
 }
 
-// TerminalHandler is a strict superset of StreamHandler — verify the
-// interface assertion at compile time so a future change that breaks
-// it shows up at build time, not at runtime.
 var _ TerminalHandler = (*fakeTerminalHandler)(nil)
 var _ StreamHandler = fakeBareHandler{}
 
-// applyWelcomeHeartbeat is the contract the server relies on: any
-// Welcome with a non-zero heartbeat_interval replaces the running
-// cadence, clamped to [Min, Max]. These tests lock that in so a
-// future change to the clamp or the dispatch path can't silently
-// regress the reconnect-reconfig flow.
 func TestApplyWelcomeHeartbeat_ClampsAndPushes(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -335,7 +285,7 @@ func TestApplyWelcomeHeartbeat_ClampsAndPushes(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			c := newTestClient()
-			// Simulate an active Run: install the update channel.
+
 			hb := make(chan time.Duration, 1)
 			c.mu.Lock()
 			c.heartbeatUpdate = hb
@@ -357,10 +307,6 @@ func TestApplyWelcomeHeartbeat_ClampsAndPushes(t *testing.T) {
 	}
 }
 
-// A Welcome without heartbeat_interval (field unset) must not push
-// anything — the caller-supplied initial cadence stays in effect.
-// Same for zero / negative durations, which are nonsensical and
-// should be ignored rather than silently clamped.
 func TestApplyWelcomeHeartbeat_NoOpCases(t *testing.T) {
 	cases := []struct {
 		name string
@@ -390,22 +336,15 @@ func TestApplyWelcomeHeartbeat_NoOpCases(t *testing.T) {
 	}
 }
 
-// When Run() isn't active the update channel is nil; applying a
-// Welcome heartbeat must be a safe no-op rather than panicking on a
-// nil-channel send.
 func TestApplyWelcomeHeartbeat_NoRunActive(t *testing.T) {
 	c := newTestClient()
-	// heartbeatUpdate is nil by default.
+
 	c.applyWelcomeHeartbeat(&cadestrov1.Welcome{
 		HeartbeatInterval: durationpb.New(42 * time.Second),
 	})
-	// Assertion is the absence of a panic.
+
 }
 
-// Second Welcome overwrites a stale pending update rather than
-// queuing — latest-wins is what the heartbeat goroutine expects,
-// otherwise an old value could be picked up after the server
-// already changed its mind.
 func TestApplyWelcomeHeartbeat_LatestWins(t *testing.T) {
 	c := newTestClient()
 	hb := make(chan time.Duration, 1)
@@ -427,9 +366,6 @@ func TestApplyWelcomeHeartbeat_LatestWins(t *testing.T) {
 	}
 }
 
-// Dispatching a Welcome through dispatchServerMessage must apply the
-// heartbeat interval AND still call handler.OnWelcome — the two
-// behaviours are independent and both must fire.
 func TestDispatch_Welcome_AppliesHeartbeatAndHandler(t *testing.T) {
 	c := newTestClient()
 	hb := make(chan time.Duration, 1)

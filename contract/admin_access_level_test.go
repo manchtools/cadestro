@@ -1,16 +1,5 @@
 package contract
 
-// Wire-compat pin for AdminAccessLevel enum values. Adding values is
-// additive and safe; reordering/renumbering is a wire break against
-// every device already running. These tests fail fast when a future
-// edit shifts a value, so the break is caught here, not at an
-// in-the-field agent.
-//
-// Filed alongside the TerminalAdmin work in
-// archived server#70 — the new TERMINAL_ADMIN_*
-// values were added so the agent can route to two new sudoers
-// generators without mutating FULL/LIMITED's existing semantics.
-
 import (
 	"testing"
 
@@ -39,10 +28,6 @@ func TestAdminAccessLevel_WireNumbersAreStable(t *testing.T) {
 	}
 }
 
-// TestAdminAccessLevel_TerminalAdminValuesAreDistinct guards against a
-// future careless edit that re-uses an existing value for one of the
-// new names. Both new values must be present and distinct from every
-// older value.
 func TestAdminAccessLevel_TerminalAdminValuesAreDistinct(t *testing.T) {
 	tlim := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED
 	tfull := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL
@@ -66,9 +51,6 @@ func TestAdminAccessLevel_TerminalAdminValuesAreDistinct(t *testing.T) {
 	}
 }
 
-// TestAdminAccessLevel_TerminalAdminValuesHaveStringNames pins the
-// generated .String() output so a future re-numbering can't drift the
-// human label silently.
 func TestAdminAccessLevel_TerminalAdminValuesHaveStringNames(t *testing.T) {
 	if got := cadestrov1.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED.String(); got != "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED" {
 		t.Fatalf("TERMINAL_ADMIN_LIMITED.String() = %q; want %q", got, "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED")

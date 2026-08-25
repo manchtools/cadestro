@@ -51,16 +51,12 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "syncRequest";
   } | {
     /**
-     * Result of a control-originated live sync command.
-     *
      * @generated from field: cadestro.v1.SyncDeviceResult sync_device_result = 24;
      */
     value: SyncDeviceResult;
     case: "syncDeviceResult";
   } | {
     /**
-     * Result of a control-originated live reboot command.
-     *
      * @generated from field: cadestro.v1.RebootDeviceResult reboot_device_result = 25;
      */
     value: RebootDeviceResult;
@@ -97,8 +93,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "securityAlert";
   } | {
     /**
-     * LUKS key management (via stream, not separate RPCs)
-     *
      * @generated from field: cadestro.v1.GetLuksKeyRequest get_luks_key = 50;
      */
     value: GetLuksKeyRequest;
@@ -117,8 +111,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "revokeLuksDeviceKeyResult";
   } | {
     /**
-     * LPS password rotations, batched per execution.
-     *
      * @generated from field: cadestro.v1.StoreLpsPasswordsRequest store_lps_passwords = 53;
      */
     value: StoreLpsPasswordsRequest;
@@ -131,16 +123,12 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "validateLuksToken";
   } | {
     /**
-     * Log query result (journalctl output)
-     *
      * @generated from field: cadestro.v1.LogQueryResult log_query_result = 60;
      */
     value: LogQueryResult;
     case: "logQueryResult";
   } | {
     /**
-     * Remote terminal (PTY) session messages
-     *
      * @generated from field: cadestro.v1.TerminalOutput terminal_output = 70;
      */
     value: TerminalOutput;
@@ -231,8 +219,6 @@ export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 2);
 
 /**
- * Security alert sent from agent to server for audit logging
- *
  * @generated from message cadestro.v1.SecurityAlert
  */
 export type SecurityAlert = Message<"cadestro.v1.SecurityAlert"> & {
@@ -247,8 +233,6 @@ export type SecurityAlert = Message<"cadestro.v1.SecurityAlert"> & {
   message: string;
 
   /**
-   * Additional context as key-value pairs
-   *
    * @generated from field: map<string, string> details = 3;
    */
   details: { [key: string]: string };
@@ -275,8 +259,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
    */
   payload: {
     /**
-     * Live operations have no policy or durable work semantics.
-     *
      * @generated from field: cadestro.v1.SyncDeviceCommand sync_device = 11;
      */
     value: SyncDeviceCommand;
@@ -319,8 +301,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "error";
   } | {
     /**
-     * LUKS key management responses
-     *
      * @generated from field: cadestro.v1.GetLuksKeyResponse get_luks_key = 50;
      */
     value: GetLuksKeyResponse;
@@ -351,24 +331,18 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "validateLuksToken";
   } | {
     /**
-     * Correlated application acknowledgement for result ingestion.
-     *
      * @generated from field: cadestro.v1.ResultAck result_ack = 24;
      */
     value: ResultAck;
     case: "resultAck";
   } | {
     /**
-     * Log query dispatch (journalctl)
-     *
      * @generated from field: cadestro.v1.LogQuery log_query = 60;
      */
     value: LogQuery;
     case: "logQuery";
   } | {
     /**
-     * Remote terminal (PTY) session control
-     *
      * @generated from field: cadestro.v1.TerminalStart terminal_start = 70;
      */
     value: TerminalStart;
@@ -476,10 +450,6 @@ export type Welcome = Message<"cadestro.v1.Welcome"> & {
   heartbeatInterval?: Duration;
 
   /**
-   * Base URL for browser-based device login (configurable, defaults to the
-   * bundled Cadestro web UI).
-   * Used by PAM module to open the OIDC login page for display manager sessions.
-   *
    * @generated from field: string device_login_url = 3;
    */
   deviceLoginUrl: string;
@@ -493,16 +463,6 @@ export const WelcomeSchema: GenMessage<Welcome> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 9);
 
 /**
- * ManifestProvenance is the bounded, structured record of where a manifest was
- * authored from: at most one Definition, one ActionSet and one Action, in that
- * order. It is a path, never a tree — the agent does not receive a recursive
- * composition and does not resolve one.
- *
- * Which levels are populated follows the assignment that produced the
- * manifest: an assignment-pulled Definition sets definition_id on one ordered
- * runbook, an ActionSet assignment sets action_set_id alone, and a singleton
- * Action assignment sets action_id alone.
- *
  * @generated from message cadestro.v1.ManifestProvenance
  */
 export type ManifestProvenance = Message<"cadestro.v1.ManifestProvenance"> & {
@@ -530,15 +490,6 @@ export const ManifestProvenanceSchema: GenMessage<ManifestProvenance> = /*@__PUR
   messageDesc(file_cadestro_v1_agent, 10);
 
 /**
- * ManifestOccurrence is one authored position in a manifest's ordered list.
- *
- * Occurrence identity is NOT run identity: occurrence_id names a position
- * the author created, run_id names one execution of the whole manifest
- * to a device. Duplicate authored occurrences — the same action reached twice
- * through different sets composing one definition — are preserved and executed
- * at each position; they are not collapsed, and the distinct occurrence_ids
- * are what keeps their results apart.
- *
  * @generated from message cadestro.v1.ManifestOccurrence
  */
 export type ManifestOccurrence = Message<"cadestro.v1.ManifestOccurrence"> & {
@@ -553,10 +504,6 @@ export type ManifestOccurrence = Message<"cadestro.v1.ManifestOccurrence"> & {
   action?: Action;
 
   /**
-   * What the manifest does if this occurrence fails. Control resolves the
-   * set's declared policy onto each position, so the agent reads this value
-   * and needs no fallback.
-   *
    * @generated from field: cadestro.v1.OnFailure on_failure = 3;
    */
   onFailure: OnFailure;
@@ -570,13 +517,6 @@ export const ManifestOccurrenceSchema: GenMessage<ManifestOccurrence> = /*@__PUR
   messageDesc(file_cadestro_v1_agent, 11);
 
 /**
- * Manifest is the unit of assignment the agent executes: a flat, ordered list
- * of action occurrences under one schedule and one failure policy.
- *
- * Assigning an Action creates a singleton manifest; assigning an ActionSet
- * creates one manifest; assigning a Definition creates one globally ordered
- * runbook. Assignment of a Definition uses the same runbook representation.
- *
  * @generated from message cadestro.v1.Manifest
  */
 export type Manifest = Message<"cadestro.v1.Manifest"> & {
@@ -591,27 +531,16 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
   provenance?: ManifestProvenance;
 
   /**
-   * The schedule that fires this manifest: every occurrence runs in declared
-   * order when it does. It is the only schedule the agent executes on — the
-   * per-Action schedule field is authoring data, not an execution trigger.
-   * run_on_assign and skip_if_unchanged keep their existing meaning.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 3;
    */
   schedule?: ActionSchedule;
 
   /**
-   * The set-level failure policy, as authored. Each occurrence carries the
-   * resolved value it executes under; this records what the set declared, so
-   * the agent's logs and results can name the policy rather than infer it.
-   *
    * @generated from field: cadestro.v1.OnFailure default_on_failure = 4;
    */
   defaultOnFailure: OnFailure;
 
   /**
-   * Execution order is list order.
-   *
    * @generated from field: repeated cadestro.v1.ManifestOccurrence occurrences = 5;
    */
   occurrences: ManifestOccurrence[];
@@ -625,13 +554,6 @@ export const ManifestSchema: GenMessage<Manifest> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 12);
 
 /**
- * Agent -> control: the outcome of a complete manifest.
- *
- * Results exist per action (ActionResult, carrying the same run_id plus
- * its occurrence_id) and once for the manifest as a whole. status is the
- * aggregate: SUCCESS when every executed occurrence succeeded, FAILED when any
- * did, and INDETERMINATE when a crash left an occurrence's effect unknown.
- *
  * @generated from message cadestro.v1.ManifestResult
  */
 export type ManifestResult = Message<"cadestro.v1.ManifestResult"> & {
@@ -747,8 +669,6 @@ export type OSQuery = Message<"cadestro.v1.OSQuery"> & {
   limit: number;
 
   /**
-   * Raw SQL query — when set, table/columns/where/limit are ignored.
-   *
    * @generated from field: string raw_sql = 6;
    */
   rawSql: string;
@@ -877,12 +797,6 @@ export const InventoryTableSchema: GenMessage<InventoryTable> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 21);
 
 /**
- * Server -> Agent: request fresh inventory collection. query_id correlates the
- * DeviceInventory the agent sends back.
- *
- * Agent-initiated periodic inventory (on connect + every 24h) does NOT travel
- * this message — it is the agent's own decision, not a command.
- *
  * @generated from message cadestro.v1.RequestInventory
  */
 export type RequestInventory = Message<"cadestro.v1.RequestInventory"> & {
@@ -900,9 +814,6 @@ export const RequestInventorySchema: GenMessage<RequestInventory> = /*@__PURE__*
   messageDesc(file_cadestro_v1_agent, 22);
 
 /**
- * Agent requests the current managed passphrase for a LUKS action.
- * device_id is omitted — control derives the device from the mTLS certificate.
- *
  * @generated from message cadestro.v1.GetLuksKeyRequest
  */
 export type GetLuksKeyRequest = Message<"cadestro.v1.GetLuksKeyRequest"> & {
@@ -924,15 +835,6 @@ export const GetLuksKeyRequestSchema: GenMessage<GetLuksKeyRequest> = /*@__PURE_
  */
 export type GetLuksKeyResponse = Message<"cadestro.v1.GetLuksKeyResponse"> & {
   /**
-   * The managed passphrase, delivered only on the authenticated mTLS stream.
-   *
-   * debug_redact is the machine-readable secret classification. It redacts
-   * nothing at runtime — no encoder in protobuf-go consults the option — but
-   * structural sink guards read it off the descriptor to derive the set of
-   * fields whose plaintext may only be touched at an enumerated sink, so a
-   * slog or fmt argument fails the build instead of shipping a credential into
-   * a log.
-   *
    * @generated from field: bytes passphrase = 1;
    */
   passphrase: Uint8Array;
@@ -946,9 +848,6 @@ export const GetLuksKeyResponseSchema: GenMessage<GetLuksKeyResponse> = /*@__PUR
   messageDesc(file_cadestro_v1_agent, 24);
 
 /**
- * Agent stores a new managed passphrase on the server.
- * The server must confirm receipt before the agent removes the old key from LUKS.
- *
  * @generated from message cadestro.v1.StoreLuksKeyRequest
  */
 export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
@@ -958,33 +857,16 @@ export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
   actionId?: ActionId;
 
   /**
-   * Auto-detected device path (e.g., "/dev/sda2"). Bounded at PATH_MAX: the
-   * value is only ever a local block-device path, and without a ceiling an
-   * authenticated agent can send a transport-sized string that is validated,
-   * encrypted and persisted.
-   *
    * @generated from field: string device_path = 2;
    */
   devicePath: string;
 
   /**
-   * The managed passphrase, delivered only on the authenticated mTLS stream;
-   * control encrypts it under its resource-context AAD before persistence.
-   * debug_redact is the secret classification (see
-   * GetLuksKeyResponse.passphrase).
-   *
    * @generated from field: bytes passphrase = 3;
    */
   passphrase: Uint8Array;
 
   /**
-   * Why this rotation happened. INITIAL on the first time the action
-   * runs on a device (no previous passphrase to retain); SCHEDULED for
-   * any subsequent policy-driven rotation. LUKS does not use
-   * AUTH_GRACE — that reason belongs to LPS, where a user
-   * authenticated during the grace period. Validated against the enum
-   * at the boundary.
-   *
    * @generated from field: cadestro.v1.RotationReason rotation_reason = 4;
    */
   rotationReason: RotationReason;
@@ -1015,52 +897,25 @@ export const StoreLuksKeyResponseSchema: GenMessage<StoreLuksKeyResponse> = /*@_
   messageDesc(file_cadestro_v1_agent, 26);
 
 /**
- * One password rotation the agent performed during an LPS execution.
- *
  * @generated from message cadestro.v1.LpsPasswordRotation
  */
 export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
   /**
-   * Local Linux username whose password was rotated.
-   *
    * @generated from field: string username = 1;
    */
   username: string;
 
   /**
-   * The rotated password, delivered only on the authenticated mTLS stream and
-   * encrypted with the owning device/action context before persistence.
-   * debug_redact is the secret classification (see
-   * GetLuksKeyResponse.passphrase).
-   *
    * @generated from field: bytes password = 2;
    */
   password: Uint8Array;
 
   /**
-   * RFC 3339 timestamp the agent observed the rotation. Control keeps the
-   * agent's clock here rather than re-stamping at receipt, so the timeline
-   * reflects the device's reality.
-   *
-   * Deliberately NOT format-validated, which is the one exception to the
-   * type/format/length/range rule on this message. By the time this arrives the
-   * agent has ALREADY changed the passwords locally and cannot undo it, so
-   * rejecting the batch over a malformed timestamp destroys the only copy of a
-   * credential the operator now needs. The handler normalises what it can and
-   * keeps the rotation; length is still bounded.
-   * (TestAgentOps_StoreLpsPasswords_PersistsWholeBatch pins this.)
-   *
    * @generated from field: string rotated_at = 3;
    */
   rotatedAt: string;
 
   /**
-   * Why this rotation happened. INITIAL the first time the LPS action ran for
-   * the user; SCHEDULED for a policy-driven rotation; AUTH_GRACE when a user
-   * authenticates during the post-rotation grace window — an LPS-only path that
-   * signals "rotate now to limit the leaked-password window", never emitted from
-   * LUKS. Stored on the event as the lowercase string form.
-   *
    * @generated from field: cadestro.v1.RotationReason reason = 4;
    */
   reason: RotationReason;
@@ -1074,9 +929,6 @@ export const LpsPasswordRotationSchema: GenMessage<LpsPasswordRotation> = /*@__P
   messageDesc(file_cadestro_v1_agent, 27);
 
 /**
- * Agent reports the LPS rotations from one execution. Batched per action: an LPS
- * run rotates every managed local account on the device.
- *
  * @generated from message cadestro.v1.StoreLpsPasswordsRequest
  */
 export type StoreLpsPasswordsRequest = Message<"cadestro.v1.StoreLpsPasswordsRequest"> & {
@@ -1086,10 +938,6 @@ export type StoreLpsPasswordsRequest = Message<"cadestro.v1.StoreLpsPasswordsReq
   actionId?: ActionId;
 
   /**
-   * One entry per managed local account on the device. Capped: each entry costs
-   * a validation pass, an encryption, and a row, and no real device manages
-   * anything near this many accounts.
-   *
    * @generated from field: repeated cadestro.v1.LpsPasswordRotation rotations = 2;
    */
   rotations: LpsPasswordRotation[];
@@ -1120,9 +968,6 @@ export const StoreLpsPasswordsResponseSchema: GenMessage<StoreLpsPasswordsRespon
   messageDesc(file_cadestro_v1_agent, 29);
 
 /**
- * Server instructs agent to revoke the device-bound key in LUKS slot 7.
- * Requested as a live operation via the stream.
- *
  * @generated from message cadestro.v1.RevokeLuksDeviceKey
  */
 export type RevokeLuksDeviceKey = Message<"cadestro.v1.RevokeLuksDeviceKey"> & {
@@ -1140,8 +985,6 @@ export const RevokeLuksDeviceKeySchema: GenMessage<RevokeLuksDeviceKey> = /*@__P
   messageDesc(file_cadestro_v1_agent, 30);
 
 /**
- * Agent reports the result of revoking the device-bound key.
- *
  * @generated from message cadestro.v1.RevokeLuksDeviceKeyResult
  */
 export type RevokeLuksDeviceKeyResult = Message<"cadestro.v1.RevokeLuksDeviceKeyResult"> & {
@@ -1173,9 +1016,6 @@ export const RevokeLuksDeviceKeyResultSchema: GenMessage<RevokeLuksDeviceKeyResu
  */
 export type ValidateLuksTokenRequest = Message<"cadestro.v1.ValidateLuksTokenRequest"> & {
   /**
-   * The one-time token the operator was shown, as issued by
-   * ControlService.CreateLuksToken.
-   *
    * @generated from field: string token = 1;
    */
   token: string;
@@ -1198,22 +1038,16 @@ export type ValidateLuksTokenResponse = Message<"cadestro.v1.ValidateLuksTokenRe
   actionId?: ActionId;
 
   /**
-   * Auto-detected device path from server's stored key data
-   *
    * @generated from field: string device_path = 2;
    */
   devicePath: string;
 
   /**
-   * Minimum passphrase length (>= 16)
-   *
    * @generated from field: int32 min_length = 3;
    */
   minLength: number;
 
   /**
-   * Complexity requirement for user-defined passphrases
-   *
    * @generated from field: cadestro.v1.LpsPasswordComplexity complexity = 4;
    */
   complexity: LpsPasswordComplexity;
@@ -1240,35 +1074,20 @@ export const SyncRequestSchema: GenMessage<SyncRequest> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 34);
 
 /**
- * SyncState carries the device policy over the existing authenticated stream.
- *
  * @generated from message cadestro.v1.SyncState
  */
 export type SyncState = Message<"cadestro.v1.SyncState"> & {
   /**
-   * Effective sync interval in minutes for this device. The agent uses it for
-   * the next sync; 0 means the default (30 minutes).
-   *
    * @generated from field: int32 sync_interval_minutes = 1;
    */
   syncIntervalMinutes: number;
 
   /**
-   * Resolved maintenance window. Server-computed union across every
-   * group the device belongs to (its own device groups plus any user
-   * groups reaching it through an assignment). Empty schedule = no
-   * gating; the agent runs assigned policy any time. Empty
-   * is also the response when no groups carry a window. The agent
-   * evaluates this against time.Now().Local() at run time.
-   *
    * @generated from field: cadestro.v1.MaintenanceWindow maintenance_window = 2;
    */
   maintenanceWindow?: MaintenanceWindow;
 
   /**
-   * Current assignment-derived desired state. This is a
-   * replaceable snapshot that the agent reconciles locally.
-   *
    * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 3;
    */
   desiredPolicy?: DesiredPolicy;
@@ -1286,15 +1105,11 @@ export const SyncStateSchema: GenMessage<SyncState> = /*@__PURE__*/
  */
 export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
   /**
-   * Stable revision of the resolved device policy.
-   *
    * @generated from field: cadestro.v1.PolicyRevisionId revision = 1;
    */
   revision?: PolicyRevisionId;
 
   /**
-   * One globally ordered runbook for the device. Empty containers are omitted.
-   *
    * @generated from field: repeated cadestro.v1.Manifest manifests = 2;
    */
   manifests: Manifest[];
@@ -1308,8 +1123,6 @@ export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 36);
 
 /**
- * Server -> Agent: request system log output
- *
  * @generated from message cadestro.v1.LogQuery
  */
 export type LogQuery = Message<"cadestro.v1.LogQuery"> & {
@@ -1354,9 +1167,6 @@ export type LogQuery = Message<"cadestro.v1.LogQuery"> & {
   kernel: boolean;
 
   /**
-   * Log source. Defaults to LOG_SOURCE_JOURNALD. Agents without
-   * support for a requested source return an error.
-   *
    * @generated from field: cadestro.v1.LogSource source = 9;
    */
   source: LogSource;
@@ -1370,8 +1180,6 @@ export const LogQuerySchema: GenMessage<LogQuery> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 37);
 
 /**
- * Agent -> Server: journalctl output result
- *
  * @generated from message cadestro.v1.LogQueryResult
  */
 export type LogQueryResult = Message<"cadestro.v1.LogQueryResult"> & {
@@ -1391,8 +1199,6 @@ export type LogQueryResult = Message<"cadestro.v1.LogQueryResult"> & {
   error: string;
 
   /**
-   * Raw journalctl output (plain text)
-   *
    * @generated from field: string logs = 4;
    */
   logs: string;
@@ -1406,11 +1212,6 @@ export const LogQueryResultSchema: GenMessage<LogQueryResult> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 38);
 
 /**
- * Server -> Agent: open a PTY session as the given TTY user.
- * The agent must verify that tty_user exists locally and is not disabled
- * before allocating the PTY. The shell is activated for the duration of
- * the session and reverted to nologin on disconnect.
- *
  * @generated from message cadestro.v1.TerminalStart
  */
 export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
@@ -1420,9 +1221,6 @@ export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
   sessionId?: SessionId;
 
   /**
-   * The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
-   * never uses the original Linux username for the shell.
-   *
    * @generated from field: string tty_user = 2;
    */
   ttyUser: string;
@@ -1446,8 +1244,6 @@ export const TerminalStartSchema: GenMessage<TerminalStart> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 39);
 
 /**
- * Server -> Agent: stdin data for an active session.
- *
  * @generated from message cadestro.v1.TerminalInput
  */
 export type TerminalInput = Message<"cadestro.v1.TerminalInput"> & {
@@ -1470,9 +1266,6 @@ export const TerminalInputSchema: GenMessage<TerminalInput> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 40);
 
 /**
- * Server -> Agent: window resize.
- * The agent forwards the new size to the PTY via TIOCSWINSZ.
- *
  * @generated from message cadestro.v1.TerminalResize
  */
 export type TerminalResize = Message<"cadestro.v1.TerminalResize"> & {
@@ -1500,12 +1293,6 @@ export const TerminalResizeSchema: GenMessage<TerminalResize> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 41);
 
 /**
- * Server -> Agent: terminate an active session.
- * The agent SIGTERMs the shell process group and reverts the user's
- * shell to nologin. The optional reason comes from
- * ControlService.TerminateTerminalSession so the agent can surface it in
- * logs and the audit trail records why the session was killed.
- *
  * @generated from message cadestro.v1.TerminalStop
  */
 export type TerminalStop = Message<"cadestro.v1.TerminalStop"> & {
@@ -1528,8 +1315,6 @@ export const TerminalStopSchema: GenMessage<TerminalStop> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 42);
 
 /**
- * Agent -> Server: stdout/stderr data from the PTY.
- *
  * @generated from message cadestro.v1.TerminalOutput
  */
 export type TerminalOutput = Message<"cadestro.v1.TerminalOutput"> & {
@@ -1552,12 +1337,6 @@ export const TerminalOutputSchema: GenMessage<TerminalOutput> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 43);
 
 /**
- * Agent -> Server: session state transition.
- * STARTED is sent immediately after the PTY is allocated and the shell
- * has begun. EXITED is sent when the shell process exits cleanly, with
- * exit_code populated. ERROR is sent for any failure that ends the
- * session early, with error populated.
- *
  * @generated from message cadestro.v1.TerminalStateChange
  */
 export type TerminalStateChange = Message<"cadestro.v1.TerminalStateChange"> & {
@@ -1572,15 +1351,11 @@ export type TerminalStateChange = Message<"cadestro.v1.TerminalStateChange"> & {
   state: TerminalSessionState;
 
   /**
-   * Set when state is EXITED.
-   *
    * @generated from field: int32 exit_code = 3;
    */
   exitCode: number;
 
   /**
-   * Set when state is ERROR.
-   *
    * @generated from field: string error = 4;
    */
   error: string;
@@ -1594,8 +1369,6 @@ export const TerminalStateChangeSchema: GenMessage<TerminalStateChange> = /*@__P
   messageDesc(file_cadestro_v1_agent, 44);
 
 /**
- * Security alert types for audit logging
- *
  * @generated from enum cadestro.v1.SecurityAlertType
  */
 export enum SecurityAlertType {
@@ -1605,22 +1378,16 @@ export enum SecurityAlertType {
   UNSPECIFIED = 0,
 
   /**
-   * Someone attempted to reassign the agent to a different server
-   *
    * @generated from enum value: SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT = 1;
    */
   SERVER_REASSIGNMENT_ATTEMPT = 1,
 
   /**
-   * Credential file tampering detected
-   *
    * @generated from enum value: SECURITY_ALERT_TYPE_CREDENTIAL_TAMPERING = 2;
    */
   CREDENTIAL_TAMPERING = 2,
 
   /**
-   * Invalid certificate presented
-   *
    * @generated from enum value: SECURITY_ALERT_TYPE_INVALID_CERTIFICATE = 3;
    */
   INVALID_CERTIFICATE = 3,
@@ -1633,24 +1400,15 @@ export const SecurityAlertTypeSchema: GenEnum<SecurityAlertType> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_agent, 0);
 
 /**
- * OnFailure decides what the rest of a manifest does after an occurrence
- * fails. CONTINUE is the wire default because the policy default is CONTINUE
- * and STOP is the explicit choice; there is no UNSPECIFIED sentinel to map, so
- * a manifest built without setting the field behaves as authored.
- *
  * @generated from enum cadestro.v1.OnFailure
  */
 export enum OnFailure {
   /**
-   * default — run the remaining occurrences
-   *
    * @generated from enum value: ON_FAILURE_CONTINUE = 0;
    */
   CONTINUE = 0,
 
   /**
-   * abandon the remaining occurrences
-   *
    * @generated from enum value: ON_FAILURE_STOP = 1;
    */
   STOP = 1,
@@ -1663,10 +1421,6 @@ export const OnFailureSchema: GenEnum<OnFailure> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_agent, 1);
 
 /**
- * ResultAckCode explains why the server accepted or rejected a result
- * result. ACCEPTED/REJECTED mirror the accepted field; the code
- * exists for the rejection message the agent surfaces to its caller.
- *
  * @generated from enum cadestro.v1.ResultAckCode
  */
 export enum ResultAckCode {
@@ -1749,26 +1503,15 @@ export const OSQueryOpSchema: GenEnum<OSQueryOp> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_agent, 3);
 
 /**
- * LogSource selects which system log source the agent queries.
- * JOURNALD is the default and is what current agents implement;
- * SYSLOG slots in for openrc/syslog-ng/rsyslog systems (Alpine, Void,
- * legacy Debian/RHEL). Agents must report a clear "source not
- * supported on this device" error when asked for a source they can't
- * serve.
- *
  * @generated from enum cadestro.v1.LogSource
  */
 export enum LogSource {
   /**
-   * default — journalctl
-   *
    * @generated from enum value: LOG_SOURCE_JOURNALD = 0;
    */
   JOURNALD = 0,
 
   /**
-   * syslog files in /var/log (rsyslog, syslog-ng, busybox syslog)
-   *
    * @generated from enum value: LOG_SOURCE_SYSLOG = 1;
    */
   SYSLOG = 1,
@@ -1781,8 +1524,6 @@ export const LogSourceSchema: GenEnum<LogSource> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_agent, 4);
 
 /**
- * Terminal session lifecycle states reported by the agent.
- *
  * @generated from enum cadestro.v1.TerminalSessionState
  */
 export enum TerminalSessionState {
@@ -1792,23 +1533,16 @@ export enum TerminalSessionState {
   UNSPECIFIED = 0,
 
   /**
-   * PTY allocated and the shell is running.
-   *
    * @generated from enum value: TERMINAL_SESSION_STATE_STARTED = 1;
    */
   STARTED = 1,
 
   /**
-   * Shell exited cleanly; exit_code is set.
-   *
    * @generated from enum value: TERMINAL_SESSION_STATE_EXITED = 2;
    */
   EXITED = 2,
 
   /**
-   * Session ended with an error (auth, missing TTY user, PTY alloc, etc.);
-   * error is populated.
-   *
    * @generated from enum value: TERMINAL_SESSION_STATE_ERROR = 3;
    */
   ERROR = 3,
@@ -1825,9 +1559,6 @@ export const TerminalSessionStateSchema: GenEnum<TerminalSessionState> = /*@__PU
  */
 export const AgentService: GenService<{
   /**
-   * The only agent-control transport. Handshake, synchronization, live control,
-   * results, secret operations and terminal traffic all use this stream.
-   *
    * @generated from rpc cadestro.v1.AgentService.Stream
    */
   stream: {

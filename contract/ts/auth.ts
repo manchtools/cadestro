@@ -1,6 +1,4 @@
-// Authentication store with automatic token refresh.
-// Plain TypeScript — no framework dependencies.
-// Refresh/logout functions are set lazily to avoid circular dependencies with ApiClient.
+
 
 import type { User } from '../gen/ts/cadestro/v1/control_pb';
 import superjson from 'superjson';
@@ -34,10 +32,6 @@ function isPersistent(): boolean {
 function loadAuth(): StoredAuth {
 	if (typeof window === 'undefined') return { ...emptyAuth };
 
-	// Honor the persist toggle when choosing read order. If the user
-	// disabled "keep me signed in" we should not silently rehydrate from
-	// localStorage on the next page load — that was the previous behavior
-	// (F020 in the SDK tech-debt audit).
 	const persistent = isPersistent();
 	const primary = persistent ? localStorage.getItem(AUTH_KEY) : sessionStorage.getItem(AUTH_KEY);
 	if (primary) {
@@ -117,8 +111,7 @@ export class AuthStore {
 			localStorage.setItem(PERSIST_KEY, 'true');
 		} else {
 			localStorage.removeItem(PERSIST_KEY);
-			// Drop any previously-persisted token so the next page load
-			// does not silently rehydrate from localStorage. F020.
+
 			localStorage.removeItem(AUTH_KEY);
 		}
 	}
@@ -139,14 +132,6 @@ export class AuthStore {
 		return this.state.user !== null && this.state.accessToken !== null && !this.isExpired();
 	}
 
-	/**
-	 * True if the user has the bootstrap admin role assigned (directly or
-	 * via group inheritance). This checks the stable admin role ID
-	 * (`00000000000000000000000001`, defined in
-	 * server/internal/auth/reconcile.go AdminRoleID) rather than proxying the
-	 * `CreateRole` permission, which any custom role could carry without being
-	 * the admin.
-	 */
 	get isAdmin() {
 		const adminRoleID = '00000000000000000000000001';
 		for (const grant of this.state.user?.roleGrants ?? []) {
@@ -253,11 +238,7 @@ export class AuthStore {
 			try {
 				await this.logoutFn();
 			} catch (err) {
-				// Logout-side errors are non-fatal — we're terminating
-				// the session locally regardless. Log at debug so the
-				// telemetry trail exists for someone investigating
-				// "why didn't the server-side session get torn down?"
-				// without polluting normal-operation logs.
+
 				log.debug('server-side logout failed; local session cleared anyway', describeError(err));
 			}
 		}

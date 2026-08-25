@@ -9,20 +9,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// WS6 #11: dispatchServerMessage spawned an UNBOUNDED goroutine for every
-// RequestInventory and every RevokeLuksDeviceKey. A compromised or buggy
-// control could flood the agent with these and exhaust memory/goroutines
-// (each inventory collection forks osquery). The fix bounds in-flight
-// handlers with a small semaphore and DROPS overflow rather than queuing
-// it unboundedly.
-//
-// These tests pin: at most `cap` handlers run concurrently, and the
-// EXCESS is dropped (not run later) — fire N >> cap and exactly `cap`
-// ever enter the handler.
-
-// blockingFanoutHandler implements StreamHandler + InventoryHandler +
-// LuksHandler. The fan-out handlers block on `release` so the test can
-// observe peak concurrency before letting them finish.
 type blockingFanoutHandler struct {
 	release  chan struct{}
 	inFlight int32
@@ -52,12 +38,12 @@ func (h *blockingFanoutHandler) OnQuery(ctx context.Context, q *cadestrov1.OSQue
 func (h *blockingFanoutHandler) OnError(ctx context.Context, e *cadestrov1.Error) error { return nil }
 
 func (h *blockingFanoutHandler) CollectInventory(ctx context.Context) *cadestrov1.DeviceInventory {
-	return nil // agent-initiated path; unused by these dispatch tests
+	return nil
 }
 
 func (h *blockingFanoutHandler) OnRequestInventory(ctx context.Context, req *cadestrov1.RequestInventory) *cadestrov1.DeviceInventory {
 	h.enter()
-	return nil // nil → dispatch skips SendInventory (no stream in test)
+	return nil
 }
 
 func (h *blockingFanoutHandler) OnRevokeLuksDeviceKey(ctx context.Context, req *cadestrov1.RevokeLuksDeviceKey) (bool, string) {
@@ -108,9 +94,7 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 	if cap < 1 {
 		t.Fatalf("inventoryDispatchConcurrency = %d, want >= 1", cap)
 	}
-	// Wait until the bounded set of handlers has entered, then settle so
-	// any (erroneously) unbounded extra goroutines would also enter and
-	// inflate maxSeen/entered before we assert.
+
 	waitForCond(t, func() bool { return atomic.LoadInt32(&h.entered) >= int32(cap) })
 	time.Sleep(100 * time.Millisecond)
 

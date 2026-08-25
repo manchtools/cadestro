@@ -42,19 +42,11 @@ export type Action = Message<"cadestro.v1.Action"> & {
   timeoutSeconds: number;
 
   /**
-   * The action's own authored schedule. It is carried for display and for
-   * authoring round-trips; execution is driven by the schedule on the
-   * Manifest the occurrence belongs to, which fires every occurrence in
-   * declared order. A singleton-Action manifest simply carries this schedule
-   * at the manifest level.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 5;
    */
   schedule?: ActionSchedule;
 
   /**
-   * Type-specific parameters
-   *
    * @generated from oneof cadestro.v1.Action.params
    */
   params: {
@@ -176,38 +168,25 @@ export const ActionSchema: GenMessage<Action> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 0);
 
 /**
- * ActionSchedule defines when an action should be executed by the agent.
- * Actions run autonomously on the agent even without server connection.
- *
  * @generated from message cadestro.v1.ActionSchedule
  */
 export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
   /**
-   * Cron expression for scheduled execution (e.g., "0 3 * * *" for 3am daily)
-   * If empty, uses default_interval_hours instead.
-   *
    * @generated from field: string cron = 1;
    */
   cron: string;
 
   /**
-   * Default interval in hours between executions (default: 8 hours for drift prevention)
-   * Used when cron is not specified.
-   *
    * @generated from field: int32 interval_hours = 2;
    */
   intervalHours: number;
 
   /**
-   * Whether to run immediately when the action is first received
-   *
    * @generated from field: bool run_on_assign = 3;
    */
   runOnAssign: boolean;
 
   /**
-   * Whether to skip execution if the previous run was successful and no changes detected
-   *
    * @generated from field: bool skip_if_unchanged = 4;
    */
   skipIfUnchanged: boolean;
@@ -225,9 +204,6 @@ export const ActionScheduleSchema: GenMessage<ActionSchedule> = /*@__PURE__*/
  */
 export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   /**
-   * Generic package name (used if manager-specific names not provided)
-   * If set, this name is used for all package managers.
-   *
    * @generated from field: string name = 1;
    */
   name: string;
@@ -248,32 +224,21 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
   pin: boolean;
 
   /**
-   * Manager-specific package names (override generic name)
-   * If a manager-specific name is empty, that manager will be skipped.
-   *
-   * Debian/Ubuntu (apt/apt-get)
-   *
    * @generated from field: string apt_name = 5;
    */
   aptName: string;
 
   /**
-   * Fedora/RHEL (dnf/yum)
-   *
    * @generated from field: string dnf_name = 6;
    */
   dnfName: string;
 
   /**
-   * Arch Linux (pacman)
-   *
    * @generated from field: string pacman_name = 7;
    */
   pacmanName: string;
 
   /**
-   * openSUSE (zypper)
-   *
    * @generated from field: string zypper_name = 8;
    */
   zypperName: string;
@@ -296,10 +261,6 @@ export type AppInstallParams = Message<"cadestro.v1.AppInstallParams"> & {
   url: string;
 
   /**
-   * Mandatory integrity for download-and-install actions (deb/rpm/
-   * appimage): without it the agent would install a binary whose only
-   * authenticity is TLS to a possibly-compromised origin. Lowercase hex.
-   *
    * @generated from field: string checksum_sha256 = 2;
    */
   checksumSha256: string;
@@ -322,8 +283,6 @@ export const AppInstallParamsSchema: GenMessage<AppInstallParams> = /*@__PURE__*
  */
 export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
   /**
-   * Execution/remediation script (runs when detection_script is absent or exits non-zero)
-   *
    * @generated from field: string script = 1;
    */
   script: string;
@@ -349,15 +308,11 @@ export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
   environment: { [key: string]: string };
 
   /**
-   * Detection script: exit 0 = compliant (skip execution), non-zero = needs remediation
-   *
    * @generated from field: string detection_script = 6;
    */
   detectionScript: string;
 
   /**
-   * When true, only the detection script runs (no remediation) and results are tracked as compliance checks
-   *
    * @generated from field: bool is_compliance = 7;
    */
   isCompliance: boolean;
@@ -371,9 +326,6 @@ export const ShellParamsSchema: GenMessage<ShellParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 4);
 
 /**
- * ServiceParams configures a systemd unit. unit_content is the verbatim unit
- * file written under /etc/systemd/system.
- *
  * @generated from message cadestro.v1.ServiceParams
  */
 export type ServiceParams = Message<"cadestro.v1.ServiceParams"> & {
@@ -435,11 +387,6 @@ export type FileParams = Message<"cadestro.v1.FileParams"> & {
   mode: string;
 
   /**
-   * Managed block mode: if true, manages a content block within the file.
-   * PRESENT: appends content if not already present in file.
-   * ABSENT: removes only the content block, not the entire file.
-   * Ownership and mode are still enforced.
-   *
    * @generated from field: bool managed_block = 6;
    */
   managedBlock: boolean;
@@ -453,15 +400,10 @@ export const FileParamsSchema: GenMessage<FileParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 6);
 
 /**
- * DirectoryParams configures directory management.
- * Creates or removes directories with optional ownership and permissions.
- *
  * @generated from message cadestro.v1.DirectoryParams
  */
 export type DirectoryParams = Message<"cadestro.v1.DirectoryParams"> & {
   /**
-   * Directory path (must be absolute)
-   *
    * @generated from field: string path = 1;
    */
   path: string;
@@ -482,9 +424,6 @@ export type DirectoryParams = Message<"cadestro.v1.DirectoryParams"> & {
   mode: string;
 
   /**
-   * Whether to create parent directories (like mkdir -p)
-   * Default: true
-   *
    * @generated from field: bool recursive = 5;
    */
   recursive: boolean;
@@ -498,29 +437,20 @@ export const DirectoryParamsSchema: GenMessage<DirectoryParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 7);
 
 /**
- * UpdateParams configures system-wide package updates.
- * Respects version pinning (apt-mark hold / dnf versionlock).
- *
  * @generated from message cadestro.v1.UpdateParams
  */
 export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
   /**
-   * Only install security updates (if supported)
-   *
    * @generated from field: bool security_only = 1;
    */
   securityOnly: boolean;
 
   /**
-   * Remove unused dependencies after update
-   *
    * @generated from field: bool autoremove = 2;
    */
   autoremove: boolean;
 
   /**
-   * Reboot system if updates require it
-   *
    * @generated from field: bool reboot_if_required = 3;
    */
   rebootIfRequired: boolean;
@@ -534,37 +464,25 @@ export const UpdateParamsSchema: GenMessage<UpdateParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 8);
 
 /**
- * FlatpakParams configures Flatpak application installation.
- * Similar to AppImage but uses the Flatpak package manager.
- *
  * @generated from message cadestro.v1.FlatpakParams
  */
 export type FlatpakParams = Message<"cadestro.v1.FlatpakParams"> & {
   /**
-   * Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
-   *
    * @generated from field: cadestro.v1.FlatpakAppId app_id = 1;
    */
   appId?: FlatpakAppId;
 
   /**
-   * Remote/repository name (default: "flathub")
-   *
    * @generated from field: string remote = 2;
    */
   remote: string;
 
   /**
-   * Whether to install system-wide (true) or user-only (false)
-   * Default: true (system-wide)
-   *
    * @generated from field: bool system_wide = 3;
    */
   systemWide: boolean;
 
   /**
-   * Pin the application to prevent automatic updates
-   *
    * @generated from field: bool pin = 4;
    */
   pin: boolean;
@@ -578,43 +496,30 @@ export const FlatpakParamsSchema: GenMessage<FlatpakParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 9);
 
 /**
- * RepositoryParams configures external package repositories.
- * Each package manager has its own configuration format.
- *
  * @generated from message cadestro.v1.RepositoryParams
  */
 export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
   /**
-   * Repository name/identifier (used for file naming)
-   *
    * @generated from field: string name = 1;
    */
   name: string;
 
   /**
-   * APT repository configuration (Debian/Ubuntu)
-   *
    * @generated from field: cadestro.v1.AptRepository apt = 2;
    */
   apt?: AptRepository;
 
   /**
-   * DNF/YUM repository configuration (Fedora/RHEL)
-   *
    * @generated from field: cadestro.v1.DnfRepository dnf = 3;
    */
   dnf?: DnfRepository;
 
   /**
-   * Pacman repository configuration (Arch Linux)
-   *
    * @generated from field: cadestro.v1.PacmanRepository pacman = 4;
    */
   pacman?: PacmanRepository;
 
   /**
-   * Zypper repository configuration (openSUSE)
-   *
    * @generated from field: cadestro.v1.ZypperRepository zypper = 5;
    */
   zypper?: ZypperRepository;
@@ -628,63 +533,45 @@ export const RepositoryParamsSchema: GenMessage<RepositoryParams> = /*@__PURE__*
   messageDesc(file_cadestro_v1_actions, 10);
 
 /**
- * AptRepository configures a Debian/Ubuntu APT repository.
- *
  * @generated from message cadestro.v1.AptRepository
  */
 export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
   /**
-   * Repository URL (e.g., "https://packages.example.com/apt")
-   *
    * @generated from field: string url = 1;
    */
   url: string;
 
   /**
-   * Distribution codename (e.g., "jammy", "bookworm")
-   *
    * @generated from field: string distribution = 2;
    */
   distribution: string;
 
   /**
-   * Components (e.g., "main", "contrib", "non-free")
-   *
    * @generated from field: repeated string components = 3;
    */
   components: string[];
 
   /**
-   * GPG key URL for repository signing
-   *
    * @generated from field: string gpg_key_url = 4;
    */
   gpgKeyUrl: string;
 
   /**
-   * GPG key content (ASCII-armored, alternative to gpg_key_url)
-   *
    * @generated from field: string gpg_key = 5;
    */
   gpgKey: string;
 
   /**
-   * Whether to use signed-by (modern) or trusted=yes (legacy, less secure)
-   *
    * @generated from field: bool trusted = 6;
    */
   trusted: boolean;
 
   /**
-   * Architecture filter (e.g., "amd64", "arm64")
-   *
    * @generated from field: string arch = 7;
    */
   arch: string;
 
   /**
-   * Set to true to disable/skip this repository manager
-   *
    * @generated from field: bool disabled = 8;
    */
   disabled: boolean;
@@ -698,56 +585,40 @@ export const AptRepositorySchema: GenMessage<AptRepository> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 11);
 
 /**
- * DnfRepository configures a Fedora/RHEL DNF/YUM repository.
- *
  * @generated from message cadestro.v1.DnfRepository
  */
 export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
   /**
-   * Base URL for the repository (supports DNF variables like $releasever and $basearch)
-   *
    * @generated from field: string baseurl = 1;
    */
   baseurl: string;
 
   /**
-   * Repository description
-   *
    * @generated from field: string description = 2;
    */
   description: string;
 
   /**
-   * Whether the repository is enabled (default true)
-   *
    * @generated from field: bool enabled = 3;
    */
   enabled: boolean;
 
   /**
-   * Whether to check GPG signatures
-   *
    * @generated from field: bool gpgcheck = 4;
    */
   gpgcheck: boolean;
 
   /**
-   * GPG key URL
-   *
    * @generated from field: string gpgkey = 5;
    */
   gpgkey: string;
 
   /**
-   * Module hotfixes (for modular content)
-   *
    * @generated from field: bool module_hotfixes = 6;
    */
   moduleHotfixes: boolean;
 
   /**
-   * Set to true to disable/skip this repository manager
-   *
    * @generated from field: bool disabled = 7;
    */
   disabled: boolean;
@@ -761,28 +632,20 @@ export const DnfRepositorySchema: GenMessage<DnfRepository> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 12);
 
 /**
- * PacmanRepository configures an Arch Linux pacman repository.
- *
  * @generated from message cadestro.v1.PacmanRepository
  */
 export type PacmanRepository = Message<"cadestro.v1.PacmanRepository"> & {
   /**
-   * Server URL (supports pacman variables like $repo and $arch)
-   *
    * @generated from field: string server = 1;
    */
   server: string;
 
   /**
-   * SigLevel (e.g., "Optional TrustAll", "Required DatabaseOptional")
-   *
    * @generated from field: string sig_level = 2;
    */
   sigLevel: string;
 
   /**
-   * Set to true to disable/skip this repository manager
-   *
    * @generated from field: bool disabled = 3;
    */
   disabled: boolean;
@@ -796,63 +659,45 @@ export const PacmanRepositorySchema: GenMessage<PacmanRepository> = /*@__PURE__*
   messageDesc(file_cadestro_v1_actions, 13);
 
 /**
- * ZypperRepository configures an openSUSE zypper repository.
- *
  * @generated from message cadestro.v1.ZypperRepository
  */
 export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
   /**
-   * Repository URL
-   *
    * @generated from field: string url = 1;
    */
   url: string;
 
   /**
-   * Repository description/alias
-   *
    * @generated from field: string description = 2;
    */
   description: string;
 
   /**
-   * Whether to enable the repository (default true)
-   *
    * @generated from field: bool enabled = 3;
    */
   enabled: boolean;
 
   /**
-   * Whether to auto-refresh the repository
-   *
    * @generated from field: bool autorefresh = 4;
    */
   autorefresh: boolean;
 
   /**
-   * Whether to check GPG signatures
-   *
    * @generated from field: bool gpgcheck = 5;
    */
   gpgcheck: boolean;
 
   /**
-   * GPG key URL
-   *
    * @generated from field: string gpgkey = 6;
    */
   gpgkey: string;
 
   /**
-   * Repository type (e.g., "rpm-md", "yast2")
-   *
    * @generated from field: string type = 7;
    */
   type: string;
 
   /**
-   * Set to true to disable/skip this repository manager
-   *
    * @generated from field: bool disabled = 8;
    */
   disabled: boolean;
@@ -866,115 +711,70 @@ export const ZypperRepositorySchema: GenMessage<ZypperRepository> = /*@__PURE__*
   messageDesc(file_cadestro_v1_actions, 14);
 
 /**
- * UserParams configures user account management.
- * Supports creating, updating, deactivating, and removing user accounts.
- *
  * @generated from message cadestro.v1.UserParams
  */
 export type UserParams = Message<"cadestro.v1.UserParams"> & {
   /**
-   * Username (required)
-   *
    * @generated from field: string username = 1;
    */
   username: string;
 
   /**
-   * User ID (optional - system assigns if not specified)
-   *
    * @generated from field: int32 uid = 2;
    */
   uid: number;
 
   /**
-   * Primary group ID (optional - creates user's own group if not specified)
-   *
    * @generated from field: int32 gid = 3;
    */
   gid: number;
 
   /**
-   * Home directory path (optional - defaults to /home/<username>)
-   *
    * @generated from field: string home_dir = 4;
    */
   homeDir: string;
 
   /**
-   * Login shell (optional - defaults to /bin/bash)
-   *
    * @generated from field: string shell = 5;
    */
   shell: string;
 
   /**
-   * SSH authorized keys to add to ~/.ssh/authorized_keys
-   *
    * @generated from field: repeated string ssh_authorized_keys = 6;
    */
   sshAuthorizedKeys: string[];
 
   /**
-   * GECOS field / user comment (full name, etc.)
-   *
    * @generated from field: string comment = 7;
    */
   comment: string;
 
   /**
-   * Create as system user (UID < 1000, no home directory by default)
-   *
    * @generated from field: bool system_user = 8;
    */
   systemUser: boolean;
 
   /**
-   * Create home directory (default: true for normal users, false for system users)
-   *
    * @generated from field: bool create_home = 9;
    */
   createHome: boolean;
 
   /**
-   * Disable the user account (lock password, set shell to /usr/sbin/nologin)
-   *
    * @generated from field: bool disabled = 10;
    */
   disabled: boolean;
 
   /**
-   * Primary group name (alternative to gid - creates group if needed)
-   *
    * @generated from field: string primary_group = 11;
    */
   primaryGroup: string;
 
   /**
-   * Hide user from graphical login screens (GDM, SDDM, LightDM).
-   * Sets SystemAccount=true in AccountsService. No effect on headless systems.
-   *
    * @generated from field: bool hidden = 12;
    */
   hidden: boolean;
 
   /**
-   * When true, the agent does NOT generate or set a temporary password
-   * for this account, nor report any lps.rotations metadata back to
-   * the server. The account is created with the shadow-locked default
-   * ('!'), so no PAM-protected login path (password, su) succeeds; a
-   * root setuid invocation (e.g. the agent's terminal session opener)
-   * still works because it bypasses PAM.
-   *
-   * Intended for system-managed nologin accounts that are only ever
-   * reached via setuid — cadestro-tty-* is the canonical case. Do NOT set
-   * this for general-purpose users: passwords are good to have for
-   * any account that might ever need a PAM-protected login path, and
-   * setting no_password here locks that path closed.
-   *
-   * This flag is deliberately explicit, not derived from
-   * Shell == "/usr/sbin/nologin": the password-good-to-have default
-   * should not be flipped by a heuristic on a related field.
-   *
    * @generated from field: bool no_password = 13;
    */
   noPassword: boolean;
@@ -988,36 +788,25 @@ export const UserParamsSchema: GenMessage<UserParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 15);
 
 /**
- * GroupParams configures Linux group management.
- * Creates or removes a group and manages its members.
- *
  * @generated from message cadestro.v1.GroupParams
  */
 export type GroupParams = Message<"cadestro.v1.GroupParams"> & {
   /**
-   * Group name (required)
-   *
    * @generated from field: string name = 1;
    */
   name: string;
 
   /**
-   * Members to add to the group
-   *
    * @generated from field: repeated string members = 2;
    */
   members: string[];
 
   /**
-   * Group ID (optional - system assigns if not specified)
-   *
    * @generated from field: int32 gid = 3;
    */
   gid: number;
 
   /**
-   * Create as system group (GID < 1000)
-   *
    * @generated from field: bool system_group = 4;
    */
   systemGroup: boolean;
@@ -1031,31 +820,20 @@ export const GroupParamsSchema: GenMessage<GroupParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 16);
 
 /**
- * SshParams configures SSH access for a user.
- * Creates an sshd_config.d drop-in file with a Match Group directive.
- * Each action creates a Linux group cadestro-ssh-{actionId} and users are added
- * to the group. SSH keys and home directory are managed by the User action type.
- *
  * @generated from message cadestro.v1.SshParams
  */
 export type SshParams = Message<"cadestro.v1.SshParams"> & {
   /**
-   * Allow public key authentication (default: true)
-   *
    * @generated from field: bool allow_pubkey = 1;
    */
   allowPubkey: boolean;
 
   /**
-   * Allow password authentication (default: false)
-   *
    * @generated from field: bool allow_password = 2;
    */
   allowPassword: boolean;
 
   /**
-   * Users to add to the SSH access group (must be valid Linux usernames)
-   *
    * @generated from field: repeated string users = 3;
    */
   users: string[];
@@ -1069,21 +847,15 @@ export const SshParamsSchema: GenMessage<SshParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 17);
 
 /**
- * SshdDirective represents a single sshd_config key-value directive.
- *
  * @generated from message cadestro.v1.SshdDirective
  */
 export type SshdDirective = Message<"cadestro.v1.SshdDirective"> & {
   /**
-   * sshd_config directive name (e.g., "PermitRootLogin", "Port")
-   *
    * @generated from field: string key = 1;
    */
   key: string;
 
   /**
-   * Directive value (e.g., "no", "22")
-   *
    * @generated from field: string value = 2;
    */
   value: string;
@@ -1097,24 +869,15 @@ export const SshdDirectiveSchema: GenMessage<SshdDirective> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 18);
 
 /**
- * SshdParams configures the SSH daemon via sshd_config.d drop-in files.
- * Each action creates a numbered config file for ordering (e.g., 0000-*.conf, 0001-*.conf).
- * Priority is auto-assigned by the server based on creation order.
- * The sshd service is automatically reloaded when configuration changes.
- *
  * @generated from message cadestro.v1.SshdParams
  */
 export type SshdParams = Message<"cadestro.v1.SshdParams"> & {
   /**
-   * Priority for config file ordering (auto-assigned by server, lower = loaded first)
-   *
    * @generated from field: uint32 priority = 1;
    */
   priority: number;
 
   /**
-   * sshd_config directives to set
-   *
    * @generated from field: repeated cadestro.v1.SshdDirective directives = 2;
    */
   directives: SshdDirective[];
@@ -1128,44 +891,25 @@ export const SshdParamsSchema: GenMessage<SshdParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 19);
 
 /**
- * AdminPolicyParams configures privilege-delegation policies.
- * Under PRIVILEGE_BACKEND_SUDO the action manages /etc/sudoers.d/
- * drop-ins; under PRIVILEGE_BACKEND_DOAS it manages /etc/doas.d/
- * drop-ins. Each action creates a Linux group cadestro-sudo-{actionId}
- * and the corresponding policy file. Users specified in the users
- * list are added to the group. When removed, the group and policy
- * file are cleaned up.
- *
  * @generated from message cadestro.v1.AdminPolicyParams
  */
 export type AdminPolicyParams = Message<"cadestro.v1.AdminPolicyParams"> & {
   /**
-   * Access level determines the policy template
-   *
    * @generated from field: cadestro.v1.AdminAccessLevel access_level = 1;
    */
   accessLevel: AdminAccessLevel;
 
   /**
-   * Users to add to the admin group (must be valid Linux usernames)
-   *
    * @generated from field: repeated string users = 2;
    */
   users: string[];
 
   /**
-   * Raw policy content (only used when access_level is CUSTOM). Must be
-   * valid syntax for the chosen backend — sudoers grammar for SUDO and
-   * doas.conf(5) grammar for DOAS. Use {group} as placeholder for the
-   * auto-generated group name. Required when access_level is CUSTOM (3).
-   *
    * @generated from field: string custom_config = 3;
    */
   customConfig: string;
 
   /**
-   * Privilege backend. Unset means PRIVILEGE_BACKEND_SUDO.
-   *
    * @generated from field: cadestro.v1.PrivilegeBackend backend = 4;
    */
   backend: PrivilegeBackend;
@@ -1179,47 +923,30 @@ export const AdminPolicyParamsSchema: GenMessage<AdminPolicyParams> = /*@__PURE_
   messageDesc(file_cadestro_v1_actions, 20);
 
 /**
- * LpsParams configures Local Password Solution (LAPS-like) password management.
- * Each action targets one or more user accounts. The agent generates a random
- * password for each user based on configured length/complexity, sets it via
- * chpasswd, kills all user sessions, and reports the passwords back to the
- * server. Rotation occurs independently per user on a schedule and optionally
- * after authentication events.
- *
  * @generated from message cadestro.v1.LpsParams
  */
 export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
   /**
-   * Target user accounts (must exist on device)
-   *
    * @generated from field: repeated string usernames = 1;
    */
   usernames: string[];
 
   /**
-   * Password length (8-128)
-   *
    * @generated from field: int32 password_length = 2;
    */
   passwordLength: number;
 
   /**
-   * Password complexity
-   *
    * @generated from field: cadestro.v1.LpsPasswordComplexity complexity = 3;
    */
   complexity: LpsPasswordComplexity;
 
   /**
-   * Days between scheduled rotations (1-365)
-   *
    * @generated from field: int32 rotation_interval_days = 4;
    */
   rotationIntervalDays: number;
 
   /**
-   * Hours after auth event before automatic rotation (0 = disabled)
-   *
    * @generated from field: int32 grace_period_hours = 5;
    */
   gracePeriodHours: number;
@@ -1233,60 +960,35 @@ export const LpsParamsSchema: GenMessage<LpsParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 21);
 
 /**
- * EncryptionParams configures LUKS disk encryption management. The agent
- * auto-detects the primary encrypted volume, generates and rotates a managed
- * passphrase, and can enroll a TPM or user passphrase in the device-bound slot.
- *
  * @generated from message cadestro.v1.EncryptionParams
  */
 export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
   /**
-   * Pre-shared key for initial ownership, delivered only over authenticated mTLS.
-   * The durable manifest carries the at-rest envelope until the authenticated
-   * send boundary, so this bound includes AEAD/base64 overhead.
-   *
    * @generated from field: bytes preshared_key = 1;
    */
   presharedKey: Uint8Array;
 
   /**
-   * Days between scheduled passphrase rotations (1-365)
-   *
    * @generated from field: int32 rotation_interval_days = 2;
    */
   rotationIntervalDays: number;
 
   /**
-   * Minimum words in generated managed passphrase (default 5, min 3, max 10)
-   *
    * @generated from field: int32 min_words = 3;
    */
   minWords: number;
 
   /**
-   * What to put in the device-bound key slot — TPM, user passphrase, or nothing.
-   * Range-checked: the agent switches on this value and its default branch means
-   * "no device-bound key", so an unvalidated out-of-range value would silently
-   * downgrade a requested TPM enrollment instead of being refused.
-   *
    * @generated from field: cadestro.v1.EncryptionDeviceBoundKeyType device_bound_key_type = 4;
    */
   deviceBoundKeyType: EncryptionDeviceBoundKeyType;
 
   /**
-   * Minimum length for user-defined passphrases (16-128, only used when device_bound_key_type = USER_PASSPHRASE)
-   *
    * @generated from field: int32 user_passphrase_min_length = 5;
    */
   userPassphraseMinLength: number;
 
   /**
-   * Complexity requirement for user-defined passphrases (only used when device_bound_key_type = USER_PASSPHRASE)
-   * Range-checked for the same reason as device_bound_key_type: this selects the
-   * alphabet the agent draws the passphrase from, and its switch default is a
-   * weaker alphabet than an out-of-range value was asking for. Stays optional —
-   * UNSPECIFIED (0) is legal because the field only applies to USER_PASSPHRASE.
-   *
    * @generated from field: cadestro.v1.LpsPasswordComplexity user_passphrase_complexity = 6;
    */
   userPassphraseComplexity: LpsPasswordComplexity;
@@ -1300,82 +1002,55 @@ export const EncryptionParamsSchema: GenMessage<EncryptionParams> = /*@__PURE__*
   messageDesc(file_cadestro_v1_actions, 22);
 
 /**
- * WifiParams configures NetworkManager WiFi connection management.
- * Each action creates a connection profile named cadestro-wifi-{actionId}. Supports PSK (password) and
- * EAP-TLS (certificate) authentication.
- *
  * @generated from message cadestro.v1.WifiParams
  */
 export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
   /**
-   * Network name (SSID)
-   *
    * @generated from field: string ssid = 1;
    */
   ssid: string;
 
   /**
-   * Authentication type
-   *
    * @generated from field: cadestro.v1.WifiAuthType auth_type = 2;
    */
   authType: WifiAuthType;
 
   /**
-   * PSK authentication (WPA2/WPA3 Personal), delivered only over authenticated mTLS.
-   *
    * @generated from field: bytes psk = 3;
    */
   psk: Uint8Array;
 
   /**
-   * EAP-TLS authentication (802.1X with client certificate)
-   *
-   * CA certificate (PEM)
-   *
    * @generated from field: string ca_cert = 4;
    */
   caCert: string;
 
   /**
-   * Client certificate (PEM)
-   *
    * @generated from field: string client_cert = 5;
    */
   clientCert: string;
 
   /**
-   * Client private key (PEM), delivered only over authenticated mTLS.
-   *
    * @generated from field: bytes client_key = 6;
    */
   clientKey: Uint8Array;
 
   /**
-   * EAP identity (e.g., user@corp.com)
-   *
    * @generated from field: string identity = 7;
    */
   identity: string;
 
   /**
-   * Connection settings
-   * Connect to this network automatically when in range.
-   *
    * @generated from field: bool auto_connect = 8;
    */
   autoConnect: boolean;
 
   /**
-   * Network does not broadcast its SSID (probe-scan required).
-   *
    * @generated from field: bool hidden = 9;
    */
   hidden: boolean;
 
   /**
-   * Selection priority when multiple known networks are visible (higher wins).
-   *
    * @generated from field: int32 priority = 10;
    */
   priority: number;
@@ -1423,44 +1098,26 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
   duration?: Duration;
 
   /**
-   * Whether the action made changes to the system (true) or state was already as desired (false)
-   *
    * @generated from field: bool changed = 7;
    */
   changed: boolean;
 
   /**
-   * Optional action-specific metadata (e.g., LPS password data)
-   *
    * @generated from field: map<string, string> metadata = 8;
    */
   metadata: { [key: string]: string };
 
   /**
-   * Detection script result: true if detection script exited 0 (compliant)
-   *
    * @generated from field: bool compliant = 9;
    */
   compliant: boolean;
 
   /**
-   * Detection script output (separate from execution output)
-   *
    * @generated from field: cadestro.v1.CommandOutput detection_output = 10;
    */
   detectionOutput?: CommandOutput;
 
   /**
-   * The run this result belongs to, and the authored position within
-   * that run's manifest. Together they make ingestion idempotent:
-   * control keys the stored result on (run_id, occurrence_id), so a
-   * result replayed after a reconnect updates the same row instead of
-   * creating a second one. action_id alone cannot do this — duplicate
-   * authored occurrences of the same action are preserved and executed, so
-   * one authored occurrence legitimately produces several results with the same
-   * action_id.
-   *
-   *
    * @generated from field: cadestro.v1.RunId run_id = 11;
    */
   runId?: RunId;
@@ -1479,24 +1136,15 @@ export const ActionResultSchema: GenMessage<ActionResult> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 24);
 
 /**
- * Per-architecture binary source authenticated by a signed checksum manifest.
- *
  * @generated from message cadestro.v1.AgentUpdateArch
  */
 export type AgentUpdateArch = Message<"cadestro.v1.AgentUpdateArch"> & {
   /**
-   * Direct download URL for the agent binary (HTTPS only)
-   *
    * @generated from field: string binary_url = 1;
    */
   binaryUrl: string;
 
   /**
-   * URL to the release's SHA256SUMS-style checksum manifest (HTTPS only).
-   * The agent requires an adjacent detached signature and verifies the exact
-   * manifest bytes with its embedded Ed25519 release-signing public key before
-   * trusting the candidate binary hash. This is the only update-integrity path.
-   *
    * @generated from field: string checksum_url = 2;
    */
   checksumUrl: string;
@@ -1510,49 +1158,25 @@ export const AgentUpdateArchSchema: GenMessage<AgentUpdateArch> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 25);
 
 /**
- * AgentUpdateParams configures agent self-update via direct binary download.
- * At least one architecture must be specified. The agent selects the entry
- * matching its own architecture (runtime.GOARCH) and skips if no match.
- *
  * @generated from message cadestro.v1.AgentUpdateParams
  */
 export type AgentUpdateParams = Message<"cadestro.v1.AgentUpdateParams"> & {
   /**
-   * AMD64 (x86_64) binary source
-   *
    * @generated from field: cadestro.v1.AgentUpdateArch amd64 = 1;
    */
   amd64?: AgentUpdateArch;
 
   /**
-   * ARM64 (aarch64) binary source
-   *
    * @generated from field: cadestro.v1.AgentUpdateArch arm64 = 2;
    */
   arm64?: AgentUpdateArch;
 
   /**
-   * When true, the agent installs the target binary even if its version
-   * is older than or equal to the running version (downgrade). The flag
-   * reaches the agent over the authenticated mTLS stream, so a downgrade is
-   * an explicit operator decision — the agent otherwise refuses an older
-   * version (anti-rollback). Default false.
-   *
    * @generated from field: bool allow_downgrade = 3;
    */
   allowDowngrade: boolean;
 
   /**
-   * When true, the agent follows a redirect that changes host or scheme
-   * while downloading the update binary and checksum manifest — e.g.
-   * GitHub release assets, which 302 from github.com to
-   * release-assets.githubusercontent.com. Default false: a cross-origin
-   * redirect is refused and the download must reach the configured host
-   * directly. The binary is still verified against the publisher-signed
-   * checksum manifest and an https->http downgrade is refused regardless.
-   * This opts into a host-changing hop, not into unchecked bytes, and it is
-   * an explicit operator decision either way.
-   *
    * @generated from field: bool allow_redirect = 4;
    */
   allowRedirect: boolean;
@@ -1575,172 +1199,106 @@ export enum ActionType {
   UNSPECIFIED = 0,
 
   /**
-   * Package management (1-99)
-   *
-   * Generic package (apt/dnf/pacman/zypper based on distro)
-   *
    * @generated from enum value: ACTION_TYPE_PACKAGE = 1;
    */
   PACKAGE = 1,
 
   /**
-   * System-wide package update (respects pinning)
-   *
    * @generated from enum value: ACTION_TYPE_UPDATE = 2;
    */
   UPDATE = 2,
 
   /**
-   * External repository configuration
-   *
    * @generated from enum value: ACTION_TYPE_REPOSITORY = 3;
    */
   REPOSITORY = 3,
 
   /**
-   * Application installation (100-199)
-   *
-   * AppImage
-   *
    * @generated from enum value: ACTION_TYPE_APP_IMAGE = 100;
    */
   APP_IMAGE = 100,
 
   /**
-   * Direct .deb
-   *
    * @generated from enum value: ACTION_TYPE_DEB = 101;
    */
   DEB = 101,
 
   /**
-   * Direct .rpm
-   *
    * @generated from enum value: ACTION_TYPE_RPM = 102;
    */
   RPM = 102,
 
   /**
-   * Flatpak application
-   *
    * @generated from enum value: ACTION_TYPE_FLATPAK = 103;
    */
   FLATPAK = 103,
 
   /**
-   * Scripts (200-299)
-   *
-   * Shell script
-   *
    * @generated from enum value: ACTION_TYPE_SHELL = 200;
    */
   SHELL = 200,
 
   /**
-   * One-off script execution (not scheduled)
-   *
    * @generated from enum value: ACTION_TYPE_SCRIPT_RUN = 201;
    */
   SCRIPT_RUN = 201,
 
   /**
-   * Services (300-399)
-   *
-   * Service unit (systemd; the only backend the SDK implements)
-   *
    * @generated from enum value: ACTION_TYPE_SERVICE = 300;
    */
   SERVICE = 300,
 
   /**
-   * Files (400-499)
-   *
-   * File management
-   *
    * @generated from enum value: ACTION_TYPE_FILE = 400;
    */
   FILE = 400,
 
   /**
-   * Directory management
-   *
    * @generated from enum value: ACTION_TYPE_DIRECTORY = 401;
    */
   DIRECTORY = 401,
 
   /**
-   * System management (600-699)
-   *
-   * User account management
-   *
    * @generated from enum value: ACTION_TYPE_USER = 600;
    */
   USER = 600,
 
   /**
-   * Group membership management
-   *
    * @generated from enum value: ACTION_TYPE_GROUP = 601;
    */
   GROUP = 601,
 
   /**
-   * SSH access management (700-799)
-   *
-   * SSH access configuration
-   *
    * @generated from enum value: ACTION_TYPE_SSH = 700;
    */
   SSH = 700,
 
   /**
-   * SSH daemon configuration
-   *
    * @generated from enum value: ACTION_TYPE_SSHD = 701;
    */
   SSHD = 701,
 
   /**
-   * Privilege management (800-899)
-   *
-   * Administrative privilege policy (sudoers or doas)
-   *
    * @generated from enum value: ACTION_TYPE_ADMIN_POLICY = 800;
    */
   ADMIN_POLICY = 800,
 
   /**
-   * Password management (900-999)
-   *
-   * Local Password Solution
-   *
    * @generated from enum value: ACTION_TYPE_LPS = 900;
    */
   LPS = 900,
 
   /**
-   * Encryption management (1000-1099)
-   *
-   * LUKS disk encryption management
-   *
    * @generated from enum value: ACTION_TYPE_ENCRYPTION = 1000;
    */
   ENCRYPTION = 1000,
 
   /**
-   * Network management (1100-1199)
-   *
-   * WiFi connection management
-   *
    * @generated from enum value: ACTION_TYPE_WIFI = 1100;
    */
   WIFI = 1100,
 
   /**
-   * Agent management (1200-1299)
-   *
-   * Agent self-update
-   *
    * @generated from enum value: ACTION_TYPE_AGENT_UPDATE = 1200;
    */
   AGENT_UPDATE = 1200,
@@ -1784,16 +1342,6 @@ export const ServiceUnitStateSchema: GenEnum<ServiceUnitState> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_actions, 1);
 
 /**
- * AdminAccessLevel defines the level of administrative access granted.
- * The server renders FULL/LIMITED into the concrete policy file format
- * for the selected PrivilegeBackend (sudoers or doas); CUSTOM carries
- * raw admin-authored config that must be valid syntax for the chosen
- * backend. TERMINAL_ADMIN_LIMITED and TERMINAL_ADMIN_FULL are used by
- * the server's TerminalAdmin reconciler — they route the agent to two
- * passwordless templates designed for cadestro-tty-* accounts (which have
- * no password to prompt for). Operator-authored AdminPolicy actions
- * should continue to use FULL/LIMITED/CUSTOM.
- *
  * @generated from enum cadestro.v1.AdminAccessLevel
  */
 export enum AdminAccessLevel {
@@ -1803,36 +1351,26 @@ export enum AdminAccessLevel {
   UNSPECIFIED = 0,
 
   /**
-   * Unrestricted access (password required)
-   *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_FULL = 1;
    */
   FULL = 1,
 
   /**
-   * System management commands only (password required)
-   *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_LIMITED = 2;
    */
   LIMITED = 2,
 
   /**
-   * Admin-defined raw policy
-   *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_CUSTOM = 3;
    */
   CUSTOM = 3,
 
   /**
-   * Passwordless LIMITED variant for cadestro-tty-* TerminalAdmin grants
-   *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED = 4;
    */
   TERMINAL_ADMIN_LIMITED = 4,
 
   /**
-   * Passwordless FULL variant for cadestro-tty-* TerminalAdmin grants
-   *
    * @generated from enum value: ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL = 5;
    */
   TERMINAL_ADMIN_FULL = 5,
@@ -1845,24 +1383,15 @@ export const AdminAccessLevelSchema: GenEnum<AdminAccessLevel> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_actions, 2);
 
 /**
- * PrivilegeBackend selects which privilege-escalation tool the agent
- * uses, both for its own operations and for rendering admin policies.
- * The agent reads its configured backend at startup and passes it to
- * the SDK via exec.SetPrivilegeBackend.
- *
  * @generated from enum cadestro.v1.PrivilegeBackend
  */
 export enum PrivilegeBackend {
   /**
-   * Default. Drops files into /etc/sudoers.d/.
-   *
    * @generated from enum value: PRIVILEGE_BACKEND_SUDO = 0;
    */
   SUDO = 0,
 
   /**
-   * Drops files into /etc/doas.d/.
-   *
    * @generated from enum value: PRIVILEGE_BACKEND_DOAS = 1;
    */
   DOAS = 1,
@@ -1875,8 +1404,6 @@ export const PrivilegeBackendSchema: GenEnum<PrivilegeBackend> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_actions, 3);
 
 /**
- * LpsPasswordComplexity defines the character set for generated passwords.
- *
  * @generated from enum cadestro.v1.LpsPasswordComplexity
  */
 export enum LpsPasswordComplexity {
@@ -1886,15 +1413,11 @@ export enum LpsPasswordComplexity {
   UNSPECIFIED = 0,
 
   /**
-   * a-z, A-Z, 0-9
-   *
    * @generated from enum value: LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC = 1;
    */
   ALPHANUMERIC = 1,
 
   /**
-   * a-z, A-Z, 0-9, special characters
-   *
    * @generated from enum value: LPS_PASSWORD_COMPLEXITY_COMPLEX = 2;
    */
   COMPLEX = 2,
@@ -1907,28 +1430,20 @@ export const LpsPasswordComplexitySchema: GenEnum<LpsPasswordComplexity> = /*@__
   enumDesc(file_cadestro_v1_actions, 4);
 
 /**
- * EncryptionDeviceBoundKeyType determines what goes in LUKS slot 7.
- *
  * @generated from enum cadestro.v1.EncryptionDeviceBoundKeyType
  */
 export enum EncryptionDeviceBoundKeyType {
   /**
-   * Managed passphrase only, no device-bound key
-   *
    * @generated from enum value: ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE = 0;
    */
   NONE = 0,
 
   /**
-   * TPM2 auto-unlock at boot
-   *
    * @generated from enum value: ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM = 1;
    */
   TPM = 1,
 
   /**
-   * User-defined passphrase via CLI
-   *
    * @generated from enum value: ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE = 2;
    */
   USER_PASSPHRASE = 2,
@@ -1941,8 +1456,6 @@ export const EncryptionDeviceBoundKeyTypeSchema: GenEnum<EncryptionDeviceBoundKe
   enumDesc(file_cadestro_v1_actions, 5);
 
 /**
- * WiFi authentication type.
- *
  * @generated from enum cadestro.v1.WifiAuthType
  */
 export enum WifiAuthType {
@@ -1952,15 +1465,11 @@ export enum WifiAuthType {
   UNSPECIFIED = 0,
 
   /**
-   * WPA2/WPA3 Personal (password)
-   *
    * @generated from enum value: WIFI_AUTH_TYPE_PSK = 1;
    */
   PSK = 1,
 
   /**
-   * 802.1X with client certificate
-   *
    * @generated from enum value: WIFI_AUTH_TYPE_EAP_TLS = 2;
    */
   EAP_TLS = 2,

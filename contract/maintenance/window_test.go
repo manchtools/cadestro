@@ -39,8 +39,7 @@ func TestValidate(t *testing.T) {
 			true,
 		},
 		{
-			// Mixed-case tokens are rejected by Validate because the evaluator
-			// accepts canonical lowercase tokens only.
+
 			"uppercase day rejected",
 			&cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 				{Days: []string{"MON"}, Allow: "09:00-17:00"},
@@ -118,7 +117,7 @@ func TestIsAllowedSameDay(t *testing.T) {
 	w := &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 		{Days: []string{"mon", "tue", "wed", "thu", "fri"}, Allow: "09:00-17:00"},
 	}}
-	// Monday 2026-05-04 — note May 3 (today's date in conv context) is Sunday.
+
 	mondayNoon := time.Date(2026, time.May, 4, 12, 0, 0, 0, time.UTC)
 	if !maintenance.IsAllowed(w, mondayNoon) {
 		t.Fatalf("want allowed at Mon noon")
@@ -145,32 +144,27 @@ func TestIsAllowedCrossesMidnight(t *testing.T) {
 	w := &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{
 		{Days: []string{"mon", "tue", "wed", "thu", "fri"}, Allow: "22:00-06:00"},
 	}}
-	// Monday 22:00 — exactly the window start. Inclusive boundary
-	// proves the agent fires on the very first second of the window
-	// rather than waiting one minute before becoming due.
+
 	if !maintenance.IsAllowed(w, time.Date(2026, time.May, 4, 22, 0, 0, 0, time.UTC)) {
 		t.Fatalf("want allowed at Mon 22:00 (cross-midnight start is inclusive)")
 	}
-	// Monday 23:00 — covered by the Mon entry's pre-midnight half.
+
 	if !maintenance.IsAllowed(w, time.Date(2026, time.May, 4, 23, 0, 0, 0, time.UTC)) {
 		t.Fatalf("want allowed at Mon 23:00")
 	}
-	// Tuesday 02:00 — covered by the *Mon* entry's post-midnight tail.
-	// The tail belongs to the day-listed-as-yesterday (Mon), not Tue.
+
 	if !maintenance.IsAllowed(w, time.Date(2026, time.May, 5, 2, 0, 0, 0, time.UTC)) {
 		t.Fatalf("want allowed at Tue 02:00 (tail of Mon's window)")
 	}
-	// Tuesday 06:00 — outside (end exclusive).
+
 	if maintenance.IsAllowed(w, time.Date(2026, time.May, 5, 6, 0, 0, 0, time.UTC)) {
 		t.Fatalf("want denied at Tue 06:00")
 	}
-	// Saturday 02:00 — Friday's window covers this (Friday is listed,
-	// Sat is the day-after, so Sat 02:00 is the post-midnight tail).
+
 	if !maintenance.IsAllowed(w, time.Date(2026, time.May, 9, 2, 0, 0, 0, time.UTC)) {
 		t.Fatalf("want allowed at Sat 02:00 (tail of Fri's window)")
 	}
-	// Sunday 02:00 — Saturday is NOT listed, so the tail does not
-	// apply: Sat midnight->Sun morning is not covered.
+
 	if maintenance.IsAllowed(w, time.Date(2026, time.May, 10, 2, 0, 0, 0, time.UTC)) {
 		t.Fatalf("want denied at Sun 02:00 (Saturday not listed)")
 	}
@@ -189,15 +183,12 @@ func TestUnion(t *testing.T) {
 	if len(got.GetSchedule()) != 2 {
 		t.Fatalf("want 2 entries in concatenation, got %d", len(got.GetSchedule()))
 	}
-	// Saturday afternoon is allowed by the weekends entry but not by
-	// the weekdays one — proves the OR semantics across windows.
+
 	satAfternoon := time.Date(2026, time.May, 9, 14, 0, 0, 0, time.UTC)
 	if !maintenance.IsAllowed(got, satAfternoon) {
 		t.Fatalf("want allowed Sat 14:00 in union")
 	}
 
-	// Empty input collapses union to "always allowed" — a group with
-	// no window contributes no constraint.
 	collapsed := maintenance.Union(weekdays, empty)
 	if len(collapsed.GetSchedule()) != 0 {
 		t.Fatalf("want empty union when any input is empty, got %d entries", len(collapsed.GetSchedule()))
@@ -206,7 +197,6 @@ func TestUnion(t *testing.T) {
 		t.Fatalf("empty union must allow any moment")
 	}
 
-	// Nil input behaves like empty.
 	collapsedNil := maintenance.Union(weekdays, nil)
 	if len(collapsedNil.GetSchedule()) != 0 {
 		t.Fatalf("nil input should collapse union, got %d entries", len(collapsedNil.GetSchedule()))

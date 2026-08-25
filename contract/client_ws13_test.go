@@ -12,8 +12,6 @@ import (
 
 const testULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 
-// recordingTransport records CloseIdleConnections calls so the #8 seam can be
-// verified without a real network.
 type recordingTransport struct{ closeCalls int }
 
 func (r *recordingTransport) RoundTrip(*http.Request) (*http.Response, error) {
@@ -21,9 +19,6 @@ func (r *recordingTransport) RoundTrip(*http.Request) (*http.Response, error) {
 }
 func (r *recordingTransport) CloseIdleConnections() { r.closeCalls++ }
 
-// TestClient_CloseIdleConnections pins WS13 #8: CloseIdleConnections releases the
-// transport's idle connections (so a reconnect loop doesn't leak transports) and
-// is nil-safe.
 func TestClient_CloseIdleConnections(t *testing.T) {
 	rt := &recordingTransport{}
 	c := NewClient("https://gw.example", WithHTTPClient(&http.Client{Transport: rt}))
@@ -35,9 +30,6 @@ func TestClient_CloseIdleConnections(t *testing.T) {
 	require.NotPanics(t, func() { nilClient.CloseIdleConnections() }, "must be nil-safe")
 }
 
-// TestDispatch_DropsInvalidInbound pins WS13 #5: a command frame that violates
-// the inbound `validate` gotags (out-of-range PTY dims, non-ULID session id) is
-// dropped before the handler; a conformant frame reaches it.
 func TestDispatch_DropsInvalidInbound(t *testing.T) {
 	ctx := context.Background()
 	start := func(sid, tty string, cols, rows uint32) *cadestrov1.ServerMessage {

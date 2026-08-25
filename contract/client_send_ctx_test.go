@@ -11,35 +11,17 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// WS16 finding #1: the Send* methods take a ctx but (*Client).send ignored
-// it and held sendMu for the whole stream.Send. A single stalled send (peer
-// not draining the HTTP/2 flow-control window) therefore wedged sendMu and
-// blocked every other sender past its own deadline; the terminal-send 5s ctx
-// was cosmetic. These tests pin that a Send must surface its ctx deadline as
-// a ctx error — both when the call is itself the wedged writer and when it is
-// merely queued behind one — without reintroducing on-wire corruption
-// (TestConcurrentSend_PreservesEveryMessage must stay green).
-
-// newStalledLoopback returns a loopback whose server accepts the stream but
-// NEVER calls Receive, so the client's HTTP/2 send window fills and stays
-// full: the next large write blocks at the transport layer indefinitely.
 func newStalledLoopback(t *testing.T) *agentLoopback {
 	t.Helper()
 	l := newAgentLoopback(t)
 	l.handler.onStream = func(ctx context.Context, _ *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
-		// Hold the stream open without ever draining the inbound side.
+
 		<-ctx.Done()
 		return nil
 	}
 	return l
 }
 
-// connectCancellable connects the client over a cancellable ctx and registers
-// cleanup that cancels it (resetting the underlying HTTP/2 stream so any send
-// wedged on a full flow-control window unblocks) before closing the client.
-// This mirrors production: the agent's run ctx cancel on shutdown/reconnect is
-// what tears down a stalled stream — Close alone cannot wake a flow-control
-// wait.
 func connectCancellable(t *testing.T, c *Client) {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -53,17 +35,15 @@ func connectCancellable(t *testing.T, c *Client) {
 		select {
 		case <-done:
 		case <-time.After(3 * time.Second):
-			// Best-effort: the httptest server cleanup will finish teardown.
+
 		}
 	})
 }
 
-// bigTerminalOutput is intentionally far larger than the ~64 KiB HTTP/2
-// flow-control window so a single Send to a non-draining peer blocks mid-write.
 func bigTerminalOutput() *cadestrov1.TerminalOutput {
 	return &cadestrov1.TerminalOutput{
 		SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
-		Data:      make([]byte, 2<<20), // 2 MiB
+		Data:      make([]byte, 2<<20),
 	}
 }
 
@@ -73,9 +53,6 @@ func TestSendTerminalOutput_HonorsContextDeadline_WhenPeerNotDraining(t *testing
 
 	connectCancellable(t, c)
 
-	// present-but-WRONG: an already-cancelled ctx must be refused up front,
-	// before attempting the wedged send. Bounded so the buggy (ctx-ignoring)
-	// path surfaces as a fast failure rather than a 10-minute hang.
 	t.Run("already cancelled returns Canceled before sending", func(t *testing.T) {
 		cctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -91,9 +68,6 @@ func TestSendTerminalOutput_HonorsContextDeadline_WhenPeerNotDraining(t *testing
 		}
 	})
 
-	// correct (the headline case): the call is itself the writer that wedges
-	// on the full window; it must return its own deadline error within
-	// roughly the timeout, not block forever.
 	t.Run("deadline surfaces as DeadlineExceeded", func(t *testing.T) {
 		done := make(chan error, 1)
 		start := time.Now()
@@ -123,22 +97,15 @@ func TestSend_DoesNotSerializeAllTrafficBehindOneStalledSend(t *testing.T) {
 
 	connectCancellable(t, c)
 
-	// A long-lived blocker saturates the window and holds the send slot.
 	blockerDone := make(chan struct{})
 	go func() {
 		defer close(blockerDone)
-		// context.Background(): with the bug this blocks forever holding
-		// sendMu; with the fix it holds the send slot until the stream is
-		// torn down at Close, which is fine — the point is the victim below
-		// must not inherit this wait.
+
 		_ = c.SendTerminalOutput(context.Background(), bigTerminalOutput())
 	}()
 
-	// Give the blocker time to fill the window and claim the slot.
 	time.Sleep(150 * time.Millisecond)
 
-	// The victim is small but must still honor its own short deadline rather
-	// than block behind the stalled blocker.
 	done := make(chan error, 1)
 	start := time.Now()
 	go func() {
@@ -166,9 +133,6 @@ func TestSendTerminalStateChange_HonorsContextDeadline(t *testing.T) {
 
 	connectCancellable(t, c)
 
-	// Saturate the window with a blocker so the state-change send is queued
-	// behind a stall — the exact shape of the F053 EXITED path (terminal.go
-	// passes a 5s ctx that was ignored).
 	go func() { _ = c.SendTerminalOutput(context.Background(), bigTerminalOutput()) }()
 	time.Sleep(150 * time.Millisecond)
 
@@ -192,11 +156,8 @@ func TestSendTerminalStateChange_HonorsContextDeadline(t *testing.T) {
 	}
 }
 
-// TestSend_DrainingPeer_NoRegression proves the ctx plumbing does not break
-// the normal path: against a draining server a Background-ctx send still
-// succeeds (ABSENT deadline → nil).
 func TestSend_DrainingPeer_NoRegression(t *testing.T) {
-	l := newAgentLoopback(t) // default handler drains via Receive
+	l := newAgentLoopback(t)
 	c := l.newClient(WithAuth("device-x", "tok"))
 
 	connectCancellable(t, c)

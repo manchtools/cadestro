@@ -20,31 +20,16 @@ export const file_cadestro_v1_device_auth: GenFile = /*@__PURE__*/
  */
 export type EnrollRequest = Message<"cadestro.v1.EnrollRequest"> & {
   /**
-   * Control server URL (https only — enforced agent-side)
-   *
    * @generated from field: string server_url = 1;
    */
   serverUrl: string;
 
   /**
-   * Registration token from web UI
-   *
    * @generated from field: string token = 2;
    */
   token: string;
 
   /**
-   * Required out-of-band CA fingerprint pin: the 64-char hex SHA-256 of
-   * the control CA certificate DER. The agent verifies the CA
-   * returned by registration matches this pin BEFORE trusting it,
-   * defending against a first-enrollment trust-anchor swap. Delivered by
-   * the operator alongside the token (e.g. cadestro://…?token=…&pin=…).
-   * Missing or mismatched pins fail closed; enrollment has no
-   * trust-on-first-use path. Case-insensitive: the enroll CLI strips colons
-   * (openssl emits uppercase, colon-separated) and the agent compares
-   * with EqualFold, so the `hexadecimal` tag is intentionally permissive
-   * on case.
-   *
    * @generated from field: string ca_fingerprint_pin = 3;
    */
   caFingerprintPin: string;
@@ -62,29 +47,16 @@ export const EnrollRequestSchema: GenMessage<EnrollRequest> = /*@__PURE__*/
  */
 export type EnrollResponse = Message<"cadestro.v1.EnrollResponse"> & {
   /**
-   * The other two fields below are conditioned on this — success=true
-   * means device_id is populated and error is empty; success=false
-   * means error is populated and device_id is empty. The bool itself
-   * is unconditional but we tag it explicit-required so the
-   * proto-validate coverage tool stops counting it as a gap. Bools
-   * always have a default value, so
-   * "required" here means "must be present in the wire payload" —
-   * protovalidate enforces no extra runtime check beyond that.
-   *
    * @generated from field: bool success = 1;
    */
   success: boolean;
 
   /**
-   * Assigned device ID on success
-   *
    * @generated from field: cadestro.v1.DeviceId device_id = 2;
    */
   deviceId?: DeviceId;
 
   /**
-   * Error message on failure
-   *
    * @generated from field: string error = 3;
    */
   error: string;
@@ -120,8 +92,6 @@ export type GetEnrollmentStatusResponse = Message<"cadestro.v1.GetEnrollmentStat
   enrolled: boolean;
 
   /**
-   * Empty if not enrolled
-   *
    * @generated from field: cadestro.v1.DeviceId device_id = 2;
    */
   deviceId?: DeviceId;
@@ -139,8 +109,6 @@ export const GetEnrollmentStatusResponseSchema: GenMessage<GetEnrollmentStatusRe
  */
 export const DeviceAuthService: GenService<{
   /**
-   * Enroll the agent with a Cadestro server (called by CLI, no sudo required).
-   *
    * @generated from rpc cadestro.v1.DeviceAuthService.Enroll
    */
   enroll: {
@@ -149,8 +117,6 @@ export const DeviceAuthService: GenService<{
     output: typeof EnrollResponseSchema;
   },
   /**
-   * Check whether the agent is currently enrolled.
-   *
    * @generated from rpc cadestro.v1.DeviceAuthService.GetEnrollmentStatus
    */
   getEnrollmentStatus: {

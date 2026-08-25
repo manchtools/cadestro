@@ -6,12 +6,10 @@ import "buf/validate/validate.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
-// Unique identifier for an action instance
 message ActionId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-// Unique identifier for a device/agent
 message DeviceId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
@@ -155,7 +153,6 @@ message ExternalIdentityId {
   string value = 1;
 }
 
-// Execution status for any action
 enum ExecutionStatus {
   EXECUTION_STATUS_UNSPECIFIED = 0;
   EXECUTION_STATUS_PENDING = 1;
@@ -164,43 +161,26 @@ enum ExecutionStatus {
   EXECUTION_STATUS_FAILED = 4;
   EXECUTION_STATUS_SKIPPED = 5;
   EXECUTION_STATUS_TIMEOUT = 6;
-  // Operator-cancelled action result.
+
   EXECUTION_STATUS_CANCELLED = 7;
-  // The action is structurally inapplicable to this device — e.g.
-  // security_only on a package manager with no security-patch
-  // scoping, a DEB action on an rpm host, a FLATPAK action with no
-  // flatpak installed. Terminal, non-error: nothing was executed
-  // (fail-closed), and the machine-readable reason travels in the
-  // result error field. Distinct from SKIPPED (a run the server or
-  // agent chose not to perform this time, e.g. maintenance window)
-  // in that NOT_APPLICABLE is a property of the device+action pair,
-  // not of the moment.
+
   EXECUTION_STATUS_NOT_APPLICABLE = 8;
-  // The agent persisted STARTED before a non-idempotent side effect and
-  // then crashed, so whether the effect landed is unknown. Reported on
-  // recovery instead of silently re-running the action: a second attempt
-  // could double-apply, and claiming FAILED would be a guess. Terminal
-  // from the agent's side — resolving it is an operator/product decision
-  // (a reboot resolves via the boot marker; other actions do not).
+
   EXECUTION_STATUS_INDETERMINATE = 9;
 }
 
-// Desired state for stateful actions
 enum DesiredState {
-  DESIRED_STATE_PRESENT = 0; // Install/create/enable
-  DESIRED_STATE_ABSENT = 1; // Remove/delete/disable
+  DESIRED_STATE_PRESENT = 0;
+  DESIRED_STATE_ABSENT = 1;
 }
 
-// Assignment mode determines how an action is applied to a target
 enum AssignmentMode {
-  ASSIGNMENT_MODE_REQUIRED = 0; // Mandatory: action will be applied
-  ASSIGNMENT_MODE_AVAILABLE = 1; // Optional: user can select
-  ASSIGNMENT_MODE_EXCLUDED = 2; // Blocked: action won't be applied on this target
-  ASSIGNMENT_MODE_UNINSTALL = 3; // Apply action but force desired_state to ABSENT
+  ASSIGNMENT_MODE_REQUIRED = 0;
+  ASSIGNMENT_MODE_AVAILABLE = 1;
+  ASSIGNMENT_MODE_EXCLUDED = 2;
+  ASSIGNMENT_MODE_UNINSTALL = 3;
 }
 
-// AssignmentSourceType identifies what kind of policy artefact an
-// Assignment links to a target.
 enum AssignmentSourceType {
   ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED = 0;
   ASSIGNMENT_SOURCE_TYPE_ACTION = 1;
@@ -209,8 +189,6 @@ enum AssignmentSourceType {
   ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY = 4;
 }
 
-// AssignmentTargetType identifies what kind of subject an Assignment
-// applies to.
 enum AssignmentTargetType {
   ASSIGNMENT_TARGET_TYPE_UNSPECIFIED = 0;
   ASSIGNMENT_TARGET_TYPE_DEVICE = 1;
@@ -219,56 +197,28 @@ enum AssignmentTargetType {
   ASSIGNMENT_TARGET_TYPE_USER_GROUP = 4;
 }
 
-// RoleGrantScopeKind names which kind of group anchors a scoped role
-// grant. Kinds are exclusive — a grant is either device-group-scoped,
-// user-group-scoped, or unscoped/global (UNSPECIFIED). Permissions
-// declare a single target kind on their PermissionInfo; a grant whose
-// scope_kind doesn't match every permission in the role is rejected at
-// the role-assignment handler.
 enum RoleGrantScopeKind {
-  // UNSPECIFIED on a grant means the grant is unscoped/global.
+
   ROLE_GRANT_SCOPE_KIND_UNSPECIFIED = 0;
   ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP = 1;
   ROLE_GRANT_SCOPE_KIND_USER_GROUP = 2;
 }
 
-// PermissionTargetKind classifies the target kind a permission acts
-// on, which determines which RoleGrantScopeKind it accepts on a
-// scoped grant. Returned on
-// PermissionInfo by ListPermissions so the role-builder UI can
-// surface scopable permissions and gate the scope picker by kind.
-//
-// Fail-closed semantic: a permission that does not explicitly
-// declare a target kind is NOT scopable — granting it with any
-// scope_kind is rejected by the role-assignment handler. New
-// permissions added without an explicit kind silently land at the
-// safe default. Use DEVICE / USER ONLY when the permission's
-// authorization decision can be expressed as "scope-id matches a
-// group containing this device/user".
 enum PermissionTargetKind {
-  // UNSPECIFIED — not scopable. Org-tier permissions
-  // (CreateRole, server settings, IDP/SCIM, audit) and any
-  // permission whose authorization decision can't be expressed as
-  // a group-membership check stay at UNSPECIFIED.
+
   PERMISSION_TARGET_KIND_UNSPECIFIED = 0;
-  // DEVICE — scopable with RoleGrantScopeKind=DEVICE_GROUP only.
+
   PERMISSION_TARGET_KIND_DEVICE = 1;
-  // USER — scopable with RoleGrantScopeKind=USER_GROUP only.
+
   PERMISSION_TARGET_KIND_USER = 2;
 }
 
-// DeviceStatus is computed by the server from the device's last_seen_at
-// timestamp, so it is wire-only — no column stores it. UNSPECIFIED on
-// the request means "no status filter".
 enum DeviceStatus {
   DEVICE_STATUS_UNSPECIFIED = 0;
   DEVICE_STATUS_ONLINE = 1;
   DEVICE_STATUS_OFFLINE = 2;
 }
 
-// SearchScope identifies which search index a SearchRequest targets,
-// and which index a SearchResult came from. UNSPECIFIED on the request
-// means "all scopes".
 enum SearchScope {
   SEARCH_SCOPE_UNSPECIFIED = 0;
   SEARCH_SCOPE_ACTIONS = 1;
@@ -282,10 +232,6 @@ enum SearchScope {
   SEARCH_SCOPE_AUDIT_EVENTS = 9;
 }
 
-// SortField is the column a Search orders by. Shared across all scopes
-// (the union of sortable columns); the server validates per-scope validity
-// (scopeSortableFields) and maps each value to that scope's index field.
-// UNSPECIFIED means "use the scope's default sort".
 enum SortField {
   SORT_FIELD_UNSPECIFIED = 0;
   SORT_FIELD_NAME = 1;
@@ -311,29 +257,17 @@ enum SortField {
   SORT_FIELD_OCCURRED_AT = 21;
 }
 
-// SortDirection is the order for a Search sort. UNSPECIFIED lets the
-// server pick the field's natural default.
 enum SortDirection {
   SORT_DIRECTION_UNSPECIFIED = 0;
   SORT_DIRECTION_ASC = 1;
   SORT_DIRECTION_DESC = 2;
 }
 
-// IdentityProviderType identifies the auth protocol an
-// IdentityProvider speaks. Today only OIDC ships, but the enum is
-// forward-looking — SAML2, LDAP, etc. can be added later.
 enum IdentityProviderType {
   IDENTITY_PROVIDER_TYPE_UNSPECIFIED = 0;
   IDENTITY_PROVIDER_TYPE_OIDC = 1;
 }
 
-// RotationReason classifies why a credential rotation happened. The
-// agent emits INITIAL (first time the action ran on the device, no
-// previous credential to retain), SCHEDULED (interval-based policy
-// rotation), and AUTH_GRACE (LPS only — user authenticated since the
-// last rotation and the grace period has now elapsed). Used by LUKS
-// passphrase rotations (INITIAL / SCHEDULED only — LUKS does not run
-// the auth-grace path) and LPS password rotations.
 enum RotationReason {
   ROTATION_REASON_UNSPECIFIED = 0;
   ROTATION_REASON_INITIAL = 1;
@@ -341,11 +275,6 @@ enum RotationReason {
   ROTATION_REASON_AUTH_GRACE = 3;
 }
 
-// LuksRevocationStatus tracks the lifecycle of a LUKS passphrase
-// revocation. NONE is the wire-default for keys that have not been
-// revoked. Once an admin triggers revocation the key moves through
-// DISPATCHED (work committed) and then SUCCESS or FAILED based on the
-// agent's response.
 enum LuksRevocationStatus {
   LUKS_REVOCATION_STATUS_UNSPECIFIED = 0;
   LUKS_REVOCATION_STATUS_NONE = 1;
@@ -354,9 +283,6 @@ enum LuksRevocationStatus {
   LUKS_REVOCATION_STATUS_FAILED = 4;
 }
 
-// ErrorCode is the fixed vocabulary of machine-readable codes an
-// ErrorDetail carries. A client branches on the code, never on the
-// message.
 enum ErrorCode {
   ERROR_CODE_UNSPECIFIED = 0;
   ERROR_CODE_ACTION_ALREADY_IN_SET = 1;
@@ -435,16 +361,12 @@ enum ErrorCode {
   ERROR_CODE_VALIDATION_FAILED = 74;
 }
 
-// Structured error detail attached to Connect-RPC errors.
 message ErrorDetail {
   ErrorCode code = 1 [(buf.validate.field).enum.defined_only = true];
-  // Server-generated request ID for correlating errors with server logs.
-  // ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
-  // without inviting unbounded growth.
+
   RequestId request_id = 2;
 }
 
-// Compliance status for a device based on detection scripts
 enum ComplianceStatus {
   COMPLIANCE_STATUS_UNKNOWN = 0;
   COMPLIANCE_STATUS_COMPLIANT = 1;
@@ -452,25 +374,10 @@ enum ComplianceStatus {
   COMPLIANCE_STATUS_IN_GRACE_PERIOD = 3;
 }
 
-// MaintenanceWindow gates scheduled policy runs by device-local wall-clock
-// time. A window is a positive allowlist: when the schedule is empty
-// the window is "always allowed" — the feature is opt-in and existing
-// groups carry an empty window with zero behavioural change.
-//
-// Multiple entries combine as OR. The agent evaluates against
-// time.Now().Local() at run time so "02:00 local" means 02:00
-// wherever the device runs; the server never tries to interpret the
-// device's timezone.
 message MaintenanceWindow {
   repeated MaintenanceWindowEntry schedule = 1;
 }
 
-// One entry in a MaintenanceWindow: a set of weekdays and a single
-// allowed clock range. `allow` uses 24-hour HH:MM-HH:MM in local time
-// (e.g. "22:00-06:00"). Crossing midnight is supported: when the
-// range's start is greater than its end the window continues into the
-// next day. `days` lists the weekdays the entry applies to using the
-// lowercase three-letter abbreviations mon|tue|wed|thu|fri|sat|sun.
 message MaintenanceWindowEntry {
   repeated string days = 1 [
     (buf.validate.field).repeated.min_items = 1,
@@ -494,7 +401,6 @@ message MaintenanceWindowEntry {
   ];
 }
 
-// Output from command execution
 message CommandOutput {
   int32 exit_code = 1;
   string stdout = 2 [

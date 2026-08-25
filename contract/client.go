@@ -43,69 +43,33 @@ type Client struct {
 	authToken string
 	logger    *slog.Logger
 
-	// httpClient is the underlying transport carrier, retained so the agent
-	// can release its idle connections on reconnect (CloseIdleConnections) and
-	// not leak a transport per reconnect attempt (WS13 #8).
 	httpClient *http.Client
 
 	mu     sync.RWMutex
 	stream *connect.BidiStreamForClient[cadestrov1.AgentMessage, cadestrov1.ServerMessage]
 
-	// sendSem is a buffered-1 channel used as a ctx-aware send lock. It
-	// serializes all stream.Send() calls — concurrent writes on a bidi
-	// stream are not safe and can corrupt messages on the wire — while
-	// letting a sender abandon its claim on its own ctx deadline instead of
-	// blocking indefinitely behind a stalled send (WS16 #1). Initialised by
-	// NewClient.
 	sendSem chan struct{}
 
-	// pendingMu protects correlated request-response traffic on the stream.
 	pendingMu       sync.Mutex
 	pendingRequests map[string]chan *cadestrov1.ServerMessage
 
-	// heartbeatUpdate is the channel Run's heartbeat goroutine reads
-	// to reset its ticker when Welcome arrives with a new interval.
-	// Non-nil only while Run() is active; guarded by mu.
 	heartbeatUpdate chan time.Duration
-	// Run enforces the stream handshake; direct dispatch callers keep their
-	// existing standalone behavior.
+
 	requireWelcome bool
 	welcomed       bool
 
-	// invSem, luksRevokeSem and liveControlSem bound how many server-originated
-	// RequestInventory / RevokeLuksDeviceKey handlers run concurrently.
-	// Each spawns a goroutine (inventory forks osquery; revoke does a
-	// request-response on the stream), so an unbounded flood from a
-	// compromised or buggy server could exhaust memory and goroutines.
-	// Acquisition is non-blocking: excess is DROPPED, not queued (WS6
-	// #11). Initialised by NewClient.
 	invSem         chan struct{}
 	luksRevokeSem  chan struct{}
 	liveControlSem chan struct{}
 }
 
 const (
-	// inventoryDispatchConcurrency bounds concurrent server-originated
-	// inventory collections. One full osquery scan at a time is the
-	// realistic need; 2 gives a little slack without risking exhaustion.
 	inventoryDispatchConcurrency = 2
-	// luksRevokeDispatchConcurrency bounds concurrent LUKS device-key
-	// revocations dispatched from the server.
+
 	luksRevokeDispatchConcurrency  = 2
 	liveControlDispatchConcurrency = 1
 
-	// maxInboundMessageBytes bounds the size of a single inbound
-	// ServerMessage the agent will decode. The agent only ever receives
-	// small control frames (actions, queries, terminal I/O chunks capped
-	// at 64 KiB, LUKS request-response) — none legitimately approach this
-	// size. Without a bound, a compromised or buggy server could push a
-	// multi-gigabyte frame and force the agent to allocate it, an OOM /
-	// DoS vector. 16 MiB is comfortably above any real frame yet refuses
-	// a frame whose only purpose is to exhaust memory. Enforced via
-	// connect.WithReadMaxBytes in NewClient; the connection that receives
-	// an oversized frame is torn down with a resource-exhausted error.
-	maxInboundMessageBytes = 16 << 20 // 16 MiB
-
+	maxInboundMessageBytes = 16 << 20
 )
 
 // NewClient creates a new SDK client.
@@ -118,24 +82,12 @@ func NewClient(serverURL string, opts ...ClientOption) *Client {
 		liveControlSem: make(chan struct{}, liveControlDispatchConcurrency),
 	}
 
-	// http.DefaultClient (no Timeout) is correct here: the agent client
-	// drives a long-lived bidi stream, and a whole-request timeout would
-	// kill it. In production NewClient is always given a WithMTLS* option
-	// that replaces this anyway. (The unary RegisterAgent/RenewCertificate
-	// bootstrap calls use the bounded bootstrapHTTPClient instead.)
 	httpClient := http.DefaultClient
 	for _, opt := range opts {
 		opt.apply(c, &httpClient)
 	}
 	c.httpClient = httpClient
 
-	// Bound the size of inbound ServerMessages. A compromised or buggy
-	// server could otherwise push an arbitrarily large frame and force
-	// the agent to allocate it (OOM/DoS). connect.WithReadMaxBytes makes
-	// the connection that receives an oversized frame fail with a
-	// resource-exhausted error and tear down cleanly, rather than
-	// allocate. The long-lived bidi stream is unaffected for normal
-	// (small) control frames.
 	c.client = cadestrov1connect.NewAgentServiceClient(httpClient, serverURL,
 		connect.WithReadMaxBytes(maxInboundMessageBytes))
 	return c
@@ -297,12 +249,6 @@ func WithMTLSFromPEMAndSystemRoots(certPEM, keyPEM, caPEM []byte) (ClientOption,
 	}}, nil
 }
 
-// newHTTPClientWithTLS creates an HTTP client with HTTP/2 support enabled.
-// A bare http.Transport with a custom TLSClientConfig disables Go's automatic
-// HTTP/2 negotiation, so we explicitly configure it via http2.ConfigureTransport.
-// If the HTTP/2 configuration fails the transport silently falls back to HTTP/1.1,
-// which breaks Connect bidirectional streaming — log it loudly so the operator can
-// see why the agent is unable to reach control.
 func newHTTPClientWithTLS(tlsConfig *tls.Config) *http.Client {
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
@@ -313,25 +259,12 @@ func newHTTPClientWithTLS(tlsConfig *tls.Config) *http.Client {
 	return &http.Client{Transport: transport}
 }
 
-// bootstrapHTTPClient is the default client for the unauthenticated
-// RegisterAgent / RenewCertificate bootstrap calls. Unlike
-// http.DefaultClient it has a bounded Timeout (a hung or malicious
-// control endpoint must not be able to wedge enrollment/renewal forever)
-// and a TLS 1.3 floor. Proxy support is deliberately retained
-// (http.ProxyFromEnvironment): the agent runs as root under systemd with
-// a controlled environment, the channel is TLS-authenticated, and the
-// optional enrollment CA-pin catches a wrong-CA outcome — so honoring an
-// enterprise proxy is the right trade-off over breaking proxied
-// deployments. Overridable via ClientOption (the renewal mTLS variants
-// replace the client entirely).
 func bootstrapHTTPClient() *http.Client {
 	transport := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS13},
 	}
-	// Preserve HTTP/2 parity with http.DefaultClient for the https
-	// control endpoint; falls back to HTTP/1.1 if configuration fails
-	// (unary register/renew works over either).
+
 	if err := http2.ConfigureTransport(transport); err != nil {
 		slog.Default().Warn("bootstrap: failed to configure HTTP/2 transport; falling back to HTTP/1.1", "error", err)
 	}
@@ -349,6 +282,7 @@ type RegisterAgentResult struct {
 	// ControlURL is where the agent dials its AgentService stream — control's
 	// agent listener, normally a different host from the API URL registration
 	// went to.
+
 	ControlURL string
 }
 
@@ -421,10 +355,13 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, opts .
 // StreamHandler handles messages received from the server.
 type StreamHandler interface {
 	// OnWelcome is called when the server sends a welcome message.
+
 	OnWelcome(ctx context.Context, welcome *cadestrov1.Welcome) error
 	// OnQuery is called when the server sends an OS query.
+
 	OnQuery(ctx context.Context, query *cadestrov1.OSQuery) (*cadestrov1.OSQueryResult, error)
 	// OnError is called when the server sends an error.
+
 	OnError(ctx context.Context, err *cadestrov1.Error) error
 }
 
@@ -442,6 +379,7 @@ type LuksHandler interface {
 	// LUKS device-bound key. The full message is delivered rather than the
 	// bare action_id so the handler keeps whatever context later fields add.
 	// Returns (success, errorMessage).
+
 	OnRevokeLuksDeviceKey(ctx context.Context, req *cadestrov1.RevokeLuksDeviceKey) (bool, string)
 }
 
@@ -450,6 +388,7 @@ type LuksHandler interface {
 type LogQueryHandler interface {
 	StreamHandler
 	// OnLogQuery is called when the server sends a log query request.
+
 	OnLogQuery(ctx context.Context, query *cadestrov1.LogQuery) (*cadestrov1.LogQueryResult, error)
 }
 
@@ -460,10 +399,12 @@ type InventoryHandler interface {
 	// CollectInventory gathers hardware/software inventory from the device on
 	// the agent's OWN schedule (on connect + every 24h). Returns nil if
 	// collection is unavailable (e.g. osquery not installed).
+
 	CollectInventory(ctx context.Context) *cadestrov1.DeviceInventory
 	// OnRequestInventory handles a control-originated RequestInventory,
 	// collecting the same inventory on demand and correlating it with the
 	// request's query_id. Returns nil when collection is unavailable.
+
 	OnRequestInventory(ctx context.Context, req *cadestrov1.RequestInventory) *cadestrov1.DeviceInventory
 }
 
@@ -489,18 +430,22 @@ type TerminalHandler interface {
 	// The handler should validate tty_user, allocate the PTY, kick off
 	// I/O goroutines, and send a TERMINAL_SESSION_STATE_STARTED state
 	// change. If allocation fails, it MUST send a STATE_ERROR instead.
+
 	OnTerminalStart(ctx context.Context, req *cadestrov1.TerminalStart) error
 	// OnTerminalInput is called for every stdin frame from the server.
 	// The handler should write the bytes to the PTY of the matching
 	// session_id and ignore (with a debug log) frames for unknown
 	// sessions.
+
 	OnTerminalInput(ctx context.Context, req *cadestrov1.TerminalInput) error
 	// OnTerminalResize forwards a TIOCSWINSZ to the session's PTY.
 	// Unknown sessions are ignored.
+
 	OnTerminalResize(ctx context.Context, req *cadestrov1.TerminalResize) error
 	// OnTerminalStop terminates the session and reverts any side effects
 	// (shell unmask, temp home cleanup, etc.). Unknown sessions are
 	// idempotent no-ops so the server can fire and forget on disconnect.
+
 	OnTerminalStop(ctx context.Context, req *cadestrov1.TerminalStop) error
 }
 
@@ -519,18 +464,6 @@ func (c *Client) Connect(ctx context.Context) error {
 	return nil
 }
 
-// send serializes all writes to the bidirectional stream and honors ctx.
-// Multiple goroutines (heartbeat, inventory, result sender) may call Send
-// methods concurrently; without serialization this can corrupt messages.
-//
-// Both the send-lock acquisition AND the underlying stream.Send observe ctx,
-// so a stalled peer (a full HTTP/2 flow-control window with no draining) can
-// no longer wedge a sender — or every other sender queued behind it — past
-// its own deadline (WS16 #1). At most one stream.Send is ever in flight: the
-// send slot is held until the in-flight Send actually returns, even if the
-// caller has already given up on ctx, so the on-wire serialization guarantee
-// is preserved. A send that is abandoned on ctx stays pending until the
-// stream is torn down (Close / run-ctx cancel on reconnect), which resets it.
 func (c *Client) send(ctx context.Context, msg *cadestrov1.AgentMessage) error {
 	c.mu.RLock()
 	stream := c.stream
@@ -540,25 +473,16 @@ func (c *Client) send(ctx context.Context, msg *cadestrov1.AgentMessage) error {
 		return errors.New("not connected")
 	}
 
-	// Refuse up front if the caller's ctx is already done — don't queue
-	// behind the send lock just to fail.
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
-	// Acquire the send slot ctx-aware: a waiting sender abandons its claim on
-	// its own deadline instead of starving behind a stalled send.
 	select {
 	case c.sendSem <- struct{}{}:
 	case <-ctx.Done():
 		return ctx.Err()
 	}
 
-	// Run the blocking Send while holding the slot. The slot is released only
-	// when stream.Send actually returns (in the goroutine), so a second Send
-	// can never start concurrently with an abandoned one — no on-wire
-	// corruption. errCh is buffered so the goroutine never blocks publishing
-	// its result even after we have returned on ctx.
 	errCh := make(chan error, 1)
 	go func() {
 		err := stream.Send(msg)
@@ -767,8 +691,7 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) ([]byte, error
 		if luksResp == nil {
 			return nil, errors.New("unexpected response type")
 		}
-		// Enforce the response's required and size bounds before returning a
-		// credential to the caller.
+
 		if err := c.validateInbound(luksResp); err != nil {
 			return nil, fmt.Errorf("invalid GetLuksKey response: %w", err)
 		}
@@ -887,7 +810,6 @@ func (c *Client) SendRevokeLuksDeviceKeyResult(ctx context.Context, actionID str
 	})
 }
 
-// registerPending creates a channel for receiving a correlated response.
 func (c *Client) registerPending(id string) chan *cadestrov1.ServerMessage {
 	ch := make(chan *cadestrov1.ServerMessage, 1)
 	c.pendingMu.Lock()
@@ -899,24 +821,12 @@ func (c *Client) registerPending(id string) chan *cadestrov1.ServerMessage {
 	return ch
 }
 
-// unregisterPending removes a pending request channel.
 func (c *Client) unregisterPending(id string) {
 	c.pendingMu.Lock()
 	delete(c.pendingRequests, id)
 	c.pendingMu.Unlock()
 }
 
-// deliverPending delivers a server message to a waiting request by ID.
-// Returns true if the message was delivered (ID matched a pending request).
-//
-// The send is non-blocking: pending channels are buffered with capacity
-// 1 (registerPending) and the request flow only reads once. If a second
-// response arrives for the same ID — for example, the server retried a
-// dispatch and the first reply was already consumed — there is no
-// receiver and the second message would block the dispatcher loop
-// forever. We log the drop so duplicates are visible in agent logs but
-// keep the receive loop moving rather than stalling on a defunct
-// request channel.
 func (c *Client) deliverPending(msg *cadestrov1.ServerMessage) bool {
 	c.pendingMu.Lock()
 	ch, ok := c.pendingRequests[msg.GetId().GetValue()]
@@ -958,7 +868,6 @@ func (c *Client) Close() error {
 		return nil
 	}
 
-	// Cancel pending correlated requests.
 	c.pendingMu.Lock()
 	for id, ch := range c.pendingRequests {
 		close(ch)
@@ -966,7 +875,6 @@ func (c *Client) Close() error {
 	}
 	c.pendingMu.Unlock()
 
-	// Close both request and response sides of the stream
 	_ = c.stream.CloseRequest()
 	_ = c.stream.CloseResponse()
 	c.stream = nil
@@ -1018,14 +926,9 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		return fmt.Errorf("send hello: %w", err)
 	}
 
-	// Start heartbeat goroutine
 	heartbeatCtx, cancelHeartbeat := context.WithCancel(ctx)
 	defer cancelHeartbeat()
 
-	// Buffered channel (capacity 1, latest-wins) lets dispatchServerMessage
-	// push a new interval without blocking. Published on Client so the
-	// Welcome handler can find it; cleared on Run exit so a reconnect's
-	// next Run() call starts from scratch.
 	hbUpdate := make(chan time.Duration, 1)
 	c.mu.Lock()
 	c.heartbeatUpdate = hbUpdate
@@ -1049,7 +952,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 				ticker.Reset(d)
 			case <-ticker.C:
 				hb := &cadestrov1.Heartbeat{}
-				// Handler can populate heartbeat data if needed
+
 				if err := c.SendHeartbeat(heartbeatCtx, hb); err != nil {
 					heartbeatErr <- err
 					return
@@ -1058,16 +961,9 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		}
 	}()
 
-	// Inventory: send on connect + every 24 hours. safeGo guards the
-	// loop so a panic in the agent-initiated CollectInventory path cannot
-	// crash the whole agent process (a panic in a bare goroutine is
-	// unrecoverable by the parent).
 	if invHandler, ok := handler.(InventoryHandler); ok {
 		c.safeGo("inventory-ticker", func() {
-			// sendWithRetry sends inventory with up to 3 attempts at
-			// 1s/3s/9s backoff. The 24-hour ticker means a single
-			// transient send failure (network blip on connect) would
-			// otherwise stall inventory for a full day. F035.
+
 			sendWithRetry := func(inv *cadestrov1.DeviceInventory) {
 				const maxAttempts = 3
 				delay := time.Second
@@ -1089,7 +985,6 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 				}
 			}
 
-			// Initial inventory on connect
 			if inv := invHandler.CollectInventory(heartbeatCtx); inv != nil {
 				sendWithRetry(inv)
 			}
@@ -1110,14 +1005,12 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		})
 	}
 
-	// Channel to receive messages from blocking Receive call
 	type receiveResult struct {
 		msg *cadestrov1.ServerMessage
 		err error
 	}
 	msgCh := make(chan receiveResult, 1)
 
-	// Start receive goroutine
 	go func() {
 		for {
 			msg, err := c.Receive(ctx)
@@ -1132,7 +1025,6 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 		}
 	}()
 
-	// Process incoming messages
 	for {
 		select {
 		case <-ctx.Done():
@@ -1157,13 +1049,6 @@ func normalizeHeartbeatInterval(interval time.Duration) time.Duration {
 	return interval
 }
 
-// applyWelcomeHeartbeat extracts the server-requested heartbeat
-// interval from a Welcome message, clamps it to [MinHeartbeatInterval,
-// MaxHeartbeatInterval], and pushes it to the running heartbeat
-// goroutine. No-op when Welcome.heartbeat_interval is zero/unset or
-// when no Run() is currently active. The update channel has capacity
-// 1 and latest-wins semantics — a stale pending update is dropped so
-// the goroutine always picks up the most recent value the server sent.
 func (c *Client) applyWelcomeHeartbeat(w *cadestrov1.Welcome) {
 	if w == nil || w.HeartbeatInterval == nil {
 		return
@@ -1184,9 +1069,7 @@ func (c *Client) applyWelcomeHeartbeat(w *cadestrov1.Welcome) {
 	if ch == nil {
 		return
 	}
-	// Drain any stale pending value, then push the fresh one. Both
-	// sends are non-blocking so a hung / exited heartbeat goroutine
-	// can't wedge the dispatcher.
+
 	select {
 	case <-ch:
 	default:
@@ -1197,11 +1080,6 @@ func (c *Client) applyWelcomeHeartbeat(w *cadestrov1.Welcome) {
 	}
 }
 
-// safeGo runs fn in a new goroutine with a deferred recover so a panic
-// in a server-originated fan-out handler (inventory, LUKS revoke,
-// inventory ticker) cannot crash the whole agent process. A panic in a
-// goroutine is unrecoverable by the parent, so each spawned goroutine
-// must guard itself. label identifies the leg in the log line.
 func (c *Client) safeGo(label string, fn func()) {
 	go func() {
 		defer func() {
@@ -1214,23 +1092,6 @@ func (c *Client) safeGo(label string, fn func()) {
 	}()
 }
 
-// dispatchServerMessage routes a single ServerMessage to the appropriate
-// handler method. Extracted from Run for testability — call sites that
-// need a fake stream or hand-built messages can drive this directly.
-// Returns a non-nil error only for fatal stream errors that should tear
-// down the connection; per-message handler failures (LUKS, terminal,
-// etc.) are wrapped before returning so callers see what failed.
-//
-// The per-message body runs under a deferred recover(): a panic inside ANY
-// handler method is caught, logged, and turned into a NON-fatal outcome
-// (dispatch returns nil) so one buggy or hostile handler invocation cannot
-// crash-loop the agent (Run treats a returned error as fatal and tears the
-// connection down). Genuine fatal stream send/receive errors still return
-// as errors — only handler PANICS become non-fatal.
-// validateInbound runs the shared `validate` gotags on a concrete inbound
-// command payload (WS13 #5) — defence-in-depth so a compromised relay can't push
-// a malformed-but-non-nil frame (out-of-range PTY dims, non-ULID session id,
-// empty action envelope) past the SDK boundary into a handler.
 func (c *Client) validateInbound(payload any) error {
 	msg, ok := payload.(proto.Message)
 	if !ok {
@@ -1297,7 +1158,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 			}
 			c.logger.Error("recovered panic while dispatching ServerMessage; dropping frame (non-fatal)",
 				"message_id", msgID, "payload_type", payloadType, "panic", fmt.Sprintf("%v", r))
-			// Non-fatal: keep the receive loop alive.
+
 			retErr = nil
 		}
 	}()
@@ -1393,16 +1254,11 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		if err := c.validateInbound(p.Error); err != nil {
 			return fmt.Errorf("invalid Error response: %w", err)
 		}
-		// A CORRELATED error is the rejection of a specific request, and its
-		// caller is blocked waiting for exactly this message ID. Routing it to
-		// the general handler instead left that caller waiting until its
-		// context expired — with the server having already answered. The
-		// operations that block here are the irreversible ones, so a rejection
-		// they never receive stalls the rollback for the whole timeout.
+
 		if c.deliverPending(msg) {
 			return nil
 		}
-		// Uncorrelated: a server-originated error with no waiter.
+
 		if err := handler.OnError(ctx, p.Error); err != nil {
 			return fmt.Errorf("handle error: %w", err)
 		}
@@ -1416,19 +1272,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		if err := c.validateInbound(correlatedResponsePayload(msg)); err != nil {
 			return fmt.Errorf("invalid correlated response: %w", err)
 		}
-		// Correlated response: deliver to the pending request by message ID.
-		// Every Client method that blocks on registerPending MUST be listed here
-		// — a missing case does not error, it drops the frame and the caller
-		// blocks until its context expires.
-		//
-		// This list being handwritten is a known weakness (a fourth waiter can
-		// be added without a case). It is NOT fixed by correlating on the ID
-		// before the switch: the inbound-validation guard classifies response
-		// arms by seeing deliverPending in their case, so hoisting the
-		// correlation reclassifies all three as command arms and demands
-		// validateInbound on a path that only hands the message to its caller.
-		// The fix belongs in the guard — discover the registerPending callers
-		// and assert each has a case — not in the dispatch shape.
+
 		if !c.deliverPending(msg) {
 			c.logger.Debug("dropping correlated response without waiter", "message_id", msg.GetId().GetValue())
 		}
@@ -1444,15 +1288,13 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		}
 		if invHandler, ok := handler.(InventoryHandler); ok {
 			req := p.RequestInventory
-			// Bound concurrency: drop (don't queue) when already at
-			// capacity so a flood cannot spawn unbounded osquery forks.
+
 			select {
 			case c.invSem <- struct{}{}:
-				// safeGo: a panic in OnRequestInventory runs in this spawned
-				// goroutine and would otherwise crash the whole agent.
+
 				c.safeGo("inventory", func() {
 					defer func() { <-c.invSem }()
-					// The handler may reject the request before running osquery.
+
 					if inv := invHandler.OnRequestInventory(ctx, req); inv != nil {
 						if err := c.SendInventory(ctx, inv); err != nil {
 							c.logger.Warn("failed to send inventory", "error", err)
@@ -1488,13 +1330,11 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 
 	case *cadestrov1.ServerMessage_RevokeLuksDeviceKey:
 		if p.RevokeLuksDeviceKey == nil {
-			// A buggy server could deliver a nil payload; dropping it avoids
-			// a nil dereference.
+
 			c.logger.Warn("dropping RevokeLuksDeviceKey with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
-		// Defence-in-depth before the irreversible LUKS slot-7 wipe: reject a
-		// malformed action_id at the SDK boundary.
+
 		if err := c.validateInbound(p.RevokeLuksDeviceKey); err != nil {
 			c.logger.Warn("dropping invalid RevokeLuksDeviceKey", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
@@ -1502,18 +1342,13 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		if luksHandler, ok := handler.(LuksHandler); ok {
 			req := p.RevokeLuksDeviceKey
 			actionID := req.GetActionId().GetValue()
-			// Run in goroutine: the handler calls GetLuksKey which sends
-			// a request on the stream and waits for a response. Processing
-			// that response requires this receive loop to keep running.
-			// Bound concurrency and drop overflow so a flood cannot spawn
-			// unbounded goroutines (WS6 #11).
+
 			select {
 			case c.luksRevokeSem <- struct{}{}:
-				// safeGo: a panic in OnRevokeLuksDeviceKey runs in this
-				// spawned goroutine and would otherwise crash the agent.
+
 				c.safeGo("luks-revoke", func() {
 					defer func() { <-c.luksRevokeSem }()
-					// Pass the full message so later request fields remain available.
+
 					success, errMsg := luksHandler.OnRevokeLuksDeviceKey(ctx, req)
 					if err := c.SendRevokeLuksDeviceKeyResult(ctx, actionID, success, errMsg); err != nil {
 						c.logger.Warn("failed to send LUKS revocation result", "action_id", actionID, "error", err)
@@ -1589,12 +1424,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		}
 
 	default:
-		// Forward-compat: a newer server may add a ServerMessage
-		// payload variant that this SDK build does not yet recognise.
-		// Logging at debug keeps this observable without spamming
-		// production logs, and we deliberately do NOT return an error
-		// — that would tear down the agent connection on every
-		// unknown frame, which is much worse than silently dropping it.
+
 		c.logger.Debug("dropping unknown ServerMessage payload",
 			"message_id", msg.GetId().GetValue(), "type", fmt.Sprintf("%T", msg.Payload))
 	}
@@ -1672,14 +1502,17 @@ func (c *Client) ValidateLuksToken(ctx context.Context, token string) (*Validate
 type SyncStateResult struct {
 	// SyncIntervalMinutes is the effective sync interval for this device.
 	// 0 means use the default (30 minutes).
+
 	SyncIntervalMinutes int32
 	// MaintenanceWindow is the server-resolved union of every reaching
 	// group's window (device groups + user groups assigned to the
 	// device). nil means "no constraint" — the agent dispatches at any
 	// time. The agent evaluates this against time.Now().Local() before
 	// firing scheduler-driven dispatches.
+
 	MaintenanceWindow *cadestrov1.MaintenanceWindow
 	// DesiredPolicy is the authenticated assignment snapshot reconciled locally.
+
 	DesiredPolicy *cadestrov1.DesiredPolicy
 }
 

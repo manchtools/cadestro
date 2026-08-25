@@ -42,9 +42,6 @@ export type RegisterRequest = Message<"cadestro.v1.RegisterRequest"> & {
   agentVersion: string;
 
   /**
-   * Certificate Signing Request (PEM-encoded PKCS#10)
-   * Agent generates its own key pair and sends CSR for signing
-   *
    * @generated from field: bytes csr = 4;
    */
   csr: Uint8Array;
@@ -67,27 +64,16 @@ export type RegisterResponse = Message<"cadestro.v1.RegisterResponse"> & {
   deviceId?: DeviceId;
 
   /**
-   * mTLS credentials issued by control server
-   *
-   * CA certificate (PEM)
-   *
    * @generated from field: bytes ca_cert = 2;
    */
   caCert: Uint8Array;
 
   /**
-   * Signed device certificate (PEM) - private key stays on agent
-   *
    * @generated from field: bytes certificate = 3;
    */
   certificate: Uint8Array;
 
   /**
-   * Control URL for the agent's streaming connection; the agent stores this and
-   * dials it for the AgentService bidi stream. Control terminates agent mTLS
-   * itself, so this is control's own agent-listener address, which is normally
-   * a different host from the web/API URL the agent registered against.
-   *
    * @generated from field: string control_url = 4;
    */
   controlUrl: string;
@@ -105,8 +91,6 @@ export const RegisterResponseSchema: GenMessage<RegisterResponse> = /*@__PURE__*
  */
 export type RenewCertificateRequest = Message<"cadestro.v1.RenewCertificateRequest"> & {
   /**
-   * Certificate Signing Request (PEM-encoded PKCS#10)
-   *
    * @generated from field: bytes csr = 1;
    */
   csr: Uint8Array;
@@ -124,15 +108,11 @@ export const RenewCertificateRequestSchema: GenMessage<RenewCertificateRequest> 
  */
 export type RenewCertificateResponse = Message<"cadestro.v1.RenewCertificateResponse"> & {
   /**
-   * New signed certificate (PEM)
-   *
    * @generated from field: bytes certificate = 1;
    */
   certificate: Uint8Array;
 
   /**
-   * Certificate expiry
-   *
    * @generated from field: google.protobuf.Timestamp not_after = 2;
    */
   notAfter?: Timestamp;
@@ -284,8 +264,6 @@ export type User = Message<"cadestro.v1.User"> & {
   identityLinks: IdentityLink[];
 
   /**
-   * OIDC profile scope properties
-   *
    * @generated from field: string display_name = 7;
    */
   displayName: string;
@@ -316,8 +294,6 @@ export type User = Message<"cadestro.v1.User"> & {
   locale: string;
 
   /**
-   * Linux identity
-   *
    * @generated from field: string linux_username = 13;
    */
   linuxUsername: string;
@@ -328,8 +304,6 @@ export type User = Message<"cadestro.v1.User"> & {
   linuxUid: number;
 
   /**
-   * SSH access settings
-   *
    * @generated from field: repeated cadestro.v1.SshPublicKey ssh_public_keys = 15;
    */
   sshPublicKeys: SshPublicKey[];
@@ -360,11 +334,6 @@ export type User = Message<"cadestro.v1.User"> & {
   inheritedRoles: InheritedRole[];
 
   /**
-   * The user's directly-assigned roles, one entry per grant, carrying each
-   * grant's scope. This is the role surface: a role granted both globally and
-   * scoped to a device group appears as two RoleGrant entries, and revocation
-   * names the grant, not just the role.
-   *
    * @generated from field: repeated cadestro.v1.RoleGrant role_grants = 21;
    */
   roleGrants: RoleGrant[];
@@ -484,12 +453,6 @@ export const RoleSchema: GenMessage<Role> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_control, 13);
 
 /**
- * A single role grant on a user or user group, with its optional scope
- * scope_kind == UNSPECIFIED is an unscoped/global grant (scope_id
- * and scope_name empty). For a scoped grant, scope_id is the device- or
- * user-group id and scope_name is that group's resolved display name
- * (empty if the group was deleted).
- *
  * @generated from message cadestro.v1.RoleGrant
  */
 export type RoleGrant = Message<"cadestro.v1.RoleGrant"> & {
@@ -541,12 +504,6 @@ export type PermissionInfo = Message<"cadestro.v1.PermissionInfo"> & {
   description: string;
 
   /**
-   * Classifies what kind of target this permission acts on, which
-   * determines whether (and how) it can be scoped on a role grant.
-   * UNSPECIFIED = not scopable (fail-closed default). DEVICE = takes
-   * RoleGrantScopeKind=DEVICE_GROUP. USER = takes USER_GROUP.
-   * Surfaced so the web role-builder can gate the scope picker.
-   *
    * @generated from field: cadestro.v1.PermissionTargetKind target_kind = 4;
    */
   targetKind: PermissionTargetKind;
@@ -560,9 +517,6 @@ export const PermissionInfoSchema: GenMessage<PermissionInfo> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_control, 15);
 
 /**
- * Explicit local erasure for subjects created by optional OIDC JIT.
- * The control server rejects subjects created through SCIM.
- *
  * @generated from message cadestro.v1.EraseJITUserRequest
  */
 export type EraseJITUserRequest = Message<"cadestro.v1.EraseJITUserRequest"> & {
@@ -676,8 +630,6 @@ export const ListUsersResponseSchema: GenMessage<ListUsersResponse> = /*@__PURE_
   messageDesc(file_cadestro_v1_control, 21);
 
 /**
- * Granular user updates
- *
  * @generated from message cadestro.v1.UpdateUserEmailRequest
  */
 export type UpdateUserEmailRequest = Message<"cadestro.v1.UpdateUserEmailRequest"> & {
@@ -938,8 +890,6 @@ export type Device = Message<"cadestro.v1.Device"> & {
   agentVersion: string;
 
   /**
-   * Online / offline, derived from last_seen_at on the server.
-   *
    * @generated from field: cadestro.v1.DeviceStatus status = 4;
    */
   status: DeviceStatus;
@@ -975,15 +925,11 @@ export type Device = Message<"cadestro.v1.Device"> & {
   assignedGroupIds: UserGroupId[];
 
   /**
-   * Stream synchronization interval in minutes (0 = use default of 30 minutes).
-   *
    * @generated from field: int32 sync_interval_minutes = 11;
    */
   syncIntervalMinutes: number;
 
   /**
-   * Compliance status based on detection scripts
-   *
    * @generated from field: cadestro.v1.ComplianceStatus compliance_status = 12;
    */
   complianceStatus: ComplianceStatus;
@@ -994,42 +940,26 @@ export type Device = Message<"cadestro.v1.Device"> & {
   complianceCheckedAt?: Timestamp;
 
   /**
-   * Total number of compliance checks
-   *
    * @generated from field: int32 compliance_total = 14;
    */
   complianceTotal: number;
 
   /**
-   * Number of passing checks
-   *
    * @generated from field: int32 compliance_passing = 15;
    */
   compliancePassing: number;
 
   /**
-   * Freshness of the server-scheduled inventory collection.
-   * last_inventory_at is MAX(collected_at) across the device's inventory;
-   * unset when no inventory has ever been collected.
-   *
    * @generated from field: google.protobuf.Timestamp last_inventory_at = 16;
    */
   lastInventoryAt?: Timestamp;
 
   /**
-   * True when inventory age exceeds the resolved interval plus grace
-   * (max(1h, 25% of interval)) — computed server-side from policy, so it
-   * is valid even while the device is offline.
-   *
    * @generated from field: bool inventory_overdue = 17;
    */
   inventoryOverdue: boolean;
 
   /**
-   * Device-level inventory interval override in minutes. Resolution:
-   * device override first, then group minimum, then the 1440-minute
-   * server default; 0 means inherit.
-   *
    * @generated from field: int32 inventory_interval_minutes = 18;
    */
   inventoryIntervalMinutes: number;
@@ -1057,9 +987,6 @@ export type ListDevicesRequest = Message<"cadestro.v1.ListDevicesRequest"> & {
   pageToken: string;
 
   /**
-   * UNSPECIFIED (0) means "no status filter"; ONLINE / OFFLINE narrow
-   * the listing to that single status.
-   *
    * @generated from field: cadestro.v1.DeviceStatus status_filter = 3;
    */
   statusFilter: DeviceStatus;
@@ -1070,8 +997,6 @@ export type ListDevicesRequest = Message<"cadestro.v1.ListDevicesRequest"> & {
   labelFilter: { [key: string]: string };
 
   /**
-   * when true, only return devices assigned to the authenticated user
-   *
    * @generated from field: bool my_devices_only = 5;
    */
   myDevicesOnly: boolean;
@@ -1146,8 +1071,6 @@ export const GetDeviceResponseSchema: GenMessage<GetDeviceResponse> = /*@__PURE_
   messageDesc(file_cadestro_v1_control, 36);
 
 /**
- * Granular device updates
- *
  * @generated from message cadestro.v1.SetDeviceLabelRequest
  */
 export type SetDeviceLabelRequest = Message<"cadestro.v1.SetDeviceLabelRequest"> & {
@@ -1244,9 +1167,6 @@ export const DeleteDeviceResponseSchema: GenMessage<DeleteDeviceResponse> = /*@_
   messageDesc(file_cadestro_v1_control, 41);
 
 /**
- * Device assignment (admin-only)
- * Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
- *
  * @generated from message cadestro.v1.AssignDeviceRequest
  */
 export type AssignDeviceRequest = Message<"cadestro.v1.AssignDeviceRequest"> & {
@@ -1301,8 +1221,6 @@ export const AssignDeviceResponseSchema: GenMessage<AssignDeviceResponse> = /*@_
   messageDesc(file_cadestro_v1_control, 43);
 
 /**
- * Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
- *
  * @generated from message cadestro.v1.UnassignDeviceRequest
  */
 export type UnassignDeviceRequest = Message<"cadestro.v1.UnassignDeviceRequest"> & {
@@ -1356,17 +1274,11 @@ export type DeviceAssignee = Message<"cadestro.v1.DeviceAssignee"> & {
   id?: GroupId;
 
   /**
-   * Subset of AssignmentTargetType: only USER and USER_GROUP are valid
-   * values for a device assignee. DEVICE and DEVICE_GROUP are rejected
-   * at write time.
-   *
    * @generated from field: cadestro.v1.AssignmentTargetType type = 2;
    */
   type: AssignmentTargetType;
 
   /**
-   * User email or group name
-   *
    * @generated from field: string name = 3;
    */
   name: string;
@@ -1414,8 +1326,6 @@ export const ListDeviceAssigneesResponseSchema: GenMessage<ListDeviceAssigneesRe
   messageDesc(file_cadestro_v1_control, 48);
 
 /**
- * Update device sync interval
- *
  * @generated from message cadestro.v1.SetDeviceSyncIntervalRequest
  */
 export type SetDeviceSyncIntervalRequest = Message<"cadestro.v1.SetDeviceSyncIntervalRequest"> & {
@@ -1425,8 +1335,6 @@ export type SetDeviceSyncIntervalRequest = Message<"cadestro.v1.SetDeviceSyncInt
   id?: DeviceId;
 
   /**
-   * 0 = use default (30 min), max 24 hours
-   *
    * @generated from field: int32 sync_interval_minutes = 2;
    */
   syncIntervalMinutes: number;
@@ -1440,8 +1348,6 @@ export const SetDeviceSyncIntervalRequestSchema: GenMessage<SetDeviceSyncInterva
   messageDesc(file_cadestro_v1_control, 49);
 
 /**
- * Update device inventory collection interval.
- *
  * @generated from message cadestro.v1.SetDeviceInventoryIntervalRequest
  */
 export type SetDeviceInventoryIntervalRequest = Message<"cadestro.v1.SetDeviceInventoryIntervalRequest"> & {
@@ -1451,8 +1357,6 @@ export type SetDeviceInventoryIntervalRequest = Message<"cadestro.v1.SetDeviceIn
   id?: DeviceId;
 
   /**
-   * 0 = inherit (group min, else 1440), else 2h–7d
-   *
    * @generated from field: int32 inventory_interval_minutes = 2;
    */
   inventoryIntervalMinutes: number;
@@ -1475,8 +1379,6 @@ export type RegistrationToken = Message<"cadestro.v1.RegistrationToken"> & {
   id?: RegistrationTokenId;
 
   /**
-   * Only returned on creation
-   *
    * @generated from field: string value = 2;
    */
   value: string;
@@ -1487,15 +1389,11 @@ export type RegistrationToken = Message<"cadestro.v1.RegistrationToken"> & {
   name: string;
 
   /**
-   * 0 = unlimited
-   *
    * @generated from field: int32 max_uses = 4;
    */
   maxUses: number;
 
   /**
-   * Derived COUNT(devices.registration_token_id); never stored on tokens
-   *
    * @generated from field: int32 current_uses = 5;
    */
   currentUses: number;
@@ -1538,16 +1436,11 @@ export type CreateTokenRequest = Message<"cadestro.v1.CreateTokenRequest"> & {
   name: string;
 
   /**
-   * 0 = unlimited (for reusable tokens)
-   *
    * @generated from field: int32 max_uses = 2;
    */
   maxUses: number;
 
   /**
-   * Enrollment tokens always expire. Set a sufficiently long TTL for the
-   * rollout; 0/unset is intentionally not a valid token.
-   *
    * @generated from field: google.protobuf.Timestamp expires_at = 3;
    */
   expiresAt?: Timestamp;
@@ -1570,9 +1463,6 @@ export type CreateTokenResponse = Message<"cadestro.v1.CreateTokenResponse"> & {
   token?: RegistrationToken;
 
   /**
-   * SHA-256 fingerprint of the control CA certificate DER. Provisioning
-   * presents this beside token.value; agents require it during enrollment.
-   *
    * @generated from field: string ca_fingerprint_pin = 2;
    */
   caFingerprintPin: string;
@@ -1640,8 +1530,6 @@ export const ListTokensResponseSchema: GenMessage<ListTokensResponse> = /*@__PUR
   messageDesc(file_cadestro_v1_control, 55);
 
 /**
- * Granular token updates
- *
  * @generated from message cadestro.v1.RenameTokenRequest
  */
 export type RenameTokenRequest = Message<"cadestro.v1.RenameTokenRequest"> & {
@@ -2448,18 +2336,11 @@ export type ActionSet = Message<"cadestro.v1.ActionSet"> & {
   updatedAt?: Timestamp;
 
   /**
-   * Schedule that triggers every member action when fired. Required.
-   * The set's schedule overrides each member action's own schedule —
-   * member actions never fire on their own when assigned via this set.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 8;
    */
   schedule?: ActionSchedule;
 
   /**
-   * Failure policy resolved onto every occurrence in the compiled manifest.
-   * CONTINUE is the default; STOP must be selected explicitly.
-   *
    * @generated from field: cadestro.v1.OnFailure on_failure = 9;
    */
   onFailure: OnFailure;
@@ -2482,10 +2363,6 @@ export type ActionSetMember = Message<"cadestro.v1.ActionSetMember"> & {
   actionId?: ActionId;
 
   /**
-   * Position of this action within the set's execution order. When the
-   * set's schedule fires, members are executed in ascending sort_order.
-   * Stable tiebreak by action_id for ties.
-   *
    * @generated from field: int32 sort_order = 2;
    */
   sortOrder: number;
@@ -2523,16 +2400,11 @@ export type CreateActionSetRequest = Message<"cadestro.v1.CreateActionSetRequest
   description: string;
 
   /**
-   * Schedule that triggers every member action when fired. Required:
-   * member actions never fire on their own when assigned via this set.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 3;
    */
   schedule?: ActionSchedule;
 
   /**
-   * CONTINUE is the default; STOP must be selected explicitly.
-   *
    * @generated from field: cadestro.v1.OnFailure on_failure = 4;
    */
   onFailure: OnFailure;
@@ -2709,15 +2581,11 @@ export type UpdateActionSetScheduleRequest = Message<"cadestro.v1.UpdateActionSe
   id?: ActionSetId;
 
   /**
-   * Replacement schedule for the set. Required.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 2;
    */
   schedule?: ActionSchedule;
 
   /**
-   * Replacement failure policy. CONTINUE is the default.
-   *
    * @generated from field: cadestro.v1.OnFailure on_failure = 3;
    */
   onFailure: OnFailure;
@@ -2944,10 +2812,6 @@ export type Definition = Message<"cadestro.v1.Definition"> & {
   updatedAt?: Timestamp;
 
   /**
-   * Schedule used by manifests compiled from this definition. Required.
-   * The override exists only on those emitted manifests: it does not rewrite
-   * member ActionSets, whose schedules still apply when assigned independently.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 8;
    */
   schedule?: ActionSchedule;
@@ -2970,11 +2834,6 @@ export type DefinitionMember = Message<"cadestro.v1.DefinitionMember"> & {
   actionSetId?: ActionSetId;
 
   /**
-   * Position of this set within the definition's execution order. When the
-   * definition's schedule fires, sets are walked in ascending sort_order
-   * and each set's actions execute in their own ascending sort_order.
-   * Stable tiebreak by action_set_id for ties.
-   *
    * @generated from field: int32 sort_order = 2;
    */
   sortOrder: number;
@@ -3007,9 +2866,6 @@ export type CreateDefinitionRequest = Message<"cadestro.v1.CreateDefinitionReque
   description: string;
 
   /**
-   * Schedule used by manifests compiled from this definition. Required. It
-   * overrides their manifest schedules without rewriting member ActionSets.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 3;
    */
   schedule?: ActionSchedule;
@@ -3181,9 +3037,6 @@ export type UpdateDefinitionScheduleRequest = Message<"cadestro.v1.UpdateDefinit
   id?: DefinitionId;
 
   /**
-   * Replacement schedule for manifests compiled from the definition. Required;
-   * member ActionSet schedules are not rewritten.
-   *
    * @generated from field: cadestro.v1.ActionSchedule schedule = 2;
    */
   schedule?: ActionSchedule;
@@ -3405,43 +3258,26 @@ export type DeviceGroup = Message<"cadestro.v1.DeviceGroup"> & {
   createdBy: string;
 
   /**
-   * True if membership is determined by dynamic_query
-   *
    * @generated from field: bool is_dynamic = 7;
    */
   isDynamic: boolean;
 
   /**
-   * Query for dynamic membership (verbose syntax)
-   *
    * @generated from field: string dynamic_query = 8;
    */
   dynamicQuery: string;
 
   /**
-   * Sync interval in minutes for devices in this group (0 = use device/default)
-   * Takes precedence over device-level setting
-   *
    * @generated from field: int32 sync_interval_minutes = 9;
    */
   syncIntervalMinutes: number;
 
   /**
-   * Per-group maintenance window. Empty means "no constraint": members
-   * may run assigned policy actions at any time. When non-empty the agent gates
-   * policy runs by the device-local-time union across
-   * every group the device belongs to (device groups + user groups
-   * reaching it via assignments).
-   *
    * @generated from field: cadestro.v1.MaintenanceWindow maintenance_window = 10;
    */
   maintenanceWindow?: MaintenanceWindow;
 
   /**
-   * Inventory collection interval in minutes for devices in this group
-   * (0 = no group contribution). A device resolves its interval as:
-   * device override, else MIN across its groups, else 1440.
-   *
    * @generated from field: int32 inventory_interval_minutes = 11;
    */
   inventoryIntervalMinutes: number;
@@ -3469,15 +3305,11 @@ export type CreateDeviceGroupRequest = Message<"cadestro.v1.CreateDeviceGroupReq
   description: string;
 
   /**
-   * If true, membership is determined by dynamic_query instead of manual assignment
-   *
    * @generated from field: bool is_dynamic = 3;
    */
   isDynamic: boolean;
 
   /**
-   * Query for dynamic membership (see docs for syntax)
-   *
    * @generated from field: string dynamic_query = 4;
    */
   dynamicQuery: string;
@@ -3841,8 +3673,6 @@ export const RemoveDeviceFromGroupResponseSchema: GenMessage<RemoveDeviceFromGro
   messageDesc(file_cadestro_v1_control, 132);
 
 /**
- * Update a device group's dynamic query
- *
  * @generated from message cadestro.v1.UpdateDeviceGroupQueryRequest
  */
 export type UpdateDeviceGroupQueryRequest = Message<"cadestro.v1.UpdateDeviceGroupQueryRequest"> & {
@@ -3852,15 +3682,11 @@ export type UpdateDeviceGroupQueryRequest = Message<"cadestro.v1.UpdateDeviceGro
   id?: DeviceGroupId;
 
   /**
-   * If true, membership is determined by dynamic_query instead of manual assignment
-   *
    * @generated from field: bool is_dynamic = 2;
    */
   isDynamic: boolean;
 
   /**
-   * Query for dynamic membership (see docs for syntax)
-   *
    * @generated from field: string dynamic_query = 3;
    */
   dynamicQuery: string;
@@ -3891,8 +3717,6 @@ export const UpdateDeviceGroupQueryResponseSchema: GenMessage<UpdateDeviceGroupQ
   messageDesc(file_cadestro_v1_control, 134);
 
 /**
- * Validate a dynamic query without creating a group
- *
  * @generated from message cadestro.v1.ValidateDynamicQueryRequest
  */
 export type ValidateDynamicQueryRequest = Message<"cadestro.v1.ValidateDynamicQueryRequest"> & {
@@ -3919,15 +3743,11 @@ export type ValidateDynamicQueryResponse = Message<"cadestro.v1.ValidateDynamicQ
   valid: boolean;
 
   /**
-   * Error message if not valid
-   *
    * @generated from field: string error = 2;
    */
   error: string;
 
   /**
-   * Number of devices that would match
-   *
    * @generated from field: int32 matching_device_count = 3;
    */
   matchingDeviceCount: number;
@@ -3941,8 +3761,6 @@ export const ValidateDynamicQueryResponseSchema: GenMessage<ValidateDynamicQuery
   messageDesc(file_cadestro_v1_control, 136);
 
 /**
- * Trigger re-evaluation of a dynamic group
- *
  * @generated from message cadestro.v1.EvaluateDynamicGroupRequest
  */
 export type EvaluateDynamicGroupRequest = Message<"cadestro.v1.EvaluateDynamicGroupRequest"> & {
@@ -3987,8 +3805,6 @@ export const EvaluateDynamicGroupResponseSchema: GenMessage<EvaluateDynamicGroup
   messageDesc(file_cadestro_v1_control, 138);
 
 /**
- * Update device group sync interval
- *
  * @generated from message cadestro.v1.SetDeviceGroupSyncIntervalRequest
  */
 export type SetDeviceGroupSyncIntervalRequest = Message<"cadestro.v1.SetDeviceGroupSyncIntervalRequest"> & {
@@ -3998,8 +3814,6 @@ export type SetDeviceGroupSyncIntervalRequest = Message<"cadestro.v1.SetDeviceGr
   id?: DeviceGroupId;
 
   /**
-   * 0 = use device/default, max 24 hours
-   *
    * @generated from field: int32 sync_interval_minutes = 2;
    */
   syncIntervalMinutes: number;
@@ -4013,8 +3827,6 @@ export const SetDeviceGroupSyncIntervalRequestSchema: GenMessage<SetDeviceGroupS
   messageDesc(file_cadestro_v1_control, 139);
 
 /**
- * Update device group inventory collection interval.
- *
  * @generated from message cadestro.v1.SetDeviceGroupInventoryIntervalRequest
  */
 export type SetDeviceGroupInventoryIntervalRequest = Message<"cadestro.v1.SetDeviceGroupInventoryIntervalRequest"> & {
@@ -4024,8 +3836,6 @@ export type SetDeviceGroupInventoryIntervalRequest = Message<"cadestro.v1.SetDev
   id?: DeviceGroupId;
 
   /**
-   * 0 = no group contribution, else 2h–7d
-   *
    * @generated from field: int32 inventory_interval_minutes = 2;
    */
   inventoryIntervalMinutes: number;
@@ -4039,11 +3849,6 @@ export const SetDeviceGroupInventoryIntervalRequestSchema: GenMessage<SetDeviceG
   messageDesc(file_cadestro_v1_control, 140);
 
 /**
- * Replace the device group's maintenance window. Pass an empty
- * MaintenanceWindow (or omit the schedule) to clear it — that drops
- * the group's contribution to the device-side union, leaving the
- * device unconstrained by this group.
- *
  * @generated from message cadestro.v1.SetDeviceGroupMaintenanceWindowRequest
  */
 export type SetDeviceGroupMaintenanceWindowRequest = Message<"cadestro.v1.SetDeviceGroupMaintenanceWindowRequest"> & {
@@ -4152,8 +3957,6 @@ export type CreateAssignmentRequest = Message<"cadestro.v1.CreateAssignmentReque
   targetId?: AssignmentTargetId;
 
   /**
-   * Defaults to REQUIRED (0)
-   *
    * @generated from field: cadestro.v1.AssignmentMode mode = 5;
    */
   mode: AssignmentMode;
@@ -4218,9 +4021,6 @@ export const DeleteAssignmentResponseSchema: GenMessage<DeleteAssignmentResponse
  */
 export type ListAssignmentsRequest = Message<"cadestro.v1.ListAssignmentsRequest"> & {
   /**
-   * UNSPECIFIED (0) means "all source types"; non-zero filters to
-   * that single source type.
-   *
    * @generated from field: cadestro.v1.AssignmentSourceType source_type = 1;
    */
   sourceType: AssignmentSourceType;
@@ -4231,9 +4031,6 @@ export type ListAssignmentsRequest = Message<"cadestro.v1.ListAssignmentsRequest
   sourceId?: AssignmentSourceId;
 
   /**
-   * UNSPECIFIED (0) means "all target types"; non-zero filters to
-   * that single target type.
-   *
    * @generated from field: cadestro.v1.AssignmentTargetType target_type = 3;
    */
   targetType: AssignmentTargetType;
@@ -4313,8 +4110,6 @@ export type UserSelection = Message<"cadestro.v1.UserSelection"> & {
   sourceId?: AssignmentSourceId;
 
   /**
-   * true=user wants it (present), false=user rejected (absent)
-   *
    * @generated from field: bool selected = 5;
    */
   selected: boolean;
@@ -4428,8 +4223,6 @@ export type AvailableItem = Message<"cadestro.v1.AvailableItem"> & {
   selected: boolean;
 
   /**
-   * preview of contained actions
-   *
    * @generated from field: repeated cadestro.v1.ManagedAction actions = 6;
    */
   actions: ManagedAction[];
@@ -4460,8 +4253,6 @@ export const ListAvailableActionsResponseSchema: GenMessage<ListAvailableActions
   messageDesc(file_cadestro_v1_control, 154);
 
 /**
- * Get all resolved actions for a device (expands groups, definitions, sets)
- *
  * @generated from message cadestro.v1.GetDeviceAssignmentsRequest
  */
 export type GetDeviceAssignmentsRequest = Message<"cadestro.v1.GetDeviceAssignmentsRequest"> & {
@@ -4521,8 +4312,6 @@ export const GetDeviceAssignmentsResponseSchema: GenMessage<GetDeviceAssignments
   messageDesc(file_cadestro_v1_control, 156);
 
 /**
- * Get all assignments targeting a user (directly or via user groups)
- *
  * @generated from message cadestro.v1.GetUserAssignmentsRequest
  */
 export type GetUserAssignmentsRequest = Message<"cadestro.v1.GetUserAssignmentsRequest"> & {
@@ -4617,13 +4406,6 @@ export const RebootDeviceResponseSchema: GenMessage<RebootDeviceResponse> = /*@_
   messageDesc(file_cadestro_v1_control, 162);
 
 /**
- * AuditEvent mirrors a row from the append-only audit log. The
- * event_type, stream_type, and actor_type fields are intentionally
- * string-typed (open set): the log records dozens of event types across
- * every domain, and a new one must not require a proto enum bump. The
- * web UI populates filter dropdowns from the distinct values returned by
- * ListAuditEvents rather than from a typed enum.
- *
  * @generated from message cadestro.v1.AuditEvent
  */
 export type AuditEvent = Message<"cadestro.v1.AuditEvent"> & {
@@ -4740,23 +4522,10 @@ export const ListAuditEventsResponseSchema: GenMessage<ListAuditEventsResponse> 
   messageDesc(file_cadestro_v1_control, 165);
 
 /**
- * ExportAuditEvents streams the audit log as CSV or JSON for DSAR /
- * external review. It is a *unary, chunked* export on purpose: the control server's
- * interceptors are deliberately fail-closed on streaming RPCs, so the
- * client loops — pass the returned next_page_token back until it comes
- * back empty, concatenating the chunks. The server applies the same
- * read-side redaction and the same permission gate as ListAuditEvents.
- *
- * Filters mirror what the audit view can express: exact actor, a set
- * of stream types, an event-type substring match (same semantics as
- * ListAuditEvents.event_type), and an occurred_at range.
- *
  * @generated from message cadestro.v1.ExportAuditEventsRequest
  */
 export type ExportAuditEventsRequest = Message<"cadestro.v1.ExportAuditEventsRequest"> & {
   /**
-   * Export format: "csv" or "json".
-   *
    * @generated from field: string format = 1;
    */
   format: string;
@@ -4767,22 +4536,16 @@ export type ExportAuditEventsRequest = Message<"cadestro.v1.ExportAuditEventsReq
   actorId?: AuditActorId;
 
   /**
-   * Empty = all stream types.
-   *
    * @generated from field: repeated string stream_types = 3;
    */
   streamTypes: string[];
 
   /**
-   * Case-insensitive substring match on the event type.
-   *
    * @generated from field: string event_type = 4;
    */
   eventType: string;
 
   /**
-   * Inclusive occurred_at lower/upper bounds; unset = unbounded.
-   *
    * @generated from field: google.protobuf.Timestamp occurred_from = 5;
    */
   occurredFrom?: Timestamp;
@@ -4793,8 +4556,6 @@ export type ExportAuditEventsRequest = Message<"cadestro.v1.ExportAuditEventsReq
   occurredTo?: Timestamp;
 
   /**
-   * Cursor from the previous chunk; empty starts the export.
-   *
    * @generated from field: string page_token = 7;
    */
   pageToken: string;
@@ -4812,18 +4573,11 @@ export const ExportAuditEventsRequestSchema: GenMessage<ExportAuditEventsRequest
  */
 export type ExportAuditEventsResponse = Message<"cadestro.v1.ExportAuditEventsResponse"> & {
   /**
-   * The next fragment of the export artifact. Chunks concatenate to
-   * one valid CSV file (header on the first chunk) or one valid JSON
-   * array. A chunk can be empty (e.g. a filter matching zero events
-   * still yields the CSV header / "[]").
-   *
    * @generated from field: bytes chunk = 1;
    */
   chunk: Uint8Array;
 
   /**
-   * Empty when the export is complete.
-   *
    * @generated from field: string next_page_token = 2;
    */
   nextPageToken: string;
@@ -4837,9 +4591,6 @@ export const ExportAuditEventsResponseSchema: GenMessage<ExportAuditEventsRespon
   messageDesc(file_cadestro_v1_control, 167);
 
 /**
- * LPS password metadata stored per device. Plaintext is available only from
- * RevealLpsPassword so each access has an independent audit operation.
- *
  * @generated from message cadestro.v1.LpsPassword
  */
 export type LpsPassword = Message<"cadestro.v1.LpsPassword"> & {
@@ -4913,15 +4664,11 @@ export const ListLpsPasswordsRequestSchema: GenMessage<ListLpsPasswordsRequest> 
  */
 export type ListLpsPasswordsResponse = Message<"cadestro.v1.ListLpsPasswordsResponse"> & {
   /**
-   * Current entries (one per LPS action and username assigned to the device).
-   *
    * @generated from field: repeated cadestro.v1.LpsPassword current = 1;
    */
   current: LpsPassword[];
 
   /**
-   * Previous entries (most recent first, max 3 per action).
-   *
    * @generated from field: repeated cadestro.v1.LpsPassword history = 2;
    */
   history: LpsPassword[];
@@ -4969,9 +4716,6 @@ export const RevealLpsPasswordResponseSchema: GenMessage<RevealLpsPasswordRespon
   messageDesc(file_cadestro_v1_control, 172);
 
 /**
- * LUKS key metadata stored per device. Plaintext is available only from
- * RevealLuksKey so each access has an independent audit operation.
- *
  * @generated from message cadestro.v1.LuksKey
  */
 export type LuksKey = Message<"cadestro.v1.LuksKey"> & {
@@ -5021,15 +4765,11 @@ export type LuksKey = Message<"cadestro.v1.LuksKey"> & {
   revocationStatus: LuksRevocationStatus;
 
   /**
-   * Error message if revocation failed
-   *
    * @generated from field: string revocation_error = 10;
    */
   revocationError: string;
 
   /**
-   * Timestamp of last revocation event
-   *
    * @generated from field: google.protobuf.Timestamp revocation_at = 11;
    */
   revocationAt?: Timestamp;
@@ -5064,15 +4804,11 @@ export const ListLuksKeysRequestSchema: GenMessage<ListLuksKeysRequest> = /*@__P
  */
 export type ListLuksKeysResponse = Message<"cadestro.v1.ListLuksKeysResponse"> & {
   /**
-   * Current key metadata (one per LUKS action assigned to the device).
-   *
    * @generated from field: repeated cadestro.v1.LuksKey current = 1;
    */
   current: LuksKey[];
 
   /**
-   * Previous key metadata (most recent first, max 3 per action).
-   *
    * @generated from field: repeated cadestro.v1.LuksKey history = 2;
    */
   history: LuksKey[];
@@ -5146,22 +4882,16 @@ export const CreateLuksTokenRequestSchema: GenMessage<CreateLuksTokenRequest> = 
  */
 export type CreateLuksTokenResponse = Message<"cadestro.v1.CreateLuksTokenResponse"> & {
   /**
-   * One-time UUID token
-   *
    * @generated from field: string token = 1;
    */
   token: string;
 
   /**
-   * URI for opening terminal: cadestro://luks/set-passphrase?token=<token-value>
-   *
    * @generated from field: string uri = 2;
    */
   uri: string;
 
   /**
-   * CLI command: cadestrod luks set-passphrase --token <token-value>
-   *
    * @generated from field: string cli_command = 3;
    */
   cliCommand: string;
@@ -5210,8 +4940,6 @@ export const RevokeLuksDeviceKeyResponseSchema: GenMessage<RevokeLuksDeviceKeyRe
   messageDesc(file_cadestro_v1_control, 181);
 
 /**
- * Dispatch an on-demand OSQuery to a connected device
- *
  * @generated from message cadestro.v1.DispatchOSQueryRequest
  */
 export type DispatchOSQueryRequest = Message<"cadestro.v1.DispatchOSQueryRequest"> & {
@@ -5236,8 +4964,6 @@ export type DispatchOSQueryRequest = Message<"cadestro.v1.DispatchOSQueryRequest
   limit: number;
 
   /**
-   * Raw SQL query — when set, table/columns/limit are ignored.
-   *
    * @generated from field: string raw_sql = 5;
    */
   rawSql: string;
@@ -5268,8 +4994,6 @@ export const DispatchOSQueryResponseSchema: GenMessage<DispatchOSQueryResponse> 
   messageDesc(file_cadestro_v1_control, 183);
 
 /**
- * Poll for the result of a dispatched OSQuery
- *
  * @generated from message cadestro.v1.GetOSQueryResultRequest
  */
 export type GetOSQueryResultRequest = Message<"cadestro.v1.GetOSQueryResultRequest"> & {
@@ -5324,8 +5048,6 @@ export const GetOSQueryResultResponseSchema: GenMessage<GetOSQueryResultResponse
   messageDesc(file_cadestro_v1_control, 185);
 
 /**
- * Get cached device inventory (hardware/software data collected by agent)
- *
  * @generated from message cadestro.v1.GetDeviceInventoryRequest
  */
 export type GetDeviceInventoryRequest = Message<"cadestro.v1.GetDeviceInventoryRequest"> & {
@@ -5335,8 +5057,6 @@ export type GetDeviceInventoryRequest = Message<"cadestro.v1.GetDeviceInventoryR
   deviceId?: DeviceId;
 
   /**
-   * Optional: filter to specific tables (empty = all)
-   *
    * @generated from field: repeated string table_names = 2;
    */
   tableNames: string[];
@@ -5394,8 +5114,6 @@ export const GetDeviceInventoryResponseSchema: GenMessage<GetDeviceInventoryResp
   messageDesc(file_cadestro_v1_control, 188);
 
 /**
- * Request the agent to re-collect and send inventory
- *
  * @generated from message cadestro.v1.RefreshDeviceInventoryRequest
  */
 export type RefreshDeviceInventoryRequest = Message<"cadestro.v1.RefreshDeviceInventoryRequest"> & {
@@ -5779,15 +5497,6 @@ export type AssignRoleToUserRequest = Message<"cadestro.v1.AssignRoleToUserReque
   roleIds: RoleId[];
 
   /**
-   * Optional grant scope. Paired-or-neither: both scope_kind and
-   * scope_id MUST be set together, or both absent. Absent =
-   * unscoped/global grant. Set = the grant's authorization extends only
-   * to members of the group identified by scope_id, and scope_kind
-   * selects which kind of group that is. Every permission in the role
-   * must accept this scope_kind (PermissionInfo.target_kind must
-   * match), or the assignment is rejected. The actor must hold
-   * AssignRoleScope.
-   *
    * @generated from field: cadestro.v1.RoleGrantScopeKind scope_kind = 4;
    */
   scopeKind: RoleGrantScopeKind;
@@ -5833,14 +5542,6 @@ export type RevokeRoleFromUserRequest = Message<"cadestro.v1.RevokeRoleFromUserR
   roleId?: RoleId;
 
   /**
-   * Optional grant scope identifying WHICH grant to revoke when the
-   * (user_id, role_id) pair has multiple grants at different
-   * scopes. Paired-or-neither with scope_id. Both absent = revoke
-   * the unscoped grant; both set = revoke that one specific scoped
-   * grant. The handler rejects "revoke unscoped" when only scoped
-   * grants exist (and vice versa) to surface ambiguity rather than
-   * silently no-op.
-   *
    * @generated from field: cadestro.v1.RoleGrantScopeKind scope_kind = 3;
    */
   scopeKind: RoleGrantScopeKind;
@@ -5946,21 +5647,11 @@ export type UserGroup = Message<"cadestro.v1.UserGroup"> & {
   isScimManaged: boolean;
 
   /**
-   * Per-group maintenance window. Same semantics as
-   * DeviceGroup.maintenance_window: when a user group reaches a device
-   * through an assignment, that device gates policy runs by the union of
-   * every reaching group's window (the device's own groups plus any
-   * user groups reaching it). Empty means "no constraint" for this
-   * group's contribution to the union.
-   *
    * @generated from field: cadestro.v1.MaintenanceWindow maintenance_window = 9;
    */
   maintenanceWindow?: MaintenanceWindow;
 
   /**
-   * The group's assigned roles, one entry per grant, carrying each grant's
-   * scope. See User.role_grants.
-   *
    * @generated from field: repeated cadestro.v1.RoleGrant role_grants = 10;
    */
   roleGrants: RoleGrant[];
@@ -6306,10 +5997,6 @@ export type AssignRoleToUserGroupRequest = Message<"cadestro.v1.AssignRoleToUser
   roleIds: RoleId[];
 
   /**
-   * Optional grant scope. Same paired-or-neither semantics as
-   * AssignRoleToUserRequest.scope_*. Every member of the target
-   * user group inherits this scope through the grant.
-   *
    * @generated from field: cadestro.v1.RoleGrantScopeKind scope_kind = 4;
    */
   scopeKind: RoleGrantScopeKind;
@@ -6355,11 +6042,6 @@ export type RevokeRoleFromUserGroupRequest = Message<"cadestro.v1.RevokeRoleFrom
   roleId?: RoleId;
 
   /**
-   * Optional grant scope identifying WHICH (user_group, role)
-   * grant to revoke when multiple scoped grants of the same role
-   * are attached to the same user group. Paired-or-neither with
-   * scope_id; same semantics as RevokeRoleFromUserRequest.
-   *
    * @generated from field: cadestro.v1.RoleGrantScopeKind scope_kind = 3;
    */
   scopeKind: RoleGrantScopeKind;
@@ -6557,11 +6239,6 @@ export const EvaluateDynamicUserGroupResponseSchema: GenMessage<EvaluateDynamicU
   messageDesc(file_cadestro_v1_control, 238);
 
 /**
- * Replace the user group's maintenance window. Same semantics as
- * SetDeviceGroupMaintenanceWindowRequest. The window contributes to a
- * device-side union for every device the user group reaches via an
- * assignment. Empty schedule = clear.
- *
  * @generated from message cadestro.v1.SetUserGroupMaintenanceWindowRequest
  */
 export type SetUserGroupMaintenanceWindowRequest = Message<"cadestro.v1.SetUserGroupMaintenanceWindowRequest"> & {
@@ -6618,8 +6295,6 @@ export type IdentityProvider = Message<"cadestro.v1.IdentityProvider"> & {
   clientId?: OidcClientId;
 
   /**
-   * client_secret is not returned in responses (write-only).
-   *
    * @generated from field: string issuer_url = 7;
    */
   issuerUrl: string;
@@ -6665,8 +6340,6 @@ export type IdentityProvider = Message<"cadestro.v1.IdentityProvider"> & {
   groupClaim: string;
 
   /**
-   * external group name → user_group_id
-   *
    * @generated from field: map<string, string> group_mapping = 16;
    */
   groupMapping: { [key: string]: string };
@@ -6687,18 +6360,11 @@ export type IdentityProvider = Message<"cadestro.v1.IdentityProvider"> & {
   scimEnabled: boolean;
 
   /**
-   * read-only, computed by server
-   *
    * @generated from field: string scim_endpoint_url = 20;
    */
   scimEndpointUrl: string;
 
   /**
-   * trust_email_assertions: operator opt-in to delegate email-identity
-   * assertion to this IdP. When true, SCIM AutoLinkByEmail may bind an asserted
-   * email to a pre-existing account; default false refuses that
-   * (account-takeover guard across providers).
-   *
    * @generated from field: bool trust_email_assertions = 21;
    */
   trustEmailAssertions: boolean;
@@ -6853,8 +6519,6 @@ export type CreateIdentityProviderRequest = Message<"cadestro.v1.CreateIdentityP
   groupMapping: { [key: string]: string };
 
   /**
-   * See IdentityProvider.trust_email_assertions. Default false (secure).
-   *
    * @generated from field: bool trust_email_assertions = 16;
    */
   trustEmailAssertions: boolean;
@@ -6992,8 +6656,6 @@ export type UpdateIdentityProviderRequest = Message<"cadestro.v1.UpdateIdentityP
   clientId?: OidcClientId;
 
   /**
-   * If empty, the existing secret is kept.
-   *
    * @generated from field: string client_secret = 5;
    */
   clientSecret: string;
@@ -7049,8 +6711,6 @@ export type UpdateIdentityProviderRequest = Message<"cadestro.v1.UpdateIdentityP
   groupMapping: { [key: string]: string };
 
   /**
-   * See IdentityProvider.trust_email_assertions. Default false (secure).
-   *
    * @generated from field: bool trust_email_assertions = 16;
    */
   trustEmailAssertions: boolean;
@@ -7147,8 +6807,6 @@ export const AuthMethodProviderSchema: GenMessage<AuthMethodProvider> = /*@__PUR
  */
 export type ListAuthMethodsRequest = Message<"cadestro.v1.ListAuthMethodsRequest"> & {
   /**
-   * Optional email to check user-specific auth methods.
-   *
    * @generated from field: string email = 1;
    */
   email: string;
@@ -7337,8 +6995,6 @@ export const UnlinkIdentityResponseSchema: GenMessage<UnlinkIdentityResponse> = 
   messageDesc(file_cadestro_v1_control, 262);
 
 /**
- * SCIM Provisioning
- *
  * @generated from message cadestro.v1.EnableSCIMRequest
  */
 export type EnableSCIMRequest = Message<"cadestro.v1.EnableSCIMRequest"> & {
@@ -7360,15 +7016,11 @@ export const EnableSCIMRequestSchema: GenMessage<EnableSCIMRequest> = /*@__PURE_
  */
 export type EnableSCIMResponse = Message<"cadestro.v1.EnableSCIMResponse"> & {
   /**
-   * plaintext token, shown once
-   *
    * @generated from field: string token = 1;
    */
   token: string;
 
   /**
-   * full SCIM endpoint URL
-   *
    * @generated from field: string endpoint_url = 2;
    */
   endpointUrl: string;
@@ -7433,8 +7085,6 @@ export const RotateSCIMTokenRequestSchema: GenMessage<RotateSCIMTokenRequest> = 
  */
 export type RotateSCIMTokenResponse = Message<"cadestro.v1.RotateSCIMTokenResponse"> & {
   /**
-   * new plaintext token, shown once
-   *
    * @generated from field: string token = 1;
    */
   token: string;
@@ -8070,22 +7720,16 @@ export const DevicePolicyRuleEvaluationSchema: GenMessage<DevicePolicyRuleEvalua
  */
 export type SearchDateFilter = Message<"cadestro.v1.SearchDateFilter"> & {
   /**
-   * index field name: "created_at", "updated_at", "occurred_at"
-   *
    * @generated from field: string field = 1;
    */
   field: string;
 
   /**
-   * unix epoch seconds, 0 = no lower bound
-   *
    * @generated from field: int64 start = 2;
    */
   start: bigint;
 
   /**
-   * unix epoch seconds, 0 = no upper bound
-   *
    * @generated from field: int64 end = 3;
    */
   end: bigint;
@@ -8108,15 +7752,11 @@ export type SearchRequest = Message<"cadestro.v1.SearchRequest"> & {
   query: string;
 
   /**
-   * UNSPECIFIED (0) means "all scopes".
-   *
    * @generated from field: cadestro.v1.SearchScope scope = 2;
    */
   scope: SearchScope;
 
   /**
-   * Matches the handler's effective clamp ([1,200], else default 50).
-   *
    * @generated from field: int32 page_size = 3;
    */
   pageSize: number;
@@ -8132,15 +7772,11 @@ export type SearchRequest = Message<"cadestro.v1.SearchRequest"> & {
   dateFilters: SearchDateFilter[];
 
   /**
-   * field → value(s), pipe-separated for OR (e.g. "completed|failed")
-   *
    * @generated from field: map<string, string> tag_filters = 6;
    */
   tagFilters: { [key: string]: string };
 
   /**
-   * UNSPECIFIED (0) means "scope default"; server validates per-scope validity.
-   *
    * @generated from field: cadestro.v1.SortField sort_field = 7;
    */
   sortField: SortField;
@@ -8188,8 +7824,6 @@ export type SearchResult = Message<"cadestro.v1.SearchResult"> & {
   memberCount: number;
 
   /**
-   * all hash fields from the search index
-   *
    * @generated from field: map<string, string> fields = 6;
    */
   fields: { [key: string]: string };
@@ -8378,9 +8012,6 @@ export type StartTerminalRequest = Message<"cadestro.v1.StartTerminalRequest"> &
   deviceId?: DeviceId;
 
   /**
-   * Initial window size. The web client may send a Resize immediately
-   * after connecting if these turn out to be wrong.
-   *
    * @generated from field: uint32 cols = 2;
    */
   cols: number;
@@ -8403,43 +8034,26 @@ export const StartTerminalRequestSchema: GenMessage<StartTerminalRequest> = /*@_
  */
 export type StartTerminalResponse = Message<"cadestro.v1.StartTerminalResponse"> & {
   /**
-   * ULID identifying the session for the lifetime of the connection.
-   *
    * @generated from field: cadestro.v1.SessionId session_id = 1;
    */
   sessionId?: SessionId;
 
   /**
-   * Short-lived bearer token the web client must append to terminal_url
-   * as ?token=<session_token> when opening the WebSocket. The token is
-   * intentionally returned separately from the URL so the URL can be
-   * logged or displayed without leaking the credential.
-   *
    * @generated from field: string session_token = 2;
    */
   sessionToken: string;
 
   /**
-   * Token-free base WebSocket URL of control's terminal endpoint
-   * (e.g. wss://control.example.com/terminal). Clients MUST construct
-   * the final connect URL by appending ?token=<session_token>; this
-   * field never embeds the token.
-   *
    * @generated from field: string terminal_url = 3;
    */
   terminalUrl: string;
 
   /**
-   * Token expiry; the client should connect well before this.
-   *
    * @generated from field: google.protobuf.Timestamp expires_at = 4;
    */
   expiresAt?: Timestamp;
 
   /**
-   * The TTY user the agent will spawn the shell as. Returned for the
-   * UI to display ("Connected as cadestro-tty-pdotterer") and for diagnostics.
-   *
    * @generated from field: string tty_user = 5;
    */
   ttyUser: string;
@@ -8453,39 +8067,6 @@ export const StartTerminalResponseSchema: GenMessage<StartTerminalResponse> = /*
   messageDesc(file_cadestro_v1_control, 308);
 
 /**
- * StopTerminal vs TerminateTerminalSession
- *
- * These two RPCs both end a session but have different semantics and
- * permission requirements; implementations MUST honour the split:
- *
- * StopTerminal — graceful, owner-initiated stop.
- *   - Caller MUST be the user that opened the session (the same
- *     identity that received it from StartTerminal). Other users get
- *     PermissionDenied even if they hold admin permissions; admins
- *     wanting to kill someone else's session must use
- *     TerminateTerminalSession.
- *   - Idempotent: calling StopTerminal twice on the same session_id
- *     returns OK both times. An unknown or already-ended session
- *     returns OK with no body, NOT NotFound, so clients can fire and
- *     forget on disconnect.
- *   - No reason field: graceful stops are audited only by the ordinary
- *     session-ended record.
- *   - Agent failures while delivering the stop signal are logged but
- *     never surface as RPC errors — the session is considered closed
- *     once the control server has accepted the request.
- *
- * TerminateTerminalSession — admin/forcible termination.
- *   - Caller MUST hold the TerminateTerminalSession permission;
- *     ownership is NOT sufficient (use StopTerminal for that path).
- *   - NOT idempotent in the same sense: an unknown session returns
- *     NotFound so the admin can distinguish "killed it" from "it was
- *     already gone".
- *   - Carries a reason that is recorded in the audit log alongside the
- *     terminating user and surfaced to the agent so the user sees why
- *     their session disappeared.
- *   - Underlying agent failures DO surface as RPC errors so the admin
- *     knows the kill did not actually land.
- *
  * @generated from message cadestro.v1.StopTerminalRequest
  */
 export type StopTerminalRequest = Message<"cadestro.v1.StopTerminalRequest"> & {
@@ -8516,9 +8097,6 @@ export const StopTerminalResponseSchema: GenMessage<StopTerminalResponse> = /*@_
   messageDesc(file_cadestro_v1_control, 310);
 
 /**
- * TerminalSessionInfo is the admin view of an active session, returned
- * by ListActiveTerminalSessions and used by the admin UI for display.
- *
  * @generated from message cadestro.v1.TerminalSessionInfo
  */
 export type TerminalSessionInfo = Message<"cadestro.v1.TerminalSessionInfo"> & {
@@ -8528,8 +8106,6 @@ export type TerminalSessionInfo = Message<"cadestro.v1.TerminalSessionInfo"> & {
   sessionId?: SessionId;
 
   /**
-   * ID and email of the Cadestro user who opened the session.
-   *
    * @generated from field: cadestro.v1.UserId user_id = 2;
    */
   userId?: UserId;
@@ -8540,8 +8116,6 @@ export type TerminalSessionInfo = Message<"cadestro.v1.TerminalSessionInfo"> & {
   userEmail: string;
 
   /**
-   * Target device.
-   *
    * @generated from field: cadestro.v1.DeviceId device_id = 4;
    */
   deviceId?: DeviceId;
@@ -8552,8 +8126,6 @@ export type TerminalSessionInfo = Message<"cadestro.v1.TerminalSessionInfo"> & {
   deviceHostname: string;
 
   /**
-   * The dedicated TTY user the shell is running as.
-   *
    * @generated from field: string tty_user = 6;
    */
   ttyUser: string;
@@ -8564,8 +8136,6 @@ export type TerminalSessionInfo = Message<"cadestro.v1.TerminalSessionInfo"> & {
   startedAt?: Timestamp;
 
   /**
-   * Last activity timestamp (any input or output traffic).
-   *
    * @generated from field: google.protobuf.Timestamp last_activity_at = 8;
    */
   lastActivityAt?: Timestamp;
@@ -8579,9 +8149,6 @@ export const TerminalSessionInfoSchema: GenMessage<TerminalSessionInfo> = /*@__P
   messageDesc(file_cadestro_v1_control, 311);
 
 /**
- * ListActiveTerminalSessionsRequest follows the project-wide pagination
- * contract: page_size + page_token in, next_page_token + total_count out.
- *
  * @generated from message cadestro.v1.ListActiveTerminalSessionsRequest
  */
 export type ListActiveTerminalSessionsRequest = Message<"cadestro.v1.ListActiveTerminalSessionsRequest"> & {
@@ -8596,15 +8163,11 @@ export type ListActiveTerminalSessionsRequest = Message<"cadestro.v1.ListActiveT
   pageToken: string;
 
   /**
-   * Optional filter: only sessions on this device.
-   *
    * @generated from field: cadestro.v1.DeviceId device_id = 3;
    */
   deviceId?: DeviceId;
 
   /**
-   * Optional filter: only sessions opened by this user.
-   *
    * @generated from field: cadestro.v1.UserId user_id = 4;
    */
   userId?: UserId;
@@ -8645,12 +8208,6 @@ export const ListActiveTerminalSessionsResponseSchema: GenMessage<ListActiveTerm
   messageDesc(file_cadestro_v1_control, 313);
 
 /**
- * See the StopTerminal vs TerminateTerminalSession comment block above
- * for the full semantic split. Summary: this is the admin/forcible
- * path, gated by the TerminateTerminalSession permission, returns
- * NotFound for unknown sessions, and records the reason in the audit
- * log alongside the terminating user.
- *
  * @generated from message cadestro.v1.TerminateTerminalSessionRequest
  */
 export type TerminateTerminalSessionRequest = Message<"cadestro.v1.TerminateTerminalSessionRequest"> & {
@@ -8660,9 +8217,6 @@ export type TerminateTerminalSessionRequest = Message<"cadestro.v1.TerminateTerm
   sessionId?: SessionId;
 
   /**
-   * Optional reason for the audit log; surfaced to the agent and the
-   * affected user.
-   *
    * @generated from field: string reason = 2;
    */
   reason: string;
@@ -8689,11 +8243,6 @@ export const TerminateTerminalSessionResponseSchema: GenMessage<TerminateTermina
   messageDesc(file_cadestro_v1_control, 315);
 
 /**
- * EncryptionAuthoringParams is the HTTPS write boundary for an operator-authored
- * encryption action. preshared_key is write-only: the create handler requires
- * it, while this shared update shape permits omission to preserve the current
- * value, and no response returns it.
- *
  * @generated from message cadestro.v1.EncryptionAuthoringParams
  */
 export type EncryptionAuthoringParams = Message<"cadestro.v1.EncryptionAuthoringParams"> & {
@@ -8713,10 +8262,6 @@ export type EncryptionAuthoringParams = Message<"cadestro.v1.EncryptionAuthoring
   minWords: number;
 
   /**
-   * Range-checked for the same reason as EncryptionParams.device_bound_key_type:
-   * the agent's switch default means "no device-bound key", so an out-of-range
-   * value must be refused here rather than silently downgraded there.
-   *
    * @generated from field: cadestro.v1.EncryptionDeviceBoundKeyType device_bound_key_type = 4;
    */
   deviceBoundKeyType: EncryptionDeviceBoundKeyType;
@@ -8727,9 +8272,6 @@ export type EncryptionAuthoringParams = Message<"cadestro.v1.EncryptionAuthoring
   userPassphraseMinLength: number;
 
   /**
-   * Range-checked for the same reason as EncryptionParams
-   * .user_passphrase_complexity, and optional for the same reason.
-   *
    * @generated from field: cadestro.v1.LpsPasswordComplexity user_passphrase_complexity = 6;
    */
   userPassphraseComplexity: LpsPasswordComplexity;
@@ -8743,8 +8285,6 @@ export const EncryptionAuthoringParamsSchema: GenMessage<EncryptionAuthoringPara
   messageDesc(file_cadestro_v1_control, 316);
 
 /**
- * ManagedEncryptionParams is safe for ordinary action reads.
- *
  * @generated from message cadestro.v1.ManagedEncryptionParams
  */
 export type ManagedEncryptionParams = Message<"cadestro.v1.ManagedEncryptionParams"> & {
@@ -8787,10 +8327,6 @@ export const ManagedEncryptionParamsSchema: GenMessage<ManagedEncryptionParams> 
   messageDesc(file_cadestro_v1_control, 317);
 
 /**
- * WifiAuthoringParams is the HTTPS write boundary for an operator-authored
- * WiFi action. psk and client_key are write-only; omission on update preserves
- * the applicable credential.
- *
  * @generated from message cadestro.v1.WifiAuthoringParams
  */
 export type WifiAuthoringParams = Message<"cadestro.v1.WifiAuthoringParams"> & {
@@ -8853,8 +8389,6 @@ export const WifiAuthoringParamsSchema: GenMessage<WifiAuthoringParams> = /*@__P
   messageDesc(file_cadestro_v1_control, 318);
 
 /**
- * ManagedWifiParams is safe for ordinary action reads.
- *
  * @generated from message cadestro.v1.ManagedWifiParams
  */
 export type ManagedWifiParams = Message<"cadestro.v1.ManagedWifiParams"> & {
@@ -8921,8 +8455,6 @@ export const ManagedWifiParamsSchema: GenMessage<ManagedWifiParams> = /*@__PURE_
  */
 export const ControlService: GenService<{
   /**
-   * Agent Registration
-   *
    * @generated from rpc cadestro.v1.ControlService.Register
    */
   register: {
@@ -8931,8 +8463,6 @@ export const ControlService: GenService<{
     output: typeof RegisterResponseSchema;
   },
   /**
-   * Certificate Renewal
-   *
    * @generated from rpc cadestro.v1.ControlService.RenewCertificate
    */
   renewCertificate: {
@@ -8941,8 +8471,6 @@ export const ControlService: GenService<{
     output: typeof RenewCertificateResponseSchema;
   },
   /**
-   * Authentication
-   *
    * @generated from rpc cadestro.v1.ControlService.RefreshToken
    */
   refreshToken: {
@@ -8967,8 +8495,6 @@ export const ControlService: GenService<{
     output: typeof GetCurrentUserResponseSchema;
   },
   /**
-   * SSO / Identity Providers
-   *
    * @generated from rpc cadestro.v1.ControlService.ListAuthMethods
    */
   listAuthMethods: {
@@ -9049,8 +8575,6 @@ export const ControlService: GenService<{
     output: typeof UnlinkIdentityResponseSchema;
   },
   /**
-   * SCIM Provisioning
-   *
    * @generated from rpc cadestro.v1.ControlService.EnableSCIM
    */
   enableSCIM: {
@@ -9075,8 +8599,6 @@ export const ControlService: GenService<{
     output: typeof RotateSCIMTokenResponseSchema;
   },
   /**
-   * Users
-   *
    * @generated from rpc cadestro.v1.ControlService.EraseJITUser
    */
   eraseJITUser: {
@@ -9157,8 +8679,6 @@ export const ControlService: GenService<{
     output: typeof UpdateUserResponseSchema;
   },
   /**
-   * Devices
-   *
    * @generated from rpc cadestro.v1.ControlService.ListDevices
    */
   listDevices: {
@@ -9239,8 +8759,6 @@ export const ControlService: GenService<{
     output: typeof DeleteDeviceResponseSchema;
   },
   /**
-   * Registration Tokens
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateToken
    */
   createToken: {
@@ -9281,8 +8799,6 @@ export const ControlService: GenService<{
     output: typeof DeleteTokenResponseSchema;
   },
   /**
-   * Actions (single executable)
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateAction
    */
   createAction: {
@@ -9339,8 +8855,6 @@ export const ControlService: GenService<{
     output: typeof DeleteActionResponseSchema;
   },
   /**
-   * Action Sets (collection of actions)
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateActionSet
    */
   createActionSet: {
@@ -9421,8 +8935,6 @@ export const ControlService: GenService<{
     output: typeof ReorderActionInSetResponseSchema;
   },
   /**
-   * Definitions (collection of action sets)
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateDefinition
    */
   createDefinition: {
@@ -9503,8 +9015,6 @@ export const ControlService: GenService<{
     output: typeof ReorderActionSetInDefinitionResponseSchema;
   },
   /**
-   * Device Groups
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateDeviceGroup
    */
   createDeviceGroup: {
@@ -9625,8 +9135,6 @@ export const ControlService: GenService<{
     output: typeof UpdateDeviceGroupResponseSchema;
   },
   /**
-   * Assignments
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateAssignment
    */
   createAssignment: {
@@ -9667,8 +9175,6 @@ export const ControlService: GenService<{
     output: typeof GetUserAssignmentsResponseSchema;
   },
   /**
-   * User Selections (for available assignments)
-   *
    * @generated from rpc cadestro.v1.ControlService.SetUserSelection
    */
   setUserSelection: {
@@ -9685,8 +9191,6 @@ export const ControlService: GenService<{
     output: typeof ListAvailableActionsResponseSchema;
   },
   /**
-   * Agent synchronization and live device control
-   *
    * @generated from rpc cadestro.v1.ControlService.SyncDevice
    */
   syncDevice: {
@@ -9703,8 +9207,6 @@ export const ControlService: GenService<{
     output: typeof RebootDeviceResponseSchema;
   },
   /**
-   * Audit Log
-   *
    * @generated from rpc cadestro.v1.ControlService.ListAuditEvents
    */
   listAuditEvents: {
@@ -9721,8 +9223,6 @@ export const ControlService: GenService<{
     output: typeof ExportAuditEventsResponseSchema;
   },
   /**
-   * LPS (Local Password Solution)
-   *
    * @generated from rpc cadestro.v1.ControlService.ListLpsPasswords
    */
   listLpsPasswords: {
@@ -9739,8 +9239,6 @@ export const ControlService: GenService<{
     output: typeof RevealLpsPasswordResponseSchema;
   },
   /**
-   * LUKS (Disk Encryption)
-   *
    * @generated from rpc cadestro.v1.ControlService.ListLuksKeys
    */
   listLuksKeys: {
@@ -9773,8 +9271,6 @@ export const ControlService: GenService<{
     output: typeof RevokeLuksDeviceKeyResponseSchema;
   },
   /**
-   * OSQuery / Device Inventory
-   *
    * @generated from rpc cadestro.v1.ControlService.DispatchOSQuery
    */
   dispatchOSQuery: {
@@ -9807,8 +9303,6 @@ export const ControlService: GenService<{
     output: typeof RefreshDeviceInventoryResponseSchema;
   },
   /**
-   * Device Logs
-   *
    * @generated from rpc cadestro.v1.ControlService.QueryDeviceLogs
    */
   queryDeviceLogs: {
@@ -9825,8 +9319,6 @@ export const ControlService: GenService<{
     output: typeof GetDeviceLogResultResponseSchema;
   },
   /**
-   * Roles & Permissions
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateRole
    */
   createRole: {
@@ -9891,8 +9383,6 @@ export const ControlService: GenService<{
     output: typeof ListPermissionsResponseSchema;
   },
   /**
-   * User Groups
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateUserGroup
    */
   createUserGroup: {
@@ -10005,8 +9495,6 @@ export const ControlService: GenService<{
     output: typeof UpdateUserGroupResponseSchema;
   },
   /**
-   * Device Compliance
-   *
    * @generated from rpc cadestro.v1.ControlService.GetDeviceCompliance
    */
   getDeviceCompliance: {
@@ -10015,8 +9503,6 @@ export const ControlService: GenService<{
     output: typeof GetDeviceComplianceResponseSchema;
   },
   /**
-   * Compliance Policies
-   *
    * @generated from rpc cadestro.v1.ControlService.CreateCompliancePolicy
    */
   createCompliancePolicy: {
@@ -10097,8 +9583,6 @@ export const ControlService: GenService<{
     output: typeof GetDeviceCompliancePolicyStatusResponseSchema;
   },
   /**
-   * Search
-   *
    * @generated from rpc cadestro.v1.ControlService.Search
    */
   search: {
@@ -10115,8 +9599,6 @@ export const ControlService: GenService<{
     output: typeof RebuildSearchIndexResponseSchema;
   },
   /**
-   * Server Settings
-   *
    * @generated from rpc cadestro.v1.ControlService.GetServerSettings
    */
   getServerSettings: {
@@ -10133,8 +9615,6 @@ export const ControlService: GenService<{
     output: typeof UpdateServerSettingsResponseSchema;
   },
   /**
-   * User Provisioning Per-User
-   *
    * @generated from rpc cadestro.v1.ControlService.SetUserProvisioningEnabled
    */
   setUserProvisioningEnabled: {
@@ -10143,8 +9623,6 @@ export const ControlService: GenService<{
     output: typeof UpdateUserResponseSchema;
   },
   /**
-   * Remote Terminal (PTY) sessions
-   *
    * @generated from rpc cadestro.v1.ControlService.StartTerminal
    */
   startTerminal: {

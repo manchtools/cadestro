@@ -39,8 +39,6 @@ const (
 
 // AgentServiceClient is a client for the cadestro.v1.AgentService service.
 type AgentServiceClient interface {
-	// The only agent-control transport. Handshake, synchronization, live control,
-	// results, secret operations and terminal traffic all use this stream.
 	Stream(context.Context) *connect.BidiStreamForClient[v1.AgentMessage, v1.ServerMessage]
 }
 
@@ -76,8 +74,6 @@ func (c *agentServiceClient) Stream(ctx context.Context) *connect.BidiStreamForC
 
 // AgentServiceHandler is an implementation of the cadestro.v1.AgentService service.
 type AgentServiceHandler interface {
-	// The only agent-control transport. Handshake, synchronization, live control,
-	// results, secret operations and terminal traffic all use this stream.
 	Stream(context.Context, *connect.BidiStream[v1.AgentMessage, v1.ServerMessage]) error
 }
 

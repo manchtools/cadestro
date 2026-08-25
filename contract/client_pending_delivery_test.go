@@ -10,8 +10,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// noopStreamHandler satisfies StreamHandler; these cases never reach a handler
-// callback, they only exercise the pending-delivery routing.
 type noopStreamHandler struct{}
 
 func (noopStreamHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
@@ -22,30 +20,10 @@ func (noopStreamHandler) OnError(context.Context, *cadestrov1.Error) error { ret
 
 func quietLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
 
-// testSecretBytes is a non-empty credential fixture for the required inbound
-// field check.
 func testSecretBytes() []byte {
 	return []byte("secret-bytes")
 }
 
-// Every Client method that sends a stream request and then BLOCKS on a pending
-// channel depends on dispatchServerMessage routing the matching ServerMessage
-// back through deliverPending. Miss that wiring and the call does not fail — it
-// hangs until the caller's context expires, which for a secret-rotation batch
-// means the agent has already changed the password locally and the report is
-// lost.
-//
-// This is table-driven over the response types so a newly added waiter is one
-// line away from being covered, and it asserts delivery rather than absence of
-// error — a dropped frame is silent by design.
-//
-// KNOWN WEAKNESS, left in place deliberately: this list and the dispatch case
-// it mirrors are both handwritten, so another registerPending caller can be
-// added without either noticing. Hoisting the correlation above the switch
-// removes the list but breaks TestDispatchValidatesEveryInboundCommand, which
-// identifies response arms precisely BY their deliverPending call and would then
-// demand validateInbound on a delivery path. The real fix is a self-discovering
-// guard over the registerPending call sites; it is not this test.
 func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -125,9 +103,6 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 	}
 }
 
-// Keep the routing table and its validation guard coupled: a newly added
-// correlated response must both appear in dispatchServerMessage and pass the
-// same inbound payload validation before it reaches a waiter.
 func TestDispatchCorrelatedResponsesAreRoutedAndValidated(t *testing.T) {
 	want := map[string]bool{
 		"ServerMessage_Error":             true,
@@ -155,19 +130,6 @@ func TestDispatchCorrelatedResponsesAreRoutedAndValidated(t *testing.T) {
 	}
 }
 
-// A correlated ERROR must reach the caller that is blocked on it.
-//
-// The server answers a rejected correlated request
-// with a ServerMessage_Error carrying the request's message ID, and the waiting
-// method already knows how to read one — it returns "server error: …". It never
-// received any: the Error case in the dispatch loop went straight to
-// handler.OnError, so the waiter blocked until its context expired while the
-// answer sat one branch away.
-//
-// The cost is not latency. These are the irreversible operations: the agent has
-// already changed the local passwords, or added a LUKS slot, and is waiting to
-// learn whether control accepted them before committing or rolling back. A
-// rejection it never sees stalls the rollback for the whole timeout.
 func TestDispatchServerMessage_DeliversCorrelatedErrorToTheWaiter(t *testing.T) {
 	c := &Client{logger: quietLogger()}
 	id := NewULID()
@@ -201,13 +163,12 @@ func TestDispatchServerMessage_DeliversCorrelatedErrorToTheWaiter(t *testing.T) 
 	}
 }
 
-// An UNcorrelated error — no waiter for that id — must still reach OnError.
 func TestDispatchServerMessage_UncorrelatedErrorStillReachesTheHandler(t *testing.T) {
 	c := &Client{logger: quietLogger()}
 	handler := &recordingErrHandler{}
 
 	msg := &cadestrov1.ServerMessage{
-		Id: &cadestrov1.MessageId{Value: NewULID()}, // nothing is waiting on this
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.ServerMessage_Error{
 			Error: &cadestrov1.Error{Code: "internal", Message: "server-originated"},
 		},

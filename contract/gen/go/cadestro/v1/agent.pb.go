@@ -24,17 +24,13 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Security alert types for audit logging
 type SecurityAlertType int32
 
 const (
-	SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED SecurityAlertType = 0
-	// Someone attempted to reassign the agent to a different server
+	SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED                 SecurityAlertType = 0
 	SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT SecurityAlertType = 1
-	// Credential file tampering detected
-	SecurityAlertType_SECURITY_ALERT_TYPE_CREDENTIAL_TAMPERING SecurityAlertType = 2
-	// Invalid certificate presented
-	SecurityAlertType_SECURITY_ALERT_TYPE_INVALID_CERTIFICATE SecurityAlertType = 3
+	SecurityAlertType_SECURITY_ALERT_TYPE_CREDENTIAL_TAMPERING        SecurityAlertType = 2
+	SecurityAlertType_SECURITY_ALERT_TYPE_INVALID_CERTIFICATE         SecurityAlertType = 3
 )
 
 // Enum value maps for SecurityAlertType.
@@ -80,15 +76,11 @@ func (SecurityAlertType) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{0}
 }
 
-// OnFailure decides what the rest of a manifest does after an occurrence
-// fails. CONTINUE is the wire default because the policy default is CONTINUE
-// and STOP is the explicit choice; there is no UNSPECIFIED sentinel to map, so
-// a manifest built without setting the field behaves as authored.
 type OnFailure int32
 
 const (
-	OnFailure_ON_FAILURE_CONTINUE OnFailure = 0 // default — run the remaining occurrences
-	OnFailure_ON_FAILURE_STOP     OnFailure = 1 // abandon the remaining occurrences
+	OnFailure_ON_FAILURE_CONTINUE OnFailure = 0
+	OnFailure_ON_FAILURE_STOP     OnFailure = 1
 )
 
 // Enum value maps for OnFailure.
@@ -130,9 +122,6 @@ func (OnFailure) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{1}
 }
 
-// ResultAckCode explains why the server accepted or rejected a result
-// result. ACCEPTED/REJECTED mirror the accepted field; the code
-// exists for the rejection message the agent surfaces to its caller.
 type ResultAckCode int32
 
 const (
@@ -249,17 +238,11 @@ func (OSQueryOp) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{3}
 }
 
-// LogSource selects which system log source the agent queries.
-// JOURNALD is the default and is what current agents implement;
-// SYSLOG slots in for openrc/syslog-ng/rsyslog systems (Alpine, Void,
-// legacy Debian/RHEL). Agents must report a clear "source not
-// supported on this device" error when asked for a source they can't
-// serve.
 type LogSource int32
 
 const (
-	LogSource_LOG_SOURCE_JOURNALD LogSource = 0 // default — journalctl
-	LogSource_LOG_SOURCE_SYSLOG   LogSource = 1 // syslog files in /var/log (rsyslog, syslog-ng, busybox syslog)
+	LogSource_LOG_SOURCE_JOURNALD LogSource = 0
+	LogSource_LOG_SOURCE_SYSLOG   LogSource = 1
 )
 
 // Enum value maps for LogSource.
@@ -301,18 +284,13 @@ func (LogSource) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{4}
 }
 
-// Terminal session lifecycle states reported by the agent.
 type TerminalSessionState int32
 
 const (
 	TerminalSessionState_TERMINAL_SESSION_STATE_UNSPECIFIED TerminalSessionState = 0
-	// PTY allocated and the shell is running.
-	TerminalSessionState_TERMINAL_SESSION_STATE_STARTED TerminalSessionState = 1
-	// Shell exited cleanly; exit_code is set.
-	TerminalSessionState_TERMINAL_SESSION_STATE_EXITED TerminalSessionState = 2
-	// Session ended with an error (auth, missing TTY user, PTY alloc, etc.);
-	// error is populated.
-	TerminalSessionState_TERMINAL_SESSION_STATE_ERROR TerminalSessionState = 3
+	TerminalSessionState_TERMINAL_SESSION_STATE_STARTED     TerminalSessionState = 1
+	TerminalSessionState_TERMINAL_SESSION_STATE_EXITED      TerminalSessionState = 2
+	TerminalSessionState_TERMINAL_SESSION_STATE_ERROR       TerminalSessionState = 3
 )
 
 // Enum value maps for TerminalSessionState.
@@ -609,12 +587,10 @@ type AgentMessage_SyncRequest struct {
 }
 
 type AgentMessage_SyncDeviceResult struct {
-	// Result of a control-originated live sync command.
 	SyncDeviceResult *SyncDeviceResult `protobuf:"bytes,24,opt,name=sync_device_result,json=syncDeviceResult,proto3,oneof"`
 }
 
 type AgentMessage_RebootDeviceResult struct {
-	// Result of a control-originated live reboot command.
 	RebootDeviceResult *RebootDeviceResult `protobuf:"bytes,25,opt,name=reboot_device_result,json=rebootDeviceResult,proto3,oneof"`
 }
 
@@ -639,7 +615,6 @@ type AgentMessage_SecurityAlert struct {
 }
 
 type AgentMessage_GetLuksKey struct {
-	// LUKS key management (via stream, not separate RPCs)
 	GetLuksKey *GetLuksKeyRequest `protobuf:"bytes,50,opt,name=get_luks_key,json=getLuksKey,proto3,oneof"`
 }
 
@@ -652,7 +627,6 @@ type AgentMessage_RevokeLuksDeviceKeyResult struct {
 }
 
 type AgentMessage_StoreLpsPasswords struct {
-	// LPS password rotations, batched per execution.
 	StoreLpsPasswords *StoreLpsPasswordsRequest `protobuf:"bytes,53,opt,name=store_lps_passwords,json=storeLpsPasswords,proto3,oneof"`
 }
 
@@ -661,12 +635,10 @@ type AgentMessage_ValidateLuksToken struct {
 }
 
 type AgentMessage_LogQueryResult struct {
-	// Log query result (journalctl output)
 	LogQueryResult *LogQueryResult `protobuf:"bytes,60,opt,name=log_query_result,json=logQueryResult,proto3,oneof"`
 }
 
 type AgentMessage_TerminalOutput struct {
-	// Remote terminal (PTY) session messages
 	TerminalOutput *TerminalOutput `protobuf:"bytes,70,opt,name=terminal_output,json=terminalOutput,proto3,oneof"`
 }
 
@@ -854,13 +826,11 @@ func (x *Heartbeat) GetDiskPercent() float32 {
 	return 0
 }
 
-// Security alert sent from agent to server for audit logging
 type SecurityAlert struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Type    SecurityAlertType      `protobuf:"varint,1,opt,name=type,proto3,enum=cadestro.v1.SecurityAlertType" json:"type,omitempty"`
-	Message string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	// Additional context as key-value pairs
-	Details       map[string]string `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          SecurityAlertType      `protobuf:"varint,1,opt,name=type,proto3,enum=cadestro.v1.SecurityAlertType" json:"type,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Details       map[string]string      `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1155,7 +1125,6 @@ type isServerMessage_Payload interface {
 }
 
 type ServerMessage_SyncDevice struct {
-	// Live operations have no policy or durable work semantics.
 	SyncDevice *SyncDeviceCommand `protobuf:"bytes,11,opt,name=sync_device,json=syncDevice,proto3,oneof"`
 }
 
@@ -1184,7 +1153,6 @@ type ServerMessage_Error struct {
 }
 
 type ServerMessage_GetLuksKey struct {
-	// LUKS key management responses
 	GetLuksKey *GetLuksKeyResponse `protobuf:"bytes,50,opt,name=get_luks_key,json=getLuksKey,proto3,oneof"`
 }
 
@@ -1205,17 +1173,14 @@ type ServerMessage_ValidateLuksToken struct {
 }
 
 type ServerMessage_ResultAck struct {
-	// Correlated application acknowledgement for result ingestion.
 	ResultAck *ResultAck `protobuf:"bytes,24,opt,name=result_ack,json=resultAck,proto3,oneof"`
 }
 
 type ServerMessage_LogQuery struct {
-	// Log query dispatch (journalctl)
 	LogQuery *LogQuery `protobuf:"bytes,60,opt,name=log_query,json=logQuery,proto3,oneof"`
 }
 
 type ServerMessage_TerminalStart struct {
-	// Remote terminal (PTY) session control
 	TerminalStart *TerminalStart `protobuf:"bytes,70,opt,name=terminal_start,json=terminalStart,proto3,oneof"`
 }
 
@@ -1431,12 +1396,9 @@ type Welcome struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	ServerVersion     string                 `protobuf:"bytes,1,opt,name=server_version,json=serverVersion,proto3" json:"server_version,omitempty"`
 	HeartbeatInterval *durationpb.Duration   `protobuf:"bytes,2,opt,name=heartbeat_interval,json=heartbeatInterval,proto3" json:"heartbeat_interval,omitempty"`
-	// Base URL for browser-based device login (configurable, defaults to the
-	// bundled Cadestro web UI).
-	// Used by PAM module to open the OIDC login page for display manager sessions.
-	DeviceLoginUrl string `protobuf:"bytes,3,opt,name=device_login_url,json=deviceLoginUrl,proto3" json:"device_login_url,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	DeviceLoginUrl    string                 `protobuf:"bytes,3,opt,name=device_login_url,json=deviceLoginUrl,proto3" json:"device_login_url,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Welcome) Reset() {
@@ -1490,15 +1452,6 @@ func (x *Welcome) GetDeviceLoginUrl() string {
 	return ""
 }
 
-// ManifestProvenance is the bounded, structured record of where a manifest was
-// authored from: at most one Definition, one ActionSet and one Action, in that
-// order. It is a path, never a tree — the agent does not receive a recursive
-// composition and does not resolve one.
-//
-// Which levels are populated follows the assignment that produced the
-// manifest: an assignment-pulled Definition sets definition_id on one ordered
-// runbook, an ActionSet assignment sets action_set_id alone, and a singleton
-// Action assignment sets action_id alone.
 type ManifestProvenance struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DefinitionId  *DefinitionId          `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
@@ -1559,22 +1512,11 @@ func (x *ManifestProvenance) GetActionId() *ActionId {
 	return nil
 }
 
-// ManifestOccurrence is one authored position in a manifest's ordered list.
-//
-// Occurrence identity is NOT run identity: occurrence_id names a position
-// the author created, run_id names one execution of the whole manifest
-// to a device. Duplicate authored occurrences — the same action reached twice
-// through different sets composing one definition — are preserved and executed
-// at each position; they are not collapsed, and the distinct occurrence_ids
-// are what keeps their results apart.
 type ManifestOccurrence struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	OccurrenceId *OccurrenceId          `protobuf:"bytes,1,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
-	Action       *Action                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
-	// What the manifest does if this occurrence fails. Control resolves the
-	// set's declared policy onto each position, so the agent reads this value
-	// and needs no fallback.
-	OnFailure     OnFailure `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OccurrenceId  *OccurrenceId          `protobuf:"bytes,1,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	Action        *Action                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	OnFailure     OnFailure              `protobuf:"varint,3,opt,name=on_failure,json=onFailure,proto3,enum=cadestro.v1.OnFailure" json:"on_failure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1630,29 +1572,15 @@ func (x *ManifestOccurrence) GetOnFailure() OnFailure {
 	return OnFailure_ON_FAILURE_CONTINUE
 }
 
-// Manifest is the unit of assignment the agent executes: a flat, ordered list
-// of action occurrences under one schedule and one failure policy.
-//
-// Assigning an Action creates a singleton manifest; assigning an ActionSet
-// creates one manifest; assigning a Definition creates one globally ordered
-// runbook. Assignment of a Definition uses the same runbook representation.
 type Manifest struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	ManifestId *ManifestId            `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
-	Provenance *ManifestProvenance    `protobuf:"bytes,2,opt,name=provenance,proto3" json:"provenance,omitempty"`
-	// The schedule that fires this manifest: every occurrence runs in declared
-	// order when it does. It is the only schedule the agent executes on — the
-	// per-Action schedule field is authoring data, not an execution trigger.
-	// run_on_assign and skip_if_unchanged keep their existing meaning.
-	Schedule *ActionSchedule `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	// The set-level failure policy, as authored. Each occurrence carries the
-	// resolved value it executes under; this records what the set declared, so
-	// the agent's logs and results can name the policy rather than infer it.
-	DefaultOnFailure OnFailure `protobuf:"varint,4,opt,name=default_on_failure,json=defaultOnFailure,proto3,enum=cadestro.v1.OnFailure" json:"default_on_failure,omitempty"`
-	// Execution order is list order.
-	Occurrences   []*ManifestOccurrence `protobuf:"bytes,5,rep,name=occurrences,proto3" json:"occurrences,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ManifestId       *ManifestId            `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
+	Provenance       *ManifestProvenance    `protobuf:"bytes,2,opt,name=provenance,proto3" json:"provenance,omitempty"`
+	Schedule         *ActionSchedule        `protobuf:"bytes,3,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	DefaultOnFailure OnFailure              `protobuf:"varint,4,opt,name=default_on_failure,json=defaultOnFailure,proto3,enum=cadestro.v1.OnFailure" json:"default_on_failure,omitempty"`
+	Occurrences      []*ManifestOccurrence  `protobuf:"bytes,5,rep,name=occurrences,proto3" json:"occurrences,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Manifest) Reset() {
@@ -1720,12 +1648,6 @@ func (x *Manifest) GetOccurrences() []*ManifestOccurrence {
 	return nil
 }
 
-// Agent -> control: the outcome of a complete manifest.
-//
-// Results exist per action (ActionResult, carrying the same run_id plus
-// its occurrence_id) and once for the manifest as a whole. status is the
-// aggregate: SUCCESS when every executed occurrence succeeded, FAILED when any
-// did, and INDETERMINATE when a crash left an occurrence's effect unknown.
 type ManifestResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RunId         *RunId                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
@@ -1915,14 +1837,13 @@ func (x *Error) GetMessage() string {
 }
 
 type OSQuery struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	QueryId *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
-	Table   string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
-	Columns []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
-	Where   []*OSQueryCondition    `protobuf:"bytes,4,rep,name=where,proto3" json:"where,omitempty"`
-	Limit   int32                  `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
-	// Raw SQL query — when set, table/columns/where/limit are ignored.
-	RawSql        string `protobuf:"bytes,6,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Table         string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
+	Columns       []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
+	Where         []*OSQueryCondition    `protobuf:"bytes,4,rep,name=where,proto3" json:"where,omitempty"`
+	Limit         int32                  `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	RawSql        string                 `protobuf:"bytes,6,opt,name=raw_sql,json=rawSql,proto3" json:"raw_sql,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2267,11 +2188,6 @@ func (x *InventoryTable) GetRows() []*OSQueryRow {
 	return nil
 }
 
-// Server -> Agent: request fresh inventory collection. query_id correlates the
-// DeviceInventory the agent sends back.
-//
-// Agent-initiated periodic inventory (on connect + every 24h) does NOT travel
-// this message — it is the agent's own decision, not a command.
 type RequestInventory struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
@@ -2316,8 +2232,6 @@ func (x *RequestInventory) GetQueryId() *QueryId {
 	return nil
 }
 
-// Agent requests the current managed passphrase for a LUKS action.
-// device_id is omitted — control derives the device from the mTLS certificate.
 type GetLuksKeyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
@@ -2363,16 +2277,8 @@ func (x *GetLuksKeyRequest) GetActionId() *ActionId {
 }
 
 type GetLuksKeyResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The managed passphrase, delivered only on the authenticated mTLS stream.
-	//
-	// debug_redact is the machine-readable secret classification. It redacts
-	// nothing at runtime — no encoder in protobuf-go consults the option — but
-	// structural sink guards read it off the descriptor to derive the set of
-	// fields whose plaintext may only be touched at an enumerated sink, so a
-	// slog or fmt argument fails the build instead of shipping a credential into
-	// a log.
-	Passphrase    []byte `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Passphrase    []byte                 `protobuf:"bytes,1,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2414,28 +2320,12 @@ func (x *GetLuksKeyResponse) GetPassphrase() []byte {
 	return nil
 }
 
-// Agent stores a new managed passphrase on the server.
-// The server must confirm receipt before the agent removes the old key from LUKS.
 type StoreLuksKeyRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	// Auto-detected device path (e.g., "/dev/sda2"). Bounded at PATH_MAX: the
-	// value is only ever a local block-device path, and without a ceiling an
-	// authenticated agent can send a transport-sized string that is validated,
-	// encrypted and persisted.
-	DevicePath string `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
-	// The managed passphrase, delivered only on the authenticated mTLS stream;
-	// control encrypts it under its resource-context AAD before persistence.
-	// debug_redact is the secret classification (see
-	// GetLuksKeyResponse.passphrase).
-	Passphrase []byte `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
-	// Why this rotation happened. INITIAL on the first time the action
-	// runs on a device (no previous passphrase to retain); SCHEDULED for
-	// any subsequent policy-driven rotation. LUKS does not use
-	// AUTH_GRACE — that reason belongs to LPS, where a user
-	// authenticated during the grace period. Validated against the enum
-	// at the boundary.
-	RotationReason RotationReason `protobuf:"varint,4,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ActionId       *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	DevicePath     string                 `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
+	Passphrase     []byte                 `protobuf:"bytes,3,opt,name=passphrase,proto3" json:"passphrase,omitempty"`
+	RotationReason RotationReason         `protobuf:"varint,4,opt,name=rotation_reason,json=rotationReason,proto3,enum=cadestro.v1.RotationReason" json:"rotation_reason,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2542,34 +2432,12 @@ func (x *StoreLuksKeyResponse) GetSuccess() bool {
 	return false
 }
 
-// One password rotation the agent performed during an LPS execution.
 type LpsPasswordRotation struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Local Linux username whose password was rotated.
-	Username string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	// The rotated password, delivered only on the authenticated mTLS stream and
-	// encrypted with the owning device/action context before persistence.
-	// debug_redact is the secret classification (see
-	// GetLuksKeyResponse.passphrase).
-	Password []byte `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	// RFC 3339 timestamp the agent observed the rotation. Control keeps the
-	// agent's clock here rather than re-stamping at receipt, so the timeline
-	// reflects the device's reality.
-	//
-	// Deliberately NOT format-validated, which is the one exception to the
-	// type/format/length/range rule on this message. By the time this arrives the
-	// agent has ALREADY changed the passwords locally and cannot undo it, so
-	// rejecting the batch over a malformed timestamp destroys the only copy of a
-	// credential the operator now needs. The handler normalises what it can and
-	// keeps the rotation; length is still bounded.
-	// (TestAgentOps_StoreLpsPasswords_PersistsWholeBatch pins this.)
-	RotatedAt string `protobuf:"bytes,3,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty"`
-	// Why this rotation happened. INITIAL the first time the LPS action ran for
-	// the user; SCHEDULED for a policy-driven rotation; AUTH_GRACE when a user
-	// authenticates during the post-rotation grace window — an LPS-only path that
-	// signals "rotate now to limit the leaked-password window", never emitted from
-	// LUKS. Stored on the event as the lowercase string form.
-	Reason        RotationReason `protobuf:"varint,4,opt,name=reason,proto3,enum=cadestro.v1.RotationReason" json:"reason,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Password      []byte                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	RotatedAt     string                 `protobuf:"bytes,3,opt,name=rotated_at,json=rotatedAt,proto3" json:"rotated_at,omitempty"`
+	Reason        RotationReason         `protobuf:"varint,4,opt,name=reason,proto3,enum=cadestro.v1.RotationReason" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2632,14 +2500,9 @@ func (x *LpsPasswordRotation) GetReason() RotationReason {
 	return RotationReason_ROTATION_REASON_UNSPECIFIED
 }
 
-// Agent reports the LPS rotations from one execution. Batched per action: an LPS
-// run rotates every managed local account on the device.
 type StoreLpsPasswordsRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	// One entry per managed local account on the device. Capped: each entry costs
-	// a validation pass, an encryption, and a row, and no real device manages
-	// anything near this many accounts.
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	Rotations     []*LpsPasswordRotation `protobuf:"bytes,2,rep,name=rotations,proto3" json:"rotations,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2733,8 +2596,6 @@ func (x *StoreLpsPasswordsResponse) GetSuccess() bool {
 	return false
 }
 
-// Server instructs agent to revoke the device-bound key in LUKS slot 7.
-// Requested as a live operation via the stream.
 type RevokeLuksDeviceKey struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
@@ -2779,7 +2640,6 @@ func (x *RevokeLuksDeviceKey) GetActionId() *ActionId {
 	return nil
 }
 
-// Agent reports the result of revoking the device-bound key.
 type RevokeLuksDeviceKeyResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
@@ -2841,10 +2701,8 @@ func (x *RevokeLuksDeviceKeyResult) GetError() string {
 }
 
 type ValidateLuksTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The one-time token the operator was shown, as issued by
-	// ControlService.CreateLuksToken.
-	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2887,14 +2745,11 @@ func (x *ValidateLuksTokenRequest) GetToken() string {
 }
 
 type ValidateLuksTokenResponse struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	// Auto-detected device path from server's stored key data
-	DevicePath string `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
-	// Minimum passphrase length (>= 16)
-	MinLength int32 `protobuf:"varint,3,opt,name=min_length,json=minLength,proto3" json:"min_length,omitempty"`
-	// Complexity requirement for user-defined passphrases
-	Complexity    LpsPasswordComplexity `protobuf:"varint,4,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	DevicePath    string                 `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
+	MinLength     int32                  `protobuf:"varint,3,opt,name=min_length,json=minLength,proto3" json:"min_length,omitempty"`
+	Complexity    LpsPasswordComplexity  `protobuf:"varint,4,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2993,24 +2848,13 @@ func (*SyncRequest) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{34}
 }
 
-// SyncState carries the device policy over the existing authenticated stream.
 type SyncState struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Effective sync interval in minutes for this device. The agent uses it for
-	// the next sync; 0 means the default (30 minutes).
-	SyncIntervalMinutes int32 `protobuf:"varint,1,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
-	// Resolved maintenance window. Server-computed union across every
-	// group the device belongs to (its own device groups plus any user
-	// groups reaching it through an assignment). Empty schedule = no
-	// gating; the agent runs assigned policy any time. Empty
-	// is also the response when no groups carry a window. The agent
-	// evaluates this against time.Now().Local() at run time.
-	MaintenanceWindow *MaintenanceWindow `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
-	// Current assignment-derived desired state. This is a
-	// replaceable snapshot that the agent reconciles locally.
-	DesiredPolicy *DesiredPolicy `protobuf:"bytes,3,opt,name=desired_policy,json=desiredPolicy,proto3" json:"desired_policy,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	SyncIntervalMinutes int32                  `protobuf:"varint,1,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
+	MaintenanceWindow   *MaintenanceWindow     `protobuf:"bytes,2,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
+	DesiredPolicy       *DesiredPolicy         `protobuf:"bytes,3,opt,name=desired_policy,json=desiredPolicy,proto3" json:"desired_policy,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *SyncState) Reset() {
@@ -3065,11 +2909,9 @@ func (x *SyncState) GetDesiredPolicy() *DesiredPolicy {
 }
 
 type DesiredPolicy struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Stable revision of the resolved device policy.
-	Revision *PolicyRevisionId `protobuf:"bytes,1,opt,name=revision,proto3" json:"revision,omitempty"`
-	// One globally ordered runbook for the device. Empty containers are omitted.
-	Manifests     []*Manifest `protobuf:"bytes,2,rep,name=manifests,proto3" json:"manifests,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Revision      *PolicyRevisionId      `protobuf:"bytes,1,opt,name=revision,proto3" json:"revision,omitempty"`
+	Manifests     []*Manifest            `protobuf:"bytes,2,rep,name=manifests,proto3" json:"manifests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3118,20 +2960,17 @@ func (x *DesiredPolicy) GetManifests() []*Manifest {
 	return nil
 }
 
-// Server -> Agent: request system log output
 type LogQuery struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	QueryId  *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
-	Lines    int32                  `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty"`
-	Unit     string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
-	Since    string                 `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty"`
-	Until    string                 `protobuf:"bytes,5,opt,name=until,proto3" json:"until,omitempty"`
-	Priority string                 `protobuf:"bytes,6,opt,name=priority,proto3" json:"priority,omitempty"`
-	Grep     string                 `protobuf:"bytes,7,opt,name=grep,proto3" json:"grep,omitempty"`
-	Kernel   bool                   `protobuf:"varint,8,opt,name=kernel,proto3" json:"kernel,omitempty"`
-	// Log source. Defaults to LOG_SOURCE_JOURNALD. Agents without
-	// support for a requested source return an error.
-	Source        LogSource `protobuf:"varint,9,opt,name=source,proto3,enum=cadestro.v1.LogSource" json:"source,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Lines         int32                  `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty"`
+	Unit          string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
+	Since         string                 `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty"`
+	Until         string                 `protobuf:"bytes,5,opt,name=until,proto3" json:"until,omitempty"`
+	Priority      string                 `protobuf:"bytes,6,opt,name=priority,proto3" json:"priority,omitempty"`
+	Grep          string                 `protobuf:"bytes,7,opt,name=grep,proto3" json:"grep,omitempty"`
+	Kernel        bool                   `protobuf:"varint,8,opt,name=kernel,proto3" json:"kernel,omitempty"`
+	Source        LogSource              `protobuf:"varint,9,opt,name=source,proto3,enum=cadestro.v1.LogSource" json:"source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3229,14 +3068,12 @@ func (x *LogQuery) GetSource() LogSource {
 	return LogSource_LOG_SOURCE_JOURNALD
 }
 
-// Agent -> Server: journalctl output result
 type LogQueryResult struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	QueryId *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
-	Success bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
-	Error   string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	// Raw journalctl output (plain text)
-	Logs          string `protobuf:"bytes,4,opt,name=logs,proto3" json:"logs,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	Logs          string                 `protobuf:"bytes,4,opt,name=logs,proto3" json:"logs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3299,18 +3136,12 @@ func (x *LogQueryResult) GetLogs() string {
 	return ""
 }
 
-// Server -> Agent: open a PTY session as the given TTY user.
-// The agent must verify that tty_user exists locally and is not disabled
-// before allocating the PTY. The shell is activated for the duration of
-// the session and reverted to nologin on disconnect.
 type TerminalStart struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	SessionId *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	// The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
-	// never uses the original Linux username for the shell.
-	TtyUser       string `protobuf:"bytes,2,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
-	Cols          uint32 `protobuf:"varint,3,opt,name=cols,proto3" json:"cols,omitempty"`
-	Rows          uint32 `protobuf:"varint,4,opt,name=rows,proto3" json:"rows,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	TtyUser       string                 `protobuf:"bytes,2,opt,name=tty_user,json=ttyUser,proto3" json:"tty_user,omitempty"`
+	Cols          uint32                 `protobuf:"varint,3,opt,name=cols,proto3" json:"cols,omitempty"`
+	Rows          uint32                 `protobuf:"varint,4,opt,name=rows,proto3" json:"rows,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3373,7 +3204,6 @@ func (x *TerminalStart) GetRows() uint32 {
 	return 0
 }
 
-// Server -> Agent: stdin data for an active session.
 type TerminalInput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -3426,8 +3256,6 @@ func (x *TerminalInput) GetData() []byte {
 	return nil
 }
 
-// Server -> Agent: window resize.
-// The agent forwards the new size to the PTY via TIOCSWINSZ.
 type TerminalResize struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -3488,11 +3316,6 @@ func (x *TerminalResize) GetRows() uint32 {
 	return 0
 }
 
-// Server -> Agent: terminate an active session.
-// The agent SIGTERMs the shell process group and reverts the user's
-// shell to nologin. The optional reason comes from
-// ControlService.TerminateTerminalSession so the agent can surface it in
-// logs and the audit trail records why the session was killed.
 type TerminalStop struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -3545,7 +3368,6 @@ func (x *TerminalStop) GetReason() string {
 	return ""
 }
 
-// Agent -> Server: stdout/stderr data from the PTY.
 type TerminalOutput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -3598,19 +3420,12 @@ func (x *TerminalOutput) GetData() []byte {
 	return nil
 }
 
-// Agent -> Server: session state transition.
-// STARTED is sent immediately after the PTY is allocated and the shell
-// has begun. EXITED is sent when the shell process exits cleanly, with
-// exit_code populated. ERROR is sent for any failure that ends the
-// session early, with error populated.
 type TerminalStateChange struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	SessionId *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	State     TerminalSessionState   `protobuf:"varint,2,opt,name=state,proto3,enum=cadestro.v1.TerminalSessionState" json:"state,omitempty"`
-	// Set when state is EXITED.
-	ExitCode int32 `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
-	// Set when state is ERROR.
-	Error         string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     *SessionId             `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	State         TerminalSessionState   `protobuf:"varint,2,opt,name=state,proto3,enum=cadestro.v1.TerminalSessionState" json:"state,omitempty"`
+	ExitCode      int32                  `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -7,43 +7,20 @@ import "cadestro/v1/common.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
-// ============================================================================
-// Device Enrollment Service (Agent Local Socket)
-//
-// This service runs on the agent's local unix socket (/run/cadestro/enroll.sock)
-// and provides enrollment functionality for registering the agent with a
-// Cadestro control server. No sudo required — the registration token is the
-// authorization.
-// ============================================================================
-
 service DeviceAuthService {
-  // Enroll the agent with a Cadestro server (called by CLI, no sudo required).
+
   rpc Enroll(EnrollRequest) returns (EnrollResponse);
 
-  // Check whether the agent is currently enrolled.
   rpc GetEnrollmentStatus(GetEnrollmentStatusRequest) returns (GetEnrollmentStatusResponse);
 }
-
-// ============================================================================
-// Enrollment (Socket-based, no sudo required)
-// ============================================================================
 
 message EnrollRequest {
   string server_url = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true
-  ]; // Control server URL (https only — enforced agent-side)
-  string token = 2 [(buf.validate.field).required = true]; // Registration token from web UI
-  // Required out-of-band CA fingerprint pin: the 64-char hex SHA-256 of
-  // the control CA certificate DER. The agent verifies the CA
-  // returned by registration matches this pin BEFORE trusting it,
-  // defending against a first-enrollment trust-anchor swap. Delivered by
-  // the operator alongside the token (e.g. cadestro://…?token=…&pin=…).
-  // Missing or mismatched pins fail closed; enrollment has no
-  // trust-on-first-use path. Case-insensitive: the enroll CLI strips colons
-  // (openssl emits uppercase, colon-separated) and the agent compares
-  // with EqualFold, so the `hexadecimal` tag is intentionally permissive
-  // on case.
+  ];
+  string token = 2 [(buf.validate.field).required = true];
+
   string ca_fingerprint_pin = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.len = 64,
@@ -52,25 +29,18 @@ message EnrollRequest {
 }
 
 message EnrollResponse {
-  // The other two fields below are conditioned on this — success=true
-  // means device_id is populated and error is empty; success=false
-  // means error is populated and device_id is empty. The bool itself
-  // is unconditional but we tag it explicit-required so the
-  // proto-validate coverage tool stops counting it as a gap. Bools
-  // always have a default value, so
-  // "required" here means "must be present in the wire payload" —
-  // protovalidate enforces no extra runtime check beyond that.
+
   bool success = 1 [(buf.validate.field).required = true];
-  DeviceId device_id = 2; // Assigned device ID on success
+  DeviceId device_id = 2;
   string error = 3 [
     (buf.validate.field).string.max_len = 4096,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ]; // Error message on failure
+  ];
 }
 
 message GetEnrollmentStatusRequest {}
 
 message GetEnrollmentStatusResponse {
   bool enrolled = 1 [(buf.validate.field).required = true];
-  DeviceId device_id = 2; // Empty if not enrolled
+  DeviceId device_id = 2;
 }

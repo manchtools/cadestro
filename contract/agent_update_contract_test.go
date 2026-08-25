@@ -7,7 +7,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// TestAgentUpdateArchRequiresSignedChecksumManifest pins the signed-only public contract.
 func TestAgentUpdateArchRequiresSignedChecksumManifest(t *testing.T) {
 	t.Parallel()
 	descriptor := (&cadestrov1.AgentUpdateArch{}).ProtoReflect().Descriptor()
