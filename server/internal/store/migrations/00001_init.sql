@@ -1,4 +1,3 @@
--- docref: anchor sqlite-baseline
 
 
 
@@ -781,7 +780,6 @@ FROM audit_operations o
 WHERE o.stream = 'control'
   AND NOT EXISTS (SELECT 1 FROM audit_effects e WHERE e.operation_id = o.operation_id);
 
--- docref: begin audit-append-only
 -- +goose StatementBegin
 CREATE TRIGGER audit_operations_block_update BEFORE UPDATE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
@@ -802,7 +800,6 @@ CREATE TRIGGER audit_effects_block_delete BEFORE DELETE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
 END;
 -- +goose StatementEnd
--- docref: end audit-append-only
 
 CREATE TABLE jobs (
     job_id        text PRIMARY KEY CHECK (
@@ -839,7 +836,6 @@ CREATE INDEX jobs_kind_idx ON jobs(kind, due_at);
 CREATE UNIQUE INDEX jobs_dedupe_live_key ON jobs(dedupe_key)
     WHERE dedupe_key IS NOT NULL AND state IN ('PENDING', 'CLAIMED');
 
--- docref: anchor sqlite-search
 
 
 CREATE TABLE search_documents (

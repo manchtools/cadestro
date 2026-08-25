@@ -232,7 +232,7 @@ and rotation revokes the old token identifier **before** minting the
 replacement.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/ts/auth.ts#saveAuth:2e47d5b2 -->
+<!-- docref: begin src=contract/ts/auth.ts#saveAuth:37a0b475 -->
 Session tokens are held in browser Web Storage — `localStorage` when the user
 asked to stay signed in, `sessionStorage` otherwise. They are **not** in
 `HttpOnly` cookies, and this page will not pretend otherwise: a script running
@@ -360,7 +360,7 @@ returned**. If the evidence cannot be written, the secret is not revealed.
 
 ### Append-only
 
-<!-- docref: begin src=server/internal/store/migrations/00001_init.sql#@audit-append-only:e521b67d -->
+<!-- docref: begin src=server/internal/store/schema_test.go#TestSchema_AuditTablesRejectUpdateAndDelete:34822aae -->
 Append-only is enforced by database triggers, not by application discipline —
 an `UPDATE` or `DELETE` on either audit table is refused outright. The event
 rows remain queryable in the database for the lifetime of the deployment.

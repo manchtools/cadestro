@@ -72,7 +72,7 @@ asked of a backend that cannot express it (see the platform table below).
 
 ### Repository
 
-<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:05b03cbf,contract/proto/cadestro/v1/actions.proto#RepositoryParams:bc5082f6 -->
+<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:5eb4701a,contract/proto/cadestro/v1/actions.proto#RepositoryParams:bc5082f6 -->
 Adds or removes an external package repository, after a network-free validation
 pre-flight.
 
