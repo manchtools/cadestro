@@ -17,7 +17,6 @@
 	import CreatePlate from '$lib/components/create/create-plate.svelte';
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
 	import QueryBuilder, { type QueryEditorState } from '$lib/components/query-builder.svelte';
-	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Switch } from '$lib/components/ui/switch';
@@ -68,10 +67,14 @@
 	let parked = $state(false);
 	// Component state, deliberately outside the buffer: the chip editor re-derives
 	// it from the query string when it mounts again.
-	let queryState = $state<QueryEditorState | null>(null);
-	const queryUnusable = $derived(
-		draft.isDynamic && queryState !== null && (!queryState.complete || queryState.valid === false)
-	);
+	let queryState = $state<QueryEditorState>({
+		text: '',
+		valid: false,
+		count: null,
+		error: m.query_incomplete(),
+		validating: false
+	});
+	const queryUnusable = $derived(draft.isDynamic && queryState.valid !== true);
 
 	const errors = $derived.by(() => {
 		const out: Record<string, string> = {};
@@ -175,16 +178,9 @@
 					onstate={(s) => (queryState = s)}
 				/>
 				<FieldError error={errors.dynamicQuery} />
-				<!-- One warn strip, same words as the rule tab's futurebar: a standing
-				     rule always keeps matching, and an empty one matches everything. -->
 				<p class="flex items-start gap-2 rounded-md bg-warn-soft px-2.5 py-2 text-xs text-warn">
 					<TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-					<span>
-						{m.query_futurebar()}
-						{#if !draft.dynamicQuery.trim()}
-							<span class="font-semibold">{m.device_groups_empty_query_warning()}</span>
-						{/if}
-					</span>
+					<span>{m.query_futurebar()}</span>
 				</p>
 			</div>
 		{/if}

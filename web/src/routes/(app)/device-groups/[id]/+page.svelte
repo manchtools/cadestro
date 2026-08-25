@@ -106,10 +106,9 @@
 	let draftQuery = $state('');
 	let ruleState = $state<QueryEditorState>({
 		text: '',
-		complete: true,
-		valid: null,
+		valid: false,
 		count: null,
-		error: '',
+		error: m.query_incomplete(),
 		validating: false
 	});
 	let ruleConfirmOpen = $state(false);
@@ -121,7 +120,7 @@
 	 *  string yet — an incomplete condition silently drops out of the compile, so
 	 *  gating on dirtiness alone would let Save look armed over a rule the operator
 	 *  is still mid-way through writing. */
-	const ruleValid = $derived(ruleState.complete && ruleState.valid !== false);
+	const ruleValid = $derived(ruleState.valid === true);
 
 	/** Labels shown inline on a preview row before it runs out of width. */
 	const PREVIEW_LABEL_CAP = 3;

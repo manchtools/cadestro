@@ -99,10 +99,9 @@
 	let groupName = $state('');
 	let ruleState = $state<QueryEditorState>({
 		text: '',
-		complete: false,
-		valid: null,
+		valid: false,
 		count: null,
-		error: '',
+		error: m.query_incomplete(),
 		validating: false
 	});
 	/** The standing-rule acknowledgement. While it is open the pill steps aside,
@@ -135,19 +134,9 @@
 			: rollup;
 	});
 
-	/** Countable = the server has actually answered for THIS query. A rule that
-	 *  has not been counted cannot claim an "Assign to N".
-	 *
-	 *  The EMPTY rule is excluded on purpose: the builder counts it now (it is
-	 *  the legal match-all rule, and group pages show its fleet-wide count), but
-	 *  an assignment against every device the org will ever enroll is not a
-	 *  target this page arms from an untouched builder — the blast-radius gate
-	 *  the empty-uncounted short-circuit used to provide, now stated. */
+	/** Countable means the server answered for this query. */
 	const ruleCountable = $derived(
-		ruleState.complete &&
-			ruleState.valid !== false &&
-			ruleState.count !== null &&
-			ruleState.text.trim().length > 0
+		ruleState.valid === true && ruleState.count !== null && ruleState.text.trim().length > 0
 	);
 	const ruleReady = $derived(ruleCountable && groupName.trim().length > 0 && setId !== null);
 	const reusableGroup = $derived(
@@ -166,13 +155,9 @@
 	 *  commit is stated in front of it rather than left to be guessed. */
 	const ruleCaption = $derived.by((): { text: string; tone: 'neutral' | 'warn' } => {
 		const query = ruleState.text;
-		if (!ruleState.complete) return { text: m.query_incomplete(), tone: 'warn' };
+		if (!query.trim()) return { text: m.query_incomplete(), tone: 'warn' };
 		if (ruleState.validating) return { text: `${m.query_counting()} · ${query}`, tone: 'neutral' };
-		if (ruleState.valid === false) return { text: `${ruleState.error} · ${query}`, tone: 'warn' };
-		// The empty rule is counted by the builder now, but on THIS page it stays
-		// a warned, un-armable state (see ruleCountable) — the caption keeps
-		// saying so instead of advertising a fleet-wide "Assign to N".
-		if (!query) return { text: m.query_future_scope_empty_query(), tone: 'warn' };
+		if (!ruleState.valid) return { text: `${ruleState.error} · ${query}`, tone: 'warn' };
 		if (ruleState.count === null) {
 			return { text: query, tone: 'neutral' };
 		}

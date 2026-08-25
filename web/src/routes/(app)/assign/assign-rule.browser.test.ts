@@ -40,7 +40,7 @@ const SET_PATCH = '01JR0A1E1R7S3T6V0W2X5Y4Z9B';
 const GROUP_ID = '01JR0B1K1X2Y3Z4A5B6C7D8E9F';
 
 /** What the chips compile to once the condition below is filled in. */
-const QUERY = 'device.hostname equals "web-prod-01"';
+const QUERY = 'device.hostname == "web-prod-01"';
 const GROUP_NAME = 'production-linux';
 const MATCH_COUNT = 47;
 
@@ -121,14 +121,11 @@ async function enterRuleMode() {
 	});
 }
 
-/** Fill the pane's single empty chip so the editor compiles QUERY. */
 async function buildRule() {
-	const chip = document.querySelector<HTMLElement>('[data-testid="query-chip"]');
-	expect(chip, 'the rule pane opens with one empty condition').toBeTruthy();
-	await chip!.click();
-	await browser.getByLabelText(m.qb_placeholder_property()).click();
-	await browser.getByRole('option', { name: m.qb_prop_hostname() }).click();
-	await browser.getByLabelText(m.qb_placeholder_value()).fill('web-prod-01');
+	const input = document.querySelector<HTMLTextAreaElement>('#query-editor-text');
+	expect(input).toBeTruthy();
+	input!.value = QUERY;
+	input!.dispatchEvent(new Event('input', { bubbles: true }));
 	await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith(QUERY), {
 		timeout: 3000
 	});
@@ -260,7 +257,7 @@ describe('assign by rule — nothing commits until all three are real', () => {
 		await enterRuleMode();
 
 		await vi.waitFor(() => expect(context()?.id).toBe('assign'), { timeout: 3000 });
-		expect(context()?.valid, 'an empty rule pane cannot commit').toBe(false);
+		expect(context()?.valid, 'an unvalidated rule pane cannot commit').toBe(false);
 		expect(commitContext()).toBe(false);
 
 		await buildRule();
@@ -314,9 +311,7 @@ describe('assign by rule — the future-scope acknowledgement', () => {
 		expect(nav.goto).not.toHaveBeenCalled();
 		// the draft survives the cancel
 		expect(context()?.valid).toBe(true);
-		expect(document.querySelector<HTMLElement>('[data-testid="query-chip"]')?.dataset.query).toBe(
-			QUERY
-		);
+		expect(document.querySelector<HTMLTextAreaElement>('#query-editor-text')?.value).toBe(QUERY);
 	});
 });
 
@@ -430,9 +425,7 @@ describe('assign by rule — the third exit', () => {
 		await vi.waitFor(() => expect(document.querySelector('[data-testid="assign-rule-stage"]')).toBeTruthy(), {
 			timeout: 3000
 		});
-		expect(document.querySelector<HTMLElement>('[data-testid="query-chip"]')?.dataset.query).toBe(
-			QUERY
-		);
+		expect(document.querySelector<HTMLTextAreaElement>('#query-editor-text')?.value).toBe(QUERY);
 		await expect.element(browser.getByTestId('assign-rule-name')).toHaveValue(GROUP_NAME);
 		await expect
 			.element(browser.getByRole('radio', { name: /Patch and reboot/ }))

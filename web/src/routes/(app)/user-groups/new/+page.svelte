@@ -16,11 +16,7 @@
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
 	import CreatePlate from '$lib/components/create/create-plate.svelte';
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
-	import QueryBuilder, {
-		type PropertyGroup,
-		type QueryEditorState
-	} from '$lib/components/query-builder.svelte';
-	import { Input } from '$lib/components/ui/input';
+	import QueryBuilder, { type QueryEditorState } from '$lib/components/query-builder.svelte';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
 	import { FieldError } from '$lib/components/ui/field-error';
@@ -72,32 +68,14 @@
 	// "Validate" round trip — the commit is simply refused while the draft rule is
 	// unusable. Component state, deliberately outside the buffer: the editor
 	// re-derives it from the query string when it mounts again.
-	let queryState = $state<QueryEditorState | null>(null);
-	const queryUnusable = $derived(
-		draft.isDynamic && queryState !== null && (!queryState.complete || queryState.valid === false)
-	);
-
-	const userPropertyGroups: PropertyGroup[] = [
-		{
-			label: m.qb_group_user_info(),
-			items: [
-				{ value: 'user.email', label: m.qb_prop_user_email() },
-				{ value: 'user.display_name', label: m.qb_prop_user_display_name() },
-				{ value: 'user.preferred_username', label: m.qb_prop_user_username() }
-			]
-		},
-		{
-			label: m.qb_group_user_status(),
-			items: [
-				{ value: 'user.disabled', label: m.qb_prop_user_disabled() },
-				{ value: 'user.locale', label: m.qb_prop_user_locale() }
-			]
-		}
-	];
-
-	const userPropertyExamples: Record<string, () => string> = {
-		'user.email': () => m.qb_hint_prop_user_email()
-	};
+	let queryState = $state<QueryEditorState>({
+		text: '',
+		valid: false,
+		count: null,
+		error: m.query_incomplete(),
+		validating: false
+	});
+	const queryUnusable = $derived(draft.isDynamic && queryState.valid !== true);
 
 	const createSchema = z.object({ name: z.string().min(1, m.validation_name_required()) });
 	const errors = $derived.by(() => {
@@ -194,21 +172,11 @@
 				<QueryBuilder
 					bind:query={draft.dynamicQuery}
 					kind="user"
-					propertyGroups={userPropertyGroups}
-					propertyExampleOverrides={userPropertyExamples}
-					advancedPlaceholder={m.user_groups_dynamic_query_placeholder()}
-					advancedHint={m.device_groups_query_operators()}
 					onstate={(s) => (queryState = s)}
 				/>
-				<!-- One warn strip, same words as the rule tab's futurebar. -->
 				<p class="flex items-start gap-2 rounded-md bg-warn-soft px-2.5 py-2 text-xs text-warn">
 					<TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-					<span>
-						{m.query_futurebar()}
-						{#if !draft.dynamicQuery.trim()}
-							<span class="font-semibold">{m.user_groups_empty_query_warning()}</span>
-						{/if}
-					</span>
+					<span>{m.query_futurebar()}</span>
 				</p>
 			</div>
 		{/if}

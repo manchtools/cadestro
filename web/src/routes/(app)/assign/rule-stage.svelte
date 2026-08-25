@@ -76,9 +76,6 @@
 				<TriangleAlert class="mt-0.5 h-3.5 w-3.5 shrink-0" />
 				<span>
 					{m.query_futurebar()}
-					{#if !state.text}
-						<span class="font-semibold">{m.device_groups_empty_query_warning()}</span>
-					{/if}
 				</span>
 			</div>
 		{/snippet}
@@ -91,11 +88,11 @@
 					<span>{m.query_preview_title()}</span>
 				</div>
 				<p class="pt-1.5 text-sm" data-testid="assign-rule-count">
-					{#if !state.complete}
+					{#if !state.text.trim()}
 						<span class="text-warn">{m.query_incomplete()}</span>
 					{:else if state.validating}
 						<span class="text-muted-foreground">{m.query_counting()}</span>
-					{:else if state.valid === false}
+					{:else if !state.valid}
 						<span class="text-crit">{state.error}</span>
 					{:else if state.count !== null}
 						<span class="font-semibold">{m.query_match_count_devices({ count: state.count })}</span>

@@ -95,6 +95,14 @@ beforeEach(() => {
 const field = (id: string) => document.querySelector<HTMLInputElement>(`#${id}`);
 const area = (id: string) => document.querySelector<HTMLTextAreaElement>(`#${id}`);
 
+async function queryInput() {
+	return await vi.waitFor(() => {
+		const input = area('query-editor-text');
+		expect(input).toBeTruthy();
+		return input!;
+	});
+}
+
 function type(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
 	input.value = value;
 	input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -123,7 +131,6 @@ describe('/device-groups/new — the commit is the pill\'s', () => {
 
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createDeviceGroup).toHaveBeenCalledTimes(1));
-		// A static group sends an EMPTY query, not the buffer's — the dialog's rule.
 		expect(api.createDeviceGroup.mock.calls[0]).toEqual([
 			'Berlin laptops',
 			'Floor 3',
@@ -145,32 +152,20 @@ describe('/device-groups/new — the commit is the pill\'s', () => {
 		expect(api.createDeviceGroup).not.toHaveBeenCalled();
 	});
 
-	// An empty query is a LEGAL rule: the server parses '' as the always-true
-	// tree and the page itself advertises "matches all devices". The seeded
-	// pristine chip must not make that state unsubmittable — deleting the last
-	// chip only re-seeds it, so builder mode had NO path to a match-all group.
-	it('allows an untouched builder to create a match-all group with an empty query', async () => {
+	it('accepts true as an explicit CEL query', async () => {
 		render(NewGroupPage);
 		await fillGroup('Every device', '');
 
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-		// Wait for the builder (and its state push) to land before judging the pill.
-		await vi.waitFor(
-			() => expect(document.querySelector('[data-testid="query-chip"]')).toBeTruthy(),
-			{ timeout: 3000 }
-		);
-
+		type(await queryInput(), 'true');
+		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith('true'), { timeout: 3000 });
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
-		// Submittable, but never silently: the match-all warning stays on screen.
-		expect(document.body.textContent).toContain(m.device_groups_empty_query_warning());
 
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createDeviceGroup).toHaveBeenCalledTimes(1));
-		expect(api.createDeviceGroup.mock.calls[0]).toEqual(['Every device', '', true, '']);
+		expect(api.createDeviceGroup.mock.calls[0]).toEqual(['Every device', '', true, 'true']);
 	});
 
-	// The operator edits against the LIVE count: the builder's own status line
-	// (the one visible copy on a create page) must say what the rule will match.
 	it('shows the live match count beside the builder while editing a rule', async () => {
 		api.validateDynamicQuery.mockResolvedValue({
 			valid: true,
@@ -181,17 +176,9 @@ describe('/device-groups/new — the commit is the pill\'s', () => {
 		await fillGroup('Berlin laptops', '');
 
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-		const chip = await vi.waitFor(() => {
-			const el = document.querySelector<HTMLElement>('[data-testid="query-chip"]');
-			expect(el).toBeTruthy();
-			return el!;
-		});
-		chip.click();
-		await browser.getByLabelText(m.qb_placeholder_property()).click();
-		await browser.getByRole('option', { name: m.qb_prop_hostname() }).click();
-		await browser.getByLabelText(m.qb_placeholder_value()).fill('web-prod-01');
+		type(await queryInput(), 'device.hostname == "web-prod-01"');
 
-		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalled(), { timeout: 3000 });
+		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith('device.hostname == "web-prod-01"'), { timeout: 3000 });
 		await vi.waitFor(
 			() =>
 				expect(
@@ -201,47 +188,14 @@ describe('/device-groups/new — the commit is the pill\'s', () => {
 		);
 	});
 
-	// The empty rule is the legal match-all rule, and the server counts it like
-	// any other (Parse("") is the always-true tree) — so the untouched builder
-	// must show the fleet-wide count instead of nothing.
-	it('fetches and shows the match-all count for the untouched empty rule', async () => {
-		api.validateDynamicQuery.mockResolvedValue({
-			valid: true,
-			error: '',
-			matchingDeviceCount: 7
-		});
-		render(NewGroupPage);
-		await fillGroup('Every device', '');
-
-		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-
-		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith(''), {
-			timeout: 3000
-		});
-		await vi.waitFor(
-			() =>
-				expect(
-					document.querySelector('[data-testid="query-status"]')?.textContent
-				).toContain(m.query_match_count_devices({ count: 7 })),
-			{ timeout: 3000 }
-		);
-	});
-
 	it('still refuses the commit while a dynamic rule is partially filled', async () => {
 		render(NewGroupPage);
 		await fillGroup('Berlin laptops', '');
 
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-		// Half-fill the seeded chip: property chosen, value still empty on a
-		// binary operator. THIS is the state the incomplete gate exists for.
-		const chip = await vi.waitFor(() => {
-			const el = document.querySelector<HTMLElement>('[data-testid="query-chip"]');
-			expect(el).toBeTruthy();
-			return el!;
-		});
-		chip.click();
-		await browser.getByLabelText(m.qb_placeholder_property()).click();
-		await browser.getByRole('option', { name: m.qb_prop_hostname() }).click();
+		type(await queryInput(), 'device.hostname ==');
+		api.validateDynamicQuery.mockResolvedValue({ valid: false, error: 'invalid CEL', matchingDeviceCount: 0 });
+		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith('device.hostname =='), { timeout: 3000 });
 
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(false), { timeout: 3000 });
 		expect(shell.pill.context?.subtext).toBe(m.device_groups_query_fix());
@@ -288,12 +242,8 @@ describe('/device-groups/new — the third exit: stash, walk away, restore', () 
 		render(NewGroupPage);
 		await fillGroup('Berlin laptops', '');
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-		// An untouched builder is now a legal (match-all) rule, so the pill stays
-		// valid; wait on the builder itself, not on an invalid state.
-		await vi.waitFor(
-			() => expect(document.querySelector('[data-testid="query-chip"]')).toBeTruthy(),
-			{ timeout: 3000 }
-		);
+		type(await queryInput(), 'true');
+		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith('true'), { timeout: 3000 });
 
 		stashContext();
 		expect(shell.drafts[0].payload).toMatchObject({ name: 'Berlin laptops', isDynamic: true });

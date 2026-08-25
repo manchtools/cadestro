@@ -96,7 +96,7 @@ vi.mock('$lib/sdk', async () => {
 import DeviceGroupPage from './[id]/+page.svelte';
 import UserGroupPage from '../user-groups/[id]/+page.svelte';
 
-const RULE = 'device.os equals "ubuntu" AND device.labels.env equals "production"';
+const RULE = 'device.os == "ubuntu" && "env" in device.labels && device.labels["env"] == "production"';
 
 // The two context ids that compete for the single pill slot on this page.
 const GROUP_ID = '01HZDEVGRP0000000000000000';
@@ -146,10 +146,6 @@ async function openRuleTab() {
 	await vi.waitFor(() => expect(document.querySelector('[data-testid="rule-tab"]')).toBeTruthy());
 }
 
-function chips(): HTMLElement[] {
-	return [...document.querySelectorAll<HTMLElement>('[data-testid="query-chip"]')];
-}
-
 beforeEach(() => {
 	document.body.innerHTML = '';
 	resetShell();
@@ -167,94 +163,42 @@ beforeEach(() => {
 
 afterEach(() => resetShell());
 
-describe('chip editor — drawing an existing rule', () => {
-	it('renders the stored query as one chip per condition, key · operator · value', async () => {
+describe('raw CEL editor', () => {
+	it('preserves the stored query and validates raw edits', async () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
-
-		const drawn = chips().map((c) => c.dataset.query);
-		expect(drawn).toEqual([
-			'device.os equals "ubuntu"',
-			'device.labels.env equals "production"'
-		]);
-
-		// the join between them is its own control, not part of a chip
-		const join = document.querySelector('[data-testid="query-join"]');
-		expect(join?.textContent?.trim()).toBe('AND');
-
-		// key / operator / value carry distinct roles, in mono
-		const [keySpan, opSpan, valueSpan] = [...chips()[0].querySelectorAll('span')];
-		expect(keySpan.textContent).toBe('device.os');
-		expect(opSpan.textContent).toBe('equals');
-		expect(valueSpan.textContent).toBe('"ubuntu"');
-		expect(getComputedStyle(chips()[0]).fontFamily.toLowerCase()).toContain('mono');
+		const input = document.querySelector<HTMLTextAreaElement>('#query-editor-text')!;
+		expect(input.value).toBe(RULE);
+		input.value = 'device.os == "debian" && "env" in device.labels && device.labels["env"] == "production"';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await vi.waitFor(() =>
+			expect(mocks.validateDynamicQuery).toHaveBeenCalledWith(
+				'device.os == "debian" && "env" in device.labels && device.labels["env"] == "production"'
+			)
+		);
 	});
 
-	it('draws a parenthesised alternative inside a dashed group', async () => {
-		seedDeviceGroup({
-			dynamicQuery:
-				'device.labels.env equals "production" AND (device.os equals "ubuntu" OR device.os equals "debian")'
+	it('does not let an older validation response overwrite newer text', async () => {
+		let resolveFirst: ((result: { valid: boolean; error: string; matchingDeviceCount: number }) => void) | undefined;
+		mocks.validateDynamicQuery.mockImplementation((query: string) => {
+			if (query.includes('first')) {
+				return new Promise((resolve) => {
+					resolveFirst = resolve;
+				});
+			}
+			return Promise.resolve({ valid: true, error: '', matchingDeviceCount: 2 });
 		});
 		render(DeviceGroupPage);
 		await openRuleTab();
-
-		const group = document.querySelector('[data-testid="query-group"]');
-		expect(group, 'the OR alternative renders as a group').toBeTruthy();
-		expect(getComputedStyle(group!).borderTopStyle).toBe('dashed');
-		expect(group!.querySelectorAll('[data-testid="query-chip"]').length).toBe(2);
-	});
-});
-
-describe('chip editor — edits produce the exact query string', () => {
-	it('sends the recompiled string to the save RPC, byte for byte', async () => {
-		render(DeviceGroupPage);
-		await openRuleTab();
-
-		await chips()[0].click();
-		const valueInput = browser.getByLabelText('Value');
-		await valueInput.fill('debian');
-
-		await vi.waitFor(() =>
-			expect(mocks.validateDynamicQuery).toHaveBeenCalledWith(
-				'device.os equals "debian" AND device.labels.env equals "production"'
-			)
-		);
-
-		expect(commitContext(), 'the pill commits the rule').toBe(true);
-		await browser.getByTestId('future-scope-confirm').click();
-
-		await vi.waitFor(() => expect(mocks.updateDeviceGroupQuery).toHaveBeenCalled());
-		expect(mocks.updateDeviceGroupQuery).toHaveBeenCalledWith(
-			mocks.params.id,
-			true,
-			'device.os equals "debian" AND device.labels.env equals "production"'
-		);
-	});
-
-	it('recompiles a removed condition without leaving a dangling conjunction', async () => {
-		render(DeviceGroupPage);
-		await openRuleTab();
-
-		await document.querySelectorAll<HTMLElement>('[data-testid="query-chip-remove"]')[0].click();
-
-		await vi.waitFor(() =>
-			expect(mocks.validateDynamicQuery).toHaveBeenCalledWith(
-				'device.labels.env equals "production"'
-			)
-		);
-	});
-
-	it('toggling the join swaps AND for OR in the compiled string', async () => {
-		render(DeviceGroupPage);
-		await openRuleTab();
-
-		await browser.getByTestId('query-join').click();
-
-		await vi.waitFor(() =>
-			expect(mocks.validateDynamicQuery).toHaveBeenCalledWith(
-				'device.os equals "ubuntu" OR device.labels.env equals "production"'
-			)
-		);
+		mocks.validateDynamicQuery.mockClear();
+		const input = browser.getByTestId('query-input');
+		await input.fill('device.hostname == "first"');
+		await vi.waitFor(() => expect(mocks.validateDynamicQuery).toHaveBeenCalledWith('device.hostname == "first"'));
+		await input.fill('device.hostname == "second"');
+		await vi.waitFor(() => expect(shell.pill.context?.subtext).toContain('2 devices match'));
+		resolveFirst?.({ valid: false, error: 'stale', matchingDeviceCount: 0 });
+		await vi.waitFor(() => expect(shell.pill.context?.subtext).toContain('device.hostname == "second"'));
+		expect(shell.pill.context?.subtext).not.toContain('stale');
 	});
 });
 
@@ -264,8 +208,7 @@ describe('an unusable draft never reaches the server', () => {
 		await openRuleTab();
 		mocks.validateDynamicQuery.mockClear();
 
-		await browser.getByTestId('query-add-condition').click();
-		// give the debounce more than its own window to misfire in
+		await browser.getByTestId('query-input').fill('');
 		await new Promise((resolve) => setTimeout(resolve, 500));
 
 		expect(mocks.validateDynamicQuery).not.toHaveBeenCalled();
@@ -273,7 +216,7 @@ describe('an unusable draft never reaches the server', () => {
 		// The pill is the group's action bar and is held for the whole visit, so
 		// what must be absent is anything to COMMIT — not the pill itself.
 		expect(shell.pill.context?.id).toBe(groupContextId);
-		expect(shell.pill.context?.dirty, 'an empty chip is not a rule change').toBe(false);
+		expect(shell.pill.context?.dirty, 'clearing the query is an invalid edit').toBe(true);
 		expect(commitContext(), 'nothing to commit yet').toBe(false);
 		expect(mocks.updateDeviceGroupQuery).not.toHaveBeenCalled();
 	});
@@ -282,16 +225,12 @@ describe('an unusable draft never reaches the server', () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 
-		await chips()[0].click();
-		mocks.validateDynamicQuery.mockClear();
-		// Clearing the value drops that condition from the compiled string — the
-		// rule would silently widen if the editor treated this as committable.
-		await browser.getByLabelText('Value').fill('');
-		await new Promise((resolve) => setTimeout(resolve, 500));
+		await browser.getByTestId('query-input').fill('device.os ==');
+		mocks.validateDynamicQuery.mockResolvedValue({ valid: false, error: 'invalid CEL', matchingDeviceCount: 0 });
+		await vi.waitFor(() => expect(mocks.validateDynamicQuery).toHaveBeenCalledWith('device.os =='));
 
-		expect(mocks.validateDynamicQuery, 'an incomplete rule never reaches the server').not.toHaveBeenCalled();
 		expect(mocks.evaluateDynamicGroup).not.toHaveBeenCalled();
-		expect(shell.pill.context?.valid, 'an incomplete rule cannot commit').toBe(false);
+		expect(shell.pill.context?.valid, 'an invalid rule cannot commit').toBe(false);
 		expect(commitContext()).toBe(false);
 		expect(mocks.updateDeviceGroupQuery).not.toHaveBeenCalled();
 	});
@@ -305,10 +244,10 @@ describe('an unusable draft never reaches the server', () => {
 			matchingDeviceCount: 0
 		});
 
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('debian');
+		await browser.getByTestId('query-input').fill('device.os == "debian"');
 
-		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(false));
+		await vi.waitFor(() => expect(shell.pill.context?.subtext).toContain('unknown property device.nope'));
+		expect(shell.pill.context?.valid).toBe(false);
 		expect(mocks.evaluateDynamicGroup).not.toHaveBeenCalled();
 		expect(commitContext()).toBe(false);
 		expect(mocks.updateDeviceGroupQuery).not.toHaveBeenCalled();
@@ -322,8 +261,7 @@ describe('future-scope guard', () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('debian');
+		await browser.getByTestId('query-input').fill('device.os == "debian" && "env" in device.labels && device.labels["env"] == "production"');
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true));
 
 		commitContext();
@@ -335,16 +273,16 @@ describe('future-scope guard', () => {
 			.toHaveTextContent('New matches apply automatically');
 		await expect
 			.element(browser.getByTestId('future-scope-query'))
-			.toHaveTextContent('device.os equals "debian"');
+			.toHaveTextContent('device.os == "debian"');
 		expect(mocks.updateDeviceGroupQuery, 'nothing saves before the acknowledgement').not.toHaveBeenCalled();
 	});
 
 	it('CANCELLING the confirm saves nothing and hands the draft back to the pill', async () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
+		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('debian');
+		await browser.getByTestId('query-input').fill('device.os == "debian"');
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true));
 
 		commitContext();
@@ -354,7 +292,7 @@ describe('future-scope guard', () => {
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`device-group:${mocks.params.id}`));
 		expect(mocks.updateDeviceGroupQuery).not.toHaveBeenCalled();
 		// the edit survives the cancel
-		expect(chips()[0].dataset.query).toBe('device.os equals "debian"');
+		expect(document.querySelector<HTMLTextAreaElement>('#query-editor-text')?.value).toBe('device.os == "debian"');
 	});
 
 	it('says nothing about dropped members when a static group is empty', async () => {
@@ -362,10 +300,7 @@ describe('future-scope guard', () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 
-		await chips()[0].click();
-		await browser.getByLabelText('Select property...').click();
-		await browser.getByRole('option', { name: 'Hostname' }).click();
-		await browser.getByLabelText('Value').fill('web-prod-01');
+		await browser.getByTestId('query-input').fill('device.hostname == "web-prod-01"');
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true));
 
 		commitContext();
@@ -382,10 +317,7 @@ describe('future-scope guard', () => {
 			.element(browser.getByTestId('rule-futurebar'))
 			.toHaveTextContent('converts this group to a standing rule');
 
-		await chips()[0].click();
-		await browser.getByLabelText('Select property...').click();
-		await browser.getByRole('option', { name: 'Hostname' }).click();
-		await browser.getByLabelText('Value').fill('web-prod-01');
+		await browser.getByTestId('query-input').fill('device.hostname == "web-prod-01"');
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true));
 
 		commitContext();
@@ -404,7 +336,7 @@ describe('future-scope guard', () => {
 			expect(mocks.updateDeviceGroupQuery).toHaveBeenCalledWith(
 				mocks.params.id,
 				true,
-				'device.hostname equals "web-prod-01"'
+				'device.hostname == "web-prod-01"'
 			)
 		);
 	});
@@ -415,12 +347,11 @@ describe('the live count rides the pill subtext', () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('debian');
+		await browser.getByTestId('query-input').fill('device.os == "debian"');
 
 		await vi.waitFor(() => {
 			expect(shell.pill.context?.subtext).toBe(
-				'47 devices match · device.os equals "debian" AND device.labels.env equals "production"'
+				'47 devices match · device.os == "debian"'
 			);
 		});
 		expect(shell.pill.context?.subtextTone).toBe('neutral');
@@ -432,11 +363,10 @@ describe('the live count rides the pill subtext', () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('debian');
+		await browser.getByTestId('query-input').fill('device.os == "debian"');
 		await vi.waitFor(() => expect(shell.pill.context?.subtext).toBeTruthy());
 
-		await browser.getByLabelText('Value').fill('ubuntu');
+		await browser.getByTestId('query-input').fill(RULE);
 		await vi.waitFor(() => {
 			// Back to the stored rule: nothing to commit, so the caption goes away.
 			// The bar itself stays — it is the group's action bar, not the rule's.
@@ -517,18 +447,17 @@ describe('user groups — the SCIM guard', () => {
 	});
 
 	it('counts users through the user-group validate RPC and gates its save the same way', async () => {
-		seedUserGroup({ isScimManaged: false, isDynamic: true, dynamicQuery: 'user.email endsWith "@example.test"' });
+		seedUserGroup({ isScimManaged: false, isDynamic: true, dynamicQuery: 'user.email.endsWith("@example.test")' });
 		mocks.updateUserGroupQuery.mockResolvedValue(undefined);
 		render(UserGroupPage);
 		await openRuleTab();
 
-		expect(chips().map((c) => c.dataset.query)).toEqual(['user.email endsWith "@example.test"']);
+		expect(document.querySelector<HTMLTextAreaElement>('#query-editor-text')?.value).toBe('user.email.endsWith("@example.test")');
 
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('@corp.test');
+		await browser.getByTestId('query-input').fill('user.email.endsWith("@corp.test")');
 
 		await vi.waitFor(() =>
-			expect(mocks.validateUserGroupQuery).toHaveBeenCalledWith('user.email endsWith "@corp.test"')
+			expect(mocks.validateUserGroupQuery).toHaveBeenCalledWith('user.email.endsWith("@corp.test")')
 		);
 		await vi.waitFor(() => expect(shell.pill.context?.subtext).toContain('9 users match'));
 		expect(mocks.validateDynamicQuery, 'device validation never runs for a user group').not.toHaveBeenCalled();
@@ -579,6 +508,8 @@ describe('the pill is the group’s action bar', () => {
 
 		await userEvent.fill(browser.getByLabelText('Name'), 'Renamed');
 		await vi.waitFor(() => expect(shell.pill.context?.dirty).toBe(true));
+		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
+		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 		expect(shell.pill.context?.valid).toBe(true);
 	});
 
@@ -596,9 +527,10 @@ describe('the pill is the group’s action bar', () => {
 		// and whichever surface held the slot decided which half was committed.
 		await openRuleTab();
 		expect(shell.pill.context?.id).toBe(groupContextId);
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('workstation-42');
+		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
+		await browser.getByTestId('query-input').fill('device.os == "workstation-42" && "env" in device.labels && device.labels["env"] == "production"');
 		await vi.waitFor(() => expect(shell.pill.context?.dirty).toBe(true));
+		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 
 		commitContext();
 		// A standing rule still takes its acknowledgement — it gates the one commit.
@@ -613,7 +545,7 @@ describe('the pill is the group’s action bar', () => {
 		expect(mocks.updateDeviceGroupQuery).toHaveBeenCalledWith(
 			mocks.params.id,
 			true,
-			'device.os equals "workstation-42" AND device.labels.env equals "production"'
+			'device.os == "workstation-42" && "env" in device.labels && device.labels["env"] == "production"'
 		);
 	});
 
@@ -622,8 +554,7 @@ describe('the pill is the group’s action bar', () => {
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(groupContextId));
 
 		await openRuleTab();
-		await chips()[0].click();
-		await browser.getByLabelText('Value').fill('workstation-42');
+		await browser.getByTestId('query-input').fill('device.os == "workstation-42" && "env" in device.labels && device.labels["env"] == "production"');
 		await vi.waitFor(() => expect(shell.pill.context?.dirty).toBe(true));
 
 		// A context can only be parked when it says where it lives and what to
@@ -632,7 +563,7 @@ describe('the pill is the group’s action bar', () => {
 		expect(shell.pill.context?.route).toBe(`/device-groups/${mocks.params.id}`);
 		const parked = shell.pill.context?.stashPayload?.() as { query?: string } | undefined;
 		expect(parked?.query, 'the parked card carries the rule, not just the name').toBe(
-			'device.os equals "workstation-42" AND device.labels.env equals "production"'
+			'device.os == "workstation-42" && "env" in device.labels && device.labels["env"] == "production"'
 		);
 	});
 });

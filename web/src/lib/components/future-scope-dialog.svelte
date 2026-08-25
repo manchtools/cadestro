@@ -73,7 +73,7 @@
 			class="rounded-md bg-sunken px-3 py-2 font-mono text-xs break-words text-muted-foreground"
 			data-testid="future-scope-query"
 		>
-			{queryText || m.query_future_scope_empty_query()}
+			{queryText}
 		</p>
 		{#if note}
 			<p class="text-sm" data-testid="future-scope-note">{note}</p>

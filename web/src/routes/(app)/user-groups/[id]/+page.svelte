@@ -44,7 +44,6 @@
 	} from '$lib/components/dynamic-rule-editor.svelte';
 	import FutureScopeDialog from '$lib/components/future-scope-dialog.svelte';
 	import type { QueryEditorState } from '$lib/components/query-builder.svelte';
-	import type { PropertyGroup } from '$lib/components/query-builder.svelte';
 	import MembersTab from './members-tab.svelte';
 	import { create } from '@bufbuild/protobuf';
 	import {
@@ -111,10 +110,9 @@
 	let draftQuery = $state('');
 	let ruleState = $state<QueryEditorState>({
 		text: '',
-		complete: true,
-		valid: null,
+		valid: false,
 		count: null,
-		error: '',
+		error: m.query_incomplete(),
 		validating: false
 	});
 	let ruleConfirmOpen = $state(false);
@@ -126,7 +124,7 @@
 	 *  string yet — an incomplete condition silently drops out of the compile, so
 	 *  gating on dirtiness alone would let Save look armed over a rule the operator
 	 *  is still mid-way through writing. */
-	const ruleValid = $derived(ruleState.complete && ruleState.valid !== false);
+	const ruleValid = $derived(ruleState.valid === true);
 
 	// Role ids hidden from the assign picker: held GLOBALLY (unscoped). A role held
 	// only at group scopes stays selectable so a second scope can be added (#7).
@@ -148,27 +146,6 @@
 		}))
 	);
 
-	const userPropertyGroups: PropertyGroup[] = [
-		{
-			label: m.qb_group_user_info(),
-			items: [
-				{ value: 'user.email', label: m.qb_prop_user_email() },
-				{ value: 'user.display_name', label: m.qb_prop_user_display_name() },
-				{ value: 'user.preferred_username', label: m.qb_prop_user_username() }
-			]
-		},
-		{
-			label: m.qb_group_user_status(),
-			items: [
-				{ value: 'user.disabled', label: m.qb_prop_user_disabled() },
-				{ value: 'user.locale', label: m.qb_prop_user_locale() }
-			]
-		}
-	];
-
-	const userPropertyExamples: Record<string, () => string> = {
-		'user.email': () => m.qb_hint_prop_user_email()
-	};
 
 	onMount(() => {
 		if (groupId) loadData();
@@ -650,10 +627,6 @@
 						savedQuery={group.dynamicQuery}
 						bind:draft={draftQuery}
 						isDynamic={group.isDynamic}
-						propertyGroups={userPropertyGroups}
-						propertyExampleOverrides={userPropertyExamples}
-						advancedPlaceholder={m.user_groups_dynamic_query_placeholder()}
-						advancedHint={m.device_groups_query_operators()}
 						rows={previewRows}
 						total={group.memberCount}
 						onstate={(state) => (ruleState = state)}
