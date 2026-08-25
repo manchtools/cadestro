@@ -147,23 +147,23 @@ func TestPumpTerminalOutput_UsesSessionAndCleanupContexts(t *testing.T) {
 	}
 	current, err := user.Current()
 	if err != nil {
-		t.Skipf("cannot determine current user: %v", err)
+		t.Fatal(err)
 	}
 	tm, err := terminal.New()
 	if err != nil {
-		t.Skipf("cannot build terminal manager: %v", err)
+		t.Fatal(err)
 	}
 	sess, err := tm.Open(context.Background(), terminal.SessionConfig{User: current.Username})
 	if err != nil {
-		t.Skipf("cannot start a local PTY session: %v", err)
+		t.Fatal(err)
 	}
+	t.Cleanup(func() { _ = sess.Close() })
 
 	originalModify := sysuserModify
 	originalTimeout := terminalCleanupTimeout
 	t.Cleanup(func() {
 		sysuserModify = originalModify
 		terminalCleanupTimeout = originalTimeout
-		_ = sess.Close()
 	})
 	terminalCleanupTimeout = 50 * time.Millisecond
 	sysuserModify = func(context.Context, string, sysuser.ModifyOptions) error { return nil }
@@ -197,9 +197,8 @@ func TestPumpTerminalOutput_UsesSessionAndCleanupContexts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var outputCtx context.Context
 	select {
-	case outputCtx = <-sender.outputCtx:
+	case <-sender.outputCtx:
 	case <-time.After(time.Second):
 		t.Fatal("terminal output was not sent")
 	}
@@ -212,14 +211,19 @@ func TestPumpTerminalOutput_UsesSessionAndCleanupContexts(t *testing.T) {
 	case <-done:
 	case <-time.After(time.Second):
 		close(sender.release)
-		<-done
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("terminal output cleanup did not finish")
+		}
 		t.Fatal("terminal output ignored session cancellation")
 	}
-	if outputCtx == context.Background() {
-		t.Fatal("terminal output used a background context")
+	var stateCtx context.Context
+	select {
+	case stateCtx = <-sender.stateCtx:
+	case <-time.After(time.Second):
+		t.Fatal("terminal exit state was not sent")
 	}
-
-	stateCtx := <-sender.stateCtx
 	deadline, ok := stateCtx.Deadline()
 	require.True(t, ok)
 	require.LessOrEqual(t, time.Until(deadline), terminalCleanupTimeout)
