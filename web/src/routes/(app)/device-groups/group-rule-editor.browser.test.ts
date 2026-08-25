@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser, userEvent } from 'vitest/browser';
 import { resetShell, shell, commitContext } from '$lib/shell/shell.svelte';
@@ -146,8 +146,6 @@ beforeEach(() => {
 	mocks.validateUserGroupQuery.mockResolvedValue({ valid: true, error: '', matchingUserCount: 9 });
 	mocks.updateDeviceGroupQuery.mockResolvedValue(deviceGroup());
 });
-
-afterEach(() => resetShell());
 
 describe('raw CEL editor', () => {
 	it('preserves the stored query and validates raw edits', async () => {
@@ -317,7 +315,6 @@ describe('future-scope guard', () => {
 		await vi.waitFor(() =>
 			expect(mocks.updateDeviceGroupQuery).toHaveBeenCalledWith(
 				mocks.params.id,
-				true,
 				'device.hostname == "web-prod-01"'
 			)
 		);
@@ -512,7 +509,6 @@ describe('the pill is the group’s action bar', () => {
 		);
 		expect(mocks.updateDeviceGroupQuery).toHaveBeenCalledWith(
 			mocks.params.id,
-			true,
 			'device.os == "workstation-42" && "env" in device.labels && device.labels["env"] == "production"'
 		);
 	});
