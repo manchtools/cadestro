@@ -99,8 +99,8 @@ func roleToProto(r store.RoleRow) *cadestrov1.Role {
 func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow) (*cadestrov1.UserGroup, error) {
 	group := &cadestrov1.UserGroup{
 		Id: &cadestrov1.UserGroupId{Value: row.ID}, Name: row.Name, Description: row.Description,
-		MemberCount: boundedIdentityCount(row.LiveMemberCount),
-		CreatedAt:   timestampValue(row.CreatedAt),
+		MemberCount:   boundedIdentityCount(row.LiveMemberCount),
+		CreatedAt:     timestampValue(row.CreatedAt),
 		IsScimManaged: row.IsScimManaged,
 	}
 	if row.DynamicQuery != nil {
