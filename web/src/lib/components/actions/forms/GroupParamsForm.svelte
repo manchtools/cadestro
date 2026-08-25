@@ -18,14 +18,7 @@
 		params: GroupFormState;
 		errors?: Partial<Record<string, string>>;
 		onclearerror?: (field: string) => void;
-		/**
-		 * Optional loader for the "pick from existing USER actions"
-		 * dropdown. Falls back to the ancestor-provided loader from
-		 * user-loader-context. Consumers without access to the
-		 * control-plane API (e.g. the marketplace) can omit this and
-		 * the dropdown shows an empty state. The web app sets the
-		 * context to `apiClient.listActions(100, '', ActionType.USER)`.
-		 */
+
 		loadUserActions?: () => Promise<ManagedAction[]>;
 	}
 
@@ -60,7 +53,6 @@
 		}
 	}
 
-	// Available user actions (exclude already added members)
 	const availableUserActions = $derived.by(() => {
 		const existing = new Set(params.members.map((u) => u.trim().toLowerCase()));
 		return userActions.filter((a) => {
@@ -112,7 +104,7 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Group Name -->
+
 	<div class="space-y-1.5">
 		<Label for="groupName">{m.group_name()}</Label>
 		<Input
@@ -127,11 +119,9 @@
 		<p class="text-xs text-muted-foreground">{m.group_name_description()}</p>
 	</div>
 
-	<!-- Members -->
 	<div class="space-y-1.5">
 		<Label>{m.group_members()} ({memberCount})</Label>
 
-		<!-- Add member input + picker -->
 		<div class="flex gap-2">
 			<Input
 				placeholder={m.group_members_add_placeholder()}
@@ -192,7 +182,6 @@
 			{/if}
 		</div>
 
-		<!-- Member list -->
 		{#if params.members.length > 0}
 			<div class="space-y-1.5">
 				{#each params.members as member, index}
@@ -221,7 +210,6 @@
 		<p class="text-xs text-muted-foreground">{m.group_members_description()}</p>
 	</div>
 
-	<!-- GID -->
 	<div class="space-y-1.5">
 		<Label for="groupGid">{m.group_gid()}</Label>
 		<Input
@@ -235,7 +223,6 @@
 		<p class="text-xs text-muted-foreground">{m.group_gid_description()}</p>
 	</div>
 
-	<!-- System Group -->
 	<div class="flex items-center space-x-2">
 		<Checkbox id="systemGroup" bind:checked={params.systemGroup} />
 		<Label for="systemGroup" class="text-sm font-normal cursor-pointer">

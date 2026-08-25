@@ -1,7 +1,5 @@
 <script lang="ts">
-	// The near pane: the same devices the far pane summarises, resolved into
-	// legible dense rows — worst first, healthy rows folded away behind an
-	// expander so triage is what the operator lands on.
+
 	import { Tile, Chip, TONE_FILL, type FleetTone } from '$lib/components/fleet';
 	import { ExternalLink } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
@@ -16,7 +14,7 @@
 		openLabel,
 		collapseHealthy = true
 	}: {
-		/** Already ordered worst-first by the caller. */
+
 		rows: FleetDevice[];
 		caption: string;
 		selected: Set<string>;
@@ -29,14 +27,11 @@
 	let expanded = $state(false);
 	let shiftHeld = $state(false);
 
-	// Worst-first ordering puts every 'ok' row at the tail, so the collapse is a
-	// suffix cut — never a filter that could reorder what stays on screen.
 	const healthyFrom = $derived(rows.findIndex((d) => d.tone === 'ok'));
 	const healthyCount = $derived(healthyFrom >= 0 ? rows.length - healthyFrom : 0);
 	const cut = $derived(collapseHealthy && !expanded && healthyFrom >= 0 ? healthyFrom : rows.length);
 	const hiddenCount = $derived(rows.length - cut);
-	// Count only what is selected IN THIS PANE — a global count here would claim
-	// devices the operator cannot see from where they are standing.
+
 	const selectedHere = $derived(rows.filter((d) => selected.has(d.id)).length);
 
 	const STATUS_LABEL: Record<FleetTone, () => string> = {

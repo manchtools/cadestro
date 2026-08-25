@@ -25,7 +25,6 @@
 	let policyStatus = $state<GetDeviceCompliancePolicyStatusResponse | null>(null);
 	let loading = $state(true);
 
-	// Derive currently-shown action ID from ActionDetailSheet shallow routing
 	let sheetActionId = $derived(page.state.actionSheet);
 
 	type PolicyParent = { policyId: string; policyName: string };
@@ -40,7 +39,6 @@
 		policies: PolicyParent[];
 	};
 
-	// Flatten and deduplicate: each action appears once with all parent policies
 	const mergedChecks = $derived.by(() => {
 		if (!policyStatus) return [];
 		const actionMap = new Map<string, MergedCheck>();
@@ -112,8 +110,6 @@
 		}
 	}
 
-	// Same buckets the compliance-policy detail page paints its device rows
-	// with, so one device never reads as two different states across surfaces.
 	function getStatusTone(status: ComplianceStatus): FleetTone {
 		switch (status) {
 			case ComplianceStatus.COMPLIANT:
@@ -139,7 +135,7 @@
 			<div class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
 		</div>
 	{:else if hasData && policyStatus}
-		<!-- Summary -->
+
 		{@const StatusIcon = getStatusIcon(policyStatus.overallStatus)}
 		<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 			<div class="flex items-center gap-2">
@@ -162,7 +158,6 @@
 			</div>
 		</section>
 
-		<!-- Compliance Checks Table -->
 		<section class="overflow-hidden rounded-xl border border-hair bg-surface shadow-plate">
 			<div class="flex items-center gap-2 border-b border-hair px-4 py-3">
 				<Zap class="h-4 w-4 text-faint" />
@@ -236,12 +231,11 @@
 	{/if}
 </div>
 
-<!-- Action Detail Sheet (shallow routing) with compliance-specific children -->
 <ActionDetailSheet>
 	{#if sheetActionId}
 		{@const check = getSheetCheck(sheetActionId)}
 		{#if check}
-			<!-- Compliance Status -->
+
 			<div class="space-y-3">
 				<h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{m.compliance_status()}</h3>
 				<div class="space-y-2">
@@ -262,7 +256,6 @@
 				</div>
 			</div>
 
-			<!-- Detection output -->
 			{#if check.detectionOutput}
 				<hr />
 				<div class="space-y-3">
@@ -283,7 +276,6 @@
 				</div>
 			{/if}
 
-			<!-- Part of (parent policies) -->
 			{#if check.policies.length > 0}
 				<hr />
 				<div class="space-y-3">
@@ -311,5 +303,4 @@
 	{/if}
 </ActionDetailSheet>
 
-<!-- Compliance Policy Detail Sheet (shallow routing) -->
 <CompliancePolicyDetailSheet />

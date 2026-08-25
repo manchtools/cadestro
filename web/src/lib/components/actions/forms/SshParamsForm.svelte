@@ -17,7 +17,6 @@
 		onclearerror
 	}: Props = $props();
 
-	// Config preview
 	const configPreview = $derived.by(() => {
 		const users = params.users.filter((u) => u.trim());
 		const userList = users.length > 0 ? users.join(',') : '<username>';
@@ -32,7 +31,7 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Users -->
+
 	<UserPicker
 		bind:usernames={params.users}
 		{errors}
@@ -44,7 +43,6 @@
 		description={m.ssh_users_description()}
 	/>
 
-	<!-- Authentication toggles -->
 	<div class="space-y-3">
 		<div class="flex items-center justify-between rounded-lg border p-3">
 			<div class="space-y-0.5">
@@ -63,7 +61,6 @@
 		</div>
 	</div>
 
-	<!-- Config preview -->
 	<div class="rounded-lg bg-muted p-3 text-sm">
 		<p class="font-medium mb-1">{m.ssh_preview_title()}</p>
 		<pre class="text-xs bg-background rounded p-2 overflow-x-auto"><code>{configPreview}</code></pre>

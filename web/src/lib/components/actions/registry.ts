@@ -1,16 +1,4 @@
-// Per-action-type adapter registry.
-//
-// Both `action-create-form.svelte` and `edit-params-dialog.svelte` previously
-// duplicated the per-action-type ladder: 19 × {default form state, validation
-// schema, form-to-proto, proto-to-form, params component, params case-name}.
-// Adding a new action type required editing both god components in lockstep,
-// plus `forms/types.ts`, `forms/index.ts`, and `actions/index.ts` — and the
-// two god components had silently drifted (`edit-params-dialog` missing
-// FLATPAK / DIRECTORY arms when the audit was run).
-//
-// This registry centralises that contract. Each FormKey has exactly one entry
-// here; the orchestrators iterate the registry instead of hand-listing types.
-// Per design decision #7 (2026.06 cleanup-release).
+
 
 import type { ZodSchema } from 'zod';
 import { ActionType } from '$contract/cadestro/v1/actions_pb';
@@ -96,9 +84,6 @@ import {
 	agentUpdateParamsSchema
 } from '$lib/forms/schemas/actions';
 
-// Form-key strings — these are the orchestrator-level identifiers (the same
-// strings the create-form already used). COMPLIANCE_CHECK is its own key
-// because the schema and the SHELL form have a `complianceOnly` mode toggle.
 export const FORM_KEYS = [
 	'PACKAGE',
 	'SHELL',
@@ -123,7 +108,6 @@ export const FORM_KEYS = [
 
 export type FormKey = keyof FormStateByKey;
 
-// `oneof params` cases on the proto ManagedAction — must match exactly.
 export type ParamsCase =
 	| 'package'
 	| 'shell'
@@ -145,31 +129,24 @@ export type ParamsCase =
 	| 'agentUpdate';
 
 export interface ActionTypeAdapter<F = FormState, P = unknown> {
-	/** Form-key identifier (orchestrator-level). */
+
 	key: FormKey;
-	/** Proto enum this form-key creates actions of. */
+
 	actionType: ActionType;
-	/** Proto oneof case-name (`params.case`). */
+
 	paramsCase: ParamsCase;
-	/** Whether this action type supports desiredState=ABSENT. */
+
 	supportsAbsent: boolean;
-	/** Default form state factory. */
+
 	defaultForm: () => F;
-	/** Zod validation schema for the form state. */
+
 	schema: ZodSchema;
-	/** Form-state -> proto. */
+
 	formToProto: (form: F) => P;
-	/** Proto -> form-state. */
+
 	protoToForm: (proto: P) => F;
 }
 
-// Registry — one entry per FormKey. Orchestrators iterate this instead of
-// hand-coding 19 case arms.
-//
-// NOTE: `as ActionTypeAdapter` casts here are a deliberate seam to keep the
-// registry's per-entry types narrow at construction while presenting a
-// uniform shape to consumers. The adapter's own functions remain typed
-// internally; only the registry record loses the F/P generic parameters.
 export const ACTION_REGISTRY: Record<FormKey, ActionTypeAdapter> = {
 	PACKAGE: {
 		key: 'PACKAGE',
@@ -222,9 +199,7 @@ export const ACTION_REGISTRY: Record<FormKey, ActionTypeAdapter> = {
 		protoToForm: fileProtoToForm as never
 	} as ActionTypeAdapter,
 	APP: {
-		// APP covers APP_IMAGE, DEB, RPM — the create-form chooses the proto
-		// ActionType from the user's group selection; the params shape is the
-		// same `app` oneof for all three.
+
 		key: 'APP',
 		actionType: ActionType.APP_IMAGE,
 		paramsCase: 'app',
@@ -366,9 +341,6 @@ export const ACTION_REGISTRY: Record<FormKey, ActionTypeAdapter> = {
 	} as ActionTypeAdapter
 };
 
-/** Resolve a FormKey from a proto ActionType. SHELL maps to SHELL (callers
- * that care about COMPLIANCE_CHECK must inspect `params.value.isCompliance`
- * before calling this). APP_IMAGE / DEB / RPM all map to the shared APP form. */
 export function formKeyFromActionType(type: ActionType): FormKey | null {
 	switch (type) {
 		case ActionType.PACKAGE:
@@ -414,9 +386,6 @@ export function formKeyFromActionType(type: ActionType): FormKey | null {
 	}
 }
 
-/** Resolve a FormKey from a string (the orchestrator-level identifiers used
- * by `action-create-form.svelte`'s type-selection step, plus the synthetic
- * `COMPLIANCE_CHECK` key). */
 export function formKeyFromString(value: string): FormKey | null {
 	if ((FORM_KEYS as readonly string[]).includes(value)) {
 		return value as FormKey;

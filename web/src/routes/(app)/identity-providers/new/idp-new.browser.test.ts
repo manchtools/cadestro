@@ -1,9 +1,5 @@
-// Behaviour contract for /identity-providers/new — the create flow that used to
-// be a modal. Six fields, one of them a client secret an operator has to go and
-// fetch from the provider's console: the trip that used to destroy the dialog is
-// exactly what Stash now survives. The tests pin the same RPC request, the
-// store-level gate, the cross-route stash round trip, and a navigating Create
-// button — plus the deliberate absence of disk persistence for the secret.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
@@ -86,7 +82,6 @@ import {
 const ROUTE = '/identity-providers/new';
 const IDP_ID = '01JQZZ4A7K3M9P2Q6R8T1V0W5X';
 
-// The fixed system roles ListRoles always returns (plus any custom roles).
 const ROLE_ADMIN_ID = '00000000000000000000000001';
 const ROLE_USER_ID = '00000000000000000000000002';
 
@@ -142,7 +137,6 @@ describe('/identity-providers/new — the commit is the pill\'s', () => {
 		await fillProvider();
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 
-		// The autosave hook persists to IndexedDB; this surface must not use it.
 		expect(drafts.types).toEqual([]);
 	});
 
@@ -160,10 +154,9 @@ describe('/identity-providers/new — the commit is the pill\'s', () => {
 			clientId: 'cadestro',
 			clientSecret: 's3cr3t',
 			issuerUrl: 'https://sso.example.com/realms/pm',
-			// An empty scopes box still sends the dialog's three defaults.
+
 			scopes: ['openid', 'profile', 'email'],
-			// JIT stays off unless the admin opts in — and untouched JIT
-			// defaults are sent explicitly, never omitted.
+
 			autoCreateUsers: false,
 			defaultRoleId: ''
 		});
@@ -238,7 +231,7 @@ describe('/identity-providers/new — the third exit: stash, walk away, restore'
 
 		await vi.waitFor(() => expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(ROUTE));
 		expect(pillMode()).toBe('nav');
-		// The card pops on the click; the buffer is staged for the remount.
+
 		expect(shell.drafts).toHaveLength(0);
 		await rail.unmount();
 
@@ -248,8 +241,7 @@ describe('/identity-providers/new — the third exit: stash, walk away, restore'
 		await vi.waitFor(() => expect(field('idpName')?.value).toBe('Keycloak'));
 		expect(field('idpSlug')?.value).toBe('keycloak');
 		expect(field('idpClientId')?.value).toBe('cadestro');
-		// The secret is part of the parked work — losing it would send the operator
-		// back to the provider's console.
+
 		expect(field('idpClientSecret')?.value).toBe('s3cr3t');
 		expect(field('idpIssuerUrl')?.value).toBe('https://sso.example.com/realms/pm');
 		expect(shell.drafts).toHaveLength(0);

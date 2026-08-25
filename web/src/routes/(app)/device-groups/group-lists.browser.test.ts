@@ -1,13 +1,5 @@
-// Conversion guard for the two group list pages (device-groups, user-groups)
-// after they moved onto createSearchListState + the shared row grammar
-// (RowList). Asserts the load-bearing wiring through the REAL route components,
-// not a copy of their config: sort key -> SortField, the static/dynamic filter's
-// server-side `is_dynamic` tag semantics (including "both selected means no
-// filter"), the URL round-trip, and the SCIM-managed delete guard.
-//
-// Two assertions are about the surface itself: each row must carry its group's
-// detail link, and no <table> may come back — a table here is the regression the
-// redesign removes.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
@@ -39,8 +31,6 @@ vi.mock('$app/navigation', () => ({
 	beforeNavigate: vi.fn()
 }));
 
-// Only the client is faked; the generated protobuf re-exports stay real so the
-// pages' SearchScope / SortField constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -64,10 +54,6 @@ vi.mock('$lib/sdk', async () => {
 	};
 });
 
-// The user_groups search document carries `is_scim_managed` now (server
-// 031605d), so the REAL adapter is under test here — the shim that used to
-// feed the flag is gone with the gap it papered over.
-
 import DeviceGroupsPage from './+page.svelte';
 import UserGroupsPage from '../user-groups/+page.svelte';
 
@@ -86,7 +72,6 @@ const STATIC_GROUP = groupResult('01HZDEVGRPSTATIC0000000000', 'Warehouse', {
 	created_at: '1700000000'
 });
 
-/** Positional apiClient.search args — see data-table/list-logic.ts SearchArgs. */
 const ARG = {
 	query: 0,
 	scope: 1,
@@ -101,7 +86,6 @@ function lastCall() {
 	return mocks.search.mock.calls.at(-1)!;
 }
 
-/** The rendered rows, addressed by the ULID each row shell carries. */
 function rowKeys(): string[] {
 	return [...document.querySelectorAll<HTMLElement>('[data-testid="row-list-row"]')].map(
 		(el) => el.getAttribute('data-row-key') ?? ''
@@ -114,9 +98,6 @@ function rowLinks(): (string | null)[] {
 	);
 }
 
-/** Headerless rows: the sort keys ride the row list's compact sort bar. Scoping
- *  to that bar keeps the click off the row overflow triggers and the filter
- *  combobox, which share their labels' words. */
 function clickSort(label: string) {
 	const button = [
 		...document.querySelectorAll<HTMLButtonElement>('[data-testid="row-list-sort"] button')
@@ -134,23 +115,13 @@ const DYNAMIC_GROUP = groupResult('01HZDEVGRPDYNAMIC000000000', 'Kiosks', {
 
 beforeEach(() => {
 	document.body.innerHTML = '';
-	// The overview is the landing level now; these tests pin the LIST level,
-	// one zoom in, addressed explicitly the way a list deep link is.
+
 	mocks.url = new URL('http://localhost/device-groups?zoom=list');
 	mocks.search.mockReset();
 	resetPageSearch();
 	respond([STATIC_GROUP]);
 });
 
-// REGRESSION (page-search seam). Publishing the page's query from an $effect is
-// only safe if the seam's write is a pure write: a version counter bumped with
-// `count++` READS the signal it writes, so the registering effect depended on
-// its own write and re-ran until Svelte gave up (`effect_update_depth_exceeded`)
-// — which killed the whole list render, not just the search.
-//
-// The trap this test exists to close: the loop only fires once rows actually
-// render. A page mounted over an EMPTY result set stays green through the bug,
-// so this case deliberately renders a NON-EMPTY list.
 describe('page-search registration does not loop the page (regression)', () => {
 	it('renders rows with a live registration and no effect-depth error', async () => {
 		const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -158,10 +129,6 @@ describe('page-search registration does not loop the page (regression)', () => {
 			respond([STATIC_GROUP, DYNAMIC_GROUP]);
 			render(DeviceGroupsPage);
 
-			// Rows are THE discriminator, and deliberately so: Svelte throws the
-			// depth error rather than logging it, so a console assertion alone would
-			// stay silent while the page died. Verified by red-run — with the
-			// read-write counter restored this waits out and reports zero rows.
 			await vi.waitFor(
 				() =>
 					expect(rowKeys()).toEqual([
@@ -170,8 +137,7 @@ describe('page-search registration does not loop the page (regression)', () => {
 					]),
 				{ timeout: 3000 }
 			);
-			// …and the seam really is live while they render, so the rows are not
-			// green merely because registration never happened.
+
 			expect(activePageSearch()?.scope).toBe(SearchScope.DEVICE_GROUPS);
 
 			const depth = errors.mock.calls
@@ -284,9 +250,6 @@ describe('device-groups list page', () => {
 		expect(lastCall()[ARG.tags]).toEqual({ is_dynamic: 'true' });
 	});
 
-	// The search box moved into the pill: the page publishes its query through
-	// the page-search seam, and ⌘K keystrokes land on exactly the setSearch the
-	// removed input drove — including its trimming, which is server-side.
 	it('registers itself as the pill’s search scope and trims what reaches the server', async () => {
 		resetPageSearch();
 		render(DeviceGroupsPage);

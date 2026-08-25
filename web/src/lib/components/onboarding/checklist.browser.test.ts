@@ -1,9 +1,5 @@
-// The getting-started checklist against mocked RPCs. What is load-bearing:
-//
-//   1. every row is the ANSWER to a read — nothing is seeded as "not done";
-//   2. a check the caller may not run disappears instead of nagging;
-//   3. a check that failed for any other reason is honestly "could not check"
-//      and is counted in neither half of the progress line.
+
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -25,7 +21,6 @@ import { resetOnboarding } from '$lib/onboarding';
 
 const denied = () => new ConnectError('permission denied', Code.PermissionDenied);
 
-/** Everything present, so a single override in a test is the only difference. */
 function happyFleet() {
 	mocks.listDevices.mockResolvedValue({ devices: [{ id: 'd1' }], totalCount: 1, nextPageToken: '' });
 	mocks.listTokens.mockResolvedValue({ tokens: [] });
@@ -73,7 +68,7 @@ describe('rows are the RPC answer', () => {
 			people: 'done'
 		});
 		expect(progress()).toBe('3 of 5 steps completed');
-		// Each read is a bounded probe, not a full sweep.
+
 		expect(mocks.listDevices).toHaveBeenCalledWith(1);
 		expect(mocks.listUsers).toHaveBeenCalledWith(2);
 	});
@@ -125,7 +120,7 @@ describe('permissions and failures', () => {
 		mocks.listIdentityProviders.mockResolvedValue({ providers: [] });
 		mount();
 		await vi.waitFor(() => expect(rows().length).toBe(5));
-		// One probe still answered, honestly, with "no".
+
 		expect(statuses().people).toBe('todo');
 
 		mounted?.unmount?.();
@@ -143,7 +138,7 @@ describe('permissions and failures', () => {
 		await vi.waitFor(() => expect(rows().length).toBe(5));
 
 		expect(statuses().assignment).toBe('unknown');
-		// 4 rows answered, 3 of them done — the failed read moves neither number.
+
 		expect(progress()).toBe('3 of 4 steps completed');
 		vi.restoreAllMocks();
 	});

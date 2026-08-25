@@ -1,5 +1,5 @@
-// Coach-mark placement: the two promises the tour makes about every card —
-// fully on screen, and never sitting on top of the thing it explains.
+
+
 import { describe, it, expect } from 'vitest';
 import { placeCard, isOnScreen, VIEWPORT_MARGIN, type Box } from './position';
 
@@ -60,8 +60,7 @@ describe('placeCard', () => {
 	it('stays on screen and admits the overlap when the anchor fills the viewport', () => {
 		const anchor = box(0, 0, VP.width, VP.height);
 		const p = placeCard(anchor, CARD, VP);
-		// No side can avoid an anchor that IS the viewport — but the card must
-		// still be reachable, which is the promise that actually matters.
+
 		expect(p.overlaps).toBe(true);
 		expect(isOnScreen({ x: p.x, y: p.y, ...CARD }, VP)).toBe(true);
 	});
@@ -69,8 +68,7 @@ describe('placeCard', () => {
 	it('pins the card start on screen when it is wider than the viewport', () => {
 		const narrow = { width: 320, height: 200 };
 		const p = placeCard(box(150, 100, 20, 20), narrow, { width: 300, height: 800 });
-		// Overflowing the far edge is survivable; pushing the title and the first
-		// control off the near edge is not.
+
 		expect(p.x).toBe(VIEWPORT_MARGIN);
 	});
 });

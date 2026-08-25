@@ -1,10 +1,5 @@
 <script lang="ts">
-	// The action's INSTALL / REMOVE switch — one control, used by the create
-	// surface, the detail editor and the pipeline step rows.
-	//
-	// It is a toggle everywhere, never a dropdown: the state has exactly two
-	// values (three counting the types that have only one), and a select for a
-	// binary choice hid the current value behind a click.
+
 	import * as m from '$lib/paraglide/messages';
 
 	let {
@@ -13,10 +8,9 @@
 		size = 'md',
 		label = m.action_detail_desired_state()
 	}: {
-		/** Proto DesiredState: 0 = PRESENT, 1 = ABSENT. */
+
 		value: number;
-		/** Types with no ABSENT are not offered a dead second option — they show
-		 *  the single RUN state they actually have. */
+
 		supportsAbsent?: boolean;
 		size?: 'sm' | 'md';
 		label?: string;

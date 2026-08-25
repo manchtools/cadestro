@@ -1,38 +1,24 @@
-// The fleet snapshot: the RPC reads behind the fleet and group zoom levels.
-//
-// Fleet/group zoom draw the WHOLE fleet, so they cannot ride the paged search
-// list — they sweep ListDevices (typed Device rows: status, last_seen_at,
-// compliance_status, sync_interval_minutes) and pair it with ListDeviceGroups +
-// one GetDeviceGroup per group for membership.
-//
-// TRADEOFF, stated rather than hidden: membership is 1 + G round-trips. The
-// contract exposes no bulk device->group edge — GetDeviceGroup is the only read
-// that returns member ids, and the alternative (ListDeviceGroupsForDevice) is
-// one call PER DEVICE, strictly worse. Calls run in small batches, and both
-// sweeps are bounded so one page load can never become an unbounded RPC storm.
+
+
 import { apiClient } from '$lib/sdk';
 import { DeviceStatus } from '$contract/cadestro/v1/common_pb';
 import type { Device, DeviceGroup } from '$contract/cadestro/v1/control_pb';
 
-/** ListDevices / ListDeviceGroups cap page_size at 100 (control.proto). */
 export const PAGE_SIZE = 100;
-/** Bound on each sweep. Past it the surface says it is showing a partial fleet
- *  instead of implying the tiles are everything. */
+
 export const MAX_PAGES = 20;
-/** Concurrent GetDeviceGroup calls. */
+
 const MEMBER_BATCH = 8;
 
 export interface FleetSnapshot {
 	devices: Device[];
-	/** Server-reported fleet size, even when the sweep stopped early. */
+
 	total: number;
 	truncated: boolean;
 	groups: DeviceGroup[];
-	/** groupId -> member device ids (GetDeviceGroup.device_ids). */
+
 	membership: Map<string, string[]>;
-	/** Non-null when the grouping reads failed (e.g. a self-service user without
-	 *  device-group permission); the surface then shows one ungrouped bubble and
-	 *  says why rather than pretending the fleet has no groups. */
+
 	groupsError: string | null;
 }
 

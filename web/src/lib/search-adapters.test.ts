@@ -1,12 +1,5 @@
-// The list surfaces are rendered from SEARCH documents, not from the List RPCs,
-// so these adapters decide what the operator sees in a row. A field the row
-// renders but the document does not carry has no honest value here — and the
-// tempting fallback is a plausible constant, which is a fabrication the UI then
-// states as fact.
-//
-// That is exactly what happened to `desiredState`: it was hardcoded to PRESENT,
-// so every remove-action read "Install" in the actions list while its own detail
-// page correctly said "Remove".
+
+
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
 import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
@@ -43,8 +36,7 @@ describe('searchResultToManagedAction', () => {
 	});
 
 	it('falls back to install only when the document truly omits the field', () => {
-		// Proto3 JSON omits zero values, so an absent field legitimately means
-		// PRESENT. What it must NOT do is swallow a present-but-unparseable value.
+
 		const omitted = searchResultToManagedAction(result({ type: String(ActionType.PACKAGE) }));
 		expect(omitted.desiredState).toBe(DesiredState.PRESENT);
 
@@ -56,12 +48,11 @@ describe('searchResultToManagedAction', () => {
 });
 
 describe('searchResultToUserGroup', () => {
-	// The document emits is_scim_managed now (server 031605d); the flag gates the
-	// list's delete guard, so it must come off the document, never a constant.
+
 	it('reads is_scim_managed from the document', () => {
 		expect(searchResultToUserGroup(result({ is_scim_managed: 'true' })).isScimManaged).toBe(true);
 		expect(searchResultToUserGroup(result({ is_scim_managed: 'false' })).isScimManaged).toBe(false);
-		// absent field = not SCIM-managed (proto3 JSON omits false)
+
 		expect(searchResultToUserGroup(result({})).isScimManaged).toBe(false);
 	});
 });
@@ -105,7 +96,7 @@ describe('searchResultUserRoles', () => {
 	it('dedupes inherited (role, group) pairs by role id', () => {
 		const roles = searchResultUserRoles(
 			result({
-				// The same role through two live groups is ONE chip.
+
 				inherited_role_ids: `${VIEW}, ${VIEW}, ${HELP}`,
 				inherited_role_names: 'Viewer, Viewer, Helpdesk'
 			})
@@ -117,9 +108,7 @@ describe('searchResultUserRoles', () => {
 	});
 
 	it('prefers the ids list on a count mismatch (comma-bearing role name)', () => {
-		// "Ops, EMEA" split into two fragments: the ids stay the source of truth
-		// for count and identity; the entry whose name is unrecoverable shows its
-		// id instead of a neighbour's fragment.
+
 		const roles = searchResultUserRoles(
 			result({ role_ids: `${ADMIN}, ${HELP}`, role_names: 'Admin, Ops, EMEA' })
 		);

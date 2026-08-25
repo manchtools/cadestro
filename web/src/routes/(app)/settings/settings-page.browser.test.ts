@@ -1,9 +1,5 @@
-// Conversion contract for Settings.
-//
-// The page was rebuilt as explanation-left / control-right section blocks. A
-// re-skin at that size can quietly drop a capability or a permission gate, so
-// these tests pin both: every capability still reaches its RPC, and the two
-// server-wide blocks stay behind the permission that guards their RPC.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser, userEvent } from 'vitest/browser';
@@ -24,7 +20,7 @@ const api = vi.hoisted(() => ({
 const auth = vi.hoisted(() => ({
 	granted: new Set<string>(),
 	user: {
-		// literal, not USER_ID: vi.hoisted() runs before module consts exist
+
 		id: '01JQZZ0000000000000000000A',
 		email: 'operator@example.test',
 		linuxUsername: 'operator',
@@ -104,7 +100,6 @@ describe('settings — every capability keeps a home', () => {
 			await expect.element(browser.getByRole('heading', { name: heading })).toBeVisible();
 		}
 
-		// Evidence rows still read the session and the config store.
 		await expect.element(browser.getByText('operator@example.test')).toBeVisible();
 		await expect.element(browser.getByText('fleet-admin')).toBeVisible();
 		await expect.element(browser.getByText('https://control.test')).toBeVisible();
@@ -156,8 +151,7 @@ describe('settings — every capability keeps a home', () => {
 		await browser.getByRole('button', { name: m.onboarding_restart_tour() }).click();
 
 		await vi.waitFor(() => expect(tour.startTour).toHaveBeenCalledTimes(1), { timeout: 3000 });
-		// Order matters: the steps resolve against the live DOM, so the navigation
-		// has to have happened before the tour is asked to start.
+
 		expect(nav.goto).toHaveBeenCalledWith('/devices');
 		expect(nav.goto.mock.invocationCallOrder[0]).toBeLessThan(
 			tour.startTour.mock.invocationCallOrder[0]
@@ -166,7 +160,7 @@ describe('settings — every capability keeps a home', () => {
 
 	it('keeps sign-out behind its confirmation dialog', async () => {
 		await mount();
-		// exact: the danger zone also holds "Clear Data & Sign Out".
+
 		await browser.getByRole('button', { name: m.settings_sign_out(), exact: true }).first().click();
 		await expect.element(browser.getByText(m.settings_sign_out_confirm())).toBeVisible();
 		await userEvent.keyboard('{Escape}');
@@ -184,7 +178,6 @@ describe('settings — server-wide capabilities stay permission-gated', () => {
 		expect(api.getServerSettings).not.toHaveBeenCalled();
 		expect(api.getCurrentUser).not.toHaveBeenCalled();
 
-		// The operator's own blocks survive the loss of every admin permission.
 		await expect.element(browser.getByRole('heading', { name: m.settings_account() })).toBeVisible();
 		await expect.element(browser.getByRole('heading', { name: m.common_danger_zone() })).toBeVisible();
 	});

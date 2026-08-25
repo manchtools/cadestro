@@ -1,6 +1,5 @@
-// Regression: the spotlight must hug its anchor's real shape. A fully-rounded
-// pill anchor got a hardcoded 12px rectangle plus a second border nested 2px
-// inside it — two visibly separate outlines around one pill.
+
+
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { resetOnboarding, startTour } from '$lib/onboarding/tour.svelte';
@@ -41,7 +40,7 @@ describe('tour spotlight ring geometry', () => {
 		render(TourOverlay);
 		expect(startTour([STEP])).toBe(true);
 		const ring = await spotlight();
-		// RING_PAD is 5: 26px anchor → 31px ring, concentric curves.
+
 		expect(getComputedStyle(ring).borderRadius).toBe('31px');
 	});
 
@@ -51,12 +50,11 @@ describe('tour spotlight ring geometry', () => {
 		expect(startTour([STEP])).toBe(true);
 		const ring = await spotlight();
 		const pulse = ring.querySelector('span');
-		if (!pulse) return; // reduced-motion environments render no pulse at all
+		if (!pulse) return;
 		expect(getComputedStyle(pulse).borderRadius).toBe(getComputedStyle(ring).borderRadius);
 		const rr = ring.getBoundingClientRect();
 		const pr = pulse.getBoundingClientRect();
-		// Coincides with the ring's own border box (2px outward inset), so the
-		// two borders overlay into one glowing edge.
+
 		expect(Math.abs(pr.left - rr.left)).toBeLessThanOrEqual(1);
 		expect(Math.abs(pr.top - rr.top)).toBeLessThanOrEqual(1);
 		expect(Math.abs(pr.width - rr.width)).toBeLessThanOrEqual(2);

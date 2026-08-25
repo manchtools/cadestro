@@ -1,15 +1,5 @@
 <script lang="ts">
-	// Device group detail — entity header card + tabs with counts.
-	//
-	// Identity (name, description) is a committable surface, so it commits from
-	// the context pill instead of two one-shot dialogs. The interval editors stay
-	// dialogs: they are one-shot pickers with no draft to carry.
-	//
-	// The pill is ALSO this group's action bar: it is held for the whole visit, so
-	// Delete and the maintenance window have a home that does not depend on having
-	// typed something first. `dirty` still tells the truth about the identity
-	// buffer, which is what turns Save/Stash/Cancel on and what decides whether
-	// leaving parks a draft.
+
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import { getLocalizedError } from '$lib/errors';
 	import { goto } from '$lib/navigation';
@@ -78,7 +68,6 @@
 	let inventoryIntervalDialogOpen = $state(false);
 	let maintenanceWindowDialogOpen = $state(false);
 
-	// Identity draft — the pill owns its commit.
 	let editingIdentity = $state(false);
 	let savingIdentity = $state(false);
 	let draftName = $state('');
@@ -86,15 +75,11 @@
 	const nameValidation = createFormValidation(editNameSchema);
 
 	const groupId = $derived(page.params.id ?? '');
-	// ONE context for the whole group. The Rule tab used to publish a second one,
-	// and with a single pill slot that meant two competing Saves: renaming a group
-	// AND editing its rule took two separate save events, and whichever surface
-	// held the bar decided which half of the work the button would commit.
+
 	const groupContextId = $derived(`device-group:${groupId}`);
 	const deviceById = $derived(new Map<string, Device>(allDevices.flatMap((d) => d.id ? [[d.id.value, d] as const] : [])));
 	const availableDevices = $derived(allDevices.filter((d) => !memberDeviceIds.includes((d.id?.value ?? ''))));
-	// Gated on `editingIdentity`: the pill is held even when the fields are shut,
-	// and a group the operator only looked at must never park a draft on the stage.
+
 	const identityDirty = $derived(
 		editingIdentity &&
 			group !== null &&
@@ -102,7 +87,6 @@
 	);
 	const identityNameValid = $derived(draftName.trim().length > 0);
 
-	// The rule's edit buffer and its live validation, reported up by the editor.
 	let draftQuery = $state('');
 	let ruleState = $state<QueryEditorState>({
 		text: '',
@@ -112,13 +96,12 @@
 		validating: false
 	});
 	let ruleConfirmOpen = $state(false);
-	/** The stored rule as last seen, so a reload cannot clobber an edit. */
+
 	let lastSavedQuery = '';
 	const savedQuery = $derived(group?.dynamicQuery ?? '');
 	const ruleDirty = $derived(group !== null && draftQuery !== savedQuery);
 	const ruleValid = $derived(ruleState.valid === true);
 
-	/** Labels shown inline on a preview row before it runs out of width. */
 	const PREVIEW_LABEL_CAP = 3;
 
 	const previewRows = $derived<RulePreviewRow[]>(
@@ -129,8 +112,7 @@
 				id: row.deviceId,
 				primary: row.hostname,
 				attributes: all.slice(0, PREVIEW_LABEL_CAP),
-				// Say what the cap left off: a three-label device and a nine-label
-				// one must not read identically.
+
 				hiddenAttributes: Math.max(0, all.length - PREVIEW_LABEL_CAP),
 				tone:
 					device?.status === DeviceStatus.ONLINE
@@ -146,10 +128,6 @@
 		if (groupId) loadData();
 	});
 
-	// If the page goes away mid-edit the pill must not keep pointing at a group
-	// that is no longer on screen — and must not DISCARD the unsaved identity.
-	// Auto-stash-on-navigate parks it on the stage instead; a commit/cancel/stash
-	// already cleared `owns`, so this only fires on a genuine leave.
 	onDestroy(() => {
 		if (owns) {
 			owns = false;
@@ -172,19 +150,12 @@
 					draftName = group.name;
 					draftDescription = group.description;
 				}
-				// The rule rebases on a fresh read unless the operator is mid-edit,
-				// exactly like the identity fields above it.
-				// Rebase the rule buffer on the STORED rule whenever the stored rule
-				// itself moved (first read, or a save landing) — never on an unrelated
-				// reload, which would eat an edit in progress. Imperative and ordered,
-				// so the parked-draft restore below still wins.
+
 				if (group.dynamicQuery !== lastSavedQuery) {
 					lastSavedQuery = group.dynamicQuery;
 					draftQuery = group.dynamicQuery;
 				}
-				// …then take back a draft this page parked on the stage. The buffer is
-				// component state, so it did NOT survive the unmount: the stash
-				// snapshotted it onto the card and this is where it comes back.
+
 				const parked = claimDraft(groupContextId) as GroupDraft | undefined;
 				if (parked) {
 					draftName = parked.name;
@@ -193,8 +164,7 @@
 					editingIdentity = true;
 				}
 			}
-			// F022 pattern: page through the fleet so the picker and the member
-			// attributes are complete, not capped at the first page.
+
 			allDevices = await fetchAllPages<Device>(async (size, token) => {
 				const r = await apiClient.listDevices(size, token);
 				return { items: r.devices, nextPageToken: r.nextPageToken };
@@ -207,25 +177,16 @@
 		}
 	}
 
-	// ── the pill is this group's action bar ──────────────────────────────────
-	/** This page's home — a stashed draft restores by navigating back to it. */
 	const contextRoute = $derived(`/device-groups/${groupId}`);
 
-	/** What Stash has to carry. These buffers are component state, so an unmount
-	 *  destroys them: the card must hold them itself. The rule rides along — it is
-	 *  the same context now, and a parked card that dropped the query would lose
-	 *  half the operator's work. */
 	interface GroupDraft {
 		name: string;
 		description: string;
 		query: string;
 	}
 
-	// Plain `let`, not `$state`: the effect writes it, so a tracked read would
-	// make the effect depend on its own write.
 	let owns = false;
-	/** The operator set this context aside on purpose: do not take the bar
-	 *  back when the slot frees, or Stash would undo itself. */
+
 	let stashParked = false;
 
 	function startIdentityEdit() {
@@ -246,14 +207,13 @@
 			id: groupContextId,
 			route: contextRoute,
 			title: draftName || (group?.name ?? ''),
-			// Either half counts. One bar, one Save, whichever tab is open.
+
 			dirty: identityDirty || ruleDirty,
 			valid: identityNameValid && ruleValid,
-			// Converting a static group is not a "save" — name what it does.
+
 			commitLabel:
 				ruleDirty && group && !group.isDynamic ? m.query_commit_convert() : m.common_save(),
-			// Every context explains itself; a greyed Save with no reason is a dead
-			// button. The rule's caption is the shared one, so the count and the
+
 			subtext: !identityNameValid
 				? m.validation_name_required()
 				: ruleDirty || !ruleValid
@@ -265,11 +225,9 @@
 					? ruleSubtext(ruleState, 'device').tone
 					: 'neutral') as 'neutral' | 'warn',
 			onCommit: () => {
-				// The store already exited context; a FAILED save re-acquires it below,
-				// so the operator never loses the buffer with the commit.
+
 				owns = false;
-				// A standing rule is a future-scope decision, so it keeps its real
-				// acknowledgement — but it now gates the ONE commit, not a second one.
+
 				if (ruleDirty) ruleConfirmOpen = true;
 				else void saveGroup();
 			},
@@ -278,9 +236,7 @@
 				revertIdentityEdit();
 				draftQuery = savedQuery;
 			},
-			// Stash releases the pill deliberately. The effect wakes when the slot
-			// frees, so without a remembered intent it would re-acquire instantly
-			// and the stash would never take.
+
 			onStash: () => {
 				stashParked = true;
 				owns = false;
@@ -295,9 +251,7 @@
 				query: draftQuery
 			}),
 			stashSubtitle: m.device_groups_edit_identity(),
-			// The group's own actions live in the pill, not as a trash glyph tucked
-			// into the header card and an Edit button a tab away. Both keep their
-			// dialogs — the pill is a shorter route to the gate, not a way past it.
+
 			extraActions: [
 				{
 					id: 'window',
@@ -317,70 +271,40 @@
 	function acquire() {
 		owns = true;
 		stashParked = false;
-		// Resuming edits supersedes any card this context parked on the stage: the
-		// live buffer is newer than the snapshot on the card.
+
 		removeDraft(draftIdFor(groupContextId));
 		enterContext(contextState());
 	}
 
 	function release() {
 		owns = false;
-		// Only tear down our own context — another surface may have taken over.
+
 		if (shell.pill.context?.id === groupContextId) exitContext();
 	}
 
 	$effect(() => {
-		// Read every reactive input HERE. `savingIdentity` parks the pill for the
-		// round trip: an in-flight commit has no second commit.
+
 		const active = group !== null && !savingIdentity;
-		// Tracked, but deliberately NOT a gate. The Rule tab publishes its own
-		// context and there is one pill, so whoever holds it keeps it — this only
-		// wakes the effect on a tab switch, so the bar comes back when the rule
-		// editor lets go. Gating on the tab instead is what made the pill reset to
-		// nav the moment the operator opened the query, and patching our state onto
-		// the rule editor's context is what greyed out its Save.
+
 		void activeTab;
-		// Tracked: this is what wakes the effect when whoever else held the bar
-		// lets go. The rule editor exits its context the moment the query matches
-		// the stored one again, and nothing else here would change — so the pill
-		// stayed empty until the next keystroke.
+
 		const holder = shell.pill.context?.id ?? null;
-		// The WHOLE state, not a three-field subset. Once the rule joined this
-		// context, a patch that carried only the identity fields left the pill
-		// blind to it: Save stayed disabled over a valid rule edit, and the rule's
-		// caption never reached the bar. Building the full state here also keeps
-		// every reactive input tracked in one place.
+
 		const patch = contextState();
-		// …and write to the store UNTRACKED. The store helpers read
-		// `shell.pill.context` themselves, so a tracked call would make this effect
-		// depend on the pill it just wrote — and Stash, which clears the context,
-		// would be undone by an instant re-acquire.
+
 		untrack(() => {
-			// Held is read from the STORE: another surface on this page (the Rule
-			// tab's editor) may have taken the single context slot, and a stale
-			// local flag made us patch OUR state onto ITS context — which set
-			// dirty:false on a dirty query and greyed out its Save.
+
 			const held = holder === groupContextId;
 			if (!active) {
 				if (held) release();
 				return;
 			}
 			if (held) updateContext(patch);
-			// Never stomp a context somebody else is holding — the Rule tab's editor
-			// takes this slot the moment its query is dirty, and patching our state
-			// onto it set dirty:false on a dirty query and greyed out its Save.
+
 			else if (holder === null && !stashParked) acquire();
 		});
 	});
 
-	/** The group's ONE commit: name, description and rule in a single save.
-	 *
-	 *  It used to take two — the Rule tab published its own context, so whichever
-	 *  surface held the single pill slot committed only its own half and the
-	 *  operator had to go back for the rest.
-	 *
-	 *  Order matters: identity first, so a rule that fails validation server-side
-	 *  does not silently discard a rename the operator already saw applied. */
 	async function saveGroup() {
 		if (!group) return;
 		const name = draftName.trim();
@@ -415,7 +339,6 @@
 		}
 	}
 
-	// ── mutations ────────────────────────────────────────────────────────────
 	async function deleteGroup() {
 		try {
 			await apiClient.deleteDeviceGroup(groupId);
@@ -495,9 +418,7 @@
 
 	async function updateMaintenanceWindow(entries: MaintenanceWindowEntryInput[]) {
 		try {
-			// An empty entry list clears the group's contribution to the
-			// device-side union; pass undefined so the wire shape drops the
-			// schedule entirely.
+
 			const window =
 				entries.length === 0
 					? undefined
@@ -522,8 +443,7 @@
 			<Button variant="ghost" size="icon" aria-label={m.common_back()} onclick={() => history.back()}>
 				<ArrowLeft class="h-4 w-4" />
 			</Button>
-			<!-- The ENTITY, not the section. This said "Device Groups" while the pill
-			     held the group's name, so the two disagreed about where you were. -->
+
 			<div class="min-w-0 flex-1">
 				<h1 class="truncate text-2xl font-bold">{group?.name ?? m.common_loading()}</h1>
 				<p class="font-mono text-xs text-faint">{groupId}</p>
@@ -548,7 +468,7 @@
 			<RefreshCw class="h-6 w-6 animate-spin text-muted-foreground" />
 		</div>
 	{:else if group}
-		<!-- entity header card -->
+
 		<div
 			class="rounded-xl border border-hair bg-surface p-4 shadow-plate"
 			data-tour="group-header"
@@ -559,10 +479,7 @@
 				<div class="min-w-0 flex-1">
 					{#if editingIdentity}
 						<div class="space-y-1.5" data-testid="identity-edit">
-							<!-- "The pill commits this" is a standing note about the whole
-							     editor, so it goes first — trailing it after the fields told
-							     the operator where Save lives only once they had stopped
-							     looking for it. -->
+
 							<p class="text-xs text-muted-foreground">{m.device_groups_identity_pill_hint()}</p>
 							<Input
 								bind:value={draftName}
@@ -607,8 +524,7 @@
 						value={group.memberCount}
 						label={m.device_group_detail_devices()}
 					/>
-					<!-- No trash glyph here: Delete acts on the whole group, so it is a
-					     pill action. The confirm dialog is still the gate. -->
+
 				</div>
 			</div>
 		</div>
@@ -648,10 +564,6 @@
 				/>
 			</Tabs.Content>
 
-			<!-- Two cadence FIELDS of the group, edited where their current value is
-			     read. The maintenance window is not here: it is a group-wide policy
-			     that unions into every member device, so it moved to the pill with
-			     Delete — a value row with no control would have been a hollow card. -->
 			<Tabs.Content value="schedules" class="mt-3">
 				<div class="divide-y rounded-xl border border-hair bg-surface shadow-plate" data-testid="schedules-tab">
 					<div class="flex flex-wrap items-center gap-3 p-3">
@@ -683,9 +595,6 @@
 	{/if}
 </PageShell>
 
-<!-- The future-scope acknowledgement gates the group's ONE commit: a standing
-     rule decides membership from here on, and a banner you can scroll past is
-     not an acknowledgement. Cancelling keeps the buffer and the pill. -->
 <FutureScopeDialog
 	bind:open={ruleConfirmOpen}
 	queryText={ruleState.text}

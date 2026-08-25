@@ -1,8 +1,4 @@
-// Behavioural tests for the list pages. Each interaction (typing, clicking a
-// sort header, ticking a filter, paging) is verified by the exact Search
-// request it emits — deterministic, and a direct check of the wiring that
-// powers #325 server-side search. DOM-state interactions (row → detail nav)
-// are asserted on the URL.
+
 
 import { test, expect, preparePage, gotoAndSettle, recordRpc } from './fixtures';
 import type { Page } from '@playwright/test';
@@ -17,8 +13,6 @@ type SearchReq = {
 	tagFilters?: Record<string, string>;
 };
 
-// The last Search request whose tagFilters/sort we care about — poll until the
-// debounced request lands, then assert on it.
 function lastSearch(calls: SearchReq[]): SearchReq {
 	return calls[calls.length - 1] ?? {};
 }
@@ -52,8 +46,6 @@ test.describe('list sort', () => {
 	});
 });
 
-// #325 empty-relation filters: the checkbox must emit @member_count / @rule_count
-// = 0 as a tag filter (the gap the server-side NUMERIC-range fix closed).
 test.describe('empty-relation filters (#325)', () => {
 	const cases: Array<{ name: string; path: string; label: string; field: string }> = [
 		{ name: 'action-sets · no assigned actions', path: '/action-sets', label: 'No assigned actions', field: 'member_count' },
@@ -89,8 +81,7 @@ test.describe('list filters', () => {
 test.describe('list pagination', () => {
 	test('the next-page control advances the page token (offset)', async ({ page }) => {
 		await preparePage(page, 'light');
-		// Report a large total so the next-page control enables (the fixtures
-		// alone fit on one page). Registered after preparePage → wins (LIFO).
+
 		await page.route('**/cadestro.v1.ControlService/Search', async (route) => {
 			await route.fulfill({
 				status: 200,
@@ -109,8 +100,7 @@ test.describe('list pagination', () => {
 		});
 		const search = recordRpc<SearchReq>(page, 'Search');
 		await gotoAndSettle(page, '/devices', 'table tbody tr');
-		// The pager renders: [prev] <span>Page 1 of N</span> [next]. The next
-		// button is the span's following sibling.
+
 		await page
 			.locator('span', { hasText: /Page \d+ of \d+/ })
 			.locator('xpath=following-sibling::button[1]')
@@ -123,7 +113,7 @@ test.describe('list navigation', () => {
 	test('clicking a row opens its detail page', async ({ page }: { page: Page }) => {
 		await preparePage(page, 'light');
 		await gotoAndSettle(page, '/devices', 'table tbody tr');
-		// Rows navigate via the hostname link (<a href=".../devices/<id>">).
+
 		await page.locator('a[href*="/devices/01J6XYZSHOWCASEDEVICE0001"]').first().click();
 		await expect(page).toHaveURL(/\/devices\/01J6XYZSHOWCASEDEVICE0001/);
 	});

@@ -1,8 +1,5 @@
-// The definition builder is the same rail one level up, but a DIFFERENT commit
-// sequence — it must reach the definition RPCs, never the action-set ones.
-//
-// Its pill is also the definition's ACTION BAR: held from mount, clean, carrying
-// the actions the detail page handed down.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -26,7 +23,7 @@ const api = vi.hoisted(() => ({
 	renameDefinition: vi.fn(),
 	updateDefinitionDescription: vi.fn(),
 	getActionSet: vi.fn(),
-	// The action-set builder's RPCs must never be reached from here.
+
 	reorderActionInSet: vi.fn(),
 	addActionToSet: vi.fn()
 }));
@@ -87,7 +84,6 @@ function actionSet(id: string, name: string, memberCount: number): ActionSet {
 	return create(ActionSetSchema, { id: { value: id }, name, memberCount });
 }
 
-/** Deliberately out of order — the rail must sort by sortOrder. */
 function members() {
 	return [
 		{ actionSetId: SET_B, sortOrder: 1, actionSetName: 'Harden SSH baseline' },
@@ -95,8 +91,6 @@ function members() {
 	];
 }
 
-/** The detail page hands the DEFINITION's own actions down to the builder; a
- *  recorder stands in for the page's confirm dialog. */
 let deleteRuns = 0;
 
 function mount() {
@@ -141,7 +135,7 @@ describe('the pill is the definition’s action bar', () => {
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`definition:${DEF_ID}`));
-		// Nothing edited yet: nothing to save, and ⌘S is closed in the store.
+
 		expect(shell.pill.context?.dirty).toBe(false);
 		expect(commitContext()).toBe(false);
 		expect(api.renameDefinition).not.toHaveBeenCalled();
@@ -174,11 +168,9 @@ describe('definition pipeline', () => {
 		mount();
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 
-		// Append "Baseline inventory" from the palette …
 		document.querySelector<HTMLButtonElement>(`[data-palette-entry="${SET_C}"]`)!.click();
 		await vi.waitFor(() => expect(railTitles().length).toBe(3));
 
-		// … then move it to the front, which shifts both existing members.
 		const upButtons = document.querySelectorAll<HTMLButtonElement>(
 			`button[aria-label="${m.action_set_detail_builder_move_up()}"]`
 		);
@@ -202,7 +194,7 @@ describe('definition pipeline', () => {
 			[DEF_ID, SET_A, 1],
 			[DEF_ID, SET_B, 2]
 		]);
-		// A definition never writes through the action-set surface.
+
 		expect(api.reorderActionInSet).not.toHaveBeenCalled();
 		expect(api.addActionToSet).not.toHaveBeenCalled();
 	});

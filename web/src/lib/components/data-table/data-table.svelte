@@ -9,7 +9,7 @@
 	interface Column {
 		id: string;
 		label: string;
-		/** If set, the header is a sort button toggling this key. */
+
 		sortKey?: K;
 		class?: string;
 	}
@@ -25,12 +25,12 @@
 	}: {
 		table: TableView<Row, K>;
 		columns: Column[];
-		/** Renders the <Table.Cell>s for one row (DataTable wraps them in <Table.Row>). */
+
 		row: Snippet<[Row]>;
 		rowKey: (row: Row) => string;
-		/** Empty-state body (rendered inside the card in place of the table). */
+
 		empty?: Snippet;
-		/** Custom loading body (rows inside <Table.Body>); defaults to skeleton rows. */
+
 		loading?: Snippet;
 		loadingRows?: number;
 	} = $props();

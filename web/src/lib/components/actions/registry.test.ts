@@ -1,9 +1,4 @@
-// Tests for the per-action-type adapter registry (F003 + F004).
-//
-// The registry is the contract between the orchestrator god-components
-// and the individual ParamsForm files. If a type drifts (registry says
-// "package" but proto says "shell") the create-action and edit-params
-// flows silently send malformed data. Pin the contract here.
+
 
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
@@ -66,13 +61,12 @@ describe('ACTION_REGISTRY', () => {
 	});
 
 	it('encodes which action types skip the desired-state ABSENT toggle', () => {
-		// Single source of truth — orchestrators read this instead of
-		// hand-coding the SHELL/UPDATE/AGENT_UPDATE/COMPLIANCE_CHECK list.
+
 		expect(ACTION_REGISTRY.SHELL.supportsAbsent).toBe(false);
 		expect(ACTION_REGISTRY.UPDATE.supportsAbsent).toBe(false);
 		expect(ACTION_REGISTRY.AGENT_UPDATE.supportsAbsent).toBe(false);
 		expect(ACTION_REGISTRY.COMPLIANCE_CHECK.supportsAbsent).toBe(false);
-		// Spot-check a few that do.
+
 		expect(ACTION_REGISTRY.PACKAGE.supportsAbsent).toBe(true);
 		expect(ACTION_REGISTRY.FILE.supportsAbsent).toBe(true);
 		expect(ACTION_REGISTRY.FLATPAK.supportsAbsent).toBe(true);
@@ -91,7 +85,7 @@ describe('formKeyFromActionType', () => {
 	});
 
 	it('returns null for action types without a params form', () => {
-		// SCRIPT_RUN has no editable params shape.
+
 		expect(formKeyFromActionType(ActionType.SCRIPT_RUN)).toBeNull();
 	});
 });
@@ -115,12 +109,9 @@ describe('formKeyFromString', () => {
 	});
 });
 
-// Smoke-test that defaultForm -> formToProto -> protoToForm round-trips
-// without throwing. This catches type-shape drift between the form-state
-// interfaces and the proto schemas.
 describe('default-form proto round-trip', () => {
 	const skip = new Set<FormKey>([
-		// COMPLIANCE_CHECK and SHELL share the SHELL converters; tested under SHELL.
+
 		'COMPLIANCE_CHECK'
 	]);
 	for (const key of FORM_KEYS) {

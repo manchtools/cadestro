@@ -20,7 +20,7 @@ for (const theme of THEMES) {
 		await primeStorage(page, theme);
 		await mockControlService(page);
 		await page.goto('/roles', { waitUntil: 'networkidle' });
-		// Roles page uses ListRoles directly; wait for at least one role card / row.
+
 		await page.waitForSelector('text=Fleet Operator', { timeout: 15_000 });
 		await page.screenshot({
 			path: `tests/showcase/output/roles-${theme}.png`,

@@ -1,15 +1,5 @@
-// The action library's semantic zoom, exercised through the REAL route component
-// against mocked RPCs. What is load-bearing here:
-//
-//   1. the bubbles are the sweep's answer — one per type really present, with
-//      counts and per-action tiles derived from ManagedAction fields only;
-//   2. a sweep that hits its bound SAYS it is partial instead of implying the
-//      tiles are the whole library;
-//   3. clicking a type drives the page's REAL type filter — the same
-//      `?types=` param and the same tag filter the menu produces, never a fork;
-//   4. the overview never spends a Search RPC (the fleet's promise), while the
-//      pill's page-search registration survives BOTH levels;
-//   5. zoom round-trips through the URL, so an overview is a link.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -44,8 +34,6 @@ vi.mock('$app/navigation', () => ({
 	beforeNavigate: vi.fn()
 }));
 
-// Only the client is faked; the generated protobuf re-exports stay real, so the
-// page's ActionType / DesiredState / SearchScope constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -102,7 +90,6 @@ const stats = () =>
 		s.querySelector('b')!.textContent
 	]);
 
-/** Positional apiClient.search args — see list-logic's SearchArgs tuple. */
 function lastSearchArgs() {
 	const call = mocks.search.mock.calls.at(-1);
 	if (!call) throw new Error('the page never issued a search');
@@ -111,7 +98,6 @@ function lastSearchArgs() {
 	return { query, scope, pageSize, pageToken, dateFilters, tagFilters, sortField, sortDirection };
 }
 
-/** The URL every history write in this test carries, in the order they landed. */
 function pushedTargets(): string[] {
 	return mocks.pushState.mock.calls.map((c) => String(c[0]));
 }
@@ -133,15 +119,13 @@ describe('overview zoom — the bubbles are the sweep’s answer', () => {
 		render(ActionsPage);
 		await vi.waitFor(() => expect(bubbles().length).toBeGreaterThan(0), { timeout: 3000 });
 
-		// A compliance-flagged SHELL action is its own bucket, not a shell script.
 		expect(bubbles().map((b) => b.dataset.bucket)).toEqual(['package', 'compliance', 'shell']);
 		expect(bubbles().map((b) => b.querySelectorAll('[data-testid="library-tile"]').length)).toEqual([
 			2, 1, 1
 		]);
-		// One tile per swept action, no more.
+
 		expect(tiles().length).toBe(LIBRARY.length);
 
-		// The removal carries its own shape, so the state is never colour-alone.
 		const removal = tiles().find((t) => t.dataset.actionId === 'p2');
 		expect(removal).toBeDefined();
 		expect(removal!.dataset.state).toBe('absent');
@@ -155,7 +139,6 @@ describe('overview zoom — the bubbles are the sweep’s answer', () => {
 		render(ActionsPage);
 		await vi.waitFor(() => expect(bubbles().length).toBeGreaterThan(0), { timeout: 3000 });
 
-		// install 3 · remove 1 · 3 types — install + remove is the swept total.
 		expect(stats()).toEqual([
 			['ok', '3'],
 			['crit', '1'],
@@ -172,8 +155,7 @@ describe('overview zoom — the bubbles are the sweep’s answer', () => {
 	});
 
 	it('says the library is partial when the sweep hits its bound', async () => {
-		// A server that never stops handing out page tokens, one distinct action
-		// per page — the sweep must stop at MAX_PAGES rather than follow forever.
+
 		let n = 0;
 		mocks.listActions.mockImplementation(async () => ({
 			actions: [action({ id: `page-${n++}`, name: `Action ${n}`, type: ActionType.PACKAGE })],
@@ -189,13 +171,12 @@ describe('overview zoom — the bubbles are the sweep’s answer', () => {
 		expect(mocks.listActions).toHaveBeenCalledTimes(MAX_PAGES);
 		expect(tiles().length).toBe(MAX_PAGES);
 		const banner = document.querySelector('[data-testid="library-truncated"]')!.textContent!;
-		expect(banner).toContain(String(MAX_PAGES)); // what it really shows
-		expect(banner).toContain('9000'); // what the server says exists
+		expect(banner).toContain(String(MAX_PAGES));
+		expect(banner).toContain('9000');
 	});
 
 	it('counts an action once when two pages of the sweep overlap', async () => {
-		// Rows shift between pages; a repeated ULID must not inflate the counts
-		// (nor blow up the keyed tile grid).
+
 		mocks.listActions
 			.mockResolvedValueOnce({ actions: LIBRARY, nextPageToken: 'next', totalCount: 4 })
 			.mockResolvedValueOnce({
@@ -231,12 +212,10 @@ describe('clicking a type drives the page’s real filter', () => {
 		const pkg = bubbles().find((b) => b.dataset.bucket === 'package')!;
 		pkg.querySelector<HTMLButtonElement>('[data-testid="library-bubble-header"]')!.click();
 
-		// One gesture, one history entry — carrying BOTH the level and the filter.
 		await vi.waitFor(() => expect(pushedTargets().length).toBe(1));
 		expect(pushedTargets()[0]).toContain('types=package');
 		expect(pushedTargets()[0]).not.toContain('zoom=overview');
 
-		// …and the list it lands on really asks the server for that type.
 		await vi.waitFor(() => expect(mocks.search).toHaveBeenCalled(), { timeout: 3000 });
 		expect(lastSearchArgs().tagFilters).toEqual({ type: String(ActionType.PACKAGE) });
 		expect(lastSearchArgs().scope).toBe(SearchScope.ACTIONS);
@@ -274,7 +253,6 @@ describe('the overview never spends a search, and ⌘K keeps its facet', () => {
 		render(ActionsPage);
 		await vi.waitFor(() => expect(tiles().length).toBeGreaterThan(0), { timeout: 3000 });
 
-		// give the search state's debounce more than enough room to have fired
 		await new Promise((r) => setTimeout(r, 500));
 		expect(mocks.search).not.toHaveBeenCalled();
 	});
@@ -283,7 +261,6 @@ describe('the overview never spends a search, and ⌘K keeps its facet', () => {
 		render(ActionsPage);
 		await vi.waitFor(() => expect(tiles().length).toBeGreaterThan(0), { timeout: 3000 });
 
-		// overview: registered, and typing into it still costs no RPC
 		expect(activePageSearch()?.scope).toBe(SearchScope.ACTIONS);
 		activePageSearch()!.setQuery('firefox');
 		await vi.waitFor(() =>
@@ -293,7 +270,6 @@ describe('the overview never spends a search, and ⌘K keeps its facet', () => {
 		await new Promise((r) => setTimeout(r, 500));
 		expect(mocks.search).not.toHaveBeenCalled();
 
-		// list: same registration, and the query it collected reaches the server
 		document.querySelector<HTMLButtonElement>('[data-testid="library-zoom-list"]')!.click();
 		await vi.waitFor(() => expect(mocks.search).toHaveBeenCalled(), { timeout: 3000 });
 		expect(activePageSearch()?.scope).toBe(SearchScope.ACTIONS);
@@ -302,13 +278,11 @@ describe('the overview never spends a search, and ⌘K keeps its facet', () => {
 });
 
 describe('zoom is URL state', () => {
-	// The drill-down grammar: the OVERVIEW is the landing level, the list is one
-	// zoom in — same as the Devices fleet. An explicit level in the URL still wins.
+
 	it('defaults to the overview: a bare /actions link lands on the high level', async () => {
 		mocks.url = new URL('https://control.test/actions');
 		render(ActionsPage);
 
-		// Landing pays for the sweep, not for list rows.
 		await vi.waitFor(() => expect(mocks.listActions).toHaveBeenCalled(), { timeout: 3000 });
 		await vi.waitFor(() => expect(bubbles().length).toBeGreaterThan(0), { timeout: 3000 });
 		expect(
@@ -316,7 +290,7 @@ describe('zoom is URL state', () => {
 				.querySelector<HTMLElement>('[data-testid="library-zoom-overview"]')!
 				.getAttribute('aria-pressed')
 		).toBe('true');
-		// The paused list never spends a Search RPC at the landing level.
+
 		expect(mocks.search).not.toHaveBeenCalled();
 	});
 
@@ -331,7 +305,7 @@ describe('zoom is URL state', () => {
 				.getAttribute('aria-pressed')
 		).toBe('true');
 		expect(bubbles().length).toBe(0);
-		// The sweep stays lazy: the list level never pays for it.
+
 		expect(mocks.listActions).not.toHaveBeenCalled();
 	});
 

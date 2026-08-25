@@ -1,9 +1,4 @@
-// Tests for createFormBundle (F003 + F004).
-//
-// The bundle is the runtime contract that lets both god-orchestrators
-// (action-create-form, edit-params-dialog) treat 19 action types as a
-// uniform map. If a registry entry is missing, validate() / set() /
-// clearAllErrors() will throw on iteration — the bundle test pins this.
+
 
 import { describe, it, expect } from 'vitest';
 import { createFormBundle } from './form-bundle.svelte';
@@ -29,8 +24,7 @@ describe('createFormBundle', () => {
 
 	it('clearAllErrors does not throw and resets every handle', () => {
 		const bundle = createFormBundle();
-		// Run a validation that will likely fail (default forms aren't
-		// always valid) and then clear.
+
 		for (const key of FORM_KEYS) {
 			bundle.validate(key);
 		}
@@ -51,7 +45,7 @@ describe('createFormBundle', () => {
 			isCompliance: false
 		});
 		expect(bundle.params.SHELL).not.toBe(original);
-		// Other keys still have their default state
+
 		expect(bundle.params.PACKAGE).toBeDefined();
 	});
 });

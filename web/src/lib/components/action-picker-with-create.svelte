@@ -10,15 +10,15 @@
 	import * as m from '$lib/paraglide/messages';
 
 	interface Props {
-		/** Whether the dialog is open */
+
 		open?: boolean;
-		/** Available actions to pick from */
+
 		availableActions: ManagedAction[];
-		/** Called when actions are selected (existing actions) */
+
 		onSelect: (actionIds: string[]) => void;
-		/** Called when a new action is created */
+
 		onCreate: (action: ManagedAction) => void;
-		/** Called when dialog is closed */
+
 		onClose: () => void;
 	}
 
@@ -33,7 +33,6 @@
 	let showCreateForm = $state(false);
 	let selectedActionIds = $state<string[]>([]);
 
-	// Reset state when dialog opens
 	$effect(() => {
 		if (open) {
 			showCreateForm = false;

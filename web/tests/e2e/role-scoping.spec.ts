@@ -1,6 +1,4 @@
-// The role-assignment scope picker is driven by each permission's target_kind
-// (ListPermissions), not a hardcoded allowlist. Verify both the available choice
-// and the request sent after assigning it.
+
 
 import { test, expect, preparePage, gotoAndSettle, recordRpc, clickUntil } from './fixtures';
 import type { Page, Route } from '@playwright/test';
@@ -15,9 +13,6 @@ async function json(route: Route, body: unknown): Promise<void> {
 	});
 }
 
-// Scope-picker fixtures: three roles each with one permission of a distinct
-// target kind, plus a device group and a user group to scope to. Registered
-// after preparePage so they win (page.route is LIFO).
 async function installScopeFixtures(page: Page): Promise<void> {
 	await page.route('**/cadestro.v1.ControlService/ListPermissions', (r) =>
 		json(r, {
@@ -49,7 +44,6 @@ async function installScopeFixtures(page: Page): Promise<void> {
 
 type AssignReq = { roleIds?: string[]; scopeKind?: string | number; scopeId?: string };
 
-// Open the Assign Role dialog and select one role by name.
 async function openDialogAndSelect(page: Page, roleName: string): Promise<void> {
 	const trigger = page.getByRole('button', { name: 'Assign Role' }).first();
 	const roleRow = page.getByRole('dialog').getByText(roleName);
@@ -74,7 +68,6 @@ test('DEVICE-kind role offers a device-group picker and assigns with DEVICE_GROU
 	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
 	await openDialogAndSelect(page, 'Device Scoped Role');
 
-	// The scope picker appears (device kind) and offers the device group.
 	await expect(scopePicker(page)).toBeEnabled();
 	await chooseScope(page, 'Production');
 
@@ -114,22 +107,16 @@ test('non-scopable role offers no picker and sends an unscoped grant', async ({ 
 	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
 	await openDialogAndSelect(page, 'Org Wide Role');
 
-	// The control stays visible to explain that the role is organization-wide,
-	// but it cannot accept a narrower scope.
 	await expect(scopePicker(page)).toBeDisabled();
 
 	await page.getByRole('dialog').getByRole('button', { name: 'Assign', exact: true }).click();
 
 	await expect.poll(() => calls.length, { timeout: 5000 }).toBeGreaterThan(0);
 	expect(calls[0].roleIds).toEqual(['ROLE_ORG']);
-	// UNSPECIFIED scope is the proto default → omitted from the JSON request.
+
 	expect(calls[0].scopeId ?? '').toBe('');
 	expect(String(calls[0].scopeKind ?? '')).toMatch(/UNSPECIFIED|^0$|^$/);
 });
-
-// ---------------------------------------------------------------------------
-// Same affordance on the user-group → roles flow.
-// ---------------------------------------------------------------------------
 
 const GROUP_ID = '01J6XYZSHOWCASEGROUP0001';
 

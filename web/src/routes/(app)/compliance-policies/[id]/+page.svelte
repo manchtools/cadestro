@@ -54,7 +54,6 @@
 	let newDescription = $state('');
 	const nameValidation = createFormValidation(editNameSchema);
 
-	// Add rule state
 	let complianceActions = $state<ManagedAction[]>([]);
 	let selectedActionId = $state('');
 	let gracePeriodHours = $state(0);
@@ -70,19 +69,12 @@
 		})
 	);
 
-	// Edit grace period state
 	let editRuleActionId = $state('');
 	let editGracePeriodHours = $state(0);
 	let updatingRule = $state(false);
 
 	const policyId = $derived(page.params.id ?? '');
 
-	// The policy's OWN action. There is no editable draft on this page — every
-	// field commits through its own dialog — so the context it holds is
-	// permanently clean: it exists solely to be the policy's action bar, the same
-	// role the action detail page's clean context plays for action types with no
-	// params form. A clean context offers no Stash/Cancel and a disabled commit,
-	// so Delete reads as the one thing on offer, in crit with a trash glyph.
 	const entityActions: PillAction[] = [
 		{
 			id: 'delete',
@@ -91,11 +83,7 @@
 			onRun: () => (deleteDialogOpen = true)
 		}
 	];
-	// Deliberately NOT `compliance-policy:<id>`: the detail SHEET on the list
-	// route already owns that id for a dirty grace-period draft, and the pill has
-	// one slot. Sharing the id would let this page's clean context replace that
-	// draft — or the sheet's teardown drop this page's action bar — on the
-	// navigation between them.
+
 	const contextId = $derived(`compliance-policy-actions:${policyId}`);
 	$effect(() => {
 		const p = policy;
@@ -116,13 +104,6 @@
 		if (shell.pill.context?.id === contextId) exitContext();
 	});
 
-	// Per-device results. There is no policy→devices status RPC: the retained
-	// surface has GetDeviceCompliancePolicyStatus(device_id) only, so the page
-	// resolves the policy's directly-assigned devices through ListAssignments and
-	// reads each device's evaluation, capped so a large assignment cannot turn
-	// one page load into hundreds of requests. Devices reached through a group
-	// assignment are counted but not expanded — that would need group-membership
-	// reads this section does not make.
 	const DEVICE_RESULT_LIMIT = 25;
 
 	type DeviceResult = {
@@ -185,7 +166,7 @@
 				const target = slice[i];
 				const hostname = target.targetName || (target.targetId?.value ?? '').slice(0, 8) + '...';
 				if (result.status === 'rejected') {
-					// A device we could not read is reported as unknown, never as passing.
+
 					console.error('Failed to read device compliance status', result.reason);
 					return {
 						deviceId: target.targetId?.value ?? '',
@@ -226,7 +207,6 @@
 		}
 	}
 
-	/** Static per-tone ink; Tailwind only emits classes it can see literally. */
 	const TONE_INK: Record<FleetTone, string> = {
 		ok: 'text-ok',
 		warn: 'text-warn',
@@ -301,12 +281,12 @@
 
 	async function openAddRuleDialog() {
 		try {
-			// F023: page through all SHELL actions instead of capping at 200.
+
 			const allActions = await fetchAllPages<ManagedAction>(async (size, token) => {
 				const r = await apiClient.listActions(size, token, ActionType.SHELL);
 				return { items: r.actions, nextPageToken: r.nextPageToken };
 			});
-			// Filter to only compliance check actions and exclude already-added ones
+
 			const existingActionIds = policy?.rules.map((r) => r.actionId?.value ?? '') ?? [];
 			complianceActions = allActions.filter((a) => {
 				if (existingActionIds.includes((a.id?.value ?? ''))) return false;
@@ -423,8 +403,7 @@
 			<RefreshCw class="h-6 w-6 animate-spin text-muted-foreground" />
 		</div>
 	{:else if policy}
-		<!-- Left column explains what the rule checks; right column is the control
-		     that changes it. Same grammar as the sheet. -->
+
 		<section
 			data-tour="compliance-sections"
 			class="space-y-6 rounded-xl border border-hair bg-surface p-4 shadow-plate"
@@ -618,7 +597,6 @@
 
 <EditDescriptionDialog bind:open={editDescDialogOpen} bind:value={newDescription} onsave={updateDescription} />
 
-<!-- Add Rule Dialog -->
 <Dialog.Root bind:open={addRuleDialogOpen}>
 	<Dialog.Content class={addRuleStep === 'create-action' ? 'sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col' : 'sm:max-w-lg'}>
 		{#if addRuleStep === 'select'}
@@ -721,7 +699,6 @@
 	</Dialog.Content>
 </Dialog.Root>
 
-<!-- Edit Grace Period Dialog -->
 <Dialog.Root bind:open={editGraceDialogOpen}>
 	<Dialog.Content>
 		<Dialog.Header>

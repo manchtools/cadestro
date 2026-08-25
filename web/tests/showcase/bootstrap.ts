@@ -1,5 +1,5 @@
-// Browser-side bootstrap for deterministic Playwright sessions. Test fixtures
-// are intentionally confined to tests/ and never ship in the application.
+
+
 import type { Page } from '@playwright/test';
 import { ALL_PERMISSIONS } from './dummy';
 
@@ -71,7 +71,7 @@ async function seedSession(page: Page, theme: Theme, auth: string): Promise<void
 				localStorage.setItem(authKey, auth);
 				localStorage.setItem(modeKey, mode);
 			} catch {
-				// Private mode or quota errors are irrelevant in headless Chromium.
+
 			}
 		},
 		{
@@ -85,7 +85,6 @@ async function seedSession(page: Page, theme: Theme, auth: string): Promise<void
 		}
 	);
 
-	// Keep the optional marketplace out of product-focused screenshots.
 	await page.addInitScript(() => {
 		const css = 'a[href$="/marketplace"], a[href*="/marketplace?"] { display: none !important; }';
 		const apply = () => {

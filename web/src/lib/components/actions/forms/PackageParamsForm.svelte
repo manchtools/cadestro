@@ -14,17 +14,14 @@
 
 	let { params = $bindable(), errors, onclearerror }: Props = $props();
 
-	// Determine if we're using per-manager names based on whether any are set
 	let usePerManagerNames = $state(false);
 
-	// Initialize based on whether manager-specific names exist
 	$effect(() => {
 		if (params.aptName || params.dnfName || params.pacmanName || params.zypperName) {
 			usePerManagerNames = true;
 		}
 	});
 
-	// When switching modes, clear the appropriate fields
 	function handleModeChange(enabled: boolean) {
 		usePerManagerNames = enabled;
 		if (enabled) {
@@ -127,8 +124,6 @@
 		</div>
 	{/if}
 
-	<!-- A version is a short token; a field the width of the whole plate reads as
-	     an invitation to type a sentence into it. -->
 	<div class="space-y-1.5 sm:max-w-64">
 		<Label for="packageVersion">{m.actions_params_package_version()}</Label>
 		<Input id="packageVersion" placeholder="e.g., 120.0" bind:value={params.version} />

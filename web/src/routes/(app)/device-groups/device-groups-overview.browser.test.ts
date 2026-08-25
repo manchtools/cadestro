@@ -1,7 +1,5 @@
-// The device-groups drill-down: the OVERVIEW is the landing level (one card
-// tile per group, every number a ListDeviceGroups response field), and the
-// existing list is one zoom in. Clicking a tile zooms to that group's device
-// grid — the Devices fleet's existing group level route.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
@@ -36,7 +34,7 @@ vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const actions = await import('$contract/cadestro/v1/actions_pb');
-	// The REAL pager: the sweep must actually walk the mocked list RPC.
+
 	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {
 		...actions,
@@ -92,7 +90,7 @@ describe('/device-groups — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		expect(document.querySelector('[data-testid="device-groups-overview"]')).not.toBeNull();
-		// Every displayed number is a response field: memberCount, isDynamic.
+
 		const rule = tiles().find((t) => t.dataset.entityId === RULE_GROUP.id)!;
 		expect(rule.textContent).toContain('Kiosks');
 		expect(rule.textContent).toContain('7 members');
@@ -100,7 +98,7 @@ describe('/device-groups — the overview is the landing level', () => {
 		const curated = tiles().find((t) => t.dataset.entityId === CURATED_GROUP.id)!;
 		expect(curated.textContent).toContain('3 members');
 		expect(curated.dataset.dynamic).toBe('false');
-		// The paused list never spends a Search RPC at the landing level.
+
 		expect(mocks.search).not.toHaveBeenCalled();
 	});
 

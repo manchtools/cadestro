@@ -1,10 +1,5 @@
-// Conversion contract for the ⌘K palette (movement E).
-//
-// The palette's whole claim is honesty about what search is: the server does
-// prefix matching with keyset paging and no ranking, so entity rows must appear
-// EXACTLY as the RPC returned them, paging must ride next_page_token, the facet
-// ring must re-scope the RPC rather than filter locally, and only the rows that
-// live in this browser tab (windows, terminals, drafts) may be matched locally.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser, userEvent } from 'vitest/browser';
@@ -32,7 +27,6 @@ import {
 const api = vi.hoisted(() => ({ search: vi.fn() }));
 const nav = vi.hoisted(() => ({ goto: vi.fn() }));
 
-// Only the client is faked; the generated protobuf re-exports stay real.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -78,7 +72,6 @@ beforeEach(() => {
 	nav.goto.mockReset();
 });
 
-/** A stand-in for a mounted list page's `createSearchListState`. */
 function fakePage(
 	scope: number | null,
 	label: string
@@ -119,8 +112,7 @@ async function openPalette(query?: string) {
 
 describe('palette — entity rows are the server’s answer, verbatim', () => {
 	it('renders results in response order and never re-sorts them', async () => {
-		// Deliberately NOT alphabetical: a palette that ranked or sorted would
-		// reorder these, and this is the only signal that it does not.
+
 		const shuffled = [
 			device('01JQZZ0000000000000000000C', 'api-prod-04'),
 			device('01JQZZ0000000000000000000A', 'api-prod-01'),
@@ -180,13 +172,11 @@ describe('palette — status is never colour alone', () => {
 		await openPalette('api');
 		await vi.waitFor(() => expect(entityRows()).toHaveLength(1), { timeout: 3000 });
 
-		// Seen 5 s ago: inside the heartbeat window.
 		const dot = document.querySelector('[data-testid="palette-dot"]');
 		expect(dot?.getAttribute('data-tone')).toBe('ok');
 		expect(dot?.getAttribute('role')).toBe('img');
 		expect(dot?.getAttribute('aria-label')).toBe(m.fleet_tile_ok());
-		// …and the same word is in the row's own text, so the status survives a
-		// screen that renders no colour at all.
+
 		expect(entityRows()[0]).toContain(m.fleet_tile_ok());
 	});
 
@@ -224,7 +214,6 @@ describe('palette — the facet ring re-scopes the RPC', () => {
 			{ timeout: 3000 }
 		);
 
-		// ⇧⇥ walks back, and the chip row marks exactly one active facet.
 		await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
 		await vi.waitFor(
 			() => expect(api.search).toHaveBeenLastCalledWith('api', SearchScope.DEVICES, 8, ''),
@@ -244,7 +233,6 @@ describe('palette — the facet ring re-scopes the RPC', () => {
 		];
 		api.search.mockResolvedValue({ results: rows, nextPageToken: '', totalCount: 41 });
 
-		// Under "All" the total spans every scope, so the group must not claim it.
 		await openPalette('api');
 		await vi.waitFor(() => expect(entityRows()).toHaveLength(2), { timeout: 3000 });
 		await expect
@@ -255,7 +243,6 @@ describe('palette — the facet ring re-scopes the RPC', () => {
 			)
 			.toBeVisible();
 
-		// Scoped to devices, "2 of 41" is true.
 		await userEvent.keyboard('{Tab}');
 		await expect
 			.element(
@@ -298,7 +285,7 @@ describe('palette — paging is keyset, not pages', () => {
 			'api-prod-03',
 			'api-prod-04'
 		]);
-		// Cursor spent: no page row remains.
+
 		expect(document.querySelector('[data-testid="palette-show-next"]')).toBeNull();
 	});
 
@@ -321,8 +308,7 @@ describe('palette — "This shell" restores what lives in this tab', () => {
 		const terminalId = openTerminal('dev-2', 'db-staging-01');
 		shell.terminal.activeId = null;
 		let resumed = 0;
-		// The owner is the mounted surface, so this draft resumes IN PLACE; the
-		// palette's cross-route path (navigate home) is covered below.
+
 		setShellPath('/assign');
 		addDraft({
 			id: 'draft:assign',
@@ -334,7 +320,6 @@ describe('palette — "This shell" restores what lives in this tab', () => {
 			onRestore: () => resumed++
 		});
 
-		// No query: the shell group stands alone and no RPC is issued for it.
 		await openPalette();
 		await expect.element(browser.getByText(m.search_group_shell())).toBeVisible();
 		expect(api.search).not.toHaveBeenCalled();
@@ -354,7 +339,7 @@ describe('palette — "This shell" restores what lives in this tab', () => {
 
 	it('a draft whose surface is gone NAVIGATES home instead of reviving a dead context', async () => {
 		let resumed = 0;
-		setShellPath('/devices'); // the operator is somewhere else entirely
+		setShellPath('/devices');
 		addDraft({
 			id: 'draft:assign',
 			contextId: 'assign',
@@ -368,11 +353,9 @@ describe('palette — "This shell" restores what lives in this tab', () => {
 		await browser.getByText('Assign · 12 devices').click();
 
 		expect(nav.goto).toHaveBeenCalledWith('/assign');
-		// Untouched closures: the dead context is never revived from here.
+
 		expect(resumed).toBe(0);
-		// The card pops on the click; the buffer is staged for the surface to
-		// claim when it mounts. A card that lingered until some later claim was
-		// the "restoring does not remove it reliably" bug.
+
 		expect(shell.drafts).toHaveLength(0);
 	});
 
@@ -383,9 +366,8 @@ describe('palette — "This shell" restores what lives in this tab', () => {
 
 		await openPalette('api');
 
-		// The server returned nothing, yet the local window still matches...
 		await expect.element(browser.getByText('api-prod-01')).toBeVisible();
-		// ...and the terminal, which does not match the query, does not.
+
 		expect(document.body.textContent).not.toContain('db-staging-01');
 	});
 });
@@ -433,7 +415,6 @@ describe('palette — keyboard and dismissal', () => {
 	});
 });
 
-// ── the unified surface: shell jump targets live here now ───────────────────
 describe('palette — one surface for entities AND the shell', () => {
 	const SECTIONS = [
 		{ href: '/devices', label: () => 'Devices', icon: Monitor },
@@ -443,7 +424,6 @@ describe('palette — one surface for entities AND the shell', () => {
 		{ group: () => 'Admin', items: [{ href: '/users', label: () => 'Users', icon: Monitor }] }
 	];
 
-	/** Section-row titles only — the facet chips share these words. */
 	const sectionRows = () =>
 		[...document.querySelectorAll('[data-testid="palette-row"][data-kind="section"]')].map(
 			(el) => el.querySelector('span')?.textContent?.trim() ?? ''
@@ -458,8 +438,7 @@ describe('palette — one surface for entities AND the shell', () => {
 			(el) => el.textContent?.includes('Actions')
 		);
 		(row as HTMLElement).click();
-		// $lib/navigation.goto owns the base prefix — the palette must not add a
-		// second one, so the row hands it the app-relative href verbatim.
+
 		expect(nav.goto).toHaveBeenCalledWith('/actions');
 	});
 
@@ -471,14 +450,13 @@ describe('palette — one surface for entities AND the shell', () => {
 	});
 });
 
-// ── page-scoped ⌘K (the operator searches what they are looking at) ─────────
 describe('palette — scoped to the page the operator is on', () => {
 	it('preselects the page’s facet and types into the PAGE’s list, not the RPC', async () => {
 		const actions = fakePage(SearchScope.ACTIONS, 'Actions');
 		registerPageSearch(actions);
 
 		const box = await openPalette();
-		// The leading chip is the page itself, and it is the pressed one.
+
 		const chip = activeFacet();
 		expect(chip?.getAttribute('data-page-facet')).toBe('true');
 		expect(chip?.getAttribute('data-scope')).toBe(String(SearchScope.ACTIONS));
@@ -486,9 +464,9 @@ describe('palette — scoped to the page the operator is on', () => {
 		await expect.element(browser.getByTestId('palette-page-row')).toBeVisible();
 
 		await box.fill('api');
-		// The page's own setSearch ran…
+
 		await vi.waitFor(() => expect(actions.query).toBe('api'));
-		// …and nothing was searched or navigated behind the operator's back.
+
 		expect(api.search).not.toHaveBeenCalled();
 		expect(nav.goto).not.toHaveBeenCalled();
 		expect(document.querySelectorAll('[data-testid="palette-row"][data-kind="entity"]')).toHaveLength(0);
@@ -506,7 +484,7 @@ describe('palette — scoped to the page the operator is on', () => {
 		await vi.waitFor(() =>
 			expect(document.querySelector('[data-testid="global-search"]')).toBeNull()
 		);
-		// never cleared, never re-issued
+
 		expect(actions.calls.length).toBe(written);
 		expect(actions.query).toBe('api');
 	});
@@ -531,10 +509,9 @@ describe('palette — scoped to the page the operator is on', () => {
 		const box = await openPalette();
 		await box.fill('api');
 		await vi.waitFor(() => expect(actions.query).toBe('api'));
-		expect(api.search).not.toHaveBeenCalled(); // positive control
+		expect(api.search).not.toHaveBeenCalled();
 		const written = actions.calls.length;
 
-		// The ring's second entry is "All" — the global palette's resting facet.
 		await userEvent.keyboard('{Tab}');
 		await vi.waitFor(
 			() => expect(api.search).toHaveBeenLastCalledWith('api', SearchScope.UNSPECIFIED, 8, ''),
@@ -542,13 +519,12 @@ describe('palette — scoped to the page the operator is on', () => {
 		);
 		expect(activeFacet()?.getAttribute('data-page-facet')).toBeNull();
 
-		// Typing now belongs to the server, not to the page.
 		await box.fill('apix');
 		await vi.waitFor(
 			() => expect(api.search).toHaveBeenLastCalledWith('apix', SearchScope.UNSPECIFIED, 8, ''),
 			{ timeout: 3000 }
 		);
-		expect(actions.calls.length).toBe(written); // the page saw nothing after ⇥
+		expect(actions.calls.length).toBe(written);
 		expect(actions.query).toBe('api');
 	});
 
@@ -568,8 +544,6 @@ describe('palette — scoped to the page the operator is on', () => {
 		expect(actions.query).toBe('api');
 		expect(actions.calls.length).toBe(written);
 
-		// Re-opening seeds the box from the page, so the operator resumes where
-		// they left off instead of facing an empty field over a filtered list.
 		render(GlobalSearch, { open: true });
 		await expect.element(browser.getByRole('combobox')).toHaveValue('api');
 	});
@@ -589,7 +563,7 @@ describe('palette — scoped to the page the operator is on', () => {
 
 	it('with no page registered, ⌘K is the global palette exactly as before', async () => {
 		const box = await openPalette();
-		// No page chip at all, and "All" leads the ring.
+
 		expect(document.querySelector('[data-testid="palette-facet"][data-page-facet]')).toBeNull();
 		expect(activeFacet()?.getAttribute('data-scope')).toBe(String(SearchScope.UNSPECIFIED));
 		expect(document.querySelector('[data-testid="palette-page-row"]')).toBeNull();
@@ -600,15 +574,13 @@ describe('palette — scoped to the page the operator is on', () => {
 		});
 	});
 
-	// The stale-scope guard, end to end: a released page must not still own ⌘K.
 	it('a released page is not inherited by the next one', async () => {
 		const actions = fakePage(SearchScope.ACTIONS, 'Actions');
 		const release = registerPageSearch(actions);
-		// positive control — the seam really carried this page, so the assertions
-		// below are a withdrawal and not an empty seam.
+
 		expect(activePageSearch()).toBe(actions);
 
-		release(); // the actions page unmounts
+		release();
 		expect(activePageSearch()).toBeNull();
 
 		const box = await openPalette();
@@ -617,6 +589,6 @@ describe('palette — scoped to the page the operator is on', () => {
 
 		await box.fill('api');
 		await vi.waitFor(() => expect(api.search).toHaveBeenCalled(), { timeout: 3000 });
-		expect(actions.calls).toEqual([]); // the dead page never saw a keystroke
+		expect(actions.calls).toEqual([]);
 	});
 });

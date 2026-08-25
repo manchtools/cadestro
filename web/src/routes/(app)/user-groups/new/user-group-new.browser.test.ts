@@ -1,9 +1,5 @@
-// Behaviour contract for /user-groups/new — the create flow that used to be a
-// modal. This one carried a whole query builder inside a dialog, so it is the
-// clearest case of the operator's report: real unfinished work with no way to
-// park it. The tests pin the same RPC arguments, the store-level gate (including
-// the unusable-rule refusal), the cross-route stash round trip, and a Create
-// button that navigates instead of popping a dialog.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
@@ -121,7 +117,7 @@ describe('/user-groups/new — the commit is the pill\'s', () => {
 		await fillGroup('Berlin staff', 'Everyone in Berlin');
 
 		expect(shell.pill.context?.route).toBe(ROUTE);
-		// One commit grammar app-wide: create surfaces say Create.
+
 		expect(shell.pill.context?.commitLabel).toBe(m.common_create());
 	});
 
@@ -203,7 +199,7 @@ describe('/user-groups/new — the third exit: stash, walk away, restore', () =>
 
 		await vi.waitFor(() => expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(ROUTE));
 		expect(pillMode()).toBe('nav');
-		// The card pops on the click; the buffer is staged for the remount.
+
 		expect(shell.drafts).toHaveLength(0);
 		await rail.unmount();
 

@@ -1,10 +1,5 @@
-// The action-sets drill-down: the OVERVIEW is the landing level (one card tile
-// per set — name and step count, both ListActionSets response fields), the
-// existing list one zoom in, and a tile opens the set's existing detail.
-//
-// How many assignments reference a set is deliberately NOT on the tile: no
-// list response carries that rollup, and counting it client-side across
-// ListAssignments pages would fabricate it.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
@@ -39,7 +34,7 @@ vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const actions = await import('$contract/cadestro/v1/actions_pb');
-	// The REAL pager: the sweep must actually walk the mocked list RPC.
+
 	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {
 		...actions,
@@ -83,7 +78,7 @@ describe('/action-sets — the overview is the landing level', () => {
 		expect(document.querySelector('[data-testid="action-sets-overview"]')).not.toBeNull();
 		const base = tiles().find((t) => t.dataset.entityId === BASE_SET.id)!;
 		expect(base.textContent).toContain('Base System Setup');
-		// memberCount straight off the response, in the list's own plural words.
+
 		expect(base.textContent).toContain('4 actions');
 		expect(mocks.search).not.toHaveBeenCalled();
 	});

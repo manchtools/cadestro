@@ -1,6 +1,5 @@
-// The shell is the app at canonical URLs: its chrome replaces the old sidebar,
-// permission-filtered navigation remains canonical, and persistent surfaces
-// stay mounted across route changes.
+
+
 import { test, expect, preparePage, preparePageAs, gotoAndSettle, clickUntil } from './fixtures';
 
 test('canonical routes render the shell chrome, not the sidebar', async ({ page }) => {
@@ -9,7 +8,7 @@ test('canonical routes render the shell chrome, not the sidebar', async ({ page 
 
 	await expect(page.getByTestId('morph-bar')).toBeVisible();
 	await expect(page.getByTestId('morph-bar')).toHaveAttribute('data-mode', 'nav');
-	// the old sidebar is gone entirely
+
 	await expect(page.locator('[data-sidebar="sidebar"]')).toHaveCount(0);
 });
 
@@ -37,9 +36,9 @@ test('permission filtering: pill and overflow expose only granted sections', asy
 	const bar = page.getByTestId('morph-bar');
 	await expect(bar.locator('a[href="/devices"]')).toBeVisible();
 	await expect(bar.locator('a[href="/actions"]')).toBeVisible();
-	// primary sections without their permission are absent from the pill
+
 	await expect(bar.locator('a[href="/audit"]')).toHaveCount(0);
-	// denied admin sections are absent even with the overflow open
+
 	await clickUntil(page.getByRole('button', { name: 'More' }), page.locator('a[href="/my-devices"]'));
 	await expect(page.locator('a[href="/users"]')).toHaveCount(0);
 	await expect(page.locator('a[href="/roles"]')).toHaveCount(0);
@@ -54,7 +53,7 @@ test('shell surfaces survive navigation without remounting', async ({ page }) =>
 	});
 	await page.getByTestId('morph-bar').locator('a[href="/actions"]').click();
 	await expect(page).toHaveURL(/\/actions$/);
-	// same DOM node: the marker survives because the layout never remounted
+
 	await expect(page.locator('[data-testid="morph-bar"][data-identity="survivor"]')).toBeVisible();
 });
 

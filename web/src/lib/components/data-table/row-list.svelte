@@ -1,9 +1,5 @@
 <script lang="ts" generics="Row, K extends string">
-	// The list grammar from the design drafts: no column headers, no <table> — a
-	// bordered card of dense rows the page composes itself (the drafts' .zoomrow /
-	// .scard idiom). It consumes the SAME TableView contract as DataTable, so a
-	// page swaps one for the other without touching createSearchListState, and
-	// DataTablePagination keeps working unchanged beneath it.
+
 	import type { Snippet } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { ArrowUp, ArrowDown } from '@lucide/svelte';
@@ -12,7 +8,7 @@
 
 	interface SortOption {
 		key: K;
-		/** Reuse the page's existing column label — same key, no new string. */
+
 		label: string;
 	}
 
@@ -28,24 +24,18 @@
 		loadingRows = 5
 	}: {
 		table: TableView<Row, K>;
-		/** The row body — page-owned content laid out inside the row shell. */
+
 		row: Snippet<[Row]>;
 		rowKey: (row: Row) => string;
-		/** When set, the whole row body becomes one link to this target. */
+
 		href?: (row: Row) => string;
-		/** Trailing controls (overflow menu, buttons). Rendered OUTSIDE the row
-		 *  link, because a button may never nest inside an anchor. */
+
 		rowEnd?: Snippet<[Row]>;
-		/** Headerless rows have nothing to click for sort, so the keys ride a
-		 *  compact segmented bar. Clicking the active key flips its direction —
-		 *  the same toggleSort semantics a column header had. */
+
 		sortOptions?: readonly SortOption[];
-		/** The page's filter controls, rendered in the SAME header bar as sort.
-		 *  Filters and sort are one act — narrowing a list — so they belong on one
-		 *  toolbar attached to the list, not split between the page band and the
-		 *  card. The page owns the controls; the list owns where they sit. */
+
 		filters?: Snippet;
-		/** Empty-state body, rendered inside the card in place of the rows. */
+
 		empty?: Snippet;
 		loadingRows?: number;
 	} = $props();

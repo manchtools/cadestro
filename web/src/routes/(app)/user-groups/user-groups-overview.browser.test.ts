@@ -1,6 +1,5 @@
-// The user-groups drill-down: the OVERVIEW is the landing level (one card tile
-// per group, every number a ListUserGroups response field), the existing list
-// one zoom in, and a tile opens the group's existing detail route.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
@@ -35,7 +34,7 @@ vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const actions = await import('$contract/cadestro/v1/actions_pb');
-	// The REAL pager: the sweep must actually walk the mocked list RPC.
+
 	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {
 		...actions,

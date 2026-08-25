@@ -1,8 +1,5 @@
 <script lang="ts">
-	// B2's left stage: the carried devices as a mini tile grid, their hostname
-	// breakdown, and the eligibility rollup. Every number comes from the
-	// Eligibility map the page derives once — the stage, the pill caption and
-	// the commit all read the same object, so they cannot disagree.
+
 	import { Tile } from '$lib/components/fleet';
 	import * as m from '$lib/paraglide/messages';
 	import { statusTone, type CarriedDevice, type Eligibility, type HostnameGroup } from './eligibility';
@@ -79,8 +76,7 @@
 	</div>
 
 	{#if failures.length}
-		<!-- A partial commit names the devices that failed; it never rounds them
-		     into a single "something went wrong". -->
+
 		<div data-testid="assign-failures" class="grid gap-1 rounded-lg border border-crit/40 bg-crit-soft p-2 text-xs text-crit">
 			<span class="font-semibold">{m.assign_failures_label()}</span>
 			{#each failures as failure (failure.deviceId)}

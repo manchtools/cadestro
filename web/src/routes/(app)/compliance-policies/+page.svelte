@@ -41,13 +41,6 @@
 	import { codecs, type Codec } from '$lib/url-state';
 	import { searchResultToCompliancePolicy } from '$lib/search-adapters';
 
-	// The list is the shared row grammar (RowList): one dense row per policy, no
-	// column headers. Rule add / remove / grace-period editing all live in
-	// CompliancePolicyDetailSheet, which this page mounts and every row opens.
-
-	// rule_count and created_at are indexed for search and filtering but dropped
-	// by searchResultToCompliancePolicy, so the row carries them alongside — the
-	// adapter sees the raw SearchResult, which is the only place they exist.
 	type PolicyRow = CompliancePolicy & { indexedRuleCount: number; createdAtSeconds: number };
 
 	function intOr(raw: string | undefined, fallback: number): number {
@@ -66,9 +59,6 @@
 
 	type SortKey = 'name' | 'rules' | 'created';
 
-	// ── the drill-down grammar (Actions/Devices reference) ─────────────────────
-	// The OVERVIEW is the landing level; the list is one zoom in. An explicit
-	// ?zoom=list deep link still wins over the landing default.
 	type Zoom = 'overview' | 'list';
 	const ZOOMS = ['overview', 'list'] as const;
 	const ZOOM_LABEL: Record<Zoom, () => string> = { overview: m.zoom_overview, list: m.zoom_list };
@@ -81,8 +71,6 @@
 		createdEnd: DateValue | undefined;
 	};
 
-	// Dates serialize as ISO YYYY-MM-DD; a bad value falls back to undefined
-	// rather than crashing the page.
 	const DATE_CODEC: Codec<DateValue | undefined> = {
 		parse: (p) => {
 			if (!p) return undefined;
@@ -96,7 +84,6 @@
 		serialize: (v) => (v ? v.toString() : null)
 	};
 
-	/** created_at range → the server's only interval channel (tags are exact-value). */
 	function createdRange(f: Filters): SearchDateFilter[] | undefined {
 		if (!f.createdStart && !f.createdEnd) return undefined;
 		const tz = getLocalTimeZone();
@@ -104,7 +91,7 @@
 			{
 				field: 'created_at',
 				start: f.createdStart ? BigInt(Math.floor(f.createdStart.toDate(tz).getTime() / 1000)) : 0n,
-				// Inclusive end-of-day: the selected day plus one.
+
 				end: f.createdEnd ? BigInt(Math.floor(f.createdEnd.toDate(tz).getTime() / 1000) + 86400) : 0n
 			}
 		];
@@ -115,13 +102,13 @@
 		adapter: toRow,
 		sortKeys: ['name', 'rules', 'created'],
 		defaultSort: 'created',
-		// Subset of the server's scopeSortableFields["compliance_policies"].
+
 		sortFieldMap: {
 			name: SortField.NAME,
 			rules: SortField.RULE_COUNT,
 			created: SortField.CREATED_AT
 		},
-		// Timestamps read newest-first, both on a bare link and when switched to.
+
 		defaultSortDir: 'desc',
 		sortDir: (key) => (key === 'created' ? 'desc' : 'asc'),
 		filters: {
@@ -130,26 +117,18 @@
 			createdStart: { key: 'createdStart', codec: DATE_CODEC },
 			createdEnd: { key: 'createdEnd', codec: DATE_CODEC }
 		},
-		// "No rules assigned" is an exact tag match on the indexed rule_count.
+
 		filterToTags: (f) => (f.noRules ? { rule_count: '0' } : undefined),
 		dateFilters: createdRange,
-		// The overview does not render rows, so it must not spend a Search RPC.
+
 		paused: (f) => f.zoom !== 'list'
 	});
 
-	// ── the overview snapshot: one bounded sweep, loaded lazily ────────────────
-	// The landing level is the FLEET seen through compliance: one device tile per
-	// device, coloured by Device.complianceStatus — a field ListDevices really
-	// returns — plus a chip per policy from ListCompliancePolicies. Per-policy
-	// tile filtering is deliberately absent: no list RPC carries per-device
-	// per-policy state (only the per-device GetDeviceCompliancePolicyStatus
-	// does), and fanning that out across the fleet would fabricate a rollup.
 	let overviewDevices = $state<Device[] | null>(null);
 	let overviewPolicies = $state<CompliancePolicy[]>([]);
 	let sweeping = $state(false);
 	let sweepError = $state<string | null>(null);
-	// A plain guard, deliberately NOT $state: the effect below must depend on the
-	// zoom alone. A reactive flag would make that effect read what it writes.
+
 	let swept = false;
 
 	async function sweep() {
@@ -182,15 +161,11 @@
 		void sweep();
 	});
 
-	/** Refresh whichever level is on screen. */
 	function refresh() {
 		if (table.filters.zoom === 'overview') void sweep();
 		else table.refresh();
 	}
 
-	// Status is never colour-alone: NON_COMPLIANT (and a failing rule inside its
-	// grace period) carries the fleet's warning dot as a real child element, and
-	// UNKNOWN renders hollow — the fleet legend's grammar, applied to compliance.
 	function complianceWord(status: ComplianceStatus): string {
 		switch (status) {
 			case ComplianceStatus.COMPLIANT:
@@ -213,11 +188,7 @@
 
 	let deleteDialogOpen = $state(false);
 	let policyToDelete = $state<PolicyRow | null>(null);
-	// Creation lives on /compliance-policies/new, a pill-committed route: naming a
-	// policy and picking its checks is real unfinished work a modal could not park.
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.actions_table_name() },
 		{ key: 'rules' as const, label: m.compliance_policies_table_rules() },
@@ -231,8 +202,6 @@
 			!!table.filters.createdEnd
 	);
 
-	// Both bounds belong to one operator gesture: seed the start directly and let
-	// the end's setFilter do the single page-reset + URL commit for the pair.
 	function onDateRangeChange(v: { start?: DateValue; end?: DateValue }) {
 		table.filters.createdStart = v.start;
 		table.setFilter('createdEnd', v.end);
@@ -264,9 +233,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove. The
-	// registration is withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.COMPLIANCE_POLICIES,
@@ -281,8 +247,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself. The search box is
-	     gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -309,9 +274,7 @@
 				{/each}
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button
 					onclick={refresh}
 					variant="outline"
@@ -352,9 +315,7 @@
 					{m.compliance_overview_caption()}
 				</div>
 				{#if overviewPolicies.length > 0}
-					<!-- The policy chip row: every policy the list RPC returned, each
-					     opening the SAME sheet the list rows open. Not a tile filter —
-					     no list RPC carries per-device per-policy state to filter by. -->
+
 					<div role="group" aria-label={m.compliance_overview_policies()} class="flex flex-wrap gap-1.5">
 						{#each overviewPolicies as policy (policy.id)}
 							<button
@@ -389,7 +350,7 @@
 								: TONE_FILL[tone] + ' border-0'}"
 						>
 							{#if tone === 'warn'}
-								<!-- violations: the fleet's warning dot, a real child element -->
+
 								<span
 									data-marker="dot"
 									class="pointer-events-none absolute bottom-[3px] left-[3px] h-1 w-1 rounded-full bg-marker"
@@ -401,9 +362,7 @@
 			</div>
 		{/if}
 	{:else}
-	<!-- A policy opens its Sheet (shallow routing), not a page, so this list
-	     passes no `href` and the row body is a real <button> — native
-	     click/Enter/Space activation and focus ring, no div-with-role. -->
+
 	<RowList {table} {sortOptions} rowKey={(p) => (p.id?.value ?? '')}>
 		{#snippet filters()}
 			<DateRangePicker
@@ -501,6 +460,4 @@
 	onconfirm={deletePolicy}
 />
 
-
-<!-- Rule add / remove / grace-period editing live here (shallow routing). -->
 <CompliancePolicyDetailSheet onupdated={() => table.refresh()} />

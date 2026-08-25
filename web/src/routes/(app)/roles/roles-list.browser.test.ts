@@ -1,11 +1,4 @@
-// Conversion contract for the roles list page.
-//
-// Roles have no Search scope, so ListRoles returns the whole set and the page's
-// own matching / sorting / paging decide what an operator sees. These tests pin
-// what the move to the shared row grammar (RowList) must not lose: the list is
-// dense rows, not a table; every row links to its role detail; the permission
-// count and the System marker still read off the row; and the system-role delete
-// refusal — the page's only authorization-shaped guard — still holds.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -19,12 +12,11 @@ const CUSTOM_ROLE_ID = '01JQZZ5B8N4P0R3S7T9V2W1X6Y';
 
 const api = vi.hoisted(() => ({ listRoles: vi.fn(), deleteRole: vi.fn(), createRole: vi.fn() }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
-// Mutable so each test can mount the page "at" a different deep link.
+
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/roles') }));
 
 vi.mock('svelte-sonner', () => ({ toast }));
 
-// Only the client is faked; the generated protobuf re-exports stay real.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -50,8 +42,6 @@ vi.mock('$app/state', () => ({
 
 vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 
-// URL writes go through SvelteKit's shallow-routing API, which needs a live
-// router; the history behaviour itself is url-state's contract, not this test's.
 vi.mock('$app/navigation', () => ({
 	pushState: vi.fn(),
 	replaceState: vi.fn(),
@@ -86,15 +76,12 @@ beforeEach(() => {
 	api.listRoles.mockResolvedValue({ roles });
 });
 
-/** The rendered rows, addressed by the ULID each row shell carries. */
 function rowKeys(): string[] {
 	return [...document.querySelectorAll<HTMLElement>('[data-testid="row-list-row"]')].map(
 		(el) => el.getAttribute('data-row-key') ?? ''
 	);
 }
 
-/** Sort controls live in the row list's sort bar; addressing them by text alone
- *  would also reach the row overflow triggers. */
 function clickSort(label: string) {
 	const button = [
 		...document.querySelectorAll<HTMLButtonElement>('[data-testid="row-list-sort"] button')
@@ -143,19 +130,19 @@ describe('roles list — the row grammar', () => {
 		await expect
 			.element(browser.getByText(m.roles_index_permissions_count({ count: 1 })))
 			.toBeVisible();
-		// A role without one still says so rather than showing an empty gap.
+
 		await expect.element(browser.getByText(m.common_no_description())).toBeVisible();
 	});
 
 	it('re-sorts by permission count from the sort bar', async () => {
 		await mountAt('');
-		// name asc is the default: Admin before Helpdesk.
+
 		await vi.waitFor(() => expect(rowKeys()).toEqual([SYSTEM_ROLE_ID, CUSTOM_ROLE_ID]), {
 			timeout: 3000
 		});
 
 		clickSort(m.roles_permission_count());
-		// permissions asc: Helpdesk (1) before Admin (3).
+
 		await vi.waitFor(() => expect(rowKeys()).toEqual([CUSTOM_ROLE_ID, SYSTEM_ROLE_ID]), {
 			timeout: 3000
 		});

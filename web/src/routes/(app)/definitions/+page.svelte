@@ -32,9 +32,6 @@
 		type SearchDateFilter
 	} from '$lib/components/data-table';
 
-	// ── the drill-down grammar (Actions/Devices reference) ─────────────────────
-	// The OVERVIEW is the landing level; the list is one zoom in. An explicit
-	// ?zoom=list deep link still wins over the landing default.
 	type Zoom = 'overview' | 'list';
 	const ZOOMS = ['overview', 'list'] as const;
 	const ZOOM_LABEL: Record<Zoom, () => string> = { overview: m.zoom_overview, list: m.zoom_list };
@@ -51,10 +48,6 @@
 	};
 	type DayKey = 'createdStart' | 'createdEnd' | 'updatedStart' | 'updatedEnd';
 
-	// Date bounds are stored as ISO YYYY-MM-DD strings, not DateValue objects:
-	// the list state passes $state.snapshot(filters) to the request builder, and a
-	// snapshot strips class prototypes — a stored CalendarDate would arrive
-	// without .toDate(). A malformed param degrades to "no bound".
 	function toDay(value: string): DateValue | undefined {
 		if (!value) return undefined;
 		try {
@@ -73,7 +66,7 @@
 		return {
 			field,
 			start: from ? BigInt(Math.floor(from.toDate(tz).getTime() / 1000)) : 0n,
-			// Inclusive end-of-day: the selected day plus one.
+
 			end: to ? BigInt(Math.floor(to.toDate(tz).getTime() / 1000) + 86400) : 0n
 		};
 	}
@@ -88,7 +81,7 @@
 			sets: SortField.MEMBER_COUNT,
 			created: SortField.CREATED_AT
 		},
-		// Timestamps read newest-first, both on a bare link and when switched to.
+
 		defaultSortDir: 'desc',
 		sortDir: (key) => (key === 'created' ? 'desc' : 'asc'),
 		filters: {
@@ -99,26 +92,22 @@
 			updatedStart: { key: 'updatedStart', codec: codecs.string('') },
 			updatedEnd: { key: 'updatedEnd', codec: codecs.string('') }
 		},
-		// member_count is indexed; "no assigned action sets" is an exact zero match.
+
 		filterToTags: (f) => (f.noSets ? { member_count: '0' } : undefined),
-		// Ranges have no tag equivalent — tag matching is exact-value.
+
 		dateFilters: (f) =>
 			[
 				dayRange('created_at', f.createdStart, f.createdEnd),
 				dayRange('updated_at', f.updatedStart, f.updatedEnd)
 			].filter((r): r is SearchDateFilter => r !== undefined),
-		// The overview does not render rows, so it must not spend a Search RPC.
+
 		paused: (f) => f.zoom !== 'list'
 	});
 
-	// ── the overview snapshot: one bounded sweep, loaded lazily ────────────────
-	// Every value on a tile is a field the list RPC really returned
-	// (Definition.memberCount — contained sets — and Definition.schedule).
 	let overview = $state<Definition[] | null>(null);
 	let sweeping = $state(false);
 	let sweepError = $state<string | null>(null);
-	// A plain guard, deliberately NOT $state: the effect below must depend on the
-	// zoom alone. A reactive flag would make that effect read what it writes.
+
 	let swept = false;
 
 	async function sweep() {
@@ -143,15 +132,11 @@
 		void sweep();
 	});
 
-	/** Refresh whichever level is on screen. */
 	function refresh() {
 		if (table.filters.zoom === 'overview') void sweep();
 		else table.refresh();
 	}
 
-
-	// Both bounds belong to one operator gesture: seed the start directly and let
-	// the end's setFilter do the single page-reset + URL commit for the pair.
 	function setRange(startKey: DayKey, endKey: DayKey, v: { start?: DateValue; end?: DateValue }) {
 		table.filters[startKey] = v.start?.toString() ?? '';
 		table.setFilter(endKey, v.end?.toString() ?? '');
@@ -166,8 +151,6 @@
 			table.filters.updatedEnd !== ''
 	);
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.DEFINITIONS,
@@ -182,15 +165,11 @@
 
 	let deleteDialogOpen = $state(false);
 	let defToDelete = $state<Definition | null>(null);
-	// Creation lives on /definitions/new, a pill-committed route: a modal cannot
-	// be stashed, so a half-written definition could never be parked.
 
 	let pickerOpen = $state(false);
 	let pickerDefId = $state<string | null>(null);
 	let availableSets = $state<ActionSet[]>([]);
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.actions_table_name() },
 		{ key: 'sets' as const, label: m.definitions_table_sets() },
@@ -218,8 +197,6 @@
 		}
 	}
 
-	// The picker offers only sets the definition doesn't already carry, so the
-	// authoritative member list comes from the definition itself, not the row.
 	async function openAddSetPicker(defId: string) {
 		pickerDefId = defId;
 		try {
@@ -258,8 +235,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself. The search box is
-	     gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -286,9 +262,7 @@
 				{/each}
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button
 					onclick={refresh}
 					variant="outline"
@@ -311,9 +285,7 @@
 	{/snippet}
 
 	{#if table.filters.zoom === 'overview'}
-		<!-- The landing level: one card tile per definition — name, its schedule
-		     summary and contained-set count, straight off ListDefinitions.
-		     Clicking opens the existing detail. -->
+
 		{#if sweepError}
 			<div class="rounded-xl border border-crit/50 bg-crit-soft p-4 text-sm text-crit">
 				{sweepError}
@@ -344,8 +316,7 @@
 								<FolderTree class="h-3.5 w-3.5 shrink-0 text-accent-ink" />
 								<span class="truncate font-mono text-[0.75rem] font-semibold">{definition.name}</span>
 							</span>
-							<!-- Schedule summary in the display component's own words:
-							     the cron string when one is set, the interval otherwise. -->
+
 							<span class="truncate font-mono text-[0.66rem] text-muted-foreground">
 								{#if definition.schedule?.cron}
 									{m.actions_display_cron()}: {definition.schedule.cron}
@@ -367,8 +338,7 @@
 			</div>
 		{/if}
 	{:else}
-	<!-- Same row grammar as the actions list: container tile, name over its ULID,
-	     set-count chip, right-aligned stamp. -->
+
 	<div data-tour="library-list">
 	<RowList
 		{table}
@@ -418,7 +388,7 @@
 					label={m.definitions_count({ count: def.memberCount })}
 				/>
 			</span>
-			<!-- Created is this page's only timestamp sort key, so it is the stamp. -->
+
 			<span class="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
 				{formatTimestampDateTime(def.createdAt)}
 			</span>

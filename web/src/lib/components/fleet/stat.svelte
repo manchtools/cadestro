@@ -1,6 +1,5 @@
 <script lang="ts">
-	// One item of the summary strip above a fleet surface: tone dot, tabular
-	// number, label ("● 392 healthy").
+
 	import { TONE_FILL, type FleetTone } from './tone';
 
 	let { tone = 'ok', value, label }: { tone?: FleetTone; value: number | string; label: string } = $props();

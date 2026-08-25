@@ -1,10 +1,5 @@
-// The page ↔ pill search seam.
-//
-// The bug this file exists to prevent is a STALE SCOPE: a list page publishes
-// its query, the operator navigates away, and ⌘K on the next page still routes
-// keystrokes into a list nobody is looking at. Every assertion below is paired
-// with a positive control, so a seam that never registered anything cannot make
-// the "it is gone" tests pass vacuously.
+
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
 	registerPageSearch,
@@ -48,12 +43,12 @@ describe('page-search seam', () => {
 		const actions = fakePage(4, 'Actions');
 
 		const release = registerPageSearch(actions);
-		// positive control: the seam really carried this page…
+
 		expect(activePageSearch()).toBe(actions);
 		expect(activePageSearch()?.label()).toBe('Actions');
 
 		release();
-		// …so "null" here is a withdrawal, not an empty seam.
+
 		expect(activePageSearch()).toBeNull();
 	});
 
@@ -76,20 +71,17 @@ describe('page-search seam', () => {
 		expect(activePageSearch()?.scope).toBeNull();
 	});
 
-	// THE stale-scope guard. Navigation can destroy the outgoing page AFTER the
-	// incoming one mounted, so a release that blindly nulls the seam would blank
-	// out the page the operator is actually looking at.
 	it('a late release from the previous page never withdraws the current one', () => {
 		const actions = fakePage(4, 'Actions');
 		const devices = fakePage(1, 'Devices');
 
 		const releaseActions = registerPageSearch(actions);
-		expect(activePageSearch()).toBe(actions); // positive control
+		expect(activePageSearch()).toBe(actions);
 
 		registerPageSearch(devices);
 		expect(activePageSearch()).toBe(devices);
 
-		releaseActions(); // the outgoing page unmounts last
+		releaseActions();
 		expect(activePageSearch()).toBe(devices);
 	});
 
@@ -97,7 +89,7 @@ describe('page-search seam', () => {
 		const actions = fakePage(4, 'Actions');
 		const release = registerPageSearch(actions);
 		actions.setQuery('api');
-		expect(activePageSearch()?.query).toBe('api'); // positive control
+		expect(activePageSearch()?.query).toBe('api');
 		release();
 
 		const devices = fakePage(1, 'Devices');

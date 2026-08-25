@@ -32,9 +32,6 @@
 		type SearchDateFilter
 	} from '$lib/components/data-table';
 
-	// ── the drill-down grammar (Actions/Devices reference) ─────────────────────
-	// The OVERVIEW is the landing level; the list is one zoom in. An explicit
-	// ?zoom=list deep link still wins over the landing default.
 	type Zoom = 'overview' | 'list';
 	const ZOOMS = ['overview', 'list'] as const;
 	const ZOOM_LABEL: Record<Zoom, () => string> = { overview: m.zoom_overview, list: m.zoom_list };
@@ -51,10 +48,6 @@
 	};
 	type DayKey = 'createdStart' | 'createdEnd' | 'updatedStart' | 'updatedEnd';
 
-	// Date bounds are stored as ISO YYYY-MM-DD strings, not DateValue objects:
-	// the list state passes $state.snapshot(filters) to the request builder, and a
-	// snapshot strips class prototypes — a stored CalendarDate would arrive
-	// without .toDate(). A malformed param degrades to "no bound".
 	function toDay(value: string): DateValue | undefined {
 		if (!value) return undefined;
 		try {
@@ -73,7 +66,7 @@
 		return {
 			field,
 			start: from ? BigInt(Math.floor(from.toDate(tz).getTime() / 1000)) : 0n,
-			// Inclusive end-of-day: the selected day plus one.
+
 			end: to ? BigInt(Math.floor(to.toDate(tz).getTime() / 1000) + 86400) : 0n
 		};
 	}
@@ -89,7 +82,7 @@
 			created: SortField.CREATED_AT,
 			updated: SortField.UPDATED_AT
 		},
-		// Timestamps read newest-first, both on a bare link and when switched to.
+
 		defaultSortDir: 'desc',
 		sortDir: (key) => (key === 'created' || key === 'updated' ? 'desc' : 'asc'),
 		filters: {
@@ -100,28 +93,22 @@
 			updatedStart: { key: 'updatedStart', codec: codecs.string('') },
 			updatedEnd: { key: 'updatedEnd', codec: codecs.string('') }
 		},
-		// member_count is indexed; "no assigned actions" is an exact zero match.
+
 		filterToTags: (f) => (f.noActions ? { member_count: '0' } : undefined),
-		// Ranges have no tag equivalent — tag matching is exact-value.
+
 		dateFilters: (f) =>
 			[
 				dayRange('created_at', f.createdStart, f.createdEnd),
 				dayRange('updated_at', f.updatedStart, f.updatedEnd)
 			].filter((r): r is SearchDateFilter => r !== undefined),
-		// The overview does not render rows, so it must not spend a Search RPC.
+
 		paused: (f) => f.zoom !== 'list'
 	});
 
-	// ── the overview snapshot: one bounded sweep, loaded lazily ────────────────
-	// Every number on a tile is a field the list RPC really returned
-	// (ActionSet.memberCount — the set's contained actions). How many assignments
-	// reference a set is OMITTED: no list response carries that rollup, and
-	// counting it client-side across ListAssignments pages would fabricate it.
 	let overview = $state<ActionSet[] | null>(null);
 	let sweeping = $state(false);
 	let sweepError = $state<string | null>(null);
-	// A plain guard, deliberately NOT $state: the effect below must depend on the
-	// zoom alone. A reactive flag would make that effect read what it writes.
+
 	let swept = false;
 
 	async function sweep() {
@@ -146,14 +133,11 @@
 		void sweep();
 	});
 
-	/** Refresh whichever level is on screen. */
 	function refresh() {
 		if (table.filters.zoom === 'overview') void sweep();
 		else table.refresh();
 	}
 
-	// Both bounds belong to one operator gesture: seed the start directly and let
-	// the end's setFilter do the single page-reset + URL commit for the pair.
 	function setRange(startKey: DayKey, endKey: DayKey, v: { start?: DateValue; end?: DateValue }) {
 		table.filters[startKey] = v.start?.toString() ?? '';
 		table.setFilter(endKey, v.end?.toString() ?? '');
@@ -168,8 +152,6 @@
 			table.filters.updatedEnd !== ''
 	);
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.ACTION_SETS,
@@ -184,14 +166,11 @@
 
 	let deleteDialogOpen = $state(false);
 	let setToDelete = $state<ActionSet | null>(null);
-	// Creation lives on /action-sets/new, a pill-committed route: naming a set and
-	// picking its actions is real unfinished work a modal could never park.
+
 	let pickerOpen = $state(false);
 	let pickerSetId = $state<string | null>(null);
 	let availableActions = $state<ManagedAction[]>([]);
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.actions_table_name() },
 		{ key: 'actions' as const, label: m.action_sets_table_actions() },
@@ -220,8 +199,6 @@
 		}
 	}
 
-	// The picker offers only actions the set doesn't already carry, so the
-	// authoritative member list comes from the set itself, not the search row.
 	async function openAddActionPicker(setId: string) {
 		pickerSetId = setId;
 		try {
@@ -267,8 +244,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself. The search box is
-	     gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -295,9 +271,7 @@
 				{/each}
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button
 					onclick={refresh}
 					variant="outline"
@@ -320,8 +294,7 @@
 	{/snippet}
 
 	{#if table.filters.zoom === 'overview'}
-		<!-- The landing level: one card tile per set — name and its step count,
-		     straight off ListActionSets. Clicking opens the existing detail. -->
+
 		{#if sweepError}
 			<div class="rounded-xl border border-crit/50 bg-crit-soft p-4 text-sm text-crit">
 				{sweepError}
@@ -364,8 +337,7 @@
 			</div>
 		{/if}
 	{:else}
-	<!-- Same row grammar as the actions list: container tile, name over its ULID,
-	     step-count chip, right-aligned stamp. -->
+
 	<div data-tour="library-list">
 	<RowList
 		{table}
@@ -470,7 +442,6 @@
 	description={m.action_sets_delete_dialog_description({ name: setToDelete?.name ?? '' })}
 	onconfirm={deleteActionSet}
 />
-
 
 <ActionPickerWithCreate
 	bind:open={pickerOpen}

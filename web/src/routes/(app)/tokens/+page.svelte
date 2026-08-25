@@ -16,10 +16,6 @@
 	import { codecs } from '$lib/url-state';
 	import { RowList, DataTablePagination, createClientListState } from '$lib/components/data-table';
 
-	// The Search RPC has no tokens scope: the list RPC returns every token
-	// (including disabled ones) and the table matches / filters / sorts / pages
-	// them client-side. Status is not a stored field — it is derived from
-	// disabled and the derived use count, here and in the status filter alike.
 	type SortKey = 'name' | 'status' | 'created';
 	type Filters = { status: string[] };
 
@@ -46,9 +42,6 @@
 
 	let deleteDialogOpen = $state(false);
 	let tokenToDelete = $state<RegistrationToken | null>(null);
-	// Creation lives on /tokens/new, a pill-committed route: a modal could not be
-	// stashed, and the secret shown once by the create response would be destroyed
-	// by the navigation that dismisses a dialog. This page only lists.
 
 	const statusFilterItems = [
 		{ id: 'active', label: m.tokens_status_active() },
@@ -56,8 +49,6 @@
 		{ id: 'exhausted', label: m.tokens_status_exhausted() },
 	];
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.tokens_table_name() },
 		{ key: 'status' as const, label: m.tokens_table_status() },
@@ -101,8 +92,6 @@
 		}
 	}
 
-	// The derived status, rendered in the concepts' tone vocabulary. Same four
-	// states as the filter — both read `tokenStatusId`, so they cannot drift.
 	function getTokenStatus(token: RegistrationToken): { label: string; tone: FleetTone } {
 		switch (tokenStatusId(token)) {
 			case 'disabled':
@@ -114,11 +103,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this page's
-	// facet and its keystrokes land on the same setSearch the removed input
-	// drove. These rows come from a plain list RPC, so the Search RPC has no
-	// scope for them — `null` says so instead of pretending. The registration is
-	// withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: null,
@@ -133,8 +117,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself. The search box is
-	     gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -142,9 +125,7 @@
 				<p class="text-sm text-muted-foreground">{m.tokens_subtitle()}</p>
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button
 					onclick={() => table.refresh()}
 					variant="outline"
@@ -164,10 +145,6 @@
 		</div>
 	{/snippet}
 
-	<!-- The token list in the drafts' row grammar: key tile, name over its ULID,
-		     derived-status and a right-aligned expiry
-	     stamp. Registration tokens have no detail route, so the row is not a link
-	     — every affordance stays in the trailing menu. -->
 	<div data-tour="tokens-list">
 		<RowList {table} {sortOptions} rowKey={(t) => (t.id?.value ?? '')}>
 			{#snippet filters()}
@@ -197,8 +174,7 @@
 				<span class="shrink-0 font-mono text-xs tabular-nums" title={m.tokens_table_uses()}>
 					{token.currentUses}{#if token.maxUses > 0}&nbsp;/&nbsp;{token.maxUses}{/if}
 				</span>
-				<!-- One stamp keeps the row dense; created stays in the tooltip and as
-				     a sort key. -->
+
 				<span
 					class="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground"
 					 title="{m.tokens_table_expires()}: {formatTimestampDateTime(token.expiresAt)} · {m.tokens_table_created()}: {formatTimestampDateTime(

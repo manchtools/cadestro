@@ -71,8 +71,6 @@
 		return user.email;
 	});
 
-	// Header avatar fallback: initials from whatever identity the user actually
-	// has — no generated art, no placeholder image.
 	const initials = $derived.by(() => {
 		const source = displayName || user?.email || '';
 		const words = source.split(/[\s._@-]+/).filter(Boolean);
@@ -82,12 +80,6 @@
 
 	const isSelf = $derived(!!user && user.id === authStore.user?.id);
 
-	// The user's OWN action. Nothing on this page holds an editable draft — every
-	// field commits from its own dialog — so the context is permanently clean and
-	// exists solely as this user's action bar, the same shape the action detail
-	// page uses for action types with no params form. Erase is offered only for
-	// somebody else; a clean context shows no Stash/Cancel and a disabled commit,
-	// so it reads as the one thing on offer, in crit with a trash glyph.
 	const contextId = $derived(`user:${userId}`);
 	$effect(() => {
 		const u = user;
@@ -118,9 +110,6 @@
 		if (shell.pill.context?.id === contextId) exitContext();
 	});
 
-	// Role ids hidden from the assign picker: held GLOBALLY (unscoped) or
-	// inherited. A role held only at device-group scopes stays selectable so a
-	// second scope can be added (#7); roleGrants carries each grant's scope.
 	const roleAssignExcludeIds = $derived.by(() => {
 		if (!user) return [];
 		const unscoped = (user.roleGrants ?? [])
@@ -129,7 +118,6 @@
 		return [...unscoped, ...inheritedRoles.map((ir) => ir.role.id?.value ?? '')];
 	});
 
-	// Roles inherited via user group membership (not directly assigned)
 	const inheritedRoles = $derived.by(() => {
 		if (!user) return [];
 		const directIds = new Set(user.roleGrants.flatMap((grant) => (grant.role?.id?.value ? [grant.role.id.value] : [])));
@@ -196,8 +184,6 @@
 		}
 	}
 
-	// The server refuses SCIM-managed subjects with `scim_managed_resource`; the
-	// page stays put because only a resolved erase navigates away.
 	async function eraseUser() {
 		if (!user) return;
 		try {
@@ -332,7 +318,7 @@
 				<RefreshCw class="h-6 w-6 animate-spin text-muted-foreground" />
 			</div>
 		{:else if user}
-			<!-- entity header card -->
+
 			<section
 				data-tour="user-header"
 				data-testid="user-header"
@@ -411,7 +397,6 @@
 					</Tabs.Trigger>
 				</Tabs.List>
 
-				<!-- ── Profile ───────────────────────────────────────────────── -->
 				<Tabs.Content value="profile" class="space-y-4">
 					<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 						{@render sectionLabel(m.user_detail_profile())}
@@ -477,7 +462,6 @@
 					</section>
 				</Tabs.Content>
 
-				<!-- ── Identity links ────────────────────────────────────────── -->
 				<Tabs.Content value="identity-links">
 					<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 						{@render sectionLabel(m.user_detail_identity_links())}
@@ -515,7 +499,6 @@
 					</section>
 				</Tabs.Content>
 
-				<!-- ── SSH keys ──────────────────────────────────────────────── -->
 				<Tabs.Content value="ssh-keys" class="space-y-4">
 					<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 						<span class="flex items-center gap-2">
@@ -601,7 +584,6 @@
 					</section>
 				</Tabs.Content>
 
-				<!-- ── Roles ─────────────────────────────────────────────────── -->
 				<Tabs.Content value="roles">
 					<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 						<div class="flex items-center justify-between gap-3">
@@ -673,10 +655,8 @@
 					</section>
 				</Tabs.Content>
 
-				<!-- ── Groups ────────────────────────────────────────────────── -->
 				<Tabs.Content value="groups">
-					<!-- The tab trigger already names this section, so it carries no
-					     second heading of its own. -->
+
 					<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 						{#if userGroups.length === 0}
 							<p class="text-sm text-muted-foreground">{m.users_groups_empty()}</p>

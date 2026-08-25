@@ -1,8 +1,5 @@
 <script lang="ts">
-	// Round 2, Movement C's set-picker idiom: a bordered option row per action
-	// set — marker, name, "N actions" meta — that expands to the set's own steps
-	// so the operator can see what a set does before dropping it into a
-	// definition. Same drag/keyboard contract as the action-type palette.
+
 	import * as m from '$lib/paraglide/messages';
 	import { ChevronRight, Search } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
@@ -20,9 +17,9 @@
 		title: string;
 		options: SetOption[];
 		oninsert: (id: string) => void;
-		/** Asked to load a set's own steps the first time it is expanded. */
+
 		onpeek?: (id: string) => void;
-		/** Resolved step names per set id; absent means "not loaded yet". */
+
 		peeked?: Record<string, string[] | undefined>;
 		emptyLabel: string;
 		footer?: Snippet;

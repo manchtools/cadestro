@@ -1,7 +1,5 @@
-// Pure logic behind the server-mode DataTable. These three functions carry the
-// bugs that hide in every list page (sort-toggle direction, off-by-one
-// pagination, filter/offset mapping), so they're pinned here — matching the
-// repo's pure-TS test style (no component-test harness exists).
+
+
 import { describe, it, expect } from 'vitest';
 import { SearchScope, SortField, SortDirection } from '$contract/cadestro/v1/common_pb';
 import { nextSort, pageMath, buildSearchArgs, type SortState } from './list-logic';
@@ -98,7 +96,7 @@ describe('buildSearchArgs', () => {
 		expect(query).toBe('web');
 		expect(scope).toBe(SearchScope.DEVICES);
 		expect(pageSize).toBe(25);
-		expect(pageToken).toBe('25'); // offset = (2 - 1) * 25
+		expect(pageToken).toBe('25');
 		expect(dateFilters).toBeUndefined();
 		expect(tags).toBeUndefined();
 		expect(sortField).toBe(SortField.HOSTNAME);
@@ -109,7 +107,7 @@ describe('buildSearchArgs', () => {
 		expect(buildSearchArgs({ ...base, filters: { status: ['online'] } }, config)[5]).toEqual({
 			status: 'online'
 		});
-		// both selected → "all", so no server-side filter
+
 		expect(
 			buildSearchArgs({ ...base, filters: { status: ['online', 'offline'] } }, config)[5]
 		).toBeUndefined();
@@ -122,11 +120,6 @@ describe('buildSearchArgs', () => {
 	});
 });
 
-// Range filters (created_at / occurred_at) have no tag equivalent — the server
-// matches tags by exact value and only compares DateRanges as intervals — so
-// they travel in their own SearchRequest slot. These pin that the slot stays
-// empty for callers that never opt in, and carries the caller's ranges verbatim
-// for the ones that do.
 describe('buildSearchArgs date filters', () => {
 	const config = {
 		scope: SearchScope.DEVICES,

@@ -34,7 +34,7 @@
 </script>
 
 <div class="space-y-4">
-	<!-- SSID -->
+
 	<div class="space-y-1.5">
 		<Label>{m.wifi_ssid()}</Label>
 		<Input
@@ -45,7 +45,6 @@
 		<FieldError error={errors.ssid} />
 	</div>
 
-	<!-- Auth Type -->
 	<div class="space-y-1.5">
 		<Label>{m.wifi_auth_type()}</Label>
 		<Select.Root
@@ -73,7 +72,6 @@
 		<FieldError error={errors.authType} />
 	</div>
 
-	<!-- PSK Fields -->
 	{#if showPskFields}
 		<div class="space-y-1.5">
 			<Label>{m.wifi_psk()}</Label>
@@ -90,7 +88,6 @@
 		</div>
 	{/if}
 
-	<!-- EAP-TLS Fields -->
 	{#if showEapTlsFields}
 		<div class="space-y-4 rounded-lg border p-3">
 			<p class="text-sm font-medium">{m.wifi_eap_tls_settings()}</p>
@@ -146,7 +143,6 @@
 		</div>
 	{/if}
 
-	<!-- Connection Settings -->
 	<div class="grid gap-3 sm:grid-cols-2">
 		<div class="flex items-center justify-between gap-2 rounded-lg border p-3">
 			<div>
@@ -165,7 +161,6 @@
 		</div>
 	</div>
 
-	<!-- Priority -->
 	<div class="space-y-1.5">
 		<Label>{m.wifi_priority()}</Label>
 		<Input

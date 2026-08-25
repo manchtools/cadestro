@@ -1,8 +1,5 @@
 <script lang="ts">
-	// One secret column cell. The plaintext lives only in this component's
-	// local state and only while the row is revealed: hiding drops it, so
-	// re-revealing re-issues the audited reveal RPC instead of replaying a
-	// cached value. Nothing here logs or stores the plaintext.
+
 	import { toast } from 'svelte-sonner';
 	import { getLocalizedError } from '$lib/errors';
 	import { Button } from '$lib/components/ui/button';

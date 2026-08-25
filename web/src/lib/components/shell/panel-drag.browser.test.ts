@@ -1,7 +1,5 @@
-// Moving-window interaction tests: header drag and keyboard movement.
-// AC-1 header-only drag (body inert, buttons still fire — see panel.browser.test.ts),
-// AC-2 clamped moves, AC-3 zone state while dragging, AC-4 dock on release,
-// AC-5 arrows / Shift-arrows / Escape.
+
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Panel from './panel.svelte';
@@ -57,10 +55,10 @@ describe('header drag (AC-1, AC-2)', () => {
 		const h = header();
 		pt(h, 'pointerdown', 200, 200);
 		pt(h, 'pointermove', -2000, -2000);
-		// mid-drag: clamped to bounds, still free
+
 		expect(p(id).x).toBe(8);
 		expect(p(id).y).toBe(88);
-		// releasing slammed against the left edge = deliberate edge gesture → docks
+
 		pt(h, 'pointerup', -2000, -2000);
 		expect(p(id).slot).toBe('left');
 		expect(p(id).x).toBe(16);
@@ -71,8 +69,8 @@ describe('snap zones (AC-3, AC-4)', () => {
 	it('dragging into the left region sets the drag slot; release docks and clears', () => {
 		const id = mountPanel();
 		const x0 = p(id).x;
-		// move so the panel center lands well inside the left region (< 40% of 1280)
-		const dx = 20 - x0; // panel left edge → 20, center → 20 + PANEL_W/2 = 212
+
+		const dx = 20 - x0;
 		const h = header();
 		pt(h, 'pointerdown', 400, 300);
 		pt(h, 'pointermove', 400 + dx, 300);
@@ -87,7 +85,7 @@ describe('snap zones (AC-3, AC-4)', () => {
 	it('release outside any region keeps the free position', () => {
 		const id = mountPanel();
 		const x0 = p(id).x;
-		// center around 600/300 → null region at 1280x800
+
 		const dx = 600 - PANEL_W / 2 - x0;
 		const h = header();
 		pt(h, 'pointerdown', 400, 300);
@@ -113,7 +111,7 @@ describe('keyboard movement (AC-5)', () => {
 		key(h, 'ArrowLeft', true);
 		key(h, 'ArrowLeft', true);
 		key(h, 'ArrowLeft', true);
-		expect(p(id).x).toBe(8); // clamped at the left edge
+		expect(p(id).x).toBe(8);
 	});
 
 	it('Escape parks the panel to the stage', () => {

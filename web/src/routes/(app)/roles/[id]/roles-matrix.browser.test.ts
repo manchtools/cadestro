@@ -1,12 +1,4 @@
-// Conversion contract for the role editor's permission MATRIX.
-//
-// The matrix is the role's single editing surface: capability rows grouped by
-// domain, one Allow column, and a commit that lives in the context pill rather
-// than a save button on the card. These tests pin what a re-skin can quietly
-// lose: the domain groups are DISCOVERED from ListPermissions (never a
-// hardcoded list, and an empty list is an error, not an empty matrix), an edit
-// morphs the pill to a dirty context whose commit sends the exact permission
-// set, and a global-only permission can never make a role scopable.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -29,8 +21,6 @@ import {
 } from '$lib/shell/shell.svelte';
 import { groupPermissions } from './permission-groups';
 
-// Hoisted: the `$app/state` mock factory below is lifted above the module body,
-// so it can only close over hoisted values.
 const ROLE_ID = vi.hoisted(() => '01JR0A1B2C3D4E5F6G7H8J9K0L');
 
 const api = vi.hoisted(() => ({
@@ -66,8 +56,6 @@ vi.mock('$lib/sdk', async () => {
 
 import RoleEditorPage from './+page.svelte';
 
-// Two domains, and inside "Devices" one scopable and one deliberately
-// global-only permission — the shape the server actually returns.
 const PERMISSIONS = [
 	create(PermissionInfoSchema, {
 		key: 'ListDevices',
@@ -115,9 +103,7 @@ beforeEach(() => {
 });
 
 async function mount() {
-	// The shell's idea of "where the app is". A stashed draft only resumes IN
-	// PLACE while its owner is the mounted surface, and that is what this page's
-	// stash/restore round trip exercises.
+
 	setShellPath(`/roles/${ROLE_ID}`);
 	render(RoleEditorPage);
 	await vi.waitFor(() => expect(api.listPermissions).toHaveBeenCalled(), { timeout: 3000 });
@@ -128,8 +114,7 @@ const checkbox = (key: string) => browser.getByRole('checkbox', { name: key, exa
 
 describe('role matrix — groups are discovered from ListPermissions', () => {
 	it('renders one group per domain the permission list actually carries', async () => {
-		// Matches-zero guard on the FIXTURE: a silently empty permission list
-		// would make every "renders nothing" assertion below vacuously pass.
+
 		expect(PERMISSIONS.length).toBeGreaterThan(0);
 		const expectedGroups = groupPermissions(PERMISSIONS).map((g) => g.name);
 		expect(expectedGroups).toEqual(['Devices', 'Users', 'Roles']);
@@ -141,7 +126,7 @@ describe('role matrix — groups are discovered from ListPermissions', () => {
 				.element(browser.getByLabelText(m.roles_matrix_group_toggle({ group: name })))
 				.toBeVisible();
 		}
-		// Every permission the server sent is a row — none dropped by grouping.
+
 		await vi.waitFor(() =>
 			expect(document.querySelectorAll('[data-testid="matrix-row"]')).toHaveLength(
 				PERMISSIONS.length
@@ -176,18 +161,14 @@ describe('role matrix — the commit rides the context pill', () => {
 		);
 	});
 
-	// The pill is this role's ACTION BAR for the whole visit — it carries Delete
-	// from the moment the role loads, so it cannot wait for an edit to appear.
-	// What the first toggle changes is `dirty`: that is what turns Save, Stash
-	// and Cancel on, and what decides whether leaving parks a draft.
 	it('holds the role from load and goes dirty on the first toggle', async () => {
 		await mount();
 		await vi.waitFor(() => expect(pillMode()).toBe('context'));
 		expect(shell.pill.context?.id).toBe(`role:${ROLE_ID}`);
-		// nothing edited yet: nothing to save, and nothing worth parking
+
 		expect(shell.pill.context?.dirty).toBe(false);
 		expect(commitContext()).toBe(false);
-		// …but the role's own action is already reachable
+
 		expect(shell.pill.context?.extraActions?.map((a) => a.id)).toContain('delete');
 
 		await checkbox('ListUsers').click();
@@ -202,7 +183,7 @@ describe('role matrix — the commit rides the context pill', () => {
 
 		await checkbox('ListUsers').click();
 		await checkbox('CreateRole').click();
-		await checkbox('ListDevices').click(); // was on — this removes it
+		await checkbox('ListDevices').click();
 
 		await vi.waitFor(() => expect(pillMode()).toBe('context'));
 		expect(commitContext()).toBe(true);
@@ -223,14 +204,11 @@ describe('role matrix — the commit rides the context pill', () => {
 
 		const draftId = stashContext();
 		expect(draftId).toBe(`draft:role:${ROLE_ID}`);
-		// The pill must actually let go — an effect that re-acquires here would
-		// make Stash a no-op while the edit is still dirty.
+
 		await vi.waitFor(() => expect(pillMode()).toBe('nav'));
 		expect(shell.drafts.map((d) => d.id)).toEqual([draftId]);
 		expect(api.updateRole).not.toHaveBeenCalled();
 
-		// The matrix is still the mounted surface, so this resumes in place —
-		// nothing for the chrome to navigate.
 		expect(restoreDraft(draftId!)).toBeNull();
 		await vi.waitFor(() => expect(pillMode()).toBe('context'));
 		expect(shell.drafts).toHaveLength(0);
@@ -244,13 +222,10 @@ describe('role matrix — the commit rides the context pill', () => {
 		await vi.waitFor(() => expect(pillMode()).toBe('context'));
 		const draftId = stashContext();
 
-		// The operator walked away: the matrix unmounts and its component state is
-		// gone. Only what the stash snapshotted can come back.
 		setShellPath('/devices');
 		expect(restoreDraft(draftId!)).toBe(`/roles/${ROLE_ID}`);
 		expect(pillMode()).toBe('nav');
-		// The card pops on the click; the buffer is staged for the surface to take
-		// with claimDraft when it mounts.
+
 		expect(shell.drafts).toHaveLength(0);
 		const payload = claimDraft(`role:${ROLE_ID}`) as {
 			name: string;
@@ -268,7 +243,7 @@ describe('role matrix — the commit rides the context pill', () => {
 		await checkbox('ListUsers').click();
 		await vi.waitFor(() => expect(pillMode()).toBe('context'));
 
-		requestCancelContext(); // dirty → asks first
+		requestCancelContext();
 		expect(shell.pill.cancelPending).toBe(true);
 		confirmCancelContext();
 
@@ -294,7 +269,7 @@ describe('role matrix — a global-only permission can never be scoped', () => {
 
 	it('drops the role to org-wide-only as soon as a global-only permission joins it', async () => {
 		await mount();
-		// ListDevices alone (DEVICE target) makes the role device-scopable.
+
 		const scopability = browser.getByTestId('role-scopability');
 		await expect.element(scopability).toBeVisible();
 		expect(scopability.element().dataset.scope).toBe('device');

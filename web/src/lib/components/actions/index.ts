@@ -1,4 +1,4 @@
-// Type utilities
+
 export {
 	getActionTypeInfo,
 	getActionTypeInfoByValue,
@@ -13,7 +13,6 @@ export {
 	type ActionTypeGroup
 } from './action-type';
 
-// Display components
 export { default as ActionTypeBadge } from './ActionTypeBadge.svelte';
 export { default as ActionParamsDisplay } from './ActionParamsDisplay.svelte';
 export { default as ActionScheduleDisplay } from './ActionScheduleDisplay.svelte';
@@ -21,13 +20,6 @@ export { default as ActionCreateForm } from './action-create-form.svelte';
 export { default as EditParamsDialog, supportsAbsent } from './edit-params-dialog.svelte';
 export { default as ActionDetailSheet, openActionSheet } from './action-detail-sheet.svelte';
 
-// The B1 pipeline builders and the inline params editor are deliberately NOT
-// re-exported here. They pull in the draft-persistence hook and the shell's
-// context pill, and this barrel is imported by every list page for nothing more
-// than a type label — a re-export would make those pages load (and their tests
-// mock) machinery they never render. Their three consumers import them by path.
-
-// Form components
 export {
 	PackageParamsForm,
 	ShellParamsForm,
@@ -50,7 +42,6 @@ export {
 	AgentUpdateParamsForm
 } from './forms';
 
-// Form state types, defaults, and converters
 export {
 	defaultPackageForm,
 	defaultShellForm,

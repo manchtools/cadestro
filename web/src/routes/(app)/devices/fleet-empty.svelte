@@ -1,7 +1,5 @@
 <script lang="ts">
-	// The honest empty fleet. Kept as ONE component so the onboarding wave can
-	// drop its checklist card into the `extra` slot without touching the fleet
-	// surface itself.
+
 	import type { Snippet } from 'svelte';
 	import { MonitorOff } from '@lucide/svelte';
 

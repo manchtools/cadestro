@@ -46,13 +46,11 @@ describe('StageRail (AC-6 / AC-7)', () => {
 		[openPanel('window', 'w1', 'W1'), openPanel('window', 'w2', 'W2')].forEach(minimizePanel);
 		render(StageRail);
 
-		// one stack stands in for the pair — not two separate cards
 		const stack = page.getByTestId('stage-stack');
 		await expect.element(stack).toBeVisible();
 		await expect.element(stack).toHaveTextContent('2');
 		expect(page.getByTestId('stage-card').elements()).toHaveLength(0);
 
-		// expanding the stack fans out the individual windows
 		await stack.click();
 		await expect.element(page.getByText('W1')).toBeVisible();
 		await expect.element(page.getByText('W2')).toBeVisible();
@@ -73,7 +71,7 @@ describe('StageRail (AC-6 / AC-7)', () => {
 	}
 
 	it('a stashed draft is a dashed ✎ card that resumes the context it parked, in place', async () => {
-		setShellPath('/action-sets/harden-ssh'); // the owner is still the mounted surface
+		setShellPath('/action-sets/harden-ssh');
 		parkHardenSsh();
 		render(StageRail);
 
@@ -81,7 +79,7 @@ describe('StageRail (AC-6 / AC-7)', () => {
 		await expect.element(draft).toBeVisible();
 		await expect.element(page.getByText('Harden SSH baseline')).toBeVisible();
 		await expect.element(page.getByText('step 4 · verify script missing')).toBeVisible();
-		// dashed border is the concept's mark for work-in-progress, not a finished window
+
 		expect(getComputedStyle(draft.element()).borderTopStyle).toBe('dashed');
 
 		await draft.click();
@@ -90,7 +88,6 @@ describe('StageRail (AC-6 / AC-7)', () => {
 		expect(goto).not.toHaveBeenCalled();
 	});
 
-	// Throwing parked work away should not require restoring it first.
 	it('the ✕ on a draft card discards it without restoring or navigating', async () => {
 		setShellPath('/devices');
 		parkHardenSsh();
@@ -107,25 +104,21 @@ describe('StageRail (AC-6 / AC-7)', () => {
 	it('a card whose surface is gone NAVIGATES home instead of reviving a dead context', async () => {
 		setShellPath('/action-sets/harden-ssh');
 		parkHardenSsh();
-		setShellPath('/devices'); // the operator moved on; the builder unmounted
+		setShellPath('/devices');
 		render(StageRail);
 
 		await page.getByTestId('stage-draft').click();
 
-		// `$lib/navigation` forwards an options argument, so assert on the target.
 		expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe('/action-sets/harden-ssh');
-		// The pill stays free — the surface re-enters context with LIVE closures
-		// once it mounts and claims the staged payload.
+
 		expect(pillMode()).toBe('nav');
-		// The card leaves the rail on the click. Leaving it standing until some
-		// later claim is what made restoring look unreliable (a reused [id]
-		// component or a load-gated claim never popped it).
+
 		expect(shell.drafts).toHaveLength(0);
 	});
 
 	it('a stashed-but-alive terminal appears on the stage', async () => {
 		openTerminal('device-1', 'edge-01');
-		toggleTerminal(); // minimise the drawer — session stays alive
+		toggleTerminal();
 		render(StageRail);
 
 		await expect.element(page.getByText('Terminal')).toBeVisible();

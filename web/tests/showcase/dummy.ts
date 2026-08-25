@@ -1,25 +1,10 @@
-// Dummy data for the showcase harness. Names, hostnames, and roles are
-// deliberately generic ("staging", "edge-01", etc.) — no real customer
-// or operator data should ever land here.
-//
-// SearchScope enum values (from contract/gen/ts/cadestro/v1/common_pb.ts):
-//   ACTIONS=1 ACTION_SETS=2 DEFINITIONS=3 COMPLIANCE_POLICIES=4
-//   DEVICES=5 USERS=6 DEVICE_GROUPS=7 USER_GROUPS=8 AUDIT_EVENTS=9
 
-// Fixed reference instant so every render is byte-for-byte reproducible:
-// relative timestamps ("5 minutes ago", "last seen 2h ago") are computed by
-// the UI from Date.now(), so the visual-regression harness freezes the browser
-// clock to exactly this value (see tests/e2e/fixtures.ts). Changing it
-// invalidates every snapshot baseline.
-export const REFERENCE_NOW_MS = Date.UTC(2026, 5, 20, 12, 0, 0); // 2026-06-20T12:00:00Z
+
+export const REFERENCE_NOW_MS = Date.UTC(2026, 5, 20, 12, 0, 0);
 const now = Math.floor(REFERENCE_NOW_MS / 1000);
 const min = 60;
 const hour = 60 * min;
 const day = 24 * hour;
-
-// ---------------------------------------------------------------------------
-// Devices
-// ---------------------------------------------------------------------------
 
 export const DUMMY_DEVICES = [
 	{
@@ -180,9 +165,7 @@ export function getDeviceByIdResponse(id: string) {
 		const [k, v] = pair.split('=');
 		if (k) labelsObj[k] = v ?? '';
 	}
-	// proto-json: google.protobuf.Timestamp = ISO-8601 string; enums =
-	// proto-name string ("DEVICE_STATUS_ONLINE"). Both required so
-	// protobuf-es accepts the response without coercion errors.
+
 	return {
 		device: {
 			id: d.id,
@@ -236,17 +219,13 @@ export function getDeviceInventoryResponse() {
 	};
 }
 
-// ---------------------------------------------------------------------------
-// Actions
-// ---------------------------------------------------------------------------
-
 export const DUMMY_ACTIONS = [
 	{
 		id: '01J6XYZSHOWCASEACTION001',
 		name: 'Install nginx',
 		description: 'Add the upstream NGINX repo and install the package',
-		type: 1, // PACKAGE
-		desired_state: 1, // PRESENT
+		type: 1,
+		desired_state: 1,
 		created_at: now - 60 * day,
 		updated_at: now - 12 * day,
 		is_compliance: 'false',
@@ -255,7 +234,7 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION002',
 		name: 'Apply security updates',
 		description: 'Run unattended-upgrades, security pocket only',
-		type: 2, // UPDATE
+		type: 2,
 		desired_state: 1,
 		created_at: now - 30 * day,
 		updated_at: now - 2 * day,
@@ -265,8 +244,8 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION003',
 		name: 'Disable telemetry service',
 		description: 'systemctl disable + mask vendor-telemetry.service',
-		type: 700, // SERVICE
-		desired_state: 2, // ABSENT
+		type: 700,
+		desired_state: 2,
 		created_at: now - 90 * day,
 		updated_at: now - 30 * day,
 		is_compliance: 'true',
@@ -275,7 +254,7 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION004',
 		name: 'Flatpak: Firefox ESR',
 		description: 'org.mozilla.firefox from flathub, system-wide',
-		type: 103, // FLATPAK
+		type: 103,
 		desired_state: 1,
 		created_at: now - 14 * day,
 		updated_at: now - 14 * day,
@@ -285,7 +264,7 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION005',
 		name: 'Deploy /etc/issue.net banner',
 		description: 'Compliance banner per group security policy',
-		type: 400, // FILE
+		type: 400,
 		desired_state: 1,
 		created_at: now - 200 * day,
 		updated_at: now - 5 * day,
@@ -295,7 +274,7 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION006',
 		name: 'Rotate LUKS device key',
 		description: 'Rotate slot-0 key on encrypted root',
-		type: 800, // LUKS
+		type: 800,
 		desired_state: 1,
 		created_at: now - 7 * day,
 		updated_at: now - 7 * day,
@@ -305,7 +284,7 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION007',
 		name: 'Provision lab user "intern"',
 		description: 'Local account in operators group, no password',
-		type: 600, // USER
+		type: 600,
 		desired_state: 1,
 		created_at: now - 18 * day,
 		updated_at: now - 18 * day,
@@ -315,7 +294,7 @@ export const DUMMY_ACTIONS = [
 		id: '01J6XYZSHOWCASEACTION008',
 		name: 'Run kernel-lockdown audit',
 		description: 'osquery compliance check for kernel.lockdown',
-		type: 200, // SHELL
+		type: 200,
 		desired_state: 1,
 		created_at: now - 45 * day,
 		updated_at: now - 1 * day,
@@ -345,10 +324,6 @@ export function actionsAsSearchResults() {
 		totalCount: DUMMY_ACTIONS.length,
 	};
 }
-
-// ---------------------------------------------------------------------------
-// Users
-// ---------------------------------------------------------------------------
 
 export const DUMMY_USERS = [
 	{
@@ -420,26 +395,6 @@ export function usersAsSearchResults() {
 	};
 }
 
-// ---------------------------------------------------------------------------
-// Roles
-// ---------------------------------------------------------------------------
-
-// The Administrator role's permission set, so the Roles page renders a real
-// count instead of a single "*".
-//
-// This is a SNAPSHOT of the server registry, in registry order, not a live
-// mirror: nothing in this TypeScript build can read the Go source, so a
-// permission added there will not appear here until someone re-extracts it.
-// The previous copy claimed to match AllPermissions() and did not — it had
-// drifted to 160 entries including CreateUser, DeleteUser and GetToken, which
-// are not permissions at all, while missing sixteen that are.
-//
-// Re-extract with, from the repository root:
-//
-//   awk '/^func registryPermissions\(\) \[\]permEntry \{/,/^\}/' \
-//       server/internal/auth/permissions.go | grep -oP '^\s*\{"\K[^"]+'
-//
-// 166 keys as of this snapshot.
 export const ALL_PERMISSIONS = [
 	'GetCurrentUser','GetUser','GetUser:self','ListUsers',
 	'EraseJITUser','UpdateUserEmail','UpdateUserEmail:self','SetUserDisabled',
@@ -527,10 +482,6 @@ export function listRolesResponse() {
 	};
 }
 
-// ---------------------------------------------------------------------------
-// User Groups
-// ---------------------------------------------------------------------------
-
 export const DUMMY_USER_GROUPS = [
 	{
 		id: '01J6XYZSHOWCASEGROUP0001',
@@ -560,10 +511,6 @@ export const DUMMY_USER_GROUPS = [
 		created_at: now - 14 * day,
 	},
 ];
-
-// ---------------------------------------------------------------------------
-// Device Groups (dynamic + static)
-// ---------------------------------------------------------------------------
 
 export const DUMMY_DEVICE_GROUPS = [
 	{
@@ -640,8 +587,6 @@ export function getDeviceGroupResponse(id: string) {
 	};
 }
 
-// ListDevices (used by device-group detail to show member list).
-// Returns a small subset of the dummy devices as "members" of the group.
 export function listDevicesResponse() {
 	const subset = DUMMY_DEVICES.slice(0, 6);
 	return {
@@ -658,12 +603,6 @@ export function listDevicesResponse() {
 	};
 }
 
-// Compliance — used by the Compliance tab on /devices/<id> via
-// GetDeviceCompliancePolicyStatus. ComplianceStatus enum:
-//   COMPLIANCE_STATUS_UNKNOWN=0
-//   COMPLIANCE_STATUS_COMPLIANT=1
-//   COMPLIANCE_STATUS_NON_COMPLIANT=2
-//   COMPLIANCE_STATUS_IN_GRACE_PERIOD=3
 export function getDeviceCompliancePolicyStatusResponse() {
 	return {
 		overallStatus: 'COMPLIANCE_STATUS_NON_COMPLIANT',
@@ -758,10 +697,6 @@ export function userGroupsAsSearchResults() {
 	};
 }
 
-// ===========================================================================
-// Action Sets  (search scope 2 · list · detail)
-// ===========================================================================
-
 export const DUMMY_ACTION_SETS = [
 	{
 		id: '01J6XYZSHOWCASESET00001',
@@ -847,10 +782,6 @@ export function listActionSetsResponse() {
 	};
 }
 
-// ===========================================================================
-// Definitions  (search scope 3 · list · detail)
-// ===========================================================================
-
 export const DUMMY_DEFINITIONS = [
 	{
 		id: '01J6XYZSHOWCASEDEF000001',
@@ -911,10 +842,6 @@ export function getDefinitionResponse(id: string) {
 		members,
 	};
 }
-
-// ===========================================================================
-// Compliance Policies  (search scope 4 · detail)
-// ===========================================================================
 
 export const DUMMY_COMPLIANCE_POLICIES = [
 	{
@@ -978,10 +905,6 @@ export function getCompliancePolicyResponse(id: string) {
 	};
 }
 
-// ===========================================================================
-// Audit events  (search scope 9)
-// ===========================================================================
-
 export const DUMMY_AUDIT_EVENTS = [
 	{ id: '01J6XYZSHOWCASEAUDIT0001', stream_type: 'device', stream_id: '01J6XYZSHOWCASEDEVICE0001', event_type: 'DeviceAssigned', actor_type: 'user', actor_id: '01J6XYZSHOWCASEADMINUSR01', occurred_at: now - 1 * hour },
 	{ id: '01J6XYZSHOWCASEAUDIT0002', stream_type: 'action', stream_id: '01J6XYZSHOWCASEACTION002', event_type: 'ActionCreated', actor_type: 'user', actor_id: '01J6XYZSHOWCASEUSER0002', occurred_at: now - 3 * hour },
@@ -1012,10 +935,6 @@ export function auditEventsAsSearchResults() {
 		totalCount: DUMMY_AUDIT_EVENTS.length,
 	};
 }
-
-// ===========================================================================
-// Actions — list + detail (full ManagedAction proto shape)
-// ===========================================================================
 
 export function getActionResponse(id: string) {
 	const a = DUMMY_ACTIONS.find((x) => x.id === id) ?? DUMMY_ACTIONS[0];
@@ -1049,10 +968,6 @@ export function listActionsResponse() {
 		totalCount: DUMMY_ACTIONS.length,
 	};
 }
-
-// ===========================================================================
-// Users — list + detail (full User proto shape)
-// ===========================================================================
 
 function userProto(u: (typeof DUMMY_USERS)[number]) {
 	return {
@@ -1090,10 +1005,6 @@ export function listUsersResponse() {
 	};
 }
 
-// ===========================================================================
-// User Groups — detail (members)
-// ===========================================================================
-
 export function getUserGroupResponse(id: string) {
 	const g = DUMMY_USER_GROUPS.find((x) => x.id === id) ?? DUMMY_USER_GROUPS[0];
 	const members = DUMMY_USERS.slice(0, parseInt(g.member_count, 10)).map((u) => ({
@@ -1121,10 +1032,6 @@ export function getUserGroupResponse(id: string) {
 	};
 }
 
-// ===========================================================================
-// Roles — detail + permissions catalogue
-// ===========================================================================
-
 export function getRoleResponse(id: string) {
 	const r = listRolesResponse().roles.find((x) => x.id === id) ?? listRolesResponse().roles[1];
 	return {
@@ -1143,8 +1050,7 @@ export function getRoleResponse(id: string) {
 const PERMISSION_GROUPS: Array<[string, string[]]> = [
 	['Devices', ['ListDevices', 'GetDevice', 'AssignDevice', 'UnassignDevice', 'DeleteDevice']],
 	['Actions', ['ListActions', 'CreateAction', 'RenameAction', 'DeleteAction']],
-	// Provisioning is provider-owned: there is no CreateUser or DeleteUser
-	// permission to catalogue, and EraseJITUser is the only local erase.
+
 	['Users', ['ListUsers', 'SetUserDisabled', 'UpdateUserProfile', 'EraseJITUser']],
 	['Roles', ['ListRoles', 'CreateRole', 'UpdateRole', 'DeleteRole', 'AssignRoleToUser']],
 	['Audit', ['ListAuditEvents']],
@@ -1159,10 +1065,6 @@ export function listPermissionsResponse() {
 	}
 	return { permissions };
 }
-
-// ===========================================================================
-// Registration tokens
-// ===========================================================================
 
 export const DUMMY_TOKENS = [
 	{ id: '01J6XYZSHOWCASETOKEN0001', name: 'Berlin rollout', max_uses: 0, current_uses: 2, expires_at: now + 60 * day, created_at: now - 40 * day, disabled: false },
@@ -1187,10 +1089,6 @@ export function listTokensResponse() {
 	};
 }
 
-// ===========================================================================
-// Identity providers + links + auth methods
-// ===========================================================================
-
 export const DUMMY_IDPS = [
 	{ id: '01J6XYZSHOWCASEIDP00001', name: 'Okta (Staging)', slug: 'okta-staging', enabled: true, client_id: 'okta-client-staging', issuer_url: 'https://staging.okta.com', auto_create_users: true, auto_link_by_email: false, scim: true },
 	{ id: '01J6XYZSHOWCASEIDP00002', name: 'Google Workspace', slug: 'google', enabled: false, client_id: 'google-oauth-client', issuer_url: 'https://accounts.google.com', auto_create_users: false, auto_link_by_email: false, scim: false },
@@ -1201,7 +1099,7 @@ function idpProto(p: (typeof DUMMY_IDPS)[number]) {
 		id: p.id,
 		name: p.name,
 		slug: p.slug,
-		providerType: 1, // OIDC
+		providerType: 1,
 		enabled: p.enabled,
 		clientId: p.client_id,
 		issuerUrl: p.issuer_url,
@@ -1252,10 +1150,6 @@ export function listAuthMethodsResponse() {
 		})),
 	};
 }
-
-// ===========================================================================
-// Server settings, terminal sessions, and available actions
-// ===========================================================================
 
 export function getServerSettingsResponse() {
 	return { settings: { userProvisioningEnabled: true, sshAccessForAll: false } };

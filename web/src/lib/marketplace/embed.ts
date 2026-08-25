@@ -1,20 +1,11 @@
-// postMessage contract with the marketplace iframe. Mirror of the
-// definition inside the marketplace repository, which is a separate
-// product — kept in sync by hand for now so this app has a single
-// source of truth it can type against.
-//
-// Any change here must be reflected in that repository's copy of
-// `web/src/lib/embed.ts`.
+
 
 export type EmbedMessage =
-	// Embed → host. Posted once the embed's message listener is
-	// attached; tells the host it's safe to send init. Carries no
-	// secrets so the embed targets origin '*'; host filters by
-	// event.source.
+
 	| { kind: 'pm.marketplace.hello' }
-	// Host → embed. Response to hello.
+
 	| { kind: 'pm.marketplace.init'; subscriptionToken: string | null; parentOrigin: string }
-	// Embed → host. Final ack — UI is visible and interactive.
+
 	| { kind: 'pm.marketplace.ready' }
 	| {
 			kind: 'pm.marketplace.import';
@@ -38,7 +29,6 @@ export function isEmbedMessage(data: unknown): data is EmbedMessage {
 	);
 }
 
-/** Extracts the origin (scheme + host + port) from a URL string. */
 export function originOf(url: string): string {
 	try {
 		return new URL(url).origin;

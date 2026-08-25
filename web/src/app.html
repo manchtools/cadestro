@@ -5,40 +5,25 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content="Cadestro — Linux fleet management web UI" />
 
-		<!-- The control origin this deployment was configured with, filled in per
-		     request by hooks.server.ts. A deployment that serves the UI beside
-		     control writes its own origin here and the app is configured before it
-		     paints; an empty value (or a build served without that server, such as
-		     a component test) leaves the app to ask at /setup, exactly as before. -->
 		<meta name="cadestro-control-url" content="%cadestro.controlUrl%" />
 
-		<!-- Favicons. Standard fallback first for browsers that ignore
-		     `media=` on rel=icon, then the light + dark variants picked
-		     by media query, then the adaptive SVG as a last-resort
-		     anywhere both link-media and inline-SVG-media-queries hold. -->
-
-		<!-- Standard fallback -->
 		<link rel="icon" type="image/x-icon" href="%sveltekit.assets%/favicon-light.ico" />
 		<link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-light-32x32.png" />
 
-		<!-- Light-mode variants -->
 		<link rel="icon" type="image/x-icon" href="%sveltekit.assets%/favicon-light.ico" media="(prefers-color-scheme: light)" />
 		<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-light-16x16.png" media="(prefers-color-scheme: light)" />
 		<link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-light-32x32.png" media="(prefers-color-scheme: light)" />
 		<link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon-light.png" media="(prefers-color-scheme: light)" />
 
-		<!-- Dark-mode variants -->
 		<link rel="icon" type="image/x-icon" href="%sveltekit.assets%/favicon-dark.ico" media="(prefers-color-scheme: dark)" />
 		<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-dark-16x16.png" media="(prefers-color-scheme: dark)" />
 		<link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-dark-32x32.png" media="(prefers-color-scheme: dark)" />
 		<link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon-dark.png" media="(prefers-color-scheme: dark)" />
 
-		<!-- Adaptive SVG (embedded prefers-color-scheme CSS) -->
 		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon-adaptive.svg" />
 
 		<link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
 
-		<!-- Open Graph / social cards -->
 		<meta property="og:title" content="Cadestro" />
 		<meta property="og:description" content="Linux fleet management — declarative, audit-first, open source." />
 		<meta property="og:image" content="%sveltekit.assets%/icon-512.png" />
@@ -46,10 +31,6 @@
 		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:image" content="%sveltekit.assets%/icon-512.png" />
 
-		<!-- Browser chrome (address bar / status bar) follows the user's
-		     light/dark preference. The light meta uses the indigo brand
-		     color; the dark uses the brighter indigo-400 that pairs with
-		     the ink plate. -->
 		<meta name="theme-color" content="#6366F1" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#818CF8" media="(prefers-color-scheme: dark)" />
 

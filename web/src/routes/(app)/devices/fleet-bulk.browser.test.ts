@@ -1,16 +1,5 @@
-// The fleet's two ambient/bulk behaviours, exercised through the REAL route
-// component against mocked RPCs:
-//
-//   1. the resting pill explains the section beneath it — the caption carries
-//      the SAME buckets the summary strip counts, and it leaves with the
-//      surface instead of lingering over the next screen;
-//   2. Reboot and Label write per device. What is load-bearing is that the
-//      confirmation tells the truth about offline members, that EVERY selected
-//      id is written (exact ids, one call each), and that one failing device
-//      neither aborts the rest nor turns into a toast storm.
-//
-// Only `apiClient` and the toaster are faked; the generated protobuf enums, the
-// shell store and the fleet selection store are the production modules.
+
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
@@ -90,7 +79,7 @@ function device(o: {
 	hostname: string;
 	status?: DeviceStatus;
 	compliance?: ComplianceStatus;
-	/** minutes ago; null = never seen */
+
 	seen?: number | null;
 }) {
 	return create(DeviceSchema, {
@@ -122,8 +111,6 @@ function respond(devices: ReturnType<typeof device>[], groups: Record<string, st
 
 const tiles = () => Array.from(document.querySelectorAll<HTMLElement>('[data-testid="fleet-tile"]'));
 
-/** Click one bubble's tile by HOSTNAME — the grid is worst-first, so addressing
- *  by name keeps the test independent of that ordering. */
 function clickTile(groupId: string, hostname: string) {
 	const bubble = document.querySelector<HTMLElement>(`[data-group-id="${groupId}"]`)!;
 	const tile = Array.from(
@@ -162,10 +149,7 @@ afterEach(() => {
 });
 
 describe('the resting pill stays quiet on the fleet', () => {
-	// The caption is a CONTEXTUAL surface — draft eligibility, commit summaries,
-	// conflict attribution — never an echo of stats the page already shows. The
-	// fleet's summary strip counts these buckets on screen; captioning the pill
-	// with the same numbers was duplication, not information.
+
 	it('pushes no page-stat caption — the summary strip on the page is the one home for those numbers', async () => {
 		respond(
 			[
@@ -200,7 +184,7 @@ describe('the resting pill stays quiet on the fleet', () => {
 		await vi.waitFor(() => expect(pillMode()).toBe('selection'));
 		expect(pillSubtext()!.text).toBe('across 1 groups · 0 offline unavailable for live calls');
 
-		clickTile('g1', 'api-01'); // toggle back off
+		clickTile('g1', 'api-01');
 		await vi.waitFor(() => expect(pillMode()).toBe('nav'));
 		expect(pillSubtext()).toBeNull();
 	});
@@ -247,7 +231,7 @@ describe('bulk reboot', () => {
 		const dialog = browser.getByRole('alertdialog');
 		await expect.element(dialog).toBeVisible();
 		const hosts = document.querySelector<HTMLElement>('[data-testid="bulk-reboot-hosts"]')!;
-		// the unreachable member is named FIRST and is never dropped from the write
+
 		expect(hosts.textContent!.replace(/\s+/g, ' ').trim()).toBe('a2 a1 b1');
 		await dialog.getByTestId('bulk-reboot-confirm').click();
 
@@ -275,12 +259,11 @@ describe('bulk reboot', () => {
 		await expect.element(browser.getByRole('alertdialog')).toBeVisible();
 		await browser.getByTestId('bulk-reboot-confirm').click();
 
-		// the failing device does NOT abort the queue behind it
 		await vi.waitFor(() => expect(mocks.rebootDevice).toHaveBeenCalledTimes(3));
 		await vi.waitFor(() =>
 			expect(toaster.error).toHaveBeenCalledWith('2 requested, 1 failed')
 		);
-		expect(toaster.error).toHaveBeenCalledTimes(1); // one toast, not one per device
+		expect(toaster.error).toHaveBeenCalledTimes(1);
 		expect(toaster.success).not.toHaveBeenCalled();
 		expect(consoleError).toHaveBeenCalledWith(
 			'fleet bulk: per-device failures',

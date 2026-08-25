@@ -18,5 +18,4 @@ export { default as GroupParamsForm } from './GroupParamsForm.svelte';
 export { default as WifiParamsForm } from './WifiParamsForm.svelte';
 export { default as AgentUpdateParamsForm } from './AgentUpdateParamsForm.svelte';
 
-// Form state types and converters
 export * from './types';

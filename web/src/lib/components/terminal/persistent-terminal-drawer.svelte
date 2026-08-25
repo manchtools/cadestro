@@ -83,10 +83,6 @@
 		}
 	});
 
-	// A newly opened session is appended to the far end of a scrolling strip, so
-	// the tab for the terminal actually on screen would start out of view. Keep
-	// the active tab inside the strip's window; `nearest` on both axes so this
-	// never drags the page itself.
 	$effect(() => {
 		const id = active?.id;
 		if (!id || !strip) return;
@@ -112,10 +108,7 @@
 		class="fixed bottom-4 right-4 z-40 flex h-[28rem] w-[min(94vw,48rem)] flex-col overflow-hidden rounded-xl border border-hair bg-surface text-foreground shadow-pill transition-[transform,opacity] duration-200 {shell.terminal.open ? '' : 'pointer-events-none translate-y-[calc(100%+2rem)] opacity-0'}"
 	>
 		<div class="flex items-center gap-1 border-b border-hair bg-sunken px-2 py-1.5">
-			<!-- The strip owns its own horizontal scroll. The drawer is a fixed width
-			     and clips (overflow-hidden), so a tab row that merely overflows is a
-			     tab the operator can neither read, focus, nor disconnect. Tabs keep
-			     their width (shrink-0) and the strip scrolls instead. -->
+
 			<div bind:this={strip} data-testid="terminal-tabs" class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
 				{#each shell.terminal.sessions as session (session.id)}
 					<div data-session-tab={session.id} class="group flex shrink-0 items-center rounded-md {session.id === active?.id ? 'bg-surface text-foreground' : 'text-muted-foreground hover:bg-surface'}">

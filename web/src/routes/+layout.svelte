@@ -40,9 +40,7 @@
 </script>
 
 <svelte:head>
-	<!-- Favicons + theme-color live in app.html with media-queried
-	     light/dark variants. The PWA-specific tags below stay here
-	     because they need to be present on every route. -->
+
 	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Cadestro" />

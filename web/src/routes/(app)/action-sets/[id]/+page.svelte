@@ -1,13 +1,5 @@
 <script lang="ts">
-	// Action-set detail = B1's pipeline builder. The page itself is a thin shell:
-	// it loads the set, its members and the action library, hands them to
-	// <ActionSetBuilder>, and keeps the surfaces the builder does NOT own — the
-	// container schedule, assignments and dispatch.
-	//
-	// There is deliberately no Save button anywhere on this page: the builder
-	// publishes its commit to the context pill (⌘S / Stash / Esc), and the SET's
-	// own action — Delete — rides the same pill instead of a danger zone below
-	// three cards.
+
 	import { onMount } from 'svelte';
 	import { getLocalizedError } from '$lib/errors';
 	import { goto } from '$lib/navigation';
@@ -33,8 +25,7 @@
 	let library = $state<ManagedAction[]>([]);
 	let loading = $state(true);
 	let deleteDialogOpen = $state(false);
-	// Bumped after every reload so the builder remounts on a fresh baseline
-	// instead of trying to reconcile a committed draft against new server state.
+
 	let revision = $state(0);
 
 	const setId = $derived(page.params.id ?? '');
@@ -42,11 +33,6 @@
 	let scheduleOpen = $state(false);
 	let assignOpen = $state(false);
 
-	// The set's OWN actions, published on the builder's context so they share the
-	// pill with the commit: schedule and assignment act on the whole set, not on
-	// anything inside the builder. Delete keeps its confirm dialog — the pill is a
-	// shorter route to the gate, not a way past it — and is marked destructive so
-	// it can never be mistaken for the two beside it.
 	const entityActions: PillAction[] = [
 		{
 			id: 'schedule',

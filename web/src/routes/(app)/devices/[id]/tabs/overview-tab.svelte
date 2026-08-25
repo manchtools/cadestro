@@ -53,7 +53,7 @@
 	let assignees = $state<DeviceAssignee[]>([]);
 
 	$effect(() => {
-		// Track refreshKey to reload when parent triggers refresh
+
 		void refreshKey;
 		loadAssignees();
 	});
@@ -66,7 +66,6 @@
 		}
 	}
 
-	// Extract inventory fields
 	const systemInfo = $derived(inventory.find((t) => t.tableName === 'system_info'));
 	const osVersion = $derived(inventory.find((t) => t.tableName === 'os_version'));
 	const kernelInfo = $derived(inventory.find((t) => t.tableName === 'kernel_info'));
@@ -86,9 +85,6 @@
 		return `${mb.toFixed(0)} MB`;
 	}
 
-
-	// Connectivity in the fleet vocabulary: reachable, unreachable, or a device
-	// control has never heard from.
 	function getStatusTone(status: DeviceStatus): FleetTone {
 		switch (status) {
 			case DeviceStatus.ONLINE: return 'ok';
@@ -101,8 +97,7 @@
 		switch (status) {
 			case DeviceStatus.ONLINE: return m.devices_status_online();
 			case DeviceStatus.OFFLINE: return m.devices_status_offline();
-			// Same words as the device window: an unlabelled status chip would
-			// claim nothing while still occupying the status slot.
+
 			default: return m.common_unknown();
 		}
 	}
@@ -225,7 +220,7 @@
 {/snippet}
 
 <div class="space-y-6">
-	<!-- Live controls -->
+
 	<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 		{@render sectionLabel(m.instant_actions_title())}
 		<div class="mt-3 flex flex-wrap gap-3">
@@ -246,7 +241,6 @@
 		</div>
 	</section>
 
-	<!-- Device Details + Labels -->
 	<div class="grid gap-6 md:grid-cols-2">
 		<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 			{@render sectionLabel(m.device_detail_title())}
@@ -420,7 +414,6 @@
 		</section>
 	</div>
 
-	<!-- Danger Zone -->
 	<section class="rounded-xl border border-crit/50 bg-surface p-4 shadow-plate">
 		<p class="text-sm font-semibold text-crit">{m.common_danger_zone()}</p>
 		<div class="mt-3">

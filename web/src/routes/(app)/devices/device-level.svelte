@@ -1,12 +1,5 @@
 <script lang="ts">
-	// Device zoom for the admin fleet. The existing server-search machinery backs
-	// this level unchanged — same DEVICES scope, same sort / status-filter / page
-	// URL params, same row capabilities (open window, assign, delete) — worn
-	// under the fleet skin: every row leads with the same status tile the far
-	// pane draws, and clicking it selects into the same fleet selection.
-	//
-	// Mounted only while zoom === 'device', so the fleet and group levels never
-	// fire a search RPC they don't render.
+
 	import { base } from '$app/paths';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type Device, formatTimestampDateTime } from '$lib/sdk';
@@ -33,8 +26,6 @@
 
 	let { surfaceId, nowMs = Date.now() }: { surfaceId: string; nowMs?: number } = $props();
 
-	// The list is a scoped PostgreSQL search query. Online/offline is a
-	// query-time filter derived from the server's five-minute heartbeat window.
 	type SortKey = 'hostname' | 'status' | 'lastSeen';
 
 	const table = createSearchListState<Device, SortKey, { status: string[] }>({
@@ -42,23 +33,19 @@
 		adapter: searchResultToDevice,
 		sortKeys: ['hostname', 'status', 'lastSeen'],
 		defaultSort: 'hostname',
-		// Compliance status is sortable; connectivity remains a last-seen filter.
+
 		sortFieldMap: {
 			hostname: SortField.HOSTNAME,
 			status: SortField.COMPLIANCE_STATUS,
 			lastSeen: SortField.LAST_SEEN_AT
 		},
-		// Timestamps read newest-first when you switch to them.
+
 		sortDir: (key) => (key === 'lastSeen' ? 'desc' : 'asc'),
 		filters: { status: { key: 'status', codec: codecs.stringArray([]) } },
-		// The server takes one connectivity value. Selecting both means no filter.
+
 		filterToTags: (f) => (f.status.length === 1 ? { status: f.status[0] } : undefined)
 	});
 
-	// The query lives in the pill now: ⌘K opens search already on the Devices
-	// facet and its keystrokes land on the same setSearch the removed input
-	// drove. This level mounts only at zoom === 'device', so the registration
-	// appears and is withdrawn with the list it belongs to.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.DEVICES,
@@ -81,11 +68,6 @@
 		{ id: 'offline', label: m.devices_status_offline() }
 	];
 
-	// The same four buckets the near pane labels, in the same words. A row's
-	// chip must name the bucket its tile was painted from: collapsing the tone
-	// to "online or offline" made a drifting device read as offline and a
-	// never-seen device read as offline too — two states the fleet model keeps
-	// deliberately apart.
 	const STATUS_LABEL: Record<FleetTone, () => string> = {
 		ok: m.devices_status_online,
 		warn: m.fleet_status_drift,
@@ -106,9 +88,7 @@
 	];
 
 	const nowSec = $derived(Math.floor(nowMs / 1000));
-	// The search document carries no sync_interval_minutes, so these tiles decay
-	// against the server default — the group-resolved cadence only exists where
-	// the snapshot does (fleet / group zoom).
+
 	const fleetRows = $derived<FleetDevice[]>(table.rows.map((d) => toFleetDevice(d, [], nowSec)));
 	const rowAt = $derived(new Map(fleetRows.map((d, i) => [d.id, i])));
 	const selectedIds = $derived(getFleetSelection(surfaceId));
@@ -178,10 +158,6 @@
 	}
 </script>
 
-<!-- ONE toolbar line for the device zoom. The search box is gone — ⌘K is the
-     search, already scoped to Devices — so only the status filter remains, and
-     it stays with the list it filters: this level is mounted only while
-     zoom === 'device', and the fleet header above outlives it. -->
 <div class="flex flex-wrap items-center justify-end gap-2">
 	<MultiSelectCombobox
 		items={statusFilterItems}

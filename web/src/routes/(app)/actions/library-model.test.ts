@@ -1,10 +1,5 @@
-// The library overview's derivations. What is load-bearing here:
-//
-//   1. an action lands in the bucket the page's own type FILTER can name, and a
-//      compliance check is its own bucket rather than a shell script;
-//   2. a type the filter menu has no slug for is still counted, but is marked
-//      unfilterable instead of pretending a click could narrow to it;
-//   3. install + remove === total is an invariant of the summary strip.
+
+
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
 import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
@@ -19,9 +14,6 @@ import {
 	UNFILTERABLE_PREFIX
 } from './library-model';
 
-/** The same map the page builds from getActionTypeOptions(): the exact inverse
- *  of the slug → ActionType map its `filterToTags` reads. WIFI is deliberately
- *  absent, because the page's type menu really does omit it. */
 const SLUG_BY_TYPE = new Map<number, string>([
 	[ActionType.SHELL, 'shell'],
 	[ActionType.PACKAGE, 'package'],
@@ -83,16 +75,16 @@ describe('buildBubbles — one bubble per bucket really present', () => {
 
 	it('counts every bucket off the snapshot, compliance apart from shell', () => {
 		const bubbles = buildBubbles(library, SLUG_BY_TYPE);
-		expect(bubbles.length).toBeGreaterThan(0); // matches-zero guard
+		expect(bubbles.length).toBeGreaterThan(0);
 
 		expect(
 			bubbles.map((b) => [b.id, b.actions.length, b.remove, b.filterable])
 		).toEqual([
-			// filterable first, biggest first, then id
+
 			['package', 3, 1, true],
 			['compliance', 2, 0, true],
 			['shell', 1, 0, true],
-			// the bucket the type filter cannot name always trails
+
 			[UNFILTERABLE_PREFIX + ActionType.WIFI, 1, 0, false]
 		]);
 	});
@@ -111,7 +103,7 @@ describe('buildBubbles — one bubble per bucket really present', () => {
 		const pkg = bubbles.find((b) => b.id === 'package');
 		expect(pkg).toBeDefined();
 		expect(pkg!.actions.map((a) => a.name)).toEqual([
-			'Drop telnet', // ABSENT leads
+			'Drop telnet',
 			'Install curl',
 			'Install Firefox'
 		]);

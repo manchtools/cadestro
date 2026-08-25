@@ -1,9 +1,7 @@
-// Tests for the BASE_PATH-aware navigation wrapper (F004).
+
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// vi.mock factories are hoisted to the top of the file; vi.hoisted lets
-// us share state between the factory and the test.
 const navMocks = vi.hoisted(() => ({
 	goto: vi.fn(),
 	pushState: vi.fn(),

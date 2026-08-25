@@ -1,6 +1,5 @@
-// Pill state-machine tests: mode precedence, commit gating, dirty-cancel
-// gating, the stash → draft → restore round trip, and the ⌘S / Esc semantics
-// at the store seam (the chrome only forwards keys to `handlePillKey`).
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
 	shell,
@@ -122,8 +121,7 @@ describe('selection mode', () => {
 describe('context commit gating', () => {
 	it('commits a valid context, runs onCommit, and frees the pill', () => {
 		const onCommit = vi.fn();
-		// A committable context has changes AND passes validation; the clean
-		// resting state an edit page now holds is deliberately not committable.
+
 		enterContext(context({ valid: true, dirty: true, onCommit }));
 
 		expect(commitContext()).toBe(true);
@@ -282,21 +280,15 @@ describe('stash → draft → restore', () => {
 		enterContext(ctx);
 		stashContext();
 
-		expect(restoreDraft('draft:assign-1')).toBeNull(); // nothing for the chrome to navigate
+		expect(restoreDraft('draft:assign-1')).toBeNull();
 		expect(onRestore).toHaveBeenCalledTimes(1);
 		expect(pillMode()).toBe('context');
-		// the exact object round-trips, so the mounted surface's buffers survive
+
 		expect(shell.pill.context).toBe(ctx);
 		expect(shell.pill.context?.dirty).toBe(true);
 		expect(shell.drafts).toEqual([]);
 	});
 
-	// THE REPORTED BUG. Stash on /actions/new, navigate away, restore: the old
-	// store re-entered the parked ContextState, whose onCommit/onCancel closed
-	// over an unmounted surface — the pill came back unable to see or do
-	// anything. Restoring from elsewhere must hand the route to the chrome and
-	// NOT re-enter the dead context; the surface re-enters with live closures
-	// once it mounts and claims the staged payload.
 	it('cross-route restore hands the route to the chrome and does NOT re-enter the dead context', () => {
 		setShellPath('/actions/new');
 		const onRestore = vi.fn();
@@ -304,14 +296,12 @@ describe('stash → draft → restore', () => {
 		enterContext(ctx);
 		stashContext();
 
-		setShellPath('/devices'); // the operator navigated; /actions/new unmounted
+		setShellPath('/devices');
 
 		expect(restoreDraft('draft:action:new')).toBe('/actions/new');
 		expect(pillMode()).toBe('nav');
 		expect(onRestore).not.toHaveBeenCalled();
-		// The card leaves the rail on the click (the payload is staged for the
-		// owner instead) — a card that lingered until some later claim was the
-		// "restoring does not pop it reliably" bug.
+
 		expect(shell.drafts).toEqual([]);
 	});
 
@@ -330,11 +320,10 @@ describe('stash → draft → restore', () => {
 		setShellPath('/devices');
 		expect(restoreDraft(draftIdFor('role:r1'))).toBe('/roles/r1');
 
-		// …the chrome navigates, the surface mounts and takes its buffer back.
 		setShellPath('/roles/r1');
 		expect(claimDraft('role:r1')).toEqual({ name: 'Auditor', permissions: ['audit.read'] });
 		expect(shell.drafts).toEqual([]);
-		// read-and-remove: a second claim can never resurrect an orphaned copy
+
 		expect(claimDraft('role:r1')).toBeUndefined();
 	});
 
@@ -350,7 +339,7 @@ describe('stash → draft → restore', () => {
 
 		expect(stashContext()).toBeNull();
 		expect(shell.drafts).toEqual([]);
-		expect(pillMode()).toBe('context'); // the context is KEPT, not silently dropped
+		expect(pillMode()).toBe('context');
 		expect(error).toHaveBeenCalledTimes(1);
 		error.mockRestore();
 	});
@@ -377,11 +366,6 @@ describe('stash → draft → restore', () => {
 	});
 });
 
-// leaveContext is the auto-stash-on-navigate rule. THE DATA-LOSS BUG: a surface
-// leaves (its editor unmounts on navigation — e.g. because the operator restored
-// a DIFFERENT parked draft) while it still holds a dirty context. The old
-// single-slot teardown called exitContext(), discarding the open work with no
-// stage card. leaveContext must park it instead, exactly like the Stash button.
 describe('leaveContext — auto-stash-on-navigate', () => {
 	it('parks a dirty context on leave so restoring elsewhere can never destroy open work', () => {
 		setShellPath('/roles/r1');
@@ -397,14 +381,14 @@ describe('leaveContext — auto-stash-on-navigate', () => {
 			})
 		);
 
-		leaveContext('role:r1'); // the surface unmounted (operator restored another draft)
+		leaveContext('role:r1');
 
-		expect(pillMode()).toBe('nav'); // pill freed
-		expect(onStash).toHaveBeenCalledTimes(1); // parked exactly like the Stash button
+		expect(pillMode()).toBe('nav');
+		expect(onStash).toHaveBeenCalledTimes(1);
 		expect(shell.drafts).toEqual([
 			expect.objectContaining({ id: 'draft:role:r1', route: '/roles/r1', title: 'Auditor' })
 		]);
-		// the buffer rode onto the card, so the unsaved edits survive the leave
+
 		expect(claimDraft('role:r1')).toEqual({ name: 'Auditor' });
 	});
 
@@ -422,23 +406,15 @@ describe('leaveContext — auto-stash-on-navigate', () => {
 		expect(shell.drafts).toEqual([]);
 	});
 
-	// THE ONE-SLOT TRAP, seen in the running app as a pill that flashed the
-	// entity's actions and then fell back to nav. Two owners on one page both
-	// bound `action:<id>`: the page entered its context, the embedded editor
-	// overwrote it, and the editor's own "nothing to edit" teardown then dropped
-	// the slot — taking the page's actions with it. One id, one owner.
 	it('a second enterContext on the same id REPLACES the first — the slot holds exactly one owner', () => {
 		const pageActions = [{ id: 'delete', label: 'Delete', onRun: () => {} }];
 		enterContext(context({ id: 'action:a1', extraActions: pageActions }));
 		expect(shell.pill.context?.extraActions).toHaveLength(1);
 
-		// the embedded editor claims the same id and wins…
 		enterContext(context({ id: 'action:a1', title: 'editor', extraActions: [] }));
 		expect(shell.pill.context?.title).toBe('editor');
 		expect(shell.pill.context?.extraActions).toHaveLength(0);
 
-		// …and its teardown then frees the slot entirely, so the page's actions are
-		// gone too. The fix is that the editor carries them, not that both enter.
 		leaveContext('action:a1');
 		expect(pillMode()).toBe('nav');
 	});
@@ -451,15 +427,12 @@ describe('leaveContext — auto-stash-on-navigate', () => {
 		expect(shell.drafts).toEqual([]);
 	});
 
-	// REPORTED: cancelling parked the work anyway. Cancel is an explicit discard;
-	// the navigation it triggers must not be mistaken for "leaving with unsaved
-	// work". Same for commit — the buffer was saved, not abandoned.
 	it('CANCEL discards: the leave that follows must not park the work', () => {
 		const ctx = context({ id: 'role:new', route: '/roles/new', dirty: true });
 		enterContext(ctx);
 
 		confirmCancelContext();
-		// the builder's effect re-enters the still-dirty context, then unmounts
+
 		enterContext(ctx);
 		leaveContext('role:new');
 
@@ -483,19 +456,15 @@ describe('leaveContext — auto-stash-on-navigate', () => {
 		enterContext(ctx);
 		confirmCancelContext();
 		enterContext(ctx);
-		leaveContext('role:new'); // consumes the suppression
+		leaveContext('role:new');
 		expect(shell.drafts).toEqual([]);
 
-		enterContext(ctx); // a fresh edit later
-		leaveContext('role:new'); // a real navigate-away
+		enterContext(ctx);
+		leaveContext('role:new');
 		expect(shell.drafts).toHaveLength(1);
 	});
 });
 
-// REPORTED: clicking a stashed card sometimes left it on the rail — it only
-// left "once". The card must pop on the click itself, with the payload staged
-// for whenever the owning surface mounts (a reused [id] component or a
-// load-gated claim must not strand it).
 describe('draft cards pop on click, and can be thrown away', () => {
 	it('a cross-route restore removes the card IMMEDIATELY and still hands the payload back', () => {
 		setShellPath('/roles/r1');
@@ -506,12 +475,11 @@ describe('draft cards pop on click, and can be thrown away', () => {
 
 		setShellPath('/devices');
 		expect(restoreDraft(draftIdFor('role:r1'))).toBe('/roles/r1');
-		expect(shell.drafts).toEqual([]); // gone from the rail on the click, not later
+		expect(shell.drafts).toEqual([]);
 
-		// …and the buffer still reaches the surface whenever it mounts.
 		setShellPath('/roles/r1');
 		expect(claimDraft('role:r1')).toEqual({ name: 'Auditor' });
-		expect(claimDraft('role:r1')).toBeUndefined(); // once only
+		expect(claimDraft('role:r1')).toBeUndefined();
 	});
 
 	it('discardDraft throws parked work away without restoring it, payload and all', () => {
@@ -524,7 +492,7 @@ describe('draft cards pop on click, and can be thrown away', () => {
 		discardDraft(draftIdFor('role:r1'));
 
 		expect(shell.drafts).toEqual([]);
-		// the buffer must not survive to resurrect on a later mount
+
 		expect(claimDraft('role:r1')).toBeUndefined();
 	});
 
@@ -579,7 +547,6 @@ describe('navigation', () => {
 		expect(shell.drafts).toHaveLength(1);
 	});
 
-	// The origin Stash returns to: where the operator was BEFORE the editor.
 	it('remembers the prior path so Stash can return the operator to where they opened the editor', () => {
 		setShellPath('/actions');
 		setShellPath('/actions/new');
@@ -589,7 +556,7 @@ describe('navigation', () => {
 	it('a repeated path does not clobber the origin — re-publishing the same route is idempotent', () => {
 		setShellPath('/actions');
 		setShellPath('/actions/new');
-		setShellPath('/actions/new'); // layout may re-publish the same path
+		setShellPath('/actions/new');
 		expect(shellPreviousPath()).toBe('/actions');
 	});
 });

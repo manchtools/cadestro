@@ -72,9 +72,6 @@
 	}
 </script>
 
-<!-- Re-skin only: a centered plate on the page plate, the first identity
-     provider as the accent CTA, and the server it will talk to in mono at the
-     foot. No sign-in logic is expressed here. -->
 <div class="flex min-h-screen items-center justify-center bg-page p-4">
 	<div class="w-full max-w-md rounded-[14px] border bg-surface shadow-plate">
 		<div class="space-y-1 px-6 pb-4 pt-6">

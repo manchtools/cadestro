@@ -1,17 +1,4 @@
-// Conversion contract for the audit list page.
-//
-// The audit view is an evidence viewer, so moving it onto the shared
-// createSearchListState + RowList machinery had to change nothing about
-// *which* events the server is asked for. Two needs are met by options rather
-// than by page-local state: the occurred_at range travels through the
-// `dateFilters` option into SearchRequest.date_filters (the server's only
-// interval channel — tag filters are matched by exact value), and
-// `defaultSortDir: 'desc'` keeps a bare /audit link newest-first.
-//
-// These tests pin the request the page issues for a given deep link: scope,
-// sort field, actor / stream-type tag filters and the occurred_at range, plus
-// the evidence a row still renders (event type, ULID, target, outcome) and the
-// details panel that replaced the expandable row.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -32,11 +19,9 @@ const api = vi.hoisted(() => ({
 	listDevices: vi.fn(),
 	exportAuditEvents: vi.fn()
 }));
-// Mutable so each test can mount the page "at" a different deep link.
+
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/audit') }));
 
-// Only the client is faked; the generated protobuf re-exports stay real so the
-// page's SearchScope / SortField constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -63,8 +48,6 @@ vi.mock('$app/state', () => ({
 
 vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 
-// URL writes go through SvelteKit's shallow-routing API, which needs a live
-// router; the page's history behaviour is url-state's contract, not this test's.
 vi.mock('$app/navigation', () => ({
 	pushState: vi.fn(),
 	replaceState: vi.fn(),
@@ -115,7 +98,6 @@ beforeEach(() => {
 	api.listDevices.mockResolvedValue({ devices: [], nextPageToken: '' });
 });
 
-/** Positional apiClient.search args — see list-logic's SearchArgs tuple. */
 function lastSearchArgs() {
 	const call = api.search.mock.calls.at(-1);
 	if (!call) throw new Error('the page never issued a search');
@@ -127,12 +109,10 @@ function lastSearchArgs() {
 async function mountAt(query: string) {
 	nav.url = new URL(`https://control.test/audit${query}`);
 	render(AuditPage);
-	// The search is debounced; wait for the request the mount produced.
+
 	await vi.waitFor(() => expect(api.search).toHaveBeenCalled(), { timeout: 3000 });
 }
 
-/** An audit row navigates nowhere, so the row body is the open affordance — a
- *  real <button>, not an anchor and not a click handler on a div. */
 function rowOpenButtons() {
 	return [...document.querySelectorAll<HTMLElement>('[data-testid="audit-row-open"]')];
 }
@@ -189,14 +169,10 @@ describe('audit list — filters reach the server as tag filters', () => {
 		expect(args.query).toBe('denied');
 		expect(args.tagFilters).toEqual({ stream_type: 'lps_password', actor_id: ACTOR_ID });
 		expect(args.pageSize).toBe(50);
-		expect(args.pageToken).toBe('50'); // offset = (2 - 1) * 50
+		expect(args.pageToken).toBe('50');
 	});
 });
 
-// The regression this page's deviation from createSearchListState exists to
-// prevent: date_filters are a separate SearchRequest field with no tag-filter
-// equivalent, so if the list ever moves onto buildSearchArgs unchanged, the
-// occurred_at range silently stops being sent and these assertions fail.
 describe('audit list — the occurred_at range still reaches the server', () => {
 	it('sends an occurred_at DateRange spanning local midnight to the inclusive end of day', async () => {
 		await mountAt('?occurredStart=2026-07-01&occurredEnd=2026-07-31');
@@ -209,7 +185,7 @@ describe('audit list — the occurred_at range still reaches the server', () => 
 		expect([start.getFullYear(), start.getMonth(), start.getDate(), start.getHours()]).toEqual([
 			2026, 6, 1, 0
 		]);
-		// End bound is the selected day plus one, so the last day is included.
+
 		expect(filters[0].end - filters[0].start).toBe(BigInt(31 * 86400));
 	});
 
@@ -228,7 +204,7 @@ describe('audit list — the rendered rows keep the evidence', () => {
 		for (const id of [EVENT_OK, EVENT_DENIED]) {
 			await expect.element(browser.getByText(id)).toBeVisible();
 		}
-		// The actor lookup resolves the ULID to the user's email.
+
 		await expect.element(browser.getByText('operator@example.test').first()).toBeVisible();
 		await expect
 			.element(browser.getByText(m.audit_stream_type_device(), { exact: true }).first())
@@ -238,8 +214,6 @@ describe('audit list — the rendered rows keep the evidence', () => {
 	it('marks a *Denied event type as a denied outcome and everything else as success', async () => {
 		await mountAt('');
 
-		// Exact: the denied event's own type text ("Lps Passwords View Denied")
-		// would otherwise match the outcome badge's substring.
 		await expect
 			.element(browser.getByText(m.audit_outcome_denied(), { exact: true }))
 			.toBeVisible();
@@ -256,9 +230,6 @@ describe('audit list — the rendered rows keep the evidence', () => {
 		expect(document.querySelectorAll('table').length).toBe(0);
 	});
 
-	// The sheet replaces navigation here, so the affordance must be a button: an
-	// anchor would promise a URL the app has no route for, and a bare div would
-	// drop keyboard activation.
 	it('makes each row a keyboard-operable button rather than a link', async () => {
 		await mountAt('');
 		await expect.element(browser.getByText('Device Registered')).toBeVisible();
@@ -269,7 +240,7 @@ describe('audit list — the rendered rows keep the evidence', () => {
 			expect(button.tagName).toBe('BUTTON');
 			expect(button.getAttribute('type')).toBe('button');
 		}
-		// No row is a navigation link — RowList only emits one when given `href`.
+
 		expect(document.querySelectorAll('[data-testid="row-list-link"]').length).toBe(0);
 	});
 
@@ -280,8 +251,7 @@ describe('audit list — the rendered rows keep the evidence', () => {
 		await browser.getByTestId('audit-row-open').first().click();
 
 		await expect.element(browser.getByText(m.audit_details(), { exact: true })).toBeVisible();
-		// Search results carry no payload (only Get/List do), so the panel is
-		// explicit about that rather than rendering an empty block.
+
 		await expect.element(browser.getByText(m.audit_no_data())).toBeVisible();
 	});
 
@@ -301,10 +271,6 @@ describe('audit list — the rendered rows keep the evidence', () => {
 	});
 });
 
-// The evidence panel is now written in the operation/effect grammar, but the
-// grammar may only use fields ListAuditEvents actually returns — no operation
-// row is reconstructed and no effect is invented. AuditEvent carries exactly one
-// effect (stream_type + stream_id + event_type), and the panel says so.
 describe('audit list — the evidence panel reads as an operation over its effects', () => {
 	it('names the operation, its ULID and the single effect the contract returns', async () => {
 		await mountAt('');
@@ -319,13 +285,11 @@ describe('audit list — the evidence panel reads as an operation over its effec
 			.element(browser.getByText(m.audit_effects_label(), { exact: true }))
 			.toBeVisible();
 		await expect.element(browser.getByText(m.audit_effects_note())).toBeVisible();
-		// The panel is scoped to the row it was opened from.
+
 		await expect.element(browser.getByText(EVENT_OK).first()).toBeVisible();
 	});
 });
 
-// The export is the capability an auditor actually leaves with: it must keep
-// sending the SAME filters the view is showing, through the chunked loop.
 describe('audit list — the export still mirrors the view', () => {
 	it('exports CSV with the actor, stream types, search term and occurred_at bounds in force', async () => {
 		const clicks = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
@@ -349,7 +313,7 @@ describe('audit list — the export still mirrors the view', () => {
 			expect(request.eventType).toBe('denied');
 			expect(request.occurredFrom).toBeDefined();
 			expect(request.occurredTo).toBeDefined();
-			// The list view's inclusive end-of-day bound is mirrored, not dropped.
+
 			expect(Number(request.occurredTo.seconds) - Number(request.occurredFrom.seconds)).toBe(
 				31 * 86400
 			);

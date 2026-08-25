@@ -22,8 +22,6 @@
 	import { registerPageSearch } from '$lib/shell/page-search.svelte';
 	import { RowList, DataTablePagination, createClientListState } from '$lib/components/data-table';
 
-	// The Search RPC has no identity-provider scope; the list RPC returns them
-	// all and the table matches / sorts / pages client-side.
 	type SortKey = 'name' | 'slug';
 
 	const table = createClientListState<IdentityProvider, SortKey>({
@@ -40,12 +38,6 @@
 	let deleteDialogOpen = $state(false);
 	let providerToDelete = $state<IdentityProvider | null>(null);
 
-	// Creation lives on /identity-providers/new, a pill-committed route: six
-	// fields including a client secret are real unfinished work, and a modal could
-	// never park them while the operator fetched a value from the provider.
-
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.idp_field_name() },
 		{ key: 'slug' as const, label: m.idp_field_slug() }
@@ -71,11 +63,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this page's
-	// facet and its keystrokes land on the same setSearch the removed input
-	// drove. These rows come from a plain list RPC, so the Search RPC has no
-	// scope for them — `null` says so instead of pretending. The registration is
-	// withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: null,
@@ -90,8 +77,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- ONE toolbar line: the filters ride the header beside Refresh/Create. The
-	     search box is gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -118,9 +104,6 @@
 		</div>
 	{/snippet}
 
-	<!-- The provider list in the drafts' row grammar: fingerprint tile, name over
-	     its ULID and slug, type + enabled chips, a right-aligned created stamp —
-	     no column headers, no table. -->
 	<RowList
 		{table}
 		{sortOptions}

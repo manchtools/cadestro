@@ -30,71 +30,49 @@
 	import { getLocalizedError } from '$lib/errors';
 
 	interface Props {
-		/** Called when user cancels or wants to go back */
+
 		onCancel: () => void;
-		/** Called when action is successfully created */
+
 		onCreated: (action: ManagedAction) => void;
-		/** Whether to show compact header (for embedding in dialogs) */
+
 		compact?: boolean;
-		/** Pre-select action type, skipping type selection step */
+
 		initialType?: string;
-		/**
-		 * Route the commit through the shell's context pill instead of an inline
-		 * Save button. Opt-in, because the several DIALOGS that embed this form
-		 * are modal surfaces with their own footers — only the full-page
-		 * /actions/new route hands its commit to the pill.
-		 */
+
 		pillCommit?: boolean;
 	}
 
 	let { onCancel, onCreated, initialType, pillCommit = false }: Props = $props();
 
-	// Wire the apiClient-backed loaders into the form context so every
-	// nested UserPicker / GroupParamsForm resolves them transparently.
 	setUserLoaders(apiUserLoaders);
 
-	// Step tracking: 'select-type' or 'configure'
-	// `initialType` is intentionally consumed only at component construction;
-	// the parent does not change it once the dialog is open.
-	// svelte-ignore state_referenced_locally
 	let step = $state<'select-type' | 'configure'>(initialType ? 'configure' : 'select-type');
 
 	let name = $state('');
 	let description = $state('');
-	// svelte-ignore state_referenced_locally
+
 	let actionType = $state<string>(initialType ?? '');
 	let desiredState = $state<string>('0');
 	let timeoutSeconds = $state(300);
 	let saving = $state(false);
 
-	// All per-FormKey state + per-type validation lives in one bundle. The
-	// registry drives the per-type defaults and schemas; this component
-	// no longer hand-iterates the 19 action types.
 	const bundle = createFormBundle();
 	let scheduleParams = $state(defaultScheduleForm());
 
-	// Get info for the selected action type
 	const selectedTypeInfo = $derived.by(() => {
 		if (!actionType) return null;
 		return getActionTypeInfoByValue(actionType);
 	});
 
-	// FormKey resolved from the orchestrator-level actionType string. This is
-	// `null` while the user is on the type-selection step.
 	const formKey = $derived.by((): FormKey | null => {
 		if (!actionType) return null;
-		// COMPLIANCE_CHECK is a synthetic key — it shares the SHELL params shape
-		// but uses a stricter compliance schema and toggles the form into
-		// compliance-only mode.
+
 		if (actionType === 'COMPLIANCE_CHECK') return 'COMPLIANCE_CHECK';
 		return formKeyFromString(actionType);
 	});
 
-	// Basic-info validation handle (not type-specific).
 	const basicValidation = createFormValidation(actionBasicSchema);
 
-	// Action types that don't model PRESENT/ABSENT — looked up via the
-	// registry so adding a new type is a single registry edit.
 	function supportsAbsent(typeKey: string): boolean {
 		const k = typeKey === 'COMPLIANCE_CHECK' ? 'COMPLIANCE_CHECK' : formKeyFromString(typeKey);
 		if (!k) return false;
@@ -105,11 +83,11 @@
 		actionType = type;
 		step = 'configure';
 		basicValidation.clearErrors();
-		// LPS uses frequent checks (1h) with run-on-assign
+
 		if (type === 'LPS') {
 			scheduleParams = { ...scheduleParams, intervalHours: 1, runOnAssign: true, skipIfUnchanged: true };
 		}
-		// LUKS uses frequent checks (1h) with run-on-assign
+
 		if (type === 'ENCRYPTION') {
 			scheduleParams = { ...scheduleParams, intervalHours: 1, runOnAssign: true, skipIfUnchanged: true };
 		}
@@ -127,9 +105,7 @@
 
 	function validateTypeParams(): boolean {
 		if (!formKey) return false;
-		// COMPLIANCE_CHECK reuses the SHELL state but validates against its
-		// stricter schema. We mark the SHELL form-state as compliance before
-		// validating so downstream code sees the right shape.
+
 		if (formKey === 'COMPLIANCE_CHECK') {
 			bundle.params.SHELL.isCompliance = true;
 			return bundle.validate('COMPLIANCE_CHECK');
@@ -137,8 +113,6 @@
 		return bundle.validate(formKey);
 	}
 
-	// Live validity for the pill: the same two schemas `createAction` submits
-	// against, evaluated on every keystroke so ⌘S is closed before it is pressed.
 	const pillValid = $derived.by(() => {
 		if (!formKey) return false;
 		const basic = actionBasicSchema.safeParse({
@@ -167,7 +141,7 @@
 	);
 
 	async function createAction() {
-		// Validate basic info and type-specific params simultaneously
+
 		const basicValid = basicValidation.validate({
 			name: name.trim(),
 			description: description.trim(),
@@ -183,8 +157,7 @@
 		saving = true;
 		try {
 			const adapter = ACTION_REGISTRY[formKey];
-			// COMPLIANCE_CHECK and SHELL share the SHELL params bucket; both go
-			// through the same form-state object.
+
 			const formStateKey: FormKey = formKey === 'COMPLIANCE_CHECK' ? 'SHELL' : formKey;
 			const params = {
 				case: adapter.paramsCase,
@@ -216,7 +189,7 @@
 </script>
 
 {#if step === 'select-type'}
-	<!-- Step 1: Select Action Type -->
+
 	<div class={"flex flex-col h-full gap-6"}>
 
 			<div class="flex items-center gap-4">
@@ -228,7 +201,6 @@
 					<p class="text-muted-foreground">{m.actions_create_subtitle()}</p>
 				</div>
 			</div>
-
 
 		<div class={"flex-1 overflow-y-auto space-y-6 pr-2"}>
 			{#each getGroupedActionTypeOptions() as group}
@@ -271,7 +243,7 @@
 		</div>
 	</div>
 {:else}
-	<!-- Step 2: Configure Action -->
+
 	<div class={"flex flex-col h-full gap-4"}>
 		<div class="flex items-center gap-4">
 			<Button variant="ghost" size="icon" aria-label={m.common_back()} onclick={goBackToTypeSelection}>

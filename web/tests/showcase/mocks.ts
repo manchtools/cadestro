@@ -1,11 +1,4 @@
-// Connect-RPC mocks for the showcase harness. Each function takes the
-// Playwright Page and registers route handlers that return JSON-encoded
-// Connect-RPC unary responses. Connect-Web defaults to JSON for non-Node
-// targets, so we don't need a binary protobuf encoder here.
-//
-// IMPORTANT: page.route is LIFO — the LAST registered handler that
-// matches the URL wins. Register the broad catch-all FIRST, then the
-// specific RPC-method handlers, so specific overrides catch-all.
+
 
 import type { Page, Route } from '@playwright/test';
 import {
@@ -54,9 +47,6 @@ function unaryJson(payload: unknown): Parameters<Route['fulfill']>[0] {
 	};
 }
 
-// protobuf-es JSON encodes enums by their proto-name (e.g.
-// "SEARCH_SCOPE_DEVICES"), not by the integer value. Accept either form
-// so the dispatch works whichever way the request was serialized.
 function searchResponseFor(scope: number | string | undefined): unknown {
 	const s = typeof scope === 'string' ? scope : '';
 	if (scope === 1 || s === 'SEARCH_SCOPE_ACTIONS') return actionsAsSearchResults();
@@ -71,8 +61,6 @@ function searchResponseFor(scope: number | string | undefined): unknown {
 	return { results: [], nextPageToken: '', totalCount: 0 };
 }
 
-// Small helper: register a handler that reads the request's `id` and dispatches
-// to a fixture builder, so detail routes resolve their entity by id.
 function byId(builder: (id: string) => unknown) {
 	return async (route: Route) => {
 		const id = (route.request().postDataJSON() as { id?: string })?.id ?? '';
@@ -81,13 +69,11 @@ function byId(builder: (id: string) => unknown) {
 }
 
 export async function mockControlService(page: Page): Promise<void> {
-	// Catch-all so any unstubbed RPC returns `{}` rather than the dev
-	// server's 404 (which would trigger a toast on every page load).
+
 	await page.route('**/cadestro.v1.ControlService/**', async (route) => {
 		await route.fulfill(unaryJson({}));
 	});
 
-	// Search dispatches by scope — read the request body and route.
 	await page.route('**/cadestro.v1.ControlService/Search', async (route) => {
 		const req = route.request();
 		let scope: number | string | undefined;
@@ -95,7 +81,7 @@ export async function mockControlService(page: Page): Promise<void> {
 			const body = req.postDataJSON() as { scope?: number | string };
 			scope = body?.scope;
 		} catch {
-			/* fall through to empty */
+
 		}
 		await route.fulfill(unaryJson(searchResponseFor(scope)));
 	});
@@ -132,12 +118,10 @@ export async function mockControlService(page: Page): Promise<void> {
 	});
 
 	await page.route('**/cadestro.v1.ControlService/ValidateDynamicQuery', async (route) => {
-		// Used by the create / edit-query dialogs to preview matching devices.
+
 		await route.fulfill(unaryJson({ valid: true, error: '', matchingDeviceCount: 6 }));
 	});
 
-	// GetCurrentUser — the auth store already has the user hydrated from
-	// localStorage; this is here for any page that calls it explicitly.
 	await page.route('**/cadestro.v1.ControlService/GetCurrentUser', async (route) => {
 		await route.fulfill(
 			unaryJson({
@@ -157,7 +141,7 @@ export async function mockControlService(page: Page): Promise<void> {
 							role: {
 								id: '00000000000000000000000001',
 								name: 'Administrator',
-								// Do not narrow the seeded admin session when a page refreshes it.
+
 								permissions: ALL_PERMISSIONS,
 								isSystem: true
 							},
@@ -173,12 +157,8 @@ export async function mockControlService(page: Page): Promise<void> {
 	});
 }
 
-// Additional read-RPC handlers covering every route the e2e smoke suite visits.
-// Registered AFTER mockControlService so they take precedence over its
-// catch-all (page.route is LIFO). Kept separate so the marketing showcase
-// (which only needs a handful) is unaffected.
 export async function mockControlServiceExtras(page: Page): Promise<void> {
-	// Actions / sets / definitions / compliance.
+
 	await page.route('**/cadestro.v1.ControlService/ListActions', async (route) => {
 		await route.fulfill(unaryJson(listActionsResponse()));
 	});
@@ -190,7 +170,6 @@ export async function mockControlServiceExtras(page: Page): Promise<void> {
 	await page.route('**/cadestro.v1.ControlService/GetDefinition', byId(getDefinitionResponse));
 	await page.route('**/cadestro.v1.ControlService/GetCompliancePolicy', byId(getCompliancePolicyResponse));
 
-	// Users / groups / roles / permissions.
 	await page.route('**/cadestro.v1.ControlService/ListUsers', async (route) => {
 		await route.fulfill(unaryJson(listUsersResponse()));
 	});
@@ -207,12 +186,10 @@ export async function mockControlServiceExtras(page: Page): Promise<void> {
 		await route.fulfill(unaryJson(deviceGroupsList()));
 	});
 
-	// Tokens.
 	await page.route('**/cadestro.v1.ControlService/ListTokens', async (route) => {
 		await route.fulfill(unaryJson(listTokensResponse()));
 	});
 
-	// Identity providers / links / auth methods.
 	await page.route('**/cadestro.v1.ControlService/ListIdentityProviders', async (route) => {
 		await route.fulfill(unaryJson(listIdentityProvidersResponse()));
 	});
@@ -224,7 +201,6 @@ export async function mockControlServiceExtras(page: Page): Promise<void> {
 		await route.fulfill(unaryJson(listAuthMethodsResponse()));
 	});
 
-	// Settings, terminal sessions, and available actions.
 	await page.route('**/cadestro.v1.ControlService/GetServerSettings', async (route) => {
 		await route.fulfill(unaryJson(getServerSettingsResponse()));
 	});
@@ -236,8 +212,6 @@ export async function mockControlServiceExtras(page: Page): Promise<void> {
 	});
 }
 
-// ListDeviceGroups returns the DeviceGroup list shape ({ groups }); derive it
-// from the same detail fixtures so the list and detail views agree.
 function deviceGroupsList(): unknown {
 	const ids = ['01J6XYZSHOWCASEDEVGRP0001', '01J6XYZSHOWCASEDEVGRP0002', '01J6XYZSHOWCASEDEVGRP0003'];
 	return {

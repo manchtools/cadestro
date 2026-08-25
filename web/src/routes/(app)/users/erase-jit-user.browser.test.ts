@@ -26,8 +26,6 @@ vi.mock('$lib/sdk', async (importOriginal) => ({
 	apiClient: api
 }));
 
-// The server fails closed for SCIM-provisioned subjects: FailedPrecondition
-// carrying ErrorDetail.code = "scim_managed_resource".
 function scimManagedRejection() {
 	return new ConnectError('user is managed by scim', Code.FailedPrecondition, undefined, [
 		{ desc: ErrorDetailSchema, value: { code: ErrorCode.SCIM_MANAGED_RESOURCE } }
@@ -49,10 +47,6 @@ beforeEach(() => {
 	api.eraseJITUser.mockResolvedValue(undefined);
 });
 
-// The list renders in the shared row grammar: the whole row body is ONE link to
-// the user's detail page, so the email is no longer its own anchor. Address the
-// row by a link whose accessible name mentions the user — the same identity the
-// old per-name anchor carried.
 const userRow = () => page.getByRole('link', { name: new RegExp(USER_EMAIL, 'i') });
 
 async function renderList() {
@@ -94,7 +88,6 @@ describe('users list — provisioning is not manual', () => {
 		await expect.element(page.getByText(m.users_provisioning_hint())).toBeVisible();
 	});
 
-	// The empty state used to carry a second create button.
 	it('offers no create-user affordance when the list is empty', async () => {
 		api.search.mockResolvedValue({ results: [], totalCount: 0 });
 		render(UsersPage);

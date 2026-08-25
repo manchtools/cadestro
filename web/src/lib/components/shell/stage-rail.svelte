@@ -6,10 +6,6 @@
 	import { panelKindPlural, panelKindSingular } from '$lib/shell/panel-labels';
 	import { shell, restorePanel, closePanel, stagedByKind, restoreDraft, discardDraft, toggleTerminal, type ShellPanel } from '$lib/shell/shell.svelte';
 
-	// Restoring a draft whose surface is no longer mounted has to go back to that
-	// surface FIRST — the store hands us the route and stays router-free (it must:
-	// chrome-stays-API-free, and the store tests run in node). The card is left
-	// standing on purpose; the surface claims it on mount and rehydrates itself.
 	function restore(id: string) {
 		const route = restoreDraft(id);
 		if (route) void goto(route);
@@ -20,11 +16,9 @@
 	const drafts = $derived(shell.drafts);
 	const anything = $derived(stacks.length > 0 || terminalStashed || drafts.length > 0);
 
-	// which category stacks are fanned open
 	let open = $state<Record<string, boolean>>({});
 	const toggle = (k: string) => (open = { ...open, [k]: !open[k] });
-	// Captions live in $lib/shell/panel-labels so the kind→message map is data a
-	// test can iterate; both helpers resolve in the locale active at render.
+
 	const label = panelKindPlural;
 </script>
 
@@ -46,7 +40,7 @@
 		{@render windowCard(panels[0])}
 	{:else}
 		<div>
-			<!-- collapsed: one stacked card standing in for the whole category -->
+
 			<div class="relative">
 				<div class="absolute inset-x-1 -bottom-1 h-full rounded-lg border bg-card/50"></div>
 				<div class="absolute inset-x-0.5 -bottom-0.5 h-full rounded-lg border bg-card/75"></div>
@@ -91,8 +85,6 @@
 			{@render stack(s.kind, s.panels)}
 		{/each}
 
-		<!-- Stashed work-in-progress: a dashed ✎ card per parked draft. Restoring
-		     hands the exact state back to the surface that parked it. -->
 		{#if drafts.length}
 			<div class="px-1 pt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{m.stage_drafts_heading()}</div>
 			{#each drafts as d (d.id)}
@@ -111,8 +103,7 @@
 							{#if d.subtitle}<span class="block truncate text-[10px] text-muted-foreground">{d.subtitle}</span>{/if}
 						</span>
 					</button>
-					<!-- Discard without restoring: cancelling parked work should not
-					     require opening it first. -->
+
 					<button
 						type="button"
 						data-testid="stage-draft-discard"

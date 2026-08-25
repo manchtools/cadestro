@@ -1,8 +1,5 @@
 <script lang="ts">
-	// Self-service view: the SAME fleet surface, constrained to the caller's own
-	// devices (ListDevices with my_devices_only). The available-actions drill-in
-	// is unchanged — it just replaces the surface while a device is open, so no
-	// self-service capability was traded for the new skin.
+
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type AvailableItem } from '$lib/sdk';
@@ -26,7 +23,6 @@
 	let nowMs = $state(Date.now());
 	let query = $state('');
 
-	// Device detail state
 	let selectedDevice = $state<FleetDevice | null>(null);
 	let availableItems = $state<AvailableItem[]>([]);
 	let loadingItems = $state(false);
@@ -49,9 +45,6 @@
 
 	onMount(refresh);
 
-	// The self-service search stays client-side (ListDevices, not the search
-	// index). Narrowing rewrites `total` too, so heading, stats and tiles all
-	// describe the same set the operator is looking at.
 	const view = $derived.by<FleetSnapshot | null>(() => {
 		if (!snapshot) return null;
 		const q = query.trim().toLowerCase();
@@ -62,10 +55,6 @@
 		return { ...snapshot, devices, total: devices.length };
 	});
 
-	// The narrowing box moved into the pill: ⌘K opens search already on this
-	// page and its keystrokes drive the same `query` the removed input drove.
-	// The Search RPC has no my-devices scope — this narrows the loaded snapshot —
-	// so the registration carries `null` instead of pretending otherwise.
 	$effect(() =>
 		registerPageSearch({
 			scope: null,
@@ -147,7 +136,7 @@
 </script>
 
 {#if selectedDevice}
-	<!-- Bound once so the header snippet's closure carries a non-null device. -->
+
 	{@const dev = selectedDevice}
 	{@const tone = deviceTone(dev.device)}
 	<PageShell contentClass="space-y-4">

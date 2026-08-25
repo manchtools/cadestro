@@ -1,10 +1,5 @@
-// Regression: "create action set with multiple selected actions only adds one".
-// Root cause: the selection checkboxes lacked stopPropagation, so a checkbox
-// click fired its own onCheckedChange AND bubbled to the row's onclick —
-// toggleAction ran twice, a silent net no-op. Row clicks worked, checkbox
-// clicks didn't, and finishCreate then added only what was really selected.
-// Both interaction paths are pinned here; the same fix was sibling-swept into
-// the compliance-policy dialogs/sheet.
+
+
 import { test, expect, preparePage, gotoAndSettle, recordRpc, clickUntil } from './fixtures';
 import type { Page, Route } from '@playwright/test';
 
@@ -30,7 +25,7 @@ async function openDialogToActionsStep(page: Page): Promise<void> {
 	const createBtn = page.getByRole('button', { name: 'Create Action Set' }).first();
 	await clickUntil(createBtn, page.getByRole('dialog'));
 	await page.getByRole('dialog').getByLabel(/name/i).first().fill('repro set');
-	// advance to the actions step
+
 	await page.getByRole('dialog').getByRole('button', { name: /next|continue|actions/i }).first().click();
 	await page.getByRole('dialog').locator('table tbody tr').first().waitFor({ state: 'visible', timeout: 10_000 });
 }
@@ -42,7 +37,7 @@ test('create dialog: selecting two actions via ROW clicks adds two', async ({ pa
 
 	await openDialogToActionsStep(page);
 	const rows = page.getByRole('dialog').locator('table tbody tr');
-	// click the NAME cell (not the checkbox) — pure row-onclick path
+
 	await rows.nth(0).locator('td').nth(1).click();
 	await rows.nth(1).locator('td').nth(1).click();
 	await expect(page.getByRole('dialog').getByText(/2 actions selected/)).toBeVisible();

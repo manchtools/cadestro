@@ -17,9 +17,9 @@
 	}: {
 		query: string;
 		groupName: string;
-		/** The editor's published state — owned by the page, shown here read-only. */
+
 		state: QueryEditorState;
-		/** A dynamic group already created from this draft, if any. */
+
 		savedGroup?: RuleGroup | null;
 		savedGroupHref?: string;
 		savingGroup?: boolean;
@@ -53,8 +53,7 @@
 
 	<QueryBuilder bind:query kind="device" inlineStatus={false} {onstate}>
 		{#snippet banner()}
-			<!-- The standing-rule warning while editing. The acknowledgement itself is
-			     the confirm in front of the commit, not this strip. -->
+
 			<div
 				class="flex items-start gap-2 border-b border-hair bg-warn-soft px-3 py-2 text-xs text-warn"
 				data-testid="assign-rule-futurebar"

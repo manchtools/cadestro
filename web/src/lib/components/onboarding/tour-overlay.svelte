@@ -1,14 +1,5 @@
 <script lang="ts">
-	// The coach-mark overlay: one spotlight ring plus one card per step.
-	//
-	// Two deliberate choices:
-	//
-	//   * the dim is the ring's own outsized box-shadow and the ring is
-	//     `pointer-events-none`, so the page behind stays scrollable and
-	//     clickable. A tour must never be able to strand an operator;
-	//   * the anchor is scrolled into view BEFORE the first measurement, and the
-	//     placement is re-measured on every scroll and resize, so the card
-	//     tracks its anchor instead of pointing at where it used to be.
+
 	import * as m from '$lib/paraglide/messages';
 	import {
 		onboarding,
@@ -22,12 +13,10 @@
 	import { cycleTab } from '$lib/onboarding/focus';
 	import { motion } from '$lib/onboarding/motion';
 
-	/** Fixed card width; the height is measured, because translated bodies wrap
-	 *  to different line counts and a guessed height mis-places the card. */
 	const CARD_W = 348;
-	/** Breathing room between the anchor's box and the ring. */
+
 	const RING_PAD = 5;
-	/** Soft corner for an anchor that has none of its own. */
+
 	const RING_RADIUS_DEFAULT = '12px';
 
 	const reduced = motion.reduced();
@@ -46,14 +35,7 @@
 	function measure(el: HTMLElement) {
 		const r = el.getBoundingClientRect();
 		anchorBox = { x: r.left, y: r.top, width: r.width, height: r.height };
-		// The ring sits RING_PAD outside the anchor, so its corners must grow by
-		// the same amount to stay concentric — a pill anchor gets a pill ring,
-		// never a foreign rectangle. Multi-value/percentage radii pass through
-		// unchanged (close enough at 5px out); a square anchor keeps a soft 12px.
-		//
-		// Order matters: `0px` matches the single-value pattern too, so the
-		// square case has to be decided BEFORE the grow-by-padding branch —
-		// otherwise a square anchor silently rings at RING_PAD (5px).
+
 		const raw = getComputedStyle(el).borderRadius;
 		const single = /^(\d+(?:\.\d+)?)px$/.exec(raw);
 		if (single) {
@@ -66,14 +48,11 @@
 		if (card) cardSize = { width: card.offsetWidth, height: card.offsetHeight };
 	}
 
-	// One effect per step: resolve, scroll into view, then keep the geometry
-	// current until the step changes.
 	$effect(() => {
 		if (!onboarding.running || !step) return;
 		const el = resolveStep(step);
 		if (!el) {
-			// The anchor left the DOM between the tour starting and this step being
-			// reached — drop the step rather than ring empty space.
+
 			dropCurrentStep();
 			return;
 		}
@@ -111,8 +90,7 @@
 
 {#if onboarding.running && step}
 	{#if anchorBox}
-		<!-- Decoration only: the cut-out dim and the ring carry no information the
-		     card does not also say, so assistive tech never sees them. -->
+
 		<div
 			aria-hidden="true"
 			data-testid="tour-spotlight"
@@ -123,8 +101,7 @@
 			class="pointer-events-none fixed z-[60] border-2 border-accent-ink"
 		>
 			{#if !reduced}
-				<!-- The pulse coincides with the main border (inset -2px = the border's
-				     own box) so it reads as one glowing ring, never a second outline. -->
+
 				<span
 					class="absolute inset-[-2px] animate-pulse border-2 border-accent-ink/70"
 					style="border-radius:{ringRadius};"

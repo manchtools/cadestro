@@ -1,7 +1,5 @@
 <script lang="ts">
-	// Dense member rows: a status tile, the hostname in mono, the ULID muted,
-	// and the real inventory attributes we already hold. A dynamic group's
-	// membership is the rule's output, so it carries no add/remove affordance.
+
 	import { base } from '$app/paths';
 	import { Tile, Chip } from '$lib/components/fleet';
 	import { Button } from '$lib/components/ui/button';
@@ -18,7 +16,7 @@
 
 	interface Props {
 		members: MemberRow[];
-		/** Full device reads, keyed by id — status and labels come from here. */
+
 		devices: Map<string, Device>;
 		isDynamic: boolean;
 		canAdd: boolean;
@@ -35,7 +33,6 @@
 		return 'idle';
 	}
 
-	/** Labels shown inline before the row runs out of width. */
 	const LABEL_CAP = 3;
 
 	function labelsOf(row: MemberRow): string[] {
@@ -47,8 +44,6 @@
 		return row.agentVersion ? [...labels, row.agentVersion] : labels;
 	}
 
-	/** How many labels the cap left off — silently dropping them would make a
-	 *  three-label device and a nine-label device read identically. */
 	function hiddenLabels(row: MemberRow): number {
 		return Math.max(0, labelsOf(row).length - LABEL_CAP);
 	}

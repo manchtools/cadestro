@@ -34,7 +34,6 @@
 	let directAssignments = $state<Assignment[]>([]);
 	let loading = $state(true);
 
-	// Reverse map: actionId → list of parent containers
 	type ParentInfo = {
 		type: 'action_set';
 		id: string;
@@ -44,15 +43,10 @@
 	};
 	let actionParentsMap = $state(new Map<string, ParentInfo[]>());
 
-	// Search
 	let searchQuery = $state('');
 
-	// Derive currently-shown action ID from ActionDetailSheet shallow routing
 	let sheetActionId = $derived(page.state.actionSheet);
 
-	// Map of "sourceType:sourceId" → Assignment for quick lookup.
-	// Keyed by the AssignmentSourceType enum value (numeric) joined
-	// with the source id; the lookup helper feeds the same enum.
 	const directAssignmentMap = $derived.by(() => {
 		const map = new Map<string, Assignment>();
 		for (const a of directAssignments) {
@@ -65,7 +59,6 @@
 		return action.type === ActionType.SHELL && action.params.case === 'shell' && action.params.value.isCompliance;
 	}
 
-	// Deduplicated actions by ID, excluding compliance check actions
 	const uniqueActions = $derived.by(() => {
 		const seen = new Set<string>();
 		const result: ManagedAction[] = [];
@@ -78,7 +71,6 @@
 		return result;
 	});
 
-	// Filtered actions by search query
 	const filteredActions = $derived.by(() => {
 		const q = searchQuery.toLowerCase().trim();
 		if (!q) return uniqueActions;
@@ -111,7 +103,6 @@
 			definitions = assignmentsResponse.definitions;
 			directAssignments = directResponse.assignments;
 
-			// Build parent mapping from enriched response (no extra API calls needed)
 			buildParentMapping(
 				(assignmentsResponse.actionSetDetails ?? []).map((detail) => ({
 					...detail,
@@ -135,7 +126,6 @@
 	) {
 		const map = new Map<string, ParentInfo[]>();
 
-		// Build a map of setId → definition info
 		const setToDefMap = new Map<string, { defId: string; defName: string }>();
 		for (const defDetail of defDetails) {
 			if (!defDetail.definition) continue;
@@ -147,7 +137,6 @@
 			}
 		}
 
-		// Build action → parent mapping from action set details
 		for (const setDetail of setDetails) {
 			if (!setDetail.set) continue;
 			const defInfo = setToDefMap.get((setDetail.set.id?.value ?? ''));
@@ -174,9 +163,6 @@
 		return directAssignmentMap.get(`${sourceType}:${sourceId}`);
 	}
 
-	// The assignment mode is the state this device is being held in, so it rides
-	// a toned chip: removal/exclusion reads critical, "available" is a neutral
-	// offer, and the default (required) is the enforced-and-healthy case.
 	function getModeTone(mode: AssignmentMode): FleetTone {
 		switch (mode) {
 			case AssignmentMode.AVAILABLE:
@@ -225,7 +211,7 @@
 			<p class="text-muted-foreground">{m.policies_no_policies()}</p>
 		</div>
 	{:else}
-		<!-- Definitions -->
+
 		{#if definitions.length > 0}
 			<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 				<div class="flex items-center gap-2">
@@ -279,7 +265,6 @@
 			</section>
 		{/if}
 
-		<!-- Action Sets -->
 		{#if actionSets.length > 0}
 			<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 				<div class="flex items-center gap-2">
@@ -333,7 +318,6 @@
 			</section>
 		{/if}
 
-		<!-- Actions Table -->
 		{#if uniqueActions.length > 0}
 			<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 				<div class="flex flex-wrap items-center gap-2">
@@ -410,7 +394,6 @@
 	{/if}
 </div>
 
-<!-- Action Detail Sheet (shallow routing) -->
 <ActionDetailSheet>
 	{#if sheetActionId}
 		{@const parents = getParents(sheetActionId)}

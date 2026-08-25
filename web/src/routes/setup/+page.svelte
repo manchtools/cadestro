@@ -1,17 +1,5 @@
 <script lang="ts">
-	// /setup — server-URL configuration AND the one-time bootstrap onboarding.
-	//
-	// `control bootstrap-admin` prints <origin>/setup#bootstrap_token=<T>. The
-	// token is single-use, ~15min TTL, and is presented to control as
-	// `Authorization: Cadestro-Bootstrap <T>` (NOT a Bearer session token). It
-	// buys exactly ONE authenticated call — registering the first OIDC provider —
-	// and is then spent. It is never stored, never logged, and never exchanged for
-	// a session.
-	//
-	// The token is captured into in-memory state on mount so it survives the
-	// server-URL → provider step transition (which is in-page, never a route
-	// change that would drop the fragment). It is scrubbed from both memory and
-	// the URL only after the single call succeeds.
+
 	import { onMount } from 'svelte';
 	import { goto } from '$lib/navigation';
 	import { toast } from 'svelte-sonner';
@@ -33,17 +21,12 @@
 	import { FieldError } from '$lib/components/ui/field-error';
 	import * as m from '$lib/paraglide/messages';
 
-	// ── server-URL step ──────────────────────────────────────────────────────
 	let serverUrl = $state(configStore.serverUrl || '');
 	let testing = $state(false);
 	const fv = createFormValidation(setupSchema);
 
-	// ── bootstrap onboarding state ───────────────────────────────────────────
-	// Memory-only. Never persisted, never logged.
 	let bootstrapToken = $state<string | null>(null);
-	// Whether the server URL is known yet. Seeded from config, then flipped in
-	// the bootstrap flow when the server step completes — an explicit flag rather
-	// than reading config so the in-page step transition is deterministic.
+
 	let serverReady = $state(!!configStore.serverUrl);
 	let submitting = $state(false);
 	let bootstrapError = $state('');
@@ -51,20 +34,12 @@
 	const showProviderStep = $derived(!!bootstrapToken && serverReady);
 
 	onMount(() => {
-		// Capture the token BEFORE anything can navigate. The fragment is not
-		// storage; it is left in the URL until the call succeeds so it also
-		// survives a version-switch reload, then scrubbed on success.
+
 		const hash = window.location.hash.replace(/^#/, '');
 		const token = new URLSearchParams(hash).get('bootstrap_token');
 		if (token) bootstrapToken = token;
 	});
 
-	// ── provider form (same field set + validation as identity-providers/new) ──
-	//
-	// JIT is preconfigured, not fetched: the bootstrap token buys exactly ONE
-	// RPC — the CreateIdentityProvider call — so this page cannot call ListRoles.
-	// The two system roles have fixed, well-known IDs; the select offers exactly
-	// those plus "no default role".
 	const SYSTEM_ROLE_ADMIN_ID = '00000000000000000000000001';
 	const SYSTEM_ROLE_USER_ID = '00000000000000000000000002';
 
@@ -78,9 +53,7 @@
 		autoCreateUsers: boolean;
 		defaultRoleId: string;
 	}
-	// Auto-create defaults ON with the User role: the whole point of the OIDC
-	// bootstrap path is that the first sign-in through this provider creates
-	// the account — and least privilege is the safe default for what it gets.
+
 	let draft = $state<IdpDraft>({
 		name: '',
 		slug: '',
@@ -130,8 +103,6 @@
 	});
 	const firstError = $derived(Object.values(providerErrors)[0] ?? null);
 
-	// The URI the operator must whitelist in their IdP. Shown read-only so it can
-	// be copied — mirrors the identity-providers/[id] detail page.
 	const redirectUri = $derived(
 		typeof window !== 'undefined' && draft.slug.trim()
 			? `${window.location.origin}/auth/callback/${draft.slug.trim().toLowerCase()}`
@@ -165,14 +136,11 @@
 		configStore.serverUrl = normalizedUrl;
 		toast.success(m.setup_configured());
 
-		// Version mismatch reloads the app. The bootstrap token rides along in the
-		// fragment and is re-parsed on the fresh mount.
 		const switched = await checkAndSwitchVersion(normalizedUrl);
 		if (switched) return;
 
 		if (bootstrapToken) {
-			// Advance to the provider step in-page — no route change, so the token
-			// held in memory is untouched.
+
 			serverReady = true;
 			return;
 		}
@@ -186,8 +154,7 @@
 
 	function scrubFragment() {
 		if (typeof window === 'undefined') return;
-		// Remove the fragment (and thus the token) from the address bar without a
-		// navigation or reload.
+
 		window.history.replaceState(
 			window.history.state,
 			'',
@@ -216,15 +183,12 @@
 				defaultRoleId: draft.defaultRoleId
 			});
 
-			// Spent. Scrub the token from memory and the URL, then sign in through
-			// the provider we just created.
 			bootstrapToken = null;
 			scrubFragment();
 			toast.success(m.idp_create_success());
 			goto('/login');
 		} catch (err) {
-			// The token is single-use: on a spent/expired/invalid token, tell the
-			// operator to mint a fresh one. Never retry automatically.
+
 			bootstrapError = isTokenRejected(err)
 				? m.setup_bootstrap_token_rejected()
 				: getLocalizedError(err);
@@ -239,14 +203,13 @@
 			await navigator.clipboard.writeText(redirectUri);
 			toast.success(m.idp_redirect_uri_copied());
 		} catch {
-			// Clipboard may be unavailable; the field is selectable to copy by hand.
+
 		}
 	}
 </script>
 
 {#if showProviderStep}
-	<!-- Bootstrap onboarding: register the first OIDC provider by spending the
-	     single-use setup token on exactly one authenticated call. -->
+
 	<div class="flex min-h-screen items-center justify-center bg-page p-4">
 		<div class="w-full max-w-md rounded-[14px] border bg-surface shadow-plate">
 			<div class="space-y-1 px-6 pb-4 pt-6">
@@ -312,8 +275,6 @@
 						<p class="text-xs text-muted-foreground">{m.idp_field_scopes_help()}</p>
 					</div>
 
-					<!-- JIT provisioning. Auto-create defaults ON: the first sign-in
-					     through this provider is what creates the operator's account. -->
 					<div class="flex items-center justify-between gap-3">
 						<div class="space-y-0.5">
 							<Label for="idpAutoCreate">{m.idp_field_auto_create_users()}</Label>
@@ -322,8 +283,6 @@
 						<Checkbox id="idpAutoCreate" bind:checked={draft.autoCreateUsers} />
 					</div>
 
-					<!-- No ListRoles here — the bootstrap token buys exactly one RPC, so
-					     the select offers only the two fixed system roles and "none". -->
 					<div class="space-y-1.5">
 						<Label>{m.idp_field_default_role()}</Label>
 						<Select.Root
@@ -343,7 +302,6 @@
 						<p class="text-xs text-muted-foreground">{m.setup_bootstrap_default_role_help()}</p>
 					</div>
 
-					<!-- The redirect/callback URI the operator whitelists in the IdP. -->
 					<div class="space-y-1.5">
 						<Label for="idpRedirect">{m.idp_field_redirect_uri()}</Label>
 						<div class="flex gap-2">
@@ -379,7 +337,7 @@
 		</div>
 	</div>
 {:else}
-	<!-- Server-URL step: the same one-field form on a centered plate. -->
+
 	<div class="flex min-h-screen items-center justify-center bg-page p-4">
 		<div class="w-full max-w-md rounded-[14px] border bg-surface shadow-plate">
 			<div class="space-y-1 px-6 pb-4 pt-6">

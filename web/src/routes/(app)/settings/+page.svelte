@@ -1,8 +1,5 @@
 <script lang="ts">
-	// Settings as section blocks: a heading band, then rows that put the
-	// EXPLANATION on the left and the CONTROL on the right (ElevenLabs / Resend
-	// pattern). One row = one capability; nothing is hidden behind a card title,
-	// and the destructive rows sit last, alone, in their own block.
+
 	import { onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
 	import { goto } from '$lib/navigation';
@@ -50,14 +47,12 @@
 	let serverVersion = $state('');
 	let pinnedVersion = $state<string | null>(null);
 
-	// Connected accounts state
 	let identityLinks = $state<IdentityLink[]>([]);
 	let identityLinksLoading = $state(true);
 	let unlinkDialogOpen = $state(false);
 	let unlinkingLinkId = $state('');
 	let unlinkLoading = $state(false);
 
-	// SSH keys state
 	let sshKeys = $state<SshPublicKey[]>([]);
 	let addSshKeyOpen = $state(false);
 	let newSshKeyValue = $state('');
@@ -65,10 +60,8 @@
 	let removeSshKeyConfirmOpen = $state(false);
 	let removingSshKeyId = $state('');
 
-	// Search index rebuild state
 	let rebuildingSearchIndex = $state(false);
 
-	// Global server settings
 	let globalUserProvisioning = $state(false);
 	let globalSshAccessForAll = $state(false);
 	let settingsLoaded = $state(false);
@@ -89,7 +82,6 @@
 			console.warn(err);
 		}
 
-		// Independent loaders fan out in parallel and tolerate individual failures.
 		await Promise.allSettled([loadIdentityLinks(), loadSshKeys(), loadServerSettings()]);
 	});
 
@@ -197,7 +189,7 @@
 
 	async function handleResetVersion() {
 		clearVersionCookie();
-		// Clear SW + caches and reload to get routed to the latest container
+
 		if ('serviceWorker' in navigator) {
 			const registrations = await navigator.serviceWorker.getRegistrations();
 			for (const reg of registrations) {
@@ -218,9 +210,6 @@
 		goto('/login');
 	}
 
-	// The tour points at anchors that live on the fleet surface, so replaying it
-	// from Settings means going there FIRST — startTour() resolves its steps
-	// against the live DOM and would otherwise find nothing to point at.
 	async function replayTour() {
 		await goto('/devices');
 		startTour();
@@ -239,7 +228,6 @@
 	}
 </script>
 
-<!-- One settings block: a section label above a plate of rows. -->
 {#snippet block(title: string, rows: Snippet, tone: 'plain' | 'danger' = 'plain')}
 	<section class="space-y-2">
 		<h2 class="px-0.5 text-xs font-semibold uppercase tracking-[0.12em] {tone === 'danger' ? 'text-crit' : 'text-faint'}">
@@ -251,8 +239,6 @@
 	</section>
 {/snippet}
 
-<!-- One row: explanation left, control right. `control` may render nothing when
-     a capability is read-only — the row then reads as a fact, not an offer. -->
 {#snippet row(label: string, description: string, control?: Snippet)}
 	<div class="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
 		<div class="min-w-0 space-y-0.5">
@@ -278,7 +264,7 @@
 	{/snippet}
 
 	<div class="max-w-3xl space-y-8">
-		<!-- Account — evidence, not controls: identity comes from the IdP. -->
+
 		{#snippet accountRows()}
 			{#snippet emailValue()}{@render mono(authStore.user?.email ?? m.common_unknown())}{/snippet}
 			{@render row(m.settings_email(), m.settings_email_description(), emailValue)}
@@ -300,7 +286,6 @@
 		{/snippet}
 		{@render block(m.settings_account(), accountRows)}
 
-		<!-- Appearance & language -->
 		{#snippet appearanceRows()}
 			{#snippet themeControl()}
 				<Select.Root type="single" value={userPrefersMode.current} onValueChange={handleThemeChange}>
@@ -339,7 +324,6 @@
 		{/snippet}
 		{@render block(m.settings_appearance(), appearanceRows)}
 
-		<!-- SSH & identity -->
 		{#snippet sshRows()}
 			{#snippet linuxUser()}
 				{@render mono(authStore.user?.linuxUsername || m.settings_linux_username_unset())}
@@ -428,7 +412,6 @@
 		{/snippet}
 		{@render block(m.settings_ssh_identity(), sshRows)}
 
-		<!-- Search index — a maintenance action, permission-gated. -->
 		{#if canRebuildIndex}
 			{#snippet searchRows()}
 				{#snippet rebuild()}
@@ -446,7 +429,6 @@
 			{@render block(m.settings_search_index(), searchRows)}
 		{/if}
 
-		<!-- Provisioning — server-wide switches, permission-gated. -->
 		{#if canProvision}
 			{#snippet provisioningRows()}
 				{#snippet provisioningSwitch()}
@@ -484,7 +466,6 @@
 			{@render block(m.settings_provisioning(), provisioningRows)}
 		{/if}
 
-		<!-- Control server -->
 		{#snippet serverRows()}
 			{#snippet urlValue()}{@render mono(configStore.serverUrl)}{/snippet}
 			{@render row(m.settings_server_url(), m.settings_server_url_description(), urlValue)}
@@ -513,7 +494,6 @@
 		{/snippet}
 		{@render block(m.settings_server_config(), serverRows)}
 
-		<!-- Danger zone — destructive last, and alone. -->
 		{#snippet dangerRows()}
 			{#snippet signOut()}
 				<Button variant="outline" onclick={() => (logoutDialogOpen = true)}>
@@ -551,7 +531,6 @@
 	</AlertDialog.Content>
 </AlertDialog.Root>
 
-<!-- Unlink Identity Dialog -->
 <AlertDialog.Root bind:open={unlinkDialogOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>

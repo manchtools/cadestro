@@ -35,13 +35,6 @@
 	import { codecs, type Codec } from '$lib/url-state';
 	import { searchResultToAuditEvent } from '$lib/search-adapters';
 
-	// This is an evidence viewer: the raw payload is rendered exactly as the
-	// server returned it (already redacted server-side) — no field is
-	// reinterpreted and no secret-bearing column is synthesised here.
-	//
-	// The list is the shared row grammar (RowList): one dense row per event, no
-	// column headers. The evidence panel stays a Sheet — it shows the same fields
-	// the row summarises plus the raw payload; no payload was dropped.
 	let users = $state<Map<string, User>>(new Map());
 	let devices = $state<Map<string, Device>>(new Map());
 	let detailEvent = $state<AuditEvent | null>(null);
@@ -55,8 +48,6 @@
 		occurredEnd: DateValue | undefined;
 	};
 
-	// Dates serialize as ISO YYYY-MM-DD; a bad value falls back to undefined
-	// rather than crashing the page.
 	const DATE_CODEC: Codec<DateValue | undefined> = {
 		parse: (p) => {
 			if (!p) return undefined;
@@ -70,7 +61,6 @@
 		serialize: (v) => (v ? v.toString() : null)
 	};
 
-	/** occurred_at range → the server's only interval channel (tags are exact-value). */
 	function occurredRange(f: Filters): SearchDateFilter[] | undefined {
 		if (!f.occurredStart && !f.occurredEnd) return undefined;
 		const tz = getLocalTimeZone();
@@ -80,7 +70,7 @@
 				start: f.occurredStart
 					? BigInt(Math.floor(f.occurredStart.toDate(tz).getTime() / 1000))
 					: 0n,
-				// Inclusive end-of-day: the selected day plus one.
+
 				end: f.occurredEnd
 					? BigInt(Math.floor(f.occurredEnd.toDate(tz).getTime() / 1000) + 86400)
 					: 0n
@@ -93,15 +83,14 @@
 		adapter: searchResultToAuditEvent,
 		sortKeys: ['timestamp', 'actor', 'event_type', 'stream_type'],
 		defaultSort: 'timestamp',
-		// The "actor" column sorts by actor_type. Subset of the server's
-		// scopeSortableFields["audit_events"].
+
 		sortFieldMap: {
 			timestamp: SortField.OCCURRED_AT,
 			actor: SortField.ACTOR_TYPE,
 			event_type: SortField.EVENT_TYPE,
 			stream_type: SortField.STREAM_TYPE
 		},
-		// Timestamps read newest-first, both on a bare link and when switched to.
+
 		defaultSortDir: 'desc',
 		sortDir: (key) => (key === 'timestamp' ? 'desc' : 'asc'),
 		filters: {
@@ -141,9 +130,6 @@
 		{ id: 'luks_key', label: m.audit_stream_type_luks_key() }
 	];
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels. The server-sortable set is
-	// unchanged — "target" still sorts by stream_type, as its column header did.
 	const sortOptions = [
 		{ key: 'timestamp' as const, label: m.audit_table_timestamp() },
 		{ key: 'actor' as const, label: m.audit_table_actor() },
@@ -151,8 +137,6 @@
 		{ key: 'stream_type' as const, label: m.audit_table_target() }
 	];
 
-	// Both bounds belong to one operator gesture: seed the start directly and let
-	// the end's setFilter do the single page-reset + URL commit for the pair.
 	function onDateRangeChange(v: { start?: DateValue; end?: DateValue }) {
 		table.filters.occurredStart = v.start;
 		table.setFilter('occurredEnd', v.end);
@@ -167,8 +151,6 @@
 		loadDevices();
 	});
 
-	// The actor dropdown and the device/user target labels are resolved from
-	// these two best-effort lookups; a failure degrades to short ids.
 	async function loadUsers() {
 		try {
 			const response = await apiClient.listUsers();
@@ -219,8 +201,6 @@
 		return devices.get(id)?.hostname ?? id.slice(0, 8) + '...';
 	}
 
-	// Target: the stream the event acted on, resolved to a human label where the
-	// id is a device or user.
 	function getTargetLabel(event: AuditEvent): string {
 		if (!event.streamId) return '-';
 		if (event.streamType === 'device') return deviceLabel((event.streamId?.value ?? ''));
@@ -238,9 +218,6 @@
 		return eventType.replace(/([A-Z])/g, ' $1').trim();
 	}
 
-	// Export: server-side chunked export with the SAME filters the view applies.
-	// The free-text search box maps to the export's event-type substring filter;
-	// the server applies the ListAuditEvents redaction and permission gate.
 	async function exportAudit(format: 'csv' | 'json') {
 		if (exporting) return;
 		exporting = true;
@@ -256,7 +233,7 @@
 					streamTypes: stream.length > 0 ? stream : undefined,
 					eventType: table.query.trim() || undefined,
 					occurredFrom: occurredStart ? timestampFromDate(occurredStart.toDate(tz)) : undefined,
-					// Mirror the list view's inclusive end-of-day bound.
+
 					occurredTo: occurredEnd
 						? timestampFromDate(new Date(occurredEnd.toDate(tz).getTime() + 86_400_000))
 						: undefined,
@@ -294,9 +271,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove. The
-	// registration is withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.AUDIT_EVENTS,
@@ -311,9 +285,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself — the export runs
-	     over the whole filtered set, so it belongs here, not on the list's bar. The
-	     search box is gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -321,9 +293,7 @@
 				<p class="text-muted-foreground">{m.audit_subtitle()}</p>
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger>
 						{#snippet child({ props })}
@@ -352,15 +322,6 @@
 		</div>
 	{/snippet}
 
-	<!-- Evidence density is deliberate: the list keeps every filter, sort key and
-	     export it had; only the ink changed — mono for machine-issued strings
-	     (ULIDs, timestamps), status chips for the outcome.
-
-	     An audit row navigates nowhere — there is no /audit/[id] route — so this
-	     list passes no `href`. The row body is a real <button> instead: it opens
-	     the evidence Sheet with the native click/Enter/Space and focus semantics
-	     a div-with-role would have to re-implement, and its accessible name is
-	     the row's own evidence. -->
 	<div data-tour="audit-table">
 	<RowList {table} {sortOptions} rowKey={(e) => (e.id?.value ?? '')}>
 		{#snippet filters()}
@@ -418,8 +379,7 @@
 					<Badge variant="outline">{getStreamTypeLabel(event.streamType)}</Badge>
 					<span class="max-w-40 truncate font-mono text-xs">{getTargetLabel(event)}</span>
 				</span>
-				<!-- Headerless rows lose their column labels, so the chip carries its
-				     former header as a tooltip. -->
+
 				<span class="shrink-0" title={m.audit_table_outcome()}>
 					{#if auditEventOutcome(event.eventType) === 'denied'}
 						<Chip tone="crit" label={m.audit_outcome_denied()} />
@@ -461,11 +421,7 @@
 			</Sheet.Header>
 
 			<div class="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
-				<!-- Movement F's grammar, applied to evidence: an operation summary
-				     over its effect rows. Everything below is a field the audit
-				     contract actually returns (AuditEvent: id, event_type,
-				     stream_type, stream_id, actor_type, actor_id, data,
-				     occurred_at) — nothing is reconstructed. -->
+
 				<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 					<h4 class="text-xs font-semibold uppercase tracking-wide text-faint">
 						{m.audit_operation_label()}

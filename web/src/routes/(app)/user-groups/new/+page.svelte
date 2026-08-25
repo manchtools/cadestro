@@ -1,14 +1,5 @@
 <script lang="ts">
-	// /user-groups/new — group creation as a pill-committed surface.
-	//
-	// This one is the operator's complaint in miniature: the create form carries a
-	// whole QUERY BUILDER, so it holds real unfinished work, and as a modal it
-	// could neither be parked nor survive a navigation. Declaring `route` earns the
-	// Stash button; `stashPayload` is what makes the parked rule come back.
-	//
-	// There is no `useDraft` bucket for user groups (the SDK's DraftType union is
-	// not extensible from the web app), so the stage card's payload is the only
-	// carrier across a restore.
+
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient } from '$lib/sdk';
@@ -50,19 +41,15 @@
 		};
 	}
 
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(CONTEXT_ID, () => snapshot());
-	// svelte-ignore state_referenced_locally
+
 	let draft = $state<GroupDraft>(hydrate(claimed) ?? emptyDraft());
 
-	/** A create surface opens EMPTY: there is nothing to save and nothing worth
-	 *  parking. Saying `dirty: true` regardless is what made an untouched form
-	 *  offer Save, and auto-stash itself onto the stage on the way out. */
 	const PRISTINE = JSON.stringify(emptyDraft());
 	const isDirty = () => JSON.stringify($state.snapshot(draft)) !== PRISTINE;
 
 	let saving = $state(false);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
 	let queryState = $state<QueryEditorState>({
 		text: '',

@@ -1,17 +1,5 @@
-// The overview's caption promises "hover a tile to peek", and this file is what
-// makes that promise mean something. What is load-bearing here:
-//
-//   1. hovering a tile REVEALS the peek, in the bubble that owns the tile, and
-//      the peek names the action — its name, its type, and the one real binary a
-//      library row carries (install / remove);
-//   2. the peek CLEARS again on unhover, so it reads the pointer rather than
-//      accumulating whatever was touched last;
-//   3. a keyboard operator gets the identical peek from focus and loses it on
-//      blur — the caption is not a mouse-only promise;
-//   4. crossing straight from one tile to the next SWAPS the peek instead of
-//      clearing it, which is what the leave-handler's id guard buys;
-//   5. a tile is still not a second navigation target: activating one peeks and
-//      never drives the page's type filter.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { userEvent } from 'vitest/browser';
@@ -52,8 +40,6 @@ const tile = (actionId: string) =>
 const peekOf = (bucket: string) =>
 	document.querySelector<HTMLElement>(`[data-testid="library-peek"][data-bucket="${bucket}"]`)!;
 
-/** What every peek slot on screen is currently naming — empty string for the
- *  slots that are showing nothing, so "only one bubble peeks" is assertable. */
 function peekedNames(): string[] {
 	return Array.from(document.querySelectorAll<HTMLElement>('[data-testid="library-peek"]')).map(
 		(slot) => slot.querySelector('[data-testid="library-peek-name"]')?.textContent?.trim() ?? ''
@@ -62,9 +48,7 @@ function peekedNames(): string[] {
 
 beforeEach(async () => {
 	document.body.innerHTML = '';
-	// The real pointer keeps whatever position the previous test left it in, and
-	// the next render would drop a tile straight underneath it. Park it in a
-	// corner nothing is rendered into.
+
 	const park = document.createElement('div');
 	park.style.cssText = 'position:fixed;right:0;bottom:0;width:24px;height:24px';
 	document.body.appendChild(park);
@@ -77,7 +61,6 @@ describe('hovering a tile peeks the action it stands for', () => {
 		render(LibraryOverview, { bubbles: BUBBLES, onFocus: vi.fn() });
 		await vi.waitFor(() => expect(tiles().length).toBe(3));
 
-		// nothing is peeked before the pointer arrives
 		expect(peekedNames()).toEqual(['', '']);
 
 		await userEvent.hover(tile('p2'));
@@ -87,8 +70,7 @@ describe('hovering a tile peeks the action it stands for', () => {
 		expect(peek.textContent).toContain('Drop telnet');
 		expect(peek.textContent).toContain(getActionTypeLabel(ActionType.PACKAGE));
 		expect(peek.textContent).toContain(m.desired_state_absent());
-		// …and it really comes on screen, rather than staying a transparent slot
-		// (the fade is 150ms, so this settles rather than reads mid-flight)
+
 		await vi.waitFor(() => expect(getComputedStyle(peek).opacity).toBe('1'));
 	});
 
@@ -106,8 +88,7 @@ describe('hovering a tile peeks the action it stands for', () => {
 	});
 
 	it('swaps rather than clears when the pointer crosses to the next tile', async () => {
-		// The leave handler fires for the tile being left; without its id guard it
-		// would wipe the peek the tile being entered has already set.
+
 		render(LibraryOverview, { bubbles: BUBBLES, onFocus: vi.fn() });
 		await vi.waitFor(() => expect(tiles().length).toBe(3));
 
@@ -116,7 +97,6 @@ describe('hovering a tile peeks the action it stands for', () => {
 
 		await userEvent.hover(tile('c1'));
 
-		// the compliance bubble now names its own action, and it is the only one
 		await vi.waitFor(() => expect(peekedNames()).toEqual(['', 'Check LUKS']));
 		expect(peekOf(COMPLIANCE_BUCKET).textContent).toContain(m.desired_state_present());
 	});
@@ -127,7 +107,6 @@ describe('the peek is not a mouse-only promise', () => {
 		render(LibraryOverview, { bubbles: BUBBLES, onFocus: vi.fn() });
 		await vi.waitFor(() => expect(tiles().length).toBe(3));
 
-		// every tile is reachable by keyboard in the first place
 		for (const t of tiles()) expect(t.tabIndex).toBeGreaterThanOrEqual(0);
 
 		tile('c1').focus();
@@ -154,7 +133,6 @@ describe('a tile peeks — it never navigates', () => {
 		await vi.waitFor(() => expect(peekedNames()).toEqual(['Install Firefox', '']));
 		expect(onFocus).not.toHaveBeenCalled();
 
-		// the bubble header is still the one thing that filters
 		document
 			.querySelector<HTMLButtonElement>(
 				'[data-bucket="package"] [data-testid="library-bubble-header"]'

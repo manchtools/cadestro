@@ -1,13 +1,5 @@
 <script lang="ts">
-	// /roles/new — role creation as a pill-committed surface.
-	//
-	// It was a modal on the list page, so it could never take part in the pill's
-	// three exits: a dialog owns its own footer and dies on navigation. Declaring
-	// `route` is what earns the Stash button.
-	//
-	// There is no `useDraft` bucket for roles (the SDK's DraftType union is not
-	// extensible from the web app), so the stage card's own payload is the ONLY
-	// thing that carries this buffer across a restore — hence `stashPayload`.
+
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient } from '$lib/sdk';
@@ -33,23 +25,17 @@
 		};
 	}
 
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(CONTEXT_ID, () => snapshot());
-	// svelte-ignore state_referenced_locally
+
 	let draft = $state<RoleDraft>(hydrate(claimed) ?? { name: '', description: '' });
 
-	/** A create surface opens EMPTY: there is nothing to save and nothing worth
-	 *  parking. Saying `dirty: true` regardless is what made an untouched form
-	 *  offer Save, and auto-stash itself onto the stage on the way out. */
 	const PRISTINE = JSON.stringify({ name: '', description: '' });
 	const isDirty = () => JSON.stringify($state.snapshot(draft)) !== PRISTINE;
 
 	let saving = $state(false);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
 
-	// The same schema the dialog submitted against, evaluated live so the commit
-	// is closed at the store before it can be pressed.
 	const createSchema = z.object({ name: z.string().min(1, m.validation_name_required()) });
 	const errors = $derived.by(() => {
 		const out: Record<string, string> = {};

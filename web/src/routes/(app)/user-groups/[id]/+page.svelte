@@ -1,13 +1,5 @@
 <script lang="ts">
-	// User group detail — entity header card + tabs with counts.
-	//
-	// A SCIM-managed group's lifecycle lives at the identity provider: its
-	// identity, membership and rule are all read-only here, and the note says
-	// why. Role grants are NOT part of SCIM, so they stay editable.
-	//
-	// The pill is this group's action bar, held for the whole visit so Delete and
-	// the maintenance window have a home that does not depend on having typed
-	// something first. `dirty` still tells the truth about the identity buffer.
+
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import { goto } from '$lib/navigation';
 	import { page } from '$app/state';
@@ -93,12 +85,10 @@
 	let draftDescription = $state('');
 
 	const groupId = $derived(page.params.id ?? '');
-	// ONE context for the whole group — see the device-group twin: a second
-	// context on the Rule tab meant two Saves for one entity.
+
 	const groupContextId = $derived(`user-group:${groupId}`);
 	const scim = $derived(group?.isScimManaged ?? false);
-	// Gated on `editingIdentity`: the pill is held even when the fields are shut,
-	// and a group the operator only looked at must never park a draft on the stage.
+
 	const identityDirty = $derived(
 		editingIdentity &&
 			group !== null &&
@@ -106,7 +96,6 @@
 	);
 	const identityNameValid = $derived(draftName.trim().length > 0);
 
-	// The rule's edit buffer and its live validation, reported up by the editor.
 	let draftQuery = $state('');
 	let ruleState = $state<QueryEditorState>({
 		text: '',
@@ -116,14 +105,12 @@
 		validating: false
 	});
 	let ruleConfirmOpen = $state(false);
-	/** The stored rule as last seen, so a reload cannot clobber an edit. */
+
 	let lastSavedQuery = '';
 	const savedQuery = $derived(group?.dynamicQuery ?? '');
 	const ruleDirty = $derived(group !== null && draftQuery !== savedQuery);
 	const ruleValid = $derived(ruleState.valid === true);
 
-	// Role ids hidden from the assign picker: held GLOBALLY (unscoped). A role held
-	// only at group scopes stays selectable so a second scope can be added (#7).
 	const roleAssignExcludeIds = $derived(
 		(group?.roleGrants ?? [])
 			.filter((g) => g.scopeKind === RoleGrantScopeKind.UNSPECIFIED && g.role)
@@ -142,15 +129,10 @@
 		}))
 	);
 
-
 	onMount(() => {
 		if (groupId) loadData();
 	});
 
-	// If the page goes away mid-edit the pill must not keep pointing at a group
-	// that is no longer on screen — and must not DISCARD the unsaved identity.
-	// Auto-stash-on-navigate parks it on the stage instead; a commit/cancel/stash
-	// already cleared `owns`, so this only fires on a genuine leave.
 	onDestroy(() => {
 		if (owns) {
 			owns = false;
@@ -169,17 +151,12 @@
 					draftName = group.name;
 					draftDescription = group.description;
 				}
-				// Rebase the rule buffer on the STORED rule whenever the stored rule
-				// itself moved (first read, or a save landing) — never on an unrelated
-				// reload, which would eat an edit in progress. Imperative and ordered,
-				// so the parked-draft restore below still wins.
+
 				if (group.dynamicQuery !== lastSavedQuery) {
 					lastSavedQuery = group.dynamicQuery;
 					draftQuery = group.dynamicQuery;
 				}
-				// …then take back a draft this page parked on the stage. The buffer is
-				// component state, so it did NOT survive the unmount: the stash
-				// snapshotted it onto the card and this is where it comes back.
+
 				const parked = claimDraft(groupContextId) as GroupDraft | undefined;
 				if (parked) {
 					draftName = parked.name;
@@ -196,23 +173,16 @@
 		}
 	}
 
-	// ── the pill is this group's action bar ──────────────────────────────────
-	/** This page's home — a stashed draft restores by navigating back to it. */
 	const contextRoute = $derived(`/user-groups/${groupId}`);
 
-	/** What Stash has to carry. The identity buffer is component state, so an
-	 *  unmount destroys it: the card must hold the buffer itself. */
 	interface GroupDraft {
 		name: string;
 		description: string;
 		query: string;
 	}
 
-	// Plain `let`, not `$state`: the effect writes it, so a tracked read would
-	// make the effect depend on its own write.
 	let owns = false;
-	/** The operator set this context aside on purpose: do not take the bar
-	 *  back when the slot frees, or Stash would undo itself. */
+
 	let stashParked = false;
 
 	function startIdentityEdit() {
@@ -228,9 +198,7 @@
 	}
 
 	function contextState(): ContextState {
-		// The group's own actions. A SCIM-managed group's lifecycle lives at the
-		// identity provider, so it is offered no Delete at all — an action that is
-		// invalid for this entity must not appear and then fail.
+
 		const entityActions: PillAction[] = [
 			{
 				id: 'window',
@@ -254,8 +222,7 @@
 			valid: identityNameValid && ruleValid,
 			commitLabel:
 				ruleDirty && group && !group.isDynamic ? m.query_commit_convert() : m.common_save(),
-			// Every context explains itself; a greyed Save with no reason is a dead
-			// button. The rule's caption is the shared one.
+
 			subtext: !identityNameValid
 				? m.validation_name_required()
 				: ruleDirty || !ruleValid
@@ -267,8 +234,7 @@
 					? ruleSubtext(ruleState, 'user').tone
 					: 'neutral') as 'neutral' | 'warn',
 			onCommit: () => {
-				// The store already exited context; a FAILED save re-acquires it below,
-				// so the operator never loses the buffer with the commit.
+
 				owns = false;
 				if (ruleDirty) ruleConfirmOpen = true;
 				else void saveGroup();
@@ -278,9 +244,7 @@
 				revertIdentityEdit();
 				draftQuery = savedQuery;
 			},
-			// Stash releases the pill deliberately. The effect wakes when the slot
-			// frees, so without a remembered intent it would re-acquire instantly
-			// and the stash would never take.
+
 			onStash: () => {
 				stashParked = true;
 				owns = false;
@@ -302,64 +266,40 @@
 	function acquire() {
 		owns = true;
 		stashParked = false;
-		// Resuming edits supersedes any card this context parked on the stage: the
-		// live buffer is newer than the snapshot on the card.
+
 		removeDraft(draftIdFor(groupContextId));
 		enterContext(contextState());
 	}
 
 	function release() {
 		owns = false;
-		// Only tear down our own context — another surface may have taken over.
+
 		if (shell.pill.context?.id === groupContextId) exitContext();
 	}
 
 	$effect(() => {
-		// Read every reactive input HERE. `savingIdentity` parks the pill for the
-		// round trip: an in-flight commit has no second commit.
+
 		const active = group !== null && !savingIdentity;
-		// Tracked, but deliberately NOT a gate. The Rule tab publishes its own
-		// context and there is one pill, so whoever holds it keeps it — this only
-		// wakes the effect on a tab switch, so the bar comes back when the rule
-		// editor lets go. Gating on the tab instead is what made the pill reset to
-		// nav the moment the operator opened the query, and patching our state onto
-		// the rule editor's context is what greyed out its Save.
+
 		void activeTab;
-		// Tracked: this is what wakes the effect when whoever else held the bar
-		// lets go. The rule editor exits its context the moment the query matches
-		// the stored one again, and nothing else here would change — so the pill
-		// stayed empty until the next keystroke.
+
 		const holder = shell.pill.context?.id ?? null;
-		// The WHOLE state, not a three-field subset. Once the rule joined this
-		// context, a patch that carried only the identity fields left the pill
-		// blind to it: Save stayed disabled over a valid rule edit, and the rule's
-		// caption never reached the bar. Building the full state here also keeps
-		// every reactive input tracked in one place.
+
 		const patch = contextState();
-		// …and write to the store UNTRACKED. The store helpers read
-		// `shell.pill.context` themselves, so a tracked call would make this effect
-		// depend on the pill it just wrote — and Stash, which clears the context,
-		// would be undone by an instant re-acquire.
+
 		untrack(() => {
-			// Held is read from the STORE: another surface on this page (the Rule
-			// tab's editor) may have taken the single context slot, and a stale
-			// local flag made us patch OUR state onto ITS context — which set
-			// dirty:false on a dirty query and greyed out its Save.
+
 			const held = holder === groupContextId;
 			if (!active) {
 				if (held) release();
 				return;
 			}
 			if (held) updateContext(patch);
-			// Never stomp a context somebody else is holding — the Rule tab's editor
-			// takes this slot the moment its query is dirty, and patching our state
-			// onto it set dirty:false on a dirty query and greyed out its Save.
+
 			else if (holder === null && !stashParked) acquire();
 		});
 	});
 
-	/** The group's ONE commit: identity and rule in a single save. Two contexts
-	 *  meant two Saves for one entity — see the device-group twin. */
 	async function saveGroup() {
 		if (!group) return;
 		const query = draftQuery;
@@ -388,7 +328,6 @@
 		}
 	}
 
-	// ── mutations ────────────────────────────────────────────────────────────
 	async function deleteGroup() {
 		if (!group) return;
 		try {
@@ -404,7 +343,7 @@
 	async function openAddMemberDialog() {
 		selectedUserIds = [];
 		try {
-			// F022: page through all users instead of capping at 200.
+
 			allUsers = await fetchAllPages<User>(async (size, token) => {
 				const r = await apiClient.listUsers(size, token);
 				return { items: r.users, nextPageToken: r.nextPageToken };
@@ -454,7 +393,6 @@
 		}
 	}
 
-	/** Reached only through the future-scope confirm in the rule editor. */
 	async function evaluateGroup() {
 		if (!group) return;
 		evaluating = true;
@@ -501,7 +439,7 @@
 			<Button variant="ghost" size="icon" aria-label={m.common_back()} onclick={() => history.back()}>
 				<ArrowLeft class="h-4 w-4" />
 			</Button>
-			<!-- The ENTITY, not the section: the page title and the pill must agree. -->
+
 			<div class="min-w-0 flex-1">
 				<h1 class="truncate text-2xl font-bold">{group?.name ?? m.common_loading()}</h1>
 				<p class="font-mono text-xs text-faint">{groupId}</p>
@@ -538,8 +476,7 @@
 				<div class="min-w-0 flex-1">
 					{#if editingIdentity}
 						<div class="space-y-1.5" data-testid="identity-edit">
-							<!-- Standing note first, same as the device-group twin: where the
-							     commit lives is no use after the fields are already typed. -->
+
 							<p class="text-xs text-muted-foreground">{m.user_groups_identity_pill_hint()}</p>
 							<Input bind:value={draftName} aria-label={m.common_name()} class="h-8 font-mono text-sm" />
 							<Textarea
@@ -583,9 +520,7 @@
 						value={group.memberCount}
 						label={m.user_group_detail_members()}
 					/>
-					<!-- No trash glyph here: Delete acts on the whole group, so it is a
-					     pill action — and a SCIM-managed group, whose lifecycle lives at
-					     the identity provider, is offered none at all. -->
+
 				</div>
 			</div>
 		</div>
@@ -601,9 +536,7 @@
 				<Tabs.Trigger value="roles">
 					{m.user_groups_roles_tab({ count: group.roleGrants.length })}
 				</Tabs.Trigger>
-				<!-- No Schedules tab: the maintenance window was its only row, and it
-				     is a group-wide policy, so it moved to the pill with Delete. An
-				     empty tab holding one edit button was not worth a tab. -->
+
 			</Tabs.List>
 
 			<Tabs.Content value="members" class="mt-3">
@@ -725,8 +658,6 @@
 	/>
 {/if}
 
-<!-- Gates the group's ONE commit: a standing rule decides membership from here
-     on, and a banner you can scroll past is not an acknowledgement. -->
 <FutureScopeDialog
 	bind:open={ruleConfirmOpen}
 	queryText={ruleState.text}

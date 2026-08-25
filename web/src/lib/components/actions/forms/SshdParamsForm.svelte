@@ -20,7 +20,6 @@
 		onclearerror
 	}: Props = $props();
 
-	// Known sshd_config directives organized by category
 	const KNOWN_DIRECTIVES: Record<string, Array<{ key: string; defaultValue: string }>> = {
 		security: [
 			{ key: 'PermitRootLogin', defaultValue: 'no' },
@@ -81,7 +80,6 @@
 	let customKey = $state('');
 	let customValue = $state('');
 
-	// Available directives for selected category (exclude already added ones)
 	const availableDirectives = $derived.by(() => {
 		if (!selectedCategory || !KNOWN_DIRECTIVES[selectedCategory]) return [];
 		const existingKeys = new Set(params.directives.map((d) => d.key));
@@ -124,7 +122,6 @@
 		);
 	}
 
-	// Config preview
 	const configPreview = $derived.by(() => {
 		if (params.directives.length === 0) return '# No directives configured';
 		const lines = ['# Managed by Cadestro - do not edit manually'];
@@ -139,7 +136,6 @@
 	<div class="space-y-2">
 		<Label>{m.sshd_directives()}</Label>
 
-		<!-- Add known directive -->
 		<div class="flex gap-2 items-end">
 			<div class="flex-1">
 				<Select.Root
@@ -192,7 +188,6 @@
 			</Button>
 		</div>
 
-		<!-- Add custom directive -->
 		<div class="flex gap-2 items-end">
 			<Input
 				placeholder={m.sshd_directive_key()}
@@ -219,7 +214,6 @@
 		<FieldError error={errors.directives} />
 	</div>
 
-	<!-- Directive list -->
 	{#if params.directives.length > 0}
 		<div class="space-y-2">
 			{#each params.directives as directive, index}
@@ -249,7 +243,6 @@
 		</p>
 	{/if}
 
-	<!-- Config preview -->
 	<div class="rounded-lg bg-muted p-3 text-sm">
 		<p class="font-medium mb-1">{m.sshd_preview_title()}</p>
 		<pre class="text-xs bg-background rounded p-2 overflow-x-auto"><code>{configPreview}</code></pre>

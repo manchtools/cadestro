@@ -35,6 +35,6 @@ export {
 	YearSelect,
 	MonthSelect,
 	Caption,
-	//
+
 	Root as Calendar,
 };

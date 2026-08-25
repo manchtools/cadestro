@@ -1,13 +1,4 @@
-// Marketplace template → PM control-server import flow.
-//
-// Each template type's `content` payload has an opinionated JSON shape
-// (the marketplace emits it, this code consumes it). When a shape
-// cannot be parsed the importer throws a descriptive error rather
-// than partially creating resources. On the multi-step flows (sets
-// and definitions) we short-circuit on the first failure; any already-
-// created children are NOT rolled back — the caller surfaces the
-// error, the operator can delete the partial leftovers from the
-// normal UI.
+
 
 import { create } from '@bufbuild/protobuf';
 import { OnFailure } from '$contract/cadestro/v1/agent_pb';
@@ -15,18 +6,9 @@ import { OnFailure } from '$contract/cadestro/v1/agent_pb';
 import { apiClient } from '$lib/sdk';
 import { ActionScheduleSchema } from '$contract/cadestro/v1/actions_pb';
 
-// Default container schedule applied when the marketplace template
-// doesn't carry one explicitly. Uses the server's eight-hour default.
-// The operator can adjust it
-// later via the action set / definition edit form.
 const defaultContainerSchedule = () =>
 	create(ActionScheduleSchema, { intervalHours: 8 });
 
-/**
- * Template payload arriving from the marketplace iframe via
- * postMessage. Shape defined by the `pm.marketplace.import` message
- * (see src/lib/marketplace/embed.ts).
- */
 export type TemplateType = 'ACTION' | 'ACTION_SET' | 'DEFINITION' | 'COMPLIANCE_POLICY';
 
 export interface Template {
@@ -37,11 +19,11 @@ export interface Template {
 }
 
 export interface ImportResult {
-	/** The route the caller should navigate to for inspecting the new object. */
+
 	redirect: string;
-	/** The server-assigned identifier of the top-level created object. */
+
 	id: string;
-	/** Human-readable name (for the success toast). */
+
 	name: string;
 }
 
@@ -54,18 +36,14 @@ export class ImportError extends Error {
 	}
 }
 
-/** Expected shapes for each template type's `content` payload. */
 interface ActionContent {
-	// Opaque — the marketplace-emitted shape matches the PM
-	// CreateActionRequest JSON serialization. The apiClient.createAction
-	// call validates it via proto schema; we let that do the work and
-	// surface a descriptive error on mismatch.
+
 	action: Record<string, unknown>;
 }
 
 interface ActionSetContent {
 	set: { name: string; description?: string };
-	actions?: Record<string, unknown>[]; // CreateAction-shaped children
+	actions?: Record<string, unknown>[];
 }
 
 interface DefinitionContent {
@@ -105,8 +83,6 @@ function parse<T>(template: Template, guard: (v: unknown) => v is T): T {
 	}
 	return content;
 }
-
-// --- Per-type importers ----------------------------------------------------
 
 async function importAction(template: Template): Promise<ImportResult> {
 	const content = parse<ActionContent>(template, isActionContent);
@@ -184,8 +160,6 @@ async function importCompliancePolicy(template: Template): Promise<ImportResult>
 	if (!policy?.id) throw new ImportError('createCompliancePolicy', 'server returned policy without an id');
 	return { redirect: '/compliance-policies/' + (policy.id?.value ?? ''), id: (policy.id?.value ?? ''), name: policy.name ?? template.name };
 }
-
-// --- Type guards ----------------------------------------------------------
 
 function isActionContent(v: unknown): v is ActionContent {
 	return typeof v === 'object' && v !== null && 'action' in v && typeof (v as { action: unknown }).action === 'object';

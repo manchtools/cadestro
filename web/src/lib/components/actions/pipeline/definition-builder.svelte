@@ -1,16 +1,5 @@
 <script lang="ts">
-	// B1's pipeline, one level up: a definition is an ordered pipeline of action
-	// SETS. The palette is round 2's Movement C set-picker (expandable option
-	// rows), the centre rail is the same numbered pipeline, and the right panel
-	// previews the selected set's own steps.
-	//
-	// A set has no params form and no PRESENT/ABSENT axis, so steps carry no
-	// state toggle here — inventing one would claim a field the contract has not
-	// got. Commit lives in the pill; the card has no button bar.
-	//
-	// The pill is held for the WHOLE visit, not only while the draft diverges: the
-	// page hands down the definition's own actions (`entityActions`) and they need
-	// a home that does not appear only after an edit.
+
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
 	import { toast } from 'svelte-sonner';
 	import { base as basePath } from '$app/paths';
@@ -33,7 +22,7 @@
 		actionSetId: string;
 		name: string;
 		memberCount: number;
-		/** sortOrder as loaded; -1 for a set the operator just added. */
+
 		originalIndex: number;
 	}
 
@@ -48,16 +37,13 @@
 		defId: string;
 		definition: Definition;
 		members: { actionSetId: string; sortOrder: number; actionSetName: string }[];
-		/** Every action set the operator may pick from. */
+
 		library: ActionSet[];
-		/** The DEFINITION's own actions (delete …), owned by the page and published
-		 *  on this builder's context so they ride the same pill as the commit. */
+
 		entityActions?: PillAction[];
 		onsaved: () => Promise<void> | void;
 	} = $props();
 
-	// Construction-time input: the page remounts this builder on every reload.
-	// svelte-ignore state_referenced_locally
 	const setsById = new Map<string, ActionSet>(library.flatMap((s) => s.id ? [[s.id.value, s] as const] : []));
 
 	interface Body {
@@ -83,24 +69,17 @@
 	const base = serverBody();
 	const baseline = JSON.stringify(base);
 
-	// No autosave here — see the action-set builder: `useDraft` read its stored
-	// value synchronously at construction while the offline store filled its map
-	// from IndexedDB after startup, so a reloaded builder always read an empty
-	// map. It wrote drafts nobody could ever read. Stash is the durable
-	// set-aside mechanism.
-	// svelte-ignore state_referenced_locally
 	let name = $state(base.name);
-	// svelte-ignore state_referenced_locally
+
 	let description = $state(base.description);
-	// svelte-ignore state_referenced_locally
+
 	let steps = $state<SetStep[]>([...base.steps]);
 	let removed = $state<string[]>([]);
-	// svelte-ignore state_referenced_locally
+
 	let selectedKey = $state<string | null>(base.steps[0]?.key ?? null);
 	let parked = $state(false);
 	let committing = $state(false);
-	/** Step names per action-set id, loaded on demand for the palette peek and
-	 *  the right panel. */
+
 	let peeked = $state<Record<string, string[] | undefined>>({});
 
 	function body(): Body {
@@ -127,16 +106,13 @@
 			.map((s) => ({ id: typeof s.id === 'string' ? s.id : s.id?.value ?? '', name: s.name, memberCount: s.memberCount }))
 	);
 
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(`definition:${defId}`, () => {
-		// `parked` still ends the hold: a stashed draft that re-entered the context
-		// on the next effect run would make Stash a no-op.
+
 		if (committing || parked) return null;
 		return {
-			// Stash's home: restoring from another page navigates back here and the
-			// remount rehydrates from this builder's own useDraft autosave.
+
 			route: `/definitions/${defId}`,
-			// The card carries the buffer — see the action-set builder.
+
 			stashPayload: () => ({ ...body(), selectedKey }),
 			title: name.trim() || definition.name,
 			dirty,
@@ -209,10 +185,6 @@
 		if (step) void peek(step.actionSetId);
 	}
 
-
-	// A card parked on the stage outranks the server body: it is unsaved work and,
-	// now that nothing autosaves, the ONLY copy of it. Declared after the bind
-	// because the claim is what that call returns.
 	if (claimed) {
 		const parked = claimed as Body & { selectedKey: string | null };
 		if (typeof parked.name === 'string') name = parked.name;
@@ -263,9 +235,7 @@
 </script>
 
 <div class="rounded-xl border border-hair bg-surface p-3 shadow-plate">
-	<!-- The same opening row every create and edit surface uses. The two
-	     hand-rolled halves here drifted: a one-row Textarea beside a plain
-	     Input, with different label spacing on each side. -->
+
 	<IdentityRow
 		idPrefix="def"
 		nameLabel={m.common_name()}
@@ -274,7 +244,7 @@
 		descriptionLabel={m.common_description()}
 		bind:description
 	/>
-	
+
 	<div class="grid gap-3 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)_27rem]">
 		<SetPickerPalette
 			title={m.definition_detail_builder_palette()}

@@ -3,9 +3,6 @@
 	import { RoleGrantScopeKind } from '$lib/sdk';
 	import * as m from '$lib/paraglide/messages';
 
-	// #7: a small marker shown next to a role that CAN be scoped at assignment.
-	// Presence = scopable; the icon + tooltip convey the kind (device vs user
-	// group). A non-scopable (org-wide-only) role renders nothing.
 	let { scopeKind }: { scopeKind: RoleGrantScopeKind | null } = $props();
 </script>
 

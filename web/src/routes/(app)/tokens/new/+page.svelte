@@ -1,14 +1,5 @@
 <script lang="ts">
-	// /tokens/new — registration-token creation as a pill-committed surface.
-	//
-	// It used to be a modal, which meant the operator could not park a half-filled
-	// token and go look something up: a dialog owns its own footer and dies on
-	// navigation, so it can never take part in the pill's three exits
-	// (Save / Stash / Cancel). Declaring `route` is what buys the Stash button.
-	//
-	// The created secret is returned exactly once, by the create RPC, so the
-	// reveal lives HERE rather than on the list page it used to pop over —
-	// navigating away with the value on screen would destroy it.
+
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient, configStore, useDraft, type RegistrationToken } from '$lib/sdk';
@@ -27,41 +18,27 @@
 	const CONTEXT_ID = 'token:create';
 	const ROUTE = '/tokens/new';
 
-	// Reload survival: the token buffer has its own SDK draft bucket already.
 	const persist = useDraft<TokenDraft>('create-token', 'default', emptyDraft());
 
-	// Two ways back into an unfinished token, in precedence order: a STASHED card
-	// (the operator parked it deliberately, and it is the only one that survives a
-	// restore from another route), then the autosave, which also survives a reload.
-	// `bindBuilderContext` performs the claim, so the binding and the claim cannot
-	// drift apart.
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(CONTEXT_ID, () => snapshot());
-	// svelte-ignore state_referenced_locally
+
 	let draft = $state<TokenDraft>(hydrate(claimed) ?? hydrate(persist.data) ?? emptyDraft());
 
-	/** A create surface opens EMPTY: there is nothing to save and nothing worth
-	 *  parking. Saying `dirty: true` regardless is what made an untouched form
-	 *  offer Save, and auto-stash itself onto the stage on the way out. */
 	const PRISTINE = JSON.stringify(emptyDraft());
 	const isDirty = () => JSON.stringify($state.snapshot(draft)) !== PRISTINE;
 
 	let saving = $state(false);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
-	/** The one and only sighting of the secret; never read from a stored token. */
+
 	let created = $state<RegistrationToken | null>(null);
-	/** Per-CA enrollment pin, delivered BESIDE the token by the create RPC. Not
-	 *  secret the way the bearer is, but the installer's `-p` refuses to enroll
-	 *  without it, so it is presented (and copyable) right next to the token. */
+
 	let caPin = $state('');
 
 	$effect(() => {
 		persist.data = $state.snapshot(draft) as TokenDraft;
 	});
 
-	// The same schema the dialog submitted against, evaluated live so the pill's
-	// commit is closed before it is pressed rather than after.
 	const errors = $derived.by(() => {
 		const out: Record<string, string> = {};
 		const result = createTokenSchema.safeParse({
@@ -87,8 +64,7 @@
 	);
 
 	function snapshot() {
-		// Nothing to commit once the token exists — the pill goes back to nav and
-		// the reveal owns the surface.
+
 		if (saving || parked || created) return null;
 		return {
 			route: ROUTE,
@@ -105,8 +81,7 @@
 			onCancel: cancel,
 			onStash: () => (parked = true),
 			onRestore: () => (parked = false),
-			// The buffer rides ON the card too, not only in the autosave: a claim
-			// after a cross-route restore must not depend on the debounced write.
+
 			stashPayload: () => $state.snapshot(draft)
 		};
 	}
@@ -180,9 +155,7 @@
 					</Button>
 				</div>
 			</div>
-			<!-- The CA pin lives beside the token because enrollment needs BOTH:
-			     the installer's -p refuses to run without it. Per-CA, not secret
-			     like the bearer — but un-copyable here meant un-enrollable. -->
+
 			<div>
 				<p class="mb-1.5 font-mono text-[0.62rem] tracking-[0.1em] text-faint uppercase">
 					{m.tokens_created_ca_pin_label()}

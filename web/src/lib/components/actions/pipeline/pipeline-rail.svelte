@@ -1,11 +1,5 @@
 <script lang="ts">
-	// B1's centre column, taken to the Twenty/Airtable idiom the brief calls for:
-	// steps stay collapsed to ONE line (number, icon, name, mono summary, state
-	// toggle) and the selected step's full config renders in the sibling panel,
-	// because the real per-type param forms are far too tall to expand inline.
-	//
-	// Ordering is keyboard-first: every step carries ↑/↓ buttons, so reorder never
-	// depends on a pointer drag. Palette drags are an addition, not the contract.
+
 	import * as m from '$lib/paraglide/messages';
 	import { ChevronUp, ChevronDown, X } from '@lucide/svelte';
 	import { STEP_DND_TYPE, type RailStep, type StepState } from './types';
@@ -27,7 +21,7 @@
 		onmove: (index: number, dir: 'up' | 'down') => void;
 		onremove: (key: string) => void;
 		onstate?: (key: string, next: StepState) => void;
-		/** A palette entry dropped at `index` (end of list when index === length). */
+
 		oninsertAt?: (paletteId: string, index: number) => void;
 		emptyLabel: string;
 		dropLabel: string;
@@ -83,7 +77,7 @@
 			ondrop={(e) => drop(e, index)}
 		>
 			{#if index > 0}
-				<!-- the connecting edge between two steps -->
+
 				<span
 					aria-hidden="true"
 					class="absolute -top-[0.95rem] left-[1.3rem] h-[0.95rem] w-px bg-border-strong"
@@ -199,7 +193,6 @@
 		</div>
 	{/each}
 
-	<!-- tail drop zone doubles as the empty state -->
 	<div
 		role="group"
 		aria-label={dropLabel}

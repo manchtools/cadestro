@@ -54,8 +54,6 @@ import {
 	type ManagedWifiParams
 } from '$contract/cadestro/v1/control_pb';
 
-// ─── Form state interfaces ──────────────────────────────────────────
-
 export interface PackageFormState {
 	name: string;
 	version: string;
@@ -77,7 +75,7 @@ export interface ShellFormState {
 
 export interface ServiceFormState {
 	unitName: string;
-	desiredState: string; // 'RUNNING' | 'STOPPED' | 'RESTARTED'
+	desiredState: string;
 	enable: boolean;
 }
 
@@ -142,7 +140,7 @@ export interface GroupFormState {
 export interface AptFormState {
 	url: string;
 	distribution: string;
-	components: string; // space-separated in form, string[] in proto
+	components: string;
 	gpgKeyUrl: string;
 	gpgKey: string;
 	trusted: boolean;
@@ -211,13 +209,13 @@ export interface AdminPolicyFormState {
 	accessLevel: string;
 	users: string[];
 	customConfig: string;
-	backend: string; // 'SUDO' | 'DOAS'
+	backend: string;
 }
 
 export interface LpsFormState {
 	usernames: string[];
 	passwordLength: number;
-	complexity: string; // 'ALPHANUMERIC' | 'COMPLEX'
+	complexity: string;
 	rotationIntervalDays: number;
 	gracePeriodHours: number;
 }
@@ -227,14 +225,14 @@ export interface EncryptionFormState {
 	presharedKeyConfigured: boolean;
 	rotationIntervalDays: number;
 	minWords: number;
-	deviceBoundKeyType: string; // 'NONE' | 'TPM' | 'USER_PASSPHRASE'
+	deviceBoundKeyType: string;
 	userPassphraseMinLength: number;
-	userPassphraseComplexity: string; // 'ALPHANUMERIC' | 'COMPLEX'
+	userPassphraseComplexity: string;
 }
 
 export interface WifiFormState {
 	ssid: string;
-	authType: string; // 'PSK' | 'EAP_TLS'
+	authType: string;
 	psk: string;
 	pskConfigured: boolean;
 	caCert: string;
@@ -278,8 +276,6 @@ export interface FormStateByKey {
 }
 
 export type FormState = FormStateByKey[keyof FormStateByKey];
-
-// ─── Default factories ──────────────────────────────────────────────
 
 export function defaultPackageForm(): PackageFormState {
 	return {
@@ -456,13 +452,10 @@ export function defaultAgentUpdateForm(): AgentUpdateFormState {
 		amd64ChecksumUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/SHA256SUMS',
 		arm64BinaryUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-linux-arm64',
 		arm64ChecksumUrl: 'https://github.com/manchtools/cadestro/releases/latest/download/SHA256SUMS',
-		// The default URLs are GitHub release downloads, which 302 to another host
-		// (release-assets.githubusercontent.com); opt into following that redirect.
+
 		allowRedirect: true
 	};
 }
-
-// ─── Form → Proto converters ────────────────────────────────────────
 
 function serviceStateToEnum(state: string): number {
 	switch (state) {
@@ -789,8 +782,6 @@ export function agentUpdateFormToProto(form: AgentUpdateFormState) {
 		allowRedirect: form.allowRedirect
 	});
 }
-
-// ─── Proto → Form converters (for edit page loading) ────────────────
 
 export function packageProtoToForm(proto: PackageParams): PackageFormState {
 	return {

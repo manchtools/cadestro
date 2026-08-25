@@ -1,11 +1,5 @@
 <script lang="ts">
-	// B1's left column: the step-type palette. Entries are draggable onto the
-	// pipeline AND activatable from the keyboard — they are real <button>s, so
-	// Enter/Space insert at the end without any extra key handling.
-	//
-	// The concepts' "⌘K to search action types" row is deliberately reduced to an
-	// inline filter here: ⌘K is the shell palette's global binding and stealing it
-	// on this surface would shadow it.
+
 	import * as m from '$lib/paraglide/messages';
 	import { Search } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
@@ -23,11 +17,10 @@
 		footer
 	}: {
 		title: string;
-		/** Action TYPES — the "New" tab, where a step is authored from scratch. */
+
 		entries: PaletteEntry[];
 		oninsert: (id: string) => void;
-		/** Library actions available to reference — the "Existing" tab. Omitted by
-		 *  surfaces that only author. */
+
 		existing?: PaletteEntry[];
 		oninsertExisting?: (id: string) => void;
 		existingEmptyLabel?: string;
@@ -36,13 +29,6 @@
 		footer?: Snippet;
 	} = $props();
 
-	// Picking something that already exists is the common case — composing a set
-	// out of the library — so it leads. Authoring a brand-new action from inside
-	// a set is the exception, and it used to be the ONLY thing this panel showed:
-	// referencing an existing action was buried behind a dialog button below the
-	// fold.
-	// Always starts on Existing; with no `existing` list the tabs do not render and
-	// `active` falls back to the types, so a palette that only authors is unchanged.
 	let tab = $state<'existing' | 'new'>('existing');
 	let filter = $state('');
 
@@ -109,8 +95,6 @@
 		/>
 	</div>
 
-	<!-- Its own scroller: the type list is long, and at the old width it ran
-	     past the bottom of the builder instead of scrolling in place. -->
 	<ul class="m-0 grid max-h-[32rem] list-none gap-1.5 overflow-y-auto p-0">
 		{#each shown as entry (entry.id)}
 			{@const Icon = entry.icon}

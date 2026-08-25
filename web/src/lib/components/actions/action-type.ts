@@ -282,28 +282,6 @@ export function getGroupedActionTypeOptions(): ActionTypeGroup[] {
 
 export { getActionTypeEnum, actionTypeToString, ACTION_TYPE_OPTIONS };
 
-/**
- * Action types that make sense to publish as reusable marketplace
- * templates. Excluded on purpose:
- *
- *  - UPDATE            — site-specific reboot / security-only policy
- *  - SCRIPT_RUN        — instant action, nothing to configure
- *  - USER, GROUP       — per-site account inventory (UIDs, SSH keys)
- *  - SSH               — SSH access lists are per-user/per-site
- *  - LPS               — password rotation for specific accounts
- *  - ENCRYPTION        — disk encryption pre-shared keys don't belong
- *                         in a public catalogue
- *  - WIFI              — SSID + credentials are deployment-specific
- *  - AGENT_UPDATE      — agent management, not a fleet-shareable
- *                         primitive
- *  - SCRIPT_RUN        — one-off execution, not a reusable template
- *
- * Everything still in the allow-list below is either configuration
- * every fleet admin would plausibly want to drop in verbatim
- * (package installs, repo definitions, service state, file drops,
- * sudoers/doas policies, sshd hardening) or an explicit
- * COMPLIANCE_CHECK template shape.
- */
 export const MARKETPLACE_SAFE_ACTION_TYPES: ReadonlySet<string> = new Set([
 	'PACKAGE',
 	'REPOSITORY',
@@ -319,11 +297,6 @@ export const MARKETPLACE_SAFE_ACTION_TYPES: ReadonlySet<string> = new Set([
 	'ADMIN_POLICY'
 ]);
 
-/**
- * Grouped ActionType options filtered to the marketplace-safe
- * subset. Empty groups are dropped from the result so the picker
- * doesn't show an empty "Network" section.
- */
 export function getMarketplaceGroupedActionTypeOptions(): ActionTypeGroup[] {
 	return getGroupedActionTypeOptions()
 		.map((group) => ({

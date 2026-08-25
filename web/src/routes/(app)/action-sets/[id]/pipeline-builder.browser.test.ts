@@ -1,15 +1,5 @@
-// Behaviour contract for the B1 action-set pipeline builder.
-//
-// What these pin is the difference between "a card that looks like a pipeline"
-// and a builder that is actually load-bearing:
-//   - the rail is the SET's order, not the order the server happened to return;
-//   - the pill is the set's ACTION BAR from mount, clean, carrying the actions
-//     the page handed down — and a clean context refuses to commit;
-//   - a step whose params don't satisfy their registry schema BLOCKS the pill's
-//     commit at the store level, not merely by disabling a button;
-//   - Stash parks the exact editing position and Restore lands back on it;
-//   - reorder reaches reorderActionInSet with the indices the operator produced;
-//   - a palette insert creates a step of the action type that was inserted.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -31,7 +21,7 @@ import * as m from '$lib/paraglide/messages';
 const SET_ID = '01JQZZ7D0Q6R2T5V9W1X4Y3Z8A';
 const PKG_ID = '01JQZZ9F2S8T4W7X1Y3Z6A5B0C';
 const SVC_ID = '01JQZZAG3T9V5X8Y2Z4A7B6C1D';
-/** In the library but NOT in the set — what the Existing tab is for. */
+
 const SPARE_ID = '01JQZZBH4U0W6Y9Z3A5B8C7D2E';
 
 const api = vi.hoisted(() => ({
@@ -48,9 +38,6 @@ const api = vi.hoisted(() => ({
 	listActions: vi.fn()
 }));
 
-// Only the client and the IndexedDB-backed draft hook are faked; the generated
-// protobuf re-exports stay real so the builder's registry, schemas and
-// ActionType constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const actions = await import('$contract/cadestro/v1/actions_pb');
@@ -63,8 +50,7 @@ vi.mock('$lib/sdk', async () => {
 		formatTimestamp: () => '—',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
 		fetchAllPages: vi.fn(),
-		// The real hook persists to IndexedDB on a debounce; autosave durability is
-		// draft.svelte.ts's own contract, not this surface's.
+
 		useDraft: <T>(_type: string, _id: string, initial: T) => {
 			let data = initial;
 			return {
@@ -136,8 +122,6 @@ const set: ActionSet = create(ActionSetSchema, {
 	description: 'baseline'
 });
 
-/** Members deliberately arrive in the WRONG order — the rail must sort by
- *  sortOrder, not by the array the server happened to hand back. */
 function members(): ActionSetMember[] {
 	return [
 		create(ActionSetMemberSchema, {
@@ -163,14 +147,10 @@ function library(): ManagedAction[] {
 	];
 }
 
-/** The detail page hands the SET's own actions down to the builder, which
- *  publishes them on its context. A recorder stands in for the page's confirm
- *  dialog so "Delete rides the pill" is provable at this level. */
 let deleteRuns = 0;
 
 function mount(overrides: { members?: ActionSetMember[] } = {}) {
-	// The shell's idea of "where the app is" — a stashed draft resumes IN PLACE
-	// only while its owner is the mounted surface, which is what these tests are.
+
 	setShellPath(`/action-sets/${SET_ID}`);
 	return render(ActionSetBuilder, {
 		props: {
@@ -190,20 +170,16 @@ function mount(overrides: { members?: ActionSetMember[] } = {}) {
 	});
 }
 
-/** The rail's step buttons, in DOM order. */
 function railTitles(): string[] {
 	return [...document.querySelectorAll<HTMLElement>('[data-step-key]')].map(
 		(el) => el.querySelector('span > span.truncate')?.textContent?.trim() ?? ''
 	);
 }
 
-/** Inputs of the selected step's config panel only — the palette carries its own
- *  filter input, which must never be mistaken for a params field. */
 function panelInputs(): HTMLInputElement[] {
 	return [...document.querySelectorAll<HTMLInputElement>('[data-testid="step-panel"] input')];
 }
 
-/** The params-form input for `id`, e.g. the SERVICE form's unit name. */
 function panelField(id: string): HTMLInputElement {
 	const el = document.querySelector<HTMLInputElement>(`[data-testid="step-panel"] input#${id}`);
 	if (!el) throw new Error(`the step panel has no #${id} field`);
@@ -215,7 +191,6 @@ function type(input: HTMLInputElement, value: string) {
 	input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-/** The palette leads with Existing now; authoring lives behind the New tab. */
 async function paletteNewTab() {
 	const tab = document.querySelector<HTMLButtonElement>('[data-palette-tab="new"]');
 	if (!tab) throw new Error('the palette never rendered its New tab');
@@ -249,14 +224,11 @@ describe('the pill is the set’s action bar', () => {
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`action-set:${SET_ID}`));
-		// Nothing edited yet: nothing to save, nothing worth parking — and ⌘S is
-		// closed in the STORE, not merely by a disabled attribute.
+
 		expect(shell.pill.context?.dirty).toBe(false);
 		expect(commitContext()).toBe(false);
 		expect(api.renameActionSet).not.toHaveBeenCalled();
 
-		// …but the set's own action is already reachable, and it runs the page's
-		// dialog opener rather than an RPC.
 		expect(shell.pill.context?.extraActions?.map((a) => a.id)).toEqual(['delete']);
 		runPillAction('delete');
 		expect(deleteRuns).toBe(1);
@@ -270,7 +242,7 @@ describe('pipeline order', () => {
 
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 		expect(railTitles()).toEqual(['Install openssh-server', 'Enable sshd']);
-		// The numbers the operator reads must match that order.
+
 		const numbers = [
 			...document.querySelectorAll('[data-tour="builder-pipeline"] [data-step-index]')
 		].map((el) => el.textContent?.trim());
@@ -290,7 +262,7 @@ describe('pipeline order', () => {
 
 describe('validation blocks the pill commit', () => {
 	it('refuses to commit while a step fails its registry schema, and says why', async () => {
-		// A member whose package name is empty cannot satisfy packageParamsSchema.
+
 		mount({
 			members: [
 				create(ActionSetMemberSchema, {
@@ -303,10 +275,6 @@ describe('validation blocks the pill commit', () => {
 		});
 		await vi.waitFor(() => expect(railTitles().length).toBe(1));
 
-		// A NEW step, authored here: its action does not exist yet, so this panel is
-		// the only place to give it a shape — and the only place a schema can fail.
-		// (A step that references an existing action is read-only now, so it cannot
-		// be made invalid from inside a set.)
 		await paletteNewTab();
 		const newEntry = document.querySelector<HTMLButtonElement>('[data-palette-entry="PACKAGE"]');
 		if (!newEntry) throw new Error('the palette never offered the PACKAGE action type');
@@ -317,14 +285,13 @@ describe('validation blocks the pill commit', () => {
 		await vi.waitFor(() => expect(shell.pill.context).not.toBeNull());
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(false));
 
-		// The store — not just a disabled attribute — is what closes ⌘S.
 		expect(commitContext()).toBe(false);
 		expect(api.updateActionParams).not.toHaveBeenCalled();
 		expect(shell.pill.context?.subtextTone).toBe('warn');
 		expect(shell.pill.context?.subtext).toContain(
 			m.action_set_detail_builder_blocked({ count: 1 })
 		);
-		// The failing step is named, and carries the crit inline reason.
+
 		expect(shell.pill.context?.subtext).toContain('step 2');
 		await vi.waitFor(() => expect(document.querySelector('[data-step-error]')).not.toBeNull());
 	});
@@ -342,18 +309,10 @@ describe('validation blocks the pill commit', () => {
 		});
 		await vi.waitFor(() => expect(railTitles().length).toBe(1));
 
-		// The panel states the member; it does not offer to change it. An action
-		// belongs to the library, and `ActionSetMember` carries only action_id and
-		// sort_order — there is nowhere set-local to hold an override, so an "edit"
-		// here could only be a GLOBAL edit. Flipping a step to REMOVE inside one set
-		// used to arm an uninstall everywhere that action was assigned.
 		await vi.waitFor(() => expect(document.querySelector('[data-testid="step-ref-name"]')).not.toBeNull());
 		expect(panelInputs(), 'a referenced action has no edit fields').toHaveLength(0);
 		expect(document.querySelector('[data-testid="action-state-toggle"]')).toBeNull();
 
-		// …and neither does the ROW, which is the toggle actually in reach: it
-		// still STATES the action's state, but every button in the group is
-		// disabled, so the state cannot be flipped from inside a set.
 		const rowState = [
 			...document.querySelectorAll<HTMLButtonElement>('[data-testid="step-row-state"] button')
 		];
@@ -364,11 +323,10 @@ describe('validation blocks the pill commit', () => {
 		).toBe(true);
 		rowState.forEach((b) => b.click());
 		await new Promise((r) => setTimeout(r, 50));
-		// …and the way to change it is offered explicitly, where it is safe.
+
 		const link = document.querySelector<HTMLAnchorElement>('[data-testid="step-ref-link"]');
 		expect(link?.getAttribute('href')).toContain(`/actions/${PKG_ID}`);
 
-		// Reordering is the set's own business, and it still commits.
 		await vi.waitFor(() => expect(shell.pill.context).not.toBeNull());
 		commitContext();
 
@@ -384,26 +342,20 @@ describe('the palette leads with what already exists', () => {
 		mount();
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 
-		// Composing a set out of the library is the common case, so it is the
-		// landing tab. It used to be a dialog behind an "Add from library" button
-		// under a list of action types — the exception was the only thing on show.
 		const tabs = [...document.querySelectorAll<HTMLButtonElement>('[data-palette-tab]')];
 		expect(tabs.map((t) => t.dataset.paletteTab)).toEqual(['existing', 'new']);
 		expect(tabs[0].getAttribute('aria-selected')).toBe('true');
 
-		// The Existing tab lists library actions the set does not already carry…
 		const offered = [...document.querySelectorAll<HTMLElement>('[data-palette-entry]')].map(
 			(e) => e.dataset.paletteEntry
 		);
 		expect(offered).toContain(SPARE_ID);
 		expect(offered, 'a current member is not offered twice').not.toContain(PKG_ID);
 
-		// …and picking one appends it as a REFERENCE, with no action created.
 		document.querySelector<HTMLButtonElement>(`[data-palette-entry="${SPARE_ID}"]`)!.click();
 		await vi.waitFor(() => expect(railTitles().length).toBe(3));
 		expect(api.createAction).not.toHaveBeenCalled();
 
-		// The second tab is where a brand-new action is authored.
 		await paletteNewTab();
 		expect(document.querySelector('[data-palette-entry="SERVICE"]')).not.toBeNull();
 	});
@@ -414,9 +366,6 @@ describe('stash and restore', () => {
 		mount();
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 
-		// Author a third step, so there is unsaved work to park. Editing an existing
-		// member is no longer possible from here — it would change the library
-		// action for every set that uses it.
 		await paletteNewTab();
 		const svcEntry = document.querySelector<HTMLButtonElement>('[data-palette-entry="SERVICE"]');
 		if (!svcEntry) throw new Error('the palette never offered the SERVICE action type');
@@ -432,18 +381,16 @@ describe('stash and restore', () => {
 
 		const draftId = stashContext();
 		expect(draftId).not.toBeNull();
-		// The pill is free again and the work is a stage citizen.
+
 		expect(shell.pill.context).toBeNull();
 		expect(shell.drafts.map((d) => d.id)).toContain(draftId);
 
-		// A parked draft must NOT be re-adopted by the still-mounted builder.
 		await new Promise((r) => setTimeout(r, 50));
 		expect(shell.pill.context).toBeNull();
 
-		// Still the mounted surface: nothing for the chrome to navigate.
 		expect(restoreDraft(draftId!)).toBeNull();
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`action-set:${SET_ID}`));
-		// Same step, same unsaved buffer — the authored step 3, not a library member.
+
 		expect(shell.pill.context?.stashSubtitle).toBe(
 			m.action_set_detail_builder_stash_subtitle({ step: 3 })
 		);
@@ -459,7 +406,6 @@ describe('reorder', () => {
 		mount();
 		await vi.waitFor(() => expect(railTitles().length).toBe(2));
 
-		// Move step 2 up: sshd 1→0, openssh-server 0→1. Both moved, so both are sent.
 		const up = document.querySelectorAll<HTMLButtonElement>(
 			`button[aria-label="${m.action_set_detail_builder_move_up()}"]`
 		)[1];
@@ -474,7 +420,7 @@ describe('reorder', () => {
 			[SET_ID, SVC_ID, 0],
 			[SET_ID, PKG_ID, 1]
 		]);
-		// Nothing else changed, so nothing else is written.
+
 		expect(api.removeActionFromSet).not.toHaveBeenCalled();
 		expect(api.createAction).not.toHaveBeenCalled();
 		expect(api.renameActionSet).not.toHaveBeenCalled();
@@ -492,12 +438,11 @@ describe('palette insert', () => {
 		entry.click();
 
 		await vi.waitFor(() => expect(railTitles().length).toBe(3));
-		// The new step reads as the type that was inserted, and is selected.
+
 		expect(
 			document.querySelector('[data-step-key][aria-current="true"]')?.textContent
 		).toContain(m.actions_type_systemd());
 
-		// A default SERVICE step has no unit name yet — it must block Save.
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(false));
 
 		await vi.waitFor(() => expect(panelField('unitName').value).toBe(''));
@@ -511,7 +456,7 @@ describe('palette insert', () => {
 			type: ActionType.SERVICE,
 			params: { case: 'service' }
 		});
-		// Appended at the end, so it lands at index 2 with no reorder of the rest.
+
 		await vi.waitFor(() => expect(api.addActionToSet).toHaveBeenCalledTimes(1));
 		expect(api.addActionToSet.mock.calls[0][2]).toBe(2);
 		expect(api.reorderActionInSet).not.toHaveBeenCalled();

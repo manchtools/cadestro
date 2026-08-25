@@ -11,9 +11,7 @@
 	interface Props {
 		open: boolean;
 		onadd: (key: string, value: string) => void;
-		/** Copy overrides so a caller writing the pair to MANY devices (the fleet's
-		 *  bulk Label action) reuses this exact form instead of duplicating it.
-		 *  Left unset, the dialog is the single-device one it has always been. */
+
 		title?: string;
 		description?: string;
 		confirmLabel?: string;

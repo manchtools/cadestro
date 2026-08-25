@@ -1,11 +1,5 @@
-// The action detail editor commits through the pill, which means the pill's
-// state IS the operator's feedback that a save landed.
-//
-// The baseline it compares against was captured once, at construction, and the
-// detail page does not remount the editor when a save returns — so after a
-// successful save the buffer still differed from a baseline describing the body
-// as it was BEFORE the save. The pill kept saying "something changed" about work
-// that was already stored, and Save stayed armed to re-send it forever.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -63,7 +57,7 @@ beforeEach(() => {
 
 describe('a saved action is not still "changed"', () => {
 	it('rebases on the saved body, so the pill goes quiet after a commit', async () => {
-		// The server returns the stored body — the same shape a reload would give.
+
 		api.updateActionParams.mockImplementation(async () =>
 			packageAction({ timeoutSeconds: 600 })
 		);
@@ -78,8 +72,6 @@ describe('a saved action is not still "changed"', () => {
 		commitContext();
 		await vi.waitFor(() => expect(api.updateActionParams).toHaveBeenCalledTimes(1));
 
-		// The whole point: stored work does not keep announcing itself as unsaved,
-		// and Save does not stay armed to re-send what the server already has.
 		await vi.waitFor(() => expect(shell.pill.context?.dirty).toBe(false));
 		expect(commitContext(), 'a clean context refuses a second commit').toBe(false);
 		expect(api.updateActionParams).toHaveBeenCalledTimes(1);
@@ -99,8 +91,6 @@ describe('a saved action is not still "changed"', () => {
 		commitContext();
 		await vi.waitFor(() => expect(api.updateActionParams).toHaveBeenCalledTimes(1));
 
-		// A keystroke that lands while the save is in flight is NOT stored, so
-		// rebasing must not silently swallow it.
 		type(timeoutInput(), '900');
 		release(packageAction({ timeoutSeconds: 600 }));
 

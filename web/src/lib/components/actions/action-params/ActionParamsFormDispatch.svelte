@@ -1,13 +1,5 @@
 <script lang="ts">
-	// Per-FormKey dispatch component. Both action-create-form.svelte and
-	// edit-params-dialog.svelte previously inlined the 19-arm ladder
-	// `{#if actionType === 'PACKAGE'}<PackageParamsForm/>{:else if …}…{/if}`.
-	// This single component owns the ladder; the orchestrators just render
-	// <ActionParamsFormDispatch formKey={…} bind:params={paramsByKey[…]} … />.
-	//
-	// `params` is the bindable form-state object for the selected FormKey.
-	// `errors` / `onclearerror` are forwarded to whichever per-type
-	// ParamsForm component lives under this FormKey.
+
 	import {
 		PackageParamsForm,
 		ShellParamsForm,

@@ -18,7 +18,6 @@
 	let groups = $state<DeviceGroup[]>([]);
 	let loading = $state(true);
 
-	// Sheet state
 	let selectedGroup = $state<DeviceGroup | null>(null);
 	let sheetOpen = $state(false);
 
@@ -103,7 +102,6 @@
 	{/if}
 </div>
 
-<!-- Group Detail Sheet -->
 <Sheet.Root bind:open={sheetOpen}>
 	<Sheet.Content side="right">
 		<Sheet.Header>
@@ -111,7 +109,7 @@
 		</Sheet.Header>
 		{#if selectedGroup}
 			<div class="space-y-6 px-4 py-4">
-				<!-- Group info -->
+
 				<div class="space-y-2">
 					<div class="flex items-center gap-2">
 						<FolderOpen class="h-4 w-4 text-muted-foreground" />
@@ -133,7 +131,6 @@
 					</div>
 				</div>
 
-				<!-- Dynamic query -->
 				{#if selectedGroup.isDynamic && selectedGroup.dynamicQuery}
 					<div class="space-y-2">
 						<h4 class="text-sm font-medium text-muted-foreground">

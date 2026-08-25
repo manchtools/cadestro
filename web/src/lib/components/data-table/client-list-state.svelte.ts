@@ -1,12 +1,5 @@
-// Runes glue for the client-mode DataTable: pages whose rows come from a plain
-// list RPC because the Search RPC has no scope for them (roles, registration
-// tokens, identity providers, my-devices). Same TableView contract and the same
-// option names as createSearchListState — pages are interchangeable between the
-// two factories — but the query match, the filters, the sort and the page slice
-// all run over the loaded row array instead of the server.
-//
-// Same URL rules as the search factory: seed from the URL at init, write from
-// user-interaction callbacks only (never from an effect), re-seed on popstate.
+
+
 import { onMount } from 'svelte';
 import { page } from '$app/state';
 import { toast } from 'svelte-sonner';
@@ -23,23 +16,20 @@ import { nextSort, pageMath, type SortDir } from './list-logic';
 import type { FilterDefs } from './list-state.svelte';
 
 export interface ClientListOptions<Row, K extends string, F extends Record<string, unknown>> {
-	/** The page's list RPC. Re-run by refresh(); its result is the whole row set. */
+
 	load: () => Promise<Row[]>;
-	/** Fields the query matches against (case-insensitive substring, any field). */
+
 	searchFields: (row: Row) => (string | null | undefined)[];
 	sortKeys: readonly K[];
-	/** Ascending comparator per sort key; the factory applies the direction. */
+
 	sortComparators: Record<K, (a: Row, b: Row) => number>;
 	defaultSort: K;
-	/** Natural direction of a column (asc unless overridden, e.g. timestamps
-	 *  desc-first). Unlike the search factory this ALSO seeds the initial
-	 *  direction when the URL carries none, so a page whose default sort is a
-	 *  timestamp opens newest-first. */
+
 	sortDir?: (key: K) => SortDir;
 	pageSizes?: readonly string[];
 	defaultPageSize?: string;
 	filters?: FilterDefs<F>;
-	/** Keep-row predicate for the page's filters. Omitted filters keep every row. */
+
 	filterRow?: (row: Row, filters: F) => boolean;
 }
 
@@ -56,9 +46,7 @@ export function createClientListState<
 	const SORT_KEY_CODEC = codecs.enum<K>(options.sortKeys, options.defaultSort);
 	const PAGE_SIZE_CODEC = codecs.enum(pageSizes, options.defaultPageSize ?? '25');
 	const PAGE_CODEC = codecs.int(1);
-	// The direction param is read/written against the ACTIVE column's natural
-	// direction, so `?sort=created` alone means "newest first" and only a
-	// deliberate flip shows up in the URL.
+
 	const dirCodec = (key: K): Codec<SortDir> =>
 		codecs.enum<SortDir>(['asc', 'desc'] as const, options.sortDir?.(key) ?? 'asc');
 
@@ -151,11 +139,11 @@ export function createClientListState<
 	});
 
 	return {
-		/** The current page's slice of the matched, sorted rows. */
+
 		get rows() {
 			return rows;
 		},
-		/** Matching rows across all pages (what pagination counts). */
+
 		get total() {
 			return sorted.length;
 		},
@@ -192,13 +180,13 @@ export function createClientListState<
 		get showingTo() {
 			return math.showingTo;
 		},
-		/** Reactive filter values (read e.g. `table.filters.status`). */
+
 		filters,
 
 		setSearch(value: string) {
 			query = value;
 			currentPage = 1;
-			commitURL('replace'); // transient — one history entry per intentional change, not per keystroke
+			commitURL('replace');
 		},
 		setFilter<P extends keyof F>(name: P, value: F[P]) {
 			filters[name] = value;
@@ -223,7 +211,7 @@ export function createClientListState<
 		refresh() {
 			void load();
 		},
-		/** Mutate the loaded rows without a reload (optimistic create/update/delete). */
+
 		patchRows(fn: (rows: Row[]) => Row[]) {
 			allRows = fn(allRows as Row[]);
 		}

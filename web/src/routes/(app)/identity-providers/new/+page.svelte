@@ -1,15 +1,5 @@
 <script lang="ts">
-	// /identity-providers/new — OIDC provider creation as a pill-committed surface.
-	//
-	// Six fields, one of them a client secret: this is the longest create form in
-	// the app and the one an operator is most likely to abandon halfway to go and
-	// fetch a value from the provider's console. As a modal that trip destroyed the
-	// form; declaring `route` earns the Stash button so the work parks instead.
-	//
-	// Deliberately NOT autosaved through `useDraft`: that hook persists to
-	// IndexedDB, and a client secret has no business being written to disk. The
-	// stash payload lives in the in-memory shell store only, exactly as long as the
-	// form field it came from.
+
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
@@ -38,7 +28,7 @@
 		issuerUrl: string;
 		scopes: string;
 		autoCreateUsers: boolean;
-		/** Role granted to JIT-created users; empty string means "no default role". */
+
 		defaultRoleId: string;
 	};
 
@@ -73,23 +63,17 @@
 		};
 	}
 
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(CONTEXT_ID, () => snapshot());
-	// svelte-ignore state_referenced_locally
+
 	let draft = $state<IdpDraft>(hydrate(claimed) ?? emptyDraft());
 
-	/** A create surface opens EMPTY: there is nothing to save and nothing worth
-	 *  parking. Saying `dirty: true` regardless is what made an untouched form
-	 *  offer Save, and auto-stash itself onto the stage on the way out. */
 	const PRISTINE = JSON.stringify(emptyDraft());
 	const isDirty = () => JSON.stringify($state.snapshot(draft)) !== PRISTINE;
 
 	let saving = $state(false);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
 
-	// The default-role select's option list. Supporting data only; a load
-	// failure surfaces as a toast and leaves the select at "no default role".
 	let roles = $state<Role[]>([]);
 
 	onMount(() => {
@@ -111,8 +95,6 @@
 			: m.idp_field_default_role_none()
 	);
 
-	// The same schema the dialog submitted against, evaluated live so the commit
-	// is closed at the store before it can be pressed.
 	const createSchema = z.object({
 		name: z.string().min(1, m.validation_name_required()),
 		slug: z
@@ -205,9 +187,7 @@
 		description={m.idp_create_description()}
 		testid="idp-create"
 	>
-		<!-- Name and slug are both short tokens, and so are the two credentials:
-		     paired they read as the two halves they are, and the detail page
-		     already lays the same four fields out this way. -->
+
 		<div class="grid gap-3 sm:grid-cols-2">
 			<div class="space-y-1.5">
 				<Label for="idpName">{m.idp_field_name()}</Label>
@@ -255,9 +235,7 @@
 			<Input id="idpScopes" bind:value={draft.scopes} placeholder="openid, profile, email" />
 			<p class="text-xs text-muted-foreground">{m.idp_field_scopes_help()}</p>
 		</div>
-		<!-- JIT provisioning: same row/select idiom as the detail page's JIT
-		     section. Auto-create defaults OFF here — an authenticated admin
-		     opts in deliberately. -->
+
 		<div class="flex items-center justify-between gap-3">
 			<div class="space-y-0.5">
 				<Label for="idpAutoCreate">{m.idp_field_auto_create_users()}</Label>

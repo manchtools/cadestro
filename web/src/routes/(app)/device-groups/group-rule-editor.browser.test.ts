@@ -43,8 +43,6 @@ vi.mock('$app/navigation', () => ({
 }));
 vi.mock('$lib/navigation', () => ({ goto: vi.fn() }));
 
-// Only the client is faked — generated protobuf re-exports stay real so the
-// pages' enums (DeviceStatus, RoleGrantScopeKind) are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -92,10 +90,8 @@ import UserGroupPage from '../user-groups/[id]/+page.svelte';
 
 const RULE = 'device.os == "ubuntu" && "env" in device.labels && device.labels["env"] == "production"';
 
-// The two context ids that compete for the single pill slot on this page.
 const GROUP_ID = '01HZDEVGRP0000000000000000';
-// ONE context per group. The Rule tab used to publish a second one, which is
-// why renaming a group AND editing its rule took two separate saves.
+
 const groupContextId = `device-group:${GROUP_ID}`;
 const savedValue = 'ubuntu';
 
@@ -132,7 +128,6 @@ function seedDeviceGroup(over: Record<string, unknown> = {}) {
 	});
 }
 
-/** Open the Rule tab of the already-rendered detail page. */
 async function openRuleTab() {
 	await browser.getByRole('tab', { name: 'Rule' }).click();
 	await vi.waitFor(() => expect(document.querySelector('[data-testid="rule-tab"]')).toBeTruthy());
@@ -205,8 +200,7 @@ describe('an unusable draft never reaches the server', () => {
 
 		expect(mocks.validateDynamicQuery).not.toHaveBeenCalled();
 		expect(mocks.evaluateDynamicGroup).not.toHaveBeenCalled();
-		// The pill is the group's action bar and is held for the whole visit, so
-		// what must be absent is anything to COMMIT — not the pill itself.
+
 		expect(shell.pill.context?.id).toBe(groupContextId);
 		expect(shell.pill.context?.dirty, 'clearing the query is an invalid edit').toBe(true);
 		expect(commitContext(), 'nothing to commit yet').toBe(false);
@@ -283,7 +277,7 @@ describe('future-scope guard', () => {
 
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`device-group:${mocks.params.id}`));
 		expect(mocks.updateDeviceGroupQuery).not.toHaveBeenCalled();
-		// the edit survives the cancel
+
 		expect(document.querySelector<HTMLTextAreaElement>('#query-editor-text')?.value).toBe('device.os == "debian"');
 	});
 
@@ -316,10 +310,7 @@ describe('future-scope guard', () => {
 		await expect
 			.element(browser.getByTestId('future-scope-dialog'))
 			.toHaveTextContent('Convert to a standing rule?');
-		// The server clears the curated membership in the same transaction that
-		// sets the mode, so the confirm has to price that in — naming only the
-		// mode change would let an operator convert a hand-picked group without
-		// being told its members are about to go.
+
 		await expect
 			.element(browser.getByTestId('future-scope-convert-members'))
 			.toHaveTextContent('are dropped');
@@ -347,7 +338,7 @@ describe('the live count rides the pill subtext', () => {
 			);
 		});
 		expect(shell.pill.context?.subtextTone).toBe('neutral');
-		// one copy only — the card carries no second count line
+
 		expect(document.querySelector('[data-testid="query-status"]')).toBeNull();
 	});
 
@@ -360,8 +351,7 @@ describe('the live count rides the pill subtext', () => {
 
 		await browser.getByTestId('query-input').fill(RULE);
 		await vi.waitFor(() => {
-			// Back to the stored rule: nothing to commit, so the caption goes away.
-			// The bar itself stays — it is the group's action bar, not the rule's.
+
 			expect(shell.pill.context?.subtext).toBeUndefined();
 			expect(shell.pill.context?.dirty).toBe(false);
 		});
@@ -393,8 +383,6 @@ describe('user groups — the SCIM guard', () => {
 		mocks.url = new URL('http://localhost/user-groups/01HZUSRGRP000000000000000');
 	});
 
-	/** The group's own actions, wherever they live — the pill is that home now,
-	 *  so a DOM query for a trash glyph would no longer prove anything. */
 	function pillActionIds(): string[] {
 		return (shell.pill.context?.extraActions ?? []).map((a) => a.id);
 	}
@@ -405,9 +393,7 @@ describe('user groups — the SCIM guard', () => {
 		await vi.waitFor(() => expect(document.querySelector('[data-testid="group-header"]')).toBeTruthy());
 
 		expect(document.querySelector('[aria-label="Edit name and description"]')).toBeNull();
-		// Delete moved to the pill, so that is where its absence has to be proven:
-		// a SCIM group's lifecycle lives at the identity provider and it must not be
-		// offered an action that the next sync would undo.
+
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`user-group:${mocks.params.id}`));
 		expect(pillActionIds()).not.toContain('delete');
 		expect(
@@ -428,8 +414,7 @@ describe('user groups — the SCIM guard', () => {
 
 		expect(document.querySelector('[aria-label="Edit name and description"]')).not.toBeNull();
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(`user-group:${mocks.params.id}`));
-		// The maintenance window is a group-wide policy and rides the pill for both
-		// kinds of group; Delete only for the one this control plane owns.
+
 		expect(pillActionIds()).toEqual(['window', 'delete']);
 		expect(
 			[...document.querySelectorAll('[role="tab"]')].map((t) => t.textContent?.trim())
@@ -472,9 +457,7 @@ describe('data-tour anchors', () => {
 });
 
 describe('the pill is the group’s action bar', () => {
-	// It is held from the moment the group loads, not only while the identity
-	// fields are open: Delete and the maintenance window are the GROUP's actions
-	// and cannot live somewhere that appears only after you have typed.
+
 	it('holds the group from load, with its own actions and nothing to commit', async () => {
 		render(DeviceGroupPage);
 		await vi.waitFor(() => expect(document.querySelector('[data-testid="group-header"]')).toBeTruthy());
@@ -483,7 +466,7 @@ describe('the pill is the group’s action bar', () => {
 			expect(shell.pill.context?.id).toBe(`device-group:${mocks.params.id}`)
 		);
 		expect(shell.pill.context?.extraActions?.map((a) => a.id)).toEqual(['window', 'delete']);
-		// nothing edited yet: nothing to save, and nothing worth parking
+
 		expect(shell.pill.context?.dirty, 'a clean context has nothing to commit').toBe(false);
 		expect(commitContext()).toBe(false);
 	});
@@ -508,14 +491,10 @@ describe('the pill is the group’s action bar', () => {
 		render(DeviceGroupPage);
 		await vi.waitFor(() => expect(shell.pill.context?.id).toBe(groupContextId));
 
-		// Rename on the identity surface…
 		await browser.getByLabelText('Edit name and description').click();
 		const nameField = browser.getByLabelText('Name');
 		await nameField.fill('Renamed fleet');
 
-		// …edit the rule on the Rule tab. The bar never changes hands: one entity,
-		// one context, one Save. Two contexts meant the operator had to save twice
-		// and whichever surface held the slot decided which half was committed.
 		await openRuleTab();
 		expect(shell.pill.context?.id).toBe(groupContextId);
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
@@ -524,7 +503,7 @@ describe('the pill is the group’s action bar', () => {
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 
 		commitContext();
-		// A standing rule still takes its acknowledgement — it gates the one commit.
+
 		await expect.element(browser.getByTestId('future-scope-dialog')).toBeVisible();
 		await browser.getByTestId('future-scope-confirm').click();
 
@@ -548,9 +527,6 @@ describe('the pill is the group’s action bar', () => {
 		await browser.getByTestId('query-input').fill('device.os == "workstation-42" && "env" in device.labels && device.labels["env"] == "production"');
 		await vi.waitFor(() => expect(shell.pill.context?.dirty).toBe(true));
 
-		// A context can only be parked when it says where it lives and what to
-		// carry. The rule editor's own context declared neither, so a half-written
-		// rule was the one buffer on this page that could not be set aside.
 		expect(shell.pill.context?.route).toBe(`/device-groups/${mocks.params.id}`);
 		const parked = shell.pill.context?.stashPayload?.() as { query?: string } | undefined;
 		expect(parked?.query, 'the parked card carries the rule, not just the name').toBe(

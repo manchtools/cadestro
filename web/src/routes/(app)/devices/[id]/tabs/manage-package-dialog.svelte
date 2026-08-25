@@ -23,7 +23,7 @@
 		packageName: string;
 		packageVersion: string;
 		deviceId: string;
-		/** Set of action IDs already assigned to this device */
+
 		assignedActionIds: Set<string>;
 		onassigned: () => void;
 	}
@@ -45,7 +45,6 @@
 	let loading = $state(false);
 	let saving = $state(false);
 
-	// Reset state and load matching actions when dialog opens
 	$effect(() => {
 		if (open) {
 			desiredState = '0';
@@ -60,7 +59,7 @@
 	async function loadMatchingActions() {
 		loading = true;
 		try {
-			// F023: page through all PACKAGE actions instead of capping at 100.
+
 			const allActions = await fetchAllPages<ManagedAction>(async (size, token) => {
 				const r = await apiClient.listActions(size, token, ActionType.PACKAGE);
 				return { items: r.actions, nextPageToken: r.nextPageToken };
@@ -154,7 +153,7 @@
 		</Dialog.Header>
 
 		<div class="space-y-4">
-			<!-- Desired State -->
+
 			<div class="space-y-1.5">
 				<Label>{m.software_manage_desired_state()}</Label>
 				<Select.Root type="single" bind:value={desiredState}>
@@ -168,7 +167,6 @@
 				</Select.Root>
 			</div>
 
-			<!-- Version (only when Present) -->
 			{#if desiredState === '0'}
 				<div class="space-y-1.5">
 					<Label>{m.software_manage_version()}</Label>
@@ -177,7 +175,6 @@
 				</div>
 			{/if}
 
-			<!-- Existing matching actions -->
 			<div class="space-y-2">
 				<Label>{m.software_manage_existing_actions()}</Label>
 				{#if loading}
@@ -220,7 +217,6 @@
 				{/if}
 			</div>
 
-			<!-- Divider -->
 			{#if matchingActions.length > 0}
 				<div class="relative">
 					<div class="absolute inset-0 flex items-center">
@@ -232,7 +228,6 @@
 				</div>
 			{/if}
 
-			<!-- Create new -->
 			<div class="space-y-2">
 				<div class="space-y-1.5">
 					<Label>{m.software_manage_action_name()}</Label>

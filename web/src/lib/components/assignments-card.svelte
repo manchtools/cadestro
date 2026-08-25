@@ -17,8 +17,7 @@
 		subtitle: string;
 		assignTitle: string;
 		assignDescription: string;
-		/** Opens the assign dialog from outside — assigning is one of the entity's
-		 *  own actions, so the pill owns the trigger. */
+
 		assignOpen?: boolean;
 	}
 
@@ -39,9 +38,6 @@
 	let allUserGroups = $state<UserGroup[]>([]);
 	let assignDialogOpen = $state(false);
 
-	// `assignOpen` is a PULSE the pill sets: the card consumes it, loads the
-	// targets the dialog needs and clears the flag, so the owner never has to
-	// track the dialog's own lifecycle.
 	$effect(() => {
 		if (!assignOpen) return;
 		assignOpen = false;
@@ -65,8 +61,6 @@
 		allUserGroups.filter((g) => !assignments.some((a) => a.targetType === AssignmentTargetType.USER_GROUP && a.targetId === g.id))
 	);
 
-	// Track the latest sourceId so out-of-order responses (slow network)
-	// don't overwrite results from a more recent request. F035.
 	let loadSeq = 0;
 
 	$effect(() => {
@@ -80,8 +74,7 @@
 		const requestedSourceId = sourceId;
 		try {
 			const response = await apiClient.listAssignments(50, '', sourceType, requestedSourceId);
-			// Discard if a newer request started while we were in flight, or
-			// if the parent swapped sourceId out from under us.
+
 			if (seq !== loadSeq || requestedSourceId !== sourceId) return;
 			assignments = response.assignments;
 		} catch (error) {
@@ -91,10 +84,7 @@
 
 	async function loadTargets() {
 		try {
-			// F022: page through everything instead of capping users / user-groups
-			// at 200. Tenants above the cap previously saw the picker silently
-			// truncate. listDevices / listDeviceGroups already return everything
-			// in a single request.
+
 			const [devicesRes, groupsRes, usersAll, userGroupsAll] = await Promise.all([
 				apiClient.listDevices(),
 				apiClient.listDeviceGroups(),
@@ -186,8 +176,7 @@
 
 <Card.Root>
 	<Card.Header>
-		<!-- No assign trigger here: assigning is one of the entity's own actions,
-		     so the pill offers it. The card states what IS assigned. -->
+
 		<Card.Title>{title}</Card.Title>
 		<Card.Description>{subtitle}</Card.Description>
 	</Card.Header>

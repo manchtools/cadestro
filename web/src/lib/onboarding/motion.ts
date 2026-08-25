@@ -1,9 +1,4 @@
-// prefers-reduced-motion, behind a stubbable seam.
-//
-// The media query is read through a mutable holder so tests can force either
-// answer deterministically — Playwright's media emulation is not reachable from
-// the component under test, and an untested reduced-motion path is exactly the
-// kind of accessibility promise that silently rots.
+
 
 export const motion = {
 	reduced(): boolean {

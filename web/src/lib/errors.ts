@@ -56,11 +56,6 @@ const errorMessages: Partial<Record<ErrorCode, () => string>> = {
 	[ErrorCode.QUERY_RESULT_NOT_FOUND]: m.error_query_result_not_found
 };
 
-/**
- * Get a localized error message for a ConnectError.
- * Falls back to the raw error message if no i18n mapping exists.
- */
-/** Error codes where the cause is obvious — no request ID needed in the message. */
 const userFacingCodes = new Set<ErrorCode>([
 	ErrorCode.NOT_AUTHENTICATED,
 	ErrorCode.TOKEN_EXPIRED,
@@ -81,7 +76,6 @@ export function getLocalizedError(error: unknown): string {
 		msg = m.error_internal();
 	}
 
-	// Append request ID for non-obvious errors so users can report them
 	if (code === undefined || !userFacingCodes.has(code)) {
 		const requestId = getRequestId(error);
 		if (requestId) {

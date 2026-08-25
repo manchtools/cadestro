@@ -1,21 +1,13 @@
 <script lang="ts" module>
 	import { pushState } from '$lib/navigation';
 
-	/**
-	 * Open the compliance policy detail sheet via shallow routing.
-	 * Call from any page that includes <CompliancePolicyDetailSheet />.
-	 */
 	export function openCompliancePolicySheet(policyId: string) {
 		pushState(`/compliance-policies/${policyId}`, { compliancePolicySheet: policyId });
 	}
 </script>
 
 <script lang="ts">
-	// Compliance reads as left-explanation / right-control section blocks: the
-	// left column says what the rule checks, the right column is the control that
-	// changes it. Grace periods are edited inline and committed together through
-	// the shell's context pill — a committable edit state, not a one-shot dialog.
-	// Add / remove stay one-shot, because they are.
+
 	import { page } from '$app/state';
 	import { toast } from 'svelte-sonner';
 	import { getLocalizedError } from '$lib/errors';
@@ -58,10 +50,8 @@
 
 	let { onupdated }: Props = $props();
 
-	/** UpdateCompliancePolicyRuleRequest validates grace_period_hours 0..8760. */
 	const GRACE_MAX_HOURS = 8760;
 
-	// Derive state from shallow routing
 	let policyId = $derived(page.state.compliancePolicySheet);
 	let sheetOpen = $derived(!!policyId);
 
@@ -74,7 +64,6 @@
 
 	const nameValidation = createFormValidation(editNameSchema);
 
-	// Add rule state
 	let addRuleDialogOpen = $state(false);
 	let complianceActions = $state<ManagedAction[]>([]);
 	let selectedActionId = $state('');
@@ -91,7 +80,6 @@
 		})
 	);
 
-	// Inline grace-period edit: action id → the operator's draft value.
 	let graceDraft = $state<Record<string, number>>({});
 	let savingGrace = $state(false);
 
@@ -125,13 +113,6 @@
 		}
 	});
 
-	// The pill carries the commit only while there is something to commit, and
-	// this sheet only ever owns its own context — never someone else's.
-	//
-	// The shell reads and writes are untracked on purpose: enterContext /
-	// updateContext mutate the very state a tracked read would subscribe to, and
-	// the callbacks below are fresh closures on every run, so a tracked version
-	// re-triggers itself forever.
 	let ownedContextId = $state('');
 	$effect(() => {
 		const active = sheetOpen && dirtyRules.length > 0;
@@ -171,7 +152,6 @@
 		});
 	});
 
-	// Navigating away while an edit is pending must not strand the pill.
 	onDestroy(() => {
 		if (ownedContextId && shell.pill.context?.id === ownedContextId) exitContext();
 	});
@@ -225,7 +205,7 @@
 
 	async function openAddRuleDialog() {
 		try {
-			// F023: page through all SHELL actions instead of capping at 200.
+
 			const allActions = await fetchAllPages<ManagedAction>(async (size, token) => {
 				const r = await apiClient.listActions(size, token, ActionType.SHELL);
 				return { items: r.actions, nextPageToken: r.nextPageToken };
@@ -288,7 +268,6 @@
 		}
 	}
 
-	/** Commit every changed grace period; the pill is the only trigger. */
 	async function saveGracePeriods() {
 		if (!policyId || savingGrace || !graceValid) return;
 		const pending = dirtyRules.map((rule) => ({
@@ -364,8 +343,7 @@
 		{:else if policy}
 			<div class="flex-1 space-y-6 overflow-y-auto px-6 py-6" data-tour="compliance-sections">
 				{#snippet detailsControl()}
-					<!-- A snippet body is its own scope, so the enclosing
-					     `{:else if policy}` narrowing does not reach in here. -->
+
 					{#if policy}
 					<div class="space-y-3">
 						<div>
@@ -486,7 +464,7 @@
 		{/if}
 
 		{#if policy}
-			<!-- Footer -->
+
 			<div class="px-6 py-4 border-t shrink-0">
 				<Button variant="outline" class="w-full" href="/compliance-policies/{policyId}">
 					<ExternalLink class="h-4 w-4 mr-2" />
@@ -512,7 +490,6 @@
 	onsave={updateDescription}
 />
 
-<!-- Add Rule Dialog -->
 <Dialog.Root bind:open={addRuleDialogOpen}>
 	<Dialog.Content
 		class={addRuleStep === 'create-action'

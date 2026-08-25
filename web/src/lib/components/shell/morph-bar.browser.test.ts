@@ -9,8 +9,6 @@ import { shell, resetShell } from '$lib/shell/shell.svelte';
 
 beforeEach(() => resetShell());
 
-// The layout passes permission-filtered navigation; tests use a fixture set.
-// Labels are message accessors, called at render time (see $lib/shell/nav).
 const SECTIONS = [
 	{ href: '/devices', label: () => 'Devices', icon: Monitor },
 	{ href: '/actions', label: () => 'Actions', icon: Send },
@@ -44,17 +42,14 @@ describe('MorphBar — search mode (AC-3)', () => {
 		render(MorphBar, { pathname: '/devices', sections: SECTIONS, searchSurface: surface() });
 		await expect.element(page.getByTestId('morph-bar')).toHaveAttribute('data-mode', 'nav');
 
-		// ⌘K is wired in the layout; the bar reacts to the store flag.
 		shell.paletteOpen = true;
 		await expect.element(page.getByTestId('morph-bar')).toHaveAttribute('data-mode', 'search');
 		await expect.element(page.getByTestId('palette-probe')).toBeVisible();
-		// The nav links are gone once the morph settles (the outgoing branch is
-		// held for its out-transition, so this waits rather than sampling).
+
 		await vi.waitFor(() =>
 			expect(page.getByRole('link', { name: 'Devices' }).elements()).toHaveLength(0)
 		);
 
-		// …and Esc, which the palette owns, restores nav through the same flag.
 		shell.paletteOpen = false;
 		await expect.element(page.getByTestId('morph-bar')).toHaveAttribute('data-mode', 'nav');
 		await expect.element(page.getByRole('link', { name: 'Devices' })).toBeVisible();

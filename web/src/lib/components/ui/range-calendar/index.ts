@@ -35,6 +35,6 @@ export {
 	Caption,
 	Nav,
 	Month,
-	//
+
 	Root as RangeCalendar,
 };

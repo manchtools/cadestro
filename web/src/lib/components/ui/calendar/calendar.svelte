@@ -39,10 +39,6 @@
 	});
 </script>
 
-<!--
-Discriminated Unions + Destructing (required for bindable) do not
-get along, so we shut typescript up by casting `value` to `never`.
--->
 <CalendarPrimitive.Root
 	bind:value={value as never}
 	bind:ref

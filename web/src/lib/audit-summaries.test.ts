@@ -1,6 +1,4 @@
-// Every covered audit event type renders a human-readable summary, and no
-// summary can leak a payload field the
-// builder does not explicitly name — including server-redacted values.
+
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -14,9 +12,6 @@ const ctx: AuditSummaryContext = {
 	deviceName: (id) => (id === 'dev-1' ? 'host-alpha' : id || '?')
 };
 
-// One realistic payload per covered event type (the wire shapes from
-// control API exposes. Keyed by event type so the
-// drift guard below can require an entry for every covered type.
 const PAYLOADS: Record<(typeof SUMMARIZED_EVENT_TYPES)[number], Record<string, unknown>> = {
 	OSQueryDispatched: { device_id: 'dev-1', query_id: 'q1', table_name: 'processes' },
 	DeviceLogsQueried: { device_id: 'dev-1', query_id: 'q2', unit: 'sshd.service', priority: 'err' },

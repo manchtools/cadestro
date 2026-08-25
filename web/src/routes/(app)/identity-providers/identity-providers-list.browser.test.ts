@@ -1,12 +1,4 @@
-// Conversion contract for the identity-provider list page.
-//
-// Identity providers have no Search scope, so ListIdentityProviders returns the
-// whole set and the page's own matching / sorting / paging decide what an
-// operator sees. These tests pin what the move to the shared row grammar
-// (RowList) must not lose: the list is dense rows, not a table; every row links
-// to its provider detail; the slug, the OIDC type and the enabled state still
-// read off the row; and the client secret — which the server never returns —
-// still never reaches the DOM from a listed provider.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -26,13 +18,11 @@ const api = vi.hoisted(() => ({
 	createIdentityProvider: vi.fn()
 }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
-// Mutable so each test can mount the page "at" a different deep link.
+
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/identity-providers') }));
 
 vi.mock('svelte-sonner', () => ({ toast }));
 
-// Only the client is faked; the generated protobuf re-exports stay real so the
-// page's IdentityProviderType constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -58,8 +48,6 @@ vi.mock('$app/state', () => ({
 
 vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 
-// URL writes go through SvelteKit's shallow-routing API, which needs a live
-// router; the history behaviour itself is url-state's contract, not this test's.
 vi.mock('$app/navigation', () => ({
 	pushState: vi.fn(),
 	replaceState: vi.fn(),
@@ -100,15 +88,12 @@ beforeEach(() => {
 	api.listIdentityProviders.mockResolvedValue({ providers });
 });
 
-/** The rendered rows, addressed by the ULID each row shell carries. */
 function rowKeys(): string[] {
 	return [...document.querySelectorAll<HTMLElement>('[data-testid="row-list-row"]')].map(
 		(el) => el.getAttribute('data-row-key') ?? ''
 	);
 }
 
-/** Sort controls live in the row list's sort bar; addressing them by text alone
- *  would also reach the row overflow triggers. */
 function clickSort(label: string) {
 	const button = [
 		...document.querySelectorAll<HTMLButtonElement>('[data-testid="row-list-sort"] button')
@@ -152,7 +137,7 @@ describe('identity-providers list — the row grammar', () => {
 
 		await expect.element(browser.getByText('Corporate Entra')).toBeVisible();
 		await expect.element(browser.getByText(ENABLED_ID)).toBeVisible();
-		// Exact, so the slug does not also match the name it is derived from.
+
 		await expect.element(browser.getByText('entra', { exact: true })).toBeVisible();
 		await expect.element(browser.getByText('okta', { exact: true })).toBeVisible();
 		await expect.element(browser.getByText(m.idp_enabled(), { exact: true })).toBeVisible();
@@ -166,13 +151,13 @@ describe('identity-providers list — the row grammar', () => {
 
 	it('re-sorts by slug from the sort bar', async () => {
 		await mountAt('');
-		// name asc is the default: "Corporate Entra" before "Legacy Okta".
+
 		await vi.waitFor(() => expect(rowKeys()).toEqual([ENABLED_ID, DISABLED_ID]), {
 			timeout: 3000
 		});
 
 		clickSort(m.idp_field_slug());
-		// slug asc keeps the same order; flipping the active key reverses it.
+
 		clickSort(m.idp_field_slug());
 		await vi.waitFor(() => expect(rowKeys()).toEqual([DISABLED_ID, ENABLED_ID]), {
 			timeout: 3000
@@ -188,8 +173,7 @@ describe('identity-providers list — the row grammar', () => {
 
 describe('identity-providers list — secret hygiene', () => {
 	it('never renders a client secret for a listed provider', async () => {
-		// The wire type is write-only for the secret, so a listed provider cannot
-		// carry one — assert the page never invents a place to show it either.
+
 		await mountAt('');
 		await expect.element(browser.getByText('Corporate Entra')).toBeVisible();
 

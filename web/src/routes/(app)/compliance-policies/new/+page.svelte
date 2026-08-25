@@ -1,13 +1,5 @@
 <script lang="ts">
-	// /compliance-policies/new — policy creation as a pill-committed surface.
-	//
-	// The modal it replaces was a three-step wizard behind a dialog footer: name
-	// and description, then a compliance-check picker, then an inline check create.
-	// None of it could be parked. On the route the wizard collapses into two plates
-	// on one page — there is no "Next", because the commit is the pill's.
-	//
-	// The RPC sequence is unchanged: CreateCompliancePolicy, then
-	// AddCompliancePolicyRule once per selected check.
+
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient, fetchAllPages, useDraft, type ManagedAction } from '$lib/sdk';
@@ -54,26 +46,19 @@
 		};
 	}
 
-	// Autosave for reload survival. The DraftType union is owned by the SDK and
-	// cannot be extended from the web app, so this surface namespaces itself inside
-	// the 'create-definition' bucket by id, exactly as /actions/new does.
 	const persist = useDraft<PolicyDraft>('create-definition', CONTEXT_ID, emptyDraft());
 
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(CONTEXT_ID, () => snapshot());
-	// svelte-ignore state_referenced_locally
+
 	let draft = $state<PolicyDraft>(hydrate(claimed) ?? hydrate(persist.data) ?? emptyDraft());
 
-	/** A create surface opens EMPTY: there is nothing to save and nothing worth
-	 *  parking. Saying `dirty: true` regardless is what made an untouched form
-	 *  offer Save, and auto-stash itself onto the stage on the way out. */
 	const PRISTINE = JSON.stringify(emptyDraft());
 	const isDirty = () => JSON.stringify($state.snapshot(draft)) !== PRISTINE;
 
 	let saving = $state(false);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
-	/** Transient view state, not part of the buffer. */
+
 	let complianceActions = $state<ManagedAction[]>([]);
 	let searchQuery = $state('');
 	let creatingAction = $state(false);
@@ -82,8 +67,6 @@
 		persist.data = $state.snapshot(draft) as PolicyDraft;
 	});
 
-	// The check catalogue. F023: page through all SHELL actions instead of capping
-	// at 200, then keep only the ones flagged as compliance checks.
 	$effect(() => {
 		let live = true;
 		void (async () => {
@@ -273,9 +256,7 @@
 								aria-pressed={isSelected((action.id?.value ?? ''))}
 								class="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"
 							>
-								<!-- A drawn tick, not a Checkbox: the row IS the control, and a
-								     nested interactive element inside this button would be both
-								     invalid HTML and a second click target. -->
+
 								<span
 									aria-hidden="true"
 									class="grid h-4 w-4 shrink-0 place-items-center rounded border {isSelected(

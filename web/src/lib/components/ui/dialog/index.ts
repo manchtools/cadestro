@@ -20,7 +20,7 @@ export {
 	Content,
 	Description,
 	Close,
-	//
+
 	Root as Dialog,
 	Title as DialogTitle,
 	Portal as DialogPortal,

@@ -4,29 +4,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ──────────────────────────────────────────────────────────────────────────
-   Cadestro web — design tokens.
-
-   TWO LAYERS, in this order:
-
-   1. `--cadestro-*` — the raw palette from the approved design concepts
-      (built-out concepts + Shell & Fleet round 2). This is the ONLY place
-      literal colours live.
-   2. the shadcn-style semantic set (--background/--card/--primary/…) and the
-      Tailwind 4 `@theme`, both of which now resolve THROUGH layer 1. Every
-      existing page re-skins without being edited, because nothing was
-      renamed or removed — only re-pointed.
-
-   Dark mode is the `.dark` class that mode-watcher toggles on <html>, which
-   is how this file already switched schemes; the concepts' own
-   `prefers-color-scheme` wiring is deliberately NOT mirrored, because it
-   would override an explicit light choice made in the mode switcher.
-   ────────────────────────────────────────────────────────────────────────── */
-
 :root {
   --radius: 0.625rem;
 
-  /* ── layer 1: raw palette (light) ─────────────────────────────────────── */
   --cadestro-page: #e9edf2;
   --cadestro-frame: #f6f8fb;
   --cadestro-surface: #ffffff;
@@ -43,7 +23,7 @@
   --cadestro-accent: #4f46e5;
   --cadestro-accent-ink: #4f46e5;
   --cadestro-accent-soft: #ecebfd;
-  /* ink that sits ON a solid accent/status fill — white in light, plate in dark */
+
   --cadestro-on-solid: #ffffff;
 
   --cadestro-ok: #12a06a;
@@ -55,9 +35,6 @@
   --cadestro-info: #2775cc;
   --cadestro-info-soft: #dcebfa;
 
-  /* markers painted ON a solid status fill — the fleet tile's warn dot and crit
-     notch. Dark ink over a saturated fill in BOTH schemes, so it is deliberately
-     not restated in the dark block; -strong is the notch's denser variant. */
   --cadestro-marker: rgba(16, 20, 24, 0.75);
   --cadestro-marker-strong: rgba(16, 20, 24, 0.8);
 
@@ -66,7 +43,6 @@
 
   --cadestro-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
-  /* ── layer 2: semantic set — surfaces ────────────────────────────────── */
   --background: var(--cadestro-page);
   --foreground: var(--cadestro-text);
   --card: var(--cadestro-surface);
@@ -82,7 +58,6 @@
   --muted: var(--cadestro-sunken);
   --muted-foreground: var(--cadestro-muted);
 
-  /* accent = the soft accent wash the concepts use for hover/selected states */
   --accent: var(--cadestro-accent-soft);
   --accent-foreground: var(--cadestro-accent-ink);
 
@@ -93,14 +68,12 @@
   --input: var(--cadestro-border-strong);
   --ring: var(--cadestro-accent);
 
-  /* charts — the concepts' semantic hues, in status order */
   --chart-1: var(--cadestro-accent);
   --chart-2: var(--cadestro-info);
   --chart-3: var(--cadestro-ok);
   --chart-4: var(--cadestro-warn);
   --chart-5: var(--cadestro-crit);
 
-  /* sidebar — the concepts' "frame" plate */
   --sidebar: var(--cadestro-frame);
   --sidebar-foreground: var(--cadestro-text);
   --sidebar-primary: var(--cadestro-accent);
@@ -110,7 +83,6 @@
   --sidebar-border: var(--cadestro-border);
   --sidebar-ring: var(--cadestro-accent);
 
-  /* brand extensions — retained names, re-pointed at the concept palette */
   --brand-key: var(--cadestro-accent-ink);
   --brand-key-foreground: var(--cadestro-accent-soft);
   --success: var(--cadestro-ok);
@@ -122,7 +94,7 @@
 }
 
 .dark {
-  /* ── layer 1: raw palette (dark) ─────────────────────────────────────── */
+
   --cadestro-page: #070809;
   --cadestro-frame: #0c0e13;
   --cadestro-surface: #161a23;
@@ -153,16 +125,12 @@
   --cadestro-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
   --cadestro-shadow-pill: 0 10px 30px -6px rgba(0, 0, 0, 0.7);
 
-  /* layer 2 needs no dark restatement — every semantic var above resolves
-     through `--cadestro-*`, so re-pointing layer 1 re-skins the whole set. The two
-     literals that stay literal are ink-on-crit and the destructive fill's
-     white text, which is white in both schemes. */
   --destructive-foreground: #ffffff;
 }
 
 @theme inline {
   --animate-caret-blink: caret-blink 1.25s ease-out infinite;
-  /* converging ring on an in-flight fleet tile (round 2, movement A) */
+
   --animate-conv-pulse: conv-pulse 1.6s ease-in-out infinite;
 
   --font-mono: var(--cadestro-mono);
@@ -206,7 +174,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* brand extensions — usable as bg-brand-key, text-success, etc. */
   --color-brand-key: var(--brand-key);
   --color-brand-key-foreground: var(--brand-key-foreground);
   --color-success: var(--success);
@@ -216,10 +183,6 @@
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
 
-  /* ── concept vocabulary ───────────────────────────────────────────────
-     Plates and status tones exactly as the design concepts name them, so
-     shell chrome and fleet atoms can be written in the concepts' own words
-     (bg-surface, border-border-strong, text-warn, bg-crit-soft, …). */
   --color-page: var(--cadestro-page);
   --color-frame: var(--cadestro-frame);
   --color-surface: var(--cadestro-surface);
@@ -239,11 +202,10 @@
   --color-crit-soft: var(--cadestro-crit-soft);
   --color-info-soft: var(--cadestro-info-soft);
   --color-idle: var(--cadestro-faint);
-  /* ink for the shape markers a status tile draws on its own fill */
+
   --color-marker: var(--cadestro-marker);
   --color-marker-strong: var(--cadestro-marker-strong);
 
-  /* the concepts' two elevations: plates, and the floating pill */
   --shadow-plate: var(--cadestro-shadow);
   --shadow-pill: var(--cadestro-shadow-pill);
 }
@@ -258,7 +220,6 @@
     @apply bg-background text-foreground;
   }
 
-  /* Webkit scrollbar styling */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -284,7 +245,6 @@
   }
 }
 
-/* Converging ring — an operation is still landing on this device. */
 @keyframes conv-pulse {
   0%, 100% {
     opacity: 0.25;

@@ -1,7 +1,5 @@
-// The definitions drill-down: the OVERVIEW is the landing level (one card tile
-// per definition — name, schedule summary and contained-set count, all
-// ListDefinitions response fields), the existing list one zoom in, and a tile
-// opens the definition's existing detail.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
@@ -36,7 +34,7 @@ vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const actions = await import('$contract/cadestro/v1/actions_pb');
-	// The REAL pager: the sweep must actually walk the mocked list RPC.
+
 	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {
 		...actions,
@@ -91,8 +89,7 @@ describe('/definitions — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		expect(document.querySelector('[data-testid="definitions-overview"]')).not.toBeNull();
-		// The schedule summary comes from the schedule the response carried: the
-		// cron string when one is set, the interval otherwise.
+
 		const cronTile = tiles().find((t) => t.dataset.entityId === CRON_DEF.id)!;
 		expect(cronTile.textContent).toContain('0 3 * * *');
 		expect(cronTile.textContent).toContain('2 sets');

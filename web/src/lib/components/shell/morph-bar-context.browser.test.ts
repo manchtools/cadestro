@@ -1,6 +1,5 @@
-// Context mode + the detached subtext caption, rendered for real.
-// Round 2 supersedes round 1 here: the caption is its OWN surface below the
-// pill — a real gap, its own border and shadow — never tucked behind it.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page, userEvent } from 'vitest/browser';
@@ -36,8 +35,7 @@ function mount() {
 function ctx(over: Partial<ContextState> = {}): ContextState {
 	return {
 		id: 'assign-1',
-		// Stash is only offered by a context that says where it lives — a parked
-		// draft has to be able to navigate back to its surface.
+
 		route: '/assign',
 		title: 'Assign · 12 devices',
 		dirty: true,
@@ -67,10 +65,6 @@ describe('MorphBar — context mode', () => {
 		await vi.waitFor(() => expect(shell.drafts).toHaveLength(1));
 		expect(vi.mocked(goto)).toHaveBeenCalledWith('/devices');
 
-		// A clean context is a resting state, not work. The pill is held for the
-		// WHOLE visit now (so the entity's actions have a home), so parking on the
-		// way out would litter the stage with cards for pages the operator only
-		// looked at.
 		resetShell();
 		vi.mocked(goto).mockClear();
 		enterContext(ctx({ dirty: false }));
@@ -131,11 +125,9 @@ describe('MorphBar — context mode', () => {
 		await expect.element(page.getByTestId('morph-bar')).toHaveAttribute('data-mode', 'nav');
 	});
 
-	// The reported bug: stashing left the operator stranded on the now-empty
-	// create/edit surface. Stash must return them to where they opened it from.
 	it('Stash returns the operator to the page they opened the editor from', async () => {
-		setShellPath('/roles'); // the list they were browsing…
-		setShellPath('/roles/new'); // …then opened the create editor
+		setShellPath('/roles');
+		setShellPath('/roles/new');
 		mount();
 		enterContext(ctx({ id: 'role:new', route: '/roles/new' }));
 
@@ -144,7 +136,7 @@ describe('MorphBar — context mode', () => {
 	});
 
 	it('a deep-linked editor with no prior path leaves the operator put on Stash (no navigation)', async () => {
-		setShellPath('/roles/new'); // landed straight here — no origin to return to
+		setShellPath('/roles/new');
 		mount();
 		enterContext(ctx({ id: 'role:new', route: '/roles/new' }));
 
@@ -152,8 +144,6 @@ describe('MorphBar — context mode', () => {
 		expect(goto).not.toHaveBeenCalled();
 	});
 
-	// A destructive pill action drawn like the neutral ones beside it is a trap:
-	// Schedule, Assign and Delete would be three identical grey buttons.
 	it('marks a destructive action apart from the neutral ones beside it', async () => {
 		mount();
 		enterContext(
@@ -169,7 +159,7 @@ describe('MorphBar — context mode', () => {
 		const danger = page.getByTestId('pill-action').and(page.getByText('Delete'));
 		await expect.element(danger).toHaveAttribute('data-tone', 'danger');
 		await expect.element(neutral).toHaveAttribute('data-tone', 'neutral');
-		// not colour-alone: the destructive one is the only one carrying an icon
+
 		expect(danger.element().querySelector('svg')).not.toBeNull();
 		expect(neutral.element().querySelector('svg')).toBeNull();
 		expect(getComputedStyle(danger.element()).color).not.toBe(
@@ -204,12 +194,11 @@ describe('MorphBar — detached subtext caption', () => {
 		const note = page.getByTestId('pill-subtext');
 		await expect.element(note).toBeVisible();
 
-		// geometry settles after the pill's width/height morph
 		await vi.waitFor(() => {
 			const pillBox = page.getByTestId('pill').element().getBoundingClientRect();
 			const noteBox = note.element().getBoundingClientRect();
 			expect(noteBox.top).toBeGreaterThanOrEqual(pillBox.bottom + 8);
-			// capped to the pill's width — the caption never widens the column
+
 			expect(noteBox.width).toBeLessThanOrEqual(pillBox.width + 1);
 		});
 
@@ -217,12 +206,10 @@ describe('MorphBar — detached subtext caption', () => {
 		expect(style.borderTopStyle).not.toBe('none');
 		expect(parseFloat(style.borderTopWidth)).toBeGreaterThan(0);
 		expect(style.boxShadow).not.toBe('none');
-		// two-line clamp survives from round 1
+
 		expect(style.getPropertyValue('-webkit-line-clamp')).toBe('2');
 	});
 
-	// A three-word validation message stretched across the whole pill read as a
-	// banner, not a caption. It hugs its text now — and is still capped above.
 	it('hugs its own text instead of always spanning the pill', async () => {
 		mount();
 		enterContext(ctx({ subtext: 'Name is required', subtextTone: 'warn' }));
@@ -234,16 +221,13 @@ describe('MorphBar — detached subtext caption', () => {
 			const pillBox = page.getByTestId('pill').element().getBoundingClientRect();
 			const noteBox = note.element().getBoundingClientRect();
 			expect(noteBox.width).toBeLessThan(pillBox.width * 0.9);
-			// …and still centred under the pill
+
 			const pillCentre = pillBox.left + pillBox.width / 2;
 			const noteCentre = noteBox.left + noteBox.width / 2;
 			expect(Math.abs(pillCentre - noteCentre)).toBeLessThanOrEqual(2);
 		});
 	});
 
-	// THE OVERLAP BUG: the chrome is fixed, so the scrolling content can only
-	// reserve room for it if the chrome says how tall it is. With a hard-coded
-	// pill height the caption landed on top of the first card below.
 	it('publishes its full height so the page can reserve room, and it grows with the caption', async () => {
 		mount();
 		enterContext(ctx({ subtext: undefined }));
@@ -262,7 +246,7 @@ describe('MorphBar — detached subtext caption', () => {
 
 		await vi.waitFor(() => {
 			const withCaption = read();
-			// the reservation must cover the caption, not just the pill
+
 			expect(withCaption).toBeGreaterThan(bare);
 			const columnBottom = page
 				.getByTestId('pill-subtext')

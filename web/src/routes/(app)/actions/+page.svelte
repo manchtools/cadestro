@@ -37,11 +37,7 @@
 	import { loadLibrary, type LibrarySnapshot } from './library-data';
 
 	type SortKey = 'name' | 'type' | 'created' | 'updated';
-	// `zoom` is a filter only in the mechanical sense — it never reaches the
-	// server. It rides the list state's filter map because that map already owns
-	// this page's URL contract: the level lands in the URL, popstate re-seeds it
-	// for free, and narrowing to a type from the overview stays ONE history entry
-	// (one commit writes the level and the type filter together).
+
 	type Zoom = 'list' | 'overview';
 	type Filters = {
 		zoom: Zoom;
@@ -59,29 +55,18 @@
 		list: m.actions_zoom_list,
 		overview: m.actions_zoom_overview
 	};
-	// Default 'overview': the drill-down grammar lands every section on its high
-	// level — the overview IS the landing, the list is one zoom in (same as the
-	// Devices fleet). An explicit ?zoom=list deep link still wins.
+
 	const ZOOM_CODEC = codecs.enum<Zoom>(ZOOMS, 'overview');
 
-	// Compliance checks are SHELL actions carrying the is_compliance flag, not a
-	// distinct ActionType — the filter id is virtual and maps to its own tag.
 	const COMPLIANCE_FILTER_ID = COMPLIANCE_BUCKET;
-	// Readable slugs ride in ?types= so shared links stay meaningful; the server
-	// filters on the numeric ActionType behind them.
+
 	const TYPE_SLUGS: [string, number][] = getActionTypeOptions()
 		.filter((o) => o.value !== 'COMPLIANCE_CHECK')
 		.map((o) => [o.value.toLowerCase(), o.type]);
 	const TYPE_SLUG_TO_NUM = new Map<string, number>(TYPE_SLUGS);
-	// The EXACT inverse, built from the same list so the two can never drift: an
-	// overview bubble may only exist for a type this filter can name, and every
-	// other type is counted in a bubble that says so instead of pretending.
+
 	const SLUG_BY_TYPE = new Map<number, string>(TYPE_SLUGS.map(([slug, num]) => [num, slug]));
 
-	// Date bounds are stored as ISO YYYY-MM-DD strings, not DateValue objects:
-	// the list state passes $state.snapshot(filters) to the request builder, and a
-	// snapshot strips class prototypes — a stored CalendarDate would arrive
-	// without .toDate(). A malformed param degrades to "no bound".
 	function toDay(value: string): DateValue | undefined {
 		if (!value) return undefined;
 		try {
@@ -100,7 +85,7 @@
 		return {
 			field,
 			start: from ? BigInt(Math.floor(from.toDate(tz).getTime() / 1000)) : 0n,
-			// Inclusive end-of-day: the selected day plus one.
+
 			end: to ? BigInt(Math.floor(to.toDate(tz).getTime() / 1000) + 86400) : 0n
 		};
 	}
@@ -116,7 +101,7 @@
 			created: SortField.CREATED_AT,
 			updated: SortField.UPDATED_AT
 		},
-		// Timestamps read newest-first, both on a bare link and when switched to.
+
 		defaultSortDir: 'desc',
 		sortDir: (key) => (key === 'created' || key === 'updated' ? 'desc' : 'asc'),
 		filters: {
@@ -128,15 +113,13 @@
 			updatedStart: { key: 'updatedStart', codec: codecs.string('') },
 			updatedEnd: { key: 'updatedEnd', codec: codecs.string('') }
 		},
-		// Ranges have no tag equivalent — tag matching is exact-value.
+
 		dateFilters: (f) =>
 			[
 				dayRange('created_at', f.createdStart, f.createdEnd),
 				dayRange('updated_at', f.updatedStart, f.updatedEnd)
 			].filter((r): r is SearchDateFilter => r !== undefined),
-		// Values within one field OR (pipe-separated); distinct fields AND. So a
-		// concrete type plus "compliance" returns their intersection, which is the
-		// natural reading of two checked boxes.
+
 		filterToTags: (f) => {
 			const tags: Record<string, string> = {};
 			const numericTypes = f.types
@@ -149,15 +132,10 @@
 			if (f.unassigned) tags.assigned = 'false';
 			return tags;
 		},
-		// The overview does not render rows, so it must not spend a Search RPC on
-		// them. The state itself stays mounted (unlike the fleet, which unmounts
-		// its list level) so ⌘K keeps this page's search facet at BOTH levels.
+
 		paused: (f) => f.zoom !== 'list'
 	});
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove. The
-	// registration is withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.ACTIONS,
@@ -170,14 +148,10 @@
 		})
 	);
 
-	// ── the overview snapshot ──────────────────────────────────────────────────
-	// One bounded exhaustive sweep, loaded LAZILY: the list zoom never pays for
-	// it, and the overview only ever draws what this snapshot really returned.
 	let snapshot = $state<LibrarySnapshot | null>(null);
 	let sweeping = $state(false);
 	let sweepError = $state<string | null>(null);
-	// A plain guard, deliberately NOT $state: the effect below must depend on the
-	// zoom alone. A reactive flag would make that effect read what it writes.
+
 	let swept = false;
 
 	async function sweep() {
@@ -203,18 +177,11 @@
 	const summary = $derived(summarize(snapshot?.actions ?? []));
 	const overviewEmpty = $derived(snapshot !== null && snapshot.actions.length === 0);
 
-	/** Narrow the list to one bucket and land on it — the ONE affordance the far
-	 *  pane offers. The type filter is the page's real, existing one: the value
-	 *  is seeded directly and the level's own commit publishes the pair, so a
-	 *  click is a single history entry rather than an intermediate state nobody
-	 *  ever saw. */
 	function focusType(bucket: string) {
 		table.filters.types = [bucket];
 		table.setFilter('zoom', 'list');
 	}
 
-	/** Refresh whichever level is on screen — at the overview the list's rows are
-	 *  not what is stale. */
 	function refresh() {
 		if (table.filters.zoom === 'overview') void sweep();
 		else table.refresh();
@@ -223,8 +190,6 @@
 	let deleteDialogOpen = $state(false);
 	let actionToDelete = $state<ManagedAction | null>(null);
 
-	// One entry per distinct ActionType (several slugs share a type), plus the
-	// virtual compliance-check option.
 	const typeFilterItems = $derived.by(() => {
 		const seen = new Set<number>();
 		const items = getActionTypeOptions()
@@ -239,8 +204,6 @@
 		return items;
 	});
 
-	// Both bounds belong to one operator gesture: seed the start directly and let
-	// the end's setFilter do the single page-reset + URL commit for the pair.
 	function setRange(startKey: DayKey, endKey: DayKey, v: { start?: DateValue; end?: DateValue }) {
 		table.filters[startKey] = v.start?.toString() ?? '';
 		table.setFilter(endKey, v.end?.toString() ?? '');
@@ -256,8 +219,6 @@
 			table.filters.updatedEnd !== ''
 	);
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.actions_table_name() },
 		{ key: 'type' as const, label: m.actions_table_type() },
@@ -290,7 +251,7 @@
 		try {
 			await apiClient.deleteAction((actionToDelete.id?.value ?? ''));
 			toast.success(m.actions_deleted());
-			// Optimistic removal, then a refetch for authoritative totals.
+
 			table.patchRows((rows) => rows.filter((a) => a.id !== actionToDelete!.id));
 			table.refresh();
 		} catch (error) {
@@ -304,9 +265,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself; narrowing the
-	     list is one act, so the filters ride the list's own toolbar beside sort. The
-	     search box is gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		{@const busy = table.filters.zoom === 'overview' ? sweeping : table.loading}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -335,9 +294,7 @@
 				{/each}
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button onclick={refresh} variant="outline" disabled={busy}>
 					<span class="mr-2 h-4 w-4" class:animate-spin={busy}>
 						<RefreshCw class="h-4 w-4" />
@@ -351,8 +308,6 @@
 			</div>
 		</div>
 
-		<!-- The summary strip belongs to the snapshot: it exists only where the
-		     numbers were really counted. install + remove === the swept total. -->
 		{#if table.filters.zoom === 'overview' && snapshot}
 			<div data-tour="library-summary" class="flex flex-wrap gap-2">
 				<Stat tone="ok" value={summary.install} label={m.desired_state_present()} />
@@ -373,8 +328,7 @@
 		{/if}
 
 		{#if snapshot?.truncated}
-			<!-- The sweep stopped at its bound: say the bubbles are a partial library
-			     instead of letting the grid imply completeness. -->
+
 			<p
 				data-testid="library-truncated"
 				class="rounded-lg border border-warn bg-warn-soft px-3 py-2 text-xs text-warn"
@@ -384,9 +338,7 @@
 		{/if}
 
 		{#if table.query}
-			<!-- ⌘K stays scoped to this page at both levels, but the overview counts
-			     the swept library, not the server's answer to the query. Said out
-			     loud rather than letting the bubbles look like search results. -->
+
 			<p data-testid="library-query-note" class="text-xs text-faint">
 				{m.actions_overview_query_note()}
 			</p>
@@ -405,8 +357,6 @@
 		{:else}
 			<LibraryOverview {bubbles} onFocus={focusType} />
 
-			<!-- The legend teaches the encoding — desired state is never colour-alone,
-			     so the removal swatch names its SHAPE too. -->
 			<div class="flex flex-wrap gap-3.5 text-[0.7rem] text-muted-foreground">
 				<span class="inline-flex items-center gap-1.5">
 					<span aria-hidden="true" class="h-2.5 w-2.5 rounded-[3px] {TONE_FILL.ok}"></span>
@@ -423,9 +373,7 @@
 			</div>
 		{/if}
 	{:else}
-	<!-- The library list in the drafts' row grammar: type tile, name over its ULID,
-	     status chips, a right-aligned stamp — no column headers, no table. The data
-	     layer is untouched; only the render layer changed. -->
+
 	<div data-tour="library-list">
 	<RowList
 		{table}
@@ -487,8 +435,7 @@
 					label={absent ? m.desired_state_absent() : m.desired_state_present()}
 				/>
 			</span>
-			<!-- One stamp keeps the row dense; the created side stays reachable in the
-			     tooltip and as a sort key. -->
+
 			<span
 				class="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground"
 				title="{m.actions_table_created()}: {formatTimestampDateTime(

@@ -20,11 +20,7 @@
 	}: {
 		start?: DateValue | undefined;
 		end?: DateValue | undefined;
-		/** Optional callback fired only on user-interaction range changes
-		 *  (calendar select or clear button) — not when start/end are set
-		 *  externally via bind:. Intended for URL-as-state syncing where
-		 *  the caller needs to distinguish user-driven changes from
-		 *  state-set-from-URL to avoid history loops. */
+
 		onChange?: (value: { start?: DateValue; end?: DateValue }) => void;
 		placeholder?: string;
 		class?: string;
@@ -34,14 +30,6 @@
 
 	const df = new DateFormatter('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-	// rangeValue is a $derived view of the (start, end) prop pair so that
-	// any external change to the props — including initial values seeded
-	// from URL state on page load — flows straight to the underlying
-	// RangeCalendar. The previous $effect-based sync raced against
-	// hydration: the trigger label rendered with the right dates, but
-	// the calendar's selected highlights and the popover's "value"
-	// remained empty until the next interaction. $derived removes the
-	// race entirely.
 	const rangeValue = $derived<DateRange | undefined>(
 		start || end ? { start, end } : undefined
 	);

@@ -1,13 +1,5 @@
-// The compliance drill-down: the OVERVIEW is the landing level — the fleet as
-// device tiles coloured by Device.complianceStatus (a ListDevices response
-// field), with a policy chip row from ListCompliancePolicies. Status is never
-// colour-alone (fleet legend grammar): violations carry the warning dot as a
-// real child element, unknown renders hollow. A tile opens the device's
-// existing compliance view; the policy list stays one zoom in.
-//
-// Per-policy tile FILTERING is deliberately absent: no list RPC carries
-// per-device per-policy state (only per-device GetDeviceCompliancePolicyStatus
-// does), and fanning that out across the fleet would fabricate a rollup.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { ComplianceStatus } from '$contract/cadestro/v1/common_pb';
@@ -25,7 +17,7 @@ vi.mock('$app/state', () => ({
 		get url() {
 			return mocks.url;
 		},
-		// The policy detail sheet reads its open-id from shallow-routing state.
+
 		get state() {
 			return {};
 		}
@@ -48,7 +40,7 @@ vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const actions = await import('$contract/cadestro/v1/actions_pb');
-	// The REAL pager: the sweep must actually walk the mocked list RPCs.
+
 	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {
 		...actions,
@@ -114,21 +106,18 @@ describe('/compliance-policies — the overview is the landing level', () => {
 		expect(compliant.dataset.tone).toBe('ok');
 		expect(violating.dataset.tone).toBe('warn');
 		expect(unknown.dataset.tone).toBe('idle');
-		// Never colour-alone: violations carry the dot as a REAL child element,
-		// the others carry none; every tile names its status in words.
+
 		expect(violating.querySelector('[data-marker="dot"]')).not.toBeNull();
 		expect(compliant.querySelector('[data-marker="dot"]')).toBeNull();
 		expect(compliant.getAttribute('aria-label')).toContain('Compliant');
 		expect(violating.getAttribute('aria-label')).toContain('Non-Compliant');
 		expect(unknown.getAttribute('aria-label')).toContain('Unknown');
 
-		// The policy chip row comes from ListCompliancePolicies, counts included.
 		const chip = document.querySelector<HTMLElement>('[data-testid="compliance-policy-chip"]');
 		expect(chip).not.toBeNull();
 		expect(chip!.textContent).toContain('CIS baseline');
 		expect(chip!.textContent).toContain('2 rules');
 
-		// The paused policy list never spends a Search RPC at the landing level.
 		expect(mocks.search).not.toHaveBeenCalled();
 	});
 

@@ -24,15 +24,7 @@
 	let luksCurrentKeys = $state<LuksKey[]>([]);
 	let luksHistoryKeys = $state<LuksKey[]>([]);
 	let luksHistoryOpen = $state(false);
-	// The token IS the authorization for writing a LUKS keyslot: single-use,
-	// device-bound, 24h. The advertised command deliberately carries neither the
-	// token nor sudo — argv is world-readable through /proc/<pid>/cmdline — so
-	// the operator has to be handed the token separately, and this dialog is the
-	// only place it exists in the client.
-	//
-	// One nullable holder drives BOTH the dialog and its contents, so the
-	// credential cannot outlive the surface showing it: closing the dialog is
-	// the assignment that drops it. It is never persisted or logged.
+
 	let luksToken = $state<{ uri: string; cliCommand: string; token: string } | null>(null);
 	let luksTokenLoading = $state(false);
 	let luksRevokeDialogOpen = $state(false);
@@ -40,8 +32,6 @@
 	let luksRevokeDispatching = $state(false);
 	let loaded = $state(false);
 
-	// The list RPCs return metadata only. Plaintext comes one entry at a time
-	// from the reveal RPCs below, each of which is an audited sensitive read.
 	const lpsSecret = $derived({
 		reveal: async (id: string) => (await apiClient.revealLpsPassword(id)).password,
 		revealLabel: m.lps_passwords_reveal(),
@@ -333,12 +323,6 @@
 	{/if}
 </div>
 
-<!-- Two routes, because only one of them works for a given operator: the URI
-     needs a desktop session with the handler registered, and most of this
-     fleet is administered over SSH. The terminal route is therefore complete
-     on its own — command AND token — and the token gets its own plate rather
-     than sitting beside the command, because it is the credential and the
-     command is not. -->
 <AlertDialog.Root open={luksToken !== null} onOpenChange={(open) => !open && (luksToken = null)}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>

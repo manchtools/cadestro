@@ -14,9 +14,7 @@ function mountPanel() {
 }
 
 describe('Panel header controls (AC-8 regression)', () => {
-	// The header is a drag surface (pointerdown → setPointerCapture). The guard
-	// skips capture when the press lands on a button, otherwise the capture eats
-	// the button's click. These prove the controls still fire.
+
 	it('Minimise sends the window to the stage', async () => {
 		const id = mountPanel();
 		await expect.element(page.getByText('nginx-prod')).toBeVisible();

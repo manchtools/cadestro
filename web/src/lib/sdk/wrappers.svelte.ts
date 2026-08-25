@@ -1,5 +1,4 @@
-// Svelte 5 wrappers around the contract's plain TypeScript client
-// (../contract/ts, reached through the $contractClient alias).
+
 
 import { ApiClient } from '$contractClient/client';
 import { AuthStore, type RefreshResult } from '$contractClient/auth';
@@ -8,24 +7,10 @@ import { OfflineStore } from '$contractClient/offline';
 import { timestampDate } from '@bufbuild/protobuf/wkt';
 import type { User } from '$contractClient/client';
 
-// --- Create plain TS instances ---
-
 const _config = new ConfigStore();
 const _auth = new AuthStore();
 const _offline = new OfflineStore();
 
-// A deployment that serves this app beside control writes the control origin
-// into the page it sends (hooks.server.ts fills the meta tag app.html declares),
-// so a fresh install reaches a working UI instead of stopping at /setup to ask a
-// human for the address of the server that just served them the page.
-//
-// It is a SEED, not an override: it applies only while nothing is configured, so
-// an operator who pointed this browser somewhere else from Settings keeps that
-// choice. It runs at module scope because the route guards read `isConfigured`
-// inside `load`, which is after this module is imported and before anything
-// renders. With no tag, no content, or no document at all — a build served
-// without that server, or a component under test — nothing happens and /setup
-// asks exactly as it always did.
 function preconfiguredControlUrl(): string {
 	if (typeof document === 'undefined') return '';
 	const configured = document
@@ -38,10 +23,6 @@ const _preconfigured = preconfiguredControlUrl();
 if (_preconfigured && !_config.isConfigured) {
 	_config.serverUrl = _preconfigured;
 }
-
-// --- Wire ApiClient with dependency injection ---
-// Closures capture _auth/_config by reference; works because refreshFn/logoutFn
-// are called lazily (never during construction).
 
 const _client = new ApiClient({
 	getServerUrl: () => _config.serverUrl,
@@ -64,7 +45,6 @@ const _client = new ApiClient({
 	}
 });
 
-// Wire auth refresh/logout callbacks (breaks the circular dependency)
 _auth.setRefreshFn(async (): Promise<RefreshResult | null> => {
 	try {
 		const response = await _client.refreshTokenRPC();
@@ -82,10 +62,6 @@ _auth.setRefreshFn(async (): Promise<RefreshResult | null> => {
 });
 
 _auth.setLogoutFn(async () => { await _client.logoutRPC(); });
-
-// --- Svelte 5 reactive wrappers ---
-// Reading _authV / _configV inside getters makes Svelte track the dependency.
-// When the plain TS store calls notify() → version increments → components re-render.
 
 let _authV = $state(0);
 _auth.onChange(() => _authV++);
@@ -118,10 +94,8 @@ export const configStore = {
 export const offlineStore = _offline;
 export const apiClient = _client;
 
-// Re-export Svelte hook
 export { useDraft, type DraftType } from './draft.svelte';
 
-// Re-export SDK types
 export type { ServerConfig } from '$contractClient/config';
 export type {
 	User, Device, RegistrationToken, ManagedAction, ActionSet, Definition,
@@ -130,18 +104,12 @@ export type {
 	LpsPassword, LuksKey
 } from '$contractClient/client';
 
-// Re-export generated types
 export * from '$contract/cadestro/v1/control_pb';
 export * from '$contract/cadestro/v1/actions_pb';
 export * from '$contract/cadestro/v1/common_pb';
 
-// Re-export helpers
 export { formatTimestamp, formatTimestampDateTime } from '$contractClient/index';
 
-/**
- * Format a duration in milliseconds to a human-readable string.
- * <1s: "42ms", <1m: "2.73s", <1h: "3m 12s", ≥1h: "1h 23m 4s"
- */
 export function formatDuration(ms: bigint | undefined): string {
 	if (!ms) return '-';
 	const n = Number(ms);

@@ -1,10 +1,5 @@
-// Behaviour contract for /action-sets/new — the three-step create WIZARD that
-// used to live behind a dialog footer. Naming a set and picking its actions is
-// exactly the kind of work an operator gets interrupted in, and a modal could
-// park none of it. The tests pin the unchanged RPC sequence (CreateActionSet
-// then one AddActionToSet per selection, in order), the store-level gate, the
-// cross-route stash round trip including the SELECTION, and a Create button that
-// navigates instead of popping a dialog.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -142,8 +137,6 @@ describe('/action-sets/new — one page, no wizard footer', () => {
 		await fillSet('  Laptop baseline  ', '  Everything a laptop needs  ');
 		await vi.waitFor(() => expect(actionRow(ACTION_B)).toBeTruthy(), { timeout: 3000 });
 
-		// Deliberately out of catalogue order: the RPC order must follow the
-		// operator's clicks, not the list.
 		actionRow(ACTION_B)!.click();
 		actionRow(ACTION_A)!.click();
 		await vi.waitFor(() =>
@@ -211,7 +204,7 @@ describe('/action-sets/new — the third exit: stash, walk away, restore', () =>
 
 		await vi.waitFor(() => expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(ROUTE));
 		expect(pillMode()).toBe('nav');
-		// The card pops on the click; the buffer is staged for the remount.
+
 		expect(shell.drafts).toHaveLength(0);
 		await rail.unmount();
 
@@ -220,7 +213,7 @@ describe('/action-sets/new — the third exit: stash, walk away, restore', () =>
 
 		await vi.waitFor(() => expect(field('set-name')?.value).toBe('Laptop baseline'));
 		expect(area('set-description')?.value).toBe('Everything a laptop needs');
-		// The picked action came back too — losing it would mean re-picking.
+
 		await vi.waitFor(() =>
 			expect(document.querySelector('[data-testid="set-selected-count"]')?.textContent?.trim()).toBe(
 				m.picker_selected({ count: '1' })
@@ -237,16 +230,12 @@ describe('/action-sets/new — the third exit: stash, walk away, restore', () =>
 
 describe('/action-sets — the list page hands creation to the route', () => {
 	it('navigates instead of opening a dialog', async () => {
-		// The list, addressed explicitly: the bare section root lands on the
-		// overview since the drill-down grammar, and this test is about the
-		// LIST page's create affordance.
+
 		nav.url = new URL('https://control.test/action-sets?zoom=list');
-		// This test is about the Create affordance, not the rows: an empty page
-		// keeps it off the shared row/search machinery entirely.
+
 		api.listActions.mockResolvedValue({ actions: [], nextPageToken: '' });
 		const list = await render(SetsPage);
-		// Let the list settle before clicking: tearing the page down mid-request
-		// leaves its in-flight effects to reject after the test has ended.
+
 		await vi.waitFor(() => expect(api.search).toHaveBeenCalled(), { timeout: 3000 });
 
 		const createButton = await vi.waitFor(() => {

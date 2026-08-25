@@ -12,8 +12,6 @@
 	import { toast } from 'svelte-sonner';
 	import { getLocalizedError } from '$lib/errors';
 
-	// Re-export UserLite so parent forms can reference the same shape
-	// without importing from the context module directly.
 	export type { UserLite };
 
 	interface Props {
@@ -25,19 +23,9 @@
 		addLabel: string;
 		placeholder: string;
 		description: string;
-		/**
-		 * Optional loader for the "pick from existing USER actions" tab.
-		 * Consumers without access to the control-plane API (e.g. the
-		 * marketplace) can omit this and the tab shows an empty state.
-		 * The web app wires this to
-		 * `apiClient.listActions(100, '', ActionType.USER)`.
-		 */
+
 		loadUserActions?: () => Promise<ManagedAction[]>;
-		/**
-		 * Optional loader for the "pick a platform user" tab. Same
-		 * fallback behaviour as loadUserActions. The web app wires
-		 * this to `apiClient.listUsers(100)`.
-		 */
+
 		loadPlatformUsers?: () => Promise<UserLite[]>;
 	}
 
@@ -54,11 +42,6 @@
 		loadPlatformUsers
 	}: Props = $props();
 
-	// Fall back to the ancestor-provided loaders from context when the
-	// parent form doesn't pass explicit props. Orchestrators
-	// (action-create-form, edit-params-dialog) set the context once so
-	// every nested UserPicker sees the same apiClient-backed loaders
-	// without the intermediate forms having to forward them.
 	const ctx = getUserLoaders();
 	const resolvedLoadUserActions = $derived(loadUserActions ?? ctx.loadUserActions);
 	const resolvedLoadPlatformUsers = $derived(loadPlatformUsers ?? ctx.loadPlatformUsers);
@@ -84,9 +67,7 @@
 			userActions = await loader();
 		} catch (e) {
 			console.error('Failed to load user actions:', e);
-			// F021: surface server failure to the user instead of silently
-			// rendering an empty picker (which the operator would read as
-			// "no users", masking the actual API failure).
+
 			toast.error(getLocalizedError(e));
 		} finally {
 			loadingUserActions = false;
@@ -108,7 +89,6 @@
 		}
 	}
 
-	// Available user actions (exclude already added users)
 	const availableUserActions = $derived.by(() => {
 		const existing = new Set(usernames.map((u) => u.trim().toLowerCase()));
 		return userActions.filter((a) => {
@@ -117,7 +97,6 @@
 		});
 	});
 
-	// Available platform users (exclude already added users)
 	const availablePlatformUsers = $derived.by(() => {
 		const existing = new Set(usernames.map((u) => u.trim().toLowerCase()));
 		return platformUsers.filter(
@@ -181,7 +160,6 @@
 <div class="space-y-1.5">
 	<Label>{label} ({userCount})</Label>
 
-	<!-- Manual input row -->
 	<div class="flex gap-2">
 		<Input
 			{placeholder}
@@ -201,7 +179,6 @@
 		</Button>
 	</div>
 
-	<!-- Tabbed picker -->
 	<Tabs.Root bind:value={activeTab}>
 		<Tabs.List class="w-full grid grid-cols-2">
 			<Tabs.Trigger value="user_actions">{m.user_picker_tab_user_actions()}</Tabs.Trigger>
@@ -263,7 +240,6 @@
 		</Tabs.Content>
 	</Tabs.Root>
 
-	<!-- User list -->
 	{#if usernames.length > 0}
 		<div class="space-y-1.5">
 			{#each usernames as user, index}

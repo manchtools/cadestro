@@ -1,4 +1,4 @@
-// Tests for the picker pagination helper (F004 + F022/F023).
+
 
 import { describe, it, expect } from 'vitest';
 import { fetchAllPages, type PageResult } from './paginate';
@@ -37,9 +37,7 @@ describe('fetchAllPages', () => {
 			return { items: [calls, calls, calls], nextPageToken: 'always-more' };
 		};
 		const result = await fetchAllPages(fetcher, { maxItems: 5, pageSize: 3 });
-		// max 5 items requested -> first call yields 3, second call (size=2)
-		// yields 3 (server returns 3 even though we asked for 2) -> 6 total.
-		// We just assert the cap stops the loop after the next iteration.
+
 		expect(result.length).toBeLessThanOrEqual(6);
 		expect(calls).toBeLessThan(10);
 	});
@@ -52,15 +50,14 @@ describe('fetchAllPages', () => {
 	});
 
 	it('defends against a server returning a non-empty token forever', async () => {
-		// Pathological server: always says "more" but returns 0 items per page.
-		// Without a max-pages guard the loop would spin forever.
+
 		let calls = 0;
 		const fetcher = async () => {
 			calls++;
 			return { items: [], nextPageToken: 'never-empty' };
 		};
 		await fetchAllPages(fetcher, { maxItems: 100, pageSize: 10 });
-		// max-pages bound = ceil(100 / 10) + 1 = 11 — should not exceed.
+
 		expect(calls).toBeLessThanOrEqual(12);
 	});
 });

@@ -13,11 +13,6 @@
 		kind: 'device' | 'user';
 	}
 
-	// Searchable, browsable single-select scope picker for a role grant.
-	// It lists EVERY group (device + user) so a searcher always finds the group they
-	// expect; groups whose kind does not match the role's scope kind are shown but
-	// DISABLED with a reason, instead of being hidden (which reads as "missing").
-	// The grant is scoped to one group, or '' for an unscoped (org-wide) grant.
 	let {
 		groups,
 		scopeId = $bindable(''),
@@ -29,8 +24,7 @@
 	}: {
 		groups: GroupOption[];
 		scopeId: string;
-		// The group kind the selected role(s) scope to. Groups of the OTHER kind are
-		// disabled. Ignored when `disabled` (the whole control is off).
+
 		activeKind: 'device' | 'user';
 		label: string;
 		allOptionLabel: string;
@@ -46,7 +40,6 @@
 			: (groups.find((g) => g.id === scopeId)?.name ?? allOptionLabel)
 	);
 
-	// Why a wrong-kind group can't be chosen, phrased by what the role needs.
 	const disabledNote = $derived(
 		activeKind === 'device' ? m.roles_scope_only_device() : m.roles_scope_only_user()
 	);

@@ -1,13 +1,5 @@
 <script lang="ts">
-	// The shell is the app layout, mounted once above the router
-	// outlet: the morph pill, stage rail, windows, and terminal drawer all live
-	// here and survive every navigation; section pages render
-	// in the outlet. Auth/config gating stays in +layout.ts; this
-	// component assumes an authenticated session.
-	//
-	// This route file owns authStore and passes the
-	// permission-filtered nav tables to the chrome as plain props. Chrome
-	// modules import no client — guard-enforced.
+
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import { page } from '$app/state';
@@ -37,20 +29,15 @@
 
 	let { children } = $props();
 
-	// Navigation is permission-gated; admins see everything.
 	const has = (p: string) => authStore.isAdmin || authStore.hasPermission(p);
 	const sections = $derived(filterNav(PRIMARY_SECTIONS, has));
 	const overflow = $derived(filterGroups(OVERFLOW_GROUPS, has));
 
-	// The app-relative path, base-path stripped — this is the form surfaces
-	// declare as their context `route`, so the store can compare the two and tell
-	// "my owner is still mounted" from "my owner is three pages behind me".
 	const appPath = $derived(page.url.pathname.slice(base.length) || '/');
 	$effect(() => setShellPath(appPath));
 
 	const openPanels = $derived(shell.panels.filter((p) => !p.minimized));
-	// Reserve a right gutter while the stage rail shows something, so section
-	// content doesn't slide under it on typical laptop widths.
+
 	const stageActive = $derived(
 		stagedByKind().length > 0 ||
 			shell.drafts.length > 0 ||
@@ -90,14 +77,13 @@
 </script>
 
 <div class="h-screen overflow-hidden bg-background text-foreground">
-	<!-- brand — passive mark, the pill is the nav -->
+
 	<a href="{base}/" class="fixed left-4 top-4 z-40 flex items-center gap-2" aria-label={m.shell_home()}>
 		<img src="{base}/icon-light.svg" alt="" width="22" height="22" class="h-[22px] w-[22px] dark:hidden" />
 		<img src="{base}/icon-dark.svg" alt="" width="22" height="22" class="hidden h-[22px] w-[22px] dark:block" />
 		<span class="hidden font-semibold lg:inline">{m.nav_app_name()}</span>
 	</a>
 
-	<!-- utility cluster — stable chrome, out of the morphing pill -->
 	<div class="fixed right-3 top-3 z-50 flex items-center gap-1.5">
 		<button type="button" aria-label={m.terminal_title()} onclick={toggleTerminal} disabled={shell.terminal.sessions.length === 0} class="relative rounded-full border bg-popover/95 p-2 shadow-pill backdrop-blur hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40" title={shell.terminal.sessions.length ? m.terminal_sessions_title() : m.shell_terminal_empty_hint()}>
 			<SquareTerminal class="h-4 w-4" />
@@ -133,31 +119,12 @@
 		</DropdownMenu.Root>
 	</div>
 
-	<!-- ⌘K morphs the pill and the palette IS the morphed pill's body — one
-	     search surface for the page's own list, the fleet, and this tab. The
-	     layout owns the client, so the palette is passed in as a snippet; the
-	     chrome itself stays API-free (guard-enforced). -->
 	<MorphBar pathname={page.url.pathname} hrefBase={base} {sections} {overflow}>
 		{#snippet searchSurface()}
 			<GlobalSearch bind:open={shell.paletteOpen} {sections} {overflow} />
 		{/snippet}
 	</MorphBar>
 
-	<!-- section outlet — ONLY this swaps on navigation. Old section pages
-	     manage their own scroll inside a flex column, as they did under the
-	     sidebar's Inset. -->
-	<!-- The chrome is fixed, so the content reserves its MEASURED height rather
-	     than a guess: `--pill-block` is published by MorphBar and grows when the
-	     subtext caption appears or wraps to two lines — hard-coding the pill's
-	     height is what left the caption sitting on top of the first card. The
-	     fallback matches the bare pill, for the first frame and for SSR.
-
-	     The reservation must FOLLOW the measurement instantly, never animate it:
-	     --pill-block is republished by a ResizeObserver on every transient height
-	     of the pill's own 220ms morph, and an animated padding restarts a 200ms
-	     transition toward that moving target on every tick — the stepped
-	     whole-page shudder reported as pill flicker. Only the stage rail's
-	     padding-right (a one-shot discrete change) transitions. -->
 	<main
 		style="padding-top: calc(0.75rem + var(--pill-block, 3.25rem) + 0.75rem)"
 		class="flex h-full min-h-0 flex-col overflow-hidden px-2 pb-2 transition-[padding-right] duration-200 {stageActive ? 'md:pr-56' : ''}"
@@ -177,7 +144,6 @@
 		</Panel>
 	{/each}
 
-	<!-- Snap zones render only while a drag is over their region. -->
 	{#if shell.drag.slot === 'left'}
 		<div data-testid="snap-zone-left" class="pointer-events-none fixed bottom-6 left-3 top-24 z-20 w-[42%] rounded-xl border-2 border-dashed border-primary bg-primary/5"></div>
 	{:else if shell.drag.slot === 'right'}
@@ -186,7 +152,6 @@
 		<div data-testid="snap-zone-corner" class="pointer-events-none fixed bottom-6 right-3 z-20 h-56 w-96 rounded-xl border-2 border-dashed border-primary bg-primary/5"></div>
 	{/if}
 
-	<!-- Auto-stash announcements are polite and text-only. -->
 	<div class="sr-only" role="status" aria-live="polite" data-testid="wm-announcement">{shell.announcement}</div>
 
 	<PersistentTerminalDrawer />

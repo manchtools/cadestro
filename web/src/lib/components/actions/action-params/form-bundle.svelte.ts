@@ -1,10 +1,4 @@
-// Per-orchestrator helpers that turn the ACTION_REGISTRY into a uniform
-// set of per-FormKey state + validation handles. Both action-create-form
-// and edit-params-dialog use the same bundle; the bundle is the only thing
-// they need to know about the 19-action-type ladder.
-//
-// Implementation note: this file uses Svelte 5 `$state` runes, so it must
-// be `.svelte.ts` to participate in the runes compiler.
+
 
 import { createFormValidation, type FormValidation } from '$lib/forms';
 import {
@@ -15,24 +9,21 @@ import {
 import type { FormStateByKey } from '../forms/types';
 
 export interface FormBundle {
-	/** Reactive map of per-FormKey form state. Mutate via
-	 *  `bundle.params[key] = newValue` or via `bind:params={bundle.params[key]}`.
-	 *  Defaults are populated lazily on access via the registry. */
+
 	params: FormStateByKey;
-	/** Per-FormKey validation handle. */
+
 	validations: { [K in FormKey]: FormValidation<FormStateByKey[K]> };
-	/** Reset all per-type validation error state. */
+
 	clearAllErrors(): void;
-	/** Validate the form state for the given FormKey. */
+
 	validate(key: FormKey): boolean;
-	/** Replace the form state for `key`. */
+
 	set<K extends FormKey>(key: K, value: FormStateByKey[K]): void;
 	clearFieldError(key: FormKey, field: string): void;
 }
 
 export function createFormBundle(): FormBundle {
-	// Per-FormKey state. We seed every entry up-front — there are only 19
-	// of them and the seed cost is one default-factory call each.
+
 	const params = $state({} as FormStateByKey);
 	function setParam<K extends FormKey>(key: K, value: FormStateByKey[K]) {
 		params[key] = value;

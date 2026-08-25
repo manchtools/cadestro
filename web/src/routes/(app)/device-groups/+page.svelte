@@ -18,15 +18,8 @@
 	import { searchResultToDeviceGroup } from '$lib/search-adapters';
 	import { RowList, DataTablePagination, createSearchListState } from '$lib/components/data-table';
 
-	// The list is a scoped search query. Membership mode is the
-	// server's `is_dynamic` tag filter; both values selected means no filter.
 	type SortKey = 'name' | 'members' | 'created';
 
-	// ── the drill-down grammar (Actions/Devices reference) ─────────────────────
-	// The OVERVIEW is the landing level; the list is one zoom in. `zoom` rides
-	// the list state's filter map because that map already owns this page's URL
-	// contract — the level lands in the URL and an explicit ?zoom=list deep link
-	// still wins over the landing default.
 	type Zoom = 'overview' | 'list';
 	const ZOOMS = ['overview', 'list'] as const;
 	const ZOOM_LABEL: Record<Zoom, () => string> = { overview: m.zoom_overview, list: m.zoom_list };
@@ -37,7 +30,7 @@
 		adapter: searchResultToDeviceGroup,
 		sortKeys: ['name', 'members', 'created'],
 		defaultSort: 'name',
-		// Subset of the server's scopeSortableFields["device_groups"].
+
 		sortFieldMap: {
 			name: SortField.NAME,
 			members: SortField.MEMBER_COUNT,
@@ -50,19 +43,14 @@
 		},
 		filterToTags: (f) =>
 			f.type.length === 1 ? { is_dynamic: f.type[0] === 'dynamic' ? 'true' : 'false' } : undefined,
-		// The overview does not render rows, so it must not spend a Search RPC.
+
 		paused: (f) => f.zoom !== 'list'
 	});
 
-	// ── the overview snapshot: one bounded sweep, loaded lazily ────────────────
-	// Every number on a tile is a field the list RPC really returned
-	// (DeviceGroup.memberCount, DeviceGroup.isDynamic) — nothing is aggregated
-	// client-side.
 	let overview = $state<DeviceGroup[] | null>(null);
 	let sweeping = $state(false);
 	let sweepError = $state<string | null>(null);
-	// A plain guard, deliberately NOT $state: the effect below must depend on the
-	// zoom alone. A reactive flag would make that effect read what it writes.
+
 	let swept = false;
 
 	async function sweep() {
@@ -87,7 +75,6 @@
 		void sweep();
 	});
 
-	/** Refresh whichever level is on screen. */
 	function refresh() {
 		if (table.filters.zoom === 'overview') void sweep();
 		else table.refresh();
@@ -96,16 +83,11 @@
 	let deleteDialogOpen = $state(false);
 	let groupToDelete = $state<DeviceGroup | null>(null);
 
-	// Creation lives on /device-groups/new, a pill-committed route: the create
-	// form carries a query builder, and a modal could never park that work.
-
 	const typeFilterItems = [
 		{ id: 'static', label: m.device_groups_static() },
 		{ id: 'dynamic', label: m.device_groups_dynamic() }
 	];
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.common_name() },
 		{ key: 'members' as const, label: m.device_groups_table_devices() },
@@ -132,9 +114,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove. The
-	// registration is withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.DEVICE_GROUPS,
@@ -149,8 +128,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself. The search box is
-	     gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		{@const busy = table.filters.zoom === 'overview' ? sweeping : table.loading}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -178,9 +156,7 @@
 				{/each}
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button onclick={refresh} variant="outline" disabled={busy}>
 					<span class="mr-2 h-4 w-4" class:animate-spin={busy}>
 						<RefreshCw class="h-4 w-4" />
@@ -196,9 +172,7 @@
 	{/snippet}
 
 	{#if table.filters.zoom === 'overview'}
-		<!-- The landing level: one card tile per group, every number a field the
-		     list RPC returned. Clicking zooms to that group's device grid — the
-		     Devices fleet's existing group level route. -->
+
 		{#if sweepError}
 			<div class="rounded-xl border border-crit/50 bg-crit-soft p-4 text-sm text-crit">
 				{sweepError}
@@ -227,8 +201,7 @@
 							class="flex flex-col gap-1.5 rounded-[10px] border bg-surface p-2.5 text-left hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 						>
 							<span class="flex min-w-0 items-center gap-1.5">
-								<!-- Rule groups get the distinct glyph — never colour-alone,
-								     the chip below repeats the mode as a word. -->
+
 								{#if group.isDynamic}
 									<Zap class="h-3.5 w-3.5 shrink-0 text-accent-ink" />
 								{:else}
@@ -253,9 +226,7 @@
 			</div>
 		{/if}
 	{:else}
-	<!-- The group list in the drafts' row grammar: group tile, name over its ULID
-	     and description, membership-mode + member-count chips, a right-aligned
-	     created stamp — no column headers, no table. -->
+
 	<RowList {table} {sortOptions} rowKey={(g) => (g.id?.value ?? '')} href={(g) => `${base}/device-groups/${(g.id?.value ?? '')}`}>
 		{#snippet filters()}
 			<MultiSelectCombobox

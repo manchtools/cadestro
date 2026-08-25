@@ -19,11 +19,6 @@
 	import { getLocalizedError } from '$lib/errors';
 	import * as m from '$lib/paraglide/messages';
 
-	// One assign-role dialog for every entry point (user list, user detail, user-group
-	// detail), so the role table, scopable-role icons and scope picker can't drift
-	// apart again. The caller supplies the target label, which roles to hide, and the
-	// assign action (assignRoleToUser vs assignRoleToUserGroup); everything else —
-	// loading roles/groups/permissions, computing scopability, the picker — lives here.
 	let {
 		open = $bindable(false),
 		title,
@@ -35,7 +30,7 @@
 		open: boolean;
 		title: string;
 		subtitle: string;
-		/** Role ids to hide (already granted globally / inherited). */
+
 		excludeRoleIds?: string[];
 		assign: (roleIds: string[], scopeKind: RoleGrantScopeKind, scopeId: string) => Promise<void>;
 		onAssigned: () => void;
@@ -48,7 +43,6 @@
 	let selectedRoleIds = $state<string[]>([]);
 	let scopeGroupId = $state('');
 
-	// Reload fresh data + reset selection each time the dialog opens.
 	$effect(() => {
 		if (open) {
 			selectedRoleIds = [];
@@ -80,9 +74,6 @@
 		}
 	}
 
-	// A role is scopable when ALL its permissions share one scopable
-	// target kind (DEVICE -> device group, USER -> user group). Driven by each
-	// permission's target_kind from ListPermissions.
 	function roleScopeKind(role: Role): RoleGrantScopeKind | null {
 		if (role.permissions.length === 0) return null;
 		let kind: RoleGrantScopeKind | null = null;

@@ -1,16 +1,4 @@
-// Conversion contract for the actions list page.
-//
-// The page hands sorting, filtering and paging to the server through one
-// scoped Search RPC, and every one of those knobs round-trips in the URL. These
-// tests pin what a deep link is worth: the sort key a URL names must reach the
-// server as the right SortField, the type / compliance / unassigned filters must
-// arrive as the same tag filters the hand-rolled page sent, and the rendered row
-// set must be exactly what the server returned (no client-side re-filtering
-// silently narrowing a paginated page).
-//
-// The list renders in the shared row grammar (RowList), so two of its assertions
-// are about the surface itself: the row must carry the detail link, and no
-// <table> may come back — a table here is the regression the redesign removes.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -26,11 +14,9 @@ const COMPLIANCE_ID = '01JQZZ5B8N4P0R3S7T9V2W1X6Y';
 const PACKAGE_ID = '01JQZZ6C9P5Q1S4T8V0W3X2Y7Z';
 
 const api = vi.hoisted(() => ({ search: vi.fn(), deleteAction: vi.fn() }));
-// Mutable so each test can mount the page "at" a different deep link.
+
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/actions') }));
 
-// Only the client is faked; the generated protobuf re-exports stay real so the
-// page's SearchScope / SortField / ActionType constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -56,8 +42,6 @@ vi.mock('$app/state', () => ({
 
 vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 
-// URL writes go through SvelteKit's shallow-routing API, which needs a live
-// router; the page's history behaviour is url-state's contract, not this test's.
 vi.mock('$app/navigation', () => ({
 	pushState: vi.fn(),
 	replaceState: vi.fn(),
@@ -95,14 +79,12 @@ const results = [
 ];
 
 beforeEach(() => {
-	// The overview is the landing level now; these tests pin the LIST level, one
-	// zoom in, so they address it explicitly the way a list deep link does.
+
 	nav.url = new URL('https://control.test/actions?zoom=list');
 	api.search.mockReset();
 	api.search.mockResolvedValue({ results, totalCount: results.length });
 });
 
-/** Positional apiClient.search args — see list-logic's SearchArgs tuple. */
 function lastSearchArgs() {
 	const call = api.search.mock.calls.at(-1);
 	if (!call) throw new Error('the page never issued a search');
@@ -111,8 +93,6 @@ function lastSearchArgs() {
 	return { query, scope, pageSize, pageToken, dateFilters, tagFilters, sortField, sortDirection };
 }
 
-/** Sort controls live in the row list's sort bar; addressing them by text alone
- *  would also reach the row overflow trigger and the date-range placeholders. */
 function clickSort(label: string) {
 	const button = [
 		...document.querySelectorAll<HTMLButtonElement>('[data-testid="row-list-sort"] button')
@@ -122,10 +102,9 @@ function clickSort(label: string) {
 }
 
 async function mountAt(query: string) {
-	// Every mount in this file addresses the list level explicitly.
+
 	nav.url = new URL(`https://control.test/actions${query}${query ? '&' : '?'}zoom=list`);
-	// The search is debounced; wait for the request THIS mount produced, not for
-	// one a previous mount left in flight.
+
 	const before = api.search.mock.calls.length;
 	render(ActionsPage);
 	await vi.waitFor(() => expect(api.search.mock.calls.length).toBeGreaterThan(before), {
@@ -180,7 +159,6 @@ describe('actions list — sort keys reach the server as SortFields', () => {
 	});
 });
 
-/** Local midnight of a Y-M-D, as the epoch seconds the server compares against. */
 function localMidnight(year: number, month: number, day: number): bigint {
 	return BigInt(Math.floor(new Date(year, month - 1, day, 0, 0, 0, 0).getTime() / 1000));
 }
@@ -193,7 +171,7 @@ describe('actions list — date ranges reach the server as date filters', () => 
 			{
 				field: 'created_at',
 				start: localMidnight(2026, 1, 5),
-				// Inclusive end of 31 Jan == local midnight of 1 Feb.
+
 				end: localMidnight(2026, 2, 1)
 			}
 		]);
@@ -267,7 +245,7 @@ describe('actions list — filters reach the server as tag filters', () => {
 			assigned: 'false'
 		});
 		expect(args.pageSize).toBe(10);
-		expect(args.pageToken).toBe('10'); // offset = (2 - 1) * 10
+		expect(args.pageToken).toBe('10');
 	});
 
 	it('drops an unknown type slug instead of sending a bogus tag', async () => {
@@ -288,8 +266,6 @@ describe('actions list — the rendered rows are the server page', () => {
 			await expect.element(browser.getByText(id)).toBeVisible();
 		}
 
-		// A SHELL action flagged is_compliance reads as a compliance check, not a
-		// shell script — the distinction the list page has always drawn.
 		for (const label of [
 			m.actions_type_compliance_check(),
 			m.actions_type_shell(),

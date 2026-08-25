@@ -1,6 +1,5 @@
-// Re-export everything from the Svelte 5 wrappers.
-// This file exists because TypeScript module resolution does not resolve
-// `.svelte.ts` files for directory index imports (`$lib/sdk`).
+
+
 export {
 	authStore,
 	configStore,
@@ -39,5 +38,4 @@ export * from '$contract/cadestro/v1/control_pb';
 export * from '$contract/cadestro/v1/actions_pb';
 export * from '$contract/cadestro/v1/common_pb';
 
-// Picker pagination helper — see ./paginate.ts.
 export { fetchAllPages, type PageResult, type PaginateOptions } from './paginate';

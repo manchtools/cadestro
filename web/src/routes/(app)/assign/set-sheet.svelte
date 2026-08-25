@@ -1,10 +1,7 @@
 <script lang="ts">
-	// B2's right sheet: pick ONE action set (the selected one expands to its real
-	// steps), then pick the schedule. Nothing here commits — the pill owns Save.
+
 	import * as m from '$lib/paraglide/messages';
-	// The app's canonical type mapping, not the SDK's `actionTypeToString`: that
-	// one has no case for unsupported built-ins and falls through to "UNSPECIFIED", which
-	// would mislabel a real step.
+
 	import { getActionTypeLabel } from '$lib/components/actions/action-type';
 	import type { ActionSet, ActionSetMember } from '$contract/cadestro/v1/control_pb';
 	import type { AssignSchedule } from './assign-data';
@@ -26,14 +23,12 @@
 		steps: ActionSetMember[];
 		stepsLoading?: boolean;
 		schedule: AssignSchedule;
-		/** Off for a rule target: the group assignment is evaluated by agents and the rule's
-		 *  matches are the server's, so there is no "now" to offer. */
+
 		showSchedule?: boolean;
 		onselect: (id: string) => void;
 		onschedule: (schedule: AssignSchedule) => void;
 	} = $props();
 
-	// Immediate assignments sync the device; scheduled assignments use the set policy.
 	const SCHEDULES: { value: AssignSchedule; label: () => string; hint: () => string }[] = [
 		{ value: 'now', label: m.assign_schedule_now, hint: m.assign_schedule_now_hint },
 		{

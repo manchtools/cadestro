@@ -1,7 +1,5 @@
-// The fleet tile's load-bearing guarantee: STATUS IS NEVER COLOUR-ALONE.
-// Every meaningful tone also encodes a SHAPE that survives a colour-blind
-// viewer, a monochrome screenshot, or a broken palette — so these assertions
-// look for real DOM/geometry, never for a colour.
+
+
 import { describe, it, expect, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
@@ -22,7 +20,6 @@ describe('Tile — shape encoding (not colour-alone)', () => {
 		expect(crit.dataset.shape).toBe('notch');
 		expect(crit.querySelector('[data-marker="notch"]')).not.toBeNull();
 
-		// hollow is the absence of a fill plus a dashed outline — no marker child
 		expect(idle.dataset.shape).toBe('hollow');
 		const idleStyle = getComputedStyle(idle);
 		expect(idleStyle.borderTopStyle).toBe('dashed');
@@ -107,7 +104,7 @@ describe('Tile — interaction', () => {
 		expect(getComputedStyle(selected).outlineWidth).toBe('2px');
 		expect(getComputedStyle(selected).outlineStyle).not.toBe('none');
 		expect(getComputedStyle(plain).outlineStyle).toBe('none');
-		// the fill is untouched — selection adds, it never replaces status
+
 		expect(getComputedStyle(selected).backgroundColor).toBe(getComputedStyle(plain).backgroundColor);
 	});
 });

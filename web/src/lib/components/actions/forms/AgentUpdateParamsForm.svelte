@@ -14,10 +14,6 @@
 
 	let { params = $bindable(), errors, onclearerror }: Props = $props();
 
-	// A form state built before allow_redirect existed (an older saved draft, or
-	// any path that didn't run defaultAgentUpdateForm) lacks the field. Coerce it
-	// to the intended default so the Switch never binds undefined (Svelte rejects
-	// bind:checked={undefined}) and the proto carries the operator's choice.
 	if (params.allowRedirect === undefined) {
 		params.allowRedirect = true;
 	}

@@ -1,7 +1,5 @@
 <script lang="ts">
-	// First-run welcome. Two exits, both final: take the tour, or explore alone.
-	// It is a courtesy, never a gate — Esc and a backdrop click dismiss it, and
-	// the app behind it has already finished loading.
+
 	import * as m from '$lib/paraglide/messages';
 	import { cycleTab } from '$lib/onboarding/focus';
 	import { motion } from '$lib/onboarding/motion';
@@ -11,8 +9,6 @@
 	let card = $state<HTMLElement | undefined>();
 	const reduced = motion.reduced();
 
-	// Focus lands on the dialog itself, so a screen reader reads the title and
-	// body before the operator tabs into the two choices.
 	$effect(() => {
 		card?.focus();
 	});

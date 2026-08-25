@@ -47,15 +47,8 @@
 	import { getLocalizedError } from '$lib/errors';
 	import { registerPageSearch } from '$lib/shell/page-search.svelte';
 
-	// Issue #84/#325. The list is a scoped PostgreSQL search query; sort and
-	// pagination are server-side.
 	type SortKey = 'email' | 'status' | 'created' | 'lastLogin';
 
-	/** The row: the typed User plus the document's role chips. Grant SCOPE
-	 *  KINDS are not in the document, so the row's typed `roleGrants` stay
-	 *  EMPTY on purpose — everything scope-aware (revoke, the assign dialog's
-	 *  unscoped-exclusion) reads the full GetUser record instead of consuming
-	 *  a fabricated UNSPECIFIED scope. */
 	type UserRow = User & { docRoles: { direct: SearchRoleRef[]; inherited: SearchRoleRef[] } };
 
 	const table = createSearchListState<UserRow, SortKey, { status: string[] }>({
@@ -63,8 +56,7 @@
 		adapter: (r) => Object.assign(searchResultToUser(r), { docRoles: searchResultUserRoles(r) }),
 		sortKeys: ['email', 'status', 'created', 'lastLogin'],
 		defaultSort: 'email',
-		// Subset of the server's scopeSortableFields["users"]; the "status"
-		// column is the active/disabled flag → the `disabled` field.
+
 		sortFieldMap: {
 			email: SortField.EMAIL,
 			status: SortField.DISABLED,
@@ -73,8 +65,7 @@
 		},
 		sortDir: (key) => (key === 'created' || key === 'lastLogin' ? 'desc' : 'asc'),
 		filters: { status: { key: 'status', codec: codecs.stringArray([]) } },
-		// The indexed `disabled` TAG takes one value: active = false,
-		// disabled = true. Selecting both (or neither) means no filter.
+
 		filterToTags: (f) =>
 			f.status.length === 1 ? { disabled: String(f.status[0] === 'disabled') } : undefined
 	});
@@ -84,12 +75,10 @@
 	let roleDialogOpen = $state(false);
 	let roleDialogUser = $state<User | null>(null);
 
-	// Edit email dialog
 	let editEmailDialogOpen = $state(false);
 	let editEmailUser = $state<User | null>(null);
 	let editEmail = $state('');
 
-	// Identity links dialog
 	let identityLinksDialogOpen = $state(false);
 	let identityLinksUser = $state<User | null>(null);
 	let identityLinks = $state<IdentityLink[]>([]);
@@ -104,8 +93,6 @@
 		{ id: 'disabled', label: m.common_disabled() }
 	];
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'email' as const, label: m.users_table_email() },
 		{ key: 'status' as const, label: m.users_table_status() },
@@ -117,8 +104,6 @@
 		return user.displayName || [user.givenName, user.familyName].filter(Boolean).join(' ') || '—';
 	}
 
-	// Avatar tile: initials from the profile name, falling back to the email's
-	// local part. Never fabricates a name — it only abbreviates one already shown.
 	function initialsOf(user: User): string {
 		const named = user.displayName || [user.givenName, user.familyName].filter(Boolean).join(' ');
 		const parts = (named || user.email.split('@')[0] || '').split(/[\s._-]+/).filter(Boolean);
@@ -135,8 +120,6 @@
 		eraseDialogOpen = true;
 	}
 
-	// The server refuses SCIM-managed subjects with `scim_managed_resource`; the
-	// row stays because only a resolved erase removes it.
 	async function eraseUser() {
 		if (!userToErase) return;
 
@@ -156,7 +139,7 @@
 		try {
 			const updated = await apiClient.setUserDisabled((user.id?.value ?? ''), !user.disabled);
 			if (updated) {
-				// The RPC returns a typed User; the row keeps its document chips.
+
 				table.patchRows((rows) =>
 					rows.map((u) => (u.id === user.id ? Object.assign(updated, { docRoles: u.docRoles }) : u))
 				);
@@ -168,10 +151,7 @@
 	}
 
 	async function openRoleDialog(user: User) {
-		// The dialog opens on the row for immediate feedback, then swaps in the
-		// full GetUser record: the row's typed grants are empty (the document has
-		// no scope kinds), so only the detail record can say which roles are
-		// already granted unscoped.
+
 		roleDialogUser = user;
 		roleDialogOpen = true;
 		try {
@@ -184,9 +164,7 @@
 
 	async function revokeRole(user: User, roleId: string) {
 		try {
-			// Scope kinds are NOT in the search document. The revoke resolves the
-			// role's REAL grants from GetUser and revokes each with its true scope,
-			// never a fabricated UNSPECIFIED one.
+
 			const detail = await apiClient.getUser((user.id?.value ?? ''));
 			const grants = (detail?.roleGrants ?? []).filter((grant) => grant.role?.id?.value === roleId);
 			for (const grant of grants) {
@@ -199,10 +177,6 @@
 		}
 	}
 
-	/** One revoke item per DISTINCT direct role. `isSystem` is not in the
-	 *  document; the system User role is the contract's FIXED id, so filtering
-	 *  it by id fabricates nothing. (Admin, also a system role, stays revocable
-	 *  — exactly as the grant-based menu behaved.) */
 	const SYSTEM_ROLE_USER_ID = '00000000000000000000000002';
 	function revocableRoles(user: UserRow): SearchRoleRef[] {
 		const seen = new Set<string>();
@@ -226,7 +200,7 @@
 			try {
 				const updated = await apiClient.updateUserEmail((editEmailUser.id?.value ?? ''), editEmail);
 				if (updated) {
-					// The RPC returns a typed User; the row keeps its document chips.
+
 					table.patchRows((rows) =>
 						rows.map((u) =>
 							u.id === editEmailUser!.id ? Object.assign(updated, { docRoles: u.docRoles }) : u
@@ -275,9 +249,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this facet and
-	// its keystrokes land on the same setSearch the removed input drove. The
-	// registration is withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: SearchScope.USERS,
@@ -292,8 +263,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- The header band keeps only what acts on the page itself. The search box is
-	     gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -301,9 +271,7 @@
 				<p class="text-sm text-muted-foreground">{m.users_subtitle()}</p>
 			</div>
 			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-				<!-- The list's filters ride IN the list's own toolbar, next to sort:
-				     narrowing a list is one act, so it reads as one bar. The page band
-				     keeps only what acts on the page itself. -->
+
 				<Button onclick={() => table.refresh()} variant="outline" size="sm" disabled={table.loading}>
 					<span class="mr-2 h-4 w-4" class:animate-spin={table.loading}>
 						<RefreshCw class="h-4 w-4" />
@@ -316,9 +284,6 @@
 		<p class="text-sm text-muted-foreground">{m.users_provisioning_hint()}</p>
 	{/snippet}
 
-	<!-- The people list in the drafts' row grammar: initials tile, email over its
-	     ULID and profile name, membership chips, a right-aligned last-login stamp —
-	     no column headers, no table. Only the render layer changed. -->
 	<RowList {table} {sortOptions} rowKey={(u) => (u.id?.value ?? '')} href={(u) => `${base}/users/${(u.id?.value ?? '')}`}>
 		{#snippet filters()}
 			<MultiSelectCombobox
@@ -354,11 +319,7 @@
 					/>
 				</span>
 			</span>
-			<!-- Granted roles first, then the ones inherited through a group; the
-			     header that used to name this cluster now rides its tooltip. Both
-			     clusters come off the SEARCH DOCUMENT (role_names/ids and their
-			     inherited_ twins) — the adapter already deduped inherited pairs by
-			     role id, and a role held directly is not repeated as inherited. -->
+
 			<span class="flex min-w-0 items-center gap-1.5 overflow-hidden" title={m.users_table_role()}>
 				{#each user.docRoles.direct as role}
 					<Chip tone={role.name === 'Admin' ? 'info' : 'idle'} label={role.name} />
@@ -372,8 +333,7 @@
 					{/if}
 				{/each}
 			</span>
-			<!-- One stamp keeps the row dense; created stays reachable in the tooltip
-			     and as a sort key. -->
+
 			<span
 				class="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground"
 				title="{m.users_table_last_login()}: {formatTimestampDateTime(

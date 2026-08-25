@@ -1,15 +1,4 @@
-// Contract for the assign surface (B2).
-//
-// What these tests pin down is the seam between three real things: the carried
-// selection the fleet writes, the RPCs the control service actually exposes,
-// and the shell's context pill. Nothing about eligibility is hardcoded in the
-// page — the rows have to fall out of a device read and an assignment read, so
-// the tests feed those two reads and assert the rows, the caption and the
-// commit all agree.
-//
-// Only `apiClient` is faked. The generated protobuf enums, the paginate helper,
-// the shell store and the carried-selection store are the production modules,
-// because they are exactly what the page is being tested against.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -100,10 +89,7 @@ const SETS = [
 beforeEach(() => {
 	document.body.innerHTML = '';
 	resetShell();
-	// Assign parks its buffer in a module-state draft (draft.svelte.ts), which
-	// resetShell does not touch. Auto-stash-on-navigate now runs onStash on
-	// unmount, so a prior test's parked assignment would leak into this one —
-	// reset it too for a genuinely clean surface.
+
 	clearAssignDraft();
 	setCarried({ deviceIds: [...CARRIED_IDS], label: '4 devices' });
 	for (const fn of Object.values(api)) fn.mockReset();
@@ -130,7 +116,7 @@ beforeEach(() => {
 			})
 		]
 	});
-	// Only DEV_ASSIGNED already carries the set.
+
 	api.listAssignments.mockResolvedValue({
 		assignments: [
 			create(AssignmentSchema, {
@@ -147,7 +133,6 @@ beforeEach(() => {
 	api.syncDevice.mockResolvedValue(undefined);
 });
 
-/** The pill context this page owns, once its effect has published it. */
 async function contextReady() {
 	await vi.waitFor(() => expect(shell.pill.context?.id).toBe('assign'), { timeout: 3000 });
 	return shell.pill.context!;
@@ -197,7 +182,6 @@ describe('assign — eligibility is derived from the two real reads', () => {
 		await contextReady();
 		await chooseSet();
 
-		// One ACTION_SET→DEVICE listing answers "who already has this set".
 		await vi.waitFor(
 			() =>
 				expect(api.listAssignments).toHaveBeenCalledWith(
@@ -212,11 +196,11 @@ describe('assign — eligibility is derived from the two real reads', () => {
 		);
 
 		const rows = browser.getByTestId('assign-eligibility');
-		// online, not yet assigned → apply now
+
 		await expect.element(rows.getByText(m.assign_eligibility_ready({ count: 2 }))).toBeVisible();
-		// already assigned → update in place, whatever its connectivity
+
 		await expect.element(rows.getByText(m.assign_eligibility_update({ count: 1 }))).toBeVisible();
-		// offline → queued, never "skipped": the server keeps the delivery durable
+
 		await expect.element(rows.getByText(m.assign_eligibility_queued({ count: 1 }))).toBeVisible();
 	});
 
@@ -243,8 +227,6 @@ describe('assign — eligibility is derived from the two real reads', () => {
 		await contextReady();
 		await chooseSet();
 
-		// The rollup cannot claim an update count it never read — the failure is
-		// on screen rather than swallowed into a confident zero.
 		await expect.element(browser.getByText(m.assign_load_failed())).toBeVisible();
 	});
 
@@ -268,9 +250,7 @@ describe('assign — eligibility is derived from the two real reads', () => {
 		await chooseSet();
 
 		const steps = browser.getByTestId('assign-set-steps');
-		// Sort order, the app's own type label, the action's real name — and
-		// The action type must not degrade to "UNSPECIFIED" the way the SDK's own
-		// enum-to-string helper does.
+
 		await expect
 			.element(steps.getByText(`1 · ${m.actions_type_update()} · full system update`))
 			.toBeVisible();
@@ -289,7 +269,7 @@ describe('assign — the pill is the only commit surface', () => {
 		expect(ctx.title).toBe(m.assign_pill_title({ label: '4 devices' }));
 		expect(ctx.commitLabel).toBe(m.assign_commit_label({ count: 4 }));
 		expect(ctx.subtext).toBe(m.assign_caption_choose());
-		// The store's guard, not just a disabled attribute — ⌘S is closed too.
+
 		expect(commitContext()).toBe(false);
 		expect(api.createAssignment).not.toHaveBeenCalled();
 
@@ -369,7 +349,7 @@ describe('assign — the pill is the only commit surface', () => {
 		expect(toaster.error).toHaveBeenCalledWith(m.assign_commit_partial({ ok: 3, failed: 1 }));
 		expect(nav.goto).not.toHaveBeenCalled();
 		expect(getCarried()?.deviceIds).toEqual(CARRIED_IDS);
-		// The pill comes back so the operator can retry from the same place.
+
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 	});
 });
@@ -387,16 +367,12 @@ describe('assign — the third exit', () => {
 		expect(shell.drafts[0].subtitle).toBe(
 			m.assign_stash_subtitle({ set: 'Patch and reboot' })
 		);
-		// Parked means parked: the pill is free and does not re-enter itself.
+
 		await vi.waitFor(() => expect(shell.pill.context).toBeNull(), { timeout: 3000 });
 
-		// The operator navigates away, then clicks the stage card. The store hands
-		// the surface's home route back to the chrome instead of re-entering a
-		// context whose closures point at an unmounted page.
 		await first.unmount();
 		expect(restoreDraft(draftId!)).toBe('/assign');
-		// …and the card leaves the rail on the click; the buffer is staged for the
-		// remount to claim.
+
 		expect(shell.drafts).toHaveLength(0);
 
 		await render(AssignPage);

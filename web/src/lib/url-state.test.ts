@@ -1,9 +1,4 @@
-// Tests for the URL-as-state codecs (F004).
-//
-// These codecs back every list page's filter persistence. A regression
-// in `serialize` would silently drop user filter sets from the URL on
-// the next history operation; a regression in `parse` would lose the
-// filter set on reload. Pin the contract here.
+
 
 import { describe, it, expect } from 'vitest';
 import { codecs, readURLParam } from './url-state';

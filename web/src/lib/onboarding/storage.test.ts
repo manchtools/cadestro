@@ -1,5 +1,5 @@
-// Onboarding persistence: the scope keeps one server/user's first run from
-// consuming another's, and a corrupted payload degrades to "fresh run".
+
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { onboardingScope, storageKey, readFlags, writeFlags, STORAGE_PREFIX } from './storage';
 

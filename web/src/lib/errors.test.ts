@@ -1,15 +1,8 @@
-// Tests for the localized-error pipeline (F004 + F005).
-//
-// Every call site in the app feeds caught errors through
-// `getLocalizedError`. If a code lands in `errorMessages` we want a
-// stable, localized string back; otherwise we fall back to the original
-// error message and append the request ID.
+
 
 import { describe, it, expect, vi } from 'vitest';
 import { ErrorCode } from '$contract/cadestro/v1/common_pb';
 
-// Mock the SDK's getErrorCode / getRequestId so we can drive arbitrary
-// shapes through getLocalizedError without needing a real ConnectError.
 vi.mock('$contractClient/client', () => ({
 	getErrorCode: (e: unknown) => {
 		if (e && typeof e === 'object' && 'code' in e) {
@@ -34,8 +27,7 @@ describe('getLocalizedError', () => {
 		const msg = getLocalizedError({ code: ErrorCode.USER_NOT_FOUND });
 		expect(typeof msg).toBe('string');
 		expect(msg.length).toBeGreaterThan(0);
-		// `USER_NOT_FOUND` carries no requestId in this fixture, so no
-		// Request ID suffix is expected regardless of userFacingCodes.
+
 		expect(msg).not.toMatch(/Request ID/);
 	});
 

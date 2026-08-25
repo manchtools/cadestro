@@ -1,15 +1,4 @@
-// Conversion contract for the registration-token list page.
-//
-// Tokens have no Search scope, so ListTokens returns the whole set and the
-// page's own matching, filtering, sorting and paging decide what an operator
-// sees. These tests pin the parts a rewrite can quietly lose: the status a
-// token shows its disabled/active status, a deep link
-// reproduces the view, and a token secret is never rendered from stored data.
-//
-// The list renders in the shared row grammar (RowList), so one assertion is
-// about the surface itself: no <table> may come back — a table here is the
-// regression the redesign removes. Registration tokens have no detail route, so
-// unlike every other converted list these rows are deliberately NOT links.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -28,11 +17,9 @@ const api = vi.hoisted(() => ({
 	setTokenDisabled: vi.fn(),
 	createToken: vi.fn()
 }));
-// Mutable so each test can mount the page "at" a different deep link.
+
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/tokens') }));
 
-// Only the client and the browser-only stores are faked; the generated
-// protobuf re-exports stay real.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -65,8 +52,6 @@ vi.mock('$app/state', () => ({
 
 vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 
-// URL writes go through SvelteKit's shallow-routing API, which needs a live
-// router; the history behaviour itself is url-state's contract, not this test's.
 vi.mock('$app/navigation', () => ({
 	pushState: vi.fn(),
 	replaceState: vi.fn(),
@@ -109,15 +94,12 @@ async function mountAt(query: string) {
 	await vi.waitFor(() => expect(api.listTokens).toHaveBeenCalled(), { timeout: 3000 });
 }
 
-/** The rendered page of rows, in order, addressed by the ULID each row carries. */
 function rowKeys(): string[] {
 	return [...document.querySelectorAll<HTMLElement>('[data-testid="row-list-row"]')]
 		.map((el) => el.getAttribute('data-row-key') ?? '')
 		.filter(Boolean);
 }
 
-/** Sort controls live in the row list's sort bar; addressing them by text alone
- *  would also reach the row overflow triggers and the filter comboboxes. */
 function clickSort(label: string) {
 	const button = [
 		...document.querySelectorAll<HTMLButtonElement>('[data-testid="row-list-sort"] button')
@@ -152,8 +134,6 @@ describe('tokens list — the list RPC feeds a client-side row list', () => {
 		expect(document.querySelectorAll('table').length).toBe(0);
 	});
 
-	// Tokens are the one converted list without a detail route. A row link here
-	// would point nowhere, so its absence is the contract — not an oversight.
 	it('leaves the rows unlinked because registration tokens have no detail page', async () => {
 		await mountAt('');
 		await expect.element(browser.getByText('Fleet rollout')).toBeVisible();

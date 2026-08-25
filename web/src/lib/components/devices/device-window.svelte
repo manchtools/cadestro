@@ -23,8 +23,6 @@
 		return m.common_unknown();
 	}
 
-	// Connectivity is status, so it rides a toned chip — an outline badge said
-	// "online" and "offline" in exactly the same ink.
 	function statusTone(status: DeviceStatus): FleetTone {
 		if (status === DeviceStatus.ONLINE) return 'ok';
 		if (status === DeviceStatus.OFFLINE) return 'crit';

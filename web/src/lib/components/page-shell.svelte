@@ -1,12 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	// Standard page chrome: a non-scrolling header band above a scrolling content
-	// area, both carrying the canonical page padding. Encodes the px-4 / md:px-6
-	// (and the header/content scroll split) ONCE, so routes don't repeat it — and
-	// can't forget it, which is how the terminal-sessions page lost its padding.
-	//
-	// Full-bleed pages (e.g. the device terminal) intentionally don't use this.
 	let {
 		header,
 		children,

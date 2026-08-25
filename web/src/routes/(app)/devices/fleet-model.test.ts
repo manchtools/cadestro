@@ -1,7 +1,5 @@
-// Pure-model guards for the fleet surface. These assert the INTENT of each
-// derivation — the summary can never disagree with the tiles, the decay steps
-// track the device's real cadence, worst-first really is worst-first — rather
-// than restating the implementation.
+
+
 import { describe, it, expect } from 'vitest';
 import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
@@ -48,7 +46,7 @@ describe('deviceTone — the one classifier', () => {
 		expect(
 			deviceTone(device({ id: 'a', lastSeenSec: null, compliance: ComplianceStatus.NON_COMPLIANT }))
 		).toBe('idle');
-		// a zero timestamp is the proto default, not a 1970 heartbeat
+
 		expect(deviceTone(device({ id: 'b', lastSeenSec: 0 }))).toBe('idle');
 	});
 
@@ -78,7 +76,7 @@ describe('summarize', () => {
 			device({ id: 'b', compliance: ComplianceStatus.NON_COMPLIANT }),
 			device({ id: 'c', status: DeviceStatus.OFFLINE }),
 			device({ id: 'd', lastSeenSec: null }),
-			// offline AND drifted: unreachable wins, and it is NOT counted twice
+
 			device({ id: 'e', status: DeviceStatus.OFFLINE, compliance: ComplianceStatus.NON_COMPLIANT })
 		].map((d) => toFleetDevice(d, [], NOW));
 
@@ -93,7 +91,7 @@ describe('sync-cadence decay', () => {
 		expect(resolveSyncMinutes(60, [])).toBe(60);
 		expect(resolveSyncMinutes(60, [10, 45])).toBe(10);
 		expect(resolveSyncMinutes(0, [])).toBe(DEFAULT_SYNC_MINUTES);
-		// a zero group interval means "no contribution", not "every 0 minutes"
+
 		expect(resolveSyncMinutes(20, [0, 0])).toBe(20);
 	});
 
@@ -109,7 +107,6 @@ describe('sync-cadence decay', () => {
 		expect(at(80, 10)).toBe(2);
 		expect(at(81, 10)).toBe(3);
 
-		// same age, different cadence => different step. That IS the open call.
 		expect(at(45, 60)).toBe(0);
 		expect(at(45, 10)).toBe(2);
 	});
@@ -173,7 +170,7 @@ describe('buildBubbles', () => {
 		);
 
 		expect(bubbles.map((b) => b.id)).toEqual(['g1', UNGROUPED_ID]);
-		expect(bubbles[1].devices.map((d) => d.id)).toEqual(['d4', 'd3']); // worst first
+		expect(bubbles[1].devices.map((d) => d.id)).toEqual(['d4', 'd3']);
 		expect(bubbles[0].down).toBe(1);
 		expect(bubbles[1].down).toBe(1);
 	});
@@ -194,7 +191,7 @@ describe('buildBubbles', () => {
 
 		expect(bubbles.find((b) => b.id === 'g1')!.devices.map((d) => d.id)).toEqual(['d1']);
 		expect(bubbles.find((b) => b.id === 'g2')!.devices.map((d) => d.id)).toEqual(['d1']);
-		// d1 counts as grouped, so it never also appears in ungrouped
+
 		expect(bubbles.find((b) => b.id === UNGROUPED_ID)!.devices.map((d) => d.id)).not.toContain('d1');
 	});
 
@@ -242,7 +239,7 @@ describe('selectionFacts', () => {
 
 		expect(selectionFacts(['d1'], bubbles)).toEqual({ groups: 1, offline: 0 });
 		expect(selectionFacts(['d2', 'd3'], bubbles)).toEqual({ groups: 2, offline: 2 });
-		// d4 is ungrouped — the ungrouped bubble is a real group for this count
+
 		expect(selectionFacts(['d1', 'd4'], bubbles)).toEqual({ groups: 2, offline: 0 });
 	});
 

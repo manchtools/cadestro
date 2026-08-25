@@ -76,12 +76,6 @@
 		return mode.current === 'dark' ? darkTheme : lightTheme;
 	}
 
-	// Root element's background tracks xterm's own theme background so
-	// any sub-row leftover pixels (xterm renders in whole row heights;
-	// a container that isn't an exact multiple of row-height has a
-	// thin strip below the last row) are invisible. Without this the
-	// root inherits bg-background from the page and that strip shows
-	// as a gap under the terminal.
 	let rootBg = $derived(mode.current === 'dark' ? darkTheme.background : lightTheme.background);
 
 	function sendResize(cols: number, rows: number) {
@@ -107,7 +101,7 @@
 		let disposed = false;
 
 		(async () => {
-			// Dynamic imports to avoid SSR issues — xterm.js is browser-only.
+
 			const { Terminal } = await import('@xterm/xterm');
 			const { FitAddon } = await import('@xterm/addon-fit');
 			const { WebLinksAddon } = await import('@xterm/addon-web-links');
@@ -131,11 +125,6 @@
 			fit.fit();
 			terminalInstance = term;
 
-			// Open WebSocket. rc10: reject anything that isn't wss://
-			// at the client so a misconfigured control server (or a
-			// MITM response) cannot downgrade the terminal channel to
-			// cleartext ws://. The terminal URL is handed to us by the
-			// StartTerminalSession RPC response — trust but verify.
 			if (!/^wss:\/\//i.test(terminalUrl)) {
 				const msg = `refusing to open insecure terminal WebSocket (${terminalUrl}); operator must configure the control server to return a wss:// URL`;
 				console.error(msg);
@@ -143,18 +132,13 @@
 				return;
 			}
 			const url = `${terminalUrl}?session_id=${encodeURIComponent(sessionId)}`;
-			// WS11: the session token travels in the WebSocket subprotocol
-			// (bearer.<token>), never the URL query string, so it cannot
-			// leak into reverse-proxy access logs, Referer headers, or
-			// devtools. Control echoes the same subprotocol back to
-			// complete the handshake.
+
 			const socket = new WebSocket(url, [`bearer.${sessionToken}`]);
 			socket.binaryType = 'arraybuffer';
 			ws = socket;
 
 			socket.onopen = () => {
-				// Send initial resize if the rendered size differs from the
-				// default 80x24 the RPC was called with.
+
 				sendResize(term.cols, term.rows);
 			};
 
@@ -162,14 +146,14 @@
 				if (event.data instanceof ArrayBuffer) {
 					term.write(new Uint8Array(event.data));
 				} else if (typeof event.data === 'string') {
-					// JSON control message from control (future use).
+
 					try {
 						const msg = JSON.parse(event.data);
 						if (msg.type === 'error') {
 							onerror?.(msg.message || 'Unknown error');
 						}
 					} catch {
-						// Ignore unparseable text frames.
+
 					}
 				}
 			};
@@ -187,7 +171,6 @@
 				}
 			};
 
-			// Terminal input → WebSocket binary frames.
 			term.onData((data) => {
 				if (socket.readyState === WebSocket.OPEN) {
 					socket.send(new TextEncoder().encode(data));
@@ -204,7 +187,6 @@
 				}
 			});
 
-			// Observe container resize → fit → send resize control message.
 			resizeObserver = new ResizeObserver(() => handleResize());
 			resizeObserver.observe(terminalEl);
 		})();
@@ -220,7 +202,6 @@
 		};
 	});
 
-	// Sync theme on mode change.
 	$effect(() => {
 		if (terminalInstance) {
 			terminalInstance.options.theme = getTheme();
@@ -228,21 +209,6 @@
 	});
 </script>
 
-<!--
-  Two-layer structure. The outer .xterm-host owns the card-level
-  chrome (rounded corners, theme background, padding), the inner
-  bind target is where xterm mounts. Putting padding on the OUTER
-  is deliberate: FitAddon computes rows from
-  getComputedStyle(xterm.parentElement).height, which returns the
-  border-box height of the element xterm is attached to. If I put
-  padding on that element directly, FitAddon ignores the padding
-  (it only subtracts padding of .xterm itself) and over-fits —
-  content overflows by the padding amount and gets clipped by
-  overflow-hidden. Wrapping terminalEl in a separate padded outer
-  keeps terminalEl's border-box height equal to the outer's
-  content area, so FitAddon's math is right by construction and
-  the padding shows up as a uniform inset around the text.
--->
 <div
 	class="xterm-host h-full w-full overflow-hidden rounded-md p-3"
 	style:background-color={rootBg}
@@ -251,23 +217,7 @@
 </div>
 
 <style>
-	/*
-	 * xterm.js renders its text canvas at rows × cell-height inside
-	 * .xterm-screen, but .xterm and .xterm-viewport stretch to 100%
-	 * of our container. When the container height isn't a clean
-	 * multiple of cell-height, the leftover pixels at the bottom
-	 * show .xterm-viewport's own background — which in the DOM
-	 * renderer doesn't always match the theme we pass in (there's
-	 * a separate internal theming path for the viewport vs. the
-	 * canvas).
-	 *
-	 * Force the whole xterm tree to inherit the host div's
-	 * background. Since the host is bound to the current theme's
-	 * .background via style:background-color, every descendant
-	 * picks up the same colour and the leftover strip is visually
-	 * absorbed. No effect on text rendering — the text layer is a
-	 * canvas painted by xterm, not a DOM background.
-	 */
+
 	.xterm-host :global(.xterm),
 	.xterm-host :global(.xterm-viewport),
 	.xterm-host :global(.xterm-screen) {

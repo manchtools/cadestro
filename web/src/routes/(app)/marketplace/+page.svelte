@@ -7,11 +7,6 @@
 	import * as m from '$lib/paraglide/messages';
 	import { Store } from '@lucide/svelte';
 
-	// The marketplace is a standalone hosted app; we embed its /embed
-	// route in an iframe, talk via postMessage, and let it own the UI.
-	// The only thing that happens on this side is the import handoff
-	// back into the control server via the existing apiClient.
-
 	const marketplaceUrl = __MARKETPLACE_URL__;
 	const marketplaceOrigin = originOf(marketplaceUrl);
 	const embedSrc = marketplaceUrl.replace(/\/$/, '') + '/embed';
@@ -23,20 +18,14 @@
 	let readyTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function onMessage(event: MessageEvent) {
-		// Strict origin + source checks. Only messages from the iframe
-		// we mounted, from the marketplace origin, count. Ignore
-		// anything else silently — other iframes / extensions may
-		// post messages to the window.
+
 		if (!marketplaceOrigin || event.origin !== marketplaceOrigin) return;
 		if (iframeRef === null || event.source !== iframeRef.contentWindow) return;
 		if (!isEmbedMessage(event.data)) return;
 
 		const msg = event.data;
 		if (msg.kind === 'pm.marketplace.hello') {
-			// Reverse handshake: the embed signals that its message
-			// listener is attached. Responding here (instead of at
-			// iframe-load) eliminates the race between the iframe's
-			// load event and Svelte hydration inside the iframe.
+
 			sendInit();
 			return;
 		}
@@ -50,9 +39,7 @@
 			return;
 		}
 		if (msg.kind === 'pm.marketplace.close') {
-			// User clicked "close" inside the iframe — take them back
-			// to the actions list for now; a proper host flow would
-			// dismiss a modal.
+
 			goto('/actions');
 			return;
 		}
@@ -85,22 +72,12 @@
 
 	function sendInit() {
 		if (iframeRef === null || iframeRef.contentWindow === null) return;
-		// If the iframe failed to load (CSP block, DNS miss, 404) the
-		// browser serves an internal error page whose origin is 'null'
-		// or 'chrome-error://...'. postMessage against that target
-		// origin silently no-ops — we can't tell synchronously. Arm
-		// a readiness timeout and surface an explicit error so the
-		// operator sees something actionable instead of a blank page.
+
 		try {
 			iframeRef.contentWindow.postMessage(
 				{
 					kind: 'pm.marketplace.init',
-					// No subscription token — the marketplace app owns
-					// authentication on its own domain. Browsers send the
-					// marketplace's own session cookie with the iframe
-					// request. Passed as null here so the contract stays
-					// forward-compatible with deployments that want to
-					// pre-seed a token.
+
 					subscriptionToken: null,
 					parentOrigin: window.location.origin
 				},
@@ -121,11 +98,7 @@
 
 	onMount(() => {
 		window.addEventListener('message', onMessage);
-		// The embed drives the handshake by posting pm.marketplace.hello
-		// once its own message listener is attached (see the /embed
-		// route in the marketplace repo). No iframe onload wiring
-		// needed — and keeping the iframe element free of inline
-		// handlers also avoids the CSP 'inline event handler' rule.
+
 	});
 
 	onDestroy(() => {

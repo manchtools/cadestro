@@ -1,14 +1,5 @@
 <script lang="ts">
-	// Step 1 of /actions/new: the type wall.
-	//
-	// A full-page searchable tile grid rather than the old scrolling list —
-	// icon + name + one-line description per tile, one flat wall with a live
-	// filter. Flat is deliberate: the registry carries no category metadata, and
-	// a taxonomy invented here would be a second source of truth that drifts the
-	// first time an adapter is added. The filter is what makes 21 tiles findable.
-	//
-	// Every tile is a real <button>, so tab + Enter/Space is the whole keyboard
-	// contract with no key handling of our own.
+
 	import { Search } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { getActionTypeInfoByValue } from '$lib/components/actions/action-type';
@@ -18,8 +9,6 @@
 
 	let filter = $state('');
 
-	// Resolved once per render pass, in the locale that is active while the wall
-	// renders — the message accessors are called here, not stored.
 	const tiles = $derived(
 		TILE_VALUES.map((value) => ({ value, ...getActionTypeInfoByValue(value) }))
 	);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Mono pill chip on a soft status plate — "✓ ok", "✕ apt failed", "? unknown".
+
 	import type { Snippet } from 'svelte';
 	import { TONE_SOFT, type FleetTone } from './tone';
 

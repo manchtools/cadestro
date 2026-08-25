@@ -18,9 +18,7 @@
 	];
 
 	export function formatEntry(e: MaintenanceWindowEntryInput): string {
-		// Day list reuses the canonical token order so a window stays
-		// readable regardless of insertion order — no surprise reshuffles
-		// when the user re-opens the editor.
+
 		const days = DAYS.filter((d) => e.days.includes(d.token))
 			.map((d) => d.label)
 			.join(', ');
@@ -57,10 +55,6 @@
 
 	let { open = $bindable(), entries, title, description, onsave }: Props = $props();
 
-	// Edit a working copy so cancel reverts cleanly. Reset whenever
-	// the dialog re-opens — this is the only Svelte $effect that
-	// depends on `open` to avoid the replaceState-during-hydration
-	// trap noted in MEMORY.
 	let working: MaintenanceWindowEntryInput[] = $state([]);
 	let newDays: Set<string> = $state(new Set());
 	let newStart = $state('22:00');
@@ -78,9 +72,7 @@
 	});
 
 	function isValidClock(s: string): boolean {
-		// HH:MM with H 00-23, M 00-59. The browser <input type="time">
-		// already normalises these, but we still validate before save
-		// in case the user pastes/edits manually.
+
 		return /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(s);
 	}
 

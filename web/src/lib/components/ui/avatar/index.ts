@@ -6,7 +6,7 @@ export {
 	Root,
 	Image,
 	Fallback,
-	//
+
 	Root as Avatar,
 	Image as AvatarImage,
 	Fallback as AvatarFallback,

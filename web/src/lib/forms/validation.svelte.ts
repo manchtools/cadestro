@@ -12,14 +12,6 @@ export interface FormValidation<T> {
 	handleSubmit(data: T, handler: (data: T) => Promise<void>): Promise<void>;
 }
 
-/**
- * Creates a reactive form validation helper using a Zod schema.
- * Works with both z.ZodObject and z.ZodEffects (schemas with .refine()).
- *
- * Usage:
- *   const { errors, handleSubmit } = createFormValidation(mySchema);
- *   await handleSubmit({ field1, field2 }, async (data) => { ... });
- */
 export function createFormValidation<T extends z.ZodTypeAny>(
 	schema: T
 ): FormValidation<z.infer<T>> {
@@ -44,7 +36,6 @@ export function createFormValidation<T extends z.ZodTypeAny>(
 			}
 		}
 
-		// Handle root-level errors from .refine() — attach to the path specified
 		for (const issue of result.error.issues) {
 			if (issue.path.length > 0) {
 				const key = String(issue.path[0]);
@@ -63,7 +54,7 @@ export function createFormValidation<T extends z.ZodTypeAny>(
 		value: unknown,
 		_data?: Partial<z.infer<T>>
 	): boolean {
-		// Try to extract the field schema from the shape (works for ZodObject)
+
 		const shape = getSchemaShape(schema);
 		if (shape && field in shape) {
 			const fieldSchema = shape[field as string];
@@ -78,7 +69,7 @@ export function createFormValidation<T extends z.ZodTypeAny>(
 				return false;
 			}
 		}
-		// Fallback: can't validate single field for refined schemas
+
 		return true;
 	}
 
@@ -116,14 +107,13 @@ export function createFormValidation<T extends z.ZodTypeAny>(
 	};
 }
 
-/** Extract shape from a ZodObject, unwrapping ZodEffects if necessary. */
 function getSchemaShape(
 	schema: z.ZodTypeAny
 ): Record<string, z.ZodTypeAny> | null {
 	if ('shape' in schema && typeof schema.shape === 'object') {
 		return schema.shape as Record<string, z.ZodTypeAny>;
 	}
-	// Unwrap ZodEffects (from .refine(), .transform(), etc.)
+
 	if ('_def' in schema) {
 		const def = schema._def as unknown as Record<string, unknown>;
 		if ('schema' in def) {

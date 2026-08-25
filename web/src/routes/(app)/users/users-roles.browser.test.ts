@@ -1,9 +1,5 @@
-// The users list's role columns come off the SEARCH DOCUMENT (server 031605d):
-// role_ids/role_names are direct grants, inherited_role_ids/_names one entry
-// per (role, group) pair. The document carries NO grant scope kinds — so the
-// row renders chips from it, but everything scope-aware (revoke, the assign
-// dialog's unscoped-exclusion) must resolve the full GetUser record instead of
-// consuming a fabricated UNSPECIFIED scope. These tests pin both halves.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page } from 'vitest/browser';
@@ -52,11 +48,10 @@ beforeEach(() => {
 				fields: {
 					email: 'ops@example.test',
 					last_login_at: '1750000000',
-					// Direct grants: Admin, Helpdesk, and the system User role.
+
 					role_ids: `${ROLE_ADMIN}, ${ROLE_HELP}, ${ROLE_USER}`,
 					role_names: 'Admin, Helpdesk, User',
-					// Inherited pairs: Viewer via two groups (one chip), and
-					// Helpdesk via a group — already granted directly, so no chip.
+
 					inherited_role_ids: `${ROLE_VIEW}, ${ROLE_VIEW}, ${ROLE_HELP}`,
 					inherited_role_names: 'Viewer, Viewer, Helpdesk'
 				}
@@ -69,8 +64,7 @@ beforeEach(() => {
 		],
 		totalCount: 2
 	});
-	// The detail record is the ONLY holder of scope truth: Helpdesk is held
-	// twice, once unscoped and once scoped to a user group.
+
 	api.getUser.mockResolvedValue({
 		id: USER_ID,
 		email: 'ops@example.test',
@@ -114,13 +108,12 @@ describe('users list — role chips come off the search document', () => {
 			.filter(Boolean);
 		const text = cluster.textContent ?? '';
 
-		// Direct: one chip per grant entry.
 		expect(text).toContain('Admin');
 		expect(text).toContain('Helpdesk');
 		expect(text).toContain('User');
-		// Inherited: Viewer once (two group pairs, deduped by role id) …
+
 		expect(text.match(/Viewer/g)).toHaveLength(1);
-		// … and Helpdesk not repeated as inherited beside its direct chip.
+
 		expect(text.match(/Helpdesk/g)).toHaveLength(1);
 		expect(chips.length).toBeGreaterThan(0);
 	});
@@ -128,7 +121,6 @@ describe('users list — role chips come off the search document', () => {
 	it("renders last_login_at from the document, with '0' meaning never", async () => {
 		await renderList();
 
-		// The formatter renders undefined as 'Never'; a real epoch is a date.
 		expect(row('new@example.test')!.textContent).toContain('Never');
 		expect(row('ops@example.test')!.textContent).not.toContain('Never');
 	});
@@ -146,7 +138,7 @@ describe('users list — scope truth stays with GetUser', () => {
 			.click();
 
 		await vi.waitFor(() => expect(api.getUser).toHaveBeenCalledWith(USER_ID), { timeout: 3000 });
-		// Both real grants revoked, each with its true scope off GetUser.
+
 		await vi.waitFor(() => expect(api.revokeRoleFromUser).toHaveBeenCalledTimes(2), {
 			timeout: 3000
 		});

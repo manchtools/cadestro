@@ -14,8 +14,6 @@
 	import { registerPageSearch } from '$lib/shell/page-search.svelte';
 	import { RowList, DataTablePagination, createClientListState } from '$lib/components/data-table';
 
-	// The Search RPC has no roles scope, so the list RPC returns every role and
-	// the table matches / sorts / pages them client-side.
 	type SortKey = 'name' | 'permissions';
 
 	const table = createClientListState<Role, SortKey>({
@@ -32,21 +30,13 @@
 	let deleteDialogOpen = $state(false);
 	let roleToDelete = $state<Role | null>(null);
 
-	// Creation lives on /roles/new, a pill-committed route: a modal cannot be
-	// stashed, so a half-written role could never be parked and picked up again.
-
-	// No assigned-to reading: Role carries no grant count on the wire, and an
-	// invented number is worse than an absent one.
-	//
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'name' as const, label: m.roles_name() },
 		{ key: 'permissions' as const, label: m.roles_permission_count() }
 	];
 
 	function confirmDelete(role: Role) {
-		// System roles are server-refused; say so before opening the dialog.
+
 		if (role.isSystem) {
 			toast.error(m.roles_cannot_delete_system());
 			return;
@@ -70,11 +60,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this page's
-	// facet and its keystrokes land on the same setSearch the removed input
-	// drove. These rows come from a plain list RPC, so the Search RPC has no
-	// scope for them — `null` says so instead of pretending. The registration is
-	// withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: null,
@@ -89,8 +74,7 @@
 </script>
 
 <PageShell contentClass="space-y-4">
-	<!-- ONE toolbar line: the filters ride the header beside Refresh/Create. The
-	     search box is gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -117,9 +101,6 @@
 		</div>
 	{/snippet}
 
-	<!-- The role list in the drafts' row grammar: shield tile, name over its ULID
-	     and description, system + permission-count chips — no headers, no table.
-	     Roles carry no timestamp, so the chips take the trailing slot. -->
 	<RowList {table} {sortOptions} rowKey={(r) => (r.id?.value ?? '')} href={(r) => `${base}/roles/${(r.id?.value ?? '')}`}>
 		{#snippet row(role)}
 			<div class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft">

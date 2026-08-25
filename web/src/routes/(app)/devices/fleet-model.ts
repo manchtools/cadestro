@@ -1,20 +1,11 @@
-// Pure fleet derivations for the semantic-zoom surface (concepts A4 + round-2
-// movement A). Everything here is computed from fields the control contract
-// actually returns on Device / DeviceGroup — no state is invented, and there is
-// deliberately no 'info' / converging tone because nothing on a Device says an
-// operation is currently landing on it.
+
+
 import { ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
 import type { Device } from '$contract/cadestro/v1/control_pb';
 import type { FleetTone } from '$lib/components/fleet/tone';
 
-/** Server default when neither the device nor any of its groups overrides it
- *  (control.proto: Device.sync_interval_minutes "0 = use default of 30"). */
 export const DEFAULT_SYNC_MINUTES = 30;
 
-/** Decay steps as MULTIPLES of the resolved cadence, not wall-clock constants —
- *  round 2's open call. Device carries no heartbeat field; sync_interval_minutes
- *  is the finest real cadence the contract exposes, so one interval is "fresh"
- *  and the stale steps are 2x and 8x of it. */
 export const AGE_MULTIPLES = [1, 2, 8] as const;
 
 export type AgeStep = 0 | 1 | 2 | 3;
@@ -22,11 +13,11 @@ export type AgeStep = 0 | 1 | 2 | 3;
 export interface FleetDevice {
 	id: string;
 	hostname: string;
-	/** ok | warn (drift) | crit (offline) | idle (never seen) — never 'info'. */
+
 	tone: FleetTone;
 	age: AgeStep;
 	lastSeenSec: number;
-	/** Resolved cadence the age step was measured against (minutes). */
+
 	syncMinutes: number;
 	device: Device;
 }
@@ -35,27 +26,18 @@ function seconds(ts: { seconds: bigint } | undefined): number {
 	return ts ? Number(ts.seconds) : 0;
 }
 
-/**
- * The one status classifier. The buckets are mutually exclusive by
- * construction, so the summary strip's counts always sum to the fleet size and
- * a tile's colour is exactly the bucket its device was counted in.
- */
 export function deviceTone(d: Device): FleetTone {
-	if (!d.lastSeenAt || seconds(d.lastSeenAt) <= 0) return 'idle'; // never seen — hollow
-	if (d.status !== DeviceStatus.ONLINE) return 'crit'; // offline — corner notch
+	if (!d.lastSeenAt || seconds(d.lastSeenAt) <= 0) return 'idle';
+	if (d.status !== DeviceStatus.ONLINE) return 'crit';
 	if (
 		d.complianceStatus === ComplianceStatus.NON_COMPLIANT ||
 		d.complianceStatus === ComplianceStatus.IN_GRACE_PERIOD
 	) {
-		return 'warn'; // compliance drift — dot
+		return 'warn';
 	}
 	return 'ok';
 }
 
-/** Resolved sync cadence in minutes. A group override wins over the device
- *  ("takes precedence over device-level setting"); with several groups the
- *  smallest non-zero one wins, mirroring the contract's documented MIN-across-
- *  groups resolution for the inventory interval. */
 export function resolveSyncMinutes(deviceMinutes: number, groupMinutes: number[]): number {
 	const overrides = groupMinutes.filter((n) => n > 0);
 	if (overrides.length > 0) return Math.min(...overrides);
@@ -93,8 +75,6 @@ export interface FleetSummary {
 	idle: number;
 }
 
-/** Counts per tone. Because deviceTone's buckets are exclusive,
- *  ok + warn + crit + idle === total is an invariant, not a coincidence. */
 export function summarize(devices: FleetDevice[]): FleetSummary {
 	const out: FleetSummary = { total: devices.length, ok: 0, warn: 0, crit: 0, idle: 0 };
 	for (const d of devices) {
@@ -106,13 +86,10 @@ export function summarize(devices: FleetDevice[]): FleetSummary {
 	return out;
 }
 
-/** A device is "down" when control cannot reach it: offline, or never seen. */
 export function isDown(d: FleetDevice): boolean {
 	return d.tone === 'crit' || d.tone === 'idle';
 }
 
-/** Worst first: unreachable before drift before healthy; within a tone the
- *  stalest first; ties broken by hostname so the order is deterministic. */
 const TONE_RANK: Record<FleetTone, number> = { crit: 0, idle: 1, warn: 2, info: 3, ok: 4 };
 
 export function worstFirst(devices: FleetDevice[]): FleetDevice[] {
@@ -133,13 +110,6 @@ export interface FleetBubble {
 	down: number;
 }
 
-/**
- * One bubble per device group plus a trailing "ungrouped" bubble. A device in
- * several groups appears in each of them — that is what the membership rows
- * say, and hiding the overlap would misreport group size. Groups sort
- * worst-first (most unreachable members first) so triage is the default view;
- * ungrouped always trails.
- */
 export function buildBubbles(
 	devices: FleetDevice[],
 	groups: { id: string; name: string }[],
@@ -154,7 +124,7 @@ export function buildBubbles(
 		const members: FleetDevice[] = [];
 		for (const id of membership.get(g.id) ?? []) {
 			const d = byId.get(id);
-			if (!d) continue; // outside this surface's scope (e.g. not one of my devices)
+			if (!d) continue;
 			members.push(d);
 			grouped.add(id);
 		}
@@ -176,8 +146,6 @@ export function buildBubbles(
 	return bubbles;
 }
 
-/** Selection implications for the pill caption — both numbers are read off the
- *  same bubbles the operator clicked in, never estimated. */
 export function selectionFacts(
 	selectedIds: readonly string[],
 	bubbles: FleetBubble[]

@@ -45,7 +45,7 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Pre-shared Key -->
+
 	<div class="space-y-1.5">
 		<Label>{m.luks_preshared_key()}</Label>
 		<div class="flex gap-2">
@@ -76,7 +76,6 @@
 		<p class="text-xs text-muted-foreground">{m.luks_preshared_key_description()}</p>
 	</div>
 
-	<!-- Rotation Interval -->
 	<div class="space-y-1.5">
 		<Label>{m.luks_rotation_interval()}</Label>
 		<div class="flex items-center gap-2">
@@ -94,7 +93,6 @@
 		<p class="text-xs text-muted-foreground">{m.luks_rotation_interval_description()}</p>
 	</div>
 
-	<!-- Minimum Words -->
 	<div class="space-y-1.5">
 		<Label>{m.luks_min_words()}</Label>
 		<Input
@@ -109,7 +107,6 @@
 		<p class="text-xs text-muted-foreground">{m.luks_min_words_description()}</p>
 	</div>
 
-	<!-- Device-Bound Key Type -->
 	<div class="space-y-1.5">
 		<Label>{m.luks_device_bound_key_type()}</Label>
 		<Select.Root
@@ -137,12 +134,10 @@
 		<FieldError error={errors.deviceBoundKeyType} />
 	</div>
 
-	<!-- User Passphrase Options (conditional) -->
 	{#if showUserPassphraseOptions}
 		<div class="space-y-4 rounded-lg border p-3">
 			<p class="text-sm font-medium">{m.luks_user_passphrase_settings()}</p>
 
-			<!-- Min Length -->
 			<div class="space-y-1.5">
 				<Label>{m.luks_user_passphrase_min_length()}</Label>
 				<Input
@@ -156,7 +151,6 @@
 				<FieldError error={errors.userPassphraseMinLength} />
 			</div>
 
-			<!-- Complexity -->
 			<div class="space-y-1.5">
 				<Label>{m.lps_complexity()}</Label>
 				<Select.Root
@@ -186,7 +180,6 @@
 		</div>
 	{/if}
 
-	<!-- Info box -->
 	<div class="rounded-lg bg-muted p-3 text-sm space-y-1">
 		<p class="font-medium">{m.luks_info_title()}</p>
 		<p class="text-xs text-muted-foreground">{m.luks_info_description()}</p>

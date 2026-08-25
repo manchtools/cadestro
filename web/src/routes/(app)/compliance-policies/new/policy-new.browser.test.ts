@@ -1,9 +1,5 @@
-// Behaviour contract for /compliance-policies/new — the three-step create WIZARD
-// that used to live behind a dialog footer. The tests pin the unchanged RPC
-// sequence (CreateCompliancePolicy then one AddCompliancePolicyRule per picked
-// check), the compliance-only catalogue filter, the store-level gate, the
-// cross-route stash round trip including the SELECTION, and a Create button that
-// navigates instead of popping a dialog.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -34,8 +30,7 @@ vi.mock('$lib/sdk', async () => {
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
-		// The route pages the SHELL actions through this helper; hand back the
-		// catalogue the client would have accumulated.
+
 		fetchAllPages: vi.fn(async () => {
 			const response = await api.listActions();
 			return response.actions;
@@ -73,8 +68,7 @@ vi.mock('$app/state', () => ({
 			return nav.url;
 		},
 		params: {},
-		// The list page mounts CompliancePolicyDetailSheet, which reads shallow
-		// routing state; without it the whole page render throws.
+
 		state: {}
 	}
 }));
@@ -98,7 +92,6 @@ const CHECK_A = '01JQZZ5B8N4P0R3S7T9V2W1X6Y';
 const CHECK_B = '01JQZZ6C9P5Q1S4T8V0W3X2Y7Z';
 const PLAIN_SHELL = '01JQZZ7D0Q6R2T5V9W1X4Y3Z8A';
 
-/** Two compliance checks plus one ordinary shell action that must NOT show up. */
 const catalogue = [
 	create(ManagedActionSchema, {
 		id: { value: CHECK_A },
@@ -162,7 +155,7 @@ describe('/compliance-policies/new — one page, no wizard footer', () => {
 		expect(shell.pill.context?.route).toBe(ROUTE);
 		expect(shell.pill.context?.commitLabel).toBe(m.common_create());
 		expect(ruleRow(CHECK_B)).toBeTruthy();
-		// A plain SHELL action is not a compliance check and must not be offered.
+
 		expect(ruleRow(PLAIN_SHELL)).toBeNull();
 	});
 
@@ -230,7 +223,7 @@ describe('/compliance-policies/new — the third exit: stash, walk away, restore
 
 		await vi.waitFor(() => expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(ROUTE));
 		expect(pillMode()).toBe('nav');
-		// The card pops on the click; the buffer is staged for the remount.
+
 		expect(shell.drafts).toHaveLength(0);
 		await rail.unmount();
 
@@ -251,16 +244,12 @@ describe('/compliance-policies/new — the third exit: stash, walk away, restore
 
 describe('/compliance-policies — the list page hands creation to the route', () => {
 	it('navigates instead of opening a dialog', async () => {
-		// The list, addressed explicitly: the bare section root lands on the
-		// overview since the drill-down grammar, and this test is about the
-		// LIST page's create affordance.
+
 		nav.url = new URL('https://control.test/compliance-policies?zoom=list');
-		// This test is about the Create affordance, not the rows: an empty page
-		// keeps it off the shared row/search machinery entirely.
+
 		api.listActions.mockResolvedValue({ actions: [], nextPageToken: '' });
 		const list = await render(PoliciesPage);
-		// Let the list settle before clicking: tearing the page down mid-request
-		// leaves its in-flight effects to reject after the test has ended.
+
 		await vi.waitFor(() => expect(api.search).toHaveBeenCalled(), { timeout: 3000 });
 
 		const createButton = await vi.waitFor(() => {

@@ -17,9 +17,6 @@
 
 	let { panel, content }: { panel: ShellPanel; content?: Snippet } = $props();
 
-	// The header is the only drag surface. A press on a header button never starts
-	// a drag because pointer capture would eat the click. Position is store state;
-	// the component renders it and movePanel clamps it.
 	let dragging = false;
 	let sx = 0;
 	let sy = 0;
@@ -51,7 +48,6 @@
 		shell.drag = { panelId: null, slot: null };
 	}
 
-	// Keyboard movement: arrows 16px, Shift+arrows 48px, Escape parks.
 	function onHeaderKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();

@@ -12,19 +12,12 @@
 	} from '$lib/components/actions/forms/types';
 	import * as m from '$lib/paraglide/messages';
 
-	// Card surfacing the schedule of an action set or definition. The
-	// container's schedule fires every member action when triggered (see
-	// manchtools/cadestro-agent#45) — that's what the description
-	// callout reinforces. Edit opens a dialog backed by the existing
-	// per-action ActionScheduleForm so cron/interval/run-on-assign/skip-
-	// if-unchanged behavior is identical.
 	interface Props {
 		schedule?: ActionSchedule;
 		label?: string;
 		description?: string;
 		saving?: boolean;
-		/** Opens the schedule editor from outside — the entity's pill owns this
-		 *  action now, so the trigger no longer has to live on the card. */
+
 		editOpen?: boolean;
 		onsave: (next: ActionSchedule) => Promise<void>;
 	}
@@ -39,17 +32,6 @@
 	}: Props = $props();
 	let formState = $state<ScheduleFormState>(defaultScheduleForm());
 
-	// Seeding rides the OPEN, not the trigger: the pill opens this dialog from
-	// outside the card, so a form seeded only inside a local click handler would
-	// come up holding the previous edit.
-	//
-	// Dismissing rides the CLOSE for the same reason the action's schedule
-	// dialog has a single Done button: the entity's one commit lives on the
-	// pill, and a second Save inside a dialog opened from that pill is a
-	// competing commit path. The container schedule is server state that the
-	// builder's draft does not carry (it is its own RPC), so the honest single
-	// path is "dismiss = commit": Done, Esc and the overlay all write once,
-	// through the same `onsave`, and only when something actually changed.
 	let seeded = false;
 	let seededJson = '';
 	$effect(() => {
@@ -66,17 +48,14 @@
 	});
 
 	async function persist() {
-		// An open-and-close with no edit is not a write: it would toast "Schedule
-		// updated" at an operator who only looked.
+
 		if (JSON.stringify($state.snapshot(formState)) === seededJson) return;
 		const next = scheduleFormToProto(formState);
 		saving = true;
 		try {
 			await onsave(next);
 		} catch {
-			// The page has already reported the failure. Reopen on the operator's
-			// edit rather than dropping it — `seeded` stays true so the reopen does
-			// not reseed the form from the schedule the server still holds.
+
 			seeded = true;
 			editOpen = true;
 		} finally {
@@ -96,10 +75,6 @@
 	}
 </script>
 
-<!-- The SAME summary an action shows: the schedule states itself in one line
-     and is revealed by clicking it (or the entity's pill action). It used to be
-     a full body card with a paragraph of prose — the container's schedule
-     "listed in the form" the operator objected to. -->
 <div class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 	<ScheduleSummary {schedule} {label} onedit={() => (editOpen = true)} />
 </div>

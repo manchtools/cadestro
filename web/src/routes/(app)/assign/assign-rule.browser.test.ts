@@ -68,10 +68,7 @@ const SETS = [create(ActionSetSchema, { id: { value: SET_PATCH }, name: 'Patch a
 beforeEach(() => {
 	document.body.innerHTML = '';
 	resetShell();
-	// Assign parks its buffer in a module-state draft (draft.svelte.ts), which
-	// resetShell does not touch. Auto-stash-on-navigate runs onStash when a dirty
-	// surface unmounts, so a prior test's parked rule/name/set would leak into
-	// this one — reset it too for a genuinely clean surface.
+
 	clearAssignDraft();
 	setCarried({ deviceIds: [DEV_ONLINE], label: '1 device' });
 	for (const fn of Object.values(api)) fn.mockReset();
@@ -124,7 +121,6 @@ async function nameGroup(name = GROUP_NAME) {
 	await browser.getByTestId('assign-rule-name').fill(name);
 }
 
-/** Everything a rule commit needs: a set, a counted rule and a group name. */
 async function readyToAssign() {
 	await enterRuleMode();
 	await buildRule();
@@ -144,8 +140,7 @@ describe('assign — the target-mode toggle', () => {
 
 		expect(document.querySelector('[data-testid="assign-carried-grid"]')).toBeNull();
 		expect(document.querySelector('[data-testid="query-editor"]')).toBeTruthy();
-		// A rule target has no per-device dispatch on the contract, so the surface
-		// offers no schedule it could not honour.
+
 		expect(
 			document.querySelector(`[role="radiogroup"][aria-label="${m.assign_schedule_label()}"]`)
 		).toBeNull();
@@ -181,10 +176,9 @@ describe('assign by rule — the count is the server’s', () => {
 			{ timeout: 3000 }
 		);
 		expect(context()?.subtextTone).toBe('neutral');
-		// One copy only: the card carries no second count line.
+
 		expect(document.querySelector('[data-testid="query-status"]')).toBeNull();
-		// The count that the operator commits against is the one the server gave
-		// for THIS query — never Evaluate, which would mutate a group.
+
 		expect(api.validateDynamicQuery).toHaveBeenCalledWith(QUERY);
 		expect(api.evaluateDynamicGroup).not.toHaveBeenCalled();
 	});
@@ -207,8 +201,7 @@ describe('assign by rule — the count is the server’s', () => {
 			.element(preview.getByText(m.query_match_count_devices({ count: MATCH_COUNT })))
 			.toBeVisible();
 		await expect.element(preview.getByText(m.assign_rule_preview_note())).toBeVisible();
-		// The count is the ONLY thing claimed. Nothing else on the surface — least
-		// of all the carried selection's own hostnames — is dressed up as a match.
+
 		const text = document.querySelector('[data-testid="assign-rule-preview"]')?.textContent ?? '';
 		expect(text).not.toContain('api-prod-01');
 		expect(text).not.toContain('web-prod-01');
@@ -253,7 +246,7 @@ describe('assign by rule — nothing commits until all three are real', () => {
 			timeout: 3000
 		});
 		expect(context()?.valid, 'the group still has no name').toBe(false);
-		// The store's guard, not just a disabled attribute — ⌘S is closed too.
+
 		expect(commitContext()).toBe(false);
 
 		await nameGroup();
@@ -294,7 +287,7 @@ describe('assign by rule — the future-scope acknowledgement', () => {
 		expect(api.createDeviceGroup).not.toHaveBeenCalled();
 		expect(api.createAssignment).not.toHaveBeenCalled();
 		expect(nav.goto).not.toHaveBeenCalled();
-		// the draft survives the cancel
+
 		expect(context()?.valid).toBe(true);
 		expect(document.querySelector<HTMLTextAreaElement>('#query-editor-text')?.value).toBe(QUERY);
 	});
@@ -318,7 +311,7 @@ describe('assign by rule — the commit is group-create then assignment', () => 
 			GROUP_ID,
 			AssignmentMode.REQUIRED
 		);
-		// The assignment can only name a group that already exists.
+
 		expect(api.createDeviceGroup.mock.invocationCallOrder[0]).toBeLessThan(
 			api.createAssignment.mock.invocationCallOrder[0]
 		);
@@ -342,8 +335,7 @@ describe('assign by rule — the commit is group-create then assignment', () => 
 			.element(browser.getByTestId('assign-rule-error'))
 			.toHaveTextContent(GROUP_NAME);
 		expect(nav.goto).not.toHaveBeenCalled();
-		// A retry assigns THAT group instead of creating a second one for the
-		// same rule.
+
 		await vi.waitFor(() => expect(context()?.valid).toBe(true), { timeout: 3000 });
 		api.createAssignment.mockResolvedValue({});
 		commitContext();
@@ -369,7 +361,7 @@ describe('assign by rule — save as group without assigning', () => {
 		await expect
 			.element(browser.getByTestId('assign-rule-saved').getByRole('link'))
 			.toHaveAttribute('href', `/device-groups/${GROUP_ID}`);
-		// The surface stays put: saving a group is not the assignment.
+
 		expect(nav.goto).not.toHaveBeenCalled();
 		expect(context()?.valid).toBe(true);
 	});
@@ -398,15 +390,13 @@ describe('assign by rule — the third exit', () => {
 		await vi.waitFor(() => expect(shell.pill.context).toBeNull(), { timeout: 3000 });
 
 		await first.unmount();
-		// Cross-route restore: the store hands the home route to the chrome and
-		// pops the card, staging the buffer for the remount to claim.
+
 		expect(restoreDraft(draftId!)).toBe('/assign');
 		expect(shell.drafts).toHaveLength(0);
 
 		await render(AssignPage);
 		expect(shell.drafts).toHaveLength(0);
 
-		// Same mode, same rule, same name, same set — and the pill can commit it.
 		await vi.waitFor(() => expect(document.querySelector('[data-testid="assign-rule-stage"]')).toBeTruthy(), {
 			timeout: 3000
 		});

@@ -2,10 +2,6 @@
 	import { pushState } from '$lib/navigation';
 	import { getLocalizedError } from '$lib/errors';
 
-	/**
-	 * Open the action detail sheet via shallow routing.
-	 * Call from any page that includes <ActionDetailSheet />.
-	 */
 	export function openActionSheet(actionId: string) {
 		pushState(`/actions/${actionId}`, { actionSheet: actionId });
 	}
@@ -46,7 +42,6 @@
 
 	let { onupdated, children }: Props = $props();
 
-	// Derive state from shallow routing
 	let actionId = $derived(page.state.actionSheet);
 	let sheetOpen = $derived(!!actionId);
 
@@ -148,7 +143,7 @@
 		{:else if action}
 			{@const isCompliance = action.type === ActionType.SHELL && action.params.case === 'shell' && action.params.value.isCompliance}
 			<div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-				<!-- Details Section -->
+
 				<div class="space-y-3">
 					<h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{m.action_detail_title()}</h3>
 					<div class="space-y-3">
@@ -209,7 +204,6 @@
 
 				<hr />
 
-				<!-- Parameters Section -->
 				<div class="space-y-3">
 					<div class="flex items-center justify-between">
 						<h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{m.action_detail_parameters()}</h3>
@@ -223,7 +217,6 @@
 
 				<hr />
 
-				<!-- Schedule Section -->
 				<div class="space-y-3">
 					<div class="flex items-center justify-between">
 						<h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
@@ -244,7 +237,6 @@
 				{/if}
 			</div>
 
-			<!-- Footer -->
 			<div class="px-6 py-4 border-t shrink-0">
 				<Button variant="outline" class="w-full" href="/actions/{actionId}">
 					<ExternalLink class="h-4 w-4 mr-2" />

@@ -54,7 +54,7 @@
 						{formatInventoryInterval(parseInt(selectedValue, 10))}
 					</Select.Trigger>
 					<Select.Content>
-						<!-- Server bounds: 0 = inherit, else 120–10080 minutes (2 h – 7 d). -->
+
 						<Select.Item value="0">{m.inventory_interval_inherit()}</Select.Item>
 						<Select.Item value="120">2 h</Select.Item>
 						<Select.Item value="240">4 h</Select.Item>

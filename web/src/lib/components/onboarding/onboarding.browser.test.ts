@@ -1,13 +1,5 @@
-// The welcome + guided tour, exercised through the REAL host component against
-// REAL anchors in the DOM. What is load-bearing here:
-//
-//   1. the welcome is a first-run courtesy: once per (server, user), never for
-//      a returning operator, and "Explore on my own" never starts anything;
-//   2. the run contains exactly the steps whose anchors are on the page — a
-//      missing anchor is dropped from the count, not crashed on;
-//   3. the card is reachable: focus is trapped in it, Esc leaves with the
-//      restart note, and it never renders off screen or over its own anchor;
-//   4. prefers-reduced-motion really removes the motion, not just some of it.
+
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
@@ -25,7 +17,6 @@ vi.mock('$app/navigation', () => ({
 	replaceState: vi.fn()
 }));
 
-// Only the client seam is faked; the onboarding modules under test are real.
 vi.mock('$lib/sdk', () => ({
 	authStore: {
 		get user() {
@@ -58,7 +49,7 @@ interface AnchorOpts {
 	zoom?: boolean;
 	legend?: boolean;
 	summary?: boolean;
-	/** A `fleet-zoom` anchor jammed into the bottom-right corner. */
+
 	corner?: boolean;
 }
 
@@ -66,7 +57,6 @@ function fixed(el: HTMLElement, left: number, top: number, width: number, height
 	el.style.cssText = `position:fixed;left:${left}px;top:${top}px;width:${width}px;height:${height}px;background:#888`;
 }
 
-/** Mount only the anchors a test wants, so "absent anchor" is a real absence. */
 function mountAnchors(opts: AnchorOpts = {}) {
 	const root = document.createElement('div');
 	root.id = 'tour-anchors';
@@ -153,7 +143,6 @@ describe('the first-run welcome', () => {
 		await vi.waitFor(() => expect(q('[data-testid="onboarding-welcome"]')).not.toBeNull());
 		expect(localStorage.getItem(storageKey(onboardingScope(mocks.serverUrl, 'u1')))).toContain('welcomeSeen');
 
-		// A reload: the in-memory store starts fresh, the stored flag does not.
 		mounted?.unmount?.();
 		document.body.innerHTML = '';
 		resetOnboarding();
@@ -207,7 +196,7 @@ describe('the coach-mark tour', () => {
 		startTour();
 
 		await vi.waitFor(() => expect(card()).not.toBeNull());
-		// Script order: the tiles are explained, then the strip that counts them.
+
 		expect(onboarding.steps.map((s) => s.id)).toEqual([
 			'pill',
 			'search',
@@ -246,7 +235,7 @@ describe('the coach-mark tour', () => {
 	});
 
 	it('drops a step whose anchor is absent instead of pointing at nothing', async () => {
-		// fleet-zoom, fleet-legend and fleet-summary are deliberately NOT mounted.
+
 		mountAnchors({ grid: true });
 		mountHost();
 		startTour();
@@ -310,7 +299,6 @@ describe('the coach-mark card is reachable', () => {
 		expect(document.getElementById(c.getAttribute('aria-describedby')!)).not.toBeNull();
 		await vi.waitFor(() => expect(document.activeElement).toBe(c));
 
-		// Back is disabled on step 1, so the cycle is skip → next → skip.
 		const skip = q<HTMLButtonElement>('[data-testid="tour-skip"]')!;
 		const next = q<HTMLButtonElement>('[data-testid="tour-next"]')!;
 
@@ -330,7 +318,7 @@ describe('the coach-mark card is reachable', () => {
 
 		const ring = q('[data-testid="tour-spotlight"]')!;
 		expect(ring.getAttribute('aria-hidden')).toBe('true');
-		// The dim must never swallow the page behind it.
+
 		expect(getComputedStyle(ring).pointerEvents).toBe('none');
 	});
 
@@ -351,7 +339,7 @@ describe('the coach-mark card is reachable', () => {
 		mountHost();
 		startTour();
 		await vi.waitFor(() => expect(card()).not.toBeNull());
-		// let the placement settle after the card's own height is measured
+
 		await new Promise((r) => setTimeout(r, 80));
 
 		const c = card()!.getBoundingClientRect();
@@ -375,7 +363,7 @@ describe('prefers-reduced-motion', () => {
 
 		const ring = q<HTMLElement>('[data-testid="tour-spotlight"]')!;
 		expect(ring.dataset.motion).toBe('full');
-		// computed, not the authored string: what the browser will actually animate
+
 		expect(getComputedStyle(ring).transitionDuration).toContain('0.22s');
 		expect(ring.querySelector('.animate-pulse')).not.toBeNull();
 	});

@@ -1,9 +1,5 @@
-// Behaviour contract for /roles/new — the create flow that used to be a modal.
-//
-// A dialog owns its own footer and dies on navigation, so it could never take
-// part in the pill's three exits. These tests pin the conversion: the same RPC
-// arguments, a store-level validation gate, the cross-route stash round trip,
-// and a list page whose Create button navigates instead of popping a dialog.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import * as m from '$lib/paraglide/messages';
@@ -15,8 +11,6 @@ const api = vi.hoisted(() => ({
 }));
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/roles/new') }));
 
-// Only the client and the browser-only stores are faked; the generated protobuf
-// re-exports stay real, so the zod schema under test is the production one.
 vi.mock('$lib/sdk', async () => {
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const common = await import('$contract/cadestro/v1/common_pb');
@@ -112,9 +106,7 @@ describe('/roles/new — the commit is the pill\'s', () => {
 		await fillRole('Auditor', 'Read-only reviewer');
 
 		expect(shell.pill.context?.route).toBe(ROUTE);
-		// One commit grammar app-wide: every create surface says Create, every edit
-		// surface says Save. It used to say "Create Role" here and "Save" on the
-		// action create route.
+
 		expect(shell.pill.context?.commitLabel).toBe(m.common_create());
 	});
 
@@ -159,9 +151,7 @@ describe('/roles/new — the third exit: stash, walk away, restore', () => {
 
 		await vi.waitFor(() => expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(ROUTE));
 		expect(pillMode()).toBe('nav');
-		// The card leaves the rail on the click; the buffer travels to the surface
-		// through the staged claim instead. (A card that lingered until the owner
-		// happened to claim it is what made restoring look unreliable.)
+
 		expect(shell.drafts).toHaveLength(0);
 		await rail.unmount();
 

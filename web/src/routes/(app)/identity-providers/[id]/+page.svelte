@@ -35,16 +35,11 @@
 	let saving = $state(false);
 	let deleteDialogOpen = $state(false);
 
-	// ── one editable buffer for the whole page ──────────────────────────────
-	// Connection, endpoints and JIT are three sections of ONE edit: the operator
-	// changes what they need across all of them and commits once, from the pill.
-	// `baseline` is the snapshot the buffer is compared against, so "dirty" is a
-	// fact about the loaded provider, not a flag someone has to remember to set.
 	interface IdpForm {
 		name: string;
 		enabled: boolean;
 		clientId: string;
-		/** Write-only: blank means "keep the stored secret". */
+
 		clientSecret: string;
 		issuerUrl: string;
 		authorizationUrl: string;
@@ -54,7 +49,7 @@
 		autoCreateUsers: boolean;
 		autoLinkByEmail: boolean;
 		trustEmail: boolean;
-		/** Role granted to JIT-created users; empty string means "no default role". */
+
 		defaultRoleId: string;
 		groupClaim: string;
 	}
@@ -83,11 +78,8 @@
 	let form = $state<IdpForm>(formOf(null));
 	let baseline = $state<IdpForm>(formOf(null));
 
-	// The default-role select's option list. Supporting data only: the provider
-	// stores a role ID, this list turns it into a name and offers the others.
 	let roles = $state<Role[]>([]);
 
-	// SCIM state
 	let scimToken = $state('');
 	let scimEnabling = $state(false);
 	let scimDisabling = $state(false);
@@ -103,8 +95,6 @@
 
 	const dirty = $derived(provider !== null && FORM_KEYS.some((k) => form[k] !== baseline[k]));
 
-	// The slug is immutable here (the header shows it read-only), so the display
-	// name is the one required field the editor can actually empty.
 	const nameValid = $derived(form.name.trim().length > 0);
 
 	onMount(() => {
@@ -121,8 +111,6 @@
 		}
 	}
 
-	/** The stored role may have been deleted since; showing its raw ID is more
-	 *  honest than pretending "no default role" while the server still grants it. */
 	const defaultRoleLabel = $derived(
 		form.defaultRoleId
 			? (roles.find((r) => (r.id?.value ?? '') === form.defaultRoleId)?.name ?? form.defaultRoleId)
@@ -134,17 +122,11 @@
 		try {
 			const p = await apiClient.getIdentityProvider(providerId);
 			if (p) {
-				// SCIM enable/disable/rotate reload the provider too. An uncommitted
-				// buffer outranks a background refresh: re-seeding here would drop the
-				// operator's edits while the pill still promises to commit them.
+
 				const keep = dirty;
 				provider = p;
 				if (!keep) resetForm(p);
-				// Take back a draft this page parked on the stage. The buffer is
-				// component state and did not survive the unmount, so the stash
-				// snapshotted it onto the card; this is where it comes back. The
-				// baseline stays the SERVER's provider, so `dirty` still means
-				// "diverges from what is stored", not "diverges from the card".
+
 				const parked = claimDraft(contextId) as IdpForm | undefined;
 				if (parked) form = { ...parked };
 			}
@@ -186,8 +168,7 @@
 				autoCreateUsers: form.autoCreateUsers,
 				autoLinkByEmail: form.autoLinkByEmail,
 				trustEmailAssertions: form.trustEmail,
-				// Full-replace semantics: omitting this would CLEAR the stored
-				// default role on every save. Empty string means "no default role".
+
 				defaultRoleId: form.defaultRoleId,
 				groupClaim: form.groupClaim.trim()
 			});
@@ -204,28 +185,14 @@
 		}
 	}
 
-	// ── the pill is this provider's action bar ──────────────────────────────
-	// No Save button anywhere on the page, and the pill is held for the WHOLE
-	// visit rather than only while the form diverges: Delete and the SCIM
-	// lifecycle act on the provider as a whole, and they cannot live somewhere
-	// that only appears after you have typed. `dirty` still says whether there is
-	// a form edit to commit, so ⌘S, Stash and Cancel stay honest. The SCIM
-	// one-shots and the delete still write immediately and never join this
-	// context's commit.
 	const contextId = $derived(`identity-provider:${providerId}`);
-	/** This editor's home — a stashed draft restores by navigating back to it. */
+
 	const contextRoute = $derived(`/identity-providers/${providerId}`);
 
 	const pillSubtext = $derived(nameValid ? (provider?.slug ?? '') : m.validation_name_required());
 
-	// Plain `let`, not `$state`: the effect writes it, so a tracked read would
-	// make the effect depend on its own write.
 	let owns = false;
 
-	/** The provider's own actions. SCIM is provisioning lifecycle, not a form
-	 *  field: enable / rotate / disable each write on their own and change what
-	 *  the NEXT action can be, so the set is rebuilt on every patch rather than
-	 *  frozen at acquire time. Rotate and disable keep their confirm dialogs. */
 	function entityActions(): PillAction[] {
 		const actions: PillAction[] = [];
 		if (!provider) return actions;
@@ -261,18 +228,14 @@
 			id: contextId,
 			route: contextRoute,
 			title: form.name || (provider?.name ?? ''),
-			// The truth, not a constant: the pill is held for the whole visit, so it
-			// must be able to say "nothing to save here". It also decides whether
-			// leaving parks a draft — a provider the operator only looked at must not
-			// land on the stage.
+
 			dirty,
 			valid: nameValid,
 			commitLabel: m.common_save(),
 			subtext: pillSubtext,
 			subtextTone: nameValid ? 'neutral' : 'warn',
 			onCommit: () => {
-				// The store already exited context; a FAILED save re-acquires it
-				// below, so the operator never loses the buffers with the commit.
+
 				owns = false;
 				void saveProvider();
 			},
@@ -280,16 +243,14 @@
 				owns = false;
 				revertEdits();
 			},
-			// Stash releases the pill deliberately — without this the effect would
-			// immediately re-acquire and the third exit would do nothing.
+
 			onStash: () => {
 				owns = false;
 			},
 			onRestore: () => {
 				owns = true;
 			},
-			// The whole buffer rides ON the card — including the write-only
-			// clientSecret, which exists nowhere else once this page unmounts.
+
 			stashPayload: (): IdpForm => ({ ...$state.snapshot(form) }),
 			stashSubtitle: m.idp_detail_title(),
 			extraActions: entityActions()
@@ -298,40 +259,31 @@
 
 	function acquire() {
 		owns = true;
-		// Resuming edits supersedes any card this context parked on the stage: the
-		// live buffer is newer than the snapshot on the card, so the card goes
-		// (claiming it here would only hand back staler edits).
+
 		removeDraft(draftIdFor(contextId));
 		enterContext(contextState());
 	}
 
 	function release() {
 		owns = false;
-		// Only tear down our own context — another surface may have taken over.
+
 		if (shell.pill.context?.id === contextId) exitContext();
 	}
 
 	$effect(() => {
-		// Read every reactive input HERE. Held from load to unmount, not only while
-		// dirty: the pill IS this provider's action bar. `saving` still parks it for
-		// the round trip — an in-flight commit has no second commit to offer.
+
 		const active = provider !== null && !saving;
 		const patch = {
 			title: form.name || (provider?.name ?? ''),
 			valid: nameValid,
-			// Tracked here too: the pill turns Save, Stash and Cancel on and off from
-			// this, and it flips on every keystroke.
+
 			dirty,
 			subtext: pillSubtext,
 			subtextTone: (nameValid ? 'neutral' : 'warn') as 'neutral' | 'warn',
-			// Enabling SCIM replaces "Enable" with "Rotate"/"Disable" while the pill
-			// is still held, so the action set has to ride the patch, not the acquire.
+
 			extraActions: entityActions()
 		};
-		// …and write to the store UNTRACKED. The store helpers read
-		// `shell.pill.context` themselves, so a tracked call would make this
-		// effect depend on the pill it just wrote — and Stash, which clears the
-		// context, would be undone by an instant re-acquire.
+
 		untrack(() => {
 			if (!active) {
 				if (owns) release();
@@ -342,11 +294,6 @@
 		});
 	});
 
-	// If the page goes away mid-edit the pill must not keep pointing at a
-	// provider that is no longer on screen — and must not DISCARD the buffer
-	// (the write-only client secret lives nowhere else once this unmounts).
-	// Auto-stash-on-navigate parks it on the stage instead; a commit/cancel/stash
-	// already cleared `owns`, so this only fires on a genuine leave.
 	onDestroy(() => {
 		if (owns) {
 			owns = false;
@@ -460,17 +407,13 @@
 		</div>
 	{/snippet}
 
-	<!-- The editor is a reading column, the same measure a create surface gets.
-	     The SCIM band keeps its two panes inside it; it is not flattened. -->
 	<div class="max-w-3xl space-y-4">
 		{#if loading && !provider}
 			<div class="flex items-center justify-center rounded-xl border border-hair bg-surface py-12">
 				<RefreshCw class="h-6 w-6 animate-spin text-muted-foreground" />
 			</div>
 		{:else if provider}
-			<!-- Connection, endpoints and JIT are three sections of ONE commit, so they
-			     are three sections of one plate — three separate plates suggested three
-			     separate saves that never existed. -->
+
 			<div class="space-y-4 rounded-xl border border-hair bg-surface p-4 shadow-plate">
 				<FormSection title={m.idp_section_connection()} lead>
 					<div class="grid gap-3 sm:grid-cols-2">
@@ -521,8 +464,7 @@
 				</FormSection>
 
 				<FormSection title={m.idp_section_endpoints()}>
-					<!-- One URL per row: three columns turned every endpoint into a
-					     scrolling sliver of the value it holds. -->
+
 					<div class="space-y-1.5">
 						<Label for="editIssuerUrl">{m.idp_field_issuer_url()}</Label>
 						<Input id="editIssuerUrl" type="url" bind:value={form.issuerUrl} class="font-mono text-xs" />
@@ -608,11 +550,6 @@
 				</FormSection>
 			</div>
 
-			<!-- ── SCIM: what has to be READ ─────────────────────────────────── -->
-			<!-- Enable, rotate and disable are not here. They act on the provider as
-			     a whole, so they are pill actions next to Delete; what stays is the
-			     state only this page can show — the endpoint the directory posts to,
-			     and the bearer token that is displayed exactly once. -->
 			<section
 				data-testid="idp-scim-section"
 				class="space-y-2 rounded-xl border border-hair bg-surface p-4 shadow-plate"
@@ -644,8 +581,7 @@
 					</div>
 				{/if}
 				{#if scimToken}
-					<!-- Shown once, straight from the enable/rotate response — the
-					     provider record never carries the bearer token back. -->
+
 					<div class="space-y-2 rounded-lg border border-warn/50 bg-warn-soft p-3">
 						<p class="text-xs font-semibold text-warn">{m.scim_token()}</p>
 						<div class="flex items-center gap-2">
@@ -667,9 +603,6 @@
 				{/if}
 			</section>
 
-			<!-- No danger zone: Delete is a pill action now. A destructive control
-			     parked below three form sections was both hard to reach and easy to
-			     hit on the way past; the confirm dialog is still the gate. -->
 		{/if}
 	</div>
 </PageShell>

@@ -1,7 +1,5 @@
 <script lang="ts">
-	// The role editor's permission MATRIX: capability rows grouped by domain,
-	// one column for this role. It carries NO save button — commit rides the
-	// context pill.
+
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import RoleScopableIcon from '$lib/components/role-scopable-icon.svelte';
@@ -19,7 +17,7 @@
 	}: {
 		permissions: PermissionInfo[];
 		selected: Set<string>;
-		/** The role this column allows for — the matrix' single toggle column. */
+
 		columnLabel: string;
 		onToggle: (key: string) => void;
 		onToggleGroup: (keys: string[], allSelected: boolean) => void;
@@ -45,10 +43,6 @@
 			.filter((g) => g.permissions.length > 0);
 	});
 
-	// The API's scope rule, mirrored exactly: a permission is scopable only when
-	// it declares a target kind. UNSPECIFIED — which is where every
-	// privilege-granting permission sits server-side — is global-only, and the
-	// row says so instead of showing nothing.
 	function scopeKindOf(p: PermissionInfo): RoleGrantScopeKind | null {
 		if (p.targetKind === PermissionTargetKind.DEVICE) return RoleGrantScopeKind.DEVICE_GROUP;
 		if (p.targetKind === PermissionTargetKind.USER) return RoleGrantScopeKind.USER_GROUP;
@@ -84,8 +78,7 @@
 	</header>
 
 	{#if permissions.length === 0}
-		<!-- Matches-zero guard: an empty permission list is a FAILURE to state, not
-		     an empty matrix that silently grants nothing. -->
+
 		<p data-testid="roles-matrix-unavailable" class="bg-crit-soft px-4 py-6 text-sm text-crit">
 			{m.roles_matrix_unavailable()}
 		</p>
@@ -124,10 +117,6 @@
 					</span>
 				</div>
 
-				<!-- Permissions flow into COLUMNS. One per full-width row put the
-				     checkbox an inch of empty gutter away from its own label and made
-				     a hundred capabilities an endless scroll; in columns the row is
-				     read as a unit and the list is a third of the height. -->
 				<div class="grid gap-x-4 gap-y-px p-2 md:grid-cols-2 2xl:grid-cols-3">
 					{#each group.permissions as perm (perm.key)}
 						{@const scopeKind = scopeKindOf(perm)}
@@ -136,8 +125,7 @@
 							data-permission={perm.key}
 							class="flex cursor-pointer items-start gap-2.5 rounded-md px-2 py-1.5 hover:bg-accent/40"
 						>
-							<!-- The control leads the label it belongs to, at the text's own
-							     line height so it aligns with the first line, not the block. -->
+
 							<span class="flex h-[1.15rem] shrink-0 items-center">
 								<Checkbox
 									checked={selected.has(perm.key)}

@@ -1,13 +1,5 @@
 <script lang="ts">
-	// The selected step's full configuration. This is where the 16+ existing
-	// per-type param forms are EMBEDDED, unchanged: ActionParamsFormDispatch owns
-	// the FormKey ladder, so this panel renders one component for every action
-	// type and none of the forms were rewritten for the builder.
-	//
-	// The field set is exactly the one edit-params-dialog offers (timeout,
-	// desired state, params, schedule) plus the step's own name/description,
-	// which the dialog could not reach — so the builder is a superset, not a
-	// reduction, of what the operator could edit before.
+
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -23,12 +15,6 @@
 	import { getActionTypeInfo } from '../action-type';
 	import type { StepDraft } from './step-draft';
 
-	// `errors` is DERIVED live from the step's registry schema on every keystroke,
-	// so there is no `onclearerror` seam here: a field stops being an error the
-	// moment its value validates, with no imperative clearing to get out of sync.
-	// `step` is $bindable because the per-type params forms bind INTO it; without
-	// the declared binding Svelte flags the write as crossing an ownership
-	// boundary it never agreed to.
 	let {
 		step = $bindable(),
 		index,
@@ -41,8 +27,7 @@
 
 	const adapter = $derived(ACTION_REGISTRY[step.formKey]);
 	const info = $derived(getActionTypeInfo(step.actionType));
-	// COMPLIANCE_CHECK validates against its own schema but shares the SHELL
-	// params bucket — the dispatch component keys on the FormKey either way.
+
 </script>
 
 <div data-testid="step-panel" class="rounded-xl border border-hair bg-surface">
@@ -58,8 +43,7 @@
 
 	<div class="max-h-[36rem] space-y-4 overflow-y-auto p-3">
 		{#if step.isNew}
-			<!-- A step being AUTHORED here: the action does not exist yet, so this is
-			     the only place to give it its shape. -->
+
 			<div class="space-y-1.5">
 				<Label for="step-name-{step.key}">{m.common_name()}</Label>
 				<Input id="step-name-{step.key}" bind:value={step.name} aria-invalid={!!errors.name} />
@@ -96,14 +80,7 @@
 				<ActionParamsFormDispatch formKey={step.formKey} bind:params={step.params} {errors} />
 			</div>
 		{:else}
-			<!-- An EXISTING action is a REFERENCE here, never an edit surface.
-			     This panel used to write name, description, params and desired state
-			     straight onto the shared action: flipping a step to REMOVE inside one
-			     set silently armed an uninstall everywhere that action was assigned.
-			     `ActionSetMember` carries only action_id and sort_order, so there is
-			     nowhere set-local to hold an override — which makes "edit it here"
-			     necessarily a global edit, and an accidental one.
-			     The set owns membership and order; the action owns itself. -->
+
 			<div class="space-y-1.5">
 				<span class="font-mono text-[0.62rem] tracking-[0.1em] text-faint uppercase">
 					{m.common_name()}

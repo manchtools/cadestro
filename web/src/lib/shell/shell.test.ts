@@ -1,4 +1,4 @@
-// Pure shell-state tests for the target design's persistent windows and terminals.
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
 	shell,

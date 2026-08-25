@@ -27,36 +27,24 @@
 
 	let { open = $bindable(), action, onsaved }: Props = $props();
 
-	// Wire the apiClient-backed loaders into the form context so nested
-	// UserPicker / GroupParamsForm resolve them without explicit props.
 	setUserLoaders(apiUserLoaders);
 
-	// Editable scalar params
 	let timeoutSeconds = $state(300);
 	let desiredState = $state<string>('0');
 	let saving = $state(false);
 
-	// All per-FormKey state + per-type validation lives in one bundle. The
-	// registry drives the per-type defaults and schemas; this dialog no
-	// longer hand-iterates the 19 action types.
 	const bundle = createFormBundle();
 	let scheduleParams = $state(defaultScheduleForm());
 
-	// FormKey resolved from the action's proto type. Returns null for actions
-	// whose type isn't in the registry (e.g. SCRIPT_RUN — these
-	// have no editable params shape and don't render a form).
 	const formKey = $derived.by((): FormKey | null => {
 		if (!action) return null;
 		const k = formKeyFromActionType(action.type);
 		if (!k) return null;
-		// SHELL with isCompliance set is the synthetic COMPLIANCE_CHECK
-		// FormKey — it shares the SHELL params bucket but validates against
-		// a stricter schema and toggles the form into compliance-only mode.
+
 		if (k === 'SHELL' && bundle.params.SHELL?.isCompliance) return 'COMPLIANCE_CHECK';
 		return k;
 	});
 
-	// Re-initialize params when dialog opens
 	$effect(() => {
 		if (open && action) {
 			timeoutSeconds = action.timeoutSeconds || 300;
@@ -74,8 +62,7 @@
 			const k = formKeyFromActionType(action.type);
 			if (k) {
 				const adapter = ACTION_REGISTRY[k];
-				// Trust the proto's `case` to match what the registry expects;
-				// the API contract says action.type and params.case agree.
+
 				if (action.params.case === adapter.paramsCase) {
 					bundle.set(k, adapter.protoToForm(action.params.value) as FormStateByKey[typeof k]);
 				}
@@ -110,7 +97,7 @@
 		saving = true;
 		try {
 			const adapter = ACTION_REGISTRY[formKey];
-			// COMPLIANCE_CHECK uses the SHELL form-state bucket.
+
 			const stateKey: FormKey = formKey === 'COMPLIANCE_CHECK' ? 'SHELL' : formKey;
 			const params = {
 				case: adapter.paramsCase,

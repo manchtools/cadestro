@@ -1,9 +1,5 @@
 <script lang="ts">
-	// The shared plate every pill-committed create route is drawn on.
-	//
-	// Deliberately button-free: Save, Cancel and Stash belong to the context pill,
-	// so a create surface that rendered its own footer would re-introduce exactly
-	// the modal shape these routes replace. The plate only frames the fields.
+
 	import type { Component, Snippet } from 'svelte';
 
 	let {
@@ -14,16 +10,13 @@
 		testid,
 		children
 	}: {
-		/** Lucide component for the header tile. */
+
 		icon: Component<{ class?: string }>;
 		title: string;
 		description?: string;
-		/** Standing note about the whole form — what this thing is, what it cannot
-		 *  do yet, where the rest is configured. It renders directly under the
-		 *  header, BEFORE the fields: a caveat that only appears after the operator
-		 *  has filled everything in has already wasted their time. */
+
 		hint?: string;
-		/** Stable hook for the route's own tests. */
+
 		testid: string;
 		children: Snippet;
 	} = $props();

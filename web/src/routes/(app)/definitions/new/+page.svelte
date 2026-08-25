@@ -1,9 +1,5 @@
 <script lang="ts">
-	// /definitions/new — definition creation as a pill-committed surface.
-	//
-	// It was a modal on the list page and therefore had no third exit: a dialog
-	// owns its own footer and dies on navigation, so a half-written definition
-	// could never be parked. Declaring `route` earns the Stash button.
+
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { create } from '@bufbuild/protobuf';
@@ -39,24 +35,17 @@
 		};
 	}
 
-	// Autosave for reload survival. The DraftType union is owned by the SDK and
-	// cannot be extended from the web app, so this surface namespaces itself inside
-	// the 'create-definition' bucket by id, exactly as /actions/new does.
 	const persist = useDraft<DefinitionDraft>('create-definition', CONTEXT_ID, emptyDraft());
 
-	// svelte-ignore state_referenced_locally
 	const claimed = bindBuilderContext(CONTEXT_ID, () => snapshot());
-	// svelte-ignore state_referenced_locally
+
 	let draft = $state<DefinitionDraft>(hydrate(claimed) ?? hydrate(persist.data) ?? emptyDraft());
 
-	/** A create surface opens EMPTY: there is nothing to save and nothing worth
-	 *  parking. Saying `dirty: true` regardless is what made an untouched form
-	 *  offer Save, and auto-stash itself onto the stage on the way out. */
 	const PRISTINE = JSON.stringify(emptyDraft());
 	const isDirty = () => JSON.stringify($state.snapshot(draft)) !== PRISTINE;
 
 	let saving = $state(false);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
 
 	$effect(() => {
@@ -112,7 +101,7 @@
 			const def = await apiClient.createDefinition({
 				name: draft.name.trim(),
 				description: draft.description.trim(),
-				// Default container schedule; the operator can edit it later.
+
 				schedule: create(ActionScheduleSchema, { intervalHours: 8 })
 			});
 			if (def) {

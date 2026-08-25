@@ -41,7 +41,7 @@
 				apiClient.listUsers(),
 				apiClient.listUserGroups()
 			]);
-			// Filter out disabled users and already-assigned items
+
 			users = usersResp.users
 				.filter((u: User) => !u.disabled && !existingUserIds.includes((u.id?.value ?? '')))
 				.map((u: User) => ({ id: u.id?.value ?? '', email: u.email }));

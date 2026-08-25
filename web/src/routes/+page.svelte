@@ -5,7 +5,7 @@
 	import * as m from '$lib/paraglide/messages';
 
 	onMount(() => {
-		// Redirect based on auth state
+
 		if (!configStore.isConfigured) {
 			goto('/setup');
 		} else if (authStore.isAuthenticated) {

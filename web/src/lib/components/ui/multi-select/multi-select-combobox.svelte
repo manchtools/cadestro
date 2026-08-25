@@ -23,11 +23,7 @@
 	}: {
 		items: Item[];
 		selected: string[];
-		/** Optional callback fired only on user-interaction toggles (not on
-		 *  external state updates from a parent's bind:selected). Intended
-		 *  for URL-as-state syncing where the caller must distinguish
-		 *  user-driven changes from state-set-from-URL to avoid history
-		 *  loops. */
+
 		onSelectedChange?: (value: string[]) => void;
 		placeholder?: string;
 		searchPlaceholder?: string;

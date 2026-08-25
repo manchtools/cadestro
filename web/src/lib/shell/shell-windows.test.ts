@@ -1,6 +1,5 @@
-// Moving-window tests: slots, cap, and stage overflow.
-// AC-2 clamp, AC-3/4 slot resolution + snap, AC-5 (keyboard uses movePanel),
-// AC-6 LRU cap + announcement, AC-7 restore semantics.
+
+
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	shell,
@@ -30,7 +29,7 @@ describe('cap + LRU auto-stash (AC-6, AC-7)', () => {
 		const a = openPanel('window', 'a', 'A');
 		const b = openPanel('window', 'b', 'B');
 		const c = openPanel('window', 'c', 'C');
-		// interact: a is oldest, then b, then c; touch a → b becomes LRU
+
 		touchPanel(a);
 		const d = openPanel('window', 'd', 'D');
 		expect(live()).toHaveLength(WINDOW_CAP);
@@ -61,7 +60,7 @@ describe('cap + LRU auto-stash (AC-6, AC-7)', () => {
 		expect(live()).toEqual(expect.arrayContaining([b, c, d]));
 		restorePanel(a);
 		expect(shell.panels.find((p) => p.id === a)?.minimized).toBe(false);
-		// b was the least-recently-touched live panel → it parks, a stays live
+
 		expect(shell.panels.find((p) => p.id === b)?.minimized).toBe(true);
 		expect(live()).toHaveLength(WINDOW_CAP);
 	});
@@ -96,7 +95,7 @@ describe('movePanel clamps to bounds (AC-2)', () => {
 
 describe('slot resolution + snap (AC-3, AC-4)', () => {
 	it('resolves left / right / corner by edge proximity, else null', () => {
-		// bounds 1280x800: left < 256; right > 1024 with cy <= 480; corner > 1024 with cy > 480
+
 		expect(slotForCenter(200, 300)).toBe('left');
 		expect(slotForCenter(1100, 300)).toBe('right');
 		expect(slotForCenter(1100, 700)).toBe('corner');

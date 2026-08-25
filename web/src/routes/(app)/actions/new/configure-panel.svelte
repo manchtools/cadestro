@@ -1,14 +1,5 @@
 <script lang="ts">
-	// Step 2 of /actions/new: one plate carrying the whole action.
-	//
-	// B1's rule — the plate has NO button bar. Save, Cancel and Stash are the
-	// context pill's, and the validation rollup is the pill's subtext, so nothing
-	// here duplicates a commit affordance.
-	//
-	// The per-type parameter forms are EMBEDDED, unchanged, through the same two
-	// components the pipeline's step panel uses: ActionParamsFormDispatch owns the
-	// FormKey ladder and ActionScheduleForm owns the schedule, so no per-type form
-	// was rewritten for this surface.
+
 	import { ArrowLeft } from '@lucide/svelte';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -27,11 +18,6 @@
 	import { getActionTypeInfoByValue } from '$lib/components/actions/action-type';
 	import type { ActionDraft } from './draft';
 
-	// `draft` is $bindable because the per-type params forms bind INTO it; without
-	// the declared binding Svelte flags the write as crossing an ownership
-	// boundary it never agreed to. `errors` is DERIVED live from the registry
-	// schema by the page, so a field stops being an error the moment its value
-	// validates — there is no imperative clearing to fall out of sync.
 	let {
 		draft = $bindable(),
 		typeValue,
@@ -44,13 +30,11 @@
 		typeValue: string;
 		formKey: FormKey;
 		errors: Record<string, string>;
-		/** Opened by the page's pill Schedule action — the schedule is the action's,
-		 *  not one more box to scroll past on the way to the parameters. */
+
 		scheduleOpen?: boolean;
 		onback: () => void;
 	} = $props();
 
-	/** The draft's schedule as the display component reads it. */
 	const scheduleProto = $derived(scheduleFormToProto(draft.schedule));
 
 	const info = $derived(getActionTypeInfoByValue(typeValue));
@@ -58,10 +42,6 @@
 
 </script>
 
-<!-- Wider than a create PLATE because this is not a plate: it is the pipeline
-     builders' working-surface grammar — a main column carrying the substance and
-     a rail carrying what qualifies it. Capped so a one-word field like "Package
-     Name" still never spans the viewport. -->
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-3" data-testid="action-configure">
 	<div class="flex items-center gap-2">
 		<button
@@ -93,11 +73,6 @@
 			<DesiredStateToggle bind:value={draft.desiredState} {supportsAbsent} />
 		</div>
 
-	<!-- A working surface, not a questionnaire: what the action DOES fills the
-		     main column, and the settings that merely qualify it (how long it may
-		     run, when it repeats) sit in a rail beside it. Stacked full width, the
-		     parameters — the only part the operator came here to write — were three
-		     scrolls down past two boxes they rarely touch. -->
 		<div class="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_17rem]">
 			<div class="min-w-0 space-y-4">
 				<IdentityRow
@@ -130,16 +105,12 @@
 					<FieldError error={errors.timeoutSeconds} />
 				</div>
 
-				<!-- The schedule STATES itself here and is edited from the pill, exactly
-					     as it is on an existing action. It rides the same draft, so it
-					     still commits with everything else from one ⌘S. -->
 				<ScheduleSummary schedule={scheduleProto} onedit={() => (scheduleOpen = true)} />
 			</aside>
 		</div>
 	</div>
 </div>
 
-<!-- Opened by the pill's Schedule action — one commit path, no second Save. -->
 <Dialog.Root bind:open={scheduleOpen}>
 	<Dialog.Content class="sm:max-w-2xl">
 		<Dialog.Header>

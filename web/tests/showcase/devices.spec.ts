@@ -32,8 +32,7 @@ for (const theme of THEMES) {
 		await mockControlService(page);
 		await page.goto('/devices/01J6XYZSHOWCASEDEVICE0001', { waitUntil: 'networkidle' });
 		await page.waitForSelector('text=edge-01.berlin', { timeout: 15_000 });
-		// Tabs in the detail header: Overview / System Resources / Hardware /
-		// Software / Policies / Groups / Compliance / OSQuery / Logs.
+
 		await page.getByRole('tab', { name: 'Compliance' }).click();
 		await page.waitForSelector('text=CIS Linux Baseline', { timeout: 15_000 });
 		await page.screenshot({

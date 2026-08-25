@@ -5,9 +5,6 @@ import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { defineConfig } from 'vite';
 
-// Dev-only: where `vite dev` proxies control's endpoints. The browser only
-// ever talks to this (trusted, basic-ssl) dev origin, so control's self-signed
-// cert never needs manual acceptance. Override with VITE_DEV_CONTROL_URL.
 const DEV_CONTROL_TARGET = process.env.VITE_DEV_CONTROL_URL || 'https://127.0.0.1:8081';
 
 export default defineConfig({
@@ -19,24 +16,14 @@ export default defineConfig({
 		__BASE_PATH__: JSON.stringify(process.env.BASE_PATH || '/')
 	},
 	resolve: {
-		// The SDK's generated TypeScript files live outside web/ (in ../contract/gen/ts/)
-		// and import @bufbuild/protobuf. Dedupe ensures Vite resolves these from
-		// web/node_modules instead of looking relative to the SDK directory.
+
 		dedupe: ['@bufbuild/protobuf']
 	},
 	server: {
 		host: '127.0.0.1',
-		// Vite 5.4+ rejects unknown Host headers to protect against DNS
-		// rebinding. The marketplace iframe flow depends on accessing
-		// this dev server through `cadestro.localhost` (so the publisher
-		// session cookie with Domain=.localhost is shared with
-		// marketplace.localhost:5180). Allow *.localhost here;
-		// production builds don't use Vite's dev server.
+
 		allowedHosts: ['.localhost'],
-		// Proxy control's endpoints so the browser reaches them same-origin
-		// over this dev server's already-trusted cert. `secure: false` accepts
-		// control's self-signed cert on the server side; the browser never sees
-		// it. Dev-only — production builds don't use Vite's dev server.
+
 		proxy: {
 			'/cadestro.v1.ControlService': {
 				target: DEV_CONTROL_TARGET,
@@ -47,9 +34,7 @@ export default defineConfig({
 		}
 	},
 	plugins: [
-		// Enable HTTPS in development for cross-origin cookie support.
-		// This allows SameSite=None; Secure cookies to work when connecting
-		// to a remote HTTPS server (e.g., production API during local dev).
+
 		basicSsl(),
 		paraglideVitePlugin({
 			project: './project.inlang',
@@ -92,7 +77,7 @@ export default defineConfig({
 							cacheName: 'images',
 							expiration: {
 								maxEntries: 100,
-								maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+								maxAgeSeconds: 60 * 60 * 24 * 30
 							}
 						}
 					}

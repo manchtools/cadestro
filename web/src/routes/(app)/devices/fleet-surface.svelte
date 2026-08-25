@@ -1,15 +1,5 @@
 <script lang="ts">
-	// THE FLEET SURFACE — concept A4 (semantic zoom: fleet -> group -> device)
-	// carried out under round-2 movement A (the fleet is the home surface).
-	//
-	// Three explicit zoom levels over ONE snapshot:
-	//   fleet   far pane only  — every bubble, ambient shape
-	//   group   far pane + near pane — summary beside legible worst-first rows
-	//   device  the route's own dense list (search-backed where the route has one)
-	//
-	// Zoom and focused group live in the URL, so a triage view is a link.
-	// Nothing here invents state: there is no "in flight" stat and no converging
-	// ring, because no field on Device says an operation is landing on it.
+
 	import type { Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import { base } from '$app/paths';
@@ -60,23 +50,23 @@
 		deviceLevel,
 		emptyExtra
 	}: {
-		/** Selection namespace — one per fleet ('devices', 'my-devices'). */
+
 		surfaceId: string;
-		/** Localized page heading, e.g. (n) => m.fleet_heading({ count: n }). */
+
 		heading: (count: number) => string;
 		snapshot: FleetSnapshot | null;
 		loading?: boolean;
 		error?: string | null;
-		/** Clock seam — frozen by tests so age buckets are deterministic. */
+
 		nowMs?: number;
 		emptyTitle: string;
 		emptyHint: string;
-		/** Resolved label for the near pane's right-aligned quick action. */
+
 		openLabel: string;
 		onOpenDevice: (device: FleetDevice) => void;
 		headerExtra?: Snippet;
 		filters?: Snippet;
-		/** Device zoom, when the route backs it with its own list machinery. */
+
 		deviceLevel?: Snippet;
 		emptyExtra?: Snippet;
 	} = $props();
@@ -101,8 +91,6 @@
 		groupId = readURLParam(u, 'group', GROUP_CODEC);
 	});
 
-	// URL writes happen only from interaction handlers — never from an effect
-	// (see $lib/url-state's hard rules).
 	function setZoom(next: Zoom, group: string = groupId) {
 		zoom = next;
 		groupId = next === 'fleet' ? group : group || (bubbles[0]?.id ?? '');
@@ -117,8 +105,6 @@
 
 	const nowSec = $derived(Math.floor(nowMs / 1000));
 
-	// A group's sync interval outranks the device's, so the decay thresholds
-	// need each device's group memberships before any tile can be drawn.
 	const groupMinutes = $derived.by(() => {
 		const out = new Map<string, number[]>();
 		if (!snapshot) return out;
@@ -144,20 +130,12 @@
 		bubbles.find((b) => b.id === groupId) ?? bubbles[0] ?? null
 	);
 	const isEmpty = $derived(!loading && snapshot !== null && devices.length === 0);
-	/** Derived once: the rendered order and the click index must be the same array. */
+
 	const allWorstFirst = $derived(worstFirst(devices));
 
 	const selectedIds = $derived(getFleetSelection(surfaceId));
 	const selected = $derived(new Set(selectedIds));
 
-	// No ambient nav caption here, on purpose: the pill caption is a CONTEXTUAL
-	// surface (draft eligibility, commit summaries, conflict attribution). The
-	// summary strip on this page already counts these buckets — captioning the
-	// pill with the same numbers was an echo, not information.
-
-	// ── selection ──────────────────────────────────────────────────────────────
-	// Shift-click extends from the last plain click WITHIN THE SAME bubble; the
-	// anchor never leaks across bubbles, so a range can't silently span groups.
 	let anchor: { bubbleId: string; index: number } | null = null;
 
 	function toggle(bubbleId: string, list: FleetDevice[], index: number, shift: boolean) {
@@ -179,25 +157,16 @@
 		);
 	}
 
-	// ── bulk actions on the selection ──────────────────────────────────────────
-	// Assign leaves for its own surface; Reboot and Label write from here, each
-	// behind a confirmation that states what the write will really do.
-	/** Hostnames named in a confirmation before it turns into "+ N more". */
 	const CONFIRM_HOSTS = 8;
 
 	let rebootOpen = $state(false);
 	let labelOpen = $state(false);
 	let running = $state(false);
 
-	// Worst-first, so the bounded preview names the unreachable members FIRST —
-	// the ones whose dispatch will sit in the queue.
 	const selectedDevices = $derived(allWorstFirst.filter((d) => selected.has(d.id)));
 	const confirmHosts = $derived(selectedDevices.slice(0, CONFIRM_HOSTS));
 	const confirmMore = $derived(Math.max(0, selectedDevices.length - CONFIRM_HOSTS));
 
-	/** ONE toast for the whole fan-out. Per-device failures are aggregated into a
-	 *  single honest count (never a toast per device) and the per-device detail
-	 *  goes to the console, where the ids survive for a retry. */
 	function report(
 		outcomes: BulkOutcome[],
 		success: (input: { count: number }) => string,
@@ -236,13 +205,10 @@
 		}
 	}
 
-	// The pill mirrors the selection; both caption numbers come off the same
-	// bubbles the operator clicked in.
 	$effect(() => {
 		const ids = getFleetSelection(surfaceId);
 		if (ids.length === 0) {
-			// A confirmation that has lost its selection must not linger: it would
-			// name zero devices and its confirm button would write nothing.
+
 			rebootOpen = false;
 			labelOpen = false;
 			if (fleetSelectionSurface() === surfaceId) exitSelection();
@@ -330,8 +296,7 @@
 	{/if}
 
 	{#if snapshot?.truncated}
-		<!-- The sweep stopped at its bound: say the tiles are a partial fleet
-		     instead of letting the grid imply completeness. -->
+
 		<p data-testid="fleet-truncated" class="rounded-lg border border-warn bg-warn-soft px-3 py-2 text-xs text-warn">
 			{m.fleet_truncated({ shown: devices.length, total: snapshot.total })}
 		</p>
@@ -406,8 +371,7 @@
 	{/if}
 
 	{#if !isEmpty}
-		<!-- The legend teaches the encoding — status is never colour-alone, so
-		     each swatch names its SHAPE too. -->
+
 		<div data-tour="fleet-legend" class="flex flex-wrap gap-3.5 text-[0.7rem] text-muted-foreground">
 			{#each LEGEND as l (l.tone)}
 				<span class="inline-flex items-center gap-1.5">
@@ -428,8 +392,6 @@
 	{/if}
 </PageShell>
 
-<!-- Bulk reboot. The dialog names the devices (bounded); live RPC failures
-     remain visible in the aggregate result. -->
 <AlertDialog.Root bind:open={rebootOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
@@ -460,8 +422,6 @@
 	</AlertDialog.Content>
 </AlertDialog.Root>
 
-<!-- Bulk label — the device detail's own key/value form, re-labelled for a
-     selection rather than a second copy of the same dialog. -->
 <AddLabelDialog
 	bind:open={labelOpen}
 	title={m.bulk_label_dialog_title({ count: selectedDevices.length })}

@@ -1,10 +1,5 @@
-// Conversion guard for the two container list pages (action-sets, definitions)
-// after they moved onto createSearchListState + the shared RowList grammar. Both
-// are thin wrappers over one scoped Search RPC, so what matters is that the URL a
-// user deep-links reaches the server unchanged — scope, sort field, direction,
-// offset, and the "empty container" tag filter — that the member-management entry
-// point the inline expansion used to provide still works from the row, and that
-// the surface stays row-shaped: a detail link per row and no <table> anywhere.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
@@ -31,8 +26,6 @@ const api = vi.hoisted(() => ({
 }));
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/action-sets') }));
 
-// Only the client is faked; the generated protobuf re-exports stay real so the
-// pages' SearchScope / SortField constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -69,7 +62,6 @@ vi.mock('$app/navigation', () => ({
 import ActionSetsPage from './+page.svelte';
 import DefinitionsPage from '../definitions/+page.svelte';
 
-/** Positional apiClient.search args — see data-table/list-logic.ts SearchArgs. */
 const ARG = {
 	query: 0,
 	scope: 1,
@@ -81,7 +73,6 @@ const ARG = {
 	sortDir: 7
 } as const;
 
-/** Local midnight of a Y-M-D, as the epoch seconds the server compares against. */
 function localMidnight(year: number, month: number, day: number): bigint {
 	return BigInt(Math.floor(new Date(year, month - 1, day, 0, 0, 0, 0).getTime() / 1000));
 }
@@ -101,8 +92,6 @@ function containerResult(id: string, name: string, memberCount: string): SearchR
 	});
 }
 
-/** Sort controls live in the row list's sort bar; addressing them by text alone
- *  would also match the row overflow trigger, which is labelled "Actions" too. */
 async function clickSort(label: string) {
 	const button = [
 		...document.querySelectorAll<HTMLButtonElement>('[data-testid="row-list-sort"] button')
@@ -112,14 +101,12 @@ async function clickSort(label: string) {
 }
 
 async function mountAt(Component: typeof ActionSetsPage, url: string, results: SearchResult[]) {
-	// The overview is the landing level now; these tests pin the LIST level, one
-	// zoom in, addressed explicitly the way a list deep link is.
+
 	const target = new URL(url);
 	target.searchParams.set('zoom', 'list');
 	nav.url = target;
 	api.search.mockResolvedValue({ results, totalCount: results.length });
-	// Count first: the assertion must wait for THIS mount's request, not for one
-	// a previous mount left in flight.
+
 	const before = api.search.mock.calls.length;
 	render(Component);
 	await vi.waitFor(() => expect(api.search.mock.calls.length).toBeGreaterThan(before), {
@@ -195,7 +182,7 @@ describe('action-sets list page', () => {
 		);
 
 		expect(lastCall()[ARG.dates]).toEqual([
-			// Inclusive end of 31 Jan == local midnight of 1 Feb.
+
 			{ field: 'created_at', start: localMidnight(2026, 1, 5), end: localMidnight(2026, 2, 1) },
 			{ field: 'updated_at', start: localMidnight(2026, 2, 1), end: 0n }
 		]);
@@ -247,7 +234,7 @@ describe('action-sets list page', () => {
 
 		await vi.waitFor(() => expect(api.getActionSet).toHaveBeenCalledWith(SET_ID));
 		expect(api.listActions).toHaveBeenCalled();
-		// The set's existing member must not be offered again.
+
 		await expect.element(browser.getByText('Rotate logs')).toBeVisible();
 		expect(document.body.textContent).not.toContain('Install Firefox');
 	});

@@ -1,9 +1,5 @@
 <script lang="ts">
-	// The getting-started card, shown on the empty fleet.
-	//
-	// Every row is the answer to a real read (see checklist.ts). Rows the caller
-	// is not permitted to check are already gone by the time they arrive here,
-	// and a row that could not be read says so instead of claiming to be undone.
+
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import { Check, Circle, CircleAlert } from '@lucide/svelte';
@@ -14,8 +10,7 @@
 	let rows = $state<ChecklistRow[] | null>(null);
 
 	onMount(async () => {
-		// loadChecklist already absorbs per-check failures; a rejection here would
-		// mean a programming error, which belongs in the console, not in the UI.
+
 		try {
 			rows = await loadChecklist();
 		} catch (err) {

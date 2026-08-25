@@ -1,20 +1,11 @@
-// Behaviour contract for the SDK's bootstrap-provider path.
-//
-// The bootstrap-admin URL hands the web a single-use token that the server
-// consumes as `Authorization: Cadestro-Bootstrap <T>` — NOT a Bearer
-// session token. The one call it may spend the token on is
-// CreateIdentityProvider. These tests pin the outgoing wire header on the
-// real Connect transport: exactly the Cadestro-Bootstrap scheme, and never
-// a Bearer/session token even when a session token happens to be available.
+
+
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ApiClient } from '$contractClient/client';
 import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 
 const SERVER_URL = 'https://control.test';
 
-// A distinctive sentinel for the session token. If any code path attached a
-// Bearer/session token to the bootstrap call, this string would surface in the
-// captured headers and the assertions below would catch it.
 const SESSION_SENTINEL = 'SESSION-SENTINEL-MUST-NOT-APPEAR';
 
 function makeClient(getAccessToken: () => string | null = () => null): ApiClient {
@@ -40,11 +31,6 @@ const providerData = {
 	scopes: ['openid', 'profile', 'email']
 };
 
-/**
- * Stub global fetch, capture the outgoing request headers, then abort so we
- * never have to fake a valid Connect response body. The header set is captured
- * synchronously at fetch-call time, before the (rejected) response resolves.
- */
 function captureFetch(): { headersOf: () => Headers | undefined; mock: ReturnType<typeof vi.fn> } {
 	let captured: Headers | undefined;
 	const mock = vi.fn(async (_url: unknown, init: RequestInit) => {
@@ -75,7 +61,7 @@ describe('ApiClient.createIdentityProviderWithBootstrapToken', () => {
 
 	it('never attaches a Bearer/session token, even when a session token is available', async () => {
 		const { headersOf } = captureFetch();
-		// A session token is present, but the bootstrap path must ignore it.
+
 		const client = makeClient(() => SESSION_SENTINEL);
 
 		await expect(
@@ -85,7 +71,7 @@ describe('ApiClient.createIdentityProviderWithBootstrapToken', () => {
 		const auth = headersOf()?.get('authorization');
 		expect(auth).toBe('Cadestro-Bootstrap BOOT-TOKEN-123');
 		expect(auth).not.toContain('Bearer');
-		// The session token must not appear anywhere in the outgoing headers.
+
 		const all = JSON.stringify([...(headersOf()?.entries() ?? [])]);
 		expect(all).not.toContain(SESSION_SENTINEL);
 	});

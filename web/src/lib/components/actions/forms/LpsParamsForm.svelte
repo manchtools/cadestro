@@ -30,7 +30,7 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Usernames -->
+
 	<UserPicker
 		bind:usernames={params.usernames}
 		{errors}
@@ -42,7 +42,6 @@
 		description={m.lps_usernames_description()}
 	/>
 
-	<!-- Password Length -->
 	<div class="space-y-1.5">
 		<Label>{m.lps_password_length()}</Label>
 		<Input
@@ -56,7 +55,6 @@
 		<p class="text-xs text-muted-foreground">{m.lps_password_length_description()}</p>
 	</div>
 
-	<!-- Complexity -->
 	<div class="space-y-1.5">
 		<Label>{m.lps_complexity()}</Label>
 		<Select.Root
@@ -84,7 +82,6 @@
 		<FieldError error={errors.complexity} />
 	</div>
 
-	<!-- Rotation Interval -->
 	<div class="space-y-1.5">
 		<Label>{m.lps_rotation_interval()}</Label>
 		<div class="flex items-center gap-2">
@@ -102,7 +99,6 @@
 		<p class="text-xs text-muted-foreground">{m.lps_rotation_interval_description()}</p>
 	</div>
 
-	<!-- Grace Period -->
 	<div class="space-y-1.5">
 		<Label>{m.lps_grace_period()}</Label>
 		<div class="flex items-center gap-2">
@@ -120,7 +116,6 @@
 		<p class="text-xs text-muted-foreground">{m.lps_grace_period_description()}</p>
 	</div>
 
-	<!-- Info box -->
 	<div class="rounded-lg bg-muted p-3 text-sm space-y-1">
 		<p class="font-medium">{m.lps_info_title()}</p>
 		<p class="text-xs text-muted-foreground">{m.lps_info_description()}</p>

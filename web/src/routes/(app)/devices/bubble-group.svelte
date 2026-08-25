@@ -1,8 +1,5 @@
 <script lang="ts">
-	// One bordered bubble in the far pane: a mono group name, a "N · M down"
-	// meta, and a dense tile grid. The far pane stays a PURE SUMMARY (A4's
-	// trade note) — the only navigation affordance is the header, so it never
-	// fights the near pane for the click.
+
 	import { Tile } from '$lib/components/fleet';
 	import * as m from '$lib/paraglide/messages';
 	import type { FleetBubble } from './fleet-model';
@@ -15,16 +12,13 @@
 		onToggle
 	}: {
 		bubble: FleetBubble;
-		/** Selected device ids — a Set so a 1000-tile grid stays O(1) per tile. */
+
 		selected: Set<string>;
 		focused?: boolean;
 		onZoom: () => void;
 		onToggle: (index: number, shift: boolean) => void;
 	} = $props();
 
-	// Tile's onclick carries no event, so the modifier is captured on the way
-	// down and read by the handler it triggers. Covers pointer AND keyboard
-	// (Shift+Space) activation of the same buttons.
 	let shiftHeld = $state(false);
 </script>
 

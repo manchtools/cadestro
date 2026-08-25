@@ -20,8 +20,7 @@ for (const theme of THEMES) {
 		await primeStorage(page, theme);
 		await mockControlService(page);
 		await page.goto('/device-groups/01J6XYZSHOWCASEDEVGRP0001', { waitUntil: 'networkidle' });
-		// The dynamic-query Card heading appears once GetDeviceGroup resolves
-		// and the page knows isDynamic=true.
+
 		await page.waitForSelector('text=Berlin Edge Nodes', { timeout: 15_000 });
 		await page.screenshot({
 			path: `tests/showcase/output/device-group-dynamic-${theme}.png`,

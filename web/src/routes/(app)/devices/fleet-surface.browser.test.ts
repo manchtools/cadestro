@@ -1,13 +1,5 @@
-// The fleet surface, exercised through the REAL route component against mocked
-// RPCs. What is load-bearing here:
-//
-//   1. the tiles are the API's answer — tone AND shape per encoding bucket,
-//      decay measured against the device's (or its group's) real cadence;
-//   2. the summary strip never disagrees with the tiles;
-//   3. the near pane really is worst-first, with healthy folded away;
-//   4. selection reaches the pill with honest numbers, and Assign carries the
-//      ids to /assign;
-//   5. zoom is URL state, so a triage view is a link.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -44,8 +36,6 @@ vi.mock('$app/navigation', () => ({
 	beforeNavigate: vi.fn()
 }));
 
-// Only the client is faked; the generated protobuf re-exports stay real, so the
-// page's DeviceStatus / ComplianceStatus constants are the production ones.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -86,7 +76,7 @@ function device(o: {
 	hostname: string;
 	status?: DeviceStatus;
 	compliance?: ComplianceStatus;
-	/** minutes ago; null = never seen */
+
 	seen?: number | null;
 	syncIntervalMinutes?: number;
 }) {
@@ -134,8 +124,6 @@ const stats = () =>
 		s.querySelector('b')!.textContent
 	]);
 
-/** A click that carries the Shift modifier all the way through the capture
- *  listener the tile grid uses to read it. */
 function shiftClick(el: HTMLElement) {
 	el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, shiftKey: true }));
 	el.click();
@@ -173,8 +161,6 @@ describe('fleet zoom — the tiles are the API answer', () => {
 		render(DevicesPage);
 		await vi.waitFor(() => expect(tiles().length).toBe(4));
 
-		// asserted as a set first, so a mis-classified bucket reads as a diff
-		// rather than as an undefined dereference further down
 		expect(tiles().map((t) => t.dataset.tone).sort()).toEqual(['crit', 'idle', 'ok', 'warn']);
 
 		const byTone = Object.fromEntries(tiles().map((t) => [t.dataset.tone, t]));
@@ -182,7 +168,7 @@ describe('fleet zoom — the tiles are the API answer', () => {
 		expect(byTone.warn.querySelector('[data-marker="dot"]')).not.toBeNull();
 		expect(byTone.crit.querySelector('[data-marker="notch"]')).not.toBeNull();
 		expect(byTone.idle.dataset.shape).toBe('hollow');
-		// no honest source for "an operation is landing" => never a ring
+
 		expect(document.querySelector('[data-marker="ring"]')).toBeNull();
 
 		expect(stats()).toEqual([
@@ -194,8 +180,7 @@ describe('fleet zoom — the tiles are the API answer', () => {
 	});
 
 	it('buckets decay against the group cadence, which outranks the device cadence', async () => {
-		// Both devices were last seen 45 minutes ago. Alone, a 60-minute device
-		// interval keeps `paced` fresh; its group's 10-minute interval does not.
+
 		respond(
 			[
 				device({ id: 'd-slow', hostname: 'slow', seen: 45, syncIntervalMinutes: 60 }),
@@ -209,8 +194,8 @@ describe('fleet zoom — the tiles are the API answer', () => {
 		await vi.waitFor(() => expect(tiles().length).toBe(2));
 
 		const byLabel = Object.fromEntries(tiles().map((t) => [t.title.split(' · ')[0], t]));
-		expect(byLabel.slow.dataset.age).toBe('0'); // 45min <= 1x 60min
-		expect(byLabel.paced.dataset.age).toBe('2'); // 45min > 2x 10min, <= 8x 10min
+		expect(byLabel.slow.dataset.age).toBe('0');
+		expect(byLabel.paced.dataset.age).toBe('2');
 	});
 
 	it('names hostname and status on every tile, so hover and assistive tech tell the same story', async () => {
@@ -302,7 +287,6 @@ describe('zoom is URL state', () => {
 		render(DevicesPage);
 		await vi.waitFor(() => expect(tiles().length).toBe(1));
 
-		// default level: bubbles only, no near pane
 		expect(document.querySelector('[data-testid="fleet-near-caption"]')).toBeNull();
 		expect(
 			document.querySelector<HTMLElement>('[data-testid="fleet-zoom-fleet"]')!.getAttribute('aria-pressed')
@@ -313,8 +297,7 @@ describe('zoom is URL state', () => {
 		await vi.waitFor(() =>
 			expect(document.querySelector('[data-testid="fleet-near-caption"]')).not.toBeNull()
 		);
-		// the focused group rides along, so the pushed link reopens this exact view
-		// (the test host owns the path; only the fleet's own params are asserted)
+
 		expect(mocks.pushState).toHaveBeenCalledWith(
 			expect.stringContaining('zoom=group&group=g1'),
 			{}
@@ -335,7 +318,6 @@ describe('zoom is URL state', () => {
 		render(DevicesPage);
 		await vi.waitFor(() => expect(tiles().length).toBe(1));
 
-		// give the search state's debounce more than enough room to have fired
 		await new Promise((r) => setTimeout(r, 500));
 		expect(mocks.search).not.toHaveBeenCalled();
 	});
@@ -357,7 +339,6 @@ describe('selection rides the pill into /assign', () => {
 		render(DevicesPage);
 		await vi.waitFor(() => expect(tiles().length).toBe(3));
 
-		// alpha is worst-first, so its offline member is the first tile
 		const alpha = document.querySelector<HTMLElement>('[data-group-id="alpha"]')!;
 		alpha.querySelectorAll<HTMLButtonElement>('[data-testid="fleet-tile"]')[0].click();
 
@@ -387,8 +368,6 @@ describe('selection rides the pill into /assign', () => {
 		shiftClick(alphaTiles[1]);
 		await vi.waitFor(() => expect(shell.pill.selection?.count).toBe(2));
 
-		// the anchor does not reach across bubbles: a shift-click in beta is a
-		// plain toggle of that one tile
 		shiftClick(
 			document
 				.querySelector<HTMLElement>('[data-group-id="beta"]')!
@@ -428,7 +407,6 @@ describe('selection rides the pill into /assign', () => {
 		render(MyDevicesPage);
 		await vi.waitFor(() => expect(mocks.listDevices).toHaveBeenCalledTimes(2));
 
-		// my-devices owns a different set; it must not tear down /devices' pill
 		expect(shell.pill.selection?.count).toBe(1);
 	});
 
@@ -474,7 +452,6 @@ describe('my-devices — the same surface, constrained to the caller', () => {
 		render(MyDevicesPage);
 		await vi.waitFor(() => expect(tiles().length).toBe(2));
 
-		// listDevices(pageSize, pageToken, statusFilter, labelFilter, myDevicesOnly)
 		expect(mocks.listDevices.mock.calls[0][4]).toBe(true);
 		expect(tiles().map((t) => t.dataset.tone).sort()).toEqual(['crit', 'ok']);
 		expect(stats()).toEqual([

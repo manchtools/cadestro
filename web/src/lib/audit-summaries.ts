@@ -1,12 +1,4 @@
-// Human-readable one-line summaries for audit operations covering device reads,
-// LUKS-token grants, session lifecycle, and secret views.
-//
-// Leak discipline: a summary interpolates ONLY the named identifier
-// fields listed per event type below, and only when they are plain
-// strings. Payload fields the builder does not name (including
-// anything the server already replaced with "[REDACTED]") can never
-// reach the summary — audit-summaries.test.ts pins this for every
-// covered type.
+
 
 import * as m from '$lib/paraglide/messages';
 
@@ -16,12 +8,10 @@ export type AuditSummaryEvent = {
 };
 
 export type AuditSummaryContext = {
-	/** Resolve a device ULID to a display label (hostname or short id). */
+
 	deviceName: (id: string) => string;
 };
 
-/** Event types this module renders — exported so the test suite can
- *  iterate the exact covered set and fail on drift. */
 export const SUMMARIZED_EVENT_TYPES = [
 	'OSQueryDispatched',
 	'DeviceLogsQueried',
@@ -46,11 +36,6 @@ function count(v: unknown): number {
 	return Array.isArray(v) ? v.length : 0;
 }
 
-/**
- * Build the one-line summary for an audit event, or null when the
- * event type has no dedicated renderer (the page then shows only the
- * generic columns + raw payload).
- */
 export function auditEventSummary(event: AuditSummaryEvent, ctx: AuditSummaryContext): string | null {
 	let data: Record<string, unknown>;
 	try {
@@ -97,11 +82,6 @@ export function auditEventSummary(event: AuditSummaryEvent, ctx: AuditSummaryCon
 	return null;
 }
 
-/**
- * Audit events are facts about things
- * that HAPPENED, so the default outcome is success; the *Denied event
- * types (#494) record handler-tier rejections.
- */
 export function auditEventOutcome(eventType: string): 'success' | 'denied' {
 	return eventType.endsWith('Denied') ? 'denied' : 'success';
 }

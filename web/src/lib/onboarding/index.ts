@@ -1,8 +1,5 @@
-// Public onboarding surface.
-//
-// Other lanes need exactly one thing from here: `startTour()`, so a Settings
-// control can replay the guided tour. Everything else is internal to the
-// onboarding host.
+
+
 export {
 	onboarding,
 	initOnboarding,

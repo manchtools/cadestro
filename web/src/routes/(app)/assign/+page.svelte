@@ -1,17 +1,5 @@
 <script lang="ts">
-	// B2 + B3 — assign an action set to a target.
-	//
-	// Two targeting modes share one surface and one pill context:
-	//
-	//   carried — the fleet page hands this surface a set of device ids through
-	//     the carried selection. Snapshot targeting: these devices, now.
-	//
-	// The pill morphs selection → context and "Assign to N →" IS the pill's Save,
-	// so this page renders NO commit button of its own — in either mode.
-	//
-	// Every state on screen is read, never assumed. No ring plan (the contract
-	// has no ring orchestration), no timed or maintenance-window dispatch of a
-	// for the full RPC mapping.
+
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import { goto } from '$app/navigation';
@@ -56,9 +44,8 @@
 	import RuleStage from './rule-stage.svelte';
 	import SetSheet from './set-sheet.svelte';
 
-	/** Stable context identity — also the stashed draft's identity. */
 	const CONTEXT_ID = 'assign';
-	/** This surface's home. A stashed draft restores by navigating here. */
+
 	const ROUTE = '/assign';
 
 	const carried = $derived(getCarried());
@@ -83,12 +70,11 @@
 
 	let committing = $state(false);
 	let failures = $state<AssignOutcome[]>([]);
-	/** Parked on the stage — the pill must NOT re-enter this context. */
+
 	let parked = $state(false);
-	/** Cancelled or committed — likewise, and the page is on its way out. */
+
 	let closed = $state(false);
 
-	// ── rule mode ────────────────────────────────────────────────────────────
 	let ruleQuery = $state('');
 	let groupName = $state('');
 	let ruleState = $state<QueryEditorState>({
@@ -98,15 +84,11 @@
 		error: m.query_incomplete(),
 		validating: false
 	});
-	/** The standing-rule acknowledgement. While it is open the pill steps aside,
-	 *  so the commit cannot be re-triggered behind the dialog. */
+
 	let confirmOpen = $state(false);
-	/** A dynamic group already created from this draft (Save as group, or a
-	 *  commit whose assignment step failed). */
+
 	let savedGroup = $state<RuleGroup | null>(null);
-	/** Exactly what `savedGroup` was created from. The group is only reused while
-	 *  the draft still says the same thing — a group already stores its own rule,
-	 *  so a changed draft is a different group, not an edit of that one. */
+
 	let savedFor = $state<{ name: string; query: string } | null>(null);
 	let savingGroup = $state(false);
 	let ruleError = $state<string | null>(null);
@@ -155,7 +137,6 @@
 		return { text: body, tone: 'neutral' };
 	});
 
-	/** Bumped by Retry so the set-dependent reads re-run for the same set id. */
 	let readNonce = $state(0);
 
 	async function loadSets() {
@@ -176,13 +157,9 @@
 	}
 
 	onMount(() => {
-		// Take back whatever this surface parked on the stage. The choices
-		// themselves live in module state (see draft.svelte.ts), so the claim only
-		// has to clear the card — but it MUST run, or a cross-route restore would
-		// navigate here and leave an orphaned card behind.
+
 		claimDraft(CONTEXT_ID);
-		// A restored draft re-enters with the same target mode AND the same
-		// choices — including the rule and the group name, which ARE the target.
+
 		const draft = takeAssignDraft();
 		if (draft) {
 			mode = draft.mode;
@@ -194,9 +171,6 @@
 		void loadSets();
 	});
 
-	// Status for exactly the carried devices — bounded fan-out, see assign-data.
-	// A rule target does not read them: its devices are the server's answer to
-	// the query, not this selection.
 	$effect(() => {
 		const ids = deviceIds;
 		void readNonce;
@@ -223,10 +197,6 @@
 		};
 	});
 
-	// The chosen set drives two reads: its steps, and which carried devices
-	// already carry it. Both re-run when the choice changes and both are dropped
-	// when it changes again mid-flight. The second one is carried-mode only —
-	// "who already has this set" is a question about a selection.
 	$effect(() => {
 		const id = setId;
 		void readNonce;
@@ -254,9 +224,7 @@
 					if (!stale) assignedIds = ids;
 				})
 				.catch((error) => {
-					// An unreadable assignment list is NOT "nobody has this set" —
-					// swallowing it would silently understate the update-in-place row,
-					// so the failure is surfaced and the previous answer is kept.
+
 					if (!stale) loadError = getLocalizedError(error);
 				});
 		}
@@ -281,8 +249,7 @@
 		committing = false;
 		const failed = outcomes.filter((o) => !o.ok);
 		if (failed.length) {
-			// Partial failure keeps the carried selection and the choices, so the
-			// operator can retry exactly the devices that did not land.
+
 			failures = failed;
 			toast.error(
 				m.assign_commit_partial({ ok: outcomes.length - failed.length, failed: failed.length })
@@ -295,18 +262,13 @@
 		clearAssignDraft();
 	}
 
-	// ── rule commit ──────────────────────────────────────────────────────────
-	// The pill's commit only OPENS the acknowledgement. Nothing is created until
-	// the operator confirms that the rule keeps applying — the banner states the
-	// consequence, this dialog is where it is accepted.
 	function openRuleConfirm() {
 		if (!ruleReady) return;
 		confirmOpen = true;
 	}
 
 	function cancelRuleConfirm() {
-		// The pill re-enters with the same draft: closing the dialog is the only
-		// state change, and the context effect owns re-entry.
+
 		confirmOpen = false;
 	}
 
@@ -336,8 +298,7 @@
 		try {
 			await assignSetToGroup(id, group.id);
 		} catch (error) {
-			// The group is real and stays named on screen: a retry assigns THAT
-			// group instead of creating a second one for the same rule.
+
 			committing = false;
 			ruleError = `${m.assign_rule_group_kept({ name: group.name })} ${getLocalizedError(error)}`;
 			toast.error(m.assign_rule_failed());
@@ -348,12 +309,10 @@
 		closed = true;
 		clearAssignDraft();
 		toast.success(m.assign_rule_commit_success({ name: group.name }));
-		// The standing rule itself is the result — the group page is where its
-		// membership and its assignments are.
+
 		void goto(`${base}/device-groups/${group.id}`);
 	}
 
-	/** The secondary pill action: save the rule as a group WITHOUT assigning. */
 	async function saveAsGroup() {
 		const name = groupName.trim();
 		if (!ruleCountable || !name || savingGroup || reusableGroup) return;
@@ -387,9 +346,6 @@
 		parked = true;
 	}
 
-	/** In-place resume only — the store calls this when the operator restores
-	 *  while /assign is still the mounted surface. A cross-route restore never
-	 *  gets here: the chrome navigates and onMount claims the card instead. */
 	function restore() {
 		parked = false;
 	}
@@ -399,9 +355,7 @@
 			route: ROUTE,
 			title: m.assign_rule_pill_title(),
 			dirty: ruleState.text.length > 0 || groupName.length > 0 || setId !== null,
-			// A standing rule needs all three: a set to apply, a counted rule to
-			// apply it to, and a name for the group that carries it. The guard is
-			// the store's, so ⌘S is closed too, not only the button.
+
 			valid: ruleReady,
 			commitLabel:
 				ruleState.count !== null
@@ -431,8 +385,7 @@
 			route: ROUTE,
 			title: m.assign_pill_title({ label: sel.label }),
 			dirty: setId !== null,
-			// The commit is impossible without a set — the guard is the store's,
-			// so ⌘S is closed too, not only the button.
+
 			valid: setId !== null,
 			commitLabel: m.assign_commit_label({ count: sel.deviceIds.length }),
 			subtext: caption,
@@ -451,15 +404,13 @@
 			if (held) exitContext();
 			return;
 		}
-		// updateContext patches the object a stashed stage card closed over, so a
-		// restored draft keeps working; enterContext replaces the whole state.
+
 		if (held) updateContext(next);
 		else enterContext({ id: CONTEXT_ID, ...next });
 	});
 
-	// Never leak a stale pill context: leaving without commit or stash drops it.
 	$effect(() => () => {
-		// auto-stash-on-navigate: park a dirty assignment instead of discarding it.
+
 			leaveContext(CONTEXT_ID);
 	});
 </script>
@@ -592,8 +543,6 @@
 	{/if}
 </div>
 
-<!-- The future-scope acknowledgement: a real confirm on first apply, naming the
-     standing-rule consequence AND the group the commit will create. -->
 <FutureScopeDialog
 	bind:open={confirmOpen}
 	queryText={ruleState.text}

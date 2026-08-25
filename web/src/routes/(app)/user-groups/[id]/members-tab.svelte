@@ -1,7 +1,5 @@
 <script lang="ts">
-	// Dense member rows for a user group. Membership of a dynamic group is the
-	// rule's output; a SCIM-managed group's membership belongs to the identity
-	// provider — both keep the add/remove affordances off.
+
 	import { base } from '$app/paths';
 	import { Tile, Chip } from '$lib/components/fleet';
 	import { Button } from '$lib/components/ui/button';

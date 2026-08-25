@@ -86,7 +86,7 @@
 		try {
 			await apiClient.refreshDeviceInventory(deviceId);
 			toast.success(m.inventory_refreshed());
-			// Wait a bit then reload inventory
+
 			setTimeout(() => loadInventory(), 2000);
 		} catch (error) {
 			toast.error(getLocalizedError(error));

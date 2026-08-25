@@ -1,11 +1,5 @@
-// Tests for the client-mode list factory. Everything the server does for
-// createSearchListState (match, filter, sort, slice) happens here in the
-// browser, so those are the bugs that can hide: a query that only looks at one
-// field, a sort that ignores its direction, a filter that doesn't reset the
-// page, a patch that silently refetches, a URL that doesn't round-trip.
-//
-// Runs in the node project (see vitest.config.ts): the file is a `.svelte.ts`
-// module, so runes compile; `onMount` is a no-op there, hence the seams below.
+
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const env = vi.hoisted(() => ({
@@ -34,8 +28,6 @@ vi.mock('$app/navigation', () => {
 	};
 });
 
-// The node build of `svelte` stubs onMount out entirely; capture it instead so
-// the test can decide when the initial load runs.
 vi.mock('svelte', async (importOriginal) => ({
 	...(await importOriginal<typeof import('svelte')>()),
 	onMount: (fn: () => void) => {
@@ -80,7 +72,7 @@ function make(load: () => Promise<Row[]> = async () => FIXTURES.map((r) => ({ ..
 			created: (a, b) => a.created - b.created
 		},
 		defaultSort: 'name',
-		// Timestamps read newest-first, names A→Z.
+
 		sortDir: (key) => (key === 'created' ? 'desc' : 'asc'),
 		pageSizes: ['2', '10', '25'],
 		defaultPageSize: '10',
@@ -89,7 +81,6 @@ function make(load: () => Promise<Row[]> = async () => FIXTURES.map((r) => ({ ..
 	});
 }
 
-/** Run the captured onMount callbacks (the initial load) and settle them. */
 async function mount() {
 	const pending = env.mounts.splice(0);
 	for (const fn of pending) fn();
@@ -173,7 +164,6 @@ describe('createClientListState — query matching', () => {
 		table.setSearch('AL');
 		expect(names(table.rows)).toEqual(['Alpha']);
 
-		// second declared field (the ULID column) matches too
 		table.setSearch('01DELTA');
 		expect(names(table.rows)).toEqual(['Delta']);
 
@@ -202,7 +192,6 @@ describe('createClientListState — sorting', () => {
 		expect(table.sortDir).toBe('desc');
 		expect(names(table.rows)).toEqual(['Gamma', 'Epsilon', 'Delta', 'beta', 'Alpha']);
 
-		// switching column uses the per-key default (timestamps desc-first)
 		table.toggleSort('created');
 		expect(table.sortKey).toBe('created');
 		expect(table.sortDir).toBe('desc');
@@ -232,7 +221,6 @@ describe('createClientListState — filters and pagination', () => {
 		expect(table.showingFrom).toBe(3);
 		expect(table.showingTo).toBe(3);
 
-		// a filter change must not strand the operator on a now-empty page
 		table.setFilter('status', ['disabled']);
 		expect(table.page).toBe(1);
 		expect(names(table.rows)).toEqual(['beta', 'Delta']);
@@ -301,7 +289,7 @@ describe('createClientListState — URL round-trip', () => {
 
 		first.setSearch('a');
 		first.setFilter('status', ['active', 'disabled']);
-		first.toggleSort('created'); // natural direction for this key
+		first.toggleSort('created');
 		first.setPageSize('2');
 		first.gotoPage(2);
 		expect(names(first.rows)).toEqual(['beta', 'Delta']);
@@ -309,15 +297,14 @@ describe('createClientListState — URL round-trip', () => {
 		const params = new URL(env.href).searchParams;
 		expect(params.get('query')).toBe('a');
 		expect(params.get('status')).toBe('active,disabled');
-		// list filters stay comma-readable in the address bar
+
 		expect(env.href).toContain('status=active,disabled');
 		expect(params.get('sort')).toBe('created');
-		// desc is `created`'s natural direction, so it stays out of the URL
+
 		expect(params.get('sortDir')).toBeNull();
 		expect(params.get('pageSize')).toBe('2');
 		expect(params.get('page')).toBe('2');
 
-		// search is transient (replace); filter/sort/page are committed (push)
 		expect(env.history[0].mode).toBe('replace');
 		expect(env.history.slice(1).map((h) => h.mode)).toEqual([
 			'push',
@@ -340,8 +327,8 @@ describe('createClientListState — URL round-trip', () => {
 	it('records a direction that differs from the column default', async () => {
 		const first = make();
 		await mount();
-		first.toggleSort('created'); // -> desc (natural, omitted)
-		first.toggleSort('created'); // -> asc (deliberate, recorded)
+		first.toggleSort('created');
+		first.toggleSort('created');
 
 		expect(new URL(env.href).searchParams.get('sortDir')).toBe('asc');
 

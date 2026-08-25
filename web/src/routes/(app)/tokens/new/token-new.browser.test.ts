@@ -1,21 +1,9 @@
-// Behaviour contract for /tokens/new — the create flow that used to be a modal.
-//
-// The operator's report was that stashing "does not work for about 90% of the
-// remaining creation parts because they are in a modal": a dialog owns its own
-// footer and dies on navigation, so it can never take part in the pill's three
-// exits. These tests pin what the conversion has to be worth:
-//   - the route commits through the SAME RPC arguments the dialog sent;
-//   - an invalid buffer is refused by the STORE, so ⌘S is closed too;
-//   - and the load-bearing one: stash, walk away, restore — the buffer comes
-//     back and still commits;
-//   - the list page's Create button navigates instead of opening a dialog.
+
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import * as m from '$lib/paraglide/messages';
 
-// `vi.mock` is hoisted above every top-level const, so the signed-in user's id
-// has to be hoisted with it — a plain module const would be in its TDZ when the
-// factory runs.
 const { USER_ID } = vi.hoisted(() => ({ USER_ID: '01JQZZ0000000000000000000A' }));
 
 const api = vi.hoisted(() => ({
@@ -26,12 +14,6 @@ const api = vi.hoisted(() => ({
 }));
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/tokens/new') }));
 
-// Only the client and the browser-only stores are faked; the generated protobuf
-// re-exports stay real, so the zod schema under test is the production one.
-//
-// The draft hook is deliberately MEMORYLESS across mounts: a remount gets an
-// empty autosave, so the cross-route test can only pass if the stage card's own
-// payload rebuilt the form.
 vi.mock('$lib/sdk', async () => {
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const common = await import('$contract/cadestro/v1/common_pb');
@@ -99,9 +81,7 @@ import {
 
 const ROUTE = '/tokens/new';
 const TOKEN_ID = '01JQZZ4A7K3M9P2Q6R8T1V0W5X';
-// 64-hex SHA-256 of the control CA certificate DER. Per-CA, not per-token: it
-// rides the CreateTokenResponse BESIDE token.value because the installer
-// refuses to enroll without `-p <pin>`.
+
 const CA_PIN = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
 
 beforeEach(() => {
@@ -109,8 +89,7 @@ beforeEach(() => {
 	resetShell();
 	setShellPath(ROUTE);
 	nav.url = new URL('https://control.test/tokens/new');
-	// The wrapper returns the full CreateTokenResponse: the pin arrives beside
-	// the token, never on it.
+
 	api.createToken.mockResolvedValue({
 		token: { id: TOKEN_ID, name: 'Fleet rollout', value: 'TOK-SECRET' },
 		caFingerprintPin: CA_PIN
@@ -120,7 +99,6 @@ beforeEach(() => {
 
 const field = (id: string) => document.querySelector<HTMLInputElement>(`#${id}`);
 
-/** Type into a real input the way the browser does, so Svelte's binding sees it. */
 function type(input: HTMLInputElement, value: string) {
 	input.value = value;
 	input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -143,9 +121,9 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 				(b) => b.textContent?.trim() === m.tokens_create()
 			)
 		).toBe(false);
-		// One commit grammar app-wide: create surfaces say Create.
+
 		expect(shell.pill.context?.commitLabel).toBe(m.common_create());
-		// Declaring a route is what earns the Stash button.
+
 		expect(shell.pill.context?.route).toBe(ROUTE);
 	});
 
@@ -181,14 +159,11 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 				'TOK-SECRET'
 			)
 		);
-		// The reveal is terminal: nothing left to commit, so the pill goes home.
+
 		await vi.waitFor(() => expect(pillMode()).toBe('nav'));
 		expect(vi.mocked(goto)).not.toHaveBeenCalled();
 	});
 
-	// A token without its CA pin is un-enrollable: the installer requires
-	// `-p <pin>`, so the reveal must present the pin beside the bearer with the
-	// same copy affordance, and thread it into the example install command.
 	it('shows the CA fingerprint pin beside the secret, copyable, and in the install command', async () => {
 		render(NewTokenPage);
 		await fillToken('Fleet rollout', '7');
@@ -198,7 +173,6 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 			expect(document.querySelector('[data-testid="token-ca-pin"]')?.textContent).toBe(CA_PIN)
 		);
 
-		// The pin's own copy control targets the PIN, not the bearer.
 		const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
 		try {
 			const copyPin = document.querySelector<HTMLButtonElement>(
@@ -211,7 +185,6 @@ describe('/tokens/new — the commit is the pill\'s', () => {
 			writeText.mockRestore();
 		}
 
-		// The example enroll command carries both halves the installer needs.
 		const command = [...document.querySelectorAll('pre')].map((p) => p.textContent).join('\n');
 		expect(command).toContain('-t TOK-SECRET');
 		expect(command).toContain(`-p ${CA_PIN}`);
@@ -238,25 +211,21 @@ describe('/tokens/new — the third exit: stash, walk away, restore', () => {
 		const draftId = stashContext();
 		expect(draftId).toBe('draft:token:create');
 		expect(shell.drafts[0].route).toBe(ROUTE);
-		// Parked means parked: the surface must not re-adopt its own card.
+
 		await new Promise((r) => setTimeout(r, 50));
 		expect(pillMode()).toBe('nav');
 
-		// The operator navigates away — /tokens/new unmounts and its component state
-		// is gone — then clicks the card from wherever they ended up.
 		await first.unmount();
 		setShellPath('/devices');
 		const rail = await render(StageRail);
 		(document.querySelector('[data-testid="stage-draft"]') as HTMLElement).click();
 
 		await vi.waitFor(() => expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(ROUTE));
-		// No dead context: the pill stays free. The card pops on the click; the
-		// buffer is staged for the remount.
+
 		expect(pillMode()).toBe('nav');
 		expect(shell.drafts).toHaveLength(0);
 		await rail.unmount();
 
-		// …the navigation lands, the surface mounts and claims its own draft.
 		setShellPath(ROUTE);
 		render(NewTokenPage);
 
@@ -264,7 +233,6 @@ describe('/tokens/new — the third exit: stash, walk away, restore', () => {
 		expect(field('token-expires')?.value).toBe('14');
 		expect(shell.drafts).toHaveLength(0);
 
-		// And the restored pill is LIVE — this is what the modal could never be.
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createToken).toHaveBeenCalledTimes(1));

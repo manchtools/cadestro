@@ -20,7 +20,7 @@ export {
 	Footer,
 	Title,
 	Description,
-	//
+
 	Root as Sheet,
 	Close as SheetClose,
 	Trigger as SheetTrigger,

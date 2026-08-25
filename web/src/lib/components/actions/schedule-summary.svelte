@@ -1,8 +1,5 @@
 <script lang="ts">
-	// The one way a schedule states itself outside its editor: a labelled,
-	// clickable summary. Actions, action sets and definitions all showed their
-	// schedule differently — an action put it in a rail, a container gave it a
-	// full body card with a paragraph of prose — for the same piece of state.
+
 	import type { ActionSchedule } from '$contract/cadestro/v1/actions_pb';
 	import ActionScheduleDisplay from './ActionScheduleDisplay.svelte';
 	import * as m from '$lib/paraglide/messages';
@@ -14,7 +11,7 @@
 	}: {
 		schedule?: ActionSchedule;
 		label?: string;
-		/** Click-to-reveal. Omitted where the pill is the only way in. */
+
 		onedit?: () => void;
 	} = $props();
 </script>

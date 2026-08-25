@@ -1,9 +1,4 @@
-// Focus containment for the onboarding dialogs.
-//
-// Tab (and Shift+Tab) cycle inside the card. Focus is NOT stolen back on
-// pointer interaction: the tour's backdrop is decoration and the app underneath
-// stays usable, so yanking focus away from a click the operator made on purpose
-// would be worse than the leak it prevents.
+
 
 const FOCUSABLE = [
 	'a[href]',
@@ -20,14 +15,11 @@ export function focusables(root: HTMLElement): HTMLElement[] {
 	);
 }
 
-/** Handle a Tab keydown inside `root`. Returns true when the event was consumed
- *  (the caller then preventDefault()s). */
 export function cycleTab(e: KeyboardEvent, root: HTMLElement): boolean {
 	if (e.key !== 'Tab') return false;
 	const items = focusables(root);
 	if (items.length === 0) {
-		// Nothing to move to — keep focus on the card rather than letting Tab
-		// wander into the page behind an open dialog.
+
 		root.focus();
 		return true;
 	}

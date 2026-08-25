@@ -1,8 +1,5 @@
-// The nav tables ARE the shell's routing contract (movement A): five operator
-// sections in the pill, everything else in the overflow — and nothing lost on
-// the way. The destination set is DISCOVERED from the route tree rather than
-// re-typed here, so adding a section without giving it a home, or dropping one
-// during a re-skin, fails instead of silently vanishing from the product.
+
+
 import { describe, it, expect, afterAll } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -17,18 +14,8 @@ import {
 
 const APP_ROUTES = 'src/routes/(app)';
 
-/** FLOW surfaces: routes entered with carried state, never by clicking a
- *  section — so they are deliberately absent from the pill AND the overflow.
- *  `/assign` (B2 / movement C) is opened by the fleet selection pill, which
- *  hands it the targets; a nav entry would open it with nothing to assign.
- *  Keep this list explicit and short — never a pattern — and note that every
- *  entry is asserted to still exist, so a stale exemption fails instead of
- *  hiding a section that quietly lost its home. */
 const NON_NAV_ROUTES = ['/assign'];
 
-/** Every routable section under (app): a directory holding a +page.svelte.
- *  Parameterised segments ([id]) are detail views reached FROM a section, and
- *  `new` is a create sub-route — neither is a nav destination. */
 function discoverSections(dir: string, prefix = ''): string[] {
 	const out: string[] = [];
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -50,7 +37,7 @@ const allHrefs = allEntries.map((e) => e.href);
 
 describe('nav tables — the pill row', () => {
 	it('discovers the (app) route tree', () => {
-		expect(discovered.length).toBeGreaterThan(0); // matches-zero guard
+		expect(discovered.length).toBeGreaterThan(0);
 	});
 
 	it('carries exactly the five round-2 operator sections', () => {
@@ -63,11 +50,10 @@ describe('nav tables — the pill row', () => {
 	});
 
 	it('keeps the admin overflow at users · roles · groups · tokens · IdP · terminal sessions', () => {
-		// Identified by a destination, not by its heading: the heading is a
-		// translated label now and would pin this assertion to English.
+
 		const admin = OVERFLOW_GROUPS.find((g) => g.items.some((i) => i.href === '/users'));
 		expect(admin).toBeDefined();
-		// Settings trails the movement-A list; the six that movement A names come first.
+
 		expect(admin!.items.slice(0, 6).map((i) => i.href)).toEqual([
 			'/users',
 			'/roles',
@@ -89,7 +75,7 @@ describe('nav tables — no destination is lost', () => {
 
 	it('exempts only routes that still exist', () => {
 		expect(NON_NAV_ROUTES.filter((href) => !discovered.includes(href))).toEqual([]);
-		expect(NON_NAV_ROUTES.length).toBeGreaterThan(0); // matches-zero guard
+		expect(NON_NAV_ROUTES.length).toBeGreaterThan(0);
 	});
 
 	it('points at no route that does not exist', () => {
@@ -108,7 +94,7 @@ describe('nav tables — permission gating', () => {
 		expect(denyAll.map((e) => e.href)).toEqual(
 			allEntries.filter((e) => e.permission === null).map((e) => e.href)
 		);
-		expect(denyAll.length).toBeGreaterThan(0); // matches-zero guard: `null` entries exist
+		expect(denyAll.length).toBeGreaterThan(0);
 	});
 
 	it('asks for exactly the permission each entry declares', () => {
@@ -125,11 +111,6 @@ describe('nav tables — permission gating', () => {
 	});
 });
 
-// The pill rendered English in every locale because these tables stored RESOLVED
-// strings (`label: 'Devices'`), frozen when the module was first evaluated — no
-// locale change could ever reach them. Labels are paraglide message accessors
-// now, and the labels below are DISCOVERED from the live tables, so a new entry
-// that re-introduces a literal (or forgets a translation) fails here.
 describe('nav tables — labels follow the locale', () => {
 	const labelled = [
 		...PRIMARY_SECTIONS.map((s) => ({ what: `section ${s.href}`, label: s.label })),
@@ -139,13 +120,12 @@ describe('nav tables — labels follow the locale', () => {
 		])
 	];
 
-	// getLocale is module state in the paraglide runtime; hand it back.
 	afterAll(() => overwriteGetLocale(() => baseLocale));
 
 	it('finds every entry label and every group heading', () => {
 		expect(labelled).toHaveLength(allEntries.length + OVERFLOW_GROUPS.length);
-		expect(labelled.length).toBeGreaterThan(0); // matches-zero guard
-		expect(locales.length).toBeGreaterThan(1); // matches-zero guard: there IS a second locale
+		expect(labelled.length).toBeGreaterThan(0);
+		expect(locales.length).toBeGreaterThan(1);
 	});
 
 	it('carries message functions, never pre-resolved strings', () => {
@@ -166,9 +146,7 @@ describe('nav tables — labels follow the locale', () => {
 	});
 
 	it('reads the locale at CALL time, so switching language changes the text', () => {
-		// A label that resolves non-empty in both locales can still be locale-blind
-		// (that was the bug). Only a difference across locales proves the accessor
-		// is evaluated per render rather than at import.
+
 		const devices = PRIMARY_SECTIONS.find((s) => s.href === '/devices');
 		expect(devices).toBeDefined();
 		overwriteGetLocale(() => 'en');
@@ -178,16 +156,13 @@ describe('nav tables — labels follow the locale', () => {
 	});
 });
 
-// The stage rail's counterpart to the nav tables: captions for parked panels.
-// Same failure mode (a caption built in English by string concatenation), same
-// contract — a lookup of lazy accessors with a fallback for an unnamed kind.
 describe('stage-rail panel-kind captions', () => {
 	const kinds = Object.keys(PANEL_KIND_PLURAL);
 
 	afterAll(() => overwriteGetLocale(() => baseLocale));
 
 	it('names the same kinds in both the plural and singular maps', () => {
-		expect(kinds.length).toBeGreaterThan(0); // matches-zero guard
+		expect(kinds.length).toBeGreaterThan(0);
 		expect(Object.keys(PANEL_KIND_SINGULAR).sort()).toEqual([...kinds].sort());
 	});
 
@@ -204,7 +179,7 @@ describe('stage-rail panel-kind captions', () => {
 	});
 
 	it('falls back to the raw kind for a kind nobody named', () => {
-		// `kind` is an open string in the shell store, so the fallback is reachable.
+
 		expect(kinds).not.toContain('pod');
 		expect(panelKindPlural('pod')).toBe('Pods');
 		expect(panelKindSingular('pod')).toBe('pod');

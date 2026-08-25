@@ -1,9 +1,5 @@
 <script lang="ts">
-	// Definition detail = the same B1 pipeline builder, one level up: the ordered
-	// steps are action SETS, and the palette is round 2's Movement C set picker.
-	// Commit lives in the context pill; this page carries no Save button, and the
-	// definition's own action — Delete — rides the same pill instead of a danger
-	// zone below the builder.
+
 	import { onMount } from 'svelte';
 	import { getLocalizedError } from '$lib/errors';
 	import { goto } from '$lib/navigation';
@@ -28,20 +24,14 @@
 	let library = $state<ActionSet[]>([]);
 	let loading = $state(true);
 	let deleteDialogOpen = $state(false);
-	// Remount key: a fresh load must give the builder a fresh baseline.
+
 	let revision = $state(0);
 
 	const defId = $derived(page.params.id ?? '');
 
-	// The definition's own action, published on the builder's context so it shares
-	// the pill with the commit. It keeps its confirm dialog.
 	let scheduleOpen = $state(false);
 	let assignOpen = $state(false);
 
-	// The definition's OWN actions: schedule and assignment act on the whole
-	// definition, not on anything inside the builder, so they belong beside the
-	// commit rather than in cards below it. Delete keeps its confirm dialog and is
-	// marked destructive so it reads apart from the two beside it.
 	const entityActions: PillAction[] = [
 		{
 			id: 'schedule',

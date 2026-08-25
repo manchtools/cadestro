@@ -1,11 +1,5 @@
 <script lang="ts">
-	// Live terminal sessions, as evidence rows: the session ULID and the TTY
-	// account are mono (they are identifiers an operator copies into a ticket),
-	// the device links back to its own page, and Terminate is the last thing on
-	// the row — destructive-last, behind a reason-carrying confirmation.
-	//
-	// ListActiveTerminalSessions has no Search scope, so the RPC returns the set
-	// and the client table does matching, sorting and paging (client mode).
+
 	import { apiClient, formatTimestampDateTime } from '$lib/sdk';
 	import { getLocalizedError } from '$lib/errors';
 	import { registerPageSearch } from '$lib/shell/page-search.svelte';
@@ -37,12 +31,10 @@
 			activity: (a, b) => seconds(a.lastActivityAt) - seconds(b.lastActivityAt)
 		},
 		defaultSort: 'started',
-		// A live-session list reads newest-first; activity does too.
+
 		sortDir: (key) => (key === 'started' || key === 'activity' ? 'desc' : 'asc')
 	});
 
-	// Headerless rows: the sort keys that were column headers now ride the row
-	// list's sort bar, reusing the same labels.
 	const sortOptions = [
 		{ key: 'user' as const, label: m.terminal_sessions_user() },
 		{ key: 'device' as const, label: m.terminal_sessions_device() },
@@ -71,7 +63,7 @@
 			await apiClient.terminateTerminalSession(id, terminateReason);
 			toast.success(m.terminal_sessions_terminated());
 			terminateDialogOpen = false;
-			// The session is gone server-side; drop it without a round trip.
+
 			table.patchRows((rows) => rows.filter((s) => s.sessionId?.value !== id));
 		} catch (err) {
 			toast.error(m.terminal_sessions_terminate_failed(), { description: getLocalizedError(err) });
@@ -81,11 +73,6 @@
 		}
 	}
 
-	// The query lives in the pill now: ⌘K opens search already on this page's
-	// facet and its keystrokes land on the same setSearch the removed input
-	// drove. These rows come from a plain list RPC, so the Search RPC has no
-	// scope for them — `null` says so instead of pretending. The registration is
-	// withdrawn on unmount so the next page never inherits it.
 	$effect(() =>
 		registerPageSearch({
 			scope: null,
@@ -104,8 +91,7 @@
 </svelte:head>
 
 <PageShell contentClass="space-y-4">
-	<!-- ONE toolbar line: the filters ride the header beside Refresh/Create. The
-	     search box is gone — ⌘K is the search, already scoped to this page. -->
+
 	{#snippet header()}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<div>
@@ -123,17 +109,13 @@
 		</div>
 	{/snippet}
 
-	<!-- A session is not a page: the only navigation off the row is its device, so
-	     the row body stays a plain container carrying that one link, and the
-	     destructive Terminate sits in rowEnd — outside any link, last on the row. -->
 	<RowList {table} {sortOptions} rowKey={(s) => (s.sessionId?.value ?? '')}>
 		{#snippet row(session)}
 			<span class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft">
 				<SquareTerminal class="h-3.5 w-3.5 text-accent-ink" />
 			</span>
 			<span class="min-w-0 flex-1">
-				<!-- Headerless rows lose their column labels, so each ambiguous mono
-				     string carries its former header as a tooltip. -->
+
 				<span
 					class="block truncate font-mono text-xs text-muted-foreground"
 					title={m.terminal_sessions_session()}
@@ -156,8 +138,7 @@
 			<span class="shrink-0 font-mono text-[0.66rem] text-faint" title={m.terminal_sessions_tty_user()}>
 				{session.ttyUser}
 			</span>
-			<!-- One stamp keeps the row dense; last activity stays reachable in the
-			     tooltip and as a sort key. -->
+
 			<span
 				class="shrink-0 font-mono text-xs tabular-nums text-muted-foreground"
 				title="{m.terminal_sessions_started_at()}: {stamp(

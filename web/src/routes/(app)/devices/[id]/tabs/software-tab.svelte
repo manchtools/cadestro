@@ -20,15 +20,12 @@
 
 	let search = $state('');
 
-	// Manage dialog state
 	let manageDialogOpen = $state(false);
 	let selectedPackage = $state({ name: '', version: '', source: '' });
 
-	// Managed packages tracking
 	let assignedActions = $state<ManagedAction[]>([]);
 	let assignedActionIds = $derived(new Set(assignedActions.map((a) => a.id)));
 
-	// Build a map of package name → action for "Managed" badge
 	const managedPackages = $derived.by(() => {
 		const map = new Map<string, { actionId: string; actionName: string }>();
 		for (const action of assignedActions) {
@@ -69,7 +66,6 @@
 		loadDeviceAssignments();
 	}
 
-	// Merge all package tables into a single list
 	const packageTables = $derived(
 		inventory.filter((t) =>
 			['deb_packages', 'rpm_packages', 'python_packages', 'packages'].includes(t.tableName)

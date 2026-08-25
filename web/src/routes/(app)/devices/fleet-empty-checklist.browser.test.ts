@@ -1,10 +1,5 @@
-// The getting-started checklist rides the EMPTY fleet — through the real seam.
-//
-// The card is not portalled, watched for or re-parented by anything: the devices
-// route passes it to FleetSurface's `emptyExtra`, which is fleet-empty's own
-// `extra` slot. So the contract these tests pin is structural — the checklist
-// renders INSIDE `[data-testid="fleet-empty"]`, and a fleet that has devices
-// never renders it at all.
+
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -12,12 +7,12 @@ import { DeviceSchema } from '$contract/cadestro/v1/control_pb';
 
 const mocks = vi.hoisted(() => ({
 	url: new URL('http://localhost/devices'),
-	// fleet snapshot reads (./fleet-data) …
+
 	listDevices: vi.fn(),
 	listDeviceGroups: vi.fn(),
 	getDeviceGroup: vi.fn(),
 	search: vi.fn(),
-	// … and the checklist's own probes ($lib/onboarding/checklist).
+
 	listTokens: vi.fn(),
 	listActions: vi.fn(),
 	listAssignments: vi.fn(),
@@ -41,8 +36,6 @@ vi.mock('$app/navigation', () => ({
 	beforeNavigate: vi.fn()
 }));
 
-// One faked client behind BOTH readers — the fleet sweep and the checklist
-// probes are the same seam, so the page and the card agree on the same fleet.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -77,8 +70,6 @@ import { resetFleetSelection } from './fleet-selection.svelte';
 const empty = () => document.querySelector<HTMLElement>('[data-testid="fleet-empty"]');
 const checklist = () => document.querySelector<HTMLElement>('[data-testid="onboarding-checklist"]');
 
-// render() resolves to the result that carries unmount(); awaiting it keeps the
-// page's own polling-free effects from outliving their test.
 let mounted: { unmount: () => Promise<void> } | null = null;
 
 beforeEach(() => {
@@ -94,7 +85,7 @@ beforeEach(() => {
 	mocks.listDeviceGroups.mockResolvedValue({ groups: [], nextPageToken: '', totalCount: 0 });
 	mocks.getDeviceGroup.mockResolvedValue({ deviceIds: [], devices: [] });
 	mocks.search.mockResolvedValue({ results: [], totalCount: 0 });
-	// Every probe answers "nothing yet", so every row is a real, readable `todo`.
+
 	mocks.listTokens.mockResolvedValue({ tokens: [] });
 	mocks.listActions.mockResolvedValue({ actions: [] });
 	mocks.listAssignments.mockResolvedValue({ assignments: [] });
@@ -114,8 +105,6 @@ describe('the getting-started checklist rides the empty fleet', () => {
 		await vi.waitFor(() => expect(empty()).not.toBeNull());
 		await vi.waitFor(() => expect(checklist()).not.toBeNull());
 
-		// The seam, asserted structurally: the card is a DESCENDANT of the empty
-		// state — a portalled card sitting next to it would fail here.
 		expect(empty()!.querySelector('[data-testid="onboarding-checklist"]')).not.toBeNull();
 		expect(
 			document.querySelectorAll('[data-testid="onboarding-checklist-row"]').length
@@ -134,8 +123,6 @@ describe('the getting-started checklist rides the empty fleet', () => {
 			expect(document.querySelectorAll('[data-testid="fleet-tile"]').length).toBe(1)
 		);
 
-		// Long enough for the checklist's own onMount reads to have landed, had
-		// anything mounted it.
 		await new Promise((r) => setTimeout(r, 120));
 		expect(empty()).toBeNull();
 		expect(checklist()).toBeNull();

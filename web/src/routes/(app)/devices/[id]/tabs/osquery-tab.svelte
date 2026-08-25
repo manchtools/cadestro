@@ -34,7 +34,6 @@
 
 	let { deviceId }: Props = $props();
 
-	// Preset queries
 	const presets = [
 		{ table: 'processes', label: () => m.osquery_processes(), icon: Activity },
 		{ table: 'listening_ports', label: () => m.osquery_ports(), icon: Network },
@@ -49,7 +48,6 @@
 		{ table: 'startup_items', label: () => m.osquery_startup(), icon: Play }
 	];
 
-	// Query state
 	let customTable = $state('');
 	let customLimit = $state(100);
 	let customSql = $state('');
@@ -77,7 +75,6 @@
 			);
 			activeQueryId = queryId;
 
-			// Poll for result
 			const maxPolls = 60;
 			for (let i = 0; i < maxPolls; i++) {
 				await new Promise((r) => setTimeout(r, 500));
@@ -115,7 +112,7 @@
 </script>
 
 <div class="space-y-6">
-	<!-- Preset Buttons -->
+
 	<section class="rounded-xl border border-hair bg-surface p-4 shadow-plate">
 		<div class="flex items-center gap-2">
 			<Search class="h-4 w-4 text-faint" />
@@ -187,7 +184,6 @@
 		</div>
 	</section>
 
-	<!-- Results -->
 	{#if queryLoading}
 		<div
 			class="flex items-center justify-center rounded-xl border border-hair bg-surface py-12 shadow-plate"

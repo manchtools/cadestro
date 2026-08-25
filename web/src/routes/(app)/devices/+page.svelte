@@ -1,7 +1,5 @@
 <script lang="ts">
-	// The devices route IS the fleet surface (concept A4 / round-2 movement A):
-	// a semantic zoom over one ListDevices + ListDeviceGroups snapshot, with the
-	// existing server-search list kept as the device zoom level.
+
 	import { onMount } from 'svelte';
 	import { RefreshCw } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -16,8 +14,7 @@
 	let snapshot = $state<FleetSnapshot | null>(null);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
-	// Captured with the snapshot so every tile's decay is measured against the
-	// same instant the data was read at.
+
 	let nowMs = $state(Date.now());
 
 	async function refresh() {
@@ -63,8 +60,6 @@
 		<DeviceLevel surfaceId="devices" {nowMs} />
 	{/snippet}
 
-	<!-- The getting-started checklist belongs to the EMPTY fleet and to nowhere
-	     else, so it rides fleet-empty's own `extra` slot. -->
 	{#snippet emptyExtra()}
 		<GettingStartedChecklist />
 	{/snippet}

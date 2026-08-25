@@ -1,32 +1,5 @@
 <script lang="ts">
-	// THE ⌘K surface — one palette, rendered as the pill's search mode (the pill's
-	// fourth posture; movement E, "the palette is honest about what search is").
-	// It is the only search implementation: the morph bar owns the morph and hands
-	// this component the box, which is why the shell's own jump targets (sections,
-	// windows, terminals, drafts) are rows HERE and not a second row model there.
-	//
-	// Four row families with deliberately DIFFERENT rules:
-	//
-	//   page rows   — when a list page has registered itself (see
-	//                 $lib/shell/page-search), the FIRST facet is that page and
-	//                 typing drives the page's own list state. No RPC is issued:
-	//                 the page already owns one, and the operator is searching
-	//                 what they are looking at. ⇥ leaves the page facet and the
-	//                 palette becomes the global one below.
-	//   entity rows — rendered exactly as the Search RPC returned them. Server
-	//                 search is prefix matching over ten scopes with keyset
-	//                 paging and no relevance ranking, so the palette does no
-	//                 client re-ranking, no re-sorting and no fuzzy matching:
-	//                 it never pretends to rank. Paging is a "show next" row fed
-	//                 by next_page_token — never numbered pages.
-	//   section rows— the nav tables the layout already filtered by permission.
-	//   shell rows  — open windows, live terminals and stashed drafts exist only
-	//                 in this browser tab. Together with sections they are the
-	//                 ONLY rows matched locally (plain substring on the title).
-	//
-	// Facets are the ten real SearchScope values plus "All" — UNSPECIFIED, which
-	// the contract defines as "all scopes" — preceded by the registered page, if
-	// any. ⇥ cycles the ring and re-scopes the RPC.
+
 	import { untrack } from 'svelte';
 	import { goto } from '$lib/navigation';
 	import { apiClient } from '$lib/sdk';
@@ -57,9 +30,6 @@
 	import { shell, restorePanel, focusSession, restoreDraft } from '$lib/shell/shell.svelte';
 	import { activePageSearch, type PageSearchRegistration } from '$lib/shell/page-search.svelte';
 
-	// Sections arrive as props for the same reason the pill takes them as props:
-	// the layout owns the auth client and hands down the permission-filtered
-	// tables. This component may talk to the Search RPC, but not to authStore.
 	let {
 		open = $bindable(false),
 		sections = [],
@@ -70,21 +40,17 @@
 		overflow?: PillGroup[];
 	} = $props();
 
-	/** Palette page size. Small on purpose: the palette is a jump target, and
-	 *  "show next" keeps the rest one keystroke away. */
 	const PAGE_SIZE = 8;
 
 	interface Facet {
 		scope: SearchScope;
 		label: () => string;
 		icon: typeof Monitor;
-		/** Section route. `detail: false` scopes have no per-entity page, so a
-		 *  row deep-links the section's own query instead of inventing a URL. */
+
 		route: string;
 		detail: boolean;
 	}
 
-	// "All" first, then the ten scopes the server actually indexes.
 	const FACETS: Facet[] = [
 		{ scope: SearchScope.UNSPECIFIED, label: () => m.search_facet_all(), icon: Search, route: '', detail: false },
 		{ scope: SearchScope.DEVICES, label: () => m.search_group_devices(), icon: Monitor, route: '/devices', detail: true },
@@ -99,8 +65,6 @@
 	];
 	const FACET_BY_SCOPE = new Map(FACETS.map((f) => [f.scope, f]));
 
-	/** The chip ring: the registered page first (when there is one), then the
-	 *  eleven server facets. `page: true` is the one entry that issues no RPC. */
 	interface RingFacet {
 		key: string;
 		scope: SearchScope;
@@ -108,10 +72,6 @@
 		page: boolean;
 	}
 
-	/** Captured at open, not read live: a page re-registering mid-keystroke must
-	 *  not reseed the box under the operator's fingers. `$state.raw` on purpose —
-	 *  a deep proxy would clone the page's getter into a snapshot and destroy the
-	 *  identity the seam's release guard depends on. */
 	let scoped = $state.raw<PageSearchRegistration | null>(null);
 
 	let query = $state('');
@@ -124,8 +84,7 @@
 	let sel = $state(0);
 	let input = $state<HTMLInputElement | null>(null);
 	let debounce: ReturnType<typeof setTimeout> | undefined;
-	// Monotonic guard: a slow response for an abandoned query must never
-	// overwrite the rows of the query the operator is looking at.
+
 	let issued = 0;
 
 	const ring = $derived.by((): RingFacet[] => {
@@ -136,8 +95,7 @@
 			page: false
 		}));
 		if (!scoped) return base;
-		// A page whose rows come from a plain list RPC has no SearchScope; its chip
-		// still leads the ring, it just carries no scope to re-run anything with.
+
 		return [
 			{
 				key: 'page',
@@ -149,10 +107,9 @@
 		];
 	});
 	const activeFacet = $derived(ring[facet] ?? ring[0]);
-	/** True while keystrokes belong to the page's list instead of the RPC. */
+
 	const pageMode = $derived(!!scoped && !!activeFacet?.page);
 
-	// ── rows ──────────────────────────────────────────────────────────────────
 	type Row =
 		| { kind: 'entity'; id: string; result: SearchResult }
 		| { kind: 'next'; id: string }
@@ -167,8 +124,6 @@
 		rows: Row[];
 	}
 
-	/** Entity groups in SERVER order: scopes appear in the order the response
-	 *  first mentions them, rows keep their response index. Nothing is sorted. */
 	const entityGroups = $derived.by((): RowGroup[] => {
 		const by = new Map<SearchScope, SearchResult[]>();
 		for (const r of results) {
@@ -179,9 +134,7 @@
 		const q = query.trim();
 		return [...by.entries()].map(([scope, items]) => {
 			const label = FACET_BY_SCOPE.get(scope)?.label() ?? m.search_facet_all();
-			// total_count belongs to the REQUEST. Under a single facet it is that
-			// scope's total, so "8 of 41" is true; under "All" it spans every
-			// scope, so a per-group "of N" would be a lie and is left off.
+
 			const heading =
 				activeFacet.scope === scope && totalCount > 0
 					? m.search_group_count_total({ scope: label, query: q, shown: items.length, total: totalCount })
@@ -194,11 +147,8 @@
 		});
 	});
 
-	/** The one honest paging affordance: the server handed back a cursor. */
 	const nextRow = $derived<Row[]>(nextPageToken ? [{ kind: 'next', id: 'next-page' }] : []);
 
-	/** The page facet's own rows: a "stay here" row (↵ closes and leaves the
-	 *  filter applied) and, once the page carries a query, a way to drop it. */
 	const pageGroup = $derived.by((): RowGroup | null => {
 		if (!pageMode || !scoped) return null;
 		const rows: Row[] = [{ kind: 'page', id: 'page-scope' }];
@@ -206,21 +156,16 @@
 		return { key: 'this-page', heading: scoped.label(), rows };
 	});
 
-	/** "Go to" — the permission-filtered nav tables the layout handed down.
-	 *  These are shell objects, so local substring matching is allowed. */
 	const sectionGroup = $derived.by((): RowGroup | null => {
 		const q = query.trim().toLowerCase();
 		const all = [...sections, ...overflow.flatMap((g) => g.items)];
 		const rows: Row[] = all
-			// The label is a message ACCESSOR — call it here so the row carries the
-			// label in the locale that is active while the palette renders.
+
 			.map((s) => ({ kind: 'section' as const, id: `section-${s.href}`, href: s.href, title: s.label() }))
 			.filter((r) => !q || r.title.toLowerCase().includes(q));
 		return rows.length ? { key: 'go-to', heading: m.search_group_goto(), rows } : null;
 	});
 
-	/** "This shell" — windows, terminals and drafts of THIS tab. Local substring
-	 *  matching is allowed here and only here (these never touch the RPC). */
 	const shellGroup = $derived.by((): RowGroup | null => {
 		const q = query.trim().toLowerCase();
 		const hit = (title: string) => !q || title.toLowerCase().includes(q);
@@ -257,8 +202,7 @@
 	});
 
 	const groups = $derived.by((): RowGroup[] => {
-		// In page mode the list behind the pill IS the result set, so the palette
-		// shows no entity rows of its own — only the page row and jump targets.
+
 		const out: RowGroup[] = pageMode ? [] : [...entityGroups];
 		if (pageGroup) out.push(pageGroup);
 		if (!pageMode && nextRow.length) out.push({ key: 'paging', heading: '', rows: nextRow });
@@ -267,18 +211,16 @@
 		return out;
 	});
 
-	/** Flat row order — what ↑↓ walks and aria-activedescendant points at. */
 	const flat = $derived(groups.flatMap((g) => g.rows));
 	const activeIndex = $derived.by(() => (flat.length ? Math.min(sel, flat.length - 1) : 0));
 
-	// ── the RPC ───────────────────────────────────────────────────────────────
 	async function runSearch(q: string, scope: SearchScope, pageToken = '') {
 		const seq = ++issued;
 		searching = true;
 		failed = false;
 		try {
 			const res = await apiClient.search(q, scope, PAGE_SIZE, pageToken);
-			if (seq !== issued) return; // a newer query already owns the list
+			if (seq !== issued) return;
 			const page = res.results ?? [];
 			results = pageToken ? [...results, ...page] : page;
 			nextPageToken = res.nextPageToken ?? '';
@@ -296,7 +238,7 @@
 	}
 
 	function clearResults() {
-		issued++; // orphan any in-flight response
+		issued++;
 		results = [];
 		nextPageToken = '';
 		totalCount = 0;
@@ -316,8 +258,7 @@
 	function onInput(value: string) {
 		query = value;
 		sel = 0;
-		// Page mode drives the page's own list state — the same setSearch its
-		// removed input drove — and issues no RPC of its own.
+
 		if (pageMode && scoped) {
 			clearTimeout(debounce);
 			clearResults();
@@ -327,9 +268,6 @@
 		schedule(value, activeFacet.scope);
 	}
 
-	/** ⇥ / a chip click. An explicit act, so it re-runs the RPC immediately —
-	 *  no debounce — and drops the previous scope's rows and cursor. Landing on
-	 *  the page facet issues nothing: the page is already showing its answer. */
 	function setFacet(next: number) {
 		facet = (next + ring.length) % ring.length;
 		sel = 0;
@@ -343,14 +281,13 @@
 		runSearch(query, activeFacet.scope, nextPageToken);
 	}
 
-	// ── activation ────────────────────────────────────────────────────────────
 	function close() {
 		open = false;
 	}
 
 	function openResult(r: SearchResult) {
 		const target = FACET_BY_SCOPE.get(r.scope);
-		if (!target || !target.route) return; // never navigate on a scope we don't know
+		if (!target || !target.route) return;
 		close();
 		goto(
 			target.detail
@@ -367,8 +304,7 @@
 	function activate(row: Row) {
 		if (row.kind === 'entity') openResult(row.result);
 		else if (row.kind === 'next') showNext();
-		// The page row is "done": the filter is already applied to the list behind
-		// the pill, so ↵ just gets the pill out of the way. It never clears.
+
 		else if (row.kind === 'page') close();
 		else if (row.kind === 'clear') {
 			query = '';
@@ -377,9 +313,7 @@
 		} else if (row.kind === 'section') (close(), goto(row.href));
 		else if (row.kind === 'panel') (restorePanel(row.refId), close());
 		else if (row.kind === 'terminal') (focusSession(row.refId), close());
-		// A draft whose surface is no longer mounted restores by going HOME first:
-		// the store hands back the route and this chrome navigates. Re-entering the
-		// parked context instead would revive closures over an unmounted page.
+
 		else (resumeDraft(row.refId), close());
 	}
 
@@ -392,21 +326,16 @@
 		else if (e.key === 'Enter') (e.preventDefault(), flat[activeIndex] && activate(flat[activeIndex]));
 		else if (e.key === 'Escape') (e.preventDefault(), close());
 		else if (e.key === 'Tab') (e.preventDefault(), setFacet(facet + (e.shiftKey ? -1 : 1)));
-		// Tab is consumed by the facet ring, and the chips are not tab stops, so
-		// focus can never leave the palette while it is open.
+
 	}
 
-	// Opening captures the registered page ONCE (untracked: reading the page's
-	// live query here must not make this effect re-run on every keystroke and
-	// reseed the box). Closing resets only the palette's OWN state — the page's
-	// query is the page's, and Esc must leave it exactly as it stands.
 	$effect(() => {
 		const isOpen = open;
 		untrack(() => {
 			if (isOpen) {
 				const reg = activePageSearch();
 				scoped = reg;
-				facet = 0; // ring[0] is the page facet when one is registered
+				facet = 0;
 				query = reg ? reg.query : '';
 				sel = 0;
 				clearResults();
@@ -422,7 +351,6 @@
 		});
 	});
 
-	// ── row presentation ──────────────────────────────────────────────────────
 	const rtf = $derived(new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' }));
 
 	function relative(seconds: string | undefined): string {
@@ -437,14 +365,6 @@
 		return rtf.format(Math.round(delta / 86400), 'day');
 	}
 
-	/** A dot only where the entity really carries a status field. Devices use
-	 *  the same five-minute heartbeat window as `searchResultToDevice`; a
-	 *  user's only status is `disabled`.
-	 *
-	 *  The tone is also the row's status WORD (`TONE_LABEL`), so the buckets have
-	 *  to mean what the fleet's words say: `idle` is "never seen" and nothing
-	 *  else, a device that was seen but has missed the window is unreachable —
-	 *  `crit` — exactly as `deviceTone` classifies it on the fleet home. */
 	function tone(r: SearchResult): FleetTone | null {
 		const f = r.fields;
 		if (r.scope === SearchScope.DEVICES) {
@@ -461,15 +381,12 @@
 		return r.name || f['hostname'] || f['name'] || f['email'] || f['event_type'] || (r.id?.value ?? '');
 	}
 
-	/** The muted trailing line: only meta the RPC actually returned. */
 	function secondary(r: SearchResult): string {
 		const f = r.fields;
 		const parts: (string | undefined)[] = [];
 		switch (r.scope) {
 			case SearchScope.DEVICES: {
-				// The status WORD leads the device meta line ("ok · 12 s"). The row's
-				// tone dot is a colour, and a colour is never the only carrier of a
-				// status — a monochrome screen must read the same fact.
+
 				const t = tone(r);
 				if (t) parts.push(TONE_LABEL[t]());
 				parts.push([f['os_name'], f['os_version']].filter(Boolean).join(' ') || f['agent_version']);
@@ -497,10 +414,7 @@
 </script>
 
 {#if open}
-	<!-- No backdrop and no dialog role: this IS the pill's search mode, not a
-	     modal over the page. The list the operator is filtering has to stay
-	     visible behind it — that is the whole point of absorbing search into the
-	     pill. The morph bar owns the surrounding surface and the dismiss layer. -->
+
 	<div
 		role="search"
 		aria-label={m.search_dialog_label()}
@@ -508,7 +422,7 @@
 		data-page-mode={pageMode ? 'true' : 'false'}
 		class="flex max-h-[62vh] w-[min(36rem,calc(100vw-3rem))] flex-col overflow-hidden text-foreground"
 	>
-			<!-- query -->
+
 			<div class="flex items-center gap-2 border-b px-3.5 py-3">
 				<Search class="h-4 w-4 shrink-0 text-muted-foreground" />
 				<input
@@ -530,9 +444,6 @@
 				<kbd class="rounded border border-border-strong bg-sunken px-1.5 py-0.5 font-mono text-[10px] text-faint">esc</kbd>
 			</div>
 
-			<!-- facets: the registered page (if any), then the ten server scopes plus
-			     "all". Not tab stops — ⇥ cycles them, so the palette keeps focus and
-			     the footer hint stays true. -->
 			<div
 				class="flex flex-wrap gap-1.5 border-b px-3 py-2"
 				data-tour="palette-facets"
@@ -560,7 +471,6 @@
 				{/each}
 			</div>
 
-			<!-- results -->
 			<ul id="palette-listbox" role="listbox" aria-label={m.search_results_label()} class="min-h-0 flex-1 overflow-y-auto p-1.5">
 				{#each groups as g (g.key)}
 					<li role="presentation">
@@ -575,10 +485,7 @@
 						<ul role="group" aria-labelledby={g.heading ? `palette-head-${g.key}` : undefined} class="contents">
 							{#each g.rows as row (row.id)}
 								{@const i = flat.indexOf(row)}
-								<!-- Options in an aria-activedescendant combobox must NOT be focus
-								     stops: the keyboard contract lives on the input (↑↓ ↵ ⇥ esc),
-								     which is why there is no per-row key handler. -->
-								<!-- svelte-ignore a11y_click_events_have_key_events -->
+
 								<li
 									id={row.id}
 									role="option"
@@ -587,6 +494,7 @@
 									data-kind={row.kind}
 									onmouseenter={() => (sel = i)}
 									onmousedown={(e) => e.preventDefault()}
+									onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && activate(row)}
 									onclick={() => activate(row)}
 									class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm {i === activeIndex
 										? 'bg-accent text-accent-foreground'
@@ -595,8 +503,7 @@
 									{#if row.kind === 'entity'}
 										{@const t = tone(row.result)}
 										{#if t}
-											<!-- The dot carries a real accessible name, from the same
-											     tone vocabulary the fleet tiles use. -->
+
 											<span role="img" aria-label={TONE_LABEL[t]()} data-testid="palette-dot" data-tone={t} class="h-1.5 w-1.5 shrink-0 rounded-full {TONE_FILL[t]}"></span>
 										{:else}
 											<span class="h-1.5 w-1.5 shrink-0"></span>
@@ -655,9 +562,6 @@
 				{/each}
 			</ul>
 
-			<!-- footer: the keyboard contract on the left, the search contract on
-			     the right — prefix matching, server order, keyset paging. In page
-			     mode there is no RPC to describe, so it says whose list is moving. -->
 			<div class="flex items-center justify-between gap-3 border-t px-3 py-2 text-[11px] text-faint">
 				<span>{m.search_footer_keys()}</span>
 				<span class="truncate font-mono" data-testid="palette-footer-contract">

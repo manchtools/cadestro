@@ -1,14 +1,5 @@
-// Behaviour contract for the container (action-set / definition) schedule.
-//
-// The three schedule surfaces in the app used to disagree: the ACTION's schedule
-// rides its draft and its dialog dismisses with a single `Done`, while this card
-// carried its own `Cancel` + `Save` that fired an immediate write beside the
-// pill's commit — a second commit path on a dialog the pill itself opened.
-//
-// The container schedule is server state the builder's draft does not carry (it
-// is its own RPC), so the single honest path here is "dismiss = commit". What
-// these pin is exactly that: one button, one write, and no write at all for an
-// operator who only looked.
+
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
@@ -19,8 +10,6 @@ import ContainerScheduleCard from './container-schedule-card.svelte';
 
 const onsave = vi.fn<(next: unknown) => Promise<void>>();
 
-/** The schedule the server holds. Seeding the form from it must be a no-op
- *  round-trip, or "closing without editing writes nothing" would be untestable. */
 function storedSchedule() {
 	return create(ActionScheduleSchema, {
 		cron: '0 3 * * *',
@@ -72,11 +61,10 @@ describe('the container schedule dialog offers ONE way out', () => {
 		await vi.waitFor(() => expect(document.querySelector('[data-slot="dialog-footer"]')).not.toBeNull());
 
 		expect(footerButtons()).toEqual([m.common_done()]);
-		// The two buttons this surface used to carry, named explicitly so a
-		// re-introduced Save cannot pass by hiding behind a different count.
+
 		expect(footerButtons()).not.toContain(m.common_save());
 		expect(footerButtons()).not.toContain(m.common_cancel());
-		// …and the operator is told where the write happens.
+
 		expect(document.body.textContent).toContain(m.container_schedule_saved_on_close());
 	});
 
@@ -86,9 +74,7 @@ describe('the container schedule dialog offers ONE way out', () => {
 		await vi.waitFor(() =>
 			expect(document.body.textContent).toContain(m.container_schedule_title())
 		);
-		// The summary reveals the editor when clicked — the same gesture an action
-		// offers. What it must NOT grow back is a second commit affordance beside
-		// the pill's: no Save/Cancel bar, and nothing open until asked.
+
 		expect(document.querySelector('[data-slot="dialog-footer"]')).toBeNull();
 		const triggers = [...document.querySelectorAll('button')];
 		expect(triggers.map((b) => b.getAttribute('data-testid'))).toEqual([
@@ -113,7 +99,7 @@ describe('dismiss is the commit', () => {
 
 		await vi.waitFor(() => expect(onsave).toHaveBeenCalledTimes(1));
 		expect(onsave.mock.calls[0][0]).toMatchObject({ cron: '0 */8 * * *' });
-		// The dialog is gone: dismissing IS the commit, not a step before it.
+
 		await vi.waitFor(() => expect(document.querySelector('[data-slot="dialog-footer"]')).toBeNull());
 	});
 
@@ -124,8 +110,7 @@ describe('dismiss is the commit', () => {
 		doneButton().click();
 
 		await vi.waitFor(() => expect(document.querySelector('[data-slot="dialog-footer"]')).toBeNull());
-		// An untouched open-and-close must not write, or every glance would toast
-		// "Schedule updated" and land an audit event.
+
 		expect(onsave).not.toHaveBeenCalled();
 	});
 
@@ -134,9 +119,7 @@ describe('dismiss is the commit', () => {
 		await vi.waitFor(() => expect(cronInput().value).toBe('0 3 * * *'));
 
 		type(cronInput(), '0 0 * * 0');
-		// Esc is not a Cancel here: the write rides the CLOSE, so every way out of
-		// the dialog lands the same edit. A dismiss that discarded would be the
-		// second commit path this surface just lost.
+
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
 		await vi.waitFor(() => expect(document.querySelector('[data-slot="dialog-footer"]')).toBeNull());

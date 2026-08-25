@@ -38,16 +38,9 @@
 		return BACKENDS.find((b) => b.value === value)?.label ?? value;
 	}
 
-	// Config preview — renders either sudoers(5) syntax or doas.conf(5)
-	// syntax depending on params.backend so the publisher sees the
-	// actual content their chosen backend will receive. Sudo and doas
-	// have meaningfully different grammars (doas has no per-argument
-	// glob, no Cmnd_Alias, and uses `:group` instead of `%group` for
-	// group membership) — sharing a single preview template would
-	// produce invalid output for at least one backend.
 	const configPreview = $derived.by(() => {
-		const sudoGroup = '%cadestro-sudo-{id}'; // sudoers group marker
-		const doasGroup = ':cadestro-sudo-{id}'; // doas group marker
+		const sudoGroup = '%cadestro-sudo-{id}';
+		const doasGroup = ':cadestro-sudo-{id}';
 		const isDoas = params.backend === 'DOAS';
 		const lines = ['# Managed by Cadestro - do not edit manually'];
 
@@ -58,8 +51,7 @@
 					lines.push(`permit persist ${doasGroup} as root`);
 					break;
 				case 'LIMITED':
-					// doas has no Cmnd_Alias and no glob matching on
-					// argv, so each permitted binary needs its own line.
+
 					lines.push('# Limited admin access via doas (password required)');
 					lines.push(`permit persist ${doasGroup} as root cmd /usr/bin/apt`);
 					lines.push(`permit persist ${doasGroup} as root cmd /usr/bin/systemctl`);
@@ -72,9 +64,7 @@
 				case 'CUSTOM':
 					if (params.customConfig.trim()) {
 						lines.push('# Custom doas rules');
-						// Replace both {group} and its %-prefixed form with
-						// the doas `:group` syntax so either convention in
-						// the raw text renders correctly.
+
 						lines.push(
 							params.customConfig
 								.replace(/%\{group\}/g, doasGroup)
@@ -115,7 +105,7 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Privilege Backend -->
+
 	<div class="space-y-1.5">
 		<Label>{m.sudo_privilege_backend()}</Label>
 		<Select.Root
@@ -143,7 +133,6 @@
 		<FieldError error={errors.backend} />
 	</div>
 
-	<!-- Access Level -->
 	<div class="space-y-1.5">
 		<Label>{m.sudo_access_level()}</Label>
 		<Select.Root
@@ -171,7 +160,6 @@
 		<FieldError error={errors.accessLevel} />
 	</div>
 
-	<!-- Users -->
 	<UserPicker
 		bind:usernames={params.users}
 		{errors}
@@ -183,7 +171,6 @@
 		description={m.sudo_users_description()}
 	/>
 
-	<!-- Custom Config (only for CUSTOM access level) -->
 	{#if params.accessLevel === 'CUSTOM'}
 		<div class="space-y-1.5">
 			<Label>{m.sudo_custom_config()}</Label>
@@ -199,7 +186,6 @@
 		</div>
 	{/if}
 
-	<!-- Config preview -->
 	<div class="rounded-lg bg-muted p-3 text-sm">
 		<p class="font-medium mb-1">
 			{params.backend === 'DOAS' ? '/etc/doas.d/<id>.conf preview' : m.sudo_preview_title()}

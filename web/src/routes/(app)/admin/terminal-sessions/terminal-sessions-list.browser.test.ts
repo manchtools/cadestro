@@ -1,11 +1,4 @@
-// Conversion contract for the active-terminal-sessions list page.
-//
-// ListActiveTerminalSessions has no Search scope, so the RPC returns the set and
-// the page's own matching, sorting and paging decide what an operator sees.
-// These tests pin what the row-grammar conversion could quietly lose: the list
-// is rows and never a table, the only navigation off a row is its device link,
-// the destructive Terminate stays outside that link, and terminating still sends
-// the session id together with the operator's reason.
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
@@ -25,10 +18,9 @@ const api = vi.hoisted(() => ({
 	listActiveTerminalSessions: vi.fn(),
 	terminateTerminalSession: vi.fn()
 }));
-// Mutable so each test can mount the page "at" a different deep link.
+
 const nav = vi.hoisted(() => ({ url: new URL('https://control.test/admin/terminal-sessions') }));
 
-// Only the client is faked; the generated protobuf re-exports stay real.
 vi.mock('$lib/sdk', async () => {
 	const common = await import('$contract/cadestro/v1/common_pb');
 	const control = await import('$contract/cadestro/v1/control_pb');
@@ -55,8 +47,6 @@ vi.mock('$app/state', () => ({
 
 vi.mock('$app/paths', () => ({ base: '', assets: '' }));
 
-// URL writes go through SvelteKit's shallow-routing API, which needs a live
-// router; the history behaviour itself is url-state's contract, not this test's.
 vi.mock('$app/navigation', () => ({
 	pushState: vi.fn(),
 	replaceState: vi.fn(),
@@ -81,7 +71,7 @@ const sessions = [
 	create(TerminalSessionInfoSchema, {
 		sessionId: { value: SESSION_B },
 		userId: { value: USER_ID },
-		// No email and no hostname: the row must fall back to the ULIDs.
+
 		deviceId: { value: DEVICE_B },
 		ttyUser: 'cadestro-shell-2',
 		startedAt: timestampFromMs(Date.UTC(2026, 6, 1)),
@@ -106,8 +96,6 @@ async function mountAt(query: string) {
 	});
 }
 
-/** The dialog is portalled, so it is addressed by its content slot, not by a
- *  role name the row's own Terminate button also answers to. */
 function dialogButton(label: string): HTMLElement {
 	const dialog = document.querySelector('[data-slot="alert-dialog-content"]');
 	if (!dialog) throw new Error('the terminate dialog never opened');
@@ -144,8 +132,6 @@ describe('terminal sessions list — the list RPC feeds a client-side row list',
 		expect(document.querySelectorAll('table').length).toBe(0);
 	});
 
-	// The column headers that carried these keys are gone; the same keys now ride
-	// RowList's sort bar, and the ?sort / ?sortDir contract is unchanged.
 	it('opens newest-first and re-sorts from the row list sort bar', async () => {
 		await mountAt('');
 		await expect.element(browser.getByText('ws-alpha')).toBeVisible();
@@ -162,8 +148,6 @@ describe('terminal sessions list — the list RPC feeds a client-side row list',
 		expect(userSort).toBeDefined();
 		userSort!.click();
 
-		// Ascending by user: the session with no email sorts on its ULID, which
-		// precedes the resolved address.
 		await vi.waitFor(() => expect(order()).toEqual([SESSION_B, SESSION_A]), { timeout: 3000 });
 	});
 
@@ -187,12 +171,10 @@ describe('terminal sessions list — the row links to its device and nothing els
 			...document.querySelectorAll<HTMLAnchorElement>('[data-testid="terminal-session-device-link"]')
 		].map((a) => a.getAttribute('href'));
 		expect(links).toEqual([`/devices/${DEVICE_A}`, `/devices/${DEVICE_B}`]);
-		// A session has no page of its own, so the row body is never one link.
+
 		expect(document.querySelectorAll('[data-testid="row-list-link"]').length).toBe(0);
 	});
 
-	// A button may never nest inside an anchor: the destructive control lives in
-	// RowList's rowEnd slot, outside the row body that carries the device link.
 	it('keeps Terminate outside the device link', async () => {
 		await mountAt('');
 		await expect.element(browser.getByText('ws-alpha')).toBeVisible();
@@ -225,7 +207,7 @@ describe('terminal sessions list — terminating a session', () => {
 				expect(api.terminateTerminalSession).toHaveBeenCalledWith(SESSION_A, 'incident 4711'),
 			{ timeout: 3000 }
 		);
-		// The session is gone server-side, so the row goes without a refetch.
+
 		await vi.waitFor(
 			() => expect(document.querySelectorAll('[data-testid="row-list-row"]')).toHaveLength(1),
 			{ timeout: 3000 }

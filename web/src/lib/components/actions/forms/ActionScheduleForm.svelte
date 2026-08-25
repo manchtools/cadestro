@@ -39,30 +39,26 @@
 		const [minute, hour, dom, month, dow] = parts;
 
 		try {
-			// Every minute
+
 			if (minute === '*' && hour === '*' && dom === '*' && month === '*' && dow === '*') {
 				return 'Runs every minute';
 			}
 
 			const minStr = minute === '0' ? ':00' : `:${minute.padStart(2, '0')}`;
 
-			// Every N minutes
 			if (minute.startsWith('*/') && hour === '*' && dom === '*' && month === '*' && dow === '*') {
 				return `Runs every ${minute.slice(2)} minutes`;
 			}
 
-			// Every hour at :MM
 			if (minute !== '*' && hour === '*' && dom === '*' && month === '*' && dow === '*') {
 				if (minute.startsWith('*/')) return `Runs every ${minute.slice(2)} minutes`;
 				return `Runs every hour at ${minStr}`;
 			}
 
-			// Every N hours
 			if (hour.startsWith('*/') && dom === '*' && month === '*' && dow === '*') {
 				return `Runs every ${hour.slice(2)} hours at ${minStr}`;
 			}
 
-			// Specific hour(s) daily
 			if (!hour.includes('*') && !hour.includes('/') && dom === '*' && month === '*' && dow === '*') {
 				if (hour.includes(',')) {
 					return `Runs daily at ${hour.split(',').map((h) => `${h}${minStr}`).join(', ')}`;
@@ -70,7 +66,6 @@
 				return `Runs daily at ${hour}${minStr}`;
 			}
 
-			// Weekly (specific day of week)
 			if (dom === '*' && month === '*' && dow !== '*') {
 				const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 				const dayNum = parseInt(dow, 10);
@@ -78,7 +73,6 @@
 				return `Runs weekly on ${dayName} at ${hour}${minStr}`;
 			}
 
-			// Monthly (specific day of month)
 			if (dom !== '*' && month === '*' && dow === '*') {
 				const suffix = dom === '1' ? 'st' : dom === '2' ? 'nd' : dom === '3' ? 'rd' : 'th';
 				return `Runs monthly on the ${dom}${suffix} at ${hour}${minStr}`;
