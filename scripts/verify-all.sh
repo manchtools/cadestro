@@ -44,31 +44,9 @@ run "contract" contract ./scripts/verify.sh
 
 run "sdk" sdk ./scripts/verify.sh
 
-run "agent" agent bash -c '
-set -euo pipefail
-echo "== gofmt"
-unformatted=$(gofmt -l .)
-[ -z "$unformatted" ] || { echo "gofmt would change:"; echo "$unformatted"; exit 1; }
-echo "== go build"
-go build ./...
-echo "== go vet"
-go vet ./...
-echo "== go test"
-go test -p 1 -count=1 ./...
-'
+run "agent" agent ./scripts/verify.sh
 
-run "server" server bash -c '
-set -euo pipefail
-echo "== gofmt"
-unformatted=$(gofmt -l .)
-[ -z "$unformatted" ] || { echo "gofmt would change:"; echo "$unformatted"; exit 1; }
-echo "== go build"
-go build ./...
-echo "== go vet"
-go vet ./...
-echo "== go test"
-go test -p 1 -count=1 -timeout 30m ./...
-'
+run "server" server ./scripts/verify.sh
 
 run "web" web bash -c '
 set -euo pipefail
