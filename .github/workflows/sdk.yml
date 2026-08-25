@@ -6,11 +6,13 @@ on:
     paths:
       - 'sdk/**'
       - 'contract/**'
+      - '.github/go-tools.env'
       - '.github/workflows/sdk.yml'
   pull_request:
     paths:
       - 'sdk/**'
       - 'contract/**'
+      - '.github/go-tools.env'
       - '.github/workflows/sdk.yml'
 
 concurrency:
@@ -36,6 +38,9 @@ jobs:
         with:
           go-version-file: sdk/go.mod
 
+      - name: Load Go analysis tool versions
+        run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
+
       - name: gofmt
         run: |
           dirty=$(gofmt -l .)
@@ -52,17 +57,17 @@ jobs:
 
       - name: staticcheck
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
           staticcheck ./...
 
       - name: errcheck
         run: |
-          go install github.com/kisielk/errcheck@latest
+          go install github.com/kisielk/errcheck@${ERRCHECK_VERSION}
           errcheck -ignoretests ./...
 
       - name: govulncheck
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
           govulncheck ./...
 
   test-go-all:

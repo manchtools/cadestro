@@ -7,12 +7,14 @@ on:
       - 'server/**'
       - 'sdk/**'
       - 'contract/**'
+      - '.github/go-tools.env'
       - '.github/workflows/server.yml'
   pull_request:
     paths:
       - 'server/**'
       - 'sdk/**'
       - 'contract/**'
+      - '.github/go-tools.env'
       - '.github/workflows/server.yml'
 
 concurrency:
@@ -53,6 +55,9 @@ jobs:
         with:
           go-version: 'stable'
 
+      - name: Load Go analysis tool versions
+        run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
+
       - name: gofmt
         run: |
           unformatted=$(gofmt -l .)
@@ -67,11 +72,11 @@ jobs:
 
       - name: staticcheck
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
           staticcheck ./...
 
       - name: install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
 
       - name: govulncheck (production packages — full report)
         continue-on-error: true

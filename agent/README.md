@@ -976,7 +976,7 @@ The repository's single release workflow (`.github/workflows/release.yml`) gates
 the agent binaries on passing integration tests, then signs the checksum
 manifest — which covers every asset in the release — before publishing.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:f46c247b -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:f212d3eb -->
 Release signing uses two GitHub settings:
 
 - `RELEASE_SIGNING_PRIVATE_KEY`: the PKCS#8 PEM private key, stored only as a
@@ -997,7 +997,7 @@ Cloning or forking this repository does not provide MANCHTOOLS release-signing
 settings or private key material. Downstream maintainers must configure their
 own Ed25519 pair under the same Actions variable and environment-secret names.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:f46c247b,agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:f212d3eb,agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
 There are two deliberately different build modes:
 
 - A normal `go build ./cmd/cadestrod` development build succeeds

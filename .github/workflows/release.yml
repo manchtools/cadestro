@@ -228,8 +228,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - name: Load Go analysis tool versions
+        run: cat .github/go-tools.env >> "$GITHUB_ENV"
       - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@v0.6.1
+        run: go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
       - name: Install pinned docref
         run: |
           version=v0.1.1

@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'contract/**'
+      - '.github/go-tools.env'
       - '.github/workflows/contract.yml'
   pull_request:
     paths:
       - 'contract/**'
+      - '.github/go-tools.env'
       - '.github/workflows/contract.yml'
 
 concurrency:
@@ -36,6 +38,9 @@ jobs:
         with:
           go-version-file: contract/go.mod
 
+      - name: Load Go analysis tool versions
+        run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
+
       - name: gofmt
         run: |
           dirty=$(gofmt -l .)
@@ -52,7 +57,7 @@ jobs:
 
       - name: staticcheck
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
           staticcheck ./...
 
   test-go:
