@@ -68,24 +68,7 @@ message Hello {
   ];
 }
 
-message Heartbeat {
-  google.protobuf.Duration uptime = 1;
-  float cpu_percent = 2 [
-    (buf.validate.field).float.gte = 0,
-    (buf.validate.field).float.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  float memory_percent = 3 [
-    (buf.validate.field).float.gte = 0,
-    (buf.validate.field).float.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  float disk_percent = 4 [
-    (buf.validate.field).float.gte = 0,
-    (buf.validate.field).float.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
+message Heartbeat {}
 
 enum SecurityAlertType {
   SECURITY_ALERT_TYPE_UNSPECIFIED = 0;
@@ -220,12 +203,7 @@ message ResultAck {
 }
 
 message Error {
-  string code = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string message = 2 [
+  string message = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 1024

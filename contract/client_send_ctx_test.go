@@ -111,7 +111,7 @@ func TestSend_DoesNotSerializeAllTrafficBehindOneStalledSend(t *testing.T) {
 	go func() {
 		vctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		defer cancel()
-		done <- c.SendHeartbeat(vctx, &cadestrov1.Heartbeat{})
+		done <- c.SendHeartbeat(vctx)
 	}()
 
 	select {
@@ -162,7 +162,7 @@ func TestSend_DrainingPeer_NoRegression(t *testing.T) {
 
 	connectCancellable(t, c)
 
-	if err := c.SendHeartbeat(context.Background(), &cadestrov1.Heartbeat{}); err != nil {
+	if err := c.SendHeartbeat(context.Background()); err != nil {
 		t.Fatalf("SendHeartbeat against a draining peer should succeed, got %v", err)
 	}
 }

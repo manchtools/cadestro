@@ -139,7 +139,7 @@ func TestDispatchServerMessage_DeliversCorrelatedErrorToTheWaiter(t *testing.T) 
 	msg := &cadestrov1.ServerMessage{
 		Id: &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.ServerMessage_Error{
-			Error: &cadestrov1.Error{Code: "internal", Message: "failed to store LPS passwords"},
+			Error: &cadestrov1.Error{Message: "failed to store LPS passwords"},
 		},
 	}
 
@@ -170,7 +170,7 @@ func TestDispatchServerMessage_UncorrelatedErrorStillReachesTheHandler(t *testin
 	msg := &cadestrov1.ServerMessage{
 		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.ServerMessage_Error{
-			Error: &cadestrov1.Error{Code: "internal", Message: "server-originated"},
+			Error: &cadestrov1.Error{Message: "server-originated"},
 		},
 	}
 	if err := c.dispatchServerMessage(context.Background(), msg, handler); err != nil {

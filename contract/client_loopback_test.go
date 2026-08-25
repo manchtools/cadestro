@@ -320,7 +320,7 @@ func TestSend_BeforeConnect_ReturnsError(t *testing.T) {
 	l := newAgentLoopback(t)
 	c := l.newClient()
 
-	if err := c.SendHeartbeat(context.Background(), &cadestrov1.Heartbeat{}); err == nil {
+	if err := c.SendHeartbeat(context.Background()); err == nil {
 		t.Fatal("SendHeartbeat without Connect should error")
 	}
 }
@@ -337,7 +337,7 @@ func TestSend_AfterClose_ReturnsError(t *testing.T) {
 	if err := c.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
-	if err := c.SendHeartbeat(context.Background(), &cadestrov1.Heartbeat{}); err == nil {
+	if err := c.SendHeartbeat(context.Background()); err == nil {
 		t.Fatal("SendHeartbeat after Close should error")
 	}
 }

@@ -390,7 +390,7 @@ func (h *Handler) sendResponse(agent *connection.Agent, messageID string, respon
 		return agent.Send(&cadestrov1.ServerMessage{
 			Id: &cadestrov1.MessageId{Value: messageID},
 			Payload: &cadestrov1.ServerMessage_Error{Error: &cadestrov1.Error{
-				Code: connect.CodeFailedPrecondition.String(), Message: "secret operation failed",
+				Message: "secret operation failed",
 			}},
 		})
 	}

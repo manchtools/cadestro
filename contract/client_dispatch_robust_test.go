@@ -157,7 +157,7 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 			_ = s.Send(&cadestrov1.ServerMessage{
 				Id: &cadestrov1.MessageId{Value: NewULID()},
 				Payload: &cadestrov1.ServerMessage_Error{
-					Error: &cadestrov1.Error{Code: "x", Message: string(big)},
+					Error: &cadestrov1.Error{Message: string(big)},
 				},
 			})
 			for {

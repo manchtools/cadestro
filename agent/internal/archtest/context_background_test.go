@@ -26,7 +26,6 @@ func TestNoContextBackgroundInRequestPaths(t *testing.T) {
 		"internal/credentials/credentials.go :: writeFile":      "local credential-file write on the enrollment/cert-rotation path, not an RPC request; fs write is synchronous",
 		"internal/deviceauth/enroll_server.go :: Shutdown":      "enrollment-socket shutdown path; no caller context to inherit; bounded 5s",
 		"internal/executor/agent_update.go :: getBinaryVersion": "bounded 10s subprocess version probe during self-update verification",
-		"internal/handler/handler.go :: BuildHeartbeat":         "best-effort periodic heartbeat metrics; no RPC caller; osquery bounds each call (defaultTimeout)",
 		"internal/handler/terminal.go :: OnTerminalStart":       "terminal session must outlive the start RPC; sessionCtx roots its own lifecycle and teardown must run even when the start ctx is gone",
 		"internal/handler/terminal.go :: pumpTerminalOutput":    "detached per-session output pump; owns sessionCtx; its sends/cleanup are bounded by their own timeouts",
 		"internal/handler/terminal.go :: sweepIdleTerminals":    "background idle-terminal sweep ticker; no RPC caller; bounded cleanup",

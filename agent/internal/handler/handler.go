@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/protobuf/types/known/durationpb"
-
 	"buf.build/go/protovalidate"
 
 	"github.com/manchtools/cadestro/agent/internal/executor"
@@ -21,8 +19,6 @@ import (
 	syslog "github.com/manchtools/cadestro/sdk/sys/log"
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
-
-const heartbeatQueryTimeout = 10 * time.Second
 
 var streamValidator = protovalidate.GlobalValidator
 
@@ -218,42 +214,8 @@ func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryRe
 }
 
 func (h *Handler) OnError(ctx context.Context, err *pb.Error) error {
-	h.logger.Error("received error from server", "code", err.Code, "message", err.Message)
+	h.logger.Error("received error from server", "message", err.Message)
 	return nil
-}
-
-func (h *Handler) BuildHeartbeat() *pb.Heartbeat {
-	hb := &pb.Heartbeat{}
-
-	oq := h.getOsquery()
-	if oq == nil {
-		return hb
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), heartbeatQueryTimeout)
-	defer cancel()
-
-	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: &pb.QueryId{Value: "hb"}, Table: "uptime"}); result != nil && result.Success && len(result.Rows) > 0 {
-		if sec, err := strconv.ParseInt(result.Rows[0].Data["total_seconds"], 10, 64); err == nil {
-			hb.Uptime = durationpb.New(time.Duration(sec) * time.Second)
-		}
-	}
-
-	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: &pb.QueryId{Value: "hb"}, Table: "memory_info"}); result != nil && result.Success && len(result.Rows) > 0 {
-		data := result.Rows[0].Data
-		total, totalErr := strconv.ParseInt(data["memory_total"], 10, 64)
-		free, freeErr := strconv.ParseInt(data["memory_free"], 10, 64)
-		if totalErr != nil || freeErr != nil {
-
-			slog.Debug("heartbeat: memory_info parse failed",
-				"memory_total_err", totalErr, "memory_free_err", freeErr)
-		} else if total > 0 {
-
-			hb.MemoryPercent = float32(100 * (total - free) / total)
-		}
-	}
-
-	return hb
 }
 
 func (h *Handler) OnRevokeLuksDeviceKey(ctx context.Context, req *pb.RevokeLuksDeviceKey) (bool, string) {

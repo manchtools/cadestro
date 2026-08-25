@@ -520,11 +520,11 @@ func (c *Client) SendHello(ctx context.Context, hostname, agentVersion string) e
 }
 
 // SendHeartbeat sends a heartbeat message to the server.
-func (c *Client) SendHeartbeat(ctx context.Context, hb *cadestrov1.Heartbeat) error {
+func (c *Client) SendHeartbeat(ctx context.Context) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
 		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_Heartbeat{
-			Heartbeat: hb,
+			Heartbeat: &cadestrov1.Heartbeat{},
 		},
 	})
 }
@@ -951,9 +951,7 @@ func (c *Client) Run(ctx context.Context, hostname, agentVersion string, heartbe
 			case d := <-hbUpdate:
 				ticker.Reset(d)
 			case <-ticker.C:
-				hb := &cadestrov1.Heartbeat{}
-
-				if err := c.SendHeartbeat(heartbeatCtx, hb); err != nil {
+				if err := c.SendHeartbeat(heartbeatCtx); err != nil {
 					heartbeatErr <- err
 					return
 				}
