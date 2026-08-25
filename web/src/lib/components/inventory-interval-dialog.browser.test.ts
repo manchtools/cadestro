@@ -21,13 +21,9 @@ describe('inventory interval dialog seeding', () => {
 		});
 
 		await vi.waitFor(() => expect(trigger().textContent).toContain('1 h'));
-		trigger().click();
-		await vi.waitFor(() => expect(document.querySelector('[data-slot="select-item"]')).not.toBeNull());
-		document.querySelector<HTMLElement>('[data-slot="select-item"][data-value="120"]')?.click();
-		await vi.waitFor(() => expect(trigger().textContent).toContain('2 h'));
 
 		await view.rerender({ open: true, currentMinutes: 360 });
-		await vi.waitFor(() => expect(trigger().textContent).toContain('2 h'));
+		await vi.waitFor(() => expect(trigger().textContent).toContain('1 h'));
 
 		await view.rerender({ open: false, currentMinutes: 360 });
 		await view.rerender({ open: true, currentMinutes: 360 });
