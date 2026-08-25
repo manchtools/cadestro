@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ManagedAction } from '$lib/sdk';
 	import { setUserLoaders, apiUserLoaders } from './forms/user-loader-context.svelte';
@@ -45,12 +46,15 @@
 		return k;
 	});
 
+	function reset() {
+		if (!action) return;
+		timeoutSeconds = action.timeoutSeconds || 300;
+		loadParamsFromAction();
+		bundle.clearAllErrors();
+	}
+
 	$effect(() => {
-		if (open && action) {
-			timeoutSeconds = action.timeoutSeconds || 300;
-			loadParamsFromAction();
-			bundle.clearAllErrors();
-		}
+		if (open) untrack(reset);
 	});
 
 	function loadParamsFromAction() {

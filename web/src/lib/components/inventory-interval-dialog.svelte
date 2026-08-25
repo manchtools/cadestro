@@ -10,6 +10,7 @@
 </script>
 
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -27,10 +28,12 @@
 
 	let selectedValue = $state('0');
 
+	function reset() {
+		selectedValue = currentMinutes.toString();
+	}
+
 	$effect(() => {
-		if (open) {
-			selectedValue = currentMinutes.toString();
-		}
+		if (open) untrack(reset);
 	});
 
 	function handleSave() {

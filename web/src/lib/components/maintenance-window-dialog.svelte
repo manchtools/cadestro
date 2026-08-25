@@ -37,6 +37,7 @@
 </script>
 
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import { Input } from '$lib/components/ui/input';
@@ -61,14 +62,16 @@
 	let newEnd = $state('06:00');
 	let error = $state('');
 
+	function reset() {
+		working = entries.map((e) => ({ days: [...e.days], allow: e.allow }));
+		newDays = new Set();
+		newStart = '22:00';
+		newEnd = '06:00';
+		error = '';
+	}
+
 	$effect(() => {
-		if (open) {
-			working = entries.map((e) => ({ days: [...e.days], allow: e.allow }));
-			newDays = new Set();
-			newStart = '22:00';
-			newEnd = '06:00';
-			error = '';
-		}
+		if (open) untrack(reset);
 	});
 
 	function isValidClock(s: string): boolean {

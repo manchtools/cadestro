@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { getLocalizedError } from '$lib/errors';
 	import { apiClient, type User, type UserGroup } from '$lib/sdk';
@@ -26,13 +27,15 @@
 	let groups = $state<{ id: string; name: string; description: string }[]>([]);
 	let assigning = $state(false);
 
+	function reset() {
+		selectedUserIds = [];
+		selectedGroupIds = [];
+		activeTab = 'users';
+		loadData();
+	}
+
 	$effect(() => {
-		if (open) {
-			selectedUserIds = [];
-			selectedGroupIds = [];
-			activeTab = 'users';
-			loadData();
-		}
+		if (open) untrack(reset);
 	});
 
 	async function loadData() {

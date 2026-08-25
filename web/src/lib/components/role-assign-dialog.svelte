@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
@@ -43,12 +44,14 @@
 	let selectedRoleIds = $state<string[]>([]);
 	let scopeGroupId = $state('');
 
+	function reset() {
+		selectedRoleIds = [];
+		scopeGroupId = '';
+		void loadAll();
+	}
+
 	$effect(() => {
-		if (open) {
-			selectedRoleIds = [];
-			scopeGroupId = '';
-			void loadAll();
-		}
+		if (open) untrack(reset);
 	});
 
 	async function loadAll() {

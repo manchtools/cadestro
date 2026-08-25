@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type User } from '$lib/sdk';
 	import { Button } from '$lib/components/ui/button';
@@ -24,15 +25,17 @@
 	let locale = $state('');
 	let saving = $state(false);
 
+	function reset() {
+		displayName = user.displayName;
+		givenName = user.givenName;
+		familyName = user.familyName;
+		preferredUsername = user.preferredUsername;
+		picture = user.picture;
+		locale = user.locale;
+	}
+
 	$effect(() => {
-		if (open) {
-			displayName = user.displayName;
-			givenName = user.givenName;
-			familyName = user.familyName;
-			preferredUsername = user.preferredUsername;
-			picture = user.picture;
-			locale = user.locale;
-		}
+		if (open) untrack(reset);
 	});
 
 	async function save() {

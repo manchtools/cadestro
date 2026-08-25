@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
@@ -33,11 +34,13 @@
 	let showCreateForm = $state(false);
 	let selectedActionIds = $state<string[]>([]);
 
+	function reset() {
+		showCreateForm = false;
+		selectedActionIds = [];
+	}
+
 	$effect(() => {
-		if (open) {
-			showCreateForm = false;
-			selectedActionIds = [];
-		}
+		if (open) untrack(reset);
 	});
 
 	function handleAddSelected() {

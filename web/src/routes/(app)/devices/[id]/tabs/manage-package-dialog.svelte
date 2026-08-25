@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, fetchAllPages, type ManagedAction } from '$lib/sdk';
 	import { ActionType } from '$contract/cadestro/v1/actions_pb';
@@ -45,15 +46,17 @@
 	let loading = $state(false);
 	let saving = $state(false);
 
+	function reset() {
+		desiredState = '0';
+		version = packageVersion;
+		actionName = packageName;
+		selectedActionId = '';
+		saving = false;
+		loadMatchingActions();
+	}
+
 	$effect(() => {
-		if (open) {
-			desiredState = '0';
-			version = packageVersion;
-			actionName = packageName;
-			selectedActionId = '';
-			saving = false;
-			loadMatchingActions();
-		}
+		if (open) untrack(reset);
 	});
 
 	async function loadMatchingActions() {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -30,14 +31,16 @@
 	let selectedUserIds = $state<string[]>([]);
 	let selectedUserGroupIds = $state<string[]>([]);
 
+	function reset() {
+		assignmentMode = '0';
+		selectedDeviceIds = [];
+		selectedGroupIds = [];
+		selectedUserIds = [];
+		selectedUserGroupIds = [];
+	}
+
 	$effect(() => {
-		if (open) {
-			assignmentMode = '0';
-			selectedDeviceIds = [];
-			selectedGroupIds = [];
-			selectedUserIds = [];
-			selectedUserGroupIds = [];
-		}
+		if (open) untrack(reset);
 	});
 
 	function handleAssign() {

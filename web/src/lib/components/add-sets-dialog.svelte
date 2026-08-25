@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { type ActionSet } from '$lib/sdk';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -16,10 +17,12 @@
 
 	let selectedSetIds = $state<string[]>([]);
 
+	function reset() {
+		selectedSetIds = [];
+	}
+
 	$effect(() => {
-		if (open) {
-			selectedSetIds = [];
-		}
+		if (open) untrack(reset);
 	});
 
 	function handleAdd() {
