@@ -141,6 +141,42 @@ func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing
 	require.Zero(t, remaining, "retired policy work is deleted after its active run closes")
 }
 
+func TestRecordManifestResultReturnsCleanupFailure(t *testing.T) {
+	st, err := New(t.TempDir())
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, st.Close()) })
+	manifest := testManifest()
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
+		Revision:  "01K00000000000000000000045",
+		Manifests: []*pb.Manifest{manifest},
+	}))
+	due, err := st.GetDueScheduledWork(context.Background())
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.NoError(t, func() error {
+		_, err := st.BeginManifestRun(&due[0], time.Now())
+		return err
+	}())
+	_, err = st.db.Exec(`
+		CREATE TRIGGER fail_manifest_cleanup
+		BEFORE UPDATE OF run_id ON scheduled_work
+		WHEN NEW.run_id IS NULL
+		BEGIN
+			SELECT RAISE(ABORT, 'cleanup failed');
+		END
+	`)
+	require.NoError(t, err)
+
+	_, err = st.RecordManifestResult(&pb.ManifestResult{
+		RunId:      due[0].RunID,
+		ManifestId: manifest.GetManifestId(),
+	})
+	require.ErrorContains(t, err, "cleanup failed")
+	var outbox int
+	require.NoError(t, st.db.QueryRow(`SELECT COUNT(*) FROM result_outbox`).Scan(&outbox))
+	assert.Zero(t, outbox)
+}
+
 func TestRecoverInterruptedOccurrenceQueuesIndeterminate(t *testing.T) {
 	st, err := New(t.TempDir())
 	require.NoError(t, err)

@@ -494,7 +494,7 @@ func (s *Store) RecordManifestResult(result *pb.ManifestResult) (string, error) 
 			return err
 		}
 		_, err = tx.Exec(`UPDATE scheduled_work SET run_id = NULL WHERE (work_id = ? OR run_id = ?)`, result.GetRunId(), result.GetRunId())
-		return nil
+		return err
 	})
 }
 
