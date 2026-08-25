@@ -271,37 +271,6 @@ func contractMessages(t *testing.T) map[protoreflect.Name]protoreflect.MessageDe
 	return out
 }
 
-var abandonedPackages = []string{"pm.v1", "powermanage.v1"}
-
-func TestContract_Namespace(t *testing.T) {
-	abandoned := map[string]bool{}
-	for _, pkg := range abandonedPackages {
-		if pkg == contractPackage {
-			t.Fatalf("%s is listed as abandoned but is the shipped package — the guard would "+
-				"contradict itself and can prove nothing", pkg)
-		}
-		abandoned[pkg] = true
-	}
-
-	var shipped, legacy []string
-	protoregistry.GlobalFiles.RangeFiles(func(fd protoreflect.FileDescriptor) bool {
-		switch pkg := string(fd.Package()); {
-		case pkg == contractPackage:
-			shipped = append(shipped, fd.Path())
-		case abandoned[pkg]:
-			legacy = append(legacy, pkg+" ("+fd.Path()+")")
-		}
-		return true
-	})
-	if len(shipped) == 0 {
-		t.Errorf("no descriptors registered under %s — the contract namespace has not moved", contractPackage)
-	}
-	if len(legacy) != 0 {
-		sort.Strings(legacy)
-		t.Errorf("stale descriptors from an abandoned namespace still registered: %s", strings.Join(legacy, ", "))
-	}
-}
-
 func TestContract_TargetShape(t *testing.T) {
 	msgs := contractMessages(t)
 

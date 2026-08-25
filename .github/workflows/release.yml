@@ -1,28 +1,5 @@
 name: Release
 
-# ONE release for the whole repository. The predecessor cut three independent
-# releases from three repositories; here a single tag produces a single set of
-# assets, a single checksum manifest, and a single signature over it:
-#
-#   cadestro-linux-{amd64,arm64}    the control binary
-#   cadestrod-linux-{amd64,arm64}   the device agent
-#   install.sh                      the agent installer, key- and version-stamped
-#   *.spdx.json                     one SPDX SBOM per binary
-#   SHA256SUMS                      covering every asset above
-#   SHA256SUMS.sig                  Ed25519 over SHA256SUMS, made in `releases`
-#
-#   ghcr.io/manchtools/cadestro        control image (per-arch + manifest)
-#   ghcr.io/manchtools/cadestro-web    administration UI image
-#
-# Build provenance is attested for every binary. The agent installer verifies
-# the publisher signature over SHA256SUMS before it trusts a single hash, so
-# the signing step is what makes the whole manifest — control binaries and
-# SBOMs included — trustworthy.
-#
-# BYOK: the signing material is the fork's own. RELEASE_SIGNING_PUBLIC_KEY is a
-# repository Actions variable; RELEASE_SIGNING_PRIVATE_KEY is a secret of the
-# protected `releases` environment. Both are required and are checked against
-# each other before anything is published.
 on:
   push:
     tags: ['v*']
@@ -34,18 +11,6 @@ permissions:
   attestations: write
 
 jobs:
-  # The version, the prerelease decision, and the moving channel tag, resolved
-  # once. Five jobs used to recompute `${GITHUB_REF_NAME#v}` and the -rc test
-  # independently, which is five chances for them to disagree about what is
-  # being released — and the control image and the UI image MUST agree, because
-  # one deployment resolves both from a single IMAGE_TAG.
-  #
-  # Resolving the channel here rather than per job is also what keeps the
-  # prerelease branch of the release body the only place in this file carrying
-  # the literal `needs.version.outputs.is_prerelease` bash test. The agent's
-  # installer-lint suite locates that branch by exactly that string; a second
-  # copy elsewhere in the file silently shadowed it and the guard read the
-  # wrong three lines.
   version:
     name: Resolve version
     runs-on: ubuntu-latest
@@ -83,8 +48,6 @@ jobs:
       - run: go test -count=1 -p 1 ./...
       - run: go vet ./...
 
-  # The agent's release gate, unchanged in substance: no agent binary is
-  # published without the per-distro integration matrix passing first.
   agent-integration:
     name: Agent integration tests
     uses: ./.github/workflows/agent-integration.yml
@@ -250,19 +213,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Image tag contract, identical to the control image's because one
-      # deployment resolves both from a single IMAGE_TAG — which is why both
-      # take their tags from the same `version` job rather than each deciding
-      # for itself:
-      #   :<version>  -> the release tag without its leading v (what .env pins)
-      #   :latest     -> the most recent stable release  (vYYYY.MM)
-      #   :latest-rc  -> the most recent release candidate (vYYYY.MM-rcN)
-      # A tag published with the leading v would be unreachable from a
-      # deployment, because install.sh writes IMAGE_TAG=${RELEASE_TAG#v}.
-      #
-      # Built from the repository root: the app compiles against the contract
-      # in contract/ through the $contract and $contractClient aliases, and
-      # those files are outside web/.
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -272,11 +222,6 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/cadestro-web:${{ needs.version.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/cadestro-web:${{ needs.version.outputs.channel }}
-          # The same string control stamps into its own binary
-          # (-X main.version=...). The UI compares its build version against the
-          # one control reports from /health and reloads itself when they
-          # differ, so a leading v here would make every first visit to a fresh
-          # deployment reload once for nothing.
           build-args: VERSION=${{ needs.version.outputs.version }}
           provenance: false
           cache-from: type=gha
@@ -317,13 +262,6 @@ jobs:
             echo "release installer still contains the public-key placeholder" >&2
             exit 1
           fi
-          # Stamp the installer's own release so running it without -v installs
-          # THIS release: the GitHub "latest" alias resolves only
-          # non-prereleases and hands a prerelease user mismatched assets.
-          # The tag is validated against the release format first: git allows
-          # sed-significant characters like & and | in refnames, and while the
-          # placeholder grep below already fails closed on a corrupted
-          # substitution, a malformed tag should fail by name, not by symptom.
           if ! printf '%s' "${GITHUB_REF_NAME}" | grep -Eq '^v[0-9]{4}\.[0-9]{2}(\.[0-9]{2})?(-[A-Za-z0-9.]+)?$'; then
             echo "refusing to stamp non-release tag name: ${GITHUB_REF_NAME}" >&2
             exit 1
@@ -338,9 +276,6 @@ jobs:
         id: syft
 
       - name: SBOMs
-        # One SPDX SBOM per shipped binary — control AND agent. The agent
-        # binary had none before; a signed manifest that covers half the
-        # artefacts documents half the supply chain.
         run: |
           shopt -s nullglob
           bins=()
@@ -354,10 +289,6 @@ jobs:
           done
 
       - name: Checksums
-        # Covers every asset in the directory, discovered rather than listed,
-        # so a newly added artefact is signed for without editing this step.
-        # SHA256SUMS itself is the only exclusion; its signature is produced
-        # from this file in the next step.
         run: |
           cd release
           mapfile -t assets < <(find . -maxdepth 1 -type f ! -name 'SHA256SUMS' -printf '%P\n' | sort)
@@ -486,9 +417,6 @@ jobs:
           The update stops the running service, downloads the new binary, updates the sudoers configuration, and restarts the service. Existing registration and credentials are preserved.
           EOF
           fi
-          # Quoted heredoc: GitHub substitutes every ${{ … }} into this `run`
-          # string before bash sees it, so the expressions still resolve while
-          # bash treats the rest — backticks included — as literal text.
           cat >> body.md <<'EOF'
 
           ## Container images

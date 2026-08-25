@@ -1,13 +1,5 @@
 name: SDK
 
-# The reusable Linux system capabilities. Ported from the predecessor SDK
-# repository's test workflow; the proto/TypeScript jobs that shared that file
-# went to .github/workflows/contract.yml with the sources they check.
-#
-# Path filter: the SDK's own tree plus contract/**, because sdk/go.mod replaces
-# the contract at ../contract and compiles against the copy in this repository.
-# A contract change that breaks the SDK must fail here, not in the next
-# unrelated pull request.
 on:
   push:
     branches: [main]
@@ -63,14 +55,6 @@ jobs:
           go install honnef.co/go/tools/cmd/staticcheck@latest
           staticcheck ./...
 
-      # errcheck catches a returned error dropped on the floor — a bare
-      # statement call (foo(ctx)) that discards an error, which the compiler
-      # permits (only unused *variables* are an error, not unused returns).
-      # No exclude list: every deliberately-ignored error is written
-      # `_ = foo()` at its call site (errcheck honours that without -blank), so
-      # the gate stays honest — it can't be told "read-side Close only" by
-      # signature, so a future bare WRITE-path Close is caught too. Production
-      # code only (-ignoretests); test-setup hygiene is tracked separately.
       - name: errcheck
         run: |
           go install github.com/kisielk/errcheck@latest
@@ -81,8 +65,6 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
-  # Go test sweep across every SDK package whose tests don't require systemd /
-  # privileged operations (those run in test-sys below).
   test-go-all:
     name: Go unit sweep (race, all SDK packages)
     runs-on: ubuntu-latest
@@ -101,11 +83,6 @@ jobs:
       - name: go test (excludes integration-tagged files)
         run: go test -p 1 -race -short ./...
 
-  # NOTE: the validate-tag coverage gate is now the Go test
-  # TestEveryBoundableRequestFieldCarriesValidateTag
-  # (contract/test/protovalidatecoverage/coverage_test.go). It hard-fails when
-  # a bound-able *Request* field lacks a validate tag and runs under the
-  # contract workflow's `go test` job.
 
   test-unit:
     name: Unit Tests
@@ -131,9 +108,6 @@ jobs:
     name: Integration Tests (sys/)
     runs-on: ubuntu-latest
     steps:
-      # No `path:` on the checkout: the SDK already sits at sdk/ in this
-      # repository, which is exactly the layout the Dockerfiles and the
-      # ./sdk/<pkg>/ test arguments below expect.
       - uses: actions/checkout@v5
 
       - name: Build test image
@@ -151,9 +125,6 @@ jobs:
             sleep 0.5
           done
 
-      # Run under a non-English locale (Japanese) so locale-fragile parsing of
-      # real tool output is caught in CI: any capability matching an English
-      # error string without forcing LC_ALL=C (Command.CLocale) fails here.
       - name: Run sys integration tests (ja_JP.UTF-8 locale)
         run: |
           docker exec -w /workspace cadestro-sdk-test \
@@ -167,12 +138,6 @@ jobs:
         if: always()
         run: docker rm -f cadestro-sdk-test 2>/dev/null || true
 
-  # Dedicated job for sys/network: the keyfile-based WiFi provisioning needs
-  # BOTH a live NetworkManager daemon (`nmcli connection reload`) and root (the
-  # 0600 keyfile write into /etc/NetworkManager/system-connections) — neither
-  # fits the test-sys lane. Its own systemd+NM image (`with-networkmanager`, NM
-  # configured to manage no devices) keeps NM out of the test-sys container so
-  # the other integration tests are unaffected.
   test-network:
     name: Integration Tests (NetworkManager)
     runs-on: ubuntu-latest
@@ -187,8 +152,6 @@ jobs:
 
       - name: Wait for NetworkManager
         run: |
-          # The container reports "degraded" (a hardware-bound unit can't start
-          # in a container) yet NM itself comes up active — wait on NM directly.
           for i in $(seq 1 60); do
             if docker exec cadestro-sdk-nm systemctl is-active NetworkManager >/dev/null 2>&1; then
               break
@@ -199,9 +162,6 @@ jobs:
 
       - name: Run network integration tests (root, real NetworkManager)
         run: |
-          # CADESTRO_NM_REQUIRED=1 makes the test FAIL (not skip) if NM is somehow
-          # unavailable — this job guarantees it, so a skip would pass
-          # vacuously.
           docker exec -w /workspace -e CADESTRO_NM_REQUIRED=1 cadestro-sdk-nm \
             /usr/local/go/bin/go test -p 1 -tags=integration -count=1 -v -timeout=5m \
               -run Integration ./sdk/sys/network/
@@ -210,12 +170,6 @@ jobs:
         if: always()
         run: docker rm -f cadestro-sdk-nm 2>/dev/null || true
 
-  # Container-based real-execution tests (`//go:build container`). Each cell
-  # builds one immutable bad-state image stage (the precondition is asserted at
-  # BUILD time) and runs the container-tagged tests INSIDE it, against the real
-  # tool binaries. Adding a distro or a state is a new matrix row + a Dockerfile
-  # stage + a `container`-tagged test file; the tests self-skip when their baked
-  # precondition is absent, so no other wiring changes.
   container-tests:
     name: Container Tests (${{ matrix.label }})
     runs-on: ubuntu-latest
@@ -228,18 +182,11 @@ jobs:
             state: state-locked-apt
             path: ./sdk/pkg/
             expect: apt-get fuser
-          # LUKS Manager against real cryptsetup. No bad-state needed (each test
-          # formats its own LUKS2 container on a /dev/shm file), so it runs on
-          # the clean `base` stage. --shm-size gives /dev/shm headroom for the
-          # 64 MiB container files.
           - label: sys/encryption (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/encryption/
             expect: cryptsetup
-          # nftables round-trip + iproute2 read path. Run on the clean `base`
-          # stage; the tests load real kernel netfilter / interface state in the
-          # container's own network namespace (CAP_NET_ADMIN, added below).
           - label: sys/firewall (debian/base)
             distro: debian
             state: base
@@ -250,74 +197,51 @@ jobs:
             state: base
             path: ./sdk/sys/netconfig/
             expect: ip
-          # /proc + os-release + lsblk + ip parsers against the real container.
           - label: sys/inventory (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/inventory/
             expect: lsblk ip
-          # update-ca-certificates round-trip into the real system trust bundle,
-          # verified with `openssl verify` (the portable, bundle-path-independent
-          # trust probe the distro-aware test uses).
           - label: sys/catrust (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/catrust/
             expect: update-ca-certificates openssl
-          # Real PTY + setresuid privilege drop (creates an unprivileged user).
           - label: sys/terminal (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/terminal/
             expect: useradd
-          # Real `wall` broadcast.
           - label: sys/notify (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/notify/
             expect: wall
-          # Real `osqueryi --json` queries + the sensitive-table deny-list
-          # against the actual binary (pinned osquery .deb in the with-osquery
-          # stage).
           - label: sys/osquery (debian/with-osquery)
             distro: debian
             state: with-osquery
             path: ./sdk/sys/osquery/
             expect: osqueryi
-          # Real clamscan detection (custom .ndb marker) + freshclam error path
-          # against the actual ClamAV binaries (with-clamav stage).
           - label: sys/antivirus (debian/with-clamav)
             distro: debian
             state: with-clamav
             path: ./sdk/sys/antivirus/
             expect: clamscan
-          # repo Manager apt backend: real `gpg --dearmor` + deb822 .sources
-          # write/idempotency/remove (base + gnupg). The dnf/pacman/zypper repo
-          # cells run in their distro jobs below; each test self-skips when its
-          # backend is absent.
           - label: sys/repo apt (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/repo/
             expect: apt-get gpg
-          # desktop: real runuser privilege-drop + HomeUsers passwd enumeration +
-          # per-user Flatpak-install probe (creates real accounts → needs root).
-          # The graphical ActiveSessions path runs against real loginctl in the
-          # systemd job; here ActiveSessions covers the loginctl-absent path.
           - label: sys/desktop (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/desktop/
             expect: useradd runuser env
-          # smartctl --scan parse + validation + fatal-exit-status-bit path
-          # (real passing-SMART-health needs hardware — residual).
           - label: sys/smart (debian/base)
             distro: debian
             state: base
             path: ./sdk/sys/smart/
             expect: smartctl
-          # reboot-required marker detection (Schedule/Cancel drive real shutdown
-          # — residual).
           - label: sys/reboot (debian/base)
             distro: debian
             state: base
@@ -332,9 +256,6 @@ jobs:
             --target ${{ matrix.state }} \
             -t cadestro-sdk-container .
 
-      # --cap-add NET_ADMIN: the firewall/netconfig tests load real netfilter and
-      # interface state in the container's own network namespace. It is harmless
-      # for the other cells. --shm-size gives /dev/shm headroom for the LUKS cell.
       - name: Assert expected tools present (no vacuous skip)
         if: matrix.expect != ''
         run: |
@@ -350,21 +271,10 @@ jobs:
           docker run --rm --memory=6g --cpus=4 --shm-size=512m --cap-add NET_ADMIN cadestro-sdk-container \
             go test -p 1 -tags=container -count=1 -v ${{ matrix.path }} -run Container
 
-  # The non-Debian distro families. Where the per-capability Debian matrix above
-  # builds one image per cell, each distro here builds its image ONCE and runs
-  # the whole base-stage capability set in a single job (the Molecule/Kitchen
-  # "platform" model) — far fewer image rebuilds for the same coverage. The SAME
-  # container tests run, proving cross-distro portability (catrust P11Kit/SUSE
-  # backends, desktop PATH on SUSE, the os-release parse, repo/pkg native
-  # backends, …). osquery stays Debian-only (statically-built binary, identical
-  # behaviour); notify is dropped on openSUSE (no `wall` package). See
-  # sdk/test/README.md.
   container-tests-distro:
     name: Container Tests (${{ matrix.distro }})
     runs-on: ubuntu-latest
     # docref: begin sdk-distro-matrix
-    # The distributions the system capabilities are exercised on, in addition to
-    # the Debian base lanes above. Cited by the root README.
     strategy:
       fail-fast: false
       matrix:
@@ -388,7 +298,6 @@ jobs:
               exit 1
             fi
           done
-          # catrust Detect must find a refresh tool, or its test skips vacuously.
           docker run --rm --memory=6g --cpus=4 cadestro-base sh -c 'command -v update-ca-trust >/dev/null 2>&1 || command -v update-ca-certificates >/dev/null 2>&1' \
             || { echo "::error::no CA-trust refresh tool on ${{ matrix.distro }}"; exit 1; }
 
@@ -465,19 +374,10 @@ jobs:
           name: coverage-dnf
           path: sdk/pkg/coverage-dnf.out
 
-      # repo Manager dnf backend: real .repo write/idempotency/remove against
-      # the actual dnf (root container). Run from the module root (pkg/ is the
-      # same module but `./...` there does not reach sys/repo). The
-      # apt/pacman/zypper repo tests self-skip here.
       - name: Run repo Manager container tests (real dnf)
         run: go test -p 1 -tags=container -count=1 -v -run Container ./sys/repo/
         working-directory: sdk
 
-  # pacman/zypper are the two package managers with zero real-tool coverage
-  # before this. The pkg integration tests (TestIntegration_Pacman/_Zypper)
-  # auto-detect the backend and run read-only ops (List / IsInstalled / Search)
-  # against the REAL binary, so an output-format / exit-code change across
-  # distro or tool versions is caught.
   test-pacman:
     name: Integration Tests (pacman)
     runs-on: ubuntu-latest
@@ -495,8 +395,6 @@ jobs:
         run: go test -p 1 -v ./...
         working-directory: sdk/pkg
 
-      # repo Manager pacman backend: real /etc/pacman.conf [section]
-      # write/remove against the actual pacman (root container).
       - name: Run repo Manager container tests (real pacman)
         run: go test -p 1 -tags=container -count=1 -v -run Container ./sys/repo/
         working-directory: sdk
@@ -516,17 +414,12 @@ jobs:
           zypper --non-interactive --gpg-auto-import-keys refresh
           zypper --non-interactive install go git tar gzip
 
-      # Leap's `go` package pins GOTOOLCHAIN=local and ships a patch below the
-      # go.mod requirement. GOTOOLCHAIN=auto lets the first `go` invocation
-      # fetch the exact toolchain the module declares.
       - name: Run integration tests
         run: go test -p 1 -v ./...
         working-directory: sdk/pkg
         env:
           GOTOOLCHAIN: auto
 
-      # repo Manager zypper backend: real `zypper addrepo`/`lr`/`removerepo`
-      # round-trip (root container). GOTOOLCHAIN=auto for Leap's older go.
       - name: Run repo Manager container tests (real zypper)
         run: go test -p 1 -tags=container -count=1 -v -run Container ./sys/repo/
         working-directory: sdk

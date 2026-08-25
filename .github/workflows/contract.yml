@@ -1,13 +1,5 @@
 name: Contract
 
-# The protobuf contract and the two client surfaces generated from it. These
-# jobs came from the predecessor SDK repository's test workflow, where the
-# protos still lived; the sources moved to contract/ in this repository, so the
-# jobs moved with them rather than staying behind under the SDK's name.
-#
-# Path filter: only the contract's own tree. Every OTHER module's workflow also
-# fires on contract/** because they all compile against it — the dependency
-# runs downstream, not here.
 on:
   push:
     branches: [main]
@@ -31,10 +23,6 @@ defaults:
     working-directory: contract
 
 env:
-  # The contract is a leaf module that anything speaking this protocol resolves
-  # on its own, and that is how CI must build it. The repository root carries a
-  # go.work covering all four Go modules; without this, every job here would
-  # silently compile against the workspace instead of the module.
   GOWORK: 'off'
 
 jobs:
@@ -91,16 +79,9 @@ jobs:
           cache: npm
           cache-dependency-path: contract/package-lock.json
 
-      # `npm ci` only — no `|| npm install` fallback. The point of these steps
-      # is that buf comes from package-lock.json; falling back to `npm install`
-      # on a lock mismatch resolves whatever the ranges allow and defeats it.
       - name: Install npm deps
         run: npm ci
 
-      # Same resolution the local gate and `make generate` use
-      # (scripts/buf.sh: fail-closed to the lock-installed binary). A bare
-      # `npx buf` DOWNLOADS registry-latest when the package is absent instead
-      # of failing.
       - name: buf lint
         working-directory: contract/proto
         run: ../scripts/buf.sh lint
@@ -109,8 +90,6 @@ jobs:
         working-directory: contract/proto
         run: ../scripts/buf.sh format --diff --exit-code
 
-  # Run `make generate` and assert nothing changed. Catches the "edited a
-  # .proto but forgot to regenerate" footgun before it lands in main.
   proto-gen-drift:
     name: Generated-code drift
     runs-on: ubuntu-latest
@@ -130,10 +109,6 @@ jobs:
       - name: Install npm deps
         run: npm ci
 
-      # Pin protoc — the generated `.pb.go` files carry a `// protoc vX.Y.Z`
-      # comment that flips every protoc release, so an unpinned apt-get install
-      # would surface false-positive drift against whatever version the
-      # contributor ran locally.
       - name: Install protoc (pinned)
         env:
           PROTOC_VERSION: 30.2
@@ -151,9 +126,6 @@ jobs:
 
       - name: Verify no drift
         run: |
-          # Ignore the auto-generated `// protoc vX.Y.Z` comment in `.pb.go`
-          # files — the line flips with every protoc release and isn't
-          # semantic. The pinned protoc above keeps this filter conservative.
           if ! git diff --exit-code \
                -I '^//\s*protoc\s+v[0-9]+\.[0-9]+\(\.[0-9]+\)\?' \
                -- gen/; then

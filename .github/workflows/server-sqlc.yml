@@ -1,16 +1,5 @@
 name: sqlc drift
 
-# Guards against internal/store/generated/ silently diverging from
-# `sqlc generate`. The check regenerates via the pinned official image
-# (make sqlc-check -> sqlc-generate) and fails if the committed output differs.
-#
-# This needs its own file, and its own narrow path filter, because the drift
-# case is a `.sql`/.yaml change WITHOUT a matching `.go` regen — server.yml
-# fires on server/** and would run this on every unrelated server change, while
-# a `**.go` filter would miss exactly the divergence being guarded against.
-#
-# The filtered paths are discovered from what the tree holds: sqlc.yaml names
-# migrations/ (the goose migration directory) as its schema.
 on:
   push:
     branches: [main, 'v*']
@@ -48,10 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # No setup-go: sqlc runs inside the pinned sqlc/sqlc image (Docker is
-      # preinstalled on ubuntu-latest), so the result does not depend on this
-      # runner's toolchain — the same image the Makefile documents as the
-      # reproducible reference.
       - name: sqlc drift check
         run: |
           make sqlc-check || {

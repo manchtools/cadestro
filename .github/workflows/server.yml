@@ -1,12 +1,5 @@
 name: Server
 
-# Static analysis and the full control-plane suite, including the deployment
-# shell tests under server/deploy/.
-#
-# Path filter: the server's own tree plus the two modules it replaces to
-# (sdk/**, contract/**). The predecessor's test workflow ran unfiltered because
-# the repository held nothing else; here an unfiltered trigger would run the
-# 30-minute suite on a web-only change.
 on:
   push:
     branches: [main, 'v*']
@@ -34,8 +27,6 @@ defaults:
     working-directory: server
 
 env:
-  # Each module must build standalone; the repository-root go.work must not be
-  # what makes CI pass.
   GOWORK: 'off'
 
 jobs:
@@ -58,11 +49,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Use the latest stable Go for the lint job specifically. The other jobs
-      # track go.mod's minimum-version directive so we don't accidentally rely
-      # on a feature absent from the supported floor. The lint job is
-      # different: its job is to surface stdlib vulns and drift, so it should
-      # always run against the latest patched toolchain.
       - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
@@ -88,30 +74,12 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
       - name: govulncheck (production packages — full report)
-        # Soft-fail. govulncheck reports stdlib + third-party + first-party
-        # findings in one pass; a stdlib CVE without an upstream patch would
-        # otherwise block every pull request for days on issues outside our
-        # control. The split below re-runs govulncheck in JSON mode and
-        # hard-fails ONLY on findings that touch a first-party
-        # (github.com/manchtools/*) module — the things we can actually patch
-        # via a go.mod bump. Exclude internal/testutil per the docker/docker
-        # carve-out: test fixtures aren't reachable from any production binary.
         continue-on-error: true
         run: |
           PKGS=$(go list ./... | grep -v 'internal/testutil')
           govulncheck $PKGS
 
       - name: govulncheck (first-party hard-fail)
-        # Re-run in JSON mode and fail the workflow if any finding's call trace
-        # touches a first-party module. The CVE may live in a transitive dep,
-        # but if the call graph reaches it from our code, it's actionable: bump
-        # the dep, work around the call site, or document the carve-out. Stdlib
-        # + third-party findings remain soft-fail above.
-        #
-        # Output shape: govulncheck -json emits newline-delimited records of
-        # various types. "finding" records carry the call trace;
-        # trace[].module is the module path. We grep for any module path under
-        # github.com/manchtools/ and fail if found.
         run: |
           PKGS=$(go list ./... | grep -v 'internal/testutil')
           govulncheck -json $PKGS > govuln.json || true

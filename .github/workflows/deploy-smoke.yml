@@ -1,9 +1,5 @@
 name: Deploy smoke test
 
-# Brings up the published control image behind the reference deployment and
-# verifies the running stack. On a pull request it fires only for deployment
-# changes; the release workflow runs the same script against the image it just
-# pushed.
 on:
   workflow_dispatch:
     inputs:
