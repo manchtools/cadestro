@@ -4,244 +4,220 @@ import (
 	"net/http"
 )
 
-// serviceProviderConfig handles GET /scim/v2/{slug}/ServiceProviderConfig
+type serviceProviderConfig struct {
+	Schemas               []string               `json:"schemas"`
+	DocumentationURI      string                 `json:"documentationUri"`
+	Patch                 supportedCapability    `json:"patch"`
+	Bulk                  bulkCapability         `json:"bulk"`
+	Filter                filterCapability       `json:"filter"`
+	ChangePassword        supportedCapability    `json:"changePassword"`
+	Sort                  supportedCapability    `json:"sort"`
+	ETag                  supportedCapability    `json:"etag"`
+	AuthenticationSchemes []authenticationScheme `json:"authenticationSchemes"`
+	Meta                  SCIMMeta               `json:"meta"`
+}
+
+type supportedCapability struct {
+	Supported bool `json:"supported"`
+}
+
+type bulkCapability struct {
+	Supported      bool `json:"supported"`
+	MaxOperations  int  `json:"maxOperations"`
+	MaxPayloadSize int  `json:"maxPayloadSize"`
+}
+
+type filterCapability struct {
+	Supported  bool `json:"supported"`
+	MaxResults int  `json:"maxResults"`
+}
+
+type authenticationScheme struct {
+	Type             string `json:"type"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	SpecURI          string `json:"specUri"`
+	DocumentationURI string `json:"documentationUri"`
+	Primary          bool   `json:"primary"`
+}
+
+type schemaResource struct {
+	Schemas     []string        `json:"schemas"`
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Attributes  []scimAttribute `json:"attributes"`
+	Meta        SCIMMeta        `json:"meta"`
+}
+
+type scimAttribute struct {
+	Name          string          `json:"name"`
+	Type          string          `json:"type"`
+	MultiValued   bool            `json:"multiValued"`
+	Description   string          `json:"description"`
+	Required      bool            `json:"required"`
+	CaseExact     *bool           `json:"caseExact,omitempty"`
+	Mutability    string          `json:"mutability"`
+	Returned      string          `json:"returned"`
+	Uniqueness    string          `json:"uniqueness,omitempty"`
+	SubAttributes []scimAttribute `json:"subAttributes,omitempty"`
+}
+
+type resourceType struct {
+	Schemas     []string `json:"schemas"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Endpoint    string   `json:"endpoint"`
+	Schema      string   `json:"schema"`
+	Meta        SCIMMeta `json:"meta"`
+}
+
 func (h *Handler) serviceProviderConfig(w http.ResponseWriter, r *http.Request, s *session) {
-	config := map[string]any{
-		"schemas":          []string{SPConfigSchema},
-		"documentationUri": "https://tools.ietf.org/html/rfc7644",
-		"patch": map[string]any{
-			"supported": true,
+	config := serviceProviderConfig{
+		Schemas:          []string{SPConfigSchema},
+		DocumentationURI: "https://tools.ietf.org/html/rfc7644",
+		Patch:            supportedCapability{Supported: true},
+		Bulk: bulkCapability{
+			Supported:      false,
+			MaxOperations:  0,
+			MaxPayloadSize: 0,
 		},
-		"bulk": map[string]any{
-			"supported":      false,
-			"maxOperations":  0,
-			"maxPayloadSize": 0,
-		},
-		"filter": map[string]any{
-			"supported":  true,
-			"maxResults": 200,
-		},
-		"changePassword": map[string]any{
-			"supported": false,
-		},
-		"sort": map[string]any{
-			"supported": false,
-		},
-		"etag": map[string]any{
-			"supported": false,
-		},
-		"authenticationSchemes": []map[string]any{
-			{
-				"type":             "oauthbearertoken",
-				"name":             "OAuth Bearer Token",
-				"description":      "Authentication scheme using the OAuth Bearer Token Standard",
-				"specUri":          "https://tools.ietf.org/html/rfc6750",
-				"documentationUri": "https://tools.ietf.org/html/rfc6750",
-				"primary":          true,
-			},
-		},
-		"meta": map[string]any{
-			"resourceType": "ServiceProviderConfig",
-			"location":     baseURLFromRequest(r, s.provider.Slug) + "/ServiceProviderConfig",
+		Filter:         filterCapability{Supported: true, MaxResults: 200},
+		ChangePassword: supportedCapability{Supported: false},
+		Sort:           supportedCapability{Supported: false},
+		ETag:           supportedCapability{Supported: false},
+		AuthenticationSchemes: []authenticationScheme{{
+			Type:             "oauthbearertoken",
+			Name:             "OAuth Bearer Token",
+			Description:      "Authentication scheme using the OAuth Bearer Token Standard",
+			SpecURI:          "https://tools.ietf.org/html/rfc6750",
+			DocumentationURI: "https://tools.ietf.org/html/rfc6750",
+			Primary:          true,
+		}},
+		Meta: SCIMMeta{
+			ResourceType: "ServiceProviderConfig",
+			Location:     baseURLFromRequest(r, s.provider.Slug) + "/ServiceProviderConfig",
 		},
 	}
 
 	writeJSON(w, http.StatusOK, config)
 }
 
-// schemas handles GET /scim/v2/{slug}/Schemas
 func (h *Handler) schemas(w http.ResponseWriter, r *http.Request, s *session) {
 	baseURL := baseURLFromRequest(r, s.provider.Slug)
 
-	userSchema := map[string]any{
-		"schemas":     []string{SchemaSchema},
-		"id":          UserSchema,
-		"name":        "User",
-		"description": "User Account",
-		"attributes": []map[string]any{
+	userSchema := schemaResource{
+		Schemas:     []string{SchemaSchema},
+		ID:          UserSchema,
+		Name:        "User",
+		Description: "User Account",
+		Attributes: []scimAttribute{
 			{
-				"name":        "userName",
-				"type":        "string",
-				"multiValued": false,
-				"description": "Unique identifier for the User, typically used by the user to directly authenticate.",
-				"required":    true,
-				"caseExact":   false,
-				"mutability":  "readWrite",
-				"returned":    "default",
-				"uniqueness":  "server",
+				Name:        "userName",
+				Type:        "string",
+				MultiValued: false,
+				Description: "Unique identifier for the User, typically used by the user to directly authenticate.",
+				Required:    true,
+				CaseExact:   boolPtr(false),
+				Mutability:  "readWrite",
+				Returned:    "default",
+				Uniqueness:  "server",
 			},
 			{
-				"name":        "name",
-				"type":        "complex",
-				"multiValued": false,
-				"description": "The components of the user's name.",
-				"required":    false,
-				"subAttributes": []map[string]any{
-					{
-						"name":        "formatted",
-						"type":        "string",
-						"multiValued": false,
-						"description": "The full name.",
-						"required":    false,
-						"mutability":  "readWrite",
-						"returned":    "default",
-					},
-					{
-						"name":        "familyName",
-						"type":        "string",
-						"multiValued": false,
-						"description": "The family name of the user.",
-						"required":    false,
-						"mutability":  "readWrite",
-						"returned":    "default",
-					},
-					{
-						"name":        "givenName",
-						"type":        "string",
-						"multiValued": false,
-						"description": "The given name of the user.",
-						"required":    false,
-						"mutability":  "readWrite",
-						"returned":    "default",
-					},
+				Name:        "name",
+				Type:        "complex",
+				MultiValued: false,
+				Description: "The components of the user's name.",
+				Required:    false,
+				SubAttributes: []scimAttribute{
+					{Name: "formatted", Type: "string", MultiValued: false, Description: "The full name.", Required: false, Mutability: "readWrite", Returned: "default"},
+					{Name: "familyName", Type: "string", MultiValued: false, Description: "The family name of the user.", Required: false, Mutability: "readWrite", Returned: "default"},
+					{Name: "givenName", Type: "string", MultiValued: false, Description: "The given name of the user.", Required: false, Mutability: "readWrite", Returned: "default"},
 				},
-				"mutability": "readWrite",
-				"returned":   "default",
+				Mutability: "readWrite",
+				Returned:   "default",
 			},
 			{
-				"name":        "emails",
-				"type":        "complex",
-				"multiValued": true,
-				"description": "Email addresses for the user.",
-				"required":    false,
-				"subAttributes": []map[string]any{
-					{
-						"name":        "value",
-						"type":        "string",
-						"multiValued": false,
-						"description": "Email address.",
-						"required":    false,
-						"mutability":  "readWrite",
-						"returned":    "default",
-					},
-					{
-						"name":        "type",
-						"type":        "string",
-						"multiValued": false,
-						"description": "A label indicating the email type.",
-						"required":    false,
-						"mutability":  "readWrite",
-						"returned":    "default",
-					},
-					{
-						"name":        "primary",
-						"type":        "boolean",
-						"multiValued": false,
-						"description": "Indicates if this is the primary email.",
-						"required":    false,
-						"mutability":  "readWrite",
-						"returned":    "default",
-					},
+				Name:        "emails",
+				Type:        "complex",
+				MultiValued: true,
+				Description: "Email addresses for the user.",
+				Required:    false,
+				SubAttributes: []scimAttribute{
+					{Name: "value", Type: "string", MultiValued: false, Description: "Email address.", Required: false, Mutability: "readWrite", Returned: "default"},
+					{Name: "type", Type: "string", MultiValued: false, Description: "A label indicating the email type.", Required: false, Mutability: "readWrite", Returned: "default"},
+					{Name: "primary", Type: "boolean", MultiValued: false, Description: "Indicates if this is the primary email.", Required: false, Mutability: "readWrite", Returned: "default"},
 				},
-				"mutability": "readWrite",
-				"returned":   "default",
+				Mutability: "readWrite",
+				Returned:   "default",
 			},
 			{
-				"name":        "active",
-				"type":        "boolean",
-				"multiValued": false,
-				"description": "A Boolean value indicating the user's administrative status.",
-				"required":    false,
-				"mutability":  "readWrite",
-				"returned":    "default",
+				Name:        "active",
+				Type:        "boolean",
+				MultiValued: false,
+				Description: "A Boolean value indicating the user's administrative status.",
+				Required:    false,
+				Mutability:  "readWrite",
+				Returned:    "default",
 			},
 			{
-				"name":        "externalId",
-				"type":        "string",
-				"multiValued": false,
-				"description": "An identifier for the resource as defined by the provisioning client.",
-				"required":    false,
-				"caseExact":   true,
-				"mutability":  "readWrite",
-				"returned":    "default",
+				Name:        "externalId",
+				Type:        "string",
+				MultiValued: false,
+				Description: "An identifier for the resource as defined by the provisioning client.",
+				Required:    false,
+				CaseExact:   boolPtr(true),
+				Mutability:  "readWrite",
+				Returned:    "default",
 			},
 		},
-		"meta": map[string]any{
-			"resourceType": "Schema",
-			"location":     baseURL + "/Schemas/" + UserSchema,
-		},
+		Meta: SCIMMeta{ResourceType: "Schema", Location: baseURL + "/Schemas/" + UserSchema},
 	}
 
-	groupSchema := map[string]any{
-		"schemas":     []string{SchemaSchema},
-		"id":          GroupSchema,
-		"name":        "Group",
-		"description": "Group",
-		"attributes": []map[string]any{
+	groupSchema := schemaResource{
+		Schemas:     []string{SchemaSchema},
+		ID:          GroupSchema,
+		Name:        "Group",
+		Description: "Group",
+		Attributes: []scimAttribute{
 			{
-				"name":        "displayName",
-				"type":        "string",
-				"multiValued": false,
-				"description": "A human-readable name for the Group.",
-				"required":    true,
-				"caseExact":   false,
-				"mutability":  "readWrite",
-				"returned":    "default",
-				"uniqueness":  "none",
+				Name:        "displayName",
+				Type:        "string",
+				MultiValued: false,
+				Description: "A human-readable name for the Group.",
+				Required:    true,
+				CaseExact:   boolPtr(false),
+				Mutability:  "readWrite",
+				Returned:    "default",
+				Uniqueness:  "none",
 			},
 			{
-				"name":        "members",
-				"type":        "complex",
-				"multiValued": true,
-				"description": "A list of members of the Group.",
-				"required":    false,
-				"subAttributes": []map[string]any{
-					{
-						"name":        "value",
-						"type":        "string",
-						"multiValued": false,
-						"description": "Identifier of the member.",
-						"required":    false,
-						"mutability":  "immutable",
-						"returned":    "default",
-					},
-					{
-						"name":        "$ref",
-						"type":        "reference",
-						"multiValued": false,
-						"description": "The URI of the member resource.",
-						"required":    false,
-						"mutability":  "immutable",
-						"returned":    "default",
-					},
-					{
-						"name":        "display",
-						"type":        "string",
-						"multiValued": false,
-						"description": "A human-readable name for the member.",
-						"required":    false,
-						"mutability":  "readOnly",
-						"returned":    "default",
-					},
+				Name:        "members",
+				Type:        "complex",
+				MultiValued: true,
+				Description: "A list of members of the Group.",
+				Required:    false,
+				SubAttributes: []scimAttribute{
+					{Name: "value", Type: "string", MultiValued: false, Description: "Identifier of the member.", Required: false, Mutability: "immutable", Returned: "default"},
+					{Name: "$ref", Type: "reference", MultiValued: false, Description: "The URI of the member resource.", Required: false, Mutability: "immutable", Returned: "default"},
+					{Name: "display", Type: "string", MultiValued: false, Description: "A human-readable name for the member.", Required: false, Mutability: "readOnly", Returned: "default"},
 				},
-				"mutability": "readWrite",
-				"returned":   "default",
+				Mutability: "readWrite",
+				Returned:   "default",
 			},
 			{
-				"name":        "externalId",
-				"type":        "string",
-				"multiValued": false,
-				"description": "An identifier for the resource as defined by the provisioning client.",
-				"required":    false,
-				"caseExact":   true,
-				"mutability":  "readWrite",
-				"returned":    "default",
+				Name:        "externalId",
+				Type:        "string",
+				MultiValued: false,
+				Description: "An identifier for the resource as defined by the provisioning client.",
+				Required:    false,
+				CaseExact:   boolPtr(true),
+				Mutability:  "readWrite",
+				Returned:    "default",
 			},
 		},
-		"meta": map[string]any{
-			"resourceType": "Schema",
-			"location":     baseURL + "/Schemas/" + GroupSchema,
-		},
+		Meta: SCIMMeta{ResourceType: "Schema", Location: baseURL + "/Schemas/" + GroupSchema},
 	}
 
 	writeJSON(w, http.StatusOK, SCIMListResponse{
@@ -253,34 +229,26 @@ func (h *Handler) schemas(w http.ResponseWriter, r *http.Request, s *session) {
 	})
 }
 
-// resourceTypes handles GET /scim/v2/{slug}/ResourceTypes
 func (h *Handler) resourceTypes(w http.ResponseWriter, r *http.Request, s *session) {
 	baseURL := baseURLFromRequest(r, s.provider.Slug)
 
-	userResourceType := map[string]any{
-		"schemas":     []string{ResourceTypeSchema},
-		"id":          "User",
-		"name":        "User",
-		"description": "User Account",
-		"endpoint":    "/Users",
-		"schema":      UserSchema,
-		"meta": map[string]any{
-			"resourceType": "ResourceType",
-			"location":     baseURL + "/ResourceTypes/User",
-		},
+	userResourceType := resourceType{
+		Schemas:     []string{ResourceTypeSchema},
+		ID:          "User",
+		Name:        "User",
+		Description: "User Account",
+		Endpoint:    "/Users",
+		Schema:      UserSchema,
+		Meta:        SCIMMeta{ResourceType: "ResourceType", Location: baseURL + "/ResourceTypes/User"},
 	}
-
-	groupResourceType := map[string]any{
-		"schemas":     []string{ResourceTypeSchema},
-		"id":          "Group",
-		"name":        "Group",
-		"description": "Group",
-		"endpoint":    "/Groups",
-		"schema":      GroupSchema,
-		"meta": map[string]any{
-			"resourceType": "ResourceType",
-			"location":     baseURL + "/ResourceTypes/Group",
-		},
+	groupResourceType := resourceType{
+		Schemas:     []string{ResourceTypeSchema},
+		ID:          "Group",
+		Name:        "Group",
+		Description: "Group",
+		Endpoint:    "/Groups",
+		Schema:      GroupSchema,
+		Meta:        SCIMMeta{ResourceType: "ResourceType", Location: baseURL + "/ResourceTypes/Group"},
 	}
 
 	writeJSON(w, http.StatusOK, SCIMListResponse{
