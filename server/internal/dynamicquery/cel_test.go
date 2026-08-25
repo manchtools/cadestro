@@ -11,7 +11,7 @@ import (
 )
 
 func TestCompileDeviceAndEvaluateFields(t *testing.T) {
-	query, err := CompileDevice(`device.hostname == "workstation" && device.os == "linux" && device.os_version == "debian" && device.os_major == 12 && device.os_minor == 4 && device.os_arch == "amd64" && device.os_platform == "linux" && device.os_platform_like == "debian" && device.cpu_type == "x86" && device.cpu_brand == "intel" && device.cpu_cores == 8 && device.cpu_logical_cores == 16 && device.memory_total == 32768 && device.kernel == "6.1" && device.labels["env"].contains("prod") && "engineering" in device.groups`)
+	query, err := CompileDevice(`device.hostname == "workstation" && device.os == "linux" && device.os_version == "debian" && device.os_major == 12 && device.os_minor == 4 && device.os_arch == "amd64" && device.os_platform == "linux" && device.os_platform_like == "debian" && device.cpu_type == "x86" && device.cpu_brand == "intel" && device.cpu_cores == 8 && device.cpu_logical_cores == 16 && device.memory_total == 32768 && device.kernel == "6.1" && "env" in device.labels && device.labels["env"].contains("prod") && "engineering" in device.groups`)
 	if err != nil {
 		t.Fatal(err)
 	}
