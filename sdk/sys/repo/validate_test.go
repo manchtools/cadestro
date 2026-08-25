@@ -152,6 +152,7 @@ func TestValidate_Zypper(t *testing.T) {
 		"control desc": {URL: "https://h/r", Description: "a\nb"},
 		"control type": {URL: "https://h/r", Type: "rpm\nmd"},
 		"bad type":     {URL: "https://h/r", Type: "rpm md"},
+		"unknown type": {URL: "https://h/r", Type: "unknown"},
 		"http gpgkey":  {URL: "https://h/r", GPGKey: "http://h/k"},
 		"flag gpgkey":  {URL: "https://h/r", GPGKey: "--import-me"},
 	}
@@ -160,9 +161,11 @@ func TestValidate_Zypper(t *testing.T) {
 			t.Errorf("Validate(zypper %s) = %v, want ErrInvalidConfig", label, err)
 		}
 	}
-	ok := &ZypperConfig{URL: "https://h/r", Description: "Corp Repo", Type: "rpm-md", Enabled: true, Autorefresh: true, GPGKey: "https://h/KEY"}
-	if err := m.Validate(Repository{Name: "r", Zypper: ok}); err != nil {
-		t.Errorf("Validate(valid zypper) = %v, want nil", err)
+	for _, typ := range []string{"", "rpm-md", "yast2", "plaindir"} {
+		ok := &ZypperConfig{URL: "https://h/r", Description: "Corp Repo", Type: typ, Enabled: true, Autorefresh: true, GPGKey: "https://h/KEY"}
+		if err := m.Validate(Repository{Name: "r", Zypper: ok}); err != nil {
+			t.Errorf("Validate(valid zypper type %q) = %v, want nil", typ, err)
+		}
 	}
 }
 

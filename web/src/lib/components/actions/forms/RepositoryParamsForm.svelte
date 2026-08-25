@@ -3,6 +3,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Switch } from '$lib/components/ui/switch';
+	import * as Select from '$lib/components/ui/select';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { FieldError } from '$lib/components/ui/field-error';
 	import * as m from '$lib/paraglide/messages';
@@ -243,11 +244,17 @@
 					</div>
 					<div class="space-y-2">
 						<Label for="zypperType">{m.actions_params_repo_zypper_type()}</Label>
-						<Input
-							id="zypperType"
-							placeholder="rpm-md (default)"
-							bind:value={params.zypper.type}
-						/>
+						<Select.Root type="single" bind:value={params.zypper.type}>
+							<Select.Trigger id="zypperType" class="w-full">
+								{params.zypper.type || 'rpm-md (default)'}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="">rpm-md (default)</Select.Item>
+								<Select.Item value="rpm-md">rpm-md</Select.Item>
+								<Select.Item value="yast2">yast2</Select.Item>
+								<Select.Item value="plaindir">plaindir</Select.Item>
+							</Select.Content>
+						</Select.Root>
 					</div>
 					<div class="space-y-2">
 						<Label for="zypperGpgkey">{m.actions_params_repo_zypper_gpg_key()}</Label>

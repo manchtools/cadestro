@@ -39,6 +39,7 @@ import {
 	LpsPasswordComplexity,
 	GroupParamsSchema,
 	type GroupParams,
+	ZypperRepositoryType,
 	EncryptionDeviceBoundKeyType,
 	WifiAuthType,
 	AgentUpdateParamsSchema,
@@ -580,7 +581,7 @@ export function repositoryFormToProto(form: RepositoryFormState) {
 					autorefresh: form.zypper.autorefresh,
 					gpgcheck: form.zypper.gpgcheck,
 					gpgkey: form.zypper.gpgkey,
-					type: form.zypper.type,
+					type: zypperTypeToEnum(form.zypper.type),
 					disabled: form.zypper.disabled
 				})
 	});
@@ -621,6 +622,32 @@ function adminAccessLevelToEnum(level: string): AdminAccessLevel {
 			return AdminAccessLevel.CUSTOM;
 		default:
 			return AdminAccessLevel.UNSPECIFIED;
+	}
+}
+
+function zypperTypeToEnum(type: string): ZypperRepositoryType {
+	switch (type) {
+		case 'rpm-md':
+			return ZypperRepositoryType.RPM_MD;
+		case 'yast2':
+			return ZypperRepositoryType.YAST2;
+		case 'plaindir':
+			return ZypperRepositoryType.PLAINDIR;
+		default:
+			return ZypperRepositoryType.UNSPECIFIED;
+	}
+}
+
+function zypperTypeFromEnum(type: ZypperRepositoryType): string {
+	switch (type) {
+		case ZypperRepositoryType.RPM_MD:
+			return 'rpm-md';
+		case ZypperRepositoryType.YAST2:
+			return 'yast2';
+		case ZypperRepositoryType.PLAINDIR:
+			return 'plaindir';
+		default:
+			return '';
 	}
 }
 
@@ -928,7 +955,7 @@ export function repositoryProtoToForm(proto: RepositoryParams): RepositoryFormSt
 					autorefresh: proto.zypper.autorefresh ?? true,
 					gpgcheck: proto.zypper.gpgcheck ?? true,
 					gpgkey: proto.zypper.gpgkey || '',
-					type: proto.zypper.type || '',
+					type: zypperTypeFromEnum(proto.zypper.type),
 					disabled: proto.zypper.disabled || false
 				}
 			: defaultZypperForm()

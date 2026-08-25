@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 	"testing"
@@ -47,12 +48,44 @@ func TestExecuteRepository_RejectsBeforePrivilegedRemount(t *testing.T) {
 
 func TestRepositoryFields_Dnf5UsesDnfConfig(t *testing.T) {
 	e := &Executor{pkgBackend: pkg.Dnf5}
-	r := e.repositoryFields(&pb.RepositoryParams{
+	r, err := e.repositoryFields(&pb.RepositoryParams{
 		Name: "corp",
 		Dnf:  &pb.DnfRepository{Baseurl: "https://mirror.example/repo", Description: "Fedora", Enabled: true},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if r.Dnf == nil || r.Dnf.BaseURL != "https://mirror.example/repo" || r.Dnf.Description != "Fedora" || !r.Dnf.Enabled {
 		t.Fatalf("Dnf5 repository fields = %+v", r.Dnf)
+	}
+}
+
+func TestRepositoryFields_ZypperTypeMapping(t *testing.T) {
+	e := &Executor{pkgBackend: pkg.Zypper}
+	cases := []struct {
+		name string
+		kind pb.ZypperRepositoryType
+		want string
+	}{
+		{name: "unspecified", kind: pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_UNSPECIFIED},
+		{name: "rpm-md", kind: pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_RPM_MD, want: "rpm-md"},
+		{name: "yast2", kind: pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_YAST2, want: "yast2"},
+		{name: "plaindir", kind: pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_PLAINDIR, want: "plaindir"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r, err := e.repositoryFields(&pb.RepositoryParams{Zypper: &pb.ZypperRepository{Type: tc.kind}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if r.Zypper == nil || r.Zypper.Type != tc.want {
+				t.Fatalf("mapped type = %q, want %q", r.Zypper.Type, tc.want)
+			}
+		})
+	}
+	_, err := e.repositoryFields(&pb.RepositoryParams{Zypper: &pb.ZypperRepository{Type: pb.ZypperRepositoryType(99)}})
+	if !errors.Is(err, errUnsupportedZypperRepositoryType) {
+		t.Fatalf("unknown type error = %v, want errUnsupportedZypperRepositoryType", err)
 	}
 }
 

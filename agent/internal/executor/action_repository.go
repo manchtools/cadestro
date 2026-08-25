@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/pkg"
 	"github.com/manchtools/cadestro/sdk/sys/repo"
 )
+
+var errUnsupportedZypperRepositoryType = errors.New("unsupported zypper repository type")
 
 func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
@@ -48,7 +51,11 @@ func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryP
 		return nil, false, fmt.Errorf("no supported package manager found for repository configuration")
 	}
 
-	if err := mgr.Validate(e.repositoryFields(params)); err != nil {
+	r, err := e.repositoryFields(params)
+	if err != nil {
+		return nil, false, err
+	}
+	if err := mgr.Validate(r); err != nil {
 		return nil, false, err
 	}
 
@@ -61,7 +68,7 @@ func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryP
 		outcome, rerr := mgr.Remove(ctx, params.Name)
 		return repoOutcome(outcome, rerr)
 	case pb.DesiredState_DESIRED_STATE_PRESENT:
-		r, berr := e.repositoryConfig(ctx, params)
+		r, berr := e.repositoryConfig(ctx, params, r)
 		if berr != nil {
 			return nil, false, berr
 		}
@@ -72,7 +79,7 @@ func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryP
 	}
 }
 
-func (e *Executor) repositoryFields(params *pb.RepositoryParams) repo.Repository {
+func (e *Executor) repositoryFields(params *pb.RepositoryParams) (repo.Repository, error) {
 	r := repo.Repository{Name: params.Name}
 	switch e.pkgBackend {
 	case pkg.Apt:
@@ -102,6 +109,10 @@ func (e *Executor) repositoryFields(params *pb.RepositoryParams) repo.Repository
 		}
 	case pkg.Zypper:
 		z := params.Zypper
+		typeName, err := zypperRepositoryTypeName(z.Type)
+		if err != nil {
+			return repo.Repository{}, err
+		}
 		r.Zypper = &repo.ZypperConfig{
 			URL:         z.Url,
 			Description: z.Description,
@@ -109,14 +120,28 @@ func (e *Executor) repositoryFields(params *pb.RepositoryParams) repo.Repository
 			Autorefresh: z.Autorefresh,
 			GPGCheck:    z.Gpgcheck,
 			GPGKey:      z.Gpgkey,
-			Type:        z.Type,
+			Type:        typeName,
 		}
 	}
-	return r
+	return r, nil
 }
 
-func (e *Executor) repositoryConfig(ctx context.Context, params *pb.RepositoryParams) (repo.Repository, error) {
-	r := e.repositoryFields(params)
+func zypperRepositoryTypeName(t pb.ZypperRepositoryType) (string, error) {
+	switch t {
+	case pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_UNSPECIFIED:
+		return "", nil
+	case pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_RPM_MD:
+		return "rpm-md", nil
+	case pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_YAST2:
+		return "yast2", nil
+	case pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_PLAINDIR:
+		return "plaindir", nil
+	default:
+		return "", fmt.Errorf("zypper repository type %d: %w", t, errUnsupportedZypperRepositoryType)
+	}
+}
+
+func (e *Executor) repositoryConfig(ctx context.Context, params *pb.RepositoryParams, r repo.Repository) (repo.Repository, error) {
 	if e.pkgBackend == pkg.Apt && r.Apt != nil {
 		switch a := params.Apt; {
 		case a.GpgKeyUrl != "":

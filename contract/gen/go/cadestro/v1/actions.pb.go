@@ -182,6 +182,58 @@ func (ServiceUnitState) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{1}
 }
 
+type ZypperRepositoryType int32
+
+const (
+	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_UNSPECIFIED ZypperRepositoryType = 0
+	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_RPM_MD      ZypperRepositoryType = 1
+	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_YAST2       ZypperRepositoryType = 2
+	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_PLAINDIR    ZypperRepositoryType = 3
+)
+
+// Enum value maps for ZypperRepositoryType.
+var (
+	ZypperRepositoryType_name = map[int32]string{
+		0: "ZYPPER_REPOSITORY_TYPE_UNSPECIFIED",
+		1: "ZYPPER_REPOSITORY_TYPE_RPM_MD",
+		2: "ZYPPER_REPOSITORY_TYPE_YAST2",
+		3: "ZYPPER_REPOSITORY_TYPE_PLAINDIR",
+	}
+	ZypperRepositoryType_value = map[string]int32{
+		"ZYPPER_REPOSITORY_TYPE_UNSPECIFIED": 0,
+		"ZYPPER_REPOSITORY_TYPE_RPM_MD":      1,
+		"ZYPPER_REPOSITORY_TYPE_YAST2":       2,
+		"ZYPPER_REPOSITORY_TYPE_PLAINDIR":    3,
+	}
+)
+
+func (x ZypperRepositoryType) Enum() *ZypperRepositoryType {
+	p := new(ZypperRepositoryType)
+	*p = x
+	return p
+}
+
+func (x ZypperRepositoryType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ZypperRepositoryType) Descriptor() protoreflect.EnumDescriptor {
+	return file_cadestro_v1_actions_proto_enumTypes[2].Descriptor()
+}
+
+func (ZypperRepositoryType) Type() protoreflect.EnumType {
+	return &file_cadestro_v1_actions_proto_enumTypes[2]
+}
+
+func (x ZypperRepositoryType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ZypperRepositoryType.Descriptor instead.
+func (ZypperRepositoryType) EnumDescriptor() ([]byte, []int) {
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
+}
+
 type AdminAccessLevel int32
 
 const (
@@ -224,11 +276,11 @@ func (x AdminAccessLevel) String() string {
 }
 
 func (AdminAccessLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[2].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[3].Descriptor()
 }
 
 func (AdminAccessLevel) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[2]
+	return &file_cadestro_v1_actions_proto_enumTypes[3]
 }
 
 func (x AdminAccessLevel) Number() protoreflect.EnumNumber {
@@ -237,7 +289,7 @@ func (x AdminAccessLevel) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AdminAccessLevel.Descriptor instead.
 func (AdminAccessLevel) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
 }
 
 type PrivilegeBackend int32
@@ -270,11 +322,11 @@ func (x PrivilegeBackend) String() string {
 }
 
 func (PrivilegeBackend) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[3].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[4].Descriptor()
 }
 
 func (PrivilegeBackend) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[3]
+	return &file_cadestro_v1_actions_proto_enumTypes[4]
 }
 
 func (x PrivilegeBackend) Number() protoreflect.EnumNumber {
@@ -283,7 +335,7 @@ func (x PrivilegeBackend) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use PrivilegeBackend.Descriptor instead.
 func (PrivilegeBackend) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
 }
 
 type LpsPasswordComplexity int32
@@ -319,11 +371,11 @@ func (x LpsPasswordComplexity) String() string {
 }
 
 func (LpsPasswordComplexity) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[4].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[5].Descriptor()
 }
 
 func (LpsPasswordComplexity) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[4]
+	return &file_cadestro_v1_actions_proto_enumTypes[5]
 }
 
 func (x LpsPasswordComplexity) Number() protoreflect.EnumNumber {
@@ -332,7 +384,7 @@ func (x LpsPasswordComplexity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use LpsPasswordComplexity.Descriptor instead.
 func (LpsPasswordComplexity) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
 }
 
 type EncryptionDeviceBoundKeyType int32
@@ -368,11 +420,11 @@ func (x EncryptionDeviceBoundKeyType) String() string {
 }
 
 func (EncryptionDeviceBoundKeyType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[5].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[6].Descriptor()
 }
 
 func (EncryptionDeviceBoundKeyType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[5]
+	return &file_cadestro_v1_actions_proto_enumTypes[6]
 }
 
 func (x EncryptionDeviceBoundKeyType) Number() protoreflect.EnumNumber {
@@ -381,7 +433,7 @@ func (x EncryptionDeviceBoundKeyType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EncryptionDeviceBoundKeyType.Descriptor instead.
 func (EncryptionDeviceBoundKeyType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{6}
 }
 
 type WifiAuthType int32
@@ -417,11 +469,11 @@ func (x WifiAuthType) String() string {
 }
 
 func (WifiAuthType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[6].Descriptor()
+	return file_cadestro_v1_actions_proto_enumTypes[7].Descriptor()
 }
 
 func (WifiAuthType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[6]
+	return &file_cadestro_v1_actions_proto_enumTypes[7]
 }
 
 func (x WifiAuthType) Number() protoreflect.EnumNumber {
@@ -430,7 +482,7 @@ func (x WifiAuthType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WifiAuthType.Descriptor instead.
 func (WifiAuthType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{7}
 }
 
 type Action struct {
@@ -1823,7 +1875,7 @@ type ZypperRepository struct {
 	Autorefresh   bool                   `protobuf:"varint,4,opt,name=autorefresh,proto3" json:"autorefresh,omitempty"`
 	Gpgcheck      bool                   `protobuf:"varint,5,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
 	Gpgkey        string                 `protobuf:"bytes,6,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
-	Type          string                 `protobuf:"bytes,7,opt,name=type,proto3" json:"type,omitempty"`
+	Type          ZypperRepositoryType   `protobuf:"varint,7,opt,name=type,proto3,enum=cadestro.v1.ZypperRepositoryType" json:"type,omitempty"`
 	Disabled      bool                   `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1901,11 +1953,11 @@ func (x *ZypperRepository) GetGpgkey() string {
 	return ""
 }
 
-func (x *ZypperRepository) GetType() string {
+func (x *ZypperRepository) GetType() ZypperRepositoryType {
 	if x != nil {
 		return x.Type
 	}
-	return ""
+	return ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_UNSPECIFIED
 }
 
 func (x *ZypperRepository) GetDisabled() bool {
@@ -3024,16 +3076,15 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\x06server\x18\x01 \x01(\tR\x06server\x12(\n" +
 	"\tsig_level\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\bsigLevel\x12\x1a\n" +
 	"\bdisabled\x18\x03 \x01(\bR\bdisabled:\x8a\x01\xbaH\x86\x01\x1a\x83\x01\n" +
-	"2pacman_repository.server_required_without_disabled\x12)server is required unless disabled is set\x1a\"this.disabled || this.server != ''\"\x9a\x03\n" +
+	"2pacman_repository.server_required_without_disabled\x12)server is required unless disabled is set\x1a\"this.disabled || this.server != ''\"\xbe\x03\n" +
 	"\x10ZypperRepository\x12\x1d\n" +
 	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x03url\x12-\n" +
 	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vdescription\x12\x18\n" +
 	"\aenabled\x18\x03 \x01(\bR\aenabled\x12 \n" +
 	"\vautorefresh\x18\x04 \x01(\bR\vautorefresh\x12\x1a\n" +
 	"\bgpgcheck\x18\x05 \x01(\bR\bgpgcheck\x12#\n" +
-	"\x06gpgkey\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x06gpgkey\x12\x1e\n" +
-	"\x04type\x18\a \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x04type\x12\x1a\n" +
+	"\x06gpgkey\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x06gpgkey\x12B\n" +
+	"\x04type\x18\a \x01(\x0e2!.cadestro.v1.ZypperRepositoryTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x04type\x12\x1a\n" +
 	"\bdisabled\x18\b \x01(\bR\bdisabled:\x7f\xbaH|\x1az\n" +
 	"/zypper_repository.url_required_without_disabled\x12&url is required unless disabled is set\x1a\x1fthis.disabled || this.url != ''\"\x83\x04\n" +
 	"\n" +
@@ -3176,7 +3227,12 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\x1eSERVICE_UNIT_STATE_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aSERVICE_UNIT_STATE_STARTED\x10\x01\x12\x1e\n" +
 	"\x1aSERVICE_UNIT_STATE_STOPPED\x10\x02\x12 \n" +
-	"\x1cSERVICE_UNIT_STATE_RESTARTED\x10\x03*\xed\x01\n" +
+	"\x1cSERVICE_UNIT_STATE_RESTARTED\x10\x03*\xa8\x01\n" +
+	"\x14ZypperRepositoryType\x12&\n" +
+	"\"ZYPPER_REPOSITORY_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dZYPPER_REPOSITORY_TYPE_RPM_MD\x10\x01\x12 \n" +
+	"\x1cZYPPER_REPOSITORY_TYPE_YAST2\x10\x02\x12#\n" +
+	"\x1fZYPPER_REPOSITORY_TYPE_PLAINDIR\x10\x03*\xed\x01\n" +
 	"\x10AdminAccessLevel\x12\"\n" +
 	"\x1eADMIN_ACCESS_LEVEL_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17ADMIN_ACCESS_LEVEL_FULL\x10\x01\x12\x1e\n" +
@@ -3212,108 +3268,110 @@ func file_cadestro_v1_actions_proto_rawDescGZIP() []byte {
 	return file_cadestro_v1_actions_proto_rawDescData
 }
 
-var file_cadestro_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_cadestro_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
 var file_cadestro_v1_actions_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_cadestro_v1_actions_proto_goTypes = []any{
 	(ActionType)(0),                   // 0: cadestro.v1.ActionType
 	(ServiceUnitState)(0),             // 1: cadestro.v1.ServiceUnitState
-	(AdminAccessLevel)(0),             // 2: cadestro.v1.AdminAccessLevel
-	(PrivilegeBackend)(0),             // 3: cadestro.v1.PrivilegeBackend
-	(LpsPasswordComplexity)(0),        // 4: cadestro.v1.LpsPasswordComplexity
-	(EncryptionDeviceBoundKeyType)(0), // 5: cadestro.v1.EncryptionDeviceBoundKeyType
-	(WifiAuthType)(0),                 // 6: cadestro.v1.WifiAuthType
-	(*Action)(nil),                    // 7: cadestro.v1.Action
-	(*ActionSchedule)(nil),            // 8: cadestro.v1.ActionSchedule
-	(*PackageParams)(nil),             // 9: cadestro.v1.PackageParams
-	(*AppInstallParams)(nil),          // 10: cadestro.v1.AppInstallParams
-	(*ShellParams)(nil),               // 11: cadestro.v1.ShellParams
-	(*ServiceParams)(nil),             // 12: cadestro.v1.ServiceParams
-	(*FileParams)(nil),                // 13: cadestro.v1.FileParams
-	(*DirectoryParams)(nil),           // 14: cadestro.v1.DirectoryParams
-	(*UpdateParams)(nil),              // 15: cadestro.v1.UpdateParams
-	(*FlatpakParams)(nil),             // 16: cadestro.v1.FlatpakParams
-	(*RepositoryParams)(nil),          // 17: cadestro.v1.RepositoryParams
-	(*AptRepository)(nil),             // 18: cadestro.v1.AptRepository
-	(*DnfRepository)(nil),             // 19: cadestro.v1.DnfRepository
-	(*PacmanRepository)(nil),          // 20: cadestro.v1.PacmanRepository
-	(*ZypperRepository)(nil),          // 21: cadestro.v1.ZypperRepository
-	(*UserParams)(nil),                // 22: cadestro.v1.UserParams
-	(*GroupParams)(nil),               // 23: cadestro.v1.GroupParams
-	(*SshParams)(nil),                 // 24: cadestro.v1.SshParams
-	(*SshdDirective)(nil),             // 25: cadestro.v1.SshdDirective
-	(*SshdParams)(nil),                // 26: cadestro.v1.SshdParams
-	(*AdminPolicyParams)(nil),         // 27: cadestro.v1.AdminPolicyParams
-	(*LpsParams)(nil),                 // 28: cadestro.v1.LpsParams
-	(*EncryptionParams)(nil),          // 29: cadestro.v1.EncryptionParams
-	(*WifiParams)(nil),                // 30: cadestro.v1.WifiParams
-	(*ActionResult)(nil),              // 31: cadestro.v1.ActionResult
-	(*AgentUpdateArch)(nil),           // 32: cadestro.v1.AgentUpdateArch
-	(*AgentUpdateParams)(nil),         // 33: cadestro.v1.AgentUpdateParams
-	nil,                               // 34: cadestro.v1.ShellParams.EnvironmentEntry
-	nil,                               // 35: cadestro.v1.ActionResult.MetadataEntry
-	(*ActionId)(nil),                  // 36: cadestro.v1.ActionId
-	(DesiredState)(0),                 // 37: cadestro.v1.DesiredState
-	(*FlatpakAppId)(nil),              // 38: cadestro.v1.FlatpakAppId
-	(ExecutionStatus)(0),              // 39: cadestro.v1.ExecutionStatus
-	(*CommandOutput)(nil),             // 40: cadestro.v1.CommandOutput
-	(*timestamppb.Timestamp)(nil),     // 41: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),       // 42: google.protobuf.Duration
-	(*RunId)(nil),                     // 43: cadestro.v1.RunId
-	(*OccurrenceId)(nil),              // 44: cadestro.v1.OccurrenceId
+	(ZypperRepositoryType)(0),         // 2: cadestro.v1.ZypperRepositoryType
+	(AdminAccessLevel)(0),             // 3: cadestro.v1.AdminAccessLevel
+	(PrivilegeBackend)(0),             // 4: cadestro.v1.PrivilegeBackend
+	(LpsPasswordComplexity)(0),        // 5: cadestro.v1.LpsPasswordComplexity
+	(EncryptionDeviceBoundKeyType)(0), // 6: cadestro.v1.EncryptionDeviceBoundKeyType
+	(WifiAuthType)(0),                 // 7: cadestro.v1.WifiAuthType
+	(*Action)(nil),                    // 8: cadestro.v1.Action
+	(*ActionSchedule)(nil),            // 9: cadestro.v1.ActionSchedule
+	(*PackageParams)(nil),             // 10: cadestro.v1.PackageParams
+	(*AppInstallParams)(nil),          // 11: cadestro.v1.AppInstallParams
+	(*ShellParams)(nil),               // 12: cadestro.v1.ShellParams
+	(*ServiceParams)(nil),             // 13: cadestro.v1.ServiceParams
+	(*FileParams)(nil),                // 14: cadestro.v1.FileParams
+	(*DirectoryParams)(nil),           // 15: cadestro.v1.DirectoryParams
+	(*UpdateParams)(nil),              // 16: cadestro.v1.UpdateParams
+	(*FlatpakParams)(nil),             // 17: cadestro.v1.FlatpakParams
+	(*RepositoryParams)(nil),          // 18: cadestro.v1.RepositoryParams
+	(*AptRepository)(nil),             // 19: cadestro.v1.AptRepository
+	(*DnfRepository)(nil),             // 20: cadestro.v1.DnfRepository
+	(*PacmanRepository)(nil),          // 21: cadestro.v1.PacmanRepository
+	(*ZypperRepository)(nil),          // 22: cadestro.v1.ZypperRepository
+	(*UserParams)(nil),                // 23: cadestro.v1.UserParams
+	(*GroupParams)(nil),               // 24: cadestro.v1.GroupParams
+	(*SshParams)(nil),                 // 25: cadestro.v1.SshParams
+	(*SshdDirective)(nil),             // 26: cadestro.v1.SshdDirective
+	(*SshdParams)(nil),                // 27: cadestro.v1.SshdParams
+	(*AdminPolicyParams)(nil),         // 28: cadestro.v1.AdminPolicyParams
+	(*LpsParams)(nil),                 // 29: cadestro.v1.LpsParams
+	(*EncryptionParams)(nil),          // 30: cadestro.v1.EncryptionParams
+	(*WifiParams)(nil),                // 31: cadestro.v1.WifiParams
+	(*ActionResult)(nil),              // 32: cadestro.v1.ActionResult
+	(*AgentUpdateArch)(nil),           // 33: cadestro.v1.AgentUpdateArch
+	(*AgentUpdateParams)(nil),         // 34: cadestro.v1.AgentUpdateParams
+	nil,                               // 35: cadestro.v1.ShellParams.EnvironmentEntry
+	nil,                               // 36: cadestro.v1.ActionResult.MetadataEntry
+	(*ActionId)(nil),                  // 37: cadestro.v1.ActionId
+	(DesiredState)(0),                 // 38: cadestro.v1.DesiredState
+	(*FlatpakAppId)(nil),              // 39: cadestro.v1.FlatpakAppId
+	(ExecutionStatus)(0),              // 40: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),             // 41: cadestro.v1.CommandOutput
+	(*timestamppb.Timestamp)(nil),     // 42: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),       // 43: google.protobuf.Duration
+	(*RunId)(nil),                     // 44: cadestro.v1.RunId
+	(*OccurrenceId)(nil),              // 45: cadestro.v1.OccurrenceId
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
-	36, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
+	37, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
 	0,  // 1: cadestro.v1.Action.type:type_name -> cadestro.v1.ActionType
-	37, // 2: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
-	8,  // 3: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
-	9,  // 4: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageParams
-	10, // 5: cadestro.v1.Action.app:type_name -> cadestro.v1.AppInstallParams
-	11, // 6: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellParams
-	12, // 7: cadestro.v1.Action.service:type_name -> cadestro.v1.ServiceParams
-	13, // 8: cadestro.v1.Action.file:type_name -> cadestro.v1.FileParams
-	15, // 9: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateParams
-	17, // 10: cadestro.v1.Action.repository:type_name -> cadestro.v1.RepositoryParams
-	16, // 11: cadestro.v1.Action.flatpak:type_name -> cadestro.v1.FlatpakParams
-	14, // 12: cadestro.v1.Action.directory:type_name -> cadestro.v1.DirectoryParams
-	22, // 13: cadestro.v1.Action.user:type_name -> cadestro.v1.UserParams
-	24, // 14: cadestro.v1.Action.ssh:type_name -> cadestro.v1.SshParams
-	26, // 15: cadestro.v1.Action.sshd:type_name -> cadestro.v1.SshdParams
-	27, // 16: cadestro.v1.Action.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
-	28, // 17: cadestro.v1.Action.lps:type_name -> cadestro.v1.LpsParams
-	23, // 18: cadestro.v1.Action.group:type_name -> cadestro.v1.GroupParams
-	29, // 19: cadestro.v1.Action.encryption:type_name -> cadestro.v1.EncryptionParams
-	30, // 20: cadestro.v1.Action.wifi:type_name -> cadestro.v1.WifiParams
-	33, // 21: cadestro.v1.Action.agent_update:type_name -> cadestro.v1.AgentUpdateParams
-	34, // 22: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
+	38, // 2: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
+	9,  // 3: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
+	10, // 4: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageParams
+	11, // 5: cadestro.v1.Action.app:type_name -> cadestro.v1.AppInstallParams
+	12, // 6: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellParams
+	13, // 7: cadestro.v1.Action.service:type_name -> cadestro.v1.ServiceParams
+	14, // 8: cadestro.v1.Action.file:type_name -> cadestro.v1.FileParams
+	16, // 9: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateParams
+	18, // 10: cadestro.v1.Action.repository:type_name -> cadestro.v1.RepositoryParams
+	17, // 11: cadestro.v1.Action.flatpak:type_name -> cadestro.v1.FlatpakParams
+	15, // 12: cadestro.v1.Action.directory:type_name -> cadestro.v1.DirectoryParams
+	23, // 13: cadestro.v1.Action.user:type_name -> cadestro.v1.UserParams
+	25, // 14: cadestro.v1.Action.ssh:type_name -> cadestro.v1.SshParams
+	27, // 15: cadestro.v1.Action.sshd:type_name -> cadestro.v1.SshdParams
+	28, // 16: cadestro.v1.Action.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
+	29, // 17: cadestro.v1.Action.lps:type_name -> cadestro.v1.LpsParams
+	24, // 18: cadestro.v1.Action.group:type_name -> cadestro.v1.GroupParams
+	30, // 19: cadestro.v1.Action.encryption:type_name -> cadestro.v1.EncryptionParams
+	31, // 20: cadestro.v1.Action.wifi:type_name -> cadestro.v1.WifiParams
+	34, // 21: cadestro.v1.Action.agent_update:type_name -> cadestro.v1.AgentUpdateParams
+	35, // 22: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
 	1,  // 23: cadestro.v1.ServiceParams.desired_state:type_name -> cadestro.v1.ServiceUnitState
-	38, // 24: cadestro.v1.FlatpakParams.app_id:type_name -> cadestro.v1.FlatpakAppId
-	18, // 25: cadestro.v1.RepositoryParams.apt:type_name -> cadestro.v1.AptRepository
-	19, // 26: cadestro.v1.RepositoryParams.dnf:type_name -> cadestro.v1.DnfRepository
-	20, // 27: cadestro.v1.RepositoryParams.pacman:type_name -> cadestro.v1.PacmanRepository
-	21, // 28: cadestro.v1.RepositoryParams.zypper:type_name -> cadestro.v1.ZypperRepository
-	25, // 29: cadestro.v1.SshdParams.directives:type_name -> cadestro.v1.SshdDirective
-	2,  // 30: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
-	3,  // 31: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
-	4,  // 32: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	5,  // 33: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
-	4,  // 34: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	6,  // 35: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
-	36, // 36: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
-	39, // 37: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
-	40, // 38: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
-	41, // 39: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	42, // 40: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
-	35, // 41: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
-	40, // 42: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	43, // 43: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
-	44, // 44: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	32, // 45: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
-	32, // 46: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
-	47, // [47:47] is the sub-list for method output_type
-	47, // [47:47] is the sub-list for method input_type
-	47, // [47:47] is the sub-list for extension type_name
-	47, // [47:47] is the sub-list for extension extendee
-	0,  // [0:47] is the sub-list for field type_name
+	39, // 24: cadestro.v1.FlatpakParams.app_id:type_name -> cadestro.v1.FlatpakAppId
+	19, // 25: cadestro.v1.RepositoryParams.apt:type_name -> cadestro.v1.AptRepository
+	20, // 26: cadestro.v1.RepositoryParams.dnf:type_name -> cadestro.v1.DnfRepository
+	21, // 27: cadestro.v1.RepositoryParams.pacman:type_name -> cadestro.v1.PacmanRepository
+	22, // 28: cadestro.v1.RepositoryParams.zypper:type_name -> cadestro.v1.ZypperRepository
+	2,  // 29: cadestro.v1.ZypperRepository.type:type_name -> cadestro.v1.ZypperRepositoryType
+	26, // 30: cadestro.v1.SshdParams.directives:type_name -> cadestro.v1.SshdDirective
+	3,  // 31: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
+	4,  // 32: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
+	5,  // 33: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	6,  // 34: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
+	5,  // 35: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	7,  // 36: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
+	37, // 37: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
+	40, // 38: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	41, // 39: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
+	42, // 40: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	43, // 41: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
+	36, // 42: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
+	41, // 43: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	44, // 44: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
+	45, // 45: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	33, // 46: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
+	33, // 47: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
+	48, // [48:48] is the sub-list for method output_type
+	48, // [48:48] is the sub-list for method input_type
+	48, // [48:48] is the sub-list for extension type_name
+	48, // [48:48] is the sub-list for extension extendee
+	0,  // [0:48] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }
@@ -3347,7 +3405,7 @@ func file_cadestro_v1_actions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_actions_proto_rawDesc), len(file_cadestro_v1_actions_proto_rawDesc)),
-			NumEnums:      7,
+			NumEnums:      8,
 			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,

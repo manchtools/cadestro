@@ -39,7 +39,11 @@ func validateRepoViaSDK(t *testing.T, p *pb.RepositoryParams) error {
 	mgr, err := repo.New(backend, testRunnerForValidation(t))
 	require.NoError(t, err)
 	e := &Executor{pkgBackend: backend}
-	return mgr.Validate(e.repositoryFields(p))
+	r, err := e.repositoryFields(p)
+	if err != nil {
+		return err
+	}
+	return mgr.Validate(r)
 }
 
 func TestRepository_AcceptsRealistic(t *testing.T) {
@@ -57,7 +61,7 @@ func TestRepository_AcceptsRealistic(t *testing.T) {
 		}},
 		"zypper": {Name: "r", Zypper: &pb.ZypperRepository{
 			Url: "https://zypper.example.com/15.5", Description: "Example Zypper repo",
-			Gpgkey: "https://zypper.example.com/key.asc", Type: "rpm-md",
+			Gpgkey: "https://zypper.example.com/key.asc", Type: pb.ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_RPM_MD,
 		}},
 	}
 	for name, p := range cases {

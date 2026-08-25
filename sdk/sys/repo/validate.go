@@ -15,7 +15,6 @@ var (
 	validAptComponent    = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
 	validAptArch         = regexp.MustCompile(`^[a-z0-9][a-z0-9,_-]*$`)
 	validPacmanSigLevel  = regexp.MustCompile(`^[a-zA-Z ]+$`)
-	validZypperType      = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-]*$`)
 )
 
 const maxNameLen = 128
@@ -207,7 +206,7 @@ func validateZypper(c *ZypperConfig) error {
 	if err := rejectControl("zypper.type", c.Type); err != nil {
 		return err
 	}
-	if c.Type != "" && !validZypperType.MatchString(c.Type) {
+	if !validZypperType(c.Type) {
 		return badShape("zypper.type")
 	}
 	if pkg.ValidateRepoBaseURL(c.URL) != nil {
@@ -217,4 +216,13 @@ func validateZypper(c *ZypperConfig) error {
 		return badShape("zypper.gpgkey")
 	}
 	return nil
+}
+
+func validZypperType(s string) bool {
+	switch s {
+	case "", "rpm-md", "yast2", "plaindir":
+		return true
+	default:
+		return false
+	}
 }

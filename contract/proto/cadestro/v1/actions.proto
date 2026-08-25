@@ -359,6 +359,13 @@ message PacmanRepository {
   bool disabled = 3;
 }
 
+enum ZypperRepositoryType {
+  ZYPPER_REPOSITORY_TYPE_UNSPECIFIED = 0;
+  ZYPPER_REPOSITORY_TYPE_RPM_MD = 1;
+  ZYPPER_REPOSITORY_TYPE_YAST2 = 2;
+  ZYPPER_REPOSITORY_TYPE_PLAINDIR = 3;
+}
+
 message ZypperRepository {
   option (buf.validate.message).cel = {
     id: "zypper_repository.url_required_without_disabled"
@@ -387,8 +394,8 @@ message ZypperRepository {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 
-  string type = 7 [
-    (buf.validate.field).string.max_len = 32,
+  ZypperRepositoryType type = 7 [
+    (buf.validate.field).enum.defined_only = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 
