@@ -212,7 +212,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			aggregateError = "manifest contains a malformed occurrence"
 			break
 		}
-		if prior, exists := states[occurrence.GetOccurrenceId()]; exists && prior.State != store.OccurrencePending {
+		if prior, exists := states[occurrence.GetOccurrenceId().GetValue()]; exists && prior.State != store.OccurrencePending {
 			if prior.State == store.OccurrenceStarted {
 				return // a scheduled reboot is still waiting for its boot marker
 			}
@@ -226,8 +226,8 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			continue
 		}
 
-		if err := s.store.MarkOccurrenceStarted(ctx, work.RunID, occurrence.GetOccurrenceId(), s.now()); err != nil {
-			s.logger.Error("mark occurrence started", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
+		if err := s.store.MarkOccurrenceStarted(ctx, work.RunID, occurrence.GetOccurrenceId().GetValue(), s.now()); err != nil {
+			s.logger.Error("mark occurrence started", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId().GetValue(), "error", err)
 			aggregate = pb.ExecutionStatus_EXECUTION_STATUS_FAILED
 			aggregateError = "failed to durably mark occurrence STARTED"
 			break
@@ -250,7 +250,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			return
 		}
 		result.RunId = &pb.RunId{Value: work.RunID}
-		result.OccurrenceId = &pb.OccurrenceId{Value: occurrence.GetOccurrenceId()}
+		result.OccurrenceId = &pb.OccurrenceId{Value: occurrence.GetOccurrenceId().GetValue()}
 		if result.CompletedAt == nil {
 			result.CompletedAt = timestamppb.New(s.now())
 		}
@@ -259,7 +259,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			!result.GetChanged()
 		resultID, suppressed, err := s.store.RecordOccurrenceResult(ctx, result, suppressUnchanged)
 		if err != nil {
-			s.logger.Error("record occurrence result", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId(), "error", err)
+			s.logger.Error("record occurrence result", "work_id", work.RunID, "occurrence_id", occurrence.GetOccurrenceId().GetValue(), "error", err)
 			return
 		}
 		if !suppressed {
@@ -273,7 +273,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 
 	finished := s.now().UTC()
 	manifestResult := &pb.ManifestResult{
-		RunId:       work.RunID,
+		RunId:       &pb.RunId{Value: work.RunID},
 		ManifestId:  manifest.GetManifestId(),
 		Status:      aggregate,
 		CompletedAt: timestamppb.New(finished),

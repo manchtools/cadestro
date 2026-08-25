@@ -5,7 +5,6 @@ package cadestro.v1;
 import "buf/validate/validate.proto";
 import "cadestro/v1/actions.proto";
 import "cadestro/v1/common.proto";
-import "cadestro/v1/validate_ext.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -209,18 +208,9 @@ enum OnFailure {
 // runbook, an ActionSet assignment sets action_set_id alone, and a singleton
 // Action assignment sets action_id alone.
 message ManifestProvenance {
-  string definition_id = 1 [
-    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string action_set_id = 2 [
-    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string action_id = 3 [
-    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
+  DefinitionId definition_id = 1;
+  ActionSetId action_set_id = 2;
+  ActionId action_id = 3;
 }
 
 // ManifestOccurrence is one authored position in a manifest's ordered list.
@@ -232,7 +222,7 @@ message ManifestProvenance {
 // at each position; they are not collapsed, and the distinct occurrence_ids
 // are what keeps their results apart.
 message ManifestOccurrence {
-  string occurrence_id = 1 [(buf.validate.field).string.ulid = true];
+  OccurrenceId occurrence_id = 1 [(buf.validate.field).required = true];
   Action action = 2 [(buf.validate.field).required = true];
   // What the manifest does if this occurrence fails. Control resolves the
   // set's declared policy onto each position, so the agent reads this value
@@ -247,7 +237,7 @@ message ManifestOccurrence {
 // creates one manifest; assigning a Definition creates one globally ordered
 // runbook. Assignment of a Definition uses the same runbook representation.
 message Manifest {
-  string manifest_id = 1 [(buf.validate.field).string.ulid = true];
+  ManifestId manifest_id = 1 [(buf.validate.field).required = true];
   ManifestProvenance provenance = 2 [(buf.validate.field).required = true];
   // The schedule that fires this manifest: every occurrence runs in declared
   // order when it does. It is the only schedule the agent executes on — the
@@ -272,8 +262,8 @@ message Manifest {
 // aggregate: SUCCESS when every executed occurrence succeeded, FAILED when any
 // did, and INDETERMINATE when a crash left an occurrence's effect unknown.
 message ManifestResult {
-  string run_id = 1 [(buf.validate.field).string.ulid = true];
-  string manifest_id = 2 [(buf.validate.field).string.ulid = true];
+  RunId run_id = 1 [(buf.validate.field).required = true];
+  ManifestId manifest_id = 2 [(buf.validate.field).required = true];
   ExecutionStatus status = 3 [(buf.validate.field).required = true];
   google.protobuf.Timestamp completed_at = 4;
   google.protobuf.Duration duration = 5 [(buf.validate.field).duration.gte = {}];

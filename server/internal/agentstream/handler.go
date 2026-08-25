@@ -318,8 +318,8 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 			_ = h.sendResultAck(agent, message.Id, err)
 			return err
 		}
-		err = h.policyResults.RecordPolicyManifestResult(ctx, deviceID, payload.ManifestResult.RunId,
-			payload.ManifestResult.ManifestId, state, code)
+		err = h.policyResults.RecordPolicyManifestResult(ctx, deviceID, payload.ManifestResult.GetRunId().GetValue(),
+			payload.ManifestResult.GetManifestId().GetValue(), state, code)
 		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
 			return ackErr
 		}

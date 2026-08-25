@@ -377,10 +377,10 @@ func TestContract_TargetShape(t *testing.T) {
 		list       bool
 		why        string
 	}{
-		{"Manifest", "manifest_id", protoreflect.StringKind, "", false, "the manifest has no identity"},
+		{"Manifest", "manifest_id", protoreflect.MessageKind, "ManifestId", false, "the manifest has no identity"},
 		{"Manifest", "provenance", protoreflect.MessageKind, "ManifestProvenance", false, "no bounded authoring provenance path"},
 		{"Manifest", "occurrences", protoreflect.MessageKind, "ManifestOccurrence", true, "no ordered occurrence list"},
-		{"ManifestOccurrence", "occurrence_id", protoreflect.StringKind, "", false, "authored positions are indistinguishable"},
+		{"ManifestOccurrence", "occurrence_id", protoreflect.MessageKind, "OccurrenceId", false, "authored positions are indistinguishable"},
 		{"ManifestOccurrence", "action", protoreflect.MessageKind, "Action", false, "the occurrence carries no action"},
 		{"ManifestOccurrence", "on_failure", protoreflect.EnumKind, "", false, "no per-occurrence failure policy"},
 		{"ActionSet", "on_failure", protoreflect.EnumKind, "", false, "the set cannot retain its authored failure policy"},
@@ -388,8 +388,8 @@ func TestContract_TargetShape(t *testing.T) {
 		{"UpdateActionSetScheduleRequest", "on_failure", protoreflect.EnumKind, "", false, "the set execution policy cannot be changed"},
 		{"ActionResult", "run_id", protoreflect.MessageKind, "RunId", false, "per-action result ingestion cannot be idempotent"},
 		{"ActionResult", "occurrence_id", protoreflect.MessageKind, "OccurrenceId", false, "per-action result ingestion cannot be idempotent"},
-		{"ManifestResult", "run_id", protoreflect.StringKind, "", false, "the manifest result cannot be matched to its run"},
-		{"ManifestResult", "manifest_id", protoreflect.StringKind, "", false, "the manifest result names no manifest"},
+		{"ManifestResult", "run_id", protoreflect.MessageKind, "RunId", false, "the manifest result cannot be matched to its run"},
+		{"ManifestResult", "manifest_id", protoreflect.MessageKind, "ManifestId", false, "the manifest result names no manifest"},
 		{"AgentMessage", "manifest_result", protoreflect.MessageKind, "ManifestResult", false, "there is no result for the complete manifest"},
 	} {
 		md, ok := msgs[protoreflect.Name(f.msg)]

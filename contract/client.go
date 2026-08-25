@@ -621,7 +621,7 @@ func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.Action
 // its occurrences have reported individually.
 func (c *Client) SendManifestResult(ctx context.Context, result *cadestrov1.ManifestResult) error {
 	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: result}}
-	if result == nil || result.GetRunId() == "" || result.GetManifestId() == "" {
+	if result == nil || result.GetRunId().GetValue() == "" || result.GetManifestId().GetValue() == "" {
 		return c.send(ctx, message)
 	}
 	return c.sendResultAwaitAck(ctx, message)

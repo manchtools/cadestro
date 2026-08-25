@@ -67,13 +67,13 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	}
 	current := make(map[string]*pb.Manifest, len(policy.Manifests))
 	for _, manifest := range policy.Manifests {
-		if manifest == nil || manifest.GetManifestId() == "" || len(manifest.GetOccurrences()) == 0 {
+		if manifest == nil || manifest.GetManifestId().GetValue() == "" || len(manifest.GetOccurrences()) == 0 {
 			return errors.New("reconcile policy: malformed manifest")
 		}
-		if _, exists := current[manifest.GetManifestId()]; exists {
-			return fmt.Errorf("reconcile policy: duplicate manifest identity %s", manifest.GetManifestId())
+		if _, exists := current[manifest.GetManifestId().GetValue()]; exists {
+			return fmt.Errorf("reconcile policy: duplicate manifest identity %s", manifest.GetManifestId().GetValue())
 		}
-		current[manifest.GetManifestId()] = manifest
+		current[manifest.GetManifestId().GetValue()] = manifest
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -137,11 +137,11 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 			return fmt.Errorf("reconcile policy: insert %s: %w", id, err)
 		}
 		for position, occurrence := range manifest.GetOccurrences() {
-			if occurrence == nil || occurrence.GetOccurrenceId() == "" || occurrence.GetAction().GetId().GetValue() == "" {
+			if occurrence == nil || occurrence.GetOccurrenceId().GetValue() == "" || occurrence.GetAction().GetId().GetValue() == "" {
 				return errors.New("reconcile policy: malformed occurrence")
 			}
 			if err := queries.InsertOccurrence(ctx, generated.InsertOccurrenceParams{
-				WorkID: id, OccurrenceID: occurrence.GetOccurrenceId(), Position: int64(position), ActionID: occurrence.GetAction().GetId().GetValue(),
+				WorkID: id, OccurrenceID: occurrence.GetOccurrenceId().GetValue(), Position: int64(position), ActionID: occurrence.GetAction().GetId().GetValue(),
 			}); err != nil {
 				return fmt.Errorf("reconcile policy: insert occurrence: %w", err)
 			}
@@ -396,21 +396,22 @@ func actionResultHash(result *pb.ActionResult) (string, error) {
 }
 
 func (s *Store) RecordManifestResult(ctx context.Context, result *pb.ManifestResult) (string, error) {
-	if result == nil || result.GetRunId() == "" || result.GetManifestId() == "" {
+	if result == nil || result.GetRunId().GetValue() == "" || result.GetManifestId().GetValue() == "" {
 		return "", errors.New("record manifest result: missing identity")
 	}
 	return s.recordResult(ctx, "MANIFEST", result, func(ctx context.Context, queries *generated.Queries, _ time.Time) error {
-		rows, err := queries.FinishManifestRun(ctx, generated.FinishManifestRunParams{WorkID: result.GetRunId(), RunID: stringPtr(result.GetRunId())})
+		runID := result.GetRunId().GetValue()
+		rows, err := queries.FinishManifestRun(ctx, generated.FinishManifestRunParams{WorkID: runID, RunID: stringPtr(runID)})
 		if err != nil {
 			return err
 		}
 		if rows != 1 {
 			return errors.New("record manifest result: manifest run is not active")
 		}
-		if err := queries.DeleteRetiredWork(ctx, generated.DeleteRetiredWorkParams{WorkID: result.GetRunId(), RunID: stringPtr(result.GetRunId())}); err != nil {
+		if err := queries.DeleteRetiredWork(ctx, generated.DeleteRetiredWorkParams{WorkID: runID, RunID: stringPtr(runID)}); err != nil {
 			return err
 		}
-		return queries.ClearRunID(ctx, generated.ClearRunIDParams{WorkID: result.GetRunId(), RunID: stringPtr(result.GetRunId())})
+		return queries.ClearRunID(ctx, generated.ClearRunIDParams{WorkID: runID, RunID: stringPtr(runID)})
 	})
 }
 

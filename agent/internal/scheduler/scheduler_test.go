@@ -33,11 +33,11 @@ func (*recordingExecutor) ResetUpdateCycle() {}
 
 func scheduledManifest(onFailure pb.OnFailure) *pb.Manifest {
 	return &pb.Manifest{
-		ManifestId: "01K00000000000000000000012",
+		ManifestId: &pb.ManifestId{Value: "01K00000000000000000000012"},
 		Schedule:   &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
 		Occurrences: []*pb.ManifestOccurrence{
-			{OccurrenceId: "01K00000000000000000000013", OnFailure: onFailure, Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000014"}, Type: pb.ActionType_ACTION_TYPE_PACKAGE}},
-			{OccurrenceId: "01K00000000000000000000015", Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000016"}, Type: pb.ActionType_ACTION_TYPE_SERVICE}},
+			{OccurrenceId: &pb.OccurrenceId{Value: "01K00000000000000000000013"}, OnFailure: onFailure, Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000014"}, Type: pb.ActionType_ACTION_TYPE_PACKAGE}},
+			{OccurrenceId: &pb.OccurrenceId{Value: "01K00000000000000000000015"}, Action: &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000016"}, Type: pb.ActionType_ACTION_TYPE_SERVICE}},
 		},
 	}
 }
@@ -52,7 +52,7 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	sched.now = func() time.Time { return now }
 	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_CONTINUE)
 
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId().GetValue(), Manifests: []*pb.Manifest{manifest}}))
 
 	sched.runDue(context.Background())
 	require.Equal(t, []string{
@@ -66,7 +66,7 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, pending, 3)
 	require.NotEmpty(t, pending[0].ActionResult.GetRunId().GetValue())
-	require.Equal(t, manifest.GetOccurrences()[0].GetOccurrenceId(), pending[0].ActionResult.GetOccurrenceId().GetValue())
+	require.Equal(t, manifest.GetOccurrences()[0].GetOccurrenceId().GetValue(), pending[0].ActionResult.GetOccurrenceId().GetValue())
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS, pending[2].ManifestResult.GetStatus())
 }
 
@@ -78,7 +78,7 @@ func TestManifestStopPolicyRecordsRemainingOccurrenceAsSkipped(t *testing.T) {
 	firstID := manifest.GetOccurrences()[0].GetAction().GetId().GetValue()
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{firstID: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}}
 	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId().GetValue(), Manifests: []*pb.Manifest{manifest}}))
 	sched.runDue(context.Background())
 	require.Equal(t, []string{firstID}, exec.executed)
 
@@ -100,7 +100,7 @@ func TestSkipIfUnchangedSuppressesRepeatedActionOutputButStillExecutes(t *testin
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
 	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	sched.now = func() time.Time { return now }
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId(), Manifests: []*pb.Manifest{manifest}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId().GetValue(), Manifests: []*pb.Manifest{manifest}}))
 
 	sched.runDue(context.Background())
 	now = now.Add(8 * time.Hour)

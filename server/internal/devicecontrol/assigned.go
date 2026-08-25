@@ -212,9 +212,9 @@ func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifes
 	if err != nil {
 		return err
 	}
-	manifest.ManifestId = policyULID(seed)
+	manifest.ManifestId = &cadestrov1.ManifestId{Value: policyULID(seed)}
 	for index, occurrence := range manifest.Occurrences {
-		occurrence.OccurrenceId = policyULID(append(append([]byte(nil), seed...), byte(index>>24), byte(index>>16), byte(index>>8), byte(index)))
+		occurrence.OccurrenceId = &cadestrov1.OccurrenceId{Value: policyULID(append(append([]byte(nil), seed...), byte(index>>24), byte(index>>16), byte(index>>8), byte(index)))}
 	}
 	return nil
 }
@@ -224,17 +224,17 @@ func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifes
 // content above so outbound secret materialization cannot enter the identity.
 func stablePolicyIdentity(manifest *cadestrov1.Manifest) {
 	clone := proto.Clone(manifest).(*cadestrov1.Manifest)
-	clone.ManifestId = ""
+	clone.ManifestId = nil
 	for _, occurrence := range clone.Occurrences {
-		occurrence.OccurrenceId = ""
+		occurrence.OccurrenceId = nil
 	}
 	seed, err := proto.MarshalOptions{Deterministic: true}.Marshal(clone)
 	if err != nil {
 		return
 	}
-	manifest.ManifestId = policyULID(seed)
+	manifest.ManifestId = &cadestrov1.ManifestId{Value: policyULID(seed)}
 	for index, occurrence := range manifest.Occurrences {
-		occurrence.OccurrenceId = policyULID(append(append([]byte(nil), seed...), byte(index>>24), byte(index>>16), byte(index>>8), byte(index)))
+		occurrence.OccurrenceId = &cadestrov1.OccurrenceId{Value: policyULID(append(append([]byte(nil), seed...), byte(index>>24), byte(index>>16), byte(index>>8), byte(index)))}
 	}
 }
 

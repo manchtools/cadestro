@@ -57,8 +57,8 @@ func (c *Compiler) Action(ctx context.Context, id string) (*cadestrov1.Manifest,
 		schedule = &cadestrov1.ActionSchedule{}
 	}
 	return finish(&cadestrov1.Manifest{
-		ManifestId:       ulid.Make().String(),
-		Provenance:       &cadestrov1.ManifestProvenance{ActionId: id},
+		ManifestId:       &cadestrov1.ManifestId{Value: ulid.Make().String()},
+		Provenance:       &cadestrov1.ManifestProvenance{ActionId: &cadestrov1.ActionId{Value: id}},
 		Schedule:         schedule,
 		DefaultOnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
 		Occurrences:      []*cadestrov1.ManifestOccurrence{occurrence(action, cadestrov1.OnFailure_ON_FAILURE_CONTINUE)},
@@ -78,7 +78,7 @@ func (c *Compiler) ActionSet(ctx context.Context, id string) (*cadestrov1.Manife
 	if err != nil {
 		return nil, err
 	}
-	return c.compileSet(set, rows, &cadestrov1.ManifestProvenance{ActionSetId: id}, nil)
+	return c.compileSet(set, rows, &cadestrov1.ManifestProvenance{ActionSetId: &cadestrov1.ActionSetId{Value: id}}, nil)
 }
 
 // Definition flattens a Definition into one globally ordered runbook.
@@ -107,7 +107,7 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manif
 		return nil, fmt.Errorf("manifest definition schedule: %w", err)
 	}
 	runbook := &cadestrov1.Manifest{
-		ManifestId: ulid.Make().String(), Provenance: &cadestrov1.ManifestProvenance{DefinitionId: id},
+		ManifestId: &cadestrov1.ManifestId{Value: ulid.Make().String()}, Provenance: &cadestrov1.ManifestProvenance{DefinitionId: &cadestrov1.DefinitionId{Value: id}},
 		Schedule: schedule, DefaultOnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
 		Occurrences: make([]*cadestrov1.ManifestOccurrence, 0),
 	}
@@ -144,12 +144,12 @@ func FreshCopy(compiled *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {
 	if !ok {
 		return nil, ErrInvalidInput
 	}
-	cloned.ManifestId = ulid.Make().String()
+	cloned.ManifestId = &cadestrov1.ManifestId{Value: ulid.Make().String()}
 	for _, occurrence := range cloned.Occurrences {
 		if occurrence == nil {
 			return nil, ErrInvalidInput
 		}
-		occurrence.OccurrenceId = ulid.Make().String()
+		occurrence.OccurrenceId = &cadestrov1.OccurrenceId{Value: ulid.Make().String()}
 	}
 	return finish(cloned)
 }
@@ -171,7 +171,7 @@ func (c *Compiler) compileSet(set store.ActionSetRow, rows []store.ActionRow, pr
 		return nil, fmt.Errorf("action set %s has invalid failure policy %d", set.ID, set.OnFailure)
 	}
 	manifest := &cadestrov1.Manifest{
-		ManifestId:       ulid.Make().String(),
+		ManifestId:       &cadestrov1.ManifestId{Value: ulid.Make().String()},
 		Provenance:       provenance,
 		Schedule:         schedule,
 		DefaultOnFailure: policy,
@@ -325,7 +325,7 @@ func requiredSchedule(raw []byte) (*cadestrov1.ActionSchedule, error) {
 
 func occurrence(action *cadestrov1.Action, policy cadestrov1.OnFailure) *cadestrov1.ManifestOccurrence {
 	return &cadestrov1.ManifestOccurrence{
-		OccurrenceId: ulid.Make().String(),
+		OccurrenceId: &cadestrov1.OccurrenceId{Value: ulid.Make().String()},
 		Action:       action,
 		OnFailure:    policy,
 	}

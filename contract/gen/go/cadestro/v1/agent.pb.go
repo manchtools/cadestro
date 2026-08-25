@@ -1501,9 +1501,9 @@ func (x *Welcome) GetDeviceLoginUrl() string {
 // Action assignment sets action_id alone.
 type ManifestProvenance struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DefinitionId  string                 `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
-	ActionSetId   string                 `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
-	ActionId      string                 `protobuf:"bytes,3,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	DefinitionId  *DefinitionId          `protobuf:"bytes,1,opt,name=definition_id,json=definitionId,proto3" json:"definition_id,omitempty"`
+	ActionSetId   *ActionSetId           `protobuf:"bytes,2,opt,name=action_set_id,json=actionSetId,proto3" json:"action_set_id,omitempty"`
+	ActionId      *ActionId              `protobuf:"bytes,3,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1538,25 +1538,25 @@ func (*ManifestProvenance) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *ManifestProvenance) GetDefinitionId() string {
+func (x *ManifestProvenance) GetDefinitionId() *DefinitionId {
 	if x != nil {
 		return x.DefinitionId
 	}
-	return ""
+	return nil
 }
 
-func (x *ManifestProvenance) GetActionSetId() string {
+func (x *ManifestProvenance) GetActionSetId() *ActionSetId {
 	if x != nil {
 		return x.ActionSetId
 	}
-	return ""
+	return nil
 }
 
-func (x *ManifestProvenance) GetActionId() string {
+func (x *ManifestProvenance) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 // ManifestOccurrence is one authored position in a manifest's ordered list.
@@ -1569,7 +1569,7 @@ func (x *ManifestProvenance) GetActionId() string {
 // are what keeps their results apart.
 type ManifestOccurrence struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
-	OccurrenceId string                 `protobuf:"bytes,1,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	OccurrenceId *OccurrenceId          `protobuf:"bytes,1,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
 	Action       *Action                `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	// What the manifest does if this occurrence fails. Control resolves the
 	// set's declared policy onto each position, so the agent reads this value
@@ -1609,11 +1609,11 @@ func (*ManifestOccurrence) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *ManifestOccurrence) GetOccurrenceId() string {
+func (x *ManifestOccurrence) GetOccurrenceId() *OccurrenceId {
 	if x != nil {
 		return x.OccurrenceId
 	}
-	return ""
+	return nil
 }
 
 func (x *ManifestOccurrence) GetAction() *Action {
@@ -1638,7 +1638,7 @@ func (x *ManifestOccurrence) GetOnFailure() OnFailure {
 // runbook. Assignment of a Definition uses the same runbook representation.
 type Manifest struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
-	ManifestId string                 `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
+	ManifestId *ManifestId            `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
 	Provenance *ManifestProvenance    `protobuf:"bytes,2,opt,name=provenance,proto3" json:"provenance,omitempty"`
 	// The schedule that fires this manifest: every occurrence runs in declared
 	// order when it does. It is the only schedule the agent executes on — the
@@ -1685,11 +1685,11 @@ func (*Manifest) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *Manifest) GetManifestId() string {
+func (x *Manifest) GetManifestId() *ManifestId {
 	if x != nil {
 		return x.ManifestId
 	}
-	return ""
+	return nil
 }
 
 func (x *Manifest) GetProvenance() *ManifestProvenance {
@@ -1728,8 +1728,8 @@ func (x *Manifest) GetOccurrences() []*ManifestOccurrence {
 // did, and INDETERMINATE when a crash left an occurrence's effect unknown.
 type ManifestResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	ManifestId    string                 `protobuf:"bytes,2,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
+	RunId         *RunId                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	ManifestId    *ManifestId            `protobuf:"bytes,2,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
 	Status        ExecutionStatus        `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
 	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	Duration      *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
@@ -1768,18 +1768,18 @@ func (*ManifestResult) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ManifestResult) GetRunId() string {
+func (x *ManifestResult) GetRunId() *RunId {
 	if x != nil {
 		return x.RunId
 	}
-	return ""
+	return nil
 }
 
-func (x *ManifestResult) GetManifestId() string {
+func (x *ManifestResult) GetManifestId() *ManifestId {
 	if x != nil {
 		return x.ManifestId
 	}
-	return ""
+	return nil
 }
 
 func (x *ManifestResult) GetStatus() ExecutionStatus {
@@ -3677,7 +3677,7 @@ var File_cadestro_v1_agent_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1ecadestro/v1/validate_ext.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\n" +
+	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\n" +
 	"\n" +
 	"\fAgentMessage\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x02id\x12*\n" +
@@ -3766,28 +3766,28 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\aWelcome\x123\n" +
 	"\x0eserver_version\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\rserverVersion\x12H\n" +
 	"\x12heartbeat_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x11heartbeatInterval\x12(\n" +
-	"\x10device_login_url\x18\x03 \x01(\tR\x0edeviceLoginUrl\"\xa1\x01\n" +
-	"\x12ManifestProvenance\x120\n" +
-	"\rdefinition_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\fdefinitionId\x12/\n" +
-	"\raction_set_id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\vactionSetId\x12(\n" +
-	"\taction_id\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\bactionId\"\xaf\x01\n" +
-	"\x12ManifestOccurrence\x12-\n" +
-	"\roccurrence_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\foccurrenceId\x123\n" +
+	"\x10device_login_url\x18\x03 \x01(\tR\x0edeviceLoginUrl\"\xc6\x01\n" +
+	"\x12ManifestProvenance\x12>\n" +
+	"\rdefinition_id\x18\x01 \x01(\v2\x19.cadestro.v1.DefinitionIdR\fdefinitionId\x12<\n" +
+	"\raction_set_id\x18\x02 \x01(\v2\x18.cadestro.v1.ActionSetIdR\vactionSetId\x122\n" +
+	"\taction_id\x18\x03 \x01(\v2\x15.cadestro.v1.ActionIdR\bactionId\"\xc8\x01\n" +
+	"\x12ManifestOccurrence\x12F\n" +
+	"\roccurrence_id\x18\x01 \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId\x123\n" +
 	"\x06action\x18\x02 \x01(\v2\x13.cadestro.v1.ActionB\x06\xbaH\x03\xc8\x01\x01R\x06action\x125\n" +
 	"\n" +
-	"on_failure\x18\x03 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xd5\x02\n" +
-	"\bManifest\x12)\n" +
-	"\vmanifest_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"on_failure\x18\x03 \x01(\x0e2\x16.cadestro.v1.OnFailureR\tonFailure\"\xec\x02\n" +
+	"\bManifest\x12@\n" +
+	"\vmanifest_id\x18\x01 \x01(\v2\x17.cadestro.v1.ManifestIdB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"manifestId\x12G\n" +
 	"\n" +
 	"provenance\x18\x02 \x01(\v2\x1f.cadestro.v1.ManifestProvenanceB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"provenance\x12?\n" +
 	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\x12D\n" +
 	"\x12default_on_failure\x18\x04 \x01(\x0e2\x16.cadestro.v1.OnFailureR\x10defaultOnFailure\x12N\n" +
-	"\voccurrences\x18\x05 \x03(\v2\x1f.cadestro.v1.ManifestOccurrenceB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\voccurrences\"\xbd\x02\n" +
-	"\x0eManifestResult\x12\x1f\n" +
-	"\x06run_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05runId\x12)\n" +
-	"\vmanifest_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
+	"\voccurrences\x18\x05 \x03(\v2\x1f.cadestro.v1.ManifestOccurrenceB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\voccurrences\"\xe6\x02\n" +
+	"\x0eManifestResult\x121\n" +
+	"\x06run_id\x18\x01 \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12@\n" +
+	"\vmanifest_id\x18\x02 \x01(\v2\x17.cadestro.v1.ManifestIdB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"manifestId\x12<\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12=\n" +
 	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
@@ -4037,13 +4037,19 @@ var file_cadestro_v1_agent_proto_goTypes = []any{
 	(*ActionResult)(nil),              // 53: cadestro.v1.ActionResult
 	(*DeviceId)(nil),                  // 54: cadestro.v1.DeviceId
 	(*durationpb.Duration)(nil),       // 55: google.protobuf.Duration
-	(*Action)(nil),                    // 56: cadestro.v1.Action
-	(*ActionSchedule)(nil),            // 57: cadestro.v1.ActionSchedule
-	(ExecutionStatus)(0),              // 58: cadestro.v1.ExecutionStatus
-	(*timestamppb.Timestamp)(nil),     // 59: google.protobuf.Timestamp
-	(RotationReason)(0),               // 60: cadestro.v1.RotationReason
-	(LpsPasswordComplexity)(0),        // 61: cadestro.v1.LpsPasswordComplexity
-	(*MaintenanceWindow)(nil),         // 62: cadestro.v1.MaintenanceWindow
+	(*DefinitionId)(nil),              // 56: cadestro.v1.DefinitionId
+	(*ActionSetId)(nil),               // 57: cadestro.v1.ActionSetId
+	(*ActionId)(nil),                  // 58: cadestro.v1.ActionId
+	(*OccurrenceId)(nil),              // 59: cadestro.v1.OccurrenceId
+	(*Action)(nil),                    // 60: cadestro.v1.Action
+	(*ManifestId)(nil),                // 61: cadestro.v1.ManifestId
+	(*ActionSchedule)(nil),            // 62: cadestro.v1.ActionSchedule
+	(*RunId)(nil),                     // 63: cadestro.v1.RunId
+	(ExecutionStatus)(0),              // 64: cadestro.v1.ExecutionStatus
+	(*timestamppb.Timestamp)(nil),     // 65: google.protobuf.Timestamp
+	(RotationReason)(0),               // 66: cadestro.v1.RotationReason
+	(LpsPasswordComplexity)(0),        // 67: cadestro.v1.LpsPasswordComplexity
+	(*MaintenanceWindow)(nil),         // 68: cadestro.v1.MaintenanceWindow
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	7,  // 0: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
@@ -4087,38 +4093,45 @@ var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	47, // 38: cadestro.v1.ServerMessage.terminal_resize:type_name -> cadestro.v1.TerminalResize
 	48, // 39: cadestro.v1.ServerMessage.terminal_stop:type_name -> cadestro.v1.TerminalStop
 	55, // 40: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
-	56, // 41: cadestro.v1.ManifestOccurrence.action:type_name -> cadestro.v1.Action
-	1,  // 42: cadestro.v1.ManifestOccurrence.on_failure:type_name -> cadestro.v1.OnFailure
-	16, // 43: cadestro.v1.Manifest.provenance:type_name -> cadestro.v1.ManifestProvenance
-	57, // 44: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
-	1,  // 45: cadestro.v1.Manifest.default_on_failure:type_name -> cadestro.v1.OnFailure
-	17, // 46: cadestro.v1.Manifest.occurrences:type_name -> cadestro.v1.ManifestOccurrence
-	58, // 47: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
-	59, // 48: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
-	55, // 49: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
-	2,  // 50: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
-	23, // 51: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
-	3,  // 52: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
-	25, // 53: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
-	52, // 54: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
-	27, // 55: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
-	25, // 56: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
-	60, // 57: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
-	60, // 58: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
-	33, // 59: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
-	61, // 60: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	62, // 61: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
-	42, // 62: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	18, // 63: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	4,  // 64: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
-	5,  // 65: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
-	6,  // 66: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	10, // 67: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	67, // [67:68] is the sub-list for method output_type
-	66, // [66:67] is the sub-list for method input_type
-	66, // [66:66] is the sub-list for extension type_name
-	66, // [66:66] is the sub-list for extension extendee
-	0,  // [0:66] is the sub-list for field type_name
+	56, // 41: cadestro.v1.ManifestProvenance.definition_id:type_name -> cadestro.v1.DefinitionId
+	57, // 42: cadestro.v1.ManifestProvenance.action_set_id:type_name -> cadestro.v1.ActionSetId
+	58, // 43: cadestro.v1.ManifestProvenance.action_id:type_name -> cadestro.v1.ActionId
+	59, // 44: cadestro.v1.ManifestOccurrence.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	60, // 45: cadestro.v1.ManifestOccurrence.action:type_name -> cadestro.v1.Action
+	1,  // 46: cadestro.v1.ManifestOccurrence.on_failure:type_name -> cadestro.v1.OnFailure
+	61, // 47: cadestro.v1.Manifest.manifest_id:type_name -> cadestro.v1.ManifestId
+	16, // 48: cadestro.v1.Manifest.provenance:type_name -> cadestro.v1.ManifestProvenance
+	62, // 49: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
+	1,  // 50: cadestro.v1.Manifest.default_on_failure:type_name -> cadestro.v1.OnFailure
+	17, // 51: cadestro.v1.Manifest.occurrences:type_name -> cadestro.v1.ManifestOccurrence
+	63, // 52: cadestro.v1.ManifestResult.run_id:type_name -> cadestro.v1.RunId
+	61, // 53: cadestro.v1.ManifestResult.manifest_id:type_name -> cadestro.v1.ManifestId
+	64, // 54: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
+	65, // 55: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
+	55, // 56: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
+	2,  // 57: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
+	23, // 58: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
+	3,  // 59: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
+	25, // 60: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
+	52, // 61: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
+	27, // 62: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
+	25, // 63: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
+	66, // 64: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
+	66, // 65: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
+	33, // 66: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
+	67, // 67: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	68, // 68: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	42, // 69: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	18, // 70: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	4,  // 71: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
+	5,  // 72: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
+	6,  // 73: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	10, // 74: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	74, // [74:75] is the sub-list for method output_type
+	73, // [73:74] is the sub-list for method input_type
+	73, // [73:73] is the sub-list for extension type_name
+	73, // [73:73] is the sub-list for extension extendee
+	0,  // [0:73] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }
@@ -4128,7 +4141,6 @@ func file_cadestro_v1_agent_proto_init() {
 	}
 	file_cadestro_v1_actions_proto_init()
 	file_cadestro_v1_common_proto_init()
-	file_cadestro_v1_validate_ext_proto_init()
 	file_cadestro_v1_agent_proto_msgTypes[0].OneofWrappers = []any{
 		(*AgentMessage_Hello)(nil),
 		(*AgentMessage_Heartbeat)(nil),

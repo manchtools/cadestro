@@ -32,23 +32,23 @@ func TestLiveOperationCorrelationIgnoresLateResultsButRejectsWrongDevice(t *test
 
 func TestStablePolicyIdentityIsReplaySafeAndContentSensitive(t *testing.T) {
 	manifest := &cadestrov1.Manifest{
-		Provenance: &cadestrov1.ManifestProvenance{ActionId: ulid.Make().String()},
+		Provenance: &cadestrov1.ManifestProvenance{ActionId: &cadestrov1.ActionId{Value: ulid.Make().String()}},
 		Schedule:   &cadestrov1.ActionSchedule{IntervalHours: 8},
 		Occurrences: []*cadestrov1.ManifestOccurrence{{
 			Action:       &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: ulid.Make().String()}, Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE},
-			OccurrenceId: ulid.Make().String(),
+			OccurrenceId: &cadestrov1.OccurrenceId{Value: ulid.Make().String()},
 		}},
 	}
 	stablePolicyIdentity(manifest)
-	firstID, firstOccurrence := manifest.ManifestId, manifest.Occurrences[0].OccurrenceId
+	firstID, firstOccurrence := manifest.GetManifestId().GetValue(), manifest.GetOccurrences()[0].GetOccurrenceId().GetValue()
 	stablePolicyIdentity(manifest)
-	require.Equal(t, firstID, manifest.ManifestId)
-	require.Equal(t, firstOccurrence, manifest.Occurrences[0].OccurrenceId)
+	require.Equal(t, firstID, manifest.GetManifestId().GetValue())
+	require.Equal(t, firstOccurrence, manifest.GetOccurrences()[0].GetOccurrenceId().GetValue())
 	if _, err := ulid.ParseStrict(firstID); err != nil {
 		t.Fatalf("manifest identity is not a strict ULID: %v", err)
 	}
 
 	manifest.Schedule.IntervalHours = 24
 	stablePolicyIdentity(manifest)
-	require.NotEqual(t, firstID, manifest.ManifestId)
+	require.NotEqual(t, firstID, manifest.GetManifestId().GetValue())
 }
