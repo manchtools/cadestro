@@ -2,11 +2,15 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { create } from '@bufbuild/protobuf';
+import { SearchResultSchema } from '$contract/cadestro/v1/control_pb';
+import * as m from '$lib/paraglide/messages';
 
 const mocks = vi.hoisted(() => ({
 	url: new URL('http://localhost/action-sets'),
 	search: vi.fn(),
 	listActionSets: vi.fn(),
+	deleteActionSet: vi.fn(),
 	goto: vi.fn()
 }));
 
@@ -44,7 +48,7 @@ vi.mock('$lib/sdk', async () => {
 			search: mocks.search,
 			listActionSets: mocks.listActionSets,
 			listActions: vi.fn(async () => ({ actions: [], nextPageToken: '' })),
-			deleteActionSet: vi.fn()
+			deleteActionSet: mocks.deleteActionSet
 		},
 		formatTimestamp: () => '—',
 		formatTimestampDateTime: () => '2026-01-01 00:00',
@@ -105,5 +109,37 @@ describe('/action-sets — the overview is the landing level', () => {
 			() => expect(document.querySelector('[data-testid="row-list"]')).not.toBeNull(),
 			{ timeout: 3000 }
 		);
+	});
+
+	it('removes a deleted row by its wrapped id value', async () => {
+		const result = create(SearchResultSchema, {
+			id: { value: BASE_SET.id.value },
+			name: BASE_SET.name,
+			fields: { name: BASE_SET.name, member_count: '4' }
+		});
+		let searchResults = [result];
+		mocks.search.mockImplementation(async () => ({ results: searchResults, totalCount: searchResults.length }));
+		mocks.url = new URL('http://localhost/action-sets?zoom=list');
+		render(ActionSetsPage);
+		await vi.waitFor(() => expect(document.querySelectorAll('[data-testid="row-list-row"]')).toHaveLength(1));
+
+		document.querySelector<HTMLButtonElement>('button[aria-label="Actions"]')!.click();
+		const menuDelete = await vi.waitFor(() => {
+			const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+				(element) => element.textContent?.trim() === m.common_delete()
+			);
+			expect(item).toBeTruthy();
+			return item!;
+		});
+		menuDelete.click();
+		searchResults = [];
+		const confirm = await vi.waitFor(() => {
+			const button = document.querySelector<HTMLButtonElement>('[data-slot="alert-dialog-action"]');
+			expect(button).toBeTruthy();
+			return button!;
+		});
+		confirm.click();
+		await vi.waitFor(() => expect(document.querySelectorAll('[data-testid="row-list-row"]')).toHaveLength(0));
+		expect(mocks.deleteActionSet).toHaveBeenCalledWith(BASE_SET.id.value);
 	});
 });

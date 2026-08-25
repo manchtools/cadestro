@@ -188,7 +188,7 @@
 		try {
 			await apiClient.deleteActionSet((setToDelete.id?.value ?? ''));
 			toast.success(m.action_sets_deleted());
-			table.patchRows((rows) => rows.filter((s) => s.id !== setToDelete!.id));
+			table.patchRows((rows) => rows.filter((s) => s.id?.value !== setToDelete!.id?.value));
 			table.refresh();
 		} catch (error) {
 			toast.error(getLocalizedError(error));

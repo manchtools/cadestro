@@ -88,7 +88,7 @@
 
 	async function toggleSelection(item: AvailableItem) {
 		if (!selectedDevice) return;
-		const key = item.sourceType + ':' + item.sourceId;
+		const key = item.sourceType + ':' + (item.sourceId?.value ?? '');
 		togglingIds = new Set([...togglingIds, key]);
 		try {
 			await apiClient.setUserSelection(
@@ -98,7 +98,7 @@
 				!item.selected
 			);
 			availableItems = availableItems.map((i) =>
-				i.sourceType === item.sourceType && i.sourceId === item.sourceId
+				i.sourceType === item.sourceType && i.sourceId?.value === item.sourceId?.value
 					? { ...i, selected: !i.selected }
 					: i
 			);
@@ -173,8 +173,8 @@
 			</Card.Root>
 		{:else}
 			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-				{#each availableItems as item (item.sourceType + ':' + item.sourceId)}
-					{@const key = item.sourceType + ':' + item.sourceId}
+				{#each availableItems as item (item.sourceType + ':' + (item.sourceId?.value ?? ''))}
+					{@const key = item.sourceType + ':' + (item.sourceId?.value ?? '')}
 					{@const toggling = togglingIds.has(key)}
 					<Card.Root class="flex flex-col">
 						<Card.Header class="flex-1">

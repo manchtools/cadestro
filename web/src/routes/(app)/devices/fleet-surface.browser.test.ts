@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
 import { TimestampSchema } from '@bufbuild/protobuf/wkt';
-import { ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
-import { DeviceSchema, DeviceGroupSchema } from '$contract/cadestro/v1/control_pb';
+import { AssignmentSourceType, ComplianceStatus, DeviceStatus } from '$contract/cadestro/v1/common_pb';
+import { AvailableItemSchema, DeviceSchema, DeviceGroupSchema } from '$contract/cadestro/v1/control_pb';
 
 const mocks = vi.hoisted(() => ({
 	url: new URL('http://localhost/devices'),
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 	getDeviceGroup: vi.fn(),
 	search: vi.fn(),
 	listAvailableActions: vi.fn(),
+	setUserSelection: vi.fn(),
 	goto: vi.fn(),
 	pushState: vi.fn()
 }));
@@ -52,7 +53,7 @@ vi.mock('$lib/sdk', async () => {
 			deleteDevice: vi.fn(),
 			assignDevice: vi.fn(),
 			listAvailableActions: mocks.listAvailableActions,
-			setUserSelection: vi.fn(),
+			setUserSelection: mocks.setUserSelection,
 			listUsers: vi.fn().mockResolvedValue({ users: [] }),
 			listUserGroups: vi.fn().mockResolvedValue({ groups: [] })
 		},
@@ -141,6 +142,8 @@ beforeEach(() => {
 	mocks.search.mockResolvedValue({ results: [], totalCount: 0 });
 	mocks.listAvailableActions.mockReset();
 	mocks.listAvailableActions.mockResolvedValue([]);
+	mocks.setUserSelection.mockReset();
+	mocks.setUserSelection.mockResolvedValue({});
 	resetShell();
 	resetFleetSelection();
 	setCarried(null);
@@ -472,5 +475,34 @@ describe('my-devices — the same surface, constrained to the caller', () => {
 
 		await vi.waitFor(() => expect(mocks.listAvailableActions).toHaveBeenCalledWith('mine-2'));
 		expect(document.body.textContent).toContain('Available Actions');
+	});
+
+	it('keys available actions by their raw source id', async () => {
+		fixture();
+		mocks.listAvailableActions.mockResolvedValue([
+			create(AvailableItemSchema, {
+				sourceType: AssignmentSourceType.ACTION,
+				sourceId: { value: 'action-1' },
+				sourceName: 'Install Firefox',
+				selected: true
+			}),
+			create(AvailableItemSchema, {
+				sourceType: AssignmentSourceType.ACTION,
+				sourceId: { value: 'action-2' },
+				sourceName: 'Install Chrome',
+				selected: true
+			})
+		]);
+		mocks.url = new URL('http://localhost/my-devices?zoom=group&group=mine');
+		render(MyDevicesPage);
+		await vi.waitFor(() => expect(rows()).toHaveLength(1));
+		rows()[0].querySelector<HTMLButtonElement>('[data-testid="fleet-row-open"]')!.click();
+		await vi.waitFor(() => expect(document.querySelectorAll('[data-slot="card"]')).toHaveLength(2));
+
+		const first = document.querySelector<HTMLElement>('[data-slot="card"]')!.querySelector('button')!;
+		const second = document.querySelectorAll<HTMLElement>('[data-slot="card"]')[1].querySelector('button')!;
+		first.click();
+		await vi.waitFor(() => expect(first).toBeDisabled());
+		expect(second).not.toBeDisabled();
 	});
 });

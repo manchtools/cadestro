@@ -50,7 +50,7 @@
 	const directAssignmentMap = $derived.by(() => {
 		const map = new Map<string, Assignment>();
 		for (const a of directAssignments) {
-			map.set(`${a.sourceType}:${a.sourceId}`, a);
+			map.set(`${a.sourceType}:${a.sourceId?.value ?? ''}`, a);
 		}
 		return map;
 	});

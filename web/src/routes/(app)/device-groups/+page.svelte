@@ -104,7 +104,7 @@
 		try {
 			await apiClient.deleteDeviceGroup((groupToDelete.id?.value ?? ''));
 			toast.success(m.device_groups_deleted());
-			table.patchRows((rows) => rows.filter((g) => g.id !== groupToDelete!.id));
+			table.patchRows((rows) => rows.filter((g) => g.id?.value !== groupToDelete!.id?.value));
 		} catch (error) {
 			toast.error(getLocalizedError(error));
 			console.error(error);

@@ -54,7 +54,7 @@
 		<p class="text-xs text-muted-foreground">{m.assign_sets_empty()}</p>
 	{:else}
 		<div data-tour="assign-sets" role="radiogroup" aria-label={m.assign_sets_label()} class="grid gap-1.5">
-			{#each sets as set (set.id)}
+			{#each sets as set (set.id?.value ?? '')}
 				{@const on = (set.id?.value ?? '') === selectedId}
 				<div class="overflow-hidden rounded-[9px] border {on ? 'border-primary' : 'border-border'}">
 					<button

@@ -23,7 +23,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: '01JQZZ0000000000000000000A' }, hasPermission: () => true },
+		authStore: { user: { id: { value: '01JQZZ0000000000000000000A' } }, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
@@ -91,12 +91,12 @@ beforeEach(() => {
 	resetShell();
 	setShellPath(ROUTE);
 	nav.url = new URL('https://control.test/identity-providers/new');
-	api.createIdentityProvider.mockResolvedValue({ id: IDP_ID, name: 'Keycloak' });
+	api.createIdentityProvider.mockResolvedValue({ id: { value: IDP_ID }, name: 'Keycloak' });
 	api.listIdentityProviders.mockResolvedValue({ providers: [] });
 	api.listRoles.mockResolvedValue({
 		roles: [
-			{ id: ROLE_ADMIN_ID, name: 'Admin', description: 'Full access', permissions: [] },
-			{ id: ROLE_USER_ID, name: 'User', description: 'Standard access', permissions: [] }
+			{ id: { value: ROLE_ADMIN_ID }, name: 'Admin', description: 'Full access', permissions: [] },
+			{ id: { value: ROLE_USER_ID }, name: 'User', description: 'Standard access', permissions: [] }
 		]
 	});
 });

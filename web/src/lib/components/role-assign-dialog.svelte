@@ -136,12 +136,10 @@
 		</Dialog.Header>
 
 		<ItemTablePicker
-			items={unassignedRoles.map((r) => ({
-				id: r.id?.value ?? '',
-				name: r.name,
-				description: r.description,
-				scopeKind: roleScopeKind(r)
-			}))}
+			items={unassignedRoles.map((r) => {
+				const id = r.id?.value ?? '';
+				return { id, displayId: id, name: r.name, description: r.description, scopeKind: roleScopeKind(r) };
+			})}
 			bind:selected={selectedRoleIds}
 			searchPlaceholder={m.picker_search_roles()}
 			emptyMessage={m.picker_no_roles()}
@@ -159,7 +157,7 @@
 						<span class="text-sm font-medium">{item.name}</span>
 						<RoleScopableIcon scopeKind={item.scopeKind} />
 					</span>
-					<span class="block font-mono text-[0.68rem] text-faint">{item.id}</span>
+					<span class="block font-mono text-[0.68rem] text-faint">{item.displayId}</span>
 				</Table.Cell>
 				<Table.Cell class="py-2">
 					<span class="line-clamp-1 text-xs text-muted-foreground">{item.description ?? ''}</span>

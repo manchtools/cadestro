@@ -222,7 +222,7 @@
 		try {
 			await apiClient.deleteCompliancePolicy((policyToDelete.id?.value ?? ''));
 			toast.success(m.compliance_policies_deleted());
-			table.patchRows((rows) => rows.filter((p) => p.id !== policyToDelete!.id));
+			table.patchRows((rows) => rows.filter((p) => p.id?.value !== policyToDelete!.id?.value));
 			table.refresh();
 		} catch (error) {
 			toast.error(getLocalizedError(error));
