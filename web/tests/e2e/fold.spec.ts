@@ -4,7 +4,7 @@ import { test, expect, preparePage, preparePageAs, gotoAndSettle, clickUntil } f
 
 test('canonical routes render the shell chrome, not the sidebar', async ({ page }) => {
 	await preparePage(page, 'light');
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
 	await expect(page.getByTestId('morph-bar')).toBeVisible();
 	await expect(page.getByTestId('morph-bar')).toHaveAttribute('data-mode', 'nav');
@@ -20,7 +20,7 @@ test('/next does not exist', async ({ page }) => {
 
 test('More ▾ overflow lists the other permitted sections and navigates', async ({ page }) => {
 	await preparePage(page, 'light');
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
 	await clickUntil(page.getByRole('button', { name: 'More' }), page.locator('a[href="/users"]'));
 	await expect(page.locator('a[href="/user-groups"]')).toBeVisible();
@@ -31,7 +31,7 @@ test('More ▾ overflow lists the other permitted sections and navigates', async
 
 test('permission filtering: pill and overflow expose only granted sections', async ({ page }) => {
 	await preparePageAs(page, 'light', ['ListDevices', 'ListActions', 'Search']);
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
 	const bar = page.getByTestId('morph-bar');
 	await expect(bar.locator('a[href="/devices"]')).toBeVisible();
@@ -46,7 +46,7 @@ test('permission filtering: pill and overflow expose only granted sections', asy
 
 test('shell surfaces survive navigation without remounting', async ({ page }) => {
 	await preparePage(page, 'light');
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
 	await page.evaluate(() => {
 		document.querySelector('[data-testid="morph-bar"]')?.setAttribute('data-identity', 'survivor');
@@ -59,11 +59,11 @@ test('shell surfaces survive navigation without remounting', async ({ page }) =>
 
 test('a device window remains alive across navigation and can be staged', async ({ page }) => {
 	await preparePage(page, 'light');
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
-	const firstRow = page.locator('table tbody tr').first();
-	await clickUntil(firstRow.getByRole('button', { name: 'Actions' }), page.getByText('Open in window'));
-	await page.getByText('Open in window').click();
+	await page.getByTestId('fleet-zoom-group').click();
+	await page.getByTestId('fleet-bubble').first().click();
+	await page.getByTestId('fleet-row-open').first().click();
 
 	const panel = page.getByTestId('panel');
 	await expect(panel).toBeVisible();

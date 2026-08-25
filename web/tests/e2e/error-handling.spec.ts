@@ -27,14 +27,13 @@ const CASES: MutationErrorCase[] = [
 		trigger: (page) => page.getByRole('button', { name: 'Rebuild Search Index' }).click(),
 	},
 	{
-
-		name: 'delete device (confirm dialog)',
-		path: '/devices',
-		waitFor: 'table tbody tr',
-		failRpc: 'DeleteDevice',
+		name: 'delete action set (confirm dialog)',
+		path: '/action-sets?zoom=list',
+		waitFor: '[data-testid="row-list-row"]',
+		failRpc: 'DeleteActionSet',
 		trigger: async (page) => {
 			const deleteItem = page.getByRole('menuitem', { name: 'Delete' });
-			await clickUntil(page.locator('table tbody tr').first().locator('button').last(), deleteItem);
+			await clickUntil(page.getByTestId('row-list-row').first().locator('button').last(), deleteItem);
 			await deleteItem.click();
 			await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
 		},

@@ -63,7 +63,7 @@ function searchResponseFor(scope: number | string | undefined): unknown {
 
 function byId(builder: (id: string) => unknown) {
 	return async (route: Route) => {
-		const id = (route.request().postDataJSON() as { id?: string })?.id ?? '';
+		const id = (route.request().postDataJSON() as { id: { value: string } }).id.value;
 		await route.fulfill(unaryJson(builder(id)));
 	};
 }
@@ -88,7 +88,7 @@ export async function mockControlService(page: Page): Promise<void> {
 
 	await page.route('**/cadestro.v1.ControlService/GetDevice', async (route) => {
 		const req = route.request();
-		const id = (req.postDataJSON() as { id?: string })?.id ?? '';
+		const id = (req.postDataJSON() as { id: { value: string } }).id.value;
 		await route.fulfill(unaryJson(getDeviceByIdResponse(id)));
 	});
 
@@ -105,7 +105,7 @@ export async function mockControlService(page: Page): Promise<void> {
 	});
 
 	await page.route('**/cadestro.v1.ControlService/GetDeviceGroup', async (route) => {
-		const id = (route.request().postDataJSON() as { id?: string })?.id ?? '';
+		const id = (route.request().postDataJSON() as { id: { value: string } }).id.value;
 		await route.fulfill(unaryJson(getDeviceGroupResponse(id)));
 	});
 

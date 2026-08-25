@@ -4,6 +4,7 @@ import { test as base, expect, type Page, type Route, type Locator } from '@play
 import { primeStorage, primeStorageAs, type Theme } from '../showcase/bootstrap';
 import { mockControlService, mockControlServiceExtras } from '../showcase/mocks';
 import { REFERENCE_NOW_MS } from '../showcase/dummy';
+import { onboardingScope, storageKey } from '$lib/onboarding/storage';
 
 export { expect };
 export type { Theme };
@@ -12,6 +13,7 @@ export const THEMES: Theme[] = ['light', 'dark'];
 export async function preparePage(page: Page, theme: Theme): Promise<void> {
 	await page.clock.setFixedTime(REFERENCE_NOW_MS);
 	await primeStorage(page, theme);
+	await seedOnboarding(page);
 	await mockControlService(page);
 	await mockControlServiceExtras(page);
 }
@@ -19,8 +21,16 @@ export async function preparePage(page: Page, theme: Theme): Promise<void> {
 export async function preparePageAs(page: Page, theme: Theme, permissions: string[]): Promise<void> {
 	await page.clock.setFixedTime(REFERENCE_NOW_MS);
 	await primeStorageAs(page, theme, { roleId: '01J6XYZSHOWCASEROLE0002', roleName: 'Limited', permissions });
+	await seedOnboarding(page);
 	await mockControlService(page);
 	await mockControlServiceExtras(page);
+}
+
+async function seedOnboarding(page: Page): Promise<void> {
+	await page.addInitScript(
+		({ key }) => localStorage.setItem(key, JSON.stringify({ welcomeSeen: true, tourCompleted: true, checklistDismissed: true })),
+		{ key: storageKey(onboardingScope('https://localhost:5179', '01J6XYZSHOWCASEADMINUSR01')) }
+	);
 }
 
 export async function gotoAndSettle(page: Page, path: string, waitFor?: string): Promise<void> {

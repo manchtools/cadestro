@@ -6,6 +6,10 @@ const min = 60;
 const hour = 60 * min;
 const day = 24 * hour;
 
+export function wrappedID(value: string): { value: string } {
+	return { value };
+}
+
 export const DUMMY_DEVICES = [
 	{
 		id: '01J6XYZSHOWCASEDEVICE0001',
@@ -132,7 +136,7 @@ export const DUMMY_DEVICES = [
 export function devicesAsSearchResults() {
 	return {
 		results: DUMMY_DEVICES.map((d) => ({
-			id: d.id,
+			id: wrappedID(d.id),
 			name: d.hostname,
 			description: '',
 			scope: 5,
@@ -168,7 +172,7 @@ export function getDeviceByIdResponse(id: string) {
 
 	return {
 		device: {
-			id: d.id,
+			id: wrappedID(d.id),
 			hostname: d.hostname,
 			agentVersion: d.agent_version,
 			status: now - d.last_seen_at < 5 * 60 ? 'DEVICE_STATUS_ONLINE' : 'DEVICE_STATUS_OFFLINE',
@@ -176,8 +180,8 @@ export function getDeviceByIdResponse(id: string) {
 			lastSeenAt: isoFromSec(d.last_seen_at),
 			certExpiresAt: isoFromSec(now + 200 * day),
 			labels: labelsObj,
-			assignedUserIds: ['01J6XYZSHOWCASEADMINUSR01'],
-			assignedGroupIds: ['01J6XYZSHOWCASEGROUP0001'],
+			assignedUserIds: [wrappedID('01J6XYZSHOWCASEADMINUSR01')],
+			assignedGroupIds: [wrappedID('01J6XYZSHOWCASEGROUP0001')],
 		},
 	};
 }
@@ -305,7 +309,7 @@ export const DUMMY_ACTIONS = [
 export function actionsAsSearchResults() {
 	return {
 		results: DUMMY_ACTIONS.map((a) => ({
-			id: a.id,
+			id: wrappedID(a.id),
 			name: a.name,
 			description: a.description,
 			scope: 1,
@@ -376,7 +380,7 @@ export const DUMMY_USERS = [
 export function usersAsSearchResults() {
 	return {
 		results: DUMMY_USERS.map((u) => ({
-			id: u.id,
+			id: wrappedID(u.id),
 			name: u.display_name,
 			description: u.email,
 			scope: 6,
@@ -442,14 +446,14 @@ export function listRolesResponse() {
 	return {
 		roles: [
 			{
-				id: '00000000000000000000000001',
+				id: wrappedID('00000000000000000000000001'),
 				name: 'Administrator',
 				description: 'Full platform control',
 				permissions: ALL_PERMISSIONS,
 				isSystem: true,
 			},
 			{
-				id: '01J6XYZSHOWCASEROLE0002',
+				id: wrappedID('01J6XYZSHOWCASEROLE0002'),
 				name: 'Fleet Operator',
 				description: 'Run actions, assign actions, view audit',
 				permissions: [
@@ -460,7 +464,7 @@ export function listRolesResponse() {
 				isSystem: false,
 			},
 			{
-				id: '01J6XYZSHOWCASEROLE0003',
+				id: wrappedID('01J6XYZSHOWCASEROLE0003'),
 				name: 'Compliance Reviewer',
 				description: 'Read-only access to audit + compliance policies',
 				permissions: [
@@ -470,7 +474,7 @@ export function listRolesResponse() {
 				isSystem: false,
 			},
 			{
-				id: '01J6XYZSHOWCASEROLE0004',
+				id: wrappedID('01J6XYZSHOWCASEROLE0004'),
 				name: 'Read-only Auditor',
 				description: 'View-only access; surfaces nothing destructive',
 				permissions: ['ListDevices', 'ListActions', 'ViewAudit', 'Search'],
@@ -551,7 +555,7 @@ export const DUMMY_DEVICE_GROUPS = [
 export function deviceGroupsAsSearchResults() {
 	return {
 		results: DUMMY_DEVICE_GROUPS.map((g) => ({
-			id: g.id,
+			id: wrappedID(g.id),
 			name: g.name,
 			description: g.description,
 			scope: 7,
@@ -574,7 +578,7 @@ export function getDeviceGroupResponse(id: string) {
 	const g = DUMMY_DEVICE_GROUPS.find((x) => x.id === id) ?? DUMMY_DEVICE_GROUPS[0];
 	return {
 		group: {
-			id: g.id,
+			id: wrappedID(g.id),
 			name: g.name,
 			description: g.description,
 			memberCount: g.member_count,
@@ -591,7 +595,7 @@ export function listDevicesResponse() {
 	const subset = DUMMY_DEVICES.slice(0, 6);
 	return {
 		devices: subset.map((d) => ({
-			id: d.id,
+			id: wrappedID(d.id),
 			hostname: d.hostname,
 			agentVersion: d.agent_version,
 			status: now - d.last_seen_at < 5 * 60 ? 'DEVICE_STATUS_ONLINE' : 'DEVICE_STATUS_OFFLINE',
@@ -608,12 +612,12 @@ export function getDeviceCompliancePolicyStatusResponse() {
 		overallStatus: 'COMPLIANCE_STATUS_NON_COMPLIANT',
 		policies: [
 			{
-				policyId: '01J6XYZSHOWCASEPOLICY001',
+				policyId: wrappedID('01J6XYZSHOWCASEPOLICY001'),
 				policyName: 'CIS Linux Baseline',
 				status: 'COMPLIANCE_STATUS_COMPLIANT',
 				rules: [
 					{
-						actionId: '01J6XYZSHOWCASECHECK0001',
+						actionId: wrappedID('01J6XYZSHOWCASECHECK0001'),
 						actionName: 'cis-1.1.1: Disable unused filesystems',
 						status: 'COMPLIANCE_STATUS_COMPLIANT',
 						compliant: true,
@@ -621,7 +625,7 @@ export function getDeviceCompliancePolicyStatusResponse() {
 						gracePeriodHours: 0,
 					},
 					{
-						actionId: '01J6XYZSHOWCASECHECK0002',
+						actionId: wrappedID('01J6XYZSHOWCASECHECK0002'),
 						actionName: 'cis-1.4.1: Bootloader password set',
 						status: 'COMPLIANCE_STATUS_COMPLIANT',
 						compliant: true,
@@ -629,7 +633,7 @@ export function getDeviceCompliancePolicyStatusResponse() {
 						gracePeriodHours: 0,
 					},
 					{
-						actionId: '01J6XYZSHOWCASECHECK0003',
+						actionId: wrappedID('01J6XYZSHOWCASECHECK0003'),
 						actionName: 'cis-5.2.1: SSH protocol = 2',
 						status: 'COMPLIANCE_STATUS_COMPLIANT',
 						compliant: true,
@@ -639,12 +643,12 @@ export function getDeviceCompliancePolicyStatusResponse() {
 				],
 			},
 			{
-				policyId: '01J6XYZSHOWCASEPOLICY002',
+				policyId: wrappedID('01J6XYZSHOWCASEPOLICY002'),
 				policyName: 'Endpoint hardening — identity & disk encryption',
 				status: 'COMPLIANCE_STATUS_NON_COMPLIANT',
 				rules: [
 					{
-						actionId: '01J6XYZSHOWCASECHECK0010',
+						actionId: wrappedID('01J6XYZSHOWCASECHECK0010'),
 						actionName: 'Operator accounts are centrally managed',
 						status: 'COMPLIANCE_STATUS_COMPLIANT',
 						compliant: true,
@@ -652,7 +656,7 @@ export function getDeviceCompliancePolicyStatusResponse() {
 						gracePeriodHours: 0,
 					},
 					{
-						actionId: '01J6XYZSHOWCASECHECK0011',
+						actionId: wrappedID('01J6XYZSHOWCASECHECK0011'),
 						actionName: 'Root filesystem encrypted with LUKS',
 						status: 'COMPLIANCE_STATUS_COMPLIANT',
 						compliant: true,
@@ -660,7 +664,7 @@ export function getDeviceCompliancePolicyStatusResponse() {
 						gracePeriodHours: 0,
 					},
 					{
-						actionId: '01J6XYZSHOWCASECHECK0012',
+						actionId: wrappedID('01J6XYZSHOWCASECHECK0012'),
 						actionName: 'Idle screen lock <= 5 minutes',
 						status: 'COMPLIANCE_STATUS_NON_COMPLIANT',
 						compliant: false,
@@ -678,7 +682,7 @@ export function getDeviceCompliancePolicyStatusResponse() {
 export function userGroupsAsSearchResults() {
 	return {
 		results: DUMMY_USER_GROUPS.map((g) => ({
-			id: g.id,
+			id: wrappedID(g.id),
 			name: g.name,
 			description: g.description,
 			scope: 8,
@@ -727,7 +731,7 @@ export const DUMMY_ACTION_SETS = [
 export function actionSetsAsSearchResults() {
 	return {
 		results: DUMMY_ACTION_SETS.map((s) => ({
-			id: s.id,
+			id: wrappedID(s.id),
 			name: s.name,
 			description: s.description,
 			scope: 2,
@@ -748,14 +752,14 @@ export function actionSetsAsSearchResults() {
 export function getActionSetResponse(id: string) {
 	const s = DUMMY_ACTION_SETS.find((x) => x.id === id) ?? DUMMY_ACTION_SETS[0];
 	const members = DUMMY_ACTIONS.slice(0, s.member_count).map((a, i) => ({
-		actionId: a.id,
+		actionId: wrappedID(a.id),
 		sortOrder: i,
 		actionName: a.name,
 		actionType: a.type,
 	}));
 	return {
 		set: {
-			id: s.id,
+			id: wrappedID(s.id),
 			name: s.name,
 			description: s.description,
 			memberCount: s.member_count,
@@ -770,7 +774,7 @@ export function getActionSetResponse(id: string) {
 export function listActionSetsResponse() {
 	return {
 		sets: DUMMY_ACTION_SETS.map((s) => ({
-			id: s.id,
+			id: wrappedID(s.id),
 			name: s.name,
 			description: s.description,
 			memberCount: s.member_count,
@@ -804,7 +808,7 @@ export const DUMMY_DEFINITIONS = [
 export function definitionsAsSearchResults() {
 	return {
 		results: DUMMY_DEFINITIONS.map((d) => ({
-			id: d.id,
+			id: wrappedID(d.id),
 			name: d.name,
 			description: d.description,
 			scope: 3,
@@ -825,13 +829,13 @@ export function definitionsAsSearchResults() {
 export function getDefinitionResponse(id: string) {
 	const d = DUMMY_DEFINITIONS.find((x) => x.id === id) ?? DUMMY_DEFINITIONS[0];
 	const members = DUMMY_ACTION_SETS.slice(0, d.member_count).map((s, i) => ({
-		actionSetId: s.id,
+		actionSetId: wrappedID(s.id),
 		sortOrder: i,
 		actionSetName: s.name,
 	}));
 	return {
 		definition: {
-			id: d.id,
+			id: wrappedID(d.id),
 			name: d.name,
 			description: d.description,
 			memberCount: d.member_count,
@@ -870,7 +874,7 @@ export const DUMMY_COMPLIANCE_POLICIES = [
 export function compliancePoliciesAsSearchResults() {
 	return {
 		results: DUMMY_COMPLIANCE_POLICIES.map((p) => ({
-			id: p.id,
+			id: wrappedID(p.id),
 			name: p.name,
 			description: p.description,
 			scope: 4,
@@ -891,10 +895,10 @@ export function getCompliancePolicyResponse(id: string) {
 	const p = DUMMY_COMPLIANCE_POLICIES.find((x) => x.id === id) ?? DUMMY_COMPLIANCE_POLICIES[0];
 	const rules = DUMMY_ACTIONS.filter((a) => a.is_compliance === 'true')
 		.slice(0, p.rule_count)
-		.map((a) => ({ actionId: a.id, actionName: a.name, gracePeriodHours: 24 }));
+		.map((a) => ({ actionId: wrappedID(a.id), actionName: a.name, gracePeriodHours: 24 }));
 	return {
 		policy: {
-			id: p.id,
+			id: wrappedID(p.id),
 			name: p.name,
 			description: p.description,
 			rules,
@@ -917,7 +921,7 @@ export const DUMMY_AUDIT_EVENTS = [
 export function auditEventsAsSearchResults() {
 	return {
 		results: DUMMY_AUDIT_EVENTS.map((e) => ({
-			id: e.id,
+			id: wrappedID(e.id),
 			name: e.event_type,
 			description: '',
 			scope: 9,
@@ -940,7 +944,7 @@ export function getActionResponse(id: string) {
 	const a = DUMMY_ACTIONS.find((x) => x.id === id) ?? DUMMY_ACTIONS[0];
 	return {
 		action: {
-			id: a.id,
+			id: wrappedID(a.id),
 			name: a.name,
 			description: a.description,
 			type: a.type,
@@ -956,7 +960,7 @@ export function getActionResponse(id: string) {
 export function listActionsResponse() {
 	return {
 		actions: DUMMY_ACTIONS.map((a) => ({
-			id: a.id,
+			id: wrappedID(a.id),
 			name: a.name,
 			description: a.description,
 			type: a.type,
@@ -971,7 +975,7 @@ export function listActionsResponse() {
 
 function userProto(u: (typeof DUMMY_USERS)[number]) {
 	return {
-		id: u.id,
+		id: wrappedID(u.id),
 		email: u.email,
 		displayName: u.display_name,
 		givenName: u.display_name.split(' ')[0],
@@ -982,9 +986,9 @@ function userProto(u: (typeof DUMMY_USERS)[number]) {
 		linuxUsername: u.email.split('@')[0].replace('.', '-'),
 		sshAccessEnabled: true,
 		roleGrants: [{
-			role: { id: '01J6XYZSHOWCASEROLE0002', name: u.roles, permissions: [], isSystem: false },
+			role: { id: wrappedID('01J6XYZSHOWCASEROLE0002'), name: u.roles, permissions: [], isSystem: false },
 			scopeKind: 'ROLE_GRANT_SCOPE_KIND_UNSPECIFIED',
-			scopeId: '',
+			scopeId: wrappedID(''),
 			scopeName: ''
 		}],
 		identityLinks: [],
@@ -1008,13 +1012,13 @@ export function listUsersResponse() {
 export function getUserGroupResponse(id: string) {
 	const g = DUMMY_USER_GROUPS.find((x) => x.id === id) ?? DUMMY_USER_GROUPS[0];
 	const members = DUMMY_USERS.slice(0, parseInt(g.member_count, 10)).map((u) => ({
-		userId: u.id,
+		userId: wrappedID(u.id),
 		email: u.email,
 		addedAt: isoFromSec(now - 30 * day),
 	}));
 	return {
 		group: {
-			id: g.id,
+			id: wrappedID(g.id),
 			name: g.name,
 			description: g.description,
 			memberCount: parseInt(g.member_count, 10),
@@ -1022,9 +1026,9 @@ export function getUserGroupResponse(id: string) {
 			dynamicQuery: g.kind === 'dynamic' ? '(user.disabled equals "false")' : '',
 			createdAt: isoFromSec(g.created_at),
 			roleGrants: [{
-				role: { id: '01J6XYZSHOWCASEROLE0002', name: 'Fleet Operator', permissions: [], isSystem: false },
+				role: { id: wrappedID('01J6XYZSHOWCASEROLE0002'), name: 'Fleet Operator', permissions: [], isSystem: false },
 				scopeKind: 'ROLE_GRANT_SCOPE_KIND_UNSPECIFIED',
-				scopeId: '',
+				scopeId: wrappedID(''),
 				scopeName: ''
 			}],
 		},
@@ -1033,7 +1037,7 @@ export function getUserGroupResponse(id: string) {
 }
 
 export function getRoleResponse(id: string) {
-	const r = listRolesResponse().roles.find((x) => x.id === id) ?? listRolesResponse().roles[1];
+	const r = listRolesResponse().roles.find((x) => x.id.value === id) ?? listRolesResponse().roles[1];
 	return {
 		role: {
 			id: r.id,
@@ -1075,7 +1079,7 @@ export const DUMMY_TOKENS = [
 export function listTokensResponse() {
 	return {
 		tokens: DUMMY_TOKENS.map((t) => ({
-			id: t.id,
+			id: wrappedID(t.id),
 			name: t.name,
 			maxUses: t.max_uses,
 			currentUses: t.current_uses,
@@ -1096,12 +1100,12 @@ export const DUMMY_IDPS = [
 
 function idpProto(p: (typeof DUMMY_IDPS)[number]) {
 	return {
-		id: p.id,
+		id: wrappedID(p.id),
 		name: p.name,
 		slug: p.slug,
 		providerType: 1,
 		enabled: p.enabled,
-		clientId: p.client_id,
+		clientId: wrappedID(p.client_id),
 		issuerUrl: p.issuer_url,
 		scopes: ['openid', 'email', 'profile'],
 		autoCreateUsers: p.auto_create_users,
@@ -1126,12 +1130,12 @@ export function listIdentityLinksResponse() {
 	return {
 		links: [
 			{
-				id: '01J6XYZSHOWCASELINK0001',
-				userId: '01J6XYZSHOWCASEADMINUSR01',
-				providerId: '01J6XYZSHOWCASEIDP00001',
+				id: wrappedID('01J6XYZSHOWCASELINK0001'),
+				userId: wrappedID('01J6XYZSHOWCASEADMINUSR01'),
+				providerId: wrappedID('01J6XYZSHOWCASEIDP00001'),
 				providerName: 'Okta (Staging)',
 				providerSlug: 'okta-staging',
-				externalId: 'okta|00u123',
+				externalId: wrappedID('okta|00u123'),
 				externalEmail: 'admin@cadestro.example',
 				externalName: 'Sam Reiter',
 				linkedAt: isoFromSec(now - 100 * day),
@@ -1159,10 +1163,10 @@ export function listActiveTerminalSessionsResponse() {
 	return {
 		sessions: [
 			{
-				sessionId: '01J6XYZSHOWCASETERM0001',
-				userId: '01J6XYZSHOWCASEADMINUSR01',
+				sessionId: wrappedID('01J6XYZSHOWCASETERM0001'),
+				userId: wrappedID('01J6XYZSHOWCASEADMINUSR01'),
 				userEmail: 'admin@cadestro.example',
-				deviceId: '01J6XYZSHOWCASEDEVICE0001',
+				deviceId: wrappedID('01J6XYZSHOWCASEDEVICE0001'),
 				deviceHostname: 'edge-01.berlin',
 				ttyUser: 'root',
 				startedAt: isoFromSec(now - 18 * min),
@@ -1177,11 +1181,11 @@ export function listActiveTerminalSessionsResponse() {
 export function listAvailableActionsResponse() {
 	return {
 		items: DUMMY_ACTIONS.slice(0, 4).map((a) => ({
-			actionId: a.id,
+			actionId: wrappedID(a.id),
 			actionName: a.name,
 			actionType: a.type,
 			sourceType: 'ASSIGNMENT_SOURCE_TYPE_DIRECT',
-			sourceId: '01J6XYZSHOWCASEADMINUSR01',
+			sourceId: wrappedID('01J6XYZSHOWCASEADMINUSR01'),
 			sourceName: 'Sam Reiter',
 		})),
 	};

@@ -9,8 +9,6 @@ The whole Control API is mocked (Connect-RPC route interception), an admin
 session is pre-seeded into `localStorage`, and the browser clock is frozen, so
 the suite is hermetic (no backend) and reproducible.
 
-> Local-only — not wired into CI.
-
 ## Running
 
 ```bash

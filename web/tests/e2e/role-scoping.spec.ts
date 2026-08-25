@@ -2,6 +2,7 @@
 
 import { test, expect, preparePage, gotoAndSettle, recordRpc, clickUntil } from './fixtures';
 import type { Page, Route } from '@playwright/test';
+import { wrappedID } from '../showcase/dummy';
 
 const USER_ID = '01J6XYZSHOWCASEUSER0002';
 
@@ -26,29 +27,38 @@ async function installScopeFixtures(page: Page): Promise<void> {
 	await page.route('**/cadestro.v1.ControlService/ListRoles', (r) =>
 		json(r, {
 			roles: [
-				{ id: 'ROLE_DEVICE', name: 'Device Scoped Role', description: '', permissions: ['DevPerm'], isSystem: false },
-				{ id: 'ROLE_USER', name: 'User Scoped Role', description: '', permissions: ['UserPerm'], isSystem: false },
-				{ id: 'ROLE_ORG', name: 'Org Wide Role', description: '', permissions: ['OrgPerm'], isSystem: false },
+				{ id: wrappedID('ROLE_DEVICE'), name: 'Device Scoped Role', description: '', permissions: ['DevPerm'], isSystem: false },
+				{ id: wrappedID('ROLE_USER'), name: 'User Scoped Role', description: '', permissions: ['UserPerm'], isSystem: false },
+				{ id: wrappedID('ROLE_ORG'), name: 'Org Wide Role', description: '', permissions: ['OrgPerm'], isSystem: false },
 			],
 			nextPageToken: '',
 			totalCount: 3,
 		})
 	);
 	await page.route('**/cadestro.v1.ControlService/ListDeviceGroups', (r) =>
-		json(r, { groups: [{ id: 'DG_PROD', name: 'Production', description: '', memberCount: 0 }], nextPageToken: '', totalCount: 1 })
+		json(r, { groups: [{ id: wrappedID('DG_PROD'), name: 'Production', description: '', memberCount: 0 }], nextPageToken: '', totalCount: 1 })
 	);
 	await page.route('**/cadestro.v1.ControlService/ListUserGroups', (r) =>
-		json(r, { groups: [{ id: 'UG_ADMINS', name: 'Admins', description: '', memberCount: 0 }], nextPageToken: '', totalCount: 1 })
+		json(r, { groups: [{ id: wrappedID('UG_ADMINS'), name: 'Admins', description: '', memberCount: 0 }], nextPageToken: '', totalCount: 1 })
 	);
 }
 
-type AssignReq = { roleIds?: string[]; scopeKind?: string | number; scopeId?: string };
+type AssignReq = {
+	roleIds?: Array<{ value?: string }>;
+	scopeKind?: string | number;
+	scopeId?: { value?: string };
+};
 
 async function openDialogAndSelect(page: Page, roleName: string): Promise<void> {
 	const trigger = page.getByRole('button', { name: 'Assign Role' }).first();
 	const roleRow = page.getByRole('dialog').getByText(roleName);
 	await clickUntil(trigger, roleRow);
 	await roleRow.click();
+}
+
+async function openRolesTab(page: Page): Promise<void> {
+	await page.getByRole('tab', { name: /Roles/ }).click();
+	await expect(page.getByRole('button', { name: /Assign Role/i })).toBeVisible();
 }
 
 const scopePicker = (page: Page) =>
@@ -65,7 +75,8 @@ test('DEVICE-kind role offers a device-group picker and assigns with DEVICE_GROU
 	await page.route('**/cadestro.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUser');
 
-	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
+	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Roles');
+	await openRolesTab(page);
 	await openDialogAndSelect(page, 'Device Scoped Role');
 
 	await expect(scopePicker(page)).toBeEnabled();
@@ -74,8 +85,8 @@ test('DEVICE-kind role offers a device-group picker and assigns with DEVICE_GROU
 	await page.getByRole('dialog').getByRole('button', { name: 'Assign', exact: true }).click();
 
 	await expect.poll(() => calls.length, { timeout: 5000 }).toBeGreaterThan(0);
-	expect(calls[0].roleIds).toEqual(['ROLE_DEVICE']);
-	expect(calls[0].scopeId).toBe('DG_PROD');
+	expect(calls[0].roleIds?.map((id) => id.value)).toEqual(['ROLE_DEVICE']);
+	expect(calls[0].scopeId?.value).toBe('DG_PROD');
 	expect(String(calls[0].scopeKind)).toMatch(/DEVICE_GROUP|^1$/);
 });
 
@@ -85,7 +96,8 @@ test('USER-kind role offers a user-group picker and assigns with USER_GROUP scop
 	await page.route('**/cadestro.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUser');
 
-	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
+	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Roles');
+	await openRolesTab(page);
 	await openDialogAndSelect(page, 'User Scoped Role');
 
 	await expect(scopePicker(page)).toBeEnabled();
@@ -94,7 +106,7 @@ test('USER-kind role offers a user-group picker and assigns with USER_GROUP scop
 	await page.getByRole('dialog').getByRole('button', { name: 'Assign', exact: true }).click();
 
 	await expect.poll(() => calls.length, { timeout: 5000 }).toBeGreaterThan(0);
-	expect(calls[0].scopeId).toBe('UG_ADMINS');
+	expect(calls[0].scopeId?.value).toBe('UG_ADMINS');
 	expect(String(calls[0].scopeKind)).toMatch(/USER_GROUP|^2$/);
 });
 
@@ -104,7 +116,8 @@ test('non-scopable role offers no picker and sends an unscoped grant', async ({ 
 	await page.route('**/cadestro.v1.ControlService/AssignRoleToUser', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUser');
 
-	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Assign Role');
+	await gotoAndSettle(page, `/users/${USER_ID}`, 'text=Roles');
+	await openRolesTab(page);
 	await openDialogAndSelect(page, 'Org Wide Role');
 
 	await expect(scopePicker(page)).toBeDisabled();
@@ -112,9 +125,9 @@ test('non-scopable role offers no picker and sends an unscoped grant', async ({ 
 	await page.getByRole('dialog').getByRole('button', { name: 'Assign', exact: true }).click();
 
 	await expect.poll(() => calls.length, { timeout: 5000 }).toBeGreaterThan(0);
-	expect(calls[0].roleIds).toEqual(['ROLE_ORG']);
+	expect(calls[0].roleIds?.map((id) => id.value)).toEqual(['ROLE_ORG']);
 
-	expect(calls[0].scopeId ?? '').toBe('');
+	expect(calls[0].scopeId?.value ?? '').toBe('');
 	expect(String(calls[0].scopeKind ?? '')).toMatch(/UNSPECIFIED|^0$|^$/);
 });
 
@@ -126,7 +139,8 @@ test('user-group flow: DEVICE-kind role assigns to the group with DEVICE_GROUP s
 	await page.route('**/cadestro.v1.ControlService/AssignRoleToUserGroup', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUserGroup');
 
-	await gotoAndSettle(page, `/user-groups/${GROUP_ID}`, 'text=Assign Role');
+	await gotoAndSettle(page, `/user-groups/${GROUP_ID}`, 'text=Roles');
+	await openRolesTab(page);
 	await openDialogAndSelect(page, 'Device Scoped Role');
 
 	await expect(scopePicker(page)).toBeEnabled();
@@ -135,7 +149,7 @@ test('user-group flow: DEVICE-kind role assigns to the group with DEVICE_GROUP s
 	await page.getByRole('dialog').getByRole('button', { name: 'Assign', exact: true }).click();
 
 	await expect.poll(() => calls.length, { timeout: 5000 }).toBeGreaterThan(0);
-	expect(calls[0].scopeId).toBe('DG_PROD');
+	expect(calls[0].scopeId?.value).toBe('DG_PROD');
 	expect(String(calls[0].scopeKind)).toMatch(/DEVICE_GROUP|^1$/);
 });
 
@@ -145,7 +159,8 @@ test('user-group flow: non-scopable role offers no picker and sends an unscoped 
 	await page.route('**/cadestro.v1.ControlService/AssignRoleToUserGroup', (r) => json(r, {}));
 	const calls = recordRpc<AssignReq>(page, 'AssignRoleToUserGroup');
 
-	await gotoAndSettle(page, `/user-groups/${GROUP_ID}`, 'text=Assign Role');
+	await gotoAndSettle(page, `/user-groups/${GROUP_ID}`, 'text=Roles');
+	await openRolesTab(page);
 	await openDialogAndSelect(page, 'Org Wide Role');
 
 	await expect(scopePicker(page)).toBeDisabled();

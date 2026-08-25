@@ -5,7 +5,7 @@ import { test, expect, preparePageAs, gotoAndSettle, clickUntil } from './fixtur
 test('nav exposes only the sections the session is permitted', async ({ page }) => {
 
 	await preparePageAs(page, 'light', ['ListDevices', 'ListActions', 'Search']);
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
 	await expect(page.locator('a[href="/devices"]')).not.toHaveCount(0);
 	await expect(page.locator('a[href="/actions"]')).not.toHaveCount(0);
@@ -17,7 +17,7 @@ test('nav exposes only the sections the session is permitted', async ({ page }) 
 
 test('granting ListUsers reveals the Users section, still not Roles', async ({ page }) => {
 	await preparePageAs(page, 'light', ['ListDevices', 'ListUsers', 'Search']);
-	await gotoAndSettle(page, '/devices', 'table tbody tr');
+	await gotoAndSettle(page, '/devices', '[data-testid="fleet-bubble"]');
 
 	await clickUntil(page.getByRole('button', { name: 'More' }), page.locator('a[href="/users"]'));
 	await expect(page.locator('a[href="/users"]')).not.toHaveCount(0);
