@@ -1,50 +1,16 @@
 package mtls
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"io"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 )
-
-// realCertWithClass builds a real x509 cert (populated .Raw) carrying the given
-// peer-class SPIFFE URI, so the revocation gate's DER fingerprint is meaningful.
-func realCertWithClass(t *testing.T, class PeerClass) *x509.Certificate {
-	t.Helper()
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
-	u, err := PeerClassURI(class)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tmpl := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
-		URIs:         []*url.URL{u},
-		NotBefore:    time.Unix(1_000_000, 0),
-		NotAfter:     time.Unix(2_000_000_000, 0),
-	}
-	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cert, err := x509.ParseCertificate(der)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return cert
-}
 
 func mustURL(t *testing.T, s string) *url.URL {
 	t.Helper()

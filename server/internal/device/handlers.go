@@ -581,13 +581,6 @@ func worseComplianceStatus(left, right cadestrov1.ComplianceStatus) cadestrov1.C
 	return left
 }
 
-func boundedInt32(value int64) int32 {
-	if value > math.MaxInt32 {
-		return math.MaxInt32
-	}
-	return int32(value)
-}
-
 // ListDeviceAssignees returns the live users and groups assigned to a device.
 func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceAssigneesRequest]) (*connect.Response[cadestrov1.ListDeviceAssigneesResponse], error) {
 	if _, err := h.actor(ctx); err != nil {

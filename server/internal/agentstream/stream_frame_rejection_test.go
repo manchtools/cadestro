@@ -138,14 +138,14 @@ func TestPendingHelloPromotesAndOldActiveIsRejected(t *testing.T) {
 	_, err := f.raw.Exec(ctx, `UPDATE devices SET pending_certificate_pem = X'02', pending_cert_serial = '2' WHERE id = ?`, f.deviceID)
 	require.NoError(t, err)
 	f.peerSerial.SetInt64(2)
-	stream := f.open(t, ctx)
+	f.open(t, ctx)
 	var active, pending any
 	require.NoError(t, f.raw.QueryRow(ctx, `SELECT active_cert_serial, pending_cert_serial FROM devices WHERE id = ?`, f.deviceID).Scan(&active, &pending))
 	require.Equal(t, "2", active)
 	require.Nil(t, pending)
 
 	f.peerSerial.SetInt64(1)
-	stream = f.client.Stream(ctx)
+	stream := f.client.Stream(ctx)
 	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
 		DeviceId: &cadestrov1.DeviceId{Value: f.deviceID}, AgentVersion: "v1", Hostname: "device",
 	}}}))
