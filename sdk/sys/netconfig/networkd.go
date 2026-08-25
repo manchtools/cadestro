@@ -9,9 +9,7 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// networkDir is where systemd-networkd reads .network units. A package var so
-// tests can assert the write path without a fixed root assumption.
-var networkDir = "/etc/systemd/network"
+const networkDir = "/etc/systemd/network"
 
 // networkdBackend writes a managed .network unit and reloads networkd.
 type networkdBackend struct {

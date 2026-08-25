@@ -28,9 +28,7 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// rebootRequiredPath is the Debian/Ubuntu reboot-required marker (created by
-// update-notifier). A var so tests can redirect it.
-var rebootRequiredPath = "/var/run/reboot-required"
+const rebootRequiredPath = "/var/run/reboot-required"
 
 // statFunc seams the marker-file check for tests.
 var statFunc = os.Stat
