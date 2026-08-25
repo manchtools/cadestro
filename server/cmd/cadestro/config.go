@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/manchtools/cadestro/server/internal/enrollment"
+	"github.com/manchtools/cadestro/contract"
 	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
@@ -277,7 +277,7 @@ func validateConfig(cfg *Config) error {
 	if err := validateHTTPSURL("public_base_url", cfg.PublicBaseURL); err != nil {
 		return err
 	}
-	if err := enrollment.ValidateControlURL(cfg.AgentURL); err != nil {
+	if err := contract.ValidateHTTPSURL(cfg.AgentURL); err != nil {
 		return fmt.Errorf("agent_url: %w", err)
 	}
 	terminalURL, err := url.Parse(cfg.TerminalURL)

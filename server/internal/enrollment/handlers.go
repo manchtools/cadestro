@@ -13,6 +13,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/manchtools/cadestro/contract"
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
@@ -47,7 +48,7 @@ func New(cfg Config) *Handlers {
 	if cfg.Store == nil || cfg.CA == nil {
 		panic("enrollment: store and CA are required")
 	}
-	if err := ValidateControlURL(cfg.ControlURL); err != nil {
+	if err := contract.ValidateHTTPSURL(cfg.ControlURL); err != nil {
 		panic(fmt.Sprintf("enrollment: invalid control URL: %v", err))
 	}
 	if cfg.Logger == nil {
