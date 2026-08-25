@@ -1,6 +1,10 @@
 
 
 import type { Page } from '@playwright/test';
+import { create } from '@bufbuild/protobuf';
+import { RoleGrantScopeKind } from '$contract/cadestro/v1/common_pb';
+import { RoleGrantSchema, RoleSchema, UserSchema } from '$contract/cadestro/v1/control_pb';
+import { serializeAuth, type StoredAuth } from '$contractClient/auth';
 import { ALL_PERMISSIONS } from './dummy';
 
 const CONFIG_KEY = 'cadestro-config';
@@ -12,51 +16,49 @@ const SHOWCASE_CONFIG = JSON.stringify({ serverUrl: 'https://localhost:5179' });
 export type Theme = 'light' | 'dark';
 export const ADMIN_ROLE_ID = '00000000000000000000000001';
 
-export function buildAuthSuperjson(opts: {
+export function buildAuthStorage(opts: {
 	roleId: string;
 	roleName: string;
 	permissions: string[];
 }): string {
-	const role = {
-		$typeName: 'cadestro.v1.Role',
+	const role = create(RoleSchema, {
 		id: { value: opts.roleId },
 		name: opts.roleName,
 		description: '',
 		permissions: opts.permissions,
 		isSystem: opts.roleId === ADMIN_ROLE_ID
-	};
-	const auth = {
+	});
+	const user = create(UserSchema, {
+		id: { value: '01J6XYZSHOWCASEADMINUSR01' },
+		email: 'sam.reiter@cadestro.example',
+		displayName: 'Sam Reiter',
+		givenName: 'Sam',
+		familyName: 'Reiter',
+		preferredUsername: 'sam.reiter',
+		locale: 'en',
+		picture: '',
+		disabled: false,
+		identityLinks: [],
+		roleGrants: [
+			create(RoleGrantSchema, {
+				role,
+				scopeKind: RoleGrantScopeKind.UNSPECIFIED,
+				scopeId: { value: '' },
+				scopeName: ''
+			})
+		],
+		inheritedRoles: []
+	});
+	const auth: StoredAuth = {
 		accessToken: 'showcase-jwt-access',
 		refreshToken: 'showcase-jwt-refresh',
-		expiresAt: '2099-01-01T00:00:00.000Z',
-		user: {
-			$typeName: 'cadestro.v1.User',
-			id: { value: '01J6XYZSHOWCASEADMINUSR01' },
-			email: 'sam.reiter@cadestro.example',
-			displayName: 'Sam Reiter',
-			givenName: 'Sam',
-			familyName: 'Reiter',
-			preferredUsername: 'sam.reiter',
-			locale: 'en',
-			picture: '',
-			disabled: false,
-			identityLinks: [],
-			roleGrants: [
-				{
-					$typeName: 'cadestro.v1.RoleGrant',
-					role,
-					scopeKind: 0,
-					scopeId: { value: '' },
-					scopeName: ''
-				}
-			],
-			inheritedRoles: []
-		}
+		expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+		user
 	};
-	return JSON.stringify({ json: auth, meta: { values: { expiresAt: ['Date'] }, v: 1 } });
+	return serializeAuth(auth);
 }
 
-const SHOWCASE_AUTH_SUPERJSON = buildAuthSuperjson({
+const SHOWCASE_AUTH_STORAGE = buildAuthStorage({
 	roleId: ADMIN_ROLE_ID,
 	roleName: 'Administrator',
 	permissions: ALL_PERMISSIONS
@@ -100,7 +102,7 @@ async function seedSession(page: Page, theme: Theme, auth: string): Promise<void
 }
 
 export async function primeStorage(page: Page, theme: Theme): Promise<void> {
-	await seedSession(page, theme, SHOWCASE_AUTH_SUPERJSON);
+	await seedSession(page, theme, SHOWCASE_AUTH_STORAGE);
 }
 
 export async function primeStorageAs(
@@ -108,5 +110,5 @@ export async function primeStorageAs(
 	theme: Theme,
 	opts: { roleId: string; roleName: string; permissions: string[] }
 ): Promise<void> {
-	await seedSession(page, theme, buildAuthSuperjson(opts));
+	await seedSession(page, theme, buildAuthStorage(opts));
 }

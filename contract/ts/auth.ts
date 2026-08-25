@@ -1,7 +1,6 @@
-
-
 import type { User } from '../gen/ts/cadestro/v1/control_pb';
-import superjson from 'superjson';
+import { UserSchema } from '../gen/ts/cadestro/v1/control_pb';
+import { fromJson, toJson, type JsonValue } from '@bufbuild/protobuf';
 import { logger, describeError } from './logger.js';
 
 const log = logger.named('auth');
@@ -24,6 +23,65 @@ export interface RefreshResult {
 
 const emptyAuth: StoredAuth = { accessToken: null, refreshToken: null, expiresAt: null, user: null };
 
+type StoredAuthJSON = {
+	accessToken: string | null;
+	refreshToken: string | null;
+	expiresAt: string | null;
+	user: JsonValue | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+	return value === null || typeof value === 'string';
+}
+
+function parseStoredAuthJSON(value: unknown): StoredAuthJSON {
+	if (!isRecord(value)) throw new Error('stored auth must be an object');
+	const fields = ['accessToken', 'refreshToken', 'expiresAt', 'user'];
+	if (Object.keys(value).some((key) => !fields.includes(key))) throw new Error('stored auth has unknown fields');
+	if (!fields.every((field) => Object.hasOwn(value, field))) throw new Error('stored auth is incomplete');
+	if (!isNullableString(value.accessToken) || !isNullableString(value.refreshToken) || !isNullableString(value.expiresAt)) {
+		throw new Error('stored auth has invalid scalar fields');
+	}
+	if (value.user !== null && !isRecord(value.user)) throw new Error('stored auth has an invalid user');
+	return value as StoredAuthJSON;
+}
+
+export function parseAuth(data: string): StoredAuth {
+	const stored = parseStoredAuthJSON(JSON.parse(data));
+	let expiresAt: Date | null = null;
+	if (stored.expiresAt !== null) {
+		expiresAt = new Date(stored.expiresAt);
+		if (Number.isNaN(expiresAt.getTime()) || expiresAt.toISOString() !== stored.expiresAt) {
+			throw new Error('stored auth has an invalid expiry');
+		}
+	}
+	return {
+		accessToken: stored.accessToken,
+		refreshToken: stored.refreshToken,
+		expiresAt,
+		user: stored.user === null ? null : fromJson(UserSchema, stored.user)
+	};
+}
+
+export function serializeAuth(auth: StoredAuth): string {
+	if (!isNullableString(auth.accessToken) || !isNullableString(auth.refreshToken)) {
+		throw new Error('auth has invalid tokens');
+	}
+	if (auth.expiresAt !== null && (!(auth.expiresAt instanceof Date) || Number.isNaN(auth.expiresAt.getTime()))) {
+		throw new Error('auth has an invalid expiry');
+	}
+	return JSON.stringify({
+		accessToken: auth.accessToken,
+		refreshToken: auth.refreshToken,
+		expiresAt: auth.expiresAt?.toISOString() ?? null,
+		user: auth.user === null ? null : toJson(UserSchema, auth.user)
+	});
+}
+
 function isPersistent(): boolean {
 	if (typeof localStorage === 'undefined') return false;
 	return localStorage.getItem(PERSIST_KEY) === 'true';
@@ -35,7 +93,7 @@ function loadAuth(): StoredAuth {
 	const persistent = isPersistent();
 	const primary = persistent ? localStorage.getItem(AUTH_KEY) : sessionStorage.getItem(AUTH_KEY);
 	if (primary) {
-		try { return superjson.parse<StoredAuth>(primary); }
+		try { return parseAuth(primary); }
 		catch (err) {
 			log.warn('failed to parse primary stored auth blob; falling back to secondary storage', describeError(err));
 		}
@@ -43,7 +101,7 @@ function loadAuth(): StoredAuth {
 
 	const fallback = persistent ? sessionStorage.getItem(AUTH_KEY) : localStorage.getItem(AUTH_KEY);
 	if (fallback) {
-		try { return superjson.parse<StoredAuth>(fallback); }
+		try { return parseAuth(fallback); }
 		catch (err) {
 			log.warn('failed to parse fallback stored auth blob; starting with empty auth', describeError(err));
 		}
@@ -54,7 +112,7 @@ function loadAuth(): StoredAuth {
 
 function saveAuth(auth: StoredAuth) {
 	if (typeof window === 'undefined') return;
-	const data = superjson.stringify(auth);
+	const data = serializeAuth(auth);
 	if (isPersistent()) {
 		localStorage.setItem(AUTH_KEY, data);
 	} else {
