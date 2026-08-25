@@ -10,8 +10,7 @@ import { ACTION_REGISTRY, formKeyFromActionType, formKeyFromString, type FormKey
 import { defaultScheduleForm, type ScheduleFormState } from '../forms/types';
 import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FormState = any;
+export type FormState = Record<string, unknown>;
 
 export interface StepDraft {
 	/** Stable client identity — survives reorder, unlike the index, and exists
@@ -85,7 +84,7 @@ export function stepFromAction(action: ManagedAction, sortOrder: number): StepDr
 		description: action.description,
 		timeoutSeconds: action.timeoutSeconds || 300,
 		desiredState: action.desiredState ?? 0,
-		params,
+		params: params as FormState,
 		schedule: scheduleToForm(action),
 		isNew: false,
 		originalIndex: sortOrder
@@ -138,7 +137,7 @@ export function stepFromJson(raw: unknown): StepDraft | null {
 		description: typeof s.description === 'string' ? s.description : '',
 		timeoutSeconds: typeof s.timeoutSeconds === 'number' ? s.timeoutSeconds : 300,
 		desiredState: typeof s.desiredState === 'number' ? s.desiredState : 0,
-		params: s.params ?? ACTION_REGISTRY[s.formKey as FormKey].defaultForm(),
+		params: (s.params ?? ACTION_REGISTRY[s.formKey as FormKey].defaultForm()) as FormState,
 		schedule: (s.schedule as ScheduleFormState) ?? defaultScheduleForm(),
 		isNew: s.isNew !== false,
 		originalIndex: typeof s.originalIndex === 'number' ? s.originalIndex : -1

@@ -36,8 +36,7 @@ describe('pushState', () => {
 	beforeEach(() => navMocks.pushState.mockReset());
 
 	it('prepends base to the URL', () => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		pushState('/devices/abc', { actionSheet: { actionId: 'x' } } as any);
+		pushState('/devices/abc', { actionSheet: { actionId: 'x' } } as unknown as App.PageState);
 		expect(navMocks.pushState).toHaveBeenCalledWith('/app/devices/abc', { actionSheet: { actionId: 'x' } });
 	});
 });
@@ -46,8 +45,7 @@ describe('replaceState', () => {
 	beforeEach(() => navMocks.replaceState.mockReset());
 
 	it('prepends base', () => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		replaceState('/devices', {} as any);
+		replaceState('/devices', {} as App.PageState);
 		expect(navMocks.replaceState).toHaveBeenCalledWith('/app/devices', {});
 	});
 });

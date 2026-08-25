@@ -391,6 +391,12 @@ describe('palette — "This shell" restores what lives in this tab', () => {
 });
 
 describe('palette — keyboard and dismissal', () => {
+	it('keeps the active row empty when ArrowDown is pressed on empty results', async () => {
+		const box = await openPalette('missing');
+		await userEvent.keyboard('{ArrowDown}');
+		expect(box.element().getAttribute('aria-activedescendant')).toBeNull();
+	});
+
 	it('walks rows with the arrows, opens with ↵ and closes with Esc', async () => {
 		api.search.mockResolvedValue({
 			results: [

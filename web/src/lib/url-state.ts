@@ -33,10 +33,10 @@ import { pushState, replaceState } from '$app/navigation';
 
 export type Codec<T> = {
 	/** Parse a URL search-param value (or null when absent) into the typed value. */
-	parse: (param: string | null) => T;
+	parse(param: string | null): T;
 	/** Serialize a typed value to a string. Return null to omit the param entirely
 	 *  (typically when the value equals its default — keeps URLs short). */
-	serialize: (value: T) => string | null;
+	serialize(value: T): string | null;
 };
 
 export const codecs = {
@@ -105,15 +105,8 @@ export function readURLParam<T>(url: URL, key: string, codec: Codec<T>): T {
  *  Default mode is 'push' (history entry, back-nav restores prior filter set);
  *  pass 'replace' for transient updates that shouldn't bloat history.
  *
- *  The Codec is typed `any` (not `unknown`) deliberately: callers want to
- *  mix differently-typed entries in one batch (`[string, string[], boolean]`),
- *  and TypeScript's strict-variance treatment of the contravariant
- *  `serialize(value: T)` slot means a heterogeneous tuple can only line up
- *  if we erase the param type at the boundary. The runtime is sound because
- *  each tuple's value is built alongside its codec by convention.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyCodecEntry = [string, any, Codec<any>];
+export type AnyCodecEntry = [string, unknown, Codec<unknown>];
 
 export function syncToURL(updates: AnyCodecEntry[], mode: 'push' | 'replace' = 'push') {
 	if (typeof window === 'undefined') return;

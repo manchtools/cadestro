@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { mode } from 'mode-watcher';
+	import type { Terminal as XtermTerminal } from '@xterm/xterm';
+	import type { FitAddon } from '@xterm/addon-fit';
 
 	interface Props {
 		terminalUrl: string;
@@ -14,9 +16,9 @@
 	let { terminalUrl, sessionId, sessionToken, ttyUser, onclose, onerror }: Props = $props();
 
 	let terminalEl: HTMLDivElement;
-	let terminalInstance: any = $state(null);
+	let terminalInstance: XtermTerminal | null = $state(null);
 	let ws: WebSocket | null = $state(null);
-	let fitAddon: any = null;
+	let fitAddon: FitAddon | null = null;
 	let resizeObserver: ResizeObserver | null = null;
 	let lastSentCols = 0;
 	let lastSentRows = 0;

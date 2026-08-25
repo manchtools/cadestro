@@ -269,10 +269,7 @@
 
 	/** Flat row order — what ↑↓ walks and aria-activedescendant points at. */
 	const flat = $derived(groups.flatMap((g) => g.rows));
-
-	$effect(() => {
-		if (sel > flat.length - 1) sel = Math.max(0, flat.length - 1);
-	});
+	const activeIndex = $derived.by(() => (flat.length ? Math.min(sel, flat.length - 1) : 0));
 
 	// ── the RPC ───────────────────────────────────────────────────────────────
 	async function runSearch(q: string, scope: SearchScope, pageToken = '') {
@@ -387,9 +384,12 @@
 	}
 
 	function onkeydown(e: KeyboardEvent) {
-		if (e.key === 'ArrowDown') (e.preventDefault(), (sel = Math.min(sel + 1, flat.length - 1)));
-		else if (e.key === 'ArrowUp') (e.preventDefault(), (sel = Math.max(sel - 1, 0)));
-		else if (e.key === 'Enter') (e.preventDefault(), flat[sel] && activate(flat[sel]));
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			if (flat.length) sel = Math.min(activeIndex + 1, flat.length - 1);
+		}
+		else if (e.key === 'ArrowUp') (e.preventDefault(), (sel = Math.max(activeIndex - 1, 0)));
+		else if (e.key === 'Enter') (e.preventDefault(), flat[activeIndex] && activate(flat[activeIndex]));
 		else if (e.key === 'Escape') (e.preventDefault(), close());
 		else if (e.key === 'Tab') (e.preventDefault(), setFacet(facet + (e.shiftKey ? -1 : 1)));
 		// Tab is consumed by the facet ring, and the chips are not tab stops, so
@@ -517,7 +517,7 @@
 					role="combobox"
 					aria-expanded="true"
 					aria-controls="palette-listbox"
-					aria-activedescendant={flat[sel]?.id}
+					aria-activedescendant={flat[activeIndex]?.id}
 					aria-label={m.search_dialog_label()}
 					autocomplete="off"
 					spellcheck="false"
@@ -582,13 +582,13 @@
 								<li
 									id={row.id}
 									role="option"
-									aria-selected={i === sel}
+									aria-selected={i === activeIndex}
 									data-testid="palette-row"
 									data-kind={row.kind}
 									onmouseenter={() => (sel = i)}
 									onmousedown={(e) => e.preventDefault()}
 									onclick={() => activate(row)}
-									class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm {i === sel
+									class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm {i === activeIndex
 										? 'bg-accent text-accent-foreground'
 										: ''}"
 								>

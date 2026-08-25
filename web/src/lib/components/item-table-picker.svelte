@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="ts" generics="T extends { id: string }">
 	import * as Table from '$lib/components/ui/table';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
@@ -6,8 +6,7 @@
 	import type { Snippet } from 'svelte';
 	import * as m from '$lib/paraglide/messages';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type Item = Record<string, any> & { id: string };
+	type Item = T;
 
 	let {
 		items = [],

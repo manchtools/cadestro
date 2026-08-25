@@ -155,8 +155,7 @@ export interface ActionTypeAdapter<F = unknown, P = unknown> {
 	/** Default form state factory. */
 	defaultForm: () => F;
 	/** Zod validation schema for the form state. */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	schema: ZodSchema<any>;
+	schema: ZodSchema<unknown>;
 	/** Form-state -> proto. */
 	formToProto: (form: F) => P;
 	/** Proto -> form-state. */
@@ -166,8 +165,7 @@ export interface ActionTypeAdapter<F = unknown, P = unknown> {
 // Component map: keyed by FormKey. Lives next to the registry but kept as a
 // separate map (not on the adapter) because Svelte 5 component types can't be
 // soundly stored in a generic `ActionTypeAdapter<F, P>` without erasing F/P.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ParamsFormComponent = Component<any>;
+export type ParamsFormComponent = Component<Record<string, unknown>>;
 
 // Registry — one entry per FormKey. Orchestrators iterate this instead of
 // hand-coding 19 case arms.

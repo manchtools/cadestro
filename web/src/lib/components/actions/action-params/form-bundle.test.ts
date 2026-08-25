@@ -43,10 +43,7 @@ describe('createFormBundle', () => {
 	it('set() replaces the form state for a key without affecting siblings', () => {
 		const bundle = createFormBundle();
 		const original = bundle.params.SHELL;
-		// Use any-cast because the bundle uses `any` for cross-type
-		// uniformity — see form-bundle.svelte.ts for the rationale.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		bundle.set('SHELL', { command: 'echo hi', isCompliance: false } as any);
+		bundle.set('SHELL', { command: 'echo hi', isCompliance: false });
 		expect(bundle.params.SHELL).not.toBe(original);
 		// Other keys still have their default state
 		expect(bundle.params.PACKAGE).toBeDefined();

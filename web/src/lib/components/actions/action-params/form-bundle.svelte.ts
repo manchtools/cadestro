@@ -13,8 +13,7 @@ import {
 	type FormKey
 } from '../registry';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FormState = any;
+export type FormState = Record<string, unknown>;
 
 export interface FormBundle {
 	/** Reactive map of per-FormKey form state. Mutate via
@@ -22,8 +21,7 @@ export interface FormBundle {
 	 *  Defaults are populated lazily on access via the registry. */
 	params: Record<FormKey, FormState>;
 	/** Per-FormKey validation handle. */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	validations: Record<FormKey, FormValidation<any>>;
+	validations: Record<FormKey, FormValidation<FormState>>;
 	/** Reset all per-type validation error state. */
 	clearAllErrors(): void;
 	/** Validate the form state for the given FormKey. */
@@ -35,16 +33,14 @@ export interface FormBundle {
 export function createFormBundle(): FormBundle {
 	// Per-FormKey state. We seed every entry up-front — there are only 19
 	// of them and the seed cost is one default-factory call each.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const params = $state({} as Record<FormKey, any>);
+	const params = $state({} as Record<FormKey, FormState>);
 	for (const key of FORM_KEYS) {
-		params[key] = ACTION_REGISTRY[key].defaultForm();
+		params[key] = ACTION_REGISTRY[key].defaultForm() as FormState;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const validations = {} as Record<FormKey, FormValidation<any>>;
+	const validations = {} as Record<FormKey, FormValidation<FormState>>;
 	for (const key of FORM_KEYS) {
-		validations[key] = createFormValidation(ACTION_REGISTRY[key].schema);
+		validations[key] = createFormValidation(ACTION_REGISTRY[key].schema) as FormValidation<FormState>;
 	}
 
 	return {

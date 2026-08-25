@@ -59,8 +59,20 @@ describe('prop-driven navigation', () => {
 	it('More ▾ opens the overflow groups and lists their items', async () => {
 		mount();
 		await page.getByRole('button', { name: 'More' }).click();
-		await expect.element(page.getByRole('link', { name: 'Users' })).toBeVisible();
-		await expect.element(page.getByRole('link', { name: 'Device groups' })).toBeVisible();
+		await expect.element(page.getByRole('menuitem', { name: 'Users' })).toBeVisible();
+		await expect.element(page.getByRole('menuitem', { name: 'Device groups' })).toBeVisible();
+	});
+
+	it('closes the overflow menu when the morph leaves nav mode', async () => {
+		mount();
+		await page.getByRole('button', { name: 'More' }).click();
+		await expect.element(page.getByRole('menuitem', { name: 'Users' })).toBeVisible();
+		shell.paletteOpen = true;
+		await expect.element(page.getByTestId('pill-more-menu')).not.toBeInTheDocument();
+		shell.paletteOpen = false;
+		await expect.element(page.getByRole('button', { name: 'More' })).toBeVisible();
+		await page.getByRole('button', { name: 'More' }).click();
+		await expect.element(page.getByRole('menuitem', { name: 'Users' })).toBeVisible();
 	});
 
 	it('hides More ▾ entirely when the overflow is empty', () => {

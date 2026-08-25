@@ -5,6 +5,7 @@
 	import type { PillEntry, PillGroup } from '$lib/shell/nav';
 	import * as m from '$lib/paraglide/messages';
 	import { goto } from '$lib/navigation';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import {
 		shell,
 		pillMode,
@@ -156,9 +157,6 @@
 			(dims.w ? `width:${dims.w}px;height:${dims.h}px;` : '')
 	);
 
-	$effect(() => {
-		if (mode !== 'nav') moreOpen = false;
-	});
 </script>
 
 <svelte:window onkeydown={onWindowKey} />
@@ -348,14 +346,31 @@
 							</a>
 						{/each}
 						{#if overflow.length}
-							<div data-testid="pill-more">
-								<!-- Labelled "More", not the draft's "Admin": the overflow deliberately
-								     carries a Workspace group too, and a content-honest label wins. -->
-								<button type="button" data-tour="nav-pill-overflow" aria-expanded={moreOpen} onclick={() => (moreOpen = !moreOpen)} class="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm text-muted-foreground hover:bg-accent/50">
-									{m.shell_more()}
-									<ChevronDown class="h-3.5 w-3.5 transition-transform {moreOpen ? 'rotate-180' : ''}" />
-								</button>
-							</div>
+							<DropdownMenu.Root bind:open={moreOpen}>
+								<DropdownMenu.Trigger>
+									{#snippet child({ props })}
+										<button {...props} type="button" data-testid="pill-more" data-tour="nav-pill-overflow" class="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm text-muted-foreground hover:bg-accent/50">
+											{m.shell_more()}
+											<ChevronDown class="h-3.5 w-3.5 transition-transform {moreOpen ? 'rotate-180' : ''}" />
+										</button>
+									{/snippet}
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content align="center" data-testid="pill-more-menu" class="w-56">
+									{#each overflow as g (g.group())}
+										<DropdownMenu.Label class="px-2 pb-0.5 pt-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">{g.group()}</DropdownMenu.Label>
+										{#each g.items as item (item.href)}
+											<DropdownMenu.Item>
+												{#snippet child({ props })}
+													<a {...props} href={href(item.href)} onclick={() => (moreOpen = false)} class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm {active(item.href) ? 'bg-accent text-accent-foreground' : 'text-popover-foreground hover:bg-accent/60'}">
+														<item.icon class="h-3.5 w-3.5 text-muted-foreground" />
+														{item.label()}
+													</a>
+												{/snippet}
+											</DropdownMenu.Item>
+										{/each}
+									{/each}
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
 						{/if}
 						<span class="mx-[7px] h-[17px] w-px bg-border-strong"></span>
 						<button type="button" aria-label={m.shell_open_search()} onclick={() => (shell.paletteOpen = true)} class="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm text-muted-foreground hover:bg-accent/50">
@@ -409,19 +424,5 @@
 			</div>
 		{/if}
 
-		{#if mode === 'nav' && moreOpen && overflow.length}
-			<!-- Render outside the overflow-hidden morph container so the menu is not clipped. -->
-			<div class="absolute left-1/2 top-[calc(100%+0.5rem)] z-50 w-56 -translate-x-1/2 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-pill" data-testid="pill-more-menu">
-				{#each overflow as g (g.group)}
-					<div class="px-2 pb-0.5 pt-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">{g.group()}</div>
-					{#each g.items as item (item.href)}
-						<a href={href(item.href)} onclick={() => (moreOpen = false)} class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm {active(item.href) ? 'bg-accent text-accent-foreground' : 'text-popover-foreground hover:bg-accent/60'}">
-							<item.icon class="h-3.5 w-3.5 text-muted-foreground" />
-							{item.label()}
-						</a>
-					{/each}
-				{/each}
-			</div>
-		{/if}
 	</div>
 </div>

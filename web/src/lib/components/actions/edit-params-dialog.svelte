@@ -76,7 +76,7 @@
 				// Trust the proto's `case` to match what the registry expects;
 				// the API contract says action.type and params.case agree.
 				if (action.params.case === adapter.paramsCase) {
-					bundle.set(k, adapter.protoToForm(action.params.value));
+					bundle.set(k, adapter.protoToForm(action.params.value) as Record<string, unknown>);
 				}
 			}
 		}

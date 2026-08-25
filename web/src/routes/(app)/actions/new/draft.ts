@@ -22,8 +22,7 @@ export type ActionDraft = {
 	timeoutSeconds: number;
 	/** 0 = PRESENT, 1 = ABSENT. Forced to 0 for types with no ABSENT. */
 	desiredState: number;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	params: any;
+	params: Record<string, unknown>;
 	schedule: ScheduleFormState;
 };
 

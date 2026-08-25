@@ -29,11 +29,30 @@
 		AgentUpdateParamsForm
 	} from '../forms';
 	import type { FormKey } from '../registry';
+	import type {
+		PackageFormState,
+		ShellFormState,
+		ServiceFormState,
+		FileFormState,
+		AppFormState,
+		FlatpakFormState,
+		UpdateFormState,
+		RepositoryFormState,
+		DirectoryFormState,
+		UserFormState,
+		SshFormState,
+		SshdFormState,
+		AdminPolicyFormState,
+		LpsFormState,
+		EncryptionFormState,
+		GroupFormState,
+		WifiFormState,
+		AgentUpdateFormState
+	} from '../forms/types';
 
 	interface Props {
 		formKey: FormKey;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		params: any;
+		params: Record<string, unknown>;
 		errors?: Partial<Record<string, string>>;
 		onclearerror?: (field: string) => void;
 	}
@@ -42,41 +61,41 @@
 </script>
 
 {#if formKey === 'PACKAGE'}
-	<PackageParamsForm bind:params {errors} {onclearerror} />
+	<PackageParamsForm bind:params={params as unknown as PackageFormState} {errors} {onclearerror} />
 {:else if formKey === 'SHELL'}
-	<ShellParamsForm bind:params {errors} {onclearerror} />
+	<ShellParamsForm bind:params={params as unknown as ShellFormState} {errors} {onclearerror} />
 {:else if formKey === 'COMPLIANCE_CHECK'}
-	<ShellParamsForm bind:params complianceOnly={true} {errors} {onclearerror} />
+	<ShellParamsForm bind:params={params as unknown as ShellFormState} complianceOnly={true} {errors} {onclearerror} />
 {:else if formKey === 'SERVICE'}
-	<ServiceParamsForm bind:params {errors} {onclearerror} />
+	<ServiceParamsForm bind:params={params as unknown as ServiceFormState} {errors} {onclearerror} />
 {:else if formKey === 'FILE'}
-	<FileParamsForm bind:params {errors} {onclearerror} />
+	<FileParamsForm bind:params={params as unknown as FileFormState} {errors} {onclearerror} />
 {:else if formKey === 'APP'}
-	<AppParamsForm bind:params {errors} {onclearerror} />
+	<AppParamsForm bind:params={params as unknown as AppFormState} {errors} {onclearerror} />
 {:else if formKey === 'FLATPAK'}
-	<FlatpakParamsForm bind:params {errors} {onclearerror} />
+	<FlatpakParamsForm bind:params={params as unknown as FlatpakFormState} {errors} {onclearerror} />
 {:else if formKey === 'UPDATE'}
-	<UpdateParamsForm bind:params {errors} {onclearerror} />
+	<UpdateParamsForm bind:params={params as unknown as UpdateFormState} {errors} {onclearerror} />
 {:else if formKey === 'REPOSITORY'}
-	<RepositoryParamsForm bind:params {errors} {onclearerror} />
+	<RepositoryParamsForm bind:params={params as unknown as RepositoryFormState} {errors} {onclearerror} />
 {:else if formKey === 'DIRECTORY'}
-	<DirectoryParamsForm bind:params {errors} {onclearerror} />
+	<DirectoryParamsForm bind:params={params as unknown as DirectoryFormState} {errors} {onclearerror} />
 {:else if formKey === 'USER'}
-	<UserParamsForm bind:params {errors} {onclearerror} />
+	<UserParamsForm bind:params={params as unknown as UserFormState} {errors} {onclearerror} />
 {:else if formKey === 'SSH'}
-	<SshParamsForm bind:params {errors} {onclearerror} />
+	<SshParamsForm bind:params={params as unknown as SshFormState} {errors} {onclearerror} />
 {:else if formKey === 'SSHD'}
-	<SshdParamsForm bind:params {errors} {onclearerror} />
+	<SshdParamsForm bind:params={params as unknown as SshdFormState} {errors} {onclearerror} />
 {:else if formKey === 'ADMIN_POLICY'}
-	<AdminPolicyParamsForm bind:params {errors} {onclearerror} />
+	<AdminPolicyParamsForm bind:params={params as unknown as AdminPolicyFormState} {errors} {onclearerror} />
 {:else if formKey === 'LPS'}
-	<LpsParamsForm bind:params {errors} {onclearerror} />
+	<LpsParamsForm bind:params={params as unknown as LpsFormState} {errors} {onclearerror} />
 {:else if formKey === 'ENCRYPTION'}
-	<EncryptionParamsForm bind:params {errors} {onclearerror} />
+	<EncryptionParamsForm bind:params={params as unknown as EncryptionFormState} {errors} {onclearerror} />
 {:else if formKey === 'GROUP'}
-	<GroupParamsForm bind:params {errors} {onclearerror} />
+	<GroupParamsForm bind:params={params as unknown as GroupFormState} {errors} {onclearerror} />
 {:else if formKey === 'WIFI'}
-	<WifiParamsForm bind:params {errors} {onclearerror} />
+	<WifiParamsForm bind:params={params as unknown as WifiFormState} {errors} {onclearerror} />
 {:else if formKey === 'AGENT_UPDATE'}
-	<AgentUpdateParamsForm bind:params {errors} {onclearerror} />
+	<AgentUpdateParamsForm bind:params={params as unknown as AgentUpdateFormState} {errors} {onclearerror} />
 {/if}
