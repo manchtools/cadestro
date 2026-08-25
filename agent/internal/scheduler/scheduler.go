@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
@@ -276,7 +277,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 		ManifestId:  manifest.GetManifestId(),
 		Status:      aggregate,
 		CompletedAt: timestamppb.New(finished),
-		DurationMs:  finished.Sub(started).Milliseconds(),
+		Duration:    durationpb.New(finished.Sub(started)),
 		Error:       aggregateError,
 	}
 	resultID, err := s.store.RecordManifestResult(ctx, manifestResult)

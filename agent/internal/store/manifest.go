@@ -384,7 +384,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 func actionResultHash(result *pb.ActionResult) (string, error) {
 	stable := proto.Clone(result).(*pb.ActionResult)
 	stable.CompletedAt = nil
-	stable.DurationMs = 0
+	stable.Duration = nil
 	stable.RunId = ""
 	stable.OccurrenceId = ""
 	encoded, err := canonicalProtoBytes(stable)

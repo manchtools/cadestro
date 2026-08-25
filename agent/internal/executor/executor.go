@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/manchtools/cadestro/agent/internal/store"
@@ -370,7 +371,7 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	result.Output = output
 	completed := e.now()
 	result.CompletedAt = timestamppb.New(completed)
-	result.DurationMs = completed.Sub(start).Milliseconds()
+	result.Duration = durationpb.New(completed.Sub(start))
 
 	// Check context errors first - distinguish between timeout and cancellation
 	switch {

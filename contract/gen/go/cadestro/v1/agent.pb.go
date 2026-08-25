@@ -1732,7 +1732,7 @@ type ManifestResult struct {
 	ManifestId    string                 `protobuf:"bytes,2,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
 	Status        ExecutionStatus        `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
 	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	DurationMs    int64                  `protobuf:"varint,5,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	Duration      *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
 	Error         string                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1796,11 +1796,11 @@ func (x *ManifestResult) GetCompletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ManifestResult) GetDurationMs() int64 {
+func (x *ManifestResult) GetDuration() *durationpb.Duration {
 	if x != nil {
-		return x.DurationMs
+		return x.Duration
 	}
-	return 0
+	return nil
 }
 
 func (x *ManifestResult) GetError() string {
@@ -3784,16 +3784,14 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"provenance\x12?\n" +
 	"\bschedule\x18\x03 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\x12D\n" +
 	"\x12default_on_failure\x18\x04 \x01(\x0e2\x16.cadestro.v1.OnFailureR\x10defaultOnFailure\x12N\n" +
-	"\voccurrences\x18\x05 \x03(\v2\x1f.cadestro.v1.ManifestOccurrenceB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\voccurrences\"\xa9\x02\n" +
+	"\voccurrences\x18\x05 \x03(\v2\x1f.cadestro.v1.ManifestOccurrenceB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\voccurrences\"\xbd\x02\n" +
 	"\x0eManifestResult\x12\x1f\n" +
 	"\x06run_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05runId\x12)\n" +
 	"\vmanifest_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\n" +
 	"manifestId\x12<\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12=\n" +
-	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12+\n" +
-	"\vduration_ms\x18\x05 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02(\x00R\n" +
-	"durationMs\x12!\n" +
+	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
+	"\bduration\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\x12!\n" +
 	"\x05error\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\"a\n" +
 	"\tResultAck\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x128\n" +
@@ -4097,29 +4095,30 @@ var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	17, // 46: cadestro.v1.Manifest.occurrences:type_name -> cadestro.v1.ManifestOccurrence
 	58, // 47: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
 	59, // 48: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
-	2,  // 49: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
-	23, // 50: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
-	3,  // 51: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
-	25, // 52: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
-	52, // 53: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
-	27, // 54: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
-	25, // 55: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
-	60, // 56: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
-	60, // 57: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
-	33, // 58: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
-	61, // 59: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	62, // 60: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
-	42, // 61: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	18, // 62: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	4,  // 63: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
-	5,  // 64: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
-	6,  // 65: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	10, // 66: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	66, // [66:67] is the sub-list for method output_type
-	65, // [65:66] is the sub-list for method input_type
-	65, // [65:65] is the sub-list for extension type_name
-	65, // [65:65] is the sub-list for extension extendee
-	0,  // [0:65] is the sub-list for field type_name
+	55, // 49: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
+	2,  // 50: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
+	23, // 51: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
+	3,  // 52: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
+	25, // 53: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
+	52, // 54: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
+	27, // 55: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
+	25, // 56: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
+	60, // 57: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
+	60, // 58: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
+	33, // 59: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
+	61, // 60: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	62, // 61: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	42, // 62: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	18, // 63: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	4,  // 64: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
+	5,  // 65: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
+	6,  // 66: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	10, // 67: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	67, // [67:68] is the sub-list for method output_type
+	66, // [66:67] is the sub-list for method input_type
+	66, // [66:66] is the sub-list for extension type_name
+	66, // [66:66] is the sub-list for extension extendee
+	0,  // [0:66] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }

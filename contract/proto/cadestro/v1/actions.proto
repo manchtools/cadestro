@@ -4,6 +4,7 @@ package cadestro.v1;
 
 import "buf/validate/validate.proto";
 import "cadestro/v1/common.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
@@ -888,10 +889,7 @@ message ActionResult {
   ];
   CommandOutput output = 4;
   google.protobuf.Timestamp completed_at = 5;
-  int64 duration_ms = 6 [
-    (buf.validate.field).int64.gte = 0,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
+  google.protobuf.Duration duration = 6 [(buf.validate.field).duration.gte = {}];
   // Whether the action made changes to the system (true) or state was already as desired (false)
   bool changed = 7;
   // Optional action-specific metadata (e.g., LPS password data)

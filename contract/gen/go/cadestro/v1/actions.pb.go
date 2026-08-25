@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -2855,7 +2856,7 @@ type ActionResult struct {
 	Error       string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	Output      *CommandOutput         `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty"`
 	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	DurationMs  int64                  `protobuf:"varint,6,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	Duration    *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
 	// Whether the action made changes to the system (true) or state was already as desired (false)
 	Changed bool `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
 	// Optional action-specific metadata (e.g., LPS password data)
@@ -2943,11 +2944,11 @@ func (x *ActionResult) GetCompletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ActionResult) GetDurationMs() int64 {
+func (x *ActionResult) GetDuration() *durationpb.Duration {
 	if x != nil {
-		return x.DurationMs
+		return x.Duration
 	}
-	return 0
+	return nil
 }
 
 func (x *ActionResult) GetChanged() bool {
@@ -3141,7 +3142,7 @@ var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf9\t\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf9\t\n" +
 	"\x06Action\x12-\n" +
 	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x123\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12>\n" +
@@ -3376,16 +3377,14 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
 	"\x06hidden\x18\t \x01(\bR\x06hidden\x122\n" +
 	"\bpriority\x18\n" +
-	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\x9c\x05\n" +
+	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\xb0\x05\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12!\n" +
 	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\x122\n" +
 	"\x06output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12=\n" +
-	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12+\n" +
-	"\vduration_ms\x18\x06 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02(\x00R\n" +
-	"durationMs\x12\x18\n" +
+	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
+	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\x12\x18\n" +
 	"\achanged\x18\a \x01(\bR\achanged\x12C\n" +
 	"\bmetadata\x18\b \x03(\v2'.cadestro.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
 	"\tcompliant\x18\t \x01(\bR\tcompliant\x12E\n" +
@@ -3513,6 +3512,7 @@ var file_cadestro_v1_actions_proto_goTypes = []any{
 	(ExecutionStatus)(0),              // 38: cadestro.v1.ExecutionStatus
 	(*CommandOutput)(nil),             // 39: cadestro.v1.CommandOutput
 	(*timestamppb.Timestamp)(nil),     // 40: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),       // 41: google.protobuf.Duration
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	36, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
@@ -3554,15 +3554,16 @@ var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	38, // 36: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
 	39, // 37: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
 	40, // 38: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	35, // 39: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
-	39, // 40: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	32, // 41: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
-	32, // 42: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
-	43, // [43:43] is the sub-list for method output_type
-	43, // [43:43] is the sub-list for method input_type
-	43, // [43:43] is the sub-list for extension type_name
-	43, // [43:43] is the sub-list for extension extendee
-	0,  // [0:43] is the sub-list for field type_name
+	41, // 39: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
+	35, // 40: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
+	39, // 41: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	32, // 42: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
+	32, // 43: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
+	44, // [44:44] is the sub-list for method output_type
+	44, // [44:44] is the sub-list for method input_type
+	44, // [44:44] is the sub-list for extension type_name
+	44, // [44:44] is the sub-list for extension extendee
+	0,  // [0:44] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }
