@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type LpsPassword, type LuksKey, formatTimestampDateTime } from '$lib/sdk';
 	import { LuksRevocationStatus, RotationReason } from '$contract/cadestro/v1/common_pb';
@@ -30,8 +31,6 @@
 	let luksRevokeDialogOpen = $state(false);
 	let luksRevokeActionId = $state('');
 	let luksRevokeDispatching = $state(false);
-	let loaded = $state(false);
-
 	const lpsSecret = $derived({
 		reveal: async (id: string) => (await apiClient.revealLpsPassword(id)).password,
 		revealLabel: m.lps_passwords_reveal(),
@@ -48,12 +47,9 @@
 		copiedMessage: m.luks_keys_copied()
 	});
 
-	$effect(() => {
-		if (!loaded) {
-			loaded = true;
-			loadLpsPasswords();
-			loadLuksKeys();
-		}
+	onMount(() => {
+		void loadLpsPasswords();
+		void loadLuksKeys();
 	});
 
 	async function loadLpsPasswords() {

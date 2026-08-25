@@ -5,6 +5,7 @@ export {
 	configStore,
 	offlineStore,
 	apiClient,
+	persistDraft,
 	useDraft,
 	formatTimestamp,
 	formatTimestampDateTime,

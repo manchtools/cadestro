@@ -2,7 +2,7 @@
 
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
-	import { apiClient, fetchAllPages, useDraft, type ManagedAction } from '$lib/sdk';
+	import { apiClient, fetchAllPages, persistDraft, useDraft, type ManagedAction } from '$lib/sdk';
 	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import { nameDescriptionSchema } from '$lib/forms/schemas/common';
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
@@ -63,9 +63,7 @@
 	let searchQuery = $state('');
 	let creatingAction = $state(false);
 
-	$effect(() => {
-		persist.data = $state.snapshot(draft) as PolicyDraft;
-	});
+	persistDraft(persist, () => draft);
 
 	$effect(() => {
 		let live = true;

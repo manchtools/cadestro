@@ -2,7 +2,7 @@
 	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
-	import { apiClient, useDraft } from '$lib/sdk';
+	import { apiClient, persistDraft, useDraft } from '$lib/sdk';
 	import { ActionType } from '$contract/cadestro/v1/actions_pb';
 	import * as m from '$lib/paraglide/messages';
 	import { getLocalizedError } from '$lib/errors';
@@ -68,9 +68,7 @@
 
 	const firstError = $derived(Object.values(errors)[0] ?? null);
 
-	$effect(() => {
-		persist.data = $state.snapshot(draft) as ActionDraft;
-	});
+	persistDraft(persist, () => draft);
 
 	function snapshot() {
 

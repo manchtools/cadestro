@@ -3,7 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { create } from '@bufbuild/protobuf';
-	import { apiClient, useDraft, type ManagedAction } from '$lib/sdk';
+	import { apiClient, persistDraft, useDraft, type ManagedAction } from '$lib/sdk';
 	import { ActionScheduleSchema } from '$contract/cadestro/v1/actions_pb';
 	import { OnFailure } from '$contract/cadestro/v1/agent_pb';
 	import { nameDescriptionSchema } from '$lib/forms/schemas/common';
@@ -59,9 +59,7 @@
 	let searchQuery = $state('');
 	let creatingAction = $state(false);
 
-	$effect(() => {
-		persist.data = $state.snapshot(draft) as SetDraft;
-	});
+	persistDraft(persist, () => draft);
 
 	$effect(() => {
 		let live = true;

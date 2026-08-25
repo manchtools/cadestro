@@ -94,7 +94,7 @@ export const configStore = {
 export const offlineStore = _offline;
 export const apiClient = _client;
 
-export { useDraft, type DraftType } from './draft.svelte';
+export { persistDraft, useDraft, type DraftType } from './draft.svelte';
 
 export type { ServerConfig } from '$contractClient/config';
 export type {

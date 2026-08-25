@@ -5,6 +5,12 @@ import { offlineStore } from './wrappers.svelte';
 
 export type { DraftType } from '$contractClient/offline';
 
+export function persistDraft<T extends object>(persist: { data: T }, draft: () => T): void {
+	$effect(() => {
+		persist.data = $state.snapshot(draft()) as T;
+	});
+}
+
 export function useDraft<T extends Record<string, unknown>>(
 	type: DraftType,
 	id: string = 'default',

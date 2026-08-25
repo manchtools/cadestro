@@ -2,7 +2,7 @@
 
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
-	import { apiClient, configStore, useDraft, type RegistrationToken } from '$lib/sdk';
+	import { apiClient, configStore, persistDraft, useDraft, type RegistrationToken } from '$lib/sdk';
 	import { createTokenSchema } from '$lib/forms/schemas/tokens';
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
 	import CreatePlate from '$lib/components/create/create-plate.svelte';
@@ -35,9 +35,7 @@
 
 	let caPin = $state('');
 
-	$effect(() => {
-		persist.data = $state.snapshot(draft) as TokenDraft;
-	});
+	persistDraft(persist, () => draft);
 
 	const errors = $derived.by(() => {
 		const out: Record<string, string> = {};

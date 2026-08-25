@@ -3,7 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { create } from '@bufbuild/protobuf';
-	import { apiClient, useDraft } from '$lib/sdk';
+	import { apiClient, persistDraft, useDraft } from '$lib/sdk';
 	import { ActionScheduleSchema } from '$contract/cadestro/v1/actions_pb';
 	import { nameDescriptionSchema } from '$lib/forms/schemas/common';
 	import { bindBuilderContext } from '$lib/components/actions/pipeline/builder-pill.svelte';
@@ -48,9 +48,7 @@
 
 	let parked = $state(false);
 
-	$effect(() => {
-		persist.data = $state.snapshot(draft) as DefinitionDraft;
-	});
+	persistDraft(persist, () => draft);
 
 	const errors = $derived.by(() => {
 		const out: Record<string, string> = {};
