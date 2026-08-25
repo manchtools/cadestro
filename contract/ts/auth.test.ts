@@ -57,6 +57,7 @@ describe('auth storage', () => {
 
 	it('rejects malformed wrappers, dates, and protobuf JSON', () => {
 		const encoded = JSON.parse(serializeAuth(fixture())) as Record<string, unknown>;
+		expect(parseAuth(JSON.stringify({ ...encoded, ignored: true })).accessToken).toBe('access');
 		expect(() => parseAuth('{}')).toThrow();
 		expect(() => parseAuth(JSON.stringify({ ...encoded, expiresAt: 'not-a-date' }))).toThrow();
 		expect(() => parseAuth(JSON.stringify({ ...encoded, user: { '$typeName': 'cadestro.v1.User' } }))).toThrow();

@@ -39,14 +39,9 @@ function isNullableString(value: unknown): value is string | null {
 }
 
 function parseStoredAuthJSON(value: unknown): StoredAuthJSON {
-	if (!isRecord(value)) throw new Error('stored auth must be an object');
-	const fields = ['accessToken', 'refreshToken', 'expiresAt', 'user'];
-	if (Object.keys(value).some((key) => !fields.includes(key))) throw new Error('stored auth has unknown fields');
-	if (!fields.every((field) => Object.hasOwn(value, field))) throw new Error('stored auth is incomplete');
-	if (!isNullableString(value.accessToken) || !isNullableString(value.refreshToken) || !isNullableString(value.expiresAt)) {
-		throw new Error('stored auth has invalid scalar fields');
+	if (!isRecord(value) || !isNullableString(value.accessToken) || !isNullableString(value.refreshToken) || !isNullableString(value.expiresAt) || (value.user !== null && !isRecord(value.user))) {
+		throw new Error('stored auth has invalid fields');
 	}
-	if (value.user !== null && !isRecord(value.user)) throw new Error('stored auth has an invalid user');
 	return value as StoredAuthJSON;
 }
 
@@ -55,7 +50,7 @@ export function parseAuth(data: string): StoredAuth {
 	let expiresAt: Date | null = null;
 	if (stored.expiresAt !== null) {
 		expiresAt = new Date(stored.expiresAt);
-		if (Number.isNaN(expiresAt.getTime()) || expiresAt.toISOString() !== stored.expiresAt) {
+		if (Number.isNaN(expiresAt.getTime())) {
 			throw new Error('stored auth has an invalid expiry');
 		}
 	}
@@ -68,12 +63,6 @@ export function parseAuth(data: string): StoredAuth {
 }
 
 export function serializeAuth(auth: StoredAuth): string {
-	if (!isNullableString(auth.accessToken) || !isNullableString(auth.refreshToken)) {
-		throw new Error('auth has invalid tokens');
-	}
-	if (auth.expiresAt !== null && (!(auth.expiresAt instanceof Date) || Number.isNaN(auth.expiresAt.getTime()))) {
-		throw new Error('auth has an invalid expiry');
-	}
 	return JSON.stringify({
 		accessToken: auth.accessToken,
 		refreshToken: auth.refreshToken,

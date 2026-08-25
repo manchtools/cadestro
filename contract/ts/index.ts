@@ -10,7 +10,7 @@ export type {
 	Role, PermissionInfo, UserGroup, UserGroupMember, IdentityProvider, IdentityLink,
 	LpsPassword, LuksKey, CreateActionRequest, UpdateActionParamsRequest
 } from './client';
-export { AuthStore, parseAuth, serializeAuth, type StoredAuth, type RefreshResult } from './auth';
+export { AuthStore, type StoredAuth, type RefreshResult } from './auth';
 export { ConfigStore, type ServerConfig } from './config';
 export { OfflineStore, type DraftType } from './offline';
 export { getActionTypeEnum, actionTypeToString, ACTION_TYPE_OPTIONS } from './action-types';
