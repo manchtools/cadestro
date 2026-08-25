@@ -18,6 +18,7 @@ type recordingExecutor struct {
 	executed []string
 	status   map[string]pb.ExecutionStatus
 }
+
 func (e *recordingExecutor) ExecuteAction(_ context.Context, action *pb.Action) *pb.ActionResult {
 	id := action.GetId().GetValue()
 	e.executed = append(e.executed, id)

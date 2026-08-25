@@ -50,8 +50,6 @@ func (f *upgradeFakeMgr) UpgradeSecurity(_ context.Context) (sysexec.Result, err
 	return sysexec.Result{Stdout: "upgraded"}, nil
 }
 
-// updateTestExecutor builds an Executor with the fake manager injected and
-// every host side effect stubbed.
 func updateTestExecutor(t *testing.T, fake *upgradeFakeMgr) *Executor {
 	t.Helper()
 	t.Setenv("PATH", t.TempDir())

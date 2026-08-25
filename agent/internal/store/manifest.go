@@ -619,7 +619,7 @@ func (s *Store) RecoverInterruptedOccurrences() ([]PendingResult, error) {
 		message := "agent restarted after STARTED; effect is unknown and was not repeated"
 		result := &pb.ActionResult{
 			ActionId:     &pb.ActionId{Value: item.actionID},
-			RunId:   item.runID,
+			RunId:        item.runID,
 			OccurrenceId: item.occurrenceID,
 			Status:       status,
 			Error:        message,

@@ -7,19 +7,6 @@ import (
 	"testing"
 )
 
-// TestNoRedundantPackageManagerLookPath enforces that the agent does NOT call
-// exec.LookPath or osexec.LookPath for package-manager binaries (flatpak, dpkg,
-// rpm) that the SDK's package detector already enumerates. The SDK runs Detect at
-// startup (executor.go:155), stores the result in e.pkgBackend, and the
-// executor's per-format action files can check the detector for sibling
-// backends instead of hard-coding binary names and bypassing the SDK's PATH
-// resolution.
-//
-// Allowed LookPath calls:
-//   - backend.go privilegeTool (sudo/doas) — the agent's own privilege config
-//   - backend.go systemctl/cryptsetup — startup validation of the operator's
-//     configured backends; these binaries must be on PATH before the SDK
-//     Manager can be built.
 func TestNoRedundantPackageManagerLookPath(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(rel string) bool {
