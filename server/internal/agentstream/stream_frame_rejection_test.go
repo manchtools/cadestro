@@ -43,12 +43,6 @@ func (streamTestSecrets) StoreLpsPasswords(context.Context, string, *cadestrov1.
 	return &cadestrov1.StoreLpsPasswordsResponse{}, nil
 }
 
-type streamTestPolicyResults struct{}
-
-func (streamTestPolicyResults) RecordPolicyManifestResult(context.Context, string, string, string, string, string) error {
-	return nil
-}
-
 type streamTestSync struct{}
 
 func (streamTestSync) Sync(context.Context, string) (*cadestrov1.SyncState, error) {
@@ -88,7 +82,7 @@ func newStreamTestFixture(t *testing.T) *streamTestFixture {
 	require.NoError(t, err)
 	serial := big.NewInt(1)
 	handler := New(Config{
-		Store: st, Manager: connection.NewManager(), PolicyResults: streamTestPolicyResults{},
+		Store: st, Manager: connection.NewManager(),
 		Executions: &fakeExecutionResults{}, DeviceResults: &fakeDeviceResults{}, Secrets: streamTestSecrets{},
 		Sync: streamTestSync{}, LiveOperations: streamTestLiveOperations{},
 		TerminalSessions: connection.NewTerminalSessionRegistry(), Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),

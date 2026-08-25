@@ -44,10 +44,6 @@ type DeviceResults interface {
 	CompleteLuksKeyRevocation(context.Context, string, *cadestrov1.RevokeLuksDeviceKeyResult) error
 }
 
-type PolicyResults interface {
-	RecordPolicyManifestResult(context.Context, string, string, string, string, string) error
-}
-
 type ExecutionResults interface {
 	ApplyActionResult(context.Context, string, *cadestrov1.ActionResult) error
 }
@@ -71,7 +67,6 @@ type LiveOperationResults interface {
 type Config struct {
 	Store             *store.Store
 	Manager           *connection.Manager
-	PolicyResults     PolicyResults
 	Executions        ExecutionResults
 	DeviceResults     DeviceResults
 	Secrets           Secrets
@@ -90,7 +85,6 @@ type Handler struct {
 
 	store             *store.Store
 	manager           *connection.Manager
-	policyResults     PolicyResults
 	executions        ExecutionResults
 	deviceResults     DeviceResults
 	secrets           Secrets
@@ -108,7 +102,7 @@ type Handler struct {
 }
 
 func New(cfg Config) *Handler {
-	if cfg.Store == nil || cfg.Manager == nil || cfg.PolicyResults == nil || cfg.Executions == nil ||
+	if cfg.Store == nil || cfg.Manager == nil || cfg.Executions == nil ||
 		cfg.DeviceResults == nil || cfg.Secrets == nil || cfg.Sync == nil || cfg.LiveOperations == nil || cfg.TerminalSessions == nil {
 		panic("agentstream: complete direct service wiring is required")
 	}
@@ -119,7 +113,7 @@ func New(cfg Config) *Handler {
 		cfg.Now = time.Now
 	}
 	return &Handler{
-		store: cfg.Store, manager: cfg.Manager, policyResults: cfg.PolicyResults, executions: cfg.Executions,
+		store: cfg.Store, manager: cfg.Manager, executions: cfg.Executions,
 		deviceResults: cfg.DeviceResults, secrets: cfg.Secrets, sync: cfg.Sync, liveOperations: cfg.LiveOperations,
 		terminalSessions: cfg.TerminalSessions, logger: cfg.Logger,
 		serverVersion: cfg.ServerVersion, deviceLoginURL: cfg.DeviceLoginURL,
@@ -300,7 +294,7 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 			_ = h.sendResultAck(agent, message.GetId().GetValue(), err)
 			return err
 		}
-		err = h.policyResults.RecordPolicyManifestResult(ctx, deviceID, payload.ManifestResult.GetRunId().GetValue(),
+		err = h.store.RecordPolicyManifestResult(ctx, deviceID, payload.ManifestResult.GetRunId().GetValue(),
 			payload.ManifestResult.GetManifestId().GetValue(), state, code)
 		if ackErr := h.sendResultAck(agent, message.GetId().GetValue(), err); ackErr != nil && err == nil {
 			return ackErr

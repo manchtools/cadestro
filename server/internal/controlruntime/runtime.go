@@ -112,7 +112,7 @@ func New(cfg Config) *Runtime {
 		AtRest: cfg.AtRest,
 	})
 	agentService := agentstream.New(agentstream.Config{
-		Store: cfg.Store, Manager: manager, PolicyResults: cfg.Store, Executions: executionResults,
+		Store: cfg.Store, Manager: manager, Executions: executionResults,
 		DeviceResults: deviceHandlers, Secrets: secretService, Sync: syncService,
 		LiveOperations:   deviceControl,
 		TerminalSessions: sessions, Logger: cfg.Logger, ServerVersion: cfg.Version,
