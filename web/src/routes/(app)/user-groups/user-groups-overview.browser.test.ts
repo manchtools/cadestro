@@ -54,7 +54,7 @@ vi.mock('$lib/sdk', async () => {
 import UserGroupsPage from './+page.svelte';
 
 const RULE_GROUP = {
-	id: '01HZUSRGRPDYNAMIC000000000',
+	id: { value: '01HZUSRGRPDYNAMIC000000000' },
 	name: 'Berlin staff',
 	description: '',
 	isDynamic: true,
@@ -62,7 +62,7 @@ const RULE_GROUP = {
 	memberCount: 12
 };
 const CURATED_GROUP = {
-	id: '01HZUSRGRPSTATIC0000000000',
+	id: { value: '01HZUSRGRPSTATIC0000000000' },
 	name: 'Operators',
 	description: '',
 	isDynamic: false,
@@ -92,11 +92,11 @@ describe('/user-groups — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		expect(document.querySelector('[data-testid="user-groups-overview"]')).not.toBeNull();
-		const rule = tiles().find((t) => t.dataset.entityId === RULE_GROUP.id)!;
+		const rule = tiles().find((t) => t.dataset.entityId === RULE_GROUP.id.value)!;
 		expect(rule.textContent).toContain('Berlin staff');
 		expect(rule.textContent).toContain('12 members');
 		expect(rule.dataset.dynamic).toBe('true');
-		const curated = tiles().find((t) => t.dataset.entityId === CURATED_GROUP.id)!;
+		const curated = tiles().find((t) => t.dataset.entityId === CURATED_GROUP.id.value)!;
 		expect(curated.textContent).toContain('2 members');
 		expect(curated.dataset.dynamic).toBe('false');
 		expect(mocks.search).not.toHaveBeenCalled();
@@ -107,10 +107,10 @@ describe('/user-groups — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		tiles()
-			.find((t) => t.dataset.entityId === CURATED_GROUP.id)!
+			.find((t) => t.dataset.entityId === CURATED_GROUP.id.value)!
 			.click();
 
-		expect(mocks.goto).toHaveBeenCalledWith(`/user-groups/${CURATED_GROUP.id}`);
+		expect(mocks.goto).toHaveBeenCalledWith(`/user-groups/${CURATED_GROUP.id.value}`);
 	});
 
 	it('the level pill zooms to the existing list one level down', async () => {

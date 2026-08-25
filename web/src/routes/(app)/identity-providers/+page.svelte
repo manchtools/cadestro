@@ -52,7 +52,7 @@
 		if (!providerToDelete) return;
 		try {
 			await apiClient.deleteIdentityProvider((providerToDelete.id?.value ?? ''));
-			table.patchRows((rows) => rows.filter((p) => p.id !== providerToDelete!.id));
+			table.patchRows((rows) => rows.filter((p) => p.id?.value !== providerToDelete!.id?.value));
 			toast.success(m.idp_detail_deleted());
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -108,7 +108,7 @@
 		{table}
 		{sortOptions}
 		rowKey={(p) => (p.id?.value ?? '')}
-		href={(p) => `${base}/identity-providers/${p.id}`}
+		href={(p) => `${base}/identity-providers/${p.id?.value ?? ''}`}
 	>
 		{#snippet row(provider)}
 			<div class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft">
@@ -117,7 +117,7 @@
 			<span class="min-w-0">
 				<span class="block truncate text-sm font-semibold">{provider.name}</span>
 				<span class="flex min-w-0 items-baseline gap-2">
-					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{provider.id}</span>
+					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{provider.id?.value ?? ''}</span>
 					<span class="truncate font-mono text-xs text-muted-foreground">{provider.slug}</span>
 				</span>
 			</span>
@@ -150,7 +150,7 @@
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item onclick={() => goto(`/identity-providers/${provider.id}`)}>
+					<DropdownMenu.Item onclick={() => goto(`/identity-providers/${provider.id?.value ?? ''}`)}>
 						<Pencil class="mr-2 h-4 w-4" />
 						{m.common_edit()}
 					</DropdownMenu.Item>

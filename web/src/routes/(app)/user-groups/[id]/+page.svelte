@@ -117,8 +117,8 @@
 			.map((g) => g.role!.id?.value ?? '')
 	);
 
-	const memberUserIds = $derived(new Set(members.map((x) => x.userId)));
-	const availableUsers = $derived(allUsers.filter((u) => !memberUserIds.has(u.id)));
+	const memberUserIds = $derived(new Set(members.map((x) => x.userId?.value ?? '')));
+	const availableUsers = $derived(allUsers.filter((u) => !memberUserIds.has(u.id?.value ?? '')));
 
 	const previewRows = $derived<RulePreviewRow[]>(
 		members.map((member) => ({
@@ -501,7 +501,7 @@
 								</Button>
 							{/if}
 						</div>
-						<p class="font-mono text-xs text-faint">{group.id}</p>
+						<p class="font-mono text-xs text-faint">{group.id?.value ?? ''}</p>
 						<p class="mt-1 text-sm text-muted-foreground">
 							{group.description || m.common_no_description()}
 						</p>
@@ -579,18 +579,18 @@
 							{m.user_group_detail_no_roles()}
 						</p>
 					{:else}
-						{#each group.roleGrants ?? [] as grant (grant.role?.id + ':' + grant.scopeKind + ':' + grant.scopeId)}
+						{#each group.roleGrants ?? [] as grant ((grant.role?.id?.value ?? '') + ':' + grant.scopeKind + ':' + (grant.scopeId?.value ?? ''))}
 							{#if grant.role}
 								<div class="flex flex-wrap items-center gap-2 border-b border-hair px-3 py-2 last:border-b-0">
 									<Shield class="h-4 w-4 shrink-0 text-muted-foreground" />
 									<span class="font-mono text-sm">{grant.role.name}</span>
 									{#if grant.scopeKind === RoleGrantScopeKind.DEVICE_GROUP}
 										<Chip tone="idle">
-											<Terminal class="h-3 w-3" />{grant.scopeName || grant.scopeId}
+							<Terminal class="h-3 w-3" />{grant.scopeName || (grant.scopeId?.value ?? '')}
 										</Chip>
 									{:else if grant.scopeKind === RoleGrantScopeKind.USER_GROUP}
 										<Chip tone="idle">
-											<UsersRound class="h-3 w-3" />{grant.scopeName || grant.scopeId}
+							<UsersRound class="h-3 w-3" />{grant.scopeName || (grant.scopeId?.value ?? '')}
 										</Chip>
 									{/if}
 									{#if grant.role.isSystem}

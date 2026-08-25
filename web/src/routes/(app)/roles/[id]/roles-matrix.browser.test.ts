@@ -46,7 +46,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: '01JR0A000000000000000000AA' }, hasPermission: () => true },
+		authStore: { user: { id: { value: '01JR0A000000000000000000AA' }}, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',

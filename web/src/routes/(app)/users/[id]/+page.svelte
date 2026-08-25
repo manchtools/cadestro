@@ -78,7 +78,7 @@
 		return (letters.join('') || source.slice(0, 2)).toUpperCase();
 	});
 
-	const isSelf = $derived(!!user && user.id === authStore.user?.id);
+	const isSelf = $derived(!!user && user.id?.value === authStore.user?.id?.value);
 
 	const contextId = $derived(`user:${userId}`);
 	$effect(() => {
@@ -360,7 +360,7 @@
 					</div>
 					<p class="truncate text-sm text-muted-foreground">{user.email}</p>
 					<p class="truncate font-mono text-[0.68rem] text-faint" title={m.users_header_id()}>
-						{user.id}
+						{user.id?.value ?? ''}
 					</p>
 				</div>
 				<div class="flex flex-wrap gap-2">
@@ -469,7 +469,7 @@
 							<p class="mt-3 text-sm text-muted-foreground">{m.user_detail_no_identity_links()}</p>
 						{:else}
 							<div class="mt-3 divide-y divide-hair">
-								{#each user.identityLinks as link (link.id)}
+								{#each user.identityLinks as link (link.id?.value ?? '')}
 									<div class="flex items-center justify-between gap-3 py-2.5">
 										<div class="min-w-0">
 											<p class="flex items-center gap-2 text-sm font-medium">
@@ -556,7 +556,7 @@
 							<p class="mt-3 text-sm text-muted-foreground">{m.user_detail_ssh_no_keys()}</p>
 						{:else}
 							<div class="mt-3 divide-y divide-hair">
-								{#each user.sshPublicKeys as key (key.id)}
+								{#each user.sshPublicKeys as key (key.id?.value ?? '')}
 									<div class="flex items-center justify-between gap-3 py-2.5">
 										<div class="min-w-0 flex-1">
 											<p class="truncate rounded-md bg-sunken px-2 py-1 font-mono text-xs">
@@ -603,18 +603,18 @@
 											<div class="min-w-0">
 												<div class="flex flex-wrap items-center gap-2">
 													<a
-														href="{base}/roles/{grant.role.id}"
+														href="{base}/roles/{grant.role.id?.value ?? ''}"
 														class="text-sm font-medium hover:underline"
 													>
 														{grant.role.name}
 													</a>
 													{#if grant.scopeKind === RoleGrantScopeKind.DEVICE_GROUP}
 														<Chip tone="idle">
-															<Terminal class="h-3 w-3" />{grant.scopeName || grant.scopeId}
+							<Terminal class="h-3 w-3" />{grant.scopeName || (grant.scopeId?.value ?? '')}
 														</Chip>
 													{:else if grant.scopeKind === RoleGrantScopeKind.USER_GROUP}
 														<Chip tone="idle">
-															<UsersRound class="h-3 w-3" />{grant.scopeName || grant.scopeId}
+							<UsersRound class="h-3 w-3" />{grant.scopeName || (grant.scopeId?.value ?? '')}
 														</Chip>
 													{:else}
 														<Chip tone="idle" label={m.roles_scope_org_wide()} />
@@ -633,11 +633,11 @@
 										</div>
 									{/if}
 								{/each}
-								{#each inheritedRoles as { role, groupName } (role.id)}
+								{#each inheritedRoles as { role, groupName } (role.id?.value ?? '')}
 									<div class="flex items-center justify-between gap-3 py-2.5">
 										<div class="min-w-0">
 											<div class="flex flex-wrap items-center gap-2">
-												<a href="{base}/roles/{role.id}" class="text-sm font-medium hover:underline">
+												<a href="{base}/roles/{role.id?.value ?? ''}" class="text-sm font-medium hover:underline">
 													{role.name}
 												</a>
 												<Chip tone="info">
@@ -662,12 +662,12 @@
 							<p class="text-sm text-muted-foreground">{m.users_groups_empty()}</p>
 						{:else}
 							<div class="divide-y divide-hair">
-								{#each userGroups as group (group.id)}
+								{#each userGroups as group (group.id?.value ?? '')}
 									<div class="flex items-center justify-between gap-3 py-2.5">
 										<div class="min-w-0">
 											<div class="flex flex-wrap items-center gap-2">
 												<a
-													href="{base}/user-groups/{group.id}"
+													href="{base}/user-groups/{group.id?.value ?? ''}"
 													class="text-sm font-medium hover:underline"
 												>
 													{group.name}

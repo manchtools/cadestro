@@ -148,7 +148,7 @@
 			if (action) {
 				await persist.clear();
 				toast.success(m.actions_created());
-				void goto(`/actions/${action.id}`);
+				void goto(`/actions/${action.id?.value ?? ''}`);
 			}
 		} catch (error) {
 			toast.error(getLocalizedError(error));

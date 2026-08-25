@@ -54,14 +54,14 @@ vi.mock('$lib/sdk', async () => {
 import DeviceGroupsPage from './+page.svelte';
 
 const RULE_GROUP = {
-	id: '01HZDEVGRPDYNAMIC000000000',
+	id: { value: '01HZDEVGRPDYNAMIC000000000' },
 	name: 'Kiosks',
 	description: '',
 	isDynamic: true,
 	memberCount: 7
 };
 const CURATED_GROUP = {
-	id: '01HZDEVGRPSTATIC0000000000',
+	id: { value: '01HZDEVGRPSTATIC0000000000' },
 	name: 'Warehouse',
 	description: '',
 	isDynamic: false,
@@ -91,11 +91,11 @@ describe('/device-groups — the overview is the landing level', () => {
 
 		expect(document.querySelector('[data-testid="device-groups-overview"]')).not.toBeNull();
 
-		const rule = tiles().find((t) => t.dataset.entityId === RULE_GROUP.id)!;
+		const rule = tiles().find((t) => t.dataset.entityId === RULE_GROUP.id.value)!;
 		expect(rule.textContent).toContain('Kiosks');
 		expect(rule.textContent).toContain('7 members');
 		expect(rule.dataset.dynamic).toBe('true');
-		const curated = tiles().find((t) => t.dataset.entityId === CURATED_GROUP.id)!;
+		const curated = tiles().find((t) => t.dataset.entityId === CURATED_GROUP.id.value)!;
 		expect(curated.textContent).toContain('3 members');
 		expect(curated.dataset.dynamic).toBe('false');
 
@@ -107,10 +107,10 @@ describe('/device-groups — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		tiles()
-			.find((t) => t.dataset.entityId === RULE_GROUP.id)!
+			.find((t) => t.dataset.entityId === RULE_GROUP.id.value)!
 			.click();
 
-		expect(mocks.goto).toHaveBeenCalledWith(`/devices?zoom=group&group=${RULE_GROUP.id}`);
+		expect(mocks.goto).toHaveBeenCalledWith(`/devices?zoom=group&group=${RULE_GROUP.id.value}`);
 	});
 
 	it('the level pill zooms to the existing list one level down', async () => {

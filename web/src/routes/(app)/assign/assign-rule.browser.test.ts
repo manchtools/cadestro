@@ -89,7 +89,7 @@ beforeEach(() => {
 		error: '',
 		matchingDeviceCount: MATCH_COUNT
 	});
-	api.createDeviceGroup.mockResolvedValue({ id: GROUP_ID, name: GROUP_NAME });
+	api.createDeviceGroup.mockResolvedValue({ id: { value: GROUP_ID }, name: GROUP_NAME });
 });
 
 function context() {

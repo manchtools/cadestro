@@ -87,7 +87,7 @@
 		const blocked = issues.first !== null;
 		return {
 
-			route: `/actions/${action.id}`,
+			route: `/actions/${action.id?.value ?? ''}`,
 			stashPayload: () => $state.snapshot(step),
 			title: step.name.trim() || action.name,
 			dirty,

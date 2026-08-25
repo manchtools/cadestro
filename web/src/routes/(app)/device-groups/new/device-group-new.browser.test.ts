@@ -22,7 +22,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: '01JQZZ0000000000000000000A' }, hasPermission: () => true },
+		authStore: { user: { id: { value: '01JQZZ0000000000000000000A' }}, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
@@ -84,7 +84,7 @@ beforeEach(() => {
 	resetShell();
 	setShellPath(ROUTE);
 	nav.url = new URL('https://control.test/device-groups/new');
-	api.createDeviceGroup.mockResolvedValue({ id: GROUP_ID, name: 'Berlin laptops' });
+	api.createDeviceGroup.mockResolvedValue({ id: { value: GROUP_ID }, name: 'Berlin laptops' });
 	api.search.mockResolvedValue({ results: [], totalCount: 0n, nextPageToken: '' });
 	api.validateDynamicQuery.mockResolvedValue({ valid: true, count: 0, error: '' });
 });

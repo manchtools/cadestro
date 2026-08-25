@@ -74,7 +74,7 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	resetShell();
 	setShellPath(ROUTE);
-	api.createAction.mockResolvedValue({ id: '01JQZZBH4V0W6Y9Z3A5B8C7D2E' });
+	api.createAction.mockResolvedValue({ id: { value: '01JQZZBH4V0W6Y9Z3A5B8C7D2E' }});
 	api.listActions.mockResolvedValue({ actions: [], nextPageToken: '' });
 	api.listUsers.mockResolvedValue({ users: [], nextPageToken: '' });
 });

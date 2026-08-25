@@ -78,7 +78,7 @@
 			const role = await apiClient.createRole(draft.name.trim(), draft.description.trim(), []);
 			if (role) {
 				toast.success(m.roles_created());
-				void goto(`/roles/${role.id}`);
+				void goto(`/roles/${role.id?.value ?? ''}`);
 			}
 		} catch (error) {
 			toast.error(getLocalizedError(error));

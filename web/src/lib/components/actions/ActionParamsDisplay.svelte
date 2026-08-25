@@ -41,7 +41,7 @@
 				return `Repository: ${params.value.name} (${configured.join(', ')})`;
 			}
 			case 'flatpak':
-				return `Flatpak: ${params.value.appId}${params.value.remote ? ` (${params.value.remote})` : ''}`;
+				return `Flatpak: ${params.value.appId?.value ?? ''}${params.value.remote ? ` (${params.value.remote})` : ''}`;
 			case 'directory':
 				return `${m.actions_type_directory()}: ${params.value.path}`;
 			case 'user':
@@ -242,7 +242,7 @@
 			</div>
 		{:else if params.case === 'flatpak'}
 			<div class="text-sm space-y-1">
-				<p><span class="text-muted-foreground">{m.actions_display_app_id()}:</span> {params.value.appId}</p>
+				<p><span class="text-muted-foreground">{m.actions_display_app_id()}:</span> {params.value.appId?.value ?? ''}</p>
 				{#if params.value.remote}
 					<p><span class="text-muted-foreground">{m.actions_display_remote()}:</span> {params.value.remote}</p>
 				{/if}

@@ -63,16 +63,16 @@ vi.mock('$lib/sdk', async () => {
 import CompliancePoliciesPage from './+page.svelte';
 
 const DEVICES = [
-	{ id: '01HZDEVCOMPLIANT000000000A', hostname: 'ok-01', complianceStatus: ComplianceStatus.COMPLIANT },
+	{ id: { value: '01HZDEVCOMPLIANT000000000A' }, hostname: 'ok-01', complianceStatus: ComplianceStatus.COMPLIANT },
 	{
-		id: '01HZDEVVIOLATION000000000B',
+		id: { value: '01HZDEVVIOLATION000000000B' },
 		hostname: 'drift-01',
 		complianceStatus: ComplianceStatus.NON_COMPLIANT
 	},
-	{ id: '01HZDEVUNKNOWN0000000000C', hostname: 'new-01', complianceStatus: ComplianceStatus.UNKNOWN }
+	{ id: { value: '01HZDEVUNKNOWN0000000000C' }, hostname: 'new-01', complianceStatus: ComplianceStatus.UNKNOWN }
 ];
 const POLICY = {
-	id: '01HZPOLICY000000000000000A',
+	id: { value: '01HZPOLICY000000000000000A' },
 	name: 'CIS baseline',
 	description: '',
 	rules: [],
@@ -99,9 +99,9 @@ describe('/compliance-policies — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(3), { timeout: 3000 });
 
 		const byId = (id: string) => tiles().find((t) => t.dataset.deviceId === id)!;
-		const compliant = byId(DEVICES[0].id);
-		const violating = byId(DEVICES[1].id);
-		const unknown = byId(DEVICES[2].id);
+		const compliant = byId(DEVICES[0].id.value);
+		const violating = byId(DEVICES[1].id.value);
+		const unknown = byId(DEVICES[2].id.value);
 
 		expect(compliant.dataset.tone).toBe('ok');
 		expect(violating.dataset.tone).toBe('warn');
@@ -126,10 +126,10 @@ describe('/compliance-policies — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(3), { timeout: 3000 });
 
 		tiles()
-			.find((t) => t.dataset.deviceId === DEVICES[1].id)!
+			.find((t) => t.dataset.deviceId === DEVICES[1].id.value)!
 			.click();
 
-		expect(mocks.goto).toHaveBeenCalledWith(`/devices/${DEVICES[1].id}?tab=compliance`);
+		expect(mocks.goto).toHaveBeenCalledWith(`/devices/${DEVICES[1].id.value}?tab=compliance`);
 	});
 
 	it('the level pill zooms to the existing policy list one level down', async () => {

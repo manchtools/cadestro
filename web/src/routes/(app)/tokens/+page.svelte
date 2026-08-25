@@ -68,7 +68,7 @@
 		if (!tokenToDelete) return;
 		try {
 			await apiClient.deleteToken((tokenToDelete.id?.value ?? ''));
-			table.patchRows((rows) => rows.filter((t) => t.id !== tokenToDelete!.id));
+			table.patchRows((rows) => rows.filter((t) => t.id?.value !== tokenToDelete!.id?.value));
 			toast.success(m.tokens_deleted());
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -83,7 +83,7 @@
 		try {
 			const updated = await apiClient.setTokenDisabled((token.id?.value ?? ''), !token.disabled);
 			if (updated) {
-				table.patchRows((rows) => rows.map((t) => (t.id === token.id ? updated : t)));
+				table.patchRows((rows) => rows.map((t) => (t.id?.value === token.id?.value ? updated : t)));
 				toast.success(updated.disabled ? m.tokens_disabled() : m.tokens_enabled());
 			}
 		} catch (error) {
@@ -164,7 +164,7 @@
 				</div>
 				<span class="min-w-0">
 					<span class="block truncate font-mono text-sm font-semibold">{token.name}</span>
-					<span class="block truncate font-mono text-[0.66rem] text-faint">{token.id}</span>
+					<span class="block truncate font-mono text-[0.66rem] text-faint">{token.id?.value ?? ''}</span>
 				</span>
 				<span class="flex shrink-0 items-center gap-1.5">
 					<span title={m.tokens_table_status()}>

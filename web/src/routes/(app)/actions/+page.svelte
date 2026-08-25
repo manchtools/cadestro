@@ -252,7 +252,7 @@
 			await apiClient.deleteAction((actionToDelete.id?.value ?? ''));
 			toast.success(m.actions_deleted());
 
-			table.patchRows((rows) => rows.filter((a) => a.id !== actionToDelete!.id));
+			table.patchRows((rows) => rows.filter((a) => a.id?.value !== actionToDelete!.id?.value));
 			table.refresh();
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -379,7 +379,7 @@
 		{table}
 		{sortOptions}
 		rowKey={(a) => (a.id?.value ?? '')}
-		href={(a) => `${base}/actions/${a.id}`}
+		href={(a) => `${base}/actions/${a.id?.value ?? ''}`}
 	>
 		{#snippet filters()}
 			<MultiSelectCombobox
@@ -422,7 +422,7 @@
 			<span class="min-w-0">
 				<span class="block truncate text-sm font-semibold">{action.name}</span>
 				<span class="flex min-w-0 items-baseline gap-2">
-					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{action.id}</span>
+					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{action.id?.value ?? ''}</span>
 					<span class="truncate text-xs text-muted-foreground">
 						{action.description || m.common_no_description()}
 					</span>

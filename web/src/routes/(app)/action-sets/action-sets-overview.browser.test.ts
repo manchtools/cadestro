@@ -54,8 +54,8 @@ vi.mock('$lib/sdk', async () => {
 
 import ActionSetsPage from './+page.svelte';
 
-const BASE_SET = { id: '01HZACTSET000000000000000A', name: 'Base System Setup', memberCount: 4 };
-const EMPTY_SET = { id: '01HZACTSET000000000000000B', name: 'Quarantine', memberCount: 0 };
+const BASE_SET = { id: { value: '01HZACTSET000000000000000A' }, name: 'Base System Setup', memberCount: 4 };
+const EMPTY_SET = { id: { value: '01HZACTSET000000000000000B' }, name: 'Quarantine', memberCount: 0 };
 
 const tiles = () =>
 	Array.from(document.querySelectorAll<HTMLElement>('[data-testid="overview-tile"]'));
@@ -76,7 +76,7 @@ describe('/action-sets — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		expect(document.querySelector('[data-testid="action-sets-overview"]')).not.toBeNull();
-		const base = tiles().find((t) => t.dataset.entityId === BASE_SET.id)!;
+		const base = tiles().find((t) => t.dataset.entityId === BASE_SET.id.value)!;
 		expect(base.textContent).toContain('Base System Setup');
 
 		expect(base.textContent).toContain('4 actions');
@@ -88,10 +88,10 @@ describe('/action-sets — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		tiles()
-			.find((t) => t.dataset.entityId === BASE_SET.id)!
+			.find((t) => t.dataset.entityId === BASE_SET.id.value)!
 			.click();
 
-		expect(mocks.goto).toHaveBeenCalledWith(`/action-sets/${BASE_SET.id}`);
+		expect(mocks.goto).toHaveBeenCalledWith(`/action-sets/${BASE_SET.id.value}`);
 	});
 
 	it('the level pill zooms to the existing list one level down', async () => {

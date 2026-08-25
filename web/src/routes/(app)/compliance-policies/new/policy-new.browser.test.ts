@@ -26,7 +26,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: '01JQZZ0000000000000000000A' }, hasPermission: () => true },
+		authStore: { user: { id: { value: '01JQZZ0000000000000000000A' }}, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
@@ -118,8 +118,8 @@ beforeEach(() => {
 	resetShell();
 	setShellPath(ROUTE);
 	nav.url = new URL('https://control.test/compliance-policies/new');
-	api.createCompliancePolicy.mockResolvedValue({ id: POLICY_ID, name: 'Baseline posture' });
-	api.addCompliancePolicyRule.mockImplementation(async () => ({ id: POLICY_ID }));
+	api.createCompliancePolicy.mockResolvedValue({ id: { value: POLICY_ID }, name: 'Baseline posture' });
+	api.addCompliancePolicyRule.mockImplementation(async () => ({ id: { value: POLICY_ID }}));
 	api.listActions.mockResolvedValue({ actions: catalogue, nextPageToken: '' });
 	api.listUsers.mockResolvedValue({ users: [], nextPageToken: '' });
 	api.search.mockResolvedValue({ results: [], totalCount: 0n, nextPageToken: '' });

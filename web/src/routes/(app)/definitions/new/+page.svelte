@@ -107,7 +107,7 @@
 			if (def) {
 				await persist.clear();
 				toast.success(m.definitions_created());
-				void goto(`/definitions/${def.id}`);
+				void goto(`/definitions/${def.id?.value ?? ''}`);
 			}
 		} catch (error) {
 			toast.error(getLocalizedError(error));

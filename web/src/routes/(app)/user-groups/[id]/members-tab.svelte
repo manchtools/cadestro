@@ -53,14 +53,14 @@
 		</p>
 	{:else}
 		<div class="max-h-[28rem] overflow-y-auto">
-			{#each members as member (member.userId)}
+			{#each members as member (member.userId?.value ?? '')}
 				<div class="flex items-center gap-2.5 border-b border-hair px-3 py-1.5 last:border-b-0">
 					<span class="w-3.5 shrink-0"><Tile tone="info" label={member.email} /></span>
-					<a href="{base}/users/{member.userId}" class="truncate font-mono text-[0.82rem] hover:underline">
+					<a href="{base}/users/{member.userId?.value ?? ''}" class="truncate font-mono text-[0.82rem] hover:underline">
 						{member.email}
 					</a>
 					<span class="ml-auto hidden truncate font-mono text-[0.68rem] text-faint sm:inline">
-						{member.userId}
+						{member.userId?.value ?? ''}
 					</span>
 					{#if !managed}
 						<Button

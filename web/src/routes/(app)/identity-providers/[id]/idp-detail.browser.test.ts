@@ -114,8 +114,8 @@ beforeEach(() => {
 	api.updateIdentityProvider.mockImplementation(async () => stored());
 	api.listRoles.mockResolvedValue({
 		roles: [
-			{ id: ROLE_ADMIN_ID, name: 'Admin', description: 'Full access', permissions: [] },
-			{ id: ROLE_USER_ID, name: 'User', description: 'Standard access', permissions: [] }
+			{ id: { value: ROLE_ADMIN_ID }, name: 'Admin', description: 'Full access', permissions: [] },
+			{ id: { value: ROLE_USER_ID }, name: 'User', description: 'Standard access', permissions: [] }
 		]
 	});
 	api.enableSCIM.mockImplementation(async () => {

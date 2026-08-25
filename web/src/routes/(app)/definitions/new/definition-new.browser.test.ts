@@ -22,7 +22,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: '01JQZZ0000000000000000000A' }, hasPermission: () => true },
+		authStore: { user: { id: { value: '01JQZZ0000000000000000000A' }}, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
@@ -84,7 +84,7 @@ beforeEach(() => {
 	resetShell();
 	setShellPath(ROUTE);
 	nav.url = new URL('https://control.test/definitions/new');
-	api.createDefinition.mockResolvedValue({ id: DEF_ID, name: 'Baseline' });
+	api.createDefinition.mockResolvedValue({ id: { value: DEF_ID }, name: 'Baseline' });
 	api.search.mockResolvedValue({ results: [], totalCount: 0n, nextPageToken: '' });
 });
 

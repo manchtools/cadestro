@@ -104,8 +104,8 @@
 
 	const options = $derived.by((): SetOption[] =>
 		library
-			.filter((s) => !steps.some((step) => (step.actionSetId ?? '') === (typeof s.id === 'string' ? s.id : s.id?.value ?? '')))
-			.map((s) => ({ id: typeof s.id === 'string' ? s.id : s.id?.value ?? '', name: s.name, memberCount: s.memberCount }))
+			.filter((s) => !steps.some((step) => (step.actionSetId ?? '') === (s.id?.value ?? '')))
+			.map((s) => ({ id: s.id?.value ?? '', name: s.name, memberCount: s.memberCount }))
 	);
 
 	const claimed = bindBuilderContext(untrack(() => `definition:${defId}`), () => {

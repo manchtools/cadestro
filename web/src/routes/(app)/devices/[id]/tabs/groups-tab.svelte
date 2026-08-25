@@ -148,7 +148,7 @@
 					class="w-full"
 					onclick={() => {
 						sheetOpen = false;
-						goto(`/device-groups/${selectedGroup!.id}`);
+						goto(`/device-groups/${selectedGroup!.id?.value ?? ''}`);
 					}}
 				>
 					<ExternalLink class="h-4 w-4 mr-2" />

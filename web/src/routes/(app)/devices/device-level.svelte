@@ -126,7 +126,7 @@
 		try {
 			await apiClient.deleteDevice((deviceToDelete.id?.value ?? ''));
 			toast.success(m.devices_deleted());
-			table.patchRows((list) => list.filter((d) => d.id !== deviceToDelete!.id));
+			table.patchRows((list) => list.filter((d) => d.id?.value !== deviceToDelete!.id?.value));
 		} catch (error) {
 			toast.error(getLocalizedError(error));
 			console.error(error);
@@ -146,7 +146,7 @@
 		try {
 			const updated = await apiClient.assignDevice((deviceToAssign.id?.value ?? ''), userIds, groupIds);
 			if (updated) {
-				table.patchRows((list) => list.map((d) => (d.id === deviceToAssign!.id ? updated : d)));
+				table.patchRows((list) => list.map((d) => (d.id?.value === deviceToAssign!.id?.value ? updated : d)));
 			}
 			toast.success(m.devices_assigned());
 			assignDialogOpen = false;
@@ -192,10 +192,10 @@
 				{/if}
 			</Table.Cell>
 			<Table.Cell>
-				<a href="{base}/devices/{device.id}" class="font-mono font-medium hover:underline">
+				<a href="{base}/devices/{device.id?.value ?? ''}" class="font-mono font-medium hover:underline">
 					{device.hostname}
 				</a>
-				<div class="font-mono text-xs text-faint">{device.id}</div>
+				<div class="font-mono text-xs text-faint">{device.id?.value ?? ''}</div>
 			</Table.Cell>
 			<Table.Cell>
 				{#if fleet}

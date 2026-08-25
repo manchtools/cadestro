@@ -109,7 +109,7 @@
 			);
 			if (group) {
 				toast.success(m.user_groups_created());
-				void goto(`/user-groups/${group.id}`);
+				void goto(`/user-groups/${group.id?.value ?? ''}`);
 			}
 		} catch (error) {
 			toast.error(getLocalizedError(error));

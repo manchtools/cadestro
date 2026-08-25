@@ -46,19 +46,19 @@
 	});
 
 	const availableDevices = $derived(
-		devices.filter((d) => !assignments.some((a) => a.targetType === AssignmentTargetType.DEVICE && a.targetId === d.id))
+		devices.filter((d) => !assignments.some((a) => a.targetType === AssignmentTargetType.DEVICE && a.targetId?.value === d.id?.value))
 	);
 
 	const availableGroups = $derived(
-		deviceGroups.filter((g) => !assignments.some((a) => a.targetType === AssignmentTargetType.DEVICE_GROUP && a.targetId === g.id))
+		deviceGroups.filter((g) => !assignments.some((a) => a.targetType === AssignmentTargetType.DEVICE_GROUP && a.targetId?.value === g.id?.value))
 	);
 
 	const availableUsers = $derived(
-		allUsers.filter((u) => !assignments.some((a) => a.targetType === AssignmentTargetType.USER && a.targetId === u.id))
+		allUsers.filter((u) => !assignments.some((a) => a.targetType === AssignmentTargetType.USER && a.targetId?.value === u.id?.value))
 	);
 
 	const availableUserGroups = $derived(
-		allUserGroups.filter((g) => !assignments.some((a) => a.targetType === AssignmentTargetType.USER_GROUP && a.targetId === g.id))
+		allUserGroups.filter((g) => !assignments.some((a) => a.targetType === AssignmentTargetType.USER_GROUP && a.targetId?.value === g.id?.value))
 	);
 
 	let loadSeq = 0;

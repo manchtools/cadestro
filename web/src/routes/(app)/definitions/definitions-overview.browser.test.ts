@@ -55,13 +55,13 @@ vi.mock('$lib/sdk', async () => {
 import DefinitionsPage from './+page.svelte';
 
 const CRON_DEF = {
-	id: '01HZDEFINITION00000000000A',
+	id: { value: '01HZDEFINITION00000000000A' },
 	name: 'Nightly baseline',
 	memberCount: 2,
 	schedule: { cron: '0 3 * * *', intervalHours: 0, runOnAssign: true, skipIfUnchanged: false }
 };
 const INTERVAL_DEF = {
-	id: '01HZDEFINITION00000000000B',
+	id: { value: '01HZDEFINITION00000000000B' },
 	name: 'Workstation rollout',
 	memberCount: 5,
 	schedule: { cron: '', intervalHours: 12, runOnAssign: false, skipIfUnchanged: true }
@@ -90,10 +90,10 @@ describe('/definitions — the overview is the landing level', () => {
 
 		expect(document.querySelector('[data-testid="definitions-overview"]')).not.toBeNull();
 
-		const cronTile = tiles().find((t) => t.dataset.entityId === CRON_DEF.id)!;
+		const cronTile = tiles().find((t) => t.dataset.entityId === CRON_DEF.id.value)!;
 		expect(cronTile.textContent).toContain('0 3 * * *');
 		expect(cronTile.textContent).toContain('2 sets');
-		const intervalTile = tiles().find((t) => t.dataset.entityId === INTERVAL_DEF.id)!;
+		const intervalTile = tiles().find((t) => t.dataset.entityId === INTERVAL_DEF.id.value)!;
 		expect(intervalTile.textContent).toContain('12');
 		expect(intervalTile.textContent).toContain('5 sets');
 		expect(mocks.search).not.toHaveBeenCalled();
@@ -104,10 +104,10 @@ describe('/definitions — the overview is the landing level', () => {
 		await vi.waitFor(() => expect(tiles()).toHaveLength(2), { timeout: 3000 });
 
 		tiles()
-			.find((t) => t.dataset.entityId === CRON_DEF.id)!
+			.find((t) => t.dataset.entityId === CRON_DEF.id.value)!
 			.click();
 
-		expect(mocks.goto).toHaveBeenCalledWith(`/definitions/${CRON_DEF.id}`);
+		expect(mocks.goto).toHaveBeenCalledWith(`/definitions/${CRON_DEF.id.value}`);
 	});
 
 	it('the level pill zooms to the existing list one level down', async () => {

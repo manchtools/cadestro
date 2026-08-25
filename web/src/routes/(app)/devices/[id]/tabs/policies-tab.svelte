@@ -228,9 +228,9 @@
 								role="button"
 								tabindex="0"
 								class="flex w-full items-center justify-between rounded-md p-3 text-left transition-colors hover:bg-muted"
-								onclick={() => goto(`/definitions/${def.id}`)}
+								onclick={() => goto(`/definitions/${def.id?.value ?? ''}`)}
 								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') goto(`/definitions/${def.id}`);
+									if (e.key === 'Enter' || e.key === ' ') goto(`/definitions/${def.id?.value ?? ''}`);
 								}}
 							>
 								<div class="space-y-0.5">
@@ -281,9 +281,9 @@
 								role="button"
 								tabindex="0"
 								class="flex w-full items-center justify-between rounded-md p-3 text-left transition-colors hover:bg-muted"
-								onclick={() => goto(`/action-sets/${set.id}`)}
+								onclick={() => goto(`/action-sets/${set.id?.value ?? ''}`)}
 								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') goto(`/action-sets/${set.id}`);
+									if (e.key === 'Enter' || e.key === ' ') goto(`/action-sets/${set.id?.value ?? ''}`);
 								}}
 							>
 								<div class="space-y-0.5">

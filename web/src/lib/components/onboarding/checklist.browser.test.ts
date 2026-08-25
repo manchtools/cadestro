@@ -22,11 +22,11 @@ import { resetOnboarding } from '$lib/onboarding';
 const denied = () => new ConnectError('permission denied', Code.PermissionDenied);
 
 function happyFleet() {
-	mocks.listDevices.mockResolvedValue({ devices: [{ id: 'd1' }], totalCount: 1, nextPageToken: '' });
+	mocks.listDevices.mockResolvedValue({ devices: [{ id: { value: 'd1' }}], totalCount: 1, nextPageToken: '' });
 	mocks.listTokens.mockResolvedValue({ tokens: [] });
-	mocks.listActions.mockResolvedValue({ actions: [{ id: 'a1' }] });
+	mocks.listActions.mockResolvedValue({ actions: [{ id: { value: 'a1' }}] });
 	mocks.listAssignments.mockResolvedValue({ assignments: [] });
-	mocks.listUsers.mockResolvedValue({ users: [{ id: 'u1' }, { id: 'u2' }] });
+	mocks.listUsers.mockResolvedValue({ users: [{ id: { value: 'u1' }}, { id: { value: 'u2' }}] });
 	mocks.listIdentityProviders.mockResolvedValue({ providers: [] });
 }
 
@@ -96,8 +96,8 @@ describe('rows are the RPC answer', () => {
 	});
 
 	it('counts an identity provider as bringing people in, without a second human', async () => {
-		mocks.listUsers.mockResolvedValue({ users: [{ id: 'u1' }] });
-		mocks.listIdentityProviders.mockResolvedValue({ providers: [{ id: 'idp' }] });
+		mocks.listUsers.mockResolvedValue({ users: [{ id: { value: 'u1' }}] });
+		mocks.listIdentityProviders.mockResolvedValue({ providers: [{ id: { value: 'idp' }}] });
 		mount();
 		await vi.waitFor(() => expect(rows().length).toBe(5));
 

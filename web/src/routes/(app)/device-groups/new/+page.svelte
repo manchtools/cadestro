@@ -114,7 +114,7 @@
 			);
 			if (group) {
 				toast.success(m.device_groups_created());
-				void goto(`/device-groups/${group.id}`);
+				void goto(`/device-groups/${group.id?.value ?? ''}`);
 			}
 		} catch (error) {
 			toast.error(getLocalizedError(error));

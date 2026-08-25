@@ -514,7 +514,7 @@
 							</Select.Trigger>
 							<Select.Content>
 								<Select.Item value="">{m.idp_field_default_role_none()}</Select.Item>
-								{#each roles as role (role.id)}
+								{#each roles as role (role.id?.value ?? '')}
 									<Select.Item value={(role.id?.value ?? '')}>{role.name}</Select.Item>
 								{/each}
 							</Select.Content>

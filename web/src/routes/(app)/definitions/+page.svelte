@@ -186,7 +186,7 @@
 		try {
 			await apiClient.deleteDefinition((defToDelete.id?.value ?? ''));
 			toast.success(m.definitions_deleted());
-			table.patchRows((rows) => rows.filter((d) => d.id !== defToDelete!.id));
+			table.patchRows((rows) => rows.filter((d) => d.id?.value !== defToDelete!.id?.value));
 			table.refresh();
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -304,12 +304,12 @@
 					{m.definitions_overview_caption()}
 				</div>
 				<div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2">
-					{#each overview ?? [] as definition (definition.id)}
+					{#each overview ?? [] as definition (definition.id?.value ?? '')}
 						<button
 							type="button"
 							data-testid="overview-tile"
-							data-entity-id={definition.id}
-							onclick={() => goto(`/definitions/${definition.id}`)}
+							data-entity-id={definition.id?.value ?? ''}
+							onclick={() => goto(`/definitions/${definition.id?.value ?? ''}`)}
 							class="flex flex-col gap-1.5 rounded-[10px] border bg-surface p-2.5 text-left hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 						>
 							<span class="flex min-w-0 items-center gap-1.5">
@@ -344,7 +344,7 @@
 		{table}
 		{sortOptions}
 		rowKey={(d) => (d.id?.value ?? '')}
-		href={(d) => `${base}/definitions/${d.id}`}
+		href={(d) => `${base}/definitions/${d.id?.value ?? ''}`}
 	>
 		{#snippet filters()}
 			<DateRangePicker
@@ -376,7 +376,7 @@
 			<span class="min-w-0">
 				<span class="block truncate text-sm font-semibold">{def.name}</span>
 				<span class="flex min-w-0 items-baseline gap-2">
-					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{def.id}</span>
+					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{def.id?.value ?? ''}</span>
 					<span class="truncate text-xs text-muted-foreground">
 						{def.description || m.common_no_description()}
 					</span>

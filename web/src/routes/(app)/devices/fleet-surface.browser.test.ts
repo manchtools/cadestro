@@ -111,7 +111,7 @@ function respond(
 	mocks.listDeviceGroups.mockResolvedValue({ groups: protos, nextPageToken: '', totalCount: protos.length });
 	mocks.getDeviceGroup.mockImplementation(async (id: string) => ({
 		group: protos.find((g) => (g.id?.value ?? '') === id),
-		deviceIds: groups[id] ?? [],
+		deviceIds: groups[id].map((value) => ({ value })),
 		devices: []
 	}));
 }

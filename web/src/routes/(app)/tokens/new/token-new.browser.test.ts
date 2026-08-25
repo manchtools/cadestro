@@ -23,7 +23,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: USER_ID }, hasPermission: () => true },
+		authStore: { user: { id: { value: USER_ID }}, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
@@ -91,7 +91,7 @@ beforeEach(() => {
 	nav.url = new URL('https://control.test/tokens/new');
 
 	api.createToken.mockResolvedValue({
-		token: { id: TOKEN_ID, name: 'Fleet rollout', value: 'TOK-SECRET' },
+		token: { id: { value: TOKEN_ID }, name: 'Fleet rollout', value: 'TOK-SECRET' },
 		caFingerprintPin: CA_PIN
 	});
 	api.listTokens.mockResolvedValue({ tokens: [], nextPageToken: '' });

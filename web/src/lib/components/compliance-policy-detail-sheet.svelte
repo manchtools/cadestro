@@ -539,7 +539,7 @@
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
-							{#each filteredComplianceActions as action (action.id)}
+							{#each filteredComplianceActions as action (action.id?.value ?? '')}
 								<Table.Row
 									class="cursor-pointer"
 									onclick={() =>

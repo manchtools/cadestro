@@ -66,18 +66,18 @@ beforeEach(() => {
 	});
 
 	api.getUser.mockResolvedValue({
-		id: USER_ID,
+		id: { value: USER_ID },
 		email: 'ops@example.test',
 		roleGrants: [
 			{
-				role: { id: ROLE_HELP, name: 'Helpdesk' },
+				role: { id: { value: ROLE_HELP }, name: 'Helpdesk' },
 				scopeKind: RoleGrantScopeKind.USER_GROUP,
-				scopeId: '01JR0GROUPSCOPE00000000000'
+				scopeId: { value: '01JR0GROUPSCOPE00000000000' }
 			},
 			{
-				role: { id: ROLE_HELP, name: 'Helpdesk' },
+				role: { id: { value: ROLE_HELP }, name: 'Helpdesk' },
 				scopeKind: RoleGrantScopeKind.UNSPECIFIED,
-				scopeId: ''
+				scopeId: { value: '' }
 			}
 		],
 		identityLinks: []

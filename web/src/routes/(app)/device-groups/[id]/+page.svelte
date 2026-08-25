@@ -508,7 +508,7 @@
 								<Pencil class="h-3.5 w-3.5" />
 							</Button>
 						</div>
-						<p class="font-mono text-xs text-faint">{group.id}</p>
+						<p class="font-mono text-xs text-faint">{group.id?.value ?? ''}</p>
 						<p class="mt-1 text-sm text-muted-foreground">
 							{group.description || m.common_no_description()}
 						</p>

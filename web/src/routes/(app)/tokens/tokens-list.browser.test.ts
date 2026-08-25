@@ -29,7 +29,7 @@ vi.mock('$lib/sdk', async () => {
 		...control,
 		...common,
 		apiClient: api,
-		authStore: { user: { id: '01JQZZ0000000000000000000A' }, hasPermission: () => true },
+		authStore: { user: { id: { value: '01JQZZ0000000000000000000A' }}, hasPermission: () => true },
 		configStore: { serverUrl: 'https://control.test' },
 		useDraft: <T>(_type: string, _id: string, initial: T) => ({
 			data: { ...initial },

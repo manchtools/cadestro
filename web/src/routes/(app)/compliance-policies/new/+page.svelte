@@ -179,7 +179,7 @@
 				}
 				await persist.clear();
 				toast.success(m.compliance_policies_created());
-				void goto(`/compliance-policies/${policy.id}`);
+				void goto(`/compliance-policies/${policy.id?.value ?? ''}`);
 			}
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -246,12 +246,12 @@
 				</p>
 			{:else}
 				<ul class="max-h-[40vh] divide-y overflow-y-auto rounded-lg border">
-					{#each filteredActions as action (action.id)}
+					{#each filteredActions as action (action.id?.value ?? '')}
 						<li>
 							<button
 								type="button"
 								data-testid="policy-rule-row"
-								data-action-id={action.id}
+								data-action-id={action.id?.value ?? ''}
 								onclick={() => toggleAction((action.id?.value ?? ''))}
 								aria-pressed={isSelected((action.id?.value ?? ''))}
 								class="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"

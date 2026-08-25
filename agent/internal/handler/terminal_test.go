@@ -240,7 +240,7 @@ func TestTerminal_FailStart_EmitsErrorState(t *testing.T) {
 		t.Fatal("expected a state change to be sent")
 	}
 	if last.GetSessionId().GetValue() != "01ABC" {
-		t.Errorf("session_id = %q, want 01ABC", last.SessionId)
+		t.Errorf("session_id = %q, want 01ABC", last.GetSessionId().GetValue())
 	}
 	if last.State != pb.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR {
 		t.Errorf("state = %v, want ERROR", last.State)

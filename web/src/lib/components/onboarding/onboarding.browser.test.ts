@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
 const mocks = vi.hoisted(() => ({
-	user: { id: 'u1', email: 'ops@example.test' } as { id: string; email: string } | null,
+	user: { id: { value: 'u1' }, email: 'ops@example.test' } as { id: { value: string }; email: string } | null,
 	serverUrl: 'https://ctl.example.test'
 }));
 
@@ -127,7 +127,7 @@ beforeEach(() => {
 	localStorage.clear();
 	resetOnboarding();
 	motion.reduced = realReduced;
-	mocks.user = { id: 'u1', email: 'ops@example.test' };
+	mocks.user = { id: { value: 'u1' }, email: 'ops@example.test' };
 	document.body.innerHTML = '';
 });
 
@@ -158,7 +158,7 @@ describe('the first-run welcome', () => {
 		mounted?.unmount?.();
 		document.body.innerHTML = '';
 		resetOnboarding();
-		mocks.user = { id: 'u2', email: 'other@example.test' };
+		mocks.user = { id: { value: 'u2' }, email: 'other@example.test' };
 		mountHost();
 		await vi.waitFor(() => expect(q('[data-testid="onboarding-welcome"]')).not.toBeNull());
 	});

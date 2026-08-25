@@ -104,7 +104,7 @@ function respond(devices: ReturnType<typeof device>[], groups: Record<string, st
 	});
 	mocks.getDeviceGroup.mockImplementation(async (id: string) => ({
 		group: protos.find((g) => (g.id?.value ?? '') === id),
-		deviceIds: groups[id] ?? [],
+		deviceIds: groups[id].map((value) => ({ value })),
 		devices: []
 	}));
 }

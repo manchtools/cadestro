@@ -93,7 +93,7 @@ beforeEach(() => {
 	api.exportAuditEvents.mockResolvedValue({ chunk: new Uint8Array(), nextPageToken: '' });
 	api.search.mockResolvedValue({ results, totalCount: results.length });
 	api.listUsers.mockResolvedValue({
-		users: [{ id: ACTOR_ID, email: 'operator@example.test' }]
+		users: [{ id: { value: ACTOR_ID }, email: 'operator@example.test' }]
 	});
 	api.listDevices.mockResolvedValue({ devices: [], nextPageToken: '' });
 });

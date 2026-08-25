@@ -317,7 +317,7 @@
 				{#if overviewPolicies.length > 0}
 
 					<div role="group" aria-label={m.compliance_overview_policies()} class="flex flex-wrap gap-1.5">
-						{#each overviewPolicies as policy (policy.id)}
+						{#each overviewPolicies as policy (policy.id?.value ?? '')}
 							<button
 								type="button"
 								data-testid="compliance-policy-chip"
@@ -334,16 +334,16 @@
 					</div>
 				{/if}
 				<div class="grid grid-cols-[repeat(auto-fill,minmax(14px,1fr))] gap-[3px]">
-					{#each overviewDevices ?? [] as device (device.id)}
+					{#each overviewDevices ?? [] as device (device.id?.value ?? '')}
 						{@const tone = complianceTone(device.complianceStatus)}
 						<button
 							type="button"
 							data-testid="compliance-tile"
-							data-device-id={device.id}
+							data-device-id={device.id?.value ?? ''}
 							data-tone={tone}
 							aria-label="{device.hostname} · {complianceWord(device.complianceStatus)}"
 							title="{device.hostname} · {complianceWord(device.complianceStatus)}"
-							onclick={() => goto(`/devices/${device.id}?tab=compliance`)}
+							onclick={() => goto(`/devices/${device.id?.value ?? ''}?tab=compliance`)}
 							class="relative block aspect-square w-full min-w-[14px] rounded-[4px] p-0 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring {tone ===
 							'idle'
 								? 'border-[1.5px] border-dashed border-idle bg-transparent'
@@ -393,7 +393,7 @@
 				<span class="min-w-0 flex-1">
 					<span class="block truncate text-sm font-semibold">{policy.name}</span>
 					<span class="flex min-w-0 items-baseline gap-2">
-						<span class="shrink-0 font-mono text-[0.66rem] text-faint">{policy.id}</span>
+						<span class="shrink-0 font-mono text-[0.66rem] text-faint">{policy.id?.value ?? ''}</span>
 						<span class="truncate text-xs text-muted-foreground">
 							{policy.description || m.common_no_description()}
 						</span>

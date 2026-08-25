@@ -21,7 +21,7 @@ const auth = vi.hoisted(() => ({
 	granted: new Set<string>(),
 	user: {
 
-		id: '01JQZZ0000000000000000000A',
+		id: { value: '01JQZZ0000000000000000000A' },
 		email: 'operator@example.test',
 		linuxUsername: 'operator',
 		roleGrants: [{ role: { name: 'fleet-admin' } }]
@@ -61,10 +61,10 @@ beforeEach(() => {
 	tour.startTour.mockReset();
 	auth.granted = new Set(ALL_PERMISSIONS);
 	api.listIdentityLinks.mockResolvedValue({
-		links: [{ id: 'link-1', providerName: 'Keycloak', externalEmail: 'operator@idp.test' }]
+		links: [{ id: { value: 'link-1' }, providerName: 'Keycloak', externalEmail: 'operator@idp.test' }]
 	});
 	api.getCurrentUser.mockResolvedValue({
-		sshPublicKeys: [{ id: 'key-1', publicKey: 'ssh-ed25519 AAAAC3Nz', comment: 'laptop' }]
+		sshPublicKeys: [{ id: { value: 'key-1' }, publicKey: 'ssh-ed25519 AAAAC3Nz', comment: 'laptop' }]
 	});
 	api.getServerSettings.mockResolvedValue({
 		settings: { userProvisioningEnabled: false, sshAccessForAll: false }

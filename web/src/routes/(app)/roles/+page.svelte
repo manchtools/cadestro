@@ -49,7 +49,7 @@
 		if (!roleToDelete) return;
 		try {
 			await apiClient.deleteRole((roleToDelete.id?.value ?? ''));
-			table.patchRows((rows) => rows.filter((r) => r.id !== roleToDelete!.id));
+			table.patchRows((rows) => rows.filter((r) => r.id?.value !== roleToDelete!.id?.value));
 			toast.success(m.roles_deleted());
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -109,7 +109,7 @@
 			<span class="min-w-0">
 				<span class="block truncate text-sm font-semibold">{role.name}</span>
 				<span class="flex min-w-0 items-baseline gap-2">
-					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{role.id}</span>
+					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{role.id?.value ?? ''}</span>
 					<span class="truncate text-xs text-muted-foreground">
 						{role.description || m.common_no_description()}
 					</span>
@@ -138,7 +138,7 @@
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item onclick={() => goto(`/roles/${role.id}`)}>
+					<DropdownMenu.Item onclick={() => goto(`/roles/${role.id?.value ?? ''}`)}>
 						<Shield class="mr-2 h-4 w-4" />
 						{m.roles_edit()}
 					</DropdownMenu.Item>

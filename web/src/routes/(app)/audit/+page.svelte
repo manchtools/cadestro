@@ -345,7 +345,7 @@
 				</Select.Trigger>
 				<Select.Content>
 					<Select.Item value="all">{m.audit_filter_actor()}</Select.Item>
-					{#each [...users.values()] as user (user.id)}
+					{#each [...users.values()] as user (user.id?.value ?? '')}
 						<Select.Item value={(user.id?.value ?? '')}>{user.email}</Select.Item>
 					{/each}
 				</Select.Content>
@@ -373,7 +373,7 @@
 				</span>
 				<span class="min-w-0 flex-1">
 					<span class="block truncate text-sm font-medium">{formatEventType(event.eventType)}</span>
-					<span class="block truncate font-mono text-[0.66rem] text-faint">{event.id}</span>
+					<span class="block truncate font-mono text-[0.66rem] text-faint">{event.id?.value ?? ''}</span>
 				</span>
 				<span class="flex shrink-0 items-center gap-1.5">
 					<Badge variant="outline">{getStreamTypeLabel(event.streamType)}</Badge>
@@ -417,7 +417,7 @@
 			{@const event = detailEvent}
 			<Sheet.Header>
 				<Sheet.Title>{formatEventType(event.eventType)}</Sheet.Title>
-				<Sheet.Description class="text-xs">{event.id}</Sheet.Description>
+				<Sheet.Description class="text-xs">{event.id?.value ?? ''}</Sheet.Description>
 			</Sheet.Header>
 
 			<div class="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
@@ -439,7 +439,7 @@
 							)}
 						</span>
 					</div>
-					<p class="mt-2 font-mono text-xs text-faint">{event.id}</p>
+					<p class="mt-2 font-mono text-xs text-faint">{event.id?.value ?? ''}</p>
 				</section>
 
 				<section>

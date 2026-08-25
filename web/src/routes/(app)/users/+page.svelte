@@ -125,7 +125,7 @@
 
 		try {
 			await apiClient.eraseJITUser((userToErase.id?.value ?? ''));
-			table.patchRows((rows) => rows.filter((u) => u.id !== userToErase!.id));
+			table.patchRows((rows) => rows.filter((u) => u.id?.value !== userToErase!.id?.value));
 			toast.success(m.users_erased());
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -141,7 +141,7 @@
 			if (updated) {
 
 				table.patchRows((rows) =>
-					rows.map((u) => (u.id === user.id ? Object.assign(updated, { docRoles: u.docRoles }) : u))
+					rows.map((u) => (u.id?.value === user.id?.value ? Object.assign(updated, { docRoles: u.docRoles }) : u))
 				);
 				toast.success(updated.disabled ? m.users_disabled() : m.users_enabled());
 			}
@@ -203,7 +203,7 @@
 
 					table.patchRows((rows) =>
 						rows.map((u) =>
-							u.id === editEmailUser!.id ? Object.assign(updated, { docRoles: u.docRoles }) : u
+							u.id?.value === editEmailUser!.id?.value ? Object.assign(updated, { docRoles: u.docRoles }) : u
 						)
 					);
 					editEmailDialogOpen = false;
@@ -304,12 +304,12 @@
 			<span class="min-w-0">
 				<span class="block truncate text-sm font-semibold">{user.email}</span>
 				<span class="flex min-w-0 items-baseline gap-2">
-					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{user.id}</span>
+					<span class="shrink-0 font-mono text-[0.66rem] text-faint">{user.id?.value ?? ''}</span>
 					<span class="truncate text-xs text-muted-foreground">{displayNameOf(user)}</span>
 				</span>
 			</span>
 			<span class="flex shrink-0 items-center gap-1.5">
-				{#if user.id === authStore.user?.id}
+				{#if user.id?.value === authStore.user?.id?.value}
 					<Chip tone="info" label={m.users_you()} />
 				{/if}
 				<span title={m.users_table_status()}>
@@ -345,7 +345,7 @@
 		{/snippet}
 
 		{#snippet rowEnd(user)}
-			{#if user.id !== authStore.user?.id}
+			{#if user.id?.value !== authStore.user?.id?.value}
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger>
 						{#snippet child({ props })}

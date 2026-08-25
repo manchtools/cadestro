@@ -207,13 +207,13 @@ describe('action-sets list page', () => {
 
 	it('still opens member management from the row, offering only non-members', async () => {
 		api.getActionSet.mockResolvedValue({
-			set: { id: SET_ID, name: 'Base System Setup' },
+			set: { id: { value: SET_ID }, name: 'Base System Setup' },
 			members: [{ actionId: { value: ACTION_ID }, sortOrder: 0, actionName: 'Install Firefox', actionType: 1 }]
 		});
 		api.listActions.mockResolvedValue({
 			actions: [
-				{ id: ACTION_ID, name: 'Install Firefox', type: 1 },
-				{ id: '01JQZZAG3T9V5X8Y2Z4A7B6C1D', name: 'Rotate logs', type: 6 }
+				{ id: { value: ACTION_ID }, name: 'Install Firefox', type: 1 },
+				{ id: { value: '01JQZZAG3T9V5X8Y2Z4A7B6C1D' }, name: 'Rotate logs', type: 6 }
 			]
 		});
 		await mountAt(ActionSetsPage, 'https://control.test/action-sets', SETS);

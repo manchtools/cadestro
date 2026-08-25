@@ -79,7 +79,7 @@
 			<dd class="text-right">{Object.keys(device.labels).length}</dd>
 		</dl>
 		<div class="flex gap-2 border-t pt-3">
-			<Button size="sm" variant="outline" href={`${base}/devices/${device.id}`}>
+			<Button size="sm" variant="outline" href={`${base}/devices/${device.id?.value ?? ''}`}>
 				<ExternalLink class="h-3.5 w-3.5" /> {m.common_details()}
 			</Button>
 			<Button size="sm" onclick={openDeviceTerminal}>

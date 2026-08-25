@@ -97,7 +97,7 @@ const savedValue = 'ubuntu';
 
 function deviceGroup(over: Record<string, unknown> = {}) {
 	return {
-		id: mocks.params.id,
+		id: { value: mocks.params.id },
 		name: 'Production Linux',
 		description: 'linux fleet',
 		memberCount: 2,
@@ -113,7 +113,7 @@ function deviceGroup(over: Record<string, unknown> = {}) {
 function seedDeviceGroup(over: Record<string, unknown> = {}) {
 	mocks.getDeviceGroup.mockResolvedValue({
 		group: deviceGroup(over),
-		deviceIds: ['dev-1', 'dev-2'],
+		deviceIds: [{ value: 'dev-1' }, { value: 'dev-2' }],
 		devices: [
 			{ deviceId: { value: 'dev-1' }, hostname: 'web-prod-01', agentVersion: '1.2.3' },
 			{ deviceId: { value: 'dev-2' }, hostname: 'web-prod-02', agentVersion: '1.2.3' }
@@ -121,8 +121,8 @@ function seedDeviceGroup(over: Record<string, unknown> = {}) {
 	});
 	mocks.listDevices.mockResolvedValue({
 		devices: [
-			{ id: 'dev-1', hostname: 'web-prod-01', status: 1, labels: { env: 'production' } },
-			{ id: 'dev-2', hostname: 'web-prod-02', status: 2, labels: { env: 'production' } }
+			{ id: { value: 'dev-1' }, hostname: 'web-prod-01', status: 1, labels: { env: 'production' } },
+			{ id: { value: 'dev-2' }, hostname: 'web-prod-02', status: 2, labels: { env: 'production' } }
 		],
 		nextPageToken: ''
 	});
@@ -363,7 +363,7 @@ describe('user groups — the SCIM guard', () => {
 	function seedUserGroup(over: Record<string, unknown> = {}) {
 		mocks.getUserGroup.mockResolvedValue({
 			group: {
-				id: '01HZUSRGRP000000000000000',
+				id: { value: '01HZUSRGRP000000000000000' },
 				name: 'Directory',
 				description: '',
 				memberCount: 1,
@@ -374,7 +374,7 @@ describe('user groups — the SCIM guard', () => {
 				maintenanceWindow: undefined,
 				...over
 			},
-			members: [{ userId: 'usr-1', email: 'ada@example.test' }]
+			members: [{ userId: { value: 'usr-1' }, email: 'ada@example.test' }]
 		});
 	}
 

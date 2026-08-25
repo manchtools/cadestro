@@ -19,7 +19,7 @@ export function buildAuthSuperjson(opts: {
 }): string {
 	const role = {
 		$typeName: 'cadestro.v1.Role',
-		id: opts.roleId,
+		id: { value: opts.roleId },
 		name: opts.roleName,
 		description: '',
 		permissions: opts.permissions,
@@ -31,7 +31,7 @@ export function buildAuthSuperjson(opts: {
 		expiresAt: '2099-01-01T00:00:00.000Z',
 		user: {
 			$typeName: 'cadestro.v1.User',
-			id: '01J6XYZSHOWCASEADMINUSR01',
+			id: { value: '01J6XYZSHOWCASEADMINUSR01' },
 			email: 'sam.reiter@cadestro.example',
 			displayName: 'Sam Reiter',
 			givenName: 'Sam',
@@ -46,7 +46,7 @@ export function buildAuthSuperjson(opts: {
 					$typeName: 'cadestro.v1.RoleGrant',
 					role,
 					scopeKind: 0,
-					scopeId: '',
+					scopeId: { value: '' },
 					scopeName: ''
 				}
 			],
