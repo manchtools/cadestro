@@ -152,11 +152,10 @@ func (o SCIMPatchOpType) Normalize() SCIMPatchOpType {
 	return SCIMPatchOpType(strings.ToLower(string(o)))
 }
 
-// SCIMPatchOp represents a single SCIM PATCH operation.
 type SCIMPatchOp struct {
 	Op    SCIMPatchOpType `json:"op"`
 	Path  string          `json:"path,omitempty"`
-	Value any             `json:"value,omitempty"`
+	Value json.RawMessage `json:"value,omitempty"`
 }
 
 // SCIMPatchRequest represents a SCIM PATCH request body.

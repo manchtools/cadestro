@@ -179,7 +179,7 @@ func TestGroups_PatchAddsAndRemovesMembers(t *testing.T) {
 	id := f.createGroup(p, scimGroup("Team", "grp-team"))
 
 	add := f.do(http.MethodPatch, p.Slug, p.Token, "/Groups/"+id, patchOps(map[string]any{
-		"op": "add", "path": "members", "value": []map[string]any{{"value": member}},
+		"op": "add", "path": "members", "value": map[string]any{"value": member},
 	}))
 	require.Equal(t, http.StatusOK, add.Code, "body: %s", add)
 	assert.Equal(t, []string{member}, memberValues(t, add.JSON()))

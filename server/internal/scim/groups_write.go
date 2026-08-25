@@ -2,6 +2,7 @@ package scim
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -271,7 +272,6 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, s *session)
 	h.writeGroup(ctx, w, mapping, baseURL, http.StatusOK)
 }
 
-// applyGroupPatchOp applies one operation to the group.
 func (h *Handler) applyGroupPatchOp(
 	ctx context.Context,
 	tx *store.Tx,
@@ -296,10 +296,6 @@ func (h *Handler) applyGroupPatchOp(
 		}
 
 	case SCIMPatchOpRemove:
-		// A remove addresses either one member through a value filter,
-		// or a list in the value. Removing a member the directory does
-		// not own is harmless — it only ever removes what is already
-		// there — so the ownership guard applies to adds only.
 		if strings.HasPrefix(path, "members[") {
 			if userID := memberIDFromFilter(op.Path); userID != "" {
 				return h.removeMember(ctx, tx, rec, mapping.UserGroupID, userID, at)
@@ -318,7 +314,7 @@ func (h *Handler) applyGroupPatchOp(
 	case SCIMPatchOpReplace:
 		switch path {
 		case "displayname":
-			name, ok := op.Value.(string)
+			name, ok := patchString(op.Value)
 			if !ok || name == "" {
 				return nil
 			}
@@ -653,25 +649,21 @@ func (h *Handler) writeGroup(ctx context.Context, w http.ResponseWriter, mapping
 	writeJSON(w, status, resource)
 }
 
-// patchMemberIDs reads member ids out of a patch value, which a
-// directory may send as a single member object or as an array of them.
-func patchMemberIDs(value any) []string {
+func patchMemberIDs(value json.RawMessage) []string {
 	var out []string
-	switch v := value.(type) {
-	case []any:
-		for _, item := range v {
-			entry, ok := item.(map[string]any)
-			if !ok {
-				continue
-			}
-			if id, ok := entry["value"].(string); ok && id != "" {
-				out = append(out, id)
+	var items []json.RawMessage
+	if json.Unmarshal(value, &items) == nil {
+		for _, item := range items {
+			var member SCIMMember
+			if json.Unmarshal(item, &member) == nil && member.Value != "" {
+				out = append(out, member.Value)
 			}
 		}
-	case map[string]any:
-		if id, ok := v["value"].(string); ok && id != "" {
-			out = append(out, id)
-		}
+		return out
+	}
+	var member SCIMMember
+	if json.Unmarshal(value, &member) == nil && member.Value != "" {
+		out = append(out, member.Value)
 	}
 	return out
 }
