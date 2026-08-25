@@ -36,8 +36,8 @@ describe('pushState', () => {
 	beforeEach(() => navMocks.pushState.mockReset());
 
 	it('prepends base to the URL', () => {
-		pushState('/devices/abc', { actionSheet: { actionId: 'x' } } as unknown as App.PageState);
-		expect(navMocks.pushState).toHaveBeenCalledWith('/app/devices/abc', { actionSheet: { actionId: 'x' } });
+		pushState('/devices/abc', { actionSheet: 'x' });
+		expect(navMocks.pushState).toHaveBeenCalledWith('/app/devices/abc', { actionSheet: 'x' });
 	});
 });
 

@@ -255,6 +255,30 @@ export interface AgentUpdateFormState {
 	allowRedirect: boolean;
 }
 
+export interface FormStateByKey {
+	PACKAGE: PackageFormState;
+	SHELL: ShellFormState;
+	COMPLIANCE_CHECK: ShellFormState;
+	SERVICE: ServiceFormState;
+	FILE: FileFormState;
+	APP: AppFormState;
+	FLATPAK: FlatpakFormState;
+	UPDATE: UpdateFormState;
+	REPOSITORY: RepositoryFormState;
+	DIRECTORY: DirectoryFormState;
+	USER: UserFormState;
+	SSH: SshFormState;
+	SSHD: SshdFormState;
+	ADMIN_POLICY: AdminPolicyFormState;
+	LPS: LpsFormState;
+	ENCRYPTION: EncryptionFormState;
+	GROUP: GroupFormState;
+	WIFI: WifiFormState;
+	AGENT_UPDATE: AgentUpdateFormState;
+}
+
+export type FormState = FormStateByKey[keyof FormStateByKey];
+
 // ─── Default factories ──────────────────────────────────────────────
 
 export function defaultPackageForm(): PackageFormState {

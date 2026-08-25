@@ -368,7 +368,7 @@
 							formKey={formKey}
 							bind:params={bundle.params[stateKey]}
 							errors={bundle.validations[formKey].errors}
-							onclearerror={(f) => bundle.validations[formKey].clearFieldError(f)}
+							onclearerror={(f) => bundle.clearFieldError(formKey, f)}
 						/>
 					{/if}
 				</Card.Content>

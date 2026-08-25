@@ -43,7 +43,13 @@ describe('createFormBundle', () => {
 	it('set() replaces the form state for a key without affecting siblings', () => {
 		const bundle = createFormBundle();
 		const original = bundle.params.SHELL;
-		bundle.set('SHELL', { command: 'echo hi', isCompliance: false });
+		bundle.set('SHELL', {
+			script: 'echo hi',
+			interpreter: '/bin/sh',
+			runAsRoot: false,
+			detectionScript: '',
+			isCompliance: false
+		});
 		expect(bundle.params.SHELL).not.toBe(original);
 		// Other keys still have their default state
 		expect(bundle.params.PACKAGE).toBeDefined();

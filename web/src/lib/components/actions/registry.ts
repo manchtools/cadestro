@@ -12,7 +12,6 @@
 // here; the orchestrators iterate the registry instead of hand-listing types.
 // Per design decision #7 (2026.06 cleanup-release).
 
-import type { Component } from 'svelte';
 import type { ZodSchema } from 'zod';
 import { ActionType } from '$contract/cadestro/v1/actions_pb';
 
@@ -35,6 +34,8 @@ import {
 	defaultGroupForm,
 	defaultWifiForm,
 	defaultAgentUpdateForm,
+	type FormState,
+	type FormStateByKey,
 	packageFormToProto,
 	shellFormToProto,
 	serviceFormToProto,
@@ -118,9 +119,9 @@ export const FORM_KEYS = [
 	'GROUP',
 	'WIFI',
 	'AGENT_UPDATE'
-] as const;
+] as const satisfies readonly (keyof FormStateByKey)[];
 
-export type FormKey = (typeof FORM_KEYS)[number];
+export type FormKey = keyof FormStateByKey;
 
 // `oneof params` cases on the proto ManagedAction — must match exactly.
 export type ParamsCase =
@@ -143,7 +144,7 @@ export type ParamsCase =
 	| 'wifi'
 	| 'agentUpdate';
 
-export interface ActionTypeAdapter<F = unknown, P = unknown> {
+export interface ActionTypeAdapter<F = FormState, P = unknown> {
 	/** Form-key identifier (orchestrator-level). */
 	key: FormKey;
 	/** Proto enum this form-key creates actions of. */
@@ -155,17 +156,12 @@ export interface ActionTypeAdapter<F = unknown, P = unknown> {
 	/** Default form state factory. */
 	defaultForm: () => F;
 	/** Zod validation schema for the form state. */
-	schema: ZodSchema<unknown>;
+	schema: ZodSchema;
 	/** Form-state -> proto. */
 	formToProto: (form: F) => P;
 	/** Proto -> form-state. */
 	protoToForm: (proto: P) => F;
 }
-
-// Component map: keyed by FormKey. Lives next to the registry but kept as a
-// separate map (not on the adapter) because Svelte 5 component types can't be
-// soundly stored in a generic `ActionTypeAdapter<F, P>` without erasing F/P.
-export type ParamsFormComponent = Component<Record<string, unknown>>;
 
 // Registry — one entry per FormKey. Orchestrators iterate this instead of
 // hand-coding 19 case arms.

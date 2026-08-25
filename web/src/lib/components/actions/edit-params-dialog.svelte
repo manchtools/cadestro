@@ -15,6 +15,7 @@
 		scheduleFormToProto
 	} from '$lib/components/actions';
 	import { ACTION_REGISTRY, formKeyFromActionType, type FormKey } from './registry';
+	import type { FormStateByKey } from './forms/types';
 	import { createFormBundle } from './action-params/form-bundle.svelte';
 	import ActionParamsFormDispatch from './action-params/ActionParamsFormDispatch.svelte';
 
@@ -76,7 +77,7 @@
 				// Trust the proto's `case` to match what the registry expects;
 				// the API contract says action.type and params.case agree.
 				if (action.params.case === adapter.paramsCase) {
-					bundle.set(k, adapter.protoToForm(action.params.value) as Record<string, unknown>);
+					bundle.set(k, adapter.protoToForm(action.params.value) as FormStateByKey[typeof k]);
 				}
 			}
 		}
@@ -174,7 +175,7 @@
 					formKey={formKey}
 					bind:params={bundle.params[stateKey]}
 					errors={bundle.validations[formKey].errors}
-					onclearerror={(f) => bundle.validations[formKey].clearFieldError(f)}
+					onclearerror={(f) => bundle.clearFieldError(formKey, f)}
 				/>
 			{/if}
 

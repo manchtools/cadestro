@@ -7,10 +7,8 @@
 
 import { ActionType } from '$contract/cadestro/v1/actions_pb';
 import { ACTION_REGISTRY, formKeyFromActionType, formKeyFromString, type FormKey } from '../registry';
-import { defaultScheduleForm, type ScheduleFormState } from '../forms/types';
+import { defaultScheduleForm, type FormState, type ScheduleFormState, type ShellFormState } from '../forms/types';
 import type { ManagedAction } from '$contract/cadestro/v1/control_pb';
-
-export type FormState = Record<string, unknown>;
 
 export interface StepDraft {
 	/** Stable client identity — survives reorder, unlike the index, and exists
@@ -84,7 +82,7 @@ export function stepFromAction(action: ManagedAction, sortOrder: number): StepDr
 		description: action.description,
 		timeoutSeconds: action.timeoutSeconds || 300,
 		desiredState: action.desiredState ?? 0,
-		params: params as FormState,
+		params,
 		schedule: scheduleToForm(action),
 		isNew: false,
 		originalIndex: sortOrder
@@ -101,10 +99,10 @@ export function stepFromPalette(
 	const key = typeValue === 'COMPLIANCE_CHECK' ? 'COMPLIANCE_CHECK' : formKeyFromString(typeValue);
 	if (!key) return null;
 	const adapter = ACTION_REGISTRY[key];
-	const params = adapter.defaultForm() as Record<string, unknown>;
+	const params = adapter.defaultForm();
 	// COMPLIANCE_CHECK shares the SHELL params shape; the flag is what makes the
 	// stricter compliance schema the right one to validate against.
-	if (key === 'COMPLIANCE_CHECK') params.isCompliance = true;
+	if (key === 'COMPLIANCE_CHECK') (params as ShellFormState).isCompliance = true;
 	return {
 		key: nextKey(),
 		actionId: '',
@@ -137,7 +135,7 @@ export function stepFromJson(raw: unknown): StepDraft | null {
 		description: typeof s.description === 'string' ? s.description : '',
 		timeoutSeconds: typeof s.timeoutSeconds === 'number' ? s.timeoutSeconds : 300,
 		desiredState: typeof s.desiredState === 'number' ? s.desiredState : 0,
-		params: (s.params ?? ACTION_REGISTRY[s.formKey as FormKey].defaultForm()) as FormState,
+		params: s.params ?? ACTION_REGISTRY[s.formKey as FormKey].defaultForm(),
 		schedule: (s.schedule as ScheduleFormState) ?? defaultScheduleForm(),
 		isNew: s.isNew !== false,
 		originalIndex: typeof s.originalIndex === 'number' ? s.originalIndex : -1

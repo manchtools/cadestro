@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { create } from '@bufbuild/protobuf';
-import { ManagedActionSchema } from '$contract/cadestro/v1/control_pb';
+import { ManagedActionSchema, type ManagedAction } from '$contract/cadestro/v1/control_pb';
 import { ActionType, PackageParamsSchema } from '$contract/cadestro/v1/actions_pb';
 import { DesiredState } from '$contract/cadestro/v1/common_pb';
 import { shell, resetShell, commitContext } from '$lib/shell/shell.svelte';
@@ -29,7 +29,7 @@ vi.mock('$lib/sdk', async (importOriginal) => ({
 
 import ActionParamsEditor from './action-params-editor.svelte';
 
-function packageAction(over: Record<string, unknown> = {}) {
+function packageAction(over: Partial<Pick<ManagedAction, 'timeoutSeconds'>> = {}) {
 	return create(ManagedActionSchema, {
 		id: ACTION_ID,
 		name: 'Install curl',

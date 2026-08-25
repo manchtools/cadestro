@@ -12,35 +12,41 @@ import {
 	FORM_KEYS,
 	type FormKey
 } from '../registry';
-
-export type FormState = Record<string, unknown>;
+import type { FormStateByKey } from '../forms/types';
 
 export interface FormBundle {
 	/** Reactive map of per-FormKey form state. Mutate via
 	 *  `bundle.params[key] = newValue` or via `bind:params={bundle.params[key]}`.
 	 *  Defaults are populated lazily on access via the registry. */
-	params: Record<FormKey, FormState>;
+	params: FormStateByKey;
 	/** Per-FormKey validation handle. */
-	validations: Record<FormKey, FormValidation<FormState>>;
+	validations: { [K in FormKey]: FormValidation<FormStateByKey[K]> };
 	/** Reset all per-type validation error state. */
 	clearAllErrors(): void;
 	/** Validate the form state for the given FormKey. */
 	validate(key: FormKey): boolean;
 	/** Replace the form state for `key`. */
-	set(key: FormKey, value: FormState): void;
+	set<K extends FormKey>(key: K, value: FormStateByKey[K]): void;
+	clearFieldError(key: FormKey, field: string): void;
 }
 
 export function createFormBundle(): FormBundle {
 	// Per-FormKey state. We seed every entry up-front — there are only 19
 	// of them and the seed cost is one default-factory call each.
-	const params = $state({} as Record<FormKey, FormState>);
+	const params = $state({} as FormStateByKey);
+	function setParam<K extends FormKey>(key: K, value: FormStateByKey[K]) {
+		params[key] = value;
+	}
 	for (const key of FORM_KEYS) {
-		params[key] = ACTION_REGISTRY[key].defaultForm() as FormState;
+		setParam(key, ACTION_REGISTRY[key].defaultForm() as FormStateByKey[typeof key]);
 	}
 
-	const validations = {} as Record<FormKey, FormValidation<FormState>>;
+	const validations = {} as FormBundle['validations'];
+	function setValidation<K extends FormKey>(key: K, value: FormBundle['validations'][K]) {
+		validations[key] = value;
+	}
 	for (const key of FORM_KEYS) {
-		validations[key] = createFormValidation(ACTION_REGISTRY[key].schema) as FormValidation<FormState>;
+		setValidation(key, createFormValidation(ACTION_REGISTRY[key].schema) as FormBundle['validations'][typeof key]);
 	}
 
 	return {
@@ -51,11 +57,14 @@ export function createFormBundle(): FormBundle {
 				validations[key].clearErrors();
 			}
 		},
-		validate(key: FormKey) {
-			return validations[key].validate(params[key]);
+		validate<K extends FormKey>(key: K) {
+			return validations[key].validate(params[key] as never);
 		},
-		set(key: FormKey, value: FormState) {
-			params[key] = value;
+		set<K extends FormKey>(key: K, value: FormStateByKey[K]) {
+			setParam(key, value);
+		},
+		clearFieldError(key: FormKey, field: string) {
+			validations[key].clearFieldError(field as never);
 		}
 	};
 }
