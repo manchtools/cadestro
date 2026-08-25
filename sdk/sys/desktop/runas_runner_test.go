@@ -23,9 +23,7 @@ func TestRunAsRunner_WrapsCommandAsUser(t *testing.T) {
 	}
 	c := base.Calls()[0]
 	got := strings.Join(append([]string{c.Name}, c.Args...), " ")
-	// The base Runner must receive a runuser-wrapped command that drops to alice,
-	// applies her session env via `env`, forces the curated PATH last, then runs
-	// the original command.
+
 	want := runuserPath + " -u alice -- " + envPath +
 		" HOME=/home/alice USER=alice LOGNAME=alice XDG_RUNTIME_DIR=/run/user/1000" +
 		" DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus" +
@@ -38,10 +36,6 @@ func TestRunAsRunner_WrapsCommandAsUser(t *testing.T) {
 	}
 }
 
-// A caller-supplied PATH must NOT override the curated user PATH: the per-user
-// run-as drops the caller's PATH and re-applies UserPath last, so an action can't
-// point a user-scoped command at an attacker-controlled bin dir (parity with the
-// dropped RunAsCommand path this replaced).
 func TestRunAsRunner_CallerPathDropped(t *testing.T) {
 	base := exectest.New(sysexec.Direct)
 	base.Push(sysexec.Result{}, nil)
@@ -65,11 +59,6 @@ func TestRunAsRunner_CallerPathDropped(t *testing.T) {
 	}
 }
 
-// A per-user command's working directory must survive the runuser wrap. The
-// removed RunAsCommand set cmd.Dir (default: the user's home); RunAsRunner is
-// its replacement, so a caller that sets Command.Dir (e.g. a per-user script
-// run from the action's WorkingDirectory) must actually run there — not silently
-// in the agent's cwd.
 func TestRunAsRunner_PropagatesCallerDir(t *testing.T) {
 	base := exectest.New(sysexec.Direct)
 	base.Push(sysexec.Result{}, nil)
@@ -92,9 +81,6 @@ func TestRunAsRunner_Rejects(t *testing.T) {
 	}
 }
 
-// TestRunAsRunner_ScreensHijackEnv: a caller command carrying an LD_* hijack in
-// its Env must be refused before it reaches the user-scoped command (the inner
-// env bypasses the base Runner's own screening).
 func TestRunAsRunner_ScreensHijackEnv(t *testing.T) {
 	base := exectest.New(sysexec.Direct)
 	s := Session{Username: "alice", UID: 1000, Home: "/home/alice", RuntimeDir: "/run/user/1000"}

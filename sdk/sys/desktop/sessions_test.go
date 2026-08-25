@@ -59,23 +59,15 @@ func TestParseLoginctlProperties_IgnoresMalformed(t *testing.T) {
 
 func TestIsGraphicalType(t *testing.T) {
 	tests := map[string]bool{
-		// Anything that owns a display surface counts. Pinning the
-		// allow-list rather than excluding from a blocklist keeps a
-		// future systemd session-type addition (say, "wayland-headless")
-		// from accidentally enabling user-scoped fan-out into a
-		// session that has no usable DBus / XDG runtime dir.
+
 		"x11":     true,
 		"wayland": true,
 		"mir":     true,
-		// Common non-graphical types we explicitly do NOT fan out to
-		// — these have no $DISPLAY / Wayland socket / session bus,
-		// so a Flatpak --user install would land in the right $HOME
-		// but a script that needs the desktop bus would silently
-		// degrade to autolaunching a fresh session bus.
+
 		"tty":         false,
 		"unspecified": false,
 		"":            false,
-		"WAYLAND":     false, // case-sensitive — loginctl always emits lowercase
+		"WAYLAND":     false,
 	}
 	for in, want := range tests {
 		if got := isGraphicalType(in); got != want {
@@ -85,24 +77,14 @@ func TestIsGraphicalType(t *testing.T) {
 }
 
 func TestIsLoginctlNoLogindStderr(t *testing.T) {
-	// Pin both stderr fingerprints loginctl produces when there's
-	// no logind to query — these decide whether ActiveSessions
-	// returns "no sessions" (caller's empty-set policy fires) vs a
-	// genuine error (caller surfaces it). Mis-classifying either
-	// way is a regression: too tolerant and we mask real probe
-	// failures; too strict and the agent fails actions on every
-	// docker-CI run.
+
 	tests := map[string]bool{
-		// Container / non-systemd-PID-1 case (docker, podman,
-		// SysV/OpenRC hosts). Verified against systemd 257.x.
+
 		"System has not been booted with systemd as init system (PID 1). Can't operate.": true,
-		// Sandbox case (loginctl exists, systemd is PID 1, but
-		// dbus / system bus path is unreachable from the caller).
+
 		"Failed to connect to bus: No such file or directory": true,
 		"Failed to connect to bus: Connection refused":        true,
 
-		// Genuine errors that MUST still surface as errors so a
-		// permission misconfig isn't silently masked.
 		"Permission denied":           false,
 		"loginctl: command not found": false,
 		"":                            false,
@@ -114,16 +96,12 @@ func TestIsLoginctlNoLogindStderr(t *testing.T) {
 	}
 }
 
-// liveResultUser is the passwd fixture loadSession resolves the kept session
-// against. Returned by the stubbed lookupID in the build/append tests.
 var liveResultUser = &user.User{Uid: "1000", Gid: "1000", Username: "alice", HomeDir: "/home/alice"}
 
-// graphicalSessionProps is the loginctl show-session output for a kept session.
 const graphicalSessionProps = "Name=alice\nUser=1000\nType=wayland\nActive=yes\nRemote=no\n"
 
 func TestActiveSessions_NoLoginctl(t *testing.T) {
-	// Host without systemd-logind: lookPath fails → ([], nil), and the Runner
-	// is never invoked.
+
 	stubLookPath(t, false)
 	m, r := newManager(t)
 	got, err := m.ActiveSessions(context.Background())
@@ -133,8 +111,7 @@ func TestActiveSessions_NoLoginctl(t *testing.T) {
 	if len(got) != 0 {
 		t.Errorf("want no sessions, got %v", got)
 	}
-	// Contract: "returns an empty slice" — pin non-nil so a caller comparing
-	// against nil, or marshalling to JSON, sees [] not null.
+
 	if got == nil {
 		t.Error("ActiveSessions must return a non-nil empty slice when loginctl is absent")
 	}
@@ -144,8 +121,7 @@ func TestActiveSessions_NoLoginctl(t *testing.T) {
 }
 
 func TestActiveSessions_NoLogind(t *testing.T) {
-	// loginctl present but no logind bus → ([], nil) so the caller's empty-set
-	// policy fires (the agent-CI-container regression).
+
 	stubLookPath(t, true)
 	m, r := newManager(t)
 	r.Push(exec.Result{ExitCode: 1, Stderr: "Failed to connect to bus: No such file or directory"}, nil)
@@ -159,8 +135,7 @@ func TestActiveSessions_NoLogind(t *testing.T) {
 }
 
 func TestActiveSessions_ListError(t *testing.T) {
-	// A non-zero exit whose stderr is NOT a no-logind fingerprint is a genuine
-	// fault and must surface.
+
 	stubLookPath(t, true)
 	m, r := newManager(t)
 	r.Push(exec.Result{ExitCode: 1, Stderr: "Permission denied"}, nil)
@@ -170,8 +145,7 @@ func TestActiveSessions_ListError(t *testing.T) {
 }
 
 func TestActiveSessions_ListRunError(t *testing.T) {
-	// The Runner itself failing (binary vanished mid-call, escalation error) is
-	// surfaced, not silently treated as "no sessions".
+
 	stubLookPath(t, true)
 	m, r := newManager(t)
 	r.Push(exec.Result{}, errors.New("boom"))
@@ -181,14 +155,13 @@ func TestActiveSessions_ListRunError(t *testing.T) {
 }
 
 func TestActiveSessions_FiltersAndBuilds(t *testing.T) {
-	// End-to-end: two sessions listed; one graphical+active+local is kept and
-	// fully built, one remote is filtered out.
+
 	stubLookPath(t, true)
 	stubLookupID(t, func(string) (*user.User, error) { return liveResultUser, nil })
 	m, r := newManager(t)
-	r.Push(exec.Result{Stdout: "c1 1000 alice seat0\nc2 1001 bob\n"}, nil)                      // list-sessions
-	r.Push(exec.Result{Stdout: graphicalSessionProps}, nil)                                     // show-session c1 (kept)
-	r.Push(exec.Result{Stdout: "Name=bob\nUser=1001\nType=x11\nActive=yes\nRemote=yes\n"}, nil) // c2 (remote, skipped)
+	r.Push(exec.Result{Stdout: "c1 1000 alice seat0\nc2 1001 bob\n"}, nil)
+	r.Push(exec.Result{Stdout: graphicalSessionProps}, nil)
+	r.Push(exec.Result{Stdout: "Name=bob\nUser=1001\nType=x11\nActive=yes\nRemote=yes\n"}, nil)
 
 	got, err := m.ActiveSessions(context.Background())
 	if err != nil {
@@ -202,8 +175,7 @@ func TestActiveSessions_FiltersAndBuilds(t *testing.T) {
 	if s != want {
 		t.Errorf("built session = %+v, want %+v", s, want)
 	}
-	// The probe is unescalated (loginctl needs no root) — pin it so a refactor
-	// doesn't start running it through sudo.
+
 	for _, c := range r.Calls() {
 		if c.Escalate {
 			t.Errorf("loginctl probe must not escalate: %+v", c)
@@ -215,18 +187,16 @@ func TestActiveSessions_FiltersAndBuilds(t *testing.T) {
 }
 
 func TestActiveSessions_LoadErrorPropagates(t *testing.T) {
-	// A non-skippable per-session probe failure aborts the whole call.
+
 	stubLookPath(t, true)
 	m, r := newManager(t)
-	r.Push(exec.Result{Stdout: "c1 1000 alice\n"}, nil)                // list
-	r.Push(exec.Result{ExitCode: 1, Stderr: "Permission denied"}, nil) // show-session c1 → hard error
+	r.Push(exec.Result{Stdout: "c1 1000 alice\n"}, nil)
+	r.Push(exec.Result{ExitCode: 1, Stderr: "Permission denied"}, nil)
 	if _, err := m.ActiveSessions(context.Background()); err == nil {
 		t.Error("a hard show-session failure must propagate")
 	}
 }
 
-// loadSession branch coverage — driven directly (one Run each) so each filter /
-// rejection path is isolated.
 func TestLoadSession_Branches(t *testing.T) {
 	props := func(name, uid, typ, active, remote string) string {
 		return "Name=" + name + "\nUser=" + uid + "\nType=" + typ + "\nActive=" + active + "\nRemote=" + remote + "\n"
@@ -338,11 +308,6 @@ func TestListSessionIDs_ParsesAndSkipsBlankLines(t *testing.T) {
 	}
 }
 
-// TestActiveSessions_RealLoginctl is the integration leg: it builds a Manager
-// over a REAL runner and runs the actual loginctl. On a host without logind
-// (the agent's CI containers) it must return ([], nil) — the regression fix for
-// archived sdk#88. On a host WITH logind any count is fine; the
-// load-bearing assertion is "no error from the no-logind path".
 func TestActiveSessions_RealLoginctl(t *testing.T) {
 	if _, err := lookPath(loginctlPath); err != nil {
 		t.Skipf("loginctl not on PATH (%v) — the missing-binary branch covers this", err)
@@ -376,10 +341,7 @@ func TestEnvFor_HasMinimumDesktopEnv(t *testing.T) {
 		"USER=alice",
 		"LOGNAME=alice",
 		"XDG_RUNTIME_DIR=/run/user/1000",
-		// DBus session bus is critical for any user-scoped command
-		// that touches notifications or GNOME settings — pin its
-		// presence so a future refactor doesn't drop it back to
-		// the autolaunched-fresh-bus default.
+
 		"DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus",
 	}
 	envSet := make(map[string]struct{}, len(env))
@@ -392,10 +354,6 @@ func TestEnvFor_HasMinimumDesktopEnv(t *testing.T) {
 		}
 	}
 
-	// Negative: PATH must NOT be set here. Callers add their own
-	// curated PATH so the user can't reach /usr/local/sbin via
-	// subshell expansion. Pin the absence so a well-meaning future
-	// "just add PATH" PR has to update this test deliberately.
 	for _, e := range env {
 		if strings.HasPrefix(e, "PATH=") {
 			t.Errorf("EnvFor must not set PATH (caller picks one); got %q", e)

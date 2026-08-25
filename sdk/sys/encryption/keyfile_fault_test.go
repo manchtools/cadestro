@@ -12,7 +12,6 @@ import (
 
 var errIO = errors.New("injected I/O failure")
 
-// fakeKeyFile injects a failure into one of the writeKeyFile file ops.
 type fakeKeyFile struct {
 	name      string
 	failChmod bool
@@ -40,15 +39,12 @@ func (f *fakeKeyFile) Close() error {
 	return nil
 }
 
-// resetKeyFileStaging drops the cached per-process staging directory so a test
-// neither inherits nor leaves behind a directory created under different seams.
 func resetKeyFileStaging() {
 	stagingMu.Lock()
 	defer stagingMu.Unlock()
 	stagingDir, stagingRoot = "", ""
 }
 
-// swapKeyFileSeams installs fault-injecting key-file seams and returns a restore.
 func swapKeyFileSeams(t *testing.T) func() {
 	t.Helper()
 	mt, ls, ge, c, rm, o := mkdirTemp, lstatFile, geteuid, createKeyFile, removeFile, openKeyFile
@@ -59,15 +55,10 @@ func swapKeyFileSeams(t *testing.T) func() {
 	}
 }
 
-// stagingDirSeam points mkdirTemp at a real private (0700, self-owned)
-// directory so a fault test reaches the file operations it is exercising
-// instead of stopping at the staging-directory check.
 func stagingDirSeam(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	// t.TempDir's numbered subdirectory is created 0777&^umask (0755 by
-	// default), which the staging check correctly refuses; chmod it to the mode
-	// the real os.MkdirTemp would produce.
+
 	if err := os.Chmod(dir, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +107,7 @@ func TestWriteKeyFile_FaultPaths(t *testing.T) {
 			if _, err := writeKeyFile(mustSecret(t, "x")); err == nil {
 				t.Errorf("writeKeyFile ignored a %s", tc.name)
 			}
-			// chmod/write failures clean up the partial file; close-failure too.
+
 			if !*rm {
 				t.Errorf("%s: partial key file was not removed", tc.name)
 			}
@@ -124,9 +115,6 @@ func TestWriteKeyFile_FaultPaths(t *testing.T) {
 	}
 }
 
-// When the key-file cleanup itself fails after a write failure, the error must
-// surface that plaintext key material may remain on /dev/shm — a dropped
-// removeFile error would hide a leaked LUKS key file.
 func TestWriteKeyFile_CleanupFailureSurfacesResidue(t *testing.T) {
 	defer swapKeyFileSeams(t)()
 	stagingDirSeam(t)
@@ -147,19 +135,16 @@ func TestWriteKeyFile_CleanupFailureSurfacesResidue(t *testing.T) {
 	}
 }
 
-// AddKey writes TWO key files; a failure on the second (new) must abort with no
-// cryptsetup run.
 func TestAddKey_SecondKeyFileFails(t *testing.T) {
 	defer swapKeyFileSeams(t)()
 	stagingDirSeam(t)
 	removeFile = func(string) error { return nil }
 	calls := 0
-	// The first key file is REAL so it survives the identity capture and the
-	// pre-exec re-check; only the second fails, which is what this pins.
+
 	createKeyFile = func(dir string) (keyFileHandle, error) {
 		calls++
 		if calls == 2 {
-			return nil, errIO // the "new" key file
+			return nil, errIO
 		}
 		f, err := os.CreateTemp(dir, "key-ok-*")
 		if err != nil {
@@ -176,7 +161,6 @@ func TestAddKey_SecondKeyFileFails(t *testing.T) {
 	}
 }
 
-// fakeScrubFile injects failures into cleanupKeyFile's scrub/close.
 type fakeScrubFile struct {
 	size      int64
 	failWrite bool
@@ -211,7 +195,7 @@ func TestCleanupKeyFile_FaultPaths(t *testing.T) {
 		defer swapKeyFileSeams(t)()
 		openKeyFile = func(string) (scrubFile, error) { return nil, errIO }
 		removeFile = func(string) error { return errIO }
-		cleanupKeyFile("/dev/shm/cadestro-luks/key-x") // must not panic
+		cleanupKeyFile("/dev/shm/cadestro-luks/key-x")
 	})
 	t.Run("scrub + close + remove all fail → warns, no panic", func(t *testing.T) {
 		defer swapKeyFileSeams(t)()
@@ -219,6 +203,6 @@ func TestCleanupKeyFile_FaultPaths(t *testing.T) {
 			return &fakeScrubFile{size: 16, failWrite: true, failClose: true}, nil
 		}
 		removeFile = func(string) error { return errIO }
-		cleanupKeyFile("/dev/shm/cadestro-luks/key-x") // exercises scrub/close/remove warn paths
+		cleanupKeyFile("/dev/shm/cadestro-luks/key-x")
 	})
 }

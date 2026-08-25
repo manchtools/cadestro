@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// errReader fails the first Read — used to drive the io.Copy error branch of the
-// streaming writers (the "the source died mid-transfer" failure mode).
 type errReader struct{}
 
 func (errReader) Read([]byte) (int, error) { return 0, errors.New("injected read error") }
@@ -27,8 +25,6 @@ func TestWriteTarEntry_CopyError(t *testing.T) {
 	}
 }
 
-// TestGitFetch_UnreachableURL drives openOrClone's clone-failure branch: a
-// well-formed but unreachable https endpoint makes PlainClone fail.
 func TestGitFetch_UnreachableURL(t *testing.T) {
 	src, err := NewGit(GitConfig{URL: "https://127.0.0.1:1/nope.git", Ref: "main"})
 	if err != nil {
@@ -41,8 +37,6 @@ func TestGitFetch_UnreachableURL(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_GetError drives the single-key GET error path: a HEAD-OK then a
-// GET that fails surfaces an error (and leaves no partial file).
 func TestS3Fetch_GetError(t *testing.T) {
 	fix := newS3Fixture(t, "bucket", "key", []byte("payload"), "etag-1")
 	fix.getErr = 500

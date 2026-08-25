@@ -79,7 +79,7 @@ func TestWriteKeyfile_AtomicMode0600(t *testing.T) {
 	if string(got) != string(content) {
 		t.Errorf("body = %q, want %q", got, content)
 	}
-	// No temp leftovers.
+
 	entries, _ := os.ReadDir(dir)
 	for _, e := range entries {
 		if strings.HasPrefix(e.Name(), ".cadestro-keyfile-") {
@@ -88,9 +88,6 @@ func TestWriteKeyfile_AtomicMode0600(t *testing.T) {
 	}
 }
 
-// --- fault injection via seams ---
-
-// fakeHandle is a keyfileHandle that fails on a chosen step.
 type fakeHandle struct {
 	name                            string
 	failWrite, failChmod, failClose bool
@@ -166,7 +163,7 @@ func TestWriteKeyfile_WriteChmodCloseRenameFail(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), c.wantMsg) {
 				t.Fatalf("err = %v, want a wrapped %q failure", err, c.wantMsg)
 			}
-			// Every failure must scrub the temp file (no plaintext residue).
+
 			if removed != c.handle.name {
 				t.Errorf("temp %q not removed on %s failure (removed %q)", c.handle.name, c.name, removed)
 			}
@@ -174,9 +171,6 @@ func TestWriteKeyfile_WriteChmodCloseRenameFail(t *testing.T) {
 	}
 }
 
-// When the temp-keyfile cleanup itself fails after a write failure, both the
-// original failure AND the cleanup failure must surface — a dropped removeFile
-// error would silently leave a keyfile holding the plaintext PSK on disk.
 func TestWriteKeyfile_CleanupFailureSurfacesPlaintextResidue(t *testing.T) {
 	swapSeams(t)
 	mkdirAll = func(string, os.FileMode) error { return nil }
@@ -197,8 +191,6 @@ func TestWriteKeyfile_CleanupFailureSurfacesPlaintextResidue(t *testing.T) {
 	}
 }
 
-// Belt-and-braces: a PSK with a newline can never be constructed, so it can never
-// inject extra keyfile lines.
 func TestPSKSecret_RejectsNewlineAtConstruction(t *testing.T) {
 	if _, err := exec.NewSecret("line1\nkey-mgmt=none"); err == nil {
 		t.Error("NewSecret accepted a newline-bearing PSK — keyfile injection would be possible")

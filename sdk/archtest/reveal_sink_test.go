@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-// revealSinkAllowlist lists the ONLY call sites permitted to call
-// exec.Secret.Reveal() — the sanctioned credential sinks that must hand the
-// plaintext to an OS tool. Keyed by "<module-rel path> :: <rendered call>".
-// assertNoStale fails the build if a listed sink stops calling Reveal (e.g. it
-// was refactored away), so the allowlist cannot rot into a silent gap.
 var revealSinkAllowlist = map[string]string{
 	"sys/user/password.go :: password.Reveal()":    "chpasswd stdin: the sole sink that writes a user password to useradd's helper",
 	"sys/encryption/luks.go :: key.Reveal()":       "LUKS key file in /dev/shm: cryptsetup --key-file sink (never argv)",
@@ -20,24 +15,15 @@ var revealSinkAllowlist = map[string]string{
 	"sys/network/certs.go :: p.ClientKey.Reveal()": "EAP-TLS client-key.pem (0600 file write + on-disk drift compare, never argv)",
 }
 
-// TestRevealOnlyFromKnownSinks locks the exec.Secret redaction contract: the
-// plaintext may be obtained via Reveal() ONLY at the enumerated credential
-// sinks (chpasswd stdin today; the wifi PSK keyfile, LUKS stdin, etc. as those
-// capability PRs land). Any other .Reveal() call — e.g. one slipped into a
-// slog/fmt path — fails the build. This is the architecture-level complement to
-// the per-package unit pin that a Secret never appears in a recorded
-// Command.Args.
 func TestRevealOnlyFromKnownSinks(t *testing.T) {
 	root := moduleRoot(t)
-	// Scan the device-side capability surface + pkg, where Secrets live. Skip
-	// generated code, the exec package itself (which DEFINES Reveal), and
-	// archtest.
+
 	files := walkGoFiles(t, root, func(rel string) bool {
 		if strings.HasPrefix(rel, "gen/") || strings.HasPrefix(rel, "archtest/") {
 			return false
 		}
 		if rel == "sys/exec/secret.go" {
-			return false // the definition of Reveal, not a use
+			return false
 		}
 		return strings.HasPrefix(rel, "sys/") || strings.HasPrefix(rel, "pkg/")
 	})

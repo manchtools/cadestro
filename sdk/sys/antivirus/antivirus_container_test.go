@@ -1,20 +1,5 @@
 //go:build container
 
-// Container-based real-execution tests for the ClamAV antivirus backend. The
-// fake-runner unit tests feed captured clamscan/freshclam output; these run the
-// real clamscan + freshclam binaries inside the with-clamav image, so a change
-// to clamscan's `--infected` line format, its exit-code contract (0 clean / 1
-// found / 2 error), or freshclam's failure behaviour is caught here.
-//
-// The image bakes a tiny STATIC seed DB (two loose signature files): the
-// canonical EICAR test file by MD5 hash (.hdb) and our marker string by byte
-// pattern (.ndb). Detection is deterministic and hermetic — no ~300 MB official
-// DB download. freshclam.conf is removed so UpdateSignatures exercises the real
-// error-mapping path without touching the network.
-//
-// Runs in the container-tests lane (root) → Direct runner: Escalate is a no-op
-// wrapper and clamscan/freshclam run as the already-root process, the same shape
-// production drives when the agent is root.
 package antivirus_test
 
 import (
@@ -29,8 +14,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// marker is the exact string the baked custom .ndb signature matches. Keep in
-// sync with test/Dockerfile.debian (with-clamav stage).
 const marker = "CADESTRO-CLAMAV-TEST-MARKER"
 
 func realAV(t *testing.T) antivirus.Manager {
@@ -61,8 +44,6 @@ func avCtx(t *testing.T) context.Context {
 	return ctx
 }
 
-// TestDetect_Container: with clamscan installed, Detect must report exactly
-// [ClamAV].
 func TestDetect_Container(t *testing.T) {
 	if !hasClamscan(t) {
 		t.Skip("clamscan not installed here")
@@ -73,8 +54,6 @@ func TestDetect_Container(t *testing.T) {
 	}
 }
 
-// TestScan_Clean_Container scans a file with no signature hit. Real clamscan
-// exits 0 and the SDK must report a clean result (no infections, no error).
 func TestScan_Clean_Container(t *testing.T) {
 	m := realAV(t)
 	dir := t.TempDir()
@@ -91,21 +70,10 @@ func TestScan_Clean_Container(t *testing.T) {
 	}
 }
 
-// eicarString returns the canonical 68-byte EICAR antivirus test string. Built
-// from parts so no verbatim EICAR literal sits in the source tree (a real
-// scanner watching the repo would otherwise flag this file). Its MD5 is
-// 44d88612fea8a8f36de82e1278abb02f — the hash the seed .hdb matches.
 func eicarString() string {
 	return `X5O!P%@AP[4\PZX54(P^)7CC)7}` + `$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*`
 }
 
-// TestScan_EICAR_Container is the headline real-detection test: the canonical
-// EICAR test file (the industry-standard AV smoke test) must be detected by real
-// clamscan via the seed .hdb MD5 signature. clamscan exits 1 (NOT a failure —
-// the "found" signal) and emits "<file>: <sig> FOUND"; the SDK must parse that
-// into an Infection whose File is the scanned path and whose Signature is the
-// matched name. Pins parseClamscanInfected + the exit-1 handling against real
-// output.
 func TestScan_EICAR_Container(t *testing.T) {
 	m := realAV(t)
 	dir := t.TempDir()
@@ -132,9 +100,6 @@ func TestScan_EICAR_Container(t *testing.T) {
 	}
 }
 
-// TestScan_Marker_Container exercises the byte-PATTERN signature path (.ndb),
-// complementing EICAR's hash signature (.hdb): a file containing the seed marker
-// must be detected too.
 func TestScan_Marker_Container(t *testing.T) {
 	m := realAV(t)
 	dir := t.TempDir()
@@ -154,8 +119,6 @@ func TestScan_Marker_Container(t *testing.T) {
 	}
 }
 
-// TestScan_InvalidPath_Container: a flag-shaped path is rejected by the SDK's
-// validation BEFORE clamscan is ever invoked (no real exec).
 func TestScan_InvalidPath_Container(t *testing.T) {
 	m := realAV(t)
 	if _, err := m.Scan(avCtx(t), "-rf"); err == nil {
@@ -163,15 +126,6 @@ func TestScan_InvalidPath_Container(t *testing.T) {
 	}
 }
 
-// TestVersion_Container exercises Version against the real clamscan binary. The
-// with-clamav image ships only a custom, UNVERSIONED .ndb (no official CVD/CLD),
-// so real `clamscan --version` reports engine-only ("ClamAV <x.y.z>"). The SDK's
-// signature-required contract (see TestParseClamscanVersion, which pins
-// "ClamAV 1.0.1" without a signature field as malformed) therefore maps this to
-// an error — the faithful "installed but no signature DB" state. The
-// engine/signature/date happy-format parse is covered by the unit tests; its
-// real-binary form needs an official signature DB (network) and is a documented
-// residual.
 func TestVersion_Container(t *testing.T) {
 	m := realAV(t)
 	if _, err := m.Version(avCtx(t)); err == nil {
@@ -179,11 +133,6 @@ func TestVersion_Container(t *testing.T) {
 	}
 }
 
-// TestUpdateSignatures_Container drives the real freshclam binary. The image
-// removes freshclam.conf, so bare `freshclam` fails fast on a missing config
-// (exit != 0) with no network access — a deterministic exercise of the SDK's
-// error-mapping (non-zero exit -> error). The successful network DB refresh is a
-// documented residual (network-bound, non-deterministic in CI).
 func TestUpdateSignatures_Container(t *testing.T) {
 	m := realAV(t)
 	if err := m.UpdateSignatures(avCtx(t)); err == nil {

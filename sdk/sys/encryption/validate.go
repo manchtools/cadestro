@@ -12,8 +12,8 @@ type Complexity int
 
 const (
 	ComplexityNone         Complexity = 0
-	ComplexityAlphanumeric Complexity = 1 // letters + digits
-	ComplexityComplex      Complexity = 2 // letters + digits + special chars
+	ComplexityAlphanumeric Complexity = 1
+	ComplexityComplex      Complexity = 2
 )
 
 // ValidatePassphrase checks a passphrase against length and complexity requirements.

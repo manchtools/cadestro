@@ -9,8 +9,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
-// --- matchRef: branch/tag/annotated-tag matching ---
-
 func TestMatchRef(t *testing.T) {
 	h := func(s string) plumbing.Hash { return plumbing.NewHash(s) }
 	hMain := h("1111111111111111111111111111111111111111")
@@ -19,16 +17,16 @@ func TestMatchRef(t *testing.T) {
 	refs := []*plumbing.Reference{
 		plumbing.NewHashReference("refs/heads/main", hMain),
 		plumbing.NewHashReference("refs/tags/v1", hTag),
-		plumbing.NewHashReference("refs/tags/v2^{}", hAnnot), // dereferenced annotated tag
+		plumbing.NewHashReference("refs/tags/v2^{}", hAnnot),
 	}
 	cases := []struct {
 		ref     string
 		want    plumbing.Hash
 		wantHit bool
 	}{
-		{"main", hMain, true}, // branch
-		{"v1", hTag, true},    // lightweight tag
-		{"v2", hAnnot, true},  // annotated tag via ^{} fallback
+		{"main", hMain, true},
+		{"v1", hTag, true},
+		{"v2", hAnnot, true},
 		{"nonexistent", plumbing.ZeroHash, false},
 	}
 	for _, c := range cases {
@@ -38,8 +36,6 @@ func TestMatchRef(t *testing.T) {
 		}
 	}
 }
-
-// --- countTreeFiles: counts files, skips .git ---
 
 func TestCountTreeFiles(t *testing.T) {
 	dest := t.TempDir()
@@ -52,7 +48,7 @@ func TestCountTreeFiles(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dest, "sub", "b"), []byte("45"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// .git contents must be skipped.
+
 	if err := os.MkdirAll(filepath.Join(dest, ".git"), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -72,10 +68,8 @@ func TestCountTreeFiles(t *testing.T) {
 	}
 }
 
-// --- relPathForKey: S3-key → relative path with traversal refusal ---
-
 func TestRelPathForKey(t *testing.T) {
-	// Valid: key under prefix maps to the relative tail.
+
 	if rel, err := relPathForKey("p/", "p/sub/file"); err != nil || rel != "sub/file" {
 		t.Errorf("relPathForKey valid = (%q,%v), want (sub/file, nil)", rel, err)
 	}
@@ -83,10 +77,10 @@ func TestRelPathForKey(t *testing.T) {
 		prefix, key string
 		sentinel    error
 	}{
-		{"p/", "other/file", ErrInvalidConfig},      // key not under prefix
-		{"p/", "p/", ErrInvalidConfig},              // key == prefix (no tail)
-		{"p/", "p/a\x00b", ErrUnsafeDestination},    // NUL
-		{"p/", "p/../escape", ErrUnsafeDestination}, // traversal component
+		{"p/", "other/file", ErrInvalidConfig},
+		{"p/", "p/", ErrInvalidConfig},
+		{"p/", "p/a\x00b", ErrUnsafeDestination},
+		{"p/", "p/../escape", ErrUnsafeDestination},
 		{"p/", "p/sub/../../escape", ErrUnsafeDestination},
 	}
 	for _, c := range bad {
@@ -95,8 +89,6 @@ func TestRelPathForKey(t *testing.T) {
 		}
 	}
 }
-
-// --- assertWithinDest: post-join containment check ---
 
 func TestAssertWithinDest(t *testing.T) {
 	dest := t.TempDir()

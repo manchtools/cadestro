@@ -14,15 +14,6 @@ import (
 	"github.com/go-cmd/cmd"
 )
 
-// WS16 finding #6: on ctx cancel/timeout the exec core SIGTERM'd the child's
-// process group but never escalated to SIGKILL, then blocked reading the status
-// channel — a SIGTERM-ignoring child therefore pinned the reaping goroutine
-// until it exited on its own (or forever). The SIGKILL-escalation path is now
-// exercised through the Runner in runner_test.go
-// (TestRunner_SIGKILLsChildThatIgnoresSIGTERM), which reuses the three helpers
-// below. This file keeps those helpers and the well-behaved control case.
-
-// readChildPID reads the pgid-leader PID the child shell wrote ($$).
 func readChildPID(t *testing.T, pidFile string) int {
 	t.Helper()
 	deadline := time.Now().Add(2 * time.Second)
@@ -40,8 +31,6 @@ func readChildPID(t *testing.T, pidFile string) int {
 	}
 }
 
-// assertProcessGroupGone polls until kill(-pid, 0) reports ESRCH (the whole
-// group is gone). SIGKILL delivery + reaping is asynchronous.
 func assertProcessGroupGone(t *testing.T, pid int) {
 	t.Helper()
 	deadline := time.Now().Add(3 * time.Second)
@@ -57,47 +46,32 @@ func assertProcessGroupGone(t *testing.T, pid int) {
 	}
 }
 
-// sigtermIgnoringScript writes its pgid-leader PID, traps+ignores SIGTERM in
-// the shell, and loops re-spawning sleep so the GROUP stays alive across a
-// SIGTERM. A bare `sleep 30` would NOT work: the group SIGTERM also hits the
-// sleep child (default disposition → it dies), the script completes and the
-// shell exits — SIGKILL would never be exercised. The restart loop keeps the
-// shell (which ignores SIGTERM) running until SIGKILL tears down the group.
 func sigtermIgnoringScript(pidFile string) string {
 	return fmt.Sprintf(`echo $$ > %s; trap "" TERM; while true; do sleep 30; done`, pidFile)
 }
 
-// TestAwaitStatusOrKill_DStateFallback covers the last-resort branch: if a child
-// cannot be reaped even after SIGKILL within the grace (e.g. an uninterruptible
-// D-state), awaitStatusOrKill must return a best-effort status snapshot rather
-// than block forever. We force the branch deterministically by passing a status
-// channel that NEVER delivers, so both timers fire; the real child started here
-// is still SIGTERM'd (Stop) and SIGKILL'd by the function, so nothing leaks.
 func TestAwaitStatusOrKill_DStateFallback(t *testing.T) {
 	restore := killGrace
 	killGrace = 50 * time.Millisecond
 	defer func() { killGrace = restore }()
 
 	c := cmd.NewCmd("sleep", "60")
-	_ = c.Start() // real status channel intentionally discarded
+	_ = c.Start()
 	never := make(chan cmd.Status)
 
 	start := time.Now()
-	_ = awaitStatusOrKill(c, never) // returns c.Status() after both grace timers fire
+	_ = awaitStatusOrKill(c, never)
 	if elapsed := time.Since(start); elapsed > 3*time.Second {
 		t.Errorf("awaitStatusOrKill blocked %v; the bounded D-state fallback did not fire", elapsed)
 	}
 }
 
-// TestRunner_WellBehavedChildReapsOnSIGTERM is the correct-path control: a child
-// that honors SIGTERM reaps at cancel, well before the SIGKILL grace, and the
-// Runner still returns ctx.Err().
 func TestRunner_WellBehavedChildReapsOnSIGTERM(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer cancel()
 
 	start := time.Now()
-	_, err := directRunner(t).Run(ctx, Command{Name: "sleep", Args: []string{"30"}}) // default disposition: dies on SIGTERM
+	_, err := directRunner(t).Run(ctx, Command{Name: "sleep", Args: []string{"30"}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("err = %v, want context.DeadlineExceeded", err)
 	}

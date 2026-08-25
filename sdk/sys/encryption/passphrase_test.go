@@ -22,14 +22,14 @@ func TestGeneratePassphrase(t *testing.T) {
 	if strings.ContainsAny(phrase, "\n\r") {
 		t.Error("passphrase contains a newline/CR")
 	}
-	// It is a Secret: redacts in logs.
+
 	if s.String() != "[REDACTED]" || strings.Contains(s.String(), phrase) {
 		t.Errorf("passphrase Secret not redacted: %q", s.String())
 	}
 }
 
 func TestGeneratePassphrase_ClampsMinWordsToThree(t *testing.T) {
-	// Asking for 1 word still yields at least 3 (and >= 32 chars).
+
 	s, err := GeneratePassphrase(1)
 	if err != nil {
 		t.Fatal(err)

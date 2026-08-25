@@ -59,7 +59,7 @@ func TestDetect(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			prev := lookPath
-			t.Cleanup(func() { lookPath = prev }) // restored even if an assertion fails
+			t.Cleanup(func() { lookPath = prev })
 			lookPath = func(name string) (string, error) {
 				if tc.present[name] {
 					return "/usr/bin/" + name, nil
@@ -90,7 +90,7 @@ func TestRunRead_ErrorMapping(t *testing.T) {
 	if _, err := runRead(ctx, r, "chronyc"); err == nil {
 		t.Error("runRead must surface an exec error")
 	}
-	// unprivileged
+
 	r.Push(exec.Result{Stdout: "x"}, nil)
 	if _, err := runRead(ctx, r, "chronyc"); err != nil {
 		t.Fatal(err)

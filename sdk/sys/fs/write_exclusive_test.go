@@ -8,15 +8,6 @@ import (
 	"testing"
 )
 
-// These run against a real temp directory through the Direct backend (see
-// directManager in manager_test.go): the whole value of an exclusive create is
-// what the kernel actually does, so a fake would prove nothing.
-
-// TestWriteFileExclusive_CreatesThenRefuses pins the primitive the firewalld
-// backend's create-only cleanup rests on: the FIRST call creates and the SECOND
-// reports ErrExists without touching the content. If the second call silently
-// overwrote, a caller would conclude it owned a file it did not create and could
-// go on to delete someone else's definition.
 func TestWriteFileExclusive_CreatesThenRefuses(t *testing.T) {
 	m := directManager(t)
 	ctx := context.Background()
@@ -34,16 +25,13 @@ func TestWriteFileExclusive_CreatesThenRefuses(t *testing.T) {
 	if !errors.Is(err, ErrExists) {
 		t.Fatalf("second WriteFileExclusive err = %v, want ErrExists (errors.Is-matchable)", err)
 	}
-	// The refusal must be total: no partial write, no truncation.
+
 	got, err = os.ReadFile(path)
 	if err != nil || string(got) != "mine" {
 		t.Errorf("a refused exclusive write modified the file: content = %q, err = %v; want %q untouched", got, err, "mine")
 	}
 }
 
-// A file planted by someone else — including one that appears between a caller's
-// would-be probe and its write — must produce ErrExists just the same. This is
-// the race the firewalld backend used to have with Exists-then-WriteFile.
 func TestWriteFileExclusive_RefusesForeignFile(t *testing.T) {
 	m := directManager(t)
 	path := filepath.Join(t.TempDir(), "svc.xml")
@@ -59,8 +47,6 @@ func TestWriteFileExclusive_RefusesForeignFile(t *testing.T) {
 	}
 }
 
-// Backup is meaningless for a call that never replaces content, so it is
-// rejected rather than silently ignored.
 func TestWriteFileExclusive_RejectsBackup(t *testing.T) {
 	m := directManager(t)
 	dir := t.TempDir()

@@ -25,8 +25,6 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 `
 
-// newManager builds a real-Runner service.Manager. The integration container
-// runs as the non-root cadestro user with passwordless sudo.
 func newManager(t *testing.T) service.Manager {
 	t.Helper()
 	r, err := exec.NewRunner(exec.Sudo)
@@ -62,7 +60,7 @@ func TestWriteUnit_Integration(t *testing.T) {
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("unit file should exist after WriteUnit: %v", err)
 	}
-	// The unit file is mode 0644 (world-readable), so a plain read suffices.
+
 	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
@@ -126,9 +124,7 @@ func TestStatus_Integration(t *testing.T) {
 }
 
 func TestStatusMissingUnit_Integration(t *testing.T) {
-	// systemctl is-enabled on a non-existent unit prints "not-found"/exits 4;
-	// Status surfaces that as an error so callers can tell "doesn't exist" from
-	// "exists but disabled".
+
 	if _, err := newManager(t).Status(context.Background(), "cadestro-nonexistent-12345.service"); err == nil {
 		t.Fatal("Status on a missing unit returned nil, want an error")
 	}
@@ -201,9 +197,6 @@ func TestMaskUnmask_Integration(t *testing.T) {
 	m := newManager(t)
 	defer cleanupUnit(t, m)
 
-	// Before Mask the unit doesn't exist → IsMasked errors (strict not-found).
-	// Mask materialises it as a /dev/null symlink (writing a real file first
-	// would make mask fail with "a regular file exists").
 	if _, err := m.IsMasked(ctx, testUnitName); err == nil {
 		t.Fatal("IsMasked on a nonexistent unit returned nil, want an error before Mask")
 	}
@@ -216,7 +209,7 @@ func TestMaskUnmask_Integration(t *testing.T) {
 	if err := m.Unmask(ctx, testUnitName); err != nil {
 		t.Fatalf("Unmask: %v", err)
 	}
-	// After Unmask the symlink is gone → the unit no longer exists → strict error.
+
 	if _, err := m.IsMasked(ctx, testUnitName); err == nil {
 		t.Fatal("IsMasked after Unmask returned nil, want a not-found error")
 	}

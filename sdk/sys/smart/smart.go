@@ -66,11 +66,6 @@ func New(runner exec.Runner) (Collector, error) {
 	return &collector{r: runner}, nil
 }
 
-// validateDevice rejects a device path that is unsafe to pass to escalated
-// smartctl. It must be under /dev/ (smartctl inspects block devices; restricting
-// to /dev keeps the privileged probe off arbitrary files like /etc/passwd),
-// contain no ".." traversal, and no NUL. The /dev/ prefix also rules out a
-// flag-shaped argument.
 func validateDevice(dev string) error {
 	if !strings.HasPrefix(dev, "/dev/") || strings.Contains(dev, "..") || strings.ContainsRune(dev, 0) {
 		return fmt.Errorf("%w: %q (must be a /dev/* path with no '..')", ErrInvalidDevice, dev)
@@ -78,7 +73,6 @@ func validateDevice(dev string) error {
 	return nil
 }
 
-// scanResult mirrors `smartctl --scan -j`.
 type scanResult struct {
 	Devices []struct {
 		Name string `json:"name"`
@@ -103,7 +97,6 @@ func (c *collector) Scan(ctx context.Context) ([]ScanDevice, error) {
 	return devs, nil
 }
 
-// deviceResult mirrors the subset of `smartctl -j -a <dev>` we consume.
 type deviceResult struct {
 	ModelName    string `json:"model_name"`
 	SerialNumber string `json:"serial_number"`
@@ -124,11 +117,6 @@ type deviceResult struct {
 	} `json:"smartctl"`
 }
 
-// smartctlFatalBits are the smartctl exit-status bits that mean the COMMAND
-// failed (bit 0 = command-line parse error, bit 1 = device open failed). Bits 2+
-// report device/SMART health (e.g. failing self-assessment) and are NOT execution
-// failures — smart_status.passed already conveys health, so they must not be
-// treated as an error.
 const smartctlFatalBits = 0x03
 
 // Device returns the health summary for dev.
@@ -157,12 +145,6 @@ func (c *collector) Device(ctx context.Context, dev string) (Device, error) {
 	}, nil
 }
 
-// run executes smartctl escalated and returns stdout. smartctl's non-zero exit
-// is a HEALTH bitmask, not (usually) an exec failure, so we do not treat a
-// non-zero exit as an error here — the caller's JSON parse + the fatal-bits check
-// classify it. A nil error from the Runner with empty stdout still yields a parse
-// error downstream. Only a Runner-level failure (binary missing, escalation
-// denied) is surfaced here.
 func (c *collector) run(ctx context.Context, args ...string) (string, error) {
 	res, err := c.r.Run(ctx, exec.Command{Name: "smartctl", Args: args, Escalate: true})
 	if err != nil {
@@ -171,7 +153,6 @@ func (c *collector) run(ctx context.Context, args ...string) (string, error) {
 	return res.Stdout, nil
 }
 
-// joinMessages flattens smartctl's message strings for an error.
 func joinMessages(msgs []struct {
 	String string `json:"string"`
 }) string {

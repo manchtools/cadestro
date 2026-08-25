@@ -42,12 +42,10 @@ func (m *manager) ReadDir(ctx context.Context, path string) ([]DirEntry, error) 
 	return m.readDirEscalated(ctx, path)
 }
 
-// readDirDirect is the root path: os.ReadDir, which returns a wrapped
-// os.ErrNotExist for a missing directory.
 func readDirDirect(path string) ([]DirEntry, error) {
 	osEntries, err := os.ReadDir(path)
 	if err != nil {
-		return nil, err // os.ReadDir wraps os.ErrNotExist for a missing dir
+		return nil, err
 	}
 	entries := make([]DirEntry, 0, len(osEntries))
 	for _, e := range osEntries {
@@ -56,30 +54,13 @@ func readDirDirect(path string) ([]DirEntry, error) {
 	return entries, nil
 }
 
-// readDirEscalated is the privilege-backend path. It runs
-//
-//	find <path>/ -maxdepth 1 -mindepth 1 -printf '%y/%f\n'
-//
-// emitting one line per entry as "<type-char>/<basename>". A basename never
-// contains '/', so the first '/' unambiguously separates the single type char
-// from the name. (A pathological filename containing a newline would break the
-// line framing; managed config directories never hold such names, and the
-// Direct/root path — which the deployed agent always takes — handles them
-// correctly via os.ReadDir.)
-//
-// The trailing slash is load-bearing: `find /file` on a REGULAR file exits 0
-// with no output (which would otherwise read as a silently-empty directory),
-// whereas `find /file/` reports ENOTDIR and exits non-zero. It makes the
-// escalated path enforce the same "non-directory target is an error, never an
-// empty listing" contract the Direct (os.ReadDir) path already honours.
 func (m *manager) readDirEscalated(ctx context.Context, path string) ([]DirEntry, error) {
 	res, err := m.runPriv(ctx, "find", path+"/", "-maxdepth", "1", "-mindepth", "1", "-printf", `%y/%f\n`)
 	if err != nil {
 		return nil, err
 	}
 	if res.ExitCode != 0 {
-		// ENOENT (missing dir) → explicit-absence contract; ENOTDIR (a regular
-		// file) and any other failure → a real error, never a silent empty list.
+
 		if isENOENTStderr(res.Stderr) {
 			return nil, fmt.Errorf("read dir %s: %w", path, os.ErrNotExist)
 		}
@@ -92,7 +73,7 @@ func (m *manager) readDirEscalated(ctx context.Context, path string) ([]DirEntry
 		}
 		slash := strings.IndexByte(line, '/')
 		if slash <= 0 || slash == len(line)-1 {
-			continue // malformed: no type/name separator or empty name
+			continue
 		}
 		entries = append(entries, DirEntry{Name: line[slash+1:], IsDir: line[:slash] == "d"})
 	}

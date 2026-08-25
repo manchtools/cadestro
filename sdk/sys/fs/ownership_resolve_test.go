@@ -8,11 +8,6 @@ import (
 	"testing"
 )
 
-// ResolveOwnership maps owner/group NAMES to numeric ids for the fd-based
-// fchown helpers. An empty name resolves to -1 ("leave unchanged", the
-// chown(2) sentinel); an unknown name is an error (fail closed — never
-// fall back to root/0 or to "leave unchanged" silently, which would let a
-// typo widen ownership).
 func TestResolveOwnership(t *testing.T) {
 	u, err := user.Current()
 	if err != nil {

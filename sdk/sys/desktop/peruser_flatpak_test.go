@@ -11,10 +11,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// TestPerUserFlatpak_Composition pins the agent's per-user flatpak pattern end to
-// end: a flatpak Manager built on a desktop.RunAsRunner runs its --user
-// transaction AS the target desktop user (Gap 7), honoring an explicit remote
-// (Gap 6) — with NO flatpak-backend changes, composed purely through the Runner.
 func TestPerUserFlatpak_Composition(t *testing.T) {
 	base := exectest.New(sysexec.Direct)
 	base.Push(sysexec.Result{}, nil)

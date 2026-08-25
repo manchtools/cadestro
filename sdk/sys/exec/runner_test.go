@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-// NewRunner is pure and fail-closed: it validates the backend is KNOWN and does
-// not probe the host. The zero value and any unimplemented value are rejected
-// with ErrUnknownBackend (Decision 5/6) — no silent default escalation.
-
 func TestNewRunner_RejectsZeroAndUnknown(t *testing.T) {
 	for _, b := range []PrivilegeBackend{0, PrivilegeBackend(-1), PrivilegeBackend(99)} {
 		r, err := NewRunner(b)
@@ -38,10 +34,6 @@ func TestNewRunner_AcceptsImplementedBackends(t *testing.T) {
 	}
 }
 
-// The capability layer sets Command.Escalate and is escalation-method-agnostic;
-// the Runner alone turns that into sudo -n / doas -n / bare. wrapEscalation is
-// the pure seam that decides the final (name, argv) — unit-testable without a
-// real sudo on PATH (the real escalation is covered by the integration harness).
 func TestWrapEscalation(t *testing.T) {
 	const abs = "/usr/sbin/useradd"
 	args := []string{"-m", "deploy"}
@@ -56,7 +48,7 @@ func TestWrapEscalation(t *testing.T) {
 		{Direct, false, abs, []string{"-m", "deploy"}},
 		{Sudo, true, "sudo", []string{"-n", abs, "-m", "deploy"}},
 		{Doas, true, "doas", []string{"-n", abs, "-m", "deploy"}},
-		{Sudo, false, abs, []string{"-m", "deploy"}}, // no escalation requested → bare
+		{Sudo, false, abs, []string{"-m", "deploy"}},
 		{Doas, false, abs, []string{"-m", "deploy"}},
 	}
 	for _, tc := range tests {
@@ -70,8 +62,6 @@ func TestWrapEscalation(t *testing.T) {
 	}
 }
 
-// wrapEscalation must not alias/mutate the caller's args slice (a reused arg
-// list must stay pristine across calls).
 func TestWrapEscalation_DoesNotMutateCallerArgs(t *testing.T) {
 	args := []string{"-m", "deploy"}
 	_, _ = wrapEscalation(Sudo, true, "/usr/sbin/useradd", args)
@@ -89,9 +79,6 @@ func directRunner(t *testing.T) Runner {
 	return r
 }
 
-// A non-zero exit is NOT an error — it is reported in Result.ExitCode, because
-// callers branch on specific codes (cryptsetup 2 = wrong passphrase, etc.). The
-// Runner returns a non-nil error only on FAILURE TO EXECUTE.
 func TestRunner_NonZeroExitIsNotAnError(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{Name: "sh", Args: []string{"-c", "exit 3"}})
 	if err != nil {
@@ -124,18 +111,13 @@ func TestRunner_RejectsEmptyNameAndUnknownBinary(t *testing.T) {
 	}
 }
 
-// TestBuildChildEnv_DefaultBranchDropsHijackVars pins that the inherit-the-parent
-// branch (no ChildPath, no Command.Env) does NOT leak a hijack variable from the
-// SDK's OWN process environment into a child (which may be escalated to root).
-// Command.Env is already filtered; the inherited env must be filtered the same
-// way. Benign inherited vars are kept, and the forced locale still wins.
 func TestBuildChildEnv_DefaultBranchDropsHijackVars(t *testing.T) {
-	t.Setenv("LD_PRELOAD", "/tmp/evil.so")          // a classic injection var
-	t.Setenv("BASH_ENV", "/tmp/evil.sh")            // another
-	t.Setenv("CADESTRO_BENIGN_TEST_VAR", "keep-me") // a normal var that must survive
-	t.Setenv("LANG", "de_DE.UTF-8")                 // reserved; forced LANG=C must win
+	t.Setenv("LD_PRELOAD", "/tmp/evil.so")
+	t.Setenv("BASH_ENV", "/tmp/evil.sh")
+	t.Setenv("CADESTRO_BENIGN_TEST_VAR", "keep-me")
+	t.Setenv("LANG", "de_DE.UTF-8")
 
-	env, err := buildChildEnv(Command{}) // default branch: inherit parent
+	env, err := buildChildEnv(Command{})
 	if err != nil {
 		t.Fatalf("buildChildEnv: %v", err)
 	}
@@ -156,24 +138,17 @@ func TestBuildChildEnv_DefaultBranchDropsHijackVars(t *testing.T) {
 	if !has("CADESTRO_BENIGN_TEST_VAR=keep-me") {
 		t.Error("a benign inherited var was dropped; the default branch must still inherit safe vars")
 	}
-	// forcedEnv is appended last, so the deterministic locale wins over inherited LANG.
+
 	if got := env[len(env)-3:]; got[0] != "LC_ALL=C" || got[1] != "LANG=C" || got[2] != "NO_COLOR=1" {
 		t.Errorf("tail = %v, want forcedEnv last (LC_ALL=C, LANG=C, NO_COLOR=1)", got)
 	}
 }
 
-// TestBuildChildEnv_DefaultBranchKeepsPATH pins that the inherit-the-parent
-// branch still hands the child a PATH. PATH is on the hijack blocklist, so the
-// os.Environ() filter that keeps LD_PRELOAD out ALSO strips the parent's PATH —
-// leaving a child spawned with neither ChildPath nor Command.Env with no PATH at
-// all, so every bare-name tool lookup fails. The other two branches already
-// re-add a PATH (ChildPath sets it; the Env branch composes the parent's), so
-// this branch must too: exactly one PATH entry, carrying the parent's value.
 func TestBuildChildEnv_DefaultBranchKeepsPATH(t *testing.T) {
 	const parentPath = "/usr/local/bin:/usr/bin:/bin"
 	t.Setenv("PATH", parentPath)
 
-	env, err := buildChildEnv(Command{}) // default branch: inherit parent
+	env, err := buildChildEnv(Command{})
 	if err != nil {
 		t.Fatalf("buildChildEnv: %v", err)
 	}
@@ -191,10 +166,6 @@ func TestBuildChildEnv_DefaultBranchKeepsPATH(t *testing.T) {
 	}
 }
 
-// The escalation contract requires an ABSOLUTE path (sudoers/doas match on
-// absolute paths; escalating a relative path is a security risk). exec.LookPath
-// returns a slash-containing relative Name UNCHANGED and with a nil error, so
-// the Runner must enforce absoluteness itself.
 func TestResolveAbsolute_BareNameIsAbsolute(t *testing.T) {
 	abs, err := resolveAbsolute("sh")
 	if err != nil {
@@ -222,11 +193,6 @@ func TestResolveAbsolute_RelativeSlashNameResolvedToAbsolute(t *testing.T) {
 	}
 }
 
-// An already-cancelled context must short-circuit: the command never runs and
-// the Runner returns ctx.Err(). Without an upfront check, go-cmd's select could
-// pick a fast-completing command over ctx.Done() and return nil — so a caller
-// passing a dead ctx could still trigger a side effect. (This also keeps the
-// real Runner and exectest.FakeRunner behaviourally identical on cancellation.)
 func TestRunner_RespectsAlreadyCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -235,8 +201,6 @@ func TestRunner_RespectsAlreadyCancelledContext(t *testing.T) {
 	}
 }
 
-// Stdin is delivered to the child (the chpasswd/cryptsetup path the capability
-// layer relies on).
 func TestRunner_DeliversStdin(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{
 		Name:  "cat",
@@ -250,8 +214,6 @@ func TestRunner_DeliversStdin(t *testing.T) {
 	}
 }
 
-// The env hijack blocklist is enforced through Command.Env — a blocked name is
-// rejected BEFORE the child is spawned (present-but-wrong → Runner does no work).
 func TestRunner_EnvBlocklistRejectedBeforeExec(t *testing.T) {
 	r := directRunner(t)
 	if _, err := r.Run(context.Background(), Command{Name: "sh", Args: []string{"-c", "true"}, Env: []string{"LD_PRELOAD=/evil.so"}}); !errors.Is(err, ErrBlockedEnvVar) {
@@ -278,9 +240,6 @@ func TestRunner_AllowedEnvReachesChild(t *testing.T) {
 	}
 }
 
-// The Runner forces a deterministic environment (LC_ALL=C, LANG=C, NO_COLOR=1)
-// on EVERY command — not a per-command opt-in — so the SDK's parsing of tool
-// output is locale/format-stable regardless of the host locale.
 func TestRunner_ForcesDeterministicEnv(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{
 		Name: "sh", Args: []string{"-c", `printf '%s|%s|%s' "$LC_ALL" "$LANG" "$NO_COLOR"`},
@@ -293,8 +252,6 @@ func TestRunner_ForcesDeterministicEnv(t *testing.T) {
 	}
 }
 
-// A consumer cannot override the forced deterministic env via Command.Env — the
-// reserved names are rejected before the command runs.
 func TestRunner_RejectsReservedEnv(t *testing.T) {
 	for _, e := range []string{"LANG=ja_JP.UTF-8", "LC_ALL=ja_JP.UTF-8", "LC_NUMERIC=de_DE.UTF-8", "LANGUAGE=ja", "NO_COLOR="} {
 		_, err := directRunner(t).Run(context.Background(), Command{Name: "true", Env: []string{e}})
@@ -304,8 +261,6 @@ func TestRunner_RejectsReservedEnv(t *testing.T) {
 	}
 }
 
-// The forced env is an OVERRIDE, not a replacement: a plain command still
-// inherits the parent environment; only the deterministic vars are pinned.
 func TestRunner_InheritsParentEnvWhilePinningLocale(t *testing.T) {
 	t.Setenv("CADESTRO_TEST_INHERIT", "visible")
 	res, err := directRunner(t).Run(context.Background(), Command{
@@ -319,8 +274,6 @@ func TestRunner_InheritsParentEnvWhilePinningLocale(t *testing.T) {
 	}
 }
 
-// ChildPath sets an explicit, isolating child PATH (the per-user runuser path):
-// the curated PATH is authoritative and the parent env is NOT inherited.
 func TestRunner_ChildPathIsAuthoritative(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{
 		Name: "sh", Args: []string{"-c", "printf %s \"$PATH\""},
@@ -334,9 +287,6 @@ func TestRunner_ChildPathIsAuthoritative(t *testing.T) {
 	}
 }
 
-// detectEscalationDenied turns a sudo/doas -n auth refusal into ErrEscalationDenied
-// (distinct from the command's own non-zero exit). Pure seam — unit-tested with
-// synthetic Results so it needs no password-protected sudo.
 func TestDetectEscalationDenied(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -359,13 +309,8 @@ func TestDetectEscalationDenied(t *testing.T) {
 	}
 }
 
-// ctx cancellation must SIGKILL a SIGTERM-ignoring child after a bounded grace
-// and return promptly — the WS16 escalation, now via the Runner. Reuses the
-// trap-ignoring harness from exec_kill_test.go (a bare sleep would die on the
-// group SIGTERM and pass for the wrong reason).
 func TestRunner_SIGKILLsChildThatIgnoresSIGTERM(t *testing.T) {
-	// Mutates the package-level killGrace seam, so this test must not be made
-	// parallel (no t.Parallel) — the same constraint as the sibling kill tests.
+
 	restore := killGrace
 	killGrace = 200 * time.Millisecond
 	defer func() { killGrace = restore }()
@@ -397,7 +342,6 @@ func TestRunner_SIGKILLsChildThatIgnoresSIGTERM(t *testing.T) {
 	assertProcessGroupGone(t, readChildPID(t, pidFile))
 }
 
-// The 1 MiB per-stream output cap is preserved on the Runner path.
 func TestRunner_OutputCapped(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{
 		Name: "sh", Args: []string{"-c", "yes aaaaaaaaaaaaaaaa | head -c 2000000"},
@@ -413,7 +357,6 @@ func TestRunner_OutputCapped(t *testing.T) {
 	}
 }
 
-// Streaming delivers lines through the callback as they arrive.
 func TestRunner_StreamDeliversLines(t *testing.T) {
 	var got []string
 	_, err := directRunner(t).Stream(context.Background(),
@@ -431,7 +374,6 @@ func TestRunner_StreamDeliversLines(t *testing.T) {
 	}
 }
 
-// Command.Dir runs the child in the requested working directory.
 func TestRunner_RunInDir(t *testing.T) {
 	dir := t.TempDir()
 	res, err := directRunner(t).Run(context.Background(), Command{Name: "pwd", Dir: dir})
@@ -443,8 +385,6 @@ func TestRunner_RunInDir(t *testing.T) {
 	}
 }
 
-// Stderr lines are captured and delivered through the callback (the stderr arm
-// of the streaming core).
 func TestRunner_StreamDeliversStderr(t *testing.T) {
 	var got []string
 	res, err := directRunner(t).Stream(context.Background(),
@@ -465,7 +405,6 @@ func TestRunner_StreamDeliversStderr(t *testing.T) {
 	}
 }
 
-// The per-stream output cap also applies to stderr.
 func TestRunner_StderrOutputCapped(t *testing.T) {
 	res, err := directRunner(t).Run(context.Background(), Command{
 		Name: "sh", Args: []string{"-c", "yes aaaaaaaaaaaaaaaa | head -c 2000000 1>&2"},

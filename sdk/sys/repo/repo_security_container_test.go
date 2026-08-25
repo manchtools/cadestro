@@ -1,28 +1,5 @@
 //go:build container
 
-// Real-execution SECURITY tests for the repository Manager — the hostile
-// counterpart to repo_container_test.go's happy paths. Package repo is a
-// supply-chain trust boundary: a wrong configuration lets a managed host install
-// attacker-controlled packages as root. The hermetic fake-runner tests in
-// security_machine_test.go / validate_test.go pin these controls against scripted
-// output; the tests here drive the SAME controls through the REAL package-manager
-// tooling, the real `gpg --dearmor`, and the real fd-anchored filesystem, so a
-// drift in any of those (a gpg exit-code change, a deb822/.repo/pacman.conf parse
-// change, an fs.Manager removal-confinement regression) is caught against ground
-// truth rather than a mock.
-//
-// Policy note: apt `Trusted: yes`, dnf `gpgcheck=0`, zypper `--no-gpgcheck`, and
-// pacman `TrustAll` are documented OPERATOR CHOICES (per the 2026-06 policy, same
-// as WS8) — they are NOT rejected. The "operator override" tests below PIN them as
-// allowed-by-design so a future change that silently starts rejecting them is
-// caught. The trust downgrade that IS refused — pacman `SigLevel Never` (signature
-// verification disabled, no valid per-invocation semantics) — and the reserved
-// `[options]` name are exercised as real rejections that leave the host untouched.
-//
-// Every lane runs as root, so the Direct runner is correct and direct os.* writes
-// stand in for an attacker who has already planted conflicting config. All tests
-// are Detect-gated and hermetic: no external repo is ever fetched (unreachable
-// example.com URLs + parser/cacheonly probes).
 package repo
 
 import (
@@ -35,9 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
-// armoredTestKey2 is a SECOND throwaway ed25519 PUBLIC key (no secret committed),
-// distinct from armoredTestKey, used to exercise real key ROTATION: a re-Apply
-// with a different key must re-dearmor and replace the on-disk keyring.
 const armoredTestKey2 = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mDMEajeV+BYJKwYBBAHaRw8BAQdAxo9qGCe3XUaNKRWUE98ne0eruTOpxaf85Jlm
@@ -50,13 +24,6 @@ IzP53rgn9zz6rhzYNLf7yWtog0MbeGAjFPy5/B2G3gEAuhJEqqjp+uBXM0MvYrfc
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
-// --- APT -------------------------------------------------------------------
-
-// TestRepoSecurity_AptMalformedKey_Rejected_Container drives a non-PGP blob as the
-// signing key. Real `gpg --dearmor` exits non-zero on garbage, so the key path
-// must FAIL CLOSED: Apply returns an error and writes NEITHER the .sources NOR the
-// keyring. A partial write here would leave a repo configured to fetch packages
-// the host cannot verify.
 func TestRepoSecurity_AptMalformedKey_Rejected_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
@@ -81,14 +48,6 @@ func TestRepoSecurity_AptMalformedKey_Rejected_Container(t *testing.T) {
 	}
 }
 
-// TestRepoSecurity_AptConflictCleanupConfinedToKeyringJail_Container plants a
-// hostile pre-existing source that references the same URL and carries two
-// Signed-By targets: one inside the apt keyring jail and one OUTSIDE it (a stand-in
-// for /etc/sudoers). Applying the real repo triggers conflict cleanup, which must
-// remove the conflicting source and its in-jail key but REFUSE to delete the
-// out-of-jail target — otherwise attacker-controlled config turns repo
-// reconfiguration into an arbitrary privileged file delete. This drives the real
-// fd-anchored fs.Manager removal, not a fake.
 func TestRepoSecurity_AptConflictCleanupConfinedToKeyringJail_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
@@ -101,7 +60,7 @@ func TestRepoSecurity_AptConflictCleanupConfinedToKeyringJail_Container(t *testi
 	}
 	decoySource := aptSourcesDir + "/cadestro-sec-decoy.sources"
 	inJailKey := aptKeyringDir + "/cadestro-sec-decoy-injail.gpg"
-	outOfJailSentinel := "/etc/cadestro-sec-out-of-jail-sentinel.gpg" // NOT under any keyring dir
+	outOfJailSentinel := "/etc/cadestro-sec-out-of-jail-sentinel.gpg"
 
 	for path, body := range map[string]string{
 		inJailKey:         "decoy-in-jail-key\n",
@@ -145,11 +104,6 @@ func TestRepoSecurity_AptConflictCleanupConfinedToKeyringJail_Container(t *testi
 	}
 }
 
-// TestRepoSecurity_AptKeyRotation_Container exercises the real key lifecycle: an
-// initial key is dearmored and installed, a rotation to a DIFFERENT key replaces
-// the on-disk keyring (Changed=true), and a re-Apply of the rotated key is an
-// idempotent no-op (Changed=false). This pins updateAptKey's differ→rewrite vs
-// already-installed branches against real `gpg --dearmor` output.
 func TestRepoSecurity_AptKeyRotation_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
@@ -196,13 +150,6 @@ func TestRepoSecurity_AptKeyRotation_Container(t *testing.T) {
 	}
 }
 
-// TestRepoSecurity_AptRejectedReapplyPreservesExisting_Container configures a valid
-// repo, then re-applies the SAME name with an invalid configuration (a control
-// character in the distribution — config injection). Apply re-validates first, so
-// the rejection must happen BEFORE any side effect: the original, working .sources
-// is left byte-for-byte intact. This is the "old config torn down, new config
-// rejected" partial-side-effect hazard — a rejected reconfigure must never leave
-// the host with no repo (or a half-written one).
 func TestRepoSecurity_AptRejectedReapplyPreservesExisting_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
@@ -229,11 +176,6 @@ func TestRepoSecurity_AptRejectedReapplyPreservesExisting_Container(t *testing.T
 	}
 }
 
-// TestRepoSecurity_AptTrustedYes_OperatorOverride_Container pins the operator
-// choice: a keyless Trusted: yes repo (signature verification off) is ALLOWED by
-// design and accepted by real apt. This is the fail-open hole the operator
-// explicitly opted into; the test exists so a future change that starts rejecting
-// it is a deliberate, visible decision — not a silent policy reversal.
 func TestRepoSecurity_AptTrustedYes_OperatorOverride_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Apt)
 	ctx := repoCtx(t)
@@ -259,13 +201,6 @@ func TestRepoSecurity_AptTrustedYes_OperatorOverride_Container(t *testing.T) {
 	}
 }
 
-// --- DNF -------------------------------------------------------------------
-
-// TestRepoSecurity_DnfGpgcheckZeroDropsKeyImport_Container pins the trust-downgrade
-// guard in applyDnf: when gpgcheck is off, the gpgkey reference is DROPPED from the
-// .repo and the key is NOT imported. Importing it behind gpgcheck=0 would trust the
-// key system-wide while the repo verifies nothing — a silent trust downgrade. The
-// written .repo carries gpgcheck=0 with no gpgkey= line, and real dnf parses it.
 func TestRepoSecurity_DnfGpgcheckZeroDropsKeyImport_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Dnf)
 	ctx := repoCtx(t)
@@ -291,12 +226,6 @@ func TestRepoSecurity_DnfGpgcheckZeroDropsKeyImport_Container(t *testing.T) {
 	}
 }
 
-// --- PACMAN ----------------------------------------------------------------
-
-// TestRepoSecurity_PacmanSigLevelNever_Rejected_Container drives the one pacman
-// trust downgrade that IS refused: SigLevel "Never" disables signature
-// verification, so the repo would install unsigned/forged packages. Apply must
-// reject it before writing, leaving /etc/pacman.conf untouched (no [section]).
 func TestRepoSecurity_PacmanSigLevelNever_Rejected_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Pacman)
 	ctx := repoCtx(t)
@@ -318,10 +247,6 @@ func TestRepoSecurity_PacmanSigLevelNever_Rejected_Container(t *testing.T) {
 	}
 }
 
-// TestRepoSecurity_PacmanReservedOptionsName_Rejected_Container ensures a repo
-// named "options" is refused: its [options] header would collide with pacman.conf's
-// global settings block and silently rewrite system-wide configuration. The real
-// /etc/pacman.conf (which has a genuine [options] block) must be left untouched.
 func TestRepoSecurity_PacmanReservedOptionsName_Rejected_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Pacman)
 	ctx := repoCtx(t)
@@ -338,9 +263,6 @@ func TestRepoSecurity_PacmanReservedOptionsName_Rejected_Container(t *testing.T)
 	}
 }
 
-// TestRepoSecurity_PacmanTrustAll_OperatorOverride_Container pins the operator
-// choice: "Optional TrustAll" relaxes the trust DB but still requires a valid
-// signature, so it is allowed (unlike Never). Real pacman accepts the section.
 func TestRepoSecurity_PacmanTrustAll_OperatorOverride_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Pacman)
 	ctx := repoCtx(t)
@@ -357,12 +279,6 @@ func TestRepoSecurity_PacmanTrustAll_OperatorOverride_Container(t *testing.T) {
 	}
 }
 
-// --- ZYPPER ----------------------------------------------------------------
-
-// TestRepoSecurity_ZypperNoGpgcheck_OperatorOverride_Container pins the operator
-// choice: GPGCheck=false adds `--no-gpgcheck`, an allowed-by-design downgrade. Real
-// zypper registers the alias; the test exists so a future change that rejects it is
-// a deliberate decision, not a silent reversal.
 func TestRepoSecurity_ZypperNoGpgcheck_OperatorOverride_Container(t *testing.T) {
 	m := realRepoMgr(t, pkg.Zypper)
 	ctx := repoCtx(t)

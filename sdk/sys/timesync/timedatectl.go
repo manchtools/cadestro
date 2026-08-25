@@ -7,7 +7,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// timedatectlManager queries systemd-timesyncd via `timedatectl show`.
 type timedatectlManager struct {
 	r exec.Runner
 }
@@ -27,7 +26,6 @@ func (m *timedatectlManager) Status(ctx context.Context) (Status, error) {
 	}, nil
 }
 
-// parseKV parses `key=value` lines (timedatectl show's property form).
 func parseKV(s string) map[string]string {
 	out := make(map[string]string)
 	for _, line := range strings.Split(s, "\n") {

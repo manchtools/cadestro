@@ -12,23 +12,10 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// runRead executes an unprivileged read-side query (Info / Search / List /
-// Show / version + status probes) through the injected Runner. The Runner forces
-// the C locale on every command, so the output parser always sees the stable
-// English form regardless of the host locale. A non-zero exit is reported in
-// Result.ExitCode (NOT as an error) — read callers branch on specific codes (e.g.
-// dnf check-update's 100, dpkg -s's 1) — so the returned error is non-nil only
-// when the command could not be executed at all.
 func runRead(ctx context.Context, r sysexec.Runner, name string, args ...string) (sysexec.Result, error) {
 	return r.Run(ctx, sysexec.Command{Name: name, Args: args})
 }
 
-// probe runs an unprivileged read whose non-zero exit is a benign domain signal
-// — "not installed" / "not pinned" / "not in repo" / "no such subcommand" —
-// rather than a failure, while a runner error (binary missing, blocked env,
-// context cancellation) propagates. It returns (stdout, ok, err): ok is true
-// only on a clean (exit 0) run. This is the seam that keeps tolerant lookups
-// from masking cancellations and executor failures as a benign miss.
 func probe(ctx context.Context, r sysexec.Runner, name string, args ...string) (string, bool, error) {
 	res, err := runRead(ctx, r, name, args...)
 	if err != nil {
@@ -37,13 +24,6 @@ func probe(ctx context.Context, r sysexec.Runner, name string, args ...string) (
 	return res.Stdout, res.ExitCode == 0, nil
 }
 
-// runPriv executes a privileged write-side command (Install / Remove / Update /
-// …) through the Runner. escalate is true for every native-manager mutation and
-// for system-scope flatpak; it is false for user-scope flatpak. env carries any
-// backend-specific variables (e.g. apt's DEBIAN_FRONTEND=noninteractive) on top
-// of the forced C locale. Like runRead, a non-zero exit is in Result.ExitCode,
-// not the error; callers convert it via asCommandError when a non-zero exit
-// means failure (most do; dnf check-update does not).
 func runPriv(ctx context.Context, r sysexec.Runner, escalate bool, env []string, name string, args ...string) (sysexec.Result, error) {
 	return r.Run(ctx, sysexec.Command{
 		Name:     name,
@@ -53,11 +33,6 @@ func runPriv(ctx context.Context, r sysexec.Runner, escalate bool, env []string,
 	})
 }
 
-// readOut runs an unprivileged read whose non-zero exit is itself a failure
-// (List/Show/Version/… — a garbled or error exit means the parse can't proceed),
-// returning stdout on a clean exit and an *exec.CommandError otherwise. Reads
-// that branch on a specific exit code (dpkg -s's 1, dnf check-update's 100,
-// search's "no matches" codes) call runRead directly and inspect Result.ExitCode.
 func readOut(ctx context.Context, r sysexec.Runner, name string, args ...string) (string, error) {
 	res, err := runRead(ctx, r, name, args...)
 	if err != nil {
@@ -69,8 +44,6 @@ func readOut(ctx context.Context, r sysexec.Runner, name string, args ...string)
 	return res.Stdout, nil
 }
 
-// runPrivStdin is the stdin-bearing companion of runPriv (pacman.conf rewrite
-// via tee). An empty stdin sends no input.
 func runPrivStdin(ctx context.Context, r sysexec.Runner, escalate bool, env []string, stdin, name string, args ...string) (sysexec.Result, error) {
 	var in io.Reader
 	if stdin != "" {
@@ -85,11 +58,6 @@ func runPrivStdin(ctx context.Context, r sysexec.Runner, escalate bool, env []st
 	})
 }
 
-// asCommandError turns a completed command's Result into a typed error when its
-// exit code is non-zero, mirroring the old "non-zero exit ⇒ failure" contract
-// the mutating methods rely on. A clean exit returns nil. The exit code and
-// stderr are preserved on *exec.CommandError so callers can branch via
-// errors.As.
 func asCommandError(name string, res sysexec.Result) error {
 	if res.ExitCode == 0 {
 		return nil
@@ -97,12 +65,6 @@ func asCommandError(name string, res sysexec.Result) error {
 	return &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 }
 
-// rpmLocalPackageInfo reads NAME / VERSION-RELEASE / ARCH out of a local .rpm via
-// `rpm -qp --qf` (an unprivileged read), shared by the dnf and zypper backends so
-// their local-introspection cannot drift. The %{NAME} a crafted .rpm embeds is
-// untrusted, so it is re-validated with ValidateRpmPackageName before it is
-// returned — a flag-shaped or metacharacter-bearing name is rejected here, not
-// passed on to a later rpm -q/-e as an option.
 func rpmLocalPackageInfo(ctx context.Context, r sysexec.Runner, path string) (*LocalPackage, error) {
 	if err := ValidateLocalPackagePath(path); err != nil {
 		return nil, err
@@ -129,10 +91,6 @@ func rpmLocalPackageInfo(ctx context.Context, r sysexec.Runner, path string) (*L
 	return info, nil
 }
 
-// parseColonValue returns the trimmed value after the first colon in a
-// "Key: value" info line, or "" when the line has no colon. Shared by every
-// rpm/pacman/flatpak info parser so the "split on first colon" rule cannot drift
-// between backends.
 func parseColonValue(line string) string {
 	parts := strings.SplitN(line, ":", 2)
 	if len(parts) < 2 {
@@ -141,30 +99,11 @@ func parseColonValue(line string) string {
 	return strings.TrimSpace(parts[1])
 }
 
-// sizeUnit pairs a trailing size suffix (with its leading space, e.g. " KiB")
-// with the byte multiplier it denotes.
 type sizeUnit struct {
 	suffix string
 	mult   int64
 }
 
-// parseSizeWithUnits parses a human-readable size string ("3.0 MiB", "512 k",
-// "900 B") into bytes using the supplied ordered unit table. Units are tried in
-// order, so a caller must list more specific suffixes before any that are a
-// suffix of them. A matched suffix is stripped and its multiplier applied; a
-// unit with mult == 1 is a no-op-multiplier suffix that is merely trimmed. The
-// input is space-trimmed before matching; callers needing other preprocessing
-// (e.g. flatpak's comma stripping) do it before calling.
-//
-// ok reports whether the remaining text actually parsed as a number. It is NOT
-// a redundant "was the result non-zero": the helper used to discard
-// strconv.ParseFloat's error and return a bare 0, so an empty line, an
-// unrecognised suffix, and outright junk were all indistinguishable from a
-// genuine zero-byte package — and a caller assigning the result unconditionally
-// would overwrite an already-parsed good size with that fabricated 0. Mapping a
-// parse failure to 0 is a legitimate choice for display metadata, but it is the
-// CALLER's choice to make explicitly, so the failure is reported here rather
-// than swallowed.
 func parseSizeWithUnits(s string, units []sizeUnit) (size int64, ok bool) {
 	s = strings.TrimSpace(s)
 	multiplier := int64(1)
@@ -179,33 +118,18 @@ func parseSizeWithUnits(s string, units []sizeUnit) (size int64, ok bool) {
 	if err != nil {
 		return 0, false
 	}
-	// ParseFloat accepts "NaN", "Inf", "+Inf" and "-Inf" (case-insensitively), and
-	// a finite-but-huge mantissa overflows to +Inf once the multiplier is applied.
-	// Converting a non-finite or out-of-range float to int64 is
-	// IMPLEMENTATION-DEFINED in Go, so junk from a package manager would land in
-	// Package.Size as an arbitrary value (in practice int64's minimum) while
-	// reporting success. A negative size is meaningless for a package. All of
-	// them take the same honest exit as unparseable text.
+
 	if math.IsNaN(n) || math.IsInf(n, 0) || n < 0 {
 		return 0, false
 	}
 	scaled := n * float64(multiplier)
-	// float64(math.MaxInt64) rounds UP to exactly 2^63, one past the largest
-	// int64, so >= is the correct boundary: anything at or above it overflows.
+
 	if math.IsInf(scaled, 0) || scaled >= float64(math.MaxInt64) {
 		return 0, false
 	}
 	return int64(scaled), true
 }
 
-// splitPositionalFields splits VALUE-ONLY one-field-per-line command output (rpm
-// -qp --qf with "\n" separators) into its POSITIONAL fields, trimming each line
-// but PRESERVING an empty leading/middle field so the name/version/arch positions
-// never shift. NOTE: it is NOT for dpkg-deb -f with multiple fields, which emits
-// a labeled "Field: value" stanza (use parseControlFields). A crafted file that
-// emits an empty NAME must surface as an empty field[0]
-// (rejected by the name validator) — NOT silently promote the version into the
-// name slot. Only the trailing blank line the tool appends is dropped.
 func splitPositionalFields(data string) []string {
 	lines := strings.Split(strings.TrimRight(data, "\n"), "\n")
 	fields := make([]string, len(lines))
@@ -215,7 +139,6 @@ func splitPositionalFields(data string) []string {
 	return fields
 }
 
-// countNonEmptyLines counts non-blank lines in command output.
 func countNonEmptyLines(data string) int {
 	count := 0
 	for _, line := range bytes.Split([]byte(data), []byte("\n")) {

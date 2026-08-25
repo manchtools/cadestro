@@ -146,8 +146,6 @@ func ResolveOwnership(owner, group string) (uid, gid int, err error) {
 	return uid, gid, nil
 }
 
-// resolveID resolves a name to a numeric id via lookup, falling back to
-// parsing the name as a raw numeric id.
 func resolveID(name string, lookup func(string) (string, error)) (int, error) {
 	if idStr, lookupErr := lookup(name); lookupErr == nil {
 		id, parseErr := strconv.Atoi(idStr)

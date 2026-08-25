@@ -8,9 +8,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// useAccountsSeams points the accountsservice file ops at a capturing fake fs
-// (via the newFS seam) and a temp dir, restoring both on cleanup. The returned
-// maps are backed by the fake, so the existing test bodies read them unchanged.
 func useAccountsSeams(t *testing.T, dir string) (writes map[string]string, removes *[]string) {
 	t.Helper()
 	f := newFakeFS().install(t)
@@ -21,7 +18,7 @@ func useAccountsSeams(t *testing.T, dir string) (writes map[string]string, remov
 }
 
 func TestSetHiddenOnLoginScreen_HideWritesSystemAccount(t *testing.T) {
-	dir := t.TempDir() // exists, so the "not installed" guard passes
+	dir := t.TempDir()
 	writes, _ := useAccountsSeams(t, dir)
 
 	if err := mgr(t, exectest.New(0)).SetHiddenOnLoginScreen(context.Background(), "deploy", true); err != nil {

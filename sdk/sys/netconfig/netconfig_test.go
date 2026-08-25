@@ -10,7 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeFS records WriteFile calls and replays a scripted error.
 type fakeFS struct {
 	writes   []fakeWrite
 	writeErr error
@@ -27,7 +26,6 @@ func (f *fakeFS) WriteFile(_ context.Context, path string, data []byte, opts fs.
 	return f.writeErr
 }
 
-// withFakeFS swaps newFS to return ff for the duration of t.
 func withFakeFS(t *testing.T, ff *fakeFS) {
 	t.Helper()
 	prev := newFS
@@ -74,8 +72,7 @@ func TestNew_PropagatesFSError(t *testing.T) {
 }
 
 func TestNew_SystemdNetworkdUsesRealFS(t *testing.T) {
-	// Exercise the production newFS closure (fs.New) — the other networkd tests
-	// stub it.
+
 	if _, err := New(SystemdNetworkd, exectest.New(exec.Direct)); err != nil {
 		t.Errorf("New(SystemdNetworkd) with the real fs.Manager: %v", err)
 	}

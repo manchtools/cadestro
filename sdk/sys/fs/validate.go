@@ -15,8 +15,6 @@ func ResolveAndValidatePath(path string) (string, error) {
 		return "", fmt.Errorf("path must be absolute: %s", path)
 	}
 
-	// Walk up from the target file to find the first existing parent directory.
-	// This handles cases where intermediate directories don't exist yet.
 	dir := filepath.Dir(clean)
 	var existingParent, missingTail string
 
@@ -28,7 +26,7 @@ func ResolveAndValidatePath(path string) (string, error) {
 			missingTail = filepath.Join(filepath.Base(dir), missingTail)
 			dir = filepath.Dir(dir)
 		} else {
-			// Permission denied or other error — reject the path.
+
 			return "", fmt.Errorf("cannot stat %s: %w", dir, err)
 		}
 	}
@@ -37,13 +35,11 @@ func ResolveAndValidatePath(path string) (string, error) {
 		existingParent = "/"
 	}
 
-	// Resolve symlinks only in the existing portion of the path.
 	resolved, err := filepath.EvalSymlinks(existingParent)
 	if err != nil {
 		return "", fmt.Errorf("resolve symlinks in %s: %w", existingParent, err)
 	}
 
-	// Rebuild the full path with resolved parent + missing components + filename.
 	if missingTail != "" {
 		return filepath.Join(resolved, missingTail, filepath.Base(clean)), nil
 	}

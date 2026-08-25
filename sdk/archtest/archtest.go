@@ -1,28 +1,3 @@
-// Package archtest holds architectural fitness functions for the SDK:
-// self-discovering, module-wide invariant tests that fail the build when
-// a known code smell is reintroduced or a good pattern is broken.
-//
-// # Scope for the SDK
-//
-// The SDK is a library (proto-generated code, crypto/signing helpers,
-// package-manager exec abstraction). The guard that matters most here is
-// the constant-time secret-comparison lock, because sdk/go/verify and
-// sdk/go/crypto are the action-signing and encryption boundary.
-//
-// Guards from the server archtest suite that do NOT apply to the SDK and
-// are intentionally absent:
-//
-//   - No-dynamic-SQL / projection-write: the SDK has no database.
-//   - Unabstracted-clock: the SDK has no time-DECISION logic. Its only
-//     time.Now() uses are external-command duration measurement in
-//     sdk/go/pkg (intrinsically real wall-clock — injecting a fake clock
-//     is meaningless there) and ULID timestamp seeding. Neither is a
-//     testability-relevant decision, so a clock seam buys nothing.
-//
-// Standard library only (go/parser, go/ast, go/token, go/printer) — no
-// golang.org/x/tools dependency. Every guard walks the module tree,
-// asserts it inspected a non-empty set (cannot pass vacuously), and ships
-// a no-stale-entry-guarded allowlist for true exceptions.
 package archtest
 
 import (
@@ -36,15 +11,12 @@ import (
 	"testing"
 )
 
-// goFile is a parsed Go source file with its module-relative path.
 type goFile struct {
 	rel  string
 	fset *token.FileSet
 	ast  *ast.File
 }
 
-// moduleRoot walks up from the test's working directory to the directory
-// containing go.mod (the SDK module root).
 func moduleRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()
@@ -63,10 +35,6 @@ func moduleRoot(t *testing.T) string {
 	}
 }
 
-// walkGoFiles parses every .go file under root whose module-relative,
-// slash-separated path satisfies keep. Test files and vendor/testdata/.git
-// are always skipped; keep narrows further (callers exclude generated and
-// the archtest package itself).
 func walkGoFiles(t *testing.T, root string, keep func(rel string) bool) []*goFile {
 	t.Helper()
 	return walkGoFilesIncludingTests(t, root, func(rel string) bool {
@@ -74,10 +42,6 @@ func walkGoFiles(t *testing.T, root string, keep func(rel string) bool) []*goFil
 	})
 }
 
-// walkGoFilesIncludingTests is walkGoFiles without the _test.go exclusion, for
-// the guards whose subject is a module-level property rather than production
-// code quality: an import edge in a test file is a real module dependency, so
-// the leaf-purity guard has to see it.
 func walkGoFilesIncludingTests(t *testing.T, root string, keep func(rel string) bool) []*goFile {
 	t.Helper()
 	var out []*goFile
@@ -90,10 +54,7 @@ func walkGoFilesIncludingTests(t *testing.T, root string, keep func(rel string) 
 			case "vendor", "testdata", ".git":
 				return filepath.SkipDir
 			}
-			// Mirror the go tool: directories whose name begins with "_" or "."
-			// are not part of any buildable package (e.g. go/sys/_planned/*
-			// scaffolds awaiting their capability PR). A guard must not flag
-			// code the compiler never sees.
+
 			if name := d.Name(); name != "." && (strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".")) {
 				return filepath.SkipDir
 			}
@@ -126,8 +87,6 @@ func walkGoFilesIncludingTests(t *testing.T, root string, keep func(rel string) 
 
 func (gf *goFile) line(n ast.Node) int { return gf.fset.Position(n.Pos()).Line }
 
-// render returns the gofmt-style source of an AST node, whitespace
-// collapsed, for stable allowlist keys and readable messages.
 func render(fset *token.FileSet, n ast.Node) string {
 	var b strings.Builder
 	if err := printer.Fprint(&b, fset, n); err != nil {
@@ -136,8 +95,6 @@ func render(fset *token.FileSet, n ast.Node) string {
 	return strings.Join(strings.Fields(b.String()), " ")
 }
 
-// allowlist couples intentionally-exempt sites with their justifications
-// and fails the build for any entry that no longer matches a site.
 type allowlist struct {
 	reason map[string]string
 	used   map[string]bool

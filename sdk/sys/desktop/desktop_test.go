@@ -9,8 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// newManager builds a Manager backed by a fresh FakeRunner and returns both so
-// a test can Push loginctl results and inspect recorded calls.
 func newManager(t *testing.T, opts ...Option) (*manager, *exectest.FakeRunner) {
 	t.Helper()
 	r := exectest.New(exec.Direct)
@@ -21,8 +19,6 @@ func newManager(t *testing.T, opts ...Option) (*manager, *exectest.FakeRunner) {
 	return m.(*manager), r
 }
 
-// stubLookPath makes lookPath report loginctl present (found=true) or absent,
-// restoring the previous value on cleanup.
 func stubLookPath(t *testing.T, found bool) {
 	t.Helper()
 	prev := lookPath
@@ -35,7 +31,6 @@ func stubLookPath(t *testing.T, found bool) {
 	}
 }
 
-// stubLookupID overrides the passwd-by-uid lookup for the duration of t.
 func stubLookupID(t *testing.T, fn func(string) (*user.User, error)) {
 	t.Helper()
 	prev := lookupID
@@ -43,7 +38,6 @@ func stubLookupID(t *testing.T, fn func(string) (*user.User, error)) {
 	lookupID = fn
 }
 
-// stubLookupUser overrides the passwd-by-name lookup for the duration of t.
 func stubLookupUser(t *testing.T, fn func(string) (*user.User, error)) {
 	t.Helper()
 	prev := lookupUser
@@ -71,9 +65,6 @@ func TestNew_WithHomeRoot(t *testing.T) {
 	}
 }
 
-// TestNew_NilOptionIgnored pins that a nil entry in opts... is skipped rather
-// than panicking the constructor (and the agent process with it); a non-nil
-// option in the same call still applies.
 func TestNew_NilOptionIgnored(t *testing.T) {
 	m, err := New(exectest.New(exec.Direct), nil, WithHomeRoot("/custom/home"), nil)
 	if err != nil {

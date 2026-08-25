@@ -13,18 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// These two guards together enforce — BY CONSTRUCTION, not by every method
-// remembering — that no user-package method can issue an unbounded escalated
-// command. That invariant was previously implemented per method (ensureCtx at the
-// top of each), so the methods that forgot (Lock, Unlock, SetPassword,
-// KillSessions, LastLogin) silently skipped it and no example-based test noticed.
-//
-//	1. exec applies ensureCtx (TestExecBoundsContext), and
-//	2. every Runner call goes through exec (TestAllRunnerCallsRouteThroughExec).
-//
-// Add a new method that calls the Runner directly and (2) fails the build.
-
-// TestExecBoundsContext: the single Runner chokepoint bounds a deadline-less ctx.
 func TestExecBoundsContext(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	su, ok := mgr(t, f).(*shadowUtils)
@@ -39,8 +27,6 @@ func TestExecBoundsContext(t *testing.T) {
 	assert.True(t, hasDeadline, "exec must bound a deadline-less context via ensureCtx")
 }
 
-// TestExecPassesThroughADeadline: a caller-supplied deadline is preserved, not
-// replaced — ensureCtx only ADDS a bound when one is missing.
 func TestExecPassesThroughADeadline(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	su := mgr(t, f).(*shadowUtils)
@@ -58,13 +44,6 @@ func TestExecPassesThroughADeadline(t *testing.T) {
 	assert.Equal(t, want, got, "an existing deadline must be preserved, not overwritten")
 }
 
-// TestAllRunnerCallsRouteThroughExec is the structural guard: every escalated /
-// Runner call MUST flow through (*shadowUtils).exec, which bounds the context. It
-// scans the package's NON-test source and asserts the raw Runner call `u.r.Run(`
-// appears exactly once — inside exec. A future method that calls the Runner
-// directly (and so could skip ensureCtx — exactly the Lock/Unlock regression)
-// makes the count != 1 and fails the build. Self-discovering: no method list to
-// keep in sync.
 func TestAllRunnerCallsRouteThroughExec(t *testing.T) {
 	src := nonTestPackageSource(t)
 	require.NotEmpty(t, src, "no non-test source read — the scan is broken")
@@ -73,7 +52,6 @@ func TestAllRunnerCallsRouteThroughExec(t *testing.T) {
 		"`u.r.Run(` must appear exactly once (inside exec); found %d. A direct Runner call bypasses the ctx-bounding chokepoint — route it through u.exec(...) instead.", n)
 }
 
-// nonTestPackageSource concatenates every non-_test .go file in the package dir.
 func nonTestPackageSource(t *testing.T) string {
 	t.Helper()
 	entries, err := os.ReadDir(".")

@@ -9,9 +9,8 @@ import (
 	syslog "github.com/manchtools/cadestro/sdk/sys/log"
 )
 
-// ExampleNew reads recent warnings from a unit's journal.
 func ExampleNew() {
-	r, err := exec.NewRunner(exec.Direct) // the system journal needs root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		log.Fatal(err)
 	}

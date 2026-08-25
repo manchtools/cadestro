@@ -48,15 +48,13 @@ type S3Config struct {
 	Prune bool
 }
 
-// s3Source is the concrete Source implementation for an anonymous S3
-// endpoint. Single-key mode in v1; prefix-sync arrives in Slice 12.
 type s3Source struct {
 	cfg       S3Config
 	objectURL string
 	client    *http.Client
 
 	mu       sync.Mutex
-	revision string // last successful object ETag
+	revision string
 }
 
 // NewS3 validates cfg and returns a Source. Pre-builds the full object
@@ -108,7 +106,7 @@ func (s *s3Source) Fetch(ctx context.Context, dest string) (Result, error) {
 	}
 	defer func() { _ = body.Close() }()
 
-	maxBytes := int64(defaultHTTPMaxBytes) // S3 single objects honour the same cap as HTTP for now.
+	maxBytes := int64(defaultHTTPMaxBytes)
 	tmp, written, sum, err := streamToTmp(dest, body, maxBytes)
 	if err != nil {
 		return Result{}, err
@@ -151,10 +149,6 @@ func (s *s3Source) String() string {
 	return fmt.Sprintf("s3 %s/%s/%s", s.cfg.Endpoint, s.cfg.Bucket, s.cfg.Key)
 }
 
-// headNotModified issues a HEAD with If-None-Match. Returns true on
-// 304. A 403/404 surfaces as ErrInvalidConfig wrapping the endpoint
-// path so the operator knows to open the bucket policy (the most
-// common anonymous-S3 footgun).
 func (s *s3Source) headNotModified(ctx context.Context, etag string) (bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, s.objectURL, nil)
 	if err != nil {
@@ -178,9 +172,6 @@ func (s *s3Source) headNotModified(ctx context.Context, etag string) (bool, erro
 	}
 }
 
-// openObject issues GET (with If-None-Match if a cached revision is
-// known) and returns (body, etag, error). Body is the caller's to
-// Close.
 func (s *s3Source) openObject(ctx context.Context, etag string) (io.ReadCloser, string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.objectURL, nil)
 	if err != nil {

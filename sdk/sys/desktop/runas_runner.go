@@ -57,11 +57,6 @@ func (ra *runAsRunner) Stream(ctx context.Context, c sysexec.Command, onLine sys
 	return ra.base.Stream(ctx, wrapped, onLine)
 }
 
-// wrap rewrites c into `runuser -u <user> -- env <session-env> PATH=<curated>
-// <name> <args...>`, running it as the session user with that user's desktop
-// environment. PATH is forced last (a caller-supplied PATH is dropped);
-// the rest of the caller's env is screened through the hijack blocklist because
-// it is spliced into the inner env wrapper, which the base Runner does not screen.
 func (ra *runAsRunner) wrap(c sysexec.Command) (sysexec.Command, error) {
 	if c.Name == "" {
 		return sysexec.Command{}, fmt.Errorf("desktop.RunAsRunner: command name is required")
@@ -72,7 +67,7 @@ func (ra *runAsRunner) wrap(c sysexec.Command) (sysexec.Command, error) {
 	env := EnvFor(ra.s)
 	for _, e := range c.Env {
 		if key, _, ok := strings.Cut(e, "="); ok && key == "PATH" {
-			continue // PATH is always forced to the curated UserPath below
+			continue
 		}
 		env = append(env, e)
 	}
@@ -84,8 +79,8 @@ func (ra *runAsRunner) wrap(c sysexec.Command) (sysexec.Command, error) {
 	return sysexec.Command{
 		Name:     runuserPath,
 		Args:     args,
-		Dir:      c.Dir, // run in the caller's working dir (default: the user's home)
+		Dir:      c.Dir,
 		Stdin:    c.Stdin,
-		Escalate: false, // runuser from root IS the privilege drop
+		Escalate: false,
 	}, nil
 }

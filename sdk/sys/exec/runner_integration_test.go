@@ -11,20 +11,12 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// These integration tests exercise REAL privilege escalation through the Runner
-// (the leg the unit tests can only fake with a temp-dir sudo). They run in the
-// CI integration container, which ships NOPASSWD sudo with id/cat/sh allowed
-// (see test/Dockerfile.integration). The previous coverage lived in the deleted
-// legacy exec_test.go's Privileged* tests; this is its Runner equivalent.
-
 func sudoRunner(t *testing.T) sysexec.Runner {
 	t.Helper()
 	if _, err := exec.LookPath("sudo"); err != nil {
 		t.Skip("sudo not on PATH; escalation integration leg not exercisable here")
 	}
-	// Presence isn't enough: gate on non-interactive escalation actually working,
-	// so a host with sudo but no NOPASSWD rule SKIPS (unmet prerequisite) rather
-	// than fails with ErrEscalationDenied.
+
 	if err := exec.Command("sudo", "-n", "true").Run(); err != nil {
 		t.Skipf("sudo present but non-interactive escalation is unavailable: %v", err)
 	}
@@ -35,7 +27,6 @@ func sudoRunner(t *testing.T) sysexec.Runner {
 	return r
 }
 
-// An escalated command runs as root: `sudo -n id -u` reports uid 0.
 func TestRunner_EscalatedRunsAsRoot_Integration(t *testing.T) {
 	res, err := sudoRunner(t).Run(context.Background(), sysexec.Command{Name: "id", Args: []string{"-u"}, Escalate: true})
 	if err != nil {
@@ -46,7 +37,6 @@ func TestRunner_EscalatedRunsAsRoot_Integration(t *testing.T) {
 	}
 }
 
-// Escalated stdin is delivered to the privileged child.
 func TestRunner_EscalatedStdin_Integration(t *testing.T) {
 	res, err := sudoRunner(t).Run(context.Background(), sysexec.Command{
 		Name: "cat", Escalate: true, Stdin: strings.NewReader("escalated-input"),
@@ -59,7 +49,6 @@ func TestRunner_EscalatedStdin_Integration(t *testing.T) {
 	}
 }
 
-// Escalated streaming delivers each line through the callback.
 func TestRunner_EscalatedStreaming_Integration(t *testing.T) {
 	var lines []string
 	res, err := sudoRunner(t).Stream(context.Background(),
@@ -80,8 +69,6 @@ func TestRunner_EscalatedStreaming_Integration(t *testing.T) {
 	}
 }
 
-// A nonexistent command is rejected (command-not-found) BEFORE escalation —
-// resolveAbsolute fails, so the wrapper is never invoked.
 func TestRunner_EscalatedCommandNotFound_Integration(t *testing.T) {
 	_, err := sudoRunner(t).Run(context.Background(), sysexec.Command{Name: "nonexistent-command-12345", Escalate: true})
 	if err == nil {

@@ -59,11 +59,7 @@ func (u *shadowUtils) GroupMembers(ctx context.Context, name string) ([]string, 
 	defer cancel()
 	out, err := u.query(ctx, "getent", "group", name)
 	if err != nil {
-		// getent exits 2 for "group not found" — a clean absence, reported as a
-		// wrapped os.ErrNotExist so a caller can tell it apart from "group exists
-		// with no members" ((nil, nil) below). Any OTHER failure (Runner /
-		// escalation / a different exit) is real and propagates — never silently
-		// read as "no members".
+
 		var ce *exec.CommandError
 		if errors.As(err, &ce) && ce.ExitCode == 2 {
 			return nil, fmt.Errorf("group %q: %w", name, os.ErrNotExist)
@@ -74,7 +70,7 @@ func (u *shadowUtils) GroupMembers(ctx context.Context, name string) ([]string, 
 	if len(fields) < 4 || fields[3] == "" {
 		return nil, nil
 	}
-	// Filter empty entries defensively (a stray "a,,b" must not yield a "").
+
 	raw := strings.Split(fields[3], ",")
 	members := make([]string, 0, len(raw))
 	for _, m := range raw {

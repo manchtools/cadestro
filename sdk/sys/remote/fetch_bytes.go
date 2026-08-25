@@ -8,11 +8,6 @@ import (
 	"io"
 )
 
-// defaultBytesMaxBytes bounds an in-memory FetchBytes when the caller leaves
-// MaxBytes unset. It is far smaller than the file-fetch default
-// (defaultHTTPMaxBytes, 2 GiB) because the whole body is buffered in RAM: 64 MiB
-// comfortably covers a GPG key or a SHA256SUMS manifest while refusing a
-// memory-exhaustion stream from a compromised origin.
 const defaultBytesMaxBytes int64 = 64 * 1024 * 1024
 
 // FetchBytes downloads the configured HTTP payload entirely into memory,
@@ -45,9 +40,6 @@ func FetchBytes(ctx context.Context, cfg HTTPConfig) ([]byte, error) {
 	}
 	defer func() { _ = body.Close() }()
 
-	// LimitReader caps at MaxBytes+1 so a one-byte over-read tells us the origin
-	// tried to deliver more than we allow — surfaced as ErrIntegrity, same bucket
-	// as a size-cap breach in the file path.
 	data, err := io.ReadAll(io.LimitReader(body, h.cfg.MaxBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("read body from %s: %w", h.cfg.URL, err)

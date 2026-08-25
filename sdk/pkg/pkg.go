@@ -32,8 +32,6 @@ import (
 // (including the zero value). Fail-closed: no silent default.
 var ErrUnknownBackend = errors.New("pkg: unknown package-manager backend")
 
-// lookPath is the exec.LookPath seam used by Detect and apt's apt/apt-get
-// resolution so binary discovery can be stubbed in tests.
 var lookPath = exec.LookPath
 
 // Backend identifies a supported package manager. The zero value is invalid
@@ -85,8 +83,6 @@ type Manager interface {
 	// Backend reports which package-manager backend this Manager drives.
 	Backend() Backend
 
-	// --- queries (unprivileged) ---
-
 	// Version returns the package-manager tool version string.
 	Version(ctx context.Context) (string, error)
 	// Search returns packages whose name/summary matches query.
@@ -121,8 +117,6 @@ type Manager interface {
 	IsPinned(ctx context.Context, name string) (bool, error)
 	// ListPinned returns the packages held back from upgrades.
 	ListPinned(ctx context.Context) ([]Package, error)
-
-	// --- mutations (privileged) ---
 
 	// Install installs each package specification in one transaction.
 	Install(ctx context.Context, opts InstallOptions, specs ...InstallSpec) (sysexec.Result, error)

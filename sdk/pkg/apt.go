@@ -12,22 +12,14 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// apt drives the Debian/Ubuntu package manager (apt / apt-get / dpkg / apt-mark)
-// over an injected Runner.
 type apt struct {
 	r sysexec.Runner
 }
 
 var _ Manager = (*apt)(nil)
 
-// aptWriteEnv prevents debconf from attempting an interactive frontend when
-// there is no terminal. The C locale is forced by the Runner on every command.
 var aptWriteEnv = []string{"DEBIAN_FRONTEND=noninteractive"}
 
-// dpkgConfOptions keep dpkg non-interactive when a postinst would otherwise
-// prompt about a changed conffile (kernel/grub upgrades):
-//   - --force-confdef: take the default action for new conffiles
-//   - --force-confold: keep the currently-installed version if user-modified
 var dpkgConfOptions = []string{
 	"-o", "Dpkg::Options::=--force-confdef",
 	"-o", "Dpkg::Options::=--force-confold",
@@ -143,12 +135,6 @@ func (a *apt) UpgradeSecurity(ctx context.Context) (sysexec.Result, error) {
 	return a.securityUpgrade(ctx)
 }
 
-// securityUpgrade applies only security updates via unattended-upgrade — Debian/
-// Ubuntu's canonical security-upgrade tool. It matches the exact security
-// origins from its Allowed-Origins config (rather than a fragile origin-name
-// heuristic) and handles holds, kernel transitions and conffile prompts. It
-// requires the unattended-upgrades package; if absent it fails closed with an
-// actionable error rather than silently performing a full upgrade.
 func (a *apt) securityUpgrade(ctx context.Context) (sysexec.Result, error) {
 	bin, err := resolveUnattendedUpgrade()
 	if err != nil {
@@ -157,20 +143,11 @@ func (a *apt) securityUpgrade(ctx context.Context) (sysexec.Result, error) {
 	return a.write(ctx, bin, "-v")
 }
 
-// unattendedUpgradeBinPaths are the canonical absolute locations of the
-// unattended-upgrade binary, probed before a bare $PATH lookup. A hardened
-// systemd unit can run with a $PATH that omits /usr/sbin (or is empty), so the
-// bare command name may fail to resolve even when the package IS installed —
-// resolving an absolute path makes both the presence check and the exec robust.
 var unattendedUpgradeBinPaths = []string{
 	"/usr/bin/unattended-upgrade",
 	"/usr/sbin/unattended-upgrade",
 }
 
-// resolveUnattendedUpgrade returns an absolute path to the unattended-upgrade
-// binary, probing the known locations first and falling back to $PATH. It fails
-// closed with ErrBackendUnavailable when the unattended-upgrades package is not
-// installed.
 func resolveUnattendedUpgrade() (string, error) {
 	for _, p := range unattendedUpgradeBinPaths {
 		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
@@ -383,10 +360,7 @@ func (a *apt) LocalPackageInfo(ctx context.Context, path string) (*LocalPackage,
 	if err := ValidateLocalPackagePath(path); err != nil {
 		return nil, err
 	}
-	// dpkg-deb -f with MULTIPLE fields prints a labeled "Field: value" stanza (a
-	// SINGLE field would print the bare value). Parse by field name so the
-	// "Package:" label never leaks into the package name (which would then fail
-	// ValidatePackageName).
+
 	out, err := readOut(ctx, a.r, "dpkg-deb", "-f", path, "Package", "Version", "Architecture")
 	if err != nil {
 		return nil, err
@@ -402,9 +376,6 @@ func (a *apt) LocalPackageInfo(ctx context.Context, path string) (*LocalPackage,
 	return &LocalPackage{Name: name, Version: fields["Version"], Arch: fields["Architecture"]}, nil
 }
 
-// parseControlFields parses dpkg-deb -f's labeled "Field: value" stanza into a
-// field map. The value is taken after the FIRST ":" so an epoch'd version
-// ("1:2.0") survives intact, and the field LABEL never becomes part of a value.
 func parseControlFields(out string) map[string]string {
 	fields := make(map[string]string)
 	for _, line := range strings.Split(out, "\n") {

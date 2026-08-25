@@ -6,9 +6,6 @@ import (
 	"testing"
 )
 
-// Reading a *directory* with bufio.Scanner: os.Open succeeds but the first Read
-// returns EISDIR, so scanner.Err() is non-nil — the cheap way to exercise the
-// defensive scan-error branches of the parsers.
 func TestParsers_ScanError(t *testing.T) {
 	dir := t.TempDir()
 	if _, _, err := parseCPUInfo(dir); err == nil {
@@ -41,7 +38,7 @@ func TestParseMemTotal_EdgeCases(t *testing.T) {
 }
 
 func TestParseOSReleaseLine_NoEquals(t *testing.T) {
-	// A non-comment, non-empty line without '=' is not a property.
+
 	if _, _, ok := parseOSReleaseLine("this is not a property"); ok {
 		t.Error("parseOSReleaseLine accepted a line with no '='")
 	}

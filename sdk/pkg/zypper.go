@@ -11,20 +11,14 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// zypper drives the openSUSE/SLES package manager (zypper / rpm) over an
-// injected Runner.
 type zypper struct {
 	r sysexec.Runner
 }
 
 var _ Manager = (*zypper)(nil)
 
-// zypperLockRe matches a `zypper locks` table row, capturing the package name.
 var zypperLockRe = regexp.MustCompile(`^\s*\d+\s*\|\s*(\S+)`)
 
-// isZypperInfoExit reports whether code is a success or one of zypper's
-// informational exit codes (100 update-needed, 101 security, 102 reboot,
-// 103 restart) — none of which are failures.
 func isZypperInfoExit(code int) bool {
 	return code == 0 || (code >= 100 && code <= 103)
 }
@@ -48,7 +42,7 @@ func (z *zypper) Version(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	parts := strings.Fields(out) // "zypper 1.14.59"
+	parts := strings.Fields(out)
 	if len(parts) >= 2 {
 		return parts[1], nil
 	}
@@ -166,7 +160,7 @@ func (z *zypper) Search(ctx context.Context, query string) ([]SearchResult, erro
 		if !headerPassed {
 			continue
 		}
-		parts := strings.Split(line, "|") // S | Name | Summary | Type
+		parts := strings.Split(line, "|")
 		if len(parts) < 3 {
 			continue
 		}
@@ -254,7 +248,7 @@ func (z *zypper) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 		if !headerPassed {
 			continue
 		}
-		// S | Repository | Name | Current Version | Available Version | Arch
+
 		parts := strings.Split(line, "|")
 		if len(parts) < 5 {
 			continue
@@ -298,8 +292,7 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 		case strings.HasPrefix(line, "Summary"):
 			pkg.Description = parseColonValue(line)
 		case strings.HasPrefix(line, "Installed Size"):
-			// Display metadata: keep what we have on an unparseable size rather
-			// than fabricating a 0-byte package. See parseSizeWithUnits.
+
 			if n, sizeOK := parseZypperSize(parseColonValue(line)); sizeOK {
 				pkg.Size = n
 			}
@@ -327,8 +320,7 @@ func (z *zypper) ListVersions(ctx context.Context, name string) (*VersionInfo, e
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
-	// search exits 104 for "no matches" (as Search treats it) — a benign empty
-	// result, not a failure. A runner/context failure still propagates.
+
 	res, err := runRead(ctx, z.r, "zypper", "--non-interactive", "search", "-s", "--match-exact", name)
 	if err != nil {
 		return nil, err
@@ -345,7 +337,7 @@ func (z *zypper) ListVersions(ctx context.Context, name string) (*VersionInfo, e
 	info.Installed = installed
 
 	if res.ExitCode == 104 {
-		return info, nil // no matching package
+		return info, nil
 	}
 	if res.ExitCode != 0 {
 		return nil, asCommandError("zypper", res)
@@ -361,7 +353,7 @@ func (z *zypper) ListVersions(ctx context.Context, name string) (*VersionInfo, e
 		if !headerPassed {
 			continue
 		}
-		// S | Name | Type | Version | Arch | Repository
+
 		parts := strings.Split(line, "|")
 		if len(parts) < 6 {
 			continue
@@ -436,10 +428,7 @@ func (z *zypper) HasUpdates(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 	if !isZypperInfoExit(res.ExitCode) {
-		// A real-error exit (6 = no repositories, 4 = ZYPP problem / lock held /
-		// network failure) must surface, never silently read as "no updates" — that
-		// would tell a patch/compliance caller it is up to date when the check broke.
-		// Matches dnf.HasUpdates' default branch.
+
 		return false, asCommandError("zypper", res)
 	}
 	for line := range strings.SplitSeq(res.Stdout, "\n") {
@@ -527,8 +516,6 @@ func (z *zypper) IsPinned(ctx context.Context, name string) (bool, error) {
 	return false, nil
 }
 
-// parseZypperSize renders zypper's human size into bytes. ok=false means the
-// text was not a size at all; it is not the same as a zero size.
 func parseZypperSize(s string) (int64, bool) {
 	return parseSizeWithUnits(s, []sizeUnit{
 		{" KiB", 1024},

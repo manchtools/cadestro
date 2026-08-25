@@ -37,7 +37,6 @@ func FlatpakAvailable() bool {
 	return err == nil
 }
 
-// scope returns the installation-scope flag for the configured mode.
 func (f *FlatpakManager) scope() string {
 	if f.system {
 		return "--system"
@@ -45,9 +44,6 @@ func (f *FlatpakManager) scope() string {
 	return "--user"
 }
 
-// write runs a privileged flatpak command. It escalates only in system scope;
-// --user operations run unprivileged. The command Result is returned on both
-// the success and non-zero-exit paths.
 func (f *FlatpakManager) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, f.r, f.system, nil, "flatpak", args...)
 	if err != nil {
@@ -208,10 +204,7 @@ func (f *FlatpakManager) List(ctx context.Context) ([]Package, error) {
 		if len(fields) > 5 {
 			repo = fields[5]
 		}
-		// Display metadata: an unparseable size column reports 0 rather than
-		// dropping the bundle from the listing — the identity fields are what
-		// the caller acts on. Explicit here so the parser can report the failure
-		// instead of swallowing it. See parseSizeWithUnits.
+
 		var size int64
 		if n, sizeOK := parseFlatpakSize(fields[3]); sizeOK {
 			size = n
@@ -267,8 +260,7 @@ func (f *FlatpakManager) Show(ctx context.Context, name string) (*Package, error
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
-	// A non-zero `flatpak info` exit means the bundle is not installed locally —
-	// fall back to the remote. A runner/context failure propagates.
+
 	out, ok, err := probe(ctx, f.r, "flatpak", "info", name, f.scope())
 	if err != nil {
 		return nil, err
@@ -287,10 +279,7 @@ func (f *FlatpakManager) Show(ctx context.Context, name string) (*Package, error
 		case strings.HasPrefix(line, "Description:"):
 			pkg.Description = parseFlatpakValue(line)
 		case strings.HasPrefix(line, "Installed:"), strings.HasPrefix(line, "Size:"):
-			// Both prefixes land here, so `flatpak info` can hit this case twice.
-			// Assigning unconditionally let an unparseable second line overwrite
-			// the good size read from the first with a fabricated 0 — keep what
-			// we have unless the text really parsed. See parseSizeWithUnits.
+
 			if n, sizeOK := parseFlatpakSize(parseFlatpakValue(line)); sizeOK {
 				pkg.Size = n
 			}
@@ -303,8 +292,7 @@ func (f *FlatpakManager) Show(ctx context.Context, name string) (*Package, error
 }
 
 func (f *FlatpakManager) showFromRemote(ctx context.Context, name string) (*Package, error) {
-	// A runner/context failure propagates; a non-zero exit means the bundle is
-	// not offered by the remote.
+
 	out, ok, err := probe(ctx, f.r, "flatpak", "remote-info", "flathub", name)
 	if err != nil {
 		return nil, err
@@ -323,7 +311,7 @@ func (f *FlatpakManager) showFromRemote(ctx context.Context, name string) (*Pack
 		case strings.HasPrefix(line, "Description:"):
 			pkg.Description = parseFlatpakValue(line)
 		case strings.HasPrefix(line, "Download:"), strings.HasPrefix(line, "Size:"):
-			// Same two-prefix overwrite hazard as Show's installed path above.
+
 			if n, sizeOK := parseFlatpakSize(parseFlatpakValue(line)); sizeOK {
 				pkg.Size = n
 			}
@@ -349,10 +337,10 @@ func (f *FlatpakManager) ListVersions(ctx context.Context, name string) (*Versio
 
 	out, ok, err := probe(ctx, f.r, "flatpak", "remote-info", "flathub", name)
 	if err != nil {
-		return nil, err // runner/context failure
+		return nil, err
 	}
 	if !ok {
-		return info, nil // not available on flathub
+		return info, nil
 	}
 	for line := range strings.SplitSeq(out, "\n") {
 		if strings.HasPrefix(line, "Version:") {
@@ -517,8 +505,7 @@ func (f *FlatpakManager) AddRemote(ctx context.Context, name, url string) error 
 	if err := ValidateRepoBaseURL(url); err != nil {
 		return err
 	}
-	// Remote management is configuration, not a package transaction, so it keeps
-	// the error-only contract; the command output is not surfaced as an action.
+
 	_, err := f.write(ctx, "remote-add", "--if-not-exists", name, url, f.scope())
 	return err
 }
@@ -548,13 +535,13 @@ func (f *FlatpakManager) ListRemotes(ctx context.Context) ([]string, error) {
 }
 
 func parseFlatpakSearchLine(line string) *SearchResult {
-	// Name\tDescription\tApplication ID\tVersion\tBranch\tRemotes
+
 	fields := strings.Split(line, "\t")
 	if len(fields) < 3 {
 		return nil
 	}
 	return &SearchResult{
-		Name:        fields[2], // application ID
+		Name:        fields[2],
 		Description: fields[1],
 	}
 }
@@ -567,11 +554,8 @@ func parseFlatpakValue(line string) string {
 	return strings.TrimSpace(parts[1])
 }
 
-// parseFlatpakSize renders flatpak's human size into bytes. ok=false means the
-// text was not a size at all; it is not the same as a zero size.
 func parseFlatpakSize(s string) (int64, bool) {
-	// flatpak's human sizes can carry thousands separators ("1,536 MB"); strip
-	// them before the shared unit parser, which only space-trims.
+
 	s = strings.ReplaceAll(s, ",", "")
 	return parseSizeWithUnits(s, []sizeUnit{
 		{" kB", 1000},

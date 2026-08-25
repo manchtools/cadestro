@@ -1,16 +1,5 @@
 //go:build container
 
-// Container-based real-execution test for the reboot detector. The fake-runner /
-// seam unit tests stub the marker stat and needs-restarting; this drives the real
-// /var/run/reboot-required marker on a real filesystem.
-//
-// Hard CI limit: Schedule/Cancel invoke real `shutdown -r`/`shutdown -c`, which
-// would schedule (and then cancel) an actual system reboot — not safe to drive in
-// shared CI. Their argv construction is unit-tested; the live shutdown round-trip
-// is a documented residual. What IS real here: IsRequired's marker-file detection.
-//
-// Runs in the container-tests lane (root) → Direct runner (the marker write needs
-// root; the IsRequired probe itself is unprivileged).
 package reboot_test
 
 import (
@@ -23,14 +12,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
-// debianRebootMarker is the Debian/Ubuntu reboot-required marker the detector
-// reads (kept in sync with reboot.rebootRequiredPath).
 const debianRebootMarker = "/var/run/reboot-required"
 
-// TestIsRequired_Marker_Container drives IsRequired against the REAL marker file:
-// absent → false, present → true, removed → false. Pins the marker-detection
-// contract on a real filesystem (no needs-restarting on the Debian image, so the
-// marker is the sole signal).
 func TestIsRequired_Marker_Container(t *testing.T) {
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
@@ -43,7 +26,6 @@ func TestIsRequired_Marker_Container(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	// Start from a known-clean state and always clean up.
 	_ = os.Remove(debianRebootMarker)
 	t.Cleanup(func() { _ = os.Remove(debianRebootMarker) })
 

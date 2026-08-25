@@ -7,33 +7,15 @@ import (
 	"testing"
 )
 
-// runnerRequiredAllowlist enumerates capability constructors that legitimately
-// reject a nil exec.Runner WITHOUT the shared exec.ErrRunnerRequired sentinel.
-// It should stay EMPTY: nil-runner rejection is identical everywhere, so every
-// capability funnels it through the one generic sentinel and callers can match
-// it with errors.Is regardless of which capability they built. Entries are keyed
-// by "<rel>:<funcName>" and stale-guarded by assertNoStale.
 var runnerRequiredAllowlist = map[string]string{}
 
-// TestNilRunnerUsesSharedSentinel locks the rule that EVERY capability
-// constructor taking an exec.Runner rejects a nil runner with the single shared
-// exec.ErrRunnerRequired sentinel — never an ad-hoc errors.New / fmt.Errorf
-// string. This is what makes the rejection errors.Is-matchable and uniform.
-//
-// It is self-discovering: it finds every function under go/sys and go/pkg that
-// takes an exec.Runner parameter and guards it with `<param> == nil`, then
-// requires that guard's body to reference exec.ErrRunnerRequired. A NEW
-// capability that hand-rolls its own "runner is required" error fails the build.
-// The companion guard (no per-package runner-required sentinel survives) and the
-// per-package New(_, nil) unit tests (errors.Is at runtime) complete the pin.
 func TestNilRunnerUsesSharedSentinel(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(rel string) bool {
 		if strings.HasPrefix(rel, "gen/") || strings.HasPrefix(rel, "archtest/") {
 			return false
 		}
-		// The exec package DEFINES the sentinel and constructs Runners rather
-		// than consuming one, so it has no nil-runner constructor guard to check.
+
 		if strings.HasPrefix(rel, "sys/exec/") {
 			return false
 		}
@@ -49,7 +31,7 @@ func TestNilRunnerUsesSharedSentinel(t *testing.T) {
 	for _, gf := range files {
 		execName := sdkExecLocalName(gf)
 		if execName == "" {
-			continue // this file does not import the SDK exec package, so no exec.Runner param
+			continue
 		}
 		for _, decl := range gf.ast.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
@@ -86,10 +68,6 @@ func TestNilRunnerUsesSharedSentinel(t *testing.T) {
 	allow.assertNoStale(t)
 }
 
-// TestNoPerPackageRunnerRequiredSentinel forbids a package from declaring its own
-// Err*RunnerRequired / "runner is required" sentinel: the generic one in exec is
-// the single source so "everything uses our generic error". A duplicate would let
-// two distinct sentinels drift apart and break uniform errors.Is matching.
 func TestNoPerPackageRunnerRequiredSentinel(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(rel string) bool {
@@ -97,7 +75,7 @@ func TestNoPerPackageRunnerRequiredSentinel(t *testing.T) {
 			return false
 		}
 		if strings.HasPrefix(rel, "sys/exec/") {
-			return false // the one legitimate home of the shared sentinel
+			return false
 		}
 		return strings.HasPrefix(rel, "sys/") || strings.HasPrefix(rel, "pkg/")
 	})
@@ -121,9 +99,9 @@ func TestNoPerPackageRunnerRequiredSentinel(t *testing.T) {
 				}
 				for i, name := range vs.Names {
 					inspected++
-					// A var named like a runner-required error...
+
 					if !strings.Contains(strings.ToLower(name.Name), "runnerrequired") {
-						// ...or one whose errors.New/fmt.Errorf literal says so.
+
 						if i < len(vs.Values) && constructsRunnerRequired(vs.Values[i], errorsName, fmtName) {
 							t.Errorf("%s:%d: %s constructs a 'runner is required' error — use the shared exec.ErrRunnerRequired instead of a per-package sentinel",
 								gf.rel, gf.line(name), name.Name)
@@ -141,8 +119,6 @@ func TestNoPerPackageRunnerRequiredSentinel(t *testing.T) {
 	}
 }
 
-// sdkExecLocalName returns the local name the SDK exec package is imported under
-// in gf (its alias, or "exec" by default), or "" if gf does not import it.
 func sdkExecLocalName(gf *goFile) string {
 	for _, imp := range gf.ast.Imports {
 		path := strings.Trim(imp.Path.Value, `"`)
@@ -157,8 +133,6 @@ func sdkExecLocalName(gf *goFile) string {
 	return ""
 }
 
-// runnerParamNames returns the parameter names of fn whose type is
-// <execName>.Runner (the injected SDK runner).
 func runnerParamNames(fn *ast.FuncDecl, execName string) []string {
 	var names []string
 	if fn.Type.Params == nil {
@@ -180,7 +154,6 @@ func runnerParamNames(fn *ast.FuncDecl, execName string) []string {
 	return names
 }
 
-// isNilCheckOn reports whether cond is `<p> == nil` for one of params.
 func isNilCheckOn(cond ast.Expr, params []string) bool {
 	be, ok := cond.(*ast.BinaryExpr)
 	if !ok || be.Op != token.EQL {
@@ -209,8 +182,6 @@ func isNilIdent(e ast.Expr) bool {
 	return ok && id.Name == "nil"
 }
 
-// blockReferences reports whether any identifier named want appears anywhere in
-// block (covers both a bare ErrRunnerRequired and the Sel of exec.ErrRunnerRequired).
 func blockReferences(block *ast.BlockStmt, want string) bool {
 	found := false
 	ast.Inspect(block, func(n ast.Node) bool {
@@ -223,19 +194,12 @@ func blockReferences(block *ast.BlockStmt, want string) bool {
 	return found
 }
 
-// constructsRunnerRequired reports whether expr is an errors.New / fmt.Errorf
-// call whose first string-literal argument mentions "runner is required".
-// errorsName/fmtName are the LOCAL names the "errors" and "fmt" packages are
-// imported under in this file (resolved from imports, so an aliased import like
-// `goerrors "errors"` cannot bypass the guard); "" means the package is not
-// imported, so the corresponding constructor cannot be called here.
 func constructsRunnerRequired(expr ast.Expr, errorsName, fmtName string) bool {
 	call, ok := expr.(*ast.CallExpr)
 	if !ok || len(call.Args) == 0 {
 		return false
 	}
-	// Restrict to the error constructors so an unrelated helper that merely takes
-	// such a string (e.g. a log call) is not flagged.
+
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
 		return false
@@ -256,9 +220,6 @@ func constructsRunnerRequired(expr ast.Expr, errorsName, fmtName string) bool {
 	return strings.Contains(strings.ToLower(lit.Value), "runner is required")
 }
 
-// importLocalName returns the local name an exact import path is bound to in gf
-// (its alias, or the path's last segment by default), or "" if gf does not
-// import it.
 func importLocalName(gf *goFile, fullPath string) string {
 	for _, imp := range gf.ast.Imports {
 		if strings.Trim(imp.Path.Value, `"`) != fullPath {

@@ -14,8 +14,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// ownerGroup is the current process's owner/group names, for fd-chown-to-self
-// tests that must work without real root.
 type ownerGroup struct{ owner, group string }
 
 func osUser() (ownerGroup, error) {
@@ -30,7 +28,6 @@ func osUser() (ownerGroup, error) {
 	return ownerGroup{owner: u.Username, group: g.Name}, nil
 }
 
-// mustManager builds a Manager over f, failing the test on error.
 func mustManager(t *testing.T, f *exectest.FakeRunner) Manager {
 	t.Helper()
 	m, err := New(f)
@@ -40,29 +37,21 @@ func mustManager(t *testing.T, f *exectest.FakeRunner) Manager {
 	return m
 }
 
-// sudoMgr is the escalated-path Manager (Sudo backend): every privileged op is
-// shelled through the Runner, so the FakeRunner records the exact argv.
 func sudoMgr(t *testing.T) (*exectest.FakeRunner, Manager) {
 	t.Helper()
 	f := exectest.New(sysexec.Sudo)
 	return f, mustManager(t, f)
 }
 
-// directManager is the Direct-backend Manager: WriteFile/RemoveDir take the
-// fd-anchored, symlink-safe path and never touch the Runner. Used by the
-// TOCTOU/symlink tests, which run against test-user-owned temp dirs so they
-// succeed without real root.
 func directManager(t *testing.T) Manager {
 	t.Helper()
 	return mustManager(t, exectest.New(sysexec.Direct))
 }
 
-// argv renders a recorded Command as "name arg1 arg2 …".
 func argv(c sysexec.Command) string {
 	return strings.TrimSpace(c.Name + " " + strings.Join(c.Args, " "))
 }
 
-// stdinOf reads back the stdin a recorded Command carried (nil → "").
 func stdinOf(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {
@@ -84,11 +73,8 @@ func TestNew_NilRunnerRejected(t *testing.T) {
 	}
 }
 
-// --- WriteFile (escalated path) -------------------------------------------
-
 func TestWriteFile_Escalated_HappyWithOwnership(t *testing.T) {
-	// /etc is root-owned and not group/other-writable, so escalatedParentSafe
-	// admits it and the write proceeds to the (faked) root shell.
+
 	f, m := sudoMgr(t)
 	if err := m.WriteFile(context.Background(), "/etc/app.conf", []byte("body\n"),
 		WriteOptions{Mode: 0o640, Owner: "root", Group: "staff"}); err != nil {
@@ -102,7 +88,7 @@ func TestWriteFile_Escalated_HappyWithOwnership(t *testing.T) {
 	if !c.Escalate {
 		t.Error("the escalated write must run escalated")
 	}
-	// args: -c <script> sh <target> <mode> <owner:group> <backup>
+
 	want := []string{"-c", escalatedWriteScript, "sh", "/etc/app.conf", "0640", "root:staff", ""}
 	if c.Name != "sh" || strings.Join(c.Args, "\x00") != strings.Join(want, "\x00") {
 		t.Errorf("command = %s %q\nwant   = sh %q", c.Name, c.Args, want)
@@ -150,10 +136,6 @@ func TestWriteFile_Escalated_ScriptFailure(t *testing.T) {
 	}
 }
 
-// TestWriteFile_Escalated_RefusesUnsafeParent: a parent directory a non-root user
-// could write to (here world-writable and not sticky) is refused BEFORE any
-// escalation, so the symlink-plant window never opens. The 0777-non-sticky perms
-// are unsafe whether or not the test runs as root.
 func TestWriteFile_Escalated_RefusesUnsafeParent(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.Chmod(dir, 0o777); err != nil {
@@ -171,7 +153,7 @@ func TestWriteFile_Escalated_RefusesUnsafeParent(t *testing.T) {
 
 func TestWriteFile_Escalated_RunnerErrorPropagates(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
-	f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied) // the root shell can't escalate
+	f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
 	m := mustManager(t, f)
 	if err := m.WriteFile(context.Background(), "/etc/app.conf", []byte("x"), WriteOptions{}); !errors.Is(err, sysexec.ErrEscalationDenied) {
 		t.Fatalf("err = %v, want ErrEscalationDenied", err)
@@ -186,8 +168,7 @@ func TestWriteFile_RejectsInvalidPathAndBackup(t *testing.T) {
 	if err := m.WriteFile(context.Background(), "/ok", []byte("x"), WriteOptions{Backup: "-evil"}); !errors.Is(err, ErrInvalidPath) {
 		t.Errorf("WriteFile(bad backup) err = %v, want ErrInvalidPath", err)
 	}
-	// Backup == target is rejected (backends would diverge: Direct no-ops, the
-	// escalated cp errors "same file").
+
 	if err := m.WriteFile(context.Background(), "/etc/app.conf", []byte("x"), WriteOptions{Backup: "/etc/./app.conf"}); !errors.Is(err, ErrInvalidPath) {
 		t.Errorf("WriteFile(self-backup) err = %v, want ErrInvalidPath", err)
 	}
@@ -208,12 +189,9 @@ func TestWriteFile_CancelledCtxBeforeAnyWork(t *testing.T) {
 	}
 }
 
-// --- ReadFile / Exists -----------------------------------------------------
-
 func TestReadFile_ReturnsStdoutVerbatim(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
-	// The Runner returns cat's stdout verbatim, trailing newline included, so the
-	// bytes round-trip exactly with what WriteFile wrote — no re-add, no strip.
+
 	f.Push(sysexec.Result{Stdout: "line1\nline2\n"}, nil)
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/etc/app.conf")
@@ -226,15 +204,11 @@ func TestReadFile_ReturnsStdoutVerbatim(t *testing.T) {
 	if got := argv(f.Calls()[0]); got != "cat -- /etc/app.conf" {
 		t.Errorf("cat argv = %q", got)
 	}
-	// Locale stability (the "No such file" check working on non-English hosts) is
-	// the Runner's invariant now, pinned by exec.TestRunner_ForcesDeterministicEnv
-	// + the fs integration suite running under ja_JP — not a per-Command flag.
+
 }
 
 func TestReadFile_DoesNotReAddNewline(t *testing.T) {
-	// ReadFile must return the Runner's stdout untouched — no re-add (the old
-	// global path stripped + re-added a newline; the Runner preserves it, so a
-	// re-add would double it). Newline normalization is the Runner's job.
+
 	f := exectest.New(sysexec.Sudo)
 	f.Push(sysexec.Result{Stdout: "no-newline"}, nil)
 	m := mustManager(t, f)
@@ -252,14 +226,14 @@ func TestReadFile_MissingIsErrNotExist(t *testing.T) {
 	f.Push(sysexec.Result{ExitCode: 1, Stderr: "cat: /x: No such file or directory"}, nil)
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/x")
-	// Explicit-absence contract: missing → wrapped os.ErrNotExist, not silent empty.
+
 	if !errors.Is(err, os.ErrNotExist) || got != nil {
 		t.Fatalf("ReadFile(missing) = (%q, %v), want (nil, ErrNotExist)", got, err)
 	}
 }
 
 func TestReadFile_EmptyFile(t *testing.T) {
-	f := exectest.New(sysexec.Sudo) // unscripted → exit 0, empty stdout
+	f := exectest.New(sysexec.Sudo)
 	m := mustManager(t, f)
 	got, err := m.ReadFile(context.Background(), "/empty")
 	if err != nil || got != nil {
@@ -276,12 +250,6 @@ func TestReadFile_OtherErrorIsCommandError(t *testing.T) {
 	}
 }
 
-// A PRESENT file whose path literally contains "No such file" but that fails for
-// a DIFFERENT reason (Permission denied). Absence classification by substring
-// (strings.Contains(stderr, "No such file")) would wrongly map this to
-// os.ErrNotExist and hide the real failure; the terminal-phrase match must treat
-// it as a command error. The error reason always trails the path, so only a
-// genuine ENOENT ends with the phrase.
 func TestReadFile_PresentFileWithNoSuchFileInPathNotMisclassified(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
 	f.Push(sysexec.Result{ExitCode: 1, Stderr: "cat: /data/No such file.txt: Permission denied"}, nil)
@@ -309,7 +277,7 @@ func TestReadFile_RunnerErrorPropagatesAndValidatesPath(t *testing.T) {
 
 func TestExists(t *testing.T) {
 	t.Run("present", func(t *testing.T) {
-		f := exectest.New(sysexec.Sudo) // unscripted → exit 0
+		f := exectest.New(sysexec.Sudo)
 		ok, err := mustManager(t, f).Exists(context.Background(), "/etc/hosts")
 		if err != nil || !ok {
 			t.Fatalf("Exists = (%v,%v), want (true,nil)", ok, err)
@@ -339,8 +307,6 @@ func TestExists(t *testing.T) {
 		}
 	})
 }
-
-// --- SetMode / SetOwnership / SetOwnershipRecursive ------------------------
 
 func TestSetMode(t *testing.T) {
 	f, m := sudoMgr(t)
@@ -406,8 +372,6 @@ func TestSetOwnershipRecursive(t *testing.T) {
 	}
 }
 
-// --- Copy ------------------------------------------------------------------
-
 func TestCopy(t *testing.T) {
 	t.Run("plain", func(t *testing.T) {
 		f, m := sudoMgr(t)
@@ -454,8 +418,7 @@ func TestCopyTree(t *testing.T) {
 			t.Fatal(err)
 		}
 		calls := f.Calls()
-		// cp -a preserves metadata; -T treats dst as the literal target so the
-		// tree merges INTO /home/alice rather than nesting at /home/alice/skel.
+
 		if len(calls) != 1 || argv(calls[0]) != "cp -a -T -- /etc/skel /home/alice" {
 			t.Fatalf("calls = %v, want a single archive `cp -a -T`", callNames(calls))
 		}
@@ -481,11 +444,11 @@ func TestCopyTree(t *testing.T) {
 				chown = c
 			}
 		}
-		// Mode applies to the dst ROOT only (archive per-file modes are kept).
+
 		if argv(chmod) != "chmod 0700 -- /home/alice" {
 			t.Errorf("chmod argv = %q, want the dst root only", argv(chmod))
 		}
-		// Ownership is recursive: re-homing a tree copied as root.
+
 		if argv(chown) != "chown -R -- alice:alice /home/alice" {
 			t.Errorf("chown argv = %q, want a recursive chown", argv(chown))
 		}
@@ -508,8 +471,6 @@ func TestCopyTree(t *testing.T) {
 		}
 	})
 }
-
-// --- Mkdir / Remove --------------------------------------------------------
 
 func TestMkdir(t *testing.T) {
 	t.Run("recursive with mode+owner", func(t *testing.T) {
@@ -567,8 +528,6 @@ func TestRemove(t *testing.T) {
 	}
 }
 
-// --- RemoveDir (escalated path; the Direct fd path is in remove_dir_test.go) -
-
 func TestRemoveDir_Escalated(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
 	m := mustManager(t, f)
@@ -600,8 +559,6 @@ func TestRemoveDir_EscalatedNonZeroExit(t *testing.T) {
 		t.Errorf("err = %v, want *exec.CommandError", err)
 	}
 }
-
-// --- IsReadOnly / RemountRW ------------------------------------------------
 
 func TestIsReadOnly(t *testing.T) {
 	t.Run("ro", func(t *testing.T) {
@@ -686,7 +643,7 @@ func TestListMounts(t *testing.T) {
 		}
 		want := []MountInfo{
 			{"/dev/sda1", "/", "ext4", false},
-			{"/dev/sda2", "/usr", "ext4", true}, // /usr read-only independently of /
+			{"/dev/sda2", "/usr", "ext4", true},
 			{"proc", "/proc", "proc", false},
 			{"tmpfs", "/run", "tmpfs", false},
 		}
@@ -701,7 +658,7 @@ func TestListMounts(t *testing.T) {
 	})
 	t.Run("ro is an exact option token, not a substring", func(t *testing.T) {
 		f := exectest.New(sysexec.Sudo)
-		// "errors=remount-ro" contains "ro" as a substring but the mount is rw.
+
 		f.Push(sysexec.Result{Stdout: "/dev/sda1 / ext4 rw,errors=remount-ro\n"}, nil)
 		got, err := mustManager(t, f).ListMounts(context.Background())
 		if err != nil {
@@ -738,8 +695,6 @@ func TestListMounts(t *testing.T) {
 	})
 }
 
-// --- pure helpers ----------------------------------------------------------
-
 func TestOwnership(t *testing.T) {
 	for _, tt := range []struct{ owner, group, want string }{
 		{"root", "root", "root:root"},
@@ -774,8 +729,7 @@ func TestModeArg(t *testing.T) {
 func TestGetOwnership_SelfAndMissing(t *testing.T) {
 	dir := t.TempDir()
 	owner, group := GetOwnership(dir)
-	// The temp dir is owned by the test user; at minimum the lookups must not
-	// crash and should resolve to non-empty names on a normal host.
+
 	if owner == "" && group == "" {
 		t.Skip("ownership name lookup unavailable in this environment")
 	}
@@ -785,7 +739,6 @@ func TestGetOwnership_SelfAndMissing(t *testing.T) {
 	}
 }
 
-// callNames extracts the command names from a recorded call log.
 func callNames(calls []sysexec.Command) []string {
 	out := make([]string, len(calls))
 	for i, c := range calls {
@@ -793,8 +746,6 @@ func callNames(calls []sysexec.Command) []string {
 	}
 	return out
 }
-
-// --- WriteFile (Direct / fd path) error & backup branches -----------------
 
 func TestWriteFile_Direct_WithBackupAndOwnership(t *testing.T) {
 	m := directManager(t)
@@ -836,7 +787,7 @@ func TestWriteFile_Direct_ResolveOwnershipError(t *testing.T) {
 
 func TestWriteFile_Direct_SafeReplaceError(t *testing.T) {
 	m := directManager(t)
-	// Parent directory does not exist → the temp create fails.
+
 	dest := t.TempDir() + "/missing-subdir/f"
 	if err := m.WriteFile(context.Background(), dest, []byte("x"), WriteOptions{}); err == nil ||
 		!strings.Contains(err.Error(), "write file") {
@@ -844,21 +795,19 @@ func TestWriteFile_Direct_SafeReplaceError(t *testing.T) {
 	}
 }
 
-// --- Copy / Mkdir post-create metadata failures ---------------------------
-
 func TestCopy_PostCopyFailures(t *testing.T) {
 	t.Run("chmod fails", func(t *testing.T) {
 		f := exectest.New(sysexec.Sudo)
-		f.Push(sysexec.Result{}, nil)                             // cp ok
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod"}, nil) // chmod fails
+		f.Push(sysexec.Result{}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod"}, nil)
 		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{Mode: 0o600}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chmod", err)
 		}
 	})
 	t.Run("chown fails", func(t *testing.T) {
 		f := exectest.New(sysexec.Sudo)
-		f.Push(sysexec.Result{}, nil)                             // cp ok
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chown"}, nil) // chown fails
+		f.Push(sysexec.Result{}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chown"}, nil)
 		if err := mustManager(t, f).Copy(context.Background(), "/a", "/b", WriteOptions{Owner: "root"}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chown", err)
 		}
@@ -868,16 +817,16 @@ func TestCopy_PostCopyFailures(t *testing.T) {
 func TestMkdir_PostMkdirFailures(t *testing.T) {
 	t.Run("chmod fails", func(t *testing.T) {
 		f := exectest.New(sysexec.Sudo)
-		f.Push(sysexec.Result{}, nil)                             // mkdir ok
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod"}, nil) // chmod fails
+		f.Push(sysexec.Result{}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chmod"}, nil)
 		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{Mode: 0o750}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chmod", err)
 		}
 	})
 	t.Run("chown fails", func(t *testing.T) {
 		f := exectest.New(sysexec.Sudo)
-		f.Push(sysexec.Result{}, nil)                             // mkdir ok
-		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chown"}, nil) // chown fails
+		f.Push(sysexec.Result{}, nil)
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "chown"}, nil)
 		if err := mustManager(t, f).Mkdir(context.Background(), "/srv/app", MkdirOptions{Owner: "app"}); !errors.As(err, new(*sysexec.CommandError)) {
 			t.Errorf("err = %v, want *exec.CommandError from chown", err)
 		}
@@ -891,8 +840,7 @@ func TestWriteFile_Direct_BackupWriteError(t *testing.T) {
 	if err := os.WriteFile(dest, []byte("OLD"), 0o644); err != nil {
 		t.Fatalf("seed dest: %v", err)
 	}
-	// Backup target's parent does not exist → the backup copy fails, so the
-	// whole write fails (and dest is left intact by safeBackupAndReplace).
+
 	if err := m.WriteFile(context.Background(), dest, []byte("NEW"),
 		WriteOptions{Backup: dir + "/missing/app.bak"}); err == nil || !strings.Contains(err.Error(), "write file") {
 		t.Fatalf("err = %v, want a wrapped backup-write failure", err)
@@ -908,7 +856,7 @@ func TestWriteFile_Direct_FchownError(t *testing.T) {
 	}
 	m := directManager(t)
 	dest := t.TempDir() + "/f"
-	// A non-root process cannot chown a file to root → FchownNoFollow fails.
+
 	if err := m.WriteFile(context.Background(), dest, []byte("x"),
 		WriteOptions{Owner: "root", Group: "root"}); err == nil || !strings.Contains(err.Error(), "set ownership") {
 		t.Fatalf("err = %v, want a set-ownership failure", err)
@@ -916,7 +864,7 @@ func TestWriteFile_Direct_FchownError(t *testing.T) {
 }
 
 func TestRunChecked_RunnerErrorPropagates(t *testing.T) {
-	// SetMode routes through runChecked; a runner (not exit) error must surface.
+
 	f := exectest.New(sysexec.Sudo)
 	f.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
 	if err := mustManager(t, f).SetMode(context.Background(), "/etc/app.conf", 0o644); !errors.Is(err, sysexec.ErrEscalationUnavailable) {

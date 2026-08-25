@@ -41,10 +41,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// isReadAbsent reports whether a fsm.ReadFile/ReadDir error is a benign "path
-// absent" (a wrapped os.ErrNotExist). These config-management paths treat absence
-// as empty content / no entries, so they opt into the old behavior explicitly;
-// a real read error (permission, I/O, escalation) still propagates.
 func isReadAbsent(err error) bool { return errors.Is(err, os.ErrNotExist) }
 
 // ErrUnsupportedBackend is returned by New for a backend without repository
@@ -178,9 +174,6 @@ type Manager interface {
 	Remove(ctx context.Context, name string) (Outcome, error)
 }
 
-// fsManager is the narrow slice of fs.Manager this package uses for privileged
-// file operations. Keeping it minimal lets unit tests inject a small fake via
-// the newFS seam without driving real privileged file ops.
 type fsManager interface {
 	ReadFile(ctx context.Context, path string) ([]byte, error)
 	ReadDir(ctx context.Context, path string) ([]fs.DirEntry, error)
@@ -190,12 +183,8 @@ type fsManager interface {
 	Exists(ctx context.Context, path string) (bool, error)
 }
 
-// newFS builds the fs.Manager each Manager delegates privileged file ops to,
-// over the same injected Runner. A package var so tests override it with a fake.
 var newFS = func(r sysexec.Runner) (fsManager, error) { return fs.New(r) }
 
-// manager is the single Manager implementation; the per-backend behavior is
-// selected by b (validated at construction), so there is no per-backend type.
 type manager struct {
 	b   pkg.Backend
 	r   sysexec.Runner
@@ -212,7 +201,7 @@ func New(b pkg.Backend, runner sysexec.Runner) (Manager, error) {
 	}
 	switch b {
 	case pkg.Apt, pkg.Dnf, pkg.Dnf5, pkg.Pacman, pkg.Zypper:
-		// supported
+
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedBackend, b)
 	}
@@ -253,8 +242,7 @@ func (m *manager) Apply(ctx context.Context, r Repository) (Outcome, error) {
 		}
 		return m.applyZypper(ctx, r.Name, r.Zypper)
 	default:
-		// Defense-in-depth: New gates the backend, so this is unreachable for a
-		// Manager built through the public constructor.
+
 		return Outcome{}, fmt.Errorf("%w: %s", ErrUnsupportedBackend, m.b)
 	}
 }
@@ -278,20 +266,14 @@ func (m *manager) Remove(ctx context.Context, name string) (Outcome, error) {
 	}
 }
 
-// out builds a successful Outcome from an accumulated log and changed flag.
 func out(log string, changed bool) Outcome {
 	return Outcome{Result: sysexec.Result{ExitCode: 0, Stdout: log}, Changed: changed}
 }
 
-// fsResultErr builds a failure Result carrying the accumulated log as stdout and
-// the error text as stderr, for the paths that return both a Result and an error.
 func fsResultErr(log string, err error) sysexec.Result {
 	return sysexec.Result{ExitCode: 1, Stdout: log, Stderr: err.Error()}
 }
 
-// runPriv runs an escalated package-manager command through the Runner and folds
-// a non-zero exit into an *exec.CommandError (the error is nil only on a clean
-// exit). The Result is returned in all cases so a caller can surface stdout.
 func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
 	res, err := m.r.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
 	if err != nil {
@@ -303,13 +285,6 @@ func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sys
 	return res, nil
 }
 
-// runNonFatal runs an escalated package-manager command whose failure is
-// non-fatal: its stdout is appended to log when non-empty, and on error a
-// warning (warnMsg followed by the error) is written to log and execution
-// continues. warnMsg is the per-site message WITHOUT the trailing ": <err>"
-// (e.g. "warning: failed to refresh repo metadata"). This folds the
-// run-append-stdout-warn-on-error idiom repeated across the backends; paths
-// where a command failure is fatal must NOT use it.
 func (m *manager) runNonFatal(ctx context.Context, log *strings.Builder, warnMsg, name string, args ...string) {
 	res, err := m.runPriv(ctx, name, args...)
 	if res.Stdout != "" {
@@ -320,10 +295,6 @@ func (m *manager) runNonFatal(ctx context.Context, log *strings.Builder, warnMsg
 	}
 }
 
-// runStdin runs an UNPRIVILEGED command with stdin (the gpg --dearmor path: it
-// processes a public key, needs no privilege, and must not touch any file —
-// fs.Manager performs the privileged keyring write). A non-zero exit folds into
-// an *exec.CommandError.
 func (m *manager) runStdin(ctx context.Context, stdin []byte, name string, args ...string) (sysexec.Result, error) {
 	cmd := sysexec.Command{Name: name, Args: args}
 	if len(stdin) > 0 {

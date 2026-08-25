@@ -1,17 +1,5 @@
 //go:build container
 
-// Container-based real-execution tests for the package-manager MUTATION paths.
-// The fake-runner unit tests assert argv shape; these run REAL apt operations
-// inside a disposable Debian container — Install/Remove, Pin/Unpin, a local-file
-// install (InstallLocal), and a safe full UpgradeAll — and assert the POST-STATE
-// against the real dpkg database, so a wrong flag, a parse mismatch, or a tool-
-// behaviour drift is caught against the actual binary instead of assumed.
-//
-// Destructive by design (it installs and removes a real package); the container
-// is thrown away after the run. apt-only: the matrix runs this on the
-// debian/base stage. The dnf/pacman/zypper query paths are covered per-distro by
-// the read-side integration_test.go; their mutation cells would need their own
-// distro images.
 package pkg
 
 import (
@@ -25,8 +13,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// mutTestPackage is a tiny, dependency-light package in the Debian archive —
-// fast to install/remove and innocuous.
 const mutTestPackage = "hello"
 
 func aptMutManager(t *testing.T) Manager {
@@ -34,7 +20,7 @@ func aptMutManager(t *testing.T) Manager {
 	if _, err := osexec.LookPath("apt-get"); err != nil {
 		t.Skip("apt-get not on PATH; apt mutation tests not exercisable")
 	}
-	r, err := sysexec.NewRunner(sysexec.Direct) // the container runs the test as root
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
@@ -42,9 +28,7 @@ func aptMutManager(t *testing.T) Manager {
 	if err != nil {
 		t.Fatalf("New(Apt): %v", err)
 	}
-	// Refresh metadata so Install/InstallLocal can resolve the package in a
-	// fresh container; a failure here means no network/mirror — skip rather than
-	// fail, so the lane is correct on an offline runner.
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	if _, err := m.Update(ctx); err != nil {
@@ -60,9 +44,6 @@ func mutCtx(t *testing.T) context.Context {
 	return ctx
 }
 
-// cleanupPkg registers a best-effort teardown that removes (and optionally first
-// unpins) the test package under a BOUNDED context, so a wedged apt can never
-// hang the cleanup indefinitely.
 func cleanupPkg(t *testing.T, m Manager, unpin bool) {
 	t.Helper()
 	t.Cleanup(func() {
@@ -75,8 +56,6 @@ func cleanupPkg(t *testing.T, m Manager, unpin bool) {
 	})
 }
 
-// TestApt_InstallRemove_Container installs then removes a real package, asserting
-// the post-state via the real dpkg database (IsInstalled), not just exit 0.
 func TestApt_InstallRemove_Container(t *testing.T) {
 	m := aptMutManager(t)
 	ctx := mutCtx(t)
@@ -97,8 +76,6 @@ func TestApt_InstallRemove_Container(t *testing.T) {
 	}
 }
 
-// TestApt_PinUnpin_Container holds then releases a real package (apt-mark hold),
-// asserting IsPinned reads the real hold state in both directions.
 func TestApt_PinUnpin_Container(t *testing.T) {
 	m := aptMutManager(t)
 	ctx := mutCtx(t)
@@ -121,17 +98,11 @@ func TestApt_PinUnpin_Container(t *testing.T) {
 	}
 }
 
-// TestApt_InstallLocal_Container downloads a real .deb and installs it FROM THE
-// LOCAL FILE — the path the agent's deb executor delegates to — asserting the
-// post-state.
 func TestApt_InstallLocal_Container(t *testing.T) {
 	m := aptMutManager(t)
 	ctx := mutCtx(t)
 	cleanupPkg(t, m, false)
 
-	// apt-get download drops to the unprivileged _apt user, so the target dir
-	// must be writable by it — t.TempDir() is 0700/root-owned. Make it traversable
-	// + writable so the .deb lands.
 	dir := t.TempDir()
 	if err := os.Chmod(dir, 0o777); err != nil {
 		t.Fatalf("chmod tempdir: %v", err)

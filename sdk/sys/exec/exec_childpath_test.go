@@ -9,9 +9,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// Command.ChildPath is the TRUSTED seam for running with a curated PATH (the
-// per-user runuser fan-out). The curated path must be the PATH the child sees
-// even though PATH is blocklisted from caller Env.
 func runnerForChildPathTest(t *testing.T) sysexec.Runner {
 	t.Helper()
 	r, err := sysexec.NewRunner(sysexec.Direct)
@@ -35,12 +32,6 @@ func TestRunnerChildPath_AppliesCuratedPath(t *testing.T) {
 	}
 }
 
-// SECURITY (the un-sandbox footgun): with EMPTY Env the curated ChildPath must
-// STILL be authoritative and the parent environment must NOT be inherited — an
-// empty-env caller must not silently inherit the agent's (root's) full
-// environment (including root's PATH), which would defeat the isolation the
-// curated PATH exists to provide. (The forced-locale vars are pinned on top, but
-// arbitrary parent vars must not leak.)
 func TestRunnerChildPath_EmptyEnvStillIsolates(t *testing.T) {
 	t.Setenv("CADESTRO_PARENT_SECRET", "leaked-from-root")
 
@@ -57,8 +48,6 @@ func TestRunnerChildPath_EmptyEnvStillIsolates(t *testing.T) {
 	}
 }
 
-// The boundary check still applies with a curated ChildPath: a blocklisted env
-// var in Env is refused, so an untrusted caller cannot smuggle one past the seam.
 func TestRunnerChildPath_StillRejectsBlockedEnv(t *testing.T) {
 	_, err := runnerForChildPathTest(t).Run(context.Background(), sysexec.Command{
 		Name: "true", Env: []string{"LD_PRELOAD=/tmp/evil.so"}, ChildPath: "/usr/bin",

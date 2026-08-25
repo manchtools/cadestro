@@ -1,13 +1,13 @@
 #!/bin/bash
-#
-# Runs SDK integration tests inside a systemd-enabled container.
-#
-# Usage:
-#   ./sdk/test/run-tests.sh
-#
-# The container boots systemd as PID 1 (required for systemctl daemon-reload,
-# enable, start, stop tests), then the tests run as the cadestro user.
-#
+
+
+
+
+
+
+
+
+
 
 set -euo pipefail
 
@@ -36,19 +36,19 @@ for i in $(seq 1 30); do
 done
 
 echo "==> Running integration tests..."
-# Run under a non-English locale (default Japanese) so locale-fragile parsing of
-# tool output is caught: any capability that matches an English error string
-# without forcing LC_ALL=C (Command.CLocale) fails here. Override with
-# CADESTRO_TEST_LOCALE=C (or zh_CN.UTF-8, etc.). The locale is generated in the image.
+
+
+
+
 TEST_LOCALE="${CADESTRO_TEST_LOCALE:-ja_JP.UTF-8}"
 echo "    (locale: ${TEST_LOCALE})"
 
-# Integration-tagged packages that run in THIS systemd container — the set whose
-# //go:build integration tests need systemd as PID 1. Kept explicit (it is an
-# intentional subset of sys/, not every package), but each path is existence-
-# checked below so a module rename/move can never again silently drop a package
-# from the run (the paths read ./sdk/go/sys/... until the go/*→root move, and the
-# stale list passed `go test` vacuously). Paths are relative to /workspace.
+
+
+
+
+
+
 INTEGRATION_PKGS=(
     sdk/sys/exec
     sdk/sys/fs

@@ -10,8 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeFS records WriteFile/Mkdir calls and replays scripted errors, so the
-// Resolved backend's drop-in path is testable without touching disk.
 type fakeFS struct {
 	writes   []fakeWrite
 	mkdirs   []string
@@ -35,7 +33,6 @@ func (f *fakeFS) Mkdir(_ context.Context, path string, _ fs.MkdirOptions) error 
 	return f.mkdirErr
 }
 
-// withFakeFS swaps newFS to return ff for the duration of t.
 func withFakeFS(t *testing.T, ff *fakeFS) {
 	t.Helper()
 	prev := newFS
@@ -76,9 +73,6 @@ func TestNew_ResolvedAndNetworkManager(t *testing.T) {
 	}
 }
 
-// TestNew_ResolvedUsesRealFS exercises the production newFS closure (fs.New over
-// the injected Runner) — the other Resolved tests stub newFS, so without this
-// the real construction path is never run.
 func TestNew_ResolvedUsesRealFS(t *testing.T) {
 	m, err := New(Resolved, exectest.New(exec.Direct))
 	if err != nil {
@@ -142,8 +136,6 @@ func TestDetect(t *testing.T) {
 	}
 }
 
-// runPriv/runRead map a non-zero exit and an exec failure into an error; a clean
-// exit returns nil / stdout.
 func TestRunHelpers_ErrorMapping(t *testing.T) {
 	ctx := context.Background()
 

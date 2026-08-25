@@ -11,31 +11,11 @@ import (
 	"testing"
 )
 
-// WS6 #2: WriteFileAtomic derived its temp file from the target path with a
-// FIXED suffix, and wrote it with a privilege-backend `tee`, which FOLLOWS
-// symlinks. A local attacker who can create entries in the target directory
-// could pre-plant that derived path as a symlink to any root-writable file and
-// redirect the root agent's write there — an arbitrary-file-write → root
-// privesc. The fix routes the write through SafeReplaceFile: a
-// RANDOM-suffix same-directory temp opened O_NOFOLLOW, fchmod'd, then
-// renamed into place. No temp path is derivable from the target any more, so a
-// planted symlink at any such name is never touched. `.cadestro-tmp` below
-// stands in for that whole class of derived names — the assertion is that the
-// write does not follow a symlink planted at a name derived from the target,
-// not that this one spelling is special.
-//
-// Design intent pinned here:
-//   - a target-derived `<target>.cadestro-tmp` path is NEVER written through;
-//   - no leftover temp (`.<base>.tmp-*`) lingers on success;
-//   - the final inode is a real regular file with the requested content
-//     and mode.
 func TestWriteFileAtomic_RefusesSymlinkPlantedTempTarget(t *testing.T) {
 	m := directManager(t)
 	dir := t.TempDir()
 	target := filepath.Join(dir, "managed.conf")
 
-	// Sentinel in a separate tree that the attacker hopes to clobber by
-	// planting a symlink at a target-derived temp path.
 	sentinelDir := t.TempDir()
 	sentinel := filepath.Join(sentinelDir, "sentinel")
 	if err := os.WriteFile(sentinel, []byte("ORIGINAL"), 0o644); err != nil {
@@ -51,8 +31,6 @@ func TestWriteFileAtomic_RefusesSymlinkPlantedTempTarget(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	// The planted symlink target must be untouched — the write must not
-	// have followed `<target>.cadestro-tmp`.
 	got, err := os.ReadFile(sentinel)
 	if err != nil {
 		t.Fatalf("read sentinel: %v", err)
@@ -61,7 +39,6 @@ func TestWriteFileAtomic_RefusesSymlinkPlantedTempTarget(t *testing.T) {
 		t.Fatalf("sentinel was modified through the planted .cadestro-tmp symlink: %q", string(got))
 	}
 
-	// The real target holds the new content as a regular file.
 	info, err := os.Lstat(target)
 	if err != nil {
 		t.Fatalf("lstat target: %v", err)
@@ -83,18 +60,12 @@ func TestWriteFileAtomic_RefusesSymlinkPlantedTempTarget(t *testing.T) {
 		t.Errorf("target mode = %v, want 0644", perm)
 	}
 
-	// No predictable name was created and no random temp lingers.
 	matches, _ := filepath.Glob(filepath.Join(dir, ".managed.conf.tmp-*"))
 	if len(matches) != 0 {
 		t.Errorf("leftover temp files: %v", matches)
 	}
 }
 
-// WriteFileAtomic must refuse to write THROUGH a symlink planted at the
-// final target path: a symlink at `target` must be replaced by the real
-// regular file (rename-over), never dereferenced so the write lands on
-// the symlink's victim. Pins that the new inode is real and the victim
-// is untouched.
 func TestWriteFileAtomic_TargetSymlinkNotDereferenced(t *testing.T) {
 	m := directManager(t)
 	dir := t.TempDir()
@@ -125,10 +96,6 @@ func TestWriteFileAtomic_TargetSymlinkNotDereferenced(t *testing.T) {
 	}
 }
 
-// The correct path with explicit ownership: resolving the owner/group
-// NAMES to ids and applying them through an fd (no path-based chown that
-// could follow a swapped symlink). Run against the current user so it
-// works without root.
 func TestWriteFileAtomic_AppliesOwnershipToSelf(t *testing.T) {
 	m := directManager(t)
 	dir := t.TempDir()

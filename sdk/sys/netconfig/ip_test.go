@@ -22,8 +22,8 @@ const (
 
 func TestGet_Success(t *testing.T) {
 	r := exectest.New(exec.Direct)
-	r.Push(exec.Result{Stdout: fixtureAddrJSON}, nil)  // ip addr
-	r.Push(exec.Result{Stdout: fixtureRouteJSON}, nil) // ip route
+	r.Push(exec.Result{Stdout: fixtureAddrJSON}, nil)
+	r.Push(exec.Result{Stdout: fixtureRouteJSON}, nil)
 	got, err := base{r: r}.Get(context.Background(), "eth0")
 	if err != nil {
 		t.Fatalf("Get: %v", err)
@@ -40,7 +40,7 @@ func TestGet_Success(t *testing.T) {
 	if len(got.Routes) != 1 || got.Routes[0].Destination != "10.0.0.0/8" || got.Routes[0].Gateway != "192.0.2.254" || got.Routes[0].Metric != 50 {
 		t.Errorf("routes = %+v, want one 10.0.0.0/8 route (connected route skipped)", got.Routes)
 	}
-	// The reads are unprivileged and use `ip -j`.
+
 	for _, c := range r.Calls() {
 		if c.Escalate {
 			t.Errorf("Get must not escalate: %+v", c)
@@ -88,8 +88,7 @@ func TestParseIPState_BadJSON(t *testing.T) {
 }
 
 func TestParseIPState_EmptyLink(t *testing.T) {
-	// `ip addr` for a nonexistent-but-zero result: empty array → no addresses/MTU,
-	// no panic.
+
 	cfg, err := parseIPState("eth0", "[]", "[]")
 	if err != nil {
 		t.Fatal(err)

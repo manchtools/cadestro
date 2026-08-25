@@ -12,9 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// A Runner execution error (here the real "sudo not installed" sentinel, the
-// fail-closed result of NewRunner(Sudo) on a host without sudo) propagates
-// unchanged from a mutating op — distinct from a non-zero exit.
 func TestRun_PropagatesRunnerError(t *testing.T) {
 	f := exectest.New(exec.Sudo)
 	f.Push(exec.Result{}, exec.ErrEscalationUnavailable)
@@ -23,7 +20,6 @@ func TestRun_PropagatesRunnerError(t *testing.T) {
 	}
 }
 
-// ... and from a query op.
 func TestQuery_PropagatesRunnerError(t *testing.T) {
 	f := exectest.New(exec.Sudo)
 	f.Push(exec.Result{}, exec.ErrEscalationUnavailable)
@@ -57,8 +53,6 @@ func TestGroupExists_PropagatesRunnerError(t *testing.T) {
 	}
 }
 
-// AddToGroup / RemoveFromGroup validate the GROUP name too (a valid user but a
-// flag-shaped group must be rejected before the Runner).
 func TestGroupMembership_RejectsInvalidGroupName(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	if err := mgr(t, f).AddToGroup(context.Background(), "deploy", "-G"); err == nil {
@@ -72,7 +66,6 @@ func TestGroupMembership_RejectsInvalidGroupName(t *testing.T) {
 	}
 }
 
-// A caller-supplied deadline is honored as-is (ensureCtx does not wrap it).
 func TestQuery_HonorsCallerDeadline(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "staff\n"}, nil)
@@ -83,8 +76,6 @@ func TestQuery_HonorsCallerDeadline(t *testing.T) {
 	}
 }
 
-// A non-zero exit on a QUERY (e.g. `id` for an unknown user) becomes a typed
-// *exec.CommandError carrying the tool's exit code/stderr.
 func TestQuery_NonZeroExitIsCommandError(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{ExitCode: 1, Stderr: "id: 'ghost': no such user"}, nil)
@@ -95,21 +86,17 @@ func TestQuery_NonZeroExitIsCommandError(t *testing.T) {
 	}
 }
 
-// Get surfaces a passwd-lookup failure (unknown user → getent exits 2).
 func TestGet_PasswdLookupFailure(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{ExitCode: 2}, nil) // getent passwd: not found
+	f.Push(exec.Result{ExitCode: 2}, nil)
 	if _, err := mgr(t, f).Get(context.Background(), "ghost"); err == nil {
 		t.Error("Get returned nil error for an unknown user")
 	}
 }
 
-// GroupMembers reports a genuinely absent group as a wrapped os.ErrNotExist
-// (getent exit 2) — distinguishable from "exists but has no members" — and
-// propagates any OTHER failure instead of silently reading it as "no members".
 func TestGroupMembers_AbsentGroupIsErrNotExist(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{ExitCode: 2}, nil) // getent group: not found
+	f.Push(exec.Result{ExitCode: 2}, nil)
 	members, err := mgr(t, f).GroupMembers(context.Background(), "ghosts")
 	if !errors.Is(err, os.ErrNotExist) || members != nil {
 		t.Errorf("GroupMembers(absent) = (%v,%v), want (nil, ErrNotExist)", members, err)
@@ -118,7 +105,7 @@ func TestGroupMembers_AbsentGroupIsErrNotExist(t *testing.T) {
 
 func TestGroupMembers_RealErrorPropagates(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{}, exec.ErrEscalationDenied) // a Runner/escalation failure, NOT "not found"
+	f.Push(exec.Result{}, exec.ErrEscalationDenied)
 	members, err := mgr(t, f).GroupMembers(context.Background(), "docker")
 	if err == nil {
 		t.Fatal("a getent failure that is not exit-2-not-found must propagate, not read as 'no members'")
@@ -128,7 +115,6 @@ func TestGroupMembers_RealErrorPropagates(t *testing.T) {
 	}
 }
 
-// SupplementaryGroups: an `id -Gn` failure is surfaced...
 func TestSupplementaryGroups_PrimaryListFailure(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{ExitCode: 1, Stderr: "id: 'ghost': no such user"}, nil)
@@ -137,13 +123,10 @@ func TestSupplementaryGroups_PrimaryListFailure(t *testing.T) {
 	}
 }
 
-// ...and if only the PRIMARY-group lookup fails, it FAILS CLOSED rather than
-// returning a list that might include the primary (the method's contract is
-// "excluding the primary", which it can no longer guarantee).
 func TestSupplementaryGroups_PrimaryLookupFailsClosed(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{Stdout: "staff docker sudo\n"}, nil) // id -Gn ok
-	f.Push(exec.Result{ExitCode: 1}, nil)                   // id -gn (primary) fails
+	f.Push(exec.Result{Stdout: "staff docker sudo\n"}, nil)
+	f.Push(exec.Result{ExitCode: 1}, nil)
 	groups, err := mgr(t, f).SupplementaryGroups(context.Background(), "deploy")
 	if err == nil {
 		t.Errorf("SupplementaryGroups returned (%v,nil); want a fail-closed error when the primary lookup fails", groups)
@@ -153,7 +136,6 @@ func TestSupplementaryGroups_PrimaryLookupFailsClosed(t *testing.T) {
 	}
 }
 
-// Create surfaces a failure to fix ownership of a pre-existing home.
 func TestCreate_ChownFailureSurfaces(t *testing.T) {
 	existing := t.TempDir()
 	f := exectest.New(exec.Direct)
@@ -167,26 +149,22 @@ func TestCreate_ChownFailureSurfaces(t *testing.T) {
 	}
 }
 
-// KillSessions surfaces a pkill execution failure (not a non-zero exit).
 func TestKillSessions_PkillExecError(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{ExitCode: 1}, nil)                // loginctl non-zero → fall through
-	f.Push(exec.Result{}, exec.ErrEscalationUnavailable) // pkill cannot execute
+	f.Push(exec.Result{ExitCode: 1}, nil)
+	f.Push(exec.Result{}, exec.ErrEscalationUnavailable)
 	err := mgr(t, f).KillSessions(context.Background(), "deploy")
 	if !errors.Is(err, exec.ErrEscalationUnavailable) {
 		t.Errorf("KillSessions err = %v, want the wrapped pkill exec error", err)
 	}
 }
 
-// Get tolerates an unreadable shadow file — the real case being a non-root agent
-// whose `getent shadow` escalation is denied. Locked stays false rather than
-// erroring.
 func TestGet_ShadowUnreadableLeavesUnlocked(t *testing.T) {
 	f := exectest.New(exec.Sudo)
-	f.Push(exec.Result{Stdout: "deploy:x:1000:1000:Deploy User:/home/deploy:/bin/bash\n"}, nil) // passwd
-	f.Push(exec.Result{Stdout: "deploy:x:1000:\n"}, nil)                                        // group
-	f.Push(exec.Result{Stdout: "deploy sudo\n"}, nil)                                           // id -Gn
-	f.Push(exec.Result{}, exec.ErrEscalationDenied)                                             // shadow: needs a password
+	f.Push(exec.Result{Stdout: "deploy:x:1000:1000:Deploy User:/home/deploy:/bin/bash\n"}, nil)
+	f.Push(exec.Result{Stdout: "deploy:x:1000:\n"}, nil)
+	f.Push(exec.Result{Stdout: "deploy sudo\n"}, nil)
+	f.Push(exec.Result{}, exec.ErrEscalationDenied)
 	info, err := mgr(t, f).Get(context.Background(), "deploy")
 	if err != nil {
 		t.Fatalf("Get should tolerate an unreadable shadow: %v", err)

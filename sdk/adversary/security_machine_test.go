@@ -62,13 +62,6 @@ type attackEnv struct {
 	ctx context.Context
 }
 
-// TestAdversarialAgentSecurityMachine is a cross-SDK adversarial finite suite:
-// each program is a short attacker playbook that chains remote input into local
-// privileged SDK surfaces, while a common oracle checks global safety properties
-// (reject before privileged execution/mutation, no network/disk side effects,
-// no secrets in argv). Package-local tests still pin individual bugs; this suite
-// is the higher-level attacker model that should stay red until the hardening is
-// implemented.
 func TestAdversarialAgentSecurityMachine(t *testing.T) {
 	programs := []attackProgram{
 		remoteToRootPersistenceProgram(),

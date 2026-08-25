@@ -12,40 +12,40 @@ RUN apt-get update && apt-get install -y \
     && locale-gen \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable systemd-resolved so the sys/dns Resolved-backend integration test can
-# exercise the real Apply round-trip: write the managed resolved.conf.d drop-in,
-# restart the service, and read back the generated /run/systemd/resolve/resolv.conf.
-# `systemctl enable` works offline at build time (it only creates the wants/
-# symlinks); the unit actually starts when systemd boots as PID 1. Installing the
-# package also puts `resolvectl` on PATH, so dns.Detect reports the Resolved
-# backend in-container.
+
+
+
+
+
+
+
 RUN systemctl enable systemd-resolved
 
-# Non-English locales so the integration suite runs under a foreign locale (see
-# run-tests.sh / CI). Standing guard against locale-fragile parsing of tool
-# output: a capability that matches an English error string without forcing
-# LC_ALL=C (via Command.CLocale) fails here. ja_JP/zh_CN translate the strings
-# the SDK parses (e.g. cat's "No such file or directory").
 
-# Create cadestro user (matches production setup). Add it to systemd-journal
-# so the sys/log integration test can read the real system journal via journalctl
-# (a non-member only sees its own, empty, user journal).
+
+
+
+
+
+
+
+
 RUN useradd --system --no-create-home --shell /usr/sbin/nologin cadestro && \
     mkdir -p /home/cadestro && \
     chown cadestro:cadestro /home/cadestro && \
     usermod -aG systemd-journal cadestro
 
-# sshd host keys (needed for systemd tests that reference ssh.service)
+
 RUN ssh-keygen -A
 
 WORKDIR /workspace
 
 COPY sdk/ ./sdk/
 
-# Pre-download dependencies
+
 RUN cd sdk && go mod download
 
-# Install sudoers for cadestro user (same commands the SDK packages use)
+
 RUN printf '\
 cadestro ALL=(root) NOPASSWD: /usr/bin/systemctl *\n\
 cadestro ALL=(root) NOPASSWD: /bin/systemctl *\n\
@@ -99,21 +99,21 @@ cadestro ALL=(root) NOPASSWD: /bin/resolvectl *\n\
     chmod 0440 /etc/sudoers.d/cadestro && \
     visudo -c -f /etc/sudoers.d/cadestro
 
-# Own workspace and Go caches so cadestro user can compile tests
+
 RUN chown -R cadestro:cadestro /workspace /home/cadestro
 
-# Use systemd as PID 1 for systemctl daemon-reload, enable, start, etc.
+
 STOPSIGNAL SIGRTMIN+3
 ENTRYPOINT ["/sbin/init"]
 
-# with-networkmanager: the `systemd` image plus a real NetworkManager daemon, for
-# the dedicated network CI job (the sys/network keyfile-based WiFi provisioning
-# runs `nmcli connection reload` against a live NM and writes a root-owned 0600
-# keyfile, so it needs both a running daemon and root — hence its own job rather
-# than the cadestro test-sys lane). `unmanaged-devices=*` keeps NM from
-# touching the container's eth0 / DNS, so it manages profile config only and
-# never disrupts the container's own networking. Inherits ENTRYPOINT/STOPSIGNAL
-# from `systemd`.
+
+
+
+
+
+
+
+
 FROM systemd AS with-networkmanager
 RUN apt-get update && apt-get install -y --no-install-recommends network-manager \
     && rm -rf /var/lib/apt/lists/* \

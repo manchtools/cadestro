@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-// These tests pin audit finding #12 — the cross-backend rule
-// validation contract. They run validateRule directly so they don't
-// depend on a configured backend (every backend's ApplyRule funnels
-// through validateRule first; the wiring is verified by the existing
-// firewall_test.go entry-path tests).
-
 func TestValidateRule_AcceptsCanonicalShape(t *testing.T) {
 	rule := Rule{
 		ID:       "ssh-in",
@@ -43,7 +37,7 @@ func TestValidateRule_RejectsBadID(t *testing.T) {
 }
 
 func TestValidatePort_RangeBoundaries(t *testing.T) {
-	// Inside the range.
+
 	for _, p := range []int{0, 1, 22, 443, 65535} {
 		t.Run(label("ok", p), func(t *testing.T) {
 			if err := validatePort(p); err != nil {
@@ -51,7 +45,7 @@ func TestValidatePort_RangeBoundaries(t *testing.T) {
 			}
 		})
 	}
-	// Outside the range.
+
 	for _, p := range []int{-1, 65536, 70000, 1 << 31} {
 		t.Run(label("reject", p), func(t *testing.T) {
 			err := validatePort(p)
@@ -112,11 +106,6 @@ func TestValidateAddr_AcceptsIPAndCIDR(t *testing.T) {
 	}
 }
 
-// TestValidateRule_BackendIndependentParity proves the cross-backend
-// validator catches every class the audit called out — port range,
-// protocol enum, source/dest address shape — before backend dispatch.
-// If validateRule grows a new gap later, this table is where the new
-// row goes.
 func TestValidateRule_BackendIndependentParity(t *testing.T) {
 	base := Rule{ID: "ok", Allow: true, Protocol: ProtocolTCP, Port: 22}
 
@@ -140,8 +129,6 @@ func TestValidateRule_BackendIndependentParity(t *testing.T) {
 		})
 	}
 
-	// Sanity-check the base case passes — establishes the table's
-	// negatives aren't tripping over an unrelated invariant.
 	if err := validateRule(base); err != nil {
 		t.Fatalf("validateRule(base) = %v; want nil — base case must not regress", err)
 	}

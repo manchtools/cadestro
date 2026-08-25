@@ -25,10 +25,7 @@ func TestWriteKeyFile_TmpfsModeAndContent(t *testing.T) {
 	if perm := info.Mode().Perm(); perm != 0o600 {
 		t.Errorf("key file mode = %o, want 0600", perm)
 	}
-	// The staging directory is created per process under keyFileDir, not AT it:
-	// keyFileDir itself is world-writable tmpfs and its mode is not ours to
-	// assert. What must hold is that the directory the key file actually lands
-	// in is private.
+
 	stagingDirOfKeyFile := filepath.Dir(path)
 	if stagingDirOfKeyFile == keyFileDir {
 		t.Errorf("key file staged directly in %q; a fixed path there is pre-creatable by any local uid", keyFileDir)
@@ -61,12 +58,10 @@ func TestCleanupKeyFile_Removes(t *testing.T) {
 }
 
 func TestCleanupKeyFile_EmptyAndMissingAreNoops(t *testing.T) {
-	cleanupKeyFile("") // must not panic
+	cleanupKeyFile("")
 	cleanupKeyFile(filepath.Join(t.TempDir(), "never-existed"))
 }
 
-// cleanupKeyFile must NOT follow a symlink that replaced the path (TOCTOU): it
-// removes the symlink itself, leaving the target untouched (not zeroed).
 func TestCleanupKeyFile_RefusesToFollowSymlink(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "target")

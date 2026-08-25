@@ -23,9 +23,6 @@ var ErrBlockedEnvVar = errors.New("env var blocked by hijack-prevention allowlis
 // locale/color of a command — these are imposed by the Runner, not negotiable.
 var ErrReservedEnvVar = errors.New("env var reserved by the SDK for deterministic output")
 
-// isReservedEnvVar reports whether name is one the Runner forces and a caller
-// therefore may not set via Command.Env: the whole LC_* family, LANG, LANGUAGE
-// (all neutralised by the forced LC_ALL=C), and NO_COLOR. Case-insensitive.
 func isReservedEnvVar(name string) bool {
 	upper := strings.ToUpper(name)
 	switch upper {
@@ -47,20 +44,20 @@ var ValidEnvVarName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 // not enumerated here — listing them would only duplicate the prefix rule. This
 // map carries the names that have no covering prefix.
 var BlockedEnvVars = map[string]bool{
-	// glibc iconv module loading (CVE-2021-4034 vector)
+
 	"GCONV_PATH": true,
-	// DNS/resolver manipulation
+
 	"HOSTALIASES":      true,
 	"RESOLV_HOST_CONF": true,
-	// System utility redirection
+
 	"GETCONF_DIR": true,
-	// Interpreter library injection
+
 	"NODE_OPTIONS": true,
 	"PYTHONPATH":   true,
 	"PERL5OPT":     true,
 	"PERL5LIB":     true,
 	"RUBYLIB":      true,
-	// Shell/path manipulation
+
 	"PATH":       true,
 	"IFS":        true,
 	"ENV":        true,
@@ -78,7 +75,7 @@ func IsAllowedEnvVar(name string) bool {
 	if BlockedEnvVars[upper] {
 		return false
 	}
-	// Block LD_*, BASH_FUNC_*, and DYLD_* (macOS) prefixes
+
 	if strings.HasPrefix(upper, "LD_") || strings.HasPrefix(upper, "BASH_FUNC_") || strings.HasPrefix(upper, "DYLD_") {
 		return false
 	}

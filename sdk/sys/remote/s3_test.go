@@ -11,17 +11,14 @@ import (
 	"testing"
 )
 
-// s3Fixture serves a single key from a fake S3-shaped HTTP endpoint.
-// Tracks GET / HEAD counts so the drift-skip test can assert that the
-// second Fetch issues HEAD only.
 type s3Fixture struct {
 	srv     *httptest.Server
 	bucket  string
 	key     string
 	body    []byte
 	etag    string
-	headErr int // override status code for HEAD; 0 means 200
-	getErr  int // override status code for GET; 0 means 200
+	headErr int
+	getErr  int
 	gets    atomic.Int32
 	heads   atomic.Int32
 }
@@ -30,7 +27,7 @@ func newS3Fixture(t *testing.T, bucket, key string, body []byte, etag string) *s
 	t.Helper()
 	f := &s3Fixture{bucket: bucket, key: key, body: body, etag: etag}
 	f.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Path layout: /bucket/key — the simplest S3-compatible mapping.
+
 		want := "/" + f.bucket + "/" + f.key
 		if r.URL.Path != want {
 			http.Error(w, "wrong path "+r.URL.Path, http.StatusNotFound)
@@ -69,9 +66,6 @@ func newS3Fixture(t *testing.T, bucket, key string, body []byte, etag string) *s
 	return f
 }
 
-// TestNewS3_RejectsBadConfig — every required field is required, and
-// the endpoint must be HTTP(S). Catch misconfiguration before any
-// network round-trip.
 func TestNewS3_RejectsBadConfig(t *testing.T) {
 	good := S3Config{Endpoint: "https://s3.example.test", Bucket: "b", Key: "k"}
 	for _, tc := range []struct {
@@ -94,9 +88,6 @@ func TestNewS3_RejectsBadConfig(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_SingleKey_DownloadsToDest — happy path: the payload at
-// ${endpoint}/${bucket}/${key} lands at dest with the expected body,
-// ETag becomes Revision, sha256 lands as Digest.
 func TestS3Fetch_SingleKey_DownloadsToDest(t *testing.T) {
 	payload := []byte("hello s3")
 	fix := newS3Fixture(t, "mybucket", "path/to/obj", payload, `"abc"`)
@@ -126,9 +117,6 @@ func TestS3Fetch_SingleKey_DownloadsToDest(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_SingleKey_NoOpOnMatchingETag — second Fetch against an
-// unchanged object hits HEAD only, returns Changed=false with the
-// same Revision. Confirms the drift-skip path via the GET counter.
 func TestS3Fetch_SingleKey_NoOpOnMatchingETag(t *testing.T) {
 	fix := newS3Fixture(t, "b", "obj", []byte("data"), `"v1"`)
 	dest := filepath.Join(t.TempDir(), "f")
@@ -157,9 +145,6 @@ func TestS3Fetch_SingleKey_NoOpOnMatchingETag(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_403FromHEAD_ReturnsClearError — the "anonymous user
-// can't even probe this key" case surfaces as ErrInvalidConfig
-// wrapping the endpoint, so operators know to open the bucket policy.
 func TestS3Fetch_403FromHEAD_ReturnsClearError(t *testing.T) {
 	fix := newS3Fixture(t, "b", "obj", []byte("x"), `"v1"`)
 	fix.getErr = http.StatusForbidden
@@ -173,8 +158,6 @@ func TestS3Fetch_403FromHEAD_ReturnsClearError(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_RejectsUnsafeDest — dest validation runs before any
-// network round-trip, same as the HTTP source.
 func TestS3Fetch_RejectsUnsafeDest(t *testing.T) {
 	fix := newS3Fixture(t, "b", "obj", []byte("x"), `"v1"`)
 	src, _ := NewS3(S3Config{Endpoint: fix.srv.URL, Bucket: "b", Key: "obj"})

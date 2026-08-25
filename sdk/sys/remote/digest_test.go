@@ -8,10 +8,6 @@ import (
 	"testing"
 )
 
-// TestSHA256File_KnownHash — sanity that the helper returns the exact hex
-// digest the stdlib would produce. Lock in the hex form (no leading
-// "sha256:" prefix, no uppercase) so callers can compare against
-// `checksum_sha256` strings on the wire byte-for-byte.
 func TestSHA256File_KnownHash(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "fixture")
@@ -31,11 +27,6 @@ func TestSHA256File_KnownHash(t *testing.T) {
 	}
 }
 
-// TestSHA256File_LargeFile — exercises the streaming code path with a
-// payload bigger than any sane in-memory buffer. The pass criterion is
-// just "produces the correct digest without errors"; the streaming
-// property itself is enforced by code review on the impl side (chunked
-// io.Copy with a fixed buffer, NOT io.ReadAll).
 func TestSHA256File_LargeFile(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping multi-MiB hash in -short mode")
@@ -43,7 +34,7 @@ func TestSHA256File_LargeFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "big")
 
-	const size = 4 * 1024 * 1024 // 4 MiB
+	const size = 4 * 1024 * 1024
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("create: %v", err)
@@ -77,19 +68,12 @@ func TestSHA256File_LargeFile(t *testing.T) {
 	}
 }
 
-// TestSHA256File_MissingPath — a missing file is a caller error, not a
-// silent empty hash. The wrapped error must carry the path so the cause
-// is obvious in logs.
 func TestSHA256File_MissingPath(t *testing.T) {
 	if _, err := sha256File("/this/does/not/exist/at/all"); err == nil {
 		t.Fatal("sha256File on missing path returned nil error")
 	}
 }
 
-// TestSHA256Tree_StableForIdenticalContent — two trees populated with the
-// same files (regardless of the order they were written) must hash to the
-// same value. This is the property a callers rely on to use the tree
-// digest as a drift token across runs.
 func TestSHA256Tree_StableForIdenticalContent(t *testing.T) {
 	t1 := buildTree(t, []treeFile{
 		{path: "a.txt", body: "alpha"},
@@ -97,7 +81,7 @@ func TestSHA256Tree_StableForIdenticalContent(t *testing.T) {
 		{path: "sub/c.txt", body: "charlie"},
 	})
 	t2 := buildTree(t, []treeFile{
-		// Different order, same content.
+
 		{path: "sub/c.txt", body: "charlie"},
 		{path: "b.txt", body: "bravo"},
 		{path: "a.txt", body: "alpha"},
@@ -115,9 +99,6 @@ func TestSHA256Tree_StableForIdenticalContent(t *testing.T) {
 	}
 }
 
-// TestSHA256Tree_DifferentContent_DifferentDigest — basic sanity. If the
-// tree hash collided on different content the entire drift-detection
-// story would be broken.
 func TestSHA256Tree_DifferentContent_DifferentDigest(t *testing.T) {
 	t1 := buildTree(t, []treeFile{{path: "a", body: "x"}})
 	t2 := buildTree(t, []treeFile{{path: "a", body: "y"}})
@@ -128,9 +109,6 @@ func TestSHA256Tree_DifferentContent_DifferentDigest(t *testing.T) {
 	}
 }
 
-// TestSHA256Tree_PathMatters — same byte content under different names
-// must produce different digests. Otherwise a renamed file would look
-// unchanged at the drift-token level.
 func TestSHA256Tree_PathMatters(t *testing.T) {
 	t1 := buildTree(t, []treeFile{{path: "a", body: "x"}})
 	t2 := buildTree(t, []treeFile{{path: "b", body: "x"}})
@@ -142,7 +120,7 @@ func TestSHA256Tree_PathMatters(t *testing.T) {
 }
 
 type treeFile struct {
-	path string // relative to the temp root
+	path string
 	body string
 }
 

@@ -17,7 +17,6 @@ func TestGenerateCSR(t *testing.T) {
 		t.Fatalf("GenerateCSR: %v", err)
 	}
 
-	// Verify CSR PEM is valid
 	csrBlock, _ := pem.Decode(csrPEM)
 	if csrBlock == nil {
 		t.Fatal("CSR PEM decode returned nil")
@@ -35,12 +34,6 @@ func TestGenerateCSR(t *testing.T) {
 		t.Fatalf("CSR CN = %q, want test-host.example.com", csr.Subject.CommonName)
 	}
 
-	// The CSR MUST NOT carry any SANs — the Control Server's CA
-	// refuses to sign CSRs that include DNSNames, IPAddresses,
-	// EmailAddresses, or URIs. Agent certs are client certs
-	// identified by the device ID the CA writes into the issued
-	// cert, not by anything the agent self-asserts in the CSR.
-	// See internal/ca/ca.go on the server side.
 	if len(csr.DNSNames) != 0 {
 		t.Fatalf("CSR DNSNames = %v, want empty (server rejects CSRs with SANs)", csr.DNSNames)
 	}
@@ -54,14 +47,10 @@ func TestGenerateCSR(t *testing.T) {
 		t.Fatalf("CSR URIs = %v, want empty", csr.URIs)
 	}
 
-	// Verify signature on CSR
 	if err := csr.CheckSignature(); err != nil {
 		t.Fatalf("CSR signature check failed: %v", err)
 	}
 
-	// Verify key PEM is a PKCS#8 Ed25519 key. Ed25519 is not a preference:
-	// the Control Server's CA rejects any other identity key type outright,
-	// so an ECDSA key here makes enrolment and renewal impossible.
 	keyBlock, _ := pem.Decode(keyPEM)
 	if keyBlock == nil {
 		t.Fatal("key PEM decode returned nil")
@@ -80,11 +69,6 @@ func TestGenerateCSR(t *testing.T) {
 		t.Fatalf("key type = %T, want ed25519.PrivateKey", parsed)
 	}
 
-	// The returned private key MUST be the one that signed the CSR — its
-	// public half must equal the CSR's embedded public key. A GenerateCSR
-	// bug that signs with key-A but returns key-B (the key-swap path the
-	// other assertions cannot catch) would leave the agent unable to use
-	// the issued certificate. (#5)
 	csrPub, ok := csr.PublicKey.(ed25519.PublicKey)
 	if !ok {
 		t.Fatalf("CSR public key type = %T, want ed25519.PublicKey", csr.PublicKey)
@@ -139,13 +123,12 @@ func TestGenerateCSR_UniqueKeys(t *testing.T) {
 }
 
 func TestGenerateCSRFromKey(t *testing.T) {
-	// Generate a key first
+
 	_, keyPEM, err := GenerateCSR("original-host")
 	if err != nil {
 		t.Fatalf("GenerateCSR: %v", err)
 	}
 
-	// Generate CSR from existing key with different hostname (renewal scenario)
 	csrPEM, err := GenerateCSRFromKey("renewed-host", keyPEM)
 	if err != nil {
 		t.Fatalf("GenerateCSRFromKey: %v", err)
@@ -185,9 +168,6 @@ func TestGenerateCSRFromKey_InvalidKey(t *testing.T) {
 	}
 }
 
-// A well-formed PKCS#8 key of the wrong type must be refused here rather than
-// producing a CSR the CA will reject: the agent then reports a key problem
-// instead of an unexplained enrolment failure.
 func TestGenerateCSRFromKey_RejectsNonEd25519Key(t *testing.T) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -209,8 +189,7 @@ func TestGenerateCSRFromKey_RejectsNonEd25519Key(t *testing.T) {
 }
 
 func TestGenerateCSRFromKey_SameKeyProducesDifferentCSR(t *testing.T) {
-	// The CSR itself might differ due to nonces in the signature,
-	// but the public key embedded in both CSRs should be identical.
+
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatalf("generate key: %v", err)
@@ -235,7 +214,6 @@ func TestGenerateCSRFromKey_SameKeyProducesDifferentCSR(t *testing.T) {
 		t.Fatalf("second CSR: %v", err)
 	}
 
-	// Parse both and verify they use the same public key
 	block1, _ := pem.Decode(csrPEM1)
 	csr1, _ := x509.ParseCertificateRequest(block1.Bytes)
 
@@ -249,7 +227,6 @@ func TestGenerateCSRFromKey_SameKeyProducesDifferentCSR(t *testing.T) {
 		t.Fatal("CSR public key does not match the supplied private key")
 	}
 
-	// But hostnames should differ
 	if csr1.Subject.CommonName == csr2.Subject.CommonName {
 		t.Fatal("CSRs should have different CNs")
 	}

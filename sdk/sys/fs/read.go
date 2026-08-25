@@ -33,10 +33,10 @@ func (m *manager) ReadFile(ctx context.Context, path string) ([]byte, error) {
 	if m.direct() {
 		b, err := os.ReadFile(path)
 		if err != nil {
-			return nil, err // a *PathError wrapping os.ErrNotExist for a missing path
+			return nil, err
 		}
 		if len(b) == 0 {
-			return nil, nil // present but empty
+			return nil, nil
 		}
 		return b, nil
 	}
@@ -51,7 +51,7 @@ func (m *manager) ReadFile(ctx context.Context, path string) ([]byte, error) {
 		return nil, cmdError("cat", res)
 	}
 	if res.Stdout == "" {
-		return nil, nil // present but empty
+		return nil, nil
 	}
 	return []byte(res.Stdout), nil
 }

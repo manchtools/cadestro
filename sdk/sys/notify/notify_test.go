@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-// loginctl(1) emits one line per session for `list-sessions --no-legend`,
-// space-separated: SESSION UID USER SEAT TTY. Anything with fewer than
-// three fields is junk (blank line, "no sessions" placeholder).
 func TestParseLoginctlListSessions(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -50,11 +47,6 @@ func TestParseLoginctlListSessions(t *testing.T) {
 	}
 }
 
-// `loginctl show-session <id> -p Type -p Name -p User` emits Key=Value
-// lines in D-Bus dictionary order (NOT the order of the -p flags), so
-// the parser keys by name. Test fixtures use Type/Name/User in mixed
-// orders to lock that in. We only treat x11 / wayland / mir as
-// graphical — every other type (tty, unspecified, …) is dropped.
 func TestParseLoginctlShowSession(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -103,19 +95,14 @@ func TestParseLoginctlShowSession(t *testing.T) {
 			wantOK:    false,
 		},
 		{
-			// Inverse of the above: User present but Name empty. Builds an
-			// anonymous session we can't target, so it's rejected.
+
 			name:      "missing Name property is rejected",
 			sessionID: "c6b",
 			stdout:    "Type=wayland\nUser=1009",
 			wantOK:    false,
 		},
 		{
-			// Malformed UID is now treated as an invalid session
-			// because uid=0 (the silent Atoi fallback) would build
-			// /run/user/0/bus and either misroute the notification
-			// to root's session or get suppressed entirely. CR
-			// finding on PR #57.
+
 			name:      "garbage uid is rejected as an invalid session",
 			sessionID: "c7",
 			stdout:    "Type=x11\nName=grace\nUser=notanint",
@@ -129,7 +116,7 @@ func TestParseLoginctlShowSession(t *testing.T) {
 			want:      session{id: "c8", user: "henry", uid: 1005, typ: "wayland"},
 		},
 		{
-			// A line with no '=' (blank line, banner) is ignored, not fatal.
+
 			name:      "ignores lines without an equals sign",
 			sessionID: "c9",
 			stdout:    "Type=x11\n\nName=ivy\nUser=1006\nnot a property",

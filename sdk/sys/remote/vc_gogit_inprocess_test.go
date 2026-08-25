@@ -13,9 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// initRepoWithCommit creates a real git repo at dir with one committed file and
-// returns the repo, its worktree, and the commit hash. Pure in-process go-git —
-// no network, no git binary.
 func initRepoWithCommit(t *testing.T, dir string) (*gogit.Repository, *gogit.Worktree, plumbing.Hash) {
 	t.Helper()
 	repo, err := gogit.PlainInit(dir, false)
@@ -53,19 +50,18 @@ func TestResolveTargetHash(t *testing.T) {
 		t.Fatalf("CreateTag: %v", err)
 	}
 
-	// Branch name (refs/heads/<branch>).
 	if got, err := resolveTargetHash(repo, branch.Name().Short()); err != nil || got != h {
 		t.Errorf("resolveTargetHash(branch) = (%v,%v), want (%v,nil)", got, err, h)
 	}
-	// Tag name (refs/tags/v1).
+
 	if got, err := resolveTargetHash(repo, "v1"); err != nil || got != h {
 		t.Errorf("resolveTargetHash(tag) = (%v,%v), want (%v,nil)", got, err, h)
 	}
-	// Raw SHA fallback.
+
 	if got, err := resolveTargetHash(repo, h.String()); err != nil || got != h {
 		t.Errorf("resolveTargetHash(sha) = (%v,%v), want (%v,nil)", got, err, h)
 	}
-	// Not found → ErrInvalidConfig.
+
 	if _, err := resolveTargetHash(repo, "no-such-ref"); !errors.Is(err, ErrInvalidConfig) {
 		t.Errorf("resolveTargetHash(missing) err = %v, want ErrInvalidConfig", err)
 	}
@@ -75,7 +71,6 @@ func TestSnapshotRestoreUntracked(t *testing.T) {
 	dir := t.TempDir()
 	_, wt, _ := initRepoWithCommit(t, dir)
 
-	// Two untracked files (one nested).
 	if err := os.WriteFile(filepath.Join(dir, "u1"), []byte("keep1"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +89,6 @@ func TestSnapshotRestoreUntracked(t *testing.T) {
 		t.Fatalf("snapshot captured %d untracked files, want >= 2", len(snap))
 	}
 
-	// Simulate a checkout blowing them away, then restore.
 	_ = os.Remove(filepath.Join(dir, "u1"))
 	_ = os.RemoveAll(filepath.Join(dir, "sub"))
 	if err := restoreUntracked(dir, snap); err != nil {
@@ -108,9 +102,6 @@ func TestSnapshotRestoreUntracked(t *testing.T) {
 	}
 }
 
-// TestResolve_LsRemoteError covers the Resolve error path: an unreachable
-// endpoint makes the in-memory ls-remote fail. (The success path needs a live
-// git remote — covered by the container/integration tier, not here.)
 func TestResolve_LsRemoteError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

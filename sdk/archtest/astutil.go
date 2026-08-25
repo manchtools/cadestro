@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-// identName returns the most specific name an expression is known by: the
-// identifier, or the trailing selector field (foo.Bar -> "Bar").
 func identName(e ast.Expr) string {
 	switch x := e.(type) {
 	case *ast.Ident:
@@ -24,9 +22,6 @@ func identName(e ast.Expr) string {
 	return ""
 }
 
-// isPresenceComparand reports whether an operand is a nil / empty-string /
-// zero literal — i.e. the comparison is a presence check, not a
-// secret-value comparison.
 func isPresenceComparand(e ast.Expr) bool {
 	switch x := e.(type) {
 	case *ast.Ident:
@@ -48,22 +43,14 @@ func isPresenceComparand(e ast.Expr) bool {
 	return false
 }
 
-// secretNameRe matches identifiers that hold secret material. The full
-// "signature"/"hmac" forms are used (bare "sig"/"mac" collide with
-// "assign"/"format"). A match is a violation only when it is not metadata
-// (secretMetaSuffixes) and not a presence check.
 var secretNameRe = regexp.MustCompile(`(?i)(token|secret|hmac|signature|fingerprint|password|passwd|digest|apikey|psk|privatekey|clientkey|presharedkey)`)
 
-// secretMetaSuffixes name fields that describe a secret rather than carry
-// its bytes (TokenType, KeyID, SignatureSize, ...).
 var secretMetaSuffixes = []string{
 	"type", "kind", "id", "name", "len", "length", "count", "version",
 	"expiry", "expiresat", "at", "format", "algorithm", "algo", "method",
 	"status", "enabled", "disabled", "index", "idx", "field", "size",
 }
 
-// looksLikeSecretOperand reports whether an operand names secret material
-// that must be compared in constant time.
 func looksLikeSecretOperand(e ast.Expr) bool {
 	name := identName(e)
 	if name == "" {

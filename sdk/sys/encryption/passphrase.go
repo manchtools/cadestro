@@ -9,8 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// randInt is a seam over crypto/rand.Int so the (practically unreachable)
-// RNG-failure path is exercisable in tests.
 var randInt = rand.Int
 
 // GeneratePassphrase generates a word-based passphrase as a Secret: at least
@@ -29,7 +27,7 @@ func GeneratePassphrase(minWords int) (exec.Secret, error) {
 		words = append(words, wordList[idx.Int64()])
 		phrase := strings.Join(words, "-")
 		if len(words) >= minWords && len(phrase) >= 32 {
-			// The wordlist + '-' contain no newline/CR, so NewSecret cannot reject.
+
 			return exec.NewSecret(phrase)
 		}
 	}

@@ -10,10 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// List must distinguish three states, never collapsing them: a missing table
-// (the namespace was never provisioned → explicit os.ErrNotExist), an empty but
-// provisioned table (nil slice, no error), and a REAL failure (escalation denied,
-// tool error → propagated, never read as "zero managed rules").
 func TestNftablesList_NoTableEmptyButRealErrorPropagates(t *testing.T) {
 	t.Run("missing table → wrapped os.ErrNotExist", func(t *testing.T) {
 		r := exectest.New(sysexec.Direct)

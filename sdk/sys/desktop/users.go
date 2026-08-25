@@ -42,9 +42,7 @@ func (m *manager) HomeUsers(ctx context.Context) ([]Session, error) {
 	entries, err := os.ReadDir(m.homeRoot)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// Missing home root is "no users", not a fault. Return a non-nil
-			// empty slice to match the documented contract and the success
-			// path below (which always make()s a slice).
+
 			return []Session{}, nil
 		}
 		return nil, fmt.Errorf("read %s: %w", m.homeRoot, err)
@@ -55,8 +53,7 @@ func (m *manager) HomeUsers(ctx context.Context) ([]Session, error) {
 		if !e.IsDir() {
 			continue
 		}
-		// Skip dot-prefixed directories (.ecryptfs, .pwd.lock, etc.)
-		// and the conventional /home/lost+found left by fsck.
+
 		name := e.Name()
 		if name == "" || name[0] == '.' || name == "lost+found" {
 			continue
@@ -70,9 +67,6 @@ func (m *manager) HomeUsers(ctx context.Context) ([]Session, error) {
 	return out, nil
 }
 
-// homeUserFor builds a Session for the given <homeRoot>/<name> subdir if
-// it resolves to a real account. Returns (zero, false) on any lookup
-// failure — callers treat that as "not a real user, skip silently."
 func homeUserFor(name string) (Session, bool) {
 	u, err := lookupUser(name)
 	if err != nil {
@@ -86,11 +80,7 @@ func homeUserFor(name string) (Session, bool) {
 	if err != nil {
 		return Session{}, false
 	}
-	// Trust the canonical home from the lookup over the directory
-	// name — a system with /etc/skel symlinks or unusual NSS modules
-	// can have <homeRoot>/<name> exist while the canonical home is
-	// elsewhere; using the lookup result keeps us aligned with what
-	// runuser will see.
+
 	return Session{
 		Username:   u.Username,
 		UID:        uid,
@@ -131,11 +121,7 @@ func (m *manager) UsersWithFlatpakInstall(ctx context.Context, appID string) ([]
 	}
 	out := make([]Session, 0, len(users))
 	for _, u := range users {
-		// Per-user installs land under
-		// $HOME/.local/share/flatpak/app/<appID>/. Existence of the
-		// directory is the cheapest possible "is it installed" check
-		// — a full `flatpak --user info` invocation per user would
-		// be 10-100× slower on a box with many accounts.
+
 		appDir := filepath.Join(u.Home, ".local", "share", "flatpak", "app", appID)
 		if _, err := os.Stat(appDir); err != nil {
 			continue

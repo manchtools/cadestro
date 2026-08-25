@@ -53,7 +53,6 @@ func TestNew_FailClosed(t *testing.T) {
 	}
 }
 
-// Mutations — golden argv, all escalated, all with the "--" separator.
 func TestMutations_GoldenArgv(t *testing.T) {
 	const unit = "nginx.service"
 	tests := []struct {
@@ -84,13 +83,6 @@ func TestMutations_GoldenArgv(t *testing.T) {
 	}
 }
 
-// TestReload pins the per-unit reload contract added so a caller (the agent's
-// user/SSH action: `systemctl reload sshd`) can ask a running unit to re-read
-// its config WITHOUT a restart through the SDK. It must run the `reload` verb
-// (not `restart` — a restart drops connections a reload preserves), escalated,
-// with the "--" separator; and a unit that defines no ExecReload makes
-// systemctl exit non-zero, which must surface as a typed *exec.CommandError
-// rather than a silent success.
 func TestReload(t *testing.T) {
 	t.Run("reloads via the reload verb, escalated", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
@@ -121,7 +113,6 @@ func TestReload(t *testing.T) {
 	})
 }
 
-// Queries run UNescalated as `systemctl <verb> -- <unit>`.
 func TestQueries_GoldenArgvUnescalated(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "enabled\n"}, nil)
@@ -138,14 +129,14 @@ func TestIsEnabled(t *testing.T) {
 	}{
 		{"enabled", true},
 		{"enabled-runtime", true},
-		{"disabled", false}, // exits 1 but whitelisted → a real "no"
-		{"static", false},   // boots via deps; not toggleable
+		{"disabled", false},
+		{"static", false},
 		{"indirect", false},
 		{"masked", false},
 	}
 	for _, c := range cases {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{Stdout: c.out + "\n", ExitCode: 1}, nil) // non-zero exit is fine
+		f.Push(exec.Result{Stdout: c.out + "\n", ExitCode: 1}, nil)
 		got, err := mgr(t, f).IsEnabled(context.Background(), "nginx.service")
 		if err != nil {
 			t.Fatalf("%s: %v", c.out, err)
@@ -213,7 +204,6 @@ func TestStatus_Combinations(t *testing.T) {
 	})
 }
 
-// Weird/unrecognised query output must be a FAILURE, not silently "disabled".
 func TestQuery_UnrecognisedOutputFailsClosed(t *testing.T) {
 	for _, out := range []string{"not-found", "", "could not be found", "Failed to get unit"} {
 		f := exectest.New(exec.Direct)
@@ -224,10 +214,9 @@ func TestQuery_UnrecognisedOutputFailsClosed(t *testing.T) {
 	}
 }
 
-// An exec failure (systemctl missing, ctx cancelled) on a query is surfaced.
 func TestQuery_ExecErrorSurfaces(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{}, exec.ErrEscalationUnavailable) // stand-in exec error
+	f.Push(exec.Result{}, exec.ErrEscalationUnavailable)
 	if _, err := mgr(t, f).IsActive(context.Background(), "nginx.service"); err == nil {
 		t.Error("IsActive returned nil error on an exec failure")
 	}
@@ -251,12 +240,9 @@ func TestMutation_ExecErrorPropagates(t *testing.T) {
 	}
 }
 
-// TestEveryMethodRejectsUnsafeUnitNameBeforeRunner: self-discovering per-parameter
-// guard — for every Manager method, a flag-shaped unit name "-rf" never reaches
-// the Runner. (fs seams are no-op'd so WriteUnit's content sub-case is hermetic.)
 func TestEveryMethodRejectsUnsafeUnitNameBeforeRunner(t *testing.T) {
 	const unsafe = "-rf"
-	const safe = "nginx.service" // a valid unit name for the non-target string params
+	const safe = "nginx.service"
 
 	defer swapFSSeams(t)()
 
@@ -310,8 +296,6 @@ func TestEveryMethodRejectsUnsafeUnitNameBeforeRunner(t *testing.T) {
 	}
 }
 
-// swapFSSeams points the newFS seam at a no-op fake for the duration of a test,
-// returning a restore func. Keeps WriteUnit/RemoveUnit reflection cases hermetic.
 func swapFSSeams(t *testing.T) func() {
 	t.Helper()
 	prev := newFS

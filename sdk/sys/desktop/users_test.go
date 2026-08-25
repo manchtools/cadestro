@@ -10,9 +10,6 @@ import (
 	"testing"
 )
 
-// currentUserSession builds a Session pointing at the running test
-// user's home, used as the fixture identity. Skips when the test
-// user can't be looked up (CI sandboxes without nsswitch/passwd).
 func currentUserSession(t *testing.T) (user.User, int, int) {
 	t.Helper()
 	u, err := user.Current()
@@ -42,10 +39,7 @@ func TestHomeUsers_EmptyHomeRoot(t *testing.T) {
 }
 
 func TestHomeUsers_MissingHomeRoot(t *testing.T) {
-	// Pin the contract: a non-existent /home is "no users", not an
-	// error. Containers and minimal systems sometimes lack /home
-	// entirely; the agent still needs to make a uninstall-loop
-	// decision without exiting the action with a hard error.
+
 	m, _ := newManager(t, WithHomeRoot(filepath.Join(t.TempDir(), "does-not-exist")))
 	got, err := m.HomeUsers(context.Background())
 	if err != nil {
@@ -54,17 +48,14 @@ func TestHomeUsers_MissingHomeRoot(t *testing.T) {
 	if len(got) != 0 {
 		t.Errorf("expected zero users for missing /home, got %d", len(got))
 	}
-	// Contract: "empty slice — not an error". Pin non-nil so missing and empty
-	// home roots are indistinguishable to the caller (and JSON-marshal to []).
+
 	if got == nil {
 		t.Error("HomeUsers must return a non-nil empty slice for a missing home root")
 	}
 }
 
 func TestHomeUsers_UnreadableHomeRoot(t *testing.T) {
-	// A home root that exists but cannot be read is a genuine fault and must
-	// surface (distinct from "missing" → empty). Root bypasses directory perms,
-	// so skip when running privileged.
+
 	if os.Geteuid() == 0 {
 		t.Skip("running as root bypasses directory permissions; cannot exercise the unreadable path")
 	}
@@ -72,7 +63,7 @@ func TestHomeUsers_UnreadableHomeRoot(t *testing.T) {
 	if err := os.Mkdir(root, 0o000); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(root, 0o755) }) // so t.TempDir cleanup can remove it
+	t.Cleanup(func() { _ = os.Chmod(root, 0o755) })
 	m, _ := newManager(t, WithHomeRoot(root))
 	if _, err := m.HomeUsers(context.Background()); err == nil {
 		t.Error("an unreadable home root must surface an error, not return empty")
@@ -82,10 +73,6 @@ func TestHomeUsers_UnreadableHomeRoot(t *testing.T) {
 func TestHomeUsers_SkipsNonDirectoryAndDotPrefixed(t *testing.T) {
 	root := t.TempDir()
 
-	// Files, dot-prefixed dirs, and lost+found must all be skipped
-	// before we even try to resolve a username — otherwise a stray
-	// `.ecryptfs` ghost dir or fsck's `lost+found` would trigger a
-	// noisy os/user.Lookup failure log on every run.
 	if err := os.WriteFile(filepath.Join(root, "shared.txt"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -95,9 +82,6 @@ func TestHomeUsers_SkipsNonDirectoryAndDotPrefixed(t *testing.T) {
 		}
 	}
 
-	// Bait: a dir whose name resolves to no real user. Should be
-	// silently skipped (no failure surfaced to the caller). This uses the
-	// REAL user.Lookup, exercising homeUserFor's lookup-failure branch.
 	if err := os.Mkdir(filepath.Join(root, "_definitely_not_a_real_user_name_pmtest"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -113,9 +97,7 @@ func TestHomeUsers_SkipsNonDirectoryAndDotPrefixed(t *testing.T) {
 }
 
 func TestHomeUsers_SkipsNonNumericUIDOrGID(t *testing.T) {
-	// homeUserFor must skip a passwd entry whose uid or gid is non-numeric
-	// rather than build a corrupt Session. Driven via the lookupUser seam since
-	// a real passwd cannot carry such values.
+
 	root := t.TempDir()
 	for _, d := range []string{"baduid", "badgid"} {
 		if err := os.Mkdir(filepath.Join(root, d), 0o755); err != nil {
@@ -167,10 +149,7 @@ func TestHomeUsers_ResolvesRealAccount(t *testing.T) {
 	if s.GID != gid {
 		t.Errorf("GID: got %d, want %d", s.GID, gid)
 	}
-	// HomeDir comes from the os/user lookup, not the synthetic
-	// /home/<name> path under the test root — pin that the lookup
-	// wins so a future refactor doesn't accidentally start trusting
-	// the directory layout over passwd.
+
 	if s.Home != u.HomeDir {
 		t.Errorf("Home: got %q, want %q (the os/user lookup is authoritative, not the directory layout)",
 			s.Home, u.HomeDir)
@@ -202,9 +181,6 @@ func TestUsersWithFlatpakInstall_PropagatesHomeUsersError(t *testing.T) {
 	}
 }
 
-// flatpakFixture mounts a fake user "alice" whose authoritative $HOME is a temp
-// dir, so the per-user flatpak install dir can be created without touching the
-// developer's real home. Returns the Manager and the user's home dir.
 func flatpakFixture(t *testing.T) (Manager, string) {
 	t.Helper()
 	root := t.TempDir()
@@ -237,7 +213,7 @@ func TestUsersWithFlatpakInstall_ReturnsUsersWithTheApp(t *testing.T) {
 
 func TestUsersWithFlatpakInstall_ExcludesUsersWithoutTheApp(t *testing.T) {
 	const appID = "com.example.CadestroTest"
-	m, _ := flatpakFixture(t) // no app dir created
+	m, _ := flatpakFixture(t)
 	got, err := m.UsersWithFlatpakInstall(context.Background(), appID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

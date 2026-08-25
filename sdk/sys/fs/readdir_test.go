@@ -13,8 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// names renders entries as "name(d|f)" sorted, so assertions are order-stable
-// (os.ReadDir sorts; find does not guarantee order).
 func names(entries []DirEntry) []string {
 	out := make([]string, len(entries))
 	for i, e := range entries {
@@ -28,12 +26,9 @@ func names(entries []DirEntry) []string {
 	return out
 }
 
-// --- ReadDir (escalated / find path) --------------------------------------
-
 func TestReadDir_Sudo_ParsesFindOutput(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
-	// `%y/%f` per line: a single type char, '/', then the basename (a basename
-	// never contains '/', so the first '/' is an unambiguous separator).
+
 	f.Push(sysexec.Result{Stdout: "f/foo.sources\nd/sub\nl/legacy.list\n"}, nil)
 	m := mustManager(t, f)
 
@@ -45,10 +40,7 @@ func TestReadDir_Sudo_ParsesFindOutput(t *testing.T) {
 	if strings.Join(names(got), ",") != strings.Join(want, ",") {
 		t.Errorf("entries = %v, want %v", names(got), want)
 	}
-	// A symlink reports type 'l' from find's %y → classified as not-a-dir, so a
-	// caller iterating files (e.g. apt conflict cleanup) processes it. The target
-	// carries a trailing slash so find reports ENOTDIR on a non-directory rather
-	// than exiting 0 with no output.
+
 	if got := argv(f.Calls()[0]); got != `find /etc/apt/sources.list.d/ -maxdepth 1 -mindepth 1 -printf %y/%f\n` {
 		t.Errorf("argv = %q", got)
 	}
@@ -58,7 +50,7 @@ func TestReadDir_Sudo_ParsesFindOutput(t *testing.T) {
 }
 
 func TestReadDir_Sudo_EmptyDir(t *testing.T) {
-	f := exectest.New(sysexec.Sudo) // unscripted → exit 0, empty stdout
+	f := exectest.New(sysexec.Sudo)
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/empty")
 	if err != nil || len(got) != 0 {
 		t.Fatalf("ReadDir(empty) = (%v, %v), want (empty, nil)", got, err)
@@ -69,8 +61,7 @@ func TestReadDir_Sudo_MissingDirIsErrNotExist(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
 	f.Push(sysexec.Result{ExitCode: 1, Stderr: "find: '/x': No such file or directory"}, nil)
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/x")
-	// Explicit-absence contract: a missing dir is a wrapped os.ErrNotExist, not a
-	// silent empty listing.
+
 	if !errors.Is(err, os.ErrNotExist) || got != nil {
 		t.Fatalf("ReadDir(missing) = (%v, %v), want (nil, ErrNotExist)", got, err)
 	}
@@ -92,9 +83,6 @@ func TestReadDir_Sudo_RunnerErrorPropagates(t *testing.T) {
 	}
 }
 
-// A regular file (not a directory): `find /path/` reports ENOTDIR. It must
-// surface as an error mirroring the Direct path — never a silent empty listing,
-// and NOT the absence sentinel (the file exists, it just isn't a directory).
 func TestReadDir_Sudo_NotADirIsError(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
 	f.Push(sysexec.Result{ExitCode: 1, Stderr: "find: '/etc/hostname/': Not a directory"}, nil)
@@ -110,9 +98,6 @@ func TestReadDir_Sudo_NotADirIsError(t *testing.T) {
 	}
 }
 
-// The escalated find target carries a trailing slash so `find` reports ENOTDIR
-// on a non-directory (a bare `find /file` exits 0 with no output, which would
-// read as a silently-empty directory). Pin that the slash reaches the argv.
 func TestReadDir_Sudo_FindTargetsDirectoryWithTrailingSlash(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
 	f.Push(sysexec.Result{Stdout: "f/a.conf\n"}, nil)
@@ -140,7 +125,7 @@ func TestReadDir_Sudo_InvalidPathRejectedBeforeExec(t *testing.T) {
 
 func TestReadDir_Sudo_SkipsMalformedAndBlankLines(t *testing.T) {
 	f := exectest.New(sysexec.Sudo)
-	// A blank line (defensive) and a line with no '/' are skipped, not panicked on.
+
 	f.Push(sysexec.Result{Stdout: "f/ok.sources\n\nbogusnoslash\nd/d1\n"}, nil)
 	got, err := mustManager(t, f).ReadDir(context.Background(), "/d")
 	if err != nil {
@@ -151,8 +136,6 @@ func TestReadDir_Sudo_SkipsMalformedAndBlankLines(t *testing.T) {
 		t.Errorf("entries = %v, want %v (malformed/blank lines skipped)", names(got), want)
 	}
 }
-
-// --- ReadDir (Direct / os.ReadDir path) -----------------------------------
 
 func TestReadDir_Direct_ListsRealDir(t *testing.T) {
 	m := directManager(t)
@@ -176,7 +159,7 @@ func TestReadDir_Direct_ListsRealDir(t *testing.T) {
 func TestReadDir_Direct_MissingDirIsErrNotExist(t *testing.T) {
 	m := directManager(t)
 	got, err := m.ReadDir(context.Background(), filepath.Join(t.TempDir(), "does-not-exist"))
-	// Explicit-absence contract: missing dir → wrapped os.ErrNotExist.
+
 	if !errors.Is(err, os.ErrNotExist) || got != nil {
 		t.Fatalf("ReadDir(missing) = (%v, %v), want (nil, ErrNotExist)", got, err)
 	}
@@ -188,7 +171,7 @@ func TestReadDir_Direct_NotADirIsError(t *testing.T) {
 	if err := os.WriteFile(file, []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// Reading a regular file as a directory is a real error (ENOTDIR), not "absent".
+
 	if _, err := m.ReadDir(context.Background(), file); err == nil {
 		t.Fatal("ReadDir(regular file) err = nil, want a non-directory error")
 	}

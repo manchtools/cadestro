@@ -8,12 +8,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// ExampleManager_ActiveSessions discovers the active graphical sessions and
-// builds, for each, a Runner that executes AS that session's user via
-// desktop.RunAsRunner — the way a user-scoped command (e.g. a per-user Flatpak
-// install) is fanned out to every signed-in user.
 func ExampleManager_ActiveSessions() {
-	r, err := exec.NewRunner(exec.Direct) // the agent runs as root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,6 +28,6 @@ func ExampleManager_ActiveSessions() {
 			log.Print(err)
 			continue
 		}
-		_ = ru // pass ru to pkg.NewUserFlatpak for a per-user install
+		_ = ru
 	}
 }

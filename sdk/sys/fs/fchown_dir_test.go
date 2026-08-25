@@ -10,20 +10,6 @@ import (
 	"testing"
 )
 
-// WS6 #5: directory chmod/chown was path-based, so it re-resolved the
-// path on every call and dereferenced a final-component symlink. A user
-// who controls a managed directory could swap it for a symlink between a
-// check and the chmod/chown, redirecting a root-run permission change
-// onto the symlink's target (e.g. /etc, /root). SetDirPermissionsNoFollow
-// closes the class: it opens the directory with O_NOFOLLOW|O_DIRECTORY
-// and applies fchmod/fchown through the fd, so a symlink at the path
-// fails the open (ELOOP) instead of being dereferenced.
-//
-// Contract:
-//   - correct: a real directory → mode and ownership applied via the fd;
-//   - present-but-wrong: the path is a symlink → ELOOP, NOTHING applied
-//     to the symlink's target;
-//   - absent: the path does not exist → error.
 func TestSetDirPermissionsNoFollow_RealDir(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "managed")
 	if err := os.Mkdir(dir, 0o777); err != nil {
@@ -69,8 +55,6 @@ func TestSetDirPermissionsNoFollow_AppliesOwnershipToSelf(t *testing.T) {
 func TestSetDirPermissionsNoFollow_RefusesSymlink(t *testing.T) {
 	root := t.TempDir()
 
-	// The victim directory whose mode an attacker hopes to change by
-	// planting a symlink where a managed dir is expected.
 	victim := filepath.Join(root, "victim")
 	if err := os.Mkdir(victim, 0o700); err != nil {
 		t.Fatalf("mkdir victim: %v", err)
@@ -85,7 +69,6 @@ func TestSetDirPermissionsNoFollow_RefusesSymlink(t *testing.T) {
 		t.Fatalf("SetDirPermissionsNoFollow on a symlink: want error, got nil")
 	}
 
-	// The victim's mode must be unchanged — the symlink was not followed.
 	info, statErr := os.Stat(victim)
 	if statErr != nil {
 		t.Fatalf("stat victim: %v", statErr)
@@ -96,8 +79,7 @@ func TestSetDirPermissionsNoFollow_RefusesSymlink(t *testing.T) {
 }
 
 func TestSetDirPermissionsNoFollow_RefusesNonDir(t *testing.T) {
-	// A regular file is not a directory: O_DIRECTORY must reject it
-	// rather than chmod'ing it.
+
 	f := filepath.Join(t.TempDir(), "file")
 	if err := os.WriteFile(f, []byte("x"), 0o644); err != nil {
 		t.Fatalf("seed: %v", err)

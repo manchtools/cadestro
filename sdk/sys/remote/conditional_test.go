@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// condServer serves body with an ETag and honours If-None-Match with a 304 —
-// the conditional-request path the per-test fixtures don't model.
 func condServer(t *testing.T, body []byte, etag, contentType string) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,9 +29,6 @@ func condServer(t *testing.T, body []byte, etag, contentType string) *httptest.S
 	return srv
 }
 
-// TestArchive_NotModifiedNoOp — a second archive Fetch into the same dest sends
-// the stored ETag and gets a 304, so it is a no-op (openArchiveBody's 304 branch
-// + fetchArchive's not-modified short-circuit).
 func TestArchive_NotModifiedNoOp(t *testing.T) {
 	body := buildTarGz(t, []archiveEntry{{name: "f", body: "x"}})
 	srv := condServer(t, body, "arch-etag", "application/gzip")
@@ -58,8 +53,6 @@ func TestArchive_NotModifiedNoOp(t *testing.T) {
 	}
 }
 
-// TestS3_HeadNotModifiedNoOp — a second single-key S3 Fetch HEADs with the stored
-// ETag, gets 304, and skips the GET (headNotModified's 304 branch).
 func TestS3_HeadNotModifiedNoOp(t *testing.T) {
 	srv := condServer(t, []byte("payload"), "s3-etag", "")
 	src, err := NewS3(S3Config{Endpoint: srv.URL, Bucket: "b", Key: "k"})

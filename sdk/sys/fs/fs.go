@@ -162,8 +162,6 @@ type Manager interface {
 	ListMounts(ctx context.Context) ([]MountInfo, error)
 }
 
-// manager is the single Manager implementation; the privilege strategy is the
-// Runner's, so there is no per-backend type.
 type manager struct {
 	r sysexec.Runner
 }
@@ -177,23 +175,12 @@ func New(runner sysexec.Runner) (Manager, error) {
 	return &manager{r: runner}, nil
 }
 
-// direct reports whether the Runner runs as root with no escalation wrapper, in
-// which case the fd-anchored, symlink-safe code paths apply.
 func (m *manager) direct() bool { return m.r.Backend() == sysexec.Direct }
 
-// runPriv runs an escalated command through the Runner. A non-zero exit is in
-// Result.ExitCode (not the error); the error is non-nil only when the command
-// could not be executed or escalation failed.
-//
-// The Runner forces the C locale so any stderr/stdout the caller parses is the
-// stable English form regardless of host locale — ReadFile's "No such file"
-// missing-file detection depends on it (a localized cat error would otherwise be
-// misread as a hard failure).
 func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
 	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
 }
 
-// runPrivStdin is runPriv with stdin (the tee write path).
 func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, args ...string) (sysexec.Result, error) {
 	var in *strings.Reader
 	if stdin != "" {
@@ -206,14 +193,10 @@ func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, a
 	return m.r.Run(ctx, cmd)
 }
 
-// runQuery runs an unprivileged read (findmnt) through the Runner. The Runner
-// forces the C locale, keeping the output parse locale-stable.
 func (m *manager) runQuery(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
 	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args})
 }
 
-// cmdError turns a completed command's Result into a typed error when its exit
-// code is non-zero; a clean exit returns nil.
 func cmdError(name string, res sysexec.Result) error {
 	if res.ExitCode == 0 {
 		return nil
@@ -221,25 +204,10 @@ func cmdError(name string, res sysexec.Result) error {
 	return &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
 }
 
-// isENOENTStderr reports whether a coreutils/find stderr line is the kernel's
-// ENOENT message — "<tool>: <path>: No such file or directory". It matches the
-// TERMINAL phrase, not a substring anywhere in the line, so a path that itself
-// contains "No such file" (e.g. a present file failing with a *different* error
-// like "Permission denied", or a file literally named that) is never
-// misclassified as absent: the error reason always trails the path in this
-// format, so path content can never reach the suffix. The Runner forces
-// LC_ALL=C, keeping the phrase locale-stable.
 func isENOENTStderr(stderr string) bool {
 	return strings.HasSuffix(strings.TrimSpace(stderr), "No such file or directory")
 }
 
-// validateMode rejects a requested file mode that would set the setuid or
-// setgid bit. Creating a setuid/setgid file through a privileged op is a
-// local-root privilege-escalation primitive (a setuid-root helper, or a
-// setgid binary that inherits a privileged group), so every mutation that
-// applies a mode (WriteFile, SetMode, Copy) refuses it before any command or
-// privileged side effect. The sticky bit and ordinary permission bits remain
-// allowed — only the privilege-conferring bits are refused.
 func validateMode(m os.FileMode) error {
 	if m&(os.ModeSetuid|os.ModeSetgid) != 0 {
 		return fmt.Errorf("%w: mode %s requests setuid/setgid", ErrUnsafeMode, modeArg(m))
@@ -247,8 +215,6 @@ func validateMode(m os.FileMode) error {
 	return nil
 }
 
-// modeArg formats an os.FileMode as the octal string chmod expects, including
-// the setuid/setgid/sticky bits (whose Go bit positions differ from unix).
 func modeArg(m os.FileMode) string {
 	o := uint32(m.Perm())
 	if m&os.ModeSetuid != 0 {

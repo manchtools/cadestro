@@ -7,10 +7,6 @@ import (
 	"testing"
 )
 
-// CommandError is the typed error the capability layer wraps a non-zero exit
-// in (Decision 3). It must carry ExitCode + Stderr for callers that branch on
-// them via errors.As, and Unwrap to the underlying cause so errors.Is chains.
-
 func TestCommandError_CarriesExitCodeAndStderr(t *testing.T) {
 	ce := &CommandError{Name: "useradd", ExitCode: 9, Stderr: "useradd: user 'deploy' already exists\n"}
 	msg := ce.Error()
@@ -45,9 +41,6 @@ func TestCommandError_ErrorsAsAndUnwrap(t *testing.T) {
 	}
 }
 
-// The Runner's construction/escalation sentinels must be distinct and
-// errors.Is-matchable (fail-closed contract: a caller can tell "tool missing"
-// from "needs a password" from "unknown backend").
 func TestRunnerSentinels_AreDistinct(t *testing.T) {
 	all := []error{ErrUnknownBackend, ErrEscalationUnavailable, ErrEscalationDenied}
 	for i := range all {

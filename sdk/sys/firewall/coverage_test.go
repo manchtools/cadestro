@@ -10,8 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// cmd.exec must surface a transport error (err != nil from the Runner), not just
-// a non-zero exit. Driven through firewalld's zone lookup.
 func TestCmdExec_TransportError(t *testing.T) {
 	r := &recordingRunner{}
 	r.push(exec.Result{}, errors.New("connection refused"))
@@ -22,13 +20,11 @@ func TestCmdExec_TransportError(t *testing.T) {
 	}
 }
 
-// --- firewalld RemoveRule failure branches ---
-
 func TestFirewalld_RemoveRule_RemoveServiceFails(t *testing.T) {
 	r := &recordingRunner{}
-	r.pushOut("public\n")                 // zone
-	r.pushOut("app-https ssh\n")          // list-services (enabled)
-	r.push(exec.Result{ExitCode: 1}, nil) // remove-service fails
+	r.pushOut("public\n")
+	r.pushOut("app-https ssh\n")
+	r.push(exec.Result{ExitCode: 1}, nil)
 	m := newMgr(t, Firewalld, "app", r)
 	if err := m.RemoveRule(context.Background(), "https"); err == nil ||
 		!strings.Contains(err.Error(), "remove-service") {
@@ -40,10 +36,10 @@ func TestFirewalld_RemoveRule_FinalReloadFails(t *testing.T) {
 	swapFirewalldSeams(t)
 	useFS(&fakeFS{})
 	r := &recordingRunner{}
-	r.pushOut("public\n")                 // zone
-	r.pushOut("app-https ssh\n")          // list-services (enabled)
-	r.pushOut("")                         // remove-service
-	r.push(exec.Result{ExitCode: 1}, nil) // final reload fails
+	r.pushOut("public\n")
+	r.pushOut("app-https ssh\n")
+	r.pushOut("")
+	r.push(exec.Result{ExitCode: 1}, nil)
 	m := newMgr(t, Firewalld, "app", r)
 	if err := m.RemoveRule(context.Background(), "https"); err == nil ||
 		!strings.Contains(err.Error(), "--reload") {
@@ -51,8 +47,6 @@ func TestFirewalld_RemoveRule_FinalReloadFails(t *testing.T) {
 	}
 }
 
-// firewalldReadServiceRule must reject XML that lacks a port/protocol (e.g. a
-// file an operator hand-edited) rather than returning a half-populated rule.
 func TestFirewalldReadServiceRule_MalformedSkipped(t *testing.T) {
 	swapFirewalldSeams(t)
 	readFile = func(string) ([]byte, error) {
@@ -62,8 +56,6 @@ func TestFirewalldReadServiceRule_MalformedSkipped(t *testing.T) {
 		t.Error("firewalldReadServiceRule accepted XML with no port/protocol")
 	}
 }
-
-// --- nftables helpers ---
 
 func TestNftDeleteManagedTable(t *testing.T) {
 	r := &recordingRunner{}
@@ -118,10 +110,8 @@ func TestNftFindRuleHandle_EdgeInputs(t *testing.T) {
 	}
 }
 
-// --- ufw helpers ---
-
 func TestUFWBuildAddArgs_ProtoOnly(t *testing.T) {
-	// No port, no scope, concrete protocol → long form `from any to any proto`.
+
 	args, err := ufwBuildAddArgs("app", Rule{ID: "x", Allow: true, Protocol: ProtocolTCP})
 	if err != nil {
 		t.Fatal(err)
@@ -131,8 +121,7 @@ func TestUFWBuildAddArgs_ProtoOnly(t *testing.T) {
 }
 
 func TestUFWFindRuleNumber_OverflowNumberSkipped(t *testing.T) {
-	// A rule index too large for int overflows strconv.Atoi → the line is skipped
-	// rather than crashing the lookup.
+
 	status := "[ 99999999999999999999999999999] 22/tcp                  ALLOW IN    Anywhere                   # app:ssh"
 	if _, ok := ufwFindRuleNumber(status, "app", "ssh"); ok {
 		t.Error("ufwFindRuleNumber returned a match for an unparseable index")

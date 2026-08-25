@@ -21,8 +21,6 @@ import (
 	sdkfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// genCert builds a self-signed cert PEM with the given CA flag and validity
-// window — the fixture for the validation matrix and the List parse.
 func genCert(t *testing.T, cn string, isCA bool, notBefore, notAfter time.Time) []byte {
 	t.Helper()
 	return genCertWithKeyUsage(t, cn, isCA, notBefore, notAfter, x509.KeyUsageCertSign|x509.KeyUsageDigitalSignature)
@@ -54,14 +52,12 @@ func validCAPEM(t *testing.T) []byte {
 	return genCert(t, "ACME Root", true, time.Now().Add(-time.Hour), time.Now().Add(24*time.Hour))
 }
 
-// fakeFS records WriteFile/Remove calls and replays scripted errors.
 type fakeFS struct {
 	writes    []fakeWrite
 	removed   []string
 	writeErr  error
 	removeErr error
-	// onWrite runs after a write is recorded, so a test can make the world change
-	// mid-Install (e.g. cancel the caller's context the way a deadline would).
+
 	onWrite func()
 }
 type fakeWrite struct {
@@ -78,10 +74,6 @@ func (f *fakeFS) WriteFile(_ context.Context, path string, data []byte, opts sdk
 	return f.writeErr
 }
 
-// Remove HONOURS the context, because the real fs.Manager does: it shells `rm`
-// through the Runner, which short-circuits a cancelled context without ever
-// executing. A fake that ignored ctx would report a removal that production
-// would never perform, hiding exactly the bug this models.
 func (f *fakeFS) Remove(ctx context.Context, path string) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -131,9 +123,6 @@ func TestNew_Backends(t *testing.T) {
 	}
 }
 
-// TestInstall_SuseWritesToTrustAnchors pins the SUSE backend's distinct anchors
-// dir + refresh command — SUSE's update-ca-certificates reads /etc/pki/trust/anchors,
-// NOT Debian's /usr/local/share/ca-certificates.
 func TestInstall_SuseWritesToTrustAnchors(t *testing.T) {
 	ff := &fakeFS{}
 	m, r := newMgr(t, SuseCaCertificates, ff)
@@ -152,8 +141,6 @@ func TestInstall_SuseWritesToTrustAnchors(t *testing.T) {
 	}
 }
 
-// TestNew_UsesRealFS exercises the production newFS closure (fs.New) — the other
-// tests stub it.
 func TestNew_UsesRealFS(t *testing.T) {
 	if _, err := New(CaCertificates, exectest.New(exec.Direct)); err != nil {
 		t.Errorf("New with the real fs.Manager: %v", err)
@@ -225,7 +212,7 @@ func TestValidateCACert(t *testing.T) {
 func TestInstall_CaCertificates(t *testing.T) {
 	ff := &fakeFS{}
 	m, r := newMgr(t, CaCertificates, ff)
-	r.Push(exec.Result{}, nil) // update-ca-certificates
+	r.Push(exec.Result{}, nil)
 	cert := validCAPEM(t)
 	if err := m.Install(context.Background(), "acme-root", cert); err != nil {
 		t.Fatal(err)
@@ -243,7 +230,7 @@ func TestInstall_CaCertificates(t *testing.T) {
 }
 
 func TestInstall_P11Kit(t *testing.T) {
-	withAnchorsDirs(t, nil) // no candidate dir present → P11Kit defaults to the Fedora/EL dir
+	withAnchorsDirs(t, nil)
 	ff := &fakeFS{}
 	m, r := newMgr(t, P11Kit, ff)
 	r.Push(exec.Result{}, nil)
@@ -259,8 +246,6 @@ func TestInstall_P11Kit(t *testing.T) {
 	}
 }
 
-// withAnchorsDirs fakes the dir-existence seam so anchors-dir resolution is
-// host-independent: only the listed dirs "exist".
 func withAnchorsDirs(t *testing.T, present []string) {
 	t.Helper()
 	prev := anchorsDirExists
@@ -272,9 +257,6 @@ func withAnchorsDirs(t *testing.T, present []string) {
 	anchorsDirExists = func(p string) bool { return set[p] }
 }
 
-// TestInstall_P11Kit_ResolvesArchAnchorsDir: Fedora/EL and Arch both use
-// update-ca-trust but read DIFFERENT anchors dirs. When only the Arch dir exists,
-// the P11Kit backend must write there (not the Fedora dir).
 func TestInstall_P11Kit_ResolvesArchAnchorsDir(t *testing.T) {
 	withAnchorsDirs(t, []string{"/etc/ca-certificates/trust-source/anchors"})
 	ff := &fakeFS{}
@@ -313,7 +295,7 @@ func TestInstall_WriteAndRefreshErrors(t *testing.T) {
 	if err := m2.Install(context.Background(), "x", validCAPEM(t)); err == nil {
 		t.Error("a refresh non-zero exit must propagate")
 	}
-	// refresh Runner error (e.g. update-ca-certificates not installed)
+
 	ff3 := &fakeFS{}
 	m3, r3 := newMgr(t, CaCertificates, ff3)
 	r3.Push(exec.Result{}, errors.New("update-ca-certificates not found"))
@@ -322,13 +304,6 @@ func TestInstall_WriteAndRefreshErrors(t *testing.T) {
 	}
 }
 
-// TestInstall_RemovesAnchorWhenRefreshFails pins the failure atomicity of
-// Install. The anchor file is written BEFORE the trust-store refresh, so a
-// refresh that fails used to return an error while leaving the .crt sitting in
-// the anchors dir — an anchor the operator was told was not installed, which
-// the very next successful refresh by anyone (a distro package hook, another
-// tool, the next boot) would silently activate. Install must undo its own write
-// before reporting failure.
 func TestInstall_RemovesAnchorWhenRefreshFails(t *testing.T) {
 	const wantPath = "/usr/local/share/ca-certificates/acme-root.crt"
 	t.Run("non-zero refresh exit", func(t *testing.T) {
@@ -355,9 +330,7 @@ func TestInstall_RemovesAnchorWhenRefreshFails(t *testing.T) {
 			t.Errorf("removed = %v, want the just-written anchor %q cleaned up", ff.removed, wantPath)
 		}
 	})
-	// Cleanup is best-effort: when the rollback ALSO fails the operator must
-	// still get the original refresh failure, plus the fact that a file was left
-	// behind — silently returning the refresh error alone would hide the anchor.
+
 	t.Run("cleanup failure is reported, refresh error still wrapped", func(t *testing.T) {
 		ff := &fakeFS{removeErr: errors.New("read-only fs")}
 		m, r := newMgr(t, CaCertificates, ff)
@@ -370,17 +343,11 @@ func TestInstall_RemovesAnchorWhenRefreshFails(t *testing.T) {
 			t.Errorf("err = %v, want it to name the anchor %q left behind", err, wantPath)
 		}
 	})
-	// The rollback must survive the caller's context dying, because a dead
-	// context is one of the main REASONS the refresh fails: a deadline expiring
-	// while update-ca-certificates runs fails the refresh and would then fail the
-	// cleanup on the very same context, leaving the anchor behind in exactly the
-	// case the cleanup exists for. The rollback therefore runs on a fresh,
-	// short-bounded context detached from the caller's cancellation.
+
 	t.Run("context cancelled during refresh still removes the anchor", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		// Cancel once the anchor is on disk: the write succeeded, the refresh is
-		// what dies.
+
 		ff := &fakeFS{onWrite: func() { cancel() }}
 		m, _ := newMgr(t, CaCertificates, ff)
 		err := m.Install(ctx, "acme-root", validCAPEM(t))
@@ -394,7 +361,7 @@ func TestInstall_RemovesAnchorWhenRefreshFails(t *testing.T) {
 			t.Errorf("err = %v, want the original context.Canceled refresh failure preserved", err)
 		}
 	})
-	// A refresh that SUCCEEDS must of course keep the anchor.
+
 	t.Run("successful refresh keeps the anchor", func(t *testing.T) {
 		ff := &fakeFS{}
 		m, _ := newMgr(t, CaCertificates, ff)
@@ -412,8 +379,8 @@ func TestRemove_Success(t *testing.T) {
 	m, r := newMgr(t, CaCertificates, ff)
 	prev := stat
 	t.Cleanup(func() { stat = prev })
-	stat = func(string) (os.FileInfo, error) { return nil, nil } // exists
-	r.Push(exec.Result{}, nil)                                   // update-ca-certificates --fresh
+	stat = func(string) (os.FileInfo, error) { return nil, nil }
+	r.Push(exec.Result{}, nil)
 	if err := m.Remove(context.Background(), "acme-root"); err != nil {
 		t.Fatal(err)
 	}
@@ -444,7 +411,6 @@ func TestRemove_Errors(t *testing.T) {
 	prev := stat
 	t.Cleanup(func() { stat = prev })
 
-	// stat error other than not-exist
 	ff := &fakeFS{}
 	m, _ := newMgr(t, CaCertificates, ff)
 	stat = func(string) (os.FileInfo, error) { return nil, errors.New("permission denied") }
@@ -452,15 +418,13 @@ func TestRemove_Errors(t *testing.T) {
 		t.Error("a non-notexist stat error must propagate")
 	}
 
-	// remove error
-	stat = func(string) (os.FileInfo, error) { return nil, nil } // exists
+	stat = func(string) (os.FileInfo, error) { return nil, nil }
 	ff2 := &fakeFS{removeErr: errors.New("rm failed")}
 	m2, _ := newMgr(t, CaCertificates, ff2)
 	if err := m2.Remove(context.Background(), "x"); err == nil {
 		t.Error("a remove error must propagate")
 	}
 
-	// refresh error
 	ff3 := &fakeFS{}
 	m3, r := newMgr(t, CaCertificates, ff3)
 	r.Push(exec.Result{ExitCode: 1, Stderr: "boom"}, nil)
@@ -468,14 +432,12 @@ func TestRemove_Errors(t *testing.T) {
 		t.Error("a refresh error must propagate")
 	}
 
-	// bad name
 	m4, _ := newMgr(t, CaCertificates, &fakeFS{})
 	if err := m4.Remove(context.Background(), "-bad"); !errors.Is(err, ErrInvalidName) {
 		t.Errorf("bad name err = %v", err)
 	}
 }
 
-// fakeDirEntry is a minimal os.DirEntry for List tests.
 type fakeDirEntry struct {
 	name string
 	dir  bool
@@ -496,9 +458,9 @@ func TestList(t *testing.T) {
 	readDir = func(string) ([]os.DirEntry, error) {
 		return []os.DirEntry{
 			fakeDirEntry{name: "acme-root.crt"},
-			fakeDirEntry{name: "subdir", dir: true}, // skipped
-			fakeDirEntry{name: "README.txt"},        // non-.crt, skipped
-			fakeDirEntry{name: "corrupt.crt"},       // unparseable, skipped
+			fakeDirEntry{name: "subdir", dir: true},
+			fakeDirEntry{name: "README.txt"},
+			fakeDirEntry{name: "corrupt.crt"},
 		}, nil
 	}
 	readFile = func(path string) ([]byte, error) {
@@ -540,8 +502,6 @@ func TestList_ReadDirError(t *testing.T) {
 	}
 }
 
-// readFile-error-while-listing skips that entry (covered: corrupt.crt path
-// returns ErrNotExist in TestList and is skipped).
 func TestList_ReadFileErrorSkipsEntry(t *testing.T) {
 	m, _ := newMgr(t, CaCertificates, &fakeFS{})
 	prevRD, prevRF := readDir, readFile
@@ -560,12 +520,11 @@ func TestDetect(t *testing.T) {
 	cases := []struct {
 		name    string
 		present map[string]bool
-		suseDir bool // /etc/pki/trust/anchors exists → SUSE, not Debian
+		suseDir bool
 		want    []Backend
 	}{
 		{"none", map[string]bool{}, false, nil},
-		// Debian and SUSE both ship `update-ca-certificates`; the anchors dir
-		// disambiguates them.
+
 		{"debian", map[string]bool{"update-ca-certificates": true}, false, []Backend{CaCertificates}},
 		{"suse", map[string]bool{"update-ca-certificates": true}, true, []Backend{SuseCaCertificates}},
 		{"fedora", map[string]bool{"update-ca-trust": true}, false, []Backend{P11Kit}},

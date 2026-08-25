@@ -41,7 +41,7 @@ func TestHashPassphrase(t *testing.T) {
 	if h1 == HashPassphrase("different") {
 		t.Error("distinct inputs hashed to the same value")
 	}
-	if len(h1) != 128 { // SHA-512 = 64 bytes = 128 hex chars
+	if len(h1) != 128 {
 		t.Errorf("hash length = %d, want 128 (SHA-512 hex)", len(h1))
 	}
 	if strings.ToLower(h1) != h1 {

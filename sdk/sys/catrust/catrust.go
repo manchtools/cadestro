@@ -88,18 +88,9 @@ type Manager interface {
 	List(ctx context.Context) ([]Anchor, error)
 }
 
-// backendConfig captures the per-backend file location + refresh commands. The
-// install and remove refreshes differ for ca-certificates (a plain run adds; a
-// --fresh run rebuilds without a removed file); p11-kit's extract is a full
-// idempotent rebuild for both.
 type backendConfig struct {
-	// anchorsDirs lists the candidate anchors directories in priority order. Some
-	// backends use a single dir, but a mechanism shared by distros that disagree on
-	// the path lists several — New resolves to the first that exists (else the
-	// first as the canonical default). p11-kit is the case: Fedora/EL and Arch both
-	// use update-ca-trust but read different dirs.
 	anchorsDirs    []string
-	installRefresh []string // [name, args...]
+	installRefresh []string
 	removeRefresh  []string
 }
 
@@ -110,16 +101,12 @@ var backends = map[Backend]backendConfig{
 		removeRefresh:  []string{"update-ca-certificates", "--fresh"},
 	},
 	P11Kit: {
-		// Fedora/EL: /etc/pki/ca-trust/source/anchors; Arch: /etc/ca-certificates/
-		// trust-source/anchors. Same update-ca-trust command, different dir.
+
 		anchorsDirs:    []string{"/etc/pki/ca-trust/source/anchors", "/etc/ca-certificates/trust-source/anchors"},
 		installRefresh: []string{"update-ca-trust", "extract"},
 		removeRefresh:  []string{"update-ca-trust", "extract"},
 	},
-	// SUSE's update-ca-certificates regenerates the consolidated bundle from the
-	// anchors dir on every run, so a plain run both adds (install) and drops a
-	// removed file (remove) — no Debian-style "--fresh" flag (which SUSE's tool
-	// does not accept).
+
 	SuseCaCertificates: {
 		anchorsDirs:    []string{"/etc/pki/trust/anchors"},
 		installRefresh: []string{"update-ca-certificates"},
@@ -127,9 +114,6 @@ var backends = map[Backend]backendConfig{
 	},
 }
 
-// resolveAnchorsDir picks the anchors dir to use from a backend's candidates: the
-// first that exists on this host, else the first (the canonical default — the
-// distro package creates it on install).
 func resolveAnchorsDir(candidates []string) string {
 	for _, d := range candidates {
 		if anchorsDirExists(d) {
@@ -139,17 +123,13 @@ func resolveAnchorsDir(candidates []string) string {
 	return candidates[0]
 }
 
-// fsManager is the narrow slice of fs.Manager catrust uses for the privileged
-// anchor writes/removes; a small interface so tests inject a fake via newFS.
 type fsManager interface {
 	WriteFile(ctx context.Context, path string, data []byte, opts fs.WriteOptions) error
 	Remove(ctx context.Context, path string) error
 }
 
-// newFS builds the fs.Manager over the same Runner. A package var for tests.
 var newFS = func(r exec.Runner) (fsManager, error) { return fs.New(r) }
 
-// Read seams (the anchors dirs are world-readable, so List needs no escalation).
 var (
 	readDir  = os.ReadDir
 	readFile = os.ReadFile
@@ -160,7 +140,7 @@ type manager struct {
 	r          exec.Runner
 	fsm        fsManager
 	cfg        backendConfig
-	anchorsDir string // resolved from cfg.anchorsDirs at construction
+	anchorsDir string
 }
 
 // New returns a Manager for the named backend. Pure: validates the backend; nil
@@ -180,17 +160,12 @@ func New(b Backend, runner exec.Runner) (Manager, error) {
 	return &manager{r: runner, fsm: fsm, cfg: cfg, anchorsDir: resolveAnchorsDir(cfg.anchorsDirs)}, nil
 }
 
-// anchorPath is the on-disk path for a named anchor.
 func (m *manager) anchorPath(name string) string {
 	return m.anchorsDir + "/" + name + anchorExt
 }
 
 const anchorExt = ".crt"
 
-// anchorRollbackTimeout bounds the detached anchor removal Install performs when
-// the trust-store refresh fails. It is deliberately short: the work is a single
-// unlink of a path we just wrote, and the caller is already on an error path, so
-// a wedged filesystem must not turn a failed Install into a hang.
 const anchorRollbackTimeout = 10 * time.Second
 
 // Install validates name + certPEM, writes the anchor, and refreshes the store.
@@ -214,13 +189,7 @@ func (m *manager) Install(ctx context.Context, name string, certPEM []byte) erro
 		return fmt.Errorf("catrust: write %s: %w", path, err)
 	}
 	if err := m.refresh(ctx, m.cfg.installRefresh); err != nil {
-		// The rollback runs on a context DETACHED from the caller's cancellation.
-		// A dead context is one of the main reasons the refresh fails — a deadline
-		// expiring while update-ca-certificates runs — and reusing it here would
-		// fail the removal too, leaving the anchor behind in precisely the case
-		// this cleanup exists for. WithoutCancel keeps the caller's values (so
-		// logging/tracing still correlate) while dropping the cancellation, and a
-		// short independent bound stops a wedged rm from hanging Install.
+
 		rollbackCtx, cancelRollback := context.WithTimeout(context.WithoutCancel(ctx), anchorRollbackTimeout)
 		defer cancelRollback()
 		if rmErr := m.fsm.Remove(rollbackCtx, path); rmErr != nil {
@@ -239,7 +208,7 @@ func (m *manager) Remove(ctx context.Context, name string) error {
 	path := m.anchorPath(name)
 	if _, err := stat(path); err != nil {
 		if os.IsNotExist(err) {
-			return nil // already absent — nothing to do
+			return nil
 		}
 		return fmt.Errorf("catrust: stat %s: %w", path, err)
 	}
@@ -284,7 +253,6 @@ func (m *manager) List(ctx context.Context) ([]Anchor, error) {
 	return out, nil
 }
 
-// refresh runs the backend's escalated trust-store rebuild command.
 func (m *manager) refresh(ctx context.Context, cmd []string) error {
 	res, err := m.r.Run(ctx, exec.Command{Name: cmd[0], Args: cmd[1:], Escalate: true})
 	if err != nil {

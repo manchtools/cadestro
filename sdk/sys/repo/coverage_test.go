@@ -11,7 +11,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// Apply runs Validate first: an invalid config is rejected before any side effect.
 func TestApply_ValidatesBeforeWork(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Dnf)
 	if _, err := m.Apply(context.Background(), Repository{Name: "-rf", Dnf: &DnfConfig{BaseURL: "https://h/r"}}); !errors.Is(err, ErrInvalidName) {
@@ -22,11 +21,9 @@ func TestApply_ValidatesBeforeWork(t *testing.T) {
 	}
 }
 
-// A runner-level error (escalation denied, not just a non-zero exit) on a
-// non-fatal step is surfaced as a warning.
 func TestRunPriv_RunnerErrorBranch(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Dnf)
-	fr.Push(sysexec.Result{}, sysexec.ErrEscalationDenied) // makecache (no key → first call)
+	fr.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r"}})
 	if err != nil {
 		t.Fatalf("a non-fatal step's runner error must not fail Apply, got %v", err)
@@ -36,7 +33,6 @@ func TestRunPriv_RunnerErrorBranch(t *testing.T) {
 	}
 }
 
-// A runner-level error during gpg --dearmor is fatal (the key path can't proceed).
 func TestRunStdin_RunnerErrorBranch(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Apt)
 	fr.Push(sysexec.Result{}, sysexec.ErrEscalationUnavailable)
@@ -46,12 +42,11 @@ func TestRunStdin_RunnerErrorBranch(t *testing.T) {
 	}
 }
 
-// Command stdout is appended to the Apply log across backends.
 func TestApply_StdoutIsLogged(t *testing.T) {
 	t.Run("dnf", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Dnf)
-		fr.Push(sysexec.Result{Stdout: "imported-key\n"}, nil)    // rpm --import
-		fr.Push(sysexec.Result{Stdout: "metadata cached\n"}, nil) // makecache
+		fr.Push(sysexec.Result{Stdout: "imported-key\n"}, nil)
+		fr.Push(sysexec.Result{Stdout: "metadata cached\n"}, nil)
 		out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r", GPGCheck: true, GPGKey: "https://h/K"}})
 		if err != nil {
 			t.Fatal(err)
@@ -71,7 +66,7 @@ func TestApply_StdoutIsLogged(t *testing.T) {
 	})
 	t.Run("apt update", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Apt)
-		fr.Push(sysexec.Result{Stdout: "Hit:1 https://h/a\n"}, nil) // apt-get update (no key → first call)
+		fr.Push(sysexec.Result{Stdout: "Hit:1 https://h/a\n"}, nil)
 		out, _ := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a"}})
 		if !strings.Contains(out.Result.Stdout, "Hit:1") {
 			t.Errorf("apt-get update stdout not logged: %q", out.Result.Stdout)
@@ -79,11 +74,11 @@ func TestApply_StdoutIsLogged(t *testing.T) {
 	})
 	t.Run("zypper", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(sysexec.Result{}, nil)                       // removerepo
-		fr.Push(sysexec.Result{Stdout: "added repo\n"}, nil) // addrepo
-		fr.Push(sysexec.Result{}, nil)                       // disable
-		fr.Push(sysexec.Result{Stdout: "imported\n"}, nil)   // rpm import
-		fr.Push(sysexec.Result{Stdout: "refreshed\n"}, nil)  // refresh
+		fr.Push(sysexec.Result{}, nil)
+		fr.Push(sysexec.Result{Stdout: "added repo\n"}, nil)
+		fr.Push(sysexec.Result{}, nil)
+		fr.Push(sysexec.Result{Stdout: "imported\n"}, nil)
+		fr.Push(sysexec.Result{Stdout: "refreshed\n"}, nil)
 		out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true, GPGKey: "https://h/K"}})
 		if err != nil {
 			t.Fatal(err)
@@ -95,8 +90,6 @@ func TestApply_StdoutIsLogged(t *testing.T) {
 		}
 	})
 }
-
-// --- apt legacy-cleanup error / warn branches ------------------------------
 
 func TestApt_Apply_LegacyExistsErrorsAreFatal(t *testing.T) {
 	t.Run("legacy .list probe error", func(t *testing.T) {
@@ -152,16 +145,14 @@ func TestApt_UpdateAptKey_ReadKeyErrorIsFatal(t *testing.T) {
 	}
 }
 
-// removeConflictKeys: the target's own key and non-absolute references are
-// skipped; an absolute key whose removal fails is warned (non-fatal).
 func TestApt_Cleanup_KeySkipsAndRemoveWarning(t *testing.T) {
 	m, ff, _ := newTestManager(t, pkg.Apt)
 	dir := "/etc/apt/sources.list.d"
 	ff.entries[dir] = []fs.DirEntry{{Name: "c.sources", IsDir: false}}
 	ff.read[dir+"/c.sources"] = []byte(strings.Join([]string{
 		"URIs: https://h/a",
-		"Signed-By: /etc/apt/keyrings/corp.gpg", // == target's key → skipped
-		"Signed-By: relative/key.gpg",           // non-absolute → skipped
+		"Signed-By: /etc/apt/keyrings/corp.gpg",
+		"Signed-By: relative/key.gpg",
 		"Signed-By: /etc/apt/keyrings/doomed.gpg",
 		"",
 	}, "\n"))
@@ -181,7 +172,6 @@ func TestApt_Cleanup_KeySkipsAndRemoveWarning(t *testing.T) {
 	}
 }
 
-// A conflicting repo FILE whose removal fails is warned (non-fatal).
 func TestApt_Cleanup_RepoFileRemoveWarning(t *testing.T) {
 	m, ff, _ := newTestManager(t, pkg.Apt)
 	dir := "/etc/apt/sources.list.d"
@@ -197,7 +187,6 @@ func TestApt_Cleanup_RepoFileRemoveWarning(t *testing.T) {
 	}
 }
 
-// removeApt: the secondary (legacy + key) removals are best-effort warnings.
 func TestApt_Remove_SecondaryWarnings(t *testing.T) {
 	m, ff, _ := newTestManager(t, pkg.Apt)
 	ff.present["/etc/apt/sources.list.d/corp.sources"] = true
@@ -213,15 +202,13 @@ func TestApt_Remove_SecondaryWarnings(t *testing.T) {
 	}
 }
 
-// cleanupConflictingApt skip branches: the target's own legacy .list, an
-// unreadable entry, and an entry that does not reference the URL are all skipped.
 func TestApt_Cleanup_SkipBranches(t *testing.T) {
 	m, ff, _ := newTestManager(t, pkg.Apt)
 	dir := "/etc/apt/sources.list.d"
 	ff.entries[dir] = []fs.DirEntry{
-		{Name: "corp.list", IsDir: false},     // legacy .list form of the target → skipped
-		{Name: "bad.sources", IsDir: false},   // unreadable → skipped
-		{Name: "other.sources", IsDir: false}, // readable but no URL match → skipped
+		{Name: "corp.list", IsDir: false},
+		{Name: "bad.sources", IsDir: false},
+		{Name: "other.sources", IsDir: false},
 	}
 	ff.errs["ReadFile:"+dir+"/bad.sources"] = errors.New("io")
 	ff.read[dir+"/other.sources"] = []byte("URIs: https://different/repo\n")
@@ -229,7 +216,7 @@ func TestApt_Cleanup_SkipBranches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Nothing matched → no conflict removals at all.
+
 	for _, p := range []string{dir + "/corp.list", dir + "/bad.sources", dir + "/other.sources"} {
 		if ff.didCall("Remove:" + p) {
 			t.Errorf("unexpected removal of skipped entry %s", p)
@@ -240,11 +227,10 @@ func TestApt_Cleanup_SkipBranches(t *testing.T) {
 	}
 }
 
-// The best-effort pre-add removerepo failure is a logged note, never fatal.
 func TestZypper_Apply_PreRemoveFailureIsNoted(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "not found"}, nil) // pre-removerepo fails
-	// addrepo + disable + refresh unscripted → clean.
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "not found"}, nil)
+
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true}})
 	if err != nil {
 		t.Fatalf("a failed pre-removerepo must not fail Apply, got %v", err)
@@ -256,21 +242,20 @@ func TestZypper_Apply_PreRemoveFailureIsNoted(t *testing.T) {
 
 func TestZypper_Apply_DisableFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(sysexec.Result{}, nil)                               // removerepo
-	fr.Push(sysexec.Result{}, nil)                               // addrepo
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "disable"}, nil) // modifyrepo --disable fails
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "disable"}, nil)
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true, Enabled: false}}); err == nil ||
 		!strings.Contains(err.Error(), "disable repo") {
 		t.Fatalf("err = %v, want a wrapped disable failure", err)
 	}
 }
 
-// zypper enable/autorefresh fatal-failure branches.
 func TestZypper_Apply_EnableAndAutorefreshFailures(t *testing.T) {
 	t.Run("enable fails", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(sysexec.Result{}, nil) // removerepo
-		fr.Push(sysexec.Result{}, nil) // addrepo
+		fr.Push(sysexec.Result{}, nil)
+		fr.Push(sysexec.Result{}, nil)
 		fr.Push(sysexec.Result{ExitCode: 1, Stderr: "enable"}, nil)
 		if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true, Enabled: true}}); err == nil ||
 			!strings.Contains(err.Error(), "enable repo") {
@@ -279,10 +264,10 @@ func TestZypper_Apply_EnableAndAutorefreshFailures(t *testing.T) {
 	})
 	t.Run("refresh failure non-fatal", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		fr.Push(sysexec.Result{}, nil)                                   // removerepo
-		fr.Push(sysexec.Result{}, nil)                                   // addrepo
-		fr.Push(sysexec.Result{}, nil)                                   // disable
-		fr.Push(sysexec.Result{ExitCode: 1, Stderr: "refresh net"}, nil) // refresh
+		fr.Push(sysexec.Result{}, nil)
+		fr.Push(sysexec.Result{}, nil)
+		fr.Push(sysexec.Result{}, nil)
+		fr.Push(sysexec.Result{ExitCode: 1, Stderr: "refresh net"}, nil)
 		out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true}})
 		if err != nil {
 			t.Fatalf("final refresh failure must be non-fatal, got %v", err)

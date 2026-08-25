@@ -25,10 +25,6 @@ type notificationStep struct {
 	wantReject bool
 }
 
-// TestNotificationSecurityMachine models notification dispatch as terminal and
-// desktop UI injection boundary. Clean messages may reach wall/notify-send;
-// control characters, unbounded payloads, and invalid user filters must fail
-// before any broadcast is attempted.
 func TestNotificationSecurityMachine(t *testing.T) {
 	steps := []notificationStep{
 		{name: "clean broadcast is accepted", action: notificationCleanBroadcast},

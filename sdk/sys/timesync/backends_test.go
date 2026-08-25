@@ -57,7 +57,6 @@ func TestParseKV_SkipsMalformed(t *testing.T) {
 	}
 }
 
-// A representative chronyc -c tracking line (14 CSV fields).
 const chronyTrackingCSV = `A0F03C2C,203.0.113.1,3,1718000000.0,0.000123456,0.000100,0.000200,1.5,0.1,0.05,0.001,0.002,64,Normal`
 
 func TestChrony_Status(t *testing.T) {
@@ -84,7 +83,7 @@ func TestChrony_Status(t *testing.T) {
 
 func TestChrony_StatusNotSynchronised(t *testing.T) {
 	r := exectest.New(exec.Direct)
-	// Leap status "Not synchronised" → Synchronized false.
+
 	csv := `00000000,,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,Not synchronised`
 	r.Push(exec.Result{Stdout: csv}, nil)
 	m, _ := New(Chrony, r)
@@ -98,13 +97,12 @@ func TestChrony_StatusNotSynchronised(t *testing.T) {
 }
 
 func TestChrony_UnknownLeapStatus(t *testing.T) {
-	// An unrecognised leap status means the CSV schema drifted → fail closed,
-	// don't silently report synchronized.
+
 	csv := `id,src,3,t,0.0,0,0,0,0,0,0,0,64,Bogus`
 	if _, err := parseChronyTracking(csv); err == nil {
 		t.Error("an unrecognised leap status must error (schema-drift guard)")
 	}
-	// A leap-second variant still counts as synchronized.
+
 	csv = `id,src,3,t,0.0,0,0,0,0,0,0,0,64,Insert second`
 	st, err := parseChronyTracking(csv)
 	if err != nil || !st.Synchronized {
@@ -128,7 +126,7 @@ func TestParseChronyTracking_Errors(t *testing.T) {
 	if _, err := parseChronyTracking("a,b,c"); err == nil {
 		t.Error("too-few fields must error")
 	}
-	// A non-numeric offset is tolerated (stays 0), not a hard error.
+
 	csv := `id,src,3,t,NOTANUMBER,0,0,0,0,0,0,0,64,Normal`
 	st, err := parseChronyTracking(csv)
 	if err != nil {

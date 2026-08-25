@@ -13,7 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// withKeyFileDir points the key-file staging root at dir for one test.
 func withKeyFileDir(t *testing.T, dir string) {
 	t.Helper()
 	orig := keyFileDir
@@ -21,16 +20,10 @@ func withKeyFileDir(t *testing.T, dir string) {
 	t.Cleanup(func() { keyFileDir = orig })
 }
 
-// assertNeverStagedIn asserts the intent behind the staging directory: whatever
-// the package does when a hostile directory is pre-created at the configured
-// path, the plaintext key file must never land in it. Two outcomes are
-// acceptable — fail closed, or write into a REAL directory this process owns at
-// mode exactly 0700, which is the only shape in which another local uid on a
-// world-writable tmpfs cannot rename or replace the entries inside it.
 func assertNeverStagedIn(t *testing.T, path string, err error, hostileDir string) {
 	t.Helper()
 	if err != nil {
-		return // fail-closed is the other acceptable outcome
+		return
 	}
 	t.Cleanup(func() { cleanupKeyFile(path) })
 
@@ -57,10 +50,6 @@ func assertNeverStagedIn(t *testing.T, path string, err error, hostileDir string
 	}
 }
 
-// TestWriteKeyFile_RefusesPreCreatedStagingDirectory is F1. os.MkdirAll returns
-// nil for a directory that already exists WITHOUT checking its owner or mode,
-// and /dev/shm is world-writable, so any local uid that wins the once-per-boot
-// race owns the directory the root agent then writes LUKS key files into.
 func TestWriteKeyFile_RefusesPreCreatedStagingDirectory(t *testing.T) {
 	t.Run("world-writable directory pre-created at the configured path", func(t *testing.T) {
 		root := t.TempDir()
@@ -68,7 +57,7 @@ func TestWriteKeyFile_RefusesPreCreatedStagingDirectory(t *testing.T) {
 		if err := os.Mkdir(hostile, 0o700); err != nil {
 			t.Fatal(err)
 		}
-		// Chmod separately: os.Mkdir's mode is masked by umask.
+
 		if err := os.Chmod(hostile, 0o777); err != nil {
 			t.Fatal(err)
 		}
@@ -114,14 +103,10 @@ func TestWriteKeyFile_RefusesPreCreatedStagingDirectory(t *testing.T) {
 	})
 }
 
-// TestVerifyStagingDir_RefusesForeignOwner covers the ownership half of the
-// staging check without root: the directory is real and 0700, but the process
-// euid it must match is redirected, which is what a directory pre-created by
-// another local uid looks like from the daemon's side.
 func TestVerifyStagingDir_RefusesForeignOwner(t *testing.T) {
 	defer swapKeyFileSeams(t)()
 	dir := t.TempDir()
-	// t.TempDir yields 0777&^umask; the real os.MkdirTemp yields 0700.
+
 	if err := os.Chmod(dir, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -156,8 +141,6 @@ type ownerOverride struct {
 
 func (i ownerOverride) Sys() any { return &syscall.Stat_t{Uid: i.uid} }
 
-// TestVerifyStagingDir_RefusesWidenedModeAndNonDirectories pins the rest of the
-// predicate: only a real directory at mode exactly 0700 may hold key material.
 func TestVerifyStagingDir_RefusesWidenedModeAndNonDirectories(t *testing.T) {
 	root := t.TempDir()
 
@@ -189,10 +172,6 @@ func TestVerifyStagingDir_RefusesWidenedModeAndNonDirectories(t *testing.T) {
 	}
 }
 
-// TestVerifyStagingParent_RequiresStickyWhenWorldWritable pins why /dev/shm is
-// usable at all: it is mode 1777, so another local uid cannot rename or delete
-// the private directory created inside it. A world-writable parent without the
-// sticky bit gives that power away and must be refused.
 func TestVerifyStagingParent_RequiresStickyWhenWorldWritable(t *testing.T) {
 	root := t.TempDir()
 
@@ -207,7 +186,6 @@ func TestVerifyStagingParent_RequiresStickyWhenWorldWritable(t *testing.T) {
 		t.Errorf("verifyStagingParent(0777, no sticky) = %v, want ErrKeyFileStaging", err)
 	}
 
-	// Group-writable is the same hazard for anyone in that group.
 	groupOpen := filepath.Join(root, "group-open")
 	if err := os.Mkdir(groupOpen, 0o700); err != nil {
 		t.Fatal(err)
@@ -231,11 +209,6 @@ func TestVerifyStagingParent_RequiresStickyWhenWorldWritable(t *testing.T) {
 	}
 }
 
-// TestAddKey_DetectsKeyFileSwapBeforeExec is the second half of F1: writeKeyFile
-// hands cryptsetup a PATH, not an open descriptor, so anyone able to replace
-// the entry between staging and exec chooses the passphrase that gets enrolled.
-// AddKey stages two key files, so the swap is planted while the second is being
-// created — after the first has already been handed back.
 func TestAddKey_DetectsKeyFileSwapBeforeExec(t *testing.T) {
 	defer swapKeyFileSeams(t)()
 
@@ -249,7 +222,7 @@ func TestAddKey_DetectsKeyFileSwapBeforeExec(t *testing.T) {
 			if err := os.WriteFile(swap, []byte(attackerKey), 0o600); err != nil {
 				t.Fatalf("plant swap file: %v", err)
 			}
-			// A rename over the path is exactly what owning the directory buys.
+
 			if err := os.Rename(swap, first); err != nil {
 				t.Fatalf("swap staged key file: %v", err)
 			}
@@ -282,11 +255,6 @@ func TestAddKey_DetectsKeyFileSwapBeforeExec(t *testing.T) {
 	}
 }
 
-// TestEverySecretMethodRefusesHostileStagingDir is the self-discovering guard:
-// for EVERY Manager method that takes an exec.Secret, a world-writable staging
-// directory pre-created at the configured path must stop cryptsetup running at
-// all. lsblk is read-only and unprivileged, so only cryptsetup invocations are
-// counted.
 func TestEverySecretMethodRefusesHostileStagingDir(t *testing.T) {
 	root := t.TempDir()
 	hostile := filepath.Join(root, "cadestro-luks")
@@ -316,7 +284,7 @@ func TestEverySecretMethodRefusesHostileStagingDir(t *testing.T) {
 			continue
 		}
 		r := &recordingRunner{}
-		// A single LUKS volume so DetectVolumeByKey reaches the key-file stage.
+
 		r.push(exec.Result{Stdout: `{"blockdevices":[{"name":"sda2","type":"part","fstype":"crypto_LUKS"}]}`}, nil)
 		fn := reflect.ValueOf(mgr(t, r)).MethodByName(name)
 		args := make([]reflect.Value, ft.NumIn())

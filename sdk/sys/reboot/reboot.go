@@ -30,7 +30,6 @@ import (
 
 const rebootRequiredPath = "/var/run/reboot-required"
 
-// statFunc seams the marker-file check for tests.
 var statFunc = os.Stat
 
 // Manager detects and schedules system reboots.
@@ -85,32 +84,24 @@ func (rb *rebooter) IsRequired(ctx context.Context) (bool, error) {
 	if _, err := statFunc(rebootRequiredPath); err == nil {
 		return true, nil
 	} else if !errors.Is(err, os.ErrNotExist) {
-		// A stat error other than "not found" (e.g. permission) is the one
-		// genuinely unexpected condition worth surfacing.
+
 		return false, fmt.Errorf("stat %s: %w", rebootRequiredPath, err)
 	}
 
 	res, err := rb.r.Run(ctx, exec.Command{Name: "needs-restarting", Args: []string{"-r"}})
 	if err != nil {
 		if errors.Is(err, exec.ErrBackendUnavailable) {
-			// needs-restarting isn't installed → no detection available on this
-			// host. That's expected on non-RHEL systems, not a failure.
+
 			slog.Debug("needs-restarting not available, skipping reboot probe", "error", err)
 			return false, nil
 		}
-		// Any other failure (e.g. context cancelled/timed out) is genuinely
-		// unexpected: we were asked and couldn't answer. Surface it rather than
-		// silently reporting "no reboot needed".
+
 		return false, fmt.Errorf("run needs-restarting: %w", err)
 	}
-	// Exit 1 = a reboot is needed; 0 = not; anything else = indeterminate.
+
 	return res.ExitCode == 1, nil
 }
 
-// minRebootGraceMinutes is the smallest accepted grace window. A reboot must
-// give logged-in users at least one minute of warning — "now"/"+0" would reboot
-// instantly, which is a denial-of-service against active sessions and exactly
-// what this Manager exists to schedule *around*, not trigger.
 const minRebootGraceMinutes = 1
 
 // Schedule schedules a system reboot via shutdown -r (escalated).
@@ -132,20 +123,12 @@ func (rb *rebooter) Schedule(ctx context.Context, opts ScheduleOptions) error {
 	return rb.shutdown(ctx, "schedule reboot", args...)
 }
 
-// validateDelay constrains the shutdown TIME spec to a positive relative
-// minute offset ("+N", N >= minRebootGraceMinutes). This is deliberately
-// narrower than shutdown(8)'s full grammar: "now", "+0", a negative offset, an
-// absolute clock time, or any control-character-bearing value is rejected
-// BEFORE the escalated shutdown runs. The reboot must always leave a grace
-// window for logged-in users, and a control character (e.g. "+5\nnow") must
-// never reach the privileged command line.
 func validateDelay(delay string) error {
 	digits, ok := strings.CutPrefix(delay, "+")
 	if !ok || digits == "" {
 		return fmt.Errorf("invalid reboot delay %q: must be a relative offset of the form \"+N\" minutes", delay)
 	}
-	// strconv.Atoi accepts a leading sign, so an all-digits check is required
-	// to reject smuggled forms like "++5" or "+-1" before parsing.
+
 	for _, r := range digits {
 		if r < '0' || r > '9' {
 			return fmt.Errorf("invalid reboot delay %q: must be a relative offset of the form \"+N\" minutes", delay)
@@ -161,11 +144,6 @@ func validateDelay(delay string) error {
 	return nil
 }
 
-// validateMessage rejects a wall message carrying a control character before it
-// reaches the escalated shutdown command. shutdown broadcasts the message
-// verbatim to every logged-in user's terminal, so a newline or ESC sequence
-// could inject terminal-control codes into other users' sessions. A space is
-// fine; only control characters and DEL are refused.
 func validateMessage(message string) error {
 	for _, r := range message {
 		if r < 0x20 || r == 0x7f {

@@ -14,9 +14,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// newManager builds a real-Runner user.Manager. The integration container runs
-// the suite as the non-root cadestro user with passwordless sudo, so the
-// escalation backend is Sudo.
 func newManager(t *testing.T) user.Manager {
 	t.Helper()
 	r, err := exec.NewRunner(exec.Sudo)
@@ -192,7 +189,7 @@ func TestDeleteNonexistent_Integration(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error deleting a non-existent user")
 	}
-	// The typed error must carry userdel's exit code and stderr.
+
 	var ce *exec.CommandError
 	if !errors.As(err, &ce) {
 		t.Fatalf("err = %v, want *exec.CommandError", err)
@@ -329,7 +326,6 @@ func TestEnsureHome_Integration(t *testing.T) {
 	name := testUsername("eh")
 	defer cleanupUser(t, m, name)
 
-	// Create the account with NO home (-M), simulating a home that is missing.
 	homeDir := "/home/" + name
 	if err := m.Create(ctx, name, user.CreateOptions{HomeDir: homeDir, CreateHome: false}); err != nil {
 		t.Fatalf("Create (-M, no home): %v", err)
@@ -338,7 +334,6 @@ func TestEnsureHome_Integration(t *testing.T) {
 		t.Fatalf("home %q must be absent after a -M create (stat err = %v)", homeDir, err)
 	}
 
-	// EnsureHome must create it, own it by the user, and set 0700.
 	if err := m.EnsureHome(ctx, name, user.EnsureHomeOptions{}); err != nil {
 		t.Fatalf("EnsureHome: %v", err)
 	}
@@ -364,7 +359,6 @@ func TestEnsureHome_Integration(t *testing.T) {
 		t.Skip("no syscall.Stat_t on this platform to verify ownership")
 	}
 
-	// Idempotent: a second EnsureHome over the now-existing home must not error.
 	if err := m.EnsureHome(ctx, name, user.EnsureHomeOptions{}); err != nil {
 		t.Fatalf("EnsureHome (idempotent re-run): %v", err)
 	}

@@ -34,21 +34,18 @@ func TestGeneratePassword_LengthCharsetAndSecret(t *testing.T) {
 			t.Errorf("alphanumeric password contains out-of-charset rune %q", c)
 		}
 	}
-	// It is a Secret: never reveals plaintext through formatting.
+
 	if got := s.String(); got != "[REDACTED]" || strings.Contains(got, pw) {
 		t.Errorf("generated password not redacted: %q", got)
 	}
-	// The generator never produces a newline/CR (would break chpasswd).
+
 	if strings.ContainsAny(pw, "\n\r") {
 		t.Error("generated password contains a newline/CR")
 	}
 }
 
 func TestGeneratePassword_ComplexUsesSpecialAndStaysInCharset(t *testing.T) {
-	// Every char stays within alphanumeric+special, AND across many draws at
-	// least one special char actually appears — so this fails if ComplexityComplex
-	// ever regresses to alphanumeric-only. With 50×32 chars drawn from an ~87-char
-	// set containing ~25 specials, P(never a special) is astronomically small.
+
 	sawSpecial := false
 	for i := 0; i < 50; i++ {
 		s, err := GeneratePassword(32, ComplexityComplex)
@@ -86,7 +83,7 @@ func TestSetPassword_ChpasswdStdinAndSecretNeverInArgv(t *testing.T) {
 	if c.Name != "chpasswd" || !c.Escalate {
 		t.Errorf("command = %q escalate=%v, want escalated chpasswd", c.Name, c.Escalate)
 	}
-	// The plaintext must go through STDIN, never argv.
+
 	for _, a := range c.Args {
 		if strings.Contains(a, "sup3r-s3cret-value") {
 			t.Errorf("secret leaked into argv: %q", a)

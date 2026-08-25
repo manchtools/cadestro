@@ -38,9 +38,7 @@ func (m *manager) WriteFile(ctx context.Context, path string, data []byte, opts 
 		if err := ValidatePath(opts.Backup); err != nil {
 			return err
 		}
-		// Backing a file up to itself is meaningless and behaves differently per
-		// backend (Direct silently no-ops; the escalated cp errors "same file"),
-		// so reject it up front for deterministic, intent-preserving behavior.
+
 		if filepath.Clean(opts.Backup) == filepath.Clean(path) {
 			return fmt.Errorf("%w: backup path must differ from the target path", ErrInvalidPath)
 		}
@@ -76,9 +74,6 @@ func (m *manager) WriteFileExclusive(ctx context.Context, path string, data []by
 	return m.writeExclusiveEscalated(ctx, path, data, opts)
 }
 
-// writeExclusiveDirect reuses the same temp-file + atomic-rename machinery as
-// writeDirect, with removeExisting=false so the rename is RENAME_NOREPLACE:
-// the kernel itself refuses to clobber, and reports EEXIST, in one syscall.
 func writeExclusiveDirect(path string, data []byte, opts WriteOptions) error {
 	perm := opts.Mode
 	if perm == 0 {
@@ -102,11 +97,6 @@ func writeExclusiveDirect(path string, data []byte, opts WriteOptions) error {
 	return nil
 }
 
-// writeExclusiveEscalated is the sudo/doas counterpart. The exclusivity comes
-// from ln(1): a hard link fails with EEXIST if the destination exists, and the
-// check and the create are the same syscall, so it is the shell's equivalent of
-// RENAME_NOREPLACE. Exit status 3 distinguishes "the destination already
-// existed" from a genuine failure.
 func (m *manager) writeExclusiveEscalated(ctx context.Context, path string, data []byte, opts WriteOptions) error {
 	perm := opts.Mode
 	if perm == 0 {
@@ -129,14 +119,8 @@ func (m *manager) writeExclusiveEscalated(ctx context.Context, path string, data
 	return nil
 }
 
-// exclusiveExistsExit is the status escalatedWriteExclusiveScript uses to report
-// "the destination already existed", keeping it distinct from a real failure.
 const exclusiveExistsExit = 3
 
-// escalatedWriteExclusiveScript builds the content in a same-directory temp file
-// and then hard-links it into place. ln(1) never clobbers: if the target exists
-// it fails, and the trap removes the temp. Positional args: $1=target,
-// $2=chmod mode, $3=chown owner (":group" form, "" to skip). Content is stdin.
 const escalatedWriteExclusiveScript = `set -eu
 target=$1; mode=$2; owner=$3
 dir=$(dirname -- "$target")
@@ -153,8 +137,6 @@ fi
 exit 3
 `
 
-// writeDirect is the fd-based, symlink-safe path (WS6 #2). It runs the syscalls
-// directly with the process's own (root) privilege — no Runner round trip.
 func writeDirect(path string, data []byte, opts WriteOptions) error {
 	perm := opts.Mode
 	if perm == 0 {
@@ -179,16 +161,6 @@ func writeDirect(path string, data []byte, opts WriteOptions) error {
 	return nil
 }
 
-// writeEscalated is the privilege-backend (sudo/doas) path for non-root callers.
-// It is symlink-safe. First it refuses, unprivileged, any target whose parent
-// directory a non-root user could write to (escalatedParentSafe) — the only
-// place an attacker could plant a symlink. Then it performs the entire write in
-// a SINGLE root shell: mktemp a random temp in the target's directory (O_EXCL,
-// nothing to follow), write it from stdin, set mode/owner, and atomically
-// `mv -T` it over the target (a rename REPLACES a symlinked target, it does not
-// follow it). The Direct/root path (writeDirect) is fd-anchored and is preferred
-// for security-sensitive writes; this shell path serves non-root callers that
-// cannot openat the target as root.
 func (m *manager) writeEscalated(ctx context.Context, path string, data []byte, opts WriteOptions) error {
 	perm := opts.Mode
 	if perm == 0 {
@@ -208,12 +180,6 @@ func (m *manager) writeEscalated(ctx context.Context, path string, data []byte, 
 	return nil
 }
 
-// escalatedWriteScript performs an atomic, symlink-safe write entirely as root in
-// one process, so there is no cross-process TOCTOU window. Positional args:
-// $1=target, $2=chmod mode, $3=chown owner (":group" form, "" to skip),
-// $4=backup path ("" to skip). The file content is read from stdin. The parent
-// directory's safety is vetted in Go (escalatedParentSafe) before this runs, so
-// only root can have influenced the directory this writes into.
 const escalatedWriteScript = `set -eu
 target=$1; mode=$2; owner=$3; backup=$4
 dir=$(dirname -- "$target")
@@ -231,8 +197,6 @@ mv -T -- "$tmp" "$target"
 trap - EXIT
 `
 
-// runChecked runs an escalated command and folds a runner error and a non-zero
-// exit into a single error (nil only on a clean exit).
 func (m *manager) runChecked(ctx context.Context, name string, args ...string) error {
 	res, err := m.runPriv(ctx, name, args...)
 	if err != nil {
@@ -347,11 +311,7 @@ func (m *manager) SetOwnershipRecursive(ctx context.Context, path, owner, group 
 	if err := ValidatePath(path); err != nil {
 		return err
 	}
-	// A recursive chown of a whole system tree (`/`, `/etc`, `/usr`, `/home`,
-	// `/root`, …) hands an attacker ownership of every file beneath it — a
-	// privilege-escalation and data-destruction vector. Refuse any top-level
-	// system directory (the same set RemoveDir protects) before chown. A managed
-	// subdirectory (e.g. /home/alice, /var/lib/app) remains re-ownable.
+
 	if IsProtectedPath(path) {
 		return fmt.Errorf("%w: %s", ErrProtectedTarget, filepath.Clean(path))
 	}

@@ -9,9 +9,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// ExampleNew updates signatures then scans a path, printing any detections.
 func ExampleNew() {
-	r, err := exec.NewRunner(exec.Direct) // a full scan / update needs root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,7 +19,7 @@ func ExampleNew() {
 		log.Fatal(err)
 	}
 	if err := m.UpdateSignatures(context.Background()); err != nil {
-		log.Print(err) // non-fatal: scan with current signatures anyway
+		log.Print(err)
 	}
 	res, err := m.Scan(context.Background(), "/home")
 	if err != nil {

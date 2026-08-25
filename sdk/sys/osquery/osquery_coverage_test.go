@@ -12,13 +12,7 @@ import (
 
 func TestListTables(t *testing.T) {
 	r := exectest.New(exec.Direct)
-	// REAL `osqueryi .tables` format: one table per line as "  => <name>"
-	// (leading whitespace + "=> " prefix). The "=> " lines ARE the data — they
-	// are the table names, not noise to skip. Blank lines are ignored. This
-	// mirrors the captured real output the sys/osquery container test asserts
-	// live; an earlier fake fed bare names + treated "=>" lines as skippable,
-	// which inverted the contract and hid that the parser dropped every real
-	// table.
+
 	r.Push(exec.Result{Stdout: "  => os_version\n  => uptime\n\n  => system_info\n"}, nil)
 	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
 	tables, err := c.ListTables(context.Background())
@@ -38,7 +32,7 @@ func TestListTables(t *testing.T) {
 	if len(want) != 0 {
 		t.Errorf("parser dropped tables: %v", want)
 	}
-	// `.tables` is a dot-command — passed bare, not via --json.
+
 	if argv := strings.Join(r.Calls()[0].Args, " "); argv != ".tables" {
 		t.Errorf("argv = %q, want bare `.tables`", argv)
 	}

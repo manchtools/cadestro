@@ -104,7 +104,7 @@ func TestRunEscalated(t *testing.T) {
 	})
 	t.Run("okExitCodes tolerated", func(t *testing.T) {
 		r := exectest.New(exec.Direct)
-		r.Push(exec.Result{ExitCode: 1, Stdout: ""}, nil) // grep "no match"
+		r.Push(exec.Result{ExitCode: 1, Stdout: ""}, nil)
 		if _, err := runEscalated(ctx, r, map[int]bool{1: true}, "grep", "x"); err != nil {
 			t.Errorf("exit 1 in okExitCodes must be tolerated, got %v", err)
 		}

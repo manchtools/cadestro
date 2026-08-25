@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// journaldSource reads the systemd journal via journalctl.
 type journaldSource struct {
 	r exec.Runner
 }
@@ -34,7 +33,7 @@ func (s *journaldSource) Query(ctx context.Context, q Query) ([]string, error) {
 		args = append(args, "-p", q.Priority)
 	}
 	if q.Kernel {
-		args = append(args, "-k") // kernel-ring only (journalctl --dmesg)
+		args = append(args, "-k")
 	}
 	if q.Grep != "" {
 		args = append(args, "--grep", q.Grep)
@@ -44,13 +43,7 @@ func (s *journaldSource) Query(ctx context.Context, q Query) ([]string, error) {
 		return nil, err
 	}
 	if res.ExitCode != 0 {
-		// journalctl --grep exits 1 (grep-like) when it matches NOTHING — an empty
-		// result, not a failure. A genuine fault writes a diagnostic to stderr,
-		// whereas a no-match leaves stderr empty (only "-- No entries --" on
-		// stdout). Treat that exact shape — a Grep query, exit 1, empty stderr — as
-		// the empty result so a caller can tell "no logs matched" from "journalctl
-		// broke"; anything else (other exit codes, any stderr, no Grep) stays an
-		// error, fail-closed.
+
 		if q.Grep != "" && res.ExitCode == 1 && strings.TrimSpace(res.Stderr) == "" {
 			return []string{}, nil
 		}
@@ -59,13 +52,6 @@ func (s *journaldSource) Query(ctx context.Context, q Query) ([]string, error) {
 	return dropStatusMarkers(splitLines(res.Stdout)), nil
 }
 
-// dropStatusMarkers removes journalctl's status MARKERS — the "-- ... --"
-// wrapped lines it prints on stdout that are NOT log entries: "-- No entries --"
-// (a non-matching query), "-- Boot <id> --" / "-- Reboot --" boot delimiters,
-// and "-- Logs begin at ..., end at ... --". In the default short output every
-// real entry begins with a timestamp, so a line wrapped in "-- ... --" is always
-// a marker. Returns a non-nil empty slice when every line was a marker, matching
-// splitLines' contract.
 func dropStatusMarkers(lines []string) []string {
 	kept := make([]string, 0, len(lines))
 	for _, ln := range lines {
@@ -78,8 +64,6 @@ func dropStatusMarkers(lines []string) []string {
 	return kept
 }
 
-// splitLines splits captured stdout into lines, dropping a single trailing
-// empty line (the final newline). Returns a non-nil empty slice for empty input.
 func splitLines(out string) []string {
 	out = strings.TrimSuffix(out, "\n")
 	if out == "" {

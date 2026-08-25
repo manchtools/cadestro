@@ -9,15 +9,10 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// TestFindOsqueryBinary_DiscoveryOrder pins the resolution order of
-// findOsqueryBinary: every entry in osqueryPaths is tried first (in
-// declaration order), then a bare "osqueryi" PATH lookup as fallback.
-// The fallback matters for Homebrew / Nix / manual installs that put
-// osqueryi outside the canonical /usr/{,local/}bin paths.
 func TestFindOsqueryBinary_DiscoveryOrder(t *testing.T) {
 	cases := []struct {
 		name      string
-		installed map[string]string // path → resolved path; missing = not installed
+		installed map[string]string
 		want      string
 	}{
 		{
@@ -49,13 +44,7 @@ func TestFindOsqueryBinary_DiscoveryOrder(t *testing.T) {
 			want: "/opt/osquery/bin/osqueryi",
 		},
 		{
-			// PATH fallback returns whatever LookPath resolved to,
-			// which is the absolute path on a real system. Canonical-
-			// path matches above return the canonical input verbatim
-			// (LookPath verified existence but findOsqueryBinary
-			// discards the resolved value); the asymmetry is
-			// intentional — operators expect the canonical paths in
-			// logs.
+
 			name: "PATH fallback when no canonical path matches",
 			installed: map[string]string{
 				"osqueryi": "/home/linuxbrew/.linuxbrew/bin/osqueryi",
@@ -84,10 +73,6 @@ func TestFindOsqueryBinary_DiscoveryOrder(t *testing.T) {
 	}
 }
 
-// TestNew_NotInstalled covers the eager fail-closed probe: when no
-// osqueryi binary is reachable, New must return ErrNotInstalled rather
-// than a half-constructed Querier, so a caller learns at construction
-// that osquery is unavailable.
 func TestNew_NotInstalled(t *testing.T) {
 	restore := lookPath
 	defer func() { lookPath = restore }()
@@ -132,15 +117,10 @@ func TestNew_Success(t *testing.T) {
 	}
 }
 
-// TestIsInstalled exercises the live re-probe contract: IsInstalled
-// re-resolves the binary on every call (it does NOT trust the path
-// captured at New), so a binary removed during the agent's lifetime is
-// reported as absent and a later re-install is picked up.
 func TestIsInstalled(t *testing.T) {
 	restore := lookPath
 	defer func() { lookPath = restore }()
-	// Construct directly so the test can drive IsInstalled across both
-	// states without New's eager probe gating construction.
+
 	c := &client{binaryPath: "/usr/bin/osqueryi", r: exectest.New(exec.Direct)}
 	ctx := context.Background()
 

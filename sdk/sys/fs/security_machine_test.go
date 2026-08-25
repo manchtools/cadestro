@@ -25,10 +25,6 @@ type fileMutationStep struct {
 	wantReject bool
 }
 
-// TestFileMutationSecurityMachine models privileged file operations as an
-// attacker-facing state machine. Ordinary managed-config writes may reach the
-// Runner; transitions that create privileged executable bits or recursively
-// change ownership of root/system trees must fail before any escalated command.
 func TestFileMutationSecurityMachine(t *testing.T) {
 	steps := []fileMutationStep{
 		{name: "managed config write is accepted", action: fileMutationWriteConfig},

@@ -11,11 +11,6 @@ import (
 	"testing"
 )
 
-// TestRemote_NormalizesPaddedURL (Gap 14): a whitespace-padded but otherwise
-// valid URL — which sdk.ValidateHTTPSURL accepts, since it trims before parsing
-// — must be accepted by NewHTTP/Fetch and FetchBytes too. Otherwise "validation
-// passed" does not imply "the fetch accepts it", and a caller that validated up
-// front fails mysteriously at fetch time.
 func TestRemote_NormalizesPaddedURL(t *testing.T) {
 	fix := newHTTPFixture(t, []byte("ok"), `"v1"`)
 	padded := "  " + fix.srv.URL + "/x\n"
@@ -39,8 +34,6 @@ func TestRemote_NormalizesPaddedURL(t *testing.T) {
 	}
 }
 
-// TestFetchBytes_ReturnsBody — the value case: a small payload (a GPG key, a
-// checksum manifest) is returned in memory.
 func TestFetchBytes_ReturnsBody(t *testing.T) {
 	payload := []byte("gpg-key-or-sha256sums-manifest")
 	fix := newHTTPFixture(t, payload, `"v1"`)
@@ -53,14 +46,11 @@ func TestFetchBytes_ReturnsBody(t *testing.T) {
 	}
 }
 
-// TestFetchBytes_EnforcesMaxBytes is the security test (Gap 12): a body that
-// exceeds the cap must fail closed with ErrIntegrity and return no data — this
-// is the bound the agent's uncapped bufio.Scanner manifest read lacked.
 func TestFetchBytes_EnforcesMaxBytes(t *testing.T) {
 	fix := newHTTPFixture(t, nil, `"v1"`)
 	fix.getDelay = func(w io.Writer) {
 		buf := make([]byte, 1024)
-		for i := 0; i < 10; i++ { // stream 10 KiB while the cap is 1 KiB
+		for i := 0; i < 10; i++ {
 			_, _ = w.Write(buf)
 		}
 	}
@@ -73,9 +63,6 @@ func TestFetchBytes_EnforcesMaxBytes(t *testing.T) {
 	}
 }
 
-// TestFetchBytes_InMemoryDefaultIsSmall guards the OOM property: when MaxBytes is
-// unset, FetchBytes must default to a SMALL in-memory cap, never the 2 GiB
-// file-fetch default (buffering 2 GiB in RAM is the DoS this primitive closes).
 func TestFetchBytes_InMemoryDefaultIsSmall(t *testing.T) {
 	if defaultBytesMaxBytes >= defaultHTTPMaxBytes {
 		t.Fatalf("in-memory default cap %d must be far below the file default %d", defaultBytesMaxBytes, defaultHTTPMaxBytes)
@@ -109,8 +96,6 @@ func TestFetchBytes_RejectsExtractAndBadScheme(t *testing.T) {
 	}
 }
 
-// TestFetchBytes_InjectedTLSClient: the same E1 transport seam works for the
-// in-memory path, so a consumer can test against an httptest TLS server.
 func TestFetchBytes_InjectedTLSClient(t *testing.T) {
 	payload := []byte("delivered-over-tls")
 	srv := newTLSFixture(t, payload)

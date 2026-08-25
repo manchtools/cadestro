@@ -1,13 +1,13 @@
-# Container-based real-execution test image for the SDK (Arch / pacman family).
-#
-# Rolling-release Arch catches the opposite drift from EL's stability: newest tool
-# versions. Go toolchain copied from the canonical golang image (not Arch's `go`)
-# for a consistent compiler across the matrix. Arch uses the p11-kit trust paths,
-# so sys/catrust runs the P11Kit backend.
-#
-# No with-osquery stage: osquery is only in the AUR (not the official repos), so
-# it cannot be installed reproducibly in CI — the osquery cell stays Debian+EL/
-# Fedora, documented in the test methodology.
+
+
+
+
+
+
+
+
+
+
 FROM golang:1.26-bookworm AS go
 
 FROM archlinux:latest AS base
@@ -15,8 +15,8 @@ COPY --from=go /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOTOOLCHAIN=local
 
-# See Dockerfile.fedora for the per-tool capability mapping. `shadow` provides
-# useradd; `ca-certificates-utils` provides update-ca-trust (P11Kit).
+
+
 RUN pacman -Sy --noconfirm \
     psmisc cryptsetup nftables iproute2 util-linux shadow \
     gnupg smartmontools openssl ca-certificates-utils p11-kit flatpak git \
@@ -26,8 +26,8 @@ WORKDIR /workspace
 COPY sdk/ ./sdk/
 RUN cd sdk && go mod download
 
-# with-clamav: clamav + the same static seed DB. Arch ships freshclam.conf at
-# /etc/clamav/freshclam.conf.
+
+
 FROM base AS with-clamav
 RUN pacman -Sy --noconfirm clamav \
     && pacman -Scc --noconfirm \

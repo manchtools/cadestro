@@ -9,15 +9,12 @@ import (
 	"sync"
 )
 
-// gitSource is the version-controlled Source. The struct is intentionally
-// thin — the heavy lifting lives in the registered VersionControlBackend
-// (vc_gogit.go for v1's go-git driver, others potentially follow).
 type gitSource struct {
 	cfg     GitConfig
 	backend VersionControlBackend
 
 	mu       sync.Mutex
-	revision string // last successful upstream SHA, for drift skip in Fetch
+	revision string
 }
 
 // NewGit validates cfg, resolves the version-control backend named by
@@ -85,11 +82,6 @@ func (g *gitSource) String() string {
 	return fmt.Sprintf("git %s @ %s [%s]", g.cfg.URL, g.cfg.Ref, g.cfg.Driver)
 }
 
-// gitRefAllowedRE constrains refs to a sane character set. The list is
-// the same one go-git's reference parser accepts plus a defense-in-
-// depth restriction against any shell metacharacter — refs flow into
-// args of "git ls-remote / git fetch" if a future shell-out driver
-// lands, and an injection there would be catastrophic.
 var gitRefAllowedRE = regexp.MustCompile(`^[A-Za-z0-9._/-]{1,250}$`)
 
 func validateGitConfig(cfg *GitConfig) error {

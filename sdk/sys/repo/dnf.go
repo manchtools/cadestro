@@ -9,13 +9,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// dnfRepoFile is the .repo path for a named DNF repository.
 func dnfRepoFile(name string) string { return "/etc/yum.repos.d/" + name + ".repo" }
 
-// applyDnf writes /etc/yum.repos.d/<name>.repo (idempotently), imports the GPG
-// key, and refreshes that repo's metadata. A key-import or refresh failure is
-// non-fatal — the repository file was written, so the failure is surfaced as a
-// warning in the output rather than discarding a configured repo.
 func (m *manager) applyDnf(ctx context.Context, name string, c *DnfConfig) (Outcome, error) {
 	repoFile := dnfRepoFile(name)
 	var log strings.Builder
@@ -46,7 +41,6 @@ func (m *manager) applyDnf(ctx context.Context, name string, c *DnfConfig) (Outc
 	}
 	desired := content.String()
 
-	// Idempotency: a byte-identical file means nothing to do.
 	existing, err := m.fsm.ReadFile(ctx, repoFile)
 	if err != nil && !isReadAbsent(err) {
 		return Outcome{}, fmt.Errorf("read existing repo file: %w", err)
@@ -61,11 +55,6 @@ func (m *manager) applyDnf(ctx context.Context, name string, c *DnfConfig) (Outc
 	}
 	fmt.Fprintf(&log, "configured repository: %s\n", name)
 
-	// rpm --import is idempotent (re-importing an existing key is a no-op). The
-	// key is imported ONLY when signature checking is on: with gpgcheck=0 the
-	// gpgkey= line is dropped from the .repo, so importing the key would silently
-	// trust it system-wide while the repository itself verifies nothing — a trust
-	// downgrade. Honor gpgcheck as the single switch and never import behind it.
 	if c.GPGCheck && c.GPGKey != "" {
 		m.runNonFatal(ctx, &log, "warning: failed to import GPG key", "rpm", sysexec.SeparatePositionals([]string{"--import"}, c.GPGKey)...)
 	}
@@ -75,8 +64,6 @@ func (m *manager) applyDnf(ctx context.Context, name string, c *DnfConfig) (Outc
 	return out(log.String(), true), nil
 }
 
-// removeDnf deletes /etc/yum.repos.d/<name>.repo. Removing an already-absent
-// repository is an idempotent no-op (Changed=false).
 func (m *manager) removeDnf(ctx context.Context, name string) (Outcome, error) {
 	repoFile := dnfRepoFile(name)
 	var log strings.Builder

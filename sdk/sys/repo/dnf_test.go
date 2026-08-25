@@ -36,8 +36,7 @@ func TestDnf_Apply_WritesRepoFileImportsKeyAndRefreshes(t *testing.T) {
 	if got := ff.wrote("/etc/yum.repos.d/corp.repo"); got != want {
 		t.Errorf("repo file =\n%q\nwant\n%q", got, want)
 	}
-	// rpm --import -- <ref> (the `--` blocks a flag-shaped ref), then a
-	// repo-scoped makecache.
+
 	wantCmds := []string{
 		"rpm --import -- https://packages.example.com/RPM-GPG-KEY",
 		"dnf -y makecache --repo corp",
@@ -81,7 +80,7 @@ func TestDnf_Apply_NoKeyDisabledNoGpgcheck(t *testing.T) {
 	if got := ff.wrote("/etc/yum.repos.d/r.repo"); got != want {
 		t.Errorf("repo file = %q, want %q", got, want)
 	}
-	// No gpgkey → no rpm --import; only the makecache runs.
+
 	if got := argvs(fr); len(got) != 1 || got[0] != "dnf -y makecache --repo r" {
 		t.Errorf("commands = %v, want just makecache (no rpm import)", got)
 	}
@@ -124,7 +123,7 @@ func TestDnf_Apply_Idempotent(t *testing.T) {
 
 func TestDnf_Apply_KeyImportFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Dnf)
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "rpm: import failed"}, nil) // rpm --import
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "rpm: import failed"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{
 		BaseURL: "https://h/r", GPGCheck: true, GPGKey: "https://h/KEY",
 	}})
@@ -141,7 +140,7 @@ func TestDnf_Apply_KeyImportFailureIsNonFatal(t *testing.T) {
 
 func TestDnf_Apply_RefreshFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Dnf)
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "makecache failed"}, nil) // makecache (no key → first cmd)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "makecache failed"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r"}})
 	if err != nil {
 		t.Fatalf("refresh failure must be non-fatal, got %v", err)

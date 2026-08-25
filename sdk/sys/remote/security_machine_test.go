@@ -32,11 +32,6 @@ type httpIngressStep struct {
 	wantNoDisk    bool
 }
 
-// TestHTTPIngressSecurityMachine models the remote-source trust boundary as a
-// small deterministic automaton: untrusted URL/config input may transition to a
-// local filesystem mutation only through the states that keep origin, integrity,
-// size, and mode constraints intact. Every reject transition must stop before
-// network IO or disk mutation.
 func TestHTTPIngressSecurityMachine(t *testing.T) {
 	payload := []byte("agent payload\n")
 	sum := sha256.Sum256(payload)
@@ -56,7 +51,7 @@ func TestHTTPIngressSecurityMachine(t *testing.T) {
 			cfg := HTTPConfig{URL: machine.origin.URL + "/payload", ChecksumSHA256: checksum}
 			switch step.action {
 			case httpIngressPinnedFile:
-				// Baseline accepted transition.
+
 			case httpIngressCrossHostRedirect:
 				cfg.URL = machine.redirector.URL + "/start"
 			case httpIngressNegativeSizeCap:

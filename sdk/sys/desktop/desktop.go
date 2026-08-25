@@ -39,32 +39,14 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// defaultHomeRoot is the directory HomeUsers enumerates unless overridden with
-// WithHomeRoot.
 const defaultHomeRoot = "/home"
 
-// loginctlPath is the absolute path to the loginctl binary. Pinned to
-// /usr/bin/loginctl because that's where systemd installs it on every supported
-// distro and absolute paths sidestep PATH-injection concerns when the agent
-// runs as root.
 const loginctlPath = "/usr/bin/loginctl"
 
-// runuserPath pins the absolute path to runuser. Like loginctlPath, pinning
-// sidesteps PATH-injection concerns when the agent runs as root and matches what
-// every supported distro ships.
 const runuserPath = "/usr/sbin/runuser"
 
-// envPath pins the absolute path to env. RunAsRunner wraps the user command in
-// `env PATH=<curated>` so the curated PATH is re-applied AFTER runuser's PAM
-// session — some distros (openSUSE: login.defs ALWAYS_SET_PATH) reset PATH during
-// the session setup, which would otherwise strip the curated value we set in the
-// child env. Pinned absolute for the same PATH-injection reason as runuserPath.
 const envPath = "/usr/bin/env"
 
-// Test seams. They default to the real lookups and are overridden only by tests
-// to exercise branches that are otherwise host-dependent (loginctl absent, a
-// passwd entry that does not resolve or carries a non-numeric uid/gid).
-// Production never reassigns them.
 var (
 	lookPath   = osexec.LookPath
 	lookupID   = user.LookupId
@@ -86,7 +68,6 @@ type Manager interface {
 	UsersWithFlatpakInstall(ctx context.Context, appID string) ([]Session, error)
 }
 
-// manager is the single Manager implementation.
 type manager struct {
 	r        sysexec.Runner
 	homeRoot string
@@ -109,12 +90,11 @@ func New(runner sysexec.Runner, opts ...Option) (Manager, error) {
 	}
 	m := &manager{r: runner, homeRoot: defaultHomeRoot}
 	for _, opt := range opts {
-		if opt != nil { // tolerate a nil option rather than panicking the agent
+		if opt != nil {
 			opt(m)
 		}
 	}
 	return m, nil
 }
 
-// ensure the single implementation satisfies the interface.
 var _ Manager = (*manager)(nil)

@@ -27,7 +27,7 @@ func TestPacman_Apply_AppendsSectionAndSyncs(t *testing.T) {
 	if !strings.HasSuffix(got, wantSection) {
 		t.Errorf("pacman.conf =\n%q\nwant it to end with\n%q", got, wantSection)
 	}
-	// The pre-existing content must be preserved (only appended to).
+
 	if !strings.Contains(got, "[options]") || !strings.Contains(got, "[core]") {
 		t.Errorf("pacman.conf lost pre-existing sections:\n%q", got)
 	}
@@ -49,7 +49,7 @@ func TestPacman_Apply_ReplacesExistingSection(t *testing.T) {
 	if !strings.Contains(got, "Server = https://new/") {
 		t.Errorf("new Server missing:\n%q", got)
 	}
-	// [extra] (a sibling that followed the replaced section) must survive.
+
 	if !strings.Contains(got, "[extra]") {
 		t.Errorf("replacing [corp] wrongly consumed the following [extra] section:\n%q", got)
 	}
@@ -57,7 +57,7 @@ func TestPacman_Apply_ReplacesExistingSection(t *testing.T) {
 
 func TestPacman_Apply_Idempotent(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Pacman)
-	// The conf already ends with exactly the section Apply would append.
+
 	existing := "[options]\nX = 1\n[corp]\nServer = https://h/\n"
 	ff.read["/etc/pacman.conf"] = []byte(existing)
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Pacman: &PacmanConfig{Server: "https://h/"}})
@@ -164,7 +164,7 @@ func TestPacman_Remove(t *testing.T) {
 }
 
 func TestRemovePacmanSection_EndOfFile(t *testing.T) {
-	// A section that runs to EOF (no following [section]) is fully removed.
+
 	in := "[options]\nX = 1\n[last]\nServer = https://h/\nKey = v\n"
 	got := removePacmanSection(in, "last")
 	if strings.Contains(got, "[last]") || strings.Contains(got, "Server = https://h/") {

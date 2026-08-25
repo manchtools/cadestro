@@ -8,10 +8,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// TestValidateProfile_RejectsControlChars: Name/SSID/PSK are rendered into the
-// .nmconnection keyfile (id=/ssid=/psk=); a control character (notably a
-// newline) would inject extra INI lines or sections. validateProfile must reject
-// them; legitimate values must pass.
 func TestValidateProfile_RejectsControlChars(t *testing.T) {
 	ok := mustSecret(t, "Hunter2-Corp-PSK-distinctive")
 	valid := Profile{Name: "cadestro-wifi-1", SSID: "CorpNet", AuthType: AuthPSK, PSK: ok}
@@ -25,9 +21,7 @@ func TestValidateProfile_RejectsControlChars(t *testing.T) {
 		"empty name":           {Name: "", SSID: "Corp", AuthType: AuthPSK, PSK: ok},
 		"newline in ssid":      {Name: "cadestro-wifi-1", SSID: "Corp\nhidden=true", AuthType: AuthPSK, PSK: ok},
 		"NUL in ssid":          {Name: "cadestro-wifi-1", SSID: "Corp\x00", AuthType: AuthPSK, PSK: ok},
-		// A normal NewSecret PSK can't hold a newline, but a NewMultilineSecret one
-		// can — and its own doc forbids using it for a keyfile psk= line. The
-		// profile validator is what enforces that, so test it via that constructor.
+
 		"newline in psk":      {Name: "cadestro-wifi-1", SSID: "Corp", AuthType: AuthPSK, PSK: exec.NewMultilineSecret("pass\n[wifi-security]\nkey-mgmt=none")},
 		"newline in identity": {Name: "cadestro-wifi-1", SSID: "Corp", AuthType: AuthEAPTLS, Identity: "user\nx"},
 	}
@@ -55,8 +49,6 @@ func TestValidateProfile_RejectsWeakOrMalformedPSK(t *testing.T) {
 	}
 }
 
-// TestApply_RejectsInjectionBeforeAnyCommand: Apply validates the profile first,
-// so an injectable field is refused before any nmcli runs or keyfile is written.
 func TestApply_RejectsInjectionBeforeAnyCommand(t *testing.T) {
 	r := &recordingRunner{}
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
@@ -91,8 +83,6 @@ func TestConnectionNameMethods_RejectInvalidName(t *testing.T) {
 	}
 }
 
-// A legitimate connection name (including one with embedded spaces, which nmcli
-// permits) must be accepted by the name validator.
 func TestValidateConnName_AllowsLegitNames(t *testing.T) {
 	for _, name := range []string{"cadestro-wifi-01", "Corp Net", "home_5GHz"} {
 		if err := validateConnName(name); err != nil {

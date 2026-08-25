@@ -6,7 +6,6 @@ import (
 	"fmt"
 )
 
-// ipLink is the subset of `ip -j addr show` JSON we consume.
 type ipLink struct {
 	Ifname   string   `json:"ifname"`
 	MTU      int      `json:"mtu"`
@@ -20,7 +19,6 @@ type ipAddr struct {
 	Scope     string `json:"scope"`
 }
 
-// ipRoute is the subset of `ip -j route show` JSON we consume.
 type ipRoute struct {
 	Dst     string `json:"dst"`
 	Gateway string `json:"gateway"`
@@ -46,11 +44,6 @@ func (b base) Get(ctx context.Context, name string) (InterfaceConfig, error) {
 	return parseIPState(name, addrOut, routeOut)
 }
 
-// parseIPState builds an InterfaceConfig from `ip -j addr` and `ip -j route`
-// output. Link-scoped addresses (fe80::, scope "link") and connected/link routes
-// (no gateway) are skipped — they are implied by the addresses, not desired
-// state a caller sets. The "default" route populates Gateway; other gatewayed
-// routes become Routes.
 func parseIPState(name, addrJSON, routeJSON string) (InterfaceConfig, error) {
 	cfg := InterfaceConfig{Name: name}
 
@@ -74,7 +67,7 @@ func parseIPState(name, addrJSON, routeJSON string) (InterfaceConfig, error) {
 	}
 	for _, rt := range routes {
 		if rt.Gateway == "" {
-			continue // connected/link route, implied by the address
+			continue
 		}
 		if rt.Dst == "default" {
 			cfg.Gateway = rt.Gateway

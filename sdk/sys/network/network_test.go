@@ -13,11 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// recordingRunner is an exec.Runner that records every Command (so a test can
-// assert the exact nmcli argv and prove no Secret ever reaches it) and scripts
-// the Run results FIFO. Network credentials never travel through the Runner at
-// all — the PSK lands in a keyfile and the EAP-TLS client key in a cert file —
-// so the proof here is "secret appears in NO recorded argv/stdin".
 type recordingRunner struct {
 	mu      sync.Mutex
 	calls   []capturedCall
@@ -83,9 +78,6 @@ func mustSecret(t *testing.T, s string) exec.Secret {
 	return sec
 }
 
-// realPEMKey is a realistic multi-line PEM private key body. The newlines are the
-// whole point: it can only be a Secret via NewMultilineSecret, and it must reach
-// disk (the 0600 cert file) but never argv.
 const realPEMKey = "-----BEGIN PRIVATE KEY-----\n" +
 	"MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEA1example\n" +
 	"key-material-line-two-distinctive-marker\n" +
@@ -96,8 +88,6 @@ const (
 	realClientCert = "-----BEGIN CERTIFICATE-----\nCLIENT-distinctive\n-----END CERTIFICATE-----\n"
 )
 
-// redirectDirs points the keyfile + cert-base seams at writable temp dirs and
-// returns them. Restores on cleanup.
 func redirectDirs(t *testing.T) (keyDir, certBase string) {
 	t.Helper()
 	keyDir = t.TempDir()
@@ -109,8 +99,6 @@ func redirectDirs(t *testing.T) (keyDir, certBase string) {
 	return keyDir, certBase
 }
 
-// assertNoSecretInCalls fails if any secret plaintext appears in any recorded
-// nmcli argv or stdin.
 func assertNoSecretInCalls(t *testing.T, calls []capturedCall, secrets ...string) {
 	t.Helper()
 	for _, cc := range calls {
@@ -169,7 +157,7 @@ func TestConnectionExists(t *testing.T) {
 	})
 	t.Run("terse-escaped name match", func(t *testing.T) {
 		r := &recordingRunner{}
-		// nmcli emits a literal colon in a name as \:
+
 		r.push(exec.Result{Stdout: `Cafe\: Wifi` + "\n"}, nil)
 		if ok, err := mgr(t, r).ConnectionExists(context.Background(), "Cafe: Wifi"); err != nil || !ok {
 			t.Errorf("ConnectionExists(escaped) = (%v,%v), want (true,nil)", ok, err)
@@ -229,7 +217,7 @@ func TestApply_PSK_Create(t *testing.T) {
 	keyDir, _ := redirectDirs(t)
 	const psk = "Hunter2-Corp-PSK-distinctive"
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // ConnectionExists → not found
+	r.push(exec.Result{Stdout: "OtherNet\n"}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name:        "cadestro-wifi-01",
@@ -243,7 +231,6 @@ func TestApply_PSK_Create(t *testing.T) {
 		t.Fatalf("Apply = (%v,%v), want (true,nil)", changed, err)
 	}
 
-	// Keyfile written, 0600, carries the PSK.
 	body, err := os.ReadFile(filepath.Join(keyDir, "cadestro-wifi-01.nmconnection"))
 	if err != nil {
 		t.Fatalf("keyfile not written: %v", err)
@@ -256,8 +243,6 @@ func TestApply_PSK_Create(t *testing.T) {
 		t.Errorf("keyfile mode = %o, want 0600", info.Mode().Perm())
 	}
 
-	// Commands: [0] con show (read), [1] connection reload (escalated). The PSK
-	// is in NEITHER.
 	if len(r.calls) != 2 {
 		t.Fatalf("ran %d commands, want 2 (con show, connection reload)", len(r.calls))
 	}
@@ -272,7 +257,7 @@ func TestApply_PSK_Update(t *testing.T) {
 	keyDir, _ := redirectDirs(t)
 	const psk = "Rotated-PSK-distinctive"
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "cadestro-wifi-01\n"}, nil) // exists
+	r.push(exec.Result{Stdout: "cadestro-wifi-01\n"}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name: "cadestro-wifi-01", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, psk),
@@ -290,8 +275,8 @@ func TestApply_PSK_Update(t *testing.T) {
 func TestApply_PSK_ReloadFailure(t *testing.T) {
 	redirectDirs(t)
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: ""}, nil)                                  // not found
-	r.push(exec.Result{ExitCode: 2, Stderr: "Error: reload failed"}, nil) // reload fails
+	r.push(exec.Result{Stdout: ""}, nil)
+	r.push(exec.Result{ExitCode: 2, Stderr: "Error: reload failed"}, nil)
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name: "cadestro-wifi-01", SSID: "CorpNet", AuthType: AuthPSK, PSK: mustSecret(t, "valid-wpa2-psk"),
 	})
@@ -304,7 +289,7 @@ func TestApply_EAPTLS_Create(t *testing.T) {
 	_, certBase := redirectDirs(t)
 	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // not found
+	r.push(exec.Result{Stdout: "OtherNet\n"}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name:       "cadestro-wifi-eap",
@@ -320,7 +305,6 @@ func TestApply_EAPTLS_Create(t *testing.T) {
 		t.Fatalf("Apply = (%v,%v), want (true,nil)", changed, err)
 	}
 
-	// Client key on disk, 0600; cert paths (not contents) in argv.
 	key, err := os.ReadFile(filepath.Join(certDir, "client-key.pem"))
 	if err != nil || string(key) != realPEMKey {
 		t.Fatalf("client-key.pem = %q (err %v), want the verbatim PEM", key, err)
@@ -342,8 +326,8 @@ func TestApply_EAPTLS_CreateFailureCleansCerts(t *testing.T) {
 	_, certBase := redirectDirs(t)
 	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: ""}, nil)                               // not found
-	r.push(exec.Result{ExitCode: 1, Stderr: "Error: add failed"}, nil) // con add fails
+	r.push(exec.Result{Stdout: ""}, nil)
+	r.push(exec.Result{ExitCode: 1, Stderr: "Error: add failed"}, nil)
 
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
@@ -353,7 +337,7 @@ func TestApply_EAPTLS_CreateFailureCleansCerts(t *testing.T) {
 	if err == nil {
 		t.Fatal("Apply returned nil on con-add failure")
 	}
-	// Certs cleaned up since the connection never came into being.
+
 	if _, err := os.Stat(filepath.Join(certDir, "client-key.pem")); !os.IsNotExist(err) {
 		t.Error("client-key.pem should have been removed after add failure")
 	}
@@ -362,7 +346,7 @@ func TestApply_EAPTLS_CreateFailureCleansCerts(t *testing.T) {
 func TestApply_EAPTLS_UpdateWithDrift(t *testing.T) {
 	_, certBase := redirectDirs(t)
 	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
-	// Pre-existing live certs (old content).
+
 	if err := os.MkdirAll(certDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -370,8 +354,8 @@ func TestApply_EAPTLS_UpdateWithDrift(t *testing.T) {
 		os.WriteFile(filepath.Join(certDir, n), []byte("OLD"), 0o600)
 	}
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil) // exists
-	// current settings differ (old ssid) → needsModify.
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)
+
 	r.push(exec.Result{Stdout: "wifi.ssid:OldName\nwifi-sec.key-mgmt:wpa-eap\n"}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
@@ -382,7 +366,7 @@ func TestApply_EAPTLS_UpdateWithDrift(t *testing.T) {
 	if err != nil || !changed {
 		t.Fatalf("Apply(update drift) = (%v,%v), want (true,nil)", changed, err)
 	}
-	// New certs swapped into the live dir; the staging dir is gone.
+
 	key, _ := os.ReadFile(filepath.Join(certDir, "client-key.pem"))
 	if string(key) != realPEMKey {
 		t.Errorf("client-key not rotated: %q", key)
@@ -406,14 +390,14 @@ func TestApply_EAPTLS_UpdateNoChange(t *testing.T) {
 	if err := os.MkdirAll(certDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	// On-disk certs already match the desired content (certsChanged=false).
+
 	os.WriteFile(filepath.Join(certDir, "ca.pem"), []byte(realCACert), 0o640)
 	os.WriteFile(filepath.Join(certDir, "client.pem"), []byte(realClientCert), 0o640)
 	os.WriteFile(filepath.Join(certDir, "client-key.pem"), []byte(realPEMKey), 0o600)
 
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil) // exists
-	// current settings already match desired exactly.
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)
+
 	current := "wifi.ssid:SecureNet\n" +
 		"wifi-sec.key-mgmt:wpa-eap\n" +
 		"802-1x.eap:tls\n" +
@@ -446,8 +430,8 @@ func TestApply_EAPTLS_UpdateSettingsErrorStillStages(t *testing.T) {
 	_, certBase := redirectDirs(t)
 	certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 	r := &recordingRunner{}
-	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)                // exists
-	r.push(exec.Result{ExitCode: 10, Stderr: "settings read failed"}, nil) // Settings fails
+	r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)
+	r.push(exec.Result{ExitCode: 10, Stderr: "settings read failed"}, nil)
 
 	changed, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name: "cadestro-wifi-eap", SSID: "SecureNet", AuthType: AuthEAPTLS,
@@ -465,7 +449,7 @@ func TestApply_EAPTLS_UpdateSettingsErrorStillStages(t *testing.T) {
 func TestApply_RejectsInvalidProfileBeforeAnyCommand(t *testing.T) {
 	redirectDirs(t)
 	r := &recordingRunner{}
-	// EAP-TLS with a CertDir OUTSIDE the base must be rejected before nmcli runs.
+
 	_, err := mgr(t, r).Apply(context.Background(), Profile{
 		Name: "cadestro-wifi", SSID: "x", AuthType: AuthEAPTLS, Identity: "u",
 		CACert: realCACert, ClientCert: realClientCert,
@@ -496,7 +480,7 @@ func TestDelete(t *testing.T) {
 		certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 		os.MkdirAll(certDir, 0o750)
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil) // exists
+		r.push(exec.Result{Stdout: "cadestro-wifi-eap\n"}, nil)
 		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi-eap", DeleteOptions{CertDir: certDir}); err != nil {
 			t.Fatal(err)
 		}
@@ -513,7 +497,7 @@ func TestDelete(t *testing.T) {
 		certDir := filepath.Join(certBase, "cadestro-wifi-eap")
 		os.MkdirAll(certDir, 0o750)
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // not found
+		r.push(exec.Result{Stdout: "OtherNet\n"}, nil)
 		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi-eap", DeleteOptions{CertDir: certDir}); err != nil {
 			t.Fatal(err)
 		}
@@ -550,7 +534,7 @@ func TestDelete(t *testing.T) {
 	t.Run("cert cleanup rejects an out-of-base dir", func(t *testing.T) {
 		redirectDirs(t)
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: "OtherNet\n"}, nil) // not found → straight to cert cleanup
+		r.push(exec.Result{Stdout: "OtherNet\n"}, nil)
 		if err := mgr(t, r).Delete(context.Background(), "cadestro-wifi", DeleteOptions{CertDir: "/tmp/evil"}); err == nil {
 			t.Error("Delete accepted a cert dir outside CertBaseDir")
 		}
@@ -651,7 +635,7 @@ func TestSafeRemoveCertDir(t *testing.T) {
 	if err := safeRemoveCertDir(filepath.Join(certBase, "nonexistent")); err != nil {
 		t.Errorf("non-existent path under base should be a no-op, got %v", err)
 	}
-	// A file (not a directory) under the base is rejected.
+
 	f := filepath.Join(certBase, "afile")
 	os.WriteFile(f, []byte("x"), 0o600)
 	if err := safeRemoveCertDir(f); err == nil {

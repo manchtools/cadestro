@@ -41,7 +41,6 @@ func VerifyCAContinuity(oldCAPEM, newCAPEM []byte) error {
 		return fmt.Errorf("new CA: failed to decode PEM")
 	}
 
-	// The overwhelmingly common case — renewal returns the same CA.
 	if bytes.Equal(oldBlock.Bytes, newBlock.Bytes) {
 		return nil
 	}
@@ -55,10 +54,6 @@ func VerifyCAContinuity(oldCAPEM, newCAPEM []byte) error {
 		return fmt.Errorf("new CA: %w", err)
 	}
 
-	// Continuity: the new CA must be signed by the enrolled CA.
-	// CheckSignatureFrom verifies the signature AND that oldCert is a CA
-	// permitted to sign certificates (IsCA + BasicConstraints + CertSign
-	// key usage), so an unrelated self-signed CA fails here.
 	if err := newCert.CheckSignatureFrom(oldCert); err != nil {
 		return fmt.Errorf("new CA does not chain to the enrolled CA: %w", err)
 	}

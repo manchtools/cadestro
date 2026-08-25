@@ -71,8 +71,7 @@ func (l *luks) DetectVolumeByKey(ctx context.Context, p exec.Secret) (Volume, er
 	for i := range volumes {
 		ok, err := l.VerifyPassphrase(ctx, volumes[i].DevicePath, p)
 		if err != nil {
-			// A single untestable volume (permissions, transient error) must
-			// not hide a match elsewhere — log and continue.
+
 			slog.Warn("failed to test passphrase on LUKS volume; skipping", "device", volumes[i].DevicePath, "error", err)
 			continue
 		}
@@ -97,7 +96,7 @@ func findLuksVolumes(devices []lsblkDevice, volumes *[]Volume) {
 					if child.MountPoint != nil && *child.MountPoint != "" {
 						vol.MountPoint = *child.MountPoint
 					}
-					// LVM-on-LUKS: a grandchild holds the mount.
+
 					for _, gc := range child.Children {
 						if gc.MountPoint != nil && *gc.MountPoint != "" {
 							vol.MountPoint = *gc.MountPoint

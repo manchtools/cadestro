@@ -1,7 +1,5 @@
 package firewall
 
-// Package-level documentation lives in doc.go.
-
 import (
 	"context"
 	"errors"
@@ -58,15 +56,8 @@ var ErrInvalidRule = errors.New("invalid firewall rule")
 // ErrInvalidNamespace is returned by New when the namespace fails validation.
 var ErrInvalidNamespace = errors.New("invalid firewall namespace")
 
-// namespaceRE constrains the per-Manager namespace to a backend-safe subset:
-// lowercase letter start, then lowercase/digit/underscore. No hyphens or colons
-// — those are reserved as separators when the namespace is composed with a
-// Rule.ID into a backend identity string.
 var namespaceRE = regexp.MustCompile(`^[a-z][a-z0-9_]{0,30}$`)
 
-// ruleIDRE constrains Rule.ID to a backend-safe subset. Hyphens are allowed
-// inside an ID (callers compose IDs from a ULID plus a suffix like "-allow-22"),
-// but the leading char excludes hyphen so a stray ID can't look like a CLI flag.
 var ruleIDRE = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,62}$`)
 
 func validateNamespace(ns string) error {
@@ -89,9 +80,6 @@ func validateRuleID(id string) error {
 	return nil
 }
 
-// validatePort enforces 0 ≤ port ≤ 65535. Port 0 is the "any port" sentinel; any
-// negative or out-of-range value is rejected here so every backend gets the same
-// reply.
 func validatePort(port int) error {
 	if port < 0 || port > 65535 {
 		return fmt.Errorf("%w: port %d outside valid TCP/UDP range 0..65535", ErrInvalidRule, port)
@@ -99,8 +87,6 @@ func validatePort(port int) error {
 	return nil
 }
 
-// validateProtocol restricts Protocol to the SDK's three canonical values so the
-// backend dispatch only ever sees one of the expected three.
 func validateProtocol(p Protocol) error {
 	switch p {
 	case ProtocolTCP, ProtocolUDP, ProtocolAny:
@@ -111,9 +97,6 @@ func validateProtocol(p Protocol) error {
 	}
 }
 
-// validateAddr accepts an empty string (the "any address" sentinel), a bare IP
-// literal (v4 or v6), or a CIDR. Anything else — hostnames, garbage,
-// shell-shape strings — is refused.
 func validateAddr(field, addr string) error {
 	if addr == "" {
 		return nil
@@ -127,16 +110,6 @@ func validateAddr(field, addr string) error {
 	return fmt.Errorf("%w: %s %q is not a valid IP address or CIDR", ErrInvalidRule, field, addr)
 }
 
-// validateAllowScope refuses an "allow everything" rule — an allow rule that
-// constrains nothing: no protocol, no port, no source, and no dest. Such a rule
-// opens the host's ingress to every protocol/port from every address, which is
-// never a legitimate per-rule intent (it is a firewall-disable disguised as a
-// rule) and is a classic takeover primitive for an attacker who can drive
-// ApplyRule with remote-influenced input. An allow rule that constrains at least
-// one dimension (e.g. "allow this network full access" — Source set, the rest
-// open) stays accepted; only the fully-unconstrained allow is refused. Deny
-// rules are unaffected: an unconstrained deny ("drop everything") fails closed
-// and is a legitimate default-deny posture.
 func validateAllowScope(rule Rule) error {
 	if rule.Allow &&
 		rule.Protocol == ProtocolAny &&
@@ -148,11 +121,6 @@ func validateAllowScope(rule Rule) error {
 	return nil
 }
 
-// validateRule runs every backend-independent invariant a Rule must satisfy
-// before dispatch. Called at the top of every backend's ApplyRule so all three
-// inherit the same rejection contract. Backend-specific rejections (firewalld's
-// allow-only scope, nft's "port without protocol") layer on top in the backend's
-// own validator.
 func validateRule(rule Rule) error {
 	if err := validateRuleID(rule.ID); err != nil {
 		return err
@@ -258,7 +226,6 @@ func New(b Backend, namespace string, runner exec.Runner, _ ...Option) (Manager,
 	}
 }
 
-// lookPath is a package-var seam so Detect is deterministically testable.
 var lookPath = osexec.LookPath
 
 // Detect reports the firewall backends usable on THIS host: Nftables when nft is
@@ -282,10 +249,6 @@ func Detect(ctx context.Context) []Backend {
 	return out
 }
 
-// cmd carries the injected Runner and maps a non-zero exit (or a failure to
-// execute) into an error — the backends rely on "err != nil ⇒ the tool failed",
-// which the old exec.Privileged provided and the new Runner (exit in Result)
-// does not.
 type cmd struct {
 	r exec.Runner
 }
@@ -309,19 +272,11 @@ func (c cmd) exec(ctx context.Context, spec exec.Command) (exec.Result, error) {
 	return res, nil
 }
 
-// isNoTable reports nft's "table does not exist" failure — the namespace's table
-// hasn't been created yet, so there are genuinely no managed rules. nft prints
-// "No such file or directory"; the Runner forces LC_ALL=C so the match is
-// locale-stable. Distinct from a REAL failure (escalation denied, nft crash),
-// which List must propagate rather than read as "zero rules".
 func isNoTable(err error) bool {
 	var ce *exec.CommandError
 	return errors.As(err, &ce) && strings.Contains(ce.Stderr, "No such file or directory")
 }
 
-// base is embedded by each backend: the namespace, the command runner, and the
-// fs.Manager (over the same Runner) the firewalld backend writes service XML
-// through.
 type base struct {
 	ns string
 	cmd

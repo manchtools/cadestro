@@ -12,24 +12,10 @@ import (
 	"github.com/go-cmd/cmd"
 )
 
-// This file holds the shared low-level execution core used by the injected
-// Runner (runner.go). The legacy process-global entry points (Run/RunStreaming/
-// Privileged/Query/SetPrivilegeBackend, …) were removed once every capability
-// migrated onto the Runner; only the internals the Runner builds on remain here.
-
-// killGrace bounds how long a cancelled child has to exit on SIGTERM before
-// its process group is escalated to SIGKILL. A package var (not const) so
-// tests can shorten it. WS16 #6: without escalation a SIGTERM-ignoring child
-// pins the reaping goroutine until the child exits on its own — or forever.
 var killGrace = 5 * time.Second
 
-// awaitStatusOrKill waits for a cancelled command's final status. It SIGTERMs
-// the process group (Stop, idempotent), and if the child has not exited within
-// killGrace it escalates to SIGKILL on the whole group, then reads the status
-// under a second bounded grace so a wedged child can never pin the caller
-// forever. go-cmd starts children with Setpgid, so -pid targets the group.
 func awaitStatusOrKill(c *cmd.Cmd, statusChan <-chan cmd.Status) cmd.Status {
-	_ = c.Stop() // SIGTERM the process group (no-op if already stopped/exited)
+	_ = c.Stop()
 
 	term := time.NewTimer(killGrace)
 	defer term.Stop()
@@ -49,9 +35,7 @@ func awaitStatusOrKill(c *cmd.Cmd, statusChan <-chan cmd.Status) cmd.Status {
 	case status := <-statusChan:
 		return status
 	case <-kill.C:
-		// Even SIGKILL could not be reaped within grace (e.g. an
-		// uninterruptible D-state). Return a best-effort snapshot rather
-		// than block the caller forever.
+
 		return c.Status()
 	}
 }
@@ -83,12 +67,6 @@ func ValidateCommandEnv(env []string) error {
 	return nil
 }
 
-// composeEnv builds the child environment: a leading PATH=childPath (when
-// childPath is non-empty) followed by the caller's already-validated env
-// vars. PATH cannot appear in envVars (it is blocklisted), so the
-// leading entry is the only PATH the child sees. The returned slice is
-// always non-nil so callers can distinguish "isolated env" (this) from
-// "inherit parent fully" (a nil env passed to runStreamingWithStdin).
 func composeEnv(childPath string, envVars []string) []string {
 	env := make([]string, 0, len(envVars)+1)
 	if childPath != "" {
@@ -97,12 +75,6 @@ func composeEnv(childPath string, envVars []string) []string {
 	return append(env, envVars...)
 }
 
-// runStreamingWithStdin is the shared low-level execution core: line-buffered
-// streaming with a per-stream MaxOutputBytes cap, ctx-cancel SIGTERM→SIGKILL
-// process-group escalation, and non-zero-exit-is-NOT-an-error semantics (the
-// exit code is in Result; the returned error is non-nil only on failure to
-// execute or ctx cancellation). The injected Runner builds on it. A nil env
-// inherits the parent environment fully; a non-nil env (even empty) replaces it.
 func runStreamingWithStdin(ctx context.Context, name string, args []string, stdin io.Reader, env []string, dir string, callback OutputCallback) (*Result, error) {
 	c := cmd.NewCmdOptions(cmd.Options{
 		Buffered:       false,
@@ -128,12 +100,6 @@ func runStreamingWithStdin(ctx context.Context, name string, args []string, stdi
 	var stdoutBuf, stderrBuf strings.Builder
 	var stdoutBytes, stderrBytes int64
 
-	// recordLine appends to the buffer (capped at MaxOutputBytes) and
-	// fires the callback with a per-stream monotonic sequence number.
-	// Extracted from the two near-identical select branches below
-	// (F029 in TECH_DEBT_AUDIT.md). Pre-extraction the streaming
-	// goroutine had eight call sites with identical bodies; the only
-	// per-call variation is which stream the line came from.
 	recordLine := func(stream StreamType, line string) {
 		lineBytes := int64(len(line) + 1)
 		if stream == StreamStdout {
@@ -153,9 +119,6 @@ func runStreamingWithStdin(ctx context.Context, name string, args []string, stdi
 		}
 	}
 
-	// drainRemaining drains a still-open channel after its sibling
-	// closed. This is the "stdout closed first, stderr still pumping"
-	// (or the symmetric stderr-first) cleanup phase.
 	drainRemaining := func(ch <-chan string, stream StreamType) {
 		for line := range ch {
 			recordLine(stream, line)
@@ -181,8 +144,7 @@ func runStreamingWithStdin(ctx context.Context, name string, args []string, stdi
 				}
 				recordLine(StreamStderr, line)
 			case <-ctx.Done():
-				// Stop draining; awaitStatusOrKill below owns the SIGTERM →
-				// SIGKILL escalation so a SIGTERM-ignoring child can't pin us.
+
 				return
 			}
 		}

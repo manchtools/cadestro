@@ -21,16 +21,8 @@ func aptLegacyRepoFile(name string) string { return aptSourcesDir + "/" + name +
 func aptKeyFile(name string) string        { return aptKeyringDir + "/" + name + ".gpg" }
 func aptLegacyKeyFile(name string) string  { return aptLegacyKeyDir + "/" + name + ".gpg" }
 
-// aptListSignedBy extracts the keyring path from a one-line .list source, e.g.
-// `deb [signed-by=/etc/apt/keyrings/x.gpg] https://…`.
 var aptListSignedBy = regexp.MustCompile(`signed-by=([^\s\]]+)`)
 
-// isAptKeyringPath reports whether p is a file directly inside one of the two
-// directories where apt signing keyrings legitimately live. Cleanup only removes
-// Signed-By targets that pass this jail, so an attacker-controlled source file
-// cannot point Signed-By at an arbitrary path (e.g. /etc/sudoers) and turn repo
-// reconfiguration into an arbitrary privileged delete. A path is in-jail only if
-// it is a direct child of the directory — no traversal, no nested subdirectory.
 func isAptKeyringPath(p string) bool {
 	for _, dir := range []string{aptKeyringDir, aptLegacyKeyDir} {
 		prefix := dir + "/"
@@ -46,25 +38,16 @@ func isAptKeyringPath(p string) bool {
 	return false
 }
 
-// applyApt writes the modern deb822 source to /etc/apt/sources.list.d/<name>.sources,
-// installs the (dearmored) signing key under /etc/apt/keyrings, removes any
-// conflicting prior configuration of the same URL, and refreshes the index. It is
-// idempotent: an unchanged source + key reports Changed=false and skips the
-// index refresh.
 func (m *manager) applyApt(ctx context.Context, name string, c *AptConfig) (Outcome, error) {
 	repoFile := aptRepoFile(name)
 	keyFile := aptKeyFile(name)
 	var log strings.Builder
 	changed := false
 
-	// Remove any other config that uses the same URL — prevents apt's
-	// "conflicting values set for option Signed-By" on the next update. A scan
-	// failure is surfaced as a warning (in log), never fatal.
 	if m.cleanupConflictingApt(ctx, c.URL, repoFile, keyFile, &log) {
 		changed = true
 	}
 
-	// Clean up legacy single-line .list and trusted.gpg.d key locations.
 	legacyFile := aptLegacyRepoFile(name)
 	if exists, eerr := m.fsm.Exists(ctx, legacyFile); eerr != nil {
 		return Outcome{}, fmt.Errorf("check legacy repo file: %w", eerr)
@@ -86,12 +69,10 @@ func (m *manager) applyApt(ctx context.Context, name string, c *AptConfig) (Outc
 		changed = true
 	}
 
-	// Ensure the keyrings directory exists before writing into it.
 	if err := m.fsm.Mkdir(ctx, aptKeyringDir, fs.MkdirOptions{Mode: 0o755, Recursive: true}); err != nil {
 		return Outcome{}, fmt.Errorf("create keyrings directory: %w", err)
 	}
 
-	// Import the signing key (idempotent; updates only when content differs).
 	if len(c.GPGKey) > 0 {
 		keyUpdated, kerr := m.updateAptKey(ctx, keyFile, c.GPGKey, &log)
 		if kerr != nil {
@@ -127,23 +108,13 @@ func (m *manager) applyApt(ctx context.Context, name string, c *AptConfig) (Outc
 		changed = true
 	}
 
-	// Refresh the index only when something actually changed. A NETWORK
-	// failure stays non-fatal (the config landed even if a typo'd URL
-	// fails the refresh) — but if apt names the file WE just wrote, the
-	// file itself is malformed and every apt operation on the host is now
-	// broken. Roll it back to the pre-apply content and FAIL: leaving it
-	// in place while reporting success bricked apt fleet-wide (#302).
 	if changed {
 		res, uerr := m.runPriv(ctx, "apt-get", "update")
 		if res.Stdout != "" {
 			log.WriteString(res.Stdout)
 		}
 		if uerr != nil {
-			// The malformed-entry diagnostic reaches us through
-			// CommandError.Error() (which folds in stderr) — but match
-			// the raw streams too, so a runner path that doesn't fold
-			// stderr into the error can never turn this guard into dead
-			// code (CR catch).
+
 			if strings.Contains(uerr.Error()+res.Stdout+res.Stderr, repoFile) {
 				fmt.Fprintf(&log, "apt rejected the just-written %s; rolling it back\n", repoFile)
 				if len(existingBytes) > 0 {
@@ -165,8 +136,6 @@ func (m *manager) applyApt(ctx context.Context, name string, c *AptConfig) (Outc
 	return out(log.String(), changed), nil
 }
 
-// buildAptSources renders the deb822 source body. Signed-By takes precedence over
-// the legacy Trusted: yes (only one trust mechanism is emitted).
 func buildAptSources(name string, c *AptConfig, keyFile string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Repository: %s\n", name)
@@ -191,9 +160,6 @@ func buildAptSources(name string, c *AptConfig, keyFile string) string {
 	return b.String()
 }
 
-// updateAptKey dearmors the public key (unprivileged; binary on stdout, no file
-// touched) and writes it to keyFile only when it differs from what is installed.
-// Returns whether the keyring changed.
 func (m *manager) updateAptKey(ctx context.Context, keyFile string, key []byte, log *strings.Builder) (bool, error) {
 	res, err := m.runStdin(ctx, key, "gpg", "--dearmor")
 	if err != nil {
@@ -220,15 +186,10 @@ func (m *manager) updateAptKey(ctx context.Context, keyFile string, key []byte, 
 	return true, nil
 }
 
-// cleanupConflictingApt scans /etc/apt/sources.list.d for any .sources/.list
-// that references url (other than the target's own files) and removes it together
-// with its Signed-By keyring. Returns whether anything was removed. A scan error
-// is surfaced as a warning and treated as "nothing to clean" rather than failing
-// the whole Apply.
 func (m *manager) cleanupConflictingApt(ctx context.Context, url, skipRepoFile, skipKeyFile string, log *strings.Builder) bool {
 	entries, err := m.fsm.ReadDir(ctx, aptSourcesDir)
 	if isReadAbsent(err) {
-		return false // no sources.list.d yet → nothing to clean up
+		return false
 	}
 	if err != nil {
 		fmt.Fprintf(log, "warning: could not scan %s for conflicts: %v\n", aptSourcesDir, err)
@@ -247,7 +208,7 @@ func (m *manager) cleanupConflictingApt(ctx context.Context, url, skipRepoFile, 
 		if filePath == skipRepoFile {
 			continue
 		}
-		// Skip the legacy .list form of the target repo.
+
 		if strings.TrimSuffix(filePath, ".list")+".sources" == skipRepoFile {
 			continue
 		}
@@ -269,9 +230,6 @@ func (m *manager) cleanupConflictingApt(ctx context.Context, url, skipRepoFile, 
 	return cleaned
 }
 
-// removeConflictKeys removes the Signed-By keyrings referenced by a conflicting
-// source file (deb822 `Signed-By:` lines or one-line `signed-by=`), skipping the
-// target repo's own key and any non-absolute reference.
 func (m *manager) removeConflictKeys(ctx context.Context, filename, content, skipKeyFile string, log *strings.Builder) {
 	var keyPaths []string
 	if strings.HasSuffix(filename, ".sources") {
@@ -282,7 +240,7 @@ func (m *manager) removeConflictKeys(ctx context.Context, filename, content, ski
 			}
 			keyPaths = append(keyPaths, strings.TrimSpace(strings.TrimPrefix(line, "Signed-By:")))
 		}
-	} else { // .list
+	} else {
 		for _, match := range aptListSignedBy.FindAllStringSubmatch(content, -1) {
 			keyPaths = append(keyPaths, match[1])
 		}
@@ -291,11 +249,7 @@ func (m *manager) removeConflictKeys(ctx context.Context, filename, content, ski
 		if keyPath == skipKeyFile || !strings.HasPrefix(keyPath, "/") {
 			continue
 		}
-		// Only remove paths inside the apt keyring jail. A hostile Signed-By in a
-		// conflicting source file is attacker-controlled config; honoring an
-		// arbitrary absolute path here would turn repo cleanup into an arbitrary
-		// privileged file delete (e.g. Signed-By: /etc/sudoers). Refuse anything
-		// outside the directories apt keyrings legitimately live in.
+
 		if !isAptKeyringPath(keyPath) {
 			fmt.Fprintf(log, "refusing to remove out-of-jail Signed-By key: %s\n", keyPath)
 			continue
@@ -307,9 +261,6 @@ func (m *manager) removeConflictKeys(ctx context.Context, filename, content, ski
 	}
 }
 
-// removeApt deletes the deb822 source, the legacy .list, and the keyring. It is
-// idempotent: when none of the three exist it reports Changed=false. The primary
-// source removal is fatal; the legacy/key removals are best-effort warnings.
 func (m *manager) removeApt(ctx context.Context, name string) (Outcome, error) {
 	repoFile := aptRepoFile(name)
 	legacyFile := aptLegacyRepoFile(name)

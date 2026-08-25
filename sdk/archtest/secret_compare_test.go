@@ -7,24 +7,14 @@ import (
 	"testing"
 )
 
-// secretCompareAllowlist lists comparisons that match the secret-name
-// heuristic but are not timing-sensitive secret-value compares. Each entry
-// is justified; assertNoStale fails the build if one stops matching.
-// Keyed by "<module-rel path> :: <rendered expression>".
 var secretCompareAllowlist = map[string]string{
 	"sys/network/networkmanager.go :: p.AuthType == AuthPSK": "AuthType is an enum selecting the WiFi authentication mode, not the PSK value",
 }
 
-// TestSecretComparesAreConstantTime forbids comparing secret material
-// (tokens, MACs, signatures, fingerprints, password/digest bytes) with
-// == / != / bytes.Equal in the SDK — the action-signing and encryption
-// boundary (sdk/go/verify, sdk/go/crypto). The correct primitives are
-// subtle.ConstantTimeCompare and hmac.Equal. Presence checks and metadata
-// fields are excluded.
 func TestSecretComparesAreConstantTime(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(rel string) bool {
-		// Skip generated proto code and the archtest package itself.
+
 		return !strings.HasPrefix(rel, "gen/") && !strings.HasPrefix(rel, "archtest/")
 	})
 	if len(files) == 0 {

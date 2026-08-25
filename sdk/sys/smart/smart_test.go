@@ -27,15 +27,15 @@ func TestNew_NilRunner(t *testing.T) {
 }
 
 func TestValidateDevice(t *testing.T) {
-	cases := map[string]bool{ // path -> valid
+	cases := map[string]bool{
 		"/dev/sda":     true,
 		"/dev/nvme0n1": true,
 		"":             false,
-		"sda":          false, // not absolute
-		"-rf":          false, // flag-shaped
-		"/etc/passwd":  false, // absolute but NOT under /dev — escalated probe must not reach it
-		"/dev/../etc":  false, // dotdot
-		"/dev/s\x00a":  false, // NUL
+		"sda":          false,
+		"-rf":          false,
+		"/etc/passwd":  false,
+		"/dev/../etc":  false,
+		"/dev/s\x00a":  false,
 	}
 	for dev, valid := range cases {
 		err := validateDevice(dev)
@@ -98,8 +98,7 @@ func TestDevice_Success(t *testing.T) {
 }
 
 func TestDevice_UnhealthyStillReturned(t *testing.T) {
-	// A failing self-assessment sets exit bits >= 4 (not fatal): the device is
-	// reported with Healthy=false, NOT an error.
+
 	c, r := newColl(t)
 	r.Push(exec.Result{ExitCode: 8, Stdout: `{"model_name":"OldDisk","smart_status":{"passed":false},"smartctl":{"exit_status":8}}`}, nil)
 	d, err := c.Device(context.Background(), "/dev/sda")

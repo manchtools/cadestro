@@ -53,22 +53,6 @@ func ValidatePackageVersion(version string) error {
 	return nil
 }
 
-// --- WS8 argv-hardening validators (sdk#88) --------------------------------
-//
-// These guard the package-manager invocation surface that the generic
-// ValidatePackageName does not cover: an RPM %{NAME} read off a crafted
-// .rpm, a dnf/zypper/pacman repository base URL, a dnf/zypper GPG key
-// reference, and a flatpak remote alias. Each is MANDATORY at the argv
-// boundary it protects (see agent/internal/executor) and, in concert
-// with exec.SeparatePositionals, ensures a flag-shaped or
-// metacharacter-bearing value can never be reparsed as an option.
-
-// validRpmPackageName matches a legitimate RPM %{NAME}. The first
-// character MUST be alphanumeric — that single rule kills the option-
-// injection class where a crafted .rpm sets %{NAME} to `-e` or
-// `--eval=%{lua:...}` and `rpm -q`/`rpm -e` reparses it as a flag/macro.
-// RPM names use `[a-zA-Z0-9._+-]` (note '+' for libstdc++); the broader
-// set ValidatePackageName allows (`:/@~`) is not part of an RPM NAME.
 var validRpmPackageName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._+-]{0,255}$`)
 
 // ValidateRpmPackageName returns a non-nil error when name is not a
@@ -142,10 +126,6 @@ func ValidateSearchQuery(query string) error {
 	return nil
 }
 
-// hasControlChar reports whether s contains any ASCII control character (NUL
-// through US, including newline and tab) or DEL. Unlike hasCtrlOrSpace it does
-// NOT reject a plain space (0x20), which is a legal, argv-safe character in a
-// filesystem path.
 func hasControlChar(s string) bool {
 	for _, r := range s {
 		if r < ' ' || r == 0x7f {
@@ -155,9 +135,6 @@ func hasControlChar(s string) bool {
 	return false
 }
 
-// validRemoteName matches a flatpak remote alias (e.g. "flathub",
-// "gnome-nightly"). Same leading-alphanumeric anti-option-injection
-// rule; remote aliases never contain a path separator or whitespace.
 var validRemoteName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$`)
 
 // ValidateRemoteName returns a non-nil error when name is not a safe
@@ -174,12 +151,6 @@ func ValidateRemoteName(name string) error {
 	return nil
 }
 
-// hasCtrlOrSpace reports whether s contains any ASCII control character,
-// whitespace, or DEL. Used to reject config-injection (newlines smuggle
-// extra directives into a repo file) and argv confusion (spaces split a
-// single field into multiple arguments) in URL/ref fields where the
-// generic ValidatePackageName grammar does not apply. r <= ' ' covers
-// NUL through space (incl. \t \n \r); 0x7f is DEL.
 func hasCtrlOrSpace(s string) bool {
 	for _, r := range s {
 		if r <= ' ' || r == 0x7f {

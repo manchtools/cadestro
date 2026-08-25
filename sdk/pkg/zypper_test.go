@@ -314,7 +314,7 @@ func TestZypper_Show(t *testing.T) {
 	t.Run("installed", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, info)
-		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled rpm -q
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -326,8 +326,8 @@ func TestZypper_Show(t *testing.T) {
 	t.Run("available not installed", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "Name : vim\nVersion : 9.0-2\n")
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // not installed
-		ok(f, "")                                // IsPinned locks empty
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		ok(f, "")
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -356,7 +356,7 @@ func TestZypper_ListVersions(t *testing.T) {
 	t.Run("parses match-exact table", func(t *testing.T) {
 		m, f := zypperM(t)
 		ok(f, "S | Name | Type | Version | Arch | Repository\n---+----+----+----+----+----\nv | vim | package | 9.0-2 | x86_64 | repo-oss\nv | vim | package | 9.0-2 | i586 | repo-oss\ni | other | package | 1.0 | x86_64 | repo\nshort | line\n")
-		ok(f, "9.0-1\n") // InstalledVersion
+		ok(f, "9.0-1\n")
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -367,8 +367,8 @@ func TestZypper_ListVersions(t *testing.T) {
 	})
 	t.Run("no match (exit 104) returns info without versions", func(t *testing.T) {
 		m, f := zypperM(t)
-		f.Push(sysexec.Result{ExitCode: 104}, nil) // search: no matches (benign)
-		ok(f, "9.0-1\n")                           // InstalledVersion
+		f.Push(sysexec.Result{ExitCode: 104}, nil)
+		ok(f, "9.0-1\n")
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil {
 			t.Fatalf("exit 104 must not fail: %v", err)
@@ -379,8 +379,8 @@ func TestZypper_ListVersions(t *testing.T) {
 	})
 	t.Run("genuine search failure surfaces", func(t *testing.T) {
 		m, f := zypperM(t)
-		f.Push(sysexec.Result{ExitCode: 6, Stderr: "no repos"}, nil) // search: real failure
-		ok(f, "9.0-1\n")                                             // InstalledVersion
+		f.Push(sysexec.Result{ExitCode: 6, Stderr: "no repos"}, nil)
+		ok(f, "9.0-1\n")
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a non-0/104 search exit must surface as an error")
 		}
@@ -512,11 +512,9 @@ func TestZypper_HasUpdates(t *testing.T) {
 	})
 	t.Run("a real-error exit fails closed, not silent 'no updates'", func(t *testing.T) {
 		m, f := zypperM(t)
-		f.Push(sysexec.Result{ExitCode: 6}, nil) // 6 = no repositories: a real failure
+		f.Push(sysexec.Result{ExitCode: 6}, nil)
 		got, err := m.HasUpdates(ctx)
-		// A failed update check must surface as an error — reporting "no updates"
-		// would tell a patch/compliance caller it is up to date when the check broke.
-		// Matches dnf.HasUpdates, which returns a CommandError on its default branch.
+
 		if err == nil {
 			t.Fatal("a failed check must error, not report 'no updates' (compliance fail-open)")
 		}
@@ -602,9 +600,9 @@ func TestZypper_ListPinnedAndIsPinned(t *testing.T) {
 	ctx := context.Background()
 	t.Run("ListPinned with versions", func(t *testing.T) {
 		m, f := zypperM(t)
-		ok(f, "# | Name | Type | Repository\n---+------+------+-----------\n1 | vim | package |\n2 | git | package |\nnotanumber | foo |\n") // locks
-		ok(f, "9.0-1\n")                                                                                                                     // InstalledVersion(vim)
-		ok(f, "2.39-1\n")                                                                                                                    // InstalledVersion(git)
+		ok(f, "# | Name | Type | Repository\n---+------+------+-----------\n1 | vim | package |\n2 | git | package |\nnotanumber | foo |\n")
+		ok(f, "9.0-1\n")
+		ok(f, "2.39-1\n")
 		pkgs, err := m.ListPinned(ctx)
 		if err != nil {
 			t.Fatal(err)
@@ -673,7 +671,7 @@ func TestZypper_ParseValueAndSize(t *testing.T) {
 			t.Errorf("parseZypperSize(%q)=%d want %d", in, got, want)
 		}
 	}
-	// Unparseable input is reported, not silently rendered as a 0-byte package.
+
 	for _, in := range []string{"", "unknown", "3.0 MiB extra"} {
 		if got, sizeOK := parseZypperSize(in); sizeOK {
 			t.Errorf("parseZypperSize(%q)=(%d, true), want ok=false", in, got)
@@ -687,16 +685,16 @@ func TestZypper_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("Show: IsInstalled runner failure", func(t *testing.T) {
 		m, f := zypperM(t)
-		ok(f, "Name : vim\nVersion : 9.0-2\n")      // info
-		f.Push(sysexec.Result{}, errors.New("rpm")) // IsInstalled
+		ok(f, "Name : vim\nVersion : 9.0-2\n")
+		f.Push(sysexec.Result{}, errors.New("rpm"))
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("an IsInstalled runner failure must propagate")
 		}
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := zypperM(t)
-		ok(f, "# | Name |\n---+\n1 | vim | package |\n") // locks
-		f.Push(sysexec.Result{}, errors.New("rpm"))      // InstalledVersion
+		ok(f, "# | Name |\n---+\n1 | vim | package |\n")
+		f.Push(sysexec.Result{}, errors.New("rpm"))
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}

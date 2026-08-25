@@ -98,7 +98,6 @@ func New(b Backend, runner exec.Runner) (Manager, error) {
 	}
 }
 
-// validatePath rejects a scan path that is unsafe as a positional argument.
 func validatePath(path string) error {
 	if path == "" || strings.HasPrefix(path, "-") || strings.ContainsRune(path, 0) {
 		return fmt.Errorf("%w: %q", ErrInvalidPath, path)

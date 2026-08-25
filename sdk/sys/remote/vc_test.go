@@ -7,12 +7,9 @@ import (
 	"testing"
 )
 
-// stubVCBackend is the minimum-viable VersionControlBackend used by
-// every Slice-8 test. Records the calls it received so the assertion
-// surface stays small.
 type stubVCBackend struct {
 	mu     sync.Mutex
-	tag    string // identifies which stub registration handled the call
+	tag    string
 	syncs  int
 	resolv int
 }
@@ -31,10 +28,6 @@ func (s *stubVCBackend) Resolve(_ context.Context, _ GitConfig) (string, error) 
 	return "stub:" + s.tag, nil
 }
 
-// withSnapshotRegistry runs body with a clean version-control registry
-// and restores whatever was registered before on return. Lets the
-// tests in this file overwrite "go-git" or register junk without
-// leaking state into the rest of the suite.
 func withSnapshotRegistry(t *testing.T, body func()) {
 	t.Helper()
 	vcRegistry.mu.Lock()
@@ -51,10 +44,6 @@ func withSnapshotRegistry(t *testing.T, body func()) {
 	body()
 }
 
-// TestRegisterVersionControlBackend_LookupAndOverride — round-trips a
-// new registration, then re-registers under the same name and asserts
-// the second registration wins. Override is a useful property for
-// tests that need to swap in a fake backend.
 func TestRegisterVersionControlBackend_LookupAndOverride(t *testing.T) {
 	withSnapshotRegistry(t, func() {
 		first := &stubVCBackend{tag: "first"}
@@ -80,13 +69,9 @@ func TestRegisterVersionControlBackend_LookupAndOverride(t *testing.T) {
 	})
 }
 
-// TestRegisterVersionControlBackend_IgnoresEmptyNameOrNil — calling
-// Register with an empty name or nil backend is a no-op (no panic, no
-// stored entry). A later lookup of "" returns ErrBackendNotFound, the
-// sentinel callers branch on.
 func TestRegisterVersionControlBackend_IgnoresEmptyNameOrNil(t *testing.T) {
 	withSnapshotRegistry(t, func() {
-		// Don't crash.
+
 		RegisterVersionControlBackend("", &stubVCBackend{tag: "ignored"})
 		RegisterVersionControlBackend("nilcheck", nil)
 
@@ -99,9 +84,6 @@ func TestRegisterVersionControlBackend_IgnoresEmptyNameOrNil(t *testing.T) {
 	})
 }
 
-// TestVersionControlBackend_UnknownDriver — looking up a driver that
-// nobody registered must surface as ErrBackendNotFound. That's the
-// error NewGit will translate into a config-time failure in Slice 9.
 func TestVersionControlBackend_UnknownDriver(t *testing.T) {
 	withSnapshotRegistry(t, func() {
 		_, err := versionControlBackend("never-registered")
@@ -111,8 +93,6 @@ func TestVersionControlBackend_UnknownDriver(t *testing.T) {
 	})
 }
 
-// TestRegisterVersionControlBackend_ConcurrentLookup — sanity check
-// that concurrent Register + lookup don't race. Run under -race in CI.
 func TestRegisterVersionControlBackend_ConcurrentLookup(t *testing.T) {
 	withSnapshotRegistry(t, func() {
 		var wg sync.WaitGroup

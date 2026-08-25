@@ -26,10 +26,6 @@ type trustAnchorStep struct {
 	wantErr error
 }
 
-// TestTrustAnchorSecurityMachine models system trust-store mutation as a CA
-// capability state machine. Only a currently valid CA certificate with signing
-// key usage may transition into the host trust store; every rejected state must
-// stop before anchor write or trust-store refresh.
 func TestTrustAnchorSecurityMachine(t *testing.T) {
 	steps := []trustAnchorStep{
 		{name: "valid root CA is accepted", action: trustAnchorValidRoot},

@@ -13,11 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// recordingRunner is an exec.Runner that captures each Command and, crucially,
-// snapshots the contents of any /dev/shm key file referenced in the argv and any
-// stdin — taken DURING Run, before the caller's deferred cleanup wipes them. It
-// lets the tests prove the right Secret reaches the right key file / stdin and
-// never the argv. Scripts results FIFO (default: clean success).
 type recordingRunner struct {
 	mu      sync.Mutex
 	calls   []capturedCall
@@ -26,7 +21,7 @@ type recordingRunner struct {
 
 type capturedCall struct {
 	cmd      exec.Command
-	keyFiles map[string]string // arg path under keyFileDir → file content
+	keyFiles map[string]string
 	stdin    string
 }
 
@@ -93,7 +88,6 @@ func mustSecret(t *testing.T, s string) exec.Secret {
 
 func ptr(i int) *int { return &i }
 
-// assertNoPlaintextInArgv fails if any arg contains a secret plaintext.
 func assertNoPlaintextInArgv(t *testing.T, args []string, secrets ...string) {
 	t.Helper()
 	for _, a := range args {
@@ -133,12 +127,7 @@ func TestIsEncrypted(t *testing.T) {
 			t.Errorf("command = %+v, want escalated `cryptsetup isLuks /dev/sda2`", c)
 		}
 	})
-	// The exit-code → result mapping (exit 1 → not-LUKS, exit 4 → error) is no
-	// longer asserted here against a FABRICATED exit code: TestIsEncrypted_Container
-	// (build tag `container`) now proves it against REAL cryptsetup, which is the
-	// only thing that establishes a real LUKS / non-LUKS / missing device actually
-	// yields exit 0 / 1 / 4. This subtest keeps only the argv-shape pin (above) and
-	// the path-validation pin (below) — both unobservable through real cryptsetup.
+
 	t.Run("invalid device path rejected before runner", func(t *testing.T) {
 		r := &recordingRunner{}
 		if _, err := mgr(t, r).IsEncrypted(context.Background(), "-rf"); err == nil {
@@ -161,7 +150,7 @@ func TestAddKey(t *testing.T) {
 		if c.Name != "cryptsetup" || !c.Escalate {
 			t.Fatalf("command = %+v, want escalated cryptsetup", c)
 		}
-		// luksAddKey <dev> <newFile> --key-file <existingFile> --batch-mode
+
 		if c.Args[0] != "luksAddKey" || c.Args[1] != "/dev/sda2" || c.Args[3] != "--key-file" || c.Args[len(c.Args)-1] != "--batch-mode" {
 			t.Fatalf("argv shape wrong: %v", c.Args)
 		}
@@ -199,7 +188,7 @@ func TestAddKey(t *testing.T) {
 
 	t.Run("cryptsetup failure decoded", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.push(exec.Result{ExitCode: 2}, nil) // no key available
+		r.push(exec.Result{ExitCode: 2}, nil)
 		err := mgr(t, r).AddKey(context.Background(), "/dev/sda2", mustSecret(t, "o"), mustSecret(t, "n"), AddKeyOptions{})
 		if err == nil || !strings.Contains(err.Error(), "no key available") {
 			t.Errorf("err = %v, want a decoded exit-2 message", err)
@@ -282,8 +271,6 @@ func TestTPMAccessor(t *testing.T) {
 	}
 }
 
-// Self-discovering per-parameter guard: for every Manager method taking a device
-// string, a non-/dev path "-rf" must never reach the Runner.
 func TestEveryDeviceMethodRejectsUnsafePathBeforeRunner(t *testing.T) {
 	const unsafe = "-rf"
 	mt := reflect.TypeOf((*Manager)(nil)).Elem()

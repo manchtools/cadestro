@@ -59,10 +59,6 @@ const (
 // can never read or remove files outside the managed tree.
 const CertBaseDir = "/var/lib/cadestro/wifi"
 
-// certBaseDir is the value actually enforced by validateProfile /
-// safeRemoveCertDir. It defaults to CertBaseDir; it is a var (not the exported
-// const) only so tests can point it at a writable temp directory. Production
-// always uses CertBaseDir.
 var certBaseDir = CertBaseDir
 
 // Profile is a NetworkManager WiFi connection profile.
@@ -119,8 +115,6 @@ func New(b Backend, runner exec.Runner, _ ...Option) (Manager, error) {
 	return &networkManager{r: runner}, nil
 }
 
-// validateProfile checks required fields based on auth type. PSK/ClientKey are
-// Secrets; an empty Secret counts as absent.
 func validateProfile(p Profile) error {
 	if err := validateConnName(p.Name); err != nil {
 		return err
@@ -128,9 +122,7 @@ func validateProfile(p Profile) error {
 	if p.SSID == "" {
 		return fmt.Errorf("SSID is required")
 	}
-	// Name, SSID and PSK are rendered into the .nmconnection keyfile as
-	// `id=`/`ssid=`/`psk=` lines; a control character (notably a newline) would
-	// inject additional INI lines or sections (config injection).
+
 	if containsControl(p.SSID) {
 		return fmt.Errorf("invalid SSID: must not contain control characters")
 	}
@@ -139,15 +131,11 @@ func validateProfile(p Profile) error {
 		if p.PSK.IsZero() {
 			return fmt.Errorf("PSK is required for WPA authentication")
 		}
-		// The PSK is rendered into the keyfile psk= line. A NewSecret PSK can't
-		// hold a newline, but a NewMultilineSecret one can — reject that here
-		// (checked without revealing the plaintext) so it can't split the line.
+
 		if p.PSK.HasNewline() {
 			return fmt.Errorf("invalid PSK: must not contain a newline or carriage return")
 		}
-		// Enforce the WPA-PSK key contract (8–63 printable-ASCII chars, or a
-		// 64-hex-digit raw PMK) before the keyfile is written or nmcli reloaded,
-		// so a weak/malformed key never reaches NetworkManager.
+
 		if err := validatePSK(p.PSK); err != nil {
 			return err
 		}
@@ -176,9 +164,6 @@ func validateProfile(p Profile) error {
 	return nil
 }
 
-// containsControl reports whether s holds any control character (NUL, newline,
-// CR, tab, …) — bytes that would corrupt the line-oriented .nmconnection keyfile
-// or nmcli's terse output.
 func containsControl(s string) bool {
 	for _, r := range s {
 		if r < 0x20 || r == 0x7f {
@@ -188,13 +173,6 @@ func containsControl(s string) bool {
 	return false
 }
 
-// validateConnName validates a connection name. It is rendered into the keyfile
-// (`id=`) and passed to nmcli as an argument, so it must be non-empty, free of
-// control characters, not start with '-' (which nmcli would read as a flag), and
-// contain no '/' path separator. The name is also re-derived from untrusted host
-// `nmcli con show` output before it is fed back into a mutation (con mod / up /
-// delete), so the same rejection must hold when a name read back from the host is
-// re-validated — host output is not trusted.
 func validateConnName(name string) error {
 	if name == "" {
 		return fmt.Errorf("connection name is required")
@@ -205,18 +183,13 @@ func validateConnName(name string) error {
 	if strings.HasPrefix(name, "-") {
 		return fmt.Errorf("invalid connection name %q: must not start with '-'", name)
 	}
-	// A '/' would let a name escape the system-connections directory when used to
-	// derive the keyfile path; keyfilePath sanitizes it defensively, but the name
-	// itself is never legitimately path-shaped, so reject it outright.
+
 	if strings.ContainsRune(name, '/') {
 		return fmt.Errorf("invalid connection name %q: must not contain '/'", name)
 	}
 	return nil
 }
 
-// isSubdirOf reports whether child is a proper subdirectory of parent (not
-// parent itself). Symlinks on existing path components are resolved so a profile
-// cannot escape parent via a symlink.
 func isSubdirOf(parent, child string) bool {
 	resolvedParent := resolvePath(parent)
 	resolvedChild := resolvePath(child)
@@ -227,19 +200,16 @@ func isSubdirOf(parent, child string) bool {
 	return rel != "." && !strings.HasPrefix(rel, "..")
 }
 
-// resolvePath resolves symlinks for existing path components. For paths that
-// don't fully exist, it resolves the deepest existing ancestor and appends the
-// remaining components.
 func resolvePath(p string) string {
 	abs, err := absPath(filepath.Clean(p))
 	if err != nil {
 		return filepath.Clean(p)
 	}
-	// Fast path: fully existing path resolves directly.
+
 	if resolved, err := evalSymlinks(abs); err == nil {
 		return resolved
 	}
-	// Walk up to the deepest existing ancestor, then re-append the suffix.
+
 	current := abs
 	var suffix []string
 	for {
@@ -260,9 +230,6 @@ func resolvePath(p string) string {
 	return filepath.Join(append([]string{resolved}, suffix...)...)
 }
 
-// safeRemoveCertDir validates that certDir is a proper subdirectory of
-// certBaseDir before removing. Rejects the base dir itself, parent traversal,
-// non-directories, and paths outside the base. A non-existent path is a no-op.
 func safeRemoveCertDir(certDir string) error {
 	abs, err := absPath(filepath.Clean(certDir))
 	if err != nil {

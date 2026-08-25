@@ -22,7 +22,6 @@ func mgr(t *testing.T, r exec.Runner) Manager {
 	return m
 }
 
-// withStat redirects the marker-file stat seam for one test.
 func withStat(t *testing.T, fn func(string) (os.FileInfo, error)) {
 	t.Helper()
 	orig := statFunc
@@ -37,7 +36,7 @@ func TestNew_NilRunner(t *testing.T) {
 }
 
 func TestIsRequired_MarkerPresent(t *testing.T) {
-	withStat(t, func(string) (os.FileInfo, error) { return nil, nil }) // exists
+	withStat(t, func(string) (os.FileInfo, error) { return nil, nil })
 	r := exectest.New(exec.Direct)
 	need, err := mgr(t, r).IsRequired(context.Background())
 	if err != nil || !need {
@@ -69,17 +68,14 @@ func TestIsRequired_NeedsRestarting(t *testing.T) {
 		{"reboot needed (exit 1)", exec.Result{ExitCode: 1}, nil, true, false},
 		{"no reboot (exit 0)", exec.Result{ExitCode: 0}, nil, false, false},
 		{"indeterminate (exit 2)", exec.Result{ExitCode: 2}, nil, false, false},
-		// Tool absent (the exec layer wraps ErrBackendUnavailable for a missing
-		// binary) → no detection available here, a graceful (false, nil).
+
 		{
 			"not installed (ErrBackendUnavailable)",
 			exec.Result{},
 			fmt.Errorf("%w: command not found: needs-restarting", exec.ErrBackendUnavailable),
 			false, false,
 		},
-		// A genuine run failure (NOT a missing tool) must surface — we were asked
-		// and couldn't answer for an unexpected reason; swallowing it as
-		// "no reboot needed" hides the failure from the caller.
+
 		{
 			"genuine run error surfaces",
 			exec.Result{},

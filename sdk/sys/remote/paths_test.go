@@ -10,9 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
-// TestValidateDestination_RejectsEmptyOrRoot covers the cheapest layer of
-// the path-safety contract: the values most likely to slip through a
-// caller's input plumbing as defaults / zero values.
 func TestValidateDestination_RejectsEmptyOrRoot(t *testing.T) {
 	for _, p := range []string{"", "/", "  "} {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -24,10 +21,6 @@ func TestValidateDestination_RejectsEmptyOrRoot(t *testing.T) {
 	}
 }
 
-// TestValidateDestination_RejectsRelative — relative paths are a vector for
-// "fetch to my homedir" surprises depending on the agent's cwd. The
-// underlying sys/fs.ResolveAndValidatePath requires absolute, so this is
-// also a sanity check that we plumb that requirement through.
 func TestValidateDestination_RejectsRelative(t *testing.T) {
 	for _, p := range []string{"foo", "./foo", "../foo", "subdir/file"} {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -39,9 +32,6 @@ func TestValidateDestination_RejectsRelative(t *testing.T) {
 	}
 }
 
-// TestValidateDestination_RejectsProtectedPaths — sys/fs.IsProtectedPath
-// flags the canonical system dirs (exact match, not prefix). validateDestination
-// must refuse to mutate any of them.
 func TestValidateDestination_RejectsProtectedPaths(t *testing.T) {
 	for _, p := range []string{"/etc", "/boot", "/proc", "/sys", "/usr", "/var", "/bin", "/sbin"} {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -53,17 +43,13 @@ func TestValidateDestination_RejectsProtectedPaths(t *testing.T) {
 	}
 }
 
-// TestValidateDestination_AcceptsNormalAbsolutePaths — anything that isn't
-// the empty string, root, a protected dir, or a relative path should pass.
-// Uses t.TempDir() to get a real, writable absolute path that
-// ResolveAndValidatePath will accept.
 func TestValidateDestination_AcceptsNormalAbsolutePaths(t *testing.T) {
 	tmp := t.TempDir()
 	for _, p := range []string{
 		tmp,
 		filepath.Join(tmp, "newfile"),
 		filepath.Join(tmp, "subdir", "file"),
-		"/var/lib/cadestro/something", // doesn't need to exist; ResolveAndValidatePath walks up
+		"/var/lib/cadestro/something",
 		"/etc/cadestro/something",
 	} {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -74,28 +60,19 @@ func TestValidateDestination_AcceptsNormalAbsolutePaths(t *testing.T) {
 	}
 }
 
-// TestValidateDestination_RejectsSymlinkEscape — the user provides a path
-// inside dest that resolves (via a symlink in an existing parent) to a
-// protected location. ResolveAndValidatePath flattens the symlink; our
-// IsProtectedPath check then catches it.
 func TestValidateDestination_RejectsSymlinkEscape(t *testing.T) {
 	tmp := t.TempDir()
 	link := filepath.Join(tmp, "escape")
 	if err := os.Symlink("/etc", link); err != nil {
 		t.Fatalf("create symlink: %v", err)
 	}
-	// Use a path whose existing parent (tmp) contains the symlink; the
-	// flattened form points at /etc, which is protected.
+
 	dest := filepath.Join(link, "")
 	if err := validateDestination(dest); !errors.Is(err, ErrUnsafeDestination) {
 		t.Fatalf("validateDestination(%q) = %v; want errors.Is(..., ErrUnsafeDestination)", dest, err)
 	}
 }
 
-// TestCanWipe_AllowsManagedRoots — the Wipe allow-list is the second layer
-// of safety. Even after validateDestination passes, Wipe additionally
-// refuses anything not under one of the project-managed roots OR
-// previously seen by a successful Fetch (RecordDest).
 func TestCanWipe_AllowsManagedRoots(t *testing.T) {
 	for _, p := range []string{
 		"/var/lib/cadestro/x",
@@ -110,20 +87,14 @@ func TestCanWipe_AllowsManagedRoots(t *testing.T) {
 	}
 }
 
-// TestCanWipe_RefusesUnregisteredPath — paths outside the allow-list and
-// not previously recorded must be refused, even if validateDestination
-// would have accepted them for a Fetch.
 func TestCanWipe_RefusesUnregisteredPath(t *testing.T) {
-	tmp := t.TempDir() // /tmp/<random>, not in the allow-list
+	tmp := t.TempDir()
 	dest := filepath.Join(tmp, "never-recorded")
 	if err := canWipe(dest); !errors.Is(err, ErrUnsafeDestination) {
 		t.Fatalf("canWipe(%q) = %v; want errors.Is(..., ErrUnsafeDestination)", dest, err)
 	}
 }
 
-// TestCanWipe_RecordDestRoundTrip — paths a previous Fetch recorded with
-// RecordDest become wipe-eligible. The store is process-local; tests
-// that call RecordDest must clean up to keep the suite hermetic.
 func TestCanWipe_RecordDestRoundTrip(t *testing.T) {
 	tmp := t.TempDir()
 	dest := filepath.Join(tmp, "recorded-by-fetch")
@@ -142,17 +113,6 @@ func TestCanWipe_RecordDestRoundTrip(t *testing.T) {
 	}
 }
 
-// TestCanWipe_RefusesProtectedEvenIfRecorded — RecordDest must not be a
-// jailbreak for the protected-path check. If someone manages to feed a
-// protected path through Fetch (which validateDestination already rejects)
-// and then call Wipe, canWipe must STILL refuse.
-//
-// The set covers BOTH exact protected roots (/etc, /var) AND protected
-// *subpaths* (/etc/cron.d/x, ...). The subpath cases are the security point:
-// the old exact-match IsProtectedPath let a recorded /etc/cron.d/x slip the
-// guard, so a Fetch→RecordDest→Wipe round-trip could rm -rf a privilege
-// vector. canWipe must refuse a protected subtree at ANY depth, recorded or
-// not.
 func TestCanWipe_RefusesProtectedEvenIfRecorded(t *testing.T) {
 	cases := append([]string{"/etc", "/var"}, protectedSubpaths...)
 	for _, p := range cases {
@@ -167,35 +127,24 @@ func TestCanWipe_RefusesProtectedEvenIfRecorded(t *testing.T) {
 	}
 }
 
-// protectedSubpaths are real-world privilege-escalation / data-destruction
-// targets that live ONE OR MORE levels under a protected system root. The set
-// is derived from the design intent encoded in sys/fs.protectedPrefixRoots
-// (deny-by-default subtree), NOT from the artifact under test (IsProtectedPath,
-// whose exact-match semantics are exactly the bug). Writing or wiping any of
-// these via the remote ingester is a root code-exec / privesc vector, which
-// sys/remote/doc.go promises is impossible.
 var protectedSubpaths = []string{
-	"/etc/cron.d/evil",                     // root cron job → code exec
-	"/etc/sudoers.d/evil",                  // grant NOPASSWD → privesc
-	"/etc/systemd/system/evil.service",     // unit drop-in → code exec
-	"/usr/bin/sshd",                        // overwrite a system binary
-	"/usr/lib/systemd/system/sshd.service", // hijack a service
-	"/bin/ls",                              // overwrite a core binary
-	"/sbin/init",                           // overwrite PID1
-	"/lib/x86_64-linux-gnu/libc.so.6",      // overwrite libc
-	"/boot/grub/grub.cfg",                  // bootloader tamper
-	"/home/alice/.ssh/authorized_keys",     // add an SSH key → account takeover
-	"/home/alice/.bashrc",                  // shell-init code exec
-	"/root/.bashrc",                        // root shell-init code exec
-	"/var/lib/postgresql/data",             // destroy persistent DB state
-	"/proc/sysrq-trigger",                  // kernel control
-	"/sys/kernel/uevent_helper",            // kernel-invoked binary
+	"/etc/cron.d/evil",
+	"/etc/sudoers.d/evil",
+	"/etc/systemd/system/evil.service",
+	"/usr/bin/sshd",
+	"/usr/lib/systemd/system/sshd.service",
+	"/bin/ls",
+	"/sbin/init",
+	"/lib/x86_64-linux-gnu/libc.so.6",
+	"/boot/grub/grub.cfg",
+	"/home/alice/.ssh/authorized_keys",
+	"/home/alice/.bashrc",
+	"/root/.bashrc",
+	"/var/lib/postgresql/data",
+	"/proc/sysrq-trigger",
+	"/sys/kernel/uevent_helper",
 }
 
-// TestValidateDestination_RejectsProtectedSubpaths pins the fail-open fix:
-// Fetch must refuse to write attacker-controlled remote content to any path
-// under a protected system subtree. Derived from intent (protectedPrefixRoots),
-// these were ACCEPTED by the old exact-match IsProtectedPath.
 func TestValidateDestination_RejectsProtectedSubpaths(t *testing.T) {
 	for _, p := range protectedSubpaths {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -206,8 +155,6 @@ func TestValidateDestination_RejectsProtectedSubpaths(t *testing.T) {
 	}
 }
 
-// TestCanWipe_RejectsProtectedSubpaths — the Wipe-side mirror: ABSENT/wipe of
-// a protected subtree must be refused even before the recorded-set check.
 func TestCanWipe_RejectsProtectedSubpaths(t *testing.T) {
 	for _, p := range protectedSubpaths {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -218,12 +165,6 @@ func TestCanWipe_RejectsProtectedSubpaths(t *testing.T) {
 	}
 }
 
-// TestValidateDestination_StillAcceptsManagedRootsUnderProtectedPrefix is the
-// regression guard for the carve-out: the agent's own managed roots live UNDER
-// protected prefixes (/etc/cadestro is under /etc, /var/lib/cadestro is
-// under /var/lib), so the deny-by-default subtree check must explicitly exempt
-// them or the agent can no longer manage its own state. Pins the boundary so a
-// future tightening of the deny set can't silently break legitimate writes.
 func TestValidateDestination_StillAcceptsManagedRootsUnderProtectedPrefix(t *testing.T) {
 	for _, p := range []string{
 		"/etc/cadestro",
@@ -239,14 +180,10 @@ func TestValidateDestination_StillAcceptsManagedRootsUnderProtectedPrefix(t *tes
 	}
 }
 
-// TestIsManagedRoot_BoundaryRobustToMissingTrailingSlash pins that the
-// sibling-prefix boundary does NOT depend on wipeAllowedRoots entries being
-// written with a trailing slash: even a no-slash entry must refuse a hostile
-// sibling (/etc/cadestro-evil) while still matching real managed subpaths.
 func TestIsManagedRoot_BoundaryRobustToMissingTrailingSlash(t *testing.T) {
 	orig := wipeAllowedRoots
 	t.Cleanup(func() { wipeAllowedRoots = orig })
-	wipeAllowedRoots = []string{"/etc/cadestro"} // intentionally no trailing slash
+	wipeAllowedRoots = []string{"/etc/cadestro"}
 
 	if isManagedRoot("/etc/cadestro-evil") {
 		t.Error("isManagedRoot matched a hostile sibling /etc/cadestro-evil; boundary must not depend on a trailing slash")
@@ -259,10 +196,6 @@ func TestIsManagedRoot_BoundaryRobustToMissingTrailingSlash(t *testing.T) {
 	}
 }
 
-// TestCanWipe_RejectsManagedRootSiblingPrefix — the carve-out must use a
-// trailing-slash boundary so a hostile sibling like /etc/cadestro-evil is
-// NOT mistaken for the managed root /etc/cadestro and is refused as a
-// protected /etc subtree.
 func TestCanWipe_RejectsManagedRootSiblingPrefix(t *testing.T) {
 	for _, p := range []string{"/etc/cadestro-evil/x", "/var/lib/cadestro-evil"} {
 		t.Run("dest="+p, func(t *testing.T) {
@@ -273,37 +206,15 @@ func TestCanWipe_RejectsManagedRootSiblingPrefix(t *testing.T) {
 	}
 }
 
-// agentStateRoots are the directories the Cadestro agent actually owns on a
-// managed host: `credentials.DefaultDataDir` in agent/internal/credentials
-// (which install.sh creates mode 0700 and the cadestrod systemd unit passes as
-// -data-dir) and its /etc configuration sibling.
-//
-// This module cannot import the agent — the SDK is a leaf and must stay
-// consumable on its own — so the coupling is pinned here as literals and
-// asserted from the other side in the agent's own suite
-// (TestCertBaseDirLivesUnderTheAgentDataDir). Both halves must name the same
-// root; a rename that moves only one fails one of the two.
 var agentStateRoots = []string{"/var/lib/cadestro", "/etc/cadestro"}
 
-// TestWipeAllowedRoots_CoverTheDirectoriesTheAgentUses is the regression guard
-// for a real split-brain: the agent's data directory was renamed to
-// /var/lib/cadestro while wipeAllowedRoots still listed the predecessor root.
-// The allow-list then protected a directory nothing writes to, and every real
-// agent-owned path fell through to the deny-by-default /var/lib refusal — so
-// the agent could no longer clean up its own state, and validateDestination
-// refused writes the carve-out exists to permit.
-//
-// Asserting the LIST covers the agent's roots (rather than asserting the list
-// equals some other literal) keeps the check about the property that matters:
-// wherever the agent state lives, the guard has to reach it.
 func TestWipeAllowedRoots_CoverTheDirectoriesTheAgentUses(t *testing.T) {
 	if len(wipeAllowedRoots) == 0 {
 		t.Fatal("wipeAllowedRoots is empty; the carve-out would refuse every agent-owned path")
 	}
 	for _, root := range agentStateRoots {
 		t.Run("root="+root, func(t *testing.T) {
-			// The root itself and a path beneath it must both be recognised —
-			// Wipe targets subtrees, validateDestination targets leaf writes.
+
 			for _, p := range []string{root, root + "/state/file"} {
 				if !isManagedRoot(p) {
 					t.Errorf("isManagedRoot(%q) = false; wipeAllowedRoots %v does not cover the agent's state root",
@@ -316,8 +227,7 @@ func TestWipeAllowedRoots_CoverTheDirectoriesTheAgentUses(t *testing.T) {
 					t.Errorf("validateDestination(%q) = %v; the agent cannot write its own state", p, err)
 				}
 			}
-			// The boundary still holds for the renamed root: a hostile sibling
-			// must not inherit the carve-out.
+
 			if isManagedRoot(root + "-evil") {
 				t.Errorf("isManagedRoot(%q) matched a hostile sibling of the agent state root", root+"-evil")
 			}
@@ -325,12 +235,6 @@ func TestWipeAllowedRoots_CoverTheDirectoriesTheAgentUses(t *testing.T) {
 	}
 }
 
-// TestWipeAllowedRoots_CoverEverythingTheSDKItselfWritesThere is the same
-// invariant from inside this module, with no literal at all: sys/network writes
-// EAP-TLS key material under CertBaseDir, which lives in the agent-managed
-// tree. If a rename moves that constant without moving the allow-list, the SDK
-// would be writing key material it can no longer remove. Self-discovering, so
-// it keeps holding after the next rename.
 func TestWipeAllowedRoots_CoverEverythingTheSDKItselfWritesThere(t *testing.T) {
 	certDir := network.CertBaseDir + "/01ARZ3NDEKTSV4RRFFQ69G5FAV"
 	if !isManagedRoot(certDir) {

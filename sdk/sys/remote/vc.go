@@ -68,10 +68,6 @@ type VersionControlBackend interface {
 	Resolve(ctx context.Context, cfg GitConfig) (revision string, err error)
 }
 
-// vcRegistry holds every registered version-control backend by
-// caller-chosen name. The default driver "go-git" is registered from
-// vc_gogit.go's init() (Slice 9); this file only owns the registry
-// shape and the lookup contract.
 var vcRegistry = struct {
 	mu sync.RWMutex
 	m  map[string]VersionControlBackend
@@ -94,11 +90,6 @@ func RegisterVersionControlBackend(name string, b VersionControlBackend) {
 	vcRegistry.m[name] = b
 }
 
-// versionControlBackend resolves driver to a registered backend.
-// Returns ErrBackendNotFound when no backend is registered under that
-// name. The name is taken verbatim — no defaulting here; defaulting is
-// the constructor's job (NewGit substitutes "go-git" when cfg.Driver
-// is empty).
 func versionControlBackend(driver string) (VersionControlBackend, error) {
 	vcRegistry.mu.RLock()
 	b, ok := vcRegistry.m[driver]

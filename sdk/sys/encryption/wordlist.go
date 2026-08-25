@@ -1,8 +1,5 @@
 package encryption
 
-// wordList contains ~2048 common English words (4-8 chars, capitalized).
-// Used for generating human-readable LUKS passphrases.
-// Source: filtered EFF diceware list + common English words.
 var wordList = []string{
 	"Able", "About", "Above", "Acid", "Acre", "Adam", "After", "Again",
 	"Agent", "Agree", "Ahead", "Aisle", "Alarm", "Album", "Alert", "Alien",

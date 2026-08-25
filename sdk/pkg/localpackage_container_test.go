@@ -1,11 +1,5 @@
 //go:build container
 
-// Real-execution coverage for LocalPackageInfo. The fake-runner unit tests assert
-// the dpkg-deb/rpm argv and parse scripted output; this builds a REAL .deb with
-// dpkg-deb and reads it back through the actual binary — which is what caught the
-// apt parse bug the fake-runner test could not (dpkg-deb -f with multiple fields
-// emits a labeled "Package: <name>" stanza, not bare values, so the label leaked
-// into Name). apt-only: runs on the debian/base pkg cell.
 package pkg
 
 import (

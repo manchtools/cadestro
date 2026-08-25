@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-// nmBackend configures an interface's active NetworkManager connection via nmcli.
 type nmBackend struct {
 	base
 }
@@ -39,7 +38,6 @@ func (b *nmBackend) Apply(ctx context.Context, cfg InterfaceConfig) error {
 	return nil
 }
 
-// activeConnection resolves the connection name bound to iface.
 func (b *nmBackend) activeConnection(ctx context.Context, iface string) (string, error) {
 	out, err := runRead(ctx, b.r, "nmcli", "-g", "GENERAL.CONNECTION", "device", "show", iface)
 	if err != nil {
@@ -52,21 +50,10 @@ func (b *nmBackend) activeConnection(ctx context.Context, iface string) (string,
 	return conn, nil
 }
 
-// nmModifyArgs builds the `nmcli connection modify` property/value pairs for cfg.
 func nmModifyArgs(cfg InterfaceConfig) []string {
 	var a []string
 	if cfg.Mode == DHCP {
-		// Make DHCP authoritative: switch both families to auto and clear the
-		// WHOLE manual configuration — addressing, resolvers, and routes.
-		// Clearing only addresses/gateway left ipv4.dns/ipv6.dns and
-		// ipv4.routes/ipv6.routes from a previous static config on the profile,
-		// so an interface switched back to DHCP kept resolving through the old
-		// nameservers and routing over the old next-hops.
-		//
-		// The generic DNS/routes appends below run AFTER this block, and nmcli
-		// honours the LAST occurrence of a repeated property — so a DHCP config
-		// that deliberately carries DNS or routes still wins, and only the
-		// leftovers are wiped.
+
 		a = append(a,
 			"ipv4.method", "auto", "ipv4.addresses", "", "ipv4.gateway", "",
 			"ipv6.method", "auto", "ipv6.addresses", "", "ipv6.gateway", "",
@@ -75,7 +62,7 @@ func nmModifyArgs(cfg InterfaceConfig) []string {
 		)
 	} else {
 		v4addr, v6addr := partitionAddrsByFamily(cfg.Addresses)
-		// cfg.Gateway is a validated IP literal (or empty); bucket it by family.
+
 		var gwV4, gwV6 string
 		if cfg.Gateway != "" {
 			if net.ParseIP(cfg.Gateway).To4() != nil {
@@ -119,9 +106,6 @@ func nmModifyArgs(cfg InterfaceConfig) []string {
 	return a
 }
 
-// nmRoutesByFamily renders each route as nmcli's "<dest> <gateway> [metric]"
-// form, bucketed by the gateway's family. A "default" destination becomes the
-// family-appropriate default CIDR.
 func nmRoutesByFamily(routes []Route) (v4, v6 []string) {
 	for _, rt := range routes {
 		isV4 := net.ParseIP(rt.Gateway).To4() != nil

@@ -9,9 +9,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/smart"
 )
 
-// ExampleNew scans for devices and prints each one's health.
 func ExampleNew() {
-	r, err := exec.NewRunner(exec.Direct) // smartctl needs root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		log.Fatal(err)
 	}

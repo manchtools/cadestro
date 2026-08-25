@@ -10,8 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// aptM builds an apt Manager over a fresh fake with "apt" resolvable on PATH
-// (so aptCommand() == "apt", making argv assertions deterministic).
 func aptM(t *testing.T) (Manager, *exectest.FakeRunner) {
 	t.Helper()
 	stubLookPath(t, "apt", "apt-get")
@@ -47,7 +45,7 @@ func TestApt_Version(t *testing.T) {
 }
 
 func TestApt_AptGetFallback(t *testing.T) {
-	stubLookPath(t) // neither apt nor apt-get on PATH -> resolves to apt-get
+	stubLookPath(t)
 	m, f := mustNew(t, Apt)
 	ok(f, "")
 	if _, err := m.Update(context.Background()); err != nil {
@@ -309,12 +307,9 @@ func TestApt_WriteExecError(t *testing.T) {
 	}
 }
 
-// --- reads -----------------------------------------------------------------
-
 func TestApt_Search(t *testing.T) {
 	t.Run("always uses apt-cache search (parsable single-line format)", func(t *testing.T) {
-		// Even when apt is present, Search must use `apt-cache search`: `apt search`
-		// emits a multi-line presentation format that would not parse on " - ".
+
 		m, f := aptM(t)
 		ok(f, "vim - Vi IMproved\nneovim - heavily refactored vim fork\nnot-a-result\n")
 		res, err := m.Search(context.Background(), "vim")
@@ -395,7 +390,7 @@ func TestApt_Show(t *testing.T) {
 	t.Run("installed", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\nArchitecture: amd64\nInstalled-Size: 3000\nDescription: Vi IMproved\n")
-		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled: dpkg -s -> installed
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -407,7 +402,7 @@ func TestApt_Show(t *testing.T) {
 	t.Run("available (not installed)", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "Package: vim\nVersion: 2:8.2\n")
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // dpkg -s -> not installed
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -439,7 +434,7 @@ func TestApt_ListVersions(t *testing.T) {
 			"  vim | 2:8.2 | http://archive jammy/main i386\n"+
 			"  vim | 2:8.1 | http://archive jammy/universe amd64\n"+
 			"short | line\n")
-		ok(f, "2:8.2\n") // InstalledVersion (dpkg-query)
+		ok(f, "2:8.2\n")
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -451,7 +446,7 @@ func TestApt_ListVersions(t *testing.T) {
 	t.Run("installed-version runner failure propagates", func(t *testing.T) {
 		m, f := aptM(t)
 		ok(f, "  vim | 2:8.2 | http://archive jammy/main amd64\n")
-		f.Push(sysexec.Result{}, errors.New("dpkg-query err")) // InstalledVersion runner failure
+		f.Push(sysexec.Result{}, errors.New("dpkg-query err"))
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a runner failure in the installed-version lookup must propagate")
 		}
@@ -610,9 +605,9 @@ func TestApt_IsPinned(t *testing.T) {
 func TestApt_ListPinned(t *testing.T) {
 	t.Run("lists held with versions", func(t *testing.T) {
 		m, f := aptM(t)
-		ok(f, "vim\n\ngit\n") // showhold (blank line skipped)
-		ok(f, "2:8.2\n")      // InstalledVersion vim
-		ok(f, "1:2.39\n")     // InstalledVersion git
+		ok(f, "vim\n\ngit\n")
+		ok(f, "2:8.2\n")
+		ok(f, "1:2.39\n")
 		pkgs, err := m.ListPinned(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -630,22 +625,20 @@ func TestApt_ListPinned(t *testing.T) {
 	})
 }
 
-// Each enrichment/secondary lookup must propagate a runner failure rather than
-// swallow it (fail-closed; CodeRabbit review).
 func TestApt_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("Show: IsInstalled runner failure", func(t *testing.T) {
 		m, f := aptM(t)
-		ok(f, "Package: vim\nVersion: 2:8.2\n")                // show
-		f.Push(sysexec.Result{}, errors.New("dpkg -s failed")) // IsInstalled
+		ok(f, "Package: vim\nVersion: 2:8.2\n")
+		f.Push(sysexec.Result{}, errors.New("dpkg -s failed"))
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("an IsInstalled runner failure must propagate")
 		}
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := aptM(t)
-		ok(f, "vim\n")                                            // apt-mark showhold
-		f.Push(sysexec.Result{}, errors.New("dpkg-query failed")) // InstalledVersion
+		ok(f, "vim\n")
+		f.Push(sysexec.Result{}, errors.New("dpkg-query failed"))
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}

@@ -21,10 +21,6 @@ import (
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// defaultHTTPMaxBytes caps the size of any single HTTP payload to defeat
-// zip-bomb / runaway-stream surprises. 2 GiB lines up with the typical
-// "large but not crazy" artefact (full distro ISO, big tarball); callers
-// who legitimately need more must set MaxBytes explicitly.
 const defaultHTTPMaxBytes int64 = 2 * 1024 * 1024 * 1024
 
 // RedirectPolicy governs which HTTP redirects a fetch follows. The zero value
@@ -111,22 +107,20 @@ type HTTPConfig struct {
 	Redirect RedirectPolicy
 }
 
-// httpSource is the concrete Source implementation.
 type httpSource struct {
 	parsedURL *url.URL
 	cfg       HTTPConfig
-	checksum  []byte // decoded ChecksumSHA256; nil when none set
+	checksum  []byte
 	client    *http.Client
 
 	mu       sync.Mutex
-	revision string // last successful ETag — drives drift detection
+	revision string
 }
 
 // NewHTTP validates cfg and returns a Source. Returns ErrInvalidConfig
 // on any validation failure.
 func NewHTTP(cfg HTTPConfig) (Source, error) {
-	// Return an untyped nil on error — never a non-nil Source wrapping a nil
-	// *httpSource (the classic nil-interface trap for `src == nil` callers).
+
 	h, err := newHTTPSource(cfg)
 	if err != nil {
 		return nil, err
@@ -134,15 +128,8 @@ func NewHTTP(cfg HTTPConfig) (Source, error) {
 	return h, nil
 }
 
-// newHTTPSource is the shared constructor used by NewHTTP and FetchBytes: it
-// validates cfg, decodes the checksum, defaults MaxBytes/client, and returns the
-// concrete source.
 func newHTTPSource(cfg HTTPConfig) (*httpSource, error) {
-	// Normalize the URL the same way sdk.ValidateHTTPSURL does (it trims before
-	// parsing), so a whitespace-padded URL that passed validation also passes
-	// here and in the request itself — "validated" implies "fetchable". Trimming
-	// the surrounding whitespace before the control-character check leaves any
-	// INTERNAL control char still caught.
+
 	cfg.URL = strings.TrimSpace(cfg.URL)
 	if err := validateHTTPConfig(&cfg); err != nil {
 		return nil, err
@@ -231,8 +218,7 @@ func (h *httpSource) Fetch(ctx context.Context, dest string) (Result, error) {
 	}
 
 	if h.checksum != nil && subtle.ConstantTimeCompare(sum, h.checksum) != 1 {
-		// Stream succeeded but the integrity pin failed; nuke the tmp
-		// so a partial / poisoned payload never reaches dest.
+
 		_ = os.Remove(tmp)
 		return Result{}, fmt.Errorf("%w: sha256 mismatch for %s", ErrIntegrity, dest)
 	}
@@ -248,9 +234,7 @@ func (h *httpSource) Fetch(ctx context.Context, dest string) (Result, error) {
 
 	revision := etag
 	if revision == "" {
-		// Origin omitted ETag — use the content sha256 as the drift
-		// token. Loses HEAD short-circuit on the next call (no header
-		// to send) but still tells callers whether the body changed.
+
 		revision = hex.EncodeToString(sum)
 	}
 
@@ -284,13 +268,8 @@ func (h *httpSource) String() string {
 	return fmt.Sprintf("http %s [%s]", h.cfg.URL, mode)
 }
 
-// maxBytes is the effective payload cap after defaulting. Test hook.
 func (h *httpSource) maxBytes() int64 { return h.cfg.MaxBytes }
 
-// checkNotModified issues a HEAD with If-None-Match. Returns true on
-// a 304 response (the origin confirms the cached Revision is still
-// current). Network errors propagate; non-200/304 responses are
-// treated as "needs GET" (no-op).
 func (h *httpSource) checkNotModified(ctx context.Context, etag string) (bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, h.cfg.URL, nil)
 	if err != nil {
@@ -305,9 +284,6 @@ func (h *httpSource) checkNotModified(ctx context.Context, etag string) (bool, e
 	return resp.StatusCode == http.StatusNotModified, nil
 }
 
-// openBody fires a GET (with optional If-None-Match) and returns the
-// response body + the origin's ETag (for the next-call drift token).
-// Caller must Close the body.
 func (h *httpSource) openBody(ctx context.Context, etag string) (io.ReadCloser, string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, h.cfg.URL, nil)
 	if err != nil {
@@ -321,11 +297,7 @@ func (h *httpSource) openBody(ctx context.Context, etag string) (io.ReadCloser, 
 		return nil, "", fmt.Errorf("GET %s: %w", h.cfg.URL, err)
 	}
 	if resp.StatusCode == http.StatusNotModified {
-		// Server-side optimisation rather than client-side error.
-		// Equivalent to a cache-hit; return an empty body so the
-		// caller falls through to "no body to read" path. In practice
-		// we only reach this branch after our own cachedRevision lost
-		// the race, which is rare but worth handling cleanly.
+
 		_ = resp.Body.Close()
 		return io.NopCloser(strings.NewReader("")), resp.Header.Get("ETag"), nil
 	}
@@ -336,11 +308,6 @@ func (h *httpSource) openBody(ctx context.Context, etag string) (io.ReadCloser, 
 	return resp.Body, resp.Header.Get("ETag"), nil
 }
 
-// streamToTmp writes the body to "<dest>.tmp.<rand>" through a
-// LimitReader and a sha256.Hash. Returns (tmpPath, bytesWritten,
-// sumBytes, error). On error the tmp file is removed before returning;
-// the returned tmpPath is empty in that case so the caller can't
-// accidentally reference a non-existent path.
 func streamToTmp(dest string, body io.Reader, maxBytes int64) (string, int64, []byte, error) {
 	tmp, err := tmpPathFor(dest)
 	if err != nil {
@@ -351,8 +318,7 @@ func streamToTmp(dest string, body io.Reader, maxBytes int64) (string, int64, []
 	}
 	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_EXCL, 0o600)
 	if err != nil {
-		// EEXIST is possible if a previous run died between OpenFile
-		// and Rename. Stomp on it — same caller, same logical fetch.
+
 		if errors.Is(err, os.ErrExist) {
 			_ = os.Remove(tmp)
 			f, err = os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_EXCL, 0o600)
@@ -366,8 +332,6 @@ func streamToTmp(dest string, body io.Reader, maxBytes int64) (string, int64, []
 		_ = os.Remove(tmp)
 	}
 
-	// LimitReader caps at maxBytes+1 so a one-byte over-read tells us
-	// the origin tried to deliver more than we allow.
 	limited := io.LimitReader(body, maxBytes+1)
 	h := sha256.New()
 	tee := io.TeeReader(limited, h)
@@ -391,12 +355,6 @@ func streamToTmp(dest string, body io.Reader, maxBytes int64) (string, int64, []
 	return tmp, n, h.Sum(nil), nil
 }
 
-// tmpPathFor builds an unpredictable sibling tmp filename. Sixteen random hex
-// chars keep collisions astronomically unlikely while keeping the suffix short
-// enough that ext4's 255-char filename limit doesn't bite. The entropy read is
-// fail-closed: if crypto/rand cannot produce randomness the suffix would be
-// predictable, letting an attacker pre-create a symlink at the staging path, so
-// the error is propagated rather than discarded.
 func tmpPathFor(dest string) (string, error) {
 	var b [8]byte
 	if _, err := rand.Read(b[:]); err != nil {
@@ -405,21 +363,12 @@ func tmpPathFor(dest string) (string, error) {
 	return dest + ".tmp." + hex.EncodeToString(b[:]), nil
 }
 
-// applyMode sets mode and/or ownership on the freshly-written destination, which
-// may be a regular file (single-file fetch) OR a directory (archive extract, git
-// clone, S3 prefix). Mode is applied with a local chmod (no privilege needed).
-// Ownership is applied through sys/fs's fd-anchored, symlink-refusing primitives
-// — FchownNoFollow for a regular file, OpenRealDir+Chown for a directory (the
-// former refuses non-regular files, so directories MUST take the dir path) — and
-// requires CAP_CHOWN (the root agent has it). Empty fields are skipped.
 func applyMode(dest, mode, owner, group string) error {
 	if mode == "" && owner == "" && group == "" {
 		return nil
 	}
 	if mode != "" {
-		// ParseUint(base 8) handles octal mode strings with or without a leading
-		// zero ("755", "0755", "0"); do NOT strip a leading "0" first — that turns
-		// "0" into "" and wrongly rejects octal zero.
+
 		bits, perr := strconv.ParseUint(mode, 8, 32)
 		if perr != nil {
 			return fmt.Errorf("invalid mode %q: %w", mode, perr)
@@ -440,10 +389,6 @@ func applyMode(dest, mode, owner, group string) error {
 	return nil
 }
 
-// chownNoFollow applies ownership to dest without following a final symlink,
-// dispatching by inode type: a directory goes through an O_NOFOLLOW|O_DIRECTORY
-// fd (OpenRealDir), a regular file through FchownNoFollow. A symlink at dest is
-// refused by both paths rather than dereferenced.
 func chownNoFollow(dest string, uid, gid int) error {
 	info, err := os.Lstat(dest)
 	if err != nil {
@@ -460,9 +405,6 @@ func chownNoFollow(dest string, uid, gid int) error {
 	return sysfs.FchownNoFollow(dest, uid, gid)
 }
 
-// defaultHTTPClient — modest timeout so a Fetch can't hang forever, and a
-// redirect guard governed by the given RedirectPolicy (the URL validation
-// already restricts the scheme to http/https).
 func defaultHTTPClient(p RedirectPolicy) *http.Client {
 	return &http.Client{
 		Timeout:       30 * time.Minute,
@@ -470,18 +412,6 @@ func defaultHTTPClient(p RedirectPolicy) *http.Client {
 	}
 }
 
-// redirectPolicy returns an http.Client.CheckRedirect that enforces p. It
-// compares each hop against the immediately-preceding request:
-//   - An https -> http downgrade is refused at EVERY level — a redirect must
-//     never strip TLS (a download pinned to https loses transport integrity if
-//     a redirect can bounce it to http).
-//   - RedirectNone refuses all redirects; RedirectSameOrigin refuses any scheme
-//     or host change; RedirectCrossOrigin allows host changes and http -> https
-//     upgrades (integrity for those then rests on the ChecksumSHA256 pin, not on
-//     host-pinning).
-//   - The chain is bounded to 10 hops wherever redirects are followed.
-//
-// An unknown policy value fails closed (refuses).
 func redirectPolicy(p RedirectPolicy) func(req *http.Request, via []*http.Request) error {
 	return func(req *http.Request, via []*http.Request) error {
 		if len(via) == 0 {
@@ -489,7 +419,7 @@ func redirectPolicy(p RedirectPolicy) func(req *http.Request, via []*http.Reques
 		}
 		from := via[len(via)-1].URL
 		to := req.URL
-		// TLS strip is never permitted, regardless of policy.
+
 		if from.Scheme == "https" && to.Scheme == "http" {
 			return fmt.Errorf("%w: refusing scheme downgrade %s://%s -> %s://%s", ErrInvalidConfig,
 				from.Scheme, from.Host, to.Scheme, to.Host)
@@ -504,7 +434,7 @@ func redirectPolicy(p RedirectPolicy) func(req *http.Request, via []*http.Reques
 					from.Scheme, from.Host, to.Scheme, to.Host)
 			}
 		case RedirectCrossOrigin:
-			// Host change / scheme upgrade allowed; downgrade already refused.
+
 		default:
 			return fmt.Errorf("%w: unknown redirect policy %d", ErrInvalidConfig, p)
 		}
@@ -519,14 +449,11 @@ func validateHTTPConfig(cfg *HTTPConfig) error {
 	if cfg.Prune && !cfg.Extract {
 		return fmt.Errorf("%w: prune requires extract", ErrInvalidConfig)
 	}
-	// extract+prune DELETES pre-existing files in the destination tree, so a
-	// poisoned origin could weaponize it; require an integrity pin so the bytes
-	// that drive the prune are verified before anything is removed.
+
 	if cfg.Extract && cfg.Prune && cfg.ChecksumSHA256 == "" {
 		return fmt.Errorf("%w: extract+prune requires a checksum_sha256 (the prune deletes files; the payload must be integrity-pinned)", ErrInvalidConfig)
 	}
-	// A negative byte cap is a caller error; never silently fall back to the
-	// default (which would lift the intended limit).
+
 	if cfg.MaxBytes < 0 {
 		return fmt.Errorf("%w: max_bytes must not be negative", ErrInvalidConfig)
 	}
@@ -536,26 +463,21 @@ func validateHTTPConfig(cfg *HTTPConfig) error {
 	return nil
 }
 
-// validateModeBits rejects a Mode that sets the setuid/setgid/sticky bits on a
-// downloaded artifact — a downloaded setuid-root helper is a privilege-escalation
-// dropper. Empty Mode is allowed (no chmod). The octal parsing mirrors applyMode.
 func validateModeBits(mode string) error {
 	if mode == "" {
 		return nil
 	}
-	// ParseUint(base 8) accepts a leading zero; do NOT TrimPrefix "0" first (it
-	// turns "0" into "" and wrongly rejects octal zero). Mirrors applyMode.
+
 	bits, err := strconv.ParseUint(mode, 8, 32)
 	if err != nil {
 		return fmt.Errorf("%w: invalid mode %q", ErrInvalidConfig, mode)
 	}
-	if bits&0o7000 != 0 { // setuid(4000) | setgid(2000) | sticky(1000)
+	if bits&0o7000 != 0 {
 		return fmt.Errorf("%w: mode %q sets privileged bits (setuid/setgid/sticky), refused for a downloaded artifact", ErrInvalidConfig, mode)
 	}
 	return nil
 }
 
-// parseHTTPURL is the URL validation layer.
 func parseHTTPURL(raw string) (*url.URL, error) {
 	if strings.TrimSpace(raw) == "" {
 		return nil, fmt.Errorf("%w: url is empty", ErrInvalidConfig)

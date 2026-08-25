@@ -8,7 +8,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// indexOf returns the first index of want in args, or -1.
 func indexOf(args []string, want string) int {
 	for i, a := range args {
 		if a == want {
@@ -18,29 +17,10 @@ func indexOf(args []string, want string) int {
 	return -1
 }
 
-// TestEveryManagerMethodNeutralizesFlagShapedOperands is a self-discovering
-// guard over the WHOLE Manager surface: for every method and every string (or
-// variadic ...string) operand, a flag-shaped value ("-rf") must never reach the
-// package manager as a parseable option. Each method satisfies this one of two
-// honest ways:
-//
-//   - it REJECTS the value before any command runs — the package-name, the
-//     local-package-path, and the search-query validators all do this (a search
-//     query cannot be "--"-guarded because dnf5's `search` rejects "--", so a
-//     flag-shaped query is refused instead), or
-//   - the value reaches argv only AFTER a "--" end-of-options separator, so the
-//     tool treats it as an operand, not a flag.
-//
-// The method set is discovered by reflection over the interface and the check is
-// run against every backend, with a matches-zero guard so a future refactor that
-// drops the operands cannot pass it vacuously. This is the package-wide analogue
-// of service's TestEveryMethodRejectsUnsafeUnitNameBeforeRunner.
 func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
-	const flag = "-rf"       // flag-shaped: must never be parsed as an option
-	const safe = "coreutils" // a valid package name for any non-target string param
+	const flag = "-rf"
+	const safe = "coreutils"
 
-	// Resolve every backend's binary so a method that probes PATH before
-	// rejecting still reaches its validation rather than a "not found".
 	stubLookPath(t, "apt", "apt-get", "dnf", "pacman", "zypper", "flatpak")
 
 	mt := reflect.TypeOf((*Manager)(nil)).Elem()
@@ -107,7 +87,7 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 				for _, c := range f.Calls() {
 					idx := indexOf(c.Args, flag)
 					if idx < 0 {
-						continue // this command does not carry the flag-shaped token
+						continue
 					}
 					sep := indexOf(c.Args, sysexec.EndOfOptions)
 					if sep < 0 || sep > idx {
@@ -124,10 +104,6 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 	}
 }
 
-// TestSearch_RejectsFlagShapedQuery is the per-backend, behaviour-level companion
-// to the reflective guard above: a flag-shaped query is refused on every backend
-// BEFORE the package manager runs (so it can never be reparsed as an option),
-// while an ordinary query reaches the tool unchanged.
 func TestSearch_RejectsFlagShapedQuery(t *testing.T) {
 	ctx := context.Background()
 	for _, b := range []Backend{Apt, Dnf, Dnf5, Pacman, Zypper} {
@@ -140,7 +116,7 @@ func TestSearch_RejectsFlagShapedQuery(t *testing.T) {
 			if n := len(f.Calls()); n != 0 {
 				t.Errorf("Search ran %d command(s) on a flag-shaped query; want 0", n)
 			}
-			// A normal query still runs.
+
 			ok(f, "")
 			if _, err := m.Search(ctx, "vim"); err != nil {
 				t.Errorf("Search(vim) = %v, want nil", err)
@@ -152,7 +128,6 @@ func TestSearch_RejectsFlagShapedQuery(t *testing.T) {
 	}
 }
 
-// TestValidateSearchQuery covers the query validator directly.
 func TestValidateSearchQuery(t *testing.T) {
 	for _, q := range []string{"vim", "lib-foo", "c++", "gtk3.0", "", "x86_64"} {
 		if err := ValidateSearchQuery(q); err != nil {

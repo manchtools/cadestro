@@ -44,7 +44,7 @@ func TestNM_ApplyRejectsInvalidConfig(t *testing.T) {
 
 func TestNM_ApplyNoActiveConnection(t *testing.T) {
 	m, r := newNM(t)
-	r.Push(exec.Result{Stdout: "--\n"}, nil) // device show → no connection
+	r.Push(exec.Result{Stdout: "--\n"}, nil)
 	if err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}}); !errors.Is(err, ErrInvalidConfig) {
 		t.Errorf("err = %v, want ErrInvalidConfig for an interface with no active connection", err)
 	}
@@ -55,9 +55,9 @@ func TestNM_ApplyNoActiveConnection(t *testing.T) {
 
 func TestNM_ApplySuccess(t *testing.T) {
 	m, r := newNM(t)
-	r.Push(exec.Result{Stdout: "Wired connection 1\n"}, nil) // device show → conn name
-	r.Push(exec.Result{}, nil)                               // connection modify
-	r.Push(exec.Result{}, nil)                               // connection up
+	r.Push(exec.Result{Stdout: "Wired connection 1\n"}, nil)
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{}, nil)
 	err := m.Apply(context.Background(), Config{
 		Interface:     "eth0",
 		Nameservers:   []string{"1.1.1.1", "2001:db8::1"},
@@ -70,11 +70,11 @@ func TestNM_ApplySuccess(t *testing.T) {
 	if len(calls) != 3 {
 		t.Fatalf("got %d calls, want 3 (resolve+modify+up): %v", len(calls), calls)
 	}
-	// resolve probe: unescalated read of GENERAL.CONNECTION.
+
 	if got := strings.Join(calls[0].Args, " "); got != "-g GENERAL.CONNECTION device show eth0" || calls[0].Escalate {
 		t.Errorf("resolve argv = %q (escalate=%v), want unescalated `-g GENERAL.CONNECTION device show eth0`", got, calls[0].Escalate)
 	}
-	// modify: v4 + v6 dns + dns-search on both families; escalated.
+
 	mod := strings.Join(calls[1].Args, " ")
 	for _, want := range []string{
 		"connection modify Wired connection 1",
@@ -90,7 +90,7 @@ func TestNM_ApplySuccess(t *testing.T) {
 	if !calls[1].Escalate {
 		t.Error("connection modify must escalate")
 	}
-	// up: reactivate, escalated.
+
 	if got := strings.Join(calls[2].Args, " "); got != "connection up Wired connection 1" || !calls[2].Escalate {
 		t.Errorf("up argv = %q (escalate=%v), want escalated `connection up Wired connection 1`", got, calls[2].Escalate)
 	}
@@ -116,7 +116,7 @@ func TestNM_ApplyV4OnlySkipsV6(t *testing.T) {
 func TestNM_ApplyModifyFailurePropagates(t *testing.T) {
 	m, r := newNM(t)
 	r.Push(exec.Result{Stdout: "conn\n"}, nil)
-	r.Push(exec.Result{ExitCode: 1, Stderr: "invalid property"}, nil) // modify fails
+	r.Push(exec.Result{ExitCode: 1, Stderr: "invalid property"}, nil)
 	if err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}}); err == nil {
 		t.Error("a failed connection modify must propagate")
 	}
@@ -125,8 +125,8 @@ func TestNM_ApplyModifyFailurePropagates(t *testing.T) {
 func TestNM_ApplyUpFailurePropagates(t *testing.T) {
 	m, r := newNM(t)
 	r.Push(exec.Result{Stdout: "conn\n"}, nil)
-	r.Push(exec.Result{}, nil)                                         // modify ok
-	r.Push(exec.Result{ExitCode: 4, Stderr: "activation failed"}, nil) // up fails
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{ExitCode: 4, Stderr: "activation failed"}, nil)
 	if err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}}); err == nil {
 		t.Error("a failed connection up must propagate")
 	}

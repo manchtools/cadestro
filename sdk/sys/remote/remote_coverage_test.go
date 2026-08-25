@@ -9,8 +9,6 @@ import (
 	"testing"
 )
 
-// --- detectArchiveKind: full content-type + extension matrix ---
-
 func TestDetectArchiveKind_Matrix(t *testing.T) {
 	cases := []struct {
 		ct, url string
@@ -20,19 +18,19 @@ func TestDetectArchiveKind_Matrix(t *testing.T) {
 		{"application/x-gzip", "", archiveTarGz},
 		{"application/x-tar+gzip", "", archiveTarGz},
 		{"application/x-tgz", "", archiveTarGz},
-		{"APPLICATION/GZIP", "", archiveTarGz}, // case-insensitive
+		{"APPLICATION/GZIP", "", archiveTarGz},
 		{"application/zip", "", archiveZip},
 		{"application/x-zip", "", archiveZip},
 		{"application/x-zip-compressed", "", archiveZip},
 		{"application/x-xz", "", archiveTarXz},
 		{"application/x-tar+xz", "", archiveTarXz},
-		// content-type unknown → fall through to URL extension
+
 		{"", "https://h/f.tar.gz", archiveTarGz},
 		{"", "https://h/f.tgz", archiveTarGz},
 		{"", "https://h/f.zip", archiveZip},
 		{"", "https://h/f.tar.xz", archiveTarXz},
 		{"", "https://h/f.txz", archiveTarXz},
-		{"", "https://h/f.tar.gz?sig=abc#frag", archiveTarGz}, // query/fragment stripped
+		{"", "https://h/f.tar.gz?sig=abc#frag", archiveTarGz},
 		{"application/octet-stream", "https://h/f.zip", archiveZip},
 		{"", "https://h/f.bin", archiveUnknown},
 		{"text/plain", "https://h/nope", archiveUnknown},
@@ -44,28 +42,26 @@ func TestDetectArchiveKind_Matrix(t *testing.T) {
 	}
 }
 
-// --- safeJoinDest: zip/tar-slip and malformed entry refusal ---
-
 func TestSafeJoinDest_RefusesEscape(t *testing.T) {
 	staging := t.TempDir()
 	bad := []string{
-		"",                 // empty
-		".",                // dot
-		"/",                // root
-		"/etc/passwd",      // absolute
-		"../escape",        // parent traversal
-		"a/../../escape",   // traversal after a component
-		"../../etc/passwd", // deep traversal
-		"sub/../../escape", // traversal mid-path
-		"foo\x00bar",       // NUL
-		"./",               // dot + slash → normalises empty
+		"",
+		".",
+		"/",
+		"/etc/passwd",
+		"../escape",
+		"a/../../escape",
+		"../../etc/passwd",
+		"sub/../../escape",
+		"foo\x00bar",
+		"./",
 	}
 	for _, e := range bad {
 		if _, err := safeJoinDest(staging, e); !errors.Is(err, ErrUnsafeDestination) {
 			t.Errorf("safeJoinDest(%q) err = %v; want ErrUnsafeDestination", e, err)
 		}
 	}
-	// Legitimate local entries are accepted and stay under staging.
+
 	for _, e := range []string{"file", "sub/file", "a/b/c/file", "dir/"} {
 		full, err := safeJoinDest(staging, e)
 		if err != nil {
@@ -78,15 +74,13 @@ func TestSafeJoinDest_RefusesEscape(t *testing.T) {
 	}
 }
 
-// --- digest: sha256File / sha256Tree happy + error paths ---
-
 func TestSha256File(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "f")
 	if err := os.WriteFile(p, []byte("abc"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// Known sha256("abc")
+
 	const want = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
 	got, err := sha256File(p)
 	if err != nil {
@@ -95,7 +89,7 @@ func TestSha256File(t *testing.T) {
 	if got != want {
 		t.Errorf("sha256File = %q, want %q", got, want)
 	}
-	// Error: nonexistent file (open failure).
+
 	if _, err := sha256File(filepath.Join(dir, "missing")); err == nil {
 		t.Error("sha256File(missing) returned nil error")
 	}
@@ -119,24 +113,22 @@ func TestSha256Tree(t *testing.T) {
 	if h1 == "" {
 		t.Error("sha256Tree returned empty hash")
 	}
-	// Deterministic: same tree → same digest.
+
 	if h2, _ := sha256Tree(dir); h2 != h1 {
 		t.Errorf("sha256Tree not deterministic: %q vs %q", h1, h2)
 	}
-	// A content change flips the digest.
+
 	if err := os.WriteFile(filepath.Join(dir, "a"), []byte("changed"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if h3, _ := sha256Tree(dir); h3 == h1 {
 		t.Error("sha256Tree digest unchanged after a file edit")
 	}
-	// Error: nonexistent root.
+
 	if _, err := sha256Tree(filepath.Join(dir, "no-such-dir")); err == nil {
 		t.Error("sha256Tree(missing) returned nil error")
 	}
 }
-
-// --- 0% functions: Source.String() and Source.Wipe() for git + s3 ---
 
 func TestGitSource_StringAndWipe(t *testing.T) {
 	src, err := NewGit(GitConfig{URL: "https://example.test/repo.git", Ref: "main"})
@@ -146,7 +138,7 @@ func TestGitSource_StringAndWipe(t *testing.T) {
 	if s := src.String(); !strings.Contains(s, "example.test") {
 		t.Errorf("String() = %q, want it to mention the URL host", s)
 	}
-	// Wipe of an unmanaged/unrecorded path must be refused.
+
 	if err := src.Wipe(context.Background(), "/etc/cron.d/x"); !errors.Is(err, ErrUnsafeDestination) {
 		t.Errorf("Wipe(unmanaged) err = %v; want ErrUnsafeDestination", err)
 	}
@@ -165,17 +157,15 @@ func TestS3Source_StringAndWipe(t *testing.T) {
 	}
 }
 
-// --- validation rejection branches ---
-
 func TestNewGit_RejectsConfig(t *testing.T) {
 	bad := []GitConfig{
-		{URL: ""},                        // empty url
-		{URL: "http://h/r.git"},          // non-https scheme
-		{URL: "ftp://h/r.git"},           // unsupported scheme
-		{URL: "https://user:pw@h/r.git"}, // userinfo
-		{URL: "https:///r.git"},          // no host
-		{URL: "https://h/r.git", Ref: "bad ref with space"}, // bad ref charset
-		{URL: "https://h/r.git", Ref: "ref;rm -rf"},         // shell metachar in ref
+		{URL: ""},
+		{URL: "http://h/r.git"},
+		{URL: "ftp://h/r.git"},
+		{URL: "https://user:pw@h/r.git"},
+		{URL: "https:///r.git"},
+		{URL: "https://h/r.git", Ref: "bad ref with space"},
+		{URL: "https://h/r.git", Ref: "ref;rm -rf"},
 	}
 	for _, c := range bad {
 		if _, err := NewGit(c); !errors.Is(err, ErrInvalidConfig) {
@@ -186,16 +176,16 @@ func TestNewGit_RejectsConfig(t *testing.T) {
 
 func TestNewS3_RejectsConfig(t *testing.T) {
 	bad := []S3Config{
-		{Endpoint: "", Bucket: "b", Key: "k"},                                // empty endpoint
-		{Endpoint: "https://h\x01", Bucket: "b", Key: "k"},                   // control char
-		{Endpoint: "not-absolute", Bucket: "b", Key: "k"},                    // not absolute
-		{Endpoint: "ftp://h", Bucket: "b", Key: "k"},                         // bad scheme
-		{Endpoint: "https://u:p@h", Bucket: "b", Key: "k"},                   // userinfo
-		{Endpoint: "https://", Bucket: "b", Key: "k"},                        // no host
-		{Endpoint: "https://h", Bucket: "", Key: "k"},                        // empty bucket
-		{Endpoint: "https://h", Bucket: strings.Repeat("a", 64), Key: "k"},   // bucket too long
-		{Endpoint: "https://h", Bucket: "b", Key: ""},                        // empty key
-		{Endpoint: "https://h", Bucket: "b", Key: strings.Repeat("a", 1025)}, // key too long
+		{Endpoint: "", Bucket: "b", Key: "k"},
+		{Endpoint: "https://h\x01", Bucket: "b", Key: "k"},
+		{Endpoint: "not-absolute", Bucket: "b", Key: "k"},
+		{Endpoint: "ftp://h", Bucket: "b", Key: "k"},
+		{Endpoint: "https://u:p@h", Bucket: "b", Key: "k"},
+		{Endpoint: "https://", Bucket: "b", Key: "k"},
+		{Endpoint: "https://h", Bucket: "", Key: "k"},
+		{Endpoint: "https://h", Bucket: strings.Repeat("a", 64), Key: "k"},
+		{Endpoint: "https://h", Bucket: "b", Key: ""},
+		{Endpoint: "https://h", Bucket: "b", Key: strings.Repeat("a", 1025)},
 	}
 	for _, c := range bad {
 		if _, err := NewS3(c); !errors.Is(err, ErrInvalidConfig) {

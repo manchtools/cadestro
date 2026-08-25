@@ -49,8 +49,6 @@ func TestJournald_QueryArgv(t *testing.T) {
 	}
 }
 
-// TestJournald_QueryKernel: Kernel=true emits journalctl's -k (kernel ring);
-// Kernel=false must NOT — the absent case proves the flag isn't always-on.
 func TestJournald_QueryKernel(t *testing.T) {
 	r := exectest.New(exec.Direct)
 	r.Push(exec.Result{Stdout: "kmsg\n"}, nil)
@@ -81,7 +79,7 @@ func TestJournald_QueryDefaultsAndMinimal(t *testing.T) {
 		t.Fatal(err)
 	}
 	argv := strings.Join(r.Calls()[0].Args, " ")
-	if !strings.Contains(argv, "-n 100") { // default line cap
+	if !strings.Contains(argv, "-n 100") {
 		t.Errorf("default lines should be 100: %q", argv)
 	}
 	for _, absent := range []string{"-u ", "--since", "--until", "-p ", "--grep", "-k"} {
@@ -111,11 +109,6 @@ func TestJournald_QueryRunError(t *testing.T) {
 	}
 }
 
-// journalctl prints status MARKERS wrapped in "-- ... --" on stdout (e.g.
-// "-- Boot <id> --", "-- No entries --", "-- Reboot --"). These are NOT log
-// entries and must not be returned as if they were — in the default short
-// output every real entry begins with a timestamp, so a "-- ... --" line is
-// always a marker.
 func TestJournald_QueryDropsStatusMarkers(t *testing.T) {
 	r := exectest.New(exec.Direct)
 	r.Push(exec.Result{Stdout: "-- Boot a1b2c3d4 --\n" +
@@ -149,11 +142,6 @@ func TestJournald_QueryNoMatchReturnsEmpty(t *testing.T) {
 	}
 }
 
-// journalctl --grep exits 1 (grep-like) when nothing matches, writing only
-// "-- No entries --" to stdout and NOTHING to stderr. That is an empty result,
-// not a failure — a filter matching nothing must return [], not an error, so a
-// caller can tell "no logs matched" from "journalctl broke" (a real fault writes
-// a diagnostic to stderr; see TestJournald_QueryRunError).
 func TestJournald_QueryGrepNoMatchExit1IsEmpty(t *testing.T) {
 	r := exectest.New(exec.Direct)
 	r.Push(exec.Result{ExitCode: 1, Stdout: "-- No entries --\n", Stderr: ""}, nil)
@@ -167,7 +155,6 @@ func TestJournald_QueryGrepNoMatchExit1IsEmpty(t *testing.T) {
 	}
 }
 
-// withSyslogFixture points syslogPaths + statFile at a fake existing file.
 func withSyslogFixture(t *testing.T, exists bool) {
 	t.Helper()
 	prevPaths, prevStat := syslogPaths, statFile
@@ -244,9 +231,6 @@ func TestSyslog_QueryValidationRejects(t *testing.T) {
 	}
 }
 
-// A grep pattern that passes the structural guard but is not valid RE2 surfaces
-// as ErrInvalidQuery from the syslog compile — and must do so BEFORE any
-// escalated tail runs (compile-before-privileged-read).
 func TestSyslog_QueryBadRegexCompile(t *testing.T) {
 	withSyslogFixture(t, true)
 	r := exectest.New(exec.Direct)

@@ -9,9 +9,6 @@ import (
 	"testing"
 )
 
-// SafeReplaceFile must produce a file with the requested content and
-// mode, atomically (no half-written intermediate state visible to a
-// concurrent reader). Same-directory temp file → fsync → rename.
 func TestSafeReplaceFile_RoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "creds")
@@ -35,7 +32,6 @@ func TestSafeReplaceFile_RoundTrip(t *testing.T) {
 	}
 }
 
-// removeExisting=true must replace the existing file in place.
 func TestSafeReplaceFile_OverwritesExisting(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "f")
@@ -54,10 +50,6 @@ func TestSafeReplaceFile_OverwritesExisting(t *testing.T) {
 	}
 }
 
-// removeExisting=false must refuse to clobber an existing file at the
-// destination — this is the symlink-swap defense from agent F022.
-// On Linux this is enforced by RENAME_NOREPLACE; the fallback path is
-// a Lstat+rename window which still rejects existing files.
 func TestSafeReplaceFile_RefusesExistingWhenNoReplace(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "f")
@@ -80,8 +72,6 @@ func TestSafeReplaceFile_RefusesExistingWhenNoReplace(t *testing.T) {
 	}
 }
 
-// SafeBackupAndReplace must move the existing binary aside, then
-// install the new one. Verifies the agent self-update flow.
 func TestSafeBackupAndReplace_MovesExistingThenWrites(t *testing.T) {
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "agent")
@@ -110,9 +100,6 @@ func TestSafeBackupAndReplace_MovesExistingThenWrites(t *testing.T) {
 	}
 }
 
-// When the existing binary is absent, SafeBackupAndReplace must skip
-// the backup move and just install the new content. Covers the
-// first-install case.
 func TestSafeBackupAndReplace_NoExistingFile(t *testing.T) {
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "agent")

@@ -1,20 +1,5 @@
 //go:build container
 
-// Container-based real-execution tests for the desktop Manager. The hermetic
-// FakeRunner/seam tests cover every branch with injected passwd lookups and
-// loginctl output; these create REAL accounts and home directories inside the
-// container and exercise the actual privilege drop (runuser), passwd/NSS
-// enumeration, and per-user filesystem probes — so a real `runuser` env/identity
-// change or an os/user lookup behaviour change is caught here.
-//
-// Runs in the container-tests lane (root): HomeUsers/UsersWithFlatpakInstall need
-// to create accounts and RunAsRunner drops privilege to a *different* user, both
-// of which require root. The Direct runner is correct (the lane is already root).
-//
-// ActiveSessions' populated GRAPHICAL path needs a real logind session of type
-// x11/wayland, which cannot exist in headless CI (no display); that branch is
-// unit-tested and exercised against real loginctl — empty — in the systemd
-// integration test. Here ActiveSessions covers the loginctl-absent path.
 package desktop
 
 import (
@@ -39,11 +24,9 @@ func requireUseradd(t *testing.T) {
 	}
 }
 
-// mkUser creates a real account whose home is homeDir (created + skel-populated),
-// registering a best-effort userdel cleanup. Returns the resolved *user.User.
 func mkUser(t *testing.T, name, homeDir string) *user.User {
 	t.Helper()
-	_ = osexec.Command("userdel", "-r", name).Run() // clean slate
+	_ = osexec.Command("userdel", "-r", name).Run()
 	if out, err := osexec.Command("useradd", "-m", "-d", homeDir, "-s", "/bin/bash", name).CombinedOutput(); err != nil {
 		t.Fatalf("useradd %s: %v\n%s", name, err, out)
 	}
@@ -75,20 +58,16 @@ func deskCtx(t *testing.T) context.Context {
 	return ctx
 }
 
-// TestHomeUsers_Container enumerates real accounts whose homes live under a
-// custom home root, against real passwd/NSS: two real users are returned, while a
-// stale dir with no account, a dot-dir, and lost+found are all skipped.
 func TestHomeUsers_Container(t *testing.T) {
 	requireUseradd(t)
 	root := t.TempDir()
 	alice := mkUser(t, "cadestrohomealice", filepath.Join(root, "cadestrohomealice"))
 	_ = mkUser(t, "cadestrohomebob", filepath.Join(root, "cadestrohomebob"))
 
-	// Decoys that must NOT be enumerated.
-	if err := os.Mkdir(filepath.Join(root, "ghost"), 0o755); err != nil { // dir with no account
+	if err := os.Mkdir(filepath.Join(root, "ghost"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Mkdir(filepath.Join(root, ".hidden"), 0o755); err != nil { // dot-dir
+	if err := os.Mkdir(filepath.Join(root, ".hidden"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Mkdir(filepath.Join(root, "lost+found"), 0o755); err != nil {
@@ -107,7 +86,7 @@ func TestHomeUsers_Container(t *testing.T) {
 	if want := []string{"cadestrohomealice", "cadestrohomebob"}; !slices.Equal(names, want) {
 		t.Errorf("HomeUsers = %v, want %v (ghost/.hidden/lost+found must be skipped)", names, want)
 	}
-	// The returned account must carry the canonical UID/Home from passwd.
+
 	for _, s := range got {
 		if s.Username == "cadestrohomealice" {
 			if strconv.Itoa(s.UID) != alice.Uid || s.Home != alice.HomeDir {
@@ -117,9 +96,6 @@ func TestHomeUsers_Container(t *testing.T) {
 	}
 }
 
-// TestRunAsRunner_Container is the security-critical real test: a Runner built
-// with RunAsRunner must actually run AS the target user (privilege dropped via
-// runuser) with the per-user HOME/USER and the curated PATH.
 func TestRunAsRunner_Container(t *testing.T) {
 	requireUseradd(t)
 	home := filepath.Join(t.TempDir(), "cadestrorunas")
@@ -137,7 +113,6 @@ func TestRunAsRunner_Container(t *testing.T) {
 	}
 	ctx := deskCtx(t)
 
-	// Identity: `id -un` must print the target user — proves the real privilege drop.
 	res, err := ru.Run(ctx, sysexec.Command{Name: "id", Args: []string{"-un"}})
 	if err != nil {
 		t.Fatalf("run id -un as cadestrorunas: %v", err)
@@ -146,8 +121,6 @@ func TestRunAsRunner_Container(t *testing.T) {
 		t.Errorf("id -un = %q, want cadestrorunas (privilege was not dropped)", got)
 	}
 
-	// Environment: HOME/USER are the user's; PATH is the curated UserPath (the
-	// user's ~/.local/bin first), NOT root's inherited PATH.
 	res2, err := ru.Run(ctx, sysexec.Command{Name: "sh", Args: []string{"-c", `printf '%s|%s|%s' "$HOME" "$USER" "$PATH"`}})
 	if err != nil {
 		t.Fatalf("run env probe as cadestrorunas: %v", err)
@@ -160,10 +133,6 @@ func TestRunAsRunner_Container(t *testing.T) {
 		t.Errorf("PATH = %q, want it to start with the user's ~/.local/bin", parts[2])
 	}
 
-	// Working dir: runuser (no -l) keeps the parent's cwd, so a `pwd` with Dir
-	// unset would print the test's cwd. Setting Command.Dir must make the real
-	// child run there — proving Dir survives the runuser wrap (the RunAsCommand
-	// parity that RunAsRunner now provides).
 	res3, err := ru.Run(ctx, sysexec.Command{Name: "pwd", Dir: u.HomeDir})
 	if err != nil {
 		t.Fatalf("run pwd as cadestrorunas with Dir: %v", err)
@@ -173,8 +142,6 @@ func TestRunAsRunner_Container(t *testing.T) {
 	}
 }
 
-// TestUsersWithFlatpakInstall_Container probes the real per-user Flatpak install
-// directory: only the user with $HOME/.local/share/flatpak/app/<appID> is returned.
 func TestUsersWithFlatpakInstall_Container(t *testing.T) {
 	requireUseradd(t)
 	const appID = "org.test.CadestroApp"
@@ -198,10 +165,6 @@ func TestUsersWithFlatpakInstall_Container(t *testing.T) {
 	}
 }
 
-// TestActiveSessions_NoLoginctl_Container: with loginctl absent (the container-
-// tests base image ships no systemd), ActiveSessions returns an empty slice and
-// NO error — the documented "no logind, no sessions" contract, against the real
-// (absent) binary.
 func TestActiveSessions_NoLoginctl_Container(t *testing.T) {
 	if _, err := osexec.LookPath("loginctl"); err == nil {
 		t.Skip("loginctl present here; the absent-path assertion does not apply")

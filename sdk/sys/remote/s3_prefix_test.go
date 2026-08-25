@@ -14,16 +14,13 @@ import (
 	"testing"
 )
 
-// s3PrefixFixture is the test rig for prefix-sync. Mocks the
-// ListObjectsV2 endpoint (?list-type=2 over the bucket) and serves
-// per-object GETs for any key the list response advertises.
 type s3PrefixFixture struct {
 	srv     *httptest.Server
 	bucket  string
 	prefix  string
 	objects []s3TestObject
-	listErr int // non-zero → status code returned for list calls
-	getErr  int // non-zero → status code returned for GETs
+	listErr int
+	getErr  int
 	lists   atomic.Int32
 	gets    atomic.Int32
 }
@@ -38,7 +35,7 @@ func newS3PrefixFixture(t *testing.T, bucket, prefix string, objs []s3TestObject
 	t.Helper()
 	f := &s3PrefixFixture{bucket: bucket, prefix: prefix, objects: objs}
 	f.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// List requests are the bucket root with list-type=2.
+
 		if r.URL.Path == "/"+f.bucket || r.URL.Path == "/"+f.bucket+"/" {
 			if r.URL.Query().Get("list-type") != "2" {
 				http.Error(w, "expected list-type=2", http.StatusBadRequest)
@@ -52,7 +49,7 @@ func newS3PrefixFixture(t *testing.T, bucket, prefix string, objs []s3TestObject
 			writeListResponse(w, f.bucket, f.prefix, f.objects)
 			return
 		}
-		// Otherwise it's an object GET / HEAD.
+
 		key := strings.TrimPrefix(r.URL.Path, "/"+f.bucket+"/")
 		for _, o := range f.objects {
 			if o.key == key {
@@ -97,12 +94,9 @@ func writeListResponse(w http.ResponseWriter, bucket, prefix string, objs []s3Te
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(http.StatusOK)
 	_ = xml.NewEncoder(w).Encode(res)
-	_, _ = fmt.Fprintln(w) // S3 responses end with a newline; harmless if absent.
+	_, _ = fmt.Fprintln(w)
 }
 
-// TestS3Fetch_PrefixSync_MirrorsTree — the happy path. A prefix with
-// three keys lands as a tree under dest, each at the right relative
-// path.
 func TestS3Fetch_PrefixSync_MirrorsTree(t *testing.T) {
 	objs := []s3TestObject{
 		{key: "data/a.txt", body: []byte("alpha"), etag: `"a1"`},
@@ -116,7 +110,7 @@ func TestS3Fetch_PrefixSync_MirrorsTree(t *testing.T) {
 	src, err := NewS3(S3Config{
 		Endpoint: fix.srv.URL,
 		Bucket:   "mybucket",
-		Key:      "data/", // trailing slash → prefix mode
+		Key:      "data/",
 	})
 	if err != nil {
 		t.Fatalf("NewS3: %v", err)
@@ -133,8 +127,6 @@ func TestS3Fetch_PrefixSync_MirrorsTree(t *testing.T) {
 	assertFile(t, filepath.Join(dest, "sub", "c.txt"), "charlie")
 }
 
-// TestS3Fetch_PrefixSync_NoOpOnSameList — second Fetch sees an
-// unchanged list, returns Changed=false, and skips object GETs.
 func TestS3Fetch_PrefixSync_NoOpOnSameList(t *testing.T) {
 	objs := []s3TestObject{
 		{key: "p/a", body: []byte("x"), etag: `"a"`},
@@ -160,8 +152,6 @@ func TestS3Fetch_PrefixSync_NoOpOnSameList(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_PrefixSync_PruneRemovesLocalExtras — the prune toggle
-// keeps local-only files when false and removes them when true.
 func TestS3Fetch_PrefixSync_PruneRemovesLocalExtras(t *testing.T) {
 	for _, prune := range []bool{false, true} {
 		t.Run(fmt.Sprintf("Prune=%v", prune), func(t *testing.T) {
@@ -185,7 +175,6 @@ func TestS3Fetch_PrefixSync_PruneRemovesLocalExtras(t *testing.T) {
 				t.Fatalf("write extra: %v", err)
 			}
 
-			// Bump upstream so the second Fetch's list-hash differs.
 			fix.objects = append(fix.objects, s3TestObject{key: "p/b", body: []byte("y"), etag: `"b"`})
 			if _, err := src.Fetch(context.Background(), dest); err != nil {
 				t.Fatalf("second Fetch: %v", err)
@@ -202,12 +191,6 @@ func TestS3Fetch_PrefixSync_PruneRemovesLocalExtras(t *testing.T) {
 	}
 }
 
-// TestS3Fetch_PrefixSync_PathPrefixedEndpoint is a regression test:
-// when the endpoint carries a path prefix (e.g. a reverse proxy fronting
-// S3 under /v1), prefix-sync must address the bucket at
-// <endpoint-path>/<bucket> — the same way NewS3 and single-key mode do.
-// The buggy version split objectURL and mistook the path prefix for the
-// bucket, listing at /v1 and GETting /v1/<key> with the bucket dropped.
 func TestS3Fetch_PrefixSync_PathPrefixedEndpoint(t *testing.T) {
 	const bucket = "mybucket"
 	objs := []s3TestObject{{key: "data/a.txt", body: []byte("alpha"), etag: `"a1"`}}
@@ -250,9 +233,6 @@ func TestS3Fetch_PrefixSync_PathPrefixedEndpoint(t *testing.T) {
 	assertFile(t, filepath.Join(dest, "a.txt"), "alpha")
 }
 
-// TestS3Fetch_PrefixSync_403OnList_SurfacesClearError — anonymous
-// listing forbidden by bucket policy must surface as ErrInvalidConfig
-// so the operator knows what to fix.
 func TestS3Fetch_PrefixSync_403OnList_SurfacesClearError(t *testing.T) {
 	fix := newS3PrefixFixture(t, "b", "p/", nil)
 	fix.listErr = http.StatusForbidden

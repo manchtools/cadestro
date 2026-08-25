@@ -8,11 +8,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/netconfig"
 )
 
-// ExampleNew shows the construct-a-handle flow: pick a backend (here
-// systemd-networkd), build a Manager over a Runner, and apply a static IP
-// config with a default route.
 func ExampleNew() {
-	r, err := exec.NewRunner(exec.Direct) // the agent runs as root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		log.Fatal(err)
 	}

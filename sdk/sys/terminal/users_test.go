@@ -53,9 +53,6 @@ func TestUIDRoundTrip_CustomOffset(t *testing.T) {
 	}
 }
 
-// TestNoUIDOverlap_DefaultOffset documents the no-overlap invariant
-// claimed in issue #16: regular UIDs 1000–99999 map to TTY UIDs
-// 101000–199999, so no real user can collide with a TTY user.
 func TestNoUIDOverlap_DefaultOffset(t *testing.T) {
 	const minRegular, maxRegular = 1000, 99999
 	minTTY := TTYUID(minRegular, DefaultUIDOffset)

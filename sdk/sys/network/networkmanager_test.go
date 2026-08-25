@@ -9,7 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// assertArgs checks that actual exactly matches expected.
 func assertArgs(t *testing.T, expected, actual []string) {
 	t.Helper()
 	if len(actual) != len(expected) {
@@ -46,7 +45,7 @@ func TestBuildAddArgs_EAPTLS_NoCertContent(t *testing.T) {
 		Name: "cadestro-wifi-xyz", SSID: "SecureNet", AuthType: AuthEAPTLS,
 		Identity: "user@corp.com", CertDir: "/var/lib/cadestro/wifi/xyz",
 	})
-	// No cert-path args when the content is empty / key is zero.
+
 	assertArgs(t, []string{
 		"con", "add", "con-name", "cadestro-wifi-xyz", "type", "wifi", "ssid", "SecureNet",
 		"wifi-sec.key-mgmt", "wpa-eap", "802-1x.eap", "tls", "802-1x.identity", "user@corp.com",
@@ -75,8 +74,6 @@ func TestBuildModifyArgs_EAPTLS_NoCurrent(t *testing.T) {
 	}, args)
 }
 
-// A PSK → EAP-TLS conversion must clear the stale wifi-sec.psk that the keyfile
-// path had set, otherwise NetworkManager would keep two key-mgmt secrets.
 func TestBuildModifyArgs_ClearsStalePSKOnTransition(t *testing.T) {
 	dir := "/var/lib/cadestro/wifi/xyz"
 	current := map[string]string{
@@ -90,8 +87,6 @@ func TestBuildModifyArgs_ClearsStalePSKOnTransition(t *testing.T) {
 		ClientKey: exec.NewMultilineSecret(realPEMKey), CertDir: dir,
 	}, current)
 
-	// wifi-sec.psk is present in current but absent from the EAP desired set, so
-	// it must be cleared (set to "").
 	foundClear := false
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] == "wifi-sec.psk" && args[i+1] == "" {
@@ -101,7 +96,7 @@ func TestBuildModifyArgs_ClearsStalePSKOnTransition(t *testing.T) {
 	if !foundClear {
 		t.Errorf("transition did not clear wifi-sec.psk; args = %v", args)
 	}
-	// key-mgmt is in desired (wpa-eap), so it is set, not cleared.
+
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] == "wifi-sec.key-mgmt" && args[i+1] == "" {
 			t.Error("wifi-sec.key-mgmt should be set to wpa-eap, not cleared")
@@ -149,7 +144,7 @@ func TestBuildDesiredSettings_EAPTLS(t *testing.T) {
 			t.Errorf("desired[%q] = %q, want %q", k, d[k], v)
 		}
 	}
-	// The PSK secret must never appear in the comparison map.
+
 	if _, ok := d["wifi-sec.psk"]; ok {
 		t.Error("buildDesiredSettings leaked a wifi-sec.psk key (Secret must stay out of the diff map)")
 	}
@@ -158,7 +153,7 @@ func TestBuildDesiredSettings_EAPTLS(t *testing.T) {
 func TestNeedsModify(t *testing.T) {
 	dir := t.TempDir()
 	p := eapProfile(t, dir)
-	if err := writeCerts(p); err != nil { // on-disk certs match desired
+	if err := writeCerts(p); err != nil {
 		t.Fatal(err)
 	}
 	matching := map[string]string{
@@ -186,7 +181,7 @@ func TestNeedsModify(t *testing.T) {
 	})
 	t.Run("stale managed key present", func(t *testing.T) {
 		withStale := copyMap(matching)
-		withStale["wifi-sec.psk"] = "leftover" // present in current, absent from desired
+		withStale["wifi-sec.psk"] = "leftover"
 		if !needsModify(withStale, p) {
 			t.Error("needsModify = false despite a stale wifi-sec.psk to clear")
 		}
@@ -229,7 +224,7 @@ func TestUnescapeNmcli(t *testing.T) {
 		`plain`:   `plain`,
 		`a\:b`:    `a:b`,
 		`a\\b`:    `a\b`,
-		`a\\:b`:   `a\:b`, // \\ → \, then the literal : stays
+		`a\\:b`:   `a\:b`,
 		`x\:y\\z`: `x:y\z`,
 	}
 	for in, want := range cases {

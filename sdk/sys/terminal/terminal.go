@@ -47,11 +47,6 @@ type Manager interface {
 	Open(ctx context.Context, cfg SessionConfig) (*Session, error)
 }
 
-// Test seams. These default to the real syscalls/lookups and are overridden
-// only by tests to exercise branches that are otherwise unreachable without
-// root or a malformed passwd entry (the parse-uid/gid errors, the
-// credential-switch branch, and the rare pty-close error). Production never
-// reassigns them.
 var (
 	lookupUser = user.Lookup
 	getuid     = os.Getuid
@@ -59,7 +54,6 @@ var (
 	ptyClose   = func(f *os.File) error { return f.Close() }
 )
 
-// manager is the single Manager implementation. It is stateless.
 type manager struct{}
 
 // New returns a terminal Manager. It takes no arguments — no Runner (see the
@@ -110,12 +104,6 @@ type Session struct {
 	cmd *exec.Cmd
 	pty *os.File
 
-	// fdMu serialises operations that read the raw fd via (*os.File).Fd()
-	// (Resize → pty.Setsize) against the two sites that close the PTY (reap and
-	// Close). os.File.Fd() concurrent with Close() is an unsynchronised access to
-	// the file's internal fd state — a data race the -race detector flags.
-	// Read/Write are NOT guarded: they go through the os poll runtime, which is
-	// already safe against a concurrent Close.
 	fdMu sync.Mutex
 
 	closeOnce sync.Once
@@ -138,8 +126,7 @@ type Session struct {
 // outlives it; cancelling ctx after Open returns does not terminate the
 // session — use Close.
 func (m *manager) Open(ctx context.Context, cfg SessionConfig) (*Session, error) {
-	// Fail closed on an already-cancelled context — never allocate a PTY for a
-	// dead request.
+
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -194,16 +181,9 @@ func (m *manager) Open(ctx context.Context, cfg SessionConfig) (*Session, error)
 	cmd := exec.Command(shell, "-l")
 	cmd.Dir = workDir
 	cmd.Env = buildEnv(cfg.Env, u, shell)
-	// Setsid is forced on by creack/pty, but we set it explicitly for
-	// clarity since the process-group signalling in Close relies on the
-	// shell being a process-group leader.
+
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
-	// Only set Credential if we'd actually be switching UIDs. setresuid
-	// to the current UID is a no-op on Linux but still requires the
-	// syscall to be permitted; some sandboxes (no_new_privs/seccomp)
-	// reject it. Skipping the call when not needed avoids that and
-	// matches the common case where the caller is already the target
-	// user (e.g., agent running as the TTY user directly).
+
 	if uint32(uid) != uint32(getuid()) || uint32(gid) != uint32(getgid()) {
 		cmd.SysProcAttr.Credential = &syscall.Credential{
 			Uid: uint32(uid),
@@ -225,11 +205,6 @@ func (m *manager) Open(ctx context.Context, cfg SessionConfig) (*Session, error)
 	return s, nil
 }
 
-// reap blocks until the child process exits, captures the exit code,
-// closes the PTY master to release the fd, and signals done. Closing the
-// master here means callers that forget to call Close still don't leak
-// the fd; the race with an explicit Close is harmless because Close
-// swallows os.ErrClosed.
 func (s *Session) reap() {
 	err := s.cmd.Wait()
 	s.waitOnce.Do(func() {
@@ -269,8 +244,7 @@ func (s *Session) Resize(cols, rows uint16) error {
 	if err := validateDims(cols, rows); err != nil {
 		return err
 	}
-	// pty.Setsize reads the raw fd via (*os.File).Fd(); hold fdMu so it cannot
-	// race the reaper/Close closing the PTY out from under it.
+
 	s.fdMu.Lock()
 	defer s.fdMu.Unlock()
 	if err := pty.Setsize(s.pty, &pty.Winsize{Cols: cols, Rows: rows}); err != nil {
@@ -279,9 +253,6 @@ func (s *Session) Resize(cols, rows uint16) error {
 	return nil
 }
 
-// validateDims rejects a zero terminal dimension. Sourced from the wire intent
-// (proto's gt=0), not from any artifact. It is the SDK's defence-in-depth
-// alongside the agent's own boundary check.
 func validateDims(cols, rows uint16) error {
 	if cols == 0 || rows == 0 {
 		return fmt.Errorf("terminal: invalid dimensions cols=%d rows=%d (both must be > 0)", cols, rows)
@@ -301,25 +272,17 @@ func validateDims(cols, rows uint16) error {
 // the actual exit.
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
-		// Only signal the shell while it is still running. After reap
-		// has signaled Done, the PID may have been recycled by the
-		// kernel and a stray kill could hit an unrelated process group.
+
 		select {
 		case <-s.done:
-			// Already exited — nothing to signal.
+
 		default:
-			// Setsid above made the shell its own process-group leader,
-			// so a negative pid signals the entire group (the shell
-			// plus any children it forked). Best-effort: a SIGTERM
-			// race with natural exit is harmless.
+
 			if s.cmd.Process != nil {
 				_ = syscall.Kill(-s.cmd.Process.Pid, syscall.SIGTERM)
 			}
 		}
-		// Closing the master also sends SIGHUP to the group, which is
-		// the polite shell-termination signal. ErrClosed is expected if
-		// the reaper or a concurrent caller already closed it. fdMu serialises
-		// this against a concurrent Resize (which reads the fd via Setsize).
+
 		s.fdMu.Lock()
 		err := ptyClose(s.pty)
 		s.fdMu.Unlock()
@@ -345,8 +308,6 @@ func (s *Session) Done() <-chan struct{} {
 	return s.done
 }
 
-// defaultWorkDir picks a sensible starting directory for the shell:
-// the user's home if it exists and is a directory, otherwise /tmp.
 func defaultWorkDir(u *user.User) string {
 	if u.HomeDir != "" {
 		if info, err := os.Stat(u.HomeDir); err == nil && info.IsDir() {
@@ -356,8 +317,6 @@ func defaultWorkDir(u *user.User) string {
 	return "/tmp"
 }
 
-// buildEnv constructs the child shell's environment, layering sane
-// defaults under any caller-supplied entries (caller wins on conflicts).
 func buildEnv(extra []string, u *user.User, shell string) []string {
 	have := map[string]struct{}{}
 	out := make([]string, 0, len(extra)+6)
@@ -385,8 +344,6 @@ func buildEnv(extra []string, u *user.User, shell string) []string {
 	return out
 }
 
-// ensure io.ReadWriter compliance — Session embeds plumbing for both.
 var _ io.ReadWriter = (*Session)(nil)
 
-// ensure the single implementation satisfies the interface.
 var _ Manager = (*manager)(nil)

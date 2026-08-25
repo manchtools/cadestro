@@ -20,8 +20,6 @@ const (
 	charsetSpecial      = "!@#$%^&*()_+-=[]{}|;:,.<>?"
 )
 
-// randInt is a seam over crypto/rand.Int so the (practically unreachable)
-// RNG-failure error path is exercisable in tests.
 var randInt = rand.Int
 
 // Complexity selects the character set GeneratePassword draws from.
@@ -58,7 +56,7 @@ func GeneratePassword(length int, c Complexity) (exec.Secret, error) {
 		}
 		buf[i] = charset[idx.Int64()]
 	}
-	// The charset contains no newline/CR, so NewSecret cannot reject this.
+
 	return exec.NewSecret(string(buf))
 }
 
@@ -69,8 +67,7 @@ func (u *shadowUtils) SetPassword(ctx context.Context, name string, password exe
 	if err := validateUsername(name); err != nil {
 		return err
 	}
-	// Reveal() here is the single sanctioned chpasswd sink (see the Secret
-	// redaction contract / the Reveal fitness function).
+
 	stdin := strings.NewReader(name + ":" + password.Reveal())
 	res, err := u.exec(ctx, exec.Command{Name: "chpasswd", Stdin: stdin, Escalate: true})
 	if err != nil {

@@ -12,10 +12,6 @@ import (
 
 const firewalldTestNamespace = "fwtest"
 
-// skipIfNotFirewalldUsable mirrors skipIfNotNftablesUsable: skip the
-// test when firewall-cmd isn't present or we can't elevate. CI runs
-// these inside containers where root is available; dev machines and
-// macOS CI skip cleanly.
 func skipIfNotFirewalldUsable(t *testing.T) {
 	t.Helper()
 	if _, err := os.Stat("/usr/bin/firewall-cmd"); err != nil {
@@ -26,9 +22,6 @@ func skipIfNotFirewalldUsable(t *testing.T) {
 	}
 }
 
-// TestFirewalldServiceXML_TCPPort — the simplest case. Lock in the
-// exact XML body the backend writes for a "open this TCP port" rule
-// so refactors don't silently change what firewalld parses.
 func TestFirewalldServiceXML_TCPPort(t *testing.T) {
 	got := firewalldServiceXML(firewalldTestNamespace, Rule{
 		ID:       "ssh-in",
@@ -50,7 +43,6 @@ func TestFirewalldServiceXML_TCPPort(t *testing.T) {
 	}
 }
 
-// TestFirewalldServiceXML_UDPPort — UDP toggle.
 func TestFirewalldServiceXML_UDPPort(t *testing.T) {
 	got := firewalldServiceXML(firewalldTestNamespace, Rule{
 		ID:       "dns",
@@ -63,16 +55,11 @@ func TestFirewalldServiceXML_UDPPort(t *testing.T) {
 	}
 }
 
-// TestFirewalldRejectsUnsupportedRules — the v1 firewalld backend only
-// translates simple "allow this port/proto" rules. Anything that needs
-// a rich rule (deny, source scope, dest scope) must surface as
-// ErrInvalidRule with a clear message so the operator can pick a
-// different backend or wait for v2.
 func TestFirewalldRejectsUnsupportedRules(t *testing.T) {
 	cases := []struct {
 		name string
 		rule Rule
-		hint string // expected substring in the error
+		hint string
 	}{
 		{
 			name: "deny",
@@ -113,11 +100,6 @@ func TestFirewalldRejectsUnsupportedRules(t *testing.T) {
 	}
 }
 
-// TestFirewalldFilterNamespaceServices — `firewall-cmd --list-services`
-// returns a space-separated list mixing system services (ssh,
-// dhcpv6-client, etc.) with our `<namespace>-<id>` ones. List must
-// hand back only the namespace-managed entries with the prefix
-// stripped, and must NOT match services owned by a different namespace.
 func TestFirewalldFilterNamespaceServices(t *testing.T) {
 	input := "ssh dhcpv6-client cockpit fwtest-web-https other-myapp fwtest-ssh-in mosh"
 	got := firewalldFilterNamespaceServices(input, firewalldTestNamespace)
@@ -132,14 +114,9 @@ func TestFirewalldFilterNamespaceServices(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// Integration tests — gated by firewall-cmd binary + root. Each test
-// cleans up the services it created so subsequent runs start fresh.
-// =============================================================================
-
 func firewalldIntegrationManager(t *testing.T) Manager {
 	t.Helper()
-	r, err := exec.NewRunner(exec.Direct) // skip guard guarantees we are root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}

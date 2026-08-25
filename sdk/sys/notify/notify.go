@@ -23,19 +23,16 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// Seams: notify-send presence + the per-user D-Bus socket check. Overridable from
-// tests so desktop-notification dispatch can be exercised without a real session.
 var (
 	lookPath   = osexec.LookPath
 	statSocket = os.Stat
 )
 
-// session represents a logged-in user session discovered via loginctl.
 type session struct {
 	id   string
 	user string
 	uid  int
-	typ  string // "tty", "x11", "wayland", "mir"
+	typ  string
 }
 
 // Manager sends notifications to logged-in users. Methods return an aggregated
@@ -53,11 +50,6 @@ type Manager interface {
 	NotifyUsers(ctx context.Context, usernames []string, title, message string) error
 }
 
-// maxNotificationField bounds the title and message length. wall and
-// notify-send both render their input into a terminal / desktop banner an
-// operator reads, and an unbounded payload is a denial-of-service / scroll-the-
-// screen vector (and a needless burden on every session). 4096 bytes is far
-// more than any real maintenance notice needs.
 const maxNotificationField = 4096
 
 // New returns a Manager driven by runner. A nil runner is rejected.
@@ -101,12 +93,6 @@ func (n *notifier) NotifyUsers(ctx context.Context, usernames []string, title, m
 	)
 }
 
-// validateNotification rejects a title or message that would corrupt the
-// broadcast surface BEFORE any wall/notify-send command runs. A control
-// character (newline, ESC, NUL, DEL, …) can smuggle terminal escape sequences
-// into every logged-in user's TTY (wall broadcasts verbatim) or break the
-// notify-send argv/banner, so both fields must be plain text. Length is bounded
-// to keep a single notice from flooding the screen.
 func validateNotification(title, message string) error {
 	if err := validateField("notification title", title); err != nil {
 		return err
@@ -124,10 +110,6 @@ func validateField(kind, s string) error {
 	return nil
 }
 
-// validateUsername rejects a user-filter entry carrying a control character. A
-// newline in a username (e.g. "alice\nroot") can never match a real loginctl
-// session, but more importantly it must never reach the runner — fail closed at
-// the boundary rather than relying on it silently never matching.
 func validateUsername(u string) error {
 	if containsControl(u) {
 		return fmt.Errorf("invalid username %q: must not contain control characters", u)
@@ -135,10 +117,6 @@ func validateUsername(u string) error {
 	return nil
 }
 
-// containsControl reports whether s holds any ASCII control character (NUL
-// through US, including newline, CR and tab) or DEL — bytes that would corrupt a
-// wall broadcast or a notify-send banner. A plain space (0x20) is left alone: it
-// is legal, argv-safe text in a notification.
 func containsControl(s string) bool {
 	for _, r := range s {
 		if r < 0x20 || r == 0x7f {
@@ -148,8 +126,6 @@ func containsControl(s string) bool {
 	return false
 }
 
-// sendWall broadcasts a message to all terminal sessions via wall (stdin). A
-// failed broadcast (runner error or non-zero exit) is returned, not swallowed.
 func (n *notifier) sendWall(ctx context.Context, message string) error {
 	res, err := n.r.Run(ctx, exec.Command{
 		Name:     "wall",
@@ -165,10 +141,6 @@ func (n *notifier) sendWall(ctx context.Context, message string) error {
 	return nil
 }
 
-// sendDesktopNotifications discovers graphical sessions and sends notify-send to
-// each. With a non-nil userFilter only matching usernames are notified. It
-// returns the aggregated errors of deliveries that ran and failed; an absent
-// notify-send is a graceful skip (nil), not a failure.
 func (n *notifier) sendDesktopNotifications(ctx context.Context, title, message string, userFilter map[string]bool) error {
 	if _, err := lookPath("notify-send"); err != nil {
 		slog.Warn("notify-send not available, skipping desktop notifications")
@@ -191,9 +163,6 @@ func (n *notifier) sendDesktopNotifications(ctx context.Context, title, message 
 	return errors.Join(errs...)
 }
 
-// listGraphicalSessions returns all active graphical login sessions. A failed
-// enumeration is an error (we couldn't determine who to notify); a single
-// session whose details can't be read is skipped (best-effort per session).
 func (n *notifier) listGraphicalSessions(ctx context.Context) ([]session, error) {
 	res, err := n.r.Run(ctx, exec.Command{Name: "loginctl", Args: []string{"list-sessions", "--no-legend"}, Escalate: true})
 	if err != nil {
@@ -205,9 +174,7 @@ func (n *notifier) listGraphicalSessions(ctx context.Context) ([]session, error)
 
 	var sessions []session
 	for _, sessionID := range parseLoginctlListSessions(res.Stdout) {
-		// Without --value loginctl prints Key=Value lines so we parse by name —
-		// D-Bus emission order isn't documented as stable, so positional parsing
-		// would silently misassign fields across systemd versions.
+
 		info, err := n.r.Run(ctx, exec.Command{
 			Name:     "loginctl",
 			Args:     []string{"show-session", sessionID, "-p", "Type", "-p", "Name", "-p", "User"},
@@ -225,10 +192,6 @@ func (n *notifier) listGraphicalSessions(ctx context.Context) ([]session, error)
 	return sessions, nil
 }
 
-// parseLoginctlListSessions extracts session IDs from `loginctl list-sessions
-// --no-legend` output. The first whitespace-separated field is the session ID;
-// lines with fewer than three fields are skipped. Pure-function shape so it can be
-// tested without shelling out (F026 in TECH_DEBT_AUDIT.md).
 func parseLoginctlListSessions(stdout string) []string {
 	var ids []string
 	for _, line := range strings.Split(strings.TrimSpace(stdout), "\n") {
@@ -241,11 +204,6 @@ func parseLoginctlListSessions(stdout string) []string {
 	return ids
 }
 
-// parseLoginctlShowSession parses `loginctl show-session <id> -p Type -p Name -p
-// User` output into a session struct, by property name (loginctl emits Key=Value
-// in D-Bus dictionary order, not -p order). Returns (session, false) when any of
-// Type / Name / User is missing, User isn't a numeric uid, Name is empty, or Type
-// isn't graphical (x11 / wayland / mir).
 func parseLoginctlShowSession(sessionID, stdout string) (session, bool) {
 	props := map[string]string{}
 	for _, line := range strings.Split(stdout, "\n") {
@@ -271,14 +229,10 @@ func parseLoginctlShowSession(sessionID, stdout string) (session, bool) {
 	return session{id: sessionID, user: user, uid: uid, typ: typ}, true
 }
 
-// sendDesktopNotification sends a freedesktop notification to a single graphical
-// session, running notify-send as the target user (via runuser) with the user's
-// D-Bus session address. Each argument is passed separately to avoid shell
-// injection.
 func (n *notifier) sendDesktopNotification(ctx context.Context, s session, title, message string) error {
 	socketPath := fmt.Sprintf("/run/user/%d/bus", s.uid)
 	if _, err := statSocket(socketPath); err != nil {
-		// No D-Bus session bus for this user — nothing to deliver to; graceful skip.
+
 		slog.Warn("DBUS socket not found, skipping desktop notification", "user", s.user, "path", socketPath)
 		return nil
 	}

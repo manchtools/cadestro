@@ -23,7 +23,6 @@ func newCollector(t *testing.T, r exec.Runner) Collector {
 	return c
 }
 
-// writeTemp writes content to a temp file and returns its path.
 func writeTemp(t *testing.T, content string) string {
 	t.Helper()
 	p := filepath.Join(t.TempDir(), "f")
@@ -55,7 +54,7 @@ func TestSystem(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		r := exectest.New(exec.Direct)
-		r.Push(exec.Result{Stdout: "6.1.0-test\n"}, nil) // uname -r
+		r.Push(exec.Result{Stdout: "6.1.0-test\n"}, nil)
 		info, err := newCollector(t, r).System(context.Background())
 		if err != nil {
 			t.Fatal(err)
@@ -316,7 +315,7 @@ func TestParseMemTotal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseMemTotal() error: %v", err)
 	}
-	// 16384000 kB / 1024 = 16000 MB
+
 	if mb != 16000 {
 		t.Errorf("MemoryTotalMB = %d, want 16000", mb)
 	}

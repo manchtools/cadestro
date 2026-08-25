@@ -11,10 +11,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// --- Weird / malformed tool output ---------------------------------------
-
-// A passwd entry with a non-numeric UID is malformed; Get fails closed rather
-// than silently treating it as UID 0 (root).
 func TestGet_NonNumericUIDFailsClosed(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "deploy:x:NOTANUMBER:1000:Deploy:/home/deploy:/bin/bash\n"}, nil)
@@ -31,14 +27,6 @@ func TestGet_NonNumericGIDFailsClosed(t *testing.T) {
 	}
 }
 
-// A '*'-prefixed shadow password (a common disabled-account marker) is detected
-// as locked, the same as '!'.
-// TestGet_StarPasswordIsNotLocked pins the corrected lock semantics: a "*"
-// shadow password means "no password, password-login disabled" — it is NOT a
-// locked account (only a leading "!", from usermod -L, is). The account stays
-// reachable via SSH keys / su / a setuid opener, which is exactly how the
-// passwordless cadestro-tty-* terminal accounts work. Treating "*" as locked made the
-// agent refuse every terminal session ("tty user is disabled").
 func TestGet_StarPasswordIsNotLocked(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "deploy:x:1000:1000::/home/deploy:/bin/bash\n"}, nil)
@@ -57,7 +45,6 @@ func TestGet_StarPasswordIsNotLocked(t *testing.T) {
 	}
 }
 
-// Get tolerates extra surrounding whitespace / CR in getent output.
 func TestGet_TrimsWhitespaceAndCR(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "  deploy:x:1000:1000:Deploy:/home/deploy:/bin/bash\r\n"}, nil)
@@ -73,7 +60,6 @@ func TestGet_TrimsWhitespaceAndCR(t *testing.T) {
 	}
 }
 
-// A group line with stray empty member entries ("a,,b") must not yield a "".
 func TestGroupMembers_FiltersEmptyEntries(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "docker:x:999:deploy,,ops,\n"}, nil)
@@ -86,7 +72,6 @@ func TestGroupMembers_FiltersEmptyEntries(t *testing.T) {
 	}
 }
 
-// A members field that is ALL separators ("docker:x:999:,,") yields no members.
 func TestGroupMembers_AllEmptyEntriesIsNil(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "docker:x:999:,,\n"}, nil)
@@ -96,10 +81,6 @@ func TestGroupMembers_AllEmptyEntriesIsNil(t *testing.T) {
 	}
 }
 
-// --- Weird-but-valid inputs ----------------------------------------------
-
-// A password may legitimately contain colons; chpasswd splits on the FIRST
-// colon, so the whole "pass:word" reaches the password field intact.
 func TestSetPassword_ColonInPasswordIsPreserved(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	secret, err := exec.NewSecret("p@ss:w0rd:with:colons")
@@ -115,7 +96,6 @@ func TestSetPassword_ColonInPasswordIsPreserved(t *testing.T) {
 	}
 }
 
-// GeneratePassword succeeds at the exact length bounds.
 func TestGeneratePassword_ExactBounds(t *testing.T) {
 	for _, n := range []int{MinPasswordLength, MaxPasswordLength} {
 		s, err := GeneratePassword(n, ComplexityComplex)
@@ -128,8 +108,6 @@ func TestGeneratePassword_ExactBounds(t *testing.T) {
 	}
 }
 
-// The (practically unreachable) RNG-failure path returns a wrapped error rather
-// than a short/empty password. Exercised via the randInt seam.
 func TestGeneratePassword_RNGFailure(t *testing.T) {
 	restore := randInt
 	randInt = func(io.Reader, *big.Int) (*big.Int, error) {

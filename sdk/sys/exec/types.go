@@ -12,7 +12,7 @@
 package exec
 
 // MaxOutputBytes is the maximum number of bytes captured per output stream.
-const MaxOutputBytes = 1 << 20 // 1 MiB
+const MaxOutputBytes = 1 << 20
 
 // Result holds the output of a command execution.
 type Result struct {

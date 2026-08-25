@@ -13,8 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// stdinOf reads back the stdin a recorded command carried (the FakeRunner never
-// consumes it, so it is still readable).
 func stdinOf(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {
@@ -29,7 +27,7 @@ func stdinOf(t *testing.T, c sysexec.Command) string {
 
 func TestApt_Apply_DearmorsKeyWritesSourcesAndUpdates(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil) // gpg --dearmor → binary keyring on stdout
+	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{
 		URL:          "https://h/a",
 		Distribution: "bookworm",
@@ -44,8 +42,6 @@ func TestApt_Apply_DearmorsKeyWritesSourcesAndUpdates(t *testing.T) {
 		t.Error("first Apply reports Changed=true")
 	}
 
-	// The armored key is dearmored via unprivileged gpg with the key on stdin
-	// (never on argv), and the binary result lands in the keyring.
 	calls := fr.Calls()
 	if argvs(fr)[0] != "gpg --dearmor" || calls[0].Escalate {
 		t.Errorf("first cmd = %q (escalate=%v), want an unprivileged `gpg --dearmor`", argvs(fr)[0], calls[0].Escalate)
@@ -89,7 +85,7 @@ func TestApt_Apply_TrustedNoKey(t *testing.T) {
 	if strings.Contains(got, "Signed-By") {
 		t.Errorf("no key configured, but Signed-By written:\n%q", got)
 	}
-	// No key → no gpg dearmor and no keyring write; only apt-get update runs.
+
 	if got := argvs(fr); len(got) != 1 || got[0] != "apt-get update" {
 		t.Errorf("commands = %v, want only apt-get update (no gpg)", got)
 	}
@@ -100,10 +96,10 @@ func TestApt_Apply_TrustedNoKey(t *testing.T) {
 
 func TestApt_Apply_Idempotent(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
-	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil) // gpg --dearmor
+	fr.Push(sysexec.Result{Stdout: "BINKEY"}, nil)
 	keyFile := "/etc/apt/keyrings/corp.gpg"
 	repoFile := "/etc/apt/sources.list.d/corp.sources"
-	ff.read[keyFile] = []byte("BINKEY") // keyring already matches the dearmored key
+	ff.read[keyFile] = []byte("BINKEY")
 	ff.read[repoFile] = []byte("# Repository: corp\nTypes: deb\nURIs: https://h/a\nSuites: /\nSigned-By: /etc/apt/keyrings/corp.gpg\n")
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{
 		URL: "https://h/a", GPGKey: []byte("armored"),
@@ -120,7 +116,7 @@ func TestApt_Apply_Idempotent(t *testing.T) {
 	if ff.didCall("WriteFile:" + repoFile) {
 		t.Error("matching sources must not be rewritten")
 	}
-	// gpg ran (to compute the comparison) but apt-get update must NOT (nothing changed).
+
 	for _, c := range argvs(fr) {
 		if c == "apt-get update" {
 			t.Error("idempotent Apply must not refresh the index")
@@ -132,7 +128,7 @@ func TestApt_Apply_KeyDiffersTriggersRewrite(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
 	fr.Push(sysexec.Result{Stdout: "NEWKEY"}, nil)
 	keyFile := "/etc/apt/keyrings/corp.gpg"
-	ff.read[keyFile] = []byte("OLDKEY") // installed key differs from dearmored
+	ff.read[keyFile] = []byte("OLDKEY")
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{
 		URL: "https://h/a", GPGKey: []byte("armored"),
 	}})
@@ -169,13 +165,13 @@ func TestApt_Apply_ConflictCleanup(t *testing.T) {
 	dir := "/etc/apt/sources.list.d"
 	ff.entries[dir] = []fs.DirEntry{
 		{Name: "other.sources", IsDir: false},
-		{Name: "corp.sources", IsDir: false}, // the target's own file — must be skipped
-		{Name: "sub", IsDir: true},           // a directory — must be skipped
-		{Name: "readme.txt", IsDir: false},   // not a repo file — must be skipped
+		{Name: "corp.sources", IsDir: false},
+		{Name: "sub", IsDir: true},
+		{Name: "readme.txt", IsDir: false},
 	}
-	// A different repo file that references the SAME url under a different key.
+
 	ff.read[dir+"/other.sources"] = []byte("Types: deb\nURIs: https://h/a\nSigned-By: /etc/apt/keyrings/other.gpg\n")
-	ff.read[dir+"/corp.sources"] = []byte("URIs: https://h/a\n") // would match, but it's the target → skipped
+	ff.read[dir+"/corp.sources"] = []byte("URIs: https://h/a\n")
 
 	out, err := m.Apply(context.Background(), Repository{Name: "corp", Apt: &AptConfig{URL: "https://h/a"}})
 	if err != nil {
@@ -190,7 +186,7 @@ func TestApt_Apply_ConflictCleanup(t *testing.T) {
 	if !ff.didCall("Remove:/etc/apt/keyrings/other.gpg") {
 		t.Error("the conflicting repo's Signed-By keyring was not removed")
 	}
-	// The target's own files must never be removed by the cleanup.
+
 	if ff.didCall("Remove:" + dir + "/corp.sources") {
 		t.Error("cleanup must skip the target repo's own .sources file")
 	}
@@ -274,7 +270,7 @@ func TestApt_Apply_MkdirAndWriteErrorsAreFatal(t *testing.T) {
 
 func TestApt_Apply_UpdateFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Apt)
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "could not resolve host"}, nil) // apt-get update fails
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "could not resolve host"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Apt: &AptConfig{URL: "https://h/a"}})
 	if err != nil {
 		t.Fatalf("apt-get update failure must be non-fatal, got %v", err)
@@ -327,7 +323,7 @@ func TestApt_Remove(t *testing.T) {
 	})
 	t.Run("primary remove error is fatal", func(t *testing.T) {
 		m, ff, _ := newTestManager(t, pkg.Apt)
-		ff.present[keyFile] = true // something exists → proceeds to delete
+		ff.present[keyFile] = true
 		ff.errs["Remove:"+repoFile] = errors.New("denied")
 		if _, err := m.Remove(context.Background(), "corp"); err == nil ||
 			!strings.Contains(err.Error(), "remove repo file") {
@@ -336,10 +332,6 @@ func TestApt_Remove(t *testing.T) {
 	})
 }
 
-// #302: apt rejecting the JUST-WRITTEN sources file (e.g. the malformed
-// "absolute Suite Component" form) must roll the file back and FAIL —
-// leaving it in place while reporting success breaks every apt
-// operation on the host.
 func TestApt_Apply_MalformedSourcesRollsBackAndFails(t *testing.T) {
 	const repoFile = "/etc/apt/sources.list.d/docker.sources"
 
@@ -366,8 +358,7 @@ func TestApt_Apply_MalformedSourcesRollsBackAndFails(t *testing.T) {
 
 	t.Run("fresh file is removed; diagnostic only on stderr", func(t *testing.T) {
 		m, ff, fr := newTestManager(t, pkg.Apt)
-		// The path arrives ONLY via Result.Stderr — pins that the guard
-		// reads the raw streams, not just the folded error string (CR).
+
 		fr.Push(sysexec.Result{
 			ExitCode: 100,
 			Stderr:   fmt.Sprintf("E: Malformed entry 1 in sources file %s (absolute Suite Component)", repoFile),
@@ -387,10 +378,6 @@ func TestApt_Apply_MalformedSourcesRollsBackAndFails(t *testing.T) {
 	})
 }
 
-// #302 counterpart: an update failure that does NOT name our file (a
-// network error, a broken THIRD-PARTY repo) stays a warning — the
-// config landed and is valid; failing would block converging repos on
-// hosts with unrelated apt breakage.
 func TestApt_Apply_UnrelatedUpdateFailureStaysWarning(t *testing.T) {
 	m, ff, fr := newTestManager(t, pkg.Apt)
 	fr.Push(sysexec.Result{}, fmt.Errorf("apt-get: exit 100: Could not resolve 'download.docker.com'"))

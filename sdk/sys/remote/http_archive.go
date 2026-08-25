@@ -13,24 +13,15 @@ import (
 	"strings"
 )
 
-// archiveKind classifies a downloaded body so the extractor knows which
-// reader to wrap it in. v1 supports tar.gz and zip; tar.xz is rejected
-// explicitly at NewHTTP-equivalent detection time so a caller doesn't
-// silently fall back to "treat as opaque blob".
 type archiveKind int
 
 const (
 	archiveUnknown archiveKind = iota
 	archiveTarGz
 	archiveZip
-	archiveTarXz // recognised → rejected; never extracted
+	archiveTarXz
 )
 
-// detectArchiveKind picks the kind from a Content-Type / URL pair. Both
-// channels are advisory — origins sometimes lie, and CDNs sometimes
-// strip Content-Type entirely. We trust Content-Type first, fall back
-// to the URL extension, and refuse to guess from raw magic bytes (the
-// extractor's safety guards still catch a misclassification).
 func detectArchiveKind(contentType, rawURL string) archiveKind {
 	ct := strings.ToLower(strings.TrimSpace(contentType))
 	switch ct {
@@ -43,7 +34,7 @@ func detectArchiveKind(contentType, rawURL string) archiveKind {
 	}
 
 	lowerURL := strings.ToLower(rawURL)
-	// Strip query string + fragment before extension matching.
+
 	if i := strings.IndexAny(lowerURL, "?#"); i >= 0 {
 		lowerURL = lowerURL[:i]
 	}
@@ -58,11 +49,6 @@ func detectArchiveKind(contentType, rawURL string) archiveKind {
 	return archiveUnknown
 }
 
-// fetchArchive is Fetch's archive branch. Downloads the body to a tmp
-// file, classifies it, dispatches to the per-kind extractor into a
-// sibling staging directory, then atomically swaps staging → dest. Any
-// validation failure mid-extract bails out and rm-rfs staging — dest is
-// either fully populated or untouched.
 func (h *httpSource) fetchArchive(ctx context.Context, dest string) (Result, error) {
 	if err := validateDestination(dest); err != nil {
 		return Result{}, err
@@ -88,9 +74,7 @@ func (h *httpSource) fetchArchive(ctx context.Context, dest string) (Result, err
 	}
 	defer func() { _ = body.Close() }()
 	if notModified {
-		// Server confirmed the cache was current after we'd already
-		// committed to the GET path; treat it as a no-op rather than
-		// "extract empty archive".
+
 		return Result{Changed: false, Revision: cachedRevision}, nil
 	}
 
@@ -102,18 +86,12 @@ func (h *httpSource) fetchArchive(ctx context.Context, dest string) (Result, err
 		return Result{}, fmt.Errorf("%w: unable to detect archive type for %s (content-type=%q)", ErrInvalidConfig, h.cfg.URL, contentType)
 	}
 
-	// Buffer the body to a tmp file before extracting. zip needs a
-	// ReaderAt for random access; tar.gz could be streamed but doing
-	// both via the same flow keeps the size cap and atomic-write logic
-	// in one place.
 	tmp, written, sum, err := streamToTmp(dest+".dl", body, h.cfg.MaxBytes)
 	if err != nil {
 		return Result{}, err
 	}
 	defer func() { _ = os.Remove(tmp) }()
 
-	// Build an unpredictable sibling staging dir via the same fail-closed
-	// crypto/rand suffix tmpPathFor stamps onto the tmp file.
 	staging, err := tmpPathFor(dest + ".staging")
 	if err != nil {
 		return Result{}, err
@@ -136,11 +114,6 @@ func (h *httpSource) fetchArchive(ctx context.Context, dest string) (Result, err
 		return Result{}, extractErr
 	}
 
-	// Swap staging → dest. If dest exists we replace it; v1 doesn't
-	// attempt a fully-atomic "previous tree visible until new one is
-	// complete" swap (that needs a per-version dir + symlink dance,
-	// which is overkill for the documentation / config / asset use
-	// cases this primitive targets).
 	if _, statErr := os.Stat(dest); statErr == nil {
 		if err := os.RemoveAll(dest); err != nil {
 			cleanupStaging()
@@ -171,8 +144,6 @@ func (h *httpSource) fetchArchive(ctx context.Context, dest string) (Result, err
 
 	RecordDest(dest)
 
-	// Compute the tree digest so callers can drift-compare against a
-	// known-good baseline outside of ETag visibility.
 	digest, _ := sha256Tree(dest)
 
 	return Result{
@@ -184,11 +155,6 @@ func (h *httpSource) fetchArchive(ctx context.Context, dest string) (Result, err
 	}, nil
 }
 
-// openArchiveBody is openBody plus the response's Content-Type, which
-// the archive branch needs for kind detection. The notModified return
-// is true when the server answered 304 to a conditional GET — caller
-// short-circuits without extracting (an empty body fed to the
-// extractor would otherwise surface as a confusing gzip / zip error).
 func (h *httpSource) openArchiveBody(ctx context.Context, etag string) (io.ReadCloser, string, string, bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, h.cfg.URL, nil)
 	if err != nil {
@@ -212,10 +178,8 @@ func (h *httpSource) openArchiveBody(ctx context.Context, etag string) (io.ReadC
 	return resp.Body, resp.Header.Get("ETag"), resp.Header.Get("Content-Type"), false, nil
 }
 
-// extractTarGzFile is the file-on-disk entry point that the staging
-// flow uses. extractTarGzBytes wraps it for the fuzz harness.
 func extractTarGzFile(tmpPath, staging string, maxBytes int64) (int, error) {
-	f, err := os.Open(tmpPath) //nolint:gosec // staging path validated upstream.
+	f, err := os.Open(tmpPath)
 	if err != nil {
 		return 0, fmt.Errorf("open archive: %w", err)
 	}
@@ -223,18 +187,11 @@ func extractTarGzFile(tmpPath, staging string, maxBytes int64) (int, error) {
 	return extractTarGz(f, staging, maxBytes)
 }
 
-// extractTarGzBytes is the fuzz-friendly entry point. Accepts arbitrary
-// bytes and never panics; safety is the whole point.
 func extractTarGzBytes(body []byte, staging string, maxBytes int64) error {
 	_, err := extractTarGz(strings.NewReader(string(body)), staging, maxBytes)
 	return err
 }
 
-// extractTarGz walks a tar.gz stream, enforces per-entry safety, and
-// writes files / dirs into staging. Returns the count of regular files
-// extracted. Returns ErrUnsafeDestination for any unsafe entry name or
-// symlink; ErrIntegrity when the cumulative size exceeds maxBytes; the
-// wrapped gzip / tar error otherwise.
 func extractTarGz(body io.Reader, staging string, maxBytes int64) (int, error) {
 	gz, err := gzip.NewReader(body)
 	if err != nil {
@@ -254,12 +211,9 @@ func extractTarGz(body io.Reader, staging string, maxBytes int64) (int, error) {
 			return files, fmt.Errorf("tar next: %w", err)
 		}
 
-		// Reject symlinks, hardlinks, devices, FIFOs — anything that
-		// can act as a redirect or escape. Only regular files and
-		// directories are accepted.
 		switch hdr.Typeflag {
-		case tar.TypeReg: // TypeRegA is a deprecated alias for TypeReg since Go 1.11.
-			// fall through to write
+		case tar.TypeReg:
+
 		case tar.TypeDir:
 			out, perr := safeJoinDest(staging, hdr.Name)
 			if perr != nil {
@@ -277,9 +231,7 @@ func extractTarGz(body io.Reader, staging string, maxBytes int64) (int, error) {
 		if perr != nil {
 			return files, perr
 		}
-		// Per-entry size + cumulative size check. The cumulative one
-		// is the real teeth (a one-byte file plus a 100 GiB file
-		// shouldn't slip past).
+
 		if hdr.Size < 0 {
 			return files, fmt.Errorf("%w: negative size in entry %q", ErrIntegrity, hdr.Name)
 		}
@@ -315,7 +267,6 @@ func writeTarEntry(out string, r io.Reader, mode os.FileMode) (int64, error) {
 	return n, nil
 }
 
-// extractZipFile mirrors extractTarGzFile for the zip branch.
 func extractZipFile(tmpPath, staging string, maxBytes int64) (int, error) {
 	zr, err := zip.OpenReader(tmpPath)
 	if err != nil {
@@ -336,10 +287,8 @@ func extractZipFile(tmpPath, staging string, maxBytes int64) (int, error) {
 			}
 			continue
 		}
-		// Pre-check declared decompressed size; defeats zip-bomb-style
-		// inputs that under-report compressed size but explode on
-		// decompress.
-		declared := int64(ze.UncompressedSize64) //nolint:gosec // guarded below
+
+		declared := int64(ze.UncompressedSize64)
 		if declared < 0 {
 			return files, fmt.Errorf("%w: negative uncompressed size", ErrIntegrity)
 		}
@@ -369,22 +318,6 @@ func extractZipFile(tmpPath, staging string, maxBytes int64) (int, error) {
 	return files, nil
 }
 
-// safeJoinDest validates an archive entry's name and returns the
-// destination path under staging. The intent check runs on the RAW
-// entry name, before any normalisation, so an adversarial input that
-// would *eventually* normalise to an in-tree path still surfaces as
-// unsafe — the caller's intent was to escape.
-//
-// Rejects:
-//   - empty names, "." and NUL bytes
-//   - any path filepath.IsLocal would refuse (absolute, .. escapes,
-//     reserved Windows names, separator quirks). IsLocal is the
-//     canonical Go sanitizer for "is this safe to filepath.Join under
-//     a trusted dir?", which means static analyzers (CodeQL,
-//     gosec) recognise this call as the point at which untrusted
-//     archive input becomes safe.
-//   - paths whose post-Localize join still lands outside staging
-//     (defense-in-depth against any future IsLocal regression).
 func safeJoinDest(staging, entry string) (string, error) {
 	if entry == "" || entry == "." {
 		return "", fmt.Errorf("%w: empty or '.' entry name", ErrUnsafeDestination)
@@ -392,17 +325,12 @@ func safeJoinDest(staging, entry string) (string, error) {
 	if strings.ContainsRune(entry, 0) {
 		return "", fmt.Errorf("%w: entry %q contains NUL", ErrUnsafeDestination, entry)
 	}
-	// Tar/zip directory entries can carry a trailing "/", which
-	// filepath.Localize would treat as a non-local path. Strip it
-	// first; the entry is still required to be non-empty after.
+
 	trimmed := strings.TrimRight(entry, "/\\")
 	if trimmed == "" || trimmed == "." {
 		return "", fmt.Errorf("%w: entry %q normalises to empty", ErrUnsafeDestination, entry)
 	}
-	// Normalise tar's forward-slash separators to the host's so
-	// IsLocal / Localize evaluate them correctly even on a Windows
-	// builder. (Not relevant to Linux deploys today, but the test
-	// harness can run anywhere.)
+
 	hostEntry := filepath.FromSlash(trimmed)
 	if !filepath.IsLocal(hostEntry) {
 		return "", fmt.Errorf("%w: entry %q is not a local path", ErrUnsafeDestination, entry)
@@ -412,10 +340,7 @@ func safeJoinDest(staging, entry string) (string, error) {
 		return "", fmt.Errorf("%w: entry %q: %v", ErrUnsafeDestination, entry, err)
 	}
 	full := filepath.Join(staging, localized)
-	// Belt-and-braces: confirm the joined path is still inside
-	// staging after Abs. IsLocal + Localize already guarantee this,
-	// but the check costs nothing and keeps a single source of truth
-	// for any future analyzer to recognise.
+
 	stagingAbs, err := filepath.Abs(staging)
 	if err != nil {
 		return "", fmt.Errorf("%w: staging abs: %v", ErrUnsafeDestination, err)

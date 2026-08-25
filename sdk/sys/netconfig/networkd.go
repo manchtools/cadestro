@@ -11,7 +11,6 @@ import (
 
 const networkDir = "/etc/systemd/network"
 
-// networkdBackend writes a managed .network unit and reloads networkd.
 type networkdBackend struct {
 	base
 	fsm fsManager
@@ -34,9 +33,6 @@ func (b *networkdBackend) Apply(ctx context.Context, cfg InterfaceConfig) error 
 	return nil
 }
 
-// renderNetworkUnit renders the .network unit for cfg. Values are validated
-// (CIDRs/IP literals/ifname) before this runs, so none can carry a newline that
-// would inject extra directives.
 func renderNetworkUnit(cfg InterfaceConfig) string {
 	var b strings.Builder
 	b.WriteString("# Managed by cadestrod — do not edit by hand.\n")
@@ -60,9 +56,7 @@ func renderNetworkUnit(cfg InterfaceConfig) string {
 	}
 	for _, rt := range cfg.Routes {
 		b.WriteString("\n[Route]\n")
-		// A "default" route omits Destination; networkd treats a [Route] with
-		// only a Gateway as the default route for that gateway's family (so v4
-		// and v6 defaults are both handled without guessing 0.0.0.0/0 vs ::/0).
+
 		if rt.Destination != "default" {
 			b.WriteString("Destination=" + rt.Destination + "\n")
 		}

@@ -24,7 +24,7 @@ func newNetworkd(t *testing.T, ff *fakeFS) (*networkdBackend, *exectest.FakeRunn
 func TestNetworkd_ApplyStatic(t *testing.T) {
 	ff := &fakeFS{}
 	m, r := newNetworkd(t, ff)
-	r.Push(exec.Result{}, nil) // networkctl reload
+	r.Push(exec.Result{}, nil)
 	err := m.Apply(context.Background(), InterfaceConfig{
 		Name: "eth0", Mode: Static,
 		Addresses: []string{"192.0.2.10/24", "2001:db8::10/64"},
@@ -49,7 +49,7 @@ func TestNetworkd_ApplyStatic(t *testing.T) {
 			t.Errorf("unit missing %q\n%s", want, body)
 		}
 	}
-	// The default route omits Destination (networkd infers it per gateway family).
+
 	if !strings.Contains(body, "[Route]\nGateway=203.0.113.1") {
 		t.Errorf("default route should be a Destination-less [Route]:\n%s", body)
 	}
@@ -59,7 +59,7 @@ func TestNetworkd_ApplyStatic(t *testing.T) {
 	if ff.writes[0].opts.Mode != 0o644 || ff.writes[0].opts.Owner != "root" {
 		t.Errorf("write opts = %+v, want mode 0644 root", ff.writes[0].opts)
 	}
-	// reload escalated.
+
 	last := r.Calls()
 	if len(last) != 1 || strings.Join(last[0].Args, " ") != "reload" || last[0].Name != "networkctl" || !last[0].Escalate {
 		t.Errorf("reload call = %v, want escalated `networkctl reload`", last)
@@ -85,8 +85,6 @@ func TestNetworkd_ApplyDHCP(t *testing.T) {
 	}
 }
 
-// Routes (and DNS/MTU) are independent of the addressing mode: a DHCP interface
-// with a static route emits the [Route] alongside DHCP=yes.
 func TestNetworkd_ApplyDHCPWithRoute(t *testing.T) {
 	ff := &fakeFS{}
 	m, r := newNetworkd(t, ff)
@@ -130,7 +128,7 @@ func TestNetworkd_ApplyReloadFailurePropagates(t *testing.T) {
 }
 
 func TestNetworkd_Get(t *testing.T) {
-	// Get is the shared base impl over `ip`; here just confirm networkd wires it.
+
 	ff := &fakeFS{}
 	m, r := newNetworkd(t, ff)
 	r.Push(exec.Result{Stdout: fixtureAddrJSON}, nil)

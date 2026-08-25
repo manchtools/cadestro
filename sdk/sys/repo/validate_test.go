@@ -8,13 +8,11 @@ import (
 	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
-// --- name validation -------------------------------------------------------
-
 func TestValidate_Name(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Dnf)
 	good := []string{"corp", "epel-9", "my.repo_1", "A0"}
 	for _, n := range good {
-		// A valid name with a valid config must pass.
+
 		r := Repository{Name: n, Dnf: &DnfConfig{BaseURL: "https://h/r"}}
 		if err := m.Validate(r); err != nil {
 			t.Errorf("Validate(name=%q) = %v, want nil", n, err)
@@ -40,7 +38,6 @@ func TestValidate_Name(t *testing.T) {
 	}
 }
 
-// Validate on a name-only Repository (the Remove shape) checks only the name.
 func TestValidate_NameOnlyRepository(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Apt)
 	if err := m.Validate(Repository{Name: "ok"}); err != nil {
@@ -51,14 +48,10 @@ func TestValidate_NameOnlyRepository(t *testing.T) {
 	}
 }
 
-// --- apt field validation --------------------------------------------------
-
 func TestValidate_Apt(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Apt)
 	base := func() *AptConfig { return &AptConfig{URL: "https://packages.example.com/apt"} }
 
-	// apt is intentionally exempt from the https requirement (trust = signed
-	// Release), so BOTH http and https are accepted.
 	for _, u := range []string{"http://old.example.com/apt", "https://packages.example.com/apt"} {
 		if err := m.Validate(Repository{Name: "r", Apt: &AptConfig{URL: u}}); err != nil {
 			t.Errorf("Validate(apt url %q) = %v, want nil", u, err)
@@ -68,14 +61,13 @@ func TestValidate_Apt(t *testing.T) {
 	reject := map[string]*AptConfig{
 		"missing url":    {URL: ""},
 		"control in url": {URL: "https://h/a\nDeb-Src: x"},
-		// A raw space splits the deb822 URIs field into a SECOND URI — the
-		// injection the old control-only check let through.
+
 		"space (second-URI injection)": {URL: "https://h/a https://evil/"},
 		"tab in url":                   {URL: "https://h/a\tb"},
 		"non-http scheme (ftp)":        {URL: "ftp://h/a"},
 		"file scheme":                  {URL: "file:///etc/passwd"},
 		"not a url (no scheme/host)":   {URL: "packages.example.com/apt"},
-		"unparseable (bad host)":       {URL: "http://[oops"}, // url.Parse: missing ']'
+		"unparseable (bad host)":       {URL: "http://[oops"},
 		"no host":                      {URL: "https:///path"},
 		"embedded credentials":         {URL: "https://user:pass@h/a"},
 		"control in dist":              mut(base(), func(c *AptConfig) { c.Distribution = "bad\nline" }),
@@ -83,7 +75,7 @@ func TestValidate_Apt(t *testing.T) {
 		"control in component":         mut(base(), func(c *AptConfig) { c.Components = []string{"main", "x\ny"} }),
 		"bad component shape":          mut(base(), func(c *AptConfig) { c.Components = []string{"@bad"} }),
 		"control in arch":              mut(base(), func(c *AptConfig) { c.Arch = "amd64\n" }),
-		"bad arch shape":               mut(base(), func(c *AptConfig) { c.Arch = "AMD64" }), // arch is lowercase
+		"bad arch shape":               mut(base(), func(c *AptConfig) { c.Arch = "AMD64" }),
 	}
 	for label, c := range reject {
 		err := m.Validate(Repository{Name: "r", Apt: c})
@@ -92,8 +84,6 @@ func TestValidate_Apt(t *testing.T) {
 		}
 	}
 
-	// A fully populated valid apt config (incl. a multi-line key blob, which is
-	// NOT control-char validated) passes.
 	ok := &AptConfig{
 		URL: "https://h/a", Distribution: "bookworm",
 		Components: []string{"main", "contrib"}, Arch: "amd64",
@@ -104,13 +94,11 @@ func TestValidate_Apt(t *testing.T) {
 	}
 }
 
-// --- dnf field validation --------------------------------------------------
-
 func TestValidate_Dnf(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Dnf)
 	reject := map[string]*DnfConfig{
 		"missing baseurl":    {BaseURL: ""},
-		"http baseurl":       {BaseURL: "http://h/r"}, // dnf requires https
+		"http baseurl":       {BaseURL: "http://h/r"},
 		"ftp baseurl":        {BaseURL: "ftp://h/r"},
 		"control in baseurl": {BaseURL: "https://h/r\nrm -rf"},
 		"control in desc":    {BaseURL: "https://h/r", Description: "x\ny"},
@@ -127,13 +115,11 @@ func TestValidate_Dnf(t *testing.T) {
 	if err := m.Validate(Repository{Name: "r", Dnf: ok}); err != nil {
 		t.Errorf("Validate(valid dnf) = %v, want nil", err)
 	}
-	// A file:// gpgkey absolute path is accepted.
+
 	if err := m.Validate(Repository{Name: "r", Dnf: &DnfConfig{BaseURL: "https://h/r", GPGKey: "/etc/pki/rpm-gpg/KEY"}}); err != nil {
 		t.Errorf("Validate(dnf abs-path gpgkey) = %v, want nil", err)
 	}
 }
-
-// --- pacman field validation -----------------------------------------------
 
 func TestValidate_Pacman(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Pacman)
@@ -156,8 +142,6 @@ func TestValidate_Pacman(t *testing.T) {
 		t.Errorf("Validate(valid pacman) = %v, want nil", err)
 	}
 }
-
-// --- zypper field validation -----------------------------------------------
 
 func TestValidate_Zypper(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Zypper)
@@ -182,19 +166,13 @@ func TestValidate_Zypper(t *testing.T) {
 	}
 }
 
-// mut clones-by-mutation: applies f to c and returns it (test sugar).
 func mut(c *AptConfig, f func(*AptConfig)) *AptConfig { f(c); return c }
 
-// #302: deb822 forbids Components with the exact-path suite form that an
-// empty distribution renders (`Suites: /`) — apt rejects the file with
-// "Malformed entry … (absolute Suite Component)" and, once written,
-// every apt operation on the host breaks. Validate must reject the
-// combination at the gate.
 func TestValidate_Apt_FlatRepoWithComponentsRejected(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Apt)
 	err := m.Validate(Repository{Name: "docker", Apt: &AptConfig{
 		URL:        "https://download.docker.com/linux/ubuntu",
-		Components: []string{"stable"}, // no distribution → flat form
+		Components: []string{"stable"},
 	}})
 	if err == nil {
 		t.Fatal("empty distribution + components must be rejected (would write a malformed .sources)")
@@ -203,9 +181,8 @@ func TestValidate_Apt_FlatRepoWithComponentsRejected(t *testing.T) {
 		t.Fatalf("want ErrInvalidConfig, got %v", err)
 	}
 
-	// Both resolutions of the conflict stay valid.
 	if err := m.Validate(Repository{Name: "docker", Apt: &AptConfig{
-		URL: "https://download.docker.com/linux/ubuntu", // flat, no components
+		URL: "https://download.docker.com/linux/ubuntu",
 	}}); err != nil {
 		t.Fatalf("flat repository without components must validate: %v", err)
 	}

@@ -88,16 +88,11 @@ type Manager interface {
 	Apply(ctx context.Context, cfg Config) error
 }
 
-// fsManager is the narrow slice of fs.Manager the Resolved backend uses to write
-// the resolved.conf.d drop-in; a small interface so tests inject a fake via the
-// newFS seam.
 type fsManager interface {
 	WriteFile(ctx context.Context, path string, data []byte, opts fs.WriteOptions) error
 	Mkdir(ctx context.Context, path string, opts fs.MkdirOptions) error
 }
 
-// newFS builds the fs.Manager (over the same injected Runner) used by the
-// Resolved backend. A package var so tests can substitute a fake.
 var newFS = func(r exec.Runner) (fsManager, error) { return fs.New(r) }
 
 // New returns a Manager for the named backend, driven by runner. Pure: it
@@ -122,9 +117,6 @@ func New(b Backend, runner exec.Runner) (Manager, error) {
 	}
 }
 
-// runPriv runs an escalated mutation through the Runner and maps a non-zero exit
-// (or a failure to execute) into an error — the "err != nil ⇒ the tool failed"
-// contract the backends rely on.
 func runPriv(ctx context.Context, r exec.Runner, name string, args ...string) error {
 	res, err := r.Run(ctx, exec.Command{Name: name, Args: args, Escalate: true})
 	if err != nil {
@@ -136,8 +128,6 @@ func runPriv(ctx context.Context, r exec.Runner, name string, args ...string) er
 	return nil
 }
 
-// runRead runs an unprivileged query through the Runner and returns its stdout,
-// mapping a non-zero exit (or exec failure) into an error.
 func runRead(ctx context.Context, r exec.Runner, name string, args ...string) (string, error) {
 	res, err := r.Run(ctx, exec.Command{Name: name, Args: args})
 	if err != nil {

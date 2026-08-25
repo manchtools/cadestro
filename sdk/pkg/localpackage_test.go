@@ -9,33 +9,9 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// Contract (gap #2): LocalPackageInfo(ctx, path) reads a package's CANONICAL
-// name (plus version + arch where available) from a LOCAL package file already
-// on disk, so the agent can resolve `IsInstalled(name)` / `Remove(name)` before
-// an InstallLocal without re-implementing the introspection itself.
-//
-//   - It MUST validate the PATH first (ValidateLocalPackagePath: absolute, no
-//     "..", no control chars) before the file ever reaches argv.
-//   - The NAME the file reports is ATTACKER-INFLUENCED — a crafted .deb/.rpm can
-//     embed any %{NAME}/Package value. LocalPackageInfo MUST re-validate that
-//     name against the BACKEND'S package-name grammar before returning it, and
-//     reject a flag-shaped (`-evil`) or metacharacter-bearing name. A bad name is
-//     a rejection, NOT a silently-returned value that a later Remove(name) would
-//     pass straight to the package manager as a flag.
-//   - flatpak has no clean local-name introspection command, so it returns a
-//     clear "not supported" error rather than guessing.
-//
-// Per backend: apt → `dpkg-deb -f <path> Package Version Architecture`;
-// dnf/zypper → `rpm -qp --qf '%{NAME}\n%{VERSION}-%{RELEASE}\n%{ARCH}' <path>`;
-// pacman → `pacman -Qp <path>` (prints "name version").
-
-// TestLocalPackageInfo_AptHappyPath: a valid .deb file → the validated canonical
-// name, version, and architecture, via an UNPRIVILEGED dpkg-deb read.
 func TestLocalPackageInfo_AptHappyPath(t *testing.T) {
 	m, f := aptM(t)
-	// dpkg-deb -f with MULTIPLE fields emits a labeled "Field: value" stanza (NOT
-	// bare values — that is only the single-field shape). The parse must read the
-	// value, not the "Package:" label.
+
 	ok(f, "Package: nginx\nVersion: 1.24.0-1ubuntu1\nArchitecture: amd64\n")
 	info, err := m.LocalPackageInfo(context.Background(), "/tmp/nginx.deb")
 	if err != nil {
@@ -54,8 +30,6 @@ func TestLocalPackageInfo_AptHappyPath(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_RpmHappyPath: dnf and zypper both introspect a local .rpm
-// via `rpm -qp --qf`, returning the validated name/version/arch.
 func TestLocalPackageInfo_RpmHappyPath(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -66,7 +40,7 @@ func TestLocalPackageInfo_RpmHappyPath(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			m, f := tc.mk(t)
-			// rpm -qp --qf '%{NAME}\n%{VERSION}-%{RELEASE}\n%{ARCH}'
+
 			ok(f, "httpd\n2.4.57-5.fc39\nx86_64\n")
 			info, err := m.LocalPackageInfo(context.Background(), "/tmp/httpd.rpm")
 			if err != nil {
@@ -92,8 +66,6 @@ func TestLocalPackageInfo_RpmHappyPath(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_PacmanHappyPath: `pacman -Qp <path>` prints "name version"
-// on one line.
 func TestLocalPackageInfo_PacmanHappyPath(t *testing.T) {
 	m, f := pacmanM(t)
 	ok(f, "neovim 0.9.5-1\n")
@@ -114,11 +86,6 @@ func TestLocalPackageInfo_PacmanHappyPath(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_PacmanRejectsNamelessOutput: malformed `-Qp` output with a
-// leading-whitespace version but no name token must be REJECTED (fail-closed
-// parse) — TrimSpace+Fields would otherwise promote the version to Name. Derived
-// from intent ("the first token IS the name; no name token => reject"), not from
-// the parser under test.
 func TestLocalPackageInfo_PacmanRejectsNamelessOutput(t *testing.T) {
 	cases := map[string]string{
 		"leading-space version": " 1.0-1\n",
@@ -141,8 +108,6 @@ func TestLocalPackageInfo_PacmanRejectsNamelessOutput(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_FlatpakUnsupported: a flatpak bundle has no clean local
-// name-introspection command, so the call returns a clear error and runs nothing.
 func TestLocalPackageInfo_FlatpakUnsupported(t *testing.T) {
 	m, f := flatpakM(t)
 	info, err := m.LocalPackageInfo(context.Background(), "/tmp/app.flatpak")
@@ -160,17 +125,15 @@ func TestLocalPackageInfo_FlatpakUnsupported(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_RejectsBadPath: a non-absolute / traversing / control-char
-// path is refused before the Runner — the path can never reach argv.
 func TestLocalPackageInfo_RejectsBadPath(t *testing.T) {
 	for _, mk := range []func(t *testing.T) (Manager, *exectest.FakeRunner){aptM, dnfM, zypperM, pacmanM} {
 		m, f := mk(t)
 		for _, path := range []string{
-			"",              // empty
-			"relative.deb",  // not absolute
-			"/tmp/../etc/x", // traversal
-			"/tmp/a\nb.deb", // control char
-			"-rf",           // flag-shaped (and relative)
+			"",
+			"relative.deb",
+			"/tmp/../etc/x",
+			"/tmp/a\nb.deb",
+			"-rf",
 		} {
 			_, err := m.LocalPackageInfo(context.Background(), path)
 			if err == nil {
@@ -183,30 +146,23 @@ func TestLocalPackageInfo_RejectsBadPath(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_RejectsCraftedName is the security core: a crafted package
-// file reports an adversarial %{NAME}/Package. LocalPackageInfo MUST reject it
-// against the backend's name grammar rather than return it — a returned `-rf`
-// would be reparsed as a flag by a later Remove/IsInstalled, and a returned
-// `evil$(id)` could escape further handling. The wrong values are derived from
-// the intent ("a package name starts alphanumeric, no flags, no metacharacters"),
-// not from the validator under test.
 func TestLocalPackageInfo_RejectsCraftedName(t *testing.T) {
-	// Names a crafted file could embed that the backend's grammar must refuse.
+
 	craftedNames := []string{
-		"-rf",          // flag-shaped: leading dash → option injection
-		"--eval=%x",    // rpm macro / flag injection
-		"evil name",    // space → argv split
-		"pkg;id",       // shell metacharacter
-		"pkg$(whoami)", // command-substitution metacharacter
-		"pkg|tee",      // pipe metacharacter
-		"pkg`id`",      // backtick
-		"",             // empty name
+		"-rf",
+		"--eval=%x",
+		"evil name",
+		"pkg;id",
+		"pkg$(whoami)",
+		"pkg|tee",
+		"pkg`id`",
+		"",
 	}
 
 	t.Run("apt rejects a crafted Package field", func(t *testing.T) {
 		for _, bad := range craftedNames {
 			m, f := aptM(t)
-			// dpkg-deb -f emits the crafted Package on the first line.
+
 			ok(f, bad+"\n1.0\namd64\n")
 			info, err := m.LocalPackageInfo(context.Background(), "/tmp/evil.deb")
 			if err == nil {
@@ -235,14 +191,10 @@ func TestLocalPackageInfo_RejectsCraftedName(t *testing.T) {
 	})
 
 	t.Run("pacman rejects a crafted name", func(t *testing.T) {
-		// pacman -Qp output is space-delimited "name version", so the name is a
-		// single token: a name with an embedded space is not representable, and an
-		// empty/whitespace first field is the "no name" shape covered separately
-		// below. Drive the single-token crafted names — the realistic threat (a
-		// flag-shaped or metacharacter-bearing first token) — through field[0].
+
 		for _, bad := range craftedNames {
 			if bad == "" || strings.ContainsAny(bad, " ") {
-				continue // not a single-token pacman name
+				continue
 			}
 			m, f := pacmanM(t)
 			ok(f, bad+" 1.0-1\n")
@@ -257,8 +209,7 @@ func TestLocalPackageInfo_RejectsCraftedName(t *testing.T) {
 	})
 
 	t.Run("pacman rejects empty -Qp output (no name)", func(t *testing.T) {
-		// A crafted/garbled package whose -Qp emits no name must be a rejection, not
-		// a half-populated info — and must never promote the version into the name.
+
 		for _, out := range []string{"", "\n", "   \n"} {
 			m, f := pacmanM(t)
 			ok(f, out)
@@ -273,10 +224,6 @@ func TestLocalPackageInfo_RejectsCraftedName(t *testing.T) {
 	})
 }
 
-// TestLocalPackageInfo_AcceptsRpmPlusName guards a real-world legitimate RPM name
-// the apt/pacman grammar would reject but the RPM grammar allows ('+', e.g.
-// libstdc++): dnf/zypper must validate with the RPM grammar, not the generic one,
-// so a valid library package is not wrongly refused.
 func TestLocalPackageInfo_AcceptsRpmPlusName(t *testing.T) {
 	for _, mk := range []func(t *testing.T) (Manager, *exectest.FakeRunner){dnfM, zypperM} {
 		m, f := mk(t)
@@ -291,9 +238,6 @@ func TestLocalPackageInfo_AcceptsRpmPlusName(t *testing.T) {
 	}
 }
 
-// TestLocalPackageInfo_RunnerErrorPropagates: a genuine read failure (binary
-// missing, unreadable file → non-zero exit) surfaces as an error, never a
-// half-populated info.
 func TestLocalPackageInfo_ReadFailurePropagates(t *testing.T) {
 	m, f := aptM(t)
 	f.Push(sysexec.Result{ExitCode: 2, Stderr: "dpkg-deb: error: not a debian archive\n"}, nil)

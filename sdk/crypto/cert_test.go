@@ -28,7 +28,6 @@ func TestCAFingerprintFromPEM(t *testing.T) {
 		}
 	}
 
-	// ABSENT / malformed inputs fail.
 	if _, err := CAFingerprintFromPEM(nil); err == nil {
 		t.Error("empty PEM accepted; want error")
 	}
@@ -37,9 +36,6 @@ func TestCAFingerprintFromPEM(t *testing.T) {
 	}
 }
 
-// TestVerifyCAContinuity pins the rotation guard: a returned CA is only
-// adopted if it is byte-identical to, or cross-signed by, the enrolled
-// CA. An unrelated CA (the trust-anchor-swap attack) is refused.
 func TestVerifyCAContinuity(t *testing.T) {
 	oldPEM, oldKey, oldCert := cryptotest.GenCA(t, "old-ca")
 	successorPEM := cryptotest.GenSubCA(t, "successor-ca", oldCert, oldKey)

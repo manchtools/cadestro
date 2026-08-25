@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// clamavManager drives ClamAV via clamscan + freshclam.
 type clamavManager struct {
 	r exec.Runner
 }
@@ -57,8 +56,6 @@ func (m *clamavManager) Version(ctx context.Context) (Version, error) {
 	return parseClamscanVersion(res.Stdout)
 }
 
-// parseClamscanInfected extracts (file, signature) pairs from clamscan
-// --infected output lines of the form "<file>: <signature> FOUND".
 func parseClamscanInfected(out string) []Infection {
 	var infected []Infection
 	for _, line := range strings.Split(out, "\n") {
@@ -67,9 +64,7 @@ func parseClamscanInfected(out string) []Infection {
 		if !ok {
 			continue
 		}
-		// The signature carries no ": ", so the LAST ": " separates file from
-		// signature (a path may contain a colon, but not the "<colon><space>"
-		// pair clamscan emits).
+
 		i := strings.LastIndex(rest, ": ")
 		if i < 0 {
 			continue
@@ -79,7 +74,6 @@ func parseClamscanInfected(out string) []Infection {
 	return infected
 }
 
-// parseClamscanVersion parses the "ClamAV <engine>/<sig>/<date>" version line.
 func parseClamscanVersion(out string) (Version, error) {
 	line := strings.TrimSpace(out)
 	if !strings.HasPrefix(line, "ClamAV ") {

@@ -7,12 +7,6 @@ import (
 	"testing"
 )
 
-// A read-only destination directory forces the create/mkdir/rename failure
-// branches of the streaming writers without instrumenting production code — the
-// "belt and braces" failure modes: a write that can't land must surface an
-// error, never silently succeed or leave a partial file. Skipped as root (which
-// bypasses the permission bits).
-
 func TestHTTPFetch_WriteIntoReadOnlyDir_Errors(t *testing.T) {
 	if os.Geteuid() == 0 {
 		t.Skip("root bypasses directory permissions")
@@ -28,7 +22,7 @@ func TestHTTPFetch_WriteIntoReadOnlyDir_Errors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewHTTP: %v", err)
 	}
-	// dest under a subdir that can't be created (parent is read-only).
+
 	if _, ferr := src.Fetch(context.Background(), filepath.Join(ro, "sub", "out")); ferr == nil {
 		t.Error("Fetch into a read-only dir returned nil error")
 	}
@@ -54,9 +48,6 @@ func TestS3Fetch_WriteIntoReadOnlyDir_Errors(t *testing.T) {
 	}
 }
 
-// TestRestoreUntracked_WriteError — restoring an untracked snapshot into a
-// read-only tree must fail (the file would otherwise be silently lost on a
-// checkout).
 func TestRestoreUntracked_WriteError(t *testing.T) {
 	if os.Geteuid() == 0 {
 		t.Skip("root bypasses directory permissions")

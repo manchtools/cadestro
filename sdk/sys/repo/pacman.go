@@ -8,12 +8,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// pacmanConf is the pacman configuration file edited in place.
 const pacmanConf = "/etc/pacman.conf"
 
-// removePacmanSection removes a [name] section from pacman.conf content. A
-// section extends from its [name] header to the next [section] header (exclusive)
-// or end of file. Done in Go (no sed) so there is no shell/regex injection risk.
 func removePacmanSection(content, name string) string {
 	sectionHeader := "[" + name + "]"
 	lines := strings.Split(content, "\n")
@@ -35,12 +31,6 @@ func removePacmanSection(content, name string) string {
 	return strings.Join(result, "\n")
 }
 
-// applyPacman appends (or replaces) the repository's [name] section in
-// /etc/pacman.conf and synchronizes the package database. The conf is rewritten
-// atomically; the db sync is non-fatal (surfaced as a warning).
-//
-// A missing /etc/pacman.conf is treated as empty content (fs.Manager.ReadFile
-// reports absence as empty); on a real pacman host the file always exists.
 func (m *manager) applyPacman(ctx context.Context, name string, c *PacmanConfig) (Outcome, error) {
 	var log strings.Builder
 	confBytes, err := m.fsm.ReadFile(ctx, pacmanConf)
@@ -62,7 +52,6 @@ func (m *manager) applyPacman(ctx context.Context, name string, c *PacmanConfig)
 	}
 	newConf += section.String()
 
-	// Idempotency: skip the write + db sync when the conf already matches.
 	if newConf == confStr {
 		fmt.Fprintf(&log, "repository %s already configured\n", name)
 		return out(log.String(), false), nil
@@ -77,11 +66,8 @@ func (m *manager) applyPacman(ctx context.Context, name string, c *PacmanConfig)
 	return out(log.String(), true), nil
 }
 
-// removePacman removes the repository's section from /etc/pacman.conf. Removing
-// an absent section is an idempotent no-op.
 func (m *manager) removePacman(ctx context.Context, name string) (Outcome, error) {
-	// Refuse to operate on the reserved [options] section: removePacmanSection
-	// would strip pacman.conf's global settings block, not a repository.
+
 	if err := validatePacmanName(name); err != nil {
 		return Outcome{}, err
 	}

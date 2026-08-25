@@ -51,7 +51,7 @@ func TestPartitionByFamily(t *testing.T) {
 	if strings.Join(v6, ",") != "2001:db8::1,fe80::1" {
 		t.Errorf("v6 = %v, want [2001:db8::1 fe80::1]", v6)
 	}
-	// Defensive skip of an unparseable entry (unreachable post-validation).
+
 	v4, v6 = partitionByFamily([]string{"garbage", "1.2.3.4"})
 	if strings.Join(v4, ",") != "1.2.3.4" || len(v6) != 0 {
 		t.Errorf("partition(garbage,1.2.3.4) = (%v,%v), want ([1.2.3.4],[])", v4, v6)

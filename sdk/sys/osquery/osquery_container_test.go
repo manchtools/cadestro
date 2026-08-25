@@ -1,17 +1,5 @@
 //go:build container
 
-// Container-based real-execution tests for the osquery Querier. The fake-runner
-// unit tests feed captured osqueryi JSON; these run real `osqueryi --json`
-// queries inside the container against the installed binary, so an osquery
-// output-format change (the []map[string]string JSON shape, the `.tables`
-// listing) is caught here. They also prove the security-critical sensitive-table
-// deny-list against the REAL binary: every query path — table, RawSql, and
-// direct QuerySQL — refuses a deny-listed table before exec; there is no
-// escape hatch around the credential-table policy.
-//
-// Runs in the container-tests lane (root), so the Runner is Direct: Escalate is
-// a no-op wrapper and osqueryi runs as the already-root process — the same shape
-// production drives when the agent is root.
 package osquery
 
 import (
@@ -32,8 +20,7 @@ func realQuerier(t *testing.T) Querier {
 	}
 	q, err := New(r)
 	if err != nil {
-		// In the with-osquery stage the binary is present (asserted at build
-		// time); anywhere else this capability is simply not exercisable.
+
 		t.Skipf("osquery not installed here: %v", err)
 	}
 	return q
@@ -46,10 +33,6 @@ func osqCtx(t *testing.T) context.Context {
 	return ctx
 }
 
-// TestQueryTable_OSVersion_Container runs a real `SELECT * FROM os_version` and
-// pins the JSON round-trip: osqueryi must return exactly one row whose `name`
-// column is populated. A change to osqueryi's --json shape breaks the
-// []map[string]string parse and fails here.
 func TestQueryTable_OSVersion_Container(t *testing.T) {
 	rows, err := realQuerier(t).QueryTable(osqCtx(t), "os_version")
 	if err != nil {
@@ -63,17 +46,12 @@ func TestQueryTable_OSVersion_Container(t *testing.T) {
 	}
 }
 
-// TestIsInstalled_Container: the live re-probe must see the binary baked into the
-// image.
 func TestIsInstalled_Container(t *testing.T) {
 	if !realQuerier(t).IsInstalled(osqCtx(t)) {
 		t.Error("IsInstalled = false, but osqueryi is installed in this image")
 	}
 }
 
-// TestListTables_Container pins the `.tables` meta-command parse: the real
-// listing must decode into a non-empty slice that includes well-known core
-// tables. A format change to osqueryi's `.tables` output is caught here.
 func TestListTables_Container(t *testing.T) {
 	tables, err := realQuerier(t).ListTables(osqCtx(t))
 	if err != nil {
@@ -89,13 +67,6 @@ func TestListTables_Container(t *testing.T) {
 	}
 }
 
-// TestDenyList_RefusedBeforeExec_Container is SELF-DISCOVERING: it iterates the
-// real sensitiveTables map (not a hardcoded copy), so a table added to the
-// deny-list is automatically covered. Each must be refused by BOTH the
-// QueryTable and raw QuerySQL paths — and the refusal must be the policy
-// sentinel (ErrTableNotPermitted, "not permitted"), distinguishable from a
-// query-execution failure, proving the gate fires BEFORE the binary is ever
-// invoked.
 func TestDenyList_RefusedBeforeExec_Container(t *testing.T) {
 	q := realQuerier(t)
 	ctx := osqCtx(t)
@@ -103,12 +74,12 @@ func TestDenyList_RefusedBeforeExec_Container(t *testing.T) {
 		t.Fatal("sensitiveTables is empty — deny-list coverage would be vacuous")
 	}
 	for table := range sensitiveTables {
-		// QueryTable path.
+
 		_, err := q.QueryTable(ctx, table)
 		if !errors.Is(err, ErrTableNotPermitted) || !strings.Contains(err.Error(), "not permitted") {
 			t.Errorf("QueryTable(%q): want the 'not permitted' policy refusal, got %v", table, err)
 		}
-		// Raw SQL path.
+
 		_, err = q.QuerySQL(ctx, "SELECT * FROM "+table)
 		if !errors.Is(err, ErrTableNotPermitted) {
 			t.Errorf("QuerySQL(FROM %s): want ErrTableNotPermitted, got %v", table, err)
@@ -116,27 +87,8 @@ func TestDenyList_RefusedBeforeExec_Container(t *testing.T) {
 	}
 }
 
-// mustDenyTables is the TEST-OWNED threat model: osquery tables that expose
-// credential material or secrets and MUST be refused by the table path. It is
-// listed here INDEPENDENTLY of the implementation's sensitiveTables map — that
-// is the whole point. The map-driven test above proves "every denied table is
-// refused"; it cannot prove "every table that SHOULD be denied is", because it
-// reads the same map the implementation does, so dropping a table from the
-// deny-list would silently drop it from the test too. This list is the fixed
-// expectation that catches such a regression. Each entry is justified:
-//   - shadow:        password hashes
-//   - process_envs:  a process environment can carry secrets / tokens
-//   - shell_history: pasted passwords / tokens land in command history
-//   - crontab:       scheduled commands can embed credentials
-//   - sudoers:       privilege policy; can name secret-bearing commands
 var mustDenyTables = []string{"shadow", "process_envs", "shell_history", "crontab", "sudoers"}
 
-// TestDenyList_ThreatModelComplete_Container is the INDEPENDENT companion to the
-// map-driven deny-list test: every threat-model-sensitive table that the real
-// osqueryi actually ships MUST be on the deny-list (isSensitiveTable) AND refused
-// before exec. Because the expectation comes from the threat model rather than
-// from sensitiveTables, this fails if the deny-list is regressed or
-// under-specified — the case the map-driven test is structurally blind to.
 func TestDenyList_ThreatModelComplete_Container(t *testing.T) {
 	q := realQuerier(t)
 	ctx := osqCtx(t)
@@ -148,8 +100,7 @@ func TestDenyList_ThreatModelComplete_Container(t *testing.T) {
 	checked := 0
 	for _, want := range mustDenyTables {
 		if !containsTable(tables, want) {
-			// A given osqueryi build may not ship every table; only assert on
-			// the ones actually present so the intersection is real, not vacuous.
+
 			t.Logf("threat-model table %q absent from this osqueryi build; skipping", want)
 			continue
 		}
@@ -166,9 +117,6 @@ func TestDenyList_ThreatModelComplete_Container(t *testing.T) {
 	}
 }
 
-// TestRawSqlGated_Container proves against the real binary that raw SQL is
-// gated by the same credential-table deny-list as the table path: a raw query
-// naming `shadow` is refused and osqueryi is never run.
 func TestRawSqlGated_Container(t *testing.T) {
 	rows, err := realQuerier(t).QuerySQL(osqCtx(t), "SELECT count(*) AS n FROM shadow")
 	if !errors.Is(err, ErrTableNotPermitted) || !strings.Contains(err.Error(), "not permitted") {
@@ -179,8 +127,6 @@ func TestRawSqlGated_Container(t *testing.T) {
 	}
 }
 
-// TestInvalidTableName_Container: a non-identifier table name is rejected on
-// shape (before exec) against the real binary.
 func TestInvalidTableName_Container(t *testing.T) {
 	const bad = "os_version; DROP TABLE x"
 	_, err := realQuerier(t).QueryTable(osqCtx(t), bad)

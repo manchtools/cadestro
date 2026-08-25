@@ -10,7 +10,6 @@ import (
 
 func strptr(s string) *string { return &s }
 
-// findLuksVolumes — pure tree-walk over lsblk's structure.
 func TestFindLuksVolumes(t *testing.T) {
 	t.Run("single unlocked, mounted via crypt child", func(t *testing.T) {
 		devs := []lsblkDevice{{
@@ -135,9 +134,9 @@ func TestDetectVolume_Priority(t *testing.T) {
 func TestDetectVolumeByKey(t *testing.T) {
 	t.Run("returns the volume that accepts the passphrase", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.push(exec.Result{Stdout: lsblkTwoVolumes}, nil) // DetectAllVolumes
-		r.push(exec.Result{ExitCode: 2}, nil)             // sda2: wrong passphrase
-		r.push(exec.Result{ExitCode: 0}, nil)             // sdb1: accepts
+		r.push(exec.Result{Stdout: lsblkTwoVolumes}, nil)
+		r.push(exec.Result{ExitCode: 2}, nil)
+		r.push(exec.Result{ExitCode: 0}, nil)
 		v, err := mgr(t, r).DetectVolumeByKey(context.Background(), mustSecret(t, "p"))
 		if err != nil {
 			t.Fatal(err)
@@ -158,8 +157,8 @@ func TestDetectVolumeByKey(t *testing.T) {
 	t.Run("a per-volume test error is skipped, not fatal", func(t *testing.T) {
 		r := &recordingRunner{}
 		r.push(exec.Result{Stdout: lsblkTwoVolumes}, nil)
-		r.push(exec.Result{ExitCode: 4}, nil) // sda2: error (skip, not abort)
-		r.push(exec.Result{ExitCode: 0}, nil) // sdb1: accepts
+		r.push(exec.Result{ExitCode: 4}, nil)
+		r.push(exec.Result{ExitCode: 0}, nil)
 		v, err := mgr(t, r).DetectVolumeByKey(context.Background(), mustSecret(t, "p"))
 		if err != nil || v.DevicePath != "/dev/sdb1" {
 			t.Errorf("DetectVolumeByKey = (%+v,%v), want sdb1 despite sda2 erroring", v, err)
@@ -174,7 +173,6 @@ func TestDetectVolumeByKey(t *testing.T) {
 	})
 }
 
-// sanity: the recordingRunner's lsblk arg is the read-only column set.
 func TestDetectAllVolumes_LsblkArgs(t *testing.T) {
 	r := &recordingRunner{}
 	r.push(exec.Result{Stdout: `{"blockdevices":[]}`}, nil)

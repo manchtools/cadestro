@@ -11,11 +11,8 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// validPacmanPkgName restricts IgnorePkg values to safe characters, preventing
-// config injection via pacman.conf even after ValidatePackageName has passed.
 var validPacmanPkgName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._+-]*$`)
 
-// pacman drives the Arch Linux package manager over an injected Runner.
 type pacman struct {
 	r sysexec.Runner
 }
@@ -131,7 +128,7 @@ func (p *pacman) Autoremove(ctx context.Context) (sysexec.Result, error) {
 		return sysexec.Result{}, err
 	}
 	if res.ExitCode == 1 {
-		return sysexec.Result{}, nil // no orphans
+		return sysexec.Result{}, nil
 	}
 	if res.ExitCode != 0 {
 		return res, asCommandError("pacman", res)
@@ -167,7 +164,7 @@ func (p *pacman) Search(ctx context.Context, query string) ([]SearchResult, erro
 	var results []SearchResult
 	var current *SearchResult
 	for line := range strings.SplitSeq(res.Stdout, "\n") {
-		if strings.HasPrefix(line, " ") { // indented description line
+		if strings.HasPrefix(line, " ") {
 			if current != nil {
 				current.Description = strings.TrimSpace(line)
 				results = append(results, *current)
@@ -178,7 +175,7 @@ func (p *pacman) Search(ctx context.Context, query string) ([]SearchResult, erro
 		if line == "" {
 			continue
 		}
-		fields := strings.Fields(line) // repo/name version …
+		fields := strings.Fields(line)
 		if len(fields) >= 2 {
 			nameParts := strings.Split(fields[0], "/")
 			name := nameParts[len(nameParts)-1]
@@ -231,13 +228,13 @@ func (p *pacman) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 	for line := range strings.SplitSeq(res.Stdout, "\n") {
 		fields := strings.Fields(line)
 		switch {
-		case len(fields) >= 4 && fields[2] == "->": // name current -> new
+		case len(fields) >= 4 && fields[2] == "->":
 			updates = append(updates, PackageUpdate{
 				Name:           fields[0],
 				CurrentVersion: fields[1],
 				NewVersion:     fields[3],
 			})
-		case len(fields) >= 2: // name new
+		case len(fields) >= 2:
 			current, err := p.InstalledVersion(ctx, fields[0])
 			if err != nil {
 				return nil, err
@@ -257,8 +254,7 @@ func (p *pacman) Show(ctx context.Context, name string) (*Package, error) {
 	if err := ValidatePackageName(name); err != nil {
 		return nil, err
 	}
-	// -Qi reports an installed package; a non-zero exit means "not installed"
-	// (try the sync DB), while a runner/context failure propagates.
+
 	out, ok, err := probe(ctx, p.r, "pacman", "-Qi", name)
 	if err != nil {
 		return nil, err
@@ -285,8 +281,7 @@ func (p *pacman) Show(ctx context.Context, name string) (*Package, error) {
 		case strings.HasPrefix(line, "Description"):
 			pkg.Description = parseColonValue(line)
 		case strings.HasPrefix(line, "Installed Size"):
-			// Display metadata: keep what we have on an unparseable size rather
-			// than fabricating a 0-byte package. See parseSizeWithUnits.
+
 			if n, sizeOK := parsePacmanSize(parseColonValue(line)); sizeOK {
 				pkg.Size = n
 			}
@@ -315,14 +310,12 @@ func (p *pacman) ListVersions(ctx context.Context, name string) (*VersionInfo, e
 
 	out, ok, err := probe(ctx, p.r, "pacman", "-Si", name)
 	if err != nil {
-		return nil, err // runner/context failure
+		return nil, err
 	}
 	if !ok {
-		return info, nil // not in any sync repo
+		return info, nil
 	}
 
-	// Parse Version and Repository order-independently (do not assume Repository
-	// follows Version in the -Si output).
 	var version, repo string
 	for line := range strings.SplitSeq(out, "\n") {
 		switch {
@@ -352,9 +345,7 @@ func (p *pacman) LocalPackageInfo(ctx context.Context, path string) (*LocalPacka
 	if err != nil {
 		return nil, err
 	}
-	// `pacman -Qp` prints "name version". Reject output with no leading name
-	// token: TrimSpace+Fields would otherwise collapse leading whitespace and
-	// promote the version of a malformed " 1.0-1" line to Name (fail-closed parse).
+
 	line := strings.TrimRight(out, "\r\n")
 	if strings.TrimSpace(line) == "" || line[0] == ' ' || line[0] == '\t' {
 		return nil, fmt.Errorf("pkg: pacman -Qp reported no name for %q", path)
@@ -439,9 +430,7 @@ func (p *pacman) Pin(ctx context.Context, packages ...string) (sysexec.Result, e
 	if err := ValidatePackageNames(packages); err != nil {
 		return sysexec.Result{}, err
 	}
-	// Second, stricter gate: IgnorePkg values land in pacman.conf, so reject any
-	// name that could inject a config directive even though ValidatePackageNames
-	// already passed.
+
 	for _, name := range packages {
 		if !validPacmanPkgName.MatchString(name) {
 			return sysexec.Result{}, fmt.Errorf("%w: invalid package name %q: must match [a-zA-Z0-9][a-zA-Z0-9._+-]*", ErrInvalidArgument, name)
@@ -516,8 +505,6 @@ func (p *pacman) IsPinned(ctx context.Context, name string) (bool, error) {
 	return slices.Contains(getIgnoredPackages(conf), name), nil
 }
 
-// readConf reads /etc/pacman.conf (world-readable, so unprivileged) via cat,
-// matching the privilege-wrapper discipline the writes use.
 func (p *pacman) readConf(ctx context.Context) (string, error) {
 	out, err := readOut(ctx, p.r, "cat", "/etc/pacman.conf")
 	if err != nil {
@@ -526,8 +513,6 @@ func (p *pacman) readConf(ctx context.Context) (string, error) {
 	return out, nil
 }
 
-// writeIgnorePkg rewrites pacman.conf with the given IgnorePkg set and installs
-// it via an escalated `tee`.
 func (p *pacman) writeIgnorePkg(ctx context.Context, conf string, ignored []string) error {
 	out := buildIgnorePkgConf(conf, ignored)
 	res, err := runPrivStdin(ctx, p.r, true, nil, out, "tee", "/etc/pacman.conf")
@@ -551,16 +536,12 @@ func getIgnoredPackages(conf string) []string {
 	return ignored
 }
 
-// buildIgnorePkgConf returns conf with its IgnorePkg line replaced (or inserted
-// after [options]) to reflect ignored. An empty set drops the directive.
 func buildIgnorePkgConf(conf string, ignored []string) string {
 	var b strings.Builder
 	found := false
 	for line := range strings.SplitSeq(conf, "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "IgnorePkg") {
-			// Emit the single consolidated directive in place of the first
-			// IgnorePkg line, then drop EVERY IgnorePkg line (a conf may carry
-			// several) so no stale entry survives a later Unpin.
+
 			if !found {
 				found = true
 				if len(ignored) > 0 {
@@ -586,8 +567,6 @@ func buildIgnorePkgConf(conf string, ignored []string) string {
 	return b.String()
 }
 
-// parsePacmanSize renders pacman's human size into bytes. ok=false means the
-// text was not a size at all; it is not the same as a zero size.
 func parsePacmanSize(s string) (int64, bool) {
 	return parseSizeWithUnits(s, []sizeUnit{
 		{" KiB", 1024},

@@ -9,8 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// Stream with a nil callback still records the Command and returns the scripted
-// Result (no replay attempted).
 func TestFakeRunner_StreamNilCallback(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{ExitCode: 0, Stdout: "line\n"}, nil)
@@ -27,8 +25,6 @@ func TestFakeRunner_StreamNilCallback(t *testing.T) {
 	}
 }
 
-// Stream mirrors Run on an already-cancelled context: it returns ctx.Err(),
-// does NOT consume the scripted result, and replays nothing.
 func TestFakeRunner_StreamRespectsCancelledContext(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "must-not-replay\n"}, nil)
@@ -48,7 +44,7 @@ func TestFakeRunner_StreamRespectsCancelledContext(t *testing.T) {
 	if res.Stdout != "" {
 		t.Errorf("res = %+v, want zero value (scripted result not consumed)", res)
 	}
-	// The scripted result is preserved for the next (non-cancelled) call.
+
 	if next, _ := f.Run(context.Background(), exec.Command{Name: "journalctl"}); next.Stdout != "must-not-replay\n" {
 		t.Errorf("scripted result was wrongly consumed by the cancelled Stream: %q", next.Stdout)
 	}

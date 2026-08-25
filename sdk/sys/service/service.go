@@ -124,7 +124,6 @@ func Detect(ctx context.Context) []Backend {
 
 const systemctlQueryTimeout = 30 * time.Second
 
-// ensureCtx applies the query timeout when the caller's context has no deadline.
 func ensureCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	if _, ok := ctx.Deadline(); ok {
 		return ctx, func() {}
@@ -132,17 +131,12 @@ func ensureCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(ctx, systemctlQueryTimeout)
 }
 
-// fsManager is the narrow slice of fs.Manager the systemd backend uses to read,
-// write, and remove unit files; a small interface so tests inject a fake via newFS.
 type fsManager interface {
 	ReadFile(ctx context.Context, path string) ([]byte, error)
 	WriteFile(ctx context.Context, path string, data []byte, opts fs.WriteOptions) error
 	Remove(ctx context.Context, path string) error
 }
 
-// Package-var seams. lookPath + systemdRunMarker make Detect deterministically
-// testable; newFS builds the fs.Manager (over the same injected Runner) that
-// WriteUnit/RemoveUnit write through, and tests override it to stay hermetic.
 var (
 	lookPath         = osexec.LookPath
 	systemdRunMarker = "/run/systemd/system"

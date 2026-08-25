@@ -8,9 +8,6 @@ import (
 	"testing"
 )
 
-// shippedSystemPackages is the exact target-design inventory. A capability is
-// removed only by an explicit product decision, never because it currently has
-// no agent importer.
 var shippedSystemPackages = []string{
 	"antivirus",
 	"catrust",
@@ -36,9 +33,6 @@ var shippedSystemPackages = []string{
 	"user",
 }
 
-// forwardSystemPackages are deliberately shipped even though the agent does
-// not import them yet. Keeping this as a named exact set prevents cleanup work
-// from mistaking planned product surface for dead code.
 var forwardSystemPackages = []string{
 	"antivirus",
 	"catrust",

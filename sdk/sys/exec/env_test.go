@@ -34,7 +34,7 @@ func TestIsAllowedEnvVar_Safe(t *testing.T) {
 
 func TestIsAllowedEnvVar_Blocked(t *testing.T) {
 	blocked := []string{
-		// Explicit blocklist
+
 		"LD_PRELOAD",
 		"LD_LIBRARY_PATH",
 		"LD_AUDIT",
@@ -47,24 +47,24 @@ func TestIsAllowedEnvVar_Blocked(t *testing.T) {
 		"CDPATH",
 		"GLOBIGNORE",
 		"BASH_FUNC_",
-		// Case insensitive
+
 		"ld_preload",
 		"Ld_Preload",
 		"path",
 		"Path",
 		"ifs",
-		// LD_* prefix catch-all
+
 		"LD_WHATEVER",
 		"LD_NEW_ATTACK",
 		"ld_custom",
-		// BASH_FUNC_* prefix catch-all
+
 		"BASH_FUNC_exploit",
 		"BASH_FUNC_any_function",
-		// DYLD_* prefix catch-all (macOS)
+
 		"DYLD_INSERT_LIBRARIES",
 		"DYLD_LIBRARY_PATH",
 		"dyld_insert_libraries",
-		// New blocklist entries
+
 		"GCONV_PATH",
 		"HOSTALIASES",
 		"RESOLV_HOST_CONF",
@@ -106,10 +106,7 @@ func TestIsAllowedEnvVar_InvalidNames(t *testing.T) {
 }
 
 func TestBlockedEnvVars_Completeness(t *testing.T) {
-	// Verify the critical security-sensitive env vars are rejected. The check is
-	// against IsAllowedEnvVar — the real security boundary — not the map alone,
-	// because the LD_* / BASH_FUNC_ families are blocked by an unconditional
-	// prefix rule rather than enumerated as map keys.
+
 	critical := []string{
 		"LD_PRELOAD",
 		"LD_LIBRARY_PATH",

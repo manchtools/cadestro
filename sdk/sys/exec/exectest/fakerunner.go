@@ -13,7 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// FakeRunner is a drop-in exec.Runner.
 var _ exec.Runner = (*FakeRunner)(nil)
 
 type scripted struct {
@@ -68,7 +67,6 @@ func (f *FakeRunner) CallContexts() []context.Context {
 	return append([]context.Context(nil), f.ctxs...)
 }
 
-// record appends the attempted Command and its context to the call log.
 func (f *FakeRunner) record(ctx context.Context, c exec.Command) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -76,7 +74,6 @@ func (f *FakeRunner) record(ctx context.Context, c exec.Command) {
 	f.ctxs = append(f.ctxs, ctx)
 }
 
-// pop returns the next scripted outcome (FIFO), or a clean success if none.
 func (f *FakeRunner) pop() (exec.Result, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -93,10 +90,7 @@ func (f *FakeRunner) pop() (exec.Result, error) {
 // scripted result — mirroring the real Runner, so a capability's ctx handling
 // can be unit-tested faithfully.
 func (f *FakeRunner) Run(ctx context.Context, c exec.Command) (exec.Result, error) {
-	// Apply the same env gate the real Runner enforces, BEFORE recording: a
-	// Command carrying a blocked/reserved/malformed env var is rejected and never
-	// recorded or "run", so a capability that builds an adversarial environment
-	// fails identically against the fake and a real Runner.
+
 	if err := exec.ValidateCommandEnv(c.Env); err != nil {
 		return exec.Result{}, err
 	}
@@ -127,11 +121,6 @@ func (f *FakeRunner) Stream(ctx context.Context, c exec.Command, onLine exec.Out
 	return res, err
 }
 
-// replay delivers buf to onLine one line at a time. Every delivered line is
-// newline-terminated — INCLUDING an unterminated final line — because that is
-// exactly what the real Runner does (its streaming path appends "\n" to every
-// callback line; verified: `printf 'a\nb'` delivers "a\n" then "b\n").
-// Preserving a missing final newline here would make the fake LESS faithful.
 func replay(buf string, stream exec.StreamType, onLine exec.OutputCallback) {
 	if buf == "" {
 		return

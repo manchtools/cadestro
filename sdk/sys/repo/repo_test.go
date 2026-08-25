@@ -13,12 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeFS is a recording fsManager. It records every op (as "Op:path", in order),
-// returns scripted contents/existence/entries per path, and can be forced to
-// error on a given "op:path". It lets repo unit tests assert the exact file
-// operations a backend performs without touching the real filesystem (the real
-// fs.Manager's Direct WriteFile hits real syscalls; its Sudo path stats real
-// parent dirs).
 type fakeFS struct {
 	mu      sync.Mutex
 	calls   []string
@@ -95,8 +89,6 @@ func (f *fakeFS) didCall(want string) bool {
 	return false
 }
 
-// newTestManager builds a Manager for backend b with the fake fs injected via the
-// newFS seam and a Direct FakeRunner for package-manager commands.
 func newTestManager(t *testing.T, b pkg.Backend) (*manager, *fakeFS, *exectest.FakeRunner) {
 	t.Helper()
 	ff := newFakeFS()
@@ -111,7 +103,6 @@ func newTestManager(t *testing.T, b pkg.Backend) (*manager, *fakeFS, *exectest.F
 	return m.(*manager), ff, fr
 }
 
-// argvs renders each recorded runner Command as "name arg1 arg2 …".
 func argvs(fr *exectest.FakeRunner) []string {
 	calls := fr.Calls()
 	out := make([]string, len(calls))
@@ -120,8 +111,6 @@ func argvs(fr *exectest.FakeRunner) []string {
 	}
 	return out
 }
-
-// --- New -------------------------------------------------------------------
 
 func TestNew_NilRunnerRejected(t *testing.T) {
 	if _, err := New(pkg.Apt, nil); !errors.Is(err, sysexec.ErrRunnerRequired) {
@@ -161,10 +150,6 @@ func TestNew_FSConstructionErrorPropagates(t *testing.T) {
 	}
 }
 
-// --- Apply / Remove dispatch defense-in-depth ------------------------------
-
-// A Manager with an out-of-range backend (only constructable by bypassing New)
-// must fail closed rather than silently no-op.
 func TestApplyRemove_UnreachableBackendFailsClosed(t *testing.T) {
 	m := &manager{b: pkg.Backend(99), r: exectest.New(sysexec.Direct), fsm: newFakeFS()}
 	if _, err := m.Apply(context.Background(), Repository{Name: "x"}); !errors.Is(err, ErrUnsupportedBackend) {
@@ -175,8 +160,6 @@ func TestApplyRemove_UnreachableBackendFailsClosed(t *testing.T) {
 	}
 }
 
-// Apply with no sub-config for the Manager's backend is a caller bug, not a
-// silent no-op.
 func TestApply_MissingConfigForBackend(t *testing.T) {
 	cases := []struct {
 		b pkg.Backend

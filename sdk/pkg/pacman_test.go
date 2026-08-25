@@ -202,8 +202,8 @@ func TestPacman_Autoremove(t *testing.T) {
 	ctx := context.Background()
 	t.Run("removes orphans", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "orphan1\norphan2\n") // -Qtdq
-		ok(f, "")                   // -Rns
+		ok(f, "orphan1\norphan2\n")
+		ok(f, "")
 		if _, err := m.Autoremove(ctx); err != nil {
 			t.Fatal(err)
 		}
@@ -224,7 +224,7 @@ func TestPacman_Autoremove(t *testing.T) {
 	})
 	t.Run("blank query output is a no-op", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "  \n\n") // exit 0 but only blank lines
+		ok(f, "  \n\n")
 		if _, err := m.Autoremove(ctx); err != nil {
 			t.Fatal(err)
 		}
@@ -320,7 +320,7 @@ func TestPacman_ListUpgradable(t *testing.T) {
 	t.Run("arrow and simple formats", func(t *testing.T) {
 		m, f := pacmanM(t)
 		ok(f, "vim 9.0-1 -> 9.0-2\ngit 2.39-1\n")
-		ok(f, "git 2.39-1\n") // InstalledVersion(git) for the simple-format row
+		ok(f, "git 2.39-1\n")
 		ups, err := m.ListUpgradable(ctx)
 		if err != nil {
 			t.Fatal(err)
@@ -363,7 +363,7 @@ func TestPacman_Show(t *testing.T) {
 	installedInfo := "Name            : vim\nVersion         : 9.0-1\nDescription     : Vi Improved\nArchitecture    : x86_64\nInstalled Size  : 3.00 MiB\nRepository      : extra\n"
 	t.Run("installed via -Qi", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Qi
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -374,9 +374,9 @@ func TestPacman_Show(t *testing.T) {
 	})
 	t.Run("available via -Si", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil)                        // -Qi: not installed
-		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil) // -Si
-		ok(f, samplePacmanConf)                                         // IsPinned
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: installedInfo}, nil)
+		ok(f, samplePacmanConf)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -394,16 +394,16 @@ func TestPacman_Show(t *testing.T) {
 	})
 	t.Run("not installed and not in any repo -> package not found", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // -Qi: not installed
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // -Si: not in any sync repo
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		if _, err := m.Show(ctx, "ghost"); err == nil || !strings.Contains(err.Error(), "not found") {
 			t.Fatalf("err=%v, want a 'package not found' error", err)
 		}
 	})
 	t.Run("-Si runner error propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(sysexec.Result{ExitCode: 1}, nil)           // -Qi not installed
-		f.Push(sysexec.Result{}, errors.New("db corrupt")) // -Si runner failure
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{}, errors.New("db corrupt"))
 		if _, err := m.Show(ctx, "ghost"); err == nil {
 			t.Fatal("a -Si runner failure must propagate")
 		}
@@ -420,7 +420,7 @@ func TestPacman_ListVersions(t *testing.T) {
 	ctx := context.Background()
 	t.Run("reads -Si version + repository", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "vim 9.0-1\n") // InstalledVersion
+		ok(f, "vim 9.0-1\n")
 		ok(f, "Name : vim\nVersion : 9.0-2\nRepository : extra\n")
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil {
@@ -432,15 +432,15 @@ func TestPacman_ListVersions(t *testing.T) {
 	})
 	t.Run("installed-version runner failure propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		f.Push(sysexec.Result{}, errors.New("pacman -Q failed")) // InstalledVersion runner failure
+		f.Push(sysexec.Result{}, errors.New("pacman -Q failed"))
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a runner failure in the installed-version lookup must propagate")
 		}
 	})
 	t.Run("not in any repo returns info without versions", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "vim 9.0-1\n")                     // InstalledVersion
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // -Si: not in any sync repo (benign)
+		ok(f, "vim 9.0-1\n")
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil || len(info.Versions) != 0 {
 			t.Fatalf("info=%+v err=%v", info, err)
@@ -448,8 +448,8 @@ func TestPacman_ListVersions(t *testing.T) {
 	})
 	t.Run("-Si runner failure propagates", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "vim 9.0-1\n")                       // InstalledVersion
-		f.Push(sysexec.Result{}, errors.New("db")) // -Si runner failure
+		ok(f, "vim 9.0-1\n")
+		f.Push(sysexec.Result{}, errors.New("db"))
 		if _, err := m.ListVersions(ctx, "vim"); err == nil {
 			t.Fatal("a -Si runner failure must propagate")
 		}
@@ -587,8 +587,8 @@ func TestPacman_Pin(t *testing.T) {
 	ctx := context.Background()
 	t.Run("appends to IgnorePkg via tee", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, samplePacmanConf) // readConf
-		ok(f, "")               // tee
+		ok(f, samplePacmanConf)
+		ok(f, "")
 		if _, err := m.Pin(ctx, "vim"); err != nil {
 			t.Fatal(err)
 		}
@@ -603,19 +603,19 @@ func TestPacman_Pin(t *testing.T) {
 	})
 	t.Run("already-pinned package is not duplicated", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, samplePacmanConf) // linux already ignored
+		ok(f, samplePacmanConf)
 		ok(f, "")
 		if _, err := m.Pin(ctx, "linux"); err != nil {
 			t.Fatal(err)
 		}
 		body := readAll(t, f.Calls()[1])
-		if strings.Count(body, "linux") != 1 { // single IgnorePkg entry, not duplicated
+		if strings.Count(body, "linux") != 1 {
 			t.Errorf("linux should appear once in IgnorePkg, not duplicated:\n%s", body)
 		}
 	})
 	t.Run("config-injection name rejected by stricter gate", func(t *testing.T) {
 		m, f := pacmanM(t)
-		// passes ValidatePackageName (':' allowed) but fails validPacmanPkgName
+
 		if _, err := m.Pin(ctx, "vim:amd64"); !errors.Is(err, ErrInvalidArgument) || len(f.Calls()) != 0 {
 			t.Fatalf("err=%v calls=%d, want stricter-gate rejection with no exec", err, len(f.Calls()))
 		}
@@ -661,8 +661,8 @@ func TestPacman_Unpin(t *testing.T) {
 	ctx := context.Background()
 	t.Run("removes from IgnorePkg", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "[options]\nIgnorePkg = linux vim\n") // readConf
-		ok(f, "")                                   // tee
+		ok(f, "[options]\nIgnorePkg = linux vim\n")
+		ok(f, "")
 		if _, err := m.Unpin(ctx, "vim"); err != nil {
 			t.Fatal(err)
 		}
@@ -696,9 +696,9 @@ func TestPacman_ListPinnedAndIsPinned(t *testing.T) {
 	ctx := context.Background()
 	t.Run("ListPinned with versions", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "[options]\nIgnorePkg = linux vim\n") // readConf
-		ok(f, "linux 6.1-1\n")                      // InstalledVersion(linux)
-		ok(f, "vim 9.0-1\n")                        // InstalledVersion(vim)
+		ok(f, "[options]\nIgnorePkg = linux vim\n")
+		ok(f, "linux 6.1-1\n")
+		ok(f, "vim 9.0-1\n")
 		pkgs, err := m.ListPinned(ctx)
 		if err != nil {
 			t.Fatal(err)
@@ -716,7 +716,7 @@ func TestPacman_ListPinnedAndIsPinned(t *testing.T) {
 	})
 	t.Run("IsPinned true/false", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, samplePacmanConf) // linux ignored
+		ok(f, samplePacmanConf)
 		if got, err := m.IsPinned(ctx, "linux"); err != nil || !got {
 			t.Fatalf("got=%v err=%v", got, err)
 		}
@@ -739,8 +739,6 @@ func TestPacman_ListPinnedAndIsPinned(t *testing.T) {
 		}
 	})
 }
-
-// --- pure helpers ----------------------------------------------------------
 
 func TestPacman_BuildIgnorePkgConf(t *testing.T) {
 	t.Run("replaces existing IgnorePkg line", func(t *testing.T) {
@@ -769,9 +767,7 @@ func TestPacman_BuildIgnorePkgConf(t *testing.T) {
 		}
 	})
 	t.Run("consolidates multiple IgnorePkg lines into one", func(t *testing.T) {
-		// pacman.conf may carry several IgnorePkg directives (getIgnoredPackages
-		// reads them all). The rewrite must drop ALL of them and emit a single
-		// consolidated line, otherwise stale entries survive an Unpin.
+
 		in := "[options]\nIgnorePkg = a\nIgnorePkg = b\nServer = x\n"
 		out := buildIgnorePkgConf(in, []string{"a", "b", "c"})
 		if n := strings.Count(out, "IgnorePkg"); n != 1 {
@@ -821,7 +817,7 @@ func TestPacman_ParseValueAndSize(t *testing.T) {
 			t.Errorf("parsePacmanSize(%q)=%d want %d", in, got, want)
 		}
 	}
-	// Unparseable input is reported, not silently rendered as a 0-byte package.
+
 	for _, in := range []string{"", "unknown", "3.00 MiB extra"} {
 		if got, sizeOK := parsePacmanSize(in); sizeOK {
 			t.Errorf("parsePacmanSize(%q)=(%d, true), want ok=false", in, got)
@@ -831,7 +827,6 @@ func TestPacman_ParseValueAndSize(t *testing.T) {
 	}
 }
 
-// readAll drains a recorded Command's stdin reader.
 func readAll(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {
@@ -853,16 +848,16 @@ func TestPacman_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("ListUpgradable: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "git 2.39-1\n")                      // -Qu (simple format triggers InstalledVersion)
-		f.Push(sysexec.Result{}, errors.New("-Q")) // InstalledVersion
+		ok(f, "git 2.39-1\n")
+		f.Push(sysexec.Result{}, errors.New("-Q"))
 		if _, err := m.ListUpgradable(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}
 	})
 	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := pacmanM(t)
-		ok(f, "[options]\nIgnorePkg = linux\n")    // readConf
-		f.Push(sysexec.Result{}, errors.New("-Q")) // InstalledVersion
+		ok(f, "[options]\nIgnorePkg = linux\n")
+		f.Push(sysexec.Result{}, errors.New("-Q"))
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}

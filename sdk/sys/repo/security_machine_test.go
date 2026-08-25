@@ -32,17 +32,8 @@ type aptTrustTransition struct {
 	forbidRemove []string
 }
 
-// TestAptTrustSecurityMachine keeps package-source trust as a finite state
-// machine. An agent that accepts repository actions must not transition from
-// absent/signed state into unsigned trust, and cleanup of hostile legacy config
-// must not let attacker-controlled Signed-By paths delete arbitrary files.
 func TestAptTrustSecurityMachine(t *testing.T) {
-	// NOTE: apt `Trusted: yes` (signature verification disabled) is an explicit,
-	// documented OPERATOR CHOICE (kept per the 2026-06 policy decision, same as
-	// WS8's gpgcheck=false), so it is intentionally NOT rejected here — that
-	// allowed behaviour is pinned by TestApt_Apply_TrustedNoKey. This machine
-	// covers the trust hardening that IS enforced: conflict-cleanup must never
-	// delete a Signed-By path outside the apt keyring jail.
+
 	transitions := []aptTrustTransition{
 		{
 			name:         "conflict cleanup ignores signed-by outside keyring jail",

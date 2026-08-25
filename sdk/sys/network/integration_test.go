@@ -14,24 +14,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
-// These exercise the REAL NetworkManager keyfile-based WiFi provisioning against
-// a live nmcli + NM daemon (the dedicated with-networkmanager CI job, run as
-// root): Apply writes a 0600 keyfile carrying the PSK and `nmcli connection
-// reload`s it, NM recognises the profile, and Delete removes it. The security
-// property under test is that the PSK is provisioned via the root-owned 0600
-// keyfile — never on a command line — proven end-to-end against the real daemon.
-//
-// No WiFi radio is needed: Apply creates a connection PROFILE, it does not
-// activate it, so the keyfile + reload + con-show round-trip works headless.
-
 const keyfileDir = "/etc/NetworkManager/system-connections"
 
-// requireNM gates the test on root + a usable NetworkManager. It SKIPS when
-// those are absent so the file is safe to run anywhere — EXCEPT when
-// CADESTRO_NM_REQUIRED=1 (set by the dedicated test-network CI job, which guarantees
-// NM), where a missing prerequisite is a setup failure and must FAIL rather than
-// let the job pass vacuously (matches-zero guard: the one test in this job must
-// actually run).
 func requireNM(t *testing.T) {
 	t.Helper()
 	bail := t.Skipf
@@ -54,7 +38,7 @@ func requireNM(t *testing.T) {
 
 func TestApplyPSK_Integration(t *testing.T) {
 	requireNM(t)
-	r, err := sysexec.NewRunner(sysexec.Direct) // root → Direct
+	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}
@@ -84,8 +68,6 @@ func TestApplyPSK_Integration(t *testing.T) {
 		t.Error("first Apply should report changed=true")
 	}
 
-	// The PSK must land in a root-owned 0600 keyfile (the secure sink) — not on
-	// any argv. Verify both the perms and that the secret is actually there.
 	fi, err := os.Stat(keyfile)
 	if err != nil {
 		t.Fatalf("stat keyfile: %v", err)
@@ -101,7 +83,6 @@ func TestApplyPSK_Integration(t *testing.T) {
 		t.Errorf("keyfile missing ssid=%s", ssid)
 	}
 
-	// The live daemon must recognise the reloaded profile.
 	exists, err := m.ConnectionExists(ctx, name)
 	if err != nil {
 		t.Fatalf("ConnectionExists: %v", err)
@@ -117,7 +98,6 @@ func TestApplyPSK_Integration(t *testing.T) {
 		t.Error("Settings returned no keys for the real connection")
 	}
 
-	// Delete removes the profile and its keyfile; a second delete is a no-op.
 	if err := m.Delete(ctx, name, network.DeleteOptions{}); err != nil {
 		t.Fatalf("Delete: %v", err)
 	}

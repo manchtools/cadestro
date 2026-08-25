@@ -1,11 +1,5 @@
 //go:build container
 
-// Container-based real-execution test for the iproute2 read path. Get parses
-// `ip -j addr/route show dev <name>` (JSON). The fake-runner unit tests feed a
-// captured JSON blob; this runs the REAL `ip` binary against a real interface in
-// the container's network namespace, so a future iproute2 that changes its `-j`
-// JSON shape is caught here. Anti-rot guard. Needs CAP_NET_ADMIN (to add the
-// test address). Self-skips when `ip` is absent.
 package netconfig
 
 import (
@@ -24,8 +18,7 @@ func TestGet_ParsesRealIpJSON_Container(t *testing.T) {
 	}
 
 	const testAddr = "192.0.2.5"
-	// Add a deterministic test address to loopback (always present, no module
-	// dependency) and clean it up.
+
 	if out, err := osexec.Command("ip", "addr", "add", testAddr+"/32", "dev", "lo").CombinedOutput(); err != nil {
 		t.Skipf("cannot add test address (need CAP_NET_ADMIN?): %v\n%s", err, out)
 	}
@@ -37,7 +30,7 @@ func TestGet_ParsesRealIpJSON_Container(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
-	m, err := New(SystemdNetworkd, r) // Get is backend-independent (just runs `ip`); no daemon needed
+	m, err := New(SystemdNetworkd, r)
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}

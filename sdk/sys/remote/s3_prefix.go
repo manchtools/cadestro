@@ -15,22 +15,6 @@ import (
 	"strings"
 )
 
-// fetchPrefix is the prefix-sync branch of s3Source.Fetch. Triggered
-// when cfg.Key has a trailing "/" (the convention NewS3 documents).
-//
-// Flow:
-//  1. validateDestination — same path safety as every other source.
-//  2. listObjectsV2 — paginate the bucket under the key prefix to get
-//     the canonical (key, ETag) set the call should mirror.
-//  3. list-hash drift compare against the cached revision; if it
-//     matches, return Changed=false without any object GETs.
-//  4. for each object: GET if missing locally OR local ETag differs;
-//     write atomically through streamToTmp + rename.
-//  5. when cfg.Prune is true: pruneTo with the source-relative paths.
-//
-// Concurrency: this v1 fetches sequentially. A future iteration could
-// parallelise the per-object GETs; defer that until benchmarks
-// motivate it.
 func (s *s3Source) fetchPrefix(ctx context.Context, dest string) (Result, error) {
 	if err := validateDestination(dest); err != nil {
 		return Result{}, err
@@ -69,8 +53,7 @@ func (s *s3Source) fetchPrefix(ctx context.Context, dest string) (Result, error)
 		relPaths[rel] = struct{}{}
 
 		outPath := filepath.Join(dest, filepath.FromSlash(rel))
-		// Defense-in-depth: a malformed object key (with .. or
-		// embedded NUL) must not write outside dest.
+
 		if err := assertWithinDest(dest, outPath); err != nil {
 			return Result{}, err
 		}
@@ -84,7 +67,7 @@ func (s *s3Source) fetchPrefix(ctx context.Context, dest string) (Result, error)
 		if err != nil {
 			return Result{}, err
 		}
-		_ = etag // available for per-object drift in a future iteration
+		_ = etag
 		bytesWritten += written
 		filesTouched++
 	}
@@ -112,33 +95,15 @@ func (s *s3Source) fetchPrefix(ctx context.Context, dest string) (Result, error)
 	}, nil
 }
 
-// s3Object is the parsed projection of one ListObjectsV2 entry. ETag
-// is the raw header form (quoted hex); the caller doesn't compare it
-// against anything that cares about the quoting.
 type s3Object struct {
 	Key  string
 	ETag string
 }
 
-// maxPrefixObjects caps the total objects a single prefix-sync will
-// enumerate. Defeats accidental "mirror an entire petabyte bucket"
-// configurations that would otherwise let listObjects accumulate a
-// few million entries in memory before the Fetch even gets to its
-// first GET. 10 000 lines up with one AWS list page × ~10 — large
-// enough for any docs / configs / asset use case this primitive
-// targets, small enough to surface "you misconfigured the prefix"
-// clearly.
 const maxPrefixObjects = 10000
 
-// listObjects paginates ?list-type=2 until IsTruncated=false. Each
-// page contributes its Contents to the accumulated set, and the
-// NextContinuationToken from one page becomes the
-// ContinuationToken query of the next. Exceeding maxPrefixObjects
-// surfaces as ErrInvalidConfig so the operator can narrow the prefix.
 func (s *s3Source) listObjects(ctx context.Context) ([]s3Object, error) {
-	// Listing happens at the bucket root, NOT the prefix path. Derive it
-	// from cfg the same way NewS3 builds objectURL so a path-prefixed
-	// endpoint (e.g. a proxy fronting S3 under /v1) is honored.
+
 	bucketURL, err := s.bucketRootURL()
 	if err != nil {
 		return nil, err
@@ -202,11 +167,6 @@ type listV2Response struct {
 	} `xml:"Contents"`
 }
 
-// hashListing returns a canonical sha256 of the listing, used as the
-// prefix-sync drift token. Keys are sorted lexically and joined with
-// ETags so two identical listings always produce the same hash, even
-// if the server delivered them in a different order across paginated
-// responses.
 func hashListing(objs []s3Object) string {
 	sort.Slice(objs, func(i, j int) bool { return objs[i].Key < objs[j].Key })
 	h := sha256.New()
@@ -219,25 +179,15 @@ func hashListing(objs []s3Object) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// bucketRootURL returns the bucket-root URL (endpoint path + bucket),
-// the base for both ListObjectsV2 and per-object GETs. It mirrors how
-// NewS3 builds objectURL, so a path-prefixed endpoint is addressed
-// consistently across single-key and prefix-sync modes. The bucket is
-// taken from cfg (already validated) rather than re-derived from the
-// pre-joined objectURL, which cannot distinguish an endpoint path prefix
-// from the bucket segment.
 func (s *s3Source) bucketRootURL() (*url.URL, error) {
 	endpoint, err := parseS3Endpoint(s.cfg.Endpoint)
 	if err != nil {
-		return nil, err // already wraps ErrInvalidConfig
+		return nil, err
 	}
 	endpoint.Path = strings.TrimRight(endpoint.Path, "/") + "/" + s.cfg.Bucket
 	return endpoint, nil
 }
 
-// openSingleObject is openObject restricted to the v1 anonymous-GET
-// surface, parameterised by the full key (rather than the cfg.Key the
-// prefix-sync path can't use).
 func (s *s3Source) openSingleObject(ctx context.Context, key string) (io.ReadCloser, string, error) {
 	bucketAndKey, err := s.bucketRootURL()
 	if err != nil {
@@ -264,9 +214,6 @@ func (s *s3Source) openSingleObject(ctx context.Context, key string) (io.ReadClo
 	return resp.Body, resp.Header.Get("ETag"), nil
 }
 
-// streamObjectToFile is streamToTmp + rename in one helper, tailored
-// for the prefix-sync case where the dest path is per-object and we
-// don't need the tmp path back.
 func streamObjectToFile(body io.Reader, outPath string, maxBytes int64) (int64, []byte, error) {
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return 0, nil, fmt.Errorf("mkdir %s: %w", filepath.Dir(outPath), err)
@@ -282,10 +229,6 @@ func streamObjectToFile(body io.Reader, outPath string, maxBytes int64) (int64, 
 	return written, sum, nil
 }
 
-// relPathForKey maps an S3 key under a prefix to its dest-relative
-// path. Refuses keys that don't begin with the prefix (defensive: a
-// server bug or proxy quirk could otherwise plant files outside the
-// expected subtree) and any key containing traversal segments.
 func relPathForKey(prefix, key string) (string, error) {
 	if !strings.HasPrefix(key, prefix) {
 		return "", fmt.Errorf("%w: object key %q does not begin with prefix %q", ErrInvalidConfig, key, prefix)
@@ -305,10 +248,6 @@ func relPathForKey(prefix, key string) (string, error) {
 	return rel, nil
 }
 
-// assertWithinDest is the post-join safety check — equivalent to the
-// archive extractor's last-step abs-path compare, applied here to
-// catch any path that normalises outside dest after platform-specific
-// separator handling.
 func assertWithinDest(dest, full string) error {
 	destAbs, err := filepath.Abs(dest)
 	if err != nil {

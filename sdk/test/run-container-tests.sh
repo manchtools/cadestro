@@ -1,18 +1,18 @@
 #!/bin/bash
-#
-# Runs the SDK's container-tagged real-execution tests.
-#
-# Usage:
-#   ./sdk/test/run-container-tests.sh [distro] [state] [go-test-path]
-#
-# Defaults: debian / state-locked-apt / ./sdk/pkg/
-#
-# The tests run INSIDE the container (go test -tags=container), so the SDK's
-# direct os.* filesystem access and its Runner-driven exec hit the same
-# filesystem. Each test owns its precondition and self-skips when the baked
-# state is absent, so running this against any stage is correct.
-#
-# Works with docker or podman (set CONTAINER_ENGINE).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 set -euo pipefail
 
@@ -23,8 +23,8 @@ TEST_PATH="${3:-./sdk/pkg/}"
 IMAGE="cadestro-sdk-container-${DISTRO}-${STATE}"
 CONTAINER_LIMITS=(--memory=6g --cpus=4)
 
-# Build context is the repo root (parent of sdk/), matching the existing
-# integration CI: the Dockerfile does `COPY sdk/ ./sdk/`.
+
+
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 echo "==> Building ${DISTRO}:${STATE} test image..."
@@ -35,7 +35,7 @@ echo "==> Building ${DISTRO}:${STATE} test image..."
     "$ROOT"
 
 echo "==> Running container tests (${TEST_PATH}) inside ${STATE}..."
-# --shm-size gives /dev/shm headroom for tests that stage container files there
-# (e.g. the LUKS Manager's 64 MiB LUKS2 containers).
+
+
 "$ENGINE" run --rm --shm-size=512m --cap-add NET_ADMIN "${CONTAINER_LIMITS[@]}" "${IMAGE}" \
     go test -p 1 -tags=container -count=1 -v "${TEST_PATH}" -run Container

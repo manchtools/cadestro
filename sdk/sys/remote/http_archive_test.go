@@ -16,9 +16,6 @@ import (
 	"testing"
 )
 
-// archiveFixture is the per-test rig for Slice 5: an httptest server
-// that serves a caller-supplied body with a caller-supplied
-// Content-Type, and a URL path used for filename-extension hints.
 type archiveFixture struct {
 	srv         *httptest.Server
 	body        []byte
@@ -48,9 +45,6 @@ func newArchiveFixture(t *testing.T, body []byte, contentType, urlPath, etag str
 	return a
 }
 
-// buildTarGz packs the given files into a gzipped tar stream. Files'
-// `name` is the entry path; an empty body field means "directory entry".
-// Symlinks are emitted when `linkname` is non-empty.
 func buildTarGz(t *testing.T, files []archiveEntry) []byte {
 	t.Helper()
 	var buf bytes.Buffer
@@ -88,9 +82,6 @@ func buildTarGz(t *testing.T, files []archiveEntry) []byte {
 	return buf.Bytes()
 }
 
-// buildZip packs files into a zip stream. linkname is unsupported here;
-// zip's symlink representation differs and we don't accept it anyway
-// (the safety layer rejects all symlinks).
 func buildZip(t *testing.T, files []archiveEntry) []byte {
 	t.Helper()
 	var buf bytes.Buffer
@@ -113,12 +104,10 @@ func buildZip(t *testing.T, files []archiveEntry) []byte {
 type archiveEntry struct {
 	name     string
 	body     string
-	linkname string // non-empty → symlink entry
+	linkname string
 	isDir    bool
 }
 
-// TestHTTPFetch_ExtractsTarGz — happy path: a small tar.gz with nested
-// content extracts into dest with the right tree layout and bodies.
 func TestHTTPFetch_ExtractsTarGz(t *testing.T) {
 	body := buildTarGz(t, []archiveEntry{
 		{name: "a.txt", body: "alpha"},
@@ -145,7 +134,6 @@ func TestHTTPFetch_ExtractsTarGz(t *testing.T) {
 	assertFile(t, filepath.Join(dest, "sub", "b.txt"), "bravo")
 }
 
-// TestHTTPFetch_ExtractsZip — same content as a zip.
 func TestHTTPFetch_ExtractsZip(t *testing.T) {
 	body := buildZip(t, []archiveEntry{
 		{name: "a.txt", body: "alpha"},
@@ -163,10 +151,6 @@ func TestHTTPFetch_ExtractsZip(t *testing.T) {
 	assertFile(t, filepath.Join(dest, "sub", "b.txt"), "bravo")
 }
 
-// TestHTTPFetch_RefusesTarXz — tar.xz support is intentionally deferred
-// to v2 to avoid adding github.com/ulikunitz/xz to sdk/go.mod for v1.
-// The refusal must be explicit (ErrInvalidConfig at the URL/Content-Type
-// detection step) rather than a confusing "unknown archive type".
 func TestHTTPFetch_RefusesTarXz(t *testing.T) {
 	body := []byte("xz body — content irrelevant; type detection happens first")
 	for _, ct := range []string{"application/x-xz", "application/x-tar+xz"} {
@@ -183,10 +167,6 @@ func TestHTTPFetch_RefusesTarXz(t *testing.T) {
 	}
 }
 
-// TestHTTPFetch_RejectsTraversalEntries — a tar with ../../etc/passwd
-// must surface as ErrUnsafeDestination AND leave nothing under dest.
-// The "nothing under dest" check guards against partial extracts: even
-// if the bad entry came last, no earlier entries should have landed.
 func TestHTTPFetch_RejectsTraversalEntries(t *testing.T) {
 	body := buildTarGz(t, []archiveEntry{
 		{name: "ok.txt", body: "innocuous"},
@@ -206,7 +186,6 @@ func TestHTTPFetch_RejectsTraversalEntries(t *testing.T) {
 	}
 }
 
-// TestHTTPFetch_RejectsAbsoluteEntries — same shape, absolute path.
 func TestHTTPFetch_RejectsAbsoluteEntries(t *testing.T) {
 	body := buildTarGz(t, []archiveEntry{
 		{name: "/etc/passwd", body: "x"},
@@ -222,11 +201,6 @@ func TestHTTPFetch_RejectsAbsoluteEntries(t *testing.T) {
 	}
 }
 
-// TestHTTPFetch_RejectsSymlinksEscapingDest — even a relative-looking
-// symlink target that resolves to a path outside dest must be refused.
-// The simplest implementation is "reject ALL symlink entries", which is
-// what we want for v1 anyway (symlinks rarely matter for content
-// distribution).
 func TestHTTPFetch_RejectsSymlinkEntries(t *testing.T) {
 	body := buildTarGz(t, []archiveEntry{
 		{name: "link", linkname: "/tmp"},
@@ -242,8 +216,6 @@ func TestHTTPFetch_RejectsSymlinkEntries(t *testing.T) {
 	}
 }
 
-// TestHTTPFetch_ArchiveSizeCap — declared cumulative decompressed size
-// exceeds MaxBytes → ErrIntegrity. Mirrors the single-file size guard.
 func TestHTTPFetch_ArchiveSizeCap(t *testing.T) {
 	body := buildTarGz(t, []archiveEntry{
 		{name: "big.bin", body: strings.Repeat("x", 4*1024)},
@@ -258,33 +230,21 @@ func TestHTTPFetch_ArchiveSizeCap(t *testing.T) {
 	}
 }
 
-// FuzzHTTPArchive_Tar — random bytes fed as tar.gz input. The fuzz
-// target asserts the extractor never panics and never writes outside
-// the dest dir, regardless of the input shape.
 func FuzzHTTPArchive_Tar(f *testing.F) {
-	// Seed with a few representative bytes streams: minimal gzip header,
-	// truncated tar, the happy-path archive.
+
 	f.Add([]byte{0x1f, 0x8b, 0x08, 0x00})
 	f.Add(buildTarGz(&testing.T{}, []archiveEntry{{name: "x", body: "y"}}))
 
 	f.Fuzz(func(t *testing.T, body []byte) {
-		// Controlled parent: t.TempDir() gives us a unique dir for this
-		// iteration. Using os.TempDir() directly races with the test
-		// framework's own scratch files and produces flaky false
-		// positives.
+
 		parent := t.TempDir()
 		dest := filepath.Join(parent, "dest")
 		if err := os.MkdirAll(dest, 0o700); err != nil {
 			t.Fatalf("mkdir dest: %v", err)
 		}
 
-		// Drive the extractor directly via the package-internal entry
-		// point — no need to spin up an httptest server per iteration.
 		_ = extractTarGzBytes(body, dest, 1<<20)
 
-		// Pass criteria: no panic (Fuzz framework catches it), and the
-		// parent directory contains only `dest`. Any other entry means
-		// the extractor escaped staging.
 		ents := dirEntries(t, parent)
 		if len(ents) != 1 || ents[0] != "dest" {
 			t.Fatalf("extractor wrote outside dest: parent now contains %v", ents)
@@ -316,7 +276,4 @@ func assertFile(t *testing.T, path, want string) {
 	}
 }
 
-// extractTarGzBytes is the package-internal entry point the fuzzer
-// targets. It must be safe to call with arbitrary bytes — no panics,
-// no out-of-dest writes — even on adversarial input.
-var _ = io.EOF // anchor for the imports the fuzz target may pull in
+var _ = io.EOF

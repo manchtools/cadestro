@@ -24,10 +24,6 @@ type unitPersistenceStep struct {
 	wantReject bool
 }
 
-// TestSystemdUnitPersistenceSecurityMachine treats a unit file as a privileged
-// persistence transition. A hardened unit may be written, but content that turns
-// the agent into a root persistence/dropper primitive must fail before the
-// root-owned unit file is created.
 func TestSystemdUnitPersistenceSecurityMachine(t *testing.T) {
 	steps := []unitPersistenceStep{
 		{name: "hardened service is accepted", action: unitHardenedService},

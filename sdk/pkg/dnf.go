@@ -11,7 +11,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// dnf drives the Fedora/RHEL package manager (dnf / rpm) over an injected Runner.
 type dnf struct {
 	r       sysexec.Runner
 	command string
@@ -19,12 +18,8 @@ type dnf struct {
 
 var _ Manager = (*dnf)(nil)
 
-// nevraVersionRe matches the first dash-then-digit in an NEVRA string, marking
-// the boundary between the package name and its version.
 var nevraVersionRe = regexp.MustCompile(`-\d`)
 
-// parseNEVRAName extracts the package name from an NEVRA string
-// (Name-[Epoch:]Version-Release[.Arch]).
 func parseNEVRAName(nevra string) string {
 	loc := nevraVersionRe.FindStringIndex(nevra)
 	if loc == nil {
@@ -40,9 +35,6 @@ func (d *dnf) Backend() Backend {
 	return Dnf
 }
 
-// write runs a privileged dnf command and maps a non-zero exit to an error,
-// returning the command Result (stdout/stderr/exit) on both the success and
-// non-zero-exit paths.
 func (d *dnf) write(ctx context.Context, args ...string) (sysexec.Result, error) {
 	res, err := runPriv(ctx, d.r, true, nil, d.command, args...)
 	if err != nil {
@@ -315,10 +307,7 @@ func (d *dnf) Show(ctx context.Context, name string) (*Package, error) {
 		case strings.HasPrefix(line, "Architecture"):
 			pkg.Architecture = parseColonValue(line)
 		case strings.HasPrefix(line, "Size"):
-			// Size is display metadata, so an unparseable size line is not worth
-			// failing Show over — but it must not fabricate a 0-byte package
-			// either. Leave whatever we already have (the zero value when nothing
-			// parsed) rather than assigning the parser's failure result.
+
 			if n, sizeOK := parseSize(parseColonValue(line)); sizeOK {
 				pkg.Size = n
 			}
@@ -364,7 +353,7 @@ func (d *dnf) ListVersions(ctx context.Context, name string) (*VersionInfo, erro
 		if line == "" || strings.HasPrefix(line, "Installed") || strings.HasPrefix(line, "Available") {
 			continue
 		}
-		fields := strings.Fields(line) // name.arch  version  repo
+		fields := strings.Fields(line)
 		if len(fields) < 3 {
 			continue
 		}
@@ -516,8 +505,6 @@ func versionLockNames(command, out string) []string {
 	return names
 }
 
-// parseSize renders dnf's human size into bytes. ok=false means the text was
-// not a size at all (see parseSizeWithUnits); it is not the same as a zero size.
 func parseSize(s string) (int64, bool) {
 	return parseSizeWithUnits(s, []sizeUnit{
 		{" k", 1024},

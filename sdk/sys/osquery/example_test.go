@@ -10,18 +10,15 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
-// ExampleNew shows the construct-a-handle flow: pick a Runner, build a Querier,
-// and query a benign table. The credential-table deny-list and table-name
-// validation are enforced inside QueryTable/QuerySQL.
 func ExampleNew() {
-	r, err := exec.NewRunner(exec.Sudo) // the consumer picks the escalation backend
+	r, err := exec.NewRunner(exec.Sudo)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	q, err := osquery.New(r)
 	if errors.Is(err, osquery.ErrNotInstalled) {
-		// osquery isn't installed on this host — skip osquery-dependent features.
+
 		return
 	}
 	if err != nil {

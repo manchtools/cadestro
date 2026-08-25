@@ -71,7 +71,7 @@ func TestOpen_TamperedCiphertextFails(t *testing.T) {
 	key := key32(t)
 	aad := []byte("d")
 	ct, _ := SealWithAAD(key, []byte("hello world"), aad)
-	ct[len(ct)-1] ^= 0xff // flip a tag byte
+	ct[len(ct)-1] ^= 0xff
 	if _, err := OpenWithAAD(key, ct, aad); err == nil {
 		t.Fatal("a tampered ciphertext must fail authentication")
 	}
@@ -89,8 +89,6 @@ func TestSealOpen_RejectsBadKeyLength(t *testing.T) {
 	}
 }
 
-// Domain-separation AAD is MANDATORY: a naked AEAD call (nil/empty AAD) must be
-// refused by both Seal and Open, so the nil-AAD class is impossible to use.
 func TestSealOpen_RejectsEmptyAAD(t *testing.T) {
 	key := key32(t)
 	for _, aad := range [][]byte{nil, {}} {
@@ -106,11 +104,8 @@ func TestSealOpen_RejectsEmptyAAD(t *testing.T) {
 func TestOpen_RejectsMalformedCiphertext(t *testing.T) {
 	key := key32(t)
 	aad := []byte("d")
-	// A valid AES-256-GCM ciphertext is at least nonce(12) + tag(16) = 28 bytes.
-	// Anything shorter cannot carry BOTH a nonce and a tag, so it is malformed and
-	// must be rejected up front with the precise ErrMalformedCiphertext — not pass
-	// the length check and fail later inside gcm.Open with a generic auth error.
-	for _, n := range []int{0, 4, 12, 27} { // 12 = nonce-only, 27 = one short of nonce+tag
+
+	for _, n := range []int{0, 4, 12, 27} {
 		if _, err := OpenWithAAD(key, make([]byte, n), aad); !errors.Is(err, ErrMalformedCiphertext) {
 			t.Errorf("Open(%d-byte ciphertext): err = %v, want ErrMalformedCiphertext", n, err)
 		}

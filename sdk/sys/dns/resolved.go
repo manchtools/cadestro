@@ -12,20 +12,13 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// resolvConfPath is systemd-resolved's generated resolv.conf, the authoritative
-// view of the active resolver config. A package var so tests can point it at a
-// fixture.
 var resolvConfPath = "/run/systemd/resolve/resolv.conf"
 
-// The managed global drop-in. A 10- prefix orders it before distro defaults
-// without overriding a higher-numbered local override an admin may add.
 const (
 	resolvedDropInDir  = "/etc/systemd/resolved.conf.d"
 	resolvedDropInPath = resolvedDropInDir + "/10-cadestro.conf"
 )
 
-// resolvedManager drives systemd-resolved via resolvectl plus a managed
-// resolved.conf.d drop-in (written through the fs.Manager).
 type resolvedManager struct {
 	r   exec.Runner
 	fsm fsManager
@@ -54,23 +47,7 @@ func (m *resolvedManager) Apply(ctx context.Context, cfg Config) error {
 		}
 		if len(cfg.SearchDomains) > 0 {
 			if err := runPriv(ctx, m.r, "resolvectl", resolvectlDomainArgs(cfg.Interface, cfg.SearchDomains)...); err != nil {
-				// The dns call already landed, so returning here would report a
-				// rejected config while the link had actually switched resolvers —
-				// with the OLD search domains still in force.
-				//
-				// `resolvectl revert` resets the link to systemd-resolved's per-link
-				// DEFAULTS. That is deliberately NOT a restore of the pre-call state:
-				// it also drops per-link runtime settings this package never touched
-				// (LLMNR, mDNS, DNSSEC, DNS-over-TLS, …) if something else had set
-				// them at runtime. We take that tradeoff on purpose — a deterministic,
-				// known state beats a half-applied one, and capturing and replaying
-				// the full per-link surface would multiply the failure modes on an
-				// error path. Runtime per-link settings are re-established by the next
-				// apply from whoever owns them; nothing persistent is lost.
-				//
-				// Best-effort: if the revert fails too, the link really is
-				// half-configured and the error says so rather than implying a clean
-				// reset.
+
 				if rvErr := runPriv(ctx, m.r, "resolvectl", "revert", cfg.Interface); rvErr != nil {
 					return fmt.Errorf("resolvectl domain %s failed and resetting the link failed too (%v), so %s is left with the new nameservers and the old search domains: %w", cfg.Interface, rvErr, cfg.Interface, err)
 				}
@@ -96,27 +73,16 @@ func (m *resolvedManager) Apply(ctx context.Context, cfg Config) error {
 	return nil
 }
 
-// resolvectlDNSArgs builds `resolvectl dns <iface> -- <ns...>`. The "--" keeps a
-// nameserver beginning with "-" an operand (validation already rejects that, but
-// the boundary stays fail-safe).
 func resolvectlDNSArgs(iface string, nameservers []string) []string {
 	return append([]string{"dns", iface}, exec.SeparatePositionals(nil, nameservers...)...)
 }
 
-// resolvectlDomainArgs builds `resolvectl domain <iface> -- <domains...>`.
 func resolvectlDomainArgs(iface string, domains []string) []string {
 	return append([]string{"domain", iface}, exec.SeparatePositionals(nil, domains...)...)
 }
 
-// renderDropIn builds the global drop-in content. A package var so a test can
-// exercise Apply's render-error propagation, which is otherwise unreachable
-// (validateConfig runs first and rejects the only render error).
 var renderDropIn = renderResolvedDropIn
 
-// renderResolvedDropIn renders the global resolved.conf.d drop-in. Values are
-// already validated newline-free by validateConfig; the explicit guard here is
-// defense-in-depth so a value can never inject extra [Resolve] directives into
-// the root-parsed file.
 func renderResolvedDropIn(cfg Config) ([]byte, error) {
 	var b strings.Builder
 	b.WriteString("# Managed by cadestrod — do not edit by hand.\n")
@@ -138,9 +104,6 @@ func renderResolvedDropIn(cfg Config) ([]byte, error) {
 	return []byte(b.String()), nil
 }
 
-// parseResolvConf extracts nameservers and search domains from resolv.conf
-// content. Comment lines (# or ;) and other directives (options, sortlist) are
-// ignored. The last `search`/`domain` line wins, matching resolver(5).
 func parseResolvConf(data []byte) State {
 	var st State
 	sc := bufio.NewScanner(bytes.NewReader(data))
@@ -150,10 +113,7 @@ func parseResolvConf(data []byte) State {
 			continue
 		}
 		fields := strings.Fields(line)
-		// Drop an inline comment: everything from the first token that begins a
-		// "#"/";" comment (a hand-edited resolv.conf may carry one). The keyword
-		// (fields[0]) is never a comment — full-comment lines are skipped above —
-		// so the cut is always at index >= 1 and fields stays non-empty.
+
 		for i, f := range fields {
 			if strings.HasPrefix(f, "#") || strings.HasPrefix(f, ";") {
 				fields = fields[:i]

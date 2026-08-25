@@ -21,8 +21,6 @@ func mgr(t *testing.T, f *exectest.FakeRunner) Manager {
 	return m
 }
 
-// wantOneCmd asserts exactly one command was run, with the given name, argv, and
-// escalation flag.
 func wantOneCmd(t *testing.T, f *exectest.FakeRunner, name string, args []string, escalate bool) {
 	t.Helper()
 	calls := f.Calls()
@@ -56,8 +54,6 @@ func TestNew_FailClosed(t *testing.T) {
 	}
 }
 
-// Create — golden argv across option combinations. HomeDir is set explicitly so
-// the -m/-M home-exists stat is deterministic.
 func TestCreate_GoldenArgv(t *testing.T) {
 	nonexistent := filepath.Join(t.TempDir(), "nohome")
 
@@ -101,10 +97,8 @@ func TestCreate_GoldenArgv(t *testing.T) {
 	})
 }
 
-// Create over a PRE-EXISTING home uses -M (useradd -m would fail) and fixes
-// ownership afterwards — exercised via the fs seam so the test stays hermetic.
 func TestCreate_ExistingHomeUsesMinusMAndChowns(t *testing.T) {
-	existing := t.TempDir() // exists
+	existing := t.TempDir()
 	f := exectest.New(exec.Direct)
 
 	ffs := newFakeFS().install(t)
@@ -201,11 +195,9 @@ func TestLockUnlock(t *testing.T) {
 	}
 	wantOneCmd(t, f, "usermod", []string{"-L", "deploy"}, true)
 
-	// Unlock of a PASSWORD-BEARING account: read the shadow, then `usermod -U`
-	// (strips the leading "!", preserving the hash).
 	f2 := exectest.New(exec.Direct)
-	f2.Push(exec.Result{Stdout: "deploy:!$6$abc$hash:19000:0:99999:7:::\n"}, nil) // getent shadow
-	f2.Push(exec.Result{}, nil)                                                   // usermod -U
+	f2.Push(exec.Result{Stdout: "deploy:!$6$abc$hash:19000:0:99999:7:::\n"}, nil)
+	f2.Push(exec.Result{}, nil)
 	if err := mgr(t, f2).Unlock(context.Background(), "deploy"); err != nil {
 		t.Fatal(err)
 	}
@@ -218,13 +210,10 @@ func TestLockUnlock(t *testing.T) {
 	}
 }
 
-// TestUnlock_Passwordless covers the cadestro-tty-* case: `usermod -U` REFUSES to
-// unlock a passwordless account ("would result in a passwordless account"), so
-// Unlock sets the field to "*" (no password, not locked) instead.
 func TestUnlock_Passwordless(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{Stdout: "cadestro-tty-paul:!:19000:0:99999:7:::\n"}, nil) // getent shadow: locked + passwordless
-	f.Push(exec.Result{}, nil)                                                   // usermod -p '*'
+	f.Push(exec.Result{Stdout: "cadestro-tty-paul:!:19000:0:99999:7:::\n"}, nil)
+	f.Push(exec.Result{}, nil)
 	if err := mgr(t, f).Unlock(context.Background(), "cadestro-tty-paul"); err != nil {
 		t.Fatal(err)
 	}
@@ -240,10 +229,10 @@ func TestUnlock_Passwordless(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Run("parses passwd + groups + unlocked shadow", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{Stdout: "deploy:x:1000:1000:Deploy User:/home/deploy:/bin/bash\n"}, nil) // getent passwd
-		f.Push(exec.Result{Stdout: "deploy:x:1000:\n"}, nil)                                        // getent group 1000
-		f.Push(exec.Result{Stdout: "deploy docker sudo\n"}, nil)                                    // id -Gn
-		f.Push(exec.Result{Stdout: "deploy:$6$abc:19000:0:99999:7:::\n"}, nil)                      // getent shadow
+		f.Push(exec.Result{Stdout: "deploy:x:1000:1000:Deploy User:/home/deploy:/bin/bash\n"}, nil)
+		f.Push(exec.Result{Stdout: "deploy:x:1000:\n"}, nil)
+		f.Push(exec.Result{Stdout: "deploy docker sudo\n"}, nil)
+		f.Push(exec.Result{Stdout: "deploy:$6$abc:19000:0:99999:7:::\n"}, nil)
 
 		info, err := mgr(t, f).Get(context.Background(), "deploy")
 		if err != nil {
@@ -261,7 +250,7 @@ func TestGet(t *testing.T) {
 		if info.Locked {
 			t.Error("Locked = true, want false for a hashed shadow entry")
 		}
-		// The shadow read must be escalated.
+
 		if c := f.Calls()[3]; c.Name != "getent" || !c.Escalate {
 			t.Errorf("shadow read = %+v, want escalated getent", c)
 		}
@@ -269,10 +258,10 @@ func TestGet(t *testing.T) {
 
 	t.Run("a failed id -Gn leaves Groups unknown, not silently empty", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{Stdout: "deploy:x:1000:1000::/home/deploy:/bin/bash\n"}, nil) // getent passwd
-		f.Push(exec.Result{Stdout: "deploy:x:1000:\n"}, nil)                             // getent group 1000
-		f.Push(exec.Result{}, exec.ErrEscalationDenied)                                  // id -Gn FAILS
-		f.Push(exec.Result{Stdout: "deploy:$6$abc:19000:0:99999:7:::\n"}, nil)           // getent shadow
+		f.Push(exec.Result{Stdout: "deploy:x:1000:1000::/home/deploy:/bin/bash\n"}, nil)
+		f.Push(exec.Result{Stdout: "deploy:x:1000:\n"}, nil)
+		f.Push(exec.Result{}, exec.ErrEscalationDenied)
+		f.Push(exec.Result{Stdout: "deploy:$6$abc:19000:0:99999:7:::\n"}, nil)
 		info, err := mgr(t, f).Get(context.Background(), "deploy")
 		if err != nil {
 			t.Fatalf("Get should not fail just because the group lookup did: %v", err)
@@ -347,8 +336,8 @@ func TestPrimaryAndSupplementaryGroups(t *testing.T) {
 	}
 
 	f2 := exectest.New(exec.Direct)
-	f2.Push(exec.Result{Stdout: "staff docker sudo\n"}, nil) // id -Gn
-	f2.Push(exec.Result{Stdout: "staff\n"}, nil)             // id -gn (primary)
+	f2.Push(exec.Result{Stdout: "staff docker sudo\n"}, nil)
+	f2.Push(exec.Result{Stdout: "staff\n"}, nil)
 	sg, err := mgr(t, f2).SupplementaryGroups(context.Background(), "deploy")
 	if err != nil {
 		t.Fatal(err)
@@ -358,10 +347,6 @@ func TestPrimaryAndSupplementaryGroups(t *testing.T) {
 	}
 }
 
-// TestEveryMethodRejectsUnsafeNameBeforeRunner is the self-discovering security
-// guard: for EVERY Manager method, a flag-shaped name ("-rf") must never reach
-// the Runner as a command argument. Discovered by reflection over the interface,
-// so a newly-added method is covered automatically.
 func TestEveryMethodRejectsUnsafeNameBeforeRunner(t *testing.T) {
 	const unsafe = "-rf"
 	mt := reflect.TypeOf((*Manager)(nil)).Elem()
@@ -372,9 +357,6 @@ func TestEveryMethodRejectsUnsafeNameBeforeRunner(t *testing.T) {
 	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
 	checked := 0
 
-	// safe is a valid name/group placed in every OTHER string position, so each
-	// string parameter is tested for validation INDIVIDUALLY — a method that
-	// validates only one of several string params is still caught.
 	const safe = "deploy"
 
 	for i := 0; i < mt.NumMethod(); i++ {
@@ -391,8 +373,6 @@ func TestEveryMethodRejectsUnsafeNameBeforeRunner(t *testing.T) {
 			continue
 		}
 
-		// One sub-case per string parameter: only that param is unsafe, the
-		// rest are valid. Catches a method that validates one string but not another.
 		for _, target := range stringParams {
 			f := exectest.New(exec.Direct)
 			fn := reflect.ValueOf(mgr(t, f)).MethodByName(name)

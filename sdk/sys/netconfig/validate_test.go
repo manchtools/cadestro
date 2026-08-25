@@ -30,7 +30,7 @@ func TestValidateInterfaceConfig(t *testing.T) {
 		{"empty ifname", base(func(c *InterfaceConfig) { c.Name = "" }), true},
 		{"mode unset", base(func(c *InterfaceConfig) { c.Mode = 0 }), true},
 		{"static no addresses", InterfaceConfig{Name: "eth0", Mode: Static}, true},
-		{"bad cidr", base(func(c *InterfaceConfig) { c.Addresses = []string{"192.0.2.10"} }), true}, // missing /prefix
+		{"bad cidr", base(func(c *InterfaceConfig) { c.Addresses = []string{"192.0.2.10"} }), true},
 		{"bad gateway", base(func(c *InterfaceConfig) { c.Gateway = "not-an-ip" }), true},
 		{"bad dns", base(func(c *InterfaceConfig) { c.DNS = []string{"nope"} }), true},
 		{"mtu too small", base(func(c *InterfaceConfig) { c.MTU = 10 }), true},
@@ -40,7 +40,7 @@ func TestValidateInterfaceConfig(t *testing.T) {
 		{"route negative metric", base(func(c *InterfaceConfig) {
 			c.Routes = []Route{{Destination: "10.0.0.0/8", Gateway: "192.0.2.1", Metric: -1}}
 		}), true},
-		{"gateway family mismatch", base(func(c *InterfaceConfig) { c.Gateway = "2001:db8::1" }), true}, // v6 gw, v4-only address
+		{"gateway family mismatch", base(func(c *InterfaceConfig) { c.Gateway = "2001:db8::1" }), true},
 		{"gateway family match v6", InterfaceConfig{Name: "eth0", Mode: Static, Addresses: []string{"2001:db8::10/64"}, Gateway: "2001:db8::1"}, false},
 		{"gateway family match dual-stack", InterfaceConfig{Name: "eth0", Mode: Static, Addresses: []string{"192.0.2.10/24", "2001:db8::10/64"}, Gateway: "2001:db8::1"}, false},
 	}

@@ -16,8 +16,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// foreignLocale returns an installed non-English UTF-8 locale (Japanese or
-// Chinese), or "" if none is present. Used to exercise the locale guard.
 func foreignLocale(t *testing.T) string {
 	t.Helper()
 	out, err := osexec.Command("locale", "-a").Output()
@@ -40,17 +38,11 @@ func foreignLocale(t *testing.T) string {
 	return ""
 }
 
-// missingPath returns a path guaranteed not to exist — a child of a fresh, empty
-// t.TempDir — so the missing-file tests can't flake on a reused/shared host that
-// happens to have a fixed /tmp literal lying around.
 func missingPath(t *testing.T) string {
 	t.Helper()
 	return filepath.Join(t.TempDir(), "definitely-missing")
 }
 
-// intManager builds a real Manager for the integration job: Direct when the job
-// runs as root, otherwise Sudo (the CI default). The Direct backend exercises
-// the fd-safe path; Sudo exercises the escalated tee/mv path.
 func intManager(t *testing.T) fs.Manager {
 	t.Helper()
 	b := exec.Sudo
@@ -78,8 +70,6 @@ func cleanup(t *testing.T, m fs.Manager, path string) {
 	_ = m.Remove(context.Background(), path)
 }
 
-// statMode returns the permission bits of path via os.Stat (metadata is
-// world-readable even when the file is root-owned).
 func statMode(t *testing.T, path string) os.FileMode {
 	t.Helper()
 	info, err := os.Stat(path)
@@ -113,8 +103,7 @@ func TestWriteAndReadRoundTrip(t *testing.T) {
 
 func TestReadFileNotFound(t *testing.T) {
 	got, err := intManager(t).ReadFile(context.Background(), missingPath(t))
-	// Explicit-absence contract: a missing file is a wrapped os.ErrNotExist, NOT a
-	// silent (nil,nil) — so a caller can tell "absent" from "present but empty".
+
 	if !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("ReadFile(missing) err = %v, want errors.Is(..., os.ErrNotExist)", err)
 	}
@@ -149,12 +138,6 @@ func TestWriteFileWithModeAndOwnership(t *testing.T) {
 	}
 }
 
-// TestWriteFile_ReplacesSymlinkTargetNotFollowed is the real-system proof of the
-// symlink-safety fix: when the target path is a pre-planted symlink, the write
-// must REPLACE the symlink with a regular file (rename, via mv -T on the
-// escalated path / O_NOFOLLOW rename on the Direct path) and must NOT follow it
-// to clobber the symlink's destination. /tmp is sticky+root-owned, so the
-// escalated path's parent check admits it.
 func TestWriteFile_ReplacesSymlinkTargetNotFollowed(t *testing.T) {
 	ctx := context.Background()
 	m := intManager(t)
@@ -176,11 +159,10 @@ func TestWriteFile_ReplacesSymlinkTargetNotFollowed(t *testing.T) {
 		t.Fatalf("WriteFile(symlinked target): %v", err)
 	}
 
-	// The symlink's destination must be untouched (the write did not follow it).
 	if got, _ := m.ReadFile(ctx, sentinel); string(got) != "SENTINEL\n" {
 		t.Errorf("sentinel was clobbered through the symlink: %q", got)
 	}
-	// The target path is now a regular file holding the new content.
+
 	if fi, err := os.Lstat(link); err != nil || fi.Mode()&os.ModeSymlink != 0 {
 		t.Errorf("target is still a symlink (err=%v, mode=%v); the symlink was followed, not replaced", err, fi.Mode())
 	}
@@ -213,10 +195,7 @@ func TestSetModeAndOwnership(t *testing.T) {
 }
 
 func TestExistsRestrictedDir(t *testing.T) {
-	// Exists probes through the privilege backend, so it should resolve a
-	// root-only path even though the test user can't read it. Pick the first
-	// restricted path that exists on this host image rather than assume a
-	// distro-specific one, and skip if none is present.
+
 	var path string
 	for _, c := range []string{"/etc/sudoers.d", "/etc/ssl/private", "/root"} {
 		if _, err := os.Stat(c); err == nil {
@@ -250,7 +229,7 @@ func TestRemove(t *testing.T) {
 	if ok, _ := m.Exists(ctx, path); ok {
 		t.Error("file should be removed")
 	}
-	// rm -f is idempotent: removing an absent file succeeds.
+
 	if err := m.Remove(ctx, path); err != nil {
 		t.Errorf("Remove of an absent file = %v, want nil (rm -f)", err)
 	}
@@ -290,9 +269,6 @@ func TestCopyTree(t *testing.T) {
 	dst := tmpPath(t, "treedst")
 	defer func() { _ = m.RemoveDir(ctx, src); _ = m.RemoveDir(ctx, dst) }()
 
-	// A src tree with a regular file, a DOTFILE (proves -a copies hidden files),
-	// and a nested subdir (proves recursion). Setup via os.* (the test user owns
-	// /tmp); the subject under test is the privileged CopyTree.
 	if err := os.MkdirAll(filepath.Join(src, "sub"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -305,8 +281,6 @@ func TestCopyTree(t *testing.T) {
 		}
 	}
 
-	// dst does not exist yet: -T makes dst a copy of src's CONTENTS (the merge
-	// semantics), never dst/treesrc.
 	if err := m.CopyTree(ctx, src, dst, fs.WriteOptions{}); err != nil {
 		t.Fatalf("CopyTree: %v", err)
 	}
@@ -319,7 +293,6 @@ func TestCopyTree(t *testing.T) {
 		t.Error("CopyTree nested the source under dst (dst/<src> exists) — -T should merge into dst")
 	}
 
-	// Idempotent re-run into the now-existing dst must not error (merge).
 	if err := m.CopyTree(ctx, src, dst, fs.WriteOptions{Mode: 0o700}); err != nil {
 		t.Fatalf("CopyTree (re-run/merge): %v", err)
 	}
@@ -363,8 +336,7 @@ func TestMkdirAndRemoveDir(t *testing.T) {
 	if ok, _ := m.Exists(ctx, leaf); !ok {
 		t.Fatal("nested directory should exist")
 	}
-	// Mode applies to the target (leaf) directory; mkdir -p leaves parents at
-	// their default mode.
+
 	if mode := statMode(t, leaf); mode != 0o750 {
 		t.Errorf("leaf dir mode = %v, want 0750", mode)
 	}
@@ -399,12 +371,6 @@ func TestGetOwnershipMissing(t *testing.T) {
 	}
 }
 
-// TestReadFile_MissingUnderForeignLocale is the end-to-end locale guard: under a
-// non-English process locale, ReadFile of a missing file must still return
-// (nil,nil). It fails if the Runner stops forcing LC_ALL=C — cat's translated
-// "No such file" message would then be misread as a hard error. (The whole
-// integration suite also runs under ja_JP via the harness; this is the explicit,
-// self-contained pin that holds even when run under C.)
 func TestReadFile_MissingUnderForeignLocale(t *testing.T) {
 	loc := foreignLocale(t)
 	if loc == "" {
@@ -413,9 +379,7 @@ func TestReadFile_MissingUnderForeignLocale(t *testing.T) {
 	t.Setenv("LANG", loc)
 	t.Setenv("LC_ALL", loc)
 	got, err := intManager(t).ReadFile(context.Background(), missingPath(t))
-	// The escalated cat path classifies absence by matching "No such file" in
-	// stderr; that match only holds because the Runner forces LC_ALL=C. Under a
-	// foreign LANG/LC_ALL it must STILL resolve to os.ErrNotExist (not a cmdError).
+
 	if !errors.Is(err, os.ErrNotExist) || got != nil {
 		t.Fatalf("ReadFile(missing) under %s = (%q,%v), want (nil, ErrNotExist) — the Runner must force LC_ALL=C", loc, got, err)
 	}

@@ -1,12 +1,5 @@
 //go:build container
 
-// Container-based real-execution tests for the inventory parsers. The fake-runner
-// unit tests feed captured /proc, os-release, lsblk and `ip -j` output; these run
-// the parsers against the REAL files and tools inside the container, so a kernel
-// /proc format change, an os-release field change, or an iproute2/lsblk JSON
-// shape change is caught here. Anti-rot guard. Self-skips nothing — /proc and
-// /etc/os-release always exist; tool-backed methods need their binary (present
-// in the test image).
 package inventory
 
 import (
@@ -41,8 +34,6 @@ func invCtx(t *testing.T) context.Context {
 	return ctx
 }
 
-// TestSystem_ParsesRealProc_Container pins the /proc/cpuinfo + /proc/meminfo +
-// uname parse against the real kernel.
 func TestSystem_ParsesRealProc_Container(t *testing.T) {
 	info, err := realCollector(t).System(invCtx(t))
 	if err != nil {
@@ -69,17 +60,12 @@ func TestSystem_ParsesRealProc_Container(t *testing.T) {
 	}
 }
 
-// TestOS_ParsesRealOSRelease_Container pins the /etc/os-release parse against the
-// real (debian) file.
 func TestOS_ParsesRealOSRelease_Container(t *testing.T) {
 	got, err := realCollector(t).OS()
 	if err != nil {
 		t.Fatalf("OS: %v", err)
 	}
-	// Independent verify: read the distro id from /etc/os-release ourselves (a
-	// minimal parse, NOT the code under test) and assert the parser extracted the
-	// SAME id. Distro-agnostic — no hardcoded "debian" — so it pins the real
-	// os-release parse on every container in the matrix.
+
 	wantID := osReleaseField(t, "ID")
 	if wantID == "" {
 		t.Fatal("could not read ID from /etc/os-release independently")
@@ -95,9 +81,6 @@ func TestOS_ParsesRealOSRelease_Container(t *testing.T) {
 	}
 }
 
-// osReleaseField reads one key from /etc/os-release with the test's own minimal
-// parse, independent of the production parser, so the comparison is a real
-// cross-check rather than echoing the code under test.
 func osReleaseField(t *testing.T, key string) string {
 	t.Helper()
 	data, err := os.ReadFile("/etc/os-release")
@@ -112,8 +95,6 @@ func osReleaseField(t *testing.T, key string) string {
 	return ""
 }
 
-// TestDisks_ParsesRealLsblk_Container pins the `lsblk --json` parse: it must
-// decode real lsblk output without error.
 func TestDisks_ParsesRealLsblk_Container(t *testing.T) {
 	if _, err := osexec.LookPath("lsblk"); err != nil {
 		t.Skip("lsblk not on PATH")
@@ -123,8 +104,6 @@ func TestDisks_ParsesRealLsblk_Container(t *testing.T) {
 	}
 }
 
-// TestNetworkInterfaces_ParsesRealIpJSON_Container pins the `ip -j addr` parse:
-// loopback must be discovered.
 func TestNetworkInterfaces_ParsesRealIpJSON_Container(t *testing.T) {
 	if _, err := osexec.LookPath("ip"); err != nil {
 		t.Skip("iproute2 `ip` not on PATH")

@@ -12,22 +12,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// removeDirSecure removes the directory at path (already validated,
-// cleaned, absolute, and confirmed NOT under a protected prefix by
-// RemoveDir) without ever following a symlink — neither an intermediate
-// path component nor the leaf nor any descendant. This closes the
-// resolve-then-string-reopen TOCTOU that a plain `rm -rf <path>` left
-// open (WS6 #4): a `rm -rf` re-resolves the whole path, so a component
-// swapped for a symlink after validation could redirect the recursive
-// delete into another tree (e.g. /etc, a user's home).
-//
-// The approach is openat-anchored:
-//   - walk the parent's components from "/" with O_NOFOLLOW|O_DIRECTORY,
-//     so a symlinked intermediate component fails the open (ELOOP);
-//   - require the leaf to be a real directory (a symlinked leaf is
-//     refused, not unlinked-as-if-the-dir and not dereferenced);
-//   - recurse with unlinkat/openat anchored on directory fds, so every
-//     descendant is reached by handle, not by re-resolved path.
 func removeDirSecure(ctx context.Context, path string) error {
 	parent := filepath.Dir(path)
 	base := filepath.Base(path)
@@ -46,7 +30,7 @@ func removeDirSecure(ctx context.Context, path string) error {
 	case unix.S_IFLNK:
 		return fmt.Errorf("refusing to remove symlink %s", path)
 	case unix.S_IFDIR:
-		// ok
+
 	default:
 		return fmt.Errorf("refusing to remove non-directory %s", path)
 	}
@@ -54,9 +38,6 @@ func removeDirSecure(ctx context.Context, path string) error {
 	return removeAtRecursive(ctx, pfd, base)
 }
 
-// openNoFollowChain opens dir by walking its components from the
-// filesystem root, opening each with O_NOFOLLOW|O_DIRECTORY so no
-// symlinked component is ever traversed. The caller must Close the fd.
 func openNoFollowChain(dir string) (int, error) {
 	clean := filepath.Clean(dir)
 
@@ -83,9 +64,6 @@ func openNoFollowChain(dir string) (int, error) {
 	return fd, nil
 }
 
-// removeAtRecursive removes name under dirfd. A directory is recursed
-// into via an O_NOFOLLOW openat and rmdir'd; anything else — including a
-// symlink — is unlinkat'd WITHOUT being followed.
 func removeAtRecursive(ctx context.Context, dirfd int, name string) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -96,8 +74,7 @@ func removeAtRecursive(ctx context.Context, dirfd int, name string) error {
 		return fmt.Errorf("stat %s: %w", name, err)
 	}
 	if st.Mode&unix.S_IFMT != unix.S_IFDIR {
-		// Regular file, symlink, device, fifo, … — unlink the entry
-		// itself; never traverse into it.
+
 		if err := unix.Unlinkat(dirfd, name, 0); err != nil {
 			return fmt.Errorf("unlink %s: %w", name, err)
 		}
@@ -108,9 +85,7 @@ func removeAtRecursive(ctx context.Context, dirfd int, name string) error {
 	if err != nil {
 		return fmt.Errorf("open dir %s: %w", name, err)
 	}
-	// os.NewFile takes ownership of cfd for the Readdirnames call; we keep
-	// using cfd for unlinkat on the children BEFORE closing f, then close
-	// f exactly once (which closes cfd).
+
 	f := os.NewFile(uintptr(cfd), name)
 	children, readErr := f.Readdirnames(-1)
 	if readErr != nil {

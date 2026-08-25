@@ -5,7 +5,6 @@ import (
 	osexec "os/exec"
 )
 
-// lookPath is a package-var seam so Detect is deterministically testable.
 var lookPath = osexec.LookPath
 
 // Detect reports the AV backends usable on THIS host: ClamAV when clamscan is on

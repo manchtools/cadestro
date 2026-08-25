@@ -10,16 +10,13 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// passwdLine is the getent passwd reply Get parses for HomeDir.
 const deployPasswd = "deploy:x:1001:1001:Deploy:/home/deploy:/bin/bash\n"
 
-// A missing home is created, seeded from skel, owned recursively by the user,
-// and chmod'd to the home-root mode — the full repair.
 func TestEnsureHome_MissingCreatesSeedsOwnsAndModes(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{Stdout: deployPasswd}, nil) // Get: getent passwd
+	f.Push(exec.Result{Stdout: deployPasswd}, nil)
 	ffs := newFakeFS().install(t)
-	ffs.present["/etc/skel"] = true // skel exists; home does NOT
+	ffs.present["/etc/skel"] = true
 
 	if err := mgr(t, f).EnsureHome(context.Background(), "deploy", EnsureHomeOptions{Group: "deploy"}); err != nil {
 		t.Fatal(err)
@@ -38,13 +35,11 @@ func TestEnsureHome_MissingCreatesSeedsOwnsAndModes(t *testing.T) {
 	}
 }
 
-// An EXISTING home must NOT be re-seeded from skel (that would clobber the
-// user's customised dotfiles) — but ownership and mode are still re-asserted.
 func TestEnsureHome_ExistingDoesNotReseedButFixesOwnerAndMode(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: deployPasswd}, nil)
 	ffs := newFakeFS().install(t)
-	ffs.present["/home/deploy"] = true // home already exists
+	ffs.present["/home/deploy"] = true
 	ffs.present["/etc/skel"] = true
 
 	if err := mgr(t, f).EnsureHome(context.Background(), "deploy", EnsureHomeOptions{Group: "staff", Mode: 0o711}); err != nil {
@@ -64,15 +59,13 @@ func TestEnsureHome_ExistingDoesNotReseedButFixesOwnerAndMode(t *testing.T) {
 	}
 }
 
-// With no explicit Group, ownership resolves to the user's actual primary group
-// (id -gn), not a hardcoded assumption.
 func TestEnsureHome_DefaultsGroupToPrimary(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{Stdout: deployPasswd}, nil)                       // Get: getent passwd
-	f.Push(exec.Result{Stdout: "deploy:x:1001:\n"}, nil)                 // Get: getent group 1001
-	f.Push(exec.Result{Stdout: "deploy\n"}, nil)                         // Get: id -Gn
-	f.Push(exec.Result{Stdout: "deploy:$6$h:19000:0:99999:7:::\n"}, nil) // Get: getent shadow (escalated)
-	f.Push(exec.Result{Stdout: "devs\n"}, nil)                           // PrimaryGroup: id -gn
+	f.Push(exec.Result{Stdout: deployPasswd}, nil)
+	f.Push(exec.Result{Stdout: "deploy:x:1001:\n"}, nil)
+	f.Push(exec.Result{Stdout: "deploy\n"}, nil)
+	f.Push(exec.Result{Stdout: "deploy:$6$h:19000:0:99999:7:::\n"}, nil)
+	f.Push(exec.Result{Stdout: "devs\n"}, nil)
 	ffs := newFakeFS().install(t)
 	ffs.present["/home/deploy"] = true
 
@@ -84,11 +77,10 @@ func TestEnsureHome_DefaultsGroupToPrimary(t *testing.T) {
 	}
 }
 
-// Skel absent: the home is still created (empty), no copy attempted.
 func TestEnsureHome_NoSkelStillCreatesEmptyHome(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: deployPasswd}, nil)
-	ffs := newFakeFS().install(t) // neither home nor skel present
+	ffs := newFakeFS().install(t)
 
 	if err := mgr(t, f).EnsureHome(context.Background(), "deploy", EnsureHomeOptions{Group: "deploy"}); err != nil {
 		t.Fatal(err)
@@ -101,10 +93,9 @@ func TestEnsureHome_NoSkelStillCreatesEmptyHome(t *testing.T) {
 	}
 }
 
-// A nonexistent account is rejected (Get fails) and the filesystem is untouched.
 func TestEnsureHome_UserNotFoundErrors(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{ExitCode: 2}, nil) // getent passwd: not found
+	f.Push(exec.Result{ExitCode: 2}, nil)
 	ffs := newFakeFS().install(t)
 
 	if err := mgr(t, f).EnsureHome(context.Background(), "ghost", EnsureHomeOptions{}); err == nil {
@@ -115,13 +106,11 @@ func TestEnsureHome_UserNotFoundErrors(t *testing.T) {
 	}
 }
 
-// A failed home-directory create aborts EnsureHome with the error wrapped, and
-// the seed/own/mode steps never run on a directory that wasn't created.
 func TestEnsureHome_MkdirFailureAborts(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	f.Push(exec.Result{Stdout: deployPasswd}, nil) // Get: getent passwd
+	f.Push(exec.Result{Stdout: deployPasswd}, nil)
 	ffs := newFakeFS().install(t)
-	ffs.present["/etc/skel"] = true // home is missing → Mkdir is attempted
+	ffs.present["/etc/skel"] = true
 	ffs.mkdirErr = errors.New("read-only fs")
 
 	err := mgr(t, f).EnsureHome(context.Background(), "deploy", EnsureHomeOptions{Group: "deploy"})
@@ -134,7 +123,6 @@ func TestEnsureHome_MkdirFailureAborts(t *testing.T) {
 	}
 }
 
-// An invalid username is rejected before any lookup or filesystem op.
 func TestEnsureHome_InvalidUsernameRejectedBeforeExec(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	newFakeFS().install(t)

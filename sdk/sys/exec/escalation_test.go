@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-// writeExecScript writes an executable shell script and returns its path.
 func writeExecScript(t *testing.T, dir, name, body string) string {
 	t.Helper()
 	p := filepath.Join(dir, name)
@@ -18,13 +17,10 @@ func writeExecScript(t *testing.T, dir, name, body string) string {
 	return p
 }
 
-// When escalation is requested but the wrapper tool is not on PATH, the Runner
-// fails closed with ErrEscalationUnavailable rather than running unescalated.
-// A temp-dir PATH containing the payload but NOT sudo makes this deterministic.
 func TestRunner_EscalationUnavailableWhenToolMissing(t *testing.T) {
 	dir := t.TempDir()
 	writeExecScript(t, dir, "payload", "#!/bin/sh\nexit 0\n")
-	t.Setenv("PATH", dir) // sudo is intentionally absent here
+	t.Setenv("PATH", dir)
 
 	r, err := NewRunner(Sudo)
 	if err != nil {
@@ -35,10 +31,6 @@ func TestRunner_EscalationUnavailableWhenToolMissing(t *testing.T) {
 	}
 }
 
-// When the wrapper runs but refuses (a `sudo -n` that would need a password),
-// the Runner surfaces ErrEscalationDenied — distinct from the command's own
-// non-zero exit. Exercised end-to-end with a fake `sudo` on PATH that emits the
-// real diagnostic and exits 1.
 func TestRunner_EscalationDeniedFromWrapper(t *testing.T) {
 	dir := t.TempDir()
 	writeExecScript(t, dir, "sudo", "#!/bin/sh\necho 'sudo: a password is required' >&2\nexit 1\n")
@@ -54,11 +46,9 @@ func TestRunner_EscalationDeniedFromWrapper(t *testing.T) {
 	}
 }
 
-// A successful escalated run through a fake `sudo` (exit 0) returns no error and
-// reports the wrapped command's exit code — the happy escalation path.
 func TestRunner_EscalatedRunSucceeds(t *testing.T) {
 	dir := t.TempDir()
-	// Fake sudo execs its remaining args ("-n <abs payload> …" → drops -n).
+
 	writeExecScript(t, dir, "sudo", "#!/bin/sh\nshift\nexec \"$@\"\n")
 	writeExecScript(t, dir, "payload", "#!/bin/sh\nexit 0\n")
 	t.Setenv("PATH", dir)
@@ -76,8 +66,6 @@ func TestRunner_EscalatedRunSucceeds(t *testing.T) {
 	}
 }
 
-// Detect lists exactly the escalation tools present on PATH — covered with fake
-// sudo + doas so both branches run deterministically (a real host may lack doas).
 func TestDetect_ListsFakeToolsOnPath(t *testing.T) {
 	dir := t.TempDir()
 	writeExecScript(t, dir, "sudo", "#!/bin/sh\n")
@@ -101,16 +89,13 @@ func TestDetect_ListsFakeToolsOnPath(t *testing.T) {
 	}
 }
 
-// Detect returns an empty slice when neither tool is on PATH (a root-only host
-// that will use Direct).
 func TestDetect_EmptyWhenNoToolsOnPath(t *testing.T) {
-	t.Setenv("PATH", t.TempDir()) // empty dir
+	t.Setenv("PATH", t.TempDir())
 	if got := Detect(context.Background()); len(got) != 0 {
 		t.Errorf("Detect = %v, want empty on a host with no sudo/doas", got)
 	}
 }
 
-// CommandError.Error formats without a stderr suffix when stderr is empty.
 func TestCommandError_ErrorWithoutStderr(t *testing.T) {
 	ce := &CommandError{Name: "userdel", ExitCode: 1}
 	if got, want := ce.Error(), "userdel: exit 1"; got != want {

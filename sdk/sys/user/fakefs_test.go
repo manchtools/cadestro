@@ -9,10 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeFS is a hermetic fsManager for user tests: it records the
-// AccountsService write/remove, the home-fixup recursive chown, and the
-// EnsureHome probe/create/seed/mode calls, and returns scripted errors.
-// install() points the newFS seam at it for the test.
 type fakeFS struct {
 	writes  map[string]string
 	removes []string
@@ -20,8 +16,8 @@ type fakeFS struct {
 		path, owner, group string
 		called             bool
 	}
-	// EnsureHome surface.
-	present map[string]bool // Exists() answers
+
+	present map[string]bool
 	mkdirs  []string
 	copies  []struct{ src, dst string }
 	chmods  struct {
@@ -43,7 +39,7 @@ func (f *fakeFS) Exists(_ context.Context, path string) (bool, error) {
 func (f *fakeFS) Mkdir(_ context.Context, path string, _ fs.MkdirOptions) error {
 	f.mkdirs = append(f.mkdirs, path)
 	if f.mkdirErr != nil {
-		return f.mkdirErr // a failed mkdir must NOT mark the dir present
+		return f.mkdirErr
 	}
 	f.present[path] = true
 	return nil

@@ -28,9 +28,9 @@ func TestZypper_Apply_FullSequence(t *testing.T) {
 		t.Error("a successful addrepo reports Changed=true")
 	}
 	want := []string{
-		"zypper --non-interactive removerepo corp",                                  // best-effort pre-removal
-		"zypper --non-interactive addrepo --refresh --type rpm-md https://h/r corp", // --refresh ⇒ Autorefresh
-		"zypper --non-interactive modifyrepo --name=Corp Repo corp",                 // glued --name= blocks flag injection
+		"zypper --non-interactive removerepo corp",
+		"zypper --non-interactive addrepo --refresh --type rpm-md https://h/r corp",
+		"zypper --non-interactive modifyrepo --name=Corp Repo corp",
 		"zypper --non-interactive modifyrepo --enable corp",
 		"rpm --import -- https://h/KEY",
 		"zypper --non-interactive refresh corp",
@@ -40,10 +40,6 @@ func TestZypper_Apply_FullSequence(t *testing.T) {
 	}
 }
 
-// Autorefresh must be controlled solely by the addrepo --refresh flag: when
-// Autorefresh is false the repo must NOT be created auto-refreshing. (A prior
-// implementation always passed addrepo --refresh and only re-enabled when true,
-// leaving Autorefresh=false repos auto-refreshing against operator intent.)
 func TestZypper_Apply_AutorefreshControlsAddrepoFlag(t *testing.T) {
 	addrepoCmd := func(fr *exectest.FakeRunner) string {
 		for _, c := range argvs(fr) {
@@ -70,7 +66,7 @@ func TestZypper_Apply_AutorefreshControlsAddrepoFlag(t *testing.T) {
 		if got := addrepoCmd(fr); got != "zypper --non-interactive addrepo https://h/r r" {
 			t.Errorf("addrepo = %q, want NO --refresh for Autorefresh=false", got)
 		}
-		// And nothing later may re-enable autorefresh.
+
 		for _, c := range argvs(fr) {
 			if strings.Contains(c, "modifyrepo --refresh") {
 				t.Errorf("Autorefresh=false but a modifyrepo --refresh ran: %q", c)
@@ -87,7 +83,7 @@ func TestZypper_Apply_NoGpgcheckAndDisabled(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmds := strings.Join(argvs(fr), " | ")
-	// Autorefresh defaults false here, so addrepo carries no --refresh.
+
 	if !strings.Contains(cmds, "addrepo --no-gpgcheck https://h/r r") {
 		t.Errorf("addrepo missing --no-gpgcheck for GPGCheck=false: %s", cmds)
 	}
@@ -101,8 +97,8 @@ func TestZypper_Apply_NoGpgcheckAndDisabled(t *testing.T) {
 
 func TestZypper_Apply_AddrepoFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(sysexec.Result{}, nil)                                        // removerepo (pre) clean
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "addrepo: bad url"}, nil) // addrepo fails
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "addrepo: bad url"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{URL: "https://h/r", GPGCheck: true}})
 	if err == nil || !strings.Contains(err.Error(), "add repository") {
 		t.Fatalf("err = %v, want a wrapped addrepo failure", err)
@@ -114,9 +110,9 @@ func TestZypper_Apply_AddrepoFailureIsFatal(t *testing.T) {
 
 func TestZypper_Apply_DescriptionFailureIsFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	fr.Push(sysexec.Result{}, nil)                                        // removerepo
-	fr.Push(sysexec.Result{}, nil)                                        // addrepo ok
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "modifyrepo: name"}, nil) // modifyrepo --name fails
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "modifyrepo: name"}, nil)
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{
 		URL: "https://h/r", GPGCheck: true, Description: "X",
 	}}); err == nil || !strings.Contains(err.Error(), "set repo description") {
@@ -126,11 +122,11 @@ func TestZypper_Apply_DescriptionFailureIsFatal(t *testing.T) {
 
 func TestZypper_Apply_KeyImportFailureIsNonFatal(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
-	// removerepo, addrepo, enable all clean; rpm --import fails; refresh clean.
-	fr.Push(sysexec.Result{}, nil)                                  // removerepo
-	fr.Push(sysexec.Result{}, nil)                                  // addrepo
-	fr.Push(sysexec.Result{}, nil)                                  // modifyrepo --enable
-	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "rpm import"}, nil) // rpm --import
+
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{}, nil)
+	fr.Push(sysexec.Result{ExitCode: 1, Stderr: "rpm import"}, nil)
 	out, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{
 		URL: "https://h/r", GPGCheck: true, Enabled: true, GPGKey: "https://h/K",
 	}})
@@ -158,11 +154,7 @@ func TestZypper_Remove(t *testing.T) {
 	})
 	t.Run("not found is idempotent", func(t *testing.T) {
 		m, _, fr := newTestManager(t, pkg.Zypper)
-		// REAL zypper behaviour: `removerepo` of an absent alias EXITS 0 and
-		// reports the absence with a "not found" message on stderr — it does NOT
-		// exit non-zero. So idempotency must be keyed off the message, not the
-		// exit code (the earlier fake scripted exit 1, hiding that removing an
-		// absent repo wrongly reported Changed=true against real zypper).
+
 		fr.Push(sysexec.Result{ExitCode: 0, Stderr: "Repository 'corp' not found by alias, number or URI."}, nil)
 		out, err := m.Remove(context.Background(), "corp")
 		if err != nil {
@@ -182,11 +174,6 @@ func TestZypper_Remove(t *testing.T) {
 	})
 }
 
-// TestZypper_Apply_GPGCheckFalseIgnoresKey guards the trust-downgrade fix
-// (parity with TestDnf_Apply_GPGCheckFalseIgnoresKey): with GPGCheck=false
-// the repo is added --no-gpgcheck, so importing the GPGKey would trust it
-// system-wide in the rpm keyring while the repo verifies nothing. The key
-// import must be gated on GPGCheck.
 func TestZypper_Apply_GPGCheckFalseIgnoresKey(t *testing.T) {
 	m, _, fr := newTestManager(t, pkg.Zypper)
 	if _, err := m.Apply(context.Background(), Repository{Name: "r", Zypper: &ZypperConfig{

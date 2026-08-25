@@ -301,7 +301,7 @@ func TestDnf_ListUpgradable(t *testing.T) {
 	t.Run("exit 100 then parses rows", func(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 100, Stdout: "vim.x86_64 8.2-2 updates\n\nshort line\n"}, nil)
-		ok(f, "8.2-1\n") // InstalledVersion(vim)
+		ok(f, "8.2-1\n")
 		ups, err := m.ListUpgradable(ctx)
 		if err != nil {
 			t.Fatal(err)
@@ -331,7 +331,7 @@ func TestDnf_Show(t *testing.T) {
 	t.Run("installed", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "Version      : 8.2\nRelease      : 1.fc39\nArchitecture : x86_64\nSize         : 3.0 M\nSummary      : Vi IMproved\nRepository   : updates\n")
-		f.Push(sysexec.Result{ExitCode: 0}, nil) // IsInstalled rpm -q
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -343,7 +343,7 @@ func TestDnf_Show(t *testing.T) {
 	t.Run("available not installed", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "Version : 8.2\n")
-		f.Push(sysexec.Result{ExitCode: 1}, nil) // rpm -q: not installed
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
 		p, err := m.Show(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -372,7 +372,7 @@ func TestDnf_ListVersions(t *testing.T) {
 	t.Run("dedups and skips headers", func(t *testing.T) {
 		m, f := dnfM(t)
 		ok(f, "Installed Packages\nvim.x86_64 8.2-1 @updates\nAvailable Packages\nvim.x86_64 8.2-2 updates\nvim.x86_64 8.2-2 updates\nshort line\n")
-		ok(f, "8.2-1\n") // InstalledVersion
+		ok(f, "8.2-1\n")
 		info, err := m.ListVersions(ctx, "vim")
 		if err != nil {
 			t.Fatal(err)
@@ -655,14 +655,12 @@ func TestDnf_ParseSize(t *testing.T) {
 			t.Errorf("parseSize(%q) = %d, want %d", in, got, want)
 		}
 	}
-	// Input that is not a size at all must be REPORTED, not silently rendered as
-	// 0 — a 0-byte package and "dnf printed something we can't read" are
-	// different facts and the caller decides what to do about the second.
+
 	for _, in := range []string{
-		"",                  // no value on the line
-		"bad MB",            // " MB" is not a suffix this table knows
-		"unknown",           // literal junk
-		"3.0 MB extra text", // trailing garbage after a plausible size
+		"",
+		"bad MB",
+		"unknown",
+		"3.0 MB extra text",
 	} {
 		if got, ok := parseSize(in); ok {
 			t.Errorf("parseSize(%q) = (%d, true), want ok=false for unparseable input", in, got)
@@ -676,16 +674,16 @@ func TestDnf_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 	ctx := context.Background()
 	t.Run("ListUpgradable: InstalledVersion runner failure", func(t *testing.T) {
 		m, f := dnfM(t)
-		f.Push(sysexec.Result{ExitCode: 100, Stdout: "vim.x86_64 8.2-2 updates\n"}, nil) // check-update
-		f.Push(sysexec.Result{}, errors.New("rpm"))                                      // InstalledVersion
+		f.Push(sysexec.Result{ExitCode: 100, Stdout: "vim.x86_64 8.2-2 updates\n"}, nil)
+		f.Push(sysexec.Result{}, errors.New("rpm"))
 		if _, err := m.ListUpgradable(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}
 	})
 	t.Run("Show: IsInstalled runner failure", func(t *testing.T) {
 		m, f := dnfM(t)
-		ok(f, "Version : 8.2\n")                    // dnf info
-		f.Push(sysexec.Result{}, errors.New("rpm")) // IsInstalled
+		ok(f, "Version : 8.2\n")
+		f.Push(sysexec.Result{}, errors.New("rpm"))
 		if _, err := m.Show(ctx, "vim"); err == nil {
 			t.Fatal("an IsInstalled runner failure must propagate")
 		}
@@ -694,7 +692,7 @@ func TestDnf_EnrichmentRunnerFailuresPropagate(t *testing.T) {
 		m, f := dnfM(t)
 		f.Push(sysexec.Result{ExitCode: 0}, nil)
 		ok(f, "vim-8.2-1.x86_64\n")
-		f.Push(sysexec.Result{}, errors.New("rpm")) // InstalledVersion
+		f.Push(sysexec.Result{}, errors.New("rpm"))
 		if _, err := m.ListPinned(ctx); err == nil {
 			t.Fatal("an InstalledVersion runner failure must propagate")
 		}

@@ -11,11 +11,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// TestVersion_ParsesSystemctlOutput pins the probe's parse contract
-// (spec 27): the FIRST integer token of the FIRST line — mirroring the
-// install.sh awk this replaces — and an error (never a guessed value)
-// for anything else, so the caller's fail-safe (RestrictRealtime=false)
-// stays a conscious decision at the call site.
 func TestVersion_ParsesSystemctlOutput(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -61,8 +56,6 @@ func TestVersion_RunnerErrorSurfaces(t *testing.T) {
 	}
 }
 
-// TestReadUnit_RoundTripsWriteUnitPath pins that ReadUnit reads exactly
-// the path WriteUnit writes — the unit path is constructed in one place.
 func TestReadUnit_RoundTripsWriteUnitPath(t *testing.T) {
 	f := &fakeFS{readContent: "[Unit]\nDescription=demo\n"}
 	f.install(t)
@@ -102,9 +95,6 @@ func TestReadUnit_RejectsInvalidUnitName(t *testing.T) {
 	}
 }
 
-// TestValidateUnitContent_ExportMatchesGate pins that the exported
-// wrapper IS the WriteUnit gate: a dropper unit is rejected, a plain
-// unit passes.
 func TestValidateUnitContent_ExportMatchesGate(t *testing.T) {
 	if err := ValidateUnitContent("[Service]\nExecStart=/bin/sh -c 'curl x | sh'\n"); !errors.Is(err, ErrUnsafeUnitContent) {
 		t.Errorf("shell dropper must be rejected, got %v", err)
@@ -114,10 +104,6 @@ func TestValidateUnitContent_ExportMatchesGate(t *testing.T) {
 	}
 }
 
-// TestNeedsReload_ParsesShowOutput pins the NeedDaemonReload probe
-// (spec 27 reload-retry): yes/no parse strictly, anything else — an
-// empty reply, an error line, a D-Bus stall — is an ERROR, never a
-// guessed false (fail-closed, matching the package's query posture).
 func TestNeedsReload_ParsesShowOutput(t *testing.T) {
 	cases := []struct {
 		name    string

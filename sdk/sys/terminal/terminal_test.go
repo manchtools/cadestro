@@ -14,10 +14,6 @@ import (
 	"time"
 )
 
-// isSandboxStartErr reports whether err looks like a sandbox/seccomp
-// restriction that should cause the test to skip rather than fail. We
-// match on EPERM/EACCES/ENOSYS so genuine bugs (panics, validation
-// failures, missing shell) still surface as test failures.
 func isSandboxStartErr(err error) bool {
 	return errors.Is(err, syscall.EPERM) ||
 		errors.Is(err, syscall.EACCES) ||
@@ -25,9 +21,6 @@ func isSandboxStartErr(err error) bool {
 		errors.Is(err, os.ErrPermission)
 }
 
-// openSession builds a Manager and opens a session with a background
-// context. It is the single seam the rest of the tests use so the
-// Manager.Open contract is exercised everywhere a session is created.
 func openSession(t *testing.T, cfg SessionConfig) (*Session, error) {
 	t.Helper()
 	m, err := New()
@@ -37,10 +30,6 @@ func openSession(t *testing.T, cfg SessionConfig) (*Session, error) {
 	return m.Open(context.Background(), cfg)
 }
 
-// startSessionOrSkip is the canonical helper for tests that need a live
-// session: it returns the Session on success, skips the test on a
-// sandbox-related Open failure, and fatally fails the test on any other
-// error so real bugs are not silently masked.
 func startSessionOrSkip(t *testing.T, cfg SessionConfig) *Session {
 	t.Helper()
 	s, err := openSession(t, cfg)
@@ -53,11 +42,6 @@ func startSessionOrSkip(t *testing.T, cfg SessionConfig) *Session {
 	return s
 }
 
-// requireLinuxCurrentUser skips the test on non-Linux platforms or if
-// user.Current() fails (e.g., NSS misconfigured), and otherwise returns
-// the current user. PTY integration tests share this preamble — calling
-// it once per test makes the intent clearer than the previous repeated
-// 6-line block.
 func requireLinuxCurrentUser(t *testing.T) *user.User {
 	t.Helper()
 	if runtime.GOOS != "linux" {
@@ -141,7 +125,7 @@ func TestOpen_ShellNotExecutable(t *testing.T) {
 	if err != nil {
 		t.Skipf("user.Current() failed: %v", err)
 	}
-	// A regular non-executable file under our temp dir.
+
 	dir := t.TempDir()
 	notExec := dir + "/not-a-shell"
 	if err := os.WriteFile(notExec, []byte("#!/bin/sh\n"), 0o644); err != nil {
@@ -156,8 +140,6 @@ func TestOpen_ShellNotExecutable(t *testing.T) {
 	}
 }
 
-// TestNew pins that the constructor returns a usable Manager and never
-// fails today (its error return exists only for forward-compatibility).
 func TestNew(t *testing.T) {
 	m, err := New()
 	if err != nil {
@@ -168,11 +150,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-// TestOpen_ContextCancelled proves Open fails closed on an already-cancelled
-// context before it touches the user database, the filesystem, or forks a PTY —
-// the allocation gate. We pass an unknown user so that, were the ctx check
-// absent, the call would fail with a user-lookup error instead; observing
-// context.Canceled confirms the ctx short-circuit ran first.
 func TestOpen_ContextCancelled(t *testing.T) {
 	m, err := New()
 	if err != nil {
@@ -186,10 +163,6 @@ func TestOpen_ContextCancelled(t *testing.T) {
 	}
 }
 
-// TestValidateDims covers the WS15 dimension contract: a zero in either axis is
-// rejected; any non-zero uint16 pair (including the type maximum) is accepted.
-// The invalid cases are sourced from the wire intent (gt=0), not from the
-// implementation under test.
 func TestValidateDims(t *testing.T) {
 	cases := []struct {
 		name       string
@@ -216,9 +189,6 @@ func TestValidateDims(t *testing.T) {
 	}
 }
 
-// TestSession_ResizeRejectsZeroDims exercises the validation on a LIVE session:
-// a zero dimension is refused before the ioctl, and a subsequent valid resize
-// still works (the rejected call did not wedge the PTY).
 func TestSession_ResizeRejectsZeroDims(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 
@@ -236,10 +206,6 @@ func TestSession_ResizeRejectsZeroDims(t *testing.T) {
 	}
 }
 
-// TestOpen_NonNumericUID drives the parse-uid failure path via the lookupUser
-// seam: a passwd entry whose Uid is not an integer is rejected before any PTY
-// is allocated. (A real passwd cannot carry a non-numeric uid, so the seam is
-// the only way to exercise the defensive parse.)
 func TestOpen_NonNumericUID(t *testing.T) {
 	restore := lookupUser
 	defer func() { lookupUser = restore }()
@@ -252,7 +218,6 @@ func TestOpen_NonNumericUID(t *testing.T) {
 	}
 }
 
-// TestOpen_NonNumericGID is the gid twin of TestOpen_NonNumericUID.
 func TestOpen_NonNumericGID(t *testing.T) {
 	restore := lookupUser
 	defer func() { lookupUser = restore }()
@@ -265,15 +230,13 @@ func TestOpen_NonNumericGID(t *testing.T) {
 	}
 }
 
-// TestOpen_DefaultShell covers the empty-Shell → DefaultShell defaulting branch
-// by opening a live session with no Shell set.
 func TestOpen_DefaultShell(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 	info, err := os.Stat(DefaultShell)
 	if err != nil || info.IsDir() || info.Mode().Perm()&0o111 == 0 {
 		t.Skipf("default shell %s not usable on this host", DefaultShell)
 	}
-	s := startSessionOrSkip(t, SessionConfig{User: cur.Username}) // Shell:"" → DefaultShell
+	s := startSessionOrSkip(t, SessionConfig{User: cur.Username})
 	defer s.Close()
 	if _, err := io.WriteString(s, "exit\n"); err != nil {
 		t.Fatalf("write: %v", err)
@@ -281,11 +244,6 @@ func TestOpen_DefaultShell(t *testing.T) {
 	drain(t, s, 5*time.Second)
 }
 
-// TestOpen_SwitchesCredentialWhenUIDDiffers exercises the credential-switch
-// branch (uid/gid != process uid/gid) without root: the getgid seam reports a
-// gid different from the looked-up user's, so the branch is taken and the
-// child's Credential is set to the user's OWN uid/gid — a setres-to-self that
-// needs no privilege, so the session still starts.
 func TestOpen_SwitchesCredentialWhenUIDDiffers(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 	restore := getgid
@@ -300,8 +258,6 @@ func TestOpen_SwitchesCredentialWhenUIDDiffers(t *testing.T) {
 	drain(t, s, 5*time.Second)
 }
 
-// TestSession_ResizeAfterCloseFails covers the pty.Setsize error path: after
-// Close the PTY fd is gone, so a (valid-dimension) resize fails at the ioctl.
 func TestSession_ResizeAfterCloseFails(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 	s := startSessionOrSkip(t, SessionConfig{User: cur.Username, Shell: pickShell(t)})
@@ -314,9 +270,6 @@ func TestSession_ResizeAfterCloseFails(t *testing.T) {
 	}
 }
 
-// TestSession_CloseSurfacesPTYError covers the branch where pty.Close returns a
-// non-ErrClosed error: the ptyClose seam closes the fd (no leak) but returns a
-// synthetic error, which Close must surface as its result.
 func TestSession_CloseSurfacesPTYError(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 	s := startSessionOrSkip(t, SessionConfig{User: cur.Username, Shell: pickShell(t)})
@@ -325,7 +278,7 @@ func TestSession_CloseSurfacesPTYError(t *testing.T) {
 	defer func() { ptyClose = restore }()
 	sentinel := errors.New("synthetic pty close failure")
 	ptyClose = func(f *os.File) error {
-		_ = f.Close() // actually release the fd so the child/session is not leaked
+		_ = f.Close()
 		return sentinel
 	}
 
@@ -334,10 +287,6 @@ func TestSession_CloseSurfacesPTYError(t *testing.T) {
 	}
 }
 
-// pickShell returns a usable shell from a fixed list of well-known
-// locations or skips the test. A candidate is "usable" only if it
-// exists, is not a directory, and has at least one execute bit set —
-// the same constraints Start now enforces.
 func pickShell(t *testing.T) string {
 	t.Helper()
 	for _, candidate := range []string{"/bin/bash", "/bin/sh", "/usr/bin/bash"} {
@@ -365,18 +314,15 @@ func TestSession_EchoAndExit(t *testing.T) {
 	})
 	defer s.Close()
 
-	// Send a command and an exit.
 	if _, err := io.WriteString(s, "echo CADESTRO-OK\nexit\n"); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
-	// Drain output until EOF (or the session closes).
 	output := drain(t, s, 5*time.Second)
 	if !strings.Contains(output, "CADESTRO-OK") {
 		t.Errorf("expected output to contain CADESTRO-OK, got: %q", output)
 	}
 
-	// Wait for the shell to exit cleanly.
 	code, err := s.Wait()
 	if err != nil {
 		t.Fatalf("wait failed: %v", err)
@@ -396,16 +342,12 @@ func TestSession_ResizeBeforeExit(t *testing.T) {
 		t.Errorf("resize: %v", err)
 	}
 
-	// Make sure resize didn't break I/O.
 	if _, err := io.WriteString(s, "exit\n"); err != nil {
 		t.Errorf("write after resize: %v", err)
 	}
 	drain(t, s, 5*time.Second)
 }
 
-// TestSession_ConcurrentResizeAndClose pins the fd-race fix: Resize (which reads
-// the raw fd via pty.Setsize) running concurrently with Close + the reaper (which
-// close the PTY) must be data-race-free. Meaningful only under `go test -race`.
 func TestSession_ConcurrentResizeAndClose(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 	s := startSessionOrSkip(t, SessionConfig{User: cur.Username, Shell: pickShell(t)})
@@ -415,10 +357,10 @@ func TestSession_ConcurrentResizeAndClose(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 200; i++ {
-			_ = s.Resize(80, 24) // an error after Close is fine; a data race is not
+			_ = s.Resize(80, 24)
 		}
 	}()
-	_ = s.Close() // races the resizes and the reaper's pty.Close
+	_ = s.Close()
 	wg.Wait()
 }
 
@@ -427,8 +369,6 @@ func TestSession_CloseUnblocksWait(t *testing.T) {
 
 	s := startSessionOrSkip(t, SessionConfig{User: cur.Username, Shell: pickShell(t)})
 
-	// Wait in a goroutine; assert it returns within a reasonable window
-	// after Close.
 	done := make(chan struct{})
 	go func() {
 		_, _ = s.Wait()
@@ -459,26 +399,19 @@ func TestSession_CloseIsIdempotent(t *testing.T) {
 	}
 }
 
-// TestSession_ReapClosesPTYWithoutExplicitClose verifies that a session
-// which exits naturally (the shell ran to completion) releases the PTY
-// fd even if the caller never calls Close. This protects against
-// fd leaks from sloppy callers.
 func TestSession_ReapClosesPTYWithoutExplicitClose(t *testing.T) {
 	cur := requireLinuxCurrentUser(t)
 
 	s := startSessionOrSkip(t, SessionConfig{User: cur.Username, Shell: pickShell(t)})
 
-	// Trigger a clean exit and wait for it.
 	if _, err := io.WriteString(s, "exit\n"); err != nil {
 		t.Fatalf("write exit: %v", err)
 	}
 	if _, err := s.Wait(); err != nil {
-		// non-zero exit is fine, we just need the process gone
+
 		t.Logf("wait returned: %v", err)
 	}
 
-	// PTY must already be closed by reap — a Read should fail with a
-	// closed-pipe / use-of-closed-file error, NOT block forever.
 	deadline := time.After(2 * time.Second)
 	read := make(chan error, 1)
 	go func() {
@@ -500,14 +433,12 @@ func TestSession_DoneChannel(t *testing.T) {
 
 	s := startSessionOrSkip(t, SessionConfig{User: cur.Username, Shell: pickShell(t)})
 
-	// Done must not be closed yet.
 	select {
 	case <-s.Done():
 		t.Fatal("Done() closed before session ended")
 	default:
 	}
 
-	// Trigger a clean exit.
 	if _, err := io.WriteString(s, "exit\n"); err != nil {
 		t.Fatalf("write exit: %v", err)
 	}
@@ -529,15 +460,14 @@ func TestBuildEnv_DefaultsAndOverrides(t *testing.T) {
 	env := buildEnv([]string{"FOO=bar", "TERM=screen"}, u, "/bin/bash")
 	m := envToMap(env)
 
-	// Caller-supplied entries are preserved verbatim.
 	if m["FOO"] != "bar" {
 		t.Errorf("FOO = %q, want bar", m["FOO"])
 	}
-	// Caller wins on conflicts.
+
 	if m["TERM"] != "screen" {
 		t.Errorf("TERM = %q, want screen (caller override)", m["TERM"])
 	}
-	// Defaults are added when absent.
+
 	if m["HOME"] != "/home/alice" {
 		t.Errorf("HOME = %q, want /home/alice", m["HOME"])
 	}
@@ -556,7 +486,7 @@ func TestBuildEnv_DefaultsAndOverrides(t *testing.T) {
 }
 
 func TestBuildEnv_NoEmptyDefaults(t *testing.T) {
-	// User with no HomeDir — HOME should not be set to the empty string.
+
 	u := &user.User{Username: "nobody", HomeDir: ""}
 	env := buildEnv(nil, u, "/bin/sh")
 	m := envToMap(env)
@@ -580,12 +510,6 @@ func TestDefaultWorkDir_PrefersExistingHome(t *testing.T) {
 	}
 }
 
-// drain reads from the session until the read loop returns EOF (or any
-// other error from the closed PTY) and returns everything it collected.
-// A timeout is treated as a hard test failure via t.Fatalf rather than
-// silently returning an empty string, so a hang in Resize/Read/Close
-// surfaces as a clear failure instead of a passing test that masks the
-// bug.
 func drain(t *testing.T, s *Session, timeout time.Duration) string {
 	t.Helper()
 	type chunk struct {
@@ -613,7 +537,7 @@ func drain(t *testing.T, s *Session, timeout time.Duration) string {
 	case <-time.After(timeout):
 		_ = s.Close()
 		t.Fatalf("drain: read did not finish within %v", timeout)
-		return "" // unreachable; t.Fatalf aborts
+		return ""
 	}
 }
 

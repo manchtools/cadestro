@@ -21,7 +21,6 @@ func mgr(t *testing.T, r exec.Runner) Manager {
 	return m
 }
 
-// seamPresent makes notify-send "installed" and the D-Bus socket "present".
 func seamPresent(t *testing.T) {
 	t.Helper()
 	ol, os_ := lookPath, statSocket
@@ -79,12 +78,12 @@ func TestNotifyUsers_RejectsControlCharactersBeforeRunner(t *testing.T) {
 func TestNotifyAll_FullGraphicalPath(t *testing.T) {
 	seamPresent(t)
 	r := exectest.New(exec.Sudo)
-	r.Push(exec.Result{}, nil)                                                     // wall
-	r.Push(exec.Result{Stdout: "c1 1000 alice seat0 -\nc2 1001 bob seat0 -"}, nil) // list-sessions
-	r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil)        // show c1
-	r.Push(exec.Result{Stdout: "Type=x11\nName=bob\nUser=1001"}, nil)              // show c2
-	r.Push(exec.Result{}, nil)                                                     // env notify-send alice
-	r.Push(exec.Result{}, nil)                                                     // env notify-send bob
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{Stdout: "c1 1000 alice seat0 -\nc2 1001 bob seat0 -"}, nil)
+	r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil)
+	r.Push(exec.Result{Stdout: "Type=x11\nName=bob\nUser=1001"}, nil)
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{}, nil)
 
 	mgr(t, r).NotifyAll(context.Background(), "Maintenance", "Reboot soon")
 
@@ -92,7 +91,7 @@ func TestNotifyAll_FullGraphicalPath(t *testing.T) {
 	if len(calls) != 6 {
 		t.Fatalf("ran %d commands, want 6 (wall, list, 2× show, 2× env)", len(calls))
 	}
-	// wall carries the combined message on stdin, escalated.
+
 	if calls[0].Name != "wall" || !calls[0].Escalate {
 		t.Errorf("call0 = %+v, want escalated wall", calls[0])
 	}
@@ -102,7 +101,7 @@ func TestNotifyAll_FullGraphicalPath(t *testing.T) {
 	if b, _ := io.ReadAll(calls[0].Stdin); string(b) != "Maintenance: Reboot soon" {
 		t.Errorf("wall stdin = %q", b)
 	}
-	// the desktop notifications run as the target user with the title+message last.
+
 	last := argv(calls[5])
 	if !strings.Contains(last, "runuser -u bob") || !strings.Contains(last, "Maintenance Reboot soon") {
 		t.Errorf("env argv = %q, want runuser bob + title/message", last)
@@ -115,16 +114,16 @@ func TestNotifyAll_FullGraphicalPath(t *testing.T) {
 func TestNotifyUsers_FiltersToNamedUsers(t *testing.T) {
 	seamPresent(t)
 	r := exectest.New(exec.Sudo)
-	r.Push(exec.Result{}, nil)                                                     // wall
-	r.Push(exec.Result{Stdout: "c1 1000 alice seat0 -\nc2 1001 bob seat0 -"}, nil) // list
-	r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil)        // show c1
-	r.Push(exec.Result{Stdout: "Type=wayland\nName=bob\nUser=1001"}, nil)          // show c2
-	r.Push(exec.Result{}, nil)                                                     // env (alice only)
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{Stdout: "c1 1000 alice seat0 -\nc2 1001 bob seat0 -"}, nil)
+	r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil)
+	r.Push(exec.Result{Stdout: "Type=wayland\nName=bob\nUser=1001"}, nil)
+	r.Push(exec.Result{}, nil)
 
 	mgr(t, r).NotifyUsers(context.Background(), []string{"alice"}, "T", "M")
 
 	calls := r.Calls()
-	// wall + list + 2× show + 1× env(alice). bob is filtered out.
+
 	if len(calls) != 5 {
 		t.Fatalf("ran %d commands, want 5 (bob filtered out)", len(calls))
 	}
@@ -141,7 +140,7 @@ func TestNotifyAll_NoNotifySendBinary(t *testing.T) {
 
 	r := exectest.New(exec.Sudo)
 	mgr(t, r).NotifyAll(context.Background(), "T", "M")
-	// Only wall runs; desktop dispatch short-circuits with no notify-send.
+
 	if calls := r.Calls(); len(calls) != 1 || calls[0].Name != "wall" {
 		t.Errorf("calls = %v, want just wall", calls)
 	}
@@ -150,9 +149,9 @@ func TestNotifyAll_NoNotifySendBinary(t *testing.T) {
 func TestSendWall_FailureIsBestEffort(t *testing.T) {
 	seamPresent(t)
 	r := exectest.New(exec.Sudo)
-	r.Push(exec.Result{ExitCode: 1, Stderr: "wall: cannot"}, nil) // wall fails
-	r.Push(exec.Result{Stdout: ""}, nil)                          // list-sessions empty
-	// Must not panic; best-effort.
+	r.Push(exec.Result{ExitCode: 1, Stderr: "wall: cannot"}, nil)
+	r.Push(exec.Result{Stdout: ""}, nil)
+
 	mgr(t, r).NotifyAll(context.Background(), "T", "M")
 	if r.Calls()[0].Name != "wall" {
 		t.Error("wall not attempted")
@@ -163,8 +162,8 @@ func TestListGraphicalSessions_Failures(t *testing.T) {
 	t.Run("list-sessions fails → no desktop notifies", func(t *testing.T) {
 		seamPresent(t)
 		r := exectest.New(exec.Sudo)
-		r.Push(exec.Result{}, nil)                            // wall
-		r.Push(exec.Result{ExitCode: 1, Stderr: "nope"}, nil) // list-sessions fails
+		r.Push(exec.Result{}, nil)
+		r.Push(exec.Result{ExitCode: 1, Stderr: "nope"}, nil)
 		mgr(t, r).NotifyAll(context.Background(), "T", "M")
 		if n := len(r.Calls()); n != 2 {
 			t.Errorf("ran %d, want 2 (wall + failed list)", n)
@@ -173,12 +172,12 @@ func TestListGraphicalSessions_Failures(t *testing.T) {
 	t.Run("show-session failure and parse-reject are skipped", func(t *testing.T) {
 		seamPresent(t)
 		r := exectest.New(exec.Sudo)
-		r.Push(exec.Result{}, nil)                                   // wall
-		r.Push(exec.Result{Stdout: "c1 1 a s -\nc2 2 b s -"}, nil)   // list (2)
-		r.Push(exec.Result{ExitCode: 1}, nil)                        // show c1 fails
-		r.Push(exec.Result{Stdout: "Type=tty\nName=b\nUser=2"}, nil) // show c2 = tty (reject)
+		r.Push(exec.Result{}, nil)
+		r.Push(exec.Result{Stdout: "c1 1 a s -\nc2 2 b s -"}, nil)
+		r.Push(exec.Result{ExitCode: 1}, nil)
+		r.Push(exec.Result{Stdout: "Type=tty\nName=b\nUser=2"}, nil)
 		mgr(t, r).NotifyAll(context.Background(), "T", "M")
-		// wall + list + 2× show, no env (both sessions dropped).
+
 		if n := len(r.Calls()); n != 4 {
 			t.Errorf("ran %d, want 4 (no env for dropped sessions)", n)
 		}
@@ -192,9 +191,9 @@ func TestSendDesktopNotification_SocketAbsentAndFailure(t *testing.T) {
 		lookPath = func(string) (string, error) { return "/usr/bin/notify-send", nil }
 		statSocket = func(string) (os.FileInfo, error) { return nil, errors.New("no socket") }
 		r := exectest.New(exec.Sudo)
-		r.Push(exec.Result{}, nil)                                              // wall
-		r.Push(exec.Result{Stdout: "c1 1000 alice s -"}, nil)                   // list
-		r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil) // show
+		r.Push(exec.Result{}, nil)
+		r.Push(exec.Result{Stdout: "c1 1000 alice s -"}, nil)
+		r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil)
 		mgr(t, r).NotifyAll(context.Background(), "T", "M")
 		if n := len(r.Calls()); n != 3 {
 			t.Errorf("ran %d, want 3 (no env when the dbus socket is missing)", n)
@@ -203,10 +202,10 @@ func TestSendDesktopNotification_SocketAbsentAndFailure(t *testing.T) {
 	t.Run("env failure is best-effort", func(t *testing.T) {
 		seamPresent(t)
 		r := exectest.New(exec.Sudo)
-		r.Push(exec.Result{}, nil)                                              // wall
-		r.Push(exec.Result{Stdout: "c1 1000 alice s -"}, nil)                   // list
-		r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil) // show
-		r.Push(exec.Result{ExitCode: 1, Stderr: "notify-send failed"}, nil)     // env fails
+		r.Push(exec.Result{}, nil)
+		r.Push(exec.Result{Stdout: "c1 1000 alice s -"}, nil)
+		r.Push(exec.Result{Stdout: "Type=wayland\nName=alice\nUser=1000"}, nil)
+		r.Push(exec.Result{ExitCode: 1, Stderr: "notify-send failed"}, nil)
 		mgr(t, r).NotifyAll(context.Background(), "T", "M")
 		if n := len(r.Calls()); n != 4 {
 			t.Errorf("ran %d, want 4 (env attempted despite failure)", n)

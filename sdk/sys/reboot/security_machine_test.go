@@ -25,10 +25,6 @@ type rebootScheduleStep struct {
 	wantReject bool
 }
 
-// TestRebootScheduleSecurityMachine models shutdown scheduling as a small DoS
-// boundary. A controlled grace period may reach shutdown; immediate, malformed,
-// or terminal-control-bearing inputs must fail before the escalated reboot
-// command is invoked.
 func TestRebootScheduleSecurityMachine(t *testing.T) {
 	steps := []rebootScheduleStep{
 		{name: "graceful reboot window is accepted", action: rebootScheduleGraceful},

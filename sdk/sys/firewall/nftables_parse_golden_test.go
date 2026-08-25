@@ -2,12 +2,6 @@ package firewall
 
 import "testing"
 
-// Golden parse tests using REAL `nft -j list` rule objects captured from nft
-// 1.0.6. They pin the saddr/daddr decode that the emit-only fakes missed and
-// the real-nft container round-trip (TestNftablesApplyListRemove_Container)
-// caught: List used to drop a rule's Source/Dest (returned ""), so a rule that
-// filtered on an address round-tripped as "any". These run in the normal suite
-// (no Docker), so the regression is caught fast.
 func TestNftParseRules_DecodesSourceDest(t *testing.T) {
 	cases := []struct {
 		name       string

@@ -31,9 +31,6 @@ func (m *manager) IsReadOnly(ctx context.Context, path string) (bool, error) {
 	return mountOptionsReadOnly(strings.TrimSpace(res.Stdout)), nil
 }
 
-// mountOptionsReadOnly reports whether a comma-separated findmnt OPTIONS value
-// carries the "ro" VFS flag (an exact token, never a substring of e.g.
-// "errors=remount-ro").
 func mountOptionsReadOnly(options string) bool {
 	for _, opt := range strings.Split(options, ",") {
 		if opt == "ro" {
@@ -66,8 +63,7 @@ func (m *manager) ListMounts(ctx context.Context) ([]MountInfo, error) {
 		if line == "" {
 			continue
 		}
-		// -r escapes any whitespace inside a value (\x20 etc.), so the four
-		// columns are always space-separated and Fields recovers them exactly.
+
 		f := strings.Fields(line)
 		if len(f) < 4 {
 			continue

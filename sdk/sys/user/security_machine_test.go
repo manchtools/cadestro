@@ -24,11 +24,6 @@ type accountPersistenceStep struct {
 	wantReject bool
 }
 
-// TestAccountPersistenceSecurityMachine models account mutation as a tiny state
-// machine around the agent's highest-risk persistence transitions. A permitted
-// system account may be created with nologin, but attacker-controlled input must
-// not reach useradd/usermod/chown when it would create relative homes, recursive
-// ownership of system directories, or executable shells from writable locations.
 func TestAccountPersistenceSecurityMachine(t *testing.T) {
 	steps := []accountPersistenceStep{
 		{name: "system nologin account is accepted", action: accountCreateSystemNoLogin},

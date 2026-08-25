@@ -9,12 +9,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// tpmDevicePaths are probed by Available. A var (not const) so tests can point
-// it at a temp file (present) or a nonexistent path (absent).
 var tpmDevicePaths = []string{"/dev/tpm0", "/dev/tpmrm0"}
 
-// tpmEnroller enrolls/removes a TPM2-bound key via systemd-cryptenroll. The
-// authenticating passphrase is piped over stdin, never argv.
 type tpmEnroller struct {
 	r exec.Runner
 }
@@ -47,11 +43,8 @@ func (t *tpmEnroller) Wipe(ctx context.Context, dev string, existing exec.Secret
 	return t.run(ctx, "wipe", []string{"--wipe-slot=tpm2", dev}, existing)
 }
 
-// run executes an escalated systemd-cryptenroll command with the passphrase on
-// stdin. Reveal() here is the single sanctioned TPM-stdin sink.
 func (t *tpmEnroller) run(ctx context.Context, op string, args []string, key exec.Secret) error {
-	// Both Enroll and Wipe authenticate with the existing passphrase; an empty
-	// one is never a legitimate request, so refuse before any cryptenroll exec.
+
 	if key.IsZero() {
 		return fmt.Errorf("%w: empty authenticating passphrase", ErrEmptyKeyMaterial)
 	}

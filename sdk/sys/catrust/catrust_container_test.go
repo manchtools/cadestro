@@ -1,17 +1,5 @@
 //go:build container
 
-// Container-based real-execution test for the CA trust-store flow. The fake-
-// runner unit tests assert the emitted refresh argv and the file written to the
-// anchors dir; this runs the REAL refresh tool (update-ca-certificates on
-// Debian/SUSE, update-ca-trust on Fedora/EL/Arch) and proves the installed CA
-// actually becomes trusted by — and is distrusted from — the system store. This
-// is the security-relevant round-trip: a trusted CA can MITM any TLS connection.
-//
-// Distro-aware: Detect() picks the backend this host provides, so the test runs
-// on EVERY supported distro with its native trust mechanism. Trust is verified
-// with `openssl verify` rather than a hardcoded bundle path — a self-signed root
-// verifies OK iff it is in the system trust store, and that probe is identical
-// across distros whose consolidated bundle paths all differ.
 package catrust
 
 import (
@@ -33,8 +21,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// selfSignedCA returns a PEM-encoded self-signed CA certificate with the given
-// CommonName, valid 2000-2100 (spans now without using the wall clock).
 func selfSignedCA(t *testing.T, cn string) []byte {
 	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -57,19 +43,11 @@ func selfSignedCA(t *testing.T, cn string) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 }
 
-// caTrusted reports whether the system trust store currently trusts the CA in
-// pemPath. It uses `openssl verify`, the portable, bundle-path-independent probe:
-// a self-signed root verifies OK iff it is in the system trust store. This works
-// uniformly across the Debian/SUSE update-ca-certificates and the Fedora/EL/Arch
-// update-ca-trust flows, whose consolidated bundle locations all differ.
 func caTrusted(pemPath string) bool {
 	out, err := osexec.Command("openssl", "verify", pemPath).CombinedOutput()
 	return err == nil && strings.Contains(string(out), ": OK")
 }
 
-// TestInstallRemove_RealTrustStore_Container drives the REAL trust-store flow on
-// whatever backend this distro provides, proving an installed CA actually becomes
-// trusted and that Remove distrusts it.
 func TestInstallRemove_RealTrustStore_Container(t *testing.T) {
 	if _, err := osexec.LookPath("openssl"); err != nil {
 		t.Skip("openssl not on PATH — cannot probe the system trust store")
@@ -104,7 +82,7 @@ func TestInstallRemove_RealTrustStore_Container(t *testing.T) {
 			if caTrusted(pemPath) {
 				t.Fatalf("CA %q is already trusted before Install — dirty test environment", cn)
 			}
-			// Install → the CA must actually become trusted by the real system store.
+
 			if err := m.Install(ctx, name, pemBytes); err != nil {
 				t.Fatalf("Install: %v", err)
 			}
@@ -124,7 +102,7 @@ func TestInstallRemove_RealTrustStore_Container(t *testing.T) {
 			if !found {
 				t.Errorf("List does not report the installed anchor %q: %+v", name, anchors)
 			}
-			// Remove → distrust must take effect.
+
 			if err := m.Remove(ctx, name); err != nil {
 				t.Fatalf("Remove: %v", err)
 			}

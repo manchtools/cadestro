@@ -12,9 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeFS is a hermetic fsManager: it records the last call and, when set,
-// returns scripted errors — so WriteUnit/RemoveUnit are exercised without a real
-// filesystem or privilege. install() swaps the newFS seam to return it.
 type fakeFS struct {
 	wrotePath, wroteContent string
 	wroteOpts               fs.WriteOptions
@@ -104,7 +101,7 @@ func TestDetect(t *testing.T) {
 	lp, marker := lookPath, systemdRunMarker
 	defer func() { lookPath, systemdRunMarker = lp, marker }()
 
-	existingDir := t.TempDir() // stands in for /run/systemd/system
+	existingDir := t.TempDir()
 
 	t.Run("systemd present", func(t *testing.T) {
 		lookPath = func(string) (string, error) { return "/usr/bin/systemctl", nil }
@@ -133,10 +130,10 @@ func TestDetect(t *testing.T) {
 func TestValidateUnitName(t *testing.T) {
 	valid := []string{
 		"nginx.service", "dbus.socket", "fstrim.timer", "tmp.mount",
-		"-.mount",                    // root mount legitimately starts with '-'
-		"getty@tty1.service",         // instance unit
-		"home-user.mount",            // path-derived
-		`dev-disk-by\x2duuid.device`, // systemd-escape hex
+		"-.mount",
+		"getty@tty1.service",
+		"home-user.mount",
+		`dev-disk-by\x2duuid.device`,
 	}
 	for _, n := range valid {
 		if err := ValidateUnitName(n); err != nil {
@@ -144,14 +141,14 @@ func TestValidateUnitName(t *testing.T) {
 		}
 	}
 	invalid := []string{
-		"",                // empty
-		"nginx",           // no type suffix
-		"nginx.txt",       // unknown type
-		".hidden.service", // leading dot
-		"-rf",             // flag-shaped, no suffix
-		"nginx.service\n", // trailing newline
-		"a b.service",     // space
-		"unit.SERVICE",    // wrong-case type
+		"",
+		"nginx",
+		"nginx.txt",
+		".hidden.service",
+		"-rf",
+		"nginx.service\n",
+		"a b.service",
+		"unit.SERVICE",
 	}
 	for _, n := range invalid {
 		if err := ValidateUnitName(n); err == nil {

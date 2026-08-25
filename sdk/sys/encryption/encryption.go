@@ -85,10 +85,6 @@ func New(b Backend, runner exec.Runner, _ ...Option) (Manager, error) {
 	return &luks{r: runner}, nil
 }
 
-// validDevicePath restricts device paths to absolute /dev/ entries with a safe
-// charset. The leading "/dev/" means a path can never be flag-shaped, and the
-// charset rejects whitespace / shell metacharacters; ".." is rejected
-// separately. Covers /dev/sdaN, /dev/nvme…, /dev/mapper/…, /dev/disk/by-*.
 var validDevicePath = regexp.MustCompile(`^/dev/[a-zA-Z0-9/_.\-]+$`)
 
 func validateDevicePath(dev string) error {

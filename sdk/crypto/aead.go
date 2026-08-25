@@ -8,7 +8,6 @@ import (
 	"fmt"
 )
 
-// keyLen is the required symmetric key length: AES-256.
 const keyLen = 32
 
 var (
@@ -50,8 +49,7 @@ func SealWithAAD(key, plaintext, aad []byte) ([]byte, error) {
 	if _, err := rand.Read(nonce); err != nil {
 		return nil, fmt.Errorf("crypto: generate nonce: %w", err)
 	}
-	// Seal appends the ciphertext+tag to its first argument, so passing nonce as
-	// the destination yields nonce||ciphertext||tag.
+
 	return gcm.Seal(nonce, nonce, plaintext, aad), nil
 }
 
@@ -68,9 +66,7 @@ func OpenWithAAD(key, ciphertext, aad []byte) ([]byte, error) {
 		return nil, ErrAADRequired
 	}
 	ns := gcm.NonceSize()
-	// A valid ciphertext carries the prepended nonce AND the GCM tag; reject
-	// anything too short to hold both up front with a precise error, rather than
-	// letting it fail later as a generic authentication failure in gcm.Open.
+
 	if len(ciphertext) < ns+gcm.Overhead() {
 		return nil, ErrMalformedCiphertext
 	}
@@ -82,7 +78,6 @@ func OpenWithAAD(key, ciphertext, aad []byte) ([]byte, error) {
 	return pt, nil
 }
 
-// newGCM builds an AES-256-GCM AEAD, rejecting a key that is not 32 bytes.
 func newGCM(key []byte) (cipher.AEAD, error) {
 	if len(key) != keyLen {
 		return nil, ErrInvalidKey

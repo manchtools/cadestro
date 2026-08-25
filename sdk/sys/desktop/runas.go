@@ -47,18 +47,11 @@ func UserPath(s Session) string {
 	}, ":")
 }
 
-// validateExtraEnv runs a caller's extra env through the Runner's env hijack
-// gate (exec.ValidateCommandEnv) so a desktop run-as inherits the same
-// LD_PRELOAD/LD_LIBRARY_PATH/GCONV_PATH refusal as every Runner-driven command.
-// PATH entries are dropped before the gate: the per-user run-as always overrides
-// PATH with the curated UserPath, so a caller "PATH=" value is inert and is not a
-// hijack — exec.ValidateCommandEnv would otherwise reject it (PATH is on the
-// blocklist) and break the documented PATH-is-re-applied contract.
 func validateExtraEnv(extraEnv []string) error {
 	filtered := make([]string, 0, len(extraEnv))
 	for _, e := range extraEnv {
 		if key, _, ok := strings.Cut(e, "="); ok && key == "PATH" {
-			continue // overridden by UserPath; never forwarded, so never a hijack
+			continue
 		}
 		filtered = append(filtered, e)
 	}

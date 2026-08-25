@@ -106,7 +106,6 @@ func New(b Backend, runner exec.Runner) (Source, error) {
 	}
 }
 
-// cappedLines applies the default/clamp policy to Query.Lines.
 func cappedLines(n int) int {
 	if n <= 0 {
 		return defaultLines
@@ -117,16 +116,12 @@ func cappedLines(n int) int {
 	return n
 }
 
-// validPriorities is the journald priority allow-list (names + numeric levels).
 var validPriorities = map[string]bool{
 	"0": true, "1": true, "2": true, "3": true, "4": true, "5": true, "6": true, "7": true,
 	"emerg": true, "alert": true, "crit": true, "err": true,
 	"warning": true, "notice": true, "info": true, "debug": true,
 }
 
-// validateQuery enforces the shared, security-relevant query constraints before
-// any backend builds a command. Priority is validated whenever set (even for
-// Syslog, which ignores it) so a bad value is never silently accepted.
 func validateQuery(q Query) error {
 	if q.Priority != "" && !validPriorities[q.Priority] {
 		return fmt.Errorf("%w: priority %q is not a valid syslog priority", ErrInvalidQuery, q.Priority)
@@ -142,9 +137,6 @@ func validateQuery(q Query) error {
 	return nil
 }
 
-// runEscalated runs a read that needs root (system logs) and returns stdout. A
-// non-zero exit becomes a *CommandError unless it is in okExitCodes (some tools,
-// e.g. grep, use a non-zero exit to mean "no matches", which is not a failure).
 func runEscalated(ctx context.Context, r exec.Runner, okExitCodes map[int]bool, name string, args ...string) (string, error) {
 	res, err := r.Run(ctx, exec.Command{Name: name, Args: args, Escalate: true})
 	if err != nil {

@@ -5,14 +5,6 @@ import (
 	"strings"
 )
 
-// dangerousPaths are top-level system directories that must never be removed.
-// IsProtectedPath matches this set; the deny-by-default subtree check RemoveDir
-// uses lives in IsUnderProtectedPrefix below.
-//
-// The first block is the critical OS tree (also guarded as subtrees by
-// protectedPrefixRoots); the second block are additional top-level directories
-// IsProtectedPath guards by exact match but that RemoveDir's subtree check does
-// not need (less critical or already covered).
 var dangerousPaths = map[string]bool{
 	"/":       true,
 	"/boot":   true,
@@ -36,7 +28,7 @@ var dangerousPaths = map[string]bool{
 	"/opt":    true,
 	"/srv":    true,
 	"/tmp":    true,
-	"/snap":   true, // snap-based distributions (Ubuntu)
+	"/snap":   true,
 }
 
 // IsProtectedPath returns true if path is a system directory that should
@@ -46,26 +38,13 @@ func IsProtectedPath(path string) bool {
 	if !filepath.IsAbs(clean) {
 		abs, err := filepath.Abs(clean)
 		if err != nil {
-			return true // err on the side of caution
+			return true
 		}
 		clean = abs
 	}
 	return dangerousPaths[clean]
 }
 
-// protectedPrefixRoots are directory subtrees that a managed directory
-// delete must NEVER touch at ANY depth. Unlike IsProtectedPath (an exact
-// top-level match), IsUnderProtectedPrefix refuses these roots AND
-// everything beneath them — so /etc/sudoers.d, /home/alice/.ssh,
-// /var/lib/postgresql, /boot/efi, /usr/bin are all refused, closing the
-// "one level down slips through to rm -rf" gap (WS6 #12).
-//
-// The set is deliberately broad: deletion of anything under the OS,
-// package-manager, bootloader, persistent-state, or user-home trees is a
-// privilege-escalation / data-destruction vector when an attacker can
-// influence the target path. /var itself is refused (see
-// protectedExactPaths) but /var/log/<app> and /var/cache/<app> are left
-// deletable for managed app data; only /var/lib is locked as a subtree.
 var protectedPrefixRoots = []string{
 	"/etc",
 	"/boot",
@@ -85,9 +64,6 @@ var protectedPrefixRoots = []string{
 	"/run",
 }
 
-// protectedExactPaths are refused only as an exact match — the directory
-// itself must never be removed, but children outside the prefix roots
-// above remain deletable (e.g. /var is locked, /var/log/<app> is not).
 var protectedExactPaths = map[string]bool{
 	"/":    true,
 	"/var": true,
@@ -104,7 +80,7 @@ func IsUnderProtectedPrefix(path string) bool {
 	if !filepath.IsAbs(clean) {
 		abs, err := filepath.Abs(clean)
 		if err != nil {
-			return true // err on the side of caution
+			return true
 		}
 		clean = abs
 	}

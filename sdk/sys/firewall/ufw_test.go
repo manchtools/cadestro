@@ -11,8 +11,6 @@ import (
 
 const ufwTestNamespace = "fwtest"
 
-// skipIfNotUFWUsable — same shape as the firewalld / nftables variants.
-// CI runs root inside a container; dev hosts and macOS skip cleanly.
 func skipIfNotUFWUsable(t *testing.T) {
 	t.Helper()
 	if _, err := os.Stat("/usr/sbin/ufw"); err != nil {
@@ -25,9 +23,6 @@ func skipIfNotUFWUsable(t *testing.T) {
 	}
 }
 
-// TestUFWBuildAddArgs_SimplePortAllow — the bread-and-butter "open this
-// TCP port" rule. Lock in the exact argv ufw receives so a refactor of
-// the builder can't silently drift the wire format.
 func TestUFWBuildAddArgs_SimplePortAllow(t *testing.T) {
 	got, err := ufwBuildAddArgs(ufwTestNamespace, Rule{
 		ID:       "ssh-in",
@@ -42,8 +37,6 @@ func TestUFWBuildAddArgs_SimplePortAllow(t *testing.T) {
 	assertArgsEqual(t, got, want)
 }
 
-// TestUFWBuildAddArgs_Deny — the deny verb. ufw exposes "deny" natively
-// (unlike firewalld v1), so the Rule.Allow=false path must round-trip.
 func TestUFWBuildAddArgs_Deny(t *testing.T) {
 	got, err := ufwBuildAddArgs(ufwTestNamespace, Rule{
 		ID:       "block-ssh",
@@ -54,17 +47,11 @@ func TestUFWBuildAddArgs_Deny(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ufwBuildAddArgs: %v", err)
 	}
-	// Full argv, not just got[0]: checking only the verb leaves the rest of the
-	// wire format (port/proto rendering, comment placement) unpinned, so a
-	// builder refactor could silently widen or misdirect a DENY rule.
+
 	want := []string{"deny", "22/tcp", "comment", "fwtest:block-ssh"}
 	assertArgsEqual(t, got, want)
 }
 
-// TestUFWBuildAddArgs_SourceScope — once a rule has a source CIDR ufw
-// requires the long "from SRC to DST port PORT proto PROTO" form.
-// Sanity-check the shape so we don't accidentally emit the short form
-// (which ufw would silently broaden into an any-source rule).
 func TestUFWBuildAddArgs_SourceScope(t *testing.T) {
 	got, err := ufwBuildAddArgs(ufwTestNamespace, Rule{
 		ID:       "from-lan",
@@ -76,17 +63,11 @@ func TestUFWBuildAddArgs_SourceScope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ufwBuildAddArgs: %v", err)
 	}
-	// Exact argv, not substring matching on the joined string: "port 22" is a
-	// prefix of an emitted "port 220" and "from 10.0.0.0/8" a prefix of
-	// "from 10.0.0.0/80", so a Contains check passes on a rule that opens the
-	// wrong port or the wrong network. Order matters to ufw too, and only a
-	// full compare pins it.
+
 	want := []string{"allow", "from", "10.0.0.0/8", "to", "any", "port", "22", "proto", "tcp", "comment", "fwtest:from-lan"}
 	assertArgsEqual(t, got, want)
 }
 
-// TestUFWBuildAddArgs_DestScope — symmetric guard on the destination
-// path. ufw uses the same long form, just populates the "to" side.
 func TestUFWBuildAddArgs_DestScope(t *testing.T) {
 	got, err := ufwBuildAddArgs(ufwTestNamespace, Rule{
 		ID:       "to-host",
@@ -98,17 +79,11 @@ func TestUFWBuildAddArgs_DestScope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ufwBuildAddArgs: %v", err)
 	}
-	// Same reasoning as the source-scope test: "to 192.168.1.1" is a prefix of
-	// "to 192.168.1.10", so only an exact full-argv compare proves the rule
-	// targets the host the caller asked for.
+
 	want := []string{"allow", "from", "any", "to", "192.168.1.1", "port", "22", "proto", "tcp", "comment", "fwtest:to-host"}
 	assertArgsEqual(t, got, want)
 }
 
-// TestUFWBuildAddArgs_RejectsPortWithoutProto — same rejection nftables
-// makes. A port without a concrete protocol is ambiguous; ufw would
-// expand it into both tcp+udp implicitly, which silently widens the
-// rule. Better to surface ErrInvalidRule and let the caller decide.
 func TestUFWBuildAddArgs_RejectsPortWithoutProto(t *testing.T) {
 	_, err := ufwBuildAddArgs(ufwTestNamespace, Rule{
 		ID:       "ambiguous",
@@ -121,9 +96,6 @@ func TestUFWBuildAddArgs_RejectsPortWithoutProto(t *testing.T) {
 	}
 }
 
-// TestUFWBuildAddArgs_RejectsEmpty — a Rule with no Port and no Protocol
-// is a no-op at the firewall level; rather than silently emit nothing
-// or apply an "allow everything from anywhere" rule, refuse early.
 func TestUFWBuildAddArgs_RejectsEmpty(t *testing.T) {
 	_, err := ufwBuildAddArgs(ufwTestNamespace, Rule{
 		ID:    "empty",
@@ -134,12 +106,6 @@ func TestUFWBuildAddArgs_RejectsEmpty(t *testing.T) {
 	}
 }
 
-// TestUFWFindRuleNumber_ByID — `ufw status numbered` is the only way
-// to learn a rule's index for `ufw delete N`, and it's the only path
-// we have to "is this rule already there?". Lock in the parse against a
-// captured sample so a ufw version that adds columns can't silently
-// break idempotency. Also confirms that another namespace's rules
-// (`other:foo`) and unrelated comments (`cockpit-managed`) don't match.
 func TestUFWFindRuleNumber_ByID(t *testing.T) {
 	status := `Status: active
 
@@ -166,24 +132,20 @@ func TestUFWFindRuleNumber_ByID(t *testing.T) {
 			t.Errorf("ufwFindRuleNumber(%q) = %d, want %d", id, gotNum, wantNum)
 		}
 	}
-	// IDs not in the namespace → not found.
+
 	if _, ok := ufwFindRuleNumber(status, ufwTestNamespace, "nonexistent"); ok {
 		t.Errorf("ufwFindRuleNumber(nonexistent) reported found")
 	}
-	// Another namespace's id → not found by THIS namespace.
+
 	if _, ok := ufwFindRuleNumber(status, ufwTestNamespace, "web-https"); ok {
 		t.Errorf("ufwFindRuleNumber should not match other-namespace rules")
 	}
-	// System-managed rule (no namespace prefix) → not found.
+
 	if _, ok := ufwFindRuleNumber(status, ufwTestNamespace, "cockpit-managed"); ok {
 		t.Errorf("ufwFindRuleNumber should not match non-namespace rules")
 	}
 }
 
-// TestUFWParseStatus_PicksOutNamespacedRules — List must return only
-// rules in this Manager's namespace. Cockpit, system services,
-// and rules owned by a different Manager stay outside the inspection
-// surface.
 func TestUFWParseStatus_PicksOutNamespacedRules(t *testing.T) {
 	status := `Status: active
 
@@ -214,16 +176,12 @@ func TestUFWParseStatus_PicksOutNamespacedRules(t *testing.T) {
 	if _, ok := ids["web-https"]; ok {
 		t.Errorf("other-namespace rule leaked into List output")
 	}
-	// Spot-check the deny rule round-tripped Allow=false.
+
 	if r, ok := ids["block-net"]; ok && r.Allow {
 		t.Errorf("block-net round-tripped with Allow=true; want false")
 	}
 }
 
-// TestUFWParseStatus_InactiveReturnsEmpty — when ufw is installed but
-// not enabled, `ufw status numbered` prints "Status: inactive" and no
-// rules. List on an inactive firewall should be an empty slice + nil
-// error, not a parse error.
 func TestUFWParseStatus_InactiveReturnsEmpty(t *testing.T) {
 	rules, err := ufwParseStatus("Status: inactive\n", ufwTestNamespace)
 	if err != nil {
@@ -234,7 +192,6 @@ func TestUFWParseStatus_InactiveReturnsEmpty(t *testing.T) {
 	}
 }
 
-// assertArgsEqual is a small helper so the argv-shape tests read cleanly.
 func assertArgsEqual(t *testing.T, got, want []string) {
 	t.Helper()
 	if len(got) != len(want) {
@@ -247,14 +204,9 @@ func assertArgsEqual(t *testing.T, got, want []string) {
 	}
 }
 
-// =============================================================================
-// Integration tests — gated by ufw binary + root. Each test cleans up
-// its own rules so subsequent runs start fresh.
-// =============================================================================
-
 func ufwIntegrationManager(t *testing.T) Manager {
 	t.Helper()
-	r, err := exec.NewRunner(exec.Direct) // skip guard guarantees we are root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner: %v", err)
 	}

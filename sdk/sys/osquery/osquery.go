@@ -42,26 +42,13 @@ import (
 // element shape of osqueryi's --json output.
 type Row map[string]string
 
-// Input caps. The numeric values are inherited from the retired wire
-// contract's validators and sit far above any legitimate osquery identifier
-// or query; anything larger is refused before execution (fail closed, like
-// the deny-list).
 const (
 	maxTableNameLen = 64
 	maxRawSQLLen    = 4096
 )
 
-// validTableName matches only safe osquery table names (alphanumeric + underscore).
 var validTableName = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
-// sensitiveTables are osquery tables that can expose credential material or other
-// high-value secrets — password-hash metadata (shadow), secrets in process
-// environments (process_envs), scheduled commands (crontab), shell history
-// (shell_history), and sudoers policy (sudoers). They all pass validTableName, so
-// the shape-only check is not enough: every query path refuses them
-// (sensitiveTableRefIn scans raw SQL for any deny-listed table as a whole-word
-// identifier), so hostile query input cannot exfiltrate them through
-// privileged osquery by any path.
 var sensitiveTables = map[string]bool{
 	"shadow":        true,
 	"process_envs":  true,
@@ -70,19 +57,10 @@ var sensitiveTables = map[string]bool{
 	"sudoers":       true,
 }
 
-// isSensitiveTable reports whether name is on the curated deny-list. Comparison is
-// case- and whitespace-insensitive so trivial variants cannot slip past.
 func isSensitiveTable(name string) bool {
 	return sensitiveTables[strings.ToLower(strings.TrimSpace(name))]
 }
 
-// sensitiveTableRefIn returns the first deny-listed table name that appears as a
-// whole-word identifier anywhere in sql (case-insensitive), or "" if none. Raw
-// SQL is operator-supplied and osquery's grammar is rich (quoting, aliases,
-// subqueries, JOINs), so rather than parse it this gate FAILS CLOSED: any token
-// equal to a sensitive table name — even in a column, alias, or string position
-// — is treated as a reference and refused. Over-refusal is the safe direction
-// for a credential-table gate; under-refusal would leak shadow/sudoers/…
 func sensitiveTableRefIn(sql string) string {
 	lower := strings.ToLower(sql)
 	for name := range sensitiveTables {
@@ -93,9 +71,6 @@ func sensitiveTableRefIn(sql string) string {
 	return ""
 }
 
-// containsWord reports whether word occurs in s delimited by non-identifier
-// characters (so "shadow" matches `FROM shadow` / `from shadow s` but not
-// `shadowed`). Both arguments must already be lowercase.
 func containsWord(s, word string) bool {
 	for from := 0; ; {
 		i := strings.Index(s[from:], word)
@@ -112,7 +87,6 @@ func containsWord(s, word string) bool {
 	}
 }
 
-// isIdentByte reports whether b is a SQL identifier character ([A-Za-z0-9_]).
 func isIdentByte(b byte) bool {
 	return b == '_' || (b >= '0' && b <= '9') || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
 }
@@ -137,14 +111,12 @@ var (
 	// ErrQueryTooLong is the size refusal: raw SQL exceeded maxRawSQLLen.
 	ErrQueryTooLong = errors.New("osquery input exceeds size limit")
 
-	// Common osquery binary paths to check.
 	osqueryPaths = []string{
 		"/usr/bin/osqueryi",
 		"/usr/local/bin/osqueryi",
 		"/opt/osquery/bin/osqueryi",
 	}
 
-	// Default query timeout.
 	defaultTimeout = 30 * time.Second
 )
 
@@ -172,8 +144,6 @@ type Querier interface {
 	QuerySQL(ctx context.Context, sql string) ([]Row, error)
 }
 
-// client is the single Querier implementation; it wraps osquery binary
-// execution over an injected Runner.
 type client struct {
 	binaryPath string
 	r          exec.Runner
@@ -199,18 +169,8 @@ func (c *client) IsInstalled(ctx context.Context) bool {
 	return findOsqueryBinary() != ""
 }
 
-// lookPath is the resolution function used by findOsqueryBinary. It defaults to
-// os/exec.LookPath and is overridable from tests so binary discovery can be
-// exercised without depending on what is installed on the test host (F026 in
-// TECH_DEBT_AUDIT.md).
 var lookPath = osexec.LookPath
 
-// findOsqueryBinary searches for the osqueryi binary.
-//
-// Resolution order: explicit absolute paths in osqueryPaths first (matches the
-// "use the system package's location if available" expectation on
-// Fedora/RHEL/Debian), then PATH lookup for the bare "osqueryi" name (covers
-// Homebrew/Linuxbrew, Nix, Snap, manual installs).
 func findOsqueryBinary() string {
 	for _, path := range osqueryPaths {
 		if _, err := lookPath(path); err == nil {
@@ -236,10 +196,7 @@ func (c *client) ListTables(ctx context.Context) ([]string, error) {
 		if line == "" {
 			continue
 		}
-		// osqueryi `.tables` prints one table per line as "=> <name>" (with
-		// leading indentation, already trimmed above). The "=> " lines ARE the
-		// data; strip the marker and keep the name. Any line without the marker
-		// is decoration/noise and is ignored.
+
 		name, ok := strings.CutPrefix(line, "=>")
 		if !ok {
 			continue
@@ -251,7 +208,6 @@ func (c *client) ListTables(ctx context.Context) ([]string, error) {
 	return tables, nil
 }
 
-// tableSQL returns custom SQL for tables that need JOINs or special handling.
 var tableSQL = map[string]string{
 	"authorized_keys": "SELECT authorized_keys.* FROM users JOIN authorized_keys USING (uid)",
 }
@@ -294,8 +250,6 @@ func (c *client) QueryTable(ctx context.Context, tableName string) ([]Row, error
 	return c.QuerySQL(ctx, sql)
 }
 
-// execQuery executes an osquery command (escalated through the Runner) and
-// returns its stdout.
 func (c *client) execQuery(ctx context.Context, query string) (string, error) {
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc

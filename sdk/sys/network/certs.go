@@ -6,10 +6,6 @@ import (
 	"path/filepath"
 )
 
-// writeCerts writes the EAP-TLS certificate files to the profile's CertDir. The
-// CA and client certificates are not credentials; the private key is, so it is
-// written 0600 and is the only file whose content comes from a Secret —
-// p.ClientKey.Reveal() here is the sanctioned client-key sink.
 func writeCerts(p Profile) error {
 	if err := mkdirAll(p.CertDir, 0o750); err != nil {
 		return fmt.Errorf("create cert directory: %w", err)
@@ -35,11 +31,6 @@ func writeCerts(p Profile) error {
 	return nil
 }
 
-// removeCerts removes the certificate files written by writeCerts (cleanup after
-// a failed create). It returns the first removal failure: client-key.pem is a
-// private key, so a file that can't be removed is key material left on disk that
-// the caller must learn about — not something to silently drop. A file that is
-// already absent is not a failure.
 func removeCerts(certDir string) error {
 	var firstErr error
 	for _, name := range []string{"ca.pem", "client.pem", "client-key.pem"} {
@@ -50,11 +41,6 @@ func removeCerts(certDir string) error {
 	return firstErr
 }
 
-// certsChanged reports whether any desired PEM content differs from the file
-// currently installed at the corresponding path under p.CertDir. A missing or
-// unreadable file (with non-empty desired content) counts as changed so the
-// writer runs. p.ClientKey.Reveal() here compares the on-disk private key against
-// the desired one — the same sanctioned client-key sink as writeCerts.
 func certsChanged(p Profile) bool {
 	files := []struct {
 		name    string

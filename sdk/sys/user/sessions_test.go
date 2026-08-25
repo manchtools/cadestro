@@ -12,7 +12,7 @@ import (
 func TestKillSessions(t *testing.T) {
 	t.Run("loginctl succeeds → no pkill", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{ExitCode: 0}, nil) // loginctl terminate-user
+		f.Push(exec.Result{ExitCode: 0}, nil)
 		if err := mgr(t, f).KillSessions(context.Background(), "deploy"); err != nil {
 			t.Fatal(err)
 		}
@@ -24,8 +24,8 @@ func TestKillSessions(t *testing.T) {
 
 	t.Run("loginctl missing → falls back to pkill", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{}, errors.New("command not found: loginctl")) // loginctl run error
-		f.Push(exec.Result{ExitCode: 0}, nil)                            // pkill
+		f.Push(exec.Result{}, errors.New("command not found: loginctl"))
+		f.Push(exec.Result{ExitCode: 0}, nil)
 		if err := mgr(t, f).KillSessions(context.Background(), "deploy"); err != nil {
 			t.Fatal(err)
 		}
@@ -37,8 +37,8 @@ func TestKillSessions(t *testing.T) {
 
 	t.Run("pkill exit 1 (no processes) is success", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{ExitCode: 1}, nil) // loginctl non-zero → fall through
-		f.Push(exec.Result{ExitCode: 1}, nil) // pkill: no matching processes
+		f.Push(exec.Result{ExitCode: 1}, nil)
+		f.Push(exec.Result{ExitCode: 1}, nil)
 		if err := mgr(t, f).KillSessions(context.Background(), "deploy"); err != nil {
 			t.Errorf("pkill exit 1 should be success, got %v", err)
 		}
@@ -46,8 +46,8 @@ func TestKillSessions(t *testing.T) {
 
 	t.Run("pkill hard failure surfaces", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{ExitCode: 1}, nil)                                         // loginctl
-		f.Push(exec.Result{ExitCode: 2, Stderr: "pkill: invalid option -- 'u'"}, nil) // pkill real error
+		f.Push(exec.Result{ExitCode: 1}, nil)
+		f.Push(exec.Result{ExitCode: 2, Stderr: "pkill: invalid option -- 'u'"}, nil)
 		err := mgr(t, f).KillSessions(context.Background(), "deploy")
 		var ce *exec.CommandError
 		if !errors.As(err, &ce) || ce.ExitCode != 2 {

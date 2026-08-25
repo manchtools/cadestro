@@ -43,9 +43,9 @@ func TestNM_ApplyNoActiveConnection(t *testing.T) {
 
 func TestNM_ApplyStaticSuccess(t *testing.T) {
 	m, r := newNM(t)
-	r.Push(exec.Result{Stdout: "Wired connection 1\n"}, nil) // resolve
-	r.Push(exec.Result{}, nil)                               // modify
-	r.Push(exec.Result{}, nil)                               // up
+	r.Push(exec.Result{Stdout: "Wired connection 1\n"}, nil)
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{}, nil)
 	err := m.Apply(context.Background(), InterfaceConfig{
 		Name: "eth0", Mode: Static,
 		Addresses: []string{"192.0.2.10/24", "2001:db8::10/64"},
@@ -100,8 +100,6 @@ func TestNM_ApplyDHCPClearsManual(t *testing.T) {
 	}
 }
 
-// Routes are independent of addressing mode: a DHCP interface with a static
-// route still emits ipv4.routes.
 func TestNM_ApplyDHCPWithRoute(t *testing.T) {
 	m, r := newNM(t)
 	r.Push(exec.Result{Stdout: "conn\n"}, nil)
@@ -171,8 +169,6 @@ func TestNM_Get(t *testing.T) {
 	}
 }
 
-// nmRoutesByFamily: a "default" destination becomes the family-correct default
-// CIDR (0.0.0.0/0 for a v4 gateway, ::/0 for a v6 gateway), bucketed by family.
 func TestNMRoutesByFamily_DefaultPerFamily(t *testing.T) {
 	v4, v6 := nmRoutesByFamily([]Route{
 		{Destination: "default", Gateway: "192.0.2.1"},
@@ -187,8 +183,6 @@ func TestNMRoutesByFamily_DefaultPerFamily(t *testing.T) {
 	}
 }
 
-// nmModifyArgs unit: a v6-gateway-only static config routes the gateway to
-// ipv6.gateway, not ipv4.
 func TestNMModifyArgs_V6Gateway(t *testing.T) {
 	args := strings.Join(nmModifyArgs(InterfaceConfig{
 		Mode: Static, Addresses: []string{"2001:db8::10/64"}, Gateway: "2001:db8::1",
@@ -201,10 +195,6 @@ func TestNMModifyArgs_V6Gateway(t *testing.T) {
 	}
 }
 
-// nmPairIndexes returns every position — counted in property/value PAIRS, so
-// the numbers are directly comparable as "which setting nmcli applies later" —
-// at which nmModifyArgs emitted (prop, val). It also asserts the argv really is
-// strictly alternating, which is what makes pair arithmetic meaningful.
 func nmPairIndexes(t *testing.T, args []string, prop, val string) []int {
 	t.Helper()
 	if len(args)%2 != 0 {
@@ -219,13 +209,6 @@ func nmPairIndexes(t *testing.T, args []string, prop, val string) []int {
 	return at
 }
 
-// TestNMModifyArgs_DHCPClearsStaleDNSAndRoutes pins the DHCP branch's stated
-// contract — "make DHCP authoritative" — against the whole manual
-// configuration, not just addresses and gateway. Switching an interface that
-// was previously configured statically back to DHCP left ipv4.dns/ipv6.dns and
-// ipv4.routes/ipv6.routes on the connection profile, so the box kept resolving
-// through the old nameservers and routing over the old next-hops while
-// reporting itself as DHCP.
 func TestNMModifyArgs_DHCPClearsStaleDNSAndRoutes(t *testing.T) {
 	args := nmModifyArgs(InterfaceConfig{Name: "eth0", Mode: DHCP})
 	for _, prop := range []string{"ipv4.dns", "ipv6.dns", "ipv4.routes", "ipv6.routes"} {
@@ -235,11 +218,6 @@ func TestNMModifyArgs_DHCPClearsStaleDNSAndRoutes(t *testing.T) {
 	}
 }
 
-// TestNMModifyArgs_DHCPWithDNSClearsBeforeSetting pins the ORDER the clearing
-// depends on. nmcli applies the last occurrence of a repeated property, so a
-// DHCP config that deliberately carries DNS must emit clear-then-set: the
-// caller's nameservers win, and the reset still wipes anything left over. The
-// reverse order would silently discard the requested DNS.
 func TestNMModifyArgs_DHCPWithDNSClearsBeforeSetting(t *testing.T) {
 	args := nmModifyArgs(InterfaceConfig{Name: "eth0", Mode: DHCP, DNS: []string{"1.1.1.1"}})
 	clears := nmPairIndexes(t, args, "ipv4.dns", "")
@@ -252,19 +230,13 @@ func TestNMModifyArgs_DHCPWithDNSClearsBeforeSetting(t *testing.T) {
 	}
 }
 
-// TestNMModifyArgs_DHCPWithRoutesClearBeforeSetting is the routes half of the
-// same ordering contract. Routes are independent of addressing mode — a DHCP
-// interface may legitimately carry a static route — so the DHCP reset must not
-// swallow one the caller asked for. Both families are covered because they are
-// emitted by separate branches and only a per-family assertion catches one of
-// them regressing alone.
 func TestNMModifyArgs_DHCPWithRoutesClearBeforeSetting(t *testing.T) {
 	cases := []struct {
 		name     string
 		route    Route
 		prop     string
 		wantSet  string
-		otherPro string // the family that gets no route: cleared, never set
+		otherPro string
 	}{
 		{
 			name:     "ipv4",
@@ -293,8 +265,7 @@ func TestNMModifyArgs_DHCPWithRoutesClearBeforeSetting(t *testing.T) {
 			if clears[0] >= sets[0] {
 				t.Errorf("%s cleared at pair %d but set at pair %d; nmcli honours the LAST occurrence, so the clear must come first or the requested route is thrown away: %v", tc.prop, clears[0], sets[0], args)
 			}
-			// The family with no route keeps a bare clear — the DHCP reset still
-			// has to wipe whatever a previous static config left there.
+
 			if at := nmPairIndexes(t, args, tc.otherPro, ""); len(at) != 1 {
 				t.Errorf("%s clear pairs = %v, want exactly 1 even though no route was requested for that family: %v", tc.otherPro, at, args)
 			}

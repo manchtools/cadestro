@@ -9,14 +9,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// TestInstallLocal_GoldenArgv pins the per-backend command for installing a
-// package from a local file already on disk (a downloaded .deb/.rpm/pacman
-// package/flatpak bundle) — the capability the agent's deb/rpm/AppImage actions
-// need so they can delegate `dpkg -i`/`rpm -i` to the SDK instead of shelling
-// out. Each backend resolves dependencies from the configured repos where it
-// can and runs escalated (except user-scope flatpak); the absolute-path
-// requirement (not a "--" separator, which dnf5 rejects) keeps the path from
-// being parsed as an option.
 func TestInstallLocal_GoldenArgv(t *testing.T) {
 	ctx := context.Background()
 
@@ -94,8 +86,6 @@ func TestInstallLocal_GoldenArgv(t *testing.T) {
 	})
 }
 
-// TestInstallLocal_AllowDowngrade pins how each backend permits installing a
-// local file older than the installed version.
 func TestInstallLocal_AllowDowngrade(t *testing.T) {
 	ctx := context.Background()
 
@@ -155,12 +145,6 @@ func TestInstallLocal_AllowDowngrade(t *testing.T) {
 	})
 }
 
-// TestInstallLocal_AllowUnsigned pins the opt-in GPG-skip knob. The agent
-// establishes a local artifact's authenticity out of band (HTTPS + a mandatory
-// SHA256 checksum), so the file is typically unsigned and dnf/zypper would
-// refuse it; AllowUnsigned says "the checksum is the verification, skip the GPG
-// check". It is secure-default-OFF — when false every backend's GPG check stays
-// in force.
 func TestInstallLocal_AllowUnsigned(t *testing.T) {
 	ctx := context.Background()
 
@@ -245,9 +229,6 @@ func TestInstallLocal_AllowUnsigned(t *testing.T) {
 	})
 }
 
-// TestInstallLocal_RejectsUnsafePathBeforeRunner is the rejection half of the
-// contract: an absent, relative, traversing, flag-shaped, or control-bearing
-// path is refused BEFORE any escalated command runs, on every backend.
 func TestInstallLocal_RejectsUnsafePathBeforeRunner(t *testing.T) {
 	ctx := context.Background()
 	bad := []struct {
@@ -279,9 +260,6 @@ func TestInstallLocal_RejectsUnsafePathBeforeRunner(t *testing.T) {
 	}
 }
 
-// TestInstallLocal_SurfacesResultAndError pins that, like the other mutations,
-// InstallLocal returns the package manager's output on success and the output +
-// a typed *exec.CommandError on a non-zero exit.
 func TestInstallLocal_SurfacesResultAndError(t *testing.T) {
 	ctx := context.Background()
 
@@ -311,13 +289,11 @@ func TestInstallLocal_SurfacesResultAndError(t *testing.T) {
 	})
 }
 
-// TestValidateLocalPackagePath covers the path validator directly: an absolute,
-// traversal-free, control-free path is accepted; everything else is rejected.
 func TestValidateLocalPackagePath(t *testing.T) {
 	good := []string{
 		"/opt/app.deb",
 		"/var/cache/pm/app.rpm",
-		"/opt/My Apps/app.flatpak", // a space is argv-safe; not rejected
+		"/opt/My Apps/app.flatpak",
 		"/tmp/123.pkg.tar.zst",
 	}
 	for _, p := range good {
@@ -326,15 +302,15 @@ func TestValidateLocalPackagePath(t *testing.T) {
 		}
 	}
 	bad := []string{
-		"",              // empty
-		"app.deb",       // relative
-		"./app.deb",     // relative
-		"-rf",           // flag-shaped (not absolute)
-		"/opt/../etc/x", // traversal
-		"/opt/a\nb",     // newline
-		"/opt/a\tb",     // tab
-		"/opt/a\x00b",   // NUL
-		"/opt/a\x7fb",   // DEL
+		"",
+		"app.deb",
+		"./app.deb",
+		"-rf",
+		"/opt/../etc/x",
+		"/opt/a\nb",
+		"/opt/a\tb",
+		"/opt/a\x00b",
+		"/opt/a\x7fb",
 	}
 	for _, p := range bad {
 		if err := ValidateLocalPackagePath(p); err == nil {

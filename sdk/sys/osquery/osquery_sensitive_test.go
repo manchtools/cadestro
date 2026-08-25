@@ -10,18 +10,12 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// The QueryTable path must refuse known-sensitive tables even though they
-// match validTableName, and must do so BEFORE building or running any SQL.
-// The sensitive cases are sourced from intent (credential-bearing osquery
-// tables), not from the validTableName regex. The FakeRunner records every
-// execution so the test can prove the deny path runs zero queries.
 func TestQueryTable_DeniesSensitiveTables(t *testing.T) {
 	r := exectest.New(exec.Direct)
-	r.Push(exec.Result{Stdout: "[]"}, nil) // consumed only by the benign os_version run
+	r.Push(exec.Result{Stdout: "[]"}, nil)
 	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
 	ctx := context.Background()
 
-	// present-but-wrong: each sensitive table is regex-valid but policy-forbidden.
 	for table := range sensitiveTables {
 		_, err := c.QueryTable(ctx, table)
 		if !errors.Is(err, ErrTableNotPermitted) {
@@ -32,17 +26,14 @@ func TestQueryTable_DeniesSensitiveTables(t *testing.T) {
 		}
 	}
 
-	// ABSENT: the empty table name is a shape rejection, not a policy one.
 	if _, err := c.QueryTable(ctx, ""); !errors.Is(err, ErrInvalidTableName) {
 		t.Errorf("QueryTable(\"\") err = %v, want ErrInvalidTableName", err)
 	}
 
-	// No query has run yet — every denied/invalid table short-circuits.
 	if n := len(r.Calls()); n != 0 {
 		t.Fatalf("a denied table must execute no query, but %d ran: %v", n, r.Calls())
 	}
 
-	// correct: a benign table builds and runs SELECT * FROM <table> exactly once.
 	if _, err := c.QueryTable(ctx, "os_version"); err != nil {
 		t.Fatalf("QueryTable(os_version) error: %v", err)
 	}
@@ -55,9 +46,6 @@ func TestQueryTable_DeniesSensitiveTables(t *testing.T) {
 	}
 }
 
-// Input caps: oversized identifiers and raw SQL are refused before any
-// command runs, with the shape/size sentinels — not silently truncated and
-// not passed through to osqueryi.
 func TestInputCaps_RefusedBeforeExec(t *testing.T) {
 	r := exectest.New(exec.Direct)
 	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
@@ -73,7 +61,6 @@ func TestInputCaps_RefusedBeforeExec(t *testing.T) {
 		t.Errorf("QuerySQL(%d bytes) err = %v, want ErrQueryTooLong", len(longSQL), err)
 	}
 
-	// boundary: exactly at the caps is allowed through the shape/size gates.
 	r.Push(exec.Result{Stdout: "[]"}, nil)
 	exactName := strings.Repeat("a", maxTableNameLen)
 	if _, err := c.QueryTable(ctx, exactName); err != nil {
@@ -85,18 +72,12 @@ func TestInputCaps_RefusedBeforeExec(t *testing.T) {
 	}
 }
 
-// QuerySQL is a public entry point and must be gated by the same
-// credential-table deny-list as Query's table and RawSql paths: the package
-// promises there is NO path to read shadow/sudoers/… via osquery, and a direct
-// QuerySQL call is such a path. Refusal must happen BEFORE any command runs.
 func TestQuerySQL_GatedByDenyList(t *testing.T) {
 	r := exectest.New(exec.Direct)
-	r.Push(exec.Result{Stdout: `[{"hash":"x"}]`}, nil) // consumed only by the benign positive control
+	r.Push(exec.Result{Stdout: `[{"hash":"x"}]`}, nil)
 	c := &client{binaryPath: "/usr/bin/osqueryi", r: r}
 	ctx := context.Background()
 
-	// Every deny-listed table is refused with the policy sentinel, and the
-	// error names it.
 	for table := range sensitiveTables {
 		_, err := c.QuerySQL(ctx, "SELECT * FROM "+table)
 		if !errors.Is(err, ErrTableNotPermitted) || !strings.Contains(err.Error(), table) {
@@ -104,25 +85,18 @@ func TestQuerySQL_GatedByDenyList(t *testing.T) {
 		}
 	}
 
-	// CTE smuggling cannot alias its way past the whole-word scan.
 	if _, err := c.QuerySQL(ctx, "WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen"); !errors.Is(err, ErrTableNotPermitted) {
 		t.Errorf("CTE-smuggled shadow read err = %v, want ErrTableNotPermitted", err)
 	}
 
-	// Recorded decision, not an accident: the gate FAILS CLOSED on any
-	// whole-word deny token even in a value position, so file *metadata*
-	// about /etc/sudoers is also refused. Over-refusal is the safe direction
-	// for a credential-table gate.
 	if _, err := c.QuerySQL(ctx, "SELECT * FROM file WHERE path = '/etc/sudoers'"); !errors.Is(err, ErrTableNotPermitted) {
 		t.Errorf("value-position sudoers err = %v, want the fail-closed refusal", err)
 	}
 
-	// Nothing above may have reached the Runner.
 	if n := len(r.Calls()); n != 0 {
 		t.Fatalf("refused raw SQL ran %d command(s) before the policy gate; want 0", n)
 	}
 
-	// Positive control: benign raw SQL still executes exactly once.
 	if _, err := c.QuerySQL(ctx, "SELECT * FROM os_version"); err != nil {
 		t.Fatalf("benign raw SQL must still run, got %v", err)
 	}
@@ -168,9 +142,6 @@ func TestExecQuery_Failures(t *testing.T) {
 	})
 }
 
-// Self-discovering guard: the deny-list must be non-empty, every member must be
-// enforced by isSensitiveTable (including case/whitespace variants), and sample
-// benign tables must stay queryable.
 func TestSensitiveTables_PolicyNonEmptyAndEnforced(t *testing.T) {
 	if len(sensitiveTables) == 0 {
 		t.Fatal("the sensitive-table deny-list must not be empty")

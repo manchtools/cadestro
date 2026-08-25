@@ -18,7 +18,7 @@ func (u *shadowUtils) SetHiddenOnLoginScreen(ctx context.Context, name string, h
 	configPath := filepath.Join(accountsServiceDir, name)
 
 	if !hidden {
-		// rm -f succeeds even if the file is absent.
+
 		return u.fsm.Remove(ctx, configPath)
 	}
 	if _, err := os.Stat(accountsServiceDir); os.IsNotExist(err) {

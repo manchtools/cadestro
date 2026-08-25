@@ -12,9 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// recordingRunner is the test exec.Runner: it records each Command (so a test can
-// assert the exact tool argv + stdin) and scripts the Run results FIFO. A default
-// result (exit 0, empty) is returned once the script is exhausted.
 type recordingRunner struct {
 	mu      sync.Mutex
 	calls   []capturedCall
@@ -35,7 +32,6 @@ func (r *recordingRunner) push(res exec.Result, err error) {
 	r.results = append(r.results, scripted{res, err})
 }
 
-// pushOut is a convenience for the common "exit 0 with this stdout" case.
 func (r *recordingRunner) pushOut(stdout string) { r.push(exec.Result{Stdout: stdout}, nil) }
 
 func (r *recordingRunner) record(c exec.Command) (exec.Result, error) {
@@ -65,7 +61,6 @@ func (r *recordingRunner) Backend() exec.PrivilegeBackend { return exec.Direct }
 
 var _ exec.Runner = (*recordingRunner)(nil)
 
-// argvOf returns the joined argv of the n-th recorded call.
 func (r *recordingRunner) argvOf(n int) string {
 	if n >= len(r.calls) {
 		return ""
@@ -81,8 +76,6 @@ func newMgr(t *testing.T, b Backend, ns string, r exec.Runner) Manager {
 	}
 	return m
 }
-
-// --- New ---
 
 func TestNew_FailClosed(t *testing.T) {
 	r := &recordingRunner{}
@@ -117,14 +110,14 @@ func TestNew_AcceptsValidNamespace(t *testing.T) {
 func TestNew_RejectsInvalidNamespace(t *testing.T) {
 	r := &recordingRunner{}
 	bad := []string{
-		"",                      // empty
-		"-leading-hyphen",       // leading char not a letter
-		"1leading-digit",        // leading digit
-		"UPPER",                 // uppercase
-		"has space",             // whitespace
-		"with-hyphen",           // hyphens reserved as separator
-		"with:colon",            // colons reserved as separator
-		strings.Repeat("a", 32), // 32 > 31 cap
+		"",
+		"-leading-hyphen",
+		"1leading-digit",
+		"UPPER",
+		"has space",
+		"with-hyphen",
+		"with:colon",
+		strings.Repeat("a", 32),
 	}
 	for _, ns := range bad {
 		if _, err := New(Nftables, ns, r); !errors.Is(err, ErrInvalidNamespace) {
@@ -132,8 +125,6 @@ func TestNew_RejectsInvalidNamespace(t *testing.T) {
 		}
 	}
 }
-
-// --- Detect ---
 
 func TestDetect(t *testing.T) {
 	orig := lookPath
@@ -167,9 +158,6 @@ func TestDetect(t *testing.T) {
 	})
 }
 
-// --- entry-path Rule.ID validation (backend-independent, dispatched through a
-// real backend with a recordingRunner so we prove validation precedes any exec) ---
-
 func TestApplyRule_RejectsInvalidID(t *testing.T) {
 	bad := []string{
 		"", " ", "with space", "UPPER", "-leading-hyphen",
@@ -198,7 +186,7 @@ func TestApplyRule_AcceptsValidID(t *testing.T) {
 	}
 	for _, id := range good {
 		r := &recordingRunner{}
-		// nft list returns exit 1 (no table) then the add succeeds.
+
 		r.push(exec.Result{ExitCode: 1}, nil)
 		r.pushOut("")
 		m := newMgr(t, Nftables, "app", r)

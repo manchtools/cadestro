@@ -12,12 +12,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-// goGitFixture builds a real bare repository inside a temp dir, seeds
-// it with one or more commits on a named branch, and exposes the URL
-// the backend should clone from. No network, no `git` binary on PATH:
-// go-git's pure-Go bits handle the whole transport via the local-path
-// "transport" (the URL is a file system path, which go-git treats as a
-// loopback transport without any actual file:// scheme).
 type goGitFixture struct {
 	t       *testing.T
 	bareDir string
@@ -35,20 +29,15 @@ func newGoGitFixture(t *testing.T) *goGitFixture {
 	return &goGitFixture{t: t, bareDir: bare, repo: repo}
 }
 
-// commit appends a commit on the named branch with a single file
-// (name → body). Returns the resulting commit SHA so tests can
-// drift-compare without re-resolving.
 func (f *goGitFixture) commit(branch, fileName, fileBody, message string) string {
 	f.t.Helper()
-	// Stage the file into a fresh tree built on top of whatever the
-	// branch currently points at.
+
 	storer := f.repo.Storer
 	var parents []plumbing.Hash
 	if ref, err := f.repo.Reference(plumbing.NewBranchReferenceName(branch), false); err == nil {
 		parents = []plumbing.Hash{ref.Hash()}
 	}
 
-	// Encode the file blob.
 	blob := plumbing.MemoryObject{}
 	blob.SetType(plumbing.BlobObject)
 	w, err := blob.Writer()
@@ -64,7 +53,6 @@ func (f *goGitFixture) commit(branch, fileName, fileBody, message string) string
 		f.t.Fatalf("set blob: %v", err)
 	}
 
-	// Tree containing just this one file.
 	tree := &object.Tree{
 		Entries: []object.TreeEntry{
 			{Name: fileName, Mode: 0o100644, Hash: blobHash},
@@ -80,7 +68,6 @@ func (f *goGitFixture) commit(branch, fileName, fileBody, message string) string
 		f.t.Fatalf("set tree: %v", err)
 	}
 
-	// Commit on top of the existing branch tip (if any).
 	sig := object.Signature{Name: "tester", Email: "tester@example.test", When: time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)}
 	commit := &object.Commit{
 		Author:       sig,
@@ -99,13 +86,11 @@ func (f *goGitFixture) commit(branch, fileName, fileBody, message string) string
 		f.t.Fatalf("set commit: %v", err)
 	}
 
-	// Move the branch ref to the new commit.
 	ref := plumbing.NewHashReference(plumbing.NewBranchReferenceName(branch), commitHash)
 	if err := storer.SetReference(ref); err != nil {
 		f.t.Fatalf("set ref: %v", err)
 	}
-	// Also point HEAD at the branch on the very first commit so a
-	// clone has somewhere to land.
+
 	if len(parents) == 0 {
 		head := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.NewBranchReferenceName(branch))
 		if err := storer.SetReference(head); err != nil {
@@ -115,14 +100,8 @@ func (f *goGitFixture) commit(branch, fileName, fileBody, message string) string
 	return commitHash.String()
 }
 
-// url returns the value the backend should put in GitConfig.URL. The
-// bare repo directory path is what go-git's local-transport accepts.
 func (f *goGitFixture) url() string { return f.bareDir }
 
-// TestGoGitBackend_FirstCloneCheckoutsRef — the smoke test. Backend
-// clones the seeded repo into a temp dest at the named ref; the
-// expected file lands with the expected body; the returned Result
-// reports Changed=true and the SHA we just committed as Revision.
 func TestGoGitBackend_FirstCloneCheckoutsRef(t *testing.T) {
 	fix := newGoGitFixture(t)
 	sha := fix.commit("main", "hello.txt", "world", "init")
@@ -150,9 +129,6 @@ func TestGoGitBackend_FirstCloneCheckoutsRef(t *testing.T) {
 	}
 }
 
-// TestGoGitBackend_SecondFetchIsNoOpWhenRefUnchanged — call
-// CloneOrSync twice without changing upstream. The second call must
-// report Changed=false and return the same Revision.
 func TestGoGitBackend_SecondFetchIsNoOpWhenRefUnchanged(t *testing.T) {
 	fix := newGoGitFixture(t)
 	sha := fix.commit("main", "a.txt", "alpha", "init")
@@ -176,8 +152,6 @@ func TestGoGitBackend_SecondFetchIsNoOpWhenRefUnchanged(t *testing.T) {
 	}
 }
 
-// TestGoGitBackend_RefSwapReChecksOut — bump the upstream ref between
-// calls; CloneOrSync must catch the new SHA and update dest.
 func TestGoGitBackend_RefSwapReChecksOut(t *testing.T) {
 	fix := newGoGitFixture(t)
 	fix.commit("main", "v.txt", "v1", "first")
@@ -206,9 +180,6 @@ func TestGoGitBackend_RefSwapReChecksOut(t *testing.T) {
 	}
 }
 
-// TestGoGitBackend_PruneRemovesUntrackedFiles — when Prune=true, a
-// local-only file left in dest from a previous tweak is cleaned up
-// during sync. When Prune=false, it stays.
 func TestGoGitBackend_PruneRemovesUntrackedFiles(t *testing.T) {
 	for _, prune := range []bool{false, true} {
 		t.Run(map[bool]string{true: "Prune=true", false: "Prune=false"}[prune], func(t *testing.T) {
@@ -227,7 +198,6 @@ func TestGoGitBackend_PruneRemovesUntrackedFiles(t *testing.T) {
 				t.Fatalf("write extra: %v", err)
 			}
 
-			// Bump upstream to force a re-sync.
 			fix.commit("main", "tracked.txt", "y", "second")
 			if _, err := (goGitBackend{}).CloneOrSync(context.Background(), cfg, dest); err != nil {
 				t.Fatalf("second CloneOrSync: %v", err)
@@ -243,9 +213,6 @@ func TestGoGitBackend_PruneRemovesUntrackedFiles(t *testing.T) {
 	}
 }
 
-// TestGoGitBackend_Resolve_ReturnsUpstreamSha — Resolve must reach the
-// upstream without touching dest. Returned SHA must match the
-// fixture's most recent commit hash on the named branch.
 func TestGoGitBackend_Resolve_ReturnsUpstreamSha(t *testing.T) {
 	fix := newGoGitFixture(t)
 	sha := fix.commit("main", "a", "b", "init")
@@ -260,15 +227,10 @@ func TestGoGitBackend_Resolve_ReturnsUpstreamSha(t *testing.T) {
 	}
 }
 
-// TestGoGitBackend_TagRef_ChecksOutTag — cfg.Ref may be a tag, not
-// just a branch name. The clone path must reach the tag's commit
-// (regression test for the CodeRabbit critical: openOrClone used to
-// hard-code refs/heads/<ref> which failed for tags and SHAs).
 func TestGoGitBackend_TagRef_ChecksOutTag(t *testing.T) {
 	fix := newGoGitFixture(t)
 	sha := fix.commit("main", "x.txt", "tagged", "init")
 
-	// Lay down a lightweight tag pointing at the just-committed SHA.
 	tagRef := plumbing.NewHashReference(plumbing.NewTagReferenceName("v1.0.0"), plumbing.NewHash(sha))
 	if err := fix.repo.Storer.SetReference(tagRef); err != nil {
 		t.Fatalf("set tag ref: %v", err)
@@ -293,8 +255,6 @@ func TestGoGitBackend_TagRef_ChecksOutTag(t *testing.T) {
 	}
 }
 
-// TestGoGitBackend_BadRef_ReturnsError — a ref that doesn't exist
-// upstream returns a non-nil error and leaves dest absent.
 func TestGoGitBackend_BadRef_ReturnsError(t *testing.T) {
 	fix := newGoGitFixture(t)
 	fix.commit("main", "x", "y", "init")
@@ -310,10 +270,6 @@ func TestGoGitBackend_BadRef_ReturnsError(t *testing.T) {
 	}
 }
 
-// TestGitSource_FetchEndToEnd — drives the public Source.Fetch surface
-// (NewGit + the real go-git backend) end-to-end. Lets the integration
-// between gitSource and the backend stay green even if the unit-level
-// backend tests get refactored.
 func TestGitSource_FetchEndToEnd(t *testing.T) {
 	fix := newGoGitFixture(t)
 	sha := fix.commit("main", "readme.md", "# hi", "init")
@@ -333,7 +289,6 @@ func TestGitSource_FetchEndToEnd(t *testing.T) {
 		t.Fatalf("Fetch Revision = %q; want %q", res.Revision, sha)
 	}
 
-	// Second call short-circuits without re-cloning.
 	res2, err := src.Fetch(context.Background(), dest)
 	if err != nil {
 		t.Fatalf("second Fetch: %v", err)
@@ -343,10 +298,6 @@ func TestGitSource_FetchEndToEnd(t *testing.T) {
 	}
 }
 
-// newGitSourceForTest builds a gitSource that bypasses NewGit's URL
-// validation (which would reject the local file-system path the
-// fixture uses). The end-to-end test wants the gitSource code path
-// without forcing the test to spin up an HTTPS server with TLS certs.
 func newGitSourceForTest(cfg GitConfig) (Source, error) {
 	if cfg.Ref == "" {
 		cfg.Ref = "main"

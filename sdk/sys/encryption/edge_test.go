@@ -10,7 +10,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// exitCodeDetail translates every documented cryptsetup return code.
 func TestExitCodeDetail(t *testing.T) {
 	for code, want := range map[int]string{
 		1: "wrong parameters",
@@ -26,7 +25,6 @@ func TestExitCodeDetail(t *testing.T) {
 	}
 }
 
-// cryptsetupError prefers real stderr when present, else the decoded exit code.
 func TestCryptsetupError(t *testing.T) {
 	withStderr := cryptsetupError("luksAddKey", exec.Result{ExitCode: 1, Stderr: "  Device /dev/sda2 is busy.\n"})
 	if !strings.Contains(withStderr.Error(), "Device /dev/sda2 is busy") {
@@ -38,7 +36,6 @@ func TestCryptsetupError(t *testing.T) {
 	}
 }
 
-// validateDevicePath rejects a regex-passing path that contains "..".
 func TestValidateDevicePath_RejectsTraversal(t *testing.T) {
 	if err := validateDevicePath("/dev/../etc/shadow"); err == nil {
 		t.Error("accepted a /dev/.. traversal path")
@@ -48,11 +45,9 @@ func TestValidateDevicePath_RejectsTraversal(t *testing.T) {
 	}
 }
 
-// When /dev/shm is unavailable, key-file creation fails closed (never disk) and
-// every passphrase op surfaces the error without running cryptsetup.
 func TestKeyFileFailClosed(t *testing.T) {
 	orig := keyFileDir
-	// Parent is a regular file (a temp file), so MkdirAll under it must fail.
+
 	tmp := filepath.Join(t.TempDir(), "notadir")
 	if err := os.WriteFile(tmp, nil, 0o600); err != nil {
 		t.Fatal(err)
@@ -86,7 +81,6 @@ func TestKeyFileFailClosed(t *testing.T) {
 	}
 }
 
-// Runner exec errors (e.g. cryptsetup not installed) surface from every op.
 func TestExecErrorsSurface(t *testing.T) {
 	ops := map[string]func(Manager) error{
 		"IsEncrypted": func(m Manager) error { _, e := m.IsEncrypted(context.Background(), "/dev/sda2"); return e },

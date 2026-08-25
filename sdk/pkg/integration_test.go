@@ -9,24 +9,9 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// These are real-system integration tests: they build a Manager over a real
-// Direct runner and exercise the read paths against the actual package manager,
-// validating that the argv + output parsing match real tool output (not just
-// scripted fixtures). Each skips when its backend is absent, so the suite is
-// safe to run anywhere — and the dedicated apt/dnf CI jobs (which run
-// `go test ./...` on apt/dnf hosts) exercise the matching backend for real.
-//
-// Read-only by design: nothing here installs, removes, or pins (those would
-// need escalation and would mutate the host). The hermetic FakeRunner tests in
-// the per-backend *_test.go files cover the mutating paths and every branch.
-
-// realManager builds a Manager for b over a Direct runner, skipping when b is
-// not installed. Reads do not escalate, so Direct is sufficient.
 func realManager(t *testing.T, b Backend) Manager {
 	t.Helper()
-	// These hit the real package manager. `go test -short` (the unit sweep and
-	// the per-package Unit Tests job) must stay hermetic, so skip there; the
-	// dedicated apt/dnf integration jobs run without -short and exercise them.
+
 	if testing.Short() {
 		t.Skip("-short: skipping real package-manager integration read")
 	}
@@ -44,9 +29,6 @@ func realManager(t *testing.T, b Backend) Manager {
 	return m
 }
 
-// readIntegration runs the common read-path assertions against a real backend.
-// knownPkg must be a package installed on every host that ships the backend
-// (bash is part of the base install on Debian/Ubuntu/Fedora/Arch/openSUSE).
 func readIntegration(t *testing.T, m Manager, knownPkg string) {
 	t.Helper()
 	ctx := context.Background()
@@ -104,8 +86,6 @@ func readIntegration(t *testing.T, m Manager, knownPkg string) {
 		t.Errorf("Show(%s).Name = %q", knownPkg, p.Name)
 	}
 
-	// Repo-metadata reads: assert no error and well-formed structure. The CI
-	// jobs prime the cache (apt-get update / dnf makecache).
 	if _, err := m.Search(ctx, knownPkg); err != nil {
 		t.Errorf("Search(%s): %v", knownPkg, err)
 	}

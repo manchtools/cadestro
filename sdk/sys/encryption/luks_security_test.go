@@ -13,13 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// --- P0.5: cleanupKeyFile must never block, and never scrub a non-regular file ---
-
-// TestCleanupKeyFile_DoesNotHangOnFIFO pins the live FIFO-hang bug: if the
-// key-file path is replaced by a FIFO between write and cleanup (a TOCTOU swap
-// in /dev/shm), opening it O_WRONLY without O_NONBLOCK blocks forever waiting
-// for a reader — the passphrase file is never scrubbed and the LUKS op wedges.
-// O_NOFOLLOW does NOT help (a FIFO is not a symlink). Uses the REAL openKeyFile.
 func TestCleanupKeyFile_DoesNotHangOnFIFO(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "key-fifo")
@@ -40,8 +33,6 @@ func TestCleanupKeyFile_DoesNotHangOnFIFO(t *testing.T) {
 	}
 }
 
-// pipeScrub is a scrubFile whose Stat reports a non-regular (named pipe) mode
-// and records whether WriteAt was called.
 type pipeScrub struct{ wrote bool }
 
 func (p *pipeScrub) Stat() (os.FileInfo, error)             { return pipeInfo{}, nil }
@@ -57,10 +48,6 @@ func (pipeInfo) ModTime() time.Time { return time.Time{} }
 func (pipeInfo) IsDir() bool        { return false }
 func (pipeInfo) Sys() any           { return nil }
 
-// TestCleanupKeyFile_RefusesToScrubNonRegular — defence-in-depth for the case
-// where the open DOES succeed on a non-regular target (a FIFO that has a reader,
-// or a device node): cleanupKeyFile must refuse to WriteAt zeros to it (which
-// would write into a pipe/device) and still unlink the path.
 func TestCleanupKeyFile_RefusesToScrubNonRegular(t *testing.T) {
 	defer swapKeyFileSeams(t)()
 	f := &pipeScrub{}
@@ -78,9 +65,6 @@ func TestCleanupKeyFile_RefusesToScrubNonRegular(t *testing.T) {
 	}
 }
 
-// --- P0.6: mutating LUKS/TPM ops must reject an empty passphrase BEFORE exec ---
-
-// emptySecret is a valid, empty Secret (NewSecret permits empty).
 func emptySecret(t *testing.T) exec.Secret {
 	t.Helper()
 	s, err := exec.NewSecret("")
@@ -93,9 +77,6 @@ func emptySecret(t *testing.T) exec.Secret {
 	return s
 }
 
-// TestAddKey_RejectsEmptyNewKey is the security-critical case: adding an EMPTY
-// new key would enroll a LUKS slot that unlocks with no passphrase. It must be
-// refused before cryptsetup runs.
 func TestAddKey_RejectsEmptyNewKey(t *testing.T) {
 	r := &recordingRunner{}
 	m := mgr(t, r)
@@ -108,17 +89,10 @@ func TestAddKey_RejectsEmptyNewKey(t *testing.T) {
 	}
 }
 
-// TestMutatingOps_RejectEmptyAuth — an empty authenticating passphrase for a
-// mutating operation is never a legitimate request and must be refused before
-// any cryptsetup/cryptenroll exec. (VerifyPassphrase is deliberately excluded:
-// probing an empty passphrase is a legitimate read-only query.)
 func TestMutatingOps_RejectEmptyAuth(t *testing.T) {
 	ctx := context.Background()
 	dev := "/dev/sda1"
 
-	// Each op takes the SUBTEST's *testing.T so a t.Skip (no TPM hardware)
-	// skips only that subtest, not the parent — the closures must not capture
-	// the outer t.
 	ops := map[string]func(t *testing.T, m Manager) error{
 		"AddKey/existing": func(t *testing.T, m Manager) error {
 			return m.AddKey(ctx, dev, emptySecret(t), mustSecret(t, "new"), AddKeyOptions{})

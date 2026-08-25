@@ -52,7 +52,7 @@ func TestValidatePath(t *testing.T) {
 
 func TestScan_Clean(t *testing.T) {
 	m, r := newClam(t)
-	r.Push(exec.Result{ExitCode: 0, Stdout: ""}, nil) // clean
+	r.Push(exec.Result{ExitCode: 0, Stdout: ""}, nil)
 	res, err := m.Scan(context.Background(), "/home")
 	if err != nil {
 		t.Fatal(err)
@@ -68,7 +68,7 @@ func TestScan_Clean(t *testing.T) {
 
 func TestScan_Infected(t *testing.T) {
 	m, r := newClam(t)
-	// Exit 1 = found (NOT an error).
+
 	r.Push(exec.Result{ExitCode: 1, Stdout: "/home/u/evil.com: Win.Test.EICAR_HDB-1 FOUND\n/home/u/x.bin: Unix.Trojan.Foo-2 FOUND\n"}, nil)
 	res, err := m.Scan(context.Background(), "/home")
 	if err != nil {
@@ -87,7 +87,7 @@ func TestScan_Infected(t *testing.T) {
 
 func TestScan_EngineError(t *testing.T) {
 	m, r := newClam(t)
-	r.Push(exec.Result{ExitCode: 2, Stderr: "database not found"}, nil) // exit 2 = error
+	r.Push(exec.Result{ExitCode: 2, Stderr: "database not found"}, nil)
 	if _, err := m.Scan(context.Background(), "/home"); err == nil {
 		t.Error("exit 2 must be an error")
 	}
@@ -166,14 +166,10 @@ func TestVersion_Errors(t *testing.T) {
 }
 
 func TestParseClamscanVersion(t *testing.T) {
-	// Contract: accept ONLY the canonical "ClamAV <engine>/<sig>[/<date>]" line —
-	// the literal "ClamAV " prefix is required and BOTH engine and signature must
-	// be present and non-empty. The rejection cases are derived from that contract
-	// (a version line must carry the prefix + both fields), not from the parser's
-	// current behaviour, so an under-specified parser is caught.
+
 	valid := map[string]Version{
 		"ClamAV 1.0.1/27000/Wed Jun 18 09:00:00 2025\n": {Engine: "1.0.1", Signature: "27000"},
-		"  ClamAV 1.0.1/27000  ":                        {Engine: "1.0.1", Signature: "27000"}, // no date, surrounding whitespace
+		"  ClamAV 1.0.1/27000  ":                        {Engine: "1.0.1", Signature: "27000"},
 	}
 	for in, want := range valid {
 		got, err := parseClamscanVersion(in)
@@ -186,15 +182,15 @@ func TestParseClamscanVersion(t *testing.T) {
 		}
 	}
 	reject := []string{
-		"",                   // empty
-		"garbage",            // no prefix, no slash
-		"1.0.1/27000",        // missing "ClamAV " prefix entirely
-		"1.0.1/27000/date",   // missing prefix, otherwise full shape
-		"ClamXV 1.0.1/27000", // wrong prefix
-		"ClamAV ",            // prefix only, nothing after
-		"ClamAV 1.0.1",       // engine but no signature field
-		"ClamAV 1.0.1//date", // empty signature
-		"ClamAV /27000/date", // empty engine
+		"",
+		"garbage",
+		"1.0.1/27000",
+		"1.0.1/27000/date",
+		"ClamXV 1.0.1/27000",
+		"ClamAV ",
+		"ClamAV 1.0.1",
+		"ClamAV 1.0.1//date",
+		"ClamAV /27000/date",
 	}
 	for _, in := range reject {
 		if v, err := parseClamscanVersion(in); err == nil {
@@ -204,7 +200,7 @@ func TestParseClamscanVersion(t *testing.T) {
 }
 
 func TestParseClamscanInfected_SkipsNoise(t *testing.T) {
-	// Summary/blank lines and malformed FOUND lines are ignored.
+
 	inf := parseClamscanInfected("\n----------- SCAN SUMMARY -----------\nInfected files: 1\nFOUND\nnoColonButEndsWith FOUND\n/a/b: Sig FOUND\n")
 	if len(inf) != 1 || inf[0].File != "/a/b" {
 		t.Errorf("parsed = %+v, want one /a/b (noise + a FOUND line lacking ': ' skipped)", inf)

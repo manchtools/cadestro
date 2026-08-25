@@ -6,13 +6,6 @@ import (
 	"testing"
 )
 
-// These tests pin audit finding #10 — the centralized path
-// validation that every privileged file op should call before the
-// path reaches exec. We exercise ValidatePath directly; the wiring
-// into RemoveStrict/Remove/WriteFile/SetMode/SetOwnership/ReadFile/
-// Mkdir/RemoveDir/CopyFile is structural (they all call ValidatePath
-// at the top).
-
 func TestValidatePath_AcceptsCanonicalShapes(t *testing.T) {
 	for _, p := range []string{
 		"/etc/sudoers.d/cadestro-power",
@@ -50,9 +43,7 @@ func TestValidatePath_RejectsNULByte(t *testing.T) {
 }
 
 func TestValidatePath_RejectsLeadingDash(t *testing.T) {
-	// `--no-preserve-root` is the headline horror story; anything
-	// starting with `-` would be parsed as a flag by rm/chmod/chown
-	// even before the path argv slot is consumed.
+
 	for _, p := range []string{
 		"-no-preserve-root",
 		"--force",

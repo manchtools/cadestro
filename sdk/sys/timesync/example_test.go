@@ -9,7 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/timesync"
 )
 
-// ExampleNew reads the clock-sync status from chrony.
 func ExampleNew() {
 	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {

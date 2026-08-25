@@ -9,8 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// noRun asserts the Runner was never invoked — an invalid request must be
-// rejected before any useradd/usermod/groupadd runs.
 func noRun(t *testing.T, f *exectest.FakeRunner) {
 	t.Helper()
 	if n := len(f.Calls()); n != 0 {
@@ -36,10 +34,6 @@ func TestGroupCreate_RejectsNegativeGID(t *testing.T) {
 	noRun(t, f)
 }
 
-// TestCreate_RejectsFieldInjection: free-form account fields written into
-// /etc/passwd (or the -G list) must reject control characters and the field
-// separators ':' / ',' so a caller cannot corrupt the file or inject extra
-// fields/records (GECOS injection, extra supplementary groups).
 func TestCreate_RejectsFieldInjection(t *testing.T) {
 	cases := map[string]CreateOptions{
 		"newline in comment":      {Comment: "Real Name\nroot:x:0:0::/root:/bin/sh"},
@@ -134,8 +128,6 @@ func TestCreateAndModify_RejectUnsafeLoginShell(t *testing.T) {
 	}
 }
 
-// A clean Comment with GECOS commas (the legitimate sub-field separator) must be
-// accepted — the validation rejects the dangerous bytes, not normal content.
 func TestCreate_AllowsCommasInComment(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	if err := mgr(t, f).Create(context.Background(), "deploy",

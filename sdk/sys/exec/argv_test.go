@@ -5,11 +5,6 @@ import (
 	"testing"
 )
 
-// TestSeparatePositionals_InsertsEndOfOptions pins the core contract:
-// the "--" end-of-options token is always inserted between the flags
-// and the positional operands, so a flag-shaped operand (a package
-// name like "-e", a remote like "--from") can never be reparsed by the
-// invoked program as an option.
 func TestSeparatePositionals_InsertsEndOfOptions(t *testing.T) {
 	cases := []struct {
 		name        string
@@ -54,8 +49,7 @@ func TestSeparatePositionals_InsertsEndOfOptions(t *testing.T) {
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("SeparatePositionals(%v, %v) = %v, want %v", tc.flags, tc.positionals, got, tc.want)
 			}
-			// The "--" must sit before every positional: its index must
-			// be strictly less than the index of any operand.
+
 			sep := -1
 			for i, a := range got {
 				if a == EndOfOptions {
@@ -82,10 +76,6 @@ func TestSeparatePositionals_InsertsEndOfOptions(t *testing.T) {
 	}
 }
 
-// TestSeparatePositionals_DoesNotMutateFlags guards against the helper
-// aliasing/appending into the caller's flags slice — a classic
-// append-to-shared-backing-array bug that would corrupt a reused flag
-// list across calls.
 func TestSeparatePositionals_DoesNotMutateFlags(t *testing.T) {
 	flags := []string{"-q"}
 	_ = SeparatePositionals(flags, "bash")

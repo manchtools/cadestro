@@ -38,7 +38,7 @@ func TestGroupDelete_Golden(t *testing.T) {
 func TestGroupEnsure(t *testing.T) {
 	t.Run("exists → no groupadd", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{ExitCode: 0}, nil) // getent group → exists
+		f.Push(exec.Result{ExitCode: 0}, nil)
 		if err := mgr(t, f).GroupEnsure(context.Background(), "staff"); err != nil {
 			t.Fatal(err)
 		}
@@ -48,8 +48,8 @@ func TestGroupEnsure(t *testing.T) {
 	})
 	t.Run("absent → groupadd", func(t *testing.T) {
 		f := exectest.New(exec.Direct)
-		f.Push(exec.Result{ExitCode: 2}, nil) // getent group → absent
-		f.Push(exec.Result{ExitCode: 0}, nil) // groupadd
+		f.Push(exec.Result{ExitCode: 2}, nil)
+		f.Push(exec.Result{ExitCode: 0}, nil)
 		if err := mgr(t, f).GroupEnsure(context.Background(), "staff"); err != nil {
 			t.Fatal(err)
 		}
@@ -121,8 +121,8 @@ func TestMembersMatch(t *testing.T) {
 	}{
 		{nil, nil, true},
 		{[]string{}, nil, true},
-		{[]string{"a", "b"}, []string{"b", "a"}, true},      // order-independent
-		{[]string{"a", "a", "b"}, []string{"a", "b"}, true}, // dup-independent
+		{[]string{"a", "b"}, []string{"b", "a"}, true},
+		{[]string{"a", "a", "b"}, []string{"a", "b"}, true},
 		{[]string{"a"}, []string{"a", "b"}, false},
 		{[]string{"a", "b"}, []string{"a", "c"}, false},
 		{[]string{"x"}, nil, false},

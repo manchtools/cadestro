@@ -25,10 +25,6 @@ type osqueryPolicyStep struct {
 	wantReject bool
 }
 
-// TestOSQueryPolicySecurityMachine models the osquery boundary as a policy
-// automaton. Query input may reach the privileged osquery binary only if the
-// resolved SQL cannot touch credential-bearing tables; every rejected state
-// must fail with ErrTableNotPermitted before Runner execution.
 func TestOSQueryPolicySecurityMachine(t *testing.T) {
 	steps := []osqueryPolicyStep{
 		{name: "allowed inventory table reaches osquery", action: osqueryAllowedTable},
@@ -77,7 +73,7 @@ func runOsqueryAction(c *client, action osqueryPolicyAction) error {
 		_, err = c.QuerySQL(ctx, "WITH stolen AS (SELECT * FROM shadow) SELECT * FROM stolen")
 	case osqueryRawProcessEnvSecret:
 		_, err = c.QuerySQL(ctx, "SELECT * FROM process_envs WHERE key LIKE '%TOKEN%'")
-	default: // osqueryAllowedTable
+	default:
 		_, err = c.QueryTable(ctx, "os_version")
 	}
 	return err

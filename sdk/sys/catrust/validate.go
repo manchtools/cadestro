@@ -16,12 +16,8 @@ var ErrInvalidName = errors.New("catrust: invalid anchor name")
 // ErrInvalidCert is returned when the supplied certificate is not a usable CA.
 var ErrInvalidCert = errors.New("catrust: invalid CA certificate")
 
-// validName matches a safe anchor name: leading alphanumeric (never flag-shaped),
-// then alphanumerics plus . _ -, up to 63 chars. It becomes a filename in a
-// root-owned directory, so no '/' and no path traversal.
 var validName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$`)
 
-// validateName rejects an unsafe anchor name.
 func validateName(name string) error {
 	if !validName.MatchString(name) || strings.Contains(name, "..") {
 		return fmt.Errorf("%w: %q (use [A-Za-z0-9._-], no '/' or '..')", ErrInvalidName, name)
@@ -29,9 +25,6 @@ func validateName(name string) error {
 	return nil
 }
 
-// validateCACert parses certPEM and requires a well-formed CA certificate that is
-// currently valid. Installing a non-CA or expired cert is virtually always a
-// mistake, so it fails closed.
 func validateCACert(certPEM []byte) error {
 	cert, err := parseCert(certPEM)
 	if err != nil {
@@ -40,11 +33,7 @@ func validateCACert(certPEM []byte) error {
 	if !cert.IsCA {
 		return fmt.Errorf("%w: certificate %q is not a CA (BasicConstraints CA=false)", ErrInvalidCert, cert.Subject.CommonName)
 	}
-	// A real CA signs other certificates, so it must carry the keyCertSign key
-	// usage. A cert without it (e.g. a leaf or a deliberately weakened anchor) is
-	// not usable for path validation as a trust anchor and must never enter the
-	// system trust store — installing it would let any host it trusts MITM TLS
-	// without the cert even being a valid issuer. Fail closed.
+
 	if cert.KeyUsage&x509.KeyUsageCertSign == 0 {
 		return fmt.Errorf("%w: certificate %q lacks the keyCertSign key usage (not a usable CA)", ErrInvalidCert, cert.Subject.CommonName)
 	}
@@ -58,7 +47,6 @@ func validateCACert(certPEM []byte) error {
 	return nil
 }
 
-// parseCert decodes a single PEM CERTIFICATE block.
 func parseCert(certPEM []byte) (*x509.Certificate, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil || block.Type != "CERTIFICATE" {
@@ -71,7 +59,6 @@ func parseCert(certPEM []byte) (*x509.Certificate, error) {
 	return cert, nil
 }
 
-// hasAnchorExt reports whether a filename is a managed anchor (.crt).
 func hasAnchorExt(name string) bool {
 	return strings.HasSuffix(name, anchorExt)
 }

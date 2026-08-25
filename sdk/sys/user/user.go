@@ -13,9 +13,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// queryTimeout caps a query op when the caller's context carries no deadline so
-// a hung getent/id (e.g. a stalled NSS/LDAP/SSSD backend) cannot pin the call
-// indefinitely. Local lookups return in milliseconds; 10s leaves headroom.
 const queryTimeout = 10 * time.Second
 
 // Backend selects the user/group implementation. It is passed explicitly even
@@ -130,9 +127,6 @@ type Manager interface {
 	RemoveFromGroup(ctx context.Context, name, group string) error
 }
 
-// shadowUtils is the shadow-utils Manager. Every operation runs through the
-// injected exec.Runner (reads unescalated; writes and the shadow read with
-// Escalate), so the whole package is unit-testable with exectest.FakeRunner.
 type shadowUtils struct {
 	r   exec.Runner
 	fsm fsManager
@@ -159,8 +153,6 @@ func New(b Backend, runner exec.Runner, _ ...Option) (Manager, error) {
 // defined today; it reserves the constructor shape.
 type Option func(*shadowUtils)
 
-// ensureCtx applies the package query timeout when the caller's context has no
-// deadline of its own.
 func ensureCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	if _, ok := ctx.Deadline(); ok {
 		return ctx, func() {}
@@ -168,22 +160,12 @@ func ensureCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(ctx, queryTimeout)
 }
 
-// exec is the SINGLE Runner chokepoint for this package. Every getent / usermod
-// / useradd / userdel / chpasswd / loginctl / pkill call flows through it, and it
-// bounds a deadline-less context (ensureCtx) so no method can issue an UNBOUNDED
-// escalated command — a hung privileged process can't block forever. The
-// invariant holds by construction here, not by each method remembering to call
-// ensureCtx (which is exactly how Lock/Unlock/SetPassword/KillSessions silently
-// skipped it). Enforced by TestExecBoundsContext.
 func (u *shadowUtils) exec(ctx context.Context, c exec.Command) (exec.Result, error) {
 	ctx, cancel := ensureCtx(ctx)
 	defer cancel()
 	return u.r.Run(ctx, c)
 }
 
-// run executes an escalated mutating command and maps a non-zero exit to a
-// *exec.CommandError carrying stderr (the "user already exists" context callers
-// need).
 func (u *shadowUtils) run(ctx context.Context, name string, args ...string) error {
 	res, err := u.exec(ctx, exec.Command{Name: name, Args: args, Escalate: true})
 	if err != nil {
@@ -195,8 +177,6 @@ func (u *shadowUtils) run(ctx context.Context, name string, args ...string) erro
 	return nil
 }
 
-// query executes an unescalated read command and returns trimmed stdout, mapping
-// a non-zero exit to a *exec.CommandError.
 func (u *shadowUtils) query(ctx context.Context, name string, args ...string) (string, error) {
 	res, err := u.exec(ctx, exec.Command{Name: name, Args: args})
 	if err != nil {
@@ -207,10 +187,6 @@ func (u *shadowUtils) query(ctx context.Context, name string, args ...string) (s
 	}
 	return strings.TrimSpace(res.Stdout), nil
 }
-
-// =============================================================================
-// Accounts
-// =============================================================================
 
 // Create creates a new user account. The default-shell policy and the
 // "home already exists" -M/chown dance live here (moved out of the agent).
@@ -253,9 +229,7 @@ func (u *shadowUtils) Create(ctx context.Context, name string, opts CreateOption
 	}
 	_, statErr := os.Stat(homeDir)
 	homeExists := statErr == nil
-	// useradd -m fails if the home already exists; use -M and fix ownership
-	// afterwards so an explicit CreateHome over a pre-seeded directory is
-	// idempotent.
+
 	if opts.CreateHome && !homeExists {
 		args = append(args, "-m")
 	} else {
@@ -273,7 +247,7 @@ func (u *shadowUtils) Create(ctx context.Context, name string, opts CreateOption
 	if opts.CreateHome && homeExists {
 		group := opts.PrimaryGroup
 		if group == "" {
-			group = name // useradd's matching-group default
+			group = name
 		}
 		if err := u.fsm.SetOwnershipRecursive(ctx, homeDir, name, group); err != nil {
 			return fmt.Errorf("fix ownership of existing home %q: %w", homeDir, err)
@@ -340,9 +314,7 @@ func (u *shadowUtils) EnsureHome(ctx context.Context, name string, opts EnsureHo
 			}
 		}
 	}
-	// Re-assert ownership (recursive, to repair a partially mis-owned tree) and
-	// the home-root mode every call, so EnsureHome is idempotent and also fixes a
-	// home that exists but is wrong.
+
 	if err := u.fsm.SetOwnershipRecursive(ctx, home, name, group); err != nil {
 		return fmt.Errorf("ensure home for %q: %w", name, err)
 	}
@@ -375,7 +347,7 @@ func (u *shadowUtils) Modify(ctx context.Context, name string, opts ModifyOption
 		args = append(args, "-g", opts.PrimaryGroup)
 	}
 	if len(args) == 0 {
-		return nil // nothing to change
+		return nil
 	}
 	args = append(args, name)
 	return u.run(ctx, "usermod", args...)
@@ -415,24 +387,19 @@ func (u *shadowUtils) Unlock(ctx context.Context, name string) error {
 	}
 	field, err := u.shadowPassword(ctx, name)
 	if err != nil {
-		// Couldn't read the shadow (e.g. escalation not authorized): fall back
-		// to the plain unlock rather than guessing.
+
 		return u.run(ctx, "usermod", "-U", name)
 	}
 	if !strings.HasPrefix(field, "!") {
-		return nil // already unlocked
+		return nil
 	}
 	if rest := strings.TrimLeft(field, "!"); rest == "" || rest == "*" {
-		// Locked AND passwordless: usermod -U errors. "*" = no password, not
-		// locked — the unlocked state for a passwordless (cadestro-tty-*) account.
+
 		return u.run(ctx, "usermod", "-p", "*", name)
 	}
 	return u.run(ctx, "usermod", "-U", name)
 }
 
-// shadowPassword returns the password field (field 2) of the user's
-// /etc/shadow entry, read escalated (root-only). Returns an error when the
-// entry can't be read or is malformed.
 func (u *shadowUtils) shadowPassword(ctx context.Context, name string) (string, error) {
 	res, err := u.exec(ctx, exec.Command{Name: "getent", Args: []string{"shadow", name}, Escalate: true})
 	if err != nil {
@@ -474,7 +441,6 @@ func (u *shadowUtils) Get(ctx context.Context, name string) (Info, error) {
 	}
 	info := Info{UID: uid, GID: gid, Comment: fields[4], HomeDir: fields[5], Shell: fields[6]}
 
-	// Resolve the primary group name from the GID so we filter it out below.
 	var primary string
 	if gout, err := u.query(ctx, "getent", "group", strconv.Itoa(gid)); err == nil {
 		if idx := strings.IndexByte(gout, ':'); idx > 0 {
@@ -487,20 +453,12 @@ func (u *shadowUtils) Get(ctx context.Context, name string) (Info, error) {
 				info.Groups = append(info.Groups, g)
 			}
 		}
-		info.GroupsKnown = true // id -Gn succeeded; Groups is authoritative
+		info.GroupsKnown = true
 	}
 
-	// The shadow file is root-only: read it escalated. If escalation is not
-	// authorized, leave Locked=false rather than guessing.
-	//
-	// Only a leading "!" means LOCKED (that's what `usermod -L` prepends). A "*"
-	// is NOT locked — it means "no password, password login disabled," while the
-	// account stays reachable via SSH keys / su / a setuid opener. The cadestro-tty-*
-	// terminal accounts are passwordless ("*") on purpose; treating "*" as locked
-	// made the agent refuse every terminal session ("tty user is disabled").
 	if field, err := u.shadowPassword(ctx, name); err == nil {
 		info.Locked = strings.HasPrefix(field, "!")
-		info.LockedKnown = true // the shadow read succeeded; Locked is authoritative
+		info.LockedKnown = true
 	}
 	return info, nil
 }
@@ -544,8 +502,7 @@ func (u *shadowUtils) SupplementaryGroups(ctx context.Context, name string) ([]s
 	groups := strings.Fields(out)
 	primary, err := u.query(ctx, "id", "-gn", name)
 	if err != nil {
-		// Cannot guarantee the primary is excluded (the method's contract), so
-		// fail closed rather than return a list that may include it.
+
 		return nil, fmt.Errorf("lookup primary group for %q: %w", name, err)
 	}
 	supplementary := make([]string, 0, len(groups))
@@ -556,10 +513,6 @@ func (u *shadowUtils) SupplementaryGroups(ctx context.Context, name string) ([]s
 	}
 	return supplementary, nil
 }
-
-// =============================================================================
-// Validation (pure helpers)
-// =============================================================================
 
 // IsValidName reports whether name is a valid, safe POSIX account name: starts
 // with a lowercase letter, contains only [a-z0-9_-], max 32 chars. The leading-
@@ -599,12 +552,6 @@ func validateName(kind, name string) error {
 
 func validateUsername(name string) error { return validateName("username", name) }
 
-// validateField rejects values that would corrupt /etc/passwd or inject extra
-// fields/records when written via useradd/usermod. Every free-form account field
-// (Comment/HomeDir/Shell, and group references) must contain no control
-// character (NUL, newline, CR, …) and none of the separators in `reject` — ':'
-// is the passwd field separator; ',' is the -G group-list separator. An empty
-// value is the "unchanged"/"default" sentinel and is allowed.
 func validateField(kind, val, reject string) error {
 	for _, r := range val {
 		if r < 0x20 || r == 0x7f {
@@ -617,8 +564,6 @@ func validateField(kind, val, reject string) error {
 	return nil
 }
 
-// validateAccountFields validates the free-form fields shared by Create/Modify.
-// reject for a passwd field is ":"; group references also reject ",".
 func validateAccountFields(comment, homeDir, shell, primaryGroup string, groups []string) error {
 	if err := validateField("comment", comment, ":"); err != nil {
 		return err
@@ -646,35 +591,14 @@ func validateAccountFields(comment, homeDir, shell, primaryGroup string, groups 
 	return nil
 }
 
-// worldWritablePersistenceRoots are directories any unprivileged user can write
-// to (or that are otherwise unsafe to anchor an account in). A home or login
-// shell placed DIRECTLY under one of these is an attacker-seedable persistence
-// point — a backdoor account whose home or shell an unprivileged process already
-// controls — so such paths are refused before useradd/usermod/chown runs.
-// Membership is by the path's PARENT being exactly one of these (a home like
-// /tmp/deploy), not a prefix match: a legitimately nested path such as a test's
-// /tmp/<suite>/<n> temp dir is two levels down and is not anchored here.
 var worldWritablePersistenceRoots = map[string]bool{
 	"/tmp":     true,
 	"/var/tmp": true,
 	"/dev/shm": true,
 }
 
-// shellMetacharacters are bytes that have no place in an absolute executable
-// path and that would be dangerous if the value were ever re-expanded by a
-// shell. A login shell is passed to useradd/usermod as an argv argument (no
-// shell interpretation), but rejecting these is cheap defense-in-depth and keeps
-// the value to a plain pathname.
 const shellMetacharacters = " \t$&|;<>()`\\\"'*?!{}[]~#"
 
-// validateHomeDir rejects an unsafe home directory before it reaches
-// useradd/usermod (and, for an existing home, before the recursive chown). An
-// empty value is the "default"/"unchanged" sentinel and is allowed. The contract:
-// a home must be an absolute path, contain no ".." traversal component, and not
-// be a sensitive system directory (the filesystem root or a top-level system
-// dir) or an attacker-seedable persistence point (a path anchored directly under
-// a world-writable directory). Control characters and ':' are already rejected by
-// validateField.
 func validateHomeDir(homeDir string) error {
 	if homeDir == "" {
 		return nil
@@ -686,9 +610,7 @@ func validateHomeDir(homeDir string) error {
 		return fmt.Errorf("invalid home directory %q: must not contain a %q traversal component", homeDir, "..")
 	}
 	clean := path.Clean(homeDir)
-	// The filesystem root and a bare top-level directory (/, /etc, /usr, …) are
-	// never a legitimate per-account home; anchoring a home there would hand the
-	// account ownership of a system directory (and a recursive chown over it).
+
 	if clean == "/" || path.Dir(clean) == "/" {
 		return fmt.Errorf("invalid home directory %q: must not be the filesystem root or a top-level system directory", homeDir)
 	}
@@ -698,13 +620,6 @@ func validateHomeDir(homeDir string) error {
 	return nil
 }
 
-// validateShell rejects an unsafe login shell before it reaches useradd/usermod.
-// An empty value is the "default" sentinel (Create fills in DefaultShell) and is
-// allowed. The contract: a shell must be an absolute path, contain no ".."
-// traversal component, no shell metacharacters, and must not live in a
-// world-writable directory tree (a /tmp, /var/tmp, /dev/shm executable an
-// unprivileged attacker can replace). Control characters and ':' are already
-// rejected by validateField.
 func validateShell(shell string) error {
 	if shell == "" {
 		return nil
@@ -727,9 +642,6 @@ func validateShell(shell string) error {
 	return nil
 }
 
-// hasDotDot reports whether an absolute path contains a ".." path component
-// (".."-anywhere, including a trailing or interior one). It splits on '/' so a
-// filename that merely contains the bytes ".." (e.g. "/bin/a..b") is not flagged.
 func hasDotDot(p string) bool {
 	for _, seg := range strings.Split(p, "/") {
 		if seg == ".." {

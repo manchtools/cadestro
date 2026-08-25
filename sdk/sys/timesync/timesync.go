@@ -81,8 +81,6 @@ func New(b Backend, runner exec.Runner) (Manager, error) {
 	}
 }
 
-// runRead runs an unprivileged query and returns stdout, mapping a non-zero exit
-// (or exec failure) into an error.
 func runRead(ctx context.Context, r exec.Runner, name string, args ...string) (string, error) {
 	res, err := r.Run(ctx, exec.Command{Name: name, Args: args})
 	if err != nil {

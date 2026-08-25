@@ -25,8 +25,8 @@ func newResolved(t *testing.T, ff *fakeFS) (*resolvedManager, *exectest.FakeRunn
 
 func TestResolved_ApplyScoped(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{}, nil) // resolvectl dns
-	r.Push(exec.Result{}, nil) // resolvectl domain
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{}, nil)
 	err := m.Apply(context.Background(), Config{
 		Interface: "eth0", Nameservers: []string{"1.1.1.1", "8.8.8.8"}, SearchDomains: []string{"corp.example"},
 	})
@@ -47,7 +47,7 @@ func TestResolved_ApplyScoped(t *testing.T) {
 
 func TestResolved_ApplyScoped_NoDomainsSkipsDomainCall(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{}, nil) // only the dns call
+	r.Push(exec.Result{}, nil)
 	if err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}}); err != nil {
 		t.Fatal(err)
 	}
@@ -66,28 +66,18 @@ func TestResolved_ApplyScoped_DNSFailurePropagates(t *testing.T) {
 
 func TestResolved_ApplyScoped_DomainFailurePropagates(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{}, nil)                                  // dns ok
-	r.Push(exec.Result{ExitCode: 1, Stderr: "bad domain"}, nil) // domain fails
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{ExitCode: 1, Stderr: "bad domain"}, nil)
 	if err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}, SearchDomains: []string{"corp.example"}}); err == nil {
 		t.Error("a failed resolvectl domain must propagate")
 	}
 }
 
-// TestResolved_ApplyScoped_DomainFailureResetsTheLink pins that a scoped Apply
-// does not leave a half-applied link. `resolvectl dns` lands first, so a failing
-// `resolvectl domain` used to return an error while the new nameservers stayed
-// applied — the caller was told the config was rejected while the box had
-// already switched resolvers, with the OLD search domains.
-//
-// Apply issues `resolvectl revert <iface>`, which resets the link to
-// systemd-resolved's per-link DEFAULTS. That is deliberately not a restore of
-// the pre-call state — see the comment on Apply — so this asserts the reset was
-// issued and the original failure preserved, NOT that prior settings came back.
 func TestResolved_ApplyScoped_DomainFailureResetsTheLink(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{}, nil)                                  // dns ok
-	r.Push(exec.Result{ExitCode: 1, Stderr: "bad domain"}, nil) // domain fails
-	r.Push(exec.Result{}, nil)                                  // revert
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{ExitCode: 1, Stderr: "bad domain"}, nil)
+	r.Push(exec.Result{}, nil)
 	err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}, SearchDomains: []string{"corp.example"}})
 	if err == nil {
 		t.Fatal("a failed resolvectl domain must propagate")
@@ -102,26 +92,21 @@ func TestResolved_ApplyScoped_DomainFailureResetsTheLink(t *testing.T) {
 	if !calls[2].Escalate {
 		t.Error("the reset must escalate like the calls it undoes")
 	}
-	// The reset is the remedy, not the news: the operator still needs the
-	// domain failure that caused it.
+
 	if !strings.Contains(err.Error(), "bad domain") {
 		t.Errorf("err = %v, want the original resolvectl domain failure preserved", err)
 	}
-	// And the message must not oversell what revert did — an operator reading
-	// "reverted" as "your previous per-link settings are back" would be wrong.
+
 	if !strings.Contains(err.Error(), "default") {
 		t.Errorf("err = %v, want it to say the link was reset to systemd-resolved's per-link defaults rather than restored", err)
 	}
 }
 
-// The rollback is best-effort: when the revert ALSO fails the link is left in
-// the half-applied state, and the error must say so instead of pretending the
-// link was restored.
 func TestResolved_ApplyScoped_RevertFailureIsReported(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{}, nil)                                     // dns ok
-	r.Push(exec.Result{ExitCode: 1, Stderr: "bad domain"}, nil)    // domain fails
-	r.Push(exec.Result{ExitCode: 1, Stderr: "revert failed"}, nil) // revert fails too
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{ExitCode: 1, Stderr: "bad domain"}, nil)
+	r.Push(exec.Result{ExitCode: 1, Stderr: "revert failed"}, nil)
 	err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}, SearchDomains: []string{"corp.example"}})
 	if err == nil {
 		t.Fatal("a failed resolvectl domain must propagate")
@@ -136,20 +121,16 @@ func TestResolved_ApplyScoped_RevertFailureIsReported(t *testing.T) {
 	if !strings.Contains(err.Error(), "bad domain") {
 		t.Errorf("err = %v, want the original resolvectl domain failure preserved", err)
 	}
-	// A failed revert leaves the link half-configured, which is a materially
-	// different operator situation from a clean rollback — the message must not
-	// read the same as the successful-revert one.
+
 	if !strings.Contains(err.Error(), "revert failed") {
 		t.Errorf("err = %v, want the revert's own failure surfaced so the operator knows the link is still half-configured", err)
 	}
 }
 
-// A scoped Apply whose calls all succeed must NOT revert — the positive control
-// for the rollback above.
 func TestResolved_ApplyScoped_SuccessDoesNotRevert(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{}, nil) // dns
-	r.Push(exec.Result{}, nil) // domain
+	r.Push(exec.Result{}, nil)
+	r.Push(exec.Result{}, nil)
 	if err := m.Apply(context.Background(), Config{Interface: "eth0", Nameservers: []string{"1.1.1.1"}, SearchDomains: []string{"corp.example"}}); err != nil {
 		t.Fatal(err)
 	}
@@ -163,14 +144,14 @@ func TestResolved_ApplyScoped_SuccessDoesNotRevert(t *testing.T) {
 func TestResolved_ApplyGlobal(t *testing.T) {
 	ff := &fakeFS{}
 	m, r := newResolved(t, ff)
-	r.Push(exec.Result{}, nil) // systemctl restart
+	r.Push(exec.Result{}, nil)
 	err := m.Apply(context.Background(), Config{
 		Nameservers: []string{"1.1.1.1", "2001:db8::1"}, SearchDomains: []string{"corp.example", "lan"},
 	})
 	if err != nil {
 		t.Fatalf("Apply global: %v", err)
 	}
-	// Mkdir then WriteFile of the drop-in.
+
 	if len(ff.mkdirs) != 1 || ff.mkdirs[0] != resolvedDropInDir {
 		t.Errorf("mkdirs = %v, want [%s]", ff.mkdirs, resolvedDropInDir)
 	}
@@ -186,7 +167,7 @@ func TestResolved_ApplyGlobal(t *testing.T) {
 	if ff.writes[0].opts.Mode != 0o644 || ff.writes[0].opts.Owner != "root" {
 		t.Errorf("drop-in opts = %+v, want mode 0644 owner root", ff.writes[0].opts)
 	}
-	// Then a restart of resolved.
+
 	last := r.Calls()
 	if len(last) != 1 || strings.Join(last[0].Args, " ") != "restart systemd-resolved" || !last[0].Escalate {
 		t.Errorf("restart call = %v, want escalated `systemctl restart systemd-resolved`", last)
@@ -209,7 +190,7 @@ func TestResolved_ApplyGlobal_WriteFailurePropagates(t *testing.T) {
 
 func TestResolved_ApplyGlobal_RestartFailurePropagates(t *testing.T) {
 	m, r := newResolved(t, &fakeFS{})
-	r.Push(exec.Result{ExitCode: 1, Stderr: "unit failed"}, nil) // restart fails
+	r.Push(exec.Result{ExitCode: 1, Stderr: "unit failed"}, nil)
 	if err := m.Apply(context.Background(), Config{Nameservers: []string{"1.1.1.1"}}); err == nil {
 		t.Error("a failed systemctl restart must propagate")
 	}
@@ -225,9 +206,6 @@ func TestResolved_ApplyRejectsInvalidConfig(t *testing.T) {
 	}
 }
 
-// TestResolved_ApplyGlobal_RenderErrorPropagates covers the defensive
-// render-error branch in Apply (unreachable in production because validateConfig
-// runs first) by overriding the renderDropIn seam.
 func TestResolved_ApplyGlobal_RenderErrorPropagates(t *testing.T) {
 	prev := renderDropIn
 	t.Cleanup(func() { renderDropIn = prev })
@@ -274,8 +252,6 @@ func TestResolved_GetReadError(t *testing.T) {
 	}
 }
 
-// parseResolvConf: the last search/domain line wins (resolver(5)); `domain`
-// is treated like `search`.
 func TestParseResolvConf_LastSearchWins(t *testing.T) {
 	st := parseResolvConf([]byte("search first.example\ndomain second.example\nnameserver 9.9.9.9\n"))
 	if strings.Join(st.SearchDomains, ",") != "second.example" {
@@ -286,8 +262,6 @@ func TestParseResolvConf_LastSearchWins(t *testing.T) {
 	}
 }
 
-// parseResolvConf strips inline comments so a hand-edited line like
-// `search corp.example # note` does not leak comment tokens into the State.
 func TestParseResolvConf_StripsInlineComments(t *testing.T) {
 	st := parseResolvConf([]byte("nameserver 1.1.1.1 # primary\nsearch corp.example lan ; trailing\n"))
 	if strings.Join(st.Nameservers, ",") != "1.1.1.1" {
@@ -296,8 +270,7 @@ func TestParseResolvConf_StripsInlineComments(t *testing.T) {
 	if strings.Join(st.SearchDomains, ",") != "corp.example,lan" {
 		t.Errorf("search domains = %v, want [corp.example lan] (inline comment stripped)", st.SearchDomains)
 	}
-	// A line that is only a keyword followed immediately by a comment yields no
-	// values (and must not panic).
+
 	st = parseResolvConf([]byte("search # nothing here\n"))
 	if len(st.SearchDomains) != 0 {
 		t.Errorf("search-only-comment domains = %v, want empty", st.SearchDomains)
@@ -305,15 +278,14 @@ func TestParseResolvConf_StripsInlineComments(t *testing.T) {
 }
 
 func TestRenderResolvedDropIn_NewlineGuard(t *testing.T) {
-	// Defense-in-depth: a value carrying a newline is refused (validateConfig
-	// already prevents this, but the renderer fails closed regardless).
+
 	if _, err := renderResolvedDropIn(Config{Nameservers: []string{"1.1.1.1\nDNS=evil"}}); !errors.Is(err, ErrInvalidConfig) {
 		t.Errorf("nameserver newline: err = %v, want ErrInvalidConfig", err)
 	}
 	if _, err := renderResolvedDropIn(Config{SearchDomains: []string{"a\nDomains=evil"}}); !errors.Is(err, ErrInvalidConfig) {
 		t.Errorf("domain newline: err = %v, want ErrInvalidConfig", err)
 	}
-	// Empty config renders just the header + section (no DNS/Domains lines).
+
 	body, err := renderResolvedDropIn(Config{})
 	if err != nil {
 		t.Fatal(err)

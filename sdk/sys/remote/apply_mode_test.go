@@ -7,9 +7,6 @@ import (
 	"testing"
 )
 
-// selfOwner returns the current process's user/group names for chown-to-self
-// (permitted without privilege), so applyMode's ownership branch can be exercised
-// in the unprivileged unit sweep.
 func selfOwner(t *testing.T) (owner, group string) {
 	t.Helper()
 	u, err := user.Current()
@@ -23,10 +20,6 @@ func selfOwner(t *testing.T) (owner, group string) {
 	return u.Username, g.Name
 }
 
-// TestApplyMode_DirectoryOwnership pins the fix for the regression where applyMode
-// used FchownNoFollow for every target. That helper refuses non-regular files, so
-// owner/group on a DIRECTORY destination (archive extract, git clone, S3 prefix)
-// failed even with valid inputs. The dir path now goes through OpenRealDir+Chown.
 func TestApplyMode_DirectoryOwnership(t *testing.T) {
 	owner, group := selfOwner(t)
 	dir := filepath.Join(t.TempDir(), "extracted")
@@ -45,7 +38,6 @@ func TestApplyMode_DirectoryOwnership(t *testing.T) {
 	}
 }
 
-// TestApplyMode_RegularFileOwnership covers the regular-file branch (FchownNoFollow).
 func TestApplyMode_RegularFileOwnership(t *testing.T) {
 	owner, group := selfOwner(t)
 	f := filepath.Join(t.TempDir(), "file")
@@ -64,7 +56,6 @@ func TestApplyMode_RegularFileOwnership(t *testing.T) {
 	}
 }
 
-// TestApplyMode_NoOpWhenAllEmpty verifies applyMode skips work entirely.
 func TestApplyMode_NoOpWhenAllEmpty(t *testing.T) {
 	if err := applyMode(filepath.Join(t.TempDir(), "nope"), "", "", ""); err != nil {
 		t.Errorf("applyMode with no fields set = %v, want nil (no-op)", err)

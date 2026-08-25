@@ -9,11 +9,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// FakeRunner is the keystone of the additive unit tier: a capability Manager
-// built with it can be tested with no host, no sudo, no container. It records
-// every Command in order and returns scripted Results FIFO.
-
-// Compile-time proof it is a drop-in exec.Runner.
 var _ exec.Runner = (*exectest.FakeRunner)(nil)
 
 func TestFakeRunner_RecordsCommandsInOrder(t *testing.T) {
@@ -86,15 +81,12 @@ func TestFakeRunner_BackendReported(t *testing.T) {
 	if got := exectest.New(exec.Sudo).Backend(); got != exec.Sudo {
 		t.Errorf("Backend() = %d, want Sudo", got)
 	}
-	// Zero value defaults to Direct (the common unit-test runner).
+
 	if got := exectest.New(0).Backend(); got != exec.Direct {
 		t.Errorf("Backend() for zero value = %d, want Direct default", got)
 	}
 }
 
-// A cancelled context makes FakeRunner behave like the real Runner: it returns
-// ctx.Err(), does NOT consume a scripted result (the command did not run), but
-// still records the attempt so a test can see what the capability tried.
 func TestFakeRunner_RespectsCancelledContext(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "should-not-be-returned"}, nil)
@@ -112,14 +104,12 @@ func TestFakeRunner_RespectsCancelledContext(t *testing.T) {
 	if len(f.Calls()) != 1 {
 		t.Errorf("Calls() = %d, want the attempted command recorded", len(f.Calls()))
 	}
-	// The scripted result is preserved for the next (non-cancelled) call.
+
 	if res2, _ := f.Run(context.Background(), exec.Command{Name: "useradd"}); res2.Stdout != "should-not-be-returned" {
 		t.Errorf("scripted result was wrongly consumed by the cancelled call: got %q", res2.Stdout)
 	}
 }
 
-// Stream records the Command too and replays scripted stdout to the callback so
-// streaming capabilities can be unit-tested.
 func TestFakeRunner_StreamRecordsAndReplays(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{ExitCode: 0, Stdout: "line1\nline2\n"}, nil)

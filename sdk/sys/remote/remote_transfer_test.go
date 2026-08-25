@@ -10,32 +10,28 @@ import (
 	"testing"
 )
 
-// --- applyMode: no-op, valid mode, invalid mode ---
-
 func TestApplyMode(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "x")
 	if err := os.WriteFile(f, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// No-op when nothing is requested.
+
 	if err := applyMode(f, "", "", ""); err != nil {
 		t.Errorf("applyMode(no-op) = %v, want nil", err)
 	}
-	// A valid octal mode is applied.
+
 	if err := applyMode(f, "0640", "", ""); err != nil {
 		t.Fatalf("applyMode(0640): %v", err)
 	}
 	if info, _ := os.Stat(f); info.Mode().Perm() != 0o640 {
 		t.Errorf("perm = %o, want 0640", info.Mode().Perm())
 	}
-	// An invalid mode string is rejected.
+
 	if err := applyMode(f, "not-octal", "", ""); err == nil {
 		t.Error("applyMode(invalid mode) = nil, want error")
 	}
 }
-
-// --- http Fetch: a non-2xx response is an error, not a silent empty file ---
 
 func TestHTTPFetch_Non2xx_Errors(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,17 +52,13 @@ func TestHTTPFetch_Non2xx_Errors(t *testing.T) {
 	}
 }
 
-// --- s3 Fetch error contract: 403 → ErrInvalidConfig (bucket-policy hint, from
-// the HEAD), other non-2xx → a plain error (from the GET). Both must surface,
-// never a silent empty file. ---
-
 func TestS3Fetch_ErrorStatuses(t *testing.T) {
 	cases := []struct {
 		code        int
-		wantInvalid bool // expect ErrInvalidConfig specifically
+		wantInvalid bool
 	}{
-		{http.StatusForbidden, true}, // 403 → bucket-policy hint
-		{http.StatusNotFound, false}, // 404 → plain status error
+		{http.StatusForbidden, true},
+		{http.StatusNotFound, false},
 		{http.StatusInternalServerError, false},
 	}
 	for _, c := range cases {

@@ -12,15 +12,10 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeFS is a hermetic fsManager for the firewalld backend's service-XML writes,
-// installed via the newFS seam by useFS. nil closures default to a success no-op.
 type fakeFS struct {
 	writeFn  func(path string, data []byte, opts fs.WriteOptions) error
 	removeFn func(path string) error
-	// present models files already on disk, keyed by path. WriteFileExclusive
-	// refuses those with fs.ErrExists exactly as the real one does, and a
-	// successful exclusive create adds to the set — so a test can plant a
-	// "foreign" definition and watch the backend correctly decline ownership.
+
 	present map[string]bool
 }
 
@@ -38,9 +33,6 @@ func (f *fakeFS) Remove(_ context.Context, path string) error {
 	return nil
 }
 
-// WriteFileExclusive refuses a path already in `present` with fs.ErrExists and
-// otherwise records the create. Default (nil map) is "nothing on disk", i.e. the
-// common fresh-create case the existing firewalld tests were written for.
 func (f *fakeFS) WriteFileExclusive(_ context.Context, path string, data []byte, opts fs.WriteOptions) error {
 	if f.present[path] {
 		return fmt.Errorf("write file %s: %w", path, fs.ErrExists)
@@ -57,16 +49,8 @@ func (f *fakeFS) WriteFileExclusive(_ context.Context, path string, data []byte,
 	return nil
 }
 
-// useFS points the newFS seam at f for the rest of the test (paired with
-// swapFirewalldSeams, which restores newFS on cleanup).
 func useFS(f *fakeFS) { newFS = func(exec.Runner) (fsManager, error) { return f, nil } }
 
-// =============================================================================
-// nftables — apply/remove/list driven by a recordingRunner (no kernel).
-// =============================================================================
-
-// nftListJSONWith builds an `nft -j list` envelope carrying one rule with the
-// given comment/handle so the idempotency + List paths can be exercised.
 func nftListJSONWith(comment string, handle int) string {
 	return `{"nftables":[
 		{"table":{"family":"inet","name":"app_filter","handle":1}},
@@ -81,8 +65,8 @@ func nftListJSONWith(comment string, handle int) string {
 
 func TestNftables_ApplyRule_NewRule(t *testing.T) {
 	r := &recordingRunner{}
-	r.push(exec.Result{ExitCode: 1}, nil) // nft list: table missing
-	r.pushOut("")                         // nft -f -: ok
+	r.push(exec.Result{ExitCode: 1}, nil)
+	r.pushOut("")
 	m := newMgr(t, Nftables, "app", r)
 
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: true, Protocol: ProtocolTCP, Port: 22}); err != nil {
@@ -111,8 +95,8 @@ func TestNftables_ApplyRule_NewRule(t *testing.T) {
 
 func TestNftables_ApplyRule_ReplacesExisting(t *testing.T) {
 	r := &recordingRunner{}
-	r.pushOut(nftListJSONWith("ssh", 7)) // existing rule with handle 7
-	r.pushOut("")                        // apply ok
+	r.pushOut(nftListJSONWith("ssh", 7))
+	r.pushOut("")
 	m := newMgr(t, Nftables, "app", r)
 
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: false, Protocol: ProtocolUDP, Port: 53}); err != nil {
@@ -129,14 +113,13 @@ func TestNftables_ApplyRule_ReplacesExisting(t *testing.T) {
 
 func TestNftables_ApplyRule_PortWithoutProtocolRejected(t *testing.T) {
 	r := &recordingRunner{}
-	r.push(exec.Result{ExitCode: 1}, nil) // list: no table
+	r.push(exec.Result{ExitCode: 1}, nil)
 	m := newMgr(t, Nftables, "app", r)
 	err := m.ApplyRule(context.Background(), Rule{ID: "bad", Allow: true, Protocol: ProtocolAny, Port: 22})
 	if !errors.Is(err, ErrInvalidRule) {
 		t.Errorf("err = %v, want ErrInvalidRule (port without protocol)", err)
 	}
-	// The build (and rejection) happens after a read-only list probe; the
-	// mutating `nft -f -` must never run.
+
 	for _, c := range r.calls {
 		if strings.Contains(strings.Join(c.cmd.Args, " "), "-f") {
 			t.Error("an untranslatable rule reached the mutating nft -f - call")
@@ -146,8 +129,8 @@ func TestNftables_ApplyRule_PortWithoutProtocolRejected(t *testing.T) {
 
 func TestNftables_ApplyRule_RunFailure(t *testing.T) {
 	r := &recordingRunner{}
-	r.push(exec.Result{ExitCode: 1}, nil)                         // list: no table
-	r.push(exec.Result{ExitCode: 1, Stderr: "syntax error"}, nil) // nft -f - fails
+	r.push(exec.Result{ExitCode: 1}, nil)
+	r.push(exec.Result{ExitCode: 1, Stderr: "syntax error"}, nil)
 	m := newMgr(t, Nftables, "app", r)
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: true, Protocol: ProtocolTCP, Port: 22}); err == nil ||
 		!strings.Contains(err.Error(), "nft -f -") {
@@ -158,8 +141,8 @@ func TestNftables_ApplyRule_RunFailure(t *testing.T) {
 func TestNftables_RemoveRule(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.pushOut(nftListJSONWith("ssh", 9)) // list
-		r.pushOut("")                        // delete run
+		r.pushOut(nftListJSONWith("ssh", 9))
+		r.pushOut("")
 		m := newMgr(t, Nftables, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err != nil {
 			t.Fatal(err)
@@ -170,8 +153,7 @@ func TestNftables_RemoveRule(t *testing.T) {
 	})
 	t.Run("no table is a no-op", func(t *testing.T) {
 		r := &recordingRunner{}
-		// nft prints "No such file or directory" when the table is absent; that
-		// is the only list failure RemoveRule may treat as "already absent".
+
 		r.push(exec.Result{ExitCode: 1, Stderr: "Error: No such file or directory"}, nil)
 		m := newMgr(t, Nftables, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err != nil {
@@ -183,8 +165,7 @@ func TestNftables_RemoveRule(t *testing.T) {
 	})
 	t.Run("a real list failure is NOT swallowed as a no-op", func(t *testing.T) {
 		r := &recordingRunner{}
-		// Escalation denied / nft crash: RemoveRule must NOT report a successful
-		// no-op (it did not prove the rule absent).
+
 		r.push(exec.Result{ExitCode: 1, Stderr: "Operation not permitted"}, nil)
 		m := newMgr(t, Nftables, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err == nil {
@@ -193,7 +174,7 @@ func TestNftables_RemoveRule(t *testing.T) {
 	})
 	t.Run("rule absent is a no-op", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.pushOut(nftListJSONWith("other", 3)) // list has a different rule
+		r.pushOut(nftListJSONWith("other", 3))
 		m := newMgr(t, Nftables, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err != nil {
 			t.Fatal(err)
@@ -231,10 +212,6 @@ func TestNftables_List(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// firewalld — apply/remove/list with the fs seams stubbed.
-// =============================================================================
-
 func swapFirewalldSeams(t *testing.T) {
 	t.Helper()
 	on, ord := newFS, readFile
@@ -249,10 +226,10 @@ func TestFirewalld_ApplyRule_Happy(t *testing.T) {
 		return nil
 	}})
 	r := &recordingRunner{}
-	r.pushOut("public\n") // --get-default-zone
-	r.pushOut("")         // --reload
-	r.pushOut("")         // --add-service
-	r.pushOut("")         // --reload (post-enable)
+	r.pushOut("public\n")
+	r.pushOut("")
+	r.pushOut("")
+	r.pushOut("")
 	m := newMgr(t, Firewalld, "app", r)
 
 	if err := m.ApplyRule(context.Background(), Rule{ID: "https", Allow: true, Protocol: ProtocolTCP, Port: 443}); err != nil {
@@ -330,8 +307,8 @@ func TestFirewalld_ApplyRule_Failures(t *testing.T) {
 		swapFirewalldSeams(t)
 		useFS(&fakeFS{})
 		r := &recordingRunner{}
-		r.pushOut("public\n")                 // zone
-		r.push(exec.Result{ExitCode: 1}, nil) // reload fails
+		r.pushOut("public\n")
+		r.push(exec.Result{ExitCode: 1}, nil)
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.ApplyRule(context.Background(), Rule{ID: "r", Allow: true, Protocol: ProtocolTCP, Port: 1}); err == nil ||
 			!strings.Contains(err.Error(), "--reload") {
@@ -342,9 +319,9 @@ func TestFirewalld_ApplyRule_Failures(t *testing.T) {
 		swapFirewalldSeams(t)
 		useFS(&fakeFS{})
 		r := &recordingRunner{}
-		r.pushOut("public\n")                 // zone
-		r.pushOut("")                         // reload
-		r.push(exec.Result{ExitCode: 1}, nil) // add-service fails
+		r.pushOut("public\n")
+		r.pushOut("")
+		r.push(exec.Result{ExitCode: 1}, nil)
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.ApplyRule(context.Background(), Rule{ID: "r", Allow: true, Protocol: ProtocolTCP, Port: 1}); err == nil ||
 			!strings.Contains(err.Error(), "add-service") {
@@ -355,10 +332,10 @@ func TestFirewalld_ApplyRule_Failures(t *testing.T) {
 		swapFirewalldSeams(t)
 		useFS(&fakeFS{})
 		r := &recordingRunner{}
-		r.pushOut("public\n")                 // zone
-		r.pushOut("")                         // reload
-		r.pushOut("")                         // add-service
-		r.push(exec.Result{ExitCode: 1}, nil) // post-enable reload fails
+		r.pushOut("public\n")
+		r.pushOut("")
+		r.pushOut("")
+		r.push(exec.Result{ExitCode: 1}, nil)
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.ApplyRule(context.Background(), Rule{ID: "r", Allow: true, Protocol: ProtocolTCP, Port: 1}); err == nil ||
 			!strings.Contains(err.Error(), "post-enable") {
@@ -367,30 +344,12 @@ func TestFirewalld_ApplyRule_Failures(t *testing.T) {
 	})
 }
 
-// TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated pins the failure
-// atomicity of ApplyRule, and its deliberate asymmetry.
-//
-// The service XML is written before the reload/add-service/reload sequence, so
-// a failure in any of those used to leave the file on disk. That matters
-// because firewalld PARSES every file in /etc/firewalld/services on the next
-// reload by anything at all: an Apply the caller was told had failed would
-// quietly become a real, loadable service definition.
-//
-// But ApplyRule also UPDATES an existing rule, overwriting a service that may
-// still be enabled in the zone. Deleting on failure there would destroy a
-// working definition that nothing asked us to touch, turning a failed update
-// into an outage. So cleanup is create-only: remove when this Apply brought the
-// file into existence, leave it when it was already there — and when the
-// existence probe itself fails, leave it, because "we don't know" must never
-// resolve to "delete".
 func TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated(t *testing.T) {
 	const wantPath = "/etc/firewalld/services/app-r.xml"
 	rule := Rule{ID: "r", Allow: true, Protocol: ProtocolTCP, Port: 1}
 
-	// failAt scripts the zone lookup plus n successful firewall-cmd calls, then
-	// one failing call — so each post-write step can be made to fail in turn.
 	failAt := func(r *recordingRunner, okCalls int) {
-		r.pushOut("public\n") // --get-default-zone
+		r.pushOut("public\n")
 		for i := 0; i < okCalls; i++ {
 			r.pushOut("")
 		}
@@ -407,7 +366,7 @@ func TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated(t *testing.T) {
 		t.Run("created, "+name+" → xml removed", func(t *testing.T) {
 			swapFirewalldSeams(t)
 			var removed []string
-			useFS(&fakeFS{ // nothing on disk → the exclusive create succeeds, we own it
+			useFS(&fakeFS{
 				removeFn: func(p string) error { removed = append(removed, p); return nil },
 			})
 			r := &recordingRunner{}
@@ -425,8 +384,7 @@ func TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated(t *testing.T) {
 			swapFirewalldSeams(t)
 			var removed []string
 			useFS(&fakeFS{
-				// Already on disk → the exclusive create reports fs.ErrExists and the
-				// backend falls back to an overwrite it does NOT own.
+
 				present:  map[string]bool{wantPath: true},
 				removeFn: func(p string) error { removed = append(removed, p); return nil },
 			})
@@ -442,18 +400,11 @@ func TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated(t *testing.T) {
 		})
 	}
 
-	// The race the create-exclusive design exists to close. Under the old
-	// Exists-then-WriteFile shape, a definition landing in the gap between the
-	// probe (which said "absent") and the write would be overwritten AND then
-	// deleted on failure, destroying a service someone else owns and may still
-	// have enabled in the zone. Here the foreign file is present by the time the
-	// write happens, so the exclusive create reports it and ownership is declined.
 	t.Run("foreign file appears before the write → left untouched on failure", func(t *testing.T) {
 		swapFirewalldSeams(t)
 		var removed []string
 		ff := &fakeFS{removeFn: func(p string) error { removed = append(removed, p); return nil }}
-		// Plant it exactly as a competing writer would: present before our write,
-		// with no cooperation from us.
+
 		ff.present = map[string]bool{wantPath: true}
 		useFS(ff)
 		r := &recordingRunner{}
@@ -467,7 +418,6 @@ func TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated(t *testing.T) {
 		}
 	})
 
-	// Positive control: a fully successful Apply keeps its XML.
 	t.Run("success keeps the xml", func(t *testing.T) {
 		swapFirewalldSeams(t)
 		var removed []string
@@ -486,11 +436,9 @@ func TestFirewalld_ApplyRule_CleansUpOnlyTheXMLItCreated(t *testing.T) {
 		}
 	})
 
-	// The cleanup is best-effort: when the removal ALSO fails the file is still
-	// there, and the error must say so rather than implying a clean rollback.
 	t.Run("cleanup failure is reported", func(t *testing.T) {
 		swapFirewalldSeams(t)
-		useFS(&fakeFS{ // fresh create → owned, so cleanup is attempted
+		useFS(&fakeFS{
 			removeFn: func(string) error { return errors.New("read-only fs") },
 		})
 		r := &recordingRunner{}
@@ -512,10 +460,10 @@ func TestFirewalld_RemoveRule(t *testing.T) {
 		var removed string
 		useFS(&fakeFS{removeFn: func(path string) error { removed = path; return nil }})
 		r := &recordingRunner{}
-		r.pushOut("public\n")        // zone
-		r.pushOut("app-https ssh\n") // list-services (svc enabled)
-		r.pushOut("")                // remove-service
-		r.pushOut("")                // reload
+		r.pushOut("public\n")
+		r.pushOut("app-https ssh\n")
+		r.pushOut("")
+		r.pushOut("")
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.RemoveRule(context.Background(), "https"); err != nil {
 			t.Fatal(err)
@@ -531,9 +479,9 @@ func TestFirewalld_RemoveRule(t *testing.T) {
 		swapFirewalldSeams(t)
 		useFS(&fakeFS{})
 		r := &recordingRunner{}
-		r.pushOut("public\n") // zone
-		r.pushOut("ssh\n")    // list-services (svc absent)
-		r.pushOut("")         // reload
+		r.pushOut("public\n")
+		r.pushOut("ssh\n")
+		r.pushOut("")
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.RemoveRule(context.Background(), "https"); err != nil {
 			t.Fatal(err)
@@ -545,7 +493,7 @@ func TestFirewalld_RemoveRule(t *testing.T) {
 	t.Run("list-services fails", func(t *testing.T) {
 		r := &recordingRunner{}
 		r.pushOut("public\n")
-		r.push(exec.Result{ExitCode: 1}, nil) // list-services
+		r.push(exec.Result{ExitCode: 1}, nil)
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.RemoveRule(context.Background(), "https"); err == nil ||
 			!strings.Contains(err.Error(), "list-services") {
@@ -557,7 +505,7 @@ func TestFirewalld_RemoveRule(t *testing.T) {
 		useFS(&fakeFS{removeFn: func(string) error { return errors.New("permission denied") }})
 		r := &recordingRunner{}
 		r.pushOut("public\n")
-		r.pushOut("ssh\n") // not enabled
+		r.pushOut("ssh\n")
 		m := newMgr(t, Firewalld, "app", r)
 		if err := m.RemoveRule(context.Background(), "https"); err == nil ||
 			!strings.Contains(err.Error(), "remove") {
@@ -584,14 +532,14 @@ func TestFirewalld_List(t *testing.T) {
 			return nil, errors.New("missing")
 		}
 		r := &recordingRunner{}
-		r.pushOut("public\n")                 // zone
-		r.pushOut("app-https app-gone ssh\n") // list-services
+		r.pushOut("public\n")
+		r.pushOut("app-https app-gone ssh\n")
 		m := newMgr(t, Firewalld, "app", r)
 		rules, err := m.List(context.Background())
 		if err != nil {
 			t.Fatal(err)
 		}
-		// app-https reconstructs; app-gone's xml is missing → skipped; ssh isn't ours.
+
 		if len(rules) != 1 || rules[0].ID != "https" || rules[0].Port != 443 {
 			t.Errorf("rules = %+v, want just https/443", rules)
 		}
@@ -616,12 +564,6 @@ func TestFirewalld_List(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// ufw — apply/remove/list driven by a recordingRunner.
-// =============================================================================
-
-// ufwStatusWith renders a minimal `ufw status numbered` body with one numbered
-// rule carrying the given comment.
 func ufwStatusWith(num int, to, comment string) string {
 	return "Status: active\n\n" +
 		"     To                         Action      From\n" +
@@ -631,8 +573,8 @@ func ufwStatusWith(num int, to, comment string) string {
 
 func TestUFW_ApplyRule_NewRule(t *testing.T) {
 	r := &recordingRunner{}
-	r.pushOut("Status: active\n") // status numbered: no existing rule
-	r.pushOut("")                 // ufw allow ...
+	r.pushOut("Status: active\n")
+	r.pushOut("")
 	m := newMgr(t, UFW, "app", r)
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: true, Protocol: ProtocolTCP, Port: 22}); err != nil {
 		t.Fatal(err)
@@ -644,9 +586,9 @@ func TestUFW_ApplyRule_NewRule(t *testing.T) {
 
 func TestUFW_ApplyRule_ReplacesExisting(t *testing.T) {
 	r := &recordingRunner{}
-	r.pushOut(ufwStatusWith(3, "22/tcp", "app:ssh")) // status shows existing rule #3
-	r.pushOut("")                                    // ufw --force delete 3
-	r.pushOut("")                                    // ufw allow ...
+	r.pushOut(ufwStatusWith(3, "22/tcp", "app:ssh"))
+	r.pushOut("")
+	r.pushOut("")
 	m := newMgr(t, UFW, "app", r)
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: true, Protocol: ProtocolTCP, Port: 22}); err != nil {
 		t.Fatal(err)
@@ -659,7 +601,7 @@ func TestUFW_ApplyRule_ReplacesExisting(t *testing.T) {
 func TestUFW_ApplyRule_DeleteExistingFails(t *testing.T) {
 	r := &recordingRunner{}
 	r.pushOut(ufwStatusWith(3, "22/tcp", "app:ssh"))
-	r.push(exec.Result{ExitCode: 1}, nil) // delete fails
+	r.push(exec.Result{ExitCode: 1}, nil)
 	m := newMgr(t, UFW, "app", r)
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: true, Protocol: ProtocolTCP, Port: 22}); err == nil ||
 		!strings.Contains(err.Error(), "delete existing rule") {
@@ -669,8 +611,8 @@ func TestUFW_ApplyRule_DeleteExistingFails(t *testing.T) {
 
 func TestUFW_ApplyRule_StatusErrorStillAdds(t *testing.T) {
 	r := &recordingRunner{}
-	r.push(exec.Result{ExitCode: 1}, nil) // status fails (inactive) → skip delete
-	r.pushOut("")                         // add still runs
+	r.push(exec.Result{ExitCode: 1}, nil)
+	r.pushOut("")
 	m := newMgr(t, UFW, "app", r)
 	if err := m.ApplyRule(context.Background(), Rule{ID: "ssh", Allow: true, Protocol: ProtocolTCP, Port: 22}); err != nil {
 		t.Fatal(err)
@@ -694,7 +636,7 @@ func TestUFW_ApplyRule_AddFails(t *testing.T) {
 func TestUFW_ApplyRule_ScopeRejection(t *testing.T) {
 	r := &recordingRunner{}
 	m := newMgr(t, UFW, "app", r)
-	// Port without a concrete protocol is rejected before any exec.
+
 	if err := m.ApplyRule(context.Background(), Rule{ID: "bad", Allow: true, Protocol: ProtocolAny, Port: 22}); !errors.Is(err, ErrInvalidRule) {
 		t.Errorf("err = %v, want ErrInvalidRule", err)
 	}
@@ -707,7 +649,7 @@ func TestUFW_RemoveRule(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		r := &recordingRunner{}
 		r.pushOut(ufwStatusWith(2, "22/tcp", "app:ssh"))
-		r.pushOut("") // delete
+		r.pushOut("")
 		m := newMgr(t, UFW, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err != nil {
 			t.Fatal(err)
@@ -718,7 +660,7 @@ func TestUFW_RemoveRule(t *testing.T) {
 	})
 	t.Run("inactive ufw is a no-op", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.push(exec.Result{ExitCode: 1}, nil) // status fails
+		r.push(exec.Result{ExitCode: 1}, nil)
 		m := newMgr(t, UFW, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err != nil {
 			t.Fatal(err)
@@ -729,7 +671,7 @@ func TestUFW_RemoveRule(t *testing.T) {
 	})
 	t.Run("not found is a no-op", func(t *testing.T) {
 		r := &recordingRunner{}
-		r.pushOut(ufwStatusWith(2, "22/tcp", "other:ssh")) // different namespace
+		r.pushOut(ufwStatusWith(2, "22/tcp", "other:ssh"))
 		m := newMgr(t, UFW, "app", r)
 		if err := m.RemoveRule(context.Background(), "ssh"); err != nil {
 			t.Fatal(err)
@@ -765,8 +707,7 @@ func TestUFW_List(t *testing.T) {
 	})
 	t.Run("inactive → empty", func(t *testing.T) {
 		r := &recordingRunner{}
-		// An inactive ufw exits 0 with "Status: inactive" — the firewall IS
-		// installed, it just holds no rules, so List is legitimately empty.
+
 		r.pushOut("Status: inactive\n")
 		m := newMgr(t, UFW, "app", r)
 		rules, err := m.List(context.Background())
@@ -776,8 +717,7 @@ func TestUFW_List(t *testing.T) {
 	})
 	t.Run("can't run ufw propagates", func(t *testing.T) {
 		r := &recordingRunner{}
-		// A non-zero exit (ufw absent, escalation denied) is a genuine
-		// can't-determine-state failure and must NOT be read as "zero rules".
+
 		r.push(exec.Result{ExitCode: 1}, nil)
 		m := newMgr(t, UFW, "app", r)
 		if _, err := m.List(context.Background()); err == nil {

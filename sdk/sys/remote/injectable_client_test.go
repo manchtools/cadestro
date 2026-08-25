@@ -11,10 +11,6 @@ import (
 	"testing"
 )
 
-// newTLSFixture serves payload over TLS with a self-signed httptest cert. The
-// default HTTP client rejects that cert, so a Fetch can only succeed if the
-// caller injects srv.Client() via HTTPConfig.Client — exactly the seam under
-// test.
 func newTLSFixture(t *testing.T, payload []byte) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,11 +21,6 @@ func newTLSFixture(t *testing.T, payload []byte) *httptest.Server {
 	return srv
 }
 
-// TestHTTPFetch_InjectedClient_ReachesTLSServer is the value case: with a
-// caller-supplied client that trusts the test server's cert, Fetch downloads
-// and atomically writes the payload. Without the injectable client this is
-// impossible (the default client won't trust a self-signed httptest cert) —
-// which is why a consumer could not delegate its own download to remote.Fetch.
 func TestHTTPFetch_InjectedClient_ReachesTLSServer(t *testing.T) {
 	payload := []byte("delivered over TLS")
 	srv := newTLSFixture(t, payload)
@@ -56,10 +47,6 @@ func TestHTTPFetch_InjectedClient_ReachesTLSServer(t *testing.T) {
 	}
 }
 
-// TestHTTPFetch_InjectedClient_StillEnforcesChecksum proves the seam is a
-// TRANSPORT override only: injecting a client does not bypass the integrity
-// pin. A wrong checksum over the injected TLS client still fails closed
-// (ErrIntegrity, dest absent).
 func TestHTTPFetch_InjectedClient_StillEnforcesChecksum(t *testing.T) {
 	srv := newTLSFixture(t, []byte("real body"))
 	dest := filepath.Join(t.TempDir(), "file")
@@ -81,8 +68,6 @@ func TestHTTPFetch_InjectedClient_StillEnforcesChecksum(t *testing.T) {
 	}
 }
 
-// TestNewHTTP_NilClientUsesDefault pins the contract that omitting Client keeps
-// the hardened default (non-nil) — so existing callers are unchanged.
 func TestNewHTTP_NilClientUsesDefault(t *testing.T) {
 	src, err := NewHTTP(HTTPConfig{URL: "https://example.com/x"})
 	if err != nil {

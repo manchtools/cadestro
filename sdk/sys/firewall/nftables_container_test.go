@@ -1,14 +1,5 @@
 //go:build container
 
-// Container-based real-execution tests for the nftables backend. The fake-runner
-// unit tests assert the emitted nft argv/ruleset; these load rules into the REAL
-// nft binary and the kernel netfilter state (in the container's own network
-// namespace), then read them back with `nft -j list` and the SDK's own JSON
-// parser. This is an anti-rot guard: a future nft version that changes its JSON
-// shape, its address normalisation, or its acceptance of a rule fails loudly
-// here instead of silently in production.
-//
-// Needs CAP_NET_ADMIN (nft writes kernel state). Self-skips when nft is absent.
 package firewall
 
 import (
@@ -31,7 +22,7 @@ func requireNft(t *testing.T) {
 
 func nftMgr(t *testing.T, ns string) Manager {
 	t.Helper()
-	r, err := exec.NewRunner(exec.Direct) // container runs as root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		t.Fatalf("NewRunner(Direct): %v", err)
 	}
@@ -51,8 +42,6 @@ func findRule(rules []Rule, id string) (Rule, bool) {
 	return Rule{}, false
 }
 
-// TestNftablesApplyListRemove_Container pins the full ApplyRule → List →
-// RemoveRule round-trip against real nft, including idempotency.
 func TestNftablesApplyListRemove_Container(t *testing.T) {
 	requireNft(t)
 	m := nftMgr(t, "cadestrort")
@@ -76,7 +65,6 @@ func TestNftablesApplyListRemove_Container(t *testing.T) {
 		t.Errorf("round-trip mismatch:\n applied = %+v\n listed  = %+v", rule, got)
 	}
 
-	// Idempotent: applying the same rule again must not duplicate it.
 	if err := m.ApplyRule(ctx, rule); err != nil {
 		t.Fatalf("ApplyRule (2nd): %v", err)
 	}
@@ -88,7 +76,6 @@ func TestNftablesApplyListRemove_Container(t *testing.T) {
 		t.Errorf("after re-applying the same rule, List = %d rules, want 1: %+v", n, rules)
 	}
 
-	// Remove → gone.
 	if err := m.RemoveRule(ctx, "allow_ssh"); err != nil {
 		t.Fatalf("RemoveRule: %v", err)
 	}
@@ -101,13 +88,6 @@ func TestNftablesApplyListRemove_Container(t *testing.T) {
 	}
 }
 
-// TestNftablesV4MappedIPv6_Container documents the real-nft behaviour for a
-// v4-mapped IPv6 source (::ffff:10.0.0.1) — the audit suspected real nft rejects
-// it (atomic batch rollback → rule silently never applies). Against real nft we
-// assert the honest contract: ApplyRule must either reject it up front OR apply
-// it AND have it survive a List round-trip — it must NOT silently disappear
-// (accepted by ApplyRule but absent from List), which would be the dangerous
-// "rule thought-applied but not enforced" state.
 func TestNftablesV4MappedIPv6_Container(t *testing.T) {
 	requireNft(t)
 	m := nftMgr(t, "cadestrov4m")
@@ -117,7 +97,7 @@ func TestNftablesV4MappedIPv6_Container(t *testing.T) {
 	rule := Rule{ID: "v4mapped", Allow: false, Source: "::ffff:10.0.0.1"}
 	err := m.ApplyRule(ctx, rule)
 	if err != nil {
-		// Rejecting a v4-mapped source up front is an acceptable, safe outcome.
+
 		t.Logf("ApplyRule(::ffff:10.0.0.1) rejected up front: %v (acceptable)", err)
 		return
 	}

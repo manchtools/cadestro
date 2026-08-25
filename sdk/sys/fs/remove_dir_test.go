@@ -9,16 +9,6 @@ import (
 	"testing"
 )
 
-// WS6 #12: RemoveDir guarded recursive `rm -rf` with a TOP-LEVEL-ONLY
-// denylist (an exact-match map of `/etc`, `/home`, …). A path one level
-// down — `/etc/sudoers.d`, `/home/alice`, `/var/lib/anything` — slipped
-// straight through to a root `rm -rf`. The fix is deny-by-default across
-// the whole subtree of every security-relevant prefix.
-//
-// The must-refuse set below is sourced from INTENT (the security-relevant
-// system prefixes a managed directory action must never be able to wipe),
-// NOT from the implementation's list — so a prefix silently dropped from
-// the code fails this test.
 func TestIsUnderProtectedPrefix(t *testing.T) {
 	refuse := []string{
 		"/",
@@ -31,7 +21,7 @@ func TestIsUnderProtectedPrefix(t *testing.T) {
 		"/usr", "/usr/bin", "/usr/lib/systemd",
 		"/bin", "/sbin", "/lib", "/lib64",
 		"/proc", "/sys", "/dev", "/run",
-		// non-clean inputs must normalise before the check
+
 		"/etc/../etc/sudoers.d", "/home/./bob",
 	}
 	for _, p := range refuse {
@@ -44,7 +34,7 @@ func TestIsUnderProtectedPrefix(t *testing.T) {
 		"/tmp/managed", "/tmp/foo/bar",
 		"/srv/app/data",
 		"/opt/myapp/cache",
-		"/var/log/myapp", // /var itself is protected but /var/log/* is not
+		"/var/log/myapp",
 		"/data/managed",
 	}
 	for _, p := range allow {
@@ -53,14 +43,9 @@ func TestIsUnderProtectedPrefix(t *testing.T) {
 		}
 	}
 
-	// A relative path is resolved against cwd before the check; exercise that
-	// branch. The bool is cwd-dependent, so only assert it does not panic.
 	_ = IsUnderProtectedPrefix("some/relative/path")
 }
 
-// RemoveDir must refuse a protected path BEFORE touching the filesystem.
-// Using real system paths is safe precisely because the refusal happens
-// in the predicate, before any unlink.
 func TestRemoveDir_RefusesProtectedPrefixes(t *testing.T) {
 	m := directManager(t)
 	for _, p := range []string{
@@ -79,8 +64,6 @@ func TestRemoveDir_RefusesProtectedPrefixes(t *testing.T) {
 	}
 }
 
-// Positive path: a managed tree under a non-protected prefix is removed
-// recursively. Runs as the test user against t.TempDir(); no root needed.
 func TestRemoveDir_DeletesManagedTree(t *testing.T) {
 	m := directManager(t)
 	root := t.TempDir()
@@ -99,21 +82,16 @@ func TestRemoveDir_DeletesManagedTree(t *testing.T) {
 	if _, err := os.Lstat(target); !os.IsNotExist(err) {
 		t.Errorf("target still exists after RemoveDir: %v", err)
 	}
-	// The parent (the non-protected managed root) is left intact.
+
 	if _, err := os.Stat(root); err != nil {
 		t.Errorf("RemoveDir removed more than its target: %v", err)
 	}
 }
 
-// WS6 #4: a symlinked INTERMEDIATE component must abort the delete — the
-// fd-anchored walk opens each component O_NOFOLLOW, so a swapped-in
-// symlink fails the open instead of redirecting `rm -rf` into another
-// tree.
 func TestRemoveDir_RefusesSymlinkedComponent(t *testing.T) {
 	m := directManager(t)
 	root := t.TempDir()
 
-	// A victim tree the attacker hopes RemoveDir will descend into.
 	victim := filepath.Join(root, "victim")
 	if err := os.MkdirAll(filepath.Join(victim, "sub"), 0o755); err != nil {
 		t.Fatalf("mkdir victim: %v", err)
@@ -123,7 +101,6 @@ func TestRemoveDir_RefusesSymlinkedComponent(t *testing.T) {
 		t.Fatalf("seed victim: %v", err)
 	}
 
-	// `link` is a symlink standing in for what should be a real dir.
 	link := filepath.Join(root, "link")
 	if err := os.Symlink(victim, link); err != nil {
 		t.Fatalf("symlink: %v", err)
@@ -138,9 +115,6 @@ func TestRemoveDir_RefusesSymlinkedComponent(t *testing.T) {
 	}
 }
 
-// The leaf target being a symlink must also be refused — RemoveDir is
-// asked to delete a DIRECTORY; a symlink is not one and must not be
-// dereferenced (nor silently unlinked as if it were the target dir).
 func TestRemoveDir_RefusesSymlinkTarget(t *testing.T) {
 	m := directManager(t)
 	root := t.TempDir()

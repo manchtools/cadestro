@@ -8,11 +8,8 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// ExampleNew shows the construct-a-handle flow: pick a backend (here
-// systemd-resolved), build a Manager over a Runner, and apply a host-global
-// resolver config.
 func ExampleNew() {
-	r, err := exec.NewRunner(exec.Direct) // the agent runs as root
+	r, err := exec.NewRunner(exec.Direct)
 	if err != nil {
 		log.Fatal(err)
 	}

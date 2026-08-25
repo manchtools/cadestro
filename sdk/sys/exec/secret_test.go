@@ -7,12 +7,6 @@ import (
 	"testing"
 )
 
-// Secret must never let plaintext reach a log/format by accident: String(),
-// %v, %s, and %#v all render the redaction sentinel; only Reveal() returns the
-// bytes. The constructor rejects embedded newlines/CR (a credential piped to
-// chpasswd/cryptsetup stdin must be a single line — a newline would split it
-// into a second record).
-
 func TestNewSecret_RejectsNewlineAndCR(t *testing.T) {
 	for _, bad := range []string{"a\nb", "a\rb", "trailing\n", "\r", "x\r\ny"} {
 		if _, err := NewSecret(bad); !errors.Is(err, ErrSecretContainsNewline) {
@@ -32,9 +26,7 @@ func TestNewSecret_EmptyIsValidAndZero(t *testing.T) {
 }
 
 func TestNewMultilineSecret_AllowsNewlinesAndStillRedacts(t *testing.T) {
-	// A PEM private key is the motivating case: it is multi-line and is written
-	// verbatim to a 0600 file (never piped to stdin), so the newline rejection
-	// must NOT apply — but the redaction and Reveal contract must be identical.
+
 	const pem = "-----BEGIN PRIVATE KEY-----\nMIIBVgIBADAN\nQ==\n-----END PRIVATE KEY-----\n"
 	s := NewMultilineSecret(pem)
 	if s.IsZero() {
@@ -56,7 +48,7 @@ func TestNewMultilineSecret_AllowsNewlinesAndStillRedacts(t *testing.T) {
 			t.Errorf("%s = %q, want [REDACTED]", verb, out)
 		}
 	}
-	// Empty is zero, same as NewSecret.
+
 	if !NewMultilineSecret("").IsZero() {
 		t.Error("empty multiline secret IsZero() = false, want true")
 	}
@@ -74,10 +66,7 @@ func TestSecret_RedactsEverywhereButReveal(t *testing.T) {
 	if got := s.Reveal(); got != plaintext {
 		t.Errorf("Reveal() = %q, want %q", got, plaintext)
 	}
-	// Format through an interface value — the realistic accidental-leak path
-	// (loggers take ...any). This also keeps the %s case honest: a direct
-	// fmt.Sprintf("%s", stringer) is a staticcheck S1025 smell, and routing via
-	// `any` is exactly how a credential would actually reach a log.
+
 	var logged any = s
 	renders := map[string]string{
 		"String()": s.String(),
@@ -96,9 +85,6 @@ func TestSecret_RedactsEverywhereButReveal(t *testing.T) {
 	}
 }
 
-// A Secret embedded in a larger struct must still redact when the OUTER value
-// is formatted — the most common accidental-leak path (logging a config/options
-// struct that happens to carry a credential).
 func TestSecret_RedactsWhenNestedInStruct(t *testing.T) {
 	const plaintext = "nested-passphrase"
 	s, _ := NewSecret(plaintext)
@@ -115,8 +101,6 @@ func TestSecret_RedactsWhenNestedInStruct(t *testing.T) {
 	}
 }
 
-// HasNewline reports a newline/CR without revealing the plaintext — the safe
-// predicate validators use for line-oriented sinks (keyfile psk=, stdin records).
 func TestSecret_HasNewline(t *testing.T) {
 	clean, err := NewSecret("Hunter2-no-newlines")
 	if err != nil {

@@ -27,8 +27,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// Seams for the file-backed sources, overridable from tests so the
-// command-driven collectors can be exercised deterministically.
 var (
 	cpuinfoPath   = "/proc/cpuinfo"
 	meminfoPath   = "/proc/meminfo"
@@ -93,8 +91,6 @@ type collector struct {
 	r exec.Runner
 }
 
-// read runs an unprivileged query and returns its stdout, mapping a non-zero
-// exit (or a failure to execute) to an error.
 func (c *collector) read(ctx context.Context, name string, args ...string) (string, error) {
 	res, err := c.r.Run(ctx, exec.Command{Name: name, Args: args})
 	if err != nil {
@@ -224,7 +220,6 @@ func (c *collector) NetworkInterfaces(ctx context.Context) ([]NetworkInterface, 
 	return interfaces, nil
 }
 
-// parseCPUInfo reads /proc/cpuinfo and extracts the CPU model name and core count.
 func parseCPUInfo(path string) (model string, cores int, err error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -253,7 +248,6 @@ func parseCPUInfo(path string) (model string, cores int, err error) {
 	return model, cores, nil
 }
 
-// parseMemTotal reads /proc/meminfo and returns total memory in MB.
 func parseMemTotal(path string) (int64, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -282,7 +276,6 @@ func parseMemTotal(path string) (int64, error) {
 	return 0, fmt.Errorf("MemTotal not found in %s", path)
 }
 
-// parseOSRelease parses an os-release file and returns OSInfo.
 func parseOSRelease(path string) (*OSInfo, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -316,8 +309,6 @@ func parseOSRelease(path string) (*OSInfo, error) {
 	return info, nil
 }
 
-// parseOSReleaseLine parses a single KEY=VALUE line from os-release. Values may be
-// optionally quoted with double quotes.
 func parseOSReleaseLine(line string) (key, value string, ok bool) {
 	line = strings.TrimSpace(line)
 	if line == "" || strings.HasPrefix(line, "#") {
