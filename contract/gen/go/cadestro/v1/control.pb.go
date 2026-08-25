@@ -7417,11 +7417,10 @@ type DeviceGroup struct {
 	MemberCount              int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
 	CreatedAt                *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	CreatedBy                string                 `protobuf:"bytes,6,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	IsDynamic                bool                   `protobuf:"varint,7,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery             string                 `protobuf:"bytes,8,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
-	SyncIntervalMinutes      int32                  `protobuf:"varint,9,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
-	MaintenanceWindow        *MaintenanceWindow     `protobuf:"bytes,10,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
-	InventoryIntervalMinutes int32                  `protobuf:"varint,11,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
+	DynamicQuery             *string                `protobuf:"bytes,7,opt,name=dynamic_query,json=dynamicQuery,proto3,oneof" json:"dynamic_query,omitempty"`
+	SyncIntervalMinutes      int32                  `protobuf:"varint,8,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
+	MaintenanceWindow        *MaintenanceWindow     `protobuf:"bytes,9,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
+	InventoryIntervalMinutes int32                  `protobuf:"varint,10,opt,name=inventory_interval_minutes,json=inventoryIntervalMinutes,proto3" json:"inventory_interval_minutes,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -7498,16 +7497,9 @@ func (x *DeviceGroup) GetCreatedBy() string {
 	return ""
 }
 
-func (x *DeviceGroup) GetIsDynamic() bool {
-	if x != nil {
-		return x.IsDynamic
-	}
-	return false
-}
-
 func (x *DeviceGroup) GetDynamicQuery() string {
-	if x != nil {
-		return x.DynamicQuery
+	if x != nil && x.DynamicQuery != nil {
+		return *x.DynamicQuery
 	}
 	return ""
 }
@@ -7537,8 +7529,7 @@ type CreateDeviceGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	IsDynamic     bool                   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string                 `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	DynamicQuery  *string                `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3,oneof" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7587,16 +7578,9 @@ func (x *CreateDeviceGroupRequest) GetDescription() string {
 	return ""
 }
 
-func (x *CreateDeviceGroupRequest) GetIsDynamic() bool {
-	if x != nil {
-		return x.IsDynamic
-	}
-	return false
-}
-
 func (x *CreateDeviceGroupRequest) GetDynamicQuery() string {
-	if x != nil {
-		return x.DynamicQuery
+	if x != nil && x.DynamicQuery != nil {
+		return *x.DynamicQuery
 	}
 	return ""
 }
@@ -8448,8 +8432,7 @@ func (x *RemoveDeviceFromGroupResponse) GetGroup() *DeviceGroup {
 type UpdateDeviceGroupQueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *DeviceGroupId         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	IsDynamic     bool                   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string                 `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	DynamicQuery  *string                `protobuf:"bytes,2,opt,name=dynamic_query,json=dynamicQuery,proto3,oneof" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8491,16 +8474,9 @@ func (x *UpdateDeviceGroupQueryRequest) GetId() *DeviceGroupId {
 	return nil
 }
 
-func (x *UpdateDeviceGroupQueryRequest) GetIsDynamic() bool {
-	if x != nil {
-		return x.IsDynamic
-	}
-	return false
-}
-
 func (x *UpdateDeviceGroupQueryRequest) GetDynamicQuery() string {
-	if x != nil {
-		return x.DynamicQuery
+	if x != nil && x.DynamicQuery != nil {
+		return *x.DynamicQuery
 	}
 	return ""
 }
@@ -12836,11 +12812,10 @@ type UserGroup struct {
 	Description       string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	MemberCount       int32                  `protobuf:"varint,4,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"`
 	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	IsDynamic         bool                   `protobuf:"varint,6,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery      string                 `protobuf:"bytes,7,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
-	IsScimManaged     bool                   `protobuf:"varint,8,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
-	MaintenanceWindow *MaintenanceWindow     `protobuf:"bytes,9,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
-	RoleGrants        []*RoleGrant           `protobuf:"bytes,10,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
+	DynamicQuery      *string                `protobuf:"bytes,6,opt,name=dynamic_query,json=dynamicQuery,proto3,oneof" json:"dynamic_query,omitempty"`
+	IsScimManaged     bool                   `protobuf:"varint,7,opt,name=is_scim_managed,json=isScimManaged,proto3" json:"is_scim_managed,omitempty"`
+	MaintenanceWindow *MaintenanceWindow     `protobuf:"bytes,8,opt,name=maintenance_window,json=maintenanceWindow,proto3" json:"maintenance_window,omitempty"`
+	RoleGrants        []*RoleGrant           `protobuf:"bytes,9,rep,name=role_grants,json=roleGrants,proto3" json:"role_grants,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -12910,16 +12885,9 @@ func (x *UserGroup) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *UserGroup) GetIsDynamic() bool {
-	if x != nil {
-		return x.IsDynamic
-	}
-	return false
-}
-
 func (x *UserGroup) GetDynamicQuery() string {
-	if x != nil {
-		return x.DynamicQuery
+	if x != nil && x.DynamicQuery != nil {
+		return *x.DynamicQuery
 	}
 	return ""
 }
@@ -13009,8 +12977,7 @@ type CreateUserGroupRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	IsDynamic     bool                   `protobuf:"varint,3,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string                 `protobuf:"bytes,4,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	DynamicQuery  *string                `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3,oneof" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -13059,16 +13026,9 @@ func (x *CreateUserGroupRequest) GetDescription() string {
 	return ""
 }
 
-func (x *CreateUserGroupRequest) GetIsDynamic() bool {
-	if x != nil {
-		return x.IsDynamic
-	}
-	return false
-}
-
 func (x *CreateUserGroupRequest) GetDynamicQuery() string {
-	if x != nil {
-		return x.DynamicQuery
+	if x != nil && x.DynamicQuery != nil {
+		return *x.DynamicQuery
 	}
 	return ""
 }
@@ -14000,8 +13960,7 @@ func (x *ListUserGroupsForUserResponse) GetGroups() []*UserGroup {
 type UpdateUserGroupQueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            *UserGroupId           `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	IsDynamic     bool                   `protobuf:"varint,2,opt,name=is_dynamic,json=isDynamic,proto3" json:"is_dynamic,omitempty"`
-	DynamicQuery  string                 `protobuf:"bytes,3,opt,name=dynamic_query,json=dynamicQuery,proto3" json:"dynamic_query,omitempty"`
+	DynamicQuery  *string                `protobuf:"bytes,2,opt,name=dynamic_query,json=dynamicQuery,proto3,oneof" json:"dynamic_query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14043,16 +14002,9 @@ func (x *UpdateUserGroupQueryRequest) GetId() *UserGroupId {
 	return nil
 }
 
-func (x *UpdateUserGroupQueryRequest) GetIsDynamic() bool {
-	if x != nil {
-		return x.IsDynamic
-	}
-	return false
-}
-
 func (x *UpdateUserGroupQueryRequest) GetDynamicQuery() string {
-	if x != nil {
-		return x.DynamicQuery
+	if x != nil && x.DynamicQuery != nil {
+		return *x.DynamicQuery
 	}
 	return ""
 }
@@ -19776,7 +19728,7 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"$ReorderActionSetInDefinitionResponse\x127\n" +
 	"\n" +
 	"definition\x18\x01 \x01(\v2\x17.cadestro.v1.DefinitionR\n" +
-	"definition\"\xf1\x03\n" +
+	"definition\"\xe9\x03\n" +
 	"\vDeviceGroup\x12*\n" +
 	"\x02id\x18\x01 \x01(\v2\x1a.cadestro.v1.DeviceGroupIdR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -19785,21 +19737,20 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
 	"\n" +
-	"created_by\x18\x06 \x01(\tR\tcreatedBy\x12\x1d\n" +
-	"\n" +
-	"is_dynamic\x18\a \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\b \x01(\tR\fdynamicQuery\x122\n" +
-	"\x15sync_interval_minutes\x18\t \x01(\x05R\x13syncIntervalMinutes\x12M\n" +
-	"\x12maintenance_window\x18\n" +
-	" \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x12<\n" +
-	"\x1ainventory_interval_minutes\x18\v \x01(\x05R\x18inventoryIntervalMinutes\"\xbd\x01\n" +
+	"created_by\x18\x06 \x01(\tR\tcreatedBy\x12(\n" +
+	"\rdynamic_query\x18\a \x01(\tH\x00R\fdynamicQuery\x88\x01\x01\x122\n" +
+	"\x15sync_interval_minutes\x18\b \x01(\x05R\x13syncIntervalMinutes\x12M\n" +
+	"\x12maintenance_window\x18\t \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x12<\n" +
+	"\x1ainventory_interval_minutes\x18\n" +
+	" \x01(\x05R\x18inventoryIntervalMinutesB\x10\n" +
+	"\x0e_dynamic_query\"\xb4\x01\n" +
 	"\x18CreateDeviceGroupRequest\x12!\n" +
 	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12-\n" +
-	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12\x1d\n" +
-	"\n" +
-	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x120\n" +
-	"\rdynamic_query\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"K\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x124\n" +
+	"\rdynamic_query\x18\x03 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80 H\x00R\fdynamicQuery\x88\x01\x01B\x10\n" +
+	"\x0e_dynamic_query\"K\n" +
 	"\x19CreateDeviceGroupResponse\x12.\n" +
 	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"K\n" +
 	"\x15GetDeviceGroupRequest\x122\n" +
@@ -19851,12 +19802,12 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\bgroup_id\x18\x01 \x01(\v2\x1a.cadestro.v1.DeviceGroupIdB\x06\xbaH\x03\xc8\x01\x01R\agroupId\x12:\n" +
 	"\tdevice_id\x18\x02 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\"O\n" +
 	"\x1dRemoveDeviceFromGroupResponse\x12.\n" +
-	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"\xa4\x01\n" +
+	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"\x9b\x01\n" +
 	"\x1dUpdateDeviceGroupQueryRequest\x122\n" +
-	"\x02id\x18\x01 \x01(\v2\x1a.cadestro.v1.DeviceGroupIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12\x1d\n" +
-	"\n" +
-	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x120\n" +
-	"\rdynamic_query\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"P\n" +
+	"\x02id\x18\x01 \x01(\v2\x1a.cadestro.v1.DeviceGroupIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x124\n" +
+	"\rdynamic_query\x18\x02 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80 H\x00R\fdynamicQuery\x88\x01\x01B\x10\n" +
+	"\x0e_dynamic_query\"P\n" +
 	"\x1eUpdateDeviceGroupQueryResponse\x12.\n" +
 	"\x05group\x18\x01 \x01(\v2\x18.cadestro.v1.DeviceGroupR\x05group\"=\n" +
 	"\x1bValidateDynamicQueryRequest\x12\x1e\n" +
@@ -20190,32 +20141,30 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x1aRevokeRoleFromUserResponse\"\x18\n" +
 	"\x16ListPermissionsRequest\"X\n" +
 	"\x17ListPermissionsResponse\x12=\n" +
-	"\vpermissions\x18\x01 \x03(\v2\x1b.cadestro.v1.PermissionInfoR\vpermissions\"\xbd\x03\n" +
+	"\vpermissions\x18\x01 \x03(\v2\x1b.cadestro.v1.PermissionInfoR\vpermissions\"\xb5\x03\n" +
 	"\tUserGroup\x12(\n" +
 	"\x02id\x18\x01 \x01(\v2\x18.cadestro.v1.UserGroupIdR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12!\n" +
 	"\fmember_count\x18\x04 \x01(\x05R\vmemberCount\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1d\n" +
-	"\n" +
-	"is_dynamic\x18\x06 \x01(\bR\tisDynamic\x12#\n" +
-	"\rdynamic_query\x18\a \x01(\tR\fdynamicQuery\x12&\n" +
-	"\x0fis_scim_managed\x18\b \x01(\bR\risScimManaged\x12M\n" +
-	"\x12maintenance_window\x18\t \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x127\n" +
-	"\vrole_grants\x18\n" +
-	" \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
-	"roleGrants\"\x8c\x01\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12(\n" +
+	"\rdynamic_query\x18\x06 \x01(\tH\x00R\fdynamicQuery\x88\x01\x01\x12&\n" +
+	"\x0fis_scim_managed\x18\a \x01(\bR\risScimManaged\x12M\n" +
+	"\x12maintenance_window\x18\b \x01(\v2\x1e.cadestro.v1.MaintenanceWindowR\x11maintenanceWindow\x127\n" +
+	"\vrole_grants\x18\t \x03(\v2\x16.cadestro.v1.RoleGrantR\n" +
+	"roleGrantsB\x10\n" +
+	"\x0e_dynamic_query\"\x8c\x01\n" +
 	"\x0fUserGroupMember\x12,\n" +
 	"\auser_id\x18\x01 \x01(\v2\x13.cadestro.v1.UserIdR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x125\n" +
-	"\badded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\xba\x01\n" +
+	"\badded_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"\xb1\x01\n" +
 	"\x16CreateUserGroupRequest\x12 \n" +
 	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12-\n" +
-	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x12\x1d\n" +
-	"\n" +
-	"is_dynamic\x18\x03 \x01(\bR\tisDynamic\x120\n" +
-	"\rdynamic_query\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"G\n" +
+	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\vdescription\x124\n" +
+	"\rdynamic_query\x18\x03 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80 H\x00R\fdynamicQuery\x88\x01\x01B\x10\n" +
+	"\x0e_dynamic_query\"G\n" +
 	"\x17CreateUserGroupResponse\x12,\n" +
 	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"G\n" +
 	"\x13GetUserGroupRequest\x120\n" +
@@ -20268,12 +20217,12 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x1cListUserGroupsForUserRequest\x124\n" +
 	"\auser_id\x18\x01 \x01(\v2\x13.cadestro.v1.UserIdB\x06\xbaH\x03\xc8\x01\x01R\x06userId\"O\n" +
 	"\x1dListUserGroupsForUserResponse\x12.\n" +
-	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\"\xa0\x01\n" +
+	"\x06groups\x18\x01 \x03(\v2\x16.cadestro.v1.UserGroupR\x06groups\"\x97\x01\n" +
 	"\x1bUpdateUserGroupQueryRequest\x120\n" +
-	"\x02id\x18\x01 \x01(\v2\x18.cadestro.v1.UserGroupIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12\x1d\n" +
-	"\n" +
-	"is_dynamic\x18\x02 \x01(\bR\tisDynamic\x120\n" +
-	"\rdynamic_query\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fdynamicQuery\"L\n" +
+	"\x02id\x18\x01 \x01(\v2\x18.cadestro.v1.UserGroupIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x124\n" +
+	"\rdynamic_query\x18\x02 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\x80 H\x00R\fdynamicQuery\x88\x01\x01B\x10\n" +
+	"\x0e_dynamic_query\"L\n" +
 	"\x1cUpdateUserGroupQueryResponse\x12,\n" +
 	"\x05group\x18\x01 \x01(\v2\x16.cadestro.v1.UserGroupR\x05group\"?\n" +
 	"\x1dValidateUserGroupQueryRequest\x12\x1e\n" +
@@ -22134,6 +22083,12 @@ func file_cadestro_v1_control_proto_init() {
 		(*UpdateActionParamsRequest_Wifi)(nil),
 		(*UpdateActionParamsRequest_AgentUpdate)(nil),
 	}
+	file_cadestro_v1_control_proto_msgTypes[114].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[115].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[133].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[211].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[213].OneofWrappers = []any{}
+	file_cadestro_v1_control_proto_msgTypes[233].OneofWrappers = []any{}
 	file_cadestro_v1_control_proto_msgTypes[316].OneofWrappers = []any{}
 	file_cadestro_v1_control_proto_msgTypes[318].OneofWrappers = []any{}
 	type x struct{}

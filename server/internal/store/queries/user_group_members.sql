@@ -26,7 +26,7 @@ INSERT INTO user_group_members (group_id, user_id, added_at, added_by)
 SELECT sqlc.arg(group_id), sqlc.arg(user_id), sqlc.arg(added_at), sqlc.arg(added_by)
 FROM user_groups g
 JOIN users u ON u.id = sqlc.arg(user_id) AND u.is_deleted = FALSE
-WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.is_dynamic = FALSE
+WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.dynamic_query IS NULL
 ON CONFLICT (group_id, user_id) DO NOTHING;
 
 -- name: RemoveStaticUserGroupMember :execrows
@@ -37,7 +37,7 @@ WHERE group_id = sqlc.arg(group_id)
       SELECT 1 FROM user_groups g
       WHERE g.id = user_group_members.group_id
         AND g.is_deleted = FALSE
-        AND g.is_dynamic = FALSE
+        AND g.dynamic_query IS NULL
   );
 
 -- name: AddDynamicUserGroupMembers :many
@@ -47,7 +47,7 @@ FROM json_each(sqlc.arg(user_ids_json)) AS wanted
 JOIN users u ON u.id = CAST(wanted.value AS TEXT) AND u.is_deleted = FALSE
 WHERE EXISTS (
     SELECT 1 FROM user_groups g
-    WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.is_dynamic = TRUE
+    WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.dynamic_query IS NOT NULL
 )
 ON CONFLICT (group_id, user_id) DO NOTHING
 RETURNING user_id;
@@ -62,7 +62,7 @@ WHERE group_id = sqlc.arg(group_id)
       SELECT 1 FROM user_groups g
       WHERE g.id = user_group_members.group_id
         AND g.is_deleted = FALSE
-        AND g.is_dynamic = TRUE
+        AND g.dynamic_query IS NOT NULL
   )
 RETURNING user_id;
 

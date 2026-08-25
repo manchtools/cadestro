@@ -32,15 +32,12 @@ func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[cad
 		return nil, err
 	}
 	permission := PermCreateStaticUserGroup
-	var query *string
-	if req.Msg.IsDynamic {
+	query := req.Msg.DynamicQuery
+	if query != nil {
 		permission = PermCreateDynamicUserGroup
-		if _, err := dynamicquery.CompileUser(req.Msg.DynamicQuery); err != nil {
+		if _, err := dynamicquery.CompileUser(*query); err != nil {
 			return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "invalid dynamic query")
 		}
-		query = &req.Msg.DynamicQuery
-	} else if req.Msg.DynamicQuery != "" {
-		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "static groups cannot carry a dynamic query")
 	}
 	if err := h.authorize(ctx, permission, ""); err != nil {
 		return nil, err
@@ -51,11 +48,11 @@ func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[cad
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.InsertUserGroup(ctx, db.InsertUserGroupParams{
 				ID: id, Name: req.Msg.Name, Description: req.Msg.Description,
-				CreatedAt: at, CreatedBy: actor.ID, IsDynamic: req.Msg.IsDynamic, DynamicQuery: query,
+				CreatedAt: at, CreatedBy: actor.ID, DynamicQuery: query,
 			}); err != nil {
 				return err
 			}
-			rec.Effect(userGroupEffect(id, "CREATE", "name", "description", "is_dynamic", "dynamic_query"))
+			rec.Effect(userGroupEffect(id, "CREATE", "name", "description", "dynamic_query"))
 			return nil
 		})
 	if err != nil {
@@ -310,7 +307,7 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 	if err != nil {
 		return nil, h.userGroupReadError(ctx, err)
 	}
-	if group.IsDynamic {
+	if group.DynamicQuery != nil {
 		return nil, rpcError(ctx, ErrDynamicGroupMembership, connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
 	}
 	roleGrants, err := h.store.ListUserGroupRoleGrants(ctx, req.Msg.GetGroupId().GetValue())
@@ -360,7 +357,7 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 			if err != nil {
 				return err
 			}
-			if stored.IsDynamic {
+			if stored.DynamicQuery != nil {
 				return errUserGroupDynamic
 			}
 			roleGrants, err := tx.ListUserGroupRoleGrants(ctx, req.Msg.GetGroupId().GetValue())
@@ -438,7 +435,7 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, h.userGroupReadError(ctx, err)
 	}
-	if group.IsDynamic {
+	if group.DynamicQuery != nil {
 		return nil, rpcError(ctx, ErrDynamicGroupMembership, connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
 	}
 	at := h.now().UTC()
@@ -448,7 +445,7 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 			if err != nil {
 				return err
 			}
-			if stored.IsDynamic {
+			if stored.DynamicQuery != nil {
 				return errUserGroupDynamic
 			}
 			rows, err := tx.RemoveStaticUserGroupMember(ctx, db.RemoveStaticUserGroupMemberParams{
@@ -522,14 +519,11 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 	if err := h.authorize(ctx, PermUpdateDynamicUserGroup, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	var query *string
-	if req.Msg.IsDynamic {
-		if _, err := dynamicquery.CompileUser(req.Msg.DynamicQuery); err != nil {
+	query := req.Msg.DynamicQuery
+	if query != nil {
+		if _, err := dynamicquery.CompileUser(*query); err != nil {
 			return nil, rpcError(ctx, ErrInvalidDynamicQuery, connect.CodeInvalidArgument, "invalid dynamic query")
 		}
-		query = &req.Msg.DynamicQuery
-	} else if req.Msg.DynamicQuery != "" {
-		return nil, rpcError(ctx, ErrInvalidDynamicQuery, connect.CodeInvalidArgument, "static groups cannot carry a dynamic query")
 	}
 
 	at := h.now().UTC()
@@ -546,8 +540,8 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 			if managed {
 				return errUserGroupSCIMManaged
 			}
-			fields := []string{"is_dynamic", "dynamic_query"}
-			if req.Msg.IsDynamic && !current.IsDynamic {
+			fields := []string{"dynamic_query"}
+			if query != nil && current == nil {
 				members, err := tx.ListUserGroupMembers(ctx, req.Msg.GetId().GetValue())
 				if err != nil {
 					return err
@@ -577,7 +571,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 				fields = append(fields, "members")
 			}
 			if _, err := tx.UpdateUserGroupQuery(ctx, db.UpdateUserGroupQueryParams{
-				ID: req.Msg.GetId().GetValue(), IsDynamic: req.Msg.IsDynamic, DynamicQuery: query, UpdatedAt: at,
+				ID: req.Msg.GetId().GetValue(), DynamicQuery: query, UpdatedAt: at,
 			}); err != nil {
 				return err
 			}

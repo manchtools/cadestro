@@ -130,19 +130,19 @@ func TestDeviceGroupState_DynamicShapeAndBoundsFailClosed(t *testing.T) {
 
 	missingQueryOp := deviceGroupOperation()
 	_, err := state.Create(ctx, missingQueryOp, devicegroup.CreateParams{
-		Name: "everything", CreatedBy: missingQueryOp.ActorID, Dynamic: true,
+		Name: "everything", CreatedBy: missingQueryOp.ActorID, Query: stringPtr(""),
 	})
 	assert.ErrorIs(t, err, devicegroup.ErrInvalidQuery)
 	invalidQueryOp := deviceGroupOperation()
 	_, err = state.Create(ctx, invalidQueryOp, devicegroup.CreateParams{
-		Name: "broken", CreatedBy: invalidQueryOp.ActorID, Dynamic: true, Query: "(",
+		Name: "broken", CreatedBy: invalidQueryOp.ActorID, Query: stringPtr("("),
 	})
 	assert.ErrorIs(t, err, devicegroup.ErrInvalidQuery)
 
 	op := deviceGroupOperation()
 	dynamic, err := state.Create(ctx, op, devicegroup.CreateParams{
-		Name: "production", CreatedBy: op.ActorID, Dynamic: true,
-		Query: `"env" in device.labels && device.labels["env"] == "prod"`,
+		Name: "production", CreatedBy: op.ActorID,
+		Query: stringPtr(`"env" in device.labels && device.labels["env"] == "prod"`),
 	})
 	require.NoError(t, err)
 	_, err = state.AddDevices(ctx, deviceGroupOperation(), dynamic.ID, []string{newID()})
@@ -157,7 +157,7 @@ func TestDeviceGroupState_DynamicShapeAndBoundsFailClosed(t *testing.T) {
 	_, err = state.SetMaintenanceWindow(ctx, deviceGroupOperation(), dynamic.ID, []byte(`null`))
 	assert.ErrorIs(t, err, devicegroup.ErrInvalidInput)
 
-	_, err = state.UpdateQuery(ctx, deviceGroupOperation(), dynamic.ID, true, "(")
+	_, err = state.UpdateQuery(ctx, deviceGroupOperation(), dynamic.ID, stringPtr("("))
 	assert.True(t, errors.Is(err, devicegroup.ErrInvalidQuery))
 }
 
@@ -194,17 +194,17 @@ func TestDeviceGroupState_ConvertingCuratedGroupToRuleClearsItsMembers(t *testin
 	require.NoError(t, err)
 	require.Equal(t, int64(2), added)
 
-	_, err = state.UpdateQuery(ctx, deviceGroupOperation(), group.ID, true, "(")
+	_, err = state.UpdateQuery(ctx, deviceGroupOperation(), group.ID, stringPtr("("))
 	assert.ErrorIs(t, err, devicegroup.ErrInvalidQuery)
 	unchanged, err := st.GetDeviceGroup(ctx, group.ID)
 	require.NoError(t, err)
-	assert.False(t, unchanged.IsDynamic, "a rejected query cannot convert the group")
+	assert.Nil(t, unchanged.DynamicQuery, "a rejected query cannot convert the group")
 	assert.Equal(t, int64(2), unchanged.LiveMemberCount, "a rejected query cannot drop members")
 
 	convertOp := deviceGroupOperation()
-	converted, err := state.UpdateQuery(ctx, convertOp, group.ID, true, `"env" in device.labels && device.labels["env"] == "prod"`)
+	converted, err := state.UpdateQuery(ctx, convertOp, group.ID, stringPtr(`"env" in device.labels && device.labels["env"] == "prod"`))
 	require.NoError(t, err, "a curated group must be convertible to a rule")
-	assert.True(t, converted.IsDynamic)
+	assert.NotNil(t, converted.DynamicQuery)
 	require.NotNil(t, converted.DynamicQuery)
 	assert.Equal(t, `"env" in device.labels && device.labels["env"] == "prod"`, *converted.DynamicQuery)
 	assert.Equal(t, int64(0), converted.LiveMemberCount, "the curated membership does not survive the rule")
@@ -230,7 +230,7 @@ func TestDeviceGroupState_ConvertingCuratedGroupToRuleClearsItsMembers(t *testin
 	_, err = state.AddDevices(ctx, deviceGroupOperation(), group.ID, []string{deviceIDs[0]})
 	assert.ErrorIs(t, err, devicegroup.ErrDynamicGroup)
 
-	materialized, err := state.UpdateQuery(ctx, deviceGroupOperation(), group.ID, false, "")
+	materialized, err := state.UpdateQuery(ctx, deviceGroupOperation(), group.ID, nil)
 	require.NoError(t, err)
-	assert.False(t, materialized.IsDynamic)
+	assert.Nil(t, materialized.DynamicQuery)
 }

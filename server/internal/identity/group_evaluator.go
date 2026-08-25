@@ -45,13 +45,10 @@ func (h *Handlers) evaluateDynamicUserGroup(ctx context.Context, op store.AuditO
 		if err != nil {
 			return err
 		}
-		if !group.IsDynamic {
+		if group == nil {
 			return errUserGroupNotDynamic
 		}
-		if group.DynamicQuery == nil {
-			return errUserGroupInvalidQuery
-		}
-		query, err := parseUserGroupQuery(*group.DynamicQuery)
+		query, err := parseUserGroupQuery(*group)
 		if err != nil {
 			return err
 		}

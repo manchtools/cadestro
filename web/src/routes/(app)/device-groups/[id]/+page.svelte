@@ -152,8 +152,8 @@
 				}
 
 				if (group.dynamicQuery !== lastSavedQuery) {
-					lastSavedQuery = group.dynamicQuery;
-					draftQuery = group.dynamicQuery;
+					lastSavedQuery = group.dynamicQuery ?? '';
+					draftQuery = group.dynamicQuery ?? '';
 				}
 
 				const parked = claimDraft(groupContextId) as GroupDraft | undefined;
@@ -212,7 +212,7 @@
 			valid: identityNameValid && ruleValid,
 
 			commitLabel:
-				ruleDirty && group && !group.isDynamic ? m.query_commit_convert() : m.common_save(),
+				ruleDirty && group && group.dynamicQuery === undefined ? m.query_commit_convert() : m.common_save(),
 
 			subtext: !identityNameValid
 				? m.validation_name_required()
@@ -324,7 +324,7 @@
 						toast.success(m.device_group_detail_desc_updated());
 					}
 					if (wantsRule) {
-						group = (await apiClient.updateDeviceGroupQuery(groupId, true, query)) ?? group;
+						group = (await apiClient.updateDeviceGroupQuery(groupId, query)) ?? group;
 						toast.success(m.device_group_detail_query_updated());
 					}
 					editingIdentity = false;
@@ -449,7 +449,7 @@
 				<p class="font-mono text-xs text-faint">{groupId}</p>
 			</div>
 			<div class="ml-auto flex gap-2">
-				{#if group?.isDynamic}
+				{#if group?.dynamicQuery !== undefined}
 					<Button variant="outline" size="sm" onclick={evaluateGroup} disabled={evaluating}>
 						<span class="mr-2 h-4 w-4" class:animate-spin={evaluating}><Play class="h-4 w-4" /></span>
 						{m.device_group_detail_re_evaluate()}
@@ -475,7 +475,7 @@
 			data-testid="group-header"
 		>
 			<div class="flex flex-wrap items-start gap-3">
-				<span class="mt-1 w-4 shrink-0"><Tile tone={group.isDynamic ? 'info' : 'idle'} label={group.name} /></span>
+				<span class="mt-1 w-4 shrink-0"><Tile tone={group.dynamicQuery !== undefined ? 'info' : 'idle'} label={group.name} /></span>
 				<div class="min-w-0 flex-1">
 					{#if editingIdentity}
 						<div class="space-y-1.5" data-testid="identity-edit">
@@ -516,11 +516,11 @@
 				</div>
 				<div class="flex flex-wrap items-center gap-2">
 					<Chip
-						tone={group.isDynamic ? 'info' : 'idle'}
-						label={group.isDynamic ? m.device_groups_dynamic() : m.device_groups_static()}
+						tone={group.dynamicQuery !== undefined ? 'info' : 'idle'}
+						label={group.dynamicQuery !== undefined ? m.device_groups_dynamic() : m.device_groups_static()}
 					/>
 					<Stat
-						tone={group.isDynamic ? 'info' : 'ok'}
+						tone={group.dynamicQuery !== undefined ? 'info' : 'ok'}
 						value={group.memberCount}
 						label={m.device_group_detail_devices()}
 					/>
@@ -542,7 +542,7 @@
 				<MembersTab
 					members={memberDevices}
 					devices={deviceById}
-					isDynamic={group.isDynamic}
+					isDynamic={group.dynamicQuery !== undefined}
 					canAdd={availableDevices.length > 0}
 					onadd={() => {
 						selectedDeviceIds = [];
@@ -555,9 +555,9 @@
 			<Tabs.Content value="rule" class="mt-3">
 				<DynamicRuleEditor
 					kind="device"
-					savedQuery={group.dynamicQuery}
+					savedQuery={group.dynamicQuery ?? ''}
 					bind:draft={draftQuery}
-					isDynamic={group.isDynamic}
+					isDynamic={group.dynamicQuery !== undefined}
 					rows={previewRows}
 					total={group.memberCount}
 					onstate={(state) => (ruleState = state)}
@@ -600,7 +600,7 @@
 	queryText={ruleState.text}
 	count={ruleState.count}
 	kind="device"
-	converting={!(group?.isDynamic ?? false)}
+	converting={group?.dynamicQuery === undefined}
 	currentMembers={group?.memberCount ?? 0}
 	onconfirm={() => {
 		ruleConfirmOpen = false;

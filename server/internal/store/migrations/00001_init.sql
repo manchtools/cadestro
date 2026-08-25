@@ -75,7 +75,6 @@ CREATE TABLE user_groups (
     created_by         text NOT NULL DEFAULT '',
     updated_at         timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_deleted         boolean NOT NULL DEFAULT false,
-    is_dynamic         boolean NOT NULL DEFAULT false,
     dynamic_query      text,
     maintenance_window text NOT NULL DEFAULT '{}' CHECK (
                            json_valid(maintenance_window)
@@ -305,7 +304,6 @@ CREATE TABLE device_groups (
     created_at                 timestamp,
     created_by                 text NOT NULL DEFAULT '',
     is_deleted                 boolean NOT NULL DEFAULT false,
-    is_dynamic                 boolean NOT NULL DEFAULT false,
     dynamic_query              text,
     sync_interval_minutes      integer NOT NULL DEFAULT 0,
     inventory_interval_minutes integer NOT NULL DEFAULT 0,

@@ -244,7 +244,6 @@ type DeviceGroup struct {
 	CreatedAt                *time.Time      `json:"created_at"`
 	CreatedBy                string          `json:"created_by"`
 	IsDeleted                bool            `json:"is_deleted"`
-	IsDynamic                bool            `json:"is_dynamic"`
 	DynamicQuery             *string         `json:"dynamic_query"`
 	SyncIntervalMinutes      int32           `json:"sync_interval_minutes"`
 	InventoryIntervalMinutes int32           `json:"inventory_interval_minutes"`
@@ -560,7 +559,6 @@ type UserGroup struct {
 	CreatedBy         string          `json:"created_by"`
 	UpdatedAt         time.Time       `json:"updated_at"`
 	IsDeleted         bool            `json:"is_deleted"`
-	IsDynamic         bool            `json:"is_dynamic"`
 	DynamicQuery      *string         `json:"dynamic_query"`
 	MaintenanceWindow sqlitetype.JSON `json:"maintenance_window"`
 }

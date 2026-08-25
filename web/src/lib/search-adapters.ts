@@ -102,7 +102,7 @@ export function searchResultToDeviceGroup(r: SearchResult): DeviceGroup {
 		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
-		isDynamic: f['is_dynamic'] === 'true',
+		dynamicQuery: f['dynamic_query'] || undefined,
 		memberCount: intOr(f['member_count'], 0),
 		createdAt: timestampFromSeconds(f['created_at'])
 	});
@@ -114,7 +114,7 @@ export function searchResultToUserGroup(r: SearchResult): UserGroup {
 		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
-		isDynamic: f['is_dynamic'] === 'true',
+		dynamicQuery: f['dynamic_query'] || undefined,
 
 		isScimManaged: f['is_scim_managed'] === 'true',
 		memberCount: intOr(f['member_count'], 0),

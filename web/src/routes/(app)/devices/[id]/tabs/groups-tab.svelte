@@ -87,7 +87,7 @@
 								</Table.Cell>
 								<Table.Cell>
 									<Badge variant="outline" class="text-xs">
-										{group.isDynamic ? m.device_groups_tab_type_dynamic() : m.device_groups_tab_type_static()}
+							{group.dynamicQuery !== undefined ? m.device_groups_tab_type_dynamic() : m.device_groups_tab_type_static()}
 									</Badge>
 								</Table.Cell>
 								<Table.Cell class="text-sm text-muted-foreground">
@@ -123,7 +123,7 @@
 					{/if}
 					<div class="flex items-center gap-1.5">
 						<Badge variant="outline" class="text-xs">
-							{selectedGroup.isDynamic ? m.device_groups_tab_type_dynamic() : m.device_groups_tab_type_static()}
+							{selectedGroup.dynamicQuery !== undefined ? m.device_groups_tab_type_dynamic() : m.device_groups_tab_type_static()}
 						</Badge>
 						<Badge variant="secondary" class="text-xs">
 							{m.device_groups_tab_members()}: {selectedGroup.memberCount}
@@ -131,7 +131,7 @@
 					</div>
 				</div>
 
-				{#if selectedGroup.isDynamic && selectedGroup.dynamicQuery}
+				{#if selectedGroup.dynamicQuery !== undefined}
 					<div class="space-y-2">
 						<h4 class="text-sm font-medium text-muted-foreground">
 							{m.device_groups_tab_dynamic_query()}

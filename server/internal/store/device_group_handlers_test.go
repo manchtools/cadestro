@@ -18,6 +18,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/devicegroup"
 )
 
+func stringPtr(value string) *string { return &value }
+
 type deviceGroupHandlerFixture struct {
 	*deviceHandlerFixture
 	handlers *devicegroup.Handlers
@@ -105,11 +107,10 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	require.Len(t, windowed.Msg.Group.MaintenanceWindow.Schedule, 1)
 
 	converted, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: &cadestrov1.DeviceGroupId{Value: id}, IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
+		Id: &cadestrov1.DeviceGroupId{Value: id}, DynamicQuery: stringPtr(`"env" in device.labels && device.labels["env"] == "prod"`),
 	}))
 	require.NoError(t, err, "a curated group is convertible to a rule")
-	assert.True(t, converted.Msg.Group.IsDynamic)
-	assert.Equal(t, `"env" in device.labels && device.labels["env"] == "prod"`, converted.Msg.Group.DynamicQuery)
+	assert.Equal(t, `"env" in device.labels && device.labels["env"] == "prod"`, converted.Msg.Group.GetDynamicQuery())
 	assert.Zero(t, converted.Msg.Group.MemberCount, "the curated membership does not survive the rule")
 	convertedGroup, err := f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: id}}))
 	require.NoError(t, err)
@@ -117,11 +118,11 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Empty(t, convertedGroup.Msg.DeviceIds)
 
 	_, err = f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: &cadestrov1.DeviceGroupId{Value: id}, IsDynamic: true, DynamicQuery: "(",
+		Id: &cadestrov1.DeviceGroupId{Value: id}, DynamicQuery: stringPtr("("),
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	dynamic, err := f.handlers.CreateDeviceGroup(ctx, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "dynamic workstations", IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
+		Name: "dynamic workstations", DynamicQuery: stringPtr(`"env" in device.labels && device.labels["env"] == "prod"`),
 	}))
 	require.NoError(t, err)
 	invalid, err := f.handlers.ValidateDynamicQuery(ctx, connect.NewRequest(&cadestrov1.ValidateDynamicQueryRequest{Query: "("}))
@@ -143,17 +144,17 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 		assert.Equal(t, int32(1), preview.Msg.MatchingDeviceCount, query)
 	}
 	updatedQuery, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, IsDynamic: true, DynamicQuery: `device.hostname == "group"`,
+		Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, DynamicQuery: stringPtr(`device.hostname == "group"`),
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, `device.hostname == "group"`, updatedQuery.Msg.Group.DynamicQuery)
+	assert.Equal(t, `device.hostname == "group"`, updatedQuery.Msg.Group.GetDynamicQuery())
 	evaluated, err := f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesAdded)
 	assert.Zero(t, evaluated.Msg.DevicesRemoved)
 	assert.Equal(t, int32(1), evaluated.Msg.Group.MemberCount)
 	_, err = f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, IsDynamic: true, DynamicQuery: `device.hostname == "outside"`,
+		Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, DynamicQuery: stringPtr(`device.hostname == "outside"`),
 	}))
 	require.NoError(t, err)
 	evaluated, err = f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}}))
@@ -193,13 +194,13 @@ func TestDeviceGroupHandlers_ShapeSpecificCreatePermissionAndScope(t *testing.T)
 	f := newDeviceGroupHandlerFixture(t)
 	staticOnly := f.actor("CreateStaticDeviceGroup")
 	_, err := f.handlers.CreateDeviceGroup(staticOnly, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "denied", IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
+		Name: "denied", DynamicQuery: stringPtr(`"env" in device.labels && device.labels["env"] == "prod"`),
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 
 	dynamicOnly := f.actor("CreateDynamicDeviceGroup")
 	created, err := f.handlers.CreateDeviceGroup(dynamicOnly, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "dynamic", IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
+		Name: "dynamic", DynamicQuery: stringPtr(`"env" in device.labels && device.labels["env"] == "prod"`),
 	}))
 	require.NoError(t, err)
 

@@ -153,8 +153,8 @@
 				}
 
 				if (group.dynamicQuery !== lastSavedQuery) {
-					lastSavedQuery = group.dynamicQuery;
-					draftQuery = group.dynamicQuery;
+					lastSavedQuery = group.dynamicQuery ?? '';
+					draftQuery = group.dynamicQuery ?? '';
 				}
 
 				const parked = claimDraft(groupContextId) as GroupDraft | undefined;
@@ -221,7 +221,7 @@
 			dirty: identityDirty || ruleDirty,
 			valid: identityNameValid && ruleValid,
 			commitLabel:
-				ruleDirty && group && !group.isDynamic ? m.query_commit_convert() : m.common_save(),
+				ruleDirty && group && group.dynamicQuery === undefined ? m.query_commit_convert() : m.common_save(),
 
 			subtext: !identityNameValid
 				? m.validation_name_required()
@@ -313,7 +313,7 @@
 			);
 			if (updated) group = updated;
 			if (wantsRule) {
-				const ruled = await apiClient.updateUserGroupQuery((group.id?.value ?? ''), true, query);
+				const ruled = await apiClient.updateUserGroupQuery((group.id?.value ?? ''), query);
 				if (ruled) group = ruled;
 				toast.success(m.user_group_detail_query_updated());
 			}
@@ -445,7 +445,7 @@
 				<p class="font-mono text-xs text-faint">{groupId}</p>
 			</div>
 			<div class="ml-auto flex gap-2">
-				{#if group?.isDynamic && !scim}
+				{#if group?.dynamicQuery !== undefined && !scim}
 					<Button variant="outline" size="sm" onclick={evaluateGroup} disabled={evaluating}>
 						<span class="mr-2 h-4 w-4" class:animate-spin={evaluating}><Play class="h-4 w-4" /></span>
 						{evaluating ? m.user_group_detail_evaluating() : m.user_group_detail_evaluate()}
@@ -471,7 +471,7 @@
 		>
 			<div class="flex flex-wrap items-start gap-3">
 				<span class="mt-1 w-4 shrink-0">
-					<Tile tone={group.isDynamic ? 'info' : 'idle'} label={group.name} />
+					<Tile tone={group.dynamicQuery !== undefined ? 'info' : 'idle'} label={group.name} />
 				</span>
 				<div class="min-w-0 flex-1">
 					{#if editingIdentity}
@@ -509,14 +509,14 @@
 				</div>
 				<div class="flex flex-wrap items-center gap-2">
 					<Chip
-						tone={group.isDynamic ? 'info' : 'idle'}
-						label={group.isDynamic ? m.user_groups_dynamic_label() : m.user_group_detail_static()}
+						tone={group.dynamicQuery !== undefined ? 'info' : 'idle'}
+						label={group.dynamicQuery !== undefined ? m.user_groups_dynamic_label() : m.user_group_detail_static()}
 					/>
 					{#if scim}
 						<Chip tone="warn" label={m.user_groups_scim_managed()} />
 					{/if}
 					<Stat
-						tone={group.isDynamic ? 'info' : 'ok'}
+						tone={group.dynamicQuery !== undefined ? 'info' : 'ok'}
 						value={group.memberCount}
 						label={m.user_group_detail_members()}
 					/>
@@ -542,7 +542,7 @@
 			<Tabs.Content value="members" class="mt-3">
 				<MembersTab
 					{members}
-					isDynamic={group.isDynamic}
+					isDynamic={group.dynamicQuery !== undefined}
 					isScimManaged={scim}
 					onadd={openAddMemberDialog}
 					onremove={removeMember}
@@ -553,9 +553,9 @@
 				<Tabs.Content value="rule" class="mt-3">
 					<DynamicRuleEditor
 						kind="user"
-						savedQuery={group.dynamicQuery}
+						savedQuery={group.dynamicQuery ?? ''}
 						bind:draft={draftQuery}
-						isDynamic={group.isDynamic}
+						isDynamic={group.dynamicQuery !== undefined}
 						rows={previewRows}
 						total={group.memberCount}
 						onstate={(state) => (ruleState = state)}
@@ -663,7 +663,7 @@
 	queryText={ruleState.text}
 	count={ruleState.count}
 	kind="user"
-	converting={!(group?.isDynamic ?? false)}
+	converting={group?.dynamicQuery === undefined}
 	currentMembers={group?.memberCount ?? 0}
 	onconfirm={() => {
 		ruleConfirmOpen = false;

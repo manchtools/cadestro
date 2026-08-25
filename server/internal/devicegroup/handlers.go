@@ -107,7 +107,7 @@ func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[c
 		return nil, err
 	}
 	permission := "CreateStaticDeviceGroup"
-	if req.Msg.IsDynamic {
+	if req.Msg.DynamicQuery != nil {
 		permission = "CreateDynamicDeviceGroup"
 	}
 	if !auth.HasPermission(ctx, permission) {
@@ -116,7 +116,7 @@ func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[c
 	row, err := h.state.Create(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceCreateDeviceGroupProcedure, permission), CreateParams{
 		Name: req.Msg.Name, Description: req.Msg.Description, CreatedBy: actor.ID,
-		Dynamic: req.Msg.IsDynamic, Query: req.Msg.DynamicQuery,
+		Query: req.Msg.DynamicQuery,
 	})
 	if err != nil {
 		return nil, h.mapError(ctx, "create device group", err)
@@ -280,7 +280,7 @@ func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Requ
 	}
 	row, err := h.state.UpdateQuery(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure, permission),
-		req.Msg.GetId().GetValue(), req.Msg.IsDynamic, req.Msg.DynamicQuery)
+		req.Msg.GetId().GetValue(), req.Msg.DynamicQuery)
 	if err != nil {
 		return nil, h.mapError(ctx, "update device group query", err)
 	}
@@ -520,11 +520,10 @@ func (h *Handlers) groupProto(row store.DeviceGroupView) (*cadestrov1.DeviceGrou
 	group := &cadestrov1.DeviceGroup{
 		Id: &cadestrov1.DeviceGroupId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		MemberCount: boundedCount(row.LiveMemberCount), CreatedBy: row.CreatedBy,
-		IsDynamic: row.IsDynamic, SyncIntervalMinutes: row.SyncIntervalMinutes,
-		InventoryIntervalMinutes: row.InventoryIntervalMinutes,
+		SyncIntervalMinutes: row.SyncIntervalMinutes, InventoryIntervalMinutes: row.InventoryIntervalMinutes,
 	}
 	if row.DynamicQuery != nil {
-		group.DynamicQuery = *row.DynamicQuery
+		group.DynamicQuery = row.DynamicQuery
 	}
 	if row.CreatedAt != nil {
 		group.CreatedAt = timestamppb.New(*row.CreatedAt)

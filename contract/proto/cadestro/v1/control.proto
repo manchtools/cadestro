@@ -922,14 +922,13 @@ message DeviceGroup {
   int32 member_count = 4;
   google.protobuf.Timestamp created_at = 5;
   string created_by = 6;
-  bool is_dynamic = 7;
-  string dynamic_query = 8;
+  optional string dynamic_query = 7;
 
-  int32 sync_interval_minutes = 9;
+  int32 sync_interval_minutes = 8;
 
-  MaintenanceWindow maintenance_window = 10;
+  MaintenanceWindow maintenance_window = 9;
 
-  int32 inventory_interval_minutes = 11;
+  int32 inventory_interval_minutes = 10;
 }
 
 message CreateDeviceGroupRequest {
@@ -943,10 +942,9 @@ message CreateDeviceGroupRequest {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 
-  bool is_dynamic = 3;
-  string dynamic_query = 4 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  optional string dynamic_query = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 4096
   ];
 }
 
@@ -1046,10 +1044,9 @@ message RemoveDeviceFromGroupResponse {
 message UpdateDeviceGroupQueryRequest {
   DeviceGroupId id = 1 [(buf.validate.field).required = true];
 
-  bool is_dynamic = 2;
-  string dynamic_query = 3 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  optional string dynamic_query = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 4096
   ];
 }
 
@@ -1630,13 +1627,12 @@ message UserGroup {
   string description = 3;
   int32 member_count = 4;
   google.protobuf.Timestamp created_at = 5;
-  bool is_dynamic = 6;
-  string dynamic_query = 7;
-  bool is_scim_managed = 8;
+  optional string dynamic_query = 6;
+  bool is_scim_managed = 7;
 
-  MaintenanceWindow maintenance_window = 9;
+  MaintenanceWindow maintenance_window = 8;
 
-  repeated RoleGrant role_grants = 10;
+  repeated RoleGrant role_grants = 9;
 }
 
 message UserGroupMember {
@@ -1655,10 +1651,9 @@ message CreateUserGroupRequest {
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  bool is_dynamic = 3;
-  string dynamic_query = 4 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  optional string dynamic_query = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 4096
   ];
 }
 
@@ -1765,10 +1760,9 @@ message ListUserGroupsForUserResponse {
 
 message UpdateUserGroupQueryRequest {
   UserGroupId id = 1 [(buf.validate.field).required = true];
-  bool is_dynamic = 2;
-  string dynamic_query = 3 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  optional string dynamic_query = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 4096
   ];
 }
 

@@ -81,7 +81,7 @@ export interface RuleGroup {
 }
 
 export async function createRuleGroup(name: string, query: string): Promise<RuleGroup> {
-	const group = await apiClient.createDeviceGroup(name, '', true, query);
+	const group = await apiClient.createDeviceGroup(name, '', query);
 
 	if (!group?.id) throw new Error('CreateDeviceGroup returned no group');
 	return { id: (group.id?.value ?? ''), name: group.name || name };

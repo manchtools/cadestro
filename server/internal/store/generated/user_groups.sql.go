@@ -154,25 +154,20 @@ func (q *Queries) DeleteUserGroupUserRoleScopes(ctx context.Context, scopeID *st
 }
 
 const getDynamicUserGroupQueryForUpdate = `-- name: GetDynamicUserGroupQueryForUpdate :one
-SELECT is_dynamic, dynamic_query
+SELECT dynamic_query
 FROM user_groups
 WHERE id = ? AND is_deleted = FALSE
 `
 
-type GetDynamicUserGroupQueryForUpdateRow struct {
-	IsDynamic    bool    `json:"is_dynamic"`
-	DynamicQuery *string `json:"dynamic_query"`
-}
-
-func (q *Queries) GetDynamicUserGroupQueryForUpdate(ctx context.Context, id string) (GetDynamicUserGroupQueryForUpdateRow, error) {
+func (q *Queries) GetDynamicUserGroupQueryForUpdate(ctx context.Context, id string) (*string, error) {
 	row := q.db.QueryRowContext(ctx, getDynamicUserGroupQueryForUpdate, id)
-	var i GetDynamicUserGroupQueryForUpdateRow
-	err := row.Scan(&i.IsDynamic, &i.DynamicQuery)
-	return i, err
+	var dynamic_query *string
+	err := row.Scan(&dynamic_query)
+	return dynamic_query, err
 }
 
 const getUserGroup = `-- name: GetUserGroup :one
-SELECT id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window FROM user_groups WHERE id = ? AND is_deleted = FALSE
+SELECT id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window FROM user_groups WHERE id = ? AND is_deleted = FALSE
 `
 
 func (q *Queries) GetUserGroup(ctx context.Context, id string) (UserGroup, error) {
@@ -187,7 +182,6 @@ func (q *Queries) GetUserGroup(ctx context.Context, id string) (UserGroup, error
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)
@@ -196,7 +190,7 @@ func (q *Queries) GetUserGroup(ctx context.Context, id string) (UserGroup, error
 
 const getUserGroupView = `-- name: GetUserGroupView :one
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.maintenance_window,
+       g.dynamic_query, g.maintenance_window,
        COUNT(u.id) AS live_member_count,
        EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) AS is_scim_managed
 FROM user_groups g
@@ -212,7 +206,6 @@ type GetUserGroupViewRow struct {
 	Description       string          `json:"description"`
 	CreatedAt         time.Time       `json:"created_at"`
 	CreatedBy         string          `json:"created_by"`
-	IsDynamic         bool            `json:"is_dynamic"`
 	DynamicQuery      *string         `json:"dynamic_query"`
 	MaintenanceWindow sqlitetype.JSON `json:"maintenance_window"`
 	LiveMemberCount   int64           `json:"live_member_count"`
@@ -228,7 +221,6 @@ func (q *Queries) GetUserGroupView(ctx context.Context, id string) (GetUserGroup
 		&i.Description,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 		&i.LiveMemberCount,
@@ -238,9 +230,9 @@ func (q *Queries) GetUserGroupView(ctx context.Context, id string) (GetUserGroup
 }
 
 const insertUserGroup = `-- name: InsertUserGroup :one
-INSERT INTO user_groups (id, name, description, created_at, created_by, updated_at, is_dynamic, dynamic_query)
-VALUES (?, ?, ?, ?, ?, ?, ?7, ?8)
-RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
+INSERT INTO user_groups (id, name, description, created_at, created_by, updated_at, dynamic_query)
+VALUES (?, ?, ?, ?, ?, ?, ?7)
+RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window
 `
 
 type InsertUserGroupParams struct {
@@ -250,7 +242,6 @@ type InsertUserGroupParams struct {
 	CreatedAt    time.Time `json:"created_at"`
 	CreatedBy    string    `json:"created_by"`
 	UpdatedAt    time.Time `json:"updated_at"`
-	IsDynamic    bool      `json:"is_dynamic"`
 	DynamicQuery *string   `json:"dynamic_query"`
 }
 
@@ -262,7 +253,6 @@ func (q *Queries) InsertUserGroup(ctx context.Context, arg InsertUserGroupParams
 		arg.CreatedAt,
 		arg.CreatedBy,
 		arg.UpdatedAt,
-		arg.IsDynamic,
 		arg.DynamicQuery,
 	)
 	var i UserGroup
@@ -275,7 +265,6 @@ func (q *Queries) InsertUserGroup(ctx context.Context, arg InsertUserGroupParams
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)
@@ -295,7 +284,7 @@ func (q *Queries) IsUserGroupSCIMManaged(ctx context.Context, userGroupID string
 
 const listUserGroups = `-- name: ListUserGroups :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.maintenance_window,
+       g.dynamic_query, g.maintenance_window,
        COUNT(u.id) AS live_member_count,
        EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) AS is_scim_managed
 FROM user_groups g
@@ -325,7 +314,6 @@ type ListUserGroupsRow struct {
 	Description       string          `json:"description"`
 	CreatedAt         time.Time       `json:"created_at"`
 	CreatedBy         string          `json:"created_by"`
-	IsDynamic         bool            `json:"is_dynamic"`
 	DynamicQuery      *string         `json:"dynamic_query"`
 	MaintenanceWindow sqlitetype.JSON `json:"maintenance_window"`
 	LiveMemberCount   int64           `json:"live_member_count"`
@@ -352,7 +340,6 @@ func (q *Queries) ListUserGroups(ctx context.Context, arg ListUserGroupsParams) 
 			&i.Description,
 			&i.CreatedAt,
 			&i.CreatedBy,
-			&i.IsDynamic,
 			&i.DynamicQuery,
 			&i.MaintenanceWindow,
 			&i.LiveMemberCount,
@@ -373,7 +360,7 @@ func (q *Queries) ListUserGroups(ctx context.Context, arg ListUserGroupsParams) 
 
 const listUserGroupsForUser = `-- name: ListUserGroupsForUser :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.maintenance_window,
+       g.dynamic_query, g.maintenance_window,
        COUNT(live.id) AS live_member_count,
        EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) AS is_scim_managed
 FROM user_group_members requested
@@ -401,7 +388,6 @@ type ListUserGroupsForUserRow struct {
 	Description       string          `json:"description"`
 	CreatedAt         time.Time       `json:"created_at"`
 	CreatedBy         string          `json:"created_by"`
-	IsDynamic         bool            `json:"is_dynamic"`
 	DynamicQuery      *string         `json:"dynamic_query"`
 	MaintenanceWindow sqlitetype.JSON `json:"maintenance_window"`
 	LiveMemberCount   int64           `json:"live_member_count"`
@@ -423,7 +409,6 @@ func (q *Queries) ListUserGroupsForUser(ctx context.Context, arg ListUserGroupsF
 			&i.Description,
 			&i.CreatedAt,
 			&i.CreatedBy,
-			&i.IsDynamic,
 			&i.DynamicQuery,
 			&i.MaintenanceWindow,
 			&i.LiveMemberCount,
@@ -491,7 +476,7 @@ func (q *Queries) ListUsersForDynamicUserGroupEvaluation(ctx context.Context) ([
 const setUserGroupMaintenanceWindow = `-- name: SetUserGroupMaintenanceWindow :one
 UPDATE user_groups SET maintenance_window = ?1, updated_at = ?2
 WHERE id = ?3 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window
 `
 
 type SetUserGroupMaintenanceWindowParams struct {
@@ -512,7 +497,6 @@ func (q *Queries) SetUserGroupMaintenanceWindow(ctx context.Context, arg SetUser
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)
@@ -522,7 +506,7 @@ func (q *Queries) SetUserGroupMaintenanceWindow(ctx context.Context, arg SetUser
 const softDeleteUserGroup = `-- name: SoftDeleteUserGroup :one
 UPDATE user_groups SET is_deleted = TRUE, updated_at = ?1
 WHERE id = ?2 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window
 `
 
 type SoftDeleteUserGroupParams struct {
@@ -542,7 +526,6 @@ func (q *Queries) SoftDeleteUserGroup(ctx context.Context, arg SoftDeleteUserGro
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)
@@ -553,7 +536,7 @@ const updateUserGroup = `-- name: UpdateUserGroup :one
 UPDATE user_groups
 SET name = ?1, description = ?2, updated_at = ?3
 WHERE id = ?4 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window
 `
 
 type UpdateUserGroupParams struct {
@@ -580,7 +563,6 @@ func (q *Queries) UpdateUserGroup(ctx context.Context, arg UpdateUserGroupParams
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)
@@ -590,7 +572,7 @@ func (q *Queries) UpdateUserGroup(ctx context.Context, arg UpdateUserGroupParams
 const updateUserGroupName = `-- name: UpdateUserGroupName :one
 UPDATE user_groups SET name = ?, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window
 `
 
 type UpdateUserGroupNameParams struct {
@@ -611,7 +593,6 @@ func (q *Queries) UpdateUserGroupName(ctx context.Context, arg UpdateUserGroupNa
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)
@@ -620,25 +601,19 @@ func (q *Queries) UpdateUserGroupName(ctx context.Context, arg UpdateUserGroupNa
 
 const updateUserGroupQuery = `-- name: UpdateUserGroupQuery :one
 UPDATE user_groups
-SET is_dynamic = ?1, dynamic_query = ?2, updated_at = ?3
-WHERE id = ?4 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
+SET dynamic_query = ?1, updated_at = ?2
+WHERE id = ?3 AND is_deleted = FALSE
+RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, dynamic_query, maintenance_window
 `
 
 type UpdateUserGroupQueryParams struct {
-	IsDynamic    bool      `json:"is_dynamic"`
 	DynamicQuery *string   `json:"dynamic_query"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	ID           string    `json:"id"`
 }
 
 func (q *Queries) UpdateUserGroupQuery(ctx context.Context, arg UpdateUserGroupQueryParams) (UserGroup, error) {
-	row := q.db.QueryRowContext(ctx, updateUserGroupQuery,
-		arg.IsDynamic,
-		arg.DynamicQuery,
-		arg.UpdatedAt,
-		arg.ID,
-	)
+	row := q.db.QueryRowContext(ctx, updateUserGroupQuery, arg.DynamicQuery, arg.UpdatedAt, arg.ID)
 	var i UserGroup
 	err := row.Scan(
 		&i.ID,
@@ -649,7 +624,6 @@ func (q *Queries) UpdateUserGroupQuery(ctx context.Context, arg UpdateUserGroupQ
 		&i.CreatedBy,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.MaintenanceWindow,
 	)

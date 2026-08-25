@@ -50,8 +50,7 @@ type CreateParams struct {
 	Name        string
 	Description string
 	CreatedBy   string
-	Dynamic     bool
-	Query       string
+	Query       *string
 }
 
 func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreateParams) (store.DeviceGroupView, error) {
@@ -59,7 +58,7 @@ func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreatePar
 		p.Name == "" || utf8.RuneCountInString(p.Name) > 255 || utf8.RuneCountInString(p.Description) > 1024 {
 		return store.DeviceGroupView{}, ErrInvalidInput
 	}
-	query, err := validatedQuery(p.Dynamic, p.Query)
+	query, err := validatedQuery(p.Query)
 	if err != nil {
 		return store.DeviceGroupView{}, err
 	}
@@ -67,11 +66,11 @@ func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreatePar
 	_, err = s.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		if _, err := tx.InsertDeviceGroup(ctx, db.InsertDeviceGroupParams{
 			ID: id, Name: p.Name, Description: p.Description, CreatedAt: &now,
-			CreatedBy: p.CreatedBy, IsDynamic: p.Dynamic, DynamicQuery: query,
+			CreatedBy: p.CreatedBy, DynamicQuery: query,
 		}); err != nil {
 			return fmt.Errorf("device group: insert: %w", err)
 		}
-		rec.Effect(groupEffect(id, "CREATE", "name", "description", "is_dynamic", "dynamic_query"))
+		rec.Effect(groupEffect(id, "CREATE", "name", "description", "dynamic_query"))
 		return nil
 	})
 	if err != nil {
@@ -110,11 +109,11 @@ func (s *State) UpdateDescription(ctx context.Context, op store.AuditOperation, 
 	return s.readAfter(ctx, id, err)
 }
 
-func (s *State) UpdateQuery(ctx context.Context, op store.AuditOperation, id string, dynamic bool, raw string) (store.DeviceGroupView, error) {
+func (s *State) UpdateQuery(ctx context.Context, op store.AuditOperation, id string, raw *string) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(id) {
 		return store.DeviceGroupView{}, ErrInvalidInput
 	}
-	query, err := validatedQuery(dynamic, raw)
+	query, err := validatedQuery(raw)
 	if err != nil {
 		return store.DeviceGroupView{}, err
 	}
@@ -126,16 +125,16 @@ func (s *State) UpdateQuery(ctx context.Context, op store.AuditOperation, id str
 		if err != nil {
 			return err
 		}
-		fields := []string{"is_dynamic", "dynamic_query"}
+		fields := []string{"dynamic_query"}
 
-		if dynamic && !current.IsDynamic {
+		if query != nil && current.DynamicQuery == nil {
 			if _, err := tx.DeleteDeviceGroupMembers(ctx, id); err != nil {
 				return err
 			}
 			fields = append(fields, "members")
 		}
 		if _, err := tx.UpdateDeviceGroupQuery(ctx, db.UpdateDeviceGroupQueryParams{
-			ID: id, IsDynamic: dynamic, DynamicQuery: query,
+			ID: id, DynamicQuery: query,
 		}); err != nil {
 			return err
 		}
@@ -153,7 +152,7 @@ func (s *State) AddDevices(ctx context.Context, op store.AuditOperation, groupID
 	if err != nil {
 		return 0, translateNotFound(err)
 	}
-	if group.IsDynamic {
+	if group.DynamicQuery != nil {
 		return 0, ErrDynamicGroup
 	}
 	unique := make([]string, 0, len(deviceIDs))
@@ -189,7 +188,7 @@ func (s *State) AddDevices(ctx context.Context, op store.AuditOperation, groupID
 		if err != nil {
 			return err
 		}
-		if current.IsDynamic {
+		if current.DynamicQuery != nil {
 			return ErrDynamicGroup
 		}
 		for _, id := range unique {
@@ -230,7 +229,7 @@ func (s *State) RemoveDevice(ctx context.Context, op store.AuditOperation, group
 	if err != nil {
 		return translateNotFound(err)
 	}
-	if group.IsDynamic {
+	if group.DynamicQuery != nil {
 		return ErrDynamicGroup
 	}
 	_, err = s.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
@@ -342,17 +341,14 @@ func (s *State) readAfter(ctx context.Context, id string, mutationErr error) (st
 	return s.store.GetDeviceGroup(ctx, id)
 }
 
-func validatedQuery(dynamic bool, raw string) (*string, error) {
-	if !dynamic {
-		if raw != "" {
-			return nil, ErrInvalidQuery
-		}
+func validatedQuery(raw *string) (*string, error) {
+	if raw == nil {
 		return nil, nil
 	}
-	if _, err := dynamicquery.CompileDevice(raw); err != nil {
+	if _, err := dynamicquery.CompileDevice(*raw); err != nil {
 		return nil, ErrInvalidQuery
 	}
-	return &raw, nil
+	return raw, nil
 }
 
 func validID(id string) bool {

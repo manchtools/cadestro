@@ -196,13 +196,13 @@
 							type="button"
 							data-testid="overview-tile"
 							data-entity-id={group.id?.value ?? ''}
-							data-dynamic={group.isDynamic ? 'true' : 'false'}
+							data-dynamic={group.dynamicQuery !== undefined ? 'true' : 'false'}
 							onclick={() => goto(`/user-groups/${group.id?.value ?? ''}`)}
 							class="flex flex-col gap-1.5 rounded-[10px] border bg-surface p-2.5 text-left hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 						>
 							<span class="flex min-w-0 items-center gap-1.5">
 
-								{#if group.isDynamic}
+								{#if group.dynamicQuery !== undefined}
 									<Zap class="h-3.5 w-3.5 shrink-0 text-accent-ink" />
 								{:else}
 									<UsersRound class="h-3.5 w-3.5 shrink-0 text-accent-ink" />
@@ -210,7 +210,7 @@
 								<span class="truncate font-mono text-[0.75rem] font-semibold">{group.name}</span>
 							</span>
 							<span class="flex flex-wrap items-center gap-1.5">
-								{#if group.isDynamic}
+								{#if group.dynamicQuery !== undefined}
 									<Chip tone="info"><Zap class="h-3 w-3" />{m.user_groups_dynamic_label()}</Chip>
 								{:else}
 									<Chip tone="idle" label={m.user_groups_static()} />
@@ -253,7 +253,7 @@
 			</span>
 			<span class="flex shrink-0 items-center gap-1.5">
 				<span title={m.common_type()}>
-					{#if group.isDynamic}
+					{#if group.dynamicQuery !== undefined}
 						<Chip tone="info"><Zap class="h-3 w-3" />{m.user_groups_dynamic_label()}</Chip>
 					{:else}
 						<Chip tone="idle" label={m.user_groups_static()} />

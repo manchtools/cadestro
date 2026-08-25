@@ -100,11 +100,11 @@ func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow)
 	group := &cadestrov1.UserGroup{
 		Id: &cadestrov1.UserGroupId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		MemberCount: boundedIdentityCount(row.LiveMemberCount),
-		CreatedAt:   timestampValue(row.CreatedAt), IsDynamic: row.IsDynamic,
+		CreatedAt:   timestampValue(row.CreatedAt),
 		IsScimManaged: row.IsScimManaged,
 	}
 	if row.DynamicQuery != nil {
-		group.DynamicQuery = *row.DynamicQuery
+		group.DynamicQuery = row.DynamicQuery
 	}
 	if len(row.MaintenanceWindow) > 0 && string(row.MaintenanceWindow) != "{}" {
 		window := &cadestrov1.MaintenanceWindow{}

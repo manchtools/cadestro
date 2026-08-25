@@ -43,13 +43,10 @@ func (s *State) EvaluateDynamicGroup(ctx context.Context, op store.AuditOperatio
 		if err != nil {
 			return err
 		}
-		if !group.IsDynamic {
+		if group == nil {
 			return ErrStaticGroup
 		}
-		if group.DynamicQuery == nil {
-			return ErrInvalidQuery
-		}
-		query, err := parseDeviceQuery(*group.DynamicQuery)
+		query, err := parseDeviceQuery(*group)
 		if err != nil {
 			return err
 		}

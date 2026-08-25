@@ -771,10 +771,10 @@ export class ApiClient {
 		return response.definition;
 	}
 
-	async createDeviceGroup(name: string, description: string = '', isDynamic: boolean = false, dynamicQuery: string = '') {
+	async createDeviceGroup(name: string, description: string = '', dynamicQuery?: string) {
 		const client = this.getClient();
 		const response = await client.createDeviceGroup(
-			create(CreateDeviceGroupRequestSchema, { name, description, isDynamic, dynamicQuery })
+			create(CreateDeviceGroupRequestSchema, { name, description, dynamicQuery })
 		);
 		return response.group;
 	}
@@ -835,10 +835,10 @@ export class ApiClient {
 		return response.group;
 	}
 
-	async updateDeviceGroupQuery(id: string, isDynamic: boolean, dynamicQuery: string = '') {
+	async updateDeviceGroupQuery(id: string, dynamicQuery?: string) {
 		const client = this.getClient();
 		const response = await client.updateDeviceGroupQuery(
-			create(UpdateDeviceGroupQueryRequestSchema, { id: { value: id }, isDynamic, dynamicQuery })
+			create(UpdateDeviceGroupQueryRequestSchema, { id: { value: id }, dynamicQuery })
 		);
 		return response.group;
 	}
@@ -1246,10 +1246,10 @@ export class ApiClient {
 		);
 	}
 
-	async createUserGroup(name: string, description: string = '', isDynamic: boolean = false, dynamicQuery: string = '') {
+	async createUserGroup(name: string, description: string = '', dynamicQuery?: string) {
 		const client = this.getClient();
 		const response = await client.createUserGroup(
-			create(CreateUserGroupRequestSchema, { name, description, isDynamic, dynamicQuery })
+			create(CreateUserGroupRequestSchema, { name, description, dynamicQuery })
 		);
 		return response.group;
 	}
@@ -1324,10 +1324,10 @@ export class ApiClient {
 		);
 	}
 
-	async updateUserGroupQuery(id: string, isDynamic: boolean, dynamicQuery: string) {
+	async updateUserGroupQuery(id: string, dynamicQuery?: string) {
 		const client = this.getClient();
 		const response = await client.updateUserGroupQuery(
-			create(UpdateUserGroupQueryRequestSchema, { id: { value: id }, isDynamic, dynamicQuery })
+			create(UpdateUserGroupQueryRequestSchema, { id: { value: id }, dynamicQuery })
 		);
 		return response.group;
 	}

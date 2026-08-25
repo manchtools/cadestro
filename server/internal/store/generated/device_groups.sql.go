@@ -17,7 +17,7 @@ INSERT INTO device_group_members (group_id, device_id, added_at)
 SELECT ?1, ?2, ?3
 FROM device_groups g
 JOIN devices d ON d.id = ?2 AND d.is_deleted = FALSE
-WHERE g.id = ?1 AND g.is_deleted = FALSE AND g.is_dynamic = FALSE
+WHERE g.id = ?1 AND g.is_deleted = FALSE AND g.dynamic_query IS NULL
 ON CONFLICT (group_id, device_id) DO NOTHING
 `
 
@@ -42,7 +42,7 @@ FROM json_each(?3) AS wanted
 JOIN devices d ON d.id = CAST(wanted.value AS TEXT) AND d.is_deleted = FALSE
 WHERE EXISTS (
     SELECT 1 FROM device_groups g
-    WHERE g.id = ?1 AND g.is_deleted = FALSE AND g.is_dynamic = TRUE
+    WHERE g.id = ?1 AND g.is_deleted = FALSE AND g.dynamic_query IS NOT NULL
 )
 ON CONFLICT (group_id, device_id) DO NOTHING
 RETURNING device_id
@@ -149,7 +149,7 @@ func (q *Queries) DeleteDeviceGroupUserRoleScopes(ctx context.Context, scopeID *
 
 const getDeviceGroup = `-- name: GetDeviceGroup :one
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.sync_interval_minutes,
+       g.dynamic_query, g.sync_interval_minutes,
        g.inventory_interval_minutes, g.maintenance_window,
        COUNT(d.id) AS live_member_count
 FROM device_groups g
@@ -165,7 +165,6 @@ type GetDeviceGroupRow struct {
 	Description              string          `json:"description"`
 	CreatedAt                *time.Time      `json:"created_at"`
 	CreatedBy                string          `json:"created_by"`
-	IsDynamic                bool            `json:"is_dynamic"`
 	DynamicQuery             *string         `json:"dynamic_query"`
 	SyncIntervalMinutes      int32           `json:"sync_interval_minutes"`
 	InventoryIntervalMinutes int32           `json:"inventory_interval_minutes"`
@@ -182,7 +181,6 @@ func (q *Queries) GetDeviceGroup(ctx context.Context, id string) (GetDeviceGroup
 		&i.Description,
 		&i.CreatedAt,
 		&i.CreatedBy,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -193,32 +191,27 @@ func (q *Queries) GetDeviceGroup(ctx context.Context, id string) (GetDeviceGroup
 }
 
 const getDynamicDeviceGroupQueryForUpdate = `-- name: GetDynamicDeviceGroupQueryForUpdate :one
-SELECT is_dynamic, dynamic_query
+SELECT dynamic_query
 FROM device_groups
 WHERE id = ? AND is_deleted = FALSE
 `
 
-type GetDynamicDeviceGroupQueryForUpdateRow struct {
-	IsDynamic    bool    `json:"is_dynamic"`
-	DynamicQuery *string `json:"dynamic_query"`
-}
-
-func (q *Queries) GetDynamicDeviceGroupQueryForUpdate(ctx context.Context, id string) (GetDynamicDeviceGroupQueryForUpdateRow, error) {
+func (q *Queries) GetDynamicDeviceGroupQueryForUpdate(ctx context.Context, id string) (*string, error) {
 	row := q.db.QueryRowContext(ctx, getDynamicDeviceGroupQueryForUpdate, id)
-	var i GetDynamicDeviceGroupQueryForUpdateRow
-	err := row.Scan(&i.IsDynamic, &i.DynamicQuery)
-	return i, err
+	var dynamic_query *string
+	err := row.Scan(&dynamic_query)
+	return dynamic_query, err
 }
 
 const insertDeviceGroup = `-- name: InsertDeviceGroup :one
 INSERT INTO device_groups (
-    id, name, description, created_at, created_by, is_dynamic, dynamic_query
+    id, name, description, created_at, created_by, dynamic_query
 )
 VALUES (
     ?1, ?2, ?3, ?4,
-    ?5, ?6, ?7
+    ?5, ?6
 )
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type InsertDeviceGroupParams struct {
@@ -227,7 +220,6 @@ type InsertDeviceGroupParams struct {
 	Description  string     `json:"description"`
 	CreatedAt    *time.Time `json:"created_at"`
 	CreatedBy    string     `json:"created_by"`
-	IsDynamic    bool       `json:"is_dynamic"`
 	DynamicQuery *string    `json:"dynamic_query"`
 }
 
@@ -238,7 +230,6 @@ func (q *Queries) InsertDeviceGroup(ctx context.Context, arg InsertDeviceGroupPa
 		arg.Description,
 		arg.CreatedAt,
 		arg.CreatedBy,
-		arg.IsDynamic,
 		arg.DynamicQuery,
 	)
 	var i DeviceGroup
@@ -250,7 +241,6 @@ func (q *Queries) InsertDeviceGroup(ctx context.Context, arg InsertDeviceGroupPa
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -334,7 +324,7 @@ func (q *Queries) ListDeviceGroupMembers(ctx context.Context, groupID string) ([
 
 const listDeviceGroups = `-- name: ListDeviceGroups :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.sync_interval_minutes,
+       g.dynamic_query, g.sync_interval_minutes,
        g.inventory_interval_minutes, g.maintenance_window,
        COUNT(d.id) AS live_member_count
 FROM device_groups g
@@ -364,7 +354,6 @@ type ListDeviceGroupsRow struct {
 	Description              string          `json:"description"`
 	CreatedAt                *time.Time      `json:"created_at"`
 	CreatedBy                string          `json:"created_by"`
-	IsDynamic                bool            `json:"is_dynamic"`
 	DynamicQuery             *string         `json:"dynamic_query"`
 	SyncIntervalMinutes      int32           `json:"sync_interval_minutes"`
 	InventoryIntervalMinutes int32           `json:"inventory_interval_minutes"`
@@ -392,7 +381,6 @@ func (q *Queries) ListDeviceGroups(ctx context.Context, arg ListDeviceGroupsPara
 			&i.Description,
 			&i.CreatedAt,
 			&i.CreatedBy,
-			&i.IsDynamic,
 			&i.DynamicQuery,
 			&i.SyncIntervalMinutes,
 			&i.InventoryIntervalMinutes,
@@ -414,7 +402,7 @@ func (q *Queries) ListDeviceGroups(ctx context.Context, arg ListDeviceGroupsPara
 
 const listDeviceGroupsForDevice = `-- name: ListDeviceGroupsForDevice :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.sync_interval_minutes,
+       g.dynamic_query, g.sync_interval_minutes,
        g.inventory_interval_minutes, g.maintenance_window,
        COUNT(live.id) AS live_member_count
 FROM device_group_members requested
@@ -442,7 +430,6 @@ type ListDeviceGroupsForDeviceRow struct {
 	Description              string          `json:"description"`
 	CreatedAt                *time.Time      `json:"created_at"`
 	CreatedBy                string          `json:"created_by"`
-	IsDynamic                bool            `json:"is_dynamic"`
 	DynamicQuery             *string         `json:"dynamic_query"`
 	SyncIntervalMinutes      int32           `json:"sync_interval_minutes"`
 	InventoryIntervalMinutes int32           `json:"inventory_interval_minutes"`
@@ -465,7 +452,6 @@ func (q *Queries) ListDeviceGroupsForDevice(ctx context.Context, arg ListDeviceG
 			&i.Description,
 			&i.CreatedAt,
 			&i.CreatedBy,
-			&i.IsDynamic,
 			&i.DynamicQuery,
 			&i.SyncIntervalMinutes,
 			&i.InventoryIntervalMinutes,
@@ -557,7 +543,7 @@ WHERE group_id = ?1
       SELECT 1 FROM device_groups g
       WHERE g.id = device_group_members.group_id
         AND g.is_deleted = FALSE
-        AND g.is_dynamic = FALSE
+        AND g.dynamic_query IS NULL
   )
 `
 
@@ -584,7 +570,7 @@ WHERE group_id = ?1
       SELECT 1 FROM device_groups g
       WHERE g.id = device_group_members.group_id
         AND g.is_deleted = FALSE
-        AND g.is_dynamic = TRUE
+        AND g.dynamic_query IS NOT NULL
   )
 RETURNING device_id
 `
@@ -620,7 +606,7 @@ func (q *Queries) RemoveDynamicDeviceGroupMembers(ctx context.Context, arg Remov
 const renameDeviceGroup = `-- name: RenameDeviceGroup :one
 UPDATE device_groups SET name = ?1
 WHERE id = ?2 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type RenameDeviceGroupParams struct {
@@ -639,7 +625,6 @@ func (q *Queries) RenameDeviceGroup(ctx context.Context, arg RenameDeviceGroupPa
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -651,7 +636,7 @@ func (q *Queries) RenameDeviceGroup(ctx context.Context, arg RenameDeviceGroupPa
 const setDeviceGroupInventoryInterval = `-- name: SetDeviceGroupInventoryInterval :one
 UPDATE device_groups SET inventory_interval_minutes = ?1
 WHERE id = ?2 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type SetDeviceGroupInventoryIntervalParams struct {
@@ -670,7 +655,6 @@ func (q *Queries) SetDeviceGroupInventoryInterval(ctx context.Context, arg SetDe
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -682,7 +666,7 @@ func (q *Queries) SetDeviceGroupInventoryInterval(ctx context.Context, arg SetDe
 const setDeviceGroupMaintenanceWindow = `-- name: SetDeviceGroupMaintenanceWindow :one
 UPDATE device_groups SET maintenance_window = ?1
 WHERE id = ?2 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type SetDeviceGroupMaintenanceWindowParams struct {
@@ -701,7 +685,6 @@ func (q *Queries) SetDeviceGroupMaintenanceWindow(ctx context.Context, arg SetDe
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -713,7 +696,7 @@ func (q *Queries) SetDeviceGroupMaintenanceWindow(ctx context.Context, arg SetDe
 const setDeviceGroupSyncInterval = `-- name: SetDeviceGroupSyncInterval :one
 UPDATE device_groups SET sync_interval_minutes = ?1
 WHERE id = ?2 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type SetDeviceGroupSyncIntervalParams struct {
@@ -732,7 +715,6 @@ func (q *Queries) SetDeviceGroupSyncInterval(ctx context.Context, arg SetDeviceG
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -744,7 +726,7 @@ func (q *Queries) SetDeviceGroupSyncInterval(ctx context.Context, arg SetDeviceG
 const softDeleteDeviceGroup = `-- name: SoftDeleteDeviceGroup :one
 UPDATE device_groups SET is_deleted = TRUE
 WHERE id = ? AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 func (q *Queries) SoftDeleteDeviceGroup(ctx context.Context, id string) (DeviceGroup, error) {
@@ -758,7 +740,6 @@ func (q *Queries) SoftDeleteDeviceGroup(ctx context.Context, id string) (DeviceG
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -770,7 +751,7 @@ func (q *Queries) SoftDeleteDeviceGroup(ctx context.Context, id string) (DeviceG
 const updateDeviceGroupDescription = `-- name: UpdateDeviceGroupDescription :one
 UPDATE device_groups SET description = ?1
 WHERE id = ?2 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type UpdateDeviceGroupDescriptionParams struct {
@@ -789,7 +770,6 @@ func (q *Queries) UpdateDeviceGroupDescription(ctx context.Context, arg UpdateDe
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,
@@ -800,19 +780,18 @@ func (q *Queries) UpdateDeviceGroupDescription(ctx context.Context, arg UpdateDe
 
 const updateDeviceGroupQuery = `-- name: UpdateDeviceGroupQuery :one
 UPDATE device_groups
-SET is_dynamic = ?1, dynamic_query = ?2
-WHERE id = ?3 AND is_deleted = FALSE
-RETURNING id, name, description, member_count, created_at, created_by, is_deleted, is_dynamic, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
+SET dynamic_query = ?1
+WHERE id = ?2 AND is_deleted = FALSE
+RETURNING id, name, description, member_count, created_at, created_by, is_deleted, dynamic_query, sync_interval_minutes, inventory_interval_minutes, maintenance_window
 `
 
 type UpdateDeviceGroupQueryParams struct {
-	IsDynamic    bool    `json:"is_dynamic"`
 	DynamicQuery *string `json:"dynamic_query"`
 	ID           string  `json:"id"`
 }
 
 func (q *Queries) UpdateDeviceGroupQuery(ctx context.Context, arg UpdateDeviceGroupQueryParams) (DeviceGroup, error) {
-	row := q.db.QueryRowContext(ctx, updateDeviceGroupQuery, arg.IsDynamic, arg.DynamicQuery, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateDeviceGroupQuery, arg.DynamicQuery, arg.ID)
 	var i DeviceGroup
 	err := row.Scan(
 		&i.ID,
@@ -822,7 +801,6 @@ func (q *Queries) UpdateDeviceGroupQuery(ctx context.Context, arg UpdateDeviceGr
 		&i.CreatedAt,
 		&i.CreatedBy,
 		&i.IsDeleted,
-		&i.IsDynamic,
 		&i.DynamicQuery,
 		&i.SyncIntervalMinutes,
 		&i.InventoryIntervalMinutes,

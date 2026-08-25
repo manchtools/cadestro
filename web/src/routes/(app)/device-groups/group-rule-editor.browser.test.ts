@@ -101,7 +101,6 @@ function deviceGroup(over: Record<string, unknown> = {}) {
 		name: 'Production Linux',
 		description: 'linux fleet',
 		memberCount: 2,
-		isDynamic: true,
 		dynamicQuery: RULE,
 		syncIntervalMinutes: 0,
 		inventoryIntervalMinutes: 0,
@@ -282,7 +281,7 @@ describe('future-scope guard', () => {
 	});
 
 	it('says nothing about dropped members when a static group is empty', async () => {
-		seedDeviceGroup({ isDynamic: false, dynamicQuery: '', memberCount: 0 });
+		seedDeviceGroup({ dynamicQuery: undefined, memberCount: 0 });
 		render(DeviceGroupPage);
 		await openRuleTab();
 
@@ -295,7 +294,7 @@ describe('future-scope guard', () => {
 	});
 
 	it('names the conversion when the group is still static', async () => {
-		seedDeviceGroup({ isDynamic: false, dynamicQuery: '' });
+		seedDeviceGroup({ dynamicQuery: undefined });
 		render(DeviceGroupPage);
 		await openRuleTab();
 
@@ -367,8 +366,7 @@ describe('user groups — the SCIM guard', () => {
 				name: 'Directory',
 				description: '',
 				memberCount: 1,
-				isDynamic: false,
-				dynamicQuery: '',
+				dynamicQuery: undefined,
 				isScimManaged: true,
 				roleGrants: [],
 				maintenanceWindow: undefined,
@@ -424,7 +422,7 @@ describe('user groups — the SCIM guard', () => {
 	});
 
 	it('counts users through the user-group validate RPC and gates its save the same way', async () => {
-		seedUserGroup({ isScimManaged: false, isDynamic: true, dynamicQuery: 'user.email.endsWith("@example.test")' });
+		seedUserGroup({ isScimManaged: false, dynamicQuery: 'user.email.endsWith("@example.test")' });
 		mocks.updateUserGroupQuery.mockResolvedValue(undefined);
 		render(UserGroupPage);
 		await openRuleTab();

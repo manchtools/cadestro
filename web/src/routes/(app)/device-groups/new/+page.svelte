@@ -109,8 +109,7 @@
 			const group = await apiClient.createDeviceGroup(
 				draft.name.trim(),
 				draft.description.trim(),
-				draft.isDynamic,
-				draft.isDynamic ? draft.dynamicQuery.trim() : ''
+				draft.isDynamic ? draft.dynamicQuery.trim() : undefined
 			);
 			if (group) {
 				toast.success(m.device_groups_created());

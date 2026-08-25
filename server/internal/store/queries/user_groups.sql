@@ -3,8 +3,8 @@
 
 
 -- name: InsertUserGroup :one
-INSERT INTO user_groups (id, name, description, created_at, created_by, updated_at, is_dynamic, dynamic_query)
-VALUES (?, ?, ?, ?, ?, ?, sqlc.arg(is_dynamic), sqlc.narg(dynamic_query))
+INSERT INTO user_groups (id, name, description, created_at, created_by, updated_at, dynamic_query)
+VALUES (?, ?, ?, ?, ?, ?, sqlc.narg(dynamic_query))
 RETURNING *;
 
 -- name: GetUserGroup :one
@@ -12,7 +12,7 @@ SELECT * FROM user_groups WHERE id = ? AND is_deleted = FALSE;
 
 -- name: GetUserGroupView :one
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.maintenance_window,
+       g.dynamic_query, g.maintenance_window,
        COUNT(u.id) AS live_member_count,
        EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) AS is_scim_managed
 FROM user_groups g
@@ -23,7 +23,7 @@ GROUP BY g.id;
 
 -- name: ListUserGroups :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.maintenance_window,
+       g.dynamic_query, g.maintenance_window,
        COUNT(u.id) AS live_member_count,
        EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) AS is_scim_managed
 FROM user_groups g
@@ -49,7 +49,7 @@ WHERE g.is_deleted = FALSE
 
 -- name: ListUserGroupsForUser :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.maintenance_window,
+       g.dynamic_query, g.maintenance_window,
        COUNT(live.id) AS live_member_count,
        EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) AS is_scim_managed
 FROM user_group_members requested
@@ -74,7 +74,7 @@ WHERE id = sqlc.arg(id) AND is_deleted = FALSE
 RETURNING *;
 
 -- name: GetDynamicUserGroupQueryForUpdate :one
-SELECT is_dynamic, dynamic_query
+SELECT dynamic_query
 FROM user_groups
 WHERE id = ? AND is_deleted = FALSE;
 
@@ -86,7 +86,7 @@ ORDER BY id;
 
 -- name: UpdateUserGroupQuery :one
 UPDATE user_groups
-SET is_dynamic = sqlc.arg(is_dynamic), dynamic_query = sqlc.narg(dynamic_query), updated_at = sqlc.arg(updated_at)
+SET dynamic_query = sqlc.narg(dynamic_query), updated_at = sqlc.arg(updated_at)
 WHERE id = sqlc.arg(id) AND is_deleted = FALSE
 RETURNING *;
 

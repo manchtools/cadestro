@@ -1,6 +1,6 @@
 -- name: GetDeviceGroup :one
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.sync_interval_minutes,
+       g.dynamic_query, g.sync_interval_minutes,
        g.inventory_interval_minutes, g.maintenance_window,
        COUNT(d.id) AS live_member_count
 FROM device_groups g
@@ -11,7 +11,7 @@ GROUP BY g.id;
 
 -- name: ListDeviceGroups :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.sync_interval_minutes,
+       g.dynamic_query, g.sync_interval_minutes,
        g.inventory_interval_minutes, g.maintenance_window,
        COUNT(d.id) AS live_member_count
 FROM device_groups g
@@ -37,7 +37,7 @@ WHERE g.is_deleted = FALSE
 
 -- name: ListDeviceGroupsForDevice :many
 SELECT g.id, g.name, g.description, g.created_at, g.created_by,
-       g.is_dynamic, g.dynamic_query, g.sync_interval_minutes,
+       g.dynamic_query, g.sync_interval_minutes,
        g.inventory_interval_minutes, g.maintenance_window,
        COUNT(live.id) AS live_member_count
 FROM device_group_members requested
@@ -66,7 +66,7 @@ WHERE m.group_id = ?
 ORDER BY m.device_id;
 
 -- name: GetDynamicDeviceGroupQueryForUpdate :one
-SELECT is_dynamic, dynamic_query
+SELECT dynamic_query
 FROM device_groups
 WHERE id = ? AND is_deleted = FALSE;
 
@@ -98,11 +98,11 @@ ORDER BY d.id;
 
 -- name: InsertDeviceGroup :one
 INSERT INTO device_groups (
-    id, name, description, created_at, created_by, is_dynamic, dynamic_query
+    id, name, description, created_at, created_by, dynamic_query
 )
 VALUES (
     sqlc.arg(id), sqlc.arg(name), sqlc.arg(description), sqlc.arg(created_at),
-    sqlc.arg(created_by), sqlc.arg(is_dynamic), sqlc.narg(dynamic_query)
+    sqlc.arg(created_by), sqlc.narg(dynamic_query)
 )
 RETURNING *;
 
@@ -118,7 +118,7 @@ RETURNING *;
 
 -- name: UpdateDeviceGroupQuery :one
 UPDATE device_groups
-SET is_dynamic = sqlc.arg(is_dynamic), dynamic_query = sqlc.narg(dynamic_query)
+SET dynamic_query = sqlc.narg(dynamic_query)
 WHERE id = sqlc.arg(id) AND is_deleted = FALSE
 RETURNING *;
 
@@ -142,7 +142,7 @@ INSERT INTO device_group_members (group_id, device_id, added_at)
 SELECT sqlc.arg(group_id), sqlc.arg(device_id), sqlc.arg(added_at)
 FROM device_groups g
 JOIN devices d ON d.id = sqlc.arg(device_id) AND d.is_deleted = FALSE
-WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.is_dynamic = FALSE
+WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.dynamic_query IS NULL
 ON CONFLICT (group_id, device_id) DO NOTHING;
 
 -- name: RemoveDeviceGroupMember :execrows
@@ -153,7 +153,7 @@ WHERE group_id = sqlc.arg(group_id)
       SELECT 1 FROM device_groups g
       WHERE g.id = device_group_members.group_id
         AND g.is_deleted = FALSE
-        AND g.is_dynamic = FALSE
+        AND g.dynamic_query IS NULL
   );
 
 -- name: AddDynamicDeviceGroupMembers :many
@@ -163,7 +163,7 @@ FROM json_each(sqlc.arg(device_ids_json)) AS wanted
 JOIN devices d ON d.id = CAST(wanted.value AS TEXT) AND d.is_deleted = FALSE
 WHERE EXISTS (
     SELECT 1 FROM device_groups g
-    WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.is_dynamic = TRUE
+    WHERE g.id = sqlc.arg(group_id) AND g.is_deleted = FALSE AND g.dynamic_query IS NOT NULL
 )
 ON CONFLICT (group_id, device_id) DO NOTHING
 RETURNING device_id;
@@ -178,7 +178,7 @@ WHERE group_id = sqlc.arg(group_id)
       SELECT 1 FROM device_groups g
       WHERE g.id = device_group_members.group_id
         AND g.is_deleted = FALSE
-        AND g.is_dynamic = TRUE
+        AND g.dynamic_query IS NOT NULL
   )
 RETURNING device_id;
 

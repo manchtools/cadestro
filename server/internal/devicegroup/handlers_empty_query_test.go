@@ -13,6 +13,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
+func stringPtr(value string) *string { return &value }
+
 func seedBareDevice(t *testing.T, raw *testdb.DB, deviceID string) {
 	t.Helper()
 	_, err := raw.Exec(context.Background(),
@@ -35,11 +37,11 @@ func TestCreateDeviceGroup_TrueDynamicQueryMatchesAllDevices(t *testing.T) {
 	callerCtx := auth.WithUser(ctx, creator)
 
 	created, err := h.CreateDeviceGroup(callerCtx, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "everything", IsDynamic: true, DynamicQuery: "true",
+		Name: "everything", DynamicQuery: stringPtr("true"),
 	}))
 	require.NoError(t, err)
 	require.NotNil(t, created.Msg.Group)
-	assert.True(t, created.Msg.Group.IsDynamic)
+	assert.Equal(t, "true", created.Msg.Group.GetDynamicQuery())
 
 	evaluated, err := h.EvaluateDynamicGroup(callerCtx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{
 		Id: &cadestrov1.DeviceGroupId{Value: created.Msg.Group.GetId().GetValue()},
@@ -62,7 +64,7 @@ func TestCreateDeviceGroup_MalformedDynamicQueryStaysRejected(t *testing.T) {
 	}
 	_, err := h.CreateDeviceGroup(auth.WithUser(context.Background(), creator),
 		connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-			Name: "broken", IsDynamic: true, DynamicQuery: `device.labels["env"] ==`,
+			Name: "broken", DynamicQuery: stringPtr(`device.labels["env"] ==`),
 		}))
 	require.Error(t, err)
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))

@@ -104,8 +104,7 @@
 			const group = await apiClient.createUserGroup(
 				draft.name.trim(),
 				draft.description.trim(),
-				draft.isDynamic,
-				draft.isDynamic ? draft.dynamicQuery.trim() : ''
+				draft.isDynamic ? draft.dynamicQuery.trim() : undefined
 			);
 			if (group) {
 				toast.success(m.user_groups_created());

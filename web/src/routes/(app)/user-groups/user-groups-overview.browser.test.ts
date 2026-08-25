@@ -57,7 +57,7 @@ const RULE_GROUP = {
 	id: { value: '01HZUSRGRPDYNAMIC000000000' },
 	name: 'Berlin staff',
 	description: '',
-	isDynamic: true,
+	dynamicQuery: 'user.disabled == false',
 	isScimManaged: false,
 	memberCount: 12
 };
@@ -65,7 +65,7 @@ const CURATED_GROUP = {
 	id: { value: '01HZUSRGRPSTATIC0000000000' },
 	name: 'Operators',
 	description: '',
-	isDynamic: false,
+	dynamicQuery: undefined,
 	isScimManaged: false,
 	memberCount: 2
 };

@@ -61,14 +61,14 @@ const RULE_GROUP = {
 	id: { value: '01HZDEVGRPDYNAMIC000000000' },
 	name: 'Kiosks',
 	description: '',
-	isDynamic: true,
+	dynamicQuery: 'device.os == "ubuntu"',
 	memberCount: 7
 };
 const CURATED_GROUP = {
 	id: { value: '01HZDEVGRPSTATIC0000000000' },
 	name: 'Warehouse',
 	description: '',
-	isDynamic: false,
+	dynamicQuery: undefined,
 	memberCount: 3
 };
 
@@ -136,7 +136,7 @@ describe('/device-groups — the overview is the landing level', () => {
 		const result = create(SearchResultSchema, {
 			id: { value: RULE_GROUP.id.value },
 			name: RULE_GROUP.name,
-			fields: { name: RULE_GROUP.name, member_count: '7', is_dynamic: 'true' }
+			fields: { name: RULE_GROUP.name, member_count: '7', dynamic_query: 'device.os == "ubuntu"' }
 		});
 		let searchResults = [result];
 		mocks.search.mockImplementation(async () => ({ results: searchResults, totalCount: searchResults.length }));

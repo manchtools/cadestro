@@ -92,7 +92,8 @@ INSERT INTO search_documents (scope, entity_id, primary_text, description, relat
 SELECT 'device_groups', g.id, g.name, g.description, g.id, lower(g.name),
        (SELECT count(*) FROM device_group_members m WHERE m.group_id = g.id),
        json_object(
-         'is_dynamic', CASE WHEN g.is_dynamic THEN 'true' ELSE 'false' END,
+         'is_dynamic', CASE WHEN g.dynamic_query IS NOT NULL THEN 'true' ELSE 'false' END,
+         'dynamic_query', g.dynamic_query,
          'member_count', CAST((SELECT count(*) FROM device_group_members m WHERE m.group_id = g.id) AS TEXT),
          'created_at', COALESCE(strftime('%s', g.created_at), '0'))
 FROM device_groups g
@@ -126,7 +127,8 @@ INSERT INTO search_documents (scope, entity_id, primary_text, description, relat
 SELECT 'user_groups', g.id, g.name, g.description, g.id, lower(g.name),
        (SELECT count(*) FROM user_group_members m WHERE m.group_id = g.id),
        json_object(
-         'is_dynamic', CASE WHEN g.is_dynamic THEN 'true' ELSE 'false' END,
+         'is_dynamic', CASE WHEN g.dynamic_query IS NOT NULL THEN 'true' ELSE 'false' END,
+         'dynamic_query', g.dynamic_query,
          'is_scim_managed', CASE WHEN EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) THEN 'true' ELSE 'false' END,
          'member_count', CAST((SELECT count(*) FROM user_group_members m WHERE m.group_id = g.id) AS TEXT),
          'created_at', COALESCE(strftime('%s', g.created_at), '0'))
@@ -242,7 +244,8 @@ INSERT INTO search_documents (scope, entity_id, primary_text, description, relat
 SELECT 'device_groups', g.id, g.name, g.description, g.id, lower(g.name),
        (SELECT count(*) FROM device_group_members m WHERE m.group_id = g.id),
        json_object(
-         'is_dynamic', CASE WHEN g.is_dynamic THEN 'true' ELSE 'false' END,
+         'is_dynamic', CASE WHEN g.dynamic_query IS NOT NULL THEN 'true' ELSE 'false' END,
+         'dynamic_query', g.dynamic_query,
          'member_count', CAST((SELECT count(*) FROM device_group_members m WHERE m.group_id = g.id) AS TEXT),
          'created_at', COALESCE(strftime('%s', g.created_at), '0'))
 FROM device_groups g
@@ -276,7 +279,8 @@ INSERT INTO search_documents (scope, entity_id, primary_text, description, relat
 SELECT 'user_groups', g.id, g.name, g.description, g.id, lower(g.name),
        (SELECT count(*) FROM user_group_members m WHERE m.group_id = g.id),
        json_object(
-         'is_dynamic', CASE WHEN g.is_dynamic THEN 'true' ELSE 'false' END,
+         'is_dynamic', CASE WHEN g.dynamic_query IS NOT NULL THEN 'true' ELSE 'false' END,
+         'dynamic_query', g.dynamic_query,
          'is_scim_managed', CASE WHEN EXISTS (SELECT 1 FROM scim_group_mapping sgm WHERE sgm.user_group_id = g.id) THEN 'true' ELSE 'false' END,
          'member_count', CAST((SELECT count(*) FROM user_group_members m WHERE m.group_id = g.id) AS TEXT),
          'created_at', COALESCE(strftime('%s', g.created_at), '0'))
