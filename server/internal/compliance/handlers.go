@@ -555,10 +555,3 @@ func MutationProcedures() []string {
 		cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure,
 	}
 }
-
-func ReadProcedures() []string {
-	return []string{
-		cadestrov1connect.ControlServiceGetCompliancePolicyProcedure,
-		cadestrov1connect.ControlServiceListCompliancePoliciesProcedure,
-	}
-}

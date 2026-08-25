@@ -153,36 +153,6 @@ func effectiveActionSetScopeGroups(ctx context.Context, st *store.Store, setID s
 	return groups, nil
 }
 
-func ActionSetVisibleToCaller(ctx context.Context, st *store.Store, setID string) (bool, error) {
-	if ctx == nil || st == nil {
-		return false, fmt.Errorf("authoring: scope context and store are required")
-	}
-	callerGroups, restricted := auth.ObjectScopeListFilter(ctx)
-	if !restricted {
-		return true, nil
-	}
-	objectGroups, err := effectiveActionSetScopeGroups(ctx, st, setID)
-	if err != nil {
-		return false, err
-	}
-	return groupsOverlap(callerGroups, objectGroups), nil
-}
-
-func DefinitionVisibleToCaller(ctx context.Context, st *store.Store, definitionID string) (bool, error) {
-	if ctx == nil || st == nil {
-		return false, fmt.Errorf("authoring: scope context and store are required")
-	}
-	callerGroups, restricted := auth.ObjectScopeListFilter(ctx)
-	if !restricted {
-		return true, nil
-	}
-	objectGroups, err := directScopeGroups(ctx, st, "definition", definitionID)
-	if err != nil {
-		return false, err
-	}
-	return groupsOverlap(callerGroups, objectGroups), nil
-}
-
 func groupsOverlap(left, right []string) bool {
 	if len(left) == 0 || len(right) == 0 {
 		return false

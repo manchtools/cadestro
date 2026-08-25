@@ -206,10 +206,6 @@ func EnforceDeviceScopeOnBaseTier(ctx context.Context, resolver ScopeResolver, p
 	return nil
 }
 
-func EnforceDeviceGroupScope(ctx context.Context, permission, groupID string) error {
-	return enforceGroupScope(ctx, DeviceScopeFilterFor(ctx, permission), permission, groupID)
-}
-
 func EnforceUserGroupScope(ctx context.Context, permission, groupID string) error {
 	return enforceGroupScope(ctx, UserScopeFilterFor(ctx, permission), permission, groupID)
 }
@@ -241,11 +237,6 @@ func enforceGroupScope(ctx context.Context, f ScopeFilter, permission, groupID s
 
 func DeviceScopeListFilter(ctx context.Context, permission string) (groupIDs []string, restricted bool) {
 	return scopeListFilter(ctx, permission, DeviceScopeFilterFor)
-}
-
-func IsDeviceScopeRestricted(ctx context.Context, permission string) bool {
-	_, restricted := scopeListFilter(ctx, permission, DeviceScopeFilterFor)
-	return restricted
 }
 
 func UserScopeListFilter(ctx context.Context, permission string) (groupIDs []string, restricted bool) {

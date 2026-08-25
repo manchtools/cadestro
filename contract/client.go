@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"reflect"
 	"runtime"
 	"sync"
@@ -140,36 +139,6 @@ func WithLogger(l *slog.Logger) ClientOption {
 	return &funcOption{func(c *Client, _ **http.Client) {
 		c.logger = l
 	}}
-}
-
-// WithMTLS configures the client to use mTLS authentication.
-// certFile and keyFile are the paths to the client certificate and key.
-// caFile is the path to the CA certificate for server verification.
-func WithMTLS(certFile, keyFile, caFile string) (ClientOption, error) {
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("load client certificate: %w", err)
-	}
-
-	caCert, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, fmt.Errorf("read CA certificate: %w", err)
-	}
-
-	caPool := x509.NewCertPool()
-	if !caPool.AppendCertsFromPEM(caCert) {
-		return nil, errors.New("failed to parse CA certificate")
-	}
-
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		RootCAs:      caPool,
-		MinVersion:   tls.VersionTLS13,
-	}
-
-	return &funcOption{func(c *Client, httpClient **http.Client) {
-		*httpClient = newHTTPClientWithTLS(tlsConfig)
-	}}, nil
 }
 
 // WithTLSConfig configures the client with a custom TLS configuration.

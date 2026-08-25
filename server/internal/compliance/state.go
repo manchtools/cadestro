@@ -237,10 +237,6 @@ func (s *State) Delete(ctx context.Context, op store.AuditOperation, id string) 
 	return translateNotFound(err)
 }
 
-func IsComplianceAction(row store.ActionRow) bool {
-	return validateComplianceAction(row) == nil
-}
-
 func validateComplianceAction(row store.ActionRow) error {
 	if cadestrov1.ActionType(row.ActionType) != cadestrov1.ActionType_ACTION_TYPE_SHELL {
 		return ErrActionNotCompliance

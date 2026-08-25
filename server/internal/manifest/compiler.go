@@ -12,7 +12,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/actionparams"
 	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
-	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -122,24 +121,6 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manif
 		return nil, ErrEmptyManifest
 	}
 	return finish(runbook)
-}
-
-func FreshCopy(compiled *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {
-	if compiled == nil {
-		return nil, ErrInvalidInput
-	}
-	cloned, ok := proto.Clone(compiled).(*cadestrov1.Manifest)
-	if !ok {
-		return nil, ErrInvalidInput
-	}
-	cloned.ManifestId = &cadestrov1.ManifestId{Value: ulid.Make().String()}
-	for _, occurrence := range cloned.Occurrences {
-		if occurrence == nil {
-			return nil, ErrInvalidInput
-		}
-		occurrence.OccurrenceId = &cadestrov1.OccurrenceId{Value: ulid.Make().String()}
-	}
-	return finish(cloned)
 }
 
 func (c *Compiler) compileSet(set store.ActionSetRow, rows []store.ActionRow, provenance *cadestrov1.ManifestProvenance, scheduleOverride []byte) (*cadestrov1.Manifest, error) {

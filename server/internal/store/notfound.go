@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"errors"
-	"strings"
 
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
@@ -40,14 +39,4 @@ func IsConflict(err error) bool {
 	}
 	return sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE ||
 		sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY
-}
-
-func IsAppendOnlyViolation(err error) bool {
-	if err == nil {
-		return false
-	}
-	var sqliteErr *sqlite.Error
-	return errors.As(err, &sqliteErr) &&
-		sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_TRIGGER &&
-		strings.Contains(sqliteErr.Error(), "append-only")
 }

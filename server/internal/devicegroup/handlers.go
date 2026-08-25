@@ -642,12 +642,3 @@ func MutationProcedures() []string {
 		cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure,
 	}
 }
-
-func ReadProcedures() []string {
-	return []string{
-		cadestrov1connect.ControlServiceGetDeviceGroupProcedure,
-		cadestrov1connect.ControlServiceListDeviceGroupsProcedure,
-		cadestrov1connect.ControlServiceListDeviceGroupsForDeviceProcedure,
-		cadestrov1connect.ControlServiceValidateDynamicQueryProcedure,
-	}
-}

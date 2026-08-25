@@ -330,32 +330,6 @@ func normalizeStoredSecretsForValidation(params proto.Message) error {
 	return nil
 }
 
-func ValidateExecutableAction(action *cadestrov1.Action) error {
-	if action == nil || !validID(action.GetId().GetValue()) {
-		return ErrInvalidInput
-	}
-	params := actionparams.ExtractParamsMsg(action)
-	if params == nil {
-
-		if action.Type != cadestrov1.ActionType_ACTION_TYPE_UPDATE {
-			return ErrInvalidInput
-		}
-	} else if !actionparams.ParamsMatchType(action, action.Type) {
-		return ErrInvalidInput
-	}
-	raw := []byte("{}")
-	if params != nil {
-		var err error
-		raw, err = actionparams.MarshalActionParams(params)
-		if err != nil {
-			return ErrInvalidInput
-		}
-	}
-	_, err := validateActionData(action.Id.Value, action.Type, action.DesiredState,
-		action.TimeoutSeconds, action.Schedule, raw)
-	return err
-}
-
 func validateActionSafety(params proto.Message) error {
 	switch p := params.(type) {
 	case *cadestrov1.ShellParams:

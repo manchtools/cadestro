@@ -44,13 +44,6 @@ func ActionMutationProcedures() []string {
 	}
 }
 
-func ActionReadProcedures() []string {
-	return []string{
-		cadestrov1connect.ControlServiceGetActionProcedure,
-		cadestrov1connect.ControlServiceListActionsProcedure,
-	}
-}
-
 func (h *Handlers) MountActionSets(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("authoring: mux is required")
@@ -96,13 +89,6 @@ func ActionSetMutationProcedures() []string {
 	}
 }
 
-func ActionSetReadProcedures() []string {
-	return []string{
-		cadestrov1connect.ControlServiceGetActionSetProcedure,
-		cadestrov1connect.ControlServiceListActionSetsProcedure,
-	}
-}
-
 func (h *Handlers) MountDefinitions(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("authoring: mux is required")
@@ -145,12 +131,5 @@ func DefinitionMutationProcedures() []string {
 		cadestrov1connect.ControlServiceAddActionSetToDefinitionProcedure,
 		cadestrov1connect.ControlServiceRemoveActionSetFromDefinitionProcedure,
 		cadestrov1connect.ControlServiceReorderActionSetInDefinitionProcedure,
-	}
-}
-
-func DefinitionReadProcedures() []string {
-	return []string{
-		cadestrov1connect.ControlServiceGetDefinitionProcedure,
-		cadestrov1connect.ControlServiceListDefinitionsProcedure,
 	}
 }
