@@ -1,6 +1,7 @@
 <script lang="ts">
 
 	import type { Snippet } from 'svelte';
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { base } from '$app/paths';
 	import { goto } from '$app/navigation';
@@ -205,15 +206,20 @@
 		}
 	}
 
+	function clearSelectionUi() {
+		rebootOpen = false;
+		labelOpen = false;
+		if (fleetSelectionSurface() === surfaceId) exitSelection();
+	}
+
 	$effect(() => {
 		const ids = getFleetSelection(surfaceId);
-		if (ids.length === 0) {
+		if (ids.length === 0) untrack(clearSelectionUi);
+	});
 
-			rebootOpen = false;
-			labelOpen = false;
-			if (fleetSelectionSurface() === surfaceId) exitSelection();
-			return;
-		}
+	$effect(() => {
+		const ids = getFleetSelection(surfaceId);
+		if (ids.length === 0) return;
 		const facts = selectionFacts(ids, bubbles);
 		enterSelection({
 			count: ids.length,

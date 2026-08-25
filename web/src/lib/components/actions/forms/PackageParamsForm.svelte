@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
@@ -15,11 +16,17 @@
 	let { params = $bindable(), errors, onclearerror }: Props = $props();
 
 	let usePerManagerNames = $state(false);
+	let seededParams: PackageFormState | null = null;
+
+	function seedMode() {
+		usePerManagerNames =
+			!!params.aptName || !!params.dnfName || !!params.pacmanName || !!params.zypperName;
+	}
 
 	$effect(() => {
-		if (params.aptName || params.dnfName || params.pacmanName || params.zypperName) {
-			usePerManagerNames = true;
-		}
+		if (params === seededParams) return;
+		seededParams = params;
+		untrack(seedMode);
 	});
 
 	function handleModeChange(enabled: boolean) {

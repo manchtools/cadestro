@@ -67,7 +67,7 @@ vi.mock('$lib/sdk', async () => {
 });
 
 import DevicesPage from './+page.svelte';
-import { shell, resetShell, runPillAction, pillMode, pillSubtext } from '$lib/shell/shell.svelte';
+import { shell, resetShell, runPillAction, pillMode, pillSubtext, clearSelection } from '$lib/shell/shell.svelte';
 import { resetFleetSelection } from './fleet-selection.svelte';
 import { setCarried } from '$lib/shell/carried-selection.svelte';
 
@@ -245,6 +245,17 @@ describe('bulk reboot', () => {
 			expect(toaster.success).toHaveBeenCalledWith('Reboot requested on 3 devices')
 		);
 		expect(toaster.error).not.toHaveBeenCalled();
+	});
+
+	it('closes the reboot dialog when the selection is cleared', async () => {
+		fixture();
+		await selectAllThree();
+
+		runPillAction('reboot');
+		await expect.element(browser.getByRole('alertdialog')).toBeVisible();
+
+		clearSelection();
+		await vi.waitFor(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull());
 	});
 
 	it('aggregates per-device failures into one toast and still writes every other device', async () => {

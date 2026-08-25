@@ -36,13 +36,9 @@
 	let deviceGroups = $state<DeviceGroup[]>([]);
 	let allUsers = $state<User[]>([]);
 	let allUserGroups = $state<UserGroup[]>([]);
-	let assignDialogOpen = $state(false);
 
 	$effect(() => {
-		if (!assignOpen) return;
-		assignOpen = false;
-		loadTargets();
-		assignDialogOpen = true;
+		if (assignOpen) loadTargets();
 	});
 
 	const availableDevices = $derived(
@@ -112,7 +108,7 @@
 		try {
 			await apiClient.batchCreateAssignments(sourceType, sourceId, targets, mode);
 			toast.success(m.assignments_created({ count: targets.length }));
-			assignDialogOpen = false;
+			assignOpen = false;
 			await loadAssignments();
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -208,8 +204,9 @@
 	</Card.Content>
 </Card.Root>
 
+
 <AssignTargetDialog
-	bind:open={assignDialogOpen}
+	bind:open={assignOpen}
 	title={assignTitle}
 	description={assignDescription}
 	devices={availableDevices.map((device) => ({ ...device, id: device.id?.value ?? '' }))}
