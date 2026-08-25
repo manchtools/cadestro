@@ -64,7 +64,7 @@ type auditExportRow struct {
 // ListAuditEvents reads the dedicated append-only operation/effect log. It
 // never consults the abolished domain event store.
 func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[cadestrov1.ListAuditEventsRequest]) (*connect.Response[cadestrov1.ListAuditEventsResponse], error) {
-	if err := validateAuditFilters(ctx, req.Msg.ActorId, []string{req.Msg.StreamType}, req.Msg.EventType); err != nil {
+	if err := validateAuditFilters(ctx, req.Msg.GetActorId().GetValue(), []string{req.Msg.StreamType}, req.Msg.EventType); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +84,7 @@ func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[cad
 	}
 	streamTypes := compactStrings(req.Msg.StreamType)
 	filter := store.AuditEventFilter{
-		ActorID: req.Msg.ActorId, StreamTypes: streamTypes,
+		ActorID: req.Msg.GetActorId().GetValue(), StreamTypes: streamTypes,
 		EventType: req.Msg.EventType, BeforeSeq: beforeSeq, Limit: pageSize + 1,
 	}
 	rows, err := h.store.ListAuditEventRows(ctx, filter)
@@ -119,7 +119,7 @@ func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[cad
 // ExportAuditEvents returns one bounded CSV or JSON fragment and records the
 // protected read before any bytes are returned to the caller.
 func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[cadestrov1.ExportAuditEventsRequest]) (*connect.Response[cadestrov1.ExportAuditEventsResponse], error) {
-	if err := validateAuditFilters(ctx, req.Msg.ActorId, req.Msg.StreamTypes, req.Msg.EventType); err != nil {
+	if err := validateAuditFilters(ctx, req.Msg.GetActorId().GetValue(), req.Msg.StreamTypes, req.Msg.EventType); err != nil {
 		return nil, err
 	}
 	if req.Msg.Format != "csv" && req.Msg.Format != "json" {
@@ -141,7 +141,7 @@ func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[c
 		return nil, err
 	}
 	rows, err := h.store.ListAuditEventRows(ctx, store.AuditEventFilter{
-		ActorID: req.Msg.ActorId, StreamTypes: req.Msg.StreamTypes,
+		ActorID: req.Msg.GetActorId().GetValue(), StreamTypes: req.Msg.StreamTypes,
 		EventType: req.Msg.EventType, OccurredFrom: from, OccurredTo: to,
 		BeforeSeq: beforeSeq, Limit: auditExportPageSize + 1,
 	})
@@ -260,8 +260,8 @@ func auditRowsToProto(rows []store.AuditEventRow) ([]*cadestrov1.AuditEvent, err
 			return nil, err
 		}
 		events[i] = &cadestrov1.AuditEvent{
-			Id: row.ID, EventType: row.EventType, StreamType: row.StreamType,
-			StreamId: row.StreamID, ActorType: row.ActorType, ActorId: row.ActorID,
+			Id: &cadestrov1.AuditEventId{Value: row.ID}, EventType: row.EventType, StreamType: row.StreamType,
+			StreamId: &cadestrov1.AuditStreamId{Value: row.StreamID}, ActorType: row.ActorType, ActorId: &cadestrov1.AuditActorId{Value: row.ActorID},
 			Data: string(data), OccurredAt: timestamppb.New(row.OccurredAt),
 		}
 	}
@@ -272,9 +272,9 @@ func encodeAuditExport(events []*cadestrov1.AuditEvent, format string, first, la
 	rows := make([]auditExportRow, len(events))
 	for i, event := range events {
 		rows[i] = auditExportRow{
-			ID: event.Id, OccurredAt: event.OccurredAt.AsTime().Format(time.RFC3339Nano),
-			ActorType: event.ActorType, ActorID: event.ActorId,
-			StreamType: event.StreamType, StreamID: event.StreamId,
+			ID: event.GetId().GetValue(), OccurredAt: event.OccurredAt.AsTime().Format(time.RFC3339Nano),
+			ActorType: event.ActorType, ActorID: event.GetActorId().GetValue(),
+			StreamType: event.StreamType, StreamID: event.GetStreamId().GetValue(),
 			EventType: event.EventType, Data: event.Data,
 		}
 	}

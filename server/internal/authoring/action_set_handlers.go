@@ -41,17 +41,17 @@ func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[cadest
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "GetActionSet", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "GetActionSet", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	row, err := h.operatorActionSet(ctx, req.Msg.Id)
+	row, err := h.operatorActionSet(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceActionSetReadScope(ctx, req.Msg.Id); err != nil {
+	if err := h.enforceActionSetReadScope(ctx, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	members, err := h.store.ListActionSetMembers(ctx, req.Msg.Id)
+	members, err := h.store.ListActionSetMembers(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, h.internal(ctx, "list action set members", err)
 	}
@@ -115,47 +115,47 @@ func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[cade
 
 // RenameActionSet replaces a set name.
 func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[cadestrov1.RenameActionSetRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "RenameActionSet")
+	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "RenameActionSet")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.RenameActionSet(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceRenameActionSetProcedure, "RenameActionSet"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameActionSetProcedure, "RenameActionSet"), req.Msg.GetId().GetValue(), req.Msg.Name)
 	return h.updatedActionSet(ctx, "rename action set", row, err)
 }
 
 // UpdateActionSetDescription replaces a set description.
 func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionSetDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "UpdateActionSetDescription")
+	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "UpdateActionSetDescription")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateActionSetDescription(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateActionSetDescriptionProcedure, "UpdateActionSetDescription"),
-		req.Msg.Id, req.Msg.Description)
+		req.Msg.GetId().GetValue(), req.Msg.Description)
 	return h.updatedActionSet(ctx, "update action set description", row, err)
 }
 
 // UpdateActionSetSchedule replaces the set schedule and failure policy.
 func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionSetScheduleRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "UpdateActionSetSchedule")
+	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "UpdateActionSetSchedule")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateActionSetPolicy(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateActionSetScheduleProcedure, "UpdateActionSetSchedule"),
-		req.Msg.Id, req.Msg.Schedule, req.Msg.OnFailure)
+		req.Msg.GetId().GetValue(), req.Msg.Schedule, req.Msg.OnFailure)
 	return h.updatedActionSet(ctx, "update action set policy", row, err)
 }
 
 // DeleteActionSet soft-deletes a set and removes its composition edges.
 func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[cadestrov1.DeleteActionSetRequest]) (*connect.Response[cadestrov1.DeleteActionSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.Id, "DeleteActionSet")
+	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "DeleteActionSet")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.DeleteActionSet(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceDeleteActionSetProcedure, "DeleteActionSet"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteActionSetProcedure, "DeleteActionSet"), req.Msg.GetId().GetValue()); err != nil {
 		return nil, h.actionSetError(ctx, "delete action set", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteActionSetResponse{}), nil

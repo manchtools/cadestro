@@ -136,7 +136,7 @@
 		const userId = authStore.user?.id;
 		if (!userId || !newSshKeyValue.trim()) return;
 		try {
-			await apiClient.addUserSshKey(userId, newSshKeyValue.trim(), newSshKeyComment.trim());
+			await apiClient.addUserSshKey(userId.value, newSshKeyValue.trim(), newSshKeyComment.trim());
 			toast.success(m.settings_ssh_key_added());
 			addSshKeyOpen = false;
 			newSshKeyValue = '';
@@ -151,7 +151,7 @@
 		const userId = authStore.user?.id;
 		if (!userId || !removingSshKeyId) return;
 		try {
-			await apiClient.removeUserSshKey(userId, removingSshKeyId);
+			await apiClient.removeUserSshKey(userId.value, removingSshKeyId);
 			toast.success(m.settings_ssh_key_removed());
 			removeSshKeyConfirmOpen = false;
 			removingSshKeyId = '';
@@ -382,7 +382,7 @@
 										size="icon"
 										aria-label={m.settings_ssh_remove_key_title()}
 										onclick={() => {
-											removingSshKeyId = key.id;
+											removingSshKeyId = (key.id?.value ?? '');
 											removeSshKeyConfirmOpen = true;
 										}}
 									>
@@ -413,7 +413,7 @@
 									variant="ghost"
 									size="sm"
 									onclick={() => {
-										unlinkingLinkId = link.id;
+										unlinkingLinkId = (link.id?.value ?? '');
 										unlinkDialogOpen = true;
 									}}
 								>

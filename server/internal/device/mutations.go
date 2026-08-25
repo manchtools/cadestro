@@ -34,10 +34,10 @@ func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[cade
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "SetDeviceLabel", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "SetDeviceLabel", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	if _, err := h.store.GetDevice(ctx, req.Msg.Id); err != nil {
+	if _, err := h.store.GetDevice(ctx, req.Msg.GetId().GetValue()); err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errDeviceNotFound, "device not found")
 		}
@@ -47,18 +47,18 @@ func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[cade
 		cadestrov1connect.ControlServiceSetDeviceLabelProcedure, "SetDeviceLabel"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			n, err := tx.SetDeviceLabel(ctx, db.SetDeviceLabelParams{
-				DeviceID: req.Msg.Id, Key: req.Msg.Key, Value: req.Msg.Value,
+				DeviceID: req.Msg.GetId().GetValue(), Key: req.Msg.Key, Value: req.Msg.Value,
 			})
 			if err := requireOne("set device label", n, err); err != nil {
 				return err
 			}
-			rec.Effect(deviceEffect(req.Msg.Id, "UPDATE", "labels"))
+			rec.Effect(deviceEffect(req.Msg.GetId().GetValue(), "UPDATE", "labels"))
 			return nil
 		})
 	if err != nil {
 		return nil, h.internal(ctx, "set device label", err)
 	}
-	return h.updatedDevice(ctx, req.Msg.Id)
+	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
 // RemoveDeviceLabel removes one label. Missing labels are an idempotent success.
@@ -67,10 +67,10 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[c
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "RemoveDeviceLabel", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "RemoveDeviceLabel", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	if _, err := h.store.GetDevice(ctx, req.Msg.Id); err != nil {
+	if _, err := h.store.GetDevice(ctx, req.Msg.GetId().GetValue()); err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errDeviceNotFound, "device not found")
 		}
@@ -79,26 +79,34 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[c
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveDeviceLabelProcedure, "RemoveDeviceLabel"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			n, err := tx.RemoveDeviceLabel(ctx, db.RemoveDeviceLabelParams{DeviceID: req.Msg.Id, Key: req.Msg.Key})
+			n, err := tx.RemoveDeviceLabel(ctx, db.RemoveDeviceLabelParams{DeviceID: req.Msg.GetId().GetValue(), Key: req.Msg.Key})
 			if err != nil {
 				return fmt.Errorf("remove device label: %w", err)
 			}
 			if n == 1 {
-				rec.Effect(deviceEffect(req.Msg.Id, "UPDATE", "labels"))
+				rec.Effect(deviceEffect(req.Msg.GetId().GetValue(), "UPDATE", "labels"))
 			}
 			return nil
 		})
 	if err != nil {
 		return nil, h.internal(ctx, "remove device label", err)
 	}
-	return h.updatedDevice(ctx, req.Msg.Id)
+	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
 // AssignDevice assigns distinct users and groups with one audited transaction.
 func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadestrov1.AssignDeviceRequest]) (*connect.Response[cadestrov1.AssignDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
-	userIDs := distinct(req.Msg.UserIds, req.Msg.UserId)
-	groupIDs := distinct(req.Msg.GroupIds, req.Msg.GroupId)
+	userIDs := make([]string, 0, len(req.Msg.GetUserIds()))
+	for _, id := range req.Msg.GetUserIds() {
+		userIDs = append(userIDs, id.GetValue())
+	}
+	userIDs = distinct(userIDs, req.Msg.GetUserId().GetValue())
+	groupIDs := make([]string, 0, len(req.Msg.GetGroupIds()))
+	for _, id := range req.Msg.GetGroupIds() {
+		groupIDs = append(groupIDs, id.GetValue())
+	}
+	groupIDs = distinct(groupIDs, req.Msg.GetGroupId().GetValue())
 	if len(userIDs) == 0 && len(groupIDs) == 0 {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "at least one user or group is required")
 	}
@@ -183,7 +191,7 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 // UnassignDevice removes exactly one user or group assignment.
 func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cadestrov1.UnassignDeviceRequest]) (*connect.Response[cadestrov1.UnassignDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
-	if (req.Msg.UserId == "") == (req.Msg.GroupId == "") {
+	if (req.Msg.GetUserId().GetValue() == "") == (req.Msg.GetGroupId().GetValue() == "") {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "exactly one user or group is required")
 	}
 	actor, err := h.actor(ctx)
@@ -205,11 +213,11 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cade
 			var n int64
 			var err error
 			var field, ref string
-			if req.Msg.UserId != "" {
-				ref, field = req.Msg.UserId, "assigned_user_ids"
+			if req.Msg.GetUserId().GetValue() != "" {
+				ref, field = req.Msg.GetUserId().GetValue(), "assigned_user_ids"
 				n, err = tx.UnassignDeviceUser(ctx, db.UnassignDeviceUserParams{DeviceID: deviceID, UserID: ref})
 			} else {
-				ref, field = req.Msg.GroupId, "assigned_group_ids"
+				ref, field = req.Msg.GetGroupId().GetValue(), "assigned_group_ids"
 				n, err = tx.UnassignDeviceGroup(ctx, db.UnassignDeviceGroupParams{DeviceID: deviceID, GroupID: ref})
 			}
 			if err != nil {
@@ -238,23 +246,23 @@ func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Reque
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.mutationDevice(ctx, "SetDeviceSyncInterval", req.Msg.Id); err != nil {
+	if _, err := h.mutationDevice(ctx, "SetDeviceSyncInterval", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetDeviceSyncIntervalProcedure, "SetDeviceSyncInterval"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			n, err := tx.SetDeviceSyncInterval(ctx, db.SetDeviceSyncIntervalParams{ID: req.Msg.Id, Minutes: req.Msg.SyncIntervalMinutes})
+			n, err := tx.SetDeviceSyncInterval(ctx, db.SetDeviceSyncIntervalParams{ID: req.Msg.GetId().GetValue(), Minutes: req.Msg.SyncIntervalMinutes})
 			if err := requireOne("set device sync interval", n, err); err != nil {
 				return err
 			}
-			rec.Effect(deviceEffect(req.Msg.Id, "UPDATE", "sync_interval_minutes"))
+			rec.Effect(deviceEffect(req.Msg.GetId().GetValue(), "UPDATE", "sync_interval_minutes"))
 			return nil
 		})
 	if err != nil {
 		return nil, h.internal(ctx, "set device sync interval", err)
 	}
-	return h.updatedDevice(ctx, req.Msg.Id)
+	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
 // SetDeviceInventoryInterval writes the device-level inventory override.
@@ -266,23 +274,23 @@ func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.mutationDevice(ctx, "SetDeviceInventoryInterval", req.Msg.Id); err != nil {
+	if _, err := h.mutationDevice(ctx, "SetDeviceInventoryInterval", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetDeviceInventoryIntervalProcedure, "SetDeviceInventoryInterval"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			n, err := tx.SetDeviceInventoryInterval(ctx, db.SetDeviceInventoryIntervalParams{ID: req.Msg.Id, Minutes: req.Msg.InventoryIntervalMinutes})
+			n, err := tx.SetDeviceInventoryInterval(ctx, db.SetDeviceInventoryIntervalParams{ID: req.Msg.GetId().GetValue(), Minutes: req.Msg.InventoryIntervalMinutes})
 			if err := requireOne("set device inventory interval", n, err); err != nil {
 				return err
 			}
-			rec.Effect(deviceEffect(req.Msg.Id, "UPDATE", "inventory_interval_minutes"))
+			rec.Effect(deviceEffect(req.Msg.GetId().GetValue(), "UPDATE", "inventory_interval_minutes"))
 			return nil
 		})
 	if err != nil {
 		return nil, h.internal(ctx, "set device inventory interval", err)
 	}
-	return h.updatedDevice(ctx, req.Msg.Id)
+	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
 // DeleteDevice atomically soft-deletes the device, revokes its current
@@ -293,18 +301,18 @@ func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[cadest
 	if err != nil {
 		return nil, err
 	}
-	view, err := h.mutationDevice(ctx, "DeleteDevice", req.Msg.Id)
+	view, err := h.mutationDevice(ctx, "DeleteDevice", req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceDeleteDeviceProcedure, "DeleteDevice"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			n, err := tx.SoftDeleteDevice(ctx, req.Msg.Id)
+			n, err := tx.SoftDeleteDevice(ctx, req.Msg.GetId().GetValue())
 			if err := requireOne("delete device", n, err); err != nil {
 				return err
 			}
-			effect := deviceEffect(req.Msg.Id, "DELETE", "is_deleted")
+			effect := deviceEffect(req.Msg.GetId().GetValue(), "DELETE", "is_deleted")
 			before, after := false, true
 			effect.BeforeFlag, effect.AfterFlag = &before, &after
 			if view.ActiveCertSerial != nil {
@@ -317,7 +325,7 @@ func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[cadest
 	if err != nil {
 		return nil, h.internal(ctx, "delete device", err)
 	}
-	h.closeStream(req.Msg.Id)
+	h.closeStream(req.Msg.GetId().GetValue())
 	return connect.NewResponse(&cadestrov1.DeleteDeviceResponse{}), nil
 }
 

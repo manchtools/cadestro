@@ -39,7 +39,7 @@ beforeEach(() => {
 	api.search.mockResolvedValue({
 		results: [
 			create(SearchResultSchema, {
-				id: USER_ID,
+				id: { value: USER_ID },
 				name: USER_EMAIL,
 				fields: { email: USER_EMAIL }
 			})

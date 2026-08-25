@@ -205,7 +205,7 @@
 	async function deleteDefinition() {
 		if (!defToDelete) return;
 		try {
-			await apiClient.deleteDefinition(defToDelete.id);
+			await apiClient.deleteDefinition((defToDelete.id?.value ?? ''));
 			toast.success(m.definitions_deleted());
 			table.patchRows((rows) => rows.filter((d) => d.id !== defToDelete!.id));
 			table.refresh();
@@ -228,7 +228,7 @@
 				apiClient.listActionSets()
 			]);
 			const existingIds = (current.members ?? []).map((mem) => mem.actionSetId?.value ?? '');
-			availableSets = sets.sets.filter((s) => !existingIds.includes(s.id));
+			availableSets = sets.sets.filter((s) => !existingIds.includes((s.id?.value ?? '')));
 			pickerOpen = true;
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -247,7 +247,7 @@
 			}
 			toast.success(m.definition_detail_sets_added({ count: setIds.length }));
 			table.patchRows((rows) =>
-				rows.map((d) => (d.id === defId ? { ...d, memberCount: d.memberCount + setIds.length } : d))
+				rows.map((d) => ((d.id?.value ?? '') === defId ? { ...d, memberCount: d.memberCount + setIds.length } : d))
 			);
 			pickerOpen = false;
 		} catch (error) {
@@ -373,7 +373,7 @@
 	<RowList
 		{table}
 		{sortOptions}
-		rowKey={(d) => d.id}
+		rowKey={(d) => (d.id?.value ?? '')}
 		href={(d) => `${base}/definitions/${d.id}`}
 	>
 		{#snippet filters()}
@@ -434,7 +434,7 @@
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item onclick={() => openAddSetPicker(def.id)}>
+					<DropdownMenu.Item onclick={() => openAddSetPicker((def.id?.value ?? ''))}>
 						<Plus class="mr-2 h-4 w-4" />
 						{m.definitions_action_sets()}
 					</DropdownMenu.Item>

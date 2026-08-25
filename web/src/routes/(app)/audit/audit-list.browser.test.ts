@@ -77,7 +77,7 @@ import AuditPage from './+page.svelte';
 
 const results = [
 	create(SearchResultSchema, {
-		id: EVENT_OK,
+		id: { value: EVENT_OK },
 		fields: {
 			stream_type: 'device',
 			stream_id: DEVICE_ID,
@@ -88,7 +88,7 @@ const results = [
 		}
 	}),
 	create(SearchResultSchema, {
-		id: EVENT_DENIED,
+		id: { value: EVENT_DENIED },
 		fields: {
 			stream_type: 'lps_password',
 			stream_id: DEVICE_ID,

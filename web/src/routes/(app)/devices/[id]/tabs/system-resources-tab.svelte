@@ -172,7 +172,7 @@
 									<Table.Cell class="font-mono text-xs">{lk.devicePath}</Table.Cell>
 							<Table.Cell>{lk.actionName || (lk.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 									<Table.Cell>
-										<SecretCell id={lk.id} {...luksSecret} />
+										<SecretCell id={(lk.id?.value ?? '')} {...luksSecret} />
 									</Table.Cell>
 									<Table.Cell class="text-sm">{formatTimestampDateTime(lk.rotatedAt)}</Table.Cell>
 									<Table.Cell><Badge variant="outline">{getRotationReasonLabel(lk.rotationReason)}</Badge></Table.Cell>
@@ -233,7 +233,7 @@
 											<Table.Cell class="font-mono text-xs">{lk.devicePath}</Table.Cell>
 							<Table.Cell>{lk.actionName || (lk.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 											<Table.Cell>
-												<SecretCell id={lk.id} {...luksSecret} />
+												<SecretCell id={(lk.id?.value ?? '')} {...luksSecret} />
 											</Table.Cell>
 											<Table.Cell class="text-sm">{formatTimestampDateTime(lk.rotatedAt)}</Table.Cell>
 											<Table.Cell><Badge variant="outline">{getRotationReasonLabel(lk.rotationReason)}</Badge></Table.Cell>
@@ -275,7 +275,7 @@
 									<Table.Cell class="font-medium">{pw.username}</Table.Cell>
 							<Table.Cell>{pw.actionName || (pw.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 									<Table.Cell>
-										<SecretCell id={pw.id} {...lpsSecret} />
+										<SecretCell id={(pw.id?.value ?? '')} {...lpsSecret} />
 									</Table.Cell>
 									<Table.Cell class="text-sm">{formatTimestampDateTime(pw.rotatedAt)}</Table.Cell>
 									<Table.Cell><Badge variant="outline">{getRotationReasonLabel(pw.rotationReason)}</Badge></Table.Cell>
@@ -307,7 +307,7 @@
 											<Table.Cell class="font-medium">{pw.username}</Table.Cell>
 							<Table.Cell>{pw.actionName || (pw.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 											<Table.Cell>
-												<SecretCell id={pw.id} {...lpsSecret} />
+												<SecretCell id={(pw.id?.value ?? '')} {...lpsSecret} />
 											</Table.Cell>
 											<Table.Cell class="text-sm">{formatTimestampDateTime(pw.rotatedAt)}</Table.Cell>
 											<Table.Cell><Badge variant="outline">{getRotationReasonLabel(pw.rotationReason)}</Badge></Table.Cell>

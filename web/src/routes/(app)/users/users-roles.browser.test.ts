@@ -47,7 +47,7 @@ beforeEach(() => {
 	api.search.mockResolvedValue({
 		results: [
 			create(SearchResultSchema, {
-				id: USER_ID,
+				id: { value: USER_ID },
 				name: 'ops@example.test',
 				fields: {
 					email: 'ops@example.test',
@@ -62,7 +62,7 @@ beforeEach(() => {
 				}
 			}),
 			create(SearchResultSchema, {
-				id: NEVER_ID,
+				id: { value: NEVER_ID },
 				name: 'new@example.test',
 				fields: { email: 'new@example.test', last_login_at: '0' }
 			})

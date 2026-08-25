@@ -101,19 +101,19 @@ const PLAIN_SHELL = '01JQZZ7D0Q6R2T5V9W1X4Y3Z8A';
 /** Two compliance checks plus one ordinary shell action that must NOT show up. */
 const catalogue = [
 	create(ManagedActionSchema, {
-		id: CHECK_A,
+		id: { value: CHECK_A },
 		name: 'Disk encrypted',
 		type: ActionType.SHELL,
 		params: { case: 'shell', value: create(ShellParamsSchema, { isCompliance: true }) }
 	}),
 	create(ManagedActionSchema, {
-		id: CHECK_B,
+		id: { value: CHECK_B },
 		name: 'Firewall on',
 		type: ActionType.SHELL,
 		params: { case: 'shell', value: create(ShellParamsSchema, { isCompliance: true }) }
 	}),
 	create(ManagedActionSchema, {
-		id: PLAIN_SHELL,
+		id: { value: PLAIN_SHELL },
 		name: 'Rotate log files',
 		type: ActionType.SHELL,
 		params: { case: 'shell', value: create(ShellParamsSchema, { isCompliance: false }) }

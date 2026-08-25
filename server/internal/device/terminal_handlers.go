@@ -98,7 +98,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cades
 		return nil, h.internal(ctx, "commit terminal session", err)
 	}
 	return connect.NewResponse(&cadestrov1.StartTerminalResponse{
-		SessionId: sessionID, SessionToken: minted.Token, TerminalUrl: h.terminalURL,
+		SessionId: &cadestrov1.SessionId{Value: sessionID}, SessionToken: minted.Token, TerminalUrl: h.terminalURL,
 		ExpiresAt: timestamppb.New(minted.ExpiresAt), TtyUser: ttyUser,
 	}), nil
 }
@@ -110,10 +110,10 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[cadest
 	if err != nil {
 		return nil, err
 	}
-	if err := h.requireTerminalPermission(ctx, "StopTerminal", req.Msg.SessionId); err != nil {
+	if err := h.requireTerminalPermission(ctx, "StopTerminal", req.Msg.GetSessionId().GetValue()); err != nil {
 		return nil, err
 	}
-	session, err := h.store.GetOpenTerminalSession(ctx, req.Msg.SessionId)
+	session, err := h.store.GetOpenTerminalSession(ctx, req.Msg.GetSessionId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return connect.NewResponse(&cadestrov1.StopTerminalResponse{}), nil
@@ -180,7 +180,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 		if deviceID != "" && current.DeviceID != deviceID {
 			continue
 		}
-		if req.Msg.UserId != "" && current.UserID != req.Msg.UserId {
+		if req.Msg.GetUserId().GetValue() != "" && current.UserID != req.Msg.GetUserId().GetValue() {
 			continue
 		}
 		row, err := h.store.GetOpenTerminalSession(ctx, current.SessionID)
@@ -202,7 +202,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 				fmt.Errorf("registry metadata does not match session %s", current.SessionID))
 		}
 		all = append(all, &cadestrov1.TerminalSessionInfo{
-			SessionId: row.SessionID, UserId: row.UserID, UserEmail: row.UserEmail,
+			SessionId: &cadestrov1.SessionId{Value: row.SessionID}, UserId: &cadestrov1.UserId{Value: row.UserID}, UserEmail: row.UserEmail,
 			DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname, TtyUser: row.TtyUser,
 			StartedAt: timestamppb.New(row.StartedAt), LastActivityAt: timestamppb.New(current.LastActivity()),
 		})
@@ -214,7 +214,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 	}
 	page := make([]*cadestrov1.TerminalSessionInfo, 0, pageSize)
 	for _, session := range all {
-		if req.Msg.PageToken != "" && session.SessionId >= req.Msg.PageToken {
+		if req.Msg.PageToken != "" && session.GetSessionId().GetValue() >= req.Msg.PageToken {
 			continue
 		}
 		if len(page) == int(pageSize) {
@@ -224,9 +224,9 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 	}
 	next := ""
 	if len(page) == int(pageSize) {
-		lastID := page[len(page)-1].SessionId
+		lastID := page[len(page)-1].GetSessionId().GetValue()
 		for _, session := range all {
-			if session.SessionId < lastID {
+			if session.GetSessionId().GetValue() < lastID {
 				next = lastID
 				break
 			}
@@ -250,10 +250,10 @@ func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Re
 	if err != nil {
 		return nil, err
 	}
-	if err := h.requireTerminalPermission(ctx, "TerminateTerminalSession", req.Msg.SessionId); err != nil {
+	if err := h.requireTerminalPermission(ctx, "TerminateTerminalSession", req.Msg.GetSessionId().GetValue()); err != nil {
 		return nil, err
 	}
-	session, err := h.store.GetOpenTerminalSession(ctx, req.Msg.SessionId)
+	session, err := h.store.GetOpenTerminalSession(ctx, req.Msg.GetSessionId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errTerminalSessionMissing, "terminal session not found")
@@ -285,9 +285,9 @@ func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Re
 
 	if live != nil {
 		err = h.agentSender.Send(session.DeviceID, &cadestrov1.ServerMessage{
-			Id: ulid.Make().String(),
+			Id: &cadestrov1.MessageId{Value: ulid.Make().String()},
 			Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{
-				SessionId: session.SessionID, Reason: req.Msg.Reason,
+				SessionId: &cadestrov1.SessionId{Value: session.SessionID}, Reason: req.Msg.Reason,
 			}},
 		})
 		if err != nil {
@@ -364,9 +364,9 @@ func (h *Handlers) terminalDeviceInScope(ctx context.Context, deviceID string) (
 
 func (h *Handlers) sendTerminalStop(deviceID, sessionID, reason string) {
 	if err := h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
-		Id: ulid.Make().String(),
+		Id: &cadestrov1.MessageId{Value: ulid.Make().String()},
 		Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{
-			SessionId: sessionID, Reason: reason,
+			SessionId: &cadestrov1.SessionId{Value: sessionID}, Reason: reason,
 		}},
 	}); err != nil {
 		h.logger.Warn("terminal stop could not reach device", "session_id", sessionID, "device_id", deviceID)

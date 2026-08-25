@@ -64,14 +64,14 @@ import RolesPage from './+page.svelte';
 
 const roles = [
 	create(RoleSchema, {
-		id: SYSTEM_ROLE_ID,
+		id: { value: SYSTEM_ROLE_ID },
 		name: 'Admin',
 		description: 'Full control',
 		isSystem: true,
 		permissions: ['devices:read', 'devices:write', 'roles:write']
 	}),
 	create(RoleSchema, {
-		id: CUSTOM_ROLE_ID,
+		id: { value: CUSTOM_ROLE_ID },
 		name: 'Helpdesk',
 		description: '',
 		isSystem: false,

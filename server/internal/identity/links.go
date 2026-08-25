@@ -56,7 +56,7 @@ func (h *Handlers) UnlinkIdentity(ctx context.Context, req *connect.Request[cade
 		return nil, notFound(ctx, ErrIdentityLinkNotFound, "identity link not found")
 	}
 
-	link, err := h.store.GetIdentityLink(ctx, req.Msg.LinkId)
+	link, err := h.store.GetIdentityLink(ctx, req.Msg.GetLinkId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrIdentityLinkNotFound, "identity link not found")

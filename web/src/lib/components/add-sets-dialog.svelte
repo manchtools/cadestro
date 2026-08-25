@@ -37,7 +37,7 @@
 		</Dialog.Header>
 		<div class="py-4">
 			<ItemTablePicker
-				items={availableSets}
+				items={availableSets.map((set) => ({ ...set, id: set.id?.value ?? '' }))}
 				bind:selected={selectedSetIds}
 				searchPlaceholder={m.definition_detail_search_sets()}
 				emptyMessage={m.definition_detail_no_sets_available()}

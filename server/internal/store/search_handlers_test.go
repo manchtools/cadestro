@@ -73,7 +73,7 @@ func TestSQLiteSearchHandlers_ValidateAuthorizeScopeAndAssign(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.Results, 1)
-	assert.Equal(t, actionA, resp.Msg.Results[0].Id)
+	assert.Equal(t, actionA, resp.Msg.Results[0].GetId().GetValue())
 	assert.Equal(t, cadestrov1.SearchScope_SEARCH_SCOPE_ACTIONS, resp.Msg.Results[0].Scope)
 	assert.Equal(t, int32(1), resp.Msg.TotalCount)
 
@@ -85,7 +85,7 @@ func TestSQLiteSearchHandlers_ValidateAuthorizeScopeAndAssign(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.Results, 1)
-	assert.Equal(t, deviceA, resp.Msg.Results[0].Id)
+	assert.Equal(t, deviceA, resp.Msg.Results[0].GetId().GetValue())
 	assert.Equal(t, int32(1), resp.Msg.TotalCount)
 
 	_, err = h.Search(scoped, connect.NewRequest(&cadestrov1.SearchRequest{

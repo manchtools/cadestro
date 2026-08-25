@@ -137,14 +137,14 @@ func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[cade
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.readScope(ctx, "GetDeviceGroup", req.Msg.Id); err != nil {
+	if err := h.readScope(ctx, "GetDeviceGroup", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	row, err := h.store.GetDeviceGroup(ctx, req.Msg.Id)
+	row, err := h.store.GetDeviceGroup(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, h.mapError(ctx, "get device group", err)
 	}
-	members, err := h.store.ListDeviceGroupMembers(ctx, req.Msg.Id)
+	members, err := h.store.ListDeviceGroupMembers(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, h.internal(ctx, "list device group members", err)
 	}
@@ -164,7 +164,13 @@ func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[cade
 		}
 	}
 	return connect.NewResponse(&cadestrov1.GetDeviceGroupResponse{
-		Group: group, DeviceIds: ids, Devices: devices,
+		Group: group, DeviceIds: func() []*cadestrov1.DeviceId {
+			out := make([]*cadestrov1.DeviceId, len(ids))
+			for i, id := range ids {
+				out[i] = &cadestrov1.DeviceId{Value: id}
+			}
+			return out
+		}(), Devices: devices,
 	}), nil
 }
 
@@ -256,37 +262,37 @@ func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.R
 
 // RenameDeviceGroup replaces a group name.
 func (h *Handlers) RenameDeviceGroup(ctx context.Context, req *connect.Request[cadestrov1.RenameDeviceGroupRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameDeviceGroup")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "RenameDeviceGroup")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.Rename(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceRenameDeviceGroupProcedure, "RenameDeviceGroup"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameDeviceGroupProcedure, "RenameDeviceGroup"), req.Msg.GetId().GetValue(), req.Msg.Name)
 	return h.updated(ctx, "rename device group", row, err)
 }
 
 // UpdateDeviceGroupDescription replaces a description.
 func (h *Handlers) UpdateDeviceGroupDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateDeviceGroupDescription")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "UpdateDeviceGroupDescription")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateDescription(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure, "UpdateDeviceGroupDescription"),
-		req.Msg.Id, req.Msg.Description)
+		req.Msg.GetId().GetValue(), req.Msg.Description)
 	return h.updated(ctx, "update device group description", row, err)
 }
 
 // UpdateDeviceGroupQuery replaces the group's membership mode and query.
 func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Request[cadestrov1.UpdateDeviceGroupQueryRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupQueryResponse], error) {
 	const permission = "UpdateDynamicDeviceGroupQuery"
-	actor, err := h.mutationActor(ctx, req.Msg.Id, permission)
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), permission)
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateQuery(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure, permission),
-		req.Msg.Id, req.Msg.IsDynamic, req.Msg.DynamicQuery)
+		req.Msg.GetId().GetValue(), req.Msg.IsDynamic, req.Msg.DynamicQuery)
 	if err != nil {
 		return nil, h.mapError(ctx, "update device group query", err)
 	}
@@ -299,12 +305,12 @@ func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Requ
 
 // DeleteDeviceGroup deletes a group and ordinary dependent state.
 func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[cadestrov1.DeleteDeviceGroupRequest]) (*connect.Response[cadestrov1.DeleteDeviceGroupResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteDeviceGroup")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "DeleteDeviceGroup")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.Delete(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure, "DeleteDeviceGroup"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure, "DeleteDeviceGroup"), req.Msg.GetId().GetValue()); err != nil {
 		return nil, h.mapError(ctx, "delete device group", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteDeviceGroupResponse{}), nil
@@ -313,14 +319,17 @@ func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[c
 // AddDeviceToGroup adds one or more devices to a static group.
 func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[cadestrov1.AddDeviceToGroupRequest]) (*connect.Response[cadestrov1.AddDeviceToGroupResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
-	ids := append([]string(nil), req.Msg.DeviceIds...)
+	ids := make([]string, 0, len(req.Msg.GetDeviceIds()))
+	for _, id := range req.Msg.GetDeviceIds() {
+		ids = append(ids, id.GetValue())
+	}
 	if deviceID != "" {
 		ids = append(ids, deviceID)
 	}
 	if len(ids) == 0 || len(ids) > maxBatchDevices {
 		return nil, rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, "at least one device is required")
 	}
-	actor, err := h.mutationActor(ctx, req.Msg.GroupId, "AddDeviceToGroup")
+	actor, err := h.mutationActor(ctx, req.Msg.GetGroupId().GetValue(), "AddDeviceToGroup")
 	if err != nil {
 		return nil, err
 	}
@@ -336,10 +345,10 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[ca
 		}
 	}
 	if _, err := h.state.AddDevices(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceAddDeviceToGroupProcedure, "AddDeviceToGroup"), req.Msg.GroupId, ids); err != nil {
+		cadestrov1connect.ControlServiceAddDeviceToGroupProcedure, "AddDeviceToGroup"), req.Msg.GetGroupId().GetValue(), ids); err != nil {
 		return nil, h.mapError(ctx, "add devices to group", err)
 	}
-	group, err := h.groupResponse(ctx, req.Msg.GroupId)
+	group, err := h.groupResponse(ctx, req.Msg.GetGroupId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -349,16 +358,16 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[ca
 // RemoveDeviceFromGroup removes one device from a static group.
 func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Request[cadestrov1.RemoveDeviceFromGroupRequest]) (*connect.Response[cadestrov1.RemoveDeviceFromGroupResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
-	actor, err := h.mutationActor(ctx, req.Msg.GroupId, "RemoveDeviceFromGroup")
+	actor, err := h.mutationActor(ctx, req.Msg.GetGroupId().GetValue(), "RemoveDeviceFromGroup")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.RemoveDevice(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure, "RemoveDeviceFromGroup"),
-		req.Msg.GroupId, deviceID); err != nil {
+		req.Msg.GetGroupId().GetValue(), deviceID); err != nil {
 		return nil, h.mapError(ctx, "remove device from group", err)
 	}
-	group, err := h.groupResponse(ctx, req.Msg.GroupId)
+	group, err := h.groupResponse(ctx, req.Msg.GetGroupId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -391,11 +400,11 @@ func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Reques
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "EvaluateDynamicGroup", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "EvaluateDynamicGroup", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	result, err := h.state.EvaluateDynamicGroup(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure, "EvaluateDynamicGroup"), req.Msg.Id)
+		cadestrov1connect.ControlServiceEvaluateDynamicGroupProcedure, "EvaluateDynamicGroup"), req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, h.mapError(ctx, "evaluate dynamic group", err)
 	}
@@ -410,25 +419,25 @@ func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Reques
 
 // SetDeviceGroupSyncInterval replaces the sync contribution.
 func (h *Handlers) SetDeviceGroupSyncInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceGroupSyncIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "SetDeviceGroupSyncInterval")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "SetDeviceGroupSyncInterval")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.SetSyncInterval(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetDeviceGroupSyncIntervalProcedure, "SetDeviceGroupSyncInterval"),
-		req.Msg.Id, req.Msg.SyncIntervalMinutes)
+		req.Msg.GetId().GetValue(), req.Msg.SyncIntervalMinutes)
 	return h.updated(ctx, "set device group sync interval", row, err)
 }
 
 // SetDeviceGroupInventoryInterval replaces the inventory contribution.
 func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceGroupInventoryIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "SetDeviceGroupInventoryInterval")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "SetDeviceGroupInventoryInterval")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.SetInventoryInterval(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetDeviceGroupInventoryIntervalProcedure, "SetDeviceGroupInventoryInterval"),
-		req.Msg.Id, req.Msg.InventoryIntervalMinutes)
+		req.Msg.GetId().GetValue(), req.Msg.InventoryIntervalMinutes)
 	return h.updated(ctx, "set device group inventory interval", row, err)
 }
 
@@ -437,7 +446,7 @@ func (h *Handlers) SetDeviceGroupMaintenanceWindow(ctx context.Context, req *con
 	if err := maintenance.Validate(req.Msg.MaintenanceWindow); err != nil {
 		return nil, rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, err.Error())
 	}
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "SetDeviceGroupMaintenanceWindow")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "SetDeviceGroupMaintenanceWindow")
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +459,7 @@ func (h *Handlers) SetDeviceGroupMaintenanceWindow(ctx context.Context, req *con
 	}
 	row, err := h.state.SetMaintenanceWindow(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetDeviceGroupMaintenanceWindowProcedure, "SetDeviceGroupMaintenanceWindow"),
-		req.Msg.Id, raw)
+		req.Msg.GetId().GetValue(), raw)
 	return h.updated(ctx, "set device group maintenance window", row, err)
 }
 
@@ -532,7 +541,7 @@ func (h *Handlers) groupResponse(ctx context.Context, id string) (*cadestrov1.De
 
 func (h *Handlers) groupProto(row store.DeviceGroupView) (*cadestrov1.DeviceGroup, error) {
 	group := &cadestrov1.DeviceGroup{
-		Id: row.ID, Name: row.Name, Description: row.Description,
+		Id: &cadestrov1.DeviceGroupId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		MemberCount: boundedCount(row.LiveMemberCount), CreatedBy: row.CreatedBy,
 		IsDynamic: row.IsDynamic, SyncIntervalMinutes: row.SyncIntervalMinutes,
 		InventoryIntervalMinutes: row.InventoryIntervalMinutes,
@@ -606,7 +615,7 @@ func boundedCount(value int64) int32 {
 func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&cadestrov1.ErrorDetail{
-		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
+		Code: code, RequestId: &cadestrov1.RequestId{Value: middleware.RequestIDFromContext(ctx)},
 	})
 	if detailErr == nil {
 		err.AddDetail(detail)

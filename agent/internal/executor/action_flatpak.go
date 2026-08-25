@@ -23,10 +23,10 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 	// front. Validating before the lookup also means a malformed action
 	// is rejected on every host, not silently skipped on one without
 	// flatpak.
-	if params.AppId == "" {
+	if params.GetAppId().GetValue() == "" {
 		return nil, false, fmt.Errorf("flatpak app_id is required")
 	}
-	if err := packageSDK.ValidatePackageName(params.AppId); err != nil {
+	if err := packageSDK.ValidatePackageName(params.GetAppId().GetValue()); err != nil {
 		return nil, false, fmt.Errorf("invalid flatpak app_id: %w", err)
 	}
 
@@ -67,9 +67,9 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 	// flatpak failure beats blindly attempting an install or falsely reporting
 	// "already absent". (The per-user path below instead treats a probe error as
 	// "not installed", so one user's failure doesn't abort the whole fan-out.)
-	installed, err := mgr.IsInstalled(ctx, params.AppId)
+	installed, err := mgr.IsInstalled(ctx, params.GetAppId().GetValue())
 	if err != nil {
-		return nil, false, fmt.Errorf("check flatpak %s installed: %w", params.AppId, err)
+		return nil, false, fmt.Errorf("check flatpak %s installed: %w", params.GetAppId().GetValue(), err)
 	}
 
 	switch state {
@@ -77,13 +77,13 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 		if installed {
 			out := &pb.CommandOutput{
 				ExitCode: 0,
-				Stdout:   fmt.Sprintf("flatpak %s is already installed", params.AppId),
+				Stdout:   fmt.Sprintf("flatpak %s is already installed", params.GetAppId().GetValue()),
 			}
 			// Converge the pin even when already installed — a pin requested
 			// after install, or lost out-of-band, must still be applied. A pin
 			// failure is a real failure.
 			if params.Pin {
-				changed, pinErr := ensureFlatpakPinned(ctx, mgr, params.AppId)
+				changed, pinErr := ensureFlatpakPinned(ctx, mgr, params.GetAppId().GetValue())
 				if pinErr != nil {
 					out.ExitCode = 1
 					out.Stderr = pinErr.Error()
@@ -101,7 +101,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 			return out, false, err
 		}
 
-		out, _, instErr := packageResult(mgr.Install(ctx, remote, params.AppId))
+		out, _, instErr := packageResult(mgr.Install(ctx, remote, params.GetAppId().GetValue()))
 		if instErr != nil {
 			return out, false, fmt.Errorf("flatpak install failed: %w", instErr)
 		}
@@ -111,7 +111,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 		// install is durable but the action did not reach the desired state
 		// (mirrors action_package.go).
 		if params.Pin {
-			if _, pinErr := ensureFlatpakPinned(ctx, mgr, params.AppId); pinErr != nil {
+			if _, pinErr := ensureFlatpakPinned(ctx, mgr, params.GetAppId().GetValue()); pinErr != nil {
 				if out == nil {
 					out = &pb.CommandOutput{}
 				}
@@ -125,7 +125,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 		if !installed {
 			return &pb.CommandOutput{
 				ExitCode: 0,
-				Stdout:   fmt.Sprintf("flatpak %s is already not installed", params.AppId),
+				Stdout:   fmt.Sprintf("flatpak %s is already not installed", params.GetAppId().GetValue()),
 			}, false, nil
 		}
 
@@ -135,12 +135,12 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 
 		// Unmask before uninstall — best-effort; can fail benignly if the app
 		// was never pinned, so log at Debug for correlation only.
-		if _, err := mgr.Unpin(ctx, params.AppId); err != nil {
+		if _, err := mgr.Unpin(ctx, params.GetAppId().GetValue()); err != nil {
 			e.logger.Debug("flatpak ABSENT: unmask before uninstall failed (often expected if not pinned)",
-				"app_id", params.AppId, "error", err)
+				"app_id", params.GetAppId().GetValue(), "error", err)
 		}
 
-		return packageResult(mgr.Remove(ctx, packageSDK.RemoveOptions{}, params.AppId))
+		return packageResult(mgr.Remove(ctx, packageSDK.RemoveOptions{}, params.GetAppId().GetValue()))
 	}
 
 	return nil, false, fmt.Errorf("unknown desired state: %v", state)
@@ -172,10 +172,10 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 		}
 		if len(sessions) == 0 {
 			e.logger.Warn("flatpak PRESENT: no active desktop sessions; per-user install deferred until a user signs in",
-				"app_id", params.AppId)
+				"app_id", params.GetAppId().GetValue())
 			return &pb.CommandOutput{
 				ExitCode: 0,
-				Stdout:   fmt.Sprintf("skipped: no signed-in desktop users to install %s for; will run again on next reconciliation", params.AppId),
+				Stdout:   fmt.Sprintf("skipped: no signed-in desktop users to install %s for; will run again on next reconciliation", params.GetAppId().GetValue()),
 			}, false, nil
 		}
 
@@ -203,7 +203,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 					firstFailure = fmt.Errorf("user %s: %w", s.Username, mkErr)
 				}
 				e.logger.Warn("flatpak PRESENT: per-user manager setup failed",
-					"user", s.Username, "app_id", params.AppId, "error", mkErr)
+					"user", s.Username, "app_id", params.GetAppId().GetValue(), "error", mkErr)
 				line("setup failed: " + mkErr.Error())
 				continue
 			}
@@ -211,40 +211,40 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 			// An IsInstalled probe error is treated as "not installed" (mirrors
 			// the prior `flatpak info` check, which collapsed to a bool): proceed
 			// to install, which surfaces any real failure per-user below.
-			if installed, _ := umgr.IsInstalled(ctx, params.AppId); installed {
-				line(fmt.Sprintf("flatpak %s already installed; skipped", params.AppId))
+			if installed, _ := umgr.IsInstalled(ctx, params.GetAppId().GetValue()); installed {
+				line(fmt.Sprintf("flatpak %s already installed; skipped", params.GetAppId().GetValue()))
 				// Converge the pin even when already installed.
 				if params.Pin {
-					changed, pinErr := ensureFlatpakPinned(ctx, umgr, params.AppId)
+					changed, pinErr := ensureFlatpakPinned(ctx, umgr, params.GetAppId().GetValue())
 					if pinErr != nil {
 						if firstFailure == nil {
 							firstFailure = fmt.Errorf("user %s: %w", s.Username, pinErr)
 						}
 						e.logger.Warn("flatpak PRESENT: per-user pin (mask) failed",
-							"user", s.Username, "app_id", params.AppId, "error", pinErr)
+							"user", s.Username, "app_id", params.GetAppId().GetValue(), "error", pinErr)
 						line("pin failed: " + pinErr.Error())
 					} else if changed {
 						anyChanged = true
-						line("pinned " + params.AppId)
+						line("pinned " + params.GetAppId().GetValue())
 					}
 				}
 				continue
 			}
 
-			if _, runErr := umgr.Install(ctx, remote, params.AppId); runErr != nil {
+			if _, runErr := umgr.Install(ctx, remote, params.GetAppId().GetValue()); runErr != nil {
 				if firstFailure == nil {
 					firstFailure = fmt.Errorf("user %s: install failed: %w", s.Username, runErr)
 				}
 				e.logger.Warn("flatpak PRESENT: per-user install failed",
-					"user", s.Username, "app_id", params.AppId, "error", runErr)
+					"user", s.Username, "app_id", params.GetAppId().GetValue(), "error", runErr)
 				line(runErr.Error())
 				continue
 			}
 			anyChanged = true
-			line(fmt.Sprintf("installed %s", params.AppId))
+			line(fmt.Sprintf("installed %s", params.GetAppId().GetValue()))
 
 			if params.Pin {
-				if _, pinErr := ensureFlatpakPinned(ctx, umgr, params.AppId); pinErr != nil {
+				if _, pinErr := ensureFlatpakPinned(ctx, umgr, params.GetAppId().GetValue()); pinErr != nil {
 					// Pin is part of the requested state: record it as a failure
 					// (firstFailure) so the action reports FAILED, not a silent
 					// success with the app left unpinned.
@@ -252,7 +252,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 						firstFailure = fmt.Errorf("user %s: install succeeded but %w", s.Username, pinErr)
 					}
 					e.logger.Warn("flatpak PRESENT: per-user pin (mask) failed (install succeeded)",
-						"user", s.Username, "app_id", params.AppId, "error", pinErr)
+						"user", s.Username, "app_id", params.GetAppId().GetValue(), "error", pinErr)
 					line("pin failed: " + pinErr.Error())
 				}
 			}
@@ -261,14 +261,14 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 		return &pb.CommandOutput{Stdout: perUserOut.String()}, anyChanged, firstFailure
 
 	case pb.DesiredState_DESIRED_STATE_ABSENT:
-		users, err := e.deps.desktop.UsersWithFlatpakInstall(ctx, params.AppId)
+		users, err := e.deps.desktop.UsersWithFlatpakInstall(ctx, params.GetAppId().GetValue())
 		if err != nil {
 			return nil, false, fmt.Errorf("enumerate per-user flatpak installs: %w", err)
 		}
 		if len(users) == 0 {
 			return &pb.CommandOutput{
 				ExitCode: 0,
-				Stdout:   fmt.Sprintf("flatpak %s is already not installed for any user", params.AppId),
+				Stdout:   fmt.Sprintf("flatpak %s is already not installed for any user", params.GetAppId().GetValue()),
 			}, false, nil
 		}
 
@@ -292,24 +292,24 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 					firstFailure = fmt.Errorf("user %s: %w", u.Username, mkErr)
 				}
 				e.logger.Warn("flatpak ABSENT: per-user manager setup failed",
-					"user", u.Username, "app_id", params.AppId, "error", mkErr)
+					"user", u.Username, "app_id", params.GetAppId().GetValue(), "error", mkErr)
 				perUserOut.WriteString("setup failed: " + mkErr.Error() + "\n")
 				continue
 			}
 
 			// Mask removal is best-effort, same rationale as the system-wide
 			// path. Log only if loud.
-			if _, err := umgr.Unpin(ctx, params.AppId); err != nil {
+			if _, err := umgr.Unpin(ctx, params.GetAppId().GetValue()); err != nil {
 				e.logger.Debug("flatpak ABSENT: per-user unmask before uninstall failed (often expected if not pinned)",
-					"user", u.Username, "app_id", params.AppId, "error", err)
+					"user", u.Username, "app_id", params.GetAppId().GetValue(), "error", err)
 			}
 
-			if _, runErr := umgr.Remove(ctx, packageSDK.RemoveOptions{}, params.AppId); runErr != nil {
+			if _, runErr := umgr.Remove(ctx, packageSDK.RemoveOptions{}, params.GetAppId().GetValue()); runErr != nil {
 				if firstFailure == nil {
 					firstFailure = fmt.Errorf("user %s: uninstall failed: %w", u.Username, runErr)
 				}
 				e.logger.Warn("flatpak ABSENT: per-user uninstall failed",
-					"user", u.Username, "app_id", params.AppId, "error", runErr)
+					"user", u.Username, "app_id", params.GetAppId().GetValue(), "error", runErr)
 				perUserOut.WriteString(runErr.Error() + "\n")
 				continue
 			}

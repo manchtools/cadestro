@@ -82,7 +82,7 @@ vi.mock('svelte-sonner', () => ({ toast: toaster }));
 import AssignPage from './+page.svelte';
 
 function device(id: string, hostname: string, status: DeviceStatus) {
-	return create(DeviceSchema, { id, hostname, status });
+	return create(DeviceSchema, { id: { value: id }, hostname, status });
 }
 
 const DEVICES: Record<string, ReturnType<typeof device>> = {
@@ -93,8 +93,8 @@ const DEVICES: Record<string, ReturnType<typeof device>> = {
 };
 
 const SETS = [
-	create(ActionSetSchema, { id: SET_PATCH, name: 'Patch and reboot', memberCount: 2 }),
-	create(ActionSetSchema, { id: SET_HARDEN, name: 'Harden SSH baseline', memberCount: 4 })
+	create(ActionSetSchema, { id: { value: SET_PATCH }, name: 'Patch and reboot', memberCount: 2 }),
+	create(ActionSetSchema, { id: { value: SET_HARDEN }, name: 'Harden SSH baseline', memberCount: 4 })
 ];
 
 beforeEach(() => {
@@ -134,11 +134,11 @@ beforeEach(() => {
 	api.listAssignments.mockResolvedValue({
 		assignments: [
 			create(AssignmentSchema, {
-				id: '01JR0A5J5W1X7Y0Z4A6B9C8D3F',
+				id: { value: '01JR0A5J5W1X7Y0Z4A6B9C8D3F' },
 				sourceType: AssignmentSourceType.ACTION_SET,
-				sourceId: SET_PATCH,
+				sourceId: { value: SET_PATCH },
 				targetType: AssignmentTargetType.DEVICE,
-				targetId: DEV_ASSIGNED
+				targetId: { value: DEV_ASSIGNED }
 			})
 		],
 		nextPageToken: ''

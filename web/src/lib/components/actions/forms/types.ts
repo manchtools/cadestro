@@ -508,7 +508,7 @@ export function appFormToProto(form: AppFormState) {
 }
 
 export function flatpakFormToProto(form: FlatpakFormState) {
-	return create(FlatpakParamsSchema, { ...form });
+	return create(FlatpakParamsSchema, { ...form, appId: { value: form.appId } });
 }
 
 export function updateFormToProto(form: UpdateFormState) {
@@ -845,7 +845,7 @@ export function appProtoToForm(proto: AppInstallParams): AppFormState {
 
 export function flatpakProtoToForm(proto: FlatpakParams): FlatpakFormState {
 	return {
-		appId: proto.appId,
+		appId: proto.appId?.value ?? '',
 		remote: proto.remote || '',
 		systemWide: proto.systemWide ?? true,
 		pin: proto.pin || false

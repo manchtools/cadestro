@@ -60,13 +60,13 @@
 	{:else}
 		<div data-tour="assign-sets" role="radiogroup" aria-label={m.assign_sets_label()} class="grid gap-1.5">
 			{#each sets as set (set.id)}
-				{@const on = set.id === selectedId}
+				{@const on = (set.id?.value ?? '') === selectedId}
 				<div class="overflow-hidden rounded-[9px] border {on ? 'border-primary' : 'border-border'}">
 					<button
 						type="button"
 						role="radio"
 						aria-checked={on}
-						onclick={() => onselect(set.id)}
+						onclick={() => onselect((set.id?.value ?? ''))}
 						class="flex w-full items-center gap-2 px-2 py-2 text-left text-sm {on ? 'bg-accent-soft' : ''}"
 					>
 						<span

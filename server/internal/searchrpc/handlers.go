@@ -195,7 +195,7 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[cadestrov1.S
 		}
 		for _, row := range rows {
 			response.Results = append(response.Results, &cadestrov1.SearchResult{
-				Id: row.ID, Name: row.Name, Description: row.Description, Scope: current.wire,
+				Id: &cadestrov1.SearchResultId{Value: row.ID}, Name: row.Name, Description: row.Description, Scope: current.wire,
 				MemberCount: boundedInt32(row.MemberCount), Fields: row.Fields,
 			})
 		}

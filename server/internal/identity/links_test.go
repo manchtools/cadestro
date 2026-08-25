@@ -24,7 +24,7 @@ func TestListIdentityLinks_ReturnsOnlyTheCallersOwnBindings(t *testing.T) {
 	resp, err := f.client.ListIdentityLinks(f.ctx(), authed(&cadestrov1.ListIdentityLinksRequest{}, caller.Token))
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.Links, 1, "the RPC takes no subject, so there is nothing to substitute")
-	assert.Equal(t, caller.ID, resp.Msg.Links[0].UserId)
+	assert.Equal(t, caller.ID, resp.Msg.Links[0].UserId.GetValue())
 	assert.Equal(t, "corp", resp.Msg.Links[0].ProviderSlug)
 }
 
@@ -37,7 +37,7 @@ func TestUnlinkIdentity_RemovesTheCallersOwnBinding(t *testing.T) {
 	doomed := f.insertIdentityLink(caller.ID, first, "first-subject")
 	f.insertIdentityLink(caller.ID, second, "second-subject")
 
-	_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: doomed}, caller.Token))
+	_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: &cadestrov1.IdentityLinkId{Value: doomed}}, caller.Token))
 	require.NoError(t, err)
 
 	links, err := f.store.ListIdentityLinksForUser(f.ctx(), caller.ID)
@@ -61,7 +61,7 @@ func TestUnlinkIdentity_RefusesToRemoveTheLastSignInMethod(t *testing.T) {
 	provider := f.insertProvider("corp", nil)
 	only := f.insertIdentityLink(caller.ID, provider, "corp-subject")
 
-	_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: only}, caller.Token))
+	_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: &cadestrov1.IdentityLinkId{Value: only}}, caller.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 
 	links, err := f.store.ListIdentityLinksForUser(f.ctx(), caller.ID)
@@ -81,7 +81,7 @@ func TestUnlinkIdentity_ReportsAnotherSubjectsBindingAsNotFound(t *testing.T) {
 	f.insertIdentityLink(caller.ID, f.insertProvider("second", nil), "caller-second")
 	victimLink := f.insertIdentityLink(victim.ID, provider, "victim-subject")
 
-	_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: victimLink}, caller.Token))
+	_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: &cadestrov1.IdentityLinkId{Value: victimLink}}, caller.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
 	links, err := f.store.ListIdentityLinksForUser(f.ctx(), victim.ID)

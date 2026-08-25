@@ -46,7 +46,7 @@ const NOW = () => Math.floor(Date.now() / 1000);
 
 function device(id: string, hostname: string, secondsAgo = 5) {
 	return create(SearchResultSchema, {
-		id,
+		id: { value: id },
 		name: hostname,
 		scope: SearchScope.DEVICES,
 		fields: { hostname, last_seen_at: String(NOW() - secondsAgo), os_name: 'Debian' }
@@ -55,7 +55,7 @@ function device(id: string, hostname: string, secondsAgo = 5) {
 
 function auditEvent(id: string, eventType: string) {
 	return create(SearchResultSchema, {
-		id,
+		id: { value: id },
 		name: eventType,
 		scope: SearchScope.AUDIT_EVENTS,
 		fields: { event_type: eventType, actor_type: 'user', occurred_at: String(NOW() - 90) }

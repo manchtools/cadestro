@@ -58,7 +58,7 @@
 
 	// Construction-time input: the page remounts this builder on every reload.
 	// svelte-ignore state_referenced_locally
-	const setsById = new Map(library.map((s) => [s.id, s]));
+	const setsById = new Map<string, ActionSet>(library.flatMap((s) => s.id ? [[s.id.value, s] as const] : []));
 
 	interface Body {
 		name: string;
@@ -74,7 +74,7 @@
 				key: `set-${member.actionSetId}`,
 				actionSetId: member.actionSetId,
 				name: member.actionSetName,
-				memberCount: setsById.get(member.actionSetId)?.memberCount ?? 0,
+				memberCount: setsById.get(member.actionSetId ?? '')?.memberCount ?? 0,
 				originalIndex: member.sortOrder
 			}));
 		return { name: definition.name, description: definition.description, steps, removed: [] };
@@ -123,8 +123,8 @@
 
 	const options = $derived.by((): SetOption[] =>
 		library
-			.filter((s) => !steps.some((step) => step.actionSetId === s.id))
-			.map((s) => ({ id: s.id, name: s.name, memberCount: s.memberCount }))
+			.filter((s) => !steps.some((step) => (step.actionSetId ?? '') === (typeof s.id === 'string' ? s.id : s.id?.value ?? '')))
+			.map((s) => ({ id: typeof s.id === 'string' ? s.id : s.id?.value ?? '', name: s.name, memberCount: s.memberCount }))
 	);
 
 	// svelte-ignore state_referenced_locally
@@ -172,7 +172,7 @@
 
 	function insertAt(setId: string, at: number) {
 		const set = setsById.get(setId);
-		if (!set || steps.some((s) => s.actionSetId === setId)) return;
+		if (!set || steps.some((s) => (s.actionSetId ?? '') === setId)) return;
 		const step: SetStep = {
 			key: `set-${setId}`,
 			actionSetId: setId,

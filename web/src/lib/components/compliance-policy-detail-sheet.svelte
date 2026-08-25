@@ -232,7 +232,7 @@
 			});
 			const existingActionIds = policy?.rules.map((r) => r.actionId?.value ?? '') ?? [];
 			complianceActions = allActions.filter((a) => {
-				if (existingActionIds.includes(a.id)) return false;
+				if (existingActionIds.includes((a.id?.value ?? ''))) return false;
 				if (a.type !== ActionType.SHELL) return false;
 				if (a.params.case === 'shell') {
 					return a.params.value.isCompliance;
@@ -271,7 +271,7 @@
 
 	function handleActionCreatedForRule(action: ManagedAction) {
 		complianceActions = [action, ...complianceActions];
-		selectedActionId = action.id;
+		selectedActionId = (action.id?.value ?? '');
 		addRuleStep = 'select';
 	}
 
@@ -566,13 +566,13 @@
 								<Table.Row
 									class="cursor-pointer"
 									onclick={() =>
-										(selectedActionId = selectedActionId === action.id ? '' : action.id)}
+										(selectedActionId = selectedActionId === (action.id?.value ?? '') ? '' : (action.id?.value ?? ''))}
 								>
 									<Table.Cell>
 										<Checkbox
-											checked={selectedActionId === action.id}
+											checked={selectedActionId === (action.id?.value ?? '')}
 											onCheckedChange={() =>
-												(selectedActionId = selectedActionId === action.id ? '' : action.id)}
+												(selectedActionId = selectedActionId === (action.id?.value ?? '') ? '' : (action.id?.value ?? ''))}
 											onclick={(e: MouseEvent) => e.stopPropagation()}
 										/>
 									</Table.Cell>

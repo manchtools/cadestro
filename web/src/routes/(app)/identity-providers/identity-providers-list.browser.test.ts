@@ -72,22 +72,22 @@ import IdentityProvidersPage from './+page.svelte';
 
 const providers = [
 	create(IdentityProviderSchema, {
-		id: ENABLED_ID,
+		id: { value: ENABLED_ID },
 		name: 'Corporate Entra',
 		slug: 'entra',
 		providerType: IdentityProviderType.OIDC,
 		enabled: true,
-		clientId: 'client-abc',
+		clientId: { value: 'client-abc' },
 		issuerUrl: 'https://login.example.test',
 		createdAt: timestampFromMs(Date.UTC(2026, 6, 1))
 	}),
 	create(IdentityProviderSchema, {
-		id: DISABLED_ID,
+		id: { value: DISABLED_ID },
 		name: 'Legacy Okta',
 		slug: 'okta',
 		providerType: IdentityProviderType.OIDC,
 		enabled: false,
-		clientId: 'client-def',
+		clientId: { value: 'client-def' },
 		issuerUrl: 'https://okta.example.test',
 		createdAt: timestampFromMs(Date.UTC(2026, 6, 2))
 	})

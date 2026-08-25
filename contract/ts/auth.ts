@@ -150,11 +150,11 @@ export class AuthStore {
 	get isAdmin() {
 		const adminRoleID = '00000000000000000000000001';
 		for (const grant of this.state.user?.roleGrants ?? []) {
-			if (grant.role?.id === adminRoleID) return true;
+			if (grant.role?.id?.value === adminRoleID) return true;
 		}
 		const inherited = this.state.user?.inheritedRoles ?? [];
 		for (const ir of inherited) {
-			if (ir.roleId === adminRoleID) return true;
+			if (ir.roleId?.value === adminRoleID) return true;
 		}
 		return false;
 	}

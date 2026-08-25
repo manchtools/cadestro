@@ -38,14 +38,14 @@ func (s *runtimeStreamService) Stream(ctx context.Context, stream *connect.BidiS
 		}
 		switch {
 		case message.GetHello() != nil:
-			if err := stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}}); err != nil {
+			if err := stream.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: message.GetId().GetValue()}, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}}); err != nil {
 				return err
 			}
 		case message.GetSyncRequest() != nil:
 			s.mu.Lock()
-			s.syncs <- message.Id
+			s.syncs <- message.GetId().GetValue()
 			s.mu.Unlock()
-			if err := stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_SyncState{SyncState: s.state}}); err != nil {
+			if err := stream.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: message.GetId().GetValue()}, Payload: &cadestrov1.ServerMessage_SyncState{SyncState: s.state}}); err != nil {
 				return err
 			}
 		}

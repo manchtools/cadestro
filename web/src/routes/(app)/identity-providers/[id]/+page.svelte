@@ -63,7 +63,7 @@
 		return {
 			name: p?.name ?? '',
 			enabled: p?.enabled ?? false,
-			clientId: p?.clientId ?? '',
+			clientId: p?.clientId?.value ?? '',
 			clientSecret: '',
 			issuerUrl: p?.issuerUrl ?? '',
 			authorizationUrl: p?.authorizationUrl ?? '',
@@ -73,7 +73,7 @@
 			autoCreateUsers: p?.autoCreateUsers ?? false,
 			autoLinkByEmail: p?.autoLinkByEmail ?? false,
 			trustEmail: p?.trustEmailAssertions ?? false,
-			defaultRoleId: p?.defaultRoleId ?? '',
+			defaultRoleId: p?.defaultRoleId?.value ?? '',
 			groupClaim: p?.groupClaim ?? ''
 		};
 	}
@@ -125,7 +125,7 @@
 	 *  honest than pretending "no default role" while the server still grants it. */
 	const defaultRoleLabel = $derived(
 		form.defaultRoleId
-			? (roles.find((r) => r.id === form.defaultRoleId)?.name ?? form.defaultRoleId)
+			? (roles.find((r) => (r.id?.value ?? '') === form.defaultRoleId)?.name ?? form.defaultRoleId)
 			: m.idp_field_default_role_none()
 	);
 
@@ -573,7 +573,7 @@
 							<Select.Content>
 								<Select.Item value="">{m.idp_field_default_role_none()}</Select.Item>
 								{#each roles as role (role.id)}
-									<Select.Item value={role.id}>{role.name}</Select.Item>
+									<Select.Item value={(role.id?.value ?? '')}>{role.name}</Select.Item>
 								{/each}
 							</Select.Content>
 						</Select.Root>

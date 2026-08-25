@@ -144,7 +144,7 @@
 	async function deleteDevice() {
 		if (!deviceToDelete) return;
 		try {
-			await apiClient.deleteDevice(deviceToDelete.id);
+			await apiClient.deleteDevice((deviceToDelete.id?.value ?? ''));
 			toast.success(m.devices_deleted());
 			table.patchRows((list) => list.filter((d) => d.id !== deviceToDelete!.id));
 		} catch (error) {
@@ -164,7 +164,7 @@
 	async function assignDevice(userIds: string[], groupIds: string[]) {
 		if (!deviceToAssign) return;
 		try {
-			const updated = await apiClient.assignDevice(deviceToAssign.id, userIds, groupIds);
+			const updated = await apiClient.assignDevice((deviceToAssign.id?.value ?? ''), userIds, groupIds);
 			if (updated) {
 				table.patchRows((list) => list.map((d) => (d.id === deviceToAssign!.id ? updated : d)));
 			}
@@ -198,9 +198,9 @@
 	onpointerdowncapture={(e) => (shiftHeld = e.shiftKey)}
 	onkeydowncapture={(e) => (shiftHeld = e.shiftKey)}
 >
-	<DataTable {table} {columns} rowKey={(d) => d.id}>
+	<DataTable {table} {columns} rowKey={(d) => (d.id?.value ?? '')}>
 		{#snippet row(device)}
-			{@const index = rowAt.get(device.id) ?? -1}
+			{@const index = rowAt.get((device.id?.value ?? '')) ?? -1}
 			{@const fleet = index >= 0 ? fleetRows[index] : undefined}
 			<Table.Cell>
 				{#if fleet}
@@ -261,7 +261,7 @@
 						{/snippet}
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end">
-						<DropdownMenu.Item onclick={() => openPanel('device', device.id, device.hostname)}>
+						<DropdownMenu.Item onclick={() => openPanel('device', (device.id?.value ?? ''), device.hostname)}>
 							<AppWindow class="mr-2 h-4 w-4" />
 							{m.common_open_window()}
 						</DropdownMenu.Item>

@@ -306,11 +306,7 @@ message UpdateParams {
 // Similar to AppImage but uses the Flatpak package manager.
 message FlatpakParams {
   // Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
-  string app_id = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
+  FlatpakAppId app_id = 1 [(buf.validate.field).required = true];
 
   // Remote/repository name (default: "flathub")
   string remote = 2 [

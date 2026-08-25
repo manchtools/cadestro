@@ -62,7 +62,7 @@ export interface LibraryBubble {
 }
 
 function toLibraryAction(a: ManagedAction): LibraryAction {
-	return { id: a.id, name: a.name, absent: a.desiredState === DesiredState.ABSENT };
+	return { id: (a.id?.value ?? ''), name: a.name, absent: a.desiredState === DesiredState.ABSENT };
 }
 
 /** Removals first, then by name, then by id — deterministic and locale-stable

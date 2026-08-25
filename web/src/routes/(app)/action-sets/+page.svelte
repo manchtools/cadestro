@@ -207,7 +207,7 @@
 	async function deleteActionSet() {
 		if (!setToDelete) return;
 		try {
-			await apiClient.deleteActionSet(setToDelete.id);
+			await apiClient.deleteActionSet((setToDelete.id?.value ?? ''));
 			toast.success(m.action_sets_deleted());
 			table.patchRows((rows) => rows.filter((s) => s.id !== setToDelete!.id));
 			table.refresh();
@@ -230,7 +230,7 @@
 				apiClient.listActions()
 			]);
 			const existingIds = (current.members ?? []).map((mem) => mem.actionId?.value ?? '');
-			availableActions = actions.actions.filter((a) => !existingIds.includes(a.id));
+			availableActions = actions.actions.filter((a) => !existingIds.includes((a.id?.value ?? '')));
 			pickerOpen = true;
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -241,7 +241,7 @@
 	function patchMemberCount(setId: string, delta: number) {
 		table.patchRows((rows) =>
 			rows.map((s) =>
-				s.id === setId ? { ...s, memberCount: Math.max(0, s.memberCount + delta) } : s
+				(s.id?.value ?? '') === setId ? { ...s, memberCount: Math.max(0, s.memberCount + delta) } : s
 			)
 		);
 	}
@@ -370,7 +370,7 @@
 	<RowList
 		{table}
 		{sortOptions}
-		rowKey={(s) => s.id}
+		rowKey={(s) => (s.id?.value ?? '')}
 		href={(s) => `${base}/action-sets/${s.id}`}
 	>
 		{#snippet filters()}
@@ -435,7 +435,7 @@
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item onclick={() => openAddActionPicker(set.id)}>
+					<DropdownMenu.Item onclick={() => openAddActionPicker((set.id?.value ?? ''))}>
 						<Plus class="mr-2 h-4 w-4" />
 						{m.action_picker_title()}
 					</DropdownMenu.Item>
@@ -476,7 +476,7 @@
 	bind:open={pickerOpen}
 	{availableActions}
 	onSelect={addActions}
-	onCreate={(action) => addActions([action.id])}
+	onCreate={(action) => addActions([(action.id?.value ?? '')])}
 	onClose={() => {
 		pickerSetId = null;
 	}}

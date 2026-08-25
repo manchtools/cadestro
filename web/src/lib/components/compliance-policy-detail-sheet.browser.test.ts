@@ -79,7 +79,7 @@ import CompliancePolicyDetailSheet from './compliance-policy-detail-sheet.svelte
 
 function policy(rules: { actionId: { value: string }; actionName: string; gracePeriodHours: number }[]) {
 	return create(CompliancePolicySchema, {
-		id: POLICY_ID,
+		id: { value: POLICY_ID },
 		name: 'Security baseline',
 		// Deliberately shares no words with a rule name — otherwise a rule lookup
 		// also matches the description and the locator goes ambiguous.

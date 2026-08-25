@@ -94,7 +94,7 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 	const fired = 50
 	for i := 0; i < fired; i++ {
 		msg := &cadestrov1.ServerMessage{
-			Id: "m",
+			Id: &cadestrov1.MessageId{Value: "m"},
 			Payload: &cadestrov1.ServerMessage_RequestInventory{
 				RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: "01HQ0000000000000000000000"}},
 			},
@@ -128,13 +128,13 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 func TestDispatchServerMessage_LiveControlIsSingleFlight(t *testing.T) {
 	c := NewClient("https://control.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
 	h := &blockingFanoutHandler{release: make(chan struct{})}
-	first := &cadestrov1.ServerMessage{Id: NewULID(), Payload: &cadestrov1.ServerMessage_SyncDevice{SyncDevice: &cadestrov1.SyncDeviceCommand{}}}
+	first := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_SyncDevice{SyncDevice: &cadestrov1.SyncDeviceCommand{}}}
 	if err := c.dispatchServerMessage(context.Background(), first, h); err != nil {
 		t.Fatal(err)
 	}
 	waitForCond(t, func() bool { return atomic.LoadInt32(&h.entered) == 1 })
 
-	second := &cadestrov1.ServerMessage{Id: NewULID(), Payload: &cadestrov1.ServerMessage_RebootDevice{RebootDevice: &cadestrov1.RebootDeviceCommand{}}}
+	second := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_RebootDevice{RebootDevice: &cadestrov1.RebootDeviceCommand{}}}
 	if err := c.dispatchServerMessage(context.Background(), second, h); err == nil {
 		t.Fatal("busy live control must send a correlated failure")
 	}
@@ -152,7 +152,7 @@ func TestDispatchServerMessage_LuksRevokeConcurrencyBounded(t *testing.T) {
 	const fired = 50
 	for i := 0; i < fired; i++ {
 		msg := &cadestrov1.ServerMessage{
-			Id: "m",
+			Id: &cadestrov1.MessageId{Value: "m"},
 			Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
 				RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: "01HQ0000000000000000000000"}},
 			},

@@ -21,7 +21,7 @@ const (
 func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&cadestrov1.ErrorDetail{
-		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
+		Code: code, RequestId: &cadestrov1.RequestId{Value: middleware.RequestIDFromContext(ctx)},
 	})
 	if detailErr == nil {
 		err.AddDetail(detail)

@@ -83,8 +83,8 @@ func (h *Handlers) CreateAssignment(ctx context.Context, req *connect.Request[ca
 	}
 	row, err := h.state.Create(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceCreateAssignmentProcedure, "CreateAssignment"), CreateParams{
-		SourceType: req.Msg.SourceType, SourceID: req.Msg.SourceId,
-		TargetType: req.Msg.TargetType, TargetID: req.Msg.TargetId,
+		SourceType: req.Msg.SourceType, SourceID: req.Msg.GetSourceId().GetValue(),
+		TargetType: req.Msg.TargetType, TargetID: req.Msg.GetTargetId().GetValue(),
 		Mode: req.Msg.Mode, CreatedBy: actor.ID,
 	})
 	if err != nil {
@@ -99,11 +99,11 @@ func (h *Handlers) DeleteAssignment(ctx context.Context, req *connect.Request[ca
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "DeleteAssignment", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "DeleteAssignment", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	if err := h.state.Delete(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceDeleteAssignmentProcedure, "DeleteAssignment"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteAssignmentProcedure, "DeleteAssignment"), req.Msg.GetId().GetValue()); err != nil {
 		return nil, h.mapError(ctx, "delete assignment", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteAssignmentResponse{}), nil
@@ -130,8 +130,8 @@ func (h *Handlers) ListAssignments(ctx context.Context, req *connect.Request[cad
 	}
 	filter := store.AssignmentListFilter{
 		AfterID: req.Msg.PageToken, Limit: limit + 1,
-		SourceType: sourceType, SourceID: req.Msg.SourceId,
-		TargetType: targetType, TargetID: req.Msg.TargetId,
+		SourceType: sourceType, SourceID: req.Msg.GetSourceId().GetValue(),
+		TargetType: targetType, TargetID: req.Msg.GetTargetId().GetValue(),
 	}
 	rows, err := h.store.ListAssignments(ctx, filter)
 	if err != nil {
@@ -166,7 +166,7 @@ func (h *Handlers) GetUserAssignments(ctx context.Context, req *connect.Request[
 	if err := h.authorize(ctx, "GetUserAssignments", ""); err != nil {
 		return nil, err
 	}
-	rows, err := h.store.ListAssignmentsForUser(ctx, req.Msg.UserId)
+	rows, err := h.store.ListAssignmentsForUser(ctx, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		return nil, h.internal(ctx, "get user assignments", err)
 	}
@@ -338,7 +338,7 @@ func EffectiveSources(paths []store.ResolvedAssignmentSource) ([]ResolvedSource,
 
 func appendResolvedActions(dst *[]*cadestrov1.ManagedAction, index map[string]int, actions []*cadestrov1.ManagedAction, forceAbsent bool) {
 	for _, action := range actions {
-		if existing, ok := index[action.Id]; ok {
+		if existing, ok := index[action.GetId().GetValue()]; ok {
 			if forceAbsent {
 				(*dst)[existing].DesiredState = cadestrov1.DesiredState_DESIRED_STATE_ABSENT
 			}
@@ -347,14 +347,14 @@ func appendResolvedActions(dst *[]*cadestrov1.ManagedAction, index map[string]in
 		if forceAbsent {
 			action.DesiredState = cadestrov1.DesiredState_DESIRED_STATE_ABSENT
 		}
-		index[action.Id] = len(*dst)
+		index[action.GetId().GetValue()] = len(*dst)
 		*dst = append(*dst, action)
 	}
 }
 
 func compliancePolicyToProto(row store.CompliancePolicyRow, rules []store.CompliancePolicyRuleView) *cadestrov1.CompliancePolicy {
 	policy := &cadestrov1.CompliancePolicy{
-		Id: row.ID, Name: row.Name, Description: row.Description,
+		Id: &cadestrov1.CompliancePolicyId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		RuleCount: boundedCount(int64(len(rules))), CreatedBy: row.CreatedBy,
 		Rules: make([]*cadestrov1.CompliancePolicyRule, len(rules)),
 	}
@@ -386,7 +386,7 @@ func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[ca
 	}
 	row, err := h.state.SetUserSelection(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetUserSelectionProcedure, "SetUserSelection"),
-		deviceID, req.Msg.SourceType, req.Msg.SourceId, req.Msg.Selected, actor.ID)
+		deviceID, req.Msg.SourceType, req.Msg.GetSourceId().GetValue(), req.Msg.Selected, actor.ID)
 	if err != nil {
 		return nil, h.mapError(ctx, "set user selection", err)
 	}
@@ -422,7 +422,7 @@ func (h *Handlers) ListAvailableActions(ctx context.Context, req *connect.Reques
 			return nil, h.internal(ctx, "build available preview", err)
 		}
 		items[i] = &cadestrov1.AvailableItem{
-			SourceType: sourceType, SourceId: row.SourceID,
+			SourceType: sourceType, SourceId: &cadestrov1.AssignmentSourceId{Value: row.SourceID},
 			SourceName: row.SourceName, SourceDescription: row.SourceDescription,
 			Selected: row.Selected, Actions: actions,
 		}
@@ -523,8 +523,8 @@ func (h *Handlers) previewActions(ctx context.Context, sourceType cadestrov1.Ass
 func userSelectionToProto(row store.UserSelectionRow) *cadestrov1.UserSelection {
 	value, _ := sourceTypeValue(row.SourceType)
 	return &cadestrov1.UserSelection{
-		Id: row.ID, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, SourceType: value,
-		SourceId: row.SourceID, Selected: row.Selected,
+		Id: &cadestrov1.UserSelectionId{Value: row.ID}, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, SourceType: value,
+		SourceId: &cadestrov1.AssignmentSourceId{Value: row.SourceID}, Selected: row.Selected,
 		UpdatedAt: timestamppb.New(row.UpdatedAt),
 	}
 }
@@ -557,8 +557,8 @@ func assignmentToProto(row store.AssignmentView) *cadestrov1.Assignment {
 	sourceType, _ := sourceTypeValue(row.SourceType)
 	targetType, _ := targetTypeValue(row.TargetType)
 	out := &cadestrov1.Assignment{
-		Id: row.ID, SourceType: sourceType, SourceId: row.SourceID,
-		TargetType: targetType, TargetId: row.TargetID, Mode: cadestrov1.AssignmentMode(row.Mode),
+		Id: &cadestrov1.AssignmentId{Value: row.ID}, SourceType: sourceType, SourceId: &cadestrov1.AssignmentSourceId{Value: row.SourceID},
+		TargetType: targetType, TargetId: &cadestrov1.AssignmentTargetId{Value: row.TargetID}, Mode: cadestrov1.AssignmentMode(row.Mode),
 		CreatedBy: row.CreatedBy, SourceName: row.SourceName, TargetName: row.TargetName,
 	}
 	if row.CreatedAt != nil {
@@ -607,7 +607,7 @@ func boundedCount(value int64) int32 {
 func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&cadestrov1.ErrorDetail{
-		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
+		Code: code, RequestId: &cadestrov1.RequestId{Value: middleware.RequestIDFromContext(ctx)},
 	})
 	if detailErr == nil {
 		err.AddDetail(detail)

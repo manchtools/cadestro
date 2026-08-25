@@ -125,20 +125,20 @@
 		if (!user) return [];
 		const unscoped = (user.roleGrants ?? [])
 			.filter((g) => g.scopeKind === RoleGrantScopeKind.UNSPECIFIED && g.role)
-			.map((g) => g.role!.id);
-		return [...unscoped, ...inheritedRoles.map((ir) => ir.role.id)];
+			.map((g) => g.role!.id?.value ?? '');
+		return [...unscoped, ...inheritedRoles.map((ir) => ir.role.id?.value ?? '')];
 	});
 
 	// Roles inherited via user group membership (not directly assigned)
 	const inheritedRoles = $derived.by(() => {
 		if (!user) return [];
-		const directIds = new Set(user.roleGrants.flatMap((grant) => (grant.role ? [grant.role.id] : [])));
+		const directIds = new Set(user.roleGrants.flatMap((grant) => (grant.role?.id?.value ? [grant.role.id.value] : [])));
 		const result: { role: Role; groupName: string }[] = [];
 		const seen = new Set<string>();
 		for (const group of userGroups) {
 			for (const grant of group.roleGrants) {
-				if (grant.role && !directIds.has(grant.role.id) && !seen.has(grant.role.id)) {
-					seen.add(grant.role.id);
+				if (grant.role?.id?.value && !directIds.has(grant.role.id.value) && !seen.has(grant.role.id.value)) {
+					seen.add(grant.role.id.value);
 					result.push({ role: grant.role, groupName: group.name });
 				}
 			}
@@ -186,7 +186,7 @@
 	async function toggleDisabled() {
 		if (!user) return;
 		try {
-			const updated = await apiClient.setUserDisabled(user.id, !user.disabled);
+			const updated = await apiClient.setUserDisabled((user.id?.value ?? ''), !user.disabled);
 			if (updated) {
 				user = { ...updated, identityLinks: user.identityLinks };
 				toast.success(updated.disabled ? m.users_disabled() : m.users_enabled());
@@ -201,7 +201,7 @@
 	async function eraseUser() {
 		if (!user) return;
 		try {
-			await apiClient.eraseJITUser(user.id);
+			await apiClient.eraseJITUser((user.id?.value ?? ''));
 			toast.success(m.users_erased());
 			goto('/users');
 		} catch (error) {
@@ -214,7 +214,7 @@
 	async function revokeRoleGrant(grant: RoleGrant) {
 		if (!user || !grant.role) return;
 		try {
-			await apiClient.revokeRoleFromUser(user.id, grant.role.id, grant.scopeKind, grant.scopeId);
+			await apiClient.revokeRoleFromUser((user.id?.value ?? ''), (grant.role.id?.value ?? ''), grant.scopeKind, grant.scopeId?.value);
 			toast.success(m.roles_revoked());
 			await loadUser();
 		} catch (error) {
@@ -238,7 +238,7 @@
 	async function updateLinuxUsername() {
 		if (!user || !editingUsername.trim()) return;
 		try {
-			const updated = await apiClient.updateUserLinuxUsername(user.id, editingUsername.trim());
+			const updated = await apiClient.updateUserLinuxUsername((user.id?.value ?? ''), editingUsername.trim());
 			if (updated) {
 				user = { ...updated, identityLinks: user.identityLinks };
 				toast.success(m.user_detail_linux_username_updated());
@@ -261,7 +261,7 @@
 			[field]: value
 		};
 		try {
-			const updated = await apiClient.updateUserSshSettings(user.id, settings);
+			const updated = await apiClient.updateUserSshSettings((user.id?.value ?? ''), settings);
 			if (updated) {
 				user = { ...updated, identityLinks: user.identityLinks };
 				toast.success(m.user_detail_ssh_settings_updated());
@@ -274,7 +274,7 @@
 	async function addSshKey() {
 		if (!user || !newSshKeyValue.trim()) return;
 		try {
-			await apiClient.addUserSshKey(user.id, newSshKeyValue.trim(), newSshKeyComment.trim());
+			await apiClient.addUserSshKey((user.id?.value ?? ''), newSshKeyValue.trim(), newSshKeyComment.trim());
 			toast.success(m.user_detail_ssh_key_added());
 			addSshKeyOpen = false;
 			newSshKeyValue = '';
@@ -288,7 +288,7 @@
 	async function removeSshKey() {
 		if (!user || !removingSshKeyId) return;
 		try {
-			await apiClient.removeUserSshKey(user.id, removingSshKeyId);
+			await apiClient.removeUserSshKey((user.id?.value ?? ''), removingSshKeyId);
 			toast.success(m.user_detail_ssh_key_removed());
 			removeSshKeyConfirmOpen = false;
 			removingSshKeyId = '';
@@ -465,7 +465,7 @@
 									checked={user.userProvisioningEnabled}
 									onCheckedChange={async (v) => {
 										try {
-											const res = await apiClient.setUserProvisioningEnabled(user!.id, v);
+			const res = await apiClient.setUserProvisioningEnabled(user!.id?.value ?? '', v);
 											if (res.user) user = { ...res.user, identityLinks: user!.identityLinks };
 										} catch (error) {
 											toast.error(getLocalizedError(error));
@@ -501,7 +501,7 @@
 											variant="ghost"
 											size="sm"
 											onclick={() => {
-												unlinkingLinkId = link.id;
+												unlinkingLinkId = (link.id?.value ?? '');
 												unlinkConfirmOpen = true;
 											}}
 										>
@@ -588,7 +588,7 @@
 											size="icon"
 											aria-label={m.common_delete()}
 											onclick={() => {
-												removingSshKeyId = key.id;
+												removingSshKeyId = (key.id?.value ?? '');
 												removeSshKeyConfirmOpen = true;
 											}}
 										>
@@ -743,7 +743,7 @@
 		subtitle={user.email}
 		excludeRoleIds={roleAssignExcludeIds}
 		assign={(roleIds, scopeKind, scopeId) =>
-			apiClient.assignRoleToUser(user!.id, roleIds, scopeKind, scopeId)}
+			apiClient.assignRoleToUser(user!.id?.value ?? '', roleIds, scopeKind, scopeId)}
 		onAssigned={loadUser}
 	/>
 {/if}

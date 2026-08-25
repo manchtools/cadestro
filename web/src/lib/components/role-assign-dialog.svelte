@@ -99,13 +99,13 @@
 	}
 
 	const excluded = $derived(new Set(excludeRoleIds));
-	const unassignedRoles = $derived(roles.filter((r) => !excluded.has(r.id)));
+	const unassignedRoles = $derived(roles.filter((r) => !excluded.has((r.id?.value ?? ''))));
 
 	const selectedScopeKind = $derived.by<RoleGrantScopeKind | null>(() => {
 		if (selectedRoleIds.length === 0) return null;
 		let kind: RoleGrantScopeKind | null = null;
 		for (const id of selectedRoleIds) {
-			const role = roles.find((r) => r.id === id);
+			const role = roles.find((r) => (r.id?.value ?? '') === id);
 			const k = role ? roleScopeKind(role) : null;
 			if (k === null) return null;
 			if (kind === null) kind = k;
@@ -115,8 +115,8 @@
 	});
 	const showScopePicker = $derived(selectedScopeKind !== null);
 	const scopeGroups = $derived([
-		...deviceGroups.map((g) => ({ id: g.id, name: g.name, kind: 'device' as const })),
-		...allUserGroups.map((g) => ({ id: g.id, name: g.name, kind: 'user' as const }))
+		...deviceGroups.map((g) => ({ id: g.id?.value ?? '', name: g.name, kind: 'device' as const })),
+		...allUserGroups.map((g) => ({ id: g.id?.value ?? '', name: g.name, kind: 'user' as const }))
 	]);
 	const scopeActiveKind = $derived(
 		selectedScopeKind === RoleGrantScopeKind.USER_GROUP ? ('user' as const) : ('device' as const)
@@ -146,7 +146,7 @@
 
 		<ItemTablePicker
 			items={unassignedRoles.map((r) => ({
-				id: r.id,
+				id: r.id?.value ?? '',
 				name: r.name,
 				description: r.description,
 				scopeKind: roleScopeKind(r)

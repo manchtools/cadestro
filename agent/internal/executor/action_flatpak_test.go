@@ -41,7 +41,7 @@ func TestExecuteFlatpak_PerUserPresentNoSessions(t *testing.T) {
 	e.logger = slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	out, changed, err := e.executeFlatpak(context.Background(), &pb.FlatpakParams{
-		AppId:      "org.nonexistent.surely_does_not_exist_pmtest",
+		AppId:      &pb.FlatpakAppId{Value: "org.nonexistent.surely_does_not_exist_pmtest"},
 		SystemWide: false,
 	}, pb.DesiredState_DESIRED_STATE_PRESENT)
 
@@ -84,7 +84,7 @@ func TestExecuteFlatpak_PerUserPresentDispatchesToLoop(t *testing.T) {
 
 	e := NewExecutor(nil)
 	out, _, _ := e.executeFlatpak(context.Background(), &pb.FlatpakParams{
-		AppId:      "org.nonexistent.surely_does_not_exist_pmtest",
+		AppId:      &pb.FlatpakAppId{Value: "org.nonexistent.surely_does_not_exist_pmtest"},
 		SystemWide: false,
 	}, pb.DesiredState_DESIRED_STATE_PRESENT)
 
@@ -108,7 +108,7 @@ func TestExecuteFlatpak_PerUserAbsentNoUsers(t *testing.T) {
 
 	e := NewExecutor(nil)
 	out, changed, err := e.executeFlatpak(context.Background(), &pb.FlatpakParams{
-		AppId:      "org.nonexistent.surely_does_not_exist_pmtest",
+		AppId:      &pb.FlatpakAppId{Value: "org.nonexistent.surely_does_not_exist_pmtest"},
 		SystemWide: false,
 	}, pb.DesiredState_DESIRED_STATE_ABSENT)
 
@@ -135,7 +135,7 @@ func TestExecuteFlatpak_SystemWideRoutesUnchanged(t *testing.T) {
 
 	e := NewExecutor(nil)
 	out, _, err := e.executeFlatpak(context.Background(), &pb.FlatpakParams{
-		AppId:      "org.nonexistent.surely_does_not_exist_pmtest",
+		AppId:      &pb.FlatpakAppId{Value: "org.nonexistent.surely_does_not_exist_pmtest"},
 		SystemWide: true,
 	}, pb.DesiredState_DESIRED_STATE_PRESENT)
 

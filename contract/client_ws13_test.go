@@ -41,8 +41,8 @@ func TestClient_CloseIdleConnections(t *testing.T) {
 func TestDispatch_DropsInvalidInbound(t *testing.T) {
 	ctx := context.Background()
 	start := func(sid, tty string, cols, rows uint32) *cadestrov1.ServerMessage {
-		return &cadestrov1.ServerMessage{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalStart{
-			TerminalStart: &cadestrov1.TerminalStart{SessionId: sid, TtyUser: tty, Cols: cols, Rows: rows},
+		return &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_TerminalStart{
+			TerminalStart: &cadestrov1.TerminalStart{SessionId: &cadestrov1.SessionId{Value: sid}, TtyUser: tty, Cols: cols, Rows: rows},
 		}}
 	}
 

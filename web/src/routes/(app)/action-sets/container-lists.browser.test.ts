@@ -94,7 +94,7 @@ function lastCall() {
 
 function containerResult(id: string, name: string, memberCount: string): SearchResult {
 	return create(SearchResultSchema, {
-		id,
+		id: { value: id },
 		name,
 		description: 'Baseline',
 		fields: { name, member_count: memberCount, created_at: '1750000000', updated_at: '1750000900' }

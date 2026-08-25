@@ -32,7 +32,7 @@ func TestReconcilePolicyIsReceiptFreeAndRemovesUnassignedWork(t *testing.T) {
 	manifest := testManifest()
 	manifest.ManifestId = &pb.ManifestId{Value: "01K00000000000000000000012"}
 	manifest.Occurrences[0].OccurrenceId = &pb.OccurrenceId{Value: "01K00000000000000000000013"}
-	policy := &pb.DesiredPolicy{Revision: "01K00000000000000000000014", Manifests: []*pb.Manifest{manifest}}
+	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000014"}, Manifests: []*pb.Manifest{manifest}}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
 
 	due, err := st.GetDueScheduledWork(context.Background())
@@ -48,7 +48,7 @@ func TestReconcilePolicyIsReceiptFreeAndRemovesUnassignedWork(t *testing.T) {
 
 	// An empty assignment snapshot removes the prior policy locally without a
 	// synthetic policy row.
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: "01K00000000000000000000015"}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000015"}}))
 	due, err = st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Empty(t, due)
@@ -64,7 +64,7 @@ func TestReconcilePolicyRejectsDuplicateManifestIdentity(t *testing.T) {
 
 	manifest := testManifest()
 	err = st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
-		Revision:  "01K00000000000000000000016",
+		Revision:  &pb.PolicyRevisionId{Value: "01K00000000000000000000016"},
 		Manifests: []*pb.Manifest{manifest, manifest},
 	})
 	require.ErrorContains(t, err, "duplicate manifest identity")
@@ -82,7 +82,7 @@ func TestReconcilePolicyKeepsStoredManifestAcrossResealing(t *testing.T) {
 			PresharedKey: []byte("first-seal"), RotationIntervalDays: 30,
 		}},
 	}
-	policy := &pb.DesiredPolicy{Revision: "01K00000000000000000000026", Manifests: []*pb.Manifest{manifest}}
+	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000026"}, Manifests: []*pb.Manifest{manifest}}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
 
 	manifest.Occurrences[0].Action.GetEncryption().PresharedKey = []byte("changed")
@@ -101,7 +101,7 @@ func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing
 	st.SetClockForTest(func() time.Time { return now })
 	manifest := testManifest()
 	manifest.ManifestId = &pb.ManifestId{Value: "01K00000000000000000000022"}
-	policy := &pb.DesiredPolicy{Revision: "01K000000000000000000000023", Manifests: []*pb.Manifest{manifest}}
+	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K000000000000000000000023"}, Manifests: []*pb.Manifest{manifest}}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
@@ -129,7 +129,7 @@ func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing
 	secondRun := due[0].RunID
 	_, err = st.BeginManifestRun(context.Background(), &due[0], now)
 	require.NoError(t, err)
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: "01K000000000000000000000025"}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K000000000000000000000025"}}))
 	due, err = st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1, "retired work remains resumable while its run is active")
@@ -147,7 +147,7 @@ func TestRecordManifestResultReturnsCleanupFailure(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
 	manifest := testManifest()
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
-		Revision:  "01K00000000000000000000045",
+		Revision:  &pb.PolicyRevisionId{Value: "01K00000000000000000000045"},
 		Manifests: []*pb.Manifest{manifest},
 	}))
 	due, err := st.GetDueScheduledWork(context.Background())
@@ -182,7 +182,7 @@ func TestRecoverInterruptedOccurrenceQueuesIndeterminate(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
 	manifest := testManifest()
-	policy := &pb.DesiredPolicy{Revision: "01K00000000000000000000035", Manifests: []*pb.Manifest{manifest}}
+	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000035"}, Manifests: []*pb.Manifest{manifest}}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)

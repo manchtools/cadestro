@@ -63,7 +63,7 @@ vi.mock('svelte-sonner', () => ({ toast: toaster }));
 
 import AssignPage from './+page.svelte';
 
-const SETS = [create(ActionSetSchema, { id: SET_PATCH, name: 'Patch and reboot', memberCount: 2 })];
+const SETS = [create(ActionSetSchema, { id: { value: SET_PATCH }, name: 'Patch and reboot', memberCount: 2 })];
 
 beforeEach(() => {
 	document.body.innerHTML = '';
@@ -80,7 +80,7 @@ beforeEach(() => {
 	toaster.error.mockReset();
 
 	api.getDevice.mockImplementation(async (id: string) =>
-		create(DeviceSchema, { id, hostname: 'api-prod-01', status: DeviceStatus.ONLINE })
+		create(DeviceSchema, { id: { value: id }, hostname: 'api-prod-01', status: DeviceStatus.ONLINE })
 	);
 	api.listActionSets.mockResolvedValue({ sets: SETS, nextPageToken: '' });
 	api.getActionSet.mockResolvedValue({ set: SETS[0], members: [] });

@@ -49,7 +49,7 @@
 				const actionId = rule.actionId?.value ?? '';
 				const existing = actionMap.get(actionId);
 				if (existing) {
-					existing.policies.push({ policyId: policy.policyId, policyName: policy.policyName });
+					existing.policies.push({ policyId: (policy.policyId?.value ?? ''), policyName: policy.policyName });
 				} else {
 					actionMap.set(actionId, {
 						actionId,
@@ -58,7 +58,7 @@
 						checkedAt: rule.checkedAt,
 						detectionOutput: rule.detectionOutput,
 						gracePeriodHours: rule.gracePeriodHours,
-						policies: [{ policyId: policy.policyId, policyName: policy.policyName }]
+						policies: [{ policyId: (policy.policyId?.value ?? ''), policyName: policy.policyName }]
 					});
 				}
 			}

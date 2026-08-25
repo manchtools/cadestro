@@ -72,7 +72,7 @@ import DeviceGroupsPage from './+page.svelte';
 import UserGroupsPage from '../user-groups/+page.svelte';
 
 function groupResult(id: string, name: string, fields: Record<string, string>): SearchResult {
-	return create(SearchResultSchema, { id, name, description: '', fields });
+	return create(SearchResultSchema, { id: { value: id }, name, description: '', fields });
 }
 
 function respond(results: SearchResult[]) {

@@ -124,7 +124,7 @@
 		if (!snapshot) return out;
 		for (const g of snapshot.groups) {
 			if (g.syncIntervalMinutes <= 0) continue;
-			for (const id of snapshot.membership.get(g.id) ?? []) {
+			for (const id of snapshot.membership.get((g.id?.value ?? '')) ?? []) {
 				const list = out.get(id);
 				if (list) list.push(g.syncIntervalMinutes);
 				else out.set(id, [g.syncIntervalMinutes]);
@@ -134,11 +134,11 @@
 	});
 
 	const devices = $derived(
-		(snapshot?.devices ?? []).map((d) => toFleetDevice(d, groupMinutes.get(d.id) ?? [], nowSec))
+		(snapshot?.devices ?? []).map((d) => toFleetDevice(d, groupMinutes.get((d.id?.value ?? '')) ?? [], nowSec))
 	);
 	const summary = $derived(summarize(devices));
 	const bubbles = $derived(
-		buildBubbles(devices, snapshot?.groups ?? [], snapshot?.membership ?? new Map(), m.fleet_ungrouped())
+		buildBubbles(devices, (snapshot?.groups ?? []).map((group) => ({ ...group, id: group.id?.value ?? '' })), snapshot?.membership ?? new Map(), m.fleet_ungrouped())
 	);
 	const focused = $derived<FleetBubble | null>(
 		bubbles.find((b) => b.id === groupId) ?? bubbles[0] ?? null

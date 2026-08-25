@@ -58,7 +58,7 @@
 	async function deleteRole() {
 		if (!roleToDelete) return;
 		try {
-			await apiClient.deleteRole(roleToDelete.id);
+			await apiClient.deleteRole((roleToDelete.id?.value ?? ''));
 			table.patchRows((rows) => rows.filter((r) => r.id !== roleToDelete!.id));
 			toast.success(m.roles_deleted());
 		} catch (error) {
@@ -120,7 +120,7 @@
 	<!-- The role list in the drafts' row grammar: shield tile, name over its ULID
 	     and description, system + permission-count chips — no headers, no table.
 	     Roles carry no timestamp, so the chips take the trailing slot. -->
-	<RowList {table} {sortOptions} rowKey={(r) => r.id} href={(r) => `${base}/roles/${r.id}`}>
+	<RowList {table} {sortOptions} rowKey={(r) => (r.id?.value ?? '')} href={(r) => `${base}/roles/${(r.id?.value ?? '')}`}>
 		{#snippet row(role)}
 			<div class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft">
 				<Shield class="h-3.5 w-3.5 text-accent-ink" />

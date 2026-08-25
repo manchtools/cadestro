@@ -106,10 +106,10 @@ func newAssignmentHandlerFixture(t *testing.T) *assignmentHandlerFixture {
 
 func TestAssignmentHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newAssignmentHandlerFixture(t)
-	_, err := validated(f.handlers.DeleteAssignment)(context.Background(), connect.NewRequest(&cadestrov1.DeleteAssignmentRequest{Id: "bad"}))
+	_, err := validated(f.handlers.DeleteAssignment)(context.Background(), connect.NewRequest(&cadestrov1.DeleteAssignmentRequest{Id: &cadestrov1.AssignmentId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.DeleteAssignment)(context.Background(), connect.NewRequest(&cadestrov1.DeleteAssignmentRequest{Id: newID()}))
+	_, err = validated(f.handlers.DeleteAssignment)(context.Background(), connect.NewRequest(&cadestrov1.DeleteAssignmentRequest{Id: &cadestrov1.AssignmentId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -134,8 +134,8 @@ func TestAssignmentHandlers_CRUDAcrossEverySourceAndTarget(t *testing.T) {
 	}
 	for _, pair := range types {
 		response, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-			SourceType: pair.source, SourceId: f.sources[pair.source],
-			TargetType: pair.target, TargetId: f.targets[pair.target],
+			SourceType: pair.source, SourceId: &cadestrov1.AssignmentSourceId{Value: f.sources[pair.source]},
+			TargetType: pair.target, TargetId: &cadestrov1.AssignmentTargetId{Value: f.targets[pair.target]},
 			Mode: cadestrov1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE,
 		}))
 		require.NoError(t, err)
@@ -155,11 +155,11 @@ func TestAssignmentHandlers_CRUDAcrossEverySourceAndTarget(t *testing.T) {
 	}
 
 	duplicate, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-		SourceType: created[0].SourceType, SourceId: created[0].SourceId,
-		TargetType: created[0].TargetType, TargetId: created[0].TargetId,
+		SourceType: created[0].SourceType, SourceId: &cadestrov1.AssignmentSourceId{Value: created[0].GetSourceId().GetValue()},
+		TargetType: created[0].TargetType, TargetId: &cadestrov1.AssignmentTargetId{Value: created[0].GetTargetId().GetValue()},
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, created[0].Id, duplicate.Msg.Assignment.Id, "active duplicate is idempotent")
+	assert.Equal(t, created[0].GetId().GetValue(), duplicate.Msg.Assignment.GetId().GetValue(), "active duplicate is idempotent")
 
 	listed, err := f.handlers.ListAssignments(ctx, connect.NewRequest(&cadestrov1.ListAssignmentsRequest{}))
 	require.NoError(t, err)
@@ -171,30 +171,30 @@ func TestAssignmentHandlers_CRUDAcrossEverySourceAndTarget(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	require.Len(t, filtered.Msg.Assignments, 1)
-	assert.Equal(t, f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET], filtered.Msg.Assignments[0].SourceId)
+	assert.Equal(t, f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET], filtered.Msg.Assignments[0].GetSourceId().GetValue())
 
 	page, err := f.handlers.ListAssignments(ctx, connect.NewRequest(&cadestrov1.ListAssignmentsRequest{PageSize: 1}))
 	require.NoError(t, err)
 	require.Len(t, page.Msg.Assignments, 1)
 	assert.NotEmpty(t, page.Msg.NextPageToken)
 
-	_, err = f.handlers.DeleteAssignment(ctx, connect.NewRequest(&cadestrov1.DeleteAssignmentRequest{Id: created[0].Id}))
+	_, err = f.handlers.DeleteAssignment(ctx, connect.NewRequest(&cadestrov1.DeleteAssignmentRequest{Id: &cadestrov1.AssignmentId{Value: created[0].GetId().GetValue()}}))
 	require.NoError(t, err)
 	rows, total, err := f.store.Search(context.Background(), store.SearchParams{
-		Scope: "actions", Query: created[0].SourceId, Limit: 50,
+		Scope: "actions", Query: created[0].GetSourceId().GetValue(), Limit: 50,
 		TagFilters: map[string][]string{"assigned": {"false"}},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), total)
 	require.Len(t, rows, 1)
-	assert.Equal(t, created[0].SourceId, rows[0].ID)
+	assert.Equal(t, created[0].GetSourceId().GetValue(), rows[0].ID)
 	recreated, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-		SourceType: created[0].SourceType, SourceId: created[0].SourceId,
-		TargetType: created[0].TargetType, TargetId: created[0].TargetId,
+		SourceType: created[0].SourceType, SourceId: &cadestrov1.AssignmentSourceId{Value: created[0].GetSourceId().GetValue()},
+		TargetType: created[0].TargetType, TargetId: &cadestrov1.AssignmentTargetId{Value: created[0].GetTargetId().GetValue()},
 		Mode: cadestrov1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL,
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, created[0].Id, recreated.Msg.Assignment.Id, "soft-deleted tuple is reactivated")
+	assert.Equal(t, created[0].GetId().GetValue(), recreated.Msg.Assignment.GetId().GetValue(), "soft-deleted tuple is reactivated")
 	assert.Equal(t, cadestrov1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL, recreated.Msg.Assignment.Mode)
 
 	for _, procedure := range []string{
@@ -213,23 +213,23 @@ func TestAssignmentHandlers_RejectSystemAndMissingResources(t *testing.T) {
 	f := newAssignmentHandlerFixture(t)
 	ctx := f.actor("CreateAssignment")
 	_, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: f.systemID,
+		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: &cadestrov1.AssignmentSourceId{Value: f.systemID},
 		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE,
-		TargetId:   f.targets[cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE],
+		TargetId:   &cadestrov1.AssignmentTargetId{Value: f.targets[cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE]},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 
 	_, err = f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: newID(),
+		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: &cadestrov1.AssignmentSourceId{Value: newID()},
 		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE,
-		TargetId:   f.targets[cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE],
+		TargetId:   &cadestrov1.AssignmentTargetId{Value: f.targets[cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE]},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	_, err = f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
 		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId:   f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION],
-		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetId: newID(),
+		SourceId:   &cadestrov1.AssignmentSourceId{Value: f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION]},
+		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetId: &cadestrov1.AssignmentTargetId{Value: newID()},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 }
@@ -246,24 +246,24 @@ func TestAssignmentHandlers_GetUserAssignmentsResolvesDirectAndGroupTargets(t *t
 
 	direct, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
 		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId:   f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION],
+		SourceId:   &cadestrov1.AssignmentSourceId{Value: f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION]},
 		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER,
-		TargetId:   userID,
+		TargetId:   &cadestrov1.AssignmentTargetId{Value: userID},
 	}))
 	require.NoError(t, err)
 	group, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
 		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET,
-		SourceId:   f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET],
+		SourceId:   &cadestrov1.AssignmentSourceId{Value: f.sources[cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET]},
 		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP,
-		TargetId:   groupID,
+		TargetId:   &cadestrov1.AssignmentTargetId{Value: groupID},
 	}))
 	require.NoError(t, err)
 
-	response, err := f.handlers.GetUserAssignments(ctx, connect.NewRequest(&cadestrov1.GetUserAssignmentsRequest{UserId: userID}))
+	response, err := f.handlers.GetUserAssignments(ctx, connect.NewRequest(&cadestrov1.GetUserAssignmentsRequest{UserId: &cadestrov1.UserId{Value: userID}}))
 	require.NoError(t, err)
 	require.Len(t, response.Msg.Assignments, 2)
-	assert.Equal(t, []string{direct.Msg.Assignment.Id, group.Msg.Assignment.Id}, []string{
-		response.Msg.Assignments[0].Id, response.Msg.Assignments[1].Id,
+	assert.Equal(t, []string{direct.Msg.Assignment.GetId().GetValue(), group.Msg.Assignment.GetId().GetValue()}, []string{
+		response.Msg.Assignments[0].GetId().GetValue(), response.Msg.Assignments[1].GetId().GetValue(),
 	})
 	for _, assignment := range response.Msg.Assignments {
 		assert.NotEmpty(t, assignment.SourceName)
@@ -279,9 +279,9 @@ func TestAssignmentHandlers_AvailableSelectionIsAuditedDirectState(t *testing.T)
 
 	_, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
 		SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId:   actionID,
+		SourceId:   &cadestrov1.AssignmentSourceId{Value: actionID},
 		TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE,
-		TargetId:   deviceID,
+		TargetId:   &cadestrov1.AssignmentTargetId{Value: deviceID},
 		Mode:       cadestrov1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE,
 	}))
 	require.NoError(t, err)
@@ -289,18 +289,18 @@ func TestAssignmentHandlers_AvailableSelectionIsAuditedDirectState(t *testing.T)
 	before, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	require.Len(t, before.Msg.Items, 1)
-	assert.Equal(t, actionID, before.Msg.Items[0].SourceId)
+	assert.Equal(t, actionID, before.Msg.Items[0].SourceId.GetValue())
 	assert.False(t, before.Msg.Items[0].Selected)
 	require.Len(t, before.Msg.Items[0].Actions, 1)
-	assert.Equal(t, actionID, before.Msg.Items[0].Actions[0].Id)
+	assert.Equal(t, actionID, before.Msg.Items[0].Actions[0].GetId().GetValue())
 
 	selected, err := f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
 		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId: actionID, Selected: true,
+		SourceId: &cadestrov1.AssignmentSourceId{Value: actionID}, Selected: true,
 	}))
 	require.NoError(t, err)
 	assert.True(t, selected.Msg.Selection.Selected)
-	selectionID := selected.Msg.Selection.Id
+	selectionID := selected.Msg.Selection.GetId().GetValue()
 
 	after, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
@@ -309,10 +309,10 @@ func TestAssignmentHandlers_AvailableSelectionIsAuditedDirectState(t *testing.T)
 
 	deselected, err := f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
 		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId: actionID, Selected: false,
+		SourceId: &cadestrov1.AssignmentSourceId{Value: actionID}, Selected: false,
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, selectionID, deselected.Msg.Selection.Id, "the source tuple owns one stable selection row")
+	assert.Equal(t, selectionID, deselected.Msg.Selection.GetId().GetValue(), "the source tuple owns one stable selection row")
 	assert.False(t, deselected.Msg.Selection.Selected)
 
 	operations := 0
@@ -342,14 +342,14 @@ func TestAssignmentHandlers_SelectionRequiresAnAvailableAssignmentAndDeviceAcces
 	ctx := f.actor("SetUserSelection", "ListDevices")
 	_, err := f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
 		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId: actionID, Selected: true,
+		SourceId: &cadestrov1.AssignmentSourceId{Value: actionID}, Selected: true,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	assignedOnly := f.actor("SetUserSelection", "ListDevices:assigned")
 	_, err = f.handlers.SetUserSelection(assignedOnly, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
 		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId: actionID, Selected: true,
+		SourceId: &cadestrov1.AssignmentSourceId{Value: actionID}, Selected: true,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "an unassigned actor gets no device existence oracle")
 }
@@ -385,8 +385,8 @@ func TestAssignmentHandlers_AvailableSourcesResolveEveryTargetKind(t *testing.T)
 	}
 	for _, pair := range pairs {
 		_, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-			SourceType: pair.source, SourceId: f.sources[pair.source],
-			TargetType: pair.target, TargetId: f.targets[pair.target],
+			SourceType: pair.source, SourceId: &cadestrov1.AssignmentSourceId{Value: f.sources[pair.source]},
+			TargetType: pair.target, TargetId: &cadestrov1.AssignmentTargetId{Value: f.targets[pair.target]},
 			Mode: cadestrov1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE,
 		}))
 		require.NoError(t, err)
@@ -396,7 +396,7 @@ func TestAssignmentHandlers_AvailableSourcesResolveEveryTargetKind(t *testing.T)
 	require.NoError(t, err)
 	require.Len(t, response.Msg.Items, 4)
 	for _, item := range response.Msg.Items {
-		assert.Equal(t, f.sources[item.SourceType], item.SourceId)
+		assert.Equal(t, f.sources[item.SourceType], item.SourceId.GetValue())
 		assert.NotEmpty(t, item.SourceName)
 	}
 
@@ -422,13 +422,13 @@ func TestAssignmentHandlers_AvailableSourceIsHiddenByStrongerMode(t *testing.T) 
 	require.NoError(t, err)
 	for _, assignment := range []*cadestrov1.CreateAssignmentRequest{
 		{
-			SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: actionID,
-			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetId: deviceID,
+			SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: &cadestrov1.AssignmentSourceId{Value: actionID},
+			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetId: &cadestrov1.AssignmentTargetId{Value: deviceID},
 			Mode: cadestrov1.AssignmentMode_ASSIGNMENT_MODE_AVAILABLE,
 		},
 		{
-			SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: actionID,
-			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP, TargetId: groupID,
+			SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: &cadestrov1.AssignmentSourceId{Value: actionID},
+			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP, TargetId: &cadestrov1.AssignmentTargetId{Value: groupID},
 			Mode: cadestrov1.AssignmentMode_ASSIGNMENT_MODE_REQUIRED,
 		},
 	} {
@@ -469,9 +469,9 @@ func TestAssignmentHandlers_GetDeviceAssignmentsExpandsLiveSources(t *testing.T)
 		cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY,
 	} {
 		_, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-			SourceType: source, SourceId: f.sources[source],
+			SourceType: source, SourceId: &cadestrov1.AssignmentSourceId{Value: f.sources[source]},
 			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE,
-			TargetId:   deviceID,
+			TargetId:   &cadestrov1.AssignmentTargetId{Value: deviceID},
 		}))
 		require.NoError(t, err)
 	}
@@ -486,15 +486,15 @@ func TestAssignmentHandlers_GetDeviceAssignmentsExpandsLiveSources(t *testing.T)
 		uninstallID: cadestrov1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL,
 	} {
 		_, err := f.handlers.CreateAssignment(ctx, connect.NewRequest(&cadestrov1.CreateAssignmentRequest{
-			SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: id,
-			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetId: deviceID,
+			SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION, SourceId: &cadestrov1.AssignmentSourceId{Value: id},
+			TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetId: &cadestrov1.AssignmentTargetId{Value: deviceID},
 			Mode: mode,
 		}))
 		require.NoError(t, err)
 	}
 	_, err = f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
 		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
-		SourceId: availableID, Selected: true,
+		SourceId: &cadestrov1.AssignmentSourceId{Value: availableID}, Selected: true,
 	}))
 	require.NoError(t, err)
 
@@ -504,7 +504,7 @@ func TestAssignmentHandlers_GetDeviceAssignmentsExpandsLiveSources(t *testing.T)
 	require.Len(t, response.Msg.Actions, 3, "duplicates collapse, selected optional and uninstall remain, excluded is absent")
 	actionsByID := make(map[string]*cadestrov1.ManagedAction, len(response.Msg.Actions))
 	for _, action := range response.Msg.Actions {
-		actionsByID[action.Id] = action
+		actionsByID[action.GetId().GetValue()] = action
 	}
 	assert.Contains(t, actionsByID, actionID)
 	assert.Contains(t, actionsByID, availableID)
@@ -512,15 +512,15 @@ func TestAssignmentHandlers_GetDeviceAssignmentsExpandsLiveSources(t *testing.T)
 	require.Contains(t, actionsByID, uninstallID)
 	assert.Equal(t, cadestrov1.DesiredState_DESIRED_STATE_ABSENT, actionsByID[uninstallID].DesiredState)
 	require.Len(t, response.Msg.ActionSets, 1)
-	assert.Equal(t, setID, response.Msg.ActionSets[0].Id)
+	assert.Equal(t, setID, response.Msg.ActionSets[0].GetId().GetValue())
 	require.Len(t, response.Msg.ActionSetDetails, 1)
 	require.Len(t, response.Msg.ActionSetDetails[0].Members, 1)
 	require.Len(t, response.Msg.Definitions, 1)
-	assert.Equal(t, definitionID, response.Msg.Definitions[0].Id)
+	assert.Equal(t, definitionID, response.Msg.Definitions[0].GetId().GetValue())
 	require.Len(t, response.Msg.DefinitionDetails, 1)
 	require.Len(t, response.Msg.DefinitionDetails[0].Members, 1)
 	require.Len(t, response.Msg.CompliancePolicies, 1)
-	assert.Equal(t, policyID, response.Msg.CompliancePolicies[0].Id)
+	assert.Equal(t, policyID, response.Msg.CompliancePolicies[0].GetId().GetValue())
 }
 
 func TestAssignmentHandlers_MountExactCRUDSurface(t *testing.T) {

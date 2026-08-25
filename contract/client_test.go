@@ -97,12 +97,12 @@ func newTestClient() *Client {
 // makeTerminalMsg builds a ServerMessage carrying one of the four
 // Terminal* payload variants. Used by both routing and error tests.
 func makeTerminalMsg(name string) *cadestrov1.ServerMessage {
-	msg := &cadestrov1.ServerMessage{Id: NewULID()}
+	msg := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}}
 	switch name {
 	case "TerminalStart":
 		msg.Payload = &cadestrov1.ServerMessage_TerminalStart{
 			TerminalStart: &cadestrov1.TerminalStart{
-				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+				SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
 				TtyUser:   "cadestro-tty-test",
 				Cols:      80,
 				Rows:      24,
@@ -111,14 +111,14 @@ func makeTerminalMsg(name string) *cadestrov1.ServerMessage {
 	case "TerminalInput":
 		msg.Payload = &cadestrov1.ServerMessage_TerminalInput{
 			TerminalInput: &cadestrov1.TerminalInput{
-				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+				SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
 				Data:      []byte("ls -la\n"),
 			},
 		}
 	case "TerminalResize":
 		msg.Payload = &cadestrov1.ServerMessage_TerminalResize{
 			TerminalResize: &cadestrov1.TerminalResize{
-				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+				SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
 				Cols:      120,
 				Rows:      40,
 			},
@@ -126,7 +126,7 @@ func makeTerminalMsg(name string) *cadestrov1.ServerMessage {
 	case "TerminalStop":
 		msg.Payload = &cadestrov1.ServerMessage_TerminalStop{
 			TerminalStop: &cadestrov1.TerminalStop{
-				SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+				SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
 				Reason:    "admin terminate",
 			},
 		}
@@ -152,8 +152,8 @@ func TestDispatch_Terminal_Routing(t *testing.T) {
 				if len(h.startCalls) != 1 {
 					t.Fatalf("OnTerminalStart calls = %d, want 1", len(h.startCalls))
 				}
-				if h.startCalls[0].SessionId != "01ARZ3NDEKTSV4RRFFQ69G5FAV" {
-					t.Errorf("session_id = %q, want 01ARZ3NDEKTSV4RRFFQ69G5FAV", h.startCalls[0].SessionId)
+				if h.startCalls[0].GetSessionId().GetValue() != "01ARZ3NDEKTSV4RRFFQ69G5FAV" {
+					t.Errorf("session_id = %q, want 01ARZ3NDEKTSV4RRFFQ69G5FAV", h.startCalls[0].GetSessionId().GetValue())
 				}
 				if h.startCalls[0].TtyUser != "cadestro-tty-test" {
 					t.Errorf("tty_user = %q, want cadestro-tty-test", h.startCalls[0].TtyUser)
@@ -275,10 +275,10 @@ func TestDispatch_Terminal_NoHandler_DropsSilently(t *testing.T) {
 	bare := fakeBareHandler{}
 
 	cases := []*cadestrov1.ServerMessage{
-		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalStart{TerminalStart: &cadestrov1.TerminalStart{SessionId: "01"}}},
-		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalInput{TerminalInput: &cadestrov1.TerminalInput{SessionId: "01"}}},
-		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalResize{TerminalResize: &cadestrov1.TerminalResize{SessionId: "01"}}},
-		{Id: NewULID(), Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{SessionId: "01"}}},
+		{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_TerminalStart{TerminalStart: &cadestrov1.TerminalStart{SessionId: &cadestrov1.SessionId{Value: "01"}}}},
+		{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_TerminalInput{TerminalInput: &cadestrov1.TerminalInput{SessionId: &cadestrov1.SessionId{Value: "01"}}}},
+		{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_TerminalResize{TerminalResize: &cadestrov1.TerminalResize{SessionId: &cadestrov1.SessionId{Value: "01"}}}},
+		{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_TerminalStop{TerminalStop: &cadestrov1.TerminalStop{SessionId: &cadestrov1.SessionId{Value: "01"}}}},
 	}
 	for _, msg := range cases {
 		if err := c.dispatchServerMessage(context.Background(), msg, bare); err != nil {
@@ -299,7 +299,7 @@ func TestDispatch_UnknownPayload_DropsSilently(t *testing.T) {
 	c := newTestClient()
 	h := &fakeTerminalHandler{}
 
-	msg := &cadestrov1.ServerMessage{Id: NewULID()}
+	msg := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}}
 	if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
 		t.Errorf("dispatch unknown payload: unexpected error: %v", err)
 	}
@@ -439,7 +439,7 @@ func TestDispatch_Welcome_AppliesHeartbeatAndHandler(t *testing.T) {
 
 	rec := &recordingWelcomeHandler{}
 	msg := &cadestrov1.ServerMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{
 			ServerVersion:     "test",
 			HeartbeatInterval: durationpb.New(60 * time.Second),

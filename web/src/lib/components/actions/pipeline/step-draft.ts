@@ -75,7 +75,7 @@ export function stepFromAction(action: ManagedAction, sortOrder: number): StepDr
 			: adapter.defaultForm();
 	return {
 		key: nextKey(),
-		actionId: action.id,
+		actionId: (action.id?.value ?? ''),
 		formKey: key,
 		actionType: action.type,
 		name: action.name,

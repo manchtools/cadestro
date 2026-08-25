@@ -45,7 +45,7 @@ type userView struct {
 
 func userToProto(v userView) *cadestrov1.User {
 	u := &cadestrov1.User{
-		Id:                      v.Row.ID,
+		Id:                      &cadestrov1.UserId{Value: v.Row.ID},
 		Email:                   v.Row.Email,
 		CreatedAt:               timestamp(v.Row.CreatedAt),
 		LastLoginAt:             timestamp(v.Row.LastLoginAt),
@@ -74,9 +74,9 @@ func userToProto(v userView) *cadestrov1.User {
 	}
 	for _, r := range v.InheritedRoles {
 		u.InheritedRoles = append(u.InheritedRoles, &cadestrov1.InheritedRole{
-			RoleId:    r.RoleID,
+			RoleId:    &cadestrov1.RoleId{Value: r.RoleID},
 			RoleName:  r.RoleName,
-			GroupId:   r.GroupID,
+			GroupId:   &cadestrov1.UserGroupId{Value: r.GroupID},
 			GroupName: r.GroupName,
 		})
 	}
@@ -84,7 +84,7 @@ func userToProto(v userView) *cadestrov1.User {
 }
 
 func sshKeyToProto(k store.UserSSHKeyRow) *cadestrov1.SshPublicKey {
-	out := &cadestrov1.SshPublicKey{Id: k.KeyID, AddedAt: timestampValue(k.AddedAt)}
+	out := &cadestrov1.SshPublicKey{Id: &cadestrov1.SshKeyId{Value: k.KeyID}, AddedAt: timestampValue(k.AddedAt)}
 	if k.PublicKey != nil {
 		out.PublicKey = *k.PublicKey
 	}
@@ -96,7 +96,7 @@ func sshKeyToProto(k store.UserSSHKeyRow) *cadestrov1.SshPublicKey {
 
 func roleToProto(r store.RoleRow) *cadestrov1.Role {
 	return &cadestrov1.Role{
-		Id:          r.ID,
+		Id:          &cadestrov1.RoleId{Value: r.ID},
 		Name:        r.Name,
 		Description: r.Description,
 		Permissions: append([]string(nil), r.Permissions...),
@@ -107,7 +107,7 @@ func roleToProto(r store.RoleRow) *cadestrov1.Role {
 
 func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow) (*cadestrov1.UserGroup, error) {
 	group := &cadestrov1.UserGroup{
-		Id: row.ID, Name: row.Name, Description: row.Description,
+		Id: &cadestrov1.UserGroupId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		MemberCount: boundedIdentityCount(row.LiveMemberCount),
 		CreatedAt:   timestampValue(row.CreatedAt), IsDynamic: row.IsDynamic,
 		IsScimManaged: row.IsScimManaged,
@@ -129,7 +129,7 @@ func userGroupToProto(row store.UserGroupView, grants []store.GroupRoleGrantRow)
 			Role: roleToProto(grant.Role), ScopeKind: scopeKindToProto(grant.ScopeKind),
 		}
 		if grant.ScopeID != nil {
-			wire.ScopeId = *grant.ScopeID
+			wire.ScopeId = &cadestrov1.ScopeId{Value: *grant.ScopeID}
 		}
 		group.RoleGrants = append(group.RoleGrants, wire)
 	}
@@ -142,7 +142,7 @@ func grantToProto(g store.RoleGrantRow, scopeNames map[string]string) *cadestrov
 		ScopeKind: scopeKindToProto(g.ScopeKind),
 	}
 	if g.ScopeID != nil {
-		out.ScopeId = *g.ScopeID
+		out.ScopeId = &cadestrov1.ScopeId{Value: *g.ScopeID}
 		out.ScopeName = scopeNames[*g.ScopeID]
 	}
 	return out
@@ -191,12 +191,12 @@ func targetKindToProto(k auth.PermissionTargetKind) cadestrov1.PermissionTargetK
 
 func linkToProto(l store.IdentityLinkWithProviderRow) *cadestrov1.IdentityLink {
 	return &cadestrov1.IdentityLink{
-		Id:            l.ID,
-		UserId:        l.UserID,
-		ProviderId:    l.ProviderID,
+		Id:            &cadestrov1.IdentityLinkId{Value: l.ID},
+		UserId:        &cadestrov1.UserId{Value: l.UserID},
+		ProviderId:    &cadestrov1.IdentityProviderId{Value: l.ProviderID},
 		ProviderName:  l.ProviderName,
 		ProviderSlug:  l.ProviderSlug,
-		ExternalId:    l.ExternalID,
+		ExternalId:    &cadestrov1.ExternalIdentityId{Value: l.ExternalID},
 		ExternalEmail: l.ExternalEmail,
 		ExternalName:  l.ExternalName,
 		LinkedAt:      timestampValue(l.LinkedAt),
@@ -211,12 +211,12 @@ func linkToProto(l store.IdentityLinkWithProviderRow) *cadestrov1.IdentityLink {
 // shown exactly once, at the moment it is minted.
 func (h *Handlers) providerToProto(p store.IdentityProviderRow) *cadestrov1.IdentityProvider {
 	out := &cadestrov1.IdentityProvider{
-		Id:                   p.ID,
+		Id:                   &cadestrov1.IdentityProviderId{Value: p.ID},
 		Name:                 p.Name,
 		Slug:                 p.Slug,
 		ProviderType:         providerTypeToProto(p.ProviderType),
 		Enabled:              p.Enabled,
-		ClientId:             p.ClientID,
+		ClientId:             &cadestrov1.OidcClientId{Value: p.ClientID},
 		IssuerUrl:            p.IssuerUrl,
 		AuthorizationUrl:     p.AuthorizationUrl,
 		TokenUrl:             p.TokenUrl,
@@ -225,7 +225,7 @@ func (h *Handlers) providerToProto(p store.IdentityProviderRow) *cadestrov1.Iden
 		AutoCreateUsers:      p.AutoCreateUsers,
 		AutoLinkByEmail:      p.AutoLinkByEmail,
 		TrustEmailAssertions: p.TrustEmailAssertions,
-		DefaultRoleId:        p.DefaultRoleID,
+		DefaultRoleId:        &cadestrov1.RoleId{Value: p.DefaultRoleID},
 		GroupClaim:           p.GroupClaim,
 		GroupMapping:         idpGroupMapping(p.GroupMapping),
 		CreatedAt:            timestampValue(p.CreatedAt),

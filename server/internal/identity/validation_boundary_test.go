@@ -12,7 +12,7 @@ func TestGetRole_RejectsMalformedIDBeforeAuthentication(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	_, err := f.client.GetRole(f.ctx(), connect.NewRequest(&cadestrov1.GetRoleRequest{Id: "not-a-ulid"}))
+	_, err := f.client.GetRole(f.ctx(), connect.NewRequest(&cadestrov1.GetRoleRequest{Id: &cadestrov1.RoleId{Value: "not-a-ulid"}}))
 
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }

@@ -106,7 +106,7 @@ func TestTerminal_LookupUnknown(t *testing.T) {
 func TestTerminal_OnInput_UnknownIsNoOp(t *testing.T) {
 	h, _ := newTestHandler(t)
 	err := h.OnTerminalInput(context.Background(), &pb.TerminalInput{
-		SessionId: "01ABC",
+		SessionId: &pb.SessionId{Value: "01ABC"},
 		Data:      []byte("hello"),
 	})
 	if err != nil {
@@ -117,7 +117,7 @@ func TestTerminal_OnInput_UnknownIsNoOp(t *testing.T) {
 func TestTerminal_OnResize_UnknownIsNoOp(t *testing.T) {
 	h, _ := newTestHandler(t)
 	err := h.OnTerminalResize(context.Background(), &pb.TerminalResize{
-		SessionId: "01ABC",
+		SessionId: &pb.SessionId{Value: "01ABC"},
 		Cols:      120,
 		Rows:      40,
 	})
@@ -128,7 +128,7 @@ func TestTerminal_OnResize_UnknownIsNoOp(t *testing.T) {
 
 func TestTerminal_OnStop_UnknownIsNoOp(t *testing.T) {
 	h, _ := newTestHandler(t)
-	err := h.OnTerminalStop(context.Background(), &pb.TerminalStop{SessionId: "01ABC"})
+	err := h.OnTerminalStop(context.Background(), &pb.TerminalStop{SessionId: &pb.SessionId{Value: "01ABC"}})
 	if err != nil {
 		t.Errorf("OnTerminalStop(unknown) = %v, want nil", err)
 	}
@@ -256,7 +256,7 @@ func TestTerminal_FailStart_EmitsErrorState(t *testing.T) {
 	if last == nil {
 		t.Fatal("expected a state change to be sent")
 	}
-	if last.SessionId != "01ABC" {
+	if last.GetSessionId().GetValue() != "01ABC" {
 		t.Errorf("session_id = %q, want 01ABC", last.SessionId)
 	}
 	if last.State != pb.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR {
@@ -275,7 +275,7 @@ func TestTerminal_FailStart_EmitsErrorState(t *testing.T) {
 func TestTerminal_Start_RejectsNonPrefixedUsername(t *testing.T) {
 	h, sender := newTestHandler(t)
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-		SessionId: "01ABC",
+		SessionId: &pb.SessionId{Value: "01ABC"},
 		TtyUser:   "alice", // valid syntax, NOT a cadestro-tty-* user
 		Cols:      80,
 		Rows:      24,
@@ -306,7 +306,7 @@ func TestTerminal_Start_RejectsNonPrefixedUsername(t *testing.T) {
 func TestTerminal_Start_RejectsWhenTTYDisabled(t *testing.T) {
 	h, sender := newTestHandlerWithTTY(t, false)
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-		SessionId: "01ABC",
+		SessionId: &pb.SessionId{Value: "01ABC"},
 		TtyUser:   "cadestro-tty-test",
 		Cols:      80,
 		Rows:      24,
@@ -343,7 +343,7 @@ func TestTerminal_Start_RejectsWhenStoreMissing(t *testing.T) {
 	h.SetTerminalSender(sender)
 
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-		SessionId: "01ABC",
+		SessionId: &pb.SessionId{Value: "01ABC"},
 		TtyUser:   "cadestro-tty-test",
 		Cols:      80,
 		Rows:      24,

@@ -31,7 +31,7 @@
 
 	const table = createClientListState<RegistrationToken, SortKey, Filters>({
 		load: async () => (await apiClient.listTokens(50, '', true)).tokens,
-		searchFields: (t) => [t.name, t.id],
+		searchFields: (t) => [t.name, (t.id?.value ?? '')],
 		sortKeys: ['name', 'status', 'created'],
 		sortComparators: {
 			name: (a, b) => a.name.localeCompare(b.name),
@@ -76,7 +76,7 @@
 	async function deleteToken() {
 		if (!tokenToDelete) return;
 		try {
-			await apiClient.deleteToken(tokenToDelete.id);
+			await apiClient.deleteToken((tokenToDelete.id?.value ?? ''));
 			table.patchRows((rows) => rows.filter((t) => t.id !== tokenToDelete!.id));
 			toast.success(m.tokens_deleted());
 		} catch (error) {
@@ -90,7 +90,7 @@
 
 	async function toggleTokenDisabled(token: RegistrationToken) {
 		try {
-			const updated = await apiClient.setTokenDisabled(token.id, !token.disabled);
+			const updated = await apiClient.setTokenDisabled((token.id?.value ?? ''), !token.disabled);
 			if (updated) {
 				table.patchRows((rows) => rows.map((t) => (t.id === token.id ? updated : t)));
 				toast.success(updated.disabled ? m.tokens_disabled() : m.tokens_enabled());
@@ -169,7 +169,7 @@
 	     stamp. Registration tokens have no detail route, so the row is not a link
 	     — every affordance stays in the trailing menu. -->
 	<div data-tour="tokens-list">
-		<RowList {table} {sortOptions} rowKey={(t) => t.id}>
+		<RowList {table} {sortOptions} rowKey={(t) => (t.id?.value ?? '')}>
 			{#snippet filters()}
 				<MultiSelectCombobox
 					items={statusFilterItems}

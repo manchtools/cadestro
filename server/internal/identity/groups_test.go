@@ -27,7 +27,7 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 		Name: "Operators", Description: "static operators",
 	}, operator.Token))
 	require.NoError(t, err)
-	groupID := created.Msg.Group.Id
+	groupID := created.Msg.Group.GetId().GetValue()
 	assert.False(t, created.Msg.Group.IsDynamic)
 	assert.Equal(t, int32(0), created.Msg.Group.MemberCount)
 
@@ -35,7 +35,7 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT session_version FROM users WHERE id = $1`, member.ID).Scan(&beforeVersion))
 	_, err = f.client.AddUserToGroup(f.ctx(), authed(&cadestrov1.AddUserToGroupRequest{
-		GroupId: groupID, UserId: member.ID, UserIds: []string{member.ID},
+		GroupId: &cadestrov1.UserGroupId{Value: groupID}, UserId: &cadestrov1.UserId{Value: member.ID}, UserIds: []*cadestrov1.UserId{&cadestrov1.UserId{Value: member.ID}},
 	}, operator.Token))
 	require.NoError(t, err)
 	rows, total, err := f.store.Search(f.ctx(), store.SearchParams{
@@ -47,34 +47,34 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 	require.Len(t, rows, 1)
 	assert.Equal(t, groupID, rows[0].ID)
 
-	got, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: groupID}, operator.Token))
+	got, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), got.Msg.Group.MemberCount)
 	require.Len(t, got.Msg.Members, 1)
-	assert.Equal(t, member.ID, got.Msg.Members[0].UserId)
+	assert.Equal(t, member.ID, got.Msg.Members[0].UserId.GetValue())
 	assert.Equal(t, member.Email, got.Msg.Members[0].Email)
 
 	listed, err := f.client.ListUserGroups(f.ctx(), authed(&cadestrov1.ListUserGroupsRequest{PageSize: 10}, operator.Token))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Groups, 1)
-	assert.Equal(t, groupID, listed.Msg.Groups[0].Id)
+	assert.Equal(t, groupID, listed.Msg.Groups[0].GetId().GetValue())
 	assert.Equal(t, int32(1), listed.Msg.TotalCount)
 
 	forUser, err := f.client.ListUserGroupsForUser(f.ctx(), authed(&cadestrov1.ListUserGroupsForUserRequest{
-		UserId: member.ID,
+		UserId: &cadestrov1.UserId{Value: member.ID},
 	}, operator.Token))
 	require.NoError(t, err)
 	require.Len(t, forUser.Msg.Groups, 1)
-	assert.Equal(t, groupID, forUser.Msg.Groups[0].Id)
+	assert.Equal(t, groupID, forUser.Msg.Groups[0].GetId().GetValue())
 
 	updated, err := f.client.UpdateUserGroup(f.ctx(), authed(&cadestrov1.UpdateUserGroupRequest{
-		GroupId: groupID, Name: "Platform operators", Description: "renamed",
+		GroupId: &cadestrov1.UserGroupId{Value: groupID}, Name: "Platform operators", Description: "renamed",
 	}, operator.Token))
 	require.NoError(t, err)
 	assert.Equal(t, "Platform operators", updated.Msg.Group.Name)
 
 	windowed, err := f.client.SetUserGroupMaintenanceWindow(f.ctx(), authed(&cadestrov1.SetUserGroupMaintenanceWindowRequest{
-		Id: groupID, MaintenanceWindow: &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{{
+		Id: &cadestrov1.UserGroupId{Value: groupID}, MaintenanceWindow: &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{{
 			Days: []string{"mon"}, Allow: "09:00-17:00",
 		}}},
 	}, operator.Token))
@@ -83,7 +83,7 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 	require.Len(t, windowed.Msg.Group.MaintenanceWindow.Schedule, 1)
 
 	_, err = f.client.RemoveUserFromGroup(f.ctx(), authed(&cadestrov1.RemoveUserFromGroupRequest{
-		GroupId: groupID, UserId: member.ID,
+		GroupId: &cadestrov1.UserGroupId{Value: groupID}, UserId: &cadestrov1.UserId{Value: member.ID},
 	}, operator.Token))
 	require.NoError(t, err)
 	rows, total, err = f.store.Search(f.ctx(), store.SearchParams{
@@ -98,9 +98,9 @@ func TestUserGroups_DirectCRUDMembershipAndAudit(t *testing.T) {
 		`SELECT session_version FROM users WHERE id = $1`, member.ID).Scan(&afterVersion))
 	assert.Equal(t, beforeVersion+2, afterVersion, "membership add and removal each invalidate existing sessions")
 
-	_, err = f.client.DeleteUserGroup(f.ctx(), authed(&cadestrov1.DeleteUserGroupRequest{Id: groupID}, operator.Token))
+	_, err = f.client.DeleteUserGroup(f.ctx(), authed(&cadestrov1.DeleteUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
-	_, err = f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: groupID}, operator.Token))
+	_, err = f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 
 	createOp := f.onlyOperationFor(cadestrov1connect.ControlServiceCreateUserGroupProcedure)
@@ -125,7 +125,7 @@ func TestAddUserToGroup_RefusesMembershipInAdminCarryingGroup(t *testing.T) {
 	beforeAudit := f.countAuditOperations()
 
 	_, err = f.client.AddUserToGroup(f.ctx(), authed(&cadestrov1.AddUserToGroupRequest{
-		GroupId: group, UserId: member.ID,
+		GroupId: &cadestrov1.UserGroupId{Value: group}, UserId: &cadestrov1.UserId{Value: member.ID},
 	}, actor.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err))
 	members, err := f.store.ListUserGroupMembers(f.ctx(), group)
@@ -147,11 +147,11 @@ func TestUserGroups_DynamicMembershipRejectsManualChanges(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = f.client.AddUserToGroup(f.ctx(), authed(&cadestrov1.AddUserToGroupRequest{
-		GroupId: created.Msg.Group.Id, UserId: member.ID,
+		GroupId: &cadestrov1.UserGroupId{Value: created.Msg.Group.GetId().GetValue()}, UserId: &cadestrov1.UserId{Value: member.ID},
 	}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 	_, err = f.client.RemoveUserFromGroup(f.ctx(), authed(&cadestrov1.RemoveUserFromGroupRequest{
-		GroupId: created.Msg.Group.Id, UserId: member.ID,
+		GroupId: &cadestrov1.UserGroupId{Value: created.Msg.Group.GetId().GetValue()}, UserId: &cadestrov1.UserId{Value: member.ID},
 	}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 }
@@ -169,7 +169,7 @@ func TestDeleteUserGroup_AllowsRemovingFinalAdminGrant(t *testing.T) {
 	require.NoError(t, err)
 	token := f.mintToken(soleAdmin.ID, soleAdmin.Email)
 
-	_, err = f.client.DeleteUserGroup(f.ctx(), authed(&cadestrov1.DeleteUserGroupRequest{Id: groupID}, token))
+	_, err = f.client.DeleteUserGroup(f.ctx(), authed(&cadestrov1.DeleteUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, token))
 	require.NoError(t, err)
 	var deleted bool
 	require.NoError(t, f.raw.QueryRow(f.ctx(), `SELECT is_deleted FROM user_groups WHERE id = $1`, groupID).Scan(&deleted))
@@ -207,36 +207,36 @@ func TestDynamicUserGroups_ValidateUpdateAndEvaluateDirectState(t *testing.T) {
 		DynamicQuery: `user.email == "` + matched.Email + `"`,
 	}, operator.Token))
 	require.NoError(t, err)
-	groupID := created.Msg.Group.Id
+	groupID := created.Msg.Group.GetId().GetValue()
 
-	first, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: groupID}, operator.Token))
+	first, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), first.Msg.UsersAdded)
 	assert.Zero(t, first.Msg.UsersRemoved)
 	assert.Equal(t, int32(1), first.Msg.Group.MemberCount)
 
 	updated, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: groupID, IsDynamic: true, DynamicQuery: `user.disabled == true`,
+		Id: &cadestrov1.UserGroupId{Value: groupID}, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	require.NoError(t, err)
 	assert.Equal(t, `user.disabled == true`, updated.Msg.Group.DynamicQuery)
 
-	second, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: groupID}, operator.Token))
+	second, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), second.Msg.UsersAdded)
 	assert.Equal(t, int32(1), second.Msg.UsersRemoved)
-	got, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: groupID}, operator.Token))
+	got, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 1)
-	assert.Equal(t, disabled.ID, got.Msg.Members[0].UserId)
+	assert.Equal(t, disabled.ID, got.Msg.Members[0].UserId.GetValue())
 
 	materialized, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: groupID, IsDynamic: false,
+		Id: &cadestrov1.UserGroupId{Value: groupID}, IsDynamic: false,
 	}, operator.Token))
 	require.NoError(t, err)
 	assert.False(t, materialized.Msg.Group.IsDynamic)
 	assert.Equal(t, int32(1), materialized.Msg.Group.MemberCount, "materializing preserves the compiled membership")
-	_, err = f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: groupID}, operator.Token))
+	_, err = f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 
 	ops := f.operationsFor(cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure)
@@ -264,7 +264,7 @@ func TestEvaluateDynamicUserGroup_AllowsRemovingFinalAdminMembership(t *testing.
 	require.NoError(t, err)
 	token := f.mintToken(soleAdmin.ID, soleAdmin.Email)
 
-	_, err = f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: groupID}, token))
+	_, err = f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, token))
 	require.NoError(t, err)
 	members, err := f.store.ListUserGroupMembers(f.ctx(), groupID)
 	require.NoError(t, err)
@@ -294,11 +294,11 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 		Name: "Hand picked",
 	}, operator.Token))
 	require.NoError(t, err)
-	groupID := curated.Msg.Group.Id
+	groupID := curated.Msg.Group.GetId().GetValue()
 	require.False(t, curated.Msg.Group.IsDynamic)
 
 	_, err = f.client.AddUserToGroup(f.ctx(), authed(&cadestrov1.AddUserToGroupRequest{
-		GroupId: groupID, UserId: member.ID,
+		GroupId: &cadestrov1.UserGroupId{Value: groupID}, UserId: &cadestrov1.UserId{Value: member.ID},
 	}, operator.Token))
 	require.NoError(t, err)
 	var versionBeforeConversion int32
@@ -308,16 +308,16 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	// An invalid query is refused before anything is written, so a rejected
 	// conversion leaves a curated group exactly as it was.
 	_, err = f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: groupID, IsDynamic: true, DynamicQuery: "(",
+		Id: &cadestrov1.UserGroupId{Value: groupID}, IsDynamic: true, DynamicQuery: "(",
 	}, operator.Token))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
-	intact, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: groupID}, operator.Token))
+	intact, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
 	assert.False(t, intact.Msg.Group.IsDynamic)
 	require.Len(t, intact.Msg.Members, 1)
 
 	converted, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: groupID, IsDynamic: true, DynamicQuery: `user.disabled == true`,
+		Id: &cadestrov1.UserGroupId{Value: groupID}, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	require.NoError(t, err, "a curated group is convertible to a rule")
 	assert.True(t, converted.Msg.Group.IsDynamic)
@@ -329,7 +329,7 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	assert.Equal(t, versionBeforeConversion+1, versionAfterConversion,
 		"removing a membership invalidates authority already baked into sessions")
 
-	after, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: groupID}, operator.Token))
+	after, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: groupID}}, operator.Token))
 	require.NoError(t, err)
 	assert.Empty(t, after.Msg.Members, "membership has one source once the group is a rule")
 	operations := f.operationsFor(cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure)
@@ -350,20 +350,20 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	_, err = f.raw.Exec(f.ctx(),
 		`INSERT INTO scim_group_mapping (id, provider_id, scim_group_id, scim_display_name, user_group_id)
 		 VALUES ($1, $2, 'grp-directory', 'Directory owned', $3)`,
-		newULID(), providerID, managed.Msg.Group.Id)
+		newULID(), providerID, managed.Msg.Group.GetId().GetValue())
 	require.NoError(t, err)
 	_, err = f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: managed.Msg.Group.Id, IsDynamic: false,
+		Id: &cadestrov1.UserGroupId{Value: managed.Msg.Group.GetId().GetValue()}, IsDynamic: false,
 	}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err),
 		"SCIM ownership rejects every query update, including a same-mode request")
 
 	_, err = f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: managed.Msg.Group.Id, IsDynamic: true, DynamicQuery: `user.disabled == true`,
+		Id: &cadestrov1.UserGroupId{Value: managed.Msg.Group.GetId().GetValue()}, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err),
 		"a SCIM-managed group's membership belongs to its directory")
-	stillManaged, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: managed.Msg.Group.Id}, operator.Token))
+	stillManaged, err := f.client.GetUserGroup(f.ctx(), authed(&cadestrov1.GetUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: managed.Msg.Group.GetId().GetValue()}}, operator.Token))
 	require.NoError(t, err)
 	assert.False(t, stillManaged.Msg.Group.IsDynamic)
 }

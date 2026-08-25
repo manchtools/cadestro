@@ -49,14 +49,14 @@ func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[cadestrov
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "GetAction", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "GetAction", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	row, err := h.operatorAction(ctx, req.Msg.Id)
+	row, err := h.operatorAction(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceActionReadScope(ctx, req.Msg.Id); err != nil {
+	if err := h.enforceActionReadScope(ctx, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	action, err := ActionToProto(row)
@@ -124,41 +124,41 @@ func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[cadestr
 
 // RenameAction replaces an Action name with audited last-write-wins CRUD.
 func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameAction")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "RenameAction")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.RenameAction(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceRenameActionProcedure, "RenameAction"), req.Msg.Id, req.Msg.Name, false)
+		cadestrov1connect.ControlServiceRenameActionProcedure, "RenameAction"), req.Msg.GetId().GetValue(), req.Msg.Name, false)
 	return h.updatedAction(ctx, "rename action", row, err)
 }
 
 // UpdateActionDescription replaces an Action description.
 func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateActionDescription")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "UpdateActionDescription")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateActionDescription(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateActionDescriptionProcedure, "UpdateActionDescription"),
-		req.Msg.Id, req.Msg.Description, false)
+		req.Msg.GetId().GetValue(), req.Msg.Description, false)
 	return h.updatedAction(ctx, "update action description", row, err)
 }
 
 // UpdateActionParams replaces the mutable execution fields while keeping the
 // Action type immutable.
 func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionParamsRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
-	actor, row, err := h.mutationAction(ctx, req.Msg.Id, "UpdateActionParams")
+	actor, row, err := h.mutationAction(ctx, req.Msg.GetId().GetValue(), "UpdateActionParams")
 	if err != nil {
 		return nil, err
 	}
-	params, err := h.requestParams(req.Msg, cadestrov1.ActionType(row.ActionType), req.Msg.Id, row.Params)
+	params, err := h.requestParams(req.Msg, cadestrov1.ActionType(row.ActionType), req.Msg.GetId().GetValue(), row.Params)
 	if err != nil {
 		return nil, h.actionError(ctx, "validate updated action params", err)
 	}
 	updated, err := h.state.UpdateActionParams(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateActionParamsProcedure, "UpdateActionParams"), UpdateActionParams{
-		ID: req.Msg.Id, DesiredState: req.Msg.DesiredState, Params: params,
+		ID: req.Msg.GetId().GetValue(), DesiredState: req.Msg.DesiredState, Params: params,
 		TimeoutSeconds: req.Msg.TimeoutSeconds, Schedule: req.Msg.Schedule,
 	})
 	return h.updatedAction(ctx, "update action params", updated, err)
@@ -166,12 +166,12 @@ func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[
 
 // DeleteAction soft-deletes an Action and its composition edges atomically.
 func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[cadestrov1.DeleteActionRequest]) (*connect.Response[cadestrov1.DeleteActionResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteAction")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "DeleteAction")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.DeleteAction(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceDeleteActionProcedure, "DeleteAction"), req.Msg.Id, false); err != nil {
+		cadestrov1connect.ControlServiceDeleteActionProcedure, "DeleteAction"), req.Msg.GetId().GetValue(), false); err != nil {
 		return nil, h.actionError(ctx, "delete action", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteActionResponse{}), nil

@@ -70,8 +70,8 @@
 		const seen = new Set<string>();
 		const result: ManagedAction[] = [];
 		for (const action of actions) {
-			if (!seen.has(action.id) && !isComplianceCheck(action)) {
-				seen.add(action.id);
+			if (!seen.has((action.id?.value ?? '')) && !isComplianceCheck(action)) {
+				seen.add((action.id?.value ?? ''));
 				result.push(action);
 			}
 		}
@@ -141,7 +141,7 @@
 			if (!defDetail.definition) continue;
 			for (const member of defDetail.members) {
 				setToDefMap.set(member.actionSetId, {
-					defId: defDetail.definition.id,
+					defId: (defDetail.definition.id?.value ?? ''),
 					defName: defDetail.definition.name
 				});
 			}
@@ -150,12 +150,12 @@
 		// Build action → parent mapping from action set details
 		for (const setDetail of setDetails) {
 			if (!setDetail.set) continue;
-			const defInfo = setToDefMap.get(setDetail.set.id);
+			const defInfo = setToDefMap.get((setDetail.set.id?.value ?? ''));
 			for (const member of setDetail.members) {
 				const existing = map.get(member.actionId) || [];
 				existing.push({
 					type: 'action_set',
-					id: setDetail.set.id,
+					id: (setDetail.set.id?.value ?? ''),
 					name: setDetail.set.name,
 					definitionId: defInfo?.defId,
 					definitionName: defInfo?.defName
@@ -237,7 +237,7 @@
 				<div class="mt-3">
 					<div class="space-y-2">
 						{#each definitions as def}
-							{@const assignment = getDirectAssignment(AssignmentSourceType.DEFINITION, def.id)}
+							{@const assignment = getDirectAssignment(AssignmentSourceType.DEFINITION, (def.id?.value ?? ''))}
 							<div
 								role="button"
 								tabindex="0"
@@ -291,7 +291,7 @@
 				<div class="mt-3">
 					<div class="space-y-2">
 						{#each actionSets as set}
-							{@const assignment = getDirectAssignment(AssignmentSourceType.ACTION_SET, set.id)}
+							{@const assignment = getDirectAssignment(AssignmentSourceType.ACTION_SET, (set.id?.value ?? ''))}
 							<div
 								role="button"
 								tabindex="0"
@@ -371,10 +371,10 @@
 								{#each filteredActions as action}
 									{@const typeInfo = getActionTypeInfo(action.type)}
 									{@const TypeIcon = typeInfo.icon}
-									{@const assignment = getDirectAssignment(AssignmentSourceType.ACTION, action.id)}
+									{@const assignment = getDirectAssignment(AssignmentSourceType.ACTION, (action.id?.value ?? ''))}
 									<Table.Row
 										class="cursor-pointer"
-										onclick={() => openActionSheet(action.id)}
+										onclick={() => openActionSheet((action.id?.value ?? ''))}
 									>
 										<Table.Cell>
 											<div class="flex items-center gap-2">

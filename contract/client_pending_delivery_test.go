@@ -79,7 +79,7 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 			name: "ValidateLuksToken",
 			payload: func() *cadestrov1.ServerMessage {
 				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_ValidateLuksToken{
-			ValidateLuksToken: &cadestrov1.ValidateLuksTokenResponse{ActionId: &cadestrov1.ActionId{Value: NewULID()}},
+					ValidateLuksToken: &cadestrov1.ValidateLuksTokenResponse{ActionId: &cadestrov1.ActionId{Value: NewULID()}},
 				}}
 			},
 		},
@@ -105,7 +105,7 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 			defer c.unregisterPending(id)
 
 			msg := tc.payload()
-			msg.Id = id
+			msg.Id = &cadestrov1.MessageId{Value: id}
 
 			if err := c.dispatchServerMessage(context.Background(), msg, noopStreamHandler{}); err != nil {
 				t.Fatalf("dispatchServerMessage: %v", err)
@@ -113,8 +113,8 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 
 			select {
 			case got := <-ch:
-				if got.Id != id {
-					t.Errorf("delivered message id = %q, want %q", got.Id, id)
+				if got.GetId().GetValue() != id {
+					t.Errorf("delivered message id = %q, want %q", got.GetId().GetValue(), id)
 				}
 			case <-time.After(time.Second):
 				t.Fatalf("%s response was never delivered to the waiting caller — "+
@@ -175,7 +175,7 @@ func TestDispatchServerMessage_DeliversCorrelatedErrorToTheWaiter(t *testing.T) 
 	defer c.unregisterPending(id)
 
 	msg := &cadestrov1.ServerMessage{
-		Id: id,
+		Id: &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.ServerMessage_Error{
 			Error: &cadestrov1.Error{Code: "internal", Message: "failed to store LPS passwords"},
 		},
@@ -207,7 +207,7 @@ func TestDispatchServerMessage_UncorrelatedErrorStillReachesTheHandler(t *testin
 	handler := &recordingErrHandler{}
 
 	msg := &cadestrov1.ServerMessage{
-		Id: NewULID(), // nothing is waiting on this
+		Id: &cadestrov1.MessageId{Value: NewULID()}, // nothing is waiting on this
 		Payload: &cadestrov1.ServerMessage_Error{
 			Error: &cadestrov1.Error{Code: "internal", Message: "server-originated"},
 		},

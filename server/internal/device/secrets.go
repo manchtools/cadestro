@@ -66,7 +66,7 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[c
 	if err := h.authorize(ctx, "RevealLpsPassword", ""); err != nil {
 		return nil, err
 	}
-	secret, err := h.store.GetLpsPasswordForReveal(ctx, req.Msg.Id)
+	secret, err := h.store.GetLpsPasswordForReveal(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errLpsPasswordNotFound, "LPS password not found")
@@ -137,7 +137,7 @@ func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[cades
 	if err := h.authorize(ctx, "RevealLuksKey", ""); err != nil {
 		return nil, err
 	}
-	secret, err := h.store.GetLuksKeyForReveal(ctx, req.Msg.Id)
+	secret, err := h.store.GetLuksKeyForReveal(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errLuksKeyNotFound, "LUKS key not found")
@@ -175,7 +175,7 @@ func (h *Handlers) lpsPasswordsToProto(rows []store.LpsPasswordView) ([]*cadestr
 			return nil, fmt.Errorf("invalid LPS rotation reason %q", row.RotationReason)
 		}
 		out[i] = &cadestrov1.LpsPassword{
-			Id: row.ID, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname,
+			Id: &cadestrov1.LpsPasswordId{Value: row.ID}, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname,
 			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			Username:  row.Username,
 			RotatedAt: timestamppb.New(row.RotatedAt), RotationReason: reason,
@@ -192,7 +192,7 @@ func (h *Handlers) luksKeysToProto(rows []store.LuksKeyView) ([]*cadestrov1.Luks
 			return nil, fmt.Errorf("invalid LUKS rotation reason %q", row.RotationReason)
 		}
 		key := &cadestrov1.LuksKey{
-			Id: row.ID, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname,
+			Id: &cadestrov1.LuksKeyId{Value: row.ID}, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname,
 			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			DevicePath: row.DevicePath,
 			RotatedAt:  timestamppb.New(row.RotatedAt), RotationReason: reason,

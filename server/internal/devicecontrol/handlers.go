@@ -182,7 +182,7 @@ func (h *Handlers) liveControlOperation(ctx context.Context, req connect.AnyRequ
 	h.liveMu.Unlock()
 	defer h.removeLiveOperation(op.OperationID)
 
-	message.Id = op.OperationID
+	message.Id = &cadestrov1.MessageId{Value: op.OperationID}
 	if h.sender == nil || h.sender(deviceID, message) != nil {
 		h.removeLiveOperation(op.OperationID)
 		if _, err := h.store.WithAuditEffects(ctx, op.OperationID, func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {

@@ -25,10 +25,10 @@ func setCreate(name string, policy cadestrov1.OnFailure) *cadestrov1.CreateActio
 
 func TestActionSetHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetActionSet)(context.Background(), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -45,7 +45,7 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 
 	created, err := f.handlers.CreateActionSet(ctx, connect.NewRequest(setCreate("baseline", cadestrov1.OnFailure_ON_FAILURE_STOP)))
 	require.NoError(t, err)
-	setID := created.Msg.Set.Id
+	setID := created.Msg.Set.GetId().GetValue()
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, created.Msg.Set.OnFailure)
 	assert.Equal(t, int32(0), created.Msg.Set.MemberCount)
 	assert.Equal(t, "0 4 * * *", created.Msg.Set.Schedule.Cron)
@@ -64,23 +64,23 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
-	got, err := f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
+	got, err := f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: setID}}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 2)
 	assert.Equal(t, action1.ID, got.Msg.Members[0].GetActionId().GetValue())
 	assert.Equal(t, action2.ID, got.Msg.Members[1].GetActionId().GetValue())
 	assert.Equal(t, int32(2), got.Msg.Set.MemberCount)
 
-	renamed, err := f.handlers.RenameActionSet(ctx, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: setID, Name: "renamed"}))
+	renamed, err := f.handlers.RenameActionSet(ctx, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: &cadestrov1.ActionSetId{Value: setID}, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Set.Name)
 	described, err := f.handlers.UpdateActionSetDescription(ctx, connect.NewRequest(&cadestrov1.UpdateActionSetDescriptionRequest{
-		Id: setID, Description: "direct state",
+		Id: &cadestrov1.ActionSetId{Value: setID}, Description: "direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "direct state", described.Msg.Set.Description)
 	policy, err := f.handlers.UpdateActionSetSchedule(ctx, connect.NewRequest(&cadestrov1.UpdateActionSetScheduleRequest{
-		Id: setID, Schedule: &cadestrov1.ActionSchedule{IntervalHours: 12}, OnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
+		Id: &cadestrov1.ActionSetId{Value: setID}, Schedule: &cadestrov1.ActionSchedule{IntervalHours: 12}, OnFailure: cadestrov1.OnFailure_ON_FAILURE_CONTINUE,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(12), policy.Msg.Set.Schedule.IntervalHours)
@@ -91,7 +91,7 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), reordered.Msg.Set.MemberCount)
-	got, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
+	got, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: setID}}))
 	require.NoError(t, err)
 	assert.Equal(t, action2.ID, got.Msg.Members[0].GetActionId().GetValue())
 
@@ -105,9 +105,9 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
-	_, err = f.handlers.DeleteActionSet(ctx, connect.NewRequest(&cadestrov1.DeleteActionSetRequest{Id: setID}))
+	_, err = f.handlers.DeleteActionSet(ctx, connect.NewRequest(&cadestrov1.DeleteActionSetRequest{Id: &cadestrov1.ActionSetId{Value: setID}}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
+	_, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: setID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range authoring.ActionSetMutationProcedures() {
@@ -158,22 +158,22 @@ func TestActionSetHandlers_KeysetAndTransitiveScope(t *testing.T) {
 		}},
 	})
 	for _, id := range []string{directID, transitiveID} {
-		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: id}))
+		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: id}}))
 		require.NoError(t, err)
 	}
 	for _, id := range []string{outsideID, unassignedID} {
-		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: id}))
+		_, err := f.handlers.GetActionSet(scoped, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: id}}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: transitiveID, Name: "denied"}))
+	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: &cadestrov1.ActionSetId{Value: transitiveID}, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameActionSet(scoped, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: &cadestrov1.ActionSetId{Value: directID}, Name: "allowed"}))
 	require.NoError(t, err)
 
 	list, err := f.handlers.ListActionSets(scoped, connect.NewRequest(&cadestrov1.ListActionSetsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, list.Msg.Sets, 2)
-	ids := []string{list.Msg.Sets[0].Id, list.Msg.Sets[1].Id}
+	ids := []string{list.Msg.Sets[0].GetId().GetValue(), list.Msg.Sets[1].GetId().GetValue()}
 	sort.Strings(ids)
 	want := []string{directID, transitiveID}
 	sort.Strings(want)
@@ -189,7 +189,7 @@ func TestActionSetHandlers_KeysetAndTransitiveScope(t *testing.T) {
 	unassigned, err := f.handlers.ListActionSets(global, connect.NewRequest(&cadestrov1.ListActionSetsRequest{UnassignedOnly: true}))
 	require.NoError(t, err)
 	require.Len(t, unassigned.Msg.Sets, 2)
-	assert.ElementsMatch(t, []string{transitiveID, unassignedID}, []string{unassigned.Msg.Sets[0].Id, unassigned.Msg.Sets[1].Id})
+	assert.ElementsMatch(t, []string{transitiveID, unassignedID}, []string{unassigned.Msg.Sets[0].GetId().GetValue(), unassigned.Msg.Sets[1].GetId().GetValue()})
 }
 
 func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
@@ -262,7 +262,7 @@ func TestActionSetHandlers_CorruptStoredPolicyFailsClosed(t *testing.T) {
 	_, err = conn.Exec(context.Background(), `UPDATE action_sets SET on_failure = 99 WHERE id = $1`, set.ID)
 	require.NoError(t, err)
 
-	_, err = f.handlers.GetActionSet(f.actor("GetActionSet"), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: set.ID}))
+	_, err = f.handlers.GetActionSet(f.actor("GetActionSet"), connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: &cadestrov1.ActionSetId{Value: set.ID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 

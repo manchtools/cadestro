@@ -26,12 +26,12 @@ func TestExecuteFlatpak_ValidatesAppIdAndRemote(t *testing.T) {
 	ctx := context.Background()
 
 	reject := []*pb.FlatpakParams{
-		{AppId: "--system"}, // flag-shaped app id
-		{AppId: "-y"},       // flag-shaped app id
-		{AppId: "a b"},      // embedded space → argv confusion
-		{AppId: "org.ok.App", Remote: "--from=evil"}, // flag-shaped remote
-		{AppId: "org.ok.App", Remote: "-x"},          // flag-shaped remote
-		{AppId: ""},                                  // ABSENT — existing required error preserved
+		{AppId: &pb.FlatpakAppId{Value: "--system"}},                          // flag-shaped app id
+		{AppId: &pb.FlatpakAppId{Value: "-y"}},                                // flag-shaped app id
+		{AppId: &pb.FlatpakAppId{Value: "a b"}},                               // embedded space → argv confusion
+		{AppId: &pb.FlatpakAppId{Value: "org.ok.App"}, Remote: "--from=evil"}, // flag-shaped remote
+		{AppId: &pb.FlatpakAppId{Value: "org.ok.App"}, Remote: "-x"},          // flag-shaped remote
+		{AppId: &pb.FlatpakAppId{Value: ""}},                                  // ABSENT — existing required error preserved
 	}
 	// The rejection must be a VALIDATION error — not an incidental
 	// downstream failure (e.g. desktop-session enumeration) that would
@@ -54,7 +54,7 @@ func TestExecuteFlatpak_ValidatesAppIdAndRemote(t *testing.T) {
 	// flatpak this returns the skip no-op (nil err); on a host with
 	// flatpak it may fail the real install — assert only that it is NOT a
 	// validation rejection.
-	if _, _, err := e.executeFlatpak(ctx, &pb.FlatpakParams{AppId: "org.videolan.VLC", Remote: "flathub"}, pb.DesiredState_DESIRED_STATE_PRESENT); err != nil {
+	if _, _, err := e.executeFlatpak(ctx, &pb.FlatpakParams{AppId: &pb.FlatpakAppId{Value: "org.videolan.VLC"}, Remote: "flathub"}, pb.DesiredState_DESIRED_STATE_PRESENT); err != nil {
 		if strings.Contains(err.Error(), "invalid") || strings.Contains(err.Error(), "is required") {
 			t.Errorf("valid app-id/remote produced a validation error: %v", err)
 		}

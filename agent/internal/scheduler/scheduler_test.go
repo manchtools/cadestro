@@ -52,7 +52,7 @@ func TestManifestRunsInOrderAndReplayDoesNotDoubleExecute(t *testing.T) {
 	sched.now = func() time.Time { return now }
 	manifest := scheduledManifest(pb.OnFailure_ON_FAILURE_CONTINUE)
 
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId().GetValue(), Manifests: []*pb.Manifest{manifest}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: manifest.GetManifestId().GetValue()}, Manifests: []*pb.Manifest{manifest}}))
 
 	sched.runDue(context.Background())
 	require.Equal(t, []string{
@@ -78,7 +78,7 @@ func TestManifestStopPolicyRecordsRemainingOccurrenceAsSkipped(t *testing.T) {
 	firstID := manifest.GetOccurrences()[0].GetAction().GetId().GetValue()
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{firstID: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}}
 	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId().GetValue(), Manifests: []*pb.Manifest{manifest}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: manifest.GetManifestId().GetValue()}, Manifests: []*pb.Manifest{manifest}}))
 	sched.runDue(context.Background())
 	require.Equal(t, []string{firstID}, exec.executed)
 
@@ -100,7 +100,7 @@ func TestSkipIfUnchangedSuppressesRepeatedActionOutputButStillExecutes(t *testin
 	exec := &recordingExecutor{status: map[string]pb.ExecutionStatus{}}
 	sched := New(context.Background(), st, exec, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	sched.now = func() time.Time { return now }
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: manifest.GetManifestId().GetValue(), Manifests: []*pb.Manifest{manifest}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: manifest.GetManifestId().GetValue()}, Manifests: []*pb.Manifest{manifest}}))
 
 	sched.runDue(context.Background())
 	now = now.Add(8 * time.Hour)

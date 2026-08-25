@@ -69,10 +69,10 @@ func TestTokenHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	// well-formed one from the same anonymous caller gets as far as
 	// authentication. Asserted on both a read and a mutation so the ordering
 	// is a property of the package, not of one handler.
-	_, err := validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: "bad", Name: "n"}))
+	_, err := validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: "bad"}, Name: "n"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: newID(), Name: "n"}))
+	_, err = validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: newID()}, Name: "n"}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 
 	_, err = validated(f.handlers.ListTokens)(context.Background(), connect.NewRequest(&cadestrov1.ListTokensRequest{PageToken: "not-a-ulid"}))
@@ -108,7 +108,7 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 		Name: "rack enrollment", MaxUses: 3, ExpiresAt: timestamp(expires),
 	}))
 	require.NoError(t, err)
-	tokenID, plaintext := created.Msg.Token.Id, created.Msg.Token.Value
+	tokenID, plaintext := created.Msg.Token.GetId().GetValue(), created.Msg.Token.Value
 	require.NotEmpty(t, plaintext)
 	assert.Equal(t, tokenCAPin, created.Msg.CaFingerprintPin)
 	assert.True(t, created.Msg.Token.CreatedAt.AsTime().Equal(f.now))
@@ -125,14 +125,14 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	stored, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	require.NoError(t, err)
 	require.Len(t, stored.Msg.Tokens, 1)
-	assert.Equal(t, tokenID, stored.Msg.Tokens[0].Id)
+	assert.Equal(t, tokenID, stored.Msg.Tokens[0].GetId().GetValue())
 	assert.Empty(t, stored.Msg.Tokens[0].Value, "stored tokens are never recoverable")
 
-	renamed, err := f.handlers.RenameToken(ctx, connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: tokenID, Name: "renamed"}))
+	renamed, err := f.handlers.RenameToken(ctx, connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: tokenID}, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Token.Name)
 
-	disabled, err := f.handlers.SetTokenDisabled(ctx, connect.NewRequest(&cadestrov1.SetTokenDisabledRequest{Id: tokenID, Disabled: true}))
+	disabled, err := f.handlers.SetTokenDisabled(ctx, connect.NewRequest(&cadestrov1.SetTokenDisabledRequest{Id: &cadestrov1.RegistrationTokenId{Value: tokenID}, Disabled: true}))
 	require.NoError(t, err)
 	assert.True(t, disabled.Msg.Token.Disabled)
 
@@ -145,13 +145,13 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	require.Len(t, visible.Msg.Tokens, 1)
 	assert.Empty(t, visible.Msg.Tokens[0].Value)
 
-	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: tokenID}))
+	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: tokenID}}))
 	require.NoError(t, err)
 	gone, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{IncludeDisabled: true}))
 	require.NoError(t, err)
 	assert.Empty(t, gone.Msg.Tokens, "a deleted token is gone from the widest read the surface offers")
 	assert.Zero(t, gone.Msg.TotalCount)
-	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: tokenID}))
+	_, err = f.handlers.DeleteToken(ctx, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: tokenID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "a second delete finds nothing")
 
 	for _, procedure := range registrationtoken.MutationProcedures() {
@@ -192,7 +192,7 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	listed, err := f.handlers.ListTokens(operator, connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Tokens, 1, "only the ordinary self token is visible")
-	assert.Equal(t, self.Msg.Token.Id, listed.Msg.Tokens[0].Id)
+	assert.Equal(t, self.Msg.Token.GetId().GetValue(), listed.Msg.Tokens[0].GetId().GetValue())
 
 	// The bootstrap token must be unreachable through EVERY read the surface
 	// still offers, not merely through the default page. The single-token read
@@ -208,7 +208,7 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 			page, err := f.handlers.ListTokens(operator, connect.NewRequest(req))
 			require.NoError(t, err)
 			for _, token := range page.Msg.Tokens {
-				assert.NotEqual(t, bootstrapID, token.Id, "the reserved bootstrap token was disclosed")
+				assert.NotEqual(t, bootstrapID, token.GetId().GetValue(), "the reserved bootstrap token was disclosed")
 				assert.NotEqual(t, store.BootstrapAdminTokenName, token.Name)
 			}
 		})
@@ -216,15 +216,15 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 
 	for name, call := range map[string]func() error{
 		"rename": func() error {
-			_, err := f.handlers.RenameToken(operator, connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: bootstrapID, Name: "stolen"}))
+			_, err := f.handlers.RenameToken(operator, connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: bootstrapID}, Name: "stolen"}))
 			return err
 		},
 		"disable": func() error {
-			_, err := f.handlers.SetTokenDisabled(operator, connect.NewRequest(&cadestrov1.SetTokenDisabledRequest{Id: bootstrapID, Disabled: true}))
+			_, err := f.handlers.SetTokenDisabled(operator, connect.NewRequest(&cadestrov1.SetTokenDisabledRequest{Id: &cadestrov1.RegistrationTokenId{Value: bootstrapID}, Disabled: true}))
 			return err
 		},
 		"delete": func() error {
-			_, err := f.handlers.DeleteToken(operator, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: bootstrapID}))
+			_, err := f.handlers.DeleteToken(operator, connect.NewRequest(&cadestrov1.DeleteTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: bootstrapID}}))
 			return err
 		},
 	} {
@@ -262,7 +262,7 @@ func TestTokenHandlers_KeysetPaginationAndMountSurface(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, second.Msg.Tokens, 1)
 	assert.Empty(t, second.Msg.NextPageToken)
-	assert.NotEqual(t, first.Msg.Tokens[1].Id, second.Msg.Tokens[0].Id)
+	assert.NotEqual(t, first.Msg.Tokens[1].GetId().GetValue(), second.Msg.Tokens[0].GetId().GetValue())
 
 	_, err = f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{PageToken: "not-a-ulid"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))

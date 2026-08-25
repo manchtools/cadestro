@@ -57,7 +57,7 @@
 		const q = query.trim().toLowerCase();
 		if (!q) return snapshot;
 		const devices = snapshot.devices.filter(
-			(d) => d.hostname.toLowerCase().includes(q) || d.id.toLowerCase().includes(q)
+		(d) => d.hostname.toLowerCase().includes(q) || (d.id?.value ?? '').toLowerCase().includes(q)
 		);
 		return { ...snapshot, devices, total: devices.length };
 	});
@@ -105,7 +105,7 @@
 			await apiClient.setUserSelection(
 				selectedDevice.id,
 				item.sourceType,
-				item.sourceId,
+				(item.sourceId?.value ?? ''),
 				!item.selected
 			);
 			availableItems = availableItems.map((i) =>

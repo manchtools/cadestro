@@ -61,7 +61,7 @@ export function searchResultToManagedAction(r: SearchResult): ManagedAction {
 	const isCompliance = f['is_compliance'] === 'true';
 
 	const action = create(ManagedActionSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
 		type,
@@ -90,7 +90,7 @@ export function searchResultToManagedAction(r: SearchResult): ManagedAction {
 export function searchResultToActionSet(r: SearchResult): ActionSet {
 	const f = r.fields;
 	return create(ActionSetSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
 		memberCount: intOr(f['member_count'], 0),
@@ -102,7 +102,7 @@ export function searchResultToActionSet(r: SearchResult): ActionSet {
 export function searchResultToDefinition(r: SearchResult): Definition {
 	const f = r.fields;
 	return create(DefinitionSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
 		memberCount: intOr(f['member_count'], 0),
@@ -114,7 +114,7 @@ export function searchResultToDefinition(r: SearchResult): Definition {
 export function searchResultToCompliancePolicy(r: SearchResult): CompliancePolicy {
 	const f = r.fields;
 	return create(CompliancePolicySchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description
 	});
@@ -123,7 +123,7 @@ export function searchResultToCompliancePolicy(r: SearchResult): CompliancePolic
 export function searchResultToDeviceGroup(r: SearchResult): DeviceGroup {
 	const f = r.fields;
 	return create(DeviceGroupSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
 		isDynamic: f['is_dynamic'] === 'true',
@@ -135,7 +135,7 @@ export function searchResultToDeviceGroup(r: SearchResult): DeviceGroup {
 export function searchResultToUserGroup(r: SearchResult): UserGroup {
 	const f = r.fields;
 	return create(UserGroupSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		name: f['name'] ?? r.name,
 		description: f['description'] ?? r.description,
 		isDynamic: f['is_dynamic'] === 'true',
@@ -150,7 +150,7 @@ export function searchResultToUserGroup(r: SearchResult): UserGroup {
 export function searchResultToUser(r: SearchResult): User {
 	const f = r.fields;
 	return create(UserSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		email: f['email'] ?? r.name,
 		displayName: f['display_name'] ?? '',
 		linuxUsername: f['linux_username'] ?? '',
@@ -226,7 +226,7 @@ export function searchResultToDevice(r: SearchResult): Device {
 			? DeviceStatus.ONLINE
 			: DeviceStatus.OFFLINE;
 	return create(DeviceSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		hostname: f['hostname'] ?? r.name,
 		agentVersion: f['agent_version'] ?? '',
 		status,
@@ -239,12 +239,12 @@ export function searchResultToDevice(r: SearchResult): Device {
 export function searchResultToAuditEvent(r: SearchResult): AuditEvent {
 	const f = r.fields;
 	return create(AuditEventSchema, {
-		id: r.id,
+		id: { value: r.id?.value ?? '' },
 		streamType: f['stream_type'] ?? '',
-		streamId: f['stream_id'] ?? '',
+		streamId: f['stream_id'] ? { value: f['stream_id'] } : undefined,
 		eventType: f['event_type'] ?? '',
 		actorType: f['actor_type'] ?? '',
-		actorId: f['actor_id'] ?? '',
+		actorId: f['actor_id'] ? { value: f['actor_id'] } : undefined,
 		occurredAt: timestampFromSeconds(f['occurred_at'])
 	});
 }

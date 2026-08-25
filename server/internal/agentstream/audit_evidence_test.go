@@ -102,7 +102,7 @@ func TestRecordFrameDropCommitsOperationAndEffect(t *testing.T) {
 	deviceID := ulid.Make().String()
 
 	message := &cadestrov1.AgentMessage{
-		Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}},
+		Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}},
 	}
 	handler.recordFrameDrop(context.Background(), deviceID, message)
 

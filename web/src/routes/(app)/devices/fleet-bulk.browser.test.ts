@@ -94,7 +94,7 @@ function device(o: {
 	seen?: number | null;
 }) {
 	return create(DeviceSchema, {
-		id: o.id,
+		id: { value: o.id },
 		hostname: o.hostname,
 		status: o.status ?? DeviceStatus.ONLINE,
 		complianceStatus: o.compliance ?? ComplianceStatus.COMPLIANT,
@@ -107,14 +107,14 @@ function device(o: {
 
 function respond(devices: ReturnType<typeof device>[], groups: Record<string, string[]> = {}) {
 	mocks.listDevices.mockResolvedValue({ devices, nextPageToken: '', totalCount: devices.length });
-	const protos = Object.keys(groups).map((id) => create(DeviceGroupSchema, { id, name: id }));
+	const protos = Object.keys(groups).map((id) => create(DeviceGroupSchema, { id: { value: id }, name: id }));
 	mocks.listDeviceGroups.mockResolvedValue({
 		groups: protos,
 		nextPageToken: '',
 		totalCount: protos.length
 	});
 	mocks.getDeviceGroup.mockImplementation(async (id: string) => ({
-		group: protos.find((g) => g.id === id),
+		group: protos.find((g) => (g.id?.value ?? '') === id),
 		deviceIds: groups[id] ?? [],
 		devices: []
 	}));

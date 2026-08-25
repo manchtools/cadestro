@@ -114,7 +114,7 @@ async function importAction(template: Template): Promise<ImportResult> {
 	if (!action?.id) {
 		throw new ImportError('createAction', 'server returned action without an id');
 	}
-	return { redirect: '/actions/' + action.id, id: action.id, name: action.name ?? template.name };
+	return { redirect: '/actions/' + (action.id?.value ?? ''), id: (action.id?.value ?? ''), name: action.name ?? template.name };
 }
 
 async function importActionSet(template: Template): Promise<ImportResult> {
@@ -139,13 +139,13 @@ async function importActionSet(template: Template): Promise<ImportResult> {
 			throw new ImportError(`createAction[${i}]`, 'server returned action without an id');
 		}
 		try {
-			await apiClient.addActionToSet(set.id, action.id, i);
+			await apiClient.addActionToSet((set.id?.value ?? ''), (action.id?.value ?? ''), i);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
 			throw new ImportError(`addActionToSet[${i}]`, msg);
 		}
 	}
-	return { redirect: '/action-sets/' + set.id, id: set.id, name: set.name ?? template.name };
+	return { redirect: '/action-sets/' + (set.id?.value ?? ''), id: (set.id?.value ?? ''), name: set.name ?? template.name };
 }
 
 async function importDefinition(template: Template): Promise<ImportResult> {
@@ -171,18 +171,18 @@ async function importDefinition(template: Template): Promise<ImportResult> {
 			if (!action?.id) {
 				throw new ImportError(`createAction[${i}.${j}]`, 'server returned action without an id');
 			}
-			await apiClient.addActionToSet(set.id, action.id, j);
+			await apiClient.addActionToSet((set.id?.value ?? ''), (action.id?.value ?? ''), j);
 		}
-		await apiClient.addActionSetToDefinition(def.id, set.id, i);
+		await apiClient.addActionSetToDefinition((def.id?.value ?? ''), (set.id?.value ?? ''), i);
 	}
-	return { redirect: '/definitions/' + def.id, id: def.id, name: def.name ?? template.name };
+	return { redirect: '/definitions/' + (def.id?.value ?? ''), id: (def.id?.value ?? ''), name: def.name ?? template.name };
 }
 
 async function importCompliancePolicy(template: Template): Promise<ImportResult> {
 	const content = parse<CompliancePolicyContent>(template, isCompliancePolicyContent);
 	const policy = await apiClient.createCompliancePolicy(content.policy.name, content.policy.description ?? '');
 	if (!policy?.id) throw new ImportError('createCompliancePolicy', 'server returned policy without an id');
-	return { redirect: '/compliance-policies/' + policy.id, id: policy.id, name: policy.name ?? template.name };
+	return { redirect: '/compliance-policies/' + (policy.id?.value ?? ''), id: (policy.id?.value ?? ''), name: policy.name ?? template.name };
 }
 
 // --- Type guards ----------------------------------------------------------

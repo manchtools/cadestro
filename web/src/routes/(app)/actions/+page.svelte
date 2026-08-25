@@ -288,7 +288,7 @@
 	async function deleteAction() {
 		if (!actionToDelete) return;
 		try {
-			await apiClient.deleteAction(actionToDelete.id);
+			await apiClient.deleteAction((actionToDelete.id?.value ?? ''));
 			toast.success(m.actions_deleted());
 			// Optimistic removal, then a refetch for authoritative totals.
 			table.patchRows((rows) => rows.filter((a) => a.id !== actionToDelete!.id));
@@ -430,7 +430,7 @@
 	<RowList
 		{table}
 		{sortOptions}
-		rowKey={(a) => a.id}
+		rowKey={(a) => (a.id?.value ?? '')}
 		href={(a) => `${base}/actions/${a.id}`}
 	>
 		{#snippet filters()}

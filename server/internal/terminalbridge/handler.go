@@ -136,8 +136,8 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 			return
 		}
 		_ = h.manager.Send(metadata.DeviceID, &cadestrov1.ServerMessage{
-			Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalStop{
-				TerminalStop: &cadestrov1.TerminalStop{SessionId: sessionID, Reason: reason},
+			Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.ServerMessage_TerminalStop{
+				TerminalStop: &cadestrov1.TerminalStop{SessionId: &cadestrov1.SessionId{Value: sessionID}, Reason: reason},
 			},
 		})
 	}
@@ -152,9 +152,9 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 	}()
 
 	if err := h.manager.Send(metadata.DeviceID, &cadestrov1.ServerMessage{
-		Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalStart{
+		Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.ServerMessage_TerminalStart{
 			TerminalStart: &cadestrov1.TerminalStart{
-				SessionId: sessionID, TtyUser: metadata.TtyUser, Cols: metadata.Cols, Rows: metadata.Rows,
+				SessionId: &cadestrov1.SessionId{Value: sessionID}, TtyUser: metadata.TtyUser, Cols: metadata.Cols, Rows: metadata.Rows,
 			},
 		},
 	}); err != nil {
@@ -257,8 +257,8 @@ func (h *Handler) clientToAgent(ctx context.Context, ws *websocket.Conn, session
 		switch messageType {
 		case websocket.MessageBinary:
 			if err := h.manager.Send(deviceID, &cadestrov1.ServerMessage{
-				Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalInput{
-					TerminalInput: &cadestrov1.TerminalInput{SessionId: session.SessionID, Data: data},
+				Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.ServerMessage_TerminalInput{
+					TerminalInput: &cadestrov1.TerminalInput{SessionId: &cadestrov1.SessionId{Value: session.SessionID}, Data: data},
 				},
 			}); err != nil {
 				return connection.ErrAgentNotConnected
@@ -269,8 +269,8 @@ func (h *Handler) clientToAgent(ctx context.Context, ws *websocket.Conn, session
 				continue
 			}
 			if err := h.manager.Send(deviceID, &cadestrov1.ServerMessage{
-				Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_TerminalResize{
-					TerminalResize: &cadestrov1.TerminalResize{SessionId: session.SessionID, Cols: resize.Cols, Rows: resize.Rows},
+				Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.ServerMessage_TerminalResize{
+					TerminalResize: &cadestrov1.TerminalResize{SessionId: &cadestrov1.SessionId{Value: session.SessionID}, Cols: resize.Cols, Rows: resize.Rows},
 				},
 			}); err != nil {
 				return connection.ErrAgentNotConnected

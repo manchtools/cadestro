@@ -77,7 +77,7 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 		c := NewClient("https://gw.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
 		h := &panicStreamingHandler{ran: make(chan struct{}), panicInv: true}
 		msg := &cadestrov1.ServerMessage{
-			Id: NewULID(),
+			Id: &cadestrov1.MessageId{Value: NewULID()},
 			Payload: &cadestrov1.ServerMessage_RequestInventory{
 				RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: "01HQ0000000000000000000000"}},
 			},
@@ -100,9 +100,9 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 		c := NewClient("https://gw.invalid", WithAuth("01HZZZZZZZZZZZZZZZZZZZZZZZZ", ""))
 		h := &panicStreamingHandler{ran: make(chan struct{}), panicRevoke: true}
 		msg := &cadestrov1.ServerMessage{
-			Id: NewULID(),
+			Id: &cadestrov1.MessageId{Value: NewULID()},
 			Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
-			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: "01HQ0000000000000000000000"}},
+				RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: "01HQ0000000000000000000000"}},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {
@@ -138,7 +138,7 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 				return err
 			}
 			if err := s.Send(&cadestrov1.ServerMessage{
-				Id:      NewULID(),
+				Id:      &cadestrov1.MessageId{Value: NewULID()},
 				Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{ServerVersion: "test"}},
 			}); err != nil {
 				return err
@@ -183,7 +183,7 @@ func TestRun_InboundMessageSizeBounded(t *testing.T) {
 				big[i] = 'a'
 			}
 			_ = s.Send(&cadestrov1.ServerMessage{
-				Id: NewULID(),
+				Id: &cadestrov1.MessageId{Value: NewULID()},
 				Payload: &cadestrov1.ServerMessage_Error{
 					Error: &cadestrov1.Error{Code: "x", Message: string(big)},
 				},

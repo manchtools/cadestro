@@ -40,8 +40,8 @@ export async function loadLibrary(): Promise<LibrarySnapshot> {
 	for (let i = 0; i < MAX_PAGES; i++) {
 		const resp = await apiClient.listActions(PAGE_SIZE, token);
 		for (const a of resp.actions) {
-			if (seen.has(a.id)) continue;
-			seen.add(a.id);
+			if (seen.has((a.id?.value ?? ''))) continue;
+			seen.add((a.id?.value ?? ''));
 			actions.push(a);
 		}
 		total = resp.totalCount || actions.length;

@@ -189,7 +189,7 @@
 			return {
 				key: `scope-${scope}`,
 				heading,
-				rows: items.map((r) => ({ kind: 'entity' as const, id: `entity-${scope}-${r.id}`, result: r }))
+				rows: items.map((r) => ({ kind: 'entity' as const, id: `entity-${scope}-${r.id?.value ?? ''}`, result: r }))
 			};
 		});
 	});
@@ -354,8 +354,8 @@
 		close();
 		goto(
 			target.detail
-				? `${target.route}/${r.id}`
-				: `${target.route}?query=${encodeURIComponent(r.name || r.id)}`
+				? `${target.route}/${r.id?.value ?? ''}`
+				: `${target.route}?query=${encodeURIComponent(r.name || (r.id?.value ?? ''))}`
 		);
 	}
 
@@ -458,7 +458,7 @@
 
 	function primary(r: SearchResult): string {
 		const f = r.fields;
-		return r.name || f['hostname'] || f['name'] || f['email'] || f['event_type'] || r.id;
+		return r.name || f['hostname'] || f['name'] || f['email'] || f['event_type'] || (r.id?.value ?? '');
 	}
 
 	/** The muted trailing line: only meta the RPC actually returned. */

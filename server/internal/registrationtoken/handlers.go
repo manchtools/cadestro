@@ -219,7 +219,7 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[cadestr
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "RenameToken", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "RenameToken", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	var row store.RegistrationTokenRow
@@ -227,7 +227,7 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[cadestr
 		cadestrov1connect.ControlServiceRenameTokenProcedure, "RenameToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			updated, err := tx.RenameRegistrationToken(ctx, db.RenameRegistrationTokenParams{
-				ID: req.Msg.Id, Name: req.Msg.Name, ReservedName: store.BootstrapAdminTokenName,
+				ID: req.Msg.GetId().GetValue(), Name: req.Msg.Name, ReservedName: store.BootstrapAdminTokenName,
 			})
 			if err != nil {
 				return err
@@ -239,7 +239,7 @@ func (h *Handlers) RenameToken(ctx context.Context, req *connect.Request[cadestr
 				return fmt.Errorf("registration token: count uses: %w", countErr)
 			}
 			row.CurrentUses = int32(uses)
-			rec.Effect(tokenEffect(req.Msg.Id, "UPDATE", "name"))
+			rec.Effect(tokenEffect(req.Msg.GetId().GetValue(), "UPDATE", "name"))
 			return nil
 		})
 	if err != nil {
@@ -254,7 +254,7 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[ca
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "SetTokenDisabled", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "SetTokenDisabled", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	var row store.RegistrationTokenRow
@@ -262,7 +262,7 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[ca
 		cadestrov1connect.ControlServiceSetTokenDisabledProcedure, "SetTokenDisabled"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			updated, err := tx.SetRegistrationTokenDisabled(ctx, db.SetRegistrationTokenDisabledParams{
-				ID: req.Msg.Id, Disabled: req.Msg.Disabled, ReservedName: store.BootstrapAdminTokenName,
+				ID: req.Msg.GetId().GetValue(), Disabled: req.Msg.Disabled, ReservedName: store.BootstrapAdminTokenName,
 			})
 			if err != nil {
 				return err
@@ -274,7 +274,7 @@ func (h *Handlers) SetTokenDisabled(ctx context.Context, req *connect.Request[ca
 				return fmt.Errorf("registration token: count uses: %w", countErr)
 			}
 			row.CurrentUses = int32(uses)
-			effect := tokenEffect(req.Msg.Id, "UPDATE", "disabled")
+			effect := tokenEffect(req.Msg.GetId().GetValue(), "UPDATE", "disabled")
 			effect.AfterFlag = &req.Msg.Disabled
 			rec.Effect(effect)
 			return nil
@@ -291,18 +291,18 @@ func (h *Handlers) DeleteToken(ctx context.Context, req *connect.Request[cadestr
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "DeleteToken", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "DeleteToken", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	_, err = h.store.WithAudit(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceDeleteTokenProcedure, "DeleteToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.SoftDeleteRegistrationToken(ctx, db.SoftDeleteRegistrationTokenParams{
-				ID: req.Msg.Id, ReservedName: store.BootstrapAdminTokenName,
+				ID: req.Msg.GetId().GetValue(), ReservedName: store.BootstrapAdminTokenName,
 			}); err != nil {
 				return err
 			}
-			rec.Effect(tokenEffect(req.Msg.Id, "DELETE", "is_deleted"))
+			rec.Effect(tokenEffect(req.Msg.GetId().GetValue(), "DELETE", "is_deleted"))
 			return nil
 		})
 	if err != nil {
@@ -320,7 +320,7 @@ func (h *Handlers) writeError(ctx context.Context, operation string, err error) 
 
 func tokenToProto(row store.RegistrationTokenRow) *cadestrov1.RegistrationToken {
 	out := &cadestrov1.RegistrationToken{
-		Id: row.ID, Name: row.Name, MaxUses: row.MaxUses, CurrentUses: row.CurrentUses,
+		Id: &cadestrov1.RegistrationTokenId{Value: row.ID}, Name: row.Name, MaxUses: row.MaxUses, CurrentUses: row.CurrentUses,
 		CreatedBy: row.CreatedBy, Disabled: row.Disabled,
 	}
 	out.ExpiresAt = timestamppb.New(row.ExpiresAt)

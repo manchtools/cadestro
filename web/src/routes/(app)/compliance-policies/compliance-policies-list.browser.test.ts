@@ -88,7 +88,7 @@ import CompliancePoliciesPage from './+page.svelte';
 
 const results = [
 	create(SearchResultSchema, {
-		id: POLICY_A,
+		id: { value: POLICY_A },
 		name: 'Security baseline',
 		description: 'Disk encryption and screen lock',
 		fields: {
@@ -99,7 +99,7 @@ const results = [
 		}
 	}),
 	create(SearchResultSchema, {
-		id: POLICY_B,
+		id: { value: POLICY_B },
 		name: 'Empty policy',
 		description: '',
 		fields: { name: 'Empty policy', rule_count: '0', created_at: String(CREATED_AT_SECONDS) }

@@ -35,15 +35,15 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 	if err := h.authorize(ctx, PermCreateIdentityProvider, ""); err != nil {
 		return nil, err
 	}
-	if err := validateProviderClientID(ctx, req.Msg.ClientId); err != nil {
+	if err := validateProviderClientID(ctx, req.Msg.GetClientId().GetValue()); err != nil {
 		return nil, err
 	}
 	providerType, ok := providerTypeFromProto(req.Msg.ProviderType)
 	if !ok {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "unsupported provider_type")
 	}
-	if req.Msg.DefaultRoleId != "" {
-		if _, err := h.store.GetRole(ctx, req.Msg.DefaultRoleId); err != nil {
+	if req.Msg.GetDefaultRoleId().GetValue() != "" {
+		if _, err := h.store.GetRole(ctx, req.Msg.GetDefaultRoleId().GetValue()); err != nil {
 			if store.IsNotFound(err) {
 				return nil, notFound(ctx, ErrRoleNotFound, "default role not found")
 			}
@@ -76,7 +76,7 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 				Slug:                  req.Msg.Slug,
 				ProviderType:          providerType,
 				Enabled:               true,
-				ClientID:              req.Msg.ClientId,
+				ClientID:              req.Msg.GetClientId().GetValue(),
 				ClientSecretEncrypted: sealed,
 				IssuerUrl:             req.Msg.IssuerUrl,
 				AuthorizationUrl:      req.Msg.AuthorizationUrl,
@@ -86,7 +86,7 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 				AutoCreateUsers:       req.Msg.AutoCreateUsers,
 				AutoLinkByEmail:       req.Msg.AutoLinkByEmail,
 				TrustEmailAssertions:  req.Msg.TrustEmailAssertions,
-				DefaultRoleID:         req.Msg.DefaultRoleId,
+				DefaultRoleID:         req.Msg.GetDefaultRoleId().GetValue(),
 				GroupClaim:            req.Msg.GroupClaim,
 				GroupMapping:          mapping,
 				CreatedAt:             at,
@@ -135,10 +135,10 @@ func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermGetIdentityProvider, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermGetIdentityProvider, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	row, err := h.store.GetIdentityProvider(ctx, req.Msg.Id)
+	row, err := h.store.GetIdentityProvider(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
@@ -186,21 +186,21 @@ func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermUpdateIdentityProvider, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermUpdateIdentityProvider, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	before, err := h.store.GetIdentityProvider(ctx, req.Msg.Id)
+	before, err := h.store.GetIdentityProvider(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
 		}
 		return nil, internalError(ctx, "failed to load identity provider")
 	}
-	if err := validateProviderClientID(ctx, req.Msg.ClientId); err != nil {
+	if err := validateProviderClientID(ctx, req.Msg.GetClientId().GetValue()); err != nil {
 		return nil, err
 	}
-	if req.Msg.DefaultRoleId != "" {
-		if _, err := h.store.GetRole(ctx, req.Msg.DefaultRoleId); err != nil {
+	if req.Msg.GetDefaultRoleId().GetValue() != "" {
+		if _, err := h.store.GetRole(ctx, req.Msg.GetDefaultRoleId().GetValue()); err != nil {
 			if store.IsNotFound(err) {
 				return nil, notFound(ctx, ErrRoleNotFound, "default role not found")
 			}
@@ -230,7 +230,7 @@ func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Requ
 				ID:                    before.ID,
 				Name:                  req.Msg.Name,
 				Enabled:               req.Msg.Enabled,
-				ClientID:              req.Msg.ClientId,
+				ClientID:              req.Msg.GetClientId().GetValue(),
 				ClientSecretEncrypted: secret,
 				IssuerUrl:             req.Msg.IssuerUrl,
 				AuthorizationUrl:      req.Msg.AuthorizationUrl,
@@ -240,7 +240,7 @@ func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Requ
 				AutoCreateUsers:       req.Msg.AutoCreateUsers,
 				AutoLinkByEmail:       req.Msg.AutoLinkByEmail,
 				TrustEmailAssertions:  req.Msg.TrustEmailAssertions,
-				DefaultRoleID:         req.Msg.DefaultRoleId,
+				DefaultRoleID:         req.Msg.GetDefaultRoleId().GetValue(),
 				GroupClaim:            req.Msg.GroupClaim,
 				GroupMapping:          mapping,
 				UpdatedAt:             at,
@@ -297,10 +297,10 @@ func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermDeleteIdentityProvider, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermDeleteIdentityProvider, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	before, err := h.store.GetIdentityProvider(ctx, req.Msg.Id)
+	before, err := h.store.GetIdentityProvider(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrProviderNotFound, "identity provider not found")
@@ -341,7 +341,7 @@ func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Requ
 // EnableSCIM turns on directory provisioning and mints the bearer token
 // the directory will present.
 func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[cadestrov1.EnableSCIMRequest]) (*connect.Response[cadestrov1.EnableSCIMResponse], error) {
-	token, provider, err := h.setSCIM(ctx, req, req.Msg.Id, PermEnableSCIM, true, "ENABLE_SCIM")
+	token, provider, err := h.setSCIM(ctx, req, req.Msg.GetId().GetValue(), PermEnableSCIM, true, "ENABLE_SCIM")
 	if err != nil {
 		return nil, err
 	}
@@ -354,11 +354,11 @@ func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[cadestro
 // RotateSCIMToken replaces the directory's bearer token. The previous
 // token stops working the moment this commits.
 func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[cadestrov1.RotateSCIMTokenRequest]) (*connect.Response[cadestrov1.RotateSCIMTokenResponse], error) {
-	provider, err := h.store.GetIdentityProvider(ctx, req.Msg.Id)
+	provider, err := h.store.GetIdentityProvider(ctx, req.Msg.GetId().GetValue())
 	if err == nil && !provider.ScimEnabled {
 		return nil, rpcError(ctx, ErrSCIMNotEnabled, connect.CodeFailedPrecondition, "SCIM is not enabled for this provider")
 	}
-	token, _, err := h.setSCIM(ctx, req, req.Msg.Id, PermRotateSCIMToken, true, "ROTATE_SCIM_TOKEN")
+	token, _, err := h.setSCIM(ctx, req, req.Msg.GetId().GetValue(), PermRotateSCIMToken, true, "ROTATE_SCIM_TOKEN")
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +369,7 @@ func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[cad
 // token digest, so a token issued earlier cannot be replayed if SCIM is
 // later re-enabled.
 func (h *Handlers) DisableSCIM(ctx context.Context, req *connect.Request[cadestrov1.DisableSCIMRequest]) (*connect.Response[cadestrov1.DisableSCIMResponse], error) {
-	if _, _, err := h.setSCIM(ctx, req, req.Msg.Id, PermDisableSCIM, false, "DISABLE_SCIM"); err != nil {
+	if _, _, err := h.setSCIM(ctx, req, req.Msg.GetId().GetValue(), PermDisableSCIM, false, "DISABLE_SCIM"); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.DisableSCIMResponse{}), nil

@@ -124,7 +124,7 @@ describe('the getting-started checklist rides the empty fleet', () => {
 
 	it('stays away from a fleet that has devices', async () => {
 		mocks.listDevices.mockResolvedValue({
-			devices: [create(DeviceSchema, { id: 'd1', hostname: 'api-01' })],
+			devices: [create(DeviceSchema, { id: { value: 'd1' }, hostname: 'api-01' })],
 			nextPageToken: '',
 			totalCount: 1
 		});

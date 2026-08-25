@@ -98,7 +98,7 @@ message GetCurrentUserResponse {
 // ============================================================================
 
 message User {
-  string id = 1;
+  UserId id = 1;
   string email = 2;
   google.protobuf.Timestamp created_at = 3;
   google.protobuf.Timestamp last_login_at = 4;
@@ -129,21 +129,21 @@ message User {
 }
 
 message InheritedRole {
-  string role_id = 1;
+  RoleId role_id = 1;
   string role_name = 2;
-  string group_id = 3;
+  UserGroupId group_id = 3;
   string group_name = 4;
 }
 
 message SshPublicKey {
-  string id = 1;
+  SshKeyId id = 1;
   string public_key = 2;
   string comment = 3;
   google.protobuf.Timestamp added_at = 4;
 }
 
 message Role {
-  string id = 1;
+  RoleId id = 1;
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -163,7 +163,7 @@ message Role {
 message RoleGrant {
   Role role = 1;
   RoleGrantScopeKind scope_kind = 2;
-  string scope_id = 3;
+  ScopeId scope_id = 3;
   string scope_name = 4;
 }
 
@@ -182,13 +182,13 @@ message PermissionInfo {
 // Explicit local erasure for subjects created by optional OIDC JIT.
 // The control server rejects subjects created through SCIM.
 message EraseJITUserRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserId id = 1 [(buf.validate.field).required = true];
 }
 
 message EraseJITUserResponse {}
 
 message GetUserRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetUserResponse {
@@ -212,7 +212,7 @@ message ListUsersResponse {
 
 // Granular user updates
 message UpdateUserEmailRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserId id = 1 [(buf.validate.field).required = true];
   string email = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.email = true
@@ -220,7 +220,7 @@ message UpdateUserEmailRequest {
 }
 
 message SetUserDisabledRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserId id = 1 [(buf.validate.field).required = true];
   bool disabled = 2;
 }
 
@@ -229,7 +229,7 @@ message UpdateUserResponse {
 }
 
 message UpdateUserProfileRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserId id = 1 [(buf.validate.field).required = true];
   string display_name = 2 [
     (buf.validate.field).string.max_len = 255,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -257,7 +257,7 @@ message UpdateUserProfileRequest {
 }
 
 message AddUserSshKeyRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
   string public_key = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -274,21 +274,21 @@ message AddUserSshKeyResponse {
 }
 
 message RemoveUserSshKeyRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
-  string key_id = 2 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
+  SshKeyId key_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveUserSshKeyResponse {}
 
 message UpdateUserSshSettingsRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
   bool ssh_access_enabled = 2;
   bool ssh_allow_pubkey = 3;
   bool ssh_allow_password = 4;
 }
 
 message UpdateUserLinuxUsernameRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
   string linux_username = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -301,7 +301,7 @@ message UpdateUserLinuxUsernameRequest {
 // ============================================================================
 
 message Device {
-  string id = 1;
+  DeviceId id = 1;
   string hostname = 2;
   string agent_version = 3;
   // Online / offline, derived from last_seen_at on the server.
@@ -310,8 +310,8 @@ message Device {
   google.protobuf.Timestamp last_seen_at = 6;
   google.protobuf.Timestamp cert_expires_at = 7;
   map<string, string> labels = 8;
-  repeated string assigned_user_ids = 9; // Users assigned to this device
-  repeated string assigned_group_ids = 10; // User groups assigned to this device
+  repeated UserId assigned_user_ids = 9;
+  repeated UserGroupId assigned_group_ids = 10;
   // Stream synchronization interval in minutes (0 = use default of 30 minutes).
   int32 sync_interval_minutes = 11;
   // Compliance status based on detection scripts
@@ -360,7 +360,7 @@ message ListDevicesResponse {
 }
 
 message GetDeviceRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceResponse {
@@ -369,7 +369,7 @@ message GetDeviceResponse {
 
 // Granular device updates
 message SetDeviceLabelRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId id = 1 [(buf.validate.field).required = true];
   string key = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -382,7 +382,7 @@ message SetDeviceLabelRequest {
 }
 
 message RemoveDeviceLabelRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId id = 1 [(buf.validate.field).required = true];
   string key = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -395,7 +395,7 @@ message UpdateDeviceResponse {
 }
 
 message DeleteDeviceRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteDeviceResponse {}
@@ -404,16 +404,14 @@ message DeleteDeviceResponse {}
 // Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
 message AssignDeviceRequest {
   DeviceId device_id = 1 [(buf.validate.field).required = true];
-  string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  string group_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  repeated string user_ids = 4 [
+  UserId user_id = 2;
+  UserGroupId group_id = 3;
+  repeated UserId user_ids = 4 [
     (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  repeated string group_ids = 5 [
+  repeated UserGroupId group_ids = 5 [
     (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 }
@@ -425,8 +423,8 @@ message AssignDeviceResponse {
 // Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
 message UnassignDeviceRequest {
   DeviceId device_id = 1 [(buf.validate.field).required = true];
-  string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  string group_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  UserId user_id = 2;
+  UserGroupId group_id = 3;
 }
 
 message UnassignDeviceResponse {
@@ -434,7 +432,7 @@ message UnassignDeviceResponse {
 }
 
 message DeviceAssignee {
-  string id = 1; // User or group ID
+  GroupId id = 1;
   // Subset of AssignmentTargetType: only USER and USER_GROUP are valid
   // values for a device assignee. DEVICE and DEVICE_GROUP are rejected
   // at write time.
@@ -452,7 +450,7 @@ message ListDeviceAssigneesResponse {
 
 // Update device sync interval
 message SetDeviceSyncIntervalRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId id = 1 [(buf.validate.field).required = true];
   int32 sync_interval_minutes = 2 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 1440
@@ -461,7 +459,7 @@ message SetDeviceSyncIntervalRequest {
 
 // Update device inventory collection interval.
 message SetDeviceInventoryIntervalRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId id = 1 [(buf.validate.field).required = true];
   int32 inventory_interval_minutes = 2 [
     (buf.validate.field).int32.gte = 120,
     (buf.validate.field).int32.lte = 10080,
@@ -474,7 +472,7 @@ message SetDeviceInventoryIntervalRequest {
 // ============================================================================
 
 message RegistrationToken {
-  string id = 1;
+  RegistrationTokenId id = 1;
   string value = 2; // Only returned on creation
   string name = 3;
   int32 max_uses = 4; // 0 = unlimited
@@ -529,7 +527,7 @@ message ListTokensResponse {
 
 // Granular token updates
 message RenameTokenRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  RegistrationTokenId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -538,7 +536,7 @@ message RenameTokenRequest {
 }
 
 message SetTokenDisabledRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  RegistrationTokenId id = 1 [(buf.validate.field).required = true];
   bool disabled = 2;
 }
 
@@ -547,7 +545,7 @@ message UpdateTokenResponse {
 }
 
 message DeleteTokenRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  RegistrationTokenId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteTokenResponse {}
@@ -557,7 +555,7 @@ message DeleteTokenResponse {}
 // ============================================================================
 
 message ManagedAction {
-  string id = 1;
+  ActionId id = 1;
   string name = 2;
   string description = 3;
   ActionType type = 4;
@@ -635,7 +633,7 @@ message CreateActionResponse {
 }
 
 message GetActionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetActionResponse {
@@ -660,7 +658,7 @@ message ListActionsResponse {
 }
 
 message RenameActionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -669,7 +667,7 @@ message RenameActionRequest {
 }
 
 message UpdateActionDescriptionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -677,7 +675,7 @@ message UpdateActionDescriptionRequest {
 }
 
 message UpdateActionParamsRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId id = 1 [(buf.validate.field).required = true];
   DesiredState desired_state = 2;
   int32 timeout_seconds = 3 [
     (buf.validate.field).int32.gte = 0,
@@ -713,7 +711,7 @@ message UpdateActionResponse {
 }
 
 message DeleteActionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteActionResponse {}
@@ -723,7 +721,7 @@ message DeleteActionResponse {}
 // ============================================================================
 
 message ActionSet {
-  string id = 1;
+  ActionSetId id = 1;
   string name = 2;
   string description = 3;
   int32 member_count = 4;
@@ -774,7 +772,7 @@ message CreateActionSetResponse {
 }
 
 message GetActionSetRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionSetId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetActionSetResponse {
@@ -799,7 +797,7 @@ message ListActionSetsResponse {
 }
 
 message RenameActionSetRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionSetId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -808,7 +806,7 @@ message RenameActionSetRequest {
 }
 
 message UpdateActionSetDescriptionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionSetId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -816,7 +814,7 @@ message UpdateActionSetDescriptionRequest {
 }
 
 message UpdateActionSetScheduleRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionSetId id = 1 [(buf.validate.field).required = true];
   // Replacement schedule for the set. Required.
   ActionSchedule schedule = 2 [(buf.validate.field).required = true];
   // Replacement failure policy. CONTINUE is the default.
@@ -828,7 +826,7 @@ message UpdateActionSetResponse {
 }
 
 message DeleteActionSetRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  ActionSetId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteActionSetResponse {}
@@ -870,7 +868,7 @@ message ReorderActionInSetResponse {
 // ============================================================================
 
 message Definition {
-  string id = 1;
+  DefinitionId id = 1;
   string name = 2;
   string description = 3;
   int32 member_count = 4;
@@ -916,7 +914,7 @@ message CreateDefinitionResponse {
 }
 
 message GetDefinitionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DefinitionId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDefinitionResponse {
@@ -940,7 +938,7 @@ message ListDefinitionsResponse {
 }
 
 message RenameDefinitionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DefinitionId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -949,7 +947,7 @@ message RenameDefinitionRequest {
 }
 
 message UpdateDefinitionDescriptionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DefinitionId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -957,7 +955,7 @@ message UpdateDefinitionDescriptionRequest {
 }
 
 message UpdateDefinitionScheduleRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DefinitionId id = 1 [(buf.validate.field).required = true];
   // Replacement schedule for manifests compiled from the definition. Required;
   // member ActionSet schedules are not rewritten.
   ActionSchedule schedule = 2 [(buf.validate.field).required = true];
@@ -968,7 +966,7 @@ message UpdateDefinitionResponse {
 }
 
 message DeleteDefinitionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DefinitionId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteDefinitionResponse {}
@@ -1010,7 +1008,7 @@ message ReorderActionSetInDefinitionResponse {
 // ============================================================================
 
 message DeviceGroup {
-  string id = 1;
+  DeviceGroupId id = 1;
   string name = 2;
   string description = 3;
   int32 member_count = 4;
@@ -1056,12 +1054,12 @@ message CreateDeviceGroupResponse {
 }
 
 message GetDeviceGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceGroupResponse {
   DeviceGroup group = 1;
-  repeated string device_ids = 2;
+  repeated DeviceId device_ids = 2;
   repeated DeviceGroupMember devices = 3;
 }
 
@@ -1096,7 +1094,7 @@ message ListDeviceGroupsForDeviceResponse {
 }
 
 message RenameDeviceGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -1105,7 +1103,7 @@ message RenameDeviceGroupRequest {
 }
 
 message UpdateDeviceGroupDescriptionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -1117,17 +1115,16 @@ message UpdateDeviceGroupResponse {
 }
 
 message DeleteDeviceGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteDeviceGroupResponse {}
 
 message AddDeviceToGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId group_id = 1 [(buf.validate.field).required = true];
   DeviceId device_id = 2;
-  repeated string device_ids = 3 [
+  repeated DeviceId device_ids = 3 [
     (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 }
@@ -1137,7 +1134,7 @@ message AddDeviceToGroupResponse {
 }
 
 message RemoveDeviceFromGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId group_id = 1 [(buf.validate.field).required = true];
   DeviceId device_id = 2 [(buf.validate.field).required = true];
 }
 
@@ -1147,7 +1144,7 @@ message RemoveDeviceFromGroupResponse {
 
 // Update a device group's dynamic query
 message UpdateDeviceGroupQueryRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   // If true, membership is determined by dynamic_query instead of manual assignment
   bool is_dynamic = 2;
   string dynamic_query = 3 [
@@ -1173,7 +1170,7 @@ message ValidateDynamicQueryResponse {
 
 // Trigger re-evaluation of a dynamic group
 message EvaluateDynamicGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
 }
 
 message EvaluateDynamicGroupResponse {
@@ -1184,7 +1181,7 @@ message EvaluateDynamicGroupResponse {
 
 // Update device group sync interval
 message SetDeviceGroupSyncIntervalRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   int32 sync_interval_minutes = 2 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 1440
@@ -1193,7 +1190,7 @@ message SetDeviceGroupSyncIntervalRequest {
 
 // Update device group inventory collection interval.
 message SetDeviceGroupInventoryIntervalRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   int32 inventory_interval_minutes = 2 [
     (buf.validate.field).int32.gte = 120,
     (buf.validate.field).int32.lte = 10080,
@@ -1206,7 +1203,7 @@ message SetDeviceGroupInventoryIntervalRequest {
 // the group's contribution to the device-side union, leaving the
 // device unconstrained by this group.
 message SetDeviceGroupMaintenanceWindowRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   MaintenanceWindow maintenance_window = 2;
 }
 
@@ -1215,11 +1212,11 @@ message SetDeviceGroupMaintenanceWindowRequest {
 // ============================================================================
 
 message Assignment {
-  string id = 1;
+  AssignmentId id = 1;
   AssignmentSourceType source_type = 2;
-  string source_id = 3;
+  AssignmentSourceId source_id = 3;
   AssignmentTargetType target_type = 4;
-  string target_id = 5;
+  AssignmentTargetId target_id = 5;
   google.protobuf.Timestamp created_at = 6;
   string created_by = 7;
   AssignmentMode mode = 8;
@@ -1239,7 +1236,7 @@ message CreateAssignmentRequest {
     },
     (buf.validate.field).required = true
   ];
-  string source_id = 2 [(buf.validate.field).string.ulid = true];
+  AssignmentSourceId source_id = 2 [(buf.validate.field).required = true];
   AssignmentTargetType target_type = 3 [
     (buf.validate.field).enum = {
       in: [
@@ -1251,7 +1248,7 @@ message CreateAssignmentRequest {
     },
     (buf.validate.field).required = true
   ];
-  string target_id = 4 [(buf.validate.field).string.ulid = true];
+  AssignmentTargetId target_id = 4 [(buf.validate.field).required = true];
   AssignmentMode mode = 5; // Defaults to REQUIRED (0)
 }
 
@@ -1260,7 +1257,7 @@ message CreateAssignmentResponse {
 }
 
 message DeleteAssignmentRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  AssignmentId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAssignmentResponse {}
@@ -1272,14 +1269,14 @@ message ListAssignmentsRequest {
     (buf.validate.field).enum.defined_only = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string source_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  AssignmentSourceId source_id = 2;
   // UNSPECIFIED (0) means "all target types"; non-zero filters to
   // that single target type.
   AssignmentTargetType target_type = 3 [
     (buf.validate.field).enum.defined_only = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string target_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  AssignmentTargetId target_id = 4;
   int32 page_size = 5 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 100,
@@ -1299,10 +1296,10 @@ message ListAssignmentsResponse {
 // ============================================================================
 
 message UserSelection {
-  string id = 1;
+  UserSelectionId id = 1;
   DeviceId device_id = 2;
   AssignmentSourceType source_type = 3;
-  string source_id = 4;
+  AssignmentSourceId source_id = 4;
   bool selected = 5; // true=user wants it (present), false=user rejected (absent)
   google.protobuf.Timestamp updated_at = 6;
 }
@@ -1320,7 +1317,7 @@ message SetUserSelectionRequest {
     },
     (buf.validate.field).required = true
   ];
-  string source_id = 3 [(buf.validate.field).string.ulid = true];
+  AssignmentSourceId source_id = 3 [(buf.validate.field).required = true];
   bool selected = 4;
 }
 
@@ -1334,7 +1331,7 @@ message ListAvailableActionsRequest {
 
 message AvailableItem {
   AssignmentSourceType source_type = 1;
-  string source_id = 2;
+  AssignmentSourceId source_id = 2;
   string source_name = 3;
   string source_description = 4;
   bool selected = 5;
@@ -1361,7 +1358,7 @@ message GetDeviceAssignmentsResponse {
 
 // Get all assignments targeting a user (directly or via user groups)
 message GetUserAssignmentsRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetUserAssignmentsResponse {
@@ -1391,12 +1388,12 @@ message RebootDeviceResponse {}
 // web UI populates filter dropdowns from the distinct values returned by
 // ListAuditEvents rather than from a typed enum.
 message AuditEvent {
-  string id = 1;
+  AuditEventId id = 1;
   string event_type = 2;
   string stream_type = 3;
-  string stream_id = 4;
+  AuditStreamId stream_id = 4;
   string actor_type = 5;
-  string actor_id = 6;
+  AuditActorId actor_id = 6;
   string data = 7;
   google.protobuf.Timestamp occurred_at = 8;
 }
@@ -1411,7 +1408,7 @@ message ListAuditEventsRequest {
     (buf.validate.field).string.max_len = 32,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string actor_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  AuditActorId actor_id = 3;
   string stream_type = 4 [
     (buf.validate.field).string.max_len = 64,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -1449,7 +1446,7 @@ message ExportAuditEventsRequest {
       ]
     }
   ];
-  string actor_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  AuditActorId actor_id = 2;
   // Empty = all stream types.
   repeated string stream_types = 3 [
     (buf.validate.field).repeated.max_items = 64,
@@ -1489,7 +1486,7 @@ message ExportAuditEventsResponse {
 // LPS password metadata stored per device. Plaintext is available only from
 // RevealLpsPassword so each access has an independent audit operation.
 message LpsPassword {
-  string id = 1;
+  LpsPasswordId id = 1;
   DeviceId device_id = 2;
   string device_hostname = 3;
   ActionId action_id = 4;
@@ -1511,7 +1508,7 @@ message ListLpsPasswordsResponse {
 }
 
 message RevealLpsPasswordRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  LpsPasswordId id = 1 [(buf.validate.field).required = true];
 }
 
 message RevealLpsPasswordResponse {
@@ -1525,7 +1522,7 @@ message RevealLpsPasswordResponse {
 // LUKS key metadata stored per device. Plaintext is available only from
 // RevealLuksKey so each access has an independent audit operation.
 message LuksKey {
-  string id = 1;
+  LuksKeyId id = 1;
   DeviceId device_id = 2;
   string device_hostname = 3;
   ActionId action_id = 4;
@@ -1552,7 +1549,7 @@ message ListLuksKeysResponse {
 }
 
 message RevealLuksKeyRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  LuksKeyId id = 1 [(buf.validate.field).required = true];
 }
 
 message RevealLuksKeyResponse {
@@ -1724,7 +1721,7 @@ message CreateRoleResponse {
 }
 
 message GetRoleRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  RoleId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetRoleResponse {
@@ -1748,7 +1745,7 @@ message ListRolesResponse {
 }
 
 message UpdateRoleRequest {
-  string role_id = 1 [(buf.validate.field).string.ulid = true];
+  RoleId role_id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -1769,17 +1766,16 @@ message UpdateRoleResponse {
 }
 
 message DeleteRoleRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  RoleId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteRoleResponse {}
 
 message AssignRoleToUserRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
-  string role_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  repeated string role_ids = 3 [
+  UserId user_id = 1 [(buf.validate.field).required = true];
+  RoleId role_id = 2;
+  repeated RoleId role_ids = 3 [
     (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   // Optional grant scope. Paired-or-neither: both scope_kind and
@@ -1791,14 +1787,14 @@ message AssignRoleToUserRequest {
   // match), or the assignment is rejected. The actor must hold
   // AssignRoleScope.
   RoleGrantScopeKind scope_kind = 4;
-  string scope_id = 5 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  ScopeId scope_id = 5;
 }
 
 message AssignRoleToUserResponse {}
 
 message RevokeRoleFromUserRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
-  string role_id = 2 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
+  RoleId role_id = 2 [(buf.validate.field).required = true];
   // Optional grant scope identifying WHICH grant to revoke when the
   // (user_id, role_id) pair has multiple grants at different
   // scopes. Paired-or-neither with scope_id. Both absent = revoke
@@ -1807,7 +1803,7 @@ message RevokeRoleFromUserRequest {
   // grants exist (and vice versa) to surface ambiguity rather than
   // silently no-op.
   RoleGrantScopeKind scope_kind = 3;
-  string scope_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  ScopeId scope_id = 4;
 }
 
 message RevokeRoleFromUserResponse {}
@@ -1823,7 +1819,7 @@ message ListPermissionsResponse {
 // ============================================================================
 
 message UserGroup {
-  string id = 1;
+  UserGroupId id = 1;
   string name = 2;
   string description = 3;
   int32 member_count = 4;
@@ -1844,7 +1840,7 @@ message UserGroup {
 }
 
 message UserGroupMember {
-  string user_id = 1;
+  UserId user_id = 1;
   string email = 2;
   google.protobuf.Timestamp added_at = 3;
 }
@@ -1871,7 +1867,7 @@ message CreateUserGroupResponse {
 }
 
 message GetUserGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserGroupId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetUserGroupResponse {
@@ -1895,7 +1891,7 @@ message ListUserGroupsResponse {
 }
 
 message UpdateUserGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
+  UserGroupId group_id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -1912,17 +1908,16 @@ message UpdateUserGroupResponse {
 }
 
 message DeleteUserGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserGroupId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteUserGroupResponse {}
 
 message AddUserToGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
-  string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  repeated string user_ids = 3 [
+  UserGroupId group_id = 1 [(buf.validate.field).required = true];
+  UserId user_id = 2;
+  repeated UserId user_ids = 3 [
     (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 }
@@ -1930,44 +1925,43 @@ message AddUserToGroupRequest {
 message AddUserToGroupResponse {}
 
 message RemoveUserFromGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
-  string user_id = 2 [(buf.validate.field).string.ulid = true];
+  UserGroupId group_id = 1 [(buf.validate.field).required = true];
+  UserId user_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveUserFromGroupResponse {}
 
 message AssignRoleToUserGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
-  string role_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  repeated string role_ids = 3 [
+  UserGroupId group_id = 1 [(buf.validate.field).required = true];
+  RoleId role_id = 2;
+  repeated RoleId role_ids = 3 [
     (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   // Optional grant scope. Same paired-or-neither semantics as
   // AssignRoleToUserRequest.scope_*. Every member of the target
   // user group inherits this scope through the grant.
   RoleGrantScopeKind scope_kind = 4;
-  string scope_id = 5 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  ScopeId scope_id = 5;
 }
 
 message AssignRoleToUserGroupResponse {}
 
 message RevokeRoleFromUserGroupRequest {
-  string group_id = 1 [(buf.validate.field).string.ulid = true];
-  string role_id = 2 [(buf.validate.field).string.ulid = true];
+  UserGroupId group_id = 1 [(buf.validate.field).required = true];
+  RoleId role_id = 2 [(buf.validate.field).required = true];
   // Optional grant scope identifying WHICH (user_group, role)
   // grant to revoke when multiple scoped grants of the same role
   // are attached to the same user group. Paired-or-neither with
   // scope_id; same semantics as RevokeRoleFromUserRequest.
   RoleGrantScopeKind scope_kind = 3;
-  string scope_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  ScopeId scope_id = 4;
 }
 
 message RevokeRoleFromUserGroupResponse {}
 
 message ListUserGroupsForUserRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
 }
 
 message ListUserGroupsForUserResponse {
@@ -1975,7 +1969,7 @@ message ListUserGroupsForUserResponse {
 }
 
 message UpdateUserGroupQueryRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserGroupId id = 1 [(buf.validate.field).required = true];
   bool is_dynamic = 2;
   string dynamic_query = 3 [
     (buf.validate.field).string.max_len = 4096,
@@ -1998,7 +1992,7 @@ message ValidateUserGroupQueryResponse {
 }
 
 message EvaluateDynamicUserGroupRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserGroupId id = 1 [(buf.validate.field).required = true];
 }
 
 message EvaluateDynamicUserGroupResponse {
@@ -2012,7 +2006,7 @@ message EvaluateDynamicUserGroupResponse {
 // device-side union for every device the user group reaches via an
 // assignment. Empty schedule = clear.
 message SetUserGroupMaintenanceWindowRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  UserGroupId id = 1 [(buf.validate.field).required = true];
   MaintenanceWindow maintenance_window = 2;
 }
 
@@ -2021,12 +2015,12 @@ message SetUserGroupMaintenanceWindowRequest {
 // ============================================================================
 
 message IdentityProvider {
-  string id = 1;
+  IdentityProviderId id = 1;
   string name = 2;
   string slug = 3;
   IdentityProviderType provider_type = 4;
   bool enabled = 5;
-  string client_id = 6;
+  OidcClientId client_id = 6;
   // client_secret is not returned in responses (write-only).
   string issuer_url = 7;
   string authorization_url = 8;
@@ -2035,7 +2029,7 @@ message IdentityProvider {
   repeated string scopes = 11;
   bool auto_create_users = 12;
   bool auto_link_by_email = 13;
-  string default_role_id = 14;
+  RoleId default_role_id = 14;
   string group_claim = 15;
   map<string, string> group_mapping = 16; // external group name → user_group_id
   google.protobuf.Timestamp created_at = 17;
@@ -2050,12 +2044,12 @@ message IdentityProvider {
 }
 
 message IdentityLink {
-  string id = 1;
-  string user_id = 2;
-  string provider_id = 3;
+  IdentityLinkId id = 1;
+  UserId user_id = 2;
+  IdentityProviderId provider_id = 3;
   string provider_name = 4;
   string provider_slug = 5;
-  string external_id = 6;
+  ExternalIdentityId external_id = 6;
   string external_email = 7;
   string external_name = 8;
   google.protobuf.Timestamp linked_at = 9;
@@ -2078,10 +2072,7 @@ message CreateIdentityProviderRequest {
     (buf.validate.field).enum.const = 1,
     (buf.validate.field).required = true
   ];
-  string client_id = 4 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
+  OidcClientId client_id = 4;
   string client_secret = 5 [
     (buf.validate.field).string.max_len = 4096,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -2105,7 +2096,7 @@ message CreateIdentityProviderRequest {
   repeated string scopes = 10 [(buf.validate.field).repeated.items.string.max_len = 255];
   bool auto_create_users = 11;
   bool auto_link_by_email = 12;
-  string default_role_id = 13 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  RoleId default_role_id = 13;
   string group_claim = 14 [
     (buf.validate.field).string.max_len = 255,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -2123,7 +2114,7 @@ message CreateIdentityProviderResponse {
 }
 
 message GetIdentityProviderRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetIdentityProviderResponse {
@@ -2146,17 +2137,14 @@ message ListIdentityProvidersResponse {
 }
 
 message UpdateIdentityProviderRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 64
   ];
   bool enabled = 3;
-  string client_id = 4 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
+  OidcClientId client_id = 4;
   // If empty, the existing secret is kept.
   string client_secret = 5 [
     (buf.validate.field).string.max_len = 4096,
@@ -2181,7 +2169,7 @@ message UpdateIdentityProviderRequest {
   repeated string scopes = 10 [(buf.validate.field).repeated.items.string.max_len = 255];
   bool auto_create_users = 11;
   bool auto_link_by_email = 12;
-  string default_role_id = 13 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  RoleId default_role_id = 13;
   string group_claim = 14 [
     (buf.validate.field).string.max_len = 255,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -2199,7 +2187,7 @@ message UpdateIdentityProviderResponse {
 }
 
 message DeleteIdentityProviderRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteIdentityProviderResponse {}
@@ -2272,14 +2260,14 @@ message ListIdentityLinksResponse {
 }
 
 message UnlinkIdentityRequest {
-  string link_id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityLinkId link_id = 1 [(buf.validate.field).required = true];
 }
 
 message UnlinkIdentityResponse {}
 
 // SCIM Provisioning
 message EnableSCIMRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
 }
 
 message EnableSCIMResponse {
@@ -2288,13 +2276,13 @@ message EnableSCIMResponse {
 }
 
 message DisableSCIMRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
 }
 
 message DisableSCIMResponse {}
 
 message RotateSCIMTokenRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
 }
 
 message RotateSCIMTokenResponse {
@@ -2327,7 +2315,7 @@ message ComplianceCheckResult {
 // ============================================================================
 
 message CompliancePolicy {
-  string id = 1;
+  CompliancePolicyId id = 1;
   string name = 2;
   string description = 3;
   repeated CompliancePolicyRule rules = 4;
@@ -2359,7 +2347,7 @@ message CreateCompliancePolicyResponse {
 }
 
 message GetCompliancePolicyRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
 }
 
 message GetCompliancePolicyResponse {
@@ -2382,7 +2370,7 @@ message ListCompliancePoliciesResponse {
 }
 
 message RenameCompliancePolicyRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -2391,7 +2379,7 @@ message RenameCompliancePolicyRequest {
 }
 
 message UpdateCompliancePolicyDescriptionRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -2403,13 +2391,13 @@ message UpdateCompliancePolicyResponse {
 }
 
 message DeleteCompliancePolicyRequest {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteCompliancePolicyResponse {}
 
 message AddCompliancePolicyRuleRequest {
-  string policy_id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId policy_id = 1 [(buf.validate.field).required = true];
   ActionId action_id = 2 [(buf.validate.field).required = true];
   int32 grace_period_hours = 3 [
     (buf.validate.field).int32.gte = 0,
@@ -2423,7 +2411,7 @@ message AddCompliancePolicyRuleResponse {
 }
 
 message RemoveCompliancePolicyRuleRequest {
-  string policy_id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId policy_id = 1 [(buf.validate.field).required = true];
   ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
@@ -2432,7 +2420,7 @@ message RemoveCompliancePolicyRuleResponse {
 }
 
 message UpdateCompliancePolicyRuleRequest {
-  string policy_id = 1 [(buf.validate.field).string.ulid = true];
+  CompliancePolicyId policy_id = 1 [(buf.validate.field).required = true];
   ActionId action_id = 2 [(buf.validate.field).required = true];
   int32 grace_period_hours = 3 [
     (buf.validate.field).int32.gte = 0,
@@ -2455,7 +2443,7 @@ message GetDeviceCompliancePolicyStatusResponse {
 }
 
 message DevicePolicyEvaluation {
-  string policy_id = 1;
+  CompliancePolicyId policy_id = 1;
   string policy_name = 2;
   ComplianceStatus status = 3;
   repeated DevicePolicyRuleEvaluation rules = 4;
@@ -2520,7 +2508,7 @@ message SearchRequest {
 }
 
 message SearchResult {
-  string id = 1;
+  SearchResultId id = 1;
   string name = 2;
   string description = 3;
   SearchScope scope = 4;
@@ -2564,7 +2552,7 @@ message UpdateServerSettingsResponse {
 // ============================================================================
 
 message SetUserProvisioningEnabledRequest {
-  string user_id = 1 [(buf.validate.field).string.ulid = true];
+  UserId user_id = 1 [(buf.validate.field).required = true];
   bool enabled = 2;
 }
 
@@ -2818,7 +2806,7 @@ message StartTerminalRequest {
 
 message StartTerminalResponse {
   // ULID identifying the session for the lifetime of the connection.
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   // Short-lived bearer token the web client must append to terminal_url
   // as ?token=<session_token> when opening the WebSocket. The token is
   // intentionally returned separately from the URL so the URL can be
@@ -2880,7 +2868,7 @@ message StartTerminalResponse {
 //   - Underlying agent failures DO surface as RPC errors so the admin
 //     knows the kill did not actually land.
 message StopTerminalRequest {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
 }
 
 message StopTerminalResponse {}
@@ -2888,9 +2876,9 @@ message StopTerminalResponse {}
 // TerminalSessionInfo is the admin view of an active session, returned
 // by ListActiveTerminalSessions and used by the admin UI for display.
 message TerminalSessionInfo {
-  string session_id = 1;
+  SessionId session_id = 1;
   // ID and email of the Cadestro user who opened the session.
-  string user_id = 2;
+  UserId user_id = 2;
   string user_email = 3;
   // Target device.
   DeviceId device_id = 4;
@@ -2914,7 +2902,7 @@ message ListActiveTerminalSessionsRequest {
   // Optional filter: only sessions on this device.
   DeviceId device_id = 3;
   // Optional filter: only sessions opened by this user.
-  string user_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  UserId user_id = 4;
 }
 
 message ListActiveTerminalSessionsResponse {
@@ -2929,7 +2917,7 @@ message ListActiveTerminalSessionsResponse {
 // NotFound for unknown sessions, and records the reason in the audit
 // log alongside the terminating user.
 message TerminateTerminalSessionRequest {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   // Optional reason for the audit log; surfaced to the agent and the
   // affected user.
   string reason = 2 [

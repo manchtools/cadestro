@@ -120,7 +120,7 @@
 	async function deleteGroup() {
 		if (!groupToDelete) return;
 		try {
-			await apiClient.deleteDeviceGroup(groupToDelete.id);
+			await apiClient.deleteDeviceGroup((groupToDelete.id?.value ?? ''));
 			toast.success(m.device_groups_deleted());
 			table.patchRows((rows) => rows.filter((g) => g.id !== groupToDelete!.id));
 		} catch (error) {
@@ -256,7 +256,7 @@
 	<!-- The group list in the drafts' row grammar: group tile, name over its ULID
 	     and description, membership-mode + member-count chips, a right-aligned
 	     created stamp — no column headers, no table. -->
-	<RowList {table} {sortOptions} rowKey={(g) => g.id} href={(g) => `${base}/device-groups/${g.id}`}>
+	<RowList {table} {sortOptions} rowKey={(g) => (g.id?.value ?? '')} href={(g) => `${base}/device-groups/${(g.id?.value ?? '')}`}>
 		{#snippet filters()}
 			<MultiSelectCombobox
 				items={typeFilterItems}

@@ -16,7 +16,7 @@
 	$effect(() => {
 		const user = authStore.user;
 		if (!user) return;
-		initOnboarding(onboardingScope(configStore.serverUrl, user.id));
+		initOnboarding(onboardingScope(configStore.serverUrl, (user.id?.value ?? '')));
 	});
 </script>
 

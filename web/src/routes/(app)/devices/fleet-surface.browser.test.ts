@@ -91,7 +91,7 @@ function device(o: {
 	syncIntervalMinutes?: number;
 }) {
 	return create(DeviceSchema, {
-		id: o.id,
+		id: { value: o.id },
 		hostname: o.hostname,
 		status: o.status ?? DeviceStatus.ONLINE,
 		complianceStatus: o.compliance ?? ComplianceStatus.COMPLIANT,
@@ -104,7 +104,7 @@ function device(o: {
 }
 
 function group(id: string, name: string, syncIntervalMinutes = 0) {
-	return create(DeviceGroupSchema, { id, name, syncIntervalMinutes });
+	return create(DeviceGroupSchema, { id: { value: id }, name, syncIntervalMinutes });
 }
 
 function respond(
@@ -120,7 +120,7 @@ function respond(
 	const protos = groupProtos.length ? groupProtos : Object.keys(groups).map((id) => group(id, id));
 	mocks.listDeviceGroups.mockResolvedValue({ groups: protos, nextPageToken: '', totalCount: protos.length });
 	mocks.getDeviceGroup.mockImplementation(async (id: string) => ({
-		group: protos.find((g) => g.id === id),
+		group: protos.find((g) => (g.id?.value ?? '') === id),
 		deviceIds: groups[id] ?? [],
 		devices: []
 	}));

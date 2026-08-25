@@ -251,7 +251,7 @@
 	async function deletePolicy() {
 		if (!policyToDelete) return;
 		try {
-			await apiClient.deleteCompliancePolicy(policyToDelete.id);
+			await apiClient.deleteCompliancePolicy((policyToDelete.id?.value ?? ''));
 			toast.success(m.compliance_policies_deleted());
 			table.patchRows((rows) => rows.filter((p) => p.id !== policyToDelete!.id));
 			table.refresh();
@@ -360,7 +360,7 @@
 							<button
 								type="button"
 								data-testid="compliance-policy-chip"
-								onclick={() => openCompliancePolicySheet(policy.id)}
+								onclick={() => openCompliancePolicySheet((policy.id?.value ?? ''))}
 								class="inline-flex items-center gap-1.5 rounded-full border bg-surface px-2.5 py-1 text-xs hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
 							>
 								<ShieldCheck class="h-3 w-3 text-accent-ink" />
@@ -404,7 +404,7 @@
 	<!-- A policy opens its Sheet (shallow routing), not a page, so this list
 	     passes no `href` and the row body is a real <button> — native
 	     click/Enter/Space activation and focus ring, no div-with-role. -->
-	<RowList {table} {sortOptions} rowKey={(p) => p.id}>
+	<RowList {table} {sortOptions} rowKey={(p) => (p.id?.value ?? '')}>
 		{#snippet filters()}
 			<DateRangePicker
 				start={table.filters.createdStart}
@@ -425,7 +425,7 @@
 			<button
 				type="button"
 				data-testid="compliance-policy-open"
-				onclick={() => openCompliancePolicySheet(policy.id)}
+				onclick={() => openCompliancePolicySheet((policy.id?.value ?? ''))}
 				class="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
 			>
 				<span class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft">
@@ -460,7 +460,7 @@
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end">
-					<DropdownMenu.Item onclick={() => openCompliancePolicySheet(policy.id)}>
+					<DropdownMenu.Item onclick={() => openCompliancePolicySheet((policy.id?.value ?? ''))}>
 						<ExternalLink class="mr-2 h-4 w-4" />
 						{m.compliance_policy_open()}
 					</DropdownMenu.Item>

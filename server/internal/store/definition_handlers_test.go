@@ -35,10 +35,10 @@ func createDefinitionSet(t *testing.T, state *authoring.Service, name string) st
 
 func TestDefinitionHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetDefinition)(context.Background(), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -55,7 +55,7 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 
 	created, err := f.handlers.CreateDefinition(ctx, connect.NewRequest(definitionCreate("baseline")))
 	require.NoError(t, err)
-	definitionID := created.Msg.Definition.Id
+	definitionID := created.Msg.Definition.GetId().GetValue()
 	assert.Equal(t, int32(0), created.Msg.Definition.MemberCount)
 	assert.Equal(t, "0 1 * * *", created.Msg.Definition.Schedule.Cron)
 
@@ -73,7 +73,7 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
-	got, err := f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
+	got, err := f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: definitionID}}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 2)
 	assert.Equal(t, set1, got.Msg.Members[0].GetActionSetId().GetValue())
@@ -81,16 +81,16 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, set2, got.Msg.Members[1].GetActionSetId().GetValue())
 	assert.Equal(t, int32(2), got.Msg.Definition.MemberCount)
 
-	renamed, err := f.handlers.RenameDefinition(ctx, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: definitionID, Name: "renamed"}))
+	renamed, err := f.handlers.RenameDefinition(ctx, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: definitionID}, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Definition.Name)
 	described, err := f.handlers.UpdateDefinitionDescription(ctx, connect.NewRequest(&cadestrov1.UpdateDefinitionDescriptionRequest{
-		Id: definitionID, Description: "direct state",
+		Id: &cadestrov1.DefinitionId{Value: definitionID}, Description: "direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "direct state", described.Msg.Definition.Description)
 	scheduled, err := f.handlers.UpdateDefinitionSchedule(ctx, connect.NewRequest(&cadestrov1.UpdateDefinitionScheduleRequest{
-		Id: definitionID, Schedule: &cadestrov1.ActionSchedule{IntervalHours: 12},
+		Id: &cadestrov1.DefinitionId{Value: definitionID}, Schedule: &cadestrov1.ActionSchedule{IntervalHours: 12},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(12), scheduled.Msg.Definition.Schedule.IntervalHours)
@@ -100,7 +100,7 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), reordered.Msg.Definition.MemberCount)
-	got, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
+	got, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: definitionID}}))
 	require.NoError(t, err)
 	assert.Equal(t, set2, got.Msg.Members[0].GetActionSetId().GetValue())
 
@@ -114,9 +114,9 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
-	_, err = f.handlers.DeleteDefinition(ctx, connect.NewRequest(&cadestrov1.DeleteDefinitionRequest{Id: definitionID}))
+	_, err = f.handlers.DeleteDefinition(ctx, connect.NewRequest(&cadestrov1.DeleteDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: definitionID}}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
+	_, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: definitionID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range authoring.DefinitionMutationProcedures() {
@@ -159,21 +159,21 @@ func TestDefinitionHandlers_KeysetAndDirectScope(t *testing.T) {
 			Permission: "ListDevices", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: groupA,
 		}},
 	})
-	_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: directID}))
+	_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: directID}}))
 	require.NoError(t, err)
 	for _, id := range []string{outsideID, unassignedID} {
-		_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: id}))
+		_, err = f.handlers.GetDefinition(scoped, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: id}}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: outsideID, Name: "denied"}))
+	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: outsideID}, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
-	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameDefinition(scoped, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: directID}, Name: "allowed"}))
 	require.NoError(t, err)
 
 	list, err := f.handlers.ListDefinitions(scoped, connect.NewRequest(&cadestrov1.ListDefinitionsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, list.Msg.Definitions, 1)
-	assert.Equal(t, directID, list.Msg.Definitions[0].Id)
+	assert.Equal(t, directID, list.Msg.Definitions[0].GetId().GetValue())
 	assert.Equal(t, int32(1), list.Msg.TotalCount)
 
 	global := f.actor("ListDefinitions")
@@ -184,7 +184,7 @@ func TestDefinitionHandlers_KeysetAndDirectScope(t *testing.T) {
 	assert.Equal(t, int32(3), page.Msg.TotalCount)
 	all, err := f.handlers.ListDefinitions(global, connect.NewRequest(&cadestrov1.ListDefinitionsRequest{}))
 	require.NoError(t, err)
-	ids := []string{all.Msg.Definitions[0].Id, all.Msg.Definitions[1].Id, all.Msg.Definitions[2].Id}
+	ids := []string{all.Msg.Definitions[0].GetId().GetValue(), all.Msg.Definitions[1].GetId().GetValue(), all.Msg.Definitions[2].GetId().GetValue()}
 	sort.Strings(ids)
 	want := []string{directID, outsideID, unassignedID}
 	sort.Strings(want)
@@ -240,7 +240,7 @@ func TestDefinitionHandlers_CorruptStoredScheduleFailsClosed(t *testing.T) {
 	_, err = f.raw.Exec(context.Background(), `UPDATE definitions SET schedule = '{}' WHERE id = $1`, definition.ID)
 	require.NoError(t, err)
 
-	_, err = f.handlers.GetDefinition(f.actor("GetDefinition"), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definition.ID}))
+	_, err = f.handlers.GetDefinition(f.actor("GetDefinition"), connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: &cadestrov1.DefinitionId{Value: definition.ID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 

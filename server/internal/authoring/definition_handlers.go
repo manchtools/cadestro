@@ -41,17 +41,17 @@ func (h *Handlers) GetDefinition(ctx context.Context, req *connect.Request[cades
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "GetDefinition", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "GetDefinition", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	row, err := h.operatorDefinition(ctx, req.Msg.Id)
+	row, err := h.operatorDefinition(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceDefinitionReadScope(ctx, req.Msg.Id); err != nil {
+	if err := h.enforceDefinitionReadScope(ctx, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	members, err := h.store.ListDefinitionMembers(ctx, req.Msg.Id)
+	members, err := h.store.ListDefinitionMembers(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, h.internal(ctx, "list definition members", err)
 	}
@@ -114,48 +114,48 @@ func (h *Handlers) ListDefinitions(ctx context.Context, req *connect.Request[cad
 
 // RenameDefinition replaces a definition name.
 func (h *Handlers) RenameDefinition(ctx context.Context, req *connect.Request[cadestrov1.RenameDefinitionRequest]) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "RenameDefinition")
+	actor, err := h.mutationDefinitionActor(ctx, req.Msg.GetId().GetValue(), "RenameDefinition")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.RenameDefinition(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceRenameDefinitionProcedure, "RenameDefinition"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameDefinitionProcedure, "RenameDefinition"), req.Msg.GetId().GetValue(), req.Msg.Name)
 	return h.updatedDefinition(ctx, "rename definition", row, err)
 }
 
 // UpdateDefinitionDescription replaces a definition description.
 func (h *Handlers) UpdateDefinitionDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateDefinitionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "UpdateDefinitionDescription")
+	actor, err := h.mutationDefinitionActor(ctx, req.Msg.GetId().GetValue(), "UpdateDefinitionDescription")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateDefinitionDescription(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateDefinitionDescriptionProcedure, "UpdateDefinitionDescription"),
-		req.Msg.Id, req.Msg.Description)
+		req.Msg.GetId().GetValue(), req.Msg.Description)
 	return h.updatedDefinition(ctx, "update definition description", row, err)
 }
 
 // UpdateDefinitionSchedule replaces only the compilation-time schedule.
 func (h *Handlers) UpdateDefinitionSchedule(ctx context.Context, req *connect.Request[cadestrov1.UpdateDefinitionScheduleRequest]) (*connect.Response[cadestrov1.UpdateDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "UpdateDefinitionSchedule")
+	actor, err := h.mutationDefinitionActor(ctx, req.Msg.GetId().GetValue(), "UpdateDefinitionSchedule")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateDefinitionSchedule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateDefinitionScheduleProcedure, "UpdateDefinitionSchedule"),
-		req.Msg.Id, req.Msg.Schedule)
+		req.Msg.GetId().GetValue(), req.Msg.Schedule)
 	return h.updatedDefinition(ctx, "update definition schedule", row, err)
 }
 
 // DeleteDefinition soft-deletes a definition and removes its composition
 // edges.
 func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[cadestrov1.DeleteDefinitionRequest]) (*connect.Response[cadestrov1.DeleteDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.Id, "DeleteDefinition")
+	actor, err := h.mutationDefinitionActor(ctx, req.Msg.GetId().GetValue(), "DeleteDefinition")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.DeleteDefinition(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceDeleteDefinitionProcedure, "DeleteDefinition"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteDefinitionProcedure, "DeleteDefinition"), req.Msg.GetId().GetValue()); err != nil {
 		return nil, h.definitionError(ctx, "delete definition", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteDefinitionResponse{}), nil

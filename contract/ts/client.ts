@@ -392,12 +392,12 @@ export class ApiClient {
 
 	async eraseJITUser(id: string) {
 		const client = this.getClient();
-		await client.eraseJITUser(create(EraseJITUserRequestSchema, { id }));
+		await client.eraseJITUser(create(EraseJITUserRequestSchema, { id: { value: id } }));
 	}
 
 	async getUser(id: string) {
 		const client = this.getClient();
-		const response = await client.getUser(create(GetUserRequestSchema, { id }));
+		const response = await client.getUser(create(GetUserRequestSchema, { id: { value: id } }));
 		return response.user;
 	}
 
@@ -411,7 +411,7 @@ export class ApiClient {
 	async updateUserEmail(id: string, email: string) {
 		const client = this.getClient();
 		const response = await client.updateUserEmail(
-			create(UpdateUserEmailRequestSchema, { id, email })
+			create(UpdateUserEmailRequestSchema, { id: { value: id }, email })
 		);
 		return response.user;
 	}
@@ -419,7 +419,7 @@ export class ApiClient {
 	async setUserDisabled(id: string, disabled: boolean) {
 		const client = this.getClient();
 		const response = await client.setUserDisabled(
-			create(SetUserDisabledRequestSchema, { id, disabled })
+			create(SetUserDisabledRequestSchema, { id: { value: id }, disabled })
 		);
 		return response.user;
 	}
@@ -434,7 +434,7 @@ export class ApiClient {
 	}) {
 		const client = this.getClient();
 		const response = await client.updateUserProfile(
-			create(UpdateUserProfileRequestSchema, { id, ...profile })
+			create(UpdateUserProfileRequestSchema, { id: { value: id }, ...profile })
 		);
 		return response.user;
 	}
@@ -442,7 +442,7 @@ export class ApiClient {
 	async updateUserLinuxUsername(userId: string, linuxUsername: string) {
 		const client = this.getClient();
 		const response = await client.updateUserLinuxUsername(
-			create(UpdateUserLinuxUsernameRequestSchema, { userId, linuxUsername })
+			create(UpdateUserLinuxUsernameRequestSchema, { userId: { value: userId }, linuxUsername })
 		);
 		return response.user;
 	}
@@ -450,7 +450,7 @@ export class ApiClient {
 	async addUserSshKey(userId: string, publicKey: string, comment: string = '') {
 		const client = this.getClient();
 		const response = await client.addUserSshKey(
-			create(AddUserSshKeyRequestSchema, { userId, publicKey, comment })
+			create(AddUserSshKeyRequestSchema, { userId: { value: userId }, publicKey, comment })
 		);
 		return response.key;
 	}
@@ -458,7 +458,7 @@ export class ApiClient {
 	async removeUserSshKey(userId: string, keyId: string) {
 		const client = this.getClient();
 		await client.removeUserSshKey(
-			create(RemoveUserSshKeyRequestSchema, { userId, keyId })
+			create(RemoveUserSshKeyRequestSchema, { userId: { value: userId }, keyId: { value: keyId } })
 		);
 	}
 
@@ -469,7 +469,7 @@ export class ApiClient {
 	}) {
 		const client = this.getClient();
 		const response = await client.updateUserSshSettings(
-			create(UpdateUserSshSettingsRequestSchema, { userId, ...settings })
+			create(UpdateUserSshSettingsRequestSchema, { userId: { value: userId }, ...settings })
 		);
 		return response.user;
 	}
@@ -493,14 +493,14 @@ export class ApiClient {
 
 	async getDevice(id: string) {
 		const client = this.getClient();
-		const response = await client.getDevice(create(GetDeviceRequestSchema, { id }));
+		const response = await client.getDevice(create(GetDeviceRequestSchema, { id: { value: id } }));
 		return response.device;
 	}
 
 	async setDeviceLabel(id: string, key: string, value: string) {
 		const client = this.getClient();
 		const response = await client.setDeviceLabel(
-			create(SetDeviceLabelRequestSchema, { id, key, value })
+			create(SetDeviceLabelRequestSchema, { id: { value: id }, key, value })
 		);
 		return response.device;
 	}
@@ -508,7 +508,7 @@ export class ApiClient {
 	async removeDeviceLabel(id: string, key: string) {
 		const client = this.getClient();
 		const response = await client.removeDeviceLabel(
-			create(RemoveDeviceLabelRequestSchema, { id, key })
+			create(RemoveDeviceLabelRequestSchema, { id: { value: id }, key })
 		);
 		return response.device;
 	}
@@ -516,7 +516,7 @@ export class ApiClient {
 	async assignDevice(deviceId: string, userIds: string[], groupIds: string[]) {
 		const client = this.getClient();
 		const response = await client.assignDevice(
-			create(AssignDeviceRequestSchema, { deviceId: { value: deviceId }, userIds, groupIds })
+			create(AssignDeviceRequestSchema, { deviceId: { value: deviceId }, userIds: userIds.map((value) => ({ value })), groupIds: groupIds.map((value) => ({ value })) })
 		);
 		return response.device;
 	}
@@ -524,7 +524,7 @@ export class ApiClient {
 	async unassignDevice(deviceId: string, userId?: string, groupId?: string) {
 		const client = this.getClient();
 		const response = await client.unassignDevice(
-			create(UnassignDeviceRequestSchema, { deviceId: { value: deviceId }, userId: userId ?? '', groupId: groupId ?? '' })
+			create(UnassignDeviceRequestSchema, { deviceId: { value: deviceId }, userId: userId ? { value: userId } : undefined, groupId: groupId ? { value: groupId } : undefined })
 		);
 		return response.device;
 	}
@@ -539,13 +539,13 @@ export class ApiClient {
 
 	async deleteDevice(id: string) {
 		const client = this.getClient();
-		await client.deleteDevice(create(DeleteDeviceRequestSchema, { id }));
+		await client.deleteDevice(create(DeleteDeviceRequestSchema, { id: { value: id } }));
 	}
 
 	async setDeviceSyncInterval(id: string, syncIntervalMinutes: number) {
 		const client = this.getClient();
 		const response = await client.setDeviceSyncInterval(
-			create(SetDeviceSyncIntervalRequestSchema, { id, syncIntervalMinutes })
+			create(SetDeviceSyncIntervalRequestSchema, { id: { value: id }, syncIntervalMinutes })
 		);
 		return response.device;
 	}
@@ -553,7 +553,7 @@ export class ApiClient {
 	async setDeviceInventoryInterval(id: string, inventoryIntervalMinutes: number) {
 		const client = this.getClient();
 		const response = await client.setDeviceInventoryInterval(
-			create(SetDeviceInventoryIntervalRequestSchema, { id, inventoryIntervalMinutes })
+			create(SetDeviceInventoryIntervalRequestSchema, { id: { value: id }, inventoryIntervalMinutes })
 		);
 		return response.device;
 	}
@@ -593,7 +593,7 @@ export class ApiClient {
 	async renameToken(id: string, name: string) {
 		const client = this.getClient();
 		const response = await client.renameToken(
-			create(RenameTokenRequestSchema, { id, name })
+			create(RenameTokenRequestSchema, { id: { value: id }, name })
 		);
 		return response.token;
 	}
@@ -601,14 +601,14 @@ export class ApiClient {
 	async setTokenDisabled(id: string, disabled: boolean) {
 		const client = this.getClient();
 		const response = await client.setTokenDisabled(
-			create(SetTokenDisabledRequestSchema, { id, disabled })
+			create(SetTokenDisabledRequestSchema, { id: { value: id }, disabled })
 		);
 		return response.token;
 	}
 
 	async deleteToken(id: string) {
 		const client = this.getClient();
-		await client.deleteToken(create(DeleteTokenRequestSchema, { id }));
+		await client.deleteToken(create(DeleteTokenRequestSchema, { id: { value: id } }));
 	}
 
 	// ============================================================================
@@ -625,7 +625,7 @@ export class ApiClient {
 
 	async getAction(id: string) {
 		const client = this.getClient();
-		const response = await client.getAction(create(GetActionRequestSchema, { id }));
+		const response = await client.getAction(create(GetActionRequestSchema, { id: { value: id } }));
 		return response.action;
 	}
 
@@ -639,7 +639,7 @@ export class ApiClient {
 	async renameAction(id: string, name: string) {
 		const client = this.getClient();
 		const response = await client.renameAction(
-			create(RenameActionRequestSchema, { id, name })
+			create(RenameActionRequestSchema, { id: { value: id }, name })
 		);
 		return response.action;
 	}
@@ -647,7 +647,7 @@ export class ApiClient {
 	async updateActionDescription(id: string, description: string) {
 		const client = this.getClient();
 		const response = await client.updateActionDescription(
-			create(UpdateActionDescriptionRequestSchema, { id, description })
+			create(UpdateActionDescriptionRequestSchema, { id: { value: id }, description })
 		);
 		return response.action;
 	}
@@ -662,7 +662,7 @@ export class ApiClient {
 
 	async deleteAction(id: string) {
 		const client = this.getClient();
-		await client.deleteAction(create(DeleteActionRequestSchema, { id }));
+		await client.deleteAction(create(DeleteActionRequestSchema, { id: { value: id } }));
 	}
 
 	// ============================================================================
@@ -679,7 +679,7 @@ export class ApiClient {
 
 	async getActionSet(id: string) {
 		const client = this.getClient();
-		return client.getActionSet(create(GetActionSetRequestSchema, { id }));
+		return client.getActionSet(create(GetActionSetRequestSchema, { id: { value: id } }));
 	}
 
 	async listActionSets(pageSize: number = 50, pageToken: string = '', unassignedOnly: boolean = false) {
@@ -692,7 +692,7 @@ export class ApiClient {
 	async renameActionSet(id: string, name: string) {
 		const client = this.getClient();
 		const response = await client.renameActionSet(
-			create(RenameActionSetRequestSchema, { id, name })
+			create(RenameActionSetRequestSchema, { id: { value: id }, name })
 		);
 		return response.set;
 	}
@@ -700,7 +700,7 @@ export class ApiClient {
 	async updateActionSetDescription(id: string, description: string) {
 		const client = this.getClient();
 		const response = await client.updateActionSetDescription(
-			create(UpdateActionSetDescriptionRequestSchema, { id, description })
+			create(UpdateActionSetDescriptionRequestSchema, { id: { value: id }, description })
 		);
 		return response.set;
 	}
@@ -708,14 +708,14 @@ export class ApiClient {
 	async updateActionSetSchedule(id: string, schedule: ActionSchedule) {
 		const client = this.getClient();
 		const response = await client.updateActionSetSchedule(
-			create(UpdateActionSetScheduleRequestSchema, { id, schedule })
+			create(UpdateActionSetScheduleRequestSchema, { id: { value: id }, schedule })
 		);
 		return response.set;
 	}
 
 	async deleteActionSet(id: string) {
 		const client = this.getClient();
-		await client.deleteActionSet(create(DeleteActionSetRequestSchema, { id }));
+		await client.deleteActionSet(create(DeleteActionSetRequestSchema, { id: { value: id } }));
 	}
 
 	async addActionToSet(setId: string, actionId: string, sortOrder: number = 0) {
@@ -756,7 +756,7 @@ export class ApiClient {
 
 	async getDefinition(id: string) {
 		const client = this.getClient();
-		return client.getDefinition(create(GetDefinitionRequestSchema, { id }));
+		return client.getDefinition(create(GetDefinitionRequestSchema, { id: { value: id } }));
 	}
 
 	async listDefinitions(pageSize: number = 50, pageToken: string = '') {
@@ -769,7 +769,7 @@ export class ApiClient {
 	async renameDefinition(id: string, name: string) {
 		const client = this.getClient();
 		const response = await client.renameDefinition(
-			create(RenameDefinitionRequestSchema, { id, name })
+			create(RenameDefinitionRequestSchema, { id: { value: id }, name })
 		);
 		return response.definition;
 	}
@@ -777,7 +777,7 @@ export class ApiClient {
 	async updateDefinitionDescription(id: string, description: string) {
 		const client = this.getClient();
 		const response = await client.updateDefinitionDescription(
-			create(UpdateDefinitionDescriptionRequestSchema, { id, description })
+			create(UpdateDefinitionDescriptionRequestSchema, { id: { value: id }, description })
 		);
 		return response.definition;
 	}
@@ -785,14 +785,14 @@ export class ApiClient {
 	async updateDefinitionSchedule(id: string, schedule: ActionSchedule) {
 		const client = this.getClient();
 		const response = await client.updateDefinitionSchedule(
-			create(UpdateDefinitionScheduleRequestSchema, { id, schedule })
+			create(UpdateDefinitionScheduleRequestSchema, { id: { value: id }, schedule })
 		);
 		return response.definition;
 	}
 
 	async deleteDefinition(id: string) {
 		const client = this.getClient();
-		await client.deleteDefinition(create(DeleteDefinitionRequestSchema, { id }));
+		await client.deleteDefinition(create(DeleteDefinitionRequestSchema, { id: { value: id } }));
 	}
 
 	async addActionSetToDefinition(definitionId: string, actionSetId: string, sortOrder: number = 0) {
@@ -833,7 +833,7 @@ export class ApiClient {
 
 	async getDeviceGroup(id: string) {
 		const client = this.getClient();
-		return client.getDeviceGroup(create(GetDeviceGroupRequestSchema, { id }));
+		return client.getDeviceGroup(create(GetDeviceGroupRequestSchema, { id: { value: id } }));
 	}
 
 	async listDeviceGroups(pageSize: number = 50, pageToken: string = '') {
@@ -853,7 +853,7 @@ export class ApiClient {
 	async renameDeviceGroup(id: string, name: string) {
 		const client = this.getClient();
 		const response = await client.renameDeviceGroup(
-			create(RenameDeviceGroupRequestSchema, { id, name })
+			create(RenameDeviceGroupRequestSchema, { id: { value: id }, name })
 		);
 		return response.group;
 	}
@@ -861,20 +861,20 @@ export class ApiClient {
 	async updateDeviceGroupDescription(id: string, description: string) {
 		const client = this.getClient();
 		const response = await client.updateDeviceGroupDescription(
-			create(UpdateDeviceGroupDescriptionRequestSchema, { id, description })
+			create(UpdateDeviceGroupDescriptionRequestSchema, { id: { value: id }, description })
 		);
 		return response.group;
 	}
 
 	async deleteDeviceGroup(id: string) {
 		const client = this.getClient();
-		await client.deleteDeviceGroup(create(DeleteDeviceGroupRequestSchema, { id }));
+		await client.deleteDeviceGroup(create(DeleteDeviceGroupRequestSchema, { id: { value: id } }));
 	}
 
 	async addDeviceToGroup(groupId: string, deviceIds: string[]) {
 		const client = this.getClient();
 		const response = await client.addDeviceToGroup(
-			create(AddDeviceToGroupRequestSchema, { groupId, deviceIds })
+			create(AddDeviceToGroupRequestSchema, { groupId: { value: groupId }, deviceIds: deviceIds.map((value) => ({ value })) })
 		);
 		return response.group;
 	}
@@ -882,7 +882,7 @@ export class ApiClient {
 	async removeDeviceFromGroup(groupId: string, deviceId: string) {
 		const client = this.getClient();
 		const response = await client.removeDeviceFromGroup(
-			create(RemoveDeviceFromGroupRequestSchema, { groupId, deviceId: { value: deviceId } })
+			create(RemoveDeviceFromGroupRequestSchema, { groupId: { value: groupId }, deviceId: { value: deviceId } })
 		);
 		return response.group;
 	}
@@ -890,7 +890,7 @@ export class ApiClient {
 	async updateDeviceGroupQuery(id: string, isDynamic: boolean, dynamicQuery: string = '') {
 		const client = this.getClient();
 		const response = await client.updateDeviceGroupQuery(
-			create(UpdateDeviceGroupQueryRequestSchema, { id, isDynamic, dynamicQuery })
+			create(UpdateDeviceGroupQueryRequestSchema, { id: { value: id }, isDynamic, dynamicQuery })
 		);
 		return response.group;
 	}
@@ -905,14 +905,14 @@ export class ApiClient {
 	async evaluateDynamicGroup(id: string) {
 		const client = this.getClient();
 		return client.evaluateDynamicGroup(
-			create(EvaluateDynamicGroupRequestSchema, { id })
+			create(EvaluateDynamicGroupRequestSchema, { id: { value: id } })
 		);
 	}
 
 	async setDeviceGroupSyncInterval(id: string, syncIntervalMinutes: number) {
 		const client = this.getClient();
 		const response = await client.setDeviceGroupSyncInterval(
-			create(SetDeviceGroupSyncIntervalRequestSchema, { id, syncIntervalMinutes })
+			create(SetDeviceGroupSyncIntervalRequestSchema, { id: { value: id }, syncIntervalMinutes })
 		);
 		return response.group;
 	}
@@ -920,7 +920,7 @@ export class ApiClient {
 	async setDeviceGroupInventoryInterval(id: string, inventoryIntervalMinutes: number) {
 		const client = this.getClient();
 		const response = await client.setDeviceGroupInventoryInterval(
-			create(SetDeviceGroupInventoryIntervalRequestSchema, { id, inventoryIntervalMinutes })
+			create(SetDeviceGroupInventoryIntervalRequestSchema, { id: { value: id }, inventoryIntervalMinutes })
 		);
 		return response.group;
 	}
@@ -931,7 +931,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		const response = await client.setDeviceGroupMaintenanceWindow(
-			create(SetDeviceGroupMaintenanceWindowRequestSchema, { id, maintenanceWindow })
+			create(SetDeviceGroupMaintenanceWindowRequestSchema, { id: { value: id }, maintenanceWindow })
 		);
 		return response.group;
 	}
@@ -949,7 +949,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		const response = await client.createAssignment(
-			create(CreateAssignmentRequestSchema, { sourceType, sourceId, targetType, targetId, mode })
+			create(CreateAssignmentRequestSchema, { sourceType, sourceId: { value: sourceId }, targetType, targetId: { value: targetId }, mode })
 		);
 		return response.assignment;
 	}
@@ -969,7 +969,7 @@ export class ApiClient {
 
 	async deleteAssignment(id: string) {
 		const client = this.getClient();
-		await client.deleteAssignment(create(DeleteAssignmentRequestSchema, { id }));
+		await client.deleteAssignment(create(DeleteAssignmentRequestSchema, { id: { value: id } }));
 	}
 
 	async listAssignments(
@@ -982,7 +982,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		return client.listAssignments(
-			create(ListAssignmentsRequestSchema, { pageSize, pageToken, sourceType, sourceId, targetType, targetId })
+			create(ListAssignmentsRequestSchema, { pageSize, pageToken, sourceType, sourceId: { value: sourceId }, targetType, targetId: { value: targetId } })
 		);
 	}
 
@@ -996,7 +996,7 @@ export class ApiClient {
 	async getUserAssignments(userId: string) {
 		const client = this.getClient();
 		return client.getUserAssignments(
-			create(GetUserAssignmentsRequestSchema, { userId })
+			create(GetUserAssignmentsRequestSchema, { userId: { value: userId } })
 		);
 	}
 
@@ -1015,7 +1015,7 @@ export class ApiClient {
 	async setUserSelection(deviceId: string, sourceType: AssignmentSourceType, sourceId: string, selected: boolean) {
 		const client = this.getClient();
 		return client.setUserSelection(
-			create(SetUserSelectionRequestSchema, { deviceId: { value: deviceId }, sourceType, sourceId, selected })
+			create(SetUserSelectionRequestSchema, { deviceId: { value: deviceId }, sourceType, sourceId: { value: sourceId }, selected })
 		);
 	}
 
@@ -1039,7 +1039,7 @@ export class ApiClient {
 	async revealLpsPassword(id: string) {
 		const client = this.getClient();
 		return client.revealLpsPassword(
-			create(RevealLpsPasswordRequestSchema, { id })
+			create(RevealLpsPasswordRequestSchema, { id: { value: id } })
 		);
 	}
 
@@ -1053,7 +1053,7 @@ export class ApiClient {
 	async revealLuksKey(id: string) {
 		const client = this.getClient();
 		return client.revealLuksKey(
-			create(RevealLuksKeyRequestSchema, { id })
+			create(RevealLuksKeyRequestSchema, { id: { value: id } })
 		);
 	}
 
@@ -1097,7 +1097,7 @@ export class ApiClient {
 	async getCompliancePolicy(id: string) {
 		const client = this.getClient();
 		const response = await client.getCompliancePolicy(
-			create(GetCompliancePolicyRequestSchema, { id })
+			create(GetCompliancePolicyRequestSchema, { id: { value: id } })
 		);
 		return response.policy;
 	}
@@ -1112,7 +1112,7 @@ export class ApiClient {
 	async renameCompliancePolicy(id: string, name: string) {
 		const client = this.getClient();
 		const response = await client.renameCompliancePolicy(
-			create(RenameCompliancePolicyRequestSchema, { id, name })
+			create(RenameCompliancePolicyRequestSchema, { id: { value: id }, name })
 		);
 		return response.policy;
 	}
@@ -1120,7 +1120,7 @@ export class ApiClient {
 	async updateCompliancePolicyDescription(id: string, description: string) {
 		const client = this.getClient();
 		const response = await client.updateCompliancePolicyDescription(
-			create(UpdateCompliancePolicyDescriptionRequestSchema, { id, description })
+			create(UpdateCompliancePolicyDescriptionRequestSchema, { id: { value: id }, description })
 		);
 		return response.policy;
 	}
@@ -1128,14 +1128,14 @@ export class ApiClient {
 	async deleteCompliancePolicy(id: string) {
 		const client = this.getClient();
 		await client.deleteCompliancePolicy(
-			create(DeleteCompliancePolicyRequestSchema, { id })
+			create(DeleteCompliancePolicyRequestSchema, { id: { value: id } })
 		);
 	}
 
 	async addCompliancePolicyRule(policyId: string, actionId: string, gracePeriodHours: number = 0) {
 		const client = this.getClient();
 		const response = await client.addCompliancePolicyRule(
-			create(AddCompliancePolicyRuleRequestSchema, { policyId, actionId: { value: actionId }, gracePeriodHours })
+			create(AddCompliancePolicyRuleRequestSchema, { policyId: { value: policyId }, actionId: { value: actionId }, gracePeriodHours })
 		);
 		return response.policy;
 	}
@@ -1143,7 +1143,7 @@ export class ApiClient {
 	async removeCompliancePolicyRule(policyId: string, actionId: string) {
 		const client = this.getClient();
 		const response = await client.removeCompliancePolicyRule(
-			create(RemoveCompliancePolicyRuleRequestSchema, { policyId, actionId: { value: actionId } })
+			create(RemoveCompliancePolicyRuleRequestSchema, { policyId: { value: policyId }, actionId: { value: actionId } })
 		);
 		return response.policy;
 	}
@@ -1151,7 +1151,7 @@ export class ApiClient {
 	async updateCompliancePolicyRule(policyId: string, actionId: string, gracePeriodHours: number) {
 		const client = this.getClient();
 		const response = await client.updateCompliancePolicyRule(
-			create(UpdateCompliancePolicyRuleRequestSchema, { policyId, actionId: { value: actionId }, gracePeriodHours })
+			create(UpdateCompliancePolicyRuleRequestSchema, { policyId: { value: policyId }, actionId: { value: actionId }, gracePeriodHours })
 		);
 		return response.policy;
 	}
@@ -1234,7 +1234,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		return client.listAuditEvents(
-			create(ListAuditEventsRequestSchema, { pageSize, pageToken, actorId, streamType, eventType })
+			create(ListAuditEventsRequestSchema, { pageSize, pageToken, actorId: { value: actorId }, streamType, eventType })
 		);
 	}
 
@@ -1254,7 +1254,10 @@ export class ApiClient {
 		pageToken?: string;
 	}) {
 		const client = this.getClient();
-		return client.exportAuditEvents(create(ExportAuditEventsRequestSchema, options));
+		return client.exportAuditEvents(create(ExportAuditEventsRequestSchema, {
+			...options,
+			actorId: options.actorId ? { value: options.actorId } : undefined,
+		}));
 	}
 
 	// ============================================================================
@@ -1271,7 +1274,7 @@ export class ApiClient {
 
 	async getRole(id: string) {
 		const client = this.getClient();
-		return client.getRole(create(GetRoleRequestSchema, { id }));
+		return client.getRole(create(GetRoleRequestSchema, { id: { value: id } }));
 	}
 
 	async listRoles(pageSize: number = 50, pageToken: string = '') {
@@ -1284,14 +1287,14 @@ export class ApiClient {
 	async updateRole(roleId: string, name: string, description: string, permissions: string[]) {
 		const client = this.getClient();
 		const response = await client.updateRole(
-			create(UpdateRoleRequestSchema, { roleId, name, description, permissions })
+			create(UpdateRoleRequestSchema, { roleId: { value: roleId }, name, description, permissions })
 		);
 		return response.role;
 	}
 
 	async deleteRole(id: string) {
 		const client = this.getClient();
-		await client.deleteRole(create(DeleteRoleRequestSchema, { id }));
+		await client.deleteRole(create(DeleteRoleRequestSchema, { id: { value: id } }));
 	}
 
 	async assignRoleToUser(
@@ -1302,7 +1305,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		await client.assignRoleToUser(
-			create(AssignRoleToUserRequestSchema, { userId, roleIds, scopeKind, scopeId })
+			create(AssignRoleToUserRequestSchema, { userId: { value: userId }, roleIds: roleIds.map((value) => ({ value })), scopeKind, scopeId: scopeId ? { value: scopeId } : undefined })
 		);
 	}
 
@@ -1314,7 +1317,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		await client.revokeRoleFromUser(
-			create(RevokeRoleFromUserRequestSchema, { userId, roleId, scopeKind, scopeId })
+			create(RevokeRoleFromUserRequestSchema, { userId: { value: userId }, roleId: { value: roleId }, scopeKind, scopeId: scopeId ? { value: scopeId } : undefined })
 		);
 	}
 
@@ -1339,7 +1342,7 @@ export class ApiClient {
 
 	async getUserGroup(id: string) {
 		const client = this.getClient();
-		return client.getUserGroup(create(GetUserGroupRequestSchema, { id }));
+		return client.getUserGroup(create(GetUserGroupRequestSchema, { id: { value: id } }));
 	}
 
 	async listUserGroups(pageSize: number = 50, pageToken: string = '') {
@@ -1352,27 +1355,27 @@ export class ApiClient {
 	async updateUserGroup(id: string, name: string, description: string) {
 		const client = this.getClient();
 		const response = await client.updateUserGroup(
-			create(UpdateUserGroupRequestSchema, { groupId: id, name, description })
+			create(UpdateUserGroupRequestSchema, { groupId: { value: id }, name, description })
 		);
 		return response.group;
 	}
 
 	async deleteUserGroup(id: string) {
 		const client = this.getClient();
-		await client.deleteUserGroup(create(DeleteUserGroupRequestSchema, { id }));
+		await client.deleteUserGroup(create(DeleteUserGroupRequestSchema, { id: { value: id } }));
 	}
 
 	async addUserToGroup(groupId: string, userIds: string[]) {
 		const client = this.getClient();
 		await client.addUserToGroup(
-			create(AddUserToGroupRequestSchema, { groupId, userIds })
+			create(AddUserToGroupRequestSchema, { groupId: { value: groupId }, userIds: userIds.map((value) => ({ value })) })
 		);
 	}
 
 	async removeUserFromGroup(groupId: string, userId: string) {
 		const client = this.getClient();
 		await client.removeUserFromGroup(
-			create(RemoveUserFromGroupRequestSchema, { groupId, userId })
+			create(RemoveUserFromGroupRequestSchema, { groupId: { value: groupId }, userId: { value: userId } })
 		);
 	}
 
@@ -1384,7 +1387,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		await client.assignRoleToUserGroup(
-			create(AssignRoleToUserGroupRequestSchema, { groupId, roleIds, scopeKind, scopeId })
+			create(AssignRoleToUserGroupRequestSchema, { groupId: { value: groupId }, roleIds: roleIds.map((value) => ({ value })), scopeKind, scopeId: scopeId ? { value: scopeId } : undefined })
 		);
 	}
 
@@ -1396,21 +1399,21 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		await client.revokeRoleFromUserGroup(
-			create(RevokeRoleFromUserGroupRequestSchema, { groupId, roleId, scopeKind, scopeId })
+			create(RevokeRoleFromUserGroupRequestSchema, { groupId: { value: groupId }, roleId: { value: roleId }, scopeKind, scopeId: scopeId ? { value: scopeId } : undefined })
 		);
 	}
 
 	async listUserGroupsForUser(userId: string) {
 		const client = this.getClient();
 		return client.listUserGroupsForUser(
-			create(ListUserGroupsForUserRequestSchema, { userId })
+			create(ListUserGroupsForUserRequestSchema, { userId: { value: userId } })
 		);
 	}
 
 	async updateUserGroupQuery(id: string, isDynamic: boolean, dynamicQuery: string) {
 		const client = this.getClient();
 		const response = await client.updateUserGroupQuery(
-			create(UpdateUserGroupQueryRequestSchema, { id, isDynamic, dynamicQuery })
+			create(UpdateUserGroupQueryRequestSchema, { id: { value: id }, isDynamic, dynamicQuery })
 		);
 		return response.group;
 	}
@@ -1425,7 +1428,7 @@ export class ApiClient {
 	async evaluateDynamicUserGroup(id: string) {
 		const client = this.getClient();
 		return client.evaluateDynamicUserGroup(
-			create(EvaluateDynamicUserGroupRequestSchema, { id })
+			create(EvaluateDynamicUserGroupRequestSchema, { id: { value: id } })
 		);
 	}
 
@@ -1435,7 +1438,7 @@ export class ApiClient {
 	) {
 		const client = this.getClient();
 		const response = await client.setUserGroupMaintenanceWindow(
-			create(SetUserGroupMaintenanceWindowRequestSchema, { id, maintenanceWindow })
+			create(SetUserGroupMaintenanceWindowRequestSchema, { id: { value: id }, maintenanceWindow })
 		);
 		return response.group;
 	}
@@ -1496,7 +1499,11 @@ export class ApiClient {
 	}) {
 		const client = this.getClient();
 		const response = await client.createIdentityProvider(
-			create(CreateIdentityProviderRequestSchema, data)
+			create(CreateIdentityProviderRequestSchema, {
+				...data,
+				clientId: { value: data.clientId },
+				defaultRoleId: data.defaultRoleId ? { value: data.defaultRoleId } : undefined,
+			})
 		);
 		return response.provider;
 	}
@@ -1531,7 +1538,11 @@ export class ApiClient {
 	) {
 		const client = this.getAuthClient();
 		const response = await client.createIdentityProvider(
-			create(CreateIdentityProviderRequestSchema, data),
+			create(CreateIdentityProviderRequestSchema, {
+				...data,
+				clientId: { value: data.clientId },
+				defaultRoleId: data.defaultRoleId ? { value: data.defaultRoleId } : undefined,
+			}),
 			{ headers: { Authorization: `Cadestro-Bootstrap ${bootstrapToken}` } }
 		);
 		return response.provider;
@@ -1540,7 +1551,7 @@ export class ApiClient {
 	async getIdentityProvider(id: string) {
 		const client = this.getClient();
 		const response = await client.getIdentityProvider(
-			create(GetIdentityProviderRequestSchema, { id })
+			create(GetIdentityProviderRequestSchema, { id: { value: id } })
 		);
 		return response.provider;
 	}
@@ -1572,7 +1583,12 @@ export class ApiClient {
 	}) {
 		const client = this.getClient();
 		const response = await client.updateIdentityProvider(
-			create(UpdateIdentityProviderRequestSchema, data)
+			create(UpdateIdentityProviderRequestSchema, {
+				...data,
+				id: { value: data.id },
+				clientId: data.clientId ? { value: data.clientId } : undefined,
+				defaultRoleId: data.defaultRoleId ? { value: data.defaultRoleId } : undefined,
+			})
 		);
 		return response.provider;
 	}
@@ -1580,7 +1596,7 @@ export class ApiClient {
 	async deleteIdentityProvider(id: string) {
 		const client = this.getClient();
 		await client.deleteIdentityProvider(
-			create(DeleteIdentityProviderRequestSchema, { id })
+			create(DeleteIdentityProviderRequestSchema, { id: { value: id } })
 		);
 	}
 
@@ -1594,23 +1610,23 @@ export class ApiClient {
 	async unlinkIdentity(linkId: string) {
 		const client = this.getClient();
 		await client.unlinkIdentity(
-			create(UnlinkIdentityRequestSchema, { linkId })
+			create(UnlinkIdentityRequestSchema, { linkId: { value: linkId } })
 		);
 	}
 
 	async enableSCIM(id: string) {
 		const client = this.getClient();
-		return client.enableSCIM(create(EnableSCIMRequestSchema, { id }));
+		return client.enableSCIM(create(EnableSCIMRequestSchema, { id: { value: id } }));
 	}
 
 	async disableSCIM(id: string) {
 		const client = this.getClient();
-		await client.disableSCIM(create(DisableSCIMRequestSchema, { id }));
+		await client.disableSCIM(create(DisableSCIMRequestSchema, { id: { value: id } }));
 	}
 
 	async rotateSCIMToken(id: string) {
 		const client = this.getClient();
-		return client.rotateSCIMToken(create(RotateSCIMTokenRequestSchema, { id }));
+		return client.rotateSCIMToken(create(RotateSCIMTokenRequestSchema, { id: { value: id } }));
 	}
 
 	// Search
@@ -1660,7 +1676,7 @@ export class ApiClient {
 	async setUserProvisioningEnabled(userId: string, enabled: boolean) {
 		const client = this.getClient();
 		return client.setUserProvisioningEnabled(create(SetUserProvisioningEnabledRequestSchema, {
-			userId,
+			userId: { value: userId },
 			enabled,
 		}));
 	}
@@ -1686,7 +1702,7 @@ export class ApiClient {
 	async stopTerminal(sessionId: string) {
 		const client = this.getClient();
 		return client.stopTerminal(create(StopTerminalRequestSchema, {
-			sessionId,
+			sessionId: { value: sessionId },
 		}));
 	}
 
@@ -1701,14 +1717,14 @@ export class ApiClient {
 			pageSize,
 			pageToken,
 			deviceId: deviceId ? { value: deviceId } : undefined,
-			userId,
+			userId: { value: userId },
 		}));
 	}
 
 	async terminateTerminalSession(sessionId: string, reason: string = '') {
 		const client = this.getClient();
 		return client.terminateTerminalSession(create(TerminateTerminalSessionRequestSchema, {
-			sessionId,
+			sessionId: { value: sessionId },
 			reason,
 		}));
 	}
@@ -1738,7 +1754,7 @@ export function getRequestId(error: unknown): string | undefined {
 		const details = error.findDetails(ErrorDetailSchema);
 		const first = details[0];
 		if (first && first.requestId) {
-			return first.requestId;
+			return first.requestId.value;
 		}
 	}
 	return undefined;

@@ -1576,6 +1576,1238 @@ func (x *QueryId) GetValue() string {
 	return ""
 }
 
+type MessageId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MessageId) Reset() {
+	*x = MessageId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MessageId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MessageId) ProtoMessage() {}
+
+func (x *MessageId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MessageId.ProtoReflect.Descriptor instead.
+func (*MessageId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *MessageId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type PolicyRevisionId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolicyRevisionId) Reset() {
+	*x = PolicyRevisionId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolicyRevisionId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolicyRevisionId) ProtoMessage() {}
+
+func (x *PolicyRevisionId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolicyRevisionId.ProtoReflect.Descriptor instead.
+func (*PolicyRevisionId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *PolicyRevisionId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type SessionId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SessionId) Reset() {
+	*x = SessionId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SessionId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SessionId) ProtoMessage() {}
+
+func (x *SessionId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SessionId.ProtoReflect.Descriptor instead.
+func (*SessionId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SessionId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type UserId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserId) Reset() {
+	*x = UserId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserId) ProtoMessage() {}
+
+func (x *UserId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserId.ProtoReflect.Descriptor instead.
+func (*UserId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UserId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type RoleId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RoleId) Reset() {
+	*x = RoleId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoleId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleId) ProtoMessage() {}
+
+func (x *RoleId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleId.ProtoReflect.Descriptor instead.
+func (*RoleId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *RoleId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type GroupId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GroupId) Reset() {
+	*x = GroupId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GroupId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GroupId) ProtoMessage() {}
+
+func (x *GroupId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GroupId.ProtoReflect.Descriptor instead.
+func (*GroupId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GroupId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type SshKeyId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SshKeyId) Reset() {
+	*x = SshKeyId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SshKeyId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SshKeyId) ProtoMessage() {}
+
+func (x *SshKeyId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SshKeyId.ProtoReflect.Descriptor instead.
+func (*SshKeyId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SshKeyId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type UserGroupId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserGroupId) Reset() {
+	*x = UserGroupId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserGroupId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserGroupId) ProtoMessage() {}
+
+func (x *UserGroupId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserGroupId.ProtoReflect.Descriptor instead.
+func (*UserGroupId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *UserGroupId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type RegistrationTokenId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegistrationTokenId) Reset() {
+	*x = RegistrationTokenId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegistrationTokenId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegistrationTokenId) ProtoMessage() {}
+
+func (x *RegistrationTokenId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegistrationTokenId.ProtoReflect.Descriptor instead.
+func (*RegistrationTokenId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RegistrationTokenId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type DeviceGroupId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceGroupId) Reset() {
+	*x = DeviceGroupId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceGroupId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceGroupId) ProtoMessage() {}
+
+func (x *DeviceGroupId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceGroupId.ProtoReflect.Descriptor instead.
+func (*DeviceGroupId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *DeviceGroupId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type AssignmentId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignmentId) Reset() {
+	*x = AssignmentId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignmentId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignmentId) ProtoMessage() {}
+
+func (x *AssignmentId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignmentId.ProtoReflect.Descriptor instead.
+func (*AssignmentId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *AssignmentId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type AssignmentSourceId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignmentSourceId) Reset() {
+	*x = AssignmentSourceId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignmentSourceId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignmentSourceId) ProtoMessage() {}
+
+func (x *AssignmentSourceId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignmentSourceId.ProtoReflect.Descriptor instead.
+func (*AssignmentSourceId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *AssignmentSourceId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type AssignmentTargetId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignmentTargetId) Reset() {
+	*x = AssignmentTargetId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignmentTargetId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignmentTargetId) ProtoMessage() {}
+
+func (x *AssignmentTargetId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignmentTargetId.ProtoReflect.Descriptor instead.
+func (*AssignmentTargetId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *AssignmentTargetId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type UserSelectionId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserSelectionId) Reset() {
+	*x = UserSelectionId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserSelectionId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserSelectionId) ProtoMessage() {}
+
+func (x *UserSelectionId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserSelectionId.ProtoReflect.Descriptor instead.
+func (*UserSelectionId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *UserSelectionId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type ScopeId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScopeId) Reset() {
+	*x = ScopeId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScopeId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScopeId) ProtoMessage() {}
+
+func (x *ScopeId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScopeId.ProtoReflect.Descriptor instead.
+func (*ScopeId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ScopeId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type AuditEventId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuditEventId) Reset() {
+	*x = AuditEventId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuditEventId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuditEventId) ProtoMessage() {}
+
+func (x *AuditEventId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuditEventId.ProtoReflect.Descriptor instead.
+func (*AuditEventId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *AuditEventId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type AuditStreamId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuditStreamId) Reset() {
+	*x = AuditStreamId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuditStreamId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuditStreamId) ProtoMessage() {}
+
+func (x *AuditStreamId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuditStreamId.ProtoReflect.Descriptor instead.
+func (*AuditStreamId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *AuditStreamId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type AuditActorId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuditActorId) Reset() {
+	*x = AuditActorId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuditActorId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuditActorId) ProtoMessage() {}
+
+func (x *AuditActorId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuditActorId.ProtoReflect.Descriptor instead.
+func (*AuditActorId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *AuditActorId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type LpsPasswordId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LpsPasswordId) Reset() {
+	*x = LpsPasswordId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LpsPasswordId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LpsPasswordId) ProtoMessage() {}
+
+func (x *LpsPasswordId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LpsPasswordId.ProtoReflect.Descriptor instead.
+func (*LpsPasswordId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *LpsPasswordId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type LuksKeyId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LuksKeyId) Reset() {
+	*x = LuksKeyId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LuksKeyId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LuksKeyId) ProtoMessage() {}
+
+func (x *LuksKeyId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LuksKeyId.ProtoReflect.Descriptor instead.
+func (*LuksKeyId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *LuksKeyId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type IdentityProviderId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IdentityProviderId) Reset() {
+	*x = IdentityProviderId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IdentityProviderId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IdentityProviderId) ProtoMessage() {}
+
+func (x *IdentityProviderId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IdentityProviderId.ProtoReflect.Descriptor instead.
+func (*IdentityProviderId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *IdentityProviderId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type IdentityLinkId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IdentityLinkId) Reset() {
+	*x = IdentityLinkId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IdentityLinkId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IdentityLinkId) ProtoMessage() {}
+
+func (x *IdentityLinkId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IdentityLinkId.ProtoReflect.Descriptor instead.
+func (*IdentityLinkId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *IdentityLinkId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type CompliancePolicyId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompliancePolicyId) Reset() {
+	*x = CompliancePolicyId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompliancePolicyId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompliancePolicyId) ProtoMessage() {}
+
+func (x *CompliancePolicyId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompliancePolicyId.ProtoReflect.Descriptor instead.
+func (*CompliancePolicyId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *CompliancePolicyId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type SearchResultId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchResultId) Reset() {
+	*x = SearchResultId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchResultId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchResultId) ProtoMessage() {}
+
+func (x *SearchResultId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchResultId.ProtoReflect.Descriptor instead.
+func (*SearchResultId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *SearchResultId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type RequestId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestId) Reset() {
+	*x = RequestId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestId) ProtoMessage() {}
+
+func (x *RequestId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestId.ProtoReflect.Descriptor instead.
+func (*RequestId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RequestId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type FlatpakAppId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FlatpakAppId) Reset() {
+	*x = FlatpakAppId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FlatpakAppId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FlatpakAppId) ProtoMessage() {}
+
+func (x *FlatpakAppId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FlatpakAppId.ProtoReflect.Descriptor instead.
+func (*FlatpakAppId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *FlatpakAppId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type OidcClientId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OidcClientId) Reset() {
+	*x = OidcClientId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OidcClientId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OidcClientId) ProtoMessage() {}
+
+func (x *OidcClientId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OidcClientId.ProtoReflect.Descriptor instead.
+func (*OidcClientId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *OidcClientId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type ExternalIdentityId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExternalIdentityId) Reset() {
+	*x = ExternalIdentityId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExternalIdentityId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExternalIdentityId) ProtoMessage() {}
+
+func (x *ExternalIdentityId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExternalIdentityId.ProtoReflect.Descriptor instead.
+func (*ExternalIdentityId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *ExternalIdentityId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
 // Structured error detail attached to Connect-RPC errors.
 type ErrorDetail struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1583,14 +2815,14 @@ type ErrorDetail struct {
 	// Server-generated request ID for correlating errors with server logs.
 	// ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
 	// without inviting unbounded growth.
-	RequestId     string `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	RequestId     *RequestId `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ErrorDetail) Reset() {
 	*x = ErrorDetail{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	mi := &file_cadestro_v1_common_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1602,7 +2834,7 @@ func (x *ErrorDetail) String() string {
 func (*ErrorDetail) ProtoMessage() {}
 
 func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	mi := &file_cadestro_v1_common_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1615,7 +2847,7 @@ func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ErrorDetail.ProtoReflect.Descriptor instead.
 func (*ErrorDetail) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ErrorDetail) GetCode() ErrorCode {
@@ -1625,11 +2857,11 @@ func (x *ErrorDetail) GetCode() ErrorCode {
 	return ErrorCode_ERROR_CODE_UNSPECIFIED
 }
 
-func (x *ErrorDetail) GetRequestId() string {
+func (x *ErrorDetail) GetRequestId() *RequestId {
 	if x != nil {
 		return x.RequestId
 	}
-	return ""
+	return nil
 }
 
 // MaintenanceWindow gates scheduled policy runs by device-local wall-clock
@@ -1650,7 +2882,7 @@ type MaintenanceWindow struct {
 
 func (x *MaintenanceWindow) Reset() {
 	*x = MaintenanceWindow{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	mi := &file_cadestro_v1_common_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1662,7 +2894,7 @@ func (x *MaintenanceWindow) String() string {
 func (*MaintenanceWindow) ProtoMessage() {}
 
 func (x *MaintenanceWindow) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	mi := &file_cadestro_v1_common_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1675,7 +2907,7 @@ func (x *MaintenanceWindow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintenanceWindow.ProtoReflect.Descriptor instead.
 func (*MaintenanceWindow) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *MaintenanceWindow) GetSchedule() []*MaintenanceWindowEntry {
@@ -1701,7 +2933,7 @@ type MaintenanceWindowEntry struct {
 
 func (x *MaintenanceWindowEntry) Reset() {
 	*x = MaintenanceWindowEntry{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[10]
+	mi := &file_cadestro_v1_common_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1713,7 +2945,7 @@ func (x *MaintenanceWindowEntry) String() string {
 func (*MaintenanceWindowEntry) ProtoMessage() {}
 
 func (x *MaintenanceWindowEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[10]
+	mi := &file_cadestro_v1_common_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1726,7 +2958,7 @@ func (x *MaintenanceWindowEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MaintenanceWindowEntry.ProtoReflect.Descriptor instead.
 func (*MaintenanceWindowEntry) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *MaintenanceWindowEntry) GetDays() []string {
@@ -1755,7 +2987,7 @@ type CommandOutput struct {
 
 func (x *CommandOutput) Reset() {
 	*x = CommandOutput{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	mi := &file_cadestro_v1_common_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1767,7 +2999,7 @@ func (x *CommandOutput) String() string {
 func (*CommandOutput) ProtoMessage() {}
 
 func (x *CommandOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	mi := &file_cadestro_v1_common_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1780,7 +3012,7 @@ func (x *CommandOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandOutput.ProtoReflect.Descriptor instead.
 func (*CommandOutput) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *CommandOutput) GetExitCode() int32 {
@@ -1825,11 +3057,68 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"ManifestId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\")\n" +
 	"\aQueryId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"k\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
+	"\tMessageId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"2\n" +
+	"\x10PolicyRevisionId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
+	"\tSessionId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"(\n" +
+	"\x06UserId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"(\n" +
+	"\x06RoleId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\")\n" +
+	"\aGroupId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"*\n" +
+	"\bSshKeyId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"-\n" +
+	"\vUserGroupId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"5\n" +
+	"\x13RegistrationTokenId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"/\n" +
+	"\rDeviceGroupId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
+	"\fAssignmentId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
+	"\x12AssignmentSourceId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
+	"\x12AssignmentTargetId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"1\n" +
+	"\x0fUserSelectionId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\")\n" +
+	"\aScopeId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
+	"\fAuditEventId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"/\n" +
+	"\rAuditStreamId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
+	"\fAuditActorId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"/\n" +
+	"\rLpsPasswordId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
+	"\tLuksKeyId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
+	"\x12IdentityProviderId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"0\n" +
+	"\x0eIdentityLinkId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
+	"\x12CompliancePolicyId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"0\n" +
+	"\x0eSearchResultId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"*\n" +
+	"\tRequestId\x12\x1d\n" +
+	"\x05value\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x18@R\x05value\"0\n" +
+	"\fFlatpakAppId\x12 \n" +
+	"\x05value\x18\x01 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\xff\x01R\x05value\".\n" +
+	"\fOidcClientId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\xff\x01R\x05value\"*\n" +
+	"\x12ExternalIdentityId\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\tR\x05value\"z\n" +
 	"\vErrorDetail\x124\n" +
-	"\x04code\x18\x01 \x01(\x0e2\x16.cadestro.v1.ErrorCodeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04code\x12&\n" +
+	"\x04code\x18\x01 \x01(\x0e2\x16.cadestro.v1.ErrorCodeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04code\x125\n" +
 	"\n" +
-	"request_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x18@R\trequestId\"T\n" +
+	"request_id\x18\x02 \x01(\v2\x16.cadestro.v1.RequestIdR\trequestId\"T\n" +
 	"\x11MaintenanceWindow\x12?\n" +
 	"\bschedule\x18\x01 \x03(\v2#.cadestro.v1.MaintenanceWindowEntryR\bschedule\"\x85\x01\n" +
 	"\x16MaintenanceWindowEntry\x12H\n" +
@@ -2031,7 +3320,7 @@ func file_cadestro_v1_common_proto_rawDescGZIP() []byte {
 }
 
 var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
-var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
 var file_cadestro_v1_common_proto_goTypes = []any{
 	(ExecutionStatus)(0),           // 0: cadestro.v1.ExecutionStatus
 	(DesiredState)(0),              // 1: cadestro.v1.DesiredState
@@ -2057,19 +3346,48 @@ var file_cadestro_v1_common_proto_goTypes = []any{
 	(*ActionSetId)(nil),            // 21: cadestro.v1.ActionSetId
 	(*ManifestId)(nil),             // 22: cadestro.v1.ManifestId
 	(*QueryId)(nil),                // 23: cadestro.v1.QueryId
-	(*ErrorDetail)(nil),            // 24: cadestro.v1.ErrorDetail
-	(*MaintenanceWindow)(nil),      // 25: cadestro.v1.MaintenanceWindow
-	(*MaintenanceWindowEntry)(nil), // 26: cadestro.v1.MaintenanceWindowEntry
-	(*CommandOutput)(nil),          // 27: cadestro.v1.CommandOutput
+	(*MessageId)(nil),              // 24: cadestro.v1.MessageId
+	(*PolicyRevisionId)(nil),       // 25: cadestro.v1.PolicyRevisionId
+	(*SessionId)(nil),              // 26: cadestro.v1.SessionId
+	(*UserId)(nil),                 // 27: cadestro.v1.UserId
+	(*RoleId)(nil),                 // 28: cadestro.v1.RoleId
+	(*GroupId)(nil),                // 29: cadestro.v1.GroupId
+	(*SshKeyId)(nil),               // 30: cadestro.v1.SshKeyId
+	(*UserGroupId)(nil),            // 31: cadestro.v1.UserGroupId
+	(*RegistrationTokenId)(nil),    // 32: cadestro.v1.RegistrationTokenId
+	(*DeviceGroupId)(nil),          // 33: cadestro.v1.DeviceGroupId
+	(*AssignmentId)(nil),           // 34: cadestro.v1.AssignmentId
+	(*AssignmentSourceId)(nil),     // 35: cadestro.v1.AssignmentSourceId
+	(*AssignmentTargetId)(nil),     // 36: cadestro.v1.AssignmentTargetId
+	(*UserSelectionId)(nil),        // 37: cadestro.v1.UserSelectionId
+	(*ScopeId)(nil),                // 38: cadestro.v1.ScopeId
+	(*AuditEventId)(nil),           // 39: cadestro.v1.AuditEventId
+	(*AuditStreamId)(nil),          // 40: cadestro.v1.AuditStreamId
+	(*AuditActorId)(nil),           // 41: cadestro.v1.AuditActorId
+	(*LpsPasswordId)(nil),          // 42: cadestro.v1.LpsPasswordId
+	(*LuksKeyId)(nil),              // 43: cadestro.v1.LuksKeyId
+	(*IdentityProviderId)(nil),     // 44: cadestro.v1.IdentityProviderId
+	(*IdentityLinkId)(nil),         // 45: cadestro.v1.IdentityLinkId
+	(*CompliancePolicyId)(nil),     // 46: cadestro.v1.CompliancePolicyId
+	(*SearchResultId)(nil),         // 47: cadestro.v1.SearchResultId
+	(*RequestId)(nil),              // 48: cadestro.v1.RequestId
+	(*FlatpakAppId)(nil),           // 49: cadestro.v1.FlatpakAppId
+	(*OidcClientId)(nil),           // 50: cadestro.v1.OidcClientId
+	(*ExternalIdentityId)(nil),     // 51: cadestro.v1.ExternalIdentityId
+	(*ErrorDetail)(nil),            // 52: cadestro.v1.ErrorDetail
+	(*MaintenanceWindow)(nil),      // 53: cadestro.v1.MaintenanceWindow
+	(*MaintenanceWindowEntry)(nil), // 54: cadestro.v1.MaintenanceWindowEntry
+	(*CommandOutput)(nil),          // 55: cadestro.v1.CommandOutput
 }
 var file_cadestro_v1_common_proto_depIdxs = []int32{
 	14, // 0: cadestro.v1.ErrorDetail.code:type_name -> cadestro.v1.ErrorCode
-	26, // 1: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
-	2,  // [2:2] is the sub-list for method output_type
-	2,  // [2:2] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	48, // 1: cadestro.v1.ErrorDetail.request_id:type_name -> cadestro.v1.RequestId
+	54, // 2: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
+	3,  // [3:3] is the sub-list for method output_type
+	3,  // [3:3] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_common_proto_init() }
@@ -2083,7 +3401,7 @@ func file_cadestro_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)),
 			NumEnums:      16,
-			NumMessages:   12,
+			NumMessages:   40,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -85,7 +85,7 @@
 	// reload (`{#key revision}`), so a live prop would fight the local draft
 	// instead of rebasing it.
 	// svelte-ignore state_referenced_locally
-	const byId = new Map(library.map((a) => [a.id, a]));
+	const byId = new Map<string, ManagedAction>(library.flatMap((a) => a.id ? [[a.id.value, a] as const] : []));
 
 	function serverBody(): Body {
 		const steps: StepDraft[] = [];
@@ -188,14 +188,14 @@
 	// Actions the set does not already carry — the palette must not offer a member
 	// twice, and a step queued for removal is available again.
 	const availableActions = $derived(
-		library.filter((a) => !steps.some((s) => s.actionId === a.id))
+		library.filter((a) => !steps.some((s) => (s.actionId ?? '') === (a.id ?? '')))
 	);
 	/** The Existing tab: the library itself, in the palette, instead of behind a
 	 *  dialog button under the fold. */
 	const existingEntries = $derived<PaletteEntry[]>(
 		availableActions.map((a) => {
 			const info = getActionTypeInfo(a.type);
-			return { id: a.id, label: a.name, hint: info.label, icon: info.icon };
+			return { id: a.id?.value ?? '', label: a.name, hint: info.label, icon: info.icon };
 		})
 	);
 
@@ -364,7 +364,7 @@
 				const step = ordered[i];
 				if (step.isNew) {
 					const created = await apiClient.createAction(createRequest(step));
-					if (created) await apiClient.addActionToSet(setId, created.id, i);
+					if (created) await apiClient.addActionToSet(setId, (created.id?.value ?? ''), i);
 					continue;
 				}
 				if (step.originalIndex < 0) {

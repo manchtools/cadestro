@@ -89,7 +89,7 @@ func TestExecuteFlatpak_NotApplicableWhenFlatpakMissing(t *testing.T) {
 
 	e := NewExecutor(nil)
 	_, changed, err := e.executeFlatpak(context.Background(), &pb.FlatpakParams{
-		AppId: "org.example.Test",
+		AppId: &pb.FlatpakAppId{Value: "org.example.Test"},
 	}, pb.DesiredState_DESIRED_STATE_PRESENT)
 
 	requireNotApplicable(t, changed, err, "flatpak not available")
@@ -169,7 +169,7 @@ func TestExecuteFlatpak_DoesNotSkipWhenFlatpakPresent(t *testing.T) {
 
 	e := NewExecutor(nil)
 	output, _, err := e.executeFlatpak(context.Background(), &pb.FlatpakParams{
-		AppId: "org.nonexistent.surely_does_not_exist_12345",
+		AppId: &pb.FlatpakAppId{Value: "org.nonexistent.surely_does_not_exist_12345"},
 	}, pb.DesiredState_DESIRED_STATE_PRESENT)
 
 	if output != nil && strings.Contains(output.Stdout, "skipped") {

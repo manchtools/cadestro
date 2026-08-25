@@ -93,8 +93,8 @@ const ACTION_A = '01JQZZ5B8N4P0R3S7T9V2W1X6Y';
 const ACTION_B = '01JQZZ6C9P5Q1S4T8V0W3X2Y7Z';
 
 const catalogue = [
-	create(ManagedActionSchema, { id: ACTION_A, name: 'Install nginx', type: ActionType.PACKAGE }),
-	create(ManagedActionSchema, { id: ACTION_B, name: 'Patch kernel', type: ActionType.UPDATE })
+	create(ManagedActionSchema, { id: { value: ACTION_A }, name: 'Install nginx', type: ActionType.PACKAGE }),
+	create(ManagedActionSchema, { id: { value: ACTION_B }, name: 'Patch kernel', type: ActionType.UPDATE })
 ];
 
 beforeEach(() => {

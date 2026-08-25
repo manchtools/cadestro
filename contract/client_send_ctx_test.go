@@ -62,7 +62,7 @@ func connectCancellable(t *testing.T, c *Client) {
 // flow-control window so a single Send to a non-draining peer blocks mid-write.
 func bigTerminalOutput() *cadestrov1.TerminalOutput {
 	return &cadestrov1.TerminalOutput{
-		SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+		SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
 		Data:      make([]byte, 2<<20), // 2 MiB
 	}
 }
@@ -177,7 +177,7 @@ func TestSendTerminalStateChange_HonorsContextDeadline(t *testing.T) {
 		sctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 		defer cancel()
 		done <- c.SendTerminalStateChange(sctx, &cadestrov1.TerminalStateChange{
-			SessionId: "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			SessionId: &cadestrov1.SessionId{Value: "01ARZ3NDEKTSV4RRFFQ69G5FAV"},
 			State:     cadestrov1.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED,
 		})
 	}()

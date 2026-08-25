@@ -70,7 +70,7 @@
 							size="icon-sm"
 							class="shrink-0 text-muted-foreground hover:text-destructive"
 							aria-label={m.user_groups_remove_member()}
-							onclick={() => onremove(member.userId)}
+							onclick={() => onremove((member.userId?.value ?? ''))}
 						>
 							<UserMinus class="h-3.5 w-3.5" />
 						</Button>

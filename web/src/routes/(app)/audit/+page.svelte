@@ -174,7 +174,7 @@
 			const response = await apiClient.listUsers();
 			const map = new Map<string, User>();
 			for (const user of response.users) {
-				map.set(user.id, user);
+				map.set((user.id?.value ?? ''), user);
 			}
 			users = map;
 		} catch (error) {
@@ -190,7 +190,7 @@
 			});
 			const map = new Map<string, Device>();
 			for (const device of all) {
-				map.set(device.id, device);
+				map.set((device.id?.value ?? ''), device);
 			}
 			devices = map;
 		} catch (error) {
@@ -223,11 +223,11 @@
 	// id is a device or user.
 	function getTargetLabel(event: AuditEvent): string {
 		if (!event.streamId) return '-';
-		if (event.streamType === 'device') return deviceLabel(event.streamId);
+		if (event.streamType === 'device') return deviceLabel((event.streamId?.value ?? ''));
 		if (event.streamType === 'user') {
-			return users.get(event.streamId)?.email ?? event.streamId.slice(0, 8) + '...';
+			return users.get((event.streamId?.value ?? ''))?.email ?? (event.streamId?.value ?? '').slice(0, 8) + '...';
 		}
-		return event.streamId.slice(0, 8) + '...';
+		return (event.streamId?.value ?? '').slice(0, 8) + '...';
 	}
 
 	function getSummary(event: AuditEvent): string | null {
@@ -362,7 +362,7 @@
 	     a div-with-role would have to re-implement, and its accessible name is
 	     the row's own evidence. -->
 	<div data-tour="audit-table">
-	<RowList {table} {sortOptions} rowKey={(e) => e.id}>
+	<RowList {table} {sortOptions} rowKey={(e) => (e.id?.value ?? '')}>
 		{#snippet filters()}
 			<MultiSelectCombobox
 				items={streamTypeFilterItems}
@@ -385,7 +385,7 @@
 				<Select.Content>
 					<Select.Item value="all">{m.audit_filter_actor()}</Select.Item>
 					{#each [...users.values()] as user (user.id)}
-						<Select.Item value={user.id}>{user.email}</Select.Item>
+						<Select.Item value={(user.id?.value ?? '')}>{user.email}</Select.Item>
 					{/each}
 				</Select.Content>
 			</Select.Root>
@@ -408,7 +408,7 @@
 					{formatTimestampDateTime(event.occurredAt)}
 				</span>
 				<span class="w-40 shrink-0 truncate text-xs text-muted-foreground">
-					{getActorLabel(event.actorType, event.actorId)}
+					{getActorLabel(event.actorType, (event.actorId?.value ?? ''))}
 				</span>
 				<span class="min-w-0 flex-1">
 					<span class="block truncate text-sm font-medium">{formatEventType(event.eventType)}</span>
@@ -478,7 +478,7 @@
 						{/if}
 						<span class="font-medium">{formatEventType(event.eventType)}</span>
 						<span class="ml-auto font-mono text-xs text-muted-foreground">
-							{getActorLabel(event.actorType, event.actorId)} · {formatTimestampDateTime(
+							{getActorLabel(event.actorType, (event.actorId?.value ?? ''))} · {formatTimestampDateTime(
 								event.occurredAt
 							)}
 						</span>

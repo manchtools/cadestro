@@ -31,7 +31,7 @@ function device(over: {
 	syncIntervalMinutes?: number;
 }) {
 	return create(DeviceSchema, {
-		id: over.id,
+		id: { value: over.id },
 		hostname: over.hostname ?? over.id,
 		status: over.status ?? DeviceStatus.ONLINE,
 		complianceStatus: over.compliance ?? ComplianceStatus.COMPLIANT,

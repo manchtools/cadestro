@@ -103,8 +103,8 @@ func TestHandleAgentMessageRoutesRetainedFrames(t *testing.T) {
 
 	frames := []*cadestrov1.AgentMessage{
 		{Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}}},
-		{Id: "sync-operation", Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: &cadestrov1.SyncDeviceResult{Success: true}}},
-		{Id: "reboot-operation", Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: &cadestrov1.RebootDeviceResult{Success: true}}},
+		{Id: &cadestrov1.MessageId{Value: "sync-operation"}, Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: &cadestrov1.SyncDeviceResult{Success: true}}},
+		{Id: &cadestrov1.MessageId{Value: "reboot-operation"}, Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: &cadestrov1.RebootDeviceResult{Success: true}}},
 		{Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: &cadestrov1.ActionResult{OccurrenceId: &cadestrov1.OccurrenceId{Value: "occurrence"}}}},
 		{Payload: &cadestrov1.AgentMessage_QueryResult{QueryResult: &cadestrov1.OSQueryResult{QueryId: &cadestrov1.QueryId{Value: "query"}}}},
 		{Payload: &cadestrov1.AgentMessage_LogQueryResult{LogQueryResult: &cadestrov1.LogQueryResult{QueryId: &cadestrov1.QueryId{Value: "log"}}}},
@@ -131,7 +131,7 @@ func TestHandleAgentMessageEnforcesTerminalDeviceBinding(t *testing.T) {
 	registry.Register(connection.NewTerminalSession("session", "right-device", "user", "root", 80, 24))
 	handler := &Handler{terminalSessions: registry}
 	message := &cadestrov1.AgentMessage{Payload: &cadestrov1.AgentMessage_TerminalOutput{
-		TerminalOutput: &cadestrov1.TerminalOutput{SessionId: "session", Data: []byte("output")},
+		TerminalOutput: &cadestrov1.TerminalOutput{SessionId: &cadestrov1.SessionId{Value: "session"}, Data: []byte("output")},
 	}}
 
 	err := handler.handleAgentMessage(context.Background(), &connection.Agent{DeviceID: "wrong-device"}, message)

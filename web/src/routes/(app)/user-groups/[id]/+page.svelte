@@ -127,7 +127,7 @@
 	const roleAssignExcludeIds = $derived(
 		(group?.roleGrants ?? [])
 			.filter((g) => g.scopeKind === RoleGrantScopeKind.UNSPECIFIED && g.role)
-			.map((g) => g.role!.id)
+			.map((g) => g.role!.id?.value ?? '')
 	);
 
 	const memberUserIds = $derived(new Set(members.map((x) => x.userId)));
@@ -135,7 +135,7 @@
 
 	const previewRows = $derived<RulePreviewRow[]>(
 		members.map((member) => ({
-			id: member.userId,
+			id: member.userId?.value ?? '',
 			primary: member.email,
 			attributes: [],
 			tone: 'info'
@@ -367,13 +367,13 @@
 		savingIdentity = true;
 		try {
 			const updated = await apiClient.updateUserGroup(
-				group.id,
+				(group.id?.value ?? ''),
 				draftName.trim(),
 				draftDescription.trim()
 			);
 			if (updated) group = updated;
 			if (wantsRule) {
-				const ruled = await apiClient.updateUserGroupQuery(group.id, true, query);
+				const ruled = await apiClient.updateUserGroupQuery((group.id?.value ?? ''), true, query);
 				if (ruled) group = ruled;
 				toast.success(m.user_group_detail_query_updated());
 			}
@@ -392,7 +392,7 @@
 	async function deleteGroup() {
 		if (!group) return;
 		try {
-			await apiClient.deleteUserGroup(group.id);
+			await apiClient.deleteUserGroup((group.id?.value ?? ''));
 			toast.success(m.user_groups_deleted());
 			goto('/user-groups');
 		} catch (error) {
@@ -420,7 +420,7 @@
 	async function addMembers() {
 		if (!group || selectedUserIds.length === 0) return;
 		try {
-			await apiClient.addUserToGroup(group.id, selectedUserIds);
+			await apiClient.addUserToGroup((group.id?.value ?? ''), selectedUserIds);
 			toast.success(m.user_group_detail_member_added());
 			addMemberDialogOpen = false;
 			await loadData();
@@ -433,7 +433,7 @@
 	async function removeMember(userId: string) {
 		if (!group) return;
 		try {
-			await apiClient.removeUserFromGroup(group.id, userId);
+			await apiClient.removeUserFromGroup((group.id?.value ?? ''), userId);
 			toast.success(m.user_group_detail_member_removed());
 			await loadData();
 		} catch (error) {
@@ -445,7 +445,7 @@
 	async function revokeRoleGrant(grant: RoleGrant) {
 		if (!group || !grant.role) return;
 		try {
-			await apiClient.revokeRoleFromUserGroup(group.id, grant.role.id, grant.scopeKind, grant.scopeId);
+			await apiClient.revokeRoleFromUserGroup((group.id?.value ?? ''), (grant.role.id?.value ?? ''), grant.scopeKind, grant.scopeId?.value);
 			toast.success(m.user_group_detail_role_revoked());
 			await loadData();
 		} catch (error) {
@@ -459,7 +459,7 @@
 		if (!group) return;
 		evaluating = true;
 		try {
-			const result = await apiClient.evaluateDynamicUserGroup(group.id);
+			const result = await apiClient.evaluateDynamicUserGroup((group.id?.value ?? ''));
 			if (result.group) group = result.group;
 			toast.success(
 				m.user_group_detail_evaluated({ added: result.usersAdded, removed: result.usersRemoved })
@@ -484,7 +484,7 @@
 								create(MaintenanceWindowEntrySchema, { days: e.days, allow: e.allow })
 							)
 						});
-			const updated = await apiClient.setUserGroupMaintenanceWindow(group.id, window);
+			const updated = await apiClient.setUserGroupMaintenanceWindow((group.id?.value ?? ''), window);
 			if (updated) group = updated;
 			toast.success(m.user_group_detail_window_updated());
 			maintenanceWindowDialogOpen = false;
@@ -692,7 +692,7 @@
 		</Dialog.Header>
 
 		<ItemTablePicker
-			items={availableUsers.map((u) => ({ id: u.id, email: u.email }))}
+			items={availableUsers.map((u) => ({ id: (u.id?.value ?? ''), email: u.email }))}
 			bind:selected={selectedUserIds}
 			searchPlaceholder={m.picker_search_users()}
 			emptyMessage={m.picker_no_users()}
@@ -720,7 +720,7 @@
 		subtitle={group.name}
 		excludeRoleIds={roleAssignExcludeIds}
 		assign={(roleIds, scopeKind, scopeId) =>
-			apiClient.assignRoleToUserGroup(group!.id, roleIds, scopeKind, scopeId)}
+			apiClient.assignRoleToUserGroup(group!.id?.value ?? '', roleIds, scopeKind, scopeId)}
 		onAssigned={loadData}
 	/>
 {/if}

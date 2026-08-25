@@ -110,7 +110,7 @@ import { resetStepKeys } from '$lib/components/actions/pipeline/step-draft';
 
 function packageAction(id: string, name: string, pkg: string): ManagedAction {
 	return create(ManagedActionSchema, {
-		id,
+		id: { value: id },
 		name,
 		description: 'nightly',
 		type: ActionType.PACKAGE,
@@ -121,7 +121,7 @@ function packageAction(id: string, name: string, pkg: string): ManagedAction {
 
 function serviceAction(id: string, name: string, unit: string): ManagedAction {
 	return create(ManagedActionSchema, {
-		id,
+		id: { value: id },
 		name,
 		description: '',
 		type: ActionType.SERVICE,
@@ -131,7 +131,7 @@ function serviceAction(id: string, name: string, unit: string): ManagedAction {
 }
 
 const set: ActionSet = create(ActionSetSchema, {
-	id: SET_ID,
+	id: { value: SET_ID },
 	name: 'Harden SSH baseline',
 	description: 'baseline'
 });

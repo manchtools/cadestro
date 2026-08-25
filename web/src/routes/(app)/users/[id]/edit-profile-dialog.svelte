@@ -38,7 +38,7 @@
 	async function save() {
 		saving = true;
 		try {
-			const updated = await apiClient.updateUserProfile(user.id, {
+			const updated = await apiClient.updateUserProfile((user.id?.value ?? ''), {
 				displayName,
 				givenName,
 				familyName,

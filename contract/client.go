@@ -582,7 +582,7 @@ func (c *Client) SendHello(ctx context.Context, hostname, agentVersion string) e
 	c.mu.RUnlock()
 
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_Hello{
 			Hello: &cadestrov1.Hello{
 				DeviceId:     &cadestrov1.DeviceId{Value: deviceID},
@@ -598,7 +598,7 @@ func (c *Client) SendHello(ctx context.Context, hostname, agentVersion string) e
 // SendHeartbeat sends a heartbeat message to the server.
 func (c *Client) SendHeartbeat(ctx context.Context, hb *cadestrov1.Heartbeat) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_Heartbeat{
 			Heartbeat: hb,
 		},
@@ -610,7 +610,7 @@ func (c *Client) SendHeartbeat(ctx context.Context, hb *cadestrov1.Heartbeat) er
 // ingestion on that pair, so a result replayed after a reconnect updates the
 // same row instead of creating a second one.
 func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.ActionResult) error {
-	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: result}}
+	message := &cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: result}}
 	if result == nil || result.GetRunId().GetValue() == "" || result.GetOccurrenceId().GetValue() == "" {
 		return c.send(ctx, message)
 	}
@@ -620,7 +620,7 @@ func (c *Client) SendActionResult(ctx context.Context, result *cadestrov1.Action
 // SendManifestResult reports the outcome of a complete manifest, once, after
 // its occurrences have reported individually.
 func (c *Client) SendManifestResult(ctx context.Context, result *cadestrov1.ManifestResult) error {
-	message := &cadestrov1.AgentMessage{Id: NewULID(), Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: result}}
+	message := &cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: result}}
 	if result == nil || result.GetRunId().GetValue() == "" || result.GetManifestId().GetValue() == "" {
 		return c.send(ctx, message)
 	}
@@ -628,7 +628,7 @@ func (c *Client) SendManifestResult(ctx context.Context, result *cadestrov1.Mani
 }
 
 func (c *Client) sendResultAwaitAck(ctx context.Context, message *cadestrov1.AgentMessage) error {
-	id := message.Id
+	id := message.GetId().GetValue()
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 	if err := c.send(ctx, message); err != nil {
@@ -655,7 +655,7 @@ func (c *Client) sendResultAwaitAck(ctx context.Context, message *cadestrov1.Age
 // SendQueryResult sends an OS query result to the server.
 func (c *Client) SendQueryResult(ctx context.Context, result *cadestrov1.OSQueryResult) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_QueryResult{
 			QueryResult: result,
 		},
@@ -665,7 +665,7 @@ func (c *Client) SendQueryResult(ctx context.Context, result *cadestrov1.OSQuery
 // SendLogQueryResult sends a log query result to the server.
 func (c *Client) SendLogQueryResult(ctx context.Context, result *cadestrov1.LogQueryResult) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_LogQueryResult{
 			LogQueryResult: result,
 		},
@@ -675,7 +675,7 @@ func (c *Client) SendLogQueryResult(ctx context.Context, result *cadestrov1.LogQ
 // SendSecurityAlert sends a security alert to the server for audit logging.
 func (c *Client) SendSecurityAlert(ctx context.Context, alert *cadestrov1.SecurityAlert) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_SecurityAlert{
 			SecurityAlert: alert,
 		},
@@ -689,7 +689,7 @@ func (c *Client) SendInventory(ctx context.Context, inventory *cadestrov1.Device
 	}
 
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_Inventory{
 			Inventory: inventory,
 		},
@@ -698,12 +698,12 @@ func (c *Client) SendInventory(ctx context.Context, inventory *cadestrov1.Device
 
 func (c *Client) sendSyncDeviceResult(ctx context.Context, id string, operationErr error) error {
 	result := &cadestrov1.SyncDeviceResult{Success: operationErr == nil}
-	return c.send(ctx, &cadestrov1.AgentMessage{Id: id, Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: result}})
+	return c.send(ctx, &cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: result}})
 }
 
 func (c *Client) sendRebootDeviceResult(ctx context.Context, id string, operationErr error) error {
 	result := &cadestrov1.RebootDeviceResult{Success: operationErr == nil}
-	return c.send(ctx, &cadestrov1.AgentMessage{Id: id, Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: result}})
+	return c.send(ctx, &cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: result}})
 }
 
 // SendTerminalOutput sends a stdout/stderr chunk from a remote terminal
@@ -711,7 +711,7 @@ func (c *Client) sendRebootDeviceResult(ctx context.Context, id string, operatio
 // chunking PTY reads to fit the proto's 64KB max data size.
 func (c *Client) SendTerminalOutput(ctx context.Context, out *cadestrov1.TerminalOutput) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_TerminalOutput{
 			TerminalOutput: out,
 		},
@@ -725,7 +725,7 @@ func (c *Client) SendTerminalOutput(ctx context.Context, out *cadestrov1.Termina
 // in flight.
 func (c *Client) SendTerminalStateChange(ctx context.Context, change *cadestrov1.TerminalStateChange) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_TerminalStateChange{
 			TerminalStateChange: change,
 		},
@@ -743,7 +743,7 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) ([]byte, error
 	defer c.unregisterPending(id)
 
 	if err := c.send(ctx, &cadestrov1.AgentMessage{
-		Id: id,
+		Id: &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.AgentMessage_GetLuksKey{
 			GetLuksKey: &cadestrov1.GetLuksKeyRequest{
 				ActionId: &cadestrov1.ActionId{Value: actionID},
@@ -787,7 +787,7 @@ func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, 
 	defer c.unregisterPending(id)
 
 	if err := c.send(ctx, &cadestrov1.AgentMessage{
-		Id: id,
+		Id: &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.AgentMessage_StoreLuksKey{
 			StoreLuksKey: &cadestrov1.StoreLuksKeyRequest{
 				ActionId:       &cadestrov1.ActionId{Value: actionID},
@@ -841,7 +841,7 @@ func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotatio
 	defer c.unregisterPending(id)
 
 	if err := c.send(ctx, &cadestrov1.AgentMessage{
-		Id: id,
+		Id: &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.AgentMessage_StoreLpsPasswords{
 			StoreLpsPasswords: &cadestrov1.StoreLpsPasswordsRequest{
 				ActionId:  &cadestrov1.ActionId{Value: actionID},
@@ -876,7 +876,7 @@ func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotatio
 // SendRevokeLuksDeviceKeyResult sends the result of a LUKS device key revocation back to the server.
 func (c *Client) SendRevokeLuksDeviceKeyResult(ctx context.Context, actionID string, success bool, errMsg string) error {
 	return c.send(ctx, &cadestrov1.AgentMessage{
-		Id: NewULID(),
+		Id: &cadestrov1.MessageId{Value: NewULID()},
 		Payload: &cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult{
 			RevokeLuksDeviceKeyResult: &cadestrov1.RevokeLuksDeviceKeyResult{
 				ActionId: &cadestrov1.ActionId{Value: actionID},
@@ -919,13 +919,13 @@ func (c *Client) unregisterPending(id string) {
 // request channel.
 func (c *Client) deliverPending(msg *cadestrov1.ServerMessage) bool {
 	c.pendingMu.Lock()
-	ch, ok := c.pendingRequests[msg.Id]
+	ch, ok := c.pendingRequests[msg.GetId().GetValue()]
 	c.pendingMu.Unlock()
 	if ok {
 		select {
 		case ch <- msg:
 		default:
-			c.logger.Warn("deliverPending: dropping duplicate response", "id", msg.Id)
+			c.logger.Warn("deliverPending: dropping duplicate response", "id", msg.GetId().GetValue())
 		}
 	}
 	return ok
@@ -1293,7 +1293,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 			}
 			var msgID string
 			if msg != nil {
-				msgID = msg.Id
+				msgID = msg.GetId().GetValue()
 			}
 			c.logger.Error("recovered panic while dispatching ServerMessage; dropping frame (non-fatal)",
 				"message_id", msgID, "payload_type", payloadType, "panic", fmt.Sprintf("%v", r))
@@ -1325,13 +1325,13 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 				if h, ok := handler.(LiveControlHandler); ok {
 					operationErr = h.OnSyncDevice(ctx, p.SyncDevice)
 				}
-				if err := c.sendSyncDeviceResult(ctx, msg.Id, operationErr); err != nil {
+				if err := c.sendSyncDeviceResult(ctx, msg.GetId().GetValue(), operationErr); err != nil {
 					c.logger.Warn("failed to send live sync result", "error", err)
 				}
 			})
 			return nil
 		default:
-			return c.sendSyncDeviceResult(ctx, msg.Id, errors.New("another live operation is already running"))
+			return c.sendSyncDeviceResult(ctx, msg.GetId().GetValue(), errors.New("another live operation is already running"))
 		}
 	case *cadestrov1.ServerMessage_RebootDevice:
 		if p.RebootDevice == nil {
@@ -1345,17 +1345,17 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 				if h, ok := handler.(LiveControlHandler); ok {
 					operationErr = h.OnRebootDevice(ctx, p.RebootDevice)
 				}
-				if err := c.sendRebootDeviceResult(ctx, msg.Id, operationErr); err != nil {
+				if err := c.sendRebootDeviceResult(ctx, msg.GetId().GetValue(), operationErr); err != nil {
 					c.logger.Warn("failed to send live reboot result", "error", err)
 				}
 			})
 			return nil
 		default:
-			return c.sendRebootDeviceResult(ctx, msg.Id, errors.New("another live operation is already running"))
+			return c.sendRebootDeviceResult(ctx, msg.GetId().GetValue(), errors.New("another live operation is already running"))
 		}
 	case *cadestrov1.ServerMessage_Welcome:
 		if p.Welcome == nil {
-			c.logger.Warn("dropping Welcome with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping Welcome with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		c.mu.Lock()
@@ -1368,11 +1368,11 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 
 	case *cadestrov1.ServerMessage_Query:
 		if p.Query == nil {
-			c.logger.Warn("dropping Query with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping Query with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.Query); err != nil {
-			c.logger.Warn("dropping invalid Query", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid Query", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		queryResult, err := handler.OnQuery(ctx, p.Query)
@@ -1387,7 +1387,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 
 	case *cadestrov1.ServerMessage_Error:
 		if p.Error == nil {
-			c.logger.Warn("dropping Error with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping Error with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.Error); err != nil {
@@ -1430,16 +1430,16 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		// The fix belongs in the guard — discover the registerPending callers
 		// and assert each has a case — not in the dispatch shape.
 		if !c.deliverPending(msg) {
-			c.logger.Debug("dropping correlated response without waiter", "message_id", msg.Id)
+			c.logger.Debug("dropping correlated response without waiter", "message_id", msg.GetId().GetValue())
 		}
 
 	case *cadestrov1.ServerMessage_RequestInventory:
 		if p.RequestInventory == nil {
-			c.logger.Warn("dropping RequestInventory with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping RequestInventory with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.RequestInventory); err != nil {
-			c.logger.Warn("dropping invalid RequestInventory", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid RequestInventory", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if invHandler, ok := handler.(InventoryHandler); ok {
@@ -1461,17 +1461,17 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 				})
 			default:
 				c.logger.Warn("dropping RequestInventory: inventory collection already at capacity",
-					"message_id", msg.Id, "limit", inventoryDispatchConcurrency)
+					"message_id", msg.GetId().GetValue(), "limit", inventoryDispatchConcurrency)
 			}
 		}
 
 	case *cadestrov1.ServerMessage_LogQuery:
 		if p.LogQuery == nil {
-			c.logger.Warn("dropping LogQuery with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping LogQuery with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.LogQuery); err != nil {
-			c.logger.Warn("dropping invalid LogQuery", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid LogQuery", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if lqHandler, ok := handler.(LogQueryHandler); ok {
@@ -1490,13 +1490,13 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		if p.RevokeLuksDeviceKey == nil {
 			// A buggy server could deliver a nil payload; dropping it avoids
 			// a nil dereference.
-			c.logger.Warn("dropping RevokeLuksDeviceKey with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping RevokeLuksDeviceKey with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		// Defence-in-depth before the irreversible LUKS slot-7 wipe: reject a
 		// malformed action_id at the SDK boundary.
 		if err := c.validateInbound(p.RevokeLuksDeviceKey); err != nil {
-			c.logger.Warn("dropping invalid RevokeLuksDeviceKey", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid RevokeLuksDeviceKey", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if luksHandler, ok := handler.(LuksHandler); ok {
@@ -1521,17 +1521,17 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 				})
 			default:
 				c.logger.Warn("dropping RevokeLuksDeviceKey: revocation already at capacity",
-					"message_id", msg.Id, "action_id", actionID, "limit", luksRevokeDispatchConcurrency)
+					"message_id", msg.GetId().GetValue(), "action_id", actionID, "limit", luksRevokeDispatchConcurrency)
 			}
 		}
 
 	case *cadestrov1.ServerMessage_TerminalStart:
 		if p.TerminalStart == nil {
-			c.logger.Warn("dropping TerminalStart with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping TerminalStart with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.TerminalStart); err != nil {
-			c.logger.Warn("dropping invalid TerminalStart", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid TerminalStart", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if termHandler, ok := handler.(TerminalHandler); ok {
@@ -1540,16 +1540,16 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 			}
 		} else {
 			c.logger.Debug("dropping TerminalStart: handler does not implement TerminalHandler",
-				"session_id", p.TerminalStart.SessionId)
+				"session_id", p.TerminalStart.GetSessionId().GetValue())
 		}
 
 	case *cadestrov1.ServerMessage_TerminalInput:
 		if p.TerminalInput == nil {
-			c.logger.Warn("dropping TerminalInput with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping TerminalInput with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.TerminalInput); err != nil {
-			c.logger.Warn("dropping invalid TerminalInput", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid TerminalInput", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if termHandler, ok := handler.(TerminalHandler); ok {
@@ -1560,11 +1560,11 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 
 	case *cadestrov1.ServerMessage_TerminalResize:
 		if p.TerminalResize == nil {
-			c.logger.Warn("dropping TerminalResize with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping TerminalResize with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.TerminalResize); err != nil {
-			c.logger.Warn("dropping invalid TerminalResize", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid TerminalResize", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if termHandler, ok := handler.(TerminalHandler); ok {
@@ -1575,11 +1575,11 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 
 	case *cadestrov1.ServerMessage_TerminalStop:
 		if p.TerminalStop == nil {
-			c.logger.Warn("dropping TerminalStop with nil payload", "message_id", msg.Id)
+			c.logger.Warn("dropping TerminalStop with nil payload", "message_id", msg.GetId().GetValue())
 			return nil
 		}
 		if err := c.validateInbound(p.TerminalStop); err != nil {
-			c.logger.Warn("dropping invalid TerminalStop", "message_id", msg.Id, "error", err)
+			c.logger.Warn("dropping invalid TerminalStop", "message_id", msg.GetId().GetValue(), "error", err)
 			return nil
 		}
 		if termHandler, ok := handler.(TerminalHandler); ok {
@@ -1596,7 +1596,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		// — that would tear down the agent connection on every
 		// unknown frame, which is much worse than silently dropping it.
 		c.logger.Debug("dropping unknown ServerMessage payload",
-			"message_id", msg.Id, "type", fmt.Sprintf("%T", msg.Payload))
+			"message_id", msg.GetId().GetValue(), "type", fmt.Sprintf("%T", msg.Payload))
 	}
 	return nil
 }
@@ -1635,7 +1635,7 @@ func (c *Client) ValidateLuksToken(ctx context.Context, token string) (*Validate
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 	if err := c.send(ctx, &cadestrov1.AgentMessage{
-		Id: id,
+		Id: &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.AgentMessage_ValidateLuksToken{
 			ValidateLuksToken: &cadestrov1.ValidateLuksTokenRequest{Token: token},
 		},
@@ -1689,7 +1689,7 @@ func (c *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 	ch := c.registerPending(id)
 	defer c.unregisterPending(id)
 	if err := c.send(ctx, &cadestrov1.AgentMessage{
-		Id:      id,
+		Id:      &cadestrov1.MessageId{Value: id},
 		Payload: &cadestrov1.AgentMessage_SyncRequest{SyncRequest: &cadestrov1.SyncRequest{}},
 	}); err != nil {
 		return nil, fmt.Errorf("send sync request: %w", err)

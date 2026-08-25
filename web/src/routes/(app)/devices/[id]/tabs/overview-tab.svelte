@@ -180,8 +180,8 @@
 
 	async function unassignDevice(assignee: DeviceAssignee) {
 		try {
-			const userId = assignee.type === AssignmentTargetType.USER ? assignee.id : undefined;
-			const groupId = assignee.type === AssignmentTargetType.USER_GROUP ? assignee.id : undefined;
+			const userId = assignee.type === AssignmentTargetType.USER ? assignee.id?.value : undefined;
+			const groupId = assignee.type === AssignmentTargetType.USER_GROUP ? assignee.id?.value : undefined;
 			const updated = await apiClient.unassignDevice(deviceId, userId, groupId);
 			if (updated) ondeviceupdate(updated);
 			await loadAssignees();
@@ -474,4 +474,4 @@
 	</AlertDialog.Content>
 </AlertDialog.Root>
 
-<AssignDeviceDialog bind:open={assignDialogOpen} hostname={device.hostname} existingUserIds={assignees.filter(a => a.type === AssignmentTargetType.USER).map(a => a.id)} existingGroupIds={assignees.filter(a => a.type === AssignmentTargetType.USER_GROUP).map(a => a.id)} onassign={assignDevice} />
+<AssignDeviceDialog bind:open={assignDialogOpen} hostname={device.hostname} existingUserIds={assignees.filter(a => a.type === AssignmentTargetType.USER).map(a => (a.id?.value ?? ''))} existingGroupIds={assignees.filter(a => a.type === AssignmentTargetType.USER_GROUP).map(a => (a.id?.value ?? ''))} onassign={assignDevice} />

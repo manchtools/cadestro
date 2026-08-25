@@ -179,24 +179,24 @@
 
 			const slice = deviceTargets.slice(0, DEVICE_RESULT_LIMIT);
 			const settled = await Promise.allSettled(
-				slice.map((a) => apiClient.getDeviceCompliancePolicyStatus(a.targetId))
+				slice.map((a) => apiClient.getDeviceCompliancePolicyStatus((a.targetId?.value ?? '')))
 			);
 			deviceResults = settled.map((result, i) => {
 				const target = slice[i];
-				const hostname = target.targetName || target.targetId.slice(0, 8) + '...';
+				const hostname = target.targetName || (target.targetId?.value ?? '').slice(0, 8) + '...';
 				if (result.status === 'rejected') {
 					// A device we could not read is reported as unknown, never as passing.
 					console.error('Failed to read device compliance status', result.reason);
 					return {
-						deviceId: target.targetId,
+						deviceId: target.targetId?.value ?? '',
 						hostname,
 						status: ComplianceStatus.UNKNOWN,
 						failing: []
 					};
 				}
-				const evaluation = result.value.policies.find((p) => p.policyId === policyId);
+				const evaluation = result.value.policies.find((p) => (p.policyId?.value ?? '') === policyId);
 				return {
-					deviceId: target.targetId,
+					deviceId: target.targetId?.value ?? '',
 					hostname,
 					status: evaluation?.status ?? ComplianceStatus.UNKNOWN,
 					failing: (evaluation?.rules ?? [])
@@ -309,7 +309,7 @@
 			// Filter to only compliance check actions and exclude already-added ones
 			const existingActionIds = policy?.rules.map((r) => r.actionId?.value ?? '') ?? [];
 			complianceActions = allActions.filter((a) => {
-				if (existingActionIds.includes(a.id)) return false;
+				if (existingActionIds.includes((a.id?.value ?? ''))) return false;
 				if (a.type !== ActionType.SHELL) return false;
 				if (a.params.case === 'shell') {
 					return a.params.value.isCompliance;
@@ -344,7 +344,7 @@
 
 	function handleActionCreatedForRule(action: ManagedAction) {
 		complianceActions = [action, ...complianceActions];
-		selectedActionId = action.id;
+		selectedActionId = (action.id?.value ?? '');
 		addRuleStep = 'select';
 	}
 
@@ -665,12 +665,12 @@
 							{#each filteredComplianceActions as action}
 								<Table.Row
 									class="cursor-pointer"
-									onclick={() => (selectedActionId = selectedActionId === action.id ? '' : action.id)}
+									onclick={() => (selectedActionId = selectedActionId === (action.id?.value ?? '') ? '' : (action.id?.value ?? ''))}
 								>
 									<Table.Cell>
 										<Checkbox
-											checked={selectedActionId === action.id}
-											onCheckedChange={() => (selectedActionId = selectedActionId === action.id ? '' : action.id)}
+											checked={selectedActionId === (action.id?.value ?? '')}
+											onCheckedChange={() => (selectedActionId = selectedActionId === (action.id?.value ?? '') ? '' : (action.id?.value ?? ''))}
 											onclick={(e: MouseEvent) => e.stopPropagation()}
 										/>
 									</Table.Cell>

@@ -40,13 +40,13 @@ func TestEraseJITUser_ErasesSubjectAndCryptoShredsAuditDetail(t *testing.T) {
 
 	const erasedAddress = "erased-jit-user@test.example"
 	_, err := f.client.UpdateUserEmail(f.ctx(), authed(&cadestrov1.UpdateUserEmailRequest{
-		Id: subject.ID, Email: erasedAddress,
+		Id: &cadestrov1.UserId{Value: subject.ID}, Email: erasedAddress,
 	}, admin.Token))
 	require.NoError(t, err)
 	updateOp := f.onlyOperationFor(cadestrov1connect.ControlServiceUpdateUserEmailProcedure)
 	sealed := f.effectWithAction(f.effectsOf(updateOp.OperationID), "UPDATE_EMAIL").SealedDetail
 
-	_, err = f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: subject.ID}, admin.Token))
+	_, err = f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: subject.ID}}, admin.Token))
 	require.NoError(t, err)
 
 	op := f.onlyOperationFor(cadestrov1connect.ControlServiceEraseJITUserProcedure)
@@ -113,7 +113,7 @@ func TestEraseJITUser_RejectsSCIMSubjectWithoutMutation(t *testing.T) {
 	admin := f.seedActor(grant{Permissions: []string{"EraseJITUser"}})
 	subject := f.seedSubject()
 
-	_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: subject.ID}, admin.Token))
+	_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: subject.ID}}, admin.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err))
 	_, err = f.store.GetUser(f.ctx(), subject.ID)
 	assert.NoError(t, err, "a SCIM-created subject must survive the rejected JIT erasure")
@@ -129,7 +129,7 @@ func TestEraseJITUser_ValidatesIDBeforeWork(t *testing.T) {
 
 	for name, id := range map[string]string{"absent": "", "malformed": "not-a-ulid"} {
 		t.Run(name, func(t *testing.T) {
-			_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: id}, admin.Token))
+			_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: id}}, admin.Token))
 			assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 		})
 	}
@@ -151,12 +151,12 @@ func TestEraseJITUser_UnknownAndOutOfScopeTargetsAreNotFound(t *testing.T) {
 
 	for name, id := range map[string]string{"unknown": newULID(), "outside scope": outside.ID} {
 		t.Run(name, func(t *testing.T) {
-			_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: id}, operator.Token))
+			_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: id}}, operator.Token))
 			assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err))
 		})
 	}
 
-	_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: inside.ID}, operator.Token))
+	_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: inside.ID}}, operator.Token))
 	require.NoError(t, err, "a user-group-scoped grant may erase a JIT subject inside that group")
 	_, err = f.store.GetUser(f.ctx(), outside.ID)
 	assert.NoError(t, err, "the out-of-scope subject must remain untouched")
@@ -176,7 +176,7 @@ func TestEraseJITUser_AuditFailureRollsBackErasure(t *testing.T) {
 		BEGIN SELECT RAISE(ABORT, 'rejected JIT erasure audit'); END`)
 	require.NoError(t, err)
 
-	resp, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: subject.ID}, admin.Token))
+	resp, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: subject.ID}}, admin.Token))
 	assert.Nil(t, resp)
 	assert.Equal(t, connect.CodeInternal, connectCodeOf(t, err))
 	_, err = f.store.GetUser(f.ctx(), subject.ID)
@@ -195,7 +195,7 @@ func TestUpdateUserEmail_SealsTheTransitionForTheSubject(t *testing.T) {
 	subject := f.seedSubject()
 
 	_, err := f.client.UpdateUserEmail(f.ctx(), authed(&cadestrov1.UpdateUserEmailRequest{
-		Id: subject.ID, Email: "renamed@test.example",
+		Id: &cadestrov1.UserId{Value: subject.ID}, Email: "renamed@test.example",
 	}, admin.Token))
 	require.NoError(t, err)
 
@@ -220,12 +220,12 @@ func TestUpdateUserEmail_SelfTierIsConfinedToTheCaller(t *testing.T) {
 	other := f.seedSubject()
 
 	_, err := f.client.UpdateUserEmail(f.ctx(), authed(&cadestrov1.UpdateUserEmailRequest{
-		Id: self.ID, Email: "myself@test.example",
+		Id: &cadestrov1.UserId{Value: self.ID}, Email: "myself@test.example",
 	}, self.Token))
 	require.NoError(t, err, "the self tier admits the caller's own row")
 
 	_, err = f.client.UpdateUserEmail(f.ctx(), authed(&cadestrov1.UpdateUserEmailRequest{
-		Id: other.ID, Email: "hijacked@test.example",
+		Id: &cadestrov1.UserId{Value: other.ID}, Email: "hijacked@test.example",
 	}, self.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err),
 		"a self-scoped caller must not learn that another subject exists")
@@ -254,12 +254,12 @@ func TestScopedCaller_SeesNotFoundForSubjectOutsideScope(t *testing.T) {
 	})
 
 	_, err := f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
-		Id: inside.ID, DisplayName: "Inside",
+		Id: &cadestrov1.UserId{Value: inside.ID}, DisplayName: "Inside",
 	}, confined.Token))
 	require.NoError(t, err, "a confined caller may act inside their scope")
 
 	_, err = f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
-		Id: outside.ID, DisplayName: "Outside",
+		Id: &cadestrov1.UserId{Value: outside.ID}, DisplayName: "Outside",
 	}, confined.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err),
 		"scoped non-owner access is reported as not found, never as permission denied")
@@ -282,7 +282,7 @@ func TestGrantEvaluation_GlobalVersusTwoScopes(t *testing.T) {
 	global := f.seedActor(grant{Permissions: perms})
 	for _, target := range []*actor{inA, inB, inC} {
 		_, err := f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
-			Id: target.ID, DisplayName: "global",
+			Id: &cadestrov1.UserId{Value: target.ID}, DisplayName: "global",
 		}, global.Token))
 		assert.NoError(t, err, "an unscoped grant reaches every subject")
 	}
@@ -294,12 +294,12 @@ func TestGrantEvaluation_GlobalVersusTwoScopes(t *testing.T) {
 	)
 	for _, target := range []*actor{inA, inB} {
 		_, err := f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
-			Id: target.ID, DisplayName: "scoped",
+			Id: &cadestrov1.UserId{Value: target.ID}, DisplayName: "scoped",
 		}, twoScopes.Token))
 		assert.NoError(t, err, "both scopes of a twice-granted role are honoured")
 	}
 	_, err := f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
-		Id: inC.ID, DisplayName: "scoped",
+		Id: &cadestrov1.UserId{Value: inC.ID}, DisplayName: "scoped",
 	}, twoScopes.Token))
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err),
 		"a subject in neither granted scope stays invisible")
@@ -315,7 +315,7 @@ func TestSetUserDisabled_BumpsSessionVersionAndRecordsTheTransition(t *testing.T
 	require.NoError(t, err)
 
 	_, err = f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
-		Id: subject.ID, Disabled: true,
+		Id: &cadestrov1.UserId{Value: subject.ID}, Disabled: true,
 	}, admin.Token))
 	require.NoError(t, err)
 
@@ -354,13 +354,13 @@ func TestSetUserDisabled_HasNoSelfOrScopedTier(t *testing.T) {
 	// scoped grant being MINTED through the RPC — see
 	// TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole.
 	_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
-		Id: target.ID, Disabled: true,
+		Id: &cadestrov1.UserId{Value: target.ID}, Disabled: true,
 	}, confined.Token))
 	require.NoError(t, err)
 
 	selfOnly := f.seedActor(grant{Permissions: []string{"GetCurrentUser"}})
 	_, err = f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
-		Id: selfOnly.ID, Disabled: false,
+		Id: &cadestrov1.UserId{Value: selfOnly.ID}, Disabled: false,
 	}, selfOnly.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err),
 		"a subject cannot change their own disabled state")
@@ -388,7 +388,7 @@ func TestSetUserDisabled_AllowsDisablingFinalAdmin(t *testing.T) {
 			token := f.mintToken(soleAdmin.ID, soleAdmin.Email)
 
 			_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
-				Id: soleAdmin.ID, Disabled: true,
+				Id: &cadestrov1.UserId{Value: soleAdmin.ID}, Disabled: true,
 			}, token))
 			require.NoError(t, err)
 			state, err := f.store.GetUserSessionState(f.ctx(), soleAdmin.ID)
@@ -417,7 +417,7 @@ func TestSetUserDisabled_ConcurrentAdminsMayReachZero(t *testing.T) {
 		go func() {
 			<-start
 			_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
-				Id: attempt.id, Disabled: true,
+				Id: &cadestrov1.UserId{Value: attempt.id}, Disabled: true,
 			}, attempt.token))
 			results <- err
 		}()
@@ -440,7 +440,7 @@ func TestAddUserSshKey_RecordsTheKeyFingerprintNotTheKey(t *testing.T) {
 	subject := f.seedSubject()
 
 	resp, err := f.client.AddUserSshKey(f.ctx(), authed(&cadestrov1.AddUserSshKeyRequest{
-		UserId: subject.ID, PublicKey: testSSHKey, Comment: "laptop",
+		UserId: &cadestrov1.UserId{Value: subject.ID}, PublicKey: testSSHKey, Comment: "laptop",
 	}, admin.Token))
 	require.NoError(t, err)
 	require.NotNil(t, resp.Msg.Key)
@@ -452,7 +452,7 @@ func TestAddUserSshKey_RecordsTheKeyFingerprintNotTheKey(t *testing.T) {
 
 	// Removing it records the same digest, so the two rows correlate.
 	_, err = f.client.RemoveUserSshKey(f.ctx(), authed(&cadestrov1.RemoveUserSshKeyRequest{
-		UserId: subject.ID, KeyId: resp.Msg.Key.Id,
+		UserId: &cadestrov1.UserId{Value: subject.ID}, KeyId: &cadestrov1.SshKeyId{Value: resp.Msg.Key.GetId().GetValue()},
 	}, admin.Token))
 	require.NoError(t, err)
 
@@ -468,7 +468,7 @@ func TestAddUserSshKey_RejectsUnparsableKey(t *testing.T) {
 	subject := f.seedSubject()
 
 	_, err := f.client.AddUserSshKey(f.ctx(), authed(&cadestrov1.AddUserSshKeyRequest{
-		UserId: subject.ID, PublicKey: "ssh-ed25519 not-base64-at-all",
+		UserId: &cadestrov1.UserId{Value: subject.ID}, PublicKey: "ssh-ed25519 not-base64-at-all",
 	}, admin.Token))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 
@@ -485,7 +485,7 @@ func TestUpdateUserLinuxUsername_HasNoSelfTier(t *testing.T) {
 	selfish := f.seedActor(grant{Permissions: []string{"UpdateUserProfile:self", "GetCurrentUser"}})
 
 	_, err := f.client.UpdateUserLinuxUsername(f.ctx(), authed(&cadestrov1.UpdateUserLinuxUsernameRequest{
-		UserId: selfish.ID, LinuxUsername: "root",
+		UserId: &cadestrov1.UserId{Value: selfish.ID}, LinuxUsername: "root",
 	}, selfish.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err),
 		"the account name keys sudo policy on managed devices; a subject cannot choose their own")
@@ -510,7 +510,7 @@ func TestListUsers_ConfinedCallerSeesOnlyTheirScope(t *testing.T) {
 
 	seen := make(map[string]bool, len(resp.Msg.Users))
 	for _, u := range resp.Msg.Users {
-		seen[u.Id] = true
+		seen[u.GetId().GetValue()] = true
 	}
 	assert.True(t, seen[inside.ID], "a subject inside the scope is listed")
 	assert.False(t, seen[outside.ID], "a subject outside the scope is not")

@@ -14,7 +14,7 @@ import (
 // the same complete authoring representation as the Action handlers.
 func ActionToProto(row store.ActionRow) (*cadestrov1.ManagedAction, error) {
 	action := &cadestrov1.ManagedAction{
-		Id: row.ID, Name: row.Name, Type: cadestrov1.ActionType(row.ActionType),
+		Id: &cadestrov1.ActionId{Value: row.ID}, Name: row.Name, Type: cadestrov1.ActionType(row.ActionType),
 		DesiredState: cadestrov1.DesiredState(row.DesiredState), TimeoutSeconds: row.TimeoutSeconds,
 		CreatedBy: row.CreatedBy,
 	}
@@ -51,7 +51,7 @@ func ActionSetToProto(row store.ActionSetRow, memberCount int64) (*cadestrov1.Ac
 		return nil, fmt.Errorf("authoring: stored action set schedule is empty")
 	}
 	set := &cadestrov1.ActionSet{
-		Id: row.ID, Name: row.Name, Description: row.Description,
+		Id: &cadestrov1.ActionSetId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		MemberCount: boundedCount(memberCount), CreatedBy: row.CreatedBy,
 		Schedule: schedule, OnFailure: cadestrov1.OnFailure(row.OnFailure),
 	}
@@ -86,7 +86,7 @@ func DefinitionToProto(row store.DefinitionRow, memberCount int64) (*cadestrov1.
 		return nil, fmt.Errorf("authoring: stored definition schedule is empty")
 	}
 	definition := &cadestrov1.Definition{
-		Id: row.ID, Name: row.Name, Description: row.Description,
+		Id: &cadestrov1.DefinitionId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		MemberCount: boundedCount(memberCount), CreatedBy: row.CreatedBy, Schedule: schedule,
 	}
 	if row.CreatedAt != nil {

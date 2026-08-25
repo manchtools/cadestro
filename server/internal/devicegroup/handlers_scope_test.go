@@ -99,7 +99,7 @@ func TestListDeviceGroupsForDevice_OutOfScopeDeviceIsNotAnExistenceOracle(t *tes
 		require.NotNil(t, resp)
 		ids := make([]string, 0, len(resp.Msg.Groups))
 		for _, g := range resp.Msg.Groups {
-			ids = append(ids, g.Id)
+			ids = append(ids, g.GetId().GetValue())
 		}
 		assert.Contains(t, ids, scopeGroup)
 	})
@@ -116,7 +116,7 @@ func TestListDeviceGroupsForDevice_OutOfScopeDeviceIsNotAnExistenceOracle(t *tes
 		require.NotNil(t, resp)
 		ids := make([]string, 0, len(resp.Msg.Groups))
 		for _, g := range resp.Msg.Groups {
-			ids = append(ids, g.Id)
+			ids = append(ids, g.GetId().GetValue())
 		}
 		assert.Contains(t, ids, otherGroup, "an unrestricted caller still sees the device's groups")
 	})

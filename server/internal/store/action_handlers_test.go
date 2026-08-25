@@ -66,10 +66,10 @@ func shellCreate(name string) *cadestrov1.CreateActionRequest {
 
 func TestActionHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newActionHandlerFixture(t)
-	_, err := validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&cadestrov1.GetActionRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&cadestrov1.GetActionRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetAction)(context.Background(), connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -82,27 +82,27 @@ func TestActionHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 
 	created, err := f.handlers.CreateAction(ctx, connect.NewRequest(shellCreate("bootstrap")))
 	require.NoError(t, err)
-	id := created.Msg.Action.Id
+	id := created.Msg.Action.GetId().GetValue()
 	assert.Equal(t, int32(300), created.Msg.Action.TimeoutSeconds)
 	assert.Equal(t, "printf ok", created.Msg.Action.GetShell().Script)
 	assert.True(t, created.Msg.Action.CreatedAt.AsTime().Equal(f.now))
 
-	got, err := f.handlers.GetAction(ctx, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
+	got, err := f.handlers.GetAction(ctx, connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: id}}))
 	require.NoError(t, err)
 	assert.Equal(t, "bootstrap", got.Msg.Action.Name)
 
-	renamed, err := f.handlers.RenameAction(ctx, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: id, Name: "renamed"}))
+	renamed, err := f.handlers.RenameAction(ctx, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: &cadestrov1.ActionId{Value: id}, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Action.Name)
 
 	described, err := f.handlers.UpdateActionDescription(ctx, connect.NewRequest(&cadestrov1.UpdateActionDescriptionRequest{
-		Id: id, Description: "audited direct state",
+		Id: &cadestrov1.ActionId{Value: id}, Description: "audited direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "audited direct state", described.Msg.Action.Description)
 
 	updated, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
-		Id: id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_ABSENT,
+		Id: &cadestrov1.ActionId{Value: id}, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_ABSENT,
 		TimeoutSeconds: 45, Schedule: &cadestrov1.ActionSchedule{Cron: "0 5 * * *"},
 		Params: &cadestrov1.UpdateActionParamsRequest_Shell{Shell: &cadestrov1.ShellParams{
 			Interpreter: "/bin/bash", Script: "printf changed",
@@ -115,12 +115,12 @@ func TestActionHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	listed, err := f.handlers.ListActions(ctx, connect.NewRequest(&cadestrov1.ListActionsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, listed.Msg.Actions, 1)
-	assert.Equal(t, id, listed.Msg.Actions[0].Id)
+	assert.Equal(t, id, listed.Msg.Actions[0].GetId().GetValue())
 	assert.Equal(t, int32(1), listed.Msg.TotalCount)
 
-	_, err = f.handlers.DeleteAction(ctx, connect.NewRequest(&cadestrov1.DeleteActionRequest{Id: id}))
+	_, err = f.handlers.DeleteAction(ctx, connect.NewRequest(&cadestrov1.DeleteActionRequest{Id: &cadestrov1.ActionId{Value: id}}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetAction(ctx, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
+	_, err = f.handlers.GetAction(ctx, connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: id}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range authoring.ActionMutationProcedures() {
@@ -173,14 +173,14 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 
 	var before string
 	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT params FROM actions WHERE id = $1`, created.Msg.Action.Id).Scan(&before))
+		`SELECT params FROM actions WHERE id = $1`, created.Msg.Action.GetId().GetValue()).Scan(&before))
 	assert.NotContains(t, before, diskKey)
 	assert.Contains(t, before, "enc:v1:")
 	beforeParams := &cadestrov1.EncryptionAuthoringParams{}
 	require.NoError(t, actionparams.UnmarshalActionParams([]byte(before), beforeParams))
 
 	updated, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
-		Id: created.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Id: &cadestrov1.ActionId{Value: created.Msg.Action.GetId().GetValue()}, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 		Params: &cadestrov1.UpdateActionParamsRequest_Encryption{Encryption: &cadestrov1.EncryptionAuthoringParams{
 			RotationIntervalDays: 60, MinWords: 6,
 		}},
@@ -189,7 +189,7 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 	assert.True(t, updated.Msg.Action.GetEncryption().PresharedKeyConfigured)
 	var after string
 	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT params FROM actions WHERE id = $1`, created.Msg.Action.Id).Scan(&after))
+		`SELECT params FROM actions WHERE id = $1`, created.Msg.Action.GetId().GetValue()).Scan(&after))
 	assert.Contains(t, after, "enc:v1:")
 	afterParams := &cadestrov1.EncryptionAuthoringParams{}
 	require.NoError(t, actionparams.UnmarshalActionParams([]byte(after), afterParams))
@@ -211,7 +211,7 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 
 	clientKey := "-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----"
 	updatedWifi, err := f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
-		Id: wifi.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Id: &cadestrov1.ActionId{Value: wifi.Msg.Action.GetId().GetValue()}, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 		Params: &cadestrov1.UpdateActionParamsRequest_Wifi{Wifi: &cadestrov1.WifiAuthoringParams{
 			Ssid: "office", AuthType: cadestrov1.WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS,
 			ClientKey: &clientKey, Identity: "device@example.test", AutoConnect: true,
@@ -222,7 +222,7 @@ func TestActionHandlers_ActionCredentialsAreWriteOnlyAndEncryptedAtRest(t *testi
 	assert.True(t, updatedWifi.Msg.Action.GetWifi().ClientKeyConfigured)
 	var wifiStored string
 	require.NoError(t, f.raw.QueryRow(context.Background(),
-		`SELECT params FROM actions WHERE id = $1`, updatedWifi.Msg.Action.Id).Scan(&wifiStored))
+		`SELECT params FROM actions WHERE id = $1`, updatedWifi.Msg.Action.GetId().GetValue()).Scan(&wifiStored))
 	assert.NotContains(t, wifiStored, wifiPSK)
 	assert.NotContains(t, wifiStored, clientKey)
 	storedWifi := &cadestrov1.WifiAuthoringParams{}
@@ -285,21 +285,21 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 		}},
 	})
 	for _, id := range []string{directID, transitiveID} {
-		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
+		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: id}}))
 		require.NoError(t, err)
 	}
 	for _, id := range []string{outsideID, unassignedID, systemID} {
-		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: id}))
+		_, err := f.handlers.GetAction(scoped, connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: id}}))
 		assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), id)
 	}
-	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: transitiveID, Name: "denied"}))
+	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: &cadestrov1.ActionId{Value: transitiveID}, Name: "denied"}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "transitive visibility never grants write scope")
-	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: directID, Name: "allowed"}))
+	_, err = f.handlers.RenameAction(scoped, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: &cadestrov1.ActionId{Value: directID}, Name: "allowed"}))
 	require.NoError(t, err)
 
 	list, err := f.handlers.ListActions(scoped, connect.NewRequest(&cadestrov1.ListActionsRequest{}))
 	require.NoError(t, err)
-	ids := []string{list.Msg.Actions[0].Id, list.Msg.Actions[1].Id}
+	ids := []string{list.Msg.Actions[0].GetId().GetValue(), list.Msg.Actions[1].GetId().GetValue()}
 	sort.Strings(ids)
 	want := []string{directID, transitiveID}
 	sort.Strings(want)
@@ -316,13 +316,13 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	require.Len(t, page2.Msg.Actions, 1)
-	assert.NotEqual(t, page1.Msg.Actions[0].Id, page2.Msg.Actions[0].Id)
+	assert.NotEqual(t, page1.Msg.Actions[0].GetId().GetValue(), page2.Msg.Actions[0].GetId().GetValue())
 	assert.Equal(t, int32(4), page2.Msg.TotalCount, "system actions are absent from the operator surface")
 
 	unassigned, err := f.handlers.ListActions(global, connect.NewRequest(&cadestrov1.ListActionsRequest{UnassignedOnly: true}))
 	require.NoError(t, err)
 	require.Len(t, unassigned.Msg.Actions, 2)
-	unassignedIDs := []string{unassigned.Msg.Actions[0].Id, unassigned.Msg.Actions[1].Id}
+	unassignedIDs := []string{unassigned.Msg.Actions[0].GetId().GetValue(), unassigned.Msg.Actions[1].GetId().GetValue()}
 	assert.ElementsMatch(t, []string{transitiveID, unassignedID}, unassignedIDs,
 		"membership is not an assignment; only direct assignment rows exclude an action")
 	typeFiltered, err := f.handlers.ListActions(global, connect.NewRequest(&cadestrov1.ListActionsRequest{
@@ -330,7 +330,7 @@ func TestActionHandlers_KeysetFiltersAndObjectScope(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	require.Len(t, typeFiltered.Msg.Actions, 1)
-	assert.Equal(t, unassignedID, typeFiltered.Msg.Actions[0].Id)
+	assert.Equal(t, unassignedID, typeFiltered.Msg.Actions[0].GetId().GetValue())
 }
 
 func TestActionHandlers_CorruptStoredParamsFailClosed(t *testing.T) {
@@ -345,7 +345,7 @@ func TestActionHandlers_CorruptStoredParamsFailClosed(t *testing.T) {
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = '{"bogus":true}' WHERE id = $1`, action.ID)
 	require.NoError(t, err)
 
-	_, err = f.handlers.GetAction(f.actor("GetAction"), connect.NewRequest(&cadestrov1.GetActionRequest{Id: action.ID}))
+	_, err = f.handlers.GetAction(f.actor("GetAction"), connect.NewRequest(&cadestrov1.GetActionRequest{Id: &cadestrov1.ActionId{Value: action.ID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 
@@ -380,7 +380,7 @@ func TestActionHandlers_RejectUnsafeOrMismatchedParamsAndSystemMutation(t *testi
 		Params: []byte(`{}`), System: true,
 	})
 	require.NoError(t, err)
-	_, err = f.handlers.RenameAction(ctx, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: system.ID, Name: "operator"}))
+	_, err = f.handlers.RenameAction(ctx, connect.NewRequest(&cadestrov1.RenameActionRequest{Id: &cadestrov1.ActionId{Value: system.ID}, Name: "operator"}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 }
 
@@ -416,7 +416,7 @@ func TestActionHandlers_RejectComplianceShellWithoutDetectionScript(t *testing.T
 	require.NoError(t, err, "a compliance action carrying a detection script stays authorable")
 
 	_, err = f.handlers.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
-		Id: created.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
+		Id: &cadestrov1.ActionId{Value: created.Msg.Action.GetId().GetValue()}, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
 		TimeoutSeconds: 300,
 		Params: &cadestrov1.UpdateActionParamsRequest_Shell{Shell: &cadestrov1.ShellParams{
 			Interpreter: "/bin/sh", Script: "echo remediate", IsCompliance: true,

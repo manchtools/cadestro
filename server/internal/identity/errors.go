@@ -68,7 +68,7 @@ const (
 // log.
 func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, msg string) *connect.Error {
 	e := connect.NewError(connectCode, errors.New(msg))
-	detail := &cadestrov1.ErrorDetail{Code: code, RequestId: middleware.RequestIDFromContext(ctx)}
+	detail := &cadestrov1.ErrorDetail{Code: code, RequestId: &cadestrov1.RequestId{Value: middleware.RequestIDFromContext(ctx)}}
 	if d, err := connect.NewErrorDetail(detail); err == nil {
 		e.AddDetail(d)
 	}

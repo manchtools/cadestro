@@ -31,7 +31,7 @@ import ActionParamsEditor from './action-params-editor.svelte';
 
 function packageAction(over: Partial<Pick<ManagedAction, 'timeoutSeconds'>> = {}) {
 	return create(ManagedActionSchema, {
-		id: ACTION_ID,
+		id: { value: ACTION_ID },
 		name: 'Install curl',
 		description: 'baseline tooling',
 		type: ActionType.PACKAGE,

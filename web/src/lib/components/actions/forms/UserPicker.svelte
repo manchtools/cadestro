@@ -126,7 +126,7 @@
 	});
 
 	function handleUserActionSelect(actionId: string) {
-		const action = userActions.find((a) => a.id === actionId);
+		const action = userActions.find((a) => (a.id?.value ?? '') === actionId);
 		if (action?.params.case === 'user') {
 			const username = action.params.value.username;
 			if (!usernames.some((u) => u.trim().toLowerCase() === username.toLowerCase())) {
@@ -223,7 +223,7 @@
 						{#each availableUserActions as userAction}
 							{@const userParams = userAction.params.case === 'user' ? userAction.params.value : null}
 							{#if userParams}
-								<Select.Item value={userAction.id}>
+								<Select.Item value={(userAction.id?.value ?? '')}>
 									{userAction.name} ({userParams.username})
 								</Select.Item>
 							{/if}

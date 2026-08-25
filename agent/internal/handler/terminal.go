@@ -257,7 +257,7 @@ func (h *Handler) snapshotTerminalSender() TerminalSender {
 // for that state between every step and reverts whichever side
 // effects already landed.
 func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) error {
-	logger := h.logger.With("session_id", req.SessionId, "tty_user", req.TtyUser)
+	logger := h.logger.With("session_id", req.GetSessionId().GetValue(), "tty_user", req.TtyUser)
 	logger.Info("opening terminal session")
 
 	// Snapshot the sender once under the lock so we never read
@@ -281,7 +281,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// compromised. The constant comes from the SDK so the prefix is
 	// the single source of truth.
 	if !sysuser.IsValidName(req.TtyUser) || !strings.HasPrefix(req.TtyUser, terminal.TTYUsernamePrefix) {
-		h.failTerminalStart(ctx, sender, req.SessionId, "invalid tty username")
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), "invalid tty username")
 		return nil
 	}
 
@@ -299,18 +299,18 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// user happens to exist.
 	if h.store == nil {
 		logger.Warn("terminal start rejected: no store wired for tty gate")
-		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), "terminal sessions are disabled on this device")
 		return nil
 	}
 	enabled, err := h.store.IsTTYEnabled(ctx)
 	if err != nil {
 		logger.Warn("failed to read tty toggle state; refusing session", "error", err)
-		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), "terminal sessions are disabled on this device")
 		return nil
 	}
 	if !enabled {
 		logger.Info("terminal start rejected: tty disabled on device")
-		h.failTerminalStart(ctx, sender, req.SessionId, "terminal sessions are disabled on this device")
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), "terminal sessions are disabled on this device")
 		return nil
 	}
 
@@ -320,7 +320,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// allocating a 0xN / 1xN terminal.
 	if err := validateDims(req.Cols, req.Rows); err != nil {
 		logger.Warn("terminal start rejected: bad dimensions", "cols", req.Cols, "rows", req.Rows)
-		h.failTerminalStart(ctx, sender, req.SessionId, err.Error())
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), err.Error())
 		return nil
 	}
 
@@ -334,8 +334,8 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// escape /tmp. Placed after the TTY/dims gates so those keep their existing
 	// rejection precedence, but before the user lookup so an invalid id costs no
 	// syscall.
-	if _, err := ulid.Parse(req.SessionId); err != nil {
-		h.failTerminalStart(ctx, sender, req.SessionId, "invalid session id")
+	if _, err := ulid.Parse(req.GetSessionId().GetValue()); err != nil {
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), "invalid session id")
 		return nil
 	}
 
@@ -345,11 +345,11 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// yet, or the user has been disabled.
 	info, err := sysuserGet(ctx, req.TtyUser)
 	if err != nil {
-		h.failTerminalStart(ctx, sender, req.SessionId, fmt.Sprintf("tty user %q not provisioned: %v", req.TtyUser, err))
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), fmt.Sprintf("tty user %q not provisioned: %v", req.TtyUser, err))
 		return nil
 	}
 	if info.Locked {
-		h.failTerminalStart(ctx, sender, req.SessionId, fmt.Sprintf("tty user %q is disabled", req.TtyUser))
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), fmt.Sprintf("tty user %q is disabled", req.TtyUser))
 		return nil
 	}
 
@@ -363,7 +363,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	setupCtx, setupCancel := context.WithTimeout(sessionCtx, terminalSetupTimeout)
 	defer setupCancel()
 	ts := &terminalSession{
-		id:      req.SessionId,
+		id:      req.GetSessionId().GetValue(),
 		ttyUser: req.TtyUser,
 		sender:  sender,
 		state:   sessionStateStarting,
@@ -378,10 +378,10 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	if h.terminals == nil {
 		h.terminals = make(map[string]*terminalSession)
 	}
-	if _, exists := h.terminals[req.SessionId]; exists {
+	if _, exists := h.terminals[req.GetSessionId().GetValue()]; exists {
 		h.mu.Unlock()
 		cancel()
-		h.failTerminalStart(ctx, sender, req.SessionId, "session already exists")
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), "session already exists")
 		return nil
 	}
 	limit := h.terminalLimit
@@ -391,10 +391,10 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	if len(h.terminals) >= limit {
 		h.mu.Unlock()
 		cancel()
-		h.failTerminalStart(ctx, sender, req.SessionId, fmt.Sprintf("device terminal session limit reached (%d)", limit))
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), fmt.Sprintf("device terminal session limit reached (%d)", limit))
 		return nil
 	}
-	h.terminals[req.SessionId] = ts
+	h.terminals[req.GetSessionId().GetValue()] = ts
 	h.mu.Unlock()
 
 	// Track which side effects have landed so the abort path can
@@ -413,11 +413,11 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 		if shellActivated {
 			// Only revert if no other session for this user is still
 			// active — matches the live-session cleanup path.
-			if !h.anySessionForUserExcept(req.TtyUser, req.SessionId) {
+			if !h.anySessionForUserExcept(req.TtyUser, req.GetSessionId().GetValue()) {
 				h.deactivateShell(ctx, req.TtyUser)
 			}
 		}
-		h.removeTerminal(req.SessionId)
+		h.removeTerminal(req.GetSessionId().GetValue())
 	}
 
 	// abortFail tears down whatever was built and emits STATE_ERROR.
@@ -425,7 +425,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// asked for.
 	abortFail := func(reason string) {
 		cleanup()
-		h.failTerminalStart(ctx, sender, req.SessionId, reason)
+		h.failTerminalStart(ctx, sender, req.GetSessionId().GetValue(), reason)
 	}
 
 	// abortStopped tears down whatever was built but does NOT emit a
@@ -467,7 +467,7 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 		abortStopped()
 		return nil
 	}
-	tempHome := filepath.Join("/tmp", req.TtyUser+"."+req.SessionId)
+	tempHome := filepath.Join("/tmp", req.TtyUser+"."+req.GetSessionId().GetValue())
 	if err := os.Mkdir(tempHome, 0o700); err != nil {
 		abortFail(fmt.Sprintf("create temp home: %v", err))
 		return nil
@@ -533,12 +533,12 @@ func (h *Handler) OnTerminalStart(ctx context.Context, req *pb.TerminalStart) er
 	// learned we're alive — there's no point keeping the PTY open
 	// and burning a slot, so tear the session down.
 	if err := sender.SendTerminalStateChange(ctx, &pb.TerminalStateChange{
-		SessionId: req.SessionId,
+		SessionId: req.GetSessionId(),
 		State:     pb.TerminalSessionState_TERMINAL_SESSION_STATE_STARTED,
 	}); err != nil {
 		logger.Warn("failed to send STARTED state change; aborting session", "error", err)
 		cleanupCtx, cancelCleanup := terminalCleanupContext(ctx)
-		h.closeTerminal(cleanupCtx, req.SessionId, "send started failed")
+		h.closeTerminal(cleanupCtx, req.GetSessionId().GetValue(), "send started failed")
 		cancelCleanup()
 		return nil
 	}
@@ -557,9 +557,9 @@ func (ts *terminalSession) touchLocked() {
 // sessions are ignored at debug level — the control may have already
 // torn down the session and a few in-flight frames are normal.
 func (h *Handler) OnTerminalInput(ctx context.Context, req *pb.TerminalInput) error {
-	ts := h.lookupTerminal(req.SessionId)
+	ts := h.lookupTerminal(req.GetSessionId().GetValue())
 	if ts == nil {
-		h.logger.Debug("terminal input for unknown session", "session_id", req.SessionId)
+		h.logger.Debug("terminal input for unknown session", "session_id", req.GetSessionId().GetValue())
 		return nil
 	}
 	// Sessions in the starting state have no PTY yet; ignore until
@@ -568,11 +568,11 @@ func (h *Handler) OnTerminalInput(ctx context.Context, req *pb.TerminalInput) er
 	sess := ts.session
 	ts.mu.Unlock()
 	if sess == nil {
-		h.logger.Debug("terminal input for not-yet-active session", "session_id", req.SessionId)
+		h.logger.Debug("terminal input for not-yet-active session", "session_id", req.GetSessionId().GetValue())
 		return nil
 	}
 	if _, err := sess.Write(req.Data); err != nil {
-		h.logger.Warn("terminal input write failed", "session_id", req.SessionId, "error", err)
+		h.logger.Warn("terminal input write failed", "session_id", req.GetSessionId().GetValue(), "error", err)
 		// Don't tear down the session — the read pump will detect the
 		// PTY going away and emit EXITED.
 		return nil
@@ -588,23 +588,23 @@ func (h *Handler) OnTerminalResize(ctx context.Context, req *pb.TerminalResize) 
 	// (65536 -> 0). Non-fatal: log and no-op, like an unknown session.
 	if err := validateDims(req.Cols, req.Rows); err != nil {
 		h.logger.Warn("ignoring terminal resize with bad dimensions",
-			"session_id", req.SessionId, "cols", req.Cols, "rows", req.Rows)
+			"session_id", req.GetSessionId().GetValue(), "cols", req.Cols, "rows", req.Rows)
 		return nil
 	}
-	ts := h.lookupTerminal(req.SessionId)
+	ts := h.lookupTerminal(req.GetSessionId().GetValue())
 	if ts == nil {
-		h.logger.Debug("terminal resize for unknown session", "session_id", req.SessionId)
+		h.logger.Debug("terminal resize for unknown session", "session_id", req.GetSessionId().GetValue())
 		return nil
 	}
 	ts.mu.Lock()
 	sess := ts.session
 	ts.mu.Unlock()
 	if sess == nil {
-		h.logger.Debug("terminal resize for not-yet-active session", "session_id", req.SessionId)
+		h.logger.Debug("terminal resize for not-yet-active session", "session_id", req.GetSessionId().GetValue())
 		return nil
 	}
 	if err := sess.Resize(uint16(req.Cols), uint16(req.Rows)); err != nil {
-		h.logger.Warn("terminal resize failed", "session_id", req.SessionId, "error", err)
+		h.logger.Warn("terminal resize failed", "session_id", req.GetSessionId().GetValue(), "error", err)
 	}
 	return nil
 }
@@ -618,11 +618,11 @@ func (h *Handler) OnTerminalResize(ctx context.Context, req *pb.TerminalResize) 
 // state check.
 func (h *Handler) OnTerminalStop(ctx context.Context, req *pb.TerminalStop) error {
 	if req.Reason != "" {
-		h.logger.Info("stopping terminal session", "session_id", req.SessionId, "reason", req.Reason)
+		h.logger.Info("stopping terminal session", "session_id", req.GetSessionId().GetValue(), "reason", req.Reason)
 	} else {
-		h.logger.Info("stopping terminal session", "session_id", req.SessionId)
+		h.logger.Info("stopping terminal session", "session_id", req.GetSessionId().GetValue())
 	}
-	h.closeTerminal(ctx, req.SessionId, req.Reason)
+	h.closeTerminal(ctx, req.GetSessionId().GetValue(), req.Reason)
 	return nil
 }
 
@@ -641,7 +641,7 @@ func (h *Handler) pumpTerminalOutput(sessionCtx context.Context, ts *terminalSes
 		// already handles the EIO/EOF in Read.
 		exitCode, _ := ts.session.Wait()
 		state := &pb.TerminalStateChange{
-			SessionId: ts.id,
+			SessionId: &pb.SessionId{Value: ts.id},
 			State:     pb.TerminalSessionState_TERMINAL_SESSION_STATE_EXITED,
 			ExitCode:  int32(exitCode),
 		}
@@ -674,7 +674,7 @@ func (h *Handler) pumpTerminalOutput(sessionCtx context.Context, ts *terminalSes
 		if n > 0 {
 			ts.touch()
 			out := &pb.TerminalOutput{
-				SessionId: ts.id,
+				SessionId: &pb.SessionId{Value: ts.id},
 				Data:      append([]byte(nil), buf[:n]...),
 			}
 			if sendErr := ts.sender.SendTerminalOutput(context.Background(), out); sendErr != nil {
@@ -710,7 +710,7 @@ func (h *Handler) failTerminalStart(ctx context.Context, sender TerminalSender, 
 		return
 	}
 	change := &pb.TerminalStateChange{
-		SessionId: sessionID,
+		SessionId: &pb.SessionId{Value: sessionID},
 		State:     pb.TerminalSessionState_TERMINAL_SESSION_STATE_ERROR,
 		Error:     msg,
 	}

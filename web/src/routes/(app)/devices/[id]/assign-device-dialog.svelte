@@ -43,11 +43,11 @@
 			]);
 			// Filter out disabled users and already-assigned items
 			users = usersResp.users
-				.filter((u: User) => !u.disabled && !existingUserIds.includes(u.id))
-				.map((u: User) => ({ id: u.id, email: u.email }));
+				.filter((u: User) => !u.disabled && !existingUserIds.includes((u.id?.value ?? '')))
+				.map((u: User) => ({ id: u.id?.value ?? '', email: u.email }));
 			groups = groupsResp.groups
-				.filter((g: UserGroup) => !existingGroupIds.includes(g.id))
-				.map((g: UserGroup) => ({ id: g.id, name: g.name, description: g.description }));
+				.filter((g: UserGroup) => !existingGroupIds.includes((g.id?.value ?? '')))
+				.map((g: UserGroup) => ({ id: g.id?.value ?? '', name: g.name, description: g.description }));
 		} catch (error) {
 			toast.error(getLocalizedError(error));
 			console.error(error);

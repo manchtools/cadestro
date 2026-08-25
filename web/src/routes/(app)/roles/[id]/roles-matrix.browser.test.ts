@@ -97,7 +97,7 @@ const PERMISSIONS = [
 
 const role = () =>
 	create(RoleSchema, {
-		id: ROLE_ID,
+		id: { value: ROLE_ID },
 		name: 'Operator',
 		description: 'Day-to-day fleet work',
 		permissions: ['ListDevices'],
@@ -110,7 +110,7 @@ beforeEach(() => {
 	api.getRole.mockResolvedValue({ role: role() });
 	api.listPermissions.mockResolvedValue({ permissions: PERMISSIONS });
 	api.updateRole.mockImplementation(async (_id, name, description, permissions) =>
-		create(RoleSchema, { id: ROLE_ID, name, description, permissions, isSystem: false })
+		create(RoleSchema, { id: { value: ROLE_ID }, name, description, permissions, isSystem: false })
 	);
 });
 

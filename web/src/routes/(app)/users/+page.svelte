@@ -141,7 +141,7 @@
 		if (!userToErase) return;
 
 		try {
-			await apiClient.eraseJITUser(userToErase.id);
+			await apiClient.eraseJITUser((userToErase.id?.value ?? ''));
 			table.patchRows((rows) => rows.filter((u) => u.id !== userToErase!.id));
 			toast.success(m.users_erased());
 		} catch (error) {
@@ -154,7 +154,7 @@
 
 	async function toggleUserDisabled(user: User) {
 		try {
-			const updated = await apiClient.setUserDisabled(user.id, !user.disabled);
+			const updated = await apiClient.setUserDisabled((user.id?.value ?? ''), !user.disabled);
 			if (updated) {
 				// The RPC returns a typed User; the row keeps its document chips.
 				table.patchRows((rows) =>
@@ -175,7 +175,7 @@
 		roleDialogUser = user;
 		roleDialogOpen = true;
 		try {
-			const detail = await apiClient.getUser(user.id);
+			const detail = await apiClient.getUser((user.id?.value ?? ''));
 			if (detail) roleDialogUser = detail;
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -187,10 +187,10 @@
 			// Scope kinds are NOT in the search document. The revoke resolves the
 			// role's REAL grants from GetUser and revokes each with its true scope,
 			// never a fabricated UNSPECIFIED one.
-			const detail = await apiClient.getUser(user.id);
-			const grants = (detail?.roleGrants ?? []).filter((grant) => grant.role?.id === roleId);
+			const detail = await apiClient.getUser((user.id?.value ?? ''));
+			const grants = (detail?.roleGrants ?? []).filter((grant) => grant.role?.id?.value === roleId);
 			for (const grant of grants) {
-				await apiClient.revokeRoleFromUser(user.id, roleId, grant.scopeKind, grant.scopeId);
+				await apiClient.revokeRoleFromUser((user.id?.value ?? ''), roleId, grant.scopeKind, grant.scopeId?.value);
 			}
 			if (grants.length > 0) toast.success(m.roles_revoked());
 			table.refresh();
@@ -224,7 +224,7 @@
 		await emailFv.handleSubmit({ email: editEmail }, async () => {
 			if (!editEmailUser) return;
 			try {
-				const updated = await apiClient.updateUserEmail(editEmailUser.id, editEmail);
+				const updated = await apiClient.updateUserEmail((editEmailUser.id?.value ?? ''), editEmail);
 				if (updated) {
 					// The RPC returns a typed User; the row keeps its document chips.
 					table.patchRows((rows) =>
@@ -244,7 +244,7 @@
 	function unscopedRoleIds(user: User): string[] {
 		return user.roleGrants
 			.filter((grant) => grant.scopeKind === RoleGrantScopeKind.UNSPECIFIED && grant.role)
-			.map((grant) => grant.role!.id);
+			.map((grant) => grant.role!.id?.value ?? '');
 	}
 
 	async function openIdentityLinksDialog(user: User) {
@@ -253,7 +253,7 @@
 		identityLinksLoading = true;
 		identityLinksDialogOpen = true;
 		try {
-			const userDetail = await apiClient.getUser(user.id);
+			const userDetail = await apiClient.getUser((user.id?.value ?? ''));
 			identityLinks = userDetail?.identityLinks ?? [];
 		} catch (error) {
 			toast.error(getLocalizedError(error));
@@ -266,7 +266,7 @@
 		if (!unlinkingLinkId) return;
 		try {
 			await apiClient.unlinkIdentity(unlinkingLinkId);
-			identityLinks = identityLinks.filter((l) => l.id !== unlinkingLinkId);
+			identityLinks = identityLinks.filter((l) => (l.id?.value ?? '') !== unlinkingLinkId);
 			unlinkConfirmOpen = false;
 			unlinkingLinkId = '';
 			toast.success(m.users_identity_unlinked());
@@ -319,7 +319,7 @@
 	<!-- The people list in the drafts' row grammar: initials tile, email over its
 	     ULID and profile name, membership chips, a right-aligned last-login stamp —
 	     no column headers, no table. Only the render layer changed. -->
-	<RowList {table} {sortOptions} rowKey={(u) => u.id} href={(u) => `${base}/users/${u.id}`}>
+	<RowList {table} {sortOptions} rowKey={(u) => (u.id?.value ?? '')} href={(u) => `${base}/users/${(u.id?.value ?? '')}`}>
 		{#snippet filters()}
 			<MultiSelectCombobox
 				items={statusFilterItems}
@@ -457,7 +457,7 @@
 		subtitle={roleDialogUser.email}
 		excludeRoleIds={unscopedRoleIds(roleDialogUser)}
 		assign={(roleIds, scopeKind, scopeId) =>
-			apiClient.assignRoleToUser(roleDialogUser!.id, roleIds, scopeKind, scopeId)}
+			apiClient.assignRoleToUser(roleDialogUser!.id?.value ?? '', roleIds, scopeKind, scopeId)}
 		onAssigned={() => table.refresh()}
 	/>
 {/if}
@@ -543,7 +543,7 @@
 							variant="ghost"
 							size="sm"
 							onclick={() => {
-								unlinkingLinkId = link.id;
+								unlinkingLinkId = (link.id?.value ?? '');
 								unlinkConfirmOpen = true;
 							}}
 						>

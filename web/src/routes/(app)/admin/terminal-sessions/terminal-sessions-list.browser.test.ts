@@ -69,8 +69,8 @@ import TerminalSessionsPage from './+page.svelte';
 
 const sessions = [
 	create(TerminalSessionInfoSchema, {
-		sessionId: SESSION_A,
-		userId: USER_ID,
+		sessionId: { value: SESSION_A },
+		userId: { value: USER_ID },
 		userEmail: 'operator@example.test',
 		deviceId: { value: DEVICE_A },
 		deviceHostname: 'ws-alpha',
@@ -79,8 +79,8 @@ const sessions = [
 		lastActivityAt: timestampFromMs(Date.UTC(2026, 6, 4))
 	}),
 	create(TerminalSessionInfoSchema, {
-		sessionId: SESSION_B,
-		userId: USER_ID,
+		sessionId: { value: SESSION_B },
+		userId: { value: USER_ID },
 		// No email and no hostname: the row must fall back to the ULIDs.
 		deviceId: { value: DEVICE_B },
 		ttyUser: 'cadestro-shell-2',

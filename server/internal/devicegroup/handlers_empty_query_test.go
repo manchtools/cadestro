@@ -42,7 +42,7 @@ func TestCreateDeviceGroup_TrueDynamicQueryMatchesAllDevices(t *testing.T) {
 	assert.True(t, created.Msg.Group.IsDynamic)
 
 	evaluated, err := h.EvaluateDynamicGroup(callerCtx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{
-		Id: created.Msg.Group.Id,
+		Id: &cadestrov1.DeviceGroupId{Value: created.Msg.Group.GetId().GetValue()},
 	}))
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, evaluated.Msg.DevicesAdded)
@@ -50,7 +50,7 @@ func TestCreateDeviceGroup_TrueDynamicQueryMatchesAllDevices(t *testing.T) {
 	var members int
 	require.NoError(t, raw.QueryRow(ctx,
 		`SELECT count(*) FROM device_group_members WHERE group_id = $1`,
-		created.Msg.Group.Id).Scan(&members))
+		created.Msg.Group.GetId().GetValue()).Scan(&members))
 	assert.Equal(t, 2, members)
 }
 

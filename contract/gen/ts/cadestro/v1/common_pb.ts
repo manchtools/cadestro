@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/common.proto.
  */
 export const file_cadestro_v1_common: GenFile = /*@__PURE__*/
-  fileDesc("ChhjYWRlc3Ryby92MS9jb21tb24ucHJvdG8SC2NhZGVzdHJvLnYxIiMKCEFjdGlvbklkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASIjCghEZXZpY2VJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiIAoFUnVuSWQSFwoFdmFsdWUYASABKAlCCLpIBXIDmAIBIicKDE9jY3VycmVuY2VJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiJwoMRGVmaW5pdGlvbklkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASImCgtBY3Rpb25TZXRJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiJQoKTWFuaWZlc3RJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiIgoHUXVlcnlJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiWgoLRXJyb3JEZXRhaWwSLgoEY29kZRgBIAEoDjIWLmNhZGVzdHJvLnYxLkVycm9yQ29kZUIIukgFggECEAESGwoKcmVxdWVzdF9pZBgCIAEoCUIHukgEcgIYQCJKChFNYWludGVuYW5jZVdpbmRvdxI1CghzY2hlZHVsZRgBIAMoCzIjLmNhZGVzdHJvLnYxLk1haW50ZW5hbmNlV2luZG93RW50cnkieAoWTWFpbnRlbmFuY2VXaW5kb3dFbnRyeRJCCgRkYXlzGAEgAygJQjS6SDHIAQGSASsIARAHIiVyI1IDbW9uUgN0dWVSA3dlZFIDdGh1UgNmcmlSA3NhdFIDc3VuEhoKBWFsbG93GAIgASgJQgu6SAjIAQFyA5gBCyJeCg1Db21tYW5kT3V0cHV0EhEKCWV4aXRfY29kZRgBIAEoBRIcCgZzdGRvdXQYAiABKAlCDLpICdgBAXIEGICAQBIcCgZzdGRlcnIYAyABKAlCDLpICdgBAXIEGICAQCrPAgoPRXhlY3V0aW9uU3RhdHVzEiAKHEVYRUNVVElPTl9TVEFUVVNfVU5TUEVDSUZJRUQQABIcChhFWEVDVVRJT05fU1RBVFVTX1BFTkRJTkcQARIcChhFWEVDVVRJT05fU1RBVFVTX1JVTk5JTkcQAhIcChhFWEVDVVRJT05fU1RBVFVTX1NVQ0NFU1MQAxIbChdFWEVDVVRJT05fU1RBVFVTX0ZBSUxFRBAEEhwKGEVYRUNVVElPTl9TVEFUVVNfU0tJUFBFRBAFEhwKGEVYRUNVVElPTl9TVEFUVVNfVElNRU9VVBAGEh4KGkVYRUNVVElPTl9TVEFUVVNfQ0FOQ0VMTEVEEAcSIwofRVhFQ1VUSU9OX1NUQVRVU19OT1RfQVBQTElDQUJMRRAIEiIKHkVYRUNVVElPTl9TVEFUVVNfSU5ERVRFUk1JTkFURRAJKkMKDERlc2lyZWRTdGF0ZRIZChVERVNJUkVEX1NUQVRFX1BSRVNFTlQQABIYChRERVNJUkVEX1NUQVRFX0FCU0VOVBABKooBCg5Bc3NpZ25tZW50TW9kZRIcChhBU1NJR05NRU5UX01PREVfUkVRVUlSRUQQABIdChlBU1NJR05NRU5UX01PREVfQVZBSUxBQkxFEAESHAoYQVNTSUdOTUVOVF9NT0RFX0VYQ0xVREVEEAISHQoZQVNTSUdOTUVOVF9NT0RFX1VOSU5TVEFMTBADKt0BChRBc3NpZ25tZW50U291cmNlVHlwZRImCiJBU1NJR05NRU5UX1NPVVJDRV9UWVBFX1VOU1BFQ0lGSUVEEAASIQodQVNTSUdOTUVOVF9TT1VSQ0VfVFlQRV9BQ1RJT04QARIlCiFBU1NJR05NRU5UX1NPVVJDRV9UWVBFX0FDVElPTl9TRVQQAhIlCiFBU1NJR05NRU5UX1NPVVJDRV9UWVBFX0RFRklOSVRJT04QAxIsCihBU1NJR05NRU5UX1NPVVJDRV9UWVBFX0NPTVBMSUFOQ0VfUE9MSUNZEAQq0gEKFEFzc2lnbm1lbnRUYXJnZXRUeXBlEiYKIkFTU0lHTk1FTlRfVEFSR0VUX1RZUEVfVU5TUEVDSUZJRUQQABIhCh1BU1NJR05NRU5UX1RBUkdFVF9UWVBFX0RFVklDRRABEicKI0FTU0lHTk1FTlRfVEFSR0VUX1RZUEVfREVWSUNFX0dST1VQEAISHwobQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9VU0VSEAMSJQohQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9VU0VSX0dST1VQEAQqiQEKElJvbGVHcmFudFNjb3BlS2luZBIlCiFST0xFX0dSQU5UX1NDT1BFX0tJTkRfVU5TUEVDSUZJRUQQABImCiJST0xFX0dSQU5UX1NDT1BFX0tJTkRfREVWSUNFX0dST1VQEAESJAogUk9MRV9HUkFOVF9TQ09QRV9LSU5EX1VTRVJfR1JPVVAQAiqCAQoUUGVybWlzc2lvblRhcmdldEtpbmQSJgoiUEVSTUlTU0lPTl9UQVJHRVRfS0lORF9VTlNQRUNJRklFRBAAEiEKHVBFUk1JU1NJT05fVEFSR0VUX0tJTkRfREVWSUNFEAESHwobUEVSTUlTU0lPTl9UQVJHRVRfS0lORF9VU0VSEAIqYgoMRGV2aWNlU3RhdHVzEh0KGURFVklDRV9TVEFUVVNfVU5TUEVDSUZJRUQQABIYChRERVZJQ0VfU1RBVFVTX09OTElORRABEhkKFURFVklDRV9TVEFUVVNfT0ZGTElORRACKrYCCgtTZWFyY2hTY29wZRIcChhTRUFSQ0hfU0NPUEVfVU5TUEVDSUZJRUQQABIYChRTRUFSQ0hfU0NPUEVfQUNUSU9OUxABEhwKGFNFQVJDSF9TQ09QRV9BQ1RJT05fU0VUUxACEhwKGFNFQVJDSF9TQ09QRV9ERUZJTklUSU9OUxADEiQKIFNFQVJDSF9TQ09QRV9DT01QTElBTkNFX1BPTElDSUVTEAQSGAoUU0VBUkNIX1NDT1BFX0RFVklDRVMQBRIWChJTRUFSQ0hfU0NPUEVfVVNFUlMQBhIeChpTRUFSQ0hfU0NPUEVfREVWSUNFX0dST1VQUxAHEhwKGFNFQVJDSF9TQ09QRV9VU0VSX0dST1VQUxAIEh0KGVNFQVJDSF9TQ09QRV9BVURJVF9FVkVOVFMQCSrgBAoJU29ydEZpZWxkEhoKFlNPUlRfRklFTERfVU5TUEVDSUZJRUQQABITCg9TT1JUX0ZJRUxEX05BTUUQARITCg9TT1JUX0ZJRUxEX1RZUEUQAhIXChNTT1JUX0ZJRUxEX0hPU1ROQU1FEAMSIAocU09SVF9GSUVMRF9DT01QTElBTkNFX1NUQVRVUxAEEhQKEFNPUlRfRklFTERfRU1BSUwQBRIbChdTT1JUX0ZJRUxEX0RJU1BMQVlfTkFNRRAGEhcKE1NPUlRfRklFTERfRElTQUJMRUQQBxIbChdTT1JUX0ZJRUxEX01FTUJFUl9DT1VOVBAIEhUKEVNPUlRfRklFTERfU1RBVFVTEAkSGgoWU09SVF9GSUVMRF9BQ1RJT05fVFlQRRAKEh4KGlNPUlRfRklFTERfREVWSUNFX0hPU1ROQU1FEAsSGQoVU09SVF9GSUVMRF9BQ1RPUl9UWVBFEAwSGgoWU09SVF9GSUVMRF9TVFJFQU1fVFlQRRANEhkKFVNPUlRfRklFTERfRVZFTlRfVFlQRRAOEhkKFVNPUlRfRklFTERfUlVMRV9DT1VOVBAPEhwKGFNPUlRfRklFTERfTEFTVF9MT0dJTl9BVBAQEhkKFVNPUlRfRklFTERfQ1JFQVRFRF9BVBAREhkKFVNPUlRfRklFTERfVVBEQVRFRF9BVBASEhsKF1NPUlRfRklFTERfTEFTVF9TRUVOX0FUEBMSHAoYU09SVF9GSUVMRF9SRUdJU1RFUkVEX0FUEBQSGgoWU09SVF9GSUVMRF9PQ0NVUlJFRF9BVBAVKmAKDVNvcnREaXJlY3Rpb24SHgoaU09SVF9ESVJFQ1RJT05fVU5TUEVDSUZJRUQQABIWChJTT1JUX0RJUkVDVElPTl9BU0MQARIXChNTT1JUX0RJUkVDVElPTl9ERVNDEAIqXwoUSWRlbnRpdHlQcm92aWRlclR5cGUSJgoiSURFTlRJVFlfUFJPVklERVJfVFlQRV9VTlNQRUNJRklFRBAAEh8KG0lERU5USVRZX1BST1ZJREVSX1RZUEVfT0lEQxABKo0BCg5Sb3RhdGlvblJlYXNvbhIfChtST1RBVElPTl9SRUFTT05fVU5TUEVDSUZJRUQQABIbChdST1RBVElPTl9SRUFTT05fSU5JVElBTBABEh0KGVJPVEFUSU9OX1JFQVNPTl9TQ0hFRFVMRUQQAhIeChpST1RBVElPTl9SRUFTT05fQVVUSF9HUkFDRRADKs0BChRMdWtzUmV2b2NhdGlvblN0YXR1cxImCiJMVUtTX1JFVk9DQVRJT05fU1RBVFVTX1VOU1BFQ0lGSUVEEAASHwobTFVLU19SRVZPQ0FUSU9OX1NUQVRVU19OT05FEAESJQohTFVLU19SRVZPQ0FUSU9OX1NUQVRVU19ESVNQQVRDSEVEEAISIgoeTFVLU19SRVZPQ0FUSU9OX1NUQVRVU19TVUNDRVNTEAMSIQodTFVLU19SRVZPQ0FUSU9OX1NUQVRVU19GQUlMRUQQBCq6FgoJRXJyb3JDb2RlEhoKFkVSUk9SX0NPREVfVU5TUEVDSUZJRUQQABIkCiBFUlJPUl9DT0RFX0FDVElPTl9BTFJFQURZX0lOX1NFVBABEiQKIEVSUk9SX0NPREVfQUNUSU9OX05PVF9DT01QTElBTkNFEAISHwobRVJST1JfQ09ERV9BQ1RJT05fTk9UX0ZPVU5EEAMSLworRVJST1JfQ09ERV9BQ1RJT05fU0VUX0FMUkVBRFlfSU5fREVGSU5JVElPThAEEioKJkVSUk9SX0NPREVfQUNUSU9OX1NFVF9NRU1CRVJfTk9UX0ZPVU5EEAUSIwofRVJST1JfQ09ERV9BQ1RJT05fU0VUX05PVF9GT1VORBAGEiMKH0VSUk9SX0NPREVfQVNTSUdOTUVOVF9OT1RfRk9VTkQQBxIqCiZFUlJPUl9DT0RFX0FTU0lHTk1FTlRfU09VUkNFX05PVF9GT1VORBAIEioKJkVSUk9SX0NPREVfQVNTSUdOTUVOVF9UQVJHRVRfTk9UX0ZPVU5EEAkSKAokRVJST1JfQ09ERV9DQU5OT1RfREVMRVRFX1NZU1RFTV9ST0xFEAoSKgomRVJST1JfQ09ERV9DQU5OT1RfTU9ESUZZX1NZU1RFTV9BQ1RJT04QCxIoCiRFUlJPUl9DT0RFX0NBTk5PVF9NT0RJRllfU1lTVEVNX1JPTEUQDBIoCiRFUlJPUl9DT0RFX0NBTk5PVF9SRU5BTUVfU1lTVEVNX1JPTEUQDRInCiNFUlJPUl9DT0RFX0NBTk5PVF9VTkxJTktfT1RIRVJfVVNFUhAOEjAKLEVSUk9SX0NPREVfQ09NUExJQU5DRV9BQ1RJT05fTkVFRFNfREVURUNUSU9OEA8SLAooRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9OQU1FX0VYSVNUUxAQEioKJkVSUk9SX0NPREVfQ09NUExJQU5DRV9QT0xJQ1lfTk9UX0ZPVU5EEBESLAooRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9SVUxFX0VYSVNUUxASEi8KK0VSUk9SX0NPREVfQ09NUExJQU5DRV9QT0xJQ1lfUlVMRV9OT1RfRk9VTkQQExIqCiZFUlJPUl9DT0RFX0RFRklOSVRJT05fTUVNQkVSX05PVF9GT1VORBAUEiMKH0VSUk9SX0NPREVfREVGSU5JVElPTl9OT1RfRk9VTkQQFRImCiJFUlJPUl9DT0RFX0RFVklDRV9BTFJFQURZX0lOX0dST1VQEBYSLAooRVJST1JfQ09ERV9ERVZJQ0VfR1JPVVBfTUVNQkVSX05PVF9GT1VORBAXEicKI0VSUk9SX0NPREVfREVWSUNFX0dST1VQX05BTUVfRVhJU1RTEBgSJQohRVJST1JfQ09ERV9ERVZJQ0VfR1JPVVBfTk9UX0ZPVU5EEBkSIwofRVJST1JfQ09ERV9ERVZJQ0VfTk9UX0NPTk5FQ1RFRBAaEh8KG0VSUk9SX0NPREVfREVWSUNFX05PVF9GT1VORBAbEiEKHUVSUk9SX0NPREVfREVWSUNFX1VOQVZBSUxBQkxFEBwSKgomRVJST1JfQ09ERV9EWU5BTUlDX0dST1VQX01BTlVBTF9NT0RJRlkQHRIvCitFUlJPUl9DT0RFX0RZTkFNSUNfR1JPVVBfTUVNQkVSU0hJUF9NQU5BR0VEEB4SIwofRVJST1JfQ09ERV9FTUFJTF9BTFJFQURZX0VYSVNUUxAfEh4KGkVSUk9SX0NPREVfR1JBTlRfTk9UX0ZPVU5EECASJQohRVJST1JfQ09ERV9HUk9VUF9BTFJFQURZX0hBU19ST0xFECESIAocRVJST1JfQ09ERV9HUk9VUF9OT1RfRFlOQU1JQxAiEiYKIkVSUk9SX0NPREVfSURFTlRJVFlfTElOS19OT1RfRk9VTkQQIxIdChlFUlJPUl9DT0RFX0lOVEVSTkFMX0VSUk9SECQSJAogRVJST1JfQ09ERV9JTlZBTElEX0RZTkFNSUNfUVVFUlkQJRIhCh1FUlJPUl9DT0RFX0lOVkFMSURfUEFHRV9UT0tFThAmEhwKGEVSUk9SX0NPREVfSU5WQUxJRF9RVUVSWRAnEh8KG0VSUk9SX0NPREVfTEFTVF9BVVRIX01FVEhPRBAoEiUKIUVSUk9SX0NPREVfTFBTX1BBU1NXT1JEX05PVF9GT1VORBApEicKI0VSUk9SX0NPREVfTFVLU19LRVlfQUxSRUFEWV9SRVZPS0VEECoSIQodRVJST1JfQ09ERV9MVUtTX0tFWV9OT1RfRk9VTkQQKxIqCiZFUlJPUl9DT0RFX0xVS1NfS0VZX1JFVk9DQVRJT05fUEVORElORxAsEiIKHkVSUk9SX0NPREVfTk9fQVNTSUdOTUVOVF9GT1VORBAtEiAKHEVSUk9SX0NPREVfTk9UX0FVVEhFTlRJQ0FURUQQLhIgChxFUlJPUl9DT0RFX1BFUk1JU1NJT05fREVOSUVEEC8SIAocRVJST1JfQ09ERV9QUk9WSURFUl9ESVNBQkxFRBAwEiEKHUVSUk9SX0NPREVfUFJPVklERVJfTk9UX0ZPVU5EEDESIwofRVJST1JfQ09ERV9QUk9WSURFUl9TTFVHX0VYSVNUUxAyEiUKIUVSUk9SX0NPREVfUVVFUllfUkVTVUxUX05PVF9GT1VORBAzEhsKF0VSUk9SX0NPREVfUkFURV9MSU1JVEVEEDQSGgoWRVJST1JfQ09ERV9ST0xFX0lOX1VTRRA1Eh8KG0VSUk9SX0NPREVfUk9MRV9OQU1FX0VYSVNUUxA2Eh0KGUVSUk9SX0NPREVfUk9MRV9OT1RfRk9VTkQQNxIjCh9FUlJPUl9DT0RFX1NDSU1fQUxSRUFEWV9FTkFCTEVEEDgSJAogRVJST1JfQ09ERV9TQ0lNX01BTkFHRURfUkVTT1VSQ0UQORIfChtFUlJPUl9DT0RFX1NDSU1fTk9UX0VOQUJMRUQQOhIiCh5FUlJPUl9DT0RFX1NDT1BFX05PVF9QRVJNSVRURUQQOxImCiJFUlJPUl9DT0RFX1NTT19OT19NQVRDSElOR19BQ0NPVU5UEDwSIAocRVJST1JfQ09ERV9TU09fU1RBVEVfRVhQSVJFRBA9Ei4KKkVSUk9SX0NPREVfVEVSTUlOQUxfTElOVVhfVVNFUk5BTUVfTk9UX1NFVBA+EiYKIkVSUk9SX0NPREVfVEVSTUlOQUxfTk9UX0NPTkZJR1VSRUQQPxIpCiVFUlJPUl9DT0RFX1RFUk1JTkFMX1NFU1NJT05fTk9UX0ZPVU5EEEASHAoYRVJST1JfQ09ERV9UT0tFTl9FWFBJUkVEEEESHgoaRVJST1JfQ09ERV9UT0tFTl9OT1RfRk9VTkQQQhIcChhFUlJPUl9DT0RFX1VOSU1QTEVNRU5URUQQQxIkCiBFUlJPUl9DT0RFX1VTRVJfQUxSRUFEWV9IQVNfUk9MRRBEEiQKIEVSUk9SX0NPREVfVVNFUl9BTFJFQURZX0lOX0dST1VQEEUSKgomRVJST1JfQ09ERV9VU0VSX0dST1VQX01FTUJFUl9OT1RfRk9VTkQQRhIlCiFFUlJPUl9DT0RFX1VTRVJfR1JPVVBfTkFNRV9FWElTVFMQRxIjCh9FUlJPUl9DT0RFX1VTRVJfR1JPVVBfTk9UX0ZPVU5EEEgSHQoZRVJST1JfQ09ERV9VU0VSX05PVF9GT1VORBBJEiAKHEVSUk9SX0NPREVfVkFMSURBVElPTl9GQUlMRUQQSiqeAQoQQ29tcGxpYW5jZVN0YXR1cxIdChlDT01QTElBTkNFX1NUQVRVU19VTktOT1dOEAASHwobQ09NUExJQU5DRV9TVEFUVVNfQ09NUExJQU5UEAESIwofQ09NUExJQU5DRV9TVEFUVVNfTk9OX0NPTVBMSUFOVBACEiUKIUNPTVBMSUFOQ0VfU1RBVFVTX0lOX0dSQUNFX1BFUklPRBADQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate]);
+  fileDesc("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Il4KDUNvbW1hbmRPdXRwdXQSEQoJZXhpdF9jb2RlGAEgASgFEhwKBnN0ZG91dBgCIAEoCUIMukgJ2AEBcgQYgIBAEhwKBnN0ZGVychgDIAEoCUIMukgJ2AEBcgQYgIBAKs8CCg9FeGVjdXRpb25TdGF0dXMSIAocRVhFQ1VUSU9OX1NUQVRVU19VTlNQRUNJRklFRBAAEhwKGEVYRUNVVElPTl9TVEFUVVNfUEVORElORxABEhwKGEVYRUNVVElPTl9TVEFUVVNfUlVOTklORxACEhwKGEVYRUNVVElPTl9TVEFUVVNfU1VDQ0VTUxADEhsKF0VYRUNVVElPTl9TVEFUVVNfRkFJTEVEEAQSHAoYRVhFQ1VUSU9OX1NUQVRVU19TS0lQUEVEEAUSHAoYRVhFQ1VUSU9OX1NUQVRVU19USU1FT1VUEAYSHgoaRVhFQ1VUSU9OX1NUQVRVU19DQU5DRUxMRUQQBxIjCh9FWEVDVVRJT05fU1RBVFVTX05PVF9BUFBMSUNBQkxFEAgSIgoeRVhFQ1VUSU9OX1NUQVRVU19JTkRFVEVSTUlOQVRFEAkqQwoMRGVzaXJlZFN0YXRlEhkKFURFU0lSRURfU1RBVEVfUFJFU0VOVBAAEhgKFERFU0lSRURfU1RBVEVfQUJTRU5UEAEqigEKDkFzc2lnbm1lbnRNb2RlEhwKGEFTU0lHTk1FTlRfTU9ERV9SRVFVSVJFRBAAEh0KGUFTU0lHTk1FTlRfTU9ERV9BVkFJTEFCTEUQARIcChhBU1NJR05NRU5UX01PREVfRVhDTFVERUQQAhIdChlBU1NJR05NRU5UX01PREVfVU5JTlNUQUxMEAMq3QEKFEFzc2lnbm1lbnRTb3VyY2VUeXBlEiYKIkFTU0lHTk1FTlRfU09VUkNFX1RZUEVfVU5TUEVDSUZJRUQQABIhCh1BU1NJR05NRU5UX1NPVVJDRV9UWVBFX0FDVElPThABEiUKIUFTU0lHTk1FTlRfU09VUkNFX1RZUEVfQUNUSU9OX1NFVBACEiUKIUFTU0lHTk1FTlRfU09VUkNFX1RZUEVfREVGSU5JVElPThADEiwKKEFTU0lHTk1FTlRfU09VUkNFX1RZUEVfQ09NUExJQU5DRV9QT0xJQ1kQBCrSAQoUQXNzaWdubWVudFRhcmdldFR5cGUSJgoiQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9VTlNQRUNJRklFRBAAEiEKHUFTU0lHTk1FTlRfVEFSR0VUX1RZUEVfREVWSUNFEAESJwojQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9ERVZJQ0VfR1JPVVAQAhIfChtBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VTRVIQAxIlCiFBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VTRVJfR1JPVVAQBCqJAQoSUm9sZUdyYW50U2NvcGVLaW5kEiUKIVJPTEVfR1JBTlRfU0NPUEVfS0lORF9VTlNQRUNJRklFRBAAEiYKIlJPTEVfR1JBTlRfU0NPUEVfS0lORF9ERVZJQ0VfR1JPVVAQARIkCiBST0xFX0dSQU5UX1NDT1BFX0tJTkRfVVNFUl9HUk9VUBACKoIBChRQZXJtaXNzaW9uVGFyZ2V0S2luZBImCiJQRVJNSVNTSU9OX1RBUkdFVF9LSU5EX1VOU1BFQ0lGSUVEEAASIQodUEVSTUlTU0lPTl9UQVJHRVRfS0lORF9ERVZJQ0UQARIfChtQRVJNSVNTSU9OX1RBUkdFVF9LSU5EX1VTRVIQAipiCgxEZXZpY2VTdGF0dXMSHQoZREVWSUNFX1NUQVRVU19VTlNQRUNJRklFRBAAEhgKFERFVklDRV9TVEFUVVNfT05MSU5FEAESGQoVREVWSUNFX1NUQVRVU19PRkZMSU5FEAIqtgIKC1NlYXJjaFNjb3BlEhwKGFNFQVJDSF9TQ09QRV9VTlNQRUNJRklFRBAAEhgKFFNFQVJDSF9TQ09QRV9BQ1RJT05TEAESHAoYU0VBUkNIX1NDT1BFX0FDVElPTl9TRVRTEAISHAoYU0VBUkNIX1NDT1BFX0RFRklOSVRJT05TEAMSJAogU0VBUkNIX1NDT1BFX0NPTVBMSUFOQ0VfUE9MSUNJRVMQBBIYChRTRUFSQ0hfU0NPUEVfREVWSUNFUxAFEhYKElNFQVJDSF9TQ09QRV9VU0VSUxAGEh4KGlNFQVJDSF9TQ09QRV9ERVZJQ0VfR1JPVVBTEAcSHAoYU0VBUkNIX1NDT1BFX1VTRVJfR1JPVVBTEAgSHQoZU0VBUkNIX1NDT1BFX0FVRElUX0VWRU5UUxAJKuAECglTb3J0RmllbGQSGgoWU09SVF9GSUVMRF9VTlNQRUNJRklFRBAAEhMKD1NPUlRfRklFTERfTkFNRRABEhMKD1NPUlRfRklFTERfVFlQRRACEhcKE1NPUlRfRklFTERfSE9TVE5BTUUQAxIgChxTT1JUX0ZJRUxEX0NPTVBMSUFOQ0VfU1RBVFVTEAQSFAoQU09SVF9GSUVMRF9FTUFJTBAFEhsKF1NPUlRfRklFTERfRElTUExBWV9OQU1FEAYSFwoTU09SVF9GSUVMRF9ESVNBQkxFRBAHEhsKF1NPUlRfRklFTERfTUVNQkVSX0NPVU5UEAgSFQoRU09SVF9GSUVMRF9TVEFUVVMQCRIaChZTT1JUX0ZJRUxEX0FDVElPTl9UWVBFEAoSHgoaU09SVF9GSUVMRF9ERVZJQ0VfSE9TVE5BTUUQCxIZChVTT1JUX0ZJRUxEX0FDVE9SX1RZUEUQDBIaChZTT1JUX0ZJRUxEX1NUUkVBTV9UWVBFEA0SGQoVU09SVF9GSUVMRF9FVkVOVF9UWVBFEA4SGQoVU09SVF9GSUVMRF9SVUxFX0NPVU5UEA8SHAoYU09SVF9GSUVMRF9MQVNUX0xPR0lOX0FUEBASGQoVU09SVF9GSUVMRF9DUkVBVEVEX0FUEBESGQoVU09SVF9GSUVMRF9VUERBVEVEX0FUEBISGwoXU09SVF9GSUVMRF9MQVNUX1NFRU5fQVQQExIcChhTT1JUX0ZJRUxEX1JFR0lTVEVSRURfQVQQFBIaChZTT1JUX0ZJRUxEX09DQ1VSUkVEX0FUEBUqYAoNU29ydERpcmVjdGlvbhIeChpTT1JUX0RJUkVDVElPTl9VTlNQRUNJRklFRBAAEhYKElNPUlRfRElSRUNUSU9OX0FTQxABEhcKE1NPUlRfRElSRUNUSU9OX0RFU0MQAipfChRJZGVudGl0eVByb3ZpZGVyVHlwZRImCiJJREVOVElUWV9QUk9WSURFUl9UWVBFX1VOU1BFQ0lGSUVEEAASHwobSURFTlRJVFlfUFJPVklERVJfVFlQRV9PSURDEAEqjQEKDlJvdGF0aW9uUmVhc29uEh8KG1JPVEFUSU9OX1JFQVNPTl9VTlNQRUNJRklFRBAAEhsKF1JPVEFUSU9OX1JFQVNPTl9JTklUSUFMEAESHQoZUk9UQVRJT05fUkVBU09OX1NDSEVEVUxFRBACEh4KGlJPVEFUSU9OX1JFQVNPTl9BVVRIX0dSQUNFEAMqzQEKFEx1a3NSZXZvY2F0aW9uU3RhdHVzEiYKIkxVS1NfUkVWT0NBVElPTl9TVEFUVVNfVU5TUEVDSUZJRUQQABIfChtMVUtTX1JFVk9DQVRJT05fU1RBVFVTX05PTkUQARIlCiFMVUtTX1JFVk9DQVRJT05fU1RBVFVTX0RJU1BBVENIRUQQAhIiCh5MVUtTX1JFVk9DQVRJT05fU1RBVFVTX1NVQ0NFU1MQAxIhCh1MVUtTX1JFVk9DQVRJT05fU1RBVFVTX0ZBSUxFRBAEKroWCglFcnJvckNvZGUSGgoWRVJST1JfQ09ERV9VTlNQRUNJRklFRBAAEiQKIEVSUk9SX0NPREVfQUNUSU9OX0FMUkVBRFlfSU5fU0VUEAESJAogRVJST1JfQ09ERV9BQ1RJT05fTk9UX0NPTVBMSUFOQ0UQAhIfChtFUlJPUl9DT0RFX0FDVElPTl9OT1RfRk9VTkQQAxIvCitFUlJPUl9DT0RFX0FDVElPTl9TRVRfQUxSRUFEWV9JTl9ERUZJTklUSU9OEAQSKgomRVJST1JfQ09ERV9BQ1RJT05fU0VUX01FTUJFUl9OT1RfRk9VTkQQBRIjCh9FUlJPUl9DT0RFX0FDVElPTl9TRVRfTk9UX0ZPVU5EEAYSIwofRVJST1JfQ09ERV9BU1NJR05NRU5UX05PVF9GT1VORBAHEioKJkVSUk9SX0NPREVfQVNTSUdOTUVOVF9TT1VSQ0VfTk9UX0ZPVU5EEAgSKgomRVJST1JfQ09ERV9BU1NJR05NRU5UX1RBUkdFVF9OT1RfRk9VTkQQCRIoCiRFUlJPUl9DT0RFX0NBTk5PVF9ERUxFVEVfU1lTVEVNX1JPTEUQChIqCiZFUlJPUl9DT0RFX0NBTk5PVF9NT0RJRllfU1lTVEVNX0FDVElPThALEigKJEVSUk9SX0NPREVfQ0FOTk9UX01PRElGWV9TWVNURU1fUk9MRRAMEigKJEVSUk9SX0NPREVfQ0FOTk9UX1JFTkFNRV9TWVNURU1fUk9MRRANEicKI0VSUk9SX0NPREVfQ0FOTk9UX1VOTElOS19PVEhFUl9VU0VSEA4SMAosRVJST1JfQ09ERV9DT01QTElBTkNFX0FDVElPTl9ORUVEU19ERVRFQ1RJT04QDxIsCihFUlJPUl9DT0RFX0NPTVBMSUFOQ0VfUE9MSUNZX05BTUVfRVhJU1RTEBASKgomRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9OT1RfRk9VTkQQERIsCihFUlJPUl9DT0RFX0NPTVBMSUFOQ0VfUE9MSUNZX1JVTEVfRVhJU1RTEBISLworRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9SVUxFX05PVF9GT1VORBATEioKJkVSUk9SX0NPREVfREVGSU5JVElPTl9NRU1CRVJfTk9UX0ZPVU5EEBQSIwofRVJST1JfQ09ERV9ERUZJTklUSU9OX05PVF9GT1VORBAVEiYKIkVSUk9SX0NPREVfREVWSUNFX0FMUkVBRFlfSU5fR1JPVVAQFhIsCihFUlJPUl9DT0RFX0RFVklDRV9HUk9VUF9NRU1CRVJfTk9UX0ZPVU5EEBcSJwojRVJST1JfQ09ERV9ERVZJQ0VfR1JPVVBfTkFNRV9FWElTVFMQGBIlCiFFUlJPUl9DT0RFX0RFVklDRV9HUk9VUF9OT1RfRk9VTkQQGRIjCh9FUlJPUl9DT0RFX0RFVklDRV9OT1RfQ09OTkVDVEVEEBoSHwobRVJST1JfQ09ERV9ERVZJQ0VfTk9UX0ZPVU5EEBsSIQodRVJST1JfQ09ERV9ERVZJQ0VfVU5BVkFJTEFCTEUQHBIqCiZFUlJPUl9DT0RFX0RZTkFNSUNfR1JPVVBfTUFOVUFMX01PRElGWRAdEi8KK0VSUk9SX0NPREVfRFlOQU1JQ19HUk9VUF9NRU1CRVJTSElQX01BTkFHRUQQHhIjCh9FUlJPUl9DT0RFX0VNQUlMX0FMUkVBRFlfRVhJU1RTEB8SHgoaRVJST1JfQ09ERV9HUkFOVF9OT1RfRk9VTkQQIBIlCiFFUlJPUl9DT0RFX0dST1VQX0FMUkVBRFlfSEFTX1JPTEUQIRIgChxFUlJPUl9DT0RFX0dST1VQX05PVF9EWU5BTUlDECISJgoiRVJST1JfQ09ERV9JREVOVElUWV9MSU5LX05PVF9GT1VORBAjEh0KGUVSUk9SX0NPREVfSU5URVJOQUxfRVJST1IQJBIkCiBFUlJPUl9DT0RFX0lOVkFMSURfRFlOQU1JQ19RVUVSWRAlEiEKHUVSUk9SX0NPREVfSU5WQUxJRF9QQUdFX1RPS0VOECYSHAoYRVJST1JfQ09ERV9JTlZBTElEX1FVRVJZECcSHwobRVJST1JfQ09ERV9MQVNUX0FVVEhfTUVUSE9EECgSJQohRVJST1JfQ09ERV9MUFNfUEFTU1dPUkRfTk9UX0ZPVU5EECkSJwojRVJST1JfQ09ERV9MVUtTX0tFWV9BTFJFQURZX1JFVk9LRUQQKhIhCh1FUlJPUl9DT0RFX0xVS1NfS0VZX05PVF9GT1VORBArEioKJkVSUk9SX0NPREVfTFVLU19LRVlfUkVWT0NBVElPTl9QRU5ESU5HECwSIgoeRVJST1JfQ09ERV9OT19BU1NJR05NRU5UX0ZPVU5EEC0SIAocRVJST1JfQ09ERV9OT1RfQVVUSEVOVElDQVRFRBAuEiAKHEVSUk9SX0NPREVfUEVSTUlTU0lPTl9ERU5JRUQQLxIgChxFUlJPUl9DT0RFX1BST1ZJREVSX0RJU0FCTEVEEDASIQodRVJST1JfQ09ERV9QUk9WSURFUl9OT1RfRk9VTkQQMRIjCh9FUlJPUl9DT0RFX1BST1ZJREVSX1NMVUdfRVhJU1RTEDISJQohRVJST1JfQ09ERV9RVUVSWV9SRVNVTFRfTk9UX0ZPVU5EEDMSGwoXRVJST1JfQ09ERV9SQVRFX0xJTUlURUQQNBIaChZFUlJPUl9DT0RFX1JPTEVfSU5fVVNFEDUSHwobRVJST1JfQ09ERV9ST0xFX05BTUVfRVhJU1RTEDYSHQoZRVJST1JfQ09ERV9ST0xFX05PVF9GT1VORBA3EiMKH0VSUk9SX0NPREVfU0NJTV9BTFJFQURZX0VOQUJMRUQQOBIkCiBFUlJPUl9DT0RFX1NDSU1fTUFOQUdFRF9SRVNPVVJDRRA5Eh8KG0VSUk9SX0NPREVfU0NJTV9OT1RfRU5BQkxFRBA6EiIKHkVSUk9SX0NPREVfU0NPUEVfTk9UX1BFUk1JVFRFRBA7EiYKIkVSUk9SX0NPREVfU1NPX05PX01BVENISU5HX0FDQ09VTlQQPBIgChxFUlJPUl9DT0RFX1NTT19TVEFURV9FWFBJUkVEED0SLgoqRVJST1JfQ09ERV9URVJNSU5BTF9MSU5VWF9VU0VSTkFNRV9OT1RfU0VUED4SJgoiRVJST1JfQ09ERV9URVJNSU5BTF9OT1RfQ09ORklHVVJFRBA/EikKJUVSUk9SX0NPREVfVEVSTUlOQUxfU0VTU0lPTl9OT1RfRk9VTkQQQBIcChhFUlJPUl9DT0RFX1RPS0VOX0VYUElSRUQQQRIeChpFUlJPUl9DT0RFX1RPS0VOX05PVF9GT1VORBBCEhwKGEVSUk9SX0NPREVfVU5JTVBMRU1FTlRFRBBDEiQKIEVSUk9SX0NPREVfVVNFUl9BTFJFQURZX0hBU19ST0xFEEQSJAogRVJST1JfQ09ERV9VU0VSX0FMUkVBRFlfSU5fR1JPVVAQRRIqCiZFUlJPUl9DT0RFX1VTRVJfR1JPVVBfTUVNQkVSX05PVF9GT1VORBBGEiUKIUVSUk9SX0NPREVfVVNFUl9HUk9VUF9OQU1FX0VYSVNUUxBHEiMKH0VSUk9SX0NPREVfVVNFUl9HUk9VUF9OT1RfRk9VTkQQSBIdChlFUlJPUl9DT0RFX1VTRVJfTk9UX0ZPVU5EEEkSIAocRVJST1JfQ09ERV9WQUxJREFUSU9OX0ZBSUxFRBBKKp4BChBDb21wbGlhbmNlU3RhdHVzEh0KGUNPTVBMSUFOQ0VfU1RBVFVTX1VOS05PV04QABIfChtDT01QTElBTkNFX1NUQVRVU19DT01QTElBTlQQARIjCh9DT01QTElBTkNFX1NUQVRVU19OT05fQ09NUExJQU5UEAISJQohQ09NUExJQU5DRV9TVEFUVVNfSU5fR1JBQ0VfUEVSSU9EEANCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate]);
 
 /**
  * Unique identifier for an action instance
@@ -154,6 +154,482 @@ export const QueryIdSchema: GenMessage<QueryId> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_common, 7);
 
 /**
+ * @generated from message cadestro.v1.MessageId
+ */
+export type MessageId = Message<"cadestro.v1.MessageId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.MessageId.
+ * Use `create(MessageIdSchema)` to create a new message.
+ */
+export const MessageIdSchema: GenMessage<MessageId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 8);
+
+/**
+ * @generated from message cadestro.v1.PolicyRevisionId
+ */
+export type PolicyRevisionId = Message<"cadestro.v1.PolicyRevisionId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.PolicyRevisionId.
+ * Use `create(PolicyRevisionIdSchema)` to create a new message.
+ */
+export const PolicyRevisionIdSchema: GenMessage<PolicyRevisionId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 9);
+
+/**
+ * @generated from message cadestro.v1.SessionId
+ */
+export type SessionId = Message<"cadestro.v1.SessionId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.SessionId.
+ * Use `create(SessionIdSchema)` to create a new message.
+ */
+export const SessionIdSchema: GenMessage<SessionId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 10);
+
+/**
+ * @generated from message cadestro.v1.UserId
+ */
+export type UserId = Message<"cadestro.v1.UserId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.UserId.
+ * Use `create(UserIdSchema)` to create a new message.
+ */
+export const UserIdSchema: GenMessage<UserId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 11);
+
+/**
+ * @generated from message cadestro.v1.RoleId
+ */
+export type RoleId = Message<"cadestro.v1.RoleId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.RoleId.
+ * Use `create(RoleIdSchema)` to create a new message.
+ */
+export const RoleIdSchema: GenMessage<RoleId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 12);
+
+/**
+ * @generated from message cadestro.v1.GroupId
+ */
+export type GroupId = Message<"cadestro.v1.GroupId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.GroupId.
+ * Use `create(GroupIdSchema)` to create a new message.
+ */
+export const GroupIdSchema: GenMessage<GroupId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 13);
+
+/**
+ * @generated from message cadestro.v1.SshKeyId
+ */
+export type SshKeyId = Message<"cadestro.v1.SshKeyId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.SshKeyId.
+ * Use `create(SshKeyIdSchema)` to create a new message.
+ */
+export const SshKeyIdSchema: GenMessage<SshKeyId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 14);
+
+/**
+ * @generated from message cadestro.v1.UserGroupId
+ */
+export type UserGroupId = Message<"cadestro.v1.UserGroupId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.UserGroupId.
+ * Use `create(UserGroupIdSchema)` to create a new message.
+ */
+export const UserGroupIdSchema: GenMessage<UserGroupId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 15);
+
+/**
+ * @generated from message cadestro.v1.RegistrationTokenId
+ */
+export type RegistrationTokenId = Message<"cadestro.v1.RegistrationTokenId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.RegistrationTokenId.
+ * Use `create(RegistrationTokenIdSchema)` to create a new message.
+ */
+export const RegistrationTokenIdSchema: GenMessage<RegistrationTokenId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 16);
+
+/**
+ * @generated from message cadestro.v1.DeviceGroupId
+ */
+export type DeviceGroupId = Message<"cadestro.v1.DeviceGroupId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.DeviceGroupId.
+ * Use `create(DeviceGroupIdSchema)` to create a new message.
+ */
+export const DeviceGroupIdSchema: GenMessage<DeviceGroupId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 17);
+
+/**
+ * @generated from message cadestro.v1.AssignmentId
+ */
+export type AssignmentId = Message<"cadestro.v1.AssignmentId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.AssignmentId.
+ * Use `create(AssignmentIdSchema)` to create a new message.
+ */
+export const AssignmentIdSchema: GenMessage<AssignmentId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 18);
+
+/**
+ * @generated from message cadestro.v1.AssignmentSourceId
+ */
+export type AssignmentSourceId = Message<"cadestro.v1.AssignmentSourceId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.AssignmentSourceId.
+ * Use `create(AssignmentSourceIdSchema)` to create a new message.
+ */
+export const AssignmentSourceIdSchema: GenMessage<AssignmentSourceId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 19);
+
+/**
+ * @generated from message cadestro.v1.AssignmentTargetId
+ */
+export type AssignmentTargetId = Message<"cadestro.v1.AssignmentTargetId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.AssignmentTargetId.
+ * Use `create(AssignmentTargetIdSchema)` to create a new message.
+ */
+export const AssignmentTargetIdSchema: GenMessage<AssignmentTargetId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 20);
+
+/**
+ * @generated from message cadestro.v1.UserSelectionId
+ */
+export type UserSelectionId = Message<"cadestro.v1.UserSelectionId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.UserSelectionId.
+ * Use `create(UserSelectionIdSchema)` to create a new message.
+ */
+export const UserSelectionIdSchema: GenMessage<UserSelectionId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 21);
+
+/**
+ * @generated from message cadestro.v1.ScopeId
+ */
+export type ScopeId = Message<"cadestro.v1.ScopeId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.ScopeId.
+ * Use `create(ScopeIdSchema)` to create a new message.
+ */
+export const ScopeIdSchema: GenMessage<ScopeId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 22);
+
+/**
+ * @generated from message cadestro.v1.AuditEventId
+ */
+export type AuditEventId = Message<"cadestro.v1.AuditEventId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.AuditEventId.
+ * Use `create(AuditEventIdSchema)` to create a new message.
+ */
+export const AuditEventIdSchema: GenMessage<AuditEventId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 23);
+
+/**
+ * @generated from message cadestro.v1.AuditStreamId
+ */
+export type AuditStreamId = Message<"cadestro.v1.AuditStreamId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.AuditStreamId.
+ * Use `create(AuditStreamIdSchema)` to create a new message.
+ */
+export const AuditStreamIdSchema: GenMessage<AuditStreamId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 24);
+
+/**
+ * @generated from message cadestro.v1.AuditActorId
+ */
+export type AuditActorId = Message<"cadestro.v1.AuditActorId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.AuditActorId.
+ * Use `create(AuditActorIdSchema)` to create a new message.
+ */
+export const AuditActorIdSchema: GenMessage<AuditActorId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 25);
+
+/**
+ * @generated from message cadestro.v1.LpsPasswordId
+ */
+export type LpsPasswordId = Message<"cadestro.v1.LpsPasswordId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.LpsPasswordId.
+ * Use `create(LpsPasswordIdSchema)` to create a new message.
+ */
+export const LpsPasswordIdSchema: GenMessage<LpsPasswordId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 26);
+
+/**
+ * @generated from message cadestro.v1.LuksKeyId
+ */
+export type LuksKeyId = Message<"cadestro.v1.LuksKeyId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.LuksKeyId.
+ * Use `create(LuksKeyIdSchema)` to create a new message.
+ */
+export const LuksKeyIdSchema: GenMessage<LuksKeyId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 27);
+
+/**
+ * @generated from message cadestro.v1.IdentityProviderId
+ */
+export type IdentityProviderId = Message<"cadestro.v1.IdentityProviderId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.IdentityProviderId.
+ * Use `create(IdentityProviderIdSchema)` to create a new message.
+ */
+export const IdentityProviderIdSchema: GenMessage<IdentityProviderId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 28);
+
+/**
+ * @generated from message cadestro.v1.IdentityLinkId
+ */
+export type IdentityLinkId = Message<"cadestro.v1.IdentityLinkId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.IdentityLinkId.
+ * Use `create(IdentityLinkIdSchema)` to create a new message.
+ */
+export const IdentityLinkIdSchema: GenMessage<IdentityLinkId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 29);
+
+/**
+ * @generated from message cadestro.v1.CompliancePolicyId
+ */
+export type CompliancePolicyId = Message<"cadestro.v1.CompliancePolicyId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.CompliancePolicyId.
+ * Use `create(CompliancePolicyIdSchema)` to create a new message.
+ */
+export const CompliancePolicyIdSchema: GenMessage<CompliancePolicyId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 30);
+
+/**
+ * @generated from message cadestro.v1.SearchResultId
+ */
+export type SearchResultId = Message<"cadestro.v1.SearchResultId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.SearchResultId.
+ * Use `create(SearchResultIdSchema)` to create a new message.
+ */
+export const SearchResultIdSchema: GenMessage<SearchResultId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 31);
+
+/**
+ * @generated from message cadestro.v1.RequestId
+ */
+export type RequestId = Message<"cadestro.v1.RequestId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.RequestId.
+ * Use `create(RequestIdSchema)` to create a new message.
+ */
+export const RequestIdSchema: GenMessage<RequestId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 32);
+
+/**
+ * @generated from message cadestro.v1.FlatpakAppId
+ */
+export type FlatpakAppId = Message<"cadestro.v1.FlatpakAppId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.FlatpakAppId.
+ * Use `create(FlatpakAppIdSchema)` to create a new message.
+ */
+export const FlatpakAppIdSchema: GenMessage<FlatpakAppId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 33);
+
+/**
+ * @generated from message cadestro.v1.OidcClientId
+ */
+export type OidcClientId = Message<"cadestro.v1.OidcClientId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.OidcClientId.
+ * Use `create(OidcClientIdSchema)` to create a new message.
+ */
+export const OidcClientIdSchema: GenMessage<OidcClientId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 34);
+
+/**
+ * @generated from message cadestro.v1.ExternalIdentityId
+ */
+export type ExternalIdentityId = Message<"cadestro.v1.ExternalIdentityId"> & {
+  /**
+   * @generated from field: string value = 1;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message cadestro.v1.ExternalIdentityId.
+ * Use `create(ExternalIdentityIdSchema)` to create a new message.
+ */
+export const ExternalIdentityIdSchema: GenMessage<ExternalIdentityId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 35);
+
+/**
  * Structured error detail attached to Connect-RPC errors.
  *
  * @generated from message cadestro.v1.ErrorDetail
@@ -169,9 +645,9 @@ export type ErrorDetail = Message<"cadestro.v1.ErrorDetail"> & {
    * ULIDs are 26 chars; bound at 64 to leave headroom for prefixes
    * without inviting unbounded growth.
    *
-   * @generated from field: string request_id = 2;
+   * @generated from field: cadestro.v1.RequestId request_id = 2;
    */
-  requestId: string;
+  requestId?: RequestId;
 };
 
 /**
@@ -179,7 +655,7 @@ export type ErrorDetail = Message<"cadestro.v1.ErrorDetail"> & {
  * Use `create(ErrorDetailSchema)` to create a new message.
  */
 export const ErrorDetailSchema: GenMessage<ErrorDetail> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 8);
+  messageDesc(file_cadestro_v1_common, 36);
 
 /**
  * MaintenanceWindow gates scheduled policy runs by device-local wall-clock
@@ -206,7 +682,7 @@ export type MaintenanceWindow = Message<"cadestro.v1.MaintenanceWindow"> & {
  * Use `create(MaintenanceWindowSchema)` to create a new message.
  */
 export const MaintenanceWindowSchema: GenMessage<MaintenanceWindow> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 9);
+  messageDesc(file_cadestro_v1_common, 37);
 
 /**
  * One entry in a MaintenanceWindow: a set of weekdays and a single
@@ -235,7 +711,7 @@ export type MaintenanceWindowEntry = Message<"cadestro.v1.MaintenanceWindowEntry
  * Use `create(MaintenanceWindowEntrySchema)` to create a new message.
  */
 export const MaintenanceWindowEntrySchema: GenMessage<MaintenanceWindowEntry> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 10);
+  messageDesc(file_cadestro_v1_common, 38);
 
 /**
  * Output from command execution
@@ -264,7 +740,7 @@ export type CommandOutput = Message<"cadestro.v1.CommandOutput"> & {
  * Use `create(CommandOutputSchema)` to create a new message.
  */
 export const CommandOutputSchema: GenMessage<CommandOutput> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 11);
+  messageDesc(file_cadestro_v1_common, 39);
 
 /**
  * Execution status for any action

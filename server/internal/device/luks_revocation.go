@@ -68,7 +68,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 	}
 
 	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
-		Id: revocationID,
+		Id: &cadestrov1.MessageId{Value: revocationID},
 		Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
 			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: actionID}},
 		},

@@ -59,7 +59,7 @@
 	async function deleteProvider() {
 		if (!providerToDelete) return;
 		try {
-			await apiClient.deleteIdentityProvider(providerToDelete.id);
+			await apiClient.deleteIdentityProvider((providerToDelete.id?.value ?? ''));
 			table.patchRows((rows) => rows.filter((p) => p.id !== providerToDelete!.id));
 			toast.success(m.idp_detail_deleted());
 		} catch (error) {
@@ -124,7 +124,7 @@
 	<RowList
 		{table}
 		{sortOptions}
-		rowKey={(p) => p.id}
+		rowKey={(p) => (p.id?.value ?? '')}
 		href={(p) => `${base}/identity-providers/${p.id}`}
 	>
 		{#snippet row(provider)}

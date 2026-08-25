@@ -58,8 +58,8 @@ func TestActionSetState_CRUDCompilesAuthoredOrderAndPolicy(t *testing.T) {
 	compiled, err := manifest.New(st).ActionSet(ctx, set.ID)
 	require.NoError(t, err)
 	require.Len(t, compiled.Occurrences, 2)
-	assert.Equal(t, action1.ID, compiled.Occurrences[0].Action.Id.Value)
-	assert.Equal(t, action2.ID, compiled.Occurrences[1].Action.Id.Value)
+	assert.Equal(t, action1.ID, compiled.Occurrences[0].Action.GetId().GetValue())
+	assert.Equal(t, action2.ID, compiled.Occurrences[1].Action.GetId().GetValue())
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, compiled.DefaultOnFailure)
 
 	require.NoError(t, svc.ReorderActionInSet(ctx, actionOperation(), set.ID, action2.ID, 0))

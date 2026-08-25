@@ -91,8 +91,8 @@
 	// AND editing its rule took two separate save events, and whichever surface
 	// held the bar decided which half of the work the button would commit.
 	const groupContextId = $derived(`device-group:${groupId}`);
-	const deviceById = $derived(new Map(allDevices.map((d) => [d.id, d])));
-	const availableDevices = $derived(allDevices.filter((d) => !memberDeviceIds.includes(d.id)));
+	const deviceById = $derived(new Map<string, Device>(allDevices.flatMap((d) => d.id ? [[d.id.value, d] as const] : [])));
+	const availableDevices = $derived(allDevices.filter((d) => !memberDeviceIds.includes((d.id?.value ?? ''))));
 	// Gated on `editingIdentity`: the pill is held even when the fields are shut,
 	// and a group the operator only looked at must never park a draft on the stage.
 	const identityDirty = $derived(
@@ -162,7 +162,7 @@
 		try {
 			const response = await apiClient.getDeviceGroup(groupId);
 			group = response.group ?? null;
-			memberDeviceIds = response.deviceIds ?? [];
+			memberDeviceIds = (response.deviceIds ?? []).map((id) => id.value);
 			memberDevices = (response.devices ?? []).map((row) => ({
 				...row,
 				deviceId: row.deviceId?.value ?? ''
@@ -715,7 +715,7 @@
 		</Dialog.Header>
 
 		<ItemTablePicker
-			items={availableDevices.map((d) => ({ id: d.id, hostname: d.hostname, status: d.status }))}
+			items={availableDevices.map((d) => ({ id: (d.id?.value ?? ''), hostname: d.hostname, status: d.status }))}
 			bind:selected={selectedDeviceIds}
 			searchPlaceholder={m.picker_search_devices()}
 			emptyMessage={m.picker_no_devices()}

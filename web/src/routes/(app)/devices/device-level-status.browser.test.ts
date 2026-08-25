@@ -84,7 +84,7 @@ function hit(o: {
 		compliance_status: String(o.compliance ?? ComplianceStatus.COMPLIANT)
 	};
 	if (o.seen !== null) fields['last_seen_at'] = String(nowSec() - o.seen);
-	return create(SearchResultSchema, { id: o.id, name: o.hostname, fields });
+	return create(SearchResultSchema, { id: { value: o.id }, name: o.hostname, fields });
 }
 
 /** The status cell for one row, addressed by the tone it was painted with. */

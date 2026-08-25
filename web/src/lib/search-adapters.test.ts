@@ -22,7 +22,7 @@ import {
 
 function result(fields: Record<string, string>) {
 	return create(SearchResultSchema, {
-		id: '01JQZZACTION0000000000000A',
+		id: { value: '01JQZZACTION0000000000000A' },
 		name: 'curl',
 		description: '',
 		fields

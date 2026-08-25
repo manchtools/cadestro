@@ -55,7 +55,7 @@ func TestRefreshToken_RefusesASessionMintedUnderOldAuthority(t *testing.T) {
 
 	role := f.insertRole([]string{"ListUsers"})
 	_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
-		UserId: subject.ID, RoleId: role,
+		UserId: &cadestrov1.UserId{Value: subject.ID}, RoleId: &cadestrov1.RoleId{Value: role},
 	}, admin.Token))
 	require.NoError(t, err)
 
@@ -74,7 +74,7 @@ func TestRefreshToken_RefusesADisabledSubject(t *testing.T) {
 	pair := f.mintPair(subject.ID, subject.Email)
 
 	_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
-		Id: subject.ID, Disabled: true,
+		Id: &cadestrov1.UserId{Value: subject.ID}, Disabled: true,
 	}, admin.Token))
 	require.NoError(t, err)
 
@@ -169,7 +169,7 @@ func TestGetCurrentUser_ReturnsTheCallersOwnRecord(t *testing.T) {
 	resp, err := f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, subject.Token))
 	require.NoError(t, err)
 	require.NotNil(t, resp.Msg.User)
-	assert.Equal(t, subject.ID, resp.Msg.User.Id)
+	assert.Equal(t, subject.ID, resp.Msg.User.GetId().GetValue())
 	assert.Len(t, resp.Msg.User.RoleGrants, 1, "the caller's direct grants are reported")
 	assert.Len(t, resp.Msg.User.InheritedRoles, 1, "and the roles they hold through a group")
 	assert.Len(t, resp.Msg.User.IdentityLinks, 1)

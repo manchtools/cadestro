@@ -15,11 +15,23 @@ const onlineWindow = 5 * time.Minute
 
 func (h *Handlers) toProto(view store.DeviceView) *cadestrov1.Device {
 	device := &cadestrov1.Device{
-		Id: view.ID, Hostname: view.Hostname, AgentVersion: view.AgentVersion,
-		Status:                   cadestrov1.DeviceStatus_DEVICE_STATUS_OFFLINE,
-		Labels:                   make(map[string]string, len(view.Labels)),
-		AssignedUserIds:          append([]string(nil), view.AssignedUserIDs...),
-		AssignedGroupIds:         append([]string(nil), view.AssignedGroupIDs...),
+		Id: &cadestrov1.DeviceId{Value: view.ID}, Hostname: view.Hostname, AgentVersion: view.AgentVersion,
+		Status: cadestrov1.DeviceStatus_DEVICE_STATUS_OFFLINE,
+		Labels: make(map[string]string, len(view.Labels)),
+		AssignedUserIds: func() []*cadestrov1.UserId {
+			out := make([]*cadestrov1.UserId, len(view.AssignedUserIDs))
+			for i, id := range view.AssignedUserIDs {
+				out[i] = &cadestrov1.UserId{Value: id}
+			}
+			return out
+		}(),
+		AssignedGroupIds: func() []*cadestrov1.UserGroupId {
+			out := make([]*cadestrov1.UserGroupId, len(view.AssignedGroupIDs))
+			for i, id := range view.AssignedGroupIDs {
+				out[i] = &cadestrov1.UserGroupId{Value: id}
+			}
+			return out
+		}(),
 		SyncIntervalMinutes:      view.SyncIntervalMinutes,
 		InventoryIntervalMinutes: view.InventoryIntervalMinutes,
 		ComplianceStatus:         cadestrov1.ComplianceStatus(view.ComplianceStatus),

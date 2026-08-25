@@ -46,7 +46,7 @@
 	}
 
 	function openDeviceTerminal() {
-		if (device) openTerminal(device.id, device.hostname);
+		if (device) openTerminal((device.id?.value ?? ''), device.hostname);
 	}
 
 	$effect(() => {

@@ -107,7 +107,7 @@
 
 	const defaultRoleLabel = $derived(
 		draft.defaultRoleId
-			? (roles.find((r) => r.id === draft.defaultRoleId)?.name ?? draft.defaultRoleId)
+			? (roles.find((r) => (r.id?.value ?? '') === draft.defaultRoleId)?.name ?? draft.defaultRoleId)
 			: m.idp_field_default_role_none()
 	);
 
@@ -278,7 +278,7 @@
 				<Select.Content>
 					<Select.Item value="">{m.idp_field_default_role_none()}</Select.Item>
 					{#each roles as role (role.id)}
-						<Select.Item value={role.id}>{role.name}</Select.Item>
+						<Select.Item value={(role.id?.value ?? '')}>{role.name}</Select.Item>
 					{/each}
 				</Select.Content>
 			</Select.Root>

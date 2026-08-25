@@ -41,7 +41,7 @@ var authenticatedMutations = map[string]call{
 			Name:         "Corp",
 			Slug:         "corp",
 			ProviderType: cadestrov1.IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC,
-			ClientId:     "client",
+			ClientId:     &cadestrov1.OidcClientId{Value: "client"},
 			ClientSecret: "secret",
 			IssuerUrl:    "https://idp.example/",
 		}, token))
@@ -49,78 +49,78 @@ var authenticatedMutations = map[string]call{
 	},
 	cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateIdentityProvider(f.ctx(), authed(&cadestrov1.UpdateIdentityProviderRequest{
-			Id:   newULID(),
+			Id:   &cadestrov1.IdentityProviderId{Value: newULID()},
 			Name: "Corp",
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceDeleteIdentityProviderProcedure: func(f *fixture, token string) error {
-		_, err := f.client.DeleteIdentityProvider(f.ctx(), authed(&cadestrov1.DeleteIdentityProviderRequest{Id: newULID()}, token))
+		_, err := f.client.DeleteIdentityProvider(f.ctx(), authed(&cadestrov1.DeleteIdentityProviderRequest{Id: &cadestrov1.IdentityProviderId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceEnableSCIMProcedure: func(f *fixture, token string) error {
-		_, err := f.client.EnableSCIM(f.ctx(), authed(&cadestrov1.EnableSCIMRequest{Id: newULID()}, token))
+		_, err := f.client.EnableSCIM(f.ctx(), authed(&cadestrov1.EnableSCIMRequest{Id: &cadestrov1.IdentityProviderId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceDisableSCIMProcedure: func(f *fixture, token string) error {
-		_, err := f.client.DisableSCIM(f.ctx(), authed(&cadestrov1.DisableSCIMRequest{Id: newULID()}, token))
+		_, err := f.client.DisableSCIM(f.ctx(), authed(&cadestrov1.DisableSCIMRequest{Id: &cadestrov1.IdentityProviderId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceRotateSCIMTokenProcedure: func(f *fixture, token string) error {
-		_, err := f.client.RotateSCIMToken(f.ctx(), authed(&cadestrov1.RotateSCIMTokenRequest{Id: newULID()}, token))
+		_, err := f.client.RotateSCIMToken(f.ctx(), authed(&cadestrov1.RotateSCIMTokenRequest{Id: &cadestrov1.IdentityProviderId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceUnlinkIdentityProcedure: func(f *fixture, token string) error {
-		_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: newULID()}, token))
+		_, err := f.client.UnlinkIdentity(f.ctx(), authed(&cadestrov1.UnlinkIdentityRequest{LinkId: &cadestrov1.IdentityLinkId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceEraseJITUserProcedure: func(f *fixture, token string) error {
-		_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: newULID()}, token))
+		_, err := f.client.EraseJITUser(f.ctx(), authed(&cadestrov1.EraseJITUserRequest{Id: &cadestrov1.UserId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceUpdateUserEmailProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserEmail(f.ctx(), authed(&cadestrov1.UpdateUserEmailRequest{
-			Id: newULID(), Email: "moved@test.example",
+			Id: &cadestrov1.UserId{Value: newULID()}, Email: "moved@test.example",
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceSetUserDisabledProcedure: func(f *fixture, token string) error {
-		_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{Id: newULID(), Disabled: true}, token))
+		_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{Id: &cadestrov1.UserId{Value: newULID()}, Disabled: true}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceUpdateUserProfileProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserProfile(f.ctx(), authed(&cadestrov1.UpdateUserProfileRequest{
-			Id: newULID(), DisplayName: "Name",
+			Id: &cadestrov1.UserId{Value: newULID()}, DisplayName: "Name",
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceUpdateUserLinuxUsernameProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserLinuxUsername(f.ctx(), authed(&cadestrov1.UpdateUserLinuxUsernameRequest{
-			UserId: newULID(), LinuxUsername: "alice",
+			UserId: &cadestrov1.UserId{Value: newULID()}, LinuxUsername: "alice",
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceUpdateUserSshSettingsProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserSshSettings(f.ctx(), authed(&cadestrov1.UpdateUserSshSettingsRequest{
-			UserId: newULID(), SshAccessEnabled: true,
+			UserId: &cadestrov1.UserId{Value: newULID()}, SshAccessEnabled: true,
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceAddUserSshKeyProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AddUserSshKey(f.ctx(), authed(&cadestrov1.AddUserSshKeyRequest{
-			UserId: newULID(), PublicKey: testSSHKey,
+			UserId: &cadestrov1.UserId{Value: newULID()}, PublicKey: testSSHKey,
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceRemoveUserSshKeyProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RemoveUserSshKey(f.ctx(), authed(&cadestrov1.RemoveUserSshKeyRequest{
-			UserId: newULID(), KeyId: newULID(),
+			UserId: &cadestrov1.UserId{Value: newULID()}, KeyId: &cadestrov1.SshKeyId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceSetUserProvisioningEnabledProcedure: func(f *fixture, token string) error {
 		_, err := f.client.SetUserProvisioningEnabled(f.ctx(), authed(&cadestrov1.SetUserProvisioningEnabledRequest{
-			UserId: newULID(), Enabled: true,
+			UserId: &cadestrov1.UserId{Value: newULID()}, Enabled: true,
 		}, token))
 		return err
 	},
@@ -130,41 +130,41 @@ var authenticatedMutations = map[string]call{
 	},
 	cadestrov1connect.ControlServiceUpdateUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserGroup(f.ctx(), authed(&cadestrov1.UpdateUserGroupRequest{
-			GroupId: newULID(), Name: "Operators",
+			GroupId: &cadestrov1.UserGroupId{Value: newULID()}, Name: "Operators",
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceDeleteUserGroupProcedure: func(f *fixture, token string) error {
-		_, err := f.client.DeleteUserGroup(f.ctx(), authed(&cadestrov1.DeleteUserGroupRequest{Id: newULID()}, token))
+		_, err := f.client.DeleteUserGroup(f.ctx(), authed(&cadestrov1.DeleteUserGroupRequest{Id: &cadestrov1.UserGroupId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceAddUserToGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AddUserToGroup(f.ctx(), authed(&cadestrov1.AddUserToGroupRequest{
-			GroupId: newULID(), UserId: newULID(),
+			GroupId: &cadestrov1.UserGroupId{Value: newULID()}, UserId: &cadestrov1.UserId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceRemoveUserFromGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RemoveUserFromGroup(f.ctx(), authed(&cadestrov1.RemoveUserFromGroupRequest{
-			GroupId: newULID(), UserId: newULID(),
+			GroupId: &cadestrov1.UserGroupId{Value: newULID()}, UserId: &cadestrov1.UserId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceSetUserGroupMaintenanceWindowProcedure: func(f *fixture, token string) error {
 		_, err := f.client.SetUserGroupMaintenanceWindow(f.ctx(), authed(&cadestrov1.SetUserGroupMaintenanceWindowRequest{
-			Id: newULID(),
+			Id: &cadestrov1.UserGroupId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-			Id: newULID(), IsDynamic: true, DynamicQuery: `user.disabled == true`,
+			Id: &cadestrov1.UserGroupId{Value: newULID()}, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{
-			Id: newULID(),
+			Id: &cadestrov1.UserGroupId{Value: newULID()},
 		}, token))
 		return err
 	},
@@ -182,35 +182,35 @@ var authenticatedMutations = map[string]call{
 	},
 	cadestrov1connect.ControlServiceUpdateRoleProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateRole(f.ctx(), authed(&cadestrov1.UpdateRoleRequest{
-			RoleId: newULID(), Name: "Auditors", Permissions: []string{"ListUsers"},
+			RoleId: &cadestrov1.RoleId{Value: newULID()}, Name: "Auditors", Permissions: []string{"ListUsers"},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceDeleteRoleProcedure: func(f *fixture, token string) error {
-		_, err := f.client.DeleteRole(f.ctx(), authed(&cadestrov1.DeleteRoleRequest{Id: newULID()}, token))
+		_, err := f.client.DeleteRole(f.ctx(), authed(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: newULID()}}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceAssignRoleToUserProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
-			UserId: newULID(), RoleId: newULID(),
+			UserId: &cadestrov1.UserId{Value: newULID()}, RoleId: &cadestrov1.RoleId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceRevokeRoleFromUserProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
-			UserId: newULID(), RoleId: newULID(),
+			UserId: &cadestrov1.UserId{Value: newULID()}, RoleId: &cadestrov1.RoleId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceAssignRoleToUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.AssignRoleToUserGroup(f.ctx(), authed(&cadestrov1.AssignRoleToUserGroupRequest{
-			GroupId: newULID(), RoleId: newULID(),
+			GroupId: &cadestrov1.UserGroupId{Value: newULID()}, RoleId: &cadestrov1.RoleId{Value: newULID()},
 		}, token))
 		return err
 	},
 	cadestrov1connect.ControlServiceRevokeRoleFromUserGroupProcedure: func(f *fixture, token string) error {
 		_, err := f.client.RevokeRoleFromUserGroup(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserGroupRequest{
-			GroupId: newULID(), RoleId: newULID(),
+			GroupId: &cadestrov1.UserGroupId{Value: newULID()}, RoleId: &cadestrov1.RoleId{Value: newULID()},
 		}, token))
 		return err
 	},

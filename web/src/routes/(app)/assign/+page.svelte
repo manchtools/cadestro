@@ -113,7 +113,7 @@
 
 	const eligibility = $derived(computeEligibility(devices, assignedIds));
 	const groups = $derived(hostnameGroups(devices));
-	const chosenSet = $derived(sets.find((s) => s.id === setId) ?? null);
+	const chosenSet = $derived(sets.find((s) => (s.id?.value ?? '') === setId) ?? null);
 
 	const caption = $derived.by(() => {
 		if (!chosenSet) return m.assign_caption_choose();

@@ -157,10 +157,10 @@
 		committing = true;
 		try {
 			if (current.name.trim() !== base?.name) {
-				await apiClient.renameAction(action.id, current.name.trim());
+				await apiClient.renameAction((action.id?.value ?? ''), current.name.trim());
 			}
 			if (current.description.trim() !== base?.description) {
-				await apiClient.updateActionDescription(action.id, current.description.trim());
+				await apiClient.updateActionDescription((action.id?.value ?? ''), current.description.trim());
 			}
 			const updated = await apiClient.updateActionParams({
 				id: action.id,

@@ -89,10 +89,10 @@ func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[cadestrov1.
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermGetRole, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermGetRole, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	role, err := h.store.GetRole(ctx, req.Msg.Id)
+	role, err := h.store.GetRole(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrRoleNotFound, "role not found")
@@ -146,10 +146,10 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[cadestro
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermUpdateRole, req.Msg.RoleId); err != nil {
+	if err := h.authorize(ctx, PermUpdateRole, req.Msg.GetRoleId().GetValue()); err != nil {
 		return nil, err
 	}
-	before, err := h.store.GetRole(ctx, req.Msg.RoleId)
+	before, err := h.store.GetRole(ctx, req.Msg.GetRoleId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrRoleNotFound, "role not found")
@@ -226,10 +226,10 @@ func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[cadestro
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermDeleteRole, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermDeleteRole, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	before, err := h.store.GetRole(ctx, req.Msg.Id)
+	before, err := h.store.GetRole(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrRoleNotFound, "role not found")
@@ -287,11 +287,15 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[ca
 		return nil, err
 	}
 
-	roleIDs := requestedRoleIDs(req.Msg.RoleId, req.Msg.RoleIds)
+	roleValues := make([]string, 0, len(req.Msg.GetRoleIds()))
+	for _, id := range req.Msg.GetRoleIds() {
+		roleValues = append(roleValues, id.GetValue())
+	}
+	roleIDs := requestedRoleIDs(req.Msg.GetRoleId().GetValue(), roleValues)
 	if len(roleIDs) == 0 {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "role_id or role_ids is required")
 	}
-	target, err := h.store.GetUser(ctx, req.Msg.UserId)
+	target, err := h.store.GetUser(ctx, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrUserNotFound, "user not found")
@@ -299,7 +303,7 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[ca
 		return nil, internalError(ctx, "failed to load user")
 	}
 
-	scopeKind, scopeID, err := h.checkGrantScope(ctx, req.Msg.ScopeKind, req.Msg.ScopeId, roleIDs)
+	scopeKind, scopeID, err := h.checkGrantScope(ctx, req.Msg.ScopeKind, req.Msg.GetScopeId().GetValue(), roleIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -365,14 +369,14 @@ func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[
 	if err := h.authorize(ctx, PermRevokeRoleFromUser, ""); err != nil {
 		return nil, err
 	}
-	target, err := h.store.GetUser(ctx, req.Msg.UserId)
+	target, err := h.store.GetUser(ctx, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrUserNotFound, "user not found")
 		}
 		return nil, internalError(ctx, "failed to load user")
 	}
-	scopeKind, scopeID, err := h.describedScope(ctx, req.Msg.ScopeKind, req.Msg.ScopeId)
+	scopeKind, scopeID, err := h.describedScope(ctx, req.Msg.ScopeKind, req.Msg.GetScopeId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -385,11 +389,11 @@ func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[
 			)
 			if scopeID == nil {
 				grant, err = tx.DeleteUnscopedUserRoleGrant(ctx, db.DeleteUnscopedUserRoleGrantParams{
-					UserID: target.ID, RoleID: req.Msg.RoleId,
+					UserID: target.ID, RoleID: req.Msg.GetRoleId().GetValue(),
 				})
 			} else {
 				grant, err = tx.DeleteScopedUserRoleGrant(ctx, db.DeleteScopedUserRoleGrantParams{
-					UserID: target.ID, RoleID: req.Msg.RoleId, ScopeKind: scopeKind, ScopeID: scopeID,
+					UserID: target.ID, RoleID: req.Msg.GetRoleId().GetValue(), ScopeKind: scopeKind, ScopeID: scopeID,
 				})
 			}
 			if err != nil {
@@ -401,7 +405,7 @@ func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[
 				Action:       "REVOKE",
 				Outcome:      store.EffectApplied,
 				BeforeRef:    &target.ID,
-				AfterRef:     &req.Msg.RoleId,
+				AfterRef:     stringPtr(req.Msg.GetRoleId().GetValue()),
 			})
 			if _, err := h.invalidateSubjectSessions(ctx, tx, rec, target.ID); err != nil {
 				return err
@@ -426,11 +430,15 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 	if err := h.authorize(ctx, PermAssignRoleToUserGroup, ""); err != nil {
 		return nil, err
 	}
-	roleIDs := requestedRoleIDs(req.Msg.RoleId, req.Msg.RoleIds)
+	roleValues := make([]string, 0, len(req.Msg.GetRoleIds()))
+	for _, id := range req.Msg.GetRoleIds() {
+		roleValues = append(roleValues, id.GetValue())
+	}
+	roleIDs := requestedRoleIDs(req.Msg.GetRoleId().GetValue(), roleValues)
 	if len(roleIDs) == 0 {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "role_id or role_ids is required")
 	}
-	scopeKind, scopeID, err := h.checkGrantScope(ctx, req.Msg.ScopeKind, req.Msg.ScopeId, roleIDs)
+	scopeKind, scopeID, err := h.checkGrantScope(ctx, req.Msg.ScopeKind, req.Msg.GetScopeId().GetValue(), roleIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +455,7 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 				grantID := ulid.Make().String()
 				if _, err := tx.InsertUserGroupRoleGrant(ctx, db.InsertUserGroupRoleGrantParams{
 					GrantID:    grantID,
-					GroupID:    req.Msg.GroupId,
+					GroupID:    req.Msg.GetGroupId().GetValue(),
 					RoleID:     roleID,
 					AssignedAt: at,
 					AssignedBy: actor.ID,
@@ -461,11 +469,11 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 					ResourceID:   grantID,
 					Action:       "GRANT",
 					Outcome:      store.EffectApplied,
-					BeforeRef:    &req.Msg.GroupId,
+					BeforeRef:    stringPtr(req.Msg.GetGroupId().GetValue()),
 					AfterRef:     &roleID,
 				})
 			}
-			if err := h.invalidateGroupMemberSessions(ctx, tx, rec, req.Msg.GroupId); err != nil {
+			if err := h.invalidateGroupMemberSessions(ctx, tx, rec, req.Msg.GetGroupId().GetValue()); err != nil {
 				return err
 			}
 			return nil
@@ -494,7 +502,7 @@ func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Req
 	if err := h.authorize(ctx, PermRevokeRoleFromUserGroup, ""); err != nil {
 		return nil, err
 	}
-	scopeKind, scopeID, err := h.describedScope(ctx, req.Msg.ScopeKind, req.Msg.ScopeId)
+	scopeKind, scopeID, err := h.describedScope(ctx, req.Msg.ScopeKind, req.Msg.GetScopeId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -507,11 +515,11 @@ func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Req
 			)
 			if scopeID == nil {
 				grant, err = tx.DeleteUnscopedUserGroupRoleGrant(ctx, db.DeleteUnscopedUserGroupRoleGrantParams{
-					GroupID: req.Msg.GroupId, RoleID: req.Msg.RoleId,
+					GroupID: req.Msg.GetGroupId().GetValue(), RoleID: req.Msg.GetRoleId().GetValue(),
 				})
 			} else {
 				grant, err = tx.DeleteScopedUserGroupRoleGrant(ctx, db.DeleteScopedUserGroupRoleGrantParams{
-					GroupID: req.Msg.GroupId, RoleID: req.Msg.RoleId, ScopeKind: scopeKind, ScopeID: scopeID,
+					GroupID: req.Msg.GetGroupId().GetValue(), RoleID: req.Msg.GetRoleId().GetValue(), ScopeKind: scopeKind, ScopeID: scopeID,
 				})
 			}
 			if err != nil {
@@ -522,10 +530,10 @@ func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Req
 				ResourceID:   grant.GrantID,
 				Action:       "REVOKE",
 				Outcome:      store.EffectApplied,
-				BeforeRef:    &req.Msg.GroupId,
-				AfterRef:     &req.Msg.RoleId,
+				BeforeRef:    stringPtr(req.Msg.GetGroupId().GetValue()),
+				AfterRef:     stringPtr(req.Msg.GetRoleId().GetValue()),
 			})
-			if err := h.invalidateGroupMemberSessions(ctx, tx, rec, req.Msg.GroupId); err != nil {
+			if err := h.invalidateGroupMemberSessions(ctx, tx, rec, req.Msg.GetGroupId().GetValue()); err != nil {
 				return err
 			}
 			return nil

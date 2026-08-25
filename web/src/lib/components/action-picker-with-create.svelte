@@ -97,12 +97,12 @@
 					</div>
 				{:else}
 					<ItemTablePicker
-						items={availableActions}
+						items={availableActions.map((action) => ({ ...action, id: action.id?.value ?? '' }))}
 						bind:selected={selectedActionIds}
 						searchPlaceholder={m.action_set_detail_search_actions()}
 						emptyMessage={m.action_set_detail_no_actions_available()}
 						searchFilter={(item, query) => {
-							const a = item as ManagedAction;
+							const a = item;
 							const q = query.toLowerCase();
 							return a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q);
 						}}
@@ -112,7 +112,7 @@
 							<Table.Head>{m.common_type()}</Table.Head>
 						{/snippet}
 						{#snippet itemRow(item)}
-							{@const a = item as ManagedAction}
+							{@const a = item}
 							<Table.Cell>
 								<div>
 									<span class="font-medium">{a.name}</span>

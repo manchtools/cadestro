@@ -133,7 +133,7 @@
 
 	function handleActionCreated(action: ManagedAction) {
 		allActions = [action, ...allActions];
-		draft.selectedActionIds = [...draft.selectedActionIds, action.id];
+		draft.selectedActionIds = [...draft.selectedActionIds, (action.id?.value ?? '')];
 		creatingAction = false;
 	}
 
@@ -178,7 +178,7 @@
 				const ids = $state.snapshot(draft.selectedActionIds);
 				for (let i = 0; i < ids.length; i++) {
 					try {
-						await apiClient.addActionToSet(set.id, ids[i], i);
+						await apiClient.addActionToSet((set.id?.value ?? ''), ids[i], i);
 					} catch (error) {
 						console.error('Failed to add action to set', error);
 					}
@@ -257,8 +257,8 @@
 								type="button"
 								data-testid="set-action-row"
 								data-action-id={action.id}
-								onclick={() => toggleAction(action.id)}
-								aria-pressed={isSelected(action.id)}
+								onclick={() => toggleAction((action.id?.value ?? ''))}
+								aria-pressed={isSelected((action.id?.value ?? ''))}
 								class="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"
 							>
 								<!-- A drawn tick, not a Checkbox: the row IS the control, and a
@@ -267,12 +267,12 @@
 								<span
 									aria-hidden="true"
 									class="grid h-4 w-4 shrink-0 place-items-center rounded border {isSelected(
-										action.id
+										(action.id?.value ?? '')
 									)
 										? 'border-accent bg-accent-soft text-accent-ink'
 										: 'border-input'}"
 								>
-									{#if isSelected(action.id)}<Check class="h-3 w-3" />{/if}
+									{#if isSelected((action.id?.value ?? ''))}<Check class="h-3 w-3" />{/if}
 								</span>
 								<span class="min-w-0 flex-1">
 									<span class="block truncate text-sm font-medium">{action.name}</span>

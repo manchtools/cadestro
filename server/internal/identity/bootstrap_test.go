@@ -66,7 +66,7 @@ func TestBootstrapToken_MayGrantTheFirstAdminRole(t *testing.T) {
 	subject := f.seedSubject()
 
 	_, err = f.client.AssignRoleToUser(f.ctx(), bootstrapAuthed(&cadestrov1.AssignRoleToUserRequest{
-		UserId: subject.ID, RoleId: auth.AdminRoleID,
+		UserId: &cadestrov1.UserId{Value: subject.ID}, RoleId: &cadestrov1.RoleId{Value: auth.AdminRoleID},
 	}, issued.Token))
 	require.NoError(t, err)
 	grants, err := f.store.ListUserRoleGrants(f.ctx(), subject.ID)
@@ -215,7 +215,7 @@ func TestBootstrapPrincipal_HoldsOnlyTheSetupAuthority(t *testing.T) {
 	require.NoError(t, err)
 	subject := f.seedSubject()
 	_, err = f.client.SetUserDisabled(f.ctx(), bootstrapAuthed(&cadestrov1.SetUserDisabledRequest{
-		Id: subject.ID, Disabled: true,
+		Id: &cadestrov1.UserId{Value: subject.ID}, Disabled: true,
 	}, issued.Token))
 	assert.Equal(t, connect.CodePermissionDenied, connectCodeOf(t, err),
 		"changing subject access is not part of bringing a deployment up")

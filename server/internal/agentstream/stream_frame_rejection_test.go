@@ -122,7 +122,7 @@ func (f *streamTestFixture) open(t *testing.T, ctx context.Context) *connect.Bid
 	t.Helper()
 	stream := f.client.Stream(ctx)
 	t.Cleanup(func() { _ = stream.CloseRequest() })
-	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
+	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
 		DeviceId: &cadestrov1.DeviceId{Value: f.deviceID}, AgentVersion: "v1", Hostname: "device",
 	}}}))
 	welcome, err := stream.Receive()
@@ -146,7 +146,7 @@ func TestPendingHelloPromotesAndOldActiveIsRejected(t *testing.T) {
 
 	f.peerSerial.SetInt64(1)
 	stream := f.client.Stream(ctx)
-	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
+	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
 		DeviceId: &cadestrov1.DeviceId{Value: f.deviceID}, AgentVersion: "v1", Hostname: "device",
 	}}}))
 	_, err = stream.Receive()
@@ -164,7 +164,7 @@ func TestStreamRejectsAlreadyOpenPeerAfterSerialPromotion(t *testing.T) {
 	stream := f.open(t, ctx)
 	_, err := f.raw.Exec(ctx, `UPDATE devices SET certificate_pem = X'02', active_cert_serial = '2' WHERE id = ?`, f.deviceID)
 	require.NoError(t, err)
-	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: ulid.Make().String(), Payload: &cadestrov1.AgentMessage_SyncRequest{SyncRequest: &cadestrov1.SyncRequest{}}}))
+	require.NoError(t, stream.Send(&cadestrov1.AgentMessage{Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.AgentMessage_SyncRequest{SyncRequest: &cadestrov1.SyncRequest{}}}))
 	_, err = stream.Receive()
 	require.Error(t, err)
 	var connectErr *connect.Error

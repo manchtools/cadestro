@@ -26,7 +26,7 @@
 
 	async function stopResponse(response: StartTerminalResponse | null) {
 		if (!response) return;
-		await apiClient.stopTerminal(response.sessionId);
+		await apiClient.stopTerminal((response.sessionId?.value ?? ''));
 	}
 
 	async function start(session: TermSession) {
@@ -156,7 +156,7 @@
 					{:else if state.response}
 						<Terminal
 							terminalUrl={state.response.terminalUrl}
-							sessionId={state.response.sessionId}
+							sessionId={(state.response.sessionId?.value ?? '')}
 							sessionToken={state.response.sessionToken}
 							ttyUser={state.response.ttyUser}
 							onclose={() => markEnded(session.id)}

@@ -157,10 +157,10 @@ func TestSSOCallback_AutoCreatesASubjectAndIssuesASession(t *testing.T) {
 	assert.NotEmpty(t, resp.Msg.AccessToken)
 	assert.NotEmpty(t, resp.Msg.RefreshToken)
 	require.Len(t, resp.Msg.User.RoleGrants, 1)
-	assert.Equal(t, role, resp.Msg.User.RoleGrants[0].Role.Id,
+	assert.Equal(t, role, resp.Msg.User.RoleGrants[0].Role.GetId().GetValue(),
 		"the provider's default role is granted on auto-create")
 	require.Len(t, resp.Msg.User.IdentityLinks, 1)
-	row, err := f.store.GetUser(f.ctx(), resp.Msg.User.Id)
+	row, err := f.store.GetUser(f.ctx(), resp.Msg.User.GetId().GetValue())
 	require.NoError(t, err)
 	assert.Equal(t, store.UserProvisioningSourceOIDCJIT, row.ProvisioningSource)
 
@@ -261,7 +261,7 @@ func TestSSOCallback_LinksAnAlreadyBoundAccountWhenEmailAssertionsAreTrusted(t *
 		Slug: "second", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, subject.ID, resp.Msg.User.Id)
+	assert.Equal(t, subject.ID, resp.Msg.User.GetId().GetValue())
 
 	links, err := f.store.ListIdentityLinksForUser(f.ctx(), subject.ID)
 	require.NoError(t, err)
@@ -287,7 +287,7 @@ func TestSSOCallback_LinksAnUnboundAccountByEmail(t *testing.T) {
 		Slug: "corp", Code: "auth-code", State: state,
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, invited.ID, resp.Msg.User.Id)
+	assert.Equal(t, invited.ID, resp.Msg.User.GetId().GetValue())
 }
 
 // An unverified email claim is not usable for linking or creating: the

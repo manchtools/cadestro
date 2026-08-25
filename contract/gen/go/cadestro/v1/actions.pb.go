@@ -1490,7 +1490,7 @@ func (x *UpdateParams) GetRebootIfRequired() bool {
 type FlatpakParams struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Application ID (e.g., "org.mozilla.firefox", "com.spotify.Client")
-	AppId string `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	AppId *FlatpakAppId `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
 	// Remote/repository name (default: "flathub")
 	Remote string `protobuf:"bytes,2,opt,name=remote,proto3" json:"remote,omitempty"`
 	// Whether to install system-wide (true) or user-only (false)
@@ -1532,11 +1532,11 @@ func (*FlatpakParams) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *FlatpakParams) GetAppId() string {
+func (x *FlatpakParams) GetAppId() *FlatpakAppId {
 	if x != nil {
 		return x.AppId
 	}
-	return ""
+	return nil
 }
 
 func (x *FlatpakParams) GetRemote() string {
@@ -3238,10 +3238,9 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
 	"autoremove\x18\x02 \x01(\bR\n" +
 	"autoremove\x12,\n" +
-	"\x12reboot_if_required\x18\x03 \x01(\bR\x10rebootIfRequired\"\x8c\x01\n" +
-	"\rFlatpakParams\x12$\n" +
-	"\x06app_id\x18\x01 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x05appId\x12\"\n" +
+	"\x12reboot_if_required\x18\x03 \x01(\bR\x10rebootIfRequired\"\xa0\x01\n" +
+	"\rFlatpakParams\x128\n" +
+	"\x06app_id\x18\x01 \x01(\v2\x19.cadestro.v1.FlatpakAppIdB\x06\xbaH\x03\xc8\x01\x01R\x05appId\x12\"\n" +
 	"\x06remote\x18\x02 \x01(\tB\n" +
 	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x06remote\x12\x1f\n" +
 	"\vsystem_wide\x18\x03 \x01(\bR\n" +
@@ -3509,12 +3508,13 @@ var file_cadestro_v1_actions_proto_goTypes = []any{
 	nil,                               // 35: cadestro.v1.ActionResult.MetadataEntry
 	(*ActionId)(nil),                  // 36: cadestro.v1.ActionId
 	(DesiredState)(0),                 // 37: cadestro.v1.DesiredState
-	(ExecutionStatus)(0),              // 38: cadestro.v1.ExecutionStatus
-	(*CommandOutput)(nil),             // 39: cadestro.v1.CommandOutput
-	(*timestamppb.Timestamp)(nil),     // 40: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),       // 41: google.protobuf.Duration
-	(*RunId)(nil),                     // 42: cadestro.v1.RunId
-	(*OccurrenceId)(nil),              // 43: cadestro.v1.OccurrenceId
+	(*FlatpakAppId)(nil),              // 38: cadestro.v1.FlatpakAppId
+	(ExecutionStatus)(0),              // 39: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),             // 40: cadestro.v1.CommandOutput
+	(*timestamppb.Timestamp)(nil),     // 41: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),       // 42: google.protobuf.Duration
+	(*RunId)(nil),                     // 43: cadestro.v1.RunId
+	(*OccurrenceId)(nil),              // 44: cadestro.v1.OccurrenceId
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	36, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
@@ -3541,33 +3541,34 @@ var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	33, // 21: cadestro.v1.Action.agent_update:type_name -> cadestro.v1.AgentUpdateParams
 	34, // 22: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
 	1,  // 23: cadestro.v1.ServiceParams.desired_state:type_name -> cadestro.v1.ServiceUnitState
-	18, // 24: cadestro.v1.RepositoryParams.apt:type_name -> cadestro.v1.AptRepository
-	19, // 25: cadestro.v1.RepositoryParams.dnf:type_name -> cadestro.v1.DnfRepository
-	20, // 26: cadestro.v1.RepositoryParams.pacman:type_name -> cadestro.v1.PacmanRepository
-	21, // 27: cadestro.v1.RepositoryParams.zypper:type_name -> cadestro.v1.ZypperRepository
-	25, // 28: cadestro.v1.SshdParams.directives:type_name -> cadestro.v1.SshdDirective
-	2,  // 29: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
-	3,  // 30: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
-	4,  // 31: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	5,  // 32: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
-	4,  // 33: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	6,  // 34: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
-	36, // 35: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
-	38, // 36: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
-	39, // 37: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
-	40, // 38: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	41, // 39: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
-	35, // 40: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
-	39, // 41: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	42, // 42: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
-	43, // 43: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	32, // 44: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
-	32, // 45: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
-	46, // [46:46] is the sub-list for method output_type
-	46, // [46:46] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	38, // 24: cadestro.v1.FlatpakParams.app_id:type_name -> cadestro.v1.FlatpakAppId
+	18, // 25: cadestro.v1.RepositoryParams.apt:type_name -> cadestro.v1.AptRepository
+	19, // 26: cadestro.v1.RepositoryParams.dnf:type_name -> cadestro.v1.DnfRepository
+	20, // 27: cadestro.v1.RepositoryParams.pacman:type_name -> cadestro.v1.PacmanRepository
+	21, // 28: cadestro.v1.RepositoryParams.zypper:type_name -> cadestro.v1.ZypperRepository
+	25, // 29: cadestro.v1.SshdParams.directives:type_name -> cadestro.v1.SshdDirective
+	2,  // 30: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
+	3,  // 31: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
+	4,  // 32: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	5,  // 33: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
+	4,  // 34: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	6,  // 35: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
+	36, // 36: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
+	39, // 37: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	40, // 38: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
+	41, // 39: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	42, // 40: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
+	35, // 41: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
+	40, // 42: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	43, // 43: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
+	44, // 44: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	32, // 45: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
+	32, // 46: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
+	47, // [47:47] is the sub-list for method output_type
+	47, // [47:47] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }

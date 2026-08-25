@@ -80,7 +80,7 @@ func (s *Service) Sync(ctx context.Context, deviceID string) (*cadestrov1.SyncSt
 				return nil, err
 			}
 		}
-		desiredPolicy = &cadestrov1.DesiredPolicy{Revision: policyRevision(manifests), Manifests: manifests}
+		desiredPolicy = &cadestrov1.DesiredPolicy{Revision: &cadestrov1.PolicyRevisionId{Value: policyRevision(manifests)}, Manifests: manifests}
 	}
 	windows, err := s.store.ListDeviceMaintenanceWindows(ctx, deviceID)
 	if err != nil {

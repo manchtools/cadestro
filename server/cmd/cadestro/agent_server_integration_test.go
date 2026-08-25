@@ -46,7 +46,7 @@ func (s *integrationAgentService) Stream(ctx context.Context, stream *connect.Bi
 	} else {
 		s.hello <- got
 	}
-	if err := stream.Send(&cadestrov1.ServerMessage{Id: first.Id, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}}); err != nil {
+	if err := stream.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: first.GetId().GetValue()}, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{}}}); err != nil {
 		return err
 	}
 	<-ctx.Done()

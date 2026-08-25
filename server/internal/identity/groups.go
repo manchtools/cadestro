@@ -77,21 +77,21 @@ func (h *Handlers) GetUserGroup(ctx context.Context, req *connect.Request[cadest
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.enforceUserGroupScope(ctx, PermGetUserGroup, req.Msg.Id, true); err != nil {
+	if err := h.enforceUserGroupScope(ctx, PermGetUserGroup, req.Msg.GetId().GetValue(), true); err != nil {
 		return nil, err
 	}
-	group, err := h.loadUserGroupProto(ctx, req.Msg.Id, true)
+	group, err := h.loadUserGroupProto(ctx, req.Msg.GetId().GetValue(), true)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := h.store.ListUserGroupMembers(ctx, req.Msg.Id)
+	rows, err := h.store.ListUserGroupMembers(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, internalError(ctx, "failed to list user group members")
 	}
 	members := make([]*cadestrov1.UserGroupMember, len(rows))
 	for i, row := range rows {
 		members[i] = &cadestrov1.UserGroupMember{
-			UserId: row.UserID, Email: row.Email, AddedAt: timestampValue(row.AddedAt),
+			UserId: &cadestrov1.UserId{Value: row.UserID}, Email: row.Email, AddedAt: timestampValue(row.AddedAt),
 		}
 	}
 	return connect.NewResponse(&cadestrov1.GetUserGroupResponse{Group: group, Members: members}), nil
@@ -149,18 +149,18 @@ func (h *Handlers) UpdateUserGroup(ctx context.Context, req *connect.Request[cad
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceUserGroupScope(ctx, PermUpdateUserGroup, req.Msg.GroupId, false); err != nil {
+	if err := h.enforceUserGroupScope(ctx, PermUpdateUserGroup, req.Msg.GetGroupId().GetValue(), false); err != nil {
 		return nil, err
 	}
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermUpdateUserGroup),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.UpdateUserGroup(ctx, db.UpdateUserGroupParams{
-				ID: req.Msg.GroupId, Name: req.Msg.Name, Description: req.Msg.Description, UpdatedAt: at,
+				ID: req.Msg.GetGroupId().GetValue(), Name: req.Msg.Name, Description: req.Msg.Description, UpdatedAt: at,
 			}); err != nil {
 				return err
 			}
-			rec.Effect(userGroupEffect(req.Msg.GroupId, "UPDATE", "name", "description"))
+			rec.Effect(userGroupEffect(req.Msg.GetGroupId().GetValue(), "UPDATE", "name", "description"))
 			return nil
 		})
 	if err != nil {
@@ -172,7 +172,7 @@ func (h *Handlers) UpdateUserGroup(ctx context.Context, req *connect.Request[cad
 		}
 		return nil, internalError(ctx, "failed to update user group")
 	}
-	group, err := h.loadUserGroupProto(ctx, req.Msg.GroupId, true)
+	group, err := h.loadUserGroupProto(ctx, req.Msg.GetGroupId().GetValue(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *conne
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceUserGroupScope(ctx, PermSetUserGroupMaintenance, req.Msg.Id, false); err != nil {
+	if err := h.enforceUserGroupScope(ctx, PermSetUserGroupMaintenance, req.Msg.GetId().GetValue(), false); err != nil {
 		return nil, err
 	}
 	raw := []byte("{}")
@@ -202,11 +202,11 @@ func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *conne
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermSetUserGroupMaintenance),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.SetUserGroupMaintenanceWindow(ctx, db.SetUserGroupMaintenanceWindowParams{
-				ID: req.Msg.Id, MaintenanceWindow: raw, UpdatedAt: at,
+				ID: req.Msg.GetId().GetValue(), MaintenanceWindow: raw, UpdatedAt: at,
 			}); err != nil {
 				return err
 			}
-			rec.Effect(userGroupEffect(req.Msg.Id, "UPDATE", "maintenance_window"))
+			rec.Effect(userGroupEffect(req.Msg.GetId().GetValue(), "UPDATE", "maintenance_window"))
 			return nil
 		})
 	if err != nil {
@@ -215,7 +215,7 @@ func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *conne
 		}
 		return nil, internalError(ctx, "failed to set user group maintenance window")
 	}
-	group, err := h.loadUserGroupProto(ctx, req.Msg.Id, true)
+	group, err := h.loadUserGroupProto(ctx, req.Msg.GetId().GetValue(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -228,20 +228,20 @@ func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[cad
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceUserGroupScope(ctx, PermDeleteUserGroup, req.Msg.Id, false); err != nil {
+	if err := h.enforceUserGroupScope(ctx, PermDeleteUserGroup, req.Msg.GetId().GetValue(), false); err != nil {
 		return nil, err
 	}
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermDeleteUserGroup),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			if _, err := tx.GetUserGroup(ctx, req.Msg.Id); err != nil {
+			if _, err := tx.GetUserGroup(ctx, req.Msg.GetId().GetValue()); err != nil {
 				return err
 			}
-			memberIDs, err := tx.ListUserGroupMemberIDs(ctx, req.Msg.Id)
+			memberIDs, err := tx.ListUserGroupMemberIDs(ctx, req.Msg.GetId().GetValue())
 			if err != nil {
 				return err
 			}
-			managed, err := tx.IsUserGroupSCIMManaged(ctx, req.Msg.Id)
+			managed, err := tx.IsUserGroupSCIMManaged(ctx, req.Msg.GetId().GetValue())
 			if err != nil {
 				return err
 			}
@@ -249,32 +249,32 @@ func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[cad
 				return errUserGroupSCIMManaged
 			}
 			affected, err := tx.BumpSessionsAffectedByUserGroupDelete(ctx, db.BumpSessionsAffectedByUserGroupDeleteParams{
-				UpdatedAt: &at, GroupID: req.Msg.Id,
+				UpdatedAt: &at, GroupID: req.Msg.GetId().GetValue(),
 			})
 			if err != nil {
 				return err
 			}
-			if _, err := tx.DeleteUserGroupMembers(ctx, req.Msg.Id); err != nil {
+			if _, err := tx.DeleteUserGroupMembers(ctx, req.Msg.GetId().GetValue()); err != nil {
 				return err
 			}
-			if _, err := tx.DeleteUserGroupAssignments(ctx, req.Msg.Id); err != nil {
+			if _, err := tx.DeleteUserGroupAssignments(ctx, req.Msg.GetId().GetValue()); err != nil {
 				return err
 			}
-			if _, err := tx.DeleteUserGroupRoleGrants(ctx, req.Msg.Id); err != nil {
+			if _, err := tx.DeleteUserGroupRoleGrants(ctx, req.Msg.GetId().GetValue()); err != nil {
 				return err
 			}
-			if _, err := tx.DeleteUserGroupUserRoleScopes(ctx, &req.Msg.Id); err != nil {
+			if _, err := tx.DeleteUserGroupUserRoleScopes(ctx, stringPtr(req.Msg.GetId().GetValue())); err != nil {
 				return err
 			}
-			if _, err := tx.DeleteUserGroupUserGroupRoleScopes(ctx, &req.Msg.Id); err != nil {
+			if _, err := tx.DeleteUserGroupUserGroupRoleScopes(ctx, stringPtr(req.Msg.GetId().GetValue())); err != nil {
 				return err
 			}
-			if _, err := tx.SoftDeleteUserGroup(ctx, db.SoftDeleteUserGroupParams{ID: req.Msg.Id, UpdatedAt: at}); err != nil {
+			if _, err := tx.SoftDeleteUserGroup(ctx, db.SoftDeleteUserGroupParams{ID: req.Msg.GetId().GetValue(), UpdatedAt: at}); err != nil {
 				return err
 			}
-			rec.Effect(userGroupEffect(req.Msg.Id, "DELETE", "is_deleted"))
+			rec.Effect(userGroupEffect(req.Msg.GetId().GetValue(), "DELETE", "is_deleted"))
 			if affected > 0 {
-				effect := userGroupEffect(req.Msg.Id, "INVALIDATE_SESSIONS", "session_version")
+				effect := userGroupEffect(req.Msg.GetId().GetValue(), "INVALIDATE_SESSIONS", "session_version")
 				effect.AfterCount = &affected
 				rec.Effect(effect)
 			}
@@ -298,7 +298,11 @@ func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[cad
 
 // AddUserToGroup adds each requested user once to a static group.
 func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cadestrov1.AddUserToGroupRequest]) (*connect.Response[cadestrov1.AddUserToGroupResponse], error) {
-	ids := requestedUserIDs(req.Msg.UserId, req.Msg.UserIds)
+	userIDs := make([]string, 0, len(req.Msg.GetUserIds()))
+	for _, id := range req.Msg.GetUserIds() {
+		userIDs = append(userIDs, id.GetValue())
+	}
+	ids := requestedUserIDs(req.Msg.GetUserId().GetValue(), userIDs)
 	if len(ids) == 0 || len(ids) > maxUserGroupBatch {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "at least one user is required")
 	}
@@ -306,17 +310,17 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceUserGroupScope(ctx, PermAddUserToGroup, req.Msg.GroupId, false); err != nil {
+	if err := h.enforceUserGroupScope(ctx, PermAddUserToGroup, req.Msg.GetGroupId().GetValue(), false); err != nil {
 		return nil, err
 	}
-	group, err := h.store.GetUserGroupView(ctx, req.Msg.GroupId)
+	group, err := h.store.GetUserGroupView(ctx, req.Msg.GetGroupId().GetValue())
 	if err != nil {
 		return nil, h.userGroupReadError(ctx, err)
 	}
 	if group.IsDynamic {
 		return nil, rpcError(ctx, ErrDynamicGroupMembership, connect.CodeFailedPrecondition, "dynamic group membership is evaluator-managed")
 	}
-	roleGrants, err := h.store.ListUserGroupRoleGrants(ctx, req.Msg.GroupId)
+	roleGrants, err := h.store.ListUserGroupRoleGrants(ctx, req.Msg.GetGroupId().GetValue())
 	if err != nil {
 		return nil, internalError(ctx, "failed to list user group role grants")
 	}
@@ -338,7 +342,7 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 			return nil, internalError(ctx, "failed to load membership target")
 		}
 	}
-	current, err := h.store.ListUserGroupMembers(ctx, req.Msg.GroupId)
+	current, err := h.store.ListUserGroupMembers(ctx, req.Msg.GetGroupId().GetValue())
 	if err != nil {
 		return nil, internalError(ctx, "failed to list user group members")
 	}
@@ -359,14 +363,14 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermAddUserToGroup),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			stored, err := tx.GetUserGroup(ctx, req.Msg.GroupId)
+			stored, err := tx.GetUserGroup(ctx, req.Msg.GetGroupId().GetValue())
 			if err != nil {
 				return err
 			}
 			if stored.IsDynamic {
 				return errUserGroupDynamic
 			}
-			roleGrants, err := tx.ListUserGroupRoleGrants(ctx, req.Msg.GroupId)
+			roleGrants, err := tx.ListUserGroupRoleGrants(ctx, req.Msg.GetGroupId().GetValue())
 			if err != nil {
 				return err
 			}
@@ -380,7 +384,7 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 			added := int64(0)
 			for _, id := range missing {
 				rows, err := tx.AddStaticUserGroupMember(ctx, db.AddStaticUserGroupMemberParams{
-					GroupID: req.Msg.GroupId, UserID: id, AddedAt: at, AddedBy: actor.ID,
+					GroupID: req.Msg.GetGroupId().GetValue(), UserID: id, AddedAt: at, AddedBy: actor.ID,
 				})
 				if err != nil {
 					return err
@@ -393,7 +397,7 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 				if err != nil {
 					return err
 				}
-				groupID := req.Msg.GroupId
+				groupID := req.Msg.GetGroupId().GetValue()
 				effect := store.AuditEffect{
 					ResourceType: "user_group_member", ResourceID: id, Action: "ADD",
 					Outcome: store.EffectApplied, ChangedFields: []string{"membership"}, AfterRef: &groupID,
@@ -408,7 +412,7 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 			if added == 0 {
 				return errUserGroupNoChange
 			}
-			rec.RefreshSearch("user_group", req.Msg.GroupId)
+			rec.RefreshSearch("user_group", req.Msg.GetGroupId().GetValue())
 			return nil
 		})
 	if errors.Is(err, errUserGroupNoChange) {
@@ -435,10 +439,10 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceUserGroupScope(ctx, PermRemoveUserFromGroup, req.Msg.GroupId, false); err != nil {
+	if err := h.enforceUserGroupScope(ctx, PermRemoveUserFromGroup, req.Msg.GetGroupId().GetValue(), false); err != nil {
 		return nil, err
 	}
-	group, err := h.store.GetUserGroupView(ctx, req.Msg.GroupId)
+	group, err := h.store.GetUserGroupView(ctx, req.Msg.GetGroupId().GetValue())
 	if err != nil {
 		return nil, h.userGroupReadError(ctx, err)
 	}
@@ -448,7 +452,7 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermRemoveUserFromGroup),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			stored, err := tx.GetUserGroup(ctx, req.Msg.GroupId)
+			stored, err := tx.GetUserGroup(ctx, req.Msg.GetGroupId().GetValue())
 			if err != nil {
 				return err
 			}
@@ -456,7 +460,7 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 				return errUserGroupDynamic
 			}
 			rows, err := tx.RemoveStaticUserGroupMember(ctx, db.RemoveStaticUserGroupMemberParams{
-				GroupID: req.Msg.GroupId, UserID: req.Msg.UserId,
+				GroupID: req.Msg.GetGroupId().GetValue(), UserID: req.Msg.GetUserId().GetValue(),
 			})
 			if err != nil {
 				return err
@@ -464,21 +468,21 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 			if rows == 0 {
 				return errUserGroupMemberAbsent
 			}
-			version, err := tx.BumpUserSessionVersion(ctx, db.BumpUserSessionVersionParams{ID: req.Msg.UserId, UpdatedAt: &at})
+			version, err := tx.BumpUserSessionVersion(ctx, db.BumpUserSessionVersionParams{ID: req.Msg.GetUserId().GetValue(), UpdatedAt: &at})
 			if err != nil {
 				return err
 			}
-			groupID := req.Msg.GroupId
+			groupID := req.Msg.GetGroupId().GetValue()
 			rec.Effect(store.AuditEffect{
-				ResourceType: "user_group_member", ResourceID: req.Msg.UserId, Action: "REMOVE",
+				ResourceType: "user_group_member", ResourceID: req.Msg.GetUserId().GetValue(), Action: "REMOVE",
 				Outcome: store.EffectApplied, ChangedFields: []string{"membership"}, BeforeRef: &groupID,
 			})
 			v := int64(version)
 			rec.Effect(store.AuditEffect{
-				ResourceType: "user", ResourceID: req.Msg.UserId, Action: "INVALIDATE_SESSIONS",
+				ResourceType: "user", ResourceID: req.Msg.GetUserId().GetValue(), Action: "INVALIDATE_SESSIONS",
 				Outcome: store.EffectApplied, ChangedFields: []string{"session_version"}, AfterCount: &v,
 			})
-			rec.RefreshSearch("user_group", req.Msg.GroupId)
+			rec.RefreshSearch("user_group", req.Msg.GetGroupId().GetValue())
 			return nil
 		})
 	if err != nil {
@@ -498,11 +502,11 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 
 // ListUserGroupsForUser returns visible groups containing one subject.
 func (h *Handlers) ListUserGroupsForUser(ctx context.Context, req *connect.Request[cadestrov1.ListUserGroupsForUserRequest]) (*connect.Response[cadestrov1.ListUserGroupsForUserResponse], error) {
-	if _, err := h.resolveUserTarget(ctx, PermListUserGroupsForUser, req.Msg.UserId); err != nil {
+	if _, err := h.resolveUserTarget(ctx, PermListUserGroupsForUser, req.Msg.GetUserId().GetValue()); err != nil {
 		return nil, err
 	}
 	groups, restricted := auth.UserScopeListFilter(ctx, PermListUserGroupsForUser)
-	rows, err := h.store.ListUserGroupsForUser(ctx, req.Msg.UserId, store.UserGroupListFilter{
+	rows, err := h.store.ListUserGroupsForUser(ctx, req.Msg.GetUserId().GetValue(), store.UserGroupListFilter{
 		ScopeRestricted: restricted, ScopeGroupIDs: groups,
 	})
 	if err != nil {
@@ -528,7 +532,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermUpdateDynamicUserGroup, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermUpdateDynamicUserGroup, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
 	var query *string
@@ -544,11 +548,11 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 	at := h.now().UTC()
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermUpdateDynamicUserGroup),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-			current, err := tx.GetDynamicUserGroupQueryForUpdate(ctx, req.Msg.Id)
+			current, err := tx.GetDynamicUserGroupQueryForUpdate(ctx, req.Msg.GetId().GetValue())
 			if err != nil {
 				return err
 			}
-			managed, err := tx.IsUserGroupSCIMManaged(ctx, req.Msg.Id)
+			managed, err := tx.IsUserGroupSCIMManaged(ctx, req.Msg.GetId().GetValue())
 			if err != nil {
 				return err
 			}
@@ -557,7 +561,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 			}
 			fields := []string{"is_dynamic", "dynamic_query"}
 			if req.Msg.IsDynamic && !current.IsDynamic {
-				members, err := tx.ListUserGroupMembers(ctx, req.Msg.Id)
+				members, err := tx.ListUserGroupMembers(ctx, req.Msg.GetId().GetValue())
 				if err != nil {
 					return err
 				}
@@ -572,7 +576,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 					if err != nil {
 						return err
 					}
-					effect := userGroupEffect(req.Msg.Id, "INVALIDATE_MEMBER_SESSIONS", "session_version")
+					effect := userGroupEffect(req.Msg.GetId().GetValue(), "INVALIDATE_MEMBER_SESSIONS", "session_version")
 					effect.AfterCount = &affected
 					rec.Effect(effect)
 					for _, userID := range userIDs {
@@ -584,17 +588,17 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 				// reports members its own rule does not select until someone
 				// evaluates it. Materializing back to static keeps its rows on
 				// purpose: it freezes the membership the rule produced.
-				if _, err := tx.DeleteUserGroupMembers(ctx, req.Msg.Id); err != nil {
+				if _, err := tx.DeleteUserGroupMembers(ctx, req.Msg.GetId().GetValue()); err != nil {
 					return err
 				}
 				fields = append(fields, "members")
 			}
 			if _, err := tx.UpdateUserGroupQuery(ctx, db.UpdateUserGroupQueryParams{
-				ID: req.Msg.Id, IsDynamic: req.Msg.IsDynamic, DynamicQuery: query, UpdatedAt: at,
+				ID: req.Msg.GetId().GetValue(), IsDynamic: req.Msg.IsDynamic, DynamicQuery: query, UpdatedAt: at,
 			}); err != nil {
 				return err
 			}
-			rec.Effect(userGroupEffect(req.Msg.Id, "UPDATE", fields...))
+			rec.Effect(userGroupEffect(req.Msg.GetId().GetValue(), "UPDATE", fields...))
 			return nil
 		})
 	if err != nil {
@@ -610,7 +614,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 			return nil, internalError(ctx, "failed to update user group query")
 		}
 	}
-	group, err := h.loadUserGroupProto(ctx, req.Msg.Id, true)
+	group, err := h.loadUserGroupProto(ctx, req.Msg.GetId().GetValue(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -643,10 +647,10 @@ func (h *Handlers) EvaluateDynamicUserGroup(ctx context.Context, req *connect.Re
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, PermEvaluateDynamicGroup, req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, PermEvaluateDynamicGroup, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	result, err := h.evaluateDynamicUserGroup(ctx, h.mutationOp(req, actor, PermEvaluateDynamicGroup), req.Msg.Id, actor.ID)
+	result, err := h.evaluateDynamicUserGroup(ctx, h.mutationOp(req, actor, PermEvaluateDynamicGroup), req.Msg.GetId().GetValue(), actor.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errUserGroupNotDynamic):
@@ -659,7 +663,7 @@ func (h *Handlers) EvaluateDynamicUserGroup(ctx context.Context, req *connect.Re
 			return nil, internalError(ctx, "failed to evaluate dynamic user group")
 		}
 	}
-	group, err := h.loadUserGroupProto(ctx, req.Msg.Id, true)
+	group, err := h.loadUserGroupProto(ctx, req.Msg.GetId().GetValue(), true)
 	if err != nil {
 		return nil, err
 	}
@@ -719,6 +723,8 @@ func requestedUserIDs(single string, many []string) []string {
 	}
 	return out
 }
+
+func stringPtr(value string) *string { return &value }
 
 func boundedIdentityCount(n int64) int32 {
 	if n > math.MaxInt32 {

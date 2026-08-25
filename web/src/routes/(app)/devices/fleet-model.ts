@@ -75,7 +75,7 @@ export function toFleetDevice(d: Device, groupMinutes: number[], nowSec: number)
 	const syncMinutes = resolveSyncMinutes(d.syncIntervalMinutes, groupMinutes);
 	const lastSeenSec = seconds(d.lastSeenAt);
 	return {
-		id: d.id,
+		id: (d.id?.value ?? ''),
 		hostname: d.hostname,
 		tone: deviceTone(d),
 		age: ageBucket(lastSeenSec, nowSec, syncMinutes),

@@ -297,7 +297,7 @@ func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[cadestrov
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	view, err := h.readDevice(ctx, "GetDevice", req.Msg.Id)
+	view, err := h.readDevice(ctx, "GetDevice", req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -502,9 +502,9 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 		if !validComplianceStatus(row.Status) {
 			return nil, h.internal(ctx, "decode policy compliance status", fmt.Errorf("unknown status %d", row.Status))
 		}
-		if policy == nil || policy.PolicyId != row.PolicyID {
+		if policy == nil || policy.GetPolicyId().GetValue() != row.PolicyID {
 			policy = &cadestrov1.DevicePolicyEvaluation{
-				PolicyId: row.PolicyID, PolicyName: row.PolicyName,
+				PolicyId: &cadestrov1.CompliancePolicyId{Value: row.PolicyID}, PolicyName: row.PolicyName,
 				Status: cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT,
 			}
 			policies = append(policies, policy)
@@ -611,7 +611,7 @@ func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request
 		default:
 			return nil, h.internal(ctx, "list device assignees", fmt.Errorf("unknown assignee kind"))
 		}
-		assignees[i] = &cadestrov1.DeviceAssignee{Id: row.ID, Type: kind, Name: row.Name}
+		assignees[i] = &cadestrov1.DeviceAssignee{Id: &cadestrov1.GroupId{Value: row.ID}, Type: kind, Name: row.Name}
 	}
 	return connect.NewResponse(&cadestrov1.ListDeviceAssigneesResponse{Assignees: assignees}), nil
 }

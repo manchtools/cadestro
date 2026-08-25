@@ -78,13 +78,13 @@ import DefinitionBuilder from '$lib/components/actions/pipeline/definition-build
 import { shell, resetShell, commitContext, runPillAction } from '$lib/shell/shell.svelte';
 
 const definition: Definition = create(DefinitionSchema, {
-	id: DEF_ID,
+	id: { value: DEF_ID },
 	name: 'Workstation Setup',
 	description: 'baseline'
 });
 
 function actionSet(id: string, name: string, memberCount: number): ActionSet {
-	return create(ActionSetSchema, { id, name, memberCount });
+	return create(ActionSetSchema, { id: { value: id }, name, memberCount });
 }
 
 /** Deliberately out of order — the rail must sort by sortOrder. */

@@ -143,7 +143,7 @@
 
 	function handleActionCreated(action: ManagedAction) {
 		complianceActions = [action, ...complianceActions];
-		draft.rules = [...draft.rules, { actionId: action.id, gracePeriodHours: 0 }];
+		draft.rules = [...draft.rules, { actionId: (action.id?.value ?? ''), gracePeriodHours: 0 }];
 		creatingAction = false;
 	}
 
@@ -186,7 +186,7 @@
 					try {
 						policy =
 							(await apiClient.addCompliancePolicyRule(
-								policy.id,
+								(policy.id?.value ?? ''),
 								rule.actionId,
 								rule.gracePeriodHours
 							)) ?? policy;
@@ -269,8 +269,8 @@
 								type="button"
 								data-testid="policy-rule-row"
 								data-action-id={action.id}
-								onclick={() => toggleAction(action.id)}
-								aria-pressed={isSelected(action.id)}
+								onclick={() => toggleAction((action.id?.value ?? ''))}
+								aria-pressed={isSelected((action.id?.value ?? ''))}
 								class="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent/50"
 							>
 								<!-- A drawn tick, not a Checkbox: the row IS the control, and a
@@ -279,12 +279,12 @@
 								<span
 									aria-hidden="true"
 									class="grid h-4 w-4 shrink-0 place-items-center rounded border {isSelected(
-										action.id
+										(action.id?.value ?? '')
 									)
 										? 'border-accent bg-accent-soft text-accent-ink'
 										: 'border-input'}"
 								>
-									{#if isSelected(action.id)}<Check class="h-3 w-3" />{/if}
+									{#if isSelected((action.id?.value ?? ''))}<Check class="h-3 w-3" />{/if}
 								</span>
 								<ShieldCheck class="h-4 w-4 shrink-0 text-muted-foreground" />
 								<span class="min-w-0 flex-1">

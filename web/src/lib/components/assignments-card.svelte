@@ -142,7 +142,7 @@
 	}
 
 	function getTargetName(assignment: Assignment): string {
-		return assignment.targetName || assignment.targetId.slice(0, 8);
+		return assignment.targetName || (assignment.targetId?.value ?? '').slice(0, 8);
 	}
 
 	function getTargetIcon(targetType: AssignmentTargetType) {
@@ -209,7 +209,7 @@
 								{getModeLabel(assignment.mode)}
 							</Badge>
 						</div>
-						<Button variant="ghost" size="icon" onclick={() => deleteAssignment(assignment.id)}>
+						<Button variant="ghost" size="icon" onclick={() => deleteAssignment((assignment.id?.value ?? ''))}>
 							<Trash2 class="h-4 w-4 text-destructive" />
 						</Button>
 					</div>
@@ -223,9 +223,9 @@
 	bind:open={assignDialogOpen}
 	title={assignTitle}
 	description={assignDescription}
-	devices={availableDevices}
-	deviceGroups={availableGroups}
-	users={availableUsers}
-	userGroups={availableUserGroups}
+	devices={availableDevices.map((device) => ({ ...device, id: device.id?.value ?? '' }))}
+	deviceGroups={availableGroups.map((group) => ({ ...group, id: group.id?.value ?? '' }))}
+	users={availableUsers.map((user) => ({ ...user, id: user.id?.value ?? '' }))}
+	userGroups={availableUserGroups.map((group) => ({ ...group, id: group.id?.value ?? '' }))}
 	onassign={createAssignments}
 />

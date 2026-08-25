@@ -130,7 +130,7 @@
 				}
 			});
 			if (action) {
-				await apiClient.createAssignment(AssignmentSourceType.ACTION, action.id, AssignmentTargetType.DEVICE, deviceId);
+				await apiClient.createAssignment(AssignmentSourceType.ACTION, (action.id?.value ?? ''), AssignmentTargetType.DEVICE, deviceId);
 				toast.success(m.software_manage_success());
 				open = false;
 				onassigned();
@@ -187,11 +187,11 @@
 				{:else}
 					<div class="space-y-1 max-h-40 overflow-y-auto rounded-md border p-2">
 						{#each matchingActions as action}
-							{@const assigned = isAssigned(action.id)}
+							{@const assigned = isAssigned((action.id?.value ?? ''))}
 							<button
 								type="button"
-								class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors {selectedActionId === action.id ? 'bg-primary/10 border border-primary' : 'hover:bg-muted'}"
-								onclick={() => { if (!assigned) selectedActionId = action.id; }}
+								class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors {selectedActionId === (action.id?.value ?? '') ? 'bg-primary/10 border border-primary' : 'hover:bg-muted'}"
+								onclick={() => { if (!assigned) selectedActionId = (action.id?.value ?? ''); }}
 								disabled={assigned}
 							>
 								<Package class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -202,7 +202,7 @@
 										{m.software_manage_already_assigned()}
 									</Badge>
 								{/if}
-								{#if selectedActionId === action.id}
+								{#if selectedActionId === (action.id?.value ?? '')}
 									<Check class="h-4 w-4 text-primary shrink-0" />
 								{/if}
 							</button>

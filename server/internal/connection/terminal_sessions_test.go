@@ -18,7 +18,7 @@ func newTestSession(id string) *TerminalSession {
 func outputMsg() *cadestrov1.AgentMessage {
 	return &cadestrov1.AgentMessage{
 		Payload: &cadestrov1.AgentMessage_TerminalOutput{
-			TerminalOutput: &cadestrov1.TerminalOutput{SessionId: "s1", Data: []byte("x")},
+			TerminalOutput: &cadestrov1.TerminalOutput{SessionId: &cadestrov1.SessionId{Value: "s1"}, Data: []byte("x")},
 		},
 	}
 }

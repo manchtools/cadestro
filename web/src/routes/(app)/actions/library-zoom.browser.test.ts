@@ -73,7 +73,7 @@ function action(o: {
 	compliance?: boolean;
 }) {
 	const base = {
-		id: o.id,
+		id: { value: o.id },
 		name: o.name,
 		type: o.type ?? ActionType.SHELL,
 		desiredState: o.absent ? DesiredState.ABSENT : DesiredState.PRESENT

@@ -300,7 +300,7 @@ func validateActionData(id string, actionType cadestrov1.ActionType, desired cad
 		actionID = ulid.Make().String()
 	}
 	request := &cadestrov1.UpdateActionParamsRequest{
-		Id: actionID, DesiredState: desired, TimeoutSeconds: timeout, Schedule: schedule,
+		Id: &cadestrov1.ActionId{Value: actionID}, DesiredState: desired, TimeoutSeconds: timeout, Schedule: schedule,
 	}
 	if err := actionparams.PopulateUpdateActionParams(request, actionType, canonical); err != nil {
 		return nil, fmt.Errorf("authoring: validate action params: %w", err)

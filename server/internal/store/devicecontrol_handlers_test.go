@@ -200,11 +200,11 @@ func TestDeviceControlHandlers_LiveOperationsUseTypedStreamWithoutPolicyWork(t *
 		switch message.GetPayload().(type) {
 		case *cadestrov1.ServerMessage_SyncDevice:
 			go func() {
-				_ = f.handlers.CompleteSyncDevice(context.Background(), deviceID, message.Id, &cadestrov1.SyncDeviceResult{Success: true})
+				_ = f.handlers.CompleteSyncDevice(context.Background(), deviceID, message.GetId().GetValue(), &cadestrov1.SyncDeviceResult{Success: true})
 			}()
 		case *cadestrov1.ServerMessage_RebootDevice:
 			go func() {
-				_ = f.handlers.CompleteRebootDevice(context.Background(), deviceID, message.Id, &cadestrov1.RebootDeviceResult{Success: true})
+				_ = f.handlers.CompleteRebootDevice(context.Background(), deviceID, message.GetId().GetValue(), &cadestrov1.RebootDeviceResult{Success: true})
 			}()
 		default:
 			t.Fatalf("unexpected live payload %T", message.GetPayload())

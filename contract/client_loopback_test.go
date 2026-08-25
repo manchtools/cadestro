@@ -68,7 +68,7 @@ func (h *recordingAgentHandler) Stream(ctx context.Context, s *connect.BidiStrea
 				state = &cadestrov1.SyncState{}
 			}
 			if err := s.Send(&cadestrov1.ServerMessage{
-				Id:      msg.Id,
+				Id:      &cadestrov1.MessageId{Value: msg.GetId().GetValue()},
 				Payload: &cadestrov1.ServerMessage_SyncState{SyncState: state},
 			}); err != nil {
 				return err
@@ -512,7 +512,7 @@ func TestConcurrentSend_PreservesEveryMessage(t *testing.T) {
 func TestDispatch_NilPayload_IsDropped(t *testing.T) {
 	c := NewClient("http://localhost:0")
 	handler := &fakeTerminalHandler{}
-	msg := &cadestrov1.ServerMessage{Id: NewULID()} // Payload nil = forward-compat case
+	msg := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}} // Payload nil = forward-compat case
 	if err := c.dispatchServerMessage(context.Background(), msg, handler); err != nil {
 		t.Fatalf("nil payload should not error: %v", err)
 	}
@@ -536,14 +536,14 @@ func TestRun_UnknownServerMessage_DoesNotTerminate(t *testing.T) {
 		}
 		// Push a Welcome so we can observe end-to-end dispatch worked.
 		if err := s.Send(&cadestrov1.ServerMessage{
-			Id:      NewULID(),
+			Id:      &cadestrov1.MessageId{Value: NewULID()},
 			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{ServerVersion: "test"}},
 		}); err != nil {
 			return err
 		}
 		// Then push a payload-less ServerMessage. The client must drop
 		// it (default branch) and keep running.
-		if err := s.Send(&cadestrov1.ServerMessage{Id: NewULID()}); err != nil {
+		if err := s.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}}); err != nil {
 			return err
 		}
 		// Drain anything else the agent sends until the request side

@@ -19,7 +19,7 @@ func TestAuditBoundary_ValidationPrecedesAuthentication(t *testing.T) {
 	f := newFixture(t)
 
 	_, err := f.client.ListAuditEvents(f.ctx(), connect.NewRequest(&cadestrov1.ListAuditEventsRequest{
-		ActorId: "not-a-ulid",
+		ActorId: &cadestrov1.AuditActorId{Value: "not-a-ulid"},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connectCodeOf(t, err))
 
@@ -54,8 +54,8 @@ func TestAuditEvents_ReadTheAppendOnlyEffectLog(t *testing.T) {
 	event := resp.Msg.Events[0]
 	assert.Equal(t, "SET_USER_PROVISIONING", event.EventType)
 	assert.Equal(t, "server_settings", event.StreamType)
-	assert.Equal(t, "00000000000000000000000003", event.StreamId)
-	assert.Equal(t, operator.ID, event.ActorId)
+	assert.Equal(t, "00000000000000000000000003", event.StreamId.GetValue())
+	assert.Equal(t, operator.ID, event.ActorId.GetValue())
 	assert.NotNil(t, event.OccurredAt)
 
 	var data map[string]any
@@ -119,7 +119,7 @@ func TestAuditEvents_UseStableKeysetPagination(t *testing.T) {
 	}, operator.Token))
 	require.NoError(t, err)
 	require.Len(t, second.Msg.Events, 1)
-	assert.NotEqual(t, first.Msg.Events[0].Id, second.Msg.Events[0].Id)
+	assert.NotEqual(t, first.Msg.Events[0].GetId().GetValue(), second.Msg.Events[0].GetId().GetValue())
 	assert.Empty(t, second.Msg.NextPageToken)
 }
 

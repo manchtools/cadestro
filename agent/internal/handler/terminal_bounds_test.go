@@ -67,7 +67,7 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 	t.Run("present-but-wrong: 65536 (wraps to 0) is rejected, not a 0xN PTY", func(t *testing.T) {
 		h, sender := newTestHandlerWithTTY(t, true)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: sessID,
+			SessionId: &pb.SessionId{Value: sessID},
 			TtyUser:   terminal.TTYUsernamePrefix + "bounds",
 			Cols:      65536, // ≡ 0 after uint16
 			Rows:      24,
@@ -81,7 +81,7 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 	t.Run("present-but-wrong: 65537 (wraps to 1) is rejected", func(t *testing.T) {
 		h, sender := newTestHandlerWithTTY(t, true)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: sessID,
+			SessionId: &pb.SessionId{Value: sessID},
 			TtyUser:   terminal.TTYUsernamePrefix + "bounds",
 			Cols:      65537, // ≡ 1 after uint16
 			Rows:      24,
@@ -95,7 +95,7 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 	t.Run("absent: zero dims are rejected (no 0x0 PTY)", func(t *testing.T) {
 		h, sender := newTestHandlerWithTTY(t, true)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: sessID,
+			SessionId: &pb.SessionId{Value: sessID},
 			TtyUser:   terminal.TTYUsernamePrefix + "bounds",
 			Cols:      0,
 			Rows:      0,
@@ -109,7 +109,7 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 	t.Run("correct: in-range dims pass the dims gate (fail later for a NON-dims reason)", func(t *testing.T) {
 		h, sender := newTestHandlerWithTTY(t, true)
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-			SessionId: sessID,
+			SessionId: &pb.SessionId{Value: sessID},
 			TtyUser:   terminal.TTYUsernamePrefix + "definitely-not-provisioned",
 			Cols:      80,
 			Rows:      24,
@@ -180,7 +180,7 @@ func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 
 	t.Run("correct: in-range resize is applied", func(t *testing.T) {
 		err := h.OnTerminalResize(context.Background(), &pb.TerminalResize{
-			SessionId: sessID, Cols: 120, Rows: 40,
+			SessionId: &pb.SessionId{Value: sessID}, Cols: 120, Rows: 40,
 		})
 		if err != nil {
 			t.Fatalf("in-range resize errored: %v", err)
@@ -189,7 +189,7 @@ func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 
 	t.Run("present-but-wrong: 65536 (wraps to 0) is rejected, Resize not called truncated", func(t *testing.T) {
 		err := h.OnTerminalResize(context.Background(), &pb.TerminalResize{
-			SessionId: sessID, Cols: 65536, Rows: 40,
+			SessionId: &pb.SessionId{Value: sessID}, Cols: 65536, Rows: 40,
 		})
 		if err != nil {
 			t.Fatalf("out-of-range resize must be a non-fatal no-op, got: %v", err)
@@ -197,7 +197,7 @@ func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 		// The session must still be alive and resizable in-range, proving
 		// the bad resize did not wedge or 0-size the PTY.
 		if err := h.OnTerminalResize(context.Background(), &pb.TerminalResize{
-			SessionId: sessID, Cols: 100, Rows: 30,
+			SessionId: &pb.SessionId{Value: sessID}, Cols: 100, Rows: 30,
 		}); err != nil {
 			t.Fatalf("session unusable after out-of-range resize: %v", err)
 		}
@@ -205,7 +205,7 @@ func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 
 	t.Run("absent: zero dims rejected as a no-op", func(t *testing.T) {
 		if err := h.OnTerminalResize(context.Background(), &pb.TerminalResize{
-			SessionId: sessID, Cols: 0, Rows: 0,
+			SessionId: &pb.SessionId{Value: sessID}, Cols: 0, Rows: 0,
 		}); err != nil {
 			t.Fatalf("zero-dims resize must be a non-fatal no-op, got: %v", err)
 		}

@@ -142,7 +142,7 @@ func TestComplianceIngest_FailedCheckIsReadableThroughTheRPCs(t *testing.T) {
 	status := f.policyStatus(t, f.groupID)
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, status.OverallStatus)
 	require.Len(t, status.Policies, 1)
-	assert.Equal(t, policyID, status.Policies[0].PolicyId)
+	assert.Equal(t, policyID, status.Policies[0].PolicyId.GetValue())
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, status.Policies[0].Status)
 	require.Len(t, status.Policies[0].Rules, 1)
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, status.Policies[0].Rules[0].Status)

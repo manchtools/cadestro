@@ -35,7 +35,7 @@
 			if (action.type !== ActionType.PACKAGE) continue;
 			if (action.params.case !== 'package') continue;
 			const p = action.params.value;
-			const entry = { actionId: action.id, actionName: action.name };
+			const entry = { actionId: action.id?.value ?? '', actionName: action.name };
 			if (p.name) map.set(p.name.toLowerCase(), entry);
 			if (p.aptName) map.set(p.aptName.toLowerCase(), entry);
 			if (p.dnfName) map.set(p.dnfName.toLowerCase(), entry);
@@ -199,6 +199,6 @@
 	packageName={selectedPackage.name}
 	packageVersion={selectedPackage.version}
 	{deviceId}
-	{assignedActionIds}
+	assignedActionIds={new Set([...assignedActionIds].map((id) => id?.value ?? ''))}
 	onassigned={handleAssigned}
 />

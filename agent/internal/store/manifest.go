@@ -62,7 +62,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	if policy == nil {
 		return errors.New("reconcile policy: missing snapshot")
 	}
-	if policy.GetRevision() == "" {
+	if policy.GetRevision().GetValue() == "" {
 		return errors.New("reconcile policy: missing revision")
 	}
 	current := make(map[string]*pb.Manifest, len(policy.Manifests))
@@ -85,7 +85,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	var appliedRevision string
 	queries := s.queries.WithTx(tx)
 	appliedRevision, err = queries.GetAssignedPolicyRevision(ctx)
-	if err == nil && appliedRevision == policy.GetRevision() {
+	if err == nil && appliedRevision == policy.GetRevision().GetValue() {
 		return tx.Commit()
 	}
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -147,7 +147,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 			}
 		}
 	}
-	if err := queries.SetAssignedPolicyRevision(ctx, policy.GetRevision()); err != nil {
+	if err := queries.SetAssignedPolicyRevision(ctx, policy.GetRevision().GetValue()); err != nil {
 		return fmt.Errorf("reconcile policy: store revision: %w", err)
 	}
 	return tx.Commit()

@@ -64,7 +64,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 	}
 
 	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
-		Id: queryID,
+		Id: &cadestrov1.MessageId{Value: queryID},
 		Payload: &cadestrov1.ServerMessage_Query{Query: &cadestrov1.OSQuery{
 			QueryId: &cadestrov1.QueryId{Value: queryID}, Table: req.Msg.Table, Columns: req.Msg.Columns,
 			Limit: req.Msg.Limit, RawSql: req.Msg.RawSql,
@@ -110,7 +110,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 	}
 
 	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
-		Id: queryID,
+		Id: &cadestrov1.MessageId{Value: queryID},
 		Payload: &cadestrov1.ServerMessage_LogQuery{LogQuery: &cadestrov1.LogQuery{
 			QueryId: &cadestrov1.QueryId{Value: queryID}, Lines: req.Msg.Lines, Unit: req.Msg.Unit,
 			Since: req.Msg.Since, Until: req.Msg.Until, Priority: req.Msg.Priority,
@@ -149,7 +149,7 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 		return nil, h.internal(ctx, "record inventory refresh", err)
 	}
 	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
-		Id: requestID,
+		Id: &cadestrov1.MessageId{Value: requestID},
 		Payload: &cadestrov1.ServerMessage_RequestInventory{
 			RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: requestID}},
 		},

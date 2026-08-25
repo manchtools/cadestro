@@ -212,7 +212,7 @@ func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[cadestr
 		welcome.HeartbeatInterval = durationpb.New(h.heartbeatInterval)
 	}
 	if err := agent.Send(&cadestrov1.ServerMessage{
-		Id: ulid.Make().String(), Payload: &cadestrov1.ServerMessage_Welcome{Welcome: welcome},
+		Id: &cadestrov1.MessageId{Value: ulid.Make().String()}, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: welcome},
 	}); err != nil {
 		return fmt.Errorf("send welcome: %w", err)
 	}
@@ -301,32 +301,32 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 		return nil
 	case *cadestrov1.AgentMessage_SyncRequest:
 		response, err := h.sync.Sync(ctx, deviceID)
-		return h.sendResponse(agent, message.Id, response, err)
+		return h.sendResponse(agent, message.GetId().GetValue(), response, err)
 	case *cadestrov1.AgentMessage_SyncDeviceResult:
 		if payload.SyncDeviceResult == nil {
 			return errors.New("sync device result is required")
 		}
-		return h.liveOperations.CompleteSyncDevice(ctx, deviceID, message.Id, payload.SyncDeviceResult)
+		return h.liveOperations.CompleteSyncDevice(ctx, deviceID, message.GetId().GetValue(), payload.SyncDeviceResult)
 	case *cadestrov1.AgentMessage_RebootDeviceResult:
 		if payload.RebootDeviceResult == nil {
 			return errors.New("reboot device result is required")
 		}
-		return h.liveOperations.CompleteRebootDevice(ctx, deviceID, message.Id, payload.RebootDeviceResult)
+		return h.liveOperations.CompleteRebootDevice(ctx, deviceID, message.GetId().GetValue(), payload.RebootDeviceResult)
 	case *cadestrov1.AgentMessage_ManifestResult:
 		state, code, err := manifestResultState(payload.ManifestResult)
 		if err != nil {
-			_ = h.sendResultAck(agent, message.Id, err)
+			_ = h.sendResultAck(agent, message.GetId().GetValue(), err)
 			return err
 		}
 		err = h.policyResults.RecordPolicyManifestResult(ctx, deviceID, payload.ManifestResult.GetRunId().GetValue(),
 			payload.ManifestResult.GetManifestId().GetValue(), state, code)
-		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
+		if ackErr := h.sendResultAck(agent, message.GetId().GetValue(), err); ackErr != nil && err == nil {
 			return ackErr
 		}
 		return err
 	case *cadestrov1.AgentMessage_ActionResult:
 		err := h.executions.ApplyActionResult(ctx, deviceID, payload.ActionResult)
-		if ackErr := h.sendResultAck(agent, message.Id, err); ackErr != nil && err == nil {
+		if ackErr := h.sendResultAck(agent, message.GetId().GetValue(), err); ackErr != nil && err == nil {
 			return ackErr
 		}
 		return err
@@ -342,20 +342,20 @@ func (h *Handler) handleAgentMessage(ctx context.Context, agent *connection.Agen
 		return h.recordSecurityAlert(ctx, deviceID, payload.SecurityAlert)
 	case *cadestrov1.AgentMessage_GetLuksKey:
 		response, err := h.secrets.GetLuksKey(ctx, deviceID, payload.GetLuksKey)
-		return h.sendResponse(agent, message.Id, response, err)
+		return h.sendResponse(agent, message.GetId().GetValue(), response, err)
 	case *cadestrov1.AgentMessage_StoreLuksKey:
 		response, err := h.secrets.StoreLuksKey(ctx, deviceID, payload.StoreLuksKey)
-		return h.sendResponse(agent, message.Id, response, err)
+		return h.sendResponse(agent, message.GetId().GetValue(), response, err)
 	case *cadestrov1.AgentMessage_StoreLpsPasswords:
 		response, err := h.secrets.StoreLpsPasswords(ctx, deviceID, payload.StoreLpsPasswords)
-		return h.sendResponse(agent, message.Id, response, err)
+		return h.sendResponse(agent, message.GetId().GetValue(), response, err)
 	case *cadestrov1.AgentMessage_ValidateLuksToken:
 		response, err := h.secrets.ValidateLuksToken(ctx, deviceID, payload.ValidateLuksToken)
-		return h.sendResponse(agent, message.Id, response, err)
+		return h.sendResponse(agent, message.GetId().GetValue(), response, err)
 	case *cadestrov1.AgentMessage_TerminalOutput:
-		return h.routeTerminal(deviceID, payload.TerminalOutput.SessionId, message)
+		return h.routeTerminal(deviceID, payload.TerminalOutput.GetSessionId().GetValue(), message)
 	case *cadestrov1.AgentMessage_TerminalStateChange:
-		return h.routeTerminal(deviceID, payload.TerminalStateChange.SessionId, message)
+		return h.routeTerminal(deviceID, payload.TerminalStateChange.GetSessionId().GetValue(), message)
 	case *cadestrov1.AgentMessage_Hello:
 		return errors.New("hello is only valid as the first frame")
 	default:
@@ -373,7 +373,7 @@ func (h *Handler) sendResultAck(agent *connection.Agent, messageID string, resul
 	} else {
 		ack.Code = cadestrov1.ResultAckCode_RESULT_ACK_CODE_REJECTED
 	}
-	return agent.Send(&cadestrov1.ServerMessage{Id: messageID, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: ack}})
+	return agent.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: messageID}, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: ack}})
 }
 
 func (h *Handler) allowFrame(deviceID string, message *cadestrov1.AgentMessage) bool {
@@ -406,13 +406,13 @@ func (h *Handler) sendResponse(agent *connection.Agent, messageID string, respon
 	if operationErr != nil {
 		h.logger.Warn("agent request failed", "device_id", agent.DeviceID, "error", operationErr)
 		return agent.Send(&cadestrov1.ServerMessage{
-			Id: messageID,
+			Id: &cadestrov1.MessageId{Value: messageID},
 			Payload: &cadestrov1.ServerMessage_Error{Error: &cadestrov1.Error{
 				Code: connect.CodeFailedPrecondition.String(), Message: "secret operation failed",
 			}},
 		})
 	}
-	message := &cadestrov1.ServerMessage{Id: messageID}
+	message := &cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: messageID}}
 	switch response := response.(type) {
 	case *cadestrov1.GetLuksKeyResponse:
 		message.Payload = &cadestrov1.ServerMessage_GetLuksKey{GetLuksKey: response}

@@ -111,7 +111,7 @@ export async function loadAssignedDeviceIds(setId: string): Promise<Set<string>>
 		);
 		return { items: page.assignments ?? [], nextPageToken: page.nextPageToken ?? '' };
 	});
-	return new Set(assignments.map((a) => a.targetId));
+	return new Set(assignments.map((a) => (a.targetId?.value ?? '')));
 }
 
 /** The dynamic group a rule target is saved as. */
@@ -128,7 +128,7 @@ export async function createRuleGroup(name: string, query: string): Promise<Rule
 	// A create that answers without a group is not a success we can build on:
 	// the assignment needs the id, and inventing one would target nothing.
 	if (!group?.id) throw new Error('CreateDeviceGroup returned no group');
-	return { id: group.id, name: group.name || name };
+	return { id: (group.id?.value ?? ''), name: group.name || name };
 }
 
 /** Point the action set at the group. The set applies to whatever the rule

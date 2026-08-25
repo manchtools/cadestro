@@ -28,10 +28,10 @@
 	const table = createClientListState<TerminalSessionInfo, SortKey>({
 		load: async () =>
 			(await apiClient.listActiveTerminalSessions(100)).sessions as TerminalSessionInfo[],
-		searchFields: (s) => [s.userEmail, s.userId, s.deviceHostname, s.deviceId?.value ?? '', s.ttyUser, s.sessionId],
+		searchFields: (s) => [s.userEmail, (s.userId?.value ?? ''), s.deviceHostname, s.deviceId?.value ?? '', s.ttyUser, (s.sessionId?.value ?? '')],
 		sortKeys: ['user', 'device', 'started', 'activity'],
 		sortComparators: {
-			user: (a, b) => (a.userEmail || a.userId).localeCompare(b.userEmail || b.userId),
+			user: (a, b) => (a.userEmail || a.userId?.value || '').localeCompare(b.userEmail || b.userId?.value || ''),
 			device: (a, b) => (a.deviceHostname || a.deviceId?.value || '').localeCompare(b.deviceHostname || b.deviceId?.value || ''),
 			started: (a, b) => seconds(a.startedAt) - seconds(b.startedAt),
 			activity: (a, b) => seconds(a.lastActivityAt) - seconds(b.lastActivityAt)
@@ -65,14 +65,14 @@
 
 	async function handleTerminate() {
 		if (!terminateSession) return;
-		const id = terminateSession.sessionId;
+		const id = terminateSession.sessionId?.value ?? '';
 		terminating = true;
 		try {
 			await apiClient.terminateTerminalSession(id, terminateReason);
 			toast.success(m.terminal_sessions_terminated());
 			terminateDialogOpen = false;
 			// The session is gone server-side; drop it without a round trip.
-			table.patchRows((rows) => rows.filter((s) => s.sessionId !== id));
+			table.patchRows((rows) => rows.filter((s) => s.sessionId?.value !== id));
 		} catch (err) {
 			toast.error(m.terminal_sessions_terminate_failed(), { description: getLocalizedError(err) });
 			console.error(err);
@@ -126,7 +126,7 @@
 	<!-- A session is not a page: the only navigation off the row is its device, so
 	     the row body stays a plain container carrying that one link, and the
 	     destructive Terminate sits in rowEnd — outside any link, last on the row. -->
-	<RowList {table} {sortOptions} rowKey={(s) => s.sessionId}>
+	<RowList {table} {sortOptions} rowKey={(s) => (s.sessionId?.value ?? '')}>
 		{#snippet row(session)}
 			<span class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft">
 				<SquareTerminal class="h-3.5 w-3.5 text-accent-ink" />
@@ -138,7 +138,7 @@
 					class="block truncate font-mono text-xs text-muted-foreground"
 					title={m.terminal_sessions_session()}
 				>
-					{session.sessionId}
+					{session.sessionId?.value ?? ''}
 				</span>
 				<span class="flex min-w-0 items-baseline gap-2">
 					<a
@@ -149,7 +149,7 @@
 						{session.deviceHostname || session.deviceId?.value}
 					</a>
 					<span class="truncate text-xs text-muted-foreground">
-						{session.userEmail || session.userId}
+						{session.userEmail || session.userId?.value || ''}
 					</span>
 				</span>
 			</span>
@@ -201,14 +201,14 @@
 			<AlertDialog.Description>
 				{#if terminateSession}
 					{m.terminal_sessions_terminate_confirm({
-						userEmail: terminateSession.userEmail || terminateSession.userId,
+			userEmail: terminateSession.userEmail || terminateSession.userId?.value || '',
 						deviceHostname: terminateSession.deviceHostname || terminateSession.deviceId?.value || ''
 					})}
 				{/if}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		{#if terminateSession}
-			<p class="font-mono text-xs text-muted-foreground">{terminateSession.sessionId}</p>
+			<p class="font-mono text-xs text-muted-foreground">{terminateSession.sessionId?.value ?? ''}</p>
 		{/if}
 		<div class="space-y-2 py-2">
 			<Label for="terminate-reason">{m.terminal_sessions_terminate_reason()}</Label>

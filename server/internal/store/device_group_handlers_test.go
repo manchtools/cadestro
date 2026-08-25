@@ -37,10 +37,10 @@ func newDeviceGroupHandlerFixture(t *testing.T) *deviceGroupHandlerFixture {
 
 func TestDeviceGroupHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newDeviceGroupHandlerFixture(t)
-	_, err := validated(f.handlers.GetDeviceGroup)(context.Background(), connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: "bad"}))
+	_, err := validated(f.handlers.GetDeviceGroup)(context.Background(), connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
-	_, err = validated(f.handlers.GetDeviceGroup)(context.Background(), connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: newID()}))
+	_, err = validated(f.handlers.GetDeviceGroup)(context.Background(), connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
@@ -58,46 +58,46 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 		Name: "workstations", Description: "static fleet",
 	}))
 	require.NoError(t, err)
-	id := created.Msg.Group.Id
+	id := created.Msg.Group.GetId().GetValue()
 
 	added, err := f.handlers.AddDeviceToGroup(ctx, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: id, DeviceId: &cadestrov1.DeviceId{Value: f.directID}, DeviceIds: []string{f.groupID, f.directID},
+		GroupId: &cadestrov1.DeviceGroupId{Value: id}, DeviceId: &cadestrov1.DeviceId{Value: f.directID}, DeviceIds: []*cadestrov1.DeviceId{&cadestrov1.DeviceId{Value: f.groupID}, &cadestrov1.DeviceId{Value: f.directID}},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), added.Msg.Group.MemberCount)
 
-	got, err := f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: id}))
+	got, err := f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: id}}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Devices, 2)
 	assert.Len(t, got.Msg.DeviceIds, 2)
 
 	removed, err := f.handlers.RemoveDeviceFromGroup(ctx, connect.NewRequest(&cadestrov1.RemoveDeviceFromGroupRequest{
-		GroupId: id, DeviceId: &cadestrov1.DeviceId{Value: f.directID},
+		GroupId: &cadestrov1.DeviceGroupId{Value: id}, DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), removed.Msg.Group.MemberCount)
 
-	renamed, err := f.handlers.RenameDeviceGroup(ctx, connect.NewRequest(&cadestrov1.RenameDeviceGroupRequest{Id: id, Name: "renamed"}))
+	renamed, err := f.handlers.RenameDeviceGroup(ctx, connect.NewRequest(&cadestrov1.RenameDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: id}, Name: "renamed"}))
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", renamed.Msg.Group.Name)
 	described, err := f.handlers.UpdateDeviceGroupDescription(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupDescriptionRequest{
-		Id: id, Description: "direct state",
+		Id: &cadestrov1.DeviceGroupId{Value: id}, Description: "direct state",
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "direct state", described.Msg.Group.Description)
 
 	synced, err := f.handlers.SetDeviceGroupSyncInterval(ctx, connect.NewRequest(&cadestrov1.SetDeviceGroupSyncIntervalRequest{
-		Id: id, SyncIntervalMinutes: 30,
+		Id: &cadestrov1.DeviceGroupId{Value: id}, SyncIntervalMinutes: 30,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(30), synced.Msg.Group.SyncIntervalMinutes)
 	inventoried, err := f.handlers.SetDeviceGroupInventoryInterval(ctx, connect.NewRequest(&cadestrov1.SetDeviceGroupInventoryIntervalRequest{
-		Id: id, InventoryIntervalMinutes: 120,
+		Id: &cadestrov1.DeviceGroupId{Value: id}, InventoryIntervalMinutes: 120,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(120), inventoried.Msg.Group.InventoryIntervalMinutes)
 	windowed, err := f.handlers.SetDeviceGroupMaintenanceWindow(ctx, connect.NewRequest(&cadestrov1.SetDeviceGroupMaintenanceWindowRequest{
-		Id: id, MaintenanceWindow: &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{{
+		Id: &cadestrov1.DeviceGroupId{Value: id}, MaintenanceWindow: &cadestrov1.MaintenanceWindow{Schedule: []*cadestrov1.MaintenanceWindowEntry{{
 			Days: []string{"mon"}, Allow: "09:00-17:00",
 		}}},
 	}))
@@ -108,19 +108,19 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	// design §5.1). This group still has one hand-picked member; converting it
 	// hands membership to the rule, so that member does not survive the call.
 	converted, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: id, IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
+		Id: &cadestrov1.DeviceGroupId{Value: id}, IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
 	}))
 	require.NoError(t, err, "a curated group is convertible to a rule")
 	assert.True(t, converted.Msg.Group.IsDynamic)
 	assert.Equal(t, `"env" in device.labels && device.labels["env"] == "prod"`, converted.Msg.Group.DynamicQuery)
 	assert.Zero(t, converted.Msg.Group.MemberCount, "the curated membership does not survive the rule")
-	convertedGroup, err := f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: id}))
+	convertedGroup, err := f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: id}}))
 	require.NoError(t, err)
 	assert.Empty(t, convertedGroup.Msg.Devices)
 	assert.Empty(t, convertedGroup.Msg.DeviceIds)
 	// An invalid query is still refused, and refusing it changes nothing.
 	_, err = f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: id, IsDynamic: true, DynamicQuery: "(",
+		Id: &cadestrov1.DeviceGroupId{Value: id}, IsDynamic: true, DynamicQuery: "(",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	dynamic, err := f.handlers.CreateDeviceGroup(ctx, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
@@ -146,25 +146,25 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 		assert.Equal(t, int32(1), preview.Msg.MatchingDeviceCount, query)
 	}
 	updatedQuery, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: dynamic.Msg.Group.Id, IsDynamic: true, DynamicQuery: `device.hostname == "group"`,
+		Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, IsDynamic: true, DynamicQuery: `device.hostname == "group"`,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, `device.hostname == "group"`, updatedQuery.Msg.Group.DynamicQuery)
-	evaluated, err := f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: dynamic.Msg.Group.Id}))
+	evaluated, err := f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesAdded)
 	assert.Zero(t, evaluated.Msg.DevicesRemoved)
 	assert.Equal(t, int32(1), evaluated.Msg.Group.MemberCount)
 	_, err = f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: dynamic.Msg.Group.Id, IsDynamic: true, DynamicQuery: `device.hostname == "outside"`,
+		Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, IsDynamic: true, DynamicQuery: `device.hostname == "outside"`,
 	}))
 	require.NoError(t, err)
-	evaluated, err = f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: dynamic.Msg.Group.Id}))
+	evaluated, err = f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesAdded)
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesRemoved)
 	_, err = f.handlers.AddDeviceToGroup(ctx, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: dynamic.Msg.Group.Id, DeviceId: &cadestrov1.DeviceId{Value: f.outsideID},
+		GroupId: &cadestrov1.DeviceGroupId{Value: dynamic.Msg.Group.GetId().GetValue()}, DeviceId: &cadestrov1.DeviceId{Value: f.outsideID},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 
@@ -178,9 +178,9 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, forDevice.Msg.Groups)
 
-	_, err = f.handlers.DeleteDeviceGroup(ctx, connect.NewRequest(&cadestrov1.DeleteDeviceGroupRequest{Id: id}))
+	_, err = f.handlers.DeleteDeviceGroup(ctx, connect.NewRequest(&cadestrov1.DeleteDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: id}}))
 	require.NoError(t, err)
-	_, err = f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: id}))
+	_, err = f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: id}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	for _, procedure := range devicegroup.MutationProcedures() {
@@ -217,16 +217,16 @@ func TestDeviceGroupHandlers_ShapeSpecificCreatePermissionAndScope(t *testing.T)
 			Permission: "RenameDeviceGroup", ScopeKind: auth.ScopeKindDeviceGroup, ScopeID: f.scopeGroup,
 		}},
 	})
-	_, err = f.handlers.GetDeviceGroup(scoped, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: created.Msg.Group.Id}))
+	_, err = f.handlers.GetDeviceGroup(scoped, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: &cadestrov1.DeviceGroupId{Value: created.Msg.Group.GetId().GetValue()}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	_, err = f.handlers.RenameDeviceGroup(scoped, connect.NewRequest(&cadestrov1.RenameDeviceGroupRequest{
-		Id: created.Msg.Group.Id, Name: "denied",
+		Id: &cadestrov1.DeviceGroupId{Value: created.Msg.Group.GetId().GetValue()}, Name: "denied",
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	list, err := f.handlers.ListDeviceGroups(scoped, connect.NewRequest(&cadestrov1.ListDeviceGroupsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, list.Msg.Groups, 1)
-	assert.Equal(t, f.scopeGroup, list.Msg.Groups[0].Id)
+	assert.Equal(t, f.scopeGroup, list.Msg.Groups[0].GetId().GetValue())
 
 	membershipScoped := auth.WithUser(context.Background(), &auth.UserContext{
 		ID: f.actorID, Kind: auth.PrincipalUser, Permissions: []string{"AddDeviceToGroup"},
@@ -235,11 +235,11 @@ func TestDeviceGroupHandlers_ShapeSpecificCreatePermissionAndScope(t *testing.T)
 		}},
 	})
 	_, err = f.handlers.AddDeviceToGroup(membershipScoped, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: f.scopeGroup, DeviceId: &cadestrov1.DeviceId{Value: f.groupID},
+		GroupId: &cadestrov1.DeviceGroupId{Value: f.scopeGroup}, DeviceId: &cadestrov1.DeviceId{Value: f.groupID},
 	}))
 	require.NoError(t, err)
 	_, err = f.handlers.AddDeviceToGroup(membershipScoped, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: f.scopeGroup, DeviceId: &cadestrov1.DeviceId{Value: f.outsideID},
+		GroupId: &cadestrov1.DeviceGroupId{Value: f.scopeGroup}, DeviceId: &cadestrov1.DeviceId{Value: f.outsideID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "membership writes must not widen the caller's device scope")
 }

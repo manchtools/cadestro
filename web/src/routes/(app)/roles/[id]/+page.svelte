@@ -118,7 +118,7 @@
 		saving = true;
 		try {
 			const updated = await apiClient.updateRole(
-				role.id,
+				(role.id?.value ?? ''),
 				editName.trim(),
 				editDescription.trim(),
 				Array.from(selectedPermissions)
@@ -148,7 +148,7 @@
 	async function deleteRole() {
 		if (!role) return;
 		try {
-			await apiClient.deleteRole(role.id);
+			await apiClient.deleteRole((role.id?.value ?? ''));
 			toast.success(m.roles_deleted());
 			goto('/roles');
 		} catch (error) {

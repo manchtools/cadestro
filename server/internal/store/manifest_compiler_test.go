@@ -73,7 +73,7 @@ func TestManifestCompiler_ActionCreatesSingleton(t *testing.T) {
 	assert.Equal(t, f.action1, got.Provenance.GetActionId().GetValue())
 	assert.Nil(t, got.Provenance.GetActionSetId())
 	assert.True(t, got.Schedule.RunOnAssign)
-	assert.Equal(t, f.action1, got.Occurrences[0].Action.Id.Value)
+	assert.Equal(t, f.action1, got.Occurrences[0].Action.GetId().GetValue())
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_CONTINUE, got.Occurrences[0].OnFailure)
 }
 
@@ -85,8 +85,8 @@ func TestManifestCompiler_ActionSetFlattensInAuthoredOrder(t *testing.T) {
 	assert.Equal(t, "0 4 * * *", got.Schedule.Cron)
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, got.DefaultOnFailure)
 	require.Len(t, got.Occurrences, 2)
-	assert.Equal(t, f.action1, got.Occurrences[0].Action.Id.Value)
-	assert.Equal(t, f.action2, got.Occurrences[1].Action.Id.Value)
+	assert.Equal(t, f.action1, got.Occurrences[0].Action.GetId().GetValue())
+	assert.Equal(t, f.action2, got.Occurrences[1].Action.GetId().GetValue())
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, got.Occurrences[0].OnFailure)
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_STOP, got.Occurrences[1].OnFailure)
 	assert.NotEqual(t, got.Occurrences[0].OccurrenceId, got.Occurrences[1].OccurrenceId)
@@ -102,8 +102,8 @@ func TestManifestCompiler_DefinitionFlattensGlobalOrderAndPolicies(t *testing.T)
 	assert.False(t, got.Schedule.RunOnAssign)
 	require.Len(t, got.Occurrences, 3)
 	assert.Equal(t, []string{f.action1, f.action1, f.action2}, []string{
-		got.Occurrences[0].Action.Id.Value, got.Occurrences[1].Action.Id.Value,
-		got.Occurrences[2].Action.Id.Value,
+		got.Occurrences[0].Action.GetId().GetValue(), got.Occurrences[1].Action.GetId().GetValue(),
+		got.Occurrences[2].Action.GetId().GetValue(),
 	}, "definition member order precedes each set's authored action order")
 	assert.Equal(t, []cadestrov1.OnFailure{
 		cadestrov1.OnFailure_ON_FAILURE_CONTINUE, cadestrov1.OnFailure_ON_FAILURE_STOP,
@@ -184,6 +184,6 @@ func TestManifestCompiler_EncryptsActionCredentialBeforeDeliveryPersistence(t *t
 	assert.Equal(t, catalogCiphertext, compiled.Occurrences[0].Action.GetEncryption().PresharedKey,
 		"materialization must not mutate the durable compiler output")
 	tampered := proto.Clone(compiled).(*cadestrov1.Manifest)
-	tampered.Occurrences[0].Action.Id.Value = newID()
+	tampered.Occurrences[0].Action.GetId().Value = newID()
 	assert.Error(t, manifest.MaterializeSecrets(tampered, atRest), "the action id is part of the at-rest AAD")
 }

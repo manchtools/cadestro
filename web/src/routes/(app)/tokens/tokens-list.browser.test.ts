@@ -79,14 +79,14 @@ import TokensPage from './+page.svelte';
 
 const tokens = [
 	create(RegistrationTokenSchema, {
-		id: ACTIVE_ID,
+		id: { value: ACTIVE_ID },
 		name: 'Fleet rollout',
 		maxUses: 0,
 		disabled: false,
 		createdAt: timestampFromMs(Date.UTC(2026, 6, 1))
 	}),
 	create(RegistrationTokenSchema, {
-		id: DISABLED_ID,
+		id: { value: DISABLED_ID },
 		name: 'Revoked laptop token',
 		maxUses: 1,
 		disabled: true,
@@ -194,7 +194,7 @@ describe('tokens list — paging and empty states', () => {
 	it('slices the page from the deep link and reports the range', async () => {
 		const many = Array.from({ length: 12 }, (_, i) =>
 			create(RegistrationTokenSchema, {
-				id: `01JQZZ8E1R7S3V6W0X2Y5Z4A${String(i).padStart(2, '0')}`,
+				id: { value: `01JQZZ8E1R7S3V6W0X2Y5Z4A${String(i).padStart(2, '0')}` },
 				name: `Batch ${String(i).padStart(2, '0')}`,
 				maxUses: 0,
 				disabled: false,

@@ -124,17 +124,17 @@ func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "GetCompliancePolicy", req.Msg.Id); err != nil {
+	if err := h.authorize(ctx, "GetCompliancePolicy", req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	row, err := h.operatorPolicy(ctx, req.Msg.Id)
+	row, err := h.operatorPolicy(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforcePolicyReadScope(ctx, req.Msg.Id); err != nil {
+	if err := h.enforcePolicyReadScope(ctx, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	rules, err := h.store.ListCompliancePolicyRules(ctx, req.Msg.Id)
+	rules, err := h.store.ListCompliancePolicyRules(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, h.internal(ctx, "list policy rules", err)
 	}
@@ -190,35 +190,35 @@ func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Requ
 
 // RenameCompliancePolicy replaces a policy name.
 func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.RenameCompliancePolicyRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "RenameCompliancePolicy")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "RenameCompliancePolicy")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.Rename(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure, "RenameCompliancePolicy"), req.Msg.Id, req.Msg.Name)
+		cadestrov1connect.ControlServiceRenameCompliancePolicyProcedure, "RenameCompliancePolicy"), req.Msg.GetId().GetValue(), req.Msg.Name)
 	return h.updatedPolicy(ctx, "rename policy", row, err)
 }
 
 // UpdateCompliancePolicyDescription replaces a policy description.
 func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyDescriptionRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "UpdateCompliancePolicyDescription")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "UpdateCompliancePolicyDescription")
 	if err != nil {
 		return nil, err
 	}
 	row, err := h.state.UpdateDescription(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateCompliancePolicyDescriptionProcedure, "UpdateCompliancePolicyDescription"),
-		req.Msg.Id, req.Msg.Description)
+		req.Msg.GetId().GetValue(), req.Msg.Description)
 	return h.updatedPolicy(ctx, "update policy description", row, err)
 }
 
 // DeleteCompliancePolicy deletes one policy and its ordinary dependent state.
 func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.DeleteCompliancePolicyRequest]) (*connect.Response[cadestrov1.DeleteCompliancePolicyResponse], error) {
-	actor, err := h.mutationActor(ctx, req.Msg.Id, "DeleteCompliancePolicy")
+	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "DeleteCompliancePolicy")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.Delete(ctx, h.operation(req, actor,
-		cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure, "DeleteCompliancePolicy"), req.Msg.Id); err != nil {
+		cadestrov1connect.ControlServiceDeleteCompliancePolicyProcedure, "DeleteCompliancePolicy"), req.Msg.GetId().GetValue()); err != nil {
 		return nil, h.policyError(ctx, "delete policy", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteCompliancePolicyResponse{}), nil
@@ -227,7 +227,7 @@ func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Requ
 // AddCompliancePolicyRule adds one visible compliance Action.
 func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.AddCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.AddCompliancePolicyRuleResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
-	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "AddCompliancePolicyRule")
+	actor, err := h.mutationActor(ctx, req.Msg.GetPolicyId().GetValue(), "AddCompliancePolicyRule")
 	if err != nil {
 		return nil, err
 	}
@@ -244,10 +244,10 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 	}
 	if err := h.state.AddRule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure, "AddCompliancePolicyRule"),
-		req.Msg.PolicyId, actionID, req.Msg.GracePeriodHours); err != nil {
-		return nil, h.addRuleError(ctx, req.Msg.PolicyId, actionID, err)
+		req.Msg.GetPolicyId().GetValue(), actionID, req.Msg.GracePeriodHours); err != nil {
+		return nil, h.addRuleError(ctx, req.Msg.GetPolicyId().GetValue(), actionID, err)
 	}
-	policy, err := h.policyResponse(ctx, req.Msg.PolicyId)
+	policy, err := h.policyResponse(ctx, req.Msg.GetPolicyId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -257,16 +257,16 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 // RemoveCompliancePolicyRule removes one Action edge.
 func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.RemoveCompliancePolicyRuleResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
-	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "RemoveCompliancePolicyRule")
+	actor, err := h.mutationActor(ctx, req.Msg.GetPolicyId().GetValue(), "RemoveCompliancePolicyRule")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.RemoveRule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure, "RemoveCompliancePolicyRule"),
-		req.Msg.PolicyId, actionID); err != nil {
+		req.Msg.GetPolicyId().GetValue(), actionID); err != nil {
 		return nil, h.policyError(ctx, "remove policy rule", err)
 	}
-	policy, err := h.policyResponse(ctx, req.Msg.PolicyId)
+	policy, err := h.policyResponse(ctx, req.Msg.GetPolicyId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -276,16 +276,16 @@ func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.
 // UpdateCompliancePolicyRule replaces one rule grace period.
 func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyRuleResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
-	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "UpdateCompliancePolicyRule")
+	actor, err := h.mutationActor(ctx, req.Msg.GetPolicyId().GetValue(), "UpdateCompliancePolicyRule")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.UpdateRule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure, "UpdateCompliancePolicyRule"),
-		req.Msg.PolicyId, actionID, req.Msg.GracePeriodHours); err != nil {
+		req.Msg.GetPolicyId().GetValue(), actionID, req.Msg.GracePeriodHours); err != nil {
 		return nil, h.policyError(ctx, "update policy rule", err)
 	}
-	policy, err := h.policyResponse(ctx, req.Msg.PolicyId)
+	policy, err := h.policyResponse(ctx, req.Msg.GetPolicyId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +478,7 @@ func (h *Handlers) addRuleError(ctx context.Context, policyID, actionID string, 
 
 func policyToProto(row store.CompliancePolicyRow, ruleCount int64, rules []store.CompliancePolicyRuleView) *cadestrov1.CompliancePolicy {
 	policy := &cadestrov1.CompliancePolicy{
-		Id: row.ID, Name: row.Name, Description: row.Description,
+		Id: &cadestrov1.CompliancePolicyId{Value: row.ID}, Name: row.Name, Description: row.Description,
 		RuleCount: boundedCount(ruleCount), CreatedBy: row.CreatedBy,
 	}
 	if row.CreatedAt != nil {
@@ -514,7 +514,7 @@ func boundedCount(n int64) int32 {
 func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, message string) *connect.Error {
 	err := connect.NewError(connectCode, errors.New(message))
 	detail, detailErr := connect.NewErrorDetail(&cadestrov1.ErrorDetail{
-		Code: code, RequestId: middleware.RequestIDFromContext(ctx),
+		Code: code, RequestId: &cadestrov1.RequestId{Value: middleware.RequestIDFromContext(ctx)},
 	})
 	if detailErr == nil {
 		err.AddDetail(detail)

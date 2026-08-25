@@ -52,13 +52,13 @@ func TestRPCSurface_CurrentTypedControl(t *testing.T) {
 func TestRPCSurface_ProviderCapabilitiesArePublic(t *testing.T) {
 	for messageName, fields := range map[protoreflect.FullName]map[protoreflect.Name]protoreflect.Kind{
 		"cadestro.v1.IdentityProvider": {
-			"client_id": protoreflect.StringKind,
+			"client_id": protoreflect.MessageKind,
 		},
 		"cadestro.v1.CreateIdentityProviderRequest": {
-			"client_id": protoreflect.StringKind,
+			"client_id": protoreflect.MessageKind,
 		},
 		"cadestro.v1.UpdateIdentityProviderRequest": {
-			"client_id": protoreflect.StringKind,
+			"client_id": protoreflect.MessageKind,
 		},
 		"cadestro.v1.AuthMethodProvider": {
 			"browser_login": protoreflect.BoolKind,

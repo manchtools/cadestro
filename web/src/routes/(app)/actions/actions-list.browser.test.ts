@@ -70,13 +70,13 @@ import ActionsPage from './+page.svelte';
 
 const results = [
 	create(SearchResultSchema, {
-		id: SHELL_ID,
+		id: { value: SHELL_ID },
 		name: 'Rotate log files',
 		description: 'Nightly cleanup',
 		fields: { name: 'Rotate log files', type: String(ActionType.SHELL), created_at: '1750000000' }
 	}),
 	create(SearchResultSchema, {
-		id: COMPLIANCE_ID,
+		id: { value: COMPLIANCE_ID },
 		name: 'Check disk encryption',
 		description: 'LUKS present',
 		fields: {
@@ -87,7 +87,7 @@ const results = [
 		}
 	}),
 	create(SearchResultSchema, {
-		id: PACKAGE_ID,
+		id: { value: PACKAGE_ID },
 		name: 'Install Firefox',
 		description: '',
 		fields: { name: 'Install Firefox', type: String(ActionType.PACKAGE), created_at: '1750000200' }

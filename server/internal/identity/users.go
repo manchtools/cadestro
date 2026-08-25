@@ -96,10 +96,10 @@ func (r storeScopeResolver) DeviceGroupsForDevice(context.Context, string) ([]st
 
 // GetUser returns one subject.
 func (h *Handlers) GetUser(ctx context.Context, req *connect.Request[cadestrov1.GetUserRequest]) (*connect.Response[cadestrov1.GetUserResponse], error) {
-	if _, err := h.resolveUserTarget(ctx, PermGetUser, req.Msg.Id); err != nil {
+	if _, err := h.resolveUserTarget(ctx, PermGetUser, req.Msg.GetId().GetValue()); err != nil {
 		return nil, err
 	}
-	view, err := h.loadUserView(ctx, req.Msg.Id)
+	view, err := h.loadUserView(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrUserNotFound, "user not found")
@@ -183,7 +183,7 @@ func (h *Handlers) userInGroups(ctx context.Context, userID string, groups []str
 // EraseJITUser removes a subject created by optional OIDC JIT. SCIM-created
 // subjects fail closed because their lifecycle remains owned by SCIM.
 func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[cadestrov1.EraseJITUserRequest]) (*connect.Response[cadestrov1.EraseJITUserResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermEraseJITUser, req.Msg.Id)
+	before, err := h.resolveUserTarget(ctx, PermEraseJITUser, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func (h *Handlers) EraseJITUser(ctx context.Context, req *connect.Request[cadest
 // sealed under the subject's own key: erasing the subject destroys the
 // key and with it the readable form, while the attribution survives.
 func (h *Handlers) UpdateUserEmail(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserEmailRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermUpdateUserEmail, req.Msg.Id)
+	before, err := h.resolveUserTarget(ctx, PermUpdateUserEmail, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[cad
 	if err := h.authorize(ctx, PermSetUserDisabled, ""); err != nil {
 		return nil, err
 	}
-	before, err := h.store.GetUser(ctx, req.Msg.Id)
+	before, err := h.store.GetUser(ctx, req.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, ErrUserNotFound, "user not found")
@@ -330,7 +330,7 @@ func (h *Handlers) SetUserDisabled(ctx context.Context, req *connect.Request[cad
 
 // UpdateUserProfile writes the OIDC profile fields.
 func (h *Handlers) UpdateUserProfile(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserProfileRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermUpdateUserProfile, req.Msg.Id)
+	before, err := h.resolveUserTarget(ctx, PermUpdateUserProfile, req.Msg.GetId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Req
 	if !auth.HasPermission(ctx, PermUpdateUserLinuxUsername) {
 		return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "permission denied")
 	}
-	before, err := h.resolveUserTarget(ctx, PermUpdateUserLinuxUsername, req.Msg.UserId)
+	before, err := h.resolveUserTarget(ctx, PermUpdateUserLinuxUsername, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +424,7 @@ func (h *Handlers) UpdateUserLinuxUsername(ctx context.Context, req *connect.Req
 
 // UpdateUserSshSettings writes a subject's SSH access flags.
 func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserSshSettingsRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermUpdateUserSshSettings, req.Msg.UserId)
+	before, err := h.resolveUserTarget(ctx, PermUpdateUserSshSettings, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +469,7 @@ func (h *Handlers) UpdateUserSshSettings(ctx context.Context, req *connect.Reque
 // SetUserProvisioningEnabled toggles whether the subject's OS account
 // is provisioned on managed devices.
 func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.Request[cadestrov1.SetUserProvisioningEnabledRequest]) (*connect.Response[cadestrov1.UpdateUserResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermSetUserProvisioningEnabled, req.Msg.UserId)
+	before, err := h.resolveUserTarget(ctx, PermSetUserProvisioningEnabled, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -516,7 +516,7 @@ func (h *Handlers) SetUserProvisioningEnabled(ctx context.Context, req *connect.
 // nothing, and the fingerprint the audit record needs comes from the
 // parse.
 func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[cadestrov1.AddUserSshKeyRequest]) (*connect.Response[cadestrov1.AddUserSshKeyResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermAddUserSshKey, req.Msg.UserId)
+	before, err := h.resolveUserTarget(ctx, PermAddUserSshKey, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -571,7 +571,7 @@ func (h *Handlers) AddUserSshKey(ctx context.Context, req *connect.Request[cades
 
 // RemoveUserSshKey withdraws an authorized key.
 func (h *Handlers) RemoveUserSshKey(ctx context.Context, req *connect.Request[cadestrov1.RemoveUserSshKeyRequest]) (*connect.Response[cadestrov1.RemoveUserSshKeyResponse], error) {
-	before, err := h.resolveUserTarget(ctx, PermRemoveUserSshKey, req.Msg.UserId)
+	before, err := h.resolveUserTarget(ctx, PermRemoveUserSshKey, req.Msg.GetUserId().GetValue())
 	if err != nil {
 		return nil, err
 	}
@@ -583,7 +583,7 @@ func (h *Handlers) RemoveUserSshKey(ctx context.Context, req *connect.Request[ca
 	_, err = h.store.WithAudit(ctx, h.mutationOp(req, actor, PermRemoveUserSshKey),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			removed, err := tx.DeleteUserSshKey(ctx, db.DeleteUserSshKeyParams{
-				UserID: before.ID, KeyID: req.Msg.KeyId,
+				UserID: before.ID, KeyID: req.Msg.GetKeyId().GetValue(),
 			})
 			if err != nil {
 				return err

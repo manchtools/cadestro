@@ -66,8 +66,8 @@ async function loadMembership(groups: DeviceGroup[]): Promise<Map<string, string
 	const membership = new Map<string, string[]>();
 	for (let i = 0; i < groups.length; i += MEMBER_BATCH) {
 		const batch = groups.slice(i, i + MEMBER_BATCH);
-		const resps = await Promise.all(batch.map((g) => apiClient.getDeviceGroup(g.id)));
-		resps.forEach((resp, n) => membership.set(batch[n].id, resp.deviceIds ?? []));
+		const resps = await Promise.all(batch.map((g) => apiClient.getDeviceGroup((g.id?.value ?? ''))));
+		resps.forEach((resp, n) => membership.set(batch[n].id?.value ?? '', (resp.deviceIds ?? []).map((id) => id.value)));
 	}
 	return membership;
 }

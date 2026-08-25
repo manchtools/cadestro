@@ -54,7 +54,7 @@ export const apiUserLoaders: UserLoaders = {
 	loadPlatformUsers: async () => {
 		return fetchAllPages<UserLite>(async (pageSize, pageToken) => {
 			const r = await apiClient.listUsers(pageSize, pageToken);
-			return { items: r.users, nextPageToken: r.nextPageToken };
+			return { items: r.users.map((user) => ({ ...user, id: user.id?.value ?? '' })), nextPageToken: r.nextPageToken };
 		});
 	}
 };

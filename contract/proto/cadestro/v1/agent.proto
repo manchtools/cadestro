@@ -25,7 +25,7 @@ service AgentService {
 // ============================================================================
 
 message AgentMessage {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  MessageId id = 1 [(buf.validate.field).required = true];
 
   oneof payload {
     Hello hello = 10;
@@ -131,7 +131,7 @@ message SecurityAlert {
 // ============================================================================
 
 message ServerMessage {
-  string id = 1 [(buf.validate.field).string.ulid = true];
+  MessageId id = 1 [(buf.validate.field).required = true];
 
   oneof payload {
     // Live operations have no policy or durable work semantics.
@@ -617,7 +617,7 @@ message SyncState {
 
 message DesiredPolicy {
   // Stable revision of the resolved device policy.
-  string revision = 1 [(buf.validate.field).string.ulid = true];
+  PolicyRevisionId revision = 1 [(buf.validate.field).required = true];
   // One globally ordered runbook for the device. Empty containers are omitted.
   repeated Manifest manifests = 2;
 }
@@ -712,7 +712,7 @@ enum TerminalSessionState {
 // before allocating the PTY. The shell is activated for the duration of
 // the session and reverted to nologin on disconnect.
 message TerminalStart {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   // The dedicated TTY username (e.g. "cadestro-tty-pdotterer"). The agent
   // never uses the original Linux username for the shell.
   string tty_user = 2 [
@@ -734,7 +734,7 @@ message TerminalStart {
 
 // Server -> Agent: stdin data for an active session.
 message TerminalInput {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   bytes data = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).bytes.max_len = 65536
@@ -744,7 +744,7 @@ message TerminalInput {
 // Server -> Agent: window resize.
 // The agent forwards the new size to the PTY via TIOCSWINSZ.
 message TerminalResize {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   uint32 cols = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).uint32.gt = 0,
@@ -763,7 +763,7 @@ message TerminalResize {
 // ControlService.TerminateTerminalSession so the agent can surface it in
 // logs and the audit trail records why the session was killed.
 message TerminalStop {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   string reason = 2 [
     (buf.validate.field).string.max_len = 512,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -772,7 +772,7 @@ message TerminalStop {
 
 // Agent -> Server: stdout/stderr data from the PTY.
 message TerminalOutput {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   bytes data = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).bytes.max_len = 65536
@@ -785,7 +785,7 @@ message TerminalOutput {
 // exit_code populated. ERROR is sent for any failure that ends the
 // session early, with error populated.
 message TerminalStateChange {
-  string session_id = 1 [(buf.validate.field).string.ulid = true];
+  SessionId session_id = 1 [(buf.validate.field).required = true];
   TerminalSessionState state = 2 [(buf.validate.field).required = true];
   // Set when state is EXITED.
   int32 exit_code = 3;

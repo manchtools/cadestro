@@ -84,12 +84,12 @@ const ROLE_USER_ID = '00000000000000000000000002';
 
 const stored = () =>
 	create(IdentityProviderSchema, {
-		id: IDP_ID,
+		id: { value: IDP_ID },
 		name: 'Corporate Entra',
 		slug: 'entra',
 		providerType: IdentityProviderType.OIDC,
 		enabled: true,
-		clientId: 'client-abc',
+		clientId: { value: 'client-abc' },
 		issuerUrl: 'https://login.example.test',
 		authorizationUrl: 'https://login.example.test/authorize',
 		tokenUrl: 'https://login.example.test/token',
@@ -98,7 +98,7 @@ const stored = () =>
 		autoCreateUsers: true,
 		autoLinkByEmail: false,
 		trustEmailAssertions: false,
-		defaultRoleId: ROLE_USER_ID,
+		defaultRoleId: { value: ROLE_USER_ID },
 		groupClaim: 'groups',
 		scimEnabled,
 		scimEndpointUrl: scimEnabled ? 'https://control.test/scim/v2/entra' : ''
