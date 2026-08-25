@@ -181,19 +181,20 @@ func (h *Handlers) GetUserAssignments(ctx context.Context, req *connect.Request[
 // device. EXCLUDED suppresses a source, UNINSTALL forces its resolved actions
 // absent, and AVAILABLE contributes only when selected.
 func (h *Handlers) GetDeviceAssignments(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceAssignmentsRequest]) (*connect.Response[cadestrov1.GetDeviceAssignmentsResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
 	if err := h.authorize(ctx, "GetDeviceAssignments", ""); err != nil {
 		return nil, err
 	}
-	if _, err := h.store.GetDevice(ctx, req.Msg.DeviceId); err != nil {
+	if _, err := h.store.GetDevice(ctx, deviceID); err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 		}
 		return nil, h.internal(ctx, "read assignment device", err)
 	}
-	paths, err := h.store.ListResolvedSources(ctx, req.Msg.DeviceId)
+	paths, err := h.store.ListResolvedSources(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "resolve device assignments", err)
 	}
@@ -372,6 +373,7 @@ func compliancePolicyToProto(row store.CompliancePolicyRow, rules []store.Compli
 // SetUserSelection persists one optional source choice for an accessible
 // device through the audited mutation primitive.
 func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[cadestrov1.SetUserSelectionRequest]) (*connect.Response[cadestrov1.SetUserSelectionResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -379,12 +381,12 @@ func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[ca
 	if err := h.authorize(ctx, "SetUserSelection", ""); err != nil {
 		return nil, err
 	}
-	if err := h.requireDeviceAccess(ctx, actor, req.Msg.DeviceId); err != nil {
+	if err := h.requireDeviceAccess(ctx, actor, deviceID); err != nil {
 		return nil, err
 	}
 	row, err := h.state.SetUserSelection(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceSetUserSelectionProcedure, "SetUserSelection"),
-		req.Msg.DeviceId, req.Msg.SourceType, req.Msg.SourceId, req.Msg.Selected, actor.ID)
+		deviceID, req.Msg.SourceType, req.Msg.SourceId, req.Msg.Selected, actor.ID)
 	if err != nil {
 		return nil, h.mapError(ctx, "set user selection", err)
 	}
@@ -394,6 +396,7 @@ func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[ca
 // ListAvailableActions returns each live AVAILABLE source once with its
 // current device selection and a complete action preview.
 func (h *Handlers) ListAvailableActions(ctx context.Context, req *connect.Request[cadestrov1.ListAvailableActionsRequest]) (*connect.Response[cadestrov1.ListAvailableActionsResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -401,10 +404,10 @@ func (h *Handlers) ListAvailableActions(ctx context.Context, req *connect.Reques
 	if err := h.authorize(ctx, "ListAvailableActions", ""); err != nil {
 		return nil, err
 	}
-	if err := h.requireDeviceAccess(ctx, actor, req.Msg.DeviceId); err != nil {
+	if err := h.requireDeviceAccess(ctx, actor, deviceID); err != nil {
 		return nil, err
 	}
-	rows, err := h.store.ListAvailableSources(ctx, req.Msg.DeviceId)
+	rows, err := h.store.ListAvailableSources(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "list available actions", err)
 	}
@@ -520,7 +523,7 @@ func (h *Handlers) previewActions(ctx context.Context, sourceType cadestrov1.Ass
 func userSelectionToProto(row store.UserSelectionRow) *cadestrov1.UserSelection {
 	value, _ := sourceTypeValue(row.SourceType)
 	return &cadestrov1.UserSelection{
-		Id: row.ID, DeviceId: row.DeviceID, SourceType: value,
+		Id: row.ID, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, SourceType: value,
 		SourceId: row.SourceID, Selected: row.Selected,
 		UpdatedAt: timestamppb.New(row.UpdatedAt),
 	}

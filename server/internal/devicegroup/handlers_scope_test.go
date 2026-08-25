@@ -83,7 +83,7 @@ func TestListDeviceGroupsForDevice_OutOfScopeDeviceIsNotAnExistenceOracle(t *tes
 
 	call := func(caller *auth.UserContext, deviceID string) (*connect.Response[cadestrov1.ListDeviceGroupsForDeviceResponse], error) {
 		return h.ListDeviceGroupsForDevice(auth.WithUser(ctx, caller),
-			connect.NewRequest(&cadestrov1.ListDeviceGroupsForDeviceRequest{DeviceId: deviceID}))
+			connect.NewRequest(&cadestrov1.ListDeviceGroupsForDeviceRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	}
 
 	t.Run("restricted caller: out-of-scope existing device reads as NotFound", func(t *testing.T) {

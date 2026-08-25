@@ -286,7 +286,7 @@ func TestAssignmentHandlers_AvailableSelectionIsAuditedDirectState(t *testing.T)
 	}))
 	require.NoError(t, err)
 
-	before, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: deviceID}))
+	before, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	require.Len(t, before.Msg.Items, 1)
 	assert.Equal(t, actionID, before.Msg.Items[0].SourceId)
@@ -295,20 +295,20 @@ func TestAssignmentHandlers_AvailableSelectionIsAuditedDirectState(t *testing.T)
 	assert.Equal(t, actionID, before.Msg.Items[0].Actions[0].Id)
 
 	selected, err := f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
-		DeviceId: deviceID, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
+		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
 		SourceId: actionID, Selected: true,
 	}))
 	require.NoError(t, err)
 	assert.True(t, selected.Msg.Selection.Selected)
 	selectionID := selected.Msg.Selection.Id
 
-	after, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: deviceID}))
+	after, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	require.Len(t, after.Msg.Items, 1)
 	assert.True(t, after.Msg.Items[0].Selected)
 
 	deselected, err := f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
-		DeviceId: deviceID, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
+		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
 		SourceId: actionID, Selected: false,
 	}))
 	require.NoError(t, err)
@@ -341,14 +341,14 @@ func TestAssignmentHandlers_SelectionRequiresAnAvailableAssignmentAndDeviceAcces
 
 	ctx := f.actor("SetUserSelection", "ListDevices")
 	_, err := f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
-		DeviceId: deviceID, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
+		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
 		SourceId: actionID, Selected: true,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	assignedOnly := f.actor("SetUserSelection", "ListDevices:assigned")
 	_, err = f.handlers.SetUserSelection(assignedOnly, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
-		DeviceId: deviceID, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
+		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
 		SourceId: actionID, Selected: true,
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "an unassigned actor gets no device existence oracle")
@@ -392,7 +392,7 @@ func TestAssignmentHandlers_AvailableSourcesResolveEveryTargetKind(t *testing.T)
 		require.NoError(t, err)
 	}
 
-	response, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: deviceID}))
+	response, err := f.handlers.ListAvailableActions(ctx, connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	require.Len(t, response.Msg.Items, 4)
 	for _, item := range response.Msg.Items {
@@ -405,7 +405,7 @@ func TestAssignmentHandlers_AvailableSourcesResolveEveryTargetKind(t *testing.T)
 		Permissions: []string{"ListAvailableActions", "ListDevices:assigned"},
 	})
 	assigned, err := f.handlers.ListAvailableActions(assignedCtx,
-		connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: deviceID}))
+		connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	assert.Len(t, assigned.Msg.Items, 4)
 }
@@ -437,7 +437,7 @@ func TestAssignmentHandlers_AvailableSourceIsHiddenByStrongerMode(t *testing.T) 
 	}
 
 	response, err := f.handlers.ListAvailableActions(ctx,
-		connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: deviceID}))
+		connect.NewRequest(&cadestrov1.ListAvailableActionsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	assert.Empty(t, response.Msg.Items, "a required source is not also an optional choice")
 }
@@ -493,13 +493,13 @@ func TestAssignmentHandlers_GetDeviceAssignmentsExpandsLiveSources(t *testing.T)
 		require.NoError(t, err)
 	}
 	_, err = f.handlers.SetUserSelection(ctx, connect.NewRequest(&cadestrov1.SetUserSelectionRequest{
-		DeviceId: deviceID, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
+		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, SourceType: cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION,
 		SourceId: availableID, Selected: true,
 	}))
 	require.NoError(t, err)
 
 	response, err := f.handlers.GetDeviceAssignments(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceAssignmentsRequest{DeviceId: deviceID}))
+		connect.NewRequest(&cadestrov1.GetDeviceAssignmentsRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	require.Len(t, response.Msg.Actions, 3, "duplicates collapse, selected optional and uninstall remain, excluded is absent")
 	actionsByID := make(map[string]*cadestrov1.ManagedAction, len(response.Msg.Actions))

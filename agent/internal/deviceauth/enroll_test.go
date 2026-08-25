@@ -85,7 +85,7 @@ func TestEnroll_Success(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Success)
-	assert.Equal(t, "dev-123", resp.Msg.DeviceId)
+	assert.Equal(t, "dev-123", resp.Msg.GetDeviceId().GetValue())
 	assert.Empty(t, resp.Msg.Error)
 
 	// Callback was called
@@ -136,7 +136,7 @@ func TestEnroll_AlreadyEnrolled(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Success) // Returns success with existing device ID
-	assert.Equal(t, "existing-device", resp.Msg.DeviceId)
+	assert.Equal(t, "existing-device", resp.Msg.GetDeviceId().GetValue())
 	assert.Contains(t, resp.Msg.Error, "already enrolled")
 }
 
@@ -169,7 +169,7 @@ func TestGetEnrollmentStatus_NotEnrolled(t *testing.T) {
 	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Enrolled)
-	assert.Empty(t, resp.Msg.DeviceId)
+	assert.Empty(t, resp.Msg.GetDeviceId().GetValue())
 }
 
 func TestGetEnrollmentStatus_Enrolled(t *testing.T) {
@@ -188,7 +188,7 @@ func TestGetEnrollmentStatus_Enrolled(t *testing.T) {
 	resp, err := handler.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Enrolled)
-	assert.Equal(t, "dev-abc", resp.Msg.DeviceId)
+	assert.Equal(t, "dev-abc", resp.Msg.GetDeviceId().GetValue())
 }
 
 func TestEnrollServer_EndToEnd(t *testing.T) {
@@ -253,7 +253,7 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Success)
-	assert.Equal(t, "dev-e2e", resp.Msg.DeviceId)
+	assert.Equal(t, "dev-e2e", resp.Msg.GetDeviceId().GetValue())
 
 	// Callback received
 	select {
@@ -267,5 +267,5 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	status, err = client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, status.Msg.Enrolled)
-	assert.Equal(t, "dev-e2e", status.Msg.DeviceId)
+	assert.Equal(t, "dev-e2e", status.Msg.GetDeviceId().GetValue())
 }

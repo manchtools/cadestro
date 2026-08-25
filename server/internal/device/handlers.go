@@ -307,6 +307,7 @@ func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[cadestrov
 // GetDeviceInventory returns the latest directly stored osquery tables for a
 // visible device.
 func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceInventoryRequest]) (*connect.Response[cadestrov1.GetDeviceInventoryResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -314,10 +315,10 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 	if len(req.Msg.TableNames) > maxInventoryTableFilters {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "too many inventory table filters")
 	}
-	if _, err := h.readDevice(ctx, "GetDeviceInventory", req.Msg.DeviceId); err != nil {
+	if _, err := h.readDevice(ctx, "GetDeviceInventory", deviceID); err != nil {
 		return nil, err
 	}
-	rows, err := h.store.ListDeviceInventory(ctx, req.Msg.DeviceId, req.Msg.TableNames)
+	rows, err := h.store.ListDeviceInventory(ctx, deviceID, req.Msg.TableNames)
 	if err != nil {
 		return nil, h.internal(ctx, "list device inventory", err)
 	}
@@ -338,7 +339,7 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
 		cadestrov1connect.ControlServiceGetDeviceInventoryProcedure, "GetDeviceInventory",
-		"device_inventory", req.Msg.DeviceId); err != nil {
+		"device_inventory", deviceID); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.GetDeviceInventoryResponse{Tables: tables}), nil
@@ -437,18 +438,19 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 // GetDeviceCompliance returns the current direct compliance rows for one
 // visible device.
 func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceComplianceRequest]) (*connect.Response[cadestrov1.GetDeviceComplianceResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	view, err := h.readDevice(ctx, "GetDeviceCompliance", req.Msg.DeviceId)
+	view, err := h.readDevice(ctx, "GetDeviceCompliance", deviceID)
 	if err != nil {
 		return nil, err
 	}
 	if !validComplianceStatus(view.ComplianceStatus) {
 		return nil, h.internal(ctx, "decode device compliance status", fmt.Errorf("unknown status %d", view.ComplianceStatus))
 	}
-	rows, err := h.store.ListDeviceComplianceResults(ctx, req.Msg.DeviceId)
+	rows, err := h.store.ListDeviceComplianceResults(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "list device compliance", err)
 	}
@@ -466,7 +468,7 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
 		cadestrov1connect.ControlServiceGetDeviceComplianceProcedure, "GetDeviceCompliance",
-		"device_compliance", req.Msg.DeviceId); err != nil {
+		"device_compliance", deviceID); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.GetDeviceComplianceResponse{
@@ -477,18 +479,19 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 // GetDeviceCompliancePolicyStatus returns the current direct policy-rule
 // evaluations for one visible device.
 func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[cadestrov1.GetDeviceCompliancePolicyStatusResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	view, err := h.readDevice(ctx, "GetDeviceCompliancePolicyStatus", req.Msg.DeviceId)
+	view, err := h.readDevice(ctx, "GetDeviceCompliancePolicyStatus", deviceID)
 	if err != nil {
 		return nil, err
 	}
 	if !validComplianceStatus(view.ComplianceStatus) {
 		return nil, h.internal(ctx, "decode device compliance status", fmt.Errorf("unknown status %d", view.ComplianceStatus))
 	}
-	rows, err := h.store.ListDeviceComplianceEvaluations(ctx, req.Msg.DeviceId)
+	rows, err := h.store.ListDeviceComplianceEvaluations(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "list device compliance policies", err)
 	}
@@ -531,7 +534,7 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
 		cadestrov1connect.ControlServiceGetDeviceCompliancePolicyStatusProcedure,
-		"GetDeviceCompliancePolicyStatus", "device_compliance_policy_status", req.Msg.DeviceId); err != nil {
+		"GetDeviceCompliancePolicyStatus", "device_compliance_policy_status", deviceID); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.GetDeviceCompliancePolicyStatusResponse{
@@ -583,13 +586,14 @@ func worseComplianceStatus(left, right cadestrov1.ComplianceStatus) cadestrov1.C
 
 // ListDeviceAssignees returns the live users and groups assigned to a device.
 func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceAssigneesRequest]) (*connect.Response[cadestrov1.ListDeviceAssigneesResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "ListDeviceAssignees", req.Msg.DeviceId); err != nil {
+	if err := h.authorize(ctx, "ListDeviceAssignees", deviceID); err != nil {
 		return nil, err
 	}
-	rows, err := h.store.ListDeviceAssignees(ctx, req.Msg.DeviceId)
+	rows, err := h.store.ListDeviceAssignees(ctx, deviceID)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errDeviceNotFound, "device not found")

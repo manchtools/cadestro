@@ -28,14 +28,15 @@ const luksTokenTTL = 24 * time.Hour
 // ListLpsPasswords returns bounded current and historical LPS metadata. Its
 // store query does not select ciphertext.
 func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[cadestrov1.ListLpsPasswordsRequest]) (*connect.Response[cadestrov1.ListLpsPasswordsResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.readDevice(ctx, "ListLpsPasswords", req.Msg.DeviceId); err != nil {
+	if _, err := h.readDevice(ctx, "ListLpsPasswords", deviceID); err != nil {
 		return nil, err
 	}
-	currentRows, historyRows, err := h.store.ListDeviceLpsPasswords(ctx, req.Msg.DeviceId)
+	currentRows, historyRows, err := h.store.ListDeviceLpsPasswords(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "read LPS passwords", err)
 	}
@@ -49,7 +50,7 @@ func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[ca
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
 		cadestrov1connect.ControlServiceListLpsPasswordsProcedure,
-		"ListLpsPasswords", "device_lps_passwords", req.Msg.DeviceId); err != nil {
+		"ListLpsPasswords", "device_lps_passwords", deviceID); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.ListLpsPasswordsResponse{Current: current, History: history}), nil
@@ -98,14 +99,15 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[c
 // ListLuksKeys returns bounded current and historical LUKS metadata. Its store
 // query does not select ciphertext.
 func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[cadestrov1.ListLuksKeysRequest]) (*connect.Response[cadestrov1.ListLuksKeysResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.readDevice(ctx, "ListLuksKeys", req.Msg.DeviceId); err != nil {
+	if _, err := h.readDevice(ctx, "ListLuksKeys", deviceID); err != nil {
 		return nil, err
 	}
-	currentRows, historyRows, err := h.store.ListDeviceLuksKeys(ctx, req.Msg.DeviceId)
+	currentRows, historyRows, err := h.store.ListDeviceLuksKeys(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "read LUKS keys", err)
 	}
@@ -119,7 +121,7 @@ func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[cadest
 	}
 	if err := h.recordSensitiveRead(ctx, req, actor,
 		cadestrov1connect.ControlServiceListLuksKeysProcedure,
-		"ListLuksKeys", "device_luks_keys", req.Msg.DeviceId); err != nil {
+		"ListLuksKeys", "device_luks_keys", deviceID); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.ListLuksKeysResponse{Current: current, History: history}), nil
@@ -173,7 +175,7 @@ func (h *Handlers) lpsPasswordsToProto(rows []store.LpsPasswordView) ([]*cadestr
 			return nil, fmt.Errorf("invalid LPS rotation reason %q", row.RotationReason)
 		}
 		out[i] = &cadestrov1.LpsPassword{
-			Id: row.ID, DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname,
+			Id: row.ID, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname,
 			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			Username:  row.Username,
 			RotatedAt: timestamppb.New(row.RotatedAt), RotationReason: reason,
@@ -190,7 +192,7 @@ func (h *Handlers) luksKeysToProto(rows []store.LuksKeyView) ([]*cadestrov1.Luks
 			return nil, fmt.Errorf("invalid LUKS rotation reason %q", row.RotationReason)
 		}
 		key := &cadestrov1.LuksKey{
-			Id: row.ID, DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname,
+			Id: row.ID, DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname,
 			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			DevicePath: row.DevicePath,
 			RotatedAt:  timestamppb.New(row.RotatedAt), RotationReason: reason,
@@ -234,14 +236,15 @@ func (h *Handlers) recordSecretReveal(
 // CreateLuksToken atomically persists a hash of a one-time owner token with
 // its audit evidence. The plaintext is returned exactly once.
 func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cadestrov1.CreateLuksTokenRequest]) (*connect.Response[cadestrov1.CreateLuksTokenResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.mutationDevice(ctx, "CreateLuksToken", req.Msg.DeviceId); err != nil {
+	if _, err := h.mutationDevice(ctx, "CreateLuksToken", deviceID); err != nil {
 		return nil, err
 	}
-	owned, err := h.store.IsDeviceDirectlyAssignedToUser(ctx, req.Msg.DeviceId, actor.ID)
+	owned, err := h.store.IsDeviceDirectlyAssignedToUser(ctx, deviceID, actor.ID)
 	if err != nil {
 		return nil, h.internal(ctx, "check LUKS token owner", err)
 	}
@@ -287,7 +290,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cad
 		cadestrov1connect.ControlServiceCreateLuksTokenProcedure, "CreateLuksToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.InsertLuksToken(ctx, db.InsertLuksTokenParams{
-				ID: rowID, DeviceID: req.Msg.DeviceId, ActionID: actionID,
+				ID: rowID, DeviceID: deviceID, ActionID: actionID,
 				Token: hex.EncodeToString(hash[:]), MinLength: minLength,
 				Complexity: int32(params.UserPassphraseComplexity),
 				CreatedAt:  issuedAt, ExpiresAt: expiresAt,

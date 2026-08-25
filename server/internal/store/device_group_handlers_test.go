@@ -61,7 +61,7 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	id := created.Msg.Group.Id
 
 	added, err := f.handlers.AddDeviceToGroup(ctx, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: id, DeviceId: f.directID, DeviceIds: []string{f.groupID, f.directID},
+		GroupId: id, DeviceId: &cadestrov1.DeviceId{Value: f.directID}, DeviceIds: []string{f.groupID, f.directID},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), added.Msg.Group.MemberCount)
@@ -72,7 +72,7 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Len(t, got.Msg.DeviceIds, 2)
 
 	removed, err := f.handlers.RemoveDeviceFromGroup(ctx, connect.NewRequest(&cadestrov1.RemoveDeviceFromGroupRequest{
-		GroupId: id, DeviceId: f.directID,
+		GroupId: id, DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), removed.Msg.Group.MemberCount)
@@ -164,7 +164,7 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesAdded)
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesRemoved)
 	_, err = f.handlers.AddDeviceToGroup(ctx, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: dynamic.Msg.Group.Id, DeviceId: f.outsideID,
+		GroupId: dynamic.Msg.Group.Id, DeviceId: &cadestrov1.DeviceId{Value: f.outsideID},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 
@@ -173,7 +173,7 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.NotEmpty(t, listed.Msg.Groups)
 	assert.GreaterOrEqual(t, listed.Msg.TotalCount, int32(2))
 	forDevice, err := f.handlers.ListDeviceGroupsForDevice(ctx, connect.NewRequest(&cadestrov1.ListDeviceGroupsForDeviceRequest{
-		DeviceId: f.groupID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.groupID},
 	}))
 	require.NoError(t, err)
 	assert.NotEmpty(t, forDevice.Msg.Groups)
@@ -235,11 +235,11 @@ func TestDeviceGroupHandlers_ShapeSpecificCreatePermissionAndScope(t *testing.T)
 		}},
 	})
 	_, err = f.handlers.AddDeviceToGroup(membershipScoped, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: f.scopeGroup, DeviceId: f.groupID,
+		GroupId: f.scopeGroup, DeviceId: &cadestrov1.DeviceId{Value: f.groupID},
 	}))
 	require.NoError(t, err)
 	_, err = f.handlers.AddDeviceToGroup(membershipScoped, connect.NewRequest(&cadestrov1.AddDeviceToGroupRequest{
-		GroupId: f.scopeGroup, DeviceId: f.outsideID,
+		GroupId: f.scopeGroup, DeviceId: &cadestrov1.DeviceId{Value: f.outsideID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "membership writes must not widen the caller's device scope")
 }

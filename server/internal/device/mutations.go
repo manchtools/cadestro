@@ -96,6 +96,7 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[c
 
 // AssignDevice assigns distinct users and groups with one audited transaction.
 func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadestrov1.AssignDeviceRequest]) (*connect.Response[cadestrov1.AssignDeviceResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	userIDs := distinct(req.Msg.UserIds, req.Msg.UserId)
 	groupIDs := distinct(req.Msg.GroupIds, req.Msg.GroupId)
 	if len(userIDs) == 0 && len(groupIDs) == 0 {
@@ -108,10 +109,10 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "AssignDevice", req.Msg.DeviceId); err != nil {
+	if err := h.authorize(ctx, "AssignDevice", deviceID); err != nil {
 		return nil, err
 	}
-	view, err := h.store.GetDeviceView(ctx, req.Msg.DeviceId)
+	view, err := h.store.GetDeviceView(ctx, deviceID)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errDeviceNotFound, "device not found")
@@ -144,12 +145,12 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 					continue
 				}
 				n, err := tx.AssignDeviceUser(ctx, db.AssignDeviceUserParams{
-					DeviceID: req.Msg.DeviceId, UserID: id, AssignedAt: h.now().UTC(), AssignedBy: actor.ID,
+					DeviceID: deviceID, UserID: id, AssignedAt: h.now().UTC(), AssignedBy: actor.ID,
 				})
 				if err := requireOne("assign device user", n, err); err != nil {
 					return err
 				}
-				effect := deviceEffect(req.Msg.DeviceId, "ASSIGN", "assigned_user_ids")
+				effect := deviceEffect(deviceID, "ASSIGN", "assigned_user_ids")
 				effect.AfterRef = &id
 				rec.Effect(effect)
 			}
@@ -158,12 +159,12 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 					continue
 				}
 				n, err := tx.AssignDeviceGroup(ctx, db.AssignDeviceGroupParams{
-					DeviceID: req.Msg.DeviceId, GroupID: id, AssignedAt: h.now().UTC(), AssignedBy: actor.ID,
+					DeviceID: deviceID, GroupID: id, AssignedAt: h.now().UTC(), AssignedBy: actor.ID,
 				})
 				if err := requireOne("assign device group", n, err); err != nil {
 					return err
 				}
-				effect := deviceEffect(req.Msg.DeviceId, "ASSIGN", "assigned_group_ids")
+				effect := deviceEffect(deviceID, "ASSIGN", "assigned_group_ids")
 				effect.AfterRef = &id
 				rec.Effect(effect)
 			}
@@ -172,7 +173,7 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 	if err != nil {
 		return nil, h.internal(ctx, "assign device", err)
 	}
-	updated, err := h.store.GetDeviceView(ctx, req.Msg.DeviceId)
+	updated, err := h.store.GetDeviceView(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "read assigned device", err)
 	}
@@ -181,6 +182,7 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 
 // UnassignDevice removes exactly one user or group assignment.
 func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cadestrov1.UnassignDeviceRequest]) (*connect.Response[cadestrov1.UnassignDeviceResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	if (req.Msg.UserId == "") == (req.Msg.GroupId == "") {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "exactly one user or group is required")
 	}
@@ -188,10 +190,10 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cade
 	if err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "UnassignDevice", req.Msg.DeviceId); err != nil {
+	if err := h.authorize(ctx, "UnassignDevice", deviceID); err != nil {
 		return nil, err
 	}
-	if _, err := h.store.GetDevice(ctx, req.Msg.DeviceId); err != nil {
+	if _, err := h.store.GetDevice(ctx, deviceID); err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errDeviceNotFound, "device not found")
 		}
@@ -205,16 +207,16 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cade
 			var field, ref string
 			if req.Msg.UserId != "" {
 				ref, field = req.Msg.UserId, "assigned_user_ids"
-				n, err = tx.UnassignDeviceUser(ctx, db.UnassignDeviceUserParams{DeviceID: req.Msg.DeviceId, UserID: ref})
+				n, err = tx.UnassignDeviceUser(ctx, db.UnassignDeviceUserParams{DeviceID: deviceID, UserID: ref})
 			} else {
 				ref, field = req.Msg.GroupId, "assigned_group_ids"
-				n, err = tx.UnassignDeviceGroup(ctx, db.UnassignDeviceGroupParams{DeviceID: req.Msg.DeviceId, GroupID: ref})
+				n, err = tx.UnassignDeviceGroup(ctx, db.UnassignDeviceGroupParams{DeviceID: deviceID, GroupID: ref})
 			}
 			if err != nil {
 				return fmt.Errorf("unassign device: %w", err)
 			}
 			if n == 1 {
-				effect := deviceEffect(req.Msg.DeviceId, "UNASSIGN", field)
+				effect := deviceEffect(deviceID, "UNASSIGN", field)
 				effect.BeforeRef = &ref
 				rec.Effect(effect)
 			}
@@ -223,7 +225,7 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cade
 	if err != nil {
 		return nil, h.internal(ctx, "unassign device", err)
 	}
-	view, err := h.store.GetDeviceView(ctx, req.Msg.DeviceId)
+	view, err := h.store.GetDeviceView(ctx, deviceID)
 	if err != nil {
 		return nil, h.internal(ctx, "read unassigned device", err)
 	}

@@ -24,25 +24,26 @@ import (
 // StartTerminal persists the authorized session and mints one short-lived,
 // single-use bearer for control's process-local WebSocket bridge.
 func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cadestrov1.StartTerminalRequest]) (*connect.Response[cadestrov1.StartTerminalResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.requireTerminalPermission(ctx, "StartTerminal", req.Msg.DeviceId); err != nil {
+	if err := h.requireTerminalPermission(ctx, "StartTerminal", deviceID); err != nil {
 		return nil, err
 	}
 	// Apply device-group confinement before existence lookup so a scoped caller
 	// cannot distinguish an out-of-scope device from an unknown one.
-	if err := h.enforceDeviceScope(ctx, "StartTerminal", req.Msg.DeviceId); err != nil {
+	if err := h.enforceDeviceScope(ctx, "StartTerminal", deviceID); err != nil {
 		return nil, err
 	}
-	if _, err := h.store.GetDevice(ctx, req.Msg.DeviceId); err != nil {
+	if _, err := h.store.GetDevice(ctx, deviceID); err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errDeviceNotFound, "device not found")
 		}
 		return nil, h.internal(ctx, "read terminal device", err)
 	}
-	if !h.isConnected(req.Msg.DeviceId) {
+	if !h.isConnected(deviceID) {
 		return nil, rpcError(ctx, errDeviceNotConnected, connect.CodeFailedPrecondition, "device is not connected")
 	}
 	user, err := h.store.GetUser(ctx, actor.ID)
@@ -71,7 +72,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cades
 
 	sessionID := ulid.Make().String()
 	minted, err := h.terminalTokens.MintWithID(ctx, sessionID, terminal.MintParams{
-		UserID: actor.ID, DeviceID: req.Msg.DeviceId, TtyUser: ttyUser, Cols: cols, Rows: rows,
+		UserID: actor.ID, DeviceID: deviceID, TtyUser: ttyUser, Cols: cols, Rows: rows,
 	})
 	if err != nil {
 		return nil, h.internal(ctx, "mint terminal token", err)
@@ -81,7 +82,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cades
 		cadestrov1connect.ControlServiceStartTerminalProcedure, "StartTerminal"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if err := tx.InsertTerminalSession(ctx, db.InsertTerminalSessionParams{
-				SessionID: sessionID, DeviceID: req.Msg.DeviceId, UserID: actor.ID,
+				SessionID: sessionID, DeviceID: deviceID, UserID: actor.ID,
 				TtyUser: ttyUser, StartedAt: startedAt, Cols: int32(cols), Rows: int32(rows),
 			}); err != nil {
 				return fmt.Errorf("insert terminal session: %w", err)
@@ -158,6 +159,7 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[cadest
 // ListActiveTerminalSessions enumerates only sessions with a live bridge in
 // this single control process, then applies exact filters, scope, and paging.
 func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.Request[cadestrov1.ListActiveTerminalSessionsRequest]) (*connect.Response[cadestrov1.ListActiveTerminalSessionsResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	if req.Msg.PageToken != "" {
 		if _, err := ulid.ParseStrict(req.Msg.PageToken); err != nil {
 			return nil, rpcError(ctx, errInvalidPageToken, connect.CodeInvalidArgument, "invalid page token")
@@ -175,7 +177,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 	sort.Slice(live, func(i, j int) bool { return live[i].SessionID > live[j].SessionID })
 	all := make([]*cadestrov1.TerminalSessionInfo, 0, len(live))
 	for _, current := range live {
-		if req.Msg.DeviceId != "" && current.DeviceID != req.Msg.DeviceId {
+		if deviceID != "" && current.DeviceID != deviceID {
 			continue
 		}
 		if req.Msg.UserId != "" && current.UserID != req.Msg.UserId {
@@ -201,7 +203,7 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 		}
 		all = append(all, &cadestrov1.TerminalSessionInfo{
 			SessionId: row.SessionID, UserId: row.UserID, UserEmail: row.UserEmail,
-			DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname, TtyUser: row.TtyUser,
+			DeviceId: &cadestrov1.DeviceId{Value: row.DeviceID}, DeviceHostname: row.DeviceHostname, TtyUser: row.TtyUser,
 			StartedAt: timestamppb.New(row.StartedAt), LastActivityAt: timestamppb.New(current.LastActivity()),
 		})
 	}

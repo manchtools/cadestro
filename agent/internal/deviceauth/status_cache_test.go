@@ -67,7 +67,7 @@ func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	resp, err = h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, resp.Msg.Enrolled, "a transient load failure must not be cached as not-enrolled")
-	assert.Equal(t, "dev-recovered", resp.Msg.DeviceId)
+	assert.Equal(t, "dev-recovered", resp.Msg.GetDeviceId().GetValue())
 }
 
 // GetEnrollmentStatus must not run credStore.Load() (a 64 MiB Argon2id
@@ -81,7 +81,7 @@ func TestGetEnrollmentStatus_LoadsAtMostOnce(t *testing.T) {
 		resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 		require.NoError(t, err)
 		assert.True(t, resp.Msg.Enrolled)
-		assert.Equal(t, "dev-cached", resp.Msg.DeviceId)
+	assert.Equal(t, "dev-cached", resp.Msg.GetDeviceId().GetValue())
 	}
 	assert.LessOrEqual(t, store.loads.Load(), int64(1),
 		"Load (Argon2id) must run at most once across repeated status calls; got %d", store.loads.Load())

@@ -163,7 +163,10 @@
 			const response = await apiClient.getDeviceGroup(groupId);
 			group = response.group ?? null;
 			memberDeviceIds = response.deviceIds ?? [];
-			memberDevices = response.devices ?? [];
+			memberDevices = (response.devices ?? []).map((row) => ({
+				...row,
+				deviceId: row.deviceId?.value ?? ''
+			}));
 			if (group) {
 				if (!editingIdentity) {
 					draftName = group.name;

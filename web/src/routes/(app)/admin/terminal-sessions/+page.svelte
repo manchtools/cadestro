@@ -28,11 +28,11 @@
 	const table = createClientListState<TerminalSessionInfo, SortKey>({
 		load: async () =>
 			(await apiClient.listActiveTerminalSessions(100)).sessions as TerminalSessionInfo[],
-		searchFields: (s) => [s.userEmail, s.userId, s.deviceHostname, s.deviceId, s.ttyUser, s.sessionId],
+		searchFields: (s) => [s.userEmail, s.userId, s.deviceHostname, s.deviceId?.value ?? '', s.ttyUser, s.sessionId],
 		sortKeys: ['user', 'device', 'started', 'activity'],
 		sortComparators: {
 			user: (a, b) => (a.userEmail || a.userId).localeCompare(b.userEmail || b.userId),
-			device: (a, b) => (a.deviceHostname || a.deviceId).localeCompare(b.deviceHostname || b.deviceId),
+			device: (a, b) => (a.deviceHostname || a.deviceId?.value || '').localeCompare(b.deviceHostname || b.deviceId?.value || ''),
 			started: (a, b) => seconds(a.startedAt) - seconds(b.startedAt),
 			activity: (a, b) => seconds(a.lastActivityAt) - seconds(b.lastActivityAt)
 		},
@@ -142,11 +142,11 @@
 				</span>
 				<span class="flex min-w-0 items-baseline gap-2">
 					<a
-						href="{base}/devices/{session.deviceId}"
+						href="{base}/devices/{session.deviceId?.value ?? ''}"
 						data-testid="terminal-session-device-link"
 						class="shrink-0 truncate font-mono text-sm text-accent-ink hover:underline"
 					>
-						{session.deviceHostname || session.deviceId}
+						{session.deviceHostname || session.deviceId?.value}
 					</a>
 					<span class="truncate text-xs text-muted-foreground">
 						{session.userEmail || session.userId}
@@ -202,7 +202,7 @@
 				{#if terminateSession}
 					{m.terminal_sessions_terminate_confirm({
 						userEmail: terminateSession.userEmail || terminateSession.userId,
-						deviceHostname: terminateSession.deviceHostname || terminateSession.deviceId
+						deviceHostname: terminateSession.deviceHostname || terminateSession.deviceId?.value
 					})}
 				{/if}
 			</AlertDialog.Description>

@@ -27,6 +27,7 @@ const (
 // DispatchOSQuery creates the pollable SQLite result before sending one
 // unsigned query frame over the authenticated agent stream.
 func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cadestrov1.DispatchOSQueryRequest]) (*connect.Response[cadestrov1.DispatchOSQueryResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	hasTable := strings.TrimSpace(req.Msg.Table) != ""
 	hasRawSQL := strings.TrimSpace(req.Msg.RawSql) != ""
 	if hasTable == hasRawSQL {
@@ -36,7 +37,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.mutationDevice(ctx, "DispatchOSQuery", req.Msg.DeviceId); err != nil {
+	if _, err := h.mutationDevice(ctx, "DispatchOSQuery", deviceID); err != nil {
 		return nil, err
 	}
 
@@ -50,7 +51,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 		cadestrov1connect.ControlServiceDispatchOSQueryProcedure, "DispatchOSQuery"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if err := tx.InsertPendingOSQueryResult(ctx, db.InsertPendingOSQueryResultParams{
-				QueryID: queryID, DeviceID: req.Msg.DeviceId, TableName: tableName, CreatedAt: createdAt,
+				QueryID: queryID, DeviceID: deviceID, TableName: tableName, CreatedAt: createdAt,
 			}); err != nil {
 				return fmt.Errorf("insert pending OS query: %w", err)
 			}
@@ -62,7 +63,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 		return nil, h.internal(ctx, "commit OS query", err)
 	}
 
-	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
+	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
 		Id: queryID,
 		Payload: &cadestrov1.ServerMessage_Query{Query: &cadestrov1.OSQuery{
 			QueryId: &cadestrov1.QueryId{Value: queryID}, Table: req.Msg.Table, Columns: req.Msg.Columns,
@@ -70,7 +71,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 		}},
 	})
 	if err != nil {
-		if auditErr := h.failOSQueryDispatch(ctx, record.OperationID, req.Msg.DeviceId, queryID); auditErr != nil {
+		if auditErr := h.failOSQueryDispatch(ctx, record.OperationID, deviceID, queryID); auditErr != nil {
 			return nil, h.internal(ctx, "record OS query dispatch failure", auditErr)
 		}
 		return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
@@ -81,11 +82,12 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 // QueryDeviceLogs creates the pollable SQLite result before sending one
 // journal query over the authenticated agent stream.
 func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cadestrov1.QueryDeviceLogsRequest]) (*connect.Response[cadestrov1.QueryDeviceLogsResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.mutationDevice(ctx, "QueryDeviceLogs", req.Msg.DeviceId); err != nil {
+	if _, err := h.mutationDevice(ctx, "QueryDeviceLogs", deviceID); err != nil {
 		return nil, err
 	}
 
@@ -95,7 +97,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 		cadestrov1connect.ControlServiceQueryDeviceLogsProcedure, "QueryDeviceLogs"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if err := tx.InsertPendingLogQueryResult(ctx, db.InsertPendingLogQueryResultParams{
-				QueryID: queryID, DeviceID: req.Msg.DeviceId, CreatedAt: createdAt,
+				QueryID: queryID, DeviceID: deviceID, CreatedAt: createdAt,
 			}); err != nil {
 				return fmt.Errorf("insert pending log query: %w", err)
 			}
@@ -107,7 +109,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 		return nil, h.internal(ctx, "commit log query", err)
 	}
 
-	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
+	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
 		Id: queryID,
 		Payload: &cadestrov1.ServerMessage_LogQuery{LogQuery: &cadestrov1.LogQuery{
 			QueryId: &cadestrov1.QueryId{Value: queryID}, Lines: req.Msg.Lines, Unit: req.Msg.Unit,
@@ -116,7 +118,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 		}},
 	})
 	if err != nil {
-		if auditErr := h.failLogQueryDispatch(ctx, record.OperationID, req.Msg.DeviceId, queryID); auditErr != nil {
+		if auditErr := h.failLogQueryDispatch(ctx, record.OperationID, deviceID, queryID); auditErr != nil {
 			return nil, h.internal(ctx, "record log query dispatch failure", auditErr)
 		}
 		return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
@@ -127,11 +129,12 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 // RefreshDeviceInventory sends one immediate collection request. Periodic
 // inventory remains an agent decision; this path is only the operator trigger.
 func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Request[cadestrov1.RefreshDeviceInventoryRequest]) (*connect.Response[cadestrov1.RefreshDeviceInventoryResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := h.mutationDevice(ctx, "RefreshDeviceInventory", req.Msg.DeviceId); err != nil {
+	if _, err := h.mutationDevice(ctx, "RefreshDeviceInventory", deviceID); err != nil {
 		return nil, err
 	}
 
@@ -139,13 +142,13 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 	record, err := h.store.RecordOperation(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRefreshDeviceInventoryProcedure, "RefreshDeviceInventory"),
 		store.AuditEffect{
-			ResourceType: "device_inventory", ResourceID: req.Msg.DeviceId,
+			ResourceType: "device_inventory", ResourceID: deviceID,
 			Action: "REFRESH", Outcome: store.EffectApplied,
 		})
 	if err != nil {
 		return nil, h.internal(ctx, "record inventory refresh", err)
 	}
-	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
+	err = h.agentSender.Send(deviceID, &cadestrov1.ServerMessage{
 		Id: requestID,
 		Payload: &cadestrov1.ServerMessage_RequestInventory{
 			RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: requestID}},
@@ -157,7 +160,7 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 	_, auditErr := h.store.WithAuditEffects(ctx, record.OperationID,
 		func(_ context.Context, _ *store.Tx, rec *store.AuditRecorder) error {
 			rec.Effect(store.AuditEffect{
-				ResourceType: "device_inventory", ResourceID: req.Msg.DeviceId,
+				ResourceType: "device_inventory", ResourceID: deviceID,
 				Action: "REFRESH", Outcome: store.EffectFailed,
 			})
 			return nil

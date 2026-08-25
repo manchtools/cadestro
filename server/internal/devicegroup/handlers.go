@@ -157,7 +157,7 @@ func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[cade
 	for i, member := range members {
 		ids[i] = member.DeviceID
 		devices[i] = &cadestrov1.DeviceGroupMember{
-			DeviceId: member.DeviceID, Hostname: member.Hostname, AgentVersion: member.AgentVersion,
+			DeviceId: &cadestrov1.DeviceId{Value: member.DeviceID}, Hostname: member.Hostname, AgentVersion: member.AgentVersion,
 		}
 		if member.LastSeenAt != nil {
 			devices[i].LastSeenAt = timestamppb.New(*member.LastSeenAt)
@@ -218,13 +218,14 @@ func (h *Handlers) ListDeviceGroups(ctx context.Context, req *connect.Request[ca
 
 // ListDeviceGroupsForDevice returns visible groups containing one live device.
 func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceGroupsForDeviceRequest]) (*connect.Response[cadestrov1.ListDeviceGroupsForDeviceResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
 	}
-	if err := h.authorize(ctx, "ListDeviceGroupsForDevice", req.Msg.DeviceId); err != nil {
+	if err := h.authorize(ctx, "ListDeviceGroupsForDevice", deviceID); err != nil {
 		return nil, err
 	}
-	if _, err := h.store.GetDevice(ctx, req.Msg.DeviceId); err != nil {
+	if _, err := h.store.GetDevice(ctx, deviceID); err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND, connect.CodeNotFound, "device not found")
 		}
@@ -233,11 +234,11 @@ func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.R
 	// A scope-restricted caller must not learn that a device outside its scope
 	// exists: an out-of-scope device reads as not found, exactly as
 	// device.GetDevice folds it, rather than returning OK with an empty list.
-	if err := h.enforceDeviceReadScope(ctx, "ListDeviceGroupsForDevice", req.Msg.DeviceId); err != nil {
+	if err := h.enforceDeviceReadScope(ctx, "ListDeviceGroupsForDevice", deviceID); err != nil {
 		return nil, err
 	}
 	groups, restricted := auth.DeviceScopeListFilter(ctx, "ListDeviceGroupsForDevice")
-	rows, err := h.store.ListDeviceGroupsForDevice(ctx, req.Msg.DeviceId, store.DeviceGroupListFilter{
+	rows, err := h.store.ListDeviceGroupsForDevice(ctx, deviceID, store.DeviceGroupListFilter{
 		ScopeRestricted: restricted, ScopeGroupIDs: groups,
 	})
 	if err != nil {
@@ -311,9 +312,10 @@ func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[c
 
 // AddDeviceToGroup adds one or more devices to a static group.
 func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[cadestrov1.AddDeviceToGroupRequest]) (*connect.Response[cadestrov1.AddDeviceToGroupResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	ids := append([]string(nil), req.Msg.DeviceIds...)
-	if req.Msg.DeviceId != "" {
-		ids = append(ids, req.Msg.DeviceId)
+	if deviceID != "" {
+		ids = append(ids, deviceID)
 	}
 	if len(ids) == 0 || len(ids) > maxBatchDevices {
 		return nil, rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, "at least one device is required")
@@ -346,13 +348,14 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[ca
 
 // RemoveDeviceFromGroup removes one device from a static group.
 func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Request[cadestrov1.RemoveDeviceFromGroupRequest]) (*connect.Response[cadestrov1.RemoveDeviceFromGroupResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.GroupId, "RemoveDeviceFromGroup")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.RemoveDevice(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveDeviceFromGroupProcedure, "RemoveDeviceFromGroup"),
-		req.Msg.GroupId, req.Msg.DeviceId); err != nil {
+		req.Msg.GroupId, deviceID); err != nil {
 		return nil, h.mapError(ctx, "remove device from group", err)
 	}
 	group, err := h.groupResponse(ctx, req.Msg.GroupId)

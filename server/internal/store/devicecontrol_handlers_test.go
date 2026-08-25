@@ -212,16 +212,16 @@ func TestDeviceControlHandlers_LiveOperationsUseTypedStreamWithoutPolicyWork(t *
 		return nil
 	}
 	f = newDeviceControlFixtureWithSender(t, sender)
-	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"), connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
+	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"), connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: &cadestrov1.DeviceId{Value: f.deviceID}}))
 	require.NoError(t, err)
-	_, err = f.handlers.RebootDevice(f.actor("RebootDevice"), connect.NewRequest(&cadestrov1.RebootDeviceRequest{DeviceId: f.deviceID}))
+	_, err = f.handlers.RebootDevice(f.actor("RebootDevice"), connect.NewRequest(&cadestrov1.RebootDeviceRequest{DeviceId: &cadestrov1.DeviceId{Value: f.deviceID}}))
 	require.NoError(t, err)
 }
 
 func TestDeviceControlHandlers_LiveOperationRequiresConnection(t *testing.T) {
 	f := newDeviceControlFixture(t)
 	_, err := f.handlers.SyncDevice(f.actor("SyncDevice"),
-		connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: f.deviceID}))
+		connect.NewRequest(&cadestrov1.SyncDeviceRequest{DeviceId: &cadestrov1.DeviceId{Value: f.deviceID}}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 
 	operation, err := latestOperationFor(t, f.store, f.raw, cadestrov1connect.ControlServiceSyncDeviceProcedure)

@@ -72,7 +72,7 @@ const sessions = [
 		sessionId: SESSION_A,
 		userId: USER_ID,
 		userEmail: 'operator@example.test',
-		deviceId: DEVICE_A,
+		deviceId: { value: DEVICE_A },
 		deviceHostname: 'ws-alpha',
 		ttyUser: 'cadestro-shell-1',
 		startedAt: timestampFromMs(Date.UTC(2026, 6, 3)),
@@ -82,7 +82,7 @@ const sessions = [
 		sessionId: SESSION_B,
 		userId: USER_ID,
 		// No email and no hostname: the row must fall back to the ULIDs.
-		deviceId: DEVICE_B,
+		deviceId: { value: DEVICE_B },
 		ttyUser: 'cadestro-shell-2',
 		startedAt: timestampFromMs(Date.UTC(2026, 6, 1)),
 		lastActivityAt: timestampFromMs(Date.UTC(2026, 6, 2))

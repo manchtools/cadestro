@@ -516,7 +516,7 @@ export class ApiClient {
 	async assignDevice(deviceId: string, userIds: string[], groupIds: string[]) {
 		const client = this.getClient();
 		const response = await client.assignDevice(
-			create(AssignDeviceRequestSchema, { deviceId, userIds, groupIds })
+			create(AssignDeviceRequestSchema, { deviceId: { value: deviceId }, userIds, groupIds })
 		);
 		return response.device;
 	}
@@ -524,7 +524,7 @@ export class ApiClient {
 	async unassignDevice(deviceId: string, userId?: string, groupId?: string) {
 		const client = this.getClient();
 		const response = await client.unassignDevice(
-			create(UnassignDeviceRequestSchema, { deviceId, userId: userId ?? '', groupId: groupId ?? '' })
+			create(UnassignDeviceRequestSchema, { deviceId: { value: deviceId }, userId: userId ?? '', groupId: groupId ?? '' })
 		);
 		return response.device;
 	}
@@ -532,7 +532,7 @@ export class ApiClient {
 	async listDeviceAssignees(deviceId: string): Promise<DeviceAssignee[]> {
 		const client = this.getClient();
 		const response = await client.listDeviceAssignees(
-			create(ListDeviceAssigneesRequestSchema, { deviceId })
+			create(ListDeviceAssigneesRequestSchema, { deviceId: { value: deviceId } })
 		);
 		return [...response.assignees];
 	}
@@ -846,7 +846,7 @@ export class ApiClient {
 	async listDeviceGroupsForDevice(deviceId: string) {
 		const client = this.getClient();
 		return client.listDeviceGroupsForDevice(
-			create(ListDeviceGroupsForDeviceRequestSchema, { deviceId })
+			create(ListDeviceGroupsForDeviceRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -882,7 +882,7 @@ export class ApiClient {
 	async removeDeviceFromGroup(groupId: string, deviceId: string) {
 		const client = this.getClient();
 		const response = await client.removeDeviceFromGroup(
-			create(RemoveDeviceFromGroupRequestSchema, { groupId, deviceId })
+			create(RemoveDeviceFromGroupRequestSchema, { groupId, deviceId: { value: deviceId } })
 		);
 		return response.group;
 	}
@@ -989,7 +989,7 @@ export class ApiClient {
 	async getDeviceAssignments(deviceId: string) {
 		const client = this.getClient();
 		return client.getDeviceAssignments(
-			create(GetDeviceAssignmentsRequestSchema, { deviceId })
+			create(GetDeviceAssignmentsRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -1007,7 +1007,7 @@ export class ApiClient {
 	async listAvailableActions(deviceId: string) {
 		const client = this.getClient();
 		const response = await client.listAvailableActions(
-			create(ListAvailableActionsRequestSchema, { deviceId })
+			create(ListAvailableActionsRequestSchema, { deviceId: { value: deviceId } })
 		);
 		return response.items;
 	}
@@ -1015,24 +1015,24 @@ export class ApiClient {
 	async setUserSelection(deviceId: string, sourceType: AssignmentSourceType, sourceId: string, selected: boolean) {
 		const client = this.getClient();
 		return client.setUserSelection(
-			create(SetUserSelectionRequestSchema, { deviceId, sourceType, sourceId, selected })
+			create(SetUserSelectionRequestSchema, { deviceId: { value: deviceId }, sourceType, sourceId, selected })
 		);
 	}
 
 	async rebootDevice(deviceId: string) {
 		const client = this.getClient();
-		await client.rebootDevice(create(RebootDeviceRequestSchema, { deviceId }));
+		await client.rebootDevice(create(RebootDeviceRequestSchema, { deviceId: { value: deviceId } }));
 	}
 
 	async syncDevice(deviceId: string) {
 		const client = this.getClient();
-		await client.syncDevice(create(SyncDeviceRequestSchema, { deviceId }));
+		await client.syncDevice(create(SyncDeviceRequestSchema, { deviceId: { value: deviceId } }));
 	}
 
 	async listLpsPasswords(deviceId: string) {
 		const client = this.getClient();
 		return client.listLpsPasswords(
-			create(ListLpsPasswordsRequestSchema, { deviceId })
+			create(ListLpsPasswordsRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -1046,7 +1046,7 @@ export class ApiClient {
 	async listLuksKeys(deviceId: string) {
 		const client = this.getClient();
 		return client.listLuksKeys(
-			create(ListLuksKeysRequestSchema, { deviceId })
+			create(ListLuksKeysRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -1060,14 +1060,14 @@ export class ApiClient {
 	async createLuksToken(deviceId: string, actionId: string) {
 		const client = this.getClient();
 		return client.createLuksToken(
-			create(CreateLuksTokenRequestSchema, { deviceId, actionId: { value: actionId } })
+			create(CreateLuksTokenRequestSchema, { deviceId: { value: deviceId }, actionId: { value: actionId } })
 		);
 	}
 
 	async revokeLuksDeviceKey(deviceId: string, actionId: string) {
 		const client = this.getClient();
 		return client.revokeLuksDeviceKey(
-			create(RevokeLuksDeviceKeyRequestSchema, { deviceId, actionId: { value: actionId } })
+			create(RevokeLuksDeviceKeyRequestSchema, { deviceId: { value: deviceId }, actionId: { value: actionId } })
 		);
 	}
 
@@ -1078,7 +1078,7 @@ export class ApiClient {
 	async getDeviceCompliance(deviceId: string): Promise<GetDeviceComplianceResponse> {
 		const client = this.getClient();
 		return client.getDeviceCompliance(
-			create(GetDeviceComplianceRequestSchema, { deviceId })
+			create(GetDeviceComplianceRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -1159,7 +1159,7 @@ export class ApiClient {
 	async getDeviceCompliancePolicyStatus(deviceId: string): Promise<GetDeviceCompliancePolicyStatusResponse> {
 		const client = this.getClient();
 		return client.getDeviceCompliancePolicyStatus(
-			create(GetDeviceCompliancePolicyStatusRequestSchema, { deviceId })
+			create(GetDeviceCompliancePolicyStatusRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -1170,14 +1170,14 @@ export class ApiClient {
 	async getDeviceInventory(deviceId: string, tableNames?: string[]) {
 		const client = this.getClient();
 		return client.getDeviceInventory(
-			create(GetDeviceInventoryRequestSchema, { deviceId, tableNames: tableNames ?? [] })
+			create(GetDeviceInventoryRequestSchema, { deviceId: { value: deviceId }, tableNames: tableNames ?? [] })
 		);
 	}
 
 	async refreshDeviceInventory(deviceId: string) {
 		const client = this.getClient();
 		return client.refreshDeviceInventory(
-			create(RefreshDeviceInventoryRequestSchema, { deviceId })
+			create(RefreshDeviceInventoryRequestSchema, { deviceId: { value: deviceId } })
 		);
 	}
 
@@ -1185,7 +1185,7 @@ export class ApiClient {
 		const client = this.getClient();
 		const response = await client.dispatchOSQuery(
 			create(DispatchOSQueryRequestSchema, {
-				deviceId, table, columns: columns ?? [], limit: limit ?? 0, rawSql: rawSql ?? ''
+				deviceId: { value: deviceId }, table, columns: columns ?? [], limit: limit ?? 0, rawSql: rawSql ?? ''
 			})
 		);
 		return response.queryId?.value ?? '';
@@ -1205,7 +1205,7 @@ export class ApiClient {
 		const client = this.getClient();
 		const response = await client.queryDeviceLogs(
 			create(QueryDeviceLogsRequestSchema, {
-				deviceId,
+				deviceId: { value: deviceId },
 				lines: options?.lines ?? 0,
 				unit: options?.unit ?? '',
 				since: options?.since ?? '',
@@ -1677,7 +1677,7 @@ export class ApiClient {
 	async startTerminal(deviceId: string, cols: number = 80, rows: number = 24) {
 		const client = this.getClient();
 		return client.startTerminal(create(StartTerminalRequestSchema, {
-			deviceId,
+			deviceId: { value: deviceId },
 			cols,
 			rows,
 		}));
@@ -1700,7 +1700,7 @@ export class ApiClient {
 		return client.listActiveTerminalSessions(create(ListActiveTerminalSessionsRequestSchema, {
 			pageSize,
 			pageToken,
-			deviceId,
+			deviceId: deviceId ? { value: deviceId } : undefined,
 			userId,
 		}));
 	}

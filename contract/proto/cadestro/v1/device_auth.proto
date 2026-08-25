@@ -3,7 +3,7 @@ syntax = "proto3";
 package cadestro.v1;
 
 import "buf/validate/validate.proto";
-import "cadestro/v1/validate_ext.proto";
+import "cadestro/v1/common.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
@@ -61,10 +61,7 @@ message EnrollResponse {
   // "required" here means "must be present in the wire payload" —
   // protovalidate enforces no extra runtime check beyond that.
   bool success = 1 [(buf.validate.field).required = true];
-  string device_id = 2 [
-    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ]; // Assigned device ID on success
+  DeviceId device_id = 2; // Assigned device ID on success
   string error = 3 [
     (buf.validate.field).string.max_len = 4096,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -75,8 +72,5 @@ message GetEnrollmentStatusRequest {}
 
 message GetEnrollmentStatusResponse {
   bool enrolled = 1 [(buf.validate.field).required = true];
-  string device_id = 2 [
-    (buf.validate.field).string.(cadestro.v1.ulid_optional) = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ]; // Empty if not enrolled
+  DeviceId device_id = 2; // Empty if not enrolled
 }

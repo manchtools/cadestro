@@ -96,7 +96,7 @@ func (f *complianceIngestFixture) report(
 func (f *complianceIngestFixture) compliance(t *testing.T, deviceID string) *cadestrov1.GetDeviceComplianceResponse {
 	t.Helper()
 	response, err := f.handlers.GetDeviceCompliance(f.ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: deviceID}))
+		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	return response.Msg
 }
@@ -104,7 +104,7 @@ func (f *complianceIngestFixture) compliance(t *testing.T, deviceID string) *cad
 func (f *complianceIngestFixture) policyStatus(t *testing.T, deviceID string) *cadestrov1.GetDeviceCompliancePolicyStatusResponse {
 	t.Helper()
 	response, err := f.handlers.GetDeviceCompliancePolicyStatus(f.ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: deviceID}))
+		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}}))
 	require.NoError(t, err)
 	return response.Msg
 }

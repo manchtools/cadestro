@@ -132,14 +132,15 @@ func (h *Handlers) internal(ctx context.Context, operation string, err error) *c
 
 // SyncDevice asks a connected agent to run its normal full Sync.
 func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[cadestrov1.SyncDeviceRequest]) (*connect.Response[cadestrov1.SyncDeviceResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.target(ctx, actor, "SyncDevice", req.Msg.DeviceId); err != nil {
+	if err := h.target(ctx, actor, "SyncDevice", deviceID); err != nil {
 		return nil, err
 	}
-	if err := h.liveControlOperation(ctx, req, actor, req.Msg.DeviceId, "SYNC",
+	if err := h.liveControlOperation(ctx, req, actor, deviceID, "SYNC",
 		cadestrov1connect.ControlServiceSyncDeviceProcedure, "SyncDevice",
 		&cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_SyncDevice{SyncDevice: &cadestrov1.SyncDeviceCommand{}}}); err != nil {
 		return nil, err
@@ -149,14 +150,15 @@ func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[cadestro
 
 // RebootDevice asks a connected agent to schedule its safe delayed reboot.
 func (h *Handlers) RebootDevice(ctx context.Context, req *connect.Request[cadestrov1.RebootDeviceRequest]) (*connect.Response[cadestrov1.RebootDeviceResponse], error) {
+	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.target(ctx, actor, "RebootDevice", req.Msg.DeviceId); err != nil {
+	if err := h.target(ctx, actor, "RebootDevice", deviceID); err != nil {
 		return nil, err
 	}
-	if err := h.liveControlOperation(ctx, req, actor, req.Msg.DeviceId, "REBOOT",
+	if err := h.liveControlOperation(ctx, req, actor, deviceID, "REBOOT",
 		cadestrov1connect.ControlServiceRebootDeviceProcedure, "RebootDevice",
 		&cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_RebootDevice{RebootDevice: &cadestrov1.RebootDeviceCommand{}}}); err != nil {
 		return nil, err

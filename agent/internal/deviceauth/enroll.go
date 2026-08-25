@@ -168,7 +168,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		} else {
 			return connect.NewResponse(&cadestrov1.EnrollResponse{
 				Success:  true,
-				DeviceId: creds.DeviceID,
+				DeviceId: &cadestrov1.DeviceId{Value: creds.DeviceID},
 				Error:    "agent is already enrolled",
 			}), nil
 		}
@@ -276,7 +276,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 
 	return connect.NewResponse(&cadestrov1.EnrollResponse{
 		Success:  true,
-		DeviceId: result.DeviceID,
+		DeviceId: &cadestrov1.DeviceId{Value: result.DeviceID},
 	}), nil
 }
 
@@ -295,7 +295,7 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 	if h.statusCached {
 		return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 			Enrolled: true,
-			DeviceId: h.cachedDeviceID,
+			DeviceId: &cadestrov1.DeviceId{Value: h.cachedDeviceID},
 		}), nil
 	}
 
@@ -322,6 +322,6 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 	h.statusCached = true
 	return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 		Enrolled: true,
-		DeviceId: creds.DeviceID,
+		DeviceId: &cadestrov1.DeviceId{Value: creds.DeviceID},
 	}), nil
 }

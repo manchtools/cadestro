@@ -403,7 +403,7 @@ message DeleteDeviceResponse {}
 // Device assignment (admin-only)
 // Assign a user or user group to a device. Exactly one of user_id or group_id must be set.
 message AssignDeviceRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   string group_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   repeated string user_ids = 4 [
@@ -424,7 +424,7 @@ message AssignDeviceResponse {
 
 // Unassign a user or user group from a device. Exactly one of user_id or group_id must be set.
 message UnassignDeviceRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   string user_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   string group_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }
@@ -443,7 +443,7 @@ message DeviceAssignee {
 }
 
 message ListDeviceAssigneesRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message ListDeviceAssigneesResponse {
@@ -1066,7 +1066,7 @@ message GetDeviceGroupResponse {
 }
 
 message DeviceGroupMember {
-  string device_id = 1;
+  DeviceId device_id = 1;
   string hostname = 2;
   string agent_version = 3;
   google.protobuf.Timestamp last_seen_at = 4;
@@ -1088,7 +1088,7 @@ message ListDeviceGroupsResponse {
 }
 
 message ListDeviceGroupsForDeviceRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message ListDeviceGroupsForDeviceResponse {
@@ -1124,7 +1124,7 @@ message DeleteDeviceGroupResponse {}
 
 message AddDeviceToGroupRequest {
   string group_id = 1 [(buf.validate.field).string.ulid = true];
-  string device_id = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  DeviceId device_id = 2;
   repeated string device_ids = 3 [
     (buf.validate.field).repeated.max_items = 256,
     (buf.validate.field).repeated.items.string.(cadestro.v1.ulid_optional) = true,
@@ -1138,7 +1138,7 @@ message AddDeviceToGroupResponse {
 
 message RemoveDeviceFromGroupRequest {
   string group_id = 1 [(buf.validate.field).string.ulid = true];
-  string device_id = 2 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveDeviceFromGroupResponse {
@@ -1300,7 +1300,7 @@ message ListAssignmentsResponse {
 
 message UserSelection {
   string id = 1;
-  string device_id = 2;
+  DeviceId device_id = 2;
   AssignmentSourceType source_type = 3;
   string source_id = 4;
   bool selected = 5; // true=user wants it (present), false=user rejected (absent)
@@ -1308,7 +1308,7 @@ message UserSelection {
 }
 
 message SetUserSelectionRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   AssignmentSourceType source_type = 2 [
     (buf.validate.field).enum = {
       in: [
@@ -1329,7 +1329,7 @@ message SetUserSelectionResponse {
 }
 
 message ListAvailableActionsRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message AvailableItem {
@@ -1347,7 +1347,7 @@ message ListAvailableActionsResponse {
 
 // Get all resolved actions for a device (expands groups, definitions, sets)
 message GetDeviceAssignmentsRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceAssignmentsResponse {
@@ -1369,13 +1369,13 @@ message GetUserAssignmentsResponse {
 }
 
 message SyncDeviceRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message SyncDeviceResponse {}
 
 message RebootDeviceRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message RebootDeviceResponse {}
@@ -1490,7 +1490,7 @@ message ExportAuditEventsResponse {
 // RevealLpsPassword so each access has an independent audit operation.
 message LpsPassword {
   string id = 1;
-  string device_id = 2;
+  DeviceId device_id = 2;
   string device_hostname = 3;
   ActionId action_id = 4;
   string action_name = 5;
@@ -1500,7 +1500,7 @@ message LpsPassword {
 }
 
 message ListLpsPasswordsRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message ListLpsPasswordsResponse {
@@ -1526,7 +1526,7 @@ message RevealLpsPasswordResponse {
 // RevealLuksKey so each access has an independent audit operation.
 message LuksKey {
   string id = 1;
-  string device_id = 2;
+  DeviceId device_id = 2;
   string device_hostname = 3;
   ActionId action_id = 4;
   string action_name = 5;
@@ -1541,7 +1541,7 @@ message LuksKey {
 }
 
 message ListLuksKeysRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message ListLuksKeysResponse {
@@ -1560,7 +1560,7 @@ message RevealLuksKeyResponse {
 }
 
 message CreateLuksTokenRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
@@ -1574,7 +1574,7 @@ message CreateLuksTokenResponse {
 }
 
 message RevokeLuksDeviceKeyRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
@@ -1592,7 +1592,7 @@ message DispatchOSQueryRequest {
     expression: "this.table != '' || this.raw_sql != ''"
   };
 
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   string table = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 64,
@@ -1630,7 +1630,7 @@ message GetOSQueryResultResponse {
 
 // Get cached device inventory (hardware/software data collected by agent)
 message GetDeviceInventoryRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   // Optional: filter to specific tables (empty = all)
   repeated string table_names = 2 [(buf.validate.field).repeated.items.string.max_len = 128];
 }
@@ -1647,7 +1647,7 @@ message GetDeviceInventoryResponse {
 
 // Request the agent to re-collect and send inventory
 message RefreshDeviceInventoryRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message RefreshDeviceInventoryResponse {}
@@ -1657,7 +1657,7 @@ message RefreshDeviceInventoryResponse {}
 // ============================================================================
 
 message QueryDeviceLogsRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   int32 lines = 2 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 10000,
@@ -2306,7 +2306,7 @@ message RotateSCIMTokenResponse {
 // ============================================================================
 
 message GetDeviceComplianceRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceComplianceResponse {
@@ -2446,7 +2446,7 @@ message UpdateCompliancePolicyRuleResponse {
 }
 
 message GetDeviceCompliancePolicyStatusRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceCompliancePolicyStatusResponse {
@@ -2801,7 +2801,7 @@ service ControlService {
 // operations gated by the corresponding permissions.
 
 message StartTerminalRequest {
-  string device_id = 1 [(buf.validate.field).string.ulid = true];
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
   // Initial window size. The web client may send a Resize immediately
   // after connecting if these turn out to be wrong.
   uint32 cols = 2 [
@@ -2893,7 +2893,7 @@ message TerminalSessionInfo {
   string user_id = 2;
   string user_email = 3;
   // Target device.
-  string device_id = 4;
+  DeviceId device_id = 4;
   string device_hostname = 5;
   // The dedicated TTY user the shell is running as.
   string tty_user = 6;
@@ -2912,7 +2912,7 @@ message ListActiveTerminalSessionsRequest {
   ];
   string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
   // Optional filter: only sessions on this device.
-  string device_id = 3 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  DeviceId device_id = 3;
   // Optional filter: only sessions opened by this user.
   string user_id = 4 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
 }

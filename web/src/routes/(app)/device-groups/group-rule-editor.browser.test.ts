@@ -119,8 +119,8 @@ function seedDeviceGroup(over: Record<string, unknown> = {}) {
 		group: deviceGroup(over),
 		deviceIds: ['dev-1', 'dev-2'],
 		devices: [
-			{ deviceId: 'dev-1', hostname: 'web-prod-01', agentVersion: '1.2.3' },
-			{ deviceId: 'dev-2', hostname: 'web-prod-02', agentVersion: '1.2.3' }
+			{ deviceId: { value: 'dev-1' }, hostname: 'web-prod-01', agentVersion: '1.2.3' },
+			{ deviceId: { value: 'dev-2' }, hostname: 'web-prod-02', agentVersion: '1.2.3' }
 		]
 	});
 	mocks.listDevices.mockResolvedValue({

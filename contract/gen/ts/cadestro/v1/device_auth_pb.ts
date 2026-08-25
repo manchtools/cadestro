@@ -5,14 +5,15 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import { file_cadestro_v1_validate_ext } from "./validate_ext_pb";
+import type { DeviceId } from "./common_pb";
+import { file_cadestro_v1_common } from "./common_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cadestro/v1/device_auth.proto.
  */
 export const file_cadestro_v1_device_auth: GenFile = /*@__PURE__*/
-  fileDesc("Ch1jYWRlc3Ryby92MS9kZXZpY2VfYXV0aC5wcm90bxILY2FkZXN0cm8udjEigAEKDUVucm9sbFJlcXVlc3QSHwoKc2VydmVyX3VybBgBIAEoCUILukgIyAEBcgOIAQESFQoFdG9rZW4YAiABKAlCBrpIA8gBARI3ChJjYV9maW5nZXJwcmludF9waW4YAyABKAlCG7pIGMgBAXITMg5eWzAtOWEtZkEtRl0rJJgBQCJlCg5FbnJvbGxSZXNwb25zZRIXCgdzdWNjZXNzGAEgASgIQga6SAPIAQESHgoJZGV2aWNlX2lkGAIgASgJQgu6SAjYAQFyA8A+ARIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgCAiHAoaR2V0RW5yb2xsbWVudFN0YXR1c1JlcXVlc3QiVwobR2V0RW5yb2xsbWVudFN0YXR1c1Jlc3BvbnNlEhgKCGVucm9sbGVkGAEgASgIQga6SAPIAQESHgoJZGV2aWNlX2lkGAIgASgJQgu6SAjYAQFyA8A+ATLAAQoRRGV2aWNlQXV0aFNlcnZpY2USQQoGRW5yb2xsEhouY2FkZXN0cm8udjEuRW5yb2xsUmVxdWVzdBobLmNhZGVzdHJvLnYxLkVucm9sbFJlc3BvbnNlEmgKE0dldEVucm9sbG1lbnRTdGF0dXMSJy5jYWRlc3Ryby52MS5HZXRFbnJvbGxtZW50U3RhdHVzUmVxdWVzdBooLmNhZGVzdHJvLnYxLkdldEVucm9sbG1lbnRTdGF0dXNSZXNwb25zZUJHWkVnaXRodWIuY29tL21hbmNodG9vbHMvY2FkZXN0cm8vY29udHJhY3QvZ2VuL2dvL2NhZGVzdHJvL3YxO2NhZGVzdHJvdjFiBnByb3RvMw", [file_buf_validate_validate, file_cadestro_v1_validate_ext]);
+  fileDesc("Ch1jYWRlc3Ryby92MS9kZXZpY2VfYXV0aC5wcm90bxILY2FkZXN0cm8udjEigAEKDUVucm9sbFJlcXVlc3QSHwoKc2VydmVyX3VybBgBIAEoCUILukgIyAEBcgOIAQESFQoFdG9rZW4YAiABKAlCBrpIA8gBARI3ChJjYV9maW5nZXJwcmludF9waW4YAyABKAlCG7pIGMgBAXITMg5eWzAtOWEtZkEtRl0rJJgBQCJvCg5FbnJvbGxSZXNwb25zZRIXCgdzdWNjZXNzGAEgASgIQga6SAPIAQESKAoJZGV2aWNlX2lkGAIgASgLMhUuY2FkZXN0cm8udjEuRGV2aWNlSWQSGgoFZXJyb3IYAyABKAlCC7pICNgBAXIDGIAgIhwKGkdldEVucm9sbG1lbnRTdGF0dXNSZXF1ZXN0ImEKG0dldEVucm9sbG1lbnRTdGF0dXNSZXNwb25zZRIYCghlbnJvbGxlZBgBIAEoCEIGukgDyAEBEigKCWRldmljZV9pZBgCIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkMsABChFEZXZpY2VBdXRoU2VydmljZRJBCgZFbnJvbGwSGi5jYWRlc3Ryby52MS5FbnJvbGxSZXF1ZXN0GhsuY2FkZXN0cm8udjEuRW5yb2xsUmVzcG9uc2USaAoTR2V0RW5yb2xsbWVudFN0YXR1cxInLmNhZGVzdHJvLnYxLkdldEVucm9sbG1lbnRTdGF0dXNSZXF1ZXN0GiguY2FkZXN0cm8udjEuR2V0RW5yb2xsbWVudFN0YXR1c1Jlc3BvbnNlQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_common]);
 
 /**
  * @generated from message cadestro.v1.EnrollRequest
@@ -77,9 +78,9 @@ export type EnrollResponse = Message<"cadestro.v1.EnrollResponse"> & {
   /**
    * Assigned device ID on success
    *
-   * @generated from field: string device_id = 2;
+   * @generated from field: cadestro.v1.DeviceId device_id = 2;
    */
-  deviceId: string;
+  deviceId?: DeviceId;
 
   /**
    * Error message on failure
@@ -121,9 +122,9 @@ export type GetEnrollmentStatusResponse = Message<"cadestro.v1.GetEnrollmentStat
   /**
    * Empty if not enrolled
    *
-   * @generated from field: string device_id = 2;
+   * @generated from field: cadestro.v1.DeviceId device_id = 2;
    */
-  deviceId: string;
+  deviceId?: DeviceId;
 };
 
 /**

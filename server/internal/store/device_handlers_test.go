@@ -177,7 +177,7 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	_, err := validated(f.handlers.GetDevice)(context.Background(), connect.NewRequest(&cadestrov1.GetDeviceRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceInventory)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetOSQueryResult)(context.Background(),
 		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: "bad"}}))
@@ -186,40 +186,40 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliance)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliancePolicyStatus)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.ListLpsPasswords)(context.Background(),
-		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevealLpsPassword)(context.Background(),
 		connect.NewRequest(&cadestrov1.RevealLpsPasswordRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.ListLuksKeys)(context.Background(),
-		connect.NewRequest(&cadestrov1.ListLuksKeysRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.ListLuksKeysRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevealLuksKey)(context.Background(),
 		connect.NewRequest(&cadestrov1.RevealLuksKeyRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.CreateLuksToken)(context.Background(),
-		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: "bad", ActionId: &cadestrov1.ActionId{Value: "bad"}}))
+		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}, ActionId: &cadestrov1.ActionId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevokeLuksDeviceKey)(context.Background(),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: "bad", ActionId: &cadestrov1.ActionId{Value: "bad"}}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}, ActionId: &cadestrov1.ActionId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
-		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: "bad", Table: "packages"}))
+		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}, Table: "packages"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.QueryDeviceLogs)(context.Background(),
-		connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.RefreshDeviceInventory)(context.Background(),
-		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.StartTerminal)(context.Background(),
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: "bad"}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.StopTerminal)(context.Background(),
 		connect.NewRequest(&cadestrov1.StopTerminalRequest{SessionId: "bad"}))
@@ -231,13 +231,13 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.ListActiveTerminalSessionsRequest{PageToken: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
-		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), "custom shape validation must precede authentication")
 
 	_, err = validated(f.handlers.GetDevice)(context.Background(), connect.NewRequest(&cadestrov1.GetDeviceRequest{Id: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceInventory)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetOSQueryResult)(context.Background(),
 		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: newID()}}))
@@ -246,40 +246,40 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliance)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliancePolicyStatus)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.ListLpsPasswords)(context.Background(),
-		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevealLpsPassword)(context.Background(),
 		connect.NewRequest(&cadestrov1.RevealLpsPasswordRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.ListLuksKeys)(context.Background(),
-		connect.NewRequest(&cadestrov1.ListLuksKeysRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.ListLuksKeysRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevealLuksKey)(context.Background(),
 		connect.NewRequest(&cadestrov1.RevealLuksKeyRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.CreateLuksToken)(context.Background(),
-		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: newID()}}))
+		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevokeLuksDeviceKey)(context.Background(),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: newID()}}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
-		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: f.directID, Table: "packages"}))
+		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Table: "packages"}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.QueryDeviceLogs)(context.Background(),
-		connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.RefreshDeviceInventory)(context.Background(),
-		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.StartTerminal)(context.Background(),
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.StopTerminal)(context.Background(),
 		connect.NewRequest(&cadestrov1.StopTerminalRequest{SessionId: newID()}))
@@ -329,17 +329,17 @@ func TestDeviceHandlers_AssignedAndScopedReads(t *testing.T) {
 	complianceCtx := f.actor("GetDeviceCompliance:assigned", "GetDeviceCompliancePolicyStatus:assigned")
 	for _, id := range []string{f.directID, f.groupID} {
 		_, err = f.handlers.GetDeviceCompliance(complianceCtx,
-			connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: id}))
+			connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: &cadestrov1.DeviceId{Value: id}}))
 		require.NoError(t, err)
 		_, err = f.handlers.GetDeviceCompliancePolicyStatus(complianceCtx,
-			connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: id}))
+			connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: &cadestrov1.DeviceId{Value: id}}))
 		require.NoError(t, err)
 	}
 	_, err = f.handlers.GetDeviceCompliance(complianceCtx,
-		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: f.outsideID}))
+		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: &cadestrov1.DeviceId{Value: f.outsideID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "assigned compliance must not reveal other devices")
 	_, err = f.handlers.GetDeviceCompliancePolicyStatus(complianceCtx,
-		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: f.outsideID}))
+		connect.NewRequest(&cadestrov1.GetDeviceCompliancePolicyStatusRequest{DeviceId: &cadestrov1.DeviceId{Value: f.outsideID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "assigned policy status must not reveal other devices")
 
 	scopedCtx := auth.WithUser(context.Background(), &auth.UserContext{
@@ -371,7 +371,7 @@ func TestDeviceHandlers_GetDeviceInventoryReadsDirectTables(t *testing.T) {
 	})
 
 	response, err := f.handlers.GetDeviceInventory(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: f.groupID}))
+		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.groupID}}))
 	require.NoError(t, err)
 	require.Len(t, response.Msg.Tables, 2)
 	assert.Equal(t, "os_version", response.Msg.Tables[0].TableName)
@@ -382,19 +382,19 @@ func TestDeviceHandlers_GetDeviceInventoryReadsDirectTables(t *testing.T) {
 
 	filtered, err := f.handlers.GetDeviceInventory(ctx,
 		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{
-			DeviceId: f.groupID, TableNames: []string{"system_info"},
+			DeviceId: &cadestrov1.DeviceId{Value: f.groupID}, TableNames: []string{"system_info"},
 		}))
 	require.NoError(t, err)
 	require.Len(t, filtered.Msg.Tables, 1)
 	assert.Equal(t, "group", filtered.Msg.Tables[0].Rows[0].Data["hostname"])
 
 	_, err = f.handlers.GetDeviceInventory(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: f.outsideID}))
+		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.outsideID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "scope must not disclose the device")
 
 	_, err = f.handlers.GetDeviceInventory(ctx,
 		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{
-			DeviceId: f.groupID, TableNames: make([]string, 129),
+			DeviceId: &cadestrov1.DeviceId{Value: f.groupID}, TableNames: make([]string, 129),
 		}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetDeviceInventoryProcedure,
@@ -408,7 +408,7 @@ func TestDeviceHandlers_GetDeviceInventoryRejectsInvalidStoredShape(t *testing.T
 	require.NoError(t, err)
 
 	_, err = f.handlers.GetDeviceInventory(f.actor("GetDeviceInventory"),
-		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: f.groupID}))
+		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.groupID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "corrupt inventory must not look like an empty table")
 }
 
@@ -591,7 +591,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 	}
 
 	lps, err := f.handlers.ListLpsPasswords(f.actor("ListLpsPasswords"),
-		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	require.Len(t, lps.Msg.Current, 1)
 	require.Len(t, lps.Msg.History, 3)
@@ -600,7 +600,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 	assert.Equal(t, "Local admin", lps.Msg.Current[0].ActionName)
 
 	luks, err := f.handlers.ListLuksKeys(f.actor("ListLuksKeys"),
-		connect.NewRequest(&cadestrov1.ListLuksKeysRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.ListLuksKeysRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	require.Len(t, luks.Msg.Current, 1)
 	require.Len(t, luks.Msg.History, 3)
@@ -639,7 +639,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		WHERE id = $1`, lpsIDs[0])
 	require.NoError(t, err)
 	_, err = f.handlers.ListLpsPasswords(f.actor("ListLpsPasswords"),
-		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.ListLpsPasswordsRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err, "metadata listing must not open ciphertext")
 	_, err = f.handlers.RevealLpsPassword(f.actor("RevealLpsPassword"),
 		connect.NewRequest(&cadestrov1.RevealLpsPasswordRequest{Id: lpsIDs[0]}))
@@ -672,7 +672,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	ctx := f.actor("CreateLuksToken")
 
 	issued, err := f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	require.NoError(t, err)
 	_, err = ulid.ParseStrict(issued.Msg.Token)
@@ -726,7 +726,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	assert.NotContains(t, strings.Join(effects[0].ChangedFields, ","), "token")
 
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.groupID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.groupID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
 		"group-derived visibility is not direct device ownership")
@@ -736,7 +736,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = '"corrupt"' WHERE id = $1`, actionID)
 	require.NoError(t, err)
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "corrupt policy must not fall back")
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = '{}' WHERE id = $1`, actionID)
@@ -746,7 +746,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 
 	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/CreateLuksToken")
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 	var tokenCount int
@@ -763,17 +763,17 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	ctx := f.actor("RevokeLuksDeviceKey")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor(), connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx, connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	seedCurrentLuksKeys(t, f, actionID, 2)
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx, connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 1)
@@ -801,7 +801,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	assert.Equal(t, int64(2), *effects[0].AfterCount)
 
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx, connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 	assert.Len(t, f.sender.messages, 1, "a pending revocation must not be sent twice")
@@ -836,7 +836,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyRecordsUnavailableDevice(t *testing.T
 	f.sender.err = errors.New("agent not connected")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor("RevokeLuksDeviceKey"),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID}}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID}}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	var status string
 	var detail *string
@@ -865,7 +865,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyAuditFailurePreventsSend(t *testing.T
 	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/RevokeLuksDeviceKey")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor("RevokeLuksDeviceKey"),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID}}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: actionID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 	assert.Empty(t, f.sender.messages, "the irreversible command must not leave before its audit commits")
 	var status *string
@@ -902,7 +902,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	ctx := f.actor("DispatchOSQuery", "QueryDeviceLogs", "RefreshDeviceInventory")
 
 	osquery, err := f.handlers.DispatchOSQuery(ctx, connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{
-		DeviceId: f.directID, Table: "packages", Columns: []string{"name"}, Limit: 25,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Table: "packages", Columns: []string{"name"}, Limit: 25,
 	}))
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 1)
@@ -922,7 +922,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	assert.False(t, osSuccess)
 
 	logs, err := f.handlers.QueryDeviceLogs(ctx, connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{
-		DeviceId: f.directID, Lines: 100, Unit: "sshd.service", Priority: "warning",
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Lines: 100, Unit: "sshd.service", Priority: "warning",
 	}))
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 2)
@@ -936,7 +936,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	assert.False(t, logCompleted)
 
 	_, err = f.handlers.RefreshDeviceInventory(ctx,
-		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 3)
 	refreshFrame := f.sender.messages[2]
@@ -956,7 +956,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	}
 
 	_, err = f.handlers.DispatchOSQuery(ctx, connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{
-		DeviceId: f.directID, Table: "packages", RawSql: "select 1",
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Table: "packages", RawSql: "select 1",
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }
@@ -967,7 +967,7 @@ func TestDeviceHandlers_InstantQuerySendFailureIsTerminalAndGeneric(t *testing.T
 	ctx := f.actor("DispatchOSQuery", "QueryDeviceLogs", "RefreshDeviceInventory")
 
 	_, err := f.handlers.DispatchOSQuery(ctx, connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{
-		DeviceId: f.directID, RawSql: "select version from os_version",
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, RawSql: "select version from os_version",
 	}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	require.Len(t, f.sender.messages, 1)
@@ -984,7 +984,7 @@ func TestDeviceHandlers_InstantQuerySendFailureIsTerminalAndGeneric(t *testing.T
 	assert.Equal(t, "raw_sql", tableName)
 
 	_, err = f.handlers.QueryDeviceLogs(ctx, connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{
-		DeviceId: f.directID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 	}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	require.Len(t, f.sender.messages, 2)
@@ -998,7 +998,7 @@ func TestDeviceHandlers_InstantQuerySendFailureIsTerminalAndGeneric(t *testing.T
 	assert.Equal(t, "device unavailable", storedError)
 
 	_, err = f.handlers.RefreshDeviceInventory(ctx,
-		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	refreshOperation, err := latestOperationFor(t, f.store, f.raw,
 		cadestrov1connect.ControlServiceRefreshDeviceInventoryProcedure)
@@ -1013,11 +1013,11 @@ func TestDeviceHandlers_AgentQueryResultsAndInventoryCommitDirectly(t *testing.T
 	f := newDeviceHandlerFixture(t)
 	ctx := f.actor("DispatchOSQuery", "QueryDeviceLogs")
 	osquery, err := f.handlers.DispatchOSQuery(ctx, connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{
-		DeviceId: f.directID, Table: "packages",
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Table: "packages",
 	}))
 	require.NoError(t, err)
 	logs, err := f.handlers.QueryDeviceLogs(ctx, connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{
-		DeviceId: f.directID, Lines: 10,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Lines: 10,
 	}))
 	require.NoError(t, err)
 
@@ -1075,7 +1075,7 @@ func TestDeviceHandlers_OSQueryAuditFailurePreventsSendAndPendingRow(t *testing.
 	f := newDeviceHandlerFixture(t)
 	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/DispatchOSQuery")
 	_, err := f.handlers.DispatchOSQuery(f.actor("DispatchOSQuery"),
-		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: f.directID, Table: "packages"}))
+		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Table: "packages"}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 	assert.Empty(t, f.sender.messages)
 	var count int
@@ -1088,18 +1088,18 @@ func TestDeviceHandlers_TerminalLifecycleUsesInProcessSessionTruth(t *testing.T)
 	startCtx := f.actor("StartTerminal")
 
 	_, err := f.handlers.StartTerminal(f.actor(), connect.NewRequest(&cadestrov1.StartTerminalRequest{
-		DeviceId: f.directID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	f.connected[f.directID] = false
 	_, err = f.handlers.StartTerminal(startCtx, connect.NewRequest(&cadestrov1.StartTerminalRequest{
-		DeviceId: f.directID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 	f.connected[f.directID] = true
 
 	started, err := f.handlers.StartTerminal(startCtx, connect.NewRequest(&cadestrov1.StartTerminalRequest{
-		DeviceId: f.directID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, "wss://control.example.test/terminal", started.Msg.TerminalUrl)
@@ -1162,7 +1162,7 @@ func TestDeviceHandlers_TerminalListFiltersScopesAndPagesLiveRegistry(t *testing
 	ids := make([]string, 0, 3)
 	for _, deviceID := range []string{f.directID, f.groupID, f.outsideID} {
 		started, err := f.handlers.StartTerminal(startCtx,
-			connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: deviceID, Cols: 120, Rows: 40}))
+			connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: deviceID}, Cols: 120, Rows: 40}))
 		require.NoError(t, err)
 		ids = append(ids, started.Msg.SessionId)
 		f.sessions.Register(connection.NewTerminalSession(
@@ -1186,10 +1186,10 @@ func TestDeviceHandlers_TerminalListFiltersScopesAndPagesLiveRegistry(t *testing
 	assert.NotEqual(t, page1.Msg.Sessions[0].SessionId, page2.Msg.Sessions[0].SessionId)
 
 	filtered, err := f.handlers.ListActiveTerminalSessions(ctx,
-		connect.NewRequest(&cadestrov1.ListActiveTerminalSessionsRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.ListActiveTerminalSessionsRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	require.Len(t, filtered.Msg.Sessions, 1)
-	assert.Equal(t, f.directID, filtered.Msg.Sessions[0].DeviceId)
+	assert.Equal(t, f.directID, filtered.Msg.Sessions[0].GetDeviceId().GetValue())
 
 	scoped := auth.WithUser(context.Background(), &auth.UserContext{
 		ID: f.actorID, Kind: auth.PrincipalUser,
@@ -1202,7 +1202,7 @@ func TestDeviceHandlers_TerminalListFiltersScopesAndPagesLiveRegistry(t *testing
 		connect.NewRequest(&cadestrov1.ListActiveTerminalSessionsRequest{}))
 	require.NoError(t, err)
 	require.Len(t, scopedList.Msg.Sessions, 1)
-	assert.Equal(t, f.groupID, scopedList.Msg.Sessions[0].DeviceId)
+	assert.Equal(t, f.groupID, scopedList.Msg.Sessions[0].GetDeviceId().GetValue())
 	assert.Equal(t, int32(1), scopedList.Msg.TotalCount)
 	assert.Len(t, ids, 3)
 }
@@ -1217,20 +1217,20 @@ func TestDeviceHandlers_StartTerminalAppliesScopeBeforeExistence(t *testing.T) {
 		}},
 	})
 	_, err := f.handlers.StartTerminal(ctx,
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: f.groupID}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: f.groupID}}))
 	require.NoError(t, err)
 	_, err = f.handlers.StartTerminal(ctx,
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: f.outsideID}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: f.outsideID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "scope misses must not disclose device existence")
 	_, err = f.handlers.StartTerminal(ctx,
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: newID()}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: newID()}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "unknown and out-of-scope devices must look alike")
 }
 
 func TestDeviceHandlers_TerminateTerminalSurfacesSendFailureThenCommitsRetry(t *testing.T) {
 	f := newDeviceHandlerFixture(t)
 	started, err := f.handlers.StartTerminal(f.actor("StartTerminal"),
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	_, err = f.tokens.Validate(context.Background(), started.Msg.SessionId, started.Msg.SessionToken)
 	require.NoError(t, err)
@@ -1273,7 +1273,7 @@ func TestDeviceHandlers_SensitiveReadFailsClosedWhenEvidenceFails(t *testing.T) 
 	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/GetDeviceInventory")
 
 	_, err := f.handlers.GetDeviceInventory(f.actor("GetDeviceInventory"),
-		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: f.groupID}))
+		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.groupID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 }
 
@@ -1299,7 +1299,7 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	assert.NotContains(t, removedLabel.Msg.Device.Labels, "env")
 
 	assigned, err := f.handlers.AssignDevice(ctx, connect.NewRequest(&cadestrov1.AssignDeviceRequest{
-		DeviceId: f.directID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID},
 		UserIds:  []string{f.userID, f.userID},
 		GroupIds: []string{f.userGroup, f.userGroup},
 	}))
@@ -1307,16 +1307,16 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	assert.ElementsMatch(t, []string{f.actorID, f.userID}, assigned.Msg.Device.AssignedUserIds)
 	assert.Equal(t, []string{f.userGroup}, assigned.Msg.Device.AssignedGroupIds)
 
-	assignees, err := f.handlers.ListDeviceAssignees(ctx, connect.NewRequest(&cadestrov1.ListDeviceAssigneesRequest{DeviceId: f.directID}))
+	assignees, err := f.handlers.ListDeviceAssignees(ctx, connect.NewRequest(&cadestrov1.ListDeviceAssigneesRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	require.Len(t, assignees.Msg.Assignees, 3)
 
 	_, err = f.handlers.UnassignDevice(ctx, connect.NewRequest(&cadestrov1.UnassignDeviceRequest{
-		DeviceId: f.directID, UserId: f.userID, GroupId: f.userGroup,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, UserId: f.userID, GroupId: f.userGroup,
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = f.handlers.UnassignDevice(ctx, connect.NewRequest(&cadestrov1.UnassignDeviceRequest{
-		DeviceId: f.directID, UserId: f.userID,
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, UserId: f.userID,
 	}))
 	require.NoError(t, err)
 
@@ -1338,32 +1338,32 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	require.NoError(t, err)
 	_, err = f.handlers.CreateLuksToken(ctx,
 		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: encryptionActionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: encryptionActionID},
 		}))
 	require.NoError(t, err)
 	seedCurrentLuksKeys(t, f, encryptionActionID, 1)
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx,
 		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: encryptionActionID},
+		DeviceId: &cadestrov1.DeviceId{Value: f.directID}, ActionId: &cadestrov1.ActionId{Value: encryptionActionID},
 		}))
 	require.NoError(t, err)
 	_, err = f.handlers.DispatchOSQuery(ctx,
-		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: f.directID, Table: "packages"}))
+		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Table: "packages"}))
 	require.NoError(t, err)
 	_, err = f.handlers.QueryDeviceLogs(ctx,
-		connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{DeviceId: f.directID, Lines: 10}))
+		connect.NewRequest(&cadestrov1.QueryDeviceLogsRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}, Lines: 10}))
 	require.NoError(t, err)
 	_, err = f.handlers.RefreshDeviceInventory(ctx,
-		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.RefreshDeviceInventoryRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	graceful, err := f.handlers.StartTerminal(ctx,
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	_, err = f.handlers.StopTerminal(ctx,
 		connect.NewRequest(&cadestrov1.StopTerminalRequest{SessionId: graceful.Msg.SessionId}))
 	require.NoError(t, err)
 	forced, err := f.handlers.StartTerminal(ctx,
-		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: f.directID}))
+		connect.NewRequest(&cadestrov1.StartTerminalRequest{DeviceId: &cadestrov1.DeviceId{Value: f.directID}}))
 	require.NoError(t, err)
 	_, err = f.handlers.TerminateTerminalSession(ctx,
 		connect.NewRequest(&cadestrov1.TerminateTerminalSessionRequest{SessionId: forced.Msg.SessionId}))

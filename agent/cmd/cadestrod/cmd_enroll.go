@@ -153,7 +153,7 @@ func runEnroll(args []string) {
 	}
 
 	if status.Msg.Enrolled {
-		fmt.Printf("Agent is already enrolled (device ID: %s)\n", status.Msg.DeviceId)
+		fmt.Printf("Agent is already enrolled (device ID: %s)\n", status.Msg.GetDeviceId().GetValue())
 		return
 	}
 
@@ -176,7 +176,7 @@ func runEnroll(args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Enrolled successfully. Device ID: %s\n", resp.Msg.DeviceId)
+	fmt.Printf("Enrolled successfully. Device ID: %s\n", resp.Msg.GetDeviceId().GetValue())
 }
 
 // registrationURIRefusedByHandler reports whether the bare-binary / desktop

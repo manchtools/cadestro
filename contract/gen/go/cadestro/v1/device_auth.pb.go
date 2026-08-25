@@ -102,9 +102,9 @@ type EnrollResponse struct {
 	// always have a default value, so
 	// "required" here means "must be present in the wire payload" —
 	// protovalidate enforces no extra runtime check beyond that.
-	Success       bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	DeviceId      string `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Assigned device ID on success
-	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`                       // Error message on failure
+	Success       bool      `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	DeviceId      *DeviceId `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Assigned device ID on success
+	Error         string    `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`                       // Error message on failure
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -146,11 +146,11 @@ func (x *EnrollResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *EnrollResponse) GetDeviceId() string {
+func (x *EnrollResponse) GetDeviceId() *DeviceId {
 	if x != nil {
 		return x.DeviceId
 	}
-	return ""
+	return nil
 }
 
 func (x *EnrollResponse) GetError() string {
@@ -199,7 +199,7 @@ func (*GetEnrollmentStatusRequest) Descriptor() ([]byte, []int) {
 type GetEnrollmentStatusResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Enrolled      bool                   `protobuf:"varint,1,opt,name=enrolled,proto3" json:"enrolled,omitempty"`
-	DeviceId      string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Empty if not enrolled
+	DeviceId      *DeviceId              `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // Empty if not enrolled
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -241,31 +241,31 @@ func (x *GetEnrollmentStatusResponse) GetEnrolled() bool {
 	return false
 }
 
-func (x *GetEnrollmentStatusResponse) GetDeviceId() string {
+func (x *GetEnrollmentStatusResponse) GetDeviceId() *DeviceId {
 	if x != nil {
 		return x.DeviceId
 	}
-	return ""
+	return nil
 }
 
 var File_cadestro_v1_device_auth_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_device_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcadestro/v1/device_auth.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1ecadestro/v1/validate_ext.proto\"\xa4\x01\n" +
+	"\x1dcadestro/v1/device_auth.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\"\xa4\x01\n" +
 	"\rEnrollRequest\x12*\n" +
 	"\n" +
 	"server_url\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tserverUrl\x12\x1c\n" +
 	"\x05token\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05token\x12I\n" +
-	"\x12ca_fingerprint_pin\x18\x03 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x7f\n" +
+	"\x12ca_fingerprint_pin\x18\x03 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x10caFingerprintPin\"\x89\x01\n" +
 	"\x0eEnrollResponse\x12 \n" +
-	"\asuccess\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\asuccess\x12(\n" +
-	"\tdevice_id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\bdeviceId\x12!\n" +
+	"\asuccess\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\asuccess\x122\n" +
+	"\tdevice_id\x18\x02 \x01(\v2\x15.cadestro.v1.DeviceIdR\bdeviceId\x12!\n" +
 	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\"\x1c\n" +
-	"\x1aGetEnrollmentStatusRequest\"k\n" +
+	"\x1aGetEnrollmentStatusRequest\"u\n" +
 	"\x1bGetEnrollmentStatusResponse\x12\"\n" +
-	"\benrolled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\benrolled\x12(\n" +
-	"\tdevice_id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xc0>\x01R\bdeviceId2\xc0\x01\n" +
+	"\benrolled\x18\x01 \x01(\bB\x06\xbaH\x03\xc8\x01\x01R\benrolled\x122\n" +
+	"\tdevice_id\x18\x02 \x01(\v2\x15.cadestro.v1.DeviceIdR\bdeviceId2\xc0\x01\n" +
 	"\x11DeviceAuthService\x12A\n" +
 	"\x06Enroll\x12\x1a.cadestro.v1.EnrollRequest\x1a\x1b.cadestro.v1.EnrollResponse\x12h\n" +
 	"\x13GetEnrollmentStatus\x12'.cadestro.v1.GetEnrollmentStatusRequest\x1a(.cadestro.v1.GetEnrollmentStatusResponseBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
@@ -288,17 +288,20 @@ var file_cadestro_v1_device_auth_proto_goTypes = []any{
 	(*EnrollResponse)(nil),              // 1: cadestro.v1.EnrollResponse
 	(*GetEnrollmentStatusRequest)(nil),  // 2: cadestro.v1.GetEnrollmentStatusRequest
 	(*GetEnrollmentStatusResponse)(nil), // 3: cadestro.v1.GetEnrollmentStatusResponse
+	(*DeviceId)(nil),                    // 4: cadestro.v1.DeviceId
 }
 var file_cadestro_v1_device_auth_proto_depIdxs = []int32{
-	0, // 0: cadestro.v1.DeviceAuthService.Enroll:input_type -> cadestro.v1.EnrollRequest
-	2, // 1: cadestro.v1.DeviceAuthService.GetEnrollmentStatus:input_type -> cadestro.v1.GetEnrollmentStatusRequest
-	1, // 2: cadestro.v1.DeviceAuthService.Enroll:output_type -> cadestro.v1.EnrollResponse
-	3, // 3: cadestro.v1.DeviceAuthService.GetEnrollmentStatus:output_type -> cadestro.v1.GetEnrollmentStatusResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	4, // 0: cadestro.v1.EnrollResponse.device_id:type_name -> cadestro.v1.DeviceId
+	4, // 1: cadestro.v1.GetEnrollmentStatusResponse.device_id:type_name -> cadestro.v1.DeviceId
+	0, // 2: cadestro.v1.DeviceAuthService.Enroll:input_type -> cadestro.v1.EnrollRequest
+	2, // 3: cadestro.v1.DeviceAuthService.GetEnrollmentStatus:input_type -> cadestro.v1.GetEnrollmentStatusRequest
+	1, // 4: cadestro.v1.DeviceAuthService.Enroll:output_type -> cadestro.v1.EnrollResponse
+	3, // 5: cadestro.v1.DeviceAuthService.GetEnrollmentStatus:output_type -> cadestro.v1.GetEnrollmentStatusResponse
+	4, // [4:6] is the sub-list for method output_type
+	2, // [2:4] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_device_auth_proto_init() }
@@ -306,7 +309,7 @@ func file_cadestro_v1_device_auth_proto_init() {
 	if File_cadestro_v1_device_auth_proto != nil {
 		return
 	}
-	file_cadestro_v1_validate_ext_proto_init()
+	file_cadestro_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
