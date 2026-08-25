@@ -2,25 +2,22 @@
 
 ## The honest statement first
 
-**Cadestro is pre-1.0. There is no automatic schema migration machinery.** A
-schema change requires a clean reinstall; startup never guesses how to
-transform old data.
-
-That is not a gap waiting to be filled in a later sprint; it is the current
-design, and this page describes what the code actually supports rather than what
-a mature product would.
+**Cadestro is pre-1.0, and the control plane embeds Goose as its schema
+migrator.** Startup applies every pending ordered migration before serving
+requests. The current pre-1.0 history is a single squashed baseline because
+that history has not been released.
 
 <!-- docref: begin src=server/internal/store/store.go#migrateSQLite:9c229738 -->
-Schema handling at startup is a single idempotent apply, through an embedded
-goose migration runner: an empty database gets the one pre-1.0 baseline
-migration applied, and a database already at that baseline is left alone. There
-is no chain of accumulated migrations to walk and no data transformation
-between schema versions — pre-1.0 the baseline is rewritten in place rather
-than extended, so there is exactly one migration to apply.
+Schema handling at startup is an idempotent Goose apply. An empty database gets
+the current baseline, and an existing database receives every pending ordered
+migration. sqlc reads the same migrations directory, so generated queries and
+the deployed schema share one source of truth. Before 1.0, unreleased history
+may be squashed into a new baseline. After a schema is released, its migration
+file is immutable: each later schema change is a new migration with tested
+`Up` and `Down` sections.
 <!-- docref: end -->
 
-So: within a schema version, updating is a container image pull. Across one,
-reinstall.
+So: updating is a container image pull followed by the embedded Goose apply.
 
 ---
 
@@ -68,29 +65,28 @@ something other than the pin in `.env`.
 
 ### Rolling back
 
-Set `IMAGE_TAG` to the previous release and run `./deploy.sh` again. This works
-as long as both releases share a schema version — the same condition as upgrading
-forward, in the other direction. Combine it with a
-[restore](backup-restore.md#restoring) if the newer version wrote data the older
-one cannot read.
+Set `IMAGE_TAG` to the previous release and run `./deploy.sh` again only when
+that release can read the current schema. A migration's `Down` section is the
+tested rollback definition, but deployment does not silently downgrade a
+database. If the older binary cannot read the newer schema, restore the verified
+backup taken before the upgrade, then deploy the older release.
 
 ---
 
 ## Across a schema version
 
-Reinstall across a schema version. Concretely:
+Goose upgrades the schema in place. Concretely:
 
 1. Take a [verified backup](backup-restore.md) and copy `certs/`, `secrets/`,
    and `data/artifacts` off the machine alongside it.
-2. Install the new release fresh.
-3. Re-enroll devices.
+2. Set `IMAGE_TAG` to the new release.
+3. Run `./deploy.sh`; control applies pending migrations before becoming ready.
 
 <!-- docref: begin src=server/internal/store/store.go#NewWithoutMigrations:f91d0fc3 -->
-Restoring the old database into the new release is not a migration and will not
-be treated as one: the store's non-creating open path requires the exact current
-schema version and refuses anything else. A database from a different schema
-version will not open, and the failure is at startup rather than halfway through
-a request.
+The embedded runner is the migration path; it does not guess or mutate schema
+outside the ordered Goose files. The non-creating bootstrap command deliberately
+does not run migrations and therefore requires the database to already be
+current, while the control server's normal startup runs them automatically.
 <!-- docref: end -->
 
 **Devices must be re-enrolled** unless you carried `certs/` across, because the

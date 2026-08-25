@@ -46,8 +46,12 @@ trap cleanup EXIT
 # docref: begin sqlite-backup
 compose exec -T control test -f "$container_database" \
     || { printf 'SQLite database does not exist\n' >&2; exit 1; }
-schema_version="$(compose exec -T control sqlite3 "$container_database" 'PRAGMA user_version;')"
-[[ "$schema_version" == 1 ]] || { printf 'SQLite schema version is %s, want 1\n' "$schema_version" >&2; exit 1; }
+schema_version="$(compose exec -T control sqlite3 "$container_database" \
+    'SELECT COALESCE((SELECT version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1), 0);')"
+[[ "$schema_version" =~ ^[1-9][0-9]*$ ]] || {
+    printf 'SQLite database has no applied Goose migration (version %s)\n' "$schema_version" >&2
+    exit 1
+}
 [[ ! -e "$temp_path" ]] || { printf 'temporary backup name collision\n' >&2; exit 1; }
 compose exec -T control sqlite3 "$container_database" ".backup '$container_temp'"
 compose exec -T control chmod 600 "$container_temp"

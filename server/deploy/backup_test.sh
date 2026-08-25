@@ -19,8 +19,10 @@ set -euo pipefail
 last="${*: -1}"
 if [[ "$*" == *" test -f /var/lib/cadestro/state/control.db"* ]]; then
     exit 0
-elif [[ "$*" == *" sqlite3 /var/lib/cadestro/state/control.db PRAGMA user_version;"* ]]; then
+elif [[ "$*" == *"goose_db_version"* ]]; then
     printf '1\n'
+elif [[ "$*" == *" sqlite3 /var/lib/cadestro/state/control.db SELECT\ COALESCE\(\(SELECT\ version_id\ FROM\ goose_db_version\ WHERE\ is_applied\ ORDER\ BY\ id\ DESC\ LIMIT\ 1\),\ 0\);"* ]]; then
+	printf '1\n'
 elif [[ "$last" == ".backup "* ]]; then
     container_path="${last:9:${#last}-10}"
     printf 'verified-fake-sqlite-snapshot-%s\n' "$(date +%s%N)" > "$TEST_BACKUP_DIR/${container_path##*/}"

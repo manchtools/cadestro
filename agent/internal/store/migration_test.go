@@ -5,8 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
+
+	"github.com/manchtools/cadestro/agent/internal/store/migrations"
 )
 
 func TestBaselineMigrationUsesScheduledWork(t *testing.T) {
@@ -24,4 +27,20 @@ func TestBaselineMigrationUsesScheduledWork(t *testing.T) {
 	require.Zero(t, count)
 	require.NoError(t, db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'manifest_deliveries'`).Scan(&count))
 	require.Zero(t, count)
+}
+
+func TestBaselineMigrationSupportsRollback(t *testing.T) {
+	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "agent.db"))
+	require.NoError(t, err)
+	defer db.Close()
+	goose.SetBaseFS(migrations.FS)
+	require.NoError(t, goose.SetDialect("sqlite3"))
+	require.NoError(t, goose.Up(db, "."))
+	require.NoError(t, goose.Down(db, "."))
+	var count int
+	require.NoError(t, db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'scheduled_work'`).Scan(&count))
+	require.Zero(t, count)
+	require.NoError(t, goose.Up(db, "."))
+	require.NoError(t, db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'scheduled_work'`).Scan(&count))
+	require.Equal(t, 1, count)
 }

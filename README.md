@@ -88,9 +88,10 @@ internal-only network.
 
 ## Status and scope
 
-**Pre-1.0. Reinstall, not upgrade.** Within a version, updating is a container
-image pull. Across a schema version there is no migration path — the server
-refuses a database it does not recognise rather than guessing.
+**Pre-1.0 release candidates.** The control plane embeds Goose and applies
+ordered SQLite migrations automatically at startup. The current pre-1.0
+history is a single squashed baseline; once a schema is released, later
+changes are new migrations with tested `Up` and `Down` sections.
 → [upgrades](docs/upgrade.md)
 
 <!-- docref: begin src=.github/workflows/agent-integration.yml#@distro-matrix:5b369588,.github/workflows/sdk.yml#@sdk-distro-matrix:7cafa43b -->

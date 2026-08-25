@@ -82,9 +82,10 @@ or cache to operate.
 
 ## Status and scope
 
-Pre-1.0 release candidates. The RPC contract, storage schema, and agent
-protocol may change between versions; pre-1.0 installations are reinstalled
-clean rather than upgraded in place.
+Pre-1.0 release candidates. Goose is embedded in the control plane and applies
+ordered SQLite migrations automatically at startup. The current pre-1.0
+history is a single squashed baseline; once a schema is released, later
+changes are new migrations with tested `Up` and `Down` sections.
 
 **CI-tested**, with real package managers and system services in the test
 matrix: Debian bookworm, Fedora, Arch, openSUSE (Leap and Tumbleweed), Ubuntu

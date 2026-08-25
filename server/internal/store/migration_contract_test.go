@@ -1,37 +1,37 @@
-package archtest
+package store
 
 import (
-	"os"
-	"path/filepath"
+	"io/fs"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/pressly/goose/v3"
-
-	"github.com/manchtools/cadestro/agent/internal/store/migrations"
 )
 
-func TestAgentMigrationContract(t *testing.T) {
-	directory := filepath.Join(moduleRoot(t), "internal", "store", "migrations")
-	entries, err := os.ReadDir(directory)
+func TestMigrationContract(t *testing.T) {
+	entries, err := fs.ReadDir(migrationsFS, migrationsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var files []string
+	files := make([]string, 0, len(entries))
 	for _, entry := range entries {
-		if strings.HasSuffix(entry.Name(), ".sql") {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".sql") {
 			files = append(files, entry.Name())
 		}
 	}
 	if len(files) == 0 {
-		t.Fatal("agent schema has no Goose migrations")
+		t.Fatal("server schema has no Goose migrations")
 	}
 	sort.Strings(files)
-	goose.SetBaseFS(migrations.FS)
-	if _, err := goose.CollectMigrations(".", 0, goose.MaxVersion); err != nil {
+	goose.SetBaseFS(migrationsFS)
+	migrations, err := goose.CollectMigrations(migrationsDir, 0, goose.MaxVersion)
+	if err != nil {
 		t.Fatalf("collect Goose migrations: %v", err)
+	}
+	if len(migrations) != len(files) {
+		t.Fatalf("Goose collected %d migrations from %d files", len(migrations), len(files))
 	}
 	previous := int64(-1)
 	for index, name := range files {
@@ -41,14 +41,15 @@ func TestAgentMigrationContract(t *testing.T) {
 			t.Fatalf("migration files must have strictly increasing numeric versions: %v", files)
 		}
 		previous = version
-		contents, err := os.ReadFile(filepath.Join(directory, name))
+		contents, err := fs.ReadFile(migrationsFS, migrationsDir+"/"+name)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(contents), "-- +goose Up") {
+		text := string(contents)
+		if !strings.Contains(text, "-- +goose Up") {
 			t.Errorf("%s has no Goose Up section", name)
 		}
-		if index > 0 && !strings.Contains(string(contents), "-- +goose Down") {
+		if index > 0 && !strings.Contains(text, "-- +goose Down") {
 			t.Errorf("%s has no Goose Down section", name)
 		}
 	}

@@ -11,7 +11,7 @@ and audit events. Back it up with the script you schedule below.
 /opt/cadestro/backup.sh
 ```
 
-<!-- docref: begin src=server/deploy/backup.sh#@sqlite-backup:99bc90ed -->
+<!-- docref: begin src=server/deploy/backup.sh#@sqlite-backup:c19c264f -->
 It uses SQLite's **online backup API**, not a file copy. A copy of a live
 WAL-mode database is not a database — it is a file plus two sidecars in an
 unknown relationship — and the backup API produces one consistent, self-contained
@@ -19,7 +19,7 @@ file from a running server.
 
 It then earns the word "verified" rather than assuming it:
 
-1. the database file must exist and be at the expected schema version;
+1. the database file must exist and contain an applied Goose migration;
 2. the snapshot is taken to a temporary name in the destination directory;
 3. `PRAGMA integrity_check` on **the copy** must return exactly `ok`;
 4. `PRAGMA foreign_key_check` on the copy must return nothing;
@@ -159,8 +159,8 @@ read-write and chmods it to owner-only on every open.
 
 ### Constraints the code imposes
 
-- **Schema version must match.** A snapshot from a different release's schema
-  will not open. See [upgrades](upgrade.md).
+- **Goose owns schema changes.** Starting control applies any pending ordered
+  migrations before serving requests. See [upgrades](upgrade.md).
 
 ### What is unproven
 

@@ -95,8 +95,9 @@ fi
 
 compose up -d --wait control
 
-schema_version="$(compose exec -T control sqlite3 /var/lib/cadestro/state/control.db 'PRAGMA user_version;')"
-[[ "$schema_version" == 1 ]] || { printf 'SQLite schema probe failed\n' >&2; exit 1; }
+schema_version="$(compose exec -T control sqlite3 /var/lib/cadestro/state/control.db \
+    'SELECT COALESCE((SELECT version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1), 0);')"
+[[ "$schema_version" =~ ^[1-9][0-9]*$ ]] || { printf 'SQLite Goose migration probe failed\n' >&2; exit 1; }
 fts="$(compose exec -T control sqlite3 /var/lib/cadestro/state/control.db \
     "SELECT count(*) FROM sqlite_schema WHERE name = 'search_fts';")"
 [[ "$fts" == 1 ]] || { printf 'SQLite FTS5 probe failed\n' >&2; exit 1; }

@@ -29,7 +29,6 @@ func TestAbolishedArchitectureCannotReturn(t *testing.T) {
 		"internal/projectors",
 		"internal/search",
 		"internal/taskqueue",
-		"migrations",
 	} {
 		err := filepath.WalkDir(filepath.Join(root, path), func(found string, entry fs.DirEntry, walkErr error) error {
 			if walkErr != nil {
