@@ -83,7 +83,7 @@ of non-idempotent effects.
 - Restrict the PROXY-protocol listener to the isolated Traefik network.
 - Protect CA, JWT, database, and at-rest encryption keys with strict
   filesystem or deployment-secret permissions.
-<!-- docref: begin src=deploy/backup.sh#@sqlite-backup:99bc90ed,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
+<!-- docref: begin src=deploy/backup.sh#@sqlite-backup:c19c264f,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 - Run `deploy/backup.sh` from a host timer and replicate the
   `CADESTRO_BACKUP_PATH` directory off-host: it contains verified bounded
   SQLite backups. Back up artifacts too, and monitor `cadestro backup-status`.

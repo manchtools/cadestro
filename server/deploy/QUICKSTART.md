@@ -148,7 +148,7 @@ occurrence time; control has no email or provider-specific notification
 integration.
 <!-- docref: end -->
 
-<!-- docref: begin src=deploy/backup.sh#@sqlite-backup:99bc90ed,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
+<!-- docref: begin src=deploy/backup.sh#@sqlite-backup:c19c264f,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 Run `./backup.sh` from a host timer at least daily. It takes an online SQLite
 `.backup`, then verifies the copy with `integrity_check` and `foreign_key_check`
 before atomically publishing `backup-status.json`. It retains seven backups by
