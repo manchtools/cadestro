@@ -42,7 +42,7 @@
 				searchPlaceholder={m.definition_detail_search_sets()}
 				emptyMessage={m.definition_detail_no_sets_available()}
 				searchFilter={(item, query) => {
-					const s =  (item);
+					const s = item;
 					const q = query.toLowerCase();
 					return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q);
 				}}
@@ -52,7 +52,7 @@
 					<Table.Head>{m.action_set_detail_members_label()}</Table.Head>
 				{/snippet}
 				{#snippet itemRow(item)}
-					{@const s =  (item)}
+					{@const s = item}
 					<Table.Cell>
 						<div>
 							<span class="font-medium">{s.name}</span>
