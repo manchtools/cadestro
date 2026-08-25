@@ -202,7 +202,7 @@
 				{#if terminateSession}
 					{m.terminal_sessions_terminate_confirm({
 						userEmail: terminateSession.userEmail || terminateSession.userId,
-						deviceHostname: terminateSession.deviceHostname || terminateSession.deviceId?.value
+						deviceHostname: terminateSession.deviceHostname || terminateSession.deviceId?.value || ''
 					})}
 				{/if}
 			</AlertDialog.Description>

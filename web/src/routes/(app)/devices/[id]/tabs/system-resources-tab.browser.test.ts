@@ -62,7 +62,7 @@ import SystemResourcesTab from './system-resources-tab.svelte';
 const lpsCurrent = [
 	create(LpsPasswordSchema, {
 		id: ALICE_ID,
-		deviceId: DEVICE_ID,
+		deviceId: { value: DEVICE_ID },
 		actionId: { value: '01JQZZACTIONLPS0000000000A' },
 		actionName: 'Workstation LPS',
 		username: 'alice',
@@ -70,7 +70,7 @@ const lpsCurrent = [
 	}),
 	create(LpsPasswordSchema, {
 		id: BOB_ID,
-		deviceId: DEVICE_ID,
+		deviceId: { value: DEVICE_ID },
 		actionId: { value: '01JQZZACTIONLPS0000000000A' },
 		actionName: 'Workstation LPS',
 		username: 'bob',
@@ -81,7 +81,7 @@ const lpsCurrent = [
 const luksCurrent = [
 	create(LuksKeySchema, {
 		id: LUKS_ID,
-		deviceId: DEVICE_ID,
+		deviceId: { value: DEVICE_ID },
 		actionId: { value: LUKS_ACTION_ID },
 		actionName: 'Laptop LUKS',
 		devicePath: '/dev/sda3',
