@@ -35,6 +35,7 @@ vi.mock('$lib/sdk', async () => {
 			const response = await api.listActions();
 			return response.actions;
 		}),
+		persistDraft: () => {},
 		useDraft: <T>(_type: string, _id: string, initial: T) => {
 			let data = initial;
 			return {

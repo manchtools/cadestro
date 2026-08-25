@@ -77,6 +77,7 @@ import {
 } from '$lib/shell/shell.svelte';
 
 const ROUTE = '/user-groups/new';
+const QUERY = 'true';
 const GROUP_ID = '01JQZZ4A7K3M9P2Q6R8T1V0W5X';
 
 beforeEach(() => {
@@ -130,8 +131,7 @@ describe('/user-groups/new — the commit is the pill\'s', () => {
 		expect(api.createUserGroup.mock.calls[0]).toEqual([
 			'Berlin staff',
 			'Everyone in Berlin',
-			false,
-			''
+			undefined
 		]);
 		await vi.waitFor(() =>
 			expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(`/user-groups/${GROUP_ID}`)
@@ -154,14 +154,14 @@ describe('/user-groups/new — the commit is the pill\'s', () => {
 
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
 		const input = await queryInput();
-		input.value = 'true';
+		input.value = QUERY;
 		input.dispatchEvent(new Event('input', { bubbles: true }));
-		await vi.waitFor(() => expect(api.validateUserGroupQuery).toHaveBeenCalledWith('true'), { timeout: 3000 });
+		await vi.waitFor(() => expect(api.validateUserGroupQuery).toHaveBeenCalledWith(QUERY), { timeout: 3000 });
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createUserGroup).toHaveBeenCalledTimes(1));
-		expect(api.createUserGroup.mock.calls[0]).toEqual(['Everyone', '', true, 'true']);
+		expect(api.createUserGroup.mock.calls[0]).toEqual(['Everyone', '', QUERY]);
 	});
 
 	it('still refuses the commit while a dynamic rule is partially filled', async () => {
@@ -221,9 +221,9 @@ describe('/user-groups/new — the third exit: stash, walk away, restore', () =>
 		await fillGroup('Berlin staff', '');
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
 		const input = await queryInput();
-		input.value = 'true';
+		input.value = QUERY;
 		input.dispatchEvent(new Event('input', { bubbles: true }));
-		await vi.waitFor(() => expect(api.validateUserGroupQuery).toHaveBeenCalledWith('true'), { timeout: 3000 });
+		await vi.waitFor(() => expect(api.validateUserGroupQuery).toHaveBeenCalledWith(QUERY), { timeout: 3000 });
 
 		stashContext();
 		expect(shell.drafts[0].payload).toMatchObject({ name: 'Berlin staff', isDynamic: true });

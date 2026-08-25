@@ -24,6 +24,7 @@ vi.mock('$lib/sdk', async () => {
 		...common,
 		apiClient: api,
 		fetchAllPages: vi.fn(async () => []),
+		persistDraft: () => {},
 		useDraft: <T>(_type: string, _id: string, initial: T) => {
 			let data = initial;
 			return {

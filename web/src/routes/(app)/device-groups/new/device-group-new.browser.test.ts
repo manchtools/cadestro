@@ -77,6 +77,7 @@ import {
 } from '$lib/shell/shell.svelte';
 
 const ROUTE = '/device-groups/new';
+const QUERY = 'true';
 const GROUP_ID = '01JQZZ4A7K3M9P2Q6R8T1V0W5X';
 
 beforeEach(() => {
@@ -131,8 +132,7 @@ describe('/device-groups/new — the commit is the pill\'s', () => {
 		expect(api.createDeviceGroup.mock.calls[0]).toEqual([
 			'Berlin laptops',
 			'Floor 3',
-			false,
-			''
+			undefined
 		]);
 		await vi.waitFor(() =>
 			expect(vi.mocked(goto).mock.calls[0]?.[0]).toBe(`/device-groups/${GROUP_ID}`)
@@ -154,13 +154,13 @@ describe('/device-groups/new — the commit is the pill\'s', () => {
 		await fillGroup('Every device', '');
 
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-		type(await queryInput(), 'true');
-		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith('true'), { timeout: 3000 });
+		type(await queryInput(), QUERY);
+		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith(QUERY), { timeout: 3000 });
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 
 		expect(commitContext()).toBe(true);
 		await vi.waitFor(() => expect(api.createDeviceGroup).toHaveBeenCalledTimes(1));
-		expect(api.createDeviceGroup.mock.calls[0]).toEqual(['Every device', '', true, 'true']);
+		expect(api.createDeviceGroup.mock.calls[0]).toEqual(['Every device', '', QUERY]);
 	});
 
 	it('shows the live match count beside the builder while editing a rule', async () => {
@@ -239,8 +239,8 @@ describe('/device-groups/new — the third exit: stash, walk away, restore', () 
 		render(NewGroupPage);
 		await fillGroup('Berlin laptops', '');
 		document.querySelector<HTMLButtonElement>('#group-dynamic')!.click();
-		type(await queryInput(), 'true');
-		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith('true'), { timeout: 3000 });
+		type(await queryInput(), QUERY);
+		await vi.waitFor(() => expect(api.validateDynamicQuery).toHaveBeenCalledWith(QUERY), { timeout: 3000 });
 
 		stashContext();
 		expect(shell.drafts[0].payload).toMatchObject({ name: 'Berlin laptops', isDynamic: true });

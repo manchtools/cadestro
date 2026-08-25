@@ -303,7 +303,7 @@ describe('assign by rule — the commit is group-create then assignment', () => 
 
 		await vi.waitFor(() => expect(api.createAssignment).toHaveBeenCalled(), { timeout: 3000 });
 		expect(api.createDeviceGroup).toHaveBeenCalledTimes(1);
-		expect(api.createDeviceGroup).toHaveBeenCalledWith(GROUP_NAME, '', true, QUERY);
+		expect(api.createDeviceGroup).toHaveBeenCalledWith(GROUP_NAME, '', QUERY);
 		expect(api.createAssignment).toHaveBeenCalledWith(
 			AssignmentSourceType.ACTION_SET,
 			SET_PATCH,
@@ -355,7 +355,7 @@ describe('assign by rule — save as group without assigning', () => {
 		runPillAction('save-as-group');
 
 		await vi.waitFor(() => expect(api.createDeviceGroup).toHaveBeenCalledTimes(1), { timeout: 3000 });
-		expect(api.createDeviceGroup).toHaveBeenCalledWith(GROUP_NAME, '', true, QUERY);
+		expect(api.createDeviceGroup).toHaveBeenCalledWith(GROUP_NAME, '', QUERY);
 		expect(api.createAssignment, 'saving a group assigns nothing').not.toHaveBeenCalled();
 		expect(api.syncDevice).not.toHaveBeenCalled();
 		await expect

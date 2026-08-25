@@ -33,6 +33,7 @@ vi.mock('$lib/sdk', async () => {
 		formatTimestamp: () => '2026-08-01',
 		formatTimestampDateTime: () => '2026-08-01 09:00',
 		fetchAllPages: vi.fn(async () => []),
+		persistDraft: () => {},
 		useDraft: <T>(_type: string, _id: string, initial: T) => {
 			let data = initial;
 			return {
