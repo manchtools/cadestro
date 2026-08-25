@@ -27,16 +27,18 @@ type executorDeps struct {
 func newExecutorDeps(runner sysexec.Runner) executorDeps {
 	managerRunner := runner
 	if managerRunner == nil {
-		managerRunner = mustDirectRunner()
+		managerRunner = must("Direct runner", func() (sysexec.Runner, error) {
+			return sysexec.NewRunner(sysexec.Direct)
+		})
 	}
 	return executorDeps{
-		desktop: mustDesktopManager(managerRunner),
-		service: mustServiceManager(managerRunner),
-		network: mustNetworkManager(managerRunner),
-		user:    mustUserManager(managerRunner),
-		fs:      mustFSManager(managerRunner),
-		encrypt: mustEncManager(managerRunner),
-		notify:  mustNotifyManager(managerRunner),
+		desktop: must("desktop manager", func() (desktop.Manager, error) { return desktop.New(managerRunner) }),
+		service: must("service manager", func() (sysservice.Manager, error) { return sysservice.New(sysservice.Systemd, managerRunner) }),
+		network: must("network manager", func() (network.Manager, error) { return network.New(network.NetworkManager, managerRunner) }),
+		user:    must("user manager", func() (sysuser.Manager, error) { return sysuser.New(sysuser.ShadowUtils, managerRunner) }),
+		fs:      must("fs manager", func() (sysfs.Manager, error) { return sysfs.New(managerRunner) }),
+		encrypt: must("encryption manager", func() (sysenc.Manager, error) { return sysenc.New(sysenc.LUKS, managerRunner) }),
+		notify:  must("notify manager", func() (sysnotify.Manager, error) { return sysnotify.New(managerRunner) }),
 	}
 }
 
@@ -70,14 +72,6 @@ func (e *Executor) ensureDeps() {
 	})
 }
 
-func mustNotifyManager(r sysexec.Runner) sysnotify.Manager {
-	m, err := sysnotify.New(r)
-	if err != nil {
-		panic("executor: notify manager must construct: " + err.Error())
-	}
-	return m
-}
-
 func (e *Executor) runSudo(ctx context.Context, name string, args ...string) (*pb.CommandOutput, error) {
 	r, err := e.runnerOrDirect().Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
 	return toOutput(&r), asCmdError(name, r, err)
@@ -87,5 +81,7 @@ func (e *Executor) runnerOrDirect() sysexec.Runner {
 	if e.runner != nil {
 		return e.runner
 	}
-	return mustDirectRunner()
+	return must("Direct runner", func() (sysexec.Runner, error) {
+		return sysexec.NewRunner(sysexec.Direct)
+	})
 }

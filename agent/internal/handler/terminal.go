@@ -22,8 +22,8 @@ import (
 var _ sdk.TerminalHandler = (*Handler)(nil)
 
 var (
-	termUserMgr   = mustTermUserManager()
-	termFSMgr     = mustTermFSManager()
+	termUserMgr   = must("user manager", func() (sysuser.Manager, error) { return sysuser.New(sysuser.ShadowUtils, handlerRunner) })
+	termFSMgr     = must("fs manager", func() (sysfs.Manager, error) { return sysfs.New(handlerRunner) })
 	sysuserModify = termUserMgr.Modify
 	sysuserGet    = termUserMgr.Get
 
@@ -36,20 +36,12 @@ func terminalCleanupContext(requestCtx context.Context) (context.Context, contex
 	return context.WithTimeout(context.WithoutCancel(requestCtx), terminalCleanupTimeout)
 }
 
-func mustTermUserManager() sysuser.Manager {
-	m, err := sysuser.New(sysuser.ShadowUtils, handlerRunner)
+func must[T any](name string, construct func() (T, error)) T {
+	v, err := construct()
 	if err != nil {
-		panic("handler: user manager must construct: " + err.Error())
+		panic("handler: " + name + " must construct: " + err.Error())
 	}
-	return m
-}
-
-func mustTermFSManager() sysfs.Manager {
-	m, err := sysfs.New(handlerRunner)
-	if err != nil {
-		panic("handler: fs manager must construct: " + err.Error())
-	}
-	return m
+	return v
 }
 
 const (

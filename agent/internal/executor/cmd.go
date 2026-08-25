@@ -5,12 +5,12 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-func mustDirectRunner() sysexec.Runner {
-	r, err := sysexec.NewRunner(sysexec.Direct)
+func must[T any](name string, construct func() (T, error)) T {
+	v, err := construct()
 	if err != nil {
-		panic("executor: Direct runner must construct: " + err.Error())
+		panic("executor: " + name + " must construct: " + err.Error())
 	}
-	return r
+	return v
 }
 
 func toOutput(r *sysexec.Result) *pb.CommandOutput {

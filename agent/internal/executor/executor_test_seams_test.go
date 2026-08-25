@@ -5,20 +5,24 @@ import (
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/sys/desktop"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysnotify "github.com/manchtools/cadestro/sdk/sys/notify"
 )
 
 var (
-	executorRunner = mustDirectRunner()
-	desktopMgr     = mustDesktopManager(executorRunner)
-	serviceMgr     = mustServiceManager(executorRunner)
-	networkMgr     = mustNetworkManager(executorRunner)
-	userMgr        = mustUserManager(executorRunner)
-	fsMgr          = mustFSManager(executorRunner)
-	encMgr         = mustEncManager(executorRunner)
+	executorRunner = must("Direct runner", func() (sysexec.Runner, error) {
+		return sysexec.NewRunner(sysexec.Direct)
+	})
+	executorDefaults = newExecutorDeps(executorRunner)
+	desktopMgr       = executorDefaults.desktop
+	serviceMgr       = executorDefaults.service
+	networkMgr       = executorDefaults.network
+	userMgr          = executorDefaults.user
+	fsMgr            = executorDefaults.fs
+	encMgr           = executorDefaults.encrypt
 )
 
-func testNotify() sysnotify.Manager { return mustNotifyManager(executorRunner) }
+func testNotify() sysnotify.Manager { return executorDefaults.notify }
 
 func testExecutor() *Executor {
 	e := NewExecutor(nil)
