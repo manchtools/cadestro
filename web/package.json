@@ -11,7 +11,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "vitest run --project unit && vitest run --project browser --shard=1/8 && vitest run --project browser --shard=2/8 && vitest run --project browser --shard=3/8 && vitest run --project browser --shard=4/8 && vitest run --project browser --shard=5/8 && vitest run --project browser --shard=6/8 && vitest run --project browser --shard=7/8 && vitest run --project browser --shard=8/8",
+		"test": "vitest run --project unit && export VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB=8 && vitest run --project browser --shard=1/8 && vitest run --project browser --shard=2/8 && vitest run --project browser --shard=3/8 && vitest run --project browser --shard=4/8 && vitest run --project browser --shard=5/8 && vitest run --project browser --shard=6/8 && vitest run --project browser --shard=7/8 && vitest run --project browser --shard=8/8",
 		"test:watch": "vitest",
 		"test:e2e": "playwright test tests/e2e",
 		"test:e2e:ui": "playwright test tests/e2e --ui"
