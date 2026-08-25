@@ -721,7 +721,7 @@ export class ApiClient {
 	async addActionToSet(setId: string, actionId: string, sortOrder: number = 0) {
 		const client = this.getClient();
 		const response = await client.addActionToSet(
-			create(AddActionToSetRequestSchema, { setId, actionId, sortOrder })
+			create(AddActionToSetRequestSchema, { setId: { value: setId }, actionId: { value: actionId }, sortOrder })
 		);
 		return response.set;
 	}
@@ -729,7 +729,7 @@ export class ApiClient {
 	async removeActionFromSet(setId: string, actionId: string) {
 		const client = this.getClient();
 		const response = await client.removeActionFromSet(
-			create(RemoveActionFromSetRequestSchema, { setId, actionId })
+			create(RemoveActionFromSetRequestSchema, { setId: { value: setId }, actionId: { value: actionId } })
 		);
 		return response.set;
 	}
@@ -737,7 +737,7 @@ export class ApiClient {
 	async reorderActionInSet(setId: string, actionId: string, newOrder: number) {
 		const client = this.getClient();
 		const response = await client.reorderActionInSet(
-			create(ReorderActionInSetRequestSchema, { setId, actionId, newOrder })
+			create(ReorderActionInSetRequestSchema, { setId: { value: setId }, actionId: { value: actionId }, newOrder })
 		);
 		return response.set;
 	}
@@ -798,7 +798,7 @@ export class ApiClient {
 	async addActionSetToDefinition(definitionId: string, actionSetId: string, sortOrder: number = 0) {
 		const client = this.getClient();
 		const response = await client.addActionSetToDefinition(
-			create(AddActionSetToDefinitionRequestSchema, { definitionId, actionSetId, sortOrder })
+			create(AddActionSetToDefinitionRequestSchema, { definitionId: { value: definitionId }, actionSetId: { value: actionSetId }, sortOrder })
 		);
 		return response.definition;
 	}
@@ -806,7 +806,7 @@ export class ApiClient {
 	async removeActionSetFromDefinition(definitionId: string, actionSetId: string) {
 		const client = this.getClient();
 		const response = await client.removeActionSetFromDefinition(
-			create(RemoveActionSetFromDefinitionRequestSchema, { definitionId, actionSetId })
+			create(RemoveActionSetFromDefinitionRequestSchema, { definitionId: { value: definitionId }, actionSetId: { value: actionSetId } })
 		);
 		return response.definition;
 	}
@@ -814,7 +814,7 @@ export class ApiClient {
 	async reorderActionSetInDefinition(definitionId: string, actionSetId: string, newOrder: number) {
 		const client = this.getClient();
 		const response = await client.reorderActionSetInDefinition(
-			create(ReorderActionSetInDefinitionRequestSchema, { definitionId, actionSetId, newOrder })
+			create(ReorderActionSetInDefinitionRequestSchema, { definitionId: { value: definitionId }, actionSetId: { value: actionSetId }, newOrder })
 		);
 		return response.definition;
 	}
@@ -1060,14 +1060,14 @@ export class ApiClient {
 	async createLuksToken(deviceId: string, actionId: string) {
 		const client = this.getClient();
 		return client.createLuksToken(
-			create(CreateLuksTokenRequestSchema, { deviceId, actionId })
+			create(CreateLuksTokenRequestSchema, { deviceId, actionId: { value: actionId } })
 		);
 	}
 
 	async revokeLuksDeviceKey(deviceId: string, actionId: string) {
 		const client = this.getClient();
 		return client.revokeLuksDeviceKey(
-			create(RevokeLuksDeviceKeyRequestSchema, { deviceId, actionId })
+			create(RevokeLuksDeviceKeyRequestSchema, { deviceId, actionId: { value: actionId } })
 		);
 	}
 
@@ -1135,7 +1135,7 @@ export class ApiClient {
 	async addCompliancePolicyRule(policyId: string, actionId: string, gracePeriodHours: number = 0) {
 		const client = this.getClient();
 		const response = await client.addCompliancePolicyRule(
-			create(AddCompliancePolicyRuleRequestSchema, { policyId, actionId, gracePeriodHours })
+			create(AddCompliancePolicyRuleRequestSchema, { policyId, actionId: { value: actionId }, gracePeriodHours })
 		);
 		return response.policy;
 	}
@@ -1143,7 +1143,7 @@ export class ApiClient {
 	async removeCompliancePolicyRule(policyId: string, actionId: string) {
 		const client = this.getClient();
 		const response = await client.removeCompliancePolicyRule(
-			create(RemoveCompliancePolicyRuleRequestSchema, { policyId, actionId })
+			create(RemoveCompliancePolicyRuleRequestSchema, { policyId, actionId: { value: actionId } })
 		);
 		return response.policy;
 	}
@@ -1151,7 +1151,7 @@ export class ApiClient {
 	async updateCompliancePolicyRule(policyId: string, actionId: string, gracePeriodHours: number) {
 		const client = this.getClient();
 		const response = await client.updateCompliancePolicyRule(
-			create(UpdateCompliancePolicyRuleRequestSchema, { policyId, actionId, gracePeriodHours })
+			create(UpdateCompliancePolicyRuleRequestSchema, { policyId, actionId: { value: actionId }, gracePeriodHours })
 		);
 		return response.policy;
 	}

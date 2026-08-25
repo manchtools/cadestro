@@ -99,8 +99,8 @@
 	const dirtyRules = $derived(
 		(policy?.rules ?? []).filter(
 			(rule) =>
-				graceDraft[rule.actionId] !== undefined &&
-				graceDraft[rule.actionId] !== rule.gracePeriodHours
+				graceDraft[rule.actionId?.value ?? ''] !== undefined &&
+				graceDraft[rule.actionId?.value ?? ''] !== rule.gracePeriodHours
 		)
 	);
 	const graceValid = $derived(
@@ -111,7 +111,7 @@
 
 	function seedGraceDraft(next: CompliancePolicy | null) {
 		const seeded: Record<string, number> = {};
-		for (const rule of next?.rules ?? []) seeded[rule.actionId] = rule.gracePeriodHours;
+		for (const rule of next?.rules ?? []) seeded[rule.actionId?.value ?? ''] = rule.gracePeriodHours;
 		graceDraft = seeded;
 	}
 
@@ -230,7 +230,7 @@
 				const r = await apiClient.listActions(size, token, ActionType.SHELL);
 				return { items: r.actions, nextPageToken: r.nextPageToken };
 			});
-			const existingActionIds = policy?.rules.map((r) => r.actionId) ?? [];
+			const existingActionIds = policy?.rules.map((r) => r.actionId?.value ?? '') ?? [];
 			complianceActions = allActions.filter((a) => {
 				if (existingActionIds.includes(a.id)) return false;
 				if (a.type !== ActionType.SHELL) return false;
@@ -292,8 +292,8 @@
 	async function saveGracePeriods() {
 		if (!policyId || savingGrace || !graceValid) return;
 		const pending = dirtyRules.map((rule) => ({
-			actionId: rule.actionId,
-			hours: graceDraft[rule.actionId]
+			actionId: rule.actionId?.value ?? '',
+			hours: graceDraft[rule.actionId?.value ?? '']
 		}));
 		if (pending.length === 0) return;
 		savingGrace = true;
@@ -435,7 +435,7 @@
 							</p>
 						{:else}
 							<ul class="divide-y divide-hair rounded-xl border border-hair bg-surface">
-								{#each policy.rules as rule (rule.actionId)}
+								{#each policy.rules as rule (rule.actionId?.value ?? '')}
 									{@const chip = graceChip(rule.gracePeriodHours)}
 									<li class="flex flex-wrap items-center gap-2 px-3 py-2.5">
 										<ShieldCheck class="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -453,11 +453,11 @@
 												max={GRACE_MAX_HOURS}
 												class="h-7 w-20 font-mono text-xs"
 												aria-label="{m.compliance_policy_detail_grace_period_label()} — {rule.actionName}"
-												value={graceDraft[rule.actionId] ?? rule.gracePeriodHours}
+								value={graceDraft[rule.actionId?.value ?? ''] ?? rule.gracePeriodHours}
 												oninput={(e) =>
 													(graceDraft = {
 														...graceDraft,
-														[rule.actionId]: e.currentTarget.valueAsNumber
+									[rule.actionId?.value ?? '']: e.currentTarget.valueAsNumber
 													})}
 											/>
 										</label>
@@ -466,7 +466,7 @@
 											size="icon"
 											class="h-7 w-7"
 											aria-label={m.common_delete()}
-											onclick={() => removeRule(rule.actionId)}
+							onclick={() => removeRule(rule.actionId?.value ?? '')}
 										>
 											<Trash2 class="h-3.5 w-3.5 text-destructive" />
 										</Button>

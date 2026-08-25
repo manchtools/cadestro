@@ -362,7 +362,7 @@ func compliancePolicyToProto(row store.CompliancePolicyRow, rules []store.Compli
 	}
 	for i, rule := range rules {
 		policy.Rules[i] = &cadestrov1.CompliancePolicyRule{
-			ActionId: rule.ActionID, ActionName: rule.ActionName,
+			ActionId: &cadestrov1.ActionId{Value: rule.ActionID}, ActionName: rule.ActionName,
 			GracePeriodHours: rule.GracePeriodHours,
 		}
 	}

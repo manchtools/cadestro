@@ -51,24 +51,24 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, "0 4 * * *", created.Msg.Set.Schedule.Cron)
 
 	added, err := f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
-		SetId: setID, ActionId: action2.ID, SortOrder: 20,
+		SetId: &cadestrov1.ActionSetId{Value: setID}, ActionId: &cadestrov1.ActionId{Value: action2.ID}, SortOrder: 20,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), added.Msg.Set.MemberCount)
 	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
-		SetId: setID, ActionId: action1.ID, SortOrder: 10,
+		SetId: &cadestrov1.ActionSetId{Value: setID}, ActionId: &cadestrov1.ActionId{Value: action1.ID}, SortOrder: 10,
 	}))
 	require.NoError(t, err)
 	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
-		SetId: setID, ActionId: action1.ID, SortOrder: 30,
+		SetId: &cadestrov1.ActionSetId{Value: setID}, ActionId: &cadestrov1.ActionId{Value: action1.ID}, SortOrder: 30,
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
 	got, err := f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 2)
-	assert.Equal(t, action1.ID, got.Msg.Members[0].ActionId)
-	assert.Equal(t, action2.ID, got.Msg.Members[1].ActionId)
+	assert.Equal(t, action1.ID, got.Msg.Members[0].GetActionId().GetValue())
+	assert.Equal(t, action2.ID, got.Msg.Members[1].GetActionId().GetValue())
 	assert.Equal(t, int32(2), got.Msg.Set.MemberCount)
 
 	renamed, err := f.handlers.RenameActionSet(ctx, connect.NewRequest(&cadestrov1.RenameActionSetRequest{Id: setID, Name: "renamed"}))
@@ -87,21 +87,21 @@ func TestActionSetHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, cadestrov1.OnFailure_ON_FAILURE_CONTINUE, policy.Msg.Set.OnFailure)
 
 	reordered, err := f.handlers.ReorderActionInSet(ctx, connect.NewRequest(&cadestrov1.ReorderActionInSetRequest{
-		SetId: setID, ActionId: action2.ID, NewOrder: 0,
+		SetId: &cadestrov1.ActionSetId{Value: setID}, ActionId: &cadestrov1.ActionId{Value: action2.ID}, NewOrder: 0,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), reordered.Msg.Set.MemberCount)
 	got, err = f.handlers.GetActionSet(ctx, connect.NewRequest(&cadestrov1.GetActionSetRequest{Id: setID}))
 	require.NoError(t, err)
-	assert.Equal(t, action2.ID, got.Msg.Members[0].ActionId)
+	assert.Equal(t, action2.ID, got.Msg.Members[0].GetActionId().GetValue())
 
 	removed, err := f.handlers.RemoveActionFromSet(ctx, connect.NewRequest(&cadestrov1.RemoveActionFromSetRequest{
-		SetId: setID, ActionId: action1.ID,
+		SetId: &cadestrov1.ActionSetId{Value: setID}, ActionId: &cadestrov1.ActionId{Value: action1.ID},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), removed.Msg.Set.MemberCount)
 	_, err = f.handlers.RemoveActionFromSet(ctx, connect.NewRequest(&cadestrov1.RemoveActionFromSetRequest{
-		SetId: setID, ActionId: action1.ID,
+		SetId: &cadestrov1.ActionSetId{Value: setID}, ActionId: &cadestrov1.ActionId{Value: action1.ID},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
@@ -208,7 +208,7 @@ func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
 	require.NoError(t, err)
 	ctx := f.actor("AddActionToSet")
 	_, err = f.handlers.AddActionToSet(ctx, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
-		SetId: set.ID, ActionId: system.ID,
+		SetId: &cadestrov1.ActionSetId{Value: set.ID}, ActionId: &cadestrov1.ActionId{Value: system.ID},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 
@@ -233,11 +233,11 @@ func TestActionSetHandlers_AddRequiresVisibleOrdinaryAction(t *testing.T) {
 		}},
 	})
 	_, err = f.handlers.AddActionToSet(scoped, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
-		SetId: set.ID, ActionId: outOfScope.ID,
+		SetId: &cadestrov1.ActionSetId{Value: set.ID}, ActionId: &cadestrov1.ActionId{Value: outOfScope.ID},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "membership must not import an out-of-scope action")
 	_, err = f.handlers.AddActionToSet(scoped, connect.NewRequest(&cadestrov1.AddActionToSetRequest{
-		SetId: set.ID, ActionId: inScope.ID,
+		SetId: &cadestrov1.ActionSetId{Value: set.ID}, ActionId: &cadestrov1.ActionId{Value: inScope.ID},
 	}))
 	require.NoError(t, err)
 }

@@ -109,7 +109,7 @@ func TestHandleAgentMessageRoutesRetainedFrames(t *testing.T) {
 		{Payload: &cadestrov1.AgentMessage_QueryResult{QueryResult: &cadestrov1.OSQueryResult{QueryId: &cadestrov1.QueryId{Value: "query"}}}},
 		{Payload: &cadestrov1.AgentMessage_LogQueryResult{LogQueryResult: &cadestrov1.LogQueryResult{QueryId: &cadestrov1.QueryId{Value: "log"}}}},
 		{Payload: &cadestrov1.AgentMessage_Inventory{Inventory: &cadestrov1.DeviceInventory{}}},
-		{Payload: &cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult{RevokeLuksDeviceKeyResult: &cadestrov1.RevokeLuksDeviceKeyResult{ActionId: "action"}}},
+		{Payload: &cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult{RevokeLuksDeviceKeyResult: &cadestrov1.RevokeLuksDeviceKeyResult{ActionId: &cadestrov1.ActionId{Value: "action"}}}},
 	}
 	for _, frame := range frames {
 		require.NoError(t, handler.handleAgentMessage(context.Background(), agent, frame))

@@ -746,7 +746,7 @@ func (c *Client) GetLuksKey(ctx context.Context, actionID string) ([]byte, error
 		Id: id,
 		Payload: &cadestrov1.AgentMessage_GetLuksKey{
 			GetLuksKey: &cadestrov1.GetLuksKeyRequest{
-				ActionId: actionID,
+				ActionId: &cadestrov1.ActionId{Value: actionID},
 			},
 		},
 	}); err != nil {
@@ -790,7 +790,7 @@ func (c *Client) StoreLuksKey(ctx context.Context, actionID, devicePath string, 
 		Id: id,
 		Payload: &cadestrov1.AgentMessage_StoreLuksKey{
 			StoreLuksKey: &cadestrov1.StoreLuksKeyRequest{
-				ActionId:       actionID,
+				ActionId:       &cadestrov1.ActionId{Value: actionID},
 				DevicePath:     devicePath,
 				Passphrase:     passphrase,
 				RotationReason: reason,
@@ -844,7 +844,7 @@ func (c *Client) StoreLpsPasswords(ctx context.Context, actionID string, rotatio
 		Id: id,
 		Payload: &cadestrov1.AgentMessage_StoreLpsPasswords{
 			StoreLpsPasswords: &cadestrov1.StoreLpsPasswordsRequest{
-				ActionId:  actionID,
+				ActionId:  &cadestrov1.ActionId{Value: actionID},
 				Rotations: rotations,
 			},
 		},
@@ -879,7 +879,7 @@ func (c *Client) SendRevokeLuksDeviceKeyResult(ctx context.Context, actionID str
 		Id: NewULID(),
 		Payload: &cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult{
 			RevokeLuksDeviceKeyResult: &cadestrov1.RevokeLuksDeviceKeyResult{
-				ActionId: actionID,
+				ActionId: &cadestrov1.ActionId{Value: actionID},
 				Success:  success,
 				Error:    errMsg,
 			},
@@ -1501,7 +1501,7 @@ func (c *Client) dispatchServerMessage(ctx context.Context, msg *cadestrov1.Serv
 		}
 		if luksHandler, ok := handler.(LuksHandler); ok {
 			req := p.RevokeLuksDeviceKey
-			actionID := req.ActionId
+			actionID := req.GetActionId().GetValue()
 			// Run in goroutine: the handler calls GetLuksKey which sends
 			// a request on the stream and waits for a response. Processing
 			// that response requires this receive loop to keep running.
@@ -1660,7 +1660,7 @@ func (c *Client) ValidateLuksToken(ctx context.Context, token string) (*Validate
 			return nil, fmt.Errorf("invalid ValidateLuksToken response: %w", err)
 		}
 		return &ValidateLuksTokenResult{
-			ActionID:   validated.ActionId,
+			ActionID:   validated.GetActionId().GetValue(),
 			DevicePath: validated.DevicePath,
 			MinLength:  validated.MinLength,
 			Complexity: validated.Complexity,

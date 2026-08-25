@@ -21,6 +21,7 @@ var errRevocationStateChanged = errors.New("LUKS revocation state changed")
 // signature is involved: the stream already supplies peer authentication,
 // confidentiality, integrity, ordering, and replay protection.
 func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request[cadestrov1.RevokeLuksDeviceKeyRequest]) (*connect.Response[cadestrov1.RevokeLuksDeviceKeyResponse], error) {
+	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return nil, err
@@ -28,7 +29,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 	if _, err := h.mutationDevice(ctx, "RevokeLuksDeviceKey", req.Msg.DeviceId); err != nil {
 		return nil, err
 	}
-	target, err := h.store.GetLuksRevocationTarget(ctx, req.Msg.DeviceId, req.Msg.ActionId)
+	target, err := h.store.GetLuksRevocationTarget(ctx, req.Msg.DeviceId, actionID)
 	if err != nil {
 		return nil, h.internal(ctx, "read LUKS revocation target", err)
 	}
@@ -47,7 +48,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 		cadestrov1connect.ControlServiceRevokeLuksDeviceKeyProcedure, "RevokeLuksDeviceKey"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			rows, err := tx.MarkLuksKeyRevocationDispatched(ctx, db.MarkLuksKeyRevocationDispatchedParams{
-				RevocationAt: &requestedAt, DeviceID: req.Msg.DeviceId, ActionID: req.Msg.ActionId,
+				RevocationAt: &requestedAt, DeviceID: req.Msg.DeviceId, ActionID: actionID,
 			})
 			if err != nil {
 				return fmt.Errorf("mark LUKS revocation dispatched: %w", err)
@@ -55,7 +56,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 			if rows != target.KeyCount {
 				return errRevocationStateChanged
 			}
-			rec.Effect(luksRevocationEffect(req.Msg.ActionId, "DISPATCH", store.EffectApplied, rows, "revocation_at", "revocation_status"))
+			rec.Effect(luksRevocationEffect(actionID, "DISPATCH", store.EffectApplied, rows, "revocation_at", "revocation_status"))
 			return nil
 		})
 	if err != nil {
@@ -68,7 +69,7 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: revocationID,
 		Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
-			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: req.Msg.ActionId},
+			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: actionID}},
 		},
 	})
 	if err == nil {
@@ -79,12 +80,12 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 	_, auditErr := h.store.WithAuditEffects(ctx, record.OperationID,
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			rows, updateErr := tx.MarkLuksKeyRevocationDispatchFailed(ctx, db.MarkLuksKeyRevocationDispatchFailedParams{
-				RevocationAt: &failedAt, DeviceID: req.Msg.DeviceId, ActionID: req.Msg.ActionId,
+				RevocationAt: &failedAt, DeviceID: req.Msg.DeviceId, ActionID: actionID,
 			})
 			if updateErr != nil {
 				return fmt.Errorf("mark LUKS revocation dispatch failed: %w", updateErr)
 			}
-			rec.Effect(luksRevocationEffect(req.Msg.ActionId, "DISPATCH", store.EffectFailed, rows,
+			rec.Effect(luksRevocationEffect(actionID, "DISPATCH", store.EffectFailed, rows,
 				"revocation_at", "revocation_error", "revocation_status"))
 			return nil
 		})
@@ -104,7 +105,8 @@ func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID strin
 	if result == nil {
 		return errors.New("LUKS revocation result is required")
 	}
-	if _, err := ulid.ParseStrict(result.ActionId); err != nil {
+	actionID := result.GetActionId().GetValue()
+	if _, err := ulid.ParseStrict(actionID); err != nil {
 		return fmt.Errorf("invalid action id: %w", err)
 	}
 	if len(result.Error) > 1024 {
@@ -127,7 +129,7 @@ func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID strin
 	_, err := h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		rows, err := tx.CompleteLuksKeyRevocation(ctx, db.CompleteLuksKeyRevocationParams{
 			RevocationStatus: &status, RevocationError: resultError, RevocationAt: &completedAt,
-			DeviceID: deviceID, ActionID: result.ActionId,
+			DeviceID: deviceID, ActionID: actionID,
 		})
 		if err != nil {
 			return fmt.Errorf("complete LUKS revocation: %w", err)
@@ -136,7 +138,7 @@ func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID strin
 		if rows == 0 {
 			outcome = store.EffectRejected
 		}
-		rec.Effect(luksRevocationEffect(result.ActionId, "COMPLETE", outcome, rows,
+		rec.Effect(luksRevocationEffect(actionID, "COMPLETE", outcome, rows,
 			"revocation_at", "revocation_error", "revocation_status"))
 		return nil
 	})

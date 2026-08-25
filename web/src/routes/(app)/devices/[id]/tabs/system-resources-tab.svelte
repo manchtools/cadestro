@@ -170,7 +170,7 @@
 							{#each luksCurrentKeys as lk}
 								<Table.Row>
 									<Table.Cell class="font-mono text-xs">{lk.devicePath}</Table.Cell>
-									<Table.Cell>{lk.actionName || lk.actionId.slice(0, 8)}</Table.Cell>
+							<Table.Cell>{lk.actionName || (lk.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 									<Table.Cell>
 										<SecretCell id={lk.id} {...luksSecret} />
 									</Table.Cell>
@@ -193,12 +193,12 @@
 									</Table.Cell>
 									<Table.Cell>
 										<div class="flex items-center gap-1">
-											<Button variant="ghost" size="sm" onclick={() => createLuksTokenFlow(lk.actionId)} disabled={luksTokenLoading}>
+										<Button variant="ghost" size="sm" onclick={() => createLuksTokenFlow(lk.actionId?.value ?? '')} disabled={luksTokenLoading}>
 												<ExternalLink class="h-3 w-3 mr-1" />
 												{m.luks_set_passphrase()}
 											</Button>
 											{#if lk.revocationStatus !== LuksRevocationStatus.DISPATCHED}
-												<Button variant="ghost" size="sm" class="text-destructive" onclick={() => { luksRevokeActionId = lk.actionId; luksRevokeDialogOpen = true; }}>
+													<Button variant="ghost" size="sm" class="text-destructive" onclick={() => { luksRevokeActionId = lk.actionId?.value ?? ''; luksRevokeDialogOpen = true; }}>
 													<ShieldOff class="h-3 w-3 mr-1" />
 													{m.luks_revoke_device_key()}
 												</Button>
@@ -231,7 +231,7 @@
 									{#each luksHistoryKeys as lk}
 										<Table.Row class="opacity-60">
 											<Table.Cell class="font-mono text-xs">{lk.devicePath}</Table.Cell>
-											<Table.Cell>{lk.actionName || lk.actionId.slice(0, 8)}</Table.Cell>
+							<Table.Cell>{lk.actionName || (lk.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 											<Table.Cell>
 												<SecretCell id={lk.id} {...luksSecret} />
 											</Table.Cell>
@@ -273,7 +273,7 @@
 							{#each lpsCurrentPasswords as pw}
 								<Table.Row>
 									<Table.Cell class="font-medium">{pw.username}</Table.Cell>
-									<Table.Cell>{pw.actionName || pw.actionId.slice(0, 8)}</Table.Cell>
+							<Table.Cell>{pw.actionName || (pw.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 									<Table.Cell>
 										<SecretCell id={pw.id} {...lpsSecret} />
 									</Table.Cell>
@@ -305,7 +305,7 @@
 									{#each lpsHistoryPasswords as pw}
 										<Table.Row class="opacity-60">
 											<Table.Cell class="font-medium">{pw.username}</Table.Cell>
-											<Table.Cell>{pw.actionName || pw.actionId.slice(0, 8)}</Table.Cell>
+							<Table.Cell>{pw.actionName || (pw.actionId?.value ?? '').slice(0, 8)}</Table.Cell>
 											<Table.Cell>
 												<SecretCell id={pw.id} {...lpsSecret} />
 											</Table.Cell>

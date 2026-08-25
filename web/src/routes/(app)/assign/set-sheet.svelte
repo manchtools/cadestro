@@ -84,7 +84,7 @@
 							{#if stepsLoading}
 								<span>{m.assign_steps_loading()}</span>
 							{:else}
-								{#each steps as step, index (step.actionId)}
+								{#each steps as step, index (step.actionId?.value ?? '')}
 									<span>{index + 1} · {getActionTypeLabel(step.actionType)} · {step.actionName}</span>
 								{/each}
 							{/if}

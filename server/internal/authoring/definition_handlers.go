@@ -163,22 +163,23 @@ func (h *Handlers) DeleteDefinition(ctx context.Context, req *connect.Request[ca
 
 // AddActionSetToDefinition adds one visible ActionSet to a definition.
 func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Request[cadestrov1.AddActionSetToDefinitionRequest]) (*connect.Response[cadestrov1.AddActionSetToDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "AddActionSetToDefinition")
+	definitionID, actionSetID := req.Msg.GetDefinitionId().GetValue(), req.Msg.GetActionSetId().GetValue()
+	actor, err := h.mutationDefinitionActor(ctx, definitionID, "AddActionSetToDefinition")
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceActionSetReadScope(ctx, req.Msg.ActionSetId); err != nil {
+	if err := h.enforceActionSetReadScope(ctx, actionSetID); err != nil {
 		return nil, err
 	}
-	if _, err := h.operatorActionSet(ctx, req.Msg.ActionSetId); err != nil {
+	if _, err := h.operatorActionSet(ctx, actionSetID); err != nil {
 		return nil, err
 	}
 	if err := h.state.AddActionSetToDefinition(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceAddActionSetToDefinitionProcedure, "AddActionSetToDefinition"),
-		req.Msg.DefinitionId, req.Msg.ActionSetId, req.Msg.SortOrder); err != nil {
+		definitionID, actionSetID, req.Msg.SortOrder); err != nil {
 		return nil, h.definitionError(ctx, "add action set to definition", err)
 	}
-	definition, err := h.definitionResponse(ctx, req.Msg.DefinitionId)
+	definition, err := h.definitionResponse(ctx, definitionID)
 	if err != nil {
 		return nil, err
 	}
@@ -187,16 +188,17 @@ func (h *Handlers) AddActionSetToDefinition(ctx context.Context, req *connect.Re
 
 // RemoveActionSetFromDefinition removes one ActionSet edge.
 func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *connect.Request[cadestrov1.RemoveActionSetFromDefinitionRequest]) (*connect.Response[cadestrov1.RemoveActionSetFromDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "RemoveActionSetFromDefinition")
+	definitionID, actionSetID := req.Msg.GetDefinitionId().GetValue(), req.Msg.GetActionSetId().GetValue()
+	actor, err := h.mutationDefinitionActor(ctx, definitionID, "RemoveActionSetFromDefinition")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.RemoveActionSetFromDefinition(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveActionSetFromDefinitionProcedure, "RemoveActionSetFromDefinition"),
-		req.Msg.DefinitionId, req.Msg.ActionSetId); err != nil {
+		definitionID, actionSetID); err != nil {
 		return nil, h.definitionError(ctx, "remove action set from definition", err)
 	}
-	definition, err := h.definitionResponse(ctx, req.Msg.DefinitionId)
+	definition, err := h.definitionResponse(ctx, definitionID)
 	if err != nil {
 		return nil, err
 	}
@@ -205,16 +207,17 @@ func (h *Handlers) RemoveActionSetFromDefinition(ctx context.Context, req *conne
 
 // ReorderActionSetInDefinition replaces one ActionSet edge position.
 func (h *Handlers) ReorderActionSetInDefinition(ctx context.Context, req *connect.Request[cadestrov1.ReorderActionSetInDefinitionRequest]) (*connect.Response[cadestrov1.ReorderActionSetInDefinitionResponse], error) {
-	actor, err := h.mutationDefinitionActor(ctx, req.Msg.DefinitionId, "ReorderActionSetInDefinition")
+	definitionID, actionSetID := req.Msg.GetDefinitionId().GetValue(), req.Msg.GetActionSetId().GetValue()
+	actor, err := h.mutationDefinitionActor(ctx, definitionID, "ReorderActionSetInDefinition")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.ReorderActionSetInDefinition(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceReorderActionSetInDefinitionProcedure, "ReorderActionSetInDefinition"),
-		req.Msg.DefinitionId, req.Msg.ActionSetId, req.Msg.NewOrder); err != nil {
+		definitionID, actionSetID, req.Msg.NewOrder); err != nil {
 		return nil, h.definitionError(ctx, "reorder action set in definition", err)
 	}
-	definition, err := h.definitionResponse(ctx, req.Msg.DefinitionId)
+	definition, err := h.definitionResponse(ctx, definitionID)
 	if err != nil {
 		return nil, err
 	}

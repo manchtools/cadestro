@@ -79,7 +79,7 @@ func TestDispatchServerMessage_DeliversEveryPendingResponse(t *testing.T) {
 			name: "ValidateLuksToken",
 			payload: func() *cadestrov1.ServerMessage {
 				return &cadestrov1.ServerMessage{Payload: &cadestrov1.ServerMessage_ValidateLuksToken{
-					ValidateLuksToken: &cadestrov1.ValidateLuksTokenResponse{ActionId: NewULID()},
+			ValidateLuksToken: &cadestrov1.ValidateLuksTokenResponse{ActionId: &cadestrov1.ActionId{Value: NewULID()}},
 				}}
 			},
 		},

@@ -84,7 +84,7 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	assert.True(t, created.Msg.Policy.CreatedAt.AsTime().Equal(f.now))
 
 	added, err := f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
-		PolicyId: policyID, ActionId: actionID, GracePeriodHours: 24,
+		PolicyId: policyID, ActionId: &cadestrov1.ActionId{Value: actionID}, GracePeriodHours: 24,
 	}))
 	require.NoError(t, err)
 	require.Len(t, added.Msg.Policy.Rules, 1)
@@ -99,12 +99,12 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	require.Len(t, rows, 1)
 	assert.Equal(t, actionID, rows[0].ID)
 	_, err = f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
-		PolicyId: policyID, ActionId: actionID,
+		PolicyId: policyID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
 	updatedRule, err := f.handlers.UpdateCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.UpdateCompliancePolicyRuleRequest{
-		PolicyId: policyID, ActionId: actionID, GracePeriodHours: 48,
+		PolicyId: policyID, ActionId: &cadestrov1.ActionId{Value: actionID}, GracePeriodHours: 48,
 	}))
 	require.NoError(t, err)
 	require.Len(t, updatedRule.Msg.Policy.Rules, 1)
@@ -131,7 +131,7 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	assert.Equal(t, int32(1), listed.Msg.Policies[0].RuleCount)
 
 	removed, err := f.handlers.RemoveCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.RemoveCompliancePolicyRuleRequest{
-		PolicyId: policyID, ActionId: actionID,
+		PolicyId: policyID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	require.NoError(t, err)
 	assert.Empty(t, removed.Msg.Policy.Rules)
@@ -145,7 +145,7 @@ func TestCompliancePolicyHandlers_CRUDRulesAndAudit(t *testing.T) {
 	require.Len(t, rows, 1)
 	assert.Equal(t, actionID, rows[0].ID)
 	_, err = f.handlers.RemoveCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.RemoveCompliancePolicyRuleRequest{
-		PolicyId: policyID, ActionId: actionID,
+		PolicyId: policyID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
@@ -178,7 +178,7 @@ func TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions(t *testing
 
 	global := f.actor("AddCompliancePolicyRule")
 	_, err = f.handlers.AddCompliancePolicyRule(global, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
-		PolicyId: policy.ID, ActionId: nonCompliance,
+		PolicyId: policy.ID, ActionId: &cadestrov1.ActionId{Value: nonCompliance},
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
@@ -201,11 +201,11 @@ func TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions(t *testing
 		}},
 	})
 	_, err = f.handlers.AddCompliancePolicyRule(scoped, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
-		PolicyId: policy.ID, ActionId: outOfScope,
+		PolicyId: policy.ID, ActionId: &cadestrov1.ActionId{Value: outOfScope},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	_, err = f.handlers.AddCompliancePolicyRule(scoped, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
-		PolicyId: policy.ID, ActionId: inScope,
+		PolicyId: policy.ID, ActionId: &cadestrov1.ActionId{Value: inScope},
 	}))
 	require.NoError(t, err)
 }
@@ -260,7 +260,7 @@ func TestCompliancePolicyHandlers_RefuseComplianceActionWithoutDetectionScript(t
 				"the refusal names the missing detection script, not the classification")
 
 			_, rpcErr := f.handlers.AddCompliancePolicyRule(ctx, connect.NewRequest(&cadestrov1.AddCompliancePolicyRuleRequest{
-				PolicyId: policy.ID, ActionId: actionID,
+				PolicyId: policy.ID, ActionId: &cadestrov1.ActionId{Value: actionID},
 			}))
 			assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(rpcErr))
 

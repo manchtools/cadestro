@@ -174,7 +174,7 @@ func (h *Handlers) lpsPasswordsToProto(rows []store.LpsPasswordView) ([]*cadestr
 		}
 		out[i] = &cadestrov1.LpsPassword{
 			Id: row.ID, DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname,
-			ActionId: row.ActionID, ActionName: row.ActionName,
+			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			Username:  row.Username,
 			RotatedAt: timestamppb.New(row.RotatedAt), RotationReason: reason,
 		}
@@ -191,7 +191,7 @@ func (h *Handlers) luksKeysToProto(rows []store.LuksKeyView) ([]*cadestrov1.Luks
 		}
 		key := &cadestrov1.LuksKey{
 			Id: row.ID, DeviceId: row.DeviceID, DeviceHostname: row.DeviceHostname,
-			ActionId: row.ActionID, ActionName: row.ActionName,
+			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			DevicePath: row.DevicePath,
 			RotatedAt:  timestamppb.New(row.RotatedAt), RotationReason: reason,
 		}
@@ -249,7 +249,8 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cad
 		return nil, rpcError(ctx, errPermissionDenied, connect.CodePermissionDenied,
 			"only the directly assigned device owner can create a LUKS passphrase token")
 	}
-	action, err := h.store.GetManifestAction(ctx, req.Msg.ActionId)
+	actionID := req.Msg.GetActionId().GetValue()
+	action, err := h.store.GetManifestAction(ctx, actionID)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errActionNotFound, "action not found")
@@ -286,7 +287,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cad
 		cadestrov1connect.ControlServiceCreateLuksTokenProcedure, "CreateLuksToken"),
 		func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 			if _, err := tx.InsertLuksToken(ctx, db.InsertLuksTokenParams{
-				ID: rowID, DeviceID: req.Msg.DeviceId, ActionID: req.Msg.ActionId,
+				ID: rowID, DeviceID: req.Msg.DeviceId, ActionID: actionID,
 				Token: hex.EncodeToString(hash[:]), MinLength: minLength,
 				Complexity: int32(params.UserPassphraseComplexity),
 				CreatedAt:  issuedAt, ExpiresAt: expiresAt,

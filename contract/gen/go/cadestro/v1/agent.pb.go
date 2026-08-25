@@ -2320,7 +2320,7 @@ func (x *RequestInventory) GetQueryId() *QueryId {
 // device_id is omitted — control derives the device from the mTLS certificate.
 type GetLuksKeyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2355,11 +2355,11 @@ func (*GetLuksKeyRequest) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *GetLuksKeyRequest) GetActionId() string {
+func (x *GetLuksKeyRequest) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 type GetLuksKeyResponse struct {
@@ -2418,7 +2418,7 @@ func (x *GetLuksKeyResponse) GetPassphrase() []byte {
 // The server must confirm receipt before the agent removes the old key from LUKS.
 type StoreLuksKeyRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	// Auto-detected device path (e.g., "/dev/sda2"). Bounded at PATH_MAX: the
 	// value is only ever a local block-device path, and without a ceiling an
 	// authenticated agent can send a transport-sized string that is validated,
@@ -2470,11 +2470,11 @@ func (*StoreLuksKeyRequest) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *StoreLuksKeyRequest) GetActionId() string {
+func (x *StoreLuksKeyRequest) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 func (x *StoreLuksKeyRequest) GetDevicePath() string {
@@ -2636,7 +2636,7 @@ func (x *LpsPasswordRotation) GetReason() RotationReason {
 // run rotates every managed local account on the device.
 type StoreLpsPasswordsRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	// One entry per managed local account on the device. Capped: each entry costs
 	// a validation pass, an encryption, and a row, and no real device manages
 	// anything near this many accounts.
@@ -2675,11 +2675,11 @@ func (*StoreLpsPasswordsRequest) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{28}
 }
 
-func (x *StoreLpsPasswordsRequest) GetActionId() string {
+func (x *StoreLpsPasswordsRequest) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 func (x *StoreLpsPasswordsRequest) GetRotations() []*LpsPasswordRotation {
@@ -2737,7 +2737,7 @@ func (x *StoreLpsPasswordsResponse) GetSuccess() bool {
 // Requested as a live operation via the stream.
 type RevokeLuksDeviceKey struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2772,17 +2772,17 @@ func (*RevokeLuksDeviceKey) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{30}
 }
 
-func (x *RevokeLuksDeviceKey) GetActionId() string {
+func (x *RevokeLuksDeviceKey) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 // Agent reports the result of revoking the device-bound key.
 type RevokeLuksDeviceKeyResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	ActionId      *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2819,11 +2819,11 @@ func (*RevokeLuksDeviceKeyResult) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{31}
 }
 
-func (x *RevokeLuksDeviceKeyResult) GetActionId() string {
+func (x *RevokeLuksDeviceKeyResult) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 func (x *RevokeLuksDeviceKeyResult) GetSuccess() bool {
@@ -2888,7 +2888,7 @@ func (x *ValidateLuksTokenRequest) GetToken() string {
 
 type ValidateLuksTokenResponse struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	ActionId string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	ActionId *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	// Auto-detected device path from server's stored key data
 	DevicePath string `protobuf:"bytes,2,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
 	// Minimum passphrase length (>= 16)
@@ -2929,11 +2929,11 @@ func (*ValidateLuksTokenResponse) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{33}
 }
 
-func (x *ValidateLuksTokenResponse) GetActionId() string {
+func (x *ValidateLuksTokenResponse) GetActionId() *ActionId {
 	if x != nil {
 		return x.ActionId
 	}
-	return ""
+	return nil
 }
 
 func (x *ValidateLuksTokenResponse) GetDevicePath() string {
@@ -3831,15 +3831,15 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"table_name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\ttableName\x12+\n" +
 	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"K\n" +
 	"\x10RequestInventory\x127\n" +
-	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\":\n" +
-	"\x11GetLuksKeyRequest\x12%\n" +
-	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"D\n" +
+	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\"O\n" +
+	"\x11GetLuksKeyRequest\x12:\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\"D\n" +
 	"\x12GetLuksKeyResponse\x12.\n" +
 	"\n" +
 	"passphrase\x18\x01 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80 \x80\x01\x01R\n" +
-	"passphrase\"\xf2\x01\n" +
-	"\x13StoreLuksKeyRequest\x12%\n" +
-	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12/\n" +
+	"passphrase\"\x87\x02\n" +
+	"\x13StoreLuksKeyRequest\x12:\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12/\n" +
 	"\vdevice_path\x18\x02 \x01(\tB\x0e\xbaH\v\xc8\x01\x01r\x06\x18\x80 :\x01/R\n" +
 	"devicePath\x12.\n" +
 	"\n" +
@@ -3854,22 +3854,22 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\bpassword\x18\x02 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80\x01\x80\x01\x01R\bpassword\x12+\n" +
 	"\n" +
 	"rotated_at\x18\x03 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\trotatedAt\x12D\n" +
-	"\x06reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonB\x0f\xbaH\f\xc8\x01\x01\x82\x01\x06\x18\x01\x18\x02\x18\x03R\x06reason\"\x91\x01\n" +
-	"\x18StoreLpsPasswordsRequest\x12%\n" +
-	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12N\n" +
+	"\x06reason\x18\x04 \x01(\x0e2\x1b.cadestro.v1.RotationReasonB\x0f\xbaH\f\xc8\x01\x01\x82\x01\x06\x18\x01\x18\x02\x18\x03R\x06reason\"\xa6\x01\n" +
+	"\x18StoreLpsPasswordsRequest\x12:\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12N\n" +
 	"\trotations\x18\x02 \x03(\v2 .cadestro.v1.LpsPasswordRotationB\x0e\xbaH\v\xc8\x01\x01\x92\x01\x05\b\x01\x10\x80\x02R\trotations\"5\n" +
 	"\x19StoreLpsPasswordsResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"<\n" +
-	"\x13RevokeLuksDeviceKey\x12%\n" +
-	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"\x7f\n" +
-	"\x19RevokeLuksDeviceKeyResult\x12%\n" +
-	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"Q\n" +
+	"\x13RevokeLuksDeviceKey\x12:\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\"\x94\x01\n" +
+	"\x19RevokeLuksDeviceKeyResult\x12:\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
 	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error\":\n" +
 	"\x18ValidateLuksTokenRequest\x12\x1e\n" +
-	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05token\"\xbc\x01\n" +
-	"\x19ValidateLuksTokenResponse\x12\x1b\n" +
-	"\taction_id\x18\x01 \x01(\tR\bactionId\x12\x1f\n" +
+	"\x05token\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05token\"\xd3\x01\n" +
+	"\x19ValidateLuksTokenResponse\x122\n" +
+	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdR\bactionId\x12\x1f\n" +
 	"\vdevice_path\x18\x02 \x01(\tR\n" +
 	"devicePath\x12\x1d\n" +
 	"\n" +
@@ -4120,24 +4120,30 @@ var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	27, // 64: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
 	25, // 65: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
 	66, // 66: cadestro.v1.RequestInventory.query_id:type_name -> cadestro.v1.QueryId
-	67, // 67: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
-	67, // 68: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
-	33, // 69: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
-	68, // 70: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	69, // 71: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
-	42, // 72: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	18, // 73: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	66, // 74: cadestro.v1.LogQuery.query_id:type_name -> cadestro.v1.QueryId
-	4,  // 75: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
-	66, // 76: cadestro.v1.LogQueryResult.query_id:type_name -> cadestro.v1.QueryId
-	5,  // 77: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
-	6,  // 78: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	10, // 79: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	79, // [79:80] is the sub-list for method output_type
-	78, // [78:79] is the sub-list for method input_type
-	78, // [78:78] is the sub-list for extension type_name
-	78, // [78:78] is the sub-list for extension extendee
-	0,  // [0:78] is the sub-list for field type_name
+	58, // 67: cadestro.v1.GetLuksKeyRequest.action_id:type_name -> cadestro.v1.ActionId
+	58, // 68: cadestro.v1.StoreLuksKeyRequest.action_id:type_name -> cadestro.v1.ActionId
+	67, // 69: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
+	67, // 70: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
+	58, // 71: cadestro.v1.StoreLpsPasswordsRequest.action_id:type_name -> cadestro.v1.ActionId
+	33, // 72: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
+	58, // 73: cadestro.v1.RevokeLuksDeviceKey.action_id:type_name -> cadestro.v1.ActionId
+	58, // 74: cadestro.v1.RevokeLuksDeviceKeyResult.action_id:type_name -> cadestro.v1.ActionId
+	58, // 75: cadestro.v1.ValidateLuksTokenResponse.action_id:type_name -> cadestro.v1.ActionId
+	68, // 76: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	69, // 77: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	42, // 78: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	18, // 79: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	66, // 80: cadestro.v1.LogQuery.query_id:type_name -> cadestro.v1.QueryId
+	4,  // 81: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
+	66, // 82: cadestro.v1.LogQueryResult.query_id:type_name -> cadestro.v1.QueryId
+	5,  // 83: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
+	6,  // 84: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	10, // 85: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	85, // [85:86] is the sub-list for method output_type
+	84, // [84:85] is the sub-list for method input_type
+	84, // [84:84] is the sub-list for extension type_name
+	84, // [84:84] is the sub-list for extension extendee
+	0,  // [0:84] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }

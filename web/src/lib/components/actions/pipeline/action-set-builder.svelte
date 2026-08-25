@@ -90,7 +90,7 @@
 	function serverBody(): Body {
 		const steps: StepDraft[] = [];
 		for (const member of [...members].sort((a, b) => a.sortOrder - b.sortOrder)) {
-			const action = byId.get(member.actionId);
+			const action = byId.get(member.actionId?.value ?? '');
 			// A member whose action is not in the library (deleted, or outside this
 			// operator's scope) is skipped rather than rendered as a broken step —
 			// commit never touches it, so it stays in the set untouched.

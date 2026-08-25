@@ -77,7 +77,7 @@ vi.mock('$app/navigation', () => ({
 
 import CompliancePolicyDetailSheet from './compliance-policy-detail-sheet.svelte';
 
-function policy(rules: { actionId: string; actionName: string; gracePeriodHours: number }[]) {
+function policy(rules: { actionId: { value: string }; actionName: string; gracePeriodHours: number }[]) {
 	return create(CompliancePolicySchema, {
 		id: POLICY_ID,
 		name: 'Security baseline',
@@ -90,8 +90,8 @@ function policy(rules: { actionId: string; actionName: string; gracePeriodHours:
 }
 
 const RULES = [
-	{ actionId: RULE_ONE, actionName: 'Disk encryption', gracePeriodHours: 0 },
-	{ actionId: RULE_TWO, actionName: 'Screen lock', gracePeriodHours: 24 }
+		{ actionId: { value: RULE_ONE }, actionName: 'Disk encryption', gracePeriodHours: 0 },
+		{ actionId: { value: RULE_TWO }, actionName: 'Screen lock', gracePeriodHours: 24 }
 ];
 
 beforeEach(() => {
@@ -107,7 +107,7 @@ beforeEach(() => {
 	api.getCompliancePolicy.mockImplementation(async () => policy(stored));
 	api.updateCompliancePolicyRule.mockImplementation(
 		async (_policyId: string, actionId: string, hours: number) => {
-			stored = stored.map((r) => (r.actionId === actionId ? { ...r, gracePeriodHours: hours } : r));
+		stored = stored.map((r) => (r.actionId.value === actionId ? { ...r, gracePeriodHours: hours } : r));
 			return policy(stored);
 		}
 	);

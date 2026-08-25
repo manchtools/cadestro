@@ -102,7 +102,7 @@ func TestDispatch_HandlerPanic_Recovered_LoopSurvives(t *testing.T) {
 		msg := &cadestrov1.ServerMessage{
 			Id: NewULID(),
 			Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
-				RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: "01HQ0000000000000000000000"},
+			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: "01HQ0000000000000000000000"}},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {

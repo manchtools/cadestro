@@ -63,7 +63,7 @@ const lpsCurrent = [
 	create(LpsPasswordSchema, {
 		id: ALICE_ID,
 		deviceId: DEVICE_ID,
-		actionId: '01JQZZACTIONLPS0000000000A',
+		actionId: { value: '01JQZZACTIONLPS0000000000A' },
 		actionName: 'Workstation LPS',
 		username: 'alice',
 		rotationReason: RotationReason.SCHEDULED
@@ -71,7 +71,7 @@ const lpsCurrent = [
 	create(LpsPasswordSchema, {
 		id: BOB_ID,
 		deviceId: DEVICE_ID,
-		actionId: '01JQZZACTIONLPS0000000000A',
+		actionId: { value: '01JQZZACTIONLPS0000000000A' },
 		actionName: 'Workstation LPS',
 		username: 'bob',
 		rotationReason: RotationReason.INITIAL
@@ -82,7 +82,7 @@ const luksCurrent = [
 	create(LuksKeySchema, {
 		id: LUKS_ID,
 		deviceId: DEVICE_ID,
-		actionId: LUKS_ACTION_ID,
+		actionId: { value: LUKS_ACTION_ID },
 		actionName: 'Laptop LUKS',
 		devicePath: '/dev/sda3',
 		rotationReason: RotationReason.SCHEDULED,

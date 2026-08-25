@@ -93,7 +93,7 @@ func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, reques
 		return nil, err
 	}
 	return &cadestrov1.ValidateLuksTokenResponse{
-		ActionId: token.ActionID, DevicePath: devicePath, MinLength: token.MinLength,
+		ActionId: &cadestrov1.ActionId{Value: token.ActionID}, DevicePath: devicePath, MinLength: token.MinLength,
 		Complexity: cadestrov1.LpsPasswordComplexity(token.Complexity),
 	}, nil
 }
@@ -103,7 +103,8 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *cade
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
-	key, err := s.store.GetCurrentLuksKeyForAgent(ctx, deviceID, request.ActionId)
+	actionID := request.GetActionId().GetValue()
+	key, err := s.store.GetCurrentLuksKeyForAgent(ctx, deviceID, actionID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +134,8 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *ca
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
-	if err := s.requireActionType(ctx, request.ActionId, cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
+	actionID := request.GetActionId().GetValue()
+	if err := s.requireActionType(ctx, actionID, cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION); err != nil {
 		return nil, err
 	}
 	plaintext, err := copySecret(request.Passphrase)
@@ -147,7 +149,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *ca
 	// non-relocatable onto a sibling rotation row.
 	rowID := ulid.Make().String()
 	genericCiphertext, err := s.atRest.EncryptWithContext(string(plaintext),
-		crypto.DeviceSecretAAD(rowID, deviceID, "luks", request.ActionId, 1))
+		crypto.DeviceSecretAAD(rowID, deviceID, "luks", actionID, 1))
 	if err != nil {
 		return nil, fmt.Errorf("encrypt generic LUKS passphrase at rest: %w", err)
 	}
@@ -159,11 +161,11 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *ca
 	_, err = s.store.WithAudit(ctx, agentOperation(deviceID, "StoreLuksKey"),
 		func(ctx context.Context, tx *store.Tx, recorder *store.AuditRecorder) error {
 			if _, err := tx.RetireCurrentLuksKeys(ctx, db.RetireCurrentLuksKeysParams{
-				DeviceID: deviceID, ActionID: request.ActionId,
+				DeviceID: deviceID, ActionID: actionID,
 			}); err != nil {
 				return fmt.Errorf("retire current LUKS key: %w", err)
 			}
-			if err := tx.InsertDeviceSecret(ctx, db.InsertDeviceSecretParams{ID: rowID, DeviceID: deviceID, Kind: "luks", Subject: request.ActionId, Version: 1, Ciphertext: genericCiphertext}); err != nil {
+			if err := tx.InsertDeviceSecret(ctx, db.InsertDeviceSecretParams{ID: rowID, DeviceID: deviceID, Kind: "luks", Subject: actionID, Version: 1, Ciphertext: genericCiphertext}); err != nil {
 				return fmt.Errorf("insert device secret: %w", err)
 			}
 			if _, err := tx.InsertLuksKey(ctx, db.InsertLuksKeyParams{
@@ -189,7 +191,8 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
 	}
-	if err := s.requireActionType(ctx, request.ActionId, cadestrov1.ActionType_ACTION_TYPE_LPS); err != nil {
+	actionID := request.GetActionId().GetValue()
+	if err := s.requireActionType(ctx, actionID, cadestrov1.ActionType_ACTION_TYPE_LPS); err != nil {
 		return nil, err
 	}
 	type preparedRotation struct {
@@ -217,7 +220,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		// ciphertext between them; the username is not a unique discriminator.
 		rowID := ulid.Make().String()
 		genericCiphertext, genericEncryptErr := s.atRest.EncryptWithContext(string(plaintext),
-			crypto.DeviceSecretAAD(rowID, deviceID, "lps", request.ActionId, 1))
+			crypto.DeviceSecretAAD(rowID, deviceID, "lps", actionID, 1))
 		clear(plaintext)
 		if genericEncryptErr != nil {
 			return nil, fmt.Errorf("encrypt generic LPS password at rest: %w", genericEncryptErr)
@@ -239,11 +242,11 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		func(ctx context.Context, tx *store.Tx, recorder *store.AuditRecorder) error {
 			for _, rotation := range prepared {
 				if _, err := tx.RetireCurrentLpsPassword(ctx, db.RetireCurrentLpsPasswordParams{
-					DeviceID: deviceID, ActionID: request.ActionId, Username: rotation.username,
+					DeviceID: deviceID, ActionID: actionID, Username: rotation.username,
 				}); err != nil {
 					return fmt.Errorf("retire current LPS password: %w", err)
 				}
-				if err := tx.InsertDeviceSecret(ctx, db.InsertDeviceSecretParams{ID: rotation.id, DeviceID: deviceID, Kind: "lps", Subject: request.ActionId, Version: 1, Ciphertext: rotation.genericCiphertext}); err != nil {
+				if err := tx.InsertDeviceSecret(ctx, db.InsertDeviceSecretParams{ID: rotation.id, DeviceID: deviceID, Kind: "lps", Subject: actionID, Version: 1, Ciphertext: rotation.genericCiphertext}); err != nil {
 					return fmt.Errorf("insert device secret: %w", err)
 				}
 				if _, err := tx.InsertLpsPassword(ctx, db.InsertLpsPasswordParams{

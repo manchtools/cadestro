@@ -740,7 +740,7 @@ message ActionSet {
 }
 
 message ActionSetMember {
-  string action_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 1 [(buf.validate.field).required = true];
   // Position of this action within the set's execution order. When the
   // set's schedule fires, members are executed in ascending sort_order.
   // Stable tiebreak by action_id for ties.
@@ -834,8 +834,8 @@ message DeleteActionSetRequest {
 message DeleteActionSetResponse {}
 
 message AddActionToSetRequest {
-  string set_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionSetId set_id = 1 [(buf.validate.field).required = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
   int32 sort_order = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -847,8 +847,8 @@ message AddActionToSetResponse {
 }
 
 message RemoveActionFromSetRequest {
-  string set_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionSetId set_id = 1 [(buf.validate.field).required = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveActionFromSetResponse {
@@ -856,8 +856,8 @@ message RemoveActionFromSetResponse {
 }
 
 message ReorderActionInSetRequest {
-  string set_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionSetId set_id = 1 [(buf.validate.field).required = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
   int32 new_order = 3 [(buf.validate.field).int32.gte = 0];
 }
 
@@ -884,7 +884,7 @@ message Definition {
 }
 
 message DefinitionMember {
-  string action_set_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionSetId action_set_id = 1 [(buf.validate.field).required = true];
   // Position of this set within the definition's execution order. When the
   // definition's schedule fires, sets are walked in ascending sort_order
   // and each set's actions execute in their own ascending sort_order.
@@ -974,8 +974,8 @@ message DeleteDefinitionRequest {
 message DeleteDefinitionResponse {}
 
 message AddActionSetToDefinitionRequest {
-  string definition_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
+  DefinitionId definition_id = 1 [(buf.validate.field).required = true];
+  ActionSetId action_set_id = 2 [(buf.validate.field).required = true];
   int32 sort_order = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -987,8 +987,8 @@ message AddActionSetToDefinitionResponse {
 }
 
 message RemoveActionSetFromDefinitionRequest {
-  string definition_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
+  DefinitionId definition_id = 1 [(buf.validate.field).required = true];
+  ActionSetId action_set_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveActionSetFromDefinitionResponse {
@@ -996,8 +996,8 @@ message RemoveActionSetFromDefinitionResponse {
 }
 
 message ReorderActionSetInDefinitionRequest {
-  string definition_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_set_id = 2 [(buf.validate.field).string.ulid = true];
+  DefinitionId definition_id = 1 [(buf.validate.field).required = true];
+  ActionSetId action_set_id = 2 [(buf.validate.field).required = true];
   int32 new_order = 3 [(buf.validate.field).int32.gte = 0];
 }
 
@@ -1492,7 +1492,7 @@ message LpsPassword {
   string id = 1;
   string device_id = 2;
   string device_hostname = 3;
-  string action_id = 4;
+  ActionId action_id = 4;
   string action_name = 5;
   string username = 6;
   google.protobuf.Timestamp rotated_at = 7;
@@ -1528,7 +1528,7 @@ message LuksKey {
   string id = 1;
   string device_id = 2;
   string device_hostname = 3;
-  string action_id = 4;
+  ActionId action_id = 4;
   string action_name = 5;
   string device_path = 6;
   google.protobuf.Timestamp rotated_at = 7;
@@ -1561,7 +1561,7 @@ message RevealLuksKeyResponse {
 
 message CreateLuksTokenRequest {
   string device_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
 message CreateLuksTokenResponse {
@@ -1575,7 +1575,7 @@ message CreateLuksTokenResponse {
 
 message RevokeLuksDeviceKeyRequest {
   string device_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
 message RevokeLuksDeviceKeyResponse {}
@@ -2315,7 +2315,7 @@ message GetDeviceComplianceResponse {
 }
 
 message ComplianceCheckResult {
-  string action_id = 1;
+  ActionId action_id = 1;
   string action_name = 2;
   bool compliant = 3;
   CommandOutput detection_output = 4;
@@ -2337,7 +2337,7 @@ message CompliancePolicy {
 }
 
 message CompliancePolicyRule {
-  string action_id = 1;
+  ActionId action_id = 1;
   string action_name = 2;
   int32 grace_period_hours = 3;
 }
@@ -2410,7 +2410,7 @@ message DeleteCompliancePolicyResponse {}
 
 message AddCompliancePolicyRuleRequest {
   string policy_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
   int32 grace_period_hours = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 8760,
@@ -2424,7 +2424,7 @@ message AddCompliancePolicyRuleResponse {
 
 message RemoveCompliancePolicyRuleRequest {
   string policy_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
 }
 
 message RemoveCompliancePolicyRuleResponse {
@@ -2433,7 +2433,7 @@ message RemoveCompliancePolicyRuleResponse {
 
 message UpdateCompliancePolicyRuleRequest {
   string policy_id = 1 [(buf.validate.field).string.ulid = true];
-  string action_id = 2 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
   int32 grace_period_hours = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 8760,
@@ -2462,7 +2462,7 @@ message DevicePolicyEvaluation {
 }
 
 message DevicePolicyRuleEvaluation {
-  string action_id = 1;
+  ActionId action_id = 1;
   string action_name = 2;
   ComplianceStatus status = 3;
   bool compliant = 4;

@@ -229,7 +229,7 @@
 				apiClient.getActionSet(setId),
 				apiClient.listActions()
 			]);
-			const existingIds = (current.members ?? []).map((mem) => mem.actionId);
+			const existingIds = (current.members ?? []).map((mem) => mem.actionId?.value ?? '');
 			availableActions = actions.actions.filter((a) => !existingIds.includes(a.id));
 			pickerOpen = true;
 		} catch (error) {

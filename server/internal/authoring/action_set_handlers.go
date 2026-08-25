@@ -163,14 +163,15 @@ func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[cad
 
 // AddActionToSet adds one visible, ordinary Action occurrence to a set.
 func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[cadestrov1.AddActionToSetRequest]) (*connect.Response[cadestrov1.AddActionToSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "AddActionToSet")
+	setID, actionID := req.Msg.GetSetId().GetValue(), req.Msg.GetActionId().GetValue()
+	actor, err := h.mutationActionSetActor(ctx, setID, "AddActionToSet")
 	if err != nil {
 		return nil, err
 	}
-	if err := h.enforceActionReadScope(ctx, req.Msg.ActionId); err != nil {
+	if err := h.enforceActionReadScope(ctx, actionID); err != nil {
 		return nil, err
 	}
-	action, err := h.store.GetManifestAction(ctx, req.Msg.ActionId)
+	action, err := h.store.GetManifestAction(ctx, actionID)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, authoringNotFound(ctx, errActionNotFound, "action not found")
@@ -182,10 +183,10 @@ func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[cade
 	}
 	if err := h.state.AddActionToSet(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceAddActionToSetProcedure, "AddActionToSet"),
-		req.Msg.SetId, req.Msg.ActionId, req.Msg.SortOrder); err != nil {
-		return nil, h.addActionToSetError(ctx, req.Msg.SetId, req.Msg.ActionId, err)
+		setID, actionID, req.Msg.SortOrder); err != nil {
+		return nil, h.addActionToSetError(ctx, setID, actionID, err)
 	}
-	set, err := h.actionSetResponse(ctx, req.Msg.SetId)
+	set, err := h.actionSetResponse(ctx, setID)
 	if err != nil {
 		return nil, err
 	}
@@ -194,16 +195,17 @@ func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[cade
 
 // RemoveActionFromSet removes one occurrence edge.
 func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request[cadestrov1.RemoveActionFromSetRequest]) (*connect.Response[cadestrov1.RemoveActionFromSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "RemoveActionFromSet")
+	setID, actionID := req.Msg.GetSetId().GetValue(), req.Msg.GetActionId().GetValue()
+	actor, err := h.mutationActionSetActor(ctx, setID, "RemoveActionFromSet")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.RemoveActionFromSet(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveActionFromSetProcedure, "RemoveActionFromSet"),
-		req.Msg.SetId, req.Msg.ActionId); err != nil {
+		setID, actionID); err != nil {
 		return nil, h.actionSetError(ctx, "remove action from set", err)
 	}
-	set, err := h.actionSetResponse(ctx, req.Msg.SetId)
+	set, err := h.actionSetResponse(ctx, setID)
 	if err != nil {
 		return nil, err
 	}
@@ -212,16 +214,17 @@ func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request
 
 // ReorderActionInSet replaces one occurrence's authored position.
 func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[cadestrov1.ReorderActionInSetRequest]) (*connect.Response[cadestrov1.ReorderActionInSetResponse], error) {
-	actor, err := h.mutationActionSetActor(ctx, req.Msg.SetId, "ReorderActionInSet")
+	setID, actionID := req.Msg.GetSetId().GetValue(), req.Msg.GetActionId().GetValue()
+	actor, err := h.mutationActionSetActor(ctx, setID, "ReorderActionInSet")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.ReorderActionInSet(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceReorderActionInSetProcedure, "ReorderActionInSet"),
-		req.Msg.SetId, req.Msg.ActionId, req.Msg.NewOrder); err != nil {
+		setID, actionID, req.Msg.NewOrder); err != nil {
 		return nil, h.actionSetError(ctx, "reorder action in set", err)
 	}
-	set, err := h.actionSetResponse(ctx, req.Msg.SetId)
+	set, err := h.actionSetResponse(ctx, setID)
 	if err != nil {
 		return nil, err
 	}

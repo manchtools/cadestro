@@ -69,7 +69,7 @@ func ActionSetMembersToProto(rows []store.ActionSetMemberView) []*cadestrov1.Act
 	members := make([]*cadestrov1.ActionSetMember, len(rows))
 	for i, row := range rows {
 		members[i] = &cadestrov1.ActionSetMember{
-			ActionId: row.ActionID, SortOrder: row.SortOrder,
+			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, SortOrder: row.SortOrder,
 			ActionName: row.ActionName, ActionType: cadestrov1.ActionType(row.ActionType),
 		}
 	}
@@ -103,7 +103,7 @@ func DefinitionMembersToProto(rows []store.DefinitionMemberView) []*cadestrov1.D
 	members := make([]*cadestrov1.DefinitionMember, len(rows))
 	for i, row := range rows {
 		members[i] = &cadestrov1.DefinitionMember{
-			ActionSetId: row.ActionSetID, SortOrder: row.SortOrder, ActionSetName: row.ActionSetName,
+			ActionSetId: &cadestrov1.ActionSetId{Value: row.ActionSetID}, SortOrder: row.SortOrder, ActionSetName: row.ActionSetName,
 		}
 	}
 	return members

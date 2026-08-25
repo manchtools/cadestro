@@ -70,7 +70,7 @@
 		try {
 			const response = await apiClient.getDefinition(defId);
 			definition = response.definition ?? null;
-			members = response.members ?? [];
+			members = (response.members ?? []).map((member) => ({ ...member, actionSetId: member.actionSetId?.value ?? '' }));
 			const setsResponse = await apiClient.listActionSets();
 			library = setsResponse.sets ?? [];
 			revision++;

@@ -204,10 +204,10 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.RevealLuksKeyRequest{Id: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.CreateLuksToken)(context.Background(),
-		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: "bad", ActionId: "bad"}))
+		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: "bad", ActionId: &cadestrov1.ActionId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevokeLuksDeviceKey)(context.Background(),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: "bad", ActionId: "bad"}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: "bad", ActionId: &cadestrov1.ActionId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
 		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: "bad", Table: "packages"}))
@@ -264,10 +264,10 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.RevealLuksKeyRequest{Id: newID()}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.CreateLuksToken)(context.Background(),
-		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: f.directID, ActionId: newID()}))
+		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.RevokeLuksDeviceKey)(context.Background(),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: newID()}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.DispatchOSQuery)(context.Background(),
 		connect.NewRequest(&cadestrov1.DispatchOSQueryRequest{DeviceId: f.directID, Table: "packages"}))
@@ -672,7 +672,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	ctx := f.actor("CreateLuksToken")
 
 	issued, err := f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	require.NoError(t, err)
 	_, err = ulid.ParseStrict(issued.Msg.Token)
@@ -726,7 +726,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	assert.NotContains(t, strings.Join(effects[0].ChangedFields, ","), "token")
 
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.groupID, ActionId: actionID,
+		DeviceId: f.groupID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
 		"group-derived visibility is not direct device ownership")
@@ -736,7 +736,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = '"corrupt"' WHERE id = $1`, actionID)
 	require.NoError(t, err)
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "corrupt policy must not fall back")
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = '{}' WHERE id = $1`, actionID)
@@ -746,7 +746,7 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 
 	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/CreateLuksToken")
 	_, err = f.handlers.CreateLuksToken(ctx, connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 	var tokenCount int
@@ -763,17 +763,17 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	ctx := f.actor("RevokeLuksDeviceKey")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor(), connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx, connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
 	seedCurrentLuksKeys(t, f, actionID, 2)
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx, connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 1)
@@ -781,7 +781,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	_, err = ulid.ParseStrict(message.Id)
 	require.NoError(t, err)
 	require.NotNil(t, message.GetRevokeLuksDeviceKey())
-	assert.Equal(t, actionID, message.GetRevokeLuksDeviceKey().ActionId)
+	assert.Equal(t, actionID, message.GetRevokeLuksDeviceKey().GetActionId().GetValue())
 
 	var dispatched int
 	err = f.raw.QueryRow(context.Background(), `
@@ -801,13 +801,13 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	assert.Equal(t, int64(2), *effects[0].AfterCount)
 
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx, connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-		DeviceId: f.directID, ActionId: actionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID},
 	}))
 	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 	assert.Len(t, f.sender.messages, 1, "a pending revocation must not be sent twice")
 
 	require.NoError(t, f.handlers.CompleteLuksKeyRevocation(context.Background(), f.directID,
-		&cadestrov1.RevokeLuksDeviceKeyResult{ActionId: actionID, Success: true}))
+		&cadestrov1.RevokeLuksDeviceKeyResult{ActionId: &cadestrov1.ActionId{Value: actionID}, Success: true}))
 	var succeeded int
 	err = f.raw.QueryRow(context.Background(), `
 		SELECT count(*) FROM luks_keys k JOIN device_secrets ds ON ds.id = k.id
@@ -819,7 +819,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	// A replay is absorbed by the conditional update and preserved as rejected
 	// evidence instead of changing the terminal state again.
 	require.NoError(t, f.handlers.CompleteLuksKeyRevocation(context.Background(), f.directID,
-		&cadestrov1.RevokeLuksDeviceKeyResult{ActionId: actionID, Success: false, Error: "stale"}))
+		&cadestrov1.RevokeLuksDeviceKeyResult{ActionId: &cadestrov1.ActionId{Value: actionID}, Success: false, Error: "stale"}))
 	resultOperation, err := latestOperationFor(t, f.store, f.raw,
 		"cadestro.v1.AgentService.Stream/RevokeLuksDeviceKeyResult")
 	require.NoError(t, err)
@@ -836,7 +836,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyRecordsUnavailableDevice(t *testing.T
 	f.sender.err = errors.New("agent not connected")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor("RevokeLuksDeviceKey"),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: actionID}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID}}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	var status string
 	var detail *string
@@ -865,7 +865,7 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyAuditFailurePreventsSend(t *testing.T
 	rejectAuditOperation(t, f.raw, "/cadestro.v1.ControlService/RevokeLuksDeviceKey")
 
 	_, err := f.handlers.RevokeLuksDeviceKey(f.actor("RevokeLuksDeviceKey"),
-		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: actionID}))
+		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: actionID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err))
 	assert.Empty(t, f.sender.messages, "the irreversible command must not leave before its audit commits")
 	var status *string
@@ -1338,13 +1338,13 @@ func TestDeviceHandlers_MutationsAreAuditedCRUD(t *testing.T) {
 	require.NoError(t, err)
 	_, err = f.handlers.CreateLuksToken(ctx,
 		connect.NewRequest(&cadestrov1.CreateLuksTokenRequest{
-			DeviceId: f.directID, ActionId: encryptionActionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: encryptionActionID},
 		}))
 	require.NoError(t, err)
 	seedCurrentLuksKeys(t, f, encryptionActionID, 1)
 	_, err = f.handlers.RevokeLuksDeviceKey(ctx,
 		connect.NewRequest(&cadestrov1.RevokeLuksDeviceKeyRequest{
-			DeviceId: f.directID, ActionId: encryptionActionID,
+		DeviceId: f.directID, ActionId: &cadestrov1.ActionId{Value: encryptionActionID},
 		}))
 	require.NoError(t, err)
 	_, err = f.handlers.DispatchOSQuery(ctx,

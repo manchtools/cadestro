@@ -221,7 +221,7 @@ describe('action-sets list page', () => {
 	it('still opens member management from the row, offering only non-members', async () => {
 		api.getActionSet.mockResolvedValue({
 			set: { id: SET_ID, name: 'Base System Setup' },
-			members: [{ actionId: ACTION_ID, sortOrder: 0, actionName: 'Install Firefox', actionType: 1 }]
+			members: [{ actionId: { value: ACTION_ID }, sortOrder: 0, actionName: 'Install Firefox', actionType: 1 }]
 		});
 		api.listActions.mockResolvedValue({
 			actions: [

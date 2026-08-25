@@ -60,25 +60,25 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, "0 1 * * *", created.Msg.Definition.Schedule.Cron)
 
 	added, err := f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
-		DefinitionId: definitionID, ActionSetId: set2, SortOrder: 20,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definitionID}, ActionSetId: &cadestrov1.ActionSetId{Value: set2}, SortOrder: 20,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), added.Msg.Definition.MemberCount)
 	_, err = f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
-		DefinitionId: definitionID, ActionSetId: set1, SortOrder: 10,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definitionID}, ActionSetId: &cadestrov1.ActionSetId{Value: set1}, SortOrder: 10,
 	}))
 	require.NoError(t, err)
 	_, err = f.handlers.AddActionSetToDefinition(ctx, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
-		DefinitionId: definitionID, ActionSetId: set1, SortOrder: 30,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definitionID}, ActionSetId: &cadestrov1.ActionSetId{Value: set1}, SortOrder: 30,
 	}))
 	assert.Equal(t, connect.CodeAlreadyExists, connect.CodeOf(err))
 
 	got, err := f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
 	require.NoError(t, err)
 	require.Len(t, got.Msg.Members, 2)
-	assert.Equal(t, set1, got.Msg.Members[0].ActionSetId)
+	assert.Equal(t, set1, got.Msg.Members[0].GetActionSetId().GetValue())
 	assert.Equal(t, "one", got.Msg.Members[0].ActionSetName)
-	assert.Equal(t, set2, got.Msg.Members[1].ActionSetId)
+	assert.Equal(t, set2, got.Msg.Members[1].GetActionSetId().GetValue())
 	assert.Equal(t, int32(2), got.Msg.Definition.MemberCount)
 
 	renamed, err := f.handlers.RenameDefinition(ctx, connect.NewRequest(&cadestrov1.RenameDefinitionRequest{Id: definitionID, Name: "renamed"}))
@@ -96,21 +96,21 @@ func TestDefinitionHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	assert.Equal(t, int32(12), scheduled.Msg.Definition.Schedule.IntervalHours)
 
 	reordered, err := f.handlers.ReorderActionSetInDefinition(ctx, connect.NewRequest(&cadestrov1.ReorderActionSetInDefinitionRequest{
-		DefinitionId: definitionID, ActionSetId: set2, NewOrder: 0,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definitionID}, ActionSetId: &cadestrov1.ActionSetId{Value: set2}, NewOrder: 0,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(2), reordered.Msg.Definition.MemberCount)
 	got, err = f.handlers.GetDefinition(ctx, connect.NewRequest(&cadestrov1.GetDefinitionRequest{Id: definitionID}))
 	require.NoError(t, err)
-	assert.Equal(t, set2, got.Msg.Members[0].ActionSetId)
+	assert.Equal(t, set2, got.Msg.Members[0].GetActionSetId().GetValue())
 
 	removed, err := f.handlers.RemoveActionSetFromDefinition(ctx, connect.NewRequest(&cadestrov1.RemoveActionSetFromDefinitionRequest{
-		DefinitionId: definitionID, ActionSetId: set1,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definitionID}, ActionSetId: &cadestrov1.ActionSetId{Value: set1},
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), removed.Msg.Definition.MemberCount)
 	_, err = f.handlers.RemoveActionSetFromDefinition(ctx, connect.NewRequest(&cadestrov1.RemoveActionSetFromDefinitionRequest{
-		DefinitionId: definitionID, ActionSetId: set1,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definitionID}, ActionSetId: &cadestrov1.ActionSetId{Value: set1},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 
@@ -220,11 +220,11 @@ func TestDefinitionHandlers_AddRequiresVisibleActionSet(t *testing.T) {
 		}},
 	})
 	_, err = f.handlers.AddActionSetToDefinition(scoped, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
-		DefinitionId: definition.ID, ActionSetId: outOfScope,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definition.ID}, ActionSetId: &cadestrov1.ActionSetId{Value: outOfScope},
 	}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	_, err = f.handlers.AddActionSetToDefinition(scoped, connect.NewRequest(&cadestrov1.AddActionSetToDefinitionRequest{
-		DefinitionId: definition.ID, ActionSetId: inScope,
+		DefinitionId: &cadestrov1.DefinitionId{Value: definition.ID}, ActionSetId: &cadestrov1.ActionSetId{Value: inScope},
 	}))
 	require.NoError(t, err)
 }

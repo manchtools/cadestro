@@ -40,7 +40,7 @@ func TestAgentSecretsLuksUsesGenericCiphertextAndPlaintextWireBytes(t *testing.T
 	ctx := context.Background()
 	const passphrase = "correct horse battery staple"
 	_, err := svc.StoreLuksKey(ctx, device, &cadestrov1.StoreLuksKeyRequest{
-		ActionId: action, DevicePath: "/dev/vda3", Passphrase: []byte(passphrase),
+		ActionId: &cadestrov1.ActionId{Value: action}, DevicePath: "/dev/vda3", Passphrase: []byte(passphrase),
 		RotationReason: cadestrov1.RotationReason_ROTATION_REASON_INITIAL,
 	})
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestAgentSecretsLuksUsesGenericCiphertextAndPlaintextWireBytes(t *testing.T
 		crypto.DeviceSecretAAD(row.ID, device, "luks", action, 1))
 	require.NoError(t, err)
 	require.Equal(t, passphrase, opened)
-	got, err := svc.GetLuksKey(ctx, device, &cadestrov1.GetLuksKeyRequest{ActionId: action})
+	got, err := svc.GetLuksKey(ctx, device, &cadestrov1.GetLuksKeyRequest{ActionId: &cadestrov1.ActionId{Value: action}})
 	require.NoError(t, err)
 	require.Equal(t, []byte(passphrase), got.Passphrase)
 }
@@ -63,7 +63,7 @@ func TestAgentSecretsLpsBatchIsAtomicAndStoresNoPlaintext(t *testing.T) {
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	svc := agentsecrets.New(agentsecrets.Config{Store: st, AtRest: atRest, Now: func() time.Time { return now }})
 	ctx := context.Background()
-	request := &cadestrov1.StoreLpsPasswordsRequest{ActionId: action, Rotations: []*cadestrov1.LpsPasswordRotation{
+	request := &cadestrov1.StoreLpsPasswordsRequest{ActionId: &cadestrov1.ActionId{Value: action}, Rotations: []*cadestrov1.LpsPasswordRotation{
 		{Username: "alice", Password: []byte("alice-secret"), RotatedAt: now.Format(time.RFC3339Nano), Reason: cadestrov1.RotationReason_ROTATION_REASON_SCHEDULED},
 		{Username: "bob", Password: []byte("bob-secret"), RotatedAt: now.Format(time.RFC3339Nano), Reason: cadestrov1.RotationReason_ROTATION_REASON_SCHEDULED},
 	}}

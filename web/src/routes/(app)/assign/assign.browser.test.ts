@@ -117,13 +117,13 @@ beforeEach(() => {
 		set: SETS[0],
 		members: [
 			create(ActionSetMemberSchema, {
-				actionId: ACTION_UPDATE,
+				actionId: { value: ACTION_UPDATE },
 				sortOrder: 0,
 				actionName: 'full system update',
 				actionType: ActionType.UPDATE
 			}),
 			create(ActionSetMemberSchema, {
-				actionId: ACTION_KERNEL_UPDATE,
+				actionId: { value: ACTION_KERNEL_UPDATE },
 				sortOrder: 1,
 				actionName: 'update kernel if changed',
 				actionType: ActionType.UPDATE

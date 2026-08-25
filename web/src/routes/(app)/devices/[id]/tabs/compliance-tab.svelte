@@ -46,12 +46,13 @@
 		const actionMap = new Map<string, MergedCheck>();
 		for (const policy of policyStatus.policies) {
 			for (const rule of policy.rules) {
-				const existing = actionMap.get(rule.actionId);
+				const actionId = rule.actionId?.value ?? '';
+				const existing = actionMap.get(actionId);
 				if (existing) {
 					existing.policies.push({ policyId: policy.policyId, policyName: policy.policyName });
 				} else {
-					actionMap.set(rule.actionId, {
-						actionId: rule.actionId,
+					actionMap.set(actionId, {
+						actionId,
 						actionName: rule.actionName,
 						status: rule.status,
 						checkedAt: rule.checkedAt,

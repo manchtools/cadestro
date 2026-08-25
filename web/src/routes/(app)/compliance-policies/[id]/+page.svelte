@@ -307,7 +307,7 @@
 				return { items: r.actions, nextPageToken: r.nextPageToken };
 			});
 			// Filter to only compliance check actions and exclude already-added ones
-			const existingActionIds = policy?.rules.map((r) => r.actionId) ?? [];
+			const existingActionIds = policy?.rules.map((r) => r.actionId?.value ?? '') ?? [];
 			complianceActions = allActions.filter((a) => {
 				if (existingActionIds.includes(a.id)) return false;
 				if (a.type !== ActionType.SHELL) return false;
@@ -360,7 +360,7 @@
 	}
 
 	function openEditGracePeriod(rule: CompliancePolicyRule) {
-		editRuleActionId = rule.actionId;
+		editRuleActionId = rule.actionId?.value ?? '';
 		editGracePeriodHours = rule.gracePeriodHours;
 		editGraceDialogOpen = true;
 	}
@@ -497,7 +497,7 @@
 						</p>
 					{:else}
 						<ul class="divide-y divide-hair rounded-xl border border-hair bg-sunken">
-							{#each policy.rules as rule (rule.actionId)}
+							{#each policy.rules as rule (rule.actionId?.value ?? '')}
 								<li class="flex items-center justify-between gap-2 px-3 py-2.5">
 									<div class="flex items-center gap-2 min-w-0 flex-1">
 										<ShieldCheck class="h-4 w-4 text-muted-foreground shrink-0" />
@@ -516,7 +516,7 @@
 											size="icon"
 											class="h-7 w-7"
 											aria-label={m.common_delete()}
-											onclick={() => removeRule(rule.actionId)}
+							onclick={() => removeRule(rule.actionId?.value ?? '')}
 										>
 											<Trash2 class="h-3.5 w-3.5 text-destructive" />
 										</Button>

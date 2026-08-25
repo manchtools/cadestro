@@ -424,7 +424,7 @@ message RequestInventory {
 // Agent requests the current managed passphrase for a LUKS action.
 // device_id is omitted — control derives the device from the mTLS certificate.
 message GetLuksKeyRequest {
-  string action_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetLuksKeyResponse {
@@ -446,7 +446,7 @@ message GetLuksKeyResponse {
 // Agent stores a new managed passphrase on the server.
 // The server must confirm receipt before the agent removes the old key from LUKS.
 message StoreLuksKeyRequest {
-  string action_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 1 [(buf.validate.field).required = true];
   // Auto-detected device path (e.g., "/dev/sda2"). Bounded at PATH_MAX: the
   // value is only ever a local block-device path, and without a ceiling an
   // authenticated agent can send a transport-sized string that is validated,
@@ -539,7 +539,7 @@ message LpsPasswordRotation {
 // Agent reports the LPS rotations from one execution. Batched per action: an LPS
 // run rotates every managed local account on the device.
 message StoreLpsPasswordsRequest {
-  string action_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 1 [(buf.validate.field).required = true];
   // One entry per managed local account on the device. Capped: each entry costs
   // a validation pass, an encryption, and a row, and no real device manages
   // anything near this many accounts.
@@ -557,12 +557,12 @@ message StoreLpsPasswordsResponse {
 // Server instructs agent to revoke the device-bound key in LUKS slot 7.
 // Requested as a live operation via the stream.
 message RevokeLuksDeviceKey {
-  string action_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 1 [(buf.validate.field).required = true];
 }
 
 // Agent reports the result of revoking the device-bound key.
 message RevokeLuksDeviceKeyResult {
-  string action_id = 1 [(buf.validate.field).string.ulid = true];
+  ActionId action_id = 1 [(buf.validate.field).required = true];
   bool success = 2;
   string error = 3 [
     (buf.validate.field).string.max_len = 1024,
@@ -581,7 +581,7 @@ message ValidateLuksTokenRequest {
 }
 
 message ValidateLuksTokenResponse {
-  string action_id = 1;
+  ActionId action_id = 1;
   // Auto-detected device path from server's stored key data
   string device_path = 2;
   // Minimum passphrase length (>= 16)

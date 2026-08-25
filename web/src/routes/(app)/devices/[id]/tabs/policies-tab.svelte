@@ -113,8 +113,14 @@
 
 			// Build parent mapping from enriched response (no extra API calls needed)
 			buildParentMapping(
-				assignmentsResponse.actionSetDetails ?? [],
-				assignmentsResponse.definitionDetails ?? []
+				(assignmentsResponse.actionSetDetails ?? []).map((detail) => ({
+					...detail,
+					members: detail.members.map((member) => ({ ...member, actionId: member.actionId?.value ?? '' }))
+				})),
+				(assignmentsResponse.definitionDetails ?? []).map((detail) => ({
+					...detail,
+					members: detail.members.map((member) => ({ ...member, actionSetId: member.actionSetId?.value ?? '' }))
+				}))
 			);
 		} catch (error) {
 			console.error('Failed to load policies:', error);

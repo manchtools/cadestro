@@ -141,13 +141,13 @@ const set: ActionSet = create(ActionSetSchema, {
 function members(): ActionSetMember[] {
 	return [
 		create(ActionSetMemberSchema, {
-			actionId: SVC_ID,
+			actionId: { value: SVC_ID },
 			sortOrder: 1,
 			actionName: 'Enable sshd',
 			actionType: ActionType.SERVICE
 		}),
 		create(ActionSetMemberSchema, {
-			actionId: PKG_ID,
+			actionId: { value: PKG_ID },
 			sortOrder: 0,
 			actionName: 'Install openssh-server',
 			actionType: ActionType.PACKAGE
@@ -294,7 +294,7 @@ describe('validation blocks the pill commit', () => {
 		mount({
 			members: [
 				create(ActionSetMemberSchema, {
-					actionId: PKG_ID,
+					actionId: { value: PKG_ID },
 					sortOrder: 0,
 					actionName: 'Install openssh-server',
 					actionType: ActionType.PACKAGE
@@ -333,7 +333,7 @@ describe('validation blocks the pill commit', () => {
 		mount({
 			members: [
 				create(ActionSetMemberSchema, {
-					actionId: PKG_ID,
+					actionId: { value: PKG_ID },
 					sortOrder: 0,
 					actionName: 'Install openssh-server',
 					actionType: ActionType.PACKAGE

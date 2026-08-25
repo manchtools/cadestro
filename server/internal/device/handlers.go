@@ -459,7 +459,7 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 			return nil, h.internal(ctx, "decode compliance output", err)
 		}
 		checks[i] = &cadestrov1.ComplianceCheckResult{
-			ActionId: row.ActionID, ActionName: row.ActionName,
+			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			Compliant: row.Compliant, DetectionOutput: output,
 			CheckedAt: timestamppb.New(row.CheckedAt),
 		}
@@ -511,7 +511,7 @@ func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *con
 			return nil, h.internal(ctx, "decode policy compliance output", err)
 		}
 		rule := &cadestrov1.DevicePolicyRuleEvaluation{
-			ActionId: row.ActionID, ActionName: row.ActionName,
+			ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName,
 			Status: cadestrov1.ComplianceStatus(row.Status), Compliant: row.Compliant,
 			GracePeriodHours: row.GracePeriodHours, DetectionOutput: output,
 		}

@@ -86,7 +86,7 @@ func TestDispatch_RejectsInvalidInboundCommands(t *testing.T) {
 	}
 	mkLuks := func(id string) *cadestrov1.ServerMessage {
 		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{
-			RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: id}}}
+		RevokeLuksDeviceKey: &cadestrov1.RevokeLuksDeviceKey{ActionId: &cadestrov1.ActionId{Value: id}}}}
 	}
 
 	cases := []struct {

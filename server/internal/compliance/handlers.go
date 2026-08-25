@@ -226,25 +226,26 @@ func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Requ
 
 // AddCompliancePolicyRule adds one visible compliance Action.
 func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.AddCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.AddCompliancePolicyRuleResponse], error) {
+	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "AddCompliancePolicyRule")
 	if err != nil {
 		return nil, err
 	}
-	visible, err := authoring.ActionVisibleToCaller(ctx, h.store, req.Msg.ActionId)
+	visible, err := authoring.ActionVisibleToCaller(ctx, h.store, actionID)
 	if err != nil {
 		return nil, h.internal(ctx, "resolve compliance action scope", err)
 	}
 	if !visible {
-		h.logger.Warn("out-of-scope compliance action read denied", "action_id", req.Msg.ActionId)
+		h.logger.Warn("out-of-scope compliance action read denied", "action_id", actionID)
 		return nil, notFound(ctx, errActionNotFound, "action not found")
 	}
-	if _, err := h.operatorAction(ctx, req.Msg.ActionId); err != nil {
+	if _, err := h.operatorAction(ctx, actionID); err != nil {
 		return nil, err
 	}
 	if err := h.state.AddRule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceAddCompliancePolicyRuleProcedure, "AddCompliancePolicyRule"),
-		req.Msg.PolicyId, req.Msg.ActionId, req.Msg.GracePeriodHours); err != nil {
-		return nil, h.addRuleError(ctx, req.Msg.PolicyId, req.Msg.ActionId, err)
+		req.Msg.PolicyId, actionID, req.Msg.GracePeriodHours); err != nil {
+		return nil, h.addRuleError(ctx, req.Msg.PolicyId, actionID, err)
 	}
 	policy, err := h.policyResponse(ctx, req.Msg.PolicyId)
 	if err != nil {
@@ -255,13 +256,14 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 
 // RemoveCompliancePolicyRule removes one Action edge.
 func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.RemoveCompliancePolicyRuleResponse], error) {
+	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "RemoveCompliancePolicyRule")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.RemoveRule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceRemoveCompliancePolicyRuleProcedure, "RemoveCompliancePolicyRule"),
-		req.Msg.PolicyId, req.Msg.ActionId); err != nil {
+		req.Msg.PolicyId, actionID); err != nil {
 		return nil, h.policyError(ctx, "remove policy rule", err)
 	}
 	policy, err := h.policyResponse(ctx, req.Msg.PolicyId)
@@ -273,13 +275,14 @@ func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.
 
 // UpdateCompliancePolicyRule replaces one rule grace period.
 func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyRuleResponse], error) {
+	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.PolicyId, "UpdateCompliancePolicyRule")
 	if err != nil {
 		return nil, err
 	}
 	if err := h.state.UpdateRule(ctx, h.operation(req, actor,
 		cadestrov1connect.ControlServiceUpdateCompliancePolicyRuleProcedure, "UpdateCompliancePolicyRule"),
-		req.Msg.PolicyId, req.Msg.ActionId, req.Msg.GracePeriodHours); err != nil {
+		req.Msg.PolicyId, actionID, req.Msg.GracePeriodHours); err != nil {
 		return nil, h.policyError(ctx, "update policy rule", err)
 	}
 	policy, err := h.policyResponse(ctx, req.Msg.PolicyId)
@@ -485,7 +488,7 @@ func policyToProto(row store.CompliancePolicyRow, ruleCount int64, rules []store
 		policy.Rules = make([]*cadestrov1.CompliancePolicyRule, len(rules))
 		for i, rule := range rules {
 			policy.Rules[i] = &cadestrov1.CompliancePolicyRule{
-				ActionId: rule.ActionID, ActionName: rule.ActionName,
+				ActionId: &cadestrov1.ActionId{Value: rule.ActionID}, ActionName: rule.ActionName,
 				GracePeriodHours: rule.GracePeriodHours,
 			}
 		}
