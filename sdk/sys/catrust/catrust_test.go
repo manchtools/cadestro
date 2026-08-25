@@ -90,7 +90,12 @@ func withFakeFS(t *testing.T, ff *fakeFS) {
 }
 
 func newMgr(t *testing.T, b Backend, ff *fakeFS) (*manager, *exectest.FakeRunner) {
+	return newMgrWithAnchors(t, b, ff, backends[b].anchorsDirs)
+}
+
+func newMgrWithAnchors(t *testing.T, b Backend, ff *fakeFS, anchors []string) (*manager, *exectest.FakeRunner) {
 	t.Helper()
+	withAnchorsDirs(t, anchors)
 	withFakeFS(t, ff)
 	r := exectest.New(exec.Direct)
 	m, err := New(b, r)
@@ -115,6 +120,11 @@ func TestNew_UnknownBackend(t *testing.T) {
 }
 
 func TestNew_Backends(t *testing.T) {
+	withAnchorsDirs(t, []string{
+		"/usr/local/share/ca-certificates",
+		"/etc/pki/ca-trust/source/anchors",
+		"/etc/pki/trust/anchors",
+	})
 	withFakeFS(t, &fakeFS{})
 	for _, b := range []Backend{CaCertificates, P11Kit, SuseCaCertificates} {
 		if _, err := New(b, exectest.New(exec.Direct)); err != nil {
@@ -142,12 +152,14 @@ func TestInstall_SuseWritesToTrustAnchors(t *testing.T) {
 }
 
 func TestNew_UsesRealFS(t *testing.T) {
+	withAnchorsDirs(t, []string{"/usr/local/share/ca-certificates"})
 	if _, err := New(CaCertificates, exectest.New(exec.Direct)); err != nil {
 		t.Errorf("New with the real fs.Manager: %v", err)
 	}
 }
 
 func TestNew_PropagatesFSError(t *testing.T) {
+	withAnchorsDirs(t, []string{"/usr/local/share/ca-certificates"})
 	prev := newFS
 	t.Cleanup(func() { newFS = prev })
 	sentinel := errors.New("fs boom")
@@ -230,7 +242,6 @@ func TestInstall_CaCertificates(t *testing.T) {
 }
 
 func TestInstall_P11Kit(t *testing.T) {
-	withAnchorsDirs(t, nil)
 	ff := &fakeFS{}
 	m, r := newMgr(t, P11Kit, ff)
 	r.Push(exec.Result{}, nil)
@@ -258,15 +269,25 @@ func withAnchorsDirs(t *testing.T, present []string) {
 }
 
 func TestInstall_P11Kit_ResolvesArchAnchorsDir(t *testing.T) {
-	withAnchorsDirs(t, []string{"/etc/ca-certificates/trust-source/anchors"})
 	ff := &fakeFS{}
-	m, r := newMgr(t, P11Kit, ff)
+	m, r := newMgrWithAnchors(t, P11Kit, ff, []string{"/etc/ca-certificates/trust-source/anchors"})
 	r.Push(exec.Result{}, nil)
 	if err := m.Install(context.Background(), "acme-root", validCAPEM(t)); err != nil {
 		t.Fatal(err)
 	}
 	if ff.writes[0].path != "/etc/ca-certificates/trust-source/anchors/acme-root.crt" {
 		t.Errorf("p11kit Arch path = %q, want the Arch anchors dir", ff.writes[0].path)
+	}
+}
+
+func TestResolveAnchorsDir_NoDirectory(t *testing.T) {
+	withAnchorsDirs(t, nil)
+	if _, err := resolveAnchorsDir([]string{"/missing/anchors"}); !errors.Is(err, ErrAnchorsDirUnavailable) {
+		t.Fatalf("resolveAnchorsDir error = %v, want ErrAnchorsDirUnavailable", err)
+	}
+	withFakeFS(t, &fakeFS{})
+	if _, err := New(CaCertificates, exectest.New(exec.Direct)); !errors.Is(err, ErrAnchorsDirUnavailable) {
+		t.Fatalf("New error = %v, want ErrAnchorsDirUnavailable", err)
 	}
 }
 

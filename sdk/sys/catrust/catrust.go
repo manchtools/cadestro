@@ -69,6 +69,9 @@ func (b Backend) String() string {
 // backend.
 var ErrUnknownBackend = errors.New("catrust: unknown backend")
 
+// ErrAnchorsDirUnavailable is returned when a backend has no usable anchors directory.
+var ErrAnchorsDirUnavailable = errors.New("catrust: anchors directory unavailable")
+
 // Anchor is an installed trust anchor this package manages.
 type Anchor struct {
 	Name    string // the operator-chosen name (the anchor's filename without .crt)
@@ -114,13 +117,13 @@ var backends = map[Backend]backendConfig{
 	},
 }
 
-func resolveAnchorsDir(candidates []string) string {
+func resolveAnchorsDir(candidates []string) (string, error) {
 	for _, d := range candidates {
 		if anchorsDirExists(d) {
-			return d
+			return d, nil
 		}
 	}
-	return candidates[0]
+	return "", fmt.Errorf("%w: none of %v exists", ErrAnchorsDirUnavailable, candidates)
 }
 
 type fsManager interface {
@@ -143,8 +146,8 @@ type manager struct {
 	anchorsDir string
 }
 
-// New returns a Manager for the named backend. Pure: validates the backend; nil
-// runner and unknown backend are rejected.
+// New returns a Manager for the named backend. The backend must have an existing
+// anchors directory; nil runners and unknown backends are rejected.
 func New(b Backend, runner exec.Runner) (Manager, error) {
 	if runner == nil {
 		return nil, fmt.Errorf("catrust: %w", exec.ErrRunnerRequired)
@@ -153,11 +156,15 @@ func New(b Backend, runner exec.Runner) (Manager, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %d", ErrUnknownBackend, int(b))
 	}
+	anchorsDir, err := resolveAnchorsDir(cfg.anchorsDirs)
+	if err != nil {
+		return nil, fmt.Errorf("catrust: %s backend unavailable: %w", b, err)
+	}
 	fsm, err := newFS(runner)
 	if err != nil {
 		return nil, err
 	}
-	return &manager{r: runner, fsm: fsm, cfg: cfg, anchorsDir: resolveAnchorsDir(cfg.anchorsDirs)}, nil
+	return &manager{r: runner, fsm: fsm, cfg: cfg, anchorsDir: anchorsDir}, nil
 }
 
 func (m *manager) anchorPath(name string) string {
