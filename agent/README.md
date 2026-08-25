@@ -843,7 +843,7 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-<!-- docref: begin src=agent/internal/unit/cadestrod.service.tmpl#@capability-boundary:afa64cbb -->
+<!-- docref: begin src=agent/internal/unit/cadestrod.service.tmpl#@capability-boundary:f6d7ee98 -->
 The packaged service runs as `root` because its action surface mutates host
 state: package installation, systemd units, `/etc`, users and groups, LUKS
 volumes, terminal sessions, and signed credential storage. The unit deliberately
