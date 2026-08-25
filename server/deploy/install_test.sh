@@ -80,9 +80,6 @@ EOF
 chmod +x "$STUB_ROOT/download-bin/curl"
 cp "$STUB_ROOT/bin/docker" "$STUB_ROOT/bin/openssl" "$STUB_ROOT/download-bin/"
 
-cp "$STUB_ROOT/bin/truncate" "$STUB_ROOT/bin/mkfs.ext4" "$STUB_ROOT/bin/mount" \
-    "$STUB_ROOT/bin/mountpoint" "$STUB_ROOT/download-bin/"
-
 # A second download stub set that serves the skew tarball.
 mkdir -p "$STUB_ROOT/skew-bin"
 sed "s|$FIXTURE_TARBALL|$SKEW_TARBALL|" "$STUB_ROOT/download-bin/curl" > "$STUB_ROOT/skew-bin/curl"
