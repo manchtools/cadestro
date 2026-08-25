@@ -10,6 +10,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export GOWORK=off
 
+echo "== sqlc drift"
+make sqlc-check
+
 echo "== gofmt"
 
 
