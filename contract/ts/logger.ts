@@ -30,17 +30,14 @@ function consoleSink(e: LogEvent): void {
 		case 'debug':
 		case 'info':
 
-			// eslint-disable-next-line no-console
 			console.log(prefix, e.message, e.context ?? '');
 			return;
 		case 'warn':
 
-			// eslint-disable-next-line no-console
 			console.warn(prefix, e.message, e.context ?? '');
 			return;
 		case 'error':
 
-			// eslint-disable-next-line no-console
 			console.error(prefix, e.message, e.context ?? '');
 			return;
 	}

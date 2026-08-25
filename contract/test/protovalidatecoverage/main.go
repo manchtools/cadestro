@@ -1,16 +1,3 @@
-// Command protovalidatecoverage reports, per .proto file, how many fields
-// across every message (requests and responses) carry a buf.validate rule.
-//
-// It is a reporting tool only — it always exits 0. The authoritative CI gate
-// is the Go test TestEveryBoundableRequestFieldCarriesAValidateRule in
-// coverage_test.go, which hard-fails when a bound-able *Request* field is
-// missing a buf.validate rule and runs under the normal `go test` job. This
-// binary stays useful for spotting uncovered RESPONSE fields (which the gate
-// deliberately does not require) when triaging coverage by hand.
-//
-// Usage:
-//
-//	go run ./test/protovalidatecoverage
 package main
 
 import (
