@@ -5,11 +5,6 @@
 	//
 	//   carried — the fleet page hands this surface a set of device ids through
 	//     the carried selection. Snapshot targeting: these devices, now.
-	//   rule    — B3. The chips compile a query, ValidateDynamicQuery counts it
-	//     live, and committing saves the rule as a dynamic device group and
-	//     assigns the set to THAT GROUP. Standing targeting: whatever matches,
-	//     now and later. Because that keeps applying without another approval,
-	//     the commit is gated by a real confirm, not by a banner.
 	//
 	// The pill morphs selection → context and "Assign to N →" IS the pill's Save,
 	// so this page renders NO commit button of its own — in either mode.
@@ -94,7 +89,6 @@
 	let closed = $state(false);
 
 	// ── rule mode ────────────────────────────────────────────────────────────
-	/** The bindable the chip editor owns; it always holds the compiled string. */
 	let ruleQuery = $state('');
 	let groupName = $state('');
 	let ruleState = $state<QueryEditorState>({
@@ -134,7 +128,6 @@
 			: rollup;
 	});
 
-	/** Countable means the server answered for this query. */
 	const ruleCountable = $derived(
 		ruleState.valid === true && ruleState.count !== null && ruleState.text.trim().length > 0
 	);
@@ -148,11 +141,6 @@
 			: null
 	);
 
-	/** B3's single source of truth: the compiled query and the live match count,
-	 *  in the pill's caption. The card never repeats the query — the builder's own
-	 *  status line is off — and the count appears there only as the preview's
-	 *  content, because no RPC can list the rows it stands for. What blocks the
-	 *  commit is stated in front of it rather than left to be guessed. */
 	const ruleCaption = $derived.by((): { text: string; tone: 'neutral' | 'warn' } => {
 		const query = ruleState.text;
 		if (!query.trim()) return { text: m.query_incomplete(), tone: 'warn' };

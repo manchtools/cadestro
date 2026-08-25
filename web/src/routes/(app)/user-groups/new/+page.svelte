@@ -64,10 +64,6 @@
 	let saving = $state(false);
 	/** Parked on the stage — the pill must NOT re-enter this context. */
 	let parked = $state(false);
-	// The chip editor validates and counts continuously, so there is no manual
-	// "Validate" round trip — the commit is simply refused while the draft rule is
-	// unusable. Component state, deliberately outside the buffer: the editor
-	// re-derives it from the query string when it mounts again.
 	let queryState = $state<QueryEditorState>({
 		text: '',
 		valid: false,

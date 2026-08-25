@@ -120,10 +120,6 @@
 	let lastSavedQuery = '';
 	const savedQuery = $derived(group?.dynamicQuery ?? '');
 	const ruleDirty = $derived(group !== null && draftQuery !== savedQuery);
-	/** A half-typed chip blocks the commit even when it has not moved the compiled
-	 *  string yet — an incomplete condition silently drops out of the compile, so
-	 *  gating on dirtiness alone would let Save look armed over a rule the operator
-	 *  is still mid-way through writing. */
 	const ruleValid = $derived(ruleState.valid === true);
 
 	// Role ids hidden from the assign picker: held GLOBALLY (unscoped). A role held

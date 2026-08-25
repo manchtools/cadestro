@@ -65,8 +65,6 @@
 	let saving = $state(false);
 	/** Parked on the stage — the pill must NOT re-enter this context. */
 	let parked = $state(false);
-	// Component state, deliberately outside the buffer: the chip editor re-derives
-	// it from the query string when it mounts again.
 	let queryState = $state<QueryEditorState>({
 		text: '',
 		valid: false,

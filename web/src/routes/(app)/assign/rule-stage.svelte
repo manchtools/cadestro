@@ -1,18 +1,4 @@
 <script lang="ts">
-	// B3's left stage: target by rule instead of by carried selection.
-	//
-	// The chips ARE the editor (query-builder), and the string they compile is
-	// what ValidateDynamicQuery counts and what CreateDeviceGroup stores. This
-	// pane therefore carries NO second copy of the count or the query — both ride
-	// the pill's context subtext, exactly as the group detail page's Rule tab
-	// does, so there is one source of truth on screen.
-	//
-	// Preview honesty: no RPC lists the devices matching an UNSAVED query.
-	// ValidateDynamicQuery answers `matching_device_count` and nothing else;
-	// ListDevices filters by status/labels only, and EvaluateDynamicGroup needs a
-	// saved group AND mutates its membership. So the preview shows the server's
-	// count and says plainly that the rows behind it are not listable — inventing
-	// sample hosts would be fabricating fleet state.
 	import { Input } from '$lib/components/ui/input';
 	import QueryBuilder, { type QueryEditorState } from '$lib/components/query-builder.svelte';
 	import { TriangleAlert } from '@lucide/svelte';

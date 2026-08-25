@@ -116,10 +116,6 @@
 	let lastSavedQuery = '';
 	const savedQuery = $derived(group?.dynamicQuery ?? '');
 	const ruleDirty = $derived(group !== null && draftQuery !== savedQuery);
-	/** A half-typed chip blocks the commit even when it has not moved the compiled
-	 *  string yet — an incomplete condition silently drops out of the compile, so
-	 *  gating on dirtiness alone would let Save look armed over a rule the operator
-	 *  is still mid-way through writing. */
 	const ruleValid = $derived(ruleState.valid === true);
 
 	/** Labels shown inline on a preview row before it runs out of width. */
@@ -255,7 +251,6 @@
 				ruleDirty && group && !group.isDynamic ? m.query_commit_convert() : m.common_save(),
 			// Every context explains itself; a greyed Save with no reason is a dead
 			// button. The rule's caption is the shared one, so the count and the
-			// compiled query read identically wherever they appear.
 			subtext: !identityNameValid
 				? m.validation_name_required()
 				: ruleDirty || !ruleValid

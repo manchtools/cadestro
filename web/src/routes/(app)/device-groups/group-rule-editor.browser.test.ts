@@ -1,9 +1,3 @@
-// B3 guard rails, exercised through the REAL detail pages.
-//
-// What is actually at stake here is the query STRING: the chips are a drawing
-// of it, the pill's caption is a copy of it, and the save RPC is the only place
-// it becomes policy. So every assertion below pins the string, the RPC, or the
-// gate in front of the RPC — never the chip markup on its own.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser, userEvent } from 'vitest/browser';
@@ -103,8 +97,6 @@ const GROUP_ID = '01HZDEVGRP0000000000000000';
 // ONE context per group. The Rule tab used to publish a second one, which is
 // why renaming a group AND editing its rule took two separate saves.
 const groupContextId = `device-group:${GROUP_ID}`;
-/** The first chip's stored value — refilling it makes the query match RULE
- *  again, which is how the rule editor goes clean and lets the slot go. */
 const savedValue = 'ubuntu';
 
 function deviceGroup(over: Record<string, unknown> = {}) {
@@ -203,7 +195,7 @@ describe('raw CEL editor', () => {
 });
 
 describe('an unusable draft never reaches the server', () => {
-	it('an empty new chip is not yet a rule change: no RPC, no commit surface', async () => {
+	it('an empty query is not yet a rule change: no RPC, no commit surface', async () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 		mocks.validateDynamicQuery.mockClear();
@@ -343,7 +335,7 @@ describe('future-scope guard', () => {
 });
 
 describe('the live count rides the pill subtext', () => {
-	it('puts the server match count AND the compiled query in the caption, not in the card', async () => {
+	it('puts the server match count and query in the caption, not in the card', async () => {
 		render(DeviceGroupPage);
 		await openRuleTab();
 
@@ -508,7 +500,6 @@ describe('the pill is the group’s action bar', () => {
 
 		await userEvent.fill(browser.getByLabelText('Name'), 'Renamed');
 		await vi.waitFor(() => expect(shell.pill.context?.dirty).toBe(true));
-		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 		await vi.waitFor(() => expect(shell.pill.context?.valid).toBe(true), { timeout: 3000 });
 		expect(shell.pill.context?.valid).toBe(true);
 	});

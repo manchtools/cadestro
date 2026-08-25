@@ -1,17 +1,3 @@
-// Contract for B3 — targeting by rule from the assign surface.
-//
-// A rule target is not a new kind of assignment: it is a dynamic device group
-// plus an assignment that points at it. So what these tests pin down is exactly
-// that mapping — the compiled query string that reaches CreateDeviceGroup, the
-// group id that reaches CreateAssignment, the order of the two, and the
-// acknowledgement standing in front of both. Everything else (the live count,
-// the pill caption, the stash) is asserted against the same string, because the
-// string is the rule.
-//
-// Only `apiClient` is faked. The generated protobuf enums, the paginate helper,
-// the query builder, the shell store and the carried-selection store are the
-// production modules — they are what the page is being tested against.
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { page as browser } from 'vitest/browser';
@@ -39,7 +25,6 @@ const DEV_ONLINE = '01JQZZ4A7K3M9P2Q6R8T1V0W5X';
 const SET_PATCH = '01JR0A1E1R7S3T6V0W2X5Y4Z9B';
 const GROUP_ID = '01JR0B1K1X2Y3Z4A5B6C7D8E9F';
 
-/** What the chips compile to once the condition below is filled in. */
 const QUERY = 'device.hostname == "web-prod-01"';
 const GROUP_NAME = 'production-linux';
 const MATCH_COUNT = 47;
@@ -149,7 +134,7 @@ async function readyToAssign() {
 }
 
 describe('assign — the target-mode toggle', () => {
-	it('swaps the carried stage for the chip rule editor', async () => {
+	it('swaps the carried stage for the rule editor', async () => {
 		await render(AssignPage);
 		await vi.waitFor(() => expect(document.querySelector('[data-testid="assign-carried-grid"]')).toBeTruthy(), {
 			timeout: 3000
@@ -184,7 +169,7 @@ describe('assign — the target-mode toggle', () => {
 });
 
 describe('assign by rule — the count is the server’s', () => {
-	it('rides the validated count and the compiled query in the pill caption', async () => {
+	it('rides the validated count and query in the pill caption', async () => {
 		await render(AssignPage);
 		await readyToAssign();
 
@@ -316,7 +301,7 @@ describe('assign by rule — the future-scope acknowledgement', () => {
 });
 
 describe('assign by rule — the commit is group-create then assignment', () => {
-	it('creates the dynamic group with the exact compiled query, then targets it', async () => {
+	it('creates the dynamic group with the exact query, then targets it', async () => {
 		await render(AssignPage);
 		await readyToAssign();
 
