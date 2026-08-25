@@ -18,7 +18,7 @@ var sqlHandleReceivers = map[string]bool{
 	"tx": true,
 }
 
-func TestNoDynamicSQL(t *testing.T) {
+func TestSQLLivesInGeneratedPackage(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(rel string) bool { return true })
 	if len(files) == 0 {

@@ -351,7 +351,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	if err != nil {
 		return "", false, err
 	}
-	status := int64(result.GetStatus())
+	status := int32(result.GetStatus())
 	updated, err := queries.RecordOccurrence(ctx, generated.RecordOccurrenceParams{
 		State: state, CompletedAt: timePtr(now), ResultStatus: &status, ResultError: result.GetError(), LastResultHash: resultHash,
 		WorkID: workID, OccurrenceID: result.GetOccurrenceId(), State_2: OccurrenceStarted,
@@ -529,7 +529,7 @@ func (s *Store) RecoverInterruptedOccurrences(ctx context.Context) ([]PendingRes
 		if err != nil {
 			return nil, err
 		}
-		statusValue := int64(status)
+		statusValue := int32(status)
 		if err := queries.RecoverOccurrence(ctx, generated.RecoverOccurrenceParams{
 			State: state, CompletedAt: timePtr(now), ResultStatus: &statusValue, ResultError: message,
 			WorkID: item.workID, OccurrenceID: item.occurrenceID, State_2: OccurrenceStarted,

@@ -53,6 +53,9 @@ jobs:
         with:
           go-version-file: agent/go.mod
 
+      - name: sqlc drift
+        run: make sqlc-check
+
       - name: gofmt
         run: |
           test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
