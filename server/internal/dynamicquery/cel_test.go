@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/google/cel-go/interpreter"
 )
 
 func TestCompileDeviceAndEvaluateFields(t *testing.T) {
@@ -104,7 +106,8 @@ func TestEvalEnforcesCostLimit(t *testing.T) {
 		groups[i] = "group-" + strconv.Itoa(i)
 	}
 	_, err = query.Eval(context.Background(), Device{Groups: groups})
-	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "cost") {
+	var canceled interpreter.EvalCancelledError
+	if err == nil || !errors.As(err, &canceled) || canceled.Cause != interpreter.CostLimitExceeded {
 		t.Fatalf("cost-limited evaluation error = %v", err)
 	}
 }
