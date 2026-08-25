@@ -82,7 +82,6 @@ message Action {
 }
 
 message ActionSchedule {
-
   string cron = 1 [
     (buf.validate.field).string.max_len = 128,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -100,7 +99,6 @@ message ActionSchedule {
 }
 
 message PackageParams {
-
   string name = 1 [
     (buf.validate.field).string.max_len = 255,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -148,7 +146,6 @@ message AppInstallParams {
 }
 
 message ShellParams {
-
   string script = 1 [
     (buf.validate.field).string.max_len = 1048576,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -222,7 +219,6 @@ message FileParams {
 }
 
 message DirectoryParams {
-
   string path = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.prefix = "/"
@@ -250,7 +246,6 @@ message UpdateParams {
 }
 
 message FlatpakParams {
-
   FlatpakAppId app_id = 1 [(buf.validate.field).required = true];
 
   string remote = 2 [
@@ -264,7 +259,6 @@ message FlatpakParams {
 }
 
 message RepositoryParams {
-
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -402,7 +396,6 @@ message ZypperRepository {
 }
 
 message UserParams {
-
   string username = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -456,7 +449,6 @@ message UserParams {
 }
 
 message GroupParams {
-
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -478,7 +470,6 @@ message GroupParams {
 }
 
 message SshParams {
-
   bool allow_pubkey = 1;
 
   bool allow_password = 2;
@@ -490,7 +481,6 @@ message SshParams {
 }
 
 message SshdDirective {
-
   string key = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -505,7 +495,6 @@ message SshdDirective {
 }
 
 message SshdParams {
-
   uint32 priority = 1;
 
   repeated SshdDirective directives = 2 [
@@ -556,7 +545,6 @@ enum LpsPasswordComplexity {
 }
 
 message LpsParams {
-
   repeated string usernames = 1 [
     (buf.validate.field).repeated.min_items = 1,
     (buf.validate.field).required = true,
@@ -592,7 +580,6 @@ enum EncryptionDeviceBoundKeyType {
 }
 
 message EncryptionParams {
-
   bytes preshared_key = 1 [
     debug_redact = true,
     (buf.validate.field).required = true,
@@ -635,7 +622,6 @@ enum WifiAuthType {
 }
 
 message WifiParams {
-
   string ssid = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -698,7 +684,6 @@ message ActionResult {
 }
 
 message AgentUpdateArch {
-
   string binary_url = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true,
@@ -713,7 +698,6 @@ message AgentUpdateArch {
 }
 
 message AgentUpdateParams {
-
   AgentUpdateArch amd64 = 1;
 
   AgentUpdateArch arm64 = 2;

@@ -8,7 +8,6 @@ import "cadestro/v1/common.proto";
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
 service DeviceAuthService {
-
   rpc Enroll(EnrollRequest) returns (EnrollResponse);
 
   rpc GetEnrollmentStatus(GetEnrollmentStatusRequest) returns (GetEnrollmentStatusResponse);
@@ -29,7 +28,6 @@ message EnrollRequest {
 }
 
 message EnrollResponse {
-
   bool success = 1 [(buf.validate.field).required = true];
   DeviceId device_id = 2;
   string error = 3 [

@@ -44,12 +44,10 @@ message RegisterResponse {
 }
 
 message RenewCertificateRequest {
-
   bytes csr = 1 [(buf.validate.field).required = true];
 }
 
 message RenewCertificateResponse {
-
   bytes certificate = 1;
 
   google.protobuf.Timestamp not_after = 2;
@@ -1153,7 +1151,6 @@ message DeleteAssignmentRequest {
 message DeleteAssignmentResponse {}
 
 message ListAssignmentsRequest {
-
   AssignmentSourceType source_type = 1 [
     (buf.validate.field).enum.defined_only = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
@@ -1298,7 +1295,6 @@ message ListAuditEventsResponse {
 }
 
 message ExportAuditEventsRequest {
-
   string format = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {
@@ -1332,7 +1328,6 @@ message ExportAuditEventsRequest {
 }
 
 message ExportAuditEventsResponse {
-
   bytes chunk = 1;
 
   string next_page_token = 2;
@@ -1354,7 +1349,6 @@ message ListLpsPasswordsRequest {
 }
 
 message ListLpsPasswordsResponse {
-
   repeated LpsPassword current = 1;
 
   repeated LpsPassword history = 2;
@@ -1389,7 +1383,6 @@ message ListLuksKeysRequest {
 }
 
 message ListLuksKeysResponse {
-
   repeated LuksKey current = 1;
 
   repeated LuksKey history = 2;
@@ -1409,7 +1402,6 @@ message CreateLuksTokenRequest {
 }
 
 message CreateLuksTokenResponse {
-
   string token = 1;
 
   string uri = 2;
@@ -1992,7 +1984,6 @@ message AuthMethodProvider {
 }
 
 message ListAuthMethodsRequest {
-
   string email = 1 [
     (buf.validate.field).string.email = true,
     (buf.validate.field).string.max_len = 254,
@@ -2320,7 +2311,6 @@ message SetUserProvisioningEnabledRequest {
 }
 
 service ControlService {
-
   rpc Register(RegisterRequest) returns (RegisterResponse);
 
   rpc RenewCertificate(RenewCertificateRequest) returns (RenewCertificateResponse);
@@ -2516,7 +2506,6 @@ message StartTerminalRequest {
 }
 
 message StartTerminalResponse {
-
   SessionId session_id = 1 [(buf.validate.field).required = true];
 
   string session_token = 2 [

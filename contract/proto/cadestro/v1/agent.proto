@@ -11,7 +11,6 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
 service AgentService {
-
   rpc Stream(stream AgentMessage) returns (stream ServerMessage);
 }
 
@@ -98,7 +97,6 @@ message ServerMessage {
   MessageId id = 1 [(buf.validate.field).required = true];
 
   oneof payload {
-
     SyncDeviceCommand sync_device = 11;
     Welcome welcome = 10;
     SyncState sync_state = 12;
@@ -301,7 +299,6 @@ message GetLuksKeyRequest {
 }
 
 message GetLuksKeyResponse {
-
   bytes passphrase = 1 [
     debug_redact = true,
     (buf.validate.field).required = true,
@@ -340,7 +337,6 @@ message StoreLuksKeyResponse {
 }
 
 message LpsPasswordRotation {
-
   string username = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -399,7 +395,6 @@ message RevokeLuksDeviceKeyResult {
 }
 
 message ValidateLuksTokenRequest {
-
   string token = 1 [(buf.validate.field).string.ulid = true];
 }
 
@@ -416,7 +411,6 @@ message ValidateLuksTokenResponse {
 message SyncRequest {}
 
 message SyncState {
-
   int32 sync_interval_minutes = 1;
 
   MaintenanceWindow maintenance_window = 2;
@@ -425,7 +419,6 @@ message SyncState {
 }
 
 message DesiredPolicy {
-
   PolicyRevisionId revision = 1 [(buf.validate.field).required = true];
 
   repeated Manifest manifests = 2;
