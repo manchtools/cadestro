@@ -302,11 +302,8 @@ func (s *State) SetInventoryInterval(ctx context.Context, op store.AuditOperatio
 	return s.readAfter(ctx, id, err)
 }
 
-// SetMaintenanceWindow stores one validated JSON object. The RPC handler owns
-// semantic MaintenanceWindow validation; this layer rejects malformed storage
-// shapes as a second boundary.
 func (s *State) SetMaintenanceWindow(ctx context.Context, op store.AuditOperation, id string, raw []byte) (store.DeviceGroupView, error) {
-	var object map[string]any
+	var object *struct{}
 	if ctx == nil || !validID(id) || len(raw) == 0 || json.Unmarshal(raw, &object) != nil || object == nil {
 		return store.DeviceGroupView{}, ErrInvalidInput
 	}

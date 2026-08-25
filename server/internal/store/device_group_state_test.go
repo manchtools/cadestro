@@ -154,6 +154,8 @@ func TestDeviceGroupState_DynamicShapeAndBoundsFailClosed(t *testing.T) {
 	assert.ErrorIs(t, err, devicegroup.ErrInvalidInput)
 	_, err = state.SetMaintenanceWindow(ctx, deviceGroupOperation(), dynamic.ID, []byte(`[]`))
 	assert.ErrorIs(t, err, devicegroup.ErrInvalidInput)
+	_, err = state.SetMaintenanceWindow(ctx, deviceGroupOperation(), dynamic.ID, []byte(`null`))
+	assert.ErrorIs(t, err, devicegroup.ErrInvalidInput)
 
 	_, err = state.UpdateQuery(ctx, deviceGroupOperation(), dynamic.ID, true, "(")
 	assert.True(t, errors.Is(err, devicegroup.ErrInvalidQuery))
