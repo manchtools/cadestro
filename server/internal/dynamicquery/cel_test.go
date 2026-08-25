@@ -3,6 +3,7 @@ package dynamicquery
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -90,5 +91,20 @@ func TestEvalPropagatesRuntimeAndCancellationErrors(t *testing.T) {
 	}
 	if _, err := query.Eval(canceled, Device{}); !errors.Is(err, context.Canceled) {
 		t.Fatalf("cancellation error = %v", err)
+	}
+}
+
+func TestEvalEnforcesCostLimit(t *testing.T) {
+	query, err := CompileDevice(`device.groups.exists(x, device.groups.exists(y, x == y && x == "never"))`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	groups := make([]string, 512)
+	for i := range groups {
+		groups[i] = "group-" + strconv.Itoa(i)
+	}
+	_, err = query.Eval(context.Background(), Device{Groups: groups})
+	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "cost") {
+		t.Fatalf("cost-limited evaluation error = %v", err)
 	}
 }
