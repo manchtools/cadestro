@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import PackageParamsForm from './PackageParamsForm.svelte';
+import PackageParamsFormTestHost from './PackageParamsFormTestHost.svelte';
 import type { PackageFormState } from './types';
 
 function params(overrides: Partial<PackageFormState> = {}): PackageFormState {
@@ -25,12 +25,12 @@ function modeSwitch(): HTMLButtonElement {
 
 describe('package parameter mode', () => {
 	it('reseeds on a new model but keeps an explicitly empty per-manager mode', async () => {
-		const view = await render(PackageParamsForm, {
+		const view = await render(PackageParamsFormTestHost, {
 			props: { params: params({ name: 'firefox' }) }
 		});
 
 		modeSwitch().click();
-		expect(modeSwitch().getAttribute('data-state')).toBe('checked');
+		await vi.waitFor(() => expect(modeSwitch().getAttribute('data-state')).toBe('checked'));
 
 		await view.rerender({ params: params({ name: 'chromium' }) });
 		await vi.waitFor(() => expect(modeSwitch().getAttribute('data-state')).toBe('unchecked'));
@@ -38,8 +38,8 @@ describe('package parameter mode', () => {
 		const empty = params();
 		await view.rerender({ params: empty });
 		modeSwitch().click();
-		expect(modeSwitch().getAttribute('data-state')).toBe('checked');
+		await vi.waitFor(() => expect(modeSwitch().getAttribute('data-state')).toBe('checked'));
 		await view.rerender({ params: empty });
-		expect(modeSwitch().getAttribute('data-state')).toBe('checked');
+		await vi.waitFor(() => expect(modeSwitch().getAttribute('data-state')).toBe('checked'));
 	});
 });
